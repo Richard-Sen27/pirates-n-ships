@@ -9,10 +9,10 @@ Last updated: 2026-10-06 (second session: wave 1 of phase C running).
 
 ## Current state
 
-`main` is green: `./gradlew build` (540 JUnit tests), `./gradlew :neoforge:runGameTestServer` (140 GameTests, four green runs in a row after the last merge) and `./gradlew :neoforge:runData` (no diff). Nothing is pushed: local `main` is ahead of `origin/main`.
+`main` builds (`./gradlew build`, 544 JUnit tests) and `./gradlew :neoforge:runData` leaves no diff. **The GameTest suite (146 tests) is flaky right now:** `AssemblyGameTests.disassemblyPutsBlocksBackOnTheGrid` failed in 2 of 5 full runs with "chest content lost on disassembly". All other tests pass in every run. D2c is investigating. Nothing is pushed: local `main` is ahead of `origin/main`.
 
 Merged in this session: foundation follow-ups **A2** and **A3**, all of phase C (**C1** to **C8**), spikes **D1** (assembly) and **D2** (dry hull, with the fix **D2b**), and all of phase E (**E1a** law in the world, **E1b** brig and shackles, **E1c** flags, **E2** pantry and water barrel, **E3** cargo containers and market backend).
-Running now: **D3a** (spike 3 part 1: sails move the ship), **D2c** (a rare flaky disassembly test), **A4** (platform hooks the integration packages asked for).
+Running now: **D3a** (spike 3 part 1: sails move the ship) and **D2c** (the flaky disassembly test). **A4** (platform hooks) is merged.
 After that: **D3b** (helm steering and anchor), then **D4** (spike 4, crew station).
 
 How merges work in this phase:
@@ -50,7 +50,7 @@ Follow-ups for later packages (small, not blocking):
 | C8 | Basic items and blocks + datagen + placeholder textures | done | Merged. 19 items and 13 blocks with models, recipes, loot, lang and tags, 22 GameTests, and `tools/gen_placeholder_textures.py`. Playtest: `docs/playtests/items-and-blocks.md`. |
 | D1 | Spike 1: assembly (§4.1) | blocked: needs playtest | Merged and green headlessly: 14 JUnit tests and 10 GameTests that assemble, name, refuse and disassemble real sub-levels. Lives in `common` (`ship/assembly`, Sable adapter in `ship/sable`, `ship/ShipData`). Playtest: `docs/playtests/milestone-1.md`. |
 | D2 | Spike 2: dry hull (§4.3, §4.4) | blocked: needs playtest | Merged and green headlessly. Hull runtime per ship (`ship/hull/runtime`), Sable water occlusion regions with client sync, flooding with breaches, buoyancy correction, persistence. Review found a ship "moving at 72 m/s" in a test: the cause was the GameTest server placing tests up to 15 million blocks out, where Sable's 32-bit physics fails (fixed by D2b, which also made the sea detection look only at the hull's own bottom). Rendering is unverified. Playtest: `docs/playtests/milestone-2.md`. |
-| D2c | Flaky test `disassemblyPutsBlocksBackOnTheGrid` ("chest content lost", about 1 in 10 to 20 runs) | in progress | Find out whether it is a test problem or a real bug. |
+| D2c | Flaky test `disassemblyPutsBlocksBackOnTheGrid` ("chest content lost") | in progress | It was rare with 140 tests (1 in 12 runs) and failed in 2 of 5 runs with 146 tests, so it depends on load or timing. The agent has to find out whether it is a test problem or a real bug. |
 | D3a | Spike 3 part 1: sail blocks with trim, sail winch, sailing runtime applying wind and keel forces, wind override command | in progress | Spike 3 is split in two, because spikes 1 and 2 each used up an agent's whole token budget. |
 | D3b | Spike 3 part 2: helm steering (rudder) and anchor (capstan) | todo | After D3a. Ends at a playtest gate. |
 | D4 | Spike 4: crew station (§6) | todo | Waits for D3b. Ends at a playtest gate. |
@@ -60,7 +60,7 @@ Follow-ups for later packages (small, not blocking):
 | E1c | Flags (§4.7): flag state on the flagpole, hoisting, striking colors | done | Merged. 22 JUnit tests, 14 GameTests. Three flag items, banners as custom flags, `/pirates flag` commands. Ship-level allegiance waits for the spikes. Playtest: `docs/playtests/flags.md`. |
 | E2 | Pantry and water barrel as real containers, connected to the provisions rules | done | Merged. 12 JUnit tests, 13 GameTests. Package `crew/galley`, `/pirates provisions` commands. Consumption by a crew waits for crew NPCs. Playtest: `docs/playtests/pantry.md`. |
 | E3 | Cargo crate and barrel as bulk containers, doubloon wallet, market backend | done | Merged. 18 JUnit tests, 11 GameTests. `trade/cargo`, `trade/coin`, `trade/exchange`, `trade/net`, `/pirates trade` commands. The market screen itself and ports come later. Playtest: `docs/playtests/cargo-and-market.md`. |
-| A4 | Platform hooks asked for by phase E: item capability for pantry and cargo containers, item tooltip event (plunder mark), entity interaction event (shackles on villagers), test hygiene | in progress | |
+| A4 | Platform hooks asked for by phase E: item capability for pantry and cargo containers, item tooltip event (plunder mark), entity interaction event (shackles on villagers), test hygiene | done | Merged. New `Services.CAPABILITIES`, `ClientEvents.ITEM_TOOLTIP`, `CommonEvents.ENTITY_INTERACT`. Four GameTests live in the NeoForge module (`NeoForgeGameTests`), because the capability lookup is a NeoForge API. |
 
 ## Roadmap milestones (design.md §20)
 

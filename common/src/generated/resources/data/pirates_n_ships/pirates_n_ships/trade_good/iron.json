@@ -1,0 +1,12 @@
+{
+  "base_price": 6.0,
+  "category": "metal",
+  "item": "minecraft:iron_ingot",
+  "produced_in": [
+    "cold",
+    "arid"
+  ],
+  "sensitivity": 0.8,
+  "stock_factor": 0.75,
+  "weight": 1.0
+}

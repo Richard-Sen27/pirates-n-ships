@@ -1,0 +1,11 @@
+{
+  "base_price": 12.0,
+  "category": "luxury",
+  "item": "pirates_n_ships:spices",
+  "produced_in": [
+    "tropical"
+  ],
+  "sensitivity": 1.5,
+  "stock_factor": 0.5,
+  "weight": 0.1
+}

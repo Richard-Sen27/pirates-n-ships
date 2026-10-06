@@ -1,0 +1,11 @@
+{
+  "base_price": 1.5,
+  "category": "food",
+  "item": "minecraft:cod",
+  "produced_in": [
+    "temperate",
+    "cold"
+  ],
+  "stock_factor": 1.5,
+  "weight": 0.25
+}

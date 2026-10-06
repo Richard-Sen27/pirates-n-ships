@@ -1,0 +1,10 @@
+{
+  "base_price": 6.0,
+  "category": "manufactured",
+  "item": "pirates_n_ships:cloth",
+  "produced_in": [
+    "temperate"
+  ],
+  "stock_factor": 0.75,
+  "weight": 0.5
+}

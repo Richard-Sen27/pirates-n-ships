@@ -2,6 +2,9 @@ package com.richardsenger.piratesnships.sailing.ship;
 
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.sailing.SailingConfig;
+import com.richardsenger.piratesnships.sailing.anchor.AnchorConfig;
+import com.richardsenger.piratesnships.sailing.anchor.AnchorEntities;
+import com.richardsenger.piratesnships.sailing.anchor.AnchorTravel;
 import com.richardsenger.piratesnships.sailing.block.CapstanBlock;
 import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import com.richardsenger.piratesnships.sailing.force.SailingParams;
@@ -33,7 +36,8 @@ import org.jetbrains.annotations.Nullable;
  *   <li><b>Anchor:</b> one per ship, in the runtime and persisted in the ship's Sable user data
  *       ({@code pirates_n_ships_sailing.anchor}, {@link ShipAnchor#CODEC}) at every change. Every capstan of a ship
  *       works the same anchor; dropping hangs it from the capstan used, and only that capstan's block state shows the
- *       phase. Breaking that capstan loses the anchor.</li>
+ *       phase. Breaking that capstan loses the anchor. The anchor is a visible entity ({@code sailing.anchor}) that
+ *       runs out from the hawse at the hull side; a trip takes as long as the chain needs for the depth.</li>
  * </ul>
  */
 public final class ShipControls {
@@ -102,18 +106,20 @@ public final class ShipControls {
         if (!SailingConfig.ANCHOR_ENABLED.get()) {
             return Component.translatable(KEY_CAPSTAN_OFF);
         }
-        SailingParams.AnchorParams p = SailingConfig.sailingParams().anchor();
         ShipAnchor a = rt.anchor();
         if (a != null && (a.state().phase() == AnchorState.Phase.DROPPING || a.state().phase() == AnchorState.Phase.HOLDING)) {
             setAnchor(ship, rt, a.withState(a.state().raise()));
-            return Component.translatable(KEY_RAISING, seconds(a.state().hold() * p.raiseTicks()));
+            return Component.translatable(KEY_RAISING, seconds(a.state().hold() * a.raiseTicks()));
         }
         if (a != null && a.state().phase() == AnchorState.Phase.RAISING) {
-            // reversed mid-way: the anchor is still on the ground where it was
+            // reversed mid-way: the anchor runs out again from where it is to the same point
             setAnchor(ship, rt, a.withState(a.state().drop()));
-            return Component.translatable(KEY_DROPPING, fmt(ship.toWorld(Vec3.atCenterOf(a.capstan())).y - a.point().y), seconds((1.0 - a.state().hold()) * p.dropTicks()));
+            return Component.translatable(KEY_DROPPING, fmt(ship.toWorld(a.hawse()).y - AnchorTravel.HEIGHT - a.point().y),
+                    seconds((1.0 - a.state().hold()) * a.dropTicks()));
         }
-        Vec3 hawse = ship.toWorld(Vec3.atCenterOf(pos));
+        // the anchor runs out from the hawse at the hull side, straight down to the first solid block in reach
+        Vec3 hawsePlot = AnchorEntities.hawse(level, rt.bow(), pos);
+        Vec3 hawse = ship.toWorld(hawsePlot);
         int x = (int) Math.floor(hawse.x), z = (int) Math.floor(hawse.z);
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         OptionalInt floor = AnchorGround.floorY((int) Math.floor(hawse.y), SailingConfig.ANCHOR_CHAIN_LENGTH.get(),
@@ -122,28 +128,46 @@ public final class ShipControls {
             return Component.translatable(KEY_NO_GROUND, SailingConfig.ANCHOR_CHAIN_LENGTH.get());
         }
         Vec3 point = new Vec3(hawse.x, floor.getAsInt(), hawse.z);
-        ShipAnchor dropped = new ShipAnchor(AnchorState.RAISED.drop(), point, pos.immutable());
+        double distance = AnchorTravel.distance(hawse.y, point.y);
+        int dropTicks, raiseTicks;
+        if (AnchorConfig.DEPTH_TRAVEL.get()) {
+            int min = AnchorConfig.MIN_TRAVEL_TICKS.get(), max = AnchorConfig.MAX_TRAVEL_TICKS.get();
+            dropTicks = AnchorTravel.ticks(distance, AnchorConfig.DROP_SPEED.get(), min, max);
+            raiseTicks = AnchorTravel.ticks(distance, AnchorConfig.RAISE_SPEED.get(), min, max);
+        } else {
+            SailingParams.AnchorParams p = SailingConfig.sailingParams().anchor();
+            dropTicks = p.dropTicks();
+            raiseTicks = p.raiseTicks();
+        }
+        ShipAnchor dropped = new ShipAnchor(AnchorState.RAISED.drop(), point, pos.immutable(), hawsePlot, dropTicks, raiseTicks);
         if (a != null && !a.capstan().equals(pos)) {
             showPhase(level, a.capstan(), AnchorState.Phase.RAISED);
         }
         setAnchor(ship, rt, dropped);
-        return Component.translatable(KEY_DROPPING, fmt(hawse.y - point.y), seconds(p.dropTicks()));
+        return Component.translatable(KEY_DROPPING, fmt(distance), seconds(dropTicks));
     }
 
-    /** Game tick: advances the anchor state machine of one ship and keeps the capstan's block state in step. */
+    /**
+     * Game tick: advances the anchor state machine of one ship at this trip's travel times, keeps the capstan's block
+     * state in step and places the visible anchor ({@link AnchorEntities#sync}).
+     */
     static void tickAnchor(ShipBody ship, SailingRuntime rt, SailingParams.AnchorParams p) {
         ShipAnchor a = rt.anchor();
-        if (a == null) {
-            return;
+        if (a != null) {
+            AnchorState next = a.state().tick(a.travelParams(p));
+            if (!next.equals(a.state())) {
+                setAnchor(ship, rt, next.phase() == AnchorState.Phase.RAISED ? null : a.withState(next));
+                if (next.phase() == AnchorState.Phase.RAISED) {
+                    showPhase(ship.level(), a.capstan(), AnchorState.Phase.RAISED);
+                }
+            }
         }
-        AnchorState next = a.state().tick(p);
-        if (next.equals(a.state())) {
-            return;
-        }
-        setAnchor(ship, rt, next.phase() == AnchorState.Phase.RAISED ? null : a.withState(next));
-        if (next.phase() == AnchorState.Phase.RAISED) {
-            showPhase(ship.level(), a.capstan(), AnchorState.Phase.RAISED);
-        }
+        AnchorEntities.sync(ship, rt.bow(), rt.anchor());
+    }
+
+    /** World position of the hawse of a ship's anchor (where its chain leaves the hull). */
+    public static Vec3 hawse(ShipBody ship, ShipAnchor anchor) {
+        return ship.toWorld(anchor.hawse());
     }
 
     /** Sets the ship's anchor in the runtime and its user data and shows the phase on the capstan. Null = stowed. */

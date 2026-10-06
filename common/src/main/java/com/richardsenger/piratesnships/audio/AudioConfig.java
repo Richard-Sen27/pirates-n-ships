@@ -5,8 +5,9 @@ import com.richardsenger.piratesnships.core.config.ConfigValue;
 import com.richardsenger.piratesnships.core.config.ModConfigs;
 
 /**
- * Client config section {@code audio} (docs/design.md §17, group "Audio"; §16). Declared ahead of the feature by
- * {@code core.settings.SettingsModule}; nothing reads these values yet.
+ * Client config section {@code audio} (docs/design.md §17, group "Audio"; §16), declared by {@link AudioModule}.
+ * Nothing reads these values yet: the hull creak is played by the server through vanilla's {@code playSound}, so it
+ * follows the player's "Blocks" volume slider; {@code ambience_volume} needs client-side sound playback (later).
  */
 public final class AudioConfig {
 

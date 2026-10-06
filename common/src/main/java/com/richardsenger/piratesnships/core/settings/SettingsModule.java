@@ -1,6 +1,5 @@
 package com.richardsenger.piratesnships.core.settings;
 
-import com.richardsenger.piratesnships.audio.AudioConfig;
 import com.richardsenger.piratesnships.combat.CombatConfig;
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.crew.CrewConfig;
@@ -25,7 +24,7 @@ public final class SettingsModule implements ModModule {
             "ships", "waves", "hazards", "crew", "combat", "survival", "world", "world_simulation");
 
     /** Top-level client sections declared by this module. */
-    public static final List<String> CLIENT_SECTIONS = List.of("wave_effects", "audio");
+    public static final List<String> CLIENT_SECTIONS = List.of("wave_effects");
 
     @Override
     public String id() {
@@ -41,7 +40,6 @@ public final class SettingsModule implements ModModule {
         SurvivalConfig.init();
         WorldConfig.init();
         WorldSimConfig.init();
-        AudioConfig.init();
     }
 
     @Override

@@ -5,23 +5,38 @@ Statuses: **todo** / **in progress** / **done** / **blocked: needs playtest** / 
 
 "Done" means: `./gradlew build` passes, `./gradlew :neoforge:runGameTestServer` passes, and the new logic has tests.
 
-Last updated: 2026-10-06 (phase B merged, phase A running).
+Last updated: 2026-10-06 (phases A and B merged, session paused before phase C).
+
+## Start here next session
+
+The session was paused on request after phases A and B, before any phase C agent was started. `main` is green: `./gradlew build` (5 JUnit tests), `./gradlew :neoforge:runGameTestServer` (2 GameTests, Sable loaded) and `./gradlew :neoforge:runData` (no diff) all pass. Nothing is pushed: local `main` is ahead of `origin/main`.
+
+Next steps, in order:
+1. **Foundation follow-up (small, before phase C):** the datagen helpers can't yet write entity-type tags or arbitrary datapack JSON. C3 (weapon definitions), C5 (trade goods), C8 and the spikes (Sable `physics_block_properties`, the `#sable:retain_in_sub_level` tag) need both. Add them to `core/datagen/DataContributions` first, so that phase C agents don't each edit that shared file.
+2. **Phase C** in waves of about four agents (16 GB RAM). Every agent prompt must start with `git merge --ff-only main` (see decisions) and must point to design.md §3.3 for the foundation APIs.
+3. **Phase D** spikes, using `docs/sable-notes.md`.
+
+Things phase C prompts must mention:
+- Pure logic takes its tuning values as parameters or reads `ConfigValue` handles. It must never touch `Services` (not available in JUnit).
+- A GameTest that changes a config value with `ConfigValue.set` writes the real server config while other tests run in the same server. Such tests need their own batch and must restore the value.
+- Each module adds one line to `core/ModModules` and nothing else in shared files. Only the orchestrator edits that file.
+- Agent worktrees and their branches from this session (`.claude/worktrees/agent-*`, `worktree-agent-*`) are fully merged and can be deleted.
 
 ## Work packages
 
 | Phase | Package | Status | Notes |
 |---|---|---|---|
-| A | Foundation (milestone 0): template cleanup, Sable dependency, platform services, registration / config / networking / attachment helpers, datagen, JUnit, GameTest harness, CI, playtest checklist | in progress | |
+| A | Foundation (milestone 0): template cleanup, Sable dependency, platform services, registration / config / networking / attachment helpers, datagen, JUnit, GameTest harness, CI, playtest checklist | done (headless part) | Merged. Build, JUnit (5), GameTests (2) and datagen verified on `main`. The client part is in the milestone 0 playtest. See "Foundation notes" below. |
 | B | Sable investigation → `docs/sable-notes.md` | done | Merged (docs only, so no build needed). Reviewed by spot-checking about 25 API claims against `refs/`, all matched. See "Sable findings" below. |
-| C1 | Hull analysis + flooding model (§4.2, §4.5), pure logic | todo | Waits for phase A. |
-| C2 | Wind and sail model (§5.1, §5.2), pure logic | todo | Waits for phase A. |
-| C3 | Melee resolution core (§8.5), pure logic | todo | Waits for phase A. |
-| C4 | Law system logic (§13.1, §13.2) + false-flag detection math (§4.7) | todo | Waits for phase A. |
-| C5 | Trade economy logic (§10.3) | todo | Waits for phase A. |
-| C6 | Provisions logic (§7.4) | todo | Waits for phase A. |
-| C7 | Config groups and values (§17) | todo | Waits for phase A. |
-| C8 | Basic items and blocks + datagen + placeholder textures | todo | Waits for phase A. |
-| D1 | Spike 1: assembly (§4.1) | todo | Waits for phases A + B. Ends at a playtest gate. |
+| C1 | Hull analysis + flooding model (§4.2, §4.5), pure logic | todo | Unblocked. Not started (session paused). |
+| C2 | Wind and sail model (§5.1, §5.2), pure logic | todo | Unblocked. Not started (session paused). |
+| C3 | Melee resolution core (§8.5), pure logic | todo | Unblocked. Not started (session paused). |
+| C4 | Law system logic (§13.1, §13.2) + false-flag detection math (§4.7) | todo | Unblocked. Not started (session paused). |
+| C5 | Trade economy logic (§10.3) | todo | Unblocked. Not started (session paused). |
+| C6 | Provisions logic (§7.4) | todo | Unblocked. Not started (session paused). |
+| C7 | Config groups and values (§17) | todo | Unblocked. Not started (session paused). |
+| C8 | Basic items and blocks + datagen + placeholder textures | todo | Unblocked. Not started (session paused). |
+| D1 | Spike 1: assembly (§4.1) | todo | Unblocked. Not started (session paused). Ends at a playtest gate. |
 | D2 | Spike 2: dry hull (§4.3, §4.4) | todo | Waits for D1 + C1. Ends at a playtest gate. |
 | D3 | Spike 3: wind + sails (§5) | todo | Waits for D1 + C2. Ends at a playtest gate. |
 | D4 | Spike 4: crew station (§6) | todo | Waits for D3. Ends at a playtest gate. |
@@ -31,7 +46,7 @@ Last updated: 2026-10-06 (phase B merged, phase A running).
 
 | # | Milestone | Status | Notes |
 |---|---|---|---|
-| 0 | Project setup | in progress | Phase A. |
+| 0 | Project setup | blocked: needs playtest | Everything headless is done and green. "Sable loads in the NeoForge dev client" and the test block's look need the playtest in `docs/playtests/milestone-0.md`. |
 | 1 | Spike: assembly | todo | Phase D1. |
 | 2 | Spike: dry hull | todo | Phase D2. |
 | 3 | Spike: wind + sails | todo | Phase D3. |
@@ -69,7 +84,7 @@ Last updated: 2026-10-06 (phase B merged, phase A running).
 
 ## Sable findings that change the design (from `docs/sable-notes.md`)
 
-These still have to be written into `docs/design.md` (§4.3–§4.5, §5, §21). That edit waits until phase A is merged, because phase A also edits §21.
+These are written into `docs/design.md` (§3.1, §4.1, §4.3–§4.5, §4.9, §5.3, §6) as decisions to be confirmed in the spikes, and the Sable questions in §21 are marked resolved.
 
 | Finding | Consequence |
 |---|---|
@@ -81,6 +96,21 @@ These still have to be written into `docs/design.md` (§4.3–§4.5, §5, §21).
 | All needed APIs, including events, are in `sable-common` (notes §7). | No Sable-specific platform service is needed. Much of it is outside `api.*`, so all Sable calls go through one adapter package. |
 | Assembling in water leaves an air pocket in the world, and disassembling leaves sea water inside the hull (notes §2.2, §2.4). | Spike 1 has to handle both. |
 
+## Foundation notes (phase A)
+
+How feature modules plug in is documented in design.md §3.3. Deviations from the orchestrator prompt and from `CLAUDE.md`, all accepted in review:
+
+| Deviation | Why |
+|---|---|
+| There is no `Services.EVENTS`. Events are static callback hubs in `common` (`platform/event/CommonEvents`, `ClientEvents`) that the NeoForge module fires. | Event logic is plain common code, so a ServiceLoader service adds nothing. `CLAUDE.md` still lists `.EVENTS` as an example service: **the human may want to update that line.** |
+| GameTests use our own `@ModGameTest` annotation plus one vanilla `@GameTestGenerator` method per class, not vanilla `@GameTest`. | NeoForge takes the template namespace of a vanilla `@GameTest` from its own `@GameTestHolder`, which `common` can't use. Without it the tests land in the `minecraft` namespace and are filtered out. It is still the vanilla GameTest framework. |
+| ModDevGradle `2.0.49-beta` → `2.0.140`. | The version Sable 2.0.6 builds with. |
+| `common/src/main/resources/META-INF/accesstransformer.cfg` with two entries (`BlockEntityType$BlockEntitySupplier`, `IntrinsicHolderTagsProvider$IntrinsicTagAppender`). | Needed by the registration and tag datagen helpers in `common`. The Fabric port needs matching access-widener lines. |
+| Sable's NeoForge artifact is added with Create, Ponder, Flywheel and Registrate excluded. | Sable's published runtime variant lists them, but only uses them for optional compat. We have no Create dependency. |
+
+Known harmless log noise with Sable: `Failed to apply tag physics properties. Unknown block: create:flywheel` on every level start (Sable's own data mentions a Create block).
+
 ## Playtests for the human
 
-None yet.
+In this order:
+1. [`docs/playtests/milestone-0.md`](playtests/milestone-0.md): Sable loads in the dev client, the mod list and config screen are correct, the test block appears and renders, `/sable spawn sphere 3` works.

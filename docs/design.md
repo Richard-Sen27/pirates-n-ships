@@ -1,6 +1,6 @@
 # Pirates 'n' Ships — Design Spec
 
-> Status: brainstorm → spec, v0.3 (2026-10-06, adds flags, ship customization, cargo, trade, brig and provisions). Living document: update it whenever a decision changes.
+> Status: brainstorm → spec, v0.4 (2026-10-06, adds the foundation APIs and the decisions from the Sable investigation). Living document: update it whenever a decision changes.
 > Mod name "Pirates 'n' Ships". Mod ID: `pirates_n_ships`.
 
 ---
@@ -70,7 +70,8 @@ Package root: `com.richardsenger.piratesnships`.
 common/      ~80–90% of the code. Vanilla Minecraft + sable-common only.
              All gameplay logic, block/item/entity classes, payloads, renderers,
              most mixins, datagen providers, GameTest definitions.
-  └─ platform/   Service interfaces (Services.PLATFORM, .REGISTRY, .NETWORK, .EVENTS, …)
+  └─ platform/   Service interfaces (Services.PLATFORM, .REGISTRY, .NETWORK, .ATTACHMENTS, .CONFIG)
+                 and the event hubs (CommonEvents, ClientEvents)
 neoforge/    Thin layer: @Mod entrypoint, platform service implementations,
              registration timing, event wiring, NeoForge-only datagen extras.
 fabric/      Same thin layer for Fabric (ModInitializer / ClientModInitializer).
@@ -80,7 +81,7 @@ fabric/      Same thin layer for Fabric (ModInitializer / ClientModInitializer).
 **Hard rules:**
 - `common/` never imports `net.neoforged.*` or `net.fabricmc.*`. Since `common` compiles against vanilla only, violations fail the build.
 - Loader-specific needs go through a **platform service interface** in `common/.../platform/`. Implementations live in `neoforge/` and `fabric/` and are loaded via `ServiceLoader` (`META-INF/services`).
-- Event handlers are plain methods in `common` (e.g. `ShipEvents.onServerTick(server)`). Loader modules only *subscribe* and forward to them.
+- Event handlers are plain methods in `common` (e.g. `ShipEvents.onServerTick(server)`). Loader modules only *subscribe* and forward to them. Events are not a `Services` entry: common code registers listeners on the static hubs `CommonEvents` and `ClientEvents`, and the loader module fires them (§3.3).
 - Registration: `common` declares what exists (a registry helper with suppliers). The loader layer performs the actual registration at the right time.
 - Networking: payload records + codecs + handlers live in `common` (vanilla `CustomPacketPayload`). Only registration and sending go through `Services.NETWORK`.
 - Mixins: shared mixins go in `common` (`pirates_n_ships.mixins.json`). Loader-specific mixins are allowed only when unavoidable, in that loader's own mixin config.
@@ -139,11 +140,13 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
   3. **Pick up:** when it's done, the player hands in the receipt. The ship appears at a free **berth** in the village dock, in the water and already assembled, so the player boards and sails away. From then on it is a regular ship that can be disassembled at the helm and modified freely.
   - The ship is only materialized at pickup, not when the build finishes. Until then it is a record only (same idea as §10.4), so finished ships never block the dock and can't be taken by others.
   - Docks have a few marked berths (markers in the village structure). If all are occupied, the shipwright asks the player to come back later.
-  - Ship types are stored as structure NBT built by hand.
+  - Ship types are stored as structure NBT built by hand. At pickup, the template is placed directly into a new Sable sub-level at the berth, without placing the blocks in the world first (`docs/sable-notes.md` §2.5).
   - Later, optional: visible construction stages at the dock (frame → hull → masts), which needs one structure per stage.
 - A **Helm block** (Steuerrad) is the ship's anchor point. Using it while docked triggers assembly.
 - Assembly collects connected blocks, excluding world terrain, with a configurable block limit. They become a Sable sub-level.
 - **Disassembly** happens at the helm when the ship is stationary and aligned. Blocks are placed back into the world, snapped to the grid.
+  - Sable has no disassembly API (`docs/sable-notes.md` §2.4). We build it from Sable's public assembly pieces: the ship is levelled and its yaw snapped to a 90° step, and the target volume is checked for obstructions before the blocks are moved.
+  - Assembling in water leaves an air pocket where the hull was, and disassembling leaves sea water inside the hull. Both need handling (spike 1).
 - Each ship gets a persistent **ShipData** record: UUID, name, owner, crew, flag/faction, hull analysis cache.
 - Ship naming happens via the helm GUI or a name tag on the helm.
 
@@ -154,12 +157,15 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
 - Results are cached and recomputed only when ship blocks change (debounced). The same goes for opening and closing hatches.
 
 ### 4.3 Dry hull: rendering
+- **Decision (Sable investigation, to be confirmed in spike 2):** use Sable's built-in **water occlusion regions** (`docs/sable-notes.md` §4.4) instead of our own mask mesh and renderer. Sable already renders a depth mask for each region before the water layer, from a common mixin that works on both loaders, and the regions follow the ship. Our part: turn dry compartments into regions, sync them to clients (Sable doesn't network them) and rebuild them when the hull changes. The bullets below describe the technique Sable implements.
 - For enclosed compartments below the waterline, build a **water-mask mesh** (the inner faces of the dry volume).
 - Render it with a depth-only render type before the translucent (water) layer, the same technique as vanilla's boat water patch, generalized.
 - The mesh moves with the ship transform, so no chunk rebuilds are needed.
 - Compatibility risk: shader packs. Plan a separate compatibility pass (Iris) later.
+- Sable's regions are dry-or-not. A water surface inside a partly flooded compartment (§4.5) needs our own rendering later.
 
 ### 4.4 Dry hull: gameplay
+- **Decision (to be confirmed in spike 2):** for positions inside a water occlusion region, Sable already cancels the in-water state, fluid pushing, swimming, drowning, the eye-in-fluid check, underwater fog and ambient particles (`docs/sable-notes.md` §4.4). We add our own mixins only for what is still missing after the spike. Expected gaps: item flotation, block placement checks and bubble columns.
 - Mixins on fluid queries (entity in-water checks, fluid pushing, drowning, bubbles, item flotation, block placement checks).
 - If a world position transformed into ship-local space lies in a **dry** compartment cell, it reports no fluid.
 - Applies to players, mobs, items and particles.
@@ -171,7 +177,7 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
 - Compartments connected through open doors or hatches equalize.
 - **Pump / bailing station:** removes water at a set rate. A player or crew member operates it.
 - **Patching:** a repair item (planks + tar/pitch) placed in a breach closes it.
-- **Buoyancy:** effective displacement = hull blocks + dry volume − flood water. Hook into or extend Sable's buoyancy, then compute list/heel from where the flooded water sits.
+- **Buoyancy:** effective displacement = hull blocks + dry volume − flood water. Sable computes buoyancy natively, for solid hull blocks only, and it can't be overridden or switched off per ship (`docs/sable-notes.md` §4.1, §4.2). So we keep Sable's hull-block buoyancy and apply the dry volume (upward) and the flood water (downward) as our own extra force at their centroids, which also produces list and heel. The constants must be tuned together in a playtest.
 - A ship that loses buoyancy sinks. A sunk ship stays a sub-level resting on the seabed (with a config option to turn it back into world blocks after some time), so wrecks can be looted.
 
 ### 4.6 Damage
@@ -203,7 +209,7 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
 
 ### 4.9 Cargo and weight
 - Every ship has a **cargo weight** = the contents of containers on board (crates, barrels, chests) plus heavy items such as cannons and cannonballs.
-- Weight lowers the ship in the water (less freeboard, so it floods more easily) and reduces speed and turning (applied to Sable mass or as a drag factor).
+- Weight lowers the ship in the water (less freeboard, so it floods more easily) and reduces speed and turning (applied to Sable mass or as a drag factor). Decision: our own containers get a load block-state with a mass per state (Sable `sable:mass` overrides from datagen), so Sable updates mass and center of mass itself. Vanilla containers get a downward force instead (`docs/sable-notes.md` §10).
 - The HUD and the helm GUI show the load level (light / laden / heavily laden / overloaded).
 
 ---
@@ -225,6 +231,7 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
 
 ### 5.3 Steering and other propulsion
 - **Helm:** sets the rudder angle. Rudder torque scales with the ship's speed through the water.
+- **Keel (lateral resistance):** Sable's water drag is the same in every direction, so without extra sideways drag a ship would just drift downwind. We apply our own drag below the waterline, strong sideways and weak along the hull (`docs/sable-notes.md` §4.3). Tuned in spike 3.
 - **Oars:** an optional small, slow propulsion source for windless conditions or small boats, operated by crew.
 - **Anchor (capstan):** a dropped anchor applies strong drag and holds position. Raising it takes time.
 
@@ -251,7 +258,7 @@ Stations are blocks on a ship that a **player or a crew member** can operate. Th
 | Flagpole | Hoist, change or strike colors (§4.7) |
 | Galley / pantry | Stores provisions; a cook crew member boosts morale (§7.4) |
 
-The crew operates a station by being attached to it, much like being seated. This avoids complex pathfinding on moving ships. Walking between stations on deck is a later improvement.
+The crew operates a station by being attached to it, much like being seated. This avoids complex pathfinding on moving ships. Walking between stations on deck is a later improvement. Planned implementation (to be confirmed in spike 4): an invisible seat entity that lives inside the ship's sub-level, with the crew member riding it (`docs/sable-notes.md` §6).
 
 ---
 
@@ -569,12 +576,15 @@ Spikes 1–4 are throwaway-quality prototypes that prove feasibility. They may l
 ---
 
 ## 21. Open questions
-- What exactly does Sable's API offer for assembly, applying forces and custom buoyancy? (Read `refs/sable` + wiki: "Block Physics Properties", "Dimension Physics Data", "Working with Entities".)
-- Can buoyancy be overridden per ship (needed for dry volume and flooding), or does it have to be applied as an external force?
-- How should cargo weight interact with Sable's mass: change block/ship mass directly, or apply drag and a buoyancy offset?
-- Can Sable create a sub-level directly from a structure template (for shipwright pickup), or do the blocks have to be placed at the berth and then assembled like at the helm?
+- ~~Sable's API for assembly, forces and custom buoyancy~~ **Resolved (Sable investigation):** assembly and forces have an API, disassembly and custom buoyancy don't. See `docs/sable-notes.md` §2–§4 and §10.
+- ~~Per-ship buoyancy override~~ **Resolved:** not possible. Dry volume and flood water are applied as an extra force on top of Sable's hull buoyancy (§4.5).
+- ~~Cargo weight vs. Sable mass~~ **Resolved:** a load block-state with per-state mass for our own containers, and a downward force for vanilla containers (§4.9).
+- ~~Sub-level from a structure template~~ **Resolved:** yes, directly (§4.1, `docs/sable-notes.md` §2.5).
 - Player animation library for melee combat: which options are maintained for 1.21.1 on both NeoForge and Fabric, and do they support first-person animations? Decide in milestone 7.
 - Melee input defaults: do hold-to-thrust and tap-to-parry feel good with mouse buttons, or are dedicated keybinds better? Decide by playtesting.
 - ~~Config library~~ **Resolved (milestone 0):** NeoForge's native `ModConfigSpec` on NeoForge, and Forge Config API Port (the same API) on Fabric, both hidden behind `Services.CONFIG`. Common declares values through our own wrapper (`core/config`, see §3.3).
-- Does Sable's API differ between `sable-common` and the loader artifacts (e.g. events or registration only on the loader side)? Check in `refs/sable` during milestone 0.
-- Do the dry-hull rendering mixins target the same classes on both loaders? Fabric has no NeoForge render patches, so some hooks may need loader-specific variants.
+- ~~`sable-common` vs. loader artifacts~~ **Resolved:** everything we need, including event subscription, is in `sable-common`. Much of it is outside Sable's `api` packages, so all Sable calls go through one adapter package in `common` (`docs/sable-notes.md` §7).
+- ~~Loader-specific dry-hull rendering hooks~~ **Resolved for the basic dry hull:** Sable's water occlusion renderer is hooked from a common mixin, so we need no rendering mixin of our own (§4.3). Still open for the water surface in partly flooded compartments.
+- Do our dry-volume force and Sable's native hull buoyancy tune well together, without over-buoyant or unstable ships? Decide in the spike 2 and milestone 6 playtests.
+- Does Sable's water occlusion scale to many ships? Its lookup loops over all regions for every entity each tick. Profile in spike 2.
+- Do mobs riding a seat entity inside a sub-level render, interpolate and interact correctly? Check in spike 4.

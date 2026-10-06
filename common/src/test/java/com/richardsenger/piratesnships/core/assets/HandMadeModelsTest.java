@@ -21,7 +21,9 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -48,10 +50,43 @@ class HandMadeModelsTest {
         }
     }
 
+    /** Every hand-made model by name; a new Blockbench model is added here, a missing or stray file fails. */
+    static final List<String> BLOCK_MODELS = List.of("capstan", "figurehead_eagle", "figurehead_lion", "figurehead_mermaid",
+            "figurehead_skull", "flagpole", "helm", "nameplate", "sail_winch", "yard");
+    static final List<String> ITEM_MODELS = List.of("cutlass", "rapier", "saber");
+
+    /** The display slots a hand-made item model copies from vanilla's {@code item/handheld} and {@code item/generated}. */
+    private static final List<String> ITEM_DISPLAY_SLOTS = List.of("thirdperson_righthand", "thirdperson_lefthand",
+            "firstperson_righthand", "firstperson_lefthand", "ground", "head", "fixed");
+
     @Test
-    void theFirstBatchOfModelsIsThere() {
-        for (String name : List.of("helm", "flagpole", "nameplate")) {
-            assertTrue(Files.isRegularFile(MAIN_MODELS.resolve("block/" + name + ".json")), "missing hand-made model " + name);
+    void everyHandMadeModelIsListedByName() throws IOException {
+        assertEquals(BLOCK_MODELS, names("block"), "hand-made block models");
+        assertEquals(ITEM_MODELS, names("item"), "hand-made item models");
+    }
+
+    private static List<String> names(String folder) throws IOException {
+        return jsonFiles(MAIN_MODELS.resolve(folder)).stream()
+                .map(p -> p.getFileName().toString().replace(".json", "")).sorted().toList();
+    }
+
+    /**
+     * A hand-made item model must not inherit from {@code item/generated} or {@code item/handheld}: vanilla's
+     * {@code ModelBakery} bakes every model whose root parent is {@code builtin/generated} from its {@code layer0}
+     * sprite and ignores the elements. So the model has no parent and carries the vanilla handheld display transforms
+     * itself, plus {@code gui_light: front} like a flat item.
+     */
+    @Test
+    void handMadeItemModelsBringTheirOwnHandheldTransforms() throws IOException {
+        for (Path file : jsonFiles(MAIN_MODELS.resolve("item"))) {
+            JsonObject json = JsonParser.parseString(Files.readString(file)).getAsJsonObject();
+            assertFalse(json.has("parent"), file + ": a parent would root in builtin/generated and drop the elements");
+            assertEquals("front", json.get("gui_light").getAsString(), file + ": gui_light");
+            JsonObject display = json.getAsJsonObject("display");
+            assertNotNull(display, file + ": no display transforms");
+            for (String slot : ITEM_DISPLAY_SLOTS) {
+                assertTrue(display.has(slot), file + ": missing display slot " + slot);
+            }
         }
     }
 

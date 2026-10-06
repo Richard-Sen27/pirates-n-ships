@@ -58,15 +58,21 @@ class BasicContentAssetsTest {
         List<List<String>> blocks = List.of(CombatContentGameTests.BLOCK_IDS, TradeContentGameTests.BLOCK_IDS, CrewContentGameTests.BLOCK_IDS,
                 LawContentGameTests.BLOCK_IDS, ShipDecorGameTests.BLOCK_IDS);
         items.stream().flatMap(List::stream).forEach(id -> {
-            if (!Files.exists(ASSETS.resolve("models/item/" + id + ".json"))) problems.add(id + ": no item model");
+            if (!hasItemModel(id)) problems.add(id + ": no item model");
             if (!lang.has("item." + NS + "." + id)) problems.add(id + ": no lang entry");
         });
         blocks.stream().flatMap(List::stream).forEach(id -> {
-            if (!Files.exists(ASSETS.resolve("models/item/" + id + ".json"))) problems.add(id + ": no item model");
+            if (!hasItemModel(id)) problems.add(id + ": no item model");
             if (!Files.exists(ASSETS.resolve("blockstates/" + id + ".json"))) problems.add(id + ": no block state");
             if (!lang.has("block." + NS + "." + id)) problems.add(id + ": no lang entry");
             if (!Files.exists(GENERATED.resolve("data/" + NS + "/loot_table/blocks/" + id + ".json"))) problems.add(id + ": no loot table");
         });
         assertTrue(problems.isEmpty(), "missing generated assets: " + problems);
+    }
+
+    /** A generated item model, or a hand-made Blockbench one (design.md §4.8, e.g. the swords). */
+    private static boolean hasItemModel(String id) {
+        return Files.exists(ASSETS.resolve("models/item/" + id + ".json"))
+                || Files.exists(TEXTURES.resolveSibling("models/item/" + id + ".json"));
     }
 }

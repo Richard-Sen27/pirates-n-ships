@@ -45,9 +45,6 @@ public final class CombatContentModule implements ModModule {
                 .item(CombatContent.CANNONBALL, "Cannonball")
                 .item(CombatContent.GRAPPLING_HOOK, "Grappling Hook"));
         data.models(m -> {
-            m.handheldItem(CombatContent.RAPIER.get());
-            m.handheldItem(CombatContent.CUTLASS.get());
-            m.handheldItem(CombatContent.SABER.get());
             m.handheldItem(CombatContent.PISTOL.get());
             m.handheldItem(CombatContent.MUSKET.get());
             m.flatItem(CombatContent.LEAD_SHOT.get());

@@ -1,7 +1,7 @@
 ---
 name: implementer
 description: Implements one scoped work package of the Pirates 'n' Ships mod (code, tests, datagen) in its own worktree, following CLAUDE.md and docs/design.md. Use for all feature implementation delegated by the orchestrator.
-model: claude-opus-5-5
+model: opus
 ---
 
 You implement exactly one work package of the Minecraft mod "Pirates 'n' Ships", as described in the prompt you receive.

@@ -144,6 +144,32 @@ public final class ShipBody {
         return out;
     }
 
+    /** World up (0, 1, 0) expressed in the body / plot frame ({@code Pose3dc#orientation}, inverse rotation). */
+    public Vector3d localUp() {
+        return sub.logicalPose().orientation().transformInverse(new Vector3d(0, 1, 0));
+    }
+
+    /**
+     * Players the ship is currently sent to ({@code ServerSubLevel#getTrackingPlayers}, l.151, maintained by
+     * {@code sublevel/system/SubLevelTrackingSystem.java#tick}, l.138). Copy.
+     */
+    public List<UUID> trackingPlayers() {
+        return List.copyOf(sub.getTrackingPlayers());
+    }
+
+    /**
+     * Records an impulse (force × time step, body frame) at a plot position in our buoyancy force group. Only legal during
+     * a physics substep: groups are reset at the start of each substep and applied after the pre-physics event
+     * ({@code ServerSubLevel#getOrCreateQueuedForceGroup}, l.395; {@code api/physics/force/QueuedForceGroup.java#applyAndRecordPointForce},
+     * l.25; tick order in docs/sable-notes.md §1.5).
+     */
+    public void applyBuoyancyImpulse(Vector3d plotPoint, Vector3d localImpulse) {
+        dev.ryanhcode.sable.api.physics.force.ForceGroup group = ShipForces.buoyancy();
+        if (group != null) {
+            sub.getOrCreateQueuedForceGroup(group).applyAndRecordPointForce(plotPoint, localImpulse);
+        }
+    }
+
     /** Our sub-tree of the sub-level's persisted user data ({@code ServerSubLevel#getUserDataTag}, l.548). */
     public CompoundTag userData(String key) {
         CompoundTag root = sub.getUserDataTag();

@@ -5,6 +5,7 @@ import com.richardsenger.piratesnships.ship.ShipData;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.assembly.AssemblyResult.Outcome;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
+import com.richardsenger.piratesnships.ship.hull.runtime.HullRuntimes;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -87,6 +88,7 @@ public final class ShipAssembler {
         pointer.putUUID("ship", data.id());
         pointer.putInt("version", 1);
         ship.setUserData(USER_DATA_KEY, pointer);
+        HullRuntimes.onAssembled(ship);
         return new AssemblyResult(Outcome.ASSEMBLED, blocks.size(), ship.id(), null, 0);
     }
 
@@ -162,6 +164,12 @@ public final class ShipAssembler {
                 player.teleportTo(level, target.x, target.y, target.z, player.getYRot(), player.getXRot());
             } else {
                 entity.teleportTo(target.x, target.y, target.z);
+            }
+            // Pose rounding can leave a deck passenger a hair below the deck top (y = n − 1e-7). Snapping to the block
+            // top fixes that; lifting by a whole block (below) would leave it floating one block high.
+            double top = Math.ceil(entity.getY());
+            if (!level.noCollision(entity) && top - entity.getY() < 0.05) {
+                entity.teleportTo(entity.getX(), top, entity.getZ());
             }
             // If the deck mapping put it inside a block (rounding), lift it out, at most three blocks.
             for (int i = 0; i < 3 && !level.noCollision(entity); i++) {

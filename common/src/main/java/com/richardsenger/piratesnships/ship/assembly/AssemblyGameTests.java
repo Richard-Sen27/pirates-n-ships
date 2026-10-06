@@ -126,6 +126,34 @@ public final class AssemblyGameTests {
         helper.succeed();
     }
 
+    /**
+     * Regression (D2c): a ship removed and another assembled in the same tick share the plot (Sable reuses the first
+     * free one), and the server chunk cache's memo still held the removed ship's chunk, so the new ship's chest arrived
+     * empty. Read through the chunk map ({@code getChunkNow}, which Sable redirects to the live plot) to see the real
+     * block entity, not the memo.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void plotFreedThisTickKeepsChestContent(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        buildHull(helper);
+        AssemblyResult first = ShipTestCleanup.assemble(helper, HELM);
+        helper.assertTrue(first.success(), "first assembly failed: " + first);
+        ShipBody old = SableShips.byId(level, first.shipId());
+        helper.assertTrue(find(old, Blocks.CHEST) != null, "first ship has no chest"); // memoises the plot's chunk
+        SableShips.remove(old);
+        buildHull(helper);
+        AssemblyResult second = ShipTestCleanup.assemble(helper, HELM);
+        helper.assertTrue(second.success(), "second assembly failed: " + second);
+        ShipBody ship = SableShips.byId(level, second.shipId());
+        BlockPos chest = find(ship, Blocks.CHEST);
+        helper.assertTrue(chest != null, "second ship has no chest in its plot");
+        net.minecraft.world.level.chunk.LevelChunk live = level.getChunkSource().getChunkNow(chest.getX() >> 4, chest.getZ() >> 4);
+        helper.assertTrue(live != null && live.getBlockEntity(chest) instanceof ChestBlockEntity be
+                && be.getItem(0).is(Items.DIAMOND) && be.getItem(0).getCount() == 7, "chest content lost when assembling into a plot freed this tick");
+        helper.assertTrue(level.getBlockEntity(chest) == live.getBlockEntity(chest), "Level#getBlockEntity sees a stale chunk");
+        helper.succeed();
+    }
+
     @ModGameTest(template = GameTestTemplates.EMPTY_9)
     public static void assemblyInWaterRestoresTheSea(GameTestHelper helper) {
         // Stone basin (x/z 0..8, floor y=1, walls y=2..3) full of water around a 5×5 open boat at x/z 2..6.

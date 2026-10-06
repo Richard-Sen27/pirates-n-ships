@@ -68,6 +68,8 @@ public final class ShipAssembler {
             }
         }
 
+        // The new ship may get a plot freed earlier this tick: flush stale chunk lookups first (see ChunkCacheGuard).
+        ChunkCacheGuard.flush(level);
         ShipBody ship = SableShips.assemble(level, helm, blocks, gathered.min(), gathered.max());
         if (ship == null) {
             Constants.LOG.error("Sable did not create a sub-level for the helm at {}", helm);
@@ -98,6 +100,9 @@ public final class ShipAssembler {
             return AssemblyResult.of(Outcome.DISABLED);
         }
         ServerLevel level = ship.level();
+        // The plot is read through Level#getBlockState/getBlockEntity below and in Sable's block move; if it was
+        // reassigned earlier this tick those lookups could hit a stale chunk (see ChunkCacheGuard).
+        ChunkCacheGuard.flush(level);
         double tilt = DisassemblyMath.tiltDegrees(ship.orientation());
         if (tilt > AssemblyConfig.MAX_TILT_DEGREES.get()) {
             return new AssemblyResult(Outcome.NOT_LEVEL, 0, null, null, tilt);
@@ -129,6 +134,8 @@ public final class ShipAssembler {
 
         ShipRegistry.get(level.getServer()).remove(ship.id());
         SableShips.disassemble(ship, helmPlotPos, goal, turns, blocks);
+        // The plot is free now and may be handed to a ship assembled later this tick.
+        ChunkCacheGuard.flush(level);
 
         if (AssemblyConfig.DRAIN_HULL.get()) {
             for (BlockPos p : drain) {

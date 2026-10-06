@@ -79,7 +79,10 @@ public final class ShipDecorModule implements ModModule {
                 .block(ShipDecor.CARGO_CRATE, "Cargo Crate")
                 .block(ShipDecor.CARGO_BARREL, "Cargo Barrel"));
         data.models(m -> {
-            for (RegistryEntry<Block, FigureheadBlock> f : ShipDecor.figureheads()) figurehead(m, f.get());
+            for (RegistryEntry<Block, FigureheadBlock> f : ShipDecor.figureheads()) {
+                if (f == ShipDecor.FIGUREHEAD_SKULL) handMadeFigurehead(m, f.get());
+                else figurehead(m, f.get());
+            }
             nameplate(m, ShipDecor.NAMEPLATE.get());
             // flagpole: model and block state in FlagData
             m.blocks().createTrivialCube(ShipDecor.CARGO_CRATE.get());
@@ -142,6 +145,12 @@ public final class ShipDecorModule implements ModModule {
         ResourceLocation model = ModelTemplates.CUBE_ORIENTABLE.create(block, textures, m.models());
         m.blockStates().accept(MultiVariantGenerator.multiVariant(block, Variant.variant().with(VariantProperties.MODEL, model))
                 .with(horizontalFacing()));
+    }
+
+    /** Hand-made Blockbench model ({@code art/models/<name>.bbmodel}); only the block state is generated. */
+    private static void handMadeFigurehead(ModelContext m, Block block) {
+        m.blockStates().accept(MultiVariantGenerator.multiVariant(block,
+                Variant.variant().with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(block))).with(horizontalFacing()));
     }
 
     /**

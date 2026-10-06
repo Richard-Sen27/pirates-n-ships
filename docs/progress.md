@@ -5,38 +5,37 @@ Statuses: **todo** / **in progress** / **done** / **blocked: needs playtest** / 
 
 "Done" means: `./gradlew build` passes, `./gradlew :neoforge:runGameTestServer` passes, and the new logic has tests.
 
-Last updated: 2026-10-06 (phases A and B merged, session paused before phase C).
+Last updated: 2026-10-06 (second session: wave 1 of phase C running).
 
-## Start here next session
+## Current state
 
-The session was paused on request after phases A and B, before any phase C agent was started. `main` is green: `./gradlew build` (5 JUnit tests), `./gradlew :neoforge:runGameTestServer` (2 GameTests, Sable loaded) and `./gradlew :neoforge:runData` (no diff) all pass. Nothing is pushed: local `main` is ahead of `origin/main`.
+`main` is green after phases A and B. Nothing is pushed: local `main` is ahead of `origin/main`.
 
-Next steps, in order:
-1. **Foundation follow-up (small, before phase C):** the datagen helpers can't yet write entity-type tags or arbitrary datapack JSON. C3 (weapon definitions), C5 (trade goods), C8 and the spikes (Sable `physics_block_properties`, the `#sable:retain_in_sub_level` tag) need both. Add them to `core/datagen/DataContributions` first, so that phase C agents don't each edit that shared file.
-2. **Phase C** in waves of about four agents (16 GB RAM). Every agent prompt must start with `git merge --ff-only main` (see decisions) and must point to design.md §3.3 for the foundation APIs.
-3. **Phase D** spikes, using `docs/sable-notes.md`.
+Running now (wave 1, five agents): **A2** foundation follow-up, **C1** hull + flooding, **C2** wind + sails, **C4** law, **C6** provisions.
+Waiting for A2 (wave 2): **C3** melee, **C5** trade, **C7** remaining config groups, **C8** basic items and blocks.
+After that: phase D spikes (using `docs/sable-notes.md`) and phase E integration.
 
-Things phase C prompts must mention:
-- Pure logic takes its tuning values as parameters or reads `ConfigValue` handles. It must never touch `Services` (not available in JUnit).
-- A GameTest that changes a config value with `ConfigValue.set` writes the real server config while other tests run in the same server. Such tests need their own batch and must restore the value.
-- Each module adds one line to `core/ModModules` and nothing else in shared files. Only the orchestrator edits that file.
-- Agent worktrees and their branches from this session (`.claude/worktrees/agent-*`, `worktree-agent-*`) are fully merged and can be deleted.
+How merges work in this phase:
+- Every merged branch and its worktree is deleted right after the merge (requested by the human).
+- `core/ModModules` and the generated resources (`common/src/generated/resources`, especially `lang/en_us.json` and `.cache`) are touched by every package. The orchestrator resolves `ModModules` by keeping all module lines, and resolves generated files by re-running `./gradlew :neoforge:runData` on the merged tree.
+- After each merge: `./gradlew build` and `./gradlew :neoforge:runGameTestServer` on `main`.
 
 ## Work packages
 
 | Phase | Package | Status | Notes |
 |---|---|---|---|
 | A | Foundation (milestone 0): template cleanup, Sable dependency, platform services, registration / config / networking / attachment helpers, datagen, JUnit, GameTest harness, CI, playtest checklist | done (headless part) | Merged. Build, JUnit (5), GameTests (2) and datagen verified on `main`. The client part is in the milestone 0 playtest. See "Foundation notes" below. |
+| A2 | Foundation follow-up: entity-type and foreign-namespace tags and arbitrary JSON in datagen, shared datapack definition loader with client sync, GameTest helper for config changes | in progress | Needed by C3, C5 and C8. |
 | B | Sable investigation → `docs/sable-notes.md` | done | Merged (docs only, so no build needed). Reviewed by spot-checking about 25 API claims against `refs/`, all matched. See "Sable findings" below. |
-| C1 | Hull analysis + flooding model (§4.2, §4.5), pure logic | todo | Unblocked. Not started (session paused). |
-| C2 | Wind and sail model (§5.1, §5.2), pure logic | todo | Unblocked. Not started (session paused). |
-| C3 | Melee resolution core (§8.5), pure logic | todo | Unblocked. Not started (session paused). |
-| C4 | Law system logic (§13.1, §13.2) + false-flag detection math (§4.7) | todo | Unblocked. Not started (session paused). |
-| C5 | Trade economy logic (§10.3) | todo | Unblocked. Not started (session paused). |
-| C6 | Provisions logic (§7.4) | todo | Unblocked. Not started (session paused). |
-| C7 | Config groups and values (§17) | todo | Unblocked. Not started (session paused). |
-| C8 | Basic items and blocks + datagen + placeholder textures | todo | Unblocked. Not started (session paused). |
-| D1 | Spike 1: assembly (§4.1) | todo | Unblocked. Not started (session paused). Ends at a playtest gate. |
+| C1 | Hull analysis + flooding model (§4.2, §4.5), pure logic | in progress | Wave 1. |
+| C2 | Wind and sail model (§5.1, §5.2), pure logic | in progress | Wave 1. |
+| C3 | Melee resolution core (§8.5), pure logic | todo | Wave 2, waits for A2. |
+| C4 | Law system logic (§13.1, §13.2) + false-flag detection math (§4.7) | in progress | Wave 1. |
+| C5 | Trade economy logic (§10.3) | todo | Wave 2, waits for A2. |
+| C6 | Provisions logic (§7.4) | in progress | Wave 1. |
+| C7 | Config groups and values (§17) | todo | Wave 2. Reduced to the groups no other package owns (see decisions). |
+| C8 | Basic items and blocks + datagen + placeholder textures | todo | Wave 2, waits for A2. |
+| D1 | Spike 1: assembly (§4.1) | todo | Starts after phase C wave 2 is under way. Ends at a playtest gate. |
 | D2 | Spike 2: dry hull (§4.3, §4.4) | todo | Waits for D1 + C1. Ends at a playtest gate. |
 | D3 | Spike 3: wind + sails (§5) | todo | Waits for D1 + C2. Ends at a playtest gate. |
 | D4 | Spike 4: crew station (§6) | todo | Waits for D3. Ends at a playtest gate. |
@@ -79,6 +78,11 @@ Things phase C prompts must mention:
 | 2026-10-06 | Phase C runs in waves of about four agents instead of all eight at once. | The machine has 16 GB RAM, and every agent runs Gradle (3 GB heap) plus a GameTest server. |
 | 2026-10-06 | Agent worktrees fork from `origin/main`, not local `main`. Every agent prompt after phases A and B must start with `git merge --ff-only main`. | The orchestrator must not push, so `origin/main` doesn't contain merged work. |
 | 2026-10-06 | No new agents are spawned after phases A and B finish. Phase C starts in the next session. | Requested by the human, so the session can be reopened cleanly (which should also make the `implementer` agent type available). |
+| 2026-10-06 | From the second session on, subagents use `subagent_type: "implementer"` again. | The restarted session lists the agent type. |
+| 2026-10-06 | A design module (§3.2 package) may have several `ModModule` implementations, one per work package or sub-feature (e.g. `ship/hull/HullModule`, id `"ship.hull"`). | Parallel packages in the same design module (C1, C7 and C8 all touch `ship`) would otherwise share one module class. A2 documents this in design.md §3.3. |
+| 2026-10-06 | Config ownership: each phase C package defines the §17 group of its own feature (C1 `flooding`, C2 `wind` + `sailing`, C3 `melee`, C4 `law` + `flags_brig`, C5 `cargo_trade`, C6 `provisions`). C7 defines only the remaining groups (ships, waves, hazards, crew, combat, survival, world, world simulation, audio). | The orchestrator prompt allows either "C7 early" or "each package adds its own section". Own sections let all packages run in parallel without waiting for C7. |
+| 2026-10-06 | Hull analysis uses a spill-height (priority-flood) model instead of a plain "enclosed air" flood fill: a cell is floodable volume when it lies below its own pour point to the outside. | With the plain flood fill of §4.2, an open-topped hull or a hull with an open deck hatch counts as "outside" and would have water inside. The new rule keeps it dry while the rim is above the waterline, floods it through holes below the waterline, and also covers waves spilling over a low rim (§5.4). To be written into design.md §4.2 when C1 is merged. |
+| 2026-10-06 | C2 also covers rudder, keel drag and anchor as pure force functions, and a thin server-side wind service with client sync. | Spike 3 needs all of them, and they are pure math like the sail model. |
 | 2026-10-06 | Subagents read `refs/` from the main checkout by absolute path. | `refs/` is git-ignored, so it doesn't exist inside agent worktrees. |
 | 2026-10-06 | Subagents are spawned as `general-purpose` agents pinned to Opus, with the instructions from `.claude/agents/implementer.md` referenced in the prompt, instead of `subagent_type: "implementer"`. | This session doesn't list the `implementer` agent type ("Agent type 'implementer' not found"), probably because the definition was added after the session's agent list was loaded. Model and instructions are the same as intended. |
 

@@ -5,6 +5,9 @@ import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
+import com.richardsenger.piratesnships.station.order.WhistleMenu;
+import com.richardsenger.piratesnships.station.order.WhistleOrder;
+import com.richardsenger.piratesnships.station.order.WhistleOrders;
 import com.richardsenger.piratesnships.station.winch.CaptainsWhistleItem;
 import com.richardsenger.piratesnships.station.winch.SailOrder;
 import java.util.List;
@@ -18,8 +21,8 @@ import net.minecraft.world.entity.EntityType;
 
 /**
  * Crew stations, spike 4 (docs/design.md §6, §7.2, roadmap milestone 4): the station contract, the sail winch as a
- * station, the invisible seat inside the ship's plot, the test crew member, the captain's whistle and
- * {@code /pirates crew}.
+ * station, the invisible seat inside the ship's plot, the test crew member, the captain's whistle with its radial
+ * order menu ({@code station/order}, screen in {@code station/client}) and {@code /pirates crew}.
  */
 public final class StationModule implements ModModule {
 
@@ -46,6 +49,11 @@ public final class StationModule implements ModModule {
     }
 
     @Override
+    public void registerPayloads() {
+        WhistleOrders.registerPayloads();
+    }
+
+    @Override
     public void registerEvents() {
         CommonEvents.LEVEL_TICK_END.register(Stations::onLevelTick);
         CommonEvents.SERVER_STOPPED.register(server -> {
@@ -58,7 +66,7 @@ public final class StationModule implements ModModule {
 
     @Override
     public void initClient() {
-        com.richardsenger.piratesnships.crew.npc.client.CrewClient.init();
+        com.richardsenger.piratesnships.station.client.StationClient.init();
     }
 
     @Override
@@ -91,7 +99,18 @@ public final class StationModule implements ModModule {
                     .add(CaptainsWhistleItem.KEY_NO_SELECTION, "Use the whistle on a crew member first")
                     .add(CaptainsWhistleItem.KEY_ORDER, "Order: %s (%s crew carry it out)")
                     .add(CaptainsWhistleItem.KEY_NOT_ON_SHIP, "You must stand on a ship to give orders")
-                    .add(CaptainsWhistleItem.KEY_HINT, "Next order: sneak and use to %s")
+                    .add(WhistleOrders.KEY_RELEASED_ALL, "%s crew members leave their stations")
+                    .add(WhistleMenu.KEY_TITLE, "Orders")
+                    .add(WhistleMenu.KEY_HINT, "Point at an order, then click or release the use key. Esc closes.")
+                    .add(WhistleMenu.KEY_LAST, "Last order: %s")
+                    .add(WhistleOrder.HOIST.nameKey(), "Hoist sails")
+                    .add(WhistleOrder.HOIST.descriptionKey(), "Crew at the winches set the sails to full")
+                    .add(WhistleOrder.REEF.nameKey(), "Reef sails")
+                    .add(WhistleOrder.REEF.descriptionKey(), "Crew at the winches take the sails in to half")
+                    .add(WhistleOrder.FURL.nameKey(), "Furl sails")
+                    .add(WhistleOrder.FURL.descriptionKey(), "Crew at the winches furl the sails")
+                    .add(WhistleOrder.RELEASE.nameKey(), "Release crew")
+                    .add(WhistleOrder.RELEASE.descriptionKey(), "All crew of this ship leave their stations")
                     .add(StationCommands.KEY + "spawned", "Crew member spawned")
                     .add(StationCommands.KEY + "not_crew", "That entity is not a crew member")
                     .add(StationCommands.KEY + "released", "%s crew members released")

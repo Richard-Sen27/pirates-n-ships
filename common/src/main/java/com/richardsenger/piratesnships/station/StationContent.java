@@ -23,7 +23,7 @@ public final class StationContent {
     public static final RegistryEntry<EntityType<?>, EntityType<CrewMember>> CREW_MEMBER = ModRegistry.entity("crew_member",
             () -> EntityType.Builder.of(CrewMember::new, MobCategory.MISC).sized(0.6f, 1.95f).clientTrackingRange(10));
 
-    /** The sail order selected on a whistle. */
+    /** The last sail order given with a whistle (set by the server; the radial menu marks it). */
     public static final RegistryEntry<DataComponentType<?>, DataComponentType<SailOrder>> WHISTLE_ORDER = ModRegistry.dataComponent(
             "whistle_order", b -> b.persistent(SailOrder.CODEC).networkSynchronized(ByteBufCodecs.idMapper(i -> SailOrder.values()[i], SailOrder::ordinal)));
 

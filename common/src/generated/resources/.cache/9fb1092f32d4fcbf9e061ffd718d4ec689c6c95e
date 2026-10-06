@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-06T21:48:50.046457	Recipes
+// 1.21.1	2026-10-07T00:55:06.436867	Recipes
 015749d8a9eaabd51b4c4c379ce38acafd30720e data/pirates_n_ships/advancement/recipes/combat/cannonball.json
 698d8285044f0e3429c2f6421d742fd348e5d011 data/pirates_n_ships/advancement/recipes/combat/cutlass.json
 1cdb4544445c73aa3f110cf02a93148f6195c77b data/pirates_n_ships/advancement/recipes/combat/lead_shot.json
@@ -31,9 +31,8 @@ dc645eb64a6aaf129d1c677f5a0cea8e270db46b data/pirates_n_ships/advancement/recipe
 1d2b2d4b56f8d693e61a6b7c8681101991a5df3d data/pirates_n_ships/advancement/recipes/transportation/capstan.json
 e4cee4631518ec7db5430bc2e34d163d3cb5ca11 data/pirates_n_ships/advancement/recipes/transportation/fore_and_aft_sail.json
 5df45ae9d559d81a65dc99c2738d2d6fb7130bab data/pirates_n_ships/advancement/recipes/transportation/helm.json
-b81cc68521c92b4e5ab9a69349886b9dd6af25ee data/pirates_n_ships/advancement/recipes/transportation/large_square_sail.json
 b18b23653494e41fd857e8bb42f9290a64350e06 data/pirates_n_ships/advancement/recipes/transportation/sail_winch.json
-e7e86a7c2a2a5c74c853704d45db08d858bf7855 data/pirates_n_ships/advancement/recipes/transportation/small_square_sail.json
+c139515e0b538370d92991be3d0cb26765b3cd6f data/pirates_n_ships/advancement/recipes/transportation/yard.json
 bf2da20e7fdc63124e2b02531cd70e8904a34cb1 data/pirates_n_ships/recipe/brig_bars.json
 ee31fa683c68b7dd3fbe347a19c643971a50d895 data/pirates_n_ships/recipe/brig_door.json
 20bf4633140f6573784d9d9688ef7e59e3363558 data/pirates_n_ships/recipe/cannonball.json
@@ -52,7 +51,6 @@ a45bf208e422724c8cd80b70e6c4d79e99380b02 data/pirates_n_ships/recipe/figurehead_
 289b9c39423d643c407f4dca3abda9cd8bfe06c6 data/pirates_n_ships/recipe/hardtack.json
 df19e78ee08b13dfc5a3753f8db8ba239bb70608 data/pirates_n_ships/recipe/helm.json
 4b7d2003ac5c6250d7cb1a96b1d3018a78a47942 data/pirates_n_ships/recipe/jolly_roger_flag.json
-c89085271de98e4a073b3b32cde27a13d378b706 data/pirates_n_ships/recipe/large_square_sail.json
 24a7c93612c17938277ff08f651ee6aabaf6a467 data/pirates_n_ships/recipe/lead_shot.json
 f213f177b8b51c52e9ceb6b0f88472f03854479a data/pirates_n_ships/recipe/merchant_flag.json
 f3293314602bc2f8489df1b00cd44ea77ffdc5e0 data/pirates_n_ships/recipe/musket.json
@@ -67,5 +65,5 @@ ff99d921b82145e6964a5fcd101f6a8181c13e27 data/pirates_n_ships/recipe/pantry.json
 536af96ca6a4b673d5b9b55e405c92aeff68e45d data/pirates_n_ships/recipe/salt_pork.json
 bfda73ccf86f5d9e8e44937fcdb3a35a4915a4f4 data/pirates_n_ships/recipe/salted_fish.json
 ac2246f9028680daca94ec84163dd9ee1f9dd335 data/pirates_n_ships/recipe/shackles.json
-1cc431e76fd29e821f3c4700ee3e6e11f9a937fa data/pirates_n_ships/recipe/small_square_sail.json
 1439e002784305e98c5e832a33e122efb3321232 data/pirates_n_ships/recipe/water_barrel.json
+a3d67d101a1608b810c3b8d59243101f0e559a26 data/pirates_n_ships/recipe/yard.json

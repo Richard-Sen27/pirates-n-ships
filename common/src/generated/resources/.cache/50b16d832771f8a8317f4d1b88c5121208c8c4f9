@@ -1,7 +1,8 @@
-// 1.21.1	2026-10-06T21:48:50.045802	Tags for minecraft:block mod id vanilla
+// 1.21.1	2026-10-07T01:15:50.039751	Tags for minecraft:block mod id vanilla
 027425cd193e9e04ea5aed99085f092fa520d95e data/minecraft/tags/block/doors.json
-6a0f0de619a4e7edebc8c615c1635ad0c0a5946a data/minecraft/tags/block/mineable/axe.json
+2dccda8b034ce8464cfd5440689edcb03f2a7a55 data/minecraft/tags/block/mineable/axe.json
 e407138a459a75449c624e2539f9f6e0407f2a2f data/minecraft/tags/block/mineable/pickaxe.json
+f7371fa73528b6e981b1f5dd5cf010306cb35cdf data/pirates_n_ships/tags/block/masts.json
 efa5c7038ab6e296491b919dff511cf035976fa2 data/pirates_n_ships/tags/block/never_assemble.json
 35133e95f1c8fdd7a1c21afcc231fc0bffefb9a8 data/pirates_n_ships/tags/block/not_watertight.json
 d0b4325bb417203ea7f0a861071937293d2a1ac8 data/pirates_n_ships/tags/block/terrain.json
@@ -9,5 +10,5 @@ ebf3d4b3edbb0cbdf9ac71e1cba8c5d457a8f8bf data/pirates_n_ships/tags/block/test_gr
 35133e95f1c8fdd7a1c21afcc231fc0bffefb9a8 data/pirates_n_ships/tags/block/watertight.json
 5073dbb2b10dec21ec2e422f93008dc243a5b4e7 data/sable/tags/block/heavy.json
 541ef1b34c1f2115620154b8a7e1d771ead5f6da data/sable/tags/block/light.json
-41efbb2295d85791798f68c21487bb726e3476f2 data/sable/tags/block/quarter_volume.json
-41efbb2295d85791798f68c21487bb726e3476f2 data/sable/tags/block/super_light.json
+c30a7834ee357693e66b135411fdf4c0b5794f75 data/sable/tags/block/quarter_volume.json
+c30a7834ee357693e66b135411fdf4c0b5794f75 data/sable/tags/block/super_light.json

@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-06T21:48:50.04624	Loot Tables
+// 1.21.1	2026-10-07T00:55:06.436607	Loot Tables
 8e9ddd746834d4dadbbd184d940b2f7faf794ccd data/pirates_n_ships/loot_table/blocks/brig_bars.json
 aaf14b20ff74118c573ba3a6e9b68b745b92dee2 data/pirates_n_ships/loot_table/blocks/brig_door.json
 8fe33c8bc9f5a48235f626ecfac350903f727f2e data/pirates_n_ships/loot_table/blocks/capstan.json
@@ -11,10 +11,9 @@ b1fa8f030a84a7c43cec2850cdb9adcb87dab4e4 data/pirates_n_ships/loot_table/blocks/
 7d40cdd5be739e1f0218bc84cdc60135cb3eca82 data/pirates_n_ships/loot_table/blocks/flagpole.json
 c24166dfd281481f866a5b83f745e16937ed05cf data/pirates_n_ships/loot_table/blocks/fore_and_aft_sail.json
 bebbad104a9895911749124568e0d6e600ef5f2f data/pirates_n_ships/loot_table/blocks/helm.json
-cd77dbdc4eaf87c85726e4a82038683573a66da4 data/pirates_n_ships/loot_table/blocks/large_square_sail.json
 16583145bb6a8246fb8825b7bacc6aae49286901 data/pirates_n_ships/loot_table/blocks/nameplate.json
 38cf3cd499cbf7780ab44ee4c58e11c82a7e884b data/pirates_n_ships/loot_table/blocks/pantry.json
 12f062da47d72466bcf7dea87ff5c49789a70cc9 data/pirates_n_ships/loot_table/blocks/sail_winch.json
-2e9a680afec922189d8fd1fc95b9e7246a9633b9 data/pirates_n_ships/loot_table/blocks/small_square_sail.json
 c61ada748ad54f40079bcb4739e9853949fe5b6f data/pirates_n_ships/loot_table/blocks/test_block.json
 35f76bb2053097f9bf42114bfc03431dde3282f8 data/pirates_n_ships/loot_table/blocks/water_barrel.json
+db4d3078eaa36803d04186b86cf1d3f3e7694482 data/pirates_n_ships/loot_table/blocks/yard.json

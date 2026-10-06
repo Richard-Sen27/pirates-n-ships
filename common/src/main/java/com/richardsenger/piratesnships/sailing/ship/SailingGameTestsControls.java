@@ -74,7 +74,7 @@ public final class SailingGameTestsControls {
     }
 
     private static BlockPos ship(GameTestHelper h, int x0, SailTrim trim, int step, BlockPos capstan) {
-        BlockPos helm = SailingGameTestsShips.hull(h, x0, 3, SailingBlocks.SMALL_SQUARE_SAIL.get(), Direction.SOUTH, trim);
+        BlockPos helm = SailingGameTestsShips.squareHull(h, x0, 3, trim);
         h.setBlock(helm, h.getBlockState(helm).setValue(HelmBlock.RUDDER, RudderSteps.toProperty(step)));
         h.setBlock(capstan, SailingBlocks.CAPSTAN.get());
         return helm;

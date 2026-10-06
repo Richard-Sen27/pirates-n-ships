@@ -1,32 +1,32 @@
 {
   "parent": "minecraft:recipes/root",
   "criteria": {
-    "has_the_recipe": {
-      "conditions": {
-        "recipe": "pirates_n_ships:small_square_sail"
-      },
-      "trigger": "minecraft:recipe_unlocked"
-    },
-    "has_wool": {
+    "has_log": {
       "conditions": {
         "items": [
           {
-            "items": "minecraft:white_wool"
+            "items": "#minecraft:logs"
           }
         ]
       },
       "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "pirates_n_ships:yard"
+      },
+      "trigger": "minecraft:recipe_unlocked"
     }
   },
   "requirements": [
     [
       "has_the_recipe",
-      "has_wool"
+      "has_log"
     ]
   ],
   "rewards": {
     "recipes": [
-      "pirates_n_ships:small_square_sail"
+      "pirates_n_ships:yard"
     ]
   }
 }

@@ -4,6 +4,14 @@ import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.sailing.SailingConfig;
 import com.richardsenger.piratesnships.sailing.block.CapstanBlock;
 import com.richardsenger.piratesnships.sailing.block.SailBlock;
+import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
+import com.richardsenger.piratesnships.sailing.block.YardBlock;
+import com.richardsenger.piratesnships.sailing.block.YardBlockEntity;
+import com.richardsenger.piratesnships.sailing.sail.YardLinker;
+import com.richardsenger.piratesnships.sailing.sail.YardLookup;
+import com.richardsenger.piratesnships.sailing.sail.YardRow;
+import com.richardsenger.piratesnships.sailing.sail.YardRules;
+import com.richardsenger.piratesnships.sailing.sail.YardSails;
 import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
 import com.richardsenger.piratesnships.sailing.force.HullDampingModel;
@@ -108,8 +116,11 @@ public final class SailingRuntimes {
             BlockState s = level.getBlockState(p);
             if (s.getBlock() instanceof SailBlock sail) {
                 rt.putSail(p, sail.type(), s.getValue(SailBlock.TRIM));
+            } else if (s.getBlock() instanceof YardBlock) {
+                rt.addYardBlock(p);
             }
         }
+        relink(level, rt);
         rt.setHelm(helm, rudder);
         ShipAnchor anchor = ShipControls.readAnchor(data);
         if (anchor != null && !capstans.contains(anchor.capstan())) {
@@ -210,10 +221,16 @@ public final class SailingRuntimes {
         }
         boolean oldSail = oldState.getBlock() instanceof SailBlock;
         boolean newSail = newState.getBlock() instanceof SailBlock;
+        boolean oldYard = oldState.getBlock() instanceof YardBlock;
+        boolean newYard = newState.getBlock() instanceof YardBlock;
         boolean helm = oldState.getBlock() instanceof HelmBlock || newState.getBlock() instanceof HelmBlock;
         boolean capstanGone = oldState.getBlock() instanceof CapstanBlock && !(newState.getBlock() instanceof CapstanBlock);
-        if (!oldSail && !newSail && !helm && !capstanGone && (newState.isAir() || !oldState.isAir())) {
-            return; // only sails, the helm, a removed capstan and newly filled cells (the plot box may grow) matter
+        boolean mastChanged = oldState.is(SailingBlocks.MASTS) != newState.is(SailingBlocks.MASTS);
+        if (!oldSail && !newSail && !oldYard && !newYard && !helm && !capstanGone && !mastChanged
+                && oldState.isAir() == newState.isAir()) {
+            // only sails, yards, the helm, a removed capstan, masts, and cells that were filled (the plot box may grow)
+            // or cleared (a square sail's gap may open) matter
+            return;
         }
         ShipBody ship = SableShips.containing(level, pos);
         SailingRuntime rt = ship == null ? null : m.get(ship.id());
@@ -229,6 +246,10 @@ public final class SailingRuntimes {
         if (capstanGone && anchor != null && anchor.capstan().equals(pos)) {
             ShipControls.setAnchor(ship, rt, null); // the anchor is lost with its capstan
         }
+        if (oldYard && newYard && oldState.getValue(YardBlock.AXIS) == newState.getValue(YardBlock.AXIS)) {
+            rt.setTrim(pos, newState.getValue(YardBlock.TRIM)); // a trim change; only a sail's head counts
+            return;
+        }
         if (newState.getBlock() instanceof SailBlock sail) {
             rt.putSail(pos, sail.type(), newState.getValue(SailBlock.TRIM));
         } else {
@@ -239,6 +260,67 @@ public final class SailingRuntimes {
                 rt.include(pos);
             }
         }
+        boolean yardsChanged = false;
+        if (oldYard) {
+            yardsChanged = rt.removeYardBlock(pos);
+        }
+        if (newYard) {
+            yardsChanged |= rt.addYardBlock(pos);
+        }
+        if (yardsChanged || rt.watchesGap(pos)) {
+            relink(level, rt);
+        }
+    }
+
+    /**
+     * Pairs the ship's yards again (rule F5a) and replaces its square sails, keeping each head's trim from its block
+     * state, and brings the cloth of the yard block entities up to date.
+     */
+    static void relink(ServerLevel level, SailingRuntime rt) {
+        YardRules rules = SailingConfig.yardRules();
+        YardLookup lookup = YardSails.lookup(level);
+        List<YardRow> before = rt.yards();
+        List<int[]> blocks = new ArrayList<>();
+        for (BlockPos p : rt.yardBlocks()) {
+            blocks.add(new int[] {p.getX(), p.getY(), p.getZ()});
+        }
+        YardLinker.Linked linked = YardLinker.link(lookup, blocks, rules);
+        rt.replaceSquareSails(linked, head -> {
+            BlockState s = level.getBlockState(head);
+            return s.getBlock() instanceof YardBlock ? s.getValue(YardBlock.TRIM) : SailTrim.FURLED;
+        }, rules.maxGap());
+        // cloth display: clear the yards as they were, then write the current ones
+        for (YardRow r : before) {
+            if (!linked.rows().contains(r)) {
+                for (int a = r.min(); a <= r.max(); a++) {
+                    if (level.getBlockEntity(new BlockPos(r.xAt(a), r.y(), r.zAt(a))) instanceof YardBlockEntity be) {
+                        be.setGeometry(null);
+                    }
+                }
+            }
+        }
+        for (YardRow r : linked.rows()) {
+            YardSails.refreshRow(level, lookup, r, rules);
+        }
+    }
+
+    /**
+     * Sets the trim of the sail at {@code sailPos} (a position from {@link SailingRuntime#sailPositions()}): on every
+     * block of a square sail's upper yard, or on a one-block sail. The block changes update the runtime. False when
+     * there is no sail block at {@code sailPos}.
+     */
+    public static boolean setTrim(ServerLevel level, BlockPos sailPos, SailTrim trim) {
+        BlockState s = level.getBlockState(sailPos);
+        if (s.getBlock() instanceof YardBlock) {
+            return YardSails.setTrim(level, sailPos, trim);
+        }
+        if (s.getBlock() instanceof SailBlock) {
+            if (s.getValue(SailBlock.TRIM) != trim) {
+                level.setBlock(sailPos, s.setValue(SailBlock.TRIM, trim), Block.UPDATE_ALL);
+            }
+            return true;
+        }
+        return false;
     }
 
     /** Result of a winch use: the trim set and how many sails got it. */
@@ -262,10 +344,7 @@ public final class SailingRuntimes {
         }
         SailTrim next = highest.next();
         for (BlockPos p : sails) {
-            BlockState s = level.getBlockState(p);
-            if (s.getBlock() instanceof SailBlock) {
-                level.setBlock(p, s.setValue(SailBlock.TRIM, next), Block.UPDATE_ALL); // the block change updates rt
-            }
+            setTrim(level, p, next); // the block changes update rt
         }
         return new CycleResult(next, sails.size());
     }

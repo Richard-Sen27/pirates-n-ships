@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "pirates_n_ships:block/yard"
+    },
+    "axis=z": {
+      "model": "pirates_n_ships:block/yard",
+      "y": 90
+    }
+  }
+}

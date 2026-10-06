@@ -8,6 +8,10 @@ import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
 import com.richardsenger.piratesnships.sailing.block.SailBlock;
 import com.richardsenger.piratesnships.sailing.block.SailWinchBlock;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
+import com.richardsenger.piratesnships.sailing.block.YardBlock;
+import com.google.gson.JsonObject;
+import com.richardsenger.piratesnships.ship.decor.flag.ElementModel;
+import net.minecraft.data.PackOutput;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
 import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsControls;
 import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips;
@@ -86,8 +90,8 @@ public final class SailingModule implements ModModule {
     public void gatherData(DataContributions data) {
         com.richardsenger.piratesnships.sailing.anchor.AnchorData.gather(data); // visible anchor (F4)
         data.lang(lang -> {
-            lang.block(SailingBlocks.SMALL_SQUARE_SAIL, "Small Square Sail")
-                    .block(SailingBlocks.LARGE_SQUARE_SAIL, "Large Square Sail")
+            lang.block(SailingBlocks.YARD, "Yard")
+                    .add(YardBlock.KEY_NO_SAIL, "This yard heads no sail: hang a second yard %s to %s blocks straight below its middle, on the same mast")
                     .block(SailingBlocks.FORE_AND_AFT_SAIL, "Fore-and-Aft Sail")
                     .block(SailingBlocks.SAIL_WINCH, "Sail Winch")
                     .add(ShipForces.SAILING_KEY, "Sails and Keel")
@@ -120,11 +124,13 @@ public final class SailingModule implements ModModule {
         });
         data.models(m -> {
             for (RegistryEntry<Block, SailBlock> s : SailingBlocks.sails()) sail(m, s.get());
+            yard(m, SailingBlocks.YARD.get());
             m.blocks().createTrivialCube(SailingBlocks.SAIL_WINCH.get());
             m.blocks().createTrivialBlock(SailingBlocks.CAPSTAN.get(), TexturedModel.COLUMN);
         });
         data.blockLoot(loot -> {
             for (RegistryEntry<Block, SailBlock> s : SailingBlocks.sails()) loot.dropSelf(s.get());
+            loot.dropSelf(SailingBlocks.YARD.get());
             loot.dropSelf(SailingBlocks.SAIL_WINCH.get());
             loot.dropSelf(SailingBlocks.CAPSTAN.get());
         });
@@ -135,21 +141,34 @@ public final class SailingModule implements ModModule {
                 tags.tag(SableWeightTags.SUPER_LIGHT).add(s.get());
                 tags.tag(SableWeightTags.QUARTER_VOLUME).add(s.get());
             }
+            tags.tag(BlockTags.MINEABLE_WITH_AXE).add(SailingBlocks.YARD.get());
+            // what may stand between the two yards of a square sail (besides air); our own mast blocks join later
+            tags.tag(SailingBlocks.MASTS).addTag(BlockTags.LOGS).addTag(BlockTags.WOODEN_FENCES);
             tags.tag(BlockTags.MINEABLE_WITH_AXE).add(SailingBlocks.SAIL_WINCH.get());
             tags.tag(SableWeightTags.LIGHT).add(SailingBlocks.SAIL_WINCH.get());
             tags.tag(BlockTags.MINEABLE_WITH_AXE).add(SailingBlocks.CAPSTAN.get());
         });
+        // A yard is a 6 px spar (about 0.14 of a block of wood) high up on the mast: Sable's lightest tag (0.25 kpg, the
+        // fence's) still made the small test hull top-heavy with six of them, so it gets its own, physical mass and volume
+        // (refs/sable/wiki/Block Physics Properties.md; priority above Sable's tag definitions).
+        data.json(PackOutput.Target.DATA_PACK, "physics_block_properties", SailingBlocks.YARD.id(), () -> {
+            JsonObject properties = new JsonObject();
+            properties.addProperty("sable:mass", 0.1);
+            properties.addProperty("sable:volume", 0.15);
+            JsonObject json = new JsonObject();
+            json.addProperty("selector", SailingBlocks.YARD.id().toString());
+            json.addProperty("priority", 1001);
+            json.add("properties", properties);
+            return json;
+        });
         data.recipes(out -> {
-            ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, SailingBlocks.SMALL_SQUARE_SAIL.get())
-                    .pattern("SSS").pattern("WWW")
-                    .define('S', Items.STICK).define('W', ItemTags.WOOL)
-                    .unlockedBy("has_wool", InventoryChangeTrigger.TriggerInstance.hasItems(Items.WHITE_WOOL))
-                    .save(out, SailingBlocks.SMALL_SQUARE_SAIL.id());
-            ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, SailingBlocks.LARGE_SQUARE_SAIL.get())
-                    .pattern("SSS").pattern("WWW").pattern("WWW")
-                    .define('S', Items.STICK).define('W', ItemTags.WOOL)
-                    .unlockedBy("has_wool", InventoryChangeTrigger.TriggerInstance.hasItems(Items.WHITE_WOOL))
-                    .save(out, SailingBlocks.LARGE_SQUARE_SAIL.id());
+            // three logs in a row give three yards (the cloth needs no item: it is drawn between the yards)
+            ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, SailingBlocks.YARD.get(), 3)
+                    .pattern("LLL")
+                    .define('L', ItemTags.LOGS)
+                    .unlockedBy("has_log", InventoryChangeTrigger.TriggerInstance.hasItems(
+                            net.minecraft.advancements.critereon.ItemPredicate.Builder.item().of(ItemTags.LOGS)))
+                    .save(out, SailingBlocks.YARD.id());
             ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, SailingBlocks.FORE_AND_AFT_SAIL.get())
                     .pattern("S  ").pattern("SW ").pattern("SWW")
                     .define('S', Items.STICK).define('W', ItemTags.WOOL)
@@ -192,6 +211,34 @@ public final class SailingModule implements ModModule {
         m.blockStates().accept(MultiVariantGenerator.multiVariant(block).with(dispatch));
         ModelTemplates.FLAT_ITEM.create(ModelLocationUtils.getModelLocation(block.asItem()),
                 TextureMapping.layer0(base.withSuffix("_full")), m.models());
+    }
+
+    /**
+     * The yard: one 6 px beam along x through the block center (stripped spruce, end grain at both ends), turned for
+     * {@code axis=z}. A placeholder until the Blockbench pass (F7).
+     */
+    private static void yard(ModelContext m, YardBlock block) {
+        ResourceLocation model = ModelLocationUtils.getModelLocation(block);
+        String side = "minecraft:block/stripped_spruce_log";
+        String end = "minecraft:block/stripped_spruce_log_top";
+        ElementModel e = new ElementModel().texture("side", side).texture("end", end).texture("particle", side)
+                .element(0, 5, 5, 16, 11, 11)
+                .face(ElementModel.Face.NORTH, 0, 5, 16, 11, "#side")
+                .face(ElementModel.Face.SOUTH, 0, 5, 16, 11, "#side")
+                .face(ElementModel.Face.UP, 0, 5, 16, 11, "#side")
+                .face(ElementModel.Face.DOWN, 0, 5, 16, 11, "#side")
+                .face(ElementModel.Face.EAST, 5, 5, 11, 11, "#end")
+                .face(ElementModel.Face.WEST, 5, 5, 11, 11, "#end")
+                .end();
+        m.models().accept(model, () -> {
+            com.google.gson.JsonObject json = e.build();
+            json.addProperty("parent", "minecraft:block/block"); // display transforms for the item
+            return json;
+        });
+        m.blockStates().accept(MultiVariantGenerator.multiVariant(block).with(PropertyDispatch.property(YardBlock.AXIS)
+                .select(Direction.Axis.X, Variant.variant().with(VariantProperties.MODEL, model))
+                .select(Direction.Axis.Z, Variant.variant().with(VariantProperties.MODEL, model)
+                        .with(VariantProperties.Y_ROT, VariantProperties.Rotation.R90))));
     }
 
     @Override

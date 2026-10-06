@@ -11,11 +11,11 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "pirates_n_ships:small_square_sail"
+          "name": "pirates_n_ships:yard"
         }
       ],
       "rolls": 1.0
     }
   ],
-  "random_sequence": "pirates_n_ships:blocks/small_square_sail"
+  "random_sequence": "pirates_n_ships:blocks/yard"
 }

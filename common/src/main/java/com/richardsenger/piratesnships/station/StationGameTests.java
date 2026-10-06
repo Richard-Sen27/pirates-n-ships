@@ -8,8 +8,11 @@ import com.richardsenger.piratesnships.core.gametest.ModGameTests;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.sailing.SailingConfig;
-import com.richardsenger.piratesnships.sailing.block.SailBlock;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
+import com.richardsenger.piratesnships.sailing.block.YardBlock;
+import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips;
+import com.richardsenger.piratesnships.sailing.ship.SailingRuntime;
+import com.richardsenger.piratesnships.sailing.ship.SailingRuntimes;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
 import com.richardsenger.piratesnships.sailing.wind.WindOverride;
 import com.richardsenger.piratesnships.ship.ShipTestCleanup;
@@ -63,6 +66,7 @@ public final class StationGameTests {
 
     /** 40×40 basin: water up to y=7, or stone up to y=4 (a ship resting on land). */
     private static void basin(GameTestHelper h, boolean water) {
+        SailingGameTestsShips.openSky(h, 40); // the two-yard rig reaches the GameTest barrier ceiling (y=12)
         for (int x = 0; x < 40; x++) {
             for (int z = 0; z < 40; z++) {
                 h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
@@ -87,9 +91,7 @@ public final class StationGameTests {
         }
         BlockPos helm = new BlockPos(x0 + 2, 9, z0 + 1);
         h.setBlock(helm, AssemblyContent.HELM.get().defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
-        h.setBlock(new BlockPos(x0 + 2, 9, z0 + 2), Blocks.OAK_FENCE);
-        h.setBlock(new BlockPos(x0 + 2, 10, z0 + 2), SailingBlocks.SMALL_SQUARE_SAIL.get().defaultBlockState()
-                .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH).setValue(SailBlock.TRIM, SailTrim.FURLED));
+        SailingGameTestsShips.rig(h, x0 + 2, z0 + 2, 1, 3, SailTrim.FURLED); // a square sail between two yards (F5a)
         h.setBlock(new BlockPos(x0 + 1, 9, z0 + 3), SailingBlocks.SAIL_WINCH.get());
         return helm;
     }
@@ -103,7 +105,9 @@ public final class StationGameTests {
         if (r.shipId() == null) throw new AssertionError("assembly failed: " + r);
         ShipBody ship = SableShips.byId(h.getLevel(), r.shipId());
         if (ship == null) throw new AssertionError("no ship after assembly");
-        return new Fixture(ship, find(h, ship, SailingBlocks.SAIL_WINCH.get()), find(h, ship, SailingBlocks.SMALL_SQUARE_SAIL.get()),
+        SailingRuntime rt = SailingRuntimes.getOrCreate(ship);
+        if (rt == null || rt.sailCount() != 1) throw new AssertionError("expected one sail on the ship");
+        return new Fixture(ship, find(h, ship, SailingBlocks.SAIL_WINCH.get()), rt.sailPositions().get(0),
                 find(h, ship, AssemblyContent.HELM.get()));
     }
 
@@ -128,7 +132,7 @@ public final class StationGameTests {
     }
 
     private static SailTrim trim(GameTestHelper h, Fixture f) {
-        return h.getLevel().getBlockState(f.sail()).getValue(SailBlock.TRIM);
+        return h.getLevel().getBlockState(f.sail()).getValue(YardBlock.TRIM);
     }
 
     private static List<StationSeat> seats(GameTestHelper h, Fixture f) {

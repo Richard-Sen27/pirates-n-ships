@@ -40,7 +40,7 @@ public final class SailForceModel {
                                             String source) {
         Vector3d point = new Vector3d(ShipFrame.UP).mul(sail.type().centerOfEffortHeight()).add(sail.position());
         double trim = sail.trim().factor(params);
-        if (trim <= 0.0 || sail.type().area() <= 0.0) {
+        if (trim <= 0.0 || sail.area() <= 0.0) {
             return ForceContribution.zero(source, point);
         }
         Vector3d apparentWorld = new Vector3d(trueWind).sub(ship.velocityAt(point, new Vector3d()));
@@ -53,7 +53,7 @@ public final class SailForceModel {
         }
         // The wind comes from −a; β = angle between FORWARD and −a.
         double beta = Math.toDegrees(Math.atan2(Math.abs(lat), -fwd));
-        double magnitude = params.sailForceScale() * speed * sail.type().area() * trim;
+        double magnitude = params.sailForceScale() * speed * sail.area() * trim;
         double drive = sail.type().curve().drive(beta) * magnitude;
         double side = sail.type().curve().side(beta) * magnitude;
         // Leeward: the side the apparent wind blows toward (sign of its lateral component).

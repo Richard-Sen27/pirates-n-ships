@@ -28,7 +28,9 @@ tasks.named('compileJava', JavaCompile) {
 
 processResources {
     dependsOn(configurations.commonResources)
-    from(configurations.commonResources)
+    from(configurations.commonResources) {
+        exclude '.cache/**' // datagen bookkeeping, not a resource
+    }
 }
 
 tasks.named('javadoc', Javadoc).configure {

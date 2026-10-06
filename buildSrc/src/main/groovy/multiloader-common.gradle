@@ -38,9 +38,23 @@ repositories {
         )
         filter { includeGroup('org.parchmentmc.data') }
     }
+    // Veil (transitive dependency of Sable)
     maven {
         name = 'BlameJared'
         url = 'https://maven.blamejared.com'
+    }
+    // Sable and sable-companion
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'RyanHCode'
+                url = 'https://maven.ryanhcode.dev/releases'
+            }
+        }
+        filter {
+            includeGroup('dev.ryanhcode.sable')
+            includeGroup('dev.ryanhcode.sable-companion')
+        }
     }
 }
 
@@ -55,6 +69,11 @@ repositories {
     publishing.publications.configureEach {
         suppressPomMetadataWarningsFor(variant)
     }
+}
+
+// Javadoc is still built (javadoc jar), but missing comments don't flood the build log
+tasks.withType(Javadoc).configureEach {
+    options.addStringOption('Xdoclint:none', '-quiet')
 }
 
 sourcesJar {
@@ -97,7 +116,8 @@ processResources {
             'neoforge_version'             : neoforge_version,
             'neoforge_loader_version_range': neoforge_loader_version_range,
             'credits'                      : credits,
-            'java_version'                 : java_version
+            'java_version'                 : java_version,
+            'sable_version'                : sable_version
     ]
 
     filesMatching(['pack.mcmeta', 'fabric.mod.json', 'META-INF/neoforge.mods.toml', '*.mixins.json']) {

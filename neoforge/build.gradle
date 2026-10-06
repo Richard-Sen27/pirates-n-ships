@@ -24,14 +24,19 @@ neoForge {
         }
         data {
             data()
-
-            // DataGen can be run by - "./gradlew :neoforge:runData" in Terminal.
-            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
-            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-
+            // ./gradlew :neoforge:runData. Providers live in common, output goes to common/src/generated/resources.
+            programArguments.addAll '--mod', project.mod_id, '--all',
+                    '--output', rootProject.file('common/src/generated/resources/').getAbsolutePath(),
+                    '--existing', rootProject.file('common/src/main/resources/').getAbsolutePath()
         }
         server {
             server()
+        }
+        // ./gradlew :neoforge:runGameTestServer. Runs every GameTest in the mod namespace and exits
+        // with a non-zero code (failing the Gradle task) when a required test fails.
+        gameTestServer {
+            type = 'gameTestServer'
+            gameDirectory = project.file('build/gametest')
         }
     }
     mods {
@@ -41,4 +46,13 @@ neoForge {
     }
 }
 
-sourceSets.main.resources { srcDir 'src/generated/resources' }
+dependencies {
+    // Sable (hard dependency). Its published runtime variant also lists Create, Ponder, Flywheel and
+    // Registrate, which Sable only uses for optional compat. We have no Create dependency, so exclude them.
+    implementation("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${sable_version}") {
+        exclude group: 'com.simibubi.create'
+        exclude group: 'net.createmod.ponder'
+        exclude group: 'dev.engine-room.flywheel'
+        exclude group: 'com.tterrag.registrate'
+    }
+}

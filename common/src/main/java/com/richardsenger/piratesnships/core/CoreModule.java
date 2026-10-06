@@ -54,6 +54,9 @@ public final class CoreModule implements ModModule {
         data.models(m -> m.blocks().createTrivialCube(CoreContent.TEST_BLOCK.get()));
         data.blockLoot(loot -> loot.dropSelf(CoreContent.TEST_BLOCK.get()));
         data.blockTags(tags -> tags.tag(BlockTags.MINEABLE_WITH_AXE).add(CoreContent.TEST_BLOCK.get()));
+        // Required reference to a vanilla tag, then an optional one to another mod's tag, chained on the appender
+        data.blockTags(tags -> tags.tag(CoreTags.TEST_GROUND).add(CoreContent.TEST_BLOCK.get())
+                .addTag(BlockTags.DIRT).addOptionalTag(CoreTags.C_SANDS));
         data.definition(CoreDefinitions.TEST_MARKER, CoreDefinitions.EXAMPLE_ID, CoreDefinitions.EXAMPLE);
         // Raw JSON example: Sable block physics (refs/sable/wiki/Block Physics Properties.md). Values = Sable defaults.
         data.json(PackOutput.Target.DATA_PACK, "physics_block_properties", CoreContent.TEST_BLOCK.id(), () -> {

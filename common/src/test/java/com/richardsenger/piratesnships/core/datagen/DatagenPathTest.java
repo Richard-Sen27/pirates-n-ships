@@ -13,10 +13,16 @@ import net.minecraft.data.PackOutput;
 import net.minecraft.data.registries.VanillaRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.Bootstrap;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.EntityTypeTags;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.material.Fluid;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -30,6 +36,7 @@ import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -131,6 +138,68 @@ class DatagenPathTest {
                 .addTag(TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath("sable", "not_defined_here"))));
         var e = assertThrows(CompletionException.class, () -> runTags(out, data));
         assertTrue(String.valueOf(e.getCause().getMessage()).contains("missing following references"), String.valueOf(e.getCause()));
+    }
+
+    @Test
+    void vanillaTagsAreKnown() {
+        assertTrue(VanillaTags.exists(BlockTags.DIRT));
+        assertTrue(VanillaTags.exists(ItemTags.PLANKS));
+        assertTrue(VanillaTags.exists(EntityTypeTags.SKELETONS));
+        assertTrue(VanillaTags.exists(FluidTags.WATER));
+        assertTrue(VanillaTags.exists(BlockTags.MINEABLE_WITH_AXE), "nested paths");
+        assertFalse(VanillaTags.exists(TagKey.create(Registries.BLOCK, ResourceLocation.withDefaultNamespace("dirtt"))));
+        assertFalse(VanillaTags.exists(TagKey.create(Registries.ITEM, ResourceLocation.withDefaultNamespace("mineable/axe"))), "registry matters");
+        assertFalse(VanillaTags.exists(TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath("c", "ores"))), "other namespaces are unknown");
+    }
+
+    @Test
+    void requiredVanillaTagReferencesAreWrittenPlainForEveryRegistry(@TempDir Path out) throws IOException {
+        TagKey<Block> blocks = TagKey.create(Registries.BLOCK, Constants.id("junit_ground"));
+        TagKey<Item> items = TagKey.create(Registries.ITEM, Constants.id("junit_wood"));
+        TagKey<EntityType<?>> entities = TagKey.create(Registries.ENTITY_TYPE, Constants.id("junit_undead"));
+        TagKey<Fluid> fluids = TagKey.create(Registries.FLUID, Constants.id("junit_sea"));
+        DataContributions data = new DataContributions();
+        data.blockTags(tags -> tags.tag(blocks).add(Blocks.CLAY).addTag(BlockTags.DIRT)
+                .addOptionalTag(ResourceLocation.fromNamespaceAndPath("c", "sands")));
+        data.itemTags(tags -> tags.tag(items).addTag(ItemTags.PLANKS).addOptional(ResourceLocation.fromNamespaceAndPath("other_mod", "plank")));
+        data.entityTypeTags(tags -> tags.tag(entities).addTag(EntityTypeTags.SKELETONS));
+        data.tags(Registries.FLUID, tags -> tags.tag(fluids).addTag(FluidTags.WATER));
+        runTags(out, data);
+
+        String block = read(out.resolve("data/pirates_n_ships/tags/block/junit_ground.json")).get("values").toString();
+        assertTrue(block.contains("\"minecraft:clay\""), block);
+        assertTrue(block.contains("\"#minecraft:dirt\""), "required reference is a plain string: " + block);
+        assertTrue(block.contains("{\"id\":\"#c:sands\",\"required\":false}"), "optional reference: " + block);
+        String item = read(out.resolve("data/pirates_n_ships/tags/item/junit_wood.json")).get("values").toString();
+        assertTrue(item.contains("\"#minecraft:planks\""), item);
+        assertTrue(item.contains("{\"id\":\"other_mod:plank\",\"required\":false}"), item);
+        assertTrue(read(out.resolve("data/pirates_n_ships/tags/entity_type/junit_undead.json")).get("values").toString()
+                .contains("\"#minecraft:skeletons\""));
+        assertTrue(read(out.resolve("data/pirates_n_ships/tags/fluid/junit_sea.json")).get("values").toString()
+                .contains("\"#minecraft:water\""));
+    }
+
+    @Test
+    void requiredReferenceToMisspelledVanillaTagFails(@TempDir Path out) {
+        DataContributions data = new DataContributions();
+        data.blockTags(tags -> tags.tag(TagKey.create(Registries.BLOCK, Constants.id("typo")))
+                .addTag(TagKey.create(Registries.BLOCK, ResourceLocation.withDefaultNamespace("dirtt"))));
+        var e = assertThrows(CompletionException.class, () -> runTags(out, data));
+        String message = String.valueOf(e.getCause().getMessage());
+        assertTrue(message.contains("missing following references") && message.contains("#minecraft:dirtt"), message);
+    }
+
+    @Test
+    void requiredReferenceToOtherModsTagFailsButOptionalPasses(@TempDir Path out) {
+        ResourceLocation cOres = ResourceLocation.fromNamespaceAndPath("c", "ores");
+        DataContributions required = new DataContributions();
+        required.blockTags(tags -> tags.tag(TagKey.create(Registries.BLOCK, Constants.id("ores"))).addTag(TagKey.create(Registries.BLOCK, cOres)));
+        assertThrows(CompletionException.class, () -> runTags(out, required));
+
+        DataContributions optional = new DataContributions();
+        optional.blockTags(tags -> tags.addOptionalTag(TagKey.create(Registries.BLOCK, Constants.id("ores")), cOres));
+        runTags(out, optional);
+        assertTrue(Files.exists(out.resolve("data/pirates_n_ships/tags/block/ores.json")));
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

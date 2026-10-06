@@ -29,6 +29,7 @@ import java.util.function.Supplier;
  * data.models(m -> m.blocks().createTrivialCube(CoreContent.TEST_BLOCK.get()));
  * data.blockLoot(loot -> loot.dropSelf(CoreContent.TEST_BLOCK.get()));
  * data.blockTags(tags -> tags.tag(BlockTags.MINEABLE_WITH_PICKAXE).add(CoreContent.TEST_BLOCK.get()));
+ * data.blockTags(tags -> tags.tag(CoreTags.TEST_GROUND).addTag(BlockTags.DIRT).addOptionalTag(ResourceLocation.fromNamespaceAndPath("c", "sands")));
  * data.entityTypeTags(tags -> tags.tag(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath("sable", "retain_in_sub_level"))).add(MY_ENTITY.get()));
  * data.recipes(out -> ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ...).save(out));
  * data.json(PackOutput.Target.DATA_PACK, "physics_block_properties", Constants.id("plank"), () -> json);

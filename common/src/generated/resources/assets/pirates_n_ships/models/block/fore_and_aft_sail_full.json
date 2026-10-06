@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/template_orientable_trapdoor_open",
+  "textures": {
+    "texture": "pirates_n_ships:block/fore_and_aft_sail_full"
+  }
+}

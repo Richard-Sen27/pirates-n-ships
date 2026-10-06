@@ -1,6 +1,6 @@
 package com.richardsenger.piratesnships.mixin;
 
-import com.richardsenger.piratesnships.ship.hull.runtime.HullRuntimes;
+import com.richardsenger.piratesnships.ship.ShipBlockChanges;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
@@ -21,7 +21,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * listener: {@code SableCommonEvents#handleBlockChange} and {@code LevelPlot#onBlockChange} call fixed internals only.
  *
  * <p>{@code setBlockState} returns the previous state, or null when nothing changed. Server levels on the server thread
- * only; {@link HullRuntimes#onBlockChanged} returns at once when the level has no ship runtimes.
+ * only. Forwards to the listeners of {@link ShipBlockChanges} (hull and sailing runtimes), which return at once when
+ * the level has no ship runtimes.
  */
 @Mixin(LevelChunk.class)
 public abstract class MixinLevelChunk {
@@ -32,7 +33,7 @@ public abstract class MixinLevelChunk {
         BlockState old = cir.getReturnValue();
         if (old != null && old != state && ((LevelChunk) (Object) this).getLevel() instanceof ServerLevel level
                 && level.getServer().isSameThread()) {
-            HullRuntimes.onBlockChanged(level, pos, old, state);
+            ShipBlockChanges.fire(level, pos, old, state);
         }
     }
 }

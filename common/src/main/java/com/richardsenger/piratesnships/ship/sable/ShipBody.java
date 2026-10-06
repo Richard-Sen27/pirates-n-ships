@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Quaterniond;
 import org.joml.Quaterniondc;
 import org.joml.Vector3d;
+import org.joml.Vector3dc;
 
 /**
  * A server-side ship body: our view of a Sable {@code ServerSubLevel} ({@code sublevel/ServerSubLevel.java}). Cheap to
@@ -167,6 +168,72 @@ public final class ShipBody {
         dev.ryanhcode.sable.api.physics.force.ForceGroup group = ShipForces.buoyancy();
         if (group != null) {
             sub.getOrCreateQueuedForceGroup(group).applyAndRecordPointForce(plotPoint, localImpulse);
+        }
+    }
+
+    // ---------------------------------------------------------------- sailing (spike 3) reads and writes
+
+    /**
+     * Total mass [kpg], 0 when the mass data is invalid ({@code ServerSubLevel#getMassTracker}, l.489;
+     * {@code api/physics/mass/MassData.java#getMass}, l.13). Merged bodies included.
+     */
+    public double mass() {
+        var m = sub.getMassTracker();
+        return m == null || m.isInvalid() ? 0.0 : m.getMass();
+    }
+
+    /**
+     * Writes the center of mass in <b>plot</b> coordinates into {@code dest} and returns true, or false when Sable has no
+     * valid mass data ({@code MassData#getCenterOfMass}, l.34, nullable, plot coordinates per docs/sable-notes.md §3.3).
+     */
+    public boolean centerOfMass(Vector3d dest) {
+        var m = sub.getMassTracker();
+        if (m == null || m.isInvalid()) {
+            return false;
+        }
+        dest.set(m.getCenterOfMass());
+        return true;
+    }
+
+    /** Plot position to world position without allocation ({@code Pose3dc#transformPosition(Vector3dc, Vector3d)}). */
+    public Vector3d toWorld(Vector3dc plotPos, Vector3d dest) {
+        return sub.logicalPose().transformPosition(plotPos, dest);
+    }
+
+    /** Body (plot) to world rotation, written into {@code dest} ({@code Pose3dc#orientation}). */
+    public Quaterniond orientation(Quaterniond dest) {
+        return dest.set(sub.logicalPose().orientation());
+    }
+
+    /**
+     * World-frame linear velocity of the center of mass [m/s] and angular velocity [rad/s] from the physics engine,
+     * into the given vectors; false (and zeros) when the body has no valid handle
+     * ({@code api/physics/handle/RigidBodyHandle.java#of(ServerSubLevel)} l.56, {@code #getLinearVelocity(Vector3d)} l.160,
+     * {@code #getAngularVelocity(Vector3d)} l.168, {@code #isValid} l.205).
+     */
+    public boolean velocities(Vector3d linear, Vector3d angular) {
+        RigidBodyHandle h = RigidBodyHandle.of(sub);
+        if (h == null || !h.isValid()) {
+            linear.zero();
+            angular.zero();
+            return false;
+        }
+        h.getLinearVelocity(linear);
+        h.getAngularVelocity(angular);
+        return true;
+    }
+
+    /**
+     * Records a linear impulse and an angular impulse about the center of mass, both in the body (plot) frame, in our
+     * sailing force group. Physics substep only, like {@link #applyBuoyancyImpulse}
+     * ({@code ServerSubLevel#getOrCreateQueuedForceGroup} l.395, {@code api/physics/force/QueuedForceGroup.java#getForceTotal}
+     * l.21, {@code api/physics/force/ForceTotal.java#applyLinearAndAngularImpulse} l.63; the torque convention is
+     * {@code (pos − COM) × force} in the local frame, {@code ForceTotal#applyImpulseAtPoint} l.101-105).
+     */
+    public void applySailingImpulse(Vector3dc localImpulse, Vector3dc localAngularImpulse) {
+        dev.ryanhcode.sable.api.physics.force.ForceGroup group = ShipForces.sailing();
+        if (group != null) {
+            sub.getOrCreateQueuedForceGroup(group).getForceTotal().applyLinearAndAngularImpulse(localImpulse, localAngularImpulse);
         }
     }
 

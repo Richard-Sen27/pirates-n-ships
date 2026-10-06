@@ -1,5 +1,8 @@
 {
   "values": [
+    "pirates_n_ships:small_square_sail",
+    "pirates_n_ships:large_square_sail",
+    "pirates_n_ships:fore_and_aft_sail",
     "pirates_n_ships:brig_bars",
     "pirates_n_ships:nameplate",
     "pirates_n_ships:flagpole"

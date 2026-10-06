@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "pirates_n_ships:block/small_square_sail_full"
+  }
+}

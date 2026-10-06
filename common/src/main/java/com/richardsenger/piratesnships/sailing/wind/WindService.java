@@ -20,6 +20,10 @@ public final class WindService {
 
     /** The wind at a world position in this level, with explicit tuning. */
     public static WindSample sample(ServerLevel level, Vec3 position, WindParams params) {
+        WindOverride.Entry fixed = WindOverride.get(level.dimension().location().toString(), level.getGameTime());
+        if (fixed != null) {
+            return fixed.sample();
+        }
         return WindField.sample(params, level.getSeed(), level.dimension().location().toString(), level.getGameTime(),
                 level.getRainLevel(1.0f), level.getThunderLevel(1.0f), position.x, position.z);
     }

@@ -131,6 +131,11 @@ public final class HullRuntime {
         return Double.isFinite(seaWorldY);
     }
 
+    /** World Y of the sea surface at the hull ({@link SeaLevel#hullSurface}), NaN when no water touches the hull. Read-only, for sailing. */
+    public double seaWorldY() {
+        return seaWorldY;
+    }
+
     public double seaShipFrame() {
         return seaShipFrame;
     }

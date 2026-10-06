@@ -48,6 +48,7 @@ public final class HullModule implements ModModule {
         SableShips.onShipRemoved(HullRuntimes::onShipRemoved);
         SableShips.onClientShipRemoved(HullRuntimes::onClientShipRemoved);
         SableShips.onPhysicsTick(HullRuntimes::onPhysicsTick);
+        com.richardsenger.piratesnships.ship.ShipBlockChanges.register(HullRuntimes::onBlockChanged);
     }
 
     @Override

@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "facing=east,trim=full": {
+      "model": "pirates_n_ships:block/fore_and_aft_sail_full",
+      "y": 90
+    },
+    "facing=east,trim=furled": {
+      "model": "pirates_n_ships:block/fore_and_aft_sail_furled",
+      "y": 90
+    },
+    "facing=east,trim=half": {
+      "model": "pirates_n_ships:block/fore_and_aft_sail_half",
+      "y": 90
+    },
+    "facing=north,trim=full": {
+      "model": "pirates_n_ships:block/fore_and_aft_sail_full",
+      "y": 0
+    },
+    "facing=north,trim=furled": {
+      "model": "pirates_n_ships:block/fore_and_aft_sail_furled",
+      "y": 0
+    },
+    "facing=north,trim=half": {
+      "model": "pirates_n_ships:block/fore_and_aft_sail_half",
+      "y": 0
+    },
+    "facing=south,trim=full": {
+      "model": "pirates_n_ships:block/fore_and_aft_sail_full",
+      "y": 180
+    },
+    "facing=south,trim=furled": {
+      "model": "pirates_n_ships:block/fore_and_aft_sail_furled",
+      "y": 180
+    },
+    "facing=south,trim=half": {
+      "model": "pirates_n_ships:block/fore_and_aft_sail_half",
+      "y": 180
+    },
+    "facing=west,trim=full": {
+      "model": "pirates_n_ships:block/fore_and_aft_sail_full",
+      "y": 270
+    },
+    "facing=west,trim=furled": {
+      "model": "pirates_n_ships:block/fore_and_aft_sail_furled",
+      "y": 270
+    },
+    "facing=west,trim=half": {
+      "model": "pirates_n_ships:block/fore_and_aft_sail_half",
+      "y": 270
+    }
+  }
+}

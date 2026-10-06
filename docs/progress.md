@@ -7,7 +7,7 @@ Statuses: **todo** / **in progress** / **done** / **blocked: needs playtest** / 
 
 Last updated: 2026-10-07 (third session: the first five playtest-feedback packages are merged; the session can be restarted for the Blockbench MCP).
 
-## Phase F: first playtest feedback (running)
+## Phase F: first playtest feedback (done, F5 and F7 continue in phase G)
 
 The human played milestones 1 to 3 and reported: the dry hull works well; a floating ship rocks from side to side without end; slabs, stairs and trapdoors show water in their empty half; the blocks look like 2012 and need real 3D models; sails should be built from two yards with cloth between them, and triangular sails from a rope and a cleat; flags are far too small; the anchor should be a real anchor on the hull side with chain sound and a splash; planks should creak now and then; the captain's whistle should open a radial menu. These are recorded as decisions in design.md §4.3, §4.7, §4.8, §5.2, §5.3, §7.2, §16 and §21.
 
@@ -17,11 +17,11 @@ The human played milestones 1 to 3 and reported: the dry hull works well; a floa
 | F2 | Occlusion regions include watertight partial blocks (slabs, stairs, trapdoors) on the hull's inside | done | Merged. A partial cell joins the dry region when every uncovered face looks at a dry cell or a block, and never when one looks at the sea or the sky. Toggle `dry_hull.partial_blocks`. Playtest `milestone-2.md` §11c. |
 | F3 | The captain's whistle opens a radial menu; orders go to the server as a payload | done | Merged. Four entries (hoist, reef, furl, release crew), click or hold-aim-release, Escape closes. The sneak-use cycling is gone. The screen itself is unverified: playtest `milestone-4.md` §9. |
 | F4 | The anchor as an entity: stowed at the hull side, lowered on a chain with sound, splash and thud, raised again; travel time from depth | done | Merged. `sailing/anchor`: a view entity inside the plot while stowed, world space while out, code-built model and chain renderer, vanilla sounds played directly (its own sound events exist but are not in `sounds.json` yet, see follow-ups). Playtest `milestone-3.md` part 2 §4 and §5. |
-| F5 | Multi-block sails: two yards with rendered cloth between them, triangular sails from a rope and a cleat | todo, after F1 and F4 (shares the sailing runtime) |
+| F5 | Multi-block sails: two yards with rendered cloth between them, triangular sails from a rope and a cleat | split into F5a and F5b, see phase G |
 | F6 | Full-size flags: a cloth hanging downwind from the pole, models built in code | done | Merged at 1 × 1.5 blocks: a vanilla block model can't reach further than 24 px from the pole's centre; 2 blocks would need a block entity renderer. Both sides textured, 32×16 textures. Playtest `flags.md`. |
-| F7 | 3D models for all ship blocks (helm wheel, capstan, figureheads, containers, …) | waiting for the human's Blockbench MCP; placeholder models built in code where cheap |
+| F7 | 3D models for all ship blocks (helm wheel, capstan, figureheads, containers, …) | split into F7a to F7d, see phase G |
 
-**State for the next session:** `main` is green (627 JUnit tests, 190 GameTests, four green runs), nothing is running, no agent branch or worktree is left. Milestone 0 was playtested by the human and passed completely. Next: **F5** (multi-block sails) and **F7** (3D models with the Blockbench MCP), then the playtests of milestones 1 to 4 with the phase F changes.
+Phase F left `main` green (627 JUnit tests, 190 GameTests, four green runs). Milestone 0 was playtested by the human and passed completely.
 
 Follow-ups from phase F (small):
 - `sounds.json` has one owner (the audio module). The anchor's three sound events (`anchor.chain`, `anchor.splash`, `anchor.thud`) are registered but not listed in it, so the anchor plays vanilla events directly. Add a shared sound-entries builder in `core/datagen` (`data.sounds(...)`) that collects entries from all modules into one file, then set `AnchorData.SOUNDS_JSON = true`.
@@ -29,7 +29,24 @@ Follow-ups from phase F (small):
 - `StationGameTests.crewHoistsAndFurlsAfterTheWorkTime` failed once for two different agents ("sails not furled: FULL") in about 12 runs each, and passed in all of the orchestrator's 20 runs. Its ±3 tick margin may be too tight under load.
 - Custom banner flags show a generic cloth. A banner-coloured cloth needs a `BlockColor` registration hook in the foundation (NeoForge `RegisterColorHandlersEvent.Block`) and a tint index on the model.
 
-Decision pending with the human: `CLAUDE.md` says all models come from datagen. Blockbench exports would be hand-made assets like textures, committed under `common/src/main/resources`, with datagen generating the block states that reference them. The orchestrator proceeds on that assumption.
+Decided (2026-10-07, the human connected Blockbench): Blockbench models are hand-made assets. `.bbmodel` sources in `art/models/`, exports in `common/src/main/resources/assets/pirates_n_ships/models/`, renders in `art/renders/`, datagen writes only block states and item models. Written into `CLAUDE.md` and design.md §4.8.
+
+## Phase G: sound, multi-block sails and 3D models (running)
+
+Started 2026-10-07 after the session restart with the Blockbench MCP connected (the MCP tools reach subagents; checked). The human added eight Pixabay files to `raw_sound/` (git-ignored): four music tracks (Leave Her Johnny; The Ghost Of Gallows Reef; There Be Pirates - The Quest; There Be Pirates - Lost in the Deep) and four gun sounds (pistol shot, empty gun shot, cannon shot, artillery gunfire), and will add more over time. Sources are listed in `docs/credits.md` once G1 lands.
+
+| Package | Scope | Status |
+|---|---|---|
+| G1 | Shared `data.sounds(...)` builder for one generated `sounds.json`; `tools/convert_sounds.py` + `tools/sounds/manifest.json` (mp3 → Ogg Vorbis with ffmpeg, credits generated); music pools `music.sea` and `music.shanty` with a client music selector (aboard → shanty, ocean biome → sea, else vanilla) through a new `ClientEvents.SELECT_MUSIC` fired from NeoForge's `SelectMusicEvent`; gun sound events registered for the firearms milestone; anchor events join `sounds.json` | in progress |
+| F5a | Square sails from two yards (`yard` block, pairing rule from design.md §5.2, trapezoid area, trim on the upper yard, block entity renderer drawing the cloth); removes the one-block square sails; the one-block fore-and-aft sail stays until F5b | in progress |
+| F5b | Triangular sails: cleat block, rope item making a stay between two cleats, third cleat below the head, cloth rendered in the triangle; removes the one-block fore-and-aft sail | todo, after F5a |
+| F7a | Blockbench models, batch 1: helm wheel, anchor (entity, exported as `LayerDefinition` code), flagpole, nameplate; JUnit tests that every hand-made model parses and every blockstate references an existing model | in progress |
+| F7b | Blockbench models, batch 2: capstan, sail winch, yard, cargo crate, cargo barrel, pantry, water barrel | todo, after F5a and F7a (shares `SailingModule` datagen with F5a) |
+| F7c | Blockbench models, batch 3: the four figureheads | todo, after F7a |
+| F7d | Blockbench models, batch 4: cleat, brig bars and door, flag cloth at 2 blocks via a block entity renderer | todo, after F5b |
+
+Only one agent at a time may use Blockbench (one desktop instance, one open project), so the F7 batches run one after another; G1 and F5 run next to them.
+
 
 ## Summary of the second session
 

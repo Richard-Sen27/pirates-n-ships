@@ -1,2 +1,4 @@
-// 1.21.1	2026-10-06T17:16:01.666279	Tags for minecraft:block mod id vanilla
-0a6ae97c9da29686371eb4553ace2383f5965ac9 data/minecraft/tags/block/mineable/axe.json
+// 1.21.1	2026-10-06T18:38:24.258293	Tags for minecraft:block mod id vanilla
+ab2d2d6bc4ab59872f7070e859abd21044321d48 data/minecraft/tags/block/mineable/axe.json
+efa5c7038ab6e296491b919dff511cf035976fa2 data/pirates_n_ships/tags/block/never_assemble.json
+d0b4325bb417203ea7f0a861071937293d2a1ac8 data/pirates_n_ships/tags/block/terrain.json

@@ -10,6 +10,8 @@ import com.richardsenger.piratesnships.sailing.block.SailBlock;
 import com.richardsenger.piratesnships.sailing.block.SailWinchBlock;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
 import com.richardsenger.piratesnships.sailing.force.ForceBreakdown;
+import com.richardsenger.piratesnships.sailing.force.HullDampingModel;
+import com.richardsenger.piratesnships.sailing.force.ShipFrame;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
 import com.richardsenger.piratesnships.sailing.wind.WindOverride;
 import com.richardsenger.piratesnships.ship.ShipTestCleanup;
@@ -29,6 +31,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import org.joml.Quaterniond;
 import org.joml.Vector3d;
 
 /**
@@ -58,7 +61,7 @@ public final class SailingGameTestsShips {
 
     // ------------------------------------------------------------------ fixtures
 
-    static void basin(GameTestHelper h, boolean water) {
+    public static void basin(GameTestHelper h, boolean water) {
         for (int x = 0; x < 40; x++) {
             for (int z = 0; z < 40; z++) {
                 h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
@@ -72,7 +75,7 @@ public final class SailingGameTestsShips {
     }
 
     /** Hull at x in [x0, x0+4], z in [z0, z0+4]; helm at the stern (z0+1) facing north, mast and sail amidships. Returns the helm. */
-    static BlockPos hull(GameTestHelper h, int x0, int z0, Block sail, Direction sailFacing, SailTrim trim) {
+    public static BlockPos hull(GameTestHelper h, int x0, int z0, Block sail, Direction sailFacing, SailTrim trim) {
         for (int x = x0; x <= x0 + 4; x++) {
             for (int z = z0; z <= z0 + 4; z++) {
                 for (int y = 5; y <= 8; y++) {
@@ -96,7 +99,7 @@ public final class SailingGameTestsShips {
      * 10 s, to port or starboard with the sign of the heel (D5, measured). Ballasted it runs about 16° bow down and
      * holds its course.
      */
-    static void ballast(GameTestHelper h, int x0, int z0) {
+    public static void ballast(GameTestHelper h, int x0, int z0) {
         for (int x = x0; x <= x0 + 4; x++) {
             for (int z = z0; z <= z0 + 4; z++) {
                 h.setBlock(new BlockPos(x, 5, z), Blocks.STONE);
@@ -104,9 +107,9 @@ public final class SailingGameTestsShips {
         }
     }
 
-    record Fixture(ShipBody ship, SailingRuntime runtime) { }
+    public record Fixture(ShipBody ship, SailingRuntime runtime) { }
 
-    static Fixture assemble(GameTestHelper h, BlockPos helm) {
+    public static Fixture assemble(GameTestHelper h, BlockPos helm) {
         AssemblyResult r = ShipTestCleanup.assemble(h, helm);
         if (r.shipId() == null) {
             throw new AssertionError("assembly failed: " + r);
@@ -327,6 +330,154 @@ public final class SailingGameTestsShips {
             ForceBreakdown fb = f.runtime().lastBreakdown();
             h.assertTrue(fb == null || fb.contributions().stream().noneMatch(c -> c.source().startsWith("sail[")),
                     "the broken sail still pushes");
+            h.succeed();
+        });
+    }
+
+    // ------------------------------------------------------------------ hull damping (F1)
+
+    private static final int KICK_AT = 60;
+    private static final double KICK = 0.8; // rad/s about the bow axis
+    private static final int WINDOW = 10;
+    private static final int WINDOWS = 20;
+
+    /**
+     * A 7×17 plank hull, 4 high (x 16..22, z 10..26), around the small {@link #hull} at (17, 17), whose walls stay as
+     * a bulkhead compartment with the helm and the furled sail on top: 180 kpg. The small hull alone is too stiff and
+     * too strongly damped by Sable's own water drag to show rolling; this one rolls a few times after a kick.
+     */
+    public static BlockPos longHull(GameTestHelper h) {
+        BlockPos helm = hull(h, 17, 17, SailingBlocks.SMALL_SQUARE_SAIL.get(), Direction.SOUTH, SailTrim.FURLED);
+        for (int x = 16; x <= 22; x++) {
+            for (int z = 10; z <= 26; z++) {
+                for (int y = 5; y <= 8; y++) {
+                    BlockPos p = new BlockPos(x, y, z);
+                    BlockState old = h.getBlockState(p);
+                    if (old.isAir() || old.is(Blocks.WATER)) {
+                        boolean shell = y == 5 || y == 8 || x == 16 || x == 22 || z == 10 || z == 26;
+                        h.setBlock(p, shell ? Blocks.OAK_PLANKS : Blocks.AIR);
+                    }
+                }
+            }
+        }
+        return helm;
+    }
+
+    /** Signed roll angle [rad]: the tilt of the ship's port axis out of the horizontal (+ = port side up). */
+    static double rollAngle(Fixture f) {
+        Quaterniond q = f.runtime().bow().shipToWorld(f.ship().orientation(new Quaterniond()), new Quaterniond());
+        Vector3d port = q.transform(new Vector3d(ShipFrame.PORT));
+        return Math.asin(Math.max(-1.0, Math.min(1.0, port.y)));
+    }
+
+    /** Roll rate [rad/s] about the ship's bow axis. */
+    static double rollRate(Fixture f) {
+        Vector3d lin = new Vector3d(), ang = new Vector3d();
+        f.ship().velocities(lin, ang);
+        Quaterniond q = f.runtime().bow().shipToWorld(f.ship().orientation(new Quaterniond()), new Quaterniond());
+        return q.transformInverse(ang).dot(ShipFrame.FORWARD);
+    }
+
+    /**
+     * Floats the {@link #longHull}, kicks it about its bow axis at {@link #KICK_AT} and records, per window of
+     * {@link #WINDOW} ticks after the kick, the largest roll rate [rad/s] (the rate rather than the angle, because a hull
+     * with little metacentric height can also take a slow new list, which is not rocking). Logs the rates and the roll
+     * range per window.
+     */
+    private static double[] rollAfterKick(GameTestHelper h, String label) {
+        basin(h, true);
+        Fixture f = assemble(h, longHull(h));
+        double[] amp = new double[WINDOWS];
+        double[] range = new double[2 * WINDOWS];
+        h.onEachTick(() -> {
+            long t = h.getTick();
+            if (f.ship().isRemoved()) return;
+            if (t == KICK_AT) {
+                Quaterniond q = f.runtime().bow().shipToWorld(f.ship().orientation(new Quaterniond()), new Quaterniond());
+                f.ship().addVelocity(new Vector3d(), q.transform(new Vector3d(ShipFrame.FORWARD)).mul(KICK));
+            } else if (t > KICK_AT && t <= KICK_AT + (long) WINDOWS * WINDOW) {
+                int w = (int) ((t - KICK_AT - 1) / WINDOW);
+                amp[w] = Math.max(amp[w], Math.abs(rollRate(f)));
+                double r = Math.toDegrees(rollAngle(f));
+                if ((t - KICK_AT - 1) % WINDOW == 0) {
+                    range[2 * w] = r;
+                    range[2 * w + 1] = r;
+                }
+                range[2 * w] = Math.min(range[2 * w], r);
+                range[2 * w + 1] = Math.max(range[2 * w + 1], r);
+            }
+        });
+        h.runAfterDelay(KICK_AT + (long) WINDOWS * WINDOW + 1, () -> {
+            StringBuilder sb = new StringBuilder();
+            for (double a : amp) sb.append(String.format(" %.2f", a));
+            StringBuilder rb = new StringBuilder();
+            for (int i = 0; i < WINDOWS; i++) rb.append(String.format(" %.0f..%.0f", range[2 * i], range[2 * i + 1]));
+            Constants.LOG.info("[damping test] {}: max roll rate per {} ticks [rad/s]:{}; roll range [deg]:{}; mass {}",
+                    label, WINDOW, sb, rb, String.format("%.1f", f.ship().mass()));
+        });
+        return amp;
+    }
+
+    /** Largest value of {@code amp} in windows {@code from..to} (inclusive). */
+    private static double maxOf(double[] amp, int from, int to) {
+        double m = 0.0;
+        for (int i = from; i <= to; i++) m = Math.max(m, amp[i]);
+        return m;
+    }
+
+    /**
+     * With hull damping on, the kicked long hull settles: 3.5 to 5 s after the kick its roll rate is small (measured
+     * 0.01 rad/s, against about 0.11 without damping and 0.7 right after the kick).
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 320, batch = "pirates_n_ships_config_sailing_damping_on")
+    public static void rollingShipSettlesWithDamping(GameTestHelper h) {
+        ConfigOverrides.during(h, SailingConfig.HULL_DAMPING_ENABLED, true);
+        ConfigOverrides.during(h, SailingConfig.ROLL_DAMPING, HullDampingModel.Params.DEFAULTS.roll());
+        ConfigOverrides.during(h, SailingConfig.PITCH_DAMPING, HullDampingModel.Params.DEFAULTS.pitch());
+        double[] amp = rollAfterKick(h, "damping on");
+        h.runAfterDelay(KICK_AT + (long) WINDOWS * WINDOW + 2, () -> {
+            h.assertTrue(amp[0] > 0.3, "the kick did not roll the ship: " + amp[0] + " rad/s");
+            double late = maxOf(amp, 7, 9);
+            h.assertTrue(late < 0.04, "still rolling 3.5 to 5 s after the kick with damping on: " + late + " rad/s");
+            h.succeed();
+        });
+    }
+
+    /** With hull damping off, the same kick still rolls the ship clearly at the same time. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 320, batch = "pirates_n_ships_config_sailing_damping_off")
+    public static void rollingShipKeepsRollingWithoutDamping(GameTestHelper h) {
+        ConfigOverrides.during(h, SailingConfig.HULL_DAMPING_ENABLED, false);
+        double[] amp = rollAfterKick(h, "damping off");
+        h.runAfterDelay(KICK_AT + (long) WINDOWS * WINDOW + 2, () -> {
+            h.assertTrue(amp[0] > 0.3, "the kick did not roll the ship: " + amp[0] + " rad/s");
+            double late = maxOf(amp, 7, 9);
+            h.assertTrue(late > 0.06, "the undamped ship stopped rolling 3.5 to 5 s after the kick: " + late + " rad/s");
+            h.succeed();
+        });
+    }
+
+    /** A floating ship at rest stays at rest with damping on (the damping adds no motion). */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = "pirates_n_ships_config_sailing_damping_on")
+    public static void shipAtRestStaysAtRest(GameTestHelper h) {
+        ConfigOverrides.during(h, SailingConfig.HULL_DAMPING_ENABLED, true);
+        basin(h, true);
+        BlockPos helm = hull(h, 17, 17, SailingBlocks.SMALL_SQUARE_SAIL.get(), Direction.SOUTH, SailTrim.FURLED);
+        ballast(h, 17, 17);
+        Fixture f = assemble(h, helm);
+        double[] max = new double[1];
+        h.onEachTick(() -> {
+            if (h.getTick() >= 100 && h.getTick() < 200 && !f.ship().isRemoved()) {
+                max[0] = Math.max(max[0], Math.abs(rollRate(f)));
+            }
+        });
+        double[] start = new double[1];
+        h.runAfterDelay(100, () -> start[0] = rollAngle(f));
+        h.runAfterDelay(200, () -> {
+            double drift = Math.abs(rollAngle(f) - start[0]);
+            Constants.LOG.info("[damping test] at rest: max roll rate {} rad/s, roll drift {} deg", String.format("%.4f", max[0]),
+                    String.format("%.2f", Math.toDegrees(drift)));
+            h.assertTrue(max[0] < 0.05, "a ship at rest rolls: " + max[0] + " rad/s");
+            h.assertTrue(drift < Math.toRadians(1), "a ship at rest changed its roll by " + Math.toDegrees(drift) + " deg");
             h.succeed();
         });
     }

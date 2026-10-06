@@ -144,6 +144,7 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
   - Ship types are stored as structure NBT built by hand. At pickup, the template is placed directly into a new Sable sub-level at the berth, without placing the blocks in the world first (`docs/sable-notes.md` §2.5).
   - Later, optional: visible construction stages at the dock (frame → hull → masts), which needs one structure per stage.
 - A **Helm block** (Steuerrad) is the ship's anchor point. Using it while docked triggers assembly.
+  - Implemented in spike 1 (`ship/assembly`): terrain is decided by the block tag `pirates_n_ships:terrain`, and `pirates_n_ships:never_assemble` excludes more blocks. A dock that touches the hull is gathered with it, so ships are moored with a one-block gap. The default block limit is 2048.
 - Assembly collects connected blocks, excluding world terrain, with a configurable block limit. They become a Sable sub-level.
 - **Disassembly** happens at the helm when the ship is stationary and aligned. Blocks are placed back into the world, snapped to the grid.
   - Sable has no disassembly API (`docs/sable-notes.md` §2.4). We build it from Sable's public assembly pieces: the ship is levelled and its yaw snapped to a 90° step, and the target volume is checked for obstructions before the blocks are moved.
@@ -152,10 +153,13 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
 - Ship naming happens via the helm GUI or a name tag on the helm.
 
 ### 4.2 Hull analysis: dry volume
-- Run a flood fill in ship-local coordinates from the "outside" (the bounding box shell and openings in the deck).
-- Air cells the outside can't reach are **enclosed volume**, split into **compartments** (connected components).
-- Openings such as hatches, doors and trapdoors count as open or closed depending on block state.
-- Results are cached and recomputed only when ship blocks change (debounced). The same goes for opening and closing hatches.
+- **Decision (implemented in `ship/hull`):** a plain "enclosed air" flood fill is not enough. An open-topped hull, or one with an open deck hatch, is connected to the outside, yet it has to stay dry while its rim is above the waterline. So the analysis uses a **spill-height model**: for every air cell it computes the lowest path to the outside (the cell's pour point). A cell is floodable volume, a **basin** cell, when it lies below its own pour point. Fully enclosed rooms, the inside of an open boat below its rim, and a holed hull are all covered by this one rule.
+- **Compartments** are connected groups of basin cells. Solid blocks and openings separate them.
+- **Openings** (doors, hatches, trapdoors, fence gates) are never part of a compartment. They are links between two compartments, or between a compartment and the outside, and the flooding simulation reads their open state. Opening or closing one never needs a new analysis.
+- **Breaches:** a hull block destroyed by damage is tracked as a permanently open opening until it is patched, so the room behind it fills at a rate instead of at once.
+- "Up" is a vector in ship-local coordinates, so a heeling ship can be re-analysed with its real tilt (a low rim going under water then starts to flood).
+- Watertight: full blocks, slabs, stairs and glass. Not watertight: fences, walls, bars, panes, ladders, chains. The block tags `pirates_n_ships:watertight` and `pirates_n_ships:not_watertight` override this.
+- Results are cached and recomputed only when ship blocks change (debounced, and able to run off the server thread). A full analysis of a 64×32×64 hull took about 93 ms in tests, so it must never run every tick.
 
 ### 4.3 Dry hull: rendering
 - **Decision (Sable investigation, to be confirmed in spike 2):** use Sable's built-in **water occlusion regions** (`docs/sable-notes.md` §4.4) instead of our own mask mesh and renderer. Sable already renders a depth mask for each region before the water layer, from a common mixin that works on both loaders, and the regions follow the ship. Our part: turn dry compartments into regions, sync them to clients (Sable doesn't network them) and rebuild them when the hull changes. The bullets below describe the technique Sable implements.

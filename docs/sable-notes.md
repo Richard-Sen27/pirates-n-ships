@@ -117,7 +117,7 @@ From `SubLevelPhysicsSystem.tick(SubLevelContainer)` (lines 218-248) and `tickPi
   (faces + edges, l.236-240). It does **not** exclude terrain: the only filter is your `FrontierPredicate`. [V]
 - `FrontierPredicate.isValidConnection(BlockPos originPos, BlockState originState, BlockPos pos, BlockState state, @Nullable Direction directionFrom)`
   (`directionFrom` is null for edge links), l.496-508. [V]
-- `GatherResult(Set<BlockPos> blocks, int checkedBlocks, BoundingBox3i boundingBox, State state)` with
+- `GatherResult(Set<BlockPos> blocks, int checkedBlocks, BoundingBox3i boundingBox, State assemblyState)` with
   `State` ∈ `SUCCESS`, `NO_BLOCKS`, `TOO_MANY_BLOCKS` (each has `errorKey`). On `TOO_MANY_BLOCKS` it aborts
   immediately and `blocks` is null. [V l.579-590, l.215-217]
 - Fluids: water source blocks are not air, so **water is gathered** unless the predicate rejects it. [I from the
@@ -481,6 +481,13 @@ many regions. [V code; I cost]
   directly. We get the companion transitively and do not need to declare it, but the Maven filter must include the
   `dev.ryanhcode.sable-companion` group (wiki "Home"). [V/I]
 
+### Corrections from spike 1 (verified by compiling and running against Sable 2.0.6)
+- The `FrontierPredicate` is **not applied to the gather origin**: the origin is always taken when it is not air. [V]
+- `Pose3d` API, checked with `javap` on the Sable Companion 1.6.0 jar: `Pose3dc.transformPosition(Vec3)`,
+  `transformPositionInverse(Vec3)`; `BoundingBox3i(BlockPos, BlockPos)`, `BoundingBox3i(BoundingBox3ic)`,
+  `BoundingBox3i.EMPTY`; `BoundingBox3dc.minX()…` and `toMojang()` (returns an `AABB`). [V]
+- Our own wrapper for all of this is `ship/sable/SableShips` and `ship/sable/ShipBody` in `common`. New Sable calls go there.
+
 ---
 
 ## 8. Persistence and loading
@@ -511,6 +518,18 @@ many regions. [V code; I cost]
 ---
 
 ## 9. Testing and debugging
+
+### 9.0 Findings from spike 1
+- Removal reasons, verified: world close and holding-chunk unload use `UNLOADED` (`ServerSubLevelContainer` l.328,
+  `SubLevelHoldingChunkMap` l.192/624). `REMOVED` is used for an empty or invalid mass tracker (`SubLevelContainer` l.165),
+  explicit removal, a sub-level that fails to load with an empty plot (`SubLevelSerializer` l.168),
+  `SubLevelHeatMapManager` l.249, and physics recovery with no center of mass (`SubLevelPhysicsSystem` l.379). So a ship
+  that fails to load is reported as `REMOVED`. [V]
+- Sable's GameTest mixin removes sub-levels that intersect the test area when a test succeeds, so cleanup is automatic.
+  Our tests still remove their ships explicitly. [V]
+- Physics in our GameTests settled within about 10 ticks for a small hull resting on stone. [V]
+- Caution from spike 1's tests: `new Quaterniond().rotationX(angle)` gave an unexpected orientation on the test
+  classpath. The tests use `rotateAxis(angle, 1, 0, 0)` instead. Not investigated. [?]
 
 ### 9.1 How Sable tests sub-levels
 - Tests live in **`sable/neoforge/src/main/java/dev/ryanhcode/sable/neoforge/gametest/`** (`AssemblyTest`, `PhysicsTest`,

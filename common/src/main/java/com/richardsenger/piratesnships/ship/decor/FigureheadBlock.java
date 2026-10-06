@@ -10,6 +10,11 @@ import net.minecraft.world.level.block.state.StateDefinition;
 /**
  * A decorative bow figurehead (design.md §4.8). Its carved front faces the direction the placing player looks,
  * so a player standing on deck and facing the bow places it looking out to sea. No other behavior.
+ * <p>
+ * Each design is a hand-made Blockbench model ({@code art/models/figurehead_<design>.bbmodel}) of carved, painted wood:
+ * a mounting plate on the side opposite {@link #FACING} (against the hull block behind it) and a forward-leaning figure
+ * that reaches up to a block beyond the front face and hangs a little below the block, like a figurehead under a
+ * bowsprit. Only the look extends past the block; the collision and selection shape stay the full block.
  */
 public class FigureheadBlock extends HorizontalDirectionalBlock {
 

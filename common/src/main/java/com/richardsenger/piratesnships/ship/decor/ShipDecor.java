@@ -43,7 +43,7 @@ public final class ShipDecor {
 
     private static RegistryEntry<Block, FigureheadBlock> figurehead(String name) {
         return ModRegistry.blockWithItem(name, () -> new FigureheadBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD)
-                .instrument(NoteBlockInstrument.BASS).strength(2.0f, 3.0f).sound(SoundType.WOOD).ignitedByLava()));
+                .instrument(NoteBlockInstrument.BASS).strength(2.0f, 3.0f).sound(SoundType.WOOD).noOcclusion().ignitedByLava()));
     }
 
     /** Like a vanilla barrel. */

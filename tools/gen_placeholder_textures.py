@@ -23,7 +23,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 TEX = ROOT / "common/src/main/resources/assets/pirates_n_ships/textures"
 PROTECTED_FILE = Path(__file__).resolve().parent / "protected_textures.txt"
-# Names of hand-made textures this script must not overwrite (e.g. "rapier", "figurehead_lion").
+# Names of hand-made textures this script must not overwrite (e.g. "rapier", "cargo_crate").
 PROTECTED = set()
 FOREIGN_PREFIXES = ("test_block",)
 
@@ -305,160 +305,6 @@ def brig_door_item():
     return cv.outline()
 
 
-# ---------------------------------------------------------------- blocks
-
-def figurehead_side():
-    return planks("figurehead_side", "wood", "wood_d", "wood_l").border()
-
-
-def figurehead_top():
-    cv = Canvas("wood")
-    noise(cv, "figurehead_top", ["wood_d", "wood_l"], 0.2)
-    for r, c in ((6, "wood_d"), (4, "wood_l"), (2, "wood_d")):
-        cv.disc(7.5, 7.5, r, c)
-    return cv.border()
-
-
-def face(name):
-    cv = planks(name, "wood", "wood_d", "wood_l")
-    return cv
-
-
-def figurehead_mermaid():
-    cv = face("figurehead_mermaid")
-    cv.rect(4, 2, 11, 6, "amber")           # hair
-    cv.rect(5, 3, 10, 7, "tan_l")           # face
-    cv.px(6, 5, "blue"); cv.px(9, 5, "blue"); cv.rect(7, 7, 8, 7, "red")
-    cv.rect(5, 8, 10, 10, "tan_l")
-    cv.rect(5, 11, 10, 14, "teal"); cv.line(4, 14, 11, 14, "blue")
-    return cv.border()
-
-
-def figurehead_lion():
-    cv = face("figurehead_lion")
-    cv.disc(7.5, 7.5, 6.2, "amber")         # mane
-    cv.disc(7.5, 8, 4, "gold")
-    cv.px(6, 6, "black"); cv.px(9, 6, "black")
-    cv.rect(7, 8, 8, 9, "brown"); cv.rect(6, 10, 9, 10, "gold_d")
-    return cv.border()
-
-
-def figurehead_eagle():
-    cv = face("figurehead_eagle")
-    cv.rect(4, 3, 11, 12, "brown")
-    cv.rect(5, 3, 10, 7, "white")           # head
-    cv.px(6, 5, "black"); cv.px(9, 5, "black")
-    cv.rect(7, 7, 8, 9, "gold"); cv.px(7, 10, "gold_d")
-    cv.line(1, 8, 4, 11, "brown"); cv.line(14, 8, 11, 11, "brown")
-    return cv.border()
-
-
-def figurehead_skull():
-    cv = face("figurehead_skull")
-    cv.disc(7.5, 6.5, 4.6, "bone")
-    cv.rect(5, 10, 10, 12, "bone")
-    cv.rect(5, 5, 6, 7, "black"); cv.rect(9, 5, 10, 7, "black")
-    cv.px(7, 9, "black"); cv.px(8, 9, "black")
-    for x in (6, 8, 10):
-        cv.px(x, 12, "grey")
-    return cv.border()
-
-
-def brig_bars():
-    cv = Canvas()
-    for x in (1, 5, 10, 14):
-        cv.rect(x, 0, x + 1, 15, "iron")
-        cv.rect(x, 0, x, 15, "steel")
-    cv.rect(0, 1, 15, 2, "wood"); cv.rect(0, 13, 15, 14, "wood")
-    cv.rect(0, 1, 15, 1, "wood_l"); cv.rect(0, 14, 15, 14, "wood_d")
-    return cv
-
-
-def brig_bars_edge():
-    cv = Canvas("iron")
-    cv.rect(7, 0, 8, 15, "steel")
-    return cv
-
-
-def brig_door(top):
-    cv = planks("brig_door_" + ("top" if top else "bottom"), "wood", "wood_d", "wood_l")
-    for x in (0, 15):
-        cv.rect(x, 0, x, 15, "iron_d")
-    if top:
-        cv.rect(0, 2, 15, 3, "iron")
-        cv.rect(3, 6, 12, 13, "black")
-        for x in (4, 7, 10):
-            cv.rect(x, 6, x + 1, 13, "iron")
-            cv.rect(x, 6, x, 13, "steel")
-        cv.rect(0, 0, 15, 0, "iron_d")
-    else:
-        cv.rect(0, 12, 15, 13, "iron")
-        cv.rect(12, 1, 13, 3, "steel"); cv.px(12, 2, "black")
-        cv.rect(0, 15, 15, 15, "iron_d")
-    return cv
-
-
-def cargo_crate():
-    cv = planks("cargo_crate")
-    cv.line(1, 1, 14, 14, "wood"); cv.line(1, 2, 13, 14, "wood_d")
-    cv.rect(1, 1, 14, 1, "wood"); cv.rect(1, 14, 14, 14, "wood")
-    cv.rect(1, 1, 1, 14, "wood"); cv.rect(14, 1, 14, 14, "wood")
-    return cv.border()
-
-
-def barrel_side(name, band="iron"):
-    cv = Canvas("plank")
-    for x in range(0, 16, 3):
-        cv.rect(x, 0, x, 15, "plank_d")
-    noise(cv, name, ["plank_l"], 0.1)
-    for y in (2, 13):
-        cv.rect(0, y, 15, y + 1, band)
-        cv.rect(0, y, 15, y, "steel")
-    return cv.border()
-
-
-def barrel_top(name, inner):
-    cv = Canvas("plank")
-    noise(cv, name, ["plank_d", "plank_l"], 0.15)
-    cv.border("iron").rect(1, 1, 14, 1, "iron")
-    cv.rect(2, 2, 13, 13, inner) if inner else None
-    for y in (5, 10):
-        cv.rect(1, y, 14, y, "plank_d")
-    return cv
-
-
-def cargo_barrel_side(): return barrel_side("cargo_barrel_side")
-def cargo_barrel_top(): return barrel_top("cargo_barrel_top", None)
-
-
-def water_barrel_side():
-    cv = barrel_side("water_barrel_side", "blue_d")
-    cv.rect(6, 6, 9, 9, "blue"); cv.rect(7, 7, 8, 8, "blue_l")
-    return cv
-
-
-def water_barrel_top():
-    cv = barrel_top("water_barrel_top", None)
-    cv.disc(7.5, 7.5, 3.5, "blue")
-    cv.disc(6.5, 6.5, 1.5, "blue_l")
-    return cv
-
-
-def pantry_side():
-    cv = planks("pantry_side", "wood", "wood_d", "wood_l")
-    for y0 in (1, 8):
-        cv.rect(2, y0, 13, y0 + 5, "wood_d")
-        cv.rect(3, y0 + 3, 5, y0 + 5, "tan")        # bread
-        cv.rect(7, y0 + 2, 8, y0 + 5, "red")        # apple / jar
-        cv.rect(10, y0 + 3, 12, y0 + 5, "amber")
-        cv.rect(2, y0 + 5, 13, y0 + 5, "wood_l")
-    return cv.border()
-
-
-def pantry_top():
-    return planks("pantry_top", "wood", "wood_d", "wood_l").border()
-
-
 ITEMS = {
     "rapier": rapier, "cutlass": cutlass, "saber": saber, "pistol": pistol, "musket": musket,
     "lead_shot": lead_shot, "cannonball": cannonball, "grappling_hook": grappling_hook,
@@ -467,9 +313,6 @@ ITEMS = {
     "shackles": shackles, "brig_door": brig_door_item,
 }
 BLOCKS = {
-    "figurehead_mermaid": figurehead_mermaid, "figurehead_lion": figurehead_lion,
-    "figurehead_eagle": figurehead_eagle, "figurehead_skull": figurehead_skull,
-    "figurehead_side": figurehead_side, "figurehead_top": figurehead_top,
     "brig_bars": brig_bars, "brig_bars_edge": brig_bars_edge,
     "brig_door_top": lambda: brig_door(True), "brig_door_bottom": lambda: brig_door(False),
     "cargo_crate": cargo_crate, "cargo_barrel_side": cargo_barrel_side, "cargo_barrel_top": cargo_barrel_top,

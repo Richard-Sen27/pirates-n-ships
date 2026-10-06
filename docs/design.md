@@ -32,7 +32,7 @@ A Minecraft mod about sailing, piracy and life at sea. Players build **real bloc
 | Loader | **Multiloader project.** NeoForge is the first shipped target. Fabric is planned (module exists in the build, but it is disabled until the NeoForge version is stable). |
 | Java | 21 |
 | Physics | **Sable** (`dev.ryanhcode.sable`) is the only hard dependency. It provides sub-levels (moving, interactive block structures), Rapier-based physics and basic buoyancy. License: PolyForm Shield 1.0.0. Depend on it, never copy or bundle its code. `common` compiles against `sable-common`, and each loader module uses its loader artifact. |
-| Animated entities | GeckoLib (required dependency, to be confirmed). It is available for both loaders. |
+| Animated entities | GeckoLib (required dependency). It is available for both loaders. |
 | Config | A cross-loader config solution (e.g. Forge Config API Port), accessed only through our own `config` wrapper. See §21. |
 | Mappings | Official Mojang + Parchment |
 | Build | Based on the **MultiLoader-Template** (jaredlll08): `common` (vanilla only, via NeoForm), `neoforge` (ModDevGradle), `fabric` (Loom). The template's legacy Forge module was removed. |
@@ -277,7 +277,7 @@ The crew operates a station by being attached to it, much like being seated. Thi
 | Pistol (Pistole) | Single shot, long reload, high damage, short range |
 | Musket (Flinte) | Single shot, longer range, slower reload |
 | Ammunition (Munition) | Lead shot, crafted |
-| Gunpowder (Schießpulver) | Uses vanilla gunpowder or a refined variant (to be decided) |
+| Gunpowder (Schießpulver) | Vanilla gunpowder. No custom variant. |
 | Grappling hook (Enterhaken) | See §8.3 |
 | Cannon (Kanone) | Block, placed on ships or land, see §8.2 |
 | Cannonball (Kanonenkugel) | Plus later chain shot (damages sails/rigging) and grapeshot (hits crew) |
@@ -370,7 +370,7 @@ Models and animations use GeckoLib. Textures are 16×16-scale pixel art.
 - Loot (Beute) from treasure chests, captured ships and wrecks can be sold to fences on pirate islands or traders in villages.
 
 ### 10.3 Trade and cargo
-- **Trade goods:** a set of cargo items (e.g. sugar, tobacco, spices, cloth, timber, rum, fish, iron), each with a base price. Stored in cargo crates and barrels (cargo containers hold one good type in bulk).
+- **Trade goods:** a set of cargo items, each with a base price. Vanilla items are reused where they exist (sugar, fish, timber/logs, iron). New items only for typical colonial goods vanilla lacks (tobacco, spices, cloth, rum). Stored in cargo crates and barrels (cargo containers hold one good type in bulk).
 - **Markets:** every port (seafarer village, navy outpost, pirate island) has a harbor master or trader with a market screen. Each port has goods it **produces** (cheap) and goods it **demands** (expensive), derived from its biome and type.
 - **Dynamic prices:** buying raises a good's price and selling lowers it, recovering slowly over time. This prevents infinite money loops.
 - **Trade runs:** buy cheap in one port and sell where demand is high. Longer and riskier routes (through pirate waters) pay more.
@@ -525,8 +525,7 @@ Spikes 1–4 are throwaway-quality prototypes that prove feasibility. They may l
 ## 21. Open questions
 - What exactly does Sable's API offer for assembly, applying forces and custom buoyancy? (Read `refs/sable` + wiki: "Block Physics Properties", "Dimension Physics Data", "Working with Entities".)
 - Can buoyancy be overridden per ship (needed for dry volume and flooding), or does it have to be applied as an external force?
-- Should gunpowder be vanilla, or a custom refined variant?
-- Trade goods: new items (sugar, tobacco, spices, …), or reuse vanilla items where they exist? And how to keep trade interesting without NPC merchant ships sailing the routes (a possible later feature)?
+- Trade: how to keep it interesting without NPC merchant ships sailing the routes (a possible later feature)?
 - How should cargo weight interact with Sable's mass: change block/ship mass directly, or apply drag and a buoyancy offset?
 - Should there be a Navy career path for players (join the navy instead of pirating)?
 - Should ships be buildable freely, or use blueprints / shipwright NPCs?

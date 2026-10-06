@@ -81,6 +81,20 @@ public final class SailingConfig {
     public static final ConfigValue<Integer> ANCHOR_RAISE_TICKS = SAILING.intRange("anchor_raise_ticks", A.raiseTicks(), 1, 2400,
             "Ticks from raising the anchor until it is stowed");
 
+    private static final ConfigSection SHIPS = ModConfigs.server("sailing_runtime", "How sails and the keel act on assembled ships");
+    public static final ConfigValue<Boolean> FORCES_ENABLED = SHIPS.bool("forces_enabled", true,
+            "Sails and the keel push assembled ships. Off: ships only float and drift");
+    public static final ConfigValue<Boolean> SAILS_NEED_WATER = SHIPS.bool("sails_need_water", true,
+            "Sails only push a ship that is afloat. Off: wind also pushes ships on land or in the air");
+    public static final ConfigValue<Double> FULL_DRAFT = SHIPS.doubleRange("full_draft", 1.0, 0.1, 16.0,
+            "Depth of the hull bottom below the sea, in blocks, at which the keel acts at full strength (less depth acts proportionally)");
+    public static final ConfigValue<Double> SAIL_HEEL_FACTOR = SHIPS.doubleRange("sail_heel_factor", 0.25, 0.0, 1.0,
+            "Fraction of the heeling and pitching moment of sails and keel that is applied (1 = physical; hollow block hulls have no ballast and capsize easily)");
+    public static final ConfigValue<Integer> SCAN_INTERVAL = SHIPS.intRange("scan_interval_ticks", 5, 1, 200,
+            "How often loaded ships without a sailing state are looked for, in ticks");
+    public static final ConfigValue<Boolean> SAIL_BLOCK_TRIM = SHIPS.bool("sail_block_trim", true,
+            "Using a sail block cycles its own trim (furled, half, full) without the winch");
+
     private SailingConfig() {
     }
 

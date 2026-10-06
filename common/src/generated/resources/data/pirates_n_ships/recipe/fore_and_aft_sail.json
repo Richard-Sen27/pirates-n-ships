@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "S": {
+      "item": "minecraft:stick"
+    },
+    "W": {
+      "tag": "minecraft:wool"
+    }
+  },
+  "pattern": [
+    "S  ",
+    "SW ",
+    "SWW"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:fore_and_aft_sail"
+  }
+}

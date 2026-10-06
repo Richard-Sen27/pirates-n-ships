@@ -21,10 +21,14 @@ public final class GameTestTemplates {
     /** 24×12×24 of air, for ship-scale tests. */
     public static final String EMPTY_24 = Constants.MOD_ID + ":empty_24x12x24";
 
+    /** 40×12×40 of air, for ships that move (sailing tests). */
+    public static final String EMPTY_40 = Constants.MOD_ID + ":empty_40x12x40";
+
     public static final List<Template> ALL = List.of(
             new Template(EMPTY_3, 3, 3, 3),
             new Template(EMPTY_9, 9, 6, 9),
-            new Template(EMPTY_24, 24, 12, 24));
+            new Template(EMPTY_24, 24, 12, 24),
+            new Template(EMPTY_40, 40, 12, 40));
 
     private GameTestTemplates() {
     }

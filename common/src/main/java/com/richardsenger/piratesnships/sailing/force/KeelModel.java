@@ -15,7 +15,7 @@ import org.joml.Vector3d;
  *       torque {@code −mass · submerged · c_lat · ω · L² / 12} (times {@code keelYawDragFactor}).</li>
  * </ul>
  * Mass-proportional, so the coefficients are decay rates [1/s]: with the defaults a ship loses sideways speed with a
- * time constant of 0.5 s and forward speed with one of 10 s.
+ * time constant of 0.125 s and forward speed with one of 10 s.
  */
 public final class KeelModel {
 

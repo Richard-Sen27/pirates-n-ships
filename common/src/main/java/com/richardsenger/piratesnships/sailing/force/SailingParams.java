@@ -31,7 +31,7 @@ public record SailingParams(
     public static final SailingParams DEFAULTS = new SailingParams(
             1.0, 0.5,
             0.5, 35.0,
-            true, 0.1, 2.0, 1.0,
+            true, 0.1, 8.0, 1.0, // lateral 8.0 since spike 3 (2.0 drifted 0.7 m/s on a beam reach)
             AnchorParams.DEFAULTS);
 
     public SailingParams {

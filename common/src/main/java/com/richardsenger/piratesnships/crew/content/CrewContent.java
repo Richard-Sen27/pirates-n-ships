@@ -2,17 +2,25 @@ package com.richardsenger.piratesnships.crew.content;
 
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
+import com.richardsenger.piratesnships.crew.galley.PantryBlock;
+import com.richardsenger.piratesnships.crew.galley.PantryBlockEntity;
+import com.richardsenger.piratesnships.crew.galley.WaterBarrelBlock;
+import com.richardsenger.piratesnships.crew.galley.WaterBarrelBlockEntity;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
 
 /**
  * Ship provisions (design.md §7.4): long-keeping foods, the anti-scurvy lime, and the pantry and water barrel
- * blocks. The blocks are plain solid blocks for now; they become containers in a later package.
+ * blocks with their block entities (behavior in {@code crew.galley}).
  */
 public final class CrewContent {
 
@@ -26,8 +34,17 @@ public final class CrewContent {
     public static final RegistryEntry<Item, Item> SALT_PORK = food("salt_pork", SALT_PORK_FOOD);
     public static final RegistryEntry<Item, Item> LIME = food("lime", LIME_FOOD);
 
-    public static final RegistryEntry<Block, Block> PANTRY = ModRegistry.blockWithItem("pantry", () -> new Block(woodProps()));
-    public static final RegistryEntry<Block, Block> WATER_BARREL = ModRegistry.blockWithItem("water_barrel", () -> new Block(woodProps()));
+    public static final RegistryEntry<Block, PantryBlock> PANTRY = ModRegistry.blockWithItem("pantry", () -> new PantryBlock(woodProps()));
+    public static final RegistryEntry<Block, WaterBarrelBlock> WATER_BARREL = ModRegistry.blockWithItem("water_barrel", () -> new WaterBarrelBlock(woodProps()));
+
+    public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<PantryBlockEntity>> PANTRY_BLOCK_ENTITY =
+            ModRegistry.blockEntity("pantry", PantryBlockEntity::new, PANTRY);
+    public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<WaterBarrelBlockEntity>> WATER_BARREL_BLOCK_ENTITY =
+            ModRegistry.blockEntity("water_barrel", WaterBarrelBlockEntity::new, WATER_BARREL);
+
+    /** Water rations in a water barrel item (from a broken barrel). Absent = a full barrel. */
+    public static final RegistryEntry<DataComponentType<?>, DataComponentType<Integer>> WATER_RATIONS = ModRegistry.dataComponent(
+            "water_rations", b -> b.persistent(ExtraCodecs.NON_NEGATIVE_INT).networkSynchronized(ByteBufCodecs.VAR_INT));
 
     private CrewContent() {
     }

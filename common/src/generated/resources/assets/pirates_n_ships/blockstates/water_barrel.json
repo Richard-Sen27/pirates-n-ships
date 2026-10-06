@@ -1,6 +1,18 @@
 {
   "variants": {
-    "": {
+    "fill=0": {
+      "model": "pirates_n_ships:block/water_barrel_fill0"
+    },
+    "fill=1": {
+      "model": "pirates_n_ships:block/water_barrel_fill1"
+    },
+    "fill=2": {
+      "model": "pirates_n_ships:block/water_barrel_fill2"
+    },
+    "fill=3": {
+      "model": "pirates_n_ships:block/water_barrel_fill3"
+    },
+    "fill=4": {
       "model": "pirates_n_ships:block/water_barrel"
     }
   }

@@ -509,13 +509,14 @@ All hazards can be turned off individually and have frequency settings.
 
 ## 17. Configuration (Einstellungen)
 
-All gameplay settings live in the **server config** (synced to clients). Audio and visuals live in the **client config**. Config values are defined once in `common` and read through our own `config` wrapper, so the backing library can be swapped. The in-game config screen uses NeoForge's generated config UI on NeoForge. On Fabric, use a Mod Menu integration or a simple fallback screen (behind a platform method).
+All gameplay settings live in the **server config** (synced to clients). Audio and visuals live in the **client config**. Config values are defined once in `common` and read through our own `config` wrapper, so the backing library can be swapped. The table lists the main settings. The config classes define more (every strength and threshold has a value), and they are the reference. A client config section must not have the same name as a server section, because the config screen's translation keys don't include the config type. The in-game config screen uses NeoForge's generated config UI on NeoForge. On Fabric, use a Mod Menu integration or a simple fallback screen (behind a platform method).
 
 | Group | Toggles and values |
 |---|---|
-| Ships | max block count, assembly enabled, sinking enabled, wreck persistence time, shipwright orders on/off, build time per ship type, order prices |
+| Ships | max block count, assembly enabled, disassembly thresholds (stillness, levelness), sinking enabled, wreck persistence time, shipwright orders on/off, build time per ship type, order prices |
 | Flooding | enabled, inflow rate, pump rate |
 | Wind | variability, weather multipliers, regional variation on/off |
+| Sailing | sail force scale, rudder strength, keel drag (on/off + strengths), anchor strength and durations |
 | Waves | enabled, amplitude, camera sway (client) |
 | Hazards | waterspouts / whirlpools / kraken: enabled + frequency each |
 | Crew | wages on/off, mutiny on/off, max crew multiplier |

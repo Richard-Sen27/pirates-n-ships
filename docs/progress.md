@@ -9,10 +9,10 @@ Last updated: 2026-10-06 (second session: wave 1 of phase C running).
 
 ## Current state
 
-`main` is green: `./gradlew build` (297 JUnit tests), `./gradlew :neoforge:runGameTestServer` (27 GameTests, including real Sable sub-levels being assembled and disassembled) and `./gradlew :neoforge:runData` (no diff). Nothing is pushed: local `main` is ahead of `origin/main`.
+`main` is green: `./gradlew build` (303 JUnit tests), `./gradlew :neoforge:runGameTestServer` (30 GameTests, including real Sable sub-levels being assembled and disassembled) and `./gradlew :neoforge:runData` (no diff). Nothing is pushed: local `main` is ahead of `origin/main`.
 
-Merged in this session: **A2** foundation follow-up, **C1** hull + flooding, **C2** wind + sails, **C4** law, **C6** provisions, **D1** spike 1 (assembly).
-Running now (five agents): **C3** melee, **C5** trade, **C7** remaining config, **C8** items and blocks, **D2** spike 2 (dry hull).
+Merged in this session: **A2** foundation follow-up, **C1** hull + flooding, **C2** wind + sails, **C4** law, **C6** provisions, **C7** remaining config, **D1** spike 1 (assembly).
+Running now (five agents): **C3** melee, **C5** trade, **C8** items and blocks, **D2** spike 2 (dry hull), **A3** foundation maintenance.
 After that: spikes D3 and D4 one after another, and phase E integration once C3, C5 and C8 are merged.
 
 How merges work in this phase:
@@ -41,7 +41,7 @@ Open foundation follow-ups (small, not blocking):
 | C4 | Law system logic (§13.1, §13.2) + false-flag detection math (§4.7) | done | Merged. 106 JUnit tests and 6 GameTests. Package `law` (`crime`, `bounty`, `flag`, `LawService`, `/pirates law` debug commands). Playtest: `docs/playtests/law-commands.md`. | |
 | C5 | Trade economy logic (§10.3) | in progress | Wave 2. |
 | C6 | Provisions logic (§7.4) | done | Merged. 54 JUnit tests, 3 GameTests. Package `crew/provisions`. |
-| C7 | Config groups and values (§17) | in progress | Wave 2. Reduced to the groups no other package owns (see decisions). |
+| C7 | Config groups and values (§17) | done | Merged. Sections `ships`, `waves`, `hazards`, `crew`, `combat`, `survival`, `world`, `world_simulation` (server) and `wave_effects`, `audio` (client), loaded by `core/settings/SettingsModule`. Nothing reads them yet. Almost every default is the agent's own choice: see "Defaults to review". |
 | C8 | Basic items and blocks + datagen + placeholder textures | in progress | Wave 2. |
 | D1 | Spike 1: assembly (§4.1) | blocked: needs playtest | Merged and green headlessly: 14 JUnit tests and 10 GameTests that assemble, name, refuse and disassemble real sub-levels. Lives in `common` (`ship/assembly`, Sable adapter in `ship/sable`, `ship/ShipData`). Playtest: `docs/playtests/milestone-1.md`. |
 | D2 | Spike 2: dry hull (§4.3, §4.4) | in progress | Started without waiting for the spike 1 playtest, because spike 1's GameTests cover assembly headlessly. Ends at a playtest gate. |
@@ -127,6 +127,19 @@ How feature modules plug in is documented in design.md §3.3. Deviations from th
 | Sable's NeoForge artifact is added with Create, Ponder, Flywheel and Registrate excluded. | Sable's published runtime variant lists them, but only uses them for optional compat. We have no Create dependency. |
 
 Known harmless log noise with Sable: `Failed to apply tag physics properties. Unknown block: create:flywheel` on every level start (Sable's own data mentions a Create block).
+
+## Defaults to review (chosen by agents, not given by the spec)
+
+All of these are config values, so they can be changed without code. The ones most worth a look:
+- **Crew:** `mutiny_enabled = true` (the spec only says "behind a config toggle").
+- **Waves:** client `camera_sway = true` (could cause motion sickness).
+- **Ships:** `wreck_persistence_days = 0`, meaning wrecks stay forever (could cost performance on big servers). Shipwright build times 2 / 3 / 4 days and prices 200 / 350 / 500 doubloons for sloop / merchant cog / brigantine.
+- **Hazards:** waterspout chance 0.1 per minute in a thunderstorm, whirlpool 0.05 per day, kraken 0.02 per day, each per player at sea.
+- **World simulation:** raids typically after 45 to 60 minutes at one settlement, then a 5-day cooldown.
+- **Law:** bounty threshold at a score of 50, navy bounty = score × 2, alive claim pays 1.5×, decay 10 points per day.
+- **Assembly:** block limit 2048, disassembly allowed below 0.3 m/s and 6° tilt.
+- **Provisions:** 6 nutrition per crew member per day, fresh food keeps 5 days, scurvy after 8 days.
+- **Sailing:** see the tuning questions in the spike 3 playtest (to be written).
 
 ## Playtests for the human
 

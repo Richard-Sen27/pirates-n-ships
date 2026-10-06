@@ -1,0 +1,228 @@
+package com.richardsenger.piratesnships.sailing.client;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.sailing.block.CleatBlock;
+import com.richardsenger.piratesnships.sailing.block.CleatBlockEntity;
+import com.richardsenger.piratesnships.sailing.sail.TriangleCloth;
+import com.richardsenger.piratesnships.sailing.sail.TriangularSail;
+import com.richardsenger.piratesnships.sailing.wind.ClientWind;
+import com.richardsenger.piratesnships.sailing.wind.WindSample;
+import com.richardsenger.piratesnships.ship.sable.ClientShipPoses;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Quaterniond;
+import org.joml.Vector3d;
+import org.joml.Vector3f;
+
+/**
+ * Draws a stay and the cloth of a triangular sail (docs/design.md §5.2, rule F5b) from the head cleat's
+ * {@link CleatBlockEntity}: the stay as a thin rope from the head to the tack, and the cloth as the triangle head -
+ * tack - clew point, where the clew point is lowered from the head toward the clew cleat by the trim (furled: a bundle
+ * along the stay; half: halfway down; full: down to the clew). Trim changes are hoisted and lowered over about a
+ * second, the cloth bellies out to the downwind side (with hysteresis), and both faces are drawn
+ * ({@code entityCutoutNoCull}). The textures repeat once per block.
+ *
+ * <p>Like {@link YardClothRenderer} it works on land and on ships (Sable renders a sub-level's block entities with the
+ * ship's pose on the pose stack), and it does not set {@code shouldRenderOffScreen} (see the note there); the
+ * NeoForge culling box comes from {@link #getRenderBoundingBox}.
+ */
+public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> {
+
+    public static final ResourceLocation CLOTH_TEXTURE = YardClothRenderer.TEXTURE;
+    public static final ResourceLocation ROPE_TEXTURE = Constants.id("textures/block/rope.png");
+
+    /** Hoisting speed: fraction of the drop per second. */
+    private static final float HOIST_PER_SECOND = 1.0f;
+    /** Cells per block of cloth along each edge. */
+    private static final int CELLS_PER_BLOCK = 2;
+    /** |cos| of the wind against the cloth's normal below which the cloth keeps its side (hysteresis). */
+    private static final double SIDE_SWITCH = 0.15;
+    /** Half the thickness of the rope [blocks]. */
+    private static final float ROPE_HALF = 0.03f;
+    /** Bulge at the middle of a full sail, per block of the square root of its area (capped). */
+    private static final float BELLY_PER_SIZE = 0.08f;
+    private static final float MAX_BELLY = 0.5f;
+
+    public StayClothRenderer(BlockEntityRendererProvider.Context context) {
+    }
+
+    @Override
+    public void render(CleatBlockEntity be, float partialTick, PoseStack pose, MultiBufferSource buffers, int light, int overlay) {
+        Level level = be.getLevel();
+        BlockState state = be.getBlockState();
+        BlockPos target = be.stayTarget();
+        if (level == null || target == null || target.getY() >= be.getBlockPos().getY() || !(state.getBlock() instanceof CleatBlock)) {
+            return; // only the higher end of a stay draws it
+        }
+        BlockPos p = be.getBlockPos();
+        Vector3f tack = new Vector3f(target.getX() - p.getX(), target.getY() - p.getY(), target.getZ() - p.getZ());
+        pose.pushPose();
+        pose.translate(0.5f, 0.5f, 0.5f);
+        PoseStack.Pose last = pose.last();
+        beam(buffers.getBuffer(RenderType.entityCutoutNoCull(ROPE_TEXTURE)), last, new Vector3f(), tack, ROPE_HALF, light, overlay);
+        TriangleCloth g = be.cloth();
+        if (g != null && g.drop() > 0) {
+            double now = level.getGameTime() + (double) partialTick;
+            float shown = animate(be, (float) TriangularSail.drawnFraction(state.getValue(CleatBlock.TRIM)), now);
+            Vector3f normal = new Vector3f(g.tackZ(), 0f, -g.tackX());
+            if (normal.lengthSquared() > 1.0e-6f) {
+                normal.normalize();
+                updateSide(be, normal, level, now, partialTick);
+                VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(CLOTH_TEXTURE));
+                Vector3f gTack = new Vector3f(g.tackX(), g.tackY(), g.tackZ());
+                if (shown * g.drop() > 0.05f) {
+                    cloth(vc, last, gTack, shown * g.drop(), normal.mul(be.side, new Vector3f()), g, light, overlay);
+                }
+                if (shown < 0.999f) {
+                    float r = 0.04f + 0.1f * (1f - shown) * Math.min(1f, g.drop() / 4f);
+                    Vector3f off = normal.mul(be.side * 0.05f, new Vector3f());
+                    beam(vc, last, new Vector3f(off), new Vector3f(gTack).add(off), r, light, overlay);
+                }
+            }
+        }
+        pose.popPose();
+    }
+
+    /** Moves the shown fraction toward {@code target} at {@link #HOIST_PER_SECOND}. */
+    private static float animate(CleatBlockEntity be, float target, double now) {
+        if (Float.isNaN(be.shownFraction) || Double.isNaN(be.shownTime)) {
+            be.shownFraction = target;
+        } else {
+            float step = (float) (Math.min(Math.max(now - be.shownTime, 0.0), 20.0) / 20.0) * HOIST_PER_SECOND;
+            float d = target - be.shownFraction;
+            be.shownFraction = Math.abs(d) <= step ? target : be.shownFraction + Math.signum(d) * step;
+        }
+        be.shownTime = now;
+        return be.shownFraction;
+    }
+
+    /** The cloth bellies toward the side the wind blows to (in the ship's frame when on a ship). */
+    private static void updateSide(CleatBlockEntity be, Vector3f normal, Level level, double now, float partialTick) {
+        if (!ClientWind.hasData()) {
+            return;
+        }
+        WindSample w = ClientWind.sample(now);
+        if (w.strength() <= 0.01) {
+            return;
+        }
+        Vector3d n = new Vector3d(normal.x, normal.y, normal.z);
+        Quaterniond q = ClientShipPoses.orientation(level, Vec3.atCenterOf(be.getBlockPos()), partialTick);
+        if (q != null) {
+            q.transform(n);
+        }
+        double h = Math.hypot(n.x, n.z);
+        if (h < 1.0e-6) {
+            return;
+        }
+        double dot = (n.x * w.dirX() + n.z * w.dirZ()) / h;
+        if (dot > SIDE_SWITCH) {
+            be.side = 1;
+        } else if (dot < -SIDE_SWITCH) {
+            be.side = -1;
+        }
+    }
+
+    /**
+     * The drawn triangle head (origin) - tack - clew point {@code (0, -bottom, 0)}, as a grid of small triangles that
+     * bulges along {@code out} (the downwind normal), most in the middle.
+     */
+    private static void cloth(VertexConsumer vc, PoseStack.Pose p, Vector3f tack, float bottom, Vector3f out, TriangleCloth g,
+                              int light, int overlay) {
+        Vector3f clew = new Vector3f(0f, -bottom, 0f);
+        float size = Math.max(tack.length(), bottom);
+        int n = Math.max(2, (int) Math.ceil(size * CELLS_PER_BLOCK));
+        double area = 0.5 * Math.hypot(g.tackX(), g.tackZ()) * g.drop();
+        float belly = Math.min(MAX_BELLY, BELLY_PER_SIZE * (float) Math.sqrt(area)) * (bottom / g.drop());
+        float hx = (float) Math.hypot(tack.x, tack.z);
+        Vector3f along = hx < 1.0e-6f ? new Vector3f(1f, 0f, 0f) : new Vector3f(tack.x / hx, 0f, tack.z / hx);
+        Vector3f[][] pts = new Vector3f[n + 1][];
+        for (int i = 0; i <= n; i++) {
+            pts[i] = new Vector3f[n - i + 1];
+            for (int j = 0; j <= n - i; j++) {
+                float u = (float) i / n, v = (float) j / n;
+                float bulge = 27f * u * v * (1f - u - v) * belly;
+                pts[i][j] = new Vector3f(tack).mul(u).add(new Vector3f(clew).mul(v)).add(new Vector3f(out).mul(bulge));
+            }
+        }
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n - i; j++) {
+                tri(vc, p, pts[i][j], pts[i + 1][j], pts[i][j + 1], along, light, overlay);
+                if (j < n - i - 1) {
+                    tri(vc, p, pts[i + 1][j], pts[i + 1][j + 1], pts[i][j + 1], along, light, overlay);
+                }
+            }
+        }
+    }
+
+    /** One triangle, as a quad with its last corner doubled; texture coordinates are the planar position in blocks. */
+    private static void tri(VertexConsumer vc, PoseStack.Pose p, Vector3f a, Vector3f b, Vector3f c, Vector3f along, int light, int overlay) {
+        Vector3f n = new Vector3f(b).sub(a).cross(new Vector3f(c).sub(a));
+        if (n.lengthSquared() < 1.0e-12f) return;
+        n.normalize();
+        vertex(vc, p, a, a.dot(along), -a.y, n, light, overlay);
+        vertex(vc, p, b, b.dot(along), -b.y, n, light, overlay);
+        vertex(vc, p, c, c.dot(along), -c.y, n, light, overlay);
+        vertex(vc, p, c, c.dot(along), -c.y, n, light, overlay);
+    }
+
+    /** A square beam of half width {@code half} from {@code from} to {@code to} (four sides, open ends). */
+    private static void beam(VertexConsumer vc, PoseStack.Pose p, Vector3f from, Vector3f to, float half, int light, int overlay) {
+        Vector3f d = new Vector3f(to).sub(from);
+        float len = d.length();
+        if (len < 1.0e-4f) return;
+        d.div(len);
+        Vector3f a = Math.abs(d.y) > 0.99f ? new Vector3f(1f, 0f, 0f) : new Vector3f(d).cross(0f, 1f, 0f).normalize();
+        Vector3f b = new Vector3f(d).cross(a).normalize();
+        Vector3f[] corner = {
+                new Vector3f(a).add(b).mul(half), new Vector3f(a).sub(b).mul(half),
+                new Vector3f(a).negate().sub(b).mul(half), new Vector3f(b).sub(a).mul(half)};
+        for (int k = 0; k < 4; k++) {
+            Vector3f c0 = corner[k], c1 = corner[(k + 1) % 4];
+            Vector3f n = new Vector3f(c0).add(c1).normalize();
+            float u0 = k * 0.25f, u1 = u0 + 0.25f;
+            vertex(vc, p, new Vector3f(from).add(c0), u0, 0f, n, light, overlay);
+            vertex(vc, p, new Vector3f(from).add(c1), u1, 0f, n, light, overlay);
+            vertex(vc, p, new Vector3f(to).add(c1), u1, len, n, light, overlay);
+            vertex(vc, p, new Vector3f(to).add(c0), u0, len, n, light, overlay);
+        }
+    }
+
+    private static void vertex(VertexConsumer vc, PoseStack.Pose p, Vector3f at, float u, float v, Vector3f n, int light, int overlay) {
+        vc.addVertex(p, at.x, at.y, at.z).setColor(255, 255, 255, 255).setUv(u, v).setOverlay(overlay).setLight(light)
+                .setNormal(p, n.x, n.y, n.z);
+    }
+
+    /** Sails are big: draw them from further away than the default 64 blocks. */
+    @Override
+    public int getViewDistance() {
+        return 192;
+    }
+
+    /**
+     * The stay and the cloth reach far beyond the head cleat. NeoForge culls block entity renderers by this box
+     * ({@code IBlockEntityRendererExtension#getRenderBoundingBox}, which this method overrides when the NeoForge module
+     * compiles the common sources); see {@link YardClothRenderer#getRenderBoundingBox}.
+     */
+    public AABB getRenderBoundingBox(CleatBlockEntity be) {
+        BlockPos p = be.getBlockPos();
+        BlockPos t = be.stayTarget();
+        if (t == null) {
+            return new AABB(p);
+        }
+        TriangleCloth g = be.cloth();
+        int drop = g == null ? 0 : g.drop();
+        return new AABB(Math.min(p.getX(), t.getX()) - MAX_BELLY, Math.min(Math.min(p.getY(), t.getY()), p.getY() - drop) - MAX_BELLY,
+                Math.min(p.getZ(), t.getZ()) - MAX_BELLY, Math.max(p.getX(), t.getX()) + 1 + MAX_BELLY,
+                Math.max(p.getY(), t.getY()) + 1 + MAX_BELLY, Math.max(p.getZ(), t.getZ()) + 1 + MAX_BELLY);
+    }
+}

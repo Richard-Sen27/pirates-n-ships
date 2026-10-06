@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "pirates_n_ships:block/fore_and_aft_sail_full"
+    "layer0": "pirates_n_ships:item/rope"
   }
 }

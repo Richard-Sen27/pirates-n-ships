@@ -1,18 +1,18 @@
-"""Placeholder textures for the sails and the sail winch (work packages D3a and F5a).
+"""Placeholder textures for the sails (work packages D3a, F5a and F5b).
 
-Reuses the canvas and palette of gen_placeholder_textures.py (not edited). Usage:
+Uses the palette of gen_placeholder_textures.py (copied here: that script no longer imports, its ITEMS table names
+removed functions). Usage:
 
     tools/.venv/bin/python tools/gen_sailing_textures.py
 
-Output in common/src/main/resources/assets/pirates_n_ships/textures/block/:
-- fore_and_aft_sail_<trim>.png: the one-block fore-and-aft sail (until F5b). Opaque (the plate models use the default
-  solid render type): a dark yard along the top, then canvas for the set part of the sail and dark rigging background
-  for the rest.
-- sail_cloth.png (32x32): the cloth of square sails, drawn between two yards by the yard renderer (one copy per block).
-  Weathered off-white canvas: vertical panel seams, a faint weave, a few stains. Opaque.
-- sail_winch.png.
+Output in common/src/main/resources/assets/pirates_n_ships/textures/:
+- block/sail_cloth.png (32x32): the cloth of square and triangular sails, drawn by the yard and stay renderers (one
+  copy per block). Weathered off-white canvas: vertical panel seams, a faint weave, a few stains. Opaque.
+- block/rope.png (16x16): the stay of a triangular sail, drawn by the stay renderer as a thin beam (u around the
+  beam, v along it, one copy per block). Twisted hemp: diagonal strands. Opaque.
+- item/rope.png: the rope item, a coil.
 
-Square sails have no block textures of their own any more: the yard uses vanilla stripped spruce log textures.
+The yard and the cleat use vanilla block textures; the sail winch has a Blockbench model (F7b).
 Deterministic: same input, same bytes.
 """
 import random
@@ -22,27 +22,46 @@ from pathlib import Path
 from PIL import Image
 
 sys.dont_write_bytecode = True  # no __pycache__ next to the tools
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from gen_placeholder_textures import P, Canvas, TEX  # noqa: E402
 
-SAILS = {
-    "fore_and_aft_sail": ("white", "grey"),
+TEX = Path(__file__).resolve().parent.parent / "common/src/main/resources/assets/pirates_n_ships/textures"
+P = {  # the colors of gen_placeholder_textures.py that these textures use
+    "outline": (34, 24, 20, 255),
+    "brown": (110, 70, 40, 255), "tan": (206, 176, 120, 255), "tan_l": (232, 212, 164, 255),
+    "white": (236, 232, 220, 255), "bone": (220, 210, 180, 255),
 }
+CLEAR = (0, 0, 0, 0)
 
 
-def sail(name, trim):
-    light, dark = SAILS[name]
-    c = Canvas("wood_d")
-    c.rect(0, 0, 15, 1, "wood")  # yard
-    if trim == "furled":
-        c.rect(1, 2, 14, 3, dark)
-        c.rect(1, 2, 14, 2, light)
-    else:
-        bottom = 8 if trim == "half" else 15
-        for y in range(2, bottom + 1):  # triangle-ish: wider toward the foot
-            w = min(15, 4 + (y - 2) * 12 // 13)
-            c.rect(1, y, w, y, light)
-    return c
+class Canvas:
+    """A 16x16 drawing surface (the subset of gen_placeholder_textures.Canvas used here)."""
+
+    def __init__(self):
+        self.img = Image.new("RGBA", (16, 16), CLEAR)
+
+    def px(self, x, y, c):
+        if 0 <= x < 16 and 0 <= y < 16:
+            self.img.putpixel((x, y), P[c])
+
+    def line(self, x0, y0, x1, y1, c):
+        steps = max(abs(x1 - x0), abs(y1 - y0))
+        for i in range(steps + 1):
+            self.px(x0 + round((x1 - x0) * i / steps), y0 + round((y1 - y0) * i / steps), c)
+
+    def disc(self, cx, cy, r, c):
+        for y in range(16):
+            for x in range(16):
+                if (x - cx) ** 2 + (y - cy) ** 2 <= r * r + r:
+                    self.px(x, y, c)
+
+    def outline(self):
+        """Dark outline around every opaque pixel."""
+        src = self.img.copy()
+        for y in range(16):
+            for x in range(16):
+                if src.getpixel((x, y))[3] == 0 and any(
+                        0 <= x + dx < 16 and 0 <= y + dy < 16 and src.getpixel((x + dx, y + dy))[3] > 0
+                        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                    self.img.putpixel((x, y), P["outline"])
 
 
 def shade(rgb, d):
@@ -75,23 +94,44 @@ def cloth():
     return img
 
 
-def winch():
-    c = Canvas("plank")
-    c.border("wood_d")
-    c.disc(7, 7, 4, "iron")
-    c.disc(7, 7, 2, "iron_d")
-    c.rect(2, 7, 13, 8, "tan")  # rope
+def rope():
+    """16x16 twisted hemp, tileable: three strands as diagonal bands of tan with dark grooves between them."""
+    rnd = random.Random(0x209E)
+    img = Image.new("RGBA", (16, 16), P["tan"])
+    for y in range(16):
+        for x in range(16):
+            k = (x + y) % 16  # strands run diagonally; period 16 keeps the tile seamless
+            band = k % 6 if k < 12 else (k - 12) * 6 // 4
+            if band == 0:
+                c = shade(P["brown"], rnd.randint(-6, 4))  # groove between strands
+            elif band in (1, 5):
+                c = shade(P["tan"], -22 + rnd.randint(-4, 4))
+            else:
+                c = shade(P["tan_l"] if band == 3 else P["tan"], rnd.randint(-8, 4))
+            img.putpixel((x, y), c)
+    return img
+
+
+def rope_item():
+    """A coil of rope with a loose end."""
+    c = Canvas()
+    for r, col in ((6, "brown"), (5, "tan"), (4, "brown"), (3, "tan_l"), (2, "brown")):
+        c.disc(7, 8, r, col)
+    c.disc(7, 8, 1, "tan")
+    c.line(12, 10, 14, 14, "tan")
+    c.line(13, 10, 15, 14, "brown")
+    c.outline()
     return c
 
 
 def main():
     out = TEX / "block"
     out.mkdir(parents=True, exist_ok=True)
-    for name in SAILS:
-        for trim in ("furled", "half", "full"):
-            sail(name, trim).img.save(out / f"{name}_{trim}.png", format="PNG", optimize=False)
     cloth().save(out / "sail_cloth.png", format="PNG", optimize=False)
-    winch().img.save(out / "sail_winch.png", format="PNG", optimize=False)
+    rope().save(out / "rope.png", format="PNG", optimize=False)
+    items = TEX / "item"
+    items.mkdir(parents=True, exist_ok=True)
+    rope_item().img.save(items / "rope.png", format="PNG", optimize=False)
 
 
 if __name__ == "__main__":

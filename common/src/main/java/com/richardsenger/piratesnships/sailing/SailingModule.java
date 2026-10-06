@@ -4,8 +4,6 @@ import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
-import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
-import com.richardsenger.piratesnships.sailing.block.SailBlock;
 import com.richardsenger.piratesnships.sailing.block.SailWinchBlock;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
 import com.richardsenger.piratesnships.sailing.block.YardBlock;
@@ -89,10 +87,10 @@ public final class SailingModule implements ModModule {
     @Override
     public void gatherData(DataContributions data) {
         com.richardsenger.piratesnships.sailing.anchor.AnchorData.gather(data); // visible anchor (F4)
+        com.richardsenger.piratesnships.sailing.sail.TriangularSailData.gather(data); // cleat and rope (F5b)
         data.lang(lang -> {
             lang.block(SailingBlocks.YARD, "Yard")
                     .add(YardBlock.KEY_NO_SAIL, "This yard heads no sail: hang a second yard %s to %s blocks straight below its middle, on the same mast")
-                    .block(SailingBlocks.FORE_AND_AFT_SAIL, "Fore-and-Aft Sail")
                     .block(SailingBlocks.SAIL_WINCH, "Sail Winch")
                     .add(ShipForces.SAILING_KEY, "Sails and Keel")
                     .add(SailWinchBlock.trimKey(SailTrim.FURLED), "furled")
@@ -123,24 +121,16 @@ public final class SailingModule implements ModModule {
                     .add(k + "ship.idle", "No forces this tick: no sail is set and the ship is not moving in water");
         });
         data.models(m -> {
-            for (RegistryEntry<Block, SailBlock> s : SailingBlocks.sails()) sail(m, s.get());
             yard(m, SailingBlocks.YARD.get());
             m.blocks().createTrivialCube(SailingBlocks.SAIL_WINCH.get());
             m.blocks().createTrivialBlock(SailingBlocks.CAPSTAN.get(), TexturedModel.COLUMN);
         });
         data.blockLoot(loot -> {
-            for (RegistryEntry<Block, SailBlock> s : SailingBlocks.sails()) loot.dropSelf(s.get());
             loot.dropSelf(SailingBlocks.YARD.get());
             loot.dropSelf(SailingBlocks.SAIL_WINCH.get());
             loot.dropSelf(SailingBlocks.CAPSTAN.get());
         });
         data.blockTags(tags -> {
-            for (RegistryEntry<Block, SailBlock> s : SailingBlocks.sails()) {
-                tags.tag(BlockTags.MINEABLE_WITH_AXE).add(s.get());
-                // canvas on a yard: thin and light, like the flagpole and nameplate
-                tags.tag(SableWeightTags.SUPER_LIGHT).add(s.get());
-                tags.tag(SableWeightTags.QUARTER_VOLUME).add(s.get());
-            }
             tags.tag(BlockTags.MINEABLE_WITH_AXE).add(SailingBlocks.YARD.get());
             // what may stand between the two yards of a square sail (besides air); our own mast blocks join later
             tags.tag(SailingBlocks.MASTS).addTag(BlockTags.LOGS).addTag(BlockTags.WOODEN_FENCES);
@@ -169,11 +159,6 @@ public final class SailingModule implements ModModule {
                     .unlockedBy("has_log", InventoryChangeTrigger.TriggerInstance.hasItems(
                             net.minecraft.advancements.critereon.ItemPredicate.Builder.item().of(ItemTags.LOGS)))
                     .save(out, SailingBlocks.YARD.id());
-            ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, SailingBlocks.FORE_AND_AFT_SAIL.get())
-                    .pattern("S  ").pattern("SW ").pattern("SWW")
-                    .define('S', Items.STICK).define('W', ItemTags.WOOL)
-                    .unlockedBy("has_wool", InventoryChangeTrigger.TriggerInstance.hasItems(Items.WHITE_WOOL))
-                    .save(out, SailingBlocks.FORE_AND_AFT_SAIL.id());
             ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, SailingBlocks.SAIL_WINCH.get())
                     .pattern("TIT").pattern("PPP")
                     .define('T', Items.STRING).define('I', Items.IRON_INGOT).define('P', ItemTags.PLANKS)
@@ -186,31 +171,6 @@ public final class SailingModule implements ModModule {
                     .unlockedBy("has_chain", InventoryChangeTrigger.TriggerInstance.hasItems(Items.CHAIN))
                     .save(out, SailingBlocks.CAPSTAN.id());
         });
-    }
-
-    /**
-     * One thin plate model per trim ({@code block/<name>_<trim>}, the open orientable trapdoor plate, as the
-     * nameplate), rotated by {@code facing}; the item shows the full sail.
-     */
-    private static void sail(ModelContext m, SailBlock block) {
-        ResourceLocation base = ModelLocationUtils.getModelLocation(block);
-        PropertyDispatch.C2<Direction, SailTrim> dispatch = PropertyDispatch.properties(SailBlock.FACING, SailBlock.TRIM);
-        for (SailTrim trim : SailTrim.values()) {
-            ResourceLocation tex = base.withSuffix("_" + trim.getSerializedName());
-            ResourceLocation model = ModelTemplates.ORIENTABLE_TRAPDOOR_OPEN.create(tex, TextureMapping.defaultTexture(tex), m.models());
-            for (Direction d : Direction.Plane.HORIZONTAL) {
-                VariantProperties.Rotation r = switch (d) {
-                    case EAST -> VariantProperties.Rotation.R90;
-                    case SOUTH -> VariantProperties.Rotation.R180;
-                    case WEST -> VariantProperties.Rotation.R270;
-                    default -> VariantProperties.Rotation.R0;
-                };
-                dispatch.select(d, trim, Variant.variant().with(VariantProperties.MODEL, model).with(VariantProperties.Y_ROT, r));
-            }
-        }
-        m.blockStates().accept(MultiVariantGenerator.multiVariant(block).with(dispatch));
-        ModelTemplates.FLAT_ITEM.create(ModelLocationUtils.getModelLocation(block.asItem()),
-                TextureMapping.layer0(base.withSuffix("_full")), m.models());
     }
 
     /**
@@ -249,6 +209,7 @@ public final class SailingModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(SailingGameTests.class, SailingGameTestsShips.class, SailingGameTestsControls.class);
+        return List.of(SailingGameTests.class, SailingGameTestsShips.class, SailingGameTestsControls.class,
+                com.richardsenger.piratesnships.sailing.ship.SailingGameTestsStays.class);
     }
 }

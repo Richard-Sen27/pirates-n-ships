@@ -4,8 +4,8 @@ package com.richardsenger.piratesnships.sailing.force;
  * A sail kind as data (docs/design.md §5.2). Kept as a plain record so it can become a datapack definition later.
  *
  * @param id                   stable id, e.g. {@code "square"}
- * @param area                 sail area [blocks²] of a one-block sail of this type; a square sail's real area comes
- *                             from its yards ({@link SailInstance#area()}), and this is only its reference value
+ * @param area                 reference sail area [blocks²]; a real sail's area comes from its yards or its triangle
+ *                             ({@link SailInstance#area()})
  * @param centerOfEffortHeight height of the center of effort above the sail's anchor position [blocks]; the force is
  *                             applied there, which is what produces the heel torque
  * @param curve                efficiency over the apparent wind angle

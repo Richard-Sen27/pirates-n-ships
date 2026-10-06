@@ -56,8 +56,13 @@ public final class SailTypes {
      * of the drawn cloth as the sail's position.
      */
     public static final SailType SQUARE = new SailType("square", 9.0, 0.0, SQUARE_CURVE);
-    /** Fore-and-aft (lateen) sail, roughly a 4×4 triangle-ish sheet with a low center of effort. */
-    public static final SailType FORE_AND_AFT = new SailType("fore_and_aft", 16.0, 2.0, FORE_AND_AFT_CURVE);
+    /**
+     * Triangular (fore-and-aft) sail between a rope stay and cleats (docs/design.md §5.2, rule F5b). Its real area comes
+     * from the triangle and travels in {@link SailInstance#area()}; 16 is only the reference area of the three-argument
+     * {@link SailInstance} constructor. The center of effort height is 0 because the runtime passes the centroid of the
+     * drawn cloth as the sail's position.
+     */
+    public static final SailType FORE_AND_AFT = new SailType("fore_and_aft", 16.0, 0.0, FORE_AND_AFT_CURVE);
 
     public static final List<SailType> ALL = List.of(SQUARE, FORE_AND_AFT);
 

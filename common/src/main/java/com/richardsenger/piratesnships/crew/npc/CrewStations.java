@@ -173,6 +173,13 @@ public final class CrewStations {
         return n;
     }
 
+    /** Releases every crew member at a station of {@code ship} (the whistle's "release crew"); returns how many. */
+    public static int releaseShip(ServerLevel level, UUID ship) {
+        List<CrewMember> crew = crewOf(level, ship);
+        for (CrewMember c : crew) release(level, c);
+        return crew.size();
+    }
+
     /** Crew members assigned to stations of {@code ship}, found around the ship. */
     public static List<CrewMember> crewOf(ServerLevel level, UUID ship) {
         var body = SableShips.byId(level, ship);

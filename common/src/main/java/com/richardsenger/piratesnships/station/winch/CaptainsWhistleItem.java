@@ -7,7 +7,7 @@ import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.ship.sable.ShipEntities;
 import com.richardsenger.piratesnships.station.StationBlock;
-import com.richardsenger.piratesnships.station.StationContent;
+import com.richardsenger.piratesnships.station.order.WhistleMenu;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,12 +26,14 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Captain's whistle, test version (docs/design.md §7.2; the radial menu comes later):
+ * Captain's whistle (docs/design.md §7.2):
  * <ul>
  *   <li>use on an unassigned crew member: select it; then use on a station block: assign it there;</li>
  *   <li>use on an assigned crew member: release it;</li>
- *   <li>sneak-use in the air: select the next sail order and issue it to all crew at stations of the ship the player
- *       stands on.</li>
+ *   <li>use anywhere else: opens the radial order menu on the client ({@link WhistleMenu}). Nothing happens on the
+ *       server until the client sends the chosen order ({@code WhistleOrderPayload}, handled by
+ *       {@link com.richardsenger.piratesnships.station.order.WhistleOrders}), which goes to all crew at stations of
+ *       the ship the player stands on.</li>
  * </ul>
  */
 public class CaptainsWhistleItem extends Item implements StationBlock.Tool {
@@ -41,19 +43,12 @@ public class CaptainsWhistleItem extends Item implements StationBlock.Tool {
     public static final String KEY_NO_SELECTION = KEY + "no_selection";
     public static final String KEY_ORDER = KEY + "order";
     public static final String KEY_NOT_ON_SHIP = KEY + "not_on_ship";
-    public static final String KEY_HINT = KEY + "hint";
 
     /** Selected crew member per player (server side, transient). */
     private static final Map<UUID, UUID> SELECTED = new ConcurrentHashMap<>();
 
     public CaptainsWhistleItem(Properties properties) {
         super(properties);
-    }
-
-    /** The order the next sneak-use issues: hoist first, then the one after the last order issued. */
-    public static SailOrder nextOrder(ItemStack stack) {
-        SailOrder last = stack.get(StationContent.WHISTLE_ORDER.get());
-        return last == null ? SailOrder.HOIST : last.next();
     }
 
     @Override
@@ -96,20 +91,8 @@ public class CaptainsWhistleItem extends Item implements StationBlock.Tool {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (level instanceof ServerLevel server) {
-            if (!player.isShiftKeyDown()) {
-                player.displayClientMessage(Component.translatable(KEY_HINT, Component.translatable(nextOrder(stack).nameKey())), true);
-            } else {
-                SailOrder next = nextOrder(stack);
-                stack.set(StationContent.WHISTLE_ORDER.get(), next);
-                ShipBody ship = shipOf(server, player);
-                if (ship == null) {
-                    player.displayClientMessage(Component.translatable(KEY_NOT_ON_SHIP), true);
-                } else {
-                    int n = CrewStations.orderShip(server, ship.id(), next);
-                    player.displayClientMessage(Component.translatable(KEY_ORDER, Component.translatable(next.nameKey()), n), true);
-                }
-            }
+        if (level.isClientSide) {
+            WhistleMenu.open(); // client only; the server waits for the chosen order
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
     }

@@ -19,6 +19,9 @@ import com.richardsenger.piratesnships.ship.assembly.ShipAssembler;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.ship.sable.ShipEntities;
+import com.richardsenger.piratesnships.station.order.WhistleOrder;
+import com.richardsenger.piratesnships.station.order.WhistleOrderPayload;
+import com.richardsenger.piratesnships.station.order.WhistleOrders;
 import com.richardsenger.piratesnships.station.seat.StationSeat;
 import com.richardsenger.piratesnships.station.winch.SailOrder;
 import java.util.Collection;
@@ -342,8 +345,8 @@ public final class StationGameTests {
 
     /**
      * The captain's whistle with a mock player: use on a crew member selects it, use on the winch assigns it,
-     * sneak-use in the air on deck issues "hoist" (the first order) to the ship's crew, use on the crew member again
-     * releases it.
+     * using it in the air gives no order on the server, the radial menu's "hoist" (its server handler) issues the
+     * order to the ship's crew, use on the crew member again releases it.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = "pirates_n_ships_config_station_winch")
     public static void whistleAssignsOrdersAndReleases(GameTestHelper h) {
@@ -363,10 +366,11 @@ public final class StationGameTests {
         ShipBody on = com.richardsenger.piratesnships.station.winch.CaptainsWhistleItem.shipOf(h.getLevel(), p);
         h.assertTrue(on != null && on.id().equals(f.ship().id()), "player on deck is not on the ship: " + p.position() + " " + f.ship().worldBounds());
         h.assertTrue(CrewStations.crewOf(h.getLevel(), f.ship().id()).contains(c), "crew member not found on its ship at " + c.position());
-        p.setShiftKeyDown(true);
         whistle.use(h.getLevel(), p, net.minecraft.world.InteractionHand.MAIN_HAND);
-        p.setShiftKeyDown(false);
-        h.assertTrue(Stations.state(c.assignment()).order() == SailOrder.HOIST, "sneak-use did not order hoist");
+        h.assertTrue(Stations.state(c.assignment()).order() == null, "using the whistle in the air gave an order on the server");
+        WhistleOrders.Result r = WhistleOrders.handle(p, WhistleOrder.HOIST.id());
+        h.assertTrue(r.outcome() == WhistleOrders.Outcome.ISSUED && r.crew() == 1, "menu order hoist: " + r);
+        h.assertTrue(Stations.state(c.assignment()).order() == SailOrder.HOIST, "the menu's hoist did not reach the crew");
         h.runAfterDelay(2 * STEP + MARGIN, () -> {
             h.assertTrue(trim(h, f) == SailTrim.FULL, "sails not hoisted by the whistle's order");
             whistle.interactLivingEntity(p, c, net.minecraft.world.InteractionHand.MAIN_HAND);
@@ -374,6 +378,73 @@ public final class StationGameTests {
             c.discard();
             h.succeed();
         });
+    }
+
+    // ------------------------------------------------------------------ radial menu (order payload handler)
+
+    /** A mock player standing on the fixture's deck, holding a whistle or (with {@code whistle == false}) nothing. */
+    private static net.minecraft.world.entity.player.Player captain(GameTestHelper h, Fixture f, boolean whistle) {
+        net.minecraft.world.entity.player.Player p = h.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        if (whistle) {
+            p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new net.minecraft.world.item.ItemStack(StationContent.CAPTAINS_WHISTLE.get()));
+        }
+        Vec3 deck = f.ship().toWorld(Vec3.atBottomCenterOf(f.helm()).add(1, 0, 1));
+        p.moveTo(deck.x, deck.y, deck.z);
+        return p;
+    }
+
+    /** The menu's "reef" reaches the seated crew and is remembered on the whistle; "release crew" frees the station. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = "pirates_n_ships_config_station_winch")
+    public static void menuOrderReachesSeatedCrew(GameTestHelper h) {
+        pin(h);
+        Fixture f = ship(h, false);
+        CrewMember c = seated(h, f, crew(h, 2, 2));
+        StationRef ref = c.assignment();
+        net.minecraft.world.entity.player.Player p = captain(h, f, true);
+        WhistleOrders.Result r = WhistleOrders.handle(p, new WhistleOrderPayload(WhistleOrder.REEF).order());
+        h.assertTrue(r.outcome() == WhistleOrders.Outcome.ISSUED && r.crew() == 1, "reef: " + r);
+        h.assertTrue(Stations.state(ref).order() == SailOrder.REEF, "the crew does not reef");
+        h.assertTrue(WhistleOrders.heldWhistle(p).get(StationContent.WHISTLE_ORDER.get()) == SailOrder.REEF, "the whistle does not remember reef");
+        h.runAfterDelay(STEP + MARGIN, () -> {
+            h.assertTrue(trim(h, f) == SailTrim.HALF, "sails not reefed by the menu's order: " + trim(h, f));
+            WhistleOrders.Result rel = WhistleOrders.handle(p, WhistleOrder.RELEASE.id());
+            h.assertTrue(rel.outcome() == WhistleOrders.Outcome.ISSUED && rel.crew() == 1, "release: " + rel);
+            h.assertTrue(c.assignment() == null && !c.isPassenger(), "release crew left the crew member at its station");
+            h.assertTrue(Stations.state(ref) == null || Stations.state(ref).occupant() == null, "the station is still occupied");
+            c.discard();
+            h.succeed();
+        });
+    }
+
+    /** A player without a whistle cannot order through the payload. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = "pirates_n_ships_config_station_winch")
+    public static void menuOrderRefusedWithoutWhistle(GameTestHelper h) {
+        pin(h);
+        Fixture f = ship(h, false);
+        CrewMember c = seated(h, f, crew(h, 2, 2));
+        WhistleOrders.Result r = WhistleOrders.handle(captain(h, f, false), WhistleOrder.HOIST.id());
+        h.assertTrue(r.outcome() == WhistleOrders.Outcome.NO_WHISTLE, "no whistle: " + r);
+        h.assertTrue(Stations.state(c.assignment()).order() == null, "an order without a whistle reached the crew");
+        h.assertTrue(c.isAtStation(), "the crew member left its station");
+        c.discard();
+        h.succeed();
+    }
+
+    /** An unknown order id (newer or modified client) is ignored: nothing changes. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = "pirates_n_ships_config_station_winch")
+    public static void menuIgnoresUnknownOrder(GameTestHelper h) {
+        pin(h);
+        Fixture f = ship(h, false);
+        CrewMember c = seated(h, f, crew(h, 2, 2));
+        net.minecraft.world.entity.player.Player p = captain(h, f, true);
+        WhistleOrders.Result r = WhistleOrders.handle(p, "fire_at_will");
+        h.assertTrue(r.outcome() == WhistleOrders.Outcome.UNKNOWN_ORDER, "unknown order: " + r);
+        h.assertTrue(Stations.state(c.assignment()).order() == null, "an unknown order changed the crew's work");
+        h.assertTrue(c.isAtStation(), "an unknown order released the crew member");
+        h.assertTrue(trim(h, f) == SailTrim.FURLED, "an unknown order changed the sails");
+        h.assertTrue(WhistleOrders.heldWhistle(p).get(StationContent.WHISTLE_ORDER.get()) == null, "an unknown order was remembered");
+        c.discard();
+        h.succeed();
     }
 
     /** A crew member that dies frees its station at once, and its seat goes. */

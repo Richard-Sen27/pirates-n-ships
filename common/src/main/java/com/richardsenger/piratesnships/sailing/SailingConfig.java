@@ -3,6 +3,7 @@ package com.richardsenger.piratesnships.sailing;
 import com.richardsenger.piratesnships.core.config.ConfigSection;
 import com.richardsenger.piratesnships.core.config.ConfigValue;
 import com.richardsenger.piratesnships.core.config.ModConfigs;
+import com.richardsenger.piratesnships.sailing.force.HullDampingModel;
 import com.richardsenger.piratesnships.sailing.force.SailingParams;
 import com.richardsenger.piratesnships.sailing.wind.WindParams;
 
@@ -16,6 +17,7 @@ public final class SailingConfig {
     private static final WindParams W = WindParams.DEFAULTS;
     private static final SailingParams S = SailingParams.DEFAULTS;
     private static final SailingParams.AnchorParams A = SailingParams.AnchorParams.DEFAULTS;
+    private static final HullDampingModel.Params D = HullDampingModel.Params.DEFAULTS;
 
     private static final ConfigSection WIND = ModConfigs.server("wind", "Global wind field: direction, strength, weather and gusts");
 
@@ -50,7 +52,7 @@ public final class SailingConfig {
     public static final ConfigValue<Integer> SYNC_INTERVAL = WIND.intRange("sync_interval_ticks", 20, 1, 1200,
             "How often the wind is sent to each player, in ticks");
 
-    private static final ConfigSection SAILING = ModConfigs.server("sailing", "Sail, rudder, keel and anchor forces");
+    private static final ConfigSection SAILING = ModConfigs.server("sailing", "Sail, rudder, keel, anchor and hull damping forces");
 
     public static final ConfigValue<Double> SAIL_FORCE_SCALE = SAILING.doubleRange("sail_force_scale", S.sailForceScale(), 0.0, 100.0,
             "Sail force per block of sail area and per block/s of apparent wind");
@@ -80,6 +82,13 @@ public final class SailingConfig {
             "Ticks from dropping the anchor until it holds fully");
     public static final ConfigValue<Integer> ANCHOR_RAISE_TICKS = SAILING.intRange("anchor_raise_ticks", A.raiseTicks(), 1, 2400,
             "Ticks from raising the anchor until it is stowed");
+
+    public static final ConfigValue<Boolean> HULL_DAMPING_ENABLED = SAILING.bool("hull_damping_enabled", D.enabled(),
+            "The water damps a floating ship's rolling and pitching, so it settles after a wave or a gust. Off: it rocks on without end");
+    public static final ConfigValue<Double> ROLL_DAMPING = SAILING.doubleRange("roll_damping", D.roll(), 0.0, 10.0,
+            "How fast the side-to-side rolling dies down, per second (higher = settles sooner, too high looks glued to the water)");
+    public static final ConfigValue<Double> PITCH_DAMPING = SAILING.doubleRange("pitch_damping", D.pitch(), 0.0, 10.0,
+            "How fast the bow-up, bow-down pitching dies down, per second");
 
     private static final ConfigSection SHIPS = ModConfigs.server("sailing_runtime", "How sails and the keel act on assembled ships");
     public static final ConfigValue<Boolean> FORCES_ENABLED = SHIPS.bool("forces_enabled", true,
@@ -117,6 +126,11 @@ public final class SailingConfig {
                 GUSTS_ENABLED.get(), GUSTS_PER_MINUTE.get(), GUST_STRENGTH.get(), GUST_DIRECTION_SHIFT.get(),
                 REGIONAL_VARIATION.get(), REGIONAL_SCALE.get(), REGIONAL_DIRECTION_VARIATION.get(),
                 REGIONAL_STRENGTH_VARIATION.get());
+    }
+
+    /** Current hull damping tuning from the server config. */
+    public static HullDampingModel.Params hullDampingParams() {
+        return new HullDampingModel.Params(HULL_DAMPING_ENABLED.get(), ROLL_DAMPING.get(), PITCH_DAMPING.get());
     }
 
     /** Current sailing tuning from the server config. */

@@ -1,6 +1,8 @@
 package com.richardsenger.piratesnships.sailing.ship;
 
 import com.richardsenger.piratesnships.sailing.force.ForceBreakdown;
+import com.richardsenger.piratesnships.sailing.force.ForceContribution;
+import com.richardsenger.piratesnships.sailing.force.HullDampingModel;
 import com.richardsenger.piratesnships.sailing.force.SailInstance;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
 import com.richardsenger.piratesnships.sailing.force.SailType;
@@ -33,7 +35,9 @@ import org.joml.Vector3d;
  *       bottom is above the water, 1 from {@code full_draft} blocks of depth on. It scales the keel only.</li>
  *   <li><b>Keel center</b> = the middle of the hull's plot box in length and beam, at half the draft (halfway between
  *       the bottom and the waterline, never above the center of mass), relative to the COM, ship frame.</li>
- *   <li><b>Hull length</b> = the plot box's extent along the bow axis.</li>
+ *   <li><b>Hull length</b> = the plot box's extent along the bow axis, <b>beam</b> the extent across it.</li>
+ *   <li><b>Hull damping</b> ({@link HullDampingModel}) is applied to every afloat ship that turns, also one without
+ *       sails or with the sailing forces off, as a full torque about the COM.</li>
  * </ul>
  */
 public final class SailingRuntime {
@@ -202,11 +206,12 @@ public final class SailingRuntime {
     // ------------------------------------------------------------------ physics substep
 
     /**
-     * One force evaluation and application. {@code seaWorldY} is NaN without sea. Returns false when the ship was
-     * skipped (no unfurled sail and not moving in water).
+     * One force evaluation and application. {@code seaWorldY} is NaN without sea. With {@code forcesEnabled} false only
+     * the hull damping is applied. Returns false when nothing was applied: no unfurled sail, no anchor and not moving in
+     * water (an idle ship that still rocks gets its damping and returns true).
      */
     boolean physicsTick(ShipBody ship, double seaWorldY, double timeStep, long gameTime, double fullDraft, boolean sailsNeedWater,
-                        double heelFactor) {
+                        double heelFactor, boolean forcesEnabled, HullDampingModel.Params damping) {
         double mass = ship.mass();
         if (!(mass > 0.0) || !ship.centerOfMass(com)) {
             return false;
@@ -215,10 +220,12 @@ public final class SailingRuntime {
         ship.toWorld(tmp.set(com.x, minY, com.z), tmp2);
         double draft = Double.isFinite(seaWorldY) ? seaWorldY - tmp2.y : Double.NEGATIVE_INFINITY;
         double submerged = Math.min(Math.max(draft / fullDraft, 0.0), 1.0);
+        lastSubmerged = submerged;
         boolean moving = lin.lengthSquared() > 1.0e-4 || ang.lengthSquared() > 1.0e-4;
         boolean anchorOut = anchor != null && anchorEnabled;
-        if (unfurled == 0 && !anchorOut && (submerged <= 0.0 || !moving)) {
-            lastSubmerged = submerged;
+        boolean idle = !forcesEnabled || unfurled == 0 && !anchorOut && (submerged <= 0.0 || !moving);
+        boolean damp = damping.enabled() && submerged > 0.0 && ang.lengthSquared() > 1.0e-8;
+        if (idle && !damp) {
             lastBreakdown = null;
             return false;
         }
@@ -231,34 +238,57 @@ public final class SailingRuntime {
         tmp.set((minX + maxX + 1) * 0.5 - com.x, keelPlotY - com.y, (minZ + maxZ + 1) * 0.5 - com.z);
         Vector3d keelCenter = bow.toShip(tmp, new Vector3d());
         double length = bow.lengthOf(maxX - minX + 1, maxZ - minZ + 1);
+        double beam = bow.beamOf(maxX - minX + 1, maxZ - minZ + 1);
 
         ShipState state = new ShipState(comWorld, shipToWorld, lin, ang, mass, submerged, length, keelCenter);
-        List<SailInstance> active = sailsNeedWater && submerged <= 0.0 ? List.of() : instances(com);
-        ShipForceModel.Rudder rudder = null;
-        if (helm != null) {
-            Vector3d rel = HullPoints.rudderPlot(bow, new int[] {minX, minY, minZ, maxX, maxY, maxZ}, new Vector3d()).sub(com);
-            rudder = new ShipForceModel.Rudder(rudderAngle, bow.toShip(rel, rel));
+        // Hull damping: a pure torque, applied in full (never scaled by heelFactor, which is for the heeling of sails
+        // and keel), also for a ship without sails, so that every floating ship stops rocking.
+        ForceContribution d = damp ? HullDampingModel.compute(state, beam, damping) : null;
+        ForceBreakdown f;
+        double tx, ty, tz;
+        Vector3d impulse;
+        if (idle) {
+            f = ForceBreakdown.of(List.of(d));
+            tx = 0.0; ty = 0.0; tz = 0.0;
+            impulse = tmp.zero();
+        } else {
+            List<SailInstance> active = sailsNeedWater && submerged <= 0.0 ? List.of() : instances(com);
+            ShipForceModel.Rudder rudder = null;
+            if (helm != null) {
+                Vector3d rel = HullPoints.rudderPlot(bow, new int[] {minX, minY, minZ, maxX, maxY, maxZ}, new Vector3d()).sub(com);
+                rudder = new ShipForceModel.Rudder(rudderAngle, bow.toShip(rel, rel));
+            }
+            ShipAnchor a = anchor;
+            ShipForceModel.Anchor anchorInput = null;
+            if (a != null && anchorEnabled && a.state().isOut()) {
+                Vector3d hawse = new Vector3d(a.capstan().getX() + 0.5, a.capstan().getY() + 0.5, a.capstan().getZ() + 0.5).sub(com);
+                anchorInput = new ShipForceModel.Anchor(a.state(), new Vector3d(a.point().x, a.point().y, a.point().z),
+                        bow.toShip(hawse, hawse));
+            }
+            ForceBreakdown forces = ShipForceModel.compute(wind, state, active, rudder, anchorInput, params);
+            if (!forces.force().isFinite() || !forces.torque().isFinite()) {
+                return false;
+            }
+            // Roll (ship z) and pitch (ship x) moments of sails and keel are scaled by heelFactor; yaw is kept. Minecraft
+            // hulls are hollow and unballasted, so the full sail moment plus the keel's heeling couple capsized the 5x4x5
+            // test hull within 2 s on a beam reach (spike 3 finding). The breakdown keeps the unscaled, physical values.
+            tx = forces.torque().x() * heelFactor;
+            ty = forces.torque().y();
+            tz = forces.torque().z() * heelFactor;
+            impulse = bow.toPlot(forces.force(), tmp).mul(timeStep);
+            f = d == null ? forces : ShipForceModel.withContribution(forces, d);
         }
-        ShipAnchor a = anchor;
-        ShipForceModel.Anchor anchorInput = null;
-        if (a != null && anchorEnabled && a.state().isOut()) {
-            Vector3d hawse = new Vector3d(a.capstan().getX() + 0.5, a.capstan().getY() + 0.5, a.capstan().getZ() + 0.5).sub(com);
-            anchorInput = new ShipForceModel.Anchor(a.state(), new Vector3d(a.point().x, a.point().y, a.point().z),
-                    bow.toShip(hawse, hawse));
+        if (d != null) {
+            if (!d.isFinite()) {
+                return false;
+            }
+            tx += d.torque().x();
+            ty += d.torque().y();
+            tz += d.torque().z();
         }
-        ForceBreakdown f = ShipForceModel.compute(wind, state, active, rudder, anchorInput, params);
-        if (!f.force().isFinite() || !f.torque().isFinite()) {
-            return false;
-        }
-        // Roll (ship z) and pitch (ship x) moments of sails and keel are scaled by heelFactor; yaw is kept. Minecraft
-        // hulls are hollow and unballasted, so the full sail moment plus the keel's heeling couple capsized the 5x4x5
-        // test hull within 2 s on a beam reach (spike 3 finding). The breakdown keeps the unscaled, physical values.
-        double tx = f.torque().x() * heelFactor, ty = f.torque().y(), tz = f.torque().z() * heelFactor;
-        Vector3d impulse = bow.toPlot(f.force(), tmp).mul(timeStep);
         Vector3d angular = bow.toPlot(tmp2.set(tx, ty, tz), tmp2).mul(timeStep);
         ship.applySailingImpulse(impulse, angular);
         lastBreakdown = f;
-        lastSubmerged = submerged;
         lastEvaluation = gameTime;
         return true;
     }

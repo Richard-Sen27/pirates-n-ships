@@ -125,8 +125,12 @@ public final class SailingModule implements ModModule {
         data.models(m -> {
             for (RegistryEntry<Block, SailBlock> s : SailingBlocks.sails()) sail(m, s.get());
             yard(m, SailingBlocks.YARD.get());
-            m.blocks().createTrivialCube(SailingBlocks.SAIL_WINCH.get());
-            m.blocks().createTrivialBlock(SailingBlocks.CAPSTAN.get(), TexturedModel.COLUMN);
+            // hand-made Blockbench model (art/models/sail_winch.bbmodel, design.md §4.8): only the block state is generated
+            m.blockStates().accept(MultiVariantGenerator.multiVariant(SailingBlocks.SAIL_WINCH.get(), Variant.variant()
+                    .with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(SailingBlocks.SAIL_WINCH.get()))));
+            // hand-made Blockbench model (art/models/capstan.bbmodel, design.md §4.8): only the block state is generated
+            m.blockStates().accept(MultiVariantGenerator.multiVariant(SailingBlocks.CAPSTAN.get(), Variant.variant()
+                    .with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(SailingBlocks.CAPSTAN.get()))));
         });
         data.blockLoot(loot -> {
             for (RegistryEntry<Block, SailBlock> s : SailingBlocks.sails()) loot.dropSelf(s.get());
@@ -214,27 +218,11 @@ public final class SailingModule implements ModModule {
     }
 
     /**
-     * The yard: one 6 px beam along x through the block center (stripped spruce, end grain at both ends), turned for
-     * {@code axis=z}. A placeholder until the Blockbench pass (F7).
+     * The yard: a hand-made Blockbench model along x (art/models/yard.bbmodel, design.md §4.8), so only the block state
+     * is generated; {@code axis=z} turns it by 90°. The cloth is drawn by {@code YardClothRenderer}, not by the model.
      */
     private static void yard(ModelContext m, YardBlock block) {
         ResourceLocation model = ModelLocationUtils.getModelLocation(block);
-        String side = "minecraft:block/stripped_spruce_log";
-        String end = "minecraft:block/stripped_spruce_log_top";
-        ElementModel e = new ElementModel().texture("side", side).texture("end", end).texture("particle", side)
-                .element(0, 5, 5, 16, 11, 11)
-                .face(ElementModel.Face.NORTH, 0, 5, 16, 11, "#side")
-                .face(ElementModel.Face.SOUTH, 0, 5, 16, 11, "#side")
-                .face(ElementModel.Face.UP, 0, 5, 16, 11, "#side")
-                .face(ElementModel.Face.DOWN, 0, 5, 16, 11, "#side")
-                .face(ElementModel.Face.EAST, 5, 5, 11, 11, "#end")
-                .face(ElementModel.Face.WEST, 5, 5, 11, 11, "#end")
-                .end();
-        m.models().accept(model, () -> {
-            com.google.gson.JsonObject json = e.build();
-            json.addProperty("parent", "minecraft:block/block"); // display transforms for the item
-            return json;
-        });
         m.blockStates().accept(MultiVariantGenerator.multiVariant(block).with(PropertyDispatch.property(YardBlock.AXIS)
                 .select(Direction.Axis.X, Variant.variant().with(VariantProperties.MODEL, model))
                 .select(Direction.Axis.Z, Variant.variant().with(VariantProperties.MODEL, model)

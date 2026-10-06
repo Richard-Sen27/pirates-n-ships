@@ -21,6 +21,10 @@ import net.minecraft.world.phys.BlockHitResult;
  * raises it. The anchor state lives with the ship (see {@code ShipControls}); {@link #ANCHOR} only shows its phase and
  * is set by the runtime. Placing and removing it tells {@code sailing.anchor.AnchorEntities}, which shows the anchor
  * as an entity at the hull side.
+ *
+ * <p>Model: hand-made in Blockbench ({@code art/models/capstan.bbmodel}, design.md §4.8), a whelped drum on an iron
+ * pawl ring and a base plate, with a drumhead and two crossed capstan bars that reach 3 px past the block. It has no
+ * facing; every {@link #ANCHOR} phase shows the same model.
  */
 public class CapstanBlock extends Block {
 

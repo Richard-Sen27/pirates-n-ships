@@ -25,6 +25,10 @@ import net.minecraft.world.phys.BlockHitResult;
  * furled → half → full → furled. The next trim follows the <em>highest</em> trim currently set on that ship, so a
  * ship with mixed trims is first brought to one trim. It is also a station (docs/design.md §6, spike 4): a crew member
  * assigned to it carries out sail orders ({@link WinchStation}); a player's use keeps working as before.
+ *
+ * <p>Model: hand-made in Blockbench ({@code art/models/sail_winch.bbmodel}, design.md §4.8), a rope drum along x
+ * between two braced uprights, with an iron ratchet and pawl on the west end and the crank on the east end, reaching
+ * 3 px past the block. The block has no facing, so the model always stands this way round.
  */
 public class SailWinchBlock extends Block implements StationBlock {
 

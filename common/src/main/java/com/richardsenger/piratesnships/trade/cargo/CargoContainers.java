@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.trade.cargo;
 
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
+import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
 import com.richardsenger.piratesnships.ship.decor.ShipDecor;
 import com.richardsenger.piratesnships.trade.TradeConfig;
@@ -60,8 +61,12 @@ public final class CargoContainers {
     private CargoContainers() {
     }
 
-    /** Loads the class so the entries are registered. Called from {@code registerContent()}. */
+    /**
+     * Loads the class so the entries are registered, and exposes the two-slot container view to other mods' pipes
+     * (item handler capability / transfer API). Called from {@code registerContent()}.
+     */
     public static void init() {
+        Services.CAPABILITIES.registerBlockContainer(BLOCK_ENTITY);
     }
 
     /** What an empty container accepts (config {@code containers.accepts}); stackability is checked by {@link BulkStore}. */

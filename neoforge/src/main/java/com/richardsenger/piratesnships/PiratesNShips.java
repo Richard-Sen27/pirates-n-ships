@@ -4,9 +4,11 @@ import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.ModModules;
 import com.richardsenger.piratesnships.core.datagen.ModDataGenerator;
 import com.richardsenger.piratesnships.platform.NeoForgeAttachmentHelper;
+import com.richardsenger.piratesnships.platform.NeoForgeCapabilityHelper;
 import com.richardsenger.piratesnships.platform.NeoForgeClientSetup;
 import com.richardsenger.piratesnships.platform.NeoForgeConfigHelper;
 import com.richardsenger.piratesnships.platform.NeoForgeEventForwarder;
+import com.richardsenger.piratesnships.platform.NeoForgeGameTests;
 import com.richardsenger.piratesnships.platform.NeoForgeNetworkHelper;
 import com.richardsenger.piratesnships.platform.NeoForgeRegistryHelper;
 import com.richardsenger.piratesnships.platform.Services;
@@ -32,10 +34,12 @@ public final class PiratesNShips {
         ((NeoForgeAttachmentHelper) Services.ATTACHMENTS).attach(modBus);
         ((NeoForgeNetworkHelper) Services.NETWORK).attach(modBus);
         ((NeoForgeConfigHelper) Services.CONFIG).attach(container);
+        ((NeoForgeCapabilityHelper) Services.CAPABILITIES).attach(modBus);
         NeoForgeEventForwarder.attach(NeoForge.EVENT_BUS);
 
         modBus.addListener(RegisterGameTestsEvent.class, event -> {
             for (ModModule m : ModModules.ALL) m.gameTestClasses().forEach(event::register);
+            event.register(NeoForgeGameTests.class);
         });
         modBus.addListener(GatherDataEvent.class, event -> ModDataGenerator.gather(
                 (client, provider) -> event.getGenerator().addProvider(client ? event.includeClient() : event.includeServer(), provider),

@@ -2,6 +2,7 @@ package com.richardsenger.piratesnships.platform;
 
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.platform.services.IAttachmentHelper;
+import com.richardsenger.piratesnships.platform.services.ICapabilityHelper;
 import com.richardsenger.piratesnships.platform.services.IConfigHelper;
 import com.richardsenger.piratesnships.platform.services.INetworkHelper;
 import com.richardsenger.piratesnships.platform.services.IPlatformHelper;
@@ -32,6 +33,8 @@ public final class Services {
     public static final IAttachmentHelper ATTACHMENTS = load(IAttachmentHelper.class);
     /** Binds our config schema to the loader's config system. Features use {@code core.config}, never this. */
     public static final IConfigHelper CONFIG = load(IConfigHelper.class);
+    /** Exposes our containers to other mods' automation (item handler capability / transfer API). */
+    public static final ICapabilityHelper CAPABILITIES = load(ICapabilityHelper.class);
 
     private Services() {
     }

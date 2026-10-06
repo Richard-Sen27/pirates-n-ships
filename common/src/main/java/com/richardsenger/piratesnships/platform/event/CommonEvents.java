@@ -10,6 +10,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -91,6 +93,25 @@ public final class CommonEvents {
         return false;
     });
 
+    /**
+     * A player right-clicks an entity, before the entity's own interaction ({@code Entity.interact}, e.g. a villager
+     * opening its trades) and before the held item's {@code interactLivingEntity}. Fires on <b>both logical sides</b>,
+     * once per hand (main hand first); the client fires it for its own player after sending the interaction to the
+     * server, the server when it handles that packet. Not fired for spectators.
+     *
+     * <p>Return {@link InteractionResult#PASS} to let the vanilla interaction run. Any other result cancels it: no
+     * later listener, no entity interaction, no item interaction; the result goes back to vanilla
+     * ({@code consumesAction()} results swing the arm and stop trying the other hand). The first non-PASS listener
+     * wins. Server-authoritative logic should return PASS on the client unless it can predict the server's answer.
+     */
+    public static final Event<EntityInteract> ENTITY_INTERACT = Event.create(ls -> (p, t, h) -> {
+        for (EntityInteract l : ls) {
+            InteractionResult r = l.onInteract(p, t, h);
+            if (r != InteractionResult.PASS) return r;
+        }
+        return InteractionResult.PASS;
+    });
+
     // --- Blocks -----------------------------------------------------------------------------------------------
 
     /** A player is about to break a block (server). Returning {@code true} cancels it. */
@@ -127,6 +148,7 @@ public final class CommonEvents {
     @FunctionalInterface public interface EntityJoinLevel { boolean onJoin(Entity entity, Level level); }
     /** Returns the new damage amount; a result {@code <= 0} cancels the damage. */
     @FunctionalInterface public interface LivingDamage { float onDamage(LivingEntity entity, DamageSource source, float amount); }
+    @FunctionalInterface public interface EntityInteract { InteractionResult onInteract(Player player, Entity target, InteractionHand hand); }
     @FunctionalInterface public interface LivingDeath { boolean onDeath(LivingEntity entity, DamageSource source); }
     @FunctionalInterface public interface BlockBreak { boolean onBreak(Level level, BlockPos pos, BlockState state, Player player); }
     @FunctionalInterface public interface BlockPlace { boolean onPlace(Level level, BlockPos pos, BlockState placed, @Nullable Entity placer); }

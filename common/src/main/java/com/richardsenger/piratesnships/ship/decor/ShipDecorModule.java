@@ -4,7 +4,13 @@ import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
+import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagCommands;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagConfig;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagData;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagGameTests;
+import com.richardsenger.piratesnships.ship.decor.flag.Flags;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.core.Direction;
 import net.minecraft.data.models.blockstates.MultiVariantGenerator;
@@ -33,7 +39,8 @@ import java.util.List;
 /**
  * The {@code ship.decor} module: figureheads, nameplate, flagpole, cargo crate and cargo barrel. Models come from
  * vanilla templates: {@code orientable} for figureheads (placeholder until the art pass gives them real shapes),
- * the open orientable trapdoor plate for the nameplate, {@code fence_post} for the flagpole.
+ * the open orientable trapdoor plate for the nameplate, {@code fence_post} for the flagpole. Flags (items, the
+ * flagpole's block entity, block state and look, config, commands) are in the {@code flag} sub-package.
  */
 public final class ShipDecorModule implements ModModule {
 
@@ -43,8 +50,19 @@ public final class ShipDecorModule implements ModModule {
     }
 
     @Override
+    public void registerConfig() {
+        FlagConfig.init();
+    }
+
+    @Override
     public void registerContent() {
         ShipDecor.init();
+        Flags.init();
+    }
+
+    @Override
+    public void registerEvents() {
+        CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> FlagCommands.register(dispatcher));
     }
 
     @Override
@@ -61,12 +79,11 @@ public final class ShipDecorModule implements ModModule {
         data.models(m -> {
             for (RegistryEntry<Block, FigureheadBlock> f : ShipDecor.figureheads()) figurehead(m, f.get());
             nameplate(m, ShipDecor.NAMEPLATE.get());
-            Block pole = ShipDecor.FLAGPOLE.get();
-            ResourceLocation poleModel = ModelTemplates.FENCE_POST.create(ModelLocationUtils.getModelLocation(pole), TextureMapping.defaultTexture(pole), m.models());
-            m.blockStates().accept(MultiVariantGenerator.multiVariant(pole, Variant.variant().with(VariantProperties.MODEL, poleModel)));
+            // flagpole: model and block state in FlagData
             m.blocks().createTrivialCube(ShipDecor.CARGO_CRATE.get());
             m.blocks().createTrivialBlock(ShipDecor.CARGO_BARREL.get(), TexturedModel.COLUMN);
         });
+        FlagData.gather(data);
         data.blockLoot(loot -> {
             for (RegistryEntry<Block, FigureheadBlock> f : ShipDecor.figureheads()) loot.dropSelf(f.get());
             loot.dropSelf(ShipDecor.NAMEPLATE.get());
@@ -158,6 +175,6 @@ public final class ShipDecorModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(ShipDecorGameTests.class);
+        return List.of(ShipDecorGameTests.class, FlagGameTests.class);
     }
 }

@@ -19,7 +19,7 @@ import java.util.List;
 /** Registration, drops, facing and recipes of the {@code ship.decor} module. */
 public final class ShipDecorGameTests {
 
-    public static final List<String> ITEM_IDS = List.of();
+    public static final List<String> ITEM_IDS = List.of("merchant_flag", "navy_flag", "jolly_roger_flag");
     public static final List<String> BLOCK_IDS = List.of("figurehead_mermaid", "figurehead_lion", "figurehead_eagle", "figurehead_skull",
             "nameplate", "flagpole", "cargo_crate", "cargo_barrel");
 

@@ -7,11 +7,18 @@ import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +31,7 @@ import java.util.function.Supplier;
  * <pre>{@code
  * ClientEvents.CLIENT_TICK_END.register(mc -> WindHud.tick(mc));
  * ClientEvents.CLIENT_DISCONNECT.register(mc -> ClientWind.reset());
+ * ClientEvents.ITEM_TOOLTIP.register((stack, context, flag, player, lines) -> lines.addAll(MyTooltips.lines(stack)));
  * ClientEvents.registerHudLayer(Constants.id("wind"), WindHud::render);
  * ClientEvents.registerEntityRenderer(ShipEntities.SHARK, SharkRenderer::new);
  * }</pre>
@@ -43,9 +51,19 @@ public final class ClientEvents {
      */
     public static final Event<ClientDisconnect> CLIENT_DISCONNECT = Event.create(ls -> mc -> ls.forEach(l -> l.onDisconnect(mc)));
 
+    /**
+     * An item tooltip was built (client thread), after vanilla and the item itself added their lines, so other code
+     * can add lines too. {@code lines} is the mutable tooltip: index 0 is the item's name, later lines may include
+     * the advanced-tooltip id and component count at the end. {@code player} is the client player, or {@code null}
+     * while the tooltip is built without a world (e.g. search tree indexing at startup): don't assume a level.
+     */
+    public static final Event<ItemTooltip> ITEM_TOOLTIP = Event.create(ls -> (st, ctx, f, p, lines) -> ls.forEach(l -> l.onTooltip(st, ctx, f, p, lines)));
+
     @FunctionalInterface public interface ClientTick { void onTick(Minecraft minecraft); }
 
     @FunctionalInterface public interface ClientDisconnect { void onDisconnect(Minecraft minecraft); }
+
+    @FunctionalInterface public interface ItemTooltip { void onTooltip(ItemStack stack, Item.TooltipContext context, TooltipFlag flag, @Nullable Player player, List<Component> lines); }
 
     /** A HUD layer, drawn above the vanilla HUD in registration order. */
     public record HudLayer(ResourceLocation id, LayeredDraw.Layer layer) { }

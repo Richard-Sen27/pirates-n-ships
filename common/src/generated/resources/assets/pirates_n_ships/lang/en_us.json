@@ -683,6 +683,8 @@
   "pirates_n_ships.configuration.sailing_runtime.full_draft.tooltip": "Depth of the hull bottom below the sea, in blocks, at which the keel acts at full strength (less depth acts proportionally)",
   "pirates_n_ships.configuration.sailing_runtime.sail_block_trim": "Sail Block Trim",
   "pirates_n_ships.configuration.sailing_runtime.sail_block_trim.tooltip": "Using a sail block cycles its own trim (furled, half, full) without the winch",
+  "pirates_n_ships.configuration.sailing_runtime.sail_heel_factor": "Sail Heel Factor",
+  "pirates_n_ships.configuration.sailing_runtime.sail_heel_factor.tooltip": "Fraction of the heeling and pitching moment of sails and keel that is applied (1 = physical; hollow block hulls have no ballast and capsize easily)",
   "pirates_n_ships.configuration.sailing_runtime.sails_need_water": "Sails Need Water",
   "pirates_n_ships.configuration.sailing_runtime.sails_need_water.tooltip": "Sails only push a ship that is afloat. Off: wind also pushes ships on land or in the air",
   "pirates_n_ships.configuration.sailing_runtime.scan_interval_ticks": "Scan Interval Ticks",

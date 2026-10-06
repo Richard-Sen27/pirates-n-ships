@@ -175,4 +175,41 @@ class DryHullLogicTest {
         assertEquals(0, moved.totalVolume(), EPS);
         assertTrue(FloodState.fromTag(new CompoundTag()).isEmpty());
     }
+
+    // ---------------------------------------------------------------- sea at the hull
+
+    @Test
+    void hullSurfaceNeedsAThirdOfTheProbesInWater() {
+        double n = Double.NaN;
+        // dry dock / cliff: no probe touches water, whatever is around
+        assertTrue(Double.isNaN(SeaLevel.hullSurface(new double[] {n, n, n, n, n, n, n, n, n})));
+        assertTrue(Double.isNaN(SeaLevel.hullSurface(new double[0])));
+        // half on a beach: 3 of 9 probes wet is enough, the wet median is the sea
+        assertEquals(62.9, SeaLevel.hullSurface(new double[] {62.9, 62.8, 63.0, n, n, n, n, n, n}), 1e-9);
+        // 2 of 9 is aground
+        assertTrue(Double.isNaN(SeaLevel.hullSurface(new double[] {62.9, 62.9, n, n, n, n, n, n, n})));
+        // a one-column mast-like hull: its single probe decides
+        assertEquals(10.5, SeaLevel.hullSurface(new double[] {10.5}), 1e-9);
+    }
+
+    @Test
+    void probesAreTheLowestSolidCellsOfTheFootprint() {
+        // a 5x5 floor at y=1 with one keel block below its center; empty columns around it
+        HullGrid.Builder b = HullGrid.builder(7, 4, 7);
+        for (int x = 1; x <= 5; x++) {
+            for (int z = 1; z <= 5; z++) {
+                b.set(x, 1, z, CellKind.SOLID);
+            }
+        }
+        b.set(3, 0, 3, CellKind.SOLID);
+        java.util.List<int[]> probes = SeaLevel.probes(b.build());
+        assertEquals(9, probes.size());
+        for (int[] p : probes) {
+            assertTrue(p[0] == 1 || p[0] == 3 || p[0] == 5, "x " + p[0]);
+            assertEquals(p[0] == 3 && p[2] == 3 ? 0 : 1, p[1], "lowest solid cell of column " + p[0] + "," + p[2]);
+        }
+        // a single solid column is probed once, an empty grid not at all
+        assertEquals(1, SeaLevel.probes(HullGrid.builder(3, 3, 3).set(1, 1, 1, CellKind.SOLID).build()).size());
+        assertTrue(SeaLevel.probes(HullGrid.builder(3, 3, 3).build()).isEmpty());
+    }
 }

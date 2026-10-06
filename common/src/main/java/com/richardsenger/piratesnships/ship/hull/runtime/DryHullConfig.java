@@ -26,8 +26,8 @@ public final class DryHullConfig {
             "How often (ticks) the server looks for players who started seeing a ship and sends them its dry regions");
     public static final ConfigValue<Integer> SAVE_INTERVAL_TICKS = SECTION.intRange("save_interval_ticks", 40, 1, 1200,
             "How often (ticks) a changing flood state is written into the ship's saved data");
-    public static final ConfigValue<Integer> SEA_SAMPLE_DEPTH = SECTION.intRange("sea_sample_depth", 24, 2, 128,
-            "How far below the ship's bottom to search for the sea surface");
+    public static final ConfigValue<Integer> SEA_PROBE_HEIGHT = SECTION.intRange("sea_probe_height", 24, 1, 128,
+            "How far up from the hull's bottom to follow the water that touches it when finding the sea surface");
     public static final ConfigValue<Boolean> ASYNC_ANALYSIS = SECTION.bool("async_analysis", true,
             "Run hull re-analysis on a background thread (the first analysis after assembly or loading is synchronous)");
 

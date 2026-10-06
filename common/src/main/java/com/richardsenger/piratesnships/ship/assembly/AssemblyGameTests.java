@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.ship.assembly;
 
+import com.richardsenger.piratesnships.ship.ShipTestCleanup;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
@@ -69,7 +70,7 @@ public final class AssemblyGameTests {
         SableShips.Gathered g = ShipAssembler.gather(helper.getLevel(), helper.absolutePos(HELM));
         helper.assertTrue(g.state() == SableShips.GatherState.SUCCESS && g.blocks().equals(Set.of(helper.absolutePos(HELM))),
                 "an isolated helm should gather exactly itself");
-        AssemblyResult r = ShipAssembler.assemble(helper.getLevel(), helper.absolutePos(HELM), null);
+        AssemblyResult r = ShipTestCleanup.assemble(helper, HELM);
         helper.assertTrue(r.outcome() == Outcome.NOTHING_TO_ASSEMBLE, "expected NOTHING_TO_ASSEMBLE, got " + r.outcome());
         helper.assertBlockPresent(AssemblyContent.HELM.get(), HELM);
         helper.succeed();
@@ -83,7 +84,7 @@ public final class AssemblyGameTests {
         int previous = AssemblyConfig.MAX_BLOCKS.get();
         AssemblyConfig.MAX_BLOCKS.set(5);
         try {
-            AssemblyResult r = ShipAssembler.assemble(helper.getLevel(), helper.absolutePos(HELM), null);
+            AssemblyResult r = ShipTestCleanup.assemble(helper, HELM);
             helper.assertTrue(r.outcome() == Outcome.TOO_MANY_BLOCKS && r.count() == 5, "expected TOO_MANY_BLOCKS(5), got " + r);
             helper.assertBlockPresent(AssemblyContent.HELM.get(), HELM);
         } finally {
@@ -98,7 +99,7 @@ public final class AssemblyGameTests {
     public static void assemblyCreatesSubLevelAndShipData(GameTestHelper helper) {
         Set<BlockPos> hull = buildHull(helper);
         ServerLevel level = helper.getLevel();
-        AssemblyResult r = ShipAssembler.assemble(level, helper.absolutePos(HELM), null);
+        AssemblyResult r = ShipTestCleanup.assemble(helper, HELM);
         helper.assertTrue(r.outcome() == Outcome.ASSEMBLED && r.count() == HULL_SIZE, "expected ASSEMBLED(" + HULL_SIZE + "), got " + r);
         ShipBody ship = SableShips.byId(level, r.shipId());
         helper.assertTrue(ship != null, "no sub-level for " + r.shipId());
@@ -143,7 +144,7 @@ public final class AssemblyGameTests {
             }
         });
         helper.setBlock(new BlockPos(4, 3, 4), AssemblyContent.HELM.get());
-        AssemblyResult r = ShipAssembler.assemble(helper.getLevel(), helper.absolutePos(new BlockPos(4, 3, 4)), null);
+        AssemblyResult r = ShipTestCleanup.assemble(helper, new BlockPos(4, 3, 4));
         helper.assertTrue(r.outcome() == Outcome.ASSEMBLED && r.count() == 25 + 16 + 1, "expected 42 blocks, got " + r);
         try {
             for (int x = 2; x <= 6; x++) {
@@ -167,7 +168,7 @@ public final class AssemblyGameTests {
         ServerLevel level = helper.getLevel();
         // A mob standing on the deck plank at (5, 2, 5): it must end up standing on the placed plank again.
         Pig pig = helper.spawnWithNoFreeWill(EntityType.PIG, new Vec3(5.5, 3.0, 5.5));
-        AssemblyResult assembled = ShipAssembler.assemble(level, helper.absolutePos(HELM), null);
+        AssemblyResult assembled = ShipTestCleanup.assemble(helper, HELM);
         helper.assertTrue(assembled.success(), "assembly failed: " + assembled);
         AtomicReference<AssemblyResult> done = new AtomicReference<>();
         helper.runAfterDelay(10, () -> helper.succeedWhen(() -> {
@@ -294,7 +295,7 @@ public final class AssemblyGameTests {
 
     private static ShipBody assembleHull(GameTestHelper helper) {
         buildHull(helper);
-        AssemblyResult r = ShipAssembler.assemble(helper.getLevel(), helper.absolutePos(HELM), null);
+        AssemblyResult r = ShipTestCleanup.assemble(helper, HELM);
         helper.assertTrue(r.success(), "assembly failed: " + r);
         ShipBody ship = SableShips.byId(helper.getLevel(), r.shipId());
         helper.assertTrue(ship != null, "no sub-level");

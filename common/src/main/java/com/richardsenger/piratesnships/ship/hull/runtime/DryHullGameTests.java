@@ -84,7 +84,7 @@ public final class DryHullGameTests {
 
     private static Fixture assemble(GameTestHelper h, BlockPos helm) {
         ServerLevel level = h.getLevel();
-        AssemblyResult r = ShipAssembler.assemble(level, h.absolutePos(helm), null);
+        AssemblyResult r = com.richardsenger.piratesnships.ship.ShipTestCleanup.assemble(h, helm);
         if (r.shipId() == null) {
             throw new AssertionError("assembly failed: " + r);
         }
@@ -251,14 +251,8 @@ public final class DryHullGameTests {
 
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200)
     public static void disassemblyLeavesNothingBehind(GameTestHelper h) {
-        // Spike 1's set-up: the hull stands directly on stone, no water anywhere near.
-        for (int x = 0; x < 24; x++) {
-            for (int z = 0; z < 24; z++) {
-                for (int y = 1; y <= 4; y++) {
-                    h.setBlock(new BlockPos(x, y, z), Blocks.STONE);
-                }
-            }
-        }
+        // The hull stands on stone in a dry dock, next to a water basin.
+        dryDock(h);
         Fixture onStone = assemble(h, hull(h, 9, false));
         ServerLevel level = h.getLevel();
         // Disassembly is refused while the ship still settles on the stone (MOVING), so retry each tick like spike 1.
@@ -290,6 +284,67 @@ public final class DryHullGameTests {
         h.assertTrue(Math.abs(reloaded.simulation().totalVolume() - 4.5) < 1e-9, "water lost on reload: " + reloaded.simulation().totalVolume());
         SableShips.remove(f.ship());
         h.succeed();
+    }
+
+    /** Stone up to y=4 everywhere, with a water basin (x 15..22, z 1..22, water y=2..7) right next to the hull. */
+    private static void dryDock(GameTestHelper h) {
+        for (int x = 0; x < 24; x++) {
+            for (int z = 0; z < 24; z++) {
+                boolean pool = x >= 15 && x <= 22 && z >= 1 && z <= 22;
+                for (int y = 1; y <= 8; y++) {
+                    boolean water = pool && y >= 2 && y <= 7;
+                    boolean stone = y == 1 || (!pool && y <= 4) || (x == 14 || x == 23 || z == 0 || z == 23) && y <= 8 && x >= 14;
+                    h.setBlock(new BlockPos(x, y, z), water ? Blocks.WATER : stone ? Blocks.STONE : Blocks.AIR);
+                }
+            }
+        }
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200)
+    public static void hullInDryDockBesideWaterStaysPut(GameTestHelper h) {
+        // The hull (x 9..13, bottom y=5) stands on stone; the basin wall at x=14 is the only thing between it and water
+        // that reaches up to y=7, above the hull's floor. The old "nine columns around the ship" rule saw that as sea.
+        dryDock(h);
+        Fixture f = assemble(h, hull(h, 9, false));
+        double y0 = world(f, f.helmPlot()).y;
+        double[] maxSpeed = {0};
+        h.onEachTick(() -> {
+            if (!f.ship().isRemoved() && h.getTick() >= 10) {
+                maxSpeed[0] = Math.max(maxSpeed[0], f.ship().linearVelocity().length());
+                h.assertFalse(f.runtime().seesSea(), "the ship in the dry dock sees a sea");
+            }
+        });
+        h.runAfterDelay(120, () -> {
+            double dy = world(f, f.helmPlot()).y - y0;
+            h.assertTrue(Math.abs(dy) < 0.1, "the ship in the dry dock moved by " + dy + " blocks");
+            h.assertTrue(maxSpeed[0] < 0.2, "the ship in the dry dock moved at up to " + maxSpeed[0] + " m/s");
+            h.assertTrue(f.runtime().simulation().totalVolume() == 0, "the dry-docked hull took on water");
+            h.succeed();
+        });
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 400)
+    public static void hullAfloatInBasinStaysCalm(GameTestHelper h) {
+        basin(h, 0, 23, true);
+        Fixture f = assemble(h, hull(h, 9, false));
+        double[] max = {0, 0};
+        h.onEachTick(() -> {
+            if (!f.ship().isRemoved() && h.getTick() >= 40) {
+                max[0] = Math.max(max[0], f.ship().linearVelocity().length());
+                max[1] = Math.max(max[1], com.richardsenger.piratesnships.ship.assembly.DisassemblyMath.tiltDegrees(f.ship().orientation()));
+            }
+        });
+        h.runAfterDelay(340, () -> {
+            // Limits: after 40 ticks of settling, a 5x4x5 hull in still water must not move faster than 1 m/s (a bob,
+            // not a launch: the bad runs reached 15 and 72 m/s) nor heel past 5 degrees (it is symmetric; the bad
+            // run reached 16); and it must still float: its sea is found and its helm is above the water.
+            h.assertTrue(max[0] < 1.0, "the floating ship moved at up to " + max[0] + " m/s");
+            h.assertTrue(max[1] < 5.0, "the floating ship tilted up to " + max[1] + " degrees");
+            h.assertTrue(f.runtime().seesSea(), "the floating ship sees no sea");
+            double helmY = world(f, f.helmPlot()).y, water = h.absolutePos(new BlockPos(0, 7, 0)).getY() + 0.9;
+            h.assertTrue(helmY > water, "the ship sank: helm at " + helmY + ", water at " + water);
+            h.succeed();
+        });
     }
 
     private static int gridIndex(Fixture f, BlockPos plot) {

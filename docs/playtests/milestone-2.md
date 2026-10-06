@@ -78,10 +78,25 @@ view, also after flying away (out of view distance) and coming back.
 ## 11. Shader pack (optional)
 With Iris or Oculus and a shader pack: repeat steps 3 and 4. Report whether water renders inside the hold.
 
+## 11b. Dry dock and beach
+The ship only feels the sea where world water touches its own bottom (up to nine probes under its hull; a third of
+them must be wet). Water next to it or below it does not count.
+1. Dig a dry dock on the shore: a stone pit next to the sea, separated by a one-block wall, deep enough that the
+   hull's bottom is below sea level. Build a closed hull on the pit floor, place the helm, assemble. Expected: the
+   ship stays exactly where it is, it does not lift, slide or tilt, and nothing floods (`/sable` force display shows
+   no buoyancy force). Break the wall so the sea pours in: once the water reaches the hull's bottom, the ship floats up.
+2. Build a hull on a cliff edge a few blocks above the sea and assemble: it stays put (no lift from the water below).
+3. Assemble a ship that is half on a beach, half in shallow water: if at least a third of its bottom is in water it
+   floats with the sea level of that water (the beached part still rests on the sand); with less it is aground and
+   behaves like a ship on land. Report whether that feels right.
+4. Note your X/Z coordinates in every report. Sable's physics loses precision very far from the world origin (beyond
+   about 4,000,000 blocks it gets worse, beyond 8,000,000 ships may sink into blocks); test near spawn.
+
 ## 12. Config toggles (optional)
 In `saves/<world>/serverconfig/pirates_n_ships-server.toml` (section `dry_hull`): set `enabled = false`, rejoin:
 water shows inside and you swim, as in milestone 1. Set `dry_buoyancy = false`: the ship should sit lower.
-Set `flood_weight_scale = 3.0` and breach the hull: it should sink faster.
+Set `flood_weight_scale = 3.0` and breach the hull: it should sink faster. `sea_probe_height` (default 24) is how far
+up the water touching the hull is followed to find the surface.
 
 ## What to send back
 - Screenshots: step 3 (looking around the dry hold, with F3), step 4.2 (hull from under water), step 6 after 30 s

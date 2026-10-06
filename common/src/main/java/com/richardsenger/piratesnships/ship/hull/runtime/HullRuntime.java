@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.ship.hull.runtime;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.core.CoreConfig;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.ship.hull.CellKind;
 import com.richardsenger.piratesnships.ship.hull.Compartment;
@@ -33,8 +34,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
@@ -73,6 +72,8 @@ public final class HullRuntime {
     private long lastRegionBuild = Long.MIN_VALUE / 2;
     private final Set<UUID> sentTo = new HashSet<>();
 
+    /** Footprint probes of the current analysis ({@link SeaLevel#probes}), grid coordinates. */
+    private List<int[]> probes = List.of();
     private double seaWorldY = Double.NaN;
     private double seaShipFrame = SeaLevel.NO_WATER;
     private @Nullable FloodReport lastReport;
@@ -96,6 +97,7 @@ public final class HullRuntime {
         if (state != null) {
             state.applyWater(rt.sim);
         }
+        rt.probes = SeaLevel.probes(rt.sim.analysis().grid());
         rt.sampleSea(ship);
         return rt;
     }
@@ -122,6 +124,11 @@ public final class HullRuntime {
 
     public int regionCount() {
         return regions.size();
+    }
+
+    /** Whether world water touches the hull ({@link SeaLevel#hullSurface}); without it nothing floods or floats. */
+    public boolean seesSea() {
+        return Double.isFinite(seaWorldY);
     }
 
     public double seaShipFrame() {
@@ -183,6 +190,7 @@ public final class HullRuntime {
             return;
         }
         double lost = sim.rebind(next);
+        probes = SeaLevel.probes(next.grid());
         HullGrid g = next.grid();
         for (long[] t : togglesSinceSnapshot) {
             BlockPos p = BlockPos.of(t[0]);
@@ -215,37 +223,49 @@ public final class HullRuntime {
     // ------------------------------------------------------------------ sea level
 
     /**
-     * Samples the world water surface in nine columns around and under the ship (corners, edge midpoints, center of its
-     * world bounds grown by one block). Each column is scanned from the ship's top down to {@code sea_sample_depth} below
-     * its bottom; the first water block from above gives the surface (block Y + fluid height). The median of the columns
-     * with water is the sea (at least three columns), otherwise the ship is on land or in the air and nothing floods.
+     * Measures the sea at the hull itself (docs/design.md §4.5). For each footprint probe ({@link SeaLevel#probes}, the
+     * lowest solid cell of up to nine columns) the world block just below the hull's bottom face, or the one that face is
+     * in, must be water; the surface is then the top of that water column, followed upward at most
+     * {@code sea_probe_height} blocks. {@link SeaLevel#hullSurface} turns the probes into the sea or none. Water beside
+     * a dry dock or below a cliff does not touch the hull, so it never counts.
      */
     private void sampleSea(ShipBody ship) {
-        AABB box = ship.worldBounds().inflate(1, 0, 1);
-        int top = Mth.floor(box.maxY) + 1, bottom = Mth.floor(box.minY) - DryHullConfig.SEA_SAMPLE_DEPTH.get();
-        double[] xs = {box.minX, (box.minX + box.maxX) / 2, box.maxX};
-        double[] zs = {box.minZ, (box.minZ + box.maxZ) / 2, box.maxZ};
-        double[] samples = new double[9];
+        int rise = DryHullConfig.SEA_PROBE_HEIGHT.get();
+        HullGrid g = sim.analysis().grid();
+        double[] samples = new double[probes.size()];
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        int k = 0;
-        for (double x : xs) {
-            for (double z : zs) {
-                samples[k++] = columnSurface(pos, Mth.floor(x), Mth.floor(z), top, bottom);
-            }
+        for (int i = 0; i < samples.length; i++) {
+            int[] c = probes.get(i);
+            Vec3 w = ship.toWorld(new Vec3(g.originX() + c[0] + 0.5, g.originY() + c[1] + 0.5, g.originZ() + c[2] + 0.5));
+            samples[i] = waterAtHull(pos, Mth.floor(w.x), w.y - 0.5, Mth.floor(w.z), rise);
         }
-        seaWorldY = SeaLevel.surface(samples, 3);
+        double before = seaWorldY;
+        seaWorldY = SeaLevel.hullSurface(samples);
         seaShipFrame = shipFrameSea(ship);
+        if (Double.isFinite(before) != Double.isFinite(seaWorldY) && CoreConfig.DEBUG.get()) {
+            Constants.LOG.info("Ship {}: {} ({} probes)", id,
+                    Double.isFinite(seaWorldY) ? "afloat, sea at y=" + seaWorldY : "no sea at the hull", samples.length);
+        }
     }
 
-    private double columnSurface(BlockPos.MutableBlockPos pos, int x, int z, int top, int bottom) {
-        for (int y = top; y >= bottom; y--) {
-            pos.set(x, y, z);
-            FluidState f = level.getFluidState(pos);
-            if (f.is(FluidTags.WATER)) {
-                return y + f.getHeight(level, pos);
+    /** World Y of the water surface touching the hull bottom ({@code bottomY}) in column x/z, or {@code NaN}. */
+    private double waterAtHull(BlockPos.MutableBlockPos pos, int x, double bottomY, int z, int rise) {
+        int y = Mth.floor(bottomY - 0.5);
+        if (!isWater(pos.set(x, y, z))) {
+            y++;
+            if (!isWater(pos.set(x, y, z))) {
+                return Double.NaN;
             }
         }
-        return Double.NaN;
+        for (int k = 0; k < rise && isWater(pos.set(x, y + 1, z)); k++) {
+            y++;
+        }
+        pos.set(x, y, z);
+        return y + level.getFluidState(pos).getHeight(level, pos);
+    }
+
+    private boolean isWater(BlockPos pos) {
+        return level.getFluidState(pos).is(FluidTags.WATER);
     }
 
     /**

@@ -9,36 +9,42 @@ Last updated: 2026-10-06 (second session: wave 1 of phase C running).
 
 ## Current state
 
-`main` is green after phases A and B. Nothing is pushed: local `main` is ahead of `origin/main`.
+`main` is green: `./gradlew build` (297 JUnit tests), `./gradlew :neoforge:runGameTestServer` (27 GameTests, including real Sable sub-levels being assembled and disassembled) and `./gradlew :neoforge:runData` (no diff). Nothing is pushed: local `main` is ahead of `origin/main`.
 
-Running now (five agents): **A2** foundation follow-up, **C1** hull + flooding, **C2** wind + sails, **C6** provisions, and **D1** spike 1 (assembly). Merged so far in phase C: **C4** law.
-
-Around 17:51 and 18:21 a short connection loss stalled several agents. All recovered by themselves except A2, which was stopped and resumed from its transcript at 18:33 with its work intact.
-Waiting for A2 (wave 2): **C3** melee, **C5** trade, **C7** remaining config groups, **C8** basic items and blocks.
-After that: spikes D2–D4 one after another (using `docs/sable-notes.md`) and phase E integration.
+Merged in this session: **A2** foundation follow-up, **C1** hull + flooding, **C2** wind + sails, **C4** law, **C6** provisions, **D1** spike 1 (assembly).
+Running now (five agents): **C3** melee, **C5** trade, **C7** remaining config, **C8** items and blocks, **D2** spike 2 (dry hull).
+After that: spikes D3 and D4 one after another, and phase E integration once C3, C5 and C8 are merged.
 
 How merges work in this phase:
 - Every merged branch and its worktree is deleted right after the merge (requested by the human).
 - `core/ModModules` and the generated resources (`common/src/generated/resources`, especially `lang/en_us.json` and `.cache`) are touched by every package. The orchestrator resolves `ModModules` by keeping all module lines, and resolves generated files by re-running `./gradlew :neoforge:runData` on the merged tree.
 - After each merge: `./gradlew build` and `./gradlew :neoforge:runGameTestServer` on `main`.
 
+Incidents:
+- Around 17:51 and 18:21 a short connection loss stalled several agents. All recovered by themselves except A2, which was stopped and resumed from its transcript at 18:33 with its work intact.
+- The merge commits `2e3fcac` (C6) and `3978c02` (A2) **don't compile**: the orchestrator wrote a malformed module list into `core/ModModules` (a shell quoting mistake) and committed without checking the result. `b97293d` fixes it. Keep this in mind when bisecting. Since then the orchestrator builds and runs the GameTests before committing a merge.
+
+Open foundation follow-ups (small, not blocking):
+- `core/datagen/ModTagsProvider` can't reference vanilla tags as required entries (`addTag(BlockTags.X)` fails the data run with "missing following references"). C1 and D1 both hit it. D1 uses optional references in the terrain tag, and C1 keeps its defaults in code and ships empty override tags. Fix: give the tag providers a lookup of vanilla tags.
+- `ConfigValue.reset()` only clears a local override. In a running game `set()` writes the real config, so `reset()` doesn't undo it. Tests must use `ConfigOverrides` (added by A2). The Javadoc of `set` still says "Undo with reset()".
+
 ## Work packages
 
 | Phase | Package | Status | Notes |
 |---|---|---|---|
 | A | Foundation (milestone 0): template cleanup, Sable dependency, platform services, registration / config / networking / attachment helpers, datagen, JUnit, GameTest harness, CI, playtest checklist | done (headless part) | Merged. Build, JUnit (5), GameTests (2) and datagen verified on `main`. The client part is in the milestone 0 playtest. See "Foundation notes" below. |
-| A2 | Foundation follow-up: entity-type and foreign-namespace tags and arbitrary JSON in datagen, shared datapack definition loader with client sync, GameTest helper for config changes | in progress | Needed by C3, C5 and C8. |
+| A2 | Foundation follow-up: entity-type and foreign-namespace tags and arbitrary JSON in datagen, shared datapack definition loader with client sync, GameTest helper for config changes | done | Merged. `core/data` (`DefinitionType`), `DataContributions.tags/json/encoded/definitions`, `ConfigOverrides`, new event `DATAPACK_SYNC`. Documented in design.md §3.3. Client sync is in the playtest `docs/playtests/data-and-config.md`. |
 | B | Sable investigation → `docs/sable-notes.md` | done | Merged (docs only, so no build needed). Reviewed by spot-checking about 25 API claims against `refs/`, all matched. See "Sable findings" below. |
-| C1 | Hull analysis + flooding model (§4.2, §4.5), pure logic | in progress | Wave 1. |
-| C2 | Wind and sail model (§5.1, §5.2), pure logic | in progress | Wave 1. |
-| C3 | Melee resolution core (§8.5), pure logic | todo | Wave 2, waits for A2. |
+| C1 | Hull analysis + flooding model (§4.2, §4.5), pure logic | done | Merged. 44 JUnit tests, 2 GameTests. Package `ship/hull` (spill-height analysis, flooding simulation, block classifier). Full analysis of a 64×32×64 hull: about 93 ms, flood tick: under 0.2 ms. |
+| C2 | Wind and sail model (§5.1, §5.2), pure logic | done | Merged. 58 JUnit tests, 2 GameTests. Package `sailing` (`wind`, `force`). Nothing is visible in-game until spike 3. |
+| C3 | Melee resolution core (§8.5), pure logic | in progress | Wave 2. |
 | C4 | Law system logic (§13.1, §13.2) + false-flag detection math (§4.7) | done | Merged. 106 JUnit tests and 6 GameTests. Package `law` (`crime`, `bounty`, `flag`, `LawService`, `/pirates law` debug commands). Playtest: `docs/playtests/law-commands.md`. | |
-| C5 | Trade economy logic (§10.3) | todo | Wave 2, waits for A2. |
-| C6 | Provisions logic (§7.4) | in progress | Wave 1. |
-| C7 | Config groups and values (§17) | todo | Wave 2. Reduced to the groups no other package owns (see decisions). |
-| C8 | Basic items and blocks + datagen + placeholder textures | todo | Wave 2, waits for A2. |
-| D1 | Spike 1: assembly (§4.1) | in progress | Lives in `common` (`ship/assembly`, Sable adapter in `ship/sable`), since all Sable APIs are in `sable-common`. Ends at a playtest gate. |
-| D2 | Spike 2: dry hull (§4.3, §4.4) | todo | Waits for D1 + C1. Ends at a playtest gate. |
+| C5 | Trade economy logic (§10.3) | in progress | Wave 2. |
+| C6 | Provisions logic (§7.4) | done | Merged. 54 JUnit tests, 3 GameTests. Package `crew/provisions`. |
+| C7 | Config groups and values (§17) | in progress | Wave 2. Reduced to the groups no other package owns (see decisions). |
+| C8 | Basic items and blocks + datagen + placeholder textures | in progress | Wave 2. |
+| D1 | Spike 1: assembly (§4.1) | blocked: needs playtest | Merged and green headlessly: 14 JUnit tests and 10 GameTests that assemble, name, refuse and disassemble real sub-levels. Lives in `common` (`ship/assembly`, Sable adapter in `ship/sable`, `ship/ShipData`). Playtest: `docs/playtests/milestone-1.md`. |
+| D2 | Spike 2: dry hull (§4.3, §4.4) | in progress | Started without waiting for the spike 1 playtest, because spike 1's GameTests cover assembly headlessly. Ends at a playtest gate. |
 | D3 | Spike 3: wind + sails (§5) | todo | Waits for D1 + C2. Ends at a playtest gate. |
 | D4 | Spike 4: crew station (§6) | todo | Waits for D3. Ends at a playtest gate. |
 | E | Integration: law, trade, provisions connected to entities and blocks (attachments, market backend, pantry, brig, flagpole) | todo | Waits for C4–C8. |
@@ -48,8 +54,8 @@ How merges work in this phase:
 | # | Milestone | Status | Notes |
 |---|---|---|---|
 | 0 | Project setup | blocked: needs playtest | Everything headless is done and green. "Sable loads in the NeoForge dev client" and the test block's look need the playtest in `docs/playtests/milestone-0.md`. |
-| 1 | Spike: assembly | todo | Phase D1. |
-| 2 | Spike: dry hull | todo | Phase D2. |
+| 1 | Spike: assembly | blocked: needs playtest | Phase D1 is merged. `docs/playtests/milestone-1.md`. |
+| 2 | Spike: dry hull | in progress | Phase D2. |
 | 3 | Spike: wind + sails | todo | Phase D3. |
 | 4 | Spike: crew station | todo | Phase D4. |
 | 5 | Config framework + weapons | todo | Partly covered by C7 + C8 (items exist, config defined). Firearm behavior and the config screen are not in this session's scope. |
@@ -87,6 +93,10 @@ How merges work in this phase:
 | 2026-10-06 | C2 also covers rudder, keel drag and anchor as pure force functions, and a thin server-side wind service with client sync. | Spike 3 needs all of them, and they are pure math like the sail model. |
 | 2026-10-06 | Spike 1 starts in parallel with phase C wave 1 and is written in `common`, not in `neoforge/`. | The four spikes are sequential and form the longest chain, and spike 1 only needs phases A and B. `docs/sable-notes.md` §7 found every needed Sable API in `sable-common`, so nothing has to be moved later. |
 | 2026-10-06 | Spike 1 defines the config section `assembly` (assembly enabled, max block count, disassembly thresholds). C7's "Ships" group leaves those two values out. | The spike needs them now, and two definitions of the same value would clash. |
+| 2026-10-06 | Spike 2 starts without waiting for the human's playtest of spike 1. The same will apply to spikes 3 and 4. | Nobody is watching, and spike 1's GameTests assemble and disassemble real sub-levels headlessly. The risk is that a problem only visible in the client (e.g. the ship not floating as expected) is found late. The playtests are listed in order at the end of this file. |
+| 2026-10-06 | C1: openings (doors, hatches) are never passable in the hull analysis. They are links whose open state the flooding simulation reads. Destroyed hull blocks are tracked as breaches. | Opening or closing never needs a re-analysis, and an open hatch or a hole below the waterline floods at a rate instead of at once. Written into design.md §4.2. |
+| 2026-10-06 | D1: a dock touching the hull is gathered with the ship. Ships are moored with a one-block gap. Logs count as ship blocks, leaves as terrain. Default block limit 2048. | Simple and predictable, and the block limit stops runaway gathers. Written into design.md §4.1. |
+| 2026-10-06 | C4: the criminal record attachment is not synced to clients. | The foundation syncs to every tracking client on each change, and decay changes the record often. A HUD will get the wanted level through its own payload. |
 | 2026-10-06 | Subagents read `refs/` from the main checkout by absolute path. | `refs/` is git-ignored, so it doesn't exist inside agent worktrees. |
 | 2026-10-06 | Subagents are spawned as `general-purpose` agents pinned to Opus, with the instructions from `.claude/agents/implementer.md` referenced in the prompt, instead of `subagent_type: "implementer"`. | This session doesn't list the `implementer` agent type ("Agent type 'implementer' not found"), probably because the definition was added after the session's agent list was loaded. Model and instructions are the same as intended. |
 
@@ -122,4 +132,6 @@ Known harmless log noise with Sable: `Failed to apply tag physics properties. Un
 
 In this order:
 1. [`docs/playtests/milestone-0.md`](playtests/milestone-0.md): Sable loads in the dev client, the mod list and config screen are correct, the test block appears and renders, `/sable spawn sphere 3` works.
-2. [`docs/playtests/law-commands.md`](playtests/law-commands.md): criminal score, navy and player bounties, claims, fines, persistence across death and reload, and the config toggle, all through `/pirates law` commands. Not a gate for other work.
+2. [`docs/playtests/milestone-1.md`](playtests/milestone-1.md): **the important one.** Build the boat from the recipe, assemble it at the helm in the sea, walk on deck, shove it, disassemble it, check the water in both directions, the block limit, a chest keeping its items, naming, and rejoining. Spikes 2 to 4 build on this.
+3. [`docs/playtests/law-commands.md`](playtests/law-commands.md): criminal score, navy and player bounties, claims, fines, persistence across death and reload, and the config toggle, all through `/pirates law` commands. Not a gate for other work.
+4. [`docs/playtests/data-and-config.md`](playtests/data-and-config.md): definitions synced to clients, a broken datapack file, tags, and the config screen. Not a gate for other work.

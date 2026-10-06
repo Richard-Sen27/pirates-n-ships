@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-06T19:06:10.0533	Tags for minecraft:item mod id vanilla
+// 1.21.1	2026-10-06T20:20:24.737385	Tags for minecraft:item mod id vanilla
 791e79cd83476b7ba87ecc885196eaa5364463fd data/c/tags/item/drinks.json
 0dfa7bb3735796e28b32944f14d9b6d5ca3eb866 data/c/tags/item/foods.json
 74ec066d50bbbe8edba4b0dfbfd83b83c5cc07b6 data/c/tags/item/foods/bread.json
@@ -7,6 +7,7 @@ d7c596d9bd2066f3cf48979fe8f153346a25e949 data/c/tags/item/tools/melee_weapon.jso
 89c1d48cb7481972ecdc1dad221630b5ea2aa553 data/c/tags/item/tools/ranged_weapon.json
 027425cd193e9e04ea5aed99085f092fa520d95e data/minecraft/tags/item/doors.json
 d7c596d9bd2066f3cf48979fe8f153346a25e949 data/minecraft/tags/item/swords.json
+c0bd5bbd8e967b153d06e7b6139d0188fbf64135 data/pirates_n_ships/tags/item/flags.json
 712cf6d10ba7bede9b7db2f7dab2ee872fca8b39 data/pirates_n_ships/tags/item/provisions/anti_scurvy.json
 2a0d78173d4a84223c01898ef26abb6a2c5d434b data/pirates_n_ships/tags/item/provisions/excluded.json
 c62b9be8a52938b166add3c15cf8fe7b6021f08a data/pirates_n_ships/tags/item/provisions/fresh_water.json

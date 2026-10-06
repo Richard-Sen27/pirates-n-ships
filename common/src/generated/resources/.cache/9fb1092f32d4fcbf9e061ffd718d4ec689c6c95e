@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-06T19:45:53.281892	Recipes
+// 1.21.1	2026-10-06T20:20:24.738525	Recipes
 015749d8a9eaabd51b4c4c379ce38acafd30720e data/pirates_n_ships/advancement/recipes/combat/cannonball.json
 698d8285044f0e3429c2f6421d742fd348e5d011 data/pirates_n_ships/advancement/recipes/combat/cutlass.json
 1cdb4544445c73aa3f110cf02a93148f6195c77b data/pirates_n_ships/advancement/recipes/combat/lead_shot.json
@@ -14,7 +14,10 @@
 d8d6742e7b00b938d6ba7583aa63200b14e03603 data/pirates_n_ships/advancement/recipes/decorations/figurehead_mermaid.json
 44163657308b2090616427baa602779a9ebe3956 data/pirates_n_ships/advancement/recipes/decorations/figurehead_skull.json
 99fc6b8a7ecf562a07f779a4fac1d22de19d5b56 data/pirates_n_ships/advancement/recipes/decorations/flagpole.json
+69f7305dc5b1a92c9575f2fbc5616e347e3b0b77 data/pirates_n_ships/advancement/recipes/decorations/jolly_roger_flag.json
+e2b270492cba5435b088d6e7fc3330413a80e288 data/pirates_n_ships/advancement/recipes/decorations/merchant_flag.json
 3f92520700f06e1abe525267746f118ade0342c7 data/pirates_n_ships/advancement/recipes/decorations/nameplate.json
+9803d6ed44f7f441f59c712df3720671d5483306 data/pirates_n_ships/advancement/recipes/decorations/navy_flag.json
 828bcded2b4c917ce606a20648c3c64c7bbc5421 data/pirates_n_ships/advancement/recipes/decorations/pantry.json
 24acbd4c3d3089c166c287f17cff2b42a52f7f76 data/pirates_n_ships/advancement/recipes/decorations/water_barrel.json
 2fbce99b46f6f5ee2a0b579c1beef4d6c4b30e71 data/pirates_n_ships/advancement/recipes/food/hardtack.json
@@ -41,9 +44,12 @@ a45bf208e422724c8cd80b70e6c4d79e99380b02 data/pirates_n_ships/recipe/figurehead_
 3d025d6dfbe0a002b63f0e49211600e94a8eb347 data/pirates_n_ships/recipe/grappling_hook.json
 289b9c39423d643c407f4dca3abda9cd8bfe06c6 data/pirates_n_ships/recipe/hardtack.json
 df19e78ee08b13dfc5a3753f8db8ba239bb70608 data/pirates_n_ships/recipe/helm.json
+4b7d2003ac5c6250d7cb1a96b1d3018a78a47942 data/pirates_n_ships/recipe/jolly_roger_flag.json
 24a7c93612c17938277ff08f651ee6aabaf6a467 data/pirates_n_ships/recipe/lead_shot.json
+f213f177b8b51c52e9ceb6b0f88472f03854479a data/pirates_n_ships/recipe/merchant_flag.json
 f3293314602bc2f8489df1b00cd44ea77ffdc5e0 data/pirates_n_ships/recipe/musket.json
 3e7f2780962b997b33366501c83931b7dd8dd009 data/pirates_n_ships/recipe/nameplate.json
+968f54f1e8f7cb0be73c534f57812a1a6d556d46 data/pirates_n_ships/recipe/navy_flag.json
 ff99d921b82145e6964a5fcd101f6a8181c13e27 data/pirates_n_ships/recipe/pantry.json
 789faf529148bcfbf77e9ca727ed22a778739226 data/pirates_n_ships/recipe/pistol.json
 78d739302fa344dbcd74f857e488d0a348238167 data/pirates_n_ships/recipe/rapier.json

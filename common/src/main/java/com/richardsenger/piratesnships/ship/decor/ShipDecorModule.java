@@ -80,7 +80,7 @@ public final class ShipDecorModule implements ModModule {
                 .block(ShipDecor.CARGO_BARREL, "Cargo Barrel"));
         data.models(m -> {
             for (RegistryEntry<Block, FigureheadBlock> f : ShipDecor.figureheads()) {
-                if (f == ShipDecor.FIGUREHEAD_SKULL) handMadeFigurehead(m, f.get());
+                if (f == ShipDecor.FIGUREHEAD_SKULL || f == ShipDecor.FIGUREHEAD_EAGLE) handMadeFigurehead(m, f.get());
                 else figurehead(m, f.get());
             }
             nameplate(m, ShipDecor.NAMEPLATE.get());

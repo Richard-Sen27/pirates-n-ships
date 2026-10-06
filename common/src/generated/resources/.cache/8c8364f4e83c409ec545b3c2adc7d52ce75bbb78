@@ -1,1 +1,7 @@
-// 1.21.1	2026-10-06T17:16:01.666568	Tags for minecraft:item mod id vanilla
+// 1.21.1	2026-10-06T18:33:15.119237	Tags for minecraft:item mod id vanilla
+500b5b16ea2217e9ea00a489aa202445217ecca8 data/pirates_n_ships/tags/item/provisions/anti_scurvy.json
+2a0d78173d4a84223c01898ef26abb6a2c5d434b data/pirates_n_ships/tags/item/provisions/excluded.json
+c62b9be8a52938b166add3c15cf8fe7b6021f08a data/pirates_n_ships/tags/item/provisions/fresh_water.json
+23ae90140ac4de52c822a45d825090cb23246407 data/pirates_n_ships/tags/item/provisions/preserved.json
+35133e95f1c8fdd7a1c21afcc231fc0bffefb9a8 data/pirates_n_ships/tags/item/provisions/rum.json
+35133e95f1c8fdd7a1c21afcc231fc0bffefb9a8 data/pirates_n_ships/tags/item/provisions/water_barrel.json

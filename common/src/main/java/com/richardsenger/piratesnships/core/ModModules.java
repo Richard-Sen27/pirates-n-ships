@@ -15,7 +15,6 @@ public final class ModModules {
     /** All modules, in initialization order. {@code core} stays first. */
     public static final List<ModModule> ALL = List.of(
             new CoreModule(),
-            new com.richardsenger.piratesnships.law.LawModule(),
-            new com.richardsenger.piratesnships.sailing.SailingModule()
+            new com.richardsenger.piratesnships.law.LawModule com.richardsenger.piratesnships.sailing.SailingModule com.richardsenger.piratesnships.crew.provisions.ProvisionsModule()
     );
 }

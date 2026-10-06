@@ -38,7 +38,6 @@ import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePrope
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * The {@code law.content} module: shackles, brig bars and brig door (design.md §13.3). Block states and models are
@@ -140,37 +139,47 @@ public final class LawContentModule implements ModModule {
 
     /**
      * A door like vanilla's: the eight door templates with {@code <name>_top} / {@code <name>_bottom}, the same
-     * facing/half/hinge/open rotations vanilla uses, and a flat item model using {@code item/<name>}.
+     * facing/half/hinge/open rotations vanilla uses, and a flat item model using {@code item/<name>}. A locked lower
+     * half uses four more models ({@code *_locked}) with the padlock texture {@code <name>_bottom_locked}.
      */
     private static void door(ModelContext m, Block block) {
         TextureMapping textures = TextureMapping.door(block);
-        Map<DoubleBlockHalf, ResourceLocation[]> models = Map.of(
-                DoubleBlockHalf.LOWER, new ResourceLocation[]{
-                        ModelTemplates.DOOR_BOTTOM_LEFT.create(block, textures, m.models()),
-                        ModelTemplates.DOOR_BOTTOM_LEFT_OPEN.create(block, textures, m.models()),
-                        ModelTemplates.DOOR_BOTTOM_RIGHT.create(block, textures, m.models()),
-                        ModelTemplates.DOOR_BOTTOM_RIGHT_OPEN.create(block, textures, m.models())},
-                DoubleBlockHalf.UPPER, new ResourceLocation[]{
-                        ModelTemplates.DOOR_TOP_LEFT.create(block, textures, m.models()),
-                        ModelTemplates.DOOR_TOP_LEFT_OPEN.create(block, textures, m.models()),
-                        ModelTemplates.DOOR_TOP_RIGHT.create(block, textures, m.models()),
-                        ModelTemplates.DOOR_TOP_RIGHT_OPEN.create(block, textures, m.models())});
+        TextureMapping lockedTextures = TextureMapping.door(block).put(TextureSlot.BOTTOM, TextureMapping.getBlockTexture(block, "_bottom_locked"));
+        ResourceLocation[] lower = {
+                ModelTemplates.DOOR_BOTTOM_LEFT.create(block, textures, m.models()),
+                ModelTemplates.DOOR_BOTTOM_LEFT_OPEN.create(block, textures, m.models()),
+                ModelTemplates.DOOR_BOTTOM_RIGHT.create(block, textures, m.models()),
+                ModelTemplates.DOOR_BOTTOM_RIGHT_OPEN.create(block, textures, m.models())};
+        ResourceLocation[] lowerLocked = {
+                ModelTemplates.DOOR_BOTTOM_LEFT.createWithSuffix(block, "_locked", lockedTextures, m.models()),
+                ModelTemplates.DOOR_BOTTOM_LEFT_OPEN.createWithSuffix(block, "_locked", lockedTextures, m.models()),
+                ModelTemplates.DOOR_BOTTOM_RIGHT.createWithSuffix(block, "_locked", lockedTextures, m.models()),
+                ModelTemplates.DOOR_BOTTOM_RIGHT_OPEN.createWithSuffix(block, "_locked", lockedTextures, m.models())};
+        ResourceLocation[] upper = {
+                ModelTemplates.DOOR_TOP_LEFT.create(block, textures, m.models()),
+                ModelTemplates.DOOR_TOP_LEFT_OPEN.create(block, textures, m.models()),
+                ModelTemplates.DOOR_TOP_RIGHT.create(block, textures, m.models()),
+                ModelTemplates.DOOR_TOP_RIGHT_OPEN.create(block, textures, m.models())};
         m.flatItem(block.asItem());
-        PropertyDispatch.C4<Direction, DoubleBlockHalf, DoorHingeSide, Boolean> dispatch = PropertyDispatch.properties(
-                BlockStateProperties.HORIZONTAL_FACING, BlockStateProperties.DOUBLE_BLOCK_HALF, BlockStateProperties.DOOR_HINGE, BlockStateProperties.OPEN);
+        PropertyDispatch.C5<Direction, DoubleBlockHalf, DoorHingeSide, Boolean, Boolean> dispatch = PropertyDispatch.properties(
+                BlockStateProperties.HORIZONTAL_FACING, BlockStateProperties.DOUBLE_BLOCK_HALF, BlockStateProperties.DOOR_HINGE,
+                BlockStateProperties.OPEN, BrigDoorBlock.LOCKED);
         for (Direction facing : Direction.Plane.HORIZONTAL) {
             for (DoubleBlockHalf half : DoubleBlockHalf.values()) {
                 for (DoorHingeSide hinge : DoorHingeSide.values()) {
                     for (boolean open : new boolean[]{false, true}) {
-                        boolean left = hinge == DoorHingeSide.LEFT;
-                        ResourceLocation model = models.get(half)[(left ? 0 : 2) + (open ? 1 : 0)];
-                        // Vanilla: closed east = 0°, then +90° per clockwise step; open adds +90° (left hinge) or +270° (right)
-                        int degrees = ((int) facing.toYRot() + 90 + (open ? (left ? 90 : 270) : 0)) % 360;
-                        Variant variant = Variant.variant().with(VariantProperties.MODEL, model);
-                        if (degrees != 0) {
-                            variant = variant.with(VariantProperties.Y_ROT, VariantProperties.Rotation.valueOf("R" + degrees));
+                        for (boolean locked : new boolean[]{false, true}) {
+                            boolean left = hinge == DoorHingeSide.LEFT;
+                            ResourceLocation[] set = half == DoubleBlockHalf.UPPER ? upper : locked ? lowerLocked : lower;
+                            ResourceLocation model = set[(left ? 0 : 2) + (open ? 1 : 0)];
+                            // Vanilla: closed east = 0°, then +90° per clockwise step; open adds +90° (left hinge) or +270° (right)
+                            int degrees = ((int) facing.toYRot() + 90 + (open ? (left ? 90 : 270) : 0)) % 360;
+                            Variant variant = Variant.variant().with(VariantProperties.MODEL, model);
+                            if (degrees != 0) {
+                                variant = variant.with(VariantProperties.Y_ROT, VariantProperties.Rotation.valueOf("R" + degrees));
+                            }
+                            dispatch.select(facing, half, hinge, open, locked, variant);
                         }
-                        dispatch.select(facing, half, hinge, open, variant);
                     }
                 }
             }

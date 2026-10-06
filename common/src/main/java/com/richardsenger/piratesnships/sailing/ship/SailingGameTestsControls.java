@@ -118,18 +118,21 @@ public final class SailingGameTestsControls {
     // ------------------------------------------------------------------ steering under sail
 
     /*
-     * Tolerances: with the defaults (rudder_strength 0.5, max angle 35°) the test hull at about 0.3 m/s turns 6 to 8°
-     * in 200 ticks with full rudder (measured), and 0.0 to 2.4° midships (2.4° at x=226k): the midships drift depends on where the
-     * random test grid lies, because far from the origin the 32-bit physics moves a slow ship in jerks (see the anchor
-     * test). MIN_TURN (3°) is under half of the smallest measured turn net of the midships drift, MAX_DRIFT is above the largest measured drift.
+     * Tolerances, measured with the defaults (rudder_strength 0.5, max angle 35°) on the ballasted test hull (about
+     * 0.45 to 0.65 m/s), 45 samples in 16 runs of the full suite (D5): full rudder turns it 8.6 to 9.7° in 200 ticks, to
+     * either side; midships it changes heading by −0.06 to +0.23°. MIN_TURN (5°) is under 60% of the smallest turn,
+     * MAX_DRIFT (1°) over four times the largest drift.
+     * Without ballast the same hull ran 35 to 46° bow down and its midships heading wandered by −2.4 to +2.2° (15
+     * samples), up to ±4° in earlier runs, with the sign of its random few degrees of heel (see SailingGameTestsShips#ballast).
      */
-    private static final double MIN_TURN = 3.0;
-    private static final double MAX_DRIFT = 3.5;
+    private static final double MIN_TURN = 5.0;
+    private static final double MAX_DRIFT = 1.0;
+    /** Unballasted hull at rest (see rudderAtRestDoesNotTurn). */
+    private static final double MAX_REST_DRIFT = 3.5;
 
     /**
-     * Three identical ships side by side in one basin and one wind, rudder hard to port, midships and hard to
-     * starboard. Each turns its way; the turns are also compared with the midships ship's, which cancels the small
-     * heading drift that depends on where the test grid lies.
+     * Three identical ballasted ships side by side in one basin and one wind, rudder hard to port, midships and hard to
+     * starboard. Each turns its way, also compared with the midships ship's turn; the midships ship holds its course.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 400, batch = "pirates_n_ships_rudder_under_sail")
     public static void rudderTurnsTheShipUnderSail(GameTestHelper h) {
@@ -140,7 +143,9 @@ public final class SailingGameTestsControls {
         Fixture[] f = new Fixture[3];
         double[][] a = new double[3][];
         for (int i = 0; i < 3; i++) {
-            f[i] = SailingGameTestsShips.assemble(h, ship(h, x0[i], SailTrim.FULL, steps[i], new BlockPos(x0[i] + 2, 9, 6)));
+            BlockPos helm = ship(h, x0[i], SailTrim.FULL, steps[i], new BlockPos(x0[i] + 2, 9, 6));
+            SailingGameTestsShips.ballast(h, x0[i], 3);
+            f[i] = SailingGameTestsShips.assemble(h, helm);
             a[i] = headingChange(h, f[i]);
         }
         h.runAfterDelay(HEAD_TO + 1, () -> {
@@ -166,10 +171,10 @@ public final class SailingGameTestsControls {
         h.runAfterDelay(HEAD_TO + 1, () -> {
             clearWind(h);
             logTurn("rudder at rest", f, a[0]);
-            // MAX_DRIFT (1.5°): the rudder force is proportional to the speed along the bow, and the freshly assembled
-            // hull still settles at about 0.06 m/s astern, which turns it about 0.7° in 10 s (measured). Under way at
-            // 0.3 m/s the same rudder turns it 6 to 8°.
-            h.assertTrue(Math.abs(a[0]) < MAX_DRIFT, "ship at rest turned: " + a[0] + "°");
+            // MAX_REST_DRIFT (3.5°): the rudder force is proportional to the speed along the bow, and the freshly
+            // assembled hull still settles at about 0.06 m/s astern, which turns it about 0.7° in 10 s (measured). Under
+            // way at 0.3 m/s the same rudder turns it 6 to 8°.
+            h.assertTrue(Math.abs(a[0]) < MAX_REST_DRIFT, "ship at rest turned: " + a[0] + "°");
             h.succeed();
         });
     }

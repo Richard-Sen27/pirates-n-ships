@@ -89,6 +89,21 @@ public final class SailingGameTestsShips {
         return helm;
     }
 
+    /**
+     * Turns the bottom layer of a {@link #hull} into stone ballast. The plain hull is a hollow, top-heavy plank box
+     * with a metacentric height of about 0.1 blocks: it lists about 22° at rest from the helm's weight alone, runs
+     * downwind 35 to 46° bow down under the small sail, and, heeled a few degrees, sheers off its course by up to 4° in
+     * 10 s, to port or starboard with the sign of the heel (D5, measured). Ballasted it runs about 16° bow down and
+     * holds its course.
+     */
+    static void ballast(GameTestHelper h, int x0, int z0) {
+        for (int x = x0; x <= x0 + 4; x++) {
+            for (int z = z0; z <= z0 + 4; z++) {
+                h.setBlock(new BlockPos(x, 5, z), Blocks.STONE);
+            }
+        }
+    }
+
     record Fixture(ShipBody ship, SailingRuntime runtime) { }
 
     static Fixture assemble(GameTestHelper h, BlockPos helm) {

@@ -69,6 +69,39 @@ whether ships need ballast, a keel block or a correction in the mod.
 4. Build a longer hull (for example 5×12) without ballast and repeat. Longer hulls should be much steadier.
    - Report at what size an unballasted wooden hull starts to feel acceptable.
 
+## 5c. Rolling and creaking (F1, added after the first playtest)
+The endless rocking of a floating ship is now damped, and a rolling ship's planks creak now and then. The creak uses
+vanilla placeholder sounds (the creaky wooden door opening and the chest lid, pitched down), so judge the timing and
+loudness, not the recording.
+1. Assemble a ship in calm open sea with the sails furled and stand on the deck or next to it. Give it a roll kick:
+   `/sable physics impulse @n angular 30 0 0 global` (the same command as milestone 1; use a larger number for a bigger
+   ship, and `0 0 30` if the ship's bow points east or west).
+   - **Expected:** it rolls over and back once or twice and then lies still within about 3 seconds. It should not look
+     glued to the water (it does swing over), and it should not keep rocking.
+   - **Measured headlessly** (a 7×17 plank hull of 180 kpg in a basin): with damping it swings 14° and settles within
+     about 3 s; with `hull_damping_enabled=false` it swings 18°, −7°, +3° and rocks for about 8 s.
+   - Report: how long it rocks, and whether it feels too stiff, about right or still too lively.
+2. `/pirates ship forces` while it rolls lists a `hull_damping` line (a pure torque in roll and pitch, no force).
+3. Listen while it rolls: now and then a quiet wooden creak from somewhere on the hull, more often while it rolls
+   hard, never more than one every 2 seconds. Subtitles (Options → Accessibility → Show Subtitles) show "Ship creaks".
+   - **Expected:** no creak at all while the ship lies still. Sailing on a beam reach with a heel that changes
+     (gusts, `/weather thunder`) also creaks now and then.
+   - Report: too frequent, too rare or about right; too loud or too quiet; whether the sound seems to come from the
+     ship (it should come from random points of the hull, not from one spot).
+4. Optional: set `hull_damping_enabled=false` in `[sailing]` and repeat step 1 to compare.
+
+Tuning values (server config, `serverconfig/pirates_n_ships-server.toml`):
+
+| What | Values [section] |
+|------|------------------|
+| Rocking dies down too slowly / too fast | `roll_damping`, `pitch_damping` (default 1.5 each, about the decay rate per second), `hull_damping_enabled` [sailing] |
+| Creaks too often / too rarely | `creaks_per_second` (0.2), `min_interval_ticks` (40), `roll_rate_threshold` (0.05 rad/s, about 3°/s) [hull_creaking] |
+| Creaks too loud / too quiet / too high | `min_volume` (0.25), `max_volume` (0.6), `min_pitch` (0.5), `max_pitch` (0.8) [hull_creaking] |
+| No creaking at all | `enabled` [hull_creaking] |
+
+The creak volume follows the game's "Blocks" volume slider (it is played by the server like any block sound); the
+client setting `audio.ambience_volume` does not affect it yet.
+
 ## 6. A second, bigger ship
 Build a longer hull (e.g. 13 x 7) with two masts and a `large_square_sail` plus a `fore_and_aft_sail`, one winch.
 Expected: the winch sets both sails; the ship is slower to accelerate (more mass) but reaches a similar top speed.

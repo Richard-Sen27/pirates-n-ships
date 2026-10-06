@@ -1,0 +1,19 @@
+{
+  "ship.creak": {
+    "sounds": [
+      {
+        "name": "minecraft:block/wooden_door/open1",
+        "volume": 0.8
+      },
+      {
+        "name": "minecraft:block/wooden_door/open2",
+        "volume": 0.8
+      },
+      {
+        "name": "minecraft:block/chest/open",
+        "volume": 0.8
+      }
+    ],
+    "subtitle": "subtitles.pirates_n_ships.ship.creak"
+  }
+}

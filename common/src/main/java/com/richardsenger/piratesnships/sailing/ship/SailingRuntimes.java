@@ -6,6 +6,7 @@ import com.richardsenger.piratesnships.sailing.block.CapstanBlock;
 import com.richardsenger.piratesnships.sailing.block.SailBlock;
 import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
+import com.richardsenger.piratesnships.sailing.force.HullDampingModel;
 import com.richardsenger.piratesnships.sailing.force.SailingParams;
 import com.richardsenger.piratesnships.sailing.wind.WindOverride;
 import com.richardsenger.piratesnships.sailing.wind.WindSample;
@@ -168,10 +169,15 @@ public final class SailingRuntimes {
         }
     }
 
-    /** Physics substep: applies sail and keel forces to every ship with a runtime. */
+    /** Physics substep: applies sail and keel forces and the hull damping to every ship with a runtime. */
     public static void onPhysicsTick(ServerLevel level, double timeStep) {
         Map<UUID, SailingRuntime> m = SERVER.get(level);
-        if (m == null || m.isEmpty() || !SailingConfig.FORCES_ENABLED.get()) {
+        if (m == null || m.isEmpty()) {
+            return;
+        }
+        boolean forces = SailingConfig.FORCES_ENABLED.get();
+        HullDampingModel.Params damping = SailingConfig.hullDampingParams();
+        if (!forces && !damping.enabled()) {
             return;
         }
         double fullDraft = SailingConfig.FULL_DRAFT.get();
@@ -189,7 +195,7 @@ public final class SailingRuntimes {
             HullRuntime hull = HullRuntimes.get(level, rt.id());
             double sea = hull == null || !hull.seesSea() ? Double.NaN : hull.seaWorldY();
             try {
-                rt.physicsTick(ship, sea, timeStep, now, fullDraft, needWater, heel);
+                rt.physicsTick(ship, sea, timeStep, now, fullDraft, needWater, heel, forces, damping);
             } catch (RuntimeException e) {
                 Constants.LOG.error("Sailing forces of ship {} failed", rt.id(), e);
             }

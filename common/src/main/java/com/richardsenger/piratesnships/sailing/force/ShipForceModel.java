@@ -61,4 +61,14 @@ public final class ShipForceModel {
         }
         return ForceBreakdown.of(out);
     }
+
+    /**
+     * {@code forces} plus one more contribution, e.g. {@link HullDampingModel}'s torque, which the runtime applies
+     * separately (unscaled by the heel factor) but lists in the same breakdown for {@code /pirates ship forces}.
+     */
+    public static ForceBreakdown withContribution(ForceBreakdown forces, ForceContribution extra) {
+        List<ForceContribution> out = new ArrayList<>(forces.contributions());
+        out.add(extra);
+        return ForceBreakdown.of(out);
+    }
 }

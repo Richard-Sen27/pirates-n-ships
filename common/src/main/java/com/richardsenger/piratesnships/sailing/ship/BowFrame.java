@@ -64,6 +64,11 @@ public record BowFrame(int dx, int dz) {
         return dx != 0 ? sizeX : sizeZ;
     }
 
+    /** Extent across the bow axis (the beam) of a plot box of the given size. */
+    public double beamOf(double sizeX, double sizeZ) {
+        return dx != 0 ? sizeZ : sizeX;
+    }
+
     /** Lower-case compass name of the plot bow direction ({@code north} = −Z), for storage and debug output. */
     public String name() {
         if (dx > 0) return "east";

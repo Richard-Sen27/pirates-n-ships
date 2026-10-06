@@ -35,7 +35,7 @@ Then write `docs/progress.md`: one line per roadmap milestone and work package w
 
 ### Phase A: foundation (sequential, one agent, must finish first)
 Milestone 0 from design.md §20, plus:
-- Rename the template from `com.example.examplemod`/`examplemod` to `com.richardsenger.piratesnships`/`pirates_n_ships` in common, neoforge and fabric (packages, service files, mixin configs, mod metadata). Remove the example mixins. Check that the `forge/` module is gone and that `fabric` is excluded in `settings.gradle`.
+- The template rename (`com.richardsenger.piratesnships` / `pirates_n_ships`), mod metadata, license and removal of the `forge/` module are already done and committed. Only verify them. Remove the template's example code: `CommonClass`, `MixinMinecraft` (common) and `MixinTitleScreen` (neoforge, fabric), and their entries in the mixin configs.
 - Add Sable (`sable-common` compileOnly in common, the NeoForge artifact in neoforge). Use the exact coordinates and version from `refs/sable` (wiki/README / gradle.properties).
 - Platform service skeleton: `Services.PLATFORM`, `.REGISTRY`, `.NETWORK`, `.EVENTS`, `.ATTACHMENTS`, `.CONFIG`, with NeoForge implementations and empty or TODO Fabric stubs.
 - Registration helper (per-module registration classes), config wrapper (config library decision per design.md §21, document it), networking helper for `CustomPacketPayload`, data attachment helper.

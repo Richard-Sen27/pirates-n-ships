@@ -43,8 +43,24 @@ Please send a screenshot of the creative tab and of the blocks placed in a row, 
 12. **Log.** Search `latest.log` for `pirates_n_ships` together with "model" or "texture".
     - **Expected:** no missing model or missing texture warnings.
 
+## 3D models (F7a: helm, anchor, flagpole, nameplate)
+Renders of the intended look are in `art/renders/`.
+1. **Helm:** place it facing you. The wheel's face with the gold hub cap points at you, the pedestal stands behind it.
+   The block under it and the blocks next to it show no holes. Rotate it four ways. On an assembled ship, clicking the
+   left, middle and right thirds still steers. In the inventory the whole wheel is visible and not clipped; check it in
+   hand and in third person too. The wheel reaches above its block: note whether it clips into a block placed above.
+2. **Flagpole:** place one and hoist each flag kind with the wind in all four directions. The cloth starts at the pole
+   with no gap, the cleat and rope never cut through the cloth, the gold finial sits on top. Stack two flagpoles: the
+   joint shows a collar band. Check the item in the GUI and in hand.
+3. **Nameplate:** place it on a hull wall facing each direction. The board hangs on two iron brackets against the wall,
+   nothing floats or sits inside the wall. It works waterlogged. The item is 3D in the GUI now.
+4. **Anchor:** stowed at the hull side it looks like an anchor: ring on top, stock across the shank, flukes at the
+   bottom. Drop and raise it: the chain still attaches at the ring, size and position are as before.
+5. **All four:** break each block; the particles are wood, not the missing texture. `latest.log` has no model or
+   texture warnings mentioning `pirates_n_ships`.
+
 ## Known placeholders (for the later art pass)
-- Figureheads are full cubes with a carved front face.
-- The flagpole borrows the vanilla fence post model, and the nameplate borrows the open trapdoor plate.
+- Figureheads are full cubes with a carved front face (Blockbench models are in work, F7c).
+- Capstan, sail winch, yards, cargo crate and barrel, pantry, water barrel, brig bars and door still use simple models.
 - The brig bars' transparency relies on a model field that only NeoForge reads. The Fabric port has to register a
   render layer for them.

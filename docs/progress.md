@@ -5,7 +5,7 @@ Statuses: **todo** / **in progress** / **done** / **blocked: needs playtest** / 
 
 "Done" means: `./gradlew build` passes, `./gradlew :neoforge:runGameTestServer` passes, and the new logic has tests.
 
-Last updated: 2026-10-07 (third session: the first five playtest-feedback packages are merged; the session can be restarted for the Blockbench MCP).
+Last updated: 2026-10-07 (fourth session: phase G; G1 and F7a merged, F5a and F7c running).
 
 ## Phase F: first playtest feedback (done, F5 and F7 continue in phase G)
 
@@ -24,7 +24,7 @@ The human played milestones 1 to 3 and reported: the dry hull works well; a floa
 Phase F left `main` green (627 JUnit tests, 190 GameTests, four green runs). Milestone 0 was playtested by the human and passed completely.
 
 Follow-ups from phase F (small):
-- `sounds.json` has one owner (the audio module). The anchor's three sound events (`anchor.chain`, `anchor.splash`, `anchor.thud`) are registered but not listed in it, so the anchor plays vanilla events directly. Add a shared sound-entries builder in `core/datagen` (`data.sounds(...)`) that collects entries from all modules into one file, then set `AnchorData.SOUNDS_JSON = true`.
+- ~~`sounds.json` has one owner~~ done in G1: `data.sounds(...)` collects entries from all modules, and the anchor plays its own events.
 - `SailingRuntime` applies the anchor force at the capstan centre; it should act at the hawse (`ShipAnchor.hawse`), which is now 2 to 3 blocks to the side. Harmless within the anchor's slack.
 - `StationGameTests.crewHoistsAndFurlsAfterTheWorkTime` failed once for two different agents ("sails not furled: FULL") in about 12 runs each, and passed in all of the orchestrator's 20 runs. Its ±3 tick margin may be too tight under load.
 - Custom banner flags show a generic cloth. A banner-coloured cloth needs a `BlockColor` registration hook in the foundation (NeoForge `RegisterColorHandlersEvent.Block`) and a tint index on the model.
@@ -37,15 +37,21 @@ Started 2026-10-07 after the session restart with the Blockbench MCP connected (
 
 | Package | Scope | Status |
 |---|---|---|
-| G1 | Shared `data.sounds(...)` builder for one generated `sounds.json`; `tools/convert_sounds.py` + `tools/sounds/manifest.json` (mp3 → Ogg Vorbis with ffmpeg, credits generated); music pools `music.sea` and `music.shanty` with a client music selector (aboard → shanty, ocean biome → sea, else vanilla) through a new `ClientEvents.SELECT_MUSIC` fired from NeoForge's `SelectMusicEvent`; gun sound events registered for the firearms milestone; anchor events join `sounds.json` | in progress |
+| G1 | Shared `data.sounds(...)` builder for one generated `sounds.json`; `tools/convert_sounds.py` + `tools/sounds/manifest.json` (mp3 → Ogg Vorbis, loudness-normalised, credits generated); music pools `music.sea` and `music.shanty` with a client music selector (aboard → shanty, ocean biome → sea, else vanilla) through `ClientEvents.SELECT_MUSIC` / `SOUND_STREAM_STARTED`; gun and sword sound events registered for the combat milestones; anchor events join `sounds.json` | done | Merged (`387e587`). 20 sound files (music 8.4 MiB, the jar is now 10.35 MB), 21 `sounds.json` entries, `docs/credits.md`. "Aboard" comes from Sable's `getTrackingOrVehicleSubLevel` (`ship/sable/ClientShipPoses.onShip`) with a 3 s memory for jumps. A running track is never cut off (`replaceCurrentMusic=false`). `music_volume` scales the channel when our track starts streaming; moving the game's music slider mid-track resets that track to the slider. The Homebrew ffmpeg has no libvorbis, so the agent installed `vorbis-tools` (`oggenc`) on the human's machine; the README says so. Playtest `audio.md`. |
 | F5a | Square sails from two yards (`yard` block, pairing rule from design.md §5.2, trapezoid area, trim on the upper yard, block entity renderer drawing the cloth); removes the one-block square sails; the one-block fore-and-aft sail stays until F5b | in progress |
 | F5b | Triangular sails: cleat block, rope item making a stay between two cleats, third cleat below the head, cloth rendered in the triangle; removes the one-block fore-and-aft sail | todo, after F5a |
-| F7a | Blockbench models, batch 1: helm wheel, anchor (entity, exported as `LayerDefinition` code), flagpole, nameplate; JUnit tests that every hand-made model parses and every blockstate references an existing model | in progress |
+| F7a | Blockbench models, batch 1: helm wheel, anchor (entity, exported as `LayerDefinition` code), flagpole, nameplate; JUnit tests that every hand-made model parses and every blockstate references an existing model | done | Merged (`e149578`). Helm 46 elements, flagpole 11, nameplate 18, anchor 26 boxes in 13 parts; `.bbmodel` projects in `art/models/` (vanilla texture data stripped; `tools/extract_vanilla_textures.py` fills the ignored `art/vanilla/` before opening them), renders in `art/renders/`, workflow in `art/README.md`. The helm got `noOcclusion()` so the deck under it is drawn; its wheel reaches above the block. Four model batches took about 230k agent tokens: keep batches at three or four models. Playtest `items-and-blocks.md`, section "3D models". |
 | F7b | Blockbench models, batch 2: capstan, sail winch, yard, cargo crate, cargo barrel, pantry, water barrel | todo, after F5a and F7a (shares `SailingModule` datagen with F5a) |
-| F7c | Blockbench models, batch 3: the four figureheads | todo, after F7a |
+| F7c | Blockbench models, batch 3: the four figureheads | in progress |
 | F7d | Blockbench models, batch 4: cleat, brig bars and door, flag cloth at 2 blocks via a block entity renderer | todo, after F5b |
 
 Only one agent at a time may use Blockbench (one desktop instance, one open project), so the F7 batches run one after another; G1 and F5 run next to them.
+
+Follow-ups from phase G (small):
+- Saving a `.bbmodel` from Blockbench embeds the vanilla textures again; strip them before committing (F7a did it with an ad-hoc script; a `tools/strip_bbmodel_textures.py` would make it one command).
+- The gun effects came out 2 to 3 LU below the −16 LUFS target (single-pass `loudnorm` with the true-peak limit). Raise `EFFECT_LUFS` or use two-pass if they sound quiet next to vanilla.
+- Fabric port: `SELECT_MUSIC` and `SOUND_STREAM_STARTED` have no direct Fabric equivalent and may need a mixin there.
+- `.gitattributes` had `* text eol=lf`, which would have corrupted the `.ogg` files; `*.ogg/.mp3/.wav binary` (G1) and `*.nbt binary` (orchestrator) were added. Existing PNGs were already covered.
 
 
 ## Summary of the second session
@@ -240,6 +246,7 @@ All of these are config values, so they can be changed without code. The ones mo
 - **Assembly:** block limit 2048, disassembly allowed below 0.3 m/s and 6° tilt.
 - **Provisions:** 6 nutrition per crew member per day, fresh food keeps 5 days, scurvy after 8 days.
 - **Sailing:** see the tuning questions in the spike 3 playtest (to be written).
+- **Audio:** 120 to 300 s between our music tracks (vanilla waits 10 to 20 minutes); shanties aboard; a pool change waits for the running track to end.
 
 ## Playtests for the human
 
@@ -250,6 +257,7 @@ In this order:
 4. [`docs/playtests/milestone-3.md`](playtests/milestone-3.md): sailing. Set the wind with `/pirates wind set`, hoist the sail at the winch, sail downwind, on a beam reach and into the wind, compare square and fore-and-aft sails, read `/pirates ship forces`. It has a tuning table (speed, heel, sideways drift), and section 5b on stability, which is the biggest open question. Part 2 covers steering at the helm and the anchor at the capstan.
 5. [`docs/playtests/milestone-4.md`](playtests/milestone-4.md): crew station. Get a crew member, assign it to the winch with the captain's whistle, order it to hoist and furl while sailing. The main question is how the crew member looks on a moving, heeling ship (jitter, lagging, feet off the deck), which nobody could check headlessly.
 6. [`docs/playtests/law-commands.md`](playtests/law-commands.md): criminal score, navy and player bounties, claims, fines, persistence across death and reload, and the config toggle, all through `/pirates law` commands. Not a gate for other work.
-7. [`docs/playtests/items-and-blocks.md`](playtests/items-and-blocks.md): every item and block in the creative tab with texture, name, model, drops and recipe. Not a gate for other work.
-8. [`docs/playtests/data-and-config.md`](playtests/data-and-config.md): definitions synced to clients, a broken datapack file, tags, and the config screen. Not a gate for other work.
-9. The phase E features, each through its own debug commands, in any order and none of them a gate: [`law-world.md`](playtests/law-world.md) (crimes from hitting villagers and from theft, bounty proof), [`brig.md`](playtests/brig.md) (shackles, leading, cells, the lockable door), [`flags.md`](playtests/flags.md) (hoisting and striking flags), [`pantry.md`](playtests/pantry.md) (pantry, water barrel, consumption and spoilage), [`cargo-and-market.md`](playtests/cargo-and-market.md) (bulk containers, coins, buying and selling at test ports, contracts).
+7. [`docs/playtests/items-and-blocks.md`](playtests/items-and-blocks.md): now also the first Blockbench models (section "3D models"); every item and block in the creative tab with texture, name, model, drops and recipe. Not a gate for other work.
+8. [`docs/playtests/audio.md`](playtests/audio.md): sea music at sea and aboard, music config, the anchor's own sounds, and the gun and sword sounds via `/playsound`. Not a gate for other work.
+9. [`docs/playtests/data-and-config.md`](playtests/data-and-config.md): definitions synced to clients, a broken datapack file, tags, and the config screen. Not a gate for other work.
+10. The phase E features, each through its own debug commands, in any order and none of them a gate: [`law-world.md`](playtests/law-world.md) (crimes from hitting villagers and from theft, bounty proof), [`brig.md`](playtests/brig.md) (shackles, leading, cells, the lockable door), [`flags.md`](playtests/flags.md) (hoisting and striking flags), [`pantry.md`](playtests/pantry.md) (pantry, water barrel, consumption and spoilage), [`cargo-and-market.md`](playtests/cargo-and-market.md) (bulk containers, coins, buying and selling at test ports, contracts).

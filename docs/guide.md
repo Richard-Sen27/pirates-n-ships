@@ -145,6 +145,13 @@ A ship that heels or is shoved swings back and settles within a few seconds (rol
 While it rolls, its planks creak now and then, quietly, from somewhere in the hull; a ship at rest is silent. The
 creak uses vanilla wooden sounds as placeholders until real recordings exist.
 
+### Sea music
+The mod brings its own music. Aboard a ship (standing on deck or sitting at a station) the next track is a sea
+shanty; at sea but not aboard (an ocean, deep ocean or beach biome) it is an ambient sea track; anywhere else vanilla
+music plays as usual. A running track is never cut off: the pool changes when it ends, and the gap between tracks is
+2 to 5 minutes by default (client config `audio`: `min_gap_seconds`, `max_gap_seconds`, `shanties_aboard`,
+`music_enabled`, `music_volume`). The tracks and their authors are listed in [`credits.md`](credits.md).
+
 ### Helm and rudder
 On an assembled ship, using the helm turns the rudder one step: the right third of the wheel (as the helmsman sees it)
 to starboard, the left third to port, the middle back to midships. There are three steps per side, up to 35°. The
@@ -370,13 +377,13 @@ nothing lets a player use it yet: the input and animation layers are missing.
 
 | Block | Recipe | What it does |
 |---|---|---|
-| Helm | 4 sticks, 1 planks | Assembles, steers and disassembles a ship. See [Ships](#2-ships) and [Sailing](#3-sailing). |
+| Helm | 4 sticks, 1 planks | Assembles, steers and disassembles a ship. A real ship's wheel on a pedestal (Blockbench model). See [Ships](#2-ships) and [Sailing](#3-sailing). |
 | Small Square Sail | 3 sticks, 3 wool | Sail, area 9. |
 | Large Square Sail | 3 sticks, 6 wool | Sail, area 25. |
 | Fore-and-Aft Sail | 3 sticks, 3 wool | Sail, area 16, sails closer to the wind. |
 | Sail Winch | 2 string, 1 iron ingot, 3 planks | Sets the trim of all sails on its ship. A crew station. |
 | Capstan | 2 logs, 1 stick, 2 chains, 1 iron block, 3 planks | Drops and raises the anchor. |
-| Flagpole | 3 sticks (gives 2) | Flies a flag. See [Flags](#5-flags). |
+| Flagpole | 3 sticks (gives 2) | Flies a flag. A thin pole with a finial and a cleat (Blockbench model). See [Flags](#5-flags). |
 | Pantry | 8 planks, 1 wheat | Food store with spoilage. See [Provisions](#6-provisions). |
 | Water Barrel | 6 planks, 2 iron nuggets, 1 water bucket | Holds 16 rations of water. Crafted full. |
 | Cargo Crate | 4 planks, 4 sticks | Bulk container for 32 stacks of one item. |
@@ -384,7 +391,7 @@ nothing lets a player use it yet: the input and animation layers are missing.
 | Brig Bars | 4 iron bars, 2 planks (gives 6) | Bars for cells. |
 | Brig Door | 4 iron ingots, 2 iron bars | Lockable door for cells. |
 | Mermaid, Lion, Eagle and Skull Figurehead | 4 planks and a prismarine shard, gold ingot, feather or bone | Decoration for the bow. Faces the way you look when placing it. |
-| Nameplate | any sign, 1 gold nugget | Decoration for the hull side. It doesn't show the ship's name yet. |
+| Nameplate | any sign, 1 gold nugget | Decoration for the hull side: a board on two iron brackets (Blockbench model). It doesn't show the ship's name yet. |
 | Test Block | none | A development block. |
 
 All blocks drop themselves. Wooden ones are mined with an axe, the bars and the door with a pickaxe.
@@ -473,6 +480,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `sailing` | Sail force, rudder strength, keel drag, anchor strength, roll and pitch damping. |
 | `anchor_chain` | Chain speeds, travel time limits, anchor sounds and volumes. |
 | `hull_creaking` | Creaking on/off, how often, volume and pitch ranges, the rolling rate that counts. |
+| `audio` (client) | Music on/off and volume, the gap between tracks, shanties aboard. |
 | `sailing_runtime` | Sailing forces on/off, heel scaling, steering and anchor on/off, rudder steps, chain length. |
 | `crew_stations` | Crew stations on/off, time per trim step. |
 | `flags` | Hoisting delay, flags following the wind, banners as flags. |

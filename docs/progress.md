@@ -23,7 +23,7 @@ How merges work in this phase:
 Incidents:
 - Around 17:51 and 18:21 a short connection loss stalled several agents. All recovered by themselves except A2, which was stopped and resumed from its transcript at 18:33 with its work intact.
 - At about 19:00 the network dropped again and all five running agents (C3, C5, C8, D2, A3) ended with API connection errors. Their worktrees and uncommitted work were intact, and all five were resumed from their transcripts at 19:40.
-- Flaky test: `AssemblyGameTests.disassemblyPutsBlocksBackOnTheGrid` (spike 1) failed once in five full runs on `main` ("pig not on deck", the pig was one block above the deck right after disassembly). It was reported to the D2 agent, which owns that package at the moment.
+- Flaky test: `AssemblyGameTests.disassemblyPutsBlocksBackOnTheGrid` (spike 1) failed once in five full runs on `main` ("pig not on deck", the pig was one block above the deck right after disassembly). The D2 agent found a real off-by-one in the passenger placement and fixed it on its branch, so `main` still has it until D2 is merged.
 - The merge commits `2e3fcac` (C6) and `3978c02` (A2) **don't compile**: the orchestrator wrote a malformed module list into `core/ModModules` (a shell quoting mistake) and committed without checking the result. `b97293d` fixes it. Keep this in mind when bisecting. Since then the orchestrator builds and runs the GameTests before committing a merge.
 
 Follow-ups for later packages (small, not blocking):
@@ -48,7 +48,7 @@ Follow-ups for later packages (small, not blocking):
 | C7 | Config groups and values (§17) | done | Merged. Sections `ships`, `waves`, `hazards`, `crew`, `combat`, `survival`, `world`, `world_simulation` (server) and `wave_effects`, `audio` (client), loaded by `core/settings/SettingsModule`. Nothing reads them yet. Almost every default is the agent's own choice: see "Defaults to review". |
 | C8 | Basic items and blocks + datagen + placeholder textures | done | Merged. 19 items and 13 blocks with models, recipes, loot, lang and tags, 22 GameTests, and `tools/gen_placeholder_textures.py`. Playtest: `docs/playtests/items-and-blocks.md`. |
 | D1 | Spike 1: assembly (§4.1) | blocked: needs playtest | Merged and green headlessly: 14 JUnit tests and 10 GameTests that assemble, name, refuse and disassemble real sub-levels. Lives in `common` (`ship/assembly`, Sable adapter in `ship/sable`, `ship/ShipData`). Playtest: `docs/playtests/milestone-1.md`. |
-| D2 | Spike 2: dry hull (§4.3, §4.4) | in progress | Started without waiting for the spike 1 playtest, because spike 1's GameTests cover assembly headlessly. Ends at a playtest gate. |
+| D2 | Spike 2: dry hull (§4.3, §4.4) | in progress (sent back after review) | The agent delivered the hull runtime, water occlusion regions with client sync, flooding, breaches, the buoyancy correction and persistence. **Not merged:** on `main` + the branch, one of its GameTests failed in 1 of 3 runs with a ship on dry stone moving at 72 m/s. The agent had seen the same symptom and worked around it in a test. It was asked to find and fix the cause and to show six green runs in a row. |
 | D3 | Spike 3: wind + sails (§5) | todo | Waits for D1 + C2. Ends at a playtest gate. |
 | D4 | Spike 4: crew station (§6) | todo | Waits for D3. Ends at a playtest gate. |
 | A3 | Foundation maintenance: required vanilla tag references in datagen, `ConfigValue` set/reset documentation, clash check for client and server section names, `ClientEvents.CLIENT_DISCONNECT` | done | Merged. |

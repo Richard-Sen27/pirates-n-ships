@@ -33,7 +33,7 @@ Set the wind: `/pirates wind set 270 6` (from the west, astern for a boat with i
    already mans this station", the second one stays where it is.
 
 ## 3. Orders while sailing (the main check)
-1. Sneak and use the whistle in the air while on deck. Expected: action bar "Order: hoist the sails (1 crew carry it
+1. Use the whistle in the air while on deck and pick "Hoist sails" in the radial menu (§9). Expected: action bar "Order: hoist the sails (1 crew carry it
    out)", chat `<Crew Member> Aye, hoisting the sails!`. The sails stay furled for **4 seconds** (default
    `ticks_per_trim_step` 40, two steps), then switch to full at once. The ship starts to move.
 2. While the ship sails, watch the crew member from on board for 20 s, then fly or walk to the shore and watch it
@@ -49,8 +49,8 @@ Set the wind: `/pirates wind set 270 6` (from the west, astern for a boat with i
    space and its head stays at the seat point, so its feet swing off the seat by roughly 1.6·tilt in radians blocks
    (GameTest: 1.2 blocks at 43° of pitch). Please screenshot how this looks; it tells us whether we need a custom
    orientation (Sable has `EntitySubLevelUtil.getCustomEntityOrientation`, unused here).
-5. Sneak-use the whistle again: "reef the sails", chat "Aye, reefing the sails!", half sail after 2 s. Again: "furl
-   the sails", furled after 2 s, the ship slows down.
+5. Whistle menu, "Reef sails": "reef the sails", chat "Aye, reefing the sails!", half sail after 2 s. Then "Furl
+   sails": "furl the sails", furled after 2 s, the ship slows down.
 6. Commands, same effect: `/pirates crew order hoist` (all assigned crew within 64 blocks), then
    `/pirates crew order furl @e[type=pirates_n_ships:crew_member,limit=1,sort=nearest]`.
    Expected: "Order hoist the sails: 1 of 1 crew carry it out". Ordering hoist when the sails are already full:
@@ -90,3 +90,35 @@ Set the wind: `/pirates wind set 270 6` (from the west, astern for a boat with i
 2. `crew_stations.enabled = false` in the server config (`serverconfig/pirates_n_ships-server.toml`), reload the
    world: an assigned crew member is released at once, the whistle answers "Crew stations are disabled on this server".
 3. `crew_stations.ticks_per_trim_step = 100`: hoisting from furled takes 10 s.
+
+## 9. Radial menu
+The whistle opens a wheel of orders (hoist, reef, furl at the top, right and bottom, "Release crew" on the left). Setup:
+a ship with a sail and a winch, a crew member seated at the winch (§2), you standing on deck with the whistle.
+1. Use the whistle in the air (not on the crew member, not on the winch). Expected: a ring of four sectors in the middle
+   of the screen, each with an icon (large sail, small sail, lead, winch), "Orders" in the center and a hint under the
+   ring. The world stays visible behind a light dim (no blur). Using the whistle on the crew member or on the winch
+   still selects, assigns and releases as before; no menu opens then.
+2. Move the mouse over each sector. Expected: the sector under the mouse turns gold with a bright rim and a larger
+   icon, its name ("Hoist sails", "Reef sails", "Furl sails", "Release crew") shows in the center and a one-line
+   description under the ring. Back in the center: nothing is highlighted.
+3. Click "Hoist sails". Expected: the menu closes with a click sound; action bar "Order: hoist the sails (1 crew carry
+   it out)"; chat `<Crew Member> Aye, hoisting the sails!`; full sails after the work time.
+4. Hold the use key (right mouse button), move onto "Reef sails" and release it there. Expected: the order is given on
+   release (reef, half sails). A quick tap of the use key opens the menu and leaves it open (the release in the center
+   gives no order); pressing the use key again over a sector gives that order.
+5. Open the menu again. Expected: a thin light mark on the inner edge of "Reef sails" and "Last order: Reef sails"
+   under the ring. Pick "Furl sails": furled after the work time.
+6. Pick "Release crew". Expected: action bar "1 crew members leave their stations"; the crew member stands on deck and
+   strolls.
+7. Open the menu and press Escape. Expected: it closes, no order, no message. Open it and click in the center: same.
+8. Open the menu standing on land (not on a ship) and pick an order. Expected: "You must stand on a ship to give
+   orders"; nothing else happens.
+9. In single player, open the menu while the ship sails. Expected: the game does not pause (the ship keeps moving,
+   water and mobs keep moving behind the menu).
+10. Options → Video Settings → GUI Scale 1, 2, 3, 4 (and Auto), opening the menu each time. Expected: the ring stays
+    round and fully on screen, icons inside their sectors, the names fit in the center hole, the description fits
+    under the ring. Please screenshot scale 1 and 4. Also try a small window (drag it to about 860×480).
+11. Look closely at the ring edges: if a sector is invisible (only icons, no colored ring) the triangle winding is
+    wrong; please say so.
+12. Dedicated server (optional): join one with the whistle; the server log shows no client class errors on startup,
+    and the menu works the same.

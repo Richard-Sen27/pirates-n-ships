@@ -107,6 +107,15 @@ public class StationSeat extends Entity {
         return worldPosition().add(0, 0.01, 0);
     }
 
+    /**
+     * A heeling ship dips the crew member's eyes into the water for a moment; vanilla would then throw it off the
+     * seat ({@code LivingEntity#baseTick}). It stays (spike: a sinking ship drowns its seated crew).
+     */
+    @Override
+    public boolean dismountsUnderwater() {
+        return false;
+    }
+
     @Override
     protected boolean canAddPassenger(Entity passenger) {
         return getPassengers().isEmpty();

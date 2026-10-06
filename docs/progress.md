@@ -21,6 +21,8 @@ The human played milestones 1 to 3 and reported: the dry hull works well; a floa
 | F6 | Full-size flags: a 2×1 block cloth hanging downwind from the pole, models built in code | in progress |
 | F7 | 3D models for all ship blocks (helm wheel, capstan, figureheads, containers, …) | waiting for the human's Blockbench MCP; placeholder models built in code where cheap |
 
+**If this session is restarted while phase F agents are running** (the human added a Blockbench MCP that needs a restart): the agents die, but their worktrees under `.claude/worktrees/agent-*` and branches `worktree-agent-*` keep their commits and uncommitted work. The next session should, for each worktree with work in it, start a fresh implementer whose setup is "`git merge --ff-only main` is not needed; you continue the work in this worktree: read `git status`, `git log main..HEAD` and the brief for the package in this table", give it the package's brief from this table and the design.md sections named above, and let it finish, test and commit. The worktree to package mapping: F1 `agent-abefaafb131e2b8c6`, F2 `agent-a9f50aa5be8da15cc`, F3 `agent-a558f10cb3840e25e`, F4 `agent-af850c7b0db69d753`, F6 `agent-af5c723a7a0704931`.
+
 Decision pending with the human: `CLAUDE.md` says all models come from datagen. Blockbench exports would be hand-made assets like textures, committed under `common/src/main/resources`, with datagen generating the block states that reference them. The orchestrator proceeds on that assumption.
 
 ## Summary of the second session

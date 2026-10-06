@@ -41,7 +41,7 @@ class ShipForceModelTest {
     void breakdownSumsItsContributions() {
         ShipState ship = ShipState.atRest(150, 20).withLinearVelocity(new Vector3d(0.5, 0, 3)).withAngularVelocity(new Vector3d(0, 0.1, 0.02));
         List<SailInstance> sails = List.of(
-                new SailInstance(SailTypes.LARGE_SQUARE, SailTrim.FULL, new Vector3d(0, 4, 2)),
+                new SailInstance(SailTypes.SQUARE, 25.0, SailTrim.FULL, new Vector3d(0, 6.5, 2)),
                 new SailInstance(SailTypes.FORE_AND_AFT, SailTrim.HALF, new Vector3d(0, 3, -5)));
         AnchorState anchor = new AnchorState(AnchorState.Phase.DROPPING, 0.4);
         ForceBreakdown f = ShipForceModel.compute(windFrom(120, 9), ship, sails,
@@ -57,7 +57,7 @@ class ShipForceModelTest {
         });
         assertTrue(sumF.distance(f.force()) < 1e-9);
         assertTrue(sumT.distance(f.torque()) < 1e-9);
-        assertTrue(f.get("sail[0]:large_square").isPresent());
+        assertTrue(f.get("sail[0]:square").isPresent());
         assertTrue(f.get("sail[1]:fore_and_aft").isPresent());
         assertTrue(f.get("keel").isPresent());
         assertTrue(f.get("rudder").isPresent());
@@ -90,7 +90,7 @@ class ShipForceModelTest {
     @Test
     void runningDownwindSettlesBelowWindSpeed() {
         WindSample wind = windFrom(180, 10);
-        Vector3d v = simulate(wind, List.of(new SailInstance(SailTypes.LARGE_SQUARE, SailTrim.FULL, new Vector3d(0, 4, 0))), P, 120);
+        Vector3d v = simulate(wind, List.of(new SailInstance(SailTypes.SQUARE, 25.0, SailTrim.FULL, new Vector3d(0, 6.5, 0))), P, 120);
         assertTrue(v.z > 3 && v.z < 10, "downwind speed " + v.z);
         assertEquals(0.0, v.x, 1e-6);
     }
@@ -115,7 +115,7 @@ class ShipForceModelTest {
 
     @Test
     void squareRiggerCannotBeatToWindward() {
-        List<SailInstance> sails = List.of(new SailInstance(SailTypes.LARGE_SQUARE, SailTrim.FULL, new Vector3d(0, 4, 0)));
+        List<SailInstance> sails = List.of(new SailInstance(SailTypes.SQUARE, 25.0, SailTrim.FULL, new Vector3d(0, 6.5, 0)));
         Vector3d v = simulate(windFrom(40, 10), sails, P, 60);
         assertTrue(v.z <= 1e-6, "square sails close to the wind must not drive forward, got " + v.z);
     }

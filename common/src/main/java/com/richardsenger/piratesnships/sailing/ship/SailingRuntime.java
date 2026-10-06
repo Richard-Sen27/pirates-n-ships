@@ -9,14 +9,21 @@ import com.richardsenger.piratesnships.sailing.force.SailType;
 import com.richardsenger.piratesnships.sailing.force.SailingParams;
 import com.richardsenger.piratesnships.sailing.force.ShipForceModel;
 import com.richardsenger.piratesnships.sailing.force.ShipState;
+import com.richardsenger.piratesnships.sailing.force.SailTypes;
+import com.richardsenger.piratesnships.sailing.sail.SquareSail;
+import com.richardsenger.piratesnships.sailing.sail.YardLinker;
+import com.richardsenger.piratesnships.sailing.sail.YardRow;
 import com.richardsenger.piratesnships.sailing.wind.WindSample;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.function.Function;
 import net.minecraft.core.BlockPos;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaterniond;
@@ -42,12 +49,19 @@ import org.joml.Vector3d;
  */
 public final class SailingRuntime {
 
-    /** One sail block: type and trim, keyed by its plot position. */
-    record Sail(SailType type, SailTrim trim) { }
+    /**
+     * One sail, keyed by its plot position: a square sail's head (its upper yard's middle block, with {@code square}
+     * set) or a one-block sail (fore-and-aft).
+     */
+    record Sail(SailType type, SailTrim trim, double area, @Nullable SquareSail square) { }
 
     private final UUID id;
     private final BowFrame bow;
     private final Map<BlockPos, Sail> sails = new TreeMap<>();
+    // every yard block of the ship, the yards they form (from the last relink) and the gap watched below each yard
+    private final Set<BlockPos> yardBlocks = new HashSet<>();
+    private List<YardRow> yards = List.of();
+    private int watchedGap;
     private int minX, minY, minZ, maxX, maxY, maxZ;
     private int unfurled;
 
@@ -171,12 +185,93 @@ public final class SailingRuntime {
         this.anchorEnabled = anchorEnabled;
     }
 
+    /** A one-block sail (its type's area). */
     void putSail(BlockPos plotPos, SailType type, SailTrim trim) {
-        Sail old = sails.put(plotPos.immutable(), new Sail(type, trim));
+        put(plotPos, new Sail(type, trim, type.area(), null));
+    }
+
+    private void put(BlockPos plotPos, Sail sail) {
+        Sail old = sails.put(plotPos.immutable(), sail);
         if (old != null && old.trim() != SailTrim.FURLED) unfurled--;
-        if (trim != SailTrim.FURLED) unfurled++;
+        if (sail.trim() != SailTrim.FURLED) unfurled++;
         include(plotPos);
         instancesDirty = true;
+    }
+
+    /** Changes only the trim of the sail at {@code plotPos} (the head of a square sail); false if there is none. */
+    boolean setTrim(BlockPos plotPos, SailTrim trim) {
+        Sail s = sails.get(plotPos);
+        if (s == null) {
+            return false;
+        }
+        if (s.trim() != trim) {
+            put(plotPos, new Sail(s.type(), trim, s.area(), s.square()));
+        }
+        return true;
+    }
+
+    // ------------------------------------------------------------------ square sails (yards, rule F5a)
+
+    /** Every yard block position of the ship (copy). */
+    List<BlockPos> yardBlocks() {
+        return new ArrayList<>(yardBlocks);
+    }
+
+    boolean addYardBlock(BlockPos p) {
+        include(p);
+        return yardBlocks.add(p.immutable());
+    }
+
+    boolean removeYardBlock(BlockPos p) {
+        return yardBlocks.remove(p);
+    }
+
+    /** The yards found by the last relink (copy). */
+    public List<YardRow> yards() {
+        return List.copyOf(yards);
+    }
+
+    /**
+     * Whether a block change at {@code p} may change which yards pair: it lies in the mast column under one of the
+     * yards, within the largest gap.
+     */
+    boolean watchesGap(BlockPos p) {
+        for (YardRow r : yards) {
+            if (p.getX() == r.middleX() && p.getZ() == r.middleZ() && p.getY() < r.y() && p.getY() >= r.y() - watchedGap) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Replaces all square sails with the result of a relink. {@code trims} reads the trim of a head (its block state).
+     */
+    void replaceSquareSails(YardLinker.Linked linked, Function<BlockPos, SailTrim> trims, int maxGap) {
+        sails.entrySet().removeIf(e -> e.getValue().square() != null);
+        unfurled = 0;
+        for (Sail s : sails.values()) {
+            if (s.trim() != SailTrim.FURLED) unfurled++;
+        }
+        for (SquareSail s : linked.sails()) {
+            BlockPos head = new BlockPos(s.upper().middleX(), s.upper().y(), s.upper().middleZ());
+            put(head, new Sail(SailTypes.SQUARE, trims.apply(head), s.area(), s));
+        }
+        yards = linked.rows();
+        watchedGap = maxGap;
+        instancesDirty = true;
+    }
+
+    /** Area of the sail at {@code plotPos} [blocks²], or NaN when there is none. */
+    public double areaAt(BlockPos plotPos) {
+        Sail s = sails.get(plotPos);
+        return s == null ? Double.NaN : s.area();
+    }
+
+    /** The square sail headed at {@code plotPos}, or null (none, or a one-block sail). */
+    public @Nullable SquareSail squareSailAt(BlockPos plotPos) {
+        Sail s = sails.get(plotPos);
+        return s == null ? null : s.square();
     }
 
     void removeSail(BlockPos plotPos) {
@@ -293,15 +388,24 @@ public final class SailingRuntime {
         return true;
     }
 
-    /** Sail instances relative to {@code com} (ship frame), rebuilt only after a sail change or a COM shift. */
+    /**
+     * Sail instances relative to {@code com} (ship frame), rebuilt only after a sail change or a COM shift. A square
+     * sail acts at the centroid of its drawn cloth ({@link SquareSail#centroid}), a one-block sail at its block center
+     * (its type adds the center of effort height).
+     */
     private List<SailInstance> instances(Vector3d com) {
         if (instancesDirty || com.distanceSquared(cachedCom) > 1.0e-4) {
             List<SailInstance> out = new ArrayList<>(sails.size());
             Vector3d rel = new Vector3d();
             for (Map.Entry<BlockPos, Sail> e : sails.entrySet()) {
                 BlockPos p = e.getKey();
+                Sail s = e.getValue();
                 rel.set(p.getX() + 0.5 - com.x, p.getY() + 0.5 - com.y, p.getZ() + 0.5 - com.z);
-                out.add(new SailInstance(e.getValue().type(), e.getValue().trim(), bow.toShip(rel, new Vector3d())));
+                if (s.square() != null) {
+                    double[] c = s.square().centroid(s.trim());
+                    rel.add(s.square().upper().alongX() ? c[0] : 0.0, -c[1], s.square().upper().alongX() ? 0.0 : c[0]);
+                }
+                out.add(new SailInstance(s.type(), s.area(), s.trim(), bow.toShip(rel, new Vector3d())));
             }
             instances = Collections.unmodifiableList(out);
             cachedCom.set(com);

@@ -19,6 +19,12 @@ class SailForceModelTest {
         return SailForceModel.compute(new SailInstance(type, trim, MAST), SailPolar.windFromAngle(windAngle, windSpeed), ship, P, "s");
     }
 
+    /** A square sail of {@code area} at the mast, wind from 150° (broad reach). */
+    static ForceContribution square(double area, SailTrim trim, double windSpeed, SailingParams params) {
+        return SailForceModel.compute(new SailInstance(SailTypes.SQUARE, area, trim, MAST), SailPolar.windFromAngle(150, windSpeed),
+                REST, params, "s");
+    }
+
     static double drive(ForceContribution c) {
         return c.force().dot(ShipFrame.FORWARD);
     }
@@ -36,21 +42,23 @@ class SailForceModelTest {
 
     @Test
     void forceGrowsWithAreaTrimAndWind() {
-        double small = drive(force(SailTypes.SMALL_SQUARE, SailTrim.FULL, 150, 10, REST));
-        double large = drive(force(SailTypes.LARGE_SQUARE, SailTrim.FULL, 150, 10, REST));
+        // a square sail's area is its own (from the yards), not its type's
+        double small = drive(square(9.0, SailTrim.FULL, 10, P));
+        double large = drive(square(25.0, SailTrim.FULL, 10, P));
         assertEquals(25.0 / 9.0, large / small, 1e-9);
-        double half = drive(force(SailTypes.LARGE_SQUARE, SailTrim.HALF, 150, 10, REST));
+        assertEquals(small, drive(force(SailTypes.SQUARE, SailTrim.FULL, 150, 10, REST)), 1e-9, "the type's reference area is 9");
+        double half = drive(square(25.0, SailTrim.HALF, 10, P));
         assertEquals(P.halfTrimFactor(), half / large, 1e-9);
-        double weak = drive(force(SailTypes.LARGE_SQUARE, SailTrim.FULL, 150, 5, REST));
+        double weak = drive(square(25.0, SailTrim.FULL, 5, P));
         assertEquals(0.5, weak / large, 1e-9);
-        double scaled = drive(SailForceModel.compute(new SailInstance(SailTypes.LARGE_SQUARE, SailTrim.FULL, MAST),
-                SailPolar.windFromAngle(150, 10), REST, P.withSailForceScale(2.0), "s"));
+        double scaled = drive(square(25.0, SailTrim.FULL, 10, P.withSailForceScale(2.0)));
         assertEquals(2.0, scaled / large, 1e-9);
+        assertEquals(0.0, square(0.0, SailTrim.FULL, 10, P).force().length(), "no area, no force");
     }
 
     @Test
     void squareSailIsBestDownwindAndUselessCloseToTheWind() {
-        List<SailPolar.Point> polar = SailPolar.curve(SailTypes.LARGE_SQUARE, 1);
+        List<SailPolar.Point> polar = SailPolar.curve(SailTypes.SQUARE, 1);
         SailPolar.Point best = polar.stream().max((a, b) -> Double.compare(a.drive(), b.drive())).orElseThrow();
         assertEquals(180.0, best.windAngleDeg(), 1e-9);
         for (SailPolar.Point p : polar) {
@@ -58,7 +66,7 @@ class SailForceModelTest {
                 assertTrue(p.drive() <= 0.0, "square sail drives at " + p.windAngleDeg());
             }
         }
-        assertTrue(SailPolar.at(SailTypes.LARGE_SQUARE, 60).drive() < 0.1 * best.drive());
+        assertTrue(SailPolar.at(SailTypes.SQUARE, 60).drive() < 0.1 * best.drive());
     }
 
     @Test
@@ -68,8 +76,8 @@ class SailForceModelTest {
         assertTrue(best.windAngleDeg() >= 75 && best.windAngleDeg() <= 105, "best at " + best.windAngleDeg());
         double at45 = SailPolar.at(SailTypes.FORE_AND_AFT, 45).drive();
         assertTrue(at45 > 0.4 * best.drive(), "fore-and-aft should still drive at 45 degrees, got " + at45);
-        assertTrue(at45 > SailPolar.at(SailTypes.LARGE_SQUARE, 45).drive() + 0.3, "fore-and-aft points higher than square");
-        assertTrue(SailPolar.at(SailTypes.FORE_AND_AFT, 180).drive() < SailPolar.at(SailTypes.LARGE_SQUARE, 180).drive(),
+        assertTrue(at45 > SailPolar.at(SailTypes.SQUARE, 45).drive() + 0.3, "fore-and-aft points higher than square");
+        assertTrue(SailPolar.at(SailTypes.FORE_AND_AFT, 180).drive() < SailPolar.at(SailTypes.SQUARE, 180).drive(),
                 "square beats fore-and-aft per area downwind");
     }
 
@@ -87,11 +95,11 @@ class SailForceModelTest {
     void shipRunningAtWindSpeedFeelsNoWind() {
         Vector3d wind = SailPolar.windFromAngle(180, 8);
         ShipState running = REST.withLinearVelocity(wind);
-        ForceContribution c = SailForceModel.compute(new SailInstance(SailTypes.LARGE_SQUARE, SailTrim.FULL, MAST), wind, running, P, "s");
+        ForceContribution c = SailForceModel.compute(new SailInstance(SailTypes.SQUARE, SailTrim.FULL, MAST), wind, running, P, "s");
         assertEquals(0.0, c.force().length(), 1e-12);
         ShipState half = REST.withLinearVelocity(new Vector3d(wind).mul(0.5));
-        double h = drive(SailForceModel.compute(new SailInstance(SailTypes.LARGE_SQUARE, SailTrim.FULL, MAST), wind, half, P, "s"));
-        double full = drive(force(SailTypes.LARGE_SQUARE, SailTrim.FULL, 180, 8, REST));
+        double h = drive(SailForceModel.compute(new SailInstance(SailTypes.SQUARE, SailTrim.FULL, MAST), wind, half, P, "s"));
+        double full = drive(force(SailTypes.SQUARE, SailTrim.FULL, 180, 8, REST));
         assertEquals(0.5, h / full, 1e-9);
     }
 
@@ -99,8 +107,8 @@ class SailForceModelTest {
     void apparentWindMovesForwardWhenSailing() {
         // Beam reach while moving forward: the apparent wind comes from further ahead, so the square sail drives less.
         ShipState moving = REST.withLinearVelocity(new Vector3d(ShipFrame.FORWARD).mul(4));
-        double still = drive(force(SailTypes.LARGE_SQUARE, SailTrim.FULL, 90, 8, REST)) / 8.0;
-        ForceContribution m = force(SailTypes.LARGE_SQUARE, SailTrim.FULL, 90, 8, moving);
+        double still = drive(force(SailTypes.SQUARE, SailTrim.FULL, 90, 8, REST)) / 8.0;
+        ForceContribution m = force(SailTypes.SQUARE, SailTrim.FULL, 90, 8, moving);
         double apparent = Math.hypot(8, 4);
         assertTrue(drive(m) / apparent < still);
     }
@@ -154,7 +162,7 @@ class SailForceModelTest {
         ShipState ship = REST.withOrientation(turned);
         Vector3d localWind = SailPolar.windFromAngle(110, 9);
         Vector3d worldWind = turned.transform(new Vector3d(localWind));
-        SailInstance sail = new SailInstance(SailTypes.LARGE_SQUARE, SailTrim.FULL, MAST);
+        SailInstance sail = new SailInstance(SailTypes.SQUARE, SailTrim.FULL, MAST);
         ForceContribution a = SailForceModel.compute(sail, localWind, REST, P, "s");
         ForceContribution b = SailForceModel.compute(sail, worldWind, ship, P, "s");
         assertTrue(a.force().distance(b.force()) < 1e-9);
@@ -166,11 +174,11 @@ class SailForceModelTest {
         // Yawing to port moves a mast ahead of the COM to port, which adds apparent wind from port.
         Vector3d ahead = new Vector3d(0, 3, 8);
         ShipState yawing = REST.withAngularVelocity(new Vector3d(0, 0.5, 0));
-        Vector3d atSail = yawing.velocityAt(new Vector3d(ahead).add(0, SailTypes.SMALL_SQUARE.centerOfEffortHeight(), 0), new Vector3d());
+        Vector3d atSail = yawing.velocityAt(new Vector3d(ahead).add(0, SailTypes.SQUARE.centerOfEffortHeight(), 0), new Vector3d());
         assertTrue(atSail.dot(ShipFrame.PORT) > 0);
-        ForceContribution still = SailForceModel.compute(new SailInstance(SailTypes.SMALL_SQUARE, SailTrim.FULL, ahead),
+        ForceContribution still = SailForceModel.compute(new SailInstance(SailTypes.SQUARE, SailTrim.FULL, ahead),
                 new Vector3d(), REST, P, "s");
-        ForceContribution spun = SailForceModel.compute(new SailInstance(SailTypes.SMALL_SQUARE, SailTrim.FULL, ahead),
+        ForceContribution spun = SailForceModel.compute(new SailInstance(SailTypes.SQUARE, SailTrim.FULL, ahead),
                 new Vector3d(), yawing, P, "s");
         assertEquals(0.0, still.force().length());
         assertTrue(spun.force().length() > 0);

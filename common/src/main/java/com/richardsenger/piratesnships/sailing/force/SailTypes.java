@@ -49,14 +49,17 @@ public final class SailTypes {
             165, 0.50, 0.07,
             180, 0.45, 0.00);
 
-    /** 3×3 square sail. */
-    public static final SailType SMALL_SQUARE = new SailType("small_square", 9.0, 1.5, SQUARE_CURVE);
-    /** 5×5 square sail. */
-    public static final SailType LARGE_SQUARE = new SailType("large_square", 25.0, 2.5, SQUARE_CURVE);
+    /**
+     * Square sail between two yards (docs/design.md §5.2, rule F5a). Its real area comes from the yards and travels in
+     * {@link SailInstance#area()}; 9 (three wide, three deep) is only the reference area that the three-argument
+     * {@link SailInstance} constructor uses. The center of effort height is 0 because the runtime passes the centroid
+     * of the drawn cloth as the sail's position.
+     */
+    public static final SailType SQUARE = new SailType("square", 9.0, 0.0, SQUARE_CURVE);
     /** Fore-and-aft (lateen) sail, roughly a 4×4 triangle-ish sheet with a low center of effort. */
     public static final SailType FORE_AND_AFT = new SailType("fore_and_aft", 16.0, 2.0, FORE_AND_AFT_CURVE);
 
-    public static final List<SailType> ALL = List.of(SMALL_SQUARE, LARGE_SQUARE, FORE_AND_AFT);
+    public static final List<SailType> ALL = List.of(SQUARE, FORE_AND_AFT);
 
     private SailTypes() {
     }

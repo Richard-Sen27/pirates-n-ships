@@ -1,6 +1,5 @@
 package com.richardsenger.piratesnships.station.winch;
 
-import com.richardsenger.piratesnships.sailing.block.SailBlock;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
 import com.richardsenger.piratesnships.sailing.ship.SailingRuntime;
 import com.richardsenger.piratesnships.sailing.ship.SailingRuntimes;
@@ -9,11 +8,8 @@ import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.station.StationConfig;
 import com.richardsenger.piratesnships.station.StationKind;
 import com.richardsenger.piratesnships.station.StationRef;
-import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -53,10 +49,9 @@ public final class WinchStation implements StationKind<SailOrder> {
         if (rt == null) {
             return;
         }
-        for (BlockPos p : List.copyOf(rt.sailPositions())) {
-            BlockState s = level.getBlockState(p);
-            if (s.getBlock() instanceof SailBlock && s.getValue(SailBlock.TRIM) != order.target()) {
-                level.setBlock(p, s.setValue(SailBlock.TRIM, order.target()), Block.UPDATE_ALL); // updates the runtime
+        for (BlockPos p : rt.sailPositions()) {
+            if (rt.trimAt(p) != order.target()) {
+                SailingRuntimes.setTrim(level, p, order.target()); // the block changes update the runtime
             }
         }
     }

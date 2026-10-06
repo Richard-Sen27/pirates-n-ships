@@ -15,8 +15,8 @@ import org.jetbrains.annotations.Nullable;
  * {@link WhistleOrders}. Pure data: the icon is an item id that the client resolves.
  */
 public enum WhistleOrder {
-    HOIST(SailOrder.HOIST, Constants.id("large_square_sail")),
-    REEF(SailOrder.REEF, Constants.id("small_square_sail")),
+    HOIST(SailOrder.HOIST, Constants.id("yard")),
+    REEF(SailOrder.REEF, ResourceLocation.withDefaultNamespace("white_wool")),
     FURL(SailOrder.FURL, ResourceLocation.withDefaultNamespace("lead")),
     RELEASE(null, Constants.id("sail_winch"));
 

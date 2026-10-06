@@ -5,6 +5,7 @@ import com.richardsenger.piratesnships.core.config.ConfigValue;
 import com.richardsenger.piratesnships.core.config.ModConfigs;
 import com.richardsenger.piratesnships.sailing.force.HullDampingModel;
 import com.richardsenger.piratesnships.sailing.force.SailingParams;
+import com.richardsenger.piratesnships.sailing.sail.YardRules;
 import com.richardsenger.piratesnships.sailing.wind.WindParams;
 
 /**
@@ -90,6 +91,16 @@ public final class SailingConfig {
     public static final ConfigValue<Double> PITCH_DAMPING = SAILING.doubleRange("pitch_damping", D.pitch(), 0.0, 10.0,
             "How fast the bow-up, bow-down pitching dies down, per second");
 
+    private static final ConfigSection SAILS = SAILING.section("sails", "Square sails: two yards on one mast with cloth between them");
+    public static final ConfigValue<Integer> YARD_MIN_GAP = SAILS.intRange("yard_min_gap", YardRules.DEFAULTS.minGap(), 1, 32,
+            "Smallest height difference, in blocks, between the upper and the lower yard of a square sail");
+    public static final ConfigValue<Integer> YARD_MAX_GAP = SAILS.intRange("yard_max_gap", YardRules.DEFAULTS.maxGap(), 1, 32,
+            "Largest height difference, in blocks, between the upper and the lower yard of a square sail (raised to yard_min_gap if lower)");
+    public static final ConfigValue<Integer> YARD_MAX_LENGTH = SAILS.intRange("yard_max_length", YardRules.DEFAULTS.maxLength(), 1, 31,
+            "Longest yard in blocks; a longer row of yard blocks carries no sail. Odd lengths center the yard on the mast");
+    public static final ConfigValue<Integer> YARD_REFRESH_TICKS = SAILS.intRange("yard_refresh_ticks", 20, 1, 1200,
+            "How often, in ticks, each yard re-checks the sail it heads for the cloth display (placing or breaking a yard updates at once)");
+
     private static final ConfigSection SHIPS = ModConfigs.server("sailing_runtime", "How sails and the keel act on assembled ships");
     public static final ConfigValue<Boolean> FORCES_ENABLED = SHIPS.bool("forces_enabled", true,
             "Sails and the keel push assembled ships. Off: ships only float and drift");
@@ -102,7 +113,7 @@ public final class SailingConfig {
     public static final ConfigValue<Integer> SCAN_INTERVAL = SHIPS.intRange("scan_interval_ticks", 5, 1, 200,
             "How often loaded ships without a sailing state are looked for, in ticks");
     public static final ConfigValue<Boolean> SAIL_BLOCK_TRIM = SHIPS.bool("sail_block_trim", true,
-            "Using a sail block cycles its own trim (furled, half, full) without the winch");
+            "Using a sail block, or a yard that heads a square sail, cycles that sail's trim (furled, half, full) without the winch");
     public static final ConfigValue<Boolean> STEERING_ENABLED = SHIPS.bool("steering_enabled", true,
             "Using the helm of an assembled ship turns its rudder, and the rudder turns the ship. Off: the rudder has no effect");
     public static final ConfigValue<Integer> RUDDER_STEPS = SHIPS.intRange("rudder_steps", 3, 1, 5,
@@ -126,6 +137,11 @@ public final class SailingConfig {
                 GUSTS_ENABLED.get(), GUSTS_PER_MINUTE.get(), GUST_STRENGTH.get(), GUST_DIRECTION_SHIFT.get(),
                 REGIONAL_VARIATION.get(), REGIONAL_SCALE.get(), REGIONAL_DIRECTION_VARIATION.get(),
                 REGIONAL_STRENGTH_VARIATION.get());
+    }
+
+    /** Current square sail limits from the server config. */
+    public static YardRules yardRules() {
+        return new YardRules(YARD_MIN_GAP.get(), YARD_MAX_GAP.get(), YARD_MAX_LENGTH.get());
     }
 
     /** Current hull damping tuning from the server config. */

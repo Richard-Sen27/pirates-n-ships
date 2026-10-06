@@ -92,7 +92,7 @@ public final class AudioGameTests {
     public static void stillShipIsSilent(GameTestHelper h) {
         pinCreaks(h);
         SailingGameTestsShips.basin(h, true);
-        BlockPos helm = SailingGameTestsShips.hull(h, 17, 17, SailingBlocks.SMALL_SQUARE_SAIL.get(), Direction.SOUTH, SailTrim.FURLED);
+        BlockPos helm = SailingGameTestsShips.squareHull(h, 17, 17, SailTrim.FURLED);
         SailingGameTestsShips.ballast(h, 17, 17);
         SailingGameTestsShips.Fixture f = SailingGameTestsShips.assemble(h, helm);
         int[] before = new int[1];

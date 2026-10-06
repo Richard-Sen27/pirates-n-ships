@@ -1,9 +1,8 @@
 {
   "values": [
     "pirates_n_ships:test_block",
-    "pirates_n_ships:small_square_sail",
-    "pirates_n_ships:large_square_sail",
     "pirates_n_ships:fore_and_aft_sail",
+    "pirates_n_ships:yard",
     "pirates_n_ships:sail_winch",
     "pirates_n_ships:capstan",
     "pirates_n_ships:helm",

@@ -23,19 +23,20 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * One whole sail of a {@link SailType} (docs/design.md §5.2): a single block placed on a mast stands for the sail until
- * multi-block sails exist. {@link #TRIM} (furled / half / full) persists in the block state and selects the model.
+ * One whole sail of a {@link SailType} (docs/design.md §5.2): a single block placed on a mast stands for the sail.
+ * Only the fore-and-aft sail still works this way (square sails are built from {@link YardBlock}s since F5a; the
+ * triangular sail of F5b replaces this block). {@link #TRIM} (furled / half / full) persists in the block state and
+ * selects the model.
  *
  * <p><b>Orientation:</b> {@code FACING} is the sail's normal, the side the canvas faces; placed, it faces the player.
- * A square sail hangs <em>across</em> the ship, so place it facing the bow or the stern; a fore-and-aft sail stands
- * <em>along</em> the hull, so place it facing port or starboard. The facing is visual only: the force model assumes the
- * crew braces the yards and sheets the sails optimally, so the force depends on the sail type and the apparent wind
- * angle, never on how the block was turned.
+ * A fore-and-aft sail stands <em>along</em> the hull, so place it facing port or starboard. The facing is visual only:
+ * the force model assumes the crew sheets the sails optimally, so the force depends on the sail type and the apparent
+ * wind angle, never on how the block was turned.
  */
 public class SailBlock extends HorizontalDirectionalBlock {
 
     public static final EnumProperty<SailTrim> TRIM = EnumProperty.create("trim", SailTrim.class);
-    public static final MapCodec<SailBlock> CODEC = simpleCodec(p -> new SailBlock(SailTypes.SMALL_SQUARE, p));
+    public static final MapCodec<SailBlock> CODEC = simpleCodec(p -> new SailBlock(SailTypes.FORE_AND_AFT, p));
 
     private static final VoxelShape[] SHAPES = {
             Block.box(0, 0, 13, 16, 16, 16), // facing north: plate at the south edge, like an open trapdoor

@@ -9,6 +9,12 @@ import com.richardsenger.piratesnships.sailing.SailingConfig;
 import com.richardsenger.piratesnships.sailing.block.SailBlock;
 import com.richardsenger.piratesnships.sailing.block.SailWinchBlock;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
+import com.richardsenger.piratesnships.sailing.block.YardBlock;
+import com.richardsenger.piratesnships.sailing.block.YardBlockEntity;
+import com.richardsenger.piratesnships.sailing.sail.ClothGeometry;
+import com.richardsenger.piratesnships.sailing.sail.SquareSail;
+import com.richardsenger.piratesnships.sailing.sail.YardSails;
+import org.jetbrains.annotations.Nullable;
 import com.richardsenger.piratesnships.sailing.force.ForceBreakdown;
 import com.richardsenger.piratesnships.sailing.force.HullDampingModel;
 import com.richardsenger.piratesnships.sailing.force.ShipFrame;
@@ -35,8 +41,9 @@ import org.joml.Quaterniond;
 import org.joml.Vector3d;
 
 /**
- * Spike 3 GameTests: a closed 5×4×5 plank hull (floor y=5, deck y=8) with a helm facing north (so the bow is +Z), a
- * fence mast and one sail on top, floating in a 40×40 stone basin of water (y=2..7). The wind is fixed with
+ * Spike 3 and F5a GameTests: a closed 5×4×5 plank hull (floor y=5, deck y=8) with a helm facing north (so the bow is
+ * +Z), a fence mast and one sail (a square sail between two yards, or the one-block fore-and-aft sail), floating in a
+ * 40×40 stone basin of water (y=2..7). The wind is fixed with
  * {@link WindOverride}, which is level-wide, so every wind test has its own batch and clears the override itself
  * (with an expiry as a safety net if a test fails).
  *
@@ -61,7 +68,16 @@ public final class SailingGameTestsShips {
 
     // ------------------------------------------------------------------ fixtures
 
+    /**
+     * 40×40 stone basin, water up to y=7 (or stone up to y=4), open to the sky: the GameTest framework puts a barrier
+     * ceiling one block above every test template ({@code GameTestInfo#prepareTestStructure} →
+     * {@code StructureUtils#encaseStructure}; at y=13 here, since y=0 is the structure block's layer). A floating test
+     * ship rises about 1.4 blocks after assembly, so a rig that reaches y=12 runs into it (measured: a two-yard rig
+     * slowed the test hull to a stop after 5 blocks, kept a kicked hull from rolling, and held the ballasted test hull
+     * down), so the ceiling over the basin is removed.
+     */
     public static void basin(GameTestHelper h, boolean water) {
+        openSky(h, 40);
         for (int x = 0; x < 40; x++) {
             for (int z = 0; z < 40; z++) {
                 h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
@@ -74,8 +90,66 @@ public final class SailingGameTestsShips {
         }
     }
 
-    /** Hull at x in [x0, x0+4], z in [z0, z0+4]; helm at the stern (z0+1) facing north, mast and sail amidships. Returns the helm. */
+    /**
+     * Hull at x in [x0, x0+4], z in [z0, z0+4]; helm at the stern (z0+1) facing north, and amidships a square sail of
+     * two 3-wide yards across the ship (along x), the lower lying on the deck (y=9) and the upper at y=12 with a fence
+     * mast between: area 9 (rule F5a), as the one-block small square sail of spike 3. The cloth's centroid at full sail
+     * is at y=11, a block lower than that sail's center of effort, and the rig weighs 1.1 kpg where the sail block and
+     * its fence weighed 0.5: the hollow test hull is so tender that heavier or higher rigs capsized it in the anchor
+     * test (measured with 0.25 kpg yards at y=10 and 13). The rig reaches above the template, so use it in a
+     * {@link #basin}. Returns the helm.
+     */
+    public static BlockPos squareHull(GameTestHelper h, int x0, int z0, SailTrim trim) {
+        BlockPos helm = bareHull(h, x0, z0);
+        rig(h, x0 + 2, z0 + 2, 1, 3, trim);
+        return helm;
+    }
+
+    /**
+     * A square sail in column (mx, mz): a lower yard lying on the deck (y=9), a fence mast above it and an upper yard
+     * {@code drop} blocks higher, both along x and {@code 2 * halfWidth + 1} long; the upper yard gets {@code trim}.
+     * Returns the head (test-relative). The rig reaches the GameTest barrier ceiling, so build it in a {@link #basin}.
+     */
+    public static BlockPos rig(GameTestHelper h, int mx, int mz, int halfWidth, int drop, SailTrim trim) {
+        yard(h, mx, 9, mz, halfWidth, SailTrim.FURLED);
+        for (int y = 10; y < 9 + drop; y++) {
+            h.setBlock(new BlockPos(mx, y, mz), Blocks.OAK_FENCE);
+        }
+        yard(h, mx, 9 + drop, mz, halfWidth, trim);
+        return new BlockPos(mx, 9 + drop, mz);
+    }
+
+    /** A yard along x centered on (mx, y, mz). */
+    public static void yard(GameTestHelper h, int mx, int y, int mz, int halfWidth, SailTrim trim) {
+        for (int x = mx - halfWidth; x <= mx + halfWidth; x++) {
+            h.setBlock(new BlockPos(x, y, mz), SailingBlocks.YARD.get().defaultBlockState()
+                    .setValue(YardBlock.AXIS, Direction.Axis.X).setValue(YardBlock.TRIM, trim));
+        }
+    }
+
+    /** Removes the GameTest barrier ceiling (y=13) over a {@code size}×{@code size} template (see {@link #basin}). */
+    public static void openSky(GameTestHelper h, int size) {
+        for (int x = 0; x < size; x++) {
+            for (int z = 0; z < size; z++) {
+                BlockPos p = new BlockPos(x, 13, z);
+                if (h.getBlockState(p).is(Blocks.BARRIER)) {
+                    h.setBlock(p, Blocks.AIR);
+                }
+            }
+        }
+    }
+
+    /** Hull at x in [x0, x0+4], z in [z0, z0+4]; helm at the stern (z0+1) facing north, mast and a one-block sail amidships. Returns the helm. */
     public static BlockPos hull(GameTestHelper h, int x0, int z0, Block sail, Direction sailFacing, SailTrim trim) {
+        BlockPos helm = bareHull(h, x0, z0);
+        h.setBlock(new BlockPos(x0 + 2, 9, z0 + 2), Blocks.OAK_FENCE);
+        h.setBlock(new BlockPos(x0 + 2, 10, z0 + 2), sail.defaultBlockState()
+                .setValue(HorizontalDirectionalBlock.FACING, sailFacing).setValue(SailBlock.TRIM, trim));
+        return helm;
+    }
+
+    /** The 5×4×5 plank hull with its helm and nothing on deck. Returns the helm. */
+    private static BlockPos bareHull(GameTestHelper h, int x0, int z0) {
         for (int x = x0; x <= x0 + 4; x++) {
             for (int z = z0; z <= z0 + 4; z++) {
                 for (int y = 5; y <= 8; y++) {
@@ -86,9 +160,6 @@ public final class SailingGameTestsShips {
         }
         BlockPos helm = new BlockPos(x0 + 2, 9, z0 + 1);
         h.setBlock(helm, AssemblyContent.HELM.get().defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
-        h.setBlock(new BlockPos(x0 + 2, 9, z0 + 2), Blocks.OAK_FENCE);
-        h.setBlock(new BlockPos(x0 + 2, 10, z0 + 2), sail.defaultBlockState()
-                .setValue(HorizontalDirectionalBlock.FACING, sailFacing).setValue(SailBlock.TRIM, trim));
         return helm;
     }
 
@@ -98,6 +169,11 @@ public final class SailingGameTestsShips {
      * downwind 35 to 46° bow down under the small sail, and, heeled a few degrees, sheers off its course by up to 4° in
      * 10 s, to port or starboard with the sign of the heel (D5, measured). Ballasted it runs about 16° bow down and
      * holds its course.
+     *
+     * <p><b>Caution (found in F5a):</b> stone is terrain ({@code ShipBlockRule.TERRAIN}) and is never gathered, so this
+     * "ballast" stays behind as a submerged plate and the ship floats without its floor (30.6 kpg instead of 43). What
+     * D5 measured is that floorless hull. A ship heavy enough to settle onto the plate sticks to it. Real ballast
+     * would be a heavy ship block such as cobblestone (Sable {@code #c:cobblestones} → heavy).
      */
     public static void ballast(GameTestHelper h, int x0, int z0) {
         for (int x = x0; x <= x0 + 4; x++) {
@@ -186,7 +262,7 @@ public final class SailingGameTestsShips {
     public static void fullSquareSailDownwindGainsSpeed(GameTestHelper h) {
         fixWind(h, 0.0);
         basin(h, true);
-        Fixture f = assemble(h, hull(h, 17, 3, SailingBlocks.SMALL_SQUARE_SAIL.get(), Direction.SOUTH, SailTrim.FULL));
+        Fixture f = assemble(h, squareHull(h, 17, 3, SailTrim.FULL));
         double[] a = measure(h, f);
         h.runAfterDelay(TO + 1, () -> {
             clearWind(h);
@@ -203,7 +279,7 @@ public final class SailingGameTestsShips {
     public static void furledSailDownwindStays(GameTestHelper h) {
         fixWind(h, 0.0);
         basin(h, true);
-        Fixture f = assemble(h, hull(h, 17, 3, SailingBlocks.SMALL_SQUARE_SAIL.get(), Direction.SOUTH, SailTrim.FURLED));
+        Fixture f = assemble(h, squareHull(h, 17, 3, SailTrim.FURLED));
         double[] a = measure(h, f);
         h.runAfterDelay(TO + 1, () -> {
             clearWind(h);
@@ -219,7 +295,7 @@ public final class SailingGameTestsShips {
     public static void headwindSquareSailMakesNoHeadway(GameTestHelper h) {
         fixWind(h, 180.0);
         basin(h, true);
-        Fixture f = assemble(h, hull(h, 17, 17, SailingBlocks.SMALL_SQUARE_SAIL.get(), Direction.SOUTH, SailTrim.FULL));
+        Fixture f = assemble(h, squareHull(h, 17, 17, SailTrim.FULL));
         double[] a = measure(h, f);
         h.runAfterDelay(TO + 1, () -> {
             clearWind(h);
@@ -267,12 +343,16 @@ public final class SailingGameTestsShips {
     public static void shipOnLandIsNotBlownAway(GameTestHelper h) {
         fixWind(h, 0.0);
         basin(h, false);
-        Fixture f = assemble(h, hull(h, 17, 17, SailingBlocks.LARGE_SQUARE_SAIL.get(), Direction.SOUTH, SailTrim.FULL));
+        BlockPos helm = bareHull(h, 17, 17);
+        rig(h, 19, 19, 2, 5, SailTrim.FULL); // 5 wide, 5 deep: 25 blocks², as the large square sail of spike 3
+        Fixture f = assemble(h, helm);
         net.minecraft.world.phys.Vec3[] start = new net.minecraft.world.phys.Vec3[1];
         h.runAfterDelay(FROM, () -> start[0] = f.ship().worldBounds().getCenter());
         h.runAfterDelay(TO + 1, () -> {
             clearWind(h);
             ForceBreakdown fb = f.runtime().lastBreakdown();
+            h.assertTrue(f.runtime().sailCount() == 1 && f.runtime().areaAt(f.runtime().sailPositions().get(0)) == 25.0,
+                    "expected one 25 block² sail, got " + f.runtime().sailCount());
             h.assertTrue(f.runtime().lastSubmerged() == 0.0, "a ship on land counts as submerged: " + f.runtime().lastSubmerged());
             h.assertTrue(fb == null || fb.force().length() < 1e-9, "a ship on land got sailing forces: " + (fb == null ? null : fb.force()));
             // 0.2 blocks in 100 ticks: resting contact jitter, far below the metres a 25-block sail would push it
@@ -282,23 +362,28 @@ public final class SailingGameTestsShips {
         });
     }
 
-    /** The winch sets the trim of its own ship's sails, and of no other ship's. */
+    /** The winch sets the trim of its own ship's sails (the whole upper yard of a square sail), and of no other ship's. */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200)
     public static void winchCyclesOnlyItsOwnShip(GameTestHelper h) {
         basin(h, true);
-        BlockPos helmA = hull(h, 5, 17, SailingBlocks.SMALL_SQUARE_SAIL.get(), Direction.SOUTH, SailTrim.FURLED);
+        BlockPos helmA = squareHull(h, 5, 17, SailTrim.FURLED);
         h.setBlock(new BlockPos(6, 9, 18), SailingBlocks.SAIL_WINCH.get());
         BlockPos helmB = hull(h, 28, 17, SailingBlocks.FORE_AND_AFT_SAIL.get(), Direction.EAST, SailTrim.FURLED);
         Fixture a = assemble(h, helmA);
         Fixture b = assemble(h, helmB);
         BlockPos winch = a.ship().plotBlocks().stream()
                 .filter(p -> h.getLevel().getBlockState(p).is(SailingBlocks.SAIL_WINCH.get())).findFirst().orElseThrow();
+        h.assertTrue(a.runtime().sailCount() == 1, "ship A should have one square sail, has " + a.runtime().sailCount());
         BlockPos sailA = a.runtime().sailPositions().get(0), sailB = b.runtime().sailPositions().get(0);
+        h.assertTrue(h.getLevel().getBlockState(sailA).getBlock() instanceof YardBlock, "the square sail's position is not a yard");
         SailTrim[] expected = {SailTrim.HALF, SailTrim.FULL, SailTrim.FURLED};
         for (SailTrim e : expected) {
             SailWinchBlock.use(h.getLevel(), winch);
-            BlockState s = h.getLevel().getBlockState(sailA);
-            h.assertTrue(s.getValue(SailBlock.TRIM) == e, "sail block trim " + s.getValue(SailBlock.TRIM) + ", expected " + e);
+            for (int dx = -1; dx <= 1; dx++) {
+                BlockState s = h.getLevel().getBlockState(sailA.offset(dx, 0, 0));
+                h.assertTrue(s.getValue(YardBlock.TRIM) == e, "upper yard trim " + s.getValue(YardBlock.TRIM) + " at " + dx + ", expected " + e);
+            }
+            h.assertTrue(h.getLevel().getBlockState(sailA.below(3)).getValue(YardBlock.TRIM) == SailTrim.FURLED, "the lower yard got a trim");
             h.assertTrue(a.runtime().trimAt(sailA) == e, "runtime trim " + a.runtime().trimAt(sailA) + ", expected " + e);
             h.assertTrue(h.getLevel().getBlockState(sailB).getValue(SailBlock.TRIM) == SailTrim.FURLED, "the other ship's sail changed");
             h.assertTrue(b.runtime().unfurledCount() == 0, "the other ship's runtime changed");
@@ -306,30 +391,112 @@ public final class SailingGameTestsShips {
         h.succeed();
     }
 
-    /** A sail placed on an assembled ship is picked up, and once broken it no longer pushes. */
+    // ------------------------------------------------------------------ square sails from yards (F5a)
+
+    private static @Nullable ClothGeometry cloth(GameTestHelper h, BlockPos plotPos) {
+        return h.getLevel().getBlockEntity(plotPos) instanceof YardBlockEntity be ? be.geometry() : null;
+    }
+
+    /**
+     * A ship with a mast and two yards has one sail of the expected area, headed by the upper yard's middle block, whose
+     * block entity holds the cloth; breaking the lower yard dissolves the sail (it stops pushing), and a new lower yard
+     * brings it back with the head's trim.
+     */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200)
-    public static void sailAddedAndBrokenOnAssembledShip(GameTestHelper h) {
+    public static void yardSailDissolvesAndReturnsOnAssembledShip(GameTestHelper h) {
         basin(h, true);
-        BlockPos helm = hull(h, 17, 17, SailingBlocks.SMALL_SQUARE_SAIL.get(), Direction.SOUTH, SailTrim.FURLED);
-        h.setBlock(new BlockPos(19, 10, 19), Blocks.AIR); // no sail at assembly
-        Fixture f = assemble(h, helm);
-        h.assertTrue(f.runtime().sailCount() == 0, "a sail was found before one was placed");
-        BlockPos mast = f.ship().plotBlocks().stream()
-                .filter(p -> h.getLevel().getBlockState(p).is(Blocks.OAK_FENCE)).findFirst().orElseThrow();
-        BlockPos sail = mast.above();
-        h.getLevel().setBlock(sail, SailingBlocks.LARGE_SQUARE_SAIL.get().defaultBlockState().setValue(SailBlock.TRIM, SailTrim.FULL), Block.UPDATE_ALL);
-        h.assertTrue(f.runtime().sailCount() == 1 && f.runtime().unfurledCount() == 1, "the placed sail was not picked up");
+        Fixture f = assemble(h, squareHull(h, 17, 17, SailTrim.FULL));
+        SailingRuntime rt = f.runtime();
+        h.assertTrue(rt.sailCount() == 1 && rt.unfurledCount() == 1, "expected one set sail, got " + rt.sailCount());
+        BlockPos head = rt.sailPositions().get(0);
+        h.assertTrue(rt.areaAt(head) == 9.0, "area " + rt.areaAt(head) + ", expected 9 (3 wide, 3 deep)");
+        SquareSail sq = rt.squareSailAt(head);
+        h.assertTrue(sq != null && sq.drop() == 3 && sq.upper().y() == head.getY(), "unexpected sail geometry: " + sq);
+        ClothGeometry expected = new ClothGeometry(true, 1.5f, 1.5f, 1.5f, 1.5f, 3);
+        h.assertTrue(expected.equals(cloth(h, head)), "head block entity cloth " + cloth(h, head) + ", expected " + expected);
+        h.assertTrue(cloth(h, head.east()) == null && cloth(h, head.below(3)) == null, "a non-head yard block has cloth");
+        BlockPos lowerMiddle = head.below(3);
         h.runAfterDelay(20, () -> {
-            ForceBreakdown fb = f.runtime().lastBreakdown();
+            ForceBreakdown fb = rt.lastBreakdown();
             h.assertTrue(fb != null && fb.contributions().stream().anyMatch(c -> c.source().startsWith("sail[")),
-                    "the placed sail is not evaluated");
-            h.getLevel().destroyBlock(sail, false);
-            h.assertTrue(f.runtime().sailCount() == 0 && f.runtime().unfurledCount() == 0, "the broken sail is still listed");
+                    "the yard sail is not evaluated");
+            h.getLevel().destroyBlock(lowerMiddle, false);
+            h.assertTrue(rt.sailCount() == 0 && rt.unfurledCount() == 0, "the sail survived its lower yard: " + rt.sailCount());
+            h.assertTrue(cloth(h, head) == null, "the head still has cloth without a lower yard");
         });
         h.runAfterDelay(40, () -> {
-            ForceBreakdown fb = f.runtime().lastBreakdown();
+            ForceBreakdown fb = rt.lastBreakdown();
             h.assertTrue(fb == null || fb.contributions().stream().noneMatch(c -> c.source().startsWith("sail[")),
-                    "the broken sail still pushes");
+                    "the dissolved sail still pushes");
+            h.getLevel().setBlock(lowerMiddle, SailingBlocks.YARD.get().defaultBlockState().setValue(YardBlock.AXIS, Direction.Axis.X),
+                    Block.UPDATE_ALL);
+            h.assertTrue(rt.sailCount() == 1 && rt.areaAt(head) == 9.0, "the mended lower yard did not bring the sail back");
+            h.assertTrue(rt.trimAt(head) == SailTrim.FULL, "the sail lost the head's trim: " + rt.trimAt(head));
+            h.assertTrue(expected.equals(cloth(h, head)), "no cloth after mending: " + cloth(h, head));
+            h.succeed();
+        });
+    }
+
+    /**
+     * A third yard placed between the two yards of a sail on an assembled ship splits it into two sails (the middle yard
+     * is the foot of the upper one and the head of the lower one); taking the middle yard's center block out joins them
+     * again. Yards 3 (top), 5 (middle), 7 (bottom) wide, 3 + 3 blocks apart.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100)
+    public static void thirdYardSplitsTheSail(GameTestHelper h) {
+        basin(h, false);
+        BlockPos helm = bareHull(h, 17, 17);
+        rig(h, 19, 19, 1, 6, SailTrim.FURLED);
+        yard(h, 19, 9, 19, 3, SailTrim.FURLED); // widen the lower yard to 7
+        Fixture f = assemble(h, helm);
+        SailingRuntime rt = f.runtime();
+        h.assertTrue(rt.sailCount() == 1, "expected one sail before, got " + rt.sailCount());
+        BlockPos top = rt.sailPositions().get(0);
+        h.assertTrue(rt.areaAt(top) == (3 + 7) / 2.0 * 6, "area " + rt.areaAt(top) + ", expected 30");
+        BlockPos mid = top.below(3);
+        for (int dx = -2; dx <= 2; dx++) {
+            h.getLevel().setBlock(mid.offset(dx, 0, 0), SailingBlocks.YARD.get().defaultBlockState()
+                    .setValue(YardBlock.AXIS, Direction.Axis.X), Block.UPDATE_ALL);
+        }
+        h.assertTrue(rt.sailCount() == 2, "expected two sails with the middle yard, got " + rt.sailCount() + " at " + rt.sailPositions());
+        h.assertTrue(rt.areaAt(top) == (3 + 5) / 2.0 * 3, "upper sail area " + rt.areaAt(top) + ", expected 12");
+        h.assertTrue(rt.areaAt(mid) == (5 + 7) / 2.0 * 3, "lower sail area " + rt.areaAt(mid) + ", expected 18");
+        h.assertTrue(cloth(h, top) != null && cloth(h, top).drop() == 3 && cloth(h, mid) != null && cloth(h, mid).drop() == 3,
+                "cloth of the two sails: " + cloth(h, top) + ", " + cloth(h, mid));
+        h.getLevel().setBlock(mid, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+        h.assertTrue(rt.sailCount() == 1 && rt.areaAt(top) == 30.0, "the sails did not join again: " + rt.sailCount() + " " + rt.areaAt(top));
+        h.assertTrue(cloth(h, top) != null && cloth(h, top).drop() == 6, "joined cloth " + cloth(h, top));
+        h.succeed();
+    }
+
+    /**
+     * On land (no ship) the head's block entity gets its cloth at once when the yards are placed; a block put into the
+     * gap is noticed by the yard's periodic check, and clicking a yard of the upper yard cycles the sail's trim.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 60, batch = "pirates_n_ships_config_sailing_yard_refresh")
+    public static void yardsOnLandShowCloth(GameTestHelper h) {
+        ConfigOverrides.during(h, SailingConfig.YARD_REFRESH_TICKS, 5);
+        for (int x = 8; x <= 14; x++) for (int z = 8; z <= 14; z++) h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
+        h.setBlock(new BlockPos(11, 2, 11), Blocks.OAK_LOG);
+        yard(h, 11, 3, 11, 1, SailTrim.FURLED);
+        h.setBlock(new BlockPos(11, 4, 11), Blocks.OAK_LOG);
+        h.setBlock(new BlockPos(11, 5, 11), Blocks.OAK_FENCE);
+        yard(h, 11, 6, 11, 1, SailTrim.FURLED);
+        BlockPos rel = new BlockPos(11, 6, 11);
+        BlockPos head = h.absolutePos(rel);
+        ClothGeometry expected = new ClothGeometry(true, 1.5f, 1.5f, 1.5f, 1.5f, 3);
+        h.assertTrue(expected.equals(cloth(h, head)), "cloth on land " + cloth(h, head));
+        SailTrim t = YardSails.cycle(h.getLevel(), head.east());
+        h.assertTrue(t == SailTrim.HALF && h.getLevel().getBlockState(head).getValue(YardBlock.TRIM) == SailTrim.HALF,
+                "clicking the upper yard did not hoist: " + t);
+        h.assertTrue(YardSails.cycle(h.getLevel(), head.below(3)) == null, "the lower yard heads a sail");
+        h.setBlock(rel.below(), Blocks.STONE);
+        h.runAfterDelay(10, () -> {
+            h.assertTrue(cloth(h, head) == null, "a stone in the gap did not take the cloth away");
+            h.setBlock(rel.below(), Blocks.OAK_FENCE);
+        });
+        h.runAfterDelay(20, () -> {
+            h.assertTrue(expected.equals(cloth(h, head)), "the cloth did not come back with the mast: " + cloth(h, head));
             h.succeed();
         });
     }
@@ -347,7 +514,7 @@ public final class SailingGameTestsShips {
      * too strongly damped by Sable's own water drag to show rolling; this one rolls a few times after a kick.
      */
     public static BlockPos longHull(GameTestHelper h) {
-        BlockPos helm = hull(h, 17, 17, SailingBlocks.SMALL_SQUARE_SAIL.get(), Direction.SOUTH, SailTrim.FURLED);
+        BlockPos helm = squareHull(h, 17, 17, SailTrim.FURLED);
         for (int x = 16; x <= 22; x++) {
             for (int z = 10; z <= 26; z++) {
                 for (int y = 5; y <= 8; y++) {
@@ -461,7 +628,7 @@ public final class SailingGameTestsShips {
     public static void shipAtRestStaysAtRest(GameTestHelper h) {
         ConfigOverrides.during(h, SailingConfig.HULL_DAMPING_ENABLED, true);
         basin(h, true);
-        BlockPos helm = hull(h, 17, 17, SailingBlocks.SMALL_SQUARE_SAIL.get(), Direction.SOUTH, SailTrim.FURLED);
+        BlockPos helm = squareHull(h, 17, 17, SailTrim.FURLED);
         ballast(h, 17, 17);
         Fixture f = assemble(h, helm);
         double[] max = new double[1];

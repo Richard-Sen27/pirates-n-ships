@@ -1,6 +1,6 @@
-// 1.21.1	2026-10-06T21:18:59.52441	Tags for minecraft:block mod id vanilla
+// 1.21.1	2026-10-06T21:48:50.045802	Tags for minecraft:block mod id vanilla
 027425cd193e9e04ea5aed99085f092fa520d95e data/minecraft/tags/block/doors.json
-407458da50d4e3007f123e5434ac9df994921288 data/minecraft/tags/block/mineable/axe.json
+6a0f0de619a4e7edebc8c615c1635ad0c0a5946a data/minecraft/tags/block/mineable/axe.json
 e407138a459a75449c624e2539f9f6e0407f2a2f data/minecraft/tags/block/mineable/pickaxe.json
 efa5c7038ab6e296491b919dff511cf035976fa2 data/pirates_n_ships/tags/block/never_assemble.json
 35133e95f1c8fdd7a1c21afcc231fc0bffefb9a8 data/pirates_n_ships/tags/block/not_watertight.json

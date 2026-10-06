@@ -11,6 +11,15 @@
       "entries": [
         {
           "type": "minecraft:item",
+          "functions": [
+            {
+              "function": "minecraft:copy_components",
+              "include": [
+                "pirates_n_ships:water_rations"
+              ],
+              "source": "block_entity"
+            }
+          ],
           "name": "pirates_n_ships:water_barrel"
         }
       ],

@@ -62,6 +62,15 @@ public final class ProvisionsConfig {
     public static final ConfigValue<Double> FRESH_SHELF_LIFE_DAYS = S.doubleRange("fresh_shelf_life_days", D.freshShelfLifeDays(), 0.1, 1000.0,
             "In-game days fresh food keeps in the pantry");
 
+    public static final ConfigValue<SpoiledFood> SPOILED_FOOD_RESULT = S.enumValue("spoiled_food_result", SpoiledFood.ROTTEN_FLESH,
+            "What spoiled food in a pantry turns into: NOTHING (it vanishes) or ROTTEN_FLESH (one per spoiled item)");
+    public static final ConfigValue<Integer> PANTRY_TICK_INTERVAL = S.intRange("pantry_tick_interval", 1200, 20, 24000,
+            "Ticks between two spoilage checks of a pantry. The result does not depend on it; pantries also catch up when opened or read");
+    public static final ConfigValue<Boolean> RAIN_REFILL_ENABLED = S.bool("rain_refill_enabled", true,
+            "Water barrels open to the sky collect rain (rain catchers)");
+    public static final ConfigValue<Double> RAIN_REFILL_CHANCE = S.doubleRange("rain_refill_chance", 0.5, 0.0, 1.0,
+            "Chance per random tick that a water barrel in the rain gains one water ration (random ticks come about every 68 s at the default tick speed)");
+
     public static final ConfigValue<Double> FOOD_WEIGHT_PER_UNIT = S.doubleRange("food_weight_per_unit", D.foodWeightPerUnit(), 0.0, 100.0,
             "Cargo weight of one food item");
     public static final ConfigValue<Double> WATER_WEIGHT_PER_RATION = S.doubleRange("water_weight_per_ration", D.waterWeightPerRation(), 0.0, 100.0,
@@ -71,7 +80,7 @@ public final class ProvisionsConfig {
     public static final ConfigValue<Integer> WATER_BUCKET_RATIONS = S.intRange("water_bucket_rations", D.waterBucketRations(), 1, 1000,
             "Water rations in a water bucket");
     public static final ConfigValue<Integer> WATER_BARREL_RATIONS = S.intRange("water_barrel_rations", D.waterBarrelRations(), 1, 1000,
-            "Water rations in a water barrel");
+            "Water rations in a full water barrel (its capacity)");
 
     private ProvisionsConfig() {
     }

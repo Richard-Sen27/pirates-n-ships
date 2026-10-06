@@ -99,7 +99,8 @@ The feature modules below are packages inside `common` (and, where needed, a sma
 | `combat` | Weapons, ammo, cannons, projectiles, grappling hook, boarding |
 | `law` | Criminal score, bounties, navy turn-in, brig and prisoners, flag allegiance detection |
 | `trade` | Doubloon economy, trade goods, port markets and dynamic prices, contracts, cargo containers |
-| `world` | Structures (pirate islands, seafarer villages, navy outposts), loot tables, treasure maps |
+| `world` | Structures (pirate islands, seafarer villages, navy outposts), loot tables, treasure maps, ship blueprints |
+| `worldsim` | World simulation: port registry, faction state, NPC voyages, raids (§10.4) |
 | `entity` | Mobs (pirates, sailors, navy soldiers/officers, sharks, kraken), sea chest entity |
 | `survival` | Cold water, swimming hunger, sea chest carry rules |
 | `hazard` | Waves, waterspouts, whirlpools |
@@ -114,7 +115,10 @@ The feature modules below are packages inside `common` (and, where needed, a sma
 
 ## 4. Ships (core system)
 
-### 4.1 Assembly
+### 4.1 Building and assembly
+- **Ships are built freely** from any blocks, like any other build. There is no fixed ship type and no blueprint requirement.
+- **Mod components** placed on the build give the ship its abilities and change how it behaves: helm (steering), sails (§5.2), anchor and capstan, cannons and gun ports (Kanonenluke, §8.2), crow's nest (lookout), flags (§4.7), pumps, galley/pantry, brig, cargo containers. A ship without sails doesn't sail, a ship without cannons can't fire, and so on. See §6 for the full station list.
+- **Blueprints for beginners:** a few prebuilt ships (e.g. sloop, brigantine, merchant cog) are available as blueprint items, bought from the shipwright in seafarer villages. Using one places the prebuilt ship as normal blocks at the dock. From then on it is a regular ship: it is assembled at the helm and can be modified freely. Blueprint ships are stored as structure NBT built by hand.
 - A **Helm block** (Steuerrad) is the ship's anchor point. Using it while docked triggers assembly.
 - Assembly collects connected blocks, excluding world terrain, with a configurable block limit. They become a Sable sub-level.
 - **Disassembly** happens at the helm when the ship is stationary and aligned. Blocks are placed back into the world, snapped to the grid.
@@ -379,6 +383,19 @@ Models and animations use GeckoLib. Textures are 16×16-scale pixel art.
 - **Port fees (optional):** small docking fees in navy ports, waived for high navy reputation.
 - Cargo weight affects the ship (§4.9), so a fully laden merchant ship is slow and an easy target.
 
+### 10.4 World simulation (later stage)
+A server-wide simulation that makes the sea feel alive between the ports, without simulating every ship physically.
+
+- **Port registry:** a saved-data record of every generated port (seafarer village, navy outpost, pirate island) with its position, faction and market. Ports are added when their structure generates.
+- **Faction state:** a small state machine per faction (Navy, Pirates, Merchants) with values such as aggression, wealth and tension between factions. Player actions and world events shift them (e.g. many pirate kills by the navy raise pirate tension).
+- **Abstract voyages:** NPC ships exist mostly as abstract records (route, cargo, faction, progress) that move along routes between ports on the server tick. Only when a player comes within range is a voyage **materialized** as a real Sable ship with crew. When no player is near any more, it is turned back into a record. This keeps the cost low no matter how many ships are travelling.
+- **Trade convoys:** merchants travel between ports that produce and demand goods (§10.3) and actually move goods, nudging market prices. Pirate players can intercept and plunder them, which feeds the criminal score (§13.1) and Merchant/Navy reputation.
+- **Navy patrols:** sail between navy outposts and hunt ships flying the Jolly Roger or with high bounties.
+- **Pirate raids on navy settlements:** while a player stays at a navy outpost or a navy-aligned village, the chance of a pirate raid slowly rises with the time spent there. It is capped and has a long cooldown, so raids stay rare events rather than a routine.
+- **Retaliation:** when the navy has been very aggressive against pirates (high pirate tension), pirates are more likely to raid navy settlements or attack navy convoys, and the reverse.
+- Events are announced in advance where it makes sense (sails on the horizon, a warning bell in the village), so the player has time to react.
+- This also answers how trade stays interesting: routes have real traffic, risk and opportunities.
+
 ---
 
 ## 11. Sea chest (Seemannstruhe)
@@ -471,6 +488,7 @@ All gameplay settings live in the **server config** (synced to clients). Audio a
 | Law | criminal score enabled, decay rate, bounty threshold, player bounties on/off |
 | Survival | cold water on/off + time to freeze, swimming hunger multiplier |
 | World | structure spacing / frequency per structure type, mob spawn weights |
+| World simulation | enabled, max simultaneous voyages, materialize radius, convoy frequency, patrol frequency, raid chance growth + cap + cooldown, retaliation on/off |
 | Audio (client) | music on/off, music volume, ambience volume |
 
 ---
@@ -483,7 +501,7 @@ All gameplay settings live in the **server config** (synced to clients). Audio a
 ---
 
 ## 19. Testing strategy
-- **GameTests** for all logic: assembly/disassembly, hull analysis (known hull shapes → expected compartments), flooding rates, criminal score/bounty thresholds, station operate logic, market price changes, provision consumption, prisoner/brig rules, flag detection, melee resolution (parry windows, stamina, hit arcs/rays), config toggles actually disabling features.
+- **GameTests** for all logic: assembly/disassembly, hull analysis (known hull shapes → expected compartments), flooding rates, criminal score/bounty thresholds, station operate logic, market price changes, provision consumption, prisoner/brig rules, flag detection, world simulation (voyage progress, raid chance and cooldown, faction state changes), melee resolution (parry windows, stamina, hit arcs/rays), config toggles actually disabling features.
 - GameTests are defined in `common` (vanilla GameTest framework). They run via the NeoForge game test server, and later also via Fabric's runner.
 - **Datagen** for all JSON: models, blockstates, recipes, loot tables, tags, lang, worldgen. Providers live in `common` where possible, and generated resources are output into `common/src/generated/resources` so both loaders ship them.
 - **CI** (GitHub Actions): build every enabled loader module on each push. Once Fabric is enabled, a Fabric build failure blocks merges just like a NeoForge one.
@@ -505,7 +523,7 @@ All gameplay settings live in the **server config** (synced to clients). Audio a
 | 7 | **Melee combat core** | Slash, thrust, guard, parry, riposte and stamina work player vs. player and player vs. a test dummy. Server-side resolution covered by GameTests. Animation library chosen. |
 | 8 | Melee animations + NPC duelists | First- and third-person sword animations with readable telegraphs. A test NPC uses the same system (telegraph, guard, parry) with skill tiers. |
 | 9 | Cannons + grappling hook v1 + boarding | Full ship-to-ship combat loop, ending in a deck duel |
-| 10 | Ship identity | Flags (incl. striking colors), ship name, figureheads, dyeable sails, decor blocks |
+| 10 | Ship identity + blueprints | Flags (incl. striking colors), ship name, figureheads, dyeable sails, decor blocks, beginner blueprint ships at the shipwright |
 | 11 | World | Islands, villages, outposts, wrecks, treasure maps |
 | 12 | Mobs | Pirates, sailors, navy, sharks (human mobs use the §8.5 duel AI) |
 | 13 | Law + brig | Criminal score, bounties, turn-ins, shackles, brig, ransom, false-flag detection |
@@ -515,8 +533,9 @@ All gameplay settings live in the **server config** (synced to clients). Audio a
 | 17 | Weather and hazards | Waves, waterspouts, whirlpools |
 | 18 | Audio | Sounds, music manager |
 | 19 | RPG + kraken + duel bosses | Reputation, quests, named pirate captains, the kraken |
-| 20 | Melee extras (optional) | Feints, directional attacks/parries mode |
-| 21 | Fabric port | Enable `fabric/`, implement platform services, all GameTests pass on both loaders, CI builds both |
+| 20 | World simulation | Port registry, faction state, abstract voyages that materialize near players, trade convoys, navy patrols, raids and retaliation (§10.4) |
+| 21 | Melee extras (optional) | Feints, directional attacks/parries mode |
+| 22 | Fabric port | Enable `fabric/`, implement platform services, all GameTests pass on both loaders, CI builds both |
 
 Spikes 1–4 are throwaway-quality prototypes that prove feasibility. They may live in `neoforge/` while exploring Sable, but must be moved into `common` (behind platform services) before milestone 5.
 
@@ -525,10 +544,8 @@ Spikes 1–4 are throwaway-quality prototypes that prove feasibility. They may l
 ## 21. Open questions
 - What exactly does Sable's API offer for assembly, applying forces and custom buoyancy? (Read `refs/sable` + wiki: "Block Physics Properties", "Dimension Physics Data", "Working with Entities".)
 - Can buoyancy be overridden per ship (needed for dry volume and flooding), or does it have to be applied as an external force?
-- Trade: how to keep it interesting without NPC merchant ships sailing the routes (a possible later feature)?
 - How should cargo weight interact with Sable's mass: change block/ship mass directly, or apply drag and a buoyancy offset?
 - Should there be a Navy career path for players (join the navy instead of pirating)?
-- Should ships be buildable freely, or use blueprints / shipwright NPCs?
 - Player animation library for melee combat: which options are maintained for 1.21.1 on both NeoForge and Fabric, and do they support first-person animations? Decide in milestone 7.
 - Melee input defaults: do hold-to-thrust and tap-to-parry feel good with mouse buttons, or are dedicated keybinds better? Decide by playtesting.
 - Config library: Forge Config API Port (NeoForge's config API on Fabric) vs. another cross-loader config library. Decide before milestone 5. Either way, access it only through our wrapper.

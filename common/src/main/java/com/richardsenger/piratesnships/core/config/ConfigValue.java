@@ -80,6 +80,17 @@ public final class ConfigValue<T> {
         override = null;
     }
 
+    /** Whether the loader config is bound and loaded, i.e. {@link #set} writes the real config. */
+    public boolean isLive() {
+        Backing<T> b = backing;
+        return b != null && b.isLoaded();
+    }
+
+    /** Whether a local (JUnit) override from {@link #set} is active. */
+    public boolean hasOverride() {
+        return override != null;
+    }
+
     /** Called by the config service when it registers the schema. */
     public void bind(Backing<T> backing) {
         this.backing = backing;

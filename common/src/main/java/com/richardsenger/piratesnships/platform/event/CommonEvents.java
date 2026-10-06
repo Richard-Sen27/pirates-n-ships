@@ -98,6 +98,12 @@ public final class CommonEvents {
     /** Add server data reload listeners (datapack JSON loaders). Fires on every {@code /reload}. */
     public static final Event<AddReloadListeners> ADD_RELOAD_LISTENERS = Event.create(ls -> (sink, ra) -> ls.forEach(l -> l.add(sink, ra)));
 
+    /**
+     * Server data must be (re)sent to a player: once when the player joins (after tags and recipes), and for every
+     * online player after a datapack reload ({@code joined == false}). Fires once per player.
+     */
+    public static final Event<DatapackSync> DATAPACK_SYNC = Event.create(ls -> (p, j) -> ls.forEach(l -> l.onSync(p, j)));
+
     // --- Listener types ---------------------------------------------------------------------------------------
 
     @FunctionalInterface public interface ServerLifecycle { void on(MinecraftServer server); }
@@ -112,5 +118,6 @@ public final class CommonEvents {
     @FunctionalInterface public interface BlockBreak { boolean onBreak(Level level, BlockPos pos, BlockState state, Player player); }
     @FunctionalInterface public interface BlockPlace { boolean onPlace(Level level, BlockPos pos, BlockState placed, @Nullable Entity placer); }
     @FunctionalInterface public interface RegisterCommands { void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context, Commands.CommandSelection selection); }
+    @FunctionalInterface public interface DatapackSync { void onSync(ServerPlayer player, boolean joined); }
     @FunctionalInterface public interface AddReloadListeners { void add(Consumer<PreparableReloadListener> sink, RegistryAccess registryAccess); }
 }

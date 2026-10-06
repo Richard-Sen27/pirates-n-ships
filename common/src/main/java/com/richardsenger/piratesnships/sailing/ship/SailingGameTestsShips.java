@@ -164,21 +164,21 @@ public final class SailingGameTestsShips {
     }
 
     /**
-     * Turns the bottom layer of a {@link #hull} into stone ballast. The plain hull is a hollow, top-heavy plank box
-     * with a metacentric height of about 0.1 blocks: it lists about 22° at rest from the helm's weight alone, runs
-     * downwind 35 to 46° bow down under the small sail, and, heeled a few degrees, sheers off its course by up to 4° in
-     * 10 s, to port or starboard with the sign of the heel (D5, measured). Ballasted it runs about 16° bow down and
-     * holds its course.
+     * Turns the bottom layer of a test hull into cobblestone ballast: a ship block (not {@code pirates_n_ships:terrain},
+     * so it is gathered) in Sable's {@code #sable:heavy} (through {@code #c:cobblestones}, 2 kpg against the planks' 1).
+     * The plain hull is a hollow, top-heavy plank box with a metacentric height of about 0.1 blocks: it lists about 22°
+     * at rest from the helm's weight alone, runs downwind 35 to 46° bow down under the small sail, and, heeled a few
+     * degrees, sheers off its course by up to 4° in 10 s, to port or starboard with the sign of the heel (D5, measured).
+     * Ballasted (81.6 kpg with the square rig) it runs about 3.4° bow down at 0.38 m/s and holds its course (F5b,
+     * measured).
      *
-     * <p><b>Caution (found in F5a):</b> stone is terrain ({@code ShipBlockRule.TERRAIN}) and is never gathered, so this
-     * "ballast" stays behind as a submerged plate and the ship floats without its floor (30.6 kpg instead of 43). What
-     * D5 measured is that floorless hull. A ship heavy enough to settle onto the plate sticks to it. Real ballast
-     * would be a heavy ship block such as cobblestone (Sable {@code #c:cobblestones} → heavy).
+     * <p>Until F5b this was stone, which is terrain ({@code ShipBlockRule.TERRAIN}): it was never gathered and stayed
+     * behind as a submerged plate, so the D5 numbers were measured on a floorless 30.6 kpg hull.
      */
     public static void ballast(GameTestHelper h, int x0, int z0) {
         for (int x = x0; x <= x0 + 4; x++) {
             for (int z = z0; z <= z0 + 4; z++) {
-                h.setBlock(new BlockPos(x, 5, z), Blocks.STONE);
+                h.setBlock(new BlockPos(x, 5, z), Blocks.COBBLESTONE);
             }
         }
     }

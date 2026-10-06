@@ -115,24 +115,34 @@ public final class SailingGameTestsControls {
 
     private static void logTurn(String name, Fixture f, double change) {
         Vector3d v = f.runtime().shipFrameVelocity(f.ship(), new Vector3d());
-        Constants.LOG.info("[sailing test] {}: heading change {}° over {} ticks, speed fwd {} m/s, rudder {}°, last forces {}", name,
-                String.format("%.2f", change), HEAD_TO - HEAD_FROM, String.format("%.2f", v.z), f.runtime().rudderAngle(),
+        Constants.LOG.info("[sailing test] {}: heading change {}° over {} ticks, speed fwd {} m/s, mass {}, pitch {}°, rudder {}°, last forces {}",
+                name, String.format("%.2f", change), HEAD_TO - HEAD_FROM, String.format("%.2f", v.z), String.format("%.1f", f.ship().mass()),
+                String.format("%.1f", pitchDegrees(f)), f.runtime().rudderAngle(),
                 f.runtime().lastBreakdown() == null ? "none"
                         : f.runtime().lastBreakdown().contributions().stream().map(c -> c.source() + "=" + c.torque()).toList());
+    }
+
+    /** Bow-down pitch [degrees, positive = bow down]: the tilt of the ship's forward axis below the horizontal. */
+    static double pitchDegrees(Fixture f) {
+        org.joml.Quaterniond q = f.runtime().bow().shipToWorld(f.ship().orientation(new org.joml.Quaterniond()), new org.joml.Quaterniond());
+        Vector3d fwd = q.transform(new Vector3d(com.richardsenger.piratesnships.sailing.force.ShipFrame.FORWARD));
+        return -Math.toDegrees(Math.asin(Math.max(-1.0, Math.min(1.0, fwd.y))));
     }
 
     // ------------------------------------------------------------------ steering under sail
 
     /*
-     * Tolerances, measured with the defaults (rudder_strength 0.5, max angle 35°) on the ballasted test hull (about
-     * 0.45 to 0.65 m/s), 45 samples in 16 runs of the full suite (D5): full rudder turns it 8.6 to 9.7° in 200 ticks, to
-     * either side; midships it changes heading by −0.06 to +0.23°. MIN_TURN (5°) is under 60% of the smallest turn,
-     * MAX_DRIFT (1°) over four times the largest drift.
-     * Without ballast the same hull ran 35 to 46° bow down and its midships heading wandered by −2.4 to +2.2° (15
-     * samples), up to ±4° in earlier runs, with the sign of its random few degrees of heel (see SailingGameTestsShips#ballast).
+     * Tolerances, measured with the defaults (rudder_strength 0.5, max angle 35°) on the ballasted test hull (cobblestone
+     * floor, 81.6 kpg, about 3.4° bow down at 0.38 to 0.39 m/s), three full suite runs (F5b): full rudder turns it 6.79°
+     * in 200 ticks to either side, every run; midships it changes heading by 0.00°. MIN_TURN (4°) is under 60% of the
+     * turn, MAX_DRIFT (0.5°) catches any sheer.
+     * Before F5b the "ballast" was stone, which is terrain and stayed behind, so D5 measured a floorless 30.6 kpg hull:
+     * 8.6 to 9.7° at 0.45 to 0.65 m/s, midships −0.06 to +0.23°, about 16° bow down. Without any ballast the plank hull
+     * ran 35 to 46° bow down and its midships heading wandered by −2.4 to +2.2° (15 samples), up to ±4° in earlier runs,
+     * with the sign of its random few degrees of heel (see SailingGameTestsShips#ballast).
      */
-    private static final double MIN_TURN = 5.0;
-    private static final double MAX_DRIFT = 1.0;
+    private static final double MIN_TURN = 4.0;
+    private static final double MAX_DRIFT = 0.5;
     /** Unballasted hull at rest (see rudderAtRestDoesNotTurn). */
     private static final double MAX_REST_DRIFT = 3.5;
 

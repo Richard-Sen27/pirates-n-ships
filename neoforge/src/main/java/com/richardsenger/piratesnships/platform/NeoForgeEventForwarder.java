@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.event.OnDatapackSyncEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -75,6 +76,7 @@ public final class NeoForgeEventForwarder {
         });
 
         bus.addListener(RegisterCommandsEvent.class, e -> CommonEvents.REGISTER_COMMANDS.invoker().register(e.getDispatcher(), e.getBuildContext(), e.getCommandSelection()));
+        bus.addListener(OnDatapackSyncEvent.class, e -> e.getRelevantPlayers().forEach(p -> CommonEvents.DATAPACK_SYNC.invoker().onSync(p, e.getPlayer() != null)));
         bus.addListener(AddReloadListenerEvent.class, e -> CommonEvents.ADD_RELOAD_LISTENERS.invoker().add(e::addListener, e.getRegistryAccess()));
     }
 }

@@ -30,8 +30,10 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A thin vertical post (design.md §4.7), 4×4 pixels like a fence post, that flies a flag. The shape matches vanilla's
- * {@code fence_post} model used for it.
+ * A thin vertical post (design.md §4.7) that flies a flag. Its look is the hand-made Blockbench model
+ * {@code block/flagpole} ({@code art/models/flagpole.bbmodel}): a 3 px pole at the block centre with a gilded finial on
+ * a truck above the block, and an iron cleat with wound halyard near the bottom, set on a diagonal so the cloth never
+ * passes through it. The shape (outline and collision) is a 4×4 post, slightly wider than the drawn pole.
  * <ul>
  *   <li>Use a flag item (ours or a banner) to hoist it, an empty hand to strike or raise the colors, sneak with an
  *       empty hand to take the flag down. Each takes the configured delay; see {@link FlagpoleMachine}.</li>
@@ -39,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
  *       state is in {@link FlagpoleBlockEntity}. {@link #FACING} is the side the flag points to (downwind).</li>
  *   <li>The flag is a full-size cloth ({@code FlagClothModel}: one block high, reaching 1.5 blocks from the pole's
  *       center) that extends into the space downwind of the pole. It is a visual overlap only: the block's shape
- *       (outline and collision) stays the 4×4 pole, so the cloth needs free space downwind to look right and
+ *       (outline and collision) stays the 4×4 post, so the cloth needs free space downwind to look right and
  *       clips through any blocks there.</li>
  * </ul>
  */

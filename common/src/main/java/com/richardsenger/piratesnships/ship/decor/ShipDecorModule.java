@@ -38,9 +38,10 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import java.util.List;
 
 /**
- * The {@code ship.decor} module: figureheads, nameplate, flagpole, cargo crate and cargo barrel. Models come from
- * vanilla templates: {@code orientable} for figureheads (placeholder until the art pass gives them real shapes),
- * the open orientable trapdoor plate for the nameplate, {@code fence_post} for the flagpole. Flags (items, the
+ * The {@code ship.decor} module: figureheads, nameplate, flagpole, cargo crate and cargo barrel. The nameplate and
+ * the flagpole use hand-made Blockbench models ({@code art/models/}, design.md §4.8; datagen writes only their block
+ * states); figureheads still use the vanilla {@code orientable} template (placeholder until the art pass gives them
+ * real shapes). Flags (items, the
  * flagpole's block entity, block state and look, config, commands) are in the {@code flag} sub-package.
  */
 public final class ShipDecorModule implements ModModule {
@@ -144,16 +145,13 @@ public final class ShipDecorModule implements ModModule {
     }
 
     /**
-     * The plate of an open orientable trapdoor (3 px against the back of the block), rotated like a ladder; same
-     * shape as {@code LadderBlock}. Flat item model with the block texture.
+     * Hand-made Blockbench model ({@code art/models/nameplate.bbmodel}, design.md §4.8): a board on two iron brackets
+     * against the back of the block (the ladder shape's side, facing north), rotated like a ladder. Only the block
+     * state is generated; the item model delegates to the block model.
      */
     private static void nameplate(ModelContext m, Block block) {
-        ResourceLocation model = ModelTemplates.ORIENTABLE_TRAPDOOR_OPEN.create(ModelLocationUtils.getModelLocation(block),
-                TextureMapping.defaultTexture(block), m.models());
-        m.blockStates().accept(MultiVariantGenerator.multiVariant(block, Variant.variant().with(VariantProperties.MODEL, model))
-                .with(horizontalFacing()));
-        ModelTemplates.FLAT_ITEM.create(ModelLocationUtils.getModelLocation(block.asItem()),
-                TextureMapping.layer0(TextureMapping.getBlockTexture(block)), m.models());
+        m.blockStates().accept(MultiVariantGenerator.multiVariant(block,
+                Variant.variant().with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(block))).with(horizontalFacing()));
     }
 
     /** Model faces north; rotate for the other directions. */

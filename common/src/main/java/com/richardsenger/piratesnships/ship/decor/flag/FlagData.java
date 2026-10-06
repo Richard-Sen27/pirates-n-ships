@@ -14,8 +14,6 @@ import net.minecraft.data.models.blockstates.MultiPartGenerator;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
 import net.minecraft.data.models.model.ModelLocationUtils;
-import net.minecraft.data.models.model.ModelTemplates;
-import net.minecraft.data.models.model.TextureMapping;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
@@ -28,7 +26,7 @@ import net.minecraft.world.level.block.Block;
 import java.util.Map;
 
 /**
- * Datagen for flags. The flagpole's look: a multipart block state with the pole ({@code fence_post}) always and,
+ * Datagen for flags. The flagpole's look: a multipart block state with the pole (hand-made {@code block/flagpole}) always and,
  * per shown flag kind and facing, the kind's cloth model ({@link FlagClothModel}: one block high, 1.5 blocks long,
  * built in code and written through {@link ModelContext#models()}), rotated by the block state to the facing. The
  * cloth model points north; other facings rotate it by {@link FlagClothModel#yRotation}. A struck flag
@@ -85,7 +83,9 @@ public final class FlagData {
     private static void models(ModelContext m) {
         for (RegistryEntry<Item, Item> flag : Flags.flagItems()) m.flatItem(flag.get());
         Block pole = ShipDecor.FLAGPOLE.get();
-        ResourceLocation poleModel = ModelTemplates.FENCE_POST.create(ModelLocationUtils.getModelLocation(pole), TextureMapping.defaultTexture(pole), m.models());
+        // Hand-made Blockbench model (art/models/flagpole.bbmodel): 3 px pole at the block centre, so the cloth's
+        // hoist (from the centre) stays inside it; the cleat sits on a diagonal, clear of the cloth in every facing.
+        ResourceLocation poleModel = ModelLocationUtils.getModelLocation(pole);
         MultiPartGenerator gen = MultiPartGenerator.multiPart(pole).with(Variant.variant().with(VariantProperties.MODEL, poleModel));
         for (FlagKind kind : FlagKind.values()) {
             if (kind == FlagKind.NONE) continue;

@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
@@ -51,23 +52,43 @@ public class AnchorRenderer extends EntityRenderer<AnchorEntity> {
         this.shadowRadius = 0f;
     }
 
-    /** Model in pixels, origin at the top of the ring, y pointing down; arms along x, stock along z. */
+    /**
+     * Admiralty-pattern anchor, exported from Blockbench ({@code art/models/anchor.bbmodel}, Modded Entity format,
+     * Mojang mappings 1.17+); edit it there and paste the export's body here. Model in pixels, origin at the top of
+     * the ring, y pointing down; arms along x, stock along z. Ring, eye, shank with a stock and ball ends across it,
+     * crown, and two curved arms (two segments each) ending in spade flukes with bills. About two blocks tall (ring
+     * top to crown tip 31 px), the flukes reach 13 px to each side. Texture {@code textures/entity/anchor.png},
+     * 64 x 64 (see {@code tools/gen_anchor_texture.py}).
+     */
     public static LayerDefinition createLayer() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
-        root.addOrReplaceChild("ring", CubeListBuilder.create().texOffs(0, 0)
-                .addBox(-3f, 0f, -0.5f, 6, 1, 1).addBox(-3f, 1f, -0.5f, 1, 4, 1).addBox(2f, 1f, -0.5f, 1, 4, 1), PartPose.ZERO);
-        root.addOrReplaceChild("stock", CubeListBuilder.create().texOffs(0, 8).addBox(-1f, 5f, -6f, 2, 2, 12), PartPose.ZERO);
-        root.addOrReplaceChild("shank", CubeListBuilder.create().texOffs(40, 0).addBox(-1f, 5f, -1f, 2, 24, 2), PartPose.ZERO);
-        root.addOrReplaceChild("crown", CubeListBuilder.create().texOffs(0, 24).addBox(-2.5f, 28f, -1.5f, 5, 3, 3), PartPose.ZERO);
-        PartDefinition left = root.addOrReplaceChild("left_arm", CubeListBuilder.create().texOffs(0, 32).addBox(-10f, -1f, -1f, 10, 2, 2),
-                PartPose.offsetAndRotation(-1.5f, 29.5f, 0f, 0f, 0f, 0.7f));
-        left.addOrReplaceChild("left_fluke", CubeListBuilder.create().texOffs(0, 40).addBox(-4f, -3f, -1.5f, 4, 4, 3),
-                PartPose.offsetAndRotation(-9f, 0f, 0f, 0f, 0f, 0.35f));
-        PartDefinition right = root.addOrReplaceChild("right_arm", CubeListBuilder.create().texOffs(0, 48).addBox(0f, -1f, -1f, 10, 2, 2),
-                PartPose.offsetAndRotation(1.5f, 29.5f, 0f, 0f, 0f, -0.7f));
-        right.addOrReplaceChild("right_fluke", CubeListBuilder.create().texOffs(16, 40).addBox(0f, -3f, -1.5f, 4, 4, 3),
-                PartPose.offsetAndRotation(9f, 0f, 0f, 0f, 0f, -0.35f));
+        PartDefinition body = root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(36, 36).addBox(-1.25F, 0.0F, -0.5F, 2.5F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+                .texOffs(44, 36).addBox(-1.25F, 6.0F, -0.5F, 2.5F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+                .texOffs(20, 27).addBox(2.0F, 2.25F, -0.5F, 1.0F, 2.5F, 1.0F, new CubeDeformation(0.0F))
+                .texOffs(24, 27).addBox(-3.0F, 2.25F, -0.5F, 1.0F, 2.5F, 1.0F, new CubeDeformation(0.0F))
+                .texOffs(0, 21).addBox(-1.5F, 6.5F, -1.5F, 3.0F, 2.5F, 3.0F, new CubeDeformation(0.0F))
+                .texOffs(0, 0).addBox(-1.0F, 9.0F, -1.0F, 2.0F, 19.0F, 2.0F, new CubeDeformation(0.0F))
+                .texOffs(8, 0).addBox(-1.0F, 9.0F, -7.0F, 2.0F, 2.0F, 14.0F, new CubeDeformation(0.0F))
+                .texOffs(12, 21).addBox(-1.5F, 8.5F, -1.5F, 3.0F, 3.0F, 3.0F, new CubeDeformation(0.0F))
+                .texOffs(0, 27).addBox(-1.25F, 8.75F, -8.5F, 2.5F, 2.5F, 1.5F, new CubeDeformation(0.0F))
+                .texOffs(10, 27).addBox(-1.25F, 8.75F, 7.0F, 2.5F, 2.5F, 1.5F, new CubeDeformation(0.0F))
+                .texOffs(24, 21).addBox(-2.5F, 27.0F, -1.5F, 5.0F, 3.0F, 3.0F, new CubeDeformation(0.0F))
+                .texOffs(28, 36).addBox(-1.0F, 30.0F, -1.0F, 2.0F, 1.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, 0.0F));
+        PartDefinition ring_ul = body.addOrReplaceChild("ring_ul", CubeListBuilder.create().texOffs(52, 36).addBox(-1.1F, -0.5F, -0.5F, 2.2F, 1.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(1.85F, 1.65F, 0.0F, 0.0F, 0.0F, 0.7854F));
+        PartDefinition ring_ur = body.addOrReplaceChild("ring_ur", CubeListBuilder.create().texOffs(0, 40).addBox(-1.1F, -0.5F, -0.5F, 2.2F, 1.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(-1.85F, 1.65F, 0.0F, 0.0F, 0.0F, -0.7854F));
+        PartDefinition ring_ll = body.addOrReplaceChild("ring_ll", CubeListBuilder.create().texOffs(8, 40).addBox(-1.1F, -0.5F, -0.5F, 2.2F, 1.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(1.85F, 5.35F, 0.0F, 0.0F, 0.0F, -0.7854F));
+        PartDefinition ring_lr = body.addOrReplaceChild("ring_lr", CubeListBuilder.create().texOffs(16, 40).addBox(-1.1F, -0.5F, -0.5F, 2.2F, 1.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(-1.85F, 5.35F, 0.0F, 0.0F, 0.0F, 0.7854F));
+        PartDefinition right_arm = body.addOrReplaceChild("right_arm", CubeListBuilder.create().texOffs(28, 27).addBox(-6.8F, -1.0F, -1.0F, 7.3F, 2.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(-2.0F, 28.5F, 0.0F, 0.0F, 0.0F, 0.4363F));
+        PartDefinition right_arm_upper = body.addOrReplaceChild("right_arm_upper", CubeListBuilder.create().texOffs(0, 32).addBox(-6.5F, -0.9F, -0.9F, 7.1F, 1.8F, 1.8F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(-7.891F, 25.753F, 0.0F, 0.0F, 0.0F, 0.9599F));
+        PartDefinition right_fluke = body.addOrReplaceChild("right_fluke", CubeListBuilder.create().texOffs(40, 0).addBox(-1.25F, -2.6F, -0.6F, 3.0F, 5.2F, 1.2F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(-9.9559F, 22.804F, 0.0F, 0.0F, 0.0F, 0.9599F));
+        PartDefinition right_fluke_point = body.addOrReplaceChild("right_fluke_point", CubeListBuilder.create().texOffs(40, 21).addBox(-1.85F, -1.85F, -0.6F, 3.7F, 3.7F, 1.2F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(-10.7589F, 21.6572F, 0.0F, 0.0F, 0.0F, 1.7453F));
+        PartDefinition right_bill = body.addOrReplaceChild("right_bill", CubeListBuilder.create().texOffs(20, 32).addBox(-0.6F, -0.6F, -0.6F, 1.2F, 1.2F, 1.2F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(-11.8487F, 20.1008F, 0.0F, 0.0F, 0.0F, 1.7453F));
+        PartDefinition left_arm = body.addOrReplaceChild("left_arm", CubeListBuilder.create().texOffs(28, 32).addBox(-0.5F, -1.0F, -1.0F, 7.3F, 2.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(2.0F, 28.5F, 0.0F, 0.0F, 0.0F, -0.4363F));
+        PartDefinition left_arm_upper = body.addOrReplaceChild("left_arm_upper", CubeListBuilder.create().texOffs(0, 36).addBox(-0.6F, -0.9F, -0.9F, 7.1F, 1.8F, 1.8F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(7.891F, 25.753F, 0.0F, 0.0F, 0.0F, -0.9599F));
+        PartDefinition left_fluke = body.addOrReplaceChild("left_fluke", CubeListBuilder.create().texOffs(50, 0).addBox(-1.25F, -2.6F, -0.6F, 3.0F, 5.2F, 1.2F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(9.9559F, 22.804F, 0.0F, 0.0F, 0.0F, -0.9599F));
+        PartDefinition left_fluke_point = body.addOrReplaceChild("left_fluke_point", CubeListBuilder.create().texOffs(52, 21).addBox(-1.85F, -1.85F, -0.6F, 3.7F, 3.7F, 1.2F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(10.7589F, 21.6572F, 0.0F, 0.0F, 0.0F, -1.7453F));
+        PartDefinition left_bill = body.addOrReplaceChild("left_bill", CubeListBuilder.create().texOffs(20, 36).addBox(-0.6F, -0.6F, -0.6F, 1.2F, 1.2F, 1.2F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(11.8487F, 20.1008F, 0.0F, 0.0F, 0.0F, -1.7453F));
         return LayerDefinition.create(mesh, 64, 64);
     }
 

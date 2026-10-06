@@ -1,4 +1,8 @@
-"""Placeholder texture of the visible anchor entity (64x64, wrought iron).
+"""Texture of the visible anchor entity (64x64, wrought iron with a few rust specks).
+
+The anchor model is built in Blockbench (art/models/anchor.bbmodel, box UV, 64x64, exported into
+AnchorRenderer.createLayer). Its UV boxes are packed anywhere inside the 64x64 sheet, so the texture is the same iron
+surface everywhere: it does not depend on the UV layout, and re-arranging the boxes in Blockbench needs no change here.
 
 Reuses the palette, Canvas and noise helpers of gen_placeholder_textures.py without changing that file.
 Run: python3 tools/gen_anchor_texture.py

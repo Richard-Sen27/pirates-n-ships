@@ -11,7 +11,7 @@ import net.minecraft.world.level.material.MapColor;
 public final class AssemblyContent {
 
     public static final RegistryEntry<Block, HelmBlock> HELM = ModRegistry.blockWithItem("helm",
-            () -> new HelmBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0f).sound(SoundType.WOOD)));
+            () -> new HelmBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0f).sound(SoundType.WOOD).noOcclusion()));
 
     private AssemblyContent() {
     }

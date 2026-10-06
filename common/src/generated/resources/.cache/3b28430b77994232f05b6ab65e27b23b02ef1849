@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-06T23:46:52.427199	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-07T00:48:21.671097	Block states and models: pirates_n_ships
 9282899a10c2af6fbcc1fd07e91ba10d9ba8a732 assets/pirates_n_ships/blockstates/brig_bars.json
 09e096c3979b4e82e1fab125e8a03e835e8c7aca assets/pirates_n_ships/blockstates/brig_door.json
 1ca2bd2df3602ba7b137ae7b56ec9fd3f195588c assets/pirates_n_ships/blockstates/capstan.json
@@ -42,7 +42,6 @@ bb73ca4eeb0a020b458084afdad4f0bba867f783 assets/pirates_n_ships/models/block/fig
 1c3843fa52a3b3ff77f705e50dfba3df96d41f49 assets/pirates_n_ships/models/block/figurehead_lion.json
 0820f8647eea62c3b70e0bd64900bbca8739fc18 assets/pirates_n_ships/models/block/figurehead_mermaid.json
 d57cd8574287ad34228d775c56b907f1944afae7 assets/pirates_n_ships/models/block/figurehead_skull.json
-9ddafa3acdb281437e6827b9deca51dfb76ec4a7 assets/pirates_n_ships/models/block/flagpole.json
 8a16b99b9bd2a9aa3b75394394517d0e3ff52567 assets/pirates_n_ships/models/block/flagpole_flag_custom.json
 f7c82b786e5bb6b0fc708a615845f0ef2c84bd44 assets/pirates_n_ships/models/block/flagpole_flag_jolly_roger.json
 e5b3569e1b8c4192055ef64e81a0d3f84ebb3c03 assets/pirates_n_ships/models/block/flagpole_flag_merchant.json
@@ -50,11 +49,9 @@ e5b3569e1b8c4192055ef64e81a0d3f84ebb3c03 assets/pirates_n_ships/models/block/fla
 7f72c7fc64ef18d0451fa4f42bc61df740ccccbb assets/pirates_n_ships/models/block/fore_and_aft_sail_full.json
 512c7dc0fed76cd1644dda8f8d882bd69d8758f5 assets/pirates_n_ships/models/block/fore_and_aft_sail_furled.json
 b4a2b0ffcb05520e7434b43d613a134da0573804 assets/pirates_n_ships/models/block/fore_and_aft_sail_half.json
-571a6c977af2e888f447aff98f3ab3e4dcdeaed8 assets/pirates_n_ships/models/block/helm.json
 cc3f2ea631098ea517819c8d7635181de7a44319 assets/pirates_n_ships/models/block/large_square_sail_full.json
 6d1d908c2e9eb4d7fa64b1d1b044f00f6eae6942 assets/pirates_n_ships/models/block/large_square_sail_furled.json
 de4285285bc3d5430f0116107b9e5b3648c413eb assets/pirates_n_ships/models/block/large_square_sail_half.json
-309ddd6b9745b930ee308cb16eb5c5da8f3c8a81 assets/pirates_n_ships/models/block/nameplate.json
 6ab72f6fce6997bbdbb38856b175676c3855f860 assets/pirates_n_ships/models/block/pantry.json
 0734b46a9bcdb1c5d60f83212c1e2ba8ac69c2ae assets/pirates_n_ships/models/block/sail_winch.json
 238dc573d52d70423bd7b7d576a8e509db6e0c8a assets/pirates_n_ships/models/block/small_square_sail_full.json
@@ -92,7 +89,7 @@ b9efa5d7f32a8ee7be71b53a63b914dc88184dd4 assets/pirates_n_ships/models/item/larg
 4226ac0f060894676313d34b10baa3c9211f689a assets/pirates_n_ships/models/item/lime.json
 4738f6156fcd947997765648f524f28c44b4a4da assets/pirates_n_ships/models/item/merchant_flag.json
 956e7c32ebe8995528011579c33d63247f4a0b27 assets/pirates_n_ships/models/item/musket.json
-802b0db9778ddaac256eb49f828daeb8765f72be assets/pirates_n_ships/models/item/nameplate.json
+0115d1b5ba50b99963c030a78b0184a09171a371 assets/pirates_n_ships/models/item/nameplate.json
 6eb672094a831d56cf44b1dd215b3733a06feaa0 assets/pirates_n_ships/models/item/navy_flag.json
 d830a7abbc232e7d496bb338343be03b894083fa assets/pirates_n_ships/models/item/pantry.json
 1557f4350b80689c46be79b5739eb01e5dc363cf assets/pirates_n_ships/models/item/pistol.json

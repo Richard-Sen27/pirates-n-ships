@@ -28,7 +28,8 @@ final class JsonOutputs {
     record Entry(PackOutput.Target target, String directory, ResourceLocation id, Function<HolderLookup.Provider, JsonElement> json) {
         /** Path relative to the output root, e.g. {@code data/sable/physics_block_properties/x.json}. */
         String relativePath() {
-            return folder(target) + "/" + id.getNamespace() + "/" + directory + "/" + id.getPath() + ".json";
+            String dir = directory.isEmpty() ? "" : directory + "/"; // empty: a file at the namespace root (sounds.json)
+            return folder(target) + "/" + id.getNamespace() + "/" + dir + id.getPath() + ".json";
         }
     }
 
@@ -44,7 +45,7 @@ final class JsonOutputs {
     private final Map<String, Entry> entries = new LinkedHashMap<>();
 
     synchronized void add(PackOutput.Target target, String directory, ResourceLocation id, Function<HolderLookup.Provider, JsonElement> json) {
-        if (directory.isEmpty() || directory.startsWith("/") || directory.endsWith("/")) {
+        if (directory.startsWith("/") || directory.endsWith("/") || directory.equals(".") || directory.contains("./")) {
             throw new IllegalArgumentException("Invalid datagen JSON directory '" + directory + "' for " + id);
         }
         Entry e = new Entry(target, directory, id, json);

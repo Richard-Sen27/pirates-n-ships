@@ -83,7 +83,9 @@ An assembled ship analyses its own hull:
   The block tags `pirates_n_ships:watertight` and `pirates_n_ships:not_watertight` override this.
 - Doors, trapdoors and fence gates are **openings**: watertight when closed, a way for water when open.
 - Inside the dry part there is no water: you don't swim, you can breathe, and no water is drawn (through Sable's water
-  occlusion). Known gaps: boats, fishing bobbers and mob pathfinding still see the water.
+  occlusion). Slabs, stairs and closed hatches inside the hull are drawn dry in their empty half too, as long as that
+  half faces the dry room and not the sea or the sky. Known gaps: boats, fishing bobbers and mob pathfinding still see
+  the water.
 
 ### Flooding and sinking
 - **A breach:** a hull block that is destroyed below the waterline lets water into the room behind it. So does an
@@ -138,6 +140,11 @@ only that sail.
 A ship in water resists moving sideways much more than moving forward, so a sail on a beam reach drives it ahead
 instead of pushing it downwind. No block is needed for this.
 
+### Rolling and creaking
+A ship that heels or is shoved swings back and settles within a few seconds (roll and pitch damping, config `sailing`).
+While it rolls, its planks creak now and then, quietly, from somewhere in the hull; a ship at rest is silent. The
+creak uses vanilla wooden sounds as placeholders until real recordings exist.
+
 ### Helm and rudder
 On an assembled ship, using the helm turns the rudder one step: the right third of the wheel (as the helmsman sees it)
 to starboard, the left third to port, the middle back to midships. There are three steps per side, up to 35°. The
@@ -145,10 +152,12 @@ action bar shows the position. The rudder only works while the ship moves throug
 ship goes astern.
 
 ### Capstan and anchor
-Using the capstan drops the anchor straight down to the first solid block within 32 blocks. It holds fully after
-2 seconds. Using it again raises it, which takes 5 seconds. Using it mid-way reverses. If there is no ground in reach,
-the capstan tells you and nothing is dropped. A held ship stays within about two blocks of the anchor point and swings
-with the wind.
+The anchor is a real object: it hangs outside the hull on the side nearer to the capstan, just below the deck, and
+moves with the ship. Using the capstan runs it out on a chain at 6 blocks per second to the first solid block within
+32 blocks below, with the chain rattling, a splash when it enters the water and a thud when it lands; from that moment
+the ship holds. Using the capstan again heaves it back in at 2.5 blocks per second until it hangs at the hull again.
+Using it mid-way reverses. If there is no ground in reach, the capstan tells you and the anchor stays stowed. A held
+ship stays within about two blocks of the anchor point and swings with the wind.
 
 ---
 
@@ -162,8 +171,8 @@ an invisible seat that travels with the ship, so it stays at its post while the 
 The **captain's whistle** (creative tab) gives orders:
 - Use it on a crew member, then on a station: the crew member takes that station.
 - Use it on an assigned crew member: it is released.
-- Sneak-use it in the air: issues the next sail order (hoist, then reef, then furl) to all crew at winches on the ship
-  you stand on.
+- Use it in the air: opens the order wheel. Point at an order (hoist, reef, furl, release crew) and click, or hold the
+  use key, aim and release. The order goes to all crew at stations on the ship you stand on. Esc closes the wheel.
 
 A crew member answers in chat ("Aye, hoisting the sails!") and then works: each trim step takes 2 seconds, and the
 sails change when the work is done. A player can still use the winch directly.
@@ -175,6 +184,9 @@ A crew member is released when its station is broken, its ship is disassembled o
 ## 5. Flags
 
 The **flagpole** flies a flag that shows a ship's allegiance.
+
+The flag cloth is one block high and one and a half blocks long and hangs downwind from the top of the pole, so a
+pole needs free space downwind.
 
 | Flag | Meaning for the law rules |
 |---|---|
@@ -405,7 +417,7 @@ All blocks drop themselves. Wooden ones are mined with an axe, the bars and the 
 | Navy Flag | 1 stick, 2 blue wool, 1 white dye | Flag for the flagpole. |
 | Jolly Roger | 1 stick, 2 black wool, 1 bone | Flag for the flagpole. |
 | Bounty Proof | none | Given for killing a target with a bounty. Hand it in for the reward. |
-| Captain's Whistle | none | Assigns crew to stations and gives sail orders. See [Crew](#4-crew). |
+| Captain's Whistle | none | Assigns crew to stations and gives orders from a radial menu. See [Crew](#4-crew). |
 
 Everything is in the "Pirates 'n' Ships" creative tab. Items without a recipe are meant to come from loot, trade or
 NPCs later.
@@ -458,10 +470,13 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `dry_hull` | Dry hull on/off, buoyancy of the dry volume, weight of flood water. |
 | `flooding` | Flooding on/off, inflow rate, pump rate. |
 | `wind` | Wind strength range, how fast it changes, weather multipliers, gusts, regional variation. |
-| `sailing` | Sail force, rudder strength, keel drag, anchor strength and timing. |
+| `sailing` | Sail force, rudder strength, keel drag, anchor strength, roll and pitch damping. |
+| `anchor_chain` | Chain speeds, travel time limits, anchor sounds and volumes. |
+| `hull_creaking` | Creaking on/off, how often, volume and pitch ranges, the rolling rate that counts. |
 | `sailing_runtime` | Sailing forces on/off, heel scaling, steering and anchor on/off, rudder steps, chain length. |
 | `crew_stations` | Crew stations on/off, time per trim step. |
 | `flags` | Hoisting delay, flags following the wind, banners as flags. |
+| `dry_hull` | Also: whether slabs, stairs and hatches are drawn dry in their empty half. |
 | `provisions` | Consumption, rations, spoilage, scurvy, rum, water barrel capacity, rain refill. |
 | `cargo_trade` | Container sizes, prices, price recovery, contracts, plunder, port fees, cargo weight. |
 | `law` | Criminal score, severity of each crime, decay, fines, bounties, crime detection, theft. |

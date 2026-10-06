@@ -5,7 +5,7 @@ Statuses: **todo** / **in progress** / **done** / **blocked: needs playtest** / 
 
 "Done" means: `./gradlew build` passes, `./gradlew :neoforge:runGameTestServer` passes, and the new logic has tests.
 
-Last updated: 2026-10-06 (third session: the human playtested and gave feedback, phase F is running).
+Last updated: 2026-10-07 (third session: the first five playtest-feedback packages are merged; the session can be restarted for the Blockbench MCP).
 
 ## Phase F: first playtest feedback (running)
 
@@ -13,15 +13,21 @@ The human played milestones 1 to 3 and reported: the dry hull works well; a floa
 
 | Package | Scope | Status |
 |---|---|---|
-| F1 | Roll and pitch damping (the rocking was undamped roll) and occasional hull creaking tied to the rolling, with placeholder vanilla sounds | in progress |
-| F2 | Occlusion regions include watertight partial blocks (slabs, stairs, trapdoors) on the hull's inside | in progress |
-| F3 | The captain's whistle opens a radial menu; orders go to the server as a payload | in progress |
-| F4 | The anchor as an entity: stowed at the hull side, lowered on a chain with sound, splash and thud, raised again; travel time from depth | in progress |
+| F1 | Roll and pitch damping (the rocking was undamped roll) and occasional hull creaking tied to the rolling, with placeholder vanilla sounds | done | Merged. `HullDampingModel` (defaults 1.5/1.5; a kicked 7×17 hull settles in 3 s instead of rocking for 8), `audio/` module with the creak trigger and the generated `sounds.json`. The endless rolling could not be reproduced headlessly: Sable damps small hulls in the test basin itself, so the in-game fix needs the playtest (`milestone-3.md` §5c). |
+| F2 | Occlusion regions include watertight partial blocks (slabs, stairs, trapdoors) on the hull's inside | done | Merged. A partial cell joins the dry region when every uncovered face looks at a dry cell or a block, and never when one looks at the sea or the sky. Toggle `dry_hull.partial_blocks`. Playtest `milestone-2.md` §11c. |
+| F3 | The captain's whistle opens a radial menu; orders go to the server as a payload | done | Merged. Four entries (hoist, reef, furl, release crew), click or hold-aim-release, Escape closes. The sneak-use cycling is gone. The screen itself is unverified: playtest `milestone-4.md` §9. |
+| F4 | The anchor as an entity: stowed at the hull side, lowered on a chain with sound, splash and thud, raised again; travel time from depth | done | Merged. `sailing/anchor`: a view entity inside the plot while stowed, world space while out, code-built model and chain renderer, vanilla sounds played directly (its own sound events exist but are not in `sounds.json` yet, see follow-ups). Playtest `milestone-3.md` part 2 §4 and §5. |
 | F5 | Multi-block sails: two yards with rendered cloth between them, triangular sails from a rope and a cleat | todo, after F1 and F4 (shares the sailing runtime) |
-| F6 | Full-size flags: a 2×1 block cloth hanging downwind from the pole, models built in code | in progress |
+| F6 | Full-size flags: a cloth hanging downwind from the pole, models built in code | done | Merged at 1 × 1.5 blocks: a vanilla block model can't reach further than 24 px from the pole's centre; 2 blocks would need a block entity renderer. Both sides textured, 32×16 textures. Playtest `flags.md`. |
 | F7 | 3D models for all ship blocks (helm wheel, capstan, figureheads, containers, …) | waiting for the human's Blockbench MCP; placeholder models built in code where cheap |
 
-**If this session is restarted while phase F agents are running** (the human added a Blockbench MCP that needs a restart): the agents die, but their worktrees under `.claude/worktrees/agent-*` and branches `worktree-agent-*` keep their commits and uncommitted work. The next session should, for each worktree with work in it, start a fresh implementer whose setup is "`git merge --ff-only main` is not needed; you continue the work in this worktree: read `git status`, `git log main..HEAD` and the brief for the package in this table", give it the package's brief from this table and the design.md sections named above, and let it finish, test and commit. The worktree to package mapping: F1 `agent-abefaafb131e2b8c6`, F2 `agent-a9f50aa5be8da15cc`, F3 `agent-a558f10cb3840e25e`, F4 `agent-af850c7b0db69d753`, F6 `agent-af5c723a7a0704931`.
+**State for the next session:** `main` is green (627 JUnit tests, 190 GameTests, four green runs), nothing is running, no agent branch or worktree is left. Milestone 0 was playtested by the human and passed completely. Next: **F5** (multi-block sails) and **F7** (3D models with the Blockbench MCP), then the playtests of milestones 1 to 4 with the phase F changes.
+
+Follow-ups from phase F (small):
+- `sounds.json` has one owner (the audio module). The anchor's three sound events (`anchor.chain`, `anchor.splash`, `anchor.thud`) are registered but not listed in it, so the anchor plays vanilla events directly. Add a shared sound-entries builder in `core/datagen` (`data.sounds(...)`) that collects entries from all modules into one file, then set `AnchorData.SOUNDS_JSON = true`.
+- `SailingRuntime` applies the anchor force at the capstan centre; it should act at the hawse (`ShipAnchor.hawse`), which is now 2 to 3 blocks to the side. Harmless within the anchor's slack.
+- `StationGameTests.crewHoistsAndFurlsAfterTheWorkTime` failed once for two different agents ("sails not furled: FULL") in about 12 runs each, and passed in all of the orchestrator's 20 runs. Its ±3 tick margin may be too tight under load.
+- Custom banner flags show a generic cloth. A banner-coloured cloth needs a `BlockColor` registration hook in the foundation (NeoForge `RegisterColorHandlersEvent.Block`) and a tint index on the model.
 
 Decision pending with the human: `CLAUDE.md` says all models come from datagen. Blockbench exports would be hand-made assets like textures, committed under `common/src/main/resources`, with datagen generating the block states that reference them. The orchestrator proceeds on that assumption.
 
@@ -118,7 +124,7 @@ Follow-ups for later packages (small, not blocking):
 
 | # | Milestone | Status | Notes |
 |---|---|---|---|
-| 0 | Project setup | blocked: needs playtest | Everything headless is done and green. "Sable loads in the NeoForge dev client" and the test block's look need the playtest in `docs/playtests/milestone-0.md`. |
+| 0 | Project setup | done | Playtested by the human on 2026-10-06: passed completely. |
 | 1 | Spike: assembly | blocked: needs playtest | Phase D1 is merged. `docs/playtests/milestone-1.md`. |
 | 2 | Spike: dry hull | blocked: needs playtest | Phase D2 is merged. `docs/playtests/milestone-2.md`. |
 | 3 | Spike: wind + sails | blocked: needs playtest | Phases D3a and D3b are merged. `docs/playtests/milestone-3.md`. |
@@ -221,7 +227,7 @@ All of these are config values, so they can be changed without code. The ones mo
 ## Playtests for the human
 
 In this order:
-1. [`docs/playtests/milestone-0.md`](playtests/milestone-0.md): Sable loads in the dev client, the mod list and config screen are correct, the test block appears and renders, `/sable spawn sphere 3` works.
+1. ~~`milestone-0.md`~~ done, passed completely.
 2. [`docs/playtests/milestone-1.md`](playtests/milestone-1.md): **the important one.** Build the boat from the recipe, assemble it at the helm in the sea, walk on deck, shove it, disassemble it, check the water in both directions, the block limit, a chest keeping its items, naming, and rejoining. Spikes 2 to 4 build on this.
 3. [`docs/playtests/milestone-2.md`](playtests/milestone-2.md): **the second important one.** No water inside the hull, no swimming below deck, a breach floods the hold, a flooded ship sinks, a ship in a dry dock stays put. It also has the tuning questions for the buoyancy values.
 4. [`docs/playtests/milestone-3.md`](playtests/milestone-3.md): sailing. Set the wind with `/pirates wind set`, hoist the sail at the winch, sail downwind, on a beam reach and into the wind, compare square and fore-and-aft sails, read `/pirates ship forces`. It has a tuning table (speed, heel, sideways drift), and section 5b on stability, which is the biggest open question. Part 2 covers steering at the helm and the anchor at the capstan.

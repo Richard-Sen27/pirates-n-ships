@@ -165,11 +165,6 @@ public final class ShipControls {
         AnchorEntities.sync(ship, rt.bow(), rt.anchor());
     }
 
-    /** World position of the hawse of a ship's anchor (where its chain leaves the hull). */
-    public static Vec3 hawse(ShipBody ship, ShipAnchor anchor) {
-        return ship.toWorld(anchor.hawse());
-    }
-
     /** Sets the ship's anchor in the runtime and its user data and shows the phase on the capstan. Null = stowed. */
     static void setAnchor(ShipBody ship, SailingRuntime rt, @Nullable ShipAnchor anchor) {
         rt.setAnchor(anchor);

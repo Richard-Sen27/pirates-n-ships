@@ -1,3 +1,6 @@
-// 1.21.1	2026-10-06T18:36:31.948236	Raw JSON (data): pirates_n_ships
+// 1.21.1	2026-10-06T19:42:19.52844	Raw JSON (data): pirates_n_ships
 b75487df5ae1bab409d28fc82e318867b315f79a data/pirates_n_ships/physics_block_properties/test_block.json
 6605efa70f733dc8e58d9f3e77fbb953ca58419a data/pirates_n_ships/pirates_n_ships/test_marker/example.json
+5e7e4d27e408ce33f664bb3604814d4ab5a9e157 data/pirates_n_ships/pirates_n_ships/weapon/cutlass.json
+01cb828897cc72914941cc3951ef786f6f94985f data/pirates_n_ships/pirates_n_ships/weapon/rapier.json
+624725f319eeecaf26fa9a60b9220f4b7e214b0e data/pirates_n_ships/pirates_n_ships/weapon/saber.json

@@ -1,0 +1,33 @@
+{
+  "guard": {
+    "arc_degrees": 120.0,
+    "damage_reduction": 0.7,
+    "stamina_per_damage": 1.0,
+    "stamina_per_hit": 6.0,
+    "stamina_per_tick": 0.3
+  },
+  "parry": {
+    "failed_stamina_cost": 10.0
+  },
+  "poise": 11.0,
+  "slash": {
+    "active_ticks": 3,
+    "arc_degrees": 110.0,
+    "damage": 7.0,
+    "reach": 2.6,
+    "recovery_ticks": 7,
+    "stamina_cost": 14.0,
+    "vertical_tolerance": 0.7,
+    "windup_ticks": 5
+  },
+  "thrust": {
+    "active_ticks": 2,
+    "damage": 6.5,
+    "miss_recovery_ticks": 10,
+    "reach": 2.8,
+    "recovery_ticks": 12,
+    "stamina_cost": 16.0,
+    "thickness": 0.2,
+    "windup_ticks": 8
+  }
+}

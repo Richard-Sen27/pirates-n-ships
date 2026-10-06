@@ -1,2 +1,4 @@
-// 1.21.1	2026-10-06T17:16:01.666279	Tags for minecraft:block mod id vanilla
+// 1.21.1	2026-10-06T18:43:03.940952	Tags for minecraft:block mod id vanilla
 0a6ae97c9da29686371eb4553ace2383f5965ac9 data/minecraft/tags/block/mineable/axe.json
+35133e95f1c8fdd7a1c21afcc231fc0bffefb9a8 data/pirates_n_ships/tags/block/not_watertight.json
+35133e95f1c8fdd7a1c21afcc231fc0bffefb9a8 data/pirates_n_ships/tags/block/watertight.json

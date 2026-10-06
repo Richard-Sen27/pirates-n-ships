@@ -561,6 +561,24 @@ many regions. [V code; I cost]
 - Not covered by Sable's water occlusion: boats (`Boat#checkInWater` reads the fluid directly), fishing bobbers and
   mob pathfinding water nodes. [V by reading; not fixed]
 
+### 9.0c A Sable bug: stale chunk lookups on a reused plot (found by D2c, verified by a deterministic test)
+- `ServerChunkCache#getChunk` (behind `Level#getChunkAt`, `getBlockState`, `getBlockEntity`) answers from a private
+  4-entry memo before it asks the chunk map. Vanilla clears that memo once per tick. Sable's
+  `mixin/plot/ServerChunkCacheMixin` redirects the chunk map lookups for plot chunks, but not the memo, and neither
+  removing nor allocating a plot clears it. `SubLevelContainer#getFirstEmptyPlot` hands a freed plot to the next new
+  sub-level at once. [V]
+- So when one sub-level is removed and another is created **in the same server tick**, `Level#getBlockEntity` on the
+  new plot can return a block entity of the removed sub-level's dead chunk. `SubLevelAssemblyHelper#moveBlocks` writes
+  block states through the chunk map (correct) but loads block entity data through `Level#getBlockEntity` (stale):
+  a chest arrived in the new ship **empty**, and its items were written into the dead chunk. Physics and anything
+  else that reads the new plot in that tick can be wrong too. [V]
+- Our workaround: `ship/assembly/ChunkCacheGuard.flush(level)` pushes the memo out before a ship is assembled, before
+  a plot is read for disassembly, and after disassembly. Regression test:
+  `AssemblyGameTests.plotFreedThisTickKeepsChestContent`. Any new code that removes a ship or reads a freshly created
+  plot must flush too. `getChunkNow` is redirected by Sable and always returns the live plot chunk. [V]
+- This is worth reporting to the Sable project. It can affect any mod that assembles a sub-level right after another
+  one was removed.
+
 ### 9.1 How Sable tests sub-levels
 - Tests live in **`sable/neoforge/src/main/java/dev/ryanhcode/sable/neoforge/gametest/`** (`AssemblyTest`, `PhysicsTest`,
   `SableTestHelper`), registered with NeoForge's `@GameTestHolder(Sable.MOD_ID)` and vanilla `@GameTest(template = …)`. [V]

@@ -9,10 +9,10 @@ Last updated: 2026-10-06 (second session: wave 1 of phase C running).
 
 ## Current state
 
-`main` builds (`./gradlew build`, 544 JUnit tests) and `./gradlew :neoforge:runData` leaves no diff. **The GameTest suite (146 tests) is flaky right now:** `AssemblyGameTests.disassemblyPutsBlocksBackOnTheGrid` failed in 2 of 5 full runs with "chest content lost on disassembly". All other tests pass in every run. D2c is investigating. Nothing is pushed: local `main` is ahead of `origin/main`.
+`main` is green: `./gradlew build` (544 JUnit tests), `./gradlew :neoforge:runGameTestServer` (147 GameTests, five green runs in a row after the last merge) and `./gradlew :neoforge:runData` (no diff). Nothing is pushed: local `main` is ahead of `origin/main`.
 
 Merged in this session: foundation follow-ups **A2** and **A3**, all of phase C (**C1** to **C8**), spikes **D1** (assembly) and **D2** (dry hull, with the fix **D2b**), and all of phase E (**E1a** law in the world, **E1b** brig and shackles, **E1c** flags, **E2** pantry and water barrel, **E3** cargo containers and market backend).
-Running now: **D3a** (spike 3 part 1: sails move the ship) and **D2c** (the flaky disassembly test). **A4** (platform hooks) is merged.
+Running now: **D3a** (spike 3 part 1: sails move the ship). **A4** (platform hooks) and **D2c** (the flaky disassembly test, which was a real bug) are merged.
 After that: **D3b** (helm steering and anchor), then **D4** (spike 4, crew station).
 
 How merges work in this phase:
@@ -23,11 +23,13 @@ How merges work in this phase:
 Incidents:
 - Around 17:51 and 18:21 a short connection loss stalled several agents. All recovered by themselves except A2, which was stopped and resumed from its transcript at 18:33 with its work intact.
 - At about 19:00 the network dropped again and all five running agents (C3, C5, C8, D2, A3) ended with API connection errors. Their worktrees and uncommitted work were intact, and all five were resumed from their transcripts at 19:40.
-- Flaky test: `AssemblyGameTests.disassemblyPutsBlocksBackOnTheGrid` (spike 1) failed three times in about 14 full runs with "pig not on deck". Two causes were found and fixed with spike 2: an off-by-one in the passenger placement, and tests running millions of blocks from the origin. One failure with a different message ("chest content lost on disassembly") was seen in 12 runs afterwards. D2c is investigating that one.
+- Flaky test: `AssemblyGameTests.disassemblyPutsBlocksBackOnTheGrid` (spike 1) failed three times in about 14 full runs with "pig not on deck". Two causes were found and fixed with spike 2: an off-by-one in the passenger placement, and tests running millions of blocks from the origin. The remaining failures ("chest content lost on disassembly") were a real bug, found and fixed by D2c (see the work package table).
 - Token budgets: the spike 1, spike 2 and D2b agents each used their whole budget (200k tokens), and two of them stopped before finishing. Later packages are cut smaller and told to keep Gradle output out of their context.
 - The merge commits `2e3fcac` (C6) and `3978c02` (A2) **don't compile**: the orchestrator wrote a malformed module list into `core/ModModules` (a shell quoting mistake) and committed without checking the result. `b97293d` fixes it. Keep this in mind when bisecting. Since then the orchestrator builds and runs the GameTests before committing a merge.
 
 Follow-ups for later packages (small, not blocking):
+- **For the human:** the stale chunk lookup on reused plots (`docs/sable-notes.md` §9.0c) is a bug in Sable that can make containers arrive empty in any mod that assembles a sub-level right after another one was removed. It is worth reporting to the Sable project. The orchestrator did not contact anyone.
+- `ChunkCacheGuard` lives in `ship/assembly` and is called by our assembly and disassembly only. It should move into the Sable adapter (`ship/sable`) so that every removal and creation of a ship goes through it. A cleaner way to clear the memo would be an access transformer line for `ServerChunkCache.clearCache()`.
 - `ship/assembly` (terrain tag) and `ship/hull` (watertight tags) can now use required vanilla tag references (`addTag(BlockTags.X)`), since A3 fixed the tag datagen. Both still use their workarounds.
 - `sailing` should register `ClientEvents.CLIENT_DISCONNECT.register(mc -> ClientWind.reset())`.
 - The trade agent's balance notes: unit prices round harshly for cheap goods (a single sugar costs 2 and sells for 2), so the market screen should show prices per stack. Trade route profit fades after roughly 250 to 400 units per port pair.
@@ -50,7 +52,7 @@ Follow-ups for later packages (small, not blocking):
 | C8 | Basic items and blocks + datagen + placeholder textures | done | Merged. 19 items and 13 blocks with models, recipes, loot, lang and tags, 22 GameTests, and `tools/gen_placeholder_textures.py`. Playtest: `docs/playtests/items-and-blocks.md`. |
 | D1 | Spike 1: assembly (§4.1) | blocked: needs playtest | Merged and green headlessly: 14 JUnit tests and 10 GameTests that assemble, name, refuse and disassemble real sub-levels. Lives in `common` (`ship/assembly`, Sable adapter in `ship/sable`, `ship/ShipData`). Playtest: `docs/playtests/milestone-1.md`. |
 | D2 | Spike 2: dry hull (§4.3, §4.4) | blocked: needs playtest | Merged and green headlessly. Hull runtime per ship (`ship/hull/runtime`), Sable water occlusion regions with client sync, flooding with breaches, buoyancy correction, persistence. Review found a ship "moving at 72 m/s" in a test: the cause was the GameTest server placing tests up to 15 million blocks out, where Sable's 32-bit physics fails (fixed by D2b, which also made the sea detection look only at the hull's own bottom). Rendering is unverified. Playtest: `docs/playtests/milestone-2.md`. |
-| D2c | Flaky test `disassemblyPutsBlocksBackOnTheGrid` ("chest content lost") | in progress | It was rare with 140 tests (1 in 12 runs) and failed in 2 of 5 runs with 146 tests, so it depends on load or timing. The agent has to find out whether it is a test problem or a real bug. |
+| D2c | Flaky test `disassemblyPutsBlocksBackOnTheGrid` ("chest content lost") | done | Merged. **It was a real bug, and it is a Sable bug:** when one ship is removed and another assembled in the same server tick, Sable reuses the plot while vanilla's chunk lookup memo still points at the old chunk, so a chest arrived in the new ship empty and its items were lost. Fixed with a workaround in `ship/assembly/ChunkCacheGuard` and a regression test that failed every time without it. Details in `docs/sable-notes.md` §9.0c. |
 | D3a | Spike 3 part 1: sail blocks with trim, sail winch, sailing runtime applying wind and keel forces, wind override command | in progress | Spike 3 is split in two, because spikes 1 and 2 each used up an agent's whole token budget. |
 | D3b | Spike 3 part 2: helm steering (rudder) and anchor (capstan) | todo | After D3a. Ends at a playtest gate. |
 | D4 | Spike 4: crew station (§6) | todo | Waits for D3b. Ends at a playtest gate. |

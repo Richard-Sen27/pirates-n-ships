@@ -23,4 +23,12 @@ public final class DefinitionLoading {
         });
         CommonEvents.SERVER_STOPPED.register(server -> DefinitionType.all().forEach(DefinitionType::clearServer));
     }
+
+    /**
+     * Empties the client store of every definition type. {@code core.client.CoreClient} calls this on
+     * {@code ClientEvents.CLIENT_DISCONNECT}, so a stale server's entries never leak into the next world. Listeners are not called.
+     */
+    public static void clearClientStores() {
+        DefinitionType.all().forEach(DefinitionType::clearClient);
+    }
 }

@@ -2,6 +2,7 @@ package com.richardsenger.piratesnships.core;
 
 import com.richardsenger.piratesnships.Constants;
 import com.google.gson.JsonObject;
+import com.richardsenger.piratesnships.core.client.CoreClient;
 import com.richardsenger.piratesnships.core.data.DefinitionLoading;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
@@ -44,6 +45,11 @@ public final class CoreModule implements ModModule {
                 Constants.LOG.info("[debug] {} active on server", Constants.MOD_NAME);
             }
         });
+    }
+
+    @Override
+    public void initClient() {
+        CoreClient.init();
     }
 
     @Override

@@ -5,11 +5,27 @@ Statuses: **todo** / **in progress** / **done** / **blocked: needs playtest** / 
 
 "Done" means: `./gradlew build` passes, `./gradlew :neoforge:runGameTestServer` passes, and the new logic has tests.
 
-Last updated: 2026-10-06 (end of the second session: all planned packages are merged, the work is waiting for playtests).
+Last updated: 2026-10-06 (third session: the human playtested and gave feedback, phase F is running).
 
-## Final summary
+## Phase F: first playtest feedback (running)
 
-The orchestrated run is finished: everything that could be built and tested without a game client is merged.
+The human played milestones 1 to 3 and reported: the dry hull works well; a floating ship rocks from side to side without end; slabs, stairs and trapdoors show water in their empty half; the blocks look like 2012 and need real 3D models; sails should be built from two yards with cloth between them, and triangular sails from a rope and a cleat; flags are far too small; the anchor should be a real anchor on the hull side with chain sound and a splash; planks should creak now and then; the captain's whistle should open a radial menu. These are recorded as decisions in design.md §4.3, §4.7, §4.8, §5.2, §5.3, §7.2, §16 and §21.
+
+| Package | Scope | Status |
+|---|---|---|
+| F1 | Roll and pitch damping (the rocking was undamped roll) and occasional hull creaking tied to the rolling, with placeholder vanilla sounds | in progress |
+| F2 | Occlusion regions include watertight partial blocks (slabs, stairs, trapdoors) on the hull's inside | in progress |
+| F3 | The captain's whistle opens a radial menu; orders go to the server as a payload | in progress |
+| F4 | The anchor as an entity: stowed at the hull side, lowered on a chain with sound, splash and thud, raised again; travel time from depth | in progress |
+| F5 | Multi-block sails: two yards with rendered cloth between them, triangular sails from a rope and a cleat | todo, after F1 and F4 (shares the sailing runtime) |
+| F6 | Full-size flags: a 2×1 block cloth hanging downwind from the pole, models built in code | in progress |
+| F7 | 3D models for all ship blocks (helm wheel, capstan, figureheads, containers, …) | waiting for the human's Blockbench MCP; placeholder models built in code where cheap |
+
+Decision pending with the human: `CLAUDE.md` says all models come from datagen. Blockbench exports would be hand-made assets like textures, committed under `common/src/main/resources`, with datagen generating the block states that reference them. The orchestrator proceeds on that assumption.
+
+## Summary of the second session
+
+Everything that could be built and tested without a game client was merged.
 
 **State of `main`:** `./gradlew build` passes (567 JUnit tests), `./gradlew :neoforge:runGameTestServer` passes (172 GameTests, eight green runs in a row after the last merge), and `./gradlew :neoforge:runData` leaves no diff. Nothing is pushed: local `main` is 130 commits ahead of `origin/main`. No agent is running, and no agent branch or worktree is left.
 

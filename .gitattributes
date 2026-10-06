@@ -16,3 +16,4 @@
 *.ogg binary
 *.mp3 binary
 *.wav binary
+*.nbt binary

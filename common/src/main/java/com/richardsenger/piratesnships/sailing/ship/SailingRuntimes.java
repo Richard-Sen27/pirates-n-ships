@@ -148,6 +148,7 @@ public final class SailingRuntimes {
         }
         double fullDraft = SailingConfig.FULL_DRAFT.get();
         boolean needWater = SailingConfig.SAILS_NEED_WATER.get();
+        double heel = SailingConfig.SAIL_HEEL_FACTOR.get();
         long now = level.getGameTime();
         for (SailingRuntime rt : m.values()) {
             if (rt.windTime() == Long.MIN_VALUE) {
@@ -160,7 +161,7 @@ public final class SailingRuntimes {
             HullRuntime hull = HullRuntimes.get(level, rt.id());
             double sea = hull == null || !hull.seesSea() ? Double.NaN : hull.seaWorldY();
             try {
-                rt.physicsTick(ship, sea, timeStep, now, fullDraft, needWater);
+                rt.physicsTick(ship, sea, timeStep, now, fullDraft, needWater, heel);
             } catch (RuntimeException e) {
                 Constants.LOG.error("Sailing forces of ship {} failed", rt.id(), e);
             }

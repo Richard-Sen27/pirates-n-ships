@@ -11,6 +11,7 @@ canvas for the set part of the sail and dark rigging background for the rest. Fu
 import sys
 from pathlib import Path
 
+sys.dont_write_bytecode = True  # no __pycache__ next to the tools
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from gen_placeholder_textures import Canvas, TEX  # noqa: E402
 

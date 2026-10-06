@@ -159,7 +159,8 @@ public final class SailingRuntime {
      * One force evaluation and application. {@code seaWorldY} is NaN without sea. Returns false when the ship was
      * skipped (no unfurled sail and not moving in water).
      */
-    boolean physicsTick(ShipBody ship, double seaWorldY, double timeStep, long gameTime, double fullDraft, boolean sailsNeedWater) {
+    boolean physicsTick(ShipBody ship, double seaWorldY, double timeStep, long gameTime, double fullDraft, boolean sailsNeedWater,
+                        double heelFactor) {
         double mass = ship.mass();
         if (!(mass > 0.0) || !ship.centerOfMass(com)) {
             return false;
@@ -190,8 +191,12 @@ public final class SailingRuntime {
         if (!f.force().isFinite() || !f.torque().isFinite()) {
             return false;
         }
+        // Roll (ship z) and pitch (ship x) moments of sails and keel are scaled by heelFactor; yaw is kept. Minecraft
+        // hulls are hollow and unballasted, so the full sail moment plus the keel's heeling couple capsized the 5x4x5
+        // test hull within 2 s on a beam reach (spike 3 finding). The breakdown keeps the unscaled, physical values.
+        double tx = f.torque().x() * heelFactor, ty = f.torque().y(), tz = f.torque().z() * heelFactor;
         Vector3d impulse = bow.toPlot(f.force(), tmp).mul(timeStep);
-        Vector3d angular = bow.toPlot(f.torque(), tmp2).mul(timeStep);
+        Vector3d angular = bow.toPlot(tmp2.set(tx, ty, tz), tmp2).mul(timeStep);
         ship.applySailingImpulse(impulse, angular);
         lastBreakdown = f;
         lastSubmerged = submerged;

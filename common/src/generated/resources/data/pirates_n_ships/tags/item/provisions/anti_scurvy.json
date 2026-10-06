@@ -9,6 +9,7 @@
     {
       "id": "#c:foods/fruit",
       "required": false
-    }
+    },
+    "pirates_n_ships:lime"
   ]
 }

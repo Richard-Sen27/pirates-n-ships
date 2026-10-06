@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": {
+      "item": "minecraft:iron_bars"
+    },
+    "P": {
+      "tag": "minecraft:planks"
+    }
+  },
+  "pattern": [
+    "BPB",
+    "BPB"
+  ],
+  "result": {
+    "count": 6,
+    "id": "pirates_n_ships:brig_bars"
+  }
+}

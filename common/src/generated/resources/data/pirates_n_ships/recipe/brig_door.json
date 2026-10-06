@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "B": {
+      "item": "minecraft:iron_bars"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "pattern": [
+    "II",
+    "BB",
+    "II"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:brig_door"
+  }
+}

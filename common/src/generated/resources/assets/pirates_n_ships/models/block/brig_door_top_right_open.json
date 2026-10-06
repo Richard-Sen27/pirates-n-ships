@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/door_top_right_open",
+  "textures": {
+    "bottom": "pirates_n_ships:block/brig_door_bottom",
+    "top": "pirates_n_ships:block/brig_door_top"
+  }
+}

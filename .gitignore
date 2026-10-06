@@ -25,3 +25,6 @@ runs
 # logs written by JUnit tests that bootstrap Minecraft (common/logs)
 logs
 refs
+
+# python venv for tools/ scripts
+tools/.venv/

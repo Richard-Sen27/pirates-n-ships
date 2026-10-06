@@ -171,7 +171,20 @@ public final class SableShips {
         void onShipRemoved(ServerLevel level, UUID shipId, boolean destroyed);
     }
 
+    /** Called on the client thread when a ship leaves a client level (unloaded, out of range or destroyed). */
+    @FunctionalInterface
+    public interface ClientRemovalListener {
+        void onClientShipRemoved(Level level, UUID shipId);
+    }
+
+    /** Called once per physics substep on the server thread, before Sable applies queued forces. */
+    @FunctionalInterface
+    public interface PhysicsTickListener {
+        void onPhysicsTick(ServerLevel level, double timeStep);
+    }
+
     private static final List<RemovalListener> REMOVAL_LISTENERS = new ArrayList<>();
+    private static final List<ClientRemovalListener> CLIENT_REMOVAL_LISTENERS = new ArrayList<>();
     private static boolean hooked;
 
     /**
@@ -182,6 +195,30 @@ public final class SableShips {
      */
     public static synchronized void onShipRemoved(RemovalListener listener) {
         REMOVAL_LISTENERS.add(listener);
+        hook();
+    }
+
+    /**
+     * Registers a listener for client ship removal: the same observer mechanism on the client container
+     * ({@code api/sublevel/SubLevelContainer.java#addObserver} l.173, observers notified on removal at l.487). Safe on a
+     * dedicated server (it never fires there).
+     */
+    public static synchronized void onClientShipRemoved(ClientRemovalListener listener) {
+        CLIENT_REMOVAL_LISTENERS.add(listener);
+        hook();
+    }
+
+    /**
+     * Registers a per-substep physics callback ({@code SableEventPlatform#onPhysicsTick} l.17,
+     * {@code api/event/SablePrePhysicsTickEvent.java#prePhysicsTick}, fired in
+     * {@code sublevel/system/SubLevelPhysicsSystem.java} l.271 right before queued forces are applied). Call during mod
+     * construction. Queued forces recorded here are applied this substep.
+     */
+    public static void onPhysicsTick(PhysicsTickListener listener) {
+        SableEventPlatform.INSTANCE.onPhysicsTick((system, timeStep) -> listener.onPhysicsTick(system.getLevel(), timeStep));
+    }
+
+    private static void hook() {
         if (hooked) {
             return;
         }
@@ -192,8 +229,17 @@ public final class SableShips {
                     @Override
                     public void onSubLevelRemoved(SubLevel subLevel, SubLevelRemovalReason reason) {
                         boolean destroyed = reason == SubLevelRemovalReason.REMOVED;
-                        for (RemovalListener l : REMOVAL_LISTENERS) {
+                        for (RemovalListener l : List.copyOf(REMOVAL_LISTENERS)) {
                             l.onShipRemoved(serverLevel, subLevel.getUniqueId(), destroyed);
+                        }
+                    }
+                });
+            } else if (level.isClientSide()) {
+                container.addObserver(new SubLevelObserver() {
+                    @Override
+                    public void onSubLevelRemoved(SubLevel subLevel, SubLevelRemovalReason reason) {
+                        for (ClientRemovalListener l : List.copyOf(CLIENT_REMOVAL_LISTENERS)) {
+                            l.onClientShipRemoved(level, subLevel.getUniqueId());
                         }
                     }
                 });

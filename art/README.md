@@ -18,5 +18,16 @@ Block model workflow:
    `./gradlew :neoforge:runData`.
 5. The JUnit tests in `core/assets` (`HandMadeModelsTest`, `AssetReferencesTest`) guard the result.
 
+Workflow notes (figurehead batch):
+- `Codecs.java_block.compile()` drops the `block/` folder (`minecraft:oak_planks`) unless each texture's `folder` and
+  `namespace` are set again after `fromPath(...).add()`; post-processing should add `block/` when it is missing.
+- Elements outside the block (−16..32) need their position-based UVs wrapped into 0..16 per face.
+- Java block rotation sign: on the x axis, −22.5 tilts the top of an element towards north (forward for a model that
+  faces north) and swings its bottom towards south.
+- `create_offscreen_view` plus `set_camera_angle(view: ...)` renders without moving the human's camera; the returned
+  PNG lands in the session's tool-results folder and can be copied straight to `renders/`.
+- A block whose model is not a full cube needs `noOcclusion()` in its properties, or neighbours cull their faces
+  against it and the model renders dark.
+
 Entity models use the Modded Entity format (Mojang mappings 1.17+); paste the body of the exported
 `createBodyLayer()` into the renderer's layer method (example: `AnchorRenderer.createLayer`).

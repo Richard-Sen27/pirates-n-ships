@@ -11,7 +11,9 @@ Last updated: 2026-10-06 (second session: wave 1 of phase C running).
 
 `main` is green after phases A and B. Nothing is pushed: local `main` is ahead of `origin/main`.
 
-Running now (six agents): **A2** foundation follow-up, **C1** hull + flooding, **C2** wind + sails, **C4** law, **C6** provisions, and **D1** spike 1 (assembly).
+Running now (five agents): **A2** foundation follow-up, **C1** hull + flooding, **C2** wind + sails, **C6** provisions, and **D1** spike 1 (assembly). Merged so far in phase C: **C4** law.
+
+Around 17:51 and 18:21 a short connection loss stalled several agents. All recovered by themselves except A2, which was stopped and resumed from its transcript at 18:33 with its work intact.
 Waiting for A2 (wave 2): **C3** melee, **C5** trade, **C7** remaining config groups, **C8** basic items and blocks.
 After that: spikes D2–D4 one after another (using `docs/sable-notes.md`) and phase E integration.
 
@@ -30,7 +32,7 @@ How merges work in this phase:
 | C1 | Hull analysis + flooding model (§4.2, §4.5), pure logic | in progress | Wave 1. |
 | C2 | Wind and sail model (§5.1, §5.2), pure logic | in progress | Wave 1. |
 | C3 | Melee resolution core (§8.5), pure logic | todo | Wave 2, waits for A2. |
-| C4 | Law system logic (§13.1, §13.2) + false-flag detection math (§4.7) | in progress | Wave 1. |
+| C4 | Law system logic (§13.1, §13.2) + false-flag detection math (§4.7) | done | Merged. 106 JUnit tests and 6 GameTests. Package `law` (`crime`, `bounty`, `flag`, `LawService`, `/pirates law` debug commands). Playtest: `docs/playtests/law-commands.md` is still to be written from the agent's checklist (see notes). | |
 | C5 | Trade economy logic (§10.3) | todo | Wave 2, waits for A2. |
 | C6 | Provisions logic (§7.4) | in progress | Wave 1. |
 | C7 | Config groups and values (§17) | todo | Wave 2. Reduced to the groups no other package owns (see decisions). |

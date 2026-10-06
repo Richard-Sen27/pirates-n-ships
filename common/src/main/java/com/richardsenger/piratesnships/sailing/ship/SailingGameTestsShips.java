@@ -58,7 +58,7 @@ public final class SailingGameTestsShips {
 
     // ------------------------------------------------------------------ fixtures
 
-    private static void basin(GameTestHelper h, boolean water) {
+    static void basin(GameTestHelper h, boolean water) {
         for (int x = 0; x < 40; x++) {
             for (int z = 0; z < 40; z++) {
                 h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
@@ -72,7 +72,7 @@ public final class SailingGameTestsShips {
     }
 
     /** Hull at x in [x0, x0+4], z in [z0, z0+4]; helm at the stern (z0+1) facing north, mast and sail amidships. Returns the helm. */
-    private static BlockPos hull(GameTestHelper h, int x0, int z0, Block sail, Direction sailFacing, SailTrim trim) {
+    static BlockPos hull(GameTestHelper h, int x0, int z0, Block sail, Direction sailFacing, SailTrim trim) {
         for (int x = x0; x <= x0 + 4; x++) {
             for (int z = z0; z <= z0 + 4; z++) {
                 for (int y = 5; y <= 8; y++) {
@@ -89,9 +89,9 @@ public final class SailingGameTestsShips {
         return helm;
     }
 
-    private record Fixture(ShipBody ship, SailingRuntime runtime) { }
+    record Fixture(ShipBody ship, SailingRuntime runtime) { }
 
-    private static Fixture assemble(GameTestHelper h, BlockPos helm) {
+    static Fixture assemble(GameTestHelper h, BlockPos helm) {
         AssemblyResult r = ShipTestCleanup.assemble(h, helm);
         if (r.shipId() == null) {
             throw new AssertionError("assembly failed: " + r);
@@ -104,18 +104,16 @@ public final class SailingGameTestsShips {
         return new Fixture(ship, rt);
     }
 
-    private static void fixWind(GameTestHelper h, double fromDegrees) {
+    static void fixWind(GameTestHelper h, double fromDegrees) {
         fixWind(h, fromDegrees, WIND);
     }
 
-    /** Also pins the keel values the tests rely on: the GameTest world's server config file outlives default changes. */
-    private static void fixWind(GameTestHelper h, double fromDegrees, double strength) {
-        ConfigOverrides.during(h, SailingConfig.KEEL_LATERAL_DRAG, 8.0);
-        ConfigOverrides.during(h, SailingConfig.SAIL_HEEL_FACTOR, 0.25);
+    /** Fixes the wind for 400 ticks. Config values are the defaults: every GameTest run starts from a fresh world. */
+    static void fixWind(GameTestHelper h, double fromDegrees, double strength) {
         WindOverride.set(h.getLevel().dimension().location().toString(), fromDegrees, strength, h.getLevel().getGameTime() + 400);
     }
 
-    private static void clearWind(GameTestHelper h) {
+    static void clearWind(GameTestHelper h) {
         WindOverride.clear(h.getLevel().dimension().location().toString());
     }
 
@@ -141,7 +139,7 @@ public final class SailingGameTestsShips {
         return acc;
     }
 
-    private static Vector3d comWorld(Fixture f) {
+    static Vector3d comWorld(Fixture f) {
         Vector3d c = new Vector3d();
         f.ship().centerOfMass(c);
         return f.ship().toWorld(c, new Vector3d());

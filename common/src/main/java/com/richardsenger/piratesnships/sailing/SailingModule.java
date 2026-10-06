@@ -9,8 +9,12 @@ import com.richardsenger.piratesnships.sailing.block.SailBlock;
 import com.richardsenger.piratesnships.sailing.block.SailWinchBlock;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
+import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsControls;
 import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips;
 import com.richardsenger.piratesnships.sailing.ship.SailingRuntimes;
+import com.richardsenger.piratesnships.sailing.ship.ShipControls;
+import com.richardsenger.piratesnships.ship.assembly.HelmBlock;
+import net.minecraft.data.models.model.TexturedModel;
 import com.richardsenger.piratesnships.sailing.wind.WindSync;
 import com.richardsenger.piratesnships.ship.ShipBlockChanges;
 import com.richardsenger.piratesnships.ship.decor.SableWeightTags;
@@ -72,6 +76,7 @@ public final class SailingModule implements ModModule {
         SableShips.onShipRemoved(SailingRuntimes::onShipRemoved);
         SableShips.onPhysicsTick(SailingRuntimes::onPhysicsTick);
         ShipBlockChanges.register(SailingRuntimes::onBlockChanged);
+        HelmBlock.setSteeringHandler(ShipControls::steer);
     }
 
     @Override
@@ -88,7 +93,18 @@ public final class SailingModule implements ModModule {
                     .add(SailWinchBlock.KEY_NOT_ON_SHIP, "The winch must be on an assembled ship")
                     .add(SailWinchBlock.KEY_NO_SAILS, "This ship has no sails")
                     .add(SailWinchBlock.KEY_SET, "Sails set: %s (%s sails)")
-                    .add(SailWinchBlock.KEY_SAIL_SET, "Sail set: %s");
+                    .add(SailWinchBlock.KEY_SAIL_SET, "Sail set: %s")
+                    .block(SailingBlocks.CAPSTAN, "Capstan")
+                    .add(ShipControls.KEY_RUDDER_MIDSHIPS, "Rudder midships")
+                    .add(ShipControls.KEY_RUDDER, "Rudder %s of %s to %s (%s°)")
+                    .add(ShipControls.KEY_PORT, "port")
+                    .add(ShipControls.KEY_STARBOARD, "starboard")
+                    .add(ShipControls.KEY_STEERING_OFF, "Steering is disabled on this server. Sneak-use with an empty hand to disassemble")
+                    .add(ShipControls.KEY_CAPSTAN_NOT_ON_SHIP, "The capstan must be on an assembled ship")
+                    .add(ShipControls.KEY_CAPSTAN_OFF, "Anchors are disabled on this server")
+                    .add(ShipControls.KEY_NO_GROUND, "No ground within %s blocks below: the anchor would not hold")
+                    .add(ShipControls.KEY_DROPPING, "Anchor dropping to the ground %s blocks below, holds in %s s")
+                    .add(ShipControls.KEY_RAISING, "Raising the anchor, stowed in %s s");
             String k = SailingCommands.KEY;
             lang.add(k + "wind.get", "Wind from %s° at %s blocks/s (%s)")
                     .add(k + "wind.fixed", "fixed by command")
@@ -101,10 +117,12 @@ public final class SailingModule implements ModModule {
         data.models(m -> {
             for (RegistryEntry<Block, SailBlock> s : SailingBlocks.sails()) sail(m, s.get());
             m.blocks().createTrivialCube(SailingBlocks.SAIL_WINCH.get());
+            m.blocks().createTrivialBlock(SailingBlocks.CAPSTAN.get(), TexturedModel.COLUMN);
         });
         data.blockLoot(loot -> {
             for (RegistryEntry<Block, SailBlock> s : SailingBlocks.sails()) loot.dropSelf(s.get());
             loot.dropSelf(SailingBlocks.SAIL_WINCH.get());
+            loot.dropSelf(SailingBlocks.CAPSTAN.get());
         });
         data.blockTags(tags -> {
             for (RegistryEntry<Block, SailBlock> s : SailingBlocks.sails()) {
@@ -115,6 +133,7 @@ public final class SailingModule implements ModModule {
             }
             tags.tag(BlockTags.MINEABLE_WITH_AXE).add(SailingBlocks.SAIL_WINCH.get());
             tags.tag(SableWeightTags.LIGHT).add(SailingBlocks.SAIL_WINCH.get());
+            tags.tag(BlockTags.MINEABLE_WITH_AXE).add(SailingBlocks.CAPSTAN.get());
         });
         data.recipes(out -> {
             ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, SailingBlocks.SMALL_SQUARE_SAIL.get())
@@ -137,6 +156,12 @@ public final class SailingModule implements ModModule {
                     .define('T', Items.STRING).define('I', Items.IRON_INGOT).define('P', ItemTags.PLANKS)
                     .unlockedBy("has_iron_ingot", InventoryChangeTrigger.TriggerInstance.hasItems(Items.IRON_INGOT))
                     .save(out, SailingBlocks.SAIL_WINCH.id());
+            ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, SailingBlocks.CAPSTAN.get())
+                    .pattern("LSL").pattern("CIC").pattern("PPP")
+                    .define('L', ItemTags.LOGS).define('S', Items.STICK).define('C', Items.CHAIN)
+                    .define('I', Items.IRON_BLOCK).define('P', ItemTags.PLANKS)
+                    .unlockedBy("has_chain", InventoryChangeTrigger.TriggerInstance.hasItems(Items.CHAIN))
+                    .save(out, SailingBlocks.CAPSTAN.id());
         });
     }
 
@@ -172,6 +197,6 @@ public final class SailingModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(SailingGameTests.class, SailingGameTestsShips.class);
+        return List.of(SailingGameTests.class, SailingGameTestsShips.class, SailingGameTestsControls.class);
     }
 }

@@ -52,10 +52,17 @@ public final class SailingRuntime {
     private boolean instancesDirty = true;
     private final Vector3d cachedCom = new Vector3d(Double.NaN, 0, 0);
 
+    // controls (server thread; read by the physics substep): helm and rudder step from block changes, the anchor
+    private @Nullable BlockPos helm;
+    private volatile int rudderStep;
+    private volatile @Nullable ShipAnchor anchor;
+
     // per-tick caches
     private long windTime = Long.MIN_VALUE;
     private WindSample wind = WindSample.CALM;
     private SailingParams params = SailingParams.DEFAULTS;
+    private double rudderAngle;
+    private boolean anchorEnabled = true;
 
     // scratch (physics substep, server thread)
     private final Vector3d com = new Vector3d();
@@ -119,7 +126,46 @@ public final class SailingRuntime {
         return lastEvaluation;
     }
 
+    /** Plot position of the helm, or null when the ship has none. */
+    public @Nullable BlockPos helm() {
+        return helm;
+    }
+
+    /** Rudder step (positive = starboard), as set at the helm. */
+    public int rudderStep() {
+        return rudderStep;
+    }
+
+    /** Rudder angle used by the last tick's inputs [degrees, positive = starboard] (0 when steering is disabled). */
+    public double rudderAngle() {
+        return rudderAngle;
+    }
+
+    /** The ship's anchor, or null when it is stowed. */
+    public @Nullable ShipAnchor anchor() {
+        return anchor;
+    }
+
+    /** Plot box {minX, minY, minZ, maxX, maxY, maxZ} (copy). */
+    public int[] bounds() {
+        return new int[] {minX, minY, minZ, maxX, maxY, maxZ};
+    }
+
     // ------------------------------------------------------------------ updates (server thread)
+
+    void setHelm(@Nullable BlockPos plotPos, int step) {
+        this.helm = plotPos == null ? null : plotPos.immutable();
+        this.rudderStep = step;
+    }
+
+    void setAnchor(@Nullable ShipAnchor anchor) {
+        this.anchor = anchor;
+    }
+
+    void setControlInputs(double rudderAngle, boolean anchorEnabled) {
+        this.rudderAngle = rudderAngle;
+        this.anchorEnabled = anchorEnabled;
+    }
 
     void putSail(BlockPos plotPos, SailType type, SailTrim trim) {
         Sail old = sails.put(plotPos.immutable(), new Sail(type, trim));
@@ -170,7 +216,8 @@ public final class SailingRuntime {
         double draft = Double.isFinite(seaWorldY) ? seaWorldY - tmp2.y : Double.NEGATIVE_INFINITY;
         double submerged = Math.min(Math.max(draft / fullDraft, 0.0), 1.0);
         boolean moving = lin.lengthSquared() > 1.0e-4 || ang.lengthSquared() > 1.0e-4;
-        if (unfurled == 0 && (submerged <= 0.0 || !moving)) {
+        boolean anchorOut = anchor != null && anchorEnabled;
+        if (unfurled == 0 && !anchorOut && (submerged <= 0.0 || !moving)) {
             lastSubmerged = submerged;
             lastBreakdown = null;
             return false;
@@ -187,7 +234,19 @@ public final class SailingRuntime {
 
         ShipState state = new ShipState(comWorld, shipToWorld, lin, ang, mass, submerged, length, keelCenter);
         List<SailInstance> active = sailsNeedWater && submerged <= 0.0 ? List.of() : instances(com);
-        ForceBreakdown f = ShipForceModel.compute(wind, state, active, null, null, params);
+        ShipForceModel.Rudder rudder = null;
+        if (helm != null) {
+            Vector3d rel = HullPoints.rudderPlot(bow, new int[] {minX, minY, minZ, maxX, maxY, maxZ}, new Vector3d()).sub(com);
+            rudder = new ShipForceModel.Rudder(rudderAngle, bow.toShip(rel, rel));
+        }
+        ShipAnchor a = anchor;
+        ShipForceModel.Anchor anchorInput = null;
+        if (a != null && anchorEnabled && a.state().isOut()) {
+            Vector3d hawse = new Vector3d(a.capstan().getX() + 0.5, a.capstan().getY() + 0.5, a.capstan().getZ() + 0.5).sub(com);
+            anchorInput = new ShipForceModel.Anchor(a.state(), new Vector3d(a.point().x, a.point().y, a.point().z),
+                    bow.toShip(hawse, hawse));
+        }
+        ForceBreakdown f = ShipForceModel.compute(wind, state, active, rudder, anchorInput, params);
         if (!f.force().isFinite() || !f.torque().isFinite()) {
             return false;
         }

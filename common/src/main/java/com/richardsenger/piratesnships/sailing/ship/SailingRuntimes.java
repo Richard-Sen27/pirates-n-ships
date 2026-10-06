@@ -2,7 +2,9 @@ package com.richardsenger.piratesnships.sailing.ship;
 
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.sailing.SailingConfig;
+import com.richardsenger.piratesnships.sailing.block.CapstanBlock;
 import com.richardsenger.piratesnships.sailing.block.SailBlock;
+import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
 import com.richardsenger.piratesnships.sailing.force.SailingParams;
 import com.richardsenger.piratesnships.sailing.wind.WindOverride;
@@ -10,11 +12,13 @@ import com.richardsenger.piratesnships.sailing.wind.WindSample;
 import com.richardsenger.piratesnships.sailing.wind.WindService;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.assembly.AssemblyContent;
+import com.richardsenger.piratesnships.ship.assembly.HelmBlock;
 import com.richardsenger.piratesnships.ship.assembly.ShipAssembler;
 import com.richardsenger.piratesnships.ship.hull.runtime.HullRuntime;
 import com.richardsenger.piratesnships.ship.hull.runtime.HullRuntimes;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -71,14 +75,19 @@ public final class SailingRuntimes {
         List<BlockPos> blocks = ship.plotBlocks();
         int[] b = {Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE};
         Direction helmFacing = null;
+        BlockPos helm = null;
+        int rudder = 0;
+        List<BlockPos> capstans = new ArrayList<>();
         for (BlockPos p : blocks) {
             b[0] = Math.min(b[0], p.getX()); b[1] = Math.min(b[1], p.getY()); b[2] = Math.min(b[2], p.getZ());
             b[3] = Math.max(b[3], p.getX()); b[4] = Math.max(b[4], p.getY()); b[5] = Math.max(b[5], p.getZ());
-            if (helmFacing == null) {
-                BlockState s = level.getBlockState(p);
-                if (s.is(AssemblyContent.HELM.get())) {
-                    helmFacing = s.getValue(HorizontalDirectionalBlock.FACING);
-                }
+            BlockState s = level.getBlockState(p);
+            if (helmFacing == null && s.is(AssemblyContent.HELM.get())) {
+                helmFacing = s.getValue(HorizontalDirectionalBlock.FACING);
+                helm = p.immutable();
+                rudder = RudderSteps.fromProperty(s.getValue(HelmBlock.RUDDER));
+            } else if (s.getBlock() instanceof CapstanBlock) {
+                capstans.add(p.immutable());
             }
         }
         if (blocks.isEmpty()) {
@@ -98,6 +107,20 @@ public final class SailingRuntimes {
             BlockState s = level.getBlockState(p);
             if (s.getBlock() instanceof SailBlock sail) {
                 rt.putSail(p, sail.type(), s.getValue(SailBlock.TRIM));
+            }
+        }
+        rt.setHelm(helm, rudder);
+        ShipAnchor anchor = ShipControls.readAnchor(data);
+        if (anchor != null && !capstans.contains(anchor.capstan())) {
+            anchor = null; // the capstan is gone: the anchor went with it
+            data.remove(ShipControls.ANCHOR_TAG);
+            ship.setUserData(USER_DATA_KEY, data);
+        }
+        rt.setAnchor(anchor);
+        // capstans that came back from land (disassembled with the anchor out) or lost their anchor show it stowed
+        for (BlockPos c : capstans) {
+            if (anchor == null || !anchor.capstan().equals(c)) {
+                ShipControls.showPhase(level, c, AnchorState.Phase.RAISED);
             }
         }
         return rt;
@@ -131,11 +154,16 @@ public final class SailingRuntimes {
         }
         SailingParams params = SailingConfig.sailingParams();
         long now = level.getGameTime();
-        for (SailingRuntime rt : m.values()) {
+        boolean steering = SailingConfig.STEERING_ENABLED.get();
+        int steps = SailingConfig.RUDDER_STEPS.get();
+        boolean anchors = SailingConfig.ANCHOR_ENABLED.get();
+        for (SailingRuntime rt : List.copyOf(m.values())) {
             ShipBody ship = SableShips.byId(level, rt.id());
             if (ship != null) {
                 WindSample w = WindService.sample(level, ship.worldBounds().getCenter());
                 rt.setTickInputs(now, w, params);
+                rt.setControlInputs(steering ? RudderSteps.angle(rt.rudderStep(), steps, params.maxRudderAngleDeg()) : 0.0, anchors);
+                ShipControls.tickAnchor(ship, rt, params.anchor());
             }
         }
     }
@@ -176,13 +204,24 @@ public final class SailingRuntimes {
         }
         boolean oldSail = oldState.getBlock() instanceof SailBlock;
         boolean newSail = newState.getBlock() instanceof SailBlock;
-        if (!oldSail && !newSail && (newState.isAir() || !oldState.isAir())) {
-            return; // only sails and newly filled cells (the plot box may grow) matter
+        boolean helm = oldState.getBlock() instanceof HelmBlock || newState.getBlock() instanceof HelmBlock;
+        boolean capstanGone = oldState.getBlock() instanceof CapstanBlock && !(newState.getBlock() instanceof CapstanBlock);
+        if (!oldSail && !newSail && !helm && !capstanGone && (newState.isAir() || !oldState.isAir())) {
+            return; // only sails, the helm, a removed capstan and newly filled cells (the plot box may grow) matter
         }
         ShipBody ship = SableShips.containing(level, pos);
         SailingRuntime rt = ship == null ? null : m.get(ship.id());
         if (rt == null) {
             return;
+        }
+        if (newState.getBlock() instanceof HelmBlock) {
+            rt.setHelm(pos, RudderSteps.fromProperty(newState.getValue(HelmBlock.RUDDER)));
+        } else if (oldState.getBlock() instanceof HelmBlock && pos.equals(rt.helm())) {
+            rt.setHelm(null, 0); // no helm, no rudder
+        }
+        ShipAnchor anchor = rt.anchor();
+        if (capstanGone && anchor != null && anchor.capstan().equals(pos)) {
+            ShipControls.setAnchor(ship, rt, null); // the anchor is lost with its capstan
         }
         if (newState.getBlock() instanceof SailBlock sail) {
             rt.putSail(pos, sail.type(), newState.getValue(SailBlock.TRIM));

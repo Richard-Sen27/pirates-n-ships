@@ -54,9 +54,9 @@ waterline, a helm and a chest on the hold floor. 97 blocks. Put a few different 
 1. Stand on the ship and run `/sable physics impulse @n linear 30 0 0 global`
    (syntax from `refs/sable/.../command/SablePhysicsCommands.java` l.43-56; `@n` = nearest sub-level; the impulse is
    in kpg·m/s, about 50 kpg for this boat, so 30 gives roughly 0.6 m/s. Use 100 for a harder shove).
-2. Immediately use the helm.
+2. Immediately sneak-use the helm with an empty hand (hold Shift, right-click). Since milestone 3, plain use steers instead (action bar "Rudder ..."), it never disassembles.
 - Expected: red "The ship is still moving (x.xx m/s). Wait until it lies still". The ship drifts on.
-3. Optional tilt check: `/sable physics impulse @n angular 30 0 0 global` and use the helm while it rocks.
+3. Optional tilt check: `/sable physics impulse @n angular 30 0 0 global` and sneak-use the helm (empty hand) while it rocks.
 - Expected: "The ship is tilted x.x°. It must be within 6.0° of level" or the "still moving" message.
 
 ## 7. Name the ship
@@ -67,11 +67,11 @@ waterline, a helm and a chest on the hold floor. 97 blocks. Put a few different 
 ## 8. Save, quit, rejoin while assembled
 1. Esc, "Save and Quit to Title", re-open the world.
 - Expected: the ship is where you left it, still floating, chest content unchanged when opened, name still
-  `Black Pearl` (`/sable name get @n`). Using the helm still works (refuses or disassembles, never "not part of a ship").
+  `Black Pearl` (`/sable name get @n`). Sneak-using the helm with an empty hand still works (refuses or disassembles, never "not part of a ship"); plain use shows the rudder.
 
 ## 9. Disassemble when still
 1. Wait until the ship lies still (watch it for ~10 s; waves may keep it rocking a little). Stand on the hold floor or
-   the rim, then use the helm.
+   the rim, then sneak-use the helm with an empty hand (hold Shift, right-click).
 - Expected: green "Ship disassembled: 97 blocks placed back". The boat is now world blocks, aligned to the block grid
   and level, facing the nearest 90° direction. You are still standing on the deck (not inside a block, not falling,
   no fall damage). **No stray water inside the hold**: the hold is air again. **No air hole in the sea** around the
@@ -84,9 +84,9 @@ waterline, a helm and a chest on the hold floor. 97 blocks. Put a few different 
    waterline and write down its coordinates from F3 (`Targeted Block`). Assemble and wait until the ship lies still
    without drifting more than half a block (in calm water; `/sable physics impulse` back if needed).
 2. `/setblock <X> <Y> <Z> cobblestone` at the written coordinates (inside the water under the ship's wall), then use
-   the helm.
+   sneak-use the helm (empty hand).
 - Expected: red "Something is in the way at X Y Z" naming the cobblestone (or another position the hull would land on
-  if the ship drifted). The ship stays assembled. `/setblock <X> <Y> <Z> water`, use the helm again: it disassembles.
+  if the ship drifted). The ship stays assembled. `/setblock <X> <Y> <Z> water`, sneak-use the helm again: it disassembles.
 
 ## 11. Config toggles (optional)
 - `enabled = false` → using a world helm says "Ship assembly is disabled on this server".

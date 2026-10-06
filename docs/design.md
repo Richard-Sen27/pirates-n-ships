@@ -174,6 +174,7 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
 - Mixins on fluid queries (entity in-water checks, fluid pushing, drowning, bubbles, item flotation, block placement checks).
 - If a world position transformed into ship-local space lies in a **dry** compartment cell, it reports no fluid.
 - Applies to players, mobs, items and particles.
+- Spike 2 found these gaps in Sable's occlusion, not fixed yet: boats, fishing bobbers and mob pathfinding still see the water inside a dry hull.
 
 ### 4.5 Flooding and sinking
 - Each compartment stores `waterLevel` (0..volume).
@@ -183,6 +184,8 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
 - **Pump / bailing station:** removes water at a set rate. A player or crew member operates it.
 - **Patching:** a repair item (planks + tar/pitch) placed in a breach closes it.
 - **Buoyancy:** effective displacement = hull blocks + dry volume − flood water. Sable computes buoyancy natively, for solid hull blocks only, and it can't be overridden or switched off per ship (`docs/sable-notes.md` §4.1, §4.2). So we keep Sable's hull-block buoyancy and apply the dry volume (upward) and the flood water (downward) as our own extra force at their centroids, which also produces list and heel. The constants must be tuned together in a playtest.
+- Implemented in spike 2 (`ship/hull/runtime`): water only counts as sea when it is at the hull's own bottom. Up to nine probes sit at the lowest hull cells, and at least a third of them must be in world water. So a ship in a dry dock next to the sea, or on a cliff above it, does not float. A hull that is a third or more over water floats, and with less it is aground.
+- **Known limit:** Sable's physics is 32-bit. Beyond about 4 million blocks from the world origin collision gets imprecise, and beyond about 8 million ships can sink into blocks. Recommend a world border well inside that range.
 - A ship that loses buoyancy sinks. A sunk ship stays a sub-level resting on the seabed (with a config option to turn it back into world blocks after some time), so wrecks can be looted.
 
 ### 4.6 Damage

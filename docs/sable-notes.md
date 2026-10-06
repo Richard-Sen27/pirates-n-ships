@@ -531,6 +531,36 @@ many regions. [V code; I cost]
 - Caution from spike 1's tests: `new Quaterniond().rotationX(angle)` gave an unexpected orientation on the test
   classpath. The tests use `rotateAxis(angle, 1, 0, 0)` instead. Not investigated. [?]
 
+### 9.0b Findings from spike 2 (verified by running)
+- **Physics is 32-bit, and precision fails far from the origin.** Sable's native physics uses `f32`
+  (`sable/sable_rapier/src/main/rust/marten/src/lib.rs`: `Real = f32`). One `f32` step is a whole block beyond
+  8,388,608. Ships on identical stone pads did not move at 1,000, 3,000,000 or 6,000,000 blocks from the origin, and
+  some sank into the stone at 12,000,000 and 13,600,000. [V]
+- **The vanilla GameTest server places its test grid at a random X/Z of up to ±14,999,992** (`GameTestServer#startTests`).
+  That made physics tests fail at random: a ship "moving at 72 m/s" was in free fall through the world. Our
+  `mixin/MixinGameTestServer` keeps the grid within ±250,000 blocks. [V]
+- Sable's GameTest cleanup removes only sub-levels that intersect the test box, on success and when the space is
+  cleared (`GameTestInfoMixin`, `StructureUtilsMixin`). Ships of failed or timed-out tests, and ships that drifted out,
+  stay alive. Tests that create ships must use `ship/ShipTestCleanup`. [V]
+- The GameTest world in `neoforge/build/gametest/world` is **not** deleted between runs, and batches do not reuse grid
+  positions (`clearOnBatch=false`). [V]
+- A real `ServerPlayer` from `makeMockServerPlayerInLevel` can't be used in GameTests: on login Sable sends
+  `sable:dimension_physics` to the fake connection, which throws "may not be sent to the client". Tests use a plain
+  mock `Player`, or a `ServerPlayer` that is not placed in the level. [V, found by three packages independently]
+- `ForceTotal.applyForces` wakes a sleeping body only when the force or torque changed (`ForceTotal` l.29), so a
+  constant force does not wake a sleeping ship. [V]
+- Sable's own `RegistryObject` handles (e.g. `ForceGroups.LEVITATION.get()`) can't be used from our `common`: the
+  class is not on our compile classpath. Our own force group is registered through `Services.REGISTRY` against
+  `ForceGroups.REGISTRY_KEY` (`ship/sable/ShipForces`). [V]
+- `WaterOcclusionContainer.isOccluded` finds the ship through the min corner of the region's **bounding box**. [V]
+- Heights along the ship's up vector must be compared using one and the same up vector (the one of the hull
+  analysis). Plot coordinates are in the millions, so two slightly different up vectors shift a height by hundreds
+  of blocks. [V, cost spike 2 a bug]
+- There is no listener for "a block state changed inside a plot". Sable uses its own `LevelChunk#setBlockState` mixin
+  and publishes nothing, so we have our own (`mixin/MixinLevelChunk`). [V]
+- Not covered by Sable's water occlusion: boats (`Boat#checkInWater` reads the fluid directly), fishing bobbers and
+  mob pathfinding water nodes. [V by reading; not fixed]
+
 ### 9.1 How Sable tests sub-levels
 - Tests live in **`sable/neoforge/src/main/java/dev/ryanhcode/sable/neoforge/gametest/`** (`AssemblyTest`, `PhysicsTest`,
   `SableTestHelper`), registered with NeoForge's `@GameTestHolder(Sable.MOD_ID)` and vanilla `@GameTest(template = …)`. [V]

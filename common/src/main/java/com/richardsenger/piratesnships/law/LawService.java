@@ -1,0 +1,285 @@
+package com.richardsenger.piratesnships.law;
+
+import com.richardsenger.piratesnships.law.bounty.BountyBoard;
+import com.richardsenger.piratesnships.law.bounty.BountyBoard.ClaimMethod;
+import com.richardsenger.piratesnships.law.bounty.BountyBoard.ClaimResult;
+import com.richardsenger.piratesnships.law.bounty.BountyBoard.NavyChange;
+import com.richardsenger.piratesnships.law.bounty.BountyBoard.PlaceResult;
+import com.richardsenger.piratesnships.law.bounty.BountyRules;
+import com.richardsenger.piratesnships.law.bounty.BountyTarget;
+import com.richardsenger.piratesnships.law.bounty.PirateTier;
+import com.richardsenger.piratesnships.law.crime.CrimeRules;
+import com.richardsenger.piratesnships.law.crime.CrimeType;
+import com.richardsenger.piratesnships.law.crime.CriminalRecord;
+import com.richardsenger.piratesnships.law.crime.CriminalRecord.CrimeResult;
+import com.richardsenger.piratesnships.law.crime.CriminalRecord.FineResult;
+import com.richardsenger.piratesnships.law.crime.WantedLevel;
+import com.richardsenger.piratesnships.law.flag.Faction;
+import com.richardsenger.piratesnships.law.flag.FalseColorsDetection;
+import com.richardsenger.piratesnships.law.flag.FlagKind;
+import com.richardsenger.piratesnships.law.flag.FlagLaw;
+import com.richardsenger.piratesnships.law.flag.Reaction;
+import com.richardsenger.piratesnships.platform.Services;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * The law API for the rest of the mod (server side only). Reads config through {@link LawConfig}, stores criminal
+ * records in {@link LawAttachments#CRIMINAL_RECORD} and bounties in {@link BountyBoardData}. Game time is the
+ * overworld game time.
+ *
+ * <pre>{@code
+ * // navy mob hurt by a player
+ * LawService.reportCrime(player, CrimeType.ATTACK_NAVY, navySailor);
+ * // navy AI
+ * if (LawService.wantedLevel(player).atLeast(WantedLevel.WANTED)) attack(player);
+ * // notice board
+ * List<BountyBoard.Notice> notices = LawService.notices(server);
+ * // navy officer, shackled prisoner delivered
+ * ClaimResult r = LawService.claimBounty(prisoner, player, ClaimMethod.ALIVE);
+ * if (r.success()) giveDoubloons(player, r.payout());
+ * }</pre>
+ *
+ * Decay is applied lazily whenever a record is read or changed, and every {@link #TICK_INTERVAL} ticks for online
+ * players (so navy bounties are withdrawn while they play). Offline players and unloaded NPCs decay when next read.
+ */
+public final class LawService {
+
+    /** How often online players are decayed and their navy bounty synced. */
+    public static final int TICK_INTERVAL = 100;
+
+    private LawService() {
+    }
+
+    // --- Time and targets ---------------------------------------------------------------------------------------
+
+    public static long now(MinecraftServer server) {
+        return server.overworld().getGameTime();
+    }
+
+    public static BountyTarget targetOf(Entity entity) {
+        String name = entity.getName().getString();
+        return entity instanceof Player
+                ? BountyTarget.player(entity.getUUID(), name)
+                : BountyTarget.npc(entity.getUUID(), name);
+    }
+
+    // --- Criminal score -----------------------------------------------------------------------------------------
+
+    /** The entity's record, decayed to now. */
+    public static CriminalRecord record(LivingEntity entity) {
+        CrimeRules rules = LawConfig.crimeRules();
+        CriminalRecord stored = Services.ATTACHMENTS.get(entity, LawAttachments.CRIMINAL_RECORD);
+        CriminalRecord decayed = stored.decayTo(now(server(entity)), rules);
+        // Linear decay: skipping the write when only lastUpdate moved gives the same result later.
+        if (decayed.score() != stored.score() || !decayed.recent().equals(stored.recent())) {
+            store(entity, decayed);
+        }
+        return decayed;
+    }
+
+    public static double score(LivingEntity entity) {
+        return LawConfig.CRIMINAL_SCORE_ENABLED.get() ? record(entity).score() : 0.0;
+    }
+
+    public static WantedLevel wantedLevel(LivingEntity entity) {
+        CrimeRules rules = LawConfig.crimeRules();
+        return rules.enabled() ? rules.wantedLevel(record(entity).score()) : WantedLevel.CLEAN;
+    }
+
+    /** Reports a crime committed by {@code offender} against {@code victim} (may be {@code null}). */
+    public static CrimeResult reportCrime(LivingEntity offender, CrimeType type, @Nullable Entity victim) {
+        return reportCrime(offender, type, victim == null ? null : victim.getUUID());
+    }
+
+    /** Reports a crime against a victim identified by UUID (e.g. a ship); {@code null} = no particular victim. */
+    public static CrimeResult reportCrime(LivingEntity offender, CrimeType type, @Nullable UUID victimId) {
+        CrimeRules rules = LawConfig.crimeRules();
+        if (!rules.enabled()) return new CrimeResult(CriminalRecord.EMPTY, 0, CriminalRecord.CrimeOutcome.DISABLED);
+        CriminalRecord stored = Services.ATTACHMENTS.get(offender, LawAttachments.CRIMINAL_RECORD);
+        CrimeResult result = stored.addCrime(type, victimId, now(server(offender)), rules);
+        store(offender, result.record());
+        if (result.counted()) syncNavyBounty(offender);
+        return result;
+    }
+
+    /** Pays a fine of up to {@code doubloons}. The caller takes {@code doubloonsSpent} from the payer. */
+    public static FineResult payFine(LivingEntity entity, int doubloons) {
+        CrimeRules rules = LawConfig.crimeRules();
+        CriminalRecord stored = Services.ATTACHMENTS.get(entity, LawAttachments.CRIMINAL_RECORD);
+        FineResult result = stored.payFine(doubloons, now(server(entity)), rules);
+        store(entity, result.record());
+        syncNavyBounty(entity);
+        return result;
+    }
+
+    /** Sets the score directly (operator commands, quests, pardons). */
+    public static void setScore(LivingEntity entity, double score) {
+        CriminalRecord stored = Services.ATTACHMENTS.get(entity, LawAttachments.CRIMINAL_RECORD);
+        store(entity, stored.setScore(score, now(server(entity)), LawConfig.crimeRules()));
+        syncNavyBounty(entity);
+    }
+
+    /** Places, raises or withdraws the navy bounty on {@code entity} to match its score. */
+    public static NavyChange syncNavyBounty(LivingEntity entity) {
+        MinecraftServer server = server(entity);
+        BountyBoardData data = BountyBoardData.get(server);
+        double score = LawConfig.CRIMINAL_SCORE_ENABLED.get() ? record(entity).score() : 0.0;
+        BountyBoard.NavySync sync = data.board().syncNavy(targetOf(entity), score, now(server), LawConfig.bountyRules());
+        data.setBoard(sync.board());
+        return sync.change();
+    }
+
+    // --- Bounties -----------------------------------------------------------------------------------------------
+
+    public static BountyBoard board(MinecraftServer server) {
+        return BountyBoardData.get(server).board();
+    }
+
+    /** Notice board listing, highest total first. */
+    public static List<BountyBoard.Notice> notices(MinecraftServer server) {
+        return board(server).notices(now(server));
+    }
+
+    public static long bountyTotal(MinecraftServer server, UUID target) {
+        return board(server).total(target, now(server));
+    }
+
+    public static boolean hasBounty(MinecraftServer server, UUID target) {
+        return board(server).hasBounty(target, now(server));
+    }
+
+    /** A player places a bounty. Take the doubloons from the payer only if the result is placed. */
+    public static PlaceResult placeBounty(Player payer, Entity target, int amount) {
+        return placeBounty(server(payer), payer.getUUID(), payer.getName().getString(), targetOf(target), amount);
+    }
+
+    public static PlaceResult placeBounty(MinecraftServer server, UUID payer, String payerName, BountyTarget target, int amount) {
+        BountyBoardData data = BountyBoardData.get(server);
+        PlaceResult result = data.board().placePlayerBounty(UUID.randomUUID(), payer, payerName, target, amount,
+                now(server), LawConfig.bountyRules());
+        data.setBoard(result.board());
+        return result;
+    }
+
+    /**
+     * Claims all bounties on a loaded {@code target}: dead (proof item) or alive (delivered). Give the claimant
+     * {@code payout} doubloons on success. The target's score is reduced as configured.
+     */
+    public static ClaimResult claimBounty(LivingEntity target, Player claimant, ClaimMethod method) {
+        MinecraftServer server = server(claimant);
+        ClaimResult result = claimOnBoard(server, target.getUUID(), claimant.getUUID(), method);
+        if (result.success()) applyScoreFactor(target, result.scoreFactor());
+        return result;
+    }
+
+    /**
+     * Claims by UUID (e.g. a proof item naming a target that is no longer loaded). If the target is an online player
+     * or a loaded entity its score is reduced now; an offline player's reduction is applied at their next login.
+     */
+    public static ClaimResult claimBounty(MinecraftServer server, UUID target, UUID claimant, ClaimMethod method) {
+        ClaimResult result = claimOnBoard(server, target, claimant, method);
+        if (!result.success()) return result;
+        LivingEntity loaded = findLiving(server, target);
+        if (loaded != null) {
+            applyScoreFactor(loaded, result.scoreFactor());
+        } else if (result.claimed().stream().anyMatch(b -> b.target().kind() == BountyTarget.Kind.PLAYER)) {
+            BountyBoardData.get(server).addPendingScoreFactor(target, result.scoreFactor());
+        }
+        return result;
+    }
+
+    private static ClaimResult claimOnBoard(MinecraftServer server, UUID target, UUID claimant, ClaimMethod method) {
+        BountyBoardData data = BountyBoardData.get(server);
+        ClaimResult result = data.board().claim(target, claimant, method, now(server), LawConfig.bountyRules());
+        if (result.success()) data.setBoard(result.board());
+        return result;
+    }
+
+    /** Result of {@link #turnInPirate}: the rank reward plus any bounty on the pirate (paid as alive). */
+    public record TurnInResult(int reward, ClaimResult bounty) {
+        public int total() {
+            return reward + (bounty.success() ? bounty.payout() : 0);
+        }
+    }
+
+    /** A captured pirate NPC is delivered to the navy. Pay the claimant {@code total()}. */
+    public static TurnInResult turnInPirate(LivingEntity pirate, PirateTier tier, Player claimant) {
+        int reward = LawConfig.bountyRules().turnInReward(tier);
+        return new TurnInResult(reward, claimBounty(pirate, claimant, ClaimMethod.ALIVE));
+    }
+
+    // --- Flags --------------------------------------------------------------------------------------------------
+
+    public static Reaction react(Faction observer, FlagKind flag) {
+        return FlagLaw.react(observer, flag, LawConfig.NPC_SURRENDER.get());
+    }
+
+    /** Whether {@code captain} flies a false flag. {@code navyStanding} comes from the reputation system. */
+    public static boolean isFalseFlag(LivingEntity captain, FlagKind flag, int navyStanding) {
+        boolean bounty = hasBounty(server(captain), captain.getUUID());
+        return FlagLaw.isFalseFlag(flag, new FlagLaw.CaptainStanding(navyStanding, bounty), LawConfig.NAVY_FLAG_MIN_STANDING.get());
+    }
+
+    /** Chance that one observation check over {@code intervalTicks} sees through the captain's flag. */
+    public static double detectionChance(LivingEntity captain, FlagKind flag, int navyStanding, double distance,
+                                         boolean observerHasCrowsNest, long intervalTicks) {
+        return FalseColorsDetection.chance(LawConfig.detectionParams(), isFalseFlag(captain, flag, navyStanding),
+                distance, observerHasCrowsNest, score(captain), intervalTicks);
+    }
+
+    // --- Ticking and login --------------------------------------------------------------------------------------
+
+    /** Throttled server tick: decay online players and keep their navy bounties in sync. */
+    public static void onServerTick(MinecraftServer server) {
+        if (server.getTickCount() % TICK_INTERVAL != 0) return;
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            syncNavyBounty(player);
+        }
+        BountyBoardData data = BountyBoardData.get(server);
+        data.setBoard(data.board().pruneExpired(now(server)).board());
+    }
+
+    /** Applies a claim's score reduction that happened while the player was offline. */
+    public static void onLogin(ServerPlayer player) {
+        double factor = BountyBoardData.get(player.server).takePendingScoreFactor(player.getUUID());
+        if (factor != 1.0) applyScoreFactor(player, factor);
+        syncNavyBounty(player);
+    }
+
+    // --- Internals ----------------------------------------------------------------------------------------------
+
+    private static void applyScoreFactor(LivingEntity entity, double factor) {
+        CriminalRecord r = record(entity);
+        store(entity, r.withScore(r.score() * factor));
+        syncNavyBounty(entity);
+    }
+
+    private static void store(LivingEntity entity, CriminalRecord record) {
+        Services.ATTACHMENTS.set(entity, LawAttachments.CRIMINAL_RECORD, record);
+    }
+
+    private static @Nullable LivingEntity findLiving(MinecraftServer server, UUID id) {
+        ServerPlayer player = server.getPlayerList().getPlayer(id);
+        if (player != null) return player;
+        for (ServerLevel level : server.getAllLevels()) {
+            if (level.getEntity(id) instanceof LivingEntity living) return living;
+        }
+        return null;
+    }
+
+    private static MinecraftServer server(Entity entity) {
+        if (!(entity.level() instanceof ServerLevel level)) {
+            throw new IllegalStateException("LawService is server-side only");
+        }
+        return level.getServer();
+    }
+}

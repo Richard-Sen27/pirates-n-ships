@@ -1,8 +1,12 @@
 package com.richardsenger.piratesnships.core;
 
 import com.richardsenger.piratesnships.Constants;
+import com.google.gson.JsonObject;
+import com.richardsenger.piratesnships.core.data.DefinitionLoading;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
+import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
+import net.minecraft.data.PackOutput;
 import net.minecraft.tags.BlockTags;
 
 import java.util.List;
@@ -23,10 +27,18 @@ public final class CoreModule implements ModModule {
     @Override
     public void registerContent() {
         CoreContent.init();
+        CoreDefinitions.init();
+    }
+
+    @Override
+    public void registerPayloads() {
+        DefinitionLoading.registerPayloads();
     }
 
     @Override
     public void registerEvents() {
+        DefinitionLoading.registerEvents();
+        ConfigOverrides.registerEvents();
         CommonEvents.SERVER_STARTED.register(server -> {
             if (CoreConfig.DEBUG.get()) {
                 Constants.LOG.info("[debug] {} active on server", Constants.MOD_NAME);
@@ -42,6 +54,16 @@ public final class CoreModule implements ModModule {
         data.models(m -> m.blocks().createTrivialCube(CoreContent.TEST_BLOCK.get()));
         data.blockLoot(loot -> loot.dropSelf(CoreContent.TEST_BLOCK.get()));
         data.blockTags(tags -> tags.tag(BlockTags.MINEABLE_WITH_AXE).add(CoreContent.TEST_BLOCK.get()));
+        data.definition(CoreDefinitions.TEST_MARKER, CoreDefinitions.EXAMPLE_ID, CoreDefinitions.EXAMPLE);
+        // Raw JSON example: Sable block physics (refs/sable/wiki/Block Physics Properties.md). Values = Sable defaults.
+        data.json(PackOutput.Target.DATA_PACK, "physics_block_properties", CoreContent.TEST_BLOCK.id(), () -> {
+            JsonObject properties = new JsonObject();
+            properties.addProperty("sable:mass", 1.0);
+            JsonObject json = new JsonObject();
+            json.addProperty("selector", CoreContent.TEST_BLOCK.id().toString());
+            json.add("properties", properties);
+            return json;
+        });
     }
 
     @Override

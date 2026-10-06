@@ -92,6 +92,25 @@ them must be wet). Water next to it or below it does not count.
 4. Note your X/Z coordinates in every report. Sable's physics loses precision very far from the world origin (beyond
    about 4,000,000 blocks it gets worse, beyond 8,000,000 ships may sink into blocks); test near spawn.
 
+## 11c. Partial blocks
+A slab, stair, trapdoor or door in the hull is drawn dry as a whole cell when its empty part faces only the dry
+inside; when the empty part faces the sea, outside air or flood water, the world water in it stays visible.
+1. Build a closed hull whose bottom is well below sea level. Make the hold floor from **bottom slabs** (keep the outer
+   edge of the floor full blocks), add **stairs** inside the hold leading down from the deck, put a **trapdoor hatch**
+   in the deck, and make one cell of the hull bottom a **top slab** (its empty half points down into the sea). Place
+   the helm and assemble on the sea.
+2. Go into the hold and look at the floor slabs and the stairs from close up and from a distance. Expected: no water
+   in the upper half of any floor slab and none in the empty corner of the stairs.
+3. Close the hatch from below and look up at it from the hold. Expected: no water drawn below the hatch.
+   Known and intended: a hatch with the open sky above is never drawn dry, so if the deck is below sea level you may
+   see water in the hatch's own block.
+4. Dive under the ship and look at the bottom. Expected: the sea renders normally right under the hull, including in the
+   lower half of the top-slab cell (no hole or see-through spot in the sea), as before.
+5. Breach the hull below the waterline next to the slab floor and wait for the bottom layer of the hold to flood.
+   Expected: the water shows in the slab halves of the flooded part, the same moment the cells above them show water.
+6. Config: `partial_blocks = false` in section `dry_hull` brings back the old look (water in slab and stair halves).
+- Send back: screenshots of steps 2, 3 and 4, and whether any slab or stair half still flickers between dry and wet.
+
 ## 12. Config toggles (optional)
 In `saves/<world>/serverconfig/pirates_n_ships-server.toml` (section `dry_hull`): set `enabled = false`, rejoin:
 water shows inside and you swim, as in milestone 1. Set `dry_buoyancy = false`: the ship should sit lower.

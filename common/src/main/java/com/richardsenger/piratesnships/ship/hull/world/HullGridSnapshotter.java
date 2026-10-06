@@ -10,7 +10,9 @@ import java.util.Set;
 
 /**
  * Snapshots a block region into an immutable {@link HullGrid} (main thread; the analysis can then run elsewhere).
- * The grid's origin is the region's minimum corner, so grid cell (0, 0, 0) is block {@code min}.
+ * The grid's origin is the region's minimum corner, so grid cell (0, 0, 0) is block {@code min}. Solid and opening
+ * cells whose block does not fill its cube are marked partial, with their uncovered faces
+ * ({@link HullBlockClassifier#uncoveredFaces}).
  */
 public final class HullGridSnapshotter {
 
@@ -41,6 +43,12 @@ public final class HullGridSnapshotter {
                         b.breach(x, y, z);
                     } else {
                         b.set(x, y, z, kind, kind == CellKind.OPENING && HullBlockClassifier.isOpen(state));
+                        if (kind != CellKind.AIR) {
+                            int faces = HullBlockClassifier.uncoveredFaces(state, level, pos, kind);
+                            if (faces != 0) {
+                                b.partial(x, y, z, faces);
+                            }
+                        }
                     }
                 }
             }

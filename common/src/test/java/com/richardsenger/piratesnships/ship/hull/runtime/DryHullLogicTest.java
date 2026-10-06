@@ -5,7 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.richardsenger.piratesnships.ship.hull.CellFaces;
 import com.richardsenger.piratesnships.ship.hull.CellKind;
+import com.richardsenger.piratesnships.ship.hull.PartialCellRule;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import com.richardsenger.piratesnships.ship.hull.HullAnalysis;
 import com.richardsenger.piratesnships.ship.hull.HullAnalyzer;
 import com.richardsenger.piratesnships.ship.hull.HullGrid;
@@ -129,6 +133,30 @@ class DryHullLogicTest {
         assertEquals(s, decoded.get(0));
         assertTrue(decoded.get(1).isEmpty());
         assertTrue(new HullRegionsPayload(UUID.randomUUID(), List.of(s)).regions().contains(s));
+    }
+
+    @Test
+    void regionWithPartialCellsRoundTripsThroughThePayload() {
+        // closed shell 1..5 in a 7³ grid with a bottom-slab floor cell under the room and a top slab as hull bottom
+        HullGrid.Builder b = HullGrid.builder(7, 7, 7).origin(5000, 70, -300);
+        b.fill(1, 1, 1, 5, 5, 5, CellKind.SOLID).fill(2, 2, 2, 4, 4, 4, CellKind.AIR);
+        int sides = CellFaces.NORTH | CellFaces.SOUTH | CellFaces.WEST | CellFaces.EAST;
+        b.partial(3, 1, 3, CellFaces.UP | sides).partial(2, 1, 2, CellFaces.DOWN | sides);
+        HullAnalysis a = HullAnalyzer.analyze(b.build());
+        BitSet dry = (BitSet) a.compartments().get(0).cells().clone();
+        dry.or(PartialCellRule.of(a).additions(List.of(dry))[0]);
+        CellSet s = CellSet.fromGrid(a.grid(), dry);
+        assertEquals(28, s.count(), "27 room cells and the bottom slab");
+        assertTrue(s.contains(5003, 71, -297), "the bottom slab's cell");
+        assertFalse(s.contains(5002, 71, -298), "the top slab over the sea");
+        assertEquals(4, s.sizeY());
+
+        RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), RegistryAccess.EMPTY);
+        HullRegionsPayload p = new HullRegionsPayload(UUID.randomUUID(), List.of(s));
+        HullRegionsPayload.CODEC.encode(buf, p);
+        HullRegionsPayload back = HullRegionsPayload.CODEC.decode(buf);
+        assertEquals(p.ship(), back.ship());
+        assertEquals(p.regions(), back.regions());
     }
 
     @Test

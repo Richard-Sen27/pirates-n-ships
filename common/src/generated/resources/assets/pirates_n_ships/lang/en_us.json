@@ -407,6 +407,8 @@
   "pirates_n_ships.configuration.dry_hull.flood_weight.tooltip": "Water inside a hull weighs the ship down",
   "pirates_n_ships.configuration.dry_hull.flood_weight_scale": "Flood Weight Scale",
   "pirates_n_ships.configuration.dry_hull.flood_weight_scale.tooltip": "Multiplier on the weight of flood water (1.0 = Sable's float force per block)",
+  "pirates_n_ships.configuration.dry_hull.partial_blocks": "Partial Blocks",
+  "pirates_n_ships.configuration.dry_hull.partial_blocks.tooltip": "Also keep the empty part of slabs, stairs, trapdoors and doors free of water when it faces only the dry inside",
   "pirates_n_ships.configuration.dry_hull.region_rebuild_ticks": "Region Rebuild Ticks",
   "pirates_n_ships.configuration.dry_hull.region_rebuild_ticks.tooltip": "Least ticks between two rebuilds of a ship's dry regions while it floods",
   "pirates_n_ships.configuration.dry_hull.save_interval_ticks": "Save Interval Ticks",

@@ -12,6 +12,8 @@ public final class DryHullConfig {
 
     public static final ConfigValue<Boolean> ENABLED = SECTION.bool("enabled", true,
             "Keep the inside of closed hulls free of water (no water rendered, no swimming below deck)");
+    public static final ConfigValue<Boolean> PARTIAL_BLOCKS = SECTION.bool("partial_blocks", true,
+            "Also keep the empty part of slabs, stairs, trapdoors and doors free of water when it faces only the dry inside");
     public static final ConfigValue<Boolean> DRY_BUOYANCY = SECTION.bool("dry_buoyancy", true,
             "The dry air inside a hull below the waterline lifts the ship");
     public static final ConfigValue<Double> DRY_BUOYANCY_SCALE = SECTION.doubleRange("dry_buoyancy_scale", 1.0, 0.0, 10.0,

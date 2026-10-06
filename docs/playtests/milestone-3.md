@@ -51,6 +51,24 @@ The printed torques are the physical ones; roll and pitch are applied scaled by 
 2. Run the boat aground (or assemble one on land) with a full sail. Expected: the wind does not push a ship that is
    not afloat (`sails_need_water=true`), and there is no keel force; the ship does not slide.
 
+## 5b. Stability (the biggest open question, added after the test investigation)
+Headless measurements say small hollow hulls barely right themselves. Please check how that looks, because it decides
+whether ships need ballast, a keel block or a correction in the mod.
+1. Use the small boat from the setup (about 5×5, 4 high, all planks, deck, helm at the stern, mast amidships) and
+   assemble it in calm water with the sail furled.
+   - **Measured headlessly:** it lies about 20° bow up at rest.
+   - Report what you see: level, bow up, or listing to a side. A screenshot from the side helps.
+2. Fix the wind from astern at 6 (`/pirates wind set <bearing> 6`) and hoist the small square sail fully.
+   - **Measured headlessly:** it runs 35 to 46° bow down, and with the rudder midships it wanders a few degrees off
+     course in 10 seconds, to either side.
+   - Report whether the bow digs in, whether water comes over the deck, and whether it holds a course.
+3. Disassemble, replace the bottom layer of the hull with stone, assemble again and repeat steps 1 and 2.
+   - **Measured headlessly:** about 16° bow down under sail, and it holds its course (under 0.25° in 10 seconds).
+     Full rudder then turns it about 9° in 10 seconds at about 0.5 m/s.
+   - Report whether this boat feels right.
+4. Build a longer hull (for example 5×12) without ballast and repeat. Longer hulls should be much steadier.
+   - Report at what size an unballasted wooden hull starts to feel acceptable.
+
 ## 6. A second, bigger ship
 Build a longer hull (e.g. 13 x 7) with two masts and a `large_square_sail` plus a `fore_and_aft_sail`, one winch.
 Expected: the winch sets both sails; the ship is slower to accelerate (more mass) but reaches a similar top speed.

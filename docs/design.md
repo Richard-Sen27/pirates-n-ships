@@ -1,6 +1,6 @@
 # Pirates 'n' Ships — Design Spec
 
-> Status: brainstorm → spec, v0.4 (2026-10-06, adds the foundation APIs and the decisions from the Sable investigation). Living document: update it whenever a decision changes.
+> Status: brainstorm → spec, v0.5 (2026-10-06, adds the foundation APIs, the decisions from the Sable investigation and what the four spikes found). Living document: update it whenever a decision changes.
 > Mod name "Pirates 'n' Ships". Mod ID: `pirates_n_ships`.
 
 ---
@@ -601,5 +601,5 @@ Spikes 1–4 are throwaway-quality prototypes that prove feasibility. They may l
 - Do our dry-volume force and Sable's native hull buoyancy tune well together, without over-buoyant or unstable ships? Decide in the spike 2 and milestone 6 playtests.
 - Does Sable's water occlusion scale to many ships? Its lookup loops over all regions for every entity each tick. Profile in spike 2.
 - Do mobs riding a seat entity inside a sub-level render, interpolate and interact correctly? Check in spike 4.
-- Stability: hollow block hulls barely right themselves (spike 3). Do we keep scaling down the heel torque, add ballast or keel blocks with real mass low in the hull, or add our own righting moment from the hull analysis? Decide after the milestone 3 playtest.
+- Stability: hollow block hulls barely right themselves (spike 3). Measured: a 5×5 plank boat, 4 high, lies about 20° bow up at rest and runs 35 to 46° bow down under a small sail, and a stone bottom layer brings that to about 16°. Do we keep scaling down the heel torque, add ballast or keel blocks with real mass low in the hull, add our own righting moment from the hull analysis, or apply the sail's drive lower? Decide after the milestone 3 playtest. This is the biggest open risk for how ships feel.
 - Sail force scale: the spike 3 agent thinks 1.0 is too strong for Sable's masses and expects something like 0.3 to 0.5. Decide in the milestone 3 playtest.

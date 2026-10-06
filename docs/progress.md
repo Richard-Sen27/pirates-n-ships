@@ -5,42 +5,66 @@ Statuses: **todo** / **in progress** / **done** / **blocked: needs playtest** / 
 
 "Done" means: `./gradlew build` passes, `./gradlew :neoforge:runGameTestServer` passes, and the new logic has tests.
 
-Last updated: 2026-10-06 (second session: wave 1 of phase C running).
+Last updated: 2026-10-06 (end of the second session: all planned packages are merged, the work is waiting for playtests).
 
-## Current state
+## Final summary
 
-`main` builds (`./gradlew build`, 567 JUnit tests) and `./gradlew :neoforge:runData` leaves no diff. **The GameTest suite (171 tests) is flaky right now:** 3 of 6 full runs failed, each in one of two tests (`SailingGameTestsControls.rudderTurnsTheShipUnderSail`: a ship with the rudder midships changed heading by about 4°, tolerance 3.5°; `StationGameTests.disassemblyLeavesCrewAtTheStation`: one seat entity left over). All other tests pass in every run. D5 is finding the causes. Nothing is pushed: local `main` is ahead of `origin/main`.
+The orchestrated run is finished: everything that could be built and tested without a game client is merged.
 
-Merged in this session: foundation follow-ups **A2** and **A3**, all of phase C (**C1** to **C8**), spikes **D1** (assembly) and **D2** (dry hull, with the fix **D2b**), and all of phase E (**E1a** law in the world, **E1b** brig and shackles, **E1c** flags, **E2** pantry and water barrel, **E3** cargo containers and market backend).
-Also merged: **A4** (platform hooks), **D2c** (the flaky disassembly test, which was a real bug) and **D3a** (spike 3 part 1: sails move the ship).
-**D3b** (spike 3 part 2: helm steering and anchor) and **D4** (spike 4: crew station) are merged too, so all four spikes are in.
-Running now: **D5** (the two flaky tests). It is the last package of this session.
+**State of `main`:** `./gradlew build` passes (567 JUnit tests), `./gradlew :neoforge:runGameTestServer` passes (172 GameTests, eight green runs in a row after the last merge), and `./gradlew :neoforge:runData` leaves no diff. Nothing is pushed: local `main` is 130 commits ahead of `origin/main`. No agent is running, and no agent branch or worktree is left.
 
-How merges work in this phase:
-- Every merged branch and its worktree is deleted right after the merge (requested by the human).
-- `core/ModModules` and the generated resources (`common/src/generated/resources`, especially `lang/en_us.json` and `.cache`) are touched by every package. The orchestrator resolves `ModModules` by keeping all module lines, and resolves generated files by re-running `./gradlew :neoforge:runData` on the merged tree.
-- After each merge: `./gradlew build` and `./gradlew :neoforge:runGameTestServer` on `main`.
+**Done (merged, with tests):**
+- **Foundation** (A, A2, A3, A4): Sable dependency, platform services, module system, config wrapper, datagen, datapack definitions, JUnit and GameTest harness, CI. See design.md §3.3.
+- **Sable investigation** (B): `docs/sable-notes.md`, extended with what the spikes found by running code (§9.0 to §9.0e).
+- **Logic packages** (C1 to C8): hull analysis and flooding, wind and sailing forces, melee rules, law, trade, provisions, the settings table, basic items and blocks with placeholder textures.
+- **The four spikes** (D1 to D4): assembly at the helm, dry hull with flooding and buoyancy, sails with helm and anchor, crew station. Plus the fixes D2b, D2c and D5.
+- **Integration** (E1a to E3): crimes detected in the world, brig and shackles, flags, pantry and water barrel, cargo containers and market backend.
+- **A guide** to everything that exists: [`docs/guide.md`](guide.md).
+
+**Blocked, and why:**
+- **Milestones 0 to 4 need playtests.** All five are green on a headless server, but nothing has been seen in a client: whether ships float at a sensible height, whether the hold looks dry, how fast and how steadily a ship sails, how a crew member looks on a moving deck. The ordered list is at the end of this file.
+- **The main risk for the playtests is stability.** Small hollow hulls barely right themselves in Sable. The test boat (5×5, 4 high, planks) lies about 20° bow up at rest and runs 35 to 46° bow down under a small sail. A stone bottom layer brings that to about 16°. A decision is needed after the milestone 3 playtest: ballast or keel blocks, our own righting moment, or accepting it (design.md §21).
+- **Everything that needs assets:** structures (human-built NBT), mobs (models and animations), real textures and block models, sounds.
+- **Everything that needs a working, playtested spike to be meaningful:** ship-level wiring of flags, cargo weight, prisoners and provisions, cannon damage, crew eating, NPC ships. Phase E stops at entry points that take plain inputs.
+- **Client features that can't be verified headlessly and were not started:** HUD, market screen, sword fighting input and animations.
+
+**What to do next, in order:**
+1. Do the playtests (list at the end of this file), at least milestones 0 to 4, and send back screenshots, logs and the answers to the tuning questions.
+2. Decide the open questions the playtests answer: buoyancy and stability, sail force and rudder strength, whether Sable's water occlusion looks right (design.md §21).
+3. Review the defaults the agents chose ("Defaults to review" below) and the two deviations from `CLAUDE.md` ("Foundation notes").
+4. Consider reporting the Sable bug described in `docs/sable-notes.md` §9.0c upstream.
+5. Push `main` when you are happy with it. The orchestrator did not push.
+
+How merges worked:
+- Every merged branch and its worktree was deleted right after the merge (requested by the human).
+- `core/ModModules` and the generated resources (`common/src/generated/resources`) were touched by every package. The orchestrator resolved `ModModules` by keeping all module lines, and resolved generated files by re-running `./gradlew :neoforge:runData` on the merged tree.
+- Before each merge commit: `./gradlew build` and several runs of `./gradlew :neoforge:runGameTestServer` on the merged tree.
 
 Incidents:
 - Around 17:51 and 18:21 a short connection loss stalled several agents. All recovered by themselves except A2, which was stopped and resumed from its transcript at 18:33 with its work intact.
 - At about 19:00 the network dropped again and all five running agents (C3, C5, C8, D2, A3) ended with API connection errors. Their worktrees and uncommitted work were intact, and all five were resumed from their transcripts at 19:40.
-- Flaky test: `AssemblyGameTests.disassemblyPutsBlocksBackOnTheGrid` (spike 1) failed three times in about 14 full runs with "pig not on deck". Two causes were found and fixed with spike 2: an off-by-one in the passenger placement, and tests running millions of blocks from the origin. The remaining failures ("chest content lost on disassembly") were a real bug, found and fixed by D2c (see the work package table).
-- Token budgets: the spike 1, spike 2 and D2b agents each used their whole budget (200k tokens), and two of them stopped before finishing. Later packages are cut smaller and told to keep Gradle output out of their context.
-- The merge commits `2e3fcac` (C6) and `3978c02` (A2) **don't compile**: the orchestrator wrote a malformed module list into `core/ModModules` (a shell quoting mistake) and committed without checking the result. `b97293d` fixes it. Keep this in mind when bisecting. Since then the orchestrator builds and runs the GameTests before committing a merge.
+- Flaky tests, all traced to a cause:
+  - `AssemblyGameTests.disassemblyPutsBlocksBackOnTheGrid`: three causes. An off-by-one in the passenger placement (fixed with spike 2), tests running millions of blocks from the origin where Sable's 32-bit physics fails (fixed by D2b), and a real bug where a chest arrives empty in a ship assembled in the same tick another ship was removed (a Sable bug, worked around by D2c).
+  - `SailingGameTestsControls.rudderTurnsTheShipUnderSail`: the unballasted test hull pitches about 40° under sail and then wanders off course. The test hull now has a stone bottom, and its tolerances were tightened (D5).
+  - `StationGameTests.disassemblyLeavesCrewAtTheStation`: the test counted a seat of another test's ship, which had been given the same plot. No seat was ever really left over (D5).
+- Token budgets: the spike 1, spike 2 and D2b agents each used their whole budget (200k tokens), and two of them stopped before finishing. Later packages were cut smaller and told to keep Gradle output out of their context.
+- The merge commits `2e3fcac` (C6) and `3978c02` (A2) **don't compile**: the orchestrator wrote a malformed module list into `core/ModModules` (a shell quoting mistake) and committed without checking the result. `b97293d` fixes it. Keep this in mind when bisecting. Since then the orchestrator built and ran the GameTests before committing a merge.
+- The orchestrator changed one line of code itself: the GameTest position range in `mixin/MixinGameTestServer` (±250,000 to ±4,096 blocks), on the D3b agent's measurement. Everything else was written by subagents.
 
 Follow-ups for later packages (small, not blocking):
-- Disassembly is not refused while the anchor is out (the anchor is simply cleared). The D3b agent could not edit `ShipAssembler`.
-- The crew station's sailing test hull tilts up to about 43° under a full small sail downwind. D5 was asked to look at it.
+- Disassembly is not refused while the anchor is out (the anchor is simply cleared).
+- Dry-hull buoyancy is only re-analysed after 5° of tilt (`reanalysis_tilt_degrees`). Inside that band the dry volume adds no extra righting moment, which may add to the random heel of small hulls. Not checked.
+- The beam-reach, anchor and crew sailing tests still use the unballasted hull, which runs about 40° bow down. They pass reliably, but their measured speeds come from that attitude.
 - The helm's rudder position is only visible through F3: the block model doesn't change with it yet.
 - An order in progress at a station is lost on save, because station states are not persisted.
 - The spike 3 agent thinks `sail_force_scale = 1.0` is too strong for Sable's masses (it expects 0.3 to 0.5), and saw a hint that the reported speed and the distance covered may not match. Both are in the milestone 3 playtest.
 - The ship's plot box only grows: removed blocks don't shrink the hull length used for sailing until the ship is reloaded.
-- **For the human:** the stale chunk lookup on reused plots (`docs/sable-notes.md` §9.0c) is a bug in Sable that can make containers arrive empty in any mod that assembles a sub-level right after another one was removed. It is worth reporting to the Sable project. The orchestrator did not contact anyone.
 - `ChunkCacheGuard` lives in `ship/assembly` and is called by our assembly and disassembly only. It should move into the Sable adapter (`ship/sable`) so that every removal and creation of a ship goes through it. A cleaner way to clear the memo would be an access transformer line for `ServerChunkCache.clearCache()`.
+- `ShipTestCleanup` (in `ship/`) and `ContentTestSupport` (in `combat/content`) are general GameTest helpers and belong in `core/gametest`.
 - `ship/assembly` (terrain tag) and `ship/hull` (watertight tags) can now use required vanilla tag references (`addTag(BlockTags.X)`), since A3 fixed the tag datagen. Both still use their workarounds.
-- `sailing` should register `ClientEvents.CLIENT_DISCONNECT.register(mc -> ClientWind.reset())`.
 - The trade agent's balance notes: unit prices round harshly for cheap goods (a single sugar costs 2 and sells for 2), so the market screen should show prices per stack. Trade route profit fades after roughly 250 to 400 units per port pair.
 - Rum is both a provision and a trade good. Whatever sums a ship's weight has to count each stack once.
+- Fabric port list so far: access-widener twins for the four access transformer lines, a render layer for brig bars and flags, and implementations of the platform services (config through Forge Config API Port, capabilities through the transfer API, the event forwarders).
 
 ## Work packages
 
@@ -61,9 +85,9 @@ Follow-ups for later packages (small, not blocking):
 | D2 | Spike 2: dry hull (§4.3, §4.4) | blocked: needs playtest | Merged and green headlessly. Hull runtime per ship (`ship/hull/runtime`), Sable water occlusion regions with client sync, flooding with breaches, buoyancy correction, persistence. Review found a ship "moving at 72 m/s" in a test: the cause was the GameTest server placing tests up to 15 million blocks out, where Sable's 32-bit physics fails (fixed by D2b, which also made the sea detection look only at the hull's own bottom). Rendering is unverified. Playtest: `docs/playtests/milestone-2.md`. |
 | D2c | Flaky test `disassemblyPutsBlocksBackOnTheGrid` ("chest content lost") | done | Merged. **It was a real bug, and it is a Sable bug:** when one ship is removed and another assembled in the same server tick, Sable reuses the plot while vanilla's chunk lookup memo still points at the old chunk, so a chest arrived in the new ship empty and its items were lost. Fixed with a workaround in `ship/assembly/ChunkCacheGuard` and a regression test that failed every time without it. Details in `docs/sable-notes.md` §9.0c. |
 | D3a | Spike 3 part 1: sail blocks with trim, sail winch, sailing runtime applying wind and keel forces, wind override command | blocked: needs playtest | Merged and green headlessly. Three sail blocks, a winch, `sailing/ship` runtime, `/pirates wind` and `/pirates ship forces`. 8 GameTests measure real ships in a basin: about 0.4 m/s downwind for a small hull with a small sail in 6 blocks/s of wind, no forward motion into the wind, and the keel halving the sideways drift. Finding: small hollow hulls capsize under the full heel torque, so it is scaled to 25% (`sail_heel_factor`). Playtest: `docs/playtests/milestone-3.md`. Spike 3 was split in two, because spikes 1 and 2 each used up an agent's whole token budget. |
-| D3b | Spike 3 part 2: helm steering (rudder) and anchor (capstan) | blocked: needs playtest | Merged. Plain use of the helm on a ship now steers (three steps per side by click position), and sneak-use with an empty hand disassembles. New capstan block with an anchor that drops to the sea floor. 10 JUnit tests, 7 GameTests. Measured: full rudder turns the small test hull about 0.6 to 0.8° per second at 0.3 m/s, and the anchor holds it within about 2 blocks. One of its tests is flaky (see D5). Playtest: `docs/playtests/milestone-3.md` part 2. |
-| D4 | Spike 4: crew station (§6) | blocked: needs playtest | Merged. Station contract (`station/`), the sail winch as a station, an invisible seat entity inside the ship's plot, a test crew member (`crew/npc`), the captain's whistle test item and `/pirates crew` commands. 7 JUnit tests, 9 GameTests, including the milestone sentence: a crew member hoists the sails on command while the ship sails and is still at its station afterwards. The seat approach works on the server. How it looks in the client is unverified. One of its tests is flaky (see D5). Playtest: `docs/playtests/milestone-4.md`. |
-| D5 | The two flaky GameTests after the last merges | in progress | Find the cause of each (brittle test or real bug), fix it there, and show ten green runs in a row. |
+| D3b | Spike 3 part 2: helm steering (rudder) and anchor (capstan) | blocked: needs playtest | Merged. Plain use of the helm on a ship now steers (three steps per side by click position), and sneak-use with an empty hand disassembles. New capstan block with an anchor that drops to the sea floor. 10 JUnit tests, 7 GameTests. Measured: full rudder turns the small test hull about 0.6 to 0.8° per second at 0.3 m/s, and the anchor holds it within about 2 blocks. Playtest: `docs/playtests/milestone-3.md` part 2. |
+| D4 | Spike 4: crew station (§6) | blocked: needs playtest | Merged. Station contract (`station/`), the sail winch as a station, an invisible seat entity inside the ship's plot, a test crew member (`crew/npc`), the captain's whistle test item and `/pirates crew` commands. 7 JUnit tests, 9 GameTests, including the milestone sentence: a crew member hoists the sails on command while the ship sails and is still at its station afterwards. The seat approach works on the server. How it looks in the client is unverified. Playtest: `docs/playtests/milestone-4.md`. |
+| D5 | The two flaky GameTests after the last merges | done | Merged. Both were test problems with a reproduced cause, no game bug: an unstable test hull, and a test that counted another ship's seat in a reused plot. The investigation measured how unstable small hollow hulls are (see the final summary). Ten green runs in a row on the branch, eight on `main`. |
 | A3 | Foundation maintenance: required vanilla tag references in datagen, `ConfigValue` set/reset documentation, clash check for client and server section names, `ClientEvents.CLIENT_DISCONNECT` | done | Merged. |
 | E1a | Law in the world: crimes reported from damage, death and theft, entity tags, bounty proof item, wanted level sent to the client | done | Merged. 13 GameTests. New events `CONTAINER_OPEN` / `CONTAINER_CLOSE`. Playtest: `docs/playtests/law-world.md`. |
 | E1b | Brig and shackles (§13.3): capture, prisoners, lockable brig door, cells, escapes | done | Merged. 23 JUnit tests, 11 GameTests. `/pirates brig` commands. Added two access transformer lines (`Mob.goalSelector`, `targetSelector`). Playtest: `docs/playtests/brig.md`. |
@@ -81,17 +105,17 @@ Follow-ups for later packages (small, not blocking):
 | 2 | Spike: dry hull | blocked: needs playtest | Phase D2 is merged. `docs/playtests/milestone-2.md`. |
 | 3 | Spike: wind + sails | blocked: needs playtest | Phases D3a and D3b are merged. `docs/playtests/milestone-3.md`. |
 | 4 | Spike: crew station | blocked: needs playtest | Phase D4 is merged. `docs/playtests/milestone-4.md`. |
-| 5 | Config framework + weapons | todo | Partly covered by C7 + C8 (items exist, config defined). Firearm behavior and the config screen are not in this session's scope. |
-| 6 | Flooding + damage | todo | Flooding simulation is C1. World integration needs spike 2. |
-| 7 | Melee combat core | todo | Resolution logic is C3. Input, sync and animation library are later. |
+| 5 | Config framework + weapons | partly done | The config framework and the whole settings table exist (C7 and the feature packages), and all §8.1 items exist as items (C8). Missing: firearms that shoot, and the config screen has not been seen in a client. |
+| 6 | Flooding + damage | partly done | Breach, flooding, equalising between rooms, buoyancy loss and sinking work on real ships (C1, D2). Missing: cannon damage, pump and patch as blocks or items, a visible water surface inside. |
+| 7 | Melee combat core | partly done | Rules, weapon definitions, server-side resolution and GameTests exist (C3). Missing: input, network events, the animation library decision, the stamina HUD. |
 | 8 | Melee animations + NPC duelists | todo | |
 | 9 | Cannons + grappling hook v1 + boarding | todo | |
-| 10 | Ship identity + shipwright | todo | Decorative blocks come with C8. |
+| 10 | Ship identity + shipwright | partly done | Flags with hoisting and striking (E1c), naming a ship with a name tag (D1), figurehead and nameplate blocks (C8). Missing: the name on the nameplate, dyeable sails, a ship's allegiance from its flagpoles, shipwright orders. |
 | 11 | World | todo | Needs human-built structure NBT. |
 | 12 | Mobs | todo | Needs models and animations (Blockbench). |
-| 13 | Law + brig | todo | Logic is C4, integration is phase E. |
-| 14 | Trade + cargo | todo | Logic is C5, integration is phase E. |
-| 15 | Crew command system + provisions | todo | Provisions logic is C6, integration is phase E. |
+| 13 | Law + brig | partly done | Criminal score, bounties, proof, crimes from combat and theft (C4, E1a), shackles, prisoners, cells and the lockable door (E1b). Missing: navy NPCs to turn in to, notice boards, false-flag detection in the world. Playtests: `law-commands.md`, `law-world.md`, `brig.md`. |
+| 14 | Trade + cargo | partly done | Goods, markets, contracts, plunder rules (C5), bulk containers, wallet and the market backend (E3). Missing: ports and harbor masters, the market screen, cargo weight acting on ships. Playtest: `cargo-and-market.md`. |
+| 15 | Crew command system + provisions | partly done | Provisions rules, pantry and water barrel (C6, E2), and the crew station prototype with sail orders (D4). Missing: hiring, the other orders and stations, wages and morale, crew eating from the pantry. Playtests: `pantry.md`, `milestone-4.md`. |
 | 16 | Sea chest + survival | todo | |
 | 17 | Weather and hazards | todo | |
 | 18 | Audio | todo | |
@@ -182,7 +206,7 @@ In this order:
 1. [`docs/playtests/milestone-0.md`](playtests/milestone-0.md): Sable loads in the dev client, the mod list and config screen are correct, the test block appears and renders, `/sable spawn sphere 3` works.
 2. [`docs/playtests/milestone-1.md`](playtests/milestone-1.md): **the important one.** Build the boat from the recipe, assemble it at the helm in the sea, walk on deck, shove it, disassemble it, check the water in both directions, the block limit, a chest keeping its items, naming, and rejoining. Spikes 2 to 4 build on this.
 3. [`docs/playtests/milestone-2.md`](playtests/milestone-2.md): **the second important one.** No water inside the hull, no swimming below deck, a breach floods the hold, a flooded ship sinks, a ship in a dry dock stays put. It also has the tuning questions for the buoyancy values.
-4. [`docs/playtests/milestone-3.md`](playtests/milestone-3.md): sailing. Set the wind with `/pirates wind set`, hoist the sail at the winch, sail downwind, on a beam reach and into the wind, compare square and fore-and-aft sails, read `/pirates ship forces`. It has a tuning table (speed, heel, sideways drift). Part 2 covers steering at the helm and the anchor at the capstan.
+4. [`docs/playtests/milestone-3.md`](playtests/milestone-3.md): sailing. Set the wind with `/pirates wind set`, hoist the sail at the winch, sail downwind, on a beam reach and into the wind, compare square and fore-and-aft sails, read `/pirates ship forces`. It has a tuning table (speed, heel, sideways drift), and section 5b on stability, which is the biggest open question. Part 2 covers steering at the helm and the anchor at the capstan.
 5. [`docs/playtests/milestone-4.md`](playtests/milestone-4.md): crew station. Get a crew member, assign it to the winch with the captain's whistle, order it to hoist and furl while sailing. The main question is how the crew member looks on a moving, heeling ship (jitter, lagging, feet off the deck), which nobody could check headlessly.
 6. [`docs/playtests/law-commands.md`](playtests/law-commands.md): criminal score, navy and player bounties, claims, fines, persistence across death and reload, and the config toggle, all through `/pirates law` commands. Not a gate for other work.
 7. [`docs/playtests/items-and-blocks.md`](playtests/items-and-blocks.md): every item and block in the creative tab with texture, name, model, drops and recipe. Not a gate for other work.

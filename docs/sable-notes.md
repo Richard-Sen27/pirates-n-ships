@@ -615,6 +615,21 @@ many regions. [V code; I cost]
 - Not verified (needs the client): how a rider of a plot seat renders and interpolates, and whether it is visible from
   far away (the seat travels with plot tracking, the rider with world tracking).
 
+### 9.0f Findings from the flaky test investigation (D5, measured over 26 full runs)
+- **Small hollow hulls have almost no metacentric height.** A 5×4×5 plank box with a deck, helm and mast floats with
+  an estimated GM of 0.1 to 0.2 blocks. It lies about 22° bow up at rest (the helm's weight at the stern is enough), and
+  under a small sail in 6 blocks/s of wind from astern it runs 35 to 46° bow down, because Sable's drag on the submerged
+  blocks works against a drive force applied at the center of mass (with our heel factor at 0 it is still 34°). In that
+  attitude a few degrees of heel make it sheer off course by up to 4° in 10 s, with a random sign. A stone bottom layer
+  cuts the pitch to about 16° and the drift to under 0.25°. Tests that measure course or heading use a ballasted hull
+  (`SailingGameTestsShips.ballast`). [V]
+- **Tests in one GameTest batch do not all start in the same tick** (a spread of up to about 30 ticks was seen), and
+  Sable reuses a freed plot at once. After a test removes its ship, a later test can put an identical hull, with its
+  seats and block entities, at the same plot coordinates. Never search an old plot position after a ship is gone
+  without checking which ship owns what you find. [V]
+- `Level#noCollision` does not see sub-level blocks. To check that an entity stands on a ship, compare heights relative
+  to the deck. [V]
+
 ### 9.1 How Sable tests sub-levels
 - Tests live in **`sable/neoforge/src/main/java/dev/ryanhcode/sable/neoforge/gametest/`** (`AssemblyTest`, `PhysicsTest`,
   `SableTestHelper`), registered with NeoForge's `@GameTestHolder(Sable.MOD_ID)` and vanilla `@GameTest(template = …)`. [V]

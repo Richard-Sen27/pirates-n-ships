@@ -14,7 +14,7 @@ import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
@@ -31,6 +31,7 @@ import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -81,9 +82,16 @@ public final class ModDataGenerator {
         });
         sink.add(false, new LootTableProvider(output, Set.of(),
                 List.of(new LootTableProvider.SubProviderEntry(reg -> new ModBlockLoot(reg, data.blockLoot), LootContextParamSets.BLOCK)), lookup));
-        sink.add(false, new ModTagsProvider<Block>(output, Registries.BLOCK, lookup, b -> b.builtInRegistryHolder().key(), data.blockTags));
-        sink.add(false, new ModTagsProvider<Item>(output, Registries.ITEM, lookup, i -> i.builtInRegistryHolder().key(), data.itemTags));
+        data.tags.forEach((registry, contributors) -> sink.add(false, tagsProvider(output, registry, lookup, contributors)));
+        sink.add(true, new JsonOutputs.Provider(output, PackOutput.Target.RESOURCE_PACK, data.json, lookup));
+        sink.add(false, new JsonOutputs.Provider(output, PackOutput.Target.DATA_PACK, data.json, lookup));
         sink.add(false, new GameTestStructureProvider(output));
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static ModTagsProvider<?> tagsProvider(PackOutput output, ResourceKey<? extends Registry<?>> registry,
+                                                   CompletableFuture<HolderLookup.Provider> lookup, List<Consumer<?>> contributors) {
+        return ModTagsProvider.forBuiltIn(output, (ResourceKey) registry, lookup, (List) contributors);
     }
 
     /** Config screen titles (from value names) and tooltips (from comments) for every declared config entry. */

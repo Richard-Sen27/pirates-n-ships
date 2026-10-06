@@ -8,6 +8,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.sounds.Music;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
@@ -15,6 +17,8 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.client.event.SelectMusicEvent;
+import net.neoforged.neoforge.client.event.sound.PlayStreamingSourceEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.NeoForge;
@@ -42,6 +46,13 @@ public final class NeoForgeClientSetup {
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> ClientEvents.CLIENT_TICK_END.invoker().onTick(Minecraft.getInstance()));
         NeoForge.EVENT_BUS.addListener(ItemTooltipEvent.class, e -> ClientEvents.ITEM_TOOLTIP.invoker().onTooltip(e.getItemStack(), e.getContext(), e.getFlags(), e.getEntity(), e.getToolTip()));
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> ClientEvents.CLIENT_DISCONNECT.invoker().onDisconnect(Minecraft.getInstance()));
+        // LOW: situational music (ours depends on the ship and biome) should run after broad biome/dimension listeners
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOW, false, SelectMusicEvent.class, e -> {
+            Music music = ClientEvents.SELECT_MUSIC.invoker().select(e.getMusic());
+            if (music != null) e.setMusic(music);
+        });
+        // fired on the sound thread, inside the channel's executor
+        NeoForge.EVENT_BUS.addListener(PlayStreamingSourceEvent.class, e -> ClientEvents.SOUND_STREAM_STARTED.invoker().onStarted(e.getSound(), e.getChannel()));
     }
 
     @SuppressWarnings("unchecked")

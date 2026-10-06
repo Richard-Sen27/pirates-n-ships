@@ -1,0 +1,216 @@
+{
+  "sounds": [
+    {
+      "source": "nakaradaalexander-leave-her-johnny-342172.mp3",
+      "target": "music/shanty/leave_her_johnny.ogg",
+      "kind": "music",
+      "event": "music.shanty",
+      "title": "Leave Her Johnny",
+      "author": "Alexander Nakarada",
+      "url": "https://pixabay.com/de/music/felsen-leave-her-johnny-342172/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "kaazoom-the-ghost-of-gallows-reef-dark-sea-shanty-378694.mp3",
+      "target": "music/shanty/ghost_of_gallows_reef.ogg",
+      "kind": "music",
+      "event": "music.shanty",
+      "title": "The Ghost Of Gallows Reef - Dark Sea Shanty",
+      "author": "kaazoom",
+      "url": "https://pixabay.com/de/music/volk-the-ghost-of-gallows-reef-dark-sea-shanty-378694/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "44363205-there-be-pirates-the-quest-323338.mp3",
+      "target": "music/sea/there_be_pirates_the_quest.ogg",
+      "kind": "music",
+      "event": "music.sea",
+      "title": "There Be Pirates - The Quest",
+      "author": "Pixabay user 44363205",
+      "url": "https://pixabay.com/de/music/akustische-gruppe-there-be-pirates-the-quest-323338/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "44363205-there-be-pirates-lost-in-the-deep-323335.mp3",
+      "target": "music/sea/there_be_pirates_lost_in_the_deep.ogg",
+      "kind": "music",
+      "event": "music.sea",
+      "title": "There Be Pirates - Lost in the Deep",
+      "author": "Pixabay user 44363205",
+      "url": "https://pixabay.com/de/music/akustische-gruppe-there-be-pirates-lost-in-the-deep-323335/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "mrfriends-pistol-shot-233473.mp3",
+      "target": "combat/pistol_shot.ogg",
+      "kind": "effect",
+      "event": "combat.pistol_shot",
+      "title": "Pistol Shot",
+      "author": "mrfriends",
+      "url": "https://pixabay.com/sound-effects/film-special-effects-pistol-shot-233473/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "freesound_community-empty-gun-shot-6209.mp3",
+      "target": "combat/pistol_empty.ogg",
+      "kind": "effect",
+      "event": "combat.pistol_empty",
+      "title": "Empty Gun Shot",
+      "author": "freesound_community",
+      "url": "https://pixabay.com/sound-effects/film-special-effects-empty-gun-shot-6209/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "magiazzz-cannon_shot-560886.mp3",
+      "target": "combat/cannon_shot.ogg",
+      "kind": "effect",
+      "event": "combat.cannon_shot",
+      "title": "Cannon Shot",
+      "author": "magiazzz",
+      "url": "https://pixabay.com/sound-effects/film-special-effects-cannon-shot-560886/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "freesound_community-artillery-gunfire-14607.mp3",
+      "target": "combat/cannon_volley.ogg",
+      "kind": "effect",
+      "event": "combat.cannon_volley",
+      "title": "Artillery Gunfire",
+      "author": "freesound_community",
+      "url": "https://pixabay.com/sound-effects/film-special-effects-artillery-gunfire-14607/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "sword/dragon-studio-sword-slice-393847.mp3",
+      "target": "combat/melee/swing1.ogg",
+      "kind": "effect",
+      "event": "combat.melee.swing",
+      "title": "Sword Slice",
+      "author": "DRAGON-STUDIO",
+      "url": "https://pixabay.com/sound-effects/sword-slice-393847/",
+      "collection": "https://pixabay.com/collections/sword-sounds-29859284/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "sword/dragon-studio-sword-slice-2-393845.mp3",
+      "target": "combat/melee/swing2.ogg",
+      "kind": "effect",
+      "event": "combat.melee.swing",
+      "title": "Sword Slice 2",
+      "author": "DRAGON-STUDIO",
+      "url": "https://pixabay.com/sound-effects/sword-slice-2-393845/",
+      "collection": "https://pixabay.com/collections/sword-sounds-29859284/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "sword/dragon-studio-violent-sword-slice-393839.mp3",
+      "target": "combat/melee/swing3.ogg",
+      "kind": "effect",
+      "event": "combat.melee.swing",
+      "title": "Violent Sword Slice",
+      "author": "DRAGON-STUDIO",
+      "url": "https://pixabay.com/sound-effects/violent-sword-slice-393839/",
+      "collection": "https://pixabay.com/collections/sword-sounds-29859284/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "sword/dragon-studio-violent-sword-slice-2-393841.mp3",
+      "target": "combat/melee/swing4.ogg",
+      "kind": "effect",
+      "event": "combat.melee.swing",
+      "title": "Violent Sword Slice 2",
+      "author": "DRAGON-STUDIO",
+      "url": "https://pixabay.com/sound-effects/violent-sword-slice-2-393841/",
+      "collection": "https://pixabay.com/collections/sword-sounds-29859284/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "sword/dragon-studio-sword-clashhit-393837.mp3",
+      "target": "combat/melee/parry.ogg",
+      "kind": "effect",
+      "event": "combat.melee.parry",
+      "title": "Sword Clashhit",
+      "author": "DRAGON-STUDIO",
+      "url": "https://pixabay.com/sound-effects/sword-clashhit-393837/",
+      "collection": "https://pixabay.com/collections/sword-sounds-29859284/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "sword/dragon-studio-armor-impact-from-sword-393843.mp3",
+      "target": "combat/melee/hit_armor.ogg",
+      "kind": "effect",
+      "event": "combat.melee.hit_armor",
+      "title": "Armor Impact From Sword",
+      "author": "DRAGON-STUDIO",
+      "url": "https://pixabay.com/sound-effects/armor-impact-from-sword-393843/",
+      "collection": "https://pixabay.com/collections/sword-sounds-29859284/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "sword/dragon-studio-bone-break-sfx-393835.mp3",
+      "target": "combat/melee/hit_heavy1.ogg",
+      "kind": "effect",
+      "event": "combat.melee.hit_heavy",
+      "title": "Bone Break SFX",
+      "author": "DRAGON-STUDIO",
+      "url": "https://pixabay.com/sound-effects/bone-break-sfx-393835/",
+      "collection": "https://pixabay.com/collections/sword-sounds-29859284/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "sword/dragon-studio-bone-breaking-393842.mp3",
+      "target": "combat/melee/hit_heavy2.ogg",
+      "kind": "effect",
+      "event": "combat.melee.hit_heavy",
+      "title": "Bone Breaking",
+      "author": "DRAGON-STUDIO",
+      "url": "https://pixabay.com/sound-effects/bone-breaking-393842/",
+      "collection": "https://pixabay.com/collections/sword-sounds-29859284/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "sword/dragon-studio-bone-breaking-effect-393836.mp3",
+      "target": "combat/melee/hit_heavy3.ogg",
+      "kind": "effect",
+      "event": "combat.melee.hit_heavy",
+      "title": "Bone Breaking Effect",
+      "author": "DRAGON-STUDIO",
+      "url": "https://pixabay.com/sound-effects/bone-breaking-effect-393836/",
+      "collection": "https://pixabay.com/collections/sword-sounds-29859284/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "sword/dragon-studio-sword-unsheathing-393851.mp3",
+      "target": "combat/melee/unsheathe.ogg",
+      "kind": "effect",
+      "event": "combat.melee.unsheathe",
+      "title": "Sword Unsheathing",
+      "author": "DRAGON-STUDIO",
+      "url": "https://pixabay.com/sound-effects/sword-unsheathing-393851/",
+      "collection": "https://pixabay.com/collections/sword-sounds-29859284/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "sword/dragon-studio-sword-clattering-to-the-ground-393838.mp3",
+      "target": "combat/melee/disarm.ogg",
+      "kind": "effect",
+      "event": "combat.melee.disarm",
+      "title": "Sword Clattering To The Ground",
+      "author": "DRAGON-STUDIO",
+      "url": "https://pixabay.com/sound-effects/sword-clattering-to-the-ground-393838/",
+      "collection": "https://pixabay.com/collections/sword-sounds-29859284/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "sword/dragon-studio-sword-breaking-sound-effect-393840.mp3",
+      "target": "combat/melee/weapon_break.ogg",
+      "kind": "effect",
+      "event": "combat.melee.weapon_break",
+      "title": "Sword Breaking Sound Effect",
+      "author": "DRAGON-STUDIO",
+      "url": "https://pixabay.com/sound-effects/sword-breaking-sound-effect-393840/",
+      "collection": "https://pixabay.com/collections/sword-sounds-29859284/",
+      "license": "Pixabay Content License"
+    }
+  ]
+}

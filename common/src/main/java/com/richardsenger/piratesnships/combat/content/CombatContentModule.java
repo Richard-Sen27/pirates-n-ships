@@ -29,10 +29,12 @@ public final class CombatContentModule implements ModModule {
     @Override
     public void registerContent() {
         CombatContent.init();
+        CombatSounds.init();
     }
 
     @Override
     public void gatherData(DataContributions data) {
+        CombatSounds.gather(data);
         data.lang(lang -> lang
                 .item(CombatContent.RAPIER, "Rapier")
                 .item(CombatContent.CUTLASS, "Cutlass")

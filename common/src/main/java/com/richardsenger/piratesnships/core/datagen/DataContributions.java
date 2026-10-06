@@ -34,6 +34,7 @@ import java.util.function.Supplier;
  * data.recipes(out -> ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ...).save(out));
  * data.json(PackOutput.Target.DATA_PACK, "physics_block_properties", Constants.id("plank"), () -> json);
  * data.definitions(CoreDefinitions.TEST_MARKER, Map.of(Constants.id("example"), new TestMarker("example", 3)));
+ * data.sounds(s -> s.event(AudioSounds.SHIP_CREAK).subtitle(key).sounds("minecraft:block/chest/open"));
  * }</pre>
  */
 public final class DataContributions {
@@ -42,6 +43,7 @@ public final class DataContributions {
     final List<Consumer<ModelContext>> models = new ArrayList<>();
     final List<Consumer<RecipeOutput>> recipes = new ArrayList<>();
     final List<Consumer<ModBlockLoot>> blockLoot = new ArrayList<>();
+    final List<Consumer<SoundEntries>> sounds = new ArrayList<>();
     /** Tag contributors per built-in registry, in first-use order (block and item always exist). */
     final Map<ResourceKey<? extends Registry<?>>, List<Consumer<?>>> tags = new LinkedHashMap<>();
     final JsonOutputs json = new JsonOutputs();
@@ -62,6 +64,12 @@ public final class DataContributions {
 
     /** Block loot tables. Every block of the mod that drops something needs one. */
     public void blockLoot(Consumer<ModBlockLoot> c) { blockLoot.add(c); }
+
+    /**
+     * Entries of the shared {@code assets/pirates_n_ships/sounds.json}. Every module adds its own sound events here;
+     * the file is written once from all of them, and a key added twice fails the data run (see {@link SoundEntries}).
+     */
+    public void sounds(Consumer<SoundEntries> c) { sounds.add(c); }
 
     /** Block tags. */
     public void blockTags(Consumer<ModTagsProvider<Block>> c) { tags(Registries.BLOCK, c); }

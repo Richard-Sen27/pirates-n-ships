@@ -83,6 +83,7 @@ public final class ModDataGenerator {
         sink.add(false, new LootTableProvider(output, Set.of(),
                 List.of(new LootTableProvider.SubProviderEntry(reg -> new ModBlockLoot(reg, data.blockLoot), LootContextParamSets.BLOCK)), lookup));
         data.tags.forEach((registry, contributors) -> sink.add(false, tagsProvider(output, registry, lookup, contributors)));
+        sink.add(true, new SoundsProvider(output, data.sounds));
         sink.add(true, new JsonOutputs.Provider(output, PackOutput.Target.RESOURCE_PACK, data.json, lookup));
         sink.add(false, new JsonOutputs.Provider(output, PackOutput.Target.DATA_PACK, data.json, lookup));
         sink.add(false, new GameTestStructureProvider(output));
@@ -130,6 +131,23 @@ public final class ModDataGenerator {
         @Override
         public String getName() {
             return "Lang: " + Constants.MOD_ID;
+        }
+    }
+
+    /** Writes {@code assets/pirates_n_ships/sounds.json} from every module's {@link DataContributions#sounds} entries. */
+    private record SoundsProvider(PackOutput output, List<Consumer<SoundEntries>> contributors) implements DataProvider {
+        @Override
+        public CompletableFuture<?> run(CachedOutput cache) {
+            SoundEntries entries = new SoundEntries();
+            contributors.forEach(c -> c.accept(entries));
+            if (entries.isEmpty()) return CompletableFuture.completedFuture(null);
+            return DataProvider.saveStable(cache, entries.toJson(), output.getOutputFolder(PackOutput.Target.RESOURCE_PACK)
+                    .resolve(Constants.MOD_ID).resolve("sounds.json"));
+        }
+
+        @Override
+        public String getName() {
+            return "Sounds: " + Constants.MOD_ID;
         }
     }
 

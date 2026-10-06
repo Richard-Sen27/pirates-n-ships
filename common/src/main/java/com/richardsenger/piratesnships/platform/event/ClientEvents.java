@@ -1,6 +1,9 @@
 package com.richardsenger.piratesnships.platform.event;
 
+import com.mojang.blaze3d.audio.Channel;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.sounds.Music;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.LayeredDraw;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -58,6 +61,32 @@ public final class ClientEvents {
      * while the tooltip is built without a world (e.g. search tree indexing at startup): don't assume a level.
      */
     public static final Event<ItemTooltip> ITEM_TOOLTIP = Event.create(ls -> (st, ctx, f, p, lines) -> ls.forEach(l -> l.onTooltip(st, ctx, f, p, lines)));
+
+    /**
+     * The music manager asks which situational music should play (client thread, every client tick, also in menus).
+     * {@code vanillaChoice} is what vanilla (and loader listeners before us) picked. Return a {@link Music} to play
+     * instead, or {@code null} to leave the choice alone; the first non-null result wins. A replacement waits for the
+     * playing track to end unless it {@linkplain Music#replaceCurrentMusic() replaces the current music}.
+     */
+    public static final Event<SelectMusic> SELECT_MUSIC = Event.create(ls -> vanilla -> {
+        for (SelectMusic l : ls) {
+            Music m = l.select(vanilla);
+            if (m != null) return m;
+        }
+        return null;
+    });
+
+    /**
+     * A streamed sound (music, records, long sounds) started playing on its audio channel. Fired on the <b>sound
+     * thread</b>, after vanilla set the channel's pitch and volume, so a listener may adjust the channel (e.g.
+     * {@code channel.setVolume}). Don't touch the level or other game state here, and keep it short. Vanilla resets the
+     * volume when the player moves that category's slider.
+     */
+    public static final Event<SoundStreamStarted> SOUND_STREAM_STARTED = Event.create(ls -> (sound, channel) -> ls.forEach(l -> l.onStarted(sound, channel)));
+
+    @FunctionalInterface public interface SelectMusic { @Nullable Music select(@Nullable Music vanillaChoice); }
+
+    @FunctionalInterface public interface SoundStreamStarted { void onStarted(SoundInstance sound, Channel channel); }
 
     @FunctionalInterface public interface ClientTick { void onTick(Minecraft minecraft); }
 

@@ -28,7 +28,7 @@ final class JsonOutputs {
     record Entry(PackOutput.Target target, String directory, ResourceLocation id, Function<HolderLookup.Provider, JsonElement> json) {
         /** Path relative to the output root, e.g. {@code data/sable/physics_block_properties/x.json}. */
         String relativePath() {
-            String dir = directory.isEmpty() ? "" : directory + "/"; // empty: a file at the namespace root (sounds.json)
+            String dir = directory.isEmpty() ? "" : directory + "/"; // empty: a file at the namespace root
             return folder(target) + "/" + id.getNamespace() + "/" + dir + id.getPath() + ".json";
         }
     }
@@ -47,6 +47,9 @@ final class JsonOutputs {
     synchronized void add(PackOutput.Target target, String directory, ResourceLocation id, Function<HolderLookup.Provider, JsonElement> json) {
         if (directory.startsWith("/") || directory.endsWith("/") || directory.equals(".") || directory.contains("./")) {
             throw new IllegalArgumentException("Invalid datagen JSON directory '" + directory + "' for " + id);
+        }
+        if (target == PackOutput.Target.RESOURCE_PACK && directory.isEmpty() && id.getPath().equals("sounds")) {
+            throw new IllegalArgumentException("Don't write " + id.getNamespace() + "/sounds.json through data.json: add entries with data.sounds(...)");
         }
         Entry e = new Entry(target, directory, id, json);
         if (entries.putIfAbsent(e.relativePath(), e) != null) {

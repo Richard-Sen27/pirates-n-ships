@@ -3,7 +3,6 @@ package com.richardsenger.piratesnships.sailing.anchor;
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 
@@ -21,17 +20,17 @@ public final class AnchorContent {
     /** The anchor landing on the ground (placeholder: vanilla stone digging sounds). */
     public static final RegistryEntry<SoundEvent, SoundEvent> THUD = ModRegistry.sound("anchor.thud");
 
-    /** The sound to play for the running chain: ours once {@code sounds.json} is generated, else the vanilla placeholder. */
+    /** The sound of the running chain ({@code anchor.chain}; its {@code sounds.json} entry comes from {@link AnchorData}). */
     static SoundEvent chainSound() {
-        return AnchorData.SOUNDS_JSON ? CHAIN.get() : SoundEvents.CHAIN_STEP;
+        return CHAIN.get();
     }
 
     static SoundEvent splashSound() {
-        return AnchorData.SOUNDS_JSON ? SPLASH.get() : SoundEvents.PLAYER_SPLASH_HIGH_SPEED;
+        return SPLASH.get();
     }
 
     static SoundEvent thudSound() {
-        return AnchorData.SOUNDS_JSON ? THUD.get() : SoundEvents.STONE_BREAK;
+        return THUD.get();
     }
 
     private AnchorContent() {

@@ -68,4 +68,68 @@ Expected: the winch sets both sails; the ship is slower to accelerate (more mass
 | Does a barely floating ship get too little keel? | `full_draft` [sailing_runtime] |
 
 ## Part 2: helm and anchor
-(to be written by the next work package)
+
+Work package D3b. Same ship as part 1 (helm at the stern, a square sail), plus a **capstan** on deck, ideally near
+the stern (`/give @s pirates_n_ships:capstan`). Assemble at the helm. Wind fixed from astern:
+`/pirates wind set <bearing your bow points away from> 6`. Use `/pirates ship forces` while standing on deck: its
+second line shows `rudder ... (step n, x°), anchor ...` and the force lines include `rudder` and `anchor`.
+
+**How the helm works now:** on an assembled ship, plain use (right-click, any hand) steers: click the **right third**
+of the wheel as seen by the helmsman (standing on the side the helm faces, looking towards the bow) = one step to
+starboard, the **left third** = one step to port, the **middle** = midships. Three steps per side up to 35°. The
+action bar shows "Rudder 2 of 3 to starboard (23°)" or "Rudder midships". **Sneak-use with an empty hand
+disassembles** (spike-1 refusals unchanged). On land, plain use still assembles. F3 on the helm shows `rudder=0..10`
+(5 = midships).
+
+### 1. Steer both ways under sail
+1. Set full sail (winch), let the ship gather way (~10 s, `/pirates ship forces` fwd > 0.3 m/s). Click the right third
+   of the wheel three times.
+- Expected: action bar "Rudder 3 of 3 to starboard (35°)". The bow swings to starboard (clockwise seen from above),
+  slowly: in the GameTests the 5x4x5 hull at 0.3 m/s turned 6 to 8° in 10 s. Bigger and faster ships turn faster.
+2. Click the middle, then the left third three times.
+- Expected: "Rudder midships", the turn stops (heading holds within a few degrees); then the bow swings to port.
+- Screenshot of `/pirates ship forces` with the rudder hard over (the `rudder:` line has a non-zero yaw torque).
+
+### 2. Sail a circle
+1. Hard to starboard and keep the sail set for 1-2 minutes. Note: as the bow comes into the wind, a square sail stops
+   drawing, so the ship may stall head to wind. Tell us whether it gets around.
+- Expected: the ship moves on a curve and the heading keeps changing in one direction while it has way on.
+
+### 3. Steer at rest
+1. Furl the sails, wait until the ship lies still, put the rudder hard over.
+- Expected: the ship does not turn (the rudder needs speed). It may creep by a fraction of a degree while it settles.
+
+### 4. Drop the anchor under sail
+1. Full sail, ship moving. Use the capstan.
+- Expected: action bar "Anchor dropping to the ground N blocks below, holds in 2.0 s". F3 on the capstan:
+  `anchor=dropping`, then `anchor=holding`. The ship slows within ~2 s and stops within about 2-3 blocks (rode slack 2
+  blocks) of the point below the capstan, then swings round so the capstan points into the wind (a bow capstan turns
+  the bow to the wind; a stern capstan keeps the stern to the wind). `/pirates ship forces`: "anchor holding, hold
+  1.00, x blocks from the anchor point" with x below ~3.
+2. Use the capstan again.
+- Expected: "Raising the anchor, stowed in 5.0 s", `anchor=raising`, the ship starts moving while the hold ramps out,
+  `anchor=raised` after 5 s. Use it mid-way to drop again: it reverses from where it was.
+
+### 5. Deep water
+1. Sail (or `/tp`) over water deeper than 32 blocks below the capstan and use it.
+- Expected: "No ground within 32 blocks below: the anchor would not hold". Nothing changes.
+
+### 6. Disassemble with sneak-use
+1. Furl, wait until still, plain-use the helm: it only steers. Sneak-use with a stick in hand: it steers too. Sneak-use
+   with an empty hand: it disassembles (or refuses while moving or tilted, as in milestone 1).
+
+### 7. Relog
+1. Rudder at "2 of 3 to port", anchor holding. Save and Quit, reopen.
+- Expected: F3 on the helm still `rudder=3`, the anchor still holds (ship stays put, capstan `anchor=holding`,
+  `/pirates ship forces` "anchor holding").
+
+### Tuning questions (server config, `serverconfig/pirates_n_ships-server.toml`)
+| Question | Value |
+|---|---|
+| Does the ship turn too slowly or too fast? | `rudder_strength` [sailing] (also `keel_yaw_drag`) |
+| Are three rudder steps per side right? Is 35° enough? | `rudder_steps` [sailing_runtime], `max_rudder_angle` [sailing] |
+| Does the anchored ship drift too far, or snap back too hard? | `anchor_slack`, `anchor_stiffness`, `anchor_damping` [sailing] |
+| Does the anchor stop a ship under full sail? | `anchor_max_acceleration` [sailing] |
+| Do dropping (2 s) and raising (5 s) feel right? | `anchor_drop_ticks`, `anchor_raise_ticks` [sailing] |
+| Is a 32-block chain right? | `anchor_chain_length` [sailing_runtime] |
+| Switch the features off | `steering_enabled`, `anchor_enabled` [sailing_runtime] |

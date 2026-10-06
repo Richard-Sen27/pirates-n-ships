@@ -42,5 +42,43 @@ Workflow notes (capstan, sail winch, yard batch):
   `risky_eval` with `require('fs')`.
 - Put a `display.gui` block (scale about 0.5) into a model whose parts reach past the block, so the item fits its slot.
 
+Items (sword batch, F8a):
+- Item models are `java_block` projects exported to `common/src/main/resources/assets/pirates_n_ships/models/item/<name>.json`;
+  datagen writes no model for them (drop the item's `m.handheldItem(...)` / `m.flatItem(...)` line).
+- **No parent.** `"parent": "minecraft:item/handheld"` (or `item/generated`) does not work with elements: vanilla's
+  `ModelBakery` bakes every model whose root parent is `builtin/generated` from its `layer0` sprite and ignores the
+  elements. The model carries vanilla's display entries itself instead: `thirdperson_righthand/lefthand` and
+  `firstperson_righthand/lefthand` from `item/handheld`, `ground`, `head` and `fixed` from `item/generated`, plus
+  `"gui_light": "front"`. `HandMadeModelsTest.handMadeItemModelsBringTheirOwnHandheldTransforms` guards this.
+- **Sprite alignment.** Model a hand-held item lying in the XY plane like its vanilla sprite (grip bottom-left, tip
+  top-right, 16×16 footprint, centred on z = 8, 1 to 3 px thick), so the vanilla transforms hold it like the vanilla
+  sword. A sword is built upright along y around x = 8 and every element gets `rotation: z −45` about `[8, 8, 8]`;
+  model +x then points to the sprite's lower-right. Curves: an upright element rotated −22.5 about its own joint is
+  steeper than the diagonal; an element built along **x** and rotated +22.5 is flatter (67.5° from upright). So one
+  blade can run 22.5° → 45° → 67.5° with only vanilla angles (the saber: hilt, blade root, tip).
+- **Edge side.** In third person the sprite's upper-left side faces down and the lower-right side faces up. Put the
+  edge and the knuckle bow on the upper-left (−x before rotation) and curve the blade towards the lower-right; then the
+  edge points down, the bow covers the fingers and the tip rises when the sword is held forward. The perspective
+  third-person preview is misleading here; check from the side (see below).
+- A model that runs past the 16×16 footprint (the rapier, about 18.4 px) gets a `gui` entry with scale 0.8 and a
+  translation that re-centres its bounding box; the hand slots stay vanilla, so the item is longer in the hand.
+- **Palette.** Faces take their colour from `textures/item/palette.png` (`tools/gen_item_palette.py`), a 16×16 sheet of
+  4×4 patches. Map a face to `[u+0.5, v+0.5, u+3.5, v+3.5]` of its patch (inset against mipmap bleeding; the wire
+  patch uses its full height so its stripes show). Never move a patch; later item batches use the same sheet.
+
+  | v \ u | 0 | 4 | 8 | 12 |
+  |---|---|---|---|---|
+  | 0 | steel_light | steel | steel_dark | iron_dark |
+  | 4 | brass_light | brass | brass_dark | gold |
+  | 8 | leather | leather_dark | wood_dark | wood |
+  | 12 | bone | black | red | wire (1 px stripes along v) |
+- **Display check.** `enter_display_mode` works for `java_block` projects (slots `firstperson_righthand`,
+  `thirdperson_righthand` with reference `player`, `gui`). Set `Project.display_settings[slot]` (a `DisplaySlot`) from
+  `risky_eval` first so the preview uses the transforms the export carries. An offscreen view renders the display scene
+  while display mode is active, so `set_camera_angle(view, locked_angle: "east")` gives a side view of the held item.
+  Selecting a project restores the mode it was left in; switch back to `edit` before offscreen renders of the model.
+- The project file keeps the palette embedded, with `path: ""` and `relative_path` pointing at the texture in
+  `common/src/main/resources`.
+
 Entity models use the Modded Entity format (Mojang mappings 1.17+); paste the body of the exported
 `createBodyLayer()` into the renderer's layer method (example: `AnchorRenderer.createLayer`).

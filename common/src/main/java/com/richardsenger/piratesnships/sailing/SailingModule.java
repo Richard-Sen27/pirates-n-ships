@@ -35,6 +35,11 @@ public final class SailingModule implements ModModule {
     }
 
     @Override
+    public void initClient() {
+        com.richardsenger.piratesnships.sailing.client.SailingClient.init();
+    }
+
+    @Override
     public List<Class<?>> gameTestClasses() {
         return List.of(SailingGameTests.class);
     }

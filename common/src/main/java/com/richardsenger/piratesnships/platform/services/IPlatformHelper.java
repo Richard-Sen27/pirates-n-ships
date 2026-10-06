@@ -1,36 +1,22 @@
 package com.richardsenger.piratesnships.platform.services;
 
+/** Basic information about the running loader. */
 public interface IPlatformHelper {
 
-    /**
-     * Gets the name of the current platform
-     *
-     * @return The name of the current platform.
-     */
+    /** The loader name, e.g. {@code "NeoForge"}. */
     String getPlatformName();
 
-    /**
-     * Checks if a mod with the given id is loaded.
-     *
-     * @param modId The mod to check if it is loaded.
-     * @return True if the mod is loaded, false otherwise.
-     */
+    /** Whether a mod with the given id is loaded. */
     boolean isModLoaded(String modId);
 
-    /**
-     * Check if the game is currently in a development environment.
-     *
-     * @return True if in a development environment, false otherwise.
-     */
+    /** Whether we run in a development environment (Gradle runs) rather than a production install. */
     boolean isDevelopmentEnvironment();
 
-    /**
-     * Gets the name of the environment type as a string.
-     *
-     * @return The name of the environment type.
-     */
-    default String getEnvironmentName() {
+    /** Whether this is the physical client (true even when the integrated server runs inside it). */
+    boolean isPhysicalClient();
 
+    /** {@code "development"} or {@code "production"}. */
+    default String getEnvironmentName() {
         return isDevelopmentEnvironment() ? "development" : "production";
     }
 }

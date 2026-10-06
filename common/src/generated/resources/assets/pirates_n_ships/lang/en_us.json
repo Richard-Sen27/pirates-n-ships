@@ -1,0 +1,7 @@
+{
+  "block.pirates_n_ships.test_block": "Test Block",
+  "itemGroup.pirates_n_ships": "Pirates 'n' Ships",
+  "pirates_n_ships.configuration.core": "Core",
+  "pirates_n_ships.configuration.core.debug": "Debug",
+  "pirates_n_ships.configuration.core.debug.tooltip": "Log extra debug information from Pirates 'n' Ships systems"
+}

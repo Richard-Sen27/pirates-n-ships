@@ -1,29 +1,46 @@
 package com.richardsenger.piratesnships.platform;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.platform.services.IAttachmentHelper;
+import com.richardsenger.piratesnships.platform.services.IConfigHelper;
+import com.richardsenger.piratesnships.platform.services.INetworkHelper;
 import com.richardsenger.piratesnships.platform.services.IPlatformHelper;
+import com.richardsenger.piratesnships.platform.services.IRegistryHelper;
 
 import java.util.ServiceLoader;
 
-// Service loaders are a built-in Java feature that allow us to locate implementations of an interface that vary from one
-// environment to another. In the context of MultiLoader we use this feature to access a mock API in the common code that
-// is swapped out for the platform specific implementation at runtime.
-public class Services {
+/**
+ * Loader-specific services, located with {@link ServiceLoader}. Each loader module provides one implementation per
+ * interface and lists it in {@code META-INF/services/<interface FQN>}.
+ *
+ * <p>Events are not a service: the callback hubs {@link com.richardsenger.piratesnships.platform.event.CommonEvents}
+ * and {@link com.richardsenger.piratesnships.platform.event.ClientEvents} are plain common code that the loader
+ * modules fire. See docs/design.md §3.3.
+ *
+ * <p>All services are loaded when this class is first touched, which fails without a loader. Pure-logic code and
+ * JUnit tests must therefore never reach this class (config handles and attachment keys are designed not to).
+ */
+public final class Services {
 
-    // In this example we provide a platform helper which provides information about what platform the mod is running on.
-    // For example this can be used to check if the code is running on Forge vs Fabric, or to ask the modloader if another
-    // mod is loaded.
+    /** Platform name, loaded mods, dev environment, physical side. */
     public static final IPlatformHelper PLATFORM = load(IPlatformHelper.class);
+    /** Registers registry content (blocks, items, ...). Use {@code core.registry.ModRegistry} instead. */
+    public static final IRegistryHelper REGISTRY = load(IRegistryHelper.class);
+    /** Payload registration and sending. */
+    public static final INetworkHelper NETWORK = load(INetworkHelper.class);
+    /** Typed data attachments on entities, levels and chunks. */
+    public static final IAttachmentHelper ATTACHMENTS = load(IAttachmentHelper.class);
+    /** Binds our config schema to the loader's config system. Features use {@code core.config}, never this. */
+    public static final IConfigHelper CONFIG = load(IConfigHelper.class);
 
-    // This code is used to load a service for the current environment. Your implementation of the service must be defined
-    // manually by including a text file in META-INF/services named with the fully qualified class name of the service.
-    // Inside the file you should write the fully qualified class name of the implementation to load for the platform. For
-    // example our file on Forge points to ForgePlatformHelper while Fabric points to FabricPlatformHelper.
+    private Services() {
+    }
+
+    /** Loads the single implementation of {@code clazz} for the current loader. */
     public static <T> T load(Class<T> clazz) {
-
-        final T loadedService = ServiceLoader.load(clazz)
+        final T loadedService = ServiceLoader.load(clazz, Services.class.getClassLoader())
                 .findFirst()
-                .orElseThrow(() -> new NullPointerException("Failed to load service for " + clazz.getName()));
+                .orElseThrow(() -> new IllegalStateException("Failed to load service for " + clazz.getName()));
         Constants.LOG.debug("Loaded {} for service {}", loadedService, clazz);
         return loadedService;
     }

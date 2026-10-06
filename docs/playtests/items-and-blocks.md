@@ -43,7 +43,7 @@ Please send a screenshot of the creative tab and of the blocks placed in a row, 
 12. **Log.** Search `latest.log` for `pirates_n_ships` together with "model" or "texture".
     - **Expected:** no missing model or missing texture warnings.
 
-## 3D models (F7a: helm, anchor, flagpole, nameplate)
+## 3D models (F7a helm, anchor, flagpole, nameplate; F7b capstan, sail winch, yard; F7c figureheads)
 Renders of the intended look are in `art/renders/`.
 1. **Helm:** place it facing you. The wheel's face with the gold hub cap points at you, the pedestal stands behind it.
    The block under it and the blocks next to it show no holes. Rotate it four ways. On an assembled ship, clicking the
@@ -56,11 +56,29 @@ Renders of the intended look are in `art/renders/`.
    nothing floats or sits inside the wall. It works waterlogged. The item is 3D in the GUI now.
 4. **Anchor:** stowed at the hull side it looks like an anchor: ring on top, stock across the shank, flukes at the
    bottom. Drop and raise it: the chain still attaches at the ring, size and position are as before.
-5. **All four:** break each block; the particles are wood, not the missing texture. `latest.log` has no model or
-   texture warnings mentioning `pirates_n_ships`.
+5. **Capstan:** on deck, base, drum, whelps and drumhead look right, four bars reach about 3 px into the neighbouring
+   blocks; neither it nor its neighbours render dark or with missing faces. On a ship the anchor drops and raises as
+   before and the model does not change between anchor phases. Full-block hitbox.
+6. **Sail winch:** place it facing each way; it looks the same each time, crank on the east side (known, a facing comes
+   later). Alternating rope rings on the drum, the pawl touches the ratchet on the west side. Using it still cycles the
+   trim; the crew station still works (whistle, assign, seat).
+7. **Yard:** yards along x and along z look the same, turned; the spar sits exactly on the hitbox outline; a row of
+   yards joins seamlessly with a lashing band on every block. With a square sail hoisted, the cloth lines up with the
+   spar at half and at full and does not clip badly through the band or the jackstay.
+8. **Figureheads (skull, eagle, lion, mermaid):** place each one facing north, east, south and west: the figure looks
+   the way you faced when placing it and the mounting plate is on the side nearest you. Against a planks block the
+   plate sits flush with no holes or x-ray around it. From the side: eagle and lion reach about ¾ block ahead, skull
+   and mermaid about ½, parts hang below the block (the mermaid's tail almost a full block). From 10 blocks away each
+   design is recognisable. In the GUI the figure is visible (not just the back plate); check hand, item frame and
+   dropped item. Particles: bone, spruce, yellow terracotta, oak planks. On an assembled ship's bow the overhangs do not
+   vanish at section edges. The prismarine tail shimmers (animated texture, intended).
+9. **All of them:** break each block; the particles match the block's wood or material, never the missing texture.
+   `latest.log` has no model or texture warnings mentioning `pirates_n_ships`. On a moving ship the models render with
+   correct lighting.
 
 ## Known placeholders (for the later art pass)
-- Figureheads are full cubes with a carved front face (Blockbench models are in work, F7c).
-- Capstan, sail winch, yards, cargo crate and barrel, pantry, water barrel, brig bars and door still use simple models.
+- Cargo crate and barrel, pantry, water barrel, brig bars and door still use simple models (F7d, F7e).
+- The yard cloth is a flat grid with a simple belly; the stay and triangular sail of F5b arrive with their own look.
+- Item sprites are script-made placeholders; 3D item models come with the F8 batches (weapons first).
 - The brig bars' transparency relies on a model field that only NeoForge reads. The Fabric port has to register a
   render layer for them.

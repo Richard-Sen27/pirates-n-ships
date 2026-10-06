@@ -5,7 +5,7 @@ Statuses: **todo** / **in progress** / **done** / **blocked: needs playtest** / 
 
 "Done" means: `./gradlew build` passes, `./gradlew :neoforge:runGameTestServer` passes, and the new logic has tests.
 
-Last updated: 2026-10-07 (fourth session: phase G; G1, F7a, F7c and F5a merged, F5b and F7b running).
+Last updated: 2026-10-07 (fourth session: phase G; G1, F7a, F7c, F5a and F7b merged, F5b running, F8a next).
 
 ## Phase F: first playtest feedback (done, F5 and F7 continue in phase G)
 
@@ -41,7 +41,7 @@ Started 2026-10-07 after the session restart with the Blockbench MCP connected (
 | F5a | Square sails from two yards (`yard` block, pairing rule from design.md §5.2, trapezoid area, trim on the upper yard, block entity renderer drawing the cloth); removes the one-block square sails; the one-block fore-and-aft sail stays until F5b | done | Merged (`bd58946`). `sailing/sail` (pure linking and geometry, 19 JUnit tests), `YardBlock` + block entity + `YardSails`, `YardClothRenderer` (cloth bellies downwind, trim animates, furled roll), `SailingRuntimes.setTrim`, masts tag (`#minecraft:logs`, `#minecraft:wooden_fences`), config `sailing.sails.yard_*`. Block entity renderers run in Sable sub-levels (sable-notes §9.0g). Three yards on a mast make two sails. Found the GameTest barrier ceiling (`openSky`) and that the test ballast was no ballast (fixed in F5b). Cloth look is placeholder quality until the art pass. Playtest `milestone-3.md` §0, §2 and §6b. |
 | F5b | Triangular sails: cleat block, rope item making a stay between two cleats, third cleat below the head, cloth rendered in the triangle; removes the one-block fore-and-aft sail. Part 0: real test ballast and re-measured thresholds | in progress |
 | F7a | Blockbench models, batch 1: helm wheel, anchor (entity, exported as `LayerDefinition` code), flagpole, nameplate; JUnit tests that every hand-made model parses and every blockstate references an existing model | done | Merged (`e149578`). Helm 46 elements, flagpole 11, nameplate 18, anchor 26 boxes in 13 parts; `.bbmodel` projects in `art/models/` (vanilla texture data stripped; `tools/extract_vanilla_textures.py` fills the ignored `art/vanilla/` before opening them), renders in `art/renders/`, workflow in `art/README.md`. The helm got `noOcclusion()` so the deck under it is drawn; its wheel reaches above the block. Four model batches took about 230k agent tokens: keep batches at three or four models. Playtest `items-and-blocks.md`, section "3D models". |
-| F7b | Blockbench models, batch 2: capstan, sail winch, yard | in progress |
+| F7b | Blockbench models, batch 2: capstan, sail winch, yard | done | Merged (`4e018e9`). Capstan 31 elements (drum, whelps, bars reaching 3 px past the block, pawl ring), winch 34 (rope drum, crank, ratchet), yard 15 (spar on the 6 px beam, rope band and hoops, jackstay). The winch has no facing property, so its crank always points east (follow-up). Block states unchanged. Playtest `items-and-blocks.md`, section "3D models". |
 | F7d | Blockbench models, batch 4: cargo crate, cargo barrel, pantry, water barrel | todo, after F7b |
 | F7c | Blockbench models, batch 3: the four figureheads | done | Merged (`c15b28c`). Skull 42 elements, eagle 35, lion 37, mermaid 33, all with a mounting plate against the hull, 8 to 15 px forward overhang, `noOcclusion()`. Renders in `art/renders/`. Playtest `items-and-blocks.md` (to be added to the 3D models section). |
 | F7e | Blockbench models, batch 5: cleat, brig bars and door, flag cloth at 2 blocks via a block entity renderer | todo, after F5b |
@@ -51,7 +51,10 @@ Only one agent at a time may use Blockbench (one desktop instance, one open proj
 
 Follow-ups from phase G (small):
 - The yard cloth is a flat grid with a simple belly and one light value; the Fabric port needs a culling-box equivalent (`shouldRenderOffScreen` breaks Sable's sub-level path, see sable-notes §9.0g). F7 may give the cloth a better look.
-- `tools/gen_sailing_textures.py` may still generate textures that F7b removed (winch); clean up after F7b.
+- `SailWinchBlock` has no facing, so its Blockbench model stands one way (crank east). Give it a horizontal facing with placement, rotate and mirror, plus the facing dispatch in datagen, after F5b has merged (both touch `sailing/`).
+- After F5b merges: remove the unused imports F7b left in `SailingModule` (`TexturedModel`, `ElementModel`), and have `HandMadeModelsTest.theFirstBatchOfModelsIsThere` list all hand-made models.
+- The yard model shows its rope band on every block of a yard (a model can't know which block meets the mast); the capstan bars and the winch crank reach 3 px into neighbouring blocks. Visual only; revisit after the playtest.
+- The rope on the winch and yard is vanilla stripped birch as a stand-in for a rope texture.
 - Saving a `.bbmodel` from Blockbench embeds the vanilla textures again; strip them before committing (F7a did it with an ad-hoc script; a `tools/strip_bbmodel_textures.py` would make it one command).
 - The gun effects came out 2 to 3 LU below the −16 LUFS target (single-pass `loudnorm` with the true-peak limit). Raise `EFFECT_LUFS` or use two-pass if they sound quiet next to vanilla.
 - Fabric port: `SELECT_MUSIC` and `SOUND_STREAM_STARTED` have no direct Fabric equivalent and may need a mixin there.

@@ -12,6 +12,7 @@ import com.richardsenger.piratesnships.law.bounty.BountyBoard;
 import com.richardsenger.piratesnships.law.crime.CrimeType;
 import com.richardsenger.piratesnships.law.crime.CriminalRecord;
 import com.richardsenger.piratesnships.law.crime.WantedLevel;
+import com.richardsenger.piratesnships.law.world.CrimeLog;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -20,6 +21,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,7 +33,9 @@ import java.util.Locale;
  * /pirates law score get|set|add &lt;target&gt; [value]
  * /pirates law crime &lt;target&gt; &lt;crime&gt;
  * /pirates law fine &lt;target&gt; &lt;doubloons&gt;
- * /pirates law bounty list | place &lt;target&gt; &lt;amount&gt; | claim &lt;target&gt; dead|alive | clear &lt;target&gt;
+ * /pirates law last &lt;target&gt;          (last crime reported for the target, any outcome)
+ * /pirates law hostile &lt;target&gt;       (would the navy attack the target on sight?)
+ * /pirates law bounty list | place &lt;target&gt; &lt;amount&gt; | claim &lt;target&gt; dead|alive | claim proof | clear &lt;target&gt;
  * </pre>
  */
 public final class LawCommands {
@@ -63,6 +67,10 @@ public final class LawCommands {
                                 .suggests((c, b) -> SharedSuggestionProvider.suggest(
                                         Arrays.stream(CrimeType.values()).map(CrimeType::id), b))
                                 .executes(LawCommands::crime))))
+                .then(Commands.literal("last").then(Commands.argument("target", EntityArgument.entity())
+                        .executes(LawCommands::lastCrime)))
+                .then(Commands.literal("hostile").then(Commands.argument("target", EntityArgument.entity())
+                        .executes(LawCommands::hostile)))
                 .then(Commands.literal("fine").then(Commands.argument("target", EntityArgument.entity())
                         .then(Commands.argument("doubloons", IntegerArgumentType.integer(0))
                                 .executes(LawCommands::fine))))
@@ -71,7 +79,9 @@ public final class LawCommands {
                         .then(Commands.literal("place").then(Commands.argument("target", EntityArgument.entity())
                                 .then(Commands.argument("amount", IntegerArgumentType.integer(1))
                                         .executes(LawCommands::bountyPlace))))
-                        .then(Commands.literal("claim").then(Commands.argument("target", EntityArgument.entity())
+                        .then(Commands.literal("claim")
+                                .then(Commands.literal("proof").executes(LawCommands::bountyClaimProof))
+                                .then(Commands.argument("target", EntityArgument.entity())
                                 .then(Commands.literal("dead").executes(c -> bountyClaim(c, BountyBoard.ClaimMethod.DEAD_WITH_PROOF)))
                                 .then(Commands.literal("alive").executes(c -> bountyClaim(c, BountyBoard.ClaimMethod.ALIVE)))))
                         .then(Commands.literal("clear").then(Commands.argument("target", EntityArgument.entity())
@@ -174,6 +184,43 @@ public final class LawCommands {
             c.getSource().sendFailure(Component.translatable(KEY + "bounty.claim.failed", outcome(result.outcome())));
         }
         return result.payout();
+    }
+
+    private static int bountyClaimProof(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer claimant = c.getSource().getPlayerOrException();
+        ItemStack stack = claimant.getMainHandItem();
+        LawService.ProofClaim result = LawService.claimWithProof(claimant, stack);
+        if (result.success()) {
+            c.getSource().sendSuccess(() -> Component.translatable(KEY + "bounty.claim.success",
+                    result.proof().targetName(), result.payout(), result.bounties()), true);
+        } else {
+            c.getSource().sendFailure(Component.translatable(KEY + "bounty.claim.failed", outcome(result.outcome())));
+        }
+        return result.payout();
+    }
+
+    private static int lastCrime(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        Entity target = EntityArgument.getEntity(c, "target");
+        var entry = CrimeLog.last(target.getUUID());
+        if (entry.isEmpty()) {
+            c.getSource().sendSuccess(() -> Component.translatable(KEY + "last.none", target.getDisplayName()), false);
+            return 0;
+        }
+        var e = entry.get();
+        long ago = (LawService.now(c.getSource().getServer()) - e.gameTime()) / 20;
+        c.getSource().sendSuccess(() -> Component.translatable(KEY + "last", target.getDisplayName(), e.type().id(),
+                e.victim().isEmpty() ? "-" : e.victim(), outcome(e.outcome()),
+                String.format(Locale.ROOT, "%.1f", e.points()), ago), false);
+        return 1;
+    }
+
+    private static int hostile(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        LivingEntity target = living(c);
+        // No navy mobs yet: ask for an unspecified navy observer
+        boolean answer = LawService.navyShouldAttack(null, target);
+        c.getSource().sendSuccess(() -> Component.translatable(KEY + (answer ? "hostile.yes" : "hostile.no"),
+                target.getDisplayName(), Component.translatable(wantedKey(LawService.wantedLevel(target)))), false);
+        return answer ? 1 : 0;
     }
 
     private static int bountyClear(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {

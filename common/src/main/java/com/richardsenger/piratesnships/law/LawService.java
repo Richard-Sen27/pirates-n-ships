@@ -19,6 +19,11 @@ import com.richardsenger.piratesnships.law.flag.FalseColorsDetection;
 import com.richardsenger.piratesnships.law.flag.FlagKind;
 import com.richardsenger.piratesnships.law.flag.FlagLaw;
 import com.richardsenger.piratesnships.law.flag.Reaction;
+import com.richardsenger.piratesnships.law.proof.BountyProof;
+import com.richardsenger.piratesnships.law.proof.BountyProofItem;
+import com.richardsenger.piratesnships.law.world.CrimeLog;
+import com.richardsenger.piratesnships.law.world.LawTags;
+import com.richardsenger.piratesnships.law.world.NavyHostility;
 import com.richardsenger.piratesnships.platform.Services;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -26,6 +31,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -95,20 +101,58 @@ public final class LawService {
         return rules.enabled() ? rules.wantedLevel(record(entity).score()) : WantedLevel.CLEAN;
     }
 
+    /** The score as shown to players (rounded up), 0 when the criminal score is disabled. */
+    public static int displayScore(LivingEntity entity) {
+        return LawConfig.CRIMINAL_SCORE_ENABLED.get() ? record(entity).displayScore() : 0;
+    }
+
     /** Reports a crime committed by {@code offender} against {@code victim} (may be {@code null}). */
     public static CrimeResult reportCrime(LivingEntity offender, CrimeType type, @Nullable Entity victim) {
-        return reportCrime(offender, type, victim == null ? null : victim.getUUID());
+        return reportCrime(offender, type, victim == null ? null : victim.getUUID(),
+                victim == null ? "" : victim.getName().getString());
     }
 
     /** Reports a crime against a victim identified by UUID (e.g. a ship); {@code null} = no particular victim. */
     public static CrimeResult reportCrime(LivingEntity offender, CrimeType type, @Nullable UUID victimId) {
+        return reportCrime(offender, type, victimId, victimId == null ? "" : victimId.toString());
+    }
+
+    private static CrimeResult reportCrime(LivingEntity offender, CrimeType type, @Nullable UUID victimId, String victimName) {
         CrimeRules rules = LawConfig.crimeRules();
-        if (!rules.enabled()) return new CrimeResult(CriminalRecord.EMPTY, 0, CriminalRecord.CrimeOutcome.DISABLED);
+        long now = now(server(offender));
+        if (!rules.enabled()) {
+            CrimeLog.record(offender.getUUID(), new CrimeLog.Entry(type, CriminalRecord.CrimeOutcome.DISABLED, 0, victimName, now));
+            return new CrimeResult(CriminalRecord.EMPTY, 0, CriminalRecord.CrimeOutcome.DISABLED);
+        }
         CriminalRecord stored = Services.ATTACHMENTS.get(offender, LawAttachments.CRIMINAL_RECORD);
-        CrimeResult result = stored.addCrime(type, victimId, now(server(offender)), rules);
+        CrimeResult result = stored.addCrime(type, victimId, now, rules);
         store(offender, result.record());
         if (result.counted()) syncNavyBounty(offender);
+        CrimeLog.record(offender.getUUID(), new CrimeLog.Entry(type, result.outcome(), result.pointsAdded(), victimName, now));
         return result;
+    }
+
+    // --- World queries ------------------------------------------------------------------------------------------
+
+    public static boolean isNavy(Entity entity) {
+        return entity.getType().is(LawTags.NAVY);
+    }
+
+    public static boolean isLawProtected(Entity entity) {
+        return entity.getType().is(LawTags.LAW_PROTECTED);
+    }
+
+    /**
+     * Hostility hook for navy AI (docs/design.md §9): whether {@code navy} should attack {@code target} on sight.
+     * True for wanted players and NPCs at or above {@code law.world.navy_hostility_threshold}; never for navy,
+     * creative or spectator players, or itself. {@code navy} may be {@code null} (any navy observer).
+     */
+    public static boolean navyShouldAttack(@Nullable LivingEntity navy, LivingEntity target) {
+        boolean exempt = target instanceof Player p && (p.isCreative() || p.isSpectator());
+        boolean enabled = LawConfig.CRIMINAL_SCORE_ENABLED.get();
+        WantedLevel level = enabled && !exempt ? wantedLevel(target) : WantedLevel.CLEAN;
+        return NavyHostility.shouldAttack(enabled, LawConfig.NAVY_HOSTILITY_THRESHOLD.get(), level,
+                isNavy(target), navy == target, exempt);
     }
 
     /** Pays a fine of up to {@code doubloons}. The caller takes {@code doubloonsSpent} from the payer. */
@@ -187,21 +231,58 @@ public final class LawService {
      */
     public static ClaimResult claimBounty(MinecraftServer server, UUID target, UUID claimant, ClaimMethod method) {
         ClaimResult result = claimOnBoard(server, target, claimant, method);
-        if (!result.success()) return result;
+        if (result.success()) applyClaimedScoreFactor(server, target, result);
+        return result;
+    }
+
+    private static ClaimResult claimOnBoard(MinecraftServer server, UUID target, UUID claimant, ClaimMethod method) {
+        return claimOnBoard(server, target, claimant, method, Long.MAX_VALUE);
+    }
+
+    private static ClaimResult claimOnBoard(MinecraftServer server, UUID target, UUID claimant, ClaimMethod method,
+                                            long createdNoLaterThan) {
+        BountyBoardData data = BountyBoardData.get(server);
+        ClaimResult result = data.board().claim(target, claimant, method, now(server), LawConfig.bountyRules(), createdNoLaterThan);
+        if (result.success()) data.setBoard(result.board());
+        return result;
+    }
+
+    /** Outcome of {@link #claimWithProof}. */
+    public enum ProofClaimOutcome { CLAIMED, NOT_A_PROOF, NO_BOUNTY, SELF_CLAIM }
+
+    /** Result of {@link #claimWithProof}: pay the claimant {@code payout} doubloons on success. */
+    public record ProofClaim(ProofClaimOutcome outcome, @Nullable BountyProof proof, int payout, int bounties) {
+        public boolean success() {
+            return outcome == ProofClaimOutcome.CLAIMED;
+        }
+    }
+
+    /**
+     * Claims the bounties on the target named by a proof item (docs/design.md §13.2, dead with proof). Only bounties
+     * placed at or before the kill are paid. On success one proof is consumed from {@code proofStack}. Called by
+     * the navy officer later; for now by {@code /pirates law bounty claim proof}.
+     */
+    public static ProofClaim claimWithProof(Player claimant, ItemStack proofStack) {
+        BountyProof proof = BountyProofItem.proofOf(proofStack);
+        if (proof == null) return new ProofClaim(ProofClaimOutcome.NOT_A_PROOF, null, 0, 0);
+        MinecraftServer server = server(claimant);
+        ClaimResult result = claimOnBoard(server, proof.target(), claimant.getUUID(), ClaimMethod.DEAD_WITH_PROOF, proof.killedAt());
+        if (!result.success()) {
+            return new ProofClaim(result.outcome() == BountyBoard.ClaimOutcome.SELF_CLAIM
+                    ? ProofClaimOutcome.SELF_CLAIM : ProofClaimOutcome.NO_BOUNTY, proof, 0, 0);
+        }
+        applyClaimedScoreFactor(server, proof.target(), result);
+        proofStack.shrink(1);
+        return new ProofClaim(ProofClaimOutcome.CLAIMED, proof, result.payout(), result.claimed().size());
+    }
+
+    private static void applyClaimedScoreFactor(MinecraftServer server, UUID target, ClaimResult result) {
         LivingEntity loaded = findLiving(server, target);
         if (loaded != null) {
             applyScoreFactor(loaded, result.scoreFactor());
         } else if (result.claimed().stream().anyMatch(b -> b.target().kind() == BountyTarget.Kind.PLAYER)) {
             BountyBoardData.get(server).addPendingScoreFactor(target, result.scoreFactor());
         }
-        return result;
-    }
-
-    private static ClaimResult claimOnBoard(MinecraftServer server, UUID target, UUID claimant, ClaimMethod method) {
-        BountyBoardData data = BountyBoardData.get(server);
-        ClaimResult result = data.board().claim(target, claimant, method, now(server), LawConfig.bountyRules());
-        if (result.success()) data.setBoard(result.board());
-        return result;
     }
 
     /** Result of {@link #turnInPirate}: the rank reward plus any bounty on the pirate (paid as alive). */

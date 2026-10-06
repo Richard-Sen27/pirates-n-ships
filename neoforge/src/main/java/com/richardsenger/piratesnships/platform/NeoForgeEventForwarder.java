@@ -11,6 +11,7 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerContainerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
@@ -54,6 +55,8 @@ public final class NeoForgeEventForwarder {
                 CommonEvents.PLAYER_CLONE.invoker().onClone(o, n, e.isWasDeath());
             }
         });
+        bus.addListener(PlayerContainerEvent.Open.class, e -> CommonEvents.CONTAINER_OPEN.invoker().on(e.getEntity(), e.getContainer()));
+        bus.addListener(PlayerContainerEvent.Close.class, e -> CommonEvents.CONTAINER_CLOSE.invoker().on(e.getEntity(), e.getContainer()));
 
         bus.addListener(EntityJoinLevelEvent.class, e -> {
             if (CommonEvents.ENTITY_JOIN_LEVEL.invoker().onJoin(e.getEntity(), e.getLevel())) e.setCanceled(true);

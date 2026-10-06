@@ -7,7 +7,9 @@ import com.richardsenger.piratesnships.law.bounty.BountyRules;
 import com.richardsenger.piratesnships.law.bounty.PirateTier;
 import com.richardsenger.piratesnships.law.crime.CrimeRules;
 import com.richardsenger.piratesnships.law.crime.CrimeType;
+import com.richardsenger.piratesnships.law.crime.WantedLevel;
 import com.richardsenger.piratesnships.law.flag.FalseColorsDetection;
+import com.richardsenger.piratesnships.law.world.TheftRule;
 
 import java.util.Collections;
 import java.util.EnumMap;
@@ -80,7 +82,28 @@ public final class LawConfig {
         TURN_IN_REWARDS = Collections.unmodifiableMap(rewards);
     }
 
-    private static final ConfigSection FLAGS = ModConfigs.server("flags_brig", "Flags, false colors and prisoners");
+    private static final ConfigSection WORLD = LAW.section("world", "How crimes are detected in the world and what clients learn");
+
+    public static final ConfigValue<Boolean> COMBAT_CRIMES = WORLD.bool("combat_crimes", true,
+            "Hurting or killing villagers, wandering traders and navy is reported as a crime");
+    public static final ConfigValue<Boolean> PROSECUTE_MONSTERS = WORLD.bool("prosecute_monsters", false,
+            "Monsters (zombies, pillagers, ...) get criminal records for hurting protected entities too");
+    public static final ConfigValue<Boolean> THEFT_DETECTION = WORLD.bool("theft_detection", true,
+            "Taking items out of a village container while a villager or navy watches is reported as theft");
+    public static final ConfigValue<Boolean> THEFT_REQUIRE_VILLAGE = WORLD.bool("theft_require_village", true,
+            "Only containers inside a village structure count. Off = every container no player placed counts");
+    public static final ConfigValue<Double> THEFT_WITNESS_RANGE = WORLD.doubleRange("theft_witness_range", 16.0, 0.0, 128.0,
+            "Blocks within which a villager, trader or navy member notices a theft");
+    public static final ConfigValue<Boolean> THEFT_WITNESS_LINE_OF_SIGHT = WORLD.bool("theft_witness_line_of_sight", true,
+            "A witness must be able to see the thief");
+    public static final ConfigValue<Boolean> BOUNTY_PROOF_DROPS = WORLD.bool("bounty_proof_drops", true,
+            "Killing a target with a bounty gives the killer a proof item to claim the bounty with");
+    public static final ConfigValue<Integer> WANTED_SYNC_INTERVAL_TICKS = WORLD.intRange("wanted_sync_interval_ticks", 20, 1, 1200,
+            "How often (ticks) a player's wanted level is checked and sent to their client if it changed");
+    public static final ConfigValue<WantedLevel> NAVY_HOSTILITY_THRESHOLD = WORLD.enumValue("navy_hostility_threshold", WantedLevel.WANTED,
+            "Lowest wanted level the navy attacks on sight");
+
+    private static final ConfigSection FLAGS =ModConfigs.server("flags_brig", "Flags, false colors and prisoners");
 
     public static final ConfigValue<Double> FALSE_FLAG_DETECTION_STRENGTH = FLAGS.doubleRange("false_flag_detection_strength", 1.0, 0.0, 100.0,
             "Multiplier for how quickly observers see through false colors (0 = never)");
@@ -136,6 +159,12 @@ public final class LawConfig {
                 NAVY_BOUNTY_PER_POINT.get(), PLAYER_BOUNTIES.get(), PLAYER_BOUNTY_MINIMUM.get(),
                 PLAYER_BOUNTY_DURATION_DAYS.get() * CrimeRules.TICKS_PER_DAY, ALIVE_FACTOR.get(),
                 SCORE_AFTER_CLAIM_FACTOR.get(), rewards);
+    }
+
+    /** The theft rule parameters from the current config. */
+    public static TheftRule.Params theftParams() {
+        return new TheftRule.Params(CRIMINAL_SCORE_ENABLED.get() && THEFT_DETECTION.get(), THEFT_REQUIRE_VILLAGE.get(),
+                THEFT_WITNESS_RANGE.get(), THEFT_WITNESS_LINE_OF_SIGHT.get());
     }
 
     /** The false-colors detection parameters from the current config. */

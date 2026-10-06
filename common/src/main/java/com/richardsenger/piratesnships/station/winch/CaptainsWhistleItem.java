@@ -130,9 +130,18 @@ public class CaptainsWhistleItem extends Item implements StationBlock.Tool {
             return s;
         }
         for (ShipBody b : SableShips.all(level)) {
-            if (b.worldBounds().inflate(1, 2, 1).contains(entity.position())) return b;
+            // near the ship and above a plot block once mapped into the ship's frame
+            if (CrewStations.worldBox(b, 2).contains(entity.position()) && onDeck(level, b, entity)) return b;
         }
         return null;
+    }
+
+    private static boolean onDeck(ServerLevel level, ShipBody ship, Entity entity) {
+        net.minecraft.core.BlockPos local = net.minecraft.core.BlockPos.containing(ship.toPlot(entity.position()));
+        for (int dy = 0; dy <= 2; dy++) {
+            if (!level.getBlockState(local.below(dy)).isAir()) return true;
+        }
+        return false;
     }
 
     private static @Nullable CrewMember selected(ServerLevel level, Player player) {

@@ -146,7 +146,9 @@ public final class CrewStations {
         }
         crew.stopRiding();
         crew.getNavigation().stop();
-        crew.startRiding(seat, true);
+        if (crew.startRiding(seat, true)) {
+            seat.positionRider(crew); // place it now, not on the next ride tick (Sable maps it to world space)
+        }
     }
 
     /** Gives a sail order to one crew member; it acknowledges near itself. */
@@ -177,12 +179,25 @@ public final class CrewStations {
         if (body == null) {
             return List.of();
         }
-        AABB box = body.worldBounds().inflate(4);
+        AABB box = worldBox(body, 4);
         List<CrewMember> out = new ArrayList<>();
         for (CrewMember c : level.getEntitiesOfClass(CrewMember.class, box, c -> c.assignment() != null)) {
             if (c.assignment().ship().equals(ship)) out.add(c);
         }
         return out;
+    }
+
+    /**
+     * A world box around the ship from its plot bounds and pose: a cube around the transformed plot center. Unlike
+     * {@code ShipBody#worldBounds} it is valid right after assembly (Sable fills the world bounds on the next tick).
+     */
+    public static AABB worldBox(com.richardsenger.piratesnships.ship.sable.ShipBody ship, double margin) {
+        BlockPos[] b = ship.plotBounds();
+        net.minecraft.world.phys.Vec3 lo = net.minecraft.world.phys.Vec3.atLowerCornerOf(b[0]);
+        net.minecraft.world.phys.Vec3 hi = net.minecraft.world.phys.Vec3.atLowerCornerOf(b[1]).add(1, 1, 1);
+        net.minecraft.world.phys.Vec3 center = ship.toWorld(lo.add(hi).scale(0.5));
+        double r = hi.subtract(lo).length() / 2 + margin;
+        return new AABB(center, center).inflate(r);
     }
 
     /** A translatable chat line from the crew member to the players near it. */

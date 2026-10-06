@@ -129,7 +129,7 @@ public final class StationCommands {
             return pos;
         }
         for (ShipBody ship : SableShips.all(level)) {
-            if (ship.worldBounds().inflate(1).contains(Vec3.atCenterOf(pos))) {
+            if (CrewStations.worldBox(ship, 1).contains(Vec3.atCenterOf(pos))) {
                 BlockPos plot = BlockPos.containing(ship.toPlot(Vec3.atCenterOf(pos)));
                 if (level.getBlockState(plot).getBlock() instanceof StationBlock) return plot;
             }

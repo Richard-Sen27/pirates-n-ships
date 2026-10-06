@@ -311,6 +311,59 @@ public final class StationGameTests {
         h.succeed();
     }
 
+    /**
+     * The captain's whistle with a mock player: use on a crew member selects it, use on the winch assigns it,
+     * sneak-use in the air on deck issues "hoist" (the first order) to the ship's crew, use on the crew member again
+     * releases it.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = "pirates_n_ships_config_station_winch")
+    public static void whistleAssignsOrdersAndReleases(GameTestHelper h) {
+        pin(h);
+        Fixture f = ship(h, false);
+        CrewMember c = crew(h, 2, 2);
+        net.minecraft.world.entity.player.Player p = h.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        net.minecraft.world.item.ItemStack whistle = new net.minecraft.world.item.ItemStack(StationContent.CAPTAINS_WHISTLE.get());
+        p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, whistle);
+        Vec3 deck = f.ship().toWorld(Vec3.atBottomCenterOf(f.helm()).add(1, 0, 1));
+        p.moveTo(deck.x, deck.y, deck.z);
+        whistle.interactLivingEntity(p, c, net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(c.assignment() == null, "selecting assigned the crew member");
+        whistle.useOn(new net.minecraft.world.item.context.UseOnContext(p, net.minecraft.world.InteractionHand.MAIN_HAND,
+                new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(f.winch()), Direction.UP, f.winch(), false)));
+        h.assertTrue(c.isAtStation(), "whistle on the winch did not seat the crew member");
+        ShipBody on = com.richardsenger.piratesnships.station.winch.CaptainsWhistleItem.shipOf(h.getLevel(), p);
+        h.assertTrue(on != null && on.id().equals(f.ship().id()), "player on deck is not on the ship: " + p.position() + " " + f.ship().worldBounds());
+        h.assertTrue(CrewStations.crewOf(h.getLevel(), f.ship().id()).contains(c), "crew member not found on its ship at " + c.position());
+        p.setShiftKeyDown(true);
+        whistle.use(h.getLevel(), p, net.minecraft.world.InteractionHand.MAIN_HAND);
+        p.setShiftKeyDown(false);
+        h.assertTrue(Stations.state(c.assignment()).order() == SailOrder.HOIST, "sneak-use did not order hoist");
+        h.runAfterDelay(2 * STEP + MARGIN, () -> {
+            h.assertTrue(trim(h, f) == SailTrim.FULL, "sails not hoisted by the whistle's order");
+            whistle.interactLivingEntity(p, c, net.minecraft.world.InteractionHand.MAIN_HAND);
+            h.assertTrue(c.assignment() == null && !c.isPassenger(), "whistle on the assigned crew member did not release it");
+            c.discard();
+            h.succeed();
+        });
+    }
+
+    /** A crew member that dies frees its station at once, and its seat goes. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = "pirates_n_ships_config_station_winch")
+    public static void deathFreesTheStation(GameTestHelper h) {
+        pin(h);
+        Fixture f = ship(h, false);
+        CrewMember c = seated(h, f, crew(h, 2, 2));
+        StationRef ref = c.assignment();
+        h.runAfterDelay(5, () -> {
+            c.kill();
+            h.assertTrue(Stations.state(ref) == null, "station still occupied by the dead crew member");
+        });
+        h.runAfterDelay(40, () -> {
+            h.assertTrue(seats(h, f).isEmpty(), "seat left over after death");
+            h.succeed();
+        });
+    }
+
     /** Removing the ship for good kills the seat (Sable, #sable:destroy_with_sub_level) and the crew is released. */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = "pirates_n_ships_config_station_winch")
     public static void removingTheShipLeavesNoSeats(GameTestHelper h) {

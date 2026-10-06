@@ -579,6 +579,19 @@ many regions. [V code; I cost]
 - This is worth reporting to the Sable project. It can affect any mod that assembles a sub-level right after another
   one was removed.
 
+### 9.0d Findings from spike 3 part 1 (sails, verified by running)
+- **Hollow block hulls float but have almost no righting moment.** A 5×4×5 plank hull capsized within 2 seconds on a
+  beam reach when the full physical heel and pitch moments of sail and keel were applied. Sable's own water drag below
+  the waterline adds a heeling couple that we can't scale. Our workaround is `sailing_runtime.sail_heel_factor`
+  (default 0.25), which scales the roll and pitch torque of our forces. Yaw is kept. [V]
+- `ServerSubLevel.latestLinearVelocity` is a per-tick difference of the pose position, not the velocity of the center
+  of mass. Use the `RigidBodyHandle` velocities (`ShipBody.velocities`). [V]
+- The GameTest world keeps its server config file between runs (`neoforge/build/gametest/world/serverconfig`), so a
+  changed config default does not reach tests on a machine that ran them before. Tests that depend on a value pin it
+  with `ConfigOverrides`. [V]
+- Measured with a 42.5 kpg hull and a small square sail in 6 blocks/s of wind from astern: about 0.4 m/s mean forward
+  speed over 100 ticks (peak about 1 m/s). The same hull drifts at about 0.09 m/s with no force at all. [V]
+
 ### 9.1 How Sable tests sub-levels
 - Tests live in **`sable/neoforge/src/main/java/dev/ryanhcode/sable/neoforge/gametest/`** (`AssemblyTest`, `PhysicsTest`,
   `SableTestHelper`), registered with NeoForge's `@GameTestHolder(Sable.MOD_ID)` and vanilla `@GameTest(template = …)`. [V]

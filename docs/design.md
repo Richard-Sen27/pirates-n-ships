@@ -237,6 +237,8 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
 - Force = wind strength × area × trim × efficiency(angle), applied at the sail position, which also produces heel torque.
 - Square sails work best downwind. Fore-and-aft sails allow sailing closer to the wind.
 - No-go zone: sailing directly into the wind produces no forward force.
+- Implemented in spike 3 (`sailing/block`, `sailing/ship`): one sail block stands for a whole sail of its type (multi-block sails come later). The bow is the direction the helmsman looks, i.e. the opposite of the helm block's facing. Sails don't push a ship that is not afloat.
+- **Finding:** hollow block hulls have almost no righting moment in Sable, so the full heel torque of a sail capsizes a small ship within seconds. For now the roll and pitch part of our sail and keel torque is scaled down (`sail_heel_factor`, default 0.25). See §21.
 
 ### 5.3 Steering and other propulsion
 - **Helm:** sets the rudder angle. Rudder torque scales with the ship's speed through the water.
@@ -598,3 +600,5 @@ Spikes 1–4 are throwaway-quality prototypes that prove feasibility. They may l
 - Do our dry-volume force and Sable's native hull buoyancy tune well together, without over-buoyant or unstable ships? Decide in the spike 2 and milestone 6 playtests.
 - Does Sable's water occlusion scale to many ships? Its lookup loops over all regions for every entity each tick. Profile in spike 2.
 - Do mobs riding a seat entity inside a sub-level render, interpolate and interact correctly? Check in spike 4.
+- Stability: hollow block hulls barely right themselves (spike 3). Do we keep scaling down the heel torque, add ballast or keel blocks with real mass low in the hull, or add our own righting moment from the hull analysis? Decide after the milestone 3 playtest.
+- Sail force scale: the spike 3 agent thinks 1.0 is too strong for Sable's masses and expects something like 0.3 to 0.5. Decide in the milestone 3 playtest.

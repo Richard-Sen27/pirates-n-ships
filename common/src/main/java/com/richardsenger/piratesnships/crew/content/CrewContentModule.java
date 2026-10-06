@@ -12,6 +12,7 @@ import com.richardsenger.piratesnships.crew.galley.GalleyText;
 import com.richardsenger.piratesnships.crew.galley.ProvisionsCommands;
 import com.richardsenger.piratesnships.crew.galley.WaterBarrelBlock;
 import com.richardsenger.piratesnships.crew.galley.WaterBarrelRules;
+import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.data.models.blockstates.MultiVariantGenerator;
@@ -60,6 +61,8 @@ public final class CrewContentModule implements ModModule {
     @Override
     public void registerContent() {
         CrewContent.init();
+        // Pipes of other mods: same face rules as hoppers (insert provisions, extract the rest)
+        Services.CAPABILITIES.registerBlockContainer(CrewContent.PANTRY_BLOCK_ENTITY);
     }
 
     @Override

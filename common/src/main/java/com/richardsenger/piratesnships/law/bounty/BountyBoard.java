@@ -164,8 +164,18 @@ public record BountyBoard(List<Bounty> bounties) {
     }
 
     public ClaimResult claim(UUID target, UUID claimant, ClaimMethod method, long now, BountyRules rules) {
+        return claim(target, claimant, method, now, rules, Long.MAX_VALUE);
+    }
+
+    /**
+     * Like {@link #claim(UUID, UUID, ClaimMethod, long, BountyRules)}, but only bounties created at or before
+     * {@code createdNoLaterThan} are claimed (a proof item made at a kill can't claim bounties placed after it).
+     * Later bounties stay on the board.
+     */
+    public ClaimResult claim(UUID target, UUID claimant, ClaimMethod method, long now, BountyRules rules,
+                             long createdNoLaterThan) {
         if (target.equals(claimant)) return new ClaimResult(this, 0, List.of(), 1.0, ClaimOutcome.SELF_CLAIM);
-        List<Bounty> active = forTarget(target, now);
+        List<Bounty> active = forTarget(target, now).stream().filter(b -> b.createdAt() <= createdNoLaterThan).toList();
         if (active.isEmpty()) return new ClaimResult(this, 0, List.of(), 1.0, ClaimOutcome.NO_BOUNTY);
         long sum = active.stream()
                 .filter(b -> b.payer().map(p -> !p.equals(claimant)).orElse(true))

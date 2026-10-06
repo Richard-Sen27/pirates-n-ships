@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-06T19:45:53.268165	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-06T20:21:42.677699	Block states and models: pirates_n_ships
 9282899a10c2af6fbcc1fd07e91ba10d9ba8a732 assets/pirates_n_ships/blockstates/brig_bars.json
 8bf6059c2f7b4818fd46cb2e91b3f432aa4b1c70 assets/pirates_n_ships/blockstates/brig_door.json
 6b0277aae77bdb656ee4e3eee02204c69eb48c50 assets/pirates_n_ships/blockstates/cargo_barrel.json
@@ -38,6 +38,7 @@ d57cd8574287ad34228d775c56b907f1944afae7 assets/pirates_n_ships/models/block/fig
 6ab72f6fce6997bbdbb38856b175676c3855f860 assets/pirates_n_ships/models/block/pantry.json
 7c3493c10a85f585af8ae3085e8e58c056e6b090 assets/pirates_n_ships/models/block/test_block.json
 6e52b5b73a60285597d05fe4c496584117c9c16a assets/pirates_n_ships/models/block/water_barrel.json
+1b6e953aa823a324abc6e1b6f94fdc847859297b assets/pirates_n_ships/models/item/bounty_proof.json
 fa17719dd41d5a45e5be74ae0f9113cb63ceadc6 assets/pirates_n_ships/models/item/brig_bars.json
 4cdbc3195a70e9000fd4656cf68fb6a35cdf084a assets/pirates_n_ships/models/item/brig_door.json
 2d947169ee8a0f53a769bd125be74e22772c92fa assets/pirates_n_ships/models/item/cannonball.json

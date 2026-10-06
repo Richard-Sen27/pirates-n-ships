@@ -3,7 +3,22 @@ package com.richardsenger.piratesnships.law;
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.law.crime.WantedLevel;
+import com.richardsenger.piratesnships.law.client.ClientWanted;
+import com.richardsenger.piratesnships.law.client.LawClient;
+import com.richardsenger.piratesnships.law.proof.BountyProofItem;
+import com.richardsenger.piratesnships.law.proof.ProofContent;
+import com.richardsenger.piratesnships.law.proof.ProofDrops;
+import com.richardsenger.piratesnships.law.sync.WantedSync;
+import com.richardsenger.piratesnships.law.sync.WantedSyncPayload;
+import com.richardsenger.piratesnships.law.world.CombatCrimeDetector;
+import com.richardsenger.piratesnships.law.world.CrimeLog;
+import com.richardsenger.piratesnships.law.world.LawTags;
+import com.richardsenger.piratesnships.law.world.LawWorldGameTests;
+import com.richardsenger.piratesnships.law.world.PlacedBlocks;
+import com.richardsenger.piratesnships.law.world.TheftDetector;
+import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
+import net.minecraft.world.entity.EntityType;
 
 import java.util.List;
 
@@ -23,18 +38,68 @@ public final class LawModule implements ModModule {
     @Override
     public void registerContent() {
         LawAttachments.init();
+        PlacedBlocks.init();
+        ProofContent.init();
+    }
+
+    @Override
+    public void registerPayloads() {
+        Services.NETWORK.registerToClient(WantedSyncPayload.TYPE, WantedSyncPayload.CODEC, (p, player) -> ClientWanted.accept(p));
     }
 
     @Override
     public void registerEvents() {
         CommonEvents.SERVER_TICK_END.register(LawService::onServerTick);
-        CommonEvents.PLAYER_LOGIN.register(LawService::onLogin);
+        CommonEvents.SERVER_TICK_END.register(WantedSync::onServerTick);
+        CommonEvents.PLAYER_LOGIN.register(player -> {
+            LawService.onLogin(player);
+            WantedSync.sendNow(player);
+        });
+        CommonEvents.PLAYER_LOGOUT.register(player -> {
+            WantedSync.onLogout(player);
+            TheftDetector.onLogout(player);
+        });
+        CommonEvents.SERVER_STOPPED.register(server -> {
+            WantedSync.onServerStopped(server);
+            TheftDetector.onServerStopped();
+            CrimeLog.clear();
+        });
         CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> LawCommands.register(dispatcher));
+        // World integration (docs/design.md §13.1, §13.2)
+        CommonEvents.LIVING_INCOMING_DAMAGE.register(CombatCrimeDetector::onIncomingDamage);
+        CommonEvents.LIVING_DEATH.register(CombatCrimeDetector::onDeath);
+        CommonEvents.LIVING_DEATH.register(ProofDrops::onDeath);
+        CommonEvents.CONTAINER_OPEN.register(TheftDetector::onContainerOpen);
+        CommonEvents.CONTAINER_CLOSE.register(TheftDetector::onContainerClose);
+        CommonEvents.BLOCK_PLACE.register(PlacedBlocks::onBlockPlace);
+        CommonEvents.BLOCK_BREAK.register(PlacedBlocks::onBlockBreak);
+    }
+
+    @Override
+    public void initClient() {
+        LawClient.init();
     }
 
     @Override
     public void gatherData(DataContributions data) {
         String k = LawCommands.KEY;
+        data.entityTypeTags(tags -> {
+            tags.tag(LawTags.NAVY);
+            tags.tag(LawTags.LAW_PROTECTED).add(EntityType.VILLAGER, EntityType.WANDERING_TRADER);
+            tags.tag(LawTags.LAW_ENFORCERS).add(EntityType.IRON_GOLEM).addTag(LawTags.NAVY);
+        });
+        data.models(m -> m.flatItem(ProofContent.BOUNTY_PROOF.get()));
+        data.lang(lang -> {
+            lang.item(ProofContent.BOUNTY_PROOF, "Bounty Proof")
+                    .add(BountyProofItem.TOOLTIP_TARGET, "Proof of the death of %s")
+                    .add(BountyProofItem.TOOLTIP_KILLER, "Slain by %s")
+                    .add(BountyProofItem.TOOLTIP_BLANK, "Names no one")
+                    .add(TheftDetector.THEFT_SEEN_KEY, "%s saw you stealing!")
+                    .add(k + "last", "Last crime of %s: %s against %s, %s, +%s points (%s s ago)")
+                    .add(k + "last.none", "No crime reported for %s since the server started")
+                    .add(k + "hostile.yes", "The navy attacks %s on sight (%s)")
+                    .add(k + "hostile.no", "The navy leaves %s alone (%s)");
+        });
         data.lang(lang -> {
             lang.add(LawCommands.wantedKey(WantedLevel.CLEAN), "Clean")
                     .add(LawCommands.wantedKey(WantedLevel.SUSPECT), "Suspect")
@@ -60,6 +125,6 @@ public final class LawModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(LawGameTests.class);
+        return List.of(LawGameTests.class, LawWorldGameTests.class);
     }
 }

@@ -1,32 +1,45 @@
-# MultiLoader Template
+# Pirates 'n' Ships
 
-This project provides a Gradle project template that can compile Minecraft mods for multiple modloaders using a common project for the sources. This project does not require any third party libraries or dependencies. If you have any questions or want to discuss the project, please join our [Discord](https://discord.myceliummod.network).
+A Minecraft mod about sailing, piracy and life at sea. Build real block ships that float, sail with the wind, take damage and sink. Crew them with NPCs, fight the Royal Navy or join it, and hunt treasure across pirate islands.
 
-## Getting Started
+> Early development. Nothing is playable yet. See the roadmap in [`docs/design.md`](docs/design.md#20-roadmap).
 
-### IntelliJ IDEA
-This guide will show how to import the MultiLoader Template into IntelliJ IDEA. The setup process is roughly equivalent to setting up the modloaders independently and should be very familiar to anyone who has worked with their MDKs.
+## Features (planned)
 
-1. Clone or download this repository to your computer.
-2. Configure the project by setting the properties in the `gradle.properties` file. You will also need to change the `rootProject.name`  property in `settings.gradle`, this should match the folder name of your project, or else IDEA may complain.
-3. Open the template's root folder as a new project in IDEA. This is the folder that contains this README.md file and the gradlew executable.
-4. If your default JVM/JDK is not Java 21 you will encounter an error when opening the project. This error is fixed by going to `File > Settings > Build, Execution, Deployment > Build Tools > Gradle > Gradle JVM` and changing the value to a valid Java 21 JVM. You will also need to set the Project SDK to Java 21. This can be done by going to `File > Project Structure > Project SDK`. Once both have been set open the Gradle tab in IDEA and click the refresh button to reload the project.
-5. Open your Run/Debug Configurations. Under the `Application` category there should now be options to run Fabric and NeoForge projects. Select one of the client options and try to run it.
-6. Assuming you were able to run the game in step 5 your workspace should now be set up.
+- **Dry hulls**: ship interiors below the waterline stay dry.
+- **Flooding and sinking**: breaches flood compartments, ships list and go down unless the crew bails and patches.
+- **Wind-driven sailing**: a global, weather-dependent wind drives the sails.
+- **Commandable crew**: NPCs man the sails, cannons, crow's nest and anchor.
+- **A living sea world**: pirate islands, seafarer villages, the navy, bounties, sharks and a rare kraken.
 
-### Eclipse
-While it is possible to use this template in Eclipse it is not recommended. During the development of this template multiple critical bugs and quirks related to Eclipse were found at nearly every level of the required build tools. While we continue to work with these tools to report and resolve issues support for projects like these are not there yet. For now Eclipse is considered unsupported by this project. The development cycle for build tools is notoriously slow so there are no ETAs available.
+## Requirements
 
-## Development Guide
-When using this template the majority of your mod should be developed in the `common` project. The `common` project is compiled against the vanilla game and is used to hold code that is shared between the different loader-specific versions of your mod. The `common` project has no knowledge or access to ModLoader specific code, apis, or concepts. Code that requires something from a specific loader must be done through the project that is specific to that loader, such as the `fabric` or `neoforge` projects.
+| | |
+|---|---|
+| Minecraft | 1.21.1 |
+| Loader | NeoForge (Fabric planned) |
+| Dependencies | [Sable](https://github.com/ryanhcode/sable) |
 
-Loader specific projects such as the `fabric` and `neoforge` project are used to load the `common` project into the game. These projects also define code that is specific to that loader. Loader specific projects can access all the code in the `common` project. It is important to remember that the `common` project can not access code from loader specific projects.
+## Development
 
-## Removing Platforms and Loaders
-While this template has support for many modloaders, new loaders may appear in the future, and existing loaders may become less relevant.
+Multiloader project based on the [MultiLoader-Template](https://github.com/jaredlll08/MultiLoader-Template). Requires Java 21.
 
-Removing loader specific projects is as easy as deleting the folder, and removing the `include("projectname")` line from the `settings.gradle` file.
-For example if you wanted to remove support for `forge` you would follow the following steps:
+| Module | Contents |
+|---|---|
+| `common/` | All gameplay logic, vanilla Minecraft only |
+| `neoforge/` | Thin NeoForge layer: entrypoint and platform services |
+| `fabric/` | Fabric layer, disabled until the Fabric port |
 
-1. Delete the subproject folder. For example, delete `MultiLoader-Template/forge`.
-2. Remove the project from `settings.gradle`. For example, remove `include("forge")`. 
+```sh
+./gradlew build                       # build all enabled modules
+./gradlew :neoforge:runClient         # start a dev client
+./gradlew :neoforge:runGameTestServer # run GameTests
+./gradlew :neoforge:runData           # generate assets and data
+```
+
+- Design spec: [`docs/design.md`](docs/design.md)
+- Contribution and commit conventions: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+
+## License
+
+[PolyForm Noncommercial 1.0.0](LICENSE). You may use, modify and share this mod for any noncommercial purpose.

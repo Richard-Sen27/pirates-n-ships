@@ -1,7 +1,7 @@
 # Pirates 'n' Ships — Design Spec
 
 > Status: brainstorm → spec, v0.1 (2026-10-06). Living document: update it whenever a decision changes.
-> Working title "MC Pirates 'n' Ships". Mod ID (proposed): `pirates_n_ships`.
+> Mod name "Pirates 'n' Ships". Mod ID: `pirates_n_ships`.
 
 ---
 
@@ -34,7 +34,8 @@ A Minecraft mod about sailing, piracy and life at sea. Players build **real bloc
 | Animated entities | GeckoLib (required dependency, to be confirmed). It is available for both loaders. |
 | Config | A cross-loader config solution (e.g. Forge Config API Port), accessed only through our own `config` wrapper. See §21. |
 | Mappings | Official Mojang + Parchment |
-| Build | Based on the **MultiLoader-Template** (jaredlll08): `common` (vanilla only, via NeoForm), `neoforge` (ModDevGradle), `fabric` (Loom) |
+| Build | Based on the **MultiLoader-Template** (jaredlll08): `common` (vanilla only, via NeoForm), `neoforge` (ModDevGradle), `fabric` (Loom). The template's legacy Forge module was removed. |
+| License | **PolyForm Noncommercial 1.0.0**: anyone may use, modify and redistribute the mod for any noncommercial purpose. |
 
 ### Dependency rule
 Every new dependency must exist for **both** NeoForge and Fabric, or be optional and isolated behind a compat module. Prefer vanilla APIs (data components, codecs, `CustomPacketPayload`, GameTest) over loader APIs wherever vanilla offers something.
@@ -49,7 +50,7 @@ Every new dependency must exist for **both** NeoForge and Fabric, or be optional
 
 ## 3. Architecture
 
-Package root: `com.richardsenger.piratesnships` (to be confirmed).
+Package root: `com.richardsenger.piratesnships`.
 
 ### 3.1 Multiloader layout
 
@@ -404,7 +405,6 @@ Spikes 1–4 are throwaway-quality prototypes that prove feasibility. They may l
 - Should gunpowder be vanilla, or a custom refined variant?
 - Should there be a Navy career path for players (join the navy instead of pirating)?
 - Should ships be buildable freely, or use blueprints / shipwright NPCs?
-- Final mod name and mod ID.
 - Config library: Forge Config API Port (NeoForge's config API on Fabric) vs. another cross-loader config library. Decide before milestone 5. Either way, access it only through our wrapper.
 - Does Sable's API differ between `sable-common` and the loader artifacts (e.g. events or registration only on the loader side)? Check in `refs/sable` during milestone 0.
 - Do the dry-hull rendering mixins target the same classes on both loaders? Fabric has no NeoForge render patches, so some hooks may need loader-specific variants.

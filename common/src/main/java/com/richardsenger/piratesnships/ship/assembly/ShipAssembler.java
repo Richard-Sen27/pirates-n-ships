@@ -132,6 +132,13 @@ public final class ShipAssembler {
         }
         List<Passenger> passengers = AssemblyConfig.MOVE_ENTITIES.get() ? passengers(ship, helmPlotPos, goal, turns) : List.of();
 
+        // Riders of plot vehicles (crew on station seats) get off first: Sable destroys or kicks the vehicles with the
+        // plot, and the riders are placed at their seat's deck position below like any other passenger.
+        for (Passenger p : passengers) {
+            if (p.entity().isPassenger()) {
+                p.entity().stopRiding();
+            }
+        }
         ShipRegistry.get(level.getServer()).remove(ship.id());
         SableShips.disassemble(ship, helmPlotPos, goal, turns, blocks);
         // The plot is free now and may be handed to a ship assembled later this tick.
@@ -196,6 +203,15 @@ public final class ShipAssembler {
             Vec3 local = ship.toPlot(e.position());
             if (plotBox.contains(local)) {
                 out.add(new Passenger(e, DisassemblyMath.target(local, helmPlotPos, goal, turns)));
+            }
+        }
+        // A rider whose vehicle lives inside the plot (a retained seat, plot coordinates): its deck position is the
+        // vehicle's plot position. Riders of world-space vehicles stay skipped (they move with their vehicle).
+        for (Entity e : ship.level().getEntities((Entity) null, ship.worldBounds().inflate(1, 3, 1),
+                e -> !e.isSpectator() && e.isPassenger())) {
+            Entity vehicle = e.getVehicle();
+            if (vehicle != null && plotBox.contains(vehicle.position())) {
+                out.add(new Passenger(e, DisassemblyMath.target(vehicle.position(), helmPlotPos, goal, turns)));
             }
         }
         return out;

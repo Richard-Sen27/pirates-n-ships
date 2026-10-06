@@ -150,20 +150,47 @@ disassembles** (spike-1 refusals unchanged). On land, plain use still assembles.
 1. Furl the sails, wait until the ship lies still, put the rudder hard over.
 - Expected: the ship does not turn (the rudder needs speed). It may creep by a fraction of a degree while it settles.
 
-### 4. Drop the anchor under sail
-1. Full sail, ship moving. Use the capstan.
-- Expected: action bar "Anchor dropping to the ground N blocks below, holds in 2.0 s". F3 on the capstan:
-  `anchor=dropping`, then `anchor=holding`. The ship slows within ~2 s and stops within about 2-3 blocks (rode slack 2
-  blocks) of the point below the capstan, then swings round so the capstan points into the wind (a bow capstan turns
-  the bow to the wind; a stern capstan keeps the stern to the wind). `/pirates ship forces`: "anchor holding, hold
-  1.00, x blocks from the anchor point" with x below ~3.
-2. Use the capstan again.
-- Expected: "Raising the anchor, stowed in 5.0 s", `anchor=raising`, the ship starts moving while the hold ramps out,
-  `anchor=raised` after 5 s. Use it mid-way to drop again: it reverses from where it was.
+### 4. The anchor: stowed, dropped, raised (visible anchor, F4)
+The anchor is now an object of its own. Placeholder look: a dark iron anchor about two blocks tall (ring, stock,
+shank, two arms with flukes) and a chain drawn with the vanilla chain texture. Placeholder sounds: vanilla chain
+steps (running chain), the heavy splash (entering the water) and stone breaking (landing). Keep subtitles on
+(Options > Accessibility) to tell them apart.
 
-### 5. Deep water
-1. Sail (or `/tp`) over water deeper than 32 blocks below the capstan and use it.
-- Expected: "No ground within 32 blocks below: the anchor would not hold". Nothing changes.
+1. Look at the ship from the deck and from a boat beside it, before using the capstan.
+- Expected: the anchor hangs **outside the hull** next to the capstan, on the nearer side across the ship (starboard
+  on a tie), its ring just below deck level, arms along the ship's length, flat against the planks. It moves, heels
+  and turns with the ship without lagging or jittering. Breaking the capstan makes it disappear; placing a capstan
+  again brings it back within a moment.
+2. Full sail, ship moving. Use the capstan.
+- Expected: action bar "Anchor dropping to the ground N blocks below, holds in X s", with X = N / 6 blocks per
+  second (at least 1 s). The anchor leaves the hull and runs straight down with a chain from the hull side to its
+  ring, the chain rattling all the way. When it enters the water: a splash sound and a ring of splash particles
+  (bubbles below). When it hits the sea floor: a dull thud, a puff of floor particles, and the rattling stops. The
+  ship slows while the chain runs out and holds fully on the tick the anchor lands (F3 on the capstan:
+  `anchor=dropping`, then `anchor=holding` at the moment of the thud). It stops within about 2-3 blocks of the
+  anchor point and swings round. `/pirates ship forces`: "anchor holding, hold 1.00".
+- Check from a boat or swimming next to the ship: the chain stays attached to the hull side while the ship swings,
+  and runs diagonally down to the anchor on the floor.
+3. Use the capstan again.
+- Expected: "Raising the anchor, stowed in X s" (N / 2.5 blocks per second). The chain rattles, the anchor rises
+  along the chain, splashes out of the water, and settles back into its place at the hull side; `anchor=raised` at
+  that moment. Use it mid-way to drop again: the anchor turns round where it is and runs down again.
+4. Tell us: does the anchor look like an anchor from the deck, is two blocks the right size, does it clip into the
+  hull (a hull that is wider below the deck than at the deck edge will clip), are the sounds too loud or too
+  frequent (`anchor_chain.chain_volume`, `splash_volume`, `thud_volume`), are the speeds right
+  (`anchor_chain.drop_speed` 6, `raise_speed` 2.5 blocks per second)?
+
+### 5. Deep water and relog
+1. Sail (or `/tp`) over water deeper than 32 blocks below the hull side and use the capstan.
+- Expected: "No ground within 32 blocks below: the anchor would not hold". The anchor stays hanging at the hull side,
+  nothing runs out, no sound.
+2. Drop the anchor in water about 20 blocks deep and, while it is still running out, save and quit, then rejoin.
+- Expected: the anchor is back on its chain where it was (or a little further) and finishes the drop; the ship holds
+  when it lands. Repeat with the anchor holding: after the relog it lies on the floor, chain to the hull, the ship
+  still held. Raise it: it comes back and is stowed at the hull side.
+3. Drop the anchor, then sail away from the area (far enough for the ship to unload) and come back, or relog far
+  away and fly back. Expected: no anchor left behind in the water without its ship; with the ship back, the anchor
+  is on its chain again.
 
 ### 6. Disassemble with sneak-use
 1. Furl, wait until still, plain-use the helm: it only steers. Sneak-use with a stick in hand: it steers too. Sneak-use

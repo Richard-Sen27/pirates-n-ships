@@ -53,12 +53,14 @@ public final class SailingModule implements ModModule {
     @Override
     public void registerConfig() {
         SailingConfig.init();
+        com.richardsenger.piratesnships.sailing.anchor.AnchorConfig.init(); // visible anchor (F4)
     }
 
     @Override
     public void registerContent() {
         SailingBlocks.init();
         ShipForces.register();
+        com.richardsenger.piratesnships.sailing.anchor.AnchorContent.init(); // visible anchor (F4)
     }
 
     @Override
@@ -77,10 +79,12 @@ public final class SailingModule implements ModModule {
         SableShips.onPhysicsTick(SailingRuntimes::onPhysicsTick);
         ShipBlockChanges.register(SailingRuntimes::onBlockChanged);
         HelmBlock.setSteeringHandler(ShipControls::steer);
+        com.richardsenger.piratesnships.sailing.anchor.AnchorEntities.registerEvents(); // visible anchor (F4)
     }
 
     @Override
     public void gatherData(DataContributions data) {
+        com.richardsenger.piratesnships.sailing.anchor.AnchorData.gather(data); // visible anchor (F4)
         data.lang(lang -> {
             lang.block(SailingBlocks.SMALL_SQUARE_SAIL, "Small Square Sail")
                     .block(SailingBlocks.LARGE_SQUARE_SAIL, "Large Square Sail")
@@ -193,6 +197,7 @@ public final class SailingModule implements ModModule {
     @Override
     public void initClient() {
         com.richardsenger.piratesnships.sailing.client.SailingClient.init();
+        com.richardsenger.piratesnships.sailing.anchor.client.AnchorClient.init(); // visible anchor (F4)
     }
 
     @Override

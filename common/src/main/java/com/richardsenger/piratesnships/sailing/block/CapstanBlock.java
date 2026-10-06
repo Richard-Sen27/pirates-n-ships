@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.sailing.block;
 
+import com.richardsenger.piratesnships.sailing.anchor.AnchorEntities;
 import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import com.richardsenger.piratesnships.sailing.ship.ShipControls;
 import java.util.Locale;
@@ -18,7 +19,8 @@ import net.minecraft.world.phys.BlockHitResult;
 /**
  * The capstan (docs/design.md §5.3, §6): on an assembled ship, using it drops the ship's anchor, and using it again
  * raises it. The anchor state lives with the ship (see {@code ShipControls}); {@link #ANCHOR} only shows its phase and
- * is set by the runtime.
+ * is set by the runtime. Placing and removing it tells {@code sailing.anchor.AnchorEntities}, which shows the anchor
+ * as an entity at the hull side.
  */
 public class CapstanBlock extends Block {
 
@@ -54,5 +56,21 @@ public class CapstanBlock extends Block {
             player.displayClientMessage(ShipControls.useCapstan(serverLevel, pos), true);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+        if (level instanceof ServerLevel serverLevel && !oldState.is(this)) {
+            AnchorEntities.capstanPlaced(serverLevel, pos); // a capstan on a ship gets its visible anchor
+        }
+    }
+
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (level instanceof ServerLevel serverLevel && !newState.is(this)) {
+            AnchorEntities.capstanRemoved(serverLevel, pos); // the anchor goes with its capstan
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 }

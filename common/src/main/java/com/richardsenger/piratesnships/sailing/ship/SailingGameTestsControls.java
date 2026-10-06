@@ -6,6 +6,10 @@ import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
 import com.richardsenger.piratesnships.sailing.SailingConfig;
+import com.richardsenger.piratesnships.sailing.anchor.AnchorConfig;
+import com.richardsenger.piratesnships.sailing.anchor.AnchorEntities;
+import com.richardsenger.piratesnships.sailing.anchor.AnchorEntity;
+import com.richardsenger.piratesnships.sailing.anchor.AnchorTravel;
 import com.richardsenger.piratesnships.sailing.block.CapstanBlock;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
 import com.richardsenger.piratesnships.sailing.force.AnchorState;
@@ -16,6 +20,7 @@ import com.richardsenger.piratesnships.sailing.wind.WindSample;
 import com.richardsenger.piratesnships.sailing.wind.WindService;
 import com.richardsenger.piratesnships.ship.assembly.HelmBlock;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
+import com.richardsenger.piratesnships.ship.sable.ShipEntities;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import java.util.Collection;
 import net.minecraft.core.BlockPos;
@@ -30,6 +35,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -300,8 +306,9 @@ public final class SailingGameTestsControls {
     }
 
     /** Drop takes anchor_drop_ticks, using the capstan mid-way reverses the ramp, the capstan shows the phase. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300)
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = "pirates_n_ships_config_sailing_anchor_fixed_times")
     public static void anchorStateMachineTimingAndReversal(GameTestHelper h) {
+        ConfigOverrides.during(h, AnchorConfig.DEPTH_TRAVEL, false);
         ConfigOverrides.during(h, SailingConfig.ANCHOR_DROP_TICKS, 40);
         ConfigOverrides.during(h, SailingConfig.ANCHOR_RAISE_TICKS, 100);
         SailingGameTestsShips.basin(h, true);
@@ -353,7 +360,7 @@ public final class SailingGameTestsControls {
     }
 
     /** A chain shorter than the depth: the drop is refused with a message and no anchor is out. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100)
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = "pirates_n_ships_config_sailing_anchor_no_ground")
     public static void capstanWithoutGroundInReachDoesNotHold(GameTestHelper h) {
         ConfigOverrides.during(h, SailingConfig.ANCHOR_CHAIN_LENGTH, 3);
         SailingGameTestsShips.basin(h, true);
@@ -363,6 +370,10 @@ public final class SailingGameTestsControls {
             Component c = ShipControls.useCapstan(h.getLevel(), capstan);
             h.assertTrue(key(c).equals(ShipControls.KEY_NO_GROUND), "expected 'no ground', got " + c.getString());
             h.assertTrue(f.runtime().anchor() == null && shown(h, capstan) == CapstanBlock.Phase.RAISED, "anchor out without ground");
+        });
+        h.runAfterDelay(6, () -> {
+            AnchorEntity e = AnchorEntities.of(h.getLevel(), f.ship().id());
+            h.assertTrue(e != null && !e.isOut(), "expected only the stowed anchor, got " + e);
             h.succeed();
         });
     }
@@ -384,6 +395,191 @@ public final class SailingGameTestsControls {
             h.assertTrue(fresh != null && fresh != f.runtime(), "no fresh runtime");
             h.assertTrue(fresh.rudderStep() == -2, "rudder lost: " + fresh.rudderStep());
             h.assertTrue(before != null && before.equals(fresh.anchor()), "anchor lost: " + before + " vs " + fresh.anchor());
+            h.succeed();
+        });
+    }
+
+    // ------------------------------------------------------------------ visible anchor (F4)
+
+    private static AnchorEntity anchorEntity(GameTestHelper h, Fixture f) {
+        AnchorEntity e = AnchorEntities.of(h.getLevel(), f.ship().id());
+        h.assertTrue(e != null && !e.isRemoved(), "no anchor entity");
+        return e;
+    }
+
+    private static boolean inPlot(AnchorEntity e, Fixture f) {
+        ShipBody s = ShipEntities.containing(e);
+        return s != null && s.id().equals(f.ship().id());
+    }
+
+    /** Pins the chain travel config: 6 blocks/s out, 2.5 in, no clamping in this basin. */
+    private static void pinTravel(GameTestHelper h) {
+        ConfigOverrides.during(h, AnchorConfig.DEPTH_TRAVEL, true);
+        ConfigOverrides.during(h, AnchorConfig.DROP_SPEED, 6.0);
+        ConfigOverrides.during(h, AnchorConfig.RAISE_SPEED, 2.5);
+        ConfigOverrides.during(h, AnchorConfig.MIN_TRAVEL_TICKS, 1);
+        ConfigOverrides.during(h, AnchorConfig.MAX_TRAVEL_TICKS, 400);
+    }
+
+    /** A ship with a capstan has one stowed anchor inside its plot, hanging in the first cell outside the hull. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100)
+    public static void stowedAnchorHangsInThePlotOutsideTheHull(GameTestHelper h) {
+        SailingGameTestsShips.basin(h, true);
+        Fixture f = SailingGameTestsShips.assemble(h, ship(h, SailTrim.FURLED, 0));
+        BlockPos capstan = find(f.ship(), SailingBlocks.CAPSTAN.get());
+        h.runAfterDelay(3, () -> {
+            AnchorEntity e = anchorEntity(h, f);
+            h.assertTrue(!e.isOut() && inPlot(e, f), "anchor not stowed in the plot: out=" + e.isOut() + " at " + e.position());
+            h.assertTrue(e.capstan().equals(capstan), "anchor of the wrong capstan: " + e.capstan());
+            // capstan (19, 9, 6) on the 5-wide hull x 17..21: both faces 3 cells away, so it hangs to starboard (west, bow south)
+            Vec3 hawse = e.hawse();
+            h.assertTrue(Math.abs(hawse.x - (capstan.getX() + 0.5 - 2.9)) < 1e-4 && Math.abs(hawse.z - (capstan.getZ() + 0.5)) < 1e-4
+                    && Math.abs(hawse.y - (capstan.getY() - 0.25)) < 1e-4, "hawse at " + hawse + " for capstan " + capstan);
+            BlockPos cell = BlockPos.containing(hawse.x, capstan.getY() - 1, hawse.z);
+            h.assertTrue(h.getLevel().getBlockState(cell).isAir() && !h.getLevel().getBlockState(cell.east()).isAir(),
+                    "anchor not in the first cell outside the hull: " + cell);
+            h.assertTrue(e.position().distanceTo(hawse.subtract(0, AnchorTravel.HEIGHT, 0)) < 1e-4, "anchor not hanging from the hawse: " + e.position());
+            h.succeed();
+        });
+    }
+
+    /**
+     * Dropping: the anchor leaves the plot, runs down at the chain speed and lands on the anchor point in the trip's
+     * time, and the ship holds from that tick on. Raising brings it back in the raise time and stows it in the plot.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = "pirates_n_ships_config_sailing_anchor_travel")
+    public static void anchorRunsOutLandsAndIsHeavedBackIn(GameTestHelper h) {
+        pinTravel(h);
+        SailingGameTestsShips.basin(h, true);
+        Fixture f = SailingGameTestsShips.assemble(h, ship(h, SailTrim.FURLED, 0));
+        BlockPos capstan = find(f.ship(), SailingBlocks.CAPSTAN.get());
+        long[] drop = {-1};
+        long[] raise = {-1};
+        ShipAnchor[] trip = new ShipAnchor[1];
+        h.onEachTick(() -> {
+            long t = h.getTick();
+            if (t == 3) {
+                Component c = ShipControls.useCapstan(h.getLevel(), capstan);
+                h.assertTrue(key(c).equals(ShipControls.KEY_DROPPING), "drop refused: " + c.getString());
+                trip[0] = f.runtime().anchor();
+                drop[0] = t;
+                double depth = AnchorTravel.distance(f.ship().toWorld(trip[0].hawse()).y, trip[0].point().y);
+                h.assertTrue(depth > 3.0 && trip[0].dropTicks() == AnchorTravel.ticks(depth, 6.0, 1, 400)
+                        && trip[0].raiseTicks() == AnchorTravel.ticks(depth, 2.5, 1, 400), "trip times " + trip[0] + " for depth " + depth);
+                return;
+            }
+            if (drop[0] < 0) {
+                return;
+            }
+            ShipAnchor a = f.runtime().anchor();
+            long dt = t - drop[0];
+            int dropTicks = trip[0].dropTicks();
+            if (raise[0] < 0 && dt >= 1 && dt < dropTicks) {
+                AnchorEntity e = anchorEntity(h, f);
+                h.assertTrue(e.isOut() && !inPlot(e, f), "dropping anchor still in the plot at dt " + dt);
+                h.assertTrue(a.state().phase() == AnchorState.Phase.DROPPING && e.getY() > a.point().y + 0.05,
+                        "landed early at dt " + dt + ": " + a + ", y " + e.getY());
+            }
+            if (raise[0] < 0 && dt >= dropTicks && dt <= dropTicks + 10) {
+                AnchorEntity e = anchorEntity(h, f);
+                h.assertTrue(a.state().phase() == AnchorState.Phase.HOLDING && a.state().hold() == 1.0,
+                        "not holding at dt " + dt + " (drop " + dropTicks + " ticks): " + a);
+                h.assertTrue(e.position().distanceTo(a.point()) < 0.05, "anchor not on the point at dt " + dt + ": " + e.position() + " vs " + a.point());
+            }
+            if (raise[0] < 0 && dt == dropTicks + 10) {
+                ShipControls.useCapstan(h.getLevel(), capstan);
+                raise[0] = t;
+                return;
+            }
+            if (raise[0] >= 0) {
+                long rt = t - raise[0];
+                int raiseTicks = trip[0].raiseTicks();
+                if (rt >= 1 && rt < raiseTicks) {
+                    AnchorEntity e = anchorEntity(h, f);
+                    h.assertTrue(a != null && a.state().phase() == AnchorState.Phase.RAISING && e.isOut(), "not raising at rt " + rt + ": " + a);
+                }
+                if (rt == raiseTicks + 2) {
+                    AnchorEntity e = anchorEntity(h, f);
+                    h.assertTrue(a == null && !e.isOut() && inPlot(e, f), "not stowed " + rt + " ticks after raising: " + a);
+                    h.assertTrue(shown(h, capstan) == CapstanBlock.Phase.RAISED, "capstan not showing raised");
+                    h.succeed();
+                }
+            }
+        });
+    }
+
+    /** Breaking the capstan removes its anchor at once; a ship without a capstan has none. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100)
+    public static void breakingTheCapstanRemovesTheAnchor(GameTestHelper h) {
+        SailingGameTestsShips.basin(h, true);
+        Fixture f = SailingGameTestsShips.assemble(h, ship(h, SailTrim.FURLED, 0));
+        BlockPos capstan = find(f.ship(), SailingBlocks.CAPSTAN.get());
+        AnchorEntity[] stowed = new AnchorEntity[1];
+        h.runAfterDelay(3, () -> {
+            stowed[0] = anchorEntity(h, f);
+            h.getLevel().setBlock(capstan, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+            h.assertTrue(stowed[0].isRemoved(), "anchor still there after its capstan was broken");
+        });
+        h.runAfterDelay(8, () -> {
+            h.assertTrue(AnchorEntities.of(h.getLevel(), f.ship().id()) == null, "an anchor came back without a capstan");
+            h.succeed();
+        });
+    }
+
+    /** Removing the ship removes its anchor, stowed in the plot or out in the world. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100)
+    public static void removingTheShipRemovesTheAnchor(GameTestHelper h) {
+        SailingGameTestsShips.basin(h, true);
+        Fixture f = SailingGameTestsShips.assemble(h, ship(h, SailTrim.FURLED, 0));
+        Fixture g = SailingGameTestsShips.assemble(h, ship(h, 5, SailTrim.FURLED, 0, new BlockPos(7, 9, 6)));
+        AnchorEntity[] e = new AnchorEntity[2];
+        h.runAfterDelay(3, () -> {
+            ShipControls.useCapstan(h.getLevel(), find(g.ship(), SailingBlocks.CAPSTAN.get()));
+        });
+        h.runAfterDelay(8, () -> {
+            e[0] = anchorEntity(h, f);
+            e[1] = anchorEntity(h, g);
+            h.assertTrue(!e[0].isOut() && e[1].isOut(), "expected one stowed and one dropped anchor");
+            SableShips.remove(f.ship());
+            SableShips.remove(g.ship());
+        });
+        h.runAfterDelay(10, () -> {
+            h.assertTrue(e[0].isRemoved(), "stowed anchor outlived its ship");
+            h.assertTrue(e[1].isRemoved(), "dropped anchor outlived its ship");
+            h.succeed();
+        });
+    }
+
+    /** The anchor's trip and its entity come back after the runtime is rebuilt from storage and the entity was lost. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = "pirates_n_ships_config_sailing_anchor_reload")
+    public static void droppingAnchorSurvivesReload(GameTestHelper h) {
+        pinTravel(h);
+        SailingGameTestsShips.basin(h, true);
+        Fixture f = SailingGameTestsShips.assemble(h, ship(h, SailTrim.FURLED, 0));
+        BlockPos capstan = find(f.ship(), SailingBlocks.CAPSTAN.get());
+        ShipAnchor[] before = new ShipAnchor[1];
+        SailingRuntime[] fresh = new SailingRuntime[1];
+        h.runAfterDelay(3, () -> ShipControls.useCapstan(h.getLevel(), capstan));
+        h.runAfterDelay(9, () -> {
+            before[0] = f.runtime().anchor();
+            h.assertTrue(before[0] != null && before[0].state().phase() == AnchorState.Phase.DROPPING, "not dropping: " + before[0]);
+            anchorEntity(h, f).discard(); // as after an unload: the entity is never saved
+            SailingRuntimes.onShipRemoved(h.getLevel(), f.ship().id(), false);
+            ShipBody ship = SableShips.byId(h.getLevel(), f.ship().id());
+            fresh[0] = ship == null ? null : SailingRuntimes.getOrCreate(ship);
+            h.assertTrue(fresh[0] != null && fresh[0] != f.runtime(), "no fresh runtime");
+            h.assertTrue(before[0].equals(fresh[0].anchor()), "anchor lost: " + before[0] + " vs " + fresh[0].anchor());
+        });
+        h.runAfterDelay(11, () -> {
+            AnchorEntity e = anchorEntity(h, f);
+            ShipAnchor a = fresh[0].anchor();
+            Vec3 expected = AnchorEntities.position(f.ship().toWorld(a.hawse()), a);
+            h.assertTrue(e.isOut() && e.position().distanceTo(expected) < 1e-3, "anchor not restored on its chain: " + e.position() + " vs " + expected);
+        });
+        h.runAfterDelay(3 + 40, () -> {
+            ShipAnchor a = fresh[0].anchor();
+            h.assertTrue(a != null && a.state().phase() == AnchorState.Phase.HOLDING, "restored drop did not land: " + a);
+            h.assertTrue(anchorEntity(h, f).position().distanceTo(a.point()) < 0.05, "anchor not on the point");
             h.succeed();
         });
     }

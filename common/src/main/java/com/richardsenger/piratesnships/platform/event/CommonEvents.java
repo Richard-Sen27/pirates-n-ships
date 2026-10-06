@@ -14,6 +14,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +60,17 @@ public final class CommonEvents {
     public static final Event<PlayerEvent> PLAYER_LOGOUT = Event.create(ls -> p -> ls.forEach(l -> l.on(p)));
     /** A new player object replaces an old one (respawn or returning from the End). */
     public static final Event<PlayerClone> PLAYER_CLONE = Event.create(ls -> (o, n, d) -> ls.forEach(l -> l.onClone(o, n, d)));
+
+    /**
+     * Server only: a player opened a container menu ({@code ServerPlayer.openMenu} or a horse inventory), after the
+     * menu was created and set as {@code player.containerMenu}. Loot tables of the container are already unpacked.
+     */
+    public static final Event<ContainerMenuEvent> CONTAINER_OPEN = Event.create(ls -> (p, m) -> ls.forEach(l -> l.on(p, m)));
+    /**
+     * Server only: a player's container menu was closed (by the player, by the server, or on logout), after
+     * {@code menu.removed(player)} returned. The menu's slots still reflect the container's final contents.
+     */
+    public static final Event<ContainerMenuEvent> CONTAINER_CLOSE = Event.create(ls -> (p, m) -> ls.forEach(l -> l.on(p, m)));
 
     // --- Entities ---------------------------------------------------------------------------------------------
 
@@ -110,6 +122,7 @@ public final class CommonEvents {
     @FunctionalInterface public interface LevelTick { void onTick(ServerLevel level); }
     @FunctionalInterface public interface PlayerTick { void onTick(Player player); }
     @FunctionalInterface public interface PlayerEvent { void on(ServerPlayer player); }
+    @FunctionalInterface public interface ContainerMenuEvent { void on(Player player, AbstractContainerMenu menu); }
     @FunctionalInterface public interface PlayerClone { void onClone(ServerPlayer oldPlayer, ServerPlayer newPlayer, boolean wasDeath); }
     @FunctionalInterface public interface EntityJoinLevel { boolean onJoin(Entity entity, Level level); }
     /** Returns the new damage amount; a result {@code <= 0} cancels the damage. */

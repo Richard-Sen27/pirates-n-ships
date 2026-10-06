@@ -64,7 +64,7 @@ public final class SailingConfig {
             "Hulls resist sideways motion in water (needed to sail across or against the wind)");
     public static final ConfigValue<Double> KEEL_LONGITUDINAL_DRAG = SAILING.doubleRange("keel_longitudinal_drag", S.keelLongitudinalDrag(), 0.0, 10.0,
             "Extra water drag along the hull, per second (fraction of speed lost per second)");
-    public static final ConfigValue<Double> KEEL_LATERAL_DRAG = SAILING.doubleRange("keel_lateral_drag", 8.0, 0.0, 50.0, // spike 3: 2.0 let a beam reach drift at 0.7 m/s
+    public static final ConfigValue<Double> KEEL_LATERAL_DRAG = SAILING.doubleRange("keel_lateral_drag", S.keelLateralDrag(), 0.0, 50.0,
             "Extra water drag across the hull, per second");
     public static final ConfigValue<Double> KEEL_YAW_DRAG = SAILING.doubleRange("keel_yaw_drag", S.keelYawDragFactor(), 0.0, 10.0,
             "Multiplier on the turning resistance the keel causes");

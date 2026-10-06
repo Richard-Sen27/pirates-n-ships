@@ -21,6 +21,9 @@ public final class SailingBlocks {
     public static final RegistryEntry<Block, SailWinchBlock> SAIL_WINCH = ModRegistry.blockWithItem("sail_winch",
             () -> new SailWinchBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0f, 3.0f)
                     .sound(SoundType.WOOD).ignitedByLava()));
+    public static final RegistryEntry<Block, CapstanBlock> CAPSTAN = ModRegistry.blockWithItem("capstan",
+            () -> new CapstanBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.5f, 3.0f)
+                    .sound(SoundType.WOOD).ignitedByLava()));
 
     private SailingBlocks() {
     }

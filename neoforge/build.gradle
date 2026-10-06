@@ -46,6 +46,15 @@ neoForge {
     }
 }
 
+// Every GameTest run starts from a fresh test world, as on CI. The world (with its serverconfig/) used to outlive
+// runs, so a changed config default never reached the tests on a machine that had run them before, and ships of
+// failed tests stayed in it.
+tasks.matching { it.name == 'runGameTestServer' }.configureEach {
+    doFirst {
+        project.delete(project.file('build/gametest/world'))
+    }
+}
+
 dependencies {
     // Sable (hard dependency). Its published runtime variant also lists Create, Ponder, Flywheel and
     // Registrate, which Sable only uses for optional compat. We have no Create dependency, so exclude them.

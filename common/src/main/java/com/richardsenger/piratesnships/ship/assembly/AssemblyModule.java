@@ -68,6 +68,7 @@ public final class AssemblyModule implements ModModule {
             lang.add(Outcome.OBSTRUCTED.key(), "Something is in the way at %s %s %s");
             lang.add(Outcome.OUT_OF_WORLD.key(), "The ship would end up outside the world at %s %s %s");
             lang.add(Outcome.NO_SHIP.key(), "This helm is not part of an assembled ship");
+            lang.add(HelmBlock.KEY_DISASSEMBLE_HINT, "Sneak-use the helm with an empty hand to disassemble the ship");
             lang.add(Outcome.FAILED.key(), "Assembly failed, see the server log");
         });
         data.models(m -> {

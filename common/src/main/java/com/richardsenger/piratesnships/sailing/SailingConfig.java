@@ -94,6 +94,14 @@ public final class SailingConfig {
             "How often loaded ships without a sailing state are looked for, in ticks");
     public static final ConfigValue<Boolean> SAIL_BLOCK_TRIM = SHIPS.bool("sail_block_trim", true,
             "Using a sail block cycles its own trim (furled, half, full) without the winch");
+    public static final ConfigValue<Boolean> STEERING_ENABLED = SHIPS.bool("steering_enabled", true,
+            "Using the helm of an assembled ship turns its rudder, and the rudder turns the ship. Off: the rudder has no effect");
+    public static final ConfigValue<Integer> RUDDER_STEPS = SHIPS.intRange("rudder_steps", 3, 1, 5,
+            "Rudder steps on each side of midships; the last step is max_rudder_angle");
+    public static final ConfigValue<Boolean> ANCHOR_ENABLED = SHIPS.bool("anchor_enabled", true,
+            "The capstan drops and raises an anchor that holds the ship. Off: capstans do nothing and dropped anchors stop holding");
+    public static final ConfigValue<Integer> ANCHOR_CHAIN_LENGTH = SHIPS.intRange("anchor_chain_length", 32, 1, 256,
+            "How far below the capstan, in blocks, the anchor can reach the ground. Deeper water: the anchor can't be dropped");
 
     private SailingConfig() {
     }

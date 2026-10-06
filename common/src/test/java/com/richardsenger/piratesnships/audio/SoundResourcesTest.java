@@ -63,7 +63,9 @@ class SoundResourcesTest {
     void soundsJsonHasEveryModulesEntries() throws IOException {
         JsonObject root = soundsJson();
         for (String key : List.of("ship.creak", "anchor.chain", "anchor.splash", "anchor.thud", "music.sea", "music.shanty",
-                "combat.pistol_shot", "combat.pistol_empty", "combat.cannon_shot", "combat.cannon_volley")) {
+                "combat.pistol_shot", "combat.pistol_empty", "combat.cannon_shot", "combat.cannon_volley",
+                "combat.melee.swing", "combat.melee.parry", "combat.melee.hit_armor", "combat.melee.hit_heavy",
+                "combat.melee.unsheathe", "combat.melee.disarm", "combat.melee.weapon_break")) {
             assertTrue(root.has(key), "sounds.json misses " + key + " (run ./gradlew :neoforge:runData)");
         }
         for (String music : List.of("music.sea", "music.shanty")) {
@@ -85,6 +87,28 @@ class SoundResourcesTest {
         }
         assertFalse(n == 0, "the manifest lists no sounds");
         assertTrue(missing.isEmpty(), "manifest targets not converted (run python3 tools/convert_sounds.py): " + missing);
+    }
+
+    /** Each manifest file is listed in sounds.json under the event the manifest names (variants share an event). */
+    @Test
+    void everyManifestFileBelongsToItsEvent() throws IOException {
+        JsonObject root = soundsJson();
+        JsonObject manifest = JsonParser.parseString(Files.readString(MANIFEST)).getAsJsonObject();
+        List<String> problems = new ArrayList<>();
+        for (JsonElement e : manifest.getAsJsonArray("sounds")) {
+            JsonObject m = e.getAsJsonObject();
+            String event = m.get("event").getAsString();
+            String target = m.get("target").getAsString();
+            String name = NS + ":" + target.substring(0, target.length() - ".ogg".length());
+            if (!root.has(event)) {
+                problems.add(target + ": event " + event + " is not in sounds.json");
+                continue;
+            }
+            JsonObject only = new JsonObject();
+            only.add(event, root.get(event));
+            if (!fileNames(only).contains(name)) problems.add(target + ": not a sound of " + event);
+        }
+        assertTrue(problems.isEmpty(), "manifest and sounds.json disagree: " + problems);
     }
 
     @Test

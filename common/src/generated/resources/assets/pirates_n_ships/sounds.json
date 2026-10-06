@@ -37,6 +37,53 @@
     ],
     "subtitle": "subtitles.pirates_n_ships.combat.cannon_volley"
   },
+  "combat.melee.disarm": {
+    "sounds": [
+      "pirates_n_ships:combat/melee/disarm"
+    ],
+    "subtitle": "subtitles.pirates_n_ships.combat.melee.disarm"
+  },
+  "combat.melee.hit_armor": {
+    "sounds": [
+      "pirates_n_ships:combat/melee/hit_armor"
+    ],
+    "subtitle": "subtitles.pirates_n_ships.combat.melee.hit_armor"
+  },
+  "combat.melee.hit_heavy": {
+    "sounds": [
+      "pirates_n_ships:combat/melee/hit_heavy1",
+      "pirates_n_ships:combat/melee/hit_heavy2",
+      "pirates_n_ships:combat/melee/hit_heavy3"
+    ],
+    "subtitle": "subtitles.pirates_n_ships.combat.melee.hit_heavy"
+  },
+  "combat.melee.parry": {
+    "sounds": [
+      "pirates_n_ships:combat/melee/parry"
+    ],
+    "subtitle": "subtitles.pirates_n_ships.combat.melee.parry"
+  },
+  "combat.melee.swing": {
+    "sounds": [
+      "pirates_n_ships:combat/melee/swing1",
+      "pirates_n_ships:combat/melee/swing2",
+      "pirates_n_ships:combat/melee/swing3",
+      "pirates_n_ships:combat/melee/swing4"
+    ],
+    "subtitle": "subtitles.pirates_n_ships.combat.melee.swing"
+  },
+  "combat.melee.unsheathe": {
+    "sounds": [
+      "pirates_n_ships:combat/melee/unsheathe"
+    ],
+    "subtitle": "subtitles.pirates_n_ships.combat.melee.unsheathe"
+  },
+  "combat.melee.weapon_break": {
+    "sounds": [
+      "pirates_n_ships:combat/melee/weapon_break"
+    ],
+    "subtitle": "subtitles.pirates_n_ships.combat.melee.weapon_break"
+  },
   "combat.pistol_empty": {
     "sounds": [
       "pirates_n_ships:combat/pistol_empty"

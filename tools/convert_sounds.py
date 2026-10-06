@@ -10,6 +10,10 @@ Output: common/src/main/resources/assets/pirates_n_ships/sounds/<target> for eve
 Music stays stereo, effects become mono (Minecraft plays only mono sounds positionally). Loudness is normalised
 with ffmpeg's loudnorm filter. A target newer than its source is skipped unless --force is given. docs/credits.md
 is always rewritten from the manifest, even when the raw files are missing.
+
+Manifest entry fields: source (path relative to RAW_DIR, subfolders allowed), target (path under sounds/), kind
+(music or effect), event (the sound event the file belongs to; several entries may share one event as variants),
+title, author, url, license, and optionally collection (a Pixabay collection or album page, listed in the credits).
 """
 import argparse
 import json
@@ -31,7 +35,7 @@ MUSIC_LUFS = -18.0  # integrated loudness target of music
 EFFECT_LUFS = -16.0  # integrated loudness target of sound effects
 TRUE_PEAK = -1.5  # dBTP ceiling of loudnorm
 KINDS = ("music", "effect")
-FIELDS = ("source", "target", "kind", "title", "author", "url", "license")
+FIELDS = ("source", "target", "kind", "event", "title", "author", "url", "license")
 
 
 def find_tool(name):
@@ -121,6 +125,13 @@ def write_credits(entries):
         if not rows:
             continue
         lines += [f"## {heading}", "", "| Title | Author | Source | File in the mod |", "|---|---|---|---|", *rows, ""]
+        collections = []
+        for e in entries:
+            c = e.get("collection")
+            if e["kind"] == kind and c and (e["author"], c) not in collections:
+                collections.append((e["author"], c))
+        if collections:
+            lines += ["Collections: " + ", ".join(f"[{author}]({c})" for author, c in collections), ""]
     CREDITS.write_text("\n".join(lines), encoding="utf-8")
     print(f"wrote    {CREDITS.relative_to(ROOT)}")
 

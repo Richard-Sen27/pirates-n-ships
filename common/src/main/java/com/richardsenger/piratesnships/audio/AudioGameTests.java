@@ -62,9 +62,10 @@ public final class AudioGameTests {
     /** The G1 sound events (music pools, combat, anchor) are registered and listed in the shared sounds.json. */
     @ModGameTest
     public static void sharedSoundEventsAreRegisteredAndDefined(GameTestHelper h) {
-        List<RegistryEntry<SoundEvent, SoundEvent>> events = List.of(AudioSounds.MUSIC_SEA, AudioSounds.MUSIC_SHANTY,
-                CombatSounds.PISTOL_SHOT, CombatSounds.PISTOL_EMPTY, CombatSounds.CANNON_SHOT, CombatSounds.CANNON_VOLLEY,
-                AnchorContent.CHAIN, AnchorContent.SPLASH, AnchorContent.THUD);
+        List<RegistryEntry<SoundEvent, SoundEvent>> events = new java.util.ArrayList<>(List.of(AudioSounds.MUSIC_SEA,
+                AudioSounds.MUSIC_SHANTY, AnchorContent.CHAIN, AnchorContent.SPLASH, AnchorContent.THUD));
+        CombatSounds.ALL.forEach(d -> events.add(d.event()));
+        h.assertTrue(events.size() == 16, "expected 16 shared sound events, got " + events.size());
         try (InputStream in = AudioGameTests.class.getResourceAsStream("/assets/pirates_n_ships/sounds.json")) {
             h.assertTrue(in != null, "assets/pirates_n_ships/sounds.json is missing (run ./gradlew :neoforge:runData)");
             JsonObject root = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
@@ -78,6 +79,8 @@ public final class AudioGameTests {
             h.assertTrue("subtitles.pirates_n_ships.combat.pistol_shot".equals(pistol.get("subtitle").getAsString()),
                     "combat.pistol_shot has the wrong subtitle");
             h.assertTrue(!root.getAsJsonObject(AudioSounds.MUSIC_SEA.id().getPath()).has("subtitle"), "music has no subtitle");
+            h.assertTrue(root.getAsJsonObject(CombatSounds.MELEE_SWING.id().getPath()).getAsJsonArray("sounds").size() == 4,
+                    "combat.melee.swing should have four variants");
         } catch (java.io.IOException ex) {
             throw new AssertionError("could not read sounds.json", ex);
         }

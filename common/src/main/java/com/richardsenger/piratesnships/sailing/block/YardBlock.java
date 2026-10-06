@@ -38,6 +38,11 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Placed, a yard runs across the player's view; placed against the end of a yard, it continues that yard. Every
  * yard block has a {@link YardBlockEntity}; the head's carries the cloth geometry for the renderer.
+ *
+ * <p>Model: hand-made in Blockbench ({@code art/models/yard.bbmodel}, design.md §4.8), a chamfered spar along x on the
+ * 6 px collision beam, with a rope band between two iron hoops in the middle and an iron jackstay on top (up to 1.8 px
+ * above the beam); {@code axis=z} turns it by 90°. The model never shows {@link #TRIM}: the cloth is drawn by
+ * {@code YardClothRenderer}.
  */
 public class YardBlock extends Block implements EntityBlock {
 

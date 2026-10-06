@@ -10,6 +10,7 @@ import com.richardsenger.piratesnships.ship.hull.HullAnalysis;
 import com.richardsenger.piratesnships.ship.hull.HullAnalyzer;
 import com.richardsenger.piratesnships.ship.hull.HullGrid;
 import com.richardsenger.piratesnships.ship.hull.HullVec;
+import com.richardsenger.piratesnships.ship.hull.PartialCellRule;
 import com.richardsenger.piratesnships.ship.hull.flooding.FloodReport;
 import com.richardsenger.piratesnships.ship.hull.flooding.FloodSimulation;
 import com.richardsenger.piratesnships.ship.hull.flooding.FloodTickInput;
@@ -20,6 +21,7 @@ import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.ship.sable.WaterRegions;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -67,6 +69,9 @@ public final class HullRuntime {
 
     private final List<WaterRegions.Handle> regions = new ArrayList<>();
     private List<CellSet> regionCells = List.of();
+    /** Partial-block candidates of the current analysis ({@link PartialCellRule}), computed once per analysis. */
+    private PartialCellRule partials = PartialCellRule.NONE;
+    private boolean partialsEnabled = true;
     private int[] floodedCounts = new int[0];
     private boolean regionsDirty = true;
     private long lastRegionBuild = Long.MIN_VALUE / 2;
@@ -98,6 +103,7 @@ public final class HullRuntime {
             state.applyWater(rt.sim);
         }
         rt.probes = SeaLevel.probes(rt.sim.analysis().grid());
+        rt.partials = PartialCellRule.of(rt.sim.analysis());
         rt.sampleSea(ship);
         return rt;
     }
@@ -116,6 +122,16 @@ public final class HullRuntime {
 
     public List<CellSet> regionCells() {
         return regionCells;
+    }
+
+    /** Whether a plot cell is in one of the ship's dry regions (server view). */
+    public boolean inRegion(BlockPos plot) {
+        for (CellSet s : regionCells) {
+            if (s.contains(plot.getX(), plot.getY(), plot.getZ())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     List<WaterRegions.Handle> regionHandles() {
@@ -196,6 +212,7 @@ public final class HullRuntime {
         }
         double lost = sim.rebind(next);
         probes = SeaLevel.probes(next.grid());
+        partials = PartialCellRule.of(next);
         HullGrid g = next.grid();
         for (long[] t : togglesSinceSnapshot) {
             BlockPos p = BlockPos.of(t[0]);
@@ -317,6 +334,8 @@ public final class HullRuntime {
     void onBlockChanged(BlockPos pos, BlockState oldState, BlockState newState) {
         CellKind oldKind = HullBlockClassifier.classify(oldState, level, pos);
         CellKind newKind = HullBlockClassifier.classify(newState, level, pos);
+        boolean shapeChanged = HullBlockClassifier.uncoveredFaces(oldState, level, pos, oldKind)
+                != HullBlockClassifier.uncoveredFaces(newState, level, pos, newKind);
         HullGrid g = sim.analysis().grid();
         int x = pos.getX() - g.originX(), y = pos.getY() - g.originY(), z = pos.getZ() - g.originZ();
         boolean inGrid = g.inBounds(x, y, z);
@@ -331,7 +350,7 @@ public final class HullRuntime {
             saveDirty = true;
             debouncer.markDirty();
         }
-        if (oldKind != newKind || !inGrid) {
+        if (oldKind != newKind || shapeChanged || !inGrid) {
             debouncer.markDirty();
         }
     }
@@ -351,6 +370,11 @@ public final class HullRuntime {
                 regionsDirty = true;
             }
         }
+        boolean partialsNow = DryHullConfig.PARTIAL_BLOCKS.get();
+        if (partialsNow != partialsEnabled) {
+            partialsEnabled = partialsNow;
+            regionsDirty = true;
+        }
         if (!regionsDirty || ticks - lastRegionBuild < DryHullConfig.REGION_REBUILD_TICKS.get()) {
             return;
         }
@@ -359,8 +383,18 @@ public final class HullRuntime {
         List<CellSet> cells = new ArrayList<>();
         if (DryHullConfig.ENABLED.get()) {
             HullGrid g = sim.analysis().grid();
+            List<BitSet> dry = new ArrayList<>(n);
             for (Compartment c : sim.analysis().compartments()) {
-                CellSet s = CellSet.fromGrid(g, sim.dryCells(c.id()));
+                dry.add(sim.dryCells(c.id()));
+            }
+            // watertight partial blocks whose empty part faces only dry cells are drawn dry too (design.md §4.3)
+            BitSet[] extra = partialsEnabled && partials.candidateCount() > 0 ? partials.additions(dry) : null;
+            for (Compartment c : sim.analysis().compartments()) {
+                BitSet d = dry.get(c.id());
+                if (extra != null && !d.isEmpty()) {
+                    d.or(extra[c.id()]);
+                }
+                CellSet s = CellSet.fromGrid(g, d);
                 if (!s.isEmpty()) {
                     cells.add(s);
                 }

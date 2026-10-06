@@ -1,8 +1,11 @@
 package com.richardsenger.piratesnships.ship.hull.world;
 
+import com.richardsenger.piratesnships.ship.hull.CellFaces;
 import com.richardsenger.piratesnships.ship.hull.CellKind;
 import com.richardsenger.piratesnships.ship.hull.HullTags;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
@@ -56,6 +59,41 @@ public final class HullBlockClassifier {
         }
         if (block instanceof LiquidBlock || state.canBeReplaced()) return CellKind.AIR;
         return Block.isShapeFullBlock(state.getCollisionShape(level, pos)) ? CellKind.SOLID : CellKind.AIR;
+    }
+
+    /**
+     * The {@link CellFaces} mask of the faces of a solid or opening cell that its block does not fully cover; 0 for a
+     * full block and for air cells. A non-zero mask makes the cell a <em>partial</em> cell ({@code HullGrid#isPartial}).
+     * Solid cells use their collision shape. Openings use the union over both open states (a toggle never triggers a
+     * re-analysis, so the mask must hold for either state).
+     */
+    public static int uncoveredFaces(BlockState state, BlockGetter level, BlockPos pos, CellKind kind) {
+        if (kind == CellKind.SOLID) {
+            return uncoveredFaces(state.getCollisionShape(level, pos));
+        }
+        if (kind == CellKind.OPENING) {
+            int mask = uncoveredFaces(state.getCollisionShape(level, pos));
+            if (state.hasProperty(BlockStateProperties.OPEN)) {
+                BlockState other = state.setValue(BlockStateProperties.OPEN, !state.getValue(BlockStateProperties.OPEN));
+                mask |= uncoveredFaces(other.getCollisionShape(level, pos));
+            }
+            return mask;
+        }
+        return 0;
+    }
+
+    /** The {@link CellFaces} mask of the cube faces {@code shape} does not fully cover (0 for a full cube). */
+    public static int uncoveredFaces(VoxelShape shape) {
+        if (Block.isShapeFullBlock(shape)) {
+            return 0;
+        }
+        int mask = 0;
+        for (Direction d : Direction.values()) {
+            if (!Block.isFaceFull(shape, d)) {
+                mask |= CellFaces.bit(d.get3DDataValue());
+            }
+        }
+        return mask;
     }
 
     /** Whether an opening block is open (only meaningful when {@link #classify} returned OPENING). */

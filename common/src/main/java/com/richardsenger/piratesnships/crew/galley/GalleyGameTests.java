@@ -20,7 +20,6 @@ import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -58,17 +57,18 @@ public final class GalleyGameTests {
     // --- pantry -------------------------------------------------------------------------------------------------
 
     @ModGameTest
-    @SuppressWarnings("removal") // vanilla's mock server player; the replacement is NeoForge-only
     public static void pantryOpensAndKeepsItemsThroughReload(GameTestHelper helper) {
         PantryBlockEntity pantry = pantry(helper, P);
         pantry.setItem(0, new ItemStack(Items.BREAD, 7));
         pantry.setItem(5, new ItemStack(CrewContent.HARDTACK.get(), 3));
         pantry.setItem(9, new ItemStack(Items.GLASS_BOTTLE, 2));
-        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        // a mock server player would join the player list, which Sable's login sync rejects in a test server;
+        // so: use the block with a mock player (openMenu is a no-op there) and check the menu the pantry provides
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
         helper.useBlock(P, player);
-        helper.assertTrue(player.containerMenu instanceof ChestMenu menu && menu.getContainer() == pantry, "pantry did not open a chest menu");
-        player.closeContainer();
-        helper.getLevel().getServer().getPlayerList().remove(player);
+        helper.assertTrue(pantry.canOpen(player), "pantry should open");
+        helper.assertTrue(pantry.createMenu(1, player.getInventory(), player) instanceof ChestMenu menu
+                && menu.getContainer() == pantry && menu.getRowCount() == 3, "pantry should provide a 3-row chest menu on itself");
 
         ProvisionSettings s = ProvisionsConfig.settings();
         long now = helper.getLevel().getGameTime();
@@ -87,7 +87,7 @@ public final class GalleyGameTests {
         PantryBlockEntity pantry = pantry(helper, P);
         pantry.setItem(0, new ItemStack(Items.BREAD, 20));
         pantry.setItem(1, new ItemStack(Items.COBBLESTONE, 5));
-        helper.destroyBlock(P);
+        destroyWithDrops(helper, P);
         helper.assertValueEqual(droppedCount(helper, Items.BREAD), 20, "bread dropped");
         helper.assertValueEqual(droppedCount(helper, Items.COBBLESTONE), 5, "cobblestone dropped");
         helper.assertValueEqual(droppedCount(helper, CrewContent.PANTRY.get().asItem()), 1, "pantry dropped");
@@ -223,7 +223,7 @@ public final class GalleyGameTests {
         helper.setBlock(P, CrewContent.WATER_BARREL.get());
         WaterBarrelBlockEntity barrel = (WaterBarrelBlockEntity) helper.getBlockEntity(P);
         barrel.setRations(5, s);
-        helper.destroyBlock(P);
+        destroyWithDrops(helper, P);
         List<ItemEntity> drops = helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(P)).inflate(2));
         helper.assertTrue(drops.size() == 1 && drops.getFirst().getItem().is(CrewContent.WATER_BARREL.get().asItem()), "should drop the barrel, dropped " + drops);
         ItemStack item = drops.getFirst().getItem();
@@ -336,6 +336,11 @@ public final class GalleyGameTests {
         List<BlockPos> positions = List.of(helper.absolutePos(new BlockPos(1, 1, 1)), helper.absolutePos(new BlockPos(3, 1, 1)),
                 helper.absolutePos(new BlockPos(5, 1, 1)));
         return new Setup(a, b, barrel, positions);
+    }
+
+    /** {@code GameTestHelper.destroyBlock} drops nothing; this breaks the block like a player without a tool. */
+    private static void destroyWithDrops(GameTestHelper helper, BlockPos pos) {
+        helper.getLevel().destroyBlock(helper.absolutePos(pos), true);
     }
 
     private static int rumEaten(ShipProvisions.Result r) {

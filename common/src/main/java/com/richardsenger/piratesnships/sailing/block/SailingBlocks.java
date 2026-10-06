@@ -33,7 +33,7 @@ public final class SailingBlocks {
     public static final RegistryEntry<Block, SailBlock> FORE_AND_AFT_SAIL = sail("fore_and_aft_sail", SailTypes.FORE_AND_AFT);
     public static final RegistryEntry<Block, SailWinchBlock> SAIL_WINCH = ModRegistry.blockWithItem("sail_winch",
             () -> new SailWinchBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0f, 3.0f)
-                    .sound(SoundType.WOOD).ignitedByLava()));
+                    .sound(SoundType.WOOD).noOcclusion().ignitedByLava()));
     public static final RegistryEntry<Block, CapstanBlock> CAPSTAN = ModRegistry.blockWithItem("capstan",
             () -> new CapstanBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.5f, 3.0f)
                     .sound(SoundType.WOOD).noOcclusion().ignitedByLava()));

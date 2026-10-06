@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-07T01:31:57.64206	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-07T01:33:56.263248	Block states and models: pirates_n_ships
 9282899a10c2af6fbcc1fd07e91ba10d9ba8a732 assets/pirates_n_ships/blockstates/brig_bars.json
 09e096c3979b4e82e1fab125e8a03e835e8c7aca assets/pirates_n_ships/blockstates/brig_door.json
 1ca2bd2df3602ba7b137ae7b56ec9fd3f195588c assets/pirates_n_ships/blockstates/capstan.json
@@ -44,7 +44,6 @@ e5b3569e1b8c4192055ef64e81a0d3f84ebb3c03 assets/pirates_n_ships/models/block/fla
 512c7dc0fed76cd1644dda8f8d882bd69d8758f5 assets/pirates_n_ships/models/block/fore_and_aft_sail_furled.json
 b4a2b0ffcb05520e7434b43d613a134da0573804 assets/pirates_n_ships/models/block/fore_and_aft_sail_half.json
 6ab72f6fce6997bbdbb38856b175676c3855f860 assets/pirates_n_ships/models/block/pantry.json
-0734b46a9bcdb1c5d60f83212c1e2ba8ac69c2ae assets/pirates_n_ships/models/block/sail_winch.json
 7c3493c10a85f585af8ae3085e8e58c056e6b090 assets/pirates_n_ships/models/block/test_block.json
 6e52b5b73a60285597d05fe4c496584117c9c16a assets/pirates_n_ships/models/block/water_barrel.json
 6607e036eeb31b6ce3e31edf8f9e4fc1101f7569 assets/pirates_n_ships/models/block/water_barrel_fill0.json

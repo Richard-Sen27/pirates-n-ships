@@ -1,6 +1,6 @@
 # Pirates 'n' Ships — Design Spec
 
-> Status: brainstorm → spec, v0.5 (2026-10-06, adds the foundation APIs, the decisions from the Sable investigation and what the four spikes found). Living document: update it whenever a decision changes.
+> Status: brainstorm → spec, v0.6 (2026-10-06, adds the first playtest feedback: roll damping, 3D models, multi-block sails, the anchor as an object, big flags, the radial menu). Living document: update it whenever a decision changes.
 > Mod name "Pirates 'n' Ships". Mod ID: `pirates_n_ships`.
 
 ---
@@ -177,6 +177,7 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
 - If a world position transformed into ship-local space lies in a **dry** compartment cell, it reports no fluid.
 - Applies to players, mobs, items and particles.
 - Spike 2 found these gaps in Sable's occlusion, not fixed yet: boats, fishing bobbers and mob pathfinding still see the water inside a dry hull.
+- **Playtest finding:** the dry hull renders well, but slabs, stairs and trapdoors in the hull still show water in their empty half, although there is none. The occlusion region has to include the cells of watertight partial blocks on the hull's inside, so the whole cell is drawn dry.
 
 ### 4.5 Flooding and sinking
 - Each compartment stores `waterLevel` (0..volume).
@@ -208,6 +209,7 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
 - **Striking colors:** lowering the flag mid-fight signals surrender. NPC ships stop firing, and the attacker can board without resistance. Attacking a ship that has struck its colors is a crime.
 - Changing the flag takes a few seconds at the flagpole (player, or the crew order "hoist colors").
 - Flags flutter in the wind direction, doubling as a visual wind indicator (§5.1).
+- **Size (playtest decision):** a flag is one block high and 1.5 to 2 blocks long, a real flag, not a small panel on the pole.
 
 ### 4.8 Ship customization
 - **Ship name:** set at the helm. Shown on a nameplate block on the hull and in the HUD, logbook and bounty notices ("the *Black Gull*").
@@ -215,6 +217,7 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
 - **Sails:** dyeable, and large sails can carry banner patterns.
 - **Hull paint and trim:** dyeable planks and trim blocks (optional, since vanilla wood types already give a lot of variety).
 - **Decor:** lanterns, stern windows, ship's bell, rope coils, captain's cabin furniture.
+- **Visual quality (playtest decision):** every ship block gets a real 3D model (helm wheel with spokes, capstan drum, anchor, figureheads, containers, flagpole). Placeholder cubes are not acceptable for the ship blocks. Models are made in Blockbench and committed as hand-made assets like textures, with datagen still generating the block states and item models that reference them; until a model exists, a model built in code is the placeholder.
 - Customization is purely cosmetic and never changes performance stats.
 
 ### 4.9 Cargo and weight
@@ -235,6 +238,10 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
 ### 5.2 Sails
 - Sail blocks come in sizes (small and large square sails, plus a fore-and-aft/lateen sail). Each has an area and an efficiency curve over the angle to the wind.
 - **Trim states:** furled / half / full, set via the sail winch station.
+- **Multi-block sails (playtest decision, replaces the one-block sail of spike 3):**
+  - A **square sail** is two horizontal **yards** on the same mast, one above the other. Placing the lower yard under an upper one on the same mast links them, and the pair is one sail. Its area comes from the yard length and the distance between them. When the sail is hoisted, cloth is drawn between the yards: furled means the cloth is bundled at the upper yard, half means it reaches half way down, full means it reaches the lower yard.
+  - A **triangular (fore-and-aft) sail** hangs from a **rope** (stay) that runs from a point high on the mast to a point further forward or aft, and its lower corner is tied to a **cleat**. The cloth fills the triangle between the rope and the cleat according to the trim.
+  - The yard blocks, the rope and the cleat are the only placed blocks; the cloth is rendered, not built from blocks.
 - Force = wind strength × area × trim × efficiency(angle), applied at the sail position, which also produces heel torque.
 - Square sails work best downwind. Fore-and-aft sails allow sailing closer to the wind.
 - No-go zone: sailing directly into the wind produces no forward force.
@@ -246,6 +253,7 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
 - **Keel (lateral resistance):** Sable's water drag is the same in every direction, so without extra sideways drag a ship would just drift downwind. We apply our own drag below the waterline, strong sideways and weak along the hull (`docs/sable-notes.md` §4.3). Tuned in spike 3.
 - **Oars:** an optional small, slow propulsion source for windless conditions or small boats, operated by crew.
 - **Anchor (capstan):** a dropped anchor applies strong drag and holds position. Raising it takes time. Implemented in spike 3: the anchor drops straight down from the capstan to the first solid block within the chain length (default 32), and doesn't hold if there is none.
+  - **The anchor is a visible object (playtest decision):** it hangs outside the hull at the capstan's side as a real anchor model. Dropping lowers it on a chain to the sea floor with the sound of the running chain, a splash with particles when it enters the water, and the chain sound until it stops. Raising plays the chain back up. Later additions: a windlass (chain roll) block and a hawsepipe block that lets the chain run through the hull to the outside.
 
 ### 5.4 Waves (simulated)
 - Sea state comes from weather: calm / moderate / rough / storm.
@@ -283,6 +291,7 @@ The crew operates a station by being attached to it, much like being seated. Thi
 
 ### 7.2 Commands
 - Issued with a **captain's whistle** (radial menu) or a **command GUI** at the helm.
+  - **Playtest decision:** using the whistle opens a circular (radial) menu on the client with the orders. Choosing one sends it to the server, which issues it to the crew of the ship the player stands on. The sneak-use cycling from spike 4 is a stopgap.
 - Orders:
   - hoist / reef / furl sails
   - load cannons / fire (broadside port or starboard / at will)
@@ -509,6 +518,7 @@ All hazards can be turned off individually and have frequency settings.
 
 ## 16. Audio and ambience
 - Sounds for creaking hulls, sail flapping, rope, cannon fire, pistols, splashes, flooding water, wind, the crew and the kraken.
+- **Hull creaking (playtest decision, first sound to build):** when a ship rolls, its planks creak now and then, the ordinary wooden creak one expects on a ship: occasional, quiet, tied to the rolling motion, never a constant loop.
 - **Music:** a sea music manager plays ambient and shanty tracks while at sea, combat music during ship battles, and calm tracks in harbors. Music discs.
 - **Licensing:** traditional shanties are public-domain songs, but only use our own recordings or recordings with a compatible license.
 
@@ -603,3 +613,4 @@ Spikes 1–4 are throwaway-quality prototypes that prove feasibility. They may l
 - Do mobs riding a seat entity inside a sub-level render, interpolate and interact correctly? Check in spike 4.
 - Stability: hollow block hulls barely right themselves (spike 3). Measured: a 5×5 plank boat, 4 high, lies about 20° bow up at rest and runs 35 to 46° bow down under a small sail, and a stone bottom layer brings that to about 16°. Do we keep scaling down the heel torque, add ballast or keel blocks with real mass low in the hull, add our own righting moment from the hull analysis, or apply the sail's drive lower? Decide after the milestone 3 playtest. This is the biggest open risk for how ships feel.
 - Sail force scale: the spike 3 agent thinks 1.0 is too strong for Sable's masses and expects something like 0.3 to 0.5. Decide in the milestone 3 playtest.
+- ~~Is the continuous rolling of a floating ship intended?~~ **Resolved (playtest):** no. It is undamped roll: nothing resists the rolling motion. A roll and pitch damping torque proportional to the angular velocity, with config values, is added in the sailing runtime.

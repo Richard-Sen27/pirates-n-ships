@@ -1,0 +1,11 @@
+{
+  "base_price": 1.0,
+  "category": "food",
+  "item": "minecraft:wheat",
+  "produced_in": [
+    "temperate"
+  ],
+  "sensitivity": 0.8,
+  "stock_factor": 1.5,
+  "weight": 0.25
+}

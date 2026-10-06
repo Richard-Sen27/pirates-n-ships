@@ -1,0 +1,12 @@
+{
+  "base_price": 1.0,
+  "category": "raw_material",
+  "item": "minecraft:oak_log",
+  "produced_in": [
+    "temperate",
+    "cold"
+  ],
+  "sensitivity": 0.5,
+  "stock_factor": 2.0,
+  "weight": 1.0
+}

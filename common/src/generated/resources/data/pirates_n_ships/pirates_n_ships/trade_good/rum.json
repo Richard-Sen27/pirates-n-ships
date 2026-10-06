@@ -1,0 +1,9 @@
+{
+  "base_price": 4.0,
+  "category": "manufactured",
+  "item": "pirates_n_ships:rum",
+  "produced_in": [
+    "tropical"
+  ],
+  "weight": 0.5
+}

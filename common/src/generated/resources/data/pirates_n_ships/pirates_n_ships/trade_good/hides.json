@@ -1,0 +1,10 @@
+{
+  "base_price": 3.0,
+  "category": "raw_material",
+  "item": "minecraft:leather",
+  "produced_in": [
+    "arid",
+    "temperate"
+  ],
+  "weight": 0.5
+}

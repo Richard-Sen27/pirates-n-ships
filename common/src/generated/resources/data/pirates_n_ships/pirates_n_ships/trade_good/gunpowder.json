@@ -1,0 +1,8 @@
+{
+  "base_price": 8.0,
+  "category": "manufactured",
+  "item": "minecraft:gunpowder",
+  "sensitivity": 1.2,
+  "stock_factor": 0.5,
+  "weight": 0.25
+}

@@ -1,0 +1,12 @@
+{
+  "base_price": 5.0,
+  "category": "crop",
+  "item": "pirates_n_ships:tobacco",
+  "produced_in": [
+    "tropical",
+    "arid"
+  ],
+  "sensitivity": 1.2,
+  "stock_factor": 0.75,
+  "weight": 0.25
+}

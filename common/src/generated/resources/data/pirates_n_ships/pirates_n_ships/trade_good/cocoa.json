@@ -1,0 +1,11 @@
+{
+  "base_price": 4.0,
+  "category": "crop",
+  "item": "minecraft:cocoa_beans",
+  "produced_in": [
+    "tropical"
+  ],
+  "sensitivity": 1.2,
+  "stock_factor": 0.75,
+  "weight": 0.25
+}

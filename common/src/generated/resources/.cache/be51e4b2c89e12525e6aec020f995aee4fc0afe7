@@ -1,3 +1,15 @@
-// 1.21.1	2026-10-06T18:36:31.948236	Raw JSON (data): pirates_n_ships
+// 1.21.1	2026-10-06T19:08:51.886095	Raw JSON (data): pirates_n_ships
 b75487df5ae1bab409d28fc82e318867b315f79a data/pirates_n_ships/physics_block_properties/test_block.json
 6605efa70f733dc8e58d9f3e77fbb953ca58419a data/pirates_n_ships/pirates_n_ships/test_marker/example.json
+7d086d7cc40b54a94b97cb2520bb9fe55c85d7bc data/pirates_n_ships/pirates_n_ships/trade_good/cloth.json
+8a4fc551bb5e5ca41d81175cc4a1e89a43583bb4 data/pirates_n_ships/pirates_n_ships/trade_good/cocoa.json
+566494693c1af1044c42c28d8c092b22bc2c428b data/pirates_n_ships/pirates_n_ships/trade_good/fish.json
+b43606c2e6e8c3437e7ee8e052b47106152b079d data/pirates_n_ships/pirates_n_ships/trade_good/grain.json
+345b0b0f6ac5557f0e7e826ca78fe4bca709fb60 data/pirates_n_ships/pirates_n_ships/trade_good/gunpowder.json
+dc0ef70531d2da9a7accfb834ff9e8527ea7adb7 data/pirates_n_ships/pirates_n_ships/trade_good/hides.json
+12b5ebc8ab0e0dc72c4aaabaec9add2f9e7aa0ee data/pirates_n_ships/pirates_n_ships/trade_good/iron.json
+4ea527b4197e8d2a6411ae89de0bb43496dbef92 data/pirates_n_ships/pirates_n_ships/trade_good/rum.json
+d39936e9dff273c682fc443d65e5365483c0f9e4 data/pirates_n_ships/pirates_n_ships/trade_good/spices.json
+67f903f7d536f5db3a32b8a0d7329098ace03177 data/pirates_n_ships/pirates_n_ships/trade_good/sugar.json
+542071e2e4290f6086ce1e6ad9232b7c23a2e8e8 data/pirates_n_ships/pirates_n_ships/trade_good/timber.json
+4f00e4fdace25a1febdc7956d3d71207d7fdcab1 data/pirates_n_ships/pirates_n_ships/trade_good/tobacco.json

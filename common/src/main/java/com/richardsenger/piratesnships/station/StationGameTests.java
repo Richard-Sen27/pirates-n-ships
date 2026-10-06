@@ -230,17 +230,21 @@ public final class StationGameTests {
             h.assertTrue(!c.isPassenger() && c.assignment() == null, "still seated or assigned");
             h.assertTrue(seats(h, f).isEmpty(), "seat left over");
             h.assertTrue(Stations.state(new StationRef(f.ship().id(), f.winch())) == null, "station still occupied");
-        });
-        h.runAfterDelay(40, () -> {
+            // checked at once: released, the crew member strolls about the 5×5 deck and may jump or step off it
             h.assertTrue(f.ship().worldBounds().inflate(0.5, 2, 0.5).contains(c.position()), "crew member not on deck: " + c.position()
                     + " ship " + f.ship().worldBounds());
-            h.assertTrue(c.onGround(), "crew member not standing on the deck");
+            // on the deck top (the helm's bottom face): Level#noCollision does not see plot blocks, so compare heights
+            double deck = f.ship().toWorld(Vec3.atBottomCenterOf(f.helm())).y;
+            h.assertTrue(Math.abs(c.getY() - deck) < 0.3, "crew member not standing on the deck: " + c.position() + ", deck top " + deck);
             c.discard();
             h.succeed();
         });
     }
 
-    /** Disassembly: the crew member stands at the seat's world spot (within 0.75 blocks horizontally, 0.6 vertically). */
+    /**
+     * Disassembly: the crew member stands at the seat's world spot (within 0.75 blocks horizontally, 0.6 vertically) on
+     * the deck, is released, and no seat entity is left.
+     */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = "pirates_n_ships_config_station_winch")
     public static void disassemblyLeavesCrewAtTheStation(GameTestHelper h) {
         pin(h);
@@ -248,29 +252,54 @@ public final class StationGameTests {
         CrewMember c = seated(h, f, crew(h, 2, 2));
         StationSeat seat = (StationSeat) c.getVehicle();
         boolean[] done = {false};
-        Vec3[] expected = new Vec3[1];
         h.onEachTick(() -> {
             if (done[0] || h.getTick() < 20 || h.getTick() % 5 != 0) return;
             Vec3 spot = f.ship().toWorld(seat.position());
             AssemblyResult r = ShipAssembler.disassemble(f.ship(), f.helm(), null);
             if (r.outcome() == AssemblyResult.Outcome.DISASSEMBLED) {
                 done[0] = true;
-                expected[0] = spot;
                 h.assertTrue(seat.isRemoved(), "seat survived disassembly");
                 h.assertTrue(!c.isPassenger(), "crew member still riding");
+                // checked in the tick of the disassembly: once released, the crew member strolls and may jump
+                Vec3 p = c.position();
+                double dx = Math.hypot(p.x - spot.x, p.z - spot.z), dy = Math.abs(p.y - spot.y);
+                h.assertTrue(dx < 0.75 && dy < 0.6, "crew member at " + p + ", expected " + spot);
+                h.assertTrue(h.getLevel().noCollision(c) && !h.getLevel().noCollision(c, c.getBoundingBox().move(0, -0.1, 0)),
+                        "crew member not standing on the deck: " + p);
                 h.runAfterDelay(15, () -> {
-                    Vec3 p = c.position();
-                    double dx = Math.hypot(p.x - expected[0].x, p.z - expected[0].z), dy = Math.abs(p.y - expected[0].y);
-                    h.assertTrue(dx < 0.75 && dy < 0.6, "crew member at " + p + ", expected " + expected[0]);
                     h.assertTrue(c.isAlive() && c.assignment() == null, "crew member still assigned to the gone ship");
-                    // near the crew member (world) and at the seat's old plot position; other tests' seats are farther away
-                    List<StationSeat> left = h.getLevel().getEntitiesOfClass(StationSeat.class, new AABB(p, p).inflate(6), s -> true);
-                    left.addAll(h.getLevel().getEntitiesOfClass(StationSeat.class, seat.getBoundingBox().inflate(6), s -> true));
-                    h.assertTrue(left.isEmpty(), "seat entities left over: " + left.size());
+                    // near the crew member (world) and at the seat's old plot position
+                    List<StationSeat> left = h.getLevel().getEntitiesOfClass(StationSeat.class, c.getBoundingBox().inflate(6), s -> orphan(h, s));
+                    left.addAll(h.getLevel().getEntitiesOfClass(StationSeat.class, seat.getBoundingBox().inflate(6), s -> orphan(h, s)));
+                    h.assertTrue(left.isEmpty(), "seat entities left over: " + left.size() + " at " + left.stream().map(StationSeat::position).toList());
                     c.discard();
                     h.succeed();
                 });
             }
+        });
+    }
+
+    /**
+     * A seat no live ship holds. Seats live in a plot, and the disassembled ship is gone; but Sable hands its freed
+     * plot to the next ship at once, and a station test of the same batch that starts late assembles the same hull
+     * there and seats its crew at the very same plot position (seen: the whistle test's seat, 8 ticks after its ship
+     * took over this test's plot). That seat is not ours.
+     */
+    private static boolean orphan(GameTestHelper h, StationSeat s) {
+        return SableShips.containing(h.getLevel(), s.blockPosition()) == null;
+    }
+
+    /** A seat without passenger removes itself after MAX_IDLE_TICKS (20): seats in a plot tick like any entity. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = "pirates_n_ships_config_station_winch")
+    public static void idleSeatRemovesItself(GameTestHelper h) {
+        pin(h);
+        Fixture f = ship(h, false);
+        StationSeat seat = StationSeat.spawn(h.getLevel(), f.winch(), f.winch().north());
+        h.assertTrue(!seat.isRemoved() && ShipEntities.containing(seat) != null, "seat not spawned in the ship's plot");
+        h.runAfterDelay(10, () -> h.assertTrue(!seat.isRemoved(), "idle seat removed too early"));
+        h.runAfterDelay(30, () -> {
+            h.assertTrue(seat.isRemoved(), "idle seat still there after 30 ticks");
+            h.succeed();
         });
     }
 

@@ -145,6 +145,7 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
   - Ship types are stored as structure NBT built by hand. At pickup, the template is placed directly into a new Sable sub-level at the berth, without placing the blocks in the world first (`docs/sable-notes.md` §2.5).
   - Later, optional: visible construction stages at the dock (frame → hull → masts), which needs one structure per stage.
 - A **Helm block** (Steuerrad) is the ship's anchor point. Using it while docked triggers assembly.
+  - Helm interaction since spike 3: on land, using the helm assembles. On a ship, using it steers, and sneak-using it with an empty hand disassembles.
   - Implemented in spike 1 (`ship/assembly`): terrain is decided by the block tag `pirates_n_ships:terrain`, and `pirates_n_ships:never_assemble` excludes more blocks. A dock that touches the hull is gathered with it, so ships are moored with a one-block gap. The default block limit is 2048.
 - Assembly collects connected blocks, excluding world terrain, with a configurable block limit. They become a Sable sub-level.
 - **Disassembly** happens at the helm when the ship is stationary and aligned. Blocks are placed back into the world, snapped to the grid.
@@ -186,7 +187,7 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
 - **Patching:** a repair item (planks + tar/pitch) placed in a breach closes it.
 - **Buoyancy:** effective displacement = hull blocks + dry volume − flood water. Sable computes buoyancy natively, for solid hull blocks only, and it can't be overridden or switched off per ship (`docs/sable-notes.md` §4.1, §4.2). So we keep Sable's hull-block buoyancy and apply the dry volume (upward) and the flood water (downward) as our own extra force at their centroids, which also produces list and heel. The constants must be tuned together in a playtest.
 - Implemented in spike 2 (`ship/hull/runtime`): water only counts as sea when it is at the hull's own bottom. Up to nine probes sit at the lowest hull cells, and at least a third of them must be in world water. So a ship in a dry dock next to the sea, or on a cliff above it, does not float. A hull that is a third or more over water floats, and with less it is aground.
-- **Known limit:** Sable's physics is 32-bit. Beyond about 4 million blocks from the world origin collision gets imprecise, and beyond about 8 million ships can sink into blocks. Recommend a world border well inside that range.
+- **Known limit:** Sable's physics is 32-bit. Slow ships are affected first: beyond about 100,000 blocks from the world origin a ship slower than roughly 0.2 to 0.3 m/s reports a speed but stops moving, because one position step is larger than its movement per physics step. Beyond about 4 million blocks collision gets imprecise, and beyond about 8 million ships can sink into blocks. Recommend keeping sea travel within a few tens of thousands of blocks of the origin (details in `docs/sable-notes.md` §9.0b and §9.0e).
 - A ship that loses buoyancy sinks. A sunk ship stays a sub-level resting on the seabed (with a config option to turn it back into world blocks after some time), so wrecks can be looted.
 
 ### 4.6 Damage
@@ -241,10 +242,10 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
 - **Finding:** hollow block hulls have almost no righting moment in Sable, so the full heel torque of a sail capsizes a small ship within seconds. For now the roll and pitch part of our sail and keel torque is scaled down (`sail_heel_factor`, default 0.25). See §21.
 
 ### 5.3 Steering and other propulsion
-- **Helm:** sets the rudder angle. Rudder torque scales with the ship's speed through the water.
+- **Helm:** sets the rudder angle. Rudder torque scales with the ship's speed through the water. Implemented in spike 3: clicking the right third of the wheel (as the helmsman sees it) turns the rudder one step to starboard, the left third one step to port, the middle puts it midships, with three steps per side up to the maximum rudder angle. Steering with keys while holding the wheel comes later.
 - **Keel (lateral resistance):** Sable's water drag is the same in every direction, so without extra sideways drag a ship would just drift downwind. We apply our own drag below the waterline, strong sideways and weak along the hull (`docs/sable-notes.md` §4.3). Tuned in spike 3.
 - **Oars:** an optional small, slow propulsion source for windless conditions or small boats, operated by crew.
-- **Anchor (capstan):** a dropped anchor applies strong drag and holds position. Raising it takes time.
+- **Anchor (capstan):** a dropped anchor applies strong drag and holds position. Raising it takes time. Implemented in spike 3: the anchor drops straight down from the capstan to the first solid block within the chain length (default 32), and doesn't hold if there is none.
 
 ### 5.4 Waves (simulated)
 - Sea state comes from weather: calm / moderate / rough / storm.
@@ -269,7 +270,7 @@ Stations are blocks on a ship that a **player or a crew member** can operate. Th
 | Flagpole | Hoist, change or strike colors (§4.7) |
 | Galley / pantry | Stores provisions; a cook crew member boosts morale (§7.4) |
 
-The crew operates a station by being attached to it, much like being seated. This avoids complex pathfinding on moving ships. Walking between stations on deck is a later improvement. Planned implementation (to be confirmed in spike 4): an invisible seat entity that lives inside the ship's sub-level, with the crew member riding it (`docs/sable-notes.md` §6).
+The crew operates a station by being attached to it, much like being seated. This avoids complex pathfinding on moving ships. Walking between stations on deck is a later improvement. Implemented in spike 4 (`station/`, `crew/npc/`): an invisible seat entity that lives inside the ship's sub-level, with the crew member riding it. It works on the server: the crew member stays at its station on a moving ship, upright in world space. How it looks in the client is the open point of the milestone 4 playtest (`docs/sable-notes.md` §9.0e). The station contract (`station/StationKind`, `StationBlock`, `Stations`) is: occupy, operate an order for a duration, release. Only the sail winch implements it so far.
 
 ---
 

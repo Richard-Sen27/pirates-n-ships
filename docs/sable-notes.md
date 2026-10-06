@@ -592,6 +592,29 @@ many regions. [V code; I cost]
 - Measured with a 42.5 kpg hull and a small square sail in 6 blocks/s of wind from astern: about 0.4 m/s mean forward
   speed over 100 ticks (peak about 1 m/s). The same hull drifts at about 0.09 m/s with no force at all. [V]
 
+### 9.0e Findings from spike 3 part 2 and spike 4 (helm, anchor, crew seat; verified by running)
+- **32-bit positions also stall slow ships, long before ships fall through blocks.** At 131,000 to 262,000 blocks from
+  the origin one `f32` step is 1/64 block. A ship at 0.3 m/s moves less than half of that per physics substep, so it
+  reported a velocity but did not move: 0.2 blocks in 9 s at x = -191,000, against 6.3 blocks at x = 55,000. As a rule
+  of thumb a ship slower than about 20 × the step size per second stalls: about 0.3 m/s beyond 131,000 blocks, 0.15 m/s
+  beyond 65,000, 0.08 m/s beyond 32,000. GameTests now run within ±4,096 blocks. [V]
+- Clicking a block on a ship gives a hit result in **plot space** (`mixin/clip_overwrite/BlockGetterMixin#clip` returns
+  the sub-level clip result as is), so "which part of the block was clicked" works unchanged on ships. [V]
+- **A seat entity inside the plot works on the server.** It needs only two entity-type tags: `sable:retain_in_sub_level`
+  (otherwise `mixin/entity/entity_kicking/ServerLevelMixin#sable$kickEntity` kicks it out when it is added) and
+  `sable:destroy_with_sub_level` (`ServerLevelPlot#kickAllEntities` l.265-289 then kills it on disassembly and on
+  removal for good). It lives in a plot chunk, ticks there, and is saved with its passenger. [V]
+- **The rider of a plot vehicle lives in world space.** Sable moves it every tick
+  (`mixin/entity/entity_rotations_and_riding/EntityMixin` l.108-130 → `EntityRidingSubLevelVehicleHelper.kickRidingEntity`
+  l.14-27): it transforms the rider's **eye** point and hangs the body straight down in world space. So the rider stays
+  upright, its eyes stay fixed in the ship's frame, and on a tilted ship its feet swing off the seat by about
+  2 × eye height × sin(tilt / 2): 1.2 blocks at 43°. `getCustomEntityOrientation` exists but always returns null. [V]
+- After `startRiding`, the rider keeps its old position until its next ride tick: call `seat.positionRider(rider)` at
+  once. A released rider must be given a dismount position in world space, or it drops to the plot coordinates. [V]
+- `ShipBody.worldBounds()` is an empty box right after assembly, until the next tick. [V]
+- Not verified (needs the client): how a rider of a plot seat renders and interpolates, and whether it is visible from
+  far away (the seat travels with plot tracking, the rider with world tracking).
+
 ### 9.1 How Sable tests sub-levels
 - Tests live in **`sable/neoforge/src/main/java/dev/ryanhcode/sable/neoforge/gametest/`** (`AssemblyTest`, `PhysicsTest`,
   `SableTestHelper`), registered with NeoForge's `@GameTestHolder(Sable.MOD_ID)` and vanilla `@GameTest(template = …)`. [V]

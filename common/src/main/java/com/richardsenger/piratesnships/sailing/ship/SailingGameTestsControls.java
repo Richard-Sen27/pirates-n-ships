@@ -13,6 +13,7 @@ import com.richardsenger.piratesnships.sailing.force.SailTrim;
 import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips.Fixture;
 import com.richardsenger.piratesnships.sailing.wind.WindOverride;
 import com.richardsenger.piratesnships.sailing.wind.WindSample;
+import com.richardsenger.piratesnships.sailing.wind.WindService;
 import com.richardsenger.piratesnships.ship.assembly.HelmBlock;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
@@ -58,14 +59,22 @@ public final class SailingGameTestsControls {
 
     /** Test hull with a capstan; rudder at {@code step} (positive = starboard). Returns the helm (test-relative). */
     private static BlockPos ship(GameTestHelper h, SailTrim trim, int step) {
-        BlockPos helm = SailingGameTestsShips.hull(h, 17, 3, SailingBlocks.SMALL_SQUARE_SAIL.get(), Direction.SOUTH, trim);
+        return ship(h, trim, step, new BlockPos(19, 9, 6));
+    }
+
+    /** As above with the capstan at {@code capstan}: (19, 9, 6) is forward of the mast, (18, 9, 4) beside the helm (stern). */
+    private static BlockPos ship(GameTestHelper h, SailTrim trim, int step, BlockPos capstan) {
+        return ship(h, 17, trim, step, capstan);
+    }
+
+    private static BlockPos ship(GameTestHelper h, int x0, SailTrim trim, int step, BlockPos capstan) {
+        BlockPos helm = SailingGameTestsShips.hull(h, x0, 3, SailingBlocks.SMALL_SQUARE_SAIL.get(), Direction.SOUTH, trim);
         h.setBlock(helm, h.getBlockState(helm).setValue(HelmBlock.RUDDER, RudderSteps.toProperty(step)));
-        h.setBlock(new BlockPos(19, 9, 6), SailingBlocks.CAPSTAN.get());
+        h.setBlock(capstan, SailingBlocks.CAPSTAN.get());
         return helm;
     }
 
     private static void wind(GameTestHelper h, double strength) {
-        ConfigOverrides.during(h, SailingConfig.RUDDER_STEPS, 3);
         WindOverride.set(h.getLevel().dimension().location().toString(), 0.0, strength, h.getLevel().getGameTime() + 700);
     }
 
@@ -110,42 +119,39 @@ public final class SailingGameTestsControls {
 
     /*
      * Tolerances: with the defaults (rudder_strength 0.5, max angle 35°) the test hull at about 0.3 m/s turns 6 to 8°
-     * in 200 ticks with full rudder (measured), and 0.00° midships. MIN_TURN is half of the smaller measured turn;
-     * MAX_DRIFT is a fifth of it.
+     * in 200 ticks with full rudder (measured), and 0.0 to 2.4° midships (2.4° at x=226k): the midships drift depends on where the
+     * random test grid lies, because far from the origin the 32-bit physics moves a slow ship in jerks (see the anchor
+     * test). MIN_TURN (3°) is under half of the smallest measured turn net of the midships drift, MAX_DRIFT is above the largest measured drift.
      */
     private static final double MIN_TURN = 3.0;
-    private static final double MAX_DRIFT = 1.5;
+    private static final double MAX_DRIFT = 3.5;
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 400, batch = "pirates_n_ships_rudder_starboard")
-    public static void rudderStarboardTurnsStarboard(GameTestHelper h) {
-        turnTest(h, 3, "rudder starboard");
-    }
-
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 400, batch = "pirates_n_ships_rudder_port")
-    public static void rudderPortTurnsPort(GameTestHelper h) {
-        turnTest(h, -3, "rudder port");
-    }
-
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 400, batch = "pirates_n_ships_rudder_midships")
-    public static void rudderMidshipsHoldsHeading(GameTestHelper h) {
-        turnTest(h, 0, "rudder midships");
-    }
-
-    private static void turnTest(GameTestHelper h, int step, String name) {
+    /**
+     * Three identical ships side by side in one basin and one wind, rudder hard to port, midships and hard to
+     * starboard. Each turns its way; the turns are also compared with the midships ship's, which cancels the small
+     * heading drift that depends on where the test grid lies.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 400, batch = "pirates_n_ships_rudder_under_sail")
+    public static void rudderTurnsTheShipUnderSail(GameTestHelper h) {
         wind(h, WIND);
         SailingGameTestsShips.basin(h, true);
-        Fixture f = SailingGameTestsShips.assemble(h, ship(h, SailTrim.FULL, step));
-        double[] a = headingChange(h, f);
+        int[] steps = {-3, 0, 3};
+        int[] x0 = {3, 17, 31};
+        Fixture[] f = new Fixture[3];
+        double[][] a = new double[3][];
+        for (int i = 0; i < 3; i++) {
+            f[i] = SailingGameTestsShips.assemble(h, ship(h, x0[i], SailTrim.FULL, steps[i], new BlockPos(x0[i] + 2, 9, 6)));
+            a[i] = headingChange(h, f[i]);
+        }
         h.runAfterDelay(HEAD_TO + 1, () -> {
             clearWind(h);
-            logTurn(name, f, a[0]);
-            if (step > 0) {
-                h.assertTrue(a[0] > MIN_TURN, "rudder to starboard did not turn to starboard: " + a[0] + "°");
-            } else if (step < 0) {
-                h.assertTrue(a[0] < -MIN_TURN, "rudder to port did not turn to port: " + a[0] + "°");
-            } else {
-                h.assertTrue(Math.abs(a[0]) < MAX_DRIFT, "midships ship changed heading: " + a[0] + "°");
-            }
+            logTurn("rudder port", f[0], a[0][0]);
+            logTurn("rudder midships", f[1], a[1][0]);
+            logTurn("rudder starboard", f[2], a[2][0]);
+            double port = a[0][0], mid = a[1][0], stb = a[2][0];
+            h.assertTrue(stb > MIN_TURN && stb - mid > MIN_TURN, "rudder to starboard did not turn to starboard: " + stb + "° (midships " + mid + "°)");
+            h.assertTrue(port < -MIN_TURN && port - mid < -MIN_TURN, "rudder to port did not turn to port: " + port + "° (midships " + mid + "°)");
+            h.assertTrue(Math.abs(mid) < MAX_DRIFT, "midships ship changed heading: " + mid + "°");
             h.succeed();
         });
     }
@@ -217,8 +223,15 @@ public final class SailingGameTestsControls {
     // ------------------------------------------------------------------ anchor
 
     /*
-     * Tolerance: at the defaults (slack 2, stiffness 0.5/s²) the sail's pull of well under 0.5 blocks/s² per unit mass
-     * stretches the rode less than one block beyond the slack, so the hawse stays within 4 blocks of the anchor point.
+     * Tolerance: at the defaults (slack 2, stiffness 0.5/s²) the sail's pull of well under 1 block/s² per unit mass
+     * stretches the rode about one block beyond the slack, so the hawse stays within 4 blocks of the anchor point.
+     *
+     * Measured 2.08 blocks at x=55k.
+     *
+     * Release: checked by the forward velocity of the free ship, not by its displacement. Sable's physics is 32-bit and
+     * the test grid lies up to 250,000 blocks from the origin, where one f32 step is 1/64 block: at 0.3 m/s a substep
+     * moves less than half a step, and the ship reports velocity but does not move (measured at x=-191k: 0.2 blocks in
+     * 9 s at 0.33 m/s; at x=55k it sailed 6.3 blocks). A stronger wind (15 blocks/s) pitched the hull over.
      */
     private static final double HOLD_RADIUS = 4.0;
 
@@ -226,12 +239,17 @@ public final class SailingGameTestsControls {
     public static void anchorHoldsUnderFullSailAndReleases(GameTestHelper h) {
         wind(h, WIND);
         SailingGameTestsShips.basin(h, true);
-        Fixture f = SailingGameTestsShips.assemble(h, ship(h, SailTrim.FULL, 0));
+        // anchored from the stern, so the ship lies downwind of the anchor with the sail drawing. Anchored from the bow,
+        // it swings head to wind (measured: then the square sail is aback and the ship can't sail off after raising).
+        Fixture f = SailingGameTestsShips.assemble(h, ship(h, SailTrim.FULL, 0, new BlockPos(18, 9, 4)));
+        double[] heading = new double[2];
         BlockPos capstan = find(f.ship(), SailingBlocks.CAPSTAN.get());
         Component dropped = ShipControls.useCapstan(h.getLevel(), capstan);
         h.assertTrue(key(dropped).equals(ShipControls.KEY_DROPPING), "drop refused: " + dropped.getString());
         double[] maxDist = new double[1];
         Vec3[] released = new Vec3[1];
+        boolean[] pulled = new boolean[1];
+        double[] free = new double[2];
         h.onEachTick(() -> {
             long t = h.getTick();
             ShipAnchor a = f.runtime().anchor();
@@ -240,24 +258,40 @@ public final class SailingGameTestsControls {
             if (t >= 60 && t < 300 && a != null) {
                 maxDist[0] = Math.max(maxDist[0], Math.hypot(hawse.x - a.point().x, hawse.z - a.point().z));
             }
+            if (t == 60) heading[0] = f.runtime().headingDegrees(f.ship());
             if (t == 300) {
+                heading[1] = f.runtime().headingDegrees(f.ship());
                 Component raised = ShipControls.useCapstan(h.getLevel(), capstan);
                 h.assertTrue(key(raised).equals(ShipControls.KEY_RAISING), "raise refused: " + raised.getString());
             }
             if (t == 420) released[0] = hawse;
+            if (t == 290) pulled[0] = hasAnchorForce(f);
+            if (t >= 440 && t < 600) {
+                free[0] += f.runtime().shipFrameVelocity(f.ship(), new Vector3d()).z;
+                free[1]++;
+            }
         });
         h.runAfterDelay(600, () -> {
             clearWind(h);
             Vec3 end = f.ship().toWorld(Vec3.atCenterOf(capstan));
             double sailed = released[0] == null ? 0 : Math.hypot(end.x - released[0].x, end.z - released[0].z);
-            Constants.LOG.info("[sailing test] anchor: max distance to the anchor point while holding {} blocks, sailed {} blocks in 180 ticks after raising",
-                    String.format("%.2f", maxDist[0]), String.format("%.2f", sailed));
+            double freeFwd = free[1] == 0 ? 0 : free[0] / free[1];
+            Constants.LOG.info("[sailing test] anchor at {}: max distance to the anchor point while holding {} blocks, heading {}° -> {}° while held, "
+                            + "after raising mean forward {} m/s and {} blocks sailed in 180 ticks", end,
+                    String.format("%.2f", maxDist[0]), String.format("%.1f", heading[0]), String.format("%.1f", heading[1]),
+                    String.format("%.2f", freeFwd), String.format("%.2f", sailed));
+            h.assertTrue(pulled[0], "no anchor force while holding");
             h.assertTrue(maxDist[0] > 0 && maxDist[0] < HOLD_RADIUS, "anchored ship drifted " + maxDist[0] + " blocks");
-            h.assertTrue(f.runtime().anchor() == null, "anchor not stowed after raising");
-            // 2 blocks in 9 s: measured 6.3 (the ship is free once the hold ramps out, about 80 ticks after raising)
-            h.assertTrue(sailed > 2.0,"ship did not sail away after raising the anchor: " + sailed);
+            h.assertTrue(f.runtime().anchor() == null && !hasAnchorForce(f), "anchor not stowed after raising");
+            // 0.15 m/s: the free ship under this sail makes about 0.3 m/s (sail tests: > 0.3 m/s mean)
+            h.assertTrue(freeFwd > 0.15, "ship did not sail away after raising the anchor: mean forward " + freeFwd);
             h.succeed();
         });
+    }
+
+    private static boolean hasAnchorForce(Fixture f) {
+        var b = f.runtime().lastBreakdown();
+        return b != null && b.contributions().stream().anyMatch(c -> c.source().equals("anchor") && c.force().length() > 0);
     }
 
     /** Drop takes anchor_drop_ticks, using the capstan mid-way reverses the ramp, the capstan shows the phase. */

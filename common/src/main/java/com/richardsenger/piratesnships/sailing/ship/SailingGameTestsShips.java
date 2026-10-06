@@ -108,10 +108,8 @@ public final class SailingGameTestsShips {
         fixWind(h, fromDegrees, WIND);
     }
 
-    /** Also pins the keel values the tests rely on: the GameTest world's server config file outlives default changes. */
+    /** Fixes the wind for 400 ticks. Config values are the defaults: every GameTest run starts from a fresh world. */
     static void fixWind(GameTestHelper h, double fromDegrees, double strength) {
-        ConfigOverrides.during(h, SailingConfig.KEEL_LATERAL_DRAG, 8.0);
-        ConfigOverrides.during(h, SailingConfig.SAIL_HEEL_FACTOR, 0.25);
         WindOverride.set(h.getLevel().dimension().location().toString(), fromDegrees, strength, h.getLevel().getGameTime() + 400);
     }
 

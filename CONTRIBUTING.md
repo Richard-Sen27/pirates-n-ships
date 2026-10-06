@@ -1,13 +1,14 @@
 # Contributing
 
-Project for **Hack-Nation 7 (2026)**.
+Contribution guide for **Pirates 'n' Ships**. The design spec lives in [`docs/design.md`](docs/design.md).
 
 ## Workflow
 
-1. Branch off `main`: `git checkout -b <type>/<short-description>` (e.g. `feat/team-signup`).
+1. Branch off `main`: `git checkout -b <type>/<short-description>` (e.g. `feat/ship-assembly`).
 2. Keep changes focused on one thing — no drive-by refactors.
 3. Commit using the convention below.
-4. Open a PR into `main` with a short description of what and why.
+4. Before opening a PR, make sure `./gradlew build` and `./gradlew :neoforge:runGameTestServer` pass.
+5. Open a PR into `main` with a short description of what and why.
 
 ## Commit messages
 
@@ -37,4 +38,4 @@ Project for **Hack-Nation 7 (2026)**.
 
 ## AI assistants
 
-Shared rules for Claude Code and Codex live in `AGENTS.md` (`CLAUDE.md` imports it). The `commit` skill is in `.claude/skills/commit/`, symlinked to `.agents/skills/commit/` for Codex.
+Rules for Claude Code live in `CLAUDE.md`. The `commit` skill is in `.claude/skills/commit/`, and the shared permission allowlist is in `.claude/settings.json`.

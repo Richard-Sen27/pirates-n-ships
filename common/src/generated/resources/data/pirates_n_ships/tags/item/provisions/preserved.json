@@ -6,6 +6,9 @@
     "minecraft:honey_bottle",
     "minecraft:golden_carrot",
     "minecraft:golden_apple",
-    "minecraft:enchanted_golden_apple"
+    "minecraft:enchanted_golden_apple",
+    "pirates_n_ships:hardtack",
+    "pirates_n_ships:salted_fish",
+    "pirates_n_ships:salt_pork"
   ]
 }

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "pirates_n_ships:block/nameplate",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "pirates_n_ships:block/nameplate"
+    },
+    "facing=south": {
+      "model": "pirates_n_ships:block/nameplate",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "pirates_n_ships:block/nameplate",
+      "y": 270
+    }
+  }
+}

@@ -1,2 +1,8 @@
-// 1.21.1	2026-10-06T17:16:01.666279	Tags for minecraft:block mod id vanilla
-0a6ae97c9da29686371eb4553ace2383f5965ac9 data/minecraft/tags/block/mineable/axe.json
+// 1.21.1	2026-10-06T19:06:10.052525	Tags for minecraft:block mod id vanilla
+027425cd193e9e04ea5aed99085f092fa520d95e data/minecraft/tags/block/doors.json
+aa3169ba71e44c232b557f4eada0242b17162d03 data/minecraft/tags/block/mineable/axe.json
+e407138a459a75449c624e2539f9f6e0407f2a2f data/minecraft/tags/block/mineable/pickaxe.json
+5073dbb2b10dec21ec2e422f93008dc243a5b4e7 data/sable/tags/block/heavy.json
+5a41f6296ecaf9e14e70e2be32b0fb7548cacb2e data/sable/tags/block/light.json
+d49b63179d26ab1e8bed691576eaba4a782cb263 data/sable/tags/block/quarter_volume.json
+d49b63179d26ab1e8bed691576eaba4a782cb263 data/sable/tags/block/super_light.json

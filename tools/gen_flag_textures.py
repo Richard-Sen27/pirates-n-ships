@@ -1,74 +1,96 @@
 #!/usr/bin/env python3
-"""Placeholder textures (16x16 pixel art) for flags (work package E1c). Reuses the canvas, palette and helpers of
+"""Placeholder textures for flags (work packages E1c, F6). Reuses the palette and helpers of
 gen_placeholder_textures.py (not edited here).
 
 Run (from the repository root, with the venv described in gen_placeholder_textures.py):
     tools/.venv/bin/python tools/gen_flag_textures.py            # write every texture
     tools/.venv/bin/python tools/gen_flag_textures.py --list     # print the names
 
-Item textures: item/<flag>.png, a flag on a stick.
-Block textures: block/flag_<kind>.png, the cloth shown on the flagpole. The flag model is vanilla's glass pane side
-template (a 2 px panel from the pole to the north edge of the block): only columns 9..15 of the texture are used,
-column 9 next to the pole and column 15 at the tip; the cloth sits in rows 1..8 (top half of the block), the rest
-is transparent (cutout). block/flag_edge.png (the panel's thin edges) is fully transparent.
+Item textures (16x16): item/<flag>.png, a flag on a stick.
+Block textures (32x16): block/flag_<kind>.png, the cloth on the flagpole (FlagClothModel). The cloth is 24 model
+pixels long and 16 high, mapped 1:1 (square pixels):
+    columns  0..23  the cloth, column 0 at the pole's center, column 23 at the tip. Columns 0..1 sit inside the
+                    pole and are never seen; column 2 is the dark hoist edge against the pole; 3..23 the field.
+    columns 24..31  an edge swatch in the cloth's base color, sampled by the thin top and bottom edges.
+The front face shows the texture as drawn (hoist on the left), the back face mirrors it.
 Deterministic, and honors tools/protected_textures.txt like the base script.
 """
 import argparse
 import sys
 from pathlib import Path
 
+from PIL import Image
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from gen_placeholder_textures import Canvas, TEX, protected  # noqa: E402
+from gen_placeholder_textures import CLEAR, P, TEX, Canvas, protected  # noqa: E402
 
-# Cloth area on the block texture
-X0, X1, Y0, Y1 = 9, 15, 1, 8
+W, H = 32, 16
+HOIST = 2          # dark hoist column
+F0, F1 = 3, 23     # field columns
+SWATCH = 24        # first edge swatch column
 
 
-def cloth(base, rope="wood_d"):
-    cv = Canvas()
-    cv.rect(X0, Y0, X1, Y1, base)
-    cv.rect(X0, Y0, X0, Y1, rope)  # hoist edge against the pole
-    return cv
+class Cloth(Canvas):
+    """A 32x16 canvas with the cloth layout above."""
+
+    def __init__(self, base, hoist="wood_d"):
+        self.img = Image.new("RGBA", (W, H), CLEAR)
+        self.rect(0, 0, F1, H - 1, base)
+        self.rect(0, 0, HOIST, H - 1, hoist)
+        self.rect(SWATCH, 0, W - 1, H - 1, base)
+
+    def px(self, x, y, c):
+        if 0 <= x < W and 0 <= y < H:
+            self.img.putpixel((x, y), P[c])
+
+    def field(self, x0, y0, x1, y1, c):
+        """A rectangle clipped to the field (never paints the hoist or the swatch)."""
+        self.rect(max(x0, F0), y0, min(x1, F1), y1, c)
 
 
 def flag_merchant():
-    cv = cloth("white")
-    cv.rect(X0 + 1, 4, X1, 5, "red")
+    cv = Cloth("white")
+    cv.field(F0, 6, F1, 9, "red")
     return cv
 
 
 def flag_navy():
-    cv = cloth("blue")
-    cv.rect(X0 + 1, 4, X1, 4, "white")
-    cv.rect(11, Y0, 11, Y1, "white")
+    cv = Cloth("blue")
+    cv.field(F0, 7, F1, 8, "white")    # horizontal arm
+    cv.field(9, 0, 10, 15, "white")    # vertical arm, toward the hoist (Nordic cross)
     return cv
 
 
 def flag_jolly_roger():
-    cv = cloth("black")
-    cv.rect(11, 2, 13, 4, "bone")
-    cv.px(11, 3, "black")
-    cv.px(13, 3, "black")
-    cv.px(12, 5, "bone")
-    for x, y in ((10, 6), (14, 6), (11, 7), (13, 7), (12, 6)):
+    cv = Cloth("black")
+    # skull, centered on column 13
+    cv.field(10, 2, 16, 6, "bone")
+    cv.field(11, 1, 15, 1, "bone")
+    cv.field(11, 7, 15, 8, "bone")
+    cv.field(11, 4, 12, 5, "black")    # eyes
+    cv.field(14, 4, 15, 5, "black")
+    cv.px(13, 6, "black")              # nose
+    cv.px(12, 8, "black")              # teeth gaps
+    cv.px(14, 8, "black")
+    # crossbones
+    cv.line(9, 10, 17, 14, "bone")
+    cv.line(17, 10, 9, 14, "bone")
+    for x, y in ((8, 10), (9, 9), (18, 10), (17, 9), (8, 14), (9, 15), (18, 14), (17, 15)):
         cv.px(x, y, "bone")
-    cv.px(10, 8, "bone")
-    cv.px(14, 8, "bone")
     return cv
 
 
 def flag_custom():
     """Stands in for any banner: the block model can't show banner patterns, so this is a generic heraldic cloth."""
-    cv = cloth("tan_l")
-    cv.rect(X0 + 1, Y0, X1, Y0, "gold")
-    cv.rect(X0 + 1, Y1, X1, Y1, "gold")
-    cv.rect(11, 3, 13, 6, "red")
-    cv.rect(12, 2, 12, 7, "red")
+    cv = Cloth("tan_l")
+    cv.field(F0, 0, F1, 0, "gold")
+    cv.field(F0, 15, F1, 15, "gold")
+    cv.field(F1, 0, F1, 15, "gold")
+    cv.field(11, 4, 15, 11, "red")     # a red lozenge-ish charge
+    cv.field(12, 3, 14, 12, "red")
+    cv.field(13, 2, 13, 13, "red")
+    cv.field(13, 7, 13, 8, "gold")
     return cv
-
-
-def flag_edge():
-    return Canvas()
 
 
 def item_flag(base, design):
@@ -104,7 +126,7 @@ def jolly_roger_flag():
 
 ITEMS = {"merchant_flag": merchant_flag, "navy_flag": navy_flag, "jolly_roger_flag": jolly_roger_flag}
 BLOCKS = {"flag_merchant": flag_merchant, "flag_navy": flag_navy, "flag_jolly_roger": flag_jolly_roger,
-          "flag_custom": flag_custom, "flag_edge": flag_edge}
+          "flag_custom": flag_custom}
 
 
 def main():

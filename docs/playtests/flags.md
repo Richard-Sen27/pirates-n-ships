@@ -1,4 +1,4 @@
-# Playtest: flags (work package E1c)
+# Playtest: flags (work packages E1c, F6)
 
 The rules (delay, striking, giving flags back, banners, drops, save and reload, the allegiance query) are covered by
 JUnit and GameTests. This checklist covers what only the client shows: the look of the flag on the pole from every
@@ -7,7 +7,7 @@ side, the feedback messages, the wind direction, and multiplayer sync. Textures 
 
 Setup: `./gradlew :neoforge:runClient`, a **survival** world with cheats on (steps 1 to 9), default config
 (`hoist_delay_ticks = 60`, i.e. 3 seconds; section `flags` of the server config).
-Please send screenshots of steps 3 and 7, and `latest.log` if anything goes wrong.
+Please send screenshots of steps 3, 7 and 10, and `latest.log` if anything goes wrong.
 
 ## Steps
 
@@ -20,12 +20,17 @@ Please send screenshots of steps 3 and 7, and `latest.log` if anything goes wron
    one of the three flags and count.
    - **Expected:** the action bar shows "Hoisting the merchant flag..." (etc.), the flag item leaves your hand at once,
      and after about **3 seconds** the cloth appears and the action bar says "The merchant flag is flying".
-3. **Look from all sides.** Walk around each pole, look from below and from above.
-   - **Expected:** a 2-pixel-thick cloth in the top half of the block, sticking out from the pole to one side,
-     with the hoist edge (brown) at the pole. White with a red stripe (merchant), blue with a white cross (navy),
-     black with a skull and crossbones (Jolly Roger). From the other side the design is mirrored. The parts of the
-     block around the cloth are transparent (no black or white box). The pole still looks like the old flagpole.
-     Edge-on, the cloth is nearly invisible (its thin edges are transparent on purpose).
+3. **Look from all sides.** Place the poles in the open (the cloth needs about two blocks of free space on every
+   side it may point to). Walk around each pole, look from below, from above and edge-on.
+   - **Expected:** a real flag, not a small panel: a thin cloth **one block high** (the full height of the pole
+     block it hangs on) and **one and a half blocks long**, starting at the pole with **no gap** (a dark brown hoist
+     edge right against the pole) and ending about 1.5 blocks out. On a stack of poles it hangs from the top block
+     you hoisted it on. White with a red band (merchant), blue with a white cross shifted toward the pole (navy),
+     black with a skull and crossbones (Jolly Roger). **Both sides** show the design; from the other side it is
+     mirrored (the hoist edge is still at the pole). Square pixels, not stretched. No black or white box around the
+     cloth, no dark shading on the far end. The top, bottom and tip edges are thin lines in the cloth's color. The
+     pole still looks like the old flagpole, and its outline box is still only the pole (the cloth has no hitbox:
+     you can walk through it). A block placed where the cloth hangs simply overlaps it (known, by design).
 4. **Change a flag.** Right-click the merchant pole with the navy flag.
    - **Expected:** after 3 seconds the navy flag flies and the merchant flag is back in your inventory.
 5. **Cancel.** Start hoisting a flag, and within the 3 seconds right-click the pole with an empty hand.
@@ -35,7 +40,8 @@ Please send screenshots of steps 3 and 7, and `latest.log` if anything goes wron
      (the pole keeps the flag: `/pirates flag get <pos>` says "struck"). The second time: "Raising the ..." and the
      same flag flies again.
 7. **Patterned banner.** Make a banner with a few patterns on a loom and right-click a pole with it.
-   - **Expected:** after 3 seconds a **generic custom cloth** appears (tan with a gold edge and a red mark). It does not
+   - **Expected:** after 3 seconds a **generic custom cloth** of the same full size appears (tan with a gold edge and a
+     red mark). It does not
      show the banner's patterns (known limitation: the block model can't). `/pirates flag get <pos>` says
      "custom flag, flying".
 8. **Take down.** Sneak and right-click the banner pole with an empty hand, wait 3 seconds.
@@ -44,12 +50,19 @@ Please send screenshots of steps 3 and 7, and `latest.log` if anything goes wron
 9. **Break the pole.** Hoist a flag, then break the pole with an axe (survival).
    - **Expected:** the flagpole and the flag drop as items. Break one in the middle of a hoist: both the old and the
      pending flag drop.
-10. **Wind.** Note which way the flags point. Run `/weather thunder`, then `/time add 6000` a few times, waiting
-    about 10 seconds after each (flags check the wind every `wind_update_interval_ticks = 200` ticks).
-    - **Expected:** all flags in one area point the same way, **downwind**, in 90° steps: if the wind HUD/indicator
-      (or `/pirates wind` if available) says the wind blows toward the south-east, the cloth points south or east.
-      When the wind turns past a 45° boundary, the flags swing to the new side within about 10 seconds. A freshly
-      hoisted flag points downwind at once. There is no fluttering animation in this version.
+10. **Wind, four directions.** Stand a few blocks away from a pole with a flying flag, with free space around it.
+    Run `/pirates wind set 0 8`, wait about 10 seconds (flags check the wind every
+    `wind_update_interval_ticks = 200` ticks), and note where the cloth points; then `/pirates wind set 90 8`,
+    `/pirates wind set 180 8` and `/pirates wind set 270 8`, waiting each time. End with `/pirates wind clear`.
+    - **Expected:** the cloth always points **downwind**, away from where the wind comes from: wind from 0 (north)
+      → cloth points **south**; from 90 (east) → **west**; from 180 (south) → **north**; from 270 (west) → **east**
+      (F3 shows which way you face). In all four directions it looks the same: one block high, 1.5 blocks long, no
+      gap at the pole, the design readable on both sides, nothing stretched, missing or flickering. Also check from
+      a distance (8 to 16 blocks) that the far end of the cloth does not vanish when the pole's own chunk section is
+      just off screen. All flags in one area point the same way. A freshly hoisted flag points downwind at once.
+      There is no fluttering animation in this version.
+    - **Struck:** strike one of the flags (empty hand) while the wind is set: the cloth disappears completely
+      (nothing left at the pole or in the air), and comes back pointing downwind when raised.
 11. **Relog.** Hoist a flag, strike another, leave the world and load it again.
     - **Expected:** the same flags fly, the struck one is still struck (`/pirates flag get`), nothing dropped.
 12. **Commands.** `/pirates flag set <pos> jolly_roger`, `/pirates flag strike <pos>`, `/pirates flag raise <pos>`,

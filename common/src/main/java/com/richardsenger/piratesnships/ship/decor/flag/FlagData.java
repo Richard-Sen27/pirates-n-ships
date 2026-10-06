@@ -1,7 +1,5 @@
 package com.richardsenger.piratesnships.ship.decor.flag;
 
-import com.google.gson.JsonObject;
-import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.datagen.LangBuilder;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
@@ -16,10 +14,8 @@ import net.minecraft.data.models.blockstates.MultiPartGenerator;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
 import net.minecraft.data.models.model.ModelLocationUtils;
-import net.minecraft.data.models.model.ModelTemplate;
 import net.minecraft.data.models.model.ModelTemplates;
 import net.minecraft.data.models.model.TextureMapping;
-import net.minecraft.data.models.model.TextureSlot;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
@@ -33,9 +29,10 @@ import java.util.Map;
 
 /**
  * Datagen for flags. The flagpole's look: a multipart block state with the pole ({@code fence_post}) always and,
- * per shown flag kind and facing, a flag cloth from vanilla's glass pane side template (a 2 px thick panel from the
- * pole's center to one side of the block), with {@code pane = block/flag_<kind>} and a transparent
- * {@code edge = block/flag_edge}, rendered cutout. The template points north; other facings rotate it.
+ * per shown flag kind and facing, the kind's cloth model ({@link FlagClothModel}: one block high, 1.5 blocks long,
+ * built in code and written through {@link ModelContext#models()}), rotated by the block state to the facing. The
+ * cloth model points north; other facings rotate it by {@link FlagClothModel#yRotation}. A struck flag
+ * ({@code flag=none}) shows only the pole.
  */
 public final class FlagData {
 
@@ -92,7 +89,8 @@ public final class FlagData {
         MultiPartGenerator gen = MultiPartGenerator.multiPart(pole).with(Variant.variant().with(VariantProperties.MODEL, poleModel));
         for (FlagKind kind : FlagKind.values()) {
             if (kind == FlagKind.NONE) continue;
-            ResourceLocation cloth = flagModel(m, kind);
+            ResourceLocation cloth = FlagClothModel.modelId(kind);
+            m.models().accept(cloth, () -> FlagClothModel.json(kind));
             for (Direction d : Direction.Plane.HORIZONTAL) {
                 gen.with(Condition.condition().term(FlagpoleBlock.FLAG, kind).term(FlagpoleBlock.FACING, d),
                         Variant.variant().with(VariantProperties.MODEL, cloth).with(VariantProperties.Y_ROT, rotation(d)));
@@ -101,27 +99,11 @@ public final class FlagData {
         m.blockStates().accept(gen);
     }
 
-    /** Texture name of a flag kind's cloth: {@code block/flag_<kind>}. */
-    public static ResourceLocation clothTexture(FlagKind kind) {
-        return Constants.id("block/flag_" + kind.getSerializedName());
-    }
-
-    private static ResourceLocation flagModel(ModelContext m, FlagKind kind) {
-        ModelTemplate template = ModelTemplates.STAINED_GLASS_PANE_SIDE;
-        TextureMapping textures = new TextureMapping().put(TextureSlot.PANE, clothTexture(kind)).put(TextureSlot.EDGE, Constants.id("block/flag_edge"));
-        return template.create(Constants.id("block/flagpole_flag_" + kind.getSerializedName()), textures, m.models(), (id, slots) -> {
-            JsonObject json = template.createBaseTemplate(id, slots);
-            // NeoForge reads this; the Fabric port needs a render layer registration instead
-            json.addProperty("render_type", "minecraft:cutout");
-            return json;
-        });
-    }
-
     private static VariantProperties.Rotation rotation(Direction d) {
-        return switch (d) {
-            case EAST -> VariantProperties.Rotation.R90;
-            case SOUTH -> VariantProperties.Rotation.R180;
-            case WEST -> VariantProperties.Rotation.R270;
+        return switch (FlagClothModel.yRotation(d)) {
+            case 90 -> VariantProperties.Rotation.R90;
+            case 180 -> VariantProperties.Rotation.R180;
+            case 270 -> VariantProperties.Rotation.R270;
             default -> VariantProperties.Rotation.R0;
         };
     }

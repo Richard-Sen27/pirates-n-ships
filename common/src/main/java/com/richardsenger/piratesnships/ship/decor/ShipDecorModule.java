@@ -10,6 +10,7 @@ import com.richardsenger.piratesnships.ship.decor.flag.FlagCommands;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagConfig;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagData;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagGameTests;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagModelGameTests;
 import com.richardsenger.piratesnships.ship.decor.flag.Flags;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.core.Direction;
@@ -175,6 +176,6 @@ public final class ShipDecorModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(ShipDecorGameTests.class, FlagGameTests.class);
+        return List.of(ShipDecorGameTests.class, FlagGameTests.class, FlagModelGameTests.class);
     }
 }

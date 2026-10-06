@@ -13,6 +13,11 @@ import com.richardsenger.piratesnships.ship.sable.WaterRegions;
 import java.util.Collection;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.StairBlock;
+import net.minecraft.world.level.block.state.properties.Half;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
@@ -345,6 +350,80 @@ public final class DryHullGameTests {
             h.assertTrue(helmY > water, "the ship sank: helm at " + helmY + ", water at " + water);
             h.succeed();
         });
+    }
+
+    // ------------------------------------------------------------------ partial blocks (design.md §4.3)
+
+    /**
+     * {@link #hull} with a deck hatch, a floor of bottom slabs under the hold except one top slab at hold
+     * (1, −4, 1) (empty half towards the sea), and a bottom stair facing south at hold (−1, −3, 1), its back to the
+     * south wall. The hold has 17 cells.
+     */
+    private static BlockPos partialHull(GameTestHelper h, int a) {
+        BlockPos helm = hull(h, a, true);
+        for (int x = a + 1; x <= a + 3; x++) {
+            for (int z = 10; z <= 12; z++) {
+                SlabType type = x == a + 3 && z == 12 ? SlabType.TOP : SlabType.BOTTOM;
+                h.setBlock(new BlockPos(x, 5, z), Blocks.OAK_SLAB.defaultBlockState().setValue(SlabBlock.TYPE, type));
+            }
+        }
+        h.setBlock(new BlockPos(a + 1, 6, 12), Blocks.OAK_STAIRS.defaultBlockState()
+                .setValue(StairBlock.FACING, Direction.SOUTH).setValue(StairBlock.HALF, Half.BOTTOM));
+        return helm;
+    }
+
+    private static Vec3 worldAt(Fixture f, BlockPos plot, double ox, double oy, double oz) {
+        return f.ship().toWorld(new Vec3(plot.getX() + ox, plot.getY() + oy, plot.getZ() + oz));
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200)
+    public static void partialBlocksInsideAreOccludedButNotTowardsTheSea(GameTestHelper h) {
+        basin(h, 0, 23, true);
+        Fixture f = assemble(h, partialHull(h, 9));
+        ServerLevel level = h.getLevel();
+        BlockPos slab = f.hold(0, -4, 0), topSlab = f.hold(1, -4, 1), stair = f.hold(-1, -3, 1), hatch = f.hold(-1, -1, -1);
+        h.assertTrue(level.getBlockState(slab).is(Blocks.OAK_SLAB) && level.getBlockState(stair).is(Blocks.OAK_STAIRS)
+                && level.getBlockState(hatch).is(Blocks.OAK_TRAPDOOR), "partial blocks missing in the plot");
+        h.assertTrue(f.runtime().simulation().analysis().compartments().size() == 1
+                && f.runtime().simulation().analysis().compartments().get(0).volume() == HOLD - 1,
+                "expected one 17-cell compartment, got " + f.runtime().simulation().analysis().compartments());
+        h.succeedWhen(() -> {
+            h.assertTrue(f.runtime().regionCount() == 1, "no dry region yet");
+            // 17 hold cells + the stair + 7 bottom slabs (the one under the stair touches no dry cell)
+            int count = f.runtime().regionCells().get(0).count();
+            h.assertTrue(count == HOLD - 1 + 1 + 7, "expected 25 occluded cells, got " + count);
+            h.assertFalse(f.runtime().inRegion(f.hold(-1, -4, 1)), "the slab under the stair is in the region");
+            h.assertTrue(WaterRegions.isOccluded(level, worldAt(f, slab, 0.5, 0.75, 0.5)), "empty half of the floor slab shows water");
+            h.assertTrue(WaterRegions.isOccluded(level, worldAt(f, stair, 0.5, 0.75, 0.25)), "empty part of the stair shows water");
+            h.assertFalse(f.runtime().inRegion(topSlab), "the top slab over the sea is in the region");
+            h.assertFalse(WaterRegions.isOccluded(level, worldAt(f, topSlab, 0.5, 0.25, 0.5)), "the sea in the top slab's lower half is hidden");
+            h.assertFalse(WaterRegions.isOccluded(level, worldAt(f, topSlab, 0.5, -0.5, 0.5)), "the sea under the hull is hidden");
+            h.assertFalse(f.runtime().inRegion(hatch), "a deck hatch under the open sky is in the region");
+            SableShips.remove(f.ship());
+        });
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 300, batch = "pirates_n_ships_dry_hull_inflow")
+    public static void floorSlabLeavesTheRegionWhenTheHoldFloods(GameTestHelper h) {
+        com.richardsenger.piratesnships.core.gametest.ConfigOverrides.during(h,
+                com.richardsenger.piratesnships.ship.hull.FloodingConfig.INFLOW_RATE, 10.0);
+        basin(h, 0, 23, true);
+        Fixture f = assemble(h, partialHull(h, 9));
+        ServerLevel level = h.getLevel();
+        BlockPos slab = f.hold(0, -4, 0), wall = f.hold(-2, -3, 0), above = f.hold(0, -3, 0);
+        boolean[] seen = {false};
+        h.runAfterDelay(20, () -> {
+            h.assertTrue(f.runtime().inRegion(slab), "the floor slab is not in the dry region before the breach");
+            seen[0] = true;
+            level.setBlock(wall, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+        });
+        h.runAfterDelay(21, () -> h.succeedWhen(() -> {
+            h.assertTrue(seen[0], "breach not made");
+            h.assertFalse(f.runtime().inRegion(above), "the hold's bottom layer is still dry");
+            h.assertFalse(f.runtime().inRegion(slab), "the floor slab stayed in the region under flood water");
+            h.assertFalse(WaterRegions.isOccluded(level, worldAt(f, slab, 0.5, 0.75, 0.5)), "the flooded slab half is still occluded");
+            SableShips.remove(f.ship());
+        }));
     }
 
     private static int gridIndex(Fixture f, BlockPos plot) {

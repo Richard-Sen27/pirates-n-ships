@@ -583,4 +583,34 @@ public final class SailingGameTestsControls {
             h.succeed();
         });
     }
+
+    /** Disassembling with the anchor out (on land here) removes the anchor: no anchor entity is left behind. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300)
+    public static void disassemblingWithTheAnchorOutLeavesNoAnchor(GameTestHelper h) {
+        SailingGameTestsShips.basin(h, false);
+        Fixture f = SailingGameTestsShips.assemble(h, ship(h, SailTrim.FURLED, 0));
+        BlockPos helm = find(f.ship(), com.richardsenger.piratesnships.ship.assembly.AssemblyContent.HELM.get());
+        BlockPos capstan = find(f.ship(), SailingBlocks.CAPSTAN.get());
+        Player player = h.makeMockPlayer(GameType.SURVIVAL);
+        player.setShiftKeyDown(true);
+        BlockHitResult middle = new BlockHitResult(Vec3.atCenterOf(helm).add(0.0, 0, -0.5), Direction.NORTH, helm, false);
+        AnchorEntity[] out = new AnchorEntity[1];
+        h.runAfterDelay(3, () -> {
+            Component c = ShipControls.useCapstan(h.getLevel(), capstan);
+            h.assertTrue(key(c).equals(ShipControls.KEY_DROPPING), "drop refused: " + c.getString());
+        });
+        h.runAfterDelay(6, () -> {
+            out[0] = anchorEntity(h, f);
+            h.assertTrue(out[0].isOut(), "anchor not out");
+        });
+        h.runAfterDelay(30, () -> h.succeedWhen(() -> {
+            if (!f.ship().isRemoved()) {
+                use(h, helm, player, middle); // refused while the ship still settles, then disassembles
+            }
+            h.assertTrue(f.ship().isRemoved(), "not disassembled yet");
+            h.assertTrue(out[0].isRemoved(), "the dropped anchor outlived the disassembly");
+            h.assertTrue(h.getLevel().getEntitiesOfClass(AnchorEntity.class, new net.minecraft.world.phys.AABB(h.absolutePos(BlockPos.ZERO)).inflate(48)).isEmpty(),
+                    "an anchor entity was left in the world");
+        }));
+    }
 }

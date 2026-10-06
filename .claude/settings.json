@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew build:*)",
+      "Bash(./gradlew :neoforge:runGameTestServer:*)",
+      "Bash(./gradlew :neoforge:runData:*)"
+    ],
+    "deny": [
+      "Bash(./gradlew :neoforge:runClient:*)",
+      "Edit(refs/**)"
+    ]
+  }
+}

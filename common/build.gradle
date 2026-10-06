@@ -14,6 +14,14 @@ neoForge {
         minecraftVersion = parchment_minecraft
         mappingsVersion = parchment_version
     }
+    // Put vanilla Minecraft (and its libraries) on the JUnit classpath, for codec tests etc.
+    addModdingDependenciesTo(sourceSets.test)
+}
+
+// Datagen output (written by ./gradlew :neoforge:runData). Shipped by every loader module.
+sourceSets.main.resources {
+    srcDir 'src/generated/resources'
+    exclude '.cache/**'
 }
 
 dependencies {
@@ -21,6 +29,18 @@ dependencies {
     // fabric and neoforge both bundle mixinextras, so it is safe to use it in common
     compileOnly group: 'io.github.llamalad7', name: 'mixinextras-common', version: '0.3.5'
     annotationProcessor group: 'io.github.llamalad7', name: 'mixinextras-common', version: '0.3.5'
+
+    // Sable (hard dependency). Only the loader-independent API is visible to common.
+    compileOnly "dev.ryanhcode.sable:sable-common-${minecraft_version}:${sable_version}"
+
+    // Unit tests for pure logic and codecs (see docs/design.md §3.3)
+    testImplementation platform('org.junit:junit-bom:5.11.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
 }
 
 configurations {
@@ -36,6 +56,9 @@ configurations {
 
 artifacts {
     commonJava sourceSets.main.java.sourceDirectories.singleFile
-    commonResources sourceSets.main.resources.sourceDirectories.singleFile
+    // One artifact per resource directory (hand-written + generated), so the loader modules ship both.
+    // (A single `sourceDirectories.singleFile` breaks as soon as there is more than one directory.)
+    sourceSets.main.resources.srcDirs.each { dir ->
+        commonResources dir
+    }
 }
-

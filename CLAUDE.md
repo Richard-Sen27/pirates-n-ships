@@ -33,7 +33,7 @@ Minecraft mod. Full spec: `docs/design.md`. Read it at the start of every sessio
 
 ## Conventions
 - Mod ID `pirates_n_ships`, root package `com.richardsenger.piratesnships`, one package per feature module as listed in design.md §3.2.
-- **All JSON assets come from datagen.** Never hand-write models, recipes, loot tables or lang files. One exception: block and entity models made in Blockbench. Their `.bbmodel` sources live in `art/models/`, the exported model files are committed under `common/src/main/resources/assets/pirates_n_ships/models/` like textures, and datagen writes only the block states and item models that reference them (design.md §4.8).
+- **All JSON assets come from datagen.** Never hand-write models, recipes, loot tables or lang files. One exception: block, item and entity models made in Blockbench. Their `.bbmodel` sources live in `art/models/`, the exported model files are committed under `common/src/main/resources/assets/pirates_n_ships/models/` like textures, and datagen writes only the block states and item models that reference them (design.md §4.8).
 - **Every gameplay-changing feature gets a server config toggle, and every frequency or strength gets a config value** (design.md §17).
 - Gameplay is server-authoritative. The client renders only.
 - Every piece of new logic gets a GameTest in `common` where feasible.

@@ -10,7 +10,7 @@ Please send back:
 - `logs/latest.log` and the chat output.
 
 ## 0. Setup
-Build the boat of `milestone-3.md` §0 (helm, mast, small square sail `trim=furled`, sail winch on deck) and assemble
+Build the boat of `milestone-3.md` §0 (helm, mast with the two yards, furled, sail winch on deck) and assemble
 it at the helm. Leave at least one free deck block with deck below it next to the winch: the crew member stands on the
 first free neighbour of the winch (north, east, south, west, in that order), or on top of the winch if there is none.
 Set the wind: `/pirates wind set 270 6` (from the west, astern for a boat with its bow east).

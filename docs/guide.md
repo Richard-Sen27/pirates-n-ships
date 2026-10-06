@@ -39,7 +39,7 @@ physics for moving ships.
    Make the bottom layer from something heavy such as stone, or the boat will tip (see [Limits](#limits-to-know)).
 2. **Place a helm** on deck. Stand behind it and look where the ship should go: the bow is the direction the
    helmsman looks.
-3. **Place a mast with a sail block** on it, and a **sail winch** somewhere on deck. A **capstan** gives you an anchor.
+3. **Rig a square sail**: a mast of logs or fences with two rows of **yards** across it, one 2 to 8 blocks above the other, and a **sail winch** somewhere on deck. A **capstan** gives you an anchor.
 4. **Use the helm.** The connected blocks become a ship: a physics object that floats, with a dry hold.
 5. **Use the sail winch** to hoist the sails (furled → half → full). The wind pushes the ship.
 6. **Steer at the helm:** click the right third of the wheel for starboard, the left third for port, the middle for
@@ -117,24 +117,29 @@ Rain makes it 1.5 times stronger and a thunderstorm 2.2 times, with gusts during
 every player and is sent to clients (nothing displays it yet, except the flags).
 
 ### Sails
-One sail block stands for a whole sail. Place it on a mast.
+A **square sail** is built from two **yards**. A yard is a straight row of yard blocks (a thin spar; place them against
+each other's ends to extend one); its middle block marks the mast column. Put a second yard with the same direction
+2 to 8 blocks straight below the first, with only air or mast blocks (logs, fences) between the two middle blocks, and
+the pair is one sail. The cloth is drawn between the yards, not built from blocks: furled is a roll under the upper
+yard, half reaches half way down, full reaches the lower yard. Its area is the mean yard length times the distance
+between the yards, so two 5-wide yards 5 apart give 25. Three yards on one mast make two sails. A yard that heads no
+sail tells you so when you click it.
 
 | Sail | Area | Good at |
 |---|---|---|
-| Small Square Sail | 9 | Wind from astern. Useless close to the wind. |
-| Large Square Sail | 25 | Same, with almost three times the push. |
-| Fore-and-Aft Sail | 16 | Wind from the side. Still drives at 45° to the wind. |
+| Square sail (two yards) | yard length × distance | Wind from astern. Useless close to the wind. |
+| Fore-and-Aft Sail (one block, until the cleat-and-rope sail arrives) | 16 | Wind from the side. Still drives at 45° to the wind. |
 
-- **Trim:** furled (no force), half, full. The block shows its trim.
+- **Trim:** furled (no force), half, full. The cloth shows the trim and bellies to the downwind side.
 - The force grows with the wind you feel on board, the sail's area and its trim. A ship running before the wind can't
   go faster than the wind.
 - **No-go zone:** within 30° of the wind no sail drives the ship forward.
 - Sails only work on a ship that is afloat.
-- Square sails are meant to face bow or stern, fore-and-aft sails port or starboard. The facing is only visual for now.
+- Yards run across the ship, a fore-and-aft sail block stands along the hull. The direction is only visual: the crew is assumed to trim the sails optimally.
 
 ### Sail winch
-Using it cycles the trim of **all** sails on its ship: furled → half → full → furled. Using a single sail block cycles
-only that sail.
+Using it cycles the trim of **all** sails on its ship: furled → half → full → furled. Clicking an upper yard (or the fore-and-aft
+sail block) with the empty hand cycles only that sail.
 
 ### Keel
 A ship in water resists moving sideways much more than moving forward, so a sail on a beam reach drives it ahead
@@ -378,9 +383,8 @@ nothing lets a player use it yet: the input and animation layers are missing.
 | Block | Recipe | What it does |
 |---|---|---|
 | Helm | 4 sticks, 1 planks | Assembles, steers and disassembles a ship. A real ship's wheel on a pedestal (Blockbench model). See [Ships](#2-ships) and [Sailing](#3-sailing). |
-| Small Square Sail | 3 sticks, 3 wool | Sail, area 9. |
-| Large Square Sail | 3 sticks, 6 wool | Sail, area 25. |
-| Fore-and-Aft Sail | 3 sticks, 3 wool | Sail, area 16, sails closer to the wind. |
+| Yard | 3 logs in a row (gives 3) | A spar. Two rows on one mast make a square sail; the cloth is drawn between them. See [Sails](#sails). |
+| Fore-and-Aft Sail | 3 sticks, 3 wool | One-block sail, area 16, sails closer to the wind. Replaced by cleat and rope soon. |
 | Sail Winch | 2 string, 1 iron ingot, 3 planks | Sets the trim of all sails on its ship. A crew station. |
 | Capstan | 2 logs, 1 stick, 2 chains, 1 iron block, 3 planks | Drops and raises the anchor. |
 | Flagpole | 3 sticks (gives 2) | Flies a flag. A thin pole with a finial and a cleat (Blockbench model). See [Flags](#5-flags). |

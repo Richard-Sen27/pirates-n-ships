@@ -9,14 +9,17 @@ the bow is where the helmsman looks, i.e. the opposite of the helm's `facing`. A
 **bow points east (+X)**. Before assembling, add a mast, a sail and a winch (coordinates relative to the same spot as
 in milestone 1):
 ```
-/fill ~6 ~-2 ~ ~6 ~1 ~ oak_fence
-/setblock ~6 ~2 ~ pirates_n_ships:small_square_sail[facing=east,trim=furled]
+/fill ~6 ~-2 ~ ~6 ~4 ~ oak_fence
+/fill ~6 ~5 ~-1 ~6 ~5 ~1 pirates_n_ships:yard[axis=z]
+/fill ~6 ~2 ~-1 ~6 ~2 ~1 pirates_n_ships:yard[axis=z]
 /setblock ~4 ~-2 ~-1 pirates_n_ships:sail_winch
 ```
-A square sail hangs across the ship, so it faces the bow or the stern; a fore-and-aft sail stands along the hull, so
-it faces north or south here. The facing is visual only (the crew is assumed to trim the sail optimally).
-Then use the helm to assemble (milestone-1 §4).
-- Expected: the sail shows the "furled" texture (a rolled bundle under the yard).
+The two yards run across the ship (axis z, the bow points +X); the upper one at y+5 is the sail's head, the lower one
+at y+2 its foot, 3 blocks apart with fence (mast) between their middle blocks, area 3 × 3 = 9. A fore-and-aft sail
+(still one block) stands along the hull, so it faces north or south here. Directions are visual only (the crew is
+assumed to trim the sail optimally). Then use the helm to assemble (milestone-1 §4).
+- Expected: a rolled cloth bundle hangs under the upper yard; the lower yard shows nothing. Clicking the lower yard
+  says it heads no sail.
 
 ## 1. Wind command
 1. `/pirates wind set 270 6` (wind **from** the west, 6 blocks/s; 0 = from the north, 90 = from the east).
@@ -24,17 +27,19 @@ Then use the helm to assemble (milestone-1 §4).
 3. `/pirates wind clear`, `/pirates wind get`. Expected: "(natural)". Set it back to `270 6`.
 
 ## 2. Hoist the sail, sail downwind
-1. Use the winch once. Expected: action bar "Sails set: half sail (1 sails)", the sail texture shows the upper half set.
-   Again: "full sail", full canvas. Again: "furled". Set it to full.
+1. Use the winch once. Expected: action bar "Sails set: half sail (1 sails)", the cloth lowers smoothly (about one
+   second) to half way between the yards. Again: "full sail", the cloth reaches the lower yard. Again: "furled", it
+   rolls back up under the upper yard. Set it to full.
 2. Expected: the boat accelerates east (bow first) over a few seconds and settles at a steady speed. In the GameTest
    (5x4x5 hull, 42.5 kpg, small square sail, 6 blocks/s astern) it peaked at ~1 m/s after 2 s and averaged 0.42 m/s
    over the next 5 s. Note the speed you see (F3 coordinates over 10 s, or `/pirates ship forces`).
-3. Using the sail block itself also cycles its trim (config `sail_block_trim`).
+3. Clicking the upper yard with the empty hand also cycles its trim (config `sail_block_trim`). Both faces of the
+   cloth are visible and it bellies to the downwind side (east); change the wind and watch it flip after a moment.
 
 ## 3. Wind on the beam and from ahead
 1. `/pirates wind set 0 6` (from the north, on the port beam). A square sail: slow forward drive and some drift south.
-2. Replace the sail with `pirates_n_ships:fore_and_aft_sail[facing=north,trim=full]` (break and place, the ship picks
-   it up). Expected: clearly faster than the square sail on this course, mostly forward, little sideways drift
+2. Remove the two yards and put `pirates_n_ships:fore_and_aft_sail[facing=north,trim=full]` on top of the mast
+   (break and place, the ship picks it up). Expected: clearly faster than the square sail on this course, mostly forward, little sideways drift
    (GameTest at 3 blocks/s: 0.38 m/s forward, 0.11 m/s sideways; with `keel_enabled=false`: 0.33 forward, 0.26 sideways).
 3. `/pirates wind set 90 6` (from ahead). Expected: no forward motion; the boat is pushed slowly backward
    (GameTest: −0.16 m/s).
@@ -103,8 +108,24 @@ The creak volume follows the game's "Blocks" volume slider (it is played by the 
 client setting `audio.ambience_volume` does not affect it yet.
 
 ## 6. A second, bigger ship
-Build a longer hull (e.g. 13 x 7) with two masts and a `large_square_sail` plus a `fore_and_aft_sail`, one winch.
-Expected: the winch sets both sails; the ship is slower to accelerate (more mass) but reaches a similar top speed.
+Build a longer hull (e.g. 13 x 7) with two masts: a square sail from two 5-wide yards 5 blocks apart (area 25) on one,
+a `fore_and_aft_sail` on the other, one winch. Expected: the winch sets both sails; the ship is slower to accelerate
+(more mass) but reaches a similar top speed; `/pirates ship forces` lists `sail[0]:square` with area 25.
+
+## 6b. Yard sails up close (F5a)
+On land is fine for all of this except step 5.
+1. **Gap rules.** Put a stone block into the mast between the two yards. Expected: the cloth disappears within about a
+   second and comes back when the stone is removed. Move the lower yard one block sideways: no sail. Turn it 90°
+   (axis x): no sail. Put it only one block below the upper yard: no sail (minimum gap 2); nine below: no sail (maximum 8).
+2. **Two sails on one mast.** Yards at y, y−3 and y−6. Expected: two cloths; the middle yard is the foot of the top sail
+   and the head of the lower one. Clicking the middle yard cycles the lower sail.
+3. **Uneven yards.** A 5-wide upper yard over a 3-wide lower yard. Expected: a trapezoid cloth; `/pirates ship forces`
+   on a ship shows area 4 × gap.
+4. **Look.** The yard is a thin stripped-spruce spar centred on the mast; the cloth clears a full-block log mast, the
+   texture is not badly stretched, the furled roll shrinks as the sail lowers. Note anything that looks wrong.
+5. **On a ship.** With the rig of §0 assembled and moving: the cloth follows the ship without jitter and is not culled
+   when the upper yard's middle block is off screen (look away from the mast while the sail is still in view).
+6. **Whistle menu icons:** hoist shows a yard, reef shows white wool (`milestone-4.md` §9).
 
 ## Tuning questions (server config, section in brackets)
 | Question | Config value |

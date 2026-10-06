@@ -630,6 +630,11 @@ many regions. [V code; I cost]
 - `Level#noCollision` does not see sub-level blocks. To check that an entity stands on a ship, compare heights relative
   to the deck. [V]
 
+### 9.0g Findings from the yard sails (F5a, verified by running)
+- **GameTest barrier ceiling.** `GameTestInfo.prepareTestStructure` → `StructureUtils.encaseStructure` puts barrier blocks one above every template (relative y = 13 for our templates). A floating test ship rises about 1.4 blocks after assembly, so anything reaching y ≥ 12 drags on the barriers: ships stopped after 5 blocks, a kicked hull could not roll, a hull was held down. `SailingGameTestsShips.openSky(helper, size)` removes the ceiling; the sailing and station basins call it.
+- **Test ballast was no ballast.** `SailingGameTestsShips.ballast()` used stone, which is in `pirates_n_ships:terrain` and is never gathered, so the hull floated without its floor (30.6 kpg instead of about 43) and the D5 thresholds (§9.0f) were measured on that hull. Fixed in F5b (real ballast, thresholds re-measured).
+- **Block entity renderers run in client sub-levels**: `sublevel/render/dispatcher/VanillaSubLevelRenderDispatcher.java` l.219-252 renders each section's block entities through the vanilla `BlockEntityRenderDispatcher` with the ship's pose; `mixinhelpers/sublevel_render/vanilla/VanillaSubLevelBlockEntityRenderer.java` does the call; NeoForge's culling box is transformed in `neoforge/mixin/block_entity_visible/LevelRendererMixin.java`. Do **not** set `shouldRenderOffScreen`: Sable's sub-level path only renders the per-section block entities.
+
 ### 9.1 How Sable tests sub-levels
 - Tests live in **`sable/neoforge/src/main/java/dev/ryanhcode/sable/neoforge/gametest/`** (`AssemblyTest`, `PhysicsTest`,
   `SableTestHelper`), registered with NeoForge's `@GameTestHolder(Sable.MOD_ID)` and vanilla `@GameTest(template = …)`. [V]

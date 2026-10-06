@@ -1,0 +1,142 @@
+"""Converts the source sounds listed in tools/sounds/manifest.json to Ogg Vorbis and writes docs/credits.md.
+
+Usage (from the repository root, needs ffmpeg on the PATH or in /opt/homebrew/bin; when that ffmpeg is built
+without libvorbis, as Homebrew's ffmpeg 8 is, oggenc from vorbis-tools encodes instead: brew install vorbis-tools):
+
+    python3 tools/convert_sounds.py [RAW_DIR] [--force]
+
+RAW_DIR defaults to raw_sound/ (git-ignored; the human drops the downloaded mp3 files there).
+Output: common/src/main/resources/assets/pirates_n_ships/sounds/<target> for every manifest entry.
+Music stays stereo, effects become mono (Minecraft plays only mono sounds positionally). Loudness is normalised
+with ffmpeg's loudnorm filter. A target newer than its source is skipped unless --force is given. docs/credits.md
+is always rewritten from the manifest, even when the raw files are missing.
+"""
+import argparse
+import json
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+sys.dont_write_bytecode = True  # no __pycache__ next to the tools
+
+ROOT = Path(__file__).resolve().parent.parent
+MANIFEST = ROOT / "tools" / "sounds" / "manifest.json"
+SOUNDS = ROOT / "common" / "src" / "main" / "resources" / "assets" / "pirates_n_ships" / "sounds"
+CREDITS = ROOT / "docs" / "credits.md"
+
+SAMPLE_RATE = 44100
+QUALITY = 3  # libvorbis -q:a, about 112 kbit/s for stereo
+MUSIC_LUFS = -18.0  # integrated loudness target of music
+EFFECT_LUFS = -16.0  # integrated loudness target of sound effects
+TRUE_PEAK = -1.5  # dBTP ceiling of loudnorm
+KINDS = ("music", "effect")
+FIELDS = ("source", "target", "kind", "title", "author", "url", "license")
+
+
+def find_tool(name):
+    for candidate in (shutil.which(name), f"/opt/homebrew/bin/{name}", f"/usr/local/bin/{name}"):
+        if candidate and Path(candidate).exists():
+            return candidate
+    return None
+
+
+def encoder():
+    """(ffmpeg, oggenc or None): oggenc is only used when ffmpeg has no libvorbis encoder."""
+    ff = find_tool("ffmpeg")
+    if not ff:
+        sys.exit("ffmpeg not found: install it (e.g. brew install ffmpeg)")
+    encoders = subprocess.run([ff, "-hide_banner", "-encoders"], capture_output=True, text=True).stdout
+    if "libvorbis" in encoders:
+        return ff, None
+    oggenc = find_tool("oggenc")
+    if not oggenc:
+        sys.exit("this ffmpeg has no libvorbis encoder and oggenc is missing: brew install vorbis-tools")
+    return ff, oggenc
+
+
+def load_manifest():
+    entries = json.loads(MANIFEST.read_text(encoding="utf-8"))["sounds"]
+    targets = set()
+    for e in entries:
+        missing = [f for f in FIELDS if not e.get(f)]
+        if missing:
+            sys.exit(f"manifest entry {e} misses {missing}")
+        if e["kind"] not in KINDS:
+            sys.exit(f"manifest entry {e['target']}: kind must be one of {KINDS}")
+        if not e["target"].endswith(".ogg") or e["target"] != e["target"].lower():
+            sys.exit(f"manifest entry {e['target']}: target must be a lower-case .ogg path")
+        if e["target"] in targets:
+            sys.exit(f"manifest lists {e['target']} twice")
+        targets.add(e["target"])
+    return entries
+
+
+def convert(ff, oggenc, entry, raw_dir, force):
+    src = raw_dir / entry["source"]
+    dst = SOUNDS / entry["target"]
+    if not src.exists():
+        if dst.exists():
+            print(f"keep     {entry['target']} (source {src.name} not in {raw_dir})")
+            return
+        sys.exit(f"missing source {src} for {entry['target']}")
+    if dst.exists() and not force and dst.stat().st_mtime >= src.stat().st_mtime:
+        print(f"skip     {entry['target']} (up to date)")
+        return
+    music = entry["kind"] == "music"
+    lufs = MUSIC_LUFS if music else EFFECT_LUFS
+    decode = [ff, "-hide_banner", "-loglevel", "error", "-y", "-i", str(src), "-vn", "-map_metadata", "-1",
+              "-af", f"loudnorm=I={lufs}:TP={TRUE_PEAK}:LRA=11",
+              "-ar", str(SAMPLE_RATE), "-ac", "2" if music else "1"]
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    if oggenc is None:
+        subprocess.run(decode + ["-c:a", "libvorbis", "-q:a", str(QUALITY), str(dst)], check=True)
+    else:  # ffmpeg decodes and normalises to WAV on a pipe, oggenc encodes
+        wav = subprocess.Popen(decode + ["-bitexact", "-f", "wav", "-c:a", "pcm_s16le", "-"], stdout=subprocess.PIPE)
+        subprocess.run([oggenc, "--quiet", "--ignorelength", "-q", str(QUALITY), "-o", str(dst), "-"],
+                       stdin=wav.stdout, check=True)
+        wav.stdout.close()
+        if wav.wait() != 0:
+            sys.exit(f"ffmpeg failed on {src}")
+    print(f"convert  {entry['target']} ({dst.stat().st_size // 1024} KiB)")
+
+
+def row(e):
+    return f"| {e['title']} | {e['author']} | [link]({e['url']}) | `assets/pirates_n_ships/sounds/{e['target']}` |"
+
+
+def write_credits(entries):
+    lines = [
+        "# Credits",
+        "",
+        "<!-- Generated by tools/convert_sounds.py from tools/sounds/manifest.json. Do not edit by hand. -->",
+        "",
+        "The music and sound effects below come from Pixabay and are used under the Pixabay Content License "
+        "(free use and modification, no attribution required, no redistribution of the files on their own). "
+        "We credit the authors anyway. The files were converted to Ogg Vorbis and loudness-normalised.",
+        "",
+    ]
+    for kind, heading in (("music", "Music"), ("effect", "Sound effects")):
+        rows = [row(e) for e in entries if e["kind"] == kind]
+        if not rows:
+            continue
+        lines += [f"## {heading}", "", "| Title | Author | Source | File in the mod |", "|---|---|---|---|", *rows, ""]
+    CREDITS.write_text("\n".join(lines), encoding="utf-8")
+    print(f"wrote    {CREDITS.relative_to(ROOT)}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("raw_dir", nargs="?", default=str(ROOT / "raw_sound"), help="folder with the source files")
+    parser.add_argument("--force", action="store_true", help="convert even when the target is up to date")
+    args = parser.parse_args()
+    entries = load_manifest()
+    ff, oggenc = encoder()
+    raw_dir = Path(args.raw_dir).resolve()
+    for e in entries:
+        convert(ff, oggenc, e, raw_dir, args.force)
+    write_credits(entries)
+
+
+if __name__ == "__main__":
+    main()

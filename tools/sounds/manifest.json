@@ -1,0 +1,76 @@
+{
+  "sounds": [
+    {
+      "source": "nakaradaalexander-leave-her-johnny-342172.mp3",
+      "target": "music/shanty/leave_her_johnny.ogg",
+      "kind": "music",
+      "title": "Leave Her Johnny",
+      "author": "Alexander Nakarada",
+      "url": "https://pixabay.com/de/music/felsen-leave-her-johnny-342172/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "kaazoom-the-ghost-of-gallows-reef-dark-sea-shanty-378694.mp3",
+      "target": "music/shanty/ghost_of_gallows_reef.ogg",
+      "kind": "music",
+      "title": "The Ghost Of Gallows Reef - Dark Sea Shanty",
+      "author": "kaazoom",
+      "url": "https://pixabay.com/de/music/volk-the-ghost-of-gallows-reef-dark-sea-shanty-378694/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "44363205-there-be-pirates-the-quest-323338.mp3",
+      "target": "music/sea/there_be_pirates_the_quest.ogg",
+      "kind": "music",
+      "title": "There Be Pirates - The Quest",
+      "author": "Pixabay user 44363205",
+      "url": "https://pixabay.com/de/music/akustische-gruppe-there-be-pirates-the-quest-323338/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "44363205-there-be-pirates-lost-in-the-deep-323335.mp3",
+      "target": "music/sea/there_be_pirates_lost_in_the_deep.ogg",
+      "kind": "music",
+      "title": "There Be Pirates - Lost in the Deep",
+      "author": "Pixabay user 44363205",
+      "url": "https://pixabay.com/de/music/akustische-gruppe-there-be-pirates-lost-in-the-deep-323335/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "mrfriends-pistol-shot-233473.mp3",
+      "target": "combat/pistol_shot.ogg",
+      "kind": "effect",
+      "title": "Pistol Shot",
+      "author": "mrfriends",
+      "url": "https://pixabay.com/sound-effects/film-special-effects-pistol-shot-233473/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "freesound_community-empty-gun-shot-6209.mp3",
+      "target": "combat/pistol_empty.ogg",
+      "kind": "effect",
+      "title": "Empty Gun Shot",
+      "author": "freesound_community",
+      "url": "https://pixabay.com/sound-effects/film-special-effects-empty-gun-shot-6209/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "magiazzz-cannon_shot-560886.mp3",
+      "target": "combat/cannon_shot.ogg",
+      "kind": "effect",
+      "title": "Cannon Shot",
+      "author": "magiazzz",
+      "url": "https://pixabay.com/sound-effects/film-special-effects-cannon-shot-560886/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "freesound_community-artillery-gunfire-14607.mp3",
+      "target": "combat/cannon_volley.ogg",
+      "kind": "effect",
+      "title": "Artillery Gunfire",
+      "author": "freesound_community",
+      "url": "https://pixabay.com/sound-effects/film-special-effects-artillery-gunfire-14607/",
+      "license": "Pixabay Content License"
+    }
+  ]
+}

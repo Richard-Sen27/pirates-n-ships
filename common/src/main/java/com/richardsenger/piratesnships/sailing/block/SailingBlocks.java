@@ -36,7 +36,7 @@ public final class SailingBlocks {
                     .sound(SoundType.WOOD).ignitedByLava()));
     public static final RegistryEntry<Block, CapstanBlock> CAPSTAN = ModRegistry.blockWithItem("capstan",
             () -> new CapstanBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.5f, 3.0f)
-                    .sound(SoundType.WOOD).ignitedByLava()));
+                    .sound(SoundType.WOOD).noOcclusion().ignitedByLava()));
 
     private SailingBlocks() {
     }

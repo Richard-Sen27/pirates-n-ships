@@ -126,7 +126,9 @@ public final class SailingModule implements ModModule {
             for (RegistryEntry<Block, SailBlock> s : SailingBlocks.sails()) sail(m, s.get());
             yard(m, SailingBlocks.YARD.get());
             m.blocks().createTrivialCube(SailingBlocks.SAIL_WINCH.get());
-            m.blocks().createTrivialBlock(SailingBlocks.CAPSTAN.get(), TexturedModel.COLUMN);
+            // hand-made Blockbench model (art/models/capstan.bbmodel, design.md §4.8): only the block state is generated
+            m.blockStates().accept(MultiVariantGenerator.multiVariant(SailingBlocks.CAPSTAN.get(), Variant.variant()
+                    .with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(SailingBlocks.CAPSTAN.get()))));
         });
         data.blockLoot(loot -> {
             for (RegistryEntry<Block, SailBlock> s : SailingBlocks.sails()) loot.dropSelf(s.get());

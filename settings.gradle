@@ -47,5 +47,5 @@ plugins {
 rootProject.name = 'pirates-n-ships'
 include('common')
 include('neoforge')
-// Fabric is disabled until the Fabric port (design.md milestone 19)
+// Fabric is disabled until the Fabric port (design.md milestone 21)
 // include('fabric')

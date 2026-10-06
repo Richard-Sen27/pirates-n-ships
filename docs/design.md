@@ -1,6 +1,6 @@
 # Pirates 'n' Ships — Design Spec
 
-> Status: brainstorm → spec, v0.2 (2026-10-06, adds skill-based melee combat). Living document: update it whenever a decision changes.
+> Status: brainstorm → spec, v0.3 (2026-10-06, adds flags, ship customization, cargo, trade, brig and provisions). Living document: update it whenever a decision changes.
 > Mod name "Pirates 'n' Ships". Mod ID: `pirates_n_ships`.
 
 ---
@@ -36,11 +36,11 @@ A Minecraft mod about sailing, piracy and life at sea. Players build **real bloc
 | Config | A cross-loader config solution (e.g. Forge Config API Port), accessed only through our own `config` wrapper. See §21. |
 | Mappings | Official Mojang + Parchment |
 | Build | Based on the **MultiLoader-Template** (jaredlll08): `common` (vanilla only, via NeoForm), `neoforge` (ModDevGradle), `fabric` (Loom). The template's legacy Forge module was removed. |
+| Optional compat | Create (contraptions on ships), shader packs (Iris), JEI/EMI, Jade |
 | License | **PolyForm Noncommercial 1.0.0**: anyone may use, modify and redistribute the mod for any noncommercial purpose. |
 
 ### Dependency rule
 Every new dependency must exist for **both** NeoForge and Fabric, or be optional and isolated behind a compat module. Prefer vanilla APIs (data components, codecs, `CustomPacketPayload`, GameTest) over loader APIs wherever vanilla offers something.
-| Optional compat | Create (contraptions on ships), shader packs (Iris), JEI/EMI, Jade |
 
 ### Reference sources (read-only, in `refs/`, excluded from build)
 - `refs/sable`: primary API reference
@@ -81,12 +81,13 @@ The feature modules below are packages inside `common` (and, where needed, a sma
 | Module | Responsibility |
 |---|---|
 | `core` | Registries, config, networking, data attachments, common utilities |
-| `ship` | Assembly/disassembly, ship registry, hull analysis (dry volume), flooding, buoyancy hook, damage |
+| `ship` | Assembly/disassembly, ship registry, hull analysis (dry volume), flooding, buoyancy hook, damage, cargo weight, flags, customization blocks |
 | `sailing` | Wind field, weather coupling, sails, rudder/helm, anchor, oars |
 | `station` | Station blocks (sail winch, cannon station, crow's nest, capstan, pump) and the shared "operate" interface used by players and crew |
-| `crew` | Crew NPC base, hiring, command system, station assignment, morale/pay |
+| `crew` | Crew NPC base, hiring, command system, station assignment, morale/pay, provisions consumption |
 | `combat` | Weapons, ammo, cannons, projectiles, grappling hook, boarding |
-| `law` | Criminal score, bounties, navy turn-in, doubloon economy |
+| `law` | Criminal score, bounties, navy turn-in, brig and prisoners, flag allegiance detection |
+| `trade` | Doubloon economy, trade goods, port markets and dynamic prices, contracts, cargo containers |
 | `world` | Structures (pirate islands, seafarer villages, navy outposts), loot tables, treasure maps |
 | `entity` | Mobs (pirates, sailors, navy soldiers/officers, sharks, kraken), sea chest entity |
 | `survival` | Cold water, swimming hunger, sea chest carry rules |
@@ -140,6 +141,34 @@ The feature modules below are packages inside `common` (and, where needed, a sma
 - Cannonballs and explosions destroy ship blocks, which may create a breach.
 - There is no separate HP bar. Ship health = structural integrity + buoyancy. A HUD shows hull status and flooding per compartment.
 
+### 4.7 Flags
+- A **flagpole / mast-top flag** block. The flag a ship flies sets its **displayed allegiance**, which NPC ships, ports and forts react to.
+
+| Flag | Effect |
+|---|---|
+| None / merchant flag | Default. Ports and navy treat the ship normally. |
+| Navy (national) flag | Navy ships and outposts are friendly, pirates are hostile. Legitimate only with enough navy reputation, otherwise it counts as a false flag. |
+| Jolly Roger | Pirates are friendly or neutral. Navy attacks on sight. Merchant NPC ships may surrender without a fight (morale check). Being seen under it raises the criminal score. |
+| Custom flag | Made from banner patterns. Treated as neutral. |
+
+- **False colors:** flying a flag that doesn't match the ship's real allegiance (e.g. a navy flag on a ship with a known bounty) lets you get close unnoticed. Being caught raises the criminal score heavily. Detection chance depends on distance, whether the observer has a manned crow's nest, and your criminal score.
+- **Striking colors:** lowering the flag mid-fight signals surrender. NPC ships stop firing, and the attacker can board without resistance. Attacking a ship that has struck its colors is a crime.
+- Changing the flag takes a few seconds at the flagpole (player, or the crew order "hoist colors").
+- Flags flutter in the wind direction, doubling as a visual wind indicator (§5.1).
+
+### 4.8 Ship customization
+- **Ship name:** set at the helm. Shown on a nameplate block on the hull and in the HUD, logbook and bounty notices ("the *Black Gull*").
+- **Figureheads:** decorative bow blocks in several designs (mermaid, lion, eagle, skull, …).
+- **Sails:** dyeable, and large sails can carry banner patterns.
+- **Hull paint and trim:** dyeable planks and trim blocks (optional, since vanilla wood types already give a lot of variety).
+- **Decor:** lanterns, stern windows, ship's bell, rope coils, captain's cabin furniture.
+- Customization is purely cosmetic and never changes performance stats.
+
+### 4.9 Cargo and weight
+- Every ship has a **cargo weight** = the contents of containers on board (crates, barrels, chests) plus heavy items such as cannons and cannonballs.
+- Weight lowers the ship in the water (less freeboard, so it floods more easily) and reduces speed and turning (applied to Sable mass or as a drag factor).
+- The HUD and the helm GUI show the load level (light / laden / heavily laden / overloaded).
+
 ---
 
 ## 5. Sailing
@@ -182,6 +211,8 @@ Stations are blocks on a ship that a **player or a crew member** can operate. Th
 | Capstan | Raise or drop the anchor |
 | Pump | Remove flood water |
 | Repair kit / carpenter | Patch breaches |
+| Flagpole | Hoist, change or strike colors (§4.7) |
+| Galley / pantry | Stores provisions; a cook crew member boosts morale (§7.4) |
 
 The crew operates a station by being attached to it, much like being seated. This avoids complex pathfinding on moving ships. Walking between stations on deck is a later improvement.
 
@@ -210,6 +241,17 @@ The crew operates a station by being attached to it, much like being seated. Thi
 
 ### 7.3 Crew upkeep
 - Wages are paid periodically from the ship's chest. Unpaid or starving crew lose morale, and low morale leads to desertion or mutiny (mutiny behind a config toggle).
+
+### 7.4 Provisions
+- A **galley / provisions store** on the ship (a pantry container block) holds food, fresh water and rum.
+- The crew consumes provisions per in-game day, scaled by crew size. The HUD shows how many days of supplies are left.
+- **Food:** any vanilla food counts, weighted by nutrition. Ship-specific foods are optional extras (hardtack, salted fish, salt pork) that keep longer.
+- **Fresh water:** water barrels, refilled in ports or from rain catchers.
+- **Rum:** a morale booster. Too much reduces the crew's work speed for a while.
+- **Running out:** hungry crew work slower and lose morale. Thirsty crew lose morale fast and eventually desert or mutiny.
+- **Scurvy (optional, config toggle):** after a long time at sea without citrus or fresh food, crew (and optionally players) get weakness and slower healing. Eating citrus cures it.
+- **Spoilage (optional):** fresh food in the pantry slowly spoils on long voyages. Preserved foods don't.
+- Provisions add weight to the cargo (§4.9).
 
 ---
 
@@ -316,6 +358,16 @@ Models and animations use GeckoLib. Textures are 16×16-scale pixel art.
 - **Gold doubloons** (Golddublonen) are the main currency, used for wages, bounties, trading and hiring.
 - Loot (Beute) from treasure chests, captured ships and wrecks can be sold to fences on pirate islands or traders in villages.
 
+### 10.3 Trade and cargo
+- **Trade goods:** a set of cargo items (e.g. sugar, tobacco, spices, cloth, timber, rum, fish, iron), each with a base price. Stored in cargo crates and barrels (cargo containers hold one good type in bulk).
+- **Markets:** every port (seafarer village, navy outpost, pirate island) has a harbor master or trader with a market screen. Each port has goods it **produces** (cheap) and goods it **demands** (expensive), derived from its biome and type.
+- **Dynamic prices:** buying raises a good's price and selling lowers it, recovering slowly over time. This prevents infinite money loops.
+- **Trade runs:** buy cheap in one port and sell where demand is high. Longer and riskier routes (through pirate waters) pay more.
+- **Contracts:** harbor masters offer delivery contracts (bring X to port Y by day Z) as a simpler entry point to trading. They link to the quest system (§15).
+- **Plunder:** cargo on captured or sunk ships can be taken. Pirate fences buy plundered goods at a discount, no questions asked. Selling plundered goods in navy ports is risky and can raise the criminal score.
+- **Port fees (optional):** small docking fees in navy ports, waived for high navy reputation.
+- Cargo weight affects the ship (§4.9), so a fully laden merchant ship is slow and an easy target.
+
 ---
 
 ## 11. Sea chest (Seemannstruhe)
@@ -354,6 +406,17 @@ All hazards can be turned off individually and have frequency settings.
 - **Pirate turn-in:** captured pirate NPCs can be delivered to the navy for doubloons.
 - Bounty notices are posted on notice boards in villages and outposts.
 
+### 13.3 Brig (prisoners)
+- **Capture:** a defeated (not killed) NPC with low health can be put in **shackles**. Players with a bounty can be captured the same way (PvP, config toggle).
+- **Brig:** a cell area on a ship, made of brig bars and a lockable brig door. A shackled prisoner led into the cell (on a lead, like a mob) stays there and can't escape while the door is locked.
+- **Prisoners on board:** take a small share of provisions. They may try to escape when the door is open or the crew's morale is low, and they free themselves if the ship is captured by their faction.
+- **What to do with them:**
+  - Deliver pirates and bounty targets to a navy officer for the bounty (§13.2).
+  - Ransom captured navy officers or merchants at their faction's port.
+  - Press-gang captured sailors into your crew (low morale at first). Pirates only, raises the criminal score.
+  - Release them (small reputation gain with their faction).
+- Captured enemy captains are worth extra and are needed for some quests.
+
 ---
 
 ## 14. Survival
@@ -389,6 +452,9 @@ All gameplay settings live in the **server config** (synced to clients). Audio a
 | Waves | enabled, amplitude, camera sway (client) |
 | Hazards | waterspouts / whirlpools / kraken: enabled + frequency each |
 | Crew | wages on/off, mutiny on/off, max crew multiplier |
+| Provisions | consumption on/off, consumption rate, scurvy on/off + onset time, spoilage on/off |
+| Cargo & trade | cargo weight affects ships on/off + weight factor, price volatility, price recovery rate, port fees on/off |
+| Flags & brig | false-flag detection strength, NPC surrender on/off, player capture (PvP) on/off, prisoner escapes on/off |
 | Combat | firearm misfire in rain, cannon block damage on/off, damage multipliers |
 | Melee | skill-based combat on/off (off = vanilla-style melee for mod swords), parry window (ticks), stamina costs and regen, directional mode on/off, NPC skill multiplier |
 | Law | criminal score enabled, decay rate, bounty threshold, player bounties on/off |
@@ -406,7 +472,7 @@ All gameplay settings live in the **server config** (synced to clients). Audio a
 ---
 
 ## 19. Testing strategy
-- **GameTests** for all logic: assembly/disassembly, hull analysis (known hull shapes → expected compartments), flooding rates, criminal score/bounty thresholds, station operate logic, melee resolution (parry windows, stamina, hit arcs/rays), config toggles actually disabling features.
+- **GameTests** for all logic: assembly/disassembly, hull analysis (known hull shapes → expected compartments), flooding rates, criminal score/bounty thresholds, station operate logic, market price changes, provision consumption, prisoner/brig rules, flag detection, melee resolution (parry windows, stamina, hit arcs/rays), config toggles actually disabling features.
 - GameTests are defined in `common` (vanilla GameTest framework). They run via the NeoForge game test server, and later also via Fabric's runner.
 - **Datagen** for all JSON: models, blockstates, recipes, loot tables, tags, lang, worldgen. Providers live in `common` where possible, and generated resources are output into `common/src/generated/resources` so both loaders ship them.
 - **CI** (GitHub Actions): build every enabled loader module on each push. Once Fabric is enabled, a Fabric build failure blocks merges just like a NeoForge one.
@@ -428,16 +494,18 @@ All gameplay settings live in the **server config** (synced to clients). Audio a
 | 7 | **Melee combat core** | Slash, thrust, guard, parry, riposte and stamina work player vs. player and player vs. a test dummy. Server-side resolution covered by GameTests. Animation library chosen. |
 | 8 | Melee animations + NPC duelists | First- and third-person sword animations with readable telegraphs. A test NPC uses the same system (telegraph, guard, parry) with skill tiers. |
 | 9 | Cannons + grappling hook v1 + boarding | Full ship-to-ship combat loop, ending in a deck duel |
-| 10 | World | Islands, villages, outposts, wrecks, treasure maps |
-| 11 | Mobs | Pirates, sailors, navy, sharks (human mobs use the §8.5 duel AI) |
-| 12 | Law + economy | Criminal score, bounties, doubloons, turn-ins |
-| 13 | Crew command system | Hiring, all orders, wages and morale |
-| 14 | Sea chest + survival | §11, §14 |
-| 15 | Weather and hazards | Waves, waterspouts, whirlpools |
-| 16 | Audio | Sounds, music manager |
-| 17 | RPG + kraken + duel bosses | Reputation, quests, named pirate captains, the kraken |
-| 18 | Melee extras (optional) | Feints, directional attacks/parries mode |
-| 19 | Fabric port | Enable `fabric/`, implement platform services, all GameTests pass on both loaders, CI builds both |
+| 10 | Ship identity | Flags (incl. striking colors), ship name, figureheads, dyeable sails, decor blocks |
+| 11 | World | Islands, villages, outposts, wrecks, treasure maps |
+| 12 | Mobs | Pirates, sailors, navy, sharks (human mobs use the §8.5 duel AI) |
+| 13 | Law + brig | Criminal score, bounties, turn-ins, shackles, brig, ransom, false-flag detection |
+| 14 | Trade + cargo | Trade goods, port markets with dynamic prices, contracts, cargo weight affecting ships, plunder |
+| 15 | Crew command system + provisions | Hiring, all orders, wages and morale, galley, provisions consumption, scurvy |
+| 16 | Sea chest + survival | §11, §14 |
+| 17 | Weather and hazards | Waves, waterspouts, whirlpools |
+| 18 | Audio | Sounds, music manager |
+| 19 | RPG + kraken + duel bosses | Reputation, quests, named pirate captains, the kraken |
+| 20 | Melee extras (optional) | Feints, directional attacks/parries mode |
+| 21 | Fabric port | Enable `fabric/`, implement platform services, all GameTests pass on both loaders, CI builds both |
 
 Spikes 1–4 are throwaway-quality prototypes that prove feasibility. They may live in `neoforge/` while exploring Sable, but must be moved into `common` (behind platform services) before milestone 5.
 
@@ -447,6 +515,8 @@ Spikes 1–4 are throwaway-quality prototypes that prove feasibility. They may l
 - What exactly does Sable's API offer for assembly, applying forces and custom buoyancy? (Read `refs/sable` + wiki: "Block Physics Properties", "Dimension Physics Data", "Working with Entities".)
 - Can buoyancy be overridden per ship (needed for dry volume and flooding), or does it have to be applied as an external force?
 - Should gunpowder be vanilla, or a custom refined variant?
+- Trade goods: new items (sugar, tobacco, spices, …), or reuse vanilla items where they exist? And how to keep trade interesting without NPC merchant ships sailing the routes (a possible later feature)?
+- How should cargo weight interact with Sable's mass: change block/ship mass directly, or apply drag and a buoyancy offset?
 - Should there be a Navy career path for players (join the navy instead of pirating)?
 - Should ships be buildable freely, or use blueprints / shipwright NPCs?
 - Player animation library for melee combat: which options are maintained for 1.21.1 on both NeoForge and Fabric, and do they support first-person animations? Decide in milestone 7.

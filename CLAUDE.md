@@ -4,7 +4,7 @@ Minecraft mod. Full spec: `docs/design.md`. Read it at the start of every sessio
 
 ## Stack (do not deviate)
 - Minecraft **1.21.1**, Java **21**, Mojang mappings + Parchment.
-- **Multiloader project** (based on the MultiLoader-Template): `common/` (vanilla only), `neoforge/` (ModDevGradle), `fabric/` (Loom, disabled until the Fabric port, design.md milestone 19).
+- **Multiloader project** (based on the MultiLoader-Template): `common/` (vanilla only), `neoforge/` (ModDevGradle), `fabric/` (Loom, disabled until the Fabric port, design.md milestone 21).
 - Hard dependency: **Sable** (physics / sub-levels). `common` uses `sable-common`. Optional: GeckoLib (entities). **No Create dependency.**
 - Every new dependency must exist for both NeoForge and Fabric, or be optional behind a compat module.
 - Never use APIs from older Forge/NeoForge versions (e.g. `DeferredRegister` patterns from 1.19, `IForgeCapability`, `RegistryObject`). When unsure, look it up in the generated MC/NeoForge sources instead of guessing.

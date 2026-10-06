@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
+import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.ship.decor.SableWeightTags;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.advancements.critereon.StatePropertiesPredicate;
@@ -53,6 +54,12 @@ public final class LawContentModule implements ModModule {
     @Override
     public void registerContent() {
         LawContent.init();
+    }
+
+    @Override
+    public void registerEvents() {
+        // Before the target's own interaction, so shackles also work on villagers and wandering traders
+        CommonEvents.ENTITY_INTERACT.register(ShacklesItem::onEntityInteract);
     }
 
     @Override

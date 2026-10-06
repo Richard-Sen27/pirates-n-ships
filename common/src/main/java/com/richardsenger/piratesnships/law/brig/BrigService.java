@@ -129,6 +129,17 @@ public final class BrigService {
     }
 
     /**
+     * Whether a shackles click on {@code target} belongs to the brig rather than to the target's own interaction
+     * (e.g. a villager's trades): the target is a prisoner, or it could be captured now or once weakened. A refusal
+     * for any other reason (not capturable, player capture off, no bounty, ...) leaves the click to vanilla.
+     */
+    public static boolean claimsShackleClick(Player player, LivingEntity target) {
+        if (state(target).active()) return true;
+        CaptureRules.Result r = canCapture(player, target);
+        return r.ok() || r == CaptureRules.Result.TOO_HEALTHY;
+    }
+
+    /**
      * Shackles used on a living entity (server). A prisoner of the user: toggle leading. A prisoner whose chain is
      * loose: the user takes it over. Otherwise: capture, consuming one shackles (not in creative).
      */

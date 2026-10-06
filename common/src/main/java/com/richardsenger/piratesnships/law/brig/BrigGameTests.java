@@ -11,6 +11,7 @@ import com.richardsenger.piratesnships.law.content.BrigDoorBlock;
 import com.richardsenger.piratesnships.law.content.LawContent;
 import com.richardsenger.piratesnships.law.crime.CriminalRecord;
 import com.richardsenger.piratesnships.platform.Services;
+import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestGenerator;
@@ -20,7 +21,11 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.entity.npc.WanderingTrader;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
@@ -93,6 +98,68 @@ public final class BrigGameTests {
         helper.assertTrue(EntityType.WITHER.is(BrigService.NOT_CAPTURABLE), "the wither is in the not_capturable tag");
         healthy.discard();
         weak.discard();
+        helper.succeed();
+    }
+
+    private static Villager tradingVillager(GameTestHelper helper, BlockPos pos) {
+        Villager v = helper.spawnWithNoFreeWill(EntityType.VILLAGER, pos);
+        v.setVillagerData(v.getVillagerData().setProfession(VillagerProfession.FARMER));
+        return v;
+    }
+
+    /** Fires the interaction event the way the loader forwarder does, with shackles in the main hand. */
+    private static InteractionResult clickWithShackles(Player player, ItemStack shackles, LivingEntity target) {
+        player.setItemInHand(InteractionHand.MAIN_HAND, shackles);
+        return CommonEvents.ENTITY_INTERACT.invoker().onInteract(player, target, InteractionHand.MAIN_HAND);
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void weakenedVillagerAndTraderAreShackledThroughTheInteractEvent(GameTestHelper helper) {
+        floor(helper, 9);
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        ItemStack stack = new ItemStack(LawContent.SHACKLES.get(), 3);
+        Villager villager = tradingVillager(helper, new BlockPos(2, 1, 2));
+        villager.setHealth(2.0f);
+        InteractionResult r = clickWithShackles(player, stack, villager);
+        helper.assertTrue(r.consumesAction(), "weakened villager should be shackled, got " + r);
+        helper.assertTrue(BrigService.state(villager).heldBy(player.getUUID()), "villager is the player's prisoner");
+        helper.assertFalse(villager.isTrading(), "no trade screen for the captor");
+        helper.assertValueEqual(stack.getCount(), 2, "one pair of shackles used");
+
+        InteractionResult again = clickWithShackles(player, stack, villager);
+        helper.assertTrue(again.consumesAction(), "own prisoner: the brig handles the click, got " + again);
+        helper.assertFalse(BrigService.state(villager).led(), "second click lets go of the chain");
+        helper.assertFalse(villager.isTrading(), "no trade screen on the own prisoner");
+
+        WanderingTrader trader = helper.spawnWithNoFreeWill(EntityType.WANDERING_TRADER, new BlockPos(5, 1, 5));
+        trader.setHealth(2.0f);
+        InteractionResult t = clickWithShackles(player, stack, trader);
+        helper.assertTrue(t.consumesAction(), "weakened wandering trader should be shackled, got " + t);
+        helper.assertTrue(BrigService.isPrisoner(trader), "trader is a prisoner");
+        helper.assertValueEqual(stack.getCount(), 1, "second pair of shackles used");
+
+        helper.assertValueEqual(clickWithShackles(player, ItemStack.EMPTY, tradingVillager(helper, new BlockPos(6, 1, 2))),
+                InteractionResult.PASS, "an empty hand leaves villagers to vanilla");
+        BrigService.clear(villager);
+        BrigService.clear(trader);
+        helper.killAllEntities();
+        helper.succeed();
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void healthyVillagerRefusesShacklesWithoutOpeningTrades(GameTestHelper helper) {
+        floor(helper, 9);
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        ItemStack stack = new ItemStack(LawContent.SHACKLES.get(), 2);
+        Villager villager = tradingVillager(helper, new BlockPos(2, 1, 2));
+        InteractionResult r = clickWithShackles(player, stack, villager);
+        helper.assertTrue(r != InteractionResult.PASS, "the brig claims the click, so vanilla's trades don't run");
+        helper.assertFalse(r.consumesAction(), "a healthy villager refuses, got " + r);
+        helper.assertFalse(BrigService.isPrisoner(villager), "healthy villager is no prisoner");
+        helper.assertValueEqual(stack.getCount(), 2, "no shackles used on refusal");
+        helper.assertFalse(villager.isTrading(), "no trade screen");
+        helper.assertTrue(player.containerMenu == player.inventoryMenu, "no menu opened");
+        helper.killAllEntities();
         helper.succeed();
     }
 

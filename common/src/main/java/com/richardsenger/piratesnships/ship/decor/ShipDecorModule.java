@@ -88,8 +88,8 @@ public final class ShipDecorModule implements ModModule {
             for (RegistryEntry<Block, FigureheadBlock> f : ShipDecor.figureheads()) loot.dropSelf(f.get());
             loot.dropSelf(ShipDecor.NAMEPLATE.get());
             loot.dropSelf(ShipDecor.FLAGPOLE.get());
-            loot.dropSelf(ShipDecor.CARGO_CRATE.get());
-            loot.dropSelf(ShipDecor.CARGO_BARREL.get());
+            loot.add(ShipDecor.CARGO_CRATE.get(), com.richardsenger.piratesnships.trade.cargo.CargoContainers.lootTable(ShipDecor.CARGO_CRATE.get()));
+            loot.add(ShipDecor.CARGO_BARREL.get(), com.richardsenger.piratesnships.trade.cargo.CargoContainers.lootTable(ShipDecor.CARGO_BARREL.get()));
         });
         data.blockTags(tags -> {
             for (RegistryEntry<Block, FigureheadBlock> f : ShipDecor.figureheads()) {

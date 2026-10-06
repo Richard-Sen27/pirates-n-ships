@@ -12,8 +12,7 @@ import net.minecraft.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
-import net.minecraft.data.models.model.ModelTemplates;
-import net.minecraft.data.models.model.TextureMapping;
+import net.minecraft.data.models.model.ModelLocationUtils;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
@@ -72,7 +71,9 @@ public final class AssemblyModule implements ModModule {
             lang.add(Outcome.FAILED.key(), "Assembly failed, see the server log");
         });
         data.models(m -> {
-            ResourceLocation model = ModelTemplates.CUBE_ORIENTABLE.create(helm, TextureMapping.orientableCube(helm), m.models());
+            // Hand-made Blockbench model (art/models/helm.bbmodel, design.md §4.8): only the block state is generated.
+            // The wheel faces north; the item model delegates to the block model.
+            ResourceLocation model = ModelLocationUtils.getModelLocation(helm);
             m.blockStates().accept(MultiVariantGenerator.multiVariant(helm, Variant.variant().with(VariantProperties.MODEL, model))
                     .with(PropertyDispatch.property(HelmBlock.FACING)
                             .select(Direction.NORTH, Variant.variant())

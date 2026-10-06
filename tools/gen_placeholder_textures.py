@@ -11,7 +11,8 @@ Run (from the repository root):
 Output: common/src/main/resources/assets/pirates_n_ships/textures/{item,block}/<name>.png
 Deterministic: same input, same bytes. One function per texture, registered in ITEMS / BLOCKS.
 Replacing a texture by hand: put its name into PROTECTED (or a line in tools/protected_textures.txt),
-then this script never overwrites it. Textures owned by other packages (test_block, helm_*) are never written.
+then this script never overwrites it. Textures owned by other packages (test_block) are never written. The helm, nameplate and flagpole have
+hand-made Blockbench models with vanilla textures (art/models/) and no textures here.
 """
 import argparse
 import random
@@ -24,7 +25,7 @@ TEX = ROOT / "common/src/main/resources/assets/pirates_n_ships/textures"
 PROTECTED_FILE = Path(__file__).resolve().parent / "protected_textures.txt"
 # Names of hand-made textures this script must not overwrite (e.g. "rapier", "figurehead_lion").
 PROTECTED = set()
-FOREIGN_PREFIXES = ("test_block", "helm_")
+FOREIGN_PREFIXES = ("test_block",)
 
 # Palette: every texture uses only these colors.
 P = {
@@ -363,30 +364,6 @@ def figurehead_skull():
     return cv.border()
 
 
-def nameplate():
-    # Vertically symmetric: the trapdoor template shows this face upside down
-    cv = Canvas("plank")
-    noise(cv, "nameplate", ["plank_d", "plank_l"], 0.15)
-    cv.rect(1, 1, 14, 14, "plank_l")
-    cv.rect(2, 2, 13, 13, "plank")
-    for y in (6, 9):
-        cv.rect(3, y, 12, y, "wood_d")
-    cv.rect(0, 0, 15, 0, "gold"); cv.rect(0, 15, 15, 15, "gold")
-    cv.rect(0, 0, 0, 15, "gold"); cv.rect(15, 0, 15, 15, "gold")
-    for x, y in ((1, 1), (14, 1), (1, 14), (14, 14)):
-        cv.px(x, y, "gold_l")
-    return cv
-
-
-def flagpole():
-    cv = Canvas("wood")
-    noise(cv, "flagpole", ["wood_d", "wood_l"], 0.2)
-    for x in (6, 9):
-        cv.rect(x, 0, x, 15, "wood_d")
-    cv.rect(7, 0, 8, 15, "wood_l")
-    return cv
-
-
 def brig_bars():
     cv = Canvas()
     for x in (1, 5, 10, 14):
@@ -493,7 +470,7 @@ BLOCKS = {
     "figurehead_mermaid": figurehead_mermaid, "figurehead_lion": figurehead_lion,
     "figurehead_eagle": figurehead_eagle, "figurehead_skull": figurehead_skull,
     "figurehead_side": figurehead_side, "figurehead_top": figurehead_top,
-    "nameplate": nameplate, "flagpole": flagpole, "brig_bars": brig_bars, "brig_bars_edge": brig_bars_edge,
+    "brig_bars": brig_bars, "brig_bars_edge": brig_bars_edge,
     "brig_door_top": lambda: brig_door(True), "brig_door_bottom": lambda: brig_door(False),
     "cargo_crate": cargo_crate, "cargo_barrel_side": cargo_barrel_side, "cargo_barrel_top": cargo_barrel_top,
     "pantry_side": pantry_side, "pantry_top": pantry_top,

@@ -1,6 +1,6 @@
 # Pirates 'n' Ships — Design Spec
 
-> Status: brainstorm → spec, v0.1 (2026-10-06). Living document: update it whenever a decision changes.
+> Status: brainstorm → spec, v0.2 (2026-10-06, adds skill-based melee combat). Living document: update it whenever a decision changes.
 > Mod name "Pirates 'n' Ships". Mod ID: `pirates_n_ships`.
 
 ---
@@ -14,7 +14,8 @@ A Minecraft mod about sailing, piracy and life at sea. Players build **real bloc
 2. **Flooding and sinking.** Hull breaches let water into compartments. Ships list, lose buoyancy and sink. The crew can bail water and patch holes.
 3. **Wind-driven sailing.** A global, weather-dependent wind drives sails. Course and sail trim matter.
 4. **Commandable crew.** NPCs man stations such as sails, cannons, the crow's nest and the anchor, following the captain's orders.
-5. **A living sea world.** Pirate islands, seafarer villages, the navy, bounties, sharks and a rare kraken.
+5. **Skill-based swordplay.** Slash, thrust, guard, parry and riposte with stamina. Deck duels are about timing, not click spam, against players and NPCs alike.
+6. **A living sea world.** Pirate islands, seafarer villages, the navy, bounties, sharks and a rare kraken.
 
 ### Non-goals (for now)
 - No visibly deforming water surface. Waves are simulated through ship motion, sound and particles.
@@ -71,7 +72,7 @@ fabric/      Same thin layer for Fabric (ModInitializer / ClientModInitializer).
 - Event handlers are plain methods in `common` (e.g. `ShipEvents.onServerTick(server)`). Loader modules only *subscribe* and forward to them.
 - Registration: `common` declares what exists (a registry helper with suppliers). The loader layer performs the actual registration at the right time.
 - Networking: payload records + codecs + handlers live in `common` (vanilla `CustomPacketPayload`). Only registration and sending go through `Services.NETWORK`.
-- Mixins: shared mixins go in `common` (`piratesnships.mixins.json`). Loader-specific mixins are allowed only when unavoidable, in that loader's own mixin config.
+- Mixins: shared mixins go in `common` (`pirates_n_ships.mixins.json`). Loader-specific mixins are allowed only when unavoidable, in that loader's own mixin config.
 - Loader-specific *features* (e.g. NeoForge's generated config screen) are allowed, but must sit behind a platform method with a fallback on the other loader.
 
 ### 3.2 Modules
@@ -217,7 +218,9 @@ The crew operates a station by being attached to it, much like being seated. Thi
 ### 8.1 Weapons (Waffen)
 | Item | Notes |
 |---|---|
-| Rapier (Degen) | Fast melee, good against unarmored targets |
+| Rapier (Degen) | Fast, long reach, strong thrust, weak slash. Uses the melee combat system (§8.5). |
+| Cutlass (Entermesser) | Shorter, heavier. Strong slash, weaker thrust. Uses §8.5. |
+| Saber (Säbel, officers) | Balanced between rapier and cutlass. Uses §8.5. |
 | Pistol (Pistole) | Single shot, long reload, high damage, short range |
 | Musket (Flinte) | Single shot, longer range, slower reload |
 | Ammunition (Munition) | Lead shot, crafted |
@@ -243,6 +246,44 @@ Firearms get a reload animation, smoke and recoil. Rain reduces reliability (a m
 - Grappled ships can be pulled closer (with multiple hooks or crew assistance).
 - Crew with the "prepare to board" order jump over and fight.
 - A ship is **captured** when its captain is defeated or all hostile crew are gone. The player then becomes the owner.
+- Fights on deck use the melee combat system (§8.5). Boarding is where skill-based duels matter most.
+
+### 8.5 Melee combat (skill-based swordplay)
+
+Goal: sword fights are about timing and reading the opponent, not click spam. The system only applies to the mod's swords. Vanilla weapons keep vanilla behavior.
+
+**Actions**
+
+| Action | Default input | Effect |
+|---|---|---|
+| Slash | Left click | Wide, short arc. Medium damage, fast recovery. |
+| Thrust | Hold left click, release | Narrow ray, long reach. High damage, slower, long recovery if it misses. |
+| Guard | Hold right click | Reduces frontal damage (per weapon), drains stamina while held and per blocked hit. |
+| Parry | Tap right click shortly before a hit lands | Deflects the hit completely, staggers the attacker, opens a **riposte** window. |
+| Riposte | Attack during the riposte window | Bonus damage, can't be parried. |
+| Feint (later) | Cancel an attack during wind-up | Baits a mistimed parry. |
+| Directional attacks/parries (later, optional) | Mouse movement picks the direction | A parry only works in the matching direction (Mount & Blade style). Off by default, config toggle. |
+
+**Rules**
+- **Stamina:** attacks, guarding and failed parries cost stamina. At zero stamina the player can't guard or parry and gets staggered more easily. Stamina regenerates when not attacking. Shown in a small HUD bar while holding a sword.
+- **Attack phases:** wind-up (telegraph, readable animation) → active (hit frames) → recovery (vulnerable). Each weapon defines the timings for each phase.
+- **Parry window:** about 6–8 ticks (configurable), deliberately generous for multiplayer latency. Each failed parry briefly blocks the next one, which prevents parry spam.
+- **Stagger/poise:** being parried or hit by a thrust while in recovery causes a short stagger (no actions, slowed movement).
+- **Mixed fights:** a parry also deflects vanilla melee hits from mobs. Projectiles (pistols, muskets) can't be parried.
+
+**Technical design**
+- `common`: combat state machine per entity (an attachment), weapon definitions (data-driven via datapack JSON: timings, damage, reach, arc, stamina costs), hit resolution (ray for thrust, arc sweep for slash), GameTests for resolution logic.
+- **Client:** intercepts attack/use input while holding a mod sword. It plays the animation immediately (prediction) and sends an action payload with a client timestamp.
+- **Server:** authoritative. It validates range, cone, cooldowns and stamina, then resolves parries using the server tick plus a latency allowance. It broadcasts the resulting state so other clients animate correctly.
+- **Animations:** a player animation library for first- and third-person player animations, which must be available on both loaders (§2 dependency rule). Choose it during this milestone, see §21. NPC animations use GeckoLib.
+- Works on moving ships: hit checks use positions relative to the sub-level where needed.
+
+**NPC duelists**
+- Pirates, navy soldiers and officers use the same state machine and the same rules as players: they telegraph attacks, guard, parry and riposte.
+- Skill tiers per NPC type set the parry chance, reaction time and how often they use feints. For example, a sailor is clumsy and a pirate captain is dangerous.
+- Duel bosses: named pirate captains with unique movesets, as quest and boarding targets.
+
+**Compatibility:** no hard dependency on combat overhaul mods (e.g. Epic Fight, Better Combat). Optional compatibility can come later.
 
 ---
 
@@ -250,10 +291,10 @@ Firearms get a reload animation, smoke and recoil. Rain reduces reliability (a m
 
 | Mob | Behavior |
 |---|---|
-| Pirate | Hostile to most players by default (depends on reputation). Melee and pistols. Spawns on pirate islands and pirate ships. Hireable when reputation is high enough. |
+| Pirate | Hostile to most players by default (depends on reputation). Cutlass duelist (§8.5) and pistols. Spawns on pirate islands and pirate ships. Hireable when reputation is high enough. |
 | Sailor (Matrose) | Neutral villager-like NPC in seafarer villages. Hireable. |
 | Navy soldier | Patrols outposts and ships. Hostile to players with a bounty. Muskets. |
-| Navy officer | Leads soldiers and accepts pirate turn-ins and bounty claims. Gives quests. |
+| Navy officer | Leads soldiers and accepts pirate turn-ins and bounty claims. Gives quests. Skilled saber duelist (§8.5). |
 | Shark (Hai) | Hostile in deep water, attracted to blood (injured entities in water). |
 | Kraken | Rare boss (§12). |
 | Sea chest | Entity, see §11. |
@@ -349,6 +390,7 @@ All gameplay settings live in the **server config** (synced to clients). Audio a
 | Hazards | waterspouts / whirlpools / kraken: enabled + frequency each |
 | Crew | wages on/off, mutiny on/off, max crew multiplier |
 | Combat | firearm misfire in rain, cannon block damage on/off, damage multipliers |
+| Melee | skill-based combat on/off (off = vanilla-style melee for mod swords), parry window (ticks), stamina costs and regen, directional mode on/off, NPC skill multiplier |
 | Law | criminal score enabled, decay rate, bounty threshold, player bounties on/off |
 | Survival | cold water on/off + time to freeze, swimming hunger multiplier |
 | World | structure spacing / frequency per structure type, mob spawn weights |
@@ -364,7 +406,7 @@ All gameplay settings live in the **server config** (synced to clients). Audio a
 ---
 
 ## 19. Testing strategy
-- **GameTests** for all logic: assembly/disassembly, hull analysis (known hull shapes → expected compartments), flooding rates, criminal score/bounty thresholds, station operate logic, config toggles actually disabling features.
+- **GameTests** for all logic: assembly/disassembly, hull analysis (known hull shapes → expected compartments), flooding rates, criminal score/bounty thresholds, station operate logic, melee resolution (parry windows, stamina, hit arcs/rays), config toggles actually disabling features.
 - GameTests are defined in `common` (vanilla GameTest framework). They run via the NeoForge game test server, and later also via Fabric's runner.
 - **Datagen** for all JSON: models, blockstates, recipes, loot tables, tags, lang, worldgen. Providers live in `common` where possible, and generated resources are output into `common/src/generated/resources` so both loaders ship them.
 - **CI** (GitHub Actions): build every enabled loader module on each push. Once Fabric is enabled, a Fabric build failure blocks merges just like a NeoForge one.
@@ -381,19 +423,21 @@ All gameplay settings live in the **server config** (synced to clients). Audio a
 | 2 | **Spike: dry hull** | No water renders inside the hull, and the player doesn't swim below deck |
 | 3 | **Spike: wind + sails** | A sail moves the ship relative to the wind, the helm steers, the anchor holds |
 | 4 | **Spike: crew station** | An NPC attached to the sail winch hoists the sails on command while the ship moves |
-| 5 | Config framework + weapons | All §8.1 items, the config screen works |
+| 5 | Config framework + weapons | All §8.1 items exist (swords still with vanilla-style melee), firearms work, the config screen works |
 | 6 | Flooding + damage | Cannon damage → breach → flooding → sinking, plus pump and patch |
-| 7 | Cannons + grappling hook v1 + boarding | Full ship-to-ship combat loop |
-| 8 | World | Islands, villages, outposts, wrecks, treasure maps |
-| 9 | Mobs | Pirates, sailors, navy, sharks |
-| 10 | Law + economy | Criminal score, bounties, doubloons, turn-ins |
-| 11 | Crew command system | Hiring, all orders, wages and morale |
-| 12 | Sea chest + survival | §11, §14 |
-| 13 | Weather and hazards | Waves, waterspouts, whirlpools |
-| 14 | Audio | Sounds, music manager |
-| 15 | RPG + kraken | Reputation, quests, the boss |
-
-| 16 | Fabric port | Enable `fabric/`, implement platform services, all GameTests pass on both loaders, CI builds both |
+| 7 | **Melee combat core** | Slash, thrust, guard, parry, riposte and stamina work player vs. player and player vs. a test dummy. Server-side resolution covered by GameTests. Animation library chosen. |
+| 8 | Melee animations + NPC duelists | First- and third-person sword animations with readable telegraphs. A test NPC uses the same system (telegraph, guard, parry) with skill tiers. |
+| 9 | Cannons + grappling hook v1 + boarding | Full ship-to-ship combat loop, ending in a deck duel |
+| 10 | World | Islands, villages, outposts, wrecks, treasure maps |
+| 11 | Mobs | Pirates, sailors, navy, sharks (human mobs use the §8.5 duel AI) |
+| 12 | Law + economy | Criminal score, bounties, doubloons, turn-ins |
+| 13 | Crew command system | Hiring, all orders, wages and morale |
+| 14 | Sea chest + survival | §11, §14 |
+| 15 | Weather and hazards | Waves, waterspouts, whirlpools |
+| 16 | Audio | Sounds, music manager |
+| 17 | RPG + kraken + duel bosses | Reputation, quests, named pirate captains, the kraken |
+| 18 | Melee extras (optional) | Feints, directional attacks/parries mode |
+| 19 | Fabric port | Enable `fabric/`, implement platform services, all GameTests pass on both loaders, CI builds both |
 
 Spikes 1–4 are throwaway-quality prototypes that prove feasibility. They may live in `neoforge/` while exploring Sable, but must be moved into `common` (behind platform services) before milestone 5.
 
@@ -405,6 +449,8 @@ Spikes 1–4 are throwaway-quality prototypes that prove feasibility. They may l
 - Should gunpowder be vanilla, or a custom refined variant?
 - Should there be a Navy career path for players (join the navy instead of pirating)?
 - Should ships be buildable freely, or use blueprints / shipwright NPCs?
+- Player animation library for melee combat: which options are maintained for 1.21.1 on both NeoForge and Fabric, and do they support first-person animations? Decide in milestone 7.
+- Melee input defaults: do hold-to-thrust and tap-to-parry feel good with mouse buttons, or are dedicated keybinds better? Decide by playtesting.
 - Config library: Forge Config API Port (NeoForge's config API on Fabric) vs. another cross-loader config library. Decide before milestone 5. Either way, access it only through our wrapper.
 - Does Sable's API differ between `sable-common` and the loader artifacts (e.g. events or registration only on the loader side)? Check in `refs/sable` during milestone 0.
 - Do the dry-hull rendering mixins target the same classes on both loaders? Fabric has no NeoForge render patches, so some hooks may need loader-specific variants.

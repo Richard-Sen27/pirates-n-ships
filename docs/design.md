@@ -40,7 +40,18 @@ A Minecraft mod about sailing, piracy and life at sea. Players build **real bloc
 | License | **PolyForm Noncommercial 1.0.0**: anyone may use, modify and redistribute the mod for any noncommercial purpose. |
 
 ### Dependency rule
-Every new dependency must exist for **both** NeoForge and Fabric, or be optional and isolated behind a compat module. Prefer vanilla APIs (data components, codecs, `CustomPacketPayload`, GameTest) over loader APIs wherever vanilla offers something.
+Every new dependency must exist for **both** NeoForge and Fabric, or be optional and isolated behind a compat module.
+
+### Vanilla vs. loader APIs
+Prefer vanilla APIs when vanilla offers an equivalent (data components, codecs, `CustomPacketPayload`, GameTest). Use a loader API, through a platform service, when it offers better compatibility, interop or performance. **Never write a mixin just to avoid a loader API.** Typical cases where the loader API wins:
+- **Loader events instead of our own mixins:** maintained hooks, shared with other mods, fewer conflicts.
+- **Capabilities / transfer APIs** (NeoForge capabilities, Fabric Transfer API): let other mods' pipes and hoppers work with cargo crates and pantries. NeoForge also caches capability lookups.
+- **Data attachments** on entities, levels and chunks (criminal score, stamina, ship data). Vanilla has no general equivalent.
+- **Render stage events** for the water mask and HUD, instead of level-renderer mixins where possible.
+- **Chunk loading** for ships far from players.
+- **Convention tags** (`c:` namespace) for recipes and trade goods.
+
+Performance in this mod comes mainly from our own hot paths: hull flood fill, flooding, per-ship forces, mask meshes, network sync and crew AI. Use efficient data structures (e.g. bitsets for hull volume), incremental updates and throttled sync, and **profile with spark** before optimizing.
 
 ### Reference sources (read-only, in `refs/`, excluded from build)
 - `refs/sable`: primary API reference

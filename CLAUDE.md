@@ -15,7 +15,7 @@ Minecraft mod. Full spec: `docs/design.md`. Read it at the start of every sessio
 - Event logic is plain methods in `common`. Loader modules only subscribe and forward.
 - Networking: payload records, codecs and handlers in `common` (vanilla `CustomPacketPayload`). Only registration and sending go through `Services.NETWORK`.
 - Shared mixins go in `common`'s mixin config. Loader-specific mixins are allowed only when unavoidable, and must be documented.
-- Prefer vanilla APIs (data components, codecs, GameTest) over loader APIs.
+- Prefer vanilla APIs (data components, codecs, `CustomPacketPayload`, GameTest) when vanilla offers an equivalent. Use a loader API (through a platform service) when it offers better compatibility, interop or performance: loader events instead of our own mixins, capabilities / transfer APIs, data attachments, render stage events, chunk loading, `c:` convention tags. **Never write a mixin just to avoid a loader API.**
 - Config: define values in `common` and read them only through our `config` wrapper, never through the config library directly.
 - Before adding anything to `neoforge/`, ask: could this be in `common` behind a platform method? Keep loader modules thin.
 

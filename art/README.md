@@ -29,5 +29,18 @@ Workflow notes (figurehead batch):
 - A block whose model is not a full cube needs `noOcclusion()` in its properties, or neighbours cull their faces
   against it and the model renders dark.
 
+Workflow notes (capstan, sail winch, yard batch):
+- Building from a spec list in `risky_eval` works well: a small helper creates each cube with `autouv: 0` and sets
+  position-based UVs (north/south `x`, `16-y`; east/west `z`, `16-y`; up/down `x`, `z`, each wrapped into 0..16) and a
+  texture per face; `null` leaves a hidden face out of the export.
+- Wood grain or rope along x: set `rotation: 90` on the north, south, up and down faces of a log-textured element.
+- Round parts without 45° rotations: two crossed boxes give a chamfered (octagon-like) profile; wound rope or a band
+  reads well as 1 px rings that alternate between two radii (0.3 px apart).
+- Remove textures no face uses before compiling (the export lists every project texture). `Codecs.project.compile`
+  with `{raw: true}` gives the project as an object; strip each texture's `source`, set `path` to `""` and
+  `relative_path` to `../vanilla/<name>.png` before writing it to `models/`. Desktop Blockbench can write files from
+  `risky_eval` with `require('fs')`.
+- Put a `display.gui` block (scale about 0.5) into a model whose parts reach past the block, so the item fits its slot.
+
 Entity models use the Modded Entity format (Mojang mappings 1.17+); paste the body of the exported
 `createBodyLayer()` into the renderer's layer method (example: `AnchorRenderer.createLayer`).

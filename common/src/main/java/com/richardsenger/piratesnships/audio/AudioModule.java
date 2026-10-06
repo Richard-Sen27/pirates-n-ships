@@ -1,16 +1,13 @@
 package com.richardsenger.piratesnships.audio;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.audio.creak.ShipCreaks;
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
+import com.richardsenger.piratesnships.core.datagen.SoundEntries;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import java.util.List;
-import net.minecraft.data.PackOutput;
 
 /**
  * The {@code audio} module (docs/design.md §16): the mod's sound events and the hull creaking of rolling ships. Owns
@@ -22,8 +19,12 @@ import net.minecraft.data.PackOutput;
  * ({@code minecraft:block/wooden_door/open1}, {@code open2}) and chest lid ({@code minecraft:block/chest/open}),
  * pitched down by the trigger (0.5 to 0.8). To use real recordings, either ship a resource pack with its own
  * {@code assets/pirates_n_ships/sounds.json} entry {@code "ship.creak"} ({@code "replace": true}) and the files, or
- * put {@code .ogg} files under {@code common/src/main/resources/assets/pirates_n_ships/sounds/ship/} and change
- * {@link #CREAK_SOUNDS} to {@code pirates_n_ships:ship/creak1}, … (then regenerate data).
+ * add the recordings through {@code tools/sounds/manifest.json} (see its README) and change {@link #CREAK_SOUNDS} to
+ * {@code pirates_n_ships:ship/creak1}, … (then regenerate data).
+ *
+ * <h2>Music</h2>
+ * {@code music.sea} and {@code music.shanty} ({@link AudioSounds}) are chosen on the client by
+ * {@code audio.music.SeaMusic} (§16, "Pools"). Their tracks are streamed.
  */
 public final class AudioModule implements ModModule {
 
@@ -49,6 +50,11 @@ public final class AudioModule implements ModModule {
     }
 
     @Override
+    public void initClient() {
+        com.richardsenger.piratesnships.audio.music.SeaMusic.init();
+    }
+
+    @Override
     public void registerEvents() {
         CommonEvents.LEVEL_TICK_END.register(ShipCreaks::onLevelTick);
         CommonEvents.SERVER_STOPPED.register(server -> ShipCreaks.onServerStopped());
@@ -57,25 +63,17 @@ public final class AudioModule implements ModModule {
 
     @Override
     public void gatherData(DataContributions data) {
-        // an empty directory puts the file at the namespace root: assets/pirates_n_ships/sounds.json
-        data.json(PackOutput.Target.RESOURCE_PACK, "", Constants.id("sounds"), AudioModule::soundsJson);
+        data.sounds(AudioModule::sounds);
         data.lang(lang -> lang.add(CREAK_SUBTITLE, "Ship creaks"));
     }
 
-    static JsonElement soundsJson() {
-        JsonArray sounds = new JsonArray();
-        for (String name : CREAK_SOUNDS) {
-            JsonObject s = new JsonObject();
-            s.addProperty("name", name);
-            s.addProperty("volume", 0.8);
-            sounds.add(s);
-        }
-        JsonObject creak = new JsonObject();
-        creak.add("sounds", sounds);
-        creak.addProperty("subtitle", CREAK_SUBTITLE);
-        JsonObject root = new JsonObject();
-        root.add(AudioSounds.SHIP_CREAK.id().getPath(), creak);
-        return root;
+    static void sounds(SoundEntries s) {
+        SoundEntries.Event creak = s.event(AudioSounds.SHIP_CREAK).subtitle(CREAK_SUBTITLE);
+        for (String name : CREAK_SOUNDS) creak.sound(SoundEntries.file(name).volume(0.8f));
+        SoundEntries.Event sea = s.event(AudioSounds.MUSIC_SEA);
+        for (String name : AudioSounds.SEA_TRACKS) sea.sound(SoundEntries.file(name).stream());
+        SoundEntries.Event shanty = s.event(AudioSounds.MUSIC_SHANTY);
+        for (String name : AudioSounds.SHANTY_TRACKS) shanty.sound(SoundEntries.file(name).stream());
     }
 
     @Override

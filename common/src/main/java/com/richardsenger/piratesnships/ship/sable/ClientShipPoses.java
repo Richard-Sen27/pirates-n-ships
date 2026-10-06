@@ -4,6 +4,7 @@ import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.companion.math.Pose3dc;
 import dev.ryanhcode.sable.sublevel.ClientSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +31,18 @@ public final class ClientShipPoses {
     public static @Nullable Quaterniond orientation(Level level, Vec3 plotPos, float partialTick) {
         Pose3dc pose = pose(level, plotPos, partialTick);
         return pose == null ? null : new Quaterniond(pose.orientation());
+    }
+
+    /**
+     * True when the entity stands on or rides in a client ship. {@code ActiveSableCompanion#getTrackingOrVehicleSubLevel}
+     * (l.449): the sub-level the entity stands on, else the one containing its vehicle. Sable sets the tracked
+     * sub-level in its {@code Entity.move} redirect ({@code mixin/entity/entity_sublevel_collision/EntityMixin} l.109
+     * to 180; it runs for the local player on the client) and clears it when the entity leaves the deck, e.g. while
+     * jumping; the vehicle part is updated every tick ({@code EntityMixin#sable$tickInject}, l.219).
+     */
+    public static boolean onShip(Entity entity) {
+        SubLevel sub = Sable.HELPER.getTrackingOrVehicleSubLevel(entity);
+        return sub instanceof ClientSubLevel c && !c.isRemoved();
     }
 
     private static @Nullable Pose3dc pose(Level level, Vec3 plotPos, float partialTick) {

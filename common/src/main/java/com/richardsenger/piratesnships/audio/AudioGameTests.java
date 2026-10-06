@@ -16,6 +16,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.List;
+import com.richardsenger.piratesnships.combat.content.CombatSounds;
+import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
+import com.richardsenger.piratesnships.sailing.anchor.AnchorContent;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -48,6 +53,31 @@ public final class AudioGameTests {
             JsonObject e = root.getAsJsonObject(key);
             h.assertTrue(e.getAsJsonArray("sounds").size() > 0, "ship.creak has no sounds");
             h.assertTrue(AudioModule.CREAK_SUBTITLE.equals(e.get("subtitle").getAsString()), "ship.creak has the wrong subtitle");
+        } catch (java.io.IOException ex) {
+            throw new AssertionError("could not read sounds.json", ex);
+        }
+        h.succeed();
+    }
+
+    /** The G1 sound events (music pools, combat, anchor) are registered and listed in the shared sounds.json. */
+    @ModGameTest
+    public static void sharedSoundEventsAreRegisteredAndDefined(GameTestHelper h) {
+        List<RegistryEntry<SoundEvent, SoundEvent>> events = List.of(AudioSounds.MUSIC_SEA, AudioSounds.MUSIC_SHANTY,
+                CombatSounds.PISTOL_SHOT, CombatSounds.PISTOL_EMPTY, CombatSounds.CANNON_SHOT, CombatSounds.CANNON_VOLLEY,
+                AnchorContent.CHAIN, AnchorContent.SPLASH, AnchorContent.THUD);
+        try (InputStream in = AudioGameTests.class.getResourceAsStream("/assets/pirates_n_ships/sounds.json")) {
+            h.assertTrue(in != null, "assets/pirates_n_ships/sounds.json is missing (run ./gradlew :neoforge:runData)");
+            JsonObject root = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
+            for (RegistryEntry<SoundEvent, SoundEvent> e : events) {
+                h.assertTrue(BuiltInRegistries.SOUND_EVENT.containsKey(e.id()), "sound event " + e.id() + " is not registered");
+                h.assertTrue(BuiltInRegistries.SOUND_EVENT.get(e.id()) == e.get(), "sound event " + e.id() + " is a different instance");
+                h.assertTrue(root.has(e.id().getPath()), "sounds.json does not list " + e.id().getPath());
+                h.assertTrue(root.getAsJsonObject(e.id().getPath()).getAsJsonArray("sounds").size() > 0, e.id() + " has no sounds");
+            }
+            JsonObject pistol = root.getAsJsonObject(CombatSounds.PISTOL_SHOT.id().getPath());
+            h.assertTrue("subtitles.pirates_n_ships.combat.pistol_shot".equals(pistol.get("subtitle").getAsString()),
+                    "combat.pistol_shot has the wrong subtitle");
+            h.assertTrue(!root.getAsJsonObject(AudioSounds.MUSIC_SEA.id().getPath()).has("subtitle"), "music has no subtitle");
         } catch (java.io.IOException ex) {
             throw new AssertionError("could not read sounds.json", ex);
         }

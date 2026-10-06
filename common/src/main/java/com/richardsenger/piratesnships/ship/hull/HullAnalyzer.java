@@ -171,21 +171,14 @@ public final class HullAnalyzer {
         List<Compartment> compartments = new ArrayList<>(compCount);
         for (int c = 0; c < compCount; c++) {
             int[] cells = members.get(c);
-            Integer[] boxed = new Integer[cells.length];
-            for (int i = 0; i < cells.length; i++) boxed[i] = cells[i];
-            Arrays.sort(boxed, (p, q) -> {
-                int r = Double.compare(h[p], h[q]);
-                return r != 0 ? r : Integer.compare(p, q);
-            });
-            int[] sorted = new int[cells.length];
+            int[] sorted = sortByHeight(cells, h);
             double[] hs = new double[cells.length];
             double[] centers = new double[3 * cells.length];
             BitSet bits = new BitSet(n);
             int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
             int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
             for (int i = 0; i < cells.length; i++) {
-                int cell = boxed[i];
-                sorted[i] = cell;
+                int cell = sorted[i];
                 hs[i] = h[cell];
                 int x = grid.x(cell), y = grid.y(cell), z = grid.z(cell);
                 centers[3 * i] = grid.originX() + x + 0.5;
@@ -204,6 +197,24 @@ public final class HullAnalyzer {
                     new HeightProfile(hs, centers), List.copyOf(ports), List.copyOf(compLinks.get(c))));
         }
         return new HullAnalysis(grid, up, spill, compOf, compartments, links);
+    }
+
+    /** Cells sorted by (height, index): a stable primitive merge sort of the index-ordered input. */
+    static int[] sortByHeight(int[] cells, double[] h) {
+        int n = cells.length;
+        int[] a = cells.clone(), b = new int[n];
+        Arrays.sort(a); // index order first, so the stable sort breaks height ties by index
+        for (int width = 1; width < n; width *= 2) {
+            for (int lo = 0; lo < n; lo += 2 * width) {
+                int mid = Math.min(lo + width, n), hi = Math.min(lo + 2 * width, n);
+                int i = lo, j = mid, k = lo;
+                while (i < mid && j < hi) b[k++] = h[a[j]] < h[a[i]] ? a[j++] : a[i++];
+                while (i < mid) b[k++] = a[i++];
+                while (j < hi) b[k++] = a[j++];
+            }
+            int[] t = a; a = b; b = t;
+        }
+        return a;
     }
 
     /** Writes the 6 neighbor indices of {@code c} into {@code out} ({@code -1} = outside the grid). Returns 6. */

@@ -45,7 +45,7 @@ Started 2026-10-07 after the session restart with the Blockbench MCP connected (
 | F7d | Blockbench models, batch 4: cargo crate, cargo barrel, pantry, water barrel | todo, after F7b |
 | F7c | Blockbench models, batch 3: the four figureheads | done | Merged (`c15b28c`). Skull 42 elements, eagle 35, lion 37, mermaid 33, all with a mounting plate against the hull, 8 to 15 px forward overhang, `noOcclusion()`. Renders in `art/renders/`. Playtest `items-and-blocks.md` (to be added to the 3D models section). |
 | F7e | Blockbench models, batch 5: cleat, brig bars and door, flag cloth at 2 blocks via a block entity renderer | todo, after F5b |
-| F8 | 3D item models in Blockbench (human request 2026-10-07): F8a melee weapons, F8b firearms and ammo, F8c tools (whistle, shackles, spyglass, bounty proof) | todo, one batch at a time after F7b (Blockbench is single-user) |
+| F8 | 3D item models in Blockbench (human request 2026-10-07): F8a melee weapons (rapier, cutlass, saber), F8b firearms and ammo (pistol, musket, lead shot, cannonball, grappling hook), F8c tools (captain's whistle, shackles), F8d food (rum, hardtack, lime, salt pork, salted fish), F8e trade goods (cloth, spices, tobacco). Doubloon and bounty proof stay flat | todo, one batch at a time after F7b (Blockbench is single-user) |
 
 Only one agent at a time may use Blockbench (one desktop instance, one open project), so the F7 batches run one after another; G1 and F5 run next to them.
 

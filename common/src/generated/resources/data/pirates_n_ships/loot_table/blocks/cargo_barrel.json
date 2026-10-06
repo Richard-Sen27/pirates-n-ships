@@ -3,14 +3,20 @@
   "pools": [
     {
       "bonus_rolls": 0.0,
-      "conditions": [
-        {
-          "condition": "minecraft:survives_explosion"
-        }
-      ],
       "entries": [
         {
           "type": "minecraft:item",
+          "functions": [
+            {
+              "function": "minecraft:copy_components",
+              "include": [
+                "pirates_n_ships:bulk_cargo",
+                "minecraft:max_stack_size",
+                "minecraft:custom_name"
+              ],
+              "source": "block_entity"
+            }
+          ],
           "name": "pirates_n_ships:cargo_barrel"
         }
       ],

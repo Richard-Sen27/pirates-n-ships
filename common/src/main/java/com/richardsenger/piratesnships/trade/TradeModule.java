@@ -29,6 +29,26 @@ public final class TradeModule implements ModModule {
     public void registerContent() {
         TradeGoods.init();
         PlunderMark.init();
+        com.richardsenger.piratesnships.trade.cargo.CargoContainers.init();
+    }
+
+    @Override
+    public void registerPayloads() {
+        com.richardsenger.piratesnships.trade.net.MarketBackend.registerPayloads();
+    }
+
+    @Override
+    public void registerEvents() {
+        com.richardsenger.piratesnships.platform.event.CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> TradeCommands.register(dispatcher));
+        com.richardsenger.piratesnships.platform.event.CommonEvents.PLAYER_LOGOUT.register(p -> {
+            if (p instanceof net.minecraft.server.level.ServerPlayer sp) com.richardsenger.piratesnships.trade.net.MarketBackend.close(sp);
+        });
+        com.richardsenger.piratesnships.platform.event.CommonEvents.SERVER_STOPPED.register(s -> com.richardsenger.piratesnships.trade.net.MarketBackend.clear());
+    }
+
+    @Override
+    public void initClient() {
+        com.richardsenger.piratesnships.trade.client.TradeClient.init();
     }
 
     @Override
@@ -39,10 +59,12 @@ public final class TradeModule implements ModModule {
                 .add(CargoWeight.LoadLevel.LADEN.translationKey(), "Laden")
                 .add(CargoWeight.LoadLevel.HEAVILY_LADEN.translationKey(), "Heavily laden")
                 .add(CargoWeight.LoadLevel.OVERLOADED.translationKey(), "Overloaded"));
+        data.lang(com.richardsenger.piratesnships.trade.cargo.CargoText::lang);
+        data.lang(TradeCommands::lang);
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(TradeGameTests.class);
+        return List.of(TradeGameTests.class, CargoGameTests.class);
     }
 }

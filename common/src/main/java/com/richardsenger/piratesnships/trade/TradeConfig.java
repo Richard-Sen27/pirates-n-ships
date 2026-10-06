@@ -114,6 +114,26 @@ public final class TradeConfig {
     public static final ConfigValue<Integer> FEE_WAIVER_STANDING = FEES.intRange("waiver_navy_standing", F.waiverStanding(), -1_000_000, 1_000_000,
             "Navy standing at or above which the fee is waived");
 
+    // --- Cargo containers and market backend ----------------------------------------------------------------
+    /** What an empty cargo container accepts. */
+    public enum ContainerAccepts { ANY_STACKABLE, TRADE_GOODS_ONLY }
+
+    private static final ConfigSection CONTAINERS = S.section("containers", "Bulk cargo crates and barrels (one kind of item each)");
+    public static final ConfigValue<Integer> CRATE_CAPACITY_STACKS = CONTAINERS.intRange("crate_capacity_stacks", 32, 1, 4096,
+            "Capacity of a cargo crate in full stacks of the held item (32 stacks = 2048 sugar or 512 rum)");
+    public static final ConfigValue<Integer> BARREL_CAPACITY_ITEMS = CONTAINERS.intRange("barrel_capacity_items", 1536, 1, 262144,
+            "Capacity of a cargo barrel in items, whatever their stack size (better than a crate for rum and other small stacks)");
+    public static final ConfigValue<ContainerAccepts> CONTAINER_ACCEPTS = CONTAINERS.enumValue("accepts", ContainerAccepts.ANY_STACKABLE,
+            "What an empty container accepts: any stackable item, or only trade goods");
+
+    private static final ConfigSection BACKEND = S.section("market_backend", "Limits the server enforces on market requests from clients");
+    public static final ConfigValue<Integer> MAX_TRADE_QUANTITY = BACKEND.intRange("max_trade_quantity", 4096, 1, 262144,
+            "Largest quantity one buy or sell request may move");
+    public static final ConfigValue<Double> MARKET_REACH = BACKEND.doubleRange("market_reach", 16.0, 1.0, 256.0,
+            "How far (blocks) a player may move from where the market was opened and still trade");
+    public static final ConfigValue<Double> CONTAINER_REACH = BACKEND.doubleRange("container_reach", 16.0, 1.0, 256.0,
+            "How far (blocks) a cargo container may be from the player to buy into it or sell or deliver from it");
+
     private TradeConfig() {
     }
 

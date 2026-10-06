@@ -99,7 +99,7 @@ The feature modules below are packages inside `common` (and, where needed, a sma
 | `combat` | Weapons, ammo, cannons, projectiles, grappling hook, boarding |
 | `law` | Criminal score, bounties, navy turn-in, brig and prisoners, flag allegiance detection |
 | `trade` | Doubloon economy, trade goods, port markets and dynamic prices, contracts, cargo containers |
-| `world` | Structures (pirate islands, seafarer villages, navy outposts), loot tables, treasure maps, ship blueprints |
+| `world` | Structures (pirate islands, seafarer villages, navy outposts), loot tables, treasure maps, shipwright orders and dock berths |
 | `worldsim` | World simulation: port registry, faction state, NPC voyages, raids (§10.4) |
 | `entity` | Mobs (pirates, sailors, navy soldiers/officers, sharks, kraken), sea chest entity |
 | `survival` | Cold water, swimming hunger, sea chest carry rules |
@@ -118,7 +118,15 @@ The feature modules below are packages inside `common` (and, where needed, a sma
 ### 4.1 Building and assembly
 - **Ships are built freely** from any blocks, like any other build. There is no fixed ship type and no blueprint requirement.
 - **Mod components** placed on the build give the ship its abilities and change how it behaves: helm (steering), sails (§5.2), anchor and capstan, cannons and gun ports (Kanonenluke, §8.2), crow's nest (lookout), flags (§4.7), pumps, galley/pantry, brig, cargo containers. A ship without sails doesn't sail, a ship without cannons can't fire, and so on. See §6 for the full station list.
-- **Blueprints for beginners:** a few prebuilt ships (e.g. sloop, brigantine, merchant cog) are available as blueprint items, bought from the shipwright in seafarer villages. Using one places the prebuilt ship as normal blocks at the dock. From then on it is a regular ship: it is assembled at the helm and can be modified freely. Blueprint ships are stored as structure NBT built by hand.
+- Free building plus assembly at the helm is the **main** way to get a ship. For beginners, ships can also be ordered from a shipwright:
+- **Shipwright orders:**
+  1. **Order:** at the shipwright in a seafarer village, the player picks a prebuilt ship type (e.g. sloop, brigantine, merchant cog) and pays in doubloons, plus some materials (logs, wool for sails).
+  2. **Wait:** the build takes a few in-game days, longer for bigger ships (config value). The player gets a **receipt** item that shows progress and proves ownership.
+  3. **Pick up:** when it's done, the player hands in the receipt. The ship appears at a free **berth** in the village dock, in the water and already assembled, so the player boards and sails away. From then on it is a regular ship that can be disassembled at the helm and modified freely.
+  - The ship is only materialized at pickup, not when the build finishes. Until then it is a record only (same idea as §10.4), so finished ships never block the dock and can't be taken by others.
+  - Docks have a few marked berths (markers in the village structure). If all are occupied, the shipwright asks the player to come back later.
+  - Ship types are stored as structure NBT built by hand.
+  - Later, optional: visible construction stages at the dock (frame → hull → masts), which needs one structure per stage.
 - A **Helm block** (Steuerrad) is the ship's anchor point. Using it while docked triggers assembly.
 - Assembly collects connected blocks, excluding world terrain, with a configurable block limit. They become a Sable sub-level.
 - **Disassembly** happens at the helm when the ship is stationary and aligned. Blocks are placed back into the world, snapped to the grid.
@@ -364,7 +372,7 @@ Models and animations use GeckoLib. Textures are 16×16-scale pixel art.
 
 ### 10.1 Structures
 - **Pirate islands** (Piraten-Inseln): a jigsaw structure with a camp, tavern, docks, buried treasure and a pirate captain. Pirates spawn there, and loot can be traded or fenced there.
-- **Seafarer villages** (Seemannsdörfer): coastal villages with docks, a shipwright, a tavern and a harbor master. Villagers and sailors spawn there.
+- **Seafarer villages** (Seemannsdörfer): coastal villages with docks (with marked ship berths), a shipwright (ship orders, §4.1), a tavern and a harbor master. Villagers and sailors spawn there.
 - **Navy outposts / forts**: a turn-in point for pirates and bounties, with patrols.
 - **Wrecks**: sunken ship structures with loot.
 - **Treasure maps**: lead to buried treasure chests (Schatzkisten) with special loot tables.
@@ -456,6 +464,11 @@ All hazards can be turned off individually and have frequency settings.
 ## 15. RPG layer
 - **Reputation:** separate scores with Pirates, Navy and Villagers. Actions shift them. Reputation affects prices, hiring, hostility and available quests.
 - **Honor/status:** a captain's rank based on deeds (ships captured, bounties claimed), shown in the ship's flag or title.
+- **Careers:** rank ladders built on reputation. Promotions need reputation plus deeds or quests, and each rank unlocks rewards.
+  - **Navy career:** Midshipman → Lieutenant → Captain → Commodore → Admiral. Promotions come from quests by navy officers (patrols, convoy escorts, hunting pirates). Rewards: pay in doubloons, cheaper or exclusive ships at navy shipyards, crew recruited at outposts, officer gear (coat, saber), and the right to fly the navy flag without false-flag penalties (§4.7). Attacking navy or merchant ships while in service counts as **desertion**: the rank is lost and a bounty is set.
+  - **Pirate infamy:** the mirror image, from Deckhand up to Pirate Lord, driven by plunder, captured ships and bounty size. Higher infamy makes pirate ships friendlier, gives better prices at fences, lets the player recruit pirate crews and unlocks pirate-captain quests. It also makes the navy hunt the player harder (more patrols, §10.4).
+  - **Privateer (middle path):** the navy grants a **letter of marque** that makes attacking pirate ships legal and pays bounties for them, without full navy service or its duties. Attacking navy or merchant ships voids the letter.
+  - The two ladders exclude each other: joining the navy requires low infamy, and a navy rank is lost when the player turns pirate.
 - **Quests** (Aufträge) from navy officers, harbor masters and pirate captains: escort, deliver cargo, hunt a ship, find treasure, kill a monster.
 - **Story (optional, later):** a light questline, e.g. a legendary pirate, a cursed treasure and the kraken.
 
@@ -474,7 +487,7 @@ All gameplay settings live in the **server config** (synced to clients). Audio a
 
 | Group | Toggles and values |
 |---|---|
-| Ships | max block count, assembly enabled, sinking enabled, wreck persistence time |
+| Ships | max block count, assembly enabled, sinking enabled, wreck persistence time, shipwright orders on/off, build time per ship type, order prices |
 | Flooding | enabled, inflow rate, pump rate |
 | Wind | variability, weather multipliers, regional variation on/off |
 | Waves | enabled, amplitude, camera sway (client) |
@@ -523,7 +536,7 @@ All gameplay settings live in the **server config** (synced to clients). Audio a
 | 7 | **Melee combat core** | Slash, thrust, guard, parry, riposte and stamina work player vs. player and player vs. a test dummy. Server-side resolution covered by GameTests. Animation library chosen. |
 | 8 | Melee animations + NPC duelists | First- and third-person sword animations with readable telegraphs. A test NPC uses the same system (telegraph, guard, parry) with skill tiers. |
 | 9 | Cannons + grappling hook v1 + boarding | Full ship-to-ship combat loop, ending in a deck duel |
-| 10 | Ship identity + blueprints | Flags (incl. striking colors), ship name, figureheads, dyeable sails, decor blocks, beginner blueprint ships at the shipwright |
+| 10 | Ship identity + shipwright | Flags (incl. striking colors), ship name, figureheads, dyeable sails, decor blocks, shipwright orders with receipt and berth pickup |
 | 11 | World | Islands, villages, outposts, wrecks, treasure maps |
 | 12 | Mobs | Pirates, sailors, navy, sharks (human mobs use the §8.5 duel AI) |
 | 13 | Law + brig | Criminal score, bounties, turn-ins, shackles, brig, ransom, false-flag detection |
@@ -532,7 +545,7 @@ All gameplay settings live in the **server config** (synced to clients). Audio a
 | 16 | Sea chest + survival | §11, §14 |
 | 17 | Weather and hazards | Waves, waterspouts, whirlpools |
 | 18 | Audio | Sounds, music manager |
-| 19 | RPG + kraken + duel bosses | Reputation, quests, named pirate captains, the kraken |
+| 19 | RPG + careers + kraken + duel bosses | Reputation, quests, navy ranks, pirate infamy, letter of marque, named pirate captains, the kraken |
 | 20 | World simulation | Port registry, faction state, abstract voyages that materialize near players, trade convoys, navy patrols, raids and retaliation (§10.4) |
 | 21 | Melee extras (optional) | Feints, directional attacks/parries mode |
 | 22 | Fabric port | Enable `fabric/`, implement platform services, all GameTests pass on both loaders, CI builds both |
@@ -545,7 +558,7 @@ Spikes 1–4 are throwaway-quality prototypes that prove feasibility. They may l
 - What exactly does Sable's API offer for assembly, applying forces and custom buoyancy? (Read `refs/sable` + wiki: "Block Physics Properties", "Dimension Physics Data", "Working with Entities".)
 - Can buoyancy be overridden per ship (needed for dry volume and flooding), or does it have to be applied as an external force?
 - How should cargo weight interact with Sable's mass: change block/ship mass directly, or apply drag and a buoyancy offset?
-- Should there be a Navy career path for players (join the navy instead of pirating)?
+- Can Sable create a sub-level directly from a structure template (for shipwright pickup), or do the blocks have to be placed at the berth and then assembled like at the helm?
 - Player animation library for melee combat: which options are maintained for 1.21.1 on both NeoForge and Fabric, and do they support first-person animations? Decide in milestone 7.
 - Melee input defaults: do hold-to-thrust and tap-to-parry feel good with mouse buttons, or are dedicated keybinds better? Decide by playtesting.
 - Config library: Forge Config API Port (NeoForge's config API on Fabric) vs. another cross-loader config library. Decide before milestone 5. Either way, access it only through our wrapper.

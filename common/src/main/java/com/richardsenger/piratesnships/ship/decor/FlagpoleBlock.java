@@ -37,6 +37,10 @@ import org.jetbrains.annotations.Nullable;
  *       empty hand to take the flag down. Each takes the configured delay; see {@link FlagpoleMachine}.</li>
  *   <li>{@link #FLAG} is the flag the pole <em>shows</em> (none while struck) and only drives the model; the real
  *       state is in {@link FlagpoleBlockEntity}. {@link #FACING} is the side the flag points to (downwind).</li>
+ *   <li>The flag is a full-size cloth ({@code FlagClothModel}: one block high, reaching 1.5 blocks from the pole's
+ *       center) that extends into the space downwind of the pole. It is a visual overlap only: the block's shape
+ *       (outline and collision) stays the 4×4 pole, so the cloth needs free space downwind to look right and
+ *       clips through any blocks there.</li>
  * </ul>
  */
 public class FlagpoleBlock extends Block implements EntityBlock {

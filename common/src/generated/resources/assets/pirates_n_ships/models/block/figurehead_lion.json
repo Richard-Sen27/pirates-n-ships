@@ -1,8 +1,0 @@
-{
-  "parent": "minecraft:block/orientable",
-  "textures": {
-    "front": "pirates_n_ships:block/figurehead_lion",
-    "side": "pirates_n_ships:block/figurehead_side",
-    "top": "pirates_n_ships:block/figurehead_top"
-  }
-}

@@ -11,9 +11,9 @@ Last updated: 2026-10-06 (second session: wave 1 of phase C running).
 
 `main` is green after phases A and B. Nothing is pushed: local `main` is ahead of `origin/main`.
 
-Running now (wave 1, five agents): **A2** foundation follow-up, **C1** hull + flooding, **C2** wind + sails, **C4** law, **C6** provisions.
+Running now (six agents): **A2** foundation follow-up, **C1** hull + flooding, **C2** wind + sails, **C4** law, **C6** provisions, and **D1** spike 1 (assembly).
 Waiting for A2 (wave 2): **C3** melee, **C5** trade, **C7** remaining config groups, **C8** basic items and blocks.
-After that: phase D spikes (using `docs/sable-notes.md`) and phase E integration.
+After that: spikes D2–D4 one after another (using `docs/sable-notes.md`) and phase E integration.
 
 How merges work in this phase:
 - Every merged branch and its worktree is deleted right after the merge (requested by the human).
@@ -35,7 +35,7 @@ How merges work in this phase:
 | C6 | Provisions logic (§7.4) | in progress | Wave 1. |
 | C7 | Config groups and values (§17) | todo | Wave 2. Reduced to the groups no other package owns (see decisions). |
 | C8 | Basic items and blocks + datagen + placeholder textures | todo | Wave 2, waits for A2. |
-| D1 | Spike 1: assembly (§4.1) | todo | Starts after phase C wave 2 is under way. Ends at a playtest gate. |
+| D1 | Spike 1: assembly (§4.1) | in progress | Lives in `common` (`ship/assembly`, Sable adapter in `ship/sable`), since all Sable APIs are in `sable-common`. Ends at a playtest gate. |
 | D2 | Spike 2: dry hull (§4.3, §4.4) | todo | Waits for D1 + C1. Ends at a playtest gate. |
 | D3 | Spike 3: wind + sails (§5) | todo | Waits for D1 + C2. Ends at a playtest gate. |
 | D4 | Spike 4: crew station (§6) | todo | Waits for D3. Ends at a playtest gate. |
@@ -83,6 +83,8 @@ How merges work in this phase:
 | 2026-10-06 | Config ownership: each phase C package defines the §17 group of its own feature (C1 `flooding`, C2 `wind` + `sailing`, C3 `melee`, C4 `law` + `flags_brig`, C5 `cargo_trade`, C6 `provisions`). C7 defines only the remaining groups (ships, waves, hazards, crew, combat, survival, world, world simulation, audio). | The orchestrator prompt allows either "C7 early" or "each package adds its own section". Own sections let all packages run in parallel without waiting for C7. |
 | 2026-10-06 | Hull analysis uses a spill-height (priority-flood) model instead of a plain "enclosed air" flood fill: a cell is floodable volume when it lies below its own pour point to the outside. | With the plain flood fill of §4.2, an open-topped hull or a hull with an open deck hatch counts as "outside" and would have water inside. The new rule keeps it dry while the rim is above the waterline, floods it through holes below the waterline, and also covers waves spilling over a low rim (§5.4). To be written into design.md §4.2 when C1 is merged. |
 | 2026-10-06 | C2 also covers rudder, keel drag and anchor as pure force functions, and a thin server-side wind service with client sync. | Spike 3 needs all of them, and they are pure math like the sail model. |
+| 2026-10-06 | Spike 1 starts in parallel with phase C wave 1 and is written in `common`, not in `neoforge/`. | The four spikes are sequential and form the longest chain, and spike 1 only needs phases A and B. `docs/sable-notes.md` §7 found every needed Sable API in `sable-common`, so nothing has to be moved later. |
+| 2026-10-06 | Spike 1 defines the config section `assembly` (assembly enabled, max block count, disassembly thresholds). C7's "Ships" group leaves those two values out. | The spike needs them now, and two definitions of the same value would clash. |
 | 2026-10-06 | Subagents read `refs/` from the main checkout by absolute path. | `refs/` is git-ignored, so it doesn't exist inside agent worktrees. |
 | 2026-10-06 | Subagents are spawned as `general-purpose` agents pinned to Opus, with the instructions from `.claude/agents/implementer.md` referenced in the prompt, instead of `subagent_type: "implementer"`. | This session doesn't list the `implementer` agent type ("Agent type 'implementer' not found"), probably because the definition was added after the session's agent list was loaded. Model and instructions are the same as intended. |
 

@@ -23,6 +23,7 @@ import java.util.function.Supplier;
  *
  * <pre>{@code
  * ClientEvents.CLIENT_TICK_END.register(mc -> WindHud.tick(mc));
+ * ClientEvents.CLIENT_DISCONNECT.register(mc -> ClientWind.reset());
  * ClientEvents.registerHudLayer(Constants.id("wind"), WindHud::render);
  * ClientEvents.registerEntityRenderer(ShipEntities.SHARK, SharkRenderer::new);
  * }</pre>
@@ -35,7 +36,16 @@ public final class ClientEvents {
     public static final Event<ClientTick> CLIENT_TICK_START = Event.create(ls -> mc -> ls.forEach(l -> l.onTick(mc)));
     public static final Event<ClientTick> CLIENT_TICK_END = Event.create(ls -> mc -> ls.forEach(l -> l.onTick(mc)));
 
+    /**
+     * Fired on the client thread when the client leaves a world or server (disconnect, quit to title, kick, and also
+     * before a new single-player world starts). Clear client-side caches of server data here (synced stores, wind,
+     * ...). The level and player may already be gone; do not rely on them. May fire more than once per session.
+     */
+    public static final Event<ClientDisconnect> CLIENT_DISCONNECT = Event.create(ls -> mc -> ls.forEach(l -> l.onDisconnect(mc)));
+
     @FunctionalInterface public interface ClientTick { void onTick(Minecraft minecraft); }
+
+    @FunctionalInterface public interface ClientDisconnect { void onDisconnect(Minecraft minecraft); }
 
     /** A HUD layer, drawn above the vanilla HUD in registration order. */
     public record HudLayer(ResourceLocation id, LayeredDraw.Layer layer) { }

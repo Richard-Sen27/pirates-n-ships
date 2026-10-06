@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
+import net.minecraft.world.level.block.Blocks;
 
 import java.util.Collection;
 
@@ -55,6 +56,16 @@ public final class CoreGameTests {
 
         ConfigOverrides.during(helper, CoreConfig.DEBUG, true);
         helper.assertTrue(CoreConfig.DEBUG.get(), "core.debug should be overridden for this test");
+        helper.succeed();
+    }
+
+    /** The generated tag's required reference to {@code #minecraft:dirt} resolves at load time. */
+    @ModGameTest
+    public static void generatedTagResolvesVanillaReference(GameTestHelper helper) {
+        helper.assertTrue(CoreContent.TEST_BLOCK.get().defaultBlockState().is(CoreTags.TEST_GROUND), "test block in " + CoreTags.TEST_GROUND);
+        helper.assertTrue(Blocks.DIRT.defaultBlockState().is(CoreTags.TEST_GROUND), "dirt (via #minecraft:dirt) in " + CoreTags.TEST_GROUND);
+        helper.assertTrue(Blocks.PODZOL.defaultBlockState().is(CoreTags.TEST_GROUND), "podzol (via #minecraft:dirt) in " + CoreTags.TEST_GROUND);
+        helper.assertFalse(Blocks.STONE.defaultBlockState().is(CoreTags.TEST_GROUND), "stone must not be in " + CoreTags.TEST_GROUND);
         helper.succeed();
     }
 

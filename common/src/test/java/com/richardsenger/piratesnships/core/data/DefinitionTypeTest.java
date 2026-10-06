@@ -66,6 +66,22 @@ class DefinitionTypeTest {
     }
 
     @Test
+    void clearingClientStoresKeepsTheServerStore() {
+        DefinitionType<String> type = DefinitionType.createSynced("junit_disconnect", Codec.STRING);
+        List<Definitions<String>> clientEvents = new ArrayList<>();
+        type.onClientSync(clientEvents::add);
+        ResourceLocation id = Constants.id("x");
+        type.acceptServer(Map.of(id, "server"));
+        type.acceptClient(Map.of(id, "client"));
+
+        DefinitionLoading.clearClientStores();
+        assertTrue(type.client().isEmpty(), "client store emptied on disconnect");
+        assertEquals("server", type.server().require(id), "server store untouched (single-player server may still run)");
+        assertEquals(1, clientEvents.size(), "clearing does not notify sync listeners");
+        type.acceptServer(Map.of());
+    }
+
+    @Test
     void syncPayloadRoundTrips() {
         ResourceLocation id = Constants.id("round_trip");
         CoreDefinitions.TEST_MARKER.acceptServer(Map.of(id, new TestMarker("rt", 7)));

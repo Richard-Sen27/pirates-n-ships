@@ -174,6 +174,11 @@ public final class DefinitionType<T> {
         server = Definitions.empty(name);
     }
 
+    /** Clears the client store (client left the world). Listeners are not called; the next sync refills it. */
+    void clearClient() {
+        client = Definitions.empty(name);
+    }
+
     @Override
     public String toString() {
         return "DefinitionType[" + name + "]";

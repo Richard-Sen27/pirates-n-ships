@@ -16,13 +16,20 @@ import java.util.function.Function;
 
 /**
  * Tags for a built-in registry (blocks, items, entity types, ...). {@link #tag} is widened to public for
- * contributors. The returned appender offers {@code add(value)} and {@code addTag(TagKey)};
- * optional entries go through {@link #addOptional} and {@link #addOptionalTag} on this provider.
+ * contributors. The returned appender offers {@code add(value)}, {@code addTag(TagKey)}, {@code addOptional(id)} and
+ * {@code addOptionalTag(id)}, and the calls chain:
+ * {@code tags.tag(OURS).add(Blocks.CLAY).addTag(BlockTags.DIRT).addOptionalTag(cTagId)} (put {@code add(value)} calls
+ * before the first optional one, which returns the plain vanilla appender). The provider-level {@link #addOptional}
+ * and {@link #addOptionalTag} do the same and stay supported.
  *
  * <p>Tag ids may be in any namespace: {@code tag(TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath("sable", "heavy")))}
  * writes {@code data/sable/tags/block/heavy.json} with {@code "replace": false}, so it merges with Sable's own file.
- * A <i>reference</i> to another tag ({@code addTag}) must be to a tag defined in this same run; for tags owned by
- * other mods use {@code addOptionalTag}, otherwise the data run fails with "missing following references".
+ *
+ * <p><b>References to other tags.</b> A <i>required</i> reference ({@code addTag}) is written as a plain
+ * {@code "#ns:path"} entry and must point to a tag defined in this same run or to a tag vanilla defines
+ * (see {@link VanillaTags}; e.g. {@code BlockTags.DIRT}). Anything else (a typo, another mod's tag) fails the data
+ * run with "missing following references". Tags of other mods ({@code c:...}, {@code sable:...}) go through
+ * {@code addOptionalTag}, which writes {@code {"id": "#c:...", "required": false}}; the game skips it if absent.
  */
 public final class ModTagsProvider<T> extends IntrinsicHolderTagsProvider<T> {
 
@@ -30,7 +37,8 @@ public final class ModTagsProvider<T> extends IntrinsicHolderTagsProvider<T> {
 
     ModTagsProvider(PackOutput output, ResourceKey<? extends Registry<T>> registry, CompletableFuture<HolderLookup.Provider> lookup,
                     Function<T, ResourceKey<T>> keyExtractor, List<Consumer<ModTagsProvider<T>>> contributors) {
-        super(output, registry, lookup, keyExtractor);
+        // Parent lookup = vanilla's tags, so required references to them pass the provider's check
+        super(output, registry, lookup, CompletableFuture.completedFuture(VanillaTags.lookup(registry)), keyExtractor);
         this.contributors = contributors;
     }
 
@@ -59,7 +67,7 @@ public final class ModTagsProvider<T> extends IntrinsicHolderTagsProvider<T> {
 
     /**
      * Adds an optional element (e.g. another mod's block) to {@code tag}; skipped at load time if it does not exist.
-     * (Vanilla's {@code addOptional} sits on a class that is not public in common, hence this helper.)
+     * Same as {@code tag(tag).addOptional(element)}.
      */
     public ModTagsProvider<T> addOptional(TagKey<T> tag, ResourceLocation element) {
         super.tag(tag).addOptional(element);

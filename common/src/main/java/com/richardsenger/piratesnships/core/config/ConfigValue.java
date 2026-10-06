@@ -13,6 +13,18 @@ import java.util.List;
  * once the loader has bound and loaded the config, otherwise the declared default. This means JUnit tests can read
  * (and override) config values without any loader, and server config reads before a world is loaded return
  * defaults instead of throwing.
+ *
+ * <p><b>Changing values in tests: use {@code core.gametest.ConfigOverrides}</b> ({@code during(helper, value, v)} in
+ * GameTests, {@code apply(value, v)} + {@code restore()} in JUnit). It remembers the previous value and puts it back
+ * in both states. Calling {@link #set} / {@link #reset()} directly is only safe in JUnit, where nothing is bound:
+ * <ul>
+ *   <li><b>Unbound or not loaded</b> (JUnit, or before the config file loads): {@code set(v)} stores a local
+ *       override and {@code reset()} clears it, so {@code get()} returns the default again.</li>
+ *   <li><b>Bound and loaded</b> ({@link #isLive()}, a running game or GameTest server): {@code set(v)} writes the
+ *       real loader config (every reader, every test of the batch, and the config file see it), and
+ *       <b>{@code reset()} does not undo that</b>: it only clears a local override, which a live value never has.
+ *       The changed value stays until something writes it back.</li>
+ * </ul>
  */
 public final class ConfigValue<T> {
 
@@ -63,8 +75,13 @@ public final class ConfigValue<T> {
     }
 
     /**
-     * Changes the value. When bound and loaded, this writes the loader config (e.g. for GameTests that check a
-     * toggle). Otherwise it sets a local override, which is what JUnit tests use. Undo with {@link #reset()}.
+     * Changes the value.
+     * <ul>
+     *   <li>Not live (unbound or not loaded): sets a local override; {@link #reset()} removes it again.</li>
+     *   <li>Live ({@link #isLive()}): writes the real loader config. <b>{@link #reset()} does not undo this</b>; only
+     *       writing the old value back does. In tests, use {@code ConfigOverrides} instead, which does that.</li>
+     * </ul>
+     * If the config loads after a local override was set, the override keeps winning until {@link #reset()}.
      */
     public void set(T value) {
         Backing<T> b = backing;
@@ -75,7 +92,12 @@ public final class ConfigValue<T> {
         }
     }
 
-    /** Clears a local override set by {@link #set} (tests call this in their cleanup). */
+    /**
+     * Clears the local override set by {@link #set} while the value was not live (JUnit cleanup). <b>It never
+     * touches the loader config</b>: after {@code set(v)} on a live value, {@code reset()} is a no-op and the value
+     * stays {@code v}. It does not restore the default either. To undo a change in a running game, use
+     * {@code ConfigOverrides} (GameTests) or {@code set(previousValue)}.
+     */
     public void reset() {
         override = null;
     }

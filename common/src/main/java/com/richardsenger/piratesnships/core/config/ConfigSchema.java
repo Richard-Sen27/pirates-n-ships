@@ -35,6 +35,10 @@ public final class ConfigSchema {
         return List.copyOf(values);
     }
 
+    synchronized boolean hasSection(List<String> path) {
+        return sections.containsKey(path);
+    }
+
     /** Called by the config service right before it builds the loader spec. */
     public synchronized void freeze() {
         frozen = true;

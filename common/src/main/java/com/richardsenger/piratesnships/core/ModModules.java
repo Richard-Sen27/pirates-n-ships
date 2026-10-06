@@ -17,6 +17,11 @@ public final class ModModules {
             new CoreModule(),
             new com.richardsenger.piratesnships.law.LawModule(),
             new com.richardsenger.piratesnships.sailing.SailingModule(),
-            new com.richardsenger.piratesnships.crew.provisions.ProvisionsModule()
+            new com.richardsenger.piratesnships.crew.provisions.ProvisionsModule(),
+            new com.richardsenger.piratesnships.combat.content.CombatContentModule(),
+            new com.richardsenger.piratesnships.trade.content.TradeContentModule(),
+            new com.richardsenger.piratesnships.crew.content.CrewContentModule(),
+            new com.richardsenger.piratesnships.law.content.LawContentModule(),
+            new com.richardsenger.piratesnships.ship.decor.ShipDecorModule()
     );
 }

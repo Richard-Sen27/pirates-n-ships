@@ -32,7 +32,7 @@ How merges work in this phase:
 | C1 | Hull analysis + flooding model (§4.2, §4.5), pure logic | in progress | Wave 1. |
 | C2 | Wind and sail model (§5.1, §5.2), pure logic | in progress | Wave 1. |
 | C3 | Melee resolution core (§8.5), pure logic | todo | Wave 2, waits for A2. |
-| C4 | Law system logic (§13.1, §13.2) + false-flag detection math (§4.7) | done | Merged. 106 JUnit tests and 6 GameTests. Package `law` (`crime`, `bounty`, `flag`, `LawService`, `/pirates law` debug commands). Playtest: `docs/playtests/law-commands.md` is still to be written from the agent's checklist (see notes). | |
+| C4 | Law system logic (§13.1, §13.2) + false-flag detection math (§4.7) | done | Merged. 106 JUnit tests and 6 GameTests. Package `law` (`crime`, `bounty`, `flag`, `LawService`, `/pirates law` debug commands). Playtest: `docs/playtests/law-commands.md`. | |
 | C5 | Trade economy logic (§10.3) | todo | Wave 2, waits for A2. |
 | C6 | Provisions logic (§7.4) | in progress | Wave 1. |
 | C7 | Config groups and values (§17) | todo | Wave 2. Reduced to the groups no other package owns (see decisions). |
@@ -122,3 +122,4 @@ Known harmless log noise with Sable: `Failed to apply tag physics properties. Un
 
 In this order:
 1. [`docs/playtests/milestone-0.md`](playtests/milestone-0.md): Sable loads in the dev client, the mod list and config screen are correct, the test block appears and renders, `/sable spawn sphere 3` works.
+2. [`docs/playtests/law-commands.md`](playtests/law-commands.md): criminal score, navy and player bounties, claims, fines, persistence across death and reload, and the config toggle, all through `/pirates law` commands. Not a gate for other work.

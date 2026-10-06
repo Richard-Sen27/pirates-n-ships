@@ -18,6 +18,7 @@ public final class ModModules {
             new com.richardsenger.piratesnships.law.LawModule(),
             new com.richardsenger.piratesnships.sailing.SailingModule(),
             new com.richardsenger.piratesnships.crew.provisions.ProvisionsModule(),
-            new com.richardsenger.piratesnships.ship.hull.HullModule()
+            new com.richardsenger.piratesnships.ship.hull.HullModule(),
+            new com.richardsenger.piratesnships.ship.assembly.AssemblyModule()
     );
 }

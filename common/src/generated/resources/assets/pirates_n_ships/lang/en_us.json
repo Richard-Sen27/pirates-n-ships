@@ -3,5 +3,18 @@
   "itemGroup.pirates_n_ships": "Pirates 'n' Ships",
   "pirates_n_ships.configuration.core": "Core",
   "pirates_n_ships.configuration.core.debug": "Debug",
-  "pirates_n_ships.configuration.core.debug.tooltip": "Log extra debug information from Pirates 'n' Ships systems"
+  "pirates_n_ships.configuration.core.debug.tooltip": "Log extra debug information from Pirates 'n' Ships systems",
+  "pirates_n_ships.configuration.flooding": "Flooding",
+  "pirates_n_ships.configuration.flooding.debounce_ticks": "Debounce Ticks",
+  "pirates_n_ships.configuration.flooding.debounce_ticks.tooltip": "Ticks a hull must stay unchanged before it is re-analyzed after block changes",
+  "pirates_n_ships.configuration.flooding.enabled": "Enabled",
+  "pirates_n_ships.configuration.flooding.enabled.tooltip": "Ships take on water through breaches, holes, low rims and open hatches below the waterline",
+  "pirates_n_ships.configuration.flooding.inflow_rate": "Inflow Rate",
+  "pirates_n_ships.configuration.flooding.inflow_rate.tooltip": "Multiplier for how fast water flows through breaches, holes and open doors or hatches",
+  "pirates_n_ships.configuration.flooding.max_debounce_ticks": "Max Debounce Ticks",
+  "pirates_n_ships.configuration.flooding.max_debounce_ticks.tooltip": "Latest re-analysis after the first unprocessed hull change, even while the hull keeps changing",
+  "pirates_n_ships.configuration.flooding.pump_rate": "Pump Rate",
+  "pirates_n_ships.configuration.flooding.pump_rate.tooltip": "Blocks of water one working pump removes per second",
+  "pirates_n_ships.configuration.flooding.reanalysis_tilt_degrees": "Reanalysis Tilt Degrees",
+  "pirates_n_ships.configuration.flooding.reanalysis_tilt_degrees.tooltip": "Re-analyze a hull when the ship has tilted this many degrees since the last analysis"
 }

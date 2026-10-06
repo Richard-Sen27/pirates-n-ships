@@ -1,6 +1,5 @@
 package com.richardsenger.piratesnships.ship.decor;
 
-import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
@@ -19,15 +18,11 @@ import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
 import net.minecraft.data.models.model.ModelLocationUtils;
-import net.minecraft.data.models.model.ModelTemplates;
-import net.minecraft.data.models.model.TextureMapping;
-import net.minecraft.data.models.model.TextureSlot;
 import net.minecraft.data.models.model.TexturedModel;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Item;
@@ -38,11 +33,11 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import java.util.List;
 
 /**
- * The {@code ship.decor} module: figureheads, nameplate, flagpole, cargo crate and cargo barrel. The nameplate and
- * the flagpole use hand-made Blockbench models ({@code art/models/}, design.md §4.8; datagen writes only their block
- * states); figureheads still use the vanilla {@code orientable} template (placeholder until the art pass gives them
- * real shapes). Flags (items, the
- * flagpole's block entity, block state and look, config, commands) are in the {@code flag} sub-package.
+ * The {@code ship.decor} module: figureheads, nameplate, flagpole, cargo crate and cargo barrel. The four figureheads
+ * (skull with crossed bones, spread-winged eagle, maned lion with its paws on a scroll, mermaid with her tail curling
+ * under the bow), the nameplate and the flagpole use hand-made Blockbench models ({@code art/models/}, design.md §4.8;
+ * datagen writes only their block states). Flags (items, the flagpole's block entity, block state and look, config,
+ * commands) are in the {@code flag} sub-package.
  */
 public final class ShipDecorModule implements ModModule {
 
@@ -79,10 +74,7 @@ public final class ShipDecorModule implements ModModule {
                 .block(ShipDecor.CARGO_CRATE, "Cargo Crate")
                 .block(ShipDecor.CARGO_BARREL, "Cargo Barrel"));
         data.models(m -> {
-            for (RegistryEntry<Block, FigureheadBlock> f : ShipDecor.figureheads()) {
-                if (f == ShipDecor.FIGUREHEAD_SKULL || f == ShipDecor.FIGUREHEAD_EAGLE || f == ShipDecor.FIGUREHEAD_LION) handMadeFigurehead(m, f.get());
-                else figurehead(m, f.get());
-            }
+            for (RegistryEntry<Block, FigureheadBlock> f : ShipDecor.figureheads()) figurehead(m, f.get());
             nameplate(m, ShipDecor.NAMEPLATE.get());
             // flagpole: model and block state in FlagData
             m.blocks().createTrivialCube(ShipDecor.CARGO_CRATE.get());
@@ -136,19 +128,13 @@ public final class ShipDecorModule implements ModModule {
         });
     }
 
-    /** Front {@code block/<name>}, shared sides {@code block/figurehead_side} and top {@code block/figurehead_top}. */
+    /**
+     * Hand-made Blockbench model ({@code art/models/<name>.bbmodel}, design.md §4.8): the carved figure looks north
+     * and stands out up to a block ahead of and a little below its block, mounted on a plate against the south side
+     * (the hull behind it), rotated like a furnace. Only the block state is generated; the item model delegates to the
+     * block model.
+     */
     private static void figurehead(ModelContext m, Block block) {
-        TextureMapping textures = new TextureMapping()
-                .put(TextureSlot.FRONT, TextureMapping.getBlockTexture(block))
-                .put(TextureSlot.SIDE, Constants.id("block/figurehead_side"))
-                .put(TextureSlot.TOP, Constants.id("block/figurehead_top"));
-        ResourceLocation model = ModelTemplates.CUBE_ORIENTABLE.create(block, textures, m.models());
-        m.blockStates().accept(MultiVariantGenerator.multiVariant(block, Variant.variant().with(VariantProperties.MODEL, model))
-                .with(horizontalFacing()));
-    }
-
-    /** Hand-made Blockbench model ({@code art/models/<name>.bbmodel}); only the block state is generated. */
-    private static void handMadeFigurehead(ModelContext m, Block block) {
         m.blockStates().accept(MultiVariantGenerator.multiVariant(block,
                 Variant.variant().with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(block))).with(horizontalFacing()));
     }

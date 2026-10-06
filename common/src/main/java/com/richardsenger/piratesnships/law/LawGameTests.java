@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.law;
 
+import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
 import com.richardsenger.piratesnships.law.bounty.Bounty;
@@ -119,39 +120,30 @@ public final class LawGameTests {
     @ModGameTest(batch = "pirates_n_ships_law_decay", timeoutTicks = 200)
     public static void decayLowersScoreAsGameTimePasses(GameTestHelper helper) {
         // 24000 points per day = 1 point per tick, no delay: the score must drop as real game ticks pass
-        LawConfig.DECAY_PER_DAY.set(24000.0);
-        LawConfig.DECAY_DELAY_SECONDS.set(0);
+        ConfigOverrides.during(helper, LawConfig.DECAY_PER_DAY, 24000.0);
+        ConfigOverrides.during(helper, LawConfig.DECAY_DELAY_SECONDS, 0);
         Mob mob = criminal(helper);
         LawService.reportCrime(mob, CrimeType.KILL_NAVY, UUID.randomUUID());
         long start = LawService.now(helper.getLevel().getServer());
         helper.runAfterDelay(10, () -> {
-            try {
-                long elapsed = LawService.now(helper.getLevel().getServer()) - start;
-                double score = LawService.score(mob);
-                helper.assertTrue(elapsed > 0, "game time advanced");
-                helper.assertTrue(Math.abs(score - Math.max(0, 30 - elapsed)) < 1e-6,
-                        "score " + score + " should be 30 - " + elapsed);
-                helper.succeed();
-            } finally {
-                LawConfig.DECAY_PER_DAY.set(LawConfig.DECAY_PER_DAY.defaultValue());
-                LawConfig.DECAY_DELAY_SECONDS.set(LawConfig.DECAY_DELAY_SECONDS.defaultValue());
-            }
+            long elapsed = LawService.now(helper.getLevel().getServer()) - start;
+            double score = LawService.score(mob);
+            helper.assertTrue(elapsed > 0, "game time advanced");
+            helper.assertTrue(Math.abs(score - Math.max(0, 30 - elapsed)) < 1e-6,
+                    "score " + score + " should be 30 - " + elapsed);
+            helper.succeed();
         });
     }
 
     @ModGameTest(batch = "pirates_n_ships_law_disabled")
     public static void disabledScoreRecordsNothing(GameTestHelper helper) {
-        LawConfig.CRIMINAL_SCORE_ENABLED.set(false);
-        try {
-            Mob mob = criminal(helper);
-            var result = LawService.reportCrime(mob, CrimeType.PIRACY, UUID.randomUUID());
-            helper.assertValueEqual(result.outcome(), CriminalRecord.CrimeOutcome.DISABLED, "outcome");
-            helper.assertValueEqual(LawService.score(mob), 0.0, "score stays 0");
-            helper.assertValueEqual(LawService.wantedLevel(mob), WantedLevel.CLEAN, "nobody is wanted");
-            helper.assertFalse(LawService.hasBounty(helper.getLevel().getServer(), mob.getUUID()), "no navy bounty");
-        } finally {
-            LawConfig.CRIMINAL_SCORE_ENABLED.set(true);
-        }
+        ConfigOverrides.during(helper, LawConfig.CRIMINAL_SCORE_ENABLED, false);
+        Mob mob = criminal(helper);
+        var result = LawService.reportCrime(mob, CrimeType.PIRACY, UUID.randomUUID());
+        helper.assertValueEqual(result.outcome(), CriminalRecord.CrimeOutcome.DISABLED, "outcome");
+        helper.assertValueEqual(LawService.score(mob), 0.0, "score stays 0");
+        helper.assertValueEqual(LawService.wantedLevel(mob), WantedLevel.CLEAN, "nobody is wanted");
+        helper.assertFalse(LawService.hasBounty(helper.getLevel().getServer(), mob.getUUID()), "no navy bounty");
         helper.succeed();
     }
 }

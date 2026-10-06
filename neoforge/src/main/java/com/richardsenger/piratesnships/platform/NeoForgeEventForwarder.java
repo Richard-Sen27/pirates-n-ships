@@ -3,6 +3,7 @@ package com.richardsenger.piratesnships.platform;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
@@ -13,6 +14,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerContainerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
@@ -60,6 +62,13 @@ public final class NeoForgeEventForwarder {
 
         bus.addListener(EntityJoinLevelEvent.class, e -> {
             if (CommonEvents.ENTITY_JOIN_LEVEL.invoker().onJoin(e.getEntity(), e.getLevel())) e.setCanceled(true);
+        });
+        bus.addListener(PlayerInteractEvent.EntityInteract.class, e -> {
+            InteractionResult r = CommonEvents.ENTITY_INTERACT.invoker().onInteract(e.getEntity(), e.getTarget(), e.getHand());
+            if (r != InteractionResult.PASS) {
+                e.setCancellationResult(r);
+                e.setCanceled(true);
+            }
         });
         bus.addListener(LivingIncomingDamageEvent.class, e -> {
             if (!CommonEvents.LIVING_INCOMING_DAMAGE.hasListeners()) return;

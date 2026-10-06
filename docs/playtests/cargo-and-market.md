@@ -29,7 +29,7 @@ on. Switch to survival (`/gamemode survival`) for the steps that break blocks, b
    - **Expected:** `Cargo Crate: 576 / 2048 Sugar: cargo weight 144.00` (sugar weighs 0.25 per item).
 9. In survival, break the crate that still holds sugar with an axe.
    - **Expected:** exactly one crate item drops, and its stack size is 1. Place it again and right-click it with an
-     empty hand: the same sugar count is back. (The tooltip shows nothing about the content yet, see "Known gaps".)
+     empty hand: the same sugar count is back. (Its tooltip: see step 24.)
 
 ## Coins and markets
 
@@ -49,7 +49,7 @@ on. Switch to survival (`/gamemode survival`) for the steps that break blocks, b
 15. Wait one in-game day (`/time add 24000`), then list both ports' goods again.
     - **Expected:** both sugar prices moved back part of the way toward the prices you wrote down.
 16. Buy 64 sugar again, hold it, run `/pirates trade plunder`, then hover over the stack.
-    - **Expected:** `Marked Sugar as plundered`. The stack no longer stacks with clean sugar. (No tooltip line yet.)
+    - **Expected:** `Marked Sugar as plundered`. The stack no longer stacks with clean sugar. (Its tooltip: see step 24.)
 17. `/pirates trade sell tortuga pirates_n_ships:sugar 64 plundered`.
     - **Expected:** `Done: … (fenced)`. The payout is about 35 % lower than a clean sale at tortuga.
 18. Mark another 64 sugar as plundered. Open the config screen and set Cargo Trade → Plunder → Navy notice chance
@@ -79,7 +79,16 @@ on. Switch to survival (`/gamemode survival`) for the steps that break blocks, b
       any recovery for the time that passed. The crates keep their content. Run `/pirates trade open cane` once after
       rejoining to start a new market session (sessions don't survive a relog).
 
+## Tooltips
+
+24. Hover over the plundered sugar from step 16 (mark a fresh stack with `/pirates trade plunder` if it's gone),
+    then break a crate holding sugar (step 9) and hover over the dropped crate item. Repeat with advanced tooltips on
+    (F3+H).
+    - **Expected:** the plundered stack shows a red `Plundered` line right below its name. The crate item shows a
+      gray `576 × Sugar` line (its real count) right below its name; a crate filled with plundered sugar also shows
+      `Plundered`. Clean sugar and an empty crate show neither line. With F3+H the lines stay directly below the
+      name, above the item id.
+
 ## Known gaps
-- Plundered stacks and filled crates show no tooltip line yet. The foundation has no tooltip event.
 - The market protocol has no screen yet. `/pirates trade open <name>` sends the state to the client, but nothing
   displays it yet.

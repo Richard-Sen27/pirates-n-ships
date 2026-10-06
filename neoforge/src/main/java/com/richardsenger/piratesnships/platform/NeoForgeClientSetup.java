@@ -18,6 +18,7 @@ import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 /** Client-only wiring: forwards {@link ClientEvents} registrations and ticks, enables NeoForge's config screen. */
 public final class NeoForgeClientSetup {
@@ -39,6 +40,7 @@ public final class NeoForgeClientSetup {
 
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Pre.class, e -> ClientEvents.CLIENT_TICK_START.invoker().onTick(Minecraft.getInstance()));
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> ClientEvents.CLIENT_TICK_END.invoker().onTick(Minecraft.getInstance()));
+        NeoForge.EVENT_BUS.addListener(ItemTooltipEvent.class, e -> ClientEvents.ITEM_TOOLTIP.invoker().onTooltip(e.getItemStack(), e.getContext(), e.getFlags(), e.getEntity(), e.getToolTip()));
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> ClientEvents.CLIENT_DISCONNECT.invoker().onDisconnect(Minecraft.getInstance()));
     }
 

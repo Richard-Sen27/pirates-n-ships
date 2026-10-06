@@ -9,11 +9,11 @@ Last updated: 2026-10-06 (second session: wave 1 of phase C running).
 
 ## Current state
 
-`main` is green: `./gradlew build` (303 JUnit tests), `./gradlew :neoforge:runGameTestServer` (30 GameTests, including real Sable sub-levels being assembled and disassembled) and `./gradlew :neoforge:runData` (no diff). Nothing is pushed: local `main` is ahead of `origin/main`.
+`main` is green: `./gradlew build` (437 JUnit tests), `./gradlew :neoforge:runGameTestServer` (67 GameTests, including real Sable sub-levels being assembled and disassembled) and `./gradlew :neoforge:runData` (no diff). Nothing is pushed: local `main` is ahead of `origin/main`.
 
-Merged in this session: **A2** foundation follow-up, **C1** hull + flooding, **C2** wind + sails, **C4** law, **C6** provisions, **C7** remaining config, **D1** spike 1 (assembly).
-Running now (five agents): **C3** melee, **C5** trade, **C8** items and blocks, **D2** spike 2 (dry hull), **A3** foundation maintenance.
-After that: spikes D3 and D4 one after another, and phase E integration once C3, C5 and C8 are merged.
+Merged in this session: foundation follow-ups **A2** and **A3**, all of phase C (**C1** hull + flooding, **C2** wind + sails, **C3** melee, **C4** law, **C5** trade, **C6** provisions, **C7** remaining config, **C8** items and blocks), and **D1** spike 1 (assembly).
+Running now: **D2** spike 2 (dry hull), and the phase E integration packages **E1a** law in the world, **E1b** brig and shackles, **E1c** flags, **E2** pantry and water barrel, **E3** cargo containers and market backend.
+After that: spikes D3 and D4 one after another.
 
 How merges work in this phase:
 - Every merged branch and its worktree is deleted right after the merge (requested by the human).
@@ -23,11 +23,14 @@ How merges work in this phase:
 Incidents:
 - Around 17:51 and 18:21 a short connection loss stalled several agents. All recovered by themselves except A2, which was stopped and resumed from its transcript at 18:33 with its work intact.
 - At about 19:00 the network dropped again and all five running agents (C3, C5, C8, D2, A3) ended with API connection errors. Their worktrees and uncommitted work were intact, and all five were resumed from their transcripts at 19:40.
+- Flaky test: `AssemblyGameTests.disassemblyPutsBlocksBackOnTheGrid` (spike 1) failed once in five full runs on `main` ("pig not on deck", the pig was one block above the deck right after disassembly). It was reported to the D2 agent, which owns that package at the moment.
 - The merge commits `2e3fcac` (C6) and `3978c02` (A2) **don't compile**: the orchestrator wrote a malformed module list into `core/ModModules` (a shell quoting mistake) and committed without checking the result. `b97293d` fixes it. Keep this in mind when bisecting. Since then the orchestrator builds and runs the GameTests before committing a merge.
 
-Open foundation follow-ups (small, not blocking):
-- `core/datagen/ModTagsProvider` can't reference vanilla tags as required entries (`addTag(BlockTags.X)` fails the data run with "missing following references"). C1 and D1 both hit it. D1 uses optional references in the terrain tag, and C1 keeps its defaults in code and ships empty override tags. Fix: give the tag providers a lookup of vanilla tags.
-- `ConfigValue.reset()` only clears a local override. In a running game `set()` writes the real config, so `reset()` doesn't undo it. Tests must use `ConfigOverrides` (added by A2). The Javadoc of `set` still says "Undo with reset()".
+Follow-ups for later packages (small, not blocking):
+- `ship/assembly` (terrain tag) and `ship/hull` (watertight tags) can now use required vanilla tag references (`addTag(BlockTags.X)`), since A3 fixed the tag datagen. Both still use their workarounds.
+- `sailing` should register `ClientEvents.CLIENT_DISCONNECT.register(mc -> ClientWind.reset())`.
+- The trade agent's balance notes: unit prices round harshly for cheap goods (a single sugar costs 2 and sells for 2), so the market screen should show prices per stack. Trade route profit fades after roughly 250 to 400 units per port pair.
+- Rum is both a provision and a trade good. Whatever sums a ship's weight has to count each stack once.
 
 ## Work packages
 
@@ -38,17 +41,22 @@ Open foundation follow-ups (small, not blocking):
 | B | Sable investigation → `docs/sable-notes.md` | done | Merged (docs only, so no build needed). Reviewed by spot-checking about 25 API claims against `refs/`, all matched. See "Sable findings" below. |
 | C1 | Hull analysis + flooding model (§4.2, §4.5), pure logic | done | Merged. 44 JUnit tests, 2 GameTests. Package `ship/hull` (spill-height analysis, flooding simulation, block classifier). Full analysis of a 64×32×64 hull: about 93 ms, flood tick: under 0.2 ms. |
 | C2 | Wind and sail model (§5.1, §5.2), pure logic | done | Merged. 58 JUnit tests, 2 GameTests. Package `sailing` (`wind`, `force`). Nothing is visible in-game until spike 3. |
-| C3 | Melee resolution core (§8.5), pure logic | in progress | Wave 2. |
+| C3 | Melee resolution core (§8.5), pure logic | done | Merged. 76 JUnit tests, 8 GameTests. Package `combat/melee` (state machine, hit geometry, resolution, weapon definitions for rapier, cutlass and saber, server-side `MeleeService`). No input layer yet, so nothing can be tried in-game. |
 | C4 | Law system logic (§13.1, §13.2) + false-flag detection math (§4.7) | done | Merged. 106 JUnit tests and 6 GameTests. Package `law` (`crime`, `bounty`, `flag`, `LawService`, `/pirates law` debug commands). Playtest: `docs/playtests/law-commands.md`. | |
-| C5 | Trade economy logic (§10.3) | in progress | Wave 2. |
+| C5 | Trade economy logic (§10.3) | done | Merged. 45 JUnit tests, 6 GameTests. Package `trade` (12 default goods, port markets, contracts, plunder rules, cargo weight, `TradeService`). |
 | C6 | Provisions logic (§7.4) | done | Merged. 54 JUnit tests, 3 GameTests. Package `crew/provisions`. |
 | C7 | Config groups and values (§17) | done | Merged. Sections `ships`, `waves`, `hazards`, `crew`, `combat`, `survival`, `world`, `world_simulation` (server) and `wave_effects`, `audio` (client), loaded by `core/settings/SettingsModule`. Nothing reads them yet. Almost every default is the agent's own choice: see "Defaults to review". |
-| C8 | Basic items and blocks + datagen + placeholder textures | in progress | Wave 2. |
+| C8 | Basic items and blocks + datagen + placeholder textures | done | Merged. 19 items and 13 blocks with models, recipes, loot, lang and tags, 22 GameTests, and `tools/gen_placeholder_textures.py`. Playtest: `docs/playtests/items-and-blocks.md`. |
 | D1 | Spike 1: assembly (§4.1) | blocked: needs playtest | Merged and green headlessly: 14 JUnit tests and 10 GameTests that assemble, name, refuse and disassemble real sub-levels. Lives in `common` (`ship/assembly`, Sable adapter in `ship/sable`, `ship/ShipData`). Playtest: `docs/playtests/milestone-1.md`. |
 | D2 | Spike 2: dry hull (§4.3, §4.4) | in progress | Started without waiting for the spike 1 playtest, because spike 1's GameTests cover assembly headlessly. Ends at a playtest gate. |
 | D3 | Spike 3: wind + sails (§5) | todo | Waits for D1 + C2. Ends at a playtest gate. |
 | D4 | Spike 4: crew station (§6) | todo | Waits for D3. Ends at a playtest gate. |
-| E | Integration: law, trade, provisions connected to entities and blocks (attachments, market backend, pantry, brig, flagpole) | todo | Waits for C4–C8. |
+| A3 | Foundation maintenance: required vanilla tag references in datagen, `ConfigValue` set/reset documentation, clash check for client and server section names, `ClientEvents.CLIENT_DISCONNECT` | done | Merged. |
+| E1a | Law in the world: crimes reported from damage, death and theft, entity tags, wanted level sent to the client | in progress | |
+| E1b | Brig and shackles (§13.3): capture, prisoners, lockable brig door, cells, escapes | in progress | |
+| E1c | Flags (§4.7): flag state on the flagpole, hoisting, striking colors | in progress | Ship-level allegiance waits for the spikes. |
+| E2 | Pantry and water barrel as real containers, connected to the provisions rules | in progress | Consumption by a crew waits for crew NPCs. |
+| E3 | Cargo crate and barrel as bulk containers, doubloon wallet, market backend | in progress | The market screen itself and ports come later. |
 
 ## Roadmap milestones (design.md §20)
 
@@ -148,4 +156,5 @@ In this order:
 1. [`docs/playtests/milestone-0.md`](playtests/milestone-0.md): Sable loads in the dev client, the mod list and config screen are correct, the test block appears and renders, `/sable spawn sphere 3` works.
 2. [`docs/playtests/milestone-1.md`](playtests/milestone-1.md): **the important one.** Build the boat from the recipe, assemble it at the helm in the sea, walk on deck, shove it, disassemble it, check the water in both directions, the block limit, a chest keeping its items, naming, and rejoining. Spikes 2 to 4 build on this.
 3. [`docs/playtests/law-commands.md`](playtests/law-commands.md): criminal score, navy and player bounties, claims, fines, persistence across death and reload, and the config toggle, all through `/pirates law` commands. Not a gate for other work.
-4. [`docs/playtests/data-and-config.md`](playtests/data-and-config.md): definitions synced to clients, a broken datapack file, tags, and the config screen. Not a gate for other work.
+4. [`docs/playtests/items-and-blocks.md`](playtests/items-and-blocks.md): every item and block in the creative tab with texture, name, model, drops and recipe. Not a gate for other work.
+5. [`docs/playtests/data-and-config.md`](playtests/data-and-config.md): definitions synced to clients, a broken datapack file, tags, and the config screen. Not a gate for other work.

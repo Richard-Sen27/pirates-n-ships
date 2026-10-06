@@ -9,11 +9,11 @@ Last updated: 2026-10-06 (second session: wave 1 of phase C running).
 
 ## Current state
 
-`main` is green: `./gradlew build` (544 JUnit tests), `./gradlew :neoforge:runGameTestServer` (147 GameTests, five green runs in a row after the last merge) and `./gradlew :neoforge:runData` (no diff). Nothing is pushed: local `main` is ahead of `origin/main`.
+`main` is green: `./gradlew build` (550 JUnit tests), `./gradlew :neoforge:runGameTestServer` (155 GameTests, four green runs in a row after the last merge) and `./gradlew :neoforge:runData` (no diff). Nothing is pushed: local `main` is ahead of `origin/main`.
 
 Merged in this session: foundation follow-ups **A2** and **A3**, all of phase C (**C1** to **C8**), spikes **D1** (assembly) and **D2** (dry hull, with the fix **D2b**), and all of phase E (**E1a** law in the world, **E1b** brig and shackles, **E1c** flags, **E2** pantry and water barrel, **E3** cargo containers and market backend).
-Running now: **D3a** (spike 3 part 1: sails move the ship). **A4** (platform hooks) and **D2c** (the flaky disassembly test, which was a real bug) are merged.
-After that: **D3b** (helm steering and anchor), then **D4** (spike 4, crew station).
+Also merged: **A4** (platform hooks), **D2c** (the flaky disassembly test, which was a real bug) and **D3a** (spike 3 part 1: sails move the ship).
+Running now, in parallel: **D3b** (spike 3 part 2: helm steering and anchor) and **D4** (spike 4: crew station). They are the last two packages of this session.
 
 How merges work in this phase:
 - Every merged branch and its worktree is deleted right after the merge (requested by the human).
@@ -28,6 +28,8 @@ Incidents:
 - The merge commits `2e3fcac` (C6) and `3978c02` (A2) **don't compile**: the orchestrator wrote a malformed module list into `core/ModModules` (a shell quoting mistake) and committed without checking the result. `b97293d` fixes it. Keep this in mind when bisecting. Since then the orchestrator builds and runs the GameTests before committing a merge.
 
 Follow-ups for later packages (small, not blocking):
+- The spike 3 agent thinks `sail_force_scale = 1.0` is too strong for Sable's masses (it expects 0.3 to 0.5), and saw a hint that the reported speed and the distance covered may not match. Both are in the milestone 3 playtest.
+- The ship's plot box only grows: removed blocks don't shrink the hull length used for sailing until the ship is reloaded.
 - **For the human:** the stale chunk lookup on reused plots (`docs/sable-notes.md` §9.0c) is a bug in Sable that can make containers arrive empty in any mod that assembles a sub-level right after another one was removed. It is worth reporting to the Sable project. The orchestrator did not contact anyone.
 - `ChunkCacheGuard` lives in `ship/assembly` and is called by our assembly and disassembly only. It should move into the Sable adapter (`ship/sable`) so that every removal and creation of a ship goes through it. A cleaner way to clear the memo would be an access transformer line for `ServerChunkCache.clearCache()`.
 - `ship/assembly` (terrain tag) and `ship/hull` (watertight tags) can now use required vanilla tag references (`addTag(BlockTags.X)`), since A3 fixed the tag datagen. Both still use their workarounds.
@@ -53,9 +55,9 @@ Follow-ups for later packages (small, not blocking):
 | D1 | Spike 1: assembly (§4.1) | blocked: needs playtest | Merged and green headlessly: 14 JUnit tests and 10 GameTests that assemble, name, refuse and disassemble real sub-levels. Lives in `common` (`ship/assembly`, Sable adapter in `ship/sable`, `ship/ShipData`). Playtest: `docs/playtests/milestone-1.md`. |
 | D2 | Spike 2: dry hull (§4.3, §4.4) | blocked: needs playtest | Merged and green headlessly. Hull runtime per ship (`ship/hull/runtime`), Sable water occlusion regions with client sync, flooding with breaches, buoyancy correction, persistence. Review found a ship "moving at 72 m/s" in a test: the cause was the GameTest server placing tests up to 15 million blocks out, where Sable's 32-bit physics fails (fixed by D2b, which also made the sea detection look only at the hull's own bottom). Rendering is unverified. Playtest: `docs/playtests/milestone-2.md`. |
 | D2c | Flaky test `disassemblyPutsBlocksBackOnTheGrid` ("chest content lost") | done | Merged. **It was a real bug, and it is a Sable bug:** when one ship is removed and another assembled in the same server tick, Sable reuses the plot while vanilla's chunk lookup memo still points at the old chunk, so a chest arrived in the new ship empty and its items were lost. Fixed with a workaround in `ship/assembly/ChunkCacheGuard` and a regression test that failed every time without it. Details in `docs/sable-notes.md` §9.0c. |
-| D3a | Spike 3 part 1: sail blocks with trim, sail winch, sailing runtime applying wind and keel forces, wind override command | in progress | Spike 3 is split in two, because spikes 1 and 2 each used up an agent's whole token budget. |
-| D3b | Spike 3 part 2: helm steering (rudder) and anchor (capstan) | todo | After D3a. Ends at a playtest gate. |
-| D4 | Spike 4: crew station (§6) | todo | Waits for D3b. Ends at a playtest gate. |
+| D3a | Spike 3 part 1: sail blocks with trim, sail winch, sailing runtime applying wind and keel forces, wind override command | blocked: needs playtest | Merged and green headlessly. Three sail blocks, a winch, `sailing/ship` runtime, `/pirates wind` and `/pirates ship forces`. 8 GameTests measure real ships in a basin: about 0.4 m/s downwind for a small hull with a small sail in 6 blocks/s of wind, no forward motion into the wind, and the keel halving the sideways drift. Finding: small hollow hulls capsize under the full heel torque, so it is scaled to 25% (`sail_heel_factor`). Playtest: `docs/playtests/milestone-3.md`. Spike 3 was split in two, because spikes 1 and 2 each used up an agent's whole token budget. |
+| D3b | Spike 3 part 2: helm steering (rudder) and anchor (capstan) | in progress | Ends at a playtest gate. |
+| D4 | Spike 4: crew station (§6) | in progress | Runs in parallel with D3b, with separate files. Ends at a playtest gate. |
 | A3 | Foundation maintenance: required vanilla tag references in datagen, `ConfigValue` set/reset documentation, clash check for client and server section names, `ClientEvents.CLIENT_DISCONNECT` | done | Merged. |
 | E1a | Law in the world: crimes reported from damage, death and theft, entity tags, bounty proof item, wanted level sent to the client | done | Merged. 13 GameTests. New events `CONTAINER_OPEN` / `CONTAINER_CLOSE`. Playtest: `docs/playtests/law-world.md`. |
 | E1b | Brig and shackles (§13.3): capture, prisoners, lockable brig door, cells, escapes | done | Merged. 23 JUnit tests, 11 GameTests. `/pirates brig` commands. Added two access transformer lines (`Mob.goalSelector`, `targetSelector`). Playtest: `docs/playtests/brig.md`. |
@@ -72,7 +74,7 @@ Follow-ups for later packages (small, not blocking):
 | 1 | Spike: assembly | blocked: needs playtest | Phase D1 is merged. `docs/playtests/milestone-1.md`. |
 | 2 | Spike: dry hull | blocked: needs playtest | Phase D2 is merged. `docs/playtests/milestone-2.md`. |
 | 3 | Spike: wind + sails | in progress | Phases D3a and D3b. |
-| 4 | Spike: crew station | todo | Phase D4. |
+| 4 | Spike: crew station | in progress | Phase D4. |
 | 5 | Config framework + weapons | todo | Partly covered by C7 + C8 (items exist, config defined). Firearm behavior and the config screen are not in this session's scope. |
 | 6 | Flooding + damage | todo | Flooding simulation is C1. World integration needs spike 2. |
 | 7 | Melee combat core | todo | Resolution logic is C3. Input, sync and animation library are later. |
@@ -119,6 +121,8 @@ Follow-ups for later packages (small, not blocking):
 | 2026-10-06 | E1b: any mob can be captured except bosses (tag `pirates_n_ships:not_capturable`), at 25% health or less. The brig door's owner is the player who placed it. | A denylist makes new mobs work by default. |
 | 2026-10-06 | E2: players can put anything into a pantry, but automation may only insert provisions and only extract leftovers. Spoiled food becomes rotten flesh. | A hopper chain can feed the galley without filling it with junk, and a hopper below works as a waste chute. |
 | 2026-10-06 | E3: a crate holds 32 stacks of one item, a barrel 1536 items. Plundered and clean goods never mix in one container. A broken container keeps its content in the item. | Barrels suit small stacks such as rum, crates suit full stacks. |
+| 2026-10-06 | D3b and D4 run in parallel, although the orchestrator prompt lists the spikes as sequential. | D4 only needs the sail winch from D3a, not the helm or anchor. The two packages own separate files, and each adds new files in `ship/sable` instead of editing the shared adapter classes. |
+| 2026-10-06 | D3a: the bow is the way the helmsman looks (opposite of the helm block's facing). Sails don't push a ship that is not afloat. The roll and pitch torque of sail and keel is scaled to 25%, and the keel's sideways drag default was raised from 2 to 8. | Measured in GameTests: with the full heel torque a small hull capsized within 2 seconds, and with the old keel value it drifted sideways as fast as it went forward. All four are config values or documented conventions. |
 | 2026-10-06 | Subagents read `refs/` from the main checkout by absolute path. | `refs/` is git-ignored, so it doesn't exist inside agent worktrees. |
 | 2026-10-06 | Subagents are spawned as `general-purpose` agents pinned to Opus, with the instructions from `.claude/agents/implementer.md` referenced in the prompt, instead of `subagent_type: "implementer"`. | This session doesn't list the `implementer` agent type ("Agent type 'implementer' not found"), probably because the definition was added after the session's agent list was loaded. Model and instructions are the same as intended. |
 
@@ -169,7 +173,8 @@ In this order:
 1. [`docs/playtests/milestone-0.md`](playtests/milestone-0.md): Sable loads in the dev client, the mod list and config screen are correct, the test block appears and renders, `/sable spawn sphere 3` works.
 2. [`docs/playtests/milestone-1.md`](playtests/milestone-1.md): **the important one.** Build the boat from the recipe, assemble it at the helm in the sea, walk on deck, shove it, disassemble it, check the water in both directions, the block limit, a chest keeping its items, naming, and rejoining. Spikes 2 to 4 build on this.
 3. [`docs/playtests/milestone-2.md`](playtests/milestone-2.md): **the second important one.** No water inside the hull, no swimming below deck, a breach floods the hold, a flooded ship sinks, a ship in a dry dock stays put. It also has the tuning questions for the buoyancy values.
-4. [`docs/playtests/law-commands.md`](playtests/law-commands.md): criminal score, navy and player bounties, claims, fines, persistence across death and reload, and the config toggle, all through `/pirates law` commands. Not a gate for other work.
-5. [`docs/playtests/items-and-blocks.md`](playtests/items-and-blocks.md): every item and block in the creative tab with texture, name, model, drops and recipe. Not a gate for other work.
-6. [`docs/playtests/data-and-config.md`](playtests/data-and-config.md): definitions synced to clients, a broken datapack file, tags, and the config screen. Not a gate for other work.
-7. The phase E features, each through its own debug commands, in any order and none of them a gate: [`law-world.md`](playtests/law-world.md) (crimes from hitting villagers and from theft, bounty proof), [`brig.md`](playtests/brig.md) (shackles, leading, cells, the lockable door), [`flags.md`](playtests/flags.md) (hoisting and striking flags), [`pantry.md`](playtests/pantry.md) (pantry, water barrel, consumption and spoilage), [`cargo-and-market.md`](playtests/cargo-and-market.md) (bulk containers, coins, buying and selling at test ports, contracts).
+4. [`docs/playtests/milestone-3.md`](playtests/milestone-3.md): sailing. Set the wind with `/pirates wind set`, hoist the sail at the winch, sail downwind, on a beam reach and into the wind, compare square and fore-and-aft sails, read `/pirates ship forces`. It has a tuning table (speed, heel, sideways drift). Part 2 (helm and anchor) is being written.
+5. [`docs/playtests/law-commands.md`](playtests/law-commands.md): criminal score, navy and player bounties, claims, fines, persistence across death and reload, and the config toggle, all through `/pirates law` commands. Not a gate for other work.
+6. [`docs/playtests/items-and-blocks.md`](playtests/items-and-blocks.md): every item and block in the creative tab with texture, name, model, drops and recipe. Not a gate for other work.
+7. [`docs/playtests/data-and-config.md`](playtests/data-and-config.md): definitions synced to clients, a broken datapack file, tags, and the config screen. Not a gate for other work.
+8. The phase E features, each through its own debug commands, in any order and none of them a gate: [`law-world.md`](playtests/law-world.md) (crimes from hitting villagers and from theft, bounty proof), [`brig.md`](playtests/brig.md) (shackles, leading, cells, the lockable door), [`flags.md`](playtests/flags.md) (hoisting and striking flags), [`pantry.md`](playtests/pantry.md) (pantry, water barrel, consumption and spoilage), [`cargo-and-market.md`](playtests/cargo-and-market.md) (bulk containers, coins, buying and selling at test ports, contracts).

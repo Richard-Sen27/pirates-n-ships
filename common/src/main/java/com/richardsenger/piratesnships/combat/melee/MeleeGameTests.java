@@ -1,0 +1,169 @@
+package com.richardsenger.piratesnships.combat.melee;
+
+import com.richardsenger.piratesnships.combat.melee.rules.CombatState;
+import com.richardsenger.piratesnships.combat.melee.rules.Phase;
+import com.richardsenger.piratesnships.combat.melee.rules.Refusal;
+import com.richardsenger.piratesnships.combat.melee.weapon.DefaultWeapons;
+import com.richardsenger.piratesnships.combat.melee.weapon.MeleeWeapons;
+import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
+import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
+import com.richardsenger.piratesnships.core.gametest.ModGameTest;
+import com.richardsenger.piratesnships.core.gametest.ModGameTests;
+import net.minecraft.gametest.framework.GameTestGenerator;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.gametest.framework.TestFunction;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.projectile.Arrow;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+
+import java.util.Collection;
+
+/**
+ * Melee on real entities in a real server. Pillagers (24 health, no armor, don't burn in daylight) without AI stand
+ * in for duelists; yaw -90 faces +X, yaw 90 faces -X.
+ */
+public final class MeleeGameTests {
+
+    private static final float FULL = 24.0f;
+
+    private MeleeGameTests() {
+    }
+
+    @GameTestGenerator
+    public static Collection<TestFunction> tests() {
+        return ModGameTests.of(MeleeGameTests.class);
+    }
+
+    private static Mob duelist(GameTestHelper helper, int x, int z, float yaw) {
+        Mob mob = helper.spawnWithNoFreeWill(EntityType.PILLAGER, x, 1, z);
+        mob.setYRot(yaw);
+        mob.setYHeadRot(yaw);
+        mob.yBodyRot = yaw;
+        mob.setXRot(0);
+        return mob;
+    }
+
+    private static void assertHealth(GameTestHelper helper, Mob mob, float expected, String what) {
+        helper.assertTrue(Math.abs(mob.getHealth() - expected) < 0.01f, what + ": expected health " + expected + ", got " + mob.getHealth());
+    }
+
+    @ModGameTest
+    public static void weaponDefinitionsAreLoaded(GameTestHelper helper) {
+        var defs = MeleeWeapons.WEAPONS.server();
+        DefaultWeapons.all().forEach((id, def) -> {
+            helper.assertTrue(defs.contains(id), "weapon " + id + " not loaded, have " + defs.ids());
+            helper.assertValueEqual(defs.require(id), def, "weapon " + id);
+        });
+        helper.assertTrue(MeleeWeapons.forStack(new ItemStack(Items.IRON_SWORD), defs).isEmpty(), "iron sword is no skill weapon");
+        helper.assertTrue(MeleeWeapons.forStack(ItemStack.EMPTY, defs).isEmpty(), "empty stack is no weapon");
+        helper.succeed();
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void slashHitsTargetsInArcAndReachOnly(GameTestHelper helper) {
+        Mob attacker = duelist(helper, 1, 4, -90);
+        Mob front = duelist(helper, 3, 4, 90);
+        Mob side = duelist(helper, 3, 5, 90);
+        Mob behind = duelist(helper, 0, 4, 90);
+        Mob far = duelist(helper, 7, 4, 90);
+        helper.assertTrue(MeleeService.startSlash(attacker, DefaultWeapons.CUTLASS).accepted(), "slash accepted");
+        helper.runAfterDelay(15, () -> {
+            assertHealth(helper, front, FULL - DefaultWeapons.CUTLASS.slash().damage(), "target in front");
+            assertHealth(helper, side, FULL - DefaultWeapons.CUTLASS.slash().damage(), "second target in the arc");
+            assertHealth(helper, behind, FULL, "target behind");
+            assertHealth(helper, far, FULL, "target out of reach");
+            helper.succeed();
+        });
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void thrustHitsOnlyTheFirstTargetInLine(GameTestHelper helper) {
+        Mob attacker = duelist(helper, 1, 4, -90);
+        Mob first = duelist(helper, 2, 4, 90);
+        Mob second = duelist(helper, 3, 4, 90);
+        helper.assertTrue(MeleeService.startThrust(attacker, DefaultWeapons.RAPIER).accepted(), "thrust accepted");
+        helper.runAfterDelay(15, () -> {
+            assertHealth(helper, first, FULL - DefaultWeapons.RAPIER.thrust().damage(), "first target");
+            assertHealth(helper, second, FULL, "second target");
+            helper.succeed();
+        });
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void timedParryPreventsDamageAndStaggersAttacker(GameTestHelper helper) {
+        Mob attacker = duelist(helper, 1, 4, -90);
+        Mob defender = duelist(helper, 3, 4, 90);
+        // Cutlass wind-up 5 < parry window 7: the hit lands inside the window
+        helper.assertTrue(MeleeService.parry(defender, DefaultWeapons.RAPIER).accepted(), "parry accepted");
+        helper.assertTrue(MeleeService.startSlash(attacker, DefaultWeapons.CUTLASS).accepted(), "slash accepted");
+        helper.runAfterDelay(12, () -> {
+            assertHealth(helper, defender, FULL, "parried defender");
+            CombatState a = MeleeService.state(attacker);
+            helper.assertValueEqual(a.phase(), Phase.STAGGERED, "attacker phase");
+            helper.assertTrue(MeleeService.state(defender).riposteReady(), "defender has a riposte window");
+            helper.assertFalse(MeleeService.state(defender).lockedOut(), "a successful parry doesn't lock out");
+            helper.succeed();
+        });
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void guardReducesDamageAndDrainsStamina(GameTestHelper helper) {
+        Mob attacker = duelist(helper, 1, 4, -90);
+        Mob defender = duelist(helper, 3, 4, 90);
+        helper.assertTrue(MeleeService.guardDown(defender, DefaultWeapons.RAPIER).accepted(), "guard accepted");
+        helper.assertTrue(MeleeService.startSlash(attacker, DefaultWeapons.CUTLASS).accepted(), "slash accepted");
+        helper.runAfterDelay(15, () -> {
+            float dmg = DefaultWeapons.CUTLASS.slash().damage();
+            var g = DefaultWeapons.RAPIER.guard();
+            assertHealth(helper, defender, FULL - (float) (dmg * (1 - g.damageReduction())), "guarded defender");
+            CombatState d = MeleeService.state(defender);
+            helper.assertValueEqual(d.phase(), Phase.GUARDING, "defender still guarding");
+            float blockCost = g.staminaPerHit() + g.staminaPerDamage() * dmg;
+            helper.assertTrue(d.stamina() < MeleeConfig.STAMINA_MAX.get() - blockCost, "stamina drained by the block, have " + d.stamina());
+            helper.succeed();
+        });
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void parryCancelsVanillaMobHit(GameTestHelper helper) {
+        Mob attacker = duelist(helper, 1, 4, -90);
+        Mob defender = duelist(helper, 2, 4, 90);
+        helper.assertTrue(MeleeService.parry(defender, DefaultWeapons.SABER).accepted(), "parry accepted");
+        attacker.doHurtTarget(defender);
+        assertHealth(helper, defender, FULL, "vanilla hit parried");
+        helper.assertValueEqual(MeleeService.state(attacker).phase(), Phase.STAGGERED, "vanilla attacker staggered");
+        helper.assertTrue(MeleeService.state(defender).riposteReady(), "riposte window after parrying a mob");
+        helper.succeed();
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void projectilesCannotBeParried(GameTestHelper helper) {
+        Mob shooter = duelist(helper, 1, 4, -90);
+        Mob defender = duelist(helper, 3, 4, 90);
+        helper.assertTrue(MeleeService.parry(defender, DefaultWeapons.SABER).accepted(), "parry accepted");
+        Arrow arrow = EntityType.ARROW.create(helper.getLevel());
+        helper.assertTrue(arrow != null, "arrow created");
+        arrow.setPos(shooter.getEyePosition());
+        defender.hurt(helper.getLevel().damageSources().arrow(arrow, shooter), 4.0f);
+        assertHealth(helper, defender, FULL - 4.0f, "arrow ignores the parry");
+        helper.assertValueEqual(MeleeService.state(defender).phase(), Phase.PARRYING, "parry still open");
+        arrow.discard();
+        helper.succeed();
+    }
+
+    /** Own batch: changes config. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = "pirates_n_ships_config_melee_skill_based")
+    public static void skillBasedOffLeavesVanillaMelee(GameTestHelper helper) {
+        ConfigOverrides.during(helper, MeleeConfig.SKILL_BASED, false);
+        Mob attacker = duelist(helper, 1, 4, -90);
+        Mob defender = duelist(helper, 2, 4, 90);
+        helper.assertValueEqual(MeleeService.startSlash(attacker, DefaultWeapons.CUTLASS).refusal(), Refusal.DISABLED, "slash refusal");
+        helper.assertValueEqual(MeleeService.parry(defender, DefaultWeapons.SABER).refusal(), Refusal.DISABLED, "parry refusal");
+        float before = defender.getHealth();
+        attacker.doHurtTarget(defender);
+        helper.assertTrue(defender.getHealth() < before, "vanilla hit lands with skill-based combat off");
+        helper.succeed();
+    }
+}

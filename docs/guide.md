@@ -216,6 +216,11 @@ other part becomes a wreck (its nameplate says "Wreck of …") that drifts but n
 bits under four blocks fall apart into items. `/pirates ship info` shows a piece's id, origin and wreck flag
 (operators). Rejoining pieces comes with the Shipwright's Toolkit. Server config `assembly.split`.
 
+### Boarding along the rope
+Once a grappling rope is latched onto another ship, look at the rope and use it: you hang from it and slide down to the
+lower end, following both ships as they move. Sneak to let go. A level rope is crawled slowly toward the hook. From the
+crow's nest down to an enemy deck is the classic move. Server config `grapple.slide`.
+
 ### Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks
 high with a low roar. Within 8 blocks of it you, your boat, loose items and light ships are pulled toward it and

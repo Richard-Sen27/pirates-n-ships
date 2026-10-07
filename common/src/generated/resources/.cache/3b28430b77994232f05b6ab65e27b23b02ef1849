@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-07T04:12:44.447059	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-07T07:55:25.090945	Block states and models: pirates_n_ships
 c189a7833975a61cf2c7c8fd326d27a32969cb9d assets/pirates_n_ships/blockstates/bilge_pump.json
 52e053a4f7334e9a78798b4b4b9a2ad80087f3d5 assets/pirates_n_ships/blockstates/brig_bars.json
 83716521a6f9785f7114fa5a9489defb1257975d assets/pirates_n_ships/blockstates/brig_door.json
@@ -49,9 +49,13 @@ f399a5322f83e89b272f7efbdfc19ccff371f439 assets/pirates_n_ships/models/item/joll
 4738f6156fcd947997765648f524f28c44b4a4da assets/pirates_n_ships/models/item/merchant_flag.json
 0115d1b5ba50b99963c030a78b0184a09171a371 assets/pirates_n_ships/models/item/nameplate.json
 6eb672094a831d56cf44b1dd215b3733a06feaa0 assets/pirates_n_ships/models/item/navy_flag.json
+63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets/pirates_n_ships/models/item/navy_officer_spawn_egg.json
+63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets/pirates_n_ships/models/item/navy_soldier_spawn_egg.json
 d830a7abbc232e7d496bb338343be03b894083fa assets/pirates_n_ships/models/item/pantry.json
+63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets/pirates_n_ships/models/item/pirate_spawn_egg.json
 2ff868694993d74c39b741b5cc83b12f64f69570 assets/pirates_n_ships/models/item/rope.json
 344a8933080d39bb3457d959748e850b869917c8 assets/pirates_n_ships/models/item/sail_winch.json
+63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets/pirates_n_ships/models/item/sailor_spawn_egg.json
 1089ff46d82ccaa42bb4f632ea36493a92ae1c93 assets/pirates_n_ships/models/item/test_block.json
 5044a42b69e6723415e07fb61619a0264973734a assets/pirates_n_ships/models/item/water_barrel.json
 f6e4d1d5088efeadbfd348531d4b3fb9903e3010 assets/pirates_n_ships/models/item/yard.json

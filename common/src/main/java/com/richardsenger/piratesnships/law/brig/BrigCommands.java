@@ -7,6 +7,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import com.richardsenger.piratesnships.crew.morale.CrewMorale;
+import com.richardsenger.piratesnships.law.LawService;
 import com.richardsenger.piratesnships.law.bounty.PirateTier;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -24,7 +26,9 @@ import java.util.Locale;
 
 /**
  * Operator debug commands {@code /pirates brig ...} (permission 2) to try the outcomes before navy officers exist.
- * The executing player is the claimant. Doubloons are only printed (no coins yet).
+ * The executing player is the claimant. Doubloons are only printed (no coins yet). {@code pressgang} takes the same path
+ * as the whistle (a shackled sailor on the player's own ship, LA2); {@code release} credits nobody (the shackles drop);
+ * {@code releases [target]} prints the release record (default: the executing player).
  */
 public final class BrigCommands {
 
@@ -51,7 +55,10 @@ public final class BrigCommands {
                                 .executes(c -> ransom(c, false))
                                 .then(Commands.argument("captain", BoolArgumentType.bool()).executes(c -> ransom(c, BoolArgumentType.getBool(c, "captain")))))))
                 .then(Commands.literal("pressgang").then(Commands.argument("prisoner", EntityArgument.entity()).executes(BrigCommands::pressGang)))
-                .then(Commands.literal("release").then(Commands.argument("prisoner", EntityArgument.entity()).executes(BrigCommands::release)))));
+                .then(Commands.literal("release").then(Commands.argument("prisoner", EntityArgument.entity()).executes(BrigCommands::release)))
+                .then(Commands.literal("releases")
+                        .executes(c -> releases(c, c.getSource().getPlayerOrException()))
+                        .then(Commands.argument("target", EntityArgument.entity()).executes(c -> releases(c, living(c, "target")))))));
     }
 
     private static LivingEntity living(CommandContext<CommandSourceStack> c, String arg) throws CommandSyntaxException {
@@ -114,7 +121,7 @@ public final class BrigCommands {
         ServerPlayer player = c.getSource().getPlayerOrException();
         PrisonerOutcomes.PressGangResult r = PrisonerOutcomes.pressGang(living(c, "prisoner"), player);
         c.getSource().sendSuccess(() -> Component.literal(r.success()
-                ? "Press-ganged " + r.recruit().name() + " (morale " + r.recruit().morale() + "), crime " + r.recruit().crime().outcome().name().toLowerCase(Locale.ROOT)
+                ? "Press-ganged " + r.crew().getName().getString() + " (morale " + CrewMorale.get(r.crew()) + "), crime " + r.crime().outcome().name().toLowerCase(Locale.ROOT)
                 : "Not press-ganged: " + r.failure().name().toLowerCase(Locale.ROOT)), false);
         return r.success() ? 1 : 0;
     }
@@ -123,5 +130,11 @@ public final class BrigCommands {
         PrisonerOutcomes.ReleaseResult r = PrisonerOutcomes.release(living(c, "prisoner"));
         c.getSource().sendSuccess(() -> Component.literal(r.success() ? "Released" : "Not released: " + r.failure().name().toLowerCase(Locale.ROOT)), false);
         return r.success() ? 1 : 0;
+    }
+
+    private static int releases(CommandContext<CommandSourceStack> c, LivingEntity target) {
+        ReleaseRecord r = LawService.releases(target);
+        c.getSource().sendSuccess(() -> Component.literal(target.getName().getString() + " released: " + r.describe()), false);
+        return r.total();
     }
 }

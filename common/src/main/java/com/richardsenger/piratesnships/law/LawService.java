@@ -8,6 +8,7 @@ import com.richardsenger.piratesnships.law.bounty.BountyBoard.PlaceResult;
 import com.richardsenger.piratesnships.law.bounty.BountyRules;
 import com.richardsenger.piratesnships.law.bounty.BountyTarget;
 import com.richardsenger.piratesnships.law.bounty.PirateTier;
+import com.richardsenger.piratesnships.law.brig.ReleaseRecord;
 import com.richardsenger.piratesnships.law.crime.CrimeRules;
 import com.richardsenger.piratesnships.law.crime.CrimeType;
 import com.richardsenger.piratesnships.law.crime.CriminalRecord;
@@ -302,6 +303,20 @@ public final class LawService {
     public static TurnInResult turnInPirate(LivingEntity pirate, PirateTier tier, Player claimant) {
         int reward = LawConfig.bountyRules().turnInReward(tier);
         return new TurnInResult(reward, claimBounty(pirate, claimant, ClaimMethod.ALIVE));
+    }
+
+    // --- Released prisoners (LA2) -------------------------------------------------------------------------------
+
+    /** The prisoners {@code entity} released so far, per faction (docs/design.md §13.3; read by §15 later). */
+    public static ReleaseRecord releases(LivingEntity entity) {
+        return Services.ATTACHMENTS.get(entity, LawAttachments.RELEASES);
+    }
+
+    /** Appends one release of a prisoner of {@code faction} ({@code null}: no faction) to {@code releaser}'s record. */
+    public static ReleaseRecord recordRelease(LivingEntity releaser, @Nullable Faction faction) {
+        ReleaseRecord next = releases(releaser).with(faction);
+        Services.ATTACHMENTS.set(releaser, LawAttachments.RELEASES, next);
+        return next;
     }
 
     // --- Flags --------------------------------------------------------------------------------------------------

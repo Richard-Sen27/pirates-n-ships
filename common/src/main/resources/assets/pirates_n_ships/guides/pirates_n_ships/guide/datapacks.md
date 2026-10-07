@@ -13,6 +13,7 @@ in its own namespace, or replace one of ours by shipping a file at the same path
 
 | Type | Folder | Contents |
 |---|---|---|
+| Ship templates | `ship_template` | Structure id, name key, helm position, waterline row, bow direction, price (for the shipwright later). The structures come from WorldEdit schematics in `art/schematics/` through `tools/schem_to_structure.py`. |
 | Trade goods | `trade_good` | Item, base price, weight, category, where it is produced. |
 | Weapons | `weapon` | Timings, damage, reach, arc, stamina costs and guard values for the fighting system. A weapon whose name matches an item id applies to that item. |
 

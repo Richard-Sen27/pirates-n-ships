@@ -27,3 +27,14 @@ ingots, 1 string). Please send `latest.log` if anything differs.
 
 ## Also worth a look
 - Should the hauled ships end closer (hull to hull) for boarding, or is the current gap right for a plank later?
+
+
+## GR1: launching and mooring rings
+1. **Ranges:** on flat land at about 30°, thrown, crossbow and musket: the hook drops at about 24, 36 and 48 blocks, each flight visibly faster.
+2. **Draw:** hook in the main hand, crossbow in the off hand: holding use plays the loading sounds with the end click at about 1.25 s; letting go early does nothing; after the click the shoot sound, the flight, 1 durability lost, the crossbow's own charge unchanged. Say whether the bow pose looks acceptable.
+3. **Powder:** an empty musket and 3 gunpowder: use fires at once with the shot sound, smoke and a view kick, leaving 2; no powder gives a click and a message; creative is free.
+4. **Refusal:** a loaded musket in the off hand: "Unload the musket first…", the hook stays, the musket stays loaded.
+5. **Catching:** a ring on another ship's deck; throw slightly over or beside it: the hook snaps onto the ring and hauling works.
+6. **Holding:** a ring latch holds past 24 blocks and snaps at about 48; a plain latch snaps at 24.
+7. **Tying off:** with a hook latched, use a ring on your own ship: "Rope tied…", a knot sound, the rope drawn from the ring; walk off: the haul continues and the hulls end side by side; sneak-use the air empty-handed releases; breaking either ring releases.
+8. **Model:** the placeholder iron plate faces correctly on floor, wall and ceiling.

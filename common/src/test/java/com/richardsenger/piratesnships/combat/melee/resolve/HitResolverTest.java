@@ -165,15 +165,15 @@ class HitResolverTest {
     @Test
     void absorbSurchargeScalesWithTheHit() {
         CombatState def = ok(CombatRules.guardDown(FRESH, D_W, P));
-        assertEquals(1.5, P.guardAbsorbStaminaPerDamage(), 1e-9, "default");
+        assertEquals(1.0, P.guardAbsorbStaminaPerDamage(), 1e-9, "default");
         HitResult light = HitResolver.resolve(FRESH, def, D_W, IncomingHit.vanillaMelee(2f, true), 0, P);
         HitResult heavy = HitResolver.resolve(FRESH, def, D_W, IncomingHit.vanillaMelee(8f, true), 0, P);
         float lightCost = def.stamina() - light.defender().stamina();
         float heavyCost = def.stamina() - heavy.defender().stamina();
-        // 6 more damage: weapon per-damage cost plus 1.5 surcharge per absorbed point
-        assertEquals(6f * (D_W.guard().staminaPerDamage() + 1.5f), heavyCost - lightCost, 1e-3, "a heavier hit drains more");
+        // 6 more damage: weapon per-damage cost plus 1.0 surcharge per absorbed point
+        assertEquals(6f * (D_W.guard().staminaPerDamage() + 1.0f), heavyCost - lightCost, 1e-3, "a heavier hit drains more");
         assertEquals(blockCost(8f, 8f, P), heavyCost, 1e-3);
-        assertEquals(D_W.guard().staminaPerHit() + 8f * D_W.guard().staminaPerDamage() + 1.5f * 8f, heavyCost, 1e-3);
+        assertEquals(D_W.guard().staminaPerHit() + 8f * D_W.guard().staminaPerDamage() + 1.0f * 8f, heavyCost, 1e-3);
     }
 
     @Test

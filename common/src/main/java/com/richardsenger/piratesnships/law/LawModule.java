@@ -16,6 +16,8 @@ import com.richardsenger.piratesnships.law.sync.WantedSyncPayload;
 import com.richardsenger.piratesnships.law.turnin.OfficerTurnIns;
 import com.richardsenger.piratesnships.law.world.CombatCrimeDetector;
 import com.richardsenger.piratesnships.law.world.CrimeLog;
+import com.richardsenger.piratesnships.law.world.FlagCrimes;
+import com.richardsenger.piratesnships.law.world.FlagWorldGameTests;
 import com.richardsenger.piratesnships.law.world.LawTags;
 import com.richardsenger.piratesnships.law.world.LawWorldGameTests;
 import com.richardsenger.piratesnships.law.world.PlacedBlocks;
@@ -86,6 +88,8 @@ public final class LawModule implements ModModule {
         CommonEvents.BLOCK_BREAK.register(PlacedBlocks::onBlockBreak);
         // Trade integration (docs/design.md §10.3): plunder a navy port noticed is a crime
         PlunderCrimes.register();
+        // Flags in the world (FL2, docs/design.md §4.7): navy observation, false colours, crimes against ships
+        FlagCrimes.register();
     }
 
     @Override
@@ -108,6 +112,7 @@ public final class LawModule implements ModModule {
                     .add(BountyProofItem.TOOLTIP_KILLER, "Slain by %s")
                     .add(BountyProofItem.TOOLTIP_BLANK, "Names no one")
                     .add(TheftDetector.THEFT_SEEN_KEY, "%s saw you stealing!")
+                    .add(FlagCrimes.COVER_BLOWN_KEY, "The navy has seen through your colours")
                     .add(k + "last", "Last crime of %s: %s against %s, %s, +%s points (%s s ago)")
                     .add(k + "last.none", "No crime reported for %s since the server started")
                     .add(k + "hostile.yes", "The navy attacks %s on sight (%s)")
@@ -204,6 +209,6 @@ public final class LawModule implements ModModule {
     @Override
     public List<Class<?>> gameTestClasses() {
         return List.of(LawGameTests.class, LawWorldGameTests.class, PlunderCrimeGameTests.class,
-                BountyTurnInGameTests.class, NoticeBoardGameTests.class);
+                BountyTurnInGameTests.class, NoticeBoardGameTests.class, FlagWorldGameTests.class);
     }
 }

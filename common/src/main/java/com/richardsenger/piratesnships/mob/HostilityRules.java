@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.mob;
 
+import com.richardsenger.piratesnships.law.flag.ShipStance;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -15,6 +16,9 @@ import org.jetbrains.annotations.Nullable;
  *       targets them.</li>
  *   <li>Peaceful types ({@code mobs.<type>_peaceful}) attack nobody and don't retaliate.</li>
  *   <li>Creative and spectator players are never targets.</li>
+ *   <li>Flags (FL2, docs/design.md §4.7): people aboard a ship that struck its colours ({@link ShipStance#SURRENDERED})
+ *       are attacked by nobody on sight; the navy attacks people aboard a ship under the Jolly Roger or whose cover is
+ *       blown ({@code mobs.navy_hostile}); pirates leave players aboard a Jolly Roger ship alone.</li>
  *   <li>Retaliation: a fighter that is not peaceful keeps fighting an attacker outside its own faction for
  *       {@code mobs.grudge_ticks} after being hit, even one it would not attack on sight.</li>
  * </ul>
@@ -36,10 +40,24 @@ public final class HostilityRules {
      * @param exempt       a creative or spectator player
      * @param wantedByNavy the law wants it ({@code LawService.navyShouldAttack}); only asked by navy mobs
      * @param monster      a vanilla monster ({@code Enemy})
+     * @param ship         what the ship it is aboard tells NPCs (FL2); {@link ShipStance#NONE} if not aboard or not a person
      */
-    public record Target(@Nullable MobFaction faction, boolean player, boolean exempt, boolean wantedByNavy, boolean monster) {
+    public record Target(@Nullable MobFaction faction, boolean player, boolean exempt, boolean wantedByNavy, boolean monster,
+                         ShipStance ship) {
+        public Target(@Nullable MobFaction faction, boolean player, boolean exempt, boolean wantedByNavy, boolean monster) {
+            this(faction, player, exempt, wantedByNavy, monster, ShipStance.NONE);
+        }
+
         public static Target ofPlayer(boolean exempt, boolean wanted) {
             return new Target(null, true, exempt, wanted, false);
+        }
+
+        public static Target ofPlayer(boolean exempt, boolean wanted, ShipStance ship) {
+            return new Target(null, true, exempt, wanted, false, ship);
+        }
+
+        public Target withShip(ShipStance stance) {
+            return new Target(faction, player, exempt, wantedByNavy, monster, stance);
         }
 
         public static Target ofMob(MobFaction faction) {
@@ -54,13 +72,17 @@ public final class HostilityRules {
     /** Whether {@code self} attacks {@code t} on sight. */
     public static boolean attacksOnSight(MobFaction self, Target t, Params p) {
         if (p.peaceful() || t.exempt()) return false;
+        if (t.ship() == ShipStance.SURRENDERED) return false; // struck colours: nobody attacks on sight
         return switch (self) {
             case CIVILIAN -> false;
-            case PIRATE -> t.player() ? p.piratesHostile() : t.faction() == MobFaction.NAVY && p.factionsFight();
+            case PIRATE -> t.player()
+                    ? p.piratesHostile() && t.ship() != ShipStance.JOLLY_ROGER
+                    : t.faction() == MobFaction.NAVY && p.factionsFight();
             case NAVY -> {
                 if (t.faction() == MobFaction.NAVY) yield false;
                 if (t.faction() == MobFaction.PIRATE) yield p.factionsFight();
-                yield p.navyHostile() && t.wantedByNavy();
+                boolean hostileShip = t.ship() == ShipStance.JOLLY_ROGER || t.ship() == ShipStance.UNMASKED;
+                yield p.navyHostile() && (t.wantedByNavy() || hostileShip);
             }
         };
     }

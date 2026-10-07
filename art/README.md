@@ -188,6 +188,29 @@ Workflow notes (sea chest, S1-art):
   difference). Script and loader are not committed; rebuild them from these notes.
 - Render: `renders/sea_chest.png` (placed three-quarter view from the front-west, GUI).
 
+Workflow notes (notice board, N1):
+- **Notice board** (34 elements, `notice_board`, one project): a village board in one block, notices on the north
+  side (the `FACING` side, unrotated). Two `dark_oak_log` posts x 1..3 and 13..15, z 6.75..8.75, y 0.5..15, standing
+  in `dark_oak_planks` feet (y 0..1, so the post bottoms sit inside them); a `spruce_planks` board x 2..14, y 4..14,
+  z 7..8.5 (front face at z 7, ends hidden in the posts); `dark_oak_planks` rails across the top and bottom edge in the
+  posts' plane (x 3..13, only edge contact with the posts, so no coplanar overlap). Roof: two 1 px `dark_oak_planks`
+  slabs x 0..16 (1 px past the posts) turned ∓22.5 about x at the ridge (8, 16, 7.75), the south slab 0.05 px
+  shorter at each end so the two slabs' end faces never share area, under a `dark_oak_log` ridge beam (grain along
+  x). Four notices 0.2 px proud (z 6.8..7): two `sandstone_top` (the parchment of the U1 cards) and two
+  `white_terracotta`, one straight pair and one pair turned +22.5 / −22.5 about z round their own centres; ink lines
+  are zero-depth `black_terracotta` strips 0.05 px proud; every notice has a 1 × 1 × 0.6 `red_concrete` pin head,
+  the lower tilted one a `nether_wart_block` wax seal (close to the dark red of the GUI seal);
+  four `gold_block` nails on the rails. Particle `spruce_planks`. Lint: no fights, no warnings.
+- `NoticeBoardBlock` uses `box(1, 0, 6, 15, 16, 10)` (x and z swapped for east/west); the roof overhang stays
+  outside the outline.
+- Display: `block/block` values except `gui` `[25, 200, 0]` / 0.8 (front three-quarter, notices readable; centred with
+  the F7g offscreen GUI check), `fixed` `[0, 180, 0]` (notices out of the frame) and `head` `[0, 180, 0]` / 0.6.
+- Built like S1-art: a Python part list (positions, per-face texture keys, vanilla-style position UVs, rotated
+  notices checked against each other and the rail band with a separating-axis test) wrote the JSON, rebuilt cube by
+  cube in a new `java_block` tab; `Codecs.java_block.compile()` of the tab is the committed model. Script not
+  committed; rebuild it from these notes.
+- Render: `renders/notice_board.png` (placed three-quarter from the front, front, GUI).
+
 Items (sword batch, F8a):
 - Item models are `java_block` projects exported to `common/src/main/resources/assets/pirates_n_ships/models/item/<name>.json`;
   datagen writes no model for them (drop the item's `m.handheldItem(...)` / `m.flatItem(...)` line).

@@ -1,13 +1,15 @@
-"""Convert Sponge schematics (.schem, WorldEdit) into vanilla structure templates for ship templates.
+"""Convert Sponge schematics (.schem, WorldEdit) into vanilla structure templates (ship templates, world structures).
 
 Usage:
-    python3 tools/schem_to_structure.py                      # every art/schematics/*.schem
+    python3 tools/schem_to_structure.py                      # every art/schematics/*.schem and structures/*/*.schem
     python3 tools/schem_to_structure.py art/schematics/x.schem [more.schem ...]
     python3 tools/schem_to_structure.py --out DIR in.schem   # write somewhere else (tests)
 
-Each ``<name>.schem`` becomes ``common/src/main/resources/data/pirates_n_ships/structure/ships/<name>.nbt``, which
-the game loads as the structure ``pirates_n_ships:ships/<name>`` (see ``ship/template`` and art/README.md, "Ship
-templates").
+Each ``art/schematics/<name>.schem`` becomes ``common/src/main/resources/data/pirates_n_ships/structure/ships/<name>.nbt``,
+which the game loads as the structure ``pirates_n_ships:ships/<name>`` (see ``ship/template`` and art/README.md, "Ship
+templates"). A structure piece ``art/schematics/structures/<group>/<piece>.schem`` (built by tools/build_structures.py)
+becomes ``.../structure/<group>/<piece>.nbt``, the structure ``pirates_n_ships:<group>/<piece>`` (art/README.md,
+"Structures (ST1)"). ``--out`` puts every output into that one directory instead.
 
 Rules:
 - Sponge schematic version 2 (``Palette`` + ``BlockData`` at the root) and version 3 (everything inside a
@@ -26,6 +28,8 @@ Rules:
   timestamp or file name. Re-running on the same input writes the same bytes.
 - Every ``pirates_n_ships:helm`` is reported with its template position: that is where a ship template's ``helm``
   points (the definition finds it by itself when it leaves ``helm`` out).
+- Structure pieces (sources under ``art/schematics/structures/``) report their ``minecraft:jigsaw`` blocks (position,
+  orientation, name) instead of helms. Their conversion is the same as a ship's.
 
 Only the standard library is used (own NBT reader and writer).
 """
@@ -40,10 +44,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_IN = ROOT / "art" / "schematics"
-DEFAULT_OUT = ROOT / "common" / "src" / "main" / "resources" / "data" / "pirates_n_ships" / "structure" / "ships"
+STRUCTURE_DIR = ROOT / "common" / "src" / "main" / "resources" / "data" / "pirates_n_ships" / "structure"
+DEFAULT_OUT = STRUCTURE_DIR / "ships"
+STRUCTURES_IN = DEFAULT_IN / "structures"
 DATA_VERSION_1_21_1 = 3955
 DROPPED = {"minecraft:air", "minecraft:cave_air", "minecraft:void_air", "minecraft:structure_void"}
 HELM = "pirates_n_ships:helm"
+JIGSAW = "minecraft:jigsaw"
 
 # NBT tag ids
 END, BYTE, SHORT, INT, LONG, FLOAT, DOUBLE, BYTE_ARRAY, STRING, LIST, COMPOUND, INT_ARRAY, LONG_ARRAY = range(13)
@@ -308,7 +315,36 @@ def to_structure(schem: dict) -> tuple[Tag, list[tuple[tuple[int, int, int], str
     return root, helms
 
 
-def convert(source: Path, out_dir: Path) -> Path:
+def structure_group(source: Path) -> str | None:
+    """``<group>`` for a piece at art/schematics/structures/<group>/<piece>.schem, else None (a ship)."""
+    try:
+        rel = source.resolve().relative_to(STRUCTURES_IN.resolve())
+    except ValueError:
+        return None
+    return rel.parts[0] if len(rel.parts) == 2 else None
+
+
+def default_out(source: Path) -> Path:
+    group = structure_group(source)
+    return DEFAULT_OUT if group is None else STRUCTURE_DIR / group
+
+
+def report_jigsaws(schem: dict):
+    for pos in sorted(schem["block_entities"], key=lambda p: (p[1], p[2], p[0])):
+        state = schem["states"].get(pos, "")
+        name, props = parse_state(state)
+        if name != JIGSAW:
+            continue
+        nbt = schem["block_entities"][pos].value
+        label = nbt["name"].value if "name" in nbt else "?"
+        pool = nbt["pool"].value if "pool" in nbt else "?"
+        print(f"  jigsaw at {list(pos)} {props.get('orientation', '?')}: {label} (pool {pool})")
+
+
+def convert(source: Path, out_dir: Path | None = None) -> Path:
+    piece = structure_group(source) is not None
+    if out_dir is None:
+        out_dir = default_out(source)
     schem = read_schematic(read_nbt(source.read_bytes()))
     root, helms = to_structure(schem)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -321,6 +357,9 @@ def convert(source: Path, out_dir: Path) -> Path:
         print(f"  warning: DataVersion {schem['data_version']} is newer than 1.21.1, written as {DATA_VERSION_1_21_1}")
     if schem["entities"]:
         print(f"  note: {schem['entities']} entities skipped (templates hold blocks only)")
+    if piece:
+        report_jigsaws(schem)
+        return target
     if not helms:
         print("  note: no helm: give the template definition a helm position or treat it as hull only")
     for pos, state in helms:
@@ -332,10 +371,12 @@ def convert(source: Path, out_dir: Path) -> Path:
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("inputs", nargs="*", type=Path, help="schematics (default: art/schematics/*.schem)")
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="output directory")
+    parser.add_argument("inputs", nargs="*", type=Path,
+                        help="schematics (default: art/schematics/*.schem and art/schematics/structures/*/*.schem)")
+    parser.add_argument("--out", type=Path, default=None,
+                        help="output directory (default: structure/ships, or structure/<group> for pieces)")
     args = parser.parse_args(argv)
-    inputs = args.inputs or sorted(DEFAULT_IN.glob("*.schem"))
+    inputs = args.inputs or sorted(DEFAULT_IN.glob("*.schem")) + sorted(STRUCTURES_IN.glob("*/*.schem"))
     if not inputs:
         print(f"no schematics in {DEFAULT_IN}", file=sys.stderr)
         return 1

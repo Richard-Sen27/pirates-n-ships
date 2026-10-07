@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.crew.npc;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.crew.hammock.CrewRest;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.assembly.ShipSplits;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
@@ -81,6 +82,9 @@ public final class CrewStations {
         }
         if (crew.assignment() != null && !crew.assignment().equals(ref)) {
             release(level, crew);
+        }
+        if (crew.rest() != null) {
+            CrewRest.getUp(crew, true); // ordered to a station at night: up at once, on duty for the night (HM1)
         }
         crew.setAssignment(ref);
         crew.setPinned(pinned);
@@ -278,7 +282,7 @@ public final class CrewStations {
     }
 
     /** A translatable chat line from the crew member to the players near it. */
-    static void say(ServerLevel level, CrewMember crew, Component line) {
+    public static void say(ServerLevel level, CrewMember crew, Component line) {
         int r = StationConfig.ACK_RADIUS.get();
         Component msg = Component.literal("<").append(crew.getDisplayName()).append("> ").append(line);
         for (ServerPlayer p : level.players()) {

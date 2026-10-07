@@ -38,11 +38,21 @@ public final class ChartConfig {
     public static final ConfigValue<Integer> TILE_CELLS = TILES.intRange("tile_cells", 128, 32, 256,
             "Chart cells along each side of a tile drawing (one pixel per cell; 128 cells of 4 blocks = 512 blocks square)");
     public static final ConfigValue<Boolean> REDRAW_ALLOWED = TILES.bool("redraw_allowed", true,
-            "A drawn tile can be redrawn (a full redraw, never a partial edit); false: the first drawing is permanent");
+            "A drawn board can be redrawn at a new area or zoom and cleared; false: the first drawing stays (anyone can still update it with what they have charted since)");
     public static final ConfigValue<Boolean> REQUIRE_CHART_ITEM = TILES.bool("require_chart_item", true,
             "A chart must be in hand (either hand) to draw onto a tile");
     public static final ConfigValue<Integer> TILE_REACH = TILES.intRange("reach", 8, 2, 64,
             "Farthest distance in blocks between a player and the tile they draw on");
+    public static final ConfigValue<Integer> MAX_BOARD_SIDE = TILES.intRange("max_board_side", 8, 1, 16,
+            "Most map tiles along each side of a board (tiles side by side in a full rectangle show one chart area together)");
+    public static final ConfigValue<Integer> MAX_ZOOM = TILES.intRange("max_zoom", 8, 1, 16,
+            "Highest zoom a board can be drawn at (zoom z: each tile pixel covers z x z chart cells)");
+    public static final ConfigValue<Boolean> INK_COST_ENABLED = TILES.bool("ink_cost_enabled", true,
+            "Drawing and updating a board costs ink (items in #pirates_n_ships:chart_ink); creative players never pay");
+    public static final ConfigValue<Integer> INK_PER_TILE = TILES.intRange("ink_per_tile", 1, 0, 64,
+            "Ink for each tile drawn, or on an update for each tile that changed (at least one tile when anything changed)");
+    public static final ConfigValue<Integer> KRAKEN_INK_TILE_VALUE = TILES.intRange("kraken_ink_tile_value", 8, 1, 64,
+            "How many tiles one kraken ink pays for");
 
     private static final ConfigSection C =ModConfigs.client("chart_visuals", "How the pirate chart is drawn");
 

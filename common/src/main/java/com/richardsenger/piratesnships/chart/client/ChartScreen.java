@@ -2,6 +2,8 @@ package com.richardsenger.piratesnships.chart.client;
 
 import com.mojang.math.Axis;
 import com.richardsenger.piratesnships.chart.ChartConfig;
+import com.richardsenger.piratesnships.chart.ChartContent;
+import com.richardsenger.piratesnships.chart.tile.InkCost;
 import com.richardsenger.piratesnships.chart.ChartText;
 import com.richardsenger.piratesnships.chart.data.ChartMarker;
 import com.richardsenger.piratesnships.chart.data.ChartRegion;
@@ -12,6 +14,7 @@ import com.richardsenger.piratesnships.chart.net.ChartSettings;
 import com.richardsenger.piratesnships.chart.net.ChartSimplePayloads;
 import com.richardsenger.piratesnships.chart.net.ChartStatePayload;
 import com.richardsenger.piratesnships.chart.net.ChartViewPayload;
+import com.richardsenger.piratesnships.chart.net.ClearBoardPayload;
 import com.richardsenger.piratesnships.chart.net.DrawTilePayload;
 import com.richardsenger.piratesnships.chart.net.TileTarget;
 import com.richardsenger.piratesnships.chart.render.MapTileRaster;
@@ -27,6 +30,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.level.Level;
@@ -101,6 +105,14 @@ public final class ChartScreen extends Screen {
     private boolean confirmRedraw;
     private BrassButton markersButton;
     private BrassButton drawButton;
+    // map boards (work package MAP3): the zoom, update or new drawing, clearing
+    private int boardZoom = 1;
+    private boolean updateMode;
+    private boolean confirmClear;
+    private BrassButton zoomDownButton;
+    private BrassButton zoomUpButton;
+    private BrassButton modeButton;
+    private BrassButton clearButton;
 
     private record CachedDoodle(long version, Optional<ChartDoodles.Doodle> doodle) {
     }
@@ -111,6 +123,8 @@ public final class ChartScreen extends Screen {
         if (target != null) {
             selCx = target.minCx();
             selCz = target.minCz();
+            boardZoom = Math.max(1, target.zoom());
+            updateMode = target.updatable();
         }
     }
 
@@ -154,8 +168,8 @@ public final class ChartScreen extends Screen {
         mapH = panelH - 2 * inner - GuiKit.HEADER_H - 3 - FOOTER_H - 2;
         if (view == null && target != null) {
             // the whole selection in view at the widest zoom
-            double cx = (selCx + target.tileCells() / 2.0) * cellBlocks();
-            double cz = (selCz + target.tileCells() / 2.0) * cellBlocks();
+            double cx = (selCx + selW() / 2.0) * cellBlocks();
+            double cz = (selCz + selH() / 2.0) * cellBlocks();
             view = new ChartProjection(cx, cz, 0, cellBlocks());
             clampSelection();
         }
@@ -193,15 +207,70 @@ public final class ChartScreen extends Screen {
             drawButton = addRenderableWidget(new BrassButton(right - 56, by, 56, GuiKit.FIELD_H, drawLabel(), this::drawPressed));
             markersButton = addRenderableWidget(new BrassButton(right - 56 - 4 - 62, by, 62, GuiKit.FIELD_H,
                     Component.translatable(ChartText.INCLUDE_MARKERS), this::toggleMarkers).selected(includeMarkers));
+            // the board panel in the map's top-left corner
+            int px = panelX();
+            int py = panelY() + PANEL_H - GuiKit.FIELD_H - 4;
+            zoomDownButton = addRenderableWidget(new BrassButton(px + 6, py, 16, GuiKit.FIELD_H, Component.translatable(ChartText.ZOOM_OUT), () -> zoomBoard(-1)));
+            zoomUpButton = addRenderableWidget(new BrassButton(px + 24, py, 16, GuiKit.FIELD_H, Component.translatable(ChartText.ZOOM_IN), () -> zoomBoard(1)));
+            modeButton = addRenderableWidget(new BrassButton(px + 46, py, 50, GuiKit.FIELD_H, modeLabel(), this::toggleMode));
+            clearButton = addRenderableWidget(new BrassButton(px + PANEL_W - 6 - 48, py, 48, GuiKit.FIELD_H, clearLabel(), this::clearPressed));
+            updateBoardWidgets();
         }
         lastSentView = null;
     }
 
-    // ------------------------------------------------------------------ draw on tile (MAP2)
+    // ------------------------------------------------------------------ draw on a tile or board (MAP2, MAP3)
+
+    private static final int PANEL_W = 170;
+    private static final int PANEL_H = 44;
+
+    private int panelX() {
+        return mapL + 4;
+    }
+
+    private int panelY() {
+        return mapT + 4;
+    }
+
+    private boolean inPanel(double mx, double my) {
+        return target != null && mx >= panelX() && mx < panelX() + PANEL_W && my >= panelY() && my < panelY() + PANEL_H;
+    }
+
+    /** Chart cells the frame covers across: tile pixels x columns x zoom. */
+    private int selW() {
+        return target.tileCells() * target.columns() * boardZoom;
+    }
+
+    private int selH() {
+        return target.tileCells() * target.rows() * boardZoom;
+    }
 
     private Component drawLabel() {
-        if (target == null || !target.drawn()) return Component.translatable(ChartText.DRAW);
+        if (target == null) return Component.translatable(ChartText.DRAW);
+        if (updateMode) return Component.translatable(ChartText.UPDATE);
+        if (!target.drawn()) return Component.translatable(ChartText.DRAW);
         return Component.translatable(confirmRedraw ? ChartText.REDRAW_CONFIRM : ChartText.REDRAW);
+    }
+
+    private Component modeLabel() {
+        return Component.translatable(updateMode ? ChartText.NEW_DRAWING : ChartText.UPDATE);
+    }
+
+    private Component clearLabel() {
+        return Component.translatable(confirmClear ? ChartText.CLEAR_CONFIRM : ChartText.CLEAR);
+    }
+
+    private void updateBoardWidgets() {
+        if (target == null || drawButton == null) return;
+        drawButton.setMessage(drawLabel());
+        drawButton.active = updateMode || !target.drawn() || target.redrawAllowed();
+        zoomDownButton.active = !updateMode && boardZoom > 1;
+        zoomUpButton.active = !updateMode && boardZoom < target.maxZoom();
+        // switching between an update and a new drawing: only on an intact board, and a new drawing needs redraw_allowed
+        modeButton.visible = target.updatable() && target.redrawAllowed();
+        modeButton.setMessage(modeLabel());
+        clearButton.visible = target.drawn() && target.redrawAllowed();
+        clearButton.setMessage(clearLabel());
     }
 
     private void toggleMarkers() {
@@ -209,24 +278,71 @@ public final class ChartScreen extends Screen {
         markersButton.selected(includeMarkers);
     }
 
+    private void toggleMode() {
+        if (target == null || !target.updatable()) return;
+        updateMode = !updateMode;
+        if (updateMode) {
+            // back to the board's own area and zoom
+            selCx = target.minCx();
+            selCz = target.minCz();
+            boardZoom = Math.max(1, target.zoom());
+        }
+        confirmRedraw = false;
+        confirmClear = false;
+        updateBoardWidgets();
+    }
+
+    private void zoomBoard(int step) {
+        if (target == null || updateMode) return;
+        int next = Math.max(1, Math.min(target.maxZoom(), boardZoom + step));
+        if (next == boardZoom) return;
+        // keep the frame's centre where it is
+        double cx = selCx + selW() / 2.0;
+        double cz = selCz + selH() / 2.0;
+        boardZoom = next;
+        selCx = (int) Math.floor(cx - selW() / 2.0);
+        selCz = (int) Math.floor(cz - selH() / 2.0);
+        clampSelection();
+        selectionMoved();
+        updateBoardWidgets();
+    }
+
     private void drawPressed() {
         if (target == null) return;
-        if (target.drawn() && !confirmRedraw) {
-            // a drawn tile is only ever redrawn as a whole: ask once more
-            confirmRedraw = true;
-            drawButton.setMessage(drawLabel());
-            showStatus(Component.translatable(ChartText.REDRAW_CONFIRM), GuiKit.INK_RED);
+        if (updateMode) {
+            Services.NETWORK.sendToServer(DrawTilePayload.update(target.pos(), includeMarkers));
+        } else {
+            if (target.drawn() && !confirmRedraw) {
+                // a drawn board is only ever redrawn as a whole: ask once more
+                confirmRedraw = true;
+                updateBoardWidgets();
+                showStatus(Component.translatable(ChartText.REDRAW_CONFIRM), GuiKit.INK_RED);
+                return;
+            }
+            Services.NETWORK.sendToServer(new DrawTilePayload(target.pos(), selCx, selCz, boardZoom, includeMarkers, false));
+        }
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.0f));
+        onClose();
+    }
+
+    private void clearPressed() {
+        if (target == null || !target.drawn()) return;
+        if (!confirmClear) {
+            confirmClear = true;
+            updateBoardWidgets();
+            showStatus(Component.translatable(ChartText.CLEAR_CONFIRM), GuiKit.INK_RED);
             return;
         }
-        Services.NETWORK.sendToServer(new DrawTilePayload(target.pos(), selCx, selCz, includeMarkers));
+        Services.NETWORK.sendToServer(new ClearBoardPayload(target.pos()));
         Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.0f));
         onClose();
     }
 
     private void selectionMoved() {
-        if (confirmRedraw) {
+        if (confirmRedraw || confirmClear) {
             confirmRedraw = false;
-            if (drawButton != null) drawButton.setMessage(drawLabel());
+            confirmClear = false;
+            updateBoardWidgets();
         }
     }
 
@@ -236,9 +352,8 @@ public final class ChartScreen extends Screen {
         ChartProjection.Bounds known = ClientChart.bounds();
         if (known == null) return;
         int cb = cellBlocks();
-        int size = target.tileCells();
-        selCx = MapTileRaster.clampAxis(selCx, size, (int) Math.floor(known.minX() / cb), (int) Math.floor(known.maxX() / cb) - 1);
-        selCz = MapTileRaster.clampAxis(selCz, size, (int) Math.floor(known.minZ() / cb), (int) Math.floor(known.maxZ() / cb) - 1);
+        selCx = MapTileRaster.clampAxis(selCx, selW(), (int) Math.floor(known.minX() / cb), (int) Math.floor(known.maxX() / cb) - 1);
+        selCz = MapTileRaster.clampAxis(selCz, selH(), (int) Math.floor(known.minZ() / cb), (int) Math.floor(known.maxZ() / cb) - 1);
     }
 
     private long originX() {
@@ -254,27 +369,80 @@ public final class ChartScreen extends Screen {
         int px = view.pixelsPerCell();
         double x0 = originX() + (double) selCx * px;
         double y0 = originY() + (double) selCz * px;
-        double w = (double) target.tileCells() * px;
-        return mx >= x0 && mx < x0 + w && my >= y0 && my < y0 + w;
+        return mx >= x0 && mx < x0 + (double) selW() * px && my >= y0 && my < y0 + (double) selH() * px;
     }
 
-    /** The selection as a parchment frame over the chart, the rest washed darker. */
+    /** The selection as a parchment frame over the chart, the rest washed darker, thin lines where the tiles meet. */
     private void renderSelection(GuiGraphics g) {
         int px = view.pixelsPerCell();
         int l = clampScreen(originX() + (long) selCx * px, mapL, mapW);
         int t = clampScreen(originY() + (long) selCz * px, mapT, mapH);
-        int r = clampScreen(originX() + ((long) selCx + target.tileCells()) * px, mapL, mapW);
-        int b = clampScreen(originY() + ((long) selCz + target.tileCells()) * px, mapT, mapH);
+        int r = clampScreen(originX() + ((long) selCx + selW()) * px, mapL, mapW);
+        int b = clampScreen(originY() + ((long) selCz + selH()) * px, mapT, mapH);
         int wash = 0x60201810;
         g.fill(mapL, mapT, mapL + mapW, Math.max(mapT, t), wash);
         g.fill(mapL, Math.min(mapT + mapH, b), mapL + mapW, mapT + mapH, wash);
         g.fill(mapL, Math.max(t, mapT), Math.max(mapL, l), Math.min(b, mapT + mapH), wash);
         g.fill(Math.min(mapL + mapW, r), Math.max(t, mapT), mapL + mapW, Math.min(b, mapT + mapH), wash);
+        // the seams between the tiles of a board
+        long tilePx = (long) target.tileCells() * boardZoom * px;
+        for (int c = 1; c < target.columns(); c++) {
+            int x = clampScreen(originX() + (long) selCx * px + c * tilePx, mapL, mapW);
+            g.fill(x, Math.max(t, mapT), x + 1, Math.min(b, mapT + mapH), 0x80201810);
+        }
+        for (int row = 1; row < target.rows(); row++) {
+            int y = clampScreen(originY() + (long) selCz * px + row * tilePx, mapT, mapH);
+            g.fill(Math.max(l, mapL), y, Math.min(r, mapL + mapW), y + 1, 0x80201810);
+        }
         // ink, two pixels of parchment, ink
         frameRect(g, l - 3, t - 3, r + 3, b + 3, GuiKit.INK);
         frameRect(g, l - 2, t - 2, r + 2, b + 2, MapTileRaster.PARCHMENT);
         frameRect(g, l - 1, t - 1, r + 1, b + 1, MapTileRaster.PARCHMENT);
         frameRect(g, l, t, r, b, GuiKit.INK);
+    }
+
+    /** The board panel: size and zoom, and the ink a draw or update costs against what the player carries. */
+    private void renderBoardPanel(GuiGraphics g) {
+        int x = panelX();
+        int y = panelY();
+        GuiKit.parchment(g, x, y, PANEL_W, PANEL_H);
+        Component size = Component.translatable(ChartText.BOARD_SIZE, target.columns(), target.rows()).append("  ")
+                .append(Component.translatable(updateMode ? ChartText.BOARD_ZOOM_LOCKED : ChartText.BOARD_ZOOM, boardZoom));
+        GuiKit.ink(g, font, size, x + 6, y + 4, PANEL_W - 12, GuiKit.INK);
+        Component ink;
+        int color = GuiKit.INK_DIM;
+        if (target.inkPerTile() <= 0) {
+            ink = Component.translatable(ChartText.INK_FREE);
+        } else {
+            long held = inkHeld();
+            int cost = target.tiles() * target.inkPerTile();
+            if (updateMode) {
+                ink = Component.translatable(ChartText.INK_COST_UPDATE, cost, held);
+                if (held < target.inkPerTile()) color = GuiKit.INK_RED;
+            } else if (held < cost) {
+                ink = Component.translatable(ChartText.INK_SHORT, cost, held);
+                color = GuiKit.INK_RED;
+            } else {
+                ink = Component.translatable(ChartText.INK_COST, cost, held);
+            }
+        }
+        GuiKit.ink(g, font, ink, x + 6, y + 15, PANEL_W - 12, color);
+    }
+
+    /** The ink in the player's inventory ({@code #pirates_n_ships:chart_ink}; kraken ink counts as several tiles). */
+    private long inkHeld() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return 0;
+        int ink = 0;
+        int kraken = 0;
+        var inv = mc.player.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            var stack = inv.getItem(i);
+            if (stack.isEmpty() || !stack.is(ChartContent.CHART_INK)) continue;
+            if (BuiltInRegistries.ITEM.getKey(stack.getItem()).equals(ChartContent.KRAKEN_INK)) kraken += stack.getCount();
+            else ink += stack.getCount();
+        }
+        return InkCost.held(ink, kraken, target.krakenWorth());
     }
 
     private static int clampScreen(long v, int min, int len) {
@@ -467,9 +635,9 @@ public final class ChartScreen extends Screen {
         if (super.mouseClicked(mx, my, button)) return true;
         if (!inMap(mx, my)) return false;
         if (target != null) {
-            // draw mode: no marker editing; drag the selection or pan the chart
-            if (button != GLFW.GLFW_MOUSE_BUTTON_LEFT) return true;
-            if (inSelection(mx, my)) {
+            // draw mode: no marker editing; drag the selection (not while updating: the board's area is fixed) or pan the chart
+            if (button != GLFW.GLFW_MOUSE_BUTTON_LEFT || inPanel(mx, my)) return true;
+            if (!updateMode && inSelection(mx, my)) {
                 draggingSelection = true;
                 selFracX = 0;
                 selFracZ = 0;
@@ -580,6 +748,7 @@ public final class ChartScreen extends Screen {
         renderMap(g, mouseX, mouseY);
         renderFooter(g, mouseX, mouseY);
         if (editing) renderEditor(g, mouseX, mouseY);
+        if (target != null) renderBoardPanel(g);
     }
 
     @Override
@@ -745,7 +914,9 @@ public final class ChartScreen extends Screen {
             color = statusColor == GuiKit.INK_RED ? GuiKit.ON_WOOD_RED : GuiKit.ON_WOOD;
         } else if (target != null && !inMap(mouseX, mouseY)) {
             int cb = cellBlocks();
-            text = Component.translatable(ChartText.DRAW_AREA, (long) selCx * cb, (long) selCz * cb, (long) target.tileCells() * cb);
+            text = updateMode
+                    ? Component.translatable(ChartText.UPDATE_HINT)
+                    : Component.translatable(ChartText.DRAW_BOARD_AREA, (long) selCx * cb, (long) selCz * cb, (long) selW() * cb, (long) selH() * cb);
             color = GuiKit.ON_WOOD;
         } else if (inMap(mouseX, mouseY)) {
             text = Component.translatable(ChartText.POSITION, (int) Math.floor(view.blockX(mouseX, mapL, mapW)),

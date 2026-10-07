@@ -25,7 +25,8 @@ import java.util.List;
  * charted into a persistent player attachment ({@link ChartService}); the chart item (or the key, if the server
  * allows it) opens the chart screen, which the server fills region by region ({@link ChartBackend}); players put
  * their own markers on it. MAP2: a chosen part of the chart is drawn onto a map tile block for everyone to see
- * ({@link com.richardsenger.piratesnships.chart.tile.MapTileService}, config {@code chart.tiles}).
+ * ({@link com.richardsenger.piratesnships.chart.tile.MapTileService}, config {@code chart.tiles}). MAP3: tiles side by side
+ * form boards drawn at a chosen area and zoom, updated by anyone, cleared, paid with ink ({@code #chart_ink}).
  */
 public final class ChartModule implements ModModule {
 
@@ -72,7 +73,7 @@ public final class ChartModule implements ModModule {
             ChartText.ENGLISH.forEach(lang::add);
         });
         data.models(m -> {
-            m.flatItem(ChartContent.CHART.get());
+            // The chart's item model is hand-made (art/models/chart.bbmodel, design.md §4.8)
             MapTileModels.generate(m);
         });
         data.recipes(out -> {
@@ -94,10 +95,12 @@ public final class ChartModule implements ModModule {
                         .apply(CopyComponentsFunction.copyComponents(CopyComponentsFunction.Source.BLOCK_ENTITY)
                                 .include(ChartContent.MAP_TILE_DRAWING.get()))))));
         data.blockTags(tags -> tags.tag(BlockTags.MINEABLE_WITH_AXE).add(ChartContent.MAP_TILE.get()));
+        // MAP3: what pays for drawing on a board; the kraken's ink (module mob) is named by id
+        data.itemTags(tags -> tags.tag(ChartContent.CHART_INK).add(Items.INK_SAC).add(Items.GLOW_INK_SAC).addOptional(ChartContent.KRAKEN_INK));
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(ChartGameTests.class, MapTileGameTests.class);
+        return List.of(ChartGameTests.class, MapTileGameTests.class, MapBoardGameTests.class);
     }
 }

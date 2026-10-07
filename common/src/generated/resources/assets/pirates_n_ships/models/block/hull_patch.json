@@ -1,6 +1,0 @@
-{
-  "parent": "minecraft:block/cube_all",
-  "textures": {
-    "all": "pirates_n_ships:block/hull_patch"
-  }
-}

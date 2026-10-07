@@ -29,6 +29,9 @@ breathing help: `/effect give @s minecraft:night_vision infinite` and `/effect g
    - **Expected:** no air pockets anywhere: every gap, the hull's inside included, is water; stairs, slabs, fences,
      panes, chains, lanterns and chests show water inside them (no dry bubble around them). Nothing sticks out above
      the sea surface.
+   - **Expected:** fences, window panes and iron bars connect to each other and to solid blocks of the wreck (they do
+     not connect to the surrounding seabed); nothing attached is missing where the wreck crosses a chunk border (the
+     mast stump's cleat on the mast, its lantern on a chain under the yard). Press F3+G to see chunk borders.
 4. **Loot.** Open the chest of the wreck.
    - **Expected:** loot from the wreck table: 3-12 doubloons plus two to four of rum, salted fish, rope, nails, lead
      shot (8-16) and rarely a cutlass (kraken ink in about one chest of 40). Find a second wreck of a different kind

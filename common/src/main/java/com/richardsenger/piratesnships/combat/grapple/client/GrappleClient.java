@@ -32,6 +32,9 @@ public final class GrappleClient {
         // the rope lines (RP1) whose drawing end is a mooring ring
         ClientEvents.registerBlockEntityRenderer(GrappleContent.MOORING_RING_BLOCK_ENTITY, RopeLineRenderer::new);
         ClientEvents.INTERACTION_KEY.register(GrappleClient::onInteraction);
+        // GR3: the crossbow's draw and shot of the hook, the musket's hook look
+        ClientEvents.INTERACTION_KEY.register(GrappleLaunchClient::onInteraction);
+        ClientEvents.CLIENT_SETUP.register(GrappleLaunchClient::registerItemProperties);
         ClientEvents.CLIENT_SETUP.register(RopeSlidePoses::onClientSetup);
         ClientEvents.CLIENT_TICK_END.register(RopeSlidePoses::onClientTickEnd);
     }

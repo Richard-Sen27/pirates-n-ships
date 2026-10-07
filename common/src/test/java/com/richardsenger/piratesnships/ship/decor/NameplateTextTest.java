@@ -55,4 +55,19 @@ class NameplateTextTest {
         assertEquals("", NameplateText.clean(null));
         assertEquals(NameplateText.MAX_LENGTH, NameplateText.clean("x".repeat(80)).length());
     }
+
+    @Test
+    void unnamedWreckPieceShowsWreckOfTheLinesName() {
+        // a wreck piece (RS1): no name of its own, the name its ship had
+        assertEquals(new NameplateText.Shown("Black Gull", true), NameplateText.shown(true, true, "", true, " Black Gull "));
+        // a named ship shows its own name, wreck or not
+        assertEquals(new NameplateText.Shown("Sea Dog", false), NameplateText.shown(true, true, "Sea Dog", true, "Black Gull"));
+        assertEquals(new NameplateText.Shown("Sea Dog", false), NameplateText.shown(true, true, "Sea Dog", false, ""));
+        // a wreck of an unnamed ship, not a wreck, off a ship or with the toggle off: blank
+        assertEquals(NameplateText.Shown.NONE, NameplateText.shown(true, true, "", true, ""));
+        assertEquals(NameplateText.Shown.NONE, NameplateText.shown(true, true, "", false, "Black Gull"));
+        assertEquals(NameplateText.Shown.NONE, NameplateText.shown(true, false, "", true, "Black Gull"));
+        assertEquals(NameplateText.Shown.NONE, NameplateText.shown(false, true, "", true, "Black Gull"));
+        assertEquals("nameplate.pirates_n_ships.wreck_of", NameplateText.KEY_WRECK_OF);
+    }
 }

@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.ship.assembly;
 
 import com.richardsenger.piratesnships.core.ModModule;
+import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.assembly.AssemblyResult.Outcome;
@@ -56,6 +57,12 @@ public final class AssemblyModule implements ModModule {
                 ShipRegistry.get(level.getServer()).remove(id);
             }
         });
+        // A ship that Sable splits: keeper, wrecks, tiny pieces (RS1)
+        ShipSplits.register();
+        CommonEvents.LEVEL_TICK_END.register(ShipSplits::onLevelTick);
+        CommonEvents.SERVER_TICK_END.register(server -> ShipSplits.onServerTick());
+        CommonEvents.SERVER_STOPPED.register(server -> ShipSplits.onServerStopped());
+        CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> ShipInfoCommand.register(dispatcher));
     }
 
     @Override
@@ -77,6 +84,10 @@ public final class AssemblyModule implements ModModule {
             lang.add(HelmBlock.KEY_DISASSEMBLE_HINT, "Sneak-use the helm with an empty hand to disassemble the ship");
             lang.add(Outcome.FAILED.key(), "Assembly failed, see the server log");
             ShipTemplateCommands.lang(lang);
+            lang.add(ShipInfoCommand.KEY_NONE, "No ship here");
+            lang.add(ShipInfoCommand.KEY_SHIP, "Ship %s, name %s, origin %s");
+            lang.add(ShipInfoCommand.KEY_WRECK, "Wreck %s of %s, origin %s");
+            lang.add(ShipInfoCommand.KEY_UNNAMED, "(unnamed)");
         });
         data.models(m -> {
             // Hand-made Blockbench model (art/models/helm.bbmodel, design.md §4.8): only the block state is generated.
@@ -123,6 +134,6 @@ public final class AssemblyModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(AssemblyGameTests.class, ShipTemplateGameTests.class);
+        return List.of(AssemblyGameTests.class, ShipTemplateGameTests.class, SplitGameTests.class);
     }
 }

@@ -331,6 +331,7 @@
   "message.pirates_n_ships.whistle.released_all": "%s crew members leave their stations",
   "message.pirates_n_ships.whistle.selected": "%s awaits orders: use the whistle on a station",
   "message.pirates_n_ships.yard.no_sail": "This yard heads no sail: hang a second yard %s to %s blocks straight below its middle, on the same mast",
+  "nameplate.pirates_n_ships.wreck_of": "Wreck of %s",
   "pirates_n_ships.assembly.assembled": "Ship assembled: %s blocks",
   "pirates_n_ships.assembly.disabled": "Ship assembly is disabled on this server",
   "pirates_n_ships.assembly.disassemble_hint": "Sneak-use the helm with an empty hand to disassemble the ship",

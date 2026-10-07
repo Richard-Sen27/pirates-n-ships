@@ -16,6 +16,11 @@ import com.richardsenger.piratesnships.sailing.wind.WindOverride;
 import com.richardsenger.piratesnships.ship.ShipData;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.ShipTestCleanup;
+import com.richardsenger.piratesnships.ship.decor.NameplateBlockEntity;
+import com.richardsenger.piratesnships.ship.decor.NameplateText;
+import com.richardsenger.piratesnships.ship.decor.ShipDecor;
+import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.world.level.block.LadderBlock;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.SableSplits;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
@@ -60,6 +65,8 @@ public final class SplitGameTests {
     /** Plate A (with the helm) at x 4..6, the joint at x 7, plate B at x 8..10; z 4..6; planks at y 2 on stone. */
     private static final BlockPos HELM = new BlockPos(5, 3, 5);
     private static final BlockPos JOINT = new BlockPos(7, 2, 5);
+    /** A nameplate hanging from plate B's north edge (facing north). */
+    private static final BlockPos PLATE = new BlockPos(9, 2, 3);
     private static final String NAME = "Black Gull";
     private static final String FLAG = "jolly_roger";
 
@@ -91,12 +98,16 @@ public final class SplitGameTests {
 
     /** The dumbbell on a stone floor; returns the assembled ship, named and flagged. */
     private static ShipBody dumbbell(GameTestHelper h) {
+        buildDumbbell(h);
+        return assembleNamed(h, HELM);
+    }
+
+    private static void buildDumbbell(GameTestHelper h) {
         floor(h, 24);
         plate(h, 4, 4, 2, Blocks.OAK_PLANKS);
         h.setBlock(JOINT, Blocks.OAK_PLANKS);
         plate(h, 8, 4, 2, Blocks.OAK_PLANKS);
         h.setBlock(HELM, AssemblyContent.HELM.get().defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
-        return assembleNamed(h, HELM);
     }
 
     private static ShipBody assembleNamed(GameTestHelper h, BlockPos helm) {
@@ -168,7 +179,10 @@ public final class SplitGameTests {
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 100, batch = BATCH + "dumbbell")
     public static void dumbbellSplitLeavesTheShipOnTheHelmSide(GameTestHelper h) {
-        ShipBody ship = dumbbell(h);
+        buildDumbbell(h);
+        // a nameplate on plate B's north edge, hanging from its plank (part of the loose piece)
+        h.setBlock(PLATE, ShipDecor.NAMEPLATE.get().defaultBlockState().setValue(LadderBlock.FACING, Direction.NORTH));
+        ShipBody ship = assembleNamed(h, HELM);
         UUID original = ship.id();
         BlockPos joint = plotOf(h, ship, JOINT);
         trackPieces(h);
@@ -189,7 +203,20 @@ public final class SplitGameTests {
             ShipSplits.Lineage w = ShipSplits.lineage(wreck);
             h.assertTrue(w.wreck() && w.origin().equals(original) && NAME.equals(w.wreckOf()), "the wreck's line is wrong: " + w);
             h.assertTrue(ShipSplits.isWreck(wreck) && !ShipSplits.isWreck(keeper), "isWreck disagrees with the line");
-            h.assertTrue(wreck.plotBlocks().size() == 9, "the wreck holds " + wreck.plotBlocks().size() + " blocks, expected plate B");
+            h.assertTrue(wreck.plotBlocks().size() == 10, "the wreck holds " + wreck.plotBlocks().size() + " blocks, expected plate B and the plate");
+            NameplateBlockEntity plate = null;
+            for (BlockPos p : wreck.plotBlocks()) {
+                if (h.getLevel().getBlockEntity(p) instanceof NameplateBlockEntity be) {
+                    plate = be;
+                }
+            }
+            h.assertTrue(plate != null, "the nameplate is not on the wreck");
+            plate.refresh();
+            h.assertTrue(plate.wreckOf() && NAME.equals(plate.text()), "the wreck's nameplate shows \"" + plate.text()
+                    + "\" (wreck of: " + plate.wreckOf() + ")");
+            h.assertTrue(plate.display().getContents() instanceof TranslatableContents t
+                    && NameplateText.KEY_WRECK_OF.equals(t.getKey()) && t.getArgs().length == 1 && NAME.equals(String.valueOf(t.getArgs()[0])),
+                    "the nameplate line is not \"Wreck of " + NAME + "\": " + plate.display());
         });
     }
 

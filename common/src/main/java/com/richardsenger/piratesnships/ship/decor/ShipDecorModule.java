@@ -75,6 +75,7 @@ public final class ShipDecorModule implements ModModule {
                 .block(ShipDecor.FIGUREHEAD_EAGLE, "Eagle Figurehead")
                 .block(ShipDecor.FIGUREHEAD_SKULL, "Skull Figurehead")
                 .block(ShipDecor.NAMEPLATE, "Nameplate")
+                .add(NameplateText.KEY_WRECK_OF, "Wreck of %s")
                 .block(ShipDecor.FLAGPOLE, "Flagpole")
                 .block(ShipDecor.CARGO_CRATE, "Cargo Crate")
                 .block(ShipDecor.CARGO_BARREL, "Cargo Barrel"));

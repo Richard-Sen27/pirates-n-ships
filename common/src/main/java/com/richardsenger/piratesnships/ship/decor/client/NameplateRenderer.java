@@ -35,9 +35,10 @@ public class NameplateRenderer implements BlockEntityRenderer<NameplateBlockEnti
 
     @Override
     public void render(NameplateBlockEntity be, float partialTick, PoseStack pose, MultiBufferSource buffers, int light, int overlay) {
-        String text = be.text();
         BlockState state = be.getBlockState();
-        if (text.isEmpty() || !(state.getBlock() instanceof NameplateBlock)) return;
+        if (be.text().isEmpty() || !(state.getBlock() instanceof NameplateBlock)) return;
+        String text = be.display().getString(); // "Wreck of <name>" on a wreck piece (RS1), translated here
+
         Direction facing = state.getValue(LadderBlock.FACING);
         int width = font.width(text);
         float scale = NameplateText.fitScale(width);

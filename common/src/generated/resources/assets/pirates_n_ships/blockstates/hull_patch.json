@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "pirates_n_ships:block/hull_patch"
+    }
+  }
+}

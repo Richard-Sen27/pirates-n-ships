@@ -116,11 +116,14 @@ class WhistleMenuLogicTest {
     // ------------------------------------------------------------------ entries
 
     @Test
-    void entriesAreTheSailOrdersThenPumpThenFireThenRelease() {
+    void entriesAreTheSailOrdersThenPumpThenFireThenLoadThenRelease() {
         List<WhistleOrder> e = WhistleOrder.entries();
         assertEquals(List.of(WhistleOrder.HOIST, WhistleOrder.REEF, WhistleOrder.FURL, WhistleOrder.PUMP, WhistleOrder.FIRE,
-                WhistleOrder.RELEASE), e);
+                WhistleOrder.LOAD, WhistleOrder.RELEASE), e);
         assertEquals(CannonOrder.FIRE, WhistleOrder.FIRE.order());
+        assertEquals(CannonOrder.LOAD, WhistleOrder.LOAD.order());
+        assertNull(WhistleOrder.LOAD.sail(), "the load order is no sail order and is not remembered");
+        assertEquals("load", WhistleOrder.LOAD.id());
         assertNull(WhistleOrder.FIRE.sail(), "the fire order is no sail order and is not remembered");
         assertEquals(Constants.id("cannon"), WhistleOrder.FIRE.icon());
         assertEquals("fire", WhistleOrder.FIRE.id());
@@ -142,9 +145,9 @@ class WhistleMenuLogicTest {
     }
 
     @Test
-    void sixEntriesSplitTheWheelEvenly() {
+    void sevenEntriesSplitTheWheelEvenly() {
         RadialLayout l = RadialLayout.forWindow(WhistleOrder.entries().size(), 480, 270, 1.0);
-        assertEquals(6, l.count());
+        assertEquals(7, l.count());
         for (int i = 0; i < l.count(); i++) {
             double a = l.centerAngle(i);
             assertEquals(i, l.sectorAt(RadialLayout.x(a, l.iconRadius()), RadialLayout.y(a, l.iconRadius())), "sector " + i);

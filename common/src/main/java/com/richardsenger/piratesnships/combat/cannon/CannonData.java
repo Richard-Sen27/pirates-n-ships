@@ -3,6 +3,7 @@ package com.richardsenger.piratesnships.combat.cannon;
 import com.google.gson.JsonObject;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
+import com.richardsenger.piratesnships.station.order.WhistleOrder;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.advancements.critereon.StatePropertiesPredicate;
 import net.minecraft.core.Direction;
@@ -63,6 +64,14 @@ public final class CannonData {
                     .add(fire.ackKey(), "Aye, firing!")
                     .add(fire.nothingToDoKey(), "The gun is not loaded, captain!")
                     .add(fire.unableKey(), "This gun won't fire, captain!");
+            // crew loading (C9): the order, and its whistle entry (next to "Fire!", whose lang is the station module's)
+            CannonStation.CannonOrder load = CannonStation.CannonOrder.LOAD;
+            lang.add(load.nameKey(), "load the guns")
+                    .add(load.ackKey(), "Aye, loading!")
+                    .add(load.nothingToDoKey(), "The gun is already loaded, captain!")
+                    .add(load.unableKey(), "No powder and shot within reach, captain!")
+                    .add(WhistleOrder.LOAD.nameKey(), "Load!")
+                    .add(WhistleOrder.LOAD.descriptionKey(), "Crew at the guns load them from powder and shot nearby");
         });
         data.models(CannonData::models);
         data.blockLoot(loot -> loot.add(CannonContent.CANNON.get(), masterOnly(CannonContent.CANNON.get())));

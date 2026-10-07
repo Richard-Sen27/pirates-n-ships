@@ -542,9 +542,9 @@ go, sneak and right-click with an empty hand. More than 24 blocks from the hook 
 (or is lost, if the server says so). Throwing a second hook releases the first. Server options: section `grapple`.
 
 ### Swordplay
-Swords make themselves heard: each swing whooshes as the blade comes through (a thrust sounds sharper), hits thud
-on flesh and ring on a chestplate, a parry rings out loudly while a blocked blow clashes dully, and a staggered
-fighter takes a heavy thud. Drawing a sword plays a short scrape. Server owners turn sword sounds off or change
+Swords make themselves heard, one sound per attack: a miss whooshes (lower for a thrust), a hit slices flesh and a
+thrust bites harder, a chestplate rings, and blade on blade clangs, loudly for a parry, dully for a blocked blow
+or when you catch an opponent mid-swing. Drawing a sword plays a short scrape. Server owners turn sword sounds off or change
 their volume under `melee.sounds`.
 
 With a rapier, cutlass or saber in hand the mouse works differently (server config `melee.skill_based_combat`,

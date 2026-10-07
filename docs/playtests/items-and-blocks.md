@@ -79,7 +79,7 @@ Renders of the intended look are in `art/renders/`.
    `latest.log` has no model or texture warnings mentioning `pirates_n_ships`. On a moving ship the models render with
    correct lighting.
 
-## 3D item models (F8a swords; F8b firearms, ammunition, grappling hook)
+## 3D item models (F8a swords; F8b firearms, ammunition, grappling hook; F8c whistle, shackles)
 Compare each sword with a vanilla iron sword in the other hand or the next hotbar slot. Renders in `art/renders/`.
 1. **First person, right hand:** the grip sits in the fist, blade up and forward at the iron sword's angle. The rapier
    is visibly longer and thin, the cutlass short and broad with a brass basket, the saber curved with the tip bending
@@ -106,6 +106,11 @@ Compare each sword with a vanilla iron sword in the other hand or the next hotba
     fully visible; dropped at half size; the same as in the GUI in an item frame.
 13. **Lighting:** the guns are not too dark in shade. Gunmetal and cast iron are dark on purpose; report if they read
     as black.
+14. **Captain's whistle and shackles, GUI:** a brass tube from lower left to upper right with a ball at the top, a steel
+    ring and a pale lanyard loop below; two dark iron cuffs with lighter upper-left rims joined by a short chain. Held
+    like vanilla flat items in first and third person and the offhand, small and turning on the ground, flat in an
+    item frame. Using the whistle still opens the radial menu; shackles still work on a villager. Watch for z-fighting
+    on the whistle's black hole and the keyholes at a distance.
 
 ## Known placeholders (for the later art pass)
 - Cargo crate and barrel, pantry, water barrel, brig bars and door still use simple models (F7d, F7e).

@@ -5,7 +5,7 @@ Statuses: **todo** / **in progress** / **done** / **blocked: needs playtest** / 
 
 "Done" means: `./gradlew build` passes, `./gradlew :neoforge:runGameTestServer` passes, and the new logic has tests.
 
-Last updated: 2026-10-07 (fourth session: phase G; G1, F7a, F7c, F5a, F7b, F5b, F8a, G2, F8b and G3 merged; F8c, G4 and G5 running).
+Last updated: 2026-10-07 (fourth session: phase G; G1, F7a, F7c, F5a, F7b, F5b, F8a, G2, F8b, G3 and F8c merged; F8d, G4 and G5 running).
 
 ## Phase F: first playtest feedback (done, F5 and F7 continue in phase G)
 
@@ -51,8 +51,8 @@ Started 2026-10-07 after the session restart with the Blockbench MCP connected (
 | G5 | Research only: player animation library survey for the melee milestones (NeoForge + Fabric, 1.21.1, first person), result in `docs/animation-libraries.md` with a recommendation for design.md §2 and §21 | in progress |
 | F8a | 3D item models, batch 1: rapier, cutlass, saber | done | Merged (`12f62ce`). Sprite-aligned models (16, 15 and 14 elements) with vanilla's handheld display entries copied in (a `builtin/generated` parent would discard the elements, `ModelBakery` 1.21.1 l.292), `gui_light: front`; the rapier runs 2 px past the footprint and scales its GUI entry to 0.8. Shared palette texture `textures/item/palette.png` from `tools/gen_item_palette.py` (16 patches, all used; grow to 32×16 for the next batch). `HandMadeModelsTest` now lists every hand-made model by name and checks item models carry all 7 display slots. Also restored the block-texture functions that F7c had accidentally dropped from `tools/gen_placeholder_textures.py`. Playtest `items-and-blocks.md`, section "3D item models". |
 | F8b | 3D item models, batch 2: pistol, musket, lead shot, cannonball, grappling hook | done | Merged (`2a50f16`). Pistol 19 elements, musket 23 (runs past the footprint, GUI scale 0.8), lead shot 15, cannonball 10 (exact octagon from four bars), grappling hook 27. Guns have their own hand transforms (barrel forward and slightly up, checked in Blockbench's display mode with the player model). Second palette sheet `palette_2.png`: a sheet can never be resized because model UVs are fractions of the sprite (`FaceBakery` l.164), so new colours go on new 16×16 sheets. Playtest `items-and-blocks.md`, section "3D item models". |
-| F8c | 3D item models, batch 3: captain's whistle, shackles | in progress |
-| F8d | 3D item models, batch 4: rum, hardtack, lime, salt pork, salted fish | todo, after F8c |
+| F8c | 3D item models, batch 3: captain's whistle, shackles | done | Merged (`c8239a9`). Whistle 20 elements (brass bosun's call with steel ring and lanyard loop), shackles 48 (two octagonal cuffs with hinge, lock and three chain links). Both use vanilla's `generated` display entries. The whistle had used vanilla's goat horn sprite. Playtest `items-and-blocks.md`, section "3D item models". |
+| F8d | 3D item models, batch 4: rum, hardtack, lime, salt pork, salted fish | in progress |
 | F8e | 3D item models, batch 5: cloth, spices, tobacco | todo, after F8d (doubloon and bounty proof stay flat) |
 
 Only one agent at a time may use Blockbench (one desktop instance, one open project), so the F7 batches run one after another; G1 and F5 run next to them.

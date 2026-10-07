@@ -1,0 +1,11 @@
+{
+  "helm": [
+    4,
+    8,
+    22
+  ],
+  "name": "ship_template.pirates_n_ships.starter_sloop_basic",
+  "price": 300,
+  "structure": "pirates_n_ships:ships/starter_sloop_basic",
+  "waterline": 2
+}

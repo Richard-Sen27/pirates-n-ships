@@ -25,7 +25,18 @@ public final class ShipTemplates {
     public static final ShipTemplate STARTER_SLOOP = new ShipTemplate(Constants.id("ships/starter_sloop"),
             nameKey(STARTER_SLOOP_ID), Optional.of(new BlockPos(4, 8, 22)), Optional.of(2), Direction.NORTH, 400);
 
-    public static final Map<ResourceLocation, ShipTemplate> DEFAULTS = Map.of(STARTER_SLOOP_ID, STARTER_SLOOP);
+    public static final ResourceLocation STARTER_SLOOP_BASIC_ID = Constants.id("starter_sloop_basic");
+
+    /**
+     * The human's basic starter sloop (art/schematics/starter_sloop_basic.schem): the same 9×21×29 hull and helm as
+     * {@link #STARTER_SLOOP}, but less fitted out (no cleats; the yards sit in front of a continuous mast), so it is
+     * cheaper. Same hull rows, so the same waterline row 2.
+     */
+    public static final ShipTemplate STARTER_SLOOP_BASIC = new ShipTemplate(Constants.id("ships/starter_sloop_basic"),
+            nameKey(STARTER_SLOOP_BASIC_ID), Optional.of(new BlockPos(4, 8, 22)), Optional.of(2), Direction.NORTH, 300);
+
+    public static final Map<ResourceLocation, ShipTemplate> DEFAULTS = Map.of(STARTER_SLOOP_ID, STARTER_SLOOP,
+            STARTER_SLOOP_BASIC_ID, STARTER_SLOOP_BASIC);
 
     private ShipTemplates() {
     }

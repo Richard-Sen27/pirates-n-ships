@@ -1853,6 +1853,7 @@
   "screen.pirates_n_ships.whistle_menu.hint": "Point at an order, then click or release the use key. Esc closes.",
   "screen.pirates_n_ships.whistle_menu.last": "Last order: %s",
   "ship_template.pirates_n_ships.starter_sloop": "Starter Sloop",
+  "ship_template.pirates_n_ships.starter_sloop_basic": "Starter Sloop (basic)",
   "subtitles.pirates_n_ships.combat.cannon_shot": "Cannon fires",
   "subtitles.pirates_n_ships.combat.cannon_volley": "Cannons fire in the distance",
   "subtitles.pirates_n_ships.combat.melee.clash": "Blades clash",

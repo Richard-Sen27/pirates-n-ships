@@ -37,11 +37,29 @@
     ],
     "subtitle": "subtitles.pirates_n_ships.combat.cannon_volley"
   },
+  "combat.melee.clash": {
+    "sounds": [
+      "pirates_n_ships:combat/melee/clash1",
+      "pirates_n_ships:combat/melee/clash2",
+      "pirates_n_ships:combat/melee/clash3",
+      "pirates_n_ships:combat/melee/clash4",
+      "pirates_n_ships:combat/melee/clash5",
+      "pirates_n_ships:combat/melee/clash6"
+    ],
+    "subtitle": "subtitles.pirates_n_ships.combat.melee.clash"
+  },
   "combat.melee.disarm": {
     "sounds": [
       "pirates_n_ships:combat/melee/disarm"
     ],
     "subtitle": "subtitles.pirates_n_ships.combat.melee.disarm"
+  },
+  "combat.melee.hit": {
+    "sounds": [
+      "pirates_n_ships:combat/melee/hit1",
+      "pirates_n_ships:combat/melee/hit2"
+    ],
+    "subtitle": "subtitles.pirates_n_ships.combat.melee.hit"
   },
   "combat.melee.hit_armor": {
     "sounds": [
@@ -52,25 +70,18 @@
   "combat.melee.hit_heavy": {
     "sounds": [
       "pirates_n_ships:combat/melee/hit_heavy1",
-      "pirates_n_ships:combat/melee/hit_heavy2",
-      "pirates_n_ships:combat/melee/hit_heavy3"
+      "pirates_n_ships:combat/melee/hit_heavy2"
     ],
     "subtitle": "subtitles.pirates_n_ships.combat.melee.hit_heavy"
   },
-  "combat.melee.parry": {
+  "combat.melee.miss": {
     "sounds": [
-      "pirates_n_ships:combat/melee/parry"
+      {
+        "type": "event",
+        "name": "minecraft:entity.player.attack.sweep"
+      }
     ],
-    "subtitle": "subtitles.pirates_n_ships.combat.melee.parry"
-  },
-  "combat.melee.swing": {
-    "sounds": [
-      "pirates_n_ships:combat/melee/swing1",
-      "pirates_n_ships:combat/melee/swing2",
-      "pirates_n_ships:combat/melee/swing3",
-      "pirates_n_ships:combat/melee/swing4"
-    ],
-    "subtitle": "subtitles.pirates_n_ships.combat.melee.swing"
+    "subtitle": "subtitles.pirates_n_ships.combat.melee.miss"
   },
   "combat.melee.unsheathe": {
     "sounds": [

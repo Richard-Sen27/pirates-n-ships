@@ -64,7 +64,7 @@ class SoundResourcesTest {
         JsonObject root = soundsJson();
         for (String key : List.of("ship.creak", "anchor.chain", "anchor.splash", "anchor.thud", "music.sea", "music.shanty",
                 "combat.pistol_shot", "combat.pistol_empty", "combat.cannon_shot", "combat.cannon_volley",
-                "combat.melee.swing", "combat.melee.parry", "combat.melee.hit_armor", "combat.melee.hit_heavy",
+                "combat.melee.miss", "combat.melee.hit", "combat.melee.hit_heavy", "combat.melee.clash", "combat.melee.hit_armor",
                 "combat.melee.unsheathe", "combat.melee.disarm", "combat.melee.weapon_break")) {
             assertTrue(root.has(key), "sounds.json misses " + key + " (run ./gradlew :neoforge:runData)");
         }

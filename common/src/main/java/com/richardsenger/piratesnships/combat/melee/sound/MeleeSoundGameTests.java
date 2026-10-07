@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 /**
- * Sword sounds on real entities (P7): every transition point of {@code MeleeService} plays its cue at the right
+ * Sword sounds on real entities (P7, P8): every attack plays exactly one cue, chosen by its outcome, at the right
  * entity. Sounds are recorded per entity ({@link MeleeSoundPlayer#record}), so these tests can share a batch with
  * other melee tests; the config tests run alone in their batches. Pillagers without AI stand in for duelists as in
  * {@code MeleeGameTests}; yaw -90 faces +X, yaw 90 faces -X.
@@ -98,116 +98,174 @@ public final class MeleeSoundGameTests {
         return list.get(0);
     }
 
-    /** A slash plays the swing at the attacker when its hit frames begin, then the flesh hit at the target. */
+    private static void assertEvent(GameTestHelper helper, MeleeSoundPlayer.Played p, net.minecraft.sounds.SoundEvent event, String what) {
+        helper.assertTrue(p.event() == event, what + " event " + p.event() + ", expected " + event);
+    }
+
+    /** A slash into the air plays exactly one miss whoosh at the attacker, when its hit frames end, and nothing else. */
     @ModGameTest(template = GameTestTemplates.EMPTY_9)
-    public static void slashSwingsThenHitsFlesh(GameTestHelper helper) {
+    public static void slashIntoTheAirWhooshesOnce(GameTestHelper helper) {
+        Mob attacker = duelist(helper, 1, 4, -90);
+        List<MeleeSoundPlayer.Played> a = rec(attacker);
+        helper.assertTrue(MeleeService.startSlash(attacker, DefaultWeapons.CUTLASS).accepted(), "slash accepted");
+        int windup = DefaultWeapons.CUTLASS.slash().windupTicks();
+        helper.runAfterDelay(windup + 1, () -> helper.assertTrue(a.isEmpty(), "wind-up and hit frames are silent: " + a));
+        helper.runAfterDelay(25, () -> {
+            MeleeSoundPlayer.Played miss = only(helper, a, "sound at the attacker");
+            helper.assertTrue(miss.cue().equals(MeleeSoundRules.MISS_SLASH), "slash miss cue: " + miss.cue());
+            assertEvent(helper, miss, CombatSounds.MELEE_MISS.get(), "miss");
+            assertAt(helper, miss, attacker, "miss");
+            helper.assertValueEqual(MeleeService.state(attacker).phase(), Phase.IDLE, "attacker phase");
+            done(helper, attacker);
+        });
+    }
+
+    /** A landed slash plays exactly one hit at the target: no swing, no whoosh, no second cue. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void landedSlashHitsOnce(GameTestHelper helper) {
         Mob attacker = duelist(helper, 1, 4, -90);
         Mob target = duelist(helper, 3, 4, 90);
         List<MeleeSoundPlayer.Played> a = rec(attacker), t = rec(target);
         helper.assertTrue(MeleeService.startSlash(attacker, DefaultWeapons.CUTLASS).accepted(), "slash accepted");
-        helper.assertTrue(a.isEmpty(), "the wind-up is silent: " + a);
-        helper.runAfterDelay(15, () -> {
-            MeleeSoundPlayer.Played swing = only(helper, a, "swing at the attacker");
-            helper.assertTrue(swing.cue().equals(MeleeSoundRules.SWING_SLASH), "slash swing cue: " + swing.cue());
-            helper.assertTrue(swing.event() == CombatSounds.MELEE_SWING.get(), "swing event " + swing.event());
-            assertAt(helper, swing, attacker, "swing");
-            MeleeSoundPlayer.Played hit = only(helper, t, "hit at the target");
+        helper.runAfterDelay(25, () -> {
+            helper.assertTrue(target.getHealth() < target.getMaxHealth(), "the slash hit");
+            helper.assertTrue(a.isEmpty(), "nothing at the attacker: " + a);
+            MeleeSoundPlayer.Played hit = only(helper, t, "sound at the target");
             helper.assertTrue(hit.cue().equals(MeleeSoundRules.HIT_FLESH), "flesh hit cue: " + hit.cue());
-            helper.assertTrue(hit.event() == CombatSounds.MELEE_HIT_HEAVY.get(), "hit event " + hit.event());
+            assertEvent(helper, hit, CombatSounds.MELEE_HIT.get(), "hit");
             assertAt(helper, hit, target, "hit");
-            helper.assertTrue(swing.seq() < hit.seq(), "the swing comes before the hit");
             done(helper, attacker, target);
         });
     }
 
-    /** A thrust swings at the thrust pitch; a target in a chestplate rings. */
+    /** A thrust that lands on flesh plays the heavy hit, once. */
     @ModGameTest(template = GameTestTemplates.EMPTY_9)
-    public static void thrustSwingsHigherAndArmourRings(GameTestHelper helper) {
+    public static void thrustHitsHeavy(GameTestHelper helper) {
+        Mob attacker = duelist(helper, 1, 4, -90);
+        Mob target = duelist(helper, 3, 4, 90);
+        List<MeleeSoundPlayer.Played> a = rec(attacker), t = rec(target);
+        helper.assertTrue(MeleeService.startThrust(attacker, DefaultWeapons.CUTLASS).accepted(), "thrust accepted");
+        helper.runAfterDelay(30, () -> {
+            helper.assertTrue(a.isEmpty(), "nothing at the attacker: " + a);
+            MeleeSoundPlayer.Played hit = only(helper, t, "sound at the target");
+            helper.assertTrue(hit.cue().equals(MeleeSoundRules.HIT_HEAVY), "heavy hit cue: " + hit.cue());
+            assertEvent(helper, hit, CombatSounds.MELEE_HIT_HEAVY.get(), "heavy hit");
+            assertAt(helper, hit, target, "heavy hit");
+            done(helper, attacker, target);
+        });
+    }
+
+    /** A target in a chestplate rings, once. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void chestplateRings(GameTestHelper helper) {
         Mob attacker = duelist(helper, 1, 4, -90);
         Mob target = duelist(helper, 3, 4, 90);
         target.setItemSlot(EquipmentSlot.CHEST, new ItemStack(Items.IRON_CHESTPLATE));
         List<MeleeSoundPlayer.Played> a = rec(attacker), t = rec(target);
         helper.assertTrue(MeleeService.startThrust(attacker, DefaultWeapons.CUTLASS).accepted(), "thrust accepted");
-        helper.runAfterDelay(20, () -> {
-            MeleeSoundPlayer.Played swing = only(helper, a, "swing at the attacker");
-            helper.assertTrue(swing.cue().equals(MeleeSoundRules.SWING_THRUST), "thrust swing cue: " + swing.cue());
-            assertAt(helper, swing, attacker, "swing");
-            MeleeSoundPlayer.Played hit = only(helper, t, "hit at the target");
+        helper.runAfterDelay(30, () -> {
+            helper.assertTrue(a.isEmpty(), "nothing at the attacker: " + a);
+            MeleeSoundPlayer.Played hit = only(helper, t, "sound at the target");
             helper.assertTrue(hit.cue().equals(MeleeSoundRules.HIT_ARMOR), "armour hit cue: " + hit.cue());
-            helper.assertTrue(hit.event() == CombatSounds.MELEE_HIT_ARMOR.get(), "hit event " + hit.event());
+            assertEvent(helper, hit, CombatSounds.MELEE_HIT_ARMOR.get(), "armour hit");
             assertAt(helper, hit, target, "armour hit");
             done(helper, attacker, target);
         });
     }
 
-    /** A parried slash clashes loudly at the defender; nothing sounds like a hit, the parried attacker's stagger is silent. */
+    /** A parried slash clashes once, loudly, at the defender; the parried attacker plays nothing (no hit, no whoosh). */
     @ModGameTest(template = GameTestTemplates.EMPTY_9)
-    public static void parriedSlashClashesWithoutAHit(GameTestHelper helper) {
+    public static void parriedSlashClashesOnce(GameTestHelper helper) {
         Mob attacker = duelist(helper, 1, 4, -90);
         Mob defender = duelist(helper, 3, 4, 90);
         List<MeleeSoundPlayer.Played> a = rec(attacker), d = rec(defender);
         helper.assertTrue(MeleeService.parry(defender, DefaultWeapons.RAPIER).accepted(), "parry accepted");
         helper.assertTrue(MeleeService.startSlash(attacker, DefaultWeapons.CUTLASS).accepted(), "slash accepted");
-        helper.runAfterDelay(12, () -> {
-            helper.assertValueEqual(MeleeService.state(attacker).phase(), Phase.STAGGERED, "attacker phase");
+        helper.runAfterDelay(12, () -> helper.assertValueEqual(MeleeService.state(attacker).phase(), Phase.STAGGERED, "attacker phase"));
+        helper.runAfterDelay(40, () -> {
             MeleeSoundPlayer.Played parry = only(helper, d, "sound at the defender");
             helper.assertTrue(parry.cue().equals(MeleeSoundRules.PARRY), "parry cue: " + parry.cue());
-            helper.assertTrue(parry.event() == CombatSounds.MELEE_PARRY.get(), "parry event " + parry.event());
+            assertEvent(helper, parry, CombatSounds.MELEE_CLASH.get(), "parry");
             assertAt(helper, parry, defender, "parry");
-            helper.assertTrue(ofSound(a, MeleeSoundRules.Sound.HIT_FLESH).isEmpty() && ofSound(a, MeleeSoundRules.Sound.HIT_ARMOR).isEmpty(),
-                    "no hit sound at the attacker: " + a);
-            only(helper, of(a, MeleeSoundRules.SWING_SLASH), "swing");
-            helper.assertTrue(a.size() == 1, "only the swing at the attacker: " + a);
+            helper.assertTrue(a.isEmpty(), "nothing at the parried attacker: " + a);
             done(helper, attacker, defender);
         });
     }
 
-    /** A guarded slash clashes low and quiet at the defender. */
+    /** A guarded slash clashes once, low and quiet, at the defender. */
     @ModGameTest(template = GameTestTemplates.EMPTY_9)
     public static void guardedSlashClashesLow(GameTestHelper helper) {
         Mob attacker = duelist(helper, 1, 4, -90);
         Mob defender = duelist(helper, 3, 4, 90);
-        List<MeleeSoundPlayer.Played> d = rec(defender);
+        List<MeleeSoundPlayer.Played> a = rec(attacker), d = rec(defender);
         helper.assertTrue(MeleeService.guardDown(defender, DefaultWeapons.RAPIER).accepted(), "guard accepted");
         helper.assertTrue(MeleeService.startSlash(attacker, DefaultWeapons.CUTLASS).accepted(), "slash accepted");
-        helper.runAfterDelay(15, () -> {
+        helper.runAfterDelay(25, () -> {
             MeleeSoundPlayer.Played guard = only(helper, d, "sound at the defender");
             helper.assertTrue(guard.cue().equals(MeleeSoundRules.GUARD), "guard cue: " + guard.cue());
-            helper.assertTrue(guard.event() == CombatSounds.MELEE_PARRY.get(), "guard event " + guard.event());
+            assertEvent(helper, guard, CombatSounds.MELEE_CLASH.get(), "guard");
             assertAt(helper, guard, defender, "guard");
+            helper.assertTrue(guard.volume() < MeleeSoundRules.PARRY.minVolume() * MeleeConfig.SOUNDS_VOLUME.get(), "quieter than a parry");
+            helper.assertTrue(a.isEmpty(), "nothing at the attacker: " + a);
             done(helper, attacker, defender);
         });
     }
 
-    /** A rapier thrust (9) beats a rapier holder's poise (8): the hit and a low stagger thud at the target. */
+    /**
+     * A slash landing on a defender who is winding up an attack with a cutlass: blade meets blade, one clash at the
+     * defender. The defender faces away so its own thrust can't reach the attacker; if it survives the hit unstaggered,
+     * its thrust into the air whooshes afterwards (its own miss, not a second cue of this hit).
+     */
     @ModGameTest(template = GameTestTemplates.EMPTY_9)
-    public static void staggeringThrustThudsLow(GameTestHelper helper) {
+    public static void hitOnADefenderMidWindUpClashes(GameTestHelper helper) {
+        Mob attacker = duelist(helper, 1, 4, -90);
+        Mob defender = duelist(helper, 3, 4, -90);
+        defender.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BuiltInRegistries.ITEM.get(DefaultWeapons.CUTLASS_ID)));
+        List<MeleeSoundPlayer.Played> a = rec(attacker), d = rec(defender);
+        helper.assertTrue(MeleeService.startThrust(defender, DefaultWeapons.CUTLASS).accepted(), "defender's thrust accepted");
+        helper.assertTrue(MeleeService.startSlash(attacker, DefaultWeapons.CUTLASS).accepted(), "slash accepted");
+        helper.assertTrue(DefaultWeapons.CUTLASS.slash().windupTicks() < DefaultWeapons.CUTLASS.thrust().windupTicks(),
+                "the slash lands while the thrust still winds up");
+        helper.runAfterDelay(30, () -> {
+            helper.assertTrue(defender.getHealth() < defender.getMaxHealth(), "the slash hit");
+            helper.assertTrue(!d.isEmpty(), "nothing at the defender");
+            MeleeSoundPlayer.Played clash = d.get(0);
+            helper.assertTrue(clash.cue().equals(MeleeSoundRules.BLADE_CLASH), "blade-on-blade cue: " + clash.cue());
+            assertEvent(helper, clash, CombatSounds.MELEE_CLASH.get(), "blade on blade");
+            assertAt(helper, clash, defender, "blade on blade");
+            helper.assertTrue(d.stream().skip(1).allMatch(p -> p.cue().equals(MeleeSoundRules.MISS_THRUST)),
+                    "after the clash at most the defender's own thrust miss: " + d);
+            helper.assertTrue(a.isEmpty(), "nothing at the attacker: " + a);
+            done(helper, attacker, defender);
+        });
+    }
+
+    /** A rapier thrust (9) beats a rapier holder's poise (8): one heavy hit at the target, no second stagger cue. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void staggeringThrustHitsHeavyOnce(GameTestHelper helper) {
         Mob attacker = duelist(helper, 1, 4, -90);
         Mob target = duelist(helper, 3, 4, 90);
         target.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BuiltInRegistries.ITEM.get(DefaultWeapons.RAPIER_ID)));
         List<MeleeSoundPlayer.Played> t = rec(target);
         helper.assertTrue(MeleeService.startThrust(attacker, DefaultWeapons.RAPIER).accepted(), "thrust accepted");
         helper.runAfterDelay(15, () -> {
-            helper.assertTrue(t.size() == 2, "hit and stagger at the target, got " + t);
-            helper.assertTrue(t.get(0).cue().equals(MeleeSoundRules.HIT_FLESH), "first the hit: " + t.get(0).cue());
-            helper.assertTrue(t.get(1).cue().equals(MeleeSoundRules.STAGGER), "then the stagger: " + t.get(1).cue());
-            assertAt(helper, t.get(1), target, "stagger");
+            helper.assertValueEqual(MeleeService.state(target).phase(), Phase.STAGGERED, "target phase");
+            MeleeSoundPlayer.Played hit = only(helper, t, "sound at the target");
+            helper.assertTrue(hit.cue().equals(MeleeSoundRules.HIT_HEAVY), "heavy hit cue: " + hit.cue());
             done(helper, attacker, target);
         });
     }
 
-    /** A feint whooshes quietly at the feinter and never swings. */
+    /** A feint is silent: no whoosh at the feinter, nothing at the target. */
     @ModGameTest(template = GameTestTemplates.EMPTY_9)
-    public static void feintWhooshesInsteadOfSwinging(GameTestHelper helper) {
+    public static void feintIsSilent(GameTestHelper helper) {
         Mob attacker = duelist(helper, 1, 4, -90);
         Mob target = duelist(helper, 3, 4, 90);
         List<MeleeSoundPlayer.Played> a = rec(attacker), t = rec(target);
         helper.assertTrue(MeleeService.startSlash(attacker, DefaultWeapons.CUTLASS).accepted(), "slash accepted");
         helper.runAfterDelay(2, () -> helper.assertTrue(MeleeService.feint(attacker).accepted(), "feint accepted"));
-        helper.runAfterDelay(20, () -> {
-            MeleeSoundPlayer.Played feint = only(helper, a, "sound at the feinter");
-            helper.assertTrue(feint.cue().equals(MeleeSoundRules.FEINT), "feint cue: " + feint.cue());
-            assertAt(helper, feint, attacker, "feint");
+        helper.runAfterDelay(25, () -> {
+            helper.assertTrue(a.isEmpty(), "nothing at the feinter: " + a);
             helper.assertTrue(t.isEmpty(), "nothing at the target: " + t);
             done(helper, attacker, target);
         });
@@ -223,6 +281,7 @@ public final class MeleeSoundGameTests {
         attacker.doHurtTarget(defender);
         MeleeSoundPlayer.Played parry = only(helper, d, "sound at the defender");
         helper.assertTrue(parry.cue().equals(MeleeSoundRules.PARRY), "parry cue: " + parry.cue());
+        assertEvent(helper, parry, CombatSounds.MELEE_CLASH.get(), "parry");
         done(helper, attacker, defender);
     }
 
@@ -248,7 +307,7 @@ public final class MeleeSoundGameTests {
         done(helper, player);
     }
 
-    /** Own batch: with {@code melee.sounds.enabled} off a whole exchange (swing, hit, parry, draw) is silent. */
+    /** Own batch: with {@code melee.sounds.enabled} off a whole exchange (miss, hit, parry, draw) is silent. */
     @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = "pirates_n_ships_config_melee_sounds_off")
     public static void soundsOffPlaysNothing(GameTestHelper helper) {
         ConfigOverrides.during(helper, MeleeConfig.SOUNDS_ENABLED, false);
@@ -262,19 +321,21 @@ public final class MeleeSoundGameTests {
         Mob target = duelist(helper, 3, 4, 90);
         Mob parrier = duelist(helper, 3, 6, 90);
         Mob parried = duelist(helper, 2, 6, -90);
+        Mob whiffer = duelist(helper, 1, 1, -90);
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
         MeleeSoundPlayer.onPlayerTick(player);
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BuiltInRegistries.ITEM.get(DefaultWeapons.CUTLASS_ID)));
         MeleeSoundPlayer.onPlayerTick(player);
         helper.assertTrue(MeleeService.startSlash(attacker, DefaultWeapons.CUTLASS).accepted(), "slash accepted");
+        helper.assertTrue(MeleeService.startSlash(whiffer, DefaultWeapons.CUTLASS).accepted(), "slash into the air accepted");
         helper.assertTrue(MeleeService.parry(parrier, DefaultWeapons.SABER).accepted(), "parry accepted");
         parried.doHurtTarget(parrier);
-        helper.runAfterDelay(15, () -> {
+        helper.runAfterDelay(25, () -> {
             helper.assertTrue(target.getHealth() < target.getMaxHealth(), "the slash still hit");
             helper.assertTrue(sunk.isEmpty(), "sounds played with melee.sounds.enabled off: " + sunk);
             MeleeSoundPlayer.installSink(null);
             player.discard();
-            done(helper, attacker, target, parrier, parried, player);
+            done(helper, attacker, target, parrier, parried, whiffer, player);
         });
     }
 
@@ -284,16 +345,19 @@ public final class MeleeSoundGameTests {
         ConfigOverrides.during(helper, MeleeConfig.SOUNDS_VOLUME, 0.5);
         Mob attacker = duelist(helper, 1, 4, -90);
         Mob target = duelist(helper, 3, 4, 90);
-        List<MeleeSoundPlayer.Played> a = rec(attacker), t = rec(target);
+        Mob whiffer = duelist(helper, 1, 1, -90);
+        List<MeleeSoundPlayer.Played> a = rec(attacker), t = rec(target), w = rec(whiffer);
         helper.assertTrue(MeleeService.startSlash(attacker, DefaultWeapons.CUTLASS).accepted(), "slash accepted");
-        helper.runAfterDelay(15, () -> {
-            MeleeSoundPlayer.Played swing = only(helper, a, "swing");
+        helper.assertTrue(MeleeService.startSlash(whiffer, DefaultWeapons.CUTLASS).accepted(), "slash into the air accepted");
+        helper.runAfterDelay(25, () -> {
+            helper.assertTrue(a.isEmpty(), "nothing at the attacker: " + a);
             MeleeSoundPlayer.Played hit = only(helper, t, "hit");
+            MeleeSoundPlayer.Played miss = only(helper, w, "miss");
             Predicate<MeleeSoundPlayer.Played> halved = p -> p.volume() <= p.cue().maxVolume() * 0.5f + 1e-4
                     && p.volume() >= p.cue().minVolume() * 0.5f - 1e-4;
-            helper.assertTrue(halved.test(swing), "swing volume not halved: " + swing.volume());
+            helper.assertTrue(halved.test(miss), "miss volume not halved: " + miss.volume());
             helper.assertTrue(halved.test(hit), "hit volume not halved: " + hit.volume());
-            done(helper, attacker, target);
+            done(helper, attacker, target, whiffer);
         });
     }
 
@@ -303,9 +367,9 @@ public final class MeleeSoundGameTests {
         JsonObject sounds = json(helper, "/assets/pirates_n_ships/sounds.json");
         JsonObject lang = json(helper, "/assets/pirates_n_ships/lang/en_us.json");
         Map<MeleeSoundRules.Sound, String> expected = Map.of(
-                MeleeSoundRules.Sound.SWING, "Sword swings", MeleeSoundRules.Sound.HIT_FLESH, "Sword hits",
-                MeleeSoundRules.Sound.PARRY, "Blades clash", MeleeSoundRules.Sound.HIT_ARMOR, "Armour rings",
-                MeleeSoundRules.Sound.UNSHEATHE, "Sword drawn");
+                MeleeSoundRules.Sound.MISS, "Sword misses", MeleeSoundRules.Sound.HIT, "Sword hits",
+                MeleeSoundRules.Sound.HIT_HEAVY, "Sword hits", MeleeSoundRules.Sound.CLASH, "Blades clash",
+                MeleeSoundRules.Sound.HIT_ARMOR, "Armour rings", MeleeSoundRules.Sound.UNSHEATHE, "Sword drawn");
         for (MeleeSoundRules.Sound sound : MeleeSoundRules.Sound.values()) {
             String path = BuiltInRegistries.SOUND_EVENT.getKey(MeleeSoundPlayer.event(sound)).getPath();
             helper.assertTrue(sounds.has(path), "sounds.json does not list " + path);
@@ -315,6 +379,13 @@ public final class MeleeSoundGameTests {
             helper.assertTrue(lang.has(key) && expected.get(sound).equals(lang.get(key).getAsString()),
                     key + " should read '" + expected.get(sound) + "', is " + lang.get(key));
         }
+        // the miss is vanilla's sweep whoosh, referenced as an event so a file of ours can replace it later
+        com.google.gson.JsonArray miss = sounds.getAsJsonObject(CombatSounds.MELEE_MISS.id().getPath()).getAsJsonArray("sounds");
+        helper.assertTrue(miss.size() == 1 && miss.get(0).isJsonObject()
+                        && "event".equals(miss.get(0).getAsJsonObject().get("type").getAsString())
+                        && CombatSounds.VANILLA_MISS.toString().equals(miss.get(0).getAsJsonObject().get("name").getAsString()),
+                "combat.melee.miss should reference " + CombatSounds.VANILLA_MISS + ": " + miss);
+        helper.assertTrue(BuiltInRegistries.SOUND_EVENT.containsKey(CombatSounds.VANILLA_MISS), "vanilla miss sound exists");
         helper.succeed();
     }
 

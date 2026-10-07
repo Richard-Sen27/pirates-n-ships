@@ -21,15 +21,17 @@ The music and sound effects below come from Pixabay and are used under the Pixab
 | Empty Gun Shot | freesound_community | [link](https://pixabay.com/sound-effects/film-special-effects-empty-gun-shot-6209/) | `assets/pirates_n_ships/sounds/combat/pistol_empty.ogg` |
 | Cannon Shot | magiazzz | [link](https://pixabay.com/sound-effects/film-special-effects-cannon-shot-560886/) | `assets/pirates_n_ships/sounds/combat/cannon_shot.ogg` |
 | Artillery Gunfire | freesound_community | [link](https://pixabay.com/sound-effects/film-special-effects-artillery-gunfire-14607/) | `assets/pirates_n_ships/sounds/combat/cannon_volley.ogg` |
-| Sword Slice | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/sword-slice-393847/) | `assets/pirates_n_ships/sounds/combat/melee/swing1.ogg` |
-| Sword Slice 2 | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/sword-slice-2-393845/) | `assets/pirates_n_ships/sounds/combat/melee/swing2.ogg` |
-| Violent Sword Slice | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/violent-sword-slice-393839/) | `assets/pirates_n_ships/sounds/combat/melee/swing3.ogg` |
-| Violent Sword Slice 2 | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/violent-sword-slice-2-393841/) | `assets/pirates_n_ships/sounds/combat/melee/swing4.ogg` |
-| Sword Clashhit | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/sword-clashhit-393837/) | `assets/pirates_n_ships/sounds/combat/melee/parry.ogg` |
+| Sword Slice | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/sword-slice-393847/) | `assets/pirates_n_ships/sounds/combat/melee/hit1.ogg` |
+| Sword Slice 2 | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/sword-slice-2-393845/) | `assets/pirates_n_ships/sounds/combat/melee/hit2.ogg` |
+| Violent Sword Slice | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/violent-sword-slice-393839/) | `assets/pirates_n_ships/sounds/combat/melee/hit_heavy1.ogg` |
+| Violent Sword Slice 2 | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/violent-sword-slice-2-393841/) | `assets/pirates_n_ships/sounds/combat/melee/hit_heavy2.ogg` |
+| Sword Clashhit | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/sword-clashhit-393837/) | `assets/pirates_n_ships/sounds/combat/melee/clash1.ogg` |
+| Sword Fight | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/sword-fight-393849/) | `assets/pirates_n_ships/sounds/combat/melee/clash2.ogg` |
+| Sword Fight | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/sword-fight-393849/) | `assets/pirates_n_ships/sounds/combat/melee/clash3.ogg` |
+| Sword Fight | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/sword-fight-393849/) | `assets/pirates_n_ships/sounds/combat/melee/clash4.ogg` |
+| Sword Fight 2 | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/sword-fight-2-393846/) | `assets/pirates_n_ships/sounds/combat/melee/clash5.ogg` |
+| Sword Fight 2 | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/sword-fight-2-393846/) | `assets/pirates_n_ships/sounds/combat/melee/clash6.ogg` |
 | Armor Impact From Sword | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/armor-impact-from-sword-393843/) | `assets/pirates_n_ships/sounds/combat/melee/hit_armor.ogg` |
-| Bone Break SFX | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/bone-break-sfx-393835/) | `assets/pirates_n_ships/sounds/combat/melee/hit_heavy1.ogg` |
-| Bone Breaking | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/bone-breaking-393842/) | `assets/pirates_n_ships/sounds/combat/melee/hit_heavy2.ogg` |
-| Bone Breaking Effect | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/bone-breaking-effect-393836/) | `assets/pirates_n_ships/sounds/combat/melee/hit_heavy3.ogg` |
 | Sword Unsheathing | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/sword-unsheathing-393851/) | `assets/pirates_n_ships/sounds/combat/melee/unsheathe.ogg` |
 | Sword Clattering To The Ground | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/sword-clattering-to-the-ground-393838/) | `assets/pirates_n_ships/sounds/combat/melee/disarm.ogg` |
 | Sword Breaking Sound Effect | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/sword-breaking-sound-effect-393840/) | `assets/pirates_n_ships/sounds/combat/melee/weapon_break.ogg` |

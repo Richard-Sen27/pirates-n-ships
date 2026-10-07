@@ -72,7 +72,7 @@ public final class AudioGameTests {
         List<RegistryEntry<SoundEvent, SoundEvent>> events = new java.util.ArrayList<>(List.of(AudioSounds.MUSIC_SEA,
                 AudioSounds.MUSIC_SHANTY, AnchorContent.CHAIN, AnchorContent.SPLASH, AnchorContent.THUD));
         CombatSounds.ALL.forEach(d -> events.add(d.event()));
-        h.assertTrue(events.size() == 16, "expected 16 shared sound events, got " + events.size());
+        h.assertTrue(events.size() == 17, "expected 17 shared sound events, got " + events.size());
         try (InputStream in = AudioGameTests.class.getResourceAsStream("/assets/pirates_n_ships/sounds.json")) {
             h.assertTrue(in != null, "assets/pirates_n_ships/sounds.json is missing (run ./gradlew :neoforge:runData)");
             JsonObject root = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
@@ -86,8 +86,8 @@ public final class AudioGameTests {
             h.assertTrue("subtitles.pirates_n_ships.combat.pistol_shot".equals(pistol.get("subtitle").getAsString()),
                     "combat.pistol_shot has the wrong subtitle");
             h.assertTrue(!root.getAsJsonObject(AudioSounds.MUSIC_SEA.id().getPath()).has("subtitle"), "music has no subtitle");
-            h.assertTrue(root.getAsJsonObject(CombatSounds.MELEE_SWING.id().getPath()).getAsJsonArray("sounds").size() == 4,
-                    "combat.melee.swing should have four variants");
+            h.assertTrue(root.getAsJsonObject(CombatSounds.MELEE_CLASH.id().getPath()).getAsJsonArray("sounds").size() == 6,
+                    "combat.melee.clash should have six variants");
         } catch (java.io.IOException ex) {
             throw new AssertionError("could not read sounds.json", ex);
         }

@@ -264,6 +264,22 @@ public final class ShipBody {
         }
     }
 
+    // ---------------------------------------------------------------- grappling hook (G11)
+
+    /**
+     * Records an impulse (force × time step, body frame) at a plot position in our grappling rope force group; the
+     * point force becomes a force plus the torque {@code (pos − COM) × force} about the center of mass. Physics substep
+     * only, like {@link #applyBuoyancyImpulse} ({@code ServerSubLevel#getOrCreateQueuedForceGroup} l.395;
+     * {@code api/physics/force/QueuedForceGroup.java#applyAndRecordPointForce} l.25;
+     * {@code api/physics/force/ForceTotal.java#applyImpulseAtPoint} l.101-105).
+     */
+    public void applyGrappleImpulse(Vector3dc plotPoint, Vector3dc localImpulse) {
+        dev.ryanhcode.sable.api.physics.force.ForceGroup group = ShipForces.grapple();
+        if (group != null) {
+            sub.getOrCreateQueuedForceGroup(group).applyAndRecordPointForce(plotPoint, localImpulse);
+        }
+    }
+
     /** Our sub-tree of the sub-level's persisted user data ({@code ServerSubLevel#getUserDataTag}, l.548). */
     public CompoundTag userData(String key) {
         CompoundTag root = sub.getUserDataTag();

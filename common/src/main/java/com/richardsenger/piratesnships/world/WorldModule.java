@@ -6,6 +6,7 @@ import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.world.port.PortService;
 import com.richardsenger.piratesnships.world.village.VillageData;
 import com.richardsenger.piratesnships.world.village.VillageStructures;
+import com.richardsenger.piratesnships.world.wreck.WreckLoot;
 
 import java.util.List;
 
@@ -44,6 +45,7 @@ public final class WorldModule implements ModModule {
     @Override
     public void gatherData(DataContributions data) {
         VillageData.gather(data);
+        WreckLoot.gather(data);
         data.lang(WorldCommands::lang);
     }
 

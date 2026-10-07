@@ -10,6 +10,7 @@ item_ids:
   - pirates_n_ships:brig_key
   - pirates_n_ships:cannonball
   - pirates_n_ships:captains_whistle
+  - pirates_n_ships:chart
   - pirates_n_ships:cloth
   - pirates_n_ships:cutlass
   - pirates_n_ships:hardtack

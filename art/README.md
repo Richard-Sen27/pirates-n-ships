@@ -627,7 +627,14 @@ subtracts the waist's turn from the arm angles. Only `right_arm`, `left_arm`, `r
 keep walking, the head follows the look; `SeafarerRigTest` checks). Checked with the player rig's musket proxy cubes
 added to `right_hand` for the preview only (not saved): the aim's barrel is level and straight ahead (measured), the
 left hand sits under the rear of the barrel (a 10 px arm cannot reach further). In game `SeafarerModel` adds the look
-pitch to both arms while aiming.
+pitch to both arms while aiming. **Correction (M6b):** a key on `right_hand` turns the held item exactly once, as in
+the Blockbench preview and as PAL's `right_item` turns the player's gun, only because `HumanoidGeoRenderer`'s item
+layer replaces GeckoLib's `BlockAndItemGeoLayer#renderForBone`, which applies the bone's rotation a second time (the
+layer gets the pose with the bone already rotated). With GeckoLib's version the reload's musket lay level at the hips
+pointing backwards and the aim pointed 73° down. The `right_hand` position keys were never the problem: GeckoLib's
+bone translation and PAL's item translation are the same move in the arm's frame (butt at the feet, muzzle at chest
+height, within 1 px of the player's pose). `SeafarerRigTest` checks the drawn musket with GeckoLib's bone transforms:
+aim level and straight ahead, reload muzzle up with the butt on the ground, shove butt first.
 
 **Variants:** a pirate, sailor, navy soldier or officer is the same geometry with its own texture (a new
 `textures/entity/<mob>.png` painted on the skin layout, its own renderer's `GeoModel` returning that texture) and the

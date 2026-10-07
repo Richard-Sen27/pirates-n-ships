@@ -17,8 +17,8 @@ import net.minecraft.world.level.block.state.properties.AttachFace;
  * Datagen of the map tile's placeholder model (work package MAP2; a Blockbench model replaces it later, design.md
  * §4.8): one element a pixel thick, parchment ({@code textures/block/map_tile.png}, drawn by
  * {@code tools/gen_gui_textures.py}) on top and spruce around and below. The block state turns it like a button:
- * {@code y} by the facing on the floor, {@code x 90} onto the wall. The item is a flat sprite
- * ({@code textures/item/map_tile.png}). The drawing itself is the block entity renderer's.
+ * {@code y} by the facing on the floor, {@code x 90} onto the wall. The item has a hand-made Blockbench model
+ * ({@code models/item/map_tile.json}, ART1b). The drawing itself is the block entity renderer's.
  */
 public final class MapTileModels {
 
@@ -43,7 +43,9 @@ public final class MapTileModels {
                     }
                     return y == 0 ? v : v.with(VariantProperties.Y_ROT, rotation(y));
                 })));
-        m.flatItem(ChartContent.MAP_TILE_ITEM.get());
+        // The item's model is hand-made (art/models/map_tile.bbmodel, design.md §4.8, ART1b): a parchment tile on a
+        // wooden frame. handMadeItem stops the automatic block-item model.
+        m.handMadeItem(ChartContent.MAP_TILE_ITEM.get());
     }
 
     private static VariantProperties.Rotation rotation(int degrees) {

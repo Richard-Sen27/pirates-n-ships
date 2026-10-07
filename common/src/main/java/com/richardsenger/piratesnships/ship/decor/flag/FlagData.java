@@ -76,7 +76,7 @@ public final class FlagData {
     }
 
     private static void models(ModelContext m) {
-        for (RegistryEntry<Item, Item> flag : Flags.flagItems()) m.flatItem(flag.get());
+        // The flag items' models are hand-made folded bundles (art/models/<flag>.bbmodel, design.md §4.8, ART1b)
         Block pole = ShipDecor.FLAGPOLE.get();
         // Hand-made Blockbench model (art/models/flagpole.bbmodel) in every state: the cloth is drawn by the
         // FlagClothRenderer at the flag's exact downwind yaw (FL1), not by the block model.

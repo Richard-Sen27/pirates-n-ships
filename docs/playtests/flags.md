@@ -72,3 +72,19 @@ Please send screenshots of steps 3, 7 and 10, and `latest.log` if anything goes 
 13. **Optional, second player** (LAN or a dedicated server): the second player stands next to the poles while the
     first hoists, strikes and takes down flags.
     - **Expected:** the second player sees the same flag, at the same time, pointing the same way.
+
+
+## G8: banner colours and nameplates
+1. **Banner colours.** Hoist a red, a blue, a black and a white banner on four poles. Flying: the cloth shows the
+   banner's colour on both faces and the edges (a white banner reads as a very light grey, fold shading darkens by
+   up to about a tenth). Struck (empty hand) and taken down (sneak): no cloth. Raised again: the colour is back. A new
+   banner hoisted over an old one: the old colour stays until the hoist completes. Check all four wind facings. Swap a
+   red banner directly for a blue one: the colour changes without touching any block nearby (this tests the re-mesh).
+   Also on an assembled ship. Navy, merchant and jolly roger flags look unchanged.
+2. **Nameplate.** Build a hull with a nameplate on its outer side facing out, assemble it, use a name tag "Black Gull"
+   on the helm. Within about a second "Black Gull" appears centred on the panel in dark brown, upright, left to right
+   from in front, readable from 3 to 5 blocks. Plates on all four sides read correctly, also while the ship turns and
+   rolls. Rename to "Sea Wolf": every plate changes within a second. A name of about 40 characters shrinks, a very long
+   one is cut with "...". A plate placed on an already named ship shows the name within a second. Disassembly blanks
+   the plates; reassembling and naming brings the name back. `ship_identity.nameplate_shows_name = false` blanks them.
+3. **Performance.** 30 or more nameplates and 30 or more banner flags on one ship: no noticeable FPS or TPS drop.

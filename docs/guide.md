@@ -244,6 +244,9 @@ The flag points downwind, in 90° steps. Nothing reacts to flags in the world ye
 
 ---
 
+Hoist any banner on a flagpole to fly a custom flag: the cloth takes the banner's base colour (its patterns are not
+shown).
+
 ## 6. Provisions
 
 ### Pantry
@@ -450,7 +453,7 @@ on by default; vanilla weapons are untouched):
 | Brig Bars | 4 iron bars, 2 planks (gives 6) | Bars for cells. |
 | Brig Door | 4 iron ingots, 2 iron bars | Lockable door for cells. |
 | Mermaid, Lion, Eagle and Skull Figurehead | 4 planks and a prismarine shard, gold ingot, feather or bone | Decoration for the bow. Faces the way you look when placing it. |
-| Nameplate | any sign, 1 gold nugget | Decoration for the hull side: a board on two iron brackets (Blockbench model). It doesn't show the ship's name yet. |
+| Nameplate | any sign, 1 gold nugget | A board on two iron brackets that shows the ship's name once the ship is assembled and named (name tag on the helm); long names shrink to fit, renaming updates every plate within a second, disassembly clears them. Server option `ship_identity.nameplate_shows_name`. |
 | Test Block | none | A development block. |
 
 All blocks drop themselves. Wooden ones are mined with an axe, the bars and the door with a pickaxe.

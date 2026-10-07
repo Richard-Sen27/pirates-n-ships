@@ -75,3 +75,6 @@ Addendum (P1): loading shows no bow pose any more (and no pose at all, known); k
    gone. Say whether you want to fire while crouched by default (then lowering becomes a sneak *press*, not the
    sneaking state).
 7. LAN if possible: the other player sees your aim animation stop when you sneak.
+
+
+Addendum (F8h): in third person the fist closes on the pistol's grip just behind the trigger guard (butt cap below and behind the fist, barrel forward and slightly up), the musket is held at the wrist of the stock behind the lock with the butt under the forearm; off hand mirrored; first person unchanged. During the reloads watch for a visible snap at the start and end (the gun slides 1.6 px / 2.5 px along the arm between rest and the fore-stock poses) and for the musket butt sinking or hovering.

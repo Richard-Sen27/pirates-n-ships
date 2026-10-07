@@ -166,3 +166,5 @@ Compare each sword with a vanilla iron sword in the other hand or the next hotba
     at the lower right. Key held: bow in the fist, shank forward and slightly up. Both on the ground (door about half
     a block tall) and in item frames (door centred and upright, key diagonal). Hold the door item next to a placed
     door: same textures. Breaking a door still gives anvil particles.
+
+Addendum (F8h): pistol and musket in the hand: see `firearms.md`.

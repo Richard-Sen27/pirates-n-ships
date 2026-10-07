@@ -26,7 +26,8 @@ import java.util.Locale;
 /**
  * Server side of the cannon (docs/design.md §8.2): loading, aiming and firing a cannon block, on land or on a ship.
  * Called by {@link CannonBlock} for players and by {@link CannonStation} for crew. All decisions are in
- * {@link CannonRules}; this class reads and writes the world.
+ * {@link CannonRules}; this class reads and writes the world. Every call takes either half of the two-block cannon and
+ * acts on its master (front) block.
  *
  * <p>On a ship the cannon block sits in the ship's plot, so its position, facing and the barrel direction are in the
  * plot (= body) frame. Firing converts the muzzle point to world space with {@link ShipBody#toWorld(Vec3)}, rotates the
@@ -57,6 +58,12 @@ public final class CannonService {
     private CannonService() {
     }
 
+    /** The master block of the cannon half at {@code pos}; {@code pos} itself when it is no cannon. */
+    public static BlockPos master(ServerLevel level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        return state.getBlock() instanceof CannonBlock ? CannonBlock.masterPos(state, pos) : pos;
+    }
+
     private static @Nullable CannonBlockEntity cannon(ServerLevel level, BlockPos pos) {
         return level.getBlockState(pos).getBlock() instanceof CannonBlock
                 && level.getBlockEntity(pos) instanceof CannonBlockEntity be ? be : null;
@@ -77,6 +84,7 @@ public final class CannonService {
      * materials (creative). Refused in the wrong order, when already loaded, or during the reload cooldown.
      */
     public static Use load(ServerLevel level, BlockPos pos, @Nullable Player player, ItemStack stack) {
+        pos = master(level, pos);
         CannonBlockEntity be = cannon(level, pos);
         if (be == null) return Use.of(Outcome.NOT_A_CANNON);
         if (!CannonConfig.ENABLED.get()) return Use.of(Outcome.DISABLED);
@@ -123,6 +131,7 @@ public final class CannonService {
 
     /** One elevation step up or down (clamped); the message names the new elevation. */
     public static Use aim(ServerLevel level, BlockPos pos, boolean up) {
+        pos = master(level, pos);
         CannonBlockEntity be = cannon(level, pos);
         if (be == null) return Use.of(Outcome.NOT_A_CANNON);
         if (!CannonConfig.ENABLED.get()) return Use.of(Outcome.DISABLED);
@@ -135,7 +144,7 @@ public final class CannonService {
 
     // ---- firing ---------------------------------------------------------------------------------------------------
 
-    /** Where the ball of the cannon at {@code pos} leaves from and which way, in the block (plot) frame. */
+    /** Where the ball of the cannon with its master at {@code pos} leaves from and which way, in the block (plot) frame. */
     public record Barrel(Vec3 muzzle, Vec3 direction) {
     }
 
@@ -146,6 +155,7 @@ public final class CannonService {
 
     /** The barrel of the cannon at {@code pos} as it is aimed now, in the block (plot) frame. */
     public static @Nullable Barrel barrel(ServerLevel level, BlockPos pos) {
+        pos = master(level, pos);
         CannonBlockEntity be = cannon(level, pos);
         if (be == null) return null;
         return barrel(pos, level.getBlockState(pos).getValue(CannonBlock.FACING), CannonConfig.elevationDegrees(be.elevationStep()));
@@ -158,6 +168,7 @@ public final class CannonService {
      * cooldown starts. An unloaded cannon only says what it needs.
      */
     public static Use fire(ServerLevel level, BlockPos pos, @Nullable Entity owner) {
+        pos = master(level, pos);
         CannonBlockEntity be = cannon(level, pos);
         if (be == null) return Use.of(Outcome.NOT_A_CANNON);
         if (!CannonConfig.ENABLED.get()) return Use.of(Outcome.DISABLED);

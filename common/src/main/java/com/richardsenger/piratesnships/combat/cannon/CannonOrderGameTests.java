@@ -67,8 +67,9 @@ public final class CannonOrderGameTests {
     private static Ship ship(GameTestHelper h) {
         DryHullGameTests.basin(h, 0, 23, true);
         BlockPos helm = DryHullGameTests.hull(h, 9, false);
-        h.setBlock(new BlockPos(10, 9, 10), CannonContent.CANNON.get().defaultBlockState().setValue(CannonBlock.FACING, Direction.WEST));
-        h.setBlock(new BlockPos(10, 9, 12), CannonContent.CANNON.get().defaultBlockState().setValue(CannonBlock.FACING, Direction.WEST));
+        // two-block cannons (P2): masters at x 10, rears at x 11
+        CannonGameTests.cannon(h, new BlockPos(10, 9, 10), Direction.WEST);
+        CannonGameTests.cannon(h, new BlockPos(10, 9, 12), Direction.WEST);
         h.setBlock(new BlockPos(12, 9, 10), SailingBlocks.SAIL_WINCH.get());
         for (int z = 1; z < 23; z++) {
             for (int y = 9; y <= 11; y++) h.setBlock(new BlockPos(2, y, z), Blocks.STONE); // backstop for the shots
@@ -76,8 +77,8 @@ public final class CannonOrderGameTests {
         Fixture f = DryHullGameTests.assemble(h, helm);
         BlockPos loaded = f.hold(-1, 0, -1), unloaded = f.hold(-1, 0, 1), winch = f.hold(1, 0, -1);
         ServerLevel level = h.getLevel();
-        h.assertTrue(level.getBlockState(loaded).is(CannonContent.CANNON.get()), "the first cannon is not in the plot");
-        h.assertTrue(level.getBlockState(unloaded).is(CannonContent.CANNON.get()), "the second cannon is not in the plot");
+        h.assertTrue(CannonBlock.isMaster(level.getBlockState(loaded)), "the first cannon is not in the plot");
+        h.assertTrue(CannonBlock.isMaster(level.getBlockState(unloaded)), "the second cannon is not in the plot");
         h.assertTrue(level.getBlockState(winch).is(SailingBlocks.SAIL_WINCH.get()), "the winch is not in the plot");
         return new Ship(f, loaded, unloaded, winch);
     }

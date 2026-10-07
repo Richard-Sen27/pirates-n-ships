@@ -20,11 +20,17 @@ import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.IronGolem;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -58,9 +64,39 @@ public final class CannonGameTests {
 
     // ------------------------------------------------------------------ helpers
 
-    private static BlockPos cannon(GameTestHelper h, BlockPos rel, Direction facing) {
-        h.setBlock(rel, CannonContent.CANNON.get().defaultBlockState().setValue(CannonBlock.FACING, facing));
+    /**
+     * Sets a two-block cannon with its master at {@code rel} (relative) and the rear behind it, without the placement
+     * checks; returns the master's absolute position. Also used by {@link CannonOrderGameTests}.
+     */
+    static BlockPos cannon(GameTestHelper h, BlockPos rel, Direction facing) {
+        BlockState master = CannonContent.CANNON.get().defaultBlockState().setValue(CannonBlock.FACING, facing);
+        h.setBlock(rel, master);
+        h.setBlock(CannonRules.rearOf(rel, facing), CannonContent.CANNON.get().rearState(master));
         return h.absolutePos(rel);
+    }
+
+    /**
+     * Places the block item {@code stack} into the free block at {@code rel} (relative) as {@code player} would by
+     * clicking the block below it, through vanilla's {@code BlockItem.place} (the block's placement rules, the item
+     * use, {@code setPlacedBy}). The loader's item-use wrapper is left out: in the test server another mod's
+     * use-on-block listener refuses mock players. Returns whether the block was placed.
+     */
+    static boolean place(GameTestHelper h, Player player, ItemStack stack, BlockPos rel) {
+        BlockPos pos = h.absolutePos(rel);
+        BlockHitResult hit = new BlockHitResult(Vec3.atBottomCenterOf(pos), Direction.UP, pos, false);
+        BlockPlaceContext ctx = new BlockPlaceContext(new UseOnContext(player, InteractionHand.MAIN_HAND, hit) {
+            @Override
+            public ItemStack getItemInHand() {
+                return stack;
+            }
+        });
+        return ((BlockItem) stack.getItem()).place(ctx).consumesAction();
+    }
+
+    /** The plot position of the master half of the (only) cannon on {@code ship}. */
+    static BlockPos masterInPlot(ServerLevel level, ShipBody ship) {
+        return ship.plotBlocks().stream().filter(p -> CannonBlock.isMaster(level.getBlockState(p)))
+                .findFirst().orElseThrow(() -> new GameTestAssertException("the cannon is not in the plot"));
     }
 
     private static CannonLoad load(ServerLevel level, BlockPos pos) {
@@ -147,6 +183,94 @@ public final class CannonGameTests {
                 "the barrel at 20° points " + up.direction());
         for (int i = 0; i < 8; i++) CannonService.aim(level, pos, false);
         h.assertTrue(CannonConfig.elevationDegrees(be.elevationStep()) == -5.0, "the lowest step is not -5°");
+        h.succeed();
+    }
+
+    // ------------------------------------------------------------------ the two blocks (P2)
+
+    /**
+     * Placing the cannon item (player looking east) makes the clicked block the master and puts the rear behind it;
+     * placement is refused when the rear is blocked or has nothing to stand on, and a refused placement keeps the item.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void placingOccupiesBothBlocksAndRefusesWhenTheRearIsBlocked(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        for (int z : new int[]{1, 4, 7}) {
+            h.setBlock(new BlockPos(4, 0, z), Blocks.STONE);
+            if (z != 1) h.setBlock(new BlockPos(3, 0, z), Blocks.STONE); // z = 1: nothing under the rear
+        }
+        h.setBlock(new BlockPos(3, 1, 7), Blocks.OAK_PLANKS); // z = 7: the rear's place is taken
+        Player player = h.makeMockPlayer(GameType.SURVIVAL);
+        player.setYRot(-90); // looking east
+        ItemStack stack = new ItemStack(CannonContent.CANNON.get(), 3);
+
+        h.assertTrue(place(h, player, stack, new BlockPos(4, 1, 4)), "placing the cannon was refused");
+        BlockState master = level.getBlockState(h.absolutePos(new BlockPos(4, 1, 4)));
+        BlockState rear = level.getBlockState(h.absolutePos(new BlockPos(3, 1, 4)));
+        h.assertTrue(CannonBlock.isMaster(master) && master.getValue(CannonBlock.FACING) == Direction.EAST,
+                "no master facing east at the clicked block: " + master);
+        h.assertTrue(rear.is(CannonContent.CANNON.get()) && rear.getValue(CannonBlock.PART) == CannonPart.REAR
+                && rear.getValue(CannonBlock.FACING) == Direction.EAST, "no rear half behind the master: " + rear);
+        h.assertTrue(level.getBlockEntity(h.absolutePos(new BlockPos(4, 1, 4))) instanceof CannonBlockEntity,
+                "the master has no block entity");
+        h.assertTrue(level.getBlockEntity(h.absolutePos(new BlockPos(3, 1, 4))) == null, "the rear has a block entity");
+        h.assertTrue(stack.getCount() == 2, "placing took " + (3 - stack.getCount()) + " items");
+
+        h.assertFalse(place(h, player, stack, new BlockPos(4, 1, 7)), "placed with the rear blocked");
+        h.assertBlockPresent(Blocks.AIR, new BlockPos(4, 1, 7));
+        h.assertBlockPresent(Blocks.OAK_PLANKS, new BlockPos(3, 1, 7));
+        h.assertFalse(place(h, player, stack, new BlockPos(4, 1, 1)), "placed with nothing under the rear");
+        h.assertBlockPresent(Blocks.AIR, new BlockPos(4, 1, 1));
+        h.assertBlockPresent(Blocks.AIR, new BlockPos(3, 1, 1));
+        h.assertTrue(stack.getCount() == 2, "a refused placement used the item");
+        h.succeed();
+    }
+
+    /** Breaking the rear removes the master and breaking the master removes the rear; each cannon drops one item. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void breakingEitherHalfRemovesBothAndDropsOneCannon(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos a = cannon(h, new BlockPos(4, 1, 2), Direction.EAST);
+        BlockPos b = cannon(h, new BlockPos(4, 1, 6), Direction.NORTH);
+        level.destroyBlock(CannonRules.rearOf(a, Direction.EAST), true);
+        h.assertTrue(level.getBlockState(a).isAir(), "the master stayed after its rear was broken");
+        level.destroyBlock(b, true);
+        h.assertTrue(level.getBlockState(CannonRules.rearOf(b, Direction.NORTH)).isAir(), "the rear stayed after its master was broken");
+        int cannons = h.getEntities(EntityType.ITEM).stream().map(ItemEntity::getItem)
+                .filter(s -> s.is(CannonContent.CANNON.get().asItem())).mapToInt(ItemStack::getCount).sum();
+        h.assertTrue(cannons == 2, "expected one cannon item per cannon, got " + cannons);
+        h.getEntities(EntityType.ITEM).forEach(ItemEntity::discard);
+        h.succeed();
+    }
+
+    /** Using, loading, aiming and firing at the rear half act on the master: its load, elevation and muzzle. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void loadingAimingAndFiringFromTheRearActOnTheMaster(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos master = cannon(h, new BlockPos(2, 1, 4), Direction.EAST);
+        BlockPos rearRel = CannonRules.rearOf(new BlockPos(2, 1, 4), Direction.EAST);
+        BlockPos rear = h.absolutePos(rearRel);
+        Player player = h.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.GUNPOWDER, 2));
+        h.useBlock(rearRel, player); // the block's own use, at the rear
+        h.assertTrue(load(level, master) == CannonLoad.POWDER, "powder used at the rear did not reach the master");
+        h.assertTrue(level.getBlockState(rear).getValue(CannonBlock.LOAD) == CannonLoad.EMPTY, "the rear took the powder");
+        h.assertTrue(player.getMainHandItem().getCount() == 1, "the powder was not taken");
+        h.assertTrue(CannonService.load(level, rear, player, new ItemStack(CombatContent.CANNONBALL.get())).outcome()
+                == CannonService.Outcome.BALL_IN && load(level, master) == CannonLoad.LOADED, "the ball did not reach the master");
+        CannonBlockEntity be = (CannonBlockEntity) level.getBlockEntity(master);
+        int before = be.elevationStep();
+        CannonService.aim(level, rear, true);
+        h.assertTrue(be.elevationStep() == before + 1, "aiming at the rear did not raise the master's barrel");
+        CannonService.aim(level, rear, false);
+
+        CannonService.Use use = CannonService.fire(level, rear, player);
+        h.assertTrue(use.outcome() == CannonService.Outcome.FIRED && use.ball() != null, "no shot from the rear: " + use.outcome());
+        Vec3 at = use.ball().position();
+        use.ball().discard();
+        assertNear(h, at, CannonRules.pivot(master.getX(), master.getY(), master.getZ()).add(CannonRules.MUZZLE_LENGTH, 0, 0),
+                1e-6, "muzzle of a shot fired at the rear");
+        h.assertTrue(load(level, master) == CannonLoad.EMPTY, "the master is still loaded");
         h.succeed();
     }
 
@@ -318,16 +442,17 @@ public final class CannonGameTests {
         Fixture f = DryHullGameTests.assemble(h, helm);
         ServerLevel level = h.getLevel();
         ShipBody ship = f.ship();
-        BlockPos plot = ship.plotBlocks().stream().filter(p -> level.getBlockState(p).is(CannonContent.CANNON.get()))
-                .findFirst().orElseThrow(() -> new GameTestAssertException("the cannon is not in the plot"));
+        BlockPos plot = masterInPlot(level, ship);
+        h.assertTrue(level.getBlockState(CannonRules.rearOf(plot, Direction.EAST)).is(CannonContent.CANNON.get()),
+                "the rear half did not assemble with the master");
         Player player = h.makeMockPlayer(GameType.SURVIVAL);
         loadFully(h, plot);
         h.runAfterDelay(20, () -> {
             ship.addVelocity(new Vector3d(3, 0, 0), new Vector3d());
             Vector3d before = ship.linearVelocity();
-            Vec3 center = ship.toWorld(Vec3.atCenterOf(plot));
+            Vec3 pivot = ship.toWorld(CannonRules.pivot(plot.getX(), plot.getY(), plot.getZ()));
             Vec3 east = CannonService.rotate(ship.orientation(), new Vec3(1, 0, 0));
-            Vec3 expected = center.add(east.scale(CannonRules.MUZZLE_LENGTH));
+            Vec3 expected = pivot.add(east.scale(CannonRules.MUZZLE_LENGTH));
 
             CannonService.Use use = CannonService.fire(level, plot, player);
             h.assertTrue(use.outcome() == CannonService.Outcome.FIRED && use.ball() != null, "no shot: " + use.outcome());
@@ -357,8 +482,7 @@ public final class CannonGameTests {
         }
         Fixture f = DryHullGameTests.assemble(h, helm);
         ServerLevel level = h.getLevel();
-        BlockPos plot = f.ship().plotBlocks().stream().filter(p -> level.getBlockState(p).is(CannonContent.CANNON.get()))
-                .findFirst().orElseThrow(() -> new GameTestAssertException("the cannon is not in the plot"));
+        BlockPos plot = masterInPlot(level, f.ship());
         StationRef ref = new StationRef(f.ship().id(), plot);
         UUID crew = UUID.randomUUID();
         h.runAfterDelay(5, () -> {

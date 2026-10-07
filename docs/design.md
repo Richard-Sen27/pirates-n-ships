@@ -150,6 +150,7 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
   - Helm interaction since spike 3: on land, using the helm assembles. On a ship, using it steers, and sneak-using it with an empty hand disassembles.
   - Implemented in spike 1 (`ship/assembly`): terrain is decided by the block tag `pirates_n_ships:terrain`, and `pirates_n_ships:never_assemble` excludes more blocks. A dock that touches the hull is gathered with it, so ships are moored with a one-block gap. The default block limit is 2048.
 - Assembly collects connected blocks, excluding world terrain, with a configurable block limit. They become a Sable sub-level.
+- **Ship templates (W0):** prebuilt ships are vanilla structure templates converted from the human's WorldEdit schematics (`ship_template` definitions with helm, waterline row, bow and price); `/pirates ship place` puts one on the water and can assemble it; the shipwright's orders will build on this.
 - **Disassembly** happens at the helm when the ship is stationary and aligned. Blocks are placed back into the world, snapped to the grid.
   - Sable has no disassembly API (`docs/sable-notes.md` §2.4). We build it from Sable's public assembly pieces: the ship is levelled and its yaw snapped to a 90° step, and the target volume is checked for obstructions before the blocks are moved.
   - Assembling in water leaves an air pocket where the hull was, and disassembling leaves sea water inside the hull. Both need handling (spike 1).

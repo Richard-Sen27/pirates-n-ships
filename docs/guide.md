@@ -675,6 +675,7 @@ ports and screens that will normally drive them exist.
 | `/pirates flag get\|strike\|raise <pos>`, `/pirates flag set <pos> <kind>` | Reads or changes a flagpole without the delay. |
 | `/pirates provisions show <crew> [pos]` | What the pantry you look at holds, and how many days it feeds that crew. |
 | `/pirates provisions advance <days> <crew> [prisoners] [rum] [pos]` | Lets that crew live off the pantry for some days and prints what happened. |
+| `/pirates ship templates` / `/pirates ship place <template> [force] [assemble]` | Lists the prebuilt ships; puts one on the water in front of you, bow away from you, optionally assembled (operators). |
 | `/pirates trade port <name> <kind> <climate>` | Creates a test port. |
 | `/pirates trade open\|goods\|buy\|sell …` | Opens a market, lists prices, buys and sells with real coins and items. |
 | `/pirates trade contracts <from> <to>`, `/pirates trade contract list\|accept\|deliver` | Delivery contracts between two test ports. |
@@ -746,6 +747,7 @@ in its own namespace, or replace one of ours by shipping a file at the same path
 
 | Type | Folder | Contents |
 |---|---|---|
+| Ship templates | `ship_template` | Structure id, name key, helm position, waterline row, bow direction, price (for the shipwright later). The structures come from WorldEdit schematics in `art/schematics/` through `tools/schem_to_structure.py`. |
 | Trade goods | `trade_good` | Item, base price, weight, category, where it is produced. |
 | Weapons | `weapon` | Timings, damage, reach, arc, stamina costs and guard values for the fighting system. A weapon whose name matches an item id applies to that item. |
 

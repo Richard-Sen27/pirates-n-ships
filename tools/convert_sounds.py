@@ -14,6 +14,13 @@ is always rewritten from the manifest, even when the raw files are missing.
 Manifest entry fields: source (path relative to RAW_DIR, subfolders allowed), target (path under sounds/), kind
 (music or effect), event (the sound event the file belongs to; several entries may share one event as variants),
 title, author, url, license, and optionally collection (a Pixabay collection or album page, listed in the credits).
+
+Optional cut fields, for taking several short variants out of one source file: start and duration (seconds, both
+together). The cut gets a short fade in and out so it never clicks; loudness is normalised after cutting. The
+up-to-date check only compares file times, so run with --force after changing a cut.
+
+author and url may be the placeholder TBD while the source page is not known yet: the conversion runs, the script
+prints a warning, and the credits show TBD with a warning line.
 """
 import argparse
 import json
@@ -36,6 +43,9 @@ EFFECT_LUFS = -16.0  # integrated loudness target of sound effects
 TRUE_PEAK = -1.5  # dBTP ceiling of loudnorm
 KINDS = ("music", "effect")
 FIELDS = ("source", "target", "kind", "event", "title", "author", "url", "license")
+PLACEHOLDER = "TBD"  # accepted for author and url until the source page is known; flagged in the credits
+FADE_IN = 0.03  # seconds of fade in at the start of a cut
+FADE_OUT = 0.25  # seconds of fade out at the end of a cut
 
 
 def find_tool(name):
@@ -73,6 +83,13 @@ def load_manifest():
         if e["target"] in targets:
             sys.exit(f"manifest lists {e['target']} twice")
         targets.add(e["target"])
+        if ("start" in e) != ("duration" in e):
+            sys.exit(f"manifest entry {e['target']}: start and duration go together")
+        if "start" in e and not (float(e["start"]) >= 0 and float(e["duration"]) > FADE_IN + FADE_OUT):
+            sys.exit(f"manifest entry {e['target']}: start must be >= 0 and duration > {FADE_IN + FADE_OUT}")
+        for f in ("author", "url"):
+            if e[f] == PLACEHOLDER:
+                print(f"warning  {e['target']}: {f} is still {PLACEHOLDER}")
     return entries
 
 
@@ -89,8 +106,14 @@ def convert(ff, oggenc, entry, raw_dir, force):
         return
     music = entry["kind"] == "music"
     lufs = MUSIC_LUFS if music else EFFECT_LUFS
-    decode = [ff, "-hide_banner", "-loglevel", "error", "-y", "-i", str(src), "-vn", "-map_metadata", "-1",
-              "-af", f"loudnorm=I={lufs}:TP={TRUE_PEAK}:LRA=11",
+    filters = f"loudnorm=I={lufs}:TP={TRUE_PEAK}:LRA=11"
+    cut = []
+    if "start" in entry:
+        start, duration = float(entry["start"]), float(entry["duration"])
+        cut = ["-ss", f"{start:.3f}", "-t", f"{duration:.3f}"]
+        filters = f"afade=t=in:d={FADE_IN},afade=t=out:st={duration - FADE_OUT:.3f}:d={FADE_OUT}," + filters
+    decode = [ff, "-hide_banner", "-loglevel", "error", "-y", *cut, "-i", str(src), "-vn", "-map_metadata", "-1",
+              "-af", filters,
               "-ar", str(SAMPLE_RATE), "-ac", "2" if music else "1"]
     dst.parent.mkdir(parents=True, exist_ok=True)
     if oggenc is None:
@@ -106,7 +129,8 @@ def convert(ff, oggenc, entry, raw_dir, force):
 
 
 def row(e):
-    return f"| {e['title']} | {e['author']} | [link]({e['url']}) | `assets/pirates_n_ships/sounds/{e['target']}` |"
+    link = PLACEHOLDER if e["url"] == PLACEHOLDER else f"[link]({e['url']})"
+    return f"| {e['title']} | {e['author']} | {link} | `assets/pirates_n_ships/sounds/{e['target']}` |"
 
 
 def write_credits(entries):
@@ -132,6 +156,10 @@ def write_credits(entries):
                 collections.append((e["author"], c))
         if collections:
             lines += ["Collections: " + ", ".join(f"[{author}]({c})" for author, c in collections), ""]
+        pending = [e["target"] for e in entries if e["kind"] == kind and PLACEHOLDER in (e["author"], e["url"])]
+        if pending:
+            lines += [f"**Warning:** author or source page still {PLACEHOLDER} for "
+                      + ", ".join(f"`{t}`" for t in pending) + ".", ""]
     CREDITS.write_text("\n".join(lines), encoding="utf-8")
     print(f"wrote    {CREDITS.relative_to(ROOT)}")
 

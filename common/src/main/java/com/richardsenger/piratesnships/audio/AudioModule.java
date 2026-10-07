@@ -14,13 +14,12 @@ import java.util.List;
  * the client section {@code audio} ({@link AudioConfig}, taken over from {@code core.settings}) and the server section
  * {@code hull_creaking} ({@link CreakConfig}).
  *
- * <h2>Placeholder sounds</h2>
- * We have no recordings yet. {@code pirates_n_ships:ship.creak} plays vanilla's creaky wooden door opening
- * ({@code minecraft:block/wooden_door/open1}, {@code open2}) and chest lid ({@code minecraft:block/chest/open}),
- * pitched down by the trigger (0.5 to 0.8). To use real recordings, either ship a resource pack with its own
- * {@code assets/pirates_n_ships/sounds.json} entry {@code "ship.creak"} ({@code "replace": true}) and the files, or
- * add the recordings through {@code tools/sounds/manifest.json} (see its README) and change {@link #CREAK_SOUNDS} to
- * {@code pirates_n_ships:ship/creak1}, … (then regenerate data).
+ * <h2>Hull creak</h2>
+ * {@code pirates_n_ships:ship.creak} plays one of {@link #CREAK_SOUNDS} with equal weight: two slices of one Pixabay
+ * wood creak recording, cut and loudness-normalised by {@code tools/convert_sounds.py} (entries in
+ * {@code tools/sounds/manifest.json}). The trigger pitches them down (0.5 to 0.8) and varies the volume, so repeated
+ * creaks don't sound alike. A resource pack can still replace them with its own {@code "ship.creak"} entry
+ * ({@code "replace": true}).
  *
  * <h2>Music</h2>
  * {@code music.sea} and {@code music.shanty} ({@link AudioSounds}) are chosen on the client by
@@ -28,9 +27,9 @@ import java.util.List;
  */
 public final class AudioModule implements ModModule {
 
-    /** Sound files of {@code ship.creak} (vanilla placeholders) and their volume in the sound definition. */
+    /** Sound files of {@code ship.creak} (from tools/sounds/manifest.json), equal weights, full volume. */
     static final List<String> CREAK_SOUNDS = List.of(
-            "minecraft:block/wooden_door/open1", "minecraft:block/wooden_door/open2", "minecraft:block/chest/open");
+            Constants.MOD_ID + ":ship/creak_1", Constants.MOD_ID + ":ship/creak_2");
     static final String CREAK_SUBTITLE = "subtitles." + Constants.MOD_ID + ".ship.creak";
 
     @Override
@@ -69,7 +68,7 @@ public final class AudioModule implements ModModule {
 
     static void sounds(SoundEntries s) {
         SoundEntries.Event creak = s.event(AudioSounds.SHIP_CREAK).subtitle(CREAK_SUBTITLE);
-        for (String name : CREAK_SOUNDS) creak.sound(SoundEntries.file(name).volume(0.8f));
+        for (String name : CREAK_SOUNDS) creak.sound(SoundEntries.file(name));
         SoundEntries.Event sea = s.event(AudioSounds.MUSIC_SEA);
         for (String name : AudioSounds.SEA_TRACKS) sea.sound(SoundEntries.file(name).stream());
         SoundEntries.Event shanty = s.event(AudioSounds.MUSIC_SHANTY);

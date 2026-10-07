@@ -84,7 +84,7 @@ public final class ShipDecorModule implements ModModule {
             nameplate(m, ShipDecor.NAMEPLATE.get());
             // flagpole: model and block state in FlagData
             // hand-made Blockbench models (art/models/cargo_{crate,barrel}.bbmodel, design.md §4.8): only the block
-            // states are generated; the load does not show (the blocks have no load property)
+            // states are generated; the load does not show (the load property is physics only, CW1: every value uses the model)
             for (Block cargo : List.of(ShipDecor.CARGO_CRATE.get(), ShipDecor.CARGO_BARREL.get())) {
                 m.blockStates().accept(MultiVariantGenerator.multiVariant(cargo, Variant.variant()
                         .with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(cargo))));

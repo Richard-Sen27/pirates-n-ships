@@ -32,6 +32,7 @@ public class CargoContainerBlockEntity extends BlockEntity implements Container 
     private ItemStack input = ItemStack.EMPTY;
     private ItemStack output = ItemStack.EMPTY;
     private int published;
+    private final CargoLoad.Tracker load = new CargoLoad.Tracker();
 
     public CargoContainerBlockEntity(BlockPos pos, BlockState state) {
         super(CargoContainers.BLOCK_ENTITY.get(), pos, state);
@@ -139,7 +140,10 @@ public class CargoContainerBlockEntity extends BlockEntity implements Container 
             }
         }
         publish();
-        if (dirty) super.setChanged();
+        if (dirty) {
+            load.markDirty();
+            super.setChanged();
+        }
     }
 
     private void publish() {
@@ -158,8 +162,15 @@ public class CargoContainerBlockEntity extends BlockEntity implements Container 
         setChanged();
     }
 
+    /** Server tick: keeps {@link CargoLoad#LOAD} in step with the content (debounced). */
+    public static void serverTick(net.minecraft.world.level.Level level, BlockPos pos, BlockState state, CargoContainerBlockEntity be) {
+        CargoMass.Profile profile = state.getBlock() instanceof CargoContainerBlock b ? b.massProfile() : CargoMass.CRATE;
+        be.load.tick(level, pos, profile, () -> CargoWeighing.weigh(be, com.richardsenger.piratesnships.trade.TradeService.goods(level)));
+    }
+
     @Override
     public void setChanged() {
+        load.markDirty();
         sync();
         if (level != null && !level.isClientSide) {
             level.updateNeighbourForOutputSignal(worldPosition, getBlockState().getBlock());
@@ -191,7 +202,10 @@ public class CargoContainerBlockEntity extends BlockEntity implements Container 
     public ItemStack removeItem(int slot, int amount) {
         if (amount <= 0) return ItemStack.EMPTY;
         ItemStack out = slot == INPUT ? input.split(amount) : slot == OUTPUT ? output.split(amount) : ItemStack.EMPTY;
-        if (!out.isEmpty()) super.setChanged();
+        if (!out.isEmpty()) {
+            load.markDirty();
+            super.setChanged();
+        }
         return out;
     }
 
@@ -258,6 +272,7 @@ public class CargoContainerBlockEntity extends BlockEntity implements Container 
         }
         if (tag.contains("residue")) input = ItemStack.parseOptional(registries, tag.getCompound("residue"));
         publish();
+        load.markDirty();
     }
 
     @Override
@@ -277,6 +292,7 @@ public class CargoContainerBlockEntity extends BlockEntity implements Container 
         store.clear();
         if (c != null) store.set(c.kind(), c.count());
         publish();
+        load.markDirty();
     }
 
     @Override

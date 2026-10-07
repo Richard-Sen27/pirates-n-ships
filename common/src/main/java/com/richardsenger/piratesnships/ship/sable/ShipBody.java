@@ -325,6 +325,47 @@ public final class ShipBody {
         }
     }
 
+    // ---------------------------------------------------------------- cargo weight (CW1)
+
+    /**
+     * Records an impulse (force × time step, body frame) at a plot position in our cargo force group, like
+     * {@link #applyGrappleImpulse}: the point force becomes a force plus the torque {@code (pos − COM) × force}. Physics
+     * substep only ({@code ServerSubLevel#getOrCreateQueuedForceGroup} l.395;
+     * {@code api/physics/force/QueuedForceGroup.java#applyAndRecordPointForce} l.25;
+     * {@code api/physics/force/ForceTotal.java#applyImpulseAtPoint} l.101-105).
+     */
+    public void applyCargoImpulse(Vector3dc plotPoint, Vector3dc localImpulse) {
+        dev.ryanhcode.sable.api.physics.force.ForceGroup group = ShipForces.cargo();
+        if (group != null) {
+            sub.getOrCreateQueuedForceGroup(group).applyAndRecordPointForce(plotPoint, localImpulse);
+        }
+    }
+
+    /**
+     * The level's gravity vector in the world frame [m/s²], {@code (0, -11, 0)} by default
+     * ({@code physics/config/dimension_physics/DimensionPhysicsData.java#getGravity(Level)}, l.49-60; the same call
+     * Sable's physics system makes, {@code sublevel/system/SubLevelPhysicsSystem.java} l.168).
+     */
+    public Vector3d gravity() {
+        return dev.ryanhcode.sable.physics.config.dimension_physics.DimensionPhysicsData.getGravity(sub.getLevel());
+    }
+
+    /**
+     * Every block entity in the ship's loaded plot chunks (plot positions), without scanning blocks
+     * ({@code LevelPlot#getLoadedChunks}, l.298; {@code sublevel/plot/PlotChunkHolder.java#getChunk}, l.146; vanilla
+     * {@code LevelChunk#getBlockEntities}). Copy.
+     */
+    public List<net.minecraft.world.level.block.entity.BlockEntity> plotBlockEntities() {
+        List<net.minecraft.world.level.block.entity.BlockEntity> out = new ArrayList<>();
+        for (PlotChunkHolder chunk : sub.getPlot().getLoadedChunks()) {
+            net.minecraft.world.level.chunk.LevelChunk c = chunk.getChunk();
+            if (c != null) {
+                out.addAll(c.getBlockEntities().values());
+            }
+        }
+        return out;
+    }
+
     /** Our sub-tree of the sub-level's persisted user data ({@code ServerSubLevel#getUserDataTag}, l.548). */
     public CompoundTag userData(String key) {
         CompoundTag root = sub.getUserDataTag();

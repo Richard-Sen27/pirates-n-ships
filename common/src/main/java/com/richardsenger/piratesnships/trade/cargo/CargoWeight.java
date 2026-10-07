@@ -52,7 +52,19 @@ public final class CargoWeight {
         }
     }
 
+    /**
+     * Default ship capacity per block [weight units] (CW1): the starter sloop (680 blocks) holds 5,440 units, so its six
+     * cargo containers at their nominal weight ({@link CargoMass}, 5,376 units) make it heavily laden, and anything on
+     * top overloads it.
+     */
+    public static final double CAPACITY_PER_BLOCK = 8.0;
+
     private CargoWeight() {
+    }
+
+    /** A ship's cargo capacity: {@code blocks × perBlock} (0 for an empty ship). */
+    public static double shipCapacity(int blocks, double perBlock) {
+        return Math.max(0, blocks) * Math.max(0, perBlock);
     }
 
     /** Weight of {@code count} items with id {@code item}. */

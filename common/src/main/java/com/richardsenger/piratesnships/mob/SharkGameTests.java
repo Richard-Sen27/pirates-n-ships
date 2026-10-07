@@ -33,12 +33,19 @@ import java.util.List;
 /**
  * The shark in a real server (M4). Every test with a shark runs in its own batch, so a shark never sees the players of
  * another test; tests that change config use {@code pirates_n_ships_config_*} batches. The basin is the whole 24×24
- * template: stone floor at y 1, stone walls, water from y 2 to {@link #WATER_TOP} (surface at y 7.0).
+ * template: stone floor at y 1, stone walls, water from y 2 to {@link #WATER_TOP} (fluid surface at {@link #SURFACE}).
  */
 public final class SharkGameTests {
 
     private static final int SIZE = 24;
     private static final int WATER_TOP = 6;
+    /** The fluid surface: a source block under air is 8/9 of a block high, so not y 7.0. */
+    private static final double SURFACE = WATER_TOP + 8.0 / 9.0;
+    /**
+     * The highest a shark's hitbox bottom may get when nothing but the shark moves it: the surface minus
+     * {@link Shark#SURFACE_MARGIN}, plus 0.01 for float rounding.
+     */
+    private static final double HIGHEST_BOTTOM = SURFACE - Shark.SURFACE_MARGIN + 0.01;
     /** A swimmer's feet: in the water, eyes just above the surface. */
     private static final Vec3 SWIMMER = new Vec3(12.5, 5.6, 12.5);
 
@@ -88,7 +95,11 @@ public final class SharkGameTests {
 
     // ------------------------------------------------------------------ swimming
 
-    /** Without prey a shark cruises about the basin and never leaves the water. */
+    /**
+     * Without prey a shark cruises about the basin and never leaves the water, nor even comes near breaching: its
+     * hitbox bottom stays {@link Shark#SURFACE_MARGIN} under the surface. (Q4: before, the move control's buoyancy
+     * made an idle shark drift up and bob out of the water by a few hundredths of a block in about 1 run in 13.)
+     */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 300, batch = "pirates_n_ships_shark_cruise")
     public static void sharkStaysInWaterAndCruises(GameTestHelper h) {
         basin(h);
@@ -96,13 +107,40 @@ public final class SharkGameTests {
         Vec3 start = shark.position();
         double[] farthest = {0};
         h.onEachTick(() -> {
-            if (shark.tickCount > 5 && !shark.isInWater()) h.fail("the shark left the water at " + shark.position());
+            if (shark.tickCount > 5 && !shark.isInWater()) h.fail("the shark left the water at " + h.relativeVec(shark.position()));
+            double bottom = shark.getBoundingBox().minY - h.absoluteVec(Vec3.ZERO).y;
+            if (bottom > HIGHEST_BOTTOM) h.fail("the shark rose to " + bottom + ", above " + HIGHEST_BOTTOM);
             farthest[0] = Math.max(farthest[0], shark.position().distanceTo(start));
         });
         h.runAfterDelay(280, () -> {
             h.assertTrue(shark.isAlive(), "the shark died");
             h.assertTrue(farthest[0] > 2.0, "the shark did not cruise: farthest " + farthest[0]);
             h.assertTrue(shark.getTarget() == null, "the shark found a target in an empty basin: " + shark.getTarget());
+            h.succeed();
+        });
+    }
+
+    /**
+     * Swimming up hard (as a lunge at a swimmer above it would) stops under the surface: the shark's own moves never
+     * carry its hitbox bottom above {@link #HIGHEST_BOTTOM}, so it never breaches.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 100, batch = "pirates_n_ships_shark_surface")
+    public static void sharkSwimmingUpStopsUnderTheSurface(GameTestHelper h) {
+        basin(h);
+        Shark shark = shark(h, 12, 3, 12);
+        double[] highest = {0};
+        h.onEachTick(() -> {
+            // isInWater is first updated on the shark's first tick
+            if (shark.tickCount < 2 || shark.tickCount > 40) return;
+            shark.setDeltaMovement(0, 0.5, 0);
+            double bottom = shark.getBoundingBox().minY - h.absoluteVec(Vec3.ZERO).y;
+            highest[0] = Math.max(highest[0], bottom);
+            if (!shark.isInWater()) h.fail("the shark breached at " + h.relativeVec(shark.position()));
+            if (bottom > HIGHEST_BOTTOM) h.fail("the shark rose to " + bottom + ", above " + HIGHEST_BOTTOM);
+        });
+        h.runAfterDelay(60, () -> {
+            h.assertTrue(highest[0] > HIGHEST_BOTTOM - 0.1, "the shark did not swim up to the surface: " + highest[0]);
+            h.assertTrue(shark.isInWater(), "the shark is out of the water");
             h.succeed();
         });
     }

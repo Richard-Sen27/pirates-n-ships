@@ -30,6 +30,9 @@ import java.util.List;
  *       After {@code aim_steady_ticks} of aiming the spread is multiplied by {@code aimed_spread_factor}; a loaded
  *       musket also zooms in on the client ({@code firearm_view.musket_zoom}).</li>
  * </ul>
+ * <b>Lowering (P5):</b> sneaking while aiming lowers the gun without firing ({@code firearms.aim.lower_on_sneak}):
+ * the client lets go as soon as sneak is pressed ({@code client.FirearmLowering}), a release while sneaking never
+ * fires ({@link FirearmRules#lowers}), and a loaded gun is not raised while sneaking ({@link FirearmRules#aimsOnUse}).
  * Use on an unloaded gun without ammunition clicks. With {@code firearms.enabled} off the gun does nothing.
  *
  * <p>Pose: {@link UseAnim#NONE}, the gun stays in the normal held position in both views. The crossbow poses can't be
@@ -63,6 +66,10 @@ public class FirearmItem extends Item {
         ItemStack stack = player.getItemInHand(hand);
         if (!FirearmsConfig.ENABLED.get()) return InteractionResultHolder.pass(stack);
         if (FirearmContent.isLoaded(stack)) {
+            // sneaking keeps a loaded gun lowered (so holding use after lowering doesn't raise it again)
+            if (!FirearmRules.aimsOnUse(player.isShiftKeyDown(), FirearmsConfig.LOWER_ON_SNEAK.get())) {
+                return InteractionResultHolder.pass(stack);
+            }
             player.startUsingItem(hand); // aim; the shot leaves on release
             return InteractionResultHolder.consume(stack);
         }
@@ -106,6 +113,8 @@ public class FirearmItem extends Item {
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
         // a loading session: let go before the reload time cancels and takes nothing, after it the gun stays loaded
         if (!FirearmRules.isAimSession(timeLeft) || !FirearmsConfig.ENABLED.get() || !FirearmContent.isLoaded(stack)) return;
+        // sneaking lowers the gun: no shot, it stays loaded (the client releases the use when sneak is pressed)
+        if (FirearmRules.lowers(entity.isShiftKeyDown(), true, FirearmsConfig.LOWER_ON_SNEAK.get())) return;
         int held = FirearmRules.heldTicks(timeLeft);
         if (level instanceof ServerLevel server && FirearmRules.firesOnRelease(held, FirearmsConfig.AIM_MIN_TICKS.get())) {
             FirearmService.fire(server, entity, stack, kind, held);

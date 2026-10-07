@@ -129,6 +129,24 @@ public final class FirearmRules {
     }
 
     /**
+     * True when letting go of the gun lowers it instead of firing: the player sneaks during an aim session and
+     * {@code firearms.aim.lower_on_sneak} is on. The gun stays loaded. A loading session is never affected (letting
+     * go of it never fires anyway).
+     */
+    public static boolean lowers(boolean sneaking, boolean aimSession, boolean lowerOnSneak) {
+        return lowerOnSneak && sneaking && aimSession;
+    }
+
+    /**
+     * True when pressing use on a loaded gun raises it to aim. While sneaking with {@code lower_on_sneak} on it stays
+     * lowered, so holding the use key after lowering does not raise the gun again (vanilla repeats the use every few
+     * ticks while the key is held).
+     */
+    public static boolean aimsOnUse(boolean sneaking, boolean lowerOnSneak) {
+        return !(lowerOnSneak && sneaking);
+    }
+
+    /**
      * The spread of a shot after aiming for {@code heldTicks}: multiplied by {@code aimedFactor} once the aim has been
      * held at least {@code steadyTicks}, the full spread before.
      */

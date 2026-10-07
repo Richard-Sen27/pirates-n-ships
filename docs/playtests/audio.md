@@ -39,3 +39,6 @@ Please send `latest.log` if anything differs.
 ## Also worth a look
 - Our music replaces vanilla's underwater and creative-mode music in sea biomes. Say whether that feels right.
 - Is the 2 to 5 minute gap between tracks (default) too long or too short?
+
+
+Addendum (A1): board a ship and let it roll: occasional quiet wooden creaks from different spots in the lower hull, more often when it rolls harder, at least 2 s apart, never a loop, no door or chest sounds any more; several creaks in a row should not sound identical (two variants, pitch 0.5–0.8); subtitles show "Ship creaks"; a ship lying still is silent. Judge the level against the waves and music: too faint means raising `hull_creaking.maxVolume`.

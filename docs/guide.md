@@ -177,6 +177,10 @@ A ship that heels or is shoved swings back and settles within a few seconds (rol
 While it rolls, its planks creak now and then, quietly, from somewhere in the hull; a ship at rest is silent. The
 creak uses vanilla wooden sounds as placeholders until real recordings exist.
 
+### Hull creaks
+A rolling ship creaks now and then from somewhere in the lower hull, louder and more often the harder it rolls,
+never as a loop; a ship lying still is silent. Server config `hull_creaking` sets the volume and the minimum gap.
+
 ### Sea music
 The mod brings its own music. Aboard a ship (standing on deck or sitting at a station) the next track is a sea
 shanty; at sea but not aboard (an ocean, deep ocean or beach biome) it is an ambient sea track; anywhere else vanilla

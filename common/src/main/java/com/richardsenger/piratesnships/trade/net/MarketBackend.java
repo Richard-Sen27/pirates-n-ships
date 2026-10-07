@@ -171,11 +171,19 @@ public final class MarketBackend {
         TransactionResult r = p.buy()
                 ? MarketTransactions.buy(player, p.port(), p.good(), p.quantity(), holder.get())
                 : MarketTransactions.sell(player, p.port(), p.good(), p.quantity(), effectivePlunder(p, player), holder.get());
-        if (r.noticedPlunder()) {
-            NoticedSale sale = new NoticedSale(player, p.port(), r);
-            for (Consumer<NoticedSale> l : NOTICED_LISTENERS) l.accept(sale);
-        }
+        reportNoticed(player, p.port(), r);
         return r;
+    }
+
+    /**
+     * Tells the {@link #onNoticedPlunder} listeners about {@code result} if it is a noticed plunder sale at
+     * {@code port} (no-op otherwise). Every server-side sale path calls it: the protocol ({@link #trade}) and the
+     * direct sell command.
+     */
+    public static void reportNoticed(ServerPlayer player, ResourceLocation port, TransactionResult result) {
+        if (!result.noticedPlunder()) return;
+        NoticedSale sale = new NoticedSale(player, port, result);
+        for (Consumer<NoticedSale> l : NOTICED_LISTENERS) l.accept(sale);
     }
 
     /** Selling from a container uses the container's own plunder state, not the client's claim. */

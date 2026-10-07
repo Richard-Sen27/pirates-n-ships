@@ -10,7 +10,8 @@ import java.util.UUID;
 
 /**
  * The law's answer to plunder sold in a port that noticed it (docs/design.md §10.3, §13.1): every noticed sale made
- * through the market protocol (harbor master's desk, or a market opened by command) is reported as
+ * through the market protocol (harbor master's desk, or a market opened by command) or the direct
+ * {@code /pirates trade sell} command is reported as
  * {@link CrimeType#FENCE_PLUNDER} against the port. The law module listens to the trade module
  * ({@link MarketBackend#onNoticedPlunder}), never the other way round. Toggles, severity and the repeat window are the
  * law module's own ({@code law.criminal_score_enabled}, {@code law.severity.fence_plunder},

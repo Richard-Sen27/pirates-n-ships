@@ -1946,6 +1946,12 @@
 				"pirates_n_ships:loaded": 1
 			},
 			"model": "pirates_n_ships:item/musket_loaded"
+		},
+		{
+			"predicate": {
+				"pirates_n_ships:grapple_loaded": 1
+			},
+			"model": "pirates_n_ships:item/musket_hook"
 		}
 	]
 }

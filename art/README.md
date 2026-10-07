@@ -603,6 +603,48 @@ and every `*.animation.json` under `animations/` of every namespace):
 - `textures/entity/<mob>.png`: 64×64 sheet in the vanilla player skin layout.
 - Blockbench project: `art/models/entity/<mob>.bbmodel`.
 
+### GeckoLib bone rotations in code: read this before any `setRotX/Y/Z` (GL1)
+
+Three packages in a row got a sign wrong when code turns a GeckoLib bone (the shark's body pitch, the kraken's tentacle
+tips and suckers pointing up, earlier the musket). The facts below are checked against the GeckoLib 4.9.3 sources
+(`software.bernie.geckolib`, sources jar in the Gradle cache) and against what the human saw in game.
+
+**GeckoLib's frame is not vanilla's.** `GeoEntityRenderer.applyRotations` turns the model by `180 − bodyYaw` and
+scales by the entity's native scale only. There is **no** `scale(−1, −1, 1)` as in `LivingEntityRenderer`, so y is up
+and a bone's local axes are the Bedrock axes. The mirror vanilla gets from that scale is instead baked into the
+geometry: `BakedModelFactory` loads every pivot and cube origin with **x negated** (`-pivot.x`, origin `-(x + size.x)`)
+and every bone and cube rotation from the file with **x and y negated** (`-rot.x, -rot.y, rot.z`, in radians);
+`RenderUtil.translateMatrixToBone` likewise moves by `-posX`. Bones render with `RenderUtil.rotateMatrixAroundBone`,
+which is JOML `rotationZYX(rotZ, rotY, rotX)`: right-handed, radians, applied Z then Y then X, exactly the values the
+bone holds. Animation keyframes are added onto the bone's initial snapshot (`AnimationProcessor`) in that same space.
+
+**Rule 1: never write a raw Minecraft angle into a bone.** Minecraft's pitch (`getXRot`, `getViewXRot`, the pitch of a
+look vector; positive = down) and yaw (`yHeadRot − yBodyRot`, `getViewYRot`) are in vanilla's convention. For a
+GeckoLib bone **negate x and y**, keep z: `bone.setRotX(-pitchRad)`, `bone.setRotY(-yawRad)`, `bone.setRotZ(rollRad)`,
+the same flip GeckoLib applies to file values. The shark did `root.setRotX(viewXRot)` and pitched the wrong way.
+
+**Rule 2: `EntityModelData` is already flipped.** `GeoEntityRenderer` fills `DataTickets.ENTITY_MODEL_DATA` with
+`new EntityModelData(sitting, baby, -netHeadYaw, -headPitch)`. So `head.setRotX(data.headPitch() * DEG_TO_RAD)` and
+`head.setRotY(data.netHeadYaw() * DEG_TO_RAD)` are correct as they stand (`HumanoidGeoModel`, the shark's head). Do
+not negate these a second time, and do not mix them with raw entity angles in one formula.
+
+**Rule 3: directions from the world go through the same mirror.** A bone aimed at a world direction (the kraken's
+tentacles, a turret) must take the direction into GeckoLib's bone space first: into the entity's local frame (undo
+the `180 − bodyYaw` turn), then mirror x (the geometry's `-x`), then decompose with `rotationZYX`. A decomposition
+that is exact against JOML in a unit test but skips the frame change renders mirrored in game (K1c passed its 72 aims
+and still pointed the suckers up).
+
+**Rule 4: held items are moved by the hand bone once, not twice.** GeckoLib 4.9.3 applies the hand bone in
+`renderRecursively` and again in `BlockAndItemGeoLayer.renderForBone` (through `translateAndRotateMatrixForBone`);
+`HumanoidGeoRenderer.HeldItemLayer` overrides `renderForBone` to translate to the pivot only (M6b).
+
+**Rule 5: verify the sign before handing back, with a test that includes the frame.** A JUnit test that composes the
+real transforms end to end (`GeoEntityRenderer`'s turn, the baked mirror, `rotationZYX`, then the item or cube
+offset) and asserts a world-space fact ("the muzzle points forward and level", "a swimming-down shark's nose is below
+its tail", "the tentacle tip is below its root") catches every sign error headlessly; `SeafarerRigTest` and
+`KrakenRigTest` are the pattern. A render in `art/renders/` from a side view is the second check. Writing
+`setRotX(angle)` because it compiled is how the three bugs above shipped.
+
 **Bones** (Bedrock coordinates, 1 unit = 1 pixel, y up, the model faces −z; the same as the vanilla player model with
 wide arms):
 

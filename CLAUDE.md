@@ -40,6 +40,7 @@ Minecraft mod. Full spec: `docs/design.md`. Read it at the start of every sessio
 - Gameplay is server-authoritative. The client renders only.
 - Every piece of new logic gets a GameTest in `common` where feasible.
 - Use mixins only when no event or API exists. Keep each one small, document why it exists, and name it `Mixin<Target>`.
+- **GeckoLib bones in code:** before any `setRotX/Y/Z`, read `art/README.md`, section "GeckoLib bone rotations in code". GeckoLib's bone space is mirrored against vanilla's: negate x and y of every raw Minecraft angle or world direction (never `EntityModelData`, which is already flipped), and prove the sign with a rig test that composes the real transforms. Three packages shipped inverted limbs by skipping this.
 
 ## Workflow
 - Plan before implementing any feature that touches more than 2 files. List the files (with their module: common / neoforge / fabric) and the approach first.

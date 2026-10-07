@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-07T08:10:05.489555	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-07T08:21:50.544303	Block states and models: pirates_n_ships
 c189a7833975a61cf2c7c8fd326d27a32969cb9d assets/pirates_n_ships/blockstates/bilge_pump.json
 52e053a4f7334e9a78798b4b4b9a2ad80087f3d5 assets/pirates_n_ships/blockstates/brig_bars.json
 83716521a6f9785f7114fa5a9489defb1257975d assets/pirates_n_ships/blockstates/brig_door.json
@@ -18,6 +18,7 @@ d241f11bb103a4cdbc981e78e9b0b5005b4befcc assets/pirates_n_ships/blockstates/figu
 fb1ffe031da0edb59999141711742474aea52104 assets/pirates_n_ships/blockstates/nameplate.json
 9a313ab632aa9d32ef1945eef9d6f1517c2875a0 assets/pirates_n_ships/blockstates/pantry.json
 f168c03dd5836ab63cd7fc09f2f78f141e839e5f assets/pirates_n_ships/blockstates/sail_winch.json
+e6693690b1a2de5def4d4ee1b77abcdb3ac5acb1 assets/pirates_n_ships/blockstates/swivel_gun.json
 d84a194713bf6b44c6713f09896c5895899e7282 assets/pirates_n_ships/blockstates/test_block.json
 6c80c8b0903433be2a48dfec98c3f4337c95808c assets/pirates_n_ships/blockstates/water_barrel.json
 0b12aae142cc2820b4f73c0ec793251dc3bc9fec assets/pirates_n_ships/blockstates/yard.json
@@ -30,6 +31,10 @@ f7c82b786e5bb6b0fc708a615845f0ef2c84bd44 assets/pirates_n_ships/models/block/fla
 e5b3569e1b8c4192055ef64e81a0d3f84ebb3c03 assets/pirates_n_ships/models/block/flagpole_flag_merchant.json
 8e589f96f89ee134fa35c32000bea7e6286115db assets/pirates_n_ships/models/block/flagpole_flag_navy.json
 454079474672d450268ce92edd45fedf1223408e assets/pirates_n_ships/models/block/hull_patch.json
+e4eeaee2c83822a0b36d91dfd89a0d38eed21035 assets/pirates_n_ships/models/block/swivel_gun.json
+9065be75d964d96cd29748593161c9a9933823cf assets/pirates_n_ships/models/block/swivel_gun_barrel.json
+656dde647ab0e949f5f8b172482f4a10934d6be3 assets/pirates_n_ships/models/block/swivel_gun_barrel_loaded.json
+3ff93ea66cf57af424fc2017b6c48ff148bd9692 assets/pirates_n_ships/models/block/swivel_gun_yoke.json
 7c3493c10a85f585af8ae3085e8e58c056e6b090 assets/pirates_n_ships/models/block/test_block.json
 5982e307cbb43d7cd8267060c04e3d13c79444f7 assets/pirates_n_ships/models/item/bilge_pump.json
 7b937a3b6f02e6abfce5d9e23f88171f665e804f assets/pirates_n_ships/models/item/brig_bars.json
@@ -54,6 +59,7 @@ f399a5322f83e89b272f7efbdfc19ccff371f439 assets/pirates_n_ships/models/item/joll
 d830a7abbc232e7d496bb338343be03b894083fa assets/pirates_n_ships/models/item/pantry.json
 2ff868694993d74c39b741b5cc83b12f64f69570 assets/pirates_n_ships/models/item/rope.json
 344a8933080d39bb3457d959748e850b869917c8 assets/pirates_n_ships/models/item/sail_winch.json
+2f69a7f53109b1bc48f7213ff2322daba1480042 assets/pirates_n_ships/models/item/swivel_gun.json
 1089ff46d82ccaa42bb4f632ea36493a92ae1c93 assets/pirates_n_ships/models/item/test_block.json
 5044a42b69e6723415e07fb61619a0264973734a assets/pirates_n_ships/models/item/water_barrel.json
 f6e4d1d5088efeadbfd348531d4b3fb9903e3010 assets/pirates_n_ships/models/item/yard.json

@@ -1,8 +1,9 @@
-// 1.21.1	2026-10-07T08:10:05.491514	Raw JSON (data): pirates_n_ships
+// 1.21.1	2026-10-07T08:21:50.547219	Raw JSON (data): pirates_n_ships
 6d43d8ef5831dc3173fdc34fded2cf864b258292 data/pirates_n_ships/physics_block_properties/bilge_pump.json
 a765a14b00c58afdeac06dec7c2951b7de50d707 data/pirates_n_ships/physics_block_properties/cannon.json
 907f1809606d3b8bffd9e0f911961f9f8ff40af7 data/pirates_n_ships/physics_block_properties/cleat.json
 944fd93d6b23ee95f58bd0b46b9f3cf7283c1daf data/pirates_n_ships/physics_block_properties/hull_patch.json
+f51d35b4fe313cf899a1835d0076c39c73bec5f8 data/pirates_n_ships/physics_block_properties/swivel_gun.json
 b75487df5ae1bab409d28fc82e318867b315f79a data/pirates_n_ships/physics_block_properties/test_block.json
 607cc5f271dd005d9c97359d52918668395791bd data/pirates_n_ships/physics_block_properties/yard.json
 6605efa70f733dc8e58d9f3e77fbb953ca58419a data/pirates_n_ships/pirates_n_ships/test_marker/example.json

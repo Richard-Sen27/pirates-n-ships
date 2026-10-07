@@ -15,5 +15,7 @@ public final class CannonClient {
 
     public static void init() {
         ClientEvents.registerEntityRenderer(CannonContent.CANNONBALL, ctx -> new ThrownItemRenderer<>(ctx, BALL_SCALE, false));
+        ClientEvents.registerBlockEntityRenderer(CannonContent.SWIVEL_GUN_ENTITY, SwivelGunRenderer::new);
+        SwivelAimClient.init();
     }
 }

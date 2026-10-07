@@ -45,6 +45,37 @@ public final class CannonConfig {
     public static final ConfigValue<Double> SINK_SPEED = S.doubleRange("sink_speed", 0.3, 0.0, 10.0,
             "A cannonball in water slower than this (blocks per tick) has sunk and is removed");
 
+    // ---- the swivel gun (P2) ---------------------------------------------------------------------------------------
+
+    private static final ConfigSection SWIVEL = S.section("swivel",
+            "The swivel gun: a small gun on a fence or railing that turns freely; less range and damage, faster reload");
+    public static final ConfigValue<Boolean> SWIVEL_ENABLED = SWIVEL.bool("enabled", true,
+            "Swivel guns can be loaded, aimed and fired. Off = they are inert blocks");
+    public static final ConfigValue<SwivelAmmo> SWIVEL_AMMO = SWIVEL.enumValue("ammo", SwivelAmmo.CANNONBALL,
+            "What goes into a swivel gun after the gunpowder: a cannonball or lead shot");
+    public static final ConfigValue<Integer> SWIVEL_AMMO_COUNT = SWIVEL.intRange("ammo_count", 1, 1, 64,
+            "How many of the ammo items one load takes");
+    public static final ConfigValue<Double> SWIVEL_DAMAGE = SWIVEL.doubleRange("damage", 8.0, 0.0, 1000.0,
+            "Damage of a swivel shot hitting an entity (times combat.damage_multipliers.cannon_entity)");
+    public static final ConfigValue<Double> SWIVEL_VELOCITY = SWIVEL.doubleRange("muzzle_velocity", 2.0, 0.1, 10.0,
+            "Start speed of a swivel shot in blocks per tick, relative to the gun (gravity: cannons.gravity)");
+    public static final ConfigValue<Integer> SWIVEL_RELOAD_TICKS = SWIVEL.intRange("reload_ticks", 60, 0, 6000,
+            "Ticks after a shot before powder can go into the swivel gun again");
+    public static final ConfigValue<Integer> SWIVEL_BLOCKS_PER_HIT = SWIVEL.intRange("blocks_per_hit", 0, 0, 16,
+            "Blocks one swivel shot destroys (times combat.damage_multipliers.cannon_block; 0 = none)");
+    public static final ConfigValue<Double> SWIVEL_RECOIL_IMPULSE = SWIVEL.doubleRange("recoil_impulse", 1.0, 0.0, 1000.0,
+            "Impulse a swivel shot gives the firing ship against the barrel, in kpg*m/s (0 = no recoil)");
+    public static final ConfigValue<Double> SWIVEL_IMPACT_IMPULSE = SWIVEL.doubleRange("impact_impulse", 1.0, 0.0, 1000.0,
+            "Impulse a swivel shot gives the ship it hits, in kpg*m/s (0 = none)");
+    public static final ConfigValue<Integer> SWIVEL_BALL_LIFETIME_TICKS = SWIVEL.intRange("ball_lifetime_ticks", 100, 1, 2400,
+            "Ticks a swivel shot flies before it vanishes");
+    public static final ConfigValue<Double> SWIVEL_MIN_ELEVATION = SWIVEL.doubleRange("min_elevation_degrees", -30.0, -90.0, 0.0,
+            "Lowest barrel elevation of the swivel gun in degrees (negative = pointing down)");
+    public static final ConfigValue<Double> SWIVEL_MAX_ELEVATION = SWIVEL.doubleRange("max_elevation_degrees", 45.0, 0.0, 90.0,
+            "Highest barrel elevation of the swivel gun in degrees");
+    public static final ConfigValue<Double> SWIVEL_AIM_REACH = SWIVEL.doubleRange("aim_reach", 4.0, 1.0, 16.0,
+            "A player aiming a swivel gun lets go of it when further than this from the gun, in blocks");
+
     private CannonConfig() {
     }
 
@@ -68,5 +99,15 @@ public final class CannonConfig {
     public static int blocksPerHit() {
         return CombatConfig.CANNON_BLOCK_DAMAGE.get()
                 ? CannonRules.blocksPerHit(BLOCKS_PER_HIT.get(), CombatConfig.CANNON_BLOCK_DAMAGE_MULTIPLIER.get()) : 0;
+    }
+
+    public static float swivelDamage() {
+        return CannonRules.entityDamage(SWIVEL_DAMAGE.get(), CombatConfig.CANNON_ENTITY_DAMAGE.get());
+    }
+
+    /** Blocks a swivel shot may destroy right now: 0 when {@code combat.cannon_block_damage} is off. */
+    public static int swivelBlocksPerHit() {
+        return CombatConfig.CANNON_BLOCK_DAMAGE.get()
+                ? CannonRules.blocksPerHit(SWIVEL_BLOCKS_PER_HIT.get(), CombatConfig.CANNON_BLOCK_DAMAGE_MULTIPLIER.get()) : 0;
     }
 }

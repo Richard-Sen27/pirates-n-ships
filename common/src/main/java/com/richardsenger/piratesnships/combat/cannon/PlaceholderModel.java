@@ -18,6 +18,13 @@ final class PlaceholderModel {
 
     private final Map<String, String> textures = new LinkedHashMap<>();
     private final JsonArray elements = new JsonArray();
+    private String parent;
+
+    /** Sets a parent model, e.g. {@code minecraft:block/block} for the item display transforms of an item's model. */
+    PlaceholderModel parent(String id) {
+        parent = id;
+        return this;
+    }
 
     /** A model whose particle texture is {@code particle} (a texture id). */
     PlaceholderModel(String particle) {
@@ -72,6 +79,7 @@ final class PlaceholderModel {
 
     JsonElement json() {
         JsonObject json = new JsonObject();
+        if (parent != null) json.addProperty("parent", parent);
         JsonObject tex = new JsonObject();
         textures.forEach(tex::addProperty);
         json.add("textures", tex);

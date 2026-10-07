@@ -1,12 +1,13 @@
-// 1.21.1	2026-10-07T03:55:44.125548	Tags for minecraft:block mod id vanilla
+// 1.21.1	2026-10-07T08:21:50.545564	Tags for minecraft:block mod id vanilla
 027425cd193e9e04ea5aed99085f092fa520d95e data/minecraft/tags/block/doors.json
 6d638c9193336210eb1a77cb56b2c497ebf390dd data/minecraft/tags/block/mineable/axe.json
-be058e2eba330e271b48b9ffbd1c4f8727594c1c data/minecraft/tags/block/mineable/pickaxe.json
+97835be4927c82e5625dd7fa723b79207225f865 data/minecraft/tags/block/mineable/pickaxe.json
 195aa9da2a3443597914841c2ff10ec2cd1aef74 data/pirates_n_ships/tags/block/cannon_breakable.json
 90b985302b5c05cc96c39f6cb2985a785fde74b2 data/pirates_n_ships/tags/block/cannon_proof.json
 f7371fa73528b6e981b1f5dd5cf010306cb35cdf data/pirates_n_ships/tags/block/masts.json
 efa5c7038ab6e296491b919dff511cf035976fa2 data/pirates_n_ships/tags/block/never_assemble.json
 35133e95f1c8fdd7a1c21afcc231fc0bffefb9a8 data/pirates_n_ships/tags/block/not_watertight.json
+91d5870fb94edef2bff504f5736897f894f87c12 data/pirates_n_ships/tags/block/swivel_mounts.json
 d0b4325bb417203ea7f0a861071937293d2a1ac8 data/pirates_n_ships/tags/block/terrain.json
 ebf3d4b3edbb0cbdf9ac71e1cba8c5d457a8f8bf data/pirates_n_ships/tags/block/test_ground.json
 1a6606b59646e30901e8ced8c7447d19dcc5fedf data/pirates_n_ships/tags/block/watertight.json

@@ -67,3 +67,16 @@ pirates ignore players; say if that was your setup during the third playtest).
    follow the arm.
 5. **Head turning:** the bandana knot, cap, tricorn, bicorne and queue turn with the head; from above nothing pokes
    through the bicorne flaps; the nameplate should clear the hats.
+
+
+## M6: the soldier's musket
+1. **Aim.** Wanted (`/pirates law score set @s 60`), 8–15 blocks from a soldier: it raises the musket over about a
+   third of a second, right hand at the lock, left arm under the barrel, slight body turn, head tipped down; the
+   barrel points at you, also when you stand higher or lower.
+2. **Shot** after about a second of steady aim.
+3. **Reload** right after: butt to the ground, two pours, two rams, raise and cock, lasting the whole reload (5 s;
+   with `mobs.musket_reload_ticks` 50 twice as fast, still ending with the next aim).
+4. **Moving while reloading:** legs walk, arms keep reloading.
+5. **Shove** within 1.8 blocks: a quick butt-stroke forward, then back to the previous pose; a reload carries on.
+6. **Pirate and officer** telegraph, guard, parry and stagger poses look as before; the **crew member** is unchanged;
+   no soldier is left-handed.

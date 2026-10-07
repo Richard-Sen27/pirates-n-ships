@@ -181,23 +181,34 @@ def full_id(item):
 # ---------------------------------------------------------------------------------------------------- inputs
 
 def load_items():
-    """(display name lower -> id, id -> display name, set of item ids) of our items."""
+    """(display name lower -> id, id -> display name, set of item ids) of our items.
+
+    An item is an id with an item model (generated or hand-made). Fails, naming the ids, when an item has no lang
+    name ("item." or "block." key) or an "item." lang key has no item model: the guide could not name or show it.
+    A "block." key without an item model is a block without an item and is skipped.
+    """
     lang = json.loads(LANG.read_text(encoding="utf-8"))
     item_ids = set()
     for base in (ASSETS_MAIN, ASSETS_GEN):
         d = base / "models" / "item"
         if d.is_dir():
             item_ids.update(f"{NS}:{p.stem}" for p in d.glob("*.json"))
-    by_name, names = {}, {}
+    by_name, names, problems = {}, {}, []
     for key in sorted(lang):
         m = re.fullmatch(rf"(item|block)\.{NS}\.([a-z0-9_]+)", key)
         if not m:
             continue
         rid = f"{NS}:{m.group(2)}"
         if rid not in item_ids:
+            if m.group(1) == "item":
+                problems.append(f"{rid}: lang key {key} but no item model (models/item/{m.group(2)}.json)")
             continue
-        names[rid] = lang[key]
+        names.setdefault(rid, lang[key])
         by_name.setdefault(lang[key].lower(), rid)
+    for rid in sorted(item_ids - set(names)):
+        problems.append(f"{rid}: item model but no lang name (item.{NS}.{rid.split(':')[1]} or block.{NS}.…)")
+    if problems:
+        raise SystemExit("gen_guideme: items the guide cannot name or show:\n  " + "\n  ".join(problems))
     return by_name, names, item_ids
 
 

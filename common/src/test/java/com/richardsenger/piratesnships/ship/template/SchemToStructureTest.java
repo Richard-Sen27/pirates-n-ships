@@ -25,6 +25,8 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -273,14 +275,15 @@ class SchemToStructureTest {
         assertArrayEquals(new byte[] {0, 0, 0, 0}, java.util.Arrays.copyOfRange(a, 4, 8));
     }
 
-    /** The committed starter sloop structure is exactly what the converter makes from the committed schematic. */
-    @Test
-    void committedStarterSloopIsUpToDate() throws Exception {
-        Path schem = root.resolve("art/schematics/starter_sloop.schem");
-        Path committed = root.resolve("common/src/main/resources/data/pirates_n_ships/structure/ships/starter_sloop.nbt");
-        Path out = tmp.resolve("sloop");
+    /** Each committed ship structure is exactly what the converter makes from its committed schematic. */
+    @ParameterizedTest
+    @ValueSource(strings = {"starter_sloop", "starter_sloop_basic"})
+    void committedShipIsUpToDate(String name) throws Exception {
+        Path schem = root.resolve("art/schematics/" + name + ".schem");
+        Path committed = root.resolve("common/src/main/resources/data/pirates_n_ships/structure/ships/" + name + ".nbt");
+        Path out = tmp.resolve(name);
         String log = convert(out, schem);
-        assertArrayEquals(Files.readAllBytes(committed), Files.readAllBytes(out.resolve("starter_sloop.nbt")),
+        assertArrayEquals(Files.readAllBytes(committed), Files.readAllBytes(out.resolve(name + ".nbt")),
                 "rerun python3 tools/schem_to_structure.py and commit the result");
         assertTrue(log.contains("helm at [4, 8, 22]"), log);
     }

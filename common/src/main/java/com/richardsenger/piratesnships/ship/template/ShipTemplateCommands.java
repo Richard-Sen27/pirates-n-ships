@@ -76,7 +76,8 @@ public final class ShipTemplateCommands {
                 .add(KEY_LIST_ENTRY, "%s (%s): %s×%s×%s, helm %s, waterline row %s, price %s")
                 .add(KEY_LIST_EMPTY, "No ship templates are loaded")
                 .add(KEY_HULL_ONLY, "none (hull only)")
-                .add(ShipTemplates.STARTER_SLOOP.name(), "Starter Sloop");
+                .add(ShipTemplates.STARTER_SLOOP.name(), "Starter Sloop")
+                .add(ShipTemplates.STARTER_SLOOP_BASIC.name(), "Starter Sloop (basic)");
     }
 
     /** The template id as typed: a bare path that is not a known {@code minecraft:} id means ours. */

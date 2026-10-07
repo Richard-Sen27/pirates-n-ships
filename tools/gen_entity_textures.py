@@ -6,8 +6,9 @@ Run (from the repository root, with the venv of tools/gen_placeholder_textures.p
 
     tools/.venv/bin/python tools/gen_entity_textures.py pirate sailor navy_soldier navy_officer   # only these
 
-Output: common/src/main/resources/assets/pirates_n_ships/textures/entity/<name>.png, 64x64: crew_member (M1), and the
-M3 mob variants pirate, sailor, navy_soldier and navy_officer (placeholders until the Blockbench textures, M3-art).
+Output: common/src/main/resources/assets/pirates_n_ships/textures/entity/<name>.png, 64x64: the M3 mob variants pirate,
+sailor, navy_soldier and navy_officer (placeholders until the Blockbench textures, M3-art). The M1 placeholder
+crew_member is only written when named explicitly (M2's Blockbench skin owns that file now).
 The layout is the vanilla player skin layout (Steve, wide arms): every cube of the rig uses Minecraft box UV at the
 same offset as the player model, so a variant mob (pirate, sailor, navy soldier, officer) is a new texture painted on
 this sheet, and any 64x64 player skin works as a test texture. The second skin layer (hat, jacket, sleeves, trousers)
@@ -361,12 +362,16 @@ def navy_officer():
 TEXTURES = {"crew_member": sailor, "pirate": pirate, "sailor": deckhand,
             "navy_soldier": navy_soldier, "navy_officer": navy_officer}
 
+# Written only when named on the command line: the crew member's skin is now the Blockbench texture of M2, and this
+# placeholder must not overwrite it.
+NOT_BY_DEFAULT = {"crew_member"}
+
 
 def main():
-    """Writes every texture, or only those named on the command line (e.g. to leave a Blockbench texture alone)."""
+    """Writes the placeholder textures (all but NOT_BY_DEFAULT), or only those named on the command line."""
     out = TEX / "entity"
     out.mkdir(parents=True, exist_ok=True)
-    for name in sys.argv[1:] or list(TEXTURES):
+    for name in sys.argv[1:] or [n for n in TEXTURES if n not in NOT_BY_DEFAULT]:
         TEXTURES[name]().img.save(out / f"{name}.png", format="PNG", optimize=False)
         print(f"wrote  entity/{name}")
 

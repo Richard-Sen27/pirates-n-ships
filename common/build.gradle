@@ -42,7 +42,8 @@ dependencies {
     // PAL's Molang engine (mochafloats, a Mocha fork): part of PlayerAnimationController's constructor signatures
     compileOnly("com.zigythebird:mochafloats:4.1.0") { transitive = false }
 
-    // GeckoLib (animated entities; imported only in crew/npc/CrewMember and crew/npc/client/). Unlike PAL, GeckoLib's
+    // GeckoLib (animated entities; imported only in crew/npc/CrewMember, crew/npc/client/, mob/entity/SeafarerMob and
+    // mob/client/). Unlike PAL, GeckoLib's
     // published common artifact is in Mojang names (checked with javap), so common compiles against it directly.
     // It declares no dependencies; not transitive anyway, so nothing else reaches our classpath.
     compileOnly("software.bernie.geckolib:geckolib-common-${minecraft_version}:${geckolib_version}") { transitive = false }

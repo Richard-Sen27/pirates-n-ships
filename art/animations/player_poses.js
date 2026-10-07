@@ -392,29 +392,32 @@ F9.make('stagger', 1.0, 'once', [{t:0,pose:P.REST},{t:0.12,pose:P.STAG_HIT},{t:0
 // the hand holds the musket by the fore-stock while its butt rests on the ground. The aim poses keep the arms level:
 // in game the look pitch is added to both arms (FirearmAnimations' adjustment). Values were tuned by measuring the
 // proxy barrel's world direction and solving the left hand onto muzzle and lock (see art/README.md, "Firearm animations").
+// F8h moved the guns in the hand (new third-person translations): the fore-stock riPos values were re-solved so the
+// guns sit exactly where they did in P3 (butt on the ground, muzzle at the left hand), and the cocking left arms were
+// re-solved onto the moved locks.
 F9.G = {
  PISTOL_AIM_RISE: {ra: [-62, -3, 0], la: [4, 0, -8], ri: [55, 0, 0], twist: -6, lean: 1},
  PISTOL_AIM: {ra: [-92, -5, 0], la: [8, 0, -10], ri: [92, 0, 5], twist: -12, lean: 2},
  MUSKET_AIM_RISE: {ra: [-55, -12, 0], la: [-55, 25, 0], ri: [50, 0, 0], twist: 8, lean: 3},
  MUSKET_AIM: {ra: [-84, -17, 0], la: [-86, 34, 0], ri: [84, 0, 17], twist: 15, lean: 5},
- P_LOW: {ra: [-45, -40, 0], la: [0, 0, 0], ri: [-35, 0, 0], riPos: [0, -4, 0], twist: 0, lean: 3},
- P_POUR: {ra: [-45, -40, 0], la: [-120, 35, -5], ri: [-35, 0, 0], riPos: [0, -4, 0], twist: 0, lean: 4},
- P_POUR2: {ra: [-45, -40, 0], la: [-116, 38, 0], ri: [-35, 0, 0], riPos: [0, -4, 0], twist: 0, lean: 4},
- P_BELT: {ra: [-45, -40, 0], la: [10, 0, -15], ri: [-35, 0, 0], riPos: [0, -4, 0], twist: 0, lean: 3},
- P_ROD_UP: {ra: [-45, -40, 0], la: [-132, 35, 0], ri: [-35, 0, 0], riPos: [0, -4, 0], twist: 0, lean: 3},
- P_ROD_DOWN: {ra: [-45, -40, 0], la: [-118, 30, -15], ri: [-35, 0, 0], riPos: [0, -4, 0], twist: 0, lean: 4},
+ P_LOW: {ra: [-45, -40, 0], la: [0, 0, 0], ri: [-35, 0, 0], riPos: [0, -2.4, -0.1], twist: 0, lean: 3},
+ P_POUR: {ra: [-45, -40, 0], la: [-120, 35, -5], ri: [-35, 0, 0], riPos: [0, -2.4, -0.1], twist: 0, lean: 4},
+ P_POUR2: {ra: [-45, -40, 0], la: [-116, 38, 0], ri: [-35, 0, 0], riPos: [0, -2.4, -0.1], twist: 0, lean: 4},
+ P_BELT: {ra: [-45, -40, 0], la: [10, 0, -15], ri: [-35, 0, 0], riPos: [0, -2.4, -0.1], twist: 0, lean: 3},
+ P_ROD_UP: {ra: [-45, -40, 0], la: [-132, 35, 0], ri: [-35, 0, 0], riPos: [0, -2.4, -0.1], twist: 0, lean: 3},
+ P_ROD_DOWN: {ra: [-45, -40, 0], la: [-118, 30, -15], ri: [-35, 0, 0], riPos: [0, -2.4, -0.1], twist: 0, lean: 4},
  P_LEVEL: {ra: [-45, -35, 0], la: [-20, 0, -10], ri: [45, 0, 0], twist: 0, lean: 2},
- P_COCK: {ra: [-45, -35, 0], la: [-90, 45, 0], ri: [45, 0, 0], twist: 0, lean: 3},
- P_COCK2: {ra: [-47, -35, 0], la: [-86, 43, 0], ri: [39, 0, 0], twist: 0, lean: 3},
- M_UP: {ra: [-20, -35, 0], la: [0, 0, 0], ri: [-75, 0, 0], riPos: [0, -8.5, 0], twist: 0, lean: 2},
- M_POUR: {ra: [-20, -35, 0], la: [-100, 70, 0], ri: [-75, 0, 0], riPos: [0, -8.5, 0], twist: 5, lean: 2},
- M_POUR2: {ra: [-20, -35, 0], la: [-97, 74, 5], ri: [-75, 0, 0], riPos: [0, -8.5, 0], twist: 5, lean: 2},
- M_ROD_TOP: {ra: [-20, -35, 0], la: [-125, 65, 0], ri: [-75, 0, 0], riPos: [0, -8.5, 0], twist: 5, lean: 0},
- M_ROD_DOWN: {ra: [-20, -35, 0], la: [-95, 70, 0], ri: [-75, 0, 0], riPos: [0, -8.5, 0], twist: 5, lean: 4},
- M_STOW: {ra: [-20, -35, 0], la: [-30, 10, -10], ri: [-75, 0, 0], riPos: [0, -8.5, 0], twist: 0, lean: 2},
+ P_COCK: {ra: [-45, -35, 0], la: [-83, 51, 0], ri: [45, 0, 0], twist: 0, lean: 3},
+ P_COCK2: {ra: [-47, -35, 0], la: [-78, 48, 0], ri: [39, 0, 0], twist: 0, lean: 3},
+ M_UP: {ra: [-20, -35, 0], la: [0, 0, 0], ri: [-75, 0, 0], riPos: [0, -6.1, -0.65], twist: 0, lean: 2},
+ M_POUR: {ra: [-20, -35, 0], la: [-100, 70, 0], ri: [-75, 0, 0], riPos: [0, -6.1, -0.65], twist: 5, lean: 2},
+ M_POUR2: {ra: [-20, -35, 0], la: [-97, 74, 5], ri: [-75, 0, 0], riPos: [0, -6.1, -0.65], twist: 5, lean: 2},
+ M_ROD_TOP: {ra: [-20, -35, 0], la: [-125, 65, 0], ri: [-75, 0, 0], riPos: [0, -6.1, -0.65], twist: 5, lean: 0},
+ M_ROD_DOWN: {ra: [-20, -35, 0], la: [-95, 70, 0], ri: [-75, 0, 0], riPos: [0, -6.1, -0.65], twist: 5, lean: 4},
+ M_STOW: {ra: [-20, -35, 0], la: [-30, 10, -10], ri: [-75, 0, 0], riPos: [0, -6.1, -0.65], twist: 0, lean: 2},
  M_RAISE: {ra: [-45, -35, 0], la: [-90, 15, 0], ri: [15, 0, 0], twist: 8, lean: 3},
- M_COCK: {ra: [-45, -35, 0], la: [-75, 40, 10], ri: [15, 0, 0], twist: 8, lean: 4},
- M_COCK2: {ra: [-47, -35, 0], la: [-72, 38, 8], ri: [9, 0, 0], twist: 8, lean: 4}
+ M_COCK: {ra: [-45, -35, 0], la: [-66, 52, 10], ri: [15, 0, 0], twist: 8, lean: 4},
+ M_COCK2: {ra: [-47, -35, 0], la: [-61, 49, 8], ri: [9, 0, 0], twist: 8, lean: 4}
 };
 // Builds an animation whose poses all key right_item's position (riPos defaults to [0, 0, 0]), so the channel has a
 // keyframe wherever the others do.
@@ -433,7 +436,7 @@ F9.makeG('musket_reload', 5.0, 'once', [{t:0,pose:R},{t:0.4,pose:G.M_UP},{t:0.75
  {t:3.6,pose:G.M_STOW},{t:4.0,pose:G.M_RAISE},{t:4.3,pose:G.M_COCK},{t:4.45,pose:G.M_COCK2},{t:4.65,pose:G.M_RAISE},{t:5.0,pose:R}]);
 };
 // Shows the proxy item of one weapon in right_item: 'sword', 'pistol' or 'musket' (the gun proxies are rough boxes
-// placed where vanilla's third-person transform of the F8b gun models puts barrel, lock and grip).
+// placed where vanilla's third-person transform of the gun models puts barrel, lock and grip; moved for F8h).
 F9.proxy = function(kind){
   for (const c of Cube.all) if (c.parent && c.parent.name==='right_item') c.visibility = kind==='sword' ? !/^(pistol|musket)_/.test(c.name) : c.name.startsWith(kind+'_');
   Canvas.updateVisibility();

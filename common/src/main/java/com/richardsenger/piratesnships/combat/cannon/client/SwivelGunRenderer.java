@@ -18,7 +18,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * Draws the swivel gun (docs/design.md §8.2, P2) from its block entity: the yoke turned by the yaw about the block's
  * vertical centre line, and the barrel turned by the yaw and raised by the elevation about the pivot
  * ({@link SwivelRules#PIVOT_HEIGHT}). Both are ordinary baked block models ({@code swivel_gun_yoke},
- * {@code swivel_gun_barrel[_loaded]}, placeholders until F7g), reached through the block's {@link SwivelGunBlock#PIECE}
+ * {@code swivel_gun_barrel[_loaded]}, hand-made Blockbench models since F7g), reached through the block's {@link SwivelGunBlock#PIECE}
  * states, built with the muzzle to the north (yaw 180°). While the local player aims this gun, the aim follows the
  * player's view directly (no wait for the server's update).
  *

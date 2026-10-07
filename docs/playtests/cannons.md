@@ -78,3 +78,15 @@ Result (third playtest, 2026-10-07): the large cannon's size is right (two-block
    blocks break; straight on three.
 6. Dedicated server with spawn protection and an op set: a non-op's shots break nothing near spawn, a moored ship
    inside the radius included.
+
+## F7g: the real cannon and swivel gun models
+1. **Cannon facing N, E, S and W** on flat land: no gap or seam where the master and rear blocks meet, the barrel
+   reaching about 15 px over the block in front, wheels on the ground, nothing cut off, the outline roughly matching
+   the model (0..20 px on the master, 0..18 on the rear).
+2. **Loading:** powder adds the rammer leaning against the right cheek; the ball shows in the muzzle with a black
+   ring; firing goes back to the empty model.
+3. **Lighting:** from both sides the rear half (drawn by the master) is lit correctly and does not go dark next to
+   solid blocks; from far away or at section borders, say if the barrel or the rear carriage vanishes.
+4. **Swivel on a fence:** turn 360° (the yoke turns about the post centre), elevate fully up and down (the trunnions
+   stay in the yoke bosses, the barrel never cuts the crossbar), the loaded ball shows at the muzzle.
+5. **Both items** in the GUI, hotbar, hand (first and third person), on the ground and in an item frame.

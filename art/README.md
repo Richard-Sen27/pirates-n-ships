@@ -142,7 +142,7 @@ Workflow notes (two-block cannon and swivel gun, F7g):
   were removed from version control before `runData` (see the containers batch).
 - Renders: `renders/cannon.png` (placed three-quarter view, east side, GUI), `cannon_loaded.png` (ball in the muzzle,
   rammer side) and `swivel_gun.png` (three-quarter view, east side, GUI); composed side by side on a 2D canvas in
-  the app and written with `fs`.
+  the app and written with `fs`. The part list that generated the geometry is `tools/gen_cannon_models.py` (run it to regenerate the JSON; the projects were rebuilt from its output).
 
 Items (sword batch, F8a):
 - Item models are `java_block` projects exported to `common/src/main/resources/assets/pirates_n_ships/models/item/<name>.json`;

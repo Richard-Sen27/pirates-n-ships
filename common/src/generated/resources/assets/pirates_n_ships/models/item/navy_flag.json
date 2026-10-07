@@ -1,6 +1,0 @@
-{
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "pirates_n_ships:item/navy_flag"
-  }
-}

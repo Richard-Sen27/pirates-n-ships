@@ -10,9 +10,9 @@ Output in common/src/main/resources/assets/pirates_n_ships/textures/:
   copy per block). Weathered off-white canvas: vertical panel seams, a faint weave, a few stains. Opaque.
 - block/rope.png (16x16): the stay of a triangular sail, drawn by the stay renderer as a thin beam (u around the
   beam, v along it, one copy per block). Twisted hemp: diagonal strands. Opaque.
-- item/rope.png: the rope item, a coil.
 
-The yard and the cleat use vanilla block textures. The sail winch, the yard and the cleat have Blockbench models (F7b, F7e).
+The yard and the cleat use vanilla block textures. The sail winch, the yard and the cleat have Blockbench models (F7b, F7e),
+and so has the rope item (ART1a), so this script draws no item sprite.
 Deterministic: same input, same bytes.
 """
 import random
@@ -25,43 +25,9 @@ sys.dont_write_bytecode = True  # no __pycache__ next to the tools
 
 TEX = Path(__file__).resolve().parent.parent / "common/src/main/resources/assets/pirates_n_ships/textures"
 P = {  # the colors of gen_placeholder_textures.py that these textures use
-    "outline": (34, 24, 20, 255),
     "brown": (110, 70, 40, 255), "tan": (206, 176, 120, 255), "tan_l": (232, 212, 164, 255),
     "white": (236, 232, 220, 255), "bone": (220, 210, 180, 255),
 }
-CLEAR = (0, 0, 0, 0)
-
-
-class Canvas:
-    """A 16x16 drawing surface (the subset of gen_placeholder_textures.Canvas used here)."""
-
-    def __init__(self):
-        self.img = Image.new("RGBA", (16, 16), CLEAR)
-
-    def px(self, x, y, c):
-        if 0 <= x < 16 and 0 <= y < 16:
-            self.img.putpixel((x, y), P[c])
-
-    def line(self, x0, y0, x1, y1, c):
-        steps = max(abs(x1 - x0), abs(y1 - y0))
-        for i in range(steps + 1):
-            self.px(x0 + round((x1 - x0) * i / steps), y0 + round((y1 - y0) * i / steps), c)
-
-    def disc(self, cx, cy, r, c):
-        for y in range(16):
-            for x in range(16):
-                if (x - cx) ** 2 + (y - cy) ** 2 <= r * r + r:
-                    self.px(x, y, c)
-
-    def outline(self):
-        """Dark outline around every opaque pixel."""
-        src = self.img.copy()
-        for y in range(16):
-            for x in range(16):
-                if src.getpixel((x, y))[3] == 0 and any(
-                        0 <= x + dx < 16 and 0 <= y + dy < 16 and src.getpixel((x + dx, y + dy))[3] > 0
-                        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
-                    self.img.putpixel((x, y), P["outline"])
 
 
 def shade(rgb, d):
@@ -112,26 +78,11 @@ def rope():
     return img
 
 
-def rope_item():
-    """A coil of rope with a loose end."""
-    c = Canvas()
-    for r, col in ((6, "brown"), (5, "tan"), (4, "brown"), (3, "tan_l"), (2, "brown")):
-        c.disc(7, 8, r, col)
-    c.disc(7, 8, 1, "tan")
-    c.line(12, 10, 14, 14, "tan")
-    c.line(13, 10, 15, 14, "brown")
-    c.outline()
-    return c
-
-
 def main():
     out = TEX / "block"
     out.mkdir(parents=True, exist_ok=True)
     cloth().save(out / "sail_cloth.png", format="PNG", optimize=False)
     rope().save(out / "rope.png", format="PNG", optimize=False)
-    items = TEX / "item"
-    items.mkdir(parents=True, exist_ok=True)
-    rope_item().img.save(items / "rope.png", format="PNG", optimize=False)
 
 
 if __name__ == "__main__":

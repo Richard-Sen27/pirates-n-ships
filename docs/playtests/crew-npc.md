@@ -77,3 +77,43 @@ the deck yourself with the captain's whistle. Default config (`crew_stations.job
    both are at their stations. Furl, then "Release" only the winch crew member with the whistle (use it on that crew
    member) and order "Hoist sails": the open winch job never takes the pinned one from the pump (open jobs themselves
    are not saved, so post the order after the reload).
+
+## HM1: hammocks and morale
+Covered by 24 JUnit tests (`HammockRulesTest`, `ShipBunksTest`, `RestRulesTest`, `MoraleRulesTest`) and 8 GameTests
+(`crew/hammock/HammockGameTests`). What the tests cannot show: how the hammock looks (a datagen placeholder until ART1d:
+a thin canvas slab with two rope ties at each outer end), how a sleeping crew member looks in it on a moving ship, and
+how the lines read. Sleeping crew play the **sit** pose: the rig has no lying animation yet.
+
+Setup: an assembled ship with a hold, standing on it with the captain's whistle. Default config (`crew.morale.enabled =
+true`, `start = 70`, `hammock_rest_per_night = 5`, `no_hammock_per_night = 10`, `crew.max_crew_multiplier = 1.0`).
+Give yourself hammocks (`/give @s pirates_n_ships:hammock 4`; recipe: 2 string over 3 wool) and fences.
+
+1. **Hanging.** Below deck, put two fence posts at the same height with two blocks of space between them and use a hammock on the block next
+   to one post, looking toward the other: it hangs between them (foot where you clicked, head one block further). Try
+   it against the hull side instead of a post (a solid wall counts) and against a log. Expected: placed. Try it with
+   nothing at the far end, or with a slab or chest there. Expected: nothing placed, action bar "A hammock hangs between
+   two supports at the same height: …". Right-click a hammock: "Hammocks are for the crew: they turn in here at night"
+   (players cannot sleep in it). Report how the placeholder looks from all four facings (canvas centred, ropes at the
+   ends toward the posts).
+2. **Breaking.** Break one post: the hammock comes down and drops exactly one hammock. Break the head half of another,
+   then the foot half of a third: one item each. In creative: nothing drops.
+3. **Bunk count.** Hang two hammocks in the hold, assemble the ship (or hang them on an assembled ship), spawn three
+   crew on deck (`/pirates crew spawn`). Use the whistle on one: chat shows "Jack: morale 70, off duty · crew 3 / bunks
+   2". `/pirates crew info` on deck: "This ship: crew 3 / bunks 2 (2 hammocks)" and one line per crew member. Nothing
+   stops a fourth crew member yet (the limit is informational until hiring).
+4. **Turning in.** Put one crew member at a winch with the whistle. `/time set 13000`. Expected within a second: the two
+   free crew members nearest the hammocks lie in them (seated pose on the canvas), the third free one keeps standing,
+   the one at the winch stays there. Sail the ship a little: the sleepers stay in their hammocks and move with the
+   ship. Report sleepers floating above or sinking into the canvas, facing across the hammock, or jitter while sailing.
+   `/pirates crew info` shows "in a hammock" for the sleepers.
+5. **An order at night.** Whistle "Hoist sails" with an unmanned second winch: a sleeper gets up at once and goes to the
+   winch (it is on duty for the night: no morale change at dawn).
+6. **Dawn.** `/time set 23500` (or sleep in a bed). Expected: the sleepers get up and stand on deck where the hammock is
+   (report if they drop through the deck or end up in the hold walls); the one without a hammock says "No hammock for
+   me… another night on the bare planks." in chat; `/pirates crew info`: sleepers morale 75, the one without 60, the
+   one at the winch 70.
+7. **Save and reload at night.** `/time set 13000`, wait until they lie in their hammocks, save and quit, reload: they
+   are still in their hammocks, and at dawn they get up with +5. Reload during the day after a night: nobody is stuck
+   in a hammock.
+8. **Config off.** Set `crew.morale.enabled = false`, `/time set 13000`: nobody turns in; `/pirates crew info` shows
+   morale 70 for everyone, whatever it was before; at dawn nothing changes and nobody grumbles.

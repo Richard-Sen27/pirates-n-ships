@@ -6,8 +6,9 @@ import com.richardsenger.piratesnships.core.config.ModConfigs;
 
 /**
  * Server config section {@code world} (docs/design.md §17, group "World"; §9, §10.1): placement of each structure
- * type and natural spawn weights of each mob. Declared ahead of the features by {@code core.settings.SettingsModule};
- * nothing reads these values yet.
+ * type and natural spawn weights of each mob. Declared ahead of the features by {@code core.settings.SettingsModule}.
+ * The seafarer village values are read by {@code world.village.PortVillageStructure} (WG1); the other structures and
+ * the spawn weights are not read yet.
  */
 public final class WorldConfig {
 
@@ -21,7 +22,31 @@ public final class WorldConfig {
     }
 
     public static final StructurePlacement PIRATE_ISLAND = structure("pirate_island", "pirate islands", 40, 0.8);
-    public static final StructurePlacement SEAFARER_VILLAGE = structure("seafarer_village", "seafarer villages", 36, 1.0);
+    private static final ConfigSection VILLAGE = STRUCTURES.section("seafarer_village", "Placement of seafarer villages");
+
+    /**
+     * Seafarer villages. {@code spacing} and {@code separation} are datapack values (structure set
+     * {@code pirates_n_ships:seafarer_villages}): the defaults here are what datagen writes, and changing them in the
+     * config has no effect (a datapack overrides the structure set). {@code frequency} is read at placement time.
+     */
+    public static final StructurePlacement SEAFARER_VILLAGE = new StructurePlacement(
+            VILLAGE.intRange("spacing", 36, 2, 4096,
+                    "Average distance in chunks between two seafarer villages. Datapack value: this default is written into "
+                            + "the structure set pirates_n_ships:seafarer_villages; change it with a datapack, not here"),
+            VILLAGE.doubleRange("frequency", 1.0, 0.0, 1.0,
+                    "Chance that seafarer villages generate at a possible location (0 = never, 1 = always); read at placement"));
+    public static final ConfigValue<Boolean> SEAFARER_VILLAGE_ENABLED = VILLAGE.bool("enabled", true,
+            "Seafarer villages generate in new chunks (off = no new villages; existing ones stay)");
+    public static final ConfigValue<Integer> SEAFARER_VILLAGE_SEPARATION = VILLAGE.intRange("separation", 12, 1, 4095,
+            "Minimum distance in chunks between two seafarer villages. Datapack value: this default is written into the "
+                    + "structure set pirates_n_ships:seafarer_villages; change it with a datapack, not here");
+    public static final ConfigValue<Integer> SEAFARER_VILLAGE_SHORE_PROBE = VILLAGE.intRange("shore_probe_blocks", 24, 4, 64,
+            "How far (blocks) a village site looks in each direction for the sea; the direction with the most water gets the pier");
+    public static final ConfigValue<Integer> SEAFARER_VILLAGE_MAX_DISTANCE_FROM_WATER = VILLAGE.intRange("max_distance_from_water", 12, 1, 64,
+            "A village site farther than this (blocks) from sea water is skipped");
+    public static final ConfigValue<Integer> SEAFARER_VILLAGE_MAX_SHORE_HEIGHT = VILLAGE.intRange("max_shore_height", 4, 0, 32,
+            "A village site whose ground at the dock head is more than this many blocks above sea level is skipped "
+                    + "(the quay is built one block above the sea)");
     public static final StructurePlacement NAVY_OUTPOST = structure("navy_outpost", "navy outposts", 48, 0.8);
     public static final StructurePlacement WRECK = structure("wreck", "wrecks", 24, 1.0);
 

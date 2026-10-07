@@ -598,6 +598,57 @@ Loaded guns: cocked-hammer variants (P6):
   person in the right hand, empty and loaded). In the hand the change is small (the lock sits by the fist); the GUI
   shows it clearly.
 
+Item models (ART1a, ART1b):
+- **Block and item with the same name** (the hull patch): the block model and the item model are both
+  `<name>.json`, but in different folders, so the projects need different names: `hull_patch.bbmodel` (the block)
+  and `hull_patch_item.bbmodel` (the item). `tools/lint_models.py` maps the item to its project in `PROJECT_NAMES`;
+  the module's datagen writes only the block state and calls `m.handMadeItem(item)`. A block item whose block model
+  stays generated (the map tile, whose placeholder block model is still datagen's) needs no `_item` project: the
+  item project is `map_tile.bbmodel` and lint finds it by name.
+- **Hull patch** (block 45 elements, item 11; vanilla `spruce_planks`, `dark_oak_planks`, `black_concrete`, `anvil`,
+  `stripped_dark_oak_log`): the board panel on each side stands about 1.5 px **proud** of the block on purpose, so it
+  reads as nailed on over the hole from outside and inside the hull; collision stays a full block. The item is the
+  panel alone, with a `gui` entry `[20, -30, 0]` / 0.85.
+- **Rope** (28 elements, `palette_2` rope colours and `palette_4` twine whipping) and **chart** (14 elements,
+  `palette`, `palette_3` paper and biscuit, `palette_4` cord; particle `palette_3`): no new colours.
+- **Flag bundles** (`navy_flag` 26 elements, `merchant_flag` 24, `jolly_roger_flag` 25; one project each, one shared
+  part list): the cloth rolled on a halyard toggle, built upright along y around x = z = 8 and turned `z -45` about
+  `[8, 8, 8]` like the cloth bolt, so the vanilla handheld slots hold it like a tool (lower knob in the fist). Parts:
+  the toggle with two crossed-box knobs and a rope eye on top (`wood`, `wood_dark` of `palette`, `rope` of
+  `palette_2`), the roll and the outer fold as two crossed boxes each (the second box 0.05 px shorter at its ends),
+  two `rope_dark` lashings, the fold's loose end in two steps to the lower right, and the design on the fold: navy a
+  white band all round plus a vertical arm on the front and back, merchant a red band, Jolly Roger a skull (eye holes
+  0.08 px proud of it) and a bone, 0.15 px proud of the front. The colours follow the flown cloth
+  (`tools/gen_flag_textures.py`), so the navy bundle is blue with a white cross. On crossed boxes the **front is the
+  deep box's face** (z = 8 + w/2), not the wide box's: inlays go there. A `gui` entry `[0, 20, 45]` /
+  `[-1.4, 0, 0]` / 0.9 stands the bundle upright in the slot (z +45 undoes the element turn; y 20 shows its side);
+  third person scale 0.75, the other slots vanilla handheld / generated.
+- **Map tile** (23 elements): a wooden board and frame (`wood`, `wood_dark`, `iron_dark` nails) round a parchment
+  (`paper` of `palette_3`) 0.3 px below the frame, land and sea halves split by an ink coastline, an island and shoals
+  on the sea, a red X of two bars at +45 and -45 (the second 0.06 px above the first) and three route dots; built
+  facing south like a sprite. Display as the doubloon (flat in the hand, `ground` lying flat), `gui` `[25, -20, 0]` /
+  0.95 (top edge and right side show).
+- **`palette_5.png`** (texture `#4`, same script) holds the flag and map colours; two spare cells remain.
+
+  | v \ u | 0 | 4 | 8 | 12 |
+  |---|---|---|---|---|
+  | 0 | navy_light | navy | navy_dark | flag_white |
+  | 4 | flag_white_shade | flag_red | flag_red_dark | flag_black |
+  | 8 | flag_black_shade | flag_black_light | map_sea | map_sea_dark |
+  | 12 | map_land | map_ink | spare | spare_2 |
+- Built like F8i: a Python part list (patch names resolved through `tools/gen_item_palette.py`'s `SHEETS`) wrote one
+  JSON spec per model, and `ART1B.load(name)` in `risky_eval` built it cube by cube in a new `java_block` tab
+  (palette textures from `fromPath` with `id`, `folder` and `namespace` set again, display slots into
+  `Project.display_settings`); `ART1B.export(name)` wrote `Codecs.java_block.compile()` (plus `credit` and
+  `gui_light`) and the project. Script and helpers are not committed; rebuild them from these notes.
+- Renders: `renders/navy_flag.png`, `merchant_flag.png`, `jolly_roger_flag.png` (three-quarter view, GUI; navy also
+  in the right hand), `map_tile.png` (three-quarter view, GUI, right hand).
+- Sprites removed: `textures/block/hull_patch.png` (with its script `tools/gen_hull_textures.py`, which drew nothing
+  else) and `textures/item/rope.png` (from `tools/gen_sailing_textures.py`; `textures/block/rope.png` stays, the stay
+  renderer uses it). `textures/item/chart.png` and `textures/item/map_tile.png` stay for now because
+  `ChartTexturesTest` requires them; the flag sprites of `tools/gen_flag_textures.py` (`item/<flag>.png`) are no
+  longer referenced by any model either.
+
 ## Entities
 
 Animated mobs and NPCs (crew member, pirate, sailor, navy soldier and officer; design.md §9) are GeckoLib models
@@ -1131,7 +1182,8 @@ operations):
 dirt path for the street verges, chiseled or plain stone bricks on the quay, spruce planks on the pier deck, gravel
 for the shipwright's apron. The pools are `pirates_n_ships:village/start` (the dock head), `village/streets`,
 `village/buildings`, `village/pier` and `village/terminators` (the fallback for `street_out` once the depth runs
-out; WG1 defines it, and no piece exists for it yet).
+out; its piece is `street_end`). The terminators pool must never be empty: vanilla skips a connector whose
+fallback pool is empty, so an empty pool would stop every street at the dock head.
 
 **Berth markers:** a `minecraft:jigsaw` named `pirates_n_ships:berth` (target and pool `minecraft:empty`,
 `final_state` `minecraft:water`). It sits at sea level, one block out from the pier's side, at the berth's
@@ -1153,11 +1205,12 @@ deeper, the footings hang in the water.
 | `dock_head` (start) | 11×8×11 | 289 | stone quay, harbor master's hut (desk facing the door, cargo, lectern), notice board beside the door, two lantern posts at the pier landing, mooring rings on the sea edge, crates and barrels; `pier_out` [5, 0, 0], `street_out` [2, 0, 10] | `harbor_desk`, `notice_board`, `mooring_ring`, `cargo_crate`, `cargo_barrel` |
 | `pier` | 7×9×20 | 197 | 5 wide plank deck on spruce piles with footings, cross beams, a rail and two lantern posts at the seaward end, a ladder down; `pier_in` [3, 5, 19], berths [0, 4, 9] and [6, 4, 9] | `mooring_ring`, `cleat` |
 | `street` | 7×4×7 | 52 | cobbled street with gravel and moss patches, dirt path verges, a lantern post; `street_in` [3, 0, 0], `street_out` [3, 0, 6], `building_out` [0, 0, 3] and [6, 0, 3] | |
+| `street_end` (terminator) | 7×4×3 | 26 | cobbled turning place at a street's end, a lantern post and two barrels; `street_in` [3, 0, 0] | |
 | `house_small` | 7×9×9 | 237 | 7×7 cottage of white render (calcite) on stripped spruce posts, red tile roof, bed, table and stool, chest, barrel, crafting table; `building_in` [3, 0, 0] | |
 | `tavern` | 11×15×11 | 695 | 11×9, two floors: bar with barrels, two tables with stools, a hanging lantern, stairs, two beds upstairs; a dark oak panel above the door for a sign; `building_in` [5, 0, 0] | `cargo_barrel` |
 | `shipwright` | 11×13×10 | 441 | open shed on posts with a dark roof, a half-built hull (keel, stem, three frames, a strake) on a gravel slipway, sawhorses, stacked logs and planks, crafting and smithing tables; `building_in` [5, 0, 0] | |
 
-Renders: `art/renders/structures/village/{dock_head,pier,street,house_small,tavern,shipwright}.png`.
+Renders: `art/renders/structures/village/{dock_head,pier,street,street_end,house_small,tavern,shipwright}.png`.
 
 **Adding a piece:** copy a generator in the group's folder, keep the conventions above (foundation row, north
 front, connectors on the box faces), then run `python3 tools/build_structures.py <group>/<piece>`. Look at the

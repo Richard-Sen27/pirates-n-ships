@@ -131,6 +131,14 @@ within a second, get to work and stay there afterwards. Crew you put at a statio
 and are never moved. If nobody is free you hear "No free hands" once; the job waits for the next crew member who comes
 aboard. "Release crew" sends everyone off and cancels the open jobs. Server config `crew_stations.job_board`.
 
+## Seafarer villages
+Seafarer villages generate on beaches. A stone quay with the harbor master's hut faces the sea, and a plank pier runs
+straight out over the water with two ship berths, one on each side halfway out. Streets lead inland with cottages, a
+tavern and a shipwright's shed, and end in a small cobbled place. The harbor master's desk belongs to the village's
+port: use it to open the port's market. A desk you place anywhere inside a village joins that port too. Operators can
+list ports with `/pirates world ports` and find the nearest with `/pirates world port nearest`. Server config
+`world.structures.seafarer_village`.
+
 ## Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks
 high with a low roar. Within 8 blocks of it you, your boat, loose items and light ships are pulled toward it and

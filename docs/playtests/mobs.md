@@ -80,3 +80,6 @@ pirates ignore players; say if that was your setup during the third playtest).
 5. **Shove** within 1.8 blocks: a quick butt-stroke forward, then back to the previous pose; a reload carries on.
 6. **Pirate and officer** telegraph, guard, parry and stagger poses look as before; the **crew member** is unchanged;
    no soldier is left-handed.
+
+
+Note (third playtest, "no damage from any mob attacks"): on peaceful difficulty vanilla zeroes every mob-caused hit on a player (`Player.hurt` scales with difficulty), so our pirates' swords and the navy's balls land without damage; test fights on normal (`/difficulty normal`). Since M5 mobs on peaceful ignore players entirely.

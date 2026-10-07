@@ -659,6 +659,8 @@ record the point forces in the `pirates_n_ships:sea_hazards` group every physics
   entity-ticking. Spawners that need to see their neighbours (the kraken's 200-block separation) must place and look
   in entity-ticking chunks only.
 
+- **Hooking the split (RS1):** `SubLevelHeatMapManager.split` (l.200-251) runs inside `ServerSubLevel#tick` while `SableConfig.SUB_LEVEL_SPLITTING` holds; for each cut-off group it calls every `SplitListener.addBlocks(level, bounds, blocks)` (registered with the static `addSplitListener`, l.382) while the blocks are still in the parent's plot, then `SubLevelAssemblyHelper.assembleBlocks` (a pure translation of `blocks.get(0)` to the new plot's centre; `SubLevelContainer#allocateSubLevel` fires `SubLevelObserver#onSubLevelAdded`); the observers' `tick` runs after all sub-levels ticked at the head of `ServerLevel.tick`. The part that stays in the original body is the one holding the heat-map root, the first block ever added (`onSolidAdded`), or the largest if every block is cut off; assembly adds blocks in the given order (`moveBlocks`), so our assembler passes the helm first. After a reload the root is wherever Sable's chunk scan starts. Sable exposes splitting only as a global `BooleanValue` (`SableConfig` l.27-29), no per-sub-level flag.
+
 ### 9.1 How Sable tests sub-levels
 - Tests live in **`sable/neoforge/src/main/java/dev/ryanhcode/sable/neoforge/gametest/`** (`AssemblyTest`, `PhysicsTest`,
   `SableTestHelper`), registered with NeoForge's `@GameTestHolder(Sable.MOD_ID)` and vanilla `@GameTest(template = …)`. [V]

@@ -6,6 +6,7 @@ navigation:
   icon: pirates_n_ships:yard
 item_ids:
   - pirates_n_ships:capstan
+  - pirates_n_ships:chart
   - pirates_n_ships:sail_winch
 ---
 
@@ -83,6 +84,12 @@ the ship holds. Using the capstan again heaves it back in at 2.5 blocks per seco
 Using it mid-way reverses. If there is no ground in reach, the capstan tells you and the anchor stays stowed. A held
 ship stays within about two blocks of the anchor point and swings with the wind.
 
+## When a ship breaks apart
+Shoot or break the only block joining two parts of a ship and it splits: the part with the helm stays your ship, the
+other part becomes a wreck (its nameplate says "Wreck of …") that drifts but no longer sails; crew on it stay aboard;
+bits under four blocks fall apart into items. `/pirates ship info` shows a piece's id, origin and wreck flag
+(operators). Rejoining pieces comes with the Shipwright's Toolkit. Server config `assembly.split`.
+
 ## Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks
 high with a low roar. Within 8 blocks of it you, your boat, loose items and light ships are pulled toward it and
@@ -92,3 +99,11 @@ of foam around a dark centre that pulls everything within 12 blocks inward and a
 boats and swimmers under, and a ship caught at its centre is slowly turned. Big ships barely notice either hazard.
 Operators: `/pirates hazard spawn <waterspout|whirlpool> [x y z]`, `/pirates hazard clear [radius]`; everything is
 in the server config under `hazards`, the particles under the client's `hazard_visuals`.
+
+## Chart
+Every captain keeps their own chart. As you sail, the coasts within about 96 blocks are drawn in automatically:
+ink coastlines, hatched shallows, sandy beaches, and the open sea, where the odd sea serpent lurks. Craft a
+Chart (paper, leather, a feather) and use it to open your map. Drag to pan, scroll to zoom, and right-click to
+place a marker (X, anchor, skull, port or danger) with a name; click a marker to rename or delete it. Your ship
+shows where you are and which way you are heading. If the server allows it, the M key opens the chart without
+one in hand, and other players can appear as ships. Only the overworld's seas are charted.

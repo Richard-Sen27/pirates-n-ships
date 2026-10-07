@@ -250,6 +250,15 @@ public final class GrappleService {
         ACTIVE.clear();
     }
 
+    /** A ship split (RS1): hooks latched onto it follow their block to the piece that holds it now. */
+    public static void onShipSplit(com.richardsenger.piratesnships.ship.assembly.ShipSplits.SplitEvent split) {
+        for (GrapplingHookEntity h : ACTIVE.values()) {
+            if (!h.isRemoved() && h.level() == split.level()) {
+                h.followSplit(split);
+            }
+        }
+    }
+
     // ------------------------------------------------------------------ ships
 
     /**

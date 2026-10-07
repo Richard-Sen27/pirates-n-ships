@@ -243,8 +243,7 @@ public final class PrisonerInteractionGameTests {
             ShipRegistry registry = ShipRegistry.get(helper.getLevel().getServer());
             UUID shipId = f.ship().id();
             Optional<ShipData> before = registry.find(shipId);
-            registry.put(new ShipData(shipId, "", Optional.of(UUID.randomUUID()), List.of(), "",
-                    helper.getLevel().dimension().location()));
+            registry.put(ShipData.create(shipId, Optional.of(UUID.randomUUID()), helper.getLevel().dimension().location()));
             helper.assertValueEqual(PrisonerOutcomes.checkPressGang(aboard, captain), PrisonerInteractionRules.PressGang.NOT_YOUR_SHIP, "someone else's ship");
             helper.assertTrue(use(captain, aboard, whistle).consumesAction() && BrigService.isPrisoner(aboard), "refused on someone else's ship");
             if (before.isPresent()) registry.put(before.get()); else registry.remove(shipId);

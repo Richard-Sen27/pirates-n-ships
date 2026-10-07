@@ -92,7 +92,8 @@ on by default; vanilla weapons are untouched):
 - **Parry:** a quick right tap just before a hit lands. The hit is deflected, the attacker staggers, and for about a
   second you may **riposte** (attack for bonus damage). A parry with no hit coming costs stamina and locks parrying
   briefly.
-- **Stamina:** a small gold bar above the hotbar while you hold a sword. Attacks, guarding and failed parries drain
+- **Stamina:** a brass-framed bar while you hold a sword, above the food row on the right (or left of the hotbar
+  with the client option `melee_hud.position`); it fades out when full and comes back the moment you fight. Attacks, guarding and failed parries drain
   it; it refills after a moment of rest. Empty, you can neither guard nor parry and stagger easily. The bar turns
   violet while you are staggered and shows a grey block during the parry lockout.
 - Right click is taken over while a mod sword is held, so swap to another item to open doors or use the helm.

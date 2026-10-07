@@ -102,3 +102,7 @@ Addendum (Q1): `/pirates trade port test navy_outpost tropical`, then `/pirates 
    within a second. Walking 8 blocks away closes it; Escape closes it; no errors in the log.
 10. **Boards off:** `law.bounty.notice_boards = false`: using the board does nothing.
 11. **Model:** the placeholder in the world, hand and inventory in all four facings; an axe drops it.
+
+
+## U1: the notice board's look (GUI scale 2 and 3)
+Wood frame with brass corner studs, a header plaque with the title and the coin count top right; cards as parchment with a pin, a red seal or a blue anchor, the name in dark ink and the amount with the coin; the second line grey ("Placed by: X · N min ago"); hovering a card brightens it with a brass outline; a bounty on you is a red card plus the seal line above the list; with more than about five bounties the wheel and the knob scroll; the form's fields are dark insets whose rim turns brass when focused, name tags turn brass on hover and fill the field when clicked, Place is grey until valid and brass with hover and pressed looks; the status line is green or red ink. Say whether the parchment speckle and the ink read well.

@@ -1,9 +1,13 @@
 package com.richardsenger.piratesnships.trade.client;
 
+import com.richardsenger.piratesnships.core.client.gui.BrassButton;
+import com.richardsenger.piratesnships.core.client.gui.GuiKit;
+import com.richardsenger.piratesnships.core.client.gui.GuiSprites;
+import com.richardsenger.piratesnships.core.client.gui.ScrollBar;
+import com.richardsenger.piratesnships.core.client.gui.ScrollMath;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.trade.TradeConfig;
 import com.richardsenger.piratesnships.trade.TradeService;
-import com.richardsenger.piratesnships.trade.content.TradeContent;
 import com.richardsenger.piratesnships.trade.contract.DeliveryContract;
 import com.richardsenger.piratesnships.trade.exchange.TransactionResult;
 import com.richardsenger.piratesnships.trade.good.TradeGood;
@@ -13,14 +17,11 @@ import com.richardsenger.piratesnships.trade.net.MarketView;
 import com.richardsenger.piratesnships.trade.plunder.PlunderMark;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.Item;
@@ -41,6 +42,11 @@ import java.util.Optional;
  * on the status line. The server pushes a new state when what the screen shows changed (another player's trade,
  * prices, doubloons). Closes on Escape, the inventory key, when the player is farther than the desk's reach, or when
  * the server refuses the session; closing sends {@link MarketPayloads.CloseMarket}.
+ *
+ * <p>Look (U1, GUI kit in {@code core/client/gui}): a wooden frame with a header plaque (port, kind, doubloons),
+ * brass tab and quantity buttons, a styled quantity field, the goods table on parchment (item icons, buy and sell
+ * columns between brass dividers, brass row buttons with hover, pressed and disabled looks) and the status line on a
+ * parchment footer.
  */
 public final class MarketScreen extends Screen {
 
@@ -60,14 +66,10 @@ public final class MarketScreen extends Screen {
     }
 
     private static final int ROW_H = 22;
-    private static final int PANEL = 0xF0201812;
-    private static final int BORDER = 0xFF8B6B3A;
-    private static final int ROW_ALT = 0x18FFFFFF;
-    private static final int GOLD = 0xFFE8C060;
-    private static final int TEXT = 0xFFFFFFFF;
-    private static final int DIM = 0xFFA0A0A0;
-    private static final int GOOD = 0xFF8FE08F;
-    private static final int BAD = 0xFFFF8070;
+    private static final int FOOTER_H = 16;
+    private static final int PRICE_W = 46;
+    private static final int TRADE_BUTTON_W = 34;
+    private static final int CONTRACT_BUTTON_W = 50;
 
     private Tab tab = Tab.GOODS;
     private int quantity = 1;
@@ -77,17 +79,21 @@ public final class MarketScreen extends Screen {
     private long seenResultVersion = ClientMarketState.resultVersion();
     private Action pending = Action.NONE;
     private Component status = Component.empty();
-    private int statusColor = TEXT;
+    private int statusColor = GuiKit.INK;
     private EditBox quantityField;
-    private Button plunderToggle;
+    private BrassButton plunderToggle;
     private final List<RowButton> rowButtons = new ArrayList<>();
+    private final ScrollBar scrollBar = new ScrollBar();
 
     private int left;
     private int top;
     private int panelW;
     private int panelH;
+    private int tablePanelTop;
     private int listTop;
     private int listBottom;
+    private int footerTop;
+    private int tableRight;
 
     MarketScreen() {
         super(Component.translatable(MarketText.TITLE));
@@ -107,45 +113,61 @@ public final class MarketScreen extends Screen {
 
     // ------------------------------------------------------------------ layout and widgets
 
+    private int inner() {
+        return left + GuiKit.FRAME_BORDER;
+    }
+
+    private int innerW() {
+        return panelW - 2 * GuiKit.FRAME_BORDER;
+    }
+
     @Override
     protected void init() {
         panelW = Math.min(380, width - 16);
         panelH = Math.min(250, height - 16);
         left = (width - panelW) / 2;
         top = (height - panelH) / 2;
-        int y = top + 20;
-        Button goods = addRenderableWidget(Button.builder(Component.translatable(MarketText.TAB_GOODS), b -> switchTab(Tab.GOODS))
-                .bounds(left + 6, y, 70, 16).build());
-        Button contracts = addRenderableWidget(Button.builder(Component.translatable(MarketText.TAB_CONTRACTS), b -> switchTab(Tab.CONTRACTS))
-                .bounds(left + 78, y, 70, 16).build());
-        goods.active = tab != Tab.GOODS;
-        contracts.active = tab != Tab.CONTRACTS;
+        int x0 = inner() + 2;
+        int y = top + 28;
+        addRenderableWidget(new BrassButton(x0, y, 70, 14, Component.translatable(MarketText.TAB_GOODS), () -> switchTab(Tab.GOODS))
+                .selected(tab == Tab.GOODS)).active = tab != Tab.GOODS;
+        addRenderableWidget(new BrassButton(x0 + 72, y, 70, 14, Component.translatable(MarketText.TAB_CONTRACTS), () -> switchTab(Tab.CONTRACTS))
+                .selected(tab == Tab.CONTRACTS)).active = tab != Tab.CONTRACTS;
         if (tab == Tab.GOODS) {
-            int qy = top + 40;
-            int x = left + 6 + font.width(Component.translatable(MarketText.QUANTITY)) + 6;
+            int qy = top + 46;
+            int x = x0 + font.width(Component.translatable(MarketText.QUANTITY)) + 6;
             for (int q : MarketLines.QUICK_QUANTITIES) {
-                addRenderableWidget(Button.builder(Component.literal(Integer.toString(q)), b -> setQuantity(q, true))
-                        .bounds(x, qy, 22, 16).build());
+                addRenderableWidget(new BrassButton(x, qy, 22, 14, Component.literal(Integer.toString(q)), () -> setQuantity(q, true)));
                 x += 24;
             }
-            quantityField = new EditBox(font, x + 2, qy + 1, 40, 14, Component.translatable(MarketText.QUANTITY));
+            int fieldX = x + 2;
+            quantityField = new EditBox(font, GuiKit.fieldTextX(fieldX), GuiKit.fieldTextY(qy), GuiKit.fieldTextW(44), 10,
+                    Component.translatable(MarketText.QUANTITY));
             quantityField.setMaxLength(6);
             quantityField.setFilter(s -> s.chars().allMatch(Character::isDigit));
+            GuiKit.styleField(quantityField, Component.translatable(MarketText.QUANTITY));
             quantityField.setValue(Integer.toString(quantity));
             quantityField.setResponder(s -> MarketLines.parseQuantity(s, maxQuantity()).ifPresent(q -> setQuantity(q, false)));
             addRenderableWidget(quantityField);
-            int tw = Math.min(130, left + panelW - 6 - (x + 48));
-            plunderToggle = addRenderableWidget(Button.builder(plunderLabel(), b -> {
+            int right = inner() + innerW() - 2;
+            int tw = Math.min(130, right - (fieldX + 50));
+            plunderToggle = addRenderableWidget(new BrassButton(right - tw, qy, tw, 14, plunderLabel(), () -> {
                 sellPlundered = !sellPlundered;
-                b.setMessage(plunderLabel());
-            }).bounds(left + panelW - 6 - tw, qy, tw, 16).build());
-            listTop = top + 60;
+                plunderToggle.setMessage(plunderLabel());
+            }));
+            tablePanelTop = top + 64;
+            listTop = tablePanelTop + 19;
         } else {
             quantityField = null;
             plunderToggle = null;
-            listTop = top + 40;
+            tablePanelTop = top + 46;
+            listTop = tablePanelTop + 4;
         }
-        listBottom = top + panelH - 16;
+        footerTop = top + panelH - GuiKit.FRAME_BORDER - FOOTER_H;
+        listBottom = footerTop - 6;
+        int barX = inner() + innerW() - 4 - GuiKit.SCROLLBAR_W;
+        scrollBar.place(barX, tablePanelTop + 4, footerTop - 3 - 4 - (tablePanelTop + 4));
+        tableRight = barX - 3;
     }
 
     private Component plunderLabel() {
@@ -213,7 +235,7 @@ public final class MarketScreen extends Screen {
         }
         if (result.isPresent() && newResult) {
             status = message(result.get(), view);
-            statusColor = result.get().done() ? GOOD : BAD;
+            statusColor = result.get().done() ? GuiKit.INK_GREEN : GuiKit.INK_RED;
             pending = Action.NONE;
         }
     }
@@ -269,16 +291,10 @@ public final class MarketScreen extends Screen {
 
     private static int roleColor(GoodRole role) {
         return switch (role) {
-            case PRODUCES -> GOOD;
-            case DEMANDS -> 0xFFFFB050;
-            case NEUTRAL, NOT_TRADED -> DIM;
+            case PRODUCES -> GuiKit.INK_GREEN;
+            case DEMANDS -> GuiKit.INK_AMBER;
+            case NEUTRAL, NOT_TRADED -> GuiKit.INK_DIM;
         };
-    }
-
-    private void drawClipped(GuiGraphics g, Component text, int x, int y, int maxW, int color) {
-        FormattedText cut = font.width(text) <= maxW ? text : font.substrByWidth(text, Math.max(0, maxW - font.width("..")));
-        g.drawString(font, Language.getInstance().getVisualOrder(cut), x, y, color);
-        if (cut != text) g.drawString(font, "..", x + font.width(cut), y, color);
     }
 
     private void send(Action action, net.minecraft.network.protocol.common.custom.CustomPacketPayload payload) {
@@ -286,13 +302,25 @@ public final class MarketScreen extends Screen {
         Services.NETWORK.sendToServer(payload);
     }
 
+    /** Rows of the open tab (for scrolling). */
+    private int rowCount() {
+        return ClientMarketState.view().map(v -> tab == Tab.GOODS ? MarketLines.order(v.goods()).size() : contractRows(v).size()).orElse(0);
+    }
+
+    private int visibleRows() {
+        return Math.max(1, (listBottom - listTop) / ROW_H);
+    }
+
     // ------------------------------------------------------------------ drawing
 
     @Override
     public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         super.renderBackground(g, mouseX, mouseY, partialTick);
-        g.fill(left, top, left + panelW, top + panelH, PANEL);
-        g.renderOutline(left, top, panelW, panelH, BORDER);
+        GuiKit.frame(g, left, top, panelW, panelH);
+        GuiKit.sprite(g, GuiSprites.HEADER, inner(), top + GuiKit.FRAME_BORDER, innerW(), GuiKit.HEADER_H);
+        GuiKit.parchment(g, inner() + 1, tablePanelTop, innerW() - 2, footerTop - 3 - tablePanelTop);
+        GuiKit.parchment(g, inner() + 1, footerTop, innerW() - 2, FOOTER_H);
+        if (quantityField != null) GuiKit.field(g, quantityField);
     }
 
     @Override
@@ -301,82 +329,105 @@ public final class MarketScreen extends Screen {
         rowButtons.clear();
         Optional<MarketView> view = ClientMarketState.view();
 
-        // header: port name and kind, doubloons
-        ItemStack coin = new ItemStack(TradeContent.DOUBLOON.get());
+        // header plaque: port name and kind, doubloons
+        int hx = inner() + 6;
+        int hy = top + GuiKit.FRAME_BORDER + 4;
+        int hRight = inner() + innerW() - 6;
         if (view.isPresent()) {
             MarketView v = view.get();
-            Component coins = Component.translatable(MarketText.COINS, MarketLines.formatCoins(v.coins()));
-            int cw = font.width(coins);
-            g.drawString(font, coins, left + panelW - 6 - cw, top + 6, GOLD);
-            g.renderItem(coin, left + panelW - 6 - cw - 18, top + 2);
-            Component name = Component.literal(MarketLines.portName(v.port())).withColor(GOLD)
-                    .append(Component.literal("  ")).append(Component.translatable(MarketText.kind(v.kind())).withColor(DIM));
-            drawClipped(g, name, left + 6, top + 6, panelW - cw - 36, TEXT);
+            int coinsLeft = GuiKit.coins(g, font, Component.literal(MarketLines.formatCoins(v.coins())), hRight, hy, GuiKit.BRASS_TEXT, true);
+            Component name = Component.literal(MarketLines.portName(v.port())).withColor(GuiKit.BRASS_TEXT)
+                    .append(Component.literal("  ")).append(Component.translatable(MarketText.kind(v.kind())).withColor(GuiKit.ON_WOOD_DIM));
+            GuiKit.text(g, font, name, hx, hy, coinsLeft - 6 - hx, GuiKit.BRASS_TEXT, true);
         } else {
-            g.drawString(font, title, left + 6, top + 6, GOLD);
+            g.drawString(font, title, hx, hy, GuiKit.BRASS_TEXT, true);
         }
         if (tab == Tab.GOODS) {
-            g.drawString(font, Component.translatable(MarketText.QUANTITY), left + 6, top + 44, DIM);
+            g.drawString(font, Component.translatable(MarketText.QUANTITY), inner() + 2, top + 49, GuiKit.ON_WOOD, true);
         }
 
+        int total = 0;
         if (view.isEmpty()) {
-            g.drawCenteredString(font, Component.translatable(MarketText.LOADING), left + panelW / 2, listTop + 20, DIM);
+            g.drawCenteredString(font, Component.translatable(MarketText.LOADING), (inner() + tableRight) / 2, listTop + 20, GuiKit.INK_DIM);
         } else if (tab == Tab.GOODS) {
-            renderGoods(g, view.get(), mouseX, mouseY);
+            total = renderGoods(g, view.get(), mouseX, mouseY);
         } else {
-            renderContracts(g, view.get());
+            total = renderContracts(g, view.get(), mouseX, mouseY);
         }
+        scrollBar.render(g, total, visibleRows(), scroll, mouseX, mouseY);
 
-        for (RowButton b : rowButtons) drawButton(g, b, mouseX, mouseY);
-        if (!status.getString().isEmpty()) drawClipped(g, status, left + 6, top + panelH - 12, panelW - 12, statusColor);
+        for (RowButton b : rowButtons) {
+            GuiKit.button(g, font, b.x(), b.y(), b.w(), b.h(), b.label(), GuiKit.buttonState(b.active(), b.contains(mouseX, mouseY)));
+        }
+        if (!status.getString().isEmpty()) {
+            GuiKit.ink(g, font, status, inner() + 6, footerTop + 4, innerW() - 12, statusColor);
+        }
 
         for (RowButton b : rowButtons) {
             if (!b.active() && b.tooltip() != null && b.contains(mouseX, mouseY)) g.renderTooltip(font, b.tooltip(), mouseX, mouseY);
         }
     }
 
-    private int visibleRows() {
-        return Math.max(1, (listBottom - listTop) / ROW_H);
+    /** Draws a row's background: a faint stripe on odd rows, a stronger wash under the mouse. */
+    private void rowWash(GuiGraphics g, int i, int y, int mouseX, int mouseY) {
+        int x0 = inner() + 4;
+        boolean hover = mouseX >= x0 && mouseX < tableRight && mouseY >= y && mouseY < y + ROW_H;
+        if (hover) GuiKit.wash(g, x0, y, tableRight, y + ROW_H, 0x30);
+        else if ((i & 1) == 1) GuiKit.wash(g, x0, y, tableRight, y + ROW_H, 0x14);
     }
 
-    private void renderGoods(GuiGraphics g, MarketView v, int mouseX, int mouseY) {
+    private int renderGoods(GuiGraphics g, MarketView v, int mouseX, int mouseY) {
         List<MarketView.GoodLine> lines = MarketLines.order(v.goods());
+        int right = tableRight - 2;
+        int sellBtnX = right - TRADE_BUTTON_W;
+        int sellPriceX = sellBtnX - 2 - PRICE_W;
+        int buyBtnX = sellPriceX - 8 - TRADE_BUTTON_W;
+        int buyPriceX = buyBtnX - 2 - PRICE_W;
+        int nameX = inner() + 24;
+        int textW = buyPriceX - nameX - 8;
+        int divBuy = buyPriceX - 5;
+        int divSell = sellPriceX - 5;
+
+        // column headings and brass rules
+        int hy = tablePanelTop + 5;
+        GuiKit.ink(g, font, Component.translatable(MarketText.TAB_GOODS), nameX, hy, textW, GuiKit.INK_DIM);
+        Component buy = Component.translatable(MarketText.BUY);
+        Component sell = Component.translatable(MarketText.SELL);
+        g.drawString(font, buy, (divBuy + 3 + divSell) / 2 - font.width(buy) / 2, hy, GuiKit.INK_DIM, false);
+        g.drawString(font, sell, (divSell + 3 + right) / 2 - font.width(sell) / 2, hy, GuiKit.INK_DIM, false);
+        GuiKit.divider(g, inner() + 4, tablePanelTop + 15, tableRight - inner() - 4);
+        int ruleBottom = Math.min(listBottom, listTop + Math.max(1, Math.min(lines.size(), visibleRows())) * ROW_H);
+        GuiKit.dividerVertical(g, divBuy, tablePanelTop + 3, ruleBottom - tablePanelTop - 3);
+        GuiKit.dividerVertical(g, divSell, tablePanelTop + 3, ruleBottom - tablePanelTop - 3);
+
         if (lines.isEmpty()) {
-            g.drawCenteredString(font, Component.translatable(MarketText.EMPTY), left + panelW / 2, listTop + 20, DIM);
-            return;
+            g.drawCenteredString(font, Component.translatable(MarketText.EMPTY), (inner() + tableRight) / 2, listTop + 8, GuiKit.INK_DIM);
+            return 0;
         }
-        scroll = MarketLines.clampScroll(scroll, lines.size(), visibleRows());
+        scroll = ScrollMath.clamp(scroll, lines.size(), visibleRows());
         boolean fresh = v.quantity() == quantity && pending == Action.NONE;
-        int right = left + panelW - 6;
-        int priceW = 46;
-        int btnW = 34;
-        int sellBtnX = right - btnW;
-        int sellPriceX = sellBtnX - 2 - priceW;
-        int buyBtnX = sellPriceX - 6 - btnW;
-        int buyPriceX = buyBtnX - 2 - priceW;
-        int textW = buyPriceX - (left + 26) - 4;
         for (int i = scroll; i < lines.size() && i < scroll + visibleRows(); i++) {
             MarketView.GoodLine l = lines.get(i);
             int y = listTop + (i - scroll) * ROW_H;
-            if ((i & 1) == 1) g.fill(left + 2, y, left + panelW - 2, y + ROW_H, ROW_ALT);
+            rowWash(g, i, y, mouseX, mouseY);
             ItemStack stack = itemStack(l.item());
-            g.renderItem(stack, left + 6, y + 3);
-            drawClipped(g, stack.getHoverName(), left + 26, y + 2, textW, TEXT);
+            g.renderItem(stack, inner() + 5, y + 3);
+            GuiKit.ink(g, font, stack.getHoverName(), nameX, y + 2, textW, GuiKit.INK);
             int clean = carried(stack.getItem(), false);
             int plundered = carried(stack.getItem(), true);
             Component have = plundered > 0 ? Component.translatable(MarketText.HAVE_PLUNDERED, clean, plundered)
                     : Component.translatable(MarketText.HAVE, clean);
             Component second = Component.translatable(MarketText.role(l.role())).withColor(roleColor(l.role()))
-                    .append(Component.literal(", ").withColor(DIM)).append(have.copy().withColor(DIM));
-            drawClipped(g, second, left + 26, y + 12, textW, TEXT);
+                    .append(Component.literal(", ").withColor(GuiKit.INK_DIM)).append(have.copy().withColor(GuiKit.INK_DIM));
+            GuiKit.ink(g, font, second, nameX, y + 12, textW, GuiKit.INK);
 
             boolean canBuy = fresh && MarketLines.canBuy(l.buy(), v.coins());
             int carriedForSale = sellPlundered ? plundered : clean;
             boolean canSell = fresh && MarketLines.canSell(l.sell(), carriedForSale, quantity);
             String buyText = MarketLines.price(l.buy());
             String sellText = MarketLines.price(l.sell());
-            g.drawString(font, buyText, buyPriceX + priceW - font.width(buyText), y + 7, canBuy ? TEXT : DIM);
-            g.drawString(font, sellText, sellPriceX + priceW - font.width(sellText), y + 7, canSell ? TEXT : DIM);
+            g.drawString(font, buyText, buyPriceX + PRICE_W - font.width(buyText), y + 7, canBuy ? GuiKit.INK : GuiKit.INK_DIM, false);
+            g.drawString(font, sellText, sellPriceX + PRICE_W - font.width(sellText), y + 7, canSell ? GuiKit.INK : GuiKit.INK_DIM, false);
             ResourceLocation port = v.port();
             ResourceLocation good = l.good();
             int q = quantity;
@@ -386,11 +437,12 @@ public final class MarketScreen extends Screen {
                 long n = Math.min(MarketLines.affordable(v.coins(), l.buy().total(), v.quantity()), l.buy().available());
                 buyTip = Component.translatable(MarketText.AFFORD, MarketLines.formatCoins(n));
             }
-            rowButtons.add(new RowButton(buyBtnX, y + 4, btnW, 14, Component.translatable(MarketText.BUY), canBuy, buyTip,
+            rowButtons.add(new RowButton(buyBtnX, y + 4, TRADE_BUTTON_W, 14, Component.translatable(MarketText.BUY), canBuy, buyTip,
                     () -> send(Action.BUY, new MarketPayloads.Trade(port, true, good, q, false, Optional.empty()))));
-            rowButtons.add(new RowButton(sellBtnX, y + 4, btnW, 14, Component.translatable(MarketText.SELL), canSell, null,
+            rowButtons.add(new RowButton(sellBtnX, y + 4, TRADE_BUTTON_W, 14, Component.translatable(MarketText.SELL), canSell, null,
                     () -> send(Action.SELL, new MarketPayloads.Trade(port, false, good, q, plunderedSale, Optional.empty()))));
         }
+        return lines.size();
     }
 
     private List<ContractRow> contractRows(MarketView v) {
@@ -404,49 +456,47 @@ public final class MarketScreen extends Screen {
         return rows;
     }
 
-    private void renderContracts(GuiGraphics g, MarketView v) {
+    private int renderContracts(GuiGraphics g, MarketView v, int mouseX, int mouseY) {
         List<ContractRow> rows = contractRows(v);
-        scroll = MarketLines.clampScroll(scroll, rows.size(), visibleRows());
-        int right = left + panelW - 6;
-        int btnW = 50;
+        scroll = ScrollMath.clamp(scroll, rows.size(), visibleRows());
+        int right = tableRight - 2;
+        int textX = inner() + 24;
         for (int i = scroll; i < rows.size() && i < scroll + visibleRows(); i++) {
             ContractRow row = rows.get(i);
             int y = listTop + (i - scroll) * ROW_H;
             if (row.contract() == null) {
-                boolean heading = row.heading();
-                g.drawString(font, row.header(), left + (heading ? 6 : 26), y + 8, heading ? GOLD : DIM);
+                if (row.heading()) {
+                    g.drawString(font, row.header(), inner() + 6, y + 8, GuiKit.INK, false);
+                    GuiKit.divider(g, inner() + 4, y + 18, tableRight - inner() - 4);
+                } else {
+                    g.drawString(font, row.header(), textX, y + 8, GuiKit.INK_DIM, false);
+                }
                 continue;
             }
             DeliveryContract c = row.contract();
-            if ((i & 1) == 1) g.fill(left + 2, y, left + panelW - 2, y + ROW_H, ROW_ALT);
+            rowWash(g, i, y, mouseX, mouseY);
             ItemStack stack = goodStack(c.good());
-            g.renderItem(stack, left + 6, y + 3);
-            int textW = right - btnW - 4 - (left + 26);
-            drawClipped(g, Component.translatable(MarketText.CONTRACT_LINE, c.quantity(), stack.getHoverName(),
-                    MarketLines.portName(c.destination())), left + 26, y + 2, textW, TEXT);
-            drawClipped(g, Component.translatable(MarketText.CONTRACT_DETAIL, c.deadlineDay(), MarketLines.formatCoins(c.reward()),
-                    MarketLines.formatCoins(c.deposit())), left + 26, y + 12, textW, DIM);
+            g.renderItem(stack, inner() + 5, y + 3);
+            int textW = right - CONTRACT_BUTTON_W - 4 - textX;
+            GuiKit.ink(g, font, Component.translatable(MarketText.CONTRACT_LINE, c.quantity(), stack.getHoverName(),
+                    MarketLines.portName(c.destination())), textX, y + 2, textW, GuiKit.INK);
+            GuiKit.ink(g, font, Component.translatable(MarketText.CONTRACT_DETAIL, c.deadlineDay(), MarketLines.formatCoins(c.reward()),
+                    MarketLines.formatCoins(c.deposit())), textX, y + 12, textW, GuiKit.INK_DIM);
             ResourceLocation port = v.port();
             boolean idle = pending == Action.NONE;
             if (row.mine()) {
                 boolean here = c.destination().equals(port);
                 boolean enough = carried(stack.getItem(), false) >= c.quantity();
-                rowButtons.add(new RowButton(right - btnW, y + 4, btnW, 14, Component.translatable(MarketText.DELIVER), idle && here && enough, null,
+                rowButtons.add(new RowButton(right - CONTRACT_BUTTON_W, y + 4, CONTRACT_BUTTON_W, 14, Component.translatable(MarketText.DELIVER),
+                        idle && here && enough, null,
                         () -> send(Action.CONTRACT, new MarketPayloads.ContractAction(port, true, c.id(), Optional.empty()))));
             } else {
-                rowButtons.add(new RowButton(right - btnW, y + 4, btnW, 14, Component.translatable(MarketText.ACCEPT),
+                rowButtons.add(new RowButton(right - CONTRACT_BUTTON_W, y + 4, CONTRACT_BUTTON_W, 14, Component.translatable(MarketText.ACCEPT),
                         idle && v.coins() >= c.deposit(), null,
                         () -> send(Action.CONTRACT, new MarketPayloads.ContractAction(port, false, c.id(), Optional.empty()))));
             }
         }
-    }
-
-    private void drawButton(GuiGraphics g, RowButton b, int mouseX, int mouseY) {
-        boolean hover = b.active() && b.contains(mouseX, mouseY);
-        int bg = !b.active() ? 0xFF303030 : hover ? 0xFF8B6B3A : 0xFF5A4325;
-        g.fill(b.x(), b.y(), b.x() + b.w(), b.y() + b.h(), bg);
-        g.renderOutline(b.x(), b.y(), b.w(), b.h(), b.active() ? BORDER : 0xFF505050);
-        g.drawCenteredString(font, b.label(), b.x() + b.w() / 2, b.y() + (b.h() - 8) / 2, b.active() ? TEXT : 0xFF808080);
+        return rows.size();
     }
 
     // ------------------------------------------------------------------ input
@@ -467,6 +517,11 @@ public final class MarketScreen extends Screen {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (super.mouseClicked(mouseX, mouseY, button)) return true;
         if (button != 0) return false;
+        int s = scrollBar.click(mouseX, mouseY, rowCount(), visibleRows(), scroll);
+        if (s >= 0) {
+            scroll = s;
+            return true;
+        }
         for (RowButton b : rowButtons) {
             if (b.active() && b.contains(mouseX, mouseY)) {
                 Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), 1.0f));
@@ -478,8 +533,24 @@ public final class MarketScreen extends Screen {
     }
 
     @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        int s = scrollBar.drag(mouseY, rowCount(), visibleRows());
+        if (s >= 0) {
+            scroll = s;
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        scrollBar.release();
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        if (mouseY >= listTop && mouseY < listBottom && scrollY != 0) {
+        if (mouseY >= tablePanelTop && mouseY < listBottom && scrollY != 0) {
             scroll -= (int) Math.signum(scrollY);
             if (scroll < 0) scroll = 0; // the upper bound is clamped when drawing
             return true;

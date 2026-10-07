@@ -8,14 +8,17 @@ import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -142,14 +145,23 @@ public class CannonballEntity extends ThrowableItemProjectile {
             ship.applyImpulseNow(hit, localDir.scale(push));
         }
 
-        int destroyed = 0;
         int limit = blocksPerHit >= 0 ? blocksPerHit : CannonConfig.blocksPerHit();
+        if (!CannonRules.worldAllowsBlockDamage(CannonConfig.RESPECT_MOB_GRIEFING.get(),
+                level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING))) {
+            limit = 0;
+        }
+        int destroyed = 0;
         for (BlockPos p : CannonImpact.blocksAlong(hitPos, hit, localDir, limit, pos -> !level.getBlockState(pos).isAir())) {
             BlockState state = level.getBlockState(p);
-            boolean onShip = ship != null || SableShips.containing(level, p) != null;
-            if (!CannonRules.destroyable(true, state.isAir(), state.getDestroySpeed(level, p), onShip,
+            ShipBody owner = ship != null ? ship : SableShips.containing(level, p);
+            if (!CannonRules.destroyable(true, state.isAir(), state.getDestroySpeed(level, p), owner != null,
                     state.is(CannonContent.BREAKABLE), state.is(CannonContent.PROOF))) {
                 break; // a block that holds stops the ball
+            }
+            // spawn protection is a world-space rule: a ship block counts where it is in the world
+            BlockPos worldPos = owner != null ? BlockPos.containing(owner.toWorld(Vec3.atCenterOf(p))) : p;
+            if (spawnProtected(level, worldPos)) {
+                break; // a protected block holds like a cannon-proof one
             }
             level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, state), worldHit.x, worldHit.y, worldHit.z,
                     24, 0.3, 0.3, 0.3, 0.15);
@@ -163,6 +175,24 @@ public class CannonballEntity extends ThrowableItemProjectile {
             level.playSound(null, worldHit.x, worldHit.y, worldHit.z, SoundEvents.STONE_HIT, SoundSource.BLOCKS, 1.5f, 0.6f);
         }
         level.sendParticles(ParticleTypes.POOF, worldHit.x, worldHit.y, worldHit.z, 8, 0.2, 0.2, 0.2, 0.05);
+    }
+
+    /**
+     * Whether the block at the world position {@code worldPos} is under the server's spawn protection
+     * ({@code cannons.respect_spawn_protection}). A ball fired by a player asks the server as a block break by that
+     * player would; any other ball follows the same vanilla rule for a shooter who is no operator. Claims of claim mods
+     * have no vanilla API and are not checked.
+     */
+    private boolean spawnProtected(ServerLevel level, BlockPos worldPos) {
+        if (!CannonConfig.RESPECT_SPAWN_PROTECTION.get()) return false;
+        MinecraftServer server = level.getServer();
+        if (getOwner() instanceof Player player) {
+            return server.isUnderSpawnProtection(level, worldPos, player);
+        }
+        BlockPos spawn = level.getSharedSpawnPos();
+        return CannonRules.spawnProtected(server.isDedicatedServer(), level.dimension() == Level.OVERWORLD,
+                !server.getPlayerList().getOps().isEmpty(), false, server.getSpawnProtectionRadius(),
+                spawn.getX(), spawn.getZ(), worldPos.getX(), worldPos.getZ());
     }
 
     @Override

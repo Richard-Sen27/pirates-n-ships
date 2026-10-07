@@ -45,6 +45,13 @@ public final class CannonConfig {
     public static final ConfigValue<Double> SINK_SPEED = S.doubleRange("sink_speed", 0.3, 0.0, 10.0,
             "A cannonball in water slower than this (blocks per tick) has sunk and is removed");
 
+    // ---- world rules (Q2) ------------------------------------------- -----------------------------------------------------------------
+
+    public static final ConfigValue<Boolean> RESPECT_MOB_GRIEFING = S.bool("respect_mob_griefing", true,
+            "Cannonballs break no blocks while the mobGriefing game rule is off");
+    public static final ConfigValue<Boolean> RESPECT_SPAWN_PROTECTION = S.bool("respect_spawn_protection", true,
+            "Cannonballs break no blocks inside the server's spawn protection (server.properties spawn-protection)");
+
     // ---- the swivel gun (P2) ---------------------------------------------------------------------------------------
 
     private static final ConfigSection SWIVEL = S.section("swivel",

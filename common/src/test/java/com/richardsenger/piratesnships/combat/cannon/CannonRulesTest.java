@@ -196,4 +196,33 @@ class CannonRulesTest {
         assertTrue(CannonImpact.blocksAlong(new BlockPos(4, 1, 4), hit, east, 0, solid::contains).isEmpty());
         assertEquals(List.of(new BlockPos(4, 1, 4)), CannonImpact.blocksAlong(new BlockPos(4, 1, 4), hit, Vec3.ZERO, 3, solid::contains));
     }
+
+    // ---- world rules (Q2) ----
+
+    @Test
+    void mobGriefingOffStopsBlockDamageOnlyWhenRespected() {
+        assertTrue(CannonRules.worldAllowsBlockDamage(true, true));
+        assertFalse(CannonRules.worldAllowsBlockDamage(true, false));
+        assertTrue(CannonRules.worldAllowsBlockDamage(false, false));
+        assertTrue(CannonRules.worldAllowsBlockDamage(false, true));
+    }
+
+    @Test
+    void spawnProtectionCoversTheRadiusAroundTheSpawn() {
+        // dedicated, overworld, ops exist, shooter no op, radius 16, spawn at (100, -40)
+        assertTrue(CannonRules.spawnProtected(true, true, true, false, 16, 100, -40, 100, -40));
+        assertTrue(CannonRules.spawnProtected(true, true, true, false, 16, 100, -40, 116, -24), "the corner is inside");
+        assertTrue(CannonRules.spawnProtected(true, true, true, false, 16, 100, -40, 84, -56));
+        assertFalse(CannonRules.spawnProtected(true, true, true, false, 16, 100, -40, 117, -40), "one block east of the edge");
+        assertFalse(CannonRules.spawnProtected(true, true, true, false, 16, 100, -40, 100, -57), "one block north of the edge");
+    }
+
+    @Test
+    void spawnProtectionFollowsVanillasConditions() {
+        assertFalse(CannonRules.spawnProtected(false, true, true, false, 16, 0, 0, 0, 0), "single player");
+        assertFalse(CannonRules.spawnProtected(true, false, true, false, 16, 0, 0, 0, 0), "the nether");
+        assertFalse(CannonRules.spawnProtected(true, true, false, false, 16, 0, 0, 0, 0), "no operators yet");
+        assertFalse(CannonRules.spawnProtected(true, true, true, true, 16, 0, 0, 0, 0), "an operator's shot");
+        assertFalse(CannonRules.spawnProtected(true, true, true, false, 0, 0, 0, 0, 0), "radius 0");
+    }
 }

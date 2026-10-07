@@ -6,6 +6,7 @@ import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
 import com.richardsenger.piratesnships.world.WorldConfig;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -21,6 +22,8 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.RandomizableContainer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CrossCollisionBlock;
+import net.minecraft.world.level.block.PipeBlock;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -61,22 +64,35 @@ public final class WreckGameTests {
 
     @ModGameTest(template = GameTestTemplates.EMPTY_48)
     public static void cargoFieldSitsOnTheFloor(GameTestHelper helper) {
-        pieceSitsOnTheFloor(helper, WreckKeys.CARGO_FIELD, Rotation.NONE);
+        pieceSitsOnTheFloorAndSucceeds(helper, WreckKeys.CARGO_FIELD, Rotation.NONE);
     }
 
     @ModGameTest(template = GameTestTemplates.EMPTY_48)
     public static void mastStumpSitsOnTheFloor(GameTestHelper helper) {
-        pieceSitsOnTheFloor(helper, WreckKeys.MAST_STUMP, Rotation.CLOCKWISE_90);
+        pieceSitsOnTheFloorAndSucceeds(helper, WreckKeys.MAST_STUMP, Rotation.CLOCKWISE_90);
     }
 
+    /** Also: the stern's fences and window panes are connected (the templates store them as posts). */
     @ModGameTest(template = GameTestTemplates.EMPTY_48)
     public static void sternSitsOnTheFloor(GameTestHelper helper) {
-        pieceSitsOnTheFloor(helper, WreckKeys.STERN, Rotation.CLOCKWISE_180);
+        WreckPiece piece = pieceSitsOnTheFloor(helper, WreckKeys.STERN, Rotation.CLOCKWISE_180);
+        ServerLevel level = helper.getLevel();
+        BoundingBox box = piece.getBoundingBox();
+        int connected = 0;
+        for (BlockPos pos : BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ())) {
+            BlockState state = level.getBlockState(pos);
+            if (!(state.getBlock() instanceof CrossCollisionBlock)) continue;
+            for (Direction dir : Direction.Plane.HORIZONTAL) {
+                if (state.getValue(PipeBlock.PROPERTY_BY_DIRECTION.get(dir))) connected++;
+            }
+        }
+        helper.assertTrue(connected > 0, "the stern's fences and panes connect to something");
+        helper.succeed();
     }
 
     @ModGameTest(template = GameTestTemplates.EMPTY_48)
     public static void sunkenSloopSitsOnTheFloor(GameTestHelper helper) {
-        pieceSitsOnTheFloor(helper, WreckKeys.SUNKEN_SLOOP, Rotation.COUNTERCLOCKWISE_90);
+        pieceSitsOnTheFloorAndSucceeds(helper, WreckKeys.SUNKEN_SLOOP, Rotation.COUNTERCLOCKWISE_90);
     }
 
     /** The structure's own planning in deep water: some piece, on the floor, fully under water. */
@@ -160,7 +176,12 @@ public final class WreckGameTests {
 
     // --- Placement and checks ----------------------------------------------------------------------------------
 
-    private static void pieceSitsOnTheFloor(GameTestHelper helper, ResourceLocation template, Rotation rotation) {
+    private static void pieceSitsOnTheFloorAndSucceeds(GameTestHelper helper, ResourceLocation template, Rotation rotation) {
+        pieceSitsOnTheFloor(helper, template, rotation);
+        helper.succeed();
+    }
+
+    private static WreckPiece pieceSitsOnTheFloor(GameTestHelper helper, ResourceLocation template, Rotation rotation) {
         buildSea(helper, FLOOR_TOP, DEEP_SEA);
         ServerLevel level = helper.getLevel();
         WreckStructure structure = structure(level);
@@ -171,7 +192,7 @@ public final class WreckGameTests {
         helper.assertValueEqual(piece.templateId(), template, "template");
         helper.assertValueEqual(piece.getRotation(), rotation, "rotation");
         checkPlaced(helper, piece, DEEP_SEA);
-        helper.succeed();
+        return piece;
     }
 
     /**
@@ -214,17 +235,19 @@ public final class WreckGameTests {
             CompoundTag block = (CompoundTag) t;
             CompoundTag state = palette.getCompound(block.getInt("state"));
             if (block.getCompound("nbt").contains("LootTable")) expectedChests++;
-            if (!"true".equals(state.getCompound("Properties").getString("waterlogged"))) continue;
-            expectedWaterlogged++;
+            boolean wet = "true".equals(state.getCompound("Properties").getString("waterlogged"));
+            if (wet) expectedWaterlogged++;
             ListTag p = block.getList("pos", Tag.TAG_INT);
             BlockPos world = piece.templatePosition().offset(StructureTemplate.calculateRelativePosition(piece.placeSettings(),
                     new BlockPos(p.getInt(0), p.getInt(1), p.getInt(2))));
             BlockState placed = level.getBlockState(world);
-            if (!placed.hasProperty(BlockStateProperties.WATERLOGGED) || !placed.getValue(BlockStateProperties.WATERLOGGED)
-                    || !BuiltInRegistries.BLOCK.getKey(placed.getBlock()).toString().equals(state.getString("Name"))) {
-                lost.add(state.getString("Name") + " at " + world.toShortString() + " is " + placed);
+            boolean same = BuiltInRegistries.BLOCK.getKey(placed.getBlock()).toString().equals(state.getString("Name"));
+            if (!same || wet && !(placed.hasProperty(BlockStateProperties.WATERLOGGED) && placed.getValue(BlockStateProperties.WATERLOGGED))) {
+                lost.add(state.getString("Name") + (wet ? "[waterlogged]" : "") + " at " + world.toShortString() + " is " + placed);
             }
         }
+        // every block of the template is in place (none dropped at a chunk border), waterlogged where the template says so
+        helper.assertTrue(lost.isEmpty(), piece.templateId() + ": template blocks missing or dry in place: " + lost);
         helper.assertTrue(expectedWaterlogged > 0 && expectedChests > 0, piece.templateId() + " has waterlogged blocks and a chest");
         helper.assertTrue(lost.isEmpty(), piece.templateId() + ": waterlogged template blocks not waterlogged in place: " + lost);
         // blocks the template stores without the property (some mod blocks) take the sea's water as well
@@ -268,8 +291,13 @@ public final class WreckGameTests {
         }
     }
 
+    /**
+     * The area's centre moved to the nearest chunk corner, so every piece spans four chunks and is placed one chunk at
+     * a time across both borders, as in world generation.
+     */
     private static BlockPos centre(GameTestHelper helper) {
-        return helper.absolutePos(new BlockPos(SIZE / 2, 0, SIZE / 2));
+        BlockPos middle = helper.absolutePos(new BlockPos(SIZE / 2, 0, SIZE / 2));
+        return new BlockPos(Math.round(middle.getX() / 16f) * 16, middle.getY(), Math.round(middle.getZ() / 16f) * 16);
     }
 
     /** The {@code OCEAN_FLOOR_WG} height of the fixture: the first free block above the floor's top row. */

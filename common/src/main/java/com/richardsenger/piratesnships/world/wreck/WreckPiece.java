@@ -21,8 +21,14 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
  * per-chunk height lookup). It turns about the template's horizontal centre on the seabed row, so the piece stays
  * centred on the planned point whatever the rotation.
  *
- * <p>Processors: only {@link BlockIgnoreProcessor#STRUCTURE_AND_AIR} (the templates hold no air or structure blocks
- * anyway). Liquid settings {@link LiquidSettings#APPLY_WATERLOGGING} (vanilla's default): the templates' own
+ * <p><b>No neighbour-shape pass</b> ({@code knownShape = true}, as vanilla's jigsaw pieces): world generation places
+ * a piece one chunk at a time, and vanilla's pass after each chunk would see the next chunk's half of the piece still
+ * missing and drop blocks attached across the border (a cleat on a mast in the next chunk, a lantern under a beam).
+ * Every block of the template is placed as it is; fences, panes and iron bars get their connections from the whole
+ * template through {@link WreckConnectionsProcessor} instead.
+ *
+ * <p>Processors: {@link BlockIgnoreProcessor#STRUCTURE_AND_AIR} (the templates hold no air or structure blocks anyway)
+ * and {@link WreckConnectionsProcessor}. Liquid settings {@link LiquidSettings#APPLY_WATERLOGGING} (vanilla's default): the templates' own
  * {@code waterlogged=true} states are kept, and blocks placed into the sea take the water as well. Chest block entity
  * data (the {@code chests/wreck} loot table) is loaded as is; vanilla only adds a loot seed.
  */
@@ -60,7 +66,9 @@ public final class WreckPiece extends TemplateStructurePiece {
                 .setMirror(Mirror.NONE)
                 .setRotationPivot(pivot(templates.getOrCreate(template).getSize()))
                 .setLiquidSettings(LiquidSettings.APPLY_WATERLOGGING)
-                .addProcessor(BlockIgnoreProcessor.STRUCTURE_AND_AIR);
+                .setKnownShape(true)
+                .addProcessor(BlockIgnoreProcessor.STRUCTURE_AND_AIR)
+                .addProcessor(WreckConnectionsProcessor.INSTANCE);
     }
 
     @Override

@@ -156,7 +156,7 @@ Compare each sword with a vanilla iron sword in the other hand or the next hotba
 ## Known placeholders (for the later art pass)
 - Every block of the mod has a Blockbench model (the hull patch since ART1a); the rope and chart items got theirs in ART1a.
 - The yard and stay cloths are flat grids with a simple belly; the cleat is a placeholder element model (F7e).
-- Still flat (ART1b, ART1c): the three flag items, map tile, kraken beak and ink, the toolkit items.
+- The three flag items and the map tile got their models in ART1b. Still flat (ART1c): kraken beak and ink, the toolkit items.
 - The brig bars' transparency relies on a model field that only NeoForge reads. The Fabric port has to register a
   render layer for them.
 
@@ -196,3 +196,24 @@ Addendum (F8h): pistol and musket in the hand: see `firearms.md`.
       proof's pose); on the ground and in a frame the same diagonal roll. Opening the chart by use still works.
     - **Z-fighting:** no flicker on the board edges, the pitch seam, the batten, the nail heads, the rope turns or the
       ink on the chart sheet at 10 and 30 blocks (patch) or in hand, GUI and frame (items).
+
+21. **Flag bundles and map tile (ART1b):** renders `art/renders/navy_flag.png`, `merchant_flag.png`,
+    `jolly_roger_flag.png`, `map_tile.png` (three-quarter view, GUI, and for navy and map tile the right hand).
+    - **Flags in the inventory:** each flag is a rolled cloth bundle standing **upright** in the slot: a wooden toggle
+      with a dark knob at each end runs through it, a pale rope eye on top, two dark lashings near the ends, a lighter
+      outer fold round the middle and its loose end sticking out to the right. Navy: blue with a white cross (a
+      horizontal band all round and a vertical arm on the front, off-centre like the flown flag). Merchant: off-white
+      with a red band. Jolly Roger: black with a bone skull (dark eye holes) and a bone below it. The three tell apart
+      at a glance in a hotbar row; say if the bundle looks too much like a tin can or a spool.
+    - **Flags in the hand:** held like a tool (right hand, F5): the bundle in the fist, the rope eye pointing forward,
+      the outer fold and its design on top; left hand mirrored; first person at the lower right. On the ground a
+      small bundle on the diagonal; in an item frame the design side faces out (on the diagonal, like a sword).
+      Hoisting a flag on a flagpole still works and the flown cloth is unchanged.
+    - **Map tile:** in the inventory a square wooden frame with dark nail heads in the corners, seen slightly from
+      above-right (the top edge and right side of the frame show), holding a parchment with land on the left (a red X
+      and a dotted route of three ink dots), a dark ink coastline and blue sea on the right with an olive island and two
+      darker shoals. In the right hand it is held flat like a tray, map up; first person turned towards the player; on
+      the ground it lies flat, map up; in an item frame the map faces out. Placing the tile on a wall or floor still
+      shows the old flat block model with the drawn map (only the item changed).
+    - **Z-fighting:** no flicker on the cross arms, the red band, the skull and its eye holes, the lashings, the coast
+      line, the island, the X or the nail heads in hand, GUI and frame.

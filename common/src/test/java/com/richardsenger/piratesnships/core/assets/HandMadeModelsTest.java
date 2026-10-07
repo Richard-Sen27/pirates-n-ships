@@ -63,7 +63,8 @@ class HandMadeModelsTest {
             "water_barrel", "water_barrel_fill0", "water_barrel_fill1", "water_barrel_fill2",
             "water_barrel_fill3", "yard");
     static final List<String> ITEM_MODELS = List.of("bandana", "bounty_proof", "brig_door", "brig_key", "cannonball", "captains_whistle", "chart", "cloth", "cutlass", "doubloon",
-            "grappling_hook", "hardtack", "hull_patch", "lead_shot", "lime", "musket", "musket_loaded", "navy_hat", "officer_hat", "pirate_hat", "pistol",
+            "grappling_hook", "hardtack", "hull_patch", "jolly_roger_flag", "lead_shot", "lime", "map_tile", "merchant_flag", "musket",
+            "musket_loaded", "navy_flag", "navy_hat", "officer_hat", "pirate_hat", "pistol",
             "pistol_loaded", "rapier", "rope", "rum", "saber", "salt_pork",
             "salted_fish", "shackles", "spices", "tobacco");
 

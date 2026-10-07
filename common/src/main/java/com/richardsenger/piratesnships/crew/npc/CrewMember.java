@@ -1,6 +1,10 @@
 package com.richardsenger.piratesnships.crew.npc;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.crew.hammock.CrewRest;
+import com.richardsenger.piratesnships.crew.hammock.HammockRef;
+import com.richardsenger.piratesnships.crew.morale.MoraleRules;
+import com.richardsenger.piratesnships.crew.morale.NightOutcome;
 import com.richardsenger.piratesnships.station.StationConfig;
 import com.richardsenger.piratesnships.station.StationRef;
 import com.richardsenger.piratesnships.station.StationState;
@@ -35,7 +39,11 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 /**
  * Test crew member of spike 4 (docs/design.md §7, §9): a plain humanoid mob with a persistent station assignment.
  * Assigned, it rides the station's seat ({@link StationSeat}) and stands still; unassigned it strolls and looks
- * around. Hiring, wages, skills and morale come later.
+ * around. Hiring, wages and skills come later.
+ * <p>
+ * HM1 (docs/design.md §7.1): it also keeps its morale ({@code crew.morale.CrewMorale}, the only writer), its hammock
+ * for the night ({@link #rest()}, set by {@code crew.hammock.CrewRest}) and how it spends the night
+ * ({@link #nightOutcome()}), all saved; {@link #isResting()} is synced for the lying pose.
  * <p>
  * Animated with GeckoLib (M1): one controller {@code body} loops the {@link CrewPose} animation of the rig contract
  * ({@code art/README.md}, "Entities"). The controller runs on the client only; the server's part is the synced
@@ -45,12 +53,17 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
 
     static final String TAG_ASSIGNMENT = Constants.MOD_ID + ":assignment";
     static final String TAG_PINNED = Constants.MOD_ID + ":pinned";
+    static final String TAG_MORALE = Constants.MOD_ID + ":morale";
+    static final String TAG_REST = Constants.MOD_ID + ":rest";
+    static final String TAG_NIGHT = Constants.MOD_ID + ":night";
 
     /** Ticks GeckoLib blends from one pose animation into the next. */
     private static final int POSE_TRANSITION_TICKS = 5;
 
     /** True while the station of this crew member carries out an order; set by the server, read by the animation. */
     private static final EntityDataAccessor<Boolean> DATA_WORKING = SynchedEntityData.defineId(CrewMember.class, EntityDataSerializers.BOOLEAN);
+    /** True while it lies in a hammock (HM1); set by the server, read by the animation. */
+    private static final EntityDataAccessor<Boolean> DATA_RESTING = SynchedEntityData.defineId(CrewMember.class, EntityDataSerializers.BOOLEAN);
 
     private static final Map<CrewPose, RawAnimation> POSE_ANIMATIONS = new EnumMap<>(CrewPose.class);
 
@@ -65,6 +78,12 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     private @Nullable StationRef assignment;
     /** Assigned by hand (whistle, command): the job board never moves it (CR1). Server only, saved. */
     private boolean pinned;
+    /** Morale 0..100, or {@link MoraleRules#UNSET} (reads as the configured start). Server only, saved. */
+    private int morale = MoraleRules.UNSET;
+    /** Its hammock while it sleeps (HM1). Server only, saved. */
+    private @Nullable HammockRef rest;
+    /** How it spends the current night, settled at dawn (HM1). Server only, saved. */
+    private NightOutcome nightOutcome = NightOutcome.NONE;
 
     public CrewMember(EntityType<? extends CrewMember> type, Level level) {
         super(type, level);
@@ -83,7 +102,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.6) {
             @Override
             public boolean canUse() {
-                return assignment == null && super.canUse();
+                return assignment == null && rest == null && super.canUse();
             }
         });
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0f));
@@ -94,6 +113,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(DATA_WORKING, false);
+        builder.define(DATA_RESTING, false);
     }
 
     /** Whether this crew member is at its station while the station carries out an order (synced to clients). */
@@ -109,9 +129,17 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         return getVehicle() != null && !(getVehicle() instanceof StationSeat);
     }
 
-    /** The pose for the animation, from the synced state and the leg movement the renderer measured. */
+    /** Whether it lies in a hammock (synced to clients; the client may not know the hammock seat in the plot). */
+    public boolean isResting() {
+        return entityData.get(DATA_RESTING);
+    }
+
+    /**
+     * The pose for the animation, from the synced state and the leg movement the renderer measured. In a hammock it
+     * plays {@link CrewPose#SIT}: the rig has no lying animation yet (ART1d / a later rig pass).
+     */
     public CrewPose pose(boolean legsMoving) {
-        return CrewPose.choose(legsMoving, isWorking(), isSeated());
+        return CrewPose.choose(legsMoving, isWorking(), isSeated() || isResting());
     }
 
     @Override
@@ -147,6 +175,38 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         this.pinned = pinned;
     }
 
+    /** Stored morale, {@link MoraleRules#UNSET} when never set; read it through {@code CrewMorale#get}. */
+    public int storedMorale() {
+        return morale;
+    }
+
+    /** Only {@code crew.morale.CrewMorale#adjust} calls this. */
+    public void setStoredMorale(int morale) {
+        this.morale = morale;
+    }
+
+    /** Its hammock while it sleeps there (HM1), else null. */
+    public @Nullable HammockRef rest() {
+        return rest;
+    }
+
+    /** Sets the hammock only; {@code crew.hammock.CrewRest} seats it there and gets it up. */
+    public void setRest(@Nullable HammockRef rest) {
+        this.rest = rest;
+        if (!level().isClientSide) {
+            entityData.set(DATA_RESTING, rest != null);
+        }
+    }
+
+    /** How it spends the current night (HM1); {@link NightOutcome#NONE} during the day. */
+    public NightOutcome nightOutcome() {
+        return nightOutcome;
+    }
+
+    public void setNightOutcome(NightOutcome nightOutcome) {
+        this.nightOutcome = nightOutcome;
+    }
+
     /** True when this crew member rides the seat of its assigned station. */
     public boolean isAtStation() {
         return assignment != null && getVehicle() instanceof StationSeat seat && seat.station().equals(assignment.pos());
@@ -162,7 +222,8 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
                 CrewStations.ensureSeated(level, this);
             }
         }
-        if (!level().isClientSide) {
+        if (level() instanceof ServerLevel level) {
+            CrewRest.tick(level, this);
             entityData.set(DATA_WORKING, operatingHere()); // only sends when the value changes
         }
     }
@@ -205,6 +266,15 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
             StationRef.CODEC.encodeStart(NbtOps.INSTANCE, assignment).ifSuccess(t -> tag.put(TAG_ASSIGNMENT, t));
             tag.putBoolean(TAG_PINNED, pinned);
         }
+        if (morale != MoraleRules.UNSET) {
+            tag.putInt(TAG_MORALE, morale);
+        }
+        if (rest != null) {
+            HammockRef.CODEC.encodeStart(NbtOps.INSTANCE, rest).ifSuccess(t -> tag.put(TAG_REST, t));
+        }
+        if (nightOutcome != NightOutcome.NONE) {
+            tag.putString(TAG_NIGHT, nightOutcome.id());
+        }
     }
 
     @Override
@@ -215,5 +285,8 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
                 : null;
         // a crew member saved before CR1 was always assigned by hand
         pinned = assignment != null && (!tag.contains(TAG_PINNED) || tag.getBoolean(TAG_PINNED));
+        morale = tag.contains(TAG_MORALE) ? MoraleRules.clamp(tag.getInt(TAG_MORALE)) : MoraleRules.UNSET;
+        setRest(tag.contains(TAG_REST) ? HammockRef.CODEC.parse(NbtOps.INSTANCE, tag.get(TAG_REST)).result().orElse(null) : null);
+        nightOutcome = tag.contains(TAG_NIGHT) ? NightOutcome.byId(tag.getString(TAG_NIGHT)) : NightOutcome.NONE;
     }
 }

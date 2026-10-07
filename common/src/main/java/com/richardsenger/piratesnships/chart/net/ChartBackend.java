@@ -67,6 +67,7 @@ public final class ChartBackend {
         Services.NETWORK.registerToServer(ChartSimplePayloads.RequestOpen.TYPE, ChartSimplePayloads.RequestOpen.CODEC, (p, player) -> handleRequestOpen((ServerPlayer) player));
         Services.NETWORK.registerToServer(ChartSimplePayloads.Close.TYPE, ChartSimplePayloads.Close.CODEC, (p, player) -> close((ServerPlayer) player));
         Services.NETWORK.registerToServer(DrawTilePayload.TYPE, DrawTilePayload.CODEC, (p, player) -> MapTileService.handleDraw((ServerPlayer) player, p));
+        Services.NETWORK.registerToServer(ClearBoardPayload.TYPE, ClearBoardPayload.CODEC, (p, player) -> MapTileService.handleClear((ServerPlayer) player, p));
         Services.NETWORK.registerToClient(ChartSettingsPayload.TYPE, ChartSettingsPayload.CODEC, (p, player) -> ClientChart.acceptSettings(p.settings()));
         Services.NETWORK.registerToClient(ChartOpenPayload.TYPE, ChartOpenPayload.CODEC, (p, player) -> ClientChart.open(p));
         Services.NETWORK.registerToClient(ChartRegionPayload.TYPE, ChartRegionPayload.CODEC, (p, player) -> ClientChart.acceptRegion(p));

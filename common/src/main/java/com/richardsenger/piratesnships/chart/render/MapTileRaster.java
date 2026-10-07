@@ -1,5 +1,8 @@
 package com.richardsenger.piratesnships.chart.render;
 
+import com.richardsenger.piratesnships.chart.data.BoardMarker;
+import com.richardsenger.piratesnships.chart.data.BoardSlice;
+import com.richardsenger.piratesnships.chart.data.CellClass;
 import com.richardsenger.piratesnships.chart.data.ChartCells;
 import com.richardsenger.piratesnships.chart.data.ChartMarker;
 import com.richardsenger.piratesnships.chart.data.MapTileDrawing;
@@ -142,6 +145,84 @@ public final class MapTileRaster {
         return out;
     }
 
+    // --- zoom (MAP3) ---------------------------------------------------------------------------------------------
+
+    /**
+     * One pixel of a drawing at zoom {@code zoom}: the cell byte that stands for the {@code zoom x zoom} chart cells
+     * from cell {@code (cx0, cz0)}. Its class is the most common class among the <b>known</b> cells of the block
+     * (ties: deep water, then shallow water, then the land classes in their stored order), its coast flag is set when
+     * any known cell of the block is coast, and it is unknown (0) only when no cell of the block is known. At zoom 1
+     * it is the cell itself (with free bits cleared).
+     */
+    public static int downsample(CellLookup cells, int cx0, int cz0, int zoom) {
+        if (zoom <= 1) {
+            int c = cells.cell(cx0, cz0);
+            return ChartCells.known(c) ? c & (ChartCells.CLASS_MASK | ChartCells.COAST) : 0;
+        }
+        int[] counts = new int[CellClass.values().length];
+        boolean coast = false;
+        boolean any = false;
+        for (int j = 0; j < zoom; j++) {
+            for (int i = 0; i < zoom; i++) {
+                int c = cells.cell(cx0 + i, cz0 + j);
+                if (!ChartCells.known(c)) continue;
+                any = true;
+                counts[ChartCells.cellClass(c).ordinal()]++;
+                if (ChartCells.coast(c)) coast = true;
+            }
+        }
+        if (!any) return 0;
+        int best = 0;
+        for (int k = 1; k < counts.length; k++) {
+            // strictly greater: on a tie the lower ordinal (deeper water first, then land) stays
+            if (counts[k] > (best == 0 ? 0 : counts[best])) best = k;
+        }
+        return ChartCells.of(CellClass.of(best), coast) & 0xFF;
+    }
+
+    /**
+     * The chart seen at zoom {@code zoom}: virtual cell {@code (vx, vz)} is {@link #downsample} of the block whose
+     * first chart cell is {@code (vx * zoom + anchorX, vz * zoom + anchorZ)}. Every slice of one board shares the
+     * anchor ({@link #anchor}), so the decorations line up across the tiles.
+     */
+    public static CellLookup zoomed(CellLookup cells, int zoom, int anchorX, int anchorZ) {
+        if (zoom <= 1 && anchorX == 0 && anchorZ == 0) return cells;
+        return (vx, vz) -> downsample(cells, vx * zoom + anchorX, vz * zoom + anchorZ, zoom);
+    }
+
+    /** The anchor of an area starting at chart cell {@code minC} at zoom {@code zoom}: {@code floorMod(minC, zoom)}. */
+    public static int anchor(int minC, int zoom) {
+        return Math.floorMod(minC, Math.max(1, zoom));
+    }
+
+    /**
+     * {@code size x size} pixels of {@code zoom x zoom} cells each from cell {@code (minCx, minCz)} as palette bytes
+     * ({@link #draw(CellLookup, int, int, int)} on the {@link #zoomed} chart): a pixel is {@link #known} exactly when
+     * at least one cell of its block is known. The zoomed cells are read once into a grid (with a one-cell rim for
+     * the coast strokes), so each chart cell is read once per pixel block.
+     */
+    public static byte[] draw(CellLookup cells, int minCx, int minCz, int size, int zoom) {
+        if (zoom <= 1) return draw(cells, minCx, minCz, size);
+        int ax = anchor(minCx, zoom);
+        int az = anchor(minCz, zoom);
+        int vx0 = Math.floorDiv(minCx, zoom);
+        int vz0 = Math.floorDiv(minCz, zoom);
+        CellLookup virtual = zoomed(cells, zoom, ax, az);
+        int w = size + 2;
+        byte[] grid = new byte[w * w];
+        for (int j = 0; j < w; j++) {
+            for (int i = 0; i < w; i++) {
+                grid[j * w + i] = (byte) virtual.cell(vx0 - 1 + i, vz0 - 1 + j);
+            }
+        }
+        CellLookup cached = (vx, vz) -> {
+            int i = vx - vx0 + 1;
+            int j = vz - vz0 + 1;
+            return i >= 0 && j >= 0 && i < w && j < w ? grid[j * w + i] & 0xFF : virtual.cell(vx, vz);
+        };
+        return draw(cached, vx0, vz0, size);
+    }
+
     /** The nearest palette entry other than parchment, for a known cell whose colour is (almost) the paper's. */
     private static int nearestInked(int argb) {
         int c = over(argb, PARCHMENT);
@@ -172,6 +253,35 @@ public final class MapTileRaster {
             out.add(new TileMarker(m.icon(), (int) px, (int) py, m.name()));
         }
         return out;
+    }
+
+    /**
+     * The markers inside a board area of {@code widthPx x heightPx} pixels of {@code zoom x zoom} cells from cell
+     * {@code (minCx, minCz)} (cells of {@code cellBlocks} blocks), at their pixel in board pixels, in the chart's
+     * order, at most {@code max} (work package MAP3).
+     */
+    public static List<BoardMarker> boardMarkers(List<ChartMarker> markers, int minCx, int minCz, int widthPx, int heightPx, int zoom,
+                                                 int cellBlocks, int max) {
+        List<BoardMarker> out = new ArrayList<>();
+        int cb = Math.max(1, cellBlocks);
+        int z = Math.max(1, zoom);
+        for (ChartMarker m : markers) {
+            if (out.size() >= max) break;
+            long bx = Math.floorDiv((long) Math.floorDiv(m.x(), cb) - minCx, z);
+            long by = Math.floorDiv((long) Math.floorDiv(m.z(), cb) - minCz, z);
+            if (bx < 0 || by < 0 || bx >= widthPx || by >= heightPx) continue;
+            out.add(new BoardMarker(m.icon(), (int) bx, (int) by, m.name()));
+        }
+        return out;
+    }
+
+    /**
+     * How many raster pixels beyond its own edge a slice still stamps a marker of its neighbour, so the icon's part
+     * that reaches over the seam is drawn on this tile too (an icon is {@link ChartSheet#ICON} picture pixels wide).
+     */
+    public static int markerMargin(int size) {
+        int scale = pictureScale(size);
+        return (ChartSheet.ICON / 2 + scale) / scale;
     }
 
     /** Whether the area of {@code size x size} cells from cell {@code (minCx, minCz)} holds at least one known cell. */
@@ -211,9 +321,14 @@ public final class MapTileRaster {
 
     /** Whether the whole area lies inside the world's coordinate limit of {@code limit} blocks either way. */
     public static boolean inWorld(int minCx, int minCz, int size, int cellBlocks, int limit) {
+        return inWorld(minCx, minCz, (long) size, (long) size, cellBlocks, limit);
+    }
+
+    /** {@link #inWorld(int, int, int, int, int)} for an area of {@code w x h} cells (a board). */
+    public static boolean inWorld(int minCx, int minCz, long w, long h, int cellBlocks, int limit) {
         long cb = Math.max(1, cellBlocks);
         return (long) minCx * cb >= -limit && (long) minCz * cb >= -limit
-                && ((long) minCx + size) * cb <= limit && ((long) minCz + size) * cb <= limit;
+                && ((long) minCx + w) * cb <= limit && ((long) minCz + h) * cb <= limit;
     }
 
     // --- the picture ---------------------------------------------------------------------------------------------
@@ -228,14 +343,24 @@ public final class MapTileRaster {
      * with a worn edge and a one-pixel ink border, the small compass rose in the top-right corner and the marker icons
      * at their pixels, taken from the chart sheet {@code sheet} ({@code sheetW x sheetH} ARGB, see {@link ChartSheet};
      * {@code null} leaves the sprites out).
+     *
+     * <p>A slice of a board (MAP3) draws the border and the worn edge only on the board's outer sides and the compass
+     * rose only on the top-right tile, so the tiles read as one map; markers stamped just beyond its edge (the
+     * neighbour's, see {@link #markerMargin}) show the part of their icon that reaches over the seam.
      */
     public static int[] picture(MapTileDrawing d, int scale, int[] sheet, int sheetW, int sheetH) {
         int size = d.size();
         int w = size * scale;
+        BoardSlice b = d.board().orElse(null);
+        boolean edgeW = b == null || b.column() == 0;
+        boolean edgeE = b == null || b.column() == b.columns() - 1;
+        boolean edgeN = b == null || b.row() == 0;
+        boolean edgeS = b == null || b.row() == b.rows() - 1;
+        int far = Integer.MAX_VALUE / 2;
         int[] out = new int[w * w];
         for (int y = 0; y < w; y++) {
             for (int x = 0; x < w; x++) {
-                int edge = Math.min(Math.min(x, y), Math.min(w - 1 - x, w - 1 - y));
+                int edge = Math.min(Math.min(edgeW ? x : far, edgeN ? y : far), Math.min(edgeE ? w - 1 - x : far, edgeS ? w - 1 - y : far));
                 int index = d.pixel(x / scale, y / scale);
                 int c;
                 if (edge == 0) {
@@ -251,8 +376,10 @@ public final class MapTileRaster {
             }
         }
         if (sheet != null) {
-            ChartSheet.Part rose = ChartSheet.SMALL_ROSE;
-            blit(out, w, w, sheet, sheetW, sheetH, rose, w - rose.w() - 3, 3);
+            if (edgeN && edgeE) {
+                ChartSheet.Part rose = ChartSheet.SMALL_ROSE;
+                blit(out, w, w, sheet, sheetW, sheetH, rose, w - rose.w() - 3, 3);
+            }
             for (TileMarker m : d.markers()) {
                 ChartSheet.Part icon = ChartSheet.marker(m.icon());
                 int cx = m.px() * scale + scale / 2;

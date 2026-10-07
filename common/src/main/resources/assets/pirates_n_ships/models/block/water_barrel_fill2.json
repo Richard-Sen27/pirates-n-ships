@@ -8,7 +8,7 @@
 		"4": "minecraft:block/stripped_oak_log",
 		"5": "minecraft:block/stripped_oak_log_top",
 		"6": "minecraft:block/oak_planks",
-		"7": "minecraft:block/blue_ice",
+		"7": "minecraft:block/water_still",
 		"particle": "minecraft:block/spruce_planks"
 	},
 	"elements": [
@@ -3149,7 +3149,8 @@
 						14.3,
 						10.61
 					],
-					"texture": "#7"
+					"texture": "#7",
+					"tintindex": 0
 				}
 			}
 		},
@@ -3182,7 +3183,8 @@
 						10.61,
 						14.3
 					],
-					"texture": "#7"
+					"texture": "#7",
+					"tintindex": 0
 				}
 			}
 		},
@@ -3215,7 +3217,8 @@
 						14.3,
 						10.61
 					],
-					"texture": "#7"
+					"texture": "#7",
+					"tintindex": 0
 				}
 			}
 		},
@@ -3248,7 +3251,8 @@
 						10.61,
 						14.3
 					],
-					"texture": "#7"
+					"texture": "#7",
+					"tintindex": 0
 				}
 			}
 		},

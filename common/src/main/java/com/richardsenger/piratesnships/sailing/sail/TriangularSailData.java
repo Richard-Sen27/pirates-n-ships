@@ -5,7 +5,6 @@ import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
 import com.richardsenger.piratesnships.sailing.block.CleatBlock;
 import com.richardsenger.piratesnships.sailing.item.RopeItem;
-import com.richardsenger.piratesnships.ship.decor.flag.ElementModel;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.core.Direction;
 import net.minecraft.data.PackOutput;
@@ -23,7 +22,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.state.properties.AttachFace;
 
 /**
- * Datagen of the triangular sail (docs/design.md §5.2, rule F5b): the cleat's model, block states, loot, tags,
+ * Datagen of the triangular sail (docs/design.md §5.2, rule F5b): the cleat's block states, loot, tags,
  * physical weight and recipe, the rope's item model and recipe, and the lang entries of both. Called from
  * {@code SailingModule.gatherData}.
  */
@@ -79,22 +78,13 @@ public final class TriangularSailData {
     }
 
     /**
-     * The cleat on the floor, facing north: a wooden foot, an iron post and iron horns along the facing. Turned for the
-     * wall and the ceiling as vanilla turns buttons (x 90 / 180, then y by the facing). A placeholder until the
-     * Blockbench pass.
+     * The cleat: a hand-made Blockbench horn cleat (art/models/cleat.bbmodel, design.md §4.8) on the floor with its
+     * horns along the facing (north-south for {@code facing=north}), so only the block state is generated. Turned for
+     * the wall and the ceiling as vanilla turns buttons (x 90 / 180, then y by the facing). The cloth is drawn by the
+     * stay renderer, so {@link CleatBlock#TRIM} does not change the model.
      */
     private static void cleat(ModelContext m, CleatBlock block) {
         ResourceLocation model = ModelLocationUtils.getModelLocation(block);
-        ElementModel e = new ElementModel().texture("wood", "minecraft:block/dark_oak_planks")
-                .texture("iron", "minecraft:block/iron_block").texture("particle", "minecraft:block/dark_oak_planks");
-        box(e, 5, 0, 4, 11, 1, 12, "#wood");
-        box(e, 7, 1, 6, 9, 3, 10, "#iron");
-        box(e, 7, 3, 2, 9, 5, 14, "#iron");
-        m.models().accept(model, () -> {
-            JsonObject json = e.build();
-            json.addProperty("parent", "minecraft:block/block"); // display transforms for the item
-            return json;
-        });
         PropertyDispatch.C2<AttachFace, Direction> dispatch = PropertyDispatch.properties(CleatBlock.FACE, CleatBlock.FACING);
         for (Direction d : Direction.Plane.HORIZONTAL) {
             VariantProperties.Rotation y = rotation(d);
@@ -115,17 +105,5 @@ public final class TriangularSailData {
             case WEST -> VariantProperties.Rotation.R270;
             default -> VariantProperties.Rotation.R0;
         };
-    }
-
-    /** A cuboid with all six faces, each mapped to its own projection on the texture. */
-    private static void box(ElementModel e, float x0, float y0, float z0, float x1, float y1, float z1, String tex) {
-        e.element(x0, y0, z0, x1, y1, z1)
-                .face(ElementModel.Face.DOWN, x0, z0, x1, z1, tex)
-                .face(ElementModel.Face.UP, x0, z0, x1, z1, tex)
-                .face(ElementModel.Face.NORTH, 16 - x1, 16 - y1, 16 - x0, 16 - y0, tex)
-                .face(ElementModel.Face.SOUTH, x0, 16 - y1, x1, 16 - y0, tex)
-                .face(ElementModel.Face.WEST, z0, 16 - y1, z1, 16 - y0, tex)
-                .face(ElementModel.Face.EAST, 16 - z1, 16 - y1, 16 - z0, 16 - y0, tex)
-                .end();
     }
 }

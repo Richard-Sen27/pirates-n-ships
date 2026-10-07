@@ -51,7 +51,7 @@ class HandMadeModelsTest {
     }
 
     /** Every hand-made model by name; a new Blockbench model is added here, a missing or stray file fails. */
-    static final List<String> BLOCK_MODELS = List.of("capstan", "cargo_barrel", "cargo_crate", "figurehead_eagle",
+    static final List<String> BLOCK_MODELS = List.of("capstan", "cargo_barrel", "cargo_crate", "cleat", "figurehead_eagle",
             "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flagpole", "helm", "nameplate", "pantry",
             "sail_winch", "water_barrel", "water_barrel_fill0", "water_barrel_fill1", "water_barrel_fill2",
             "water_barrel_fill3", "yard");

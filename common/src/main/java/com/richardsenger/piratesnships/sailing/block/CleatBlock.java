@@ -40,6 +40,10 @@ import org.jetbrains.annotations.Nullable;
  * <p>{@link #TRIM} is the sail's trim; only the head's counts (as with the yards). Every cleat has a
  * {@link CleatBlockEntity} that holds its end of the stay and, on the head, the cloth for the renderer. Besides
  * sturdy faces, a cleat also holds on a mast block ({@link SailingBlocks#MASTS}), so it can be fixed to a fence mast.
+ *
+ * <p>Model: a hand-made horn cleat (art/models/cleat.bbmodel, design.md §4.8): an iron horn bar on two legs over a
+ * dark wooden pad, modelled on the floor with its horns along {@link #FACING} and turned for the wall and the ceiling
+ * by the block state. {@link #TRIM} does not change the model (the cloth is drawn by the stay renderer).
  */
 public class CleatBlock extends FaceAttachedHorizontalDirectionalBlock implements EntityBlock {
 

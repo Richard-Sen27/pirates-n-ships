@@ -112,8 +112,37 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
                 return assignment == null && rest == null && super.canUse();
             }
         });
-        goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0f));
-        goalSelector.addGoal(7, new RandomLookAroundGoal(this));
+        // HM2: a sleeper keeps its head and body along the hammock (CrewRest#orient); awake, it looks around again
+        goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0f) {
+            @Override
+            public boolean canUse() {
+                return mayLookAround() && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return mayLookAround() && super.canContinueToUse();
+            }
+        });
+        goalSelector.addGoal(7, new RandomLookAroundGoal(this) {
+            @Override
+            public boolean canUse() {
+                return mayLookAround() && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return mayLookAround() && super.canContinueToUse();
+            }
+        });
+    }
+
+    /**
+     * Whether its look goals (look at a player, look around) may turn its head: not while it lies in a hammock (HM2),
+     * where {@code crew.hammock.CrewRest#orient} holds head and body along the hammock.
+     */
+    public boolean mayLookAround() {
+        return !isResting();
     }
 
     @Override
@@ -143,10 +172,10 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
 
     /**
      * The pose for the animation, from the synced state and the leg movement the renderer measured. In a hammock it
-     * plays {@link CrewPose#SIT}: the rig has no lying animation yet (ART1d / a later rig pass).
+     * plays {@link CrewPose#SLEEP} (ART1d), lying along the hammock ({@code crew.hammock.CrewRest#orient}, HM2).
      */
     public CrewPose pose(boolean legsMoving) {
-        return CrewPose.choose(legsMoving, isWorking(), isSeated() || isResting());
+        return CrewPose.choose(legsMoving, isWorking(), isSeated(), isResting());
     }
 
     @Override

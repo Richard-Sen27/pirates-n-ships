@@ -203,7 +203,7 @@ public final class HazardGameTests {
             double end = horizontal(com(ship), pool.position());
             Constants.LOG.info("[hazard test] small ship: mass {}, distance {} -> {}", ship.ship().mass(), start[0], end);
             h.assertTrue(start[0] > 4.5 && start[0] < 7.5, "the ship did not start about 6 blocks out: " + start[0]);
-            // measured 5.90 -> 4.33 (1.6 blocks; Sable's water drag holds the hull to about 0.3-0.5 m/s); a third of that
+            // measured 5.90 -> 4.25..4.38 over four runs (1.5-1.7 blocks; Sable's water drag holds the hull to about 0.3-0.5 m/s); a third of that
             h.assertTrue(end < start[0] - 0.5, "the ship was not pulled toward the centre: " + start[0] + " -> " + end);
             h.succeed();
         });
@@ -233,9 +233,9 @@ public final class HazardGameTests {
             Constants.LOG.info("[hazard test] mass cap 20: light {} kpg moved {}, heavy {} kpg moved {}",
                     light.ship().mass(), moveLight, heavy.ship().mass(), moveHeavy);
             h.assertTrue(heavy.ship().mass() > light.ship().mass() * 1.5, "the ballast did not make the ship heavier");
-            // measured: light 0.83 blocks in, heavy 0.25 out (its slower inward drift loses to the outward drift of
-            // the orbit the spin puts it on); the light bound is about a third of the measurement, and the heavy one only
-            // asks for clearly less than the light ship
+            // measured over four runs: light 0.66-0.83 blocks in, heavy between 0.25 out and 0.29 in (its slower inward
+            // drift partly loses to the outward drift of the orbit the spin puts it on); the light bound is about half the
+            // lowest measurement, the heavy one asks for clearly less than the light ship (worst case 0.29 < 0.8 × 0.66)
             h.assertTrue(moveLight > 0.3, "the light ship was not pulled in: " + moveLight);
             h.assertTrue(moveHeavy < moveLight * 0.8, "the heavy ship moved as much as the light one: " + moveHeavy + " vs " + moveLight);
             h.succeed();

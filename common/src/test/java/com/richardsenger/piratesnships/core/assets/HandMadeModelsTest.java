@@ -53,7 +53,8 @@ class HandMadeModelsTest {
     /** Every hand-made model by name; a new Blockbench model is added here, a missing or stray file fails. */
     static final List<String> BLOCK_MODELS = List.of("capstan", "figurehead_eagle", "figurehead_lion", "figurehead_mermaid",
             "figurehead_skull", "flagpole", "helm", "nameplate", "sail_winch", "yard");
-    static final List<String> ITEM_MODELS = List.of("cutlass", "rapier", "saber");
+    static final List<String> ITEM_MODELS = List.of("cannonball", "cutlass", "grappling_hook", "lead_shot", "musket",
+            "pistol", "rapier", "saber");
 
     /** The display slots a hand-made item model copies from vanilla's {@code item/handheld} and {@code item/generated}. */
     private static final List<String> ITEM_DISPLAY_SLOTS = List.of("thirdperson_righthand", "thirdperson_lefthand",

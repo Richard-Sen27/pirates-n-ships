@@ -5,15 +5,16 @@ Run (from the repository root):
     python3 -m venv tools/.venv
     tools/.venv/bin/pip install -r tools/requirements.txt
     tools/.venv/bin/python tools/gen_placeholder_textures.py            # write every texture
-    tools/.venv/bin/python tools/gen_placeholder_textures.py --only pistol musket   # just these
+    tools/.venv/bin/python tools/gen_placeholder_textures.py --only doubloon rum      # just these
     tools/.venv/bin/python tools/gen_placeholder_textures.py --list     # print the names
 
 Output: common/src/main/resources/assets/pirates_n_ships/textures/{item,block}/<name>.png
 Deterministic: same input, same bytes. One function per texture, registered in ITEMS / BLOCKS.
 Replacing a texture by hand: put its name into PROTECTED (or a line in tools/protected_textures.txt),
 then this script never overwrites it. Textures owned by other packages (test_block) are never written. The helm, nameplate and flagpole have
-hand-made Blockbench models with vanilla textures (art/models/) and no textures here; the rapier, cutlass and saber
-have hand-made item models textured from the item palette (tools/gen_item_palette.py).
+hand-made Blockbench models with vanilla textures (art/models/) and no textures here; the rapier, cutlass, saber,
+pistol, musket, lead shot, cannonball and grappling hook have hand-made item models textured from the item palettes
+(tools/gen_item_palette.py).
 """
 import argparse
 import random
@@ -24,7 +25,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 TEX = ROOT / "common/src/main/resources/assets/pirates_n_ships/textures"
 PROTECTED_FILE = Path(__file__).resolve().parent / "protected_textures.txt"
-# Names of hand-made textures this script must not overwrite (e.g. "pistol", "cargo_crate").
+# Names of hand-made textures this script must not overwrite (e.g. "cargo_crate").
 PROTECTED = set()
 FOREIGN_PREFIXES = ("test_block",)
 
@@ -119,56 +120,6 @@ def planks(name, base="plank", dark="plank_d", light="plank_l"):
 
 
 # ---------------------------------------------------------------- items
-
-def pistol():
-    cv = Canvas()
-    cv.rect(3, 5, 14, 6, "iron")
-    cv.rect(3, 5, 14, 5, "steel")
-    cv.rect(2, 7, 7, 8, "wood")
-    cv.rect(2, 9, 5, 12, "wood")
-    cv.rect(2, 13, 4, 13, "wood_d")
-    cv.px(6, 4, "iron_d"); cv.px(7, 4, "gold")
-    cv.px(7, 9, "iron")
-    return cv.outline()
-
-
-def musket():
-    cv = Canvas()
-    cv.line(4, 11, 14, 1, "iron")
-    cv.line(5, 11, 14, 2, "steel")
-    cv.rect(1, 11, 5, 13, "wood")
-    cv.line(1, 14, 3, 14, "wood_d")
-    cv.px(6, 9, "gold"); cv.px(7, 9, "iron_d")
-    return cv.outline()
-
-
-def lead_shot():
-    cv = Canvas()
-    for cx, cy in ((5, 6), (10, 5), (7, 10), (11, 10)):
-        cv.disc(cx, cy, 1.6, "iron")
-        cv.px(cx - 1, cy - 1, "steel")
-    return cv.outline()
-
-
-def cannonball():
-    cv = Canvas()
-    cv.disc(7.5, 8, 5.6, "iron_d")
-    cv.disc(6.5, 7, 3.5, "iron")
-    cv.px(5, 5, "steel"); cv.px(6, 5, "steel")
-    return cv.outline()
-
-
-def grappling_hook():
-    cv = Canvas()
-    cv.line(8, 3, 8, 11, "iron")
-    for x0, x1 in ((4, 12),):
-        cv.line(x0, 11, x1, 11, "iron")
-    cv.line(4, 11, 3, 9, "steel"); cv.line(12, 11, 13, 9, "steel")
-    cv.px(8, 12, "steel"); cv.px(8, 13, "steel")
-    cv.line(8, 2, 11, 1, "tan")
-    cv.px(8, 2, "steel_l")
-    return cv.outline()
-
 
 def doubloon():
     cv = Canvas()
@@ -378,8 +329,6 @@ def pantry_top():
 
 
 ITEMS = {
-    "pistol": pistol, "musket": musket,
-    "lead_shot": lead_shot, "cannonball": cannonball, "grappling_hook": grappling_hook,
     "doubloon": doubloon, "tobacco": tobacco, "spices": spices, "cloth": cloth, "rum": rum,
     "hardtack": hardtack, "salted_fish": salted_fish, "salt_pork": salt_pork, "lime": lime,
     "shackles": shackles, "brig_door": brig_door_item,

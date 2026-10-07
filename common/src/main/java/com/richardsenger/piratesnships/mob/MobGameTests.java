@@ -408,7 +408,7 @@ public final class MobGameTests {
     public static void spawnCommandSpawnsTheAskedCount(GameTestHelper h) {
         floor(h, 9);
         run(h, "pirates mob spawn sailor 3");
-        run(h, "pirates mob spawn kraken 2");
+        run(h, "pirates mob spawn leviathan 2");
         h.runAfterDelay(1, () -> {
             h.assertValueEqual(h.getEntities(MobContent.SAILOR.get()).size(), 3, "sailors spawned");
             h.succeed();

@@ -118,6 +118,14 @@ public final class MobConfig {
     public static final ConfigValue<Double> SHARK_KNOCKBACK = SHARK.doubleRange("knockback", 0.5, 0.0, 5.0,
             "Knockback strength of a bite");
 
+    // --- kraken (K1a, docs/design.md §12) -------------------------------------------------------------------------
+    /**
+     * The {@code mobs.kraken} section, filled by {@code mob.kraken.KrakenConfig}. The kraken's toggle and frequency are
+     * {@code hazards.kraken.enabled} and {@code hazards.kraken.chance_per_day} (§17 "Hazards").
+     */
+    public static final ConfigSection KRAKEN = S.section("kraken",
+            "The kraken's fight (whether and how often it appears: hazards.kraken)");
+
     private MobConfig() {
     }
 
@@ -131,6 +139,7 @@ public final class MobConfig {
 
     /** Loads the class so the values above are declared in time. Called from {@code registerConfig()}. */
     public static void init() {
+        com.richardsenger.piratesnships.mob.kraken.KrakenConfig.init();
     }
 
     public static ConfigValue<Boolean> enabled(MobKind kind) {

@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.combat.firearms;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.combat.firearms.client.FirearmClientState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -30,6 +31,11 @@ import java.util.List;
  *       After {@code aim_steady_ticks} of aiming the spread is multiplied by {@code aimed_spread_factor}; a loaded
  *       musket also zooms in on the client ({@code firearm_view.musket_zoom}).</li>
  * </ul>
+ * <b>Lowering (P5):</b> sneaking while aiming lowers the gun without firing ({@code firearms.aim.lower_on_sneak}):
+ * the client lets go as soon as sneak is pressed ({@code client.FirearmLowering}), a release while sneaking never
+ * fires ({@link FirearmRules#lowers}), and a loaded gun is not raised while sneaking ({@link FirearmRules#aimsOnUse}).
+ * <b>Item bar (P5):</b> white and filling while the local player loads the gun (read through
+ * {@link FirearmClientState}), full and gold on a loaded gun, none on an empty one ({@link FirearmBar}).
  * Use on an unloaded gun without ammunition clicks. With {@code firearms.enabled} off the gun does nothing.
  *
  * <p>Pose: {@link UseAnim#NONE}, the gun stays in the normal held position in both views. The crossbow poses can't be
@@ -41,6 +47,9 @@ public class FirearmItem extends Item {
 
     public static final String LOADED_KEY = "item." + Constants.MOD_ID + ".firearm.loaded";
     public static final String UNLOADED_KEY = "item." + Constants.MOD_ID + ".firearm.unloaded";
+    public static final String AIM_HINT_KEY = "item." + Constants.MOD_ID + ".firearm.hint.aim";
+    public static final String LOWER_HINT_KEY = "item." + Constants.MOD_ID + ".firearm.hint.lower";
+    public static final String LOAD_HINT_KEY = "item." + Constants.MOD_ID + ".firearm.hint.load";
 
     private final FirearmKind kind;
 
@@ -63,6 +72,10 @@ public class FirearmItem extends Item {
         ItemStack stack = player.getItemInHand(hand);
         if (!FirearmsConfig.ENABLED.get()) return InteractionResultHolder.pass(stack);
         if (FirearmContent.isLoaded(stack)) {
+            // sneaking keeps a loaded gun lowered (so holding use after lowering doesn't raise it again)
+            if (!FirearmRules.aimsOnUse(player.isShiftKeyDown(), FirearmsConfig.LOWER_ON_SNEAK.get())) {
+                return InteractionResultHolder.pass(stack);
+            }
             player.startUsingItem(hand); // aim; the shot leaves on release
             return InteractionResultHolder.consume(stack);
         }
@@ -106,6 +119,8 @@ public class FirearmItem extends Item {
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
         // a loading session: let go before the reload time cancels and takes nothing, after it the gun stays loaded
         if (!FirearmRules.isAimSession(timeLeft) || !FirearmsConfig.ENABLED.get() || !FirearmContent.isLoaded(stack)) return;
+        // sneaking lowers the gun: no shot, it stays loaded (the client releases the use when sneak is pressed)
+        if (FirearmRules.lowers(entity.isShiftKeyDown(), true, FirearmsConfig.LOWER_ON_SNEAK.get())) return;
         int held = FirearmRules.heldTicks(timeLeft);
         if (level instanceof ServerLevel server && FirearmRules.firesOnRelease(held, FirearmsConfig.AIM_MIN_TICKS.get())) {
             FirearmService.fire(server, entity, stack, kind, held);
@@ -122,10 +137,44 @@ public class FirearmItem extends Item {
         return UseAnim.NONE;
     }
 
+    // ---- item bar: loading progress (white) and the loaded state (full, gold) ----
+
+    private FirearmBar.State barState(ItemStack stack, int loadingHeld) {
+        return FirearmBar.state(FirearmContent.isLoaded(stack), loadingHeld >= 0);
+    }
+
+    /** Ticks the local player has been loading this stack, -1 if not (always -1 without a client). */
+    private static int loadingHeld(ItemStack stack) {
+        return FirearmContent.isLoaded(stack) ? -1 : FirearmClientState.get().loadingHeldTicks(stack);
+    }
+
+    @Override
+    public boolean isBarVisible(ItemStack stack) {
+        return FirearmBar.visible(barState(stack, loadingHeld(stack)));
+    }
+
+    @Override
+    public int getBarWidth(ItemStack stack) {
+        int held = loadingHeld(stack);
+        return FirearmBar.width(barState(stack, held), held, type().reloadTicks());
+    }
+
+    @Override
+    public int getBarColor(ItemStack stack) {
+        return FirearmBar.color(barState(stack, loadingHeld(stack)));
+    }
+
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
-        boolean loaded = FirearmContent.isLoaded(stack);
-        lines.add(Component.translatable(loaded ? LOADED_KEY : UNLOADED_KEY)
-                .withStyle(loaded ? ChatFormatting.GOLD : ChatFormatting.GRAY));
+        if (FirearmContent.isLoaded(stack)) {
+            lines.add(Component.translatable(LOADED_KEY).withStyle(ChatFormatting.GOLD));
+            lines.add(Component.translatable(AIM_HINT_KEY).withStyle(ChatFormatting.GRAY));
+            if (FirearmsConfig.LOWER_ON_SNEAK.get()) {
+                lines.add(Component.translatable(LOWER_HINT_KEY).withStyle(ChatFormatting.GRAY));
+            }
+        } else {
+            lines.add(Component.translatable(UNLOADED_KEY).withStyle(ChatFormatting.GRAY));
+            lines.add(Component.translatable(LOAD_HINT_KEY).withStyle(ChatFormatting.DARK_GRAY));
+        }
     }
 }

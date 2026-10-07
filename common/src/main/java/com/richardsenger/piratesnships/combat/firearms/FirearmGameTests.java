@@ -38,6 +38,7 @@ public final class FirearmGameTests {
     private static final String DISABLED_BATCH = "pirates_n_ships_config_firearms_disabled";
     private static final String AIM_MIN_BATCH = "pirates_n_ships_config_firearms_aim_min";
     private static final String AIMED_SPREAD_BATCH = "pirates_n_ships_config_firearms_aimed_spread";
+    private static final String LOWER_ON_SNEAK_BATCH = "pirates_n_ships_config_firearms_lower_on_sneak";
 
     private FirearmGameTests() {
     }
@@ -246,6 +247,95 @@ public final class FirearmGameTests {
         helper.assertValueEqual(balls(helper).size(), 1, "balls after a click");
         helper.assertFalse(FirearmContent.isLoaded(gun), "the gun is unloaded after the shot");
         removeBalls(helper);
+        helper.succeed();
+    }
+
+    // ---- lowering and the item bar (P5) -------------------------------------------------------------------------
+
+    /** Sneaking while aiming and letting go lowers the gun: no ball, still loaded, no ammunition used, no cooldown. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void sneakingLowersAnAimedGunWithoutFiring(GameTestHelper helper) {
+        Player player = shooter(helper, new Vec3(4.5, 1, 1.5), 0, 0);
+        ItemStack gun = hold(player, CombatContent.PISTOL.get(), true);
+        giveAmmo(player, 2, 2);
+
+        helper.assertValueEqual(use(helper, player), InteractionResult.CONSUME, "use of a loaded gun");
+        helper.assertTrue(player.isUsingItem(), "the gun is raised to aim");
+        player.setShiftKeyDown(true); // the client releases the use right after the sneak command
+        gun.releaseUsing(helper.getLevel(), player, FirearmRules.AIM_SESSION_TICKS - 30);
+        player.stopUsingItem();
+        helper.assertTrue(balls(helper).isEmpty(), "lowering must not fire");
+        helper.assertTrue(FirearmContent.isLoaded(gun), "the lowered gun stays loaded");
+        helper.assertValueEqual(count(player, CombatContent.LEAD_SHOT.get()), 2, "no lead shot used");
+        helper.assertValueEqual(count(player, Items.GUNPOWDER), 2, "no gunpowder used");
+        helper.assertFalse(player.getCooldowns().isOnCooldown(gun.getItem()), "lowering starts no cooldown");
+
+        // still sneaking with the use key held: the gun is not raised again
+        helper.assertValueEqual(use(helper, player), InteractionResult.PASS, "use of a loaded gun while sneaking");
+        helper.assertFalse(player.isUsingItem(), "a loaded gun stays lowered while sneaking");
+
+        // standing up again: aiming and firing work as before
+        player.setShiftKeyDown(false);
+        aimAndRelease(helper, player, 5);
+        helper.assertValueEqual(balls(helper).size(), 1, "balls after standing up and firing");
+        helper.assertFalse(FirearmContent.isLoaded(gun), "the gun is unloaded after the shot");
+        removeBalls(helper);
+        helper.succeed();
+    }
+
+    /** Sneaking does not stop loading: an unloaded gun loads while sneaking. */
+    @ModGameTest
+    public static void sneakingStillLoads(GameTestHelper helper) {
+        Player player = shooter(helper, new Vec3(1.5, 1, 1.5), 0, 0);
+        ItemStack gun = hold(player, CombatContent.PISTOL.get(), false);
+        giveAmmo(player, 1, 1);
+        player.setShiftKeyDown(true);
+        helper.assertValueEqual(use(helper, player), InteractionResult.CONSUME, "use of an unloaded gun while sneaking");
+        holdLoading(helper, player, gun, FirearmsConfig.type(FirearmKind.PISTOL).reloadTicks());
+        helper.assertTrue(FirearmContent.isLoaded(gun), "the gun loads while sneaking");
+        helper.succeed();
+    }
+
+    /** With {@code lower_on_sneak} off, a sneaking player aims and the release fires. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = LOWER_ON_SNEAK_BATCH)
+    public static void lowerOnSneakOffFiresWhileSneaking(GameTestHelper helper) {
+        ConfigOverrides.during(helper, FirearmsConfig.LOWER_ON_SNEAK, false);
+        Player player = shooter(helper, new Vec3(4.5, 1, 1.5), 0, 0);
+        ItemStack gun = hold(player, CombatContent.PISTOL.get(), true);
+        player.setShiftKeyDown(true);
+        aimAndRelease(helper, player, 10);
+        helper.assertValueEqual(balls(helper).size(), 1, "balls after a sneaking release with lower_on_sneak off");
+        helper.assertFalse(FirearmContent.isLoaded(gun), "the gun is unloaded after the shot");
+        removeBalls(helper);
+        helper.succeed();
+    }
+
+    /** The item bar from the stack alone (no client here): full and gold when loaded, hidden when empty. */
+    @ModGameTest
+    public static void itemBarShowsTheLoadedState(GameTestHelper helper) {
+        ItemStack loaded = new ItemStack(CombatContent.MUSKET.get());
+        FirearmContent.setLoaded(loaded, true);
+        helper.assertTrue(loaded.isBarVisible(), "a loaded gun shows a bar");
+        helper.assertValueEqual(loaded.getBarWidth(), FirearmBar.MAX_WIDTH, "a loaded gun's bar is full");
+        helper.assertValueEqual(loaded.getBarColor(), FirearmBar.LOADED_COLOR, "a loaded gun's bar is gold");
+
+        ItemStack empty = new ItemStack(CombatContent.PISTOL.get());
+        helper.assertFalse(empty.isBarVisible(), "an empty gun shows no bar");
+        helper.succeed();
+    }
+
+    /** A loading session cancelled by letting go leaves the gun unloaded and its bar hidden. */
+    @ModGameTest
+    public static void cancelledLoadingLeavesTheBarHidden(GameTestHelper helper) {
+        Player player = shooter(helper, new Vec3(1.5, 1, 1.5), 0, 0);
+        ItemStack gun = hold(player, CombatContent.PISTOL.get(), false);
+        giveAmmo(player, 1, 1);
+        use(helper, player);
+        holdLoading(helper, player, gun, 10);
+        player.releaseUsingItem();
+        helper.assertFalse(player.isUsingItem(), "letting go stops loading");
+        helper.assertFalse(FirearmContent.isLoaded(gun), "the gun stays unloaded");
+        helper.assertFalse(gun.isBarVisible(), "no bar after a cancelled load");
         helper.succeed();
     }
 

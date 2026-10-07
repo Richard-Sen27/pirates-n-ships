@@ -27,6 +27,10 @@ public final class FirearmsClient {
         // aim and reload poses (P3); the cannon's fuse animation is not part of this
         ClientEvents.CLIENT_SETUP.register(FirearmAnimationsSetup::onClientSetup);
         ClientEvents.CLIENT_TICK_END.register(FirearmAnimationDriver::onClientTickEnd);
+        // sneaking lowers an aimed gun without firing (P5)
+        ClientEvents.CLIENT_TICK_END.register(FirearmLowering::onClientTickEnd);
+        // the loading progress on the item bar (P5)
+        FirearmClientState.set(new LocalFirearmClientState());
     }
 
     /** Zooms in while the player aims a loaded musket (an aim session, not the hold after loading). */

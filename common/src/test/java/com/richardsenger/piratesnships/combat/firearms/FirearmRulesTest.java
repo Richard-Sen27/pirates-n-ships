@@ -217,4 +217,32 @@ class FirearmRulesTest {
         assertEquals(1.1f, FirearmRules.zoomedFov(1.1f, 1.0), 1e-6f, "zoom 1 changes nothing");
         assertEquals(0.5f, FirearmRules.zoomedFov(1.0f, 2.0), 1e-6f);
     }
+
+    // ---- lowering (P5) ----
+
+    @Test
+    void sneakingDuringAnAimLowersTheGun() {
+        assertTrue(FirearmRules.lowers(true, true, true), "sneaking + aim session: no shot");
+        assertFalse(FirearmRules.lowers(false, true, true), "a release without sneaking fires");
+    }
+
+    @Test
+    void sneakingDuringALoadingSessionIsIrrelevant() {
+        assertFalse(FirearmRules.lowers(true, false, true));
+        assertFalse(FirearmRules.lowers(false, false, true));
+    }
+
+    @Test
+    void lowerOnSneakOffAlwaysFires() {
+        assertFalse(FirearmRules.lowers(true, true, false));
+        assertFalse(FirearmRules.lowers(false, true, false));
+    }
+
+    @Test
+    void aLoadedGunIsNotRaisedWhileSneaking() {
+        assertFalse(FirearmRules.aimsOnUse(true, true));
+        assertTrue(FirearmRules.aimsOnUse(false, true));
+        assertTrue(FirearmRules.aimsOnUse(true, false), "with lower_on_sneak off sneaking changes nothing");
+        assertTrue(FirearmRules.aimsOnUse(false, false));
+    }
 }

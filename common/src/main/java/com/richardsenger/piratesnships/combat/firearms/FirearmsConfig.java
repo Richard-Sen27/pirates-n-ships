@@ -33,6 +33,8 @@ public final class FirearmsConfig {
             "Ticks of aiming after which the shot is steadied (aimed_spread_factor applies)");
     public static final ConfigValue<Double> AIMED_SPREAD_FACTOR = AIM.doubleRange("aimed_spread_factor", 0.5, 0.0, 1.0,
             "Spread of a steadied shot as a fraction of the gun's spread (1 = no benefit from aiming)");
+    public static final ConfigValue<Boolean> LOWER_ON_SNEAK = AIM.bool("lower_on_sneak", true,
+            "Sneaking while aiming lowers the gun without firing; it stays loaded and is not raised while sneaking. Off = letting go always fires");
 
     private static final ConfigSection VIEW = ModConfigs.client("firearm_view", "How aiming a gun looks on this client");
     public static final ConfigValue<Double> MUSKET_ZOOM = VIEW.doubleRange("musket_zoom", 1.25, 1.0, 4.0,

@@ -1168,7 +1168,7 @@
 			"scope": 0,
 			"allow_mirror_modeling": true,
 			"from": [
-				0,
+				0.05,
 				3,
 				6.3
 			],
@@ -2821,7 +2821,7 @@
 			"scope": 0,
 			"allow_mirror_modeling": true,
 			"from": [
-				0,
+				0.05,
 				27,
 				6.3
 			],

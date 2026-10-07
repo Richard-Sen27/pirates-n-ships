@@ -136,7 +136,8 @@ class SettingsConfigTest {
         assertEquals(0.05, HazardsConfig.KRAKEN_CHANCE_PER_DAY.get());
         assertTrue(HazardConfig.CAMERA_SWAY.get());
         assertTrue(CrewConfig.WAGES_ENABLED.get());
-        assertTrue(CrewConfig.MUTINY_ENABLED.get());
+        assertFalse(CrewConfig.MUTINY_ENABLED.get());
+        assertEquals(2, CrewConfig.WAGE_PER_DAY.get());
         assertEquals(1.0, CrewConfig.MAX_CREW_MULTIPLIER.get());
         assertTrue(CombatConfig.FIREARM_MISFIRE_IN_RAIN.get());
         assertTrue(CombatConfig.CANNON_BLOCK_DAMAGE.get());
@@ -160,11 +161,11 @@ class SettingsConfigTest {
     @Test
     void overridesWorkWithoutALoader() {
         try {
-            CrewConfig.MUTINY_ENABLED.set(false);
-            assertFalse(CrewConfig.MUTINY_ENABLED.get());
+            CrewConfig.MUTINY_ENABLED.set(true);
+            assertTrue(CrewConfig.MUTINY_ENABLED.get());
         } finally {
             CrewConfig.MUTINY_ENABLED.reset();
         }
-        assertTrue(CrewConfig.MUTINY_ENABLED.get());
+        assertFalse(CrewConfig.MUTINY_ENABLED.get());
     }
 }

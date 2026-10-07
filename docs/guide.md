@@ -259,6 +259,21 @@ will grumble). Crew on duty all night are unaffected, and an order at night gets
 one bunk: use the captain's whistle on a crew member, or `/pirates crew info`, to see morale and "crew 3 / bunks 2".
 Players can't sleep in hammocks. Server config `crew.morale`.
 
+### When an order reaches nobody
+If the whistle or `/pirates crew order` says nobody carries an order out, the line now tells you why: no ship under
+you, no station on board can do it, nothing to do, or no sails with the reason (a gap over 8 blocks between the yards,
+a block in the mast between them, yards off the mast's column, a lower yard longer than the upper). `/pirates ship
+rigging` lists every yard and what it carries, the triangular sails and the crew aboard.
+
+### Upkeep
+Every dawn your crew eats and drinks one day of provisions from the pantries and water barrels aboard and wants its
+pay: 2 doubloons each, taken from any chest, barrel or cargo crate on the ship (the ones nearest the helm first).
+Hungry or thirsty crew lose morale and work slower; rum cheers them up; weeks without citrus or fresh food bring
+scurvy. Unpaid crew lose 8 morale, paid crew gain 1. A sailor whose morale stays below 20 for two dawns deserts. If
+mutiny is enabled in the config, a crew whose average stays below 15 for three dawns turns pirate and takes your ship.
+`/pirates crew info` shows supplies left, the last payday and the work speed; the whistle shows "unpaid" next to
+anyone you could not pay. Server config `crew.wages`, `crew.desertion`, `crew.mutiny`, `provisions`.
+
 ### Orders, not assignments
 You don't have to assign every sailor. Give an order with the whistle (or `/pirates crew order`), and every unmanned
 station that can carry it out becomes an open job: free crew standing on your ship take the nearest one by themselves
@@ -273,6 +288,14 @@ tavern and a shipwright's shed, and end in a small cobbled place. The harbor mas
 port: use it to open the port's market. A desk you place anywhere inside a village joins that port too. Operators can
 list ports with `/pirates world ports` and find the nearest with `/pirates world port nearest`. Server config
 `world.structures.seafarer_village`.
+
+### Cargo weight
+What you carry weighs the ship down. Crates, cargo barrels, pantries and water barrels get heavier as they fill: a full
+crate weighs as much as forty planks. Chests and other vanilla containers press down where they stand, so a heavy
+chest in the bow trims the ship by the bow. Spread heavy cargo and keep it low and central. At the wheel the rudder
+line shows the load: Light, Laden, Heavily laden or Overloaded (`/pirates ship info` shows the numbers). A laden ship
+sits lower, so it floods sooner through a breach, and it is slower to accelerate and turn. Server config
+`cargo_trade.cargo_weight_affects_ships`, `weight_factor`, `weigh_interval_ticks`, `load_levels`.
 
 ### Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks
@@ -361,6 +384,13 @@ pole needs free space downwind.
 At the pole:
 - **Use it with a flag item:** hoists that flag after 3 seconds and gives back the old one.
 - **Use it with an empty hand:** strikes the colors (the flag is lowered but kept), or raises them again.
+
+**What the flag does.** The flag your ship flies is the highest flag on its poles. Under the Jolly Roger the navy attacks
+everyone aboard on sight and charges you for being seen; pirates leave you alone. A navy flag lets you pass the navy,
+unless you are a suspect or worse: then every navy soldier within range may see through your colours. If one does, you
+are charged heavily and the navy hunts your ship for five minutes, whatever you fly. Striking your colours surrenders:
+navy and pirates stop attacking. Firing on a ship that struck its colours, or on one flying a merchant flag or banner,
+is a crime; if your crew fires, the charge goes to you as the ship's owner. Server config `law.flags`.
 - **Sneak-use with an empty hand:** takes the flag down.
 - Breaking the pole drops the flag.
 

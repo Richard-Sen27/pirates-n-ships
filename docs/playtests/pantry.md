@@ -49,3 +49,27 @@ Report: screenshots of the chat output for 2.2, 3.2 and the barrel top textures 
 
 
 Addendum (Q1): place a pantry facing north, east, south and west: the doors always face you; opening and breaking still work. Fill a water barrel with a bucket at sea and in a swamp: the water takes the colour of the water around it (blue, then murky green), animated, not grey; the barrel item in the inventory still shows light-blue water. A barrel on a ship uses the plot's biome colour (probably plains blue), like vanilla water on the ship; say if it looks wrong.
+
+## CR2: a voyage with and without supplies
+The provisions rules now run by themselves once per ship at dawn (see `crew-npc.md`, CR2): one day of food, water and
+rum for the crew aboard (plus prisoners on the ship at `prisoner_share`). Setup: an assembled ship you own, two crew
+from `/pirates crew spawn` on its deck, a pantry and a water barrel aboard, a chest with 20 doubloons (so a missing pay
+does not muddle the morale numbers), you on the deck. Force a dawn with `/time set 13000`, wait a second, then
+`/time set 23500`. One dawn is always one day of provisions, however far the clock jumped.
+
+1. **With supplies.** 10 hardtack in the pantry, a full water barrel. Force a dawn. Expected: the pantry holds 7
+   hardtack (two crew eat 12 nutrition a day), the barrel 14 rations; no hunger or thirst line; `/pirates crew info`:
+   "Supplies: food 2.3 days, water 7.0 days, rum 0.0 days" (or close), "Work speed 100%".
+2. **Rum.** Add 4 rum. Force a dawn. Expected: one rum gone, crew morale 4 higher than without rum.
+3. **Without supplies.** Empty pantry and barrel. Force a dawn. Expected: action bar "The crew has no food · The crew
+   has no water · Paid 2 crew, 4 doubloons"; crew morale 35 lower (plus 1 for the pay); `/pirates crew info` "Work
+   speed 38%"; whistle "Hoist sails": the hoist takes visibly longer (about 2.7 times) than with supplies. Restock: the
+   crew keeps working slowly until the next dawn, then at full speed again.
+4. **Scurvy.** Set `provisions.scurvy_onset_days = 1`, only hardtack and water aboard. Force two dawns. Expected: action
+   bar "… Scurvy aboard: the crew needs citrus or fresh food …", the crew have Weakness (particles); with
+   `provisions.scurvy_affects_players = true` you get Weakness too when you are aboard at dawn. Add limes or apples:
+   from the next dawn on no scurvy line.
+5. **Prisoners.** With a shackled prisoner on the ship, force a dawn: a little more food and water go than for the
+   crew alone.
+6. **Consumption off.** `provisions.consumption_enabled = false`: dawns take nothing from the pantry and barrel, no
+   food or water lines, work speed 100%.

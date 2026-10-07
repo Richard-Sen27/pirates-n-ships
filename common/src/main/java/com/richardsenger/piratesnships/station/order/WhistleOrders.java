@@ -4,6 +4,7 @@ import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
+import com.richardsenger.piratesnships.station.OrderHints;
 import com.richardsenger.piratesnships.station.StationConfig;
 import com.richardsenger.piratesnships.station.StationContent;
 import com.richardsenger.piratesnships.station.jobs.JobBoard;
@@ -99,6 +100,9 @@ public final class WhistleOrders {
                 player.displayClientMessage(Component.translatable(JobBoard.KEY_NO_FREE_HANDS, name), true);
             } else if (jobs > 0) {
                 player.displayClientMessage(Component.translatable(JobBoard.KEY_ORDER_POSTED, name, n, jobs), true);
+            } else if (n == 0 && CrewStations.crewOf(level, ship.id()).stream().noneMatch(c -> CrewStations.takes(level, c, crewOrder))) {
+                // Q5: nobody heard it and no job opened: say what is missing instead of "0 crew carry it out"
+                player.displayClientMessage(OrderHints.why(level, ship, crewOrder), true);
             } else {
                 player.displayClientMessage(Component.translatable(CaptainsWhistleItem.KEY_ORDER, name, n), true);
             }

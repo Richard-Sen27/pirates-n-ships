@@ -31,10 +31,14 @@ public final class TradeConfig {
             "Multiplier from cargo weight to the weight applied to the ship");
     public static final ConfigValue<Double> DEFAULT_ITEM_WEIGHT = S.doubleRange("default_item_weight", W.defaultItemWeight(), 0.0, 100.0,
             "Cargo weight of one item that is not a trade good");
+    public static final ConfigValue<Integer> WEIGH_INTERVAL_TICKS = S.intRange("weigh_interval_ticks", 40, 1, 1200,
+            "Ticks between two weighings of a ship's cargo (vanilla containers' downward force, load level)");
     private static final ConfigSection LOAD = S.section("load_levels", "Load level thresholds as weight / ship capacity");
     public static final ConfigValue<Double> LADEN_AT = LOAD.doubleRange("laden_at", W.ladenAt(), 0.0, 10.0, "Ratio from which a ship is laden");
     public static final ConfigValue<Double> HEAVY_AT = LOAD.doubleRange("heavily_laden_at", W.heavyAt(), 0.0, 10.0, "Ratio from which a ship is heavily laden");
     public static final ConfigValue<Double> OVERLOADED_AT = LOAD.doubleRange("overloaded_above", W.overloadedAt(), 0.0, 10.0, "Ratio above which a ship is overloaded");
+    public static final ConfigValue<Double> CAPACITY_PER_BLOCK = LOAD.doubleRange("capacity_per_block", CargoWeight.CAPACITY_PER_BLOCK, 0.01, 1000.0,
+            "A ship's cargo capacity in weight units per block of the ship (the load ratio is cargo weight / (blocks × this))");
 
     // --- Market -----------------------------------------------------------------------------------------------
     private static final ConfigSection MARKET = S.section("market", "Port markets and dynamic prices");

@@ -1,6 +1,9 @@
 package com.richardsenger.piratesnships.ship.decor.flag;
 
+import com.mojang.serialization.Codec;
 import com.richardsenger.piratesnships.law.flag.FlagKind;
+
+import java.util.Locale;
 
 /**
  * What a flagpole (or a whole ship) shows (docs/design.md §4.7). The three statuses are distinct on purpose: a pole
@@ -12,6 +15,15 @@ import com.richardsenger.piratesnships.law.flag.FlagKind;
 public record FlagReading(FlagKind kind, Status status) {
 
     public static final FlagReading NO_FLAG = new FlagReading(FlagKind.NONE, Status.NO_FLAG);
+
+    private static final String STRUCK_PREFIX = "struck:";
+
+    /**
+     * A reading as one string, for {@code ShipData.flag} (FL2): {@code ""} for no flag, the kind id while it flies
+     * ({@code "jolly_roger"}), {@code "struck:<kind>"} while it is struck. Strings it does not know read as
+     * {@link #NO_FLAG}, so the placeholder strings saved before FL2 load as "no flag".
+     */
+    public static final Codec<FlagReading> STRING_CODEC = Codec.STRING.xmap(FlagReading::fromId, FlagReading::id);
 
     public enum Status {
         /** No flag on the pole. */
@@ -49,5 +61,25 @@ public record FlagReading(FlagKind kind, Status status) {
 
     public boolean hasFlag() {
         return status != Status.NO_FLAG;
+    }
+
+    /** See {@link #STRING_CODEC}. */
+    public String id() {
+        return switch (status) {
+            case NO_FLAG -> "";
+            case FLYING -> kind.getSerializedName();
+            case STRUCK -> STRUCK_PREFIX + kind.getSerializedName();
+        };
+    }
+
+    /** See {@link #STRING_CODEC}; unknown strings give {@link #NO_FLAG}. */
+    public static FlagReading fromId(String id) {
+        String s = id.trim().toLowerCase(Locale.ROOT);
+        boolean struck = s.startsWith(STRUCK_PREFIX);
+        String kindId = struck ? s.substring(STRUCK_PREFIX.length()) : s;
+        for (FlagKind k : FlagKind.values()) {
+            if (k != FlagKind.NONE && k.getSerializedName().equals(kindId)) return struck ? struck(k) : flying(k);
+        }
+        return NO_FLAG;
     }
 }

@@ -47,7 +47,8 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * <p>
  * Animated with GeckoLib (M1): one controller {@code body} loops the {@link CrewPose} animation of the rig contract
  * ({@code art/README.md}, "Entities"). The controller runs on the client only; the server's part is the synced
- * {@link #isWorking()} flag. This class and {@code crew/npc/client/} are the only GeckoLib importers.
+ * {@link #isWorking()} flag. CR2 adds its low-morale day counter and whether it went unpaid at the last dawn (saved).
+ * This class and {@code crew/npc/client/} are the only GeckoLib importers.
  */
 public class CrewMember extends PathfinderMob implements GeoEntity {
 
@@ -56,6 +57,8 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     static final String TAG_MORALE = Constants.MOD_ID + ":morale";
     static final String TAG_REST = Constants.MOD_ID + ":rest";
     static final String TAG_NIGHT = Constants.MOD_ID + ":night";
+    static final String TAG_LOW_MORALE_DAYS = Constants.MOD_ID + ":low_morale_days";
+    static final String TAG_UNPAID = Constants.MOD_ID + ":unpaid";
 
     /** Ticks GeckoLib blends from one pose animation into the next. */
     private static final int POSE_TRANSITION_TICKS = 5;
@@ -84,6 +87,10 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     private @Nullable HammockRef rest;
     /** How it spends the current night, settled at dawn (HM1). Server only, saved. */
     private NightOutcome nightOutcome = NightOutcome.NONE;
+    /** Consecutive dawns with morale below {@code crew.desertion.desert_below} (CR2). Server only, saved. */
+    private int lowMoraleDays;
+    /** It was not paid at the last dawn (CR2). Server only, saved. */
+    private boolean unpaid;
 
     public CrewMember(EntityType<? extends CrewMember> type, Level level) {
         super(type, level);
@@ -207,6 +214,24 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         this.nightOutcome = nightOutcome;
     }
 
+    /** Consecutive dawns with low morale (CR2, {@code crew.upkeep.ShipDayTick}); 0 when its morale is fine. */
+    public int lowMoraleDays() {
+        return lowMoraleDays;
+    }
+
+    public void setLowMoraleDays(int days) {
+        this.lowMoraleDays = Math.max(0, days);
+    }
+
+    /** Whether it went unpaid at the last dawn (CR2). */
+    public boolean isUnpaid() {
+        return unpaid;
+    }
+
+    public void setUnpaid(boolean unpaid) {
+        this.unpaid = unpaid;
+    }
+
     /** True when this crew member rides the seat of its assigned station. */
     public boolean isAtStation() {
         return assignment != null && getVehicle() instanceof StationSeat seat && seat.station().equals(assignment.pos());
@@ -275,6 +300,12 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         if (nightOutcome != NightOutcome.NONE) {
             tag.putString(TAG_NIGHT, nightOutcome.id());
         }
+        if (lowMoraleDays > 0) {
+            tag.putInt(TAG_LOW_MORALE_DAYS, lowMoraleDays);
+        }
+        if (unpaid) {
+            tag.putBoolean(TAG_UNPAID, true);
+        }
     }
 
     @Override
@@ -288,5 +319,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         morale = tag.contains(TAG_MORALE) ? MoraleRules.clamp(tag.getInt(TAG_MORALE)) : MoraleRules.UNSET;
         setRest(tag.contains(TAG_REST) ? HammockRef.CODEC.parse(NbtOps.INSTANCE, tag.get(TAG_REST)).result().orElse(null) : null);
         nightOutcome = tag.contains(TAG_NIGHT) ? NightOutcome.byId(tag.getString(TAG_NIGHT)) : NightOutcome.NONE;
+        lowMoraleDays = Math.max(0, tag.getInt(TAG_LOW_MORALE_DAYS));
+        unpaid = tag.getBoolean(TAG_UNPAID);
     }
 }

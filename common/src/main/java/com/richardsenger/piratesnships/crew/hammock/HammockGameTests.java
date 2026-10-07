@@ -196,6 +196,15 @@ public final class HammockGameTests {
         h.runAfterDelay(NIGHT_AT, () -> h.getLevel().setDayTime(today + MIDNIGHT));
     }
 
+    /**
+     * CR2: the ship day tick runs at the same dawn; without provisions and wages only the hammock rule moves morale.
+     * These tests run in batches of their own, so they may change the config.
+     */
+    private static void upkeepOff(GameTestHelper h) {
+        ConfigOverrides.during(h, CrewConfig.WAGES_ENABLED, false);
+        ConfigOverrides.during(h, com.richardsenger.piratesnships.crew.provisions.ProvisionsConfig.CONSUMPTION_ENABLED, false);
+    }
+
     private static void cleanup(CrewMember... crew) {
         for (CrewMember c : crew) {
             if (c.getVehicle() != null) c.getVehicle().discard();
@@ -327,6 +336,7 @@ public final class HammockGameTests {
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = NIGHT_BATCH + "rule")
     public static void hammockRuleAtNightAndDawn(GameTestHelper h) {
+        upkeepOff(h);
         Fixture f = ship(h, x -> { });
         ServerLevel level = h.getLevel();
         CrewMember sleeper = onDeck(h, f, 20, 20);
@@ -366,6 +376,7 @@ public final class HammockGameTests {
     /** At night an order gets the sleeper up at once: the job board seats it at the winch, the hammock seat goes. */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = NIGHT_BATCH + "order")
     public static void anOrderAtNightGetsTheSleeperUp(GameTestHelper h) {
+        upkeepOff(h);
         Fixture f = ship(h, x -> { });
         ServerLevel level = h.getLevel();
         CrewMember sleeper = onDeck(h, f, 20, 20);

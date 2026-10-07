@@ -9,10 +9,15 @@ import com.richardsenger.piratesnships.crew.hammock.CrewInfo;
 import com.richardsenger.piratesnships.crew.hammock.ShipBunks;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
+import com.richardsenger.piratesnships.sailing.ship.SailingRuntime;
+import com.richardsenger.piratesnships.sailing.ship.SailingRuntimes;
+import com.richardsenger.piratesnships.ship.ShipData;
+import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.station.jobs.JobBoard;
 import com.richardsenger.piratesnships.station.winch.CaptainsWhistleItem;
+import com.richardsenger.piratesnships.station.winch.RiggingReport;
 import com.richardsenger.piratesnships.station.order.CrewOrder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,8 +40,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Operator commands for crew stations (permission 2), for tests and playtests:
  * {@code /pirates crew spawn}, {@code assign <crew> <station pos>}, {@code release <crew>},
- * {@code order <hoist|reef|furl|pump> [crew]}, {@code info [crew]} (morale, crew and bunks, HM1). A station position may be the block's world position (as seen in game,
- * F3) or its plot position.
+ * {@code order <hoist|reef|furl|pump> [crew]}, {@code info [crew]} (morale, crew and bunks, HM1), and
+ * {@code /pirates ship rigging} (Q5: the ship's sails, why yards carry none, and its crew). A station position may be
+ * the block's world position (as seen in game, F3) or its plot position.
  */
 public final class StationCommands {
 
@@ -59,6 +65,8 @@ public final class StationCommands {
                         .suggests((c, b) -> SharedSuggestionProvider.suggest(CrewOrder.ids(), b))
                         .executes(c -> order(c, null))
                         .then(Commands.argument("crew", EntityArgument.entities()).executes(c -> order(c, EntityArgument.getEntities(c, "crew"))))))));
+        dispatcher.register(Commands.literal("pirates").then(Commands.literal("ship").requires(s -> s.hasPermission(2))
+                .then(Commands.literal("rigging").executes(StationCommands::rigging))));
     }
 
     private static int spawn(CommandContext<CommandSourceStack> c) {
@@ -138,7 +146,35 @@ public final class StationCommands {
         if (posted.noFreeHands()) {
             c.getSource().sendSuccess(() -> Component.translatable(JobBoard.KEY_NO_FREE_HANDS, Component.translatable(order.nameKey())), true);
         }
+        if (targets == null && crew.isEmpty() && posted.jobs() == 0) {
+            // Q5: "0 of 0" alone does not tell the captain what is missing
+            Component why = OrderHints.why(level, ship, order);
+            c.getSource().sendSuccess(() -> why, false);
+        }
         return n;
+    }
+
+    /**
+     * {@code /pirates ship rigging} (Q5): the rigging of the ship the source stands on as the rules see it now, what the
+     * ship's sailing state held before this command re-read it, and the crew the ship's orders reach.
+     */
+    private static int rigging(CommandContext<CommandSourceStack> c) {
+        ServerLevel level = c.getSource().getLevel();
+        ShipBody ship = shipAt(c.getSource());
+        if (ship == null) {
+            c.getSource().sendFailure(Component.translatable(OrderHints.KEY_NO_SHIP));
+            return 0;
+        }
+        SailingRuntime before = SailingRuntimes.get(level, ship.id());
+        int sailsBefore = before == null ? -1 : before.sailCount();
+        SailingRuntime after = SailingRuntimes.refreshSails(ship);
+        RiggingReport report = RiggingReport.of(level, ship);
+        String name = ShipRegistry.get(level.getServer()).find(ship.id()).map(ShipData::name).orElse("");
+        Component shipName = Component.literal(name.isEmpty() ? ship.id().toString() : name);
+        for (Component line : report.lines(level, shipName, sailsBefore, after)) {
+            c.getSource().sendSuccess(() -> line, false);
+        }
+        return report.sails();
     }
 
     /**
@@ -156,6 +192,9 @@ public final class StationCommands {
             }
             ShipBunks.Count n = ShipBunks.count(level, ship);
             c.getSource().sendSuccess(() -> Component.translatable(CrewInfo.KEY_COMMAND_SHIP, CrewInfo.shipLine(level, ship), n.hammocks()), false);
+            for (Component line : com.richardsenger.piratesnships.crew.upkeep.UpkeepInfo.lines(level, ship)) {
+                c.getSource().sendSuccess(() -> line, false); // CR2: supplies, last pay, work speed
+            }
             crew.addAll(ShipBunks.crewOf(level, ship));
         } else {
             for (Entity e : targets) if (e instanceof CrewMember m) crew.add(m);

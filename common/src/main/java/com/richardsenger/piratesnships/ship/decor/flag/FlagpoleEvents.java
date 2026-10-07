@@ -10,7 +10,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Server-side notification when what a flagpole shows changes: hoisted, struck, raised, taken down, broken, or set by
- * command. Later systems (ship allegiance, NPC AI that stops firing at a ship that struck its colors, crimes for
+ * command. The ship's allegiance ({@link ShipAllegiance}) is refreshed before any listener runs. Later systems (NPC AI that stops firing at a ship that struck its colors, crimes for
  * attacking it) register a listener in their {@code registerEvents()}. Listeners run on the server thread.
  */
 public final class FlagpoleEvents {
@@ -43,6 +43,8 @@ public final class FlagpoleEvents {
     }
 
     static void fire(FlagChange change) {
+        // FL2: the ship's allegiance first, so listeners already see what the ship shows now
+        ShipAllegiance.onChange(change);
         for (Listener l : LISTENERS) l.onChange(change);
     }
 }

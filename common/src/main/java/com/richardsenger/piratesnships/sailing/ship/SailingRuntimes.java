@@ -147,6 +147,52 @@ public final class SailingRuntimes {
         return rt;
     }
 
+    /**
+     * Brings the sails of {@code ship}'s runtime up to date with its plot (Q5): reads every yard and cleat position
+     * again, adds or drops those the runtime missed, and relinks both kinds of sails. The runtime is otherwise kept
+     * current by block changes only, so a change it never heard of would leave it without sails that the cloth (which
+     * re-checks the blocks by itself) still shows. Creates the runtime when there is none. Logs a warning when the
+     * runtime was stale. Returns the runtime, or null when the ship is not one of ours.
+     */
+    public static @Nullable SailingRuntime refreshSails(ShipBody ship) {
+        SailingRuntime rt = get(ship.level(), ship.id());
+        if (rt == null) {
+            return getOrCreate(ship); // a fresh scan
+        }
+        ServerLevel level = ship.level();
+        java.util.Set<BlockPos> yards = new java.util.HashSet<>();
+        java.util.Set<BlockPos> cleats = new java.util.HashSet<>();
+        for (BlockPos p : ship.plotBlocks()) {
+            BlockState s = level.getBlockState(p);
+            if (s.getBlock() instanceof YardBlock) {
+                yards.add(p);
+            } else if (s.getBlock() instanceof CleatBlock) {
+                cleats.add(p);
+            }
+        }
+        int missed = 0;
+        for (BlockPos p : rt.yardBlocks()) {
+            if (!yards.contains(p) && rt.removeYardBlock(p)) missed++;
+        }
+        for (BlockPos p : yards) {
+            if (rt.addYardBlock(p)) missed++;
+        }
+        for (BlockPos p : rt.cleatBlocks()) {
+            if (!cleats.contains(p) && rt.removeCleat(p)) missed++;
+        }
+        for (BlockPos p : cleats) {
+            if (rt.addCleat(p)) missed++;
+        }
+        List<BlockPos> before = rt.sailPositions();
+        relink(level, rt);
+        List<BlockPos> after = rt.sailPositions();
+        if (missed > 0 || !before.equals(after)) {
+            Constants.LOG.warn("Sailing state of ship {} was stale: {} yard or cleat positions missed, sails {} -> {}",
+                    ship.id(), missed, before, after);
+        }
+        return rt;
+    }
+
     public static void onShipRemoved(ServerLevel level, UUID ship, boolean destroyed) {
         Map<UUID, SailingRuntime> m = SERVER.get(level);
         if (m != null) {
@@ -396,6 +442,10 @@ public final class SailingRuntimes {
             return null;
         }
         List<BlockPos> sails = rt.sailPositions();
+        if (sails.isEmpty()) {
+            rt = refreshSails(ship); // Q5: read the rigging again before answering "no sails"
+            sails = rt == null ? List.of() : rt.sailPositions();
+        }
         SailTrim highest = SailTrim.FURLED;
         for (BlockPos p : sails) {
             SailTrim t = rt.trimAt(p);

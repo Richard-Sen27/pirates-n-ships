@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.mob.entity;
 
 import com.richardsenger.piratesnships.combat.melee.MeleeService;
+import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.crew.npc.CrewPose;
 import com.richardsenger.piratesnships.law.LawAttachments;
 import com.richardsenger.piratesnships.law.LawService;
@@ -139,19 +140,24 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity {
 
     // --- hostility ----------------------------------------------------------------------------------------------
 
-    /** What the hostility rules need to know about {@code e}, from this mob's point of view. */
+    /**
+     * What the hostility rules need to know about {@code e}, from this mob's point of view. Players and crew members
+     * aboard a ship also carry what its flag tells NPCs ({@link LawService#shipStance}, FL2).
+     */
     public HostilityRules.Target describe(LivingEntity e) {
         boolean navy = faction() == MobFaction.NAVY;
         if (e instanceof SeafarerMob m) return HostilityRules.Target.ofMob(m.faction());
         if (e instanceof Player p) {
             boolean exempt = p.isCreative() || p.isSpectator();
-            return HostilityRules.Target.ofPlayer(exempt, navy && !exempt && LawService.navyShouldAttack(this, p));
+            if (exempt) return HostilityRules.Target.ofPlayer(true, false);
+            return HostilityRules.Target.ofPlayer(false, navy && LawService.navyShouldAttack(this, p), LawService.shipStance(p));
         }
         MobFaction faction = LawService.isNavy(e) ? MobFaction.NAVY : null;
         // only entities that already have a criminal record can be wanted (don't attach records to every animal)
         boolean wanted = navy && faction == null && Services.ATTACHMENTS.has(e, LawAttachments.CRIMINAL_RECORD)
                 && LawService.navyShouldAttack(this, e);
-        return new HostilityRules.Target(faction, false, false, wanted, e instanceof Enemy);
+        HostilityRules.Target t = new HostilityRules.Target(faction, false, false, wanted, e instanceof Enemy);
+        return e instanceof CrewMember ? t.withShip(LawService.shipStance(e)) : t;
     }
 
     /** Whether this mob attacks {@code e} on sight. */

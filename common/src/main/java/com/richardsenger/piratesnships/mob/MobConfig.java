@@ -41,6 +41,14 @@ public final class MobConfig {
             "Least ticks a duelist waits between two attacks (a random extra of up to the same again is added)");
     public static final ConfigValue<Double> DUELIST_GUARD_STAMINA = S.doubleRange("duelist_guard_stamina", 25.0, 0.0, 10000.0,
             "Duelists only raise their guard with at least this much stamina");
+    public static final ConfigValue<Double> DUELIST_CHASE_SPEED = S.doubleRange("duelist_chase_speed", 1.15, 0.5, 3.0,
+            "Speed multiplier of a sword-fighting mob closing in on its target. At 1.0 a pirate is a little slower than a "
+                    + "walking player; 1.15 is a little faster than walking and slower than sprinting");
+    public static final ConfigValue<Double> DUELIST_APPROACH_MARGIN = S.doubleRange("duelist_approach_margin", 1.0, 0.0, 4.0,
+            "A duelist walks in until its target is this many blocks inside its weapon's reach, then stands its ground");
+    public static final ConfigValue<Double> DUELIST_REACH_MARGIN = S.doubleRange("duelist_reach_margin", 0.3, 0.0, 2.0,
+            "A duelist starts an attack only when its target is expected to be this many blocks inside its reach at the "
+                    + "first hit frame (it accounts for the target and itself moving during the wind-up)");
 
     // --- musketeers ---------------------------------------------------------------------------------------------
     public static final ConfigValue<Integer> MUSKET_RELOAD_TICKS = S.intRange("musket_reload_ticks", 100, 1, 1200,

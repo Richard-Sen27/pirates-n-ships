@@ -13,8 +13,9 @@ import software.bernie.geckolib.model.data.EntityModelData;
 
 /**
  * GeckoLib model of any mob on the humanoid rig ({@code art/README.md}, "Entities"): geometry, texture and animations
- * by id, so a variant (pirate, sailor, navy) is the same class with another texture. The head bone follows the look
- * direction after the animations ran, so animations never key the head's x and y rotation.
+ * by id, so a variant (pirate, sailor, navy) is the same class with its own geometry and texture. Every variant's
+ * geometry keeps the rig's bones, so the shared animations drive it. The head bone follows the look direction after
+ * the animations ran, so animations never key the head's x and y rotation.
  */
 public class HumanoidGeoModel<T extends LivingEntity & GeoAnimatable> extends GeoModel<T> {
 
@@ -40,14 +41,28 @@ public class HumanoidGeoModel<T extends LivingEntity & GeoAnimatable> extends Ge
         this.animations = animations;
     }
 
-    /** A variant on the shared rig and animations with its own texture. */
+    /**
+     * A variant with the shared animations: its texture {@code textures/entity/<name>.png} and its own geometry
+     * {@code geo/<name>.geo.json} on the rig (M3-art: the pirate, sailor, navy soldier and officer models).
+     */
     public HumanoidGeoModel(ResourceLocation texture) {
-        this(RIG_GEO, texture, RIG_ANIMATIONS);
+        this(geoFor(texture), texture, RIG_ANIMATIONS);
     }
 
     /** {@code textures/entity/<name>.png} of this mod. */
     public static ResourceLocation entityTexture(String name) {
         return Constants.id("textures/entity/" + name + ".png");
+    }
+
+    /** The geometry that goes with an entity texture: {@code textures/entity/<name>.png} → {@code geo/<name>.geo.json}. */
+    public static ResourceLocation geoFor(ResourceLocation texture) {
+        String path = texture.getPath();
+        String prefix = "textures/entity/", suffix = ".png";
+        if (!path.startsWith(prefix) || !path.endsWith(suffix)) {
+            throw new IllegalArgumentException("not an entity texture: " + texture);
+        }
+        return ResourceLocation.fromNamespaceAndPath(texture.getNamespace(),
+                "geo/" + path.substring(prefix.length(), path.length() - suffix.length()) + ".geo.json");
     }
 
     @Override

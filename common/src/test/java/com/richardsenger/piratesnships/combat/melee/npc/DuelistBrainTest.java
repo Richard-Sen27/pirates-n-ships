@@ -138,4 +138,18 @@ class DuelistBrainTest {
         CombatState lockedOut = CombatRules.failParry(parrying, DefaultWeapons.CUTLASS, P);
         assertEquals(Action.SLASH, DuelistBrain.decide(feintView(IDLE, lockedOut, false), SKILLED, 0.9, 0.9));
     }
+
+    /** The debug trace's reasons: fixed texts naming the rule, the same action as {@link DuelistBrain#decide}. */
+    @Test
+    void explainNamesTheRule() {
+        assertEquals(new DuelistBrain.Decision(Action.NONE, "out of reach"),
+                DuelistBrain.explain(view(IDLE, IDLE, false, -1, 0), SKILLED, 0.9, 0.9));
+        assertEquals(new DuelistBrain.Decision(Action.NONE, "attack pause"),
+                DuelistBrain.explain(view(IDLE, IDLE, true, -1, 5), SKILLED, 0.9, 0.9));
+        assertEquals(new DuelistBrain.Decision(Action.SLASH, "attack"),
+                DuelistBrain.explain(view(IDLE, IDLE, true, -1, 0), SKILLED, 0.9, 0.9));
+        CombatState incoming = windup(AttackKind.SLASH, 0);
+        assertEquals(new DuelistBrain.Decision(Action.NONE, "incoming: not seen yet"),
+                DuelistBrain.explain(view(IDLE, incoming, true, 0, 0), SKILLED, 0.9, 0.9));
+    }
 }

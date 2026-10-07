@@ -37,3 +37,33 @@ Please send `latest.log` if anything differs.
 
 
 Addendum (Q1, feints): spawn a pirate (set `melee.npc_skill_multiplier` to 5 so it always feints), hold a sword and parry as soon as it raises its arm: it sometimes stops the swing (no hit, a brief recovery), your parry runs out into the lockout, and its next swing hits you. With `melee.npc_feints = false` it never does this. Say how the aborted swing looks on the mob (the arm pose treats the feint recovery like a normal recovery).
+
+
+## M5: approach and hits
+Survival, difficulty Easy or higher. Run `/pirates mob debug on` first: its reply shows the difficulty (on peaceful
+pirates ignore players; say if that was your setup during the third playtest).
+1. **Standing still** 5 blocks away: the pirate walks up and hits within about a second, then every 1–2 s.
+2. **Walking away** at normal speed: it catches up within several seconds and hits; sprinting gets away.
+3. **Strafing** around it at 3 blocks: it closes in and hits within a few seconds, without stuttering.
+4. **Kiting** (step back whenever it gets close): it still lands hits within about 10 s.
+5. **Hitting it:** after the knockback it resumes the chase at once.
+6. **On a deck:** it chases and hits on the deck and does not run off the edge after you.
+7. **Parry and feints** still work (`melee.npc_skill_multiplier` 5 for feints).
+8. If anything is still off, keep debug on during the fight, send `latest.log` (search `[mob debug]`), then
+   `/pirates mob debug off`.
+
+
+## M3-art: the looks
+1. **Front and back, each type.** Pirate: bandana with knot and tails, eyepatch on his right eye, earring, open dark
+   coat with lapels and gold buttons, sash ends on his left hip, coat tails, boot cuffs. Sailor: blue-grey knitted
+   cap, red and white stripes, black neckerchief, rope belt, rolled hems, buckled shoes. Soldier: tricorn pointing
+   forward, white cross belts with a brass plate front and back, red collar and cuffs, cartridge box at the back,
+   red-lined tails, black gaiters. Officer: bicorne side to side with a gold edge and loop, epaulettes, crimson sash
+   with gold tassels, gold-edged tails, tall boots. No missing textures, no z-fighting.
+2. **Walking:** limbs animate like the crew member; the legs passing through the back coat tails at full stride is
+   known, say if it looks bad.
+3. **Work and sit poses** (a station, or riding a boat): coat skirts and sash ends stay attached.
+4. **Weapons:** cutlass, saber and the musket's aim pose sit in the hand under the cuffs; the officer's epaulettes
+   follow the arm.
+5. **Head turning:** the bandana knot, cap, tricorn, bicorne and queue turn with the head; from above nothing pokes
+   through the bicorne flaps; the nameplate should clear the hats.

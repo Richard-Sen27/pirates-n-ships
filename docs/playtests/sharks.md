@@ -26,3 +26,6 @@ model until its Blockbench pass. Please send `latest.log` if anything differs.
    makes loaded sharks vanish.
 9. **Stranding.** A shark spawned on a beach flops toward the water; one far from water takes damage after about
    15 s.
+
+
+Addendum (Q4): an idle shark in deep ocean cruises below the surface for a minute without bobbing or breaching; when it hunts a surface swimmer it bites from just under the surface (the back may show, it never jumps out); stranding still flops it into the water.

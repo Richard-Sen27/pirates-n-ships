@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.mob.ai.DuelistDebug;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -26,6 +27,8 @@ import java.util.stream.Stream;
  * around the source position, up to {@link #MAX_COUNT} at once. Disabled types ({@code mobs.<type>.enabled}) are
  * refused. The humanoids' natural spawning waits for the world structures (docs/design.md §10.1); sharks also spawn
  * naturally in oceans.
+ *
+ * <p>{@code /pirates mob debug <on|off>} (permission 2) traces the fighting mobs near the source ({@link #debug}).
  */
 public final class MobCommands {
 
@@ -48,7 +51,30 @@ public final class MobCommands {
                                 Stream.concat(Arrays.stream(MobKind.values()).map(MobKind::id), Stream.of(SHARK)), b))
                         .executes(c -> spawn(c, 1))
                         .then(Commands.argument("count", IntegerArgumentType.integer(1, MAX_COUNT))
-                                .executes(c -> spawn(c, IntegerArgumentType.getInteger(c, "count"))))))));
+                                .executes(c -> spawn(c, IntegerArgumentType.getInteger(c, "count"))))))
+                .then(Commands.literal("debug")
+                        .then(Commands.literal("on").executes(c -> debug(c.getSource(), true)))
+                        .then(Commands.literal("off").executes(c -> debug(c.getSource(), false))))));
+    }
+
+    /**
+     * {@code /pirates mob debug <on|off>}: traces the state changes of fighting mobs within {@link DuelistDebug#RANGE}
+     * blocks of the source (the duelist goal, the target goal, the brain's decision) to the server log, and to the
+     * player's chat at a throttled rate. A debug aid for playtests, so the lines are plain English (not translated).
+     */
+    private static int debug(CommandSourceStack source, boolean on) {
+        Object key = source.getPlayer() != null ? source.getPlayer().getUUID() : "source:" + source.getTextName();
+        if (on) {
+            if (source.getPlayer() != null) DuelistDebug.listen(source.getPlayer());
+            else DuelistDebug.listen(key, source.getLevel().dimension(), source.getPosition());
+            source.sendSuccess(() -> Component.literal("Mob debug on: state changes of mobs within " + (int) DuelistDebug.RANGE
+                    + " blocks go to the server log (and to your chat, at most " + DuelistDebug.CHAT_LINES_PER_SECOND
+                    + " lines a second). Difficulty: " + source.getLevel().getDifficulty().getKey()), false);
+        } else {
+            boolean was = DuelistDebug.unlisten(key);
+            source.sendSuccess(() -> Component.literal(was ? "Mob debug off" : "Mob debug was not on"), false);
+        }
+        return 1;
     }
 
     private static int spawn(CommandContext<CommandSourceStack> c, int count) {

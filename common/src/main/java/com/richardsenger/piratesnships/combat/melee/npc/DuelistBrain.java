@@ -70,35 +70,51 @@ public final class DuelistBrain {
      * @param thrustRoll 0..1, drawn once per own attack opportunity
      */
     public static Action decide(View v, SkillTier tier, double parryRoll, double thrustRoll) {
+        return explain(v, tier, parryRoll, thrustRoll).action();
+    }
+
+    /** A decision with the rule that made it: a short fixed text for the {@code /pirates mob debug} trace. */
+    public record Decision(Action action, String reason) {
+    }
+
+    /** {@link #decide} with the rule that made the decision. */
+    public static Decision explain(View v, SkillTier tier, double parryRoll, double thrustRoll) {
         CombatState self = v.self();
         Phase phase = self.phase();
         if (phase == Phase.WINDUP && v.feintPlanned()) {
             Phase opp = v.opponent().phase();
-            if (opp == Phase.PARRYING) return Action.FEINT;
-            if (opp == Phase.GUARDING && self.elapsed() >= FEINT_TICK_AGAINST_GUARD) return Action.FEINT;
-            return Action.NONE;
+            if (opp == Phase.PARRYING) return new Decision(Action.FEINT, "feint: opponent parries");
+            if (opp == Phase.GUARDING && self.elapsed() >= FEINT_TICK_AGAINST_GUARD) {
+                return new Decision(Action.FEINT, "feint: opponent guards");
+            }
+            return new Decision(Action.NONE, "feint wind-up");
         }
-        if (phase == Phase.STAGGERED || phase == Phase.PARRYING || phase.attacking()) return Action.NONE;
+        if (phase == Phase.STAGGERED) return new Decision(Action.NONE, "staggered");
+        if (phase == Phase.PARRYING) return new Decision(Action.NONE, "parrying");
+        if (phase.attacking()) return new Decision(Action.NONE, "attacking");
 
         CombatState opp = v.opponent();
         boolean incoming = (opp.phase() == Phase.WINDUP || opp.phase() == Phase.ACTIVE) && v.threatened();
         if (incoming) {
-            if (v.ticksSinceTelegraph() < tier.reactionTicks()) return Action.NONE;
+            if (v.ticksSinceTelegraph() < tier.reactionTicks()) return new Decision(Action.NONE, "incoming: not seen yet");
             boolean canParry = !self.lockedOut() && !self.exhausted() && !opp.riposteAttack();
             if (canParry && parryRoll < tier.parryChance()) {
-                if (hitDueInWindow(opp, v.parryWindowTicks())) return Action.PARRY;
-                return phase == Phase.GUARDING || self.stamina() < v.guardStamina() ? Action.NONE : Action.GUARD;
+                if (hitDueInWindow(opp, v.parryWindowTicks())) return new Decision(Action.PARRY, "incoming: parry");
+                return phase == Phase.GUARDING || self.stamina() < v.guardStamina()
+                        ? new Decision(Action.NONE, "incoming: waiting to parry")
+                        : new Decision(Action.GUARD, "incoming: guard until the parry");
             }
-            if (phase != Phase.GUARDING && self.stamina() >= v.guardStamina()) return Action.GUARD;
-            return Action.NONE;
+            if (phase != Phase.GUARDING && self.stamina() >= v.guardStamina()) return new Decision(Action.GUARD, "incoming: guard");
+            return new Decision(Action.NONE, phase == Phase.GUARDING ? "incoming: guarding" : "incoming: no stamina to guard");
         }
 
-        if (phase == Phase.GUARDING) return Action.RELEASE_GUARD;
-        if (!v.inReach()) return Action.NONE;
-        if (self.riposteReady()) return Action.SLASH;
-        if (v.attackCooldown() > 0 || opp.phase() == Phase.PARRYING) return Action.NONE;
-        if (opp.phase() == Phase.RECOVERY || opp.phase() == Phase.STAGGERED) return Action.THRUST;
-        return thrustRoll < THRUST_SHARE ? Action.THRUST : Action.SLASH;
+        if (phase == Phase.GUARDING) return new Decision(Action.RELEASE_GUARD, "nothing coming: lower guard");
+        if (!v.inReach()) return new Decision(Action.NONE, "out of reach");
+        if (self.riposteReady()) return new Decision(Action.SLASH, "riposte");
+        if (v.attackCooldown() > 0) return new Decision(Action.NONE, "attack pause");
+        if (opp.phase() == Phase.PARRYING) return new Decision(Action.NONE, "opponent parry open");
+        if (opp.phase() == Phase.RECOVERY || opp.phase() == Phase.STAGGERED) return new Decision(Action.THRUST, "thrust into an opening");
+        return new Decision(thrustRoll < THRUST_SHARE ? Action.THRUST : Action.SLASH, "attack");
     }
 
     /**

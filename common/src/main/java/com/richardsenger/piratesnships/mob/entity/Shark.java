@@ -94,7 +94,10 @@ public class Shark extends WaterAnimal implements GeoEntity {
 
     public Shark(EntityType<? extends Shark> type, Level level) {
         super(type, level);
-        this.moveControl = new SmoothSwimmingMoveControl(this, 85, 10, 0.02f, 0.1f, true);
+        // No buoyancy (last argument false): with it the move control adds 0.005 up every tick in water. Dolphin cancels
+        // that in its travel() while it has no target; without the cancel an idle shark drifted to the surface and
+        // bobbed out of the water (Q4). A shark is neutrally buoyant.
+        this.moveControl = new SmoothSwimmingMoveControl(this, 85, 10, 0.02f, 0.1f, false);
         this.lookControl = new SmoothSwimmingLookControl(this, 10);
     }
 
@@ -228,15 +231,48 @@ public class Shark extends WaterAnimal implements GeoEntity {
 
     // --- water and land -----------------------------------------------------------------------------------------
 
+    /**
+     * Blocks the hitbox's bottom stays below the water's fluid surface when the shark swims up on its own (cruise
+     * path nodes in the top water layer, a lunge at a swimmer). Its body then stays in the water and the fin shows.
+     */
+    public static final double SURFACE_MARGIN = 0.25;
+    /** Water blocks searched upwards for the surface. */
+    private static final int SURFACE_SEARCH = 16;
+
     @Override
     public void travel(Vec3 travelVector) {
         if (isEffectiveAi() && isInWater()) {
             moveRelative(getSpeed(), travelVector);
+            Vec3 v = getDeltaMovement();
+            if (v.y > 0) {
+                double surface = waterSurfaceAbove();
+                if (!Double.isNaN(surface)) {
+                    double room = Math.max(0, surface - SURFACE_MARGIN - getBoundingBox().minY);
+                    if (v.y > room) setDeltaMovement(v.x, room, v.z);
+                }
+            }
             move(MoverType.SELF, getDeltaMovement());
             setDeltaMovement(getDeltaMovement().scale(0.9));
         } else {
             super.travel(travelVector);
         }
+    }
+
+    /**
+     * The fluid surface height (absolute y) of the water column the hitbox's bottom is in, or NaN when the bottom is
+     * not in water or the column is deeper than {@link #SURFACE_SEARCH}. A source block under air ends at 8/9, not at
+     * the block top.
+     */
+    public double waterSurfaceAbove() {
+        BlockPos p = BlockPos.containing(getX(), getBoundingBox().minY, getZ());
+        if (!level().getFluidState(p).is(FluidTags.WATER)) return Double.NaN;
+        for (int i = 0; i < SURFACE_SEARCH; i++) {
+            if (!level().getFluidState(p.above()).is(FluidTags.WATER)) {
+                return p.getY() + level().getFluidState(p).getHeight(level(), p);
+            }
+            p = p.above();
+        }
+        return Double.NaN;
     }
 
     @Override

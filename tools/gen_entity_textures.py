@@ -2,13 +2,12 @@
 """Placeholder entity skins on the humanoid rig of work package M1 (rig contract: art/README.md, "Entities").
 
 Run (from the repository root, with the venv of tools/gen_placeholder_textures.py):
-    tools/.venv/bin/python tools/gen_entity_textures.py
-
     tools/.venv/bin/python tools/gen_entity_textures.py pirate sailor navy_soldier navy_officer   # only these
 
-Output: common/src/main/resources/assets/pirates_n_ships/textures/entity/<name>.png, 64x64: the M3 mob variants pirate,
-sailor, navy_soldier and navy_officer (placeholders until the Blockbench textures, M3-art). The M1 placeholder
-crew_member is only written when named explicitly (M2's Blockbench skin owns that file now).
+Output: common/src/main/resources/assets/pirates_n_ships/textures/entity/<name>.png, 64x64. Every texture here is now
+a placeholder kept for regeneration on demand: M2's Blockbench skin owns crew_member.png, and M3-art's Blockbench skins
+(art/models/entity/seafarer_skins.js) own pirate, sailor, navy_soldier and navy_officer, so a run without names writes
+nothing.
 The layout is the vanilla player skin layout (Steve, wide arms): every cube of the rig uses Minecraft box UV at the
 same offset as the player model, so a variant mob (pirate, sailor, navy soldier, officer) is a new texture painted on
 this sheet, and any 64x64 player skin works as a test texture. The second skin layer (hat, jacket, sleeves, trousers)
@@ -362,9 +361,9 @@ def navy_officer():
 TEXTURES = {"crew_member": sailor, "pirate": pirate, "sailor": deckhand,
             "navy_soldier": navy_soldier, "navy_officer": navy_officer}
 
-# Written only when named on the command line: the crew member's skin is now the Blockbench texture of M2, and this
-# placeholder must not overwrite it.
-NOT_BY_DEFAULT = {"crew_member"}
+# Written only when named on the command line: the crew member's skin is the Blockbench texture of M2 and the four
+# mob skins are the Blockbench textures of M3-art; these placeholders must not overwrite them.
+NOT_BY_DEFAULT = {"crew_member", "pirate", "sailor", "navy_soldier", "navy_officer"}
 
 
 def main():

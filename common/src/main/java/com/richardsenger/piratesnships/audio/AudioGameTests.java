@@ -96,7 +96,7 @@ public final class AudioGameTests {
     }
 
     /** A ship kicked into rolling every two seconds creaks, and never more often than the minimum interval allows. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = "pirates_n_ships_config_audio_creak")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = "pirates_n_ships_config_audio_creak_rolling")
     public static void rollingShipCreaks(GameTestHelper h) {
         pinCreaks(h);
         SailingGameTestsShips.basin(h, true);
@@ -121,7 +121,7 @@ public final class AudioGameTests {
     }
 
     /** A ship lying still in calm water never creaks. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = "pirates_n_ships_config_audio_creak")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = "pirates_n_ships_config_audio_creak_still")
     public static void stillShipIsSilent(GameTestHelper h) {
         pinCreaks(h);
         SailingGameTestsShips.basin(h, true);

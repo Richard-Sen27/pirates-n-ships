@@ -57,4 +57,27 @@ public final class NameplateText {
     public static String shown(boolean enabled, boolean onShip, String shipName) {
         return enabled && onShip ? clean(shipName) : "";
     }
+
+    /** Lang key of the line on a wreck piece's plate (RS1): "Wreck of %s" with the name the ship had. */
+    public static final String KEY_WRECK_OF = "nameplate." + com.richardsenger.piratesnships.Constants.MOD_ID + ".wreck_of";
+
+    /**
+     * What a plate stores: {@code name} and whether it is drawn as {@link #KEY_WRECK_OF} with that name.
+     * {@link #NONE} for a blank plate.
+     */
+    public record Shown(String name, boolean wreckOf) {
+        public static final Shown NONE = new Shown("", false);
+    }
+
+    /**
+     * What a plate shows on a ship that may be a wreck piece of a split ship (RS1): a named ship shows its name; an
+     * unnamed wreck piece shows "Wreck of" the name its line had (if that had one); off a ship, with the feature off,
+     * or with no name at all, nothing.
+     */
+    public static Shown shown(boolean enabled, boolean onShip, String shipName, boolean wreck, String wreckOf) {
+        String name = shown(enabled, onShip, shipName);
+        if (!name.isEmpty()) return new Shown(name, false);
+        String lineName = enabled && onShip && wreck ? clean(wreckOf) : "";
+        return lineName.isEmpty() ? Shown.NONE : new Shown(lineName, true);
+    }
 }

@@ -73,6 +73,15 @@ reloads by itself from that supply, so a manned, supplied gun keeps firing as fa
 `cannons.crew`).
 
 ## Grappling hook
+**Shooting the hook.** Hold the grappling hook in your main hand and a crossbow or an empty musket in your off
+hand. With a crossbow, hold use to draw (about a second) and let go to shoot: the hook flies faster and the rope
+reaches 36 blocks instead of 24. With a musket, use fires the hook at once for one gunpowder (no lead shot), the
+farthest of all with a 48-block rope; a loaded musket refuses, so fire it first; rain can make it misfire.
+**Mooring rings** (4 iron ingots make 2) mount on decks, walls or beams. A hook that flies within a block of a ring
+on another ship catches on it and holds twice as far before tearing loose. With your hook latched, use a ring on
+your own ship to tie the rope there: the ships keep hauling together and you can walk away. Sneak and use with an
+empty hand, or breaking a ring, lets go.
+
 Right-click to throw the hook. If it hits the hull of another ship it bites in and hangs there, following the ship.
 If you stand on your own ship, the taut rope hauls both ships together until they lie side by side, ready for
 boarding; then it goes slack. From land the rope drags the hooked ship slowly toward you. A hook that hits your own

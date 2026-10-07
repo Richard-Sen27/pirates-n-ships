@@ -44,7 +44,9 @@ public final class GrappleRules {
         OWNER_GONE,
         /** The ship the hook hangs on is gone (sunk, disassembled, unloaded). */
         SHIP_GONE,
-        /** The thrower is farther from the hook than the rope is long: the rope snaps. */
+        /** The mooring ring the hook is latched on, or the rope is tied to, was broken (GR1). */
+        RING_GONE,
+        /** The rope's near end (the thrower, or the ring it is tied to) is farther from the hook than the rope holds: it snaps. */
         TOO_FAR
     }
 
@@ -65,6 +67,91 @@ public final class GrappleRules {
             return Release.SHIP_GONE;
         }
         return latched && ownerDistance > maxRopeLength ? Release.TOO_FAR : Release.NONE;
+    }
+
+    /**
+     * Like {@link #release(boolean, boolean, boolean, boolean, double, double)} with the mooring rings (GR1), checked in
+     * this order: config, thrower, ship (latched hooks only), rings, distance. {@code nearEndDistance} is measured from
+     * the rope's near end (the thrower, or the ring it is tied to) and {@code breakLength} comes from
+     * {@link #breakLength}. A tied rope's thrower may stand anywhere, so the caller passes {@code ownerPresent} true for
+     * it as long as the thrower is known.
+     *
+     * @param ringsIntact false when a ring the hook is latched on, or the rope is tied to, is gone
+     */
+    public static Release release(boolean enabled, boolean ownerPresent, boolean latched, boolean shipPresent,
+                                  boolean ringsIntact, double nearEndDistance, double breakLength) {
+        Release r = release(enabled, ownerPresent, latched, shipPresent, 0.0, breakLength);
+        if (r != Release.NONE) {
+            return r;
+        }
+        if (!ringsIntact) {
+            return Release.RING_GONE;
+        }
+        return latched && nearEndDistance > breakLength ? Release.TOO_FAR : Release.NONE;
+    }
+
+    // ------------------------------------------------------------------ mooring rings (GR1)
+
+    /**
+     * Distance at which the rope snaps: its length, times {@code ringHoldMultiplier} (at least 1) when the hook is
+     * latched on a mooring ring. The rope's break rule is a distance (the hook tears loose once the ends are farther
+     * apart than the rope is long), so "a ring holds {@code ring_hold_multiplier} times the normal break tension" is
+     * this length.
+     */
+    public static double breakLength(double ropeLength, boolean onRing, double ringHoldMultiplier) {
+        return onRing ? ropeLength * Math.max(1.0, ringHoldMultiplier) : ropeLength;
+    }
+
+    /** Shortest distance from point p to the segment a-b (to a when a equals b). */
+    public static double segmentDistance(double ax, double ay, double az, double bx, double by, double bz,
+                                         double px, double py, double pz) {
+        double dx = bx - ax, dy = by - ay, dz = bz - az;
+        double len2 = dx * dx + dy * dy + dz * dz;
+        double t = len2 < 1.0e-12 ? 0.0 : ((px - ax) * dx + (py - ay) * dy + (pz - az) * dz) / len2;
+        t = Math.max(0.0, Math.min(1.0, t));
+        double cx = ax + t * dx - px, cy = ay + t * dy - py, cz = az + t * dz - pz;
+        return Math.sqrt(cx * cx + cy * cy + cz * cz);
+    }
+
+    /** A flying hook whose path this tick passes {@code distance} from a ring is caught by it. */
+    public static boolean ringCatches(double distance, double catchRadius) {
+        return catchRadius > 0 && distance <= catchRadius;
+    }
+
+    /** Where the rope's near end is. */
+    public enum NearEnd {
+        /** In the thrower's hand: the thrower's ship (its block nearest the hook) hauls, or the thrower stands on land. */
+        THROWER,
+        /** Tied to a mooring ring: the ring's ship hauls from the ring, or a ring on land holds the rope. */
+        RING
+    }
+
+    public static NearEnd nearEnd(boolean tiedToRing) {
+        return tiedToRing ? NearEnd.RING : NearEnd.THROWER;
+    }
+
+    /** The ship that hauls at the near end: the ring's ship when tied (null: a ring on land), else the thrower's. */
+    public static UUID haulingShip(NearEnd nearEnd, UUID ringShip, UUID throwerShip) {
+        return nearEnd == NearEnd.RING ? ringShip : throwerShip;
+    }
+
+    /** Whether the rope can be tied to a ring. */
+    public enum Tie { OK, NO_HOOK, SAME_SHIP, TOO_FAR }
+
+    /**
+     * Tying the near end to a ring: needs a hook out, a ring not on the ship the hook is latched on (the rope would
+     * run from a ship to itself), and a ring within the rope's length of the hook.
+     *
+     * @param hookShip ship the hook is latched on, null while it flies or lies on land
+     */
+    public static Tie tie(boolean hookOut, UUID ringShip, UUID hookShip, double ringToHook, double ropeLength) {
+        if (!hookOut) {
+            return Tie.NO_HOOK;
+        }
+        if (sameShip(ringShip, hookShip)) {
+            return Tie.SAME_SHIP;
+        }
+        return ringToHook > ropeLength ? Tie.TOO_FAR : Tie.OK;
     }
 
     /** A rope that snaps loses the hook only when configured so; every other release returns it. */

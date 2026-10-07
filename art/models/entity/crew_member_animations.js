@@ -58,11 +58,24 @@ M2.ANIMS = {
     left_arm: {rotation: {0: [-38, 10, -2], 2: [-40, 10, -3], 4: [-38, 10, -2]}},
     waist: {rotation: {0: [-3, 0, 0], 2: [-4, 0, 0], 4: [-3, 0, 0]}},
     body: {scale: {0: [1, 1, 1], 2: [1.02, 1.01, 1.05], 4: [1, 1, 1]}}
+  }],
+  // ART1d, 4 s: lying on the back in a hammock (HammockSeat at the canvas top where the halves meet). The root drops
+  // the hips 11 px onto the canvas and moves the body 4.5 px towards the feet so it is centred on the hammock; the upper
+  // body is raised 17.5 and the straight legs 22.5 degrees (a shallow V fitted to the canvas profile), arms folded
+  // over the belly, slow breathing. The head is not keyed: CrewMemberModel raises it 15 degrees while resting.
+  sleep: [4.0, {
+    root: {position: {0: [0, -11, -4.5], 4: [0, -11, -4.5]}},
+    waist: {rotation: {0: [-72.5, 0, 0], 2: [-73.5, 0, 0], 4: [-72.5, 0, 0]}},
+    body: {scale: {0: [1, 1, 1], 2: [1.02, 1.01, 1.05], 4: [1, 1, 1]}},
+    right_arm: {rotation: {0: [-25, 0, -25], 2: [-27, 0, -25], 4: [-25, 0, -25]}},
+    left_arm: {rotation: {0: [-25, 0, 25], 2: [-27, 0, 25], 4: [-25, 0, 25]}},
+    right_leg: {rotation: {0: [-112.5, 0, 2], 4: [-112.5, 0, 2]}},
+    left_leg: {rotation: {0: [-112.5, 0, -2], 4: [-112.5, 0, -2]}}
   }]
 };
 
 M2.buildAnimations = function () {
-  for (const name of ['idle', 'walk', 'work', 'sit']) M2.make(name, M2.ANIMS[name][0], M2.ANIMS[name][1]);
+  for (const name of ['idle', 'walk', 'work', 'sit', 'sleep']) M2.make(name, M2.ANIMS[name][0], M2.ANIMS[name][1]);
   return Animation.all.map(a => a.name);
 };
 M2.buildAnimations();

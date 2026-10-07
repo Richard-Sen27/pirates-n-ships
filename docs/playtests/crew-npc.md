@@ -155,6 +155,46 @@ Give yourself hammocks (`/give @s pirates_n_ships:hammock 4`; recipe: 2 string o
 8. **Config off.** Set `crew.morale.enabled = false`, `/time set 13000`: nobody turns in; `/pirates crew info` shows
    morale 70 for everyone, whatever it was before; at dawn nothing changes and nobody grumbles.
 
+### ART1d: the hammock model and the lying pose
+The placeholder slab is replaced by the Blockbench hammock (`art/renders/hammock.png`, `hammock_item.png`) and sleepers
+play the rig's new `sleep` animation (`art/renders/anim_crew_sleep.png`). Since HM2 `CrewMember#pose` passes the
+resting flag, so sleepers play **sleep**, and they lie along the hammock (steps 13 to 15).
+
+9. **The model, four facings.** Hang a hammock between two fence posts facing north, east, south and west (in the
+   world and below deck on a ship). Expected per facing: white wool canvas 12 px wide with rolled side hems, flat in
+   the middle at about a quarter block, sloping up at 22.5 degrees to the ends, a rolled end hem round a spruce
+   spreader bar at each end, four strings (two from the bar ends, two from inside) meeting in a knot about 10 px (0.6
+   block) up, and one rope from the knot into the post. Check: **no visible seam** where the two halves meet (flat
+   canvas, hems in line); the rope ends **inside** the fence post, and into a wall post or the hull side (solid
+   block) without a gap; nothing flickers. The block outline/collision is the canvas box (3 to 7 px high).
+10. **The item.** In the hotbar: a rolled canvas with three rope windings, a knot and loop at the upper right, on the
+    diagonal like a tool; in hand held like a tool (roll forward from the fist); on the ground and in an item frame.
+11. **Lying.** At night (`/time set 13000`) a crew member turns in. Expected: lying on its back along the hammock,
+    hips in the middle where the halves meet, upper body and straight legs raised slightly with the canvas, head
+    raised a little (not looking around), arms folded over the belly; the chest breathes slowly (4 s). Report: the body
+    floating above or sinking more than a pixel or two into the canvas, the head or feet poking through the end hems
+    or ropes, or the body lying across the hammock (record the facing). Check it next to the hull side: hammock and
+    sleeper do not clip into the hull planks. On a sailing ship: no jitter between body and canvas.
+12. **Waking.** An order or dawn: the crew member stands up and walks off with the normal poses (no leftover tilt).
+
+**HM2: lying along the hammock.** Covered headlessly by `crew/hammock/SleepAxisTest` (the yaw maths for all four facings,
+ship turns, the render frame) and two GameTests in `HammockGameTests` (in the world and on a ship turned 90 degrees, 40
+ticks with a player beside it). The sleeper faces the **foot** half (the block you clicked when hanging it); its head
+lies over the **head** half (the block toward which you looked). Crew only turn in on ships, so check below deck.
+13. **Along the hammock, head on the head half.** Hang four hammocks in the hold, one per facing (remember where you
+    clicked: that is the foot), spawn four crew, `/time set 13000`. Expected for every facing: the body lies along the
+    canvas (never across it), the head over the half away from the clicked block, the feet toward the clicked block,
+    hips over the seam, nothing poking through the end hems. Report any facing that is reversed (head over the foot
+    half) or crossed.
+14. **Turning ship.** With the sleepers in their hammocks, sail and turn the ship through a full circle (and hold a
+    turn for a while). Expected: the sleepers turn with the hull and stay along their hammocks the whole time; no
+    sudden half or full spin of the body when the ship's heading passes south (yaw ±180), no lag of more than a few
+    degrees behind the canvas, no jitter between body and canvas while the ship rolls.
+15. **No twisting when you walk by.** Walk round a sleeper, stand close to its head and its feet, and crouch next to it.
+    Expected: neither head nor body turns toward you or looks around; the head keeps its slight chin-to-chest tilt.
+    Then give an order that gets it up (whistle "Hoist sails" with an unmanned winch) or `/time set 23500`: once up it
+    looks at you and around again as usual.
+
 ## CR2: crew upkeep (wages, desertion, mutiny)
 Covered by JUnit tests (`crew/upkeep/WageRulesTest`, `UpkeepDayTest`) and 8 GameTests (`crew/upkeep/UpkeepGameTests`).
 What the tests cannot show: how the lines read in a real game (action bar and chat), the deserter and the mutineers in

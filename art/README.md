@@ -701,6 +701,32 @@ Item models (ART1c: kraken beak and ink, carpenter's hammer, saw, nails, Shipwri
   but stay because `KrakenRigTest` reads them; `carpenters_hammer`, `saw`, `nails` and `shipwright_toolkit.png`
   (`tools/gen_placeholder_textures.py`) are unused too and can go with their generator code in a cleanup.
 
+Hammock (ART1d):
+- `hammock.bbmodel` holds both halves as groups `foot` (block coordinates) and `head` (drawn 16 px north of it, so
+  the project shows the whole hammock); `block/hammock_foot.json` is the `foot` group, `block/hammock_head.json` the
+  `head` group shifted 16 px south. Both are drawn facing north, the head north of the foot; the head is the foot
+  mirrored in z (z -> 16 - z, x rotations negated). 18 elements each: canvas (`white_wool`) flat at y 3..4 for
+  |s| <= 5 px from the seam, a 22.5 degree slope rising 3 px to y 6..7 at s 12.24, a level end into the hem; rolled
+  side hems (1.25 px, on flat, slope and end); an end hem round a `stripped_spruce_log` spreader bar (x 0.75..15.25,
+  grain along x, log top on the ends); four `pirates_n_ships:block/rope` strings (bar ends at 22.5, inner pair at 45)
+  into a knot at y 9.1..11.1 on the outer face; a rope from the knot to z 22.5, the middle of a fence post in the next
+  block (hidden in walls and solid blocks). Seam faces are left out. The slope parts are 0.05 px narrower than the
+  flat ones (V1 joint rule). `HammockBlock` collision: `CANVAS_BOTTOM` 3, `CANVAS_TOP` 7; the sleeper's seat is at
+  `HammockSeat.SEAM_CANVAS_TOP` 4.
+- Item (`hammock_item.bbmodel`, 16 elements, `item/hammock`, handheld slots, no `gui` entry: the `z -45` turn of every
+  element gives the diagonal): the canvas roll as two crossed boxes, spreader bar stubs at both ends, three rope
+  windings of crossed boxes 0.3 px proud, a rope run along the front, knot and loop at the top, a tail at the bottom.
+- Built like ART1b/ART1c from a Python part list written as model JSON, rebuilt cube by cube in `java_block` tabs;
+  `Codecs.java_block.compile()` gives the same geometry. Script not committed.
+- **Sleep pose** (`sleep`, 4 s loop, in `crew_member_animations.js` and all five rig projects): root position
+  `[0, -11, -4.5]` (hips' back onto the canvas at the seat, body centred on the seam), `waist` x −72.5 (−73.5 at 2 s:
+  breathing), legs x −112.5 (z ±2), arms `[-25, 0, ∓25]` (right/left: folded over the belly; −27 at 2 s), `body`
+  scale breathing as `sit`. The V (upper body up 17.5, legs up 22.5) was fitted to the canvas profile: the hips' back
+  sits 0.7 px into the canvas, nothing floats more than about 1 px. The head is not keyed (rig contract);
+  `CrewMemberModel` tilts it 15 degrees chin to chest while resting. `CrewSleepPoseTest` checks hips on the canvas
+  and the body within the two blocks. Render `renders/anim_crew_sleep.png` (the hammock cubes added to the rig tab for
+  the shot only, frames 0 s and 2 s: three-quarter, side, top).
+
 ## Entities
 
 Animated mobs and NPCs (crew member, pirate, sailor, navy soldier and officer; design.md §9) are GeckoLib models
@@ -844,8 +870,9 @@ GeckoLib project). Every keyframe uses GeckoLib's `easeInOutSine` easing. Source
 | `walk` | the legs move (GeckoLib's limb swing) | 1 s: legs ±32°, arms ±28° in opposite phase, waist dips 0.6 px at full stride, leans 3° and twists ±3° |
 | `work` | at its station while the station carries out an order (winch, pump, cannon, …) | 2 s: hand over hand; each arm reaches to −125° (high front), pulls down to −52° in 1.2 s and swings back up in 0.8 s, the left arm 1 s behind the right; arms turned 10–16° inwards so the hands meet in front of the chest; waist leans 12° and dips to 20° in each pull; right foot forward (−16°), left back (14°) |
 | `sit` | riding something that seats it (boat, minecart; **not** the station seat, where it stands) | 4 s: legs −81° x, ±18° y, ±4° z (vanilla riding pose), hands resting on the thighs (−38° to −40°, 10° inwards), leaning back 3–4°, breathing |
+| `sleep` | lying in a hammock (ART1d; `CrewMember#isResting`) | 4 s: on the back in the hammock, see "Hammock (ART1d)" above |
 
-Priority: `work` > `sit` > `walk` > `idle` (`crew/npc/CrewPose`). One controller (`body`) plays them with a 5-tick
+Priority: `work` > `sleep` > `sit` > `walk` > `idle` (`crew/npc/CrewPose`). One controller (`body`) plays them with a 5-tick
 blend. A mob with more states adds animations with new names and its own controller logic; triggered one-shots
 (attack swings, a cannon fuse) go through GeckoLib triggerable animations on a second controller.
 

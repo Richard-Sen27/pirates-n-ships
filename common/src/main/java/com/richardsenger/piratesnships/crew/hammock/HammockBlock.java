@@ -42,10 +42,10 @@ public class HammockBlock extends HorizontalDirectionalBlock {
     public static final MapCodec<HammockBlock> CODEC = simpleCodec(HammockBlock::new);
     public static final EnumProperty<BedPart> PART = BlockStateProperties.BED_PART;
 
-    /** Top of the canvas in pixels: the sleeper lies on it. */
+    /** Top of the canvas in pixels at its outer ends (ART1d model: it sags to 4 at the seam, see HammockSeat). */
     public static final int CANVAS_TOP = 7;
-    /** Bottom of the canvas in pixels. */
-    public static final int CANVAS_BOTTOM = 5;
+    /** Bottom of the canvas in pixels, at the seam where it sags lowest (ART1d model). */
+    public static final int CANVAS_BOTTOM = 3;
     /** Inset of the canvas from the block's long sides, in pixels. */
     public static final int CANVAS_INSET = 2;
 

@@ -4,6 +4,7 @@ import com.richardsenger.piratesnships.combat.melee.engine.MeleeEngine;
 import com.richardsenger.piratesnships.combat.melee.geometry.Box;
 import com.richardsenger.piratesnships.combat.melee.geometry.HitGeometry;
 import com.richardsenger.piratesnships.combat.melee.geometry.Vec;
+import com.richardsenger.piratesnships.combat.melee.net.MeleeStateSync;
 import com.richardsenger.piratesnships.combat.melee.resolve.HitResolver;
 import com.richardsenger.piratesnships.combat.melee.resolve.HitResult;
 import com.richardsenger.piratesnships.combat.melee.resolve.IncomingHit;
@@ -135,6 +136,8 @@ public final class MeleeService {
         EXPLICIT_WEAPONS.keySet().removeIf(e -> !e.isAlive() || e.isRemoved());
         List<EntityFighter> fighters = new ArrayList<>(ACTIVE.values());
         ENGINE.tick(server.getTickCount(), fighters, ARENA, p);
+        // before dormant combatants are dropped, so their final state (full stamina, idle) still goes out
+        MeleeStateSync.flush(server.getTickCount(), ACTIVE.keySet());
         if (ENGINE.heldHits() == 0) {
             for (Iterator<Map.Entry<LivingEntity, EntityFighter>> it = ACTIVE.entrySet().iterator(); it.hasNext(); ) {
                 var entry = it.next();
@@ -150,6 +153,7 @@ public final class MeleeService {
         ACTIVE.clear();
         EXPLICIT_WEAPONS.clear();
         ENGINE.clear();
+        MeleeStateSync.onServerStopped();
     }
 
     /** {@code LIVING_INCOMING_DAMAGE}: guard and parry against vanilla melee from the front. Returns the new amount. */

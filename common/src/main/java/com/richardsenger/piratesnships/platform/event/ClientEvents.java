@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
@@ -83,6 +84,35 @@ public final class ClientEvents {
      * volume when the player moves that category's slider.
      */
     public static final Event<SoundStreamStarted> SOUND_STREAM_STARTED = Event.create(ls -> (sound, channel) -> ls.forEach(l -> l.onStarted(sound, channel)));
+
+    /**
+     * An attack, use or pick-block input is about to run (client thread, inside the client tick's key handling): a
+     * new click, the repeated use while the use key is held, or the continued attack on a block while the attack key
+     * is held. Return {@link InteractionKeyResult#CANCEL} to stop vanilla's action (entity attack, block breaking,
+     * item or block use, pick block) and its hand swing; the first non-{@code PASS} result wins. For {@code USE} it is
+     * fired per hand, main hand first; a cancel stops the off hand too. Fired from NeoForge's
+     * {@code InputEvent.InteractionKeyMappingTriggered}. Used by {@code combat.melee.client.MeleeInput}.
+     */
+    public static final Event<InteractionKey> INTERACTION_KEY = Event.create(ls -> (mc, input, hand) -> {
+        for (InteractionKey l : ls) {
+            InteractionKeyResult r = l.onInteraction(mc, input, hand);
+            if (r != InteractionKeyResult.PASS) return r;
+        }
+        return InteractionKeyResult.PASS;
+    });
+
+    /** Which interaction key fired {@link #INTERACTION_KEY}. */
+    public enum InteractionInput { ATTACK, USE, PICK_BLOCK }
+
+    /** Result of an {@link #INTERACTION_KEY} listener. */
+    public enum InteractionKeyResult {
+        /** Let later listeners and vanilla handle the input. */
+        PASS,
+        /** Cancel vanilla's action and its hand swing. */
+        CANCEL
+    }
+
+    @FunctionalInterface public interface InteractionKey { InteractionKeyResult onInteraction(Minecraft minecraft, InteractionInput input, InteractionHand hand); }
 
     @FunctionalInterface public interface SelectMusic { @Nullable Music select(@Nullable Music vanillaChoice); }
 

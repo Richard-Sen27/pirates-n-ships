@@ -48,6 +48,8 @@ public final class MeleeConfig {
             "Poise multiplier at zero stamina (lower = staggered more easily, 0 = every hit staggers)");
     public static final ConfigValue<Double> NPC_SKILL = S.doubleRange("npc_skill_multiplier", D.npcSkillMultiplier(), 0.0, 10.0,
             "Scales NPC duelists' parry chance, reaction speed and feint frequency");
+    public static final ConfigValue<Integer> STAMINA_SYNC_INTERVAL = S.intRange("stamina_sync_interval_ticks", 5, 1, 100,
+            "Shortest interval between two stamina updates sent to a player for the HUD (phase changes are sent at once)");
 
     private MeleeConfig() {
     }

@@ -131,9 +131,11 @@ public final class HelmHandoverGameTests {
         ServerLevel level = h.getLevel();
         trackPieces(h);
         h.runAfterDelay(2, () -> {
-            SailingRuntime rt = runtime(h, d.ship());
-            h.assertTrue(d.helm().equals(rt.helm()), "the runtime does not steer from the assembly helm: " + rt.helm());
+            // no runtime yet (as before the first plot scan): the helm placement itself creates it
+            SailingRuntimes.onShipRemoved(level, d.ship().id(), false);
             level.setBlock(d.other(), helmState(), 3);
+            SailingRuntime rt = SailingRuntimes.get(level, d.ship().id());
+            h.assertTrue(rt != null, "placing a helm did not create the ship's sailing runtime");
             h.assertTrue(ShipHelm.role(d.ship(), d.other()) == HelmRules.Role.SECOND, "the placed helm is not a second helm");
             h.assertTrue(d.helm().equals(rt.helm()), "placing a second helm moved the runtime's helm to " + rt.helm());
             ShipControls.setWheel(level, d.helm(), 30.0);

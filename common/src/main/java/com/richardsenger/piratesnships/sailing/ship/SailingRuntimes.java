@@ -326,14 +326,14 @@ public final class SailingRuntimes {
     /** From {@link com.richardsenger.piratesnships.ship.ShipBlockChanges}: keeps sail lists current. */
     public static void onBlockChanged(ServerLevel level, BlockPos pos, BlockState oldState, BlockState newState) {
         Map<UUID, SailingRuntime> m = SERVER.get(level);
-        if (m == null || m.isEmpty()) {
+        boolean helm = oldState.getBlock() instanceof HelmBlock || newState.getBlock() instanceof HelmBlock;
+        if ((m == null || m.isEmpty()) && !helm) {
             return;
         }
         boolean oldCleat = oldState.getBlock() instanceof CleatBlock;
         boolean newCleat = newState.getBlock() instanceof CleatBlock;
         boolean oldYard = oldState.getBlock() instanceof YardBlock;
         boolean newYard = newState.getBlock() instanceof YardBlock;
-        boolean helm = oldState.getBlock() instanceof HelmBlock || newState.getBlock() instanceof HelmBlock;
         boolean capstanGone = oldState.getBlock() instanceof CapstanBlock && !(newState.getBlock() instanceof CapstanBlock);
         boolean mastChanged = oldState.is(SailingBlocks.MASTS) != newState.is(SailingBlocks.MASTS);
         if (!oldCleat && !newCleat && !oldYard && !newYard && !helm && !capstanGone && !mastChanged
@@ -343,8 +343,14 @@ public final class SailingRuntimes {
             return;
         }
         ShipBody ship = SableShips.containing(level, pos);
-        SailingRuntime rt = ship == null ? null : m.get(ship.id());
+        SailingRuntime rt = ship == null || m == null ? null : m.get(ship.id());
         if (rt == null) {
+            if (helm && ship != null && !ship.isRemoved() && ShipHelm.isOurShip(ship)) {
+                // HL1b: a helm change on one of our ships without a runtime yet (the plot scan runs every
+                // scan_interval_ticks) creates it now, so the rudder never depends on where that interval stands; the
+                // scan reads the plot as it is after this change
+                getOrCreate(ship);
+            }
             return;
         }
         if (newState.getBlock() instanceof HelmBlock) {

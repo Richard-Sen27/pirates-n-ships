@@ -5,7 +5,7 @@ The sea is to the north: ``pier_out`` on the north edge hangs the pier from the 
 paving, row y 0, which sits one block above sea level), ``street_out`` on the south edge leads inland. The hut (east
 half) has its door on the north side; inside, the harbor master's desk faces the door (its customer side north), and
 the notice board stands on the quay beside the door, its notices facing the quay."""
-from _style import DARK, PALETTE, door, lantern_post
+from _style import DARK, PALETTE, corner_post, door_frame, lantern_post, plinth, rafter_ends, trim_band, window
 from buildspec import Piece
 
 S = 11
@@ -14,22 +14,33 @@ TOP = 3                               # last wall row
 
 p = Piece("village_dock_head", "Seafarer Dock Head", (S, 8, S), PALETTE)
 
-# the quay: stone bricks with weathered patches, a chiseled course along the sea edge
+# the quay: stone bricks with weathered patches (mossy towards the sea, cracked inland), a chiseled course along the
+# sea edge
 p.fill(0, 0, 0, S - 1, 0, S - 1, "bricks")
 p.fill(0, 0, 0, S - 1, 0, 0, "chiseled")
-for x, z, key in ((1, 3, "bricks_mossy"), (3, 6, "bricks_cracked"), (0, 9, "bricks_mossy"), (4, 1, "bricks_cracked"),
-                  (2, 8, "bricks_cracked"), (9, 1, "bricks_mossy"), (1, 10, "bricks_cracked")):
+for x, z, key in ((1, 3, "bricks_mossy"), (3, 6, "bricks_cracked"), (0, 9, "bricks_mossy"), (4, 1, "bricks_mossy"),
+                  (2, 8, "bricks_cracked"), (9, 1, "bricks_mossy"), (1, 10, "bricks_cracked"), (0, 1, "bricks_mossy"),
+                  (6, 1, "bricks_mossy"), (8, 2, "bricks_mossy"), (2, 2, "bricks_mossy"), (10, 1, "bricks_cracked"),
+                  (3, 4, "bricks_cracked"), (4, 7, "bricks_cracked")):
     p.put(x, 0, z, key)
 
-# the harbor master's hut: render walls on posts, plank floor, dark roof with the ridge along x
+# the harbor master's hut: render walls between stripped spruce corner posts on a cobblestone plinth (the quay paving
+# is its footing), plank floor, a dark roof with the ridge along x over a spruce band and rafter ends
 p.fill(HX0 + 1, 0, HZ0 + 1, HX1 - 1, 0, HZ1 - 1, "spruce")
 p.ring(HX0, HZ0, HX1, HZ1, 1, TOP, "render")
 for x, z in ((HX0, HZ0), (HX1, HZ0), (HX0, HZ1), (HX1, HZ1)):
-    p.fill(x, 1, z, x, TOP, z, "post")
+    corner_post(p, x, z, 1, TOP)
+plinth(p, HX0, HZ0, HX1, HZ1, y=1, footing=False)
 p.roof_ridge_x(HX0, HX1, HZ0, HZ1, TOP + 1, DARK, "dark_ridge", "render", plate="beam_x")
-door(p, 7, 1, HZ0)
-for x, y, z in ((9, 2, HZ0), (HX1, 2, 6), (HX1, 2, 8), (HX0, 2, 7), (8, 2, HZ1)):
-    p.put(x, y, z, "pane")
+trim_band(p, HX0, HZ0, HX1, HZ1, TOP + 1)
+rafter_ends(p, [(x, TOP, HZ0 - 1) for x in (HX0, HX1)], "north")
+rafter_ends(p, [(x, TOP, HZ1 + 1) for x in (HX0, 7, HX1)], "south")
+door_frame(p, 7, 1, HZ0, "north")
+window(p, 9, 2, HZ0, "north", lintel=False)
+window(p, HX0, 2, 7, "west", lintel=False)
+window(p, 8, 2, HZ1, "south", lintel=False)
+for z in (6, 8):
+    window(p, HX1, 2, z, "east", lintel=False)
 
 # inside: the desk across the room facing the door, cargo behind the harbor master, a lantern on the crates
 p.put(7, 1, 6, "pirates_n_ships:harbor_desk[facing=north]")
@@ -57,6 +68,12 @@ for x, y, z in ((0, 1, 8), (1, 1, 8), (0, 2, 8)):
     p.put(x, y, z, "pirates_n_ships:cargo_barrel")
 p.put(1, 1, 3, "minecraft:barrel[facing=up]")
 p.put(2, 1, 3, "minecraft:barrel[facing=north]")
+
+# a bench against the hut's west wall, a barrel with a flower pot by the street
+p.put(HX0 - 1, 1, 5, "minecraft:spruce_stairs[facing=east,half=bottom]")
+p.put(HX0 - 1, 1, 6, "minecraft:spruce_stairs[facing=east,half=bottom]")
+p.put(3, 1, 9, "minecraft:barrel[facing=up]")
+p.put(3, 2, 9, "minecraft:flower_pot")
 
 p.connector(5, 0, 0, "pier_out", "north", "minecraft:chiseled_stone_bricks")
 p.connector(2, 0, S - 1, "street_out", "south", "minecraft:stone_bricks")

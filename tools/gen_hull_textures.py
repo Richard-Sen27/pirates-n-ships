@@ -6,8 +6,8 @@ Run (from the repository root, with the venv of tools/gen_placeholder_textures.p
 Output: common/src/main/resources/assets/pirates_n_ships/textures/block/hull_patch.png
 Rough planks nailed over a hole: the placeholder planks of gen_placeholder_textures.py, with black pitch (tar) run
 into the seams and a tar stripe across the middle, and iron nail heads at the board ends. Deterministic. Reuses that
-script's helpers (imported, not edited). The bilge pump uses vanilla textures (its model is an element model in
-datagen), so it has none here.
+script's helpers (imported, not edited). The bilge pump uses vanilla textures (it has a Blockbench model, F7e),
+so it has none here.
 """
 import sys
 from pathlib import Path

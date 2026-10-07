@@ -47,6 +47,9 @@ public class FirearmItem extends Item {
 
     public static final String LOADED_KEY = "item." + Constants.MOD_ID + ".firearm.loaded";
     public static final String UNLOADED_KEY = "item." + Constants.MOD_ID + ".firearm.unloaded";
+    public static final String AIM_HINT_KEY = "item." + Constants.MOD_ID + ".firearm.hint.aim";
+    public static final String LOWER_HINT_KEY = "item." + Constants.MOD_ID + ".firearm.hint.lower";
+    public static final String LOAD_HINT_KEY = "item." + Constants.MOD_ID + ".firearm.hint.load";
 
     private final FirearmKind kind;
 
@@ -163,8 +166,15 @@ public class FirearmItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
-        boolean loaded = FirearmContent.isLoaded(stack);
-        lines.add(Component.translatable(loaded ? LOADED_KEY : UNLOADED_KEY)
-                .withStyle(loaded ? ChatFormatting.GOLD : ChatFormatting.GRAY));
+        if (FirearmContent.isLoaded(stack)) {
+            lines.add(Component.translatable(LOADED_KEY).withStyle(ChatFormatting.GOLD));
+            lines.add(Component.translatable(AIM_HINT_KEY).withStyle(ChatFormatting.GRAY));
+            if (FirearmsConfig.LOWER_ON_SNEAK.get()) {
+                lines.add(Component.translatable(LOWER_HINT_KEY).withStyle(ChatFormatting.GRAY));
+            }
+        } else {
+            lines.add(Component.translatable(UNLOADED_KEY).withStyle(ChatFormatting.GRAY));
+            lines.add(Component.translatable(LOAD_HINT_KEY).withStyle(ChatFormatting.DARK_GRAY));
+        }
     }
 }

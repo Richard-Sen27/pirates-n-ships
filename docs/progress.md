@@ -5,7 +5,7 @@ Statuses: **todo** / **in progress** / **done** / **blocked: needs playtest** / 
 
 "Done" means: `./gradlew build` passes, `./gradlew :neoforge:runGameTestServer` passes, and the new logic has tests.
 
-Last updated: 2026-10-07 (fourth session: phase G complete; every package merged; nothing running).
+Last updated: 2026-10-07 (fourth session: phase G complete; phase M started: M1 and F9 running).
 
 ## Phase F: first playtest feedback (done, F5 and F7 continue in phase G)
 
@@ -65,6 +65,19 @@ Started 2026-10-07 after the session restart with the Blockbench MCP connected (
 | F8e | 3D item models, batch 5: cloth, spices, tobacco | done | Merged (`6982a54`). Cloth 10 elements, spices 42, tobacco 43; fourth palette sheet `palette_4.png` (full). Every held item of the mod is now a Blockbench model except the doubloon, the bounty proof and the hull patch. Playtest `items-and-blocks.md`, section "3D item models". |
 
 Only one agent at a time may use Blockbench (one desktop instance, one open project), so the F7 batches run one after another; G1 and F5 run next to them.
+
+## Phase M: NPCs and animations (running)
+
+Started 2026-10-07 on the human's request ("what about all the NPCs and the animations? can't you already start doing that?"). GeckoLib was not in the build yet and the crew member used the vanilla humanoid model, so the NPC work starts with a GeckoLib spike that also fixes the rig contract the mob models follow; the sword animations are authored in Blockbench in parallel.
+
+| Package | Scope | Status |
+|---|---|---|
+| M1 | GeckoLib dependency (both loaders, like the PAL integration), the crew member as a `GeoEntity` with a hand-written placeholder rig (vanilla player proportions, skin-layout texture), controller states idle/walk/work/sit, item in hand; the rig contract written into `art/README.md` for the mob batches | in progress |
+| F9 | Sword animations authored in Blockbench on a player rig (`art/animations/player_rig.bbmodel`), exported into the 11 PAL files, replacing the G12 placeholders; matching poses at phase boundaries | in progress |
+| M2 | Blockbench crew member model and textures in GeckoLib format on the M1 rig, with idle/walk/work/sit animations | todo, after M1 and F9 (Blockbench) |
+| M3 | Mob variants on the rig: pirate, sailor, navy soldier, navy officer (textures, hats, coats), with entity registration, spawn rules per structure later (11) and the melee duelist hook (§8.5 NPC duelists) | todo, after M2 |
+| M4 | Shark (own rig, swim and bite), later the kraken (multi-part, §12) | todo, after M3 |
+
 
 **State for the next session (written 2026-10-07 at the end of the fourth session):** `main` is green (831 JUnit tests, 257 GameTests, three green runs after every merge), nothing is running, no agent branch or worktree is left, 150 commits since the start of the session. Phase G is complete: every package from G1 to G13 and every Blockbench batch (F7a to F7f, F8a to F8e) is merged; every block and held item has a Blockbench model except the doubloon, the bounty proof, the hull patch and the brig door item. Milestones 5 to 10 and 13 to 15 all gained real pieces; what each still lacks is in the roadmap table. **The human's playtest backlog is the gate now:** milestones 1 to 4 with the phase F and G changes, then the phase G checklists (`firearms.md`, `melee.md`, `pump-and-patch.md`, `cannons.md`, `grapple.md`, `market-desk.md`, `audio.md`), plus `items-and-blocks.md` for every model and `flags.md` for banners and nameplates. Open design questions: stability and the sail force scale (§21, milestone 3 playtest), the sword's right click taking over doors and the helm (melee.md), hauling feel (grapple.md). Work that needs no playtest and no Blockbench: crew hiring, wages and morale (15), navy NPCs and notice boards (13), ports with positions once the human's structures exist (11), the follow-ups listed above. Blockbench work still open: Blockbench-authored sword animations (`art/animations/`, replacing the G12 placeholders), the flag cloth at 2 blocks (block entity renderer), the brig door item, entity models for the mobs (12, needs a GeckoLib integration spike like G12 first).
 

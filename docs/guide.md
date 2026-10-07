@@ -306,6 +306,12 @@ The rules for a crew eating and drinking exist, but no crew eats yet. Try them w
 
 ---
 
+### Cold water and swimming
+Swimming or wading in frozen or cold oceans and frozen rivers fills the freezing meter like powder snow: after
+about 7 seconds you are frozen and take damage every 2 seconds. You are safe in a boat, on a ship's deck or inside
+a dry hull, in any piece of leather armour, or after a bottle of rum ("Warm", 2 minutes). Swimming makes you hungry
+half again as fast as in vanilla. Server config `survival`.
+
 ## 7. Cargo and trade
 
 ### Cargo crate and cargo barrel
@@ -655,6 +661,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `crew_stations` | Crew stations on/off, time per trim step. |
 | `flags` | Hoisting delay, flags following the wind (land and ship check intervals), banners as flags. |
 | `dry_hull` | Also: whether slabs, stairs and hatches are drawn dry in their empty half. |
+| `survival` | Cold water on/off and freeze rate, warm effect length, swimming hunger multiplier. |
 | `provisions` | Consumption, rations, spoilage, scurvy, rum, water barrel capacity, rain refill. |
 | `cargo_trade` | Container sizes, prices, price recovery, contracts, plunder, port fees, cargo weight. |
 | `law` | Criminal score, severity of each crime, decay, fines, bounties, crime detection, theft. |

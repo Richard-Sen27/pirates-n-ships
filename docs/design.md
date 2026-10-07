@@ -509,6 +509,8 @@ All hazards can be turned off individually and have frequency settings.
 **Brig key (P1):** locking and unlocking a brig door needs a brig key (an iron ingot over an iron nugget); any key works on any brig door (keys are the security, cells are shared among a crew); the key never changes the owner; the owner can still open a locked door bare-handed; without a key nobody else, no mob and no redstone opens a locked door; brig bars connect to door halves.
 
 ## 14. Survival
+
+**Implemented (S2, `survival`):** cold water adds to vanilla's freezing meter in `#pirates_n_ships:cold_water` (frozen and cold oceans, frozen river), so the frost overlay, slowdown and freeze damage are vanilla's; boats, ship decks and dry hulls, leather armour, creative and the `warm` effect (rum, `#warming`) prevent it; swimming costs `swim_exhaustion_multiplier` × vanilla's exhaustion. New hook `CommonEvents.ITEM_USE_FINISH`.
 - **Cold water:** in cold and frozen ocean biomes, being in water builds up a freezing meter (similar to powder snow). It ends in freezing damage. Boats, dry hulls and warming items prevent it.
 - **Swimming hunger:** swimming increases exhaustion (configurable multiplier).
 

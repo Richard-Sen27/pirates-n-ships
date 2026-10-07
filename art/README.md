@@ -253,3 +253,45 @@ Items (trade goods batch: cloth, spices, tobacco, F8e):
 
 Entity models use the Modded Entity format (Mojang mappings 1.17+); paste the body of the exported
 `createBodyLayer()` into the renderer's layer method (example: `AnchorRenderer.createLayer`).
+
+Player animations (melee, F9):
+- Sources: `animations/player_rig.bbmodel` (format Bedrock entity, all 11 animations of
+  `MeleeAnimationMapping.ALL`) and `animations/player_poses.js` (the pose table and the builder that writes the
+  keyframes; run it in `risky_eval` with the rig open to rebuild every animation after editing a pose). Strips:
+  `renders/anim_<name>.png`, five evenly spaced frames, front three-quarter view on top, right side below.
+- **Rig.** Flat PAL bones, the vanilla parts are siblings: `body` (pivot 0, 12, 0; the whole model, unused) holds
+  `head` and `torso` (0, 24, 0), `right_arm` (5, 22, 0), `left_arm` (−5, 22, 0), `right_leg` / `left_leg`
+  (±1.9, 12, 0); `right_item` (6, 12, −2) and `left_item` (−6, 12, −2) are children of the arms, at the point where
+  vanilla's `ItemInHandLayer` pivots the item (arm centre, 10 px down, 2 px forward). The rig **faces north (−z)
+  with the right arm at +x**, matching PAL's `PlayerAnimationController.BONE_POSITIONS`. A proxy sword in
+  `right_item` points forward and 10° towards the hand, as vanilla's `item/handheld` third-person transform holds it.
+- **Sign convention (checked in PAL's source and in the rig).** PAL writes a file's rotation, in radians, straight
+  into the vanilla `ModelPart` (`RenderUtil.translatePartToBone`; the `body` bone negates x and y because it acts
+  before the model's `scale(-1, -1, 1)`, which gives the same result). So file values are vanilla angles:
+  right arm x −90 = horizontal forward, −180 = straight up, positive = backwards; y positive swings the arm towards
+  the player's right; z positive lifts the right arm sideways (outwards) and the left arm inwards. Positions: x
+  positive moves a part to the player's left, y positive up, z positive backwards. `right_item` rotations act in the
+  arm's frame in the same sense (x positive turns the blade from "perpendicular to the arm" towards "along the
+  arm": about +80 makes the sword an extension of the arm; y twists it about the arm), applied in the order Y, Z, X
+  (Blockbench previews Z, Y, X; only matters when y and z are both set).
+- **Blockbench 5 stores keyframes negated.** `compileBedrockAnimation()` writes rotation `[-x, -y, z]` and
+  position `[-x, y, z]` of the stored values, and the preview shows the stored values as plain three.js angles. On
+  the north-facing rig the exported file then renders in game exactly like the preview. The builder therefore takes
+  file-convention values and stores them negated (`F9.toInternal`); never type file values into the keyframe panel.
+- **Export.** `compileBedrockAnimation()` per animation, post-processed into PAL's shape: one animation per file,
+  key = file name, `format_version` 1.8.0, every channel as an object of `"time": [x, y, z]` (a single keyframe
+  compiles to a bare array; `PalAnimationFilesTest` wants the object), `loop` `"hold_on_last_frame"` (wind-ups,
+  actives, guard, parry) or `false` (recoveries, guard_lower, stagger). Only linear keyframes: smooth/Bézier ones
+  compile to `{post, lerp_mode}` objects, which PAL reads but the test does not; ease with extra keys instead.
+- **What the builder animates.** Per key pose: `right_arm`, `left_arm` and `right_item` rotations, plus a torso
+  `twist` (yaw) and `lean` (pitch). The lean is pivoted at the hips, not at the neck where the vanilla torso
+  pivots: the torso, head and arms get the matching positions so nothing detaches; the twist moves the shoulders
+  around the spine like vanilla's attack swing. Legs and head rotation are never animated (walking and looking stay
+  vanilla).
+- **Rest pose** is vanilla's "holding an item" arm, right arm `[-18, 0, 0]`: every animation that starts or ends at
+  idle starts or ends there, so the hand-over to vanilla does not snap. Chains share their poses exactly
+  (wind-up end = active start, active end = recovery start, guard = parry start = guard_lower start).
+- Offscreen strips: a separate `THREE.WebGLRenderer({preserveDrawingBuffer: true})` rendering Blockbench's `scene`
+  from scripted cameras, drawn onto a 2D canvas and written with `fs`; the human's viewport never moves.
+- Measuring the proxy blade's world direction (blade cube corners through `mesh.localToWorld`) was the quickest check for "is the blade level": perspective
+  views from above make a level blade look tilted down.

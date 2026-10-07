@@ -8,8 +8,8 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * The {@code grapple_loaded} data component (GR3, docs/design.md §8.3): the grappling hook sitting in a launcher (a
- * crossbow or a musket). The hook item travels with all its own data and comes out again with the fired hook.
+ * The {@code grapple_loaded} data component (GR3, docs/design.md §8.3): the grappling hook sitting in the musket (the
+ * only launcher since GR4). The hook item travels with all its own data and comes out again with the fired hook.
  *
  * @param hook  the hook item (one)
  * @param taken whether it was taken from the player's inventory (not in creative), so the fired hook is given back

@@ -10,14 +10,14 @@ import org.jetbrains.annotations.Nullable;
 /**
  * What a helm action did. {@link #message()} is the translatable feedback for the player.
  *
- * @param shipId the assembled ship (only for {@link Outcome#ASSEMBLED})
+ * @param shipId the assembled ship (only for {@link Outcome#ASSEMBLED} and {@link Outcome#ADOPTED})
  * @param where  the first obstructed position (only for {@link Outcome#OBSTRUCTED})
  * @param count  blocks moved, or the block limit for {@link Outcome#TOO_MANY_BLOCKS}
  */
 public record AssemblyResult(Outcome outcome, int count, @Nullable UUID shipId, @Nullable BlockPos where, double value) {
 
     public enum Outcome {
-        ASSEMBLED(true), DISASSEMBLED(true), NAMED(true),
+        ASSEMBLED(true), DISASSEMBLED(true), NAMED(true), ADOPTED(true),
         DISABLED(false), TOO_MANY_BLOCKS(false), NOTHING_TO_ASSEMBLE(false), MOVING(false), NOT_LEVEL(false),
         OBSTRUCTED(false), OUT_OF_WORLD(false), NO_SHIP(false), FAILED(false);
 
@@ -42,7 +42,7 @@ public record AssemblyResult(Outcome outcome, int count, @Nullable UUID shipId, 
 
     public Component message() {
         Object[] args = switch (outcome) {
-            case ASSEMBLED, DISASSEMBLED, TOO_MANY_BLOCKS -> new Object[] {count};
+            case ASSEMBLED, DISASSEMBLED, ADOPTED, TOO_MANY_BLOCKS -> new Object[] {count};
             case MOVING -> new Object[] {String.format(java.util.Locale.ROOT, "%.2f", value)};
             case NOT_LEVEL -> new Object[] {String.format(java.util.Locale.ROOT, "%.1f", value),
                     String.format(java.util.Locale.ROOT, "%.1f", AssemblyConfig.MAX_TILT_DEGREES.get())};

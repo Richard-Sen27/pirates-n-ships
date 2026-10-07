@@ -48,7 +48,7 @@ Capture a fresh pillager for each step: summon it, weaken it (or `/data merge en
    - Expected: "Delivered, payout 150 doubloons" (captain turn-in reward), the pillager disappears.
 2. Deliver without tier and without bounty: "Not delivered: nothing_to_claim", the pillager stays a prisoner.
 3. `/pirates brig ransom @e[type=pillager,limit=1,sort=nearest] navy_officer true` - Expected: "Ransomed for 360 doubloons", it disappears.
-4. `/pirates brig pressgang @e[type=pillager,limit=1,sort=nearest]` - Expected: "Press-ganged Pillager (morale 0.2), crime counted", it disappears, `/pirates law score get @s` shows your score went up by 15.
+4. `/pirates brig pressgang @e[type=pillager,limit=1,sort=nearest]` - Expected since LA2: "Not press-ganged: not_a_sailor", the pillager stays a prisoner, no crime. Only shackled sailors on your own ship can be press-ganged (section LA2 below).
 5. `/pirates brig release @e[type=pillager,limit=1,sort=nearest]` - Expected: "Released", a pair of shackles drops, the pillager fights again.
 
 ## 7. Relog
@@ -70,3 +70,55 @@ Addendum (F7e): the bars and the door are now Blockbench models (iron posts and 
 
 
 Addendum (P1): bars beside a door reach its edge on both heights and retract when the door is broken. Craft a brig key (ingot over nugget): using it on either half locks the door with a click, "Brig door locked" and the padlock; again unlocks. Sneaking without a key says "You need a brig key…" and changes nothing. The owner opens the locked door bare-handed; another player can't.
+
+
+## LA2: law outcomes as NPC interactions
+
+Setup: cheats on, `/gamemode survival` for every step (creative players are never navy targets, but the shackles and coins work the same). Items: `/give @s pirates_n_ships:shackles 8`, `/give @s pirates_n_ships:doubloon 64`, `/give @s pirates_n_ships:captains_whistle`, `/give @s minecraft:wooden_sword`. Default config. Weaken a mob quickly with `/data merge entity @e[type=<type>,limit=1,sort=nearest] {Health:3f}` before shackling it.
+
+### 1. Paying a fine at a navy officer
+1. `/summon pirates_n_ships:navy_officer ~3 ~ ~` and `/pirates law score set @s 5`.
+2. Hold exactly 20 doubloons in the main hand (drop or store the rest) and right-click the officer.
+   - Expected: chat (gold) `"That settles 5 points. Your slate is clean. Mind yourself." (15 doubloons)`, the officer nods (villager yes sound), 5 doubloons left in hand.
+   - `/pirates law score get @s`: score 0.
+3. Right-click him again with the coins.
+   - Expected: `"You owe the Crown nothing."`, no coins taken.
+4. `/pirates law score set @s 5`, hold 10 doubloons, right-click.
+   - Expected: `"That settles 3 points. Mind yourself." (9 doubloons)`, 1 doubloon left, `/pirates law score get @s` shows 2.
+5. Hold 2 doubloons with a score above 0: `"That won't settle a single point. 3 doubloons a point."` (red, action bar), nothing taken.
+6. `/pirates law score set @s 60` (wanted), right-click with coins.
+   - Expected: red action bar "The officer won't deal with a wanted criminal", no coins taken, score 60; he attacks you. `/pirates law score set @s 0` afterwards.
+7. Precedence: with a shackled prisoner next to you and coins in hand, a plain right-click pays the fine; sneak + right-click hands the prisoner over instead (step 2 below).
+
+### 2. Ransoming a navy soldier or a merchant
+1. `/summon pirates_n_ships:navy_soldier ~5 ~ ~`, weaken it, right-click it with shackles ("Navy Soldier is in shackles"). Note: hitting it is a crime (`/pirates law score get @s`); keep the score below 50 or reset it with `/pirates law score set @s 0`.
+2. Lead it to the officer (within 4 blocks of him) and right-click the officer with an empty main hand.
+   - Expected: `"The Crown thanks you." Navy Soldier is ransomed for 15 doubloons`, then "The navy takes 1 prisoner(s) off your hands and pays you 15 doubloons"; 15 doubloons in your inventory, the shackles come back, the soldier's chain particles stop and it walks over to the officer.
+3. Same with a villager or a sailor (`/summon pirates_n_ships:sailor`): 60 doubloons (merchant). With a shackled navy officer: 120.
+4. A shackled pirate without a bounty is turned in (10 doubloons for a deckhand, "led away by the navy"), never ransomed.
+5. Set `law.ransom_needs_port = true` and repeat step 2.
+   - Expected: red "Ransoms are only paid at a navy outpost", the soldier stays shackled (no navy outposts generate yet).
+
+### 3. Press-ganging a sailor
+1. Build and assemble a small ship yourself (you are its owner), standing on land or in water.
+2. Summon a sailor on the deck (`/summon pirates_n_ships:sailor` while standing on the deck), weaken it, shackle it.
+3. Hold the captain's whistle and right-click the shackled sailor.
+   - Expected: the radial order menu does NOT open; chat (gold) `Sailor, grumbling: "Aye... Captain." Pressed into your crew`, a grumble and a chain-break sound. The sailor turns into a crew member at the same spot (crew member look).
+   - Right-click the new crew member with the whistle: its crew line shows morale 30.
+   - `/pirates law score get @s`: score up by 15. `/pirates law last @s`: "Press-ganging", counted.
+4. Shackle a sailor on the ground next to the ship and use the whistle on it.
+   - Expected: red action bar "Bring them aboard your ship first.", it stays shackled, no crime.
+5. Optional, second account: on a ship assembled by the other player: "This isn't your ship to crew."
+6. `/pirates brig pressgang @e[type=pirates_n_ships:sailor,limit=1,sort=nearest]` takes the same path ("Press-ganged Sailor (morale 30), crime counted" on your ship, "not_on_ship" off it).
+
+### 4. Releasing a prisoner
+1. Shackle a pirate (`/summon pirates_n_ships:pirate`, weaken, shackle). Sneak + right-click it with an empty main hand.
+   - Expected: chat `"Go, before I change my mind." Pirate is free`, chain-break sound, particles stop, the shackles come back into your inventory. The pirate fights you again (survival).
+2. `/pirates brig releases` - Expected: "<you> released: navy 0, pirates 1, merchants 0, total 1". Release a villager: merchants 1, total 2.
+3. Right-click a prisoner without sneaking: nothing is released (it toggles leading only with shackles in hand). A prisoner shackled by another player can't be released by you.
+
+### 5. Toggles
+1. `flags_brig.prisoner_interactions = false`: the whistle opens the radial menu on a shackled sailor, sneak-use releases nothing, the officer ransoms nobody ("The navy pays nothing for …").
+2. `law.officer_fines = false`: coins in hand at the officer do nothing.
+
+Report: the chat lines of each step, whether the whistle menu stays closed in step 3.3, and how the ransomed soldier behaves after step 2.2 (it should not attack you; if it does within ~30 s, that is the mob's grudge from being hit).

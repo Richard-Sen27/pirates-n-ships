@@ -39,6 +39,14 @@ What is detected in the world today:
   can see you. Putting items in is fine.
 - The other crimes need ships, flags or the navy to react, and are reached through `/pirates law crime`.
 
+## Fines, ransom, press-gang and release
+Pay your fine at a navy officer: hold doubloons and right-click him. Each criminal-score point costs 3 doubloons by
+default, and he takes only the whole points you can afford; he won't deal with wanted criminals. Lead a shackled navy
+officer, navy soldier or merchant (sailor, villager, trader) to a navy officer and right-click him with an empty hand
+to ransom them. Hold the captain's whistle and right-click a shackled sailor standing on your own ship to press-gang
+them into your crew (low morale, and a crime). Sneak and right-click your own prisoner with an empty hand to let them
+go. Server config `law.officer_fines`, `law.ransom_needs_port`, `flags_brig.prisoner_interactions`.
+
 ## Bounties
 - At a score of 50 the navy puts a **bounty** on you of twice your score. It grows with the score and is withdrawn
   when the score falls below 25.

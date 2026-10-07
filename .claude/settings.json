@@ -3,7 +3,8 @@
     "allow": [
       "Bash(./gradlew build:*)",
       "Bash(./gradlew :neoforge:runGameTestServer:*)",
-      "Bash(./gradlew :neoforge:runData:*)"
+      "Bash(./gradlew :neoforge:runData:*)",
+      "Bash(./gradlew *)"
     ],
     "deny": [
       "Bash(./gradlew :neoforge:runClient:*)",

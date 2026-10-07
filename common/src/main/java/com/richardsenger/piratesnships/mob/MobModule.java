@@ -19,7 +19,8 @@ import java.util.Optional;
  * The humanoid mobs (work package M3, docs/design.md §9, §8.5 "NPC duelists"): pirate, sailor, navy soldier and navy
  * officer on the shared GeckoLib rig, with hostility rules, sword duelists through the melee engine, musketeers
  * through the firearm service, law crimes through {@code #pirates_n_ships:navy}, loot tables and
- * {@code /pirates mob spawn}.
+ * {@code /pirates mob spawn}. Since M4 also the shark (docs/design.md §12): a water creature that spawns naturally in
+ * ocean biomes and hunts swimmers.
  */
 public final class MobModule implements ModModule {
 
@@ -57,9 +58,11 @@ public final class MobModule implements ModModule {
         data.entityTypeTags(tags -> tags.tag(LawTags.NAVY).add(MobContent.NAVY_SOLDIER.get(), MobContent.NAVY_OFFICER.get()));
         data.models(m -> MobContent.eggs().values().forEach(egg ->
                 SPAWN_EGG.create(ModelLocationUtils.getModelLocation(egg.get()), new TextureMapping(), m.models())));
+        data.models(m -> SPAWN_EGG.create(ModelLocationUtils.getModelLocation(MobContent.SHARK_SPAWN_EGG.get()), new TextureMapping(), m.models()));
         lootTable(data, MobKind.PIRATE, MobLoot.pirate());
         lootTable(data, MobKind.NAVY_SOLDIER, MobLoot.navy());
         lootTable(data, MobKind.NAVY_OFFICER, MobLoot.navy());
+        data.encoded(PackOutput.Target.DATA_PACK, "loot_table", Constants.id("entities/" + MobCommands.SHARK), LootTable.DIRECT_CODEC, MobLoot.shark());
         data.lang(lang -> {
             lang.add(MobContent.PIRATE.get().getDescriptionId(), "Pirate")
                     .add(MobContent.SAILOR.get().getDescriptionId(), "Sailor")
@@ -69,8 +72,10 @@ public final class MobModule implements ModModule {
                     .item(MobContent.SAILOR_SPAWN_EGG, "Sailor Spawn Egg")
                     .item(MobContent.NAVY_SOLDIER_SPAWN_EGG, "Navy Soldier Spawn Egg")
                     .item(MobContent.NAVY_OFFICER_SPAWN_EGG, "Navy Officer Spawn Egg")
+                    .add(MobContent.SHARK.get().getDescriptionId(), "Shark")
+                    .item(MobContent.SHARK_SPAWN_EGG, "Shark Spawn Egg")
                     .add(MobCommands.KEY_SPAWNED, "Spawned %s × %s")
-                    .add(MobCommands.KEY_UNKNOWN, "Unknown mob: %s (pirate, sailor, navy_soldier or navy_officer)")
+                    .add(MobCommands.KEY_UNKNOWN, "Unknown mob: %s (pirate, sailor, navy_soldier, navy_officer or shark)")
                     .add(MobCommands.KEY_DISABLED, "%s is disabled in the server config (mobs)");
         });
     }
@@ -81,6 +86,6 @@ public final class MobModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(MobGameTests.class);
+        return List.of(MobGameTests.class, SharkGameTests.class);
     }
 }

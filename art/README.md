@@ -508,3 +508,51 @@ shared animations working because every contract bone is still there.
 - `risky_eval` rejects code containing `//` anywhere, even inside a string; build such strings from `'/' + '/'`.
 Run `./gradlew build` afterwards: `CrewMemberRigTest` parses the files with GeckoLib's loader and checks bones,
 pivots, parents and animation names.
+
+### Shark rig (M4)
+
+The shark (design.md §9, §12) is a GeckoLib model on its own rig. M4 ships a **script placeholder**:
+`tools/gen_shark.py` writes `geo/shark.geo.json`, `animations/shark.animation.json` and `textures/entity/shark.png`
+(run it with the tools venv; deterministic). A Blockbench model replaces all three files and is saved as
+`art/models/entity/shark.bbmodel`, exported with the recipe above; `SharkRigTest` checks the contract.
+
+**Files:** `geo/shark.geo.json` (`format_version` 1.12.0, identifier `geometry.shark`, `texture_width` 64,
+`texture_height` **32**), `animations/shark.animation.json` (1.8.0, `geckolib_format_version` 2),
+`textures/entity/shark.png` (64×32). The UV layout is free: the placeholder uses per-face UV into an atlas the script
+packs; a Blockbench model brings its own layout with its texture.
+
+**Size:** 2.4 blocks long (about 38 px from snout to tail fin), body about 10 px wide and 10 px tall. The hitbox is
+0.9 × 0.6 blocks in the middle of the body (like the dolphin, the model is longer than the box). The shark faces −z,
++x is its left (file coordinates, as for the humanoids).
+
+| Bone | Parent | Pivot | Placeholder cubes |
+|---|---|---|---|
+| `root` | | 0, 5, 0 | none; code pitches it with the swimming direction (the entity's x rotation) |
+| `body` | `root` | 0, 5, 0 | torso −5 0 −8, 10×10×14 |
+| `head` | `body` | 0, 5, −8 | snout −4 3 −18, 8×6×10; two eye cubes |
+| `jaw` | `head` | 0, 3, −9 | lower jaw −3.5 1 −17, 7×2×8 (hinge at its back end) |
+| `tail_1` | `body` | 0, 5, 6 | −3.5 2 6, 7×7×8 |
+| `tail_2` | `tail_1` | 0, 5, 14 | −2 3 14, 4×5×6, plus the upper and lower lobes of the tail fin |
+| `fin_left` | `body` | 5, 2, −4 | pectoral fin 5 1.5 −6, 8×1×5 |
+| `fin_right` | `body` | −5, 2, −4 | pectoral fin −13 1.5 −6, 8×1×5 |
+| `fin_dorsal` | `body` | 0, 10, −2 | −0.5 10 −4, 1×8×6 |
+
+- Names, parents and pivots are fixed (code looks up `head` and `root`, animations address bones by name). A model may
+  add cubes and child bones (gill flaps, a second dorsal fin, teeth as cubes) but never renames or re-parents these.
+- **Code drives** `head` (x and y rotation follow the look direction, clamped to ±30°, `mob/client/SharkModel`) and
+  `root` (x rotation = swimming pitch, clamped to ±60°). Animations never key the rotation of either (the test checks).
+
+**Animations** (file convention as above: positive x on `jaw` drops its front, i.e. opens the mouth):
+
+| Name | Loop | When | Placeholder content |
+|---|---|---|---|
+| `swim` | loop, 1 s | moving faster than 0.02 blocks/tick; played faster with speed (×0.6 to ×2.5, ×1 at 0.12 blocks/tick) | `tail_1` y ±14°, `tail_2` y ±20° a quarter behind, `body` y ±3° against the tail, pectoral fins z ±6° |
+| `idle` | loop, 3 s | hovering | the same sway at ±6°/±9°/±1.5°, fins ±4°, the jaw breathing 4° |
+| `bite` | play once, 0.5 s | triggered at the moment of a bite (second controller `bite`, a synced bite counter) | `jaw` opens to 38° at 0.2 s and snaps shut at 0.3 s; `body` lunges 1.5 px forward |
+
+One controller (`body`, 5-tick blend) switches `swim`/`idle`; the `bite` controller only plays the triggered
+animation, on top.
+
+**Texture (placeholder):** grey-blue speckled back and upper sides, a light line, white belly (countershading),
+darker fin edges, black eyes (separate eye cubes on one black texel), dark-red mouth lining with white teeth around
+the rim of the jaw and the roof of the mouth, a row of teeth on the snout's front edge, three gill slits.

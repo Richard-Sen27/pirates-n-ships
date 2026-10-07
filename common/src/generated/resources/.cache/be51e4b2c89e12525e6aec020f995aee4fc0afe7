@@ -1,7 +1,8 @@
-// 1.21.1	2026-10-07T08:33:47.638029	Raw JSON (data): pirates_n_ships
+// 1.21.1	2026-10-07T08:58:13.618597	Raw JSON (data): pirates_n_ships
 fe7053acbb25918c89e2aa78604271fe9aed9b86 data/pirates_n_ships/loot_table/entities/navy_officer.json
 fe7053acbb25918c89e2aa78604271fe9aed9b86 data/pirates_n_ships/loot_table/entities/navy_soldier.json
 b0418bb17a7a2fdb50483d5529c1ce229810413d data/pirates_n_ships/loot_table/entities/pirate.json
+3aa0bd40e87edebf8b2b3e0b3c8fd78c4a83be72 data/pirates_n_ships/loot_table/entities/shark.json
 6d43d8ef5831dc3173fdc34fded2cf864b258292 data/pirates_n_ships/physics_block_properties/bilge_pump.json
 a765a14b00c58afdeac06dec7c2951b7de50d707 data/pirates_n_ships/physics_block_properties/cannon.json
 907f1809606d3b8bffd9e0f911961f9f8ff40af7 data/pirates_n_ships/physics_block_properties/cleat.json

@@ -1,0 +1,187 @@
+# Release: build, test and publish the NeoForge jar to Modrinth, CurseForge and GitHub Releases.
+# Scheme, secrets and the maintainer's checklist: docs/releasing.md.
+#
+# - Pushing a tag vX.Y.Z, vX.Y.Z-alpha.N or vX.Y.Z-beta.N publishes that version.
+# - "Run workflow" (workflow_dispatch) simulates a tag. With dry_run (the default) it builds, tests, writes the notes
+#   and uploads the jar as a workflow artifact, and publishes nothing. Without dry_run the tag must already exist.
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Tag to release or simulate, e.g. v0.1.0-beta.1'
+        required: true
+        type: string
+      dry_run:
+        description: 'Dry run: build, test and upload the jar as an artifact, publish nothing'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+# One release at a time: a second tag waits until the first one has published.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.version }}
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && 'true' || 'false' }}
+    steps:
+      - name: Check out (full history and tags, for the release notes)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version, channel and previous tag
+        id: version
+        run: |
+          set -euo pipefail
+          # Channel rule (docs/releasing.md): -alpha.N -> alpha; -beta.N or any 0.x.y -> beta; otherwise release.
+          channel_of() {
+            [[ "$1" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)\.([0-9]+))?$ ]] || return 1
+            if [[ "${BASH_REMATCH[5]}" == alpha ]]; then echo alpha
+            elif [[ "${BASH_REMATCH[5]}" == beta || "${BASH_REMATCH[1]}" == 0 ]]; then echo beta
+            else echo release
+            fi
+          }
+          # Self-check of the rule on fixed input, before it is used.
+          [[ "$(channel_of 0.1.0)" == beta && "$(channel_of 0.3.0-beta.1)" == beta \
+            && "$(channel_of 0.3.0-alpha.2)" == alpha && "$(channel_of 1.0.0)" == release \
+            && "$(channel_of 1.2.0-beta.1)" == beta && "$(channel_of 1.2.0-alpha.1)" == alpha ]] \
+            || { echo "::error::channel rule self-check failed"; exit 1; }
+          if channel_of 1.0 >/dev/null || channel_of 1.0.0-rc.1 >/dev/null; then
+            echo "::error::channel rule accepts a malformed version"; exit 1
+          fi
+
+          if [[ "$TAG" != v* ]]; then
+            echo "::error::'$TAG' is not a tag of the form vX.Y.Z[-alpha.N|-beta.N]"; exit 1
+          fi
+          version="${TAG#v}"
+          channel="$(channel_of "$version")" \
+            || { echo "::error::'$TAG' is not a tag of the form vX.Y.Z[-alpha.N|-beta.N]"; exit 1; }
+
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            ref="$TAG"
+            git checkout -q "refs/tags/$TAG"
+          elif [[ "$DRY_RUN" == true ]]; then
+            ref=HEAD   # simulated tag: notes and build from the selected branch
+          else
+            echo "::error::tag $TAG does not exist; push it first (docs/releasing.md)"; exit 1
+          fi
+          previous="$(git describe --tags --abbrev=0 --match 'v[0-9]*' --exclude "$TAG" "$ref" 2>/dev/null || true)"
+
+          {
+            echo "version=$version"
+            echo "channel=$channel"
+            echo "prerelease=$([[ "$channel" == release ]] && echo false || echo true)"
+            echo "ref=$ref"
+            echo "previous=$previous"
+          } >> "$GITHUB_OUTPUT"
+          echo "Version $version, channel $channel, notes from '${previous:-the first commit}' to $ref, dry run: $DRY_RUN"
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build (includes JUnit tests)
+        run: ./gradlew build -Pversion=${{ steps.version.outputs.version }} --console=plain
+
+      - name: GameTests (NeoForge, Sable loaded)
+        run: ./gradlew :neoforge:runGameTestServer -Pversion=${{ steps.version.outputs.version }} --console=plain
+
+      - name: Check the jar
+        id: jar
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          jars=(neoforge/build/libs/*-neoforge-*-"$VERSION".jar)
+          if [[ ${#jars[@]} -ne 1 ]]; then
+            echo "::error::expected one release jar for $VERSION in neoforge/build/libs, found: ${jars[*]:-none}"
+            ls -l neoforge/build/libs; exit 1
+          fi
+          jar="${jars[0]}"
+          unzip -p "$jar" META-INF/neoforge.mods.toml | grep -F "version = \"$VERSION\"" \
+            || { echo "::error::neoforge.mods.toml in $jar does not carry version $VERSION"; exit 1; }
+          echo "path=$jar" >> "$GITHUB_OUTPUT"
+
+      - name: Release notes
+        env:
+          PREVIOUS: ${{ steps.version.outputs.previous }}
+          REF: ${{ steps.version.outputs.ref }}
+        run: |
+          set -euo pipefail
+          python3 tools/release_notes.py --self-test
+          python3 tools/release_notes.py "$PREVIOUS" "$REF" > build/release-notes.md
+          cat build/release-notes.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the jar and notes as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pirates_n_ships-${{ steps.version.outputs.version }}
+          path: |
+            ${{ steps.jar.outputs.path }}
+            build/release-notes.md
+          if-no-files-found: error
+
+      - name: Check publishing secrets
+        if: env.DRY_RUN != 'true'
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          MODRINTH_ID: ${{ vars.MODRINTH_ID || secrets.MODRINTH_ID }}
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          CURSEFORGE_ID: ${{ vars.CURSEFORGE_ID || secrets.CURSEFORGE_ID }}
+        run: |
+          missing=()
+          for name in MODRINTH_TOKEN MODRINTH_ID CURSEFORGE_TOKEN CURSEFORGE_ID; do
+            [[ -n "${!name}" ]] || missing+=("$name")
+          done
+          if [[ ${#missing[@]} -gt 0 ]]; then
+            echo "::error::missing repository secrets/variables: ${missing[*]} (docs/releasing.md)"; exit 1
+          fi
+
+      # Dependencies use the platforms' project ids, slugs in the comments:
+      #   Sable                    modrinth.com/mod/sable                    curseforge.com/minecraft/mc-mods/sable
+      #   GeckoLib                 modrinth.com/mod/geckolib                 curseforge.com/minecraft/mc-mods/geckolib
+      #   Player Animation Library modrinth.com/mod/player-animation-library curseforge.com/minecraft/mc-mods/player-animation-library
+      #   GuideME (optional)       modrinth.com/mod/guideme                  curseforge.com/minecraft/mc-mods/guideme
+      - name: Publish to Modrinth, CurseForge and GitHub Releases
+        if: env.DRY_RUN != 'true'
+        uses: Kira-NT/mc-publish@v3.3.1
+        with:
+          modrinth-id: ${{ vars.MODRINTH_ID || secrets.MODRINTH_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          curseforge-id: ${{ vars.CURSEFORGE_ID || secrets.CURSEFORGE_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-tag: ${{ env.TAG }}
+          github-prerelease: ${{ steps.version.outputs.prerelease }}
+          files: ${{ steps.jar.outputs.path }}
+          name: Pirates 'n' Ships ${{ steps.version.outputs.version }} for NeoForge 1.21.1
+          version: ${{ steps.version.outputs.version }}
+          version-type: ${{ steps.version.outputs.channel }}
+          changelog-file: build/release-notes.md
+          loaders: neoforge
+          game-versions: 1.21.1
+          java: 21
+          dependencies: |
+            sable(required){modrinth:T9PomCSv}{curseforge:1312371}
+            geckolib(required){modrinth:8BmcQJ2H}{curseforge:388172}
+            player_animation_library(required){modrinth:ha1mEyJS}{curseforge:1283899}
+            guideme(optional){modrinth:Ck4E7v7R}{curseforge:1173950}

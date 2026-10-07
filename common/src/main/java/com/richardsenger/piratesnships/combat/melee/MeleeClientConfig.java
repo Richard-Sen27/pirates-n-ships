@@ -8,7 +8,8 @@ import com.richardsenger.piratesnships.core.config.ModConfigs;
 
 /**
  * Client config sections {@code melee_input} (how mouse presses become actions), {@code melee_hud} (the stamina
- * bar) and {@code melee_animations} (sword animations through the Player Animation Library). Declared on both sides from {@code MeleeModule.registerConfig()} so datagen and the config screen see them;
+ * bar), {@code melee_animations} (sword animations through the Player Animation Library) and
+ * {@code firearm_animations} (pistol and musket aim and reload animations, same library). Declared on both sides from {@code MeleeModule.registerConfig()} so datagen and the config screen see them;
  * only the client reads them.
  */
 public final class MeleeClientConfig {
@@ -43,6 +44,14 @@ public final class MeleeClientConfig {
     public static final ConfigValue<Integer> ANIMATIONS_LAYER_PRIORITY = ANIM.intRange("layer_priority", 1500, 0, 100000,
             "Priority of the sword animation layer among other mods' player animations (higher = drawn over them; "
                     + "emotes typically use 1000). Applied at game start");
+
+    // Declared here (not in FirearmsConfig) because this class is already loaded on both sides by MeleeModule; the
+    // firearm layer shares first_person and sits 100 below layer_priority (FirearmAnimationsSetup).
+    private static final ConfigSection FIREARM_ANIM = ModConfigs.client("firearm_animations", "Pistol and musket animations of players (Player Animation Library)");
+
+    public static final ConfigValue<Boolean> FIREARM_ANIMATIONS_ENABLED = FIREARM_ANIM.bool("enabled", true,
+            "Animate players aiming and reloading pistols and muskets (first person follows melee_animations.first_person). "
+                    + "Off = guns stay in the normal held pose");
 
     private MeleeClientConfig() {
     }

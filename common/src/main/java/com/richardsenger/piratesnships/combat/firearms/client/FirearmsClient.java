@@ -5,6 +5,8 @@ import com.richardsenger.piratesnships.combat.firearms.FirearmItem;
 import com.richardsenger.piratesnships.combat.firearms.FirearmKind;
 import com.richardsenger.piratesnships.combat.firearms.FirearmRules;
 import com.richardsenger.piratesnships.combat.firearms.FirearmsConfig;
+import com.richardsenger.piratesnships.combat.firearms.client.anim.FirearmAnimationDriver;
+import com.richardsenger.piratesnships.combat.firearms.client.anim.FirearmAnimationsSetup;
 import com.richardsenger.piratesnships.platform.event.ClientEvents;
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraft.world.entity.player.Player;
@@ -22,6 +24,9 @@ public final class FirearmsClient {
     public static void init() {
         ClientEvents.registerEntityRenderer(FirearmContent.LEAD_BALL, ctx -> new ThrownItemRenderer<>(ctx, BALL_SCALE, false));
         ClientEvents.COMPUTE_FOV.register(FirearmsClient::aimFov);
+        // aim and reload poses (P3); the cannon's fuse animation is not part of this
+        ClientEvents.CLIENT_SETUP.register(FirearmAnimationsSetup::onClientSetup);
+        ClientEvents.CLIENT_TICK_END.register(FirearmAnimationDriver::onClientTickEnd);
     }
 
     /** Zooms in while the player aims a loaded musket (an aim session, not the hold after loading). */

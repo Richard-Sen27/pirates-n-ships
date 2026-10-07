@@ -442,6 +442,14 @@ and each shot pushes your ship back a little; a hit pushes the other ship. Balls
 member at a cannon can fire it once you have loaded it. Server options: section `cannons` (on/off, damage, speed,
 gravity, reload, elevations, blocks per hit, recoil and impact push) and `combat.cannon_block_damage`.
 
+### Grappling hook
+Right-click to throw the hook. If it hits the hull of another ship it bites in and hangs there, following the ship.
+If you stand on your own ship, the taut rope hauls both ships together until they lie side by side, ready for
+boarding; then it goes slack. From land the rope drags the hooked ship slowly toward you. A hook that hits your own
+ship, land, water or a creature does not hold (a creature takes a small hit) and comes back after two seconds. To let
+go, sneak and right-click with an empty hand. More than 24 blocks from the hook the rope snaps and the hook comes back
+(or is lost, if the server says so). Throwing a second hook releases the first. Server options: section `grapple`.
+
 ### Swordplay
 With a rapier, cutlass or saber in hand the mouse works differently (server config `melee.skill_based_combat`,
 on by default; vanilla weapons are untouched):
@@ -500,7 +508,7 @@ All blocks drop themselves. Wooden ones are mined with an axe, the bars and the 
 | Musket | 2 iron ingots, 1 flint, 1 planks | Longer reload, flatter and tighter shot. See [Firearms](#firearms). |
 | Lead Shot | 2 iron nuggets (gives 4) | Ammunition for pistol and musket, one per load, with one gunpowder. |
 | Cannonball | 4 iron ingots (gives 2) | Ammunition for the cannon, loaded after the gunpowder. |
-| Grappling Hook | 3 iron ingots, 1 string | No function yet. |
+| Grappling Hook | 3 iron ingots, 1 string | Throw it at another ship to hook it and haul the hulls together. See [Grappling hook](#grappling-hook). |
 | Rope | string | Use it on one cleat, then on a second one 2 to 16 blocks away and lower, to rig a stay. It glints while it remembers the first cleat. |
 | Hull Patch | 2 planks, 1 coal or charcoal (gives 2) | Use on the edge of a hole in an assembled hull to close the breach. See [Fighting a leak](#fighting-a-leak). |
 | Doubloon | none | Currency. |
@@ -574,6 +582,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `anchor_chain` | Chain speeds, travel time limits, anchor sounds and volumes. |
 | `hull_creaking` | Creaking on/off, how often, volume and pitch ranges, the rolling rate that counts. |
 | `audio` (client) | Music on/off and volume, the gap between tracks, shanties aboard. |
+| `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore pull, entity damage, lost-hook rule. |
 | `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevation range and steps, blocks per hit, recoil and impact impulses, ball lifetime and water behaviour. |
 | `melee_animations` (client) | Sword animations on/off, first-person mode, layer priority. |
 | `melee_input` / `melee_hud` (client) | Hold-to-thrust and parry-tap thresholds; stamina bar on/off, scale and offsets. |

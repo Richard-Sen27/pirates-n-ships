@@ -353,6 +353,8 @@ Firearms get a reload animation, smoke and recoil. Rain reduces reliability (a m
 - **Version 2:** rope physics: swing, climb up and down, balance on the rope between two ships.
 - The hook attaches in ship-local coordinates, so it follows the moving ship.
 
+**Implemented (G11, `combat/grapple`):** the thrown hook latches onto another ship's block (plot position); while the thrower stands on a ship, a rope spring between the thrower ship's nearest block and the hook pulls both bodies with equal and opposite horizontal forces at centre-of-mass height, through the force group "grapple" every physics substep, until the ends are within `hold_distance + hold_slack` or the rope stalls against the touching hulls (`GrappleRules.Holding`, judged by distance progress only); sneak-use releases, walking beyond the rope length snaps it. From land the rope drags the hooked ship gently.
+
 ### 8.4 Boarding
 - Grappled ships can be pulled closer (with multiple hooks or crew assistance).
 - Crew with the "prepare to board" order jump over and fight.

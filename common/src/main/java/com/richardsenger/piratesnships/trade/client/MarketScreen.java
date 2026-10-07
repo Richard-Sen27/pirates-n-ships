@@ -14,6 +14,12 @@ import com.richardsenger.piratesnships.trade.good.TradeGood;
 import com.richardsenger.piratesnships.trade.market.GoodRole;
 import com.richardsenger.piratesnships.trade.net.MarketPayloads;
 import com.richardsenger.piratesnships.trade.net.MarketView;
+import com.richardsenger.piratesnships.trade.net.OrderPayloads;
+import com.richardsenger.piratesnships.ship.template.ShipOrderContent;
+import com.richardsenger.piratesnships.ship.template.ShipOrderMath;
+import com.richardsenger.piratesnships.ship.template.ShipReceiptText;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
 import com.richardsenger.piratesnships.trade.plunder.PlunderMark;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -38,7 +44,8 @@ import java.util.Optional;
  * {@link MarketPayloads.OpenMarket}; shows {@link ClientMarketState}'s view: the port's name and kind, the player's
  * doubloons, a "Goods" tab (each good with its role, buy and sell totals for the chosen quantity, what the player
  * carries, buy and sell buttons) and a "Contracts" tab (today's offers with accept, the player's contracts with
- * deliver). Every button only sends a request; the server decides and answers with a new state, whose result shows
+ * deliver) and, at a seafarer village's desk, an "Orders" tab (SW1: the shipwright's ships with price, build time
+ * and materials and an order button, and the player's orders there with their progress). Every button only sends a request; the server decides and answers with a new state, whose result shows
  * on the status line. The server pushes a new state when what the screen shows changed (another player's trade,
  * prices, doubloons). Closes on Escape, the inventory key, when the player is farther than the desk's reach, or when
  * the server refuses the session; closing sends {@link MarketPayloads.CloseMarket}.
@@ -50,9 +57,9 @@ import java.util.Optional;
  */
 public final class MarketScreen extends Screen {
 
-    private enum Tab { GOODS, CONTRACTS }
+    private enum Tab { GOODS, CONTRACTS, ORDERS }
 
-    private enum Action { NONE, BUY, SELL, CONTRACT }
+    private enum Action { NONE, BUY, SELL, CONTRACT, ORDER }
 
     /** A button drawn in a list row; {@code tooltip} (may be null) explains a disabled button. */
     private record RowButton(int x, int y, int w, int h, Component label, boolean active, Component tooltip, Runnable action) {
@@ -63,6 +70,10 @@ public final class MarketScreen extends Screen {
 
     /** A line of the contracts tab: a section header, an offer, an accepted contract, or an "empty" note. */
     private record ContractRow(Component header, boolean heading, DeliveryContract contract, boolean mine) {
+    }
+
+    /** A line of the orders tab (SW1): a section header, a ship on offer, one of the player's orders, or a note. */
+    private record OrderRow(Component header, boolean heading, OrderPayloads.OrderLine ship, OrderPayloads.MyOrder mine) {
     }
 
     private static final int ROW_H = 22;
@@ -77,6 +88,8 @@ public final class MarketScreen extends Screen {
     private int scroll;
     private long seenVersion = -1;
     private long seenResultVersion = ClientMarketState.resultVersion();
+    private long seenOrderResultVersion = ClientMarketState.orderResultVersion();
+    private boolean ordersShown;
     private Action pending = Action.NONE;
     private Component status = Component.empty();
     private int statusColor = GuiKit.INK;
@@ -133,6 +146,13 @@ public final class MarketScreen extends Screen {
                 .selected(tab == Tab.GOODS)).active = tab != Tab.GOODS;
         addRenderableWidget(new BrassButton(x0 + 72, y, 70, 14, Component.translatable(MarketText.TAB_CONTRACTS), () -> switchTab(Tab.CONTRACTS))
                 .selected(tab == Tab.CONTRACTS)).active = tab != Tab.CONTRACTS;
+        // SW1: a seafarer village's desk also takes ship orders
+        ordersShown = ClientMarketState.orders().isPresent();
+        if (!ordersShown && tab == Tab.ORDERS) tab = Tab.GOODS;
+        if (ordersShown) {
+            addRenderableWidget(new BrassButton(x0 + 144, y, 70, 14, Component.translatable(MarketText.TAB_ORDERS), () -> switchTab(Tab.ORDERS))
+                    .selected(tab == Tab.ORDERS)).active = tab != Tab.ORDERS;
+        }
         if (tab == Tab.GOODS) {
             int qy = top + 46;
             int x = x0 + font.width(Component.translatable(MarketText.QUANTITY)) + 6;
@@ -219,6 +239,7 @@ public final class MarketScreen extends Screen {
         if (ClientMarketState.version() != seenVersion) {
             seenVersion = ClientMarketState.version();
             onState(mc);
+            if (ClientMarketState.orders().isPresent() != ordersShown) rebuildWidgets();
         }
     }
 
@@ -237,6 +258,16 @@ public final class MarketScreen extends Screen {
             status = message(result.get(), view);
             statusColor = result.get().done() ? GuiKit.INK_GREEN : GuiKit.INK_RED;
             pending = Action.NONE;
+        }
+        Optional<OrderPayloads.OrderResult> order = ClientMarketState.lastOrderResult();
+        if (order.isPresent() && ClientMarketState.orderResultVersion() != seenOrderResultVersion) {
+            seenOrderResultVersion = ClientMarketState.orderResultVersion();
+            OrderPayloads.OrderResult r = order.get();
+            // template names travel as translation keys
+            Object[] args = r.args().stream().map(a -> a.startsWith("ship_template.") ? (Object) Component.translatable(a) : a).toArray();
+            status = Component.translatable(r.key(), args);
+            statusColor = r.done() ? GuiKit.INK_GREEN : GuiKit.INK_RED;
+            if (pending == Action.ORDER) pending = Action.NONE;
         }
     }
 
@@ -304,6 +335,7 @@ public final class MarketScreen extends Screen {
 
     /** Rows of the open tab (for scrolling). */
     private int rowCount() {
+        if (tab == Tab.ORDERS) return ClientMarketState.orders().map(o -> orderRows(o).size()).orElse(0);
         return ClientMarketState.view().map(v -> tab == Tab.GOODS ? MarketLines.order(v.goods()).size() : contractRows(v).size()).orElse(0);
     }
 
@@ -351,6 +383,9 @@ public final class MarketScreen extends Screen {
             g.drawCenteredString(font, Component.translatable(MarketText.LOADING), (inner() + tableRight) / 2, listTop + 20, GuiKit.INK_DIM);
         } else if (tab == Tab.GOODS) {
             total = renderGoods(g, view.get(), mouseX, mouseY);
+        } else if (tab == Tab.ORDERS) {
+            MarketView v = view.get();
+            total = ClientMarketState.orders().map(o -> renderOrders(g, v, o, mouseX, mouseY)).orElse(0);
         } else {
             total = renderContracts(g, view.get(), mouseX, mouseY);
         }
@@ -495,6 +530,84 @@ public final class MarketScreen extends Screen {
                         idle && v.coins() >= c.deposit(), null,
                         () -> send(Action.CONTRACT, new MarketPayloads.ContractAction(port, false, c.id(), Optional.empty()))));
             }
+        }
+        return rows.size();
+    }
+
+    private List<OrderRow> orderRows(OrderPayloads.OrdersView o) {
+        List<OrderRow> rows = new ArrayList<>();
+        rows.add(new OrderRow(Component.translatable(MarketText.SHIPS, o.open(), o.max()), true, null, null));
+        if (!o.enabled()) rows.add(new OrderRow(Component.translatable(MarketText.ORDERS_DISABLED), false, null, null));
+        else if (o.lines().isEmpty()) rows.add(new OrderRow(Component.translatable(MarketText.NO_SHIPS), false, null, null));
+        for (OrderPayloads.OrderLine l : o.lines()) rows.add(new OrderRow(null, false, l, null));
+        rows.add(new OrderRow(Component.translatable(MarketText.MY_ORDERS), true, null, null));
+        if (o.mine().isEmpty()) rows.add(new OrderRow(Component.translatable(MarketText.NO_MY_ORDERS), false, null, null));
+        for (OrderPayloads.MyOrder m : o.mine()) rows.add(new OrderRow(null, false, null, m));
+        return rows;
+    }
+
+    /** Items of {@code tag} anywhere in the inventory (what the server takes). */
+    private static int carried(TagKey<Item> tag) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return 0;
+        int n = 0;
+        for (int i = 0; i < mc.player.getInventory().getContainerSize(); i++) {
+            ItemStack s = mc.player.getInventory().getItem(i);
+            if (!s.isEmpty() && s.is(tag)) n += s.getCount();
+        }
+        return n;
+    }
+
+    private int renderOrders(GuiGraphics g, MarketView v, OrderPayloads.OrdersView o, int mouseX, int mouseY) {
+        List<OrderRow> rows = orderRows(o);
+        scroll = ScrollMath.clamp(scroll, rows.size(), visibleRows());
+        int right = tableRight - 2;
+        int textX = inner() + 24;
+        int logs = carried(ItemTags.LOGS);
+        int wool = carried(ItemTags.WOOL);
+        Minecraft mc = Minecraft.getInstance();
+        double today = mc.level == null ? 0.0 : ShipOrderMath.day(mc.level.getDayTime());
+        for (int i = scroll; i < rows.size() && i < scroll + visibleRows(); i++) {
+            OrderRow row = rows.get(i);
+            int y = listTop + (i - scroll) * ROW_H;
+            if (row.ship() == null && row.mine() == null) {
+                if (row.heading()) {
+                    g.drawString(font, row.header(), inner() + 6, y + 8, GuiKit.INK, false);
+                    GuiKit.divider(g, inner() + 4, y + 18, tableRight - inner() - 4);
+                } else {
+                    g.drawString(font, row.header(), textX, y + 8, GuiKit.INK_DIM, false);
+                }
+                continue;
+            }
+            rowWash(g, i, y, mouseX, mouseY);
+            if (row.mine() != null) {
+                OrderPayloads.MyOrder m = row.mine();
+                ShipReceiptText.State state = ShipReceiptText.state(m.finishDay(), today);
+                g.renderItem(new ItemStack(ShipOrderContent.SHIP_RECEIPT.get()), inner() + 5, y + 3);
+                GuiKit.ink(g, font, Component.translatable(m.name()), textX, y + 2, right - textX, GuiKit.INK);
+                Component when = state.ready() ? Component.translatable(MarketText.MY_ORDER_READY)
+                        : Component.translatable(MarketText.MY_ORDER_WAITING, state.daysLeft());
+                GuiKit.ink(g, font, when, textX, y + 12, right - textX, state.ready() ? GuiKit.INK_GREEN : GuiKit.INK_DIM);
+                continue;
+            }
+            OrderPayloads.OrderLine l = row.ship();
+            g.renderItem(new ItemStack(Items.OAK_BOAT), inner() + 5, y + 3);
+            int textW = right - CONTRACT_BUTTON_W - 4 - textX;
+            GuiKit.ink(g, font, Component.translatable(l.name()), textX, y + 2, textW, GuiKit.INK);
+            boolean enough = v.coins() >= l.price() && logs >= l.logs() && wool >= l.wool();
+            Component detail = Component.translatable(MarketText.ORDER_DETAIL, MarketLines.formatCoins(l.price()),
+                    ShipOrderMath.formatDays(l.buildDays())).append(Component.literal(", "))
+                    .append(Component.translatable(MarketText.ORDER_MATERIALS, l.logs(), l.wool()));
+            GuiKit.ink(g, font, detail, textX, y + 12, textW, enough ? GuiKit.INK_DIM : GuiKit.INK_RED);
+            boolean free = o.enabled() && o.open() < o.max();
+            Component tip = !o.enabled() ? Component.translatable(MarketText.ORDERS_DISABLED)
+                    : !free ? Component.translatable(MarketText.ORDERS_FULL)
+                    : !enough ? Component.translatable(MarketText.ORDER_NEEDS, MarketLines.formatCoins(l.price()), l.logs(), l.wool()) : null;
+            ResourceLocation port = o.port();
+            ResourceLocation template = l.template();
+            rowButtons.add(new RowButton(right - CONTRACT_BUTTON_W, y + 4, CONTRACT_BUTTON_W, 14, Component.translatable(MarketText.ORDER),
+                    pending == Action.NONE && free && enough, tip,
+                    () -> send(Action.ORDER, new OrderPayloads.PlaceOrder(port, template))));
         }
         return rows.size();
     }

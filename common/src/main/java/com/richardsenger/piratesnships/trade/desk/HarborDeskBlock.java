@@ -6,7 +6,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import com.richardsenger.piratesnships.ship.template.ShipOrderContent;
+import com.richardsenger.piratesnships.ship.template.ShipOrders;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -33,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The harbor master's desk (design.md §10.3): a writing desk bound to one port ({@link HarborDeskBlockEntity}). Its
  * front faces the player who placed it. Using it opens the port's market screen ({@link HarborDeskService#use}); an
- * unbound desk says so on the action bar. With {@code harbor_desks.desks_enabled} off the desk is inert.
+ * unbound desk says so on the action bar. Using it with a ship receipt picks up the ordered ship (SW1). With {@code harbor_desks.desks_enabled} off the desk is inert.
  *
  * <p>The model is hand-made in Blockbench ({@code art/models/harbor_desk.bbmodel}): a partner's desk with drawers and a
  * kneehole on both sides. {@link #FACING} is the customer's side (towards the player who placed it; north in the
@@ -100,6 +104,24 @@ public class HarborDeskBlock extends BaseEntityBlock {
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
         if (level instanceof ServerLevel server) HarborDeskService.autoBind(server, pos);
+    }
+
+    /**
+     * Using the desk with a ship receipt (SW1) picks up the ordered ship ({@code ShipOrders.pickup}) instead of opening
+     * the market; any other item opens the market as an empty hand does.
+     */
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
+                                              InteractionHand hand, BlockHitResult hit) {
+        if (!TradeConfig.DESKS_ENABLED.get() || !stack.is(ShipOrderContent.SHIP_RECEIPT.get())) {
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+        if (level.isClientSide) return ItemInteractionResult.SUCCESS;
+        if (!(player instanceof ServerPlayer sp)) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        return ShipOrders.pickup(sp, pos, stack).map(r -> {
+            sp.displayClientMessage(r.message(), false);
+            return ItemInteractionResult.CONSUME;
+        }).orElse(ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION);
     }
 
     @Override

@@ -46,13 +46,22 @@ public final class ShipTemplatePlacer {
 
     /** Blocks between the caller and the near end of the ship. */
     public static final int GAP = 3;
+    /** Blocks between a berth's own column and the near side of a ship moored there (SW1). */
+    public static final int BERTH_GAP = 1;
+    /**
+     * How far a ship may be slid from the berth's centre toward its bow when the centred spot is blocked (a pier of 20
+     * blocks with its berth at the middle leaves a 29 block hull's stern over the quay or the beach).
+     */
+    static final int[] BERTH_SLIDES = {0, 4, 8, 12, 16};
     /** How far above and below the caller the water surface is searched. */
     static final int SURFACE_SEARCH_UP = 4;
     static final int SURFACE_SEARCH_DOWN = 48;
 
     public enum Outcome {
         PLACED(true), UNKNOWN_TEMPLATE(false), MISSING_STRUCTURE(false), OBSTRUCTED(false), OUT_OF_WORLD(false),
-        NO_HELM(false);
+        NO_HELM(false),
+        /** At a berth (SW1): another ship lies there. */
+        OCCUPIED(false);
 
         public final boolean success;
 
@@ -150,10 +159,20 @@ public final class ShipTemplatePlacer {
         int surfaceY = surface.orElse(level.getSeaLevel() - 1);
         BlockPos origin = TemplatePlacement.origin(size, rotation, facing, feet, GAP, surfaceY, waterline);
 
+        return placeAt(level, id, template, structure, blocks, helmLocal, origin, rotation, surfaceY, seaLevel, force, assemble, player);
+    }
+
+    /** The template's world cells at {@code origin} with {@code rotation}. */
+    static Set<BlockPos> cells(List<LocalBlock> blocks, Rotation rotation, BlockPos origin) {
         Set<BlockPos> cells = new LinkedHashSet<>();
         for (LocalBlock b : blocks) {
             cells.add(TemplatePlacement.toWorld(b.pos(), rotation, origin));
         }
+        return cells;
+    }
+
+    /** The first cell that is outside the world or (unless {@code force}) not free for a ship; null if none. */
+    static @Nullable Result blocked(ServerLevel level, ResourceLocation id, ShipTemplate template, Set<BlockPos> cells, boolean force) {
         Optional<BlockPos> outside = TemplatePlacement.firstBlocked(cells, level::isOutsideBuildHeight);
         if (outside.isPresent()) {
             return Result.fail(Outcome.OUT_OF_WORLD, id, template, outside.get());
@@ -164,7 +183,18 @@ public final class ShipTemplatePlacer {
                 return Result.fail(Outcome.OBSTRUCTED, id, template, blocked.get());
             }
         }
+        return null;
+    }
 
+    /** Checks the cells, places the template at {@code origin}, drains the hold and assembles on request. */
+    private static Result placeAt(ServerLevel level, ResourceLocation id, ShipTemplate template, StructureTemplate structure,
+                                  List<LocalBlock> blocks, @Nullable BlockPos helmLocal, BlockPos origin, Rotation rotation,
+                                  int surfaceY, boolean seaLevel, boolean force, boolean assemble, @Nullable Player player) {
+        Set<BlockPos> cells = cells(blocks, rotation, origin);
+        Result refused = blocked(level, id, template, cells, force);
+        if (refused != null) {
+            return refused;
+        }
         StructurePlaceSettings settings = new StructurePlaceSettings().setRotation(rotation).setIgnoreEntities(true)
                 .setLiquidSettings(LiquidSettings.IGNORE_WATERLOGGING);
         structure.placeInWorld(level, origin, origin, settings, level.getRandom(), Block.UPDATE_CLIENTS);
@@ -184,4 +214,60 @@ public final class ShipTemplatePlacer {
         }
         return new Result(Outcome.PLACED, id, template, origin, rotation, helmWorld, null, blocks.size(), surfaceY, seaLevel, assembly);
     }
+
+    /**
+     * Places template {@code id} at a berth (shipwright pickup, SW1) and assembles it with {@code player} as owner:
+     * bow along {@code bow}, centred on the berth along the bow axis, on the side of the berth away from the pier with
+     * {@link #BERTH_GAP} blocks of water between (see {@link TemplatePlacement#berthOrigin}), the waterline row at the
+     * berth's height (the sea surface). Each side is tried in turn, first centred and then slid toward the bow in
+     * steps ({@link #BERTH_SLIDES}) while the cells are not free (outside the world, quay, beach, seabed); a footprint
+     * that {@code occupied} rejects (another ship lies there) ends that side. Returns {@link Outcome#OCCUPIED} or the
+     * last obstruction when nothing works.
+     */
+    public static Result placeAtBerth(ServerLevel level, ResourceLocation id, BlockPos berth, Direction bow,
+                                      java.util.function.Predicate<net.minecraft.world.level.levelgen.structure.BoundingBox> occupied,
+                                      boolean assemble, @Nullable Player player) {
+        ShipTemplate template = ShipTemplates.TYPE.server().get(id).orElse(null);
+        if (template == null) {
+            return Result.fail(Outcome.UNKNOWN_TEMPLATE, id, null, null);
+        }
+        StructureTemplate structure = structure(level, template).orElse(null);
+        if (structure == null || structure.getSize().getX() < 1) {
+            return Result.fail(Outcome.MISSING_STRUCTURE, id, template, null);
+        }
+        List<LocalBlock> blocks = blocks(structure, level.holderLookup(Registries.BLOCK));
+        BlockPos helmLocal = helm(template, blocks);
+        if (assemble && helmLocal == null) {
+            return Result.fail(Outcome.NO_HELM, id, template, null);
+        }
+        Vec3i size = structure.getSize();
+        Rotation rotation = TemplatePlacement.rotationFor(template.bow(), bow);
+        int waterline = template.waterlineFor(helmLocal);
+        int surfaceY = berth.getY();
+        Result last = Result.fail(Outcome.OCCUPIED, id, template, berth);
+        List<Direction> sides = TemplatePlacement.berthSides(bow, side -> {
+            for (int dy = 0; dy <= 2; dy++) {
+                if (!ShipBlockRule.isFreeForShip(level.getBlockState(berth.relative(side).above(dy)))) return true;
+            }
+            return false;
+        });
+        for (Direction side : sides) {
+            BlockPos centred = TemplatePlacement.berthOrigin(size, rotation, bow, side, berth, BERTH_GAP, surfaceY, waterline);
+            for (int slide : BERTH_SLIDES) {
+                BlockPos origin = centred.relative(bow, slide);
+                if (occupied.test(TemplatePlacement.worldBox(size, rotation, origin))) {
+                    // another ship lies here: sliding further out along the same berth would only crowd it
+                    break;
+                }
+                Result refused = blocked(level, id, template, cells(blocks, rotation, origin), false);
+                if (refused != null) {
+                    last = refused;
+                    continue;
+                }
+                return placeAt(level, id, template, structure, blocks, helmLocal, origin, rotation, surfaceY, false, false, assemble, player);
+            }
+        }
+        return last;
+    }
+
 }

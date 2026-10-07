@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
  *                                                      where the caller looks; force ignores obstructions, assemble
  *                                                      turns it into a ship at its helm
  * </pre>
+ * The shipwright order commands ({@code /pirates ship orders ...}) are in {@link ShipOrderCommands}.
  * A template id without a namespace means ours ({@code starter_sloop} = {@code pirates_n_ships:starter_sloop}).
  */
 public final class ShipTemplateCommands {
@@ -46,6 +47,7 @@ public final class ShipTemplateCommands {
     public static final String KEY_LIST_ENTRY = KEY + "list_entry";
     public static final String KEY_LIST_EMPTY = KEY + "list_empty";
     public static final String KEY_HULL_ONLY = KEY + "hull_only";
+    public static final String KEY_OCCUPIED = KEY + "occupied";
 
     private ShipTemplateCommands() {
     }
@@ -61,6 +63,7 @@ public final class ShipTemplateCommands {
                 .then(Commands.literal("ship").requires(s -> s.hasPermission(2))
                         .then(Commands.literal("templates").executes(ShipTemplateCommands::list))
                         .then(Commands.literal("place").then(template))));
+        ShipOrderCommands.register(dispatcher);
     }
 
     /** English strings of the commands and our template names (datagen). */
@@ -76,6 +79,7 @@ public final class ShipTemplateCommands {
                 .add(KEY_LIST_ENTRY, "%s (%s): %s×%s×%s, helm %s, waterline row %s, price %s")
                 .add(KEY_LIST_EMPTY, "No ship templates are loaded")
                 .add(KEY_HULL_ONLY, "none (hull only)")
+                .add(KEY_OCCUPIED, "Another ship lies there")
                 .add(ShipTemplates.STARTER_SLOOP.name(), "Starter Sloop")
                 .add(ShipTemplates.STARTER_SLOOP_BASIC.name(), "Starter Sloop (basic)");
     }
@@ -128,6 +132,7 @@ public final class ShipTemplateCommands {
             case OBSTRUCTED -> source.sendFailure(Component.translatable(KEY_OBSTRUCTED, r.where().getX(), r.where().getY(), r.where().getZ()));
             case OUT_OF_WORLD -> source.sendFailure(Component.translatable(KEY_OUT_OF_WORLD, r.where().getX(), r.where().getY(), r.where().getZ()));
             case NO_HELM -> source.sendFailure(Component.translatable(KEY_NO_HELM, idText));
+            case OCCUPIED -> source.sendFailure(Component.translatable(KEY_OCCUPIED));
         }
     }
 

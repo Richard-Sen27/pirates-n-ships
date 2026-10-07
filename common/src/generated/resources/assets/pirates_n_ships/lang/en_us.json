@@ -330,6 +330,9 @@
   "message.pirates_n_ships.hull_patch.disabled": "Hull patches are disabled on this server",
   "message.pirates_n_ships.hull_patch.not_a_breach": "Use the patch on a hole in the hull",
   "message.pirates_n_ships.hull_patch.not_on_ship": "Hull patches only close holes in an assembled ship",
+  "message.pirates_n_ships.jobs.no_free_hands": "No free hands to %s",
+  "message.pirates_n_ships.jobs.order_posted": "Order: %s (%s crew carry it out, %s stations open for free hands)",
+  "message.pirates_n_ships.jobs.posted": "%s open jobs posted: %s",
   "message.pirates_n_ships.melee.refused.locked_out": "Can't parry again so soon",
   "message.pirates_n_ships.melee.refused.no_stamina": "Too exhausted",
   "message.pirates_n_ships.melee.refused.staggered": "Staggered",
@@ -791,6 +794,13 @@
   "pirates_n_ships.configuration.crew_stations.ack_radius.tooltip": "Players within this many blocks of a crew member see its acknowledgement of an order (0 = nobody)",
   "pirates_n_ships.configuration.crew_stations.enabled": "Enabled",
   "pirates_n_ships.configuration.crew_stations.enabled.tooltip": "Crew members can be assigned to stations and carry out orders there. Off: assigned crew are released",
+  "pirates_n_ships.configuration.crew_stations.job_board": "Job Board",
+  "pirates_n_ships.configuration.crew_stations.job_board.claim_interval_ticks": "Claim Interval Ticks",
+  "pirates_n_ships.configuration.crew_stations.job_board.claim_interval_ticks.tooltip": "Ticks between two passes of the job board, in which free crew claim the open jobs",
+  "pirates_n_ships.configuration.crew_stations.job_board.enabled": "Enabled",
+  "pirates_n_ships.configuration.crew_stations.job_board.enabled.tooltip": "Ship-wide orders post open jobs for unmanned stations that free crew take by themselves. Off = only manned stations carry orders out",
+  "pirates_n_ships.configuration.crew_stations.job_board.max_claim_distance": "Max Claim Distance",
+  "pirates_n_ships.configuration.crew_stations.job_board.max_claim_distance.tooltip": "Crew members farther than this many blocks from an open job never claim it (0 = the whole ship)",
   "pirates_n_ships.configuration.crew_stations.order_radius": "Order Radius",
   "pirates_n_ships.configuration.crew_stations.order_radius.tooltip": "Range of /pirates crew order without targets: assigned crew members within this many blocks",
   "pirates_n_ships.configuration.crew_stations.seat_check_interval": "Seat Check Interval",
@@ -1901,5 +1911,5 @@
   "whistle_order.pirates_n_ships.reef": "Reef sails",
   "whistle_order.pirates_n_ships.reef.desc": "Crew at the winches take the sails in to half",
   "whistle_order.pirates_n_ships.release": "Release crew",
-  "whistle_order.pirates_n_ships.release.desc": "All crew of this ship leave their stations"
+  "whistle_order.pirates_n_ships.release.desc": "All crew of this ship leave their stations; open jobs are dropped"
 }

@@ -124,6 +124,25 @@ public final class Stations {
         return OrderResult.STARTED;
     }
 
+    /**
+     * Work time {@code order} would take at the station {@code ref} now, whoever mans it: negative when the station is
+     * gone, does not take the order or cannot carry it out, 0 when there is nothing to do (the job board posts no job
+     * then).
+     */
+    public static int workTicks(ServerLevel level, StationRef ref, Object order) {
+        StationKind<?> kind = kindAt(level, ref);
+        if (kind == null || !kind.accepts(order)) {
+            return -1;
+        }
+        return duration(kind, level, ref, order);
+    }
+
+    /** Whether somebody (crew member or player) occupies the station at {@code ref}. */
+    public static boolean isManned(StationRef ref) {
+        Entry e = STATES.get(ref);
+        return e != null && e.state().occupant() != null;
+    }
+
     /** Advances the orders in progress of this level; orders of ships that are not loaded wait. */
     public static void onLevelTick(ServerLevel level) {
         if (STATES.isEmpty()) {

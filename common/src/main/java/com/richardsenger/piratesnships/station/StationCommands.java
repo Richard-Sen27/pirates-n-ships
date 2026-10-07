@@ -9,6 +9,7 @@ import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
+import com.richardsenger.piratesnships.station.jobs.JobBoard;
 import com.richardsenger.piratesnships.station.winch.CaptainsWhistleItem;
 import com.richardsenger.piratesnships.station.order.CrewOrder;
 import java.util.ArrayList;
@@ -101,7 +102,8 @@ public final class StationCommands {
 
     /**
      * Without a crew argument the order goes to the assigned crew within {@code order_radius} whose station takes it
-     * (as the whistle's orders do); named crew members at another kind of station refuse it.
+     * (as the whistle's orders do), and the unmanned stations of the ship at the source that take it become open jobs on
+     * its {@link JobBoard} (CR1); named crew members at another kind of station refuse it.
      */
     private static int order(CommandContext<CommandSourceStack> c, @Nullable Collection<? extends Entity> targets) {
         CrewOrder order = CrewOrder.byId(StringArgumentType.getString(c, "order").toLowerCase(Locale.ROOT)).orElse(null);
@@ -124,7 +126,33 @@ public final class StationCommands {
         }
         int started = n;
         c.getSource().sendSuccess(() -> Component.translatable(KEY_ORDERED, Component.translatable(order.nameKey()), started, crew.size()), true);
+        ShipBody ship = targets == null ? shipAt(c.getSource()) : null;
+        JobBoard.Posted posted = ship == null ? JobBoard.Posted.NONE : JobBoard.post(level, ship, order);
+        if (posted.jobs() > 0) {
+            c.getSource().sendSuccess(() -> Component.translatable(JobBoard.KEY_POSTED, posted.jobs(), Component.translatable(order.nameKey())), true);
+        }
+        if (posted.noFreeHands()) {
+            c.getSource().sendSuccess(() -> Component.translatable(JobBoard.KEY_NO_FREE_HANDS, Component.translatable(order.nameKey())), true);
+        }
         return n;
+    }
+
+    /** The ship the command's entity stands on, else the ship whose deck is at the command's position, else null. */
+    static @Nullable ShipBody shipAt(CommandSourceStack source) {
+        ServerLevel level = source.getLevel();
+        if (source.getEntity() != null) {
+            return CaptainsWhistleItem.shipOf(level, source.getEntity());
+        }
+        Vec3 pos = source.getPosition();
+        for (ShipBody ship : SableShips.all(level)) {
+            if (CrewStations.worldBox(ship, 2).contains(pos)) {
+                BlockPos local = BlockPos.containing(ship.toPlot(pos));
+                for (int dy = 0; dy <= 2; dy++) {
+                    if (!level.getBlockState(local.below(dy)).isAir()) return ship;
+                }
+            }
+        }
+        return null;
     }
 
     /** Plot position of the station at {@code pos}: {@code pos} itself if it is in a plot, else the ship block seen there. */

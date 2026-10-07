@@ -43,3 +43,37 @@ differs.
 5. **Sit (boat).** Legs forward and slightly splayed, hands on the thighs, leaning back slightly.
 6. **Items in hand.** A sword in the main hand and a torch in the off hand follow the hands in every pose; in the work
    pose the sword swings with the hauling arm.
+
+## CR1: job board (orders instead of assignments)
+Covered by 9 JUnit tests (`JobBoardRulesTest`) and 6 GameTests (`station/jobs/JobBoardGameTests`). What the tests
+cannot show: how claiming looks and reads in game. Crew are seated at the station at once (no walking yet).
+
+Setup: an assembled ship with a mast and at least two sails, two sail winches and a bilge pump on deck, standing on
+the deck yourself with the captain's whistle. Default config (`crew_stations.job_board.enabled = true`,
+`claim_interval_ticks = 20`, `max_claim_distance = 0`).
+
+1. **Hoist without assignments.** `/pirates crew spawn` three times on the deck, assign nobody. Whistle menu: "Hoist
+   sails". Expected: the action bar reads "Order: hoist the sails (0 crew carry it out, 2 stations open for free
+   hands)"; within about one second two of the three crew appear at the two winches (the nearer crew member at each),
+   each says "Aye, hoisting the sails!", and the sails go up after the work time (80 ticks from furled with the
+   default trim step). The third crew member keeps strolling. Report a crew member that ends up at a winch on another
+   ship, or one that stood on the dock and still claimed.
+2. **They stay.** After the hoist the two crew stay at their winches. "Furl sails": they furl at once (they man the
+   winches now), no new line about open jobs.
+3. **Pinned at the pump.** "Release crew" (all three walk free; the board is empty). Then select one crew member with
+   the whistle and use it on the pump: it is pinned there. "Hoist sails": the two others take the winches, the pinned
+   one stays at the pump. "Man the pumps" with water in the hold: the pinned one pumps as before.
+4. **No free hands.** "Release crew", then `/kill @e[type=pirates_n_ships:crew_member]`. "Hoist sails": the action bar
+   reads "No free hands to hoist the sails" once, and it does not come back on its own. Spawn a crew member on the
+   deck: within about a second it takes a winch and hoists (the open job waited for it).
+5. **Release clears the board.** With no crew on board, "Hoist sails", then "Release crew", then spawn a crew member:
+   it stays free, the sails stay furled.
+6. **Command.** Standing on the deck: `/pirates crew order hoist`. Expected: the usual "Order ..." feedback plus "2 open
+   jobs posted: hoist the sails" when nobody mans the winches, and free crew take them as in step 1.
+7. **Config off.** Set `crew_stations.job_board.enabled = false` (server config, or `/config` screen), repeat step 1:
+   nothing happens at unmanned winches, the action bar reads "Order: hoist the sails (0 crew carry it out)", the free
+   crew keep strolling. Assigning by hand with the whistle works as before.
+8. **Save and reload.** A board-assigned crew member at a winch and a pinned one at the pump, save and quit, reload:
+   both are at their stations. Furl, then "Release" only the winch crew member with the whistle (use it on that crew
+   member) and order "Hoist sails": the open winch job never takes the pinned one from the pump (open jobs themselves
+   are not saved, so post the order after the reload).

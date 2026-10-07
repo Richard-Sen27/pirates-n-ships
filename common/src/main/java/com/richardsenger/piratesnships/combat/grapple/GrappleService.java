@@ -218,7 +218,7 @@ public final class GrappleService {
             return;
         }
         Vec3 hookWorld = target.toWorld(hookPlot);
-        double hold = GrappleConfig.HOLD_DISTANCE.get();
+        double hold = GrappleConfig.holdLength();
         double damping = GrappleConfig.ROPE_DAMPING.get();
         UUID throwerId = h.throwerShipId();
         Vec3 anchorPlot = h.anchorPlot();

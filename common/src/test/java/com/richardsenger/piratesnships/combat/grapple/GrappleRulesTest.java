@@ -102,6 +102,24 @@ class GrappleRulesTest {
     }
 
     @Test
+    void deadBandHoldsWithoutPullingJustBeyondTheHoldDistance() {
+        double rest = GrappleRules.holdLength(1.5, 0.5);
+        assertEquals(2.0, rest, EPS);
+        assertEquals(1.5, GrappleRules.holdLength(1.5, -1.0), EPS, "negative slack is no slack");
+        // the hulls settle a little beyond hold_distance (1.58 to 1.78 blocks measured): no pull, rope not taut
+        for (double d : new double[] {1.58, 1.78, 2.0}) {
+            assertEquals(0.0, GrappleRules.tension(d, rest, 0, 120, 40), EPS, "pull at " + d);
+            assertEquals(0.0, GrappleRules.tension(d, rest, 1.0, 120, 40), EPS, "pull at " + d + " while separating");
+            assertFalse(GrappleRules.taut(d, rest, 120), "taut at " + d);
+        }
+        // from farther out the ramp still pulls them together, starting at the end of the dead band
+        assertEquals(60.0, GrappleRules.tension(2.5, rest, 0, 120, 40), EPS);
+        assertEquals(120.0, GrappleRules.tension(3.0, rest, 0, 120, 40), EPS);
+        assertEquals(120.0, GrappleRules.tension(9.0, rest, 0, 120, 40), EPS);
+        assertTrue(GrappleRules.taut(2.01, rest, 120));
+    }
+
+    @Test
     void noForceMeansNoPullAndNoTautRope() {
         assertEquals(0.0, GrappleRules.tension(10, 1.5, 0, 0, 40), EPS);
         assertFalse(GrappleRules.taut(10, 1.5, 0));

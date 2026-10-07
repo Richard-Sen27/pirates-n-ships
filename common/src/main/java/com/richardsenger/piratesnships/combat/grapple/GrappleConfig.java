@@ -30,6 +30,9 @@ public final class GrappleConfig {
     public static final ConfigValue<Double> HOLD_DISTANCE = S.doubleRange("hold_distance", 1.5, 0.0, 32.0,
             "Horizontal distance in blocks between the rope's two ends (the thrower ship's nearest block and the hook) "
                     + "at which hauling stops: the hulls are side by side");
+    public static final ConfigValue<Double> HOLD_SLACK = S.doubleRange("hold_slack", 0.5, 0.0, 8.0,
+            "Dead band in blocks beyond hold_distance in which the rope holds without pulling (hulls that touch or "
+                    + "collide before the rope's ends reach hold_distance still count as alongside)");
     public static final ConfigValue<Double> SHORE_HAUL_FORCE = S.doubleRange("shore_haul_force", 30.0, 0.0, 100000.0,
             "Pull on a hooked ship toward a thrower who is not on a ship, in kpg*m/s^2 (0 = no pulling from land)");
     public static final ConfigValue<Double> ENTITY_DAMAGE = S.doubleRange("entity_damage", 2.0, 0.0, 100.0,
@@ -44,5 +47,10 @@ public final class GrappleConfig {
 
     /** Loads the class so the values above are declared in time. Called from {@code registerConfig()}. */
     public static void init() {
+    }
+
+    /** Distance up to which the rope holds without pulling: {@code hold_distance + hold_slack}. */
+    public static double holdLength() {
+        return GrappleRules.holdLength(HOLD_DISTANCE.get(), HOLD_SLACK.get());
     }
 }

@@ -73,6 +73,16 @@ public final class GrappleRules {
     }
 
     /**
+     * The rope's holding length: {@code holdDistance} plus a dead band {@code slack} in which the rope holds without
+     * pulling. Hulls that touch (or that collision keeps apart) before the rope's ends reach {@code holdDistance} would
+     * otherwise keep a small residual pull and a taut rope forever. Pass the result as {@code restLength} to
+     * {@link #tension} and {@link #taut}; the ramp starts at this length, so from farther out the pull is unchanged.
+     */
+    public static double holdLength(double holdDistance, double slack) {
+        return holdDistance + Math.max(0.0, slack);
+    }
+
+    /**
      * Rope tension [kpg·m/s²]: zero up to the rest length (a rope never pushes), then rising linearly over
      * {@link #RAMP} blocks to {@code maxForce}, minus damping times the closing speed (plus when the ends separate),
      * clamped to {@code [0, maxForce]}.

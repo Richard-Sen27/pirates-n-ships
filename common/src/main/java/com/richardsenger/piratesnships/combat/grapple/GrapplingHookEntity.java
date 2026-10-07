@@ -262,10 +262,10 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         boolean taut;
         if (throwerShipId != null) {
             Vec3 anchor = thrower.toWorld(anchorPlot);
-            taut = GrappleRules.taut(horizontal(hookWorld, anchor), GrappleConfig.HOLD_DISTANCE.get(), GrappleConfig.HAUL_FORCE.get());
+            taut = GrappleRules.taut(horizontal(hookWorld, anchor), GrappleConfig.holdLength(), GrappleConfig.HAUL_FORCE.get());
         } else {
             taut = !throwerAboardTarget && GrappleRules.taut(horizontal(hookWorld, throwerPos),
-                    GrappleConfig.HOLD_DISTANCE.get(), GrappleConfig.SHORE_HAUL_FORCE.get());
+                    GrappleConfig.holdLength(), GrappleConfig.SHORE_HAUL_FORCE.get());
         }
         entityData.set(TAUT, taut);
     }

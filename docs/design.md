@@ -430,7 +430,7 @@ Models and animations use GeckoLib. Textures are 16×16-scale pixel art.
 ## 10. World and economy
 
 ### 10.1 Structures
-- **Pirate islands** (Piraten-Inseln): a jigsaw structure with a camp, tavern, docks, buried treasure and a pirate captain. Pirates spawn there, and loot can be traded or fenced there.
+- **Pirate islands** (Piraten-Inseln): a jigsaw structure with a camp, tavern, docks, buried treasure and a pirate captain. Pirates spawn there, and loot can be traded or fenced there. **Pieces (ST2, decided 2026-10-07):** the same pipeline and jigsaw convention as the village, pools `pirates_n_ships:pirate_island/start|paths|huts|jetty|terminators`; the start piece is a beach camp with a rough jetty (two berths) and the fence's shack; a **buried treasure** is a jigsaw block named `pirates_n_ships:treasure` with `final_state` sand, placed two blocks under the surface in a camp piece, which the world module later turns into a buried chest and a treasure-map target.
 - **Seafarer villages** (Seemannsdörfer): coastal villages with docks (with marked ship berths), a shipwright (ship orders, §4.1), a tavern and a harbor master. Villagers and sailors spawn there.
 - **Navy outposts / forts**: a turn-in point for pirates and bounties, with patrols.
 - **Wrecks**: sunken ship structures with loot.

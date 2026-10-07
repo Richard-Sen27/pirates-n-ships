@@ -77,7 +77,10 @@ reloads by itself from that supply, so a manned, supplied gun keeps firing as fa
 hand. With a crossbow, hold use to draw (about a second) and let go to shoot: the hook flies faster and the rope
 reaches 36 blocks instead of 24. With a musket, use fires the hook at once for one gunpowder (no lead shot), the
 farthest of all with a 48-block rope; a loaded musket refuses, so fire it first; rain can make it misfire.
-**Mooring rings** (4 iron ingots make 2) mount on decks, walls or beams. A hook that flies within a block of a ring
+**Mooring rings** (4 iron ingots make 2) mount on decks, walls or beams. Cleats work the same way: a hook flying close
+to a cleat catches on it, and using a cleat on your ship while your hook is out ties the rope off there.
+
+**Mooring rings** mount on decks, walls or beams. A hook that flies within a block of a ring
 on another ship catches on it and holds twice as far before tearing loose. With your hook latched, use a ring on
 your own ship to tie the rope there: the ships keep hauling together and you can walk away. Sneak and use with an
 empty hand, or breaking a ring, lets go.

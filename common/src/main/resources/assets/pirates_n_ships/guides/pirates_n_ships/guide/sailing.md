@@ -41,6 +41,12 @@ the stay; breaking the tack drops the rope (not in creative).
 | Square sail (two yards) | yard length × distance | Wind from astern. Useless close to the wind. |
 | Triangular sail (a stay and three cleats) | half of head-to-tack × head-to-clew | Wind from the side. Still drives at 45° to the wind. |
 
+**Rope lines.** A rope used on two cleats (or a cleat and a mooring ring, or two rings) on the same ship, or both on
+land, up to 16 blocks apart, makes a rope line when it is no stay: a decorative rope that sags in the middle. Each
+anchor holds up to 4 ropes, so you can run a line along a railing. A rope from a high cleat down to a lower one
+becomes a sail's stay as soon as a cleat sits straight below its upper end. Breaking an anchor gives the ropes back.
+Server config `sailing.sails.rope_lines`, `rope_sag`.
+
 - **Trim:** furled (no force), half, full. The cloth shows the trim and bellies to the downwind side.
 - The force grows with the wind you feel on board, the sail's area and its trim. A ship running before the wind can't
   go faster than the wind.

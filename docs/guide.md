@@ -165,6 +165,12 @@ the stay; breaking the tack drops the rope (not in creative).
 | Square sail (two yards) | yard length × distance | Wind from astern. Useless close to the wind. |
 | Triangular sail (a stay and three cleats) | half of head-to-tack × head-to-clew | Wind from the side. Still drives at 45° to the wind. |
 
+**Rope lines.** A rope used on two cleats (or a cleat and a mooring ring, or two rings) on the same ship, or both on
+land, up to 16 blocks apart, makes a rope line when it is no stay: a decorative rope that sags in the middle. Each
+anchor holds up to 4 ropes, so you can run a line along a railing. A rope from a high cleat down to a lower one
+becomes a sail's stay as soon as a cleat sits straight below its upper end. Breaking an anchor gives the ropes back.
+Server config `sailing.sails.rope_lines`, `rope_sag`.
+
 - **Trim:** furled (no force), half, full. The cloth shows the trim and bellies to the downwind side.
 - The force grows with the wind you feel on board, the sail's area and its trim. A ship running before the wind can't
   go faster than the wind.
@@ -600,7 +606,10 @@ reloads by itself from that supply, so a manned, supplied gun keeps firing as fa
 hand. With a crossbow, hold use to draw (about a second) and let go to shoot: the hook flies faster and the rope
 reaches 36 blocks instead of 24. With a musket, use fires the hook at once for one gunpowder (no lead shot), the
 farthest of all with a 48-block rope; a loaded musket refuses, so fire it first; rain can make it misfire.
-**Mooring rings** (4 iron ingots make 2) mount on decks, walls or beams. A hook that flies within a block of a ring
+**Mooring rings** (4 iron ingots make 2) mount on decks, walls or beams. Cleats work the same way: a hook flying close
+to a cleat catches on it, and using a cleat on your ship while your hook is out ties the rope off there.
+
+**Mooring rings** mount on decks, walls or beams. A hook that flies within a block of a ring
 on another ship catches on it and holds twice as far before tearing loose. With your hook latched, use a ring on
 your own ship to tie the rope there: the ships keep hauling together and you can walk away. Sneak and use with an
 empty hand, or breaking a ring, lets go.
@@ -685,7 +694,7 @@ over leather, bone, leather (pirate hat), leather, white wool, leather (navy tri
 | Lead Shot | 2 iron nuggets (gives 4) | Ammunition for pistol and musket, one per load, with one gunpowder. |
 | Cannonball | 4 iron ingots (gives 2) | Ammunition for the cannon, loaded after the gunpowder. |
 | Grappling Hook | 3 iron ingots, 1 string | Throw it at another ship to hook it and haul the hulls together. See [Grappling hook](#grappling-hook). |
-| Rope | string | Use it on one cleat, then on a second one 2 to 16 blocks away and lower, to rig a stay. It glints while it remembers the first cleat. |
+| Rope | string | Use it on a cleat or mooring ring, then on a second one up to 16 blocks away on the same ship: a stay (2+ blocks lower, cleats only) or a decorative rope line. It glints while it remembers the first anchor. |
 | Hull Patch | 2 planks, 1 coal or charcoal (gives 2) | Use on the edge of a hole in an assembled hull to close the breach. See [Fighting a leak](#fighting-a-leak). |
 | Doubloon | none | Currency. |
 | Tobacco | none | Trade good. |

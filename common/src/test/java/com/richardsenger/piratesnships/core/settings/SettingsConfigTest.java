@@ -9,6 +9,7 @@ import com.richardsenger.piratesnships.core.config.ConfigValue;
 import com.richardsenger.piratesnships.core.config.ModConfigs;
 import com.richardsenger.piratesnships.crew.CrewConfig;
 import com.richardsenger.piratesnships.hazard.HazardConfig;
+import com.richardsenger.piratesnships.hazards.HazardsConfig;
 import com.richardsenger.piratesnships.ship.ShipConfig;
 import com.richardsenger.piratesnships.survival.SurvivalConfig;
 import com.richardsenger.piratesnships.world.WorldConfig;
@@ -66,7 +67,8 @@ class SettingsConfigTest {
     @Test
     void ownValuesAreWellFormed() {
         List<ConfigValue<?>> own = ownValues();
-        assertTrue(own.size() >= 50, "expected all settings values, found " + own.size());
+        // 44 since H1: the six hazards values (waterspouts, whirlpools, kraken: enabled + chance) moved to hazards.HazardsConfig
+        assertTrue(own.size() >= 44, "expected all settings values, found " + own.size());
         for (ConfigValue<?> v : own) {
             String c = v.comment();
             assertFalse(c == null || c.isBlank(), v + " has no comment");
@@ -130,8 +132,8 @@ class SettingsConfigTest {
         assertEquals(500, ShipConfig.PRICE_BRIGANTINE.get());
         assertTrue(HazardConfig.WAVES_ENABLED.get());
         assertEquals(1.0, HazardConfig.WAVE_AMPLITUDE.get());
-        assertTrue(HazardConfig.KRAKEN_ENABLED.get());
-        assertEquals(0.02, HazardConfig.KRAKEN_CHANCE_PER_DAY.get());
+        assertTrue(HazardsConfig.KRAKEN_ENABLED.get());
+        assertEquals(0.02, HazardsConfig.KRAKEN_CHANCE_PER_DAY.get());
         assertTrue(HazardConfig.CAMERA_SWAY.get());
         assertTrue(CrewConfig.WAGES_ENABLED.get());
         assertTrue(CrewConfig.MUTINY_ENABLED.get());

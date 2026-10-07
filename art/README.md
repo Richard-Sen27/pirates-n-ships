@@ -628,14 +628,15 @@ Item models (ART1a, ART1b):
   on the sea, a red X of two bars at +45 and -45 (the second 0.06 px above the first) and three route dots; built
   facing south like a sprite. Display as the doubloon (flat in the hand, `ground` lying flat), `gui` `[25, -20, 0]` /
   0.95 (top edge and right side show).
-- **`palette_5.png`** (texture `#4`, same script) holds the flag and map colours; two spare cells remain.
+- **`palette_5.png`** (texture `#4`, same script) holds the flag and map colours and, since ART1c, the kraken beak's
+  horn in the two former spare cells. It is full: the next new colour needs a `palette_6.png`.
 
   | v \ u | 0 | 4 | 8 | 12 |
   |---|---|---|---|---|
   | 0 | navy_light | navy | navy_dark | flag_white |
   | 4 | flag_white_shade | flag_red | flag_red_dark | flag_black |
   | 8 | flag_black_shade | flag_black_light | map_sea | map_sea_dark |
-  | 12 | map_land | map_ink | spare | spare_2 |
+  | 12 | map_land | map_ink | horn | horn_light |
 - Built like F8i: a Python part list (patch names resolved through `tools/gen_item_palette.py`'s `SHEETS`) wrote one
   JSON spec per model, and `ART1B.load(name)` in `risky_eval` built it cube by cube in a new `java_block` tab
   (palette textures from `fromPath` with `id`, `folder` and `namespace` set again, display slots into
@@ -646,8 +647,59 @@ Item models (ART1a, ART1b):
 - Sprites removed: `textures/block/hull_patch.png` (with its script `tools/gen_hull_textures.py`, which drew nothing
   else) and `textures/item/rope.png` (from `tools/gen_sailing_textures.py`; `textures/block/rope.png` stays, the stay
   renderer uses it). `textures/item/chart.png` and `textures/item/map_tile.png` stay for now because
-  `ChartTexturesTest` requires them; the flag sprites of `tools/gen_flag_textures.py` (`item/<flag>.png`) are no
-  longer referenced by any model either.
+  `ChartTexturesTest` requires them. The flag sprites (`item/<flag>.png`) and their code in
+  `tools/gen_flag_textures.py` were removed in ART1c; the script now writes only the flown cloth (`block/flag_*.png`).
+
+Item models (ART1c: kraken beak and ink, carpenter's hammer, saw, nails, Shipwright's Toolkit, hook-loaded musket):
+- One `java_block` project per model, no block of the same name, so lint finds each by name. Built like ART1b from a
+  Python part list (patch names through `SHEETS`) written as model JSON, then rebuilt cube by cube in a new tab
+  (`ART1C.load(name)`: palette textures from `fromPath` with `id`, `folder`, `namespace`; display slots into
+  `Project.display_settings`) and exported with `Codecs.java_block.compile()` plus `credit`, `gui_light`, the particle
+  and the source's full display entries (compile drops default rotation/translation/scale, the committed files keep
+  them like the older items). Helpers not committed; rebuild them from these notes.
+- **Bar helper.** `seg(cx, cy, angle, length, width, z0, z1)` places a bar whose axis points `angle` degrees clockwise
+  from up, in 22.5 degree steps: built along y and rotated `-angle` for -45..45, built along x and rotated
+  `90 - angle` (or `-90 - angle`) otherwise. `dseg` takes a diagonal frame instead (v along 45 degrees up-right, u
+  across towards the lower right), which is how all six new tools are laid out. Curves walk a spine of such bars (the
+  beak: 45, 45, 45, 67.5, 90, 112.5, 135 degrees, each 0.5 px longer than its step so the joints close).
+- **Kraken beak** (24 elements, `palette_5` only, handheld slots): each spine section is two crossed boxes (wide and
+  flat, narrow and deep) so it reads round from the side; base sections `horn`, the hook `flag_black`; a lower jaw on
+  the lower-right side under the hook; `horn_light` rims round both open ends.
+- **Kraken ink** (22, `item/generated` slots, particle `palette_2`): stacked crossed-box sections like the rum
+  bottle, body `gunmetal_dark` (blue-black), neck tied with `cord` (palette_4) and a `twine`/`cord` end; gloss is a
+  `steel_light` streak and a `gunmetal_light` dot 0.1 px proud of the deep boxes' south faces (the crossed-box front),
+  plus a `navy_dark` sheen on the right.
+- **Carpenter's hammer** (13, handheld): `wood` handle (two crossed boxes, `wood_dark` grip end), head across the
+  handle top, `steel_light` striking face on the upper-left end (faces down in third person like an axe blade),
+  claw on the lower right: a root bar at 135, then two prongs (split 0.24 px in z) at 157.5 and 180 bending back
+  towards the handle.
+- **Saw** (22, handheld, particle `palette_2`): blade in three steps (the toothed upper-left edge steps in towards
+  the tip, the back stays straight), a `steel_light` back strip, teeth as axis-aligned 0.72 px squares on the 45
+  degree edge (they stand out as diamonds), a closed `walnut` handle of four bars round a finger hole, a heel horn and
+  two brass screws through the front bar.
+- **Nails** (26, `item/generated`, particle `palette_2`): seven nails in a 5 + 2 bundle, each shank, point and head;
+  lengths differ so the heads never share a plane; head half-depths grow 0.02 px per nail for the same reason. Two
+  `twine` wraps, a `cord` knot and two twine ends on the front.
+- **Shipwright's Toolkit** (30, handheld): an opened tool roll; the roll (crossed boxes, `wood_dark` core showing at
+  the ends) with a `leather_dark` strap and brass buckle on the lower right, the flap's dark inner side on the upper
+  left, a lighter pocket band with two twine stitch lines; out of the pockets a 0.6 scale copy of the hammer (the
+  hammer builder with `small=True`), a saw blade with six teeth (inside the blade's z range, 0.05 px from its faces)
+  and three nails. The open flap is the GUI view, so no `gui` entry.
+- **Hook-loaded musket** (`musket_hook`, 33): the 24 elements of `musket_loaded` verbatim, then nine `hook_*` parts
+  built in the muzzle frame (origin at the muzzle centre (16.572, 17.584), the barrel's own −45 turn): the shank
+  seated 3 px in the bore and 1.7 px out, a crossbar of two crossed boxes just ahead of the muzzle, two arms at 45
+  degrees to the barrel (axis-aligned in the model: −x on the upper-left side, −y on the lower right) and the fluke
+  blades and points parallel to the barrel, ending beside the muzzle. Display entries and textures are copied from
+  `musket.json`, so the hook sits where the ball variant's barrel ends in every slot;
+  `HandMadeModelsTest.musketHookIsTheLoadedMusketWithAHookAtTheMuzzle` guards it. It replaced GR3's datagen
+  placeholder (`MusketHookModel`, deleted with its test); the override in the hand-made `musket.json` is unchanged.
+  If `musket_loaded` changes, rebuild `musket_hook` from it.
+- Renders: `renders/<name>.png` for all seven, each a strip of four orthographic views (front as in the GUI, two
+  three-quarter views, side) from a separate `THREE.WebGLRenderer` over Blockbench's scene (helpers and grid hidden).
+  No hand views (display mode was not used).
+- Sprites: `textures/item/kraken_beak.png` and `kraken_ink.png` (`tools/gen_kraken.py`) are no longer used by any model
+  but stay because `KrakenRigTest` reads them; `carpenters_hammer`, `saw`, `nails` and `shipwright_toolkit.png`
+  (`tools/gen_placeholder_textures.py`) are unused too and can go with their generator code in a cleanup.
 
 ## Entities
 
@@ -1347,3 +1399,44 @@ Renders: `art/renders/structures/navy_outpost/{fort_gate,quay,wall,wall_tower,ba
 - **Brig doors** are closed and unlocked: a generated door has no owner (`BrigDoorBlockEntity` is created empty on
   placement), and a locked door without an owner would open only with a key.
 - Chests and barrels are empty (no loot tables yet).
+
+### Wrecks (ST5)
+Wrecks (`wreck`, design.md §10.1) use the ST1 pipeline but are **single pieces**: no jigsaw blocks, no pools. A later
+world package places one piece per wreck on the ocean floor. Sources are `art/structures/wreck/*.py`; the group's
+`_style.py` holds the drowned palette (dark oak and spruce planks, stripped dark oak and spruce logs, spruce log
+masts, mossy and plain cobblestone ballast, tuff and prismarine speckles for the barnacle crust, iron bars and chains,
+a sand, gravel and clay seabed), the loot chest, and seabed helpers (`bed_disc` for the ragged bed, `drift` for sand
+banked against the wreck, `underpin` so nothing on row y 1 floats over the bed's edge). The random parts (missing
+planks, speckles, the bed's edge) come from a fixed `random.Random` seed per piece, so a rebuild changes nothing.
+
+**Coordinates:** y 0 is the **seabed row**: the top row of the terrain's sand or gravel, which the piece's own thin
+bed replaces. Everything above it stands in water. Placement puts the piece's y 0 on the ocean floor surface
+(`OCEAN_FLOOR_WG` height minus one) and may rotate it freely; the pieces have no front.
+
+**Under water:** every block that has a `waterlogged` property is written with `waterlogged=true` (stairs, slabs,
+fences, trapdoors, panes, chains, iron bars, lanterns, walls and the chests; vanilla chests can be waterlogged). Mod
+blocks without the property (cargo crates and barrels, the cannon, cleat, nameplate, yard, sea chest) simply take
+their cell. Air is never written (the converter drops it), so the sea fills every gap, the hulls' insides included:
+the dry-hull system of ships (§4) does not apply to world blocks. A wreck placed so that it reaches above sea level
+would carry its waterlogged blocks into the air as water sources, so placement must keep the piece's top under the
+surface (the tallest, `mast_stump`, needs 12 blocks of water above its seabed row). The lab's render colours every
+state containing `water` blue, so waterlogged blocks show as blue in `art/renders/structures/wreck/*.png`.
+
+**Loot:** every vanilla chest carries `{LootTable: "pirates_n_ships:chests/wreck"}` (no `LootTableSeed`, so the loot is
+rolled when a player first opens it), written by `_style.loot_chest` as a `block_entity` operation. The loot table
+is datagen (`world/wreck/WreckLoot`, called from `WorldModule.gatherData`): always 3-12 doubloons; two to four rolls
+of rum, salted fish, rope, nails, lead shot (8-16) and, at weight 1, a cutlass; kraken ink in one chest of 40. The
+sea chest in the sloop's hold is empty: `SeaChestBlockEntity` is a plain container without a loot table.
+
+| piece | size (x×y×z) | blocks | contents | mod blocks |
+|---|---|---|---|---|
+| `sunken_sloop` | 14×10×27 | 1091 | the starter sloop's hull (same half-widths, rocker, hold, forecastle, stern cabin and quarterdeck) heeled to starboard, the fore half 22°, the after half 27° and one block to starboard; each cross-section turned about the keel by sampling the upright hull, closed where blocks only meet at an edge. Frames (stripped spruce ribs) at the break with jagged planking either side, patches of missing planking (frames left standing in them), barnacle crust on the bottom, the mast snapped above the deck and fallen across the after deck into the sand, the lower yard and its chain beside the hull, sand banked against the starboard side and silting the low side of the hold and cabin, spilled ballast; bow north (−z) | `sea_chest` (forward hold), `cargo_barrel`, `cargo_crate` (slid to starboard in the after hold), `yard` |
+| `cargo_field` | 15×4×15 | 231 | a round, ragged bed with ballast stones; crates and barrels set into it with sand over their edges or sitting on it half buried, a toppled stack, kegs on their sides, a broken yard in two pieces with its chain, a cannon with its rear in a sand drift (it turns only horizontally, so it stands upright), loose planks and hatch covers, the chest under a fallen plank | `cargo_crate`, `cargo_barrel`, `yard`, `cannon` |
+| `mast_stump` | 7×12×7 | 92 | a broken square of deck planking in the bed with mast partners and heaved-up ballast, the mast (spruce log, an iron band of chain, a stripped fished section, a splintered stub on top), the remains of the fighting top, the yard with one arm snapped and hanging, a hanging lantern, torn rigging (chains), a stepped fence shroud, a cleat with a rope coil (chain), the chest at the foot half buried | `yard`, `cleat` |
+| `stern` | 9×8×11 | 441 | the stern of a larger ship, half buried: a framed transom facing north (−z) with quarter posts, trim bands at the cabin floor and the poop deck, four cabin windows round a mullion (two broken out) with sills and a hood, the nameplate above the rudder head, the taffrail; the rudder with iron straps; sides with a wale, a trim band, a quarter window and a frame post, falling away in steps to the broken end with its frames showing; the great cabin with a table and chairs, a keg, a lantern, a hanging lantern and the chest, the poop deck half fallen in, sand in the hold and drifting in at the broken end | `nameplate`, `cargo_crate` |
+
+Renders: `art/renders/structures/wreck/*.png`. `WreckPiecesTest` checks the committed pieces: the four files and no
+others, sizes within bounds, every row used, existing blocks and states (mod blocks against the datagen block
+states), `waterlogged=true` wherever the block has the property, no jigsaws, the wreck loot table (and no seed) in
+every chest, the sea chest in the sloop, the generated loot table's items and doubloon count, and a fresh conversion
+equal to the committed NBT. The wrecks were built on lab port 8769.

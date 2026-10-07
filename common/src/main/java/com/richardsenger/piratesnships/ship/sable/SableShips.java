@@ -185,6 +185,32 @@ public final class SableShips {
         }
     }
 
+    /**
+     * The root of Sable's splitting heat map of {@code ship}: the one block with heat 1, from which Sable measures what is
+     * still connected (null while the heat map is being rebuilt, or if there is none). For GameTests that need to cut a
+     * ship at its root deterministically. Backed by {@code sublevel/plot/heat/SubLevelHeatMapManager.java}
+     * {@code onSolidAdded} (l.279-287: the first block gets heat 1) and {@code heatMapGet} (l.341-357), read through the
+     * same public calls: {@code sublevel/plot/LevelPlot.java#toLocal} (l.242), {@code #getChunkHolder} (l.256),
+     * {@code sublevel/plot/PlotChunkHolder.java#getHeatSection} (l.179) and {@code HeatDataChunkSection#get} (l.28).
+     */
+    public static @Nullable BlockPos heatMapRoot(ShipBody ship) {
+        ServerSubLevel sub = ship.raw();
+        dev.ryanhcode.sable.sublevel.plot.LevelPlot plot = sub.getPlot();
+        BlockPos root = null;
+        for (BlockPos p : ship.plotBlocks()) {
+            net.minecraft.core.SectionPos section = net.minecraft.core.SectionPos.of(p);
+            dev.ryanhcode.sable.sublevel.plot.PlotChunkHolder holder = plot.getChunkHolder(plot.toLocal(section.chunk()));
+            dev.ryanhcode.sable.sublevel.plot.HeatDataChunkSection heat = holder == null ? null : holder.getHeatSection(section.y());
+            if (heat != null && heat.get(p.getX() & 15, p.getY() & 15, p.getZ() & 15) == 1) {
+                if (root != null) {
+                    return null; // two roots: mid-rebuild
+                }
+                root = p.immutable();
+            }
+        }
+        return root;
+    }
+
     private static @Nullable ShipBody wrap(@Nullable SubLevel sub) {
         return sub instanceof ServerSubLevel s && !s.isRemoved() ? new ShipBody(s) : null;
     }

@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.UnaryOperator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -30,7 +31,10 @@ import org.jetbrains.annotations.Nullable;
  *       new body, the identity <b>moves</b> to that body's id ({@link SplitEvent#keeper()} differs from
  *       {@link SplitEvent#parent()}). {@link ShipAssembler} hands the helm to Sable first, which makes the helm Sable's
  *       heat-map root, so on a ship assembled in this session the helm side stays in the original body and keeps the id;
- *       after a reload Sable's root is wherever its chunk scan starts, so a move is possible.</li>
+ *       after a reload Sable's root is wherever its chunk scan starts, so a move is possible. Sable may also move
+ *       <i>every</i> block into a new body and remove the emptied original before the split is reported
+ *       ({@link SableSplits#isSplitPending}); the record is then held back and follows the keeper here, together with
+ *       the steering helm and the user-data parts registered with {@link #carryOnIdentityMove} (HL1).</li>
  *   <li>Every other piece becomes a <b>wreck</b>: its own record without a name, {@code wreck = true}, the
  *       {@code origin} of the line, the original's name as {@code wreck_of}. Sails on a wreck give no force (checked in
  *       {@code SailingRuntimes}); crew at its stations are released where they stand (on its deck,
@@ -119,6 +123,17 @@ public final class ShipSplits {
         });
     }
 
+    private static final Map<String, UnaryOperator<CompoundTag>> CARRIED = new java.util.LinkedHashMap<>();
+
+    /**
+     * HL1: when the identity moves to a new body, the sub-tree {@code userDataKey} of the parent's user data is copied to
+     * it through {@code keep}, which must drop anything tied to plot positions (they differ in the new body). Meant for
+     * position-free ship state such as the sailing bow. Call during mod construction.
+     */
+    public static synchronized void carryOnIdentityMove(String userDataKey, UnaryOperator<CompoundTag> keep) {
+        CARRIED.put(userDataKey, keep);
+    }
+
     /** Listens to every processed split (server thread). */
     public static synchronized void onSplit(SplitListener listener) {
         LISTENERS.add(listener);
@@ -165,12 +180,27 @@ public final class ShipSplits {
      * GameTests, which also feed it batches of real bodies to cover the identity move deterministically.
      */
     public static @Nullable SplitEvent process(ServerLevel level, UUID parentId, List<SableSplits.Piece> pieces) {
+        return process(level, parentId, pieces, new CompoundTag());
+    }
+
+    /**
+     * {@link #process(ServerLevel, UUID, List)} with a copy of the parent's user data from before the split, used when
+     * Sable already removed the parent because the split emptied it (HL1, {@link SableSplits#isSplitPending}): the
+     * record was held back for this call and now follows the piece that keeps the identity, with the parent's line and
+     * steering helm.
+     */
+    public static @Nullable SplitEvent process(ServerLevel level, UUID parentId, List<SableSplits.Piece> pieces,
+                                               CompoundTag parentUserData) {
         ShipRegistry registry = ShipRegistry.get(level.getServer());
         Optional<ShipData> parentData = registry.find(parentId);
+        ShipBody parent = SableShips.byId(level, parentId);
+        if (parentData.isPresent() && pieces.isEmpty() && parent == null) {
+            registry.remove(parentId); // the parent went and no piece survived: the held-back record goes now
+            return null;
+        }
         if (parentData.isEmpty() || pieces.isEmpty()) {
             return null; // not one of our ships (a plain Sable sub-level), or nothing to do
         }
-        ShipBody parent = SableShips.byId(level, parentId);
         List<SplitRules.Piece> rulePieces = new ArrayList<>();
         if (parent != null) {
             List<BlockPos> blocks = parent.plotBlocks();
@@ -189,7 +219,8 @@ public final class ShipSplits {
         }
         UUID keeper = SplitRules.keeper(rulePieces);
 
-        CompoundTag parentPointer = parent != null ? parent.userData(ShipAssembler.USER_DATA_KEY) : new CompoundTag();
+        CompoundTag parentPointer = parent != null ? parent.userData(ShipAssembler.USER_DATA_KEY)
+                : parentUserData.getCompound(ShipAssembler.USER_DATA_KEY);
         UUID origin = SplitRules.origin(parentPointer.hasUUID(TAG_ORIGIN) ? parentPointer.getUUID(TAG_ORIGIN) : null, parentId);
         boolean lineIsWreck = parentPointer.getBoolean(TAG_WRECK);
         ShipData data = parentData.get();
@@ -205,6 +236,17 @@ public final class ShipSplits {
             if (body != null) {
                 writePointer(body, keeper, origin, lineIsWreck, lineIsWreck ? lineName : "");
                 body.setName(sableName(lineIsWreck, data.name(), lineName));
+                // HL1: the steering helm moves along if it went with the keeper; else the keeper is helmless (or takes
+                // the helm it has the first time one is used)
+                BlockPos helm = ShipHelm.recorded(parentPointer);
+                SableSplits.Piece moved = helm == null ? null : movedIndex.get(helm.asLong());
+                ShipHelm.setSteering(body, moved != null && moved.id().equals(keeper) ? moved.moved(helm) : null);
+                for (Map.Entry<String, UnaryOperator<CompoundTag>> c : CARRIED.entrySet()) {
+                    CompoundTag old = parent != null ? parent.userData(c.getKey()) : parentUserData.getCompound(c.getKey());
+                    if (!old.isEmpty()) {
+                        body.setUserData(c.getKey(), c.getValue().apply(old.copy()));
+                    }
+                }
             }
         }
         Set<UUID> wrecks = new LinkedHashSet<>();

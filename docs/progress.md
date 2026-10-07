@@ -5,7 +5,7 @@ Statuses: **todo** / **in progress** / **done** / **blocked: needs playtest** / 
 
 "Done" means: `./gradlew build` passes, `./gradlew :neoforge:runGameTestServer` passes, and the new logic has tests.
 
-Last updated: 2026-10-07 (fourth session: phase G complete; phase M: F9 and M1 merged, M2 and M3 running).
+Last updated: 2026-10-07 (fourth session: phase G complete; phase M: F9 and M1 merged, M2 and M3 running; phase P (second playtest feedback) started with P1).
 
 ## Phase F: first playtest feedback (done, F5 and F7 continue in phase G)
 
@@ -65,6 +65,18 @@ Started 2026-10-07 after the session restart with the Blockbench MCP connected (
 | F8e | 3D item models, batch 5: cloth, spices, tobacco | done | Merged (`6982a54`). Cloth 10 elements, spices 42, tobacco 43; fourth palette sheet `palette_4.png` (full). Every held item of the mod is now a Blockbench model except the doubloon, the bounty proof and the hull patch. Playtest `items-and-blocks.md`, section "3D item models". |
 
 Only one agent at a time may use Blockbench (one desktop instance, one open project), so the F7 batches run one after another; G1 and F5 run next to them.
+
+## Phase P: second playtest feedback (running)
+
+The human played with the phase G build on 2026-10-07 and reported: figureheads face the same way as the player instead of looking at the player with the plate on the clicked block; the brig door still has the old item sprite and does not connect with the brig bars, and a key should lock and unlock it; pistol and musket show the bow pose while holding right click but should aim (and whether reloading works at all: it does, hold right click with lead shot and gunpowder); the doubloon and the bounty proof should be 3D too; cannons need sizes: a large cannon whose carriage takes two blocks in length and 1.5 in height with the barrel one to two blocks ahead, plus a small swivel gun that mounts on a railing, turns around, and has a shorter range (no 1×1×1 cannon); the sail direction is detected exactly 180° wrong.
+
+| Package | Scope | Status |
+|---|---|---|
+| P1 | Code fixes: figureheads mount on the clicked block facing the player; the cloth bellies downwind (convention fix); brig bars connect to the door and a brig key locks and unlocks it; firearms load with the crossbow pose and a loaded gun aims while held and fires on release, with an aimed spread bonus | in progress |
+| F8f | Blockbench: doubloon and bounty proof as 3D items, a 3D brig door item (both halves in one item model), a brig key item | todo, after M2 (Blockbench) |
+| P2 | Cannon sizes: the cannon becomes a two-block gun (master and part blocks like a bed, carriage two long and 1.5 high, barrel a block ahead) and a swivel gun that mounts on fences and railings with free yaw (block entity renderer), lower range and damage, faster reload; code with placeholder models first | todo, after P1 |
+| F7g | Blockbench: the large cannon model spanning two blocks plus the barrel, the swivel gun | todo, after P2 and F8f |
+| P3 | Firearm and cannon animations through PAL on the player rig (aim pistol, aim musket, reload musket, light the fuse), musket zoom if P1 could not do it | todo, after P1 and M2 (Blockbench) |
 
 ## Phase M: NPCs and animations (running)
 

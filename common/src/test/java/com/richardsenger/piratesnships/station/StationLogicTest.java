@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
 import com.richardsenger.piratesnships.station.winch.SailOrder;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.SharedConstants;
@@ -127,5 +128,20 @@ class StationLogicTest {
         assertEquals(st.east(), spot);
         // nothing beside has a floor: on top
         assertEquals(st.above(), StationSpot.choose(st, p -> true, p -> false));
+    }
+
+    @Test
+    void aMultiBlockStationSeatsBesideAnyOfItsBlocksButNeverOnOne() {
+        BlockPos front = new BlockPos(0, 64, 0);
+        BlockPos rear = front.east(); // a two-block cannon facing west
+        List<BlockPos> footprint = List.of(front, rear);
+        // all four sides of the front are walled in except the rear cell, which is free of collision for the test
+        Set<BlockPos> walls = Set.of(front.north(), front.south(), front.west());
+        BlockPos spot = StationSpot.choose(footprint, p -> !walls.contains(p) && !footprint.contains(p), p -> true);
+        assertEquals(rear.north(), spot, "not beside the rear");
+        // even a footprint cell that tests free is never chosen
+        assertEquals(rear.north(), StationSpot.choose(footprint, p -> !walls.contains(p), p -> true));
+        // no room anywhere: on top of the station block (the front)
+        assertEquals(front.above(), StationSpot.choose(footprint, p -> false, p -> true));
     }
 }

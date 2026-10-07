@@ -1,21 +1,31 @@
 package com.richardsenger.piratesnships.combat.cannon;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
 
 /**
  * Pure rules of the cannon (docs/design.md §8.2): the loading order, the elevation steps, where the muzzle is and which
  * way it points, the velocity of a fired ball and which blocks a ball may destroy. No world access, unit tested.
  *
- * <p>Geometry is in the cannon's own block frame (the plot frame on a ship): the barrel pivots at
- * {@link #PIVOT_HEIGHT} above the block's bottom, centred in x and z, and the muzzle lies {@link #MUZZLE_LENGTH} from
- * the pivot along the barrel, just outside the block.
+ * <p>Geometry is in the cannon's own block frame (the plot frame on a ship). The cannon is two blocks long (P2,
+ * {@link #CARRIAGE_LENGTH}): the master block at the front (muzzle end) and the rear block behind it, against the
+ * facing. In the master's model frame (muzzle to the north, pixels): the carriage spans z 0..32 (the master 0..16, the
+ * rear 16..32) and is about 24 px (1.5 blocks) high with the barrel; the barrel pivots (trunnions) at x 8, z 8,
+ * {@link #PIVOT_HEIGHT} = 14 px above the master's bottom; the muzzle face is {@link #MUZZLE_LENGTH} = 24 px ahead of
+ * the pivot, at z −16, one block ahead of the master's front face (the model limit). The ball leaves from there.
  */
 public final class CannonRules {
 
-    /** Height of the barrel's pivot (trunnions) above the bottom of the block, in blocks (the model's barrel axis). */
-    public static final double PIVOT_HEIGHT = 9.5 / 16.0;
-    /** Distance from the pivot to the point the ball leaves from, in blocks: half a block plus a margin past the face. */
-    public static final double MUZZLE_LENGTH = 1.0;
+    /** Height of the barrel's pivot (trunnions) above the bottom of the master block, in blocks (14 px). */
+    public static final double PIVOT_HEIGHT = 14.0 / 16.0;
+    /**
+     * Distance from the pivot to the point the ball leaves from, in blocks: the pivot sits in the master's centre, the
+     * muzzle face one block ahead of the master's front face (24 px).
+     */
+    public static final double MUZZLE_LENGTH = 1.5;
+    /** Blocks the carriage takes along the facing: the master and one rear block. */
+    public static final int CARRIAGE_LENGTH = 2;
 
     /** What the crew puts in, in this order. */
     public enum Charge { POWDER, BALL }
@@ -30,6 +40,48 @@ public final class CannonRules {
     }
 
     private CannonRules() {
+    }
+
+    // ---- the two blocks -------------------------------------------------------------------------------------------
+
+    /** The rear block of a cannon whose master is at {@code master} with the muzzle to {@code facing}. */
+    public static BlockPos rearOf(BlockPos master, Direction facing) {
+        return master.relative(facing.getOpposite());
+    }
+
+    /** The master block of the cannon half at {@code pos}: itself for the front, one block ahead for the rear. */
+    public static BlockPos masterOf(BlockPos pos, Direction facing, CannonPart part) {
+        return part.isMaster() ? pos : pos.relative(facing);
+    }
+
+    /** The other half of the cannon half at {@code pos}. */
+    public static BlockPos otherHalf(BlockPos pos, Direction facing, CannonPart part) {
+        return part.isMaster() ? rearOf(pos, facing) : pos.relative(facing);
+    }
+
+    /** The side of the half at {@code part} on which its other half lies. */
+    public static Direction towardsOtherHalf(Direction facing, CannonPart part) {
+        return part.isMaster() ? facing.getOpposite() : facing;
+    }
+
+    /**
+     * A box given in the north frame of a block (pixels, muzzle to the north) turned to {@code facing} about the
+     * block's vertical centre line, as {@code {x1, y1, z1, x2, y2, z2}} with the minimum first. The same turn as the
+     * block state's {@code y} rotation (east = 90° clockwise seen from above).
+     */
+    public static double[] turnBox(double x1, double y1, double z1, double x2, double y2, double z2, Direction facing) {
+        double[] a = turn(x1, z1, facing);
+        double[] b = turn(x2, z2, facing);
+        return new double[]{Math.min(a[0], b[0]), y1, Math.min(a[1], b[1]), Math.max(a[0], b[0]), y2, Math.max(a[1], b[1])};
+    }
+
+    private static double[] turn(double x, double z, Direction facing) {
+        return switch (facing) {
+            case EAST -> new double[]{16 - z, x};
+            case SOUTH -> new double[]{16 - x, 16 - z};
+            case WEST -> new double[]{z, 16 - x};
+            default -> new double[]{x, z};
+        };
     }
 
     // ---- loading --------------------------------------------------------------------------------------------------
@@ -99,7 +151,7 @@ public final class CannonRules {
         return new Vec3(dx * h, Math.sin(a), dz * h);
     }
 
-    /** The pivot of the barrel of the cannon block at {@code (x, y, z)}, in the block frame. */
+    /** The pivot of the barrel of the cannon whose master block is at {@code (x, y, z)}, in the block frame. */
     public static Vec3 pivot(int x, int y, int z) {
         return new Vec3(x + 0.5, y + PIVOT_HEIGHT, z + 0.5);
     }

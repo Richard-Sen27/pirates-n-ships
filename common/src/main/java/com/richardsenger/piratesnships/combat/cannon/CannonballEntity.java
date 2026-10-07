@@ -40,15 +40,30 @@ public class CannonballEntity extends ThrowableItemProjectile {
     private float damage;
     private int lifetime = 200;
     private boolean splashed;
+    /** Blocks one hit may destroy; negative = the cannon's config. */
+    private int blocksPerHit = -1;
+    /** Impulse on a hit ship; negative = the cannon's config. */
+    private double impactImpulse = -1;
 
     public CannonballEntity(EntityType<? extends CannonballEntity> type, Level level) {
         super(type, level);
     }
 
     public CannonballEntity(Level level, Vec3 pos, Vec3 velocity, float damage, int lifetime) {
+        this(level, pos, velocity, damage, lifetime, -1, -1);
+    }
+
+    /**
+     * A shot with its own block damage and impact impulse (the swivel gun, P2): {@code blocksPerHit} blocks at most (the
+     * caller applies the block damage toggle), {@code impactImpulse} on a hit ship; a negative value means the cannon's
+     * config ({@link CannonConfig#blocksPerHit()}, {@code cannons.impact_impulse}) at the time of the hit.
+     */
+    public CannonballEntity(Level level, Vec3 pos, Vec3 velocity, float damage, int lifetime, int blocksPerHit, double impactImpulse) {
         super(CannonContent.CANNONBALL.get(), pos.x, pos.y, pos.z, level);
         this.damage = damage;
         this.lifetime = lifetime;
+        this.blocksPerHit = blocksPerHit;
+        this.impactImpulse = impactImpulse;
         setDeltaMovement(velocity);
         double h = velocity.horizontalDistance();
         setYRot((float) Math.toDegrees(Math.atan2(velocity.x, velocity.z)));
@@ -122,13 +137,13 @@ public class CannonballEntity extends ThrowableItemProjectile {
         Vec3 hit = result.getLocation();
         Vec3 worldHit = ship != null ? ship.toWorld(hit) : hit;
 
-        double push = CannonConfig.IMPACT_IMPULSE.get();
+        double push = impactImpulse >= 0 ? impactImpulse : CannonConfig.IMPACT_IMPULSE.get();
         if (ship != null && push > 0 && localDir != Vec3.ZERO) {
             ship.applyImpulseNow(hit, localDir.scale(push));
         }
 
         int destroyed = 0;
-        int limit = CannonConfig.blocksPerHit();
+        int limit = blocksPerHit >= 0 ? blocksPerHit : CannonConfig.blocksPerHit();
         for (BlockPos p : CannonImpact.blocksAlong(hitPos, hit, localDir, limit, pos -> !level.getBlockState(pos).isAir())) {
             BlockState state = level.getBlockState(p);
             boolean onShip = ship != null || SableShips.containing(level, p) != null;
@@ -164,6 +179,8 @@ public class CannonballEntity extends ThrowableItemProjectile {
         tag.putFloat("damage", damage);
         tag.putInt("lifetime", lifetime);
         tag.putBoolean("splashed", splashed);
+        tag.putInt("blocks_per_hit", blocksPerHit);
+        tag.putDouble("impact_impulse", impactImpulse);
     }
 
     @Override
@@ -172,5 +189,7 @@ public class CannonballEntity extends ThrowableItemProjectile {
         damage = tag.getFloat("damage");
         if (tag.contains("lifetime")) lifetime = tag.getInt("lifetime");
         splashed = tag.getBoolean("splashed");
+        blocksPerHit = tag.contains("blocks_per_hit") ? tag.getInt("blocks_per_hit") : -1;
+        impactImpulse = tag.contains("impact_impulse") ? tag.getDouble("impact_impulse") : -1;
     }
 }

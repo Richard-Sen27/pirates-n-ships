@@ -1,12 +1,14 @@
 package com.richardsenger.piratesnships.combat.cannon;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -96,6 +98,51 @@ class CannonRulesTest {
         Vec3 dir = CannonRules.muzzleDirection(1, 0, 0);
         assertVec(new Vec3(10.5 + CannonRules.MUZZLE_LENGTH, 64 + CannonRules.PIVOT_HEIGHT, -2.5), CannonRules.muzzle(10, 64, -3, dir));
         assertTrue(CannonRules.MUZZLE_LENGTH > 0.5, "the muzzle must be outside the cannon's own block");
+    }
+
+    // ---- the two blocks (P2) ----
+
+    @Test
+    void theRearLiesBehindTheMasterAgainstTheFacing() {
+        BlockPos master = new BlockPos(10, 64, -3);
+        assertEquals(new BlockPos(10, 64, -2), CannonRules.rearOf(master, Direction.NORTH));
+        assertEquals(new BlockPos(10, 64, -4), CannonRules.rearOf(master, Direction.SOUTH));
+        assertEquals(new BlockPos(9, 64, -3), CannonRules.rearOf(master, Direction.EAST));
+        assertEquals(new BlockPos(11, 64, -3), CannonRules.rearOf(master, Direction.WEST));
+        assertEquals(2, CannonRules.CARRIAGE_LENGTH);
+    }
+
+    @Test
+    void eitherHalfFindsTheMasterAndTheOtherHalf() {
+        BlockPos master = new BlockPos(4, 1, 4);
+        for (Direction facing : Direction.Plane.HORIZONTAL) {
+            BlockPos rear = CannonRules.rearOf(master, facing);
+            assertEquals(master, CannonRules.masterOf(master, facing, CannonPart.FRONT), "front, " + facing);
+            assertEquals(master, CannonRules.masterOf(rear, facing, CannonPart.REAR), "rear, " + facing);
+            assertEquals(rear, CannonRules.otherHalf(master, facing, CannonPart.FRONT));
+            assertEquals(master, CannonRules.otherHalf(rear, facing, CannonPart.REAR));
+            assertEquals(rear, master.relative(CannonRules.towardsOtherHalf(facing, CannonPart.FRONT)));
+            assertEquals(master, rear.relative(CannonRules.towardsOtherHalf(facing, CannonPart.REAR)));
+        }
+    }
+
+    @Test
+    void theMuzzleIsOneBlockAheadOfTheMastersFrontFaceAtPivotHeight() {
+        assertEquals(14.0 / 16.0, CannonRules.PIVOT_HEIGHT, EPS);
+        Vec3 muzzle = CannonRules.muzzle(0, 0, 0, CannonRules.muzzleDirection(0, -1, 0)); // facing north, level
+        assertEquals(-1.0, muzzle.z, EPS, "the front face is z = 0, the muzzle one block further north");
+        assertEquals(0.5, muzzle.x, EPS);
+        assertEquals(CannonRules.PIVOT_HEIGHT, muzzle.y, EPS);
+    }
+
+    @Test
+    void boxesTurnLikeTheBlockStateRotation() {
+        // a box at the north edge of the block (the muzzle side) ends up at the facing's edge
+        double[] north = {6, 0, 0, 10, 4, 2};
+        assertArrayEquals(north, CannonRules.turnBox(6, 0, 0, 10, 4, 2, Direction.NORTH), EPS);
+        assertArrayEquals(new double[]{14, 0, 6, 16, 4, 10}, CannonRules.turnBox(6, 0, 0, 10, 4, 2, Direction.EAST), EPS);
+        assertArrayEquals(new double[]{6, 0, 14, 10, 4, 16}, CannonRules.turnBox(6, 0, 0, 10, 4, 2, Direction.SOUTH), EPS);
+        assertArrayEquals(new double[]{0, 0, 6, 2, 4, 10}, CannonRules.turnBox(6, 0, 0, 10, 4, 2, Direction.WEST), EPS);
     }
 
     // ---- firing ----

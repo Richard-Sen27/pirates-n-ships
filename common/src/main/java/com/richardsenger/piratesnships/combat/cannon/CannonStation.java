@@ -73,7 +73,8 @@ public final class CannonStation implements StationKind<CannonStation.CannonOrde
     @Override
     public int durationTicks(ServerLevel level, StationRef station, CannonOrder order) {
         if (!CannonConfig.ENABLED.get()) return -1;
-        var state = level.getBlockState(station.pos());
+        // a station taken at the rear half acts on the master like every use does
+        var state = level.getBlockState(CannonService.master(level, station.pos()));
         if (!(state.getBlock() instanceof CannonBlock)) return -1;
         return CannonRules.canFire(state.getValue(CannonBlock.LOAD)) ? FUSE_TICKS : 0;
     }

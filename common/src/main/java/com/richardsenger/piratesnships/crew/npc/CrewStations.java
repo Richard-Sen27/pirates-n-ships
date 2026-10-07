@@ -3,6 +3,7 @@ package com.richardsenger.piratesnships.crew.npc;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
+import com.richardsenger.piratesnships.station.StationBlock;
 import com.richardsenger.piratesnships.station.StationConfig;
 import com.richardsenger.piratesnships.station.StationRef;
 import com.richardsenger.piratesnships.station.StationSpot;
@@ -140,7 +141,10 @@ public final class CrewStations {
         }
         StationSeat seat = StationSeat.free(level, ref.pos());
         if (seat == null) {
-            BlockPos spot = StationSpot.choose(ref.pos(),
+            // beside any block of the station (a two-block cannon: beside its front or rear), never on one of them
+            var state = level.getBlockState(ref.pos());
+            List<BlockPos> footprint = state.getBlock() instanceof StationBlock b ? b.footprint(state, ref.pos()) : List.of(ref.pos());
+            BlockPos spot = StationSpot.choose(footprint,
                     p -> level.getBlockState(p).getCollisionShape(level, p).isEmpty(),
                     p -> level.getBlockState(p).isFaceSturdy(level, p, net.minecraft.core.Direction.UP));
             seat = StationSeat.spawn(level, ref.pos(), spot);

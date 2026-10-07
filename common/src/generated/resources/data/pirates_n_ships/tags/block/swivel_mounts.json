@@ -1,0 +1,11 @@
+{
+  "values": [
+    "minecraft:iron_bars",
+    "#minecraft:fences",
+    "#minecraft:walls",
+    {
+      "id": "pirates_n_ships:brig_bars",
+      "required": false
+    }
+  ]
+}

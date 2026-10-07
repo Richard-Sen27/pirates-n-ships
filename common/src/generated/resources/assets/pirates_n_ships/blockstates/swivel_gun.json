@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "load=empty,piece=barrel": {
+      "model": "pirates_n_ships:block/swivel_gun_barrel"
+    },
+    "load=empty,piece=yoke": {
+      "model": "pirates_n_ships:block/swivel_gun_yoke"
+    },
+    "load=loaded,piece=barrel": {
+      "model": "pirates_n_ships:block/swivel_gun_barrel_loaded"
+    },
+    "load=loaded,piece=yoke": {
+      "model": "pirates_n_ships:block/swivel_gun_yoke"
+    },
+    "load=powder,piece=barrel": {
+      "model": "pirates_n_ships:block/swivel_gun_barrel"
+    },
+    "load=powder,piece=yoke": {
+      "model": "pirates_n_ships:block/swivel_gun_yoke"
+    }
+  }
+}

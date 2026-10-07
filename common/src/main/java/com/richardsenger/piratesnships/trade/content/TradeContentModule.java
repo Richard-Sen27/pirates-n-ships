@@ -46,7 +46,7 @@ public final class TradeContentModule implements ModModule {
             m.flatItem(TradeContent.TOBACCO.get());
             m.flatItem(TradeContent.SPICES.get());
             m.flatItem(TradeContent.CLOTH.get());
-            m.flatItem(TradeContent.RUM.get());
+            // Rum's item model is hand-made (art/models/rum.bbmodel), so datagen writes none
         });
         data.itemTags(tags -> tags.tag(C_DRINKS).add(TradeContent.RUM.get()));
         data.recipes(out -> {

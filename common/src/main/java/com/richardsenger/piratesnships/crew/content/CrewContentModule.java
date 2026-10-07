@@ -77,10 +77,8 @@ public final class CrewContentModule implements ModModule {
                 .add("container." + Constants.MOD_ID + ".pantry", "Pantry"));
         data.lang(lang -> GalleyText.LANG.forEach(lang::add));
         data.models(m -> {
-            m.flatItem(CrewContent.HARDTACK.get());
-            m.flatItem(CrewContent.SALTED_FISH.get());
-            m.flatItem(CrewContent.SALT_PORK.get());
-            m.flatItem(CrewContent.LIME.get());
+            // The provisions' item models are hand-made (art/models/{hardtack,salted_fish,salt_pork,lime}.bbmodel),
+            // so datagen writes none
             // cube_column: <name>_side around, <name>_top on top and bottom
             m.blocks().createTrivialBlock(CrewContent.PANTRY.get(), TexturedModel.COLUMN);
             waterBarrelModels(m);

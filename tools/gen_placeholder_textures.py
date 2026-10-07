@@ -5,7 +5,7 @@ Run (from the repository root):
     python3 -m venv tools/.venv
     tools/.venv/bin/pip install -r tools/requirements.txt
     tools/.venv/bin/python tools/gen_placeholder_textures.py            # write every texture
-    tools/.venv/bin/python tools/gen_placeholder_textures.py --only doubloon rum      # just these
+    tools/.venv/bin/python tools/gen_placeholder_textures.py --only doubloon cloth    # just these
     tools/.venv/bin/python tools/gen_placeholder_textures.py --list     # print the names
 
 Output: common/src/main/resources/assets/pirates_n_ships/textures/{item,block}/<name>.png
@@ -13,7 +13,8 @@ Deterministic: same input, same bytes. One function per texture, registered in I
 Replacing a texture by hand: put its name into PROTECTED (or a line in tools/protected_textures.txt),
 then this script never overwrites it. Textures owned by other packages (test_block) are never written. The helm, nameplate and flagpole have
 hand-made Blockbench models with vanilla textures (art/models/) and no textures here; the rapier, cutlass, saber,
-pistol, musket, lead shot, cannonball, grappling hook and shackles have hand-made item models textured from the item palettes
+pistol, musket, lead shot, cannonball, grappling hook, shackles, rum, hardtack, lime, salt pork and salted fish have hand-made
+item models textured from the item palettes
 (tools/gen_item_palette.py).
 """
 import argparse
@@ -160,52 +161,6 @@ def cloth():
     return cv.outline()
 
 
-def rum():
-    cv = Canvas()
-    cv.rect(5, 7, 10, 13, "amber")
-    cv.rect(6, 8, 7, 12, "amber_l")
-    cv.rect(7, 3, 8, 6, "amber")
-    cv.rect(7, 2, 8, 2, "wood_l")
-    cv.rect(5, 9, 10, 10, "tan_l")
-    return cv.outline()
-
-
-def hardtack():
-    cv = Canvas()
-    cv.rect(3, 4, 12, 11, "tan")
-    cv.rect(3, 4, 12, 4, "tan_l")
-    for x, y in ((5, 6), (8, 6), (11, 6), (5, 9), (8, 9), (11, 9)):
-        cv.px(x - 1, y, "brown")
-    return cv.outline()
-
-
-def salted_fish():
-    cv = Canvas()
-    cv.rect(3, 6, 10, 9, "grey")
-    cv.rect(4, 6, 9, 6, "steel_l")
-    cv.line(11, 7, 13, 5, "grey"); cv.line(11, 8, 13, 10, "grey")
-    cv.px(4, 7, "black")
-    noise(cv, "salted_fish", ["white"], 0.3, (5, 7, 9, 9))
-    return cv.outline()
-
-
-def salt_pork():
-    cv = Canvas()
-    cv.rect(3, 4, 12, 11, "pink")
-    cv.rect(3, 4, 12, 5, "white")
-    cv.rect(3, 8, 12, 8, "white")
-    noise(cv, "salt_pork", ["white", "red"], 0.12, (3, 9, 12, 11))
-    return cv.outline()
-
-
-def lime():
-    cv = Canvas()
-    cv.disc(7.5, 8.5, 4.8, "leaf")
-    cv.disc(6.5, 7.5, 2.5, "lime_l")
-    cv.px(8, 3, "wood"); cv.px(9, 3, "leaf_d"); cv.px(10, 2, "leaf_d")
-    return cv.outline()
-
-
 def brig_door_item():
     cv = Canvas()
     cv.rect(4, 1, 11, 14, "wood")
@@ -314,8 +269,7 @@ def pantry_top():
 
 
 ITEMS = {
-    "doubloon": doubloon, "tobacco": tobacco, "spices": spices, "cloth": cloth, "rum": rum,
-    "hardtack": hardtack, "salted_fish": salted_fish, "salt_pork": salt_pork, "lime": lime,
+    "doubloon": doubloon, "tobacco": tobacco, "spices": spices, "cloth": cloth,
     "brig_door": brig_door_item,
 }
 BLOCKS = {

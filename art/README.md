@@ -130,5 +130,34 @@ Items (captain's whistle and shackles batch, F8c):
 - An item whose flat model used a vanilla sprite (the whistle used `minecraft:item/goat_horn`) has no sprite of
   ours to delete.
 
+Items (provisions batch: rum, hardtack, lime, salt pork, salted fish, F8d):
+- All five use `item/generated`'s transforms unchanged (left hand repeats the right hand), like the other small items.
+- **`palette_3.png`** (texture `#2`, same script) holds the food and glass colours. It is full: the next new colour
+  needs a `palette_4.png`.
+
+  | v \ u | 0 | 4 | 8 | 12 |
+  |---|---|---|---|---|
+  | 0 | lime_light | lime | lime_dark | leaf |
+  | 4 | biscuit_light | biscuit_dark | meat_light | meat_dark |
+  | 8 | fat | rind | fish_back | fish_belly |
+  | 12 | glass_dark | glass_highlight | cork | paper |
+- **Particle texture.** Eating and drinking particles come from the model's `particle` sprite, so the food models point
+  `particle` at `palette_3` (the sheet with their own colours) even when they also use `palette` or `palette_2`.
+- **Flat food seen from above.** The GUI looks straight at the south face. A biscuit or slab "lying on a table" gets
+  one `x` rotation about `[8, 8, 8]` on every element: the hardtack is built facing south and tilted `-45` (the top
+  leans away, the front edge shows as a band at the bottom, the face is foreshortened to 0.71); the salt pork is built
+  lying flat in xz and tilted `+22.5` (the layered cut face stays in front, the rind on top shows above it). Blockbench
+  shades a cut face tilted downwards darker than the game's front GUI light does.
+- **Bottles** are stacked octagon sections (two crossed boxes D × 0.7 D per section: body, shoulder, neck, lip, cork);
+  a label is the same section 0.2 px wider. Opaque liquid is a darker lower body section (`walnut_dark` under
+  `glass_dark`) whose level shows just above the label.
+- **Diagonal bodies with splayed ends** (salted fish): the body is built upright along y and rotated `z -45` about
+  `[8, 8, 8]`; parts at other angles (tail lobes at 202.5° and 247.5°) are placed in world coordinates instead, one
+  built along x and rotated `+22.5`, the other along y and rotated `-22.5`, each about its own centre.
+- Two `risky_eval` helpers kept each model to one or two iterations: `build(parts)` (part list with a default palette
+  patch, per-face overrides and an optional rotation) and `exportAll(name)` (drops sheets no face uses, sets the
+  display slots, writes the item model and the project file). They live only in the running app; rebuild them from
+  these notes after a restart.
+
 Entity models use the Modded Entity format (Mojang mappings 1.17+); paste the body of the exported
 `createBodyLayer()` into the renderer's layer method (example: `AnchorRenderer.createLayer`).

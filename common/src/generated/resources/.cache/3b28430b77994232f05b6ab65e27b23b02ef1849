@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-07T02:45:42.146504	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-07T02:59:50.156184	Block states and models: pirates_n_ships
 9282899a10c2af6fbcc1fd07e91ba10d9ba8a732 assets/pirates_n_ships/blockstates/brig_bars.json
 09e096c3979b4e82e1fab125e8a03e835e8c7aca assets/pirates_n_ships/blockstates/brig_door.json
 1ca2bd2df3602ba7b137ae7b56ec9fd3f195588c assets/pirates_n_ships/blockstates/capstan.json
@@ -62,19 +62,14 @@ c2828a89c739dcf7d31509c39dbef0032d04a8c0 assets/pirates_n_ships/models/item/figu
 9c494019b08c2cdab4ac80af298cd351a0f0e200 assets/pirates_n_ships/models/item/figurehead_mermaid.json
 cc79ca683cdbc9c26d9ace4c524deb0acab46534 assets/pirates_n_ships/models/item/figurehead_skull.json
 801c31e2cd8b59209585cb057659e90b8696f843 assets/pirates_n_ships/models/item/flagpole.json
-ce98e291ab03f547f55d6c2df5324c0b72dc78f7 assets/pirates_n_ships/models/item/hardtack.json
 ee032feb25e676092a205d8740cf094a32b5cccc assets/pirates_n_ships/models/item/helm.json
 f399a5322f83e89b272f7efbdfc19ccff371f439 assets/pirates_n_ships/models/item/jolly_roger_flag.json
-4226ac0f060894676313d34b10baa3c9211f689a assets/pirates_n_ships/models/item/lime.json
 4738f6156fcd947997765648f524f28c44b4a4da assets/pirates_n_ships/models/item/merchant_flag.json
 0115d1b5ba50b99963c030a78b0184a09171a371 assets/pirates_n_ships/models/item/nameplate.json
 6eb672094a831d56cf44b1dd215b3733a06feaa0 assets/pirates_n_ships/models/item/navy_flag.json
 d830a7abbc232e7d496bb338343be03b894083fa assets/pirates_n_ships/models/item/pantry.json
 2ff868694993d74c39b741b5cc83b12f64f69570 assets/pirates_n_ships/models/item/rope.json
-8d7890a5f2729a0886e350d33b34816f743740bd assets/pirates_n_ships/models/item/rum.json
 344a8933080d39bb3457d959748e850b869917c8 assets/pirates_n_ships/models/item/sail_winch.json
-b26882bfbfc7d2150f7a3f3bc94c1bf2f480276f assets/pirates_n_ships/models/item/salt_pork.json
-78f9086fc82d3c6ee9501aaa20414f761cb43951 assets/pirates_n_ships/models/item/salted_fish.json
 c64f5ef95295a670fbd366a7bf6c08d84f0f8805 assets/pirates_n_ships/models/item/spices.json
 1089ff46d82ccaa42bb4f632ea36493a92ae1c93 assets/pirates_n_ships/models/item/test_block.json
 190d1e042beb273f219543d3657d76001621d4af assets/pirates_n_ships/models/item/tobacco.json

@@ -102,6 +102,7 @@ public class MusketeerGoal extends Goal {
         if (d.shove()) {
             MobAim.face(mob, target);
             mob.swing(InteractionHand.MAIN_HAND);
+            mob.musketShoved();
             target.hurt(mob.damageSources().mobAttack(mob), MobConfig.SHOVE_DAMAGE.get().floatValue());
             target.knockback(MobConfig.SHOVE_KNOCKBACK.get(), mob.getX() - target.getX(), mob.getZ() - target.getZ());
             shoveCooldown = MobConfig.SHOVE_COOLDOWN.get();

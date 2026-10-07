@@ -11,7 +11,8 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 
 /**
- * Registered content of the grappling hook (docs/design.md §8.3): the thrown hook entity and the mooring ring (GR1).
+ * Registered content of the grappling hook (docs/design.md §8.3): the thrown hook entity, the mooring ring (GR1)
+ * and the rope rider (GR2).
  * The item itself is {@code combat.content.CombatContent#GRAPPLING_HOOK}, a {@link GrapplingHookItem}.
  */
 public final class GrappleContent {
@@ -20,6 +21,14 @@ public final class GrappleContent {
     public static final RegistryEntry<EntityType<?>, EntityType<GrapplingHookEntity>> HOOK = ModRegistry.entity("grappling_hook",
             () -> EntityType.Builder.<GrapplingHookEntity>of(GrapplingHookEntity::new, MobCategory.MISC)
                     .sized(0.3f, 0.3f).noSummon().clientTrackingRange(10).updateInterval(2));
+
+    /**
+     * The invisible handle a player hangs on while sliding along a rope (GR2): not saved, tracked like the hook and
+     * updated every tick so the hanging player moves smoothly.
+     */
+    public static final RegistryEntry<EntityType<?>, EntityType<RopeRiderEntity>> ROPE_RIDER = ModRegistry.entity("rope_rider",
+            () -> EntityType.Builder.<RopeRiderEntity>of(RopeRiderEntity::new, MobCategory.MISC)
+                    .sized(0.25f, 0.25f).noSummon().noSave().fireImmune().clientTrackingRange(10).updateInterval(1));
 
     /** A small iron ring on a plate: a sure target for hooks and a tie-off for the rope (see {@link MooringRingBlock}). */
     public static final RegistryEntry<Block, MooringRingBlock> MOORING_RING = ModRegistry.blockWithItem("mooring_ring",

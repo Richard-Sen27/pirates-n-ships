@@ -71,6 +71,13 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
     private static final EntityDataAccessor<Vector3f> PLOT_OFFSET = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.VECTOR3);
     /** Mooring ring the rope's near end is tied to (plot position on a ship, else world), or empty (GR1). */
     private static final EntityDataAccessor<Optional<BlockPos>> TIED_RING = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
+    /** Block of the pinned near end (plot position on a ship, else world), or empty (GR2). */
+    private static final EntityDataAccessor<Optional<BlockPos>> PIN_BLOCK = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
+    /** Pinned near end relative to {@link #PIN_BLOCK}. */
+    private static final EntityDataAccessor<Vector3f> PIN_OFFSET = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.VECTOR3);
+
+    /** How far below the eyes the thrower holds the rope [blocks] (the renderer's third-person hand height). */
+    public static final double HAND_BELOW_EYES = 0.45;
 
     /** A flying hook that has not hit anything after this many ticks drops. */
     private static final int MAX_FLIGHT_TICKS = 200;
@@ -93,6 +100,12 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
     private @Nullable BlockPos tiedRing;
     /** Ship of {@link #tiedRing}, null for a ring on land. */
     private @Nullable UUID tiedShip;
+    /**
+     * Where the near end was pinned when the thrower grabbed their own rope to slide (GR2): plot position on
+     * {@link #pinShip}, world position when that is null; null when not pinned.
+     */
+    private @Nullable Vec3 pinPos;
+    private @Nullable UUID pinShip;
 
     // rope ends for the physics substep, refreshed every game tick while latched
     private @Nullable UUID throwerShipId;
@@ -131,6 +144,8 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         builder.define(PLOT_BLOCK, BlockPos.ZERO);
         builder.define(PLOT_OFFSET, new Vector3f());
         builder.define(TIED_RING, Optional.empty());
+        builder.define(PIN_BLOCK, Optional.empty());
+        builder.define(PIN_OFFSET, new Vector3f());
     }
 
     @Override
@@ -177,6 +192,14 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         return entityData.get(TIED_RING);
     }
 
+    /** The pinned near end (plot position on a ship, else world), as synched (both sides), or empty (GR2). */
+    public Optional<Vec3> syncedPin() {
+        return entityData.get(PIN_BLOCK).map(b -> {
+            Vector3f o = entityData.get(PIN_OFFSET);
+            return new Vec3(b.getX() + (double) o.x, b.getY() + (double) o.y, b.getZ() + (double) o.z);
+        });
+    }
+
     // ------------------------------------------------------------------ server accessors
 
     /** Rope length of this hook [blocks]. */
@@ -198,8 +221,47 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         return tiedRing;
     }
 
+    /** Ship of the ring the rope is tied to, null for a ring on land or an untied rope. */
+    public @Nullable UUID tiedShip() {
+        return tiedShip;
+    }
+
+    /** The pinned near end (plot position on {@link #pinShip()}, else world), or null (GR2). */
+    public @Nullable Vec3 pinPos() {
+        return pinPos;
+    }
+
+    /** Ship of the pinned near end, null when pinned on land or not pinned. */
+    public @Nullable UUID pinShip() {
+        return pinShip;
+    }
+
+    /**
+     * Pins the rope's near end where it is now, at {@code pos} (plot position on {@code ship}, world position when
+     * that is null): the thrower grabbed their own rope to slide down it (GR2), so the end no longer moves with them.
+     * Like a tie-off, the pinned end hauls from its ship and the rope snaps when the hook is too far from it. A later
+     * tie to a ring replaces the pin.
+     */
+    void pinNearEnd(Vec3 pos, @Nullable UUID ship) {
+        pinPos = pos;
+        pinShip = ship;
+        anchorPlot = null;
+        holding.reset(); // a new rope end: start over
+        BlockPos b = BlockPos.containing(pos);
+        entityData.set(PIN_BLOCK, Optional.of(b));
+        entityData.set(PIN_OFFSET, new Vector3f((float) (pos.x - b.getX()), (float) (pos.y - b.getY()), (float) (pos.z - b.getZ())));
+    }
+
+    /** True when the near end is fixed: tied to a ring or pinned. */
+    public boolean nearEndFixed() {
+        return tiedRing != null || pinPos != null;
+    }
+
     /** Ties the rope's near end to the ring at {@code ring} on ship {@code ship} (null: on land). */
     void tieTo(BlockPos ring, @Nullable UUID ship) {
+        pinPos = null;
+        pinShip = null;
+        entityData.set(PIN_BLOCK, Optional.empty());
         tiedRing = ring.immutable();
         tiedShip = ship;
         anchorPlot = null;
@@ -302,8 +364,8 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         ShipBody ringShip = tied && tiedShip != null ? SableShips.byId(level, tiedShip) : null;
         boolean ringsIntact = (!tied || (tiedShip == null || ringShip != null) && MooringRingBlock.isRing(level, tiedRing))
                 && (s != State.LATCHED || !onRing || ship == null || MooringRingBlock.isRing(level, latchedBlock));
-        // a tied rope does not need its thrower nearby, only a thrower to give the hook back to
-        boolean ownerPresent = owner != null && (tied || owner.isAlive() && owner.level() == level);
+        // a tied or pinned rope does not need its thrower nearby, only a thrower to give the hook back to
+        boolean ownerPresent = owner != null && (nearEndFixed() || owner.isAlive() && owner.level() == level);
         Vec3 near = ownerPresent && ringsIntact ? nearEndPos(level, owner) : null;
         double nearDistance = near != null ? near.distanceTo(hookWorld) : Double.POSITIVE_INFINITY;
         GrappleRules.Release release = GrappleRules.release(GrappleConfig.ENABLED.get(), ownerPresent, s == State.LATCHED,
@@ -313,7 +375,7 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
             return;
         }
         switch (s) {
-            case LATCHED -> tickLatched(level, ship, hookWorld, owner, ringShip, near);
+            case LATCHED -> tickLatched(level, ship, hookWorld, owner, near);
             case RETRACTING -> tickRetracting(nearDistance);
             default -> { }
         }
@@ -324,19 +386,59 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
      * thrower; null when neither can be found.
      */
     private @Nullable Vec3 nearEndPos(ServerLevel level, @Nullable Entity owner) {
-        if (tiedRing != null) {
-            Vec3 c = MooringRingBlock.ringCenter(level, tiedRing);
-            if (tiedShip == null) {
-                return c;
-            }
-            ShipBody ringShip = SableShips.byId(level, tiedShip);
-            return ringShip != null ? ringShip.toWorld(c) : null;
+        if (nearEndFixed()) {
+            return fixedNearEnd(level);
         }
         return owner != null ? owner.position() : null;
     }
 
+    /** World position of the ring the rope is tied to or of the pin, null when neither (or its ship is gone). */
+    private @Nullable Vec3 fixedNearEnd(ServerLevel level) {
+        Vec3 local;
+        UUID shipOf;
+        if (tiedRing != null) {
+            local = MooringRingBlock.ringCenter(level, tiedRing);
+            shipOf = tiedShip;
+        } else if (pinPos != null) {
+            local = pinPos;
+            shipOf = pinShip;
+        } else {
+            return null;
+        }
+        if (shipOf == null) {
+            return local;
+        }
+        ShipBody s = SableShips.byId(level, shipOf);
+        return s != null ? s.toWorld(local) : null;
+    }
+
+    /**
+     * World position of the rope's near end for riders (GR2, server): the ring it is tied to, the pin, else the
+     * thrower's hand ({@link #HAND_BELOW_EYES} below the eyes); null when it cannot be found.
+     */
+    public @Nullable Vec3 ropeNearEnd(ServerLevel level) {
+        if (nearEndFixed()) {
+            return fixedNearEnd(level);
+        }
+        Entity owner = getOwner();
+        return owner != null && owner.isAlive() && owner.level() == level
+                ? owner.getEyePosition().subtract(0, HAND_BELOW_EYES, 0) : null;
+    }
+
+    /** World position of the latched hook (the rope's far end, server), or null when it is not latched or its ship is gone. */
+    public @Nullable Vec3 ropeFarEnd(ServerLevel level) {
+        if (state() != State.LATCHED || shipId == null || plotPos == null) {
+            return null;
+        }
+        ShipBody ship = SableShips.byId(level, shipId);
+        return ship != null ? ship.toWorld(plotPos) : null;
+    }
+
     /** The ship at the rope's near end: the tied ring's ship, else the ship the thrower stands on (null: land). */
     private @Nullable ShipBody nearEndShip(ServerLevel level, @Nullable Entity owner) {
+        if (pinPos != null) {
+            return pinShip == null ? null : SableShips.byId(level, pinShip);
+        }
         UUID ringShip = tiedShip;
         ShipBody thrower = tiedRing == null ? GrappleService.shipOf(level, owner) : null;
         UUID id = GrappleRules.haulingShip(GrappleRules.nearEnd(tiedRing != null), ringShip, thrower == null ? null : thrower.id());
@@ -367,16 +469,17 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         return true;
     }
 
-    private void tickLatched(ServerLevel level, ShipBody ship, Vec3 hookWorld, Entity owner, @Nullable ShipBody ringShip, Vec3 near) {
+    private void tickLatched(ServerLevel level, ShipBody ship, Vec3 hookWorld, Entity owner, Vec3 near) {
         setPos(hookWorld);
         setDeltaMovement(Vec3.ZERO);
-        boolean tied = tiedRing != null;
-        ShipBody nearShip = tied ? ringShip : GrappleService.shipOf(level, owner);
+        ShipBody nearShip = nearEndFixed() ? nearEndShip(level, owner) : GrappleService.shipOf(level, owner);
         throwerPos = near;
         throwerAboardTarget = nearShip != null && nearShip.id().equals(shipId);
         if (nearShip != null && !throwerAboardTarget) {
-            if (tied) {
+            if (tiedRing != null) {
                 anchorPlot = MooringRingBlock.ringCenter(level, tiedRing); // the ring is the rope's end
+            } else if (pinPos != null) {
+                anchorPlot = pinPos; // the pin is the rope's end
             } else if (!nearShip.id().equals(throwerShipId) || anchorPlot == null || tickCount >= anchorRefreshAt) {
                 anchorPlot = GrappleService.nearestBlockCenter(nearShip, hookWorld);
                 anchorRefreshAt = tickCount + ANCHOR_REFRESH_TICKS;

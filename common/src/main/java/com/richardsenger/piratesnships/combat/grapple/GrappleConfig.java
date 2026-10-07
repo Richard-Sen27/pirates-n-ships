@@ -67,6 +67,27 @@ public final class GrappleConfig {
     public static final ConfigValue<Double> MUSKET_ROPE_LENGTH = LAUNCH.doubleRange("musket_rope_length", 48.0, 2.0, 128.0,
             "Rope length in blocks of a hook fired from a musket (never shorter than max_rope_length)");
 
+    private static final ConfigSection SLIDE = S.section("slide",
+            "Sliding along a latched rope (e.g. from the crow's nest down to the other ship): use the rope while looking at it");
+    public static final ConfigValue<Boolean> SLIDE_ENABLED = SLIDE.bool("enabled", true,
+            "Players can hang on a latched grappling rope and slide down it. Off = using the rope does nothing and riders drop off");
+    public static final ConfigValue<Double> BOARD_REACH = SLIDE.doubleRange("board_reach", 2.5, 0.5, 8.0,
+            "How far [blocks] from the eyes a player can grab the rope");
+    public static final ConfigValue<Double> BOARD_PICK_RADIUS = SLIDE.doubleRange("board_pick_radius", 0.6, 0.1, 2.0,
+            "How close [blocks] the look ray must pass the rope to grab it");
+    public static final ConfigValue<Double> SLIDE_SPEED = SLIDE.doubleRange("slide_speed", 0.35, 0.01, 2.0,
+            "Start speed of the slide in blocks per tick, toward the rope's lower end");
+    public static final ConfigValue<Double> SLIDE_GRAVITY = SLIDE.doubleRange("slide_gravity", 0.02, 0.0, 0.5,
+            "Speed gained per tick, in blocks per tick, times the rope's slope (height difference per block of rope): steeper is faster");
+    public static final ConfigValue<Double> SLIDE_MIN_SPEED = SLIDE.doubleRange("slide_min_speed", 0.1, 0.01, 2.0,
+            "Crawling speed in blocks per tick along a level rope, toward the hook");
+    public static final ConfigValue<Double> SLIDE_MAX_SPEED = SLIDE.doubleRange("slide_max_speed", 0.8, 0.01, 4.0,
+            "Top speed of the slide in blocks per tick");
+    public static final ConfigValue<Double> HANG_OFFSET = SLIDE.doubleRange("hang_offset", 2.0, 0.0, 4.0,
+            "How far [blocks] the hanging player's feet are below the rope (2: both hands raised to the rope)");
+    public static final ConfigValue<Double> DISMOUNT_DISTANCE = SLIDE.doubleRange("dismount_distance", 1.0, 0.1, 8.0,
+            "Distance [blocks] from the end of the rope at which the rider lets go and lands on that spot");
+
     private GrappleConfig() {
     }
 
@@ -82,6 +103,12 @@ public final class GrappleConfig {
     /** Rope length [blocks] of a hook launched in {@code mode}. */
     public static double ropeLength(GrappleLaunch.Mode mode) {
         return GrappleLaunch.ropeLength(mode, MAX_ROPE_LENGTH.get(), CROSSBOW_ROPE_LENGTH.get(), MUSKET_ROPE_LENGTH.get());
+    }
+
+    /** The slide's speeds and distances ({@link RopeSlide}). */
+    public static RopeSlide.Params slideParams() {
+        return new RopeSlide.Params(SLIDE_SPEED.get(), SLIDE_GRAVITY.get(), SLIDE_MIN_SPEED.get(), SLIDE_MAX_SPEED.get(),
+                DISMOUNT_DISTANCE.get());
     }
 
     /** Distance up to which the rope holds without pulling: {@code hold_distance + hold_slack}. */

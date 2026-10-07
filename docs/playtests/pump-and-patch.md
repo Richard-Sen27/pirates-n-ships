@@ -29,5 +29,15 @@ Setup: `./gradlew :neoforge:runClient`, a world with deep water; planks, a helm,
     as when still. Report if clicks miss on the moving hull.
 11. Multiplayer: two players on two pumps in one room drain twice as fast.
 
+12. **Crew order (G7).** Assign a crew member to the pump with the whistle (use on the crew member, then on the pump),
+    flood the hold, and pick "Man the pumps" in the whistle wheel (five sectors now, the pump icon between Furl and
+    Release). Expected: "Order: pump the bilge (1 crew carry it out)", the crew says "Aye, manning the pump!", the
+    water drops and keeps dropping past 5 seconds until dry; picking it again on a dry hold gives "The bilge is dry,
+    captain" and 0 crew. `/pirates crew order pump` does the same; tab completion offers hoist, reef, furl and pump.
+13. **Refusals (G7).** With crew at a winch and at a pump: "Hoist sails" moves only the winch crew while the pump crew
+    keeps pumping; "Man the pumps" leaves the winch crew silent; `/pirates crew order pump <winch crew>` makes that
+    crew member say "I can't pump the bilge from this station, captain!". With `pump_enabled = false` the pump crew
+    says "This pump won't draw, captain!".
+
 ## Also worth a look
 - Is 1 block per second a good pump rate against the default inflow? Should pumping be slower or tire you more?

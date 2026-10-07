@@ -122,3 +122,6 @@ a ship with a sail and a winch, a crew member seated at the winch (§2), you sta
     wrong; please say so.
 12. Dedicated server (optional): join one with the whistle; the server log shows no client class errors on startup,
     and the menu works the same.
+
+
+Addendum (G7): the whistle wheel now has five sectors; the fifth, "Man the pumps", sits between Furl and Release and is covered in `pump-and-patch.md` §12 and §13.

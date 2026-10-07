@@ -109,8 +109,10 @@ faster.
   pump: it removes 1 block of water per second and stops when you let go. The action bar shows how much water is left,
   or "The bilge is dry". It drains the highest flooded room below it. Pumping makes you hungry slowly. Several pumps in
   one room add up.
-- A crew member can man a pump like a sail winch and keeps pumping until the room is dry. There is no whistle order
-  for it yet.
+- A crew member can man a pump like a sail winch: assign it with the whistle, then pick **Man the pumps** in the
+  whistle wheel (or `/pirates crew order pump`). It pumps until the room is dry and answers "The bilge is dry" when
+  there is nothing to do. Ship-wide orders reach only the crew whose station takes them; an order to the wrong station
+  is refused.
 - Server config `flooding`: `pump_enabled`, `pump_rate`, `pump_reach`, `pump_use_ticks`, `pump_exhaustion`,
   `patch_enabled`.
 

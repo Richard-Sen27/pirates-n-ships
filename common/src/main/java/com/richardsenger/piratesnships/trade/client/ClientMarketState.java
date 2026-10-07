@@ -16,6 +16,7 @@ public final class ClientMarketState {
     private static volatile Optional<MarketView> view = Optional.empty();
     private static volatile Optional<TransactionResult> lastResult = Optional.empty();
     private static volatile long version;
+    private static volatile long resultVersion;
     private static volatile Optional<MarketPayloads.OpenMarket> desk = Optional.empty();
     private static volatile Runnable opener = () -> { };
 
@@ -42,10 +43,22 @@ public final class ClientMarketState {
         return desk;
     }
 
+    /**
+     * A new state. A state without a result (a live refresh) keeps the last result, so a refresh that arrives in the
+     * same client tick as a request's answer does not hide it; {@link #resultVersion()} tells new results apart.
+     */
     public static void accept(MarketPayloads.State state) {
         view = state.view();
-        lastResult = state.result();
+        if (state.result().isPresent()) {
+            lastResult = state.result();
+            resultVersion++;
+        }
         version++;
+    }
+
+    /** Grows with every state that carried a result. */
+    public static long resultVersion() {
+        return resultVersion;
     }
 
     public static Optional<MarketView> view() {

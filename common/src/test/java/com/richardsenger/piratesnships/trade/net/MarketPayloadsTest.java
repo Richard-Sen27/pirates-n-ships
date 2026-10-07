@@ -51,6 +51,7 @@ class MarketPayloadsTest {
         assertEquals(noContainer, roundTrip(MarketPayloads.Trade.CODEC, noContainer));
         var contract = new MarketPayloads.ContractAction(port, true, UUID.randomUUID(), Optional.empty());
         assertEquals(contract, roundTrip(MarketPayloads.ContractAction.CODEC, contract));
+        assertEquals(MarketPayloads.CloseMarket.INSTANCE, roundTrip(MarketPayloads.CloseMarket.CODEC, MarketPayloads.CloseMarket.INSTANCE));
     }
 
     @Test

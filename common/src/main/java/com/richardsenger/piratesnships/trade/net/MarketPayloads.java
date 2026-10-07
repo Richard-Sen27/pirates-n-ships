@@ -18,6 +18,8 @@ import java.util.UUID;
 /**
  * The market protocol. Client → server: {@link Refresh}, {@link Trade}, {@link ContractAction}; the server checks
  * everything (open session for that port, distance, quantity, container) and answers each with a {@link State}.
+ * {@link CloseMarket} (client to server) ends the session when the screen closes. The server also sends a
+ * {@link State} without a result when an open session's view changed (another player's trade, prices, doubloons).
  * Codecs go through NBT ({@code ByteBufCodecs.fromCodec}); the payloads are small and rare.
  */
 public final class MarketPayloads {
@@ -112,6 +114,18 @@ public final class MarketPayloads {
 
         @Override
         public Type<State> type() {
+            return TYPE;
+        }
+    }
+
+    /** Client to server: the market screen was closed; the session ends. */
+    public record CloseMarket() implements CustomPacketPayload {
+        public static final CloseMarket INSTANCE = new CloseMarket();
+        public static final Type<CloseMarket> TYPE = payloadType("market_close");
+        public static final StreamCodec<RegistryFriendlyByteBuf, CloseMarket> CODEC = StreamCodec.unit(INSTANCE);
+
+        @Override
+        public Type<CloseMarket> type() {
             return TYPE;
         }
     }

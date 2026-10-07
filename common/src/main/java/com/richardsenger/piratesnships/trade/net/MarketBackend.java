@@ -39,17 +39,25 @@ import java.util.function.Consumer;
  * quantities must be 1..{@code max_trade_quantity}; a container must be a loaded cargo container within
  * {@code container_reach} of the player. Every request is answered with a {@link MarketPayloads.State}.
  *
+ * <p>Every open session is kept: once every {@code market_refresh_ticks} each valid session whose view changed
+ * (prices drifting back, stock, the viewer's doubloons, offers) gets a new state, and a trade or contract action pushes
+ * the new state to every other session of that port at once, so several players at one desk see each other's trades.
+ * A session ends on {@link MarketPayloads.CloseMarket} (the screen closed), logout, death, or when another market is
+ * opened; a session that is out of reach is only paused (no refreshes, requests refused) as before.
+ *
  * <p>{@link #onNoticedPlunder} is the hook for the law integration (this package never calls the law module).
  */
 public final class MarketBackend {
 
     /**
      * {@code desk} = opened at a harbor master's desk (reach and binding checked against it on every request);
-     * {@code quantity} = the quote quantity last sent, kept for answers to requests without one (contracts).
+     * {@code quantity} = the quote quantity last sent, kept for answers to requests without one (contracts) and for
+     * refreshes; {@code lastSent} = the view last sent, so a refresh is sent only when it changed.
      */
-    record Session(ResourceLocation port, ResourceKey<Level> dimension, Vec3 origin, Optional<BlockPos> desk, int quantity) {
-        Session withQuantity(int q) {
-            return new Session(port, dimension, origin, desk, q);
+    record Session(ServerPlayer player, ResourceLocation port, ResourceKey<Level> dimension, Vec3 origin, Optional<BlockPos> desk,
+                   int quantity, Optional<MarketView> lastSent) {
+        Session withSent(int q, Optional<MarketView> view) {
+            return new Session(player, port, dimension, origin, desk, q, view.isPresent() ? view : lastSent);
         }
     }
 
@@ -79,10 +87,14 @@ public final class MarketBackend {
                 (p, player) -> handleTrade((ServerPlayer) player, p));
         Services.NETWORK.registerToServer(MarketPayloads.ContractAction.TYPE, MarketPayloads.ContractAction.CODEC,
                 (p, player) -> handleContract((ServerPlayer) player, p));
+        Services.NETWORK.registerToServer(MarketPayloads.CloseMarket.TYPE, MarketPayloads.CloseMarket.CODEC,
+                (p, player) -> handleClose((ServerPlayer) player, p));
         Services.NETWORK.registerToClient(MarketPayloads.OpenMarket.TYPE, MarketPayloads.OpenMarket.CODEC,
                 (p, player) -> com.richardsenger.piratesnships.trade.client.ClientMarketState.open(p));
         Services.NETWORK.registerToClient(MarketPayloads.State.TYPE, MarketPayloads.State.CODEC,
                 (p, player) -> com.richardsenger.piratesnships.trade.client.ClientMarketState.accept(p));
+        // The live refresh belongs to the protocol; subscribed here so the module's event list stays unchanged
+        com.richardsenger.piratesnships.platform.event.CommonEvents.SERVER_TICK_END.register(MarketBackend::onServerTick);
     }
 
     // --- Sessions -----------------------------------------------------------------------------------------------
@@ -90,7 +102,8 @@ public final class MarketBackend {
     /** Opens the port's market (it must exist) for the player and sends the state; false if there is no market. */
     public static boolean open(ServerPlayer player, ResourceLocation port, int quantity) {
         if (TradeService.market(player.server, port).isEmpty()) return false;
-        SESSIONS.put(player.getUUID(), new Session(port, player.level().dimension(), player.position(), Optional.empty(), quantity));
+        SESSIONS.put(player.getUUID(), new Session(player, port, player.level().dimension(), player.position(), Optional.empty(),
+                quantity, Optional.empty()));
         send(player, port, quantity, Optional.empty());
         return true;
     }
@@ -101,7 +114,8 @@ public final class MarketBackend {
      */
     public static boolean openDesk(ServerPlayer player, ResourceLocation port, BlockPos desk) {
         if (TradeService.market(player.server, port).isEmpty()) return false;
-        SESSIONS.put(player.getUUID(), new Session(port, player.level().dimension(), Vec3.atCenterOf(desk), Optional.of(desk), 1));
+        SESSIONS.put(player.getUUID(), new Session(player, port, player.level().dimension(), Vec3.atCenterOf(desk),
+                Optional.of(desk.immutable()), 1, Optional.empty()));
         deliver(player, new MarketPayloads.OpenMarket(port, desk, TradeConfig.DESK_REACH.get()));
         send(player, port, 1, Optional.empty());
         return true;
@@ -109,6 +123,46 @@ public final class MarketBackend {
 
     public static void close(ServerPlayer player) {
         SESSIONS.remove(player.getUUID());
+    }
+
+    /** Whether {@code player} has a market session for {@code port} (open, not necessarily in reach; tests, debug). */
+    public static boolean isOpen(UUID player, ResourceLocation port) {
+        Session s = SESSIONS.get(player);
+        return s != null && s.port().equals(port);
+    }
+
+    /**
+     * Every server tick (subscribed in {@link #registerPayloads}): on refresh ticks, drops the sessions of players
+     * who logged out or died and re-sends the state to every valid session whose view changed.
+     */
+    public static void onServerTick(MinecraftServer server) {
+        if (SESSIONS.isEmpty() || !MarketRefresh.due(server.getTickCount(), TradeConfig.MARKET_REFRESH_TICKS.get())) return;
+        for (UUID id : new ArrayList<>(SESSIONS.keySet())) {
+            Session s = SESSIONS.get(id);
+            if (s == null) continue;
+            if (s.player().isRemoved() || s.player().hasDisconnected()) {
+                // logged out, or died (a respawn is a new player object)
+                SESSIONS.remove(id, s);
+                continue;
+            }
+            refresh(s);
+        }
+    }
+
+    /** Pushes the state to every other valid session of {@code port} whose view changed (after a trade there). */
+    private static void pushPort(ServerPlayer except, ResourceLocation port) {
+        for (Session s : new ArrayList<>(SESSIONS.values())) {
+            if (s.player() != except && s.port().equals(port)) refresh(s);
+        }
+    }
+
+    private static void refresh(Session s) {
+        ServerPlayer player = s.player();
+        if (!canUse(player, s.port())) return;
+        Optional<MarketView> view = view(player, s.port(), s.quantity());
+        if (view.isEmpty() || !MarketRefresh.changed(s.lastSent(), view.get())) return;
+        SESSIONS.computeIfPresent(player.getUUID(), (k, cur) -> cur.port().equals(s.port()) ? cur.withSent(cur.quantity(), view) : cur);
+        deliver(player, new MarketPayloads.State(view, Optional.empty()));
     }
 
     public static void clear() {
@@ -161,6 +215,12 @@ public final class MarketBackend {
         }
         TransactionResult r = trade(player, p);
         send(player, p.port(), clampQuantity(p.quantity()), Optional.of(r));
+        if (r.done()) pushPort(player, p.port());
+    }
+
+    /** The client closed the market screen: the session ends. */
+    public static void handleClose(ServerPlayer player, MarketPayloads.CloseMarket p) {
+        close(player);
     }
 
     /** Runs a validated trade request (the session check is the caller's). */
@@ -213,6 +273,7 @@ public final class MarketBackend {
         }
         Session s = SESSIONS.get(player.getUUID());
         send(player, p.port(), clampQuantity(s == null ? 64 : s.quantity()), Optional.of(r));
+        if (r.done()) pushPort(player, p.port());
     }
 
     private static Optional<MarketTransactions.Holder> holder(ServerPlayer player, Optional<BlockPos> pos) {
@@ -227,8 +288,9 @@ public final class MarketBackend {
     }
 
     private static void send(ServerPlayer player, ResourceLocation port, int quantity, Optional<TransactionResult> result) {
-        SESSIONS.computeIfPresent(player.getUUID(), (k, s) -> s.port().equals(port) ? s.withQuantity(quantity) : s);
-        deliver(player, new MarketPayloads.State(view(player, port, quantity), result));
+        Optional<MarketView> view = view(player, port, quantity);
+        SESSIONS.computeIfPresent(player.getUUID(), (k, s) -> s.port().equals(port) ? s.withSent(quantity, view) : s);
+        deliver(player, new MarketPayloads.State(view, result));
     }
 
     private static void deliver(ServerPlayer player, CustomPacketPayload payload) {

@@ -191,7 +191,9 @@ public final class HullRuntime {
         ticks++;
         sim.setParams(FloodingConfig.params());
         sampleSea(ship);
-        FloodTickInput input = FloodTickInput.calm(seaShipFrame);
+        // WV1: wave crests at the hull raise the sea at the outside ports (0 without waves or sea)
+        FloodTickInput input = FloodTickInput.calm(seaShipFrame)
+                .withWaves(com.richardsenger.piratesnships.sailing.waves.WaveForces.spillHeight(level, id));
         int[] working = workingPumps();
         lastReport = sim.tick(working == null ? input : input.withPumps(working));
         if (lastReport.inflow() > 0 || lastReport.outflow() > 0 || lastReport.pumped() > 0) {

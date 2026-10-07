@@ -134,7 +134,7 @@ class SettingsConfigTest {
         assertEquals(1.0, HazardConfig.WAVE_AMPLITUDE.get());
         assertTrue(HazardsConfig.KRAKEN_ENABLED.get());
         assertEquals(0.05, HazardsConfig.KRAKEN_CHANCE_PER_DAY.get());
-        assertTrue(HazardConfig.CAMERA_SWAY.get());
+        assertFalse(HazardConfig.CAMERA_SWAY.get()); // WV1: camera sway is opt-in (design.md §5.4)
         assertTrue(CrewConfig.WAGES_ENABLED.get());
         assertFalse(CrewConfig.MUTINY_ENABLED.get());
         assertEquals(2, CrewConfig.WAGE_PER_DAY.get());

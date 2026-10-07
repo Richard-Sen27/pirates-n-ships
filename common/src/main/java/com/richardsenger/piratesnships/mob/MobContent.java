@@ -6,20 +6,28 @@ import com.richardsenger.piratesnships.mob.entity.NavySoldier;
 import com.richardsenger.piratesnships.mob.entity.Pirate;
 import com.richardsenger.piratesnships.mob.entity.Sailor;
 import com.richardsenger.piratesnships.mob.entity.SeafarerMob;
+import com.richardsenger.piratesnships.mob.entity.Shark;
 import com.richardsenger.piratesnships.platform.Services;
+import com.richardsenger.piratesnships.platform.registry.NaturalSpawn;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
+import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.SpawnPlacementTypes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
 /**
  * The humanoid mobs (docs/design.md §9) and their spawn eggs. Category {@code MISC} like the crew member: they are
  * placed by spawn eggs, the {@code /pirates mob spawn} command and later by structures, not by the natural spawner.
+ * The shark (M4) is a {@code WATER_CREATURE}: it spawns naturally in ocean biomes and despawns like vanilla's fish.
  */
 public final class MobContent {
 
@@ -27,6 +35,11 @@ public final class MobContent {
     public static final RegistryEntry<EntityType<?>, EntityType<Sailor>> SAILOR = humanoid("sailor", Sailor::new);
     public static final RegistryEntry<EntityType<?>, EntityType<NavySoldier>> NAVY_SOLDIER = humanoid("navy_soldier", NavySoldier::new);
     public static final RegistryEntry<EntityType<?>, EntityType<NavyOfficer>> NAVY_OFFICER = humanoid("navy_officer", NavyOfficer::new);
+
+    /** 0.9 × 0.6 hitbox in the middle of a 2.4-block body (the model is longer than the box, like the dolphin's). */
+    public static final RegistryEntry<EntityType<?>, EntityType<Shark>> SHARK = ModRegistry.entity("shark",
+            () -> EntityType.Builder.of(Shark::new, MobCategory.WATER_CREATURE).sized(0.9f, 0.6f).eyeHeight(0.35f)
+                    .clientTrackingRange(10));
 
     public static final RegistryEntry<Item, SpawnEggItem> PIRATE_SPAWN_EGG = egg("pirate", PIRATE, 0x3E2E26, 0x962228);
     public static final RegistryEntry<Item, SpawnEggItem> SAILOR_SPAWN_EGG = egg("sailor", SAILOR, 0xECE8DC, 0xB0342C);
@@ -41,7 +54,9 @@ public final class MobContent {
                 .eyeHeight(1.62f).clientTrackingRange(10));
     }
 
-    private static RegistryEntry<Item, SpawnEggItem> egg(String name, Supplier<? extends EntityType<? extends SeafarerMob>> type,
+    public static final RegistryEntry<Item, SpawnEggItem> SHARK_SPAWN_EGG = egg("shark", SHARK, 0x5E6E7E, 0xE8ECEE);
+
+    private static RegistryEntry<Item, SpawnEggItem> egg(String name, Supplier<? extends EntityType<? extends Mob>> type,
                                                          int base, int spots) {
         return ModRegistry.item(name + "_spawn_egg", () -> new SpawnEggItem(type.get(), base, spots, new Item.Properties()));
     }
@@ -70,5 +85,10 @@ public final class MobContent {
         Services.REGISTRY.registerEntityAttributes(SAILOR, Sailor::createAttributes);
         Services.REGISTRY.registerEntityAttributes(NAVY_SOLDIER, NavySoldier::createAttributes);
         Services.REGISTRY.registerEntityAttributes(NAVY_OFFICER, NavyOfficer::createAttributes);
+        Services.REGISTRY.registerEntityAttributes(SHARK, Shark::createAttributes);
+        Services.REGISTRY.registerSpawnPlacement(SHARK, SpawnPlacementTypes.IN_WATER, Heightmap.Types.OCEAN_FLOOR, Shark::checkSpawnRules);
+        Services.REGISTRY.registerNaturalSpawn(new NaturalSpawn(SHARK, MobCategory.WATER_CREATURE,
+                List.of(BiomeTags.IS_OCEAN, BiomeTags.IS_DEEP_OCEAN), MobConfig.SHARK_SPAWN_WEIGHT::get,
+                MobConfig.SHARK_MIN_GROUP::get, MobConfig.SHARK_MAX_GROUP::get));
     }
 }

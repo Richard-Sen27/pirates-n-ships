@@ -83,7 +83,42 @@ public final class MobConfig {
         }
     }
 
+    // --- shark (M4, docs/design.md §12) ------------------------------------------------------------------------
+    private static final ConfigSection SHARK = S.section("shark", "The shark: hunts swimmers in the oceans");
+    public static final ConfigValue<Boolean> SHARK_ENABLED = SHARK.bool("enabled", true,
+            "Sharks exist: off = they don't spawn, can't be spawned, and existing ones disappear");
+    public static final ConfigValue<Boolean> SHARK_PEACEFUL = SHARK.bool("peaceful", false,
+            "Sharks never attack anyone and don't fight back");
+    public static final ConfigValue<Integer> SHARK_SPAWN_WEIGHT = SHARK.intRange("spawn_weight", 8, 0, 100,
+            "Natural spawn weight among the water creatures of ocean biomes (squid 1-10, dolphin 1-2; 0 = no natural spawns). Read at server start");
+    public static final ConfigValue<Integer> SHARK_MIN_GROUP = SHARK.intRange("min_group", 1, 1, 8,
+            "Fewest sharks in a naturally spawned group. Read at server start");
+    public static final ConfigValue<Integer> SHARK_MAX_GROUP = SHARK.intRange("max_group", 2, 1, 8,
+            "Most sharks in a naturally spawned group (at least min_group). Read at server start");
+    public static final ConfigValue<Double> SHARK_DETECTION_RANGE = SHARK.doubleRange("detection_range", 16.0, 1.0, 64.0,
+            "Blocks within which a shark notices prey in the water");
+    public static final ConfigValue<Integer> SHARK_CIRCLE_TICKS = SHARK.intRange("circle_ticks", 60, 0, 1200,
+            "Ticks a shark circles its prey before each charge");
+    public static final ConfigValue<Integer> SHARK_BITE_COOLDOWN = SHARK.intRange("bite_cooldown_ticks", 30, 1, 1200,
+            "Least ticks between two bites");
+    public static final ConfigValue<Integer> SHARK_GIVE_UP_TICKS = SHARK.intRange("give_up_ticks", 200, 20, 12000,
+            "A shark that hasn't bitten its prey for this many ticks loses interest (and ignores it as long again)");
+    public static final ConfigValue<Double> SHARK_FRENZY_FRACTION = SHARK.doubleRange("frenzy_health_fraction", 0.4, 0.0, 1.0,
+            "Blood frenzy: prey below this fraction of its health is charged without circling (0 = never)");
+    public static final ConfigValue<Double> SHARK_BITE_DAMAGE = SHARK.doubleRange("bite_damage", 6.0, 0.0, 100.0,
+            "Damage of a bite");
+    public static final ConfigValue<Double> SHARK_KNOCKBACK = SHARK.doubleRange("knockback", 0.5, 0.0, 5.0,
+            "Knockback strength of a bite");
+
     private MobConfig() {
+    }
+
+    public static SharkRules.Params sharkRules() {
+        return new SharkRules.Params(SHARK_PEACEFUL.get(), SHARK_DETECTION_RANGE.get());
+    }
+
+    public static SharkHunt.Params sharkHunt() {
+        return new SharkHunt.Params(SHARK_CIRCLE_TICKS.get(), SHARK_BITE_COOLDOWN.get(), SHARK_GIVE_UP_TICKS.get());
     }
 
     /** Loads the class so the values above are declared in time. Called from {@code registerConfig()}. */

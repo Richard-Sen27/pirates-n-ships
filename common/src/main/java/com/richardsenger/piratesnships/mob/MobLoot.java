@@ -17,11 +17,13 @@ import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
  * Entity loot tables of the humanoid mobs (written by datagen through vanilla's loot table codec; a datapack can
  * replace them at {@code data/pirates_n_ships/loot_table/entities/<mob>.json}). Pirates drop 1-3 doubloons and, when
  * killed by a player, a cutlass 1 time in 10; navy soldiers and officers drop 0-2 lead shot and 0-2 gunpowder; sailors
- * drop nothing. {@code mobs.drops} switches all of them off.
+ * drop nothing; sharks drop 0-1 raw cod and, 1 time in 20, a prismarine shard. {@code mobs.drops} switches all of them
+ * off.
  */
 public final class MobLoot {
 
     public static final float CUTLASS_CHANCE = 0.1f;
+    public static final float SHARK_SHARD_CHANCE = 0.05f;
 
     private MobLoot() {
     }
@@ -46,6 +48,17 @@ public final class MobLoot {
                 .withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1))
                         .add(LootItem.lootTableItem(Items.GUNPOWDER)
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(0, 2)))))
+                .build();
+    }
+
+    public static LootTable shark() {
+        return LootTable.lootTable().setParamSet(LootContextParamSets.ENTITY)
+                .withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1))
+                        .add(LootItem.lootTableItem(Items.COD)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(0, 1)))))
+                .withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1))
+                        .add(LootItem.lootTableItem(Items.PRISMARINE_SHARD))
+                        .when(LootItemRandomChanceCondition.randomChance(SHARK_SHARD_CHANCE)))
                 .build();
     }
 }

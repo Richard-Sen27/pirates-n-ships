@@ -7,6 +7,7 @@ import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.trade.market.PortKind;
 import com.richardsenger.piratesnships.world.WorldConfig;
 import com.richardsenger.piratesnships.world.island.TreasureChests;
+import com.richardsenger.piratesnships.world.outpost.Garrison;
 import com.richardsenger.piratesnships.world.port.Port;
 import com.richardsenger.piratesnships.world.port.PortService;
 import com.richardsenger.piratesnships.world.port.TreasureSite;
@@ -42,7 +43,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * A port structure (design.md §10.1; WG1 for the seafarer village, generalised in WG2 for the pirate island): a vanilla
+ * A port structure (design.md §10.1; WG1 for the seafarer village, generalised in WG2 for the pirate island, WG3 for the
+ * navy outpost): a vanilla
  * jigsaw layout from {@code start_pool} with three things vanilla's {@code minecraft:jigsaw} cannot do.
  * <ol>
  *     <li><b>Faces the sea.</b> From the chunk's centre it probes the four directions for sea water at sea level
@@ -58,10 +60,11 @@ import java.util.Optional;
  *     rigid and are sunk by one block when they hang from a terrain-matching piece, so their foundation row replaces
  *     the surface row as well (art/README.md "Structures (ST1)").</li>
  *     <li><b>Port.</b> {@link #afterPlace} records the port of {@code port_kind} with the berths and treasure markers
- *     read from the pieces' templates, binds the harbor desks and buries the treasure chests of the chunk being placed
- *     ({@link PortService}, {@link TreasureChests}).</li>
+ *     read from the pieces' templates, binds the harbor desks, buries the treasure chests and (navy outposts, WG3)
+ *     places the garrison posts of the chunk being placed ({@link PortService}, {@link TreasureChests},
+ *     {@link Garrison}).</li>
  * </ol>
- * Terrain adaptation comes from the JSON; both ports use {@code none}, because vanilla's beardifier treats every
+ * Terrain adaptation comes from the JSON; all three ports use {@code none}, because vanilla's beardifier treats every
  * rigid piece alike and would raise land under the pier and around the quay (see {@code VillageData}).
  */
 public final class PortStructure extends Structure {
@@ -228,6 +231,7 @@ public final class PortStructure extends Structure {
         for (TreasureSite site : port.treasures()) {
             if (chunkBox.isInside(site.pos())) TreasureChests.bury(level, site.pos(), random);
         }
+        if (portKind == PortKind.NAVY_OUTPOST) Garrison.place(level, chunkBox, pieces);
     }
 
     @Override

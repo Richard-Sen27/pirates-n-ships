@@ -93,6 +93,8 @@ for x, z in west + east:
     p.put(x, WALK + 1, z, "bricks")
 merlons(p, [(x, z) for x, z in west + east if z % 2 == 0], WALK + 2)
 guards = (3, 11)
+for x in guards:                               # the guards stand on solid andesite sills in the corbel table
+    p.put(x, WALK, SOUTH_Z, "andesite")
 south_line = [(x, SOUTH_Z) for x in list(range(0, TW[0][0])) + list(range(TW[1][1] + 1, S))]
 for x, z in south_line:
     if x not in guards:

@@ -93,4 +93,51 @@ public final class FirearmRules {
         if (infiniteMaterials) return true;
         return leadShot > 0 && (!needsGunpowder || gunpowder > 0);
     }
+
+    // ---- holding: loading and aiming sessions ----
+
+    /**
+     * Use duration of a loading session (an unloaded gun held down). Loading completes after the reload time inside
+     * the session; the player keeps "using" the gun until they let go, so holding on does not start an aim.
+     */
+    public static final int LOAD_SESSION_TICKS = 36000;
+    /** Use duration of an aiming session (a loaded gun held down); the shot leaves when the player lets go. */
+    public static final int AIM_SESSION_TICKS = 72000;
+
+    /** The use duration for a session that starts with the gun loaded or not. */
+    public static int sessionTicks(boolean loadedAtStart) {
+        return loadedAtStart ? AIM_SESSION_TICKS : LOAD_SESSION_TICKS;
+    }
+
+    /**
+     * True when a use session with {@code remainingTicks} left started as an aim (the gun was loaded when the player
+     * pressed use). Stateless: aim sessions are longer than loading sessions, so their remaining time is too, even
+     * after a loading session turned the gun loaded in the middle.
+     */
+    public static boolean isAimSession(int remainingTicks) {
+        return remainingTicks > LOAD_SESSION_TICKS;
+    }
+
+    /** Ticks the gun has been held in the session that has {@code remainingTicks} left. */
+    public static int heldTicks(int remainingTicks) {
+        return (isAimSession(remainingTicks) ? AIM_SESSION_TICKS : LOAD_SESSION_TICKS) - remainingTicks;
+    }
+
+    /** True when letting go of an aiming gun after {@code heldTicks} fires it (held at least {@code minTicks}). */
+    public static boolean firesOnRelease(int heldTicks, int minTicks) {
+        return heldTicks >= minTicks;
+    }
+
+    /**
+     * The spread of a shot after aiming for {@code heldTicks}: multiplied by {@code aimedFactor} once the aim has been
+     * held at least {@code steadyTicks}, the full spread before.
+     */
+    public static double aimedSpread(double spreadDegrees, int heldTicks, int steadyTicks, double aimedFactor) {
+        return heldTicks >= steadyTicks ? spreadDegrees * aimedFactor : spreadDegrees;
+    }
+
+    /** The field-of-view modifier while aiming with {@code zoom} (FOV divided by it); a zoom of 1 or less changes nothing. */
+    public static float zoomedFov(float fovModifier, double zoom) {
+        return zoom <= 1.0 ? fovModifier : (float) (fovModifier / zoom);
+    }
 }

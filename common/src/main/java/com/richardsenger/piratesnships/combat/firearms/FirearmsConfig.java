@@ -26,6 +26,18 @@ public final class FirearmsConfig {
     public static final ConfigValue<Double> BALL_GRAVITY = S.doubleRange("ball_gravity", 0.02, 0.0, 1.0,
             "Downward acceleration of a lead ball in blocks per tick squared (arrows: 0.05, snowballs: 0.03)");
 
+    private static final ConfigSection AIM = S.section("aim", "Holding a loaded gun to aim; the shot leaves when the use key is let go");
+    public static final ConfigValue<Integer> AIM_MIN_TICKS = AIM.intRange("aim_min_ticks", 0, 0, 100,
+            "Ticks a loaded gun must be held before letting go fires it; a shorter hold puts it down still loaded. 0 = a click fires at once");
+    public static final ConfigValue<Integer> AIM_STEADY_TICKS = AIM.intRange("aim_steady_ticks", 20, 0, 1200,
+            "Ticks of aiming after which the shot is steadied (aimed_spread_factor applies)");
+    public static final ConfigValue<Double> AIMED_SPREAD_FACTOR = AIM.doubleRange("aimed_spread_factor", 0.5, 0.0, 1.0,
+            "Spread of a steadied shot as a fraction of the gun's spread (1 = no benefit from aiming)");
+
+    private static final ConfigSection VIEW = ModConfigs.client("firearm_view", "How aiming a gun looks on this client");
+    public static final ConfigValue<Double> MUSKET_ZOOM = VIEW.doubleRange("musket_zoom", 1.25, 1.0, 4.0,
+            "Zoom while aiming a loaded musket (field of view divided by this). 1 = no zoom");
+
     private static final ConfigSection PISTOL = S.section("pistol", "The pistol: short range, high damage");
     public static final ConfigValue<Double> PISTOL_DAMAGE = PISTOL.doubleRange("damage", 10.0, 0.0, 100.0,
             "Damage of a pistol ball hit");

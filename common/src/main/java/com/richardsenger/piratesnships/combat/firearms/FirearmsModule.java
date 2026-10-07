@@ -42,8 +42,8 @@ public final class FirearmsModule implements ModModule {
     public void gatherData(DataContributions data) {
         data.lang(lang -> lang
                 .add(FirearmContent.LEAD_BALL.get().getDescriptionId(), "Lead Ball")
-                .add(FirearmItem.LOADED_KEY, "Loaded")
-                .add(FirearmItem.UNLOADED_KEY, "Unloaded"));
+                .add(FirearmItem.LOADED_KEY, "Loaded: hold to aim, release to fire")
+                .add(FirearmItem.UNLOADED_KEY, "Unloaded: hold with lead shot and gunpowder to load"));
     }
 
     @Override

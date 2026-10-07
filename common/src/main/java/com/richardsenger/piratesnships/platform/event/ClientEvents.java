@@ -111,6 +111,19 @@ public final class ClientEvents {
         return InteractionKeyResult.PASS;
     });
 
+    /**
+     * The local player's field-of-view modifier is computed (client thread, once per client tick; the camera eases
+     * toward it). {@code fovModifier} is the value so far (vanilla's sprint, speed and bow effects, already scaled by
+     * the "FOV effects" option, and earlier listeners); return it unchanged or a new one, e.g. {@code fovModifier / 1.25f}
+     * to zoom in. Listeners are chained in registration order. Fired from NeoForge's {@code ComputeFovModifierEvent}.
+     * Used by {@code combat.firearms.client.FirearmsClient} (musket zoom).
+     */
+    public static final Event<ComputeFov> COMPUTE_FOV = Event.create(ls -> (player, fov) -> {
+        float result = fov;
+        for (ComputeFov l : ls) result = l.modify(player, result);
+        return result;
+    });
+
     /** Which interaction key fired {@link #INTERACTION_KEY}. */
     public enum InteractionInput { ATTACK, USE, PICK_BLOCK }
 
@@ -123,6 +136,8 @@ public final class ClientEvents {
     }
 
     @FunctionalInterface public interface InteractionKey { InteractionKeyResult onInteraction(Minecraft minecraft, InteractionInput input, InteractionHand hand); }
+
+    @FunctionalInterface public interface ComputeFov { float modify(Player player, float fovModifier); }
 
     @FunctionalInterface public interface SelectMusic { @Nullable Music select(@Nullable Music vanillaChoice); }
 

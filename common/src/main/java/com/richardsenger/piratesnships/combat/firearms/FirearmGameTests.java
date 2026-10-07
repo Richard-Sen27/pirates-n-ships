@@ -27,14 +27,17 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Loading and firing with a mock player in a real server. The mock player is not ticked, so a completed reload is
- * driven by calling {@code finishUsingItem} the way {@code LivingEntity#completeUsingItem} does. Iron golems (100
- * health, no armor) without AI are the targets. Yaw 0 faces +Z.
+ * Loading, aiming and firing with a mock player in a real server. The mock player is not ticked, so holding is driven
+ * by calling {@code onUseTick} and {@code releaseUsing} with the remaining session time, the way
+ * {@code LivingEntity#updateUsingItem} and {@code releaseUsingItem} do. Iron golems (100 health, no armor) without AI
+ * are the targets. Yaw 0 faces +Z.
  */
 public final class FirearmGameTests {
 
     private static final String MISFIRE_BATCH = "pirates_n_ships_config_firearms_misfire";
     private static final String DISABLED_BATCH = "pirates_n_ships_config_firearms_disabled";
+    private static final String AIM_MIN_BATCH = "pirates_n_ships_config_firearms_aim_min";
+    private static final String AIMED_SPREAD_BATCH = "pirates_n_ships_config_firearms_aimed_spread";
 
     private FirearmGameTests() {
     }
@@ -74,6 +77,20 @@ public final class FirearmGameTests {
         return player.getMainHandItem().use(helper.getLevel(), player, InteractionHand.MAIN_HAND).getResult();
     }
 
+    /** Holds use on a loading gun until {@code heldTicks} into the session (one call, as the tick would). */
+    private static void holdLoading(GameTestHelper helper, Player player, ItemStack gun, int heldTicks) {
+        gun.onUseTick(helper.getLevel(), player, FirearmRules.LOAD_SESSION_TICKS - heldTicks);
+    }
+
+    /** Presses use on the held (loaded) gun, aims for {@code heldTicks} and lets go. */
+    private static void aimAndRelease(GameTestHelper helper, Player player, int heldTicks) {
+        ItemStack gun = player.getMainHandItem();
+        helper.assertValueEqual(use(helper, player), InteractionResult.CONSUME, "use of a loaded gun");
+        helper.assertTrue(player.isUsingItem(), "a loaded gun is held to aim");
+        gun.releaseUsing(helper.getLevel(), player, FirearmRules.AIM_SESSION_TICKS - heldTicks);
+        player.stopUsingItem();
+    }
+
     private static List<LeadBallEntity> balls(GameTestHelper helper) {
         return helper.getEntities(FirearmContent.LEAD_BALL.get());
     }
@@ -91,11 +108,14 @@ public final class FirearmGameTests {
         giveAmmo(player, 3, 2);
 
         helper.assertValueEqual(use(helper, player), InteractionResult.CONSUME, "use of an unloaded gun with ammo");
-        helper.assertTrue(player.isUsingItem(), "loading should hold the gun like a drawn bow");
-        helper.assertValueEqual(gun.getUseDuration(player), FirearmsConfig.type(FirearmKind.PISTOL).reloadTicks(), "use duration");
+        helper.assertTrue(player.isUsingItem(), "loading holds the gun");
+        helper.assertValueEqual(gun.getUseDuration(player), FirearmRules.LOAD_SESSION_TICKS, "use duration of a loading session");
+        int reload = FirearmsConfig.type(FirearmKind.PISTOL).reloadTicks();
+        holdLoading(helper, player, gun, reload - 1);
+        helper.assertFalse(FirearmContent.isLoaded(gun), "not loaded before the reload time");
         helper.assertValueEqual(count(player, CombatContent.LEAD_SHOT.get()), 3, "lead shot while loading");
 
-        gun.finishUsingItem(helper.getLevel(), player);
+        holdLoading(helper, player, gun, reload);
         helper.assertTrue(FirearmContent.isLoaded(gun), "gun should be loaded after the reload time");
         helper.assertValueEqual(count(player, CombatContent.LEAD_SHOT.get()), 2, "lead shot after loading");
         helper.assertValueEqual(count(player, Items.GUNPOWDER), 1, "gunpowder after loading");
@@ -125,8 +145,27 @@ public final class FirearmGameTests {
         ItemStack gun = hold(player, CombatContent.PISTOL.get(), false);
 
         helper.assertValueEqual(use(helper, player), InteractionResult.CONSUME, "creative use of an unloaded gun");
-        gun.finishUsingItem(helper.getLevel(), player);
+        holdLoading(helper, player, gun, FirearmsConfig.type(FirearmKind.PISTOL).reloadTicks());
         helper.assertTrue(FirearmContent.isLoaded(gun), "creative gun should load without ammunition");
+        helper.succeed();
+    }
+
+    /** Holding on after the gun has loaded and letting go then neither fires nor loads twice. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void lettingGoAfterLoadingDoesNotFire(GameTestHelper helper) {
+        Player player = shooter(helper, new Vec3(4.5, 1, 1.5), 0, 0);
+        ItemStack gun = hold(player, CombatContent.MUSKET.get(), false);
+        giveAmmo(player, 2, 2);
+        use(helper, player);
+        int reload = FirearmsConfig.type(FirearmKind.MUSKET).reloadTicks();
+        holdLoading(helper, player, gun, reload);
+        helper.assertTrue(FirearmContent.isLoaded(gun), "loaded after the reload time");
+        holdLoading(helper, player, gun, reload + 40); // still held: nothing more happens
+        gun.releaseUsing(helper.getLevel(), player, FirearmRules.LOAD_SESSION_TICKS - reload - 40);
+        player.stopUsingItem();
+        helper.assertTrue(balls(helper).isEmpty(), "letting go of a loading session must not fire");
+        helper.assertTrue(FirearmContent.isLoaded(gun), "the gun stays loaded");
+        helper.assertValueEqual(count(player, CombatContent.LEAD_SHOT.get()), 1, "one lead shot used");
         helper.succeed();
     }
 
@@ -151,6 +190,12 @@ public final class FirearmGameTests {
         ItemStack gun = hold(player, CombatContent.PISTOL.get(), true);
 
         helper.assertValueEqual(use(helper, player), InteractionResult.CONSUME, "use of a loaded gun");
+        helper.assertTrue(player.isUsingItem(), "a loaded gun is held to aim");
+        helper.assertValueEqual(gun.getUseDuration(player), FirearmRules.AIM_SESSION_TICKS, "use duration of an aim");
+        helper.assertTrue(balls(helper).isEmpty(), "pressing use only aims");
+        // let go after aiming for 10 ticks: the shot leaves
+        gun.releaseUsing(helper.getLevel(), player, FirearmRules.AIM_SESSION_TICKS - 10);
+        player.stopUsingItem();
         List<LeadBallEntity> balls = balls(helper);
         helper.assertValueEqual(balls.size(), 1, "balls after one shot");
         LeadBallEntity ball = balls.getFirst();
@@ -171,7 +216,7 @@ public final class FirearmGameTests {
         hold(player, CombatContent.MUSKET.get(), true);
         float damage = FirearmsConfig.type(FirearmKind.MUSKET).damage();
 
-        use(helper, player);
+        aimAndRelease(helper, player, 5);
         helper.succeedWhen(() -> {
             helper.assertTrue(target.getHealth() < full, "the golem has not been hit yet");
             helper.assertTrue(Math.abs(target.getHealth() - (full - damage)) < 0.01f,
@@ -192,7 +237,61 @@ public final class FirearmGameTests {
         helper.succeedWhen(() -> helper.assertTrue(ball.isRemoved(), "the ball should vanish after its lifetime"));
     }
 
+    /** A plain click (let go in the same tick) fires at once with the default minimum hold of 0. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void anInstantClickStillFires(GameTestHelper helper) {
+        Player player = shooter(helper, new Vec3(4.5, 1, 1.5), 0, 0);
+        ItemStack gun = hold(player, CombatContent.PISTOL.get(), true);
+        aimAndRelease(helper, player, 0);
+        helper.assertValueEqual(balls(helper).size(), 1, "balls after a click");
+        helper.assertFalse(FirearmContent.isLoaded(gun), "the gun is unloaded after the shot");
+        removeBalls(helper);
+        helper.succeed();
+    }
+
     // ---- config -----------------------------------------------------------------------------------------------
+
+    /** With a minimum hold, letting go too early puts the gun down still loaded; after the minimum it fires. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = AIM_MIN_BATCH)
+    public static void releaseFiresAfterTheMinimumHold(GameTestHelper helper) {
+        ConfigOverrides.during(helper, FirearmsConfig.AIM_MIN_TICKS, 5);
+        Player player = shooter(helper, new Vec3(4.5, 1, 1.5), 0, 0);
+        ItemStack gun = hold(player, CombatContent.PISTOL.get(), true);
+        aimAndRelease(helper, player, 2);
+        helper.assertTrue(balls(helper).isEmpty(), "let go before the minimum hold: no shot");
+        helper.assertTrue(FirearmContent.isLoaded(gun), "the gun stays loaded");
+        aimAndRelease(helper, player, 5);
+        helper.assertValueEqual(balls(helper).size(), 1, "balls after the minimum hold");
+        helper.assertFalse(FirearmContent.isLoaded(gun), "the gun is unloaded after the shot");
+        removeBalls(helper);
+        helper.succeed();
+    }
+
+    /** With a wide spread and an aimed factor of 0, a steadied shot (held for the steady time) flies exactly along the aim. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = AIMED_SPREAD_BATCH)
+    public static void aimedSpreadFactorAppliesAfterTheSteadyTime(GameTestHelper helper) {
+        ConfigOverrides.during(helper, FirearmsConfig.PISTOL_SPREAD, 30.0);
+        ConfigOverrides.during(helper, FirearmsConfig.AIM_STEADY_TICKS, 20);
+        ConfigOverrides.during(helper, FirearmsConfig.AIMED_SPREAD_FACTOR, 0.0);
+        Player player = shooter(helper, new Vec3(4.5, 1, 1.5), 0, 0);
+        for (int i = 0; i < 5; i++) {
+            hold(player, CombatContent.PISTOL.get(), true);
+            player.getCooldowns().removeCooldown(player.getMainHandItem().getItem());
+            // undo the last shot's recoil (view kick and push)
+            player.setXRot(0);
+            player.setYRot(0);
+            player.setDeltaMovement(Vec3.ZERO);
+            aimAndRelease(helper, player, 20);
+            List<LeadBallEntity> balls = balls(helper);
+            helper.assertValueEqual(balls.size(), 1, "balls after a steadied shot");
+            Vec3 v = balls.getFirst().getDeltaMovement();
+            helper.assertTrue(Math.abs(v.x) < 1e-6 && Math.abs(v.y) < 1e-6 && v.z > 1.0,
+                    "a steadied shot with factor 0 flies straight along +Z, was " + v);
+            removeBalls(helper);
+        }
+        helper.succeed();
+    }
+
 
     @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = MISFIRE_BATCH)
     public static void rainMisfireClicksAndKeepsTheGunLoaded(GameTestHelper helper) {
@@ -212,7 +311,7 @@ public final class FirearmGameTests {
             level.setRainLevel(1.0f);
             helper.assertTrue(FirearmService.inRain(player), "the shooter should stand in the rain");
 
-            use(helper, player);
+            aimAndRelease(helper, player, 3);
             helper.assertTrue(balls(helper).isEmpty(), "a misfire must not fire a ball");
             helper.assertTrue(FirearmContent.isLoaded(gun), "a misfire leaves the gun loaded");
             helper.assertTrue(player.getCooldowns().isOnCooldown(gun.getItem()), "a misfire still starts the cooldown");

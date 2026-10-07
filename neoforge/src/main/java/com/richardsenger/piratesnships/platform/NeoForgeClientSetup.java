@@ -21,6 +21,7 @@ import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.client.event.ComputeFovModifierEvent;
 import net.neoforged.neoforge.client.event.SelectMusicEvent;
 import net.neoforged.neoforge.client.event.sound.PlayStreamingSourceEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
@@ -71,6 +72,8 @@ public final class NeoForgeClientSetup {
             }
         });
         // fired on the sound thread, inside the channel's executor
+        NeoForge.EVENT_BUS.addListener(ComputeFovModifierEvent.class,
+                e -> e.setNewFovModifier(ClientEvents.COMPUTE_FOV.invoker().modify(e.getPlayer(), e.getNewFovModifier())));
         NeoForge.EVENT_BUS.addListener(PlayStreamingSourceEvent.class, e -> ClientEvents.SOUND_STREAM_STARTED.invoker().onStarted(e.getSound(), e.getChannel()));
     }
 

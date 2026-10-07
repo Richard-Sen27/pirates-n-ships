@@ -17,7 +17,8 @@ For every source (files starting with ``_`` are helpers, not pieces):
 
 Files are only rewritten when their bytes change, and the lab's output is deterministic, so a second run changes
 nothing. The lab (``minecraft-schematic-lab`` v0.1.0, run without ``--mcp`` it is a plain HTTP server that never opens
-a browser) is found on ``--port`` (default 8766; 8765 is the default of the human's own MCP instance) or started there
+a browser) is found on ``--port`` (else the ``SCHEMATIC_LAB_PORT`` environment variable, else 8766; 8765 is the default of
+the human's own MCP instance, and parallel agents each pick their own port) or started there
 with ``npx -y github:SimoneRecchia/minecraft-schematic-lab#v0.1.0`` and stopped again at the end. ``--lab-cmd``
 replaces that command. Standard library only.
 """
@@ -193,7 +194,8 @@ def build(lab: Lab, source: Path, views: Path | None) -> list[str]:
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("pieces", nargs="*", help="<group>/<piece> names or source paths (default: all)")
-    parser.add_argument("--port", type=int, default=DEFAULT_PORT, help="lab port (default 8766)")
+    parser.add_argument("--port", type=int, default=int(os.environ.get("SCHEMATIC_LAB_PORT", DEFAULT_PORT)),
+                        help="lab port (default: $SCHEMATIC_LAB_PORT, else 8766)")
     parser.add_argument("--lab-cmd", default=LAB_CMD, help="command that starts the lab (PORT is set for it)")
     parser.add_argument("--views", type=Path, default=None,
                         help="also save renders from the north-east, south-west and north-west here (not committed)")

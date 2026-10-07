@@ -2,6 +2,7 @@ package com.richardsenger.piratesnships.crew.npc;
 
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
+import com.richardsenger.piratesnships.ship.assembly.ShipSplits;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.station.StationBlock;
 import com.richardsenger.piratesnships.station.StationConfig;
@@ -97,8 +98,30 @@ public final class CrewStations {
         }
     }
 
+    /**
+     * The ship under the station split (RS1, {@link ShipSplits}): a station that stayed with the ship (the keeper) is
+     * manned again at its new place if it moved to another body; a station on a wreck or a dropped piece is given up,
+     * which ends the order, and the crew member stays where it stands, on that piece's deck. Returns true if the
+     * assignment changed.
+     */
+    private static boolean followSplit(ServerLevel level, CrewMember crew) {
+        StationRef ref = crew.assignment();
+        ShipSplits.Relocation r = ref == null ? null : ShipSplits.relocate(level, ref.ship(), ref.pos());
+        if (r == null || r.keeper() && !r.moved(ref.ship(), ref.pos())) {
+            return false;
+        }
+        release(level, crew);
+        if (r.keeper()) {
+            assign(level, crew, r.pos());
+        }
+        return true;
+    }
+
     /** Seated: re-asserts the occupancy (station states are not saved, see {@link Stations}). */
     static void keepOccupied(ServerLevel level, CrewMember crew) {
+        if (followSplit(level, crew)) {
+            return;
+        }
         StationRef ref = crew.assignment();
         if (ref != null && Stations.state(ref) == null) {
             StationState.OccupyResult r = Stations.occupy(level, ref, occupant(crew));
@@ -114,7 +137,7 @@ public final class CrewStations {
     /** Assigned but not seated: take the seat, wait for the ship to load, or give up. */
     static void ensureSeated(ServerLevel level, CrewMember crew) {
         StationRef ref = crew.assignment();
-        if (ref == null || crew.isAtStation()) {
+        if (ref == null || crew.isAtStation() || followSplit(level, crew)) {
             return;
         }
         if (!StationConfig.ENABLED.get()) {

@@ -614,10 +614,10 @@ Sheet allocation (outside the box-UV contract areas; the same free corners in ev
 
 ### Shark rig (M4)
 
-The shark (design.md §9, §12) is a GeckoLib model on its own rig. M4 ships a **script placeholder**:
-`tools/gen_shark.py` writes `geo/shark.geo.json`, `animations/shark.animation.json` and `textures/entity/shark.png`
-(run it with the tools venv; deterministic). A Blockbench model replaces all three files and is saved as
-`art/models/entity/shark.bbmodel`, exported with the recipe above; `SharkRigTest` checks the contract.
+The shark (design.md §9, §12) is a GeckoLib model on its own rig. M4 shipped a script placeholder
+(`tools/gen_shark.py`, removed in M4-art); since M4-art the three files are Blockbench exports of
+`art/models/entity/shark.bbmodel` (see "Shark (M4-art)" below), made with the recipe above; `SharkRigTest` checks
+the contract. The placeholder columns below record what M4 had.
 
 **Files:** `geo/shark.geo.json` (`format_version` 1.12.0, identifier `geometry.shark`, `texture_width` 64,
 `texture_height` **32**), `animations/shark.animation.json` (1.8.0, `geckolib_format_version` 2),
@@ -659,3 +659,50 @@ animation, on top.
 **Texture (placeholder):** grey-blue speckled back and upper sides, a light line, white belly (countershading),
 darker fin edges, black eyes (separate eye cubes on one black texel), dark-red mouth lining with white teeth around
 the rim of the jaw and the roof of the mouth, a row of teeth on the snout's front edge, three gill slits.
+
+### Shark (M4-art)
+
+Blockbench model, skin and animations on the shark rig; the M4 placeholder script is gone. Sources:
+`art/models/entity/shark.bbmodel` (75 cubes), `shark_model.js` (part list, UV packer, skin painter, export) and
+`shark_animations.js` (keyframe table); render `renders/shark.png` (left side, three-quarter, bite at 0.22 s, swim
+from above).
+
+- **Rebuild.** New GeckoLib project (`setupProject(Formats.geckolib_model)`, name/geometry/identifier `shark`,
+  texture 64×32), then in `risky_eval`: `window.SH = {REPO: '<repo>'}`, eval `shark_model.js`, `SH.build()`,
+  `SH.paint()`, eval `shark_animations.js`, `SHA.build()`, `SH.export()` (writes the geo, the animation file, the PNG
+  and the project). Re-running gives byte-identical geo, animation and PNG files (checked); the project file differs
+  only in uuids. **Select the shark tab first and check `Project` in the same call**: `risky_eval` acts on whichever
+  tab is selected, and a tab switch between two calls once made the build land in another open project.
+- **Coordinates.** The part list uses Blockbench's internal coordinates (x mirrored against the file, so `fin_left`
+  sits at internal −x); the shark is symmetric, so only the pectoral fins care. Only the pectoral fins have cube
+  rotations (`[0, ±25, ±15]` internal: swept back, tips lowered). Other fins are stepped layers, which read better
+  than rotated slabs at this size.
+- **Cubes per bone:** `body` 16 (three sections, each a wide box plus a narrower taller core for the flat belly and
+  rounded back; five gill slits per side as 0.16 px strips), `head` 22 (skull, brow, throat, snout in three steps,
+  pink palate as the mouth line, two eyes, 13 upper teeth hanging from the snout), `jaw` 14 (jaw, jaw tip, 12 lower
+  teeth that sit inside the palate while the mouth is shut), `fin_left`/`fin_right` 2 each (base, darker tip),
+  `fin_dorsal` 5 (stepped, swept back), `tail_1` 6 (two tapering sections, second dorsal and anal fin, two steps
+  each), `tail_2` 8 (peduncle, keel, upper lobe in four steps up to y 13.6, lower lobe in two). Length snout tip
+  z −18.6 to tail tip z 21.8 (40 px, 2.5 blocks); width at the gills 10 px, pectoral span 27 px.
+- **Sheet (64×32, per-face UV).** `SH.pack` packs one rectangle per visible face on shelves at one texel scale for
+  the whole model (0.8 texel per pixel: the largest that fits), leaving the bottom-right 8×2 corner for patches.
+  Mirror faces share a rectangle with u reversed: the east face of a centred cube uses its west face's rectangle,
+  the right pectoral fin uses the left one's. 2×2 solid patches at v 30..31: tooth white u 56, eye black u 58, gill
+  pale u 60 (u 62 free). About a quarter of the sheet is still free (magenta in a viewer), so a later detail can
+  get its own area without a repack.
+- **Painting.** `SH.paint` reads each cube's mesh (4 vertices per face in Blockbench's face order east, west, up,
+  down, south, north) in the rest pose, maps every texel centre to its 3D point and colours it from position and
+  face normal: grey-blue back (darker along the spine, sparse darker specks from a texel hash), a soft countershade
+  to the white belly around y 4.2 (4.5 on the tail), pink mouth (darker deeper in), darker fin edges and tips,
+  nostrils under the snout tip. Shared rectangles are painted twice and must agree (`conflicts: 0`).
+- **Animations** (file values; `SHA.wave` keys a sine at its quarter points with `easeOutSine` into a peak and
+  `easeInSine` into a zero crossing, which makes GeckoLib's curve an exact sine):
+
+  | Name | Content |
+  |---|---|
+  | `swim` (1 s, loop) | `tail_1` y ±13°, `tail_2` y ±20° a quarter behind (S-curve), `body` y ±3° against the tail, pectoral fins z ±6° (opposite signs, both tips rise together), `fin_dorsal` z ±2.5° |
+  | `idle` (3 s, loop) | the same sway at ±6°/±9°/±1.5°, fins ±3.5°, jaw breathing to 4° |
+  | `bite` (0.5 s, once) | `jaw` x to 35° at 0.18 s (`easeOutSine`), held to 0.26 s, snapped shut at 0.32 s (`easeInQuad`); `head` position dips and thrusts (`[0, −0.6, −0.8]` at 0.32 s); `body` position lunges 1.5 px forward |
+
+  `head` and `root` rotation are never keyed; the bite keys only positions on `head` and `body`, so it never fights
+  the body controller's yaw or the code's head turn.

@@ -95,6 +95,14 @@ public final class ElementModel {
          * {@code texture} is a reference such as {@code "#cloth"}.
          */
         public Element face(Face face, float u0, float v0, float u1, float v1, String texture) {
+            return face(face, u0, v0, u1, v1, texture, -1);
+        }
+
+        /**
+         * Like {@link #face(Face, float, float, float, float, String)} with a {@code tintindex} (the block colour
+         * handler's tint index for this face); a negative index writes none.
+         */
+        public Element face(Face face, float u0, float v0, float u1, float v1, String texture, int tintIndex) {
             checkUv(u0);
             checkUv(v0);
             checkUv(u1);
@@ -102,6 +110,7 @@ public final class ElementModel {
             JsonObject f = new JsonObject();
             f.add("uv", array(u0, v0, u1, v1));
             f.addProperty("texture", texture);
+            if (tintIndex >= 0) f.addProperty("tintindex", tintIndex);
             faces.add(face.key(), f);
             return this;
         }

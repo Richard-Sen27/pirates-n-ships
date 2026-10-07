@@ -49,6 +49,12 @@ public final class ShipDecorModule implements ModModule {
     @Override
     public void registerConfig() {
         FlagConfig.init();
+        ShipIdentityConfig.init();
+    }
+
+    @Override
+    public void initClient() {
+        com.richardsenger.piratesnships.ship.decor.client.ShipDecorClient.init();
     }
 
     @Override
@@ -169,6 +175,6 @@ public final class ShipDecorModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(ShipDecorGameTests.class, FlagGameTests.class, FlagModelGameTests.class);
+        return List.of(ShipDecorGameTests.class, FlagGameTests.class, FlagModelGameTests.class, NameplateGameTests.class);
     }
 }

@@ -4,6 +4,7 @@ import com.richardsenger.piratesnships.core.registry.ModRegistry;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
@@ -26,6 +27,10 @@ public final class ShipDecor {
     public static final RegistryEntry<Block, NameplateBlock> NAMEPLATE = ModRegistry.blockWithItem("nameplate",
             () -> new NameplateBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(1.0f).sound(SoundType.WOOD)
                     .noOcclusion().pushReaction(PushReaction.DESTROY).ignitedByLava()));
+
+    /** The ship's name on a nameplate (see {@link NameplateBlockEntity}). */
+    public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<NameplateBlockEntity>> NAMEPLATE_BLOCK_ENTITY =
+            ModRegistry.blockEntity("nameplate", NameplateBlockEntity::new, NAMEPLATE);
 
     public static final RegistryEntry<Block, FlagpoleBlock> FLAGPOLE = ModRegistry.blockWithItem("flagpole",
             () -> new FlagpoleBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0f, 3.0f).sound(SoundType.WOOD)

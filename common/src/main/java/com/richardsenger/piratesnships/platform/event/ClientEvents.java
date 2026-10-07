@@ -2,6 +2,8 @@ package com.richardsenger.piratesnships.platform.event;
 
 import com.mojang.blaze3d.audio.Channel;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.color.block.BlockColor;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.sounds.Music;
 import net.minecraft.client.Minecraft;
@@ -133,11 +135,15 @@ public final class ClientEvents {
 
     public record ModelLayer(ModelLayerLocation location, Supplier<LayerDefinition> definition) { }
 
+    /** A block colour handler for some blocks (faces with a {@code tintindex} in their model). */
+    public record BlockColorHandler(BlockColor color, List<Supplier<? extends Block>> blocks) { }
+
     private static final List<KeyMapping> KEY_MAPPINGS = new ArrayList<>();
     private static final List<HudLayer> HUD_LAYERS = new ArrayList<>();
     private static final List<EntityRenderer<?>> ENTITY_RENDERERS = new ArrayList<>();
     private static final List<BlockEntityRenderer<?>> BLOCK_ENTITY_RENDERERS = new ArrayList<>();
     private static final List<ModelLayer> MODEL_LAYERS = new ArrayList<>();
+    private static final List<BlockColorHandler> BLOCK_COLORS = new ArrayList<>();
 
     public static synchronized void registerKeyMapping(KeyMapping mapping) {
         KEY_MAPPINGS.add(mapping);
@@ -155,6 +161,20 @@ public final class ClientEvents {
         BLOCK_ENTITY_RENDERERS.add(new BlockEntityRenderer<>(type, provider));
     }
 
+    /**
+     * A block colour handler (vanilla {@link BlockColor}): model faces with a {@code tintindex} are multiplied by
+     * {@code color.getColor(state, level, pos, tintIndex)} (RGB, alpha ignored). Called while a chunk section is meshed,
+     * possibly off the client thread; {@code level} is then the meshing region, whose {@code getBlockEntity} sees the
+     * client's block entities (also on Sable ships). {@code level} and {@code pos} are null for items and particles.
+     * The colour is baked into the mesh: after the data it reads changes, re-mesh the block (client
+     * {@code level.sendBlockUpdated(pos, state, state, Block.UPDATE_IMMEDIATE)}). Forwarded from NeoForge's
+     * {@code RegisterColorHandlersEvent.Block}. Example: {@code ship.decor.client.ShipDecorClient} (banner flags).
+     */
+    @SafeVarargs
+    public static synchronized void registerBlockColor(BlockColor color, Supplier<? extends Block>... blocks) {
+        BLOCK_COLORS.add(new BlockColorHandler(color, List.of(blocks)));
+    }
+
     public static synchronized void registerModelLayer(ModelLayerLocation location, Supplier<LayerDefinition> definition) {
         MODEL_LAYERS.add(new ModelLayer(location, definition));
     }
@@ -166,4 +186,5 @@ public final class ClientEvents {
     public static synchronized List<EntityRenderer<?>> entityRenderers() { return List.copyOf(ENTITY_RENDERERS); }
     public static synchronized List<BlockEntityRenderer<?>> blockEntityRenderers() { return List.copyOf(BLOCK_ENTITY_RENDERERS); }
     public static synchronized List<ModelLayer> modelLayers() { return List.copyOf(MODEL_LAYERS); }
+    public static synchronized List<BlockColorHandler> blockColors() { return List.copyOf(BLOCK_COLORS); }
 }

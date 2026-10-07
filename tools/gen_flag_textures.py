@@ -80,16 +80,42 @@ def flag_jolly_roger():
     return cv
 
 
+# Greyscale for the banner cloth only (the shared palette P has no neutral greys). The custom cloth model is tinted
+# with the banner's base dye colour (FlagTint, G8), so the texture must be near-white and colourless.
+GREY = {
+    "field": (242, 242, 242, 255), "fold_l": (250, 250, 250, 255), "fold_d": (230, 230, 230, 255),
+    "weave": (236, 236, 236, 255), "border": (214, 214, 214, 255), "hoist": (186, 186, 186, 255),
+    "swatch": (222, 222, 222, 255),
+}
+
+
 def flag_custom():
-    """Stands in for any banner: the block model can't show banner patterns, so this is a generic heraldic cloth."""
-    cv = Cloth("tan_l")
-    cv.field(F0, 0, F1, 0, "gold")
-    cv.field(F0, 15, F1, 15, "gold")
-    cv.field(F1, 0, F1, 15, "gold")
-    cv.field(11, 4, 15, 11, "red")     # a red lozenge-ish charge
-    cv.field(12, 3, 14, 12, "red")
-    cv.field(13, 2, 13, 13, "red")
-    cv.field(13, 7, 13, 8, "gold")
+    """Any banner: a light greyscale cloth that the block colour handler tints with the banner's base colour.
+    Near-white field with soft vertical folds and a faint weave, a light-grey border on the top, bottom and fly
+    edges, a light-grey edge swatch. Banner patterns are not shown."""
+    cv = Cloth("white")
+    g = lambda x, y, c: cv.img.putpixel((x, y), GREY[c])  # noqa: E731
+    for y in range(H):
+        for x in range(W):
+            g(x, y, "field")
+        for x in range(HOIST + 1):
+            g(x, y, "hoist")
+        for x in range(SWATCH, W):
+            g(x, y, "swatch")
+    for y in range(1, H - 1):
+        for x in range(F0, F1):
+            fold = (x - F0) % 7
+            if fold == 2:
+                g(x, y, "fold_l")       # light crest of a fold
+            elif fold == 5:
+                g(x, y, "fold_d")       # shadowed trough
+            elif (x + y) % 4 == 0:
+                g(x, y, "weave")        # faint diagonal weave
+    for x in range(F0, F1 + 1):
+        g(x, 0, "border")
+        g(x, H - 1, "border")
+    for y in range(H):
+        g(F1, y, "border")
     return cv
 
 

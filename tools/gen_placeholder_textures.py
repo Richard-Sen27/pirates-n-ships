@@ -12,7 +12,7 @@ Output: common/src/main/resources/assets/pirates_n_ships/textures/{item,block}/<
 Deterministic: same input, same bytes. One function per texture, registered in ITEMS / BLOCKS.
 Replacing a texture by hand: put its name into PROTECTED (or a line in tools/protected_textures.txt),
 then this script never overwrites it. Textures owned by other packages (test_block) are never written. The helm, nameplate,
-flagpole, cargo crate, cargo barrel, pantry and water barrel have hand-made Blockbench models with vanilla textures
+flagpole, cargo crate, cargo barrel, pantry, water barrel and brig bars have hand-made Blockbench models with vanilla textures
 (art/models/) and no textures here; the rapier, cutlass, saber,
 pistol, musket, lead shot, cannonball, grappling hook, shackles, rum, hardtack, lime, salt pork, salted fish, cloth,
 spices and tobacco have hand-made item models textured from the item palettes
@@ -27,7 +27,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 TEX = ROOT / "common/src/main/resources/assets/pirates_n_ships/textures"
 PROTECTED_FILE = Path(__file__).resolve().parent / "protected_textures.txt"
-# Names of hand-made textures this script must not overwrite (e.g. "brig_bars").
+# Names of hand-made textures this script must not overwrite (e.g. "doubloon").
 PROTECTED = set()
 FOREIGN_PREFIXES = ("test_block",)
 
@@ -144,22 +144,6 @@ def brig_door_item():
 
 # ---------------------------------------------------------------- blocks
 
-def brig_bars():
-    cv = Canvas()
-    for x in (1, 5, 10, 14):
-        cv.rect(x, 0, x + 1, 15, "iron")
-        cv.rect(x, 0, x, 15, "steel")
-    cv.rect(0, 1, 15, 2, "wood"); cv.rect(0, 13, 15, 14, "wood")
-    cv.rect(0, 1, 15, 1, "wood_l"); cv.rect(0, 14, 15, 14, "wood_d")
-    return cv
-
-
-def brig_bars_edge():
-    cv = Canvas("iron")
-    cv.rect(7, 0, 8, 15, "steel")
-    return cv
-
-
 def brig_door(top):
     cv = planks("brig_door_" + ("top" if top else "bottom"), "wood", "wood_d", "wood_l")
     for x in (0, 15):
@@ -183,7 +167,6 @@ ITEMS = {
     "brig_door": brig_door_item,
 }
 BLOCKS = {
-    "brig_bars": brig_bars, "brig_bars_edge": brig_bars_edge,
     "brig_door_top": lambda: brig_door(True), "brig_door_bottom": lambda: brig_door(False),
 }
 

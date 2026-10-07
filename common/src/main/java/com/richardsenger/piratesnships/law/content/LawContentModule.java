@@ -106,20 +106,17 @@ public final class LawContentModule implements ModModule {
     }
 
     /**
-     * Bars like vanilla glass panes (an IronBarsBlock has the same states): the pane templates with
-     * {@code pane = <name>} and {@code edge = <name>_edge}, a multipart block state and a flat item model.
-     * The models get NeoForge's {@code render_type: cutout} so the gaps between the bars are transparent; Fabric
-     * ignores the key and needs a render layer registration in the Fabric port.
+     * Bars: hand-made Blockbench models (art/models/brig_bars*.bbmodel, design.md §4.8), so only the block state is
+     * generated. A multipart state like vanilla's panes: the post always, {@code brig_bars_side} (the arm to the north)
+     * for north and, turned 90°, east, {@code brig_bars_side_alt} (the arm to the south) for south and, turned 90°, west.
+     * An unconnected side shows nothing (the pane's {@code noside} parts have no counterpart: the post stands alone).
+     * The item uses {@code block/brig_bars}, a straight piece of post and both arms. The models are opaque (iron and
+     * anvil textures, no transparent gaps), so they need no render type on either loader.
      */
     private static void bars(ModelContext m, Block block) {
-        ResourceLocation tex = TextureMapping.getBlockTexture(block);
-        TextureMapping textures = new TextureMapping().put(TextureSlot.PANE, tex).put(TextureSlot.EDGE, TextureMapping.getBlockTexture(block, "_edge"));
-        ResourceLocation post = cutout(ModelTemplates.STAINED_GLASS_PANE_POST, block, textures, m);
-        ResourceLocation side = cutout(ModelTemplates.STAINED_GLASS_PANE_SIDE, block, textures, m);
-        ResourceLocation sideAlt = cutout(ModelTemplates.STAINED_GLASS_PANE_SIDE_ALT, block, textures, m);
-        ResourceLocation noSide = cutout(ModelTemplates.STAINED_GLASS_PANE_NOSIDE, block, textures, m);
-        ResourceLocation noSideAlt = cutout(ModelTemplates.STAINED_GLASS_PANE_NOSIDE_ALT, block, textures, m);
-        ModelTemplates.FLAT_ITEM.create(ModelLocationUtils.getModelLocation(block.asItem()), TextureMapping.layer0(tex), m.models());
+        ResourceLocation post = ModelLocationUtils.getModelLocation(block, "_post");
+        ResourceLocation side = ModelLocationUtils.getModelLocation(block, "_side");
+        ResourceLocation sideAlt = ModelLocationUtils.getModelLocation(block, "_side_alt");
         m.blockStates().accept(MultiPartGenerator.multiPart(block)
                 .with(Variant.variant().with(VariantProperties.MODEL, post))
                 .with(Condition.condition().term(BlockStateProperties.NORTH, true), Variant.variant().with(VariantProperties.MODEL, side))
@@ -127,21 +124,7 @@ public final class LawContentModule implements ModModule {
                         Variant.variant().with(VariantProperties.MODEL, side).with(VariantProperties.Y_ROT, VariantProperties.Rotation.R90))
                 .with(Condition.condition().term(BlockStateProperties.SOUTH, true), Variant.variant().with(VariantProperties.MODEL, sideAlt))
                 .with(Condition.condition().term(BlockStateProperties.WEST, true),
-                        Variant.variant().with(VariantProperties.MODEL, sideAlt).with(VariantProperties.Y_ROT, VariantProperties.Rotation.R90))
-                .with(Condition.condition().term(BlockStateProperties.NORTH, false), Variant.variant().with(VariantProperties.MODEL, noSide))
-                .with(Condition.condition().term(BlockStateProperties.EAST, false), Variant.variant().with(VariantProperties.MODEL, noSideAlt))
-                .with(Condition.condition().term(BlockStateProperties.SOUTH, false),
-                        Variant.variant().with(VariantProperties.MODEL, noSideAlt).with(VariantProperties.Y_ROT, VariantProperties.Rotation.R90))
-                .with(Condition.condition().term(BlockStateProperties.WEST, false),
-                        Variant.variant().with(VariantProperties.MODEL, noSide).with(VariantProperties.Y_ROT, VariantProperties.Rotation.R270)));
-    }
-
-    private static ResourceLocation cutout(ModelTemplate template, Block block, TextureMapping textures, ModelContext m) {
-        return template.create(template.getDefaultModelLocation(block), textures, m.models(), (id, slots) -> {
-            JsonObject json = template.createBaseTemplate(id, slots);
-            json.addProperty("render_type", "minecraft:cutout");
-            return json;
-        });
+                        Variant.variant().with(VariantProperties.MODEL, sideAlt).with(VariantProperties.Y_ROT, VariantProperties.Rotation.R90)));
     }
 
     /**

@@ -1,8 +1,0 @@
-{
-  "parent": "minecraft:block/template_glass_pane_side",
-  "render_type": "minecraft:cutout",
-  "textures": {
-    "edge": "pirates_n_ships:block/brig_bars_edge",
-    "pane": "pirates_n_ships:block/brig_bars"
-  }
-}

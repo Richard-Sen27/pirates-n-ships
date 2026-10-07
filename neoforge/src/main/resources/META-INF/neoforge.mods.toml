@@ -33,6 +33,13 @@ type="required"
 versionRange = "[${sable_version},3.0.0)"
 ordering = "AFTER"
 side = "BOTH"
+# Player Animation Library: melee animations (client only, docs/animation-libraries.md)
+[[dependencies.${mod_id}]]
+modId = "player_animation_library"
+type="required"
+versionRange = "${pal_version_range}"
+ordering = "NONE"
+side = "CLIENT"
 
 # Features are specific properties of the game environment, that you may want to declare you require. This example declares
 # that your mod requires GL version 3.2 or higher. Other features will be added. They are side aware so declaring this won't

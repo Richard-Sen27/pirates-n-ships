@@ -66,4 +66,11 @@ dependencies {
         exclude group: 'dev.engine-room.flywheel'
         exclude group: 'com.tterrag.registrate'
     }
+    // Player Animation Library (required on the client, docs/animation-libraries.md). The jar already contains
+    // PlayerAnimationLibCore and jar-in-jars mochafloats and javassist; its POM still lists Core (and through it newer
+    // gson, slf4j, fastutil, netty: PAL issue #163) at runtime. A second copy of Core's packages on the module path
+    // would clash with the copy inside the jar, so the separate Core artifact is excluded.
+    implementation("com.zigythebird.playeranim:PlayerAnimationLibNeo:${pal_version}") {
+        exclude group: 'com.zigythebird.playeranim', module: 'PlayerAnimationLibCore'
+    }
 }

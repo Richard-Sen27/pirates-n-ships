@@ -150,6 +150,7 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
   - Helm interaction since spike 3: on land, using the helm assembles. On a ship, using it steers, and sneak-using it with an empty hand disassembles.
   - Implemented in spike 1 (`ship/assembly`): terrain is decided by the block tag `pirates_n_ships:terrain`, and `pirates_n_ships:never_assemble` excludes more blocks. A dock that touches the hull is gathered with it, so ships are moored with a one-block gap. The default block limit is 2048.
 - Assembly collects connected blocks, excluding world terrain, with a configurable block limit. They become a Sable sub-level.
+- **Ship templates (W0):** prebuilt ships are vanilla structure templates converted from the human's WorldEdit schematics (`ship_template` definitions with helm, waterline row, bow and price); `/pirates ship place` puts one on the water and can assemble it; the shipwright's orders will build on this.
 - **Disassembly** happens at the helm when the ship is stationary and aligned. Blocks are placed back into the world, snapped to the grid.
   - Sable has no disassembly API (`docs/sable-notes.md` §2.4). We build it from Sable's public assembly pieces: the ship is levelled and its yaw snapped to a 90° step, and the target volume is checked for obstructions before the blocks are moved.
   - Assembling in water leaves an air pocket where the hull was, and disassembling leaves sea water inside the hull. Both need handling (spike 1).
@@ -211,7 +212,7 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
 - **Striking colors:** lowering the flag mid-fight signals surrender. NPC ships stop firing, and the attacker can board without resistance. Attacking a ship that has struck its colors is a crime.
 - Changing the flag takes a few seconds at the flagpole (player, or the crew order "hoist colors").
 - Flags flutter in the wind direction, doubling as a visual wind indicator (§5.1).
-- **Wind on ships (P4):** the flag's downwind facing is computed in the ship's frame (the world wind sampled at the pole's world position, rotated by the inverse ship orientation) and re-checked every `flags.ship_update_interval_ticks`; on land every `wind_update_interval_ticks`.
+- **Wind on ships (P4, exact angle since FL1):** the flag stores the exact downwind angle (no four-way facing): the world wind is sampled at the pole's world position every `flags.ship_update_interval_ticks` (on land `wind_update_interval_ticks`) and synced as a bearing; the client turns it into the ship's render orientation every frame and eases the cloth the short way, so the cloth streams downwind at any angle while the ship turns.
 - **Banner flags (G8):** a custom flag made from a banner shows the banner's base colour through a tint index and a `BlockColor`; patterns are not shown.
 - **Size (playtest decision):** a flag is one block high and 1.5 to 2 blocks long, a real flag, not a small panel on the pole. Implemented at 1 × 1.5 blocks: a vanilla block model can't reach further than 24 pixels from the pole's centre. Two blocks would need a block entity renderer.
 

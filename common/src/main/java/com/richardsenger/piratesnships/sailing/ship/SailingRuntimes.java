@@ -24,6 +24,9 @@ import com.richardsenger.piratesnships.sailing.wind.WindSample;
 import com.richardsenger.piratesnships.sailing.wind.WindService;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.assembly.AssemblyContent;
+import com.richardsenger.piratesnships.sailing.helm.HelmBlockEntity;
+import com.richardsenger.piratesnships.sailing.helm.HelmConfig;
+import com.richardsenger.piratesnships.sailing.helm.WheelMath;
 import com.richardsenger.piratesnships.ship.assembly.HelmBlock;
 import com.richardsenger.piratesnships.ship.assembly.ShipAssembler;
 import com.richardsenger.piratesnships.ship.hull.runtime.HullRuntime;
@@ -88,6 +91,7 @@ public final class SailingRuntimes {
         Direction helmFacing = null;
         BlockPos helm = null;
         int rudder = 0;
+        double wheel = 0.0;
         List<BlockPos> capstans = new ArrayList<>();
         for (BlockPos p : blocks) {
             b[0] = Math.min(b[0], p.getX()); b[1] = Math.min(b[1], p.getY()); b[2] = Math.min(b[2], p.getZ());
@@ -97,6 +101,7 @@ public final class SailingRuntimes {
                 helmFacing = s.getValue(HorizontalDirectionalBlock.FACING);
                 helm = p.immutable();
                 rudder = RudderSteps.fromProperty(s.getValue(HelmBlock.RUDDER));
+                wheel = level.getBlockEntity(p) instanceof HelmBlockEntity be ? be.wheel() : 0.0;
             } else if (s.getBlock() instanceof CapstanBlock) {
                 capstans.add(p.immutable());
             }
@@ -124,6 +129,7 @@ public final class SailingRuntimes {
         }
         relink(level, rt);
         rt.setHelm(helm, rudder);
+        rt.setWheelAngle(wheel);
         ShipAnchor anchor = ShipControls.readAnchor(data);
         if (anchor != null && !capstans.contains(anchor.capstan())) {
             anchor = null; // the capstan is gone: the anchor went with it
@@ -170,13 +176,18 @@ public final class SailingRuntimes {
         long now = level.getGameTime();
         boolean steering = SailingConfig.STEERING_ENABLED.get();
         int steps = SailingConfig.RUDDER_STEPS.get();
+        boolean wheel = HelmConfig.DRAG_STEERING.get();
+        double lock = HelmConfig.lockAngle();
         boolean anchors = SailingConfig.ANCHOR_ENABLED.get();
         for (SailingRuntime rt : List.copyOf(m.values())) {
             ShipBody ship = SableShips.byId(level, rt.id());
             if (ship != null) {
                 WindSample w = WindService.sample(level, ship.worldBounds().getCenter());
                 rt.setTickInputs(now, w, params);
-                rt.setControlInputs(steering ? RudderSteps.angle(rt.rudderStep(), steps, params.maxRudderAngleDeg()) : 0.0, anchors);
+                // HELM1: with wheel steering the rudder follows the helm wheel, else the click steps of the block state
+                double rudder = !steering ? 0.0 : wheel ? WheelMath.rudderAngle(rt.wheelAngle(), lock, params.maxRudderAngleDeg())
+                        : RudderSteps.angle(rt.rudderStep(), steps, params.maxRudderAngleDeg());
+                rt.setControlInputs(rudder, anchors);
                 ShipControls.tickAnchor(ship, rt, params.anchor());
             }
         }
@@ -245,6 +256,7 @@ public final class SailingRuntimes {
             rt.setHelm(pos, RudderSteps.fromProperty(newState.getValue(HelmBlock.RUDDER)));
         } else if (oldState.getBlock() instanceof HelmBlock && pos.equals(rt.helm())) {
             rt.setHelm(null, 0); // no helm, no rudder
+            rt.setWheelAngle(0.0);
         }
         ShipAnchor anchor = rt.anchor();
         if (capstanGone && anchor != null && anchor.capstan().equals(pos)) {

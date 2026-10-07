@@ -90,7 +90,15 @@ ship stays within about two blocks of the anchor point and swings with the wind.
 Shoot or break the only block joining two parts of a ship and it splits: the part with the helm stays your ship, the
 other part becomes a wreck (its nameplate says "Wreck of …") that drifts but no longer sails; crew on it stay aboard;
 bits under four blocks fall apart into items. `/pirates ship info` shows a piece's id, origin and wreck flag
-(operators). Rejoining pieces comes with the Shipwright's Toolkit. Server config `assembly.split`.
+(operators). Server config `assembly.split`.
+
+**Putting it back together.** Craft a Shipwright's Toolkit (Carpenter's Hammer, Saw, Nails and Leather) and some Nails
+(3 iron nuggets make 8). Sneak-use the toolkit on the half you want to keep, usually the one with the helm; while you
+hold it, green sparkles show where the other pieces are close. Bring the broken-off piece back against it, lined up
+straight (no more than a few degrees off), touching face to face; if there is a one-block gap, place planks to bridge
+it first. Then use the toolkit on the broken-off piece: after a second of hammering it is nailed back on, keeps its
+chests and stations, and the ship keeps its name. Each repair uses 4 nails. Only pieces of the same ship can be
+joined, and only pieces up to 200 blocks; bigger halves need a shipwright. Server config `assembly.rejoin`.
 
 ## Boarding along the rope
 Once a grappling rope is latched onto another ship, look at the rope and use it: you hang from it and slide down to the

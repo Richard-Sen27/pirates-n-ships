@@ -5,7 +5,7 @@ Run (from the repository root):
     python3 -m venv tools/.venv
     tools/.venv/bin/pip install -r tools/requirements.txt
     tools/.venv/bin/python tools/gen_placeholder_textures.py            # write every texture
-    tools/.venv/bin/python tools/gen_placeholder_textures.py --only doubloon cloth    # just these
+    tools/.venv/bin/python tools/gen_placeholder_textures.py --only doubloon brig_door    # just these
     tools/.venv/bin/python tools/gen_placeholder_textures.py --list     # print the names
 
 Output: common/src/main/resources/assets/pirates_n_ships/textures/{item,block}/<name>.png
@@ -13,8 +13,8 @@ Deterministic: same input, same bytes. One function per texture, registered in I
 Replacing a texture by hand: put its name into PROTECTED (or a line in tools/protected_textures.txt),
 then this script never overwrites it. Textures owned by other packages (test_block) are never written. The helm, nameplate and flagpole have
 hand-made Blockbench models with vanilla textures (art/models/) and no textures here; the rapier, cutlass, saber,
-pistol, musket, lead shot, cannonball, grappling hook, shackles, rum, hardtack, lime, salt pork and salted fish have hand-made
-item models textured from the item palettes
+pistol, musket, lead shot, cannonball, grappling hook, shackles, rum, hardtack, lime, salt pork, salted fish, cloth,
+spices and tobacco have hand-made item models textured from the item palettes
 (tools/gen_item_palette.py).
 """
 import argparse
@@ -131,36 +131,6 @@ def doubloon():
     return cv.outline()
 
 
-def tobacco():
-    cv = Canvas()
-    for i in range(9):
-        cv.line(3 + i // 2, 13 - i, 8 + i // 3, 4 - i // 3 + i // 2, "amber" if i % 2 else "brown")
-    cv.line(4, 12, 11, 3, "amber_l")
-    cv.rect(5, 9, 9, 10, "tan")
-    return cv.outline()
-
-
-def spices():
-    cv = Canvas()
-    cv.rect(4, 7, 11, 13, "tan")
-    cv.rect(5, 5, 10, 6, "tan_l")
-    cv.rect(4, 7, 11, 7, "brown")
-    cv.rect(6, 3, 9, 4, "red")
-    cv.px(7, 2, "red_d"); cv.px(8, 4, "amber_l")
-    noise(cv, "spices", ["amber", "red"], 0.25, (5, 9, 10, 12))
-    return cv.outline()
-
-
-def cloth():
-    cv = Canvas()
-    cv.rect(2, 4, 13, 11, "white")
-    for y in (5, 8, 11):
-        cv.rect(2, y, 13, y, "bone")
-    cv.rect(11, 4, 13, 11, "blue_l")
-    cv.rect(12, 4, 12, 11, "blue")
-    return cv.outline()
-
-
 def brig_door_item():
     cv = Canvas()
     cv.rect(4, 1, 11, 14, "wood")
@@ -269,7 +239,7 @@ def pantry_top():
 
 
 ITEMS = {
-    "doubloon": doubloon, "tobacco": tobacco, "spices": spices, "cloth": cloth,
+    "doubloon": doubloon,
     "brig_door": brig_door_item,
 }
 BLOCKS = {

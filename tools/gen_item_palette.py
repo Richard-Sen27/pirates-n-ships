@@ -50,7 +50,7 @@ palette_4.png (texture "#3"; trade goods: cloth, spices, tobacco, F8e):
  v 12  tobacco_light      tobacco_dark     midrib           burlap_weave
 
 cloth_weave (undyed cloth, lighter and light rows) and burlap_weave (light and darker sacking rows) are striped.
-Spares not used by the F8e models (free for later trade goods): cloth_shadow, spice_dark, burlap_weave.
+cloth_shadow colours the cloth bolt's end rings. Spare, not used by the F8e models: spice_dark.
 
 The striped patches alternate a light and a dark row; a face whose v runs along a grip or a coil shows the winding.
 """

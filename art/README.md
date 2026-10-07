@@ -132,8 +132,8 @@ Items (captain's whistle and shackles batch, F8c):
 
 Items (provisions batch: rum, hardtack, lime, salt pork, salted fish, F8d):
 - All five use `item/generated`'s transforms unchanged (left hand repeats the right hand), like the other small items.
-- **`palette_3.png`** (texture `#2`, same script) holds the food and glass colours. It is full: the next new colour
-  needs a `palette_4.png`.
+- **`palette_3.png`** (texture `#2`, same script) holds the food and glass colours. It is full; new colours went into
+  `palette_4.png` (F8e).
 
   | v \ u | 0 | 4 | 8 | 12 |
   |---|---|---|---|---|
@@ -158,6 +158,37 @@ Items (provisions batch: rum, hardtack, lime, salt pork, salted fish, F8d):
   patch, per-face overrides and an optional rotation) and `exportAll(name)` (drops sheets no face uses, sets the
   display slots, writes the item model and the project file). They live only in the running app; rebuild them from
   these notes after a restart.
+
+Items (trade goods batch: cloth, spices, tobacco, F8e):
+- All three use `item/generated`'s transforms unchanged (left hand repeats the right hand); particle `palette_4`.
+- **`palette_4.png`** (texture `#3`, same script) holds the trade-good colours. It is full: the next new colour
+  needs a `palette_5.png`. `cloth_weave` (lighter and light off-white rows) and `burlap_weave` (light and darker
+  sacking rows) are striped; `cloth_shadow` is used only for the cloth's end rings, `spice_dark` is a spare.
+
+  | v \ u | 0 | 4 | 8 | 12 |
+  |---|---|---|---|---|
+  | 0 | cloth_light | cloth_dark | cloth_weave (stripes) | cloth_shadow |
+  | 4 | burlap_light | burlap_dark | cord | twine |
+  | 8 | spice_red | spice_orange | spice_gold | spice_dark |
+  | 12 | tobacco_light | tobacco_dark | midrib | burlap_weave (stripes) |
+- **Cloth** (10 elements): roll, end ring and wooden core (`wood` / `wood_dark` of `palette.png`) are octagons from
+  two crossed axis-aligned boxes (D x 0.7 D), so the whole bolt needs only the one `z -45` rotation about
+  `[8, 8, 8]`. The flap leaves the roll side and sags towards the table in three z steps (one rotation per element
+  leaves no room for a y tilt). The weave runs along the roll: `cloth_weave` with face `rotation: 90` on the side
+  faces. A striped patch shows at most four stripes per face, however large the face, so stripes only read on faces
+  about 3 to 6 px wide.
+- **Spices** (42 elements): stacked octagon sections (base, wide lower body, upper body, shoulder, neck, cord, cuff,
+  rolled lip, heap layers); the heap's colour patches are split half-octagons. Striped `burlap_weave` on the large
+  body read as barrel hoops in the GUI, so the body is plain `burlap_light` with thin `burlap_dark` creases gathered
+  under the cord (0.1 px proud), and the weave only on the rolled lip.
+- **Tobacco** (43 elements): leaves fan from one pivot (the tie) with vanilla angles only: upright and `z -22.5`
+  (22.5 degrees from upright), upright and `z -45` (three leaves offset sideways by 1.5 px and stacked in z), built
+  along x and `z +22.5` (67.5 degrees). Each leaf is a width profile of boxes along its length plus a 0.1 px proud
+  midrib; stem stubs reach past the twine wraps so the bundle end reads as cut stems.
+- The helpers `F8E.build(parts)` (part list with palette patch names, per-face overrides `{tex, rot}`, one rotation
+  per part), `F8E.bbox()` (rotated bounding box, for re-centring on (8, 8)) and `F8E.exportAll(name, particleSheet)`
+  live only in the running app, like the F8d ones. One offscreen view renders whichever project is active, so it
+  serves several projects in turn.
 
 Entity models use the Modded Entity format (Mojang mappings 1.17+); paste the body of the exported
 `createBodyLayer()` into the renderer's layer method (example: `AnchorRenderer.createLayer`).

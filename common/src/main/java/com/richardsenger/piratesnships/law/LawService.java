@@ -20,6 +20,8 @@ import com.richardsenger.piratesnships.law.flag.FalseColorsDetection;
 import com.richardsenger.piratesnships.law.flag.FlagKind;
 import com.richardsenger.piratesnships.law.flag.FlagLaw;
 import com.richardsenger.piratesnships.law.flag.Reaction;
+import com.richardsenger.piratesnships.law.flag.ShipStance;
+import com.richardsenger.piratesnships.law.world.FlagCrimes;
 import com.richardsenger.piratesnships.law.proof.BountyProof;
 import com.richardsenger.piratesnships.law.proof.BountyProofItem;
 import com.richardsenger.piratesnships.law.world.CrimeLog;
@@ -334,6 +336,32 @@ public final class LawService {
                                          boolean observerHasCrowsNest, long intervalTicks) {
         return FalseColorsDetection.chance(LawConfig.detectionParams(), isFalseFlag(captain, flag, navyStanding),
                 distance, observerHasCrowsNest, score(captain), intervalTicks);
+    }
+
+    /**
+     * What the ship {@code entity} is aboard tells NPCs about it (FL2): {@link ShipStance#NONE} when not aboard,
+     * when {@code law.flags.enabled} is off, or when the flag makes no difference. Asked by the mob hostility rules.
+     */
+    public static ShipStance shipStance(LivingEntity entity) {
+        return FlagCrimes.stanceOf(entity);
+    }
+
+    /**
+     * FL2's interim false-colours rule for the captain of a ship showing {@code shown}: standing 0 for everyone and the
+     * wanted check of {@code law.flags.false_flag_wanted_threshold} on top ({@link FlagLaw#fliesFalseColours}).
+     */
+    public static boolean fliesFalseColours(LivingEntity captain, FlagKind shown) {
+        boolean bounty = hasBounty(server(captain), captain.getUUID());
+        return FlagLaw.fliesFalseColours(shown, new FlagLaw.CaptainStanding(0, bounty), LawConfig.NAVY_FLAG_MIN_STANDING.get(),
+                wantedLevel(captain), LawConfig.FALSE_FLAG_WANTED_THRESHOLD.get());
+    }
+
+    /**
+     * A loaded living entity by UUID: an online player, else an entity in any level (a ship's owner, for crimes
+     * committed by the ship). {@code null} if it is not loaded.
+     */
+    public static @Nullable LivingEntity findLoaded(MinecraftServer server, UUID id) {
+        return findLiving(server, id);
     }
 
     // --- Ticking and login --------------------------------------------------------------------------------------

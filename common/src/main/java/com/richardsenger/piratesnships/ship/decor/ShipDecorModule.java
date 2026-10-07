@@ -6,6 +6,7 @@ import com.richardsenger.piratesnships.core.datagen.ModelContext;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagCommands;
+import com.richardsenger.piratesnships.ship.decor.flag.ShipAllegiance;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagConfig;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagData;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagGameTests;
@@ -65,6 +66,7 @@ public final class ShipDecorModule implements ModModule {
     @Override
     public void registerEvents() {
         CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> FlagCommands.register(dispatcher));
+        ShipAllegiance.register(); // FL2: refresh the keeper's flag after a split or rejoin
     }
 
     @Override
@@ -84,7 +86,7 @@ public final class ShipDecorModule implements ModModule {
             nameplate(m, ShipDecor.NAMEPLATE.get());
             // flagpole: model and block state in FlagData
             // hand-made Blockbench models (art/models/cargo_{crate,barrel}.bbmodel, design.md §4.8): only the block
-            // states are generated; the load does not show (the blocks have no load property)
+            // states are generated; the load does not show (the load property is physics only, CW1: every value uses the model)
             for (Block cargo : List.of(ShipDecor.CARGO_CRATE.get(), ShipDecor.CARGO_BARREL.get())) {
                 m.blockStates().accept(MultiVariantGenerator.multiVariant(cargo, Variant.variant()
                         .with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(cargo))));

@@ -60,6 +60,8 @@ public class PantryBlockEntity extends BaseContainerBlockEntity implements World
     private boolean storeDirty = true;
     /** Game time up to which spoilage was applied; -1 = not yet (the first catch-up only starts the clock). */
     private long agedUntil = -1;
+    /** Keeps the block's {@code load} (Sable mass, CW1) in step with the content. */
+    private final com.richardsenger.piratesnships.trade.cargo.CargoLoad.Tracker load = new com.richardsenger.piratesnships.trade.cargo.CargoLoad.Tracker();
 
     public PantryBlockEntity(BlockPos pos, BlockState state) {
         super(CrewContent.PANTRY_BLOCK_ENTITY.get(), pos, state);
@@ -159,6 +161,7 @@ public class PantryBlockEntity extends BaseContainerBlockEntity implements World
 
     /** Marks the block entity for saving and comparators without throwing away the store. */
     private void setChangedQuietly() {
+        load.markDirty();
         boolean dirty = storeDirty;
         super.setChanged();
         storeDirty = dirty;
@@ -171,11 +174,14 @@ public class PantryBlockEntity extends BaseContainerBlockEntity implements World
         if (pantry.agedUntil < 0 || Math.floorMod(time + pos.asLong(), interval) == 0) {
             pantry.catchUp(time, ProvisionsConfig.settings());
         }
+        pantry.load.tick(level, pos, com.richardsenger.piratesnships.trade.cargo.CargoMass.PANTRY,
+                () -> com.richardsenger.piratesnships.trade.cargo.CargoWeighing.weigh(pantry, com.richardsenger.piratesnships.trade.TradeService.goods(level)));
     }
 
     @Override
     public void setChanged() {
         storeDirty = true;
+        load.markDirty();
         super.setChanged();
     }
 
@@ -195,6 +201,7 @@ public class PantryBlockEntity extends BaseContainerBlockEntity implements World
     protected void setItems(NonNullList<ItemStack> items) {
         this.items = items;
         storeDirty = true;
+        load.markDirty();
     }
 
     @Override
@@ -246,6 +253,7 @@ public class PantryBlockEntity extends BaseContainerBlockEntity implements World
         agedUntil = tag.contains("aged_until") ? tag.getLong("aged_until") : -1;
         // the stacks stay the authority on amounts; the next read reconciles the store with them
         storeDirty = true;
+        load.markDirty();
     }
 
     @Override

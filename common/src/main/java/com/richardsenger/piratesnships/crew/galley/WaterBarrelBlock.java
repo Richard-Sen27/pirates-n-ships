@@ -46,7 +46,7 @@ public class WaterBarrelBlock extends BaseEntityBlock {
 
     public WaterBarrelBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FILL, 0));
+        registerDefaultState(stateDefinition.any().setValue(FILL, 0).setValue(com.richardsenger.piratesnships.trade.cargo.CargoLoad.LOAD, 0));
     }
 
     @Override
@@ -56,7 +56,8 @@ public class WaterBarrelBlock extends BaseEntityBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FILL);
+        // load: the water's weight as Sable mass (CW1, physics only; FILL drives the model)
+        builder.add(FILL, com.richardsenger.piratesnships.trade.cargo.CargoLoad.LOAD);
     }
 
     @Override

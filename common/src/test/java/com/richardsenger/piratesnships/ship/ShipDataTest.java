@@ -1,6 +1,9 @@
 package com.richardsenger.piratesnships.ship;
 
 import com.mojang.serialization.JsonOps;
+import com.richardsenger.piratesnships.law.flag.FlagKind;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagReading;
+import net.minecraft.nbt.CompoundTag;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,7 +25,8 @@ class ShipDataTest {
     }
 
     private static final ShipData FULL = new ShipData(UUID.randomUUID(), "Black Pearl", Optional.of(UUID.randomUUID()),
-            List.of(UUID.randomUUID(), UUID.randomUUID()), "pirates", ResourceLocation.withDefaultNamespace("overworld"));
+            List.of(UUID.randomUUID(), UUID.randomUUID()), FlagReading.struck(FlagKind.JOLLY_ROGER),
+            ResourceLocation.withDefaultNamespace("overworld"), 12345L);
 
     @Test
     void roundTripsThroughNbt() {
@@ -45,5 +49,28 @@ class ShipDataTest {
         assertEquals("", back.name());
         assertEquals(List.of(), back.crew());
         assertEquals("Renamed", back.withName("Renamed").name());
+        assertEquals(FlagReading.NO_FLAG, back.flag());
+        assertEquals(0L, back.blownCoverUntil());
+    }
+
+    @Test
+    void flagAndBlownCoverAreKeptByTheOtherWithers() {
+        ShipData d = FULL.withName("x").withFlag(FlagReading.flying(FlagKind.NAVY)).withBlownCoverUntil(99L);
+        assertEquals(FlagReading.flying(FlagKind.NAVY), d.flag());
+        assertEquals(99L, d.blownCoverUntil());
+        assertEquals("x", d.name());
+        assertEquals(true, d.coverBlown(98L));
+        assertEquals(false, d.coverBlown(99L));
+    }
+
+    @Test
+    void preFl2PlaceholderFlagLoadsAsNoFlag() {
+        var tag = (CompoundTag) ShipData.CODEC.encodeStart(NbtOps.INSTANCE, FULL).getOrThrow();
+        tag.putString("flag", "pirates");
+        tag.remove("blown_cover_until");
+        ShipData back = ShipData.CODEC.parse(NbtOps.INSTANCE, tag).getOrThrow();
+        assertEquals(FlagReading.NO_FLAG, back.flag());
+        assertEquals(0L, back.blownCoverUntil());
+        assertEquals(FULL.name(), back.name());
     }
 }

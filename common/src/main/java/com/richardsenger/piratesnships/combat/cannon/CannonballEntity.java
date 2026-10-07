@@ -25,6 +25,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.UUID;
 
 /**
  * A fired cannonball (docs/design.md §8.2, §4.6). A heavy thrown projectile with {@code cannons.gravity}; it can't be
@@ -50,6 +53,10 @@ public class CannonballEntity extends ThrowableItemProjectile {
     private double impactImpulse = -1;
     /** Set by a glancing hit that bounced (Q2) for {@link #onHit}: the ball flies on. Not saved. */
     private boolean bounced;
+    /** The ship the ball was fired from (FL2, for {@link CannonShipHits}), or null. Saved. */
+    private @Nullable UUID firingShip;
+    /** The ship this ball last reported a hit on, so a bounce and the following hit on one ship report once. Not saved. */
+    private @Nullable UUID reportedShip;
 
     public CannonballEntity(EntityType<? extends CannonballEntity> type, Level level) {
         super(type, level);
@@ -80,6 +87,16 @@ public class CannonballEntity extends ThrowableItemProjectile {
 
     public float damage() {
         return damage;
+    }
+
+    /** The ship the ball was fired from, or null. */
+    public @Nullable UUID firingShip() {
+        return firingShip;
+    }
+
+    /** Set by the gun that fires the ball ({@link CannonService#fire}, {@link SwivelService#fire}). */
+    public void setFiringShip(@Nullable UUID ship) {
+        this.firingShip = ship;
     }
 
     @Override
@@ -149,6 +166,12 @@ public class CannonballEntity extends ThrowableItemProjectile {
         boolean glancing = CannonConfig.GLANCING_HITS.get();
         double square = glancing ? CannonImpact.squareness(localDir, localNormal) : 1.0;
         boolean bounce = glancing && CannonImpact.bounces(square, CannonConfig.GLANCING_BOUNCE_DEGREES.get());
+
+        // FL2: a hit on another ship is announced (the law decides whether it is a crime), once per ship and ball
+        if (ship != null && !ship.id().equals(firingShip) && !ship.id().equals(reportedShip)) {
+            reportedShip = ship.id();
+            CannonShipHits.fire(new CannonShipHits.ShipHit(level, ship.id(), getOwner(), firingShip, worldHit));
+        }
 
         double push = (impactImpulse >= 0 ? impactImpulse : CannonConfig.IMPACT_IMPULSE.get()) * square;
         if (ship != null && push > 0 && localDir != Vec3.ZERO) {
@@ -244,6 +267,7 @@ public class CannonballEntity extends ThrowableItemProjectile {
         tag.putBoolean("splashed", splashed);
         tag.putInt("blocks_per_hit", blocksPerHit);
         tag.putDouble("impact_impulse", impactImpulse);
+        if (firingShip != null) tag.putUUID("firing_ship", firingShip);
     }
 
     @Override
@@ -254,5 +278,6 @@ public class CannonballEntity extends ThrowableItemProjectile {
         splashed = tag.getBoolean("splashed");
         blocksPerHit = tag.contains("blocks_per_hit") ? tag.getInt("blocks_per_hit") : -1;
         impactImpulse = tag.contains("impact_impulse") ? tag.getDouble("impact_impulse") : -1;
+        firingShip = tag.hasUUID("firing_ship") ? tag.getUUID("firing_ship") : null;
     }
 }

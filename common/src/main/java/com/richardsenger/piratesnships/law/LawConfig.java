@@ -119,6 +119,22 @@ public final class LawConfig {
     public static final ConfigValue<WantedLevel> NAVY_HOSTILITY_THRESHOLD = WORLD.enumValue("navy_hostility_threshold", WantedLevel.WANTED,
             "Lowest wanted level the navy attacks on sight");
 
+    private static final ConfigSection FLAGS_WORLD = LAW.section("flags",
+            "How flags act in the world: navy and pirate reactions, false colours and crimes against ships (docs/design.md §4.7)");
+
+    public static final ConfigValue<Boolean> FLAGS_ENABLED = FLAGS_WORLD.bool("enabled", true,
+            "Flags act in the world. Off = NPCs ignore ship flags, nobody checks for false colours and attacking ships "
+                    + "that struck their colours or fly a neutral flag is no crime");
+    public static final ConfigValue<Double> OBSERVE_RANGE = FLAGS_WORLD.doubleRange("observe_range", 48.0, 1.0, 256.0,
+            "Blocks within which navy soldiers and officers notice a ship's flag (Jolly Roger, false colours)");
+    public static final ConfigValue<Integer> OBSERVE_INTERVAL_TICKS = FLAGS_WORLD.intRange("observe_interval_ticks", 40, 1, 12000,
+            "How often (ticks) the navy looks at the flags of ships in range and rolls for false colours");
+    public static final ConfigValue<Integer> FALSE_FLAG_WANTED_THRESHOLD = FLAGS_WORLD.intRange("false_flag_wanted_threshold", 1, 0, 3,
+            "Until reputation exists: a navy flag is false colours when the ship's owner has at least this wanted level "
+                    + "(0 clean, 1 suspect, 2 wanted, 3 notorious)");
+    public static final ConfigValue<Integer> BLOWN_COVER_TICKS = FLAGS_WORLD.intRange("blown_cover_ticks", 6000, 0, 1728000,
+            "Ticks the navy treats a ship caught under false colours as hostile, whatever it flies");
+
     private static final ConfigSection FLAGS =ModConfigs.server("flags_brig", "Flags, false colors and prisoners");
 
     public static final ConfigValue<Double> FALSE_FLAG_DETECTION_STRENGTH = FLAGS.doubleRange("false_flag_detection_strength", 1.0, 0.0, 100.0,

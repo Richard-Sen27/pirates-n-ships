@@ -13,9 +13,14 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import org.jetbrains.annotations.Nullable;
 import net.minecraft.world.phys.BlockHitResult;
 
 /**
@@ -28,7 +33,8 @@ import net.minecraft.world.phys.BlockHitResult;
  * </ul>
  * Every interaction shows the content on the action bar. Breaking keeps the cargo in the dropped item. The models are
  * hand-made in Blockbench (art/models/cargo_crate.bbmodel, cargo_barrel.bbmodel, design.md §4.8) and do not change with
- * the load; the blocks are registered with {@code noOcclusion} in {@code ShipDecor}.
+ * the load; the blocks are registered with {@code noOcclusion} in {@code ShipDecor}. {@link CargoLoad#LOAD} carries the
+ * content's weight as Sable mass (CW1, physics only).
  */
 public class CargoContainerBlock extends BaseEntityBlock {
 
@@ -42,6 +48,23 @@ public class CargoContainerBlock extends BaseEntityBlock {
     public CargoContainerBlock(Properties properties, CargoContainers.Kind kind) {
         super(properties);
         this.kind = kind;
+        registerDefaultState(stateDefinition.any().setValue(CargoLoad.LOAD, 0));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(CargoLoad.LOAD);
+    }
+
+    /** The mass profile of this container ({@link CargoMass}). */
+    public CargoMass.Profile massProfile() {
+        return kind == CargoContainers.Kind.BARREL ? CargoMass.BARREL : CargoMass.CRATE;
+    }
+
+    @Override
+    @Nullable
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        return level.isClientSide ? null : createTickerHelper(type, CargoContainers.BLOCK_ENTITY.get(), CargoContainerBlockEntity::serverTick);
     }
 
     public CargoContainers.Kind kind() {

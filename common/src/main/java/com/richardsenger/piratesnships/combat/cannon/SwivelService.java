@@ -262,6 +262,7 @@ public final class SwivelService {
                 CannonConfig.SWIVEL_IMPACT_IMPULSE.get());
         ball.setItem(new ItemStack(ammoItem()));
         ball.setOwner(owner);
+        ball.setFiringShip(ship == null ? null : ship.id()); // FL2: who fired at whom
         level.addFreshEntity(ball);
 
         level.setBlock(pos, state.setValue(SwivelGunBlock.LOAD, CannonLoad.EMPTY), Block.UPDATE_ALL);

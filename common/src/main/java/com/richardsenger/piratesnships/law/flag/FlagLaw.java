@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.law.flag;
 
 import com.richardsenger.piratesnships.law.crime.CrimeType;
+import com.richardsenger.piratesnships.law.crime.WantedLevel;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -67,6 +68,43 @@ public final class FlagLaw {
             case JOLLY_ROGER -> false;
             case NAVY -> captain.hasActiveBounty() || captain.navyStanding() < minNavyStanding;
             case NONE, MERCHANT, CUSTOM -> captain.hasActiveBounty();
+        };
+    }
+
+    /**
+     * FL2's interim false-colours rule (until reputation exists, docs/design.md §15): a ship flies false colours when
+     * its flag is a false flag for the captain by {@link #isFalseFlag} <b>and</b> the captain's wanted level is at least
+     * {@code wantedThreshold} (ordinal of {@link WantedLevel}: 0 clean, 1 suspect, 2 wanted, 3 notorious). The world
+     * adapter passes a navy standing of 0 for everyone, so today a navy flag is false exactly for a captain at or above
+     * the threshold (with {@code navy_flag_min_standing} above 0); §15 replaces the standing input and can drop the
+     * wanted check. Only the navy flag is judged here: the harmless flags are not checked in the world yet.
+     */
+    public static boolean fliesFalseColours(FlagKind shown, CaptainStanding captain, int minNavyStanding,
+                                            WantedLevel captainLevel, int wantedThreshold) {
+        if (shown != FlagKind.NAVY) return false;
+        return isFalseFlag(shown, captain, minNavyStanding) && captainLevel.ordinal() >= Math.max(0, wantedThreshold);
+    }
+
+    /**
+     * The crime for a cannonball from another ship hitting a ship (FL2), or {@code null}:
+     * <ul>
+     *   <li>nothing for hitting one's own ship (the firing ship, or a ship of the same owner);</li>
+     *   <li>{@link CrimeType#ATTACK_STRUCK_COLORS} for a ship that has struck its colours;</li>
+     *   <li>{@link CrimeType#ATTACK_NEUTRAL_SHIP} for a ship flying a merchant or custom (neutral) flag;</li>
+     *   <li>nothing for a ship without a flag, under the Jolly Roger, or under a navy flag (real navy ships do not
+     *       exist yet; {@link #crimeForAttackingShip} covers them once they do).</li>
+     * </ul>
+     *
+     * @param kind   the target's flag (also while struck), {@code NONE} without one
+     * @param struck the target's flag is struck
+     * @param ownShip the shooter hit its own ship or one of its owner's
+     */
+    public static @Nullable CrimeType crimeForShipHit(FlagKind kind, boolean struck, boolean ownShip) {
+        if (ownShip || kind == FlagKind.NONE) return null;
+        if (struck) return CrimeType.ATTACK_STRUCK_COLORS;
+        return switch (kind) {
+            case MERCHANT, CUSTOM -> CrimeType.ATTACK_NEUTRAL_SHIP;
+            case NONE, NAVY, JOLLY_ROGER -> null;
         };
     }
 

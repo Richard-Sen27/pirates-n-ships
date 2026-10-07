@@ -9,9 +9,15 @@ import com.richardsenger.piratesnships.law.flag.Faction;
 import com.richardsenger.piratesnships.law.flag.FlagKind;
 import com.richardsenger.piratesnships.law.flag.FlagLaw;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
+import com.richardsenger.piratesnships.sailing.wind.WindOverride;
 import com.richardsenger.piratesnships.sailing.wind.WindSample;
 import com.richardsenger.piratesnships.sailing.wind.WindService;
+import com.richardsenger.piratesnships.ship.ShipTestCleanup;
+import com.richardsenger.piratesnships.ship.assembly.AssemblyContent;
+import com.richardsenger.piratesnships.ship.assembly.AssemblyResult;
 import com.richardsenger.piratesnships.ship.decor.FlagpoleBlock;
+import com.richardsenger.piratesnships.ship.sable.SableShips;
+import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.ship.decor.ShipDecor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -30,12 +36,14 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BannerPatternLayers;
 import net.minecraft.world.level.block.entity.BannerPatterns;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Quaterniond;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -345,5 +353,78 @@ public final class FlagGameTests {
         helper.assertTrue(seen.get(1).after().equals(FlagReading.struck(FlagKind.NAVY)), "strike: " + seen.get(1));
         helper.assertTrue(seen.get(2).cause() == FlagpoleMachine.Cause.BROKEN && seen.get(2).after().equals(FlagReading.NO_FLAG), "break: " + seen.get(2));
         helper.succeed();
+    }
+
+    /**
+     * A flag on an assembled ship points downwind in the ship's frame (its {@code FACING} is stored in plot
+     * coordinates): with the wind blowing south, it faces plot south at first, plot north once the ship has turned
+     * 180 degrees and plot west after a turn to +90 degrees (plot west is world south then), each within the ship
+     * re-check interval. A flag on land next to it keeps facing world south. Own batch: it fixes the dimension's wind
+     * and pins the ship re-check interval.
+     */
+    @ModGameTest(timeoutTicks = 200, batch = "pirates_n_ships_config_flags_ship_wind")
+    public static void flagOnTurnedShipStreamsDownwind(GameTestHelper helper) {
+        if (!FlagConfig.FOLLOW_WIND.get()) {
+            helper.succeed();
+            return;
+        }
+        int interval = 20;
+        ConfigOverrides.during(helper, FlagConfig.SHIP_UPDATE_INTERVAL_TICKS, interval);
+        // From the north: blows toward +Z (south). Only for as long as the test needs it (cleared at the end; on a
+        // failure it expires by itself shortly after), since the override applies to the whole dimension and later
+        // batches sample the real wind.
+        fixWind(helper, 0.0, 2 * (interval + 5) + 20);
+        for (int x = 1; x <= 7; x++) {
+            for (int z = 1; z <= 7; z++) helper.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
+        }
+        for (int x = 3; x <= 5; x++) {
+            for (int z = 3; z <= 5; z++) helper.setBlock(new BlockPos(x, 2, z), Blocks.OAK_PLANKS);
+        }
+        BlockPos helm = new BlockPos(4, 3, 4);
+        helper.setBlock(helm, AssemblyContent.HELM.get());
+        BlockPos shipPole = new BlockPos(3, 3, 3);
+        pole(helper, shipPole).commandSet(FlagKind.MERCHANT, false, null);
+        helper.assertBlockProperty(shipPole, FlagpoleBlock.FACING, Direction.SOUTH);
+        BlockPos landPole = new BlockPos(1, 2, 7);
+        pole(helper, landPole).commandSet(FlagKind.NAVY, false, null);
+        helper.assertBlockProperty(landPole, FlagpoleBlock.FACING, Direction.SOUTH);
+
+        AssemblyResult r = ShipTestCleanup.assemble(helper, helm);
+        helper.assertTrue(r.success() && r.shipId() != null, "assembly failed: " + r);
+        ShipBody ship = SableShips.byId(helper.getLevel(), r.shipId());
+        helper.assertTrue(ship != null, "no sub-level for " + r.shipId());
+        BlockPos plotPole = ship.plotBlocks().stream()
+                .filter(p -> helper.getLevel().getBlockState(p).is(ShipDecor.FLAGPOLE.get())).findFirst().orElse(null);
+        helper.assertTrue(plotPole != null, "the flagpole was not assembled into the ship");
+        assertPlotFacing(helper, plotPole, Direction.SOUTH, "after assembly");
+
+        helper.startSequence()
+                .thenExecute(() -> ship.setOrientation(new Quaterniond().rotateAxis(Math.toRadians(180), 0, 1, 0)))
+                .thenExecuteAfter(interval + 5, () -> {
+                    assertPlotFacing(helper, plotPole, Direction.NORTH, "after a half turn");
+                    ship.setOrientation(new Quaterniond().rotateAxis(Math.toRadians(90), 0, 1, 0));
+                })
+                .thenExecuteAfter(interval + 5, () -> {
+                    try {
+                        assertPlotFacing(helper, plotPole, Direction.WEST, "after a turn to +90 degrees");
+                        helper.assertBlockProperty(landPole, FlagpoleBlock.FACING, Direction.SOUTH);
+                    } finally {
+                        WindOverride.clear(helper.getLevel().dimension().location().toString());
+                    }
+                })
+                .thenSucceed();
+    }
+
+    private static void assertPlotFacing(GameTestHelper helper, BlockPos plotPos, Direction expected, String when) {
+        BlockState bs = helper.getLevel().getBlockState(plotPos);
+        helper.assertTrue(bs.getBlock() instanceof FlagpoleBlock, "no flagpole at plot " + plotPos + " " + when);
+        Direction actual = bs.getValue(FlagpoleBlock.FACING);
+        helper.assertTrue(actual == expected, "ship flag faces plot " + actual + " " + when + ", expected " + expected);
+    }
+
+    /** Fixes the test dimension's wind for {@code ticks} ticks. */
+    private static void fixWind(GameTestHelper helper, double fromDegrees, int ticks) {
+        WindOverride.set(helper.getLevel().dimension().location().toString(), fromDegrees, 8.0,
+                helper.getLevel().getGameTime() + ticks);
     }
 }

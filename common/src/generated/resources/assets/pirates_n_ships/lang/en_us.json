@@ -610,6 +610,8 @@
   "pirates_n_ships.configuration.flags.follow_wind.tooltip": "Flags turn to point downwind (in 90 degree steps), doubling as a wind indicator",
   "pirates_n_ships.configuration.flags.hoist_delay_ticks": "Hoist Delay Ticks",
   "pirates_n_ships.configuration.flags.hoist_delay_ticks.tooltip": "Ticks it takes to hoist, change, strike, raise or take down a flag at a flagpole (20 ticks = 1 second)",
+  "pirates_n_ships.configuration.flags.ship_update_interval_ticks": "Ship Update Interval Ticks",
+  "pirates_n_ships.configuration.flags.ship_update_interval_ticks.tooltip": "How often a flying flag on a ship re-checks which way is downwind, in ticks (the ship turns under it)",
   "pirates_n_ships.configuration.flags.wind_update_interval_ticks": "Wind Update Interval Ticks",
   "pirates_n_ships.configuration.flags.wind_update_interval_ticks.tooltip": "How often a flying flag checks the wind direction, in ticks",
   "pirates_n_ships.configuration.flags_brig": "Flags Brig",

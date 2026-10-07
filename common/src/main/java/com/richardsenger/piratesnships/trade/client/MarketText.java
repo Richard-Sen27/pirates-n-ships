@@ -40,6 +40,20 @@ public final class MarketText {
     public static final String DELIVERED = KEY + "result.delivered";
     public static final String REFUSED = KEY + "result.refused";
     public static final String CLOSED = KEY + "closed";
+    // SW1: the shipwright's Orders tab
+    public static final String TAB_ORDERS = KEY + "tab_orders";
+    public static final String SHIPS = KEY + "ships";
+    public static final String NO_SHIPS = KEY + "no_ships";
+    public static final String MY_ORDERS = KEY + "my_orders";
+    public static final String NO_MY_ORDERS = KEY + "no_my_orders";
+    public static final String ORDER = KEY + "order";
+    public static final String ORDER_DETAIL = KEY + "order_detail";
+    public static final String ORDER_MATERIALS = KEY + "order_materials";
+    public static final String ORDERS_DISABLED = KEY + "orders_disabled";
+    public static final String ORDERS_FULL = KEY + "orders_full";
+    public static final String ORDER_NEEDS = KEY + "order_needs";
+    public static final String MY_ORDER_WAITING = KEY + "my_order_waiting";
+    public static final String MY_ORDER_READY = KEY + "my_order_ready";
 
     private MarketText() {
     }
@@ -89,6 +103,19 @@ public final class MarketText {
                 .add(DELIVERED, "Contract delivered: %s units, %s doubloons paid out")
                 .add(REFUSED, "%s: %s")
                 .add(CLOSED, "The harbor master has closed the books");
+        lang.add(TAB_ORDERS, "Orders")
+                .add(SHIPS, "The shipwright builds (%s of %s slipways taken)")
+                .add(NO_SHIPS, "The shipwright has no ship plans")
+                .add(MY_ORDERS, "Your orders")
+                .add(NO_MY_ORDERS, "No orders here")
+                .add(ORDER, "Order")
+                .add(ORDER_DETAIL, "%s doubloons, %s days")
+                .add(ORDER_MATERIALS, "%s logs, %s wool")
+                .add(ORDERS_DISABLED, "The shipwright takes no orders")
+                .add(ORDERS_FULL, "All slipways are taken; come back later")
+                .add(ORDER_NEEDS, "You need %s doubloons, %s logs and %s wool")
+                .add(MY_ORDER_WAITING, "ready in %s days")
+                .add(MY_ORDER_READY, "ready: bring the receipt to this desk");
         lang.add(kind(PortKind.SEAFARER_VILLAGE), "Seafarer village")
                 .add(kind(PortKind.NAVY_OUTPOST), "Navy outpost")
                 .add(kind(PortKind.PIRATE_ISLAND), "Pirate island");

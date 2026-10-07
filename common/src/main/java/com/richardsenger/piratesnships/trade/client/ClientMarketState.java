@@ -2,6 +2,7 @@ package com.richardsenger.piratesnships.trade.client;
 
 import com.richardsenger.piratesnships.trade.exchange.TransactionResult;
 import com.richardsenger.piratesnships.trade.net.MarketPayloads;
+import com.richardsenger.piratesnships.trade.net.OrderPayloads;
 import com.richardsenger.piratesnships.trade.net.MarketView;
 
 import java.util.Optional;
@@ -19,6 +20,9 @@ public final class ClientMarketState {
     private static volatile long resultVersion;
     private static volatile Optional<MarketPayloads.OpenMarket> desk = Optional.empty();
     private static volatile Runnable opener = () -> { };
+    private static volatile Optional<OrderPayloads.OrdersView> orders = Optional.empty();
+    private static volatile Optional<OrderPayloads.OrderResult> lastOrderResult = Optional.empty();
+    private static volatile long orderResultVersion;
 
     private ClientMarketState() {
     }
@@ -34,6 +38,8 @@ public final class ClientMarketState {
         desk = Optional.of(open);
         view = Optional.empty();
         lastResult = Optional.empty();
+        orders = Optional.empty();
+        lastOrderResult = Optional.empty();
         version++;
         opener.run();
     }
@@ -73,10 +79,38 @@ public final class ClientMarketState {
         return version;
     }
 
+    /**
+     * The shipwright's Orders tab (SW1). A payload without a view (a refused order) keeps the last tab content;
+     * {@link #orderResultVersion()} grows with every result.
+     */
+    public static void acceptOrders(OrderPayloads.Orders payload) {
+        if (payload.view().isPresent()) orders = payload.view();
+        if (payload.result().isPresent()) {
+            lastOrderResult = payload.result();
+            orderResultVersion++;
+        }
+        version++;
+    }
+
+    /** The Orders tab of the open desk (present only at a seafarer village's desk). */
+    public static Optional<OrderPayloads.OrdersView> orders() {
+        return orders;
+    }
+
+    public static Optional<OrderPayloads.OrderResult> lastOrderResult() {
+        return lastOrderResult;
+    }
+
+    public static long orderResultVersion() {
+        return orderResultVersion;
+    }
+
     public static void reset() {
         desk = Optional.empty();
         view = Optional.empty();
         lastResult = Optional.empty();
+        orders = Optional.empty();
+        lastOrderResult = Optional.empty();
         version++;
     }
 }

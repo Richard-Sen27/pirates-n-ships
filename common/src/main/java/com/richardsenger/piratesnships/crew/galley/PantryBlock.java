@@ -41,12 +41,14 @@ public class PantryBlock extends BaseEntityBlock {
 
     public PantryBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH)
+                .setValue(com.richardsenger.piratesnships.trade.cargo.CargoLoad.LOAD, 0));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        // load: the content's weight as Sable mass (CW1, physics only, the model ignores it)
+        builder.add(FACING, com.richardsenger.piratesnships.trade.cargo.CargoLoad.LOAD);
     }
 
     @Override

@@ -32,11 +32,14 @@ public final class TradeModule implements ModModule {
         PlunderMark.init();
         com.richardsenger.piratesnships.trade.cargo.CargoContainers.init();
         com.richardsenger.piratesnships.trade.desk.HarborDesks.init();
+        // CW1: the cargo force group (vanilla containers' weight on ships)
+        com.richardsenger.piratesnships.ship.cargo.ShipCargo.registerContent();
     }
 
     @Override
     public void registerPayloads() {
         com.richardsenger.piratesnships.trade.net.MarketBackend.registerPayloads();
+        com.richardsenger.piratesnships.ship.cargo.ShipCargo.registerPayloads();
     }
 
     @Override
@@ -50,11 +53,13 @@ public final class TradeModule implements ModModule {
         });
         com.richardsenger.piratesnships.platform.event.CommonEvents.SERVER_STOPPED.register(s -> com.richardsenger.piratesnships.trade.net.MarketBackend.clear());
         com.richardsenger.piratesnships.platform.event.CommonEvents.SERVER_TICK_END.register(com.richardsenger.piratesnships.trade.net.MarketBackend::onServerTick);
+        com.richardsenger.piratesnships.ship.cargo.ShipCargo.registerEvents();
     }
 
     @Override
     public void initClient() {
         com.richardsenger.piratesnships.trade.client.TradeClient.init();
+        com.richardsenger.piratesnships.ship.cargo.ShipCargo.initClient();
     }
 
     @Override
@@ -68,10 +73,13 @@ public final class TradeModule implements ModModule {
         data.lang(com.richardsenger.piratesnships.trade.cargo.CargoText::lang);
         data.lang(TradeCommands::lang);
         com.richardsenger.piratesnships.trade.desk.HarborDeskData.gather(data);
+        com.richardsenger.piratesnships.trade.cargo.CargoPhysicsData.gather(data);
+        data.lang(com.richardsenger.piratesnships.ship.cargo.ShipCargo::lang);
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(TradeGameTests.class, CargoGameTests.class, com.richardsenger.piratesnships.trade.desk.HarborDeskGameTests.class);
+        return List.of(TradeGameTests.class, CargoGameTests.class, com.richardsenger.piratesnships.trade.desk.HarborDeskGameTests.class,
+                com.richardsenger.piratesnships.trade.cargo.CargoWeightGameTests.class);
     }
 }

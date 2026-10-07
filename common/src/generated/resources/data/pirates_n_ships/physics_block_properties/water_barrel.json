@@ -1,0 +1,21 @@
+{
+  "overrides": {
+    "load=1": {
+      "sable:mass": 2.08
+    },
+    "load=2": {
+      "sable:mass": 2.16
+    },
+    "load=3": {
+      "sable:mass": 2.24
+    },
+    "load=4": {
+      "sable:mass": 2.32
+    }
+  },
+  "priority": 1001,
+  "properties": {
+    "sable:mass": 2.0
+  },
+  "selector": "pirates_n_ships:water_barrel"
+}

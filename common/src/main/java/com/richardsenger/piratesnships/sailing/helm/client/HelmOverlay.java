@@ -10,7 +10,8 @@ import net.minecraft.network.chat.Component;
 
 /**
  * The helmsman's HUD while holding the wheel (HELM1): the rudder angle and side ("Rudder 12° starboard", "Rudder
- * midships") above the action bar, from the locally predicted wheel, behind {@code helm_view.show_rudder_angle}.
+ * midships") above the action bar, from the locally predicted wheel, behind {@code helm_view.show_rudder_angle};
+ * followed by the ship's load level when the server sent one (CW1, "Rudder 12° starboard · Laden").
  */
 public final class HelmOverlay {
 
@@ -22,7 +23,9 @@ public final class HelmOverlay {
         if (HelmSteeringClient.activeHelm() == null || mc.options.hideGui || !HelmConfig.SHOW_RUDDER_ANGLE.get()) {
             return;
         }
-        Component text = HelmService.rudderMessage(HelmService.rudderAngle(HelmSteeringClient.predictedWheel()));
+        // CW1: the ship's load level after the rudder line ("Rudder 12° starboard · Laden")
+        Component text = com.richardsenger.piratesnships.ship.cargo.client.ClientShipLoad.withLoad(
+                HelmService.rudderMessage(HelmService.rudderAngle(HelmSteeringClient.predictedWheel())));
         Font font = mc.font;
         int w = font.width(text);
         int x = graphics.guiWidth() / 2;

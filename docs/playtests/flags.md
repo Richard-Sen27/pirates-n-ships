@@ -91,3 +91,6 @@ Please send screenshots of steps 3, 7 and 10, and `latest.log` if anything goes 
 
 
 Addendum (P1 finding, fixed in P4): on a ship that has turned since assembly the flag pointed the wrong way (180° after a half turn), because its wind facing ignored the ship's orientation. After P4 the flag must stream downwind on a turned ship too. When judging the sails, use `/pirates wind get`, not the flag.
+
+
+Addendum (P4): with the wind fixed from the north, a flag on land points south and stays. A ship's flag points south before turning; after turning the ship 90° it still points south in the world (sideways relative to the ship) within about a second; after 180° likewise (the opposite side of the ship). During a slow turn the flag jumps 90° at each 45° boundary (four-way facings). After disassembling a turned ship the flag on the ground points downwind within one land interval, up to 10 s.

@@ -603,7 +603,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `firearms` | Firearms on/off, per gun: damage, muzzle velocity, spread, reload time, recoil; ball lifetime and gravity, cooldown, gunpowder use. |
 | `sailing_runtime` | Sailing forces on/off, heel scaling, steering and anchor on/off, rudder steps, chain length. |
 | `crew_stations` | Crew stations on/off, time per trim step. |
-| `flags` | Hoisting delay, flags following the wind, banners as flags. |
+| `flags` | Hoisting delay, flags following the wind (land and ship check intervals), banners as flags. |
 | `dry_hull` | Also: whether slabs, stairs and hatches are drawn dry in their empty half. |
 | `provisions` | Consumption, rations, spoilage, scurvy, rum, water barrel capacity, rain refill. |
 | `cargo_trade` | Container sizes, prices, price recovery, contracts, plunder, port fees, cargo weight. |

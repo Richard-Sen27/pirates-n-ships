@@ -210,6 +210,7 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
 - **Striking colors:** lowering the flag mid-fight signals surrender. NPC ships stop firing, and the attacker can board without resistance. Attacking a ship that has struck its colors is a crime.
 - Changing the flag takes a few seconds at the flagpole (player, or the crew order "hoist colors").
 - Flags flutter in the wind direction, doubling as a visual wind indicator (§5.1).
+- **Wind on ships (P4):** the flag's downwind facing is computed in the ship's frame (the world wind sampled at the pole's world position, rotated by the inverse ship orientation) and re-checked every `flags.ship_update_interval_ticks`; on land every `wind_update_interval_ticks`.
 - **Banner flags (G8):** a custom flag made from a banner shows the banner's base colour through a tint index and a `BlockColor`; patterns are not shown.
 - **Size (playtest decision):** a flag is one block high and 1.5 to 2 blocks long, a real flag, not a small panel on the pole. Implemented at 1 × 1.5 blocks: a vanilla block model can't reach further than 24 pixels from the pole's centre. Two blocks would need a block entity renderer.
 

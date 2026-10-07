@@ -127,6 +127,6 @@ public final class StationModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(StationGameTests.class, PumpOrderGameTests.class);
+        return List.of(StationGameTests.class, PumpOrderGameTests.class, com.richardsenger.piratesnships.crew.npc.CrewPoseGameTests.class);
     }
 }

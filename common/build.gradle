@@ -42,6 +42,11 @@ dependencies {
     // PAL's Molang engine (mochafloats, a Mocha fork): part of PlayerAnimationController's constructor signatures
     compileOnly("com.zigythebird:mochafloats:4.1.0") { transitive = false }
 
+    // GeckoLib (animated entities; imported only in crew/npc/CrewMember and crew/npc/client/). Unlike PAL, GeckoLib's
+    // published common artifact is in Mojang names (checked with javap), so common compiles against it directly.
+    // It declares no dependencies; not transitive anyway, so nothing else reaches our classpath.
+    compileOnly("software.bernie.geckolib:geckolib-common-${minecraft_version}:${geckolib_version}") { transitive = false }
+
     // Unit tests for pure logic and codecs (see docs/design.md §3.3)
     testImplementation platform('org.junit:junit-bom:5.11.3')
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -51,6 +56,8 @@ dependencies {
     testImplementation("com.zigythebird.playeranim:PlayerAnimationLibCore:${pal_version}") { transitive = false }
     testImplementation("com.zigythebird:mochafloats:4.1.0") { transitive = false }
     testRuntimeOnly("org.javassist:javassist:3.30.2-GA")
+    // CrewMemberRigTest parses our geo and animation files with GeckoLib's own Gson adapters and bakes the model.
+    testImplementation("software.bernie.geckolib:geckolib-common-${minecraft_version}:${geckolib_version}") { transitive = false }
 }
 
 tasks.named('test', Test) {

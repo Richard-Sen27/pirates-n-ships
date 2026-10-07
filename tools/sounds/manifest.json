@@ -211,6 +211,30 @@
       "url": "https://pixabay.com/sound-effects/sword-breaking-sound-effect-393840/",
       "collection": "https://pixabay.com/collections/sword-sounds-29859284/",
       "license": "Pixabay Content License"
+    },
+    {
+      "source": "ship-wood-creak-sfx.mp3",
+      "target": "ship/creak_1.ogg",
+      "start": 0.55,
+      "duration": 1.8,
+      "kind": "effect",
+      "event": "ship.creak",
+      "title": "Ship wood creak",
+      "author": "TBD",
+      "url": "TBD",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "ship-wood-creak-sfx.mp3",
+      "target": "ship/creak_2.ogg",
+      "start": 2.0,
+      "duration": 2.4,
+      "kind": "effect",
+      "event": "ship.creak",
+      "title": "Ship wood creak",
+      "author": "TBD",
+      "url": "TBD",
+      "license": "Pixabay Content License"
     }
   ]
 }

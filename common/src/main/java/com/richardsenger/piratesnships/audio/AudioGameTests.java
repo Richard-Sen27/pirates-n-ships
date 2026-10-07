@@ -52,6 +52,13 @@ public final class AudioGameTests {
             h.assertTrue(root.has(key), "sounds.json does not list " + key);
             JsonObject e = root.getAsJsonObject(key);
             h.assertTrue(e.getAsJsonArray("sounds").size() > 0, "ship.creak has no sounds");
+            h.assertTrue(e.getAsJsonArray("sounds").size() == AudioModule.CREAK_SOUNDS.size(),
+                    "ship.creak lists " + e.getAsJsonArray("sounds") + ", expected " + AudioModule.CREAK_SOUNDS);
+            for (com.google.gson.JsonElement s : e.getAsJsonArray("sounds")) {
+                String name = s.isJsonPrimitive() ? s.getAsString() : s.getAsJsonObject().get("name").getAsString();
+                h.assertTrue(AudioModule.CREAK_SOUNDS.contains(name) && name.startsWith("pirates_n_ships:ship/creak"),
+                        "ship.creak still plays a placeholder: " + name);
+            }
             h.assertTrue(AudioModule.CREAK_SUBTITLE.equals(e.get("subtitle").getAsString()), "ship.creak has the wrong subtitle");
         } catch (java.io.IOException ex) {
             throw new AssertionError("could not read sounds.json", ex);

@@ -33,5 +33,9 @@ The music and sound effects below come from Pixabay and are used under the Pixab
 | Sword Unsheathing | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/sword-unsheathing-393851/) | `assets/pirates_n_ships/sounds/combat/melee/unsheathe.ogg` |
 | Sword Clattering To The Ground | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/sword-clattering-to-the-ground-393838/) | `assets/pirates_n_ships/sounds/combat/melee/disarm.ogg` |
 | Sword Breaking Sound Effect | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/sword-breaking-sound-effect-393840/) | `assets/pirates_n_ships/sounds/combat/melee/weapon_break.ogg` |
+| Ship wood creak | TBD | TBD | `assets/pirates_n_ships/sounds/ship/creak_1.ogg` |
+| Ship wood creak | TBD | TBD | `assets/pirates_n_ships/sounds/ship/creak_2.ogg` |
 
 Collections: [DRAGON-STUDIO](https://pixabay.com/collections/sword-sounds-29859284/)
+
+**Warning:** author or source page still TBD for `ship/creak_1.ogg`, `ship/creak_2.ogg`.

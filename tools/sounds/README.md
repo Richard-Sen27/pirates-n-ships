@@ -18,6 +18,10 @@ Every sound file of the mod comes from `manifest.json` here and is converted by 
      as variants (`swing1.ogg` ... `swing4.ogg`); the game picks one at random each time.
    - `title`, `author`, `url` (the page you downloaded it from) and `license`; optionally `collection` (an
      album or collection page, listed in the credits)
+   - optionally `start` and `duration` (seconds, both together) to cut a short variant out of a longer source;
+     several entries may cut different stretches of one file (e.g. `ship/creak_1.ogg`, `ship/creak_2.ogg`). The cut
+     gets a short fade in and out. After changing a cut, convert with `--force`.
+   - `author` and `url` may be `TBD` while the source page is unknown; the script warns and the credits flag it.
    Only use files whose license allows use in a mod (Pixabay Content License, CC0, CC-BY with credit, our own recordings).
 3. Run `python3 tools/convert_sounds.py` (or `python3 tools/convert_sounds.py <other raw folder>`). It needs `ffmpeg`;
    if that ffmpeg has no libvorbis encoder (Homebrew's ffmpeg 8 doesn't), also `oggenc` (`brew install vorbis-tools`).

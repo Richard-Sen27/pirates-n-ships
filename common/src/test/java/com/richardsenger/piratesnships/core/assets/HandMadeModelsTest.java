@@ -58,7 +58,7 @@ class HandMadeModelsTest {
             "brig_door_bottom_left_open_locked", "brig_door_bottom_right", "brig_door_bottom_right_locked",
             "brig_door_bottom_right_open_locked", "brig_door_top_left", "brig_door_top_right", "cannon",
             "cannon_loaded", "cannon_powder", "capstan", "cargo_barrel", "cargo_crate", "cleat", "figurehead_eagle",
-            "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flagpole", "harbor_desk", "helm", "hull_patch", "nameplate",
+            "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flagpole", "harbor_desk", "helm", "helm_item", "helm_wheel", "hull_patch", "nameplate",
             "notice_board", "pantry", "sail_winch", "sea_chest", "swivel_gun", "swivel_gun_barrel", "swivel_gun_barrel_loaded", "swivel_gun_yoke",
             "water_barrel", "water_barrel_fill0", "water_barrel_fill1", "water_barrel_fill2",
             "water_barrel_fill3", "yard");
@@ -100,6 +100,28 @@ class HandMadeModelsTest {
                 assertTrue(display.has(slot), file + ": missing display slot " + slot);
             }
         }
+    }
+
+    /**
+     * HELM1: the helm is split into the static pedestal ({@code helm}, the block model) and the wheel
+     * ({@code helm_wheel}, turned by {@code HelmWheelRenderer}); {@code helm_item} is both for the item. The item model
+     * holds exactly the wheel's elements followed by the pedestal's, so the three files stay in step with each other
+     * and with the {@code wheel} and {@code pedestal} groups of {@code art/models/helm.bbmodel}.
+     */
+    @Test
+    void helmSplitsIntoPedestalAndWheel() throws IOException {
+        JsonArray pedestal = blockModel("helm").getAsJsonArray("elements");
+        JsonArray wheel = blockModel("helm_wheel").getAsJsonArray("elements");
+        JsonArray item = blockModel("helm_item").getAsJsonArray("elements");
+        JsonArray both = new JsonArray();
+        both.addAll(wheel);
+        both.addAll(pedestal);
+        assertEquals(item, both, "helm_item is not helm_wheel + helm");
+        assertTrue(wheel.size() > 0 && pedestal.size() > 0, "empty helm part");
+    }
+
+    private static JsonObject blockModel(String name) throws IOException {
+        return JsonParser.parseString(Files.readString(MAIN_MODELS.resolve("block").resolve(name + ".json"))).getAsJsonObject();
     }
 
     /** The guns that show a cocked-hammer variant while loaded (P6), and the lock parts the variant moves or adds. */

@@ -20,6 +20,15 @@ public final class StationConfig {
     public static final ConfigValue<Integer> SEAT_CHECK_INTERVAL = S.intRange("seat_check_interval", 10, 1, 200,
             "Ticks between checks of an assigned crew member that is not at its station (take the seat, or release it)");
 
+    private static final ConfigSection JOB_BOARD = S.section("job_board",
+            "Orders instead of assignments (CR1): unmanned stations that take a ship-wide order become open jobs, and free crew on board claim them");
+    public static final ConfigValue<Boolean> JOB_BOARD_ENABLED = JOB_BOARD.bool("enabled", true,
+            "Ship-wide orders post open jobs for unmanned stations that free crew take by themselves. Off = only manned stations carry orders out");
+    public static final ConfigValue<Integer> CLAIM_INTERVAL_TICKS = JOB_BOARD.intRange("claim_interval_ticks", 20, 1, 200,
+            "Ticks between two passes of the job board, in which free crew claim the open jobs");
+    public static final ConfigValue<Double> MAX_CLAIM_DISTANCE = JOB_BOARD.doubleRange("max_claim_distance", 0.0, 0.0, 128.0,
+            "Crew members farther than this many blocks from an open job never claim it (0 = the whole ship)");
+
     private StationConfig() {
     }
 

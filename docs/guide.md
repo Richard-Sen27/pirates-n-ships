@@ -48,8 +48,10 @@ guide as an in-game book with item links, recipes and search. Hold G over one of
 3. **Rig a square sail**: a mast of logs or fences with two rows of **yards** across it, one 2 to 8 blocks above the other, and a **sail winch** somewhere on deck. A **capstan** gives you an anchor.
 4. **Use the helm.** The connected blocks become a ship: a physics object that floats, with a dry hold.
 5. **Use the sail winch** to hoist the sails (furled → half → full). The wind pushes the ship.
-6. **Steer at the helm:** click the right third of the wheel for starboard, the left third for port, the middle for
-   midships.
+6. **Steer at the helm:** hold right-click on the helm to take the wheel, then move the mouse or hold A/D to turn it:
+   right or D turns it clockwise and the ship to starboard, left or A to port. The wheel turns three quarters of a turn
+   each way from midships, and the line above the hotbar shows the rudder angle. Let go to release it; the wheel stays
+   where you left it. (Server option `helm.wheel.drag_steering = false` brings back clicking the wheel's thirds.)
 7. **Use the capstan** to drop the anchor, and again to raise it.
 8. **Sneak-use the helm with an empty hand** to turn the ship back into normal blocks. The ship has to be nearly still
    and level.
@@ -235,6 +237,13 @@ chart opens with a frame. Drag the frame over the part you want, choose whether 
 Everyone who passes by sees that part of your chart on the tile, and looking at it tells who drew it and when. Drawing
 again replaces the picture. Break the tile and it keeps its drawing as an item, ready to hang somewhere else. Server
 options: `chart.tiles.enabled`, `redraw_allowed`, `require_chart_item`, `reach`, `tile_cells`.
+
+### Orders, not assignments
+You don't have to assign every sailor. Give an order with the whistle (or `/pirates crew order`), and every unmanned
+station that can carry it out becomes an open job: free crew standing on your ship take the nearest one by themselves
+within a second, get to work and stay there afterwards. Crew you put at a station yourself with the whistle stay put
+and are never moved. If nobody is free you hear "No free hands" once; the job waits for the next crew member who comes
+aboard. "Release crew" sends everyone off and cancels the open jobs. Server config `crew_stations.job_board`.
 
 ### Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks

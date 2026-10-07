@@ -69,8 +69,8 @@ public final class StationGameTests {
         ConfigOverrides.during(h, StationConfig.SEAT_CHECK_INTERVAL, 5);
     }
 
-    /** 40×40 basin: water up to y=7, or stone up to y=4 (a ship resting on land). */
-    private static void basin(GameTestHelper h, boolean water) {
+    /** 40×40 basin: water up to y=7, or stone up to y=4 (a ship resting on land). Shared with {@code JobBoardGameTests}. */
+    public static void basin(GameTestHelper h, boolean water) {
         SailingGameTestsShips.openSky(h, 40); // the two-yard rig reaches the GameTest barrier ceiling (y=12)
         for (int x = 0; x < 40; x++) {
             for (int z = 0; z < 40; z++) {
@@ -85,7 +85,7 @@ public final class StationGameTests {
     }
 
     /** 5×4×5 plank hull at (x0, z0), deck top y=9, helm at the stern, mast + furled sail amidships, winch on deck. */
-    private static BlockPos hull(GameTestHelper h, int x0, int z0) {
+    public static BlockPos hull(GameTestHelper h, int x0, int z0) {
         for (int x = x0; x <= x0 + 4; x++) {
             for (int z = z0; z <= z0 + 4; z++) {
                 for (int y = 5; y <= 8; y++) {
@@ -101,11 +101,21 @@ public final class StationGameTests {
         return helm;
     }
 
-    private record Fixture(ShipBody ship, BlockPos winch, BlockPos sail, BlockPos helm) { }
+    /** The assembled test ship: plot positions of its (first) winch, its sail and its helm. */
+    public record Fixture(ShipBody ship, BlockPos winch, BlockPos sail, BlockPos helm) { }
 
     private static Fixture ship(GameTestHelper h, boolean water) {
+        return ship(h, water, x -> { });
+    }
+
+    /**
+     * The basin and the 5×4×5 hull at (17, 17) of {@link #hull}, then {@code extra} places more blocks (relative
+     * positions, e.g. a second station on the deck at y = 9) before the ship is assembled.
+     */
+    public static Fixture ship(GameTestHelper h, boolean water, java.util.function.Consumer<GameTestHelper> extra) {
         basin(h, water);
         BlockPos helm = hull(h, 17, 17);
+        extra.accept(h);
         AssemblyResult r = ShipTestCleanup.assemble(h, helm);
         if (r.shipId() == null) throw new AssertionError("assembly failed: " + r);
         ShipBody ship = SableShips.byId(h.getLevel(), r.shipId());
@@ -116,7 +126,7 @@ public final class StationGameTests {
                 find(h, ship, AssemblyContent.HELM.get()));
     }
 
-    private static BlockPos find(GameTestHelper h, ShipBody ship, Block block) {
+    public static BlockPos find(GameTestHelper h, ShipBody ship, Block block) {
         return ship.plotBlocks().stream().filter(p -> h.getLevel().getBlockState(p).is(block)).findFirst()
                 .orElseThrow(() -> new AssertionError("no " + block + " on the ship"));
     }
@@ -136,7 +146,7 @@ public final class StationGameTests {
         return c;
     }
 
-    private static SailTrim trim(GameTestHelper h, Fixture f) {
+    public static SailTrim trim(GameTestHelper h, Fixture f) {
         return h.getLevel().getBlockState(f.sail()).getValue(YardBlock.TRIM);
     }
 

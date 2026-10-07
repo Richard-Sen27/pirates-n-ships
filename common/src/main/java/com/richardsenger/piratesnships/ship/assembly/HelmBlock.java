@@ -16,7 +16,9 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
@@ -30,9 +32,11 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>{@link #RUDDER} is the rudder position, stored as {@code step + 5} (5 = midships, 0..4 port, 6..10 starboard; see
  * {@code sailing.ship.RudderSteps}). It lives in the block state, so it is visible (F3) and is saved with the ship's
- * blocks.
+ * blocks. With the sailing module's wheel steering (HELM1, the default) the rudder follows the wheel's angle instead,
+ * which lives in the block entity the sailing module installs ({@link #setBlockEntityFactory}); the property then
+ * only matters for the old click steps.
  */
-public class HelmBlock extends HorizontalDirectionalBlock {
+public class HelmBlock extends HorizontalDirectionalBlock implements EntityBlock {
 
     public static final MapCodec<HelmBlock> CODEC = simpleCodec(HelmBlock::new);
     public static final int MIDSHIPS = 5;
@@ -45,7 +49,19 @@ public class HelmBlock extends HorizontalDirectionalBlock {
         Component steer(ServerLevel level, BlockPos pos, BlockState state, Player player, BlockHitResult hit);
     }
 
+    /** Creates the helm's block entity (installed by the sailing module, which owns the wheel). */
+    @FunctionalInterface
+    public interface BlockEntityFactory {
+        @Nullable BlockEntity create(BlockPos pos, BlockState state);
+    }
+
     private static volatile @Nullable SteeringHandler steering;
+    private static volatile @Nullable BlockEntityFactory blockEntities;
+
+    /** Installed by the sailing module. Without one, helms have no block entity. */
+    public static void setBlockEntityFactory(@Nullable BlockEntityFactory factory) {
+        blockEntities = factory;
+    }
 
     /** Installed by the sailing module. Without one, using the helm on a ship only shows the disassembly hint. */
     public static void setSteeringHandler(@Nullable SteeringHandler handler) {
@@ -65,6 +81,12 @@ public class HelmBlock extends HorizontalDirectionalBlock {
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING, RUDDER);
+    }
+
+    @Override
+    public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        BlockEntityFactory f = blockEntities;
+        return f == null ? null : f.create(pos, state);
     }
 
     @Override

@@ -274,6 +274,14 @@ port: use it to open the port's market. A desk you place anywhere inside a villa
 list ports with `/pirates world ports` and find the nearest with `/pirates world port nearest`. Server config
 `world.structures.seafarer_village`.
 
+### Cargo weight
+What you carry weighs the ship down. Crates, cargo barrels, pantries and water barrels get heavier as they fill: a full
+crate weighs as much as forty planks. Chests and other vanilla containers press down where they stand, so a heavy
+chest in the bow trims the ship by the bow. Spread heavy cargo and keep it low and central. At the wheel the rudder
+line shows the load: Light, Laden, Heavily laden or Overloaded (`/pirates ship info` shows the numbers). A laden ship
+sits lower, so it floods sooner through a breach, and it is slower to accelerate and turn. Server config
+`cargo_trade.cargo_weight_affects_ships`, `weight_factor`, `weigh_interval_ticks`, `load_levels`.
+
 ### Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks
 high with a low roar. Within 8 blocks of it you, your boat, loose items and light ships are pulled toward it and

@@ -265,6 +265,15 @@ you, no station on board can do it, nothing to do, or no sails with the reason (
 a block in the mast between them, yards off the mast's column, a lower yard longer than the upper). `/pirates ship
 rigging` lists every yard and what it carries, the triangular sails and the crew aboard.
 
+### Upkeep
+Every dawn your crew eats and drinks one day of provisions from the pantries and water barrels aboard and wants its
+pay: 2 doubloons each, taken from any chest, barrel or cargo crate on the ship (the ones nearest the helm first).
+Hungry or thirsty crew lose morale and work slower; rum cheers them up; weeks without citrus or fresh food bring
+scurvy. Unpaid crew lose 8 morale, paid crew gain 1. A sailor whose morale stays below 20 for two dawns deserts. If
+mutiny is enabled in the config, a crew whose average stays below 15 for three dawns turns pirate and takes your ship.
+`/pirates crew info` shows supplies left, the last payday and the work speed; the whistle shows "unpaid" next to
+anyone you could not pay. Server config `crew.wages`, `crew.desertion`, `crew.mutiny`, `provisions`.
+
 ### Orders, not assignments
 You don't have to assign every sailor. Give an order with the whistle (or `/pirates crew order`), and every unmanned
 station that can carry it out becomes an open job: free crew standing on your ship take the nearest one by themselves

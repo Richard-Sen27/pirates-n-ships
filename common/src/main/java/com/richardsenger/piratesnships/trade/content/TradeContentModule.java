@@ -41,10 +41,7 @@ public final class TradeContentModule implements ModModule {
                 .item(TradeContent.SPICES, "Spices")
                 .item(TradeContent.CLOTH, "Cloth")
                 .item(TradeContent.RUM, "Rum"));
-        data.models(m -> {
-            m.flatItem(TradeContent.DOUBLOON.get());
-            // Rum, tobacco, spices and cloth have hand-made item models (art/models/), so datagen writes none
-        });
+        // The doubloon, rum, tobacco, spices and cloth have hand-made item models (art/models/), so datagen writes none
         data.itemTags(tags -> tags.tag(C_DRINKS).add(TradeContent.RUM.get()));
         data.recipes(out -> {
             ShapedRecipeBuilder.shaped(RecipeCategory.MISC, TradeContent.CLOTH.get())

@@ -123,4 +123,107 @@ public final class CannonFollowUpGameTests {
             }
         });
     }
+
+    // ------------------------------------------------------------------ a broken gun returns its load
+
+    private static void loadCannon(GameTestHelper h, BlockPos master) {
+        Player creative = h.makeMockPlayer(GameType.CREATIVE);
+        creative.getAbilities().instabuild = true;
+        CannonService.load(h.getLevel(), master, creative, new ItemStack(Items.GUNPOWDER));
+        CannonService.load(h.getLevel(), master, creative, new ItemStack(CombatContent.CANNONBALL.get()));
+        h.assertTrue(h.getLevel().getBlockState(master).getValue(CannonBlock.LOAD) == CannonLoad.LOADED, "the cannon is not loaded");
+    }
+
+    /** A loaded cannon broken at its rear (and one at its master) drops the cannon, the powder and the ball, once each. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void aBrokenLoadedCannonDropsItsPowderAndBall(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos a = CannonGameTests.cannon(h, new BlockPos(4, 1, 2), Direction.EAST);
+        BlockPos b = CannonGameTests.cannon(h, new BlockPos(4, 1, 6), Direction.EAST);
+        loadCannon(h, a);
+        loadCannon(h, b);
+        level.destroyBlock(CannonRules.rearOf(a, Direction.EAST), true);
+        level.destroyBlock(b, true);
+        h.assertTrue(level.getBlockState(a).isAir() && level.getBlockState(b).isAir(), "a cannon is still there");
+        int cannons = items(h, CannonContent.CANNON.get().asItem());
+        int powder = items(h, Items.GUNPOWDER);
+        int balls = items(h, CombatContent.CANNONBALL.get());
+        h.getEntities(EntityType.ITEM).forEach(ItemEntity::discard);
+        h.assertTrue(cannons == 2 && powder == 2 && balls == 2,
+                "expected 2 cannons, 2 gunpowder, 2 cannonballs, got " + cannons + ", " + powder + ", " + balls);
+        h.succeed();
+    }
+
+    /** An empty cannon drops only itself; a powdered one adds the powder only. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void anEmptyCannonDropsOnlyItself(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos a = CannonGameTests.cannon(h, new BlockPos(4, 1, 2), Direction.EAST);
+        BlockPos b = CannonGameTests.cannon(h, new BlockPos(4, 1, 6), Direction.EAST);
+        Player creative = h.makeMockPlayer(GameType.CREATIVE);
+        creative.getAbilities().instabuild = true;
+        CannonService.load(level, b, creative, new ItemStack(Items.GUNPOWDER));
+        level.destroyBlock(a, true);
+        int cannons = items(h, CannonContent.CANNON.get().asItem());
+        int other = h.getEntities(EntityType.ITEM).size() - h.getEntities(EntityType.ITEM).stream()
+                .filter(e -> e.getItem().is(CannonContent.CANNON.get().asItem())).toList().size();
+        h.assertTrue(cannons == 1 && other == 0, "an empty cannon dropped " + cannons + " cannons and " + other + " other items");
+        level.destroyBlock(CannonRules.rearOf(b, Direction.EAST), true);
+        int powder = items(h, Items.GUNPOWDER);
+        int balls = items(h, CombatContent.CANNONBALL.get());
+        h.getEntities(EntityType.ITEM).forEach(ItemEntity::discard);
+        h.assertTrue(powder == 1 && balls == 0, "a powdered cannon dropped " + powder + " powder and " + balls + " balls");
+        h.succeed();
+    }
+
+    /** In creative, breaking the rear of a loaded cannon drops nothing (P2's creative rule, now with the load). */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void aLoadedCannonBrokenInCreativeDropsNothing(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos master = CannonGameTests.cannon(h, new BlockPos(4, 1, 4), Direction.EAST);
+        loadCannon(h, master);
+        Player creative = h.makeMockPlayer(GameType.CREATIVE);
+        BlockPos rear = CannonRules.rearOf(master, Direction.EAST);
+        BlockState state = level.getBlockState(rear);
+        // what ServerPlayerGameMode.destroyBlock does for a creative player: playerWillDestroy, then remove, no drops
+        state.getBlock().playerWillDestroy(level, rear, state, creative);
+        level.removeBlock(rear, false);
+        h.assertTrue(level.getBlockState(master).isAir(), "the master stayed");
+        int dropped = h.getEntities(EntityType.ITEM).size();
+        h.getEntities(EntityType.ITEM).forEach(ItemEntity::discard);
+        h.assertTrue(dropped == 0, "a creative break dropped " + dropped + " items");
+        h.succeed();
+    }
+
+    /** A loaded swivel gun drops itself, the powder and the shot; an empty one only itself. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void aBrokenLoadedSwivelDropsItsPowderAndShot(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        h.setBlock(new BlockPos(2, 1, 2), Blocks.STONE);
+        h.setBlock(new BlockPos(2, 2, 2), CannonContent.SWIVEL_GUN.get());
+        h.setBlock(new BlockPos(6, 1, 6), Blocks.STONE);
+        h.setBlock(new BlockPos(6, 2, 6), CannonContent.SWIVEL_GUN.get());
+        BlockPos loaded = h.absolutePos(new BlockPos(2, 2, 2));
+        BlockPos empty = h.absolutePos(new BlockPos(6, 2, 6));
+        Player creative = h.makeMockPlayer(GameType.CREATIVE);
+        creative.getAbilities().instabuild = true;
+        SwivelService.load(level, loaded, creative, new ItemStack(Items.GUNPOWDER));
+        SwivelService.load(level, loaded, creative, new ItemStack(SwivelService.ammoItem(), 64));
+        h.assertTrue(level.getBlockState(loaded).getValue(SwivelGunBlock.LOAD) == CannonLoad.LOADED, "the swivel is not loaded");
+        Item ammo = SwivelService.ammoItem();
+        int ammoCount = CannonConfig.SWIVEL_AMMO_COUNT.get();
+
+        level.destroyBlock(empty, true);
+        int swivels = items(h, CannonContent.SWIVEL_GUN.get().asItem());
+        h.assertTrue(swivels == 1 && h.getEntities(EntityType.ITEM).size() == 1,
+                "an empty swivel dropped " + h.getEntities(EntityType.ITEM).size() + " item stacks");
+        level.destroyBlock(loaded, true);
+        swivels = items(h, CannonContent.SWIVEL_GUN.get().asItem());
+        int powder = items(h, Items.GUNPOWDER);
+        int shot = items(h, ammo);
+        h.getEntities(EntityType.ITEM).forEach(ItemEntity::discard);
+        h.assertTrue(swivels == 2 && powder == 1 && shot == ammoCount,
+                "expected 2 swivels, 1 gunpowder, " + ammoCount + " shot, got " + swivels + ", " + powder + ", " + shot);
+        h.succeed();
+    }
 }

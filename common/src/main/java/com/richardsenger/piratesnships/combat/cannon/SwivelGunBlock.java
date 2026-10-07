@@ -150,6 +150,19 @@ public class SwivelGunBlock extends Block implements EntityBlock, StationBlock {
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
+    /**
+     * A gun broken with drops (by a player in survival, a ball, an explosion, its mount going) gives back its powder and
+     * shot next to its own item (Q2); a creative break drops nothing, as for the gun itself.
+     */
+    @Override
+    protected void spawnAfterBreak(BlockState state, ServerLevel level, BlockPos pos, ItemStack tool, boolean dropExperience) {
+        super.spawnAfterBreak(state, level, pos, tool, dropExperience);
+        SwivelGunBlockEntity be = level.getBlockEntity(pos) instanceof SwivelGunBlockEntity s ? s : null;
+        for (ItemStack stack : SwivelService.loadContents(state.getValue(LOAD), be)) {
+            popResource(level, pos, stack);
+        }
+    }
+
     /** Breaking the gun frees the station and removes its seat. */
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {

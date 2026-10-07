@@ -14,6 +14,9 @@ import com.richardsenger.piratesnships.sailing.block.CapstanBlock;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
 import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
+import com.richardsenger.piratesnships.sailing.helm.HelmBlockEntity;
+import com.richardsenger.piratesnships.sailing.helm.HelmConfig;
+import com.richardsenger.piratesnships.sailing.helm.WheelMath;
 import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips.Fixture;
 import com.richardsenger.piratesnships.sailing.wind.WindOverride;
 import com.richardsenger.piratesnships.sailing.wind.WindSample;
@@ -75,6 +78,10 @@ public final class SailingGameTestsControls {
     private static BlockPos ship(GameTestHelper h, int x0, SailTrim trim, int step, BlockPos capstan) {
         BlockPos helm = SailingGameTestsShips.squareHull(h, x0, 3, trim);
         h.setBlock(helm, h.getBlockState(helm).setValue(HelmBlock.RUDDER, RudderSteps.toProperty(step)));
+        // HELM1: with wheel steering (the default) the rudder follows the wheel; turn it to the same rudder angle
+        if (h.getLevel().getBlockEntity(h.absolutePos(helm)) instanceof HelmBlockEntity be) {
+            be.setWheel(WheelMath.wheelForFraction(RudderSteps.angle(step, SailingConfig.RUDDER_STEPS.get(), 1.0), HelmConfig.lockAngle()));
+        }
         h.setBlock(capstan, SailingBlocks.CAPSTAN.get());
         return helm;
     }
@@ -196,9 +203,13 @@ public final class SailingGameTestsControls {
 
     // ------------------------------------------------------------------ helm interaction
 
-    /** Plain use steers (right third = starboard, middle = midships) and keeps the ship; sneak-use with an empty hand disassembles. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300)
+    /**
+     * The click steps (with {@code helm.wheel.drag_steering} off, HELM1): plain use steers (right third = starboard,
+     * middle = midships) and keeps the ship; sneak-use with an empty hand disassembles.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = "pirates_n_ships_config_helm_wheel_clicks")
     public static void helmUseSteersAndSneakUseDisassembles(GameTestHelper h) {
+        ConfigOverrides.during(h, HelmConfig.DRAG_STEERING, false);
         SailingGameTestsShips.basin(h, false);
         Fixture f = SailingGameTestsShips.assemble(h, ship(h, SailTrim.FURLED, 0));
         BlockPos helm = find(f.ship(), com.richardsenger.piratesnships.ship.assembly.AssemblyContent.HELM.get());

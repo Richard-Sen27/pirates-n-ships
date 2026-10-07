@@ -5,6 +5,9 @@ import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
+import com.richardsenger.piratesnships.ship.assembly.ShipSplits;
+import com.richardsenger.piratesnships.station.jobs.JobBoard;
+import com.richardsenger.piratesnships.station.jobs.JobBoardGameTests;
 import com.richardsenger.piratesnships.station.order.WhistleMenu;
 import com.richardsenger.piratesnships.station.order.WhistleOrder;
 import com.richardsenger.piratesnships.station.order.WhistleOrders;
@@ -55,12 +58,16 @@ public final class StationModule implements ModModule {
     @Override
     public void registerEvents() {
         CommonEvents.LEVEL_TICK_END.register(Stations::onLevelTick);
+        CommonEvents.LEVEL_TICK_END.register(JobBoard::onLevelTick);
         CommonEvents.SERVER_STOPPED.register(server -> {
             Stations.onServerStopped();
             CaptainsWhistleItem.onServerStopped();
+            JobBoard.onServerStopped();
         });
         CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> StationCommands.register(dispatcher));
         SableShips.onShipRemoved(Stations::onShipRemoved);
+        SableShips.onShipRemoved(JobBoard::onShipRemoved);
+        ShipSplits.onSplit(JobBoard::onSplit);
     }
 
     @Override
@@ -102,6 +109,9 @@ public final class StationModule implements ModModule {
                     .add(CaptainsWhistleItem.KEY_ORDER, "Order: %s (%s crew carry it out)")
                     .add(CaptainsWhistleItem.KEY_NOT_ON_SHIP, "You must stand on a ship to give orders")
                     .add(WhistleOrders.KEY_RELEASED_ALL, "%s crew members leave their stations")
+                    .add(JobBoard.KEY_NO_FREE_HANDS, "No free hands to %s")
+                    .add(JobBoard.KEY_ORDER_POSTED, "Order: %s (%s crew carry it out, %s stations open for free hands)")
+                    .add(JobBoard.KEY_POSTED, "%s open jobs posted: %s")
                     .add(WhistleMenu.KEY_TITLE, "Orders")
                     .add(WhistleMenu.KEY_HINT, "Point at an order, then click or release the use key. Esc closes.")
                     .add(WhistleMenu.KEY_LAST, "Last order: %s")
@@ -116,7 +126,7 @@ public final class StationModule implements ModModule {
                     .add(WhistleOrder.FIRE.nameKey(), "Fire!")
                     .add(WhistleOrder.FIRE.descriptionKey(), "Crew at loaded cannons fire them")
                     .add(WhistleOrder.RELEASE.nameKey(), "Release crew")
-                    .add(WhistleOrder.RELEASE.descriptionKey(), "All crew of this ship leave their stations")
+                    .add(WhistleOrder.RELEASE.descriptionKey(), "All crew of this ship leave their stations; open jobs are dropped")
                     .add(StationCommands.KEY + "spawned", "Crew member spawned")
                     .add(StationCommands.KEY + "not_crew", "That entity is not a crew member")
                     .add(StationCommands.KEY + "released", "%s crew members released")
@@ -127,6 +137,6 @@ public final class StationModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(StationGameTests.class, PumpOrderGameTests.class, com.richardsenger.piratesnships.crew.npc.CrewPoseGameTests.class);
+        return List.of(StationGameTests.class, PumpOrderGameTests.class, JobBoardGameTests.class, com.richardsenger.piratesnships.crew.npc.CrewPoseGameTests.class);
     }
 }

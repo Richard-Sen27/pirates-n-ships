@@ -8,6 +8,9 @@ import com.richardsenger.piratesnships.sailing.anchor.AnchorTravel;
 import com.richardsenger.piratesnships.sailing.block.CapstanBlock;
 import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import com.richardsenger.piratesnships.sailing.force.SailingParams;
+import com.richardsenger.piratesnships.sailing.helm.HelmBlockEntity;
+import com.richardsenger.piratesnships.sailing.helm.HelmConfig;
+import com.richardsenger.piratesnships.sailing.helm.WheelMath;
 import com.richardsenger.piratesnships.ship.assembly.HelmBlock;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
@@ -31,8 +34,10 @@ import org.jetbrains.annotations.Nullable;
  * Server logic of the helm's rudder and the capstan's anchor (docs/design.md §5.3).
  *
  * <ul>
- *   <li><b>Rudder:</b> lives in the helm's block state ({@link HelmBlock#RUDDER}); the runtime caches it from block
- *       changes, so the physics substep reads no blocks.</li>
+ *   <li><b>Rudder:</b> with wheel steering (HELM1, {@code helm.wheel.drag_steering}, the default) it follows the
+ *       wheel angle of the helm's block entity, set through {@link #setWheel}; with the old click steps it lives in
+ *       the helm's block state ({@link HelmBlock#RUDDER}). The runtime caches both, so the physics substep reads no
+ *       blocks.</li>
  *   <li><b>Anchor:</b> one per ship, in the runtime and persisted in the ship's Sable user data
  *       ({@code pirates_n_ships_sailing.anchor}, {@link ShipAnchor#CODEC}) at every change. Every capstan of a ship
  *       works the same anchor; dropping hangs it from the capstan used, and only that capstan's block state shows the
@@ -82,7 +87,24 @@ public final class ShipControls {
         int steps = SailingConfig.RUDDER_STEPS.get();
         int step = RudderSteps.apply(RudderSteps.fromProperty(state.getValue(HelmBlock.RUDDER)), click, steps);
         level.setBlock(pos, state.setValue(HelmBlock.RUDDER, RudderSteps.toProperty(step)), Block.UPDATE_ALL); // runtime follows the block change
+        // HELM1: the wheel shows the step, so it agrees with the rudder (and stays there if wheel steering comes back)
+        setWheel(level, pos, WheelMath.wheelForFraction(RudderSteps.angle(step, steps, 1.0), HelmConfig.lockAngle()));
         return rudderMessage(step, steps, SailingConfig.MAX_RUDDER_ANGLE.get());
+    }
+
+    /**
+     * HELM1: turns the wheel of the helm at {@code pos} (plot) to {@code degrees} (positive = starboard): saved and
+     * synced in its block entity, and handed to the ship's runtime, whose rudder follows it with wheel steering.
+     */
+    public static void setWheel(ServerLevel level, BlockPos pos, double degrees) {
+        if (level.getBlockEntity(pos) instanceof HelmBlockEntity be) {
+            be.setWheel(degrees);
+        }
+        ShipBody ship = SableShips.containing(level, pos);
+        SailingRuntime rt = ship == null ? null : SailingRuntimes.get(level, ship.id());
+        if (rt != null) {
+            rt.setWheelAngle(degrees);
+        }
     }
 
     public static Component rudderMessage(int step, int stepsPerSide, double maxAngle) {

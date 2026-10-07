@@ -6,6 +6,7 @@ import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.station.StationConfig;
 import com.richardsenger.piratesnships.station.StationContent;
+import com.richardsenger.piratesnships.station.jobs.JobBoard;
 import com.richardsenger.piratesnships.station.winch.CaptainsWhistleItem;
 import com.richardsenger.piratesnships.station.winch.SailOrder;
 import java.util.Optional;
@@ -20,8 +21,9 @@ import org.jetbrains.annotations.Nullable;
  * Server side of the whistle's radial menu: registers {@link WhistleOrderPayload} and carries out a chosen order. The
  * client only asks; this class checks that the sender holds a whistle, that the order exists and that the sender
  * stands on a ship, then issues the order to that ship's crew through {@link CrewStations}: a {@link CrewOrder} goes to
- * the crew at the stations whose kind takes it (sail orders to the winches, "pump" to the bilge pumps, "fire" and "load" to the cannons and swivel guns). Only sail orders are remembered
- * on the whistle as its last order.
+ * the crew at the stations whose kind takes it (sail orders to the winches, "pump" to the bilge pumps, "fire" and "load" to the cannons and swivel guns), and the
+ * unmanned stations that take it become open jobs on the ship's {@link JobBoard} for free crew to claim (CR1). Only
+ * sail orders are remembered on the whistle as its last order. "Release crew" frees everyone and clears the board.
  */
 public final class WhistleOrders {
 
@@ -39,9 +41,13 @@ public final class WhistleOrders {
         DISABLED
     }
 
-    public record Result(Outcome outcome, int crew) {
+    /**
+     * @param crew how many manned stations carry the order out at once (or, for "release crew", how many leave)
+     * @param jobs how many unmanned stations became open jobs on the ship's board
+     */
+    public record Result(Outcome outcome, int crew, int jobs) {
         static Result of(Outcome o) {
-            return new Result(o, 0);
+            return new Result(o, 0, 0);
         }
     }
 
@@ -78,19 +84,31 @@ public final class WhistleOrders {
         }
         CrewOrder crewOrder = order.get().order();
         int n;
+        int jobs = 0;
         if (crewOrder != null) {
             // only the crew at stations that take this order hear it (CrewStations#orderShip)
             n = CrewStations.orderShip(level, ship.id(), crewOrder);
+            // the unmanned stations that take it become open jobs for the free crew (CR1)
+            JobBoard.Posted posted = JobBoard.post(level, ship, crewOrder);
+            jobs = posted.jobs();
             if (crewOrder instanceof SailOrder sail) {
                 whistle.set(StationContent.WHISTLE_ORDER.get(), sail); // the menu marks the last sail order
             }
-            player.displayClientMessage(Component.translatable(CaptainsWhistleItem.KEY_ORDER, Component.translatable(crewOrder.nameKey()), n), true);
+            Component name = Component.translatable(crewOrder.nameKey());
+            if (posted.noFreeHands()) {
+                player.displayClientMessage(Component.translatable(JobBoard.KEY_NO_FREE_HANDS, name), true);
+            } else if (jobs > 0) {
+                player.displayClientMessage(Component.translatable(JobBoard.KEY_ORDER_POSTED, name, n, jobs), true);
+            } else {
+                player.displayClientMessage(Component.translatable(CaptainsWhistleItem.KEY_ORDER, name, n), true);
+            }
         } else {
-            // RELEASE, the only entry that is not a crew order so far
+            // RELEASE, the only entry that is not a crew order so far: everyone leaves, the open jobs go too
             n = CrewStations.releaseShip(level, ship.id());
+            JobBoard.clear(ship.id());
             player.displayClientMessage(Component.translatable(KEY_RELEASED_ALL, n), true);
         }
-        return new Result(Outcome.ISSUED, n);
+        return new Result(Outcome.ISSUED, n, jobs);
     }
 
     /** The whistle in the main hand, else in the off hand, else null. */

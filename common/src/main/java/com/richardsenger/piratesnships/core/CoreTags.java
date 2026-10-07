@@ -10,7 +10,7 @@ import net.minecraft.world.level.block.Block;
 public final class CoreTags {
 
     /**
-     * Dev/test tag: the test block, a required reference to vanilla's {@code #minecraft:dirt} and an optional
+     * Dev/test tag: vanilla clay, a required reference to vanilla's {@code #minecraft:dirt} and an optional
      * reference to {@code #c:sands}. Checked by {@code CoreGameTests.generatedTagResolvesVanillaReference}.
      */
     public static final TagKey<Block> TEST_GROUND = TagKey.create(Registries.BLOCK, Constants.id("test_ground"));

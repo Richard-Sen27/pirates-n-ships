@@ -6,23 +6,28 @@ import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.item.Items;
+
+import java.util.Objects;
+import java.util.function.Supplier;
 
 /** Registry content of the {@code core} module. */
 public final class CoreContent {
 
-    /** Dev/test block: a plain cube used by foundation GameTests and as a known-good registration example. */
-    public static final RegistryEntry<Block, Block> TEST_BLOCK = ModRegistry.blockWithItem("test_block",
-            () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(1.5f).sound(SoundType.WOOD)));
+    /** Icon of {@link #TAB} until a feature module sets one: a vanilla item, so core needs no feature module. */
+    private static final Supplier<ItemStack> FALLBACK_TAB_ICON = () -> new ItemStack(Items.OAK_BOAT);
 
-    /** The mod's creative tab. Lists every item registered through {@link ModRegistry}. */
+    private static volatile Supplier<ItemStack> tabIcon = FALLBACK_TAB_ICON;
+
+    /**
+     * The mod's creative tab. Lists every item registered through {@link ModRegistry}. Its icon comes from
+     * {@link #setTabIcon}; vanilla reads it lazily (on the first {@link CreativeModeTab#getIconItem()}), long after
+     * every module has registered its content.
+     */
     public static final RegistryEntry<CreativeModeTab, CreativeModeTab> TAB = ModRegistry.creativeTab("main",
             () -> CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
                     .title(Component.translatable("itemGroup." + Constants.MOD_ID))
-                    .icon(() -> new ItemStack(TEST_BLOCK.get()))
+                    .icon(() -> tabIcon.get())
                     .displayItems((params, output) -> ModRegistry.items().forEach(item -> output.accept(item.get())))
                     .build());
 
@@ -30,5 +35,14 @@ public final class CoreContent {
     }
 
     public static void init() {
+    }
+
+    /**
+     * Sets the icon of {@link #TAB} without core knowing the feature module that owns the item. Call from a module's
+     * {@code registerContent()}; the supplier is evaluated lazily, once registries are frozen. The apparel module
+     * sets the officer's bicorne.
+     */
+    public static void setTabIcon(Supplier<ItemStack> icon) {
+        tabIcon = Objects.requireNonNull(icon, "icon");
     }
 }

@@ -40,6 +40,27 @@ public final class AssemblyConfig {
     public static final ConfigValue<Integer> WRECK_PERSIST_TICKS = SPLIT.intRange("wreck_persist_ticks", 0, 0, 100000000,
             "Ticks a wreck piece stays while no player is near it before it is removed (0 = forever)");
 
+    /** Sub-section {@code assembly.rejoin}: rejoining split pieces with the Shipwright's Toolkit (RS2, {@link ShipRejoin}). */
+    private static final ConfigSection REJOIN = S.section("rejoin",
+            "Rejoin a split-off piece to its ship: sneak-use the Shipwright's Toolkit on the piece to keep, then use it on the other piece");
+
+    public static final ConfigValue<Boolean> REJOIN_ENABLED = REJOIN.bool("enabled", true,
+            "The Shipwright's Toolkit can rejoin pieces of the same ship that lie together");
+    public static final ConfigValue<Integer> REJOIN_MAX_PIECE_BLOCKS = REJOIN.intRange("max_piece_blocks", 200, 1, 65536,
+            "Largest piece (in blocks) the toolkit can join onto the marked piece; bigger halves need a shipwright");
+    public static final ConfigValue<Double> REJOIN_MAX_ANGLE = REJOIN.doubleRange("max_angle", 5.0, 0.0, 45.0,
+            "How far (degrees) the pieces may be off level and off a multiple of 90 degrees to each other");
+    public static final ConfigValue<Double> REJOIN_MAX_GAP = REJOIN.doubleRange("max_gap", 0.5, 0.0, 2.0,
+            "How far (blocks) the piece may be off the marked piece's block grid before it is snapped onto it");
+    public static final ConfigValue<Integer> NAILS_PER_REJOIN = REJOIN.intRange("nails_per_rejoin", 4, 0, 64,
+            "Nails used up by one rejoin");
+    public static final ConfigValue<Integer> TOOLKIT_DURABILITY = REJOIN.intRange("toolkit_durability", 64, 1, 10000,
+            "Uses of a Shipwright's Toolkit (one per rejoin)");
+    public static final ConfigValue<Integer> REJOIN_WORK_TICKS = REJOIN.intRange("work_ticks", 20, 1, 1200,
+            "Ticks of hammering between the second click and the rejoin");
+    public static final ConfigValue<Double> SEAM_RADIUS = REJOIN.doubleRange("seam_radius", 6.0, 1.0, 32.0,
+            "While a piece is marked, its blocks this close (blocks) to other pieces of the same ship show particles");
+
     private AssemblyConfig() {
     }
 

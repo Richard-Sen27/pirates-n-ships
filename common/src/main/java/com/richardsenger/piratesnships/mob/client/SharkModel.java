@@ -12,9 +12,10 @@ import software.bernie.geckolib.model.data.EntityModelData;
 
 /**
  * GeckoLib model of the shark (rig contract: {@code art/README.md}, "Entities", shark rig). After the animations ran,
- * the {@code head} bone follows the look direction within ±{@link #HEAD_LIMIT}° and the {@code root} bone pitches the
- * whole body with the swimming direction (the entity's x rotation), so animations never key the head's or the root's
- * rotation.
+ * the {@code root} bone pitches the whole body with the swimming direction (the entity's x rotation) and the
+ * {@code head} bone follows the rest of the look direction within ±{@link #HEAD_LIMIT}°, so animations never key the
+ * head's or the root's rotation. The pitch maths and its sign live in {@link SharkPose} (GL1: the root used to get
+ * Minecraft's pitch unflipped and pitched the body against the swimming direction).
  */
 public class SharkModel extends GeoModel<Shark> {
 
@@ -24,8 +25,7 @@ public class SharkModel extends GeoModel<Shark> {
 
     public static final String ROOT = "root";
     public static final String HEAD = "head";
-    public static final float HEAD_LIMIT = 30f;
-    private static final float BODY_PITCH_LIMIT = 60f;
+    public static final float HEAD_LIMIT = SharkPose.HEAD_LIMIT;
 
     @Override
     public ResourceLocation getModelResource(Shark animatable) {
@@ -45,15 +45,16 @@ public class SharkModel extends GeoModel<Shark> {
     @Override
     public void setCustomAnimations(Shark animatable, long instanceId, AnimationState<Shark> animationState) {
         EntityModelData data = animationState.getData(DataTickets.ENTITY_MODEL_DATA);
+        boolean inWater = animatable.isInWater();
+        // Minecraft's pitch (positive = nose down); SharkPose takes it into bone space, once
+        float pitch = animatable.getViewXRot(animationState.getPartialTick());
         GeoBone head = getAnimationProcessor().getBone(HEAD);
-        if (head != null && data != null) {
-            head.setRotX(Mth.clamp(data.headPitch(), -HEAD_LIMIT, HEAD_LIMIT) * Mth.DEG_TO_RAD);
-            head.setRotY(Mth.clamp(data.netHeadYaw(), -HEAD_LIMIT, HEAD_LIMIT) * Mth.DEG_TO_RAD);
+        if (head != null) {
+            head.setRotX(SharkPose.headRotX(pitch, inWater));
+            // EntityModelData's yaw is already in bone space (GeoEntityRenderer passes -netHeadYaw)
+            if (data != null) head.setRotY(Mth.clamp(data.netHeadYaw(), -HEAD_LIMIT, HEAD_LIMIT) * Mth.DEG_TO_RAD);
         }
         GeoBone root = getAnimationProcessor().getBone(ROOT);
-        if (root != null && animatable.isInWater()) {
-            float pitch = animatable.getViewXRot(animationState.getPartialTick());
-            root.setRotX(Mth.clamp(pitch, -BODY_PITCH_LIMIT, BODY_PITCH_LIMIT) * Mth.DEG_TO_RAD);
-        }
+        if (root != null) root.setRotX(SharkPose.rootRotX(pitch, inWater));
     }
 }

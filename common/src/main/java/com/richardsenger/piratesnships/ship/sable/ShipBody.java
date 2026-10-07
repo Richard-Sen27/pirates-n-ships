@@ -118,6 +118,35 @@ public final class ShipBody {
     }
 
     /**
+     * Teleports the ship so that the plot point {@code plotPoint} lands on {@code world} with the body-to-world rotation
+     * {@code orientation}. The pose maps {@code world = orientation · (plot − rotationPoint) + position}
+     * (docs/sable-notes.md §1.3), so the new position is {@code world − orientation · (plotPoint − rotationPoint)};
+     * applied like {@link #setOrientation} through {@code api/physics/PhysicsPipeline.java#teleport} (l.149), as
+     * {@code api/SubLevelAssemblyHelper.java#assembleBlocks} does (l.131-135; the rotation point, l.119).
+     */
+    public void placeAt(Vec3 plotPoint, Vec3 world, Quaterniondc orientation) {
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(sub.getLevel());
+        if (container == null) {
+            return;
+        }
+        var pose = sub.logicalPose();
+        Vector3d arm = new Vector3d(plotPoint.x, plotPoint.y, plotPoint.z).sub(pose.rotationPoint());
+        new Quaterniond(orientation).transform(arm);
+        pose.orientation().set(orientation);
+        pose.position().set(world.x - arm.x, world.y - arm.y, world.z - arm.z);
+        container.physicsSystem().getPipeline().teleport(sub, pose.position(), pose.orientation());
+        sub.updateLastPose();
+    }
+
+    /**
+     * True if the plot position lies in this ship's plot area, where its blocks may go
+     * ({@code sublevel/plot/LevelPlot.java#contains(double, double)}, l.198; the plot spans {@code 1 << logSize} chunks).
+     */
+    public boolean plotContains(BlockPos plotPos) {
+        return sub.getPlot().contains(plotPos.getX() + 0.5, plotPos.getZ() + 0.5);
+    }
+
+    /**
      * Every non-air block in the ship's loaded plot chunks, in plot coordinates
      * ({@code LevelPlot#getLoadedChunks}, l.298; {@code PlotChunkHolder#getBoundingBox}, l.153, chunk-local x/z).
      */

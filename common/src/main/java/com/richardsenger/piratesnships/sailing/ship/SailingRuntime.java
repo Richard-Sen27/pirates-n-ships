@@ -77,6 +77,7 @@ public final class SailingRuntime {
     // controls (server thread; read by the physics substep): helm and rudder step from block changes, the anchor
     private @Nullable BlockPos helm;
     private volatile int rudderStep;
+    private volatile double wheelAngle; // HELM1: the helm wheel's angle [degrees, positive = starboard]
     private volatile @Nullable ShipAnchor anchor;
 
     // per-tick caches
@@ -158,6 +159,11 @@ public final class SailingRuntime {
         return rudderStep;
     }
 
+    /** Wheel angle of the helm [degrees, positive = starboard], the rudder's source with wheel steering (HELM1). */
+    public double wheelAngle() {
+        return wheelAngle;
+    }
+
     /** Rudder angle used by the last tick's inputs [degrees, positive = starboard] (0 when steering is disabled). */
     public double rudderAngle() {
         return rudderAngle;
@@ -178,6 +184,10 @@ public final class SailingRuntime {
     void setHelm(@Nullable BlockPos plotPos, int step) {
         this.helm = plotPos == null ? null : plotPos.immutable();
         this.rudderStep = step;
+    }
+
+    void setWheelAngle(double degrees) {
+        this.wheelAngle = degrees;
     }
 
     void setAnchor(@Nullable ShipAnchor anchor) {

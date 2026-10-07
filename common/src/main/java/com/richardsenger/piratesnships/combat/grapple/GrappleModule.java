@@ -74,6 +74,7 @@ public final class GrappleModule implements ModModule {
         CommonEvents.SERVER_STOPPED.register(server -> GrappleService.onServerStopped());
         SableShips.onPhysicsTick(GrappleService::onPhysicsTick);
         com.richardsenger.piratesnships.ship.assembly.ShipSplits.onSplit(GrappleService::onShipSplit); // RS1
+        com.richardsenger.piratesnships.ship.assembly.ShipRejoin.onRejoin(GrappleService::onShipRejoined); // RS2
         CommonEvents.PLAYER_TICK_END.register(CrossbowHookLaunch::onPlayerTick); // GR3: the crossbow's draw loads the hook
     }
 

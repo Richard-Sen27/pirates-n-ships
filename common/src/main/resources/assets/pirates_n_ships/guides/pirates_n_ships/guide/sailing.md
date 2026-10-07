@@ -90,7 +90,15 @@ ship stays within about two blocks of the anchor point and swings with the wind.
 Shoot or break the only block joining two parts of a ship and it splits: the part with the helm stays your ship, the
 other part becomes a wreck (its nameplate says "Wreck of …") that drifts but no longer sails; crew on it stay aboard;
 bits under four blocks fall apart into items. `/pirates ship info` shows a piece's id, origin and wreck flag
-(operators). Rejoining pieces comes with the Shipwright's Toolkit. Server config `assembly.split`.
+(operators). Server config `assembly.split`.
+
+**Putting it back together.** Craft a Shipwright's Toolkit (Carpenter's Hammer, Saw, Nails and Leather) and some Nails
+(3 iron nuggets make 8). Sneak-use the toolkit on the half you want to keep, usually the one with the helm; while you
+hold it, green sparkles show where the other pieces are close. Bring the broken-off piece back against it, lined up
+straight (no more than a few degrees off), touching face to face; if there is a one-block gap, place planks to bridge
+it first. Then use the toolkit on the broken-off piece: after a second of hammering it is nailed back on, keeps its
+chests and stations, and the ship keeps its name. Each repair uses 4 nails. Only pieces of the same ship can be
+joined, and only pieces up to 200 blocks; bigger halves need a shipwright. Server config `assembly.rejoin`.
 
 ## Boarding along the rope
 Once a grappling rope is latched onto another ship, look at the rope and use it: you hang from it and slide down to the
@@ -103,6 +111,13 @@ chart opens with a frame. Drag the frame over the part you want, choose whether 
 Everyone who passes by sees that part of your chart on the tile, and looking at it tells who drew it and when. Drawing
 again replaces the picture. Break the tile and it keeps its drawing as an item, ready to hang somewhere else. Server
 options: `chart.tiles.enabled`, `redraw_allowed`, `require_chart_item`, `reach`, `tile_cells`.
+
+## Orders, not assignments
+You don't have to assign every sailor. Give an order with the whistle (or `/pirates crew order`), and every unmanned
+station that can carry it out becomes an open job: free crew standing on your ship take the nearest one by themselves
+within a second, get to work and stay there afterwards. Crew you put at a station yourself with the whistle stay put
+and are never moved. If nobody is free you hear "No free hands" once; the job waits for the next crew member who comes
+aboard. "Release crew" sends everyone off and cancels the open jobs. Server config `crew_stations.job_board`.
 
 ## Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks

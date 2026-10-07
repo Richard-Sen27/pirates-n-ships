@@ -9,13 +9,13 @@ import com.richardsenger.piratesnships.sailing.block.SailWinchBlock;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
 import com.richardsenger.piratesnships.sailing.block.YardBlock;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
+import com.richardsenger.piratesnships.sailing.helm.HelmSetup;
 import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsControls;
 import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips;
 import com.richardsenger.piratesnships.sailing.ship.SailingRuntimes;
 import com.richardsenger.piratesnships.sailing.ship.ShipControls;
 import com.richardsenger.piratesnships.sailing.wind.WindSync;
 import com.richardsenger.piratesnships.ship.ShipBlockChanges;
-import com.richardsenger.piratesnships.ship.assembly.HelmBlock;
 import com.richardsenger.piratesnships.ship.decor.SableWeightTags;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipForces;
@@ -51,6 +51,7 @@ public final class SailingModule implements ModModule {
     public void registerConfig() {
         SailingConfig.init();
         com.richardsenger.piratesnships.sailing.anchor.AnchorConfig.init(); // visible anchor (F4)
+        HelmSetup.registerConfig(); // wheel steering (HELM1)
     }
 
     @Override
@@ -58,11 +59,13 @@ public final class SailingModule implements ModModule {
         SailingBlocks.init();
         ShipForces.register();
         com.richardsenger.piratesnships.sailing.anchor.AnchorContent.init(); // visible anchor (F4)
+        HelmSetup.registerContent(); // wheel steering (HELM1)
     }
 
     @Override
     public void registerPayloads() {
         WindSync.registerPayloads();
+        HelmSetup.registerPayloads(); // wheel steering (HELM1)
     }
 
     @Override
@@ -75,7 +78,9 @@ public final class SailingModule implements ModModule {
         SableShips.onShipRemoved(SailingRuntimes::onShipRemoved);
         SableShips.onPhysicsTick(SailingRuntimes::onPhysicsTick);
         ShipBlockChanges.register(SailingRuntimes::onBlockChanged);
-        HelmBlock.setSteeringHandler(ShipControls::steer);
+        // wheel steering (HELM1): the helm's steering handler starts a wheel session, or runs the click steps of
+        // ShipControls.steer when helm.wheel.drag_steering is off
+        HelmSetup.registerEvents();
         com.richardsenger.piratesnships.sailing.anchor.AnchorEntities.registerEvents(); // visible anchor (F4)
     }
 
@@ -83,6 +88,7 @@ public final class SailingModule implements ModModule {
     public void gatherData(DataContributions data) {
         com.richardsenger.piratesnships.sailing.anchor.AnchorData.gather(data); // visible anchor (F4)
         com.richardsenger.piratesnships.sailing.sail.TriangularSailData.gather(data); // cleat and rope (F5b)
+        HelmSetup.gatherData(data); // wheel steering (HELM1)
         data.lang(lang -> {
             lang.block(SailingBlocks.YARD, "Yard")
                     .add(YardBlock.KEY_NO_SAIL, "This yard heads no sail: hang a second yard %s to %s blocks straight below its middle, on the same mast")
@@ -201,12 +207,14 @@ public final class SailingModule implements ModModule {
     public void initClient() {
         com.richardsenger.piratesnships.sailing.client.SailingClient.init();
         com.richardsenger.piratesnships.sailing.anchor.client.AnchorClient.init(); // visible anchor (F4)
+        HelmSetup.initClient(); // wheel steering (HELM1)
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
         return List.of(SailingGameTests.class, SailingGameTestsShips.class, SailingGameTestsControls.class,
                 com.richardsenger.piratesnships.sailing.ship.SailingGameTestsStays.class,
-                com.richardsenger.piratesnships.sailing.ship.SailingGameTestsRigging.class);
+                com.richardsenger.piratesnships.sailing.ship.SailingGameTestsRigging.class,
+                com.richardsenger.piratesnships.sailing.helm.HelmSteeringGameTests.class);
     }
 }

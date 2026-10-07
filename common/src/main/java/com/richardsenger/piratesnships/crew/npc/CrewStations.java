@@ -48,8 +48,19 @@ public final class CrewStations {
     private CrewStations() {
     }
 
-    /** Assigns {@code crew} to the station at plot position {@code plotPos} and seats it there. */
+    /**
+     * Assigns {@code crew} by hand (whistle, command) to the station at plot position {@code plotPos} and seats it
+     * there; it is {@linkplain CrewMember#isPinned() pinned}, the job board never moves it.
+     */
     public static AssignResult assign(ServerLevel level, CrewMember crew, BlockPos plotPos) {
+        return assign(level, crew, plotPos, true);
+    }
+
+    /**
+     * Assigns {@code crew} to the station at plot position {@code plotPos} and seats it there. {@code pinned}: by hand
+     * (the board never moves it) or by the job board (CR1, it may be re-tasked while idle).
+     */
+    public static AssignResult assign(ServerLevel level, CrewMember crew, BlockPos plotPos, boolean pinned) {
         if (!StationConfig.ENABLED.get()) {
             return AssignResult.DISABLED;
         }
@@ -68,6 +79,7 @@ public final class CrewStations {
             release(level, crew);
         }
         crew.setAssignment(ref);
+        crew.setPinned(pinned);
         seat(level, crew, ref);
         return AssignResult.ASSIGNED;
     }
@@ -76,6 +88,7 @@ public final class CrewStations {
     public static void release(ServerLevel level, CrewMember crew) {
         StationRef ref = crew.assignment();
         crew.setAssignment(null);
+        crew.setPinned(false);
         if (crew.getVehicle() instanceof StationSeat seat) {
             crew.stopRiding();
             seat.discard();
@@ -110,9 +123,10 @@ public final class CrewStations {
         if (r == null || r.keeper() && !r.moved(ref.ship(), ref.pos())) {
             return false;
         }
+        boolean pinned = crew.isPinned();
         release(level, crew);
         if (r.keeper()) {
-            assign(level, crew, r.pos());
+            assign(level, crew, r.pos(), pinned);
         }
         return true;
     }

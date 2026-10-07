@@ -12,6 +12,8 @@ import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
@@ -28,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -40,6 +43,8 @@ import java.util.function.Supplier;
  * ClientEvents.ITEM_TOOLTIP.register((stack, context, flag, player, lines) -> lines.addAll(MyTooltips.lines(stack)));
  * ClientEvents.registerHudLayer(Constants.id("wind"), WindHud::render);
  * ClientEvents.registerEntityRenderer(ShipEntities.SHARK, SharkRenderer::new);
+ * ClientEvents.RENDER_FRAME_PRE.register(mc -> MyView.frame(mc));
+ * ClientEvents.registerAdditionalModel(Constants.id("block/helm_wheel")); // later: ClientEvents.additionalModel(id)
  * }</pre>
  */
 public final class ClientEvents {
@@ -57,6 +62,14 @@ public final class ClientEvents {
 
     public static final Event<ClientTick> CLIENT_TICK_START = Event.create(ls -> mc -> ls.forEach(l -> l.onTick(mc)));
     public static final Event<ClientTick> CLIENT_TICK_END = Event.create(ls -> mc -> ls.forEach(l -> l.onTick(mc)));
+
+    /**
+     * Fired once per rendered frame on the client thread, after the mouse movement accumulated since the last frame
+     * turned the player and before the frame (world and HUD) is drawn; also while paused or in menus, but not while
+     * rendering is off. For per-frame input or view work that must show in this very frame. Keep it cheap. Fired from
+     * NeoForge's {@code RenderFrameEvent.Pre}. Used by {@code sailing.helm.client.HelmSteeringClient} (view lock).
+     */
+    public static final Event<ClientTick> RENDER_FRAME_PRE = Event.create(ls -> mc -> ls.forEach(l -> l.onTick(mc)));
 
     /**
      * Fired on the client thread when the client leaves a world or server (disconnect, quit to title, kick, and also
@@ -169,6 +182,8 @@ public final class ClientEvents {
     private static final List<BlockEntityRenderer<?>> BLOCK_ENTITY_RENDERERS = new ArrayList<>();
     private static final List<ModelLayer> MODEL_LAYERS = new ArrayList<>();
     private static final List<BlockColorHandler> BLOCK_COLORS = new ArrayList<>();
+    private static final List<ResourceLocation> ADDITIONAL_MODELS = new ArrayList<>();
+    private static volatile @Nullable Function<ResourceLocation, ModelResourceLocation> additionalModelKey;
 
     public static synchronized void registerKeyMapping(KeyMapping mapping) {
         KEY_MAPPINGS.add(mapping);
@@ -204,6 +219,35 @@ public final class ClientEvents {
         MODEL_LAYERS.add(new ModelLayer(location, definition));
     }
 
+    /**
+     * A stand-alone model (one that no block state or item references, e.g. a part a block entity renderer draws) to
+     * load and bake with the other models. {@code id} is the model file's id, e.g. {@code pirates_n_ships:block/helm_wheel}
+     * for {@code models/block/helm_wheel.json}; register it in {@code initClient()}, before model loading. Fetch the
+     * baked model with {@link #additionalModel}. Forwarded from NeoForge's {@code ModelEvent.RegisterAdditional}.
+     * Example: {@code sailing.helm.client.HelmWheelRenderer}.
+     */
+    public static synchronized void registerAdditionalModel(ResourceLocation id) {
+        ADDITIONAL_MODELS.add(id);
+    }
+
+    /**
+     * The baked model of a {@linkplain #registerAdditionalModel registered stand-alone model} (client thread, after
+     * model loading), or the missing model if it was not registered or failed to load.
+     */
+    public static BakedModel additionalModel(ResourceLocation id) {
+        var models = Minecraft.getInstance().getModelManager();
+        Function<ResourceLocation, ModelResourceLocation> key = additionalModelKey;
+        return key == null ? models.getMissingModel() : models.getModel(key.apply(id));
+    }
+
+    /**
+     * Set by the loader module: the key under which its model loader stores a stand-alone model (NeoForge:
+     * {@code ModelResourceLocation.standalone}).
+     */
+    public static void setAdditionalModelKey(Function<ResourceLocation, ModelResourceLocation> key) {
+        additionalModelKey = key;
+    }
+
     // Read by the loader module when its registration events fire.
 
     public static synchronized List<KeyMapping> keyMappings() { return List.copyOf(KEY_MAPPINGS); }
@@ -212,4 +256,5 @@ public final class ClientEvents {
     public static synchronized List<BlockEntityRenderer<?>> blockEntityRenderers() { return List.copyOf(BLOCK_ENTITY_RENDERERS); }
     public static synchronized List<ModelLayer> modelLayers() { return List.copyOf(MODEL_LAYERS); }
     public static synchronized List<BlockColorHandler> blockColors() { return List.copyOf(BLOCK_COLORS); }
+    public static synchronized List<ResourceLocation> additionalModels() { return List.copyOf(ADDITIONAL_MODELS); }
 }

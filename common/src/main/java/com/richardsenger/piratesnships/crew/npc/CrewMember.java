@@ -44,6 +44,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 public class CrewMember extends PathfinderMob implements GeoEntity {
 
     static final String TAG_ASSIGNMENT = Constants.MOD_ID + ":assignment";
+    static final String TAG_PINNED = Constants.MOD_ID + ":pinned";
 
     /** Ticks GeckoLib blends from one pose animation into the next. */
     private static final int POSE_TRANSITION_TICKS = 5;
@@ -62,6 +63,8 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     private final AnimatableInstanceCache geoCache = GeckoLibUtil.createInstanceCache(this);
 
     private @Nullable StationRef assignment;
+    /** Assigned by hand (whistle, command): the job board never moves it (CR1). Server only, saved. */
+    private boolean pinned;
 
     public CrewMember(EntityType<? extends CrewMember> type, Level level) {
         super(type, level);
@@ -131,6 +134,19 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         this.assignment = ref;
     }
 
+    /**
+     * Whether this crew member was assigned by hand (whistle or command) and the job board leaves it where it is
+     * (docs/design.md §7.2, CR1). False when it is free or was put at its station by the board.
+     */
+    public boolean isPinned() {
+        return assignment != null && pinned;
+    }
+
+    /** Sets the pinned flag only; {@link CrewStations} sets it with the assignment. */
+    void setPinned(boolean pinned) {
+        this.pinned = pinned;
+    }
+
     /** True when this crew member rides the seat of its assigned station. */
     public boolean isAtStation() {
         return assignment != null && getVehicle() instanceof StationSeat seat && seat.station().equals(assignment.pos());
@@ -187,6 +203,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         super.addAdditionalSaveData(tag);
         if (assignment != null) {
             StationRef.CODEC.encodeStart(NbtOps.INSTANCE, assignment).ifSuccess(t -> tag.put(TAG_ASSIGNMENT, t));
+            tag.putBoolean(TAG_PINNED, pinned);
         }
     }
 
@@ -196,5 +213,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         assignment = tag.contains(TAG_ASSIGNMENT)
                 ? StationRef.CODEC.parse(NbtOps.INSTANCE, tag.get(TAG_ASSIGNMENT)).result().orElse(null)
                 : null;
+        // a crew member saved before CR1 was always assigned by hand
+        pinned = assignment != null && (!tag.contains(TAG_PINNED) || tag.getBoolean(TAG_PINNED));
     }
 }

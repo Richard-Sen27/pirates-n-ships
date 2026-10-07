@@ -73,4 +73,7 @@ dependencies {
     implementation("com.zigythebird.playeranim:PlayerAnimationLibNeo:${pal_version}") {
         exclude group: 'com.zigythebird.playeranim', module: 'PlayerAnimationLibCore'
     }
+    // GeckoLib (required on both sides, animated entities). The NeoForge jar contains GeckoLib's common classes and
+    // declares no dependencies.
+    implementation("software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}")
 }

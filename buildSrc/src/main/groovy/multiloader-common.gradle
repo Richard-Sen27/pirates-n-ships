@@ -66,6 +66,16 @@ repositories {
         }
         filter { includeGroupAndSubgroups('com.zigythebird') }
     }
+    // GeckoLib (animated entities: crew and mobs, docs/design.md §2, §9). Releases for 1.21.1 are only on Cloudsmith.
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'GeckoLib'
+                url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+            }
+        }
+        filter { includeGroup('software.bernie.geckolib') }
+    }
 }
 
 // Declare capabilities on the outgoing configurations.
@@ -129,7 +139,9 @@ processResources {
             'java_version'                 : java_version,
             'sable_version'                : sable_version,
             'pal_version'                  : pal_version,
-            'pal_version_range'            : pal_version_range
+            'pal_version_range'            : pal_version_range,
+            'geckolib_version'             : geckolib_version,
+            'geckolib_version_range'       : geckolib_version_range
     ]
 
     filesMatching(['pack.mcmeta', 'fabric.mod.json', 'META-INF/neoforge.mods.toml', '*.mixins.json']) {

@@ -20,9 +20,10 @@ import org.junit.jupiter.api.Test;
 class CrewOrderTest {
 
     @Test
-    void allHoldsTheSailOrdersThenPumpThenFire() {
-        assertEquals(List.of(SailOrder.HOIST, SailOrder.REEF, SailOrder.FURL, PumpOrder.PUMP, CannonOrder.FIRE), CrewOrder.all());
-        assertEquals(List.of("hoist", "reef", "furl", "pump", "fire"), CrewOrder.ids());
+    void allHoldsTheSailOrdersThenPumpThenTheGunOrders() {
+        assertEquals(List.of(SailOrder.HOIST, SailOrder.REEF, SailOrder.FURL, PumpOrder.PUMP, CannonOrder.FIRE, CannonOrder.LOAD),
+                CrewOrder.all());
+        assertEquals(List.of("hoist", "reef", "furl", "pump", "fire", "load"), CrewOrder.ids());
     }
 
     @Test
@@ -32,6 +33,16 @@ class CrewOrderTest {
         assertEquals("message.pirates_n_ships.crew.ack.fire", CannonOrder.FIRE.ackKey());
         assertEquals("message.pirates_n_ships.crew.cannon_not_loaded", CannonOrder.FIRE.nothingToDoKey());
         assertEquals("message.pirates_n_ships.crew.cannon_unable", CannonOrder.FIRE.unableKey());
+    }
+
+    @Test
+    void loadOrderHasItsOwnKeys() {
+        assertEquals(CannonOrder.LOAD, CrewOrder.byId("load").orElseThrow());
+        assertEquals("cannon_order.pirates_n_ships.load", CannonOrder.LOAD.nameKey());
+        assertEquals("message.pirates_n_ships.crew.ack.load", CannonOrder.LOAD.ackKey());
+        assertEquals("message.pirates_n_ships.crew.cannon_already_loaded", CannonOrder.LOAD.nothingToDoKey());
+        assertEquals("message.pirates_n_ships.crew.cannon_no_supply", CannonOrder.LOAD.unableKey());
+        assertTrue(CannonStation.INSTANCE.accepts(CannonOrder.LOAD));
     }
 
     @Test
@@ -60,7 +71,7 @@ class CrewOrderTest {
         // and the cannon from both
         Set<String> nothing = new HashSet<>();
         Set<String> unable = new HashSet<>();
-        for (CrewOrder o : List.of(SailOrder.HOIST, PumpOrder.PUMP, CannonOrder.FIRE)) {
+        for (CrewOrder o : List.of(SailOrder.HOIST, PumpOrder.PUMP, CannonOrder.FIRE, CannonOrder.LOAD)) {
             assertTrue(nothing.add(o.nothingToDoKey()), "shared nothing-to-do key " + o.nothingToDoKey());
             assertTrue(unable.add(o.unableKey()), "shared unable key " + o.unableKey());
         }

@@ -23,6 +23,7 @@ public enum WhistleOrder {
     FURL(SailOrder.FURL, ResourceLocation.withDefaultNamespace("lead")),
     PUMP(PumpOrder.PUMP, Constants.id("bilge_pump")),
     FIRE(CannonOrder.FIRE, Constants.id("cannon")),
+    LOAD(CannonOrder.LOAD, ResourceLocation.withDefaultNamespace("gunpowder")),
     RELEASE(null, Constants.id("sail_winch"));
 
     private static final List<WhistleOrder> ENTRIES = List.of(values());

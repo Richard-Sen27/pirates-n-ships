@@ -8,9 +8,10 @@ import java.util.Locale;
 import net.minecraft.server.level.ServerLevel;
 
 /**
- * The cannon as a crew station (docs/design.md §6, §8.2). For now a crew member can only fire a cannon that a player
- * loaded ({@link CannonOrder#FIRE}, a short fuse of {@link #FUSE_TICKS}); loading by crew needs a powder and shot
- * supply and comes with the crew orders. A crew shot has no owner.
+ * The cannon as a crew station (docs/design.md §6, §8.2). A crew member fires a loaded cannon ({@link CannonOrder#FIRE},
+ * a short fuse of {@link #FUSE_TICKS}) and loads it from a powder and shot supply in reach ({@link CannonOrder#LOAD},
+ * C9, see {@link CrewLoading}); with {@code cannons.crew.auto_reload} it loads again after each of its shots. A crew
+ * shot has no owner.
  */
 public final class CannonStation implements StationKind<CannonStation.CannonOrder> {
 
@@ -20,40 +21,44 @@ public final class CannonStation implements StationKind<CannonStation.CannonOrde
     public static final int FUSE_TICKS = 10;
 
     /**
-     * Orders of the cannon station. A {@link CrewOrder}: the whistle's "Fire!" entry and {@code /pirates crew order fire}
-     * give it. A ship-wide "Fire!" reaches the crew at every cannon of the ship; those at an unloaded cannon answer
-     * that it is not loaded.
+     * Orders of the cannon and swivel gun stations. A {@link CrewOrder}: the whistle's "Fire!" and "Load!" entries and
+     * {@code /pirates crew order fire|load} give them. A ship-wide "Fire!" reaches the crew at every gun of the ship;
+     * those at an unloaded gun answer that it is not loaded (unless they are loading it: then they fire once it is
+     * loaded). "Load!" makes the crew load from the supply in reach; refused at a loaded gun and without a supply.
      */
     public enum CannonOrder implements CrewOrder {
-        FIRE;
+        FIRE, LOAD;
 
         @Override
         public String id() {
             return name().toLowerCase(Locale.ROOT);
         }
 
-        /** Translation key of the order name ("fire the cannons"). */
+        /** Translation key of the order name ("fire the cannons", "load the guns"). */
         @Override
         public String nameKey() {
             return "cannon_order." + Constants.MOD_ID + "." + id();
         }
 
-        /** "Aye, firing!" */
+        /** "Aye, firing!", "Aye, loading!" */
         @Override
         public String ackKey() {
             return "message." + Constants.MOD_ID + ".crew.ack." + id();
         }
 
-        /** "The gun is not loaded, captain!" */
+        /** FIRE: "The gun is not loaded, captain!"; LOAD: "The gun is already loaded, captain!" */
         @Override
         public String nothingToDoKey() {
-            return "message." + Constants.MOD_ID + ".crew.cannon_not_loaded";
+            return "message." + Constants.MOD_ID + ".crew." + (this == FIRE ? "cannon_not_loaded" : "cannon_already_loaded");
         }
 
-        /** "This gun won't fire, captain!" (cannons disabled on the server). */
+        /**
+         * FIRE: "This gun won't fire, captain!" (cannons disabled on the server); LOAD: no powder and shot in reach (or
+         * crew loading disabled on the server).
+         */
         @Override
         public String unableKey() {
-            return "message." + Constants.MOD_ID + ".crew.cannon_unable";
+            return "message." + Constants.MOD_ID + ".crew." + (this == FIRE ? "cannon_unable" : "cannon_no_supply");
         }
     }
 
@@ -74,13 +79,23 @@ public final class CannonStation implements StationKind<CannonStation.CannonOrde
     public int durationTicks(ServerLevel level, StationRef station, CannonOrder order) {
         if (!CannonConfig.ENABLED.get()) return -1;
         // a station taken at the rear half acts on the master like every use does
-        var state = level.getBlockState(CannonService.master(level, station.pos()));
-        if (!(state.getBlock() instanceof CannonBlock)) return -1;
-        return CannonRules.canFire(state.getValue(CannonBlock.LOAD)) ? FUSE_TICKS : 0;
+        CrewLoading.Gun gun = CrewLoading.cannon(level, station);
+        if (gun == null) return -1;
+        return order == CannonOrder.LOAD ? CrewLoading.loadTicks(level, station, gun) : CrewLoading.fireTicks(station, gun);
     }
 
     @Override
     public void complete(ServerLevel level, StationRef station, CannonOrder order) {
-        CannonService.fire(level, station.pos(), null);
+        CrewLoading.Gun gun = CrewLoading.cannon(level, station);
+        if (gun == null) return;
+        if (order == CannonOrder.LOAD) {
+            CrewLoading.load(level, station, gun);
+            return;
+        }
+        if (CrewLoading.firesAfterLoad(station) && !CannonRules.canFire(gun.load())) {
+            CrewLoading.load(level, station, gun);
+        }
+        boolean fired = CannonService.fire(level, station.pos(), null).outcome() == CannonService.Outcome.FIRED;
+        CrewLoading.afterShot(level, station, fired);
     }
 }

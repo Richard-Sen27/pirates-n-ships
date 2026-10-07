@@ -92,6 +92,21 @@ public final class CannonConfig {
     public static final ConfigValue<Double> SWIVEL_AIM_REACH = SWIVEL.doubleRange("aim_reach", 4.0, 1.0, 16.0,
             "A player aiming a swivel gun lets go of it when further than this from the gun, in blocks");
 
+    // ---- crew loading (C9) -----------------------------------------------------------------------------------------
+
+    private static final ConfigSection CREW = S.section("crew",
+            "Crew at a cannon or swivel gun loads it from powder and shot in a nearby container on the same ship");
+    public static final ConfigValue<Boolean> CREW_ENABLED = CREW.bool("enabled", true,
+            "Crew members load guns from a supply (the \"Load!\" order and the reload after a shot). Off = only players load");
+    public static final ConfigValue<Integer> CREW_SUPPLY_RANGE = CREW.intRange("supply_range", 4, 0, 16,
+            "Containers (chests, barrels, cargo crates) within this many blocks of the gun on the same ship are its supply");
+    public static final ConfigValue<Integer> CREW_LOAD_TICKS = CREW.intRange("load_ticks", 80, 1, 6000,
+            "Ticks a crew member needs to load a cannon (powder and ball); at least the reload time after a shot");
+    public static final ConfigValue<Integer> CREW_SWIVEL_LOAD_TICKS = CREW.intRange("swivel_load_ticks", 40, 1, 6000,
+            "Ticks a crew member needs to load a swivel gun; at least the reload time after a shot");
+    public static final ConfigValue<Boolean> CREW_AUTO_RELOAD = CREW.bool("auto_reload", true,
+            "After firing, a crew member loads the gun again by itself from the supply");
+
     private CannonConfig() {
     }
 

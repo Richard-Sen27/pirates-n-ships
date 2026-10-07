@@ -22,20 +22,25 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HopperBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,6 +60,26 @@ public final class GalleyGameTests {
     }
 
     // --- pantry -------------------------------------------------------------------------------------------------
+
+    /** A pantry placed by a player looking in each direction opens its doors (the model's north side) towards them. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void pantryDoorsFaceThePlacer(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        for (Direction looking : Direction.Plane.HORIZONTAL) {
+            BlockPos floor = new BlockPos(1 + 2 * looking.get2DDataValue(), 1, 4);
+            helper.setBlock(floor, Blocks.STONE);
+            player.setYRot(looking.toYRot());
+            ItemStack stack = new ItemStack(CrewContent.PANTRY.get());
+            player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+            BlockPos abs = helper.absolutePos(floor);
+            BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(abs).add(0, 0.5, 0), Direction.UP, abs, false);
+            InteractionResult r = ((BlockItem) stack.getItem()).place(new BlockPlaceContext(player, InteractionHand.MAIN_HAND, stack, hit));
+            helper.assertTrue(r.consumesAction(), "placing the pantry looking " + looking + " failed: " + r);
+            helper.assertBlockPresent(CrewContent.PANTRY.get(), floor.above());
+            helper.assertBlockProperty(floor.above(), PantryBlock.FACING, looking.getOpposite());
+        }
+        helper.succeed();
+    }
 
     @ModGameTest
     public static void pantryOpensAndKeepsItemsThroughReload(GameTestHelper helper) {

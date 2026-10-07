@@ -10,6 +10,10 @@ import com.richardsenger.piratesnships.combat.melee.rules.Phase;
  *
  * <p>Rules, in order:
  * <ol>
+ *   <li>Own attack in its wind-up and meant as a feint ({@link View#feintPlanned}, decided by {@link #planFeint} when
+ *       the attack started): abort it ({@link Action#FEINT}) as soon as the opponent opens a parry, or at wind-up tick
+ *       {@link #FEINT_TICK_AGAINST_GUARD} if the opponent guards; otherwise let it run (if the wind-up ends first, the
+ *       attack is real).</li>
  *   <li>Staggered, attacking or parrying: nothing to decide ({@link Action#NONE}).</li>
  *   <li>An opponent attack (wind-up or hit frames) that can reach us: before the reaction time has passed the NPC has
  *       not seen it yet ({@code NONE}). After it, if the per-attack parry roll is below the tier's parry chance (and the
@@ -21,15 +25,18 @@ import com.richardsenger.piratesnships.combat.melee.rules.Phase;
  *       staggers), otherwise a slash or, if the thrust roll is below {@link #THRUST_SHARE}, a thrust. It never swings
  *       into an open parry window.</li>
  * </ol>
- * Feints ({@link SkillTier#feintFrequency()}) need an "abort wind-up" input the state machine does not have yet
- * (milestone 21), so they are not used.
+ * After a feint the opponent's parry runs out and locks them out; the next attack is always real
+ * ({@link #planFeint}), and the brain does not swing while the opponent's parry is still open, so the follow-up
+ * lands after the window.
  */
 public final class DuelistBrain {
 
     /** Share of normal attacks that are thrusts. */
     public static final double THRUST_SHARE = 0.3;
+    /** Wind-up tick at which a planned feint is aborted against a guarding (not parrying) opponent. */
+    public static final int FEINT_TICK_AGAINST_GUARD = 2;
 
-    public enum Action { NONE, SLASH, THRUST, GUARD, RELEASE_GUARD, PARRY }
+    public enum Action { NONE, SLASH, THRUST, GUARD, RELEASE_GUARD, PARRY, FEINT }
 
     /**
      * What the NPC sees this tick.
@@ -42,9 +49,17 @@ public final class DuelistBrain {
      * @param parryWindowTicks    {@code melee.parry_window_ticks}
      * @param attackCooldown      ticks before we may start our next attack (0 = ready)
      * @param guardStamina        minimum stamina to raise the guard
+     * @param feintPlanned        our current attack was started as a feint ({@link #planFeint})
      */
     public record View(CombatState self, CombatState opponent, boolean inReach, boolean threatened,
-                       int ticksSinceTelegraph, int parryWindowTicks, int attackCooldown, float guardStamina) {
+                       int ticksSinceTelegraph, int parryWindowTicks, int attackCooldown, float guardStamina,
+                       boolean feintPlanned) {
+
+        /** No feint planned. */
+        public View(CombatState self, CombatState opponent, boolean inReach, boolean threatened,
+                    int ticksSinceTelegraph, int parryWindowTicks, int attackCooldown, float guardStamina) {
+            this(self, opponent, inReach, threatened, ticksSinceTelegraph, parryWindowTicks, attackCooldown, guardStamina, false);
+        }
     }
 
     private DuelistBrain() {
@@ -57,6 +72,12 @@ public final class DuelistBrain {
     public static Action decide(View v, SkillTier tier, double parryRoll, double thrustRoll) {
         CombatState self = v.self();
         Phase phase = self.phase();
+        if (phase == Phase.WINDUP && v.feintPlanned()) {
+            Phase opp = v.opponent().phase();
+            if (opp == Phase.PARRYING) return Action.FEINT;
+            if (opp == Phase.GUARDING && self.elapsed() >= FEINT_TICK_AGAINST_GUARD) return Action.FEINT;
+            return Action.NONE;
+        }
         if (phase == Phase.STAGGERED || phase == Phase.PARRYING || phase.attacking()) return Action.NONE;
 
         CombatState opp = v.opponent();
@@ -78,6 +99,18 @@ public final class DuelistBrain {
         if (v.attackCooldown() > 0 || opp.phase() == Phase.PARRYING) return Action.NONE;
         if (opp.phase() == Phase.RECOVERY || opp.phase() == Phase.STAGGERED) return Action.THRUST;
         return thrustRoll < THRUST_SHARE ? Action.THRUST : Action.SLASH;
+    }
+
+    /**
+     * Whether an attack the NPC starts now is meant as a feint: with the tier's {@link SkillTier#feintFrequency()},
+     * never for a riposte (it can't be parried anyway) and never right after a feint (the follow-up is real).
+     *
+     * @param feintRoll  0..1, drawn once per own attack
+     * @param riposte    the attack will be a riposte
+     * @param afterFeint the NPC's previous attack was a feint
+     */
+    public static boolean planFeint(SkillTier tier, double feintRoll, boolean riposte, boolean afterFeint) {
+        return !riposte && !afterFeint && feintRoll < tier.feintFrequency();
     }
 
     /** The opponent's hit lands while a parry opened now is still open (hit frames running count as due). */

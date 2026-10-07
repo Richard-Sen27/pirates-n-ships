@@ -9,12 +9,15 @@ import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
 import com.richardsenger.piratesnships.crew.galley.GalleyGameTests;
 import com.richardsenger.piratesnships.crew.galley.GalleyText;
+import com.richardsenger.piratesnships.crew.galley.PantryBlock;
 import com.richardsenger.piratesnships.crew.galley.ProvisionsCommands;
 import com.richardsenger.piratesnships.crew.galley.WaterBarrelBlock;
 import com.richardsenger.piratesnships.crew.galley.WaterBarrelRules;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
+import com.google.gson.JsonObject;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
+import net.minecraft.core.Direction;
 import net.minecraft.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
@@ -78,9 +81,15 @@ public final class CrewContentModule implements ModModule {
         data.models(m -> {
             // The provisions' item models are hand-made (art/models/{hardtack,salted_fish,salt_pork,lime}.bbmodel),
             // so datagen writes none
-            // hand-made Blockbench model (art/models/pantry.bbmodel, design.md §4.8): only the block state is generated
+            // hand-made Blockbench model (art/models/pantry.bbmodel, design.md §4.8), doors on the north side: only the
+            // block state is generated, rotated so the doors face FACING
             m.blockStates().accept(MultiVariantGenerator.multiVariant(CrewContent.PANTRY.get(), Variant.variant()
-                    .with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(CrewContent.PANTRY.get()))));
+                    .with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(CrewContent.PANTRY.get())))
+                    .with(PropertyDispatch.property(PantryBlock.FACING)
+                            .select(Direction.NORTH, Variant.variant())
+                            .select(Direction.EAST, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R90))
+                            .select(Direction.SOUTH, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R180))
+                            .select(Direction.WEST, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R270))));
             waterBarrelModels(m);
         });
         data.blockLoot(loot -> {
@@ -151,6 +160,24 @@ public final class CrewContentModule implements ModModule {
                 .generate(fill -> Variant.variant().with(VariantProperties.MODEL, fill == WaterBarrelRules.MAX_FILL
                         ? ModelLocationUtils.getModelLocation(barrel)
                         : ModelLocationUtils.getModelLocation(barrel, "_fill" + fill)))));
+        // The block's water surface is greyscale water_still tinted by the biome (CrewContentClient). Items have no
+        // colour handler, so the item model keeps the old pre-coloured stand-in for that texture slot.
+        m.models().accept(ModelLocationUtils.getModelLocation(barrel.asItem()), () -> {
+            JsonObject textures = new JsonObject();
+            textures.addProperty(WATER_TEXTURE_SLOT, "minecraft:block/blue_ice");
+            JsonObject model = new JsonObject();
+            model.addProperty("parent", ModelLocationUtils.getModelLocation(barrel).toString());
+            model.add("textures", textures);
+            return model;
+        });
+    }
+
+    /** The texture slot of the water surface in the hand-made water barrel models. */
+    static final String WATER_TEXTURE_SLOT = "7";
+
+    @Override
+    public void initClient() {
+        com.richardsenger.piratesnships.crew.content.client.CrewContentClient.init();
     }
 
     @Override

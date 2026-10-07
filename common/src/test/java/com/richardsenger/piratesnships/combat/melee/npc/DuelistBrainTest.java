@@ -94,4 +94,48 @@ class DuelistBrainTest {
         CombatState tired = new CombatState(IDLE.phase(), null, 0, 0, 10f, 0, 0, 0, false, false, java.util.Set.of());
         assertEquals(Action.NONE, DuelistBrain.decide(view(tired, windup(AttackKind.SLASH, 2), true, 5, 0), SKILLED, 0.9, 0.9));
     }
+
+    private static DuelistBrain.View feintView(CombatState self, CombatState opp, boolean feintPlanned) {
+        return new DuelistBrain.View(self, opp, true, true, -1, P.parryWindowTicks(), 0, 25f, feintPlanned);
+    }
+
+    @Test
+    void aPlannedFeintAbortsWhenTheOpponentParries() {
+        CombatState mine = windup(AttackKind.SLASH, 1);
+        CombatState parrying = CombatRules.parry(IDLE, DefaultWeapons.CUTLASS, P).state();
+        assertEquals(Action.FEINT, DuelistBrain.decide(feintView(mine, parrying, true), SKILLED, 0.9, 0.9));
+        assertEquals(Action.NONE, DuelistBrain.decide(feintView(mine, IDLE, true), SKILLED, 0.9, 0.9), "no bait taken yet");
+        assertEquals(Action.NONE, DuelistBrain.decide(feintView(mine, parrying, false), SKILLED, 0.9, 0.9), "a real attack runs on");
+        assertEquals(Action.NONE, DuelistBrain.decide(view(mine, parrying, true, -1, 0), SKILLED, 0.9, 0.9), "old constructor: no feint");
+    }
+
+    @Test
+    void aPlannedFeintAbortsAtAFixedTickAgainstAGuard() {
+        CombatState guarding = CombatRules.guardDown(IDLE, DefaultWeapons.CUTLASS, P).state();
+        CombatState early = windup(AttackKind.THRUST, DuelistBrain.FEINT_TICK_AGAINST_GUARD - 1);
+        CombatState due = windup(AttackKind.THRUST, DuelistBrain.FEINT_TICK_AGAINST_GUARD);
+        assertEquals(Action.NONE, DuelistBrain.decide(feintView(early, guarding, true), SKILLED, 0.9, 0.9));
+        assertEquals(Action.FEINT, DuelistBrain.decide(feintView(due, guarding, true), SKILLED, 0.9, 0.9));
+    }
+
+    @Test
+    void feintsFollowTheTierFrequencyAndAreFollowedByARealAttack() {
+        SkillTier feinter = new SkillTier(0.5, 4, 0.4);
+        assertTrue(DuelistBrain.planFeint(feinter, 0.39, false, false));
+        assertFalse(DuelistBrain.planFeint(feinter, 0.4, false, false));
+        assertFalse(DuelistBrain.planFeint(feinter, 0.0, true, false), "never feint a riposte");
+        assertFalse(DuelistBrain.planFeint(feinter, 0.0, false, true), "the attack after a feint is real");
+        assertFalse(DuelistBrain.planFeint(SKILLED, 0.0, false, false), "feint frequency 0");
+        assertTrue(DuelistBrain.planFeint(new SkillTier(0.5, 4, 1.0), 0.999, false, false), "frequency 1 always feints");
+    }
+
+    @Test
+    void afterAFeintTheDuelistWaitsOutTheBaitedParryThenAttacks() {
+        CombatState feinted = CombatRules.feint(windup(AttackKind.SLASH, 1), P).state();
+        CombatState parrying = CombatRules.parry(IDLE, DefaultWeapons.CUTLASS, P).state();
+        assertEquals(Action.NONE, DuelistBrain.decide(feintView(feinted, parrying, false), SKILLED, 0.9, 0.9), "in feint recovery");
+        assertEquals(Action.NONE, DuelistBrain.decide(feintView(IDLE, parrying, false), SKILLED, 0.9, 0.9), "parry still open");
+        CombatState lockedOut = CombatRules.failParry(parrying, DefaultWeapons.CUTLASS, P);
+        assertEquals(Action.SLASH, DuelistBrain.decide(feintView(IDLE, lockedOut, false), SKILLED, 0.9, 0.9));
+    }
 }

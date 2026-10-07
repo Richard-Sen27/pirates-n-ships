@@ -1,11 +1,11 @@
 package com.richardsenger.piratesnships.combat.melee.npc;
 
 /**
- * How well an NPC duelist fights (docs/design.md §8.5 "NPC duelists"). Data only; the duel AI (milestone 8) reads it.
+ * How well an NPC duelist fights (docs/design.md §8.5 "NPC duelists"). Data only; the duel AI ({@link DuelistBrain}) reads it.
  *
  * @param parryChance    probability 0..1 that the NPC tries to parry a readable attack
  * @param reactionTicks  ticks between seeing a telegraph and reacting
- * @param feintFrequency probability 0..1 per attack of using a feint (feints come in milestone 21)
+ * @param feintFrequency probability 0..1 per attack of using a feint ({@link DuelistBrain#planFeint})
  */
 public record SkillTier(double parryChance, int reactionTicks, double feintFrequency) {
 

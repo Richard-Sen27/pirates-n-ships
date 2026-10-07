@@ -180,6 +180,8 @@ public final class TradeCommands {
         }
         TransactionResult r = buy ? MarketTransactions.buy(player, id, good, qty, holder)
                 : MarketTransactions.sell(player, id, good, qty, plundered, holder);
+        // The same crime hook as desk and opened-market sales (the law module records fence_plunder)
+        MarketBackend.reportNoticed(player, id, r);
         report(c, r);
         return r.done() ? 1 : 0;
     }

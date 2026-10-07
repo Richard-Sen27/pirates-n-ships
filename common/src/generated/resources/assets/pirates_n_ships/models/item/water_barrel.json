@@ -1,3 +1,6 @@
 {
-  "parent": "pirates_n_ships:block/water_barrel"
+  "parent": "pirates_n_ships:block/water_barrel",
+  "textures": {
+    "7": "minecraft:block/blue_ice"
+  }
 }

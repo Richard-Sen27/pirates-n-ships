@@ -96,9 +96,14 @@ public final class MobGameTests {
         });
     }
 
-    /** The player parries the pirate's telegraphed hit through {@code MeleeService.parry}: no damage, the pirate staggers. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 300, batch = "pirates_n_ships_mob_player_parry")
+    /**
+     * The player parries the pirate's telegraphed hit through {@code MeleeService.parry}: no damage, the pirate staggers.
+     * The scripted player parries at the start of the slash wind-up, which a feinting pirate would bait, so feints are
+     * off here ({@code melee.npc_feints}); {@link #pirateFeintBaitsAnEarlyParry} covers them.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 300, batch = "pirates_n_ships_config_mob_player_parry")
     public static void playerParryStaggersThePirate(GameTestHelper h) {
+        ConfigOverrides.during(h, MeleeConfig.NPC_FEINTS, false);
         floor(h, 9);
         Pirate pirate = spawn(h, MobContent.PIRATE.get(), 2, 4, -90);
         Player player = MobTestSupport.playerInLevel(h, new Vec3(4.5, 1, 4.5), 90);
@@ -115,6 +120,40 @@ public final class MobGameTests {
         h.succeedWhen(() -> {
             h.assertTrue(staggered[0], "the pirate was never staggered by a parry");
             h.assertTrue(player.getHealth() >= player.getMaxHealth(), "the parried hit did damage: " + player.getHealth());
+        });
+    }
+
+    /**
+     * Feints (docs/design.md §8.5): with {@code melee.npc_skill_multiplier} 5 the pirate tier's feint frequency (0.2) is 1,
+     * so every attack except the follow-up of a feint starts as one. The player parries as soon as a wind-up shows; the pirate
+     * aborts the swing (its synced pose shows the feint recovery), the parry runs out into the lockout, and the real
+     * follow-up hits the player.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 400, batch = "pirates_n_ships_config_mob_duelist_feint")
+    public static void pirateFeintBaitsAnEarlyParry(GameTestHelper h) {
+        ConfigOverrides.during(h, MeleeConfig.NPC_SKILL, 5.0);
+        floor(h, 9);
+        Pirate pirate = spawn(h, MobContent.PIRATE.get(), 2, 4, -90);
+        Player player = MobTestSupport.playerInLevel(h, new Vec3(4.5, 1, 4.5), 90);
+        player.setHealth(player.getMaxHealth());
+        int[] feints = {0};
+        boolean[] wasFeint = {false};
+        float[] healthAtFirstFeint = {-1f};
+        h.onEachTick(() -> {
+            if (MeleeService.state(pirate).phase() == Phase.WINDUP && MeleeService.state(player).phase() != Phase.PARRYING) {
+                MeleeService.parry(player, DefaultWeapons.SABER); // refused while locked out
+            }
+            boolean feint = pirate.meleePose().feint();
+            if (feint && !wasFeint[0]) {
+                feints[0]++;
+                if (healthAtFirstFeint[0] < 0) healthAtFirstFeint[0] = player.getHealth();
+            }
+            wasFeint[0] = feint;
+        });
+        h.succeedWhen(() -> {
+            h.assertTrue(feints[0] >= 1, "the pirate never feinted");
+            h.assertTrue(player.getHealth() < healthAtFirstFeint[0],
+                    "no hit after the feint: health " + player.getHealth() + ", at the feint " + healthAtFirstFeint[0]);
         });
     }
 

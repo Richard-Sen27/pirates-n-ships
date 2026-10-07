@@ -20,9 +20,9 @@ import net.minecraft.world.effect.MobEffectInstance;
  * The ship HUD (docs/design.md §4.6, HUD1), a HUD layer drawn while the player is aboard and a fresh
  * {@link ShipStatusPayload} is in {@link ClientShipStatus}: a north-up compass rose with a ship-shaped needle for the
  * heading and the wind as an arrow outside the rose (on the side it blows from, pointing where it blows, longer for
- * stronger wind, amber in a gust); under it speed and rudder; then the ship's name and the hull strip, bow on the left,
- * one cell per compartment filling blue with water, a red tick on a cell with an open breach and a pump glyph while a
- * pump drains it. Layout: {@link ShipHudLayout}; texture: {@link ShipHudSheet}; config {@code ship_hud}.
+ * stronger wind, amber in a gust); under it speed and rudder; then the ship's name, followed by the cargo load level
+ * (CW1) when known, and the hull strip, bow on the left: one cell per compartment filling blue with water, a red tick
+ * on a cell with an open breach and a pump glyph while a pump drains it. Layout: {@link ShipHudLayout}; texture: {@link ShipHudSheet}; config {@code ship_hud}.
  */
 public final class ShipHud {
 
@@ -130,10 +130,14 @@ public final class ShipHud {
 
         boolean unnamed = s.name().isEmpty();
         String name = unnamed ? Component.translatable(ShipHudText.KEY_UNNAMED).getString() : s.name();
-        int max = ShipHudLayout.W - 8;
-        if (font.width(name) > max) name = font.plainSubstrByWidth(name, max - font.width("…")) + "…";
-        int nw = font.width(name);
-        g.drawString(font, name, w / 2 - nw / 2, ShipHudLayout.NAME_Y, unnamed ? TEXT_DIM : TEXT, true);
+        // CW1's load level after the name ("Black Pearl · Laden"); the name gives way when space is short
+        String load = s.loadLevel() == null ? "" : " · " + Component.translatable(s.loadLevel().translationKey()).getString();
+        int max = ShipHudLayout.W - 4 - font.width(load);
+        if (font.width(name) > max) name = font.plainSubstrByWidth(name, Math.max(0, max - font.width("…"))) + "…";
+        int nw = font.width(name), tw = nw + font.width(load);
+        int x = w / 2 - tw / 2;
+        g.drawString(font, name, x, ShipHudLayout.NAME_Y, unnamed ? TEXT_DIM : TEXT, true);
+        if (!load.isEmpty()) g.drawString(font, load, x + nw, ShipHudLayout.NAME_Y, TEXT_DIM, true);
     }
 
     private static void strip(GuiGraphics g, List<ShipStatusPayload.Cell> cells) {

@@ -37,19 +37,21 @@ class ShipStatusPayloadTest {
     void roundTrips() {
         List<ShipStatusPayload.Cell> cells = new ArrayList<>();
         for (int i = 0; i < 16; i++) cells.add(new ShipStatusPayload.Cell(i, 10 + i, i * 0.5f, i % 3, i % 2 == 0));
-        ShipStatusPayload p = new ShipStatusPayload(UUID.randomUUID(), "Black Pearl", 271.5f, 4.25f, -12f, cells);
+        ShipStatusPayload p = new ShipStatusPayload(UUID.randomUUID(), "Black Pearl", 271.5f, 4.25f, -12f, 2, cells);
         assertEquals(p, roundTrip(p));
-        ShipStatusPayload noHelm = new ShipStatusPayload(UUID.randomUUID(), "", 0f, 0f, Float.NaN, List.of());
+        ShipStatusPayload noHelm = new ShipStatusPayload(UUID.randomUUID(), "", 0f, 0f, Float.NaN, -1, List.of());
         ShipStatusPayload back = roundTrip(noHelm);
         assertEquals(noHelm, back);
         assertFalse(back.hasRudder());
+        assertEquals(null, back.loadLevel());
+        assertEquals(com.richardsenger.piratesnships.trade.cargo.CargoWeight.LoadLevel.HEAVILY_LADEN, roundTrip(p).loadLevel());
     }
 
     @Test
     void longNamesAndTooManyCellsAreCut() {
         List<ShipStatusPayload.Cell> cells = new ArrayList<>();
         for (int i = 0; i < 20; i++) cells.add(new ShipStatusPayload.Cell(i, 1, 0, 0, false));
-        ShipStatusPayload p = new ShipStatusPayload(UUID.randomUUID(), "x".repeat(100), 0, 0, 0, cells);
+        ShipStatusPayload p = new ShipStatusPayload(UUID.randomUUID(), "x".repeat(100), 0, 0, 0, -1, cells);
         assertEquals(ShipStatusPayload.MAX_NAME, p.name().length());
         assertEquals(CompartmentStrip.MAX_CELLS, p.cells().size());
         assertEquals(p, roundTrip(p));
@@ -58,7 +60,7 @@ class ShipStatusPayloadTest {
     @Test
     void quantizeRoundsAndClamps() {
         UUID id = UUID.randomUUID();
-        ShipStatusPayload p = new ShipStatusPayload(id, "A", 359.7f, 3.0123f, -11.6f,
+        ShipStatusPayload p = new ShipStatusPayload(id, "A", 359.7f, 3.0123f, -11.6f, 1,
                 List.of(new ShipStatusPayload.Cell(0, 10, 12.3f, 0, false), new ShipStatusPayload.Cell(1, 10, -0.01f, 0, false)));
         ShipStatusPayload q = p.quantize();
         assertEquals(0f, q.heading(), "359.7° rounds round to north");
@@ -68,19 +70,19 @@ class ShipStatusPayloadTest {
         assertEquals(0f, q.cells().get(1).water());
         assertEquals(1f, q.cells().get(0).fraction());
         // tiny jitter rounds away, a real change does not
-        ShipStatusPayload jitter = new ShipStatusPayload(id, "A", 359.9f, 3.0101f, -11.7f, p.cells()).quantize();
+        ShipStatusPayload jitter = new ShipStatusPayload(id, "A", 359.9f, 3.0101f, -11.7f, 1, p.cells()).quantize();
         assertEquals(q, jitter);
-        ShipStatusPayload moved = new ShipStatusPayload(id, "A", 2f, 3.0123f, -11.6f, p.cells()).quantize();
+        ShipStatusPayload moved = new ShipStatusPayload(id, "A", 2f, 3.0123f, -11.6f, 1, p.cells()).quantize();
         assertNotEquals(q, moved);
-        assertTrue(Float.isNaN(new ShipStatusPayload(id, "", 0, 0, Float.NaN, List.of()).quantize().rudder()));
+        assertTrue(Float.isNaN(new ShipStatusPayload(id, "", 0, 0, Float.NaN, -1, List.of()).quantize().rudder()));
     }
 
     @Test
     void throttleSendsChangesAndEveryFifthInterval() {
         ShipStatusThrottle t = new ShipStatusThrottle();
         UUID player = UUID.randomUUID(), other = UUID.randomUUID();
-        ShipStatusPayload a = new ShipStatusPayload(UUID.randomUUID(), "A", 10, 1, 0, List.of());
-        ShipStatusPayload b = new ShipStatusPayload(a.ship(), "A", 11, 1, 0, List.of());
+        ShipStatusPayload a = new ShipStatusPayload(UUID.randomUUID(), "A", 10, 1, 0, -1, List.of());
+        ShipStatusPayload b = new ShipStatusPayload(a.ship(), "A", 11, 1, 0, -1, List.of());
         assertTrue(t.offer(player, a), "the first status goes out");
         for (int i = 1; i < ShipStatusThrottle.KEEPALIVE_INTERVALS; i++) {
             assertFalse(t.offer(player, a), "unchanged at interval " + i);

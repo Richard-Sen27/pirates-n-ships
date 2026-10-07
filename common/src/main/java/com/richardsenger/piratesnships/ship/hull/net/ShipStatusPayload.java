@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.ship.hull.net;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.trade.cargo.CargoWeight;
 import io.netty.buffer.ByteBuf;
 import java.util.List;
 import java.util.UUID;
@@ -9,6 +10,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Server → client: the status of the ship the player is aboard, for the ship HUD (docs/design.md §4.6, HUD1). Sent by
@@ -21,9 +23,10 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
  * @param heading compass bearing of the bow [degrees, 0 = north, 90 = east]
  * @param speed   horizontal speed through the water [blocks/s]
  * @param rudder  rudder angle [degrees, positive = starboard], {@code NaN} when the ship has no helm
+ * @param load    the ship's cargo load level ({@code CargoWeight.LoadLevel} ordinal, CW1's last weighing), -1 when unknown
  * @param cells   the compartments, bow first, at most {@link CompartmentStrip#MAX_CELLS}
  */
-public record ShipStatusPayload(UUID ship, String name, float heading, float speed, float rudder, List<Cell> cells)
+public record ShipStatusPayload(UUID ship, String name, float heading, float speed, float rudder, int load, List<Cell> cells)
         implements CustomPacketPayload {
 
     public static final Type<ShipStatusPayload> TYPE = new Type<>(Constants.id("ship_status"));
@@ -56,18 +59,31 @@ public record ShipStatusPayload(UUID ship, String name, float heading, float spe
         }
     }
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, ShipStatusPayload> CODEC = StreamCodec.composite(
-            UUIDUtil.STREAM_CODEC, ShipStatusPayload::ship,
-            ByteBufCodecs.stringUtf8(MAX_NAME), ShipStatusPayload::name,
-            ByteBufCodecs.FLOAT, ShipStatusPayload::heading,
-            ByteBufCodecs.FLOAT, ShipStatusPayload::speed,
-            ByteBufCodecs.FLOAT, ShipStatusPayload::rudder,
-            Cell.CODEC.apply(ByteBufCodecs.list(CompartmentStrip.MAX_CELLS)), ShipStatusPayload::cells,
-            ShipStatusPayload::new);
+    private static final StreamCodec<ByteBuf, List<Cell>> CELLS = Cell.CODEC.apply(ByteBufCodecs.list(CompartmentStrip.MAX_CELLS));
+
+    /** Seven fields: more than {@code StreamCodec.composite} takes in 1.21.1, so written out. */
+    public static final StreamCodec<RegistryFriendlyByteBuf, ShipStatusPayload> CODEC = StreamCodec.of(
+            (buf, p) -> {
+                UUIDUtil.STREAM_CODEC.encode(buf, p.ship());
+                ByteBufCodecs.stringUtf8(MAX_NAME).encode(buf, p.name());
+                buf.writeFloat(p.heading());
+                buf.writeFloat(p.speed());
+                buf.writeFloat(p.rudder());
+                ByteBufCodecs.VAR_INT.encode(buf, p.load());
+                CELLS.encode(buf, p.cells());
+            },
+            buf -> new ShipStatusPayload(UUIDUtil.STREAM_CODEC.decode(buf), ByteBufCodecs.stringUtf8(MAX_NAME).decode(buf),
+                    buf.readFloat(), buf.readFloat(), buf.readFloat(), ByteBufCodecs.VAR_INT.decode(buf), CELLS.decode(buf)));
 
     public ShipStatusPayload {
         name = name.length() > MAX_NAME ? name.substring(0, MAX_NAME) : name;
         cells = List.copyOf(cells.size() > CompartmentStrip.MAX_CELLS ? cells.subList(0, CompartmentStrip.MAX_CELLS) : cells);
+    }
+
+    /** The cargo load level, or null when unknown. */
+    public @Nullable CargoWeight.LoadLevel loadLevel() {
+        CargoWeight.LoadLevel[] all = CargoWeight.LoadLevel.values();
+        return load >= 0 && load < all.length ? all[load] : null;
     }
 
     /** Whether the ship has a helm (and so a rudder angle to show). */
@@ -86,7 +102,7 @@ public record ShipStatusPayload(UUID ship, String name, float heading, float spe
                 .toList();
         int h = Math.floorMod(Math.round(heading), 360);
         return new ShipStatusPayload(ship, name, h, round(Math.max(0f, speed)),
-                Float.isNaN(rudder) ? Float.NaN : Math.round(rudder), q);
+                Float.isNaN(rudder) ? Float.NaN : Math.round(rudder), load, q);
     }
 
     /** Rounds to a multiple of 0.05 (never −0). */

@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 class ClientShipStatusTest {
 
     private static ShipStatusPayload status(UUID ship, float heading) {
-        return new ShipStatusPayload(ship, "A", heading, 0, 0, List.of());
+        return new ShipStatusPayload(ship, "A", heading, 0, 0, -1, List.of());
     }
 
     @AfterEach

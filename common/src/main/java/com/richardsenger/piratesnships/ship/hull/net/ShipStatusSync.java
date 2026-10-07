@@ -8,6 +8,7 @@ import com.richardsenger.piratesnships.sailing.wind.WindSample;
 import com.richardsenger.piratesnships.ship.ShipConfig;
 import com.richardsenger.piratesnships.ship.ShipData;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
+import com.richardsenger.piratesnships.ship.cargo.ShipCargo;
 import com.richardsenger.piratesnships.ship.hull.Compartment;
 import com.richardsenger.piratesnships.ship.hull.HullAnalysis;
 import com.richardsenger.piratesnships.ship.hull.HullGrid;
@@ -108,7 +109,9 @@ public final class ShipStatusSync {
         float rudder = sailing == null || sailing.helm() == null ? Float.NaN : (float) sailing.rudderAngle();
         HullRuntime hull = HullRuntimes.get(level, ship.id());
         List<ShipStatusPayload.Cell> cells = hull == null ? List.of() : CompartmentStrip.cells(entries(hull, bow));
-        return new ShipStatusPayload(ship.id(), name, (float) heading, (float) speed, rudder, cells).quantize();
+        ShipCargo.Snapshot weighed = ShipCargo.last(level, ship.id()); // CW1's last weighing, cheap
+        int load = weighed == null || weighed.level() == null ? -1 : weighed.level().ordinal();
+        return new ShipStatusPayload(ship.id(), name, (float) heading, (float) speed, rudder, load, cells).quantize();
     }
 
     /** Compass bearing of the bow (0 = north) for a ship without a sailing runtime. */

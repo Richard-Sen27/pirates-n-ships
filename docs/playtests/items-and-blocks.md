@@ -79,7 +79,7 @@ Renders of the intended look are in `art/renders/`.
    `latest.log` has no model or texture warnings mentioning `pirates_n_ships`. On a moving ship the models render with
    correct lighting.
 
-## 3D item models (F8a swords; F8b firearms, ammunition, grappling hook; F8c whistle, shackles)
+## 3D item models (F8a swords; F8b firearms, ammunition, grappling hook; F8c whistle, shackles; F8d provisions)
 Compare each sword with a vanilla iron sword in the other hand or the next hotbar slot. Renders in `art/renders/`.
 1. **First person, right hand:** the grip sits in the fist, blade up and forward at the iron sword's angle. The rapier
    is visibly longer and thin, the cutlass short and broad with a brass basket, the saber curved with the tip bending
@@ -111,10 +111,18 @@ Compare each sword with a vanilla iron sword in the other hand or the next hotba
     like vanilla flat items in first and third person and the offhand, small and turning on the ground, flat in an
     item frame. Using the whistle still opens the radial menu; shackles still work on a villager. Watch for z-fighting
     on the whistle's black hole and the keyholes at a distance.
+15. **Provisions (rum, hardtack, lime, salt pork, salted fish), GUI:** an upright green bottle with cork, pale label
+    with a dark stripe and a brown liquid band; a tan square biscuit with a 4×4 grid of holes and a darker front edge;
+    a green ball with stem, leaf and a light patch; a pink-and-white layered slab with a brown rind and white specks;
+    a blue-grey fish on the diagonal, head upper right. None cut off or too dark (the salt pork front and the hardtack
+    edge are the likeliest to look dull). Held like vanilla food in first and third person and the offhand; small and
+    bobbing on the ground; centred in an item frame. Eating and drinking still work with their effects, the eating
+    particles show tans, pinks, greens and blue-grey (never magenta or black), rum still counts as a drink and the
+    pantry still accepts the provisions.
 
 ## Known placeholders (for the later art pass)
-- Cargo crate and barrel, pantry, water barrel, brig bars and door still use simple models (F7d, F7e).
+- Cargo crate and barrel, pantry, water barrel, brig bars and door, and the bilge pump still use simple models (F7d, F7e).
 - The yard and stay cloths are flat grids with a simple belly; the cleat is a placeholder element model (F7e).
-- Item sprites other than the swords are script-made placeholders; 3D item models come with the F8 batches.
+- Only cloth, spices and tobacco (F8e in work), the doubloon, the bounty proof and the hull patch still use sprites.
 - The brig bars' transparency relies on a model field that only NeoForge reads. The Fabric port has to register a
   render layer for them.

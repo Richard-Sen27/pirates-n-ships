@@ -97,6 +97,23 @@ An assembled ship analyses its own hull:
 - The flood state is saved with the ship.
 - Not there yet: a visible water surface inside a flooding room, pumps, patch items, and damage from cannons.
 
+### Fighting a leak
+A hull block destroyed below the waterline leaves a breach, and water runs into that room at a rate; deeper holes leak
+faster.
+- **Hull Patch** (2 planks and 1 coal or charcoal give 2): stand inside, look at the edge of the hole (the face of a hull
+  block next to it) and use the patch. It fills the hole with a tarred plank block and the water stops at once. A patch
+  only goes into a real hole in an assembled ship; elsewhere it tells you so and is not used up. You can break the
+  patch later and put in a normal plank, but the hole is open while you swap.
+- **Bilge Pump** (a stick on top, plank, bucket, plank in the middle, a plank below): place it on the hold floor, or on
+  the deck right above the hold, since its pipe reaches 4 blocks down through the planks. Hold right-click on it to
+  pump: it removes 1 block of water per second and stops when you let go. The action bar shows how much water is left,
+  or "The bilge is dry". It drains the highest flooded room below it. Pumping makes you hungry slowly. Several pumps in
+  one room add up.
+- A crew member can man a pump like a sail winch and keeps pumping until the room is dry. There is no whistle order
+  for it yet.
+- Server config `flooding`: `pump_enabled`, `pump_rate`, `pump_reach`, `pump_use_ticks`, `pump_exhaustion`,
+  `patch_enabled`.
+
 ### Limits to know
 - **Stay near the world origin.** Sable's physics uses 32-bit positions. Beyond about 100,000 blocks from the origin a
   slow ship reports a speed but stops moving. Beyond several million blocks ships can sink into solid blocks.
@@ -405,6 +422,8 @@ chance in `combat`).
 | Cleat | iron ingot, planks | Attaches to floors, walls and masts. Three cleats and a rope make a triangular sail. See [Sails](#sails). |
 | Sail Winch | 2 string, 1 iron ingot, 3 planks | Sets the trim of all sails on its ship. A crew station. The crank faces you when placed. |
 | Capstan | 2 logs, 1 stick, 2 chains, 1 iron block, 3 planks | Drops and raises the anchor. |
+| Bilge Pump | stick, 3 planks, 1 bucket, 1 plank | Pumps water out of the hold below it. A crew station. See [Fighting a leak](#fighting-a-leak). |
+| Hull Patch (block) | placed by the item | A tarred plank that closes a breach. Watertight hull block. |
 | Flagpole | 3 sticks (gives 2) | Flies a flag. A thin pole with a finial and a cleat (Blockbench model). See [Flags](#5-flags). |
 | Pantry | 8 planks, 1 wheat | Food store with spoilage. See [Provisions](#6-provisions). |
 | Water Barrel | 6 planks, 2 iron nuggets, 1 water bucket | Holds 16 rations of water. Crafted full. |
@@ -433,6 +452,7 @@ All blocks drop themselves. Wooden ones are mined with an axe, the bars and the 
 | Cannonball | 4 iron ingots (gives 2) | No function yet. |
 | Grappling Hook | 3 iron ingots, 1 string | No function yet. |
 | Rope | string | Use it on one cleat, then on a second one 2 to 16 blocks away and lower, to rig a stay. It glints while it remembers the first cleat. |
+| Hull Patch | 2 planks, 1 coal or charcoal (gives 2) | Use on the edge of a hole in an assembled hull to close the breach. See [Fighting a leak](#fighting-a-leak). |
 | Doubloon | none | Currency. |
 | Tobacco | none | Trade good. |
 | Spices | none | Trade good. |
@@ -498,7 +518,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 |---|---|
 | `assembly` | Assembly on/off, block limit, how still and level a ship must be to disassemble, water handling. |
 | `dry_hull` | Dry hull on/off, buoyancy of the dry volume, weight of flood water. |
-| `flooding` | Flooding on/off, inflow rate, pump rate. |
+| `flooding` | Flooding on/off, inflow rate; bilge pump on/off, rate, reach, use time and exhaustion; hull patch on/off. |
 | `wind` | Wind strength range, how fast it changes, weather multipliers, gusts, regional variation. |
 | `sailing` | Sail force, rudder strength, keel drag, anchor strength, roll and pitch damping. |
 | `anchor_chain` | Chain speeds, travel time limits, anchor sounds and volumes. |

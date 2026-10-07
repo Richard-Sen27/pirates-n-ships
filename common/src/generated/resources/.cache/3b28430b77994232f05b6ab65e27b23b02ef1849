@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-07T13:25:23.094892	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-07T14:17:38.732331	Block states and models: pirates_n_ships
 c189a7833975a61cf2c7c8fd326d27a32969cb9d assets/pirates_n_ships/blockstates/bilge_pump.json
 52e053a4f7334e9a78798b4b4b9a2ad80087f3d5 assets/pirates_n_ships/blockstates/brig_bars.json
 83716521a6f9785f7114fa5a9489defb1257975d assets/pirates_n_ships/blockstates/brig_door.json
@@ -37,6 +37,7 @@ f7fb3b356386931f9fe39ebac39ce5984c685200 assets/pirates_n_ships/models/item/cann
 6e2d9e4e9e945102afe0356dd536dd6bd2314eb5 assets/pirates_n_ships/models/item/capstan.json
 e762fd96625dae60f3cbfdcb33e82b84c2f742ab assets/pirates_n_ships/models/item/cargo_barrel.json
 724e2310f488c077c19808000615dc5c2378241c assets/pirates_n_ships/models/item/cargo_crate.json
+04ee1eb4fd122280088fb0f5930380680986f6b4 assets/pirates_n_ships/models/item/chart.json
 f1f1587eb52c46d53241c7cb9019de1506eee3b8 assets/pirates_n_ships/models/item/cleat.json
 c2828a89c739dcf7d31509c39dbef0032d04a8c0 assets/pirates_n_ships/models/item/figurehead_eagle.json
 8011b8a61cfe0370674b6b357d92ed5112191a79 assets/pirates_n_ships/models/item/figurehead_lion.json

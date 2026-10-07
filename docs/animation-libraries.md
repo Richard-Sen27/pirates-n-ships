@@ -301,3 +301,8 @@ Replace the §21 bullet "Player animation library for melee combat: ..." with:
 Add this row to the §2 table, after "Animated entities":
 
 > | Player animations | **Player Animation Library (PAL)** (`com.zigythebird.playeranim`, MIT), required on the client for both loaders. `common` compiles against `PlayerAnimationLibCommon` + `PlayerAnimationLibCore`; `neoforge` uses `PlayerAnimationLibNeo`, `fabric` uses `PlayerAnimationLibFabric`. Used only for the player's melee animations (§8.5); NPCs use GeckoLib. See `docs/animation-libraries.md`. |
+
+
+## Correction after integration (G12, 2026-10-07)
+
+`PlayerAnimationLibCommon` 1.1.6+mc.1.21.1 is published remapped to Fabric intermediary names (`net.minecraft.class_742`, `class_2960`), not Mojang names as stated above, so our NeoForm `common` cannot compile against it. `PlayerAnimationLibNeo` bundles the Common and Core classes in Mojang names (with mochafloats and javassist nested), so `common` uses it as a non-transitive `compileOnly` dependency and `neoforge` as `implementation` with the separate Core artifact excluded; that exclusion also avoids the dependency clash of PAL issue #163, so no `resolutionStrategy force` block was needed. The Maven repository is declared in `buildSrc/src/main/groovy/multiloader-common.gradle` as exclusive content for `com.zigythebird`. PAL loads on the dedicated server without errors. `PalMeleeAnimations` registers one `PlayerAnimationController` layer per player and triggers animations with `triggerAnimation(animation, startTick)` plus a `SpeedModifier` and a per-trigger `MirrorModifier` (PAL's `MirrorIfLeftHandModifier` only checks the local player's option).

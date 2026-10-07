@@ -456,6 +456,9 @@ on by default; vanilla weapons are untouched):
   it; it refills after a moment of rest. Empty, you can neither guard nor parry and stagger easily. The bar turns
   violet while you are staggered and shows a grey block during the parry lockout.
 - Right click is taken over while a mod sword is held, so swap to another item to open doors or use the helm.
+- Your attacks, guard, parry and stagger are animated in first and third person through the Player Animation
+  Library (a required client mod); the animations are placeholders until the art pass. Client config
+  `melee_animations`: on/off, first person auto/on/off (auto steps back for camera mods), layer priority.
 - Client config `melee_input` (tap and hold thresholds) and `melee_hud` (bar on/off, scale, offsets).
 
 ## 10. All blocks
@@ -572,6 +575,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `hull_creaking` | Creaking on/off, how often, volume and pitch ranges, the rolling rate that counts. |
 | `audio` (client) | Music on/off and volume, the gap between tracks, shanties aboard. |
 | `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevation range and steps, blocks per hit, recoil and impact impulses, ball lifetime and water behaviour. |
+| `melee_animations` (client) | Sword animations on/off, first-person mode, layer priority. |
 | `melee_input` / `melee_hud` (client) | Hold-to-thrust and parry-tap thresholds; stamina bar on/off, scale and offsets. |
 | `firearms` | Firearms on/off, per gun: damage, muzzle velocity, spread, reload time, recoil; ball lifetime and gravity, cooldown, gunpowder use. |
 | `sailing_runtime` | Sailing forces on/off, heel scaling, steering and anchor on/off, rudder steps, chain length. |

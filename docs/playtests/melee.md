@@ -37,3 +37,22 @@ differs.
 - Does the parry window feel fair with the parry firing on release (up to 3 ticks after the press)?
 - Is losing right click for doors, chests and the helm while holding a sword acceptable, or should use pass through
   when you look at something usable?
+
+
+## G12: animations (placeholders)
+1. **Third person** (F5 or a second client): slash = arm rises high to the right, sweeps down across the body, droops
+   back; thrust = arm draws back, punches forward, pulls back; guard = sword raised across the chest, off hand forward,
+   held, lowering on release; parry = quick upward-outward flick; stagger = torso and head lean back, arms out;
+   riposte = low side flourish instead of the high wind-up. Each animation ends exactly when its phase does; compare a
+   fast and a slow weapon.
+2. **Rotation signs are unverified:** if arms swing backwards or the sword points the wrong way, report which
+   animation; the thrust and guard item rotations are the most uncertain.
+3. **First person** (`melee_animations.first_person = AUTO`, no camera mods): the animated right arm and sword replace
+   the vanilla hand during combat phases and the vanilla hand returns at idle. With `OFF`: vanilla hand and swing,
+   third person still animates. With First Person Model or Real Camera installed, AUTO behaves like OFF.
+4. **Left-handed** (main hand left): mirrored onto the left arm in both views; check what another client sees.
+5. **`melee_animations.enabled = false`:** only the vanilla swing.
+6. **Startup:** without PAL installed, NeoForge shows the missing-dependency screen (expected: PAL is a required client
+   mod). A dedicated server starts with or without it.
+7. **At sea on a rolling ship:** first-person arms line up with the camera; third-person animations look right on a
+   moving deck.

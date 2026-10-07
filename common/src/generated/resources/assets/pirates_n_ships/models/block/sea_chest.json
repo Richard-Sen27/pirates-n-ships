@@ -1,9 +1,0 @@
-{
-  "parent": "minecraft:block/orientable_with_bottom",
-  "textures": {
-    "bottom": "minecraft:block/spruce_planks",
-    "front": "minecraft:block/barrel_bottom",
-    "side": "minecraft:block/spruce_planks",
-    "top": "minecraft:block/barrel_top"
-  }
-}

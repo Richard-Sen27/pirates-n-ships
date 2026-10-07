@@ -144,6 +144,28 @@ Workflow notes (two-block cannon and swivel gun, F7g):
   rammer side) and `swivel_gun.png` (three-quarter view, east side, GUI); composed side by side on a 2D canvas in
   the app and written with `fs`. The part list that generated the geometry is `tools/gen_cannon_models.py` (run it to regenerate the JSON; the projects were rebuilt from its output).
 
+Workflow notes (sea chest, S1-art):
+- **Sea chest** (60 elements, `sea_chest`, one project): a seaman's chest facing north (the `FACING` side). Body
+  `dark_oak_planks` x 2..14, z 3..13, y 1..6.5 on four 1 px `stripped_dark_oak_log` feet; lid of a rim (0.4 px
+  overhang) and four narrowing steps up to y 10 (`stripped_dark_oak_log`, grain along x). Bands are `anvil`: two
+  horizontal ones round the body (foot and top edge, 0.2 px proud) and two vertical ones at x 4..5 and 11..12 over
+  body and every lid step (0.3 / 0.2 px proud); `iron_block` rivets on the bands, `anvil` hinge straps on the back.
+  Front: an `iron_block` lock plate with a `black_concrete` keyhole, an `anvil` hasp hanging from the lid rim and an
+  iron staple through it. Sides: rope handles (`stripped_birch_log` like the sail winch and flagpole), a bottom
+  strand along z (grain turned) and two legs tilted ±22.5 about x up to `dark_oak_planks` cleats. `iron_block` bands
+  looked white and flat; `anvil` bands with `iron_block` rivets read as dark iron.
+- Footprint x 1..15 (handles), z 2..14 (staple to hinges), y 0..10.2; `SeaChestBlock` uses `box(1, 0, 2, 15, 10, 14)`
+  (x and z swapped for east/west). The floating entity draws the same model scaled to its width (0.875), so it stays
+  centred on the block's x/z centre.
+- Display: `block/block` values tuned for a model smaller than a block: `gui` `[30, 225, 0]` / `[0, 2.4, 0]` / 0.85
+  (front on the right, like any block item at y 225; centred with the offscreen GUI check of F7g), `fixed` 0.65
+  raised 1.95, `ground` 0.3 raised 3.5, third person 0.4 raised 3, first person 0.45 raised 2, `head` 0.75.
+- Built like F7g: a Python part list (positions, per-face texture keys, vanilla default UVs, log faces turned with
+  the UV rect transposed so the grain keeps its texel density) wrote the model JSON, and `S1A.load()` rebuilt it cube
+  by cube in a new `java_block` tab; `Codecs.java_block.compile()` of the tab matches the JSON (60 elements, no
+  difference). Script and loader are not committed; rebuild them from these notes.
+- Render: `renders/sea_chest.png` (placed three-quarter view from the front-west, GUI).
+
 Items (sword batch, F8a):
 - Item models are `java_block` projects exported to `common/src/main/resources/assets/pirates_n_ships/models/item/<name>.json`;
   datagen writes no model for them (drop the item's `m.handheldItem(...)` / `m.flatItem(...)` line).

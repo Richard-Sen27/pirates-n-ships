@@ -11,9 +11,7 @@ import net.minecraft.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
-import net.minecraft.data.models.model.ModelTemplates;
-import net.minecraft.data.models.model.TextureMapping;
-import net.minecraft.data.models.model.TextureSlot;
+import net.minecraft.data.models.model.ModelLocationUtils;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
@@ -75,14 +73,10 @@ public final class SeaChestModule implements ModModule {
                 .add(SeaChestBlockEntity.TITLE_KEY, "Sea Chest")
                 .add(SeaChestItem.WORN_HINT_KEY, "Use in the air to carry it on your back: no jumping, sprinting or swimming"));
         data.models(m -> {
-            // Placeholder until the Blockbench model (art/models/sea_chest.bbmodel): an orientable cube from vanilla
-            // textures, front (north) = the banded barrel bottom
-            TextureMapping textures = new TextureMapping()
-                    .put(TextureSlot.TOP, ResourceLocation.withDefaultNamespace("block/barrel_top"))
-                    .put(TextureSlot.SIDE, ResourceLocation.withDefaultNamespace("block/spruce_planks"))
-                    .put(TextureSlot.FRONT, ResourceLocation.withDefaultNamespace("block/barrel_bottom"))
-                    .put(TextureSlot.BOTTOM, ResourceLocation.withDefaultNamespace("block/spruce_planks"));
-            ResourceLocation model = ModelTemplates.CUBE_ORIENTABLE_TOP_BOTTOM.create(block, textures, m.models());
+            // Hand-made Blockbench model (art/models/sea_chest.bbmodel, design.md §4.8): only the block state is
+            // generated. The model's north side (hasp and lock plate) is the front, unrotated for FACING north; the
+            // block item delegates to the block model.
+            ResourceLocation model = ModelLocationUtils.getModelLocation(block);
             m.blockStates().accept(MultiVariantGenerator.multiVariant(block, Variant.variant().with(VariantProperties.MODEL, model))
                     .with(PropertyDispatch.property(SeaChestBlock.FACING)
                             .select(Direction.NORTH, Variant.variant())

@@ -91,7 +91,12 @@ Renders of the intended look are in `art/renders/`.
     leaf lies along the hinge edge with the straps at the hinge corner; locked (sneak-use), a brass padlock on the
     lower half on the side you placed it from, staying on that face when the owner opens it. The door item is still
     the flat wooden sprite (known).
-11. **All of them:** break each block; the particles match the block's wood or material, never the missing texture.
+11. **Cannon and harbor master's desk (F7f):** the cannon faces the way you placed it with about 2.5 px of muzzle past
+    the block; powder in shows a rammer leaning on the barrel, loaded shows a grey ball in the bore, firing clears
+    both; loading, aiming and firing still work, also on a moving ship. The desk's bell faces you, the ledger and
+    inkwell the far side, the quill does not clip the block above; the market screen still opens when bound. Both
+    items fit their slots; the cannon may look large in hand (block defaults).
+12. **All of them:** break each block; the particles match the block's wood or material, never the missing texture.
    `latest.log` has no model or texture warnings mentioning `pirates_n_ships`. On a moving ship the models render with
    correct lighting.
 
@@ -143,7 +148,7 @@ Compare each sword with a vanilla iron sword in the other hand or the next hotba
     and show the 3D icons.
 
 ## Known placeholders (for the later art pass)
-- The cannon and the harbor desk still use placeholder models (F7f in work).
+- Every block of the mod now has a Blockbench model. Only the doubloon, the bounty proof, the hull patch and the brig door item use sprites.
 - The yard and stay cloths are flat grids with a simple belly; the cleat is a placeholder element model (F7e).
 - Only the doubloon, the bounty proof and the hull patch still use sprites (by decision).
 - The brig bars' transparency relies on a model field that only NeoForge reads. The Fabric port has to register a

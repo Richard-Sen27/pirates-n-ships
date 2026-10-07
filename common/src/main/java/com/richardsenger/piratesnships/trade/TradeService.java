@@ -265,6 +265,16 @@ public final class TradeService {
         return CargoWeight.LoadLevel.of(totalWeight, capacity, TradeConfig.cargoParams());
     }
 
+    /** The load level of a ship of {@code blocks} blocks carrying {@code totalWeight} (capacity from config). */
+    public static CargoWeight.LoadLevel shipLoadLevel(double totalWeight, int blocks) {
+        return loadLevel(totalWeight, shipCapacity(blocks));
+    }
+
+    /** A ship's cargo capacity in weight units ({@code load_levels.capacity_per_block} per block). */
+    public static double shipCapacity(int blocks) {
+        return CargoWeight.shipCapacity(blocks, TradeConfig.CAPACITY_PER_BLOCK.get());
+    }
+
     /** The weight the ship physics should apply (0 when "cargo weight affects ships" is off). */
     public static double shipEffect(double totalWeight) {
         return CargoWeight.shipEffect(totalWeight, TradeConfig.cargoParams());

@@ -3,6 +3,8 @@ package com.richardsenger.piratesnships.combat.melee.client.anim;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.richardsenger.piratesnships.combat.firearms.FirearmsConfig;
+import com.richardsenger.piratesnships.combat.firearms.client.anim.FirearmAnimationMapping;
 import com.zigythebird.playeranimcore.animation.Animation;
 import com.zigythebird.playeranimcore.loading.UniversalAnimLoader;
 import org.junit.jupiter.api.Test;
@@ -11,16 +13,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * The placeholder melee animations under {@code assets/pirates_n_ships/player_animations/} (run from {@code common/}):
- * every animation {@link MeleeAnimationMapping} can play has a file with PAL's GeckoLib/Bedrock top-level fields, only
+ * The player animations under {@code assets/pirates_n_ships/player_animations/} (run from {@code common/}):
+ * every animation {@link MeleeAnimationMapping} or {@link FirearmAnimationMapping} can play has a file with PAL's GeckoLib/Bedrock top-level fields, only
  * animates PAL's player bones, and loads with PAL's own loader at the expected length; no stray files.
  */
 class PalAnimationFilesTest {
@@ -31,6 +35,9 @@ class PalAnimationFilesTest {
             "right_item", "left_item", "cape", "elytra");
     static final Set<String> CHANNELS = Set.of("rotation", "position", "scale", "bend");
     static final Set<String> LOOPS = Set.of("hold_on_last_frame", "loop", "play_once");
+    /** Every animation of every PAL layer of the mod. */
+    static final List<String> ALL = Stream.of(MeleeAnimationMapping.ALL, FirearmAnimationMapping.ALL)
+            .flatMap(List::stream).collect(Collectors.toList());
 
     static JsonObject read(String name) throws IOException {
         Path file = DIR.resolve(name + ".json");
@@ -44,12 +51,12 @@ class PalAnimationFilesTest {
         try (Stream<Path> s = Files.list(DIR)) {
             s.forEach(p -> files.add(p.getFileName().toString().replaceFirst("\\.json$", "")));
         }
-        assertEquals(new TreeSet<>(MeleeAnimationMapping.ALL), files);
+        assertEquals(new TreeSet<>(ALL), files);
     }
 
     @Test
     void filesHaveThePalTopLevelFields() throws IOException {
-        for (String name : MeleeAnimationMapping.ALL) {
+        for (String name : ALL) {
             JsonObject root = read(name);
             assertEquals("1.8.0", root.get("format_version").getAsString(), name);
             JsonObject animations = root.getAsJsonObject("animations");
@@ -79,7 +86,7 @@ class PalAnimationFilesTest {
 
     @Test
     void palLoadsEveryFile() throws IOException {
-        for (String name : MeleeAnimationMapping.ALL) {
+        for (String name : ALL) {
             Map<String, Animation> loaded;
             try (InputStream in = Files.newInputStream(DIR.resolve(name + ".json"))) {
                 loaded = UniversalAnimLoader.loadAnimations(in);
@@ -91,5 +98,23 @@ class PalAnimationFilesTest {
             assertEquals(seconds * 20f, a.length(), 1e-3, name);
             assertFalse(a.boneAnimations().isEmpty(), name);
         }
+    }
+
+    @Test
+    void reloadsLastAboutTheDefaultReloadTimeAndAimsHoldTheirPose() throws IOException {
+        // the speed modifier should barely stretch a reload at the default reload times
+        assertReloadLength(FirearmAnimationMapping.PISTOL_RELOAD, FirearmsConfig.PISTOL_RELOAD.get());
+        assertReloadLength(FirearmAnimationMapping.MUSKET_RELOAD, FirearmsConfig.MUSKET_RELOAD.get());
+        for (String aim : List.of(FirearmAnimationMapping.PISTOL_AIM, FirearmAnimationMapping.MUSKET_AIM)) {
+            assertEquals("hold_on_last_frame", read(aim).getAsJsonObject("animations").getAsJsonObject(aim).get("loop").getAsString(), aim);
+        }
+    }
+
+    private static void assertReloadLength(String name, int defaultReloadTicks) throws IOException {
+        JsonObject anim = read(name).getAsJsonObject("animations").getAsJsonObject(name);
+        float ticks = anim.get("animation_length").getAsFloat() * 20f;
+        assertEquals(defaultReloadTicks, ticks, defaultReloadTicks * 0.1f, name + " length in ticks");
+        var loop = anim.get("loop").getAsJsonPrimitive();
+        assertTrue(loop.isBoolean() ? !loop.getAsBoolean() : "play_once".equals(loop.getAsString()), name + " must play once");
     }
 }

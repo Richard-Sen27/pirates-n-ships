@@ -278,7 +278,7 @@ Entity models use the Modded Entity format (Mojang mappings 1.17+); paste the bo
 
 Player animations (melee, F9):
 - Sources: `animations/player_rig.bbmodel` (format Bedrock entity, all 11 animations of
-  `MeleeAnimationMapping.ALL`) and `animations/player_poses.js` (the pose table and the builder that writes the
+  `MeleeAnimationMapping.ALL`, plus the four firearm animations below) and `animations/player_poses.js` (the pose table and the builder that writes the
   keyframes; run it in `risky_eval` with the rig open to rebuild every animation after editing a pose). Strips:
   `renders/anim_<name>.png`, five evenly spaced frames, front three-quarter view on top, right side below.
 - **Rig.** Flat PAL bones, the vanilla parts are siblings: `body` (pivot 0, 12, 0; the whole model, unused) holds
@@ -317,6 +317,43 @@ Player animations (melee, F9):
   from scripted cameras, drawn onto a 2D canvas and written with `fs`; the human's viewport never moves.
 - Measuring the proxy blade's world direction (blade cube corners through `mesh.localToWorld`) was the quickest check for "is the blade level": perspective
   views from above make a level blade look tilted down.
+
+Firearm animations (P3):
+- Same rig, same builder, same export (the rig now holds 15 animations: the 11 melee ones plus
+  `FirearmAnimationMapping.ALL`). `player_poses.js` adds the pose table `F9.G`, `F9.buildFirearms()` and
+  `F9.proxy('sword' | 'pistol' | 'musket')`, which shows one proxy item in `right_item`. The gun proxies
+  (`pistol_*`, `musket_*` cubes, hidden by default) are boxes placed where vanilla's third-person transform of the F8b
+  gun models (`thirdperson_righthand` rotation `[0, 90, 40]` / `[0, 90, 43]`) puts barrel, lock and grip, computed
+  through `ItemInHandLayer`'s chain: in the rest pose the barrel sits about 4 px up the arm from the hand pivot and
+  points forward, 1–2° towards the hand (so it is perpendicular to the arm, like the sword).
+- Animations (strips `renders/anim_pistol_*.png`, `anim_musket_*.png`; aims five frames, reloads eight):
+
+  | Name | Length | Loop | Content |
+  |---|---|---|---|
+  | `pistol_aim` | 0.25 s | hold | right arm to `[-92, -5, 0]`, `right_item` `[92, 0, 5]` (barrel level and straight ahead, muzzle at eye height), torso twisted −12° (right shoulder forward), left arm hanging slightly out |
+  | `musket_aim` | 0.35 s | hold | vanilla's crossbow-hold arms (right `[-84, -17, 0]`, left `[-86, 34, 0]` under the barrel), `right_item` `[84, 0, 17]` (the z cancels the arm's inward yaw: barrel level and straight ahead), twist +15° (left shoulder forward), lean 5° to the sights |
+  | `pistol_reload` | 3.0 s (60 ticks) | once | gun low in front, muzzle up; the left hand pours powder (two shakes), fetches the rod at the belt, rams twice, puts it back; the gun comes level across the body and the left hand cocks the lock |
+  | `musket_reload` | 5.0 s (100 ticks) | once | butt on the ground in front of the feet, muzzle at chest height; powder, rod out, ram twice, rod back; raise across the body, left hand under the barrel, then on the lock to cock |
+
+- **Barrel along the aim.** `right_item` x +90 lays the barrel along the arm; with the arm at about −90 that is level
+  and forward. Its z yaws the gun about the arm (the arm's own y would otherwise point the barrel inwards); never
+  set its y and z together. Values were tuned by measuring the proxy barrel's world direction (yaw and pitch both 0
+  in the final aim frames). The aim poses keep the arms level: in game the look pitch and the head's turn against
+  the body are added to both arms (`PalFirearmAnimations`' adjustment modifier, like vanilla's bow pose), so the
+  barrel follows the crosshair.
+- **`right_item` position (`riPos`, new).** PAL translates the item bone in the arm's frame before the hand offset
+  (`ItemInHandLayerMixin`: `translate(x, -y, z)` / 16, the same sense as the arm positions), so y negative slides the
+  gun along the arm past the hand. The reloads use it to hold the guns lower (pistol −4, musket −8.5: the hand holds the
+  fore-stock, the butt reaches the ground). `F9.makeG` keys the position on every pose of an animation, so the
+  channel never interpolates against a missing keyframe; the melee animations do not key it (re-exporting them
+  reproduces the committed files byte for byte).
+- **Left hand on muzzle and lock.** The arms are 10 px long and straight (no bends), so a hand cannot reach every
+  point of a 20 px musket. The left-arm angles were solved with a small forward-kinematics search (left arm pivot plus
+  the lean/twist offsets, hand = cube bottom centre at `(-1, -10, 0)` from the pivot, Euler order ZYX on the stored
+  values) towards targets measured on the proxy: a little above the muzzle (pour, rod down), higher (rod up), the
+  lock (cock). The ramming stroke is therefore short (2–5 px).
+- Head rotation is still never keyed: the head follows the look, so "head down to the sights" is only the torso
+  lean. Cannon fuse animation: not part of P3.
 
 ## Entities
 

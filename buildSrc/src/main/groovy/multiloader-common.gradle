@@ -76,6 +76,16 @@ repositories {
         }
         filter { includeGroup('software.bernie.geckolib') }
     }
+    // Modrinth (dev-only mods such as WorldEdit, never a dependency of the mod)
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Modrinth'
+                url = 'https://api.modrinth.com/maven'
+            }
+        }
+        filter { includeGroup('maven.modrinth') }
+    }
 }
 
 // Declare capabilities on the outgoing configurations.

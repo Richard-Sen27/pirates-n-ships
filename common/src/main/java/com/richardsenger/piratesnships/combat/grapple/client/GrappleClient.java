@@ -5,6 +5,9 @@ import com.richardsenger.piratesnships.combat.grapple.GrappleService;
 import com.richardsenger.piratesnships.combat.grapple.BoardRopePayload;
 import com.richardsenger.piratesnships.combat.grapple.GrappleConfig;
 import com.richardsenger.piratesnships.combat.grapple.GrappleContent;
+import com.richardsenger.piratesnships.combat.grapple.GrappleLaunch;
+import com.richardsenger.piratesnships.combat.grapple.GrapplingHookItem;
+import com.richardsenger.piratesnships.combat.grapple.RopeSlide;
 import com.richardsenger.piratesnships.combat.grapple.GrapplingHookEntity;
 import com.richardsenger.piratesnships.combat.grapple.ReleaseHookPayload;
 import com.richardsenger.piratesnships.platform.Services;
@@ -32,8 +35,7 @@ public final class GrappleClient {
         // the rope lines (RP1) whose drawing end is a mooring ring
         ClientEvents.registerBlockEntityRenderer(GrappleContent.MOORING_RING_BLOCK_ENTITY, RopeLineRenderer::new);
         ClientEvents.INTERACTION_KEY.register(GrappleClient::onInteraction);
-        // GR3: the crossbow's draw and shot of the hook, the musket's hook look
-        ClientEvents.INTERACTION_KEY.register(GrappleLaunchClient::onInteraction);
+        // GR3: the musket's hook look
         ClientEvents.CLIENT_SETUP.register(GrappleLaunchClient::registerItemProperties);
         ClientEvents.CLIENT_SETUP.register(RopeSlidePoses::onClientSetup);
         ClientEvents.CLIENT_TICK_END.register(RopeSlidePoses::onClientTickEnd);
@@ -58,16 +60,25 @@ public final class GrappleClient {
 
     /**
      * Use (not sneaking) while looking at a latched rope within reach grabs it (GR2): asks the server to let the player
-     * slide and cancels vanilla's use. A block or entity in front of the rope gets the use instead.
+     * slide and cancels vanilla's use. A block or entity in front of the rope gets the use instead. GR4: only with an
+     * empty main hand or a grappling hook in it, and not within {@code grab_cooldown_ticks} of the hook leaving
+     * ({@link RopeSlide#grab}, the server checks the same): with the musket in hand the use always goes to the musket,
+     * so re-aiming right after a shot (the rope runs from the hand along the look ray) no longer grabs the rope.
      */
     private static boolean grabRope(Minecraft mc) {
         LocalPlayer player = mc.player;
         if (player.isPassenger() || player.isSpectator() || !GrappleConfig.ENABLED.get() || !GrappleConfig.SLIDE_ENABLED.get()) {
             return false;
         }
+        GrappleLaunch.Held main = GrapplingHookItem.heldOf(player.getMainHandItem());
+        int cooldown = GrappleConfig.GRAB_COOLDOWN_TICKS.get();
+        if (RopeSlide.grab(main, Integer.MAX_VALUE, cooldown) != RopeSlide.Grab.OK) {
+            return false; // the item in hand keeps its own use
+        }
         Vec3 eye = player.getEyePosition(1.0f);
         ClientRopes.RopeHit hit = ClientRopes.pick(mc.level, eye, player.getViewVector(1.0f));
-        if (hit == null || inFront(mc, eye, hit.pick().eyeDistance())) {
+        if (hit == null || RopeSlide.grab(main, hit.hook().tickCount, cooldown) != RopeSlide.Grab.OK
+                || inFront(mc, eye, hit.pick().eyeDistance())) {
             return false;
         }
         Services.NETWORK.sendToServer(new BoardRopePayload(hit.hook().getId()));

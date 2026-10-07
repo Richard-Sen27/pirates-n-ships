@@ -16,17 +16,57 @@ class GrappleRulesTest {
 
     // ---- hits ----
 
-    @Test
-    void anotherShipIsALatch() {
-        assertEquals(GrappleRules.HitKind.LATCH, GrappleRules.blockHit(B, A));
-        assertEquals(GrappleRules.HitKind.LATCH, GrappleRules.blockHit(B, null), "a thrower on land latches onto a ship");
+    private static GrappleRules.HitKind hit(UUID hitShip, UUID nearShip) {
+        return GrappleRules.blockHit(hitShip, nearShip, true, true, true);
     }
 
     @Test
-    void ownShipAndLandAreNoLatch() {
-        assertEquals(GrappleRules.HitKind.OWN_SHIP, GrappleRules.blockHit(A, A));
-        assertEquals(GrappleRules.HitKind.LAND, GrappleRules.blockHit(null, A));
-        assertEquals(GrappleRules.HitKind.LAND, GrappleRules.blockHit(null, null));
+    void anotherShipIsALatch() {
+        assertEquals(GrappleRules.HitKind.LATCH, hit(B, A));
+        assertEquals(GrappleRules.HitKind.LATCH, hit(B, null), "a thrower on land latches onto a ship");
+        assertEquals(GrappleRules.HitKind.LATCH, GrappleRules.blockHit(B, A, true, false, false), "the toggles do not touch it");
+    }
+
+    @Test
+    void ownShipAndWorldBlocksLatchToo() {
+        // GR4: any solid surface catches
+        assertEquals(GrappleRules.HitKind.LATCH_OWN_SHIP, hit(A, A));
+        assertEquals(GrappleRules.HitKind.LATCH_WORLD, hit(null, A), "a world block from a ship");
+        assertEquals(GrappleRules.HitKind.LATCH_WORLD, hit(null, null), "a world block from land");
+        for (GrappleRules.HitKind k : new GrappleRules.HitKind[]{GrappleRules.HitKind.LATCH, GrappleRules.HitKind.LATCH_OWN_SHIP,
+                GrappleRules.HitKind.LATCH_WORLD}) {
+            assertTrue(GrappleRules.latches(k), k + " latches");
+        }
+    }
+
+    @Test
+    void theTogglesTurnOwnShipAndWorldBlocksIntoMisses() {
+        assertEquals(GrappleRules.HitKind.OWN_SHIP, GrappleRules.blockHit(A, A, true, false, true));
+        assertEquals(GrappleRules.HitKind.LAND, GrappleRules.blockHit(null, A, true, true, false));
+        assertEquals(GrappleRules.HitKind.LAND, GrappleRules.blockHit(null, null, true, true, false));
+        assertEquals(GrappleRules.HitKind.LATCH_WORLD, GrappleRules.blockHit(null, A, true, false, true), "own-ship toggle only");
+        for (GrappleRules.HitKind k : new GrappleRules.HitKind[]{GrappleRules.HitKind.OWN_SHIP, GrappleRules.HitKind.LAND,
+                GrappleRules.HitKind.SLIP, GrappleRules.HitKind.ENTITY}) {
+            assertFalse(GrappleRules.latches(k), k + " does not latch");
+        }
+    }
+
+    @Test
+    void theHookSlipsOffNonSolidBlocksEverywhere() {
+        assertEquals(GrappleRules.HitKind.SLIP, GrappleRules.blockHit(B, A, false, true, true));
+        assertEquals(GrappleRules.HitKind.SLIP, GrappleRules.blockHit(A, A, false, true, true));
+        assertEquals(GrappleRules.HitKind.SLIP, GrappleRules.blockHit(null, null, false, true, true));
+    }
+
+    // ---- what the rope pulls (GR4) ----
+
+    @Test
+    void theRopeForcePerCase() {
+        assertEquals(GrappleRules.Haul.SHIPS, GrappleRules.haul(B, A), "another ship: both are hauled together");
+        assertEquals(GrappleRules.Haul.NONE, GrappleRules.haul(A, A), "the own ship: a line without force");
+        assertEquals(GrappleRules.Haul.SHORE, GrappleRules.haul(B, null), "a ship hooked from land is pulled ashore");
+        assertEquals(GrappleRules.Haul.KEDGE, GrappleRules.haul(null, A), "a world block from a ship: a kedge line");
+        assertEquals(GrappleRules.Haul.NONE, GrappleRules.haul(null, null), "a world block from land: a zip line");
     }
 
     @Test

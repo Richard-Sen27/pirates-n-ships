@@ -1,0 +1,10 @@
+{
+  "values": [
+    "#minecraft:leaves",
+    "minecraft:glass_pane",
+    {
+      "id": "#c:glass_panes",
+      "required": false
+    }
+  ]
+}

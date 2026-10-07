@@ -17,22 +17,69 @@ public final class GrappleRules {
 
     /** What a hook does with a hit. */
     public enum HitKind {
-        /** A block of a ship other than the thrower's: the hook latches there. */
+        /** A block of a ship other than the near end's: the hook latches there (and hauls, {@link #haul}). */
         LATCH,
-        /** A block of the ship the thrower stands on: no latch. */
+        /** A block of the near end's own ship (GR4, {@code latch_own_ship}): it latches, a line without force. */
+        LATCH_OWN_SHIP,
+        /** A world block (GR4, {@code latch_world_blocks}): it latches at the world position. */
+        LATCH_WORLD,
+        /** A block of the near end's own ship with {@code latch_own_ship} off: no latch. */
         OWN_SHIP,
-        /** A world block (land, a quay, the sea floor): no latch. */
+        /** A world block (land, a quay, the sea floor) with {@code latch_world_blocks} off: no latch. */
         LAND,
+        /** A block the hook slips off (tag {@code pirates_n_ships:grapple_slips}: leaves, glass panes): no latch. */
+        SLIP,
         /** An entity: it takes {@code grapple.entity_damage}, no latch. */
         ENTITY
     }
 
-    /** A block hit: latch only onto a ship that is not the thrower's own. */
-    public static HitKind blockHit(UUID hitShip, UUID throwerShip) {
-        if (hitShip == null) {
-            return HitKind.LAND;
+    /**
+     * A block hit (GR4: any solid surface catches): {@code hitShip} is the ship of the hit block (null: a world block),
+     * {@code nearShip} the ship at the rope's near end (the thrower's, or the tied ring's; null: land), {@code catches}
+     * false for a block the hook slips off. The toggles switch off latching on the own ship and on world blocks.
+     */
+    public static HitKind blockHit(UUID hitShip, UUID nearShip, boolean catches, boolean latchOwnShip, boolean latchWorld) {
+        if (!catches) {
+            return HitKind.SLIP;
         }
-        return hitShip.equals(throwerShip) ? HitKind.OWN_SHIP : HitKind.LATCH;
+        if (hitShip == null) {
+            return latchWorld ? HitKind.LATCH_WORLD : HitKind.LAND;
+        }
+        if (hitShip.equals(nearShip)) {
+            return latchOwnShip ? HitKind.LATCH_OWN_SHIP : HitKind.OWN_SHIP;
+        }
+        return HitKind.LATCH;
+    }
+
+    /** Whether a hit latches the hook. */
+    public static boolean latches(HitKind kind) {
+        return kind == HitKind.LATCH || kind == HitKind.LATCH_OWN_SHIP || kind == HitKind.LATCH_WORLD;
+    }
+
+    /** What a latched rope pulls (GR4). */
+    public enum Haul {
+        /** Hook on one ship, near end on another: both ships are hauled together ({@code haul_force}). */
+        SHIPS,
+        /** Hook on a ship, near end on land: the hooked ship is pulled toward the shore ({@code shore_haul_force}). */
+        SHORE,
+        /** Hook on a world block, near end on a ship: that ship is hauled toward the block, a kedge ({@code haul_force}). */
+        KEDGE,
+        /** Both ends on the same body (one ship, or the world): a line to slide along, no force. */
+        NONE
+    }
+
+    /**
+     * The force a latched rope applies: {@code farShip} is the ship the hook holds (null: a world block),
+     * {@code nearShip} the ship at the rope's near end (null: land).
+     */
+    public static Haul haul(UUID farShip, UUID nearShip) {
+        if (farShip == null) {
+            return nearShip == null ? Haul.NONE : Haul.KEDGE;
+        }
+        if (nearShip == null) {
+            return Haul.SHORE;
+        }
+        return farShip.equals(nearShip) ? Haul.NONE : Haul.SHIPS;
     }
 
     /** Why a hook is let go, or {@link #NONE}. */
@@ -42,7 +89,7 @@ public final class GrappleRules {
         DISABLED,
         /** The thrower is gone, dead or in another dimension. */
         OWNER_GONE,
-        /** The ship the hook hangs on is gone (sunk, disassembled, unloaded). */
+        /** The ship the hook hangs on is gone (sunk, disassembled, unloaded), or the world block it holds was broken (GR4). */
         SHIP_GONE,
         /** The mooring ring the hook is latched on, or the rope is tied to, was broken (GR1). */
         RING_GONE,

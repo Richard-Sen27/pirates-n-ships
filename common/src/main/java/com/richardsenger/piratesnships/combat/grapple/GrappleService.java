@@ -30,7 +30,7 @@ import java.util.UUID;
 
 /**
  * Server side of the grappling hook (docs/design.md §8.3, §8.4, G11): throwing, one hook per thrower, release, and the
- * rope force that hauls two ships together.
+ * rope force that hauls two ships together, a ship to the shore, or (GR4) a ship toward a world block (a kedge).
  *
  * <p><b>The rope force</b> is applied every physics substep ({@link SableShips#onPhysicsTick}) to both bodies through
  * our own Sable force group ({@link ShipBody#applyGrappleImpulse}: {@code QueuedForceGroup#applyAndRecordPointForce}):
@@ -41,7 +41,9 @@ import java.util.UUID;
  * docs/sable-notes.md §9.0d). The world force is turned into the body frame and multiplied by the substep length, as
  * Sable expects an impulse (sable-notes §3.2). A thrower on land pulls only the hooked ship, toward the thrower, with
  * {@code shore_haul_force}. When the rope is tied to a mooring ring (GR1), the ring's ship hauls from the ring instead
- * of the thrower's ship from its nearest block, and a ring on land pulls like a thrower on land.
+ * of the thrower's ship from its nearest block, and a ring on land pulls like a thrower on land. A hook on a world
+ * block (GR4) is a fixed end: the near end's ship is hauled toward it with {@code haul_force} (a kedge line), and a
+ * near end on land or a hook on the near end's own ship applies no force ({@link GrappleRules#haul}).
  */
 public final class GrappleService {
 
@@ -65,16 +67,23 @@ public final class GrappleService {
     }
 
     /**
-     * Launches a hook from {@code player}'s eyes along its view (GR1): thrown, shot from a crossbow or fired from a
-     * musket, with the mode's speed ({@link GrappleConfig#speed}) and rope length ({@link GrappleConfig#ropeLength}).
-     * The weapon's own sound and effects are the caller's; a throw plays the bobber throw.
+     * Launches a hook from {@code player}'s eyes along its view: thrown or fired from the musket, with the mode's speed
+     * ({@link GrappleConfig#speed}), rope length ({@link GrappleConfig#ropeLength}) and gravity factor
+     * ({@link GrappleConfig#gravityFactor}, GR4). The weapon's own sound and effects are the caller's; a throw plays
+     * the bobber throw.
      */
     public static GrapplingHookEntity launchHook(ServerLevel level, Player player, ItemStack hook, boolean consumed, GrappleLaunch.Mode mode) {
         GrapplingHookEntity entity = new GrapplingHookEntity(level, player, hook, consumed);
-        entity.setRopeLength(GrappleConfig.ropeLength(mode));
+        configure(entity, mode);
         entity.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0f, (float) GrappleConfig.speed(mode),
                 GrappleLaunch.inaccuracy(mode));
         return launch(level, player, entity, mode == GrappleLaunch.Mode.THROW);
+    }
+
+    /** Gives a new hook the rope length and gravity of a launch in {@code mode}. */
+    static void configure(GrapplingHookEntity entity, GrappleLaunch.Mode mode) {
+        entity.setRopeLength(GrappleConfig.ropeLength(mode));
+        entity.setGravityFactor(GrappleConfig.gravityFactor(mode));
     }
 
     /** Launches a hook from {@code pos} with {@code velocity} (blocks per tick); used by tests. */
@@ -369,21 +378,23 @@ public final class GrappleService {
     }
 
     private static void haul(ServerLevel level, GrapplingHookEntity h, double dt) {
-        UUID targetId = h.shipId();
         Vec3 hookPlot = h.plotPos();
-        if (targetId == null || hookPlot == null || h.throwerAboardTarget()) {
+        GrappleRules.Haul kind = h.haulKind();
+        if (hookPlot == null || kind == GrappleRules.Haul.NONE) {
             return;
         }
-        ShipBody target = SableShips.byId(level, targetId);
-        if (target == null) {
+        UUID targetId = h.shipId();
+        ShipBody target = targetId == null ? null : SableShips.byId(level, targetId);
+        if (targetId != null && target == null) {
             return;
         }
-        Vec3 hookWorld = target.toWorld(hookPlot);
+        // the hook's end: on its ship, or (KEDGE, GR4) the fixed world point it holds
+        Vec3 hookWorld = target != null ? target.toWorld(hookPlot) : hookPlot;
         double hold = GrappleConfig.holdLength();
         double damping = GrappleConfig.ROPE_DAMPING.get();
         UUID throwerId = h.throwerShipId();
         Vec3 anchorPlot = h.anchorPlot();
-        if (throwerId != null && anchorPlot != null) {
+        if ((kind == GrappleRules.Haul.SHIPS || kind == GrappleRules.Haul.KEDGE) && throwerId != null && anchorPlot != null) {
             ShipBody thrower = SableShips.byId(level, throwerId);
             if (thrower == null) {
                 return;
@@ -396,16 +407,19 @@ public final class GrappleService {
                 return;
             }
             Vec3 u = new Vec3(dx / d, 0, dz / d);
-            double extension = target.velocityAt(hookPlot).subtract(thrower.velocityAt(anchorPlot)).dot(u);
+            Vec3 hookVelocity = target != null ? target.velocityAt(hookPlot) : Vec3.ZERO;
+            double extension = hookVelocity.subtract(thrower.velocityAt(anchorPlot)).dot(u);
             if (h.holding().update(d, hold)) {
-                return; // the hulls lie together: the rope holds without pulling
+                return; // the hulls lie together (or the ship lies at the kedge point): the rope holds without pulling
             }
             double t = GrappleRules.tension(d, hold, extension, GrappleConfig.HAUL_FORCE.get(), damping);
             if (t > 0) {
-                push(target, hookWorld, u.scale(-t), dt);
+                if (target != null) {
+                    push(target, hookWorld, u.scale(-t), dt);
+                }
                 push(thrower, anchorWorld, u.scale(t), dt);
             }
-        } else {
+        } else if (kind == GrappleRules.Haul.SHORE && target != null) {
             Vec3 shore = h.throwerPos();
             if (shore == null) {
                 return;

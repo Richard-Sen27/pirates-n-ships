@@ -7,8 +7,9 @@ import com.richardsenger.piratesnships.core.config.ModConfigs;
 /**
  * Server config section {@code ships} (docs/design.md §17, group "Ships"; §4.1 shipwright orders, §4.5 sinking).
  * Max block count and assembly enabled belong to the assembly package and are not declared here. Declared ahead of
- * the features by the settings package ({@code core.settings.SettingsModule}); nothing reads these values yet. The
- * ship feature package takes this class over when it is written.
+ * the features by the settings package ({@code core.settings.SettingsModule}). The ship HUD values are read by
+ * {@code ship.hull.net.ShipStatusSync} (HUD1); the rest is not read yet. The ship feature package takes this class over
+ * when it is written.
  */
 public final class ShipConfig {
 
@@ -20,6 +21,14 @@ public final class ShipConfig {
             "In-game days a sunk ship stays a sub-level on the seabed before it turns back into world blocks (0 = forever)");
     public static final ConfigValue<Boolean> SHIPWRIGHT_ORDERS = S.bool("shipwright_orders", true,
             "Shipwrights in seafarer villages sell prebuilt ships that are picked up at the village dock");
+
+    // Ship HUD (HUD1, ship.hull.net.ShipStatusSync): read by the hull module
+    public static final ConfigValue<Boolean> SHIP_STATUS_HUD = S.bool("ship_status_hud", true,
+            "Send players aboard a ship its status (heading, speed, rudder, water per compartment) for the ship HUD. "
+                    + "Off = the HUD shows for nobody");
+    public static final ConfigValue<Integer> SHIP_STATUS_SYNC_INTERVAL_TICKS = S.intRange("ship_status_sync_interval_ticks", 20, 1, 200,
+            "How often (ticks) the server checks the ship status of players aboard and sends it when it changed "
+                    + "(unchanged, it still goes out every fifth time)");
 
     private static final ConfigSection BUILD_TIME = S.section("build_time_days",
             "In-game days a shipwright needs to build each ship type");

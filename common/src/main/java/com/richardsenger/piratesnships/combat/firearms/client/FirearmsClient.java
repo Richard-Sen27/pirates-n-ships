@@ -29,6 +29,8 @@ public final class FirearmsClient {
         ClientEvents.CLIENT_TICK_END.register(FirearmAnimationDriver::onClientTickEnd);
         // sneaking lowers an aimed gun without firing (P5)
         ClientEvents.CLIENT_TICK_END.register(FirearmLowering::onClientTickEnd);
+        // the loading progress on the item bar (P5)
+        FirearmClientState.set(new LocalFirearmClientState());
     }
 
     /** Zooms in while the player aims a loaded musket (an aim session, not the hold after loading). */

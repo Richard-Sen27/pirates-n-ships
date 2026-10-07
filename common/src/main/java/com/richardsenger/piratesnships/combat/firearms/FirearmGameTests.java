@@ -310,6 +310,35 @@ public final class FirearmGameTests {
         helper.succeed();
     }
 
+    /** The item bar from the stack alone (no client here): full and gold when loaded, hidden when empty. */
+    @ModGameTest
+    public static void itemBarShowsTheLoadedState(GameTestHelper helper) {
+        ItemStack loaded = new ItemStack(CombatContent.MUSKET.get());
+        FirearmContent.setLoaded(loaded, true);
+        helper.assertTrue(loaded.isBarVisible(), "a loaded gun shows a bar");
+        helper.assertValueEqual(loaded.getBarWidth(), FirearmBar.MAX_WIDTH, "a loaded gun's bar is full");
+        helper.assertValueEqual(loaded.getBarColor(), FirearmBar.LOADED_COLOR, "a loaded gun's bar is gold");
+
+        ItemStack empty = new ItemStack(CombatContent.PISTOL.get());
+        helper.assertFalse(empty.isBarVisible(), "an empty gun shows no bar");
+        helper.succeed();
+    }
+
+    /** A loading session cancelled by letting go leaves the gun unloaded and its bar hidden. */
+    @ModGameTest
+    public static void cancelledLoadingLeavesTheBarHidden(GameTestHelper helper) {
+        Player player = shooter(helper, new Vec3(1.5, 1, 1.5), 0, 0);
+        ItemStack gun = hold(player, CombatContent.PISTOL.get(), false);
+        giveAmmo(player, 1, 1);
+        use(helper, player);
+        holdLoading(helper, player, gun, 10);
+        player.releaseUsingItem();
+        helper.assertFalse(player.isUsingItem(), "letting go stops loading");
+        helper.assertFalse(FirearmContent.isLoaded(gun), "the gun stays unloaded");
+        helper.assertFalse(gun.isBarVisible(), "no bar after a cancelled load");
+        helper.succeed();
+    }
+
     // ---- config -----------------------------------------------------------------------------------------------
 
     /** With a minimum hold, letting go too early puts the gun down still loaded; after the minimum it fires. */

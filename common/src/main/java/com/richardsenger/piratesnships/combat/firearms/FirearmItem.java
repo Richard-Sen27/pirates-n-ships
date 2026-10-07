@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.combat.firearms;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.combat.firearms.client.FirearmClientState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -33,6 +34,8 @@ import java.util.List;
  * <b>Lowering (P5):</b> sneaking while aiming lowers the gun without firing ({@code firearms.aim.lower_on_sneak}):
  * the client lets go as soon as sneak is pressed ({@code client.FirearmLowering}), a release while sneaking never
  * fires ({@link FirearmRules#lowers}), and a loaded gun is not raised while sneaking ({@link FirearmRules#aimsOnUse}).
+ * <b>Item bar (P5):</b> white and filling while the local player loads the gun (read through
+ * {@link FirearmClientState}), full and gold on a loaded gun, none on an empty one ({@link FirearmBar}).
  * Use on an unloaded gun without ammunition clicks. With {@code firearms.enabled} off the gun does nothing.
  *
  * <p>Pose: {@link UseAnim#NONE}, the gun stays in the normal held position in both views. The crossbow poses can't be
@@ -129,6 +132,33 @@ public class FirearmItem extends Item {
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
         return UseAnim.NONE;
+    }
+
+    // ---- item bar: loading progress (white) and the loaded state (full, gold) ----
+
+    private FirearmBar.State barState(ItemStack stack, int loadingHeld) {
+        return FirearmBar.state(FirearmContent.isLoaded(stack), loadingHeld >= 0);
+    }
+
+    /** Ticks the local player has been loading this stack, -1 if not (always -1 without a client). */
+    private static int loadingHeld(ItemStack stack) {
+        return FirearmContent.isLoaded(stack) ? -1 : FirearmClientState.get().loadingHeldTicks(stack);
+    }
+
+    @Override
+    public boolean isBarVisible(ItemStack stack) {
+        return FirearmBar.visible(barState(stack, loadingHeld(stack)));
+    }
+
+    @Override
+    public int getBarWidth(ItemStack stack) {
+        int held = loadingHeld(stack);
+        return FirearmBar.width(barState(stack, held), held, type().reloadTicks());
+    }
+
+    @Override
+    public int getBarColor(ItemStack stack) {
+        return FirearmBar.color(barState(stack, loadingHeld(stack)));
     }
 
     @Override

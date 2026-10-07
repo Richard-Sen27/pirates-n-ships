@@ -15,7 +15,7 @@ F9.expand = function(p){
     head: {position: leanTop},
     right_arm: {rotation: p.ra, position: add(add(leanSh, twR), p.raPos||[0,0,0])},
     left_arm: {rotation: p.la, position: add(add(leanSh, twL), p.laPos||[0,0,0])},
-    right_item: {rotation: p.ri||[0,0,0]}
+    right_item: p.riPos ? {rotation: p.ri||[0,0,0], position: p.riPos} : {rotation: p.ri||[0,0,0]}
   };
 };
 F9.toInternal = (ch, v) => ch==='rotation' ? [-v[0],-v[1],v[2]] : [-v[0],v[1],v[2]];
@@ -387,4 +387,56 @@ F9.make('guard_lower', 0.2, 'once', [{t:0,pose:P.GUARD},{t:0.2,pose:P.REST}]);
 F9.make('parry', 0.35, 'hold', [{t:0,pose:P.GUARD},{t:0.07,pose:P.PARRY_FLICK},{t:0.18,pose:P.PARRY_HOLD},{t:0.35,pose:P.REST}]);
 F9.make('stagger', 1.0, 'once', [{t:0,pose:P.REST},{t:0.12,pose:P.STAG_HIT},{t:0.5,pose:P.STAG_HOLD},{t:1.0,pose:P.REST}]);
 };
+// Firearm poses (P3). Same convention. ri turns the gun in the arm's frame (x +90 lays the barrel along the arm, z
+// yaws it; never y and z together). riPos slides the gun along the arm (y negative = towards the hand and beyond), so
+// the hand holds the musket by the fore-stock while its butt rests on the ground. The aim poses keep the arms level:
+// in game the look pitch is added to both arms (FirearmAnimations' adjustment). Values were tuned by measuring the
+// proxy barrel's world direction and solving the left hand onto muzzle and lock (see art/README.md, "Firearm animations").
+F9.G = {
+ PISTOL_AIM_RISE: {ra: [-62, -3, 0], la: [4, 0, -8], ri: [55, 0, 0], twist: -6, lean: 1},
+ PISTOL_AIM: {ra: [-92, -5, 0], la: [8, 0, -10], ri: [92, 0, 5], twist: -12, lean: 2},
+ MUSKET_AIM_RISE: {ra: [-55, -12, 0], la: [-55, 25, 0], ri: [50, 0, 0], twist: 8, lean: 3},
+ MUSKET_AIM: {ra: [-84, -17, 0], la: [-86, 34, 0], ri: [84, 0, 17], twist: 15, lean: 5},
+ P_LOW: {ra: [-45, -40, 0], la: [0, 0, 0], ri: [-35, 0, 0], riPos: [0, -4, 0], twist: 0, lean: 3},
+ P_POUR: {ra: [-45, -40, 0], la: [-120, 35, -5], ri: [-35, 0, 0], riPos: [0, -4, 0], twist: 0, lean: 4},
+ P_POUR2: {ra: [-45, -40, 0], la: [-116, 38, 0], ri: [-35, 0, 0], riPos: [0, -4, 0], twist: 0, lean: 4},
+ P_BELT: {ra: [-45, -40, 0], la: [10, 0, -15], ri: [-35, 0, 0], riPos: [0, -4, 0], twist: 0, lean: 3},
+ P_ROD_UP: {ra: [-45, -40, 0], la: [-132, 35, 0], ri: [-35, 0, 0], riPos: [0, -4, 0], twist: 0, lean: 3},
+ P_ROD_DOWN: {ra: [-45, -40, 0], la: [-118, 30, -15], ri: [-35, 0, 0], riPos: [0, -4, 0], twist: 0, lean: 4},
+ P_LEVEL: {ra: [-45, -35, 0], la: [-20, 0, -10], ri: [45, 0, 0], twist: 0, lean: 2},
+ P_COCK: {ra: [-45, -35, 0], la: [-90, 45, 0], ri: [45, 0, 0], twist: 0, lean: 3},
+ P_COCK2: {ra: [-47, -35, 0], la: [-86, 43, 0], ri: [39, 0, 0], twist: 0, lean: 3},
+ M_UP: {ra: [-20, -35, 0], la: [0, 0, 0], ri: [-75, 0, 0], riPos: [0, -8.5, 0], twist: 0, lean: 2},
+ M_POUR: {ra: [-20, -35, 0], la: [-100, 70, 0], ri: [-75, 0, 0], riPos: [0, -8.5, 0], twist: 5, lean: 2},
+ M_POUR2: {ra: [-20, -35, 0], la: [-97, 74, 5], ri: [-75, 0, 0], riPos: [0, -8.5, 0], twist: 5, lean: 2},
+ M_ROD_TOP: {ra: [-20, -35, 0], la: [-125, 65, 0], ri: [-75, 0, 0], riPos: [0, -8.5, 0], twist: 5, lean: 0},
+ M_ROD_DOWN: {ra: [-20, -35, 0], la: [-95, 70, 0], ri: [-75, 0, 0], riPos: [0, -8.5, 0], twist: 5, lean: 4},
+ M_STOW: {ra: [-20, -35, 0], la: [-30, 10, -10], ri: [-75, 0, 0], riPos: [0, -8.5, 0], twist: 0, lean: 2},
+ M_RAISE: {ra: [-45, -35, 0], la: [-90, 15, 0], ri: [15, 0, 0], twist: 8, lean: 3},
+ M_COCK: {ra: [-45, -35, 0], la: [-75, 40, 10], ri: [15, 0, 0], twist: 8, lean: 4},
+ M_COCK2: {ra: [-47, -35, 0], la: [-72, 38, 8], ri: [9, 0, 0], twist: 8, lean: 4}
+};
+// Builds an animation whose poses all key right_item's position (riPos defaults to [0, 0, 0]), so the channel has a
+// keyframe wherever the others do.
+F9.makeG = function(name, length, loop, keys){
+  return F9.make(name, length, loop, keys.map(k => ({t: k.t, pose: Object.assign({riPos: [0, 0, 0]}, k.pose)})));
+};
+F9.buildFirearms = function(){
+var G = F9.G, R = F9.P.REST;
+F9.make('pistol_aim', 0.25, 'hold', [{t:0,pose:R},{t:0.1,pose:G.PISTOL_AIM_RISE},{t:0.25,pose:G.PISTOL_AIM}]);
+F9.make('musket_aim', 0.35, 'hold', [{t:0,pose:R},{t:0.15,pose:G.MUSKET_AIM_RISE},{t:0.35,pose:G.MUSKET_AIM}]);
+F9.makeG('pistol_reload', 3.0, 'once', [{t:0,pose:R},{t:0.25,pose:G.P_LOW},{t:0.45,pose:G.P_POUR},{t:0.7,pose:G.P_POUR2},{t:0.95,pose:G.P_POUR},
+ {t:1.2,pose:G.P_BELT},{t:1.45,pose:G.P_ROD_UP},{t:1.65,pose:G.P_ROD_DOWN},{t:1.85,pose:G.P_ROD_UP},{t:2.05,pose:G.P_ROD_DOWN},
+ {t:2.3,pose:G.P_BELT},{t:2.5,pose:G.P_LEVEL},{t:2.65,pose:G.P_COCK},{t:2.75,pose:G.P_COCK2},{t:3.0,pose:R}]);
+F9.makeG('musket_reload', 5.0, 'once', [{t:0,pose:R},{t:0.4,pose:G.M_UP},{t:0.75,pose:G.M_POUR},{t:1.05,pose:G.M_POUR2},{t:1.35,pose:G.M_POUR},
+ {t:1.7,pose:G.M_ROD_TOP},{t:2.1,pose:G.M_ROD_DOWN},{t:2.5,pose:G.M_ROD_TOP},{t:2.9,pose:G.M_ROD_DOWN},{t:3.3,pose:G.M_ROD_TOP},
+ {t:3.6,pose:G.M_STOW},{t:4.0,pose:G.M_RAISE},{t:4.3,pose:G.M_COCK},{t:4.45,pose:G.M_COCK2},{t:4.65,pose:G.M_RAISE},{t:5.0,pose:R}]);
+};
+// Shows the proxy item of one weapon in right_item: 'sword', 'pistol' or 'musket' (the gun proxies are rough boxes
+// placed where vanilla's third-person transform of the F8b gun models puts barrel, lock and grip).
+F9.proxy = function(kind){
+  for (const c of Cube.all) if (c.parent && c.parent.name==='right_item') c.visibility = kind==='sword' ? !/^(pistol|musket)_/.test(c.name) : c.name.startsWith(kind+'_');
+  Canvas.updateVisibility();
+};
 F9.build();
+F9.buildFirearms();

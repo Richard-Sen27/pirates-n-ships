@@ -1,12 +1,10 @@
 package com.richardsenger.piratesnships.combat.grapple;
 
-import com.richardsenger.piratesnships.combat.grapple.GrappleLaunch.CrossbowUse;
 import com.richardsenger.piratesnships.combat.grapple.GrappleLaunch.Held;
 import com.richardsenger.piratesnships.combat.grapple.GrappleLaunch.HookUse;
 import com.richardsenger.piratesnships.combat.grapple.GrappleLaunch.Mode;
 import com.richardsenger.piratesnships.combat.grapple.GrappleLaunch.MusketRefusal;
 import com.richardsenger.piratesnships.combat.grapple.GrappleLaunch.Powder;
-import com.richardsenger.piratesnships.combat.grapple.GrappleLaunch.Release;
 import net.minecraft.world.InteractionHand;
 import org.junit.jupiter.api.Test;
 
@@ -17,88 +15,64 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** GR3's pure launch rules (docs/design.md §8.3 "Launching"). */
+/** GR3's pure launch rules with GR4's changes: the musket is the only launcher (docs/design.md §8.3 "Launching"). */
 class GrappleLaunchTest {
 
     private static final double EPS = 1e-9;
 
     private static InteractionHand launcherHand(Held main, Held off, boolean offhandRequired) {
-        return GrappleLaunch.launcherHand(main, off, offhandRequired, true, true);
+        return GrappleLaunch.launcherHand(main, off, offhandRequired, true);
     }
 
     // ---- hand arrangement ----
 
     @Test
-    void hookInTheOffHandAndLauncherInTheMainHand() {
-        assertEquals(MAIN_HAND, launcherHand(Held.CROSSBOW, Held.HOOK, true));
+    void hookInTheOffHandAndMusketInTheMainHand() {
         assertEquals(MAIN_HAND, launcherHand(Held.MUSKET, Held.HOOK, true));
     }
 
     @Test
     void swappedHandsNeedOffhandRequiredOff() {
-        assertNull(launcherHand(Held.HOOK, Held.CROSSBOW, true), "offhand_required refuses the hook in the main hand");
-        assertNull(launcherHand(Held.HOOK, Held.MUSKET, true));
-        assertEquals(OFF_HAND, launcherHand(Held.HOOK, Held.CROSSBOW, false));
+        assertNull(launcherHand(Held.HOOK, Held.MUSKET, true), "offhand_required refuses the hook in the main hand");
         assertEquals(OFF_HAND, launcherHand(Held.HOOK, Held.MUSKET, false));
         assertEquals(MAIN_HAND, launcherHand(Held.MUSKET, Held.HOOK, false), "the default arrangement still works");
     }
 
     @Test
-    void noLauncherNoArrangement() {
+    void onlyTheMusketLaunches() {
         for (Held other : new Held[]{Held.EMPTY, Held.OTHER, Held.HOOK}) {
-            assertNull(launcherHand(other, Held.HOOK, false));
+            assertNull(launcherHand(other, Held.HOOK, false), "GR4: " + other + " is no launcher");
             assertNull(launcherHand(Held.HOOK, other, false));
         }
-        assertNull(launcherHand(Held.CROSSBOW, Held.MUSKET, false), "two launchers and no hook");
+        assertNull(launcherHand(Held.OTHER, Held.MUSKET, false), "a musket and no hook");
     }
 
     @Test
-    void switchedOffLaunchersDoNotCount() {
-        assertNull(GrappleLaunch.launcherHand(Held.CROSSBOW, Held.HOOK, true, false, true));
-        assertNull(GrappleLaunch.launcherHand(Held.MUSKET, Held.HOOK, true, true, false));
-        assertEquals(MAIN_HAND, GrappleLaunch.launcherHand(Held.CROSSBOW, Held.HOOK, true, true, false),
-                "the musket toggle does not touch the crossbow");
+    void aSwitchedOffMusketDoesNotLaunch() {
+        assertNull(GrappleLaunch.launcherHand(Held.MUSKET, Held.HOOK, true, false));
+        assertEquals(HookUse.THROW, GrappleLaunch.hookUse(OFF_HAND, Held.MUSKET, Held.HOOK, true, false));
     }
 
     @Test
-    void theHookIsThrownWithoutALauncherInTheOtherHand() {
-        assertEquals(HookUse.THROW, GrappleLaunch.hookUse(MAIN_HAND, Held.HOOK, Held.EMPTY, true, true, true));
-        assertEquals(HookUse.THROW, GrappleLaunch.hookUse(MAIN_HAND, Held.HOOK, Held.OTHER, true, true, true));
-        assertEquals(HookUse.THROW, GrappleLaunch.hookUse(OFF_HAND, Held.OTHER, Held.HOOK, true, true, true));
+    void theHookIsThrownWithoutAMusketInTheOtherHand() {
+        assertEquals(HookUse.THROW, GrappleLaunch.hookUse(MAIN_HAND, Held.HOOK, Held.EMPTY, true, true));
+        assertEquals(HookUse.THROW, GrappleLaunch.hookUse(MAIN_HAND, Held.HOOK, Held.OTHER, true, true));
+        // a crossbow or any other item in the main hand: the off-hand hook is a hook (thrown if vanilla offers it the use)
+        assertEquals(HookUse.THROW, GrappleLaunch.hookUse(OFF_HAND, Held.OTHER, Held.HOOK, true, true));
         // offhand_required: a hook in the main hand with a musket in the off hand is thrown
-        assertEquals(HookUse.THROW, GrappleLaunch.hookUse(MAIN_HAND, Held.HOOK, Held.MUSKET, true, true, true));
-        assertEquals(HookUse.THROW, GrappleLaunch.hookUse(OFF_HAND, Held.CROSSBOW, Held.HOOK, true, false, true),
-                "a switched-off crossbow");
+        assertEquals(HookUse.THROW, GrappleLaunch.hookUse(MAIN_HAND, Held.HOOK, Held.MUSKET, true, true));
     }
 
     @Test
-    void theHookHandsTheUseToTheLauncher() {
-        assertEquals(HookUse.LAUNCHER, GrappleLaunch.hookUse(OFF_HAND, Held.CROSSBOW, Held.HOOK, true, true, true));
-        assertEquals(HookUse.LAUNCHER, GrappleLaunch.hookUse(OFF_HAND, Held.MUSKET, Held.HOOK, true, true, true));
-        assertEquals(HookUse.LAUNCHER, GrappleLaunch.hookUse(MAIN_HAND, Held.HOOK, Held.MUSKET, false, true, true));
+    void theHookHandsTheUseToTheMusket() {
+        assertEquals(HookUse.LAUNCHER, GrappleLaunch.hookUse(OFF_HAND, Held.MUSKET, Held.HOOK, true, true));
+        assertEquals(HookUse.LAUNCHER, GrappleLaunch.hookUse(MAIN_HAND, Held.HOOK, Held.MUSKET, false, true));
     }
 
     @Test
     void otherHandIsTheOtherHand() {
         assertEquals(OFF_HAND, GrappleLaunch.other(MAIN_HAND));
         assertEquals(MAIN_HAND, GrappleLaunch.other(OFF_HAND));
-    }
-
-    // ---- crossbow ----
-
-    @Test
-    void crossbowDrawsWhenEmptyFiresWhenHookedAndLeavesArrowsToVanilla() {
-        assertEquals(CrossbowUse.DRAW, GrappleLaunch.crossbowUse(false, false));
-        assertEquals(CrossbowUse.FIRE, GrappleLaunch.crossbowUse(true, false));
-        assertEquals(CrossbowUse.VANILLA, GrappleLaunch.crossbowUse(false, true));
-    }
-
-    @Test
-    void drawCompletesAtTheChargeTime() {
-        assertFalse(GrappleLaunch.drawn(24, 25));
-        assertTrue(GrappleLaunch.drawn(25, 25));
-        assertTrue(GrappleLaunch.drawn(0, 0), "quick charge III and beyond");
-        assertTrue(GrappleLaunch.drawn(0, -5), "a negative charge time counts as none");
     }
 
     // ---- musket: load preconditions ----
@@ -122,35 +96,6 @@ class GrappleLaunchTest {
         assertEquals(MusketRefusal.NO_POWDER, GrappleLaunch.musketRefusal(false, false, Powder.MISSING));
     }
 
-    // ---- release ----
-
-    @Test
-    void releasingADrawOrLoadBeforeItCompletesCancels() {
-        assertEquals(Release.CANCEL, GrappleLaunch.release(Mode.CROSSBOW, false, false, false, 10, 0));
-        assertEquals(Release.CANCEL, GrappleLaunch.release(Mode.MUSKET, false, false, false, 10, 0));
-        assertEquals(Release.CANCEL, GrappleLaunch.release(Mode.MUSKET, false, false, true, 10, 0), "sneaking changes nothing");
-    }
-
-    @Test
-    void releasingAfterTheLoadCompletedKeepsTheHookLoaded() {
-        assertEquals(Release.KEEP_LOADED, GrappleLaunch.release(Mode.CROSSBOW, false, true, false, 40, 0));
-        assertEquals(Release.KEEP_LOADED, GrappleLaunch.release(Mode.MUSKET, false, true, false, 120, 0));
-    }
-
-    @Test
-    void releasingAnAimedMusketFiresUnlessLowered() {
-        assertEquals(Release.FIRE, GrappleLaunch.release(Mode.MUSKET, true, true, false, 0, 0), "a click fires at once");
-        assertEquals(Release.FIRE, GrappleLaunch.release(Mode.MUSKET, true, true, false, 30, 0));
-        assertEquals(Release.LOWER, GrappleLaunch.release(Mode.MUSKET, true, true, true, 30, 0));
-        assertEquals(Release.LOWER, GrappleLaunch.release(Mode.MUSKET, true, true, false, 3, 5), "below aim_min_ticks");
-    }
-
-    @Test
-    void theCrossbowHasNoAimSession() {
-        // a hook-loaded crossbow fires on the press; a later release only ends the held key
-        assertEquals(Release.KEEP_LOADED, GrappleLaunch.release(Mode.CROSSBOW, true, true, false, 30, 0));
-    }
-
     @Test
     void aMisfireKeepsTheHook() {
         assertFalse(GrappleLaunch.hookLeaves(true));
@@ -160,30 +105,34 @@ class GrappleLaunchTest {
     // ---- flight ----
 
     @Test
-    void launchSpeedsScaleTheThrow() {
-        assertEquals(1.5, GrappleLaunch.speed(Mode.THROW, 1.5, 1.6, 2.4), EPS);
-        assertEquals(2.4, GrappleLaunch.speed(Mode.CROSSBOW, 1.5, 1.6, 2.4), EPS);
-        assertEquals(3.6, GrappleLaunch.speed(Mode.MUSKET, 1.5, 1.6, 2.4), EPS);
+    void theMusketScalesTheThrowSpeed() {
+        assertEquals(2.8, GrappleLaunch.speed(Mode.THROW, 2.8, 1.6), EPS);
+        assertEquals(4.48, GrappleLaunch.speed(Mode.MUSKET, 2.8, 1.6), EPS);
     }
 
     @Test
-    void weaponRopesAreNeverShorterThanTheThrownOne() {
-        assertEquals(24, GrappleLaunch.ropeLength(Mode.THROW, 24, 36, 48), EPS);
-        assertEquals(36, GrappleLaunch.ropeLength(Mode.CROSSBOW, 24, 36, 48), EPS);
-        assertEquals(48, GrappleLaunch.ropeLength(Mode.MUSKET, 24, 36, 48), EPS);
-        assertEquals(40, GrappleLaunch.ropeLength(Mode.MUSKET, 40, 36, 20), EPS);
+    void theMusketRopeIsNeverShorterThanTheThrownOne() {
+        assertEquals(32, GrappleLaunch.ropeLength(Mode.THROW, 32, 64), EPS);
+        assertEquals(64, GrappleLaunch.ropeLength(Mode.MUSKET, 32, 64), EPS);
+        assertEquals(40, GrappleLaunch.ropeLength(Mode.MUSKET, 40, 20), EPS);
     }
 
     @Test
-    void weaponsAreSteadierThanAThrow() {
-        assertTrue(GrappleLaunch.inaccuracy(Mode.CROSSBOW) < GrappleLaunch.inaccuracy(Mode.THROW));
-        assertEquals(GrappleLaunch.inaccuracy(Mode.CROSSBOW), GrappleLaunch.inaccuracy(Mode.MUSKET));
+    void onlyTheMusketShotFliesFlatter() {
+        assertEquals(1.0, GrappleLaunch.gravityFactor(Mode.THROW, 0.5), EPS);
+        assertEquals(0.5, GrappleLaunch.gravityFactor(Mode.MUSKET, 0.5), EPS);
+        assertEquals(0.0, GrappleLaunch.gravityFactor(Mode.MUSKET, -1.0), EPS, "never negative");
+    }
+
+    @Test
+    void theMusketIsSteadierThanAThrow() {
+        assertTrue(GrappleLaunch.inaccuracy(Mode.MUSKET) < GrappleLaunch.inaccuracy(Mode.THROW));
     }
 
     @Test
     void launcherModes() {
-        assertEquals(Mode.CROSSBOW, GrappleLaunch.mode(Held.CROSSBOW));
         assertEquals(Mode.MUSKET, GrappleLaunch.mode(Held.MUSKET));
         assertEquals(Mode.THROW, GrappleLaunch.mode(Held.HOOK));
+        assertEquals(Mode.THROW, GrappleLaunch.mode(Held.OTHER));
     }
 }

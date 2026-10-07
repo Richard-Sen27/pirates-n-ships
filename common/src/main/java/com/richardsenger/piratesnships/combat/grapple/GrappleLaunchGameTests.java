@@ -27,6 +27,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CrossbowItem;
+import com.richardsenger.piratesnships.Constants;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
@@ -40,19 +41,18 @@ import org.joml.Vector3d;
 import java.util.Collection;
 
 /**
- * GR3 and GR1 in a real server: loading the grappling hook from the off hand into a musket or crossbow and firing it
- * (GR3), and the mooring ring (GR1) (docs/design.md §8.3). The launch tests use a survival mock player looking up and
- * drive the sessions the way {@code LivingEntity} does ({@code use}, {@code onUseTick} at the held time, then
- * {@code releaseUsing} with the remaining use time; the crossbow's draw through {@link CrossbowHookLaunch#tickDraw},
- * its press through {@link CrossbowHookLaunch#fire}, which the client's payload calls) and measure the hook's speed
- * right after the launch. The ring tests use the two hulls of {@link GrappleGameTests} (ship A at x 2..6, ship B
- * at x 16..20, both z 9..13, deck top at y 9) with rings placed on the deck before assembly.
+ * GR3, GR4 and GR1 in a real server: loading the grappling hook from the off hand into the musket and firing it (GR3;
+ * GR4 removed the crossbow), the reach of a level throw and shot (GR4), and the mooring ring (GR1) (docs/design.md
+ * §8.3). The launch tests use a survival mock player looking up and drive the sessions the way {@code LivingEntity}
+ * does ({@code use}, {@code onUseTick} at the held time, then {@code releaseUsing} with the remaining use time) and
+ * measure the hook's speed right after the launch. The reach tests fly a hook by hand high above the test (not added
+ * to the level, so only the test ticks it). The ring tests use the two hulls of {@link GrappleGameTests} (ship A at
+ * x 2..6, ship B at x 16..20, both z 9..13, deck top at y 9) with rings placed on the deck before assembly.
  */
 public final class GrappleLaunchGameTests {
 
     private static final String LAUNCH_BATCH = "pirates_n_ships_grapple_launch";
     private static final String RING_BATCH = "pirates_n_ships_grapple_ring";
-    private static final String CROSSBOW_DISABLED_BATCH = "pirates_n_ships_config_grapple_crossbow_disabled";
     private static final String OFFHAND_BATCH = "pirates_n_ships_config_grapple_launch";
     private static final String MISFIRE_BATCH = "pirates_n_ships_config_grapple_launch_misfire";
     /** Relative tolerance of a measured launch speed (the weapon's inaccuracy changes the length very slightly). */
@@ -194,7 +194,9 @@ public final class GrappleLaunchGameTests {
         double musket = GrappleConfig.THROW_VELOCITY.get() * GrappleConfig.MUSKET_SPEED.get();
         assertSpeed(h, out, musket, "the musket hook");
         h.assertTrue(out.ropeLength() == GrappleConfig.ropeLength(GrappleLaunch.Mode.MUSKET)
-                && out.ropeLength() > GrappleConfig.ropeLength(GrappleLaunch.Mode.CROSSBOW), "rope length " + out.ropeLength());
+                && out.ropeLength() > GrappleConfig.MAX_ROPE_LENGTH.get(), "rope length " + out.ropeLength());
+        h.assertTrue(Math.abs(out.gravityFactor() - GrappleConfig.MUSKET_GRAVITY_FACTOR.get()) < 1.0e-6,
+                "the musket hook flies with gravity factor " + out.gravityFactor());
         h.assertTrue(!GrappleContent.isHookLoaded(gun), "the musket still holds the hook");
         h.assertTrue(!FirearmContent.isLoaded(gun), "the musket is still marked loaded");
         h.assertTrue(player.getCooldowns().isOnCooldown(CombatContent.MUSKET.get()), "the musket's cooldown did not start");
@@ -236,73 +238,120 @@ public final class GrappleLaunchGameTests {
         h.succeed();
     }
 
-    // ------------------------------------------------------------------ crossbow
+    // ------------------------------------------------------------------ crossbow (GR4: no launcher)
 
     @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = LAUNCH_BATCH)
-    public static void crossbowDrawLoadsTheHookAndAPressShootsIt(GameTestHelper h) {
+    public static void aCrossbowNextToTheHookIsJustACrossbow(GameTestHelper h) {
         ServerLevel level = h.getLevel();
         Player player = shooter(h, new ItemStack(Items.CROSSBOW), hook());
         give(player, new ItemStack(Items.ARROW, 5));
         ItemStack crossbow = player.getMainHandItem();
+        // the main hand gets the use first: vanilla's draw with arrows, the hook stays in the off hand
+        InteractionResult r = crossbow.use(level, player, InteractionHand.MAIN_HAND).getResult();
+        h.assertTrue(r.consumesAction() && player.isUsingItem() && player.getUseItem() == crossbow, "the crossbow did not draw: " + r);
         int charge = CrossbowItem.getChargeDuration(crossbow, player);
-
-        InteractionResult r = player.getOffhandItem().use(level, player, InteractionHand.OFF_HAND).getResult();
-        h.assertTrue(r.consumesAction(), "the draw was refused: " + r);
-        h.assertTrue(player.isUsingItem() && player.getUseItem() == crossbow && player.getUsedItemHand() == InteractionHand.MAIN_HAND,
-                "the crossbow is not being drawn");
-        h.assertTrue(!CrossbowHookLaunch.tickDraw(player, charge - 1), "the hook was loaded before the full draw");
-        h.assertTrue(CrossbowHookLaunch.tickDraw(player, charge), "the hook was not loaded at the full draw");
-        h.assertTrue(CrossbowHookLaunch.isHookLoaded(crossbow) && CrossbowItem.isCharged(crossbow), "the crossbow is not hook-loaded");
-        h.assertTrue(player.getOffhandItem().isEmpty(), "the hook is still in the off hand");
-        // vanilla's release of the charged crossbow does nothing: no arrows are loaded on top
         crossbow.releaseUsing(level, player, crossbow.getUseDuration(player) - (charge + 5));
         player.stopUsingItem();
-        h.assertTrue(player.getInventory().countItem(Items.ARROW) == 5, "arrows were loaded");
-        h.assertTrue(GrappleService.hookOf(player) == null, "letting go after the draw shot the hook");
+        h.assertTrue(CrossbowItem.isCharged(crossbow), "the crossbow is not charged with an arrow");
+        h.assertTrue(!GrappleContent.isHookLoaded(crossbow), "the hook went into the crossbow");
+        h.assertTrue(player.getOffhandItem().is(CombatContent.GRAPPLING_HOOK.get()), "the hook left the off hand");
+        h.assertTrue(player.getInventory().countItem(Items.ARROW) == 4, "the draw did not take one arrow");
+        h.assertTrue(GrappleService.hookOf(player) == null, "a hook is out");
+        // with no arrows the crossbow's use fails and vanilla offers the use to the off hand: the hook is thrown by hand
+        Player empty = shooter(h, new ItemStack(Items.CROSSBOW), hook());
+        InteractionResult none = empty.getMainHandItem().use(level, empty, InteractionHand.MAIN_HAND).getResult();
+        h.assertTrue(!none.consumesAction(), "an empty crossbow without arrows took the use: " + none);
+        InteractionResult thrown = empty.getOffhandItem().use(level, empty, InteractionHand.OFF_HAND).getResult();
+        h.assertTrue(thrown.consumesAction() && !empty.isUsingItem(), "the off-hand hook was not thrown: " + thrown);
+        GrapplingHookEntity out = GrappleService.hookOf(empty);
+        h.assertTrue(out != null, "the hook was not thrown");
+        assertSpeed(h, out, GrappleConfig.THROW_VELOCITY.get(), "the thrown hook");
+        h.assertTrue(GrappleService.release(empty) && hooks(empty) == 1, "the released hook did not come back");
+        h.succeed();
+    }
 
-        h.assertTrue(CrossbowHookLaunch.fire(level, player, InteractionHand.MAIN_HAND), "the press did not shoot");
-        GrapplingHookEntity out = GrappleService.hookOf(player);
-        h.assertTrue(out != null, "no hook out after the shot");
-        assertSpeed(h, out, GrappleConfig.THROW_VELOCITY.get() * GrappleConfig.CROSSBOW_SPEED.get(), "the crossbow hook");
-        h.assertTrue(out.ropeLength() == GrappleConfig.ropeLength(GrappleLaunch.Mode.CROSSBOW)
-                && out.ropeLength() > GrappleConfig.MAX_ROPE_LENGTH.get(), "rope length " + out.ropeLength());
-        h.assertTrue(!CrossbowItem.isCharged(crossbow) && !GrappleContent.isHookLoaded(crossbow), "the crossbow is still loaded");
-        h.assertTrue(crossbow.getDamageValue() == 1, "the crossbow took no wear");
-        h.assertTrue(!CrossbowHookLaunch.fire(level, player, InteractionHand.MAIN_HAND), "an empty crossbow shot again");
-        h.assertTrue(GrappleService.release(player) && hooks(player) == 1, "the released hook did not come back");
+    // ------------------------------------------------------------------ reach (GR4)
+
+    /**
+     * How a level flight ended: horizontal distance from the thrower's feet, ticks, height above the feet and state
+     * then; and the last position still within the rope's length of the feet (distance and height), i.e. where the
+     * hook was on the tick before its rope ran out.
+     */
+    private record Flight(double distance, int ticks, double heightAboveFeet, GrapplingHookEntity.State state,
+                          double insideDistance, double insideHeight) {
+    }
+
+    /**
+     * Flies a hook launched in {@code mode} level along +x from the eyes of a mock player standing 60 blocks above the
+     * test (open air), with the mode's speed, gravity and rope ({@code rope} overrides the rope length; NaN keeps
+     * it). The hook is not added to the level: the test ticks it until it stops flying or sinks to the thrower's
+     * feet, i.e. lands on flat ground at the thrower's height.
+     */
+    private static Flight flyLevel(GameTestHelper h, GrappleLaunch.Mode mode, double rope) {
+        ServerLevel level = h.getLevel();
+        Player p = h.makeMockPlayer(GameType.SURVIVAL);
+        p.getInventory().clearContent();
+        Vec3 feet = h.absoluteVec(new Vec3(4.5, 60, 4.5));
+        p.setPos(feet.x, feet.y, feet.z);
+        p.setYRot(-90.0f); // +x
+        p.setXRot(0.0f);
+        Vec3 eye = new Vec3(p.getX(), p.getEyeY() - 0.1, p.getZ()); // where a thrown projectile starts
+        GrapplingHookEntity hook = new GrapplingHookEntity(level, p, eye, new Vec3(GrappleConfig.speed(mode), 0, 0), hook(), false);
+        GrappleService.configure(hook, mode);
+        if (!Double.isNaN(rope)) {
+            hook.setRopeLength(rope);
+        }
+        int t = 0;
+        double insideDistance = 0;
+        double insideHeight = hook.getY() - feet.y;
+        try {
+            while (t < 400 && hook.state() == GrapplingHookEntity.State.FLYING && hook.getY() > feet.y) {
+                hook.tick();
+                t++;
+                if (hook.state() == GrapplingHookEntity.State.FLYING && hook.position().distanceTo(feet) <= hook.ropeLength()) {
+                    insideDistance = Math.hypot(hook.getX() - feet.x, hook.getZ() - feet.z);
+                    insideHeight = hook.getY() - feet.y;
+                }
+            }
+            return new Flight(Math.hypot(hook.getX() - feet.x, hook.getZ() - feet.z), t, hook.getY() - feet.y, hook.state(),
+                    insideDistance, insideHeight);
+        } finally {
+            hook.discard();
+        }
+    }
+
+    /**
+     * A level launch in {@code mode} would land past its rope (with 10 % margin), and with the rope it is still in the
+     * air, above the thrower's feet, when the rope runs out: it reaches the whole rope.
+     */
+    private static void assertReach(GameTestHelper h, GrappleLaunch.Mode mode, String what) {
+        double rope = GrappleConfig.ropeLength(mode);
+        double speed = GrappleConfig.speed(mode);
+        Flight free = flyLevel(h, mode, 1000.0);
+        Constants.LOG.info("GR4 reach: a level {} lands {} blocks away after {} ticks (rope {})", what,
+                String.format(java.util.Locale.ROOT, "%.1f", free.distance()), free.ticks(), rope);
+        h.assertTrue(free.distance() >= 1.1 * rope, "a level " + what + " lands after " + free.distance()
+                + " blocks, not past its " + rope + "-block rope with margin");
+        Flight roped = flyLevel(h, mode, Double.NaN);
+        h.assertTrue(roped.state() == GrapplingHookEntity.State.RETRACTING, "the " + what + "'s rope did not run out: " + roped);
+        h.assertTrue(roped.insideDistance() >= rope - speed && roped.insideHeight() > 0.0,
+                "the " + what + " fell before its rope ran out: " + roped);
+        h.assertTrue(roped.distance() > rope - 0.5 && roped.distance() <= rope + speed,
+                "the " + what + "'s rope ran out after " + roped.distance() + " blocks, not at " + rope + ": " + roped);
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = LAUNCH_BATCH)
+    public static void aLevelThrowReachesTheWholeRope(GameTestHelper h) {
+        assertReach(h, GrappleLaunch.Mode.THROW, "throw");
+        h.assertTrue(GrappleConfig.ropeLength(GrappleLaunch.Mode.THROW) >= 32.0, "the thrown rope is shorter than 32 blocks");
         h.succeed();
     }
 
     @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = LAUNCH_BATCH)
-    public static void earlyCrossbowReleaseTakesNothing(GameTestHelper h) {
-        ServerLevel level = h.getLevel();
-        Player player = shooter(h, new ItemStack(Items.CROSSBOW), hook());
-        give(player, new ItemStack(Items.ARROW, 5));
-        ItemStack crossbow = player.getMainHandItem();
-        int charge = CrossbowItem.getChargeDuration(crossbow, player);
-        player.getOffhandItem().use(level, player, InteractionHand.OFF_HAND);
-        h.assertTrue(player.isUsingItem(), "the crossbow is not being drawn");
-        CrossbowHookLaunch.tickDraw(player, charge - 3);
-        crossbow.releaseUsing(level, player, crossbow.getUseDuration(player) - (charge - 3));
-        player.stopUsingItem();
-        h.assertTrue(!CrossbowItem.isCharged(crossbow) && !GrappleContent.isHookLoaded(crossbow), "the crossbow got loaded");
-        h.assertTrue(player.getOffhandItem().is(CombatContent.GRAPPLING_HOOK.get()), "the hook left the off hand");
-        h.assertTrue(player.getInventory().countItem(Items.ARROW) == 5, "arrows were used");
-        h.succeed();
-    }
-
-    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = CROSSBOW_DISABLED_BATCH)
-    public static void crossbowLaunchSwitchedOffThrowsTheHook(GameTestHelper h) {
-        ConfigOverrides.during(h, GrappleConfig.CROSSBOW_ENABLED, false);
-        ServerLevel level = h.getLevel();
-        Player player = shooter(h, new ItemStack(Items.CROSSBOW), hook());
-        InteractionResult r = player.getOffhandItem().use(level, player, InteractionHand.OFF_HAND).getResult();
-        h.assertTrue(r.consumesAction(), "the throw was refused: " + r);
-        h.assertTrue(!player.isUsingItem(), "a switched-off crossbow launch still draws");
-        GrapplingHookEntity out = GrappleService.hookOf(player);
-        h.assertTrue(out != null, "the hook was not thrown");
-        assertSpeed(h, out, GrappleConfig.THROW_VELOCITY.get(), "the thrown hook");
-        h.assertTrue(GrappleService.release(player) && hooks(player) == 1, "the released hook did not come back");
+    public static void aLevelMusketShotReachesTheWholeRope(GameTestHelper h) {
+        assertReach(h, GrappleLaunch.Mode.MUSKET, "musket shot");
+        h.assertTrue(GrappleConfig.ropeLength(GrappleLaunch.Mode.MUSKET) >= 2 * GrappleConfig.ropeLength(GrappleLaunch.Mode.THROW),
+                "the musket does not reach twice as far as a throw");
         h.succeed();
     }
 

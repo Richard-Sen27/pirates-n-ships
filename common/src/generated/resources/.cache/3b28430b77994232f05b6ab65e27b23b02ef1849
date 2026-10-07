@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-07T10:21:08.808873	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-07T10:43:57.069985	Block states and models: pirates_n_ships
 c189a7833975a61cf2c7c8fd326d27a32969cb9d assets/pirates_n_ships/blockstates/bilge_pump.json
 52e053a4f7334e9a78798b4b4b9a2ad80087f3d5 assets/pirates_n_ships/blockstates/brig_bars.json
 83716521a6f9785f7114fa5a9489defb1257975d assets/pirates_n_ships/blockstates/brig_door.json
@@ -29,7 +29,6 @@ f7c82b786e5bb6b0fc708a615845f0ef2c84bd44 assets/pirates_n_ships/models/block/fla
 e5b3569e1b8c4192055ef64e81a0d3f84ebb3c03 assets/pirates_n_ships/models/block/flagpole_flag_merchant.json
 8e589f96f89ee134fa35c32000bea7e6286115db assets/pirates_n_ships/models/block/flagpole_flag_navy.json
 454079474672d450268ce92edd45fedf1223408e assets/pirates_n_ships/models/block/hull_patch.json
-47abd24ea4491ae2c5a2954dabb597878ee1db74 assets/pirates_n_ships/models/block/sea_chest.json
 7c3493c10a85f585af8ae3085e8e58c056e6b090 assets/pirates_n_ships/models/block/test_block.json
 5982e307cbb43d7cd8267060c04e3d13c79444f7 assets/pirates_n_ships/models/item/bilge_pump.json
 7b937a3b6f02e6abfce5d9e23f88171f665e804f assets/pirates_n_ships/models/item/brig_bars.json

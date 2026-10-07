@@ -9,6 +9,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -22,18 +23,24 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
  * The placed sea chest (docs/design.md §11): use opens its 54 slots in the vanilla double-chest screen. It keeps its
  * contents when broken like a shulker box: the loot table copies the {@code container} component into the dropped
  * item, a creative player breaking a filled chest gets the item with the contents, and pick-block keeps them.
- * {@link #FACING} is the side the lid's front faces (toward the player who placed it); the placeholder model from
- * datagen rotates with it until the Blockbench model arrives.
+ * {@link #FACING} is the side the lid's front faces (toward the player who placed it); the hand-made model
+ * (art/models/sea_chest.bbmodel) rotates with it. The outline and collision shape is the model's footprint: 14 px wide
+ * (rope handles included), 12 px deep (hasp to hinges) and 10 px high.
  */
 public class SeaChestBlock extends BaseEntityBlock {
 
     public static final MapCodec<SeaChestBlock> CODEC = simpleCodec(SeaChestBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+
+    private static final VoxelShape SHAPE_NS = Block.box(1, 0, 2, 15, 10, 14);
+    private static final VoxelShape SHAPE_EW = Block.box(2, 0, 1, 14, 10, 15);
 
     public SeaChestBlock(Properties properties) {
         super(properties);
@@ -63,6 +70,11 @@ public class SeaChestBlock extends BaseEntityBlock {
     @Override
     protected BlockState mirror(BlockState state, Mirror mirror) {
         return state.rotate(mirror.getRotation(state.getValue(FACING)));
+    }
+
+    @Override
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return state.getValue(FACING).getAxis() == Direction.Axis.X ? SHAPE_EW : SHAPE_NS;
     }
 
     @Override

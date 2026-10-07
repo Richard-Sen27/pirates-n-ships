@@ -44,13 +44,6 @@ public final class CombatContentModule implements ModModule {
                 .item(CombatContent.LEAD_SHOT, "Lead Shot")
                 .item(CombatContent.CANNONBALL, "Cannonball")
                 .item(CombatContent.GRAPPLING_HOOK, "Grappling Hook"));
-        data.models(m -> {
-            m.handheldItem(CombatContent.PISTOL.get());
-            m.handheldItem(CombatContent.MUSKET.get());
-            m.flatItem(CombatContent.LEAD_SHOT.get());
-            m.flatItem(CombatContent.CANNONBALL.get());
-            m.flatItem(CombatContent.GRAPPLING_HOOK.get());
-        });
         data.itemTags(tags -> {
             tags.tag(ItemTags.SWORDS).add(CombatContent.RAPIER.get(), CombatContent.CUTLASS.get(), CombatContent.SABER.get());
             tags.tag(C_MELEE_WEAPONS).add(CombatContent.RAPIER.get(), CombatContent.CUTLASS.get(), CombatContent.SABER.get());

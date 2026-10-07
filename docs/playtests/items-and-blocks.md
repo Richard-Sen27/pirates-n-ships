@@ -79,7 +79,7 @@ Renders of the intended look are in `art/renders/`.
    `latest.log` has no model or texture warnings mentioning `pirates_n_ships`. On a moving ship the models render with
    correct lighting.
 
-## 3D item models (F8a: rapier, cutlass, saber)
+## 3D item models (F8a swords; F8b firearms, ammunition, grappling hook)
 Compare each sword with a vanilla iron sword in the other hand or the next hotbar slot. Renders in `art/renders/`.
 1. **First person, right hand:** the grip sits in the fist, blade up and forward at the iron sword's angle. The rapier
    is visibly longer and thin, the cutlass short and broad with a brass basket, the saber curved with the tip bending
@@ -94,6 +94,18 @@ Compare each sword with a vanilla iron sword in the other hand or the next hotba
 7. **Item frame:** flat and centred. The rapier's tip sticks about 2 px out of the frame (vanilla frame scale); say
    whether that bothers you.
 8. **Texture:** no missing-texture faces; the rapier grip shows light and dark wire stripes.
+9. **Pistol and musket, GUI:** diagonal, grip hanging down-right, hammer on top; the musket fills the slot's diagonal
+   without being clipped. No missing textures.
+10. **Guns, first person:** the barrel points forward toward the crosshair and a little up, grip down at the lower
+    right, hammer on top. Offhand: a mirror image at the lower left. Say whether they feel too big or too small.
+11. **Guns, third person (F5, front and side):** grip in the fist, barrel horizontal to slightly up and pointing where
+    the player faces; the musket's butt runs alongside the arm and hip and does not stick out of the back. Also while
+    looking up and down. Offhand mirrored.
+12. **Lead shot, cannonball, grappling hook:** in the GUI a low pile of grey balls, a dark octagonal ball with a light
+    spot at the upper left, and an upright hook with eye, rope coil and four flukes. Held like vanilla flat items,
+    fully visible; dropped at half size; the same as in the GUI in an item frame.
+13. **Lighting:** the guns are not too dark in shade. Gunmetal and cast iron are dark on purpose; report if they read
+    as black.
 
 ## Known placeholders (for the later art pass)
 - Cargo crate and barrel, pantry, water barrel, brig bars and door still use simple models (F7d, F7e).

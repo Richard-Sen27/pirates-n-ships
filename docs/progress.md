@@ -5,7 +5,7 @@ Statuses: **todo** / **in progress** / **done** / **blocked: needs playtest** / 
 
 "Done" means: `./gradlew build` passes, `./gradlew :neoforge:runGameTestServer` passes, and the new logic has tests.
 
-Last updated: 2026-10-07 (fourth session: phase G; G1, F7a, F7c, F5a, F7b, F5b, F8a and G2 merged; F8b running).
+Last updated: 2026-10-07 (fourth session: phase G; G1, F7a, F7c, F5a, F7b, F5b, F8a, G2 and F8b merged; G3 and F8c running).
 
 ## Phase F: first playtest feedback (done, F5 and F7 continue in phase G)
 
@@ -47,8 +47,8 @@ Started 2026-10-07 after the session restart with the Blockbench MCP connected (
 | F7e | Blockbench models, batch 5: cleat, brig bars and door, flag cloth at 2 blocks via a block entity renderer | todo, after F5b |
 | G2 | Sailing follow-ups: sail winch facing (crank toward the player), cloth refresh right after a rotated disassembly, unused imports and dead helpers from F5a/F5b/F7b | done | Merged (`249dc88`). `SailWinchBlock.FACING` = the side the crank is on (default east = the unrotated model, so old worlds look the same; east 0 / south 90 / west 180 / north 270). Yard and cleat block entities recompute their cloth on their first server tick (Sable's `moveBlocks` carries the stale saved cloth along), which also covers chunk loads. New `SailingGameTestsRigging` (3 tests). The station seat and the winch item don't follow the facing (visual only). |
 | F8a | 3D item models, batch 1: rapier, cutlass, saber | done | Merged (`12f62ce`). Sprite-aligned models (16, 15 and 14 elements) with vanilla's handheld display entries copied in (a `builtin/generated` parent would discard the elements, `ModelBakery` 1.21.1 l.292), `gui_light: front`; the rapier runs 2 px past the footprint and scales its GUI entry to 0.8. Shared palette texture `textures/item/palette.png` from `tools/gen_item_palette.py` (16 patches, all used; grow to 32×16 for the next batch). `HandMadeModelsTest` now lists every hand-made model by name and checks item models carry all 7 display slots. Also restored the block-texture functions that F7c had accidentally dropped from `tools/gen_placeholder_textures.py`. Playtest `items-and-blocks.md`, section "3D item models". |
-| F8b | 3D item models, batch 2: pistol, musket, lead shot, cannonball, grappling hook | in progress |
-| F8c | 3D item models, batch 3: captain's whistle, shackles | todo, after F8b |
+| F8b | 3D item models, batch 2: pistol, musket, lead shot, cannonball, grappling hook | done | Merged (`2a50f16`). Pistol 19 elements, musket 23 (runs past the footprint, GUI scale 0.8), lead shot 15, cannonball 10 (exact octagon from four bars), grappling hook 27. Guns have their own hand transforms (barrel forward and slightly up, checked in Blockbench's display mode with the player model). Second palette sheet `palette_2.png`: a sheet can never be resized because model UVs are fractions of the sprite (`FaceBakery` l.164), so new colours go on new 16×16 sheets. Playtest `items-and-blocks.md`, section "3D item models". |
+| F8c | 3D item models, batch 3: captain's whistle, shackles | in progress |
 | F8d | 3D item models, batch 4: rum, hardtack, lime, salt pork, salted fish | todo, after F8c |
 | F8e | 3D item models, batch 5: cloth, spices, tobacco | todo, after F8d (doubloon and bounty proof stay flat) |
 

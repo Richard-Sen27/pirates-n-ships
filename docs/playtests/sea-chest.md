@@ -24,3 +24,10 @@ its Blockbench pass.
 5. **On a ship.** Placing on an assembled deck gives a block, not a floating chest; open it while sailing.
 6. **Toggle.** `sea_chest.enabled = false`: the item cannot be worn, placing on water places a block, a worn chest
    stops restricting within a tick.
+
+
+## S1-art: the look
+1. Place the chest facing each direction: hasp and lock plate face you, rope handles left and right, no missing or dark faces, also with blocks beside and on top of it.
+2. The outline hugs the chest (about 14 wide, 12 deep, 10 high); walking against it and standing on it (10 px high) behave accordingly.
+3. The floating chest bobs and rocks with the new model, centred in its shadow, front toward the player who launched it.
+4. The item in the GUI (three-quarter view, front on the right, a bit smaller than a block), in hand (first and third person, not clipping the arm), on the ground (small, just above it) and in an item frame (hasp facing out, centred).

@@ -134,6 +134,12 @@ will grumble). Crew on duty all night are unaffected, and an order at night gets
 one bunk: use the captain's whistle on a crew member, or `/pirates crew info`, to see morale and "crew 3 / bunks 2".
 Players can't sleep in hammocks. Server config `crew.morale`.
 
+## When an order reaches nobody
+If the whistle or `/pirates crew order` says nobody carries an order out, the line now tells you why: no ship under
+you, no station on board can do it, nothing to do, or no sails with the reason (a gap over 8 blocks between the yards,
+a block in the mast between them, yards off the mast's column, a lower yard longer than the upper). `/pirates ship
+rigging` lists every yard and what it carries, the triangular sails and the crew aboard.
+
 ## Orders, not assignments
 You don't have to assign every sailor. Give an order with the whistle (or `/pirates crew order`), and every unmanned
 station that can carry it out becomes an open job: free crew standing on your ship take the nearest one by themselves

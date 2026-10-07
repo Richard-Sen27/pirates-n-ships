@@ -1342,16 +1342,31 @@ left alone, the jigsaw just becomes sand.
 
 | piece | size (x×y×z) | blocks | contents | mod blocks |
 |---|---|---|---|---|
-| `camp_start` (start) | 13×8×13 | 298 | sandy clearing with gravel and dirt trails, a campfire on a cobblestone hearth with log seats, the Jolly Roger, a loot heap (barrels, crates, a chest), the fence's lean-to shack (desk as the counter, stock, cobwebs) with the notice board on its south side, torch posts; `jetty_out` [6, 0, 0], `path_out` [0, 0, 9] and [12, 0, 9], `hut_out` [6, 0, 12] | `flagpole`, `harbor_desk`, `notice_board`, `cargo_crate`, `cargo_barrel` |
-| `jetty` | 5×9×16 | 97 | 3 wide patched plank deck on mixed bark and stripped posts (two crooked ones leaning on stair braces) with footings, a lantern post and a rail at the seaward end, a ladder down; `jetty_in` [2, 5, 15], berths [0, 4, 7] and [4, 4, 7] | `cleat`, `mooring_ring` |
-| `path` | 7×4×7 | 68 | gravel and dirt trail on sand between palisade stakes (stripped log with a fence tip), two torches; `path_in` [3, 0, 0], `path_out` [3, 0, 6], `hut_out` [0, 0, 3] and [6, 0, 3] | |
-| `path_end` | 7×4×3 | 33 | the trail ends at a row of stakes with a torch post; `path_in` [3, 0, 0] | |
-| `tent` | 7×6×7 | 112 | A-frame of stepped wool (vanilla has no wool stairs or slabs) over a stripped log ridge, a bed roll, a chest, a barrel, a lantern; `hut_in` [3, 0, 0] | |
-| `tavern_hut` | 9×8×9 | 291 | open-sided hut (plank course, fence rail, log posts) under a dark oak thatch roof, a bar of barrels and a plank counter, kegs and rum behind it, two tables with stools, lanterns, cobwebs; `hut_in` [4, 0, 0] | `cargo_barrel` |
-| `captains_hut` | 9×9×9 | 313 | dark oak room on stripped log stilts (floor y 2), two steps up to a railed porch, a door, a bed, a cartography table with a map tile and a stool, the sea chest, a hanging lantern; `hut_in` [4, 0, 0] | `map_tile`, `sea_chest`, `cargo_crate` |
-| `treasure_spot` | 5×5×5 | 83 | sand with two crossed stripped logs, a skull and dead bushes, the treasure marker [2, 0, 2]; `hut_in` [2, 2, 0] | |
+| `camp_start` (start) | 13×8×13 | 399 | sandy clearing with gravel and dirt trails, a campfire on a cobblestone hearth with driftwood log seats and a roasting spit, a keg, the Jolly Roger, a loot heap (barrels, crates, a chest) under a striped sailcloth lean-to, the fence's lean-to shack (desk as the counter, stock, cobwebs; vertical dark and spruce boards with salvaged patches, palm front posts, sill beam, rafter ends, barred and shuttered windows) with the notice board on its south side under a striped awning, a crude palisade of uneven stakes on the inland sides with taller gate posts (a skull and a torch on the south gate), lantern posts, gravel and mossy skirts; `jetty_out` [6, 0, 0], `path_out` [0, 0, 9] and [12, 0, 9], `hut_out` [6, 0, 12] | `flagpole`, `harbor_desk`, `notice_board`, `cargo_crate`, `cargo_barrel` |
+| `jetty` | 5×9×16 | 117 | 3 wide patched plank deck (dark oak, a salvaged jungle board, sagging slabs) on mixed bark and stripped posts (two crooked ones leaning on stair braces) with footings, palm bollards and a rope rail at the seaward end, a lantern post and a rail with a net, a ladder down, a crude crane (palm mast, fence jib on a stair brace, chain hook with a crate) and a rope rail at the landward end, barrels and a lantern post; columns x 0 and x 4 stay clear; `jetty_in` [2, 5, 15], berths [0, 4, 7] and [4, 4, 7] | `cleat`, `mooring_ring`, `cargo_crate`, `cargo_barrel` |
+| `path` | 7×4×7 | 73 | gravel and dirt trail on sand between uneven palisade stakes (palm, stripped spruce, dark oak, fence tips), one propped on a stair, a lantern and a torch, a barrel and dead bushes, gravel at the stakes' feet; `path_in` [3, 0, 0], `path_out` [3, 0, 6], `hut_out` [0, 0, 3] and [6, 0, 3] | |
+| `path_end` | 7×4×3 | 42 | the trail ends at a row of uneven stakes with a palm warning post carrying a skull, a lantern, a crate and a dead bush; `path_in` [3, 0, 0] | `cargo_crate` |
+| `tent` | 7×6×7 | 125 | A-frame of stepped wool (vanilla has no wool stairs or slabs) in patched sailcloth (white, grey and brown patches, a red patch, brown hem) over a stripped log ridge that runs on over a fly on two poles, a hanging lantern at the front, a red pennant at the back, a guy stake and a crate, a bed roll, a chest, a barrel, lanterns, a rug; `hut_in` [3, 0, 0] | `cargo_crate` |
+| `tavern_hut` | 9×8×9 | 309 | open-sided hut (board course of alternating dark and spruce boards, fence rail, palm corner posts, stripped door posts) on a cobblestone plinth going mossy, under a patched dark oak thatch roof with rafter ends; gables on a tie beam with vertical boards, king post and vents; a shuttered back window and a fieldstone chimney with a smoking top; a bar of barrels and a plank counter with a skull, kegs and rum behind it, two tables with stools, lanterns (one over the doorway), cobwebs; `hut_in` [4, 0, 0] | `cargo_barrel` |
+| `captains_hut` | 9×9×9 | 336 | room on palm and stripped dark oak stilts (floor y 2, sill beam round it, salvage stowed below), walls of vertical dark and spruce boards between stripped posts, a door between dark frame posts, shuttered windows (sills on the back), gables on a tie beam with king post and vent, a patched thatch roof with rafter ends, two steps up to a porch with rope rails and a skull, a lantern post; a bed, a cartography table with a map tile and a stool, the sea chest, a rug, a black banner, a hanging lantern; `hut_in` [4, 0, 0] | `map_tile`, `sea_chest`, `cargo_crate` |
+| `treasure_spot` | 5×5×5 | 89 | sand speckled with gravel and coarse dirt, two crossed stripped logs, a skull, a bone, an old trapdoor lid, dead bushes, a mossy cairn and a palm marker stake; the column over the marker stays sand; the treasure marker [2, 0, 2]; `hut_in` [2, 2, 0] | |
 
 Renders: `art/renders/structures/pirate_island/*.png`.
+
+**ST4b pass (the look of the buildings, design.md §10.1):** every island piece was rebuilt to the camp style with
+the same sizes, connectors, berths, treasure marker and doorsteps. `_style.py` holds the camp palette: two woods,
+spruce and dark oak, with jungle logs as palm-trunk posts and stripped jungle as pale driftwood; one stone,
+cobblestone going mossy where it meets the ground; one accent, sailcloth (white wool with red stripes and brown
+patches). It also holds the reusable fittings: `awning` (striped sailcloth on fence poles), `palisade_post` (an uneven
+palm, spruce or dark oak stake with a fence tip), `shutter_window` (an opening with a trapdoor sill and open
+trapdoor shutters folded against the wall, one or both), `rope_rail` (posts with chain slung between),
+`rafter_ends` (upside-down stair corbels under an eave), `campfire_ring` (a hearth, seats and a spit), `sand_skirt`
+(the gravel, coarse dirt and mossy gradient at the foot of everything), `weatherboard` (vertical boards of two
+woods with the odd salvaged jungle board), `roof_patches` (spruce mends in a dark oak thatch), `chimney` (fieldstone
+with a smoking campfire on top), `lantern_post`, and `jit`, a fixed per-position hash that makes the irregularity
+repeatable byte for byte. States leave `waterlogged` at its default: the lab's preview colours any state string
+containing "water" as water. Every piece was reviewed from all four corners with `tools/iso_render.py`
+(shape-aware); the lab's preview draws whole cubes and one colour for all wool.
 
 **Lab port per agent:** `tools/build_structures.py` takes the lab's port from `--port`, else from the
 `SCHEMATIC_LAB_PORT` environment variable, else 8766. Agents building pieces in parallel each use their own port

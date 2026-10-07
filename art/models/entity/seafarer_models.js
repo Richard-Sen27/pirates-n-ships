@@ -104,9 +104,9 @@ SF.DETAILS.navy_soldier = [
 
 // bicorne worn athwart: a low crown, a stepped front and back flap leaning towards each other, end plates
 SF.bicorneFlap = function (side) {
-  const z0 = side < 0 ? -4.3 : 3.6, z1 = z0 + 0.7, rot = [side < 0 ? -8 : 8, 0, 0], origin = [0, 30.4, side < 0 ? -3.95 : 3.95];
+  const z0 = side < 0 ? -4.75 : 4.05, z1 = z0 + 0.7, rot = [side < 0 ? 18 : -18, 0, 0], origin = [0, 30.4, side < 0 ? -4.4 : 4.4];
   const out = side < 0 ? 'north' : 'south', inn = side < 0 ? 'south' : 'north', n = side < 0 ? 'front' : 'back';
-  const f = {up: 'gold', down: 'hat_d', east: 'hat_d', west: 'hat_d'}; f[out] = 'R:flap'; f[inn] = 'R:flap_in';
+  const f = {up: 'hat_d', down: 'hat_d', east: 'hat_d', west: 'hat_d'}; f[out] = 'R:flap'; f[inn] = 'R:flap_in';
   const piece = (name, x0, x1, top) => T('hat', 'bicorne_' + n + '_' + name, [x0, 30.4, z0], [x1, top, z1], 'hat_d', {faces: Object.assign({}, f), rot, origin});
   return [piece('centre', -3, 3, 36.4), piece('right', -5.6, -3, 35.0), piece('left', 3, 5.6, 35.0),
     piece('right_tip', -7.6, -5.6, 33.4), piece('left_tip', 5.6, 7.6, 33.4)];
@@ -115,11 +115,11 @@ SF.DETAILS.navy_officer = [
   T('hat', 'bicorne_crown', [-4.3, 30.6, -3.6], [4.3, 33.4, 3.6], 'hat', {faces: sides('R:crown', {up: 'R:crown_top', down: null})}),
   ...SF.bicorneFlap(-1),
   ...SF.bicorneFlap(1),
-  T('hat', 'bicorne_end_right', [-7.6, 30.4, -3.6], [-4.3, 31.6, 3.6], 'hat_d', {faces: {up: 'hat'}}),
-  T('hat', 'bicorne_end_left', [4.3, 30.4, -3.6], [7.6, 31.6, 3.6], 'hat_d', {faces: {up: 'hat'}}),
-  T('hat', 'bicorne_loop', [-0.8, 31.6, -4.6], [0.8, 35.6, -4.3], 'gold', {faces: {east: 'gold_d', west: 'gold_d'}, rot: [-8, 0, 0], origin: [0, 30.4, -3.95]}),
-  T('hat', 'bicorne_button', [-0.45, 32.0, -4.75], [0.45, 32.9, -4.55], 'gold_l', {rot: [-8, 0, 0], origin: [0, 30.4, -3.95]}),
-  T('hat', 'bicorne_cockade', [-1.4, 33.6, -4.55], [1.4, 35.2, -4.35], 'black', {rot: [-8, 0, 0], origin: [0, 30.4, -3.95]}),
+  T('hat', 'bicorne_end_right', [-7.6, 30.4, -4.05], [-4.3, 31.6, 4.05], 'hat_d', {faces: {up: 'hat'}}),
+  T('hat', 'bicorne_end_left', [4.3, 30.4, -4.05], [7.6, 31.6, 4.05], 'hat_d', {faces: {up: 'hat'}}),
+  T('hat', 'bicorne_loop', [-0.8, 31.6, -5.05], [0.8, 35.6, -4.75], 'gold', {faces: {east: 'gold_d', west: 'gold_d'}, rot: [18, 0, 0], origin: [0, 30.4, -4.4]}),
+  T('hat', 'bicorne_button', [-0.45, 32.0, -5.2], [0.45, 32.9, -5.0], 'gold_l', {rot: [18, 0, 0], origin: [0, 30.4, -4.4]}),
+  T('hat', 'bicorne_cockade', [-1.4, 33.6, -5.0], [1.4, 35.2, -4.8], 'black', {rot: [18, 0, 0], origin: [0, 30.4, -4.4]}),
   T('head', 'queue', [-0.6, 22.6, 4.0], [0.6, 25.6, 4.6], 'white', {faces: {down: 'belt_shade'}}),
   T('head', 'queue_bow', [-1.3, 25.0, 4.05], [1.3, 26.0, 4.75], 'black'),
   T('body', 'collar', [-4.4, 22.9, -2.45], [4.4, 24, 2.45], 'navy', {faces: {up: 'gold', down: null}}),

@@ -1031,3 +1031,93 @@ library only) turns it into the vanilla structure `common/src/main/resources/dat
 Keep templates under the ship block limit (2048 by default), keep every block connected to the helm (the assembler
 gathers only connected blocks), and leave no loose terrain blocks (dirt, sand, stone) in the selection: they never
 become part of a ship.
+
+## Structures (ST1)
+World structures (design.md §10.1) are vanilla **jigsaw pieces**. Each piece is written as code, not built by hand: a
+BuildSpec generator in `art/structures/<group>/<piece>.py` (the format of `minecraft-schematic-lab`, the tool the
+human used for `art/schematics/starter_sloop.py`). Sources, schematics, renders and NBT are all committed. The
+`world` module (WG1) registers the pools and structure sets that use them.
+
+**Pipeline:** `python3 tools/build_structures.py` (all pieces) or `python3 tools/build_structures.py village/tavern`.
+For every source it:
+1. runs the generator, which prints the BuildSpec JSON;
+2. finds the lab on port **8766**, or starts it there (`npx -y github:SimoneRecchia/minecraft-schematic-lab#v0.1.0`,
+   HTTP mode, which never opens a browser) and stops it at the end. Port 8765 is left for the human's own MCP
+   instance. The run fails on `valid: false` or on any lab warning (unknown block id, blocks outside the size);
+3. saves `art/schematics/structures/<group>/<piece>.schem` (Sponge v2, `export.schem?version=2`) and
+   `art/renders/structures/<group>/<piece>.png` (the lab's isometric preview from the south-east, flat block
+   colours);
+4. converts the schematic with `tools/schem_to_structure.py` to
+   `common/src/main/resources/data/pirates_n_ships/structure/<group>/<piece>.nbt`, the structure
+   `pirates_n_ships:<group>/<piece>`.
+
+Files are only rewritten when their bytes change, and the lab is deterministic, so a second run changes nothing.
+`--views DIR` also saves renders from the other three corners (not committed; useful because the committed render
+shows only the south and east faces, while doors face north). `StructurePiecesTest` checks the committed NBT: the
+pieces load, stay within 32 blocks per axis, use only existing blocks and states (mod blocks against the datagen
+block states), follow the jigsaw convention below, have the expected connectors and berths, and match a fresh
+conversion of the committed `.schem`.
+
+**Generators:** `art/structures/buildspec.py` holds the shared `Piece` helper: `put`/`fill`/`ring` take a palette
+key or a literal state, `roof_ridge_x`/`roof_ridge_z` build stair roofs with gables, and `connector`/`berth` add the
+jigsaws. `Piece.emit` merges runs along x into `box` operations and adds the jigsaws as `block_entity` operations.
+`art/structures/<group>/_style.py` holds the group's palette and small fittings (doors, beds, tables, lantern posts).
+Files starting with `_` are helpers, not pieces.
+
+**Coordinates:** y 0 is the piece's **foundation row**. It sits level with the terrain surface (WG1 sinks land
+pieces by one). Pieces face **north (−z)**: a building's door and its `building_in` jigsaw are on the −z side,
+in front of the door on row z 0 (doorstep, porch or apron). Keep every block inside the piece's box. A jigsaw sits
+on the face of the box it points out of, because the child piece is placed in the block beyond it and must not
+overlap the parent's box (so no roof overhang on a face that has a connector, except in the connector's own row).
+
+**Jigsaw convention** (vanilla `minecraft:jigsaw`, horizontal, `orientation=<front>_up`, written as `block_entity`
+operations):
+
+| name | target | pool | joint | used by |
+|---|---|---|---|---|
+| `pirates_n_ships:street_out` | `pirates_n_ships:street_in` | `pirates_n_ships:village/streets` | aligned | dock head (south edge), street (south end) |
+| `pirates_n_ships:street_in` | `pirates_n_ships:street_out` | `minecraft:empty` | aligned | street (north end) |
+| `pirates_n_ships:building_out` | `pirates_n_ships:building_in` | `pirates_n_ships:village/buildings` | rollable | street (both verges) |
+| `pirates_n_ships:building_in` | `pirates_n_ships:building_out` | `minecraft:empty` | rollable | house, tavern, shipwright (north side, y 0) |
+| `pirates_n_ships:pier_out` | `pirates_n_ships:pier_in` | `pirates_n_ships:village/pier` | aligned | dock head (north edge) |
+| `pirates_n_ships:pier_in` | `pirates_n_ships:pier_out` | `minecraft:empty` | aligned | pier (south end, deck row) |
+| `pirates_n_ships:berth` | `minecraft:empty` | `minecraft:empty` | aligned | pier (berth markers) |
+
+`*_out` jigsaws pull a piece from their pool. `*_in` jigsaws are where a piece attaches, and they spawn nothing.
+`final_state` is the block that belongs in that spot after generation: cobblestone for street ends and doorsteps,
+dirt path for the street verges, chiseled or plain stone bricks on the quay, spruce planks on the pier deck, gravel
+for the shipwright's apron. The pools are `pirates_n_ships:village/start` (the dock head), `village/streets`,
+`village/buildings`, `village/pier` and `village/terminators` (the fallback for `street_out` once the depth runs
+out; WG1 defines it, and no piece exists for it yet).
+
+**Berth markers:** a `minecraft:jigsaw` named `pirates_n_ships:berth` (target and pool `minecraft:empty`,
+`final_state` `minecraft:water`). It sits at sea level, one block out from the pier's side, at the berth's
+centre along the pier. Its orientation points along the berth's bow direction (parallel to the pier, toward the
+sea). The pier has two, one on each side at `[0, 4, 9]` and `[6, 4, 9]`, both pointing north. When WG1 places the
+structure, it reads them into the port registry (shipwright pickups, §4.1) before the jigsaw becomes water. A ship
+placed there lies alongside the pier with its bow toward the sea, centred on the marker along the pier, and its near
+side in the marker's column (the first water column beside the deck).
+
+**Sea level:** the dock head's paving (its y 0) sits one block above sea level. The pier hangs from it: its deck is
+row y 5 (level with the paving), the sea surface is its row y 4, and its piles (y 1..4) stand on cobblestone footings
+on its row y 0, five blocks below the paving. WG1 places the dock head with y 0 at sea level + 1. Where the seabed is
+deeper, the footings hang in the water.
+
+**The seafarer village (`village`):**
+
+| piece | size (x×y×z) | blocks | contents | mod blocks |
+|---|---|---|---|---|
+| `dock_head` (start) | 11×8×11 | 289 | stone quay, harbor master's hut (desk facing the door, cargo, lectern), notice board beside the door, two lantern posts at the pier landing, mooring rings on the sea edge, crates and barrels; `pier_out` [5, 0, 0], `street_out` [2, 0, 10] | `harbor_desk`, `notice_board`, `mooring_ring`, `cargo_crate`, `cargo_barrel` |
+| `pier` | 7×9×20 | 197 | 5 wide plank deck on spruce piles with footings, cross beams, a rail and two lantern posts at the seaward end, a ladder down; `pier_in` [3, 5, 19], berths [0, 4, 9] and [6, 4, 9] | `mooring_ring`, `cleat` |
+| `street` | 7×4×7 | 52 | cobbled street with gravel and moss patches, dirt path verges, a lantern post; `street_in` [3, 0, 0], `street_out` [3, 0, 6], `building_out` [0, 0, 3] and [6, 0, 3] | |
+| `house_small` | 7×9×9 | 237 | 7×7 cottage of white render (calcite) on stripped spruce posts, red tile roof, bed, table and stool, chest, barrel, crafting table; `building_in` [3, 0, 0] | |
+| `tavern` | 11×15×11 | 695 | 11×9, two floors: bar with barrels, two tables with stools, a hanging lantern, stairs, two beds upstairs; a dark oak panel above the door for a sign; `building_in` [5, 0, 0] | `cargo_barrel` |
+| `shipwright` | 11×13×10 | 441 | open shed on posts with a dark roof, a half-built hull (keel, stem, three frames, a strake) on a gravel slipway, sawhorses, stacked logs and planks, crafting and smithing tables; `building_in` [5, 0, 0] | |
+
+Renders: `art/renders/structures/village/{dock_head,pier,street,house_small,tavern,shipwright}.png`.
+
+**Adding a piece:** copy a generator in the group's folder, keep the conventions above (foundation row, north
+front, connectors on the box faces), then run `python3 tools/build_structures.py <group>/<piece>`. Look at the
+render (and `--views`) for floating blocks, roofs that miss walls, doors without a path, and posts that don't reach
+the ground. Add the piece to `StructurePiecesTest` (the expected piece list and its connectors), and to its pool
+in the world module.

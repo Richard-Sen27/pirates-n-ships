@@ -4,7 +4,7 @@
       "element": {
         "element_type": "minecraft:single_pool_element",
         "location": "pirates_n_ships:village/house_small",
-        "processors": "minecraft:empty",
+        "processors": "pirates_n_ships:connections",
         "projection": "rigid"
       },
       "weight": 3
@@ -13,7 +13,7 @@
       "element": {
         "element_type": "minecraft:single_pool_element",
         "location": "pirates_n_ships:village/tavern",
-        "processors": "minecraft:empty",
+        "processors": "pirates_n_ships:connections",
         "projection": "rigid"
       },
       "weight": 1
@@ -22,7 +22,7 @@
       "element": {
         "element_type": "minecraft:single_pool_element",
         "location": "pirates_n_ships:village/shipwright",
-        "processors": "minecraft:empty",
+        "processors": "pirates_n_ships:connections",
         "projection": "rigid"
       },
       "weight": 1

@@ -472,6 +472,31 @@ Gun grip in the hand (F8h):
   the ground, muzzle at the left hand), and the cocking left arms (`P_COCK*`, `M_COCK*`) were solved onto the moved
   locks (Gauss-Newton on the hand point over left-arm x/y, residual < 0.2 px).
 
+Loaded guns: cocked-hammer variants (P6):
+- `pistol_loaded` (20 elements) and `musket_loaded` (24), one project each, built from the base projects. Every
+  element except the lock is byte-identical to the base (`HandMadeModelsTest.loadedGunsOverrideToTheirCockedVariant`
+  checks it), and the display entries, textures and particle are copied verbatim from the base JSON, so the F8h grip
+  holds for both states. The base models show the hammer down against the frizzen (fired); the variant shows it
+  cocked.
+- **Hammer cocked back:** `cock`, `cock_jaw` and `flint` turned together 45° to the rear about the foot of the cock
+  (the tumbler on the lock plate). With vanilla angles only: the cock goes from upright `+22.5` (22.5° forward of the
+  barrel's normal) to built along x and `-22.5` (22.5° behind it; an element of size (w, h) at angle a equals one of
+  size (h, w) at a − 90); jaw and flint go from `-45` to `0`.
+- **Frizzen closed:** the frizzen stands on the barrel's normal (`+45`) with its foot on the pan's top, and a
+  0.2 px `pan_cover` (frizzen colour, `-45`, along the barrel) lies on the pan up to the frizzen face. The ramrods
+  were already seated in the base models.
+- **Override:** the exported `pistol.json` / `musket.json` were edited by hand (like the water tint in Q1) to add
+  `"overrides": [{"predicate": {"pirates_n_ships:loaded": 1}, "model": "pirates_n_ships:item/<gun>_loaded"}]`; a
+  re-export from the base project has to add it again. `FirearmsClient` registers the `pirates_n_ships:loaded`
+  property for both items at client setup (1 while the `firearm_loaded` component is true). Vanilla's per-item
+  `ItemProperties.register` is private; the access transformer widens it (Fabric port: twin access widener line).
+- Helpers `P6.turn(cube, pivot, delta)` (turns a cube about a pivot in the xy plane, switching between y-built and
+  x-built when the angle leaves ±45), `P6.apply(opts)` and `P6.export(base, name, uuid)` (compile, round to 5
+  decimals, display/textures from the base JSON, write model and project) lived only in the running app.
+- Renders: `renders/pistol_loaded.png`, `renders/musket_loaded.png` (top: GUI slot, empty and loaded; bottom: third
+  person in the right hand, empty and loaded). In the hand the change is small (the lock sits by the fist); the GUI
+  shows it clearly.
+
 ## Entities
 
 Animated mobs and NPCs (crew member, pirate, sailor, navy soldier and officer; design.md §9) are GeckoLib models

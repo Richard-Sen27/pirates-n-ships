@@ -1,8 +1,8 @@
 package com.richardsenger.piratesnships.combat.grapple.client;
 
+import com.richardsenger.piratesnships.sailing.rope.RopeAnchor;
 import com.richardsenger.piratesnships.combat.grapple.GrappleConfig;
 import com.richardsenger.piratesnships.combat.grapple.GrapplingHookEntity;
-import com.richardsenger.piratesnships.combat.grapple.MooringRingBlock;
 import com.richardsenger.piratesnships.combat.grapple.RopeRiderEntity;
 import com.richardsenger.piratesnships.combat.grapple.RopeSlide;
 import com.richardsenger.piratesnships.ship.sable.ClientShipPoses;
@@ -28,12 +28,12 @@ public final class ClientRopes {
     }
 
     /**
-     * The rope's fixed near end at render time: the mooring ring it is tied to or the pin (GR2), through the ship's
+     * The rope's fixed near end at render time: the mooring ring or cleat it is tied to or the pin (GR2), through the ship's
      * render pose when it is on a ship; null when the thrower holds it.
      */
     public static @Nullable Vec3 fixedNearEnd(GrapplingHookEntity hook, float partialTick) {
         BlockPos ring = hook.syncedTiedRing().orElse(null);
-        Vec3 local = ring != null ? MooringRingBlock.ringCenter(hook.level(), ring) : hook.syncedPin().orElse(null);
+        Vec3 local = ring != null ? RopeAnchor.point(hook.level(), ring) : hook.syncedPin().orElse(null);
         if (local == null) {
             return null;
         }

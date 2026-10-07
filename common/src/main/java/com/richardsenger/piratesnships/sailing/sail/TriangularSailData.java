@@ -36,12 +36,17 @@ public final class TriangularSailData {
                 .block(TriangularSailContent.CLEAT, "Cleat")
                 .item(TriangularSailContent.ROPE, "Rope")
                 .add(CleatBlock.KEY_NO_SAIL, "This cleat heads no sail: rig a rope stay from it down to a lower cleat, and put a third cleat straight below it")
-                .add(RopeItem.KEY_TIED, "Rope tied to this cleat: now use it on a second, higher or lower cleat up to %s blocks away")
-                .add(RopeItem.KEY_ELSEWHERE, "The first cleat is gone or on another ship: the rope is now tied to this cleat (stays reach %s blocks)")
-                .add(RopeItem.KEY_SAME, "Use the rope on a second cleat, up to %s blocks away")
-                .add(RopeItem.KEY_TOO_LONG, "Too far: the cleats are %s blocks apart, a stay reaches %s")
+                .add(RopeItem.KEY_TIED, "Rope tied here: now use it on a second cleat or mooring ring up to %s blocks away")
+                .add(RopeItem.KEY_ELSEWHERE, "The first anchor is gone or in another dimension: the rope is now tied here (ropes reach %s blocks)")
+                .add(RopeItem.KEY_SAME, "Use the rope on a second cleat or mooring ring, up to %s blocks away")
+                .add(RopeItem.KEY_TOO_LONG, "Too far: the anchors are %s blocks apart, a rope reaches %s")
                 .add(RopeItem.KEY_TOO_FLAT, "Too flat: the two ends of a stay must be at least %s blocks apart in height")
-                .add(RopeItem.KEY_RIGGED, "Stay rigged. A cleat straight below its upper end makes the sail"));
+                .add(RopeItem.KEY_RIGGED, "Stay rigged. A cleat straight below its upper end makes the sail")
+                .add(RopeItem.KEY_LINE, "Rope line rigged")
+                .add(RopeItem.KEY_OTHER_BODY, "The rope must stay on one ship: both ends on the same ship, or both on land")
+                .add(RopeItem.KEY_NO_LINES, "Rope lines are off: a rope only runs between two cleats as a stay")
+                .add(RopeItem.KEY_ALREADY, "These two are already roped together")
+                .add(RopeItem.KEY_FULL, "An anchor holds at most %s ropes"));
         data.models(TriangularSailData::models);
         data.blockLoot(loot -> loot.dropSelf(TriangularSailContent.CLEAT.get()));
         data.blockTags(tags -> tags.tag(BlockTags.MINEABLE_WITH_AXE).add(TriangularSailContent.CLEAT.get()));

@@ -45,10 +45,13 @@ public final class GrappleConfig {
     public static final ConfigValue<Boolean> RINGS_ENABLED = S.bool("rings_enabled", true,
             "Mooring rings catch hooks passing close by, hold them harder, and take the rope's near end when tied off. "
                     + "Off = a ring is a plain ship block");
+    public static final ConfigValue<Boolean> CLEATS_ENABLED = S.bool("cleats_enabled", true,
+            "Cleats act like mooring rings (with the ring values below): they catch hooks passing close by, hold them harder, "
+                    + "and take the rope's near end when tied off. Needs rings_enabled. Off = only rings do");
     public static final ConfigValue<Double> RING_CATCH_RADIUS = S.doubleRange("ring_catch_radius", 1.0, 0.0, 4.0,
-            "A flying hook passing this close [blocks] to a mooring ring on another ship latches onto the ring (0 = only a direct hit)");
+            "A flying hook passing this close [blocks] to a mooring ring (or cleat) on another ship latches onto it (0 = only a direct hit)");
     public static final ConfigValue<Double> RING_HOLD_MULTIPLIER = S.doubleRange("ring_hold_multiplier", 2.0, 1.0, 8.0,
-            "A hook latched on a mooring ring snaps only when the rope's ends are this many times its length apart");
+            "A hook latched on a mooring ring (or cleat) snaps only when the rope's ends are this many times its length apart");
 
     private static final ConfigSection LAUNCH = S.section("launch",
             "Launching the hook with a crossbow or a musket held in the other hand instead of throwing it");

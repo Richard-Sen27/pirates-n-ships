@@ -3,6 +3,12 @@ package com.richardsenger.piratesnships.sailing.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.sailing.SailingConfig;
+import com.richardsenger.piratesnships.sailing.sail.StayLinker;
+import com.richardsenger.piratesnships.sailing.sail.StayRules;
+import com.richardsenger.piratesnships.sailing.sail.TriangularSails;
+import java.util.ArrayList;
+import java.util.List;
 import com.richardsenger.piratesnships.sailing.block.CleatBlock;
 import com.richardsenger.piratesnships.sailing.block.CleatBlockEntity;
 import com.richardsenger.piratesnships.sailing.sail.TriangleCloth;
@@ -30,7 +36,8 @@ import org.joml.Vector3f;
  * tack - clew point, where the clew point is lowered from the head toward the clew cleat by the trim (furled: a bundle
  * along the stay; half: halfway down; full: down to the clew). Trim changes are hoisted and lowered over about a
  * second, the cloth bellies out to the downwind side (with hysteresis), and both faces are drawn
- * ({@code entityCutoutNoCull}). The textures repeat once per block.
+ * ({@code entityCutoutNoCull}). The textures repeat once per block. Every other rope of the cleat (RP1: lines to cleats
+ * or mooring rings, and a stay without a sail) is drawn with sag by {@link RopeLineRenderer#drawLines}.
  *
  * <p>Like {@link YardClothRenderer} it works on land and on ships (Sable renders a sub-level's block entities with the
  * ship's pose on the pose stack), and it does not set {@code shouldRenderOffScreen} (see the note there); the
@@ -58,16 +65,18 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
     public void render(CleatBlockEntity be, float partialTick, PoseStack pose, MultiBufferSource buffers, int light, int overlay) {
         Level level = be.getLevel();
         BlockState state = be.getBlockState();
-        BlockPos target = be.stayTarget();
-        if (level == null || target == null || target.getY() >= be.getBlockPos().getY() || !(state.getBlock() instanceof CleatBlock)) {
-            return; // only the higher end of a stay draws it
+        if (level == null || !(state.getBlock() instanceof CleatBlock)) {
+            return;
         }
         BlockPos p = be.getBlockPos();
-        Vector3f tack = new Vector3f(target.getX() - p.getX(), target.getY() - p.getY(), target.getZ() - p.getZ());
+        List<BlockPos> stays = straightStays(be);
         pose.pushPose();
         pose.translate(0.5f, 0.5f, 0.5f);
         PoseStack.Pose last = pose.last();
-        beam(buffers.getBuffer(RenderType.entityCutoutNoCull(ROPE_TEXTURE)), last, new Vector3f(), tack, ROPE_HALF, light, overlay);
+        for (BlockPos target : stays) { // only the higher end of a stay draws it
+            Vector3f tack = new Vector3f(target.getX() - p.getX(), target.getY() - p.getY(), target.getZ() - p.getZ());
+            beam(buffers.getBuffer(RenderType.entityCutoutNoCull(ROPE_TEXTURE)), last, new Vector3f(), tack, ROPE_HALF, light, overlay);
+        }
         TriangleCloth g = be.cloth();
         if (g != null && g.drop() > 0) {
             double now = level.getGameTime() + (double) partialTick;
@@ -89,6 +98,32 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
             }
         }
         pose.popPose();
+        RopeLineRenderer.drawLines(be, stays, pose, buffers, light, overlay); // every other rope is a line (RP1)
+    }
+
+    /**
+     * The ropes this cleat draws straight, as stays from the head: with rope lines on only the stay of the sail it
+     * heads (from the cloth's tack); with them off every rope down to a cleat that passes the stay rule, as before RP1.
+     */
+    static List<BlockPos> straightStays(CleatBlockEntity be) {
+        BlockPos p = be.getBlockPos();
+        List<BlockPos> out = new ArrayList<>(1);
+        if (SailingConfig.ROPE_LINES.get()) {
+            BlockPos tack = be.clothTack();
+            if (tack != null && be.hasRopeTo(tack)) {
+                out.add(tack);
+            }
+            return out;
+        }
+        Level level = be.getLevel();
+        StayRules rules = SailingConfig.stayRules();
+        for (BlockPos t : be.ropeTargets()) {
+            if (t.getY() < p.getY() && level != null && level.getBlockState(t).getBlock() instanceof CleatBlock
+                    && StayLinker.check(TriangularSails.point(p), TriangularSails.point(t), rules) == StayLinker.Check.OK) {
+                out.add(t);
+            }
+        }
+        return out;
     }
 
     /** Moves the shown fraction toward {@code target} at {@link #HOIST_PER_SECOND}. */
@@ -161,7 +196,7 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
     }
 
     /** A square beam of half width {@code half} from {@code from} to {@code to} (four sides, open ends). */
-    private static void beam(VertexConsumer vc, PoseStack.Pose p, Vector3f from, Vector3f to, float half, int light, int overlay) {
+    static void beam(VertexConsumer vc, PoseStack.Pose p, Vector3f from, Vector3f to, float half, int light, int overlay) {
         Vector3f d = new Vector3f(to).sub(from);
         float len = d.length();
         if (len < 1.0e-4f) return;
@@ -200,14 +235,15 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
      */
     public AABB getRenderBoundingBox(CleatBlockEntity be) {
         BlockPos p = be.getBlockPos();
-        BlockPos t = be.stayTarget();
-        if (t == null) {
-            return new AABB(p);
-        }
+        AABB box = RopeLineRenderer.linesBox(be);
         TriangleCloth g = be.cloth();
-        int drop = g == null ? 0 : g.drop();
-        return new AABB(Math.min(p.getX(), t.getX()) - MAX_BELLY, Math.min(Math.min(p.getY(), t.getY()), p.getY() - drop) - MAX_BELLY,
+        if (g == null) {
+            return box;
+        }
+        BlockPos t = p.offset(g.tackX(), g.tackY(), g.tackZ());
+        int drop = g.drop();
+        return box.minmax(new AABB(Math.min(p.getX(), t.getX()) - MAX_BELLY, Math.min(Math.min(p.getY(), t.getY()), p.getY() - drop) - MAX_BELLY,
                 Math.min(p.getZ(), t.getZ()) - MAX_BELLY, Math.max(p.getX(), t.getX()) + 1 + MAX_BELLY,
-                Math.max(p.getY(), t.getY()) + 1 + MAX_BELLY, Math.max(p.getZ(), t.getZ()) + 1 + MAX_BELLY);
+                Math.max(p.getY(), t.getY()) + 1 + MAX_BELLY, Math.max(p.getZ(), t.getZ()) + 1 + MAX_BELLY));
     }
 }

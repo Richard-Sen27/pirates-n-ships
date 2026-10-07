@@ -12,9 +12,6 @@ import com.richardsenger.piratesnships.station.winch.CaptainsWhistleItem;
 import com.richardsenger.piratesnships.station.winch.SailOrder;
 import java.util.List;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.data.models.model.ModelLocationUtils;
-import net.minecraft.data.models.model.ModelTemplates;
-import net.minecraft.data.models.model.TextureMapping;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
@@ -75,9 +72,7 @@ public final class StationModule implements ModModule {
             tags.tag(SABLE_RETAIN).add(StationContent.STATION_SEAT.get());
             tags.tag(SABLE_DESTROY_WITH_SUB_LEVEL).add(StationContent.STATION_SEAT.get());
         });
-        data.models(m -> ModelTemplates.FLAT_ITEM.create(ModelLocationUtils.getModelLocation(StationContent.CAPTAINS_WHISTLE.get()),
-                // placeholder: vanilla's goat horn texture until the whistle gets its own
-                TextureMapping.layer0(ResourceLocation.withDefaultNamespace("item/goat_horn")), m.models()));
+        // The whistle's item model is hand-made (art/models/captains_whistle.bbmodel), so datagen writes none
         data.lang(lang -> {
             lang.item(StationContent.CAPTAINS_WHISTLE, "Captain's Whistle")
                     .add(StationContent.CREW_MEMBER.get().getDescriptionId(), "Crew Member")

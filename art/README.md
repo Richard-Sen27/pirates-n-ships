@@ -114,5 +114,21 @@ Items (firearms, ammunition and grappling hook batch, F8b):
 - Building from a part list in `risky_eval` (centre, direction in 22.5° steps, length, width, z range, palette patch
   per face) and re-centring the bounding box on (8, 8) before building kept each model to a few iterations.
 
+Items (captain's whistle and shackles batch, F8c):
+- Both use `item/generated`'s transforms unchanged (left hand repeats the right hand) and need no new colours:
+  brass patches of `palette.png` for the whistle, `cast_iron*` of `palette_2.png` (plus `black` for the keyhole) for
+  the shackles.
+- **Rings** (whistle shackle, cuffs, flat chain links): eight bars around the centre, bar `k` at normal angle
+  `k * 45°`, direction `k * 45° + 90°` folded into −90..90, length `2 (r − t/2) tan 22.5° + 0.3..0.45 t`. A longer
+  overlap makes the corners stick out as spikes. A **rim highlight** is a second, thinner ring at the outer edge,
+  0.1 px proud in z on both sides, with the light patch on the south faces of bars `k = 1..4` (upper-left half, the
+  side the GUI light comes from) and on its outer sides.
+- **Chains**: alternate an edge-on link (one bar along the chain, 0.8 wide, 2 px deep in z) and a flat link (an
+  oval of four bars); let them overlap by about 1 px and end in an eye on each cuff.
+- **Cord loops** (lanyard): four segments at ±22.5° around the hanging direction form a narrow diamond, with vanilla
+  angles only.
+- An item whose flat model used a vanilla sprite (the whistle used `minecraft:item/goat_horn`) has no sprite of
+  ours to delete.
+
 Entity models use the Modded Entity format (Mojang mappings 1.17+); paste the body of the exported
 `createBodyLayer()` into the renderer's layer method (example: `AnchorRenderer.createLayer`).

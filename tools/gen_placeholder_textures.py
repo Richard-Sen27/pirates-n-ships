@@ -13,7 +13,7 @@ Deterministic: same input, same bytes. One function per texture, registered in I
 Replacing a texture by hand: put its name into PROTECTED (or a line in tools/protected_textures.txt),
 then this script never overwrites it. Textures owned by other packages (test_block) are never written. The helm, nameplate and flagpole have
 hand-made Blockbench models with vanilla textures (art/models/) and no textures here; the rapier, cutlass, saber,
-pistol, musket, lead shot, cannonball and grappling hook have hand-made item models textured from the item palettes
+pistol, musket, lead shot, cannonball, grappling hook and shackles have hand-made item models textured from the item palettes
 (tools/gen_item_palette.py).
 """
 import argparse
@@ -206,21 +206,6 @@ def lime():
     return cv.outline()
 
 
-def shackles():
-    cv = Canvas()
-    for cx in (4, 11):
-        cv.disc(cx, 10, 3, "iron")
-        cv.disc(cx, 10, 1.5, CLEAR_KEY)
-    for x in range(6, 10):
-        cv.px(x, 5 + (x % 2), "steel")
-    cv.px(5, 6, "steel"); cv.px(10, 6, "steel")
-    return cv.outline()
-
-
-CLEAR_KEY = "_clear"
-P[CLEAR_KEY] = CLEAR
-
-
 def brig_door_item():
     cv = Canvas()
     cv.rect(4, 1, 11, 14, "wood")
@@ -331,7 +316,7 @@ def pantry_top():
 ITEMS = {
     "doubloon": doubloon, "tobacco": tobacco, "spices": spices, "cloth": cloth, "rum": rum,
     "hardtack": hardtack, "salted_fish": salted_fish, "salt_pork": salt_pork, "lime": lime,
-    "shackles": shackles, "brig_door": brig_door_item,
+    "brig_door": brig_door_item,
 }
 BLOCKS = {
     "brig_bars": brig_bars, "brig_bars_edge": brig_bars_edge,

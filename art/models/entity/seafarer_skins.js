@@ -30,6 +30,7 @@ SF.C = {
   shoe_d: [22, 20, 22], shoe: [38, 34, 36],
   navy_d: [22, 32, 70], navy: [34, 50, 104], navy_l: [50, 70, 132],
   facing_d: [126, 22, 28], facing: [168, 34, 40],
+  buff_d: [170, 148, 104], buff: [200, 178, 130],
   belt_white: [240, 238, 230], belt_shade: [200, 198, 190],
   hat_d: [16, 14, 18], hat: [32, 30, 36], hat_l: [52, 50, 58],
   gold_d: [156, 104, 22], gold: [222, 170, 48], gold_l: [252, 226, 120],
@@ -235,11 +236,11 @@ SF.sailor = function () {
 };
 
 // --- navy -------------------------------------------------------------------------------------------------------
-SF.navyCoat = function (s, trim, trim_d) {
-  s.fill(SF.BODY, 'white', 'belt_shade', 0.12);
+SF.navyCoat = function (s, trim, waist, waist_d) {
+  s.fill(SF.BODY, waist, waist_d, 0.12);
   const b = s.faces(SF.BODY), [bx, by] = b.front;
   for (let r = 1; r < 9; r += 2) s.px(bx + 4, by + r, 'gold');
-  s.band(SF.BODY, 9, 3, 'white', 'belt_shade', 0.2);
+  s.band(SF.BODY, 9, 3, waist, waist_d, 0.2);
   // coat on the base body sides and back too (the jacket layer adds the open front edges)
   s.rect(...b.right, 'navy'); s.rect(...b.left, 'navy'); s.rect(...b.back, 'navy'); s.rect(...b.top, 'navy');
   for (const k of ['right', 'left', 'back']) s.speckle(...b[k], 'navy_d', 0.15);
@@ -270,18 +271,18 @@ SF.navy_soldier = function () {
   const f = SF.head(s, {skin: 'pale', skin_d: 'pale_d', skin_l: 'skin_l', hair: 'grey', hair_d: 'grey_d', brow: 'grey_d', hairRows: 2, backRows: 6});
   const [bkx, bky] = f.back; s.rect(bkx + 3, bky + 5, 2, 3, 'black');
   for (const side of ['right', 'left']) { const r = f[side]; s.px(r[0] + (side === 'right' ? 1 : 2), r[1] + 3, 'grey_l'); s.px(r[0] + (side === 'right' ? 1 : 2), r[1] + 4, 'grey'); }
-  SF.navyCoat(s, 'facing', 'facing_d');
+  SF.navyCoat(s, 'facing', 'buff', 'buff_d');
   // cross belts on the jacket layer front and back (over the waistcoat gap, too)
   for (const k of ['front', 'back']) {
     const [x, y] = s.faces(SF.JACKET)[k];
+    for (let i = 0; i < 8; i++) { s.px(x + i, y + 2 + i, 'belt_shade'); s.px(x + 7 - i, y + 2 + i, 'belt_shade'); }
     for (let i = 0; i < 8; i++) { s.px(x + i, y + 1 + i, 'belt_white'); s.px(x + 7 - i, y + 1 + i, 'belt_white'); }
-    for (let i = 0; i < 8; i += 3) { s.px(x + i, y + 2 + i, 'belt_shade'); }
   }
   for (const k of ['right', 'left']) { const r = s.faces(SF.JACKET)[k]; s.px(r[0] + 1, r[1] + 9, 'belt_white'); s.px(r[0] + 2, r[1] + 9, 'belt_white'); }
   // gaiters: black, buttoned on the outside, over the trousers layer; shoes on the legs
   for (const l of SF.LEGS) { s.band(l, 10, 2, 'shoe', 'shoe_d', 0.2); s.rect(...s.faces(l).bottom, 'shoe_d'); }
-  for (const p of SF.PANTS) { s.band(p, 5, 6, 'shoe', 'shoe_d', 0.15); s.band(p, 5, 1, 'shoe_d'); s.rect(...s.faces(p).bottom, null); s.rect(...s.faces(p).top, null); }
-  s.column(s.faces(SF.RPANTS).right, 1, 6, 5, 'steel'); s.column(s.faces(SF.LPANTS).left, 2, 6, 5, 'steel');
+  for (const p of SF.PANTS) { s.band(p, 7, 4, 'shoe', 'shoe_d', 0.15); s.band(p, 7, 1, 'shoe_d'); s.rect(...s.faces(p).bottom, null); s.rect(...s.faces(p).top, null); }
+  s.column(s.faces(SF.RPANTS).right, 1, 8, 3, 'steel'); s.column(s.faces(SF.LPANTS).left, 2, 8, 3, 'steel');
   // tricorn regions
   s.region(R.brim_out, 'hat', 'hat_d', 0.2, 'belt_white'); s.region(R.brim_in, 'hat_d', 'hat', 0.2, 'belt_white');
   s.region(R.crown, 'hat', 'hat_d', 0.2); s.region(R.crown_top, 'hat', 'hat_d', 0.25);
@@ -310,7 +311,7 @@ SF.navy_officer = function () {
   const [bkx, bky] = f.back; s.rect(bkx + 3, bky + 5, 2, 3, 'black');
   const [fx, fy] = f.front; s.px(fx + 2, fy + 6, 'skin'); s.px(fx + 5, fy + 6, 'skin');
   for (const side of ['right', 'left']) { const r = f[side]; s.px(r[0] + (side === 'right' ? 1 : 2), r[1] + 3, 'white'); s.px(r[0] + (side === 'right' ? 1 : 2), r[1] + 4, 'grey_l'); }
-  SF.navyCoat(s, 'gold', 'gold_d');
+  SF.navyCoat(s, 'gold', 'white', 'belt_shade');
   const j = s.faces(SF.JACKET);
   for (const k of ['right', 'left']) { const r = j[k]; s.rect(r[0], r[1] + 11, r[2], 1, 'gold_d'); }
   s.rect(j.back[0], j.back[1] + 11, 8, 1, 'gold_d');

@@ -37,7 +37,7 @@ SF.DETAILS.pirate = [
   T('head', 'eyepatch', [-3.1, 26.9, -4.3], [-0.9, 28.9, -4.0], 'black'),
   T('head', 'earring', [4, 25.4, -0.2], [4.4, 26.2, 0.4], 'gold'),
   ...pair(T('body', 'x', [-2.7, 16.5, -2.62], [-1.6, 24, -2.25], 'coat_l', {faces: {north: 'R:lapel', up: 'coat_ll'}}), 'lapel_right', 'lapel_left'),
-  ...pair(T('body', 'x', [-4.3, 4, 2.3], [-0.15, 12.4, 2.85], 'coat_d', {faces: {south: 'R:tail_back', up: null}, rot: [9, 0, 0], origin: [-2.2, 12.4, 2.55]}), 'coat_tail_right', 'coat_tail_left'),
+  ...pair(T('body', 'x', [-4.3, 4, 2.3], [-0.15, 12.4, 2.85], 'coat_d', {faces: {south: 'R:tail_back', up: null}, rot: [-9, 0, 0], origin: [-2.2, 12.4, 2.55]}), 'coat_tail_right', 'coat_tail_left'),
   ...pair(T('body', 'x', [-4.85, 4, -2.3], [-4.3, 12.4, 2.85], 'coat_d', {faces: {west: 'R:tail_side', up: null}, rot: [0, 0, -5], origin: [-4.55, 12.4, 0]}), 'coat_skirt_right', 'coat_skirt_left'),
   T('body', 'sash', [-4.45, 12.7, -2.45], [4.45, 14.5, 2.45], 'sash', {faces: {up: 'sash_d', down: 'sash_d'}}),
   T('body', 'sash_knot', [2.2, 12.4, -2.85], [3.6, 14.1, -2.4], 'sash_l', {faces: {down: 'sash_d'}}),
@@ -94,12 +94,12 @@ SF.DETAILS.navy_soldier = [
   T('body', 'belt_plate', [-1, 17.7, -2.62], [1, 19.6, -2.3], 'brass', {faces: {down: 'brass_d', east: 'brass_d', west: 'brass_d'}}),
   T('body', 'cartridge_box', [-3.6, 11.4, 2.9], [-0.6, 13.8, 3.9], 'black', {faces: {up: 'shoe'}}),
   T('body', 'cartridge_badge', [-2.5, 12.2, 3.9], [-1.7, 13.0, 4.0], 'brass'),
-  ...pair(T('body', 'x', [-4.3, 6, 2.3], [-0.15, 12.4, 2.85], 'navy_d', {faces: {south: 'R:tail_back', north: 'facing', up: null}, rot: [8, 0, 0], origin: [-2.2, 12.4, 2.55]}), 'coat_tail_right', 'coat_tail_left'),
+  ...pair(T('body', 'x', [-4.3, 6, 2.3], [-0.15, 12.4, 2.85], 'navy_d', {faces: {south: 'R:tail_back', north: 'facing', up: null}, rot: [-8, 0, 0], origin: [-2.2, 12.4, 2.55]}), 'coat_tail_right', 'coat_tail_left'),
   ...pair(T('body', 'x', [-4.85, 6, -2.3], [-4.3, 12.4, 2.85], 'navy_d', {faces: {west: 'R:tail_side', east: 'facing', up: null}, rot: [0, 0, -4], origin: [-4.55, 12.4, 0]}), 'coat_skirt_right', 'coat_skirt_left'),
   ...pair(T('right_arm', 'x', [-8.45, 13.9, -2.45], [-3.55, 16.5, 2.45], 'facing_d', {faces: sides('R:cuff')}), 'cuff_right', 'cuff_left').map((c, i) => Object.assign(c, {bone: i ? 'left_arm' : 'right_arm'})),
   ...pair(T('right_leg', 'x', [-4.0, 0, -2.6], [0.2, 1.1, 2.2], 'shoe', {faces: {down: 'shoe_d'}}), 'shoe_right', 'shoe_left').map((c, i) => Object.assign(c, {bone: i ? 'left_leg' : 'right_leg'})),
   ...pair(T('right_leg', 'x', [-2.4, 0.4, -2.72], [-1.4, 1.05, -2.55], 'brass', {faces: {down: 'brass_d'}}), 'buckle_right', 'buckle_left').map((c, i) => Object.assign(c, {bone: i ? 'left_leg' : 'right_leg'})),
-  ...pair(T('right_leg', 'x', [-4.4, 6.6, -2.5], [0.4, 7.4, 2.5], 'shoe_d', {faces: sides('R:gaiter')}), 'gaiter_top_right', 'gaiter_top_left').map((c, i) => Object.assign(c, {bone: i ? 'left_leg' : 'right_leg'}))
+  ...pair(T('right_leg', 'x', [-4.4, 4.6, -2.5], [0.4, 5.4, 2.5], 'shoe_d', {faces: sides('R:gaiter')}), 'gaiter_top_right', 'gaiter_top_left').map((c, i) => Object.assign(c, {bone: i ? 'left_leg' : 'right_leg'}))
 ];
 
 // bicorne worn athwart: a low crown, a stepped front and back flap leaning towards each other, end plates
@@ -129,7 +129,7 @@ SF.DETAILS.navy_officer = [
   T('body', 'sash_end_b', [4.45, 8.6, -0.4], [4.95, 11.4, 0.7], 'crimson_d', {rot: [0, 0, -3], origin: [4.7, 11.4, 0.15]}),
   T('body', 'tassel_a', [4.35, 7.0, -1.8], [5.05, 8.0, -0.4], 'gold', {rot: [0, 0, 4], origin: [4.7, 11.4, -1.1]}),
   T('body', 'tassel_b', [4.35, 7.6, -0.5], [5.05, 8.6, 0.8], 'gold_d', {rot: [0, 0, -3], origin: [4.7, 11.4, 0.15]}),
-  ...pair(T('body', 'x', [-4.3, 5, 2.3], [-0.15, 12.4, 2.85], 'navy_d', {faces: {south: 'R:tail_back', north: 'white', up: null}, rot: [8, 0, 0], origin: [-2.2, 12.4, 2.55]}), 'coat_tail_right', 'coat_tail_left'),
+  ...pair(T('body', 'x', [-4.3, 5, 2.3], [-0.15, 12.4, 2.85], 'navy_d', {faces: {south: 'R:tail_back', north: 'white', up: null}, rot: [-8, 0, 0], origin: [-2.2, 12.4, 2.55]}), 'coat_tail_right', 'coat_tail_left'),
   ...pair(T('body', 'x', [-4.85, 5, -2.3], [-4.3, 12.4, 2.85], 'navy_d', {faces: {west: 'R:tail_side', east: 'white', up: null}, rot: [0, 0, -4], origin: [-4.55, 12.4, 0]}), 'coat_skirt_right', 'coat_skirt_left'),
   ...pair(T('right_arm', 'x', [-8.6, 23.9, -2.6], [-4.2, 24.7, 2.6], 'gold', {faces: {up: 'R:epaulette', down: 'gold_d'}}), 'epaulette_right', 'epaulette_left').map((c, i) => Object.assign(c, {bone: i ? 'left_arm' : 'right_arm'})),
   ...pair(T('right_arm', 'x', [-8.95, 21.6, -2.6], [-8.6, 23.9, 2.6], 'gold_d', {faces: sides('R:fringe', {up: null})}), 'fringe_right', 'fringe_left').map((c, i) => Object.assign(c, {bone: i ? 'left_arm' : 'right_arm'})),

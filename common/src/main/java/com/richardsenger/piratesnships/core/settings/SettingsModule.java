@@ -5,7 +5,6 @@ import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.crew.CrewConfig;
 import com.richardsenger.piratesnships.hazard.HazardConfig;
 import com.richardsenger.piratesnships.ship.ShipConfig;
-import com.richardsenger.piratesnships.survival.SurvivalConfig;
 import com.richardsenger.piratesnships.world.WorldConfig;
 import com.richardsenger.piratesnships.worldsim.WorldSimConfig;
 
@@ -21,7 +20,7 @@ public final class SettingsModule implements ModModule {
 
     /** Top-level server sections declared by this module. */
     public static final List<String> SERVER_SECTIONS = List.of(
-            "ships", "waves", "hazards", "crew", "combat", "survival", "world", "world_simulation");
+            "ships", "waves", "hazards", "crew", "combat", "world", "world_simulation");
 
     /** Top-level client sections declared by this module. */
     public static final List<String> CLIENT_SECTIONS = List.of("wave_effects");
@@ -37,7 +36,6 @@ public final class SettingsModule implements ModModule {
         HazardConfig.init();
         CrewConfig.init();
         CombatConfig.init();
-        SurvivalConfig.init();
         WorldConfig.init();
         WorldSimConfig.init();
     }

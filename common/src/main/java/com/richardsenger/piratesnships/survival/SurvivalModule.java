@@ -31,11 +31,13 @@ import java.util.List;
  */
 public final class SurvivalModule implements ModModule {
 
-    /** Vanilla biomes in {@code #pirates_n_ships:cold_water}; the tag also includes {@code #c:is_cold} if present. */
+    /**
+     * The biomes in {@code #pirates_n_ships:cold_water}: vanilla's cold and frozen oceans and the frozen river. Not
+     * {@code #c:is_cold}, which would also make taiga lakes, stony shores and the End freeze (design §14: cold and
+     * frozen ocean biomes).
+     */
     public static final List<ResourceKey<Biome>> COLD_BIOMES = List.of(
             Biomes.FROZEN_OCEAN, Biomes.DEEP_FROZEN_OCEAN, Biomes.COLD_OCEAN, Biomes.DEEP_COLD_OCEAN, Biomes.FROZEN_RIVER);
-    /** The convention tag of cold biomes (NeoForge and Fabric 1.21.1), referenced optionally. */
-    public static final String C_IS_COLD = "#c:is_cold";
 
     @Override
     public String id() {
@@ -68,10 +70,6 @@ public final class SurvivalModule implements ModModule {
         data.json(PackOutput.Target.DATA_PACK, "tags/worldgen/biome", SurvivalContent.COLD_WATER.location(), () -> {
             JsonArray values = new JsonArray();
             for (ResourceKey<Biome> biome : COLD_BIOMES) values.add(biome.location().toString());
-            JsonObject optional = new JsonObject();
-            optional.addProperty("id", C_IS_COLD);
-            optional.addProperty("required", false);
-            values.add(optional);
             JsonObject json = new JsonObject();
             json.add("values", values);
             return json;

@@ -12,6 +12,9 @@ import com.richardsenger.piratesnships.chart.net.ChartSettings;
 import com.richardsenger.piratesnships.chart.net.ChartSimplePayloads;
 import com.richardsenger.piratesnships.chart.net.ChartStatePayload;
 import com.richardsenger.piratesnships.chart.net.ChartViewPayload;
+import com.richardsenger.piratesnships.chart.net.DrawTilePayload;
+import com.richardsenger.piratesnships.chart.net.TileTarget;
+import com.richardsenger.piratesnships.chart.render.MapTileRaster;
 import com.richardsenger.piratesnships.chart.render.ChartDoodles;
 import com.richardsenger.piratesnships.chart.render.ChartProjection;
 import com.richardsenger.piratesnships.chart.render.ChartSheet;
@@ -87,11 +90,28 @@ public final class ChartScreen extends Screen {
 
     private final Map<Long, CachedDoodle> doodles = new HashMap<>();
 
+    // "draw on tile" mode (work package MAP2): null for the plain chart
+    private final TileTarget target;
+    private int selCx;
+    private int selCz;
+    private double selFracX;
+    private double selFracZ;
+    private boolean draggingSelection;
+    private boolean includeMarkers = true;
+    private boolean confirmRedraw;
+    private BrassButton markersButton;
+    private BrassButton drawButton;
+
     private record CachedDoodle(long version, Optional<ChartDoodles.Doodle> doodle) {
     }
 
-    ChartScreen() {
-        super(Component.translatable(ChartText.TITLE, playerName()));
+    ChartScreen(TileTarget target) {
+        super(target == null ? Component.translatable(ChartText.TITLE, playerName()) : Component.translatable(ChartText.DRAW_TITLE));
+        this.target = target;
+        if (target != null) {
+            selCx = target.minCx();
+            selCz = target.minCz();
+        }
     }
 
     private static String playerName() {
@@ -103,11 +123,12 @@ public final class ChartScreen extends Screen {
     static void open() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
-        if (mc.screen instanceof ChartScreen open) {
+        TileTarget target = ClientChart.drawTarget().orElse(null);
+        if (mc.screen instanceof ChartScreen open && target == null && open.target == null) {
             open.lastSentView = null;
             return;
         }
-        mc.setScreen(new ChartScreen());
+        mc.setScreen(new ChartScreen(target));
     }
 
     @Override
@@ -131,6 +152,13 @@ public final class ChartScreen extends Screen {
         mapT = top + inner + GuiKit.HEADER_H + 3;
         mapW = panelW - 2 * inner - 4;
         mapH = panelH - 2 * inner - GuiKit.HEADER_H - 3 - FOOTER_H - 2;
+        if (view == null && target != null) {
+            // the whole selection in view at the widest zoom
+            double cx = (selCx + target.tileCells() / 2.0) * cellBlocks();
+            double cz = (selCz + target.tileCells() / 2.0) * cellBlocks();
+            view = new ChartProjection(cx, cz, 0, cellBlocks());
+            clampSelection();
+        }
         if (view == null) {
             view = mc.player == null ? new ChartProjection(0, 0, ChartProjection.DEFAULT_ZOOM, cellBlocks())
                     : ClientChart.view(mc.player.getUUID())
@@ -160,7 +188,104 @@ public final class ChartScreen extends Screen {
         deleteButton = addRenderableWidget(new BrassButton(editorX + 54, buttonsY, 46, GuiKit.FIELD_H, Component.translatable(ChartText.DELETE), this::deleteMarker));
         cancelButton = addRenderableWidget(new BrassButton(editorX + 104, buttonsY, 46, GuiKit.FIELD_H, Component.translatable(ChartText.CANCEL), this::closeEditor));
         updateEditorWidgets();
+        if (target != null) {
+            int right = mapL + mapW;
+            drawButton = addRenderableWidget(new BrassButton(right - 56, by, 56, GuiKit.FIELD_H, drawLabel(), this::drawPressed));
+            markersButton = addRenderableWidget(new BrassButton(right - 56 - 4 - 62, by, 62, GuiKit.FIELD_H,
+                    Component.translatable(ChartText.INCLUDE_MARKERS), this::toggleMarkers).selected(includeMarkers));
+        }
         lastSentView = null;
+    }
+
+    // ------------------------------------------------------------------ draw on tile (MAP2)
+
+    private Component drawLabel() {
+        if (target == null || !target.drawn()) return Component.translatable(ChartText.DRAW);
+        return Component.translatable(confirmRedraw ? ChartText.REDRAW_CONFIRM : ChartText.REDRAW);
+    }
+
+    private void toggleMarkers() {
+        includeMarkers = !includeMarkers;
+        markersButton.selected(includeMarkers);
+    }
+
+    private void drawPressed() {
+        if (target == null) return;
+        if (target.drawn() && !confirmRedraw) {
+            // a drawn tile is only ever redrawn as a whole: ask once more
+            confirmRedraw = true;
+            drawButton.setMessage(drawLabel());
+            showStatus(Component.translatable(ChartText.REDRAW_CONFIRM), GuiKit.INK_RED);
+            return;
+        }
+        Services.NETWORK.sendToServer(new DrawTilePayload(target.pos(), selCx, selCz, includeMarkers));
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.0f));
+        onClose();
+    }
+
+    private void selectionMoved() {
+        if (confirmRedraw) {
+            confirmRedraw = false;
+            if (drawButton != null) drawButton.setMessage(drawLabel());
+        }
+    }
+
+    /** Keeps the selection on the charted area ({@link MapTileRaster#clampAxis}); nothing charted: no limit. */
+    private void clampSelection() {
+        if (target == null) return;
+        ChartProjection.Bounds known = ClientChart.bounds();
+        if (known == null) return;
+        int cb = cellBlocks();
+        int size = target.tileCells();
+        selCx = MapTileRaster.clampAxis(selCx, size, (int) Math.floor(known.minX() / cb), (int) Math.floor(known.maxX() / cb) - 1);
+        selCz = MapTileRaster.clampAxis(selCz, size, (int) Math.floor(known.minZ() / cb), (int) Math.floor(known.maxZ() / cb) - 1);
+    }
+
+    private long originX() {
+        return (long) Math.floor(view.screenX(0, mapL, mapW));
+    }
+
+    private long originY() {
+        return (long) Math.floor(view.screenY(0, mapT, mapH));
+    }
+
+    private boolean inSelection(double mx, double my) {
+        if (target == null) return false;
+        int px = view.pixelsPerCell();
+        double x0 = originX() + (double) selCx * px;
+        double y0 = originY() + (double) selCz * px;
+        double w = (double) target.tileCells() * px;
+        return mx >= x0 && mx < x0 + w && my >= y0 && my < y0 + w;
+    }
+
+    /** The selection as a parchment frame over the chart, the rest washed darker. */
+    private void renderSelection(GuiGraphics g) {
+        int px = view.pixelsPerCell();
+        int l = clampScreen(originX() + (long) selCx * px, mapL, mapW);
+        int t = clampScreen(originY() + (long) selCz * px, mapT, mapH);
+        int r = clampScreen(originX() + ((long) selCx + target.tileCells()) * px, mapL, mapW);
+        int b = clampScreen(originY() + ((long) selCz + target.tileCells()) * px, mapT, mapH);
+        int wash = 0x60201810;
+        g.fill(mapL, mapT, mapL + mapW, Math.max(mapT, t), wash);
+        g.fill(mapL, Math.min(mapT + mapH, b), mapL + mapW, mapT + mapH, wash);
+        g.fill(mapL, Math.max(t, mapT), Math.max(mapL, l), Math.min(b, mapT + mapH), wash);
+        g.fill(Math.min(mapL + mapW, r), Math.max(t, mapT), mapL + mapW, Math.min(b, mapT + mapH), wash);
+        // ink, two pixels of parchment, ink
+        frameRect(g, l - 3, t - 3, r + 3, b + 3, GuiKit.INK);
+        frameRect(g, l - 2, t - 2, r + 2, b + 2, MapTileRaster.PARCHMENT);
+        frameRect(g, l - 1, t - 1, r + 1, b + 1, MapTileRaster.PARCHMENT);
+        frameRect(g, l, t, r, b, GuiKit.INK);
+    }
+
+    private static int clampScreen(long v, int min, int len) {
+        return (int) Math.max(min - 8, Math.min(min + len + 8, v));
+    }
+
+    private static void frameRect(GuiGraphics g, int l, int t, int r, int b, int color) {
+        g.fill(l, t, r, t + 1, color);
+        g.fill(l, b - 1, r, b, color);
+        g.fill(l, t, l + 1, b, color);
+        g.fill(r - 1, t, r, b, color);
     }
 
     // ------------------------------------------------------------------ state
@@ -341,6 +466,19 @@ public final class ChartScreen extends Screen {
         }
         if (super.mouseClicked(mx, my, button)) return true;
         if (!inMap(mx, my)) return false;
+        if (target != null) {
+            // draw mode: no marker editing; drag the selection or pan the chart
+            if (button != GLFW.GLFW_MOUSE_BUTTON_LEFT) return true;
+            if (inSelection(mx, my)) {
+                draggingSelection = true;
+                selFracX = 0;
+                selFracZ = 0;
+            } else {
+                dragging = true;
+                dragDistance = 0;
+            }
+            return true;
+        }
         if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
             int x = (int) Math.floor(view.blockX(mx, mapL, mapW));
             int z = (int) Math.floor(view.blockZ(my, mapT, mapH));
@@ -369,6 +507,22 @@ public final class ChartScreen extends Screen {
 
     @Override
     public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
+        if (draggingSelection && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+            int px = view.pixelsPerCell();
+            selFracX += dx / px;
+            selFracZ += dy / px;
+            int stepX = (int) selFracX;
+            int stepZ = (int) selFracZ;
+            if (stepX != 0 || stepZ != 0) {
+                selFracX -= stepX;
+                selFracZ -= stepZ;
+                selCx += stepX;
+                selCz += stepZ;
+                clampSelection();
+                selectionMoved();
+            }
+            return true;
+        }
         if (dragging && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
             dragDistance += Math.abs(dx) + Math.abs(dy);
             setView(view.pan(dx, dy));
@@ -380,6 +534,7 @@ public final class ChartScreen extends Screen {
     @Override
     public boolean mouseReleased(double mx, double my, int button) {
         dragging = false;
+        draggingSelection = false;
         return super.mouseReleased(mx, my, button);
     }
 
@@ -494,6 +649,8 @@ public final class ChartScreen extends Screen {
             blitPart(g, ChartSheet.marker(editIcon), sx - 4, sy - 4);
         }
 
+        if (target != null) renderSelection(g);
+
         boolean charted = mc.level != null && mc.level.dimension() == Level.OVERWORLD;
         if (charted) {
             for (ChartStatePayload.OtherPlayer o : ClientChart.others()) {
@@ -586,13 +743,21 @@ public final class ChartScreen extends Screen {
         if (!status.getString().isEmpty()) {
             text = status;
             color = statusColor == GuiKit.INK_RED ? GuiKit.ON_WOOD_RED : GuiKit.ON_WOOD;
+        } else if (target != null && !inMap(mouseX, mouseY)) {
+            int cb = cellBlocks();
+            text = Component.translatable(ChartText.DRAW_AREA, (long) selCx * cb, (long) selCz * cb, (long) target.tileCells() * cb);
+            color = GuiKit.ON_WOOD;
         } else if (inMap(mouseX, mouseY)) {
             text = Component.translatable(ChartText.POSITION, (int) Math.floor(view.blockX(mouseX, mapL, mapW)),
                     (int) Math.floor(view.blockZ(mouseY, mapT, mapH)));
             color = GuiKit.ON_WOOD;
         } else {
-            text = Component.translatable(ChartText.HINT);
+            text = Component.translatable(target != null ? ChartText.DRAW_HINT : ChartText.HINT);
             color = GuiKit.ON_WOOD_DIM;
+        }
+        if (target != null) {
+            GuiKit.text(g, font, text, x, y, markersButton.getX() - 6 - x, color, true);
+            return;
         }
         Component count = Component.translatable(ChartText.MARKER_COUNT, ClientChart.markers().size(), ClientChart.settings().maxMarkers());
         int cw = font.width(count);

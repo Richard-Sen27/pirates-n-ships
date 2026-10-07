@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.chart.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.chart.ChartContent;
 import com.richardsenger.piratesnships.chart.ChartText;
 import com.richardsenger.piratesnships.chart.net.ChartSettings;
@@ -16,7 +17,7 @@ import org.lwjgl.glfw.GLFW;
 /**
  * Client side of the chart (physical client only, work package MAP1): the "Open Chart" key (default M), the screen
  * opener, texture invalidation, the cache reset on leaving a server, and a tooltip line on the chart item while the
- * server allows the key without the item.
+ * server allows the key without the item. MAP2: the map tile's block entity renderer, its HUD line and its textures.
  *
  * <p>The key: with {@code chart.open_without_item} (from the synced settings) or a chart in either hand it asks the
  * server to open the chart; otherwise it only shows a hint on the action bar and sends nothing.
@@ -34,6 +35,11 @@ public final class ChartClient {
         ClientChart.setRegionListener(ChartTextures::onRegion);
         ClientEvents.CLIENT_DISCONNECT.register(mc -> ClientChart.reset());
         ClientEvents.CLIENT_TICK_END.register(ChartClient::tick);
+        // map tiles (MAP2)
+        ClientEvents.registerBlockEntityRenderer(ChartContent.MAP_TILE_BLOCK_ENTITY, MapTileRenderer::new);
+        ClientEvents.registerHudLayer(Constants.id("map_tile_info"), MapTileHud::render);
+        ClientEvents.CLIENT_DISCONNECT.register(mc -> MapTileTextures.releaseAll());
+        ClientEvents.CLIENT_TICK_END.register(mc -> MapTileTextures.onClientTick());
         ClientEvents.ITEM_TOOLTIP.register((stack, context, flag, player, lines) -> {
             if (player != null && stack.is(ChartContent.CHART.get()) && ClientChart.settings().openWithoutItem()) {
                 lines.add(Component.translatable(ChartText.KEY_TOOLTIP, OPEN_KEY.getTranslatedKeyMessage()).withStyle(ChatFormatting.DARK_GRAY));

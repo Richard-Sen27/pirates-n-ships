@@ -56,7 +56,7 @@ public final class ChartGameTests {
 
     // --- helpers ------------------------------------------------------------------------------------------------
 
-    private static ServerPlayer player(GameTestHelper helper, String name) {
+    static ServerPlayer player(GameTestHelper helper, String name) {
         // Not added to the level: a mock connection would receive (and reject) other mods' login payloads
         var profile = new com.mojang.authlib.GameProfile(UUID.randomUUID(), name);
         var cookie = net.minecraft.server.network.CommonListenerCookie.createInitial(profile, false);

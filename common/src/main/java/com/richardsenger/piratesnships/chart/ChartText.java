@@ -1,9 +1,14 @@
 package com.richardsenger.piratesnships.chart;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.chart.data.MapTileDrawing;
 import com.richardsenger.piratesnships.chart.data.MarkerIcon;
 import com.richardsenger.piratesnships.chart.data.MarkerRules;
 import com.richardsenger.piratesnships.chart.net.ChartBackend;
+import com.richardsenger.piratesnships.chart.tile.MapTileRules;
+import com.richardsenger.piratesnships.chart.tile.MapTileService;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -33,6 +38,28 @@ public final class ChartText {
     public static final String KEY_OPEN = "key." + Constants.MOD_ID + ".open_chart";
     public static final String KEY_CATEGORY = "key.categories." + Constants.MOD_ID;
     public static final String KEY_TOOLTIP = "item." + Constants.MOD_ID + ".chart.key_tooltip";
+
+    // map tile (MAP2)
+    public static final String DRAW_TITLE = SCREEN + "draw_title";
+    public static final String DRAW = SCREEN + "draw";
+    public static final String REDRAW = SCREEN + "redraw";
+    public static final String REDRAW_CONFIRM = SCREEN + "redraw_confirm";
+    public static final String INCLUDE_MARKERS = SCREEN + "include_markers";
+    public static final String DRAW_HINT = SCREEN + "draw_hint";
+    public static final String DRAW_AREA = SCREEN + "draw_area";
+    public static final String TILE_BLANK_TOOLTIP = "item." + Constants.MOD_ID + ".map_tile.blank";
+    public static final String TILE_DRAWN_BY = "item." + Constants.MOD_ID + ".map_tile.drawn_by";
+    public static final String TILE_AREA = "item." + Constants.MOD_ID + ".map_tile.area";
+
+    /** "Drawn by NAME on day N". */
+    public static MutableComponent drawnBy(MapTileDrawing d) {
+        return Component.translatable(TILE_DRAWN_BY, d.drawer(), d.day());
+    }
+
+    /** "x A to B, z C to D" (blocks). */
+    public static MutableComponent tileArea(MapTileDrawing d) {
+        return Component.translatable(TILE_AREA, d.minX(), d.maxX() - 1, d.minZ(), d.maxZ() - 1);
+    }
 
     public static String icon(MarkerIcon icon) {
         return SCREEN + "icon." + icon.getSerializedName();
@@ -72,6 +99,30 @@ public final class ChartText {
         m.put(com.richardsenger.piratesnships.chart.ChartItem.TOOLTIP, "Use to open your own chart of the coasts you have seen");
         m.put(ChartBackend.MSG + "disabled", "Charts are disabled on this server");
         m.put(ChartBackend.MSG + "needs_item", "You need a chart in hand to open it");
+        m.put(DRAW_TITLE, "Draw on map tile");
+        m.put(DRAW, "Draw");
+        m.put(REDRAW, "Redraw");
+        m.put(REDRAW_CONFIRM, "Redraw?");
+        m.put(INCLUDE_MARKERS, "Markers");
+        m.put(DRAW_HINT, "Drag the frame to choose the area, then draw");
+        m.put(DRAW_AREA, "x %s, z %s (%s blocks square)");
+        m.put(TILE_BLANK_TOOLTIP, "Use with a chart to draw a part of it onto the tile");
+        m.put(TILE_DRAWN_BY, "Drawn by %s on day %s");
+        m.put(TILE_AREA, "x %s to %s, z %s to %s");
+        m.put(MapTileService.DRAWN, "You draw your chart onto the tile");
+        for (MapTileRules.Refusal r : MapTileRules.Refusal.values()) {
+            if (r == MapTileRules.Refusal.NONE) continue;
+            m.put(MapTileService.MSG + r.key(), switch (r) {
+                case CHARTS_DISABLED -> "Charts are disabled on this server";
+                case TILES_DISABLED -> "Drawing on map tiles is disabled on this server";
+                case NO_TILE -> "That map tile is gone";
+                case TOO_FAR -> "You are too far from the map tile";
+                case NEEDS_CHART -> "You need a chart in hand to draw on the tile";
+                case PERMANENT -> "This tile's drawing is permanent";
+                case OUT_OF_WORLD -> "That area is beyond the edge of the world";
+                case NONE -> "";
+            });
+        }
         for (MarkerRules.Refusal r : MarkerRules.Refusal.values()) {
             m.put(ChartBackend.MSG + "refused." + r.key(), switch (r) {
                 case TOO_MANY -> "Your chart holds no more markers";

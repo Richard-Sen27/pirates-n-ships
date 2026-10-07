@@ -31,7 +31,20 @@ public final class ChartConfig {
     public static final ConfigValue<Integer> MAX_MARKERS = S.intRange("max_markers", 64, 0, 512,
             "Most markers a player can put on their chart");
 
-    private static final ConfigSection C = ModConfigs.client("chart_visuals", "How the pirate chart is drawn");
+    private static final ConfigSection TILES = S.section("tiles", "Map tiles (work package MAP2): a part of a player's chart drawn onto a block for everyone to see");
+
+    public static final ConfigValue<Boolean> TILES_ENABLED = TILES.bool("enabled", true,
+            "Players can draw their chart onto map tiles (false: drawn tiles keep their drawing, but nothing new is drawn)");
+    public static final ConfigValue<Integer> TILE_CELLS = TILES.intRange("tile_cells", 128, 32, 256,
+            "Chart cells along each side of a tile drawing (one pixel per cell; 128 cells of 4 blocks = 512 blocks square)");
+    public static final ConfigValue<Boolean> REDRAW_ALLOWED = TILES.bool("redraw_allowed", true,
+            "A drawn tile can be redrawn (a full redraw, never a partial edit); false: the first drawing is permanent");
+    public static final ConfigValue<Boolean> REQUIRE_CHART_ITEM = TILES.bool("require_chart_item", true,
+            "A chart must be in hand (either hand) to draw onto a tile");
+    public static final ConfigValue<Integer> TILE_REACH = TILES.intRange("reach", 8, 2, 64,
+            "Farthest distance in blocks between a player and the tile they draw on");
+
+    private static final ConfigSection C =ModConfigs.client("chart_visuals", "How the pirate chart is drawn");
 
     public static final ConfigValue<Boolean> DOODLES = C.bool("doodles", true,
             "Sea monsters and compass roses drawn into open water");

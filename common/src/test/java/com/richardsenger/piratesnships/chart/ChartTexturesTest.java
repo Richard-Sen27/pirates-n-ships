@@ -28,7 +28,7 @@ class ChartTexturesTest {
 
     private static final Path REPO = Path.of("..").toAbsolutePath().normalize();
     private static final Path TEXTURES = Path.of("src/main/resources/assets/pirates_n_ships/textures");
-    private static final List<String> FILES = List.of("gui/chart/sheet.png", "item/chart.png");
+    private static final List<String> FILES = List.of("gui/chart/sheet.png", "item/chart.png", "block/map_tile.png", "item/map_tile.png");
 
     private static int[] size(Path png) throws IOException {
         try (InputStream in = Files.newInputStream(png); DataInputStream data = new DataInputStream(in)) {
@@ -62,6 +62,8 @@ class ChartTexturesTest {
         assertEquals(ChartSheet.WIDTH, wh[0]);
         assertEquals(ChartSheet.HEIGHT, wh[1]);
         assertArrayEquals(new int[]{16, 16}, size(TEXTURES.resolve("item/chart.png")));
+        assertArrayEquals(new int[]{16, 16}, size(TEXTURES.resolve("block/map_tile.png")));
+        assertArrayEquals(new int[]{16, 16}, size(TEXTURES.resolve("item/map_tile.png")));
         List<ChartSheet.Part> parts = new ArrayList<>(List.of(ChartSheet.COMPASS, ChartSheet.SERPENT, ChartSheet.WHALE,
                 ChartSheet.SMALL_ROSE, ChartSheet.RING, ChartSheet.OWN_SHIP, ChartSheet.OTHER_SHIP));
         for (MarkerIcon icon : MarkerIcon.values()) parts.add(ChartSheet.marker(icon));

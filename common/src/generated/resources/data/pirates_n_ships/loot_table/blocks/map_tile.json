@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "function": "minecraft:copy_components",
+              "include": [
+                "pirates_n_ships:map_tile_drawing"
+              ],
+              "source": "block_entity"
+            }
+          ],
+          "name": "pirates_n_ships:map_tile"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "pirates_n_ships:blocks/map_tile"
+}

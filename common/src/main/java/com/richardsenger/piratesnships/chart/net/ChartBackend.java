@@ -8,6 +8,7 @@ import com.richardsenger.piratesnships.chart.client.ClientChart;
 import com.richardsenger.piratesnships.chart.data.ChartData;
 import com.richardsenger.piratesnships.chart.data.ChartRegion;
 import com.richardsenger.piratesnships.chart.data.MarkerRules;
+import com.richardsenger.piratesnships.chart.tile.MapTileService;
 import com.richardsenger.piratesnships.platform.Services;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -65,6 +66,7 @@ public final class ChartBackend {
         Services.NETWORK.registerToServer(ChartMarkerPayload.TYPE, ChartMarkerPayload.CODEC, (p, player) -> handleMarker((ServerPlayer) player, p));
         Services.NETWORK.registerToServer(ChartSimplePayloads.RequestOpen.TYPE, ChartSimplePayloads.RequestOpen.CODEC, (p, player) -> handleRequestOpen((ServerPlayer) player));
         Services.NETWORK.registerToServer(ChartSimplePayloads.Close.TYPE, ChartSimplePayloads.Close.CODEC, (p, player) -> close((ServerPlayer) player));
+        Services.NETWORK.registerToServer(DrawTilePayload.TYPE, DrawTilePayload.CODEC, (p, player) -> MapTileService.handleDraw((ServerPlayer) player, p));
         Services.NETWORK.registerToClient(ChartSettingsPayload.TYPE, ChartSettingsPayload.CODEC, (p, player) -> ClientChart.acceptSettings(p.settings()));
         Services.NETWORK.registerToClient(ChartOpenPayload.TYPE, ChartOpenPayload.CODEC, (p, player) -> ClientChart.open(p));
         Services.NETWORK.registerToClient(ChartRegionPayload.TYPE, ChartRegionPayload.CODEC, (p, player) -> ClientChart.acceptRegion(p));
@@ -100,6 +102,14 @@ public final class ChartBackend {
 
     /** Opens the chart screen of {@code player} (the item was used, or the key was allowed). */
     public static boolean open(ServerPlayer player) {
+        return open(player, Optional.empty());
+    }
+
+    /**
+     * Opens the chart screen of {@code player}; with a {@code tile} in "draw on tile" mode (work package MAP2, the
+     * caller checked the tile rules).
+     */
+    public static boolean open(ServerPlayer player, Optional<TileTarget> tile) {
         if (!ChartConfig.ENABLED.get()) {
             player.displayClientMessage(Component.translatable(MSG + "disabled"), true);
             return false;
@@ -108,7 +118,7 @@ public final class ChartBackend {
         Session old = SESSIONS.put(player.getUUID(), s);
         if (old != null) s.view = old.view;
         ChartData data = ChartService.data(player);
-        deliver(player, new ChartOpenPayload(settings(), data.markers()));
+        deliver(player, new ChartOpenPayload(settings(), data.markers(), tile));
         deliver(player, new ChartStatePayload(data.markers(), others(player), Optional.empty()));
         player.level().playSound(null, player.blockPosition(), SoundEvents.BOOK_PAGE_TURN, SoundSource.PLAYERS, 0.8f, 0.9f);
         return true;

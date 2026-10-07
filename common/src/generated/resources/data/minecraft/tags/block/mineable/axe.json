@@ -17,6 +17,7 @@
     "pirates_n_ships:nameplate",
     "pirates_n_ships:flagpole",
     "pirates_n_ships:cargo_crate",
-    "pirates_n_ships:cargo_barrel"
+    "pirates_n_ships:cargo_barrel",
+    "pirates_n_ships:harbor_desk"
   ]
 }

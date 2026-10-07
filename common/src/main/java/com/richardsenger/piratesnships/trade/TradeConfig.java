@@ -134,6 +134,13 @@ public final class TradeConfig {
     public static final ConfigValue<Double> CONTAINER_REACH = BACKEND.doubleRange("container_reach", 16.0, 1.0, 256.0,
             "How far (blocks) a cargo container may be from the player to buy into it or sell or deliver from it");
 
+    // --- Harbor master's desks -------------------------------------------------------------------------------
+    private static final ConfigSection DESKS = S.section("harbor_desks", "Harbor master's desks: the block that opens a port's market screen");
+    public static final ConfigValue<Boolean> DESKS_ENABLED = DESKS.bool("desks_enabled", true,
+            "Harbor master's desks open the market screen (off = desks are inert; the debug commands still work)");
+    public static final ConfigValue<Double> DESK_REACH = DESKS.doubleRange("desk_reach", 8.0, 1.0, 64.0,
+            "How far (blocks) a player may be from the desk and still trade; the screen closes beyond it");
+
     private TradeConfig() {
     }
 

@@ -1,6 +1,6 @@
-// 1.21.1	2026-10-07T03:32:09.440044	Tags for minecraft:block mod id vanilla
+// 1.21.1	2026-10-07T03:55:44.125548	Tags for minecraft:block mod id vanilla
 027425cd193e9e04ea5aed99085f092fa520d95e data/minecraft/tags/block/doors.json
-df878d7636bd35bca3a7fc56172c92f18945ad0a data/minecraft/tags/block/mineable/axe.json
+6d638c9193336210eb1a77cb56b2c497ebf390dd data/minecraft/tags/block/mineable/axe.json
 be058e2eba330e271b48b9ffbd1c4f8727594c1c data/minecraft/tags/block/mineable/pickaxe.json
 195aa9da2a3443597914841c2ff10ec2cd1aef74 data/pirates_n_ships/tags/block/cannon_breakable.json
 90b985302b5c05cc96c39f6cb2985a785fde74b2 data/pirates_n_ships/tags/block/cannon_proof.json

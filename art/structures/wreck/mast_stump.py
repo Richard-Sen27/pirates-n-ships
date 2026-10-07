@@ -5,7 +5,7 @@ The mast steps through a broken square of deck planking half buried in the bed (
 by a stripped log partner ring; it is spruce log below and a stripped fished section above an iron band (chains),
 and it snapped above the top: a splintered fence stub. Halfway up, the remains of the fighting top (trapdoors on
 beams, two of four gone). The yard still hangs across the mast, one arm snapped and hanging straight down; a lantern hangs from
-it and torn rigging trails from both arms (chains), a shroud of fences runs from the top down to the deck's edge in
+it on a short chain and torn rigging trails from both arms (chains), a shroud of fences runs from the top down to the deck's edge in
 steps. A cleat on the mast with a coil of rope (chain), and at the mast's foot a chest with the wreck loot table,
 half covered by sand and ballast."""
 import random
@@ -56,7 +56,8 @@ p.put(M + 1, YARD, M, "pirates_n_ships:yard[axis=x]")
 p.put(M + 2, YARD, M, "spruce_beam_x")                  # the stub of the broken arm
 p.put(M + 2, YARD - 1, M, "spruce_post")                 # the rest of it hanging straight down
 p.put(M + 2, YARD - 2, M, "fence")                       # its splinter
-p.put(1, YARD - 1, M, "lantern_hanging")
+p.put(1, YARD - 1, M, "chain_y")                         # a lantern on a short chain (the yard's underside cannot hold it)
+p.put(1, YARD - 2, M, "lantern_hanging")
 # torn rigging trailing from both arms
 for y in (YARD - 1, YARD - 2, YARD - 3):
     p.put(0, y, M, "chain_y")

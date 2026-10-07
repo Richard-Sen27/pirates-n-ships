@@ -10,17 +10,20 @@ import com.richardsenger.piratesnships.world.island.PirateIslandSpawns;
 import com.richardsenger.piratesnships.world.port.PortService;
 import com.richardsenger.piratesnships.world.structure.PortStructures;
 import com.richardsenger.piratesnships.world.village.VillageData;
+import com.richardsenger.piratesnships.world.wreck.WreckData;
+import com.richardsenger.piratesnships.world.wreck.WreckGameTests;
 import com.richardsenger.piratesnships.world.wreck.WreckLoot;
+import com.richardsenger.piratesnships.world.wreck.WreckStructures;
 import net.minecraft.world.entity.SpawnPlacementTypes;
 import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.List;
 
 /**
- * The {@code world} module (design.md §10.1, §10.4, WG1, WG2): the port structures (custom structure type
+ * The {@code world} module (design.md §10.1, §10.4, WG1, WG2, WK1): the port structures (custom structure type
  * {@code pirates_n_ships:port_village} over vanilla jigsaw pools: the seafarer village and the pirate island with its
- * buried treasure and pirate spawns), the port registry with berths and treasure sites, and the binding of harbor
- * desks to the port they stand in.
+ * buried treasure and pirate spawns), the port registry with berths and treasure sites, the binding of harbor
+ * desks to the port they stand in, and the wrecks on the ocean floor (custom structure type {@code pirates_n_ships:wreck}).
  */
 public final class WorldModule implements ModModule {
 
@@ -40,6 +43,7 @@ public final class WorldModule implements ModModule {
         // The pirate's spawn rule lives here because its only natural spawns are the island's (WG2)
         Services.REGISTRY.registerSpawnPlacement(MobContent.PIRATE, SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, PirateIslandSpawns::check);
+        WreckStructures.init();
     }
 
     @Override
@@ -57,11 +61,12 @@ public final class WorldModule implements ModModule {
         VillageData.gather(data);
         WreckLoot.gather(data);
         IslandData.gather(data);
+        WreckData.gather(data);
         data.lang(WorldCommands::lang);
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(WorldGameTests.class, PirateIslandGameTests.class);
+        return List.of(WorldGameTests.class, PirateIslandGameTests.class, WreckGameTests.class);
     }
 }

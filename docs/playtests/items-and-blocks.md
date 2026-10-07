@@ -43,7 +43,7 @@ Please send a screenshot of the creative tab and of the blocks placed in a row, 
 12. **Log.** Search `latest.log` for `pirates_n_ships` together with "model" or "texture".
     - **Expected:** no missing model or missing texture warnings.
 
-## 3D models (F7a helm, anchor, flagpole, nameplate; F7b capstan, sail winch, yard; F7c figureheads)
+## 3D models (F7a helm, anchor, flagpole, nameplate; F7b capstan, sail winch, yard; F7c figureheads; F7d containers and galley)
 Renders of the intended look are in `art/renders/`.
 1. **Helm:** place it facing you. The wheel's face with the gold hub cap points at you, the pedestal stands behind it.
    The block under it and the blocks next to it show no holes. Rotate it four ways. On an assembled ship, clicking the
@@ -75,7 +75,14 @@ Renders of the intended look are in `art/renders/`.
    design is recognisable. In the GUI the figure is visible (not just the back plate); check hand, item frame and
    dropped item. Particles: bone, spruce, yellow terracotta, oak planks. On an assembled ship's bow the overhangs do not
    vanish at section edges. The prismarine tail shimmers (animated texture, intended).
-9. **All of them:** break each block; the particles match the block's wood or material, never the missing texture.
+9. **Cargo crate and barrel, pantry, water barrel (F7d):** place all four. The crate is a slatted box with braces and
+   iron corner caps and a stencilled X on its east side; the barrel bulges with four hoops; the pantry is a larder
+   cabinet whose doors always face north (known, a facing is a follow-up); the water barrel is an open barrel with a
+   ladle on the rim. Fill the water barrel step by step with bottles or buckets from empty to full and back: the
+   surface rises and falls through the five levels, the walls and floor never show through from any angle, the empty
+   barrel shows a dark floor. Insert and take goods from crate and barrel, open the pantry, check comparator output:
+   unchanged. Neighbouring blocks render normally. In hand, GUI, dropped and in a frame they look like small blocks.
+10. **All of them:** break each block; the particles match the block's wood or material, never the missing texture.
    `latest.log` has no model or texture warnings mentioning `pirates_n_ships`. On a moving ship the models render with
    correct lighting.
 
@@ -127,7 +134,7 @@ Compare each sword with a vanilla iron sword in the other hand or the next hotba
     and show the 3D icons.
 
 ## Known placeholders (for the later art pass)
-- Cargo crate and barrel, pantry, water barrel, brig bars and door, and the bilge pump still use simple models (F7d, F7e).
+- Brig bars and door, the cleat, the bilge pump, the cannon and the harbor desk still use simple models (F7e and later batches).
 - The yard and stay cloths are flat grids with a simple belly; the cleat is a placeholder element model (F7e).
 - Only the doubloon, the bounty proof and the hull patch still use sprites (by decision).
 - The brig bars' transparency relies on a model field that only NeoForge reads. The Fabric port has to register a

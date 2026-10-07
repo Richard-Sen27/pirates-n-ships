@@ -37,6 +37,8 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * The cannon (docs/design.md §8.2): an iron barrel on a four-wheeled truck carriage, placed on a ship's deck or on
  * land. Two blocks long (P2), like a bed: the {@link CannonPart#FRONT} block is the master (block entity, station,
@@ -199,6 +201,18 @@ public class CannonBlock extends Block implements EntityBlock, StationBlock {
     @Override
     public StationKind<?> stationKind() {
         return CannonStation.INSTANCE;
+    }
+
+    /** Both halves are one station, at the master: assigning crew at the rear mans the same gun. */
+    @Override
+    public BlockPos stationPos(BlockState state, BlockPos pos) {
+        return masterPos(state, pos);
+    }
+
+    /** The crew's seat goes beside the master or the rear, never on the rear half. */
+    @Override
+    public List<BlockPos> footprint(BlockState state, BlockPos stationPos) {
+        return List.of(stationPos, CannonRules.rearOf(stationPos, state.getValue(FACING)));
     }
 
     static boolean isPowder(ItemStack stack) {

@@ -25,10 +25,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.level.GameType;
@@ -77,20 +75,16 @@ public final class CannonGameTests {
 
     /**
      * Places the block item {@code stack} into the free block at {@code rel} (relative) as {@code player} would by
-     * clicking the block below it, through vanilla's {@code BlockItem.place} (the block's placement rules, the item
-     * use, {@code setPlacedBy}). The loader's item-use wrapper is left out: in the test server another mod's
-     * use-on-block listener refuses mock players. Returns whether the block was placed.
+     * clicking into that cell: the stack goes into the player's main hand and {@code ItemStack.useOn} runs, with the
+     * loader's placement hooks (on NeoForge {@code CommonHooks.onPlaceItemIntoWorld}, which takes the item from the
+     * context, i.e. the player's hand; vanilla's {@code GameTestHelper.placeAt} leaves the mock player's hand empty, so
+     * it places nothing there). Returns whether the block was placed.
      */
     static boolean place(GameTestHelper h, Player player, ItemStack stack, BlockPos rel) {
         BlockPos pos = h.absolutePos(rel);
         BlockHitResult hit = new BlockHitResult(Vec3.atBottomCenterOf(pos), Direction.UP, pos, false);
-        BlockPlaceContext ctx = new BlockPlaceContext(new UseOnContext(player, InteractionHand.MAIN_HAND, hit) {
-            @Override
-            public ItemStack getItemInHand() {
-                return stack;
-            }
-        });
-        return ((BlockItem) stack.getItem()).place(ctx).consumesAction();
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+        return stack.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND, hit)).consumesAction();
     }
 
     /** The plot position of the master half of the (only) cannon on {@code ship}. */

@@ -13,6 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -51,13 +52,22 @@ public final class Stations {
         return kind != null && kind.accepts(order);
     }
 
-    /** The station whose block is at plot position {@code plotPos}, or null when it is not a station on a loaded ship. */
+    /**
+     * The station whose block is at plot position {@code plotPos}, or null when it is not a station on a loaded ship.
+     * A click on any block of a multi-block station gives the one station at its master
+     * ({@link StationBlock#stationPos}).
+     */
     public static @Nullable StationRef at(ServerLevel level, BlockPos plotPos) {
         ShipBody ship = SableShips.containing(level, plotPos);
-        if (ship == null || !(level.getBlockState(plotPos).getBlock() instanceof StationBlock)) {
+        BlockState state = level.getBlockState(plotPos);
+        if (ship == null || !(state.getBlock() instanceof StationBlock block)) {
             return null;
         }
-        return new StationRef(ship.id(), plotPos);
+        BlockPos pos = block.stationPos(state, plotPos);
+        if (!pos.equals(plotPos) && !(level.getBlockState(pos).getBlock() instanceof StationBlock)) {
+            return null; // a broken multi-block: no master to station at
+        }
+        return new StationRef(ship.id(), pos);
     }
 
     public static @Nullable StationState<Object> state(StationRef ref) {

@@ -17,6 +17,7 @@ import com.richardsenger.piratesnships.station.StationState;
 import com.richardsenger.piratesnships.station.Stations;
 import com.richardsenger.piratesnships.station.order.WhistleOrder;
 import com.richardsenger.piratesnships.station.order.WhistleOrderPayload;
+import com.richardsenger.piratesnships.station.seat.StationSeat;
 import com.richardsenger.piratesnships.station.order.WhistleOrders;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -207,6 +208,50 @@ public final class CannonOrderGameTests {
             h.assertTrue(orderAt(loadedRef) == null, "the fire order is still running");
             h.assertTrue(atLoaded.isAtStation(), "the gunner left the cannon after firing");
             cleanup(h, atLoaded, atUnloaded, atWinch);
+        }));
+    }
+
+    /**
+     * Both halves of a two-block cannon are one station (P2): a click on the rear resolves to the master's
+     * {@link StationRef}, a crew member assigned through the rear mans the master and sits beside the gun (not on the
+     * rear half), a second crew member is refused through either half, and the whistle's "Fire!" still fires the gun.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200)
+    public static void assigningAtTheRearMansTheSameStationAsTheFront(GameTestHelper h) {
+        Ship s = ship(h);
+        ServerLevel level = h.getLevel();
+        BlockPos front = s.loaded();
+        BlockPos rear = CannonRules.rearOf(front, Direction.WEST);
+        h.assertTrue(level.getBlockState(rear).getValue(CannonBlock.PART) == CannonPart.REAR, "no rear half at " + rear);
+        StationRef viaFront = Stations.at(level, front), viaRear = Stations.at(level, rear);
+        h.assertTrue(viaFront != null && viaFront.equals(viaRear) && viaFront.pos().equals(front),
+                "the halves are different stations: " + viaFront + " / " + viaRear);
+
+        CrewMember first = h.spawn(StationContent.CREW_MEMBER.get(), new BlockPos(11, 10, 11));
+        h.assertTrue(CrewStations.assign(level, first, rear) == CrewStations.AssignResult.ASSIGNED, "assigning at the rear failed");
+        h.assertTrue(viaFront.equals(first.assignment()), "the crew member mans " + first.assignment() + ", not the master");
+        h.assertTrue(first.isAtStation() && first.getVehicle() instanceof StationSeat, "the crew member is not seated");
+        StationSeat seat = (StationSeat) first.getVehicle();
+        h.assertTrue(seat.station().equals(front), "the seat belongs to " + seat.station());
+        h.assertFalse(seat.blockPosition().equals(rear) || seat.blockPosition().equals(front),
+                "the seat stands on the gun at " + seat.blockPosition());
+
+        CrewMember second = h.spawn(StationContent.CREW_MEMBER.get(), new BlockPos(12, 10, 12));
+        h.assertTrue(CrewStations.assign(level, second, front) == CrewStations.AssignResult.TAKEN, "a second gunner got the front");
+        h.assertTrue(CrewStations.assign(level, second, rear) == CrewStations.AssignResult.TAKEN, "a second gunner got the rear");
+        h.assertTrue(second.assignment() == null && !second.isAtStation(), "the refused gunner was assigned");
+        long manned = StationSeat.at(level, front).stream().filter(StationSeat::isVehicle).count()
+                + StationSeat.at(level, rear).stream().filter(StationSeat::isVehicle).count();
+        h.assertTrue(manned == 1, "expected one manned seat at the gun, found " + manned);
+        h.assertTrue(CrewStations.assign(level, first, front) == CrewStations.AssignResult.ASSIGNED
+                && viaFront.equals(first.assignment()), "re-assigning through the front changed the station");
+
+        loadFully(h, front);
+        WhistleOrders.Result r = WhistleOrders.handle(captain(h, s), WhistleOrder.FIRE.id());
+        h.assertTrue(r.outcome() == WhistleOrders.Outcome.ISSUED && r.crew() == 1, "menu order fire: " + r);
+        h.runAfterDelay(1, () -> h.succeedWhen(() -> {
+            h.assertTrue(load(h, front) == CannonLoad.EMPTY, "the crew member has not fired yet");
+            cleanup(h, first, second);
         }));
     }
 

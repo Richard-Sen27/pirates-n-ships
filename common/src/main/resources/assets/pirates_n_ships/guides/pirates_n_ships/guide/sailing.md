@@ -7,6 +7,7 @@ navigation:
 item_ids:
   - pirates_n_ships:capstan
   - pirates_n_ships:chart
+  - pirates_n_ships:rope
   - pirates_n_ships:sail_winch
 ---
 
@@ -89,6 +90,11 @@ Shoot or break the only block joining two parts of a ship and it splits: the par
 other part becomes a wreck (its nameplate says "Wreck of …") that drifts but no longer sails; crew on it stay aboard;
 bits under four blocks fall apart into items. `/pirates ship info` shows a piece's id, origin and wreck flag
 (operators). Rejoining pieces comes with the Shipwright's Toolkit. Server config `assembly.split`.
+
+## Boarding along the rope
+Once a grappling rope is latched onto another ship, look at the rope and use it: you hang from it and slide down to the
+lower end, following both ships as they move. Sneak to let go. A level rope is crawled slowly toward the hook. From the
+crow's nest down to an enemy deck is the classic move. Server config `grapple.slide`.
 
 ## Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks

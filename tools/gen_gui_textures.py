@@ -9,7 +9,7 @@ Run (from the repository root, Python 3 standard library only, no Pillow):
     python3 tools/gen_gui_textures.py --out DIR --textures-out DIR2   # also the chart textures, under DIR2 (ChartTexturesTest)
 
 The chart textures (work package MAP1: textures/gui/chart/sheet.png with the compass rose, doodles, marker and ship
-icons, and the chart item's textures/item/chart.png) are plain textures outside the sprite atlas. A run without
+icons, the chart item's textures/item/chart.png, and MAP2's map tile textures block/map_tile.png and item/map_tile.png) are plain textures outside the sprite atlas. A run without
 --out writes them into the mod's textures folder; with --out they are written only under --textures-out, so
 GuiTexturesTest's run (--out alone) sees just the atlas sprites.
 
@@ -657,6 +657,7 @@ def lockout():
 #     (76, 10) own ship (bow up = north), 9x9
 #     (86, 10) other player's ship, 9x9
 #   item/chart.png, 16x16: the chart item, a rolled parchment with a red wax seal (placeholder until a Blockbench model)
+#   block/map_tile.png, item/map_tile.png, 16x16: the map tile's parchment face and item (work package MAP2, placeholders)
 EXTRAS = {}
 
 INK = rgb(44, 32, 24)
@@ -942,6 +943,49 @@ def chart_item():
     for (x, y) in ((7, 8), (8, 7), (8, 8)):
         c.set(x, y, WAX_D)
     c.set(7, 7, WAX_L)
+    return c
+
+
+@extra("block/map_tile.png")
+def map_tile_block():
+    """The map tile's blank parchment face (MAP2, 16x16, placeholder until a Blockbench model): speckled paper with a
+    darker worn edge. The drawing itself is the block entity renderer's."""
+    c = Canvas(16, 16)
+    for y in range(16):
+        for x in range(16):
+            n = noise(x, y, 61)
+            col = PAPER_D if c.ring(x, y) == 0 else (PAPER_D if n < 30 else PAPER_L if n > 220 else PAPER)
+            c.set(x, y, col)
+    return c
+
+
+LAND_INK = rgb(150, 142, 98)
+SEA_WASH = rgb(160, 184, 180)
+
+
+@extra("item/map_tile.png")
+def map_tile_item():
+    """The map tile item (MAP2, 16x16): parchment in a spruce frame with a sketched coast and a red X."""
+    c = Canvas(16, 16)
+    for y in range(1, 15):
+        for x in range(1, 15):
+            ring = min(x - 1, y - 1, 14 - x, 14 - y)
+            if ring == 0:
+                c.set(x, y, OUTLINE)
+            elif ring == 1:
+                c.set(x, y, WOOD_L if (x + y) % 5 else WOOD)
+            else:
+                # a coast running from the top towards the bottom-right: land to the left, sea to the right
+                coast = 6 + (y - 3) // 2 + (1 if y in (6, 7) else 0)
+                if x < coast:
+                    col = LAND_INK
+                elif x == coast:
+                    col = INK
+                else:
+                    col = SEA_WASH if (x + 2 * y) % 7 else PAPER
+                c.set(x, y, col)
+    for (x, y) in ((4, 9), (6, 11), (6, 9), (4, 11), (5, 10)):
+        c.set(x, y, WAX)
     return c
 
 

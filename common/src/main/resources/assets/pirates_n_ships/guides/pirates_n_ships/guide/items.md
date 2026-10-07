@@ -30,7 +30,6 @@ item_ids:
   - pirates_n_ships:pirate_spawn_egg
   - pirates_n_ships:pistol
   - pirates_n_ships:rapier
-  - pirates_n_ships:rope
   - pirates_n_ships:rum
   - pirates_n_ships:saber
   - pirates_n_ships:sailor_spawn_egg

@@ -6,6 +6,7 @@ import com.richardsenger.piratesnships.chart.net.ChartOpenPayload;
 import com.richardsenger.piratesnships.chart.net.ChartRegionPayload;
 import com.richardsenger.piratesnships.chart.net.ChartSettings;
 import com.richardsenger.piratesnships.chart.net.ChartStatePayload;
+import com.richardsenger.piratesnships.chart.net.TileTarget;
 import com.richardsenger.piratesnships.chart.render.ChartProjection;
 import com.richardsenger.piratesnships.chart.render.CellLookup;
 
@@ -32,6 +33,7 @@ public final class ClientChart {
     private static volatile List<ChartStatePayload.OtherPlayer> others = List.of();
     private static volatile Optional<String> refusal = Optional.empty();
     private static volatile long version;
+    private static volatile Optional<TileTarget> drawTarget = Optional.empty();
     private static volatile Runnable opener = () -> { };
     private static volatile LongConsumer regionListener = key -> { };
     private static final Map<UUID, ChartProjection> VIEWS = new HashMap<>();
@@ -57,6 +59,7 @@ public final class ClientChart {
     public static void open(ChartOpenPayload p) {
         settings = p.settings();
         markers = p.markers();
+        drawTarget = p.tile();
         refusal = Optional.empty();
         version++;
         opener.run();
@@ -74,6 +77,11 @@ public final class ClientChart {
         others = p.others();
         if (p.refusal().isPresent()) refusal = p.refusal();
         version++;
+    }
+
+    /** The map tile the chart was last opened to draw on (work package MAP2), empty for a plain chart. */
+    public static Optional<TileTarget> drawTarget() {
+        return drawTarget;
     }
 
     public static ChartSettings settings() {
@@ -145,6 +153,7 @@ public final class ClientChart {
         markers = List.of();
         others = List.of();
         refusal = Optional.empty();
+        drawTarget = Optional.empty();
         version++;
         regionListener.accept(Long.MIN_VALUE);
     }

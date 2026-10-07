@@ -45,3 +45,6 @@ anything differs.
 
 
 Addendum (G13): with `cargo_trade.plunder.navy_notice_chance = 1.0`, a noticed plunder sale at a navy desk raises `/pirates law score get @s` by 15 and `/pirates law last @s` shows "Selling plunder" with the port id; selling again within a minute does not raise it again; a pirate fence never does. The direct `/pirates trade sell` command does not record the crime yet (known gap).
+
+
+Addendum (T1, two clients at one desk): A sells a stack: within a second B's screen shows the new totals without clicking. A gives B doubloons: B's coin count updates within a second. A buys: A's status line shows "Bought …" and the buttons re-enable even if a refresh arrives at the same time. A presses Escape: A's session ends (a trade request from A at that port is refused until the desk is used again), B keeps updating. The inventory key closes the screen unless the quantity field has focus. B walking out of reach closes the screen and stops the refreshes.

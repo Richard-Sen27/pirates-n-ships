@@ -81,6 +81,8 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
     private @Nullable Vec3 throwerPos;
     private boolean throwerAboardTarget;
     private int anchorRefreshAt;
+    /** Stall detector of the rope, updated every physics substep by {@link GrappleService}. */
+    private final GrappleRules.Holding holding = new GrappleRules.Holding();
 
     public GrapplingHookEntity(EntityType<? extends GrapplingHookEntity> type, Level level) {
         super(type, level);
@@ -185,6 +187,11 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         return throwerPos;
     }
 
+    /** The rope's holding state (server). */
+    public GrappleRules.Holding holding() {
+        return holding;
+    }
+
     boolean throwerAboardTarget() {
         return throwerAboardTarget;
     }
@@ -254,8 +261,15 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
                 anchorPlot = GrappleService.nearestBlockCenter(thrower, hookWorld);
                 anchorRefreshAt = tickCount + ANCHOR_REFRESH_TICKS;
             }
-            throwerShipId = anchorPlot != null ? thrower.id() : null;
+            UUID next = anchorPlot != null ? thrower.id() : null;
+            if (next == null || !next.equals(throwerShipId)) {
+                holding.reset(); // a new rope end: start over
+            }
+            throwerShipId = next;
         } else {
+            if (throwerShipId != null) {
+                holding.reset(); // from ship-to-ship to shore (or aboard the target)
+            }
             throwerShipId = null;
             anchorPlot = null;
         }
@@ -267,7 +281,7 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
             taut = !throwerAboardTarget && GrappleRules.taut(horizontal(hookWorld, throwerPos),
                     GrappleConfig.holdLength(), GrappleConfig.SHORE_HAUL_FORCE.get());
         }
-        entityData.set(TAUT, taut);
+        entityData.set(TAUT, taut && !holding.holding()); // a holding rope does not pull
     }
 
     private void tickRetracting(double ownerDistance) {

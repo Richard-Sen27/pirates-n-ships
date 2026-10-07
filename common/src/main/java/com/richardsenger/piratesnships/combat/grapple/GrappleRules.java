@@ -102,6 +102,77 @@ public final class GrappleRules {
         return Math.max(0.0, Math.min(maxForce, t));
     }
 
+    /** Substeps the rope must have pulled, and must have pulled without progress, before it counts as stalled. */
+    public static final int STALL_SUBSTEPS = 20;
+    /** A distance decrease [blocks] smaller than this is no progress. */
+    public static final double STALL_EPSILON = 0.01;
+    /** Separation speed [m/s] below which the ends still count as closing (never stalled). */
+    public static final double CLOSING_SPEED = -0.05;
+    /** Margin [blocks] beyond the hold length within which a stall can start, and beyond which holding ends. */
+    public static final double HOLD_HYSTERESIS = 1.0;
+
+    /**
+     * The rope's holding state, updated once per physics substep (pure, one per hook). Hulls touch at a rope length
+     * that depends on their shape, so the rope also holds, with no pull, once it has stopped making progress: when it
+     * has pulled for at least {@link #STALL_SUBSTEPS} substeps, the distance has not dropped by more than
+     * {@link #STALL_EPSILON} for the last {@link #STALL_SUBSTEPS} of them, the ends are not closing (separation speed
+     * above {@link #CLOSING_SPEED}) and the distance is within {@link #HOLD_HYSTERESIS} of the hold length (a stall far
+     * out, e.g. a heavy ship slow to start, keeps pulling). Holding ends only when the distance grows beyond the hold
+     * length plus {@link #HOLD_HYSTERESIS}, so the ships do not oscillate between pulling and holding.
+     */
+    public static final class Holding {
+        private boolean holding;
+        private int pulling;
+        private int sinceProgress;
+        private double best = Double.POSITIVE_INFINITY;
+
+        /**
+         * One substep. Returns true while the rope holds (no pull).
+         *
+         * @param distance        distance between the rope's ends [blocks]
+         * @param restLength      the hold length ({@link #holdLength}) [blocks]
+         * @param separationSpeed rate at which the distance grows [m/s]
+         */
+        public boolean update(double distance, double restLength, double separationSpeed) {
+            if (holding) {
+                if (!(distance > restLength + HOLD_HYSTERESIS)) {
+                    return true;
+                }
+                reset();
+            }
+            if (!(distance > restLength)) {
+                // slack inside the dead band: the rope is not pulling
+                pulling = 0;
+                sinceProgress = 0;
+                best = distance;
+                return false;
+            }
+            pulling++;
+            if (distance < best - STALL_EPSILON) {
+                best = distance;
+                sinceProgress = 0;
+            } else {
+                sinceProgress++;
+            }
+            if (pulling >= STALL_SUBSTEPS && sinceProgress >= STALL_SUBSTEPS && separationSpeed > CLOSING_SPEED
+                    && distance <= restLength + HOLD_HYSTERESIS) {
+                holding = true;
+            }
+            return holding;
+        }
+
+        public boolean holding() {
+            return holding;
+        }
+
+        public void reset() {
+            holding = false;
+            pulling = 0;
+            sinceProgress = 0;
+            best = Double.POSITIVE_INFINITY;
+        }
+    }
+
     /** True when the rope is taut: longer than the rest length and there is a force to pull with. */
     public static boolean taut(double distance, double restLength, double maxForce) {
         return distance > restLength && maxForce > 0;

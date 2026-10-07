@@ -5,13 +5,18 @@ import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.ship.sable.ShipEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
@@ -33,7 +38,8 @@ import java.util.UUID;
  * about the vertical axis but does not heel or pitch them (small hulls have almost no righting moment,
  * docs/sable-notes.md §9.0d). The world force is turned into the body frame and multiplied by the substep length, as
  * Sable expects an impulse (sable-notes §3.2). A thrower on land pulls only the hooked ship, toward the thrower, with
- * {@code shore_haul_force}.
+ * {@code shore_haul_force}. When the rope is tied to a mooring ring (GR1), the ring's ship hauls from the ring instead
+ * of the thrower's ship from its nearest block, and a ring on land pulls like a thrower on land.
  */
 public final class GrappleService {
 
@@ -53,23 +59,122 @@ public final class GrappleService {
      * @param consumed whether the item was taken from the player (not in creative), so it must be given back
      */
     public static GrapplingHookEntity throwHook(ServerLevel level, Player player, ItemStack hook, boolean consumed) {
+        return launchHook(level, player, hook, consumed, GrappleLaunch.Mode.THROW);
+    }
+
+    /**
+     * Launches a hook from {@code player}'s eyes along its view (GR1): thrown, shot from a crossbow or fired from a
+     * musket, with the mode's speed ({@link GrappleConfig#speed}) and rope length ({@link GrappleConfig#ropeLength}).
+     * The weapon's own sound and effects are the caller's; a throw plays the bobber throw.
+     */
+    public static GrapplingHookEntity launchHook(ServerLevel level, Player player, ItemStack hook, boolean consumed, GrappleLaunch.Mode mode) {
         GrapplingHookEntity entity = new GrapplingHookEntity(level, player, hook, consumed);
-        entity.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0f, GrappleConfig.THROW_VELOCITY.get().floatValue(), 1.0f);
-        return launch(level, player, entity);
+        entity.setRopeLength(GrappleConfig.ropeLength(mode));
+        entity.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0f, (float) GrappleConfig.speed(mode),
+                GrappleLaunch.inaccuracy(mode));
+        return launch(level, player, entity, mode == GrappleLaunch.Mode.THROW);
     }
 
     /** Launches a hook from {@code pos} with {@code velocity} (blocks per tick); used by tests. */
     public static GrapplingHookEntity launch(ServerLevel level, Player player, Vec3 pos, Vec3 velocity, ItemStack hook, boolean consumed) {
-        return launch(level, player, new GrapplingHookEntity(level, player, pos, velocity, hook, consumed));
+        return launch(level, player, new GrapplingHookEntity(level, player, pos, velocity, hook, consumed), true);
     }
 
-    private static GrapplingHookEntity launch(ServerLevel level, Player player, GrapplingHookEntity entity) {
+    private static GrapplingHookEntity launch(ServerLevel level, Player player, GrapplingHookEntity entity, boolean throwSound) {
         release(player);
         ACTIVE.put(player.getUUID(), entity);
         level.addFreshEntity(entity);
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.FISHING_BOBBER_THROW, SoundSource.PLAYERS,
-                0.6f, 0.6f);
+        if (throwSound) {
+            level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.FISHING_BOBBER_THROW, SoundSource.PLAYERS,
+                    0.6f, 0.6f);
+        }
         return entity;
+    }
+
+    // ------------------------------------------------------------------ mooring rings (GR1)
+
+    public static final String TIED_KEY = "message." + Constants.MOD_ID + ".grapple.tied";
+    public static final String TIE_SAME_SHIP_KEY = "message." + Constants.MOD_ID + ".grapple.tie_same_ship";
+    public static final String TIE_TOO_FAR_KEY = "message." + Constants.MOD_ID + ".grapple.tie_too_far";
+    public static final String ALREADY_TIED_KEY = "message." + Constants.MOD_ID + ".grapple.already_tied";
+
+    /**
+     * The player used the mooring ring at {@code ringPos} (plot position for a ring on a ship): ties the near end of
+     * their hook's rope to it ({@link GrappleRules#tie}). PASS without a hook out, so an item in hand is used as usual.
+     */
+    public static InteractionResult tieOff(ServerLevel level, Player player, BlockPos ringPos) {
+        GrapplingHookEntity hook = hookOf(player);
+        if (hook == null) {
+            return InteractionResult.PASS;
+        }
+        if (ringPos.equals(hook.tiedRing())) {
+            player.displayClientMessage(Component.translatable(ALREADY_TIED_KEY), true);
+            return InteractionResult.SUCCESS;
+        }
+        ShipBody ringShip = SableShips.containing(level, ringPos);
+        Vec3 ringPlot = MooringRingBlock.ringCenter(level, ringPos);
+        Vec3 ringWorld = ringShip != null ? ringShip.toWorld(ringPlot) : ringPlot;
+        UUID hookShip = hook.state() == GrapplingHookEntity.State.LATCHED ? hook.shipId() : null;
+        GrappleRules.Tie tie = GrappleRules.tie(true, ringShip == null ? null : ringShip.id(), hookShip,
+                ringWorld.distanceTo(hook.position()), hook.ropeLength());
+        switch (tie) {
+            case SAME_SHIP -> player.displayClientMessage(Component.translatable(TIE_SAME_SHIP_KEY), true);
+            case TOO_FAR -> player.displayClientMessage(Component.translatable(TIE_TOO_FAR_KEY), true);
+            case OK -> {
+                hook.tieTo(ringPos, ringShip == null ? null : ringShip.id());
+                level.playSound(null, ringWorld.x, ringWorld.y, ringWorld.z, SoundEvents.LEASH_KNOT_PLACE, SoundSource.PLAYERS, 1.0f, 1.0f);
+                player.displayClientMessage(Component.translatable(TIED_KEY), true);
+            }
+            default -> { }
+        }
+        return InteractionResult.SUCCESS;
+    }
+
+    /** Client prediction of {@link #tieOff}: whether the player has a hook out among the entities the client knows. */
+    public static boolean hasHookOutClientSide(Level level, Player player) {
+        return !level.getEntitiesOfClass(GrapplingHookEntity.class, player.getBoundingBox().inflate(160.0),
+                h -> h.getOwner() == player).isEmpty();
+    }
+
+    /** A ring found near a hook's path: its ship, block (plot position) and middle (plot coordinates). */
+    record RingCatch(ShipBody ship, BlockPos block, Vec3 center) {
+    }
+
+    /**
+     * The mooring ring on a ship other than {@code exclude} whose middle lies nearest to the segment {@code from}-{@code to}
+     * (world coordinates), within {@code radius}, or null. Searches only ships whose world bounds come close to the
+     * segment, and in each only the plot blocks around the segment.
+     */
+    static @Nullable RingCatch findRing(ServerLevel level, Vec3 from, Vec3 to, double radius, @Nullable UUID exclude) {
+        if (radius <= 0) {
+            return null;
+        }
+        AABB path = new AABB(from, to).inflate(radius + 1.0);
+        RingCatch best = null;
+        double bestD = Double.POSITIVE_INFINITY;
+        for (ShipBody ship : SableShips.all(level)) {
+            if (ship.id().equals(exclude) || !ship.worldBounds().intersects(path)) {
+                continue;
+            }
+            Vec3 a = ship.toPlot(from);
+            Vec3 b = ship.toPlot(to);
+            double r = radius + 0.5;
+            BlockPos min = BlockPos.containing(Math.min(a.x, b.x) - r, Math.min(a.y, b.y) - r, Math.min(a.z, b.z) - r);
+            BlockPos max = BlockPos.containing(Math.max(a.x, b.x) + r, Math.max(a.y, b.y) + r, Math.max(a.z, b.z) + r);
+            for (BlockPos p : BlockPos.betweenClosed(min, max)) {
+                BlockState state = level.getBlockState(p);
+                if (!(state.getBlock() instanceof MooringRingBlock)) {
+                    continue;
+                }
+                Vec3 c = MooringRingBlock.ringCenter(state, p);
+                double d = GrappleRules.segmentDistance(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
+                if (GrappleRules.ringCatches(d, radius) && d < bestD) {
+                    bestD = d;
+                    best = new RingCatch(ship, p.immutable(), c);
+                }
+            }
+        }
+        return best;
     }
 
     /** The player's hook that is out, or null. */

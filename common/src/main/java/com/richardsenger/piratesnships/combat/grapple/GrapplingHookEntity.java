@@ -22,6 +22,7 @@ import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -38,7 +40,9 @@ import java.util.UUID;
  *
  * <ul>
  *   <li><b>Flying</b>: a thrown projectile with {@code grapple.gravity}. It stops and drops when the rope runs out
- *       ({@code max_rope_length} from the thrower) or when it falls into water.</li>
+ *       ({@link #ropeLength()} from the rope's near end: {@code max_rope_length} for a throw, longer from a crossbow or
+ *       musket, GR1) or when it falls into water. Passing within {@code ring_catch_radius} of a mooring ring on another
+ *       ship, it latches onto the ring.</li>
  *   <li><b>Latched</b>: it hit a block of a ship that is not the thrower's own. It hangs at that plot position (Sable
  *       returns ship hits in plot coordinates, docs/sable-notes.md §9.0e) and follows the ship; the entity itself stays
  *       in world space at the plot position's world point. While latched {@link GrappleService} hauls the ships
@@ -47,7 +51,12 @@ import java.util.UUID;
  *       {@code retract_ticks}, then the rope pulls it back to the thrower.</li>
  * </ul>
  *
- * The thrown item travels with the hook ({@link #getItem()}) and goes back to the thrower when the hook is released,
+ * <b>The rope's near end</b> (GR1) is the thrower, or the mooring ring it was tied to ({@link #tieTo},
+ * {@link GrappleRules.NearEnd}): a tied rope hauls with the ring's ship (or holds from a ring on land) whatever the
+ * thrower does, and snaps when the hook is farther from the ring than {@link #breakLength()}. A hook latched on a ring
+ * holds {@code ring_hold_multiplier} times the rope's length; breaking either ring releases the hook.
+ *
+ * <p>The thrown item travels with the hook ({@link #getItem()}) and goes back to the thrower when the hook is released,
  * unless a snapped rope loses it ({@code rope_breaks_lose_hook}). Hooks are not saved with the chunk: a logout
  * releases them first ({@link GrappleService#onLogout}).
  */
@@ -61,6 +70,8 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
     private static final EntityDataAccessor<BlockPos> PLOT_BLOCK = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.BLOCK_POS);
     /** Hook point relative to {@link #PLOT_BLOCK}. */
     private static final EntityDataAccessor<Vector3f> PLOT_OFFSET = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.VECTOR3);
+    /** Mooring ring the rope's near end is tied to (plot position on a ship, else world), or empty (GR1). */
+    private static final EntityDataAccessor<Optional<BlockPos>> TIED_RING = SynchedEntityData.defineId(GrapplingHookEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
 
     /** A flying hook that has not hit anything after this many ticks drops. */
     private static final int MAX_FLIGHT_TICKS = 200;
@@ -75,6 +86,14 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
     private @Nullable Vec3 plotPos;
     private @Nullable BlockPos latchedBlock;
     private @Nullable Vec3 pendingPos;
+    /** Rope length of this launch [blocks] (GR1: longer from a crossbow or musket); NaN = {@code max_rope_length}. */
+    private double ropeLength = Double.NaN;
+    /** The hook is latched on a mooring ring: it holds {@code ring_hold_multiplier} times longer. */
+    private boolean onRing;
+    /** Mooring ring the near end is tied to (plot position on a ship, world position on land), or null. */
+    private @Nullable BlockPos tiedRing;
+    /** Ship of {@link #tiedRing}, null for a ring on land. */
+    private @Nullable UUID tiedShip;
 
     // rope ends for the physics substep, refreshed every game tick while latched
     private @Nullable UUID throwerShipId;
@@ -112,6 +131,7 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         builder.define(TAUT, false);
         builder.define(PLOT_BLOCK, BlockPos.ZERO);
         builder.define(PLOT_OFFSET, new Vector3f());
+        builder.define(TIED_RING, Optional.empty());
     }
 
     @Override
@@ -153,7 +173,45 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         return new Vec3(b.getX() + (double) o.x, b.getY() + (double) o.y, b.getZ() + (double) o.z);
     }
 
+    /** The mooring ring the rope is tied to, as synched (both sides). */
+    public Optional<BlockPos> syncedTiedRing() {
+        return entityData.get(TIED_RING);
+    }
+
     // ------------------------------------------------------------------ server accessors
+
+    /** Rope length of this hook [blocks]. */
+    public double ropeLength() {
+        return Double.isNaN(ropeLength) ? GrappleConfig.MAX_ROPE_LENGTH.get() : ropeLength;
+    }
+
+    void setRopeLength(double length) {
+        this.ropeLength = length;
+    }
+
+    /** The hook is latched on a mooring ring. */
+    public boolean onRing() {
+        return onRing;
+    }
+
+    /** The mooring ring the rope's near end is tied to (plot position on a ship), or null. */
+    public @Nullable BlockPos tiedRing() {
+        return tiedRing;
+    }
+
+    /** Ties the rope's near end to the ring at {@code ring} on ship {@code ship} (null: on land). */
+    void tieTo(BlockPos ring, @Nullable UUID ship) {
+        tiedRing = ring.immutable();
+        tiedShip = ship;
+        anchorPlot = null;
+        holding.reset(); // a new rope end: start over
+        entityData.set(TIED_RING, Optional.of(tiedRing));
+    }
+
+    /** Distance at which the rope snaps now ({@link GrappleRules#breakLength}). */
+    public double breakLength() {
+        return GrappleRules.breakLength(ropeLength(), state() == State.LATCHED && onRing, GrappleConfig.RING_HOLD_MULTIPLIER.get());
+    }
 
     public @Nullable UUID shipId() {
         return shipId;
@@ -233,7 +291,11 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         GrappleService.adopt(this);
         Entity owner = getOwner();
         if (state() == State.FLYING) {
-            super.tick();
+            if (catchRing(level, owner)) {
+                baseTick(); // caught by a ring on its way: no flight step this tick
+            } else {
+                super.tick();
+            }
             if (isRemoved() || finished) {
                 return;
             }
@@ -241,9 +303,10 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
                 setPos(pendingPos);
                 pendingPos = null;
             } else if (state() == State.FLYING) {
+                Vec3 near = nearEndPos(level, owner);
                 if (isInWater()) {
                     miss(position(), true);
-                } else if (owner != null && GrappleRules.ropeRunsOut(distanceTo(owner), GrappleConfig.MAX_ROPE_LENGTH.get())) {
+                } else if (near != null && GrappleRules.ropeRunsOut(position().distanceTo(near), ropeLength())) {
                     miss(position(), false);
                 } else if (tickCount > MAX_FLIGHT_TICKS) {
                     miss(position(), false);
@@ -256,33 +319,90 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         State s = state();
         ShipBody ship = s == State.LATCHED && shipId != null ? SableShips.byId(level, shipId) : null;
         Vec3 hookWorld = ship != null && plotPos != null ? ship.toWorld(plotPos) : position();
-        boolean ownerPresent = owner != null && owner.isAlive() && owner.level() == level;
-        double ownerDistance = ownerPresent ? owner.position().distanceTo(hookWorld) : Double.POSITIVE_INFINITY;
+        boolean tied = tiedRing != null;
+        ShipBody ringShip = tied && tiedShip != null ? SableShips.byId(level, tiedShip) : null;
+        boolean ringsIntact = (!tied || (tiedShip == null || ringShip != null) && MooringRingBlock.isRing(level, tiedRing))
+                && (s != State.LATCHED || !onRing || ship == null || MooringRingBlock.isRing(level, latchedBlock));
+        // a tied rope does not need its thrower nearby, only a thrower to give the hook back to
+        boolean ownerPresent = owner != null && (tied || owner.isAlive() && owner.level() == level);
+        Vec3 near = ownerPresent && ringsIntact ? nearEndPos(level, owner) : null;
+        double nearDistance = near != null ? near.distanceTo(hookWorld) : Double.POSITIVE_INFINITY;
         GrappleRules.Release release = GrappleRules.release(GrappleConfig.ENABLED.get(), ownerPresent, s == State.LATCHED,
-                ship != null, ownerDistance, GrappleConfig.MAX_ROPE_LENGTH.get());
+                ship != null, ringsIntact, nearDistance, breakLength());
         if (release != GrappleRules.Release.NONE) {
             release(release);
             return;
         }
         switch (s) {
-            case LATCHED -> tickLatched(level, ship, hookWorld, owner);
-            case RETRACTING -> tickRetracting(ownerDistance);
+            case LATCHED -> tickLatched(level, ship, hookWorld, owner, ringShip, near);
+            case RETRACTING -> tickRetracting(nearDistance);
             default -> { }
         }
     }
 
-    private void tickLatched(ServerLevel level, ShipBody ship, Vec3 hookWorld, Entity owner) {
+    /**
+     * Where the rope's near end is (world): the ring it is tied to ({@link GrappleRules.NearEnd#RING}), else the
+     * thrower; null when neither can be found.
+     */
+    private @Nullable Vec3 nearEndPos(ServerLevel level, @Nullable Entity owner) {
+        if (tiedRing != null) {
+            Vec3 c = MooringRingBlock.ringCenter(level, tiedRing);
+            if (tiedShip == null) {
+                return c;
+            }
+            ShipBody ringShip = SableShips.byId(level, tiedShip);
+            return ringShip != null ? ringShip.toWorld(c) : null;
+        }
+        return owner != null ? owner.position() : null;
+    }
+
+    /** The ship at the rope's near end: the tied ring's ship, else the ship the thrower stands on (null: land). */
+    private @Nullable ShipBody nearEndShip(ServerLevel level, @Nullable Entity owner) {
+        UUID ringShip = tiedShip;
+        ShipBody thrower = tiedRing == null ? GrappleService.shipOf(level, owner) : null;
+        UUID id = GrappleRules.haulingShip(GrappleRules.nearEnd(tiedRing != null), ringShip, thrower == null ? null : thrower.id());
+        if (id == null) {
+            return null;
+        }
+        return thrower != null && thrower.id().equals(id) ? thrower : SableShips.byId(level, id);
+    }
+
+    /**
+     * A flying hook passing within {@code ring_catch_radius} of a mooring ring on a ship other than the near end's
+     * latches onto the ring, even if it would otherwise fly past or glance off (GR1). Checked along this tick's path
+     * before the flight step. True when it latched.
+     */
+    private boolean catchRing(ServerLevel level, @Nullable Entity owner) {
+        if (!GrappleConfig.ENABLED.get() || !GrappleConfig.RINGS_ENABLED.get()) {
+            return false;
+        }
+        Vec3 from = position();
+        Vec3 to = from.add(getDeltaMovement());
+        ShipBody nearShip = nearEndShip(level, owner);
+        GrappleService.RingCatch c = GrappleService.findRing(level, from, to, GrappleConfig.RING_CATCH_RADIUS.get(),
+                nearShip == null ? null : nearShip.id());
+        if (c == null) {
+            return false;
+        }
+        latch(level, c.ship(), c.block(), c.center(), true);
+        return true;
+    }
+
+    private void tickLatched(ServerLevel level, ShipBody ship, Vec3 hookWorld, Entity owner, @Nullable ShipBody ringShip, Vec3 near) {
         setPos(hookWorld);
         setDeltaMovement(Vec3.ZERO);
-        ShipBody thrower = GrappleService.shipOf(level, owner);
-        throwerPos = owner.position();
-        throwerAboardTarget = thrower != null && thrower.id().equals(shipId);
-        if (thrower != null && !throwerAboardTarget) {
-            if (!thrower.id().equals(throwerShipId) || anchorPlot == null || tickCount >= anchorRefreshAt) {
-                anchorPlot = GrappleService.nearestBlockCenter(thrower, hookWorld);
+        boolean tied = tiedRing != null;
+        ShipBody nearShip = tied ? ringShip : GrappleService.shipOf(level, owner);
+        throwerPos = near;
+        throwerAboardTarget = nearShip != null && nearShip.id().equals(shipId);
+        if (nearShip != null && !throwerAboardTarget) {
+            if (tied) {
+                anchorPlot = MooringRingBlock.ringCenter(level, tiedRing); // the ring is the rope's end
+            } else if (!nearShip.id().equals(throwerShipId) || anchorPlot == null || tickCount >= anchorRefreshAt) {
+                anchorPlot = GrappleService.nearestBlockCenter(nearShip, hookWorld);
                 anchorRefreshAt = tickCount + ANCHOR_REFRESH_TICKS;
             }
-            UUID next = anchorPlot != null ? thrower.id() : null;
+            UUID next = anchorPlot != null ? nearShip.id() : null;
             if (next == null || !next.equals(throwerShipId)) {
                 holding.reset(); // a new rope end: start over
             }
@@ -296,7 +416,7 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         }
         boolean taut;
         if (throwerShipId != null) {
-            Vec3 anchor = thrower.toWorld(anchorPlot);
+            Vec3 anchor = nearShip.toWorld(anchorPlot);
             taut = GrappleRules.taut(horizontal(hookWorld, anchor), GrappleConfig.holdLength(), GrappleConfig.HAUL_FORCE.get());
         } else {
             taut = !throwerAboardTarget && GrappleRules.taut(horizontal(hookWorld, throwerPos),
@@ -305,7 +425,7 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         entityData.set(TAUT, taut && !holding.holding()); // a holding rope does not pull
     }
 
-    private void tickRetracting(double ownerDistance) {
+    private void tickRetracting(double nearDistance) {
         if (!onGround()) {
             Vec3 v = getDeltaMovement().add(0, -getDefaultGravity(), 0).scale(isInWater() ? 0.8 : 0.98);
             setDeltaMovement(v);
@@ -314,7 +434,7 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
             setDeltaMovement(Vec3.ZERO);
         }
         retractTicks++;
-        if (retractTicks >= GrappleConfig.RETRACT_TICKS.get() || ownerDistance > 2 * GrappleConfig.MAX_ROPE_LENGTH.get()) {
+        if (retractTicks >= GrappleConfig.RETRACT_TICKS.get() || nearDistance > 2 * ropeLength()) {
             level().playSound(null, getX(), getY(), getZ(), SoundEvents.FISHING_BOBBER_RETRIEVE, SoundSource.PLAYERS, 0.8f, 1.0f);
             finish(true);
         }
@@ -344,12 +464,13 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         BlockPos pos = result.getBlockPos();
         // a ship block is hit in plot space (Sable's clip returns the sub-level result as is, sable-notes §9.0e)
         ShipBody ship = SableShips.containing(level, pos);
-        Entity owner = getOwner();
-        ShipBody throwerShip = owner == null ? null : GrappleService.shipOf(level, owner);
+        ShipBody throwerShip = nearEndShip(level, getOwner());
         Vec3 at = result.getLocation();
         GrappleRules.HitKind kind = GrappleRules.blockHit(ship == null ? null : ship.id(), throwerShip == null ? null : throwerShip.id());
         if (kind == GrappleRules.HitKind.LATCH) {
-            latch(level, ship, pos, at);
+            BlockState state = level.getBlockState(pos);
+            boolean ring = state.getBlock() instanceof MooringRingBlock && GrappleConfig.RINGS_ENABLED.get();
+            latch(level, ship, pos, ring ? MooringRingBlock.ringCenter(state, pos) : at, ring);
         } else {
             miss(ship != null ? ship.toWorld(at) : at, false);
         }
@@ -361,8 +482,12 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         super.onHit(result);
     }
 
-    /** Latches the hook onto {@code ship} at plot position {@code at} on block {@code block}. */
-    void latch(ServerLevel level, ShipBody ship, BlockPos block, Vec3 at) {
+    /**
+     * Latches the hook onto {@code ship} at plot position {@code at} on block {@code block}; {@code ring}: the block is
+     * a mooring ring, which holds the hook harder ({@link #breakLength}).
+     */
+    void latch(ServerLevel level, ShipBody ship, BlockPos block, Vec3 at, boolean ring) {
+        onRing = ring;
         shipId = ship.id();
         plotPos = at;
         latchedBlock = block.immutable();

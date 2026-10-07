@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.law.crime;
 
 import com.mojang.serialization.Codec;
+import com.richardsenger.piratesnships.Constants;
 import net.minecraft.util.StringRepresentable;
 
 /**
@@ -33,7 +34,12 @@ public enum CrimeType implements StringRepresentable {
     /** Press-ganging a captured sailor into the crew (§13.3). Victim = the prisoner. */
     PRESS_GANG("press_gang", 15, 0),
     /** Attacking navy or merchant ships while in navy service (§15). */
-    DESERTION("desertion", 60, 600);
+    DESERTION("desertion", 60, 600),
+    /**
+     * Selling plundered goods that a navy port noticed (§10.3). Victim = the port (one victim id per port, see
+     * {@code law.world.PlunderCrimes#portVictim}), so several noticed sales at one port within the window count once.
+     */
+    FENCE_PLUNDER("fence_plunder", 15, 60);
 
     public static final Codec<CrimeType> CODEC = StringRepresentable.fromEnum(CrimeType::values);
 
@@ -50,6 +56,11 @@ public enum CrimeType implements StringRepresentable {
     /** snake_case id, used in config paths, saves and commands. */
     public String id() {
         return id;
+    }
+
+    /** Translation key of the crime's display name ("Fencing plunder"). */
+    public String nameKey() {
+        return "crime." + Constants.MOD_ID + "." + id;
     }
 
     public int defaultSeverity() {

@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 /**
@@ -54,7 +55,7 @@ public final class MarketBackend {
 
     private static final Map<UUID, Session> SESSIONS = new ConcurrentHashMap<>();
     private static final Map<UUID, List<CustomPacketPayload>> RECORDINGS = new ConcurrentHashMap<>();
-    private static volatile Consumer<NoticedSale> noticedListener = s -> { };
+    private static final List<Consumer<NoticedSale>> NOTICED_LISTENERS = new CopyOnWriteArrayList<>();
 
     /** A plunder sale a port noticed. */
     public record NoticedSale(ServerPlayer player, ResourceLocation port, TransactionResult result) {
@@ -63,9 +64,12 @@ public final class MarketBackend {
     private MarketBackend() {
     }
 
-    /** The law integration registers here to report noticed plunder sales made through the protocol. */
+    /**
+     * Adds a listener for noticed plunder sales made through the protocol (the law module reports them as crimes).
+     * Listeners run on the server thread in registration order; register once, at mod construction.
+     */
     public static void onNoticedPlunder(Consumer<NoticedSale> listener) {
-        noticedListener = listener;
+        NOTICED_LISTENERS.add(listener);
     }
 
     public static void registerPayloads() {
@@ -167,7 +171,10 @@ public final class MarketBackend {
         TransactionResult r = p.buy()
                 ? MarketTransactions.buy(player, p.port(), p.good(), p.quantity(), holder.get())
                 : MarketTransactions.sell(player, p.port(), p.good(), p.quantity(), effectivePlunder(p, player), holder.get());
-        if (r.noticedPlunder()) noticedListener.accept(new NoticedSale(player, p.port(), r));
+        if (r.noticedPlunder()) {
+            NoticedSale sale = new NoticedSale(player, p.port(), r);
+            for (Consumer<NoticedSale> l : NOTICED_LISTENERS) l.accept(sale);
+        }
         return r;
     }
 

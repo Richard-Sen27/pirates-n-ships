@@ -117,7 +117,11 @@ public final class LawService {
         return reportCrime(offender, type, victimId, victimId == null ? "" : victimId.toString());
     }
 
-    private static CrimeResult reportCrime(LivingEntity offender, CrimeType type, @Nullable UUID victimId, String victimName) {
+    /**
+     * Reports a crime against a victim identified by UUID, with the name {@code /pirates law last} shows (e.g. the port
+     * id for {@link CrimeType#FENCE_PLUNDER}); {@code null} = no particular victim.
+     */
+    public static CrimeResult reportCrime(LivingEntity offender, CrimeType type, @Nullable UUID victimId, String victimName) {
         CrimeRules rules = LawConfig.crimeRules();
         long now = now(server(offender));
         if (!rules.enabled()) {

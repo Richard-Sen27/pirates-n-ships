@@ -128,7 +128,7 @@ public final class LawCommands {
         Entity victim = c.getSource().getEntity();
         CriminalRecord.CrimeResult result = LawService.reportCrime(target, type, victim);
         CriminalRecord r = LawService.record(target);
-        c.getSource().sendSuccess(() -> Component.translatable(KEY + "crime", target.getDisplayName(), type.id(),
+        c.getSource().sendSuccess(() -> Component.translatable(KEY + "crime", target.getDisplayName(), Component.translatable(type.nameKey()),
                 outcome(result.outcome()), String.format(Locale.ROOT, "%.1f", result.pointsAdded()), r.displayScore()), true);
         return result.counted() ? 1 : 0;
     }
@@ -208,7 +208,7 @@ public final class LawCommands {
         }
         var e = entry.get();
         long ago = (LawService.now(c.getSource().getServer()) - e.gameTime()) / 20;
-        c.getSource().sendSuccess(() -> Component.translatable(KEY + "last", target.getDisplayName(), e.type().id(),
+        c.getSource().sendSuccess(() -> Component.translatable(KEY + "last", target.getDisplayName(), Component.translatable(e.type().nameKey()),
                 e.victim().isEmpty() ? "-" : e.victim(), outcome(e.outcome()),
                 String.format(Locale.ROOT, "%.1f", e.points()), ago), false);
         return 1;

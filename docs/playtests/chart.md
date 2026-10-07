@@ -34,7 +34,7 @@ replaces the tile's picture (after a confirm click). Boards of several tiles, up
 clearing a tile and the ink cost come with MAP3 and are not in this build.
 
 The data, packing, rules and raster are covered by JUnit tests (`MapTileDataTest`, `MapTileRasterTest`), the server
-side by 9 GameTests (`MapTileGameTests`). The block model is a datagen placeholder (Blockbench model later); the
+side by 10 GameTests (`MapTileGameTests`). The block model is a datagen placeholder (Blockbench model later); the
 drawing itself is drawn by the block entity renderer.
 
 1. **Craft:** 8 sticks around 1 paper in a crafting table gives one Map Tile; the tooltip of a blank tile says to use

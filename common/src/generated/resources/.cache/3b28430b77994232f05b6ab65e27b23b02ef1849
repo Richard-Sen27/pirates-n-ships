@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-07T02:41:41.296873	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-07T02:45:42.146504	Block states and models: pirates_n_ships
 9282899a10c2af6fbcc1fd07e91ba10d9ba8a732 assets/pirates_n_ships/blockstates/brig_bars.json
 09e096c3979b4e82e1fab125e8a03e835e8c7aca assets/pirates_n_ships/blockstates/brig_door.json
 1ca2bd2df3602ba7b137ae7b56ec9fd3f195588c assets/pirates_n_ships/blockstates/capstan.json
@@ -75,7 +75,6 @@ d830a7abbc232e7d496bb338343be03b894083fa assets/pirates_n_ships/models/item/pant
 344a8933080d39bb3457d959748e850b869917c8 assets/pirates_n_ships/models/item/sail_winch.json
 b26882bfbfc7d2150f7a3f3bc94c1bf2f480276f assets/pirates_n_ships/models/item/salt_pork.json
 78f9086fc82d3c6ee9501aaa20414f761cb43951 assets/pirates_n_ships/models/item/salted_fish.json
-122abb5707c1bc01526629d649d119c13b618b23 assets/pirates_n_ships/models/item/shackles.json
 c64f5ef95295a670fbd366a7bf6c08d84f0f8805 assets/pirates_n_ships/models/item/spices.json
 1089ff46d82ccaa42bb4f632ea36493a92ae1c93 assets/pirates_n_ships/models/item/test_block.json
 190d1e042beb273f219543d3657d76001621d4af assets/pirates_n_ships/models/item/tobacco.json

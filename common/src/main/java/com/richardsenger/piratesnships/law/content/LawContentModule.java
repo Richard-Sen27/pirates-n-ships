@@ -69,7 +69,7 @@ public final class LawContentModule implements ModModule {
                 .block(LawContent.BRIG_BARS, "Brig Bars")
                 .block(LawContent.BRIG_DOOR, "Brig Door"));
         data.models(m -> {
-            m.flatItem(LawContent.SHACKLES.get());
+            // The shackles' item model is hand-made (art/models/shackles.bbmodel), so datagen writes none
             bars(m, LawContent.BRIG_BARS.get());
             door(m, LawContent.BRIG_DOOR.get());
         });

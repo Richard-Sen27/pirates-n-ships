@@ -12,10 +12,13 @@ import com.richardsenger.piratesnships.mob.MobConfig;
 import com.richardsenger.piratesnships.mob.entity.SeafarerMob;
 import com.richardsenger.piratesnships.platform.Services;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
+import java.util.Locale;
 
 /**
  * Sword fighting through the melee engine (docs/design.md §8.5 "NPC duelists"): the mob walks into reach and feeds
@@ -26,12 +29,20 @@ import java.util.EnumSet;
  * {@code melee.npc_feints} on) an attack is started as a feint: the brain aborts it when the opponent parries or
  * guards, and the real follow-up comes without the usual pause.
  *
+ * <p>Closing in on a moving target (M5, {@link ChaseRules}): the mob walks at {@code mobs.duelist_chase_speed} until the
+ * target is {@code mobs.duelist_approach_margin} inside its reach, keeps walking during its own wind-up, recalculates
+ * its path on a vanilla-like cadence, and starts an attack only when the gap predicted for the first hit frame is
+ * {@code mobs.duelist_reach_margin} inside the reach. {@code /pirates mob debug on} traces its states.
+ *
  * <p>Only while {@code melee.skill_based_combat} is on and the mob holds a skill-based sword; otherwise
  * {@link VanillaSwordGoal} fights with vanilla melee.
  */
 public class DuelistAttackGoal extends Goal {
 
-    private static final int REPATH_TICKS = 5;
+    /** Ground speed per (attribute × modifier)² on flat ground: zza = speed and the input scales with speed again. */
+    private static final double GROUND_SPEED_FACTOR = 1.0 / (1.0 - 0.6 * 0.91);
+    /** Heights (blocks) between feet beyond which the target is out of sword reach whatever the horizontal gap. */
+    private static final double MAX_HEIGHT_DIFFERENCE = 1.5;
 
     private final SeafarerMob mob;
     private final double speed;
@@ -45,7 +56,12 @@ public class DuelistAttackGoal extends Goal {
     /** The last attack was a feint: the next one is real and follows without the pause. */
     private boolean afterFeint;
     private boolean wasAttacking;
-    private int repath;
+    // chase state
+    private int repathIn;
+    private double pathedX, pathedY, pathedZ;
+    private boolean walking;
+    private double lastGap = -1;
+    private double closing;
 
     public DuelistAttackGoal(SeafarerMob mob, double speed) {
         this.mob = mob;
@@ -76,7 +92,10 @@ public class DuelistAttackGoal extends Goal {
 
     @Override
     public void start() {
-        repath = 0;
+        repathIn = 0;
+        walking = false;
+        lastGap = -1;
+        closing = 0;
         thrustRoll = mob.getRandom().nextDouble();
         feintRoll = mob.getRandom().nextDouble();
     }
@@ -88,6 +107,8 @@ public class DuelistAttackGoal extends Goal {
         attackSeenAt = -1;
         feintPlanned = false;
         afterFeint = false;
+        walking = false;
+        DuelistDebug.report(mob, "duelist", "stopped", mob.getTarget(), "");
     }
 
     @Override
@@ -98,18 +119,16 @@ public class DuelistAttackGoal extends Goal {
         long now = mob.level().getGameTime();
         mob.getLookControl().setLookAt(target, 30f, 30f);
 
-        double gap = mob.distanceTo(target) - target.getBbWidth() / 2;
-        double reach = Math.min(w.slash().reach(), w.thrust().reach());
-        if (gap > reach * 0.75) {
-            if (--repath <= 0) {
-                repath = REPATH_TICKS;
-                mob.getNavigation().moveTo(target, speed);
-            }
-        } else {
-            mob.getNavigation().stop();
-        }
-
         CombatState self = MeleeService.state(mob);
+        double reach = Math.min(w.slash().reach(), w.thrust().reach());
+        AABB box = target.getBoundingBox();
+        double gap = ChaseRules.gap(mob.getX(), mob.getZ(), box.minX, box.minZ, box.maxX, box.maxZ);
+        boolean level = Math.abs(target.getY() - mob.getY()) <= MAX_HEIGHT_DIFFERENCE;
+        closing = lastGap < 0 ? 0 : ChaseRules.closing(closing, lastGap, gap);
+        lastGap = gap;
+        double chaseSpeed = speed * MobConfig.DUELIST_CHASE_SPEED.get();
+        approach(target, gap, ChaseRules.stopGap(reach, MobConfig.DUELIST_APPROACH_MARGIN.get()), chaseSpeed, self.phase());
+
         CombatState opp = Services.ATTACHMENTS.has(target, MeleeAttachments.COMBAT_STATE)
                 ? MeleeService.state(target) : CombatState.fresh(MeleeConfig.STAMINA_MAX.get().floatValue());
 
@@ -135,14 +154,18 @@ public class DuelistAttackGoal extends Goal {
         WeaponDefinition ow = MeleeService.weapon(target);
         double oppReach = ow == null ? 3.0 : Math.max(ow.slash().reach(), ow.thrust().reach());
         boolean threatened = mob.distanceTo(target) - mob.getBbWidth() / 2 <= oppReach + 0.5 && MobAim.facing(target, mob);
-        boolean inReach = gap <= reach - 0.2;
+        double ownSpeed = mob.getAttributeValue(Attributes.MOVEMENT_SPEED) * chaseSpeed;
+        boolean inReach = level && ChaseRules.attackReaches(gap, closing, w.slash().windupTicks(), reach,
+                MobConfig.DUELIST_REACH_MARGIN.get(), ownSpeed * ownSpeed * GROUND_SPEED_FACTOR);
         if (inReach || attacking) MobAim.face(mob, target);
 
         DuelistBrain.View view = new DuelistBrain.View(self, opp, inReach, threatened,
                 attackSeenAt < 0 ? -1 : (int) (now - attackSeenAt), MeleeConfig.PARRY_WINDOW.get(), attackCooldown,
                 MobConfig.DUELIST_GUARD_STAMINA.get().floatValue(), feintPlanned);
         SkillTier tier = MobConfig.skill(mob.kind()).tier(MeleeConfig.NPC_SKILL.get());
-        switch (DuelistBrain.decide(view, tier, parryRoll, thrustRoll)) {
+        DuelistBrain.Decision decision = DuelistBrain.explain(view, tier, parryRoll, thrustRoll);
+        if (DuelistDebug.active()) trace(target, self, decision, gap, reach);
+        switch (decision.action()) {
             case SLASH -> {
                 if (MeleeService.startSlash(mob, w).accepted()) attackStarted(tier, self.riposteReady());
             }
@@ -163,11 +186,53 @@ public class DuelistAttackGoal extends Goal {
         }
     }
 
+    /**
+     * Walks towards the target until it is inside the stop gap (with hysteresis), also during the own wind-up and hit
+     * frames; a staggered mob stands. New paths follow {@link ChaseRules#repath}.
+     */
+    private void approach(LivingEntity target, double gap, double stopGap, double chaseSpeed, Phase phase) {
+        if (repathIn > 0) repathIn--;
+        boolean go = phase != Phase.STAGGERED && ChaseRules.approach(gap, stopGap, walking);
+        if (!go) {
+            if (walking) mob.getNavigation().stop();
+            walking = false;
+            return;
+        }
+        double moved = target.distanceToSqr(pathedX, pathedY, pathedZ);
+        boolean pathDone = !walking || mob.getNavigation().isDone();
+        // ground navigation refuses to search while airborne (just spawned, knocked back by a hit, jumping) and drops the
+        // current path when asked: wait for the landing instead, or each hit taken would cost a failed-search penalty
+        boolean canSearch = mob.onGround() || mob.isInWater() || mob.isPassenger();
+        if (canSearch && ChaseRules.repath(repathIn, pathDone, moved, mob.getRandom().nextDouble())) {
+            pathedX = target.getX();
+            pathedY = target.getY();
+            pathedZ = target.getZ();
+            boolean found = mob.getNavigation().moveTo(target, chaseSpeed);
+            repathIn = ChaseRules.nextRepathDelay(mob.getRandom().nextDouble(), found);
+            DuelistDebug.stats(mob).repaths++;
+            if (!found) DuelistDebug.report(mob, "path", "no path", target, "");
+            else DuelistDebug.report(mob, "path", "found", target, "");
+        }
+        walking = true;
+    }
+
     /** Bookkeeping when an own attack started: new rolls, and whether this one is a feint. */
     private void attackStarted(SkillTier tier, boolean riposte) {
+        DuelistDebug.stats(mob).attacksStarted++;
         feintPlanned = MeleeConfig.NPC_FEINTS.get() && DuelistBrain.planFeint(tier, feintRoll, riposte, afterFeint);
         afterFeint = false;
         thrustRoll = mob.getRandom().nextDouble();
         feintRoll = mob.getRandom().nextDouble();
+    }
+
+    private void trace(LivingEntity target, CombatState self, DuelistBrain.Decision decision, double gap, double reach) {
+        String state = self.phase() != Phase.IDLE ? self.phase().name().toLowerCase(Locale.ROOT)
+                + (self.attack() == null ? "" : " " + self.attack().name().toLowerCase(Locale.ROOT))
+                : walking ? "approaching" : "holding";
+        String detail = String.format(Locale.ROOT, "gap %.2f, reach %.2f, closing %.3f/t, pause %d, %s",
+                gap, reach, closing, attackCooldown, mob.level().getDifficulty().getKey());
+        DuelistDebug.report(mob, "duelist", state, target, detail);
+        DuelistDebug.report(mob, "brain", decision.action().name().toLowerCase(Locale.ROOT) + " (" + decision.reason() + ")",
+                target, detail);
     }
 }

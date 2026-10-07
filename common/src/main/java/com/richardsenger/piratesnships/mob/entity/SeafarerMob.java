@@ -9,6 +9,7 @@ import com.richardsenger.piratesnships.mob.MeleePose;
 import com.richardsenger.piratesnships.mob.MobConfig;
 import com.richardsenger.piratesnships.mob.MobFaction;
 import com.richardsenger.piratesnships.mob.MobKind;
+import com.richardsenger.piratesnships.mob.ai.DuelistDebug;
 import com.richardsenger.piratesnships.mob.ai.HostileTargetGoal;
 import com.richardsenger.piratesnships.platform.Services;
 import net.minecraft.nbt.CompoundTag;
@@ -177,7 +178,10 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity {
             if (HostilityRules.retaliates(faction(), t, MobConfig.hostility(kind()))) {
                 grudgeTarget = attacker.getUUID();
                 grudgeUntil = level().getGameTime() + MobConfig.GRUDGE_TICKS.get();
-                if (getTarget() == null || !getTarget().isAlive()) setTarget(attacker);
+                if (getTarget() == null || !getTarget().isAlive()) {
+                    setTarget(attacker);
+                    DuelistDebug.report(this, "target", "acquired (fights back)", attacker, "");
+                }
             }
         }
         return hurt;
@@ -187,7 +191,11 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity {
     protected void customServerAiStep() {
         super.customServerAiStep();
         LivingEntity target = getTarget();
-        if (target != null && !keepsTarget(target)) setTarget(null);
+        if (target != null && !keepsTarget(target)) {
+            setTarget(null);
+            DuelistDebug.stats(this).targetsLost++;
+            DuelistDebug.report(this, "target", "dropped (hostility rules: creative, pardoned or not hostile)", target, "");
+        }
         MeleePose pose = MeleeService.isActive(this) ? MeleePose.of(MeleeService.state(this)) : MeleePose.IDLE;
         entityData.set(DATA_MELEE_POSE, pose.pack()); // only sends when it changes
     }

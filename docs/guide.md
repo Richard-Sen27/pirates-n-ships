@@ -236,6 +236,14 @@ Blockbench models land. Operators spawn them with `/pirates mob spawn <pirate|sa
 [count]` or with spawn eggs; natural spawning comes with the world structures. Everything is in the `mobs` server
 config.
 
+### Sharks
+Sharks roam every ocean, cruising a few blocks under the surface. A shark that spots you swimming circles you
+before it charges and bites. Wounded swimmers drive it into a blood frenzy, and then it charges straight in. Stay
+on deck or in a boat and it leaves you alone; climb out of the water and it loses you at once. If it can't land a
+bite for a while, it gives up. Sharks fight back when hurt. Drops: sometimes a cod, rarely a prismarine shard. Server
+config `mobs.shark.*`, including `enabled`, `peaceful` and the spawn weight, which takes effect at the next server
+start. Operators: `/pirates mob spawn shark` or the spawn egg.
+
 ## 5. Flags
 
 The **flagpole** flies a flag that shows a ship's allegiance.
@@ -627,6 +635,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevation range and steps, blocks per hit, recoil and impact impulses, ball lifetime and water behaviour. |
 | `cannons.swivel` | Swivel gun on/off, ammo item and count, damage, muzzle speed, reload, blocks per hit, recoil and impact impulses, ball lifetime, elevation limits, aim reach. |
 | `mobs` | Mob types on/off and peaceful, hostility toggles, detection and fight ranges, skill tiers, musket timings and ammo, shove, drops. |
+| `mobs.shark` | Shark on/off and peaceful, spawn weight and group (server restart), detection, circle and give-up times, bite cooldown, damage and knockback, frenzy threshold. |
 | `melee_animations` (client) | Sword animations on/off, first-person mode, layer priority. |
 | `melee_input` / `melee_hud` (client) | Hold-to-thrust and parry-tap thresholds; stamina bar on/off, scale and offsets. |
 | `firearms.aim` / `firearm_view` (client) | Minimum hold, steady time and aimed spread factor; musket zoom. |

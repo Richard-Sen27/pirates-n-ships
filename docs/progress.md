@@ -5,7 +5,7 @@ Statuses: **todo** / **in progress** / **done** / **blocked: needs playtest** / 
 
 "Done" means: `./gradlew build` passes, `./gradlew :neoforge:runGameTestServer` passes, and the new logic has tests.
 
-Last updated: 2026-10-07 (fourth session: phase G; G1, F7a, F7c, F5a, F7b, F5b, F8a, G2 and F8b merged; G3 and F8c running).
+Last updated: 2026-10-07 (fourth session: phase G; G1, F7a, F7c, F5a, F7b, F5b, F8a, G2, F8b and G3 merged; F8c running).
 
 ## Phase F: first playtest feedback (done, F5 and F7 continue in phase G)
 
@@ -46,6 +46,7 @@ Started 2026-10-07 after the session restart with the Blockbench MCP connected (
 | F7c | Blockbench models, batch 3: the four figureheads | done | Merged (`c15b28c`). Skull 42 elements, eagle 35, lion 37, mermaid 33, all with a mounting plate against the hull, 8 to 15 px forward overhang, `noOcclusion()`. Renders in `art/renders/`. Playtest `items-and-blocks.md` (to be added to the 3D models section). |
 | F7e | Blockbench models, batch 5: cleat, brig bars and door, flag cloth at 2 blocks via a block entity renderer | todo, after F5b |
 | G2 | Sailing follow-ups: sail winch facing (crank toward the player), cloth refresh right after a rotated disassembly, unused imports and dead helpers from F5a/F5b/F7b | done | Merged (`249dc88`). `SailWinchBlock.FACING` = the side the crank is on (default east = the unrotated model, so old worlds look the same; east 0 / south 90 / west 180 / north 270). Yard and cleat block entities recompute their cloth on their first server tick (Sable's `moveBlocks` carries the stale saved cloth along), which also covers chunk loads. New `SailingGameTestsRigging` (3 tests). The station seat and the winch item don't follow the facing (visual only). |
+| G3 | Firearms that shoot (milestone 5): `combat/firearms` module, `FirearmItem` for pistol and musket, crossbow-style loading with lead shot and gunpowder, `LeadBallEntity`, smoke, recoil payload, misfire in rain, config section `firearms` | done | Merged (`5833073`). 24 JUnit tests (`FirearmRules`), 9 GameTests. Rain misfire and the damage multiplier use the existing `combat` config values; damage type is vanilla `arrow` for attribution. Ship velocity reaches the ball through Sable's own projectile mixin (`ProjectileMixin`, inherited deck velocity). Playtest `firearms.md`. |
 | F8a | 3D item models, batch 1: rapier, cutlass, saber | done | Merged (`12f62ce`). Sprite-aligned models (16, 15 and 14 elements) with vanilla's handheld display entries copied in (a `builtin/generated` parent would discard the elements, `ModelBakery` 1.21.1 l.292), `gui_light: front`; the rapier runs 2 px past the footprint and scales its GUI entry to 0.8. Shared palette texture `textures/item/palette.png` from `tools/gen_item_palette.py` (16 patches, all used; grow to 32×16 for the next batch). `HandMadeModelsTest` now lists every hand-made model by name and checks item models carry all 7 display slots. Also restored the block-texture functions that F7c had accidentally dropped from `tools/gen_placeholder_textures.py`. Playtest `items-and-blocks.md`, section "3D item models". |
 | F8b | 3D item models, batch 2: pistol, musket, lead shot, cannonball, grappling hook | done | Merged (`2a50f16`). Pistol 19 elements, musket 23 (runs past the footprint, GUI scale 0.8), lead shot 15, cannonball 10 (exact octagon from four bars), grappling hook 27. Guns have their own hand transforms (barrel forward and slightly up, checked in Blockbench's display mode with the player model). Second palette sheet `palette_2.png`: a sheet can never be resized because model UVs are fractions of the sprite (`FaceBakery` l.164), so new colours go on new 16×16 sheets. Playtest `items-and-blocks.md`, section "3D item models". |
 | F8c | 3D item models, batch 3: captain's whistle, shackles | in progress |
@@ -57,6 +58,7 @@ Only one agent at a time may use Blockbench (one desktop instance, one open proj
 **Incident (F5b merge): stale GameTest config.** The F5b branch passed its GameTests in the agent's worktree but the beam-reach keel test failed deterministically on the merged tree (leeway 0.139 instead of 0.111 m/s). Cause: the GameTest server keeps the mod's config in `neoforge/build/gametest/config/`, which the fresh-world task did not clear, and the orchestrator's copy still had `keel_lateral_drag = 2.0` from an old default (the current default is 8.0), while every fresh agent worktree ran with 8.0. So orchestrator and agent measurements have differed for a while, which explains part of the earlier "flaky" sailing tests. Fixed in `neoforge/build.gradle`: `runGameTestServer` now also deletes `build/gametest/config/pirates_n_ships-*.toml`.
 
 Follow-ups from phase G (small):
+- Firearms: whether lead balls collide with Sable ship blocks, and whether a server player's inherited deck velocity is current when firing from a moving ship, are unverified (playtest `firearms.md`). The musket reuses the pistol shot sound at a lower pitch until a musket recording exists. `CombatContent`'s class Javadoc still says firearms have no behaviour.
 - The rapier's item-frame (`fixed`) entry is at vanilla scale, so its tip sticks about 2 px out of the frame; very thin faces (0.5 px tip) may flicker at distance. Decide after the playtest.
 - `.gitattributes` marks `*.gradle` as CRLF (template leftover), so Git warns about `neoforge/build.gradle`; switch it to LF when convenient.
 - Stays and mirrored structure templates: the cleat facing is mirrored but the stored stay offset is not, so the stay is ignored after a mirrored placement. Matters once ship templates exist.
@@ -168,7 +170,7 @@ Follow-ups for later packages (small, not blocking):
 | 2 | Spike: dry hull | blocked: needs playtest | Phase D2 is merged. `docs/playtests/milestone-2.md`. |
 | 3 | Spike: wind + sails | blocked: needs playtest | Phases D3a and D3b are merged. `docs/playtests/milestone-3.md`. |
 | 4 | Spike: crew station | blocked: needs playtest | Phase D4 is merged. `docs/playtests/milestone-4.md`. |
-| 5 | Config framework + weapons | partly done | The config framework and the whole settings table exist (C7 and the feature packages), and all §8.1 items exist as items (C8). Missing: firearms that shoot, and the config screen has not been seen in a client. |
+| 5 | Config framework + weapons | partly done | The config framework and the whole settings table exist (C7 and the feature packages), all §8.1 items exist (C8), and the pistol and musket load and fire (G3). Missing: the config screen has not been seen in a client, no reload animation beyond the bow pose. |
 | 6 | Flooding + damage | partly done | Breach, flooding, equalising between rooms, buoyancy loss and sinking work on real ships (C1, D2). Missing: cannon damage, pump and patch as blocks or items, a visible water surface inside. |
 | 7 | Melee combat core | partly done | Rules, weapon definitions, server-side resolution and GameTests exist (C3). Missing: input, network events, the animation library decision, the stamina HUD. |
 | 8 | Melee animations + NPC duelists | todo | |
@@ -262,6 +264,7 @@ All of these are config values, so they can be changed without code. The ones mo
 - **Assembly:** block limit 2048, disassembly allowed below 0.3 m/s and 6° tilt.
 - **Provisions:** 6 nutrition per crew member per day, fresh food keeps 5 days, scurvy after 8 days.
 - **Sailing:** see the tuning questions in the spike 3 playtest (to be written).
+- **Firearms:** pistol 10 damage, 2.5 blocks/tick, 4° spread, 3 s reload, 3° view kick; musket 14 damage, 4.0 blocks/tick, 1° spread, 5 s reload, 5° view kick; misfire in rain 25% (`combat.rain_misfire_chance`); ball lifetime 5 s, gravity 0.02; cooldown 0.5 s. The musket's range comes only from velocity and spread, there is no range cap.
 - **Audio:** 120 to 300 s between our music tracks (vanilla waits 10 to 20 minutes); shanties aboard; a pool change waits for the running track to end.
 
 ## Playtests for the human

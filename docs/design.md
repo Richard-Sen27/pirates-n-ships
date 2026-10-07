@@ -336,7 +336,7 @@ The crew operates a station by being attached to it, much like being seated. Thi
 | Cannon (Kanone) | Block, placed on ships or land, see §8.2 |
 | Cannonball (Kanonenkugel) | Plus later chain shot (damages sails/rigging) and grapeshot (hits crew) |
 
-Firearms get a reload animation, smoke and recoil. Rain reduces reliability (a misfire chance, configurable).
+Firearms get a reload animation, smoke and recoil. Rain reduces reliability (a misfire chance, configurable). **Implemented (G3, `combat/firearms`):** crossbow-style loading (hold to load, one lead shot and one gunpowder, bow pose), a `firearm_loaded` data component, a thrown `LeadBallEntity` with vanilla `arrow` damage attribution, smoke at the muzzle, a recoil payload (view kick and push), misfire in rain via `combat.rain_misfire_chance`, the musket reusing the pistol sound at a lower pitch. The ball inherits the deck velocity through Sable's projectile mixin.
 
 ### 8.2 Cannons
 - Operated by a player or by crew at the cannon station.

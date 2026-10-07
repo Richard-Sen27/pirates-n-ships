@@ -386,6 +386,16 @@ nothing lets a player use it yet: the input and animation layers are missing.
 
 ---
 
+### Firearms
+The pistol and the musket are single-shot flintlocks. Hold right-click with one lead shot and one gunpowder in your
+inventory to load (3 seconds for the pistol, 5 for the musket, with the bow pose; letting go early cancels and costs
+nothing; creative mode needs no ammo). The tooltip shows "Loaded" or "Unloaded". Right-click a loaded gun to fire at
+once: a lead ball flies out with smoke and a small kick, the gun is unloaded again and needs half a second before it
+can be used. The pistol hits hard but scatters; the musket flies flatter and tighter. Standing in the rain, a quarter of
+the shots misfire with a click and the charge stays in. Without ammo the gun only clicks. Shooting someone counts as an
+attack for the law, and the death message names you. Everything is in the `firearms` server config (and the misfire
+chance in `combat`).
+
 ## 10. All blocks
 
 | Block | Recipe | What it does |
@@ -417,9 +427,9 @@ All blocks drop themselves. Wooden ones are mined with an axe, the bars and the 
 | Rapier | 2 iron ingots, 1 stick | Sword. See [Weapons](#9-weapons-and-combat). |
 | Cutlass | 3 iron ingots, 1 stick | Sword. |
 | Saber | 2 iron ingots, 1 gold ingot, 1 stick | Sword. |
-| Pistol | 2 iron ingots, 1 flint, 1 planks | No function yet. |
-| Musket | 2 iron ingots, 1 flint, 1 planks | No function yet. |
-| Lead Shot | 2 iron nuggets (gives 4) | No function yet. |
+| Pistol | 2 iron ingots, 1 flint, 1 planks | Single-shot flintlock: load with lead shot and gunpowder, fire. See [Firearms](#firearms). |
+| Musket | 2 iron ingots, 1 flint, 1 planks | Longer reload, flatter and tighter shot. See [Firearms](#firearms). |
+| Lead Shot | 2 iron nuggets (gives 4) | Ammunition for pistol and musket, one per load, with one gunpowder. |
 | Cannonball | 4 iron ingots (gives 2) | No function yet. |
 | Grappling Hook | 3 iron ingots, 1 string | No function yet. |
 | Rope | string | Use it on one cleat, then on a second one 2 to 16 blocks away and lower, to rig a stay. It glints while it remembers the first cleat. |
@@ -494,6 +504,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `anchor_chain` | Chain speeds, travel time limits, anchor sounds and volumes. |
 | `hull_creaking` | Creaking on/off, how often, volume and pitch ranges, the rolling rate that counts. |
 | `audio` (client) | Music on/off and volume, the gap between tracks, shanties aboard. |
+| `firearms` | Firearms on/off, per gun: damage, muzzle velocity, spread, reload time, recoil; ball lifetime and gravity, cooldown, gunpowder use. |
 | `sailing_runtime` | Sailing forces on/off, heel scaling, steering and anchor on/off, rudder steps, chain length. |
 | `crew_stations` | Crew stations on/off, time per trim step. |
 | `flags` | Hoisting delay, flags following the wind, banners as flags. |

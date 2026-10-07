@@ -2,6 +2,7 @@ package com.richardsenger.piratesnships.ship.assembly;
 
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.ship.ShipData;
+import com.richardsenger.piratesnships.ship.decor.flag.ShipAllegiance;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.assembly.AssemblyResult.Outcome;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
@@ -100,6 +101,7 @@ public final class ShipAssembler {
         pointer.putInt("version", 1);
         ship.setUserData(USER_DATA_KEY, pointer);
         HullRuntimes.onAssembled(ship);
+        ShipAllegiance.refresh(ship); // FL2: flags hoisted before assembly now fly from the ship
         return new AssemblyResult(Outcome.ASSEMBLED, blocks.size(), ship.id(), null, 0);
     }
 

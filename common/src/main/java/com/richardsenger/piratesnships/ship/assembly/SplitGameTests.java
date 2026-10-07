@@ -13,7 +13,10 @@ import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips;
 import com.richardsenger.piratesnships.sailing.ship.SailingRuntime;
 import com.richardsenger.piratesnships.sailing.ship.SailingRuntimes;
 import com.richardsenger.piratesnships.sailing.wind.WindOverride;
+import com.richardsenger.piratesnships.law.flag.FlagKind;
 import com.richardsenger.piratesnships.ship.ShipData;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagReading;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagpoleBlockEntity;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.ShipTestCleanup;
 import com.richardsenger.piratesnships.ship.decor.NameplateBlockEntity;
@@ -68,7 +71,9 @@ public final class SplitGameTests {
     /** A nameplate hanging from plate B's north edge (facing north). */
     private static final BlockPos PLATE = new BlockPos(9, 2, 3);
     private static final String NAME = "Black Gull";
-    private static final String FLAG = "jolly_roger";
+    /** Flown from a flagpole on plate A (FL2: the flag comes from the ship's poles, not from the record). */
+    private static final FlagReading FLAG = FlagReading.flying(FlagKind.JOLLY_ROGER);
+    private static final BlockPos POLE = new BlockPos(4, 3, 4);
 
     private SplitGameTests() {
     }
@@ -100,6 +105,16 @@ public final class SplitGameTests {
     private static ShipBody dumbbell(GameTestHelper h) {
         buildDumbbell(h);
         return assembleNamed(h, HELM);
+    }
+
+    /** A flagpole flying the Jolly Roger on plate A (the helm side). */
+    private static void pole(GameTestHelper h) {
+        h.setBlock(POLE, ShipDecor.FLAGPOLE.get());
+        if (h.getBlockEntity(POLE) instanceof FlagpoleBlockEntity be) {
+            be.commandSet(FlagKind.JOLLY_ROGER, false, null);
+        } else {
+            throw new AssertionError("no flagpole at " + POLE);
+        }
     }
 
     private static void buildDumbbell(GameTestHelper h) {
@@ -180,6 +195,7 @@ public final class SplitGameTests {
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 100, batch = BATCH + "dumbbell")
     public static void dumbbellSplitLeavesTheShipOnTheHelmSide(GameTestHelper h) {
         buildDumbbell(h);
+        pole(h); // FL2: the keeper keeps flying the flag of its own pole
         // a nameplate on plate B's north edge, hanging from its plank (part of the loose piece)
         h.setBlock(PLATE, ShipDecor.NAMEPLATE.get().defaultBlockState().setValue(LadderBlock.FACING, Direction.NORTH));
         ShipBody ship = assembleNamed(h, HELM);
@@ -199,7 +215,7 @@ public final class SplitGameTests {
             ShipSplits.Lineage k = ShipSplits.lineage(keeper);
             h.assertTrue(!k.wreck() && k.origin().equals(original), "the keeper's line is wrong: " + k);
             ShipData wr = record(h, wreck.id());
-            h.assertTrue(wr.name().isEmpty() && wr.flag().isEmpty(), "the wreck has a name or flag: " + wr);
+            h.assertTrue(wr.name().isEmpty() && !wr.flag().hasFlag(), "the wreck has a name or flag: " + wr);
             ShipSplits.Lineage w = ShipSplits.lineage(wreck);
             h.assertTrue(w.wreck() && w.origin().equals(original) && NAME.equals(w.wreckOf()), "the wreck's line is wrong: " + w);
             h.assertTrue(ShipSplits.isWreck(wreck) && !ShipSplits.isWreck(keeper), "isWreck disagrees with the line");
@@ -244,6 +260,7 @@ public final class SplitGameTests {
         // the "piece": plate A with the helm
         plate(h, 4, 4, 2, Blocks.OAK_PLANKS);
         h.setBlock(HELM, AssemblyContent.HELM.get().defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
+        pole(h);
         AssemblyResult r = ShipTestCleanup.assemble(h, HELM);
         h.assertTrue(r.shipId() != null, "piece assembly failed: " + r);
         ShipBody piece = SableShips.byId(level, r.shipId());

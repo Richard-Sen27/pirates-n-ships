@@ -191,6 +191,7 @@ public final class CannonService {
         CannonballEntity ball = new CannonballEntity(level, muzzle, velocity, CannonConfig.entityDamage(),
                 CannonConfig.BALL_LIFETIME_TICKS.get());
         ball.setOwner(owner);
+        ball.setFiringShip(ship == null ? null : ship.id()); // FL2: who fired at whom
         level.addFreshEntity(ball);
 
         level.setBlock(pos, state.setValue(CannonBlock.LOAD, CannonLoad.EMPTY), Block.UPDATE_ALL);

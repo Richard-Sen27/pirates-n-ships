@@ -210,6 +210,12 @@ ship stays within about two blocks of the anchor point and swings with the wind.
 
 ---
 
+### When a ship breaks apart
+Shoot or break the only block joining two parts of a ship and it splits: the part with the helm stays your ship, the
+other part becomes a wreck (its nameplate says "Wreck of …") that drifts but no longer sails; crew on it stay aboard;
+bits under four blocks fall apart into items. `/pirates ship info` shows a piece's id, origin and wreck flag
+(operators). Rejoining pieces comes with the Shipwright's Toolkit. Server config `assembly.split`.
+
 ### Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks
 high with a low roar. Within 8 blocks of it you, your boat, loose items and light ships are pulled toward it and

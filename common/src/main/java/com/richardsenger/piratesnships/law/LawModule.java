@@ -10,6 +10,7 @@ import com.richardsenger.piratesnships.law.proof.ProofContent;
 import com.richardsenger.piratesnships.law.proof.ProofDrops;
 import com.richardsenger.piratesnships.law.sync.WantedSync;
 import com.richardsenger.piratesnships.law.sync.WantedSyncPayload;
+import com.richardsenger.piratesnships.law.turnin.OfficerTurnIns;
 import com.richardsenger.piratesnships.law.world.CombatCrimeDetector;
 import com.richardsenger.piratesnships.law.world.CrimeLog;
 import com.richardsenger.piratesnships.law.world.LawTags;
@@ -127,6 +128,18 @@ public final class LawModule implements ModModule {
                     .add(k + "bounty.clear", "Removed all bounties on %s");
         });
         data.lang(lang -> {
+            String o = OfficerTurnIns.MSG;
+            lang.add(o + "hostile", "The officer won't deal with a wanted criminal")
+                    .add(o + "proof.paid", "The officer takes the proof of %s's death and pays you %s doubloons")
+                    .add(o + "proof.blank", "This proof names no one")
+                    .add(o + "proof.no_bounty", "There is no bounty left to claim on %s")
+                    .add(o + "proof.self", "You can't claim the bounty on yourself")
+                    .add(o + "prisoner.led_away", "%s is led away by the navy")
+                    .add(o + "prisoner.paid", "The navy takes %s prisoner(s) off your hands and pays you %s doubloons")
+                    .add(o + "prisoner.nothing", "The navy pays nothing for %s")
+                    .add(o + "prisoner.released", "%s took you into custody. Your record is wiped and the shackles are off");
+        });
+        data.lang(lang -> {
             for (CrimeType t : CrimeType.values()) {
                 lang.add(t.nameKey(), switch (t) {
                     case ATTACK_NAVY -> "Attacking the navy";
@@ -149,6 +162,7 @@ public final class LawModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(LawGameTests.class, LawWorldGameTests.class, PlunderCrimeGameTests.class);
+        return List.of(LawGameTests.class, LawWorldGameTests.class, PlunderCrimeGameTests.class,
+                BountyTurnInGameTests.class);
     }
 }

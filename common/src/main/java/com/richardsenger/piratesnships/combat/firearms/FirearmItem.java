@@ -19,11 +19,23 @@ import net.minecraft.world.level.Level;
 import java.util.List;
 
 /**
- * Pistol and musket (docs/design.md §8.1). Use on an unloaded gun starts loading if the player has one lead shot and
- * one gunpowder (none in creative): the gun is held like a drawn bow for the reload time, and loads when it is
- * reached ({@link #finishUsingItem}); letting go early ({@link #releaseUsing}) cancels and takes nothing. Use on a
- * loaded gun fires at once ({@link FirearmService#fire}). Use on an unloaded gun without ammunition clicks. With
- * {@code firearms.enabled} off the gun does nothing.
+ * Pistol and musket (docs/design.md §8.1). Holding use is a <b>session</b> ({@link FirearmRules#isAimSession}):
+ * <ul>
+ *   <li><b>Loading</b> (the gun was unloaded at the press, the player has one lead shot and one gunpowder, none in
+ *       creative): after the reload time the gun loads ({@link #onUseTick}); the player keeps holding without effect,
+ *       so letting go never fires a gun that was just loaded. Letting go before the reload time cancels and takes
+ *       nothing.</li>
+ *   <li><b>Aiming</b> (the gun was loaded at the press): the shot leaves when the player lets go
+ *       ({@link #releaseUsing}), if held at least {@code firearms.aim.aim_min_ticks} (default 0: a click fires at once).
+ *       After {@code aim_steady_ticks} of aiming the spread is multiplied by {@code aimed_spread_factor}; a loaded
+ *       musket also zooms in on the client ({@code firearm_view.musket_zoom}).</li>
+ * </ul>
+ * Use on an unloaded gun without ammunition clicks. With {@code firearms.enabled} off the gun does nothing.
+ *
+ * <p>Pose: {@link UseAnim#NONE}, the gun stays in the normal held position in both views. The crossbow poses can't be
+ * used: vanilla draws {@code CROSSBOW_HOLD} and the crossbow's first-person transform only for {@code CrossbowItem}
+ * instances, and {@link UseAnim#CROSSBOW} on another item gets no first-person arm transform at all (the gun would be
+ * drawn at the camera). Aim and reload poses come with the player animations (P3).
  */
 public class FirearmItem extends Item {
 
@@ -51,13 +63,15 @@ public class FirearmItem extends Item {
         ItemStack stack = player.getItemInHand(hand);
         if (!FirearmsConfig.ENABLED.get()) return InteractionResultHolder.pass(stack);
         if (FirearmContent.isLoaded(stack)) {
-            if (level instanceof ServerLevel server) {
-                FirearmService.fire(server, player, stack, kind);
-            }
+            player.startUsingItem(hand); // aim; the shot leaves on release
             return InteractionResultHolder.consume(stack);
         }
         if (FirearmService.canLoad(player)) {
             player.startUsingItem(hand);
+            if (!level.isClientSide) {
+                level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.CROSSBOW_LOADING_START.value(),
+                        SoundSource.PLAYERS, 0.6f, 0.8f);
+            }
             return InteractionResultHolder.consume(stack);
         }
         if (!level.isClientSide) {
@@ -68,37 +82,44 @@ public class FirearmItem extends Item {
 
     @Override
     public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int remainingUseDuration) {
-        if (level.isClientSide) return;
-        int duration = getUseDuration(stack, entity);
-        int used = duration - remainingUseDuration;
-        if (used == duration / 2) {
+        if (level.isClientSide || FirearmRules.isAimSession(remainingUseDuration) || FirearmContent.isLoaded(stack)) return;
+        if (!FirearmsConfig.ENABLED.get()) return;
+        int reload = type().reloadTicks();
+        int held = FirearmRules.heldTicks(remainingUseDuration);
+        if (held == reload / 2) {
             // the ramrod, half way through loading
             level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SoundEvents.CROSSBOW_LOADING_MIDDLE.value(),
                     SoundSource.PLAYERS, 0.6f, 0.8f);
+        }
+        if (FirearmRules.reloadComplete(held, reload)) {
+            FirearmService.completeLoading(level, entity, stack);
         }
     }
 
     @Override
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
-        if (!level.isClientSide && FirearmsConfig.ENABLED.get() && !FirearmContent.isLoaded(stack)) {
-            FirearmService.completeLoading(level, entity, stack);
-        }
+        // only after a whole session (an hour or half an hour of holding): nothing to do
         return stack;
     }
 
     @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
-        // let go before the reload time: loading is cancelled, nothing is used up
+        // a loading session: let go before the reload time cancels and takes nothing, after it the gun stays loaded
+        if (!FirearmRules.isAimSession(timeLeft) || !FirearmsConfig.ENABLED.get() || !FirearmContent.isLoaded(stack)) return;
+        int held = FirearmRules.heldTicks(timeLeft);
+        if (level instanceof ServerLevel server && FirearmRules.firesOnRelease(held, FirearmsConfig.AIM_MIN_TICKS.get())) {
+            FirearmService.fire(server, entity, stack, kind, held);
+        }
     }
 
     @Override
     public int getUseDuration(ItemStack stack, LivingEntity entity) {
-        return type().reloadTicks();
+        return FirearmRules.sessionTicks(FirearmContent.isLoaded(stack));
     }
 
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
-        return UseAnim.BOW;
+        return UseAnim.NONE;
     }
 
     @Override

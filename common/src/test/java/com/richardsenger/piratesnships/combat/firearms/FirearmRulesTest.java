@@ -176,4 +176,45 @@ class FirearmRulesTest {
         assertEquals(0.0, dry.misfireChanceInRain());
         assertEquals(pistol.damage(), dry.damage());
     }
+
+    // ---- loading and aiming sessions ----
+
+    @Test
+    void aSessionKnowsWhetherItStartedLoaded() {
+        int load = FirearmRules.sessionTicks(false);
+        int aim = FirearmRules.sessionTicks(true);
+        assertTrue(aim > load);
+        assertFalse(FirearmRules.isAimSession(load), "a fresh loading session");
+        assertFalse(FirearmRules.isAimSession(load - 100), "a loading session after 100 ticks, gun loaded by now");
+        assertTrue(FirearmRules.isAimSession(aim), "a fresh aim");
+        assertTrue(FirearmRules.isAimSession(aim - 1200), "an aim held for a minute");
+        assertEquals(0, FirearmRules.heldTicks(load));
+        assertEquals(60, FirearmRules.heldTicks(load - 60));
+        assertEquals(0, FirearmRules.heldTicks(aim));
+        assertEquals(25, FirearmRules.heldTicks(aim - 25));
+    }
+
+    @Test
+    void releaseFiresAfterTheMinimumHold() {
+        assertTrue(FirearmRules.firesOnRelease(0, 0), "a click fires at once with no minimum");
+        assertTrue(FirearmRules.firesOnRelease(1, 0));
+        assertFalse(FirearmRules.firesOnRelease(1, 2));
+        assertTrue(FirearmRules.firesOnRelease(2, 2));
+    }
+
+    @Test
+    void aimingSteadilyNarrowsTheSpread() {
+        assertEquals(4.0, FirearmRules.aimedSpread(4.0, 0, 20, 0.5));
+        assertEquals(4.0, FirearmRules.aimedSpread(4.0, 19, 20, 0.5));
+        assertEquals(2.0, FirearmRules.aimedSpread(4.0, 20, 20, 0.5));
+        assertEquals(2.0, FirearmRules.aimedSpread(4.0, 600, 20, 0.5));
+        assertEquals(0.0, FirearmRules.aimedSpread(4.0, 20, 20, 0.0));
+    }
+
+    @Test
+    void musketZoomDividesTheFieldOfView() {
+        assertEquals(0.8f, FirearmRules.zoomedFov(1.0f, 1.25), 1e-6f);
+        assertEquals(1.1f, FirearmRules.zoomedFov(1.1f, 1.0), 1e-6f, "zoom 1 changes nothing");
+        assertEquals(0.5f, FirearmRules.zoomedFov(1.0f, 2.0), 1e-6f);
+    }
 }

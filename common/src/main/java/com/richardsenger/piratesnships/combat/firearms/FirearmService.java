@@ -44,6 +44,7 @@ public final class FirearmService {
      * the gun loaded. Returns false (and changes nothing) when the ammunition is gone by now.
      */
     public static boolean completeLoading(Level level, LivingEntity shooter, ItemStack gun) {
+        if (FirearmContent.isLoaded(gun)) return false;
         if (shooter instanceof Player player) {
             if (!canLoad(player)) return false;
             if (!player.hasInfiniteMaterials()) {
@@ -93,7 +94,18 @@ public final class FirearmService {
      * and unloads the gun. Either way the cooldown starts.
      */
     public static Shot fire(ServerLevel level, LivingEntity shooter, ItemStack gun, FirearmKind kind) {
+        return fire(level, shooter, gun, kind, 0);
+    }
+
+    /**
+     * Like {@link #fire(ServerLevel, LivingEntity, ItemStack, FirearmKind)} after aiming for {@code aimedTicks}: once
+     * the aim has been held {@code firearms.aim.aim_steady_ticks}, the spread is multiplied by
+     * {@code aimed_spread_factor} ({@link FirearmRules#aimedSpread}).
+     */
+    public static Shot fire(ServerLevel level, LivingEntity shooter, ItemStack gun, FirearmKind kind, int aimedTicks) {
         FirearmType type = FirearmsConfig.type(kind);
+        double spread = FirearmRules.aimedSpread(type.spreadDegrees(), aimedTicks, FirearmsConfig.AIM_STEADY_TICKS.get(),
+                FirearmsConfig.AIMED_SPREAD_FACTOR.get());
         RandomSource random = shooter.getRandom();
         startCooldown(shooter, gun);
         if (FirearmRules.misfires(inRain(shooter), type.misfireChanceInRain(), random.nextDouble())) {
@@ -102,7 +114,7 @@ public final class FirearmService {
         }
 
         LeadBallEntity ball = new LeadBallEntity(level, shooter, type.damage(), FirearmsConfig.BALL_LIFETIME_TICKS.get());
-        float[] rot = FirearmRules.spreadRotation(shooter.getXRot(), shooter.getYRot(), type.spreadDegrees(),
+        float[] rot = FirearmRules.spreadRotation(shooter.getXRot(), shooter.getYRot(), spread,
                 random.nextDouble(), random.nextDouble());
         ball.shootFromRotation(shooter, rot[0], rot[1], 0.0f, type.muzzleVelocity(), 0.0f);
         level.addFreshEntity(ball);

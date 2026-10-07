@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.state.properties.BlockSetType;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 
-/** Brig content (design.md §13.3): shackles, brig bars and the lockable brig door. Prisoners: {@code law.brig}. */
+/** Brig content (design.md §13.3): shackles, brig bars, the lockable brig door and its key. Prisoners: {@code law.brig}. */
 public final class LawContent {
 
     /**
@@ -30,7 +30,10 @@ public final class LawContent {
 
     public static final RegistryEntry<Item, Item> SHACKLES = ModRegistry.item("shackles", () -> new ShacklesItem(new Item.Properties().stacksTo(16)));
 
-    /** Vanilla iron bars behavior (connects to neighbors and sturdy faces). */
+    /** Locks and unlocks any brig door (design.md §13.3); never changes the door's owner. */
+    public static final RegistryEntry<Item, Item> BRIG_KEY = ModRegistry.item("brig_key", () -> new BrigKeyItem(new Item.Properties().stacksTo(1)));
+
+    /** Vanilla iron bars behavior (connects to neighbors and sturdy faces), plus brig doors. */
     public static final RegistryEntry<Block, BrigBarsBlock> BRIG_BARS = ModRegistry.blockWithItem("brig_bars",
             () -> new BrigBarsBlock(BlockBehaviour.Properties.of().requiresCorrectToolForDrops().strength(5.0f, 6.0f)
                     .sound(SoundType.METAL).noOcclusion()));

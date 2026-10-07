@@ -21,7 +21,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaterniond;
-import org.joml.Vector3d;
 import org.joml.Vector3f;
 
 /**
@@ -46,8 +45,6 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
     private static final float BEAM_HALF = 3f / 16f;
     /** Cells per block of cloth (texture: one copy per block). */
     private static final int CELLS_PER_BLOCK = 2;
-    /** |cos| of the wind against the across-yard axis below which the cloth keeps its side (hysteresis). */
-    private static final double SIDE_SWITCH = 0.15;
 
     public YardClothRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -90,7 +87,7 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
         return be.shownFraction;
     }
 
-    /** The cloth bellies toward the side the wind blows to (in the ship's frame when on a ship). */
+    /** The cloth bellies toward the side the wind blows to (in the ship's frame when on a ship), see {@link ClothSide}. */
     private static void updateSide(YardBlockEntity be, ClothGeometry g, Level level, double now, float partialTick) {
         if (!ClientWind.hasData()) {
             return;
@@ -99,21 +96,8 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
         if (w.strength() <= 0.01) {
             return;
         }
-        Vector3d across = g.alongX() ? new Vector3d(0, 0, 1) : new Vector3d(1, 0, 0);
         Quaterniond q = ClientShipPoses.orientation(level, Vec3.atCenterOf(be.getBlockPos()), partialTick);
-        if (q != null) {
-            q.transform(across);
-        }
-        double h = Math.hypot(across.x, across.z);
-        if (h < 1.0e-6) {
-            return;
-        }
-        double dot = (across.x * w.dirX() + across.z * w.dirZ()) / h;
-        if (dot > SIDE_SWITCH) {
-            be.side = 1;
-        } else if (dot < -SIDE_SWITCH) {
-            be.side = -1;
-        }
+        be.side = ClothSide.side(be.side, ClothSide.squareSailOut(g.alongX()), q, w.dirX(), w.dirZ());
     }
 
     /** The drawn cloth from the upper yard down to {@code bottom}, as a grid that follows the standoff profile. */

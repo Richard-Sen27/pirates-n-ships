@@ -125,6 +125,7 @@ Follow-ups from phase G (small):
 - `.gitattributes` marks `*.gradle` as CRLF (template leftover), so Git warns about `neoforge/build.gradle`; switch it to LF when convenient.
 - Stays and mirrored structure templates: the cleat facing is mirrored but the stored stay offset is not, so the stay is ignored after a mirrored placement. Matters once ship templates exist.
 - GameTest rule (Q3): one config override per value per batch; `ConfigOverrides` now tolerates any restore order, but a test that reads a value another test in the same batch overrides still races. Earlier "flaky" reports may have been leaked `INFLOW_RATE`/`TICKS_PER_TRIM_STEP` values.
+- GameTest rule (Q3): one config override per value per batch; `ConfigOverrides` now tolerates any restore order, but a test that reads a value another test in the same batch overrides still races. Earlier "flaky" reports may have been leaked `INFLOW_RATE`/`TICKS_PER_TRIM_STEP` values.
 - The beam-reach GameTests run close to their bounds (0.371 m/s against 0.3). Physics has been deterministic so far; watch them.
 - The yard cloth is a flat grid with a simple belly and one light value; the Fabric port needs a culling-box equivalent (`shouldRenderOffScreen` breaks Sable's sub-level path, see sable-notes §9.0g). F7 may give the cloth a better look.
 - The yard model shows its rope band on every block of a yard (a model can't know which block meets the mast); the capstan bars and the winch crank reach 3 px into neighbouring blocks. Visual only; revisit after the playtest.

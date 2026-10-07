@@ -8,6 +8,7 @@ import com.richardsenger.piratesnships.world.port.Berth;
 import com.richardsenger.piratesnships.world.port.Port;
 import com.richardsenger.piratesnships.world.port.PortIndex;
 import com.richardsenger.piratesnships.world.port.PortRegistry;
+import com.richardsenger.piratesnships.world.port.TreasureSite;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
@@ -17,7 +18,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/** {@code /pirates world ports} lists the port registry; {@code /pirates world port nearest} shows the nearest port. */
+/**
+ * {@code /pirates world ports} lists the port registry; {@code /pirates world port nearest} shows the nearest port with
+ * its berths and treasure sites (operators only, permission 2).
+ */
 public final class WorldCommands {
 
     static final String KEY = "commands." + Constants.MOD_ID + ".world.";
@@ -55,6 +59,10 @@ public final class WorldCommands {
         for (Berth b : p.berths()) {
             source.sendSuccess(() -> Component.translatable(KEY + "berth", b.pos().toShortString(), b.bow().getName()), false);
         }
+        for (TreasureSite t : p.treasures()) {
+            source.sendSuccess(() -> Component.translatable(KEY + "treasure", t.pos().toShortString(),
+                    Component.translatable(KEY + (t.looted() ? "treasure.looted" : "treasure.buried"))), false);
+        }
         return distance;
     }
 
@@ -69,6 +77,9 @@ public final class WorldCommands {
                 .add(KEY + "port", "%s (%s, %s) in %s at %s, %s berths [%s]")
                 .add(KEY + "nearest", "Nearest port, %s blocks away:")
                 .add(KEY + "berth", "Berth at %s, bow %s")
+                .add(KEY + "treasure", "Treasure at %s (%s)")
+                .add(KEY + "treasure.buried", "buried")
+                .add(KEY + "treasure.looted", "looted")
                 .add(KEY + "none", "No port known in this dimension");
     }
 }

@@ -40,6 +40,8 @@ import software.bernie.geckolib.loading.object.GeometryTree;
 import software.bernie.geckolib.loading.math.MathValue;
 import software.bernie.geckolib.util.RenderUtil;
 import org.joml.Vector3f;
+import com.mojang.math.Axis;
+import software.bernie.geckolib.model.data.EntityModelData;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -340,5 +342,36 @@ class SeafarerRigTest {
         assertTrue(hit.butt().z < hit.muzzle().z - 10, "butt leads, muzzle back: " + hit);
         assertTrue(hit.butt().z < -12, "butt well in front of the chest: " + hit);
         assertTrue(Math.abs(hit.pitch()) < 25, "musket roughly level in the stroke, pitch " + hit.pitch());
+    }
+
+    /**
+     * GL1 rule 2: {@code HumanoidGeoModel} writes {@link EntityModelData}'s angles into the head as they are, because
+     * {@code GeoEntityRenderer} already negated them ({@code new EntityModelData(sit, baby, -netHeadYaw, -headPitch)}).
+     * Composed with the renderer's turn by {@code 180 - bodyYaw} the face then looks along Minecraft's look vector.
+     */
+    @Test
+    void theHeadLooksWhereTheEntityLooks() throws IOException {
+        Model model = KeyFramesAdapter.GEO_GSON.fromJson(read(geo(MobKind.NAVY_SOLDIER)), Model.class);
+        for (float bodyYaw : new float[]{0f, 90f, 200f}) {
+            for (float[] look : new float[][]{{30f, 0f}, {-30f, 0f}, {0f, 40f}, {20f, -35f}}) {
+                float pitch = look[0], netHeadYaw = look[1];
+                EntityModelData data = new EntityModelData(false, false, -netHeadYaw, -pitch); // as GeoEntityRenderer fills it
+                BakedGeoModel baked = BakedModelFactory.DEFAULT_FACTORY.constructGeoModel(GeometryTree.fromModel(model));
+                GeoBone head = baked.getBone("head").orElseThrow();
+                head.setRotX(data.headPitch() * net.minecraft.util.Mth.DEG_TO_RAD);
+                head.setRotY(data.netHeadYaw() * net.minecraft.util.Mth.DEG_TO_RAD);
+                PoseStack pose = new PoseStack();
+                pose.mulPose(Axis.YP.rotationDegrees(180f - bodyYaw));
+                for (String name : List.of("root", "waist", "head")) RenderUtil.prepMatrixForBone(pose, baked.getBone(name).orElseThrow());
+                // the head cube is -4 24 -4, 8x8x8: centre (0, 28, 0), face centre (0, 28, -4) (the model faces -z)
+                Vector3f centre = pose.last().pose().transformPosition(new Vector3f(0, 28, 0).div(16f));
+                Vector3f face = pose.last().pose().transformPosition(new Vector3f(0, 28, -4).div(16f));
+                Vector3f dir = face.sub(centre).normalize();
+                double p = Math.toRadians(pitch), y = Math.toRadians(bodyYaw + netHeadYaw);
+                Vector3f want = new Vector3f((float) (-Math.sin(y) * Math.cos(p)), (float) -Math.sin(p), (float) (Math.cos(y) * Math.cos(p)));
+                double off = Math.toDegrees(Math.acos(Math.max(-1, Math.min(1, dir.dot(want)))));
+                assertTrue(off < 0.5, "body yaw " + bodyYaw + " look " + pitch + "/" + netHeadYaw + ": the face points " + off + " deg off");
+            }
+        }
     }
 }

@@ -46,6 +46,13 @@ public final class WaveGameTests {
     /** Waves come from the west and run toward +X: abeam of a +Z bow. */
     private static final double FROM_WEST = 270.0;
     private static final int SETTLE = 60;
+    /** Ticks from a change of the sea to the steady state the tests measure. */
+    private static final int RAMP = 160;
+    /**
+     * Measuring window: one beat of the two wave trains (periods 180 and 130 ticks beat every 468 ticks), so the
+     * half range covers their highest combined swing whatever phase the test starts at.
+     */
+    private static final int WINDOW = 480;
 
     private WaveGameTests() {
     }
@@ -134,18 +141,18 @@ public final class WaveGameTests {
     // ------------------------------------------------------------------ roll
 
     /**
-     * The 7×17 hull at storm amplitude rolls 3 to 15 degrees (half range over 10 s at steady state), and once the sea
+     * The 7×17 hull at storm amplitude rolls 3 to 15 degrees (half range over one beat of the wave trains, 24 s, at steady state), and once the sea
      * goes calm it settles within 10 s.
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 700, batch = "pirates_n_ships_waves_storm_roll")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 1000, batch = "pirates_n_ships_waves_storm_roll")
     public static void stormRollsTheTestHullAndCalmSettlesIt(GameTestHelper h) {
-        hold(h, SeaState.CALM, 800);
+        hold(h, SeaState.CALM, 1100);
         SailingGameTestsShips.Fixture f = longHull(h);
-        long stormAt = SETTLE, calmAt = SETTLE + 360;
-        h.runAfterDelay(stormAt, () -> hold(h, SeaState.STORM, 800));
-        h.runAfterDelay(calmAt, () -> hold(h, SeaState.CALM, 800));
+        long stormAt = SETTLE, calmAt = SETTLE + RAMP + WINDOW;
+        h.runAfterDelay(stormAt, () -> hold(h, SeaState.STORM, 1100));
+        h.runAfterDelay(calmAt, () -> hold(h, SeaState.CALM, 1100));
         trace(h, "storm 7x17", f, stormAt, calmAt + 220);
-        double[] storm = watchRoll(h, f, stormAt + 160, calmAt);
+        double[] storm = watchRoll(h, f, stormAt + RAMP, calmAt);
         double[] settled = watchRoll(h, f, calmAt + 200, calmAt + 220);
         h.runAfterDelay(calmAt + 221, () -> {
             double s = half(storm), c = half(settled);
@@ -161,13 +168,14 @@ public final class WaveGameTests {
     }
 
     /** A calm sea leaves the 7×17 hull still: under half a degree of roll. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 400, batch = "pirates_n_ships_waves_calm_roll")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 760, batch = "pirates_n_ships_waves_calm_roll")
     public static void calmSeaLeavesTheTestHullStill(GameTestHelper h) {
-        hold(h, SeaState.CALM, 500);
+        hold(h, SeaState.CALM, 900);
         SailingGameTestsShips.Fixture f = longHull(h);
-        trace(h, "calm 7x17", f, SETTLE, 360);
-        double[] calm = watchRoll(h, f, 160, 360);
-        h.runAfterDelay(361, () -> {
+        long end = SETTLE + RAMP + WINDOW;
+        trace(h, "calm 7x17", f, SETTLE, end);
+        double[] calm = watchRoll(h, f, SETTLE + RAMP, end);
+        h.runAfterDelay(end + 1, () -> {
             double c = half(calm);
             Constants.LOG.info("[wave test] 7x17 calm roll {} deg", String.format("%.3f", c));
             release(h);
@@ -178,14 +186,15 @@ public final class WaveGameTests {
     }
 
     /** A big hull (32×12) lies steady in a storm: under 3 degrees of roll. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 500, batch = "pirates_n_ships_waves_big_hull")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 760, batch = "pirates_n_ships_waves_big_hull")
     public static void stormBarelyRollsABigHull(GameTestHelper h) {
-        hold(h, SeaState.CALM, 600);
+        hold(h, SeaState.CALM, 900);
         SailingGameTestsShips.Fixture f = bigHull(h);
-        h.runAfterDelay(SETTLE, () -> hold(h, SeaState.STORM, 600));
-        trace(h, "storm 32x12", f, SETTLE, 420);
-        double[] storm = watchRoll(h, f, SETTLE + 160, 420);
-        h.runAfterDelay(421, () -> {
+        long end = SETTLE + RAMP + WINDOW;
+        h.runAfterDelay(SETTLE, () -> hold(h, SeaState.STORM, 900));
+        trace(h, "storm 32x12", f, SETTLE, end);
+        double[] storm = watchRoll(h, f, SETTLE + RAMP, end);
+        h.runAfterDelay(end + 1, () -> {
             double s = half(storm);
             Constants.LOG.info("[wave test] 32x12 storm roll {} deg (range {}..{}); mass {}", String.format("%.2f", s),
                     String.format("%.1f", storm[0]), String.format("%.1f", storm[1]), String.format("%.1f", f.ship().mass()));

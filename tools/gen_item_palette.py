@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Item palette textures for the hand-made 3D item models (design.md §4.8, work packages F8a, F8b, F8d, F8e).
+"""Item palette textures for the hand-made 3D item models (design.md §4.8, work packages F8a, F8b, F8d, F8e, ART1b).
 
 Run (from the repository root): tools/.venv/bin/python tools/gen_item_palette.py
 Output: common/src/main/resources/assets/pirates_n_ships/textures/item/palette.png
         common/src/main/resources/assets/pirates_n_ships/textures/item/palette_2.png
         common/src/main/resources/assets/pirates_n_ships/textures/item/palette_3.png
         common/src/main/resources/assets/pirates_n_ships/textures/item/palette_4.png
+        common/src/main/resources/assets/pirates_n_ships/textures/item/palette_5.png
 
-Four 16x16 sheets of 4x4 px colour patches. Blockbench item models map every face to the patch it needs with UVs
+Five 16x16 sheets of 4x4 px colour patches. Blockbench item models map every face to the patch it needs with UVs
 (a face of a 1 px edge may use a 1 px sliver of a patch), so all item models share one set of colours.
 Deterministic: same input, same bytes. Never move a patch: existing models point at these UVs.
 
@@ -48,6 +49,17 @@ palette_4.png (texture "#3"; trade goods: cloth, spices, tobacco, F8e):
  v 4   burlap_light       burlap_dark      cord             twine
  v 8   spice_red          spice_orange     spice_gold       spice_dark
  v 12  tobacco_light      tobacco_dark     midrib           burlap_weave
+
+palette_5.png (texture "#4"; flag bundles and the map tile, ART1b):
+
+    u:   0                  4                8                12
+ v 0   navy_light         navy             navy_dark        flag_white
+ v 4   flag_white_shade   flag_red         flag_red_dark    flag_black
+ v 8   flag_black_shade   flag_black_light map_sea          map_sea_dark
+ v 12  map_land           map_ink          spare            spare
+
+The navy, merchant and Jolly Roger colours follow the flown cloth (tools/gen_flag_textures.py: blue with a white
+cross, white with a red stripe, black with a bone skull); the spare cells repeat flag_white and stay unused.
 
 cloth_weave (undyed cloth, lighter and light rows) and burlap_weave (light and darker sacking rows) are striped.
 cloth_shadow colours the cloth bolt's end rings. Spare, not used by the F8e models: spice_dark.
@@ -90,6 +102,12 @@ SHEETS = {
         [("burlap_light", (184, 150, 98)), ("burlap_dark", (128, 98, 60)), ("cord", (96, 66, 40)), ("twine", (206, 184, 128))],
         [("spice_red", (168, 48, 30)), ("spice_orange", (214, 112, 38)), ("spice_gold", (226, 174, 56)), ("spice_dark", (112, 36, 24))],
         [("tobacco_light", (150, 100, 50)), ("tobacco_dark", (98, 62, 30)), ("midrib", (198, 164, 104)), ("burlap_weave", BURLAP_WEAVE)],
+    ],
+    "palette_5.png": [
+        [("navy_light", (82, 120, 188)), ("navy", (52, 84, 150)), ("navy_dark", (30, 50, 98)), ("flag_white", (240, 236, 224))],
+        [("flag_white_shade", (204, 198, 182)), ("flag_red", (180, 52, 44)), ("flag_red_dark", (122, 32, 30)), ("flag_black", (42, 40, 46))],
+        [("flag_black_shade", (22, 20, 24)), ("flag_black_light", (70, 68, 76)), ("map_sea", (124, 164, 180)), ("map_sea_dark", (84, 124, 146))],
+        [("map_land", (178, 172, 110)), ("map_ink", (58, 44, 34)), ("spare", (240, 236, 224)), ("spare_2", (240, 236, 224))],
     ],
 }
 

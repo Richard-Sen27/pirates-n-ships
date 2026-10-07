@@ -88,6 +88,8 @@ public final class HullRuntime {
     private double seaWorldY = Double.NaN;
     private double seaShipFrame = SeaLevel.NO_WATER;
     private @Nullable FloodReport lastReport;
+    /** Working pumps per compartment in the last tick (empty when none worked), for the ship HUD. */
+    private int[] pumpingNow = new int[0];
     private boolean saveDirty;
     private long ticks;
 
@@ -181,6 +183,11 @@ public final class HullRuntime {
         return lastReport;
     }
 
+    /** Whether a pump drained compartment {@code compartment} in the last tick (ship HUD, HUD1). */
+    public boolean pumping(int compartment) {
+        return compartment >= 0 && compartment < pumpingNow.length && pumpingNow[compartment] > 0;
+    }
+
     public boolean isAnalysing() {
         return pending != null || debouncer.isDirty();
     }
@@ -195,6 +202,7 @@ public final class HullRuntime {
         FloodTickInput input = FloodTickInput.calm(seaShipFrame)
                 .withWaves(com.richardsenger.piratesnships.sailing.waves.WaveForces.spillHeight(level, id));
         int[] working = workingPumps();
+        pumpingNow = working == null ? new int[0] : working;
         lastReport = sim.tick(working == null ? input : input.withPumps(working));
         if (lastReport.inflow() > 0 || lastReport.outflow() > 0 || lastReport.pumped() > 0) {
             saveDirty = true;

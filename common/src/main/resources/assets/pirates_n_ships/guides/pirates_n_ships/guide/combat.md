@@ -73,13 +73,13 @@ reloads by itself from that supply, so a manned, supplied gun keeps firing as fa
 `cannons.crew`).
 
 ## Grappling hook
-**Shooting the hook.** Put the grappling hook in your **off hand** and a crossbow or musket in your main hand. Hold
-use to load the hook into the weapon: the musket takes its full reload and one gunpowder, the crossbow a normal draw.
-A loaded musket shows the hook at its muzzle and a gold bar; hold use to aim and let go to fire, or sneak to lower. A
-loaded crossbow looks charged; click to shoot. The musket throws the hook farthest (48-block rope), the crossbow
-farther than a throw (36). Without a weapon in the other hand the hook is thrown by hand (24). Rain can make the
-musket misfire; the hook stays loaded. Left-handed players can turn off `grapple.launch.offhand_required` to swap the
-hands.
+**Shooting the hook.** Put the grappling hook in your **off hand** and a musket in your main hand. Hold use to load
+the hook into the musket (its full reload and one gunpowder), then aim and let go to fire it: a flat shot on a 64-block
+rope. Thrown by hand, the hook's rope is 32 blocks. The hook catches on any solid surface: another ship (the rope hauls
+both ships together), your own ship (a line to slide down, e.g. from the mast top), or land (from a ship it slowly
+hauls your ship toward that point like a kedge; from land it is a zip line). It slips off leaves and glass panes. To
+slide, look at the rope with an empty hand (or a hook in it) and use it; with a musket in hand, use always works the
+musket. Left-handed players can turn off `grapple.launch.offhand_required` to swap the hands.
 
 **Cleats** work like mooring rings: a hook flying close to a cleat catches on it, and using a cleat on your ship
 while your hook is out ties the rope off there.

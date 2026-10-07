@@ -78,6 +78,14 @@ public final class SailingModule implements ModModule {
         SableShips.onShipRemoved(SailingRuntimes::onShipRemoved);
         SableShips.onPhysicsTick(SailingRuntimes::onPhysicsTick);
         ShipBlockChanges.register(SailingRuntimes::onBlockChanged);
+        // HL1b: a ship Sable moves to a new body keeps its bow (position-free); the anchor (a plot position) stays behind
+        com.richardsenger.piratesnships.ship.assembly.ShipSplits.carryOnIdentityMove(SailingRuntimes.USER_DATA_KEY, tag -> {
+            net.minecraft.nbt.CompoundTag kept = new net.minecraft.nbt.CompoundTag();
+            if (tag.contains("bow")) {
+                kept.putString("bow", tag.getString("bow"));
+            }
+            return kept;
+        });
         // wheel steering (HELM1): the helm's steering handler starts a wheel session, or runs the click steps of
         // ShipControls.steer when helm.wheel.drag_steering is off
         HelmSetup.registerEvents();
@@ -216,6 +224,7 @@ public final class SailingModule implements ModModule {
                 com.richardsenger.piratesnships.sailing.ship.SailingGameTestsStays.class,
                 com.richardsenger.piratesnships.sailing.ship.SailingGameTestsRigging.class,
                 com.richardsenger.piratesnships.sailing.helm.HelmSteeringGameTests.class,
-                com.richardsenger.piratesnships.sailing.rope.RopeLineGameTests.class);
+                com.richardsenger.piratesnships.sailing.rope.RopeLineGameTests.class,
+                com.richardsenger.piratesnships.sailing.ship.HelmHandoverGameTests.class);
     }
 }

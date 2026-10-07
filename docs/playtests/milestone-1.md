@@ -99,3 +99,27 @@ waterline, a helm and a chest on the hold floor. 97 blocks. Put a few different 
 - From `logs/latest.log`: every line containing `pirates_n_ships`, `Sable` with `ERROR` or `WARN`
   (except the flywheel one), `Failed to move block`, `Failed to mark & notify`, and any stack trace.
 - Whether steps 5 and 9 felt right for the player position (any jump, fall damage, suffocation).
+
+## HL1: replacing the helm
+Use the starter sloop (`/pirates ship place starter_sloop assemble`) on calm water, survival mode, a helm in your
+inventory. Name it with a name tag on the helm (e.g. "Heron").
+1. **Break the helm** (axe). Expected: it drops as an item; the ship stays a ship (no message, no split, it keeps
+   floating). Use the sail winch: it cycles the sails (or "no sails"), never "The winch must be on an assembled ship".
+   Use the capstan: the anchor drops / raises, never "The capstan must be on an assembled ship". `/pirates ship info`
+   (standing on the deck) still shows "Heron". Crew at stations stay there.
+2. **Place the helm back where it was.** Expected: action bar "This helm now steers Heron". Hold use on it: you take the
+   wheel, it starts at midships (spokes straight), the rudder follows. Sneak-use with an empty hand while the ship
+   lies still: it disassembles as usual.
+3. Assemble again, break the helm, **place a helm somewhere else on the deck**. Expected: "This helm now steers Heron";
+   it steers. The bow does not change (the ship sails the same way it did; the bow is kept from the first assembly
+   even if the new helm faces another way, which is worth a look: tell us if that feels wrong).
+4. **Two helms:** with the steering helm standing, place a second helm on the deck. Expected: "This ship is steered
+   from its other helm. Break that one to steer from here". Using or sneak-using the second helm does nothing else.
+   Break the first: using the second now takes the wheel.
+5. **Helmless save and load:** break the helm, save and quit, rejoin. Expected: winch and capstan still work, then
+   place a helm: it steers.
+6. **Your broken ship from before HL1** (the body whose winch and capstan said "must be on an assembled ship"): place a
+   helm on it and use it. Expected: "This helm now steers the body it stands on: a ship of N blocks"; from then on it
+   is a ship (winch, capstan, steering; name it again with a name tag; its old name and crew list are lost).
+- Send back: any message that differs, and from `logs/latest.log` every `pirates_n_ships` line with `ERROR`/`WARN`
+  and any line "Ship ... split".

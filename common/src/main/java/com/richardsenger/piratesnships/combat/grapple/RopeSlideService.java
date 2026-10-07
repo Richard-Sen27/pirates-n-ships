@@ -18,7 +18,7 @@ import java.util.UUID;
 /**
  * Server side of sliding along a grappling rope (GR2, docs/design.md §8.3): grabbing the rope and the rider's tick.
  *
- * <p><b>Grabbing.</b> A player uses the rope while looking at it (the client sends {@link BoardRopePayload} when its
+ * <p><b>Grabbing.</b> A player uses the rope while looking at it, with an empty main hand or a hook in it (GR4) (the client sends {@link BoardRopePayload} when its
  * own pick hits a rope; {@link #tryBoard} checks again with the server's view of the player, a little more lenient
  * for the latency). The rope must be latched; the player must be within {@code board_reach} of the rope point the look
  * ray passes within {@code board_pick_radius} of. A thrower grabbing their own untied rope pins its near end where
@@ -44,7 +44,14 @@ public final class RopeSlideService {
     }
 
     /** Outcome of a grab. */
-    public enum Board { OK, DISABLED, BUSY, NOT_LATCHED, OUT_OF_REACH }
+    public enum Board {
+        OK, DISABLED, BUSY,
+        /** GR4: the main hand holds a musket or another item with its own use ({@link RopeSlide.Grab#HAND_BUSY}). */
+        HAND_BUSY,
+        /** GR4: the hook left less than {@code grab_cooldown_ticks} ago ({@link RopeSlide.Grab#TOO_SOON}). */
+        TOO_SOON,
+        NOT_LATCHED, OUT_OF_REACH
+    }
 
     /** From {@link BoardRopePayload}: the player used the rope of the hook with network id {@code hookId}. */
     public static void onBoardRequest(Player player, int hookId) {
@@ -63,7 +70,9 @@ public final class RopeSlideService {
 
     /**
      * The player grabs {@code hook}'s rope where their look ray passes it ({@link RopeSlide#pick}, reach and radius
-     * widened by {@code tolerance}) and starts sliding.
+     * widened by {@code tolerance}) and starts sliding. GR4: only with an empty main hand or a grappling hook in it,
+     * and not within {@code grab_cooldown_ticks} of the hook leaving ({@link RopeSlide#grab}); a musket in hand
+     * keeps its own use, so the thrower is never hung on (and never pins) a rope they just fired.
      */
     public static Board tryBoard(ServerLevel level, Player player, GrapplingHookEntity hook, double tolerance) {
         if (!GrappleConfig.ENABLED.get() || !GrappleConfig.SLIDE_ENABLED.get()) {
@@ -72,6 +81,14 @@ public final class RopeSlideService {
         if (player.isPassenger() || player.isVehicle() || player.isSpectator() || !player.isAlive() || player.isSleeping()
                 || player.level() != level) {
             return Board.BUSY;
+        }
+        RopeSlide.Grab grab = RopeSlide.grab(GrapplingHookItem.heldOf(player.getMainHandItem()), hook.tickCount,
+                GrappleConfig.GRAB_COOLDOWN_TICKS.get());
+        if (grab == RopeSlide.Grab.HAND_BUSY) {
+            return Board.HAND_BUSY;
+        }
+        if (grab == RopeSlide.Grab.TOO_SOON) {
+            return Board.TOO_SOON;
         }
         if (hook.isRemoved() || hook.level() != level || hook.state() != GrapplingHookEntity.State.LATCHED) {
             return Board.NOT_LATCHED;
@@ -101,10 +118,13 @@ public final class RopeSlideService {
         return Board.OK;
     }
 
-    /** Pins the thrower's rope at their hand {@code hand} (world), on the ship they stand on or in the world. */
+    /**
+     * Pins the thrower's rope at their hand {@code hand} (world), on the ship they stand on or in the world. GR4: also
+     * on the ship the hook holds (a line within one ship, e.g. mast top to deck), so the line moves with that ship.
+     */
     private static void pin(ServerLevel level, GrapplingHookEntity hook, Player thrower, Vec3 hand) {
         ShipBody ship = GrappleService.shipOf(level, thrower);
-        if (ship != null && !ship.id().equals(hook.shipId())) {
+        if (ship != null) {
             hook.pinNearEnd(ship.toPlot(hand), ship.id());
         } else {
             hook.pinNearEnd(hand, null);

@@ -99,10 +99,28 @@ public final class ShipAssembler {
         CompoundTag pointer = new CompoundTag();
         pointer.putUUID("ship", data.id());
         pointer.putInt("version", 1);
+        ShipHelm.writeHelm(pointer, helmInPlot(ship, helm));
         ship.setUserData(USER_DATA_KEY, pointer);
         HullRuntimes.onAssembled(ship);
         ShipAllegiance.refresh(ship); // FL2: flags hoisted before assembly now fly from the ship
         return new AssemblyResult(Outcome.ASSEMBLED, blocks.size(), ship.id(), null, 0);
+    }
+
+    /**
+     * Where the helm that was at world position {@code worldHelm} is in the new ship's plot (HL1: it becomes the steering
+     * helm). Assembly moves the blocks by a pure translation, so the pose maps it exactly; if not, the first helm found.
+     */
+    private static @Nullable BlockPos helmInPlot(ShipBody ship, BlockPos worldHelm) {
+        BlockPos mapped = BlockPos.containing(ship.toPlot(Vec3.atCenterOf(worldHelm)));
+        if (ship.level().getBlockState(mapped).getBlock() instanceof HelmBlock) {
+            return mapped;
+        }
+        for (BlockPos p : ship.plotBlocks()) {
+            if (ship.level().getBlockState(p).getBlock() instanceof HelmBlock) {
+                return p;
+            }
+        }
+        return null;
     }
 
     /** Disassembles {@code ship}; {@code helmPlotPos} is the helm's position in the plot and becomes the anchor. */

@@ -10,6 +10,7 @@ item_ids:
   - pirates_n_ships:brig_key
   - pirates_n_ships:cannonball
   - pirates_n_ships:captains_whistle
+  - pirates_n_ships:carpenters_hammer
   - pirates_n_ships:cloth
   - pirates_n_ships:cutlass
   - pirates_n_ships:hardtack
@@ -21,6 +22,7 @@ item_ids:
   - pirates_n_ships:lime
   - pirates_n_ships:merchant_flag
   - pirates_n_ships:musket
+  - pirates_n_ships:nails
   - pirates_n_ships:navy_flag
   - pirates_n_ships:navy_hat
   - pirates_n_ships:navy_officer_spawn_egg
@@ -30,13 +32,14 @@ item_ids:
   - pirates_n_ships:pirate_spawn_egg
   - pirates_n_ships:pistol
   - pirates_n_ships:rapier
-  - pirates_n_ships:rope
   - pirates_n_ships:rum
   - pirates_n_ships:saber
   - pirates_n_ships:sailor_spawn_egg
   - pirates_n_ships:salt_pork
   - pirates_n_ships:salted_fish
+  - pirates_n_ships:saw
   - pirates_n_ships:shark_spawn_egg
+  - pirates_n_ships:shipwright_toolkit
   - pirates_n_ships:spices
   - pirates_n_ships:tobacco
 ---

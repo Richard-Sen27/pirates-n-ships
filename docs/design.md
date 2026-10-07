@@ -151,6 +151,7 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
   - Implemented in spike 1 (`ship/assembly`): terrain is decided by the block tag `pirates_n_ships:terrain`, and `pirates_n_ships:never_assemble` excludes more blocks. A dock that touches the hull is gathered with it, so ships are moored with a one-block gap. The default block limit is 2048.
 - Assembly collects connected blocks, excluding world terrain, with a configurable block limit. They become a Sable sub-level.
 - **Ship templates (W0):** prebuilt ships are vanilla structure templates converted from the human's WorldEdit schematics (`ship_template` definitions with helm, waterline row, bow and price); `/pirates ship place` puts one on the water and can assemble it; the shipwright's orders will build on this.
+- **Splits (RS1):** Sable splits a ship whose only connecting block is destroyed; the piece with the helm (else the larger) keeps the identity, other pieces become wrecks with an `origin` (the first ship's id through any number of splits) that sail no more, keep their crew standing and show "Wreck of <name>"; pieces under `assembly.split.wreck_min_blocks` drop as items; `assembly.split.enabled` can hold Sable's splitting off. Rejoining is explicit and tool-driven (RS2: the Shipwright's Toolkit, only pieces of the same origin, aligned and touching).
 - **Disassembly** happens at the helm when the ship is stationary and aligned. Blocks are placed back into the world, snapped to the grid.
   - Sable has no disassembly API (`docs/sable-notes.md` §2.4). We build it from Sable's public assembly pieces: the ship is levelled and its yaw snapped to a 90° step, and the target volume is checked for obstructions before the blocks are moved.
   - Assembling in water leaves an air pocket where the hull was, and disassembling leaves sea water inside the hull. Both need handling (spike 1).
@@ -639,3 +640,11 @@ Spikes 1–4 are throwaway-quality prototypes that prove feasibility. They may l
 - Stability: hollow block hulls barely right themselves (spike 3). Measured: a 5×5 plank boat, 4 high, lies about 20° bow up at rest and runs 35 to 46° bow down under a small sail, and a stone bottom layer brings that to about 16°. Do we keep scaling down the heel torque, add ballast or keel blocks with real mass low in the hull, add our own righting moment from the hull analysis, or apply the sail's drive lower? Decide after the milestone 3 playtest. This is the biggest open risk for how ships feel.
 - Sail force scale: the spike 3 agent thinks 1.0 is too strong for Sable's masses and expects something like 0.3 to 0.5. Decide in the milestone 3 playtest.
 - ~~Is the continuous rolling of a floating ship intended?~~ **Resolved (playtest):** no. It is undamped roll: nothing resists the rolling motion. A roll and pitch damping torque proportional to the angular velocity, with config values, is added in the sailing runtime (`HullDampingModel`, defaults 1.5 / 1.5: a kicked 7×17 hull settles in about 3 s instead of rocking for 8). To be confirmed in game: the endless rolling could not be reproduced headlessly.
+
+---
+
+## 22. Charts (fourth session)
+- Every player keeps a **chart** on their player data (not on an item): the coasts around them are sampled as they travel (cell classes: deep, shallow, beach, land, snow/ice, with a coast flag), drawn in a pirate style (ink coastlines, hatched shallows, parchment sea with doodles), never forgotten, capped per player.
+- A **chart item** is needed to open it (server option: the M key without an item); other players are hidden unless the server shows them; **markers** with icons and names are the player's own.
+- **Map tile (MAP2):** a block onto which a selected chart region is drawn for everyone to see, with or without the markers; once drawn, only a full redraw is possible.
+- **Implemented (MAP1):** `chart` module with the data, sampling, payloads, screen, item, key and config; MAP2 is open.

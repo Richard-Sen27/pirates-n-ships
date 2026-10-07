@@ -88,11 +88,11 @@ public final class AssemblyModule implements ModModule {
             lang.add(Outcome.NO_SHIP.key(), "This helm is not part of an assembled ship");
             lang.add(HelmBlock.KEY_DISASSEMBLE_HINT, "Sneak-use the helm with an empty hand to disassemble the ship");
             lang.add(Outcome.FAILED.key(), "Assembly failed, see the server log");
-            ShipTemplateCommands.lang(lang);
             lang.add(ShipInfoCommand.KEY_NONE, "No ship here");
             lang.add(ShipInfoCommand.KEY_SHIP, "Ship %s, name %s, origin %s");
             lang.add(ShipInfoCommand.KEY_WRECK, "Wreck %s of %s, origin %s");
             lang.add(ShipInfoCommand.KEY_UNNAMED, "(unnamed)");
+            ShipTemplateCommands.lang(lang);
             rejoinLang(lang);
         });
         data.models(m -> {
@@ -199,6 +199,6 @@ public final class AssemblyModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(AssemblyGameTests.class, ShipTemplateGameTests.class, SplitGameTests.class, RejoinGameTests.class);
+        return List.of(AssemblyGameTests.class, SplitGameTests.class, ShipTemplateGameTests.class, RejoinGameTests.class);
     }
 }

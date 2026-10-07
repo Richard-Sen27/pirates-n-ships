@@ -8,6 +8,8 @@ import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.station.order.WhistleMenu;
 import com.richardsenger.piratesnships.station.order.WhistleOrder;
 import com.richardsenger.piratesnships.station.order.WhistleOrders;
+import com.richardsenger.piratesnships.station.pump.PumpOrder;
+import com.richardsenger.piratesnships.station.pump.PumpOrderGameTests;
 import com.richardsenger.piratesnships.station.winch.CaptainsWhistleItem;
 import com.richardsenger.piratesnships.station.winch.SailOrder;
 import java.util.List;
@@ -83,6 +85,11 @@ public final class StationModule implements ModModule {
                     .add(SailOrder.HOIST.ackKey(), "Aye, hoisting the sails!")
                     .add(SailOrder.REEF.ackKey(), "Aye, reefing the sails!")
                     .add(SailOrder.FURL.ackKey(), "Aye, furling the sails!")
+                    .add(PumpOrder.PUMP.nameKey(), "pump the bilge")
+                    .add(PumpOrder.PUMP.ackKey(), "Aye, manning the pump!")
+                    .add(PumpOrder.PUMP.nothingToDoKey(), "The bilge is dry, captain")
+                    .add(PumpOrder.PUMP.unableKey(), "This pump won't draw, captain!")
+                    .add(CrewStations.KEY_WRONG_STATION, "I can't %s from this station, captain!")
                     .add(CrewStations.KEY_ASSIGNED, "%s mans the station")
                     .add(CrewStations.KEY_RELEASED, "%s leaves the station")
                     .add(CrewStations.KEY_TAKEN, "Somebody already mans this station")
@@ -104,18 +111,20 @@ public final class StationModule implements ModModule {
                     .add(WhistleOrder.REEF.descriptionKey(), "Crew at the winches take the sails in to half")
                     .add(WhistleOrder.FURL.nameKey(), "Furl sails")
                     .add(WhistleOrder.FURL.descriptionKey(), "Crew at the winches furl the sails")
+                    .add(WhistleOrder.PUMP.nameKey(), "Man the pumps")
+                    .add(WhistleOrder.PUMP.descriptionKey(), "Crew at the bilge pumps pump until the bilge is dry")
                     .add(WhistleOrder.RELEASE.nameKey(), "Release crew")
                     .add(WhistleOrder.RELEASE.descriptionKey(), "All crew of this ship leave their stations")
                     .add(StationCommands.KEY + "spawned", "Crew member spawned")
                     .add(StationCommands.KEY + "not_crew", "That entity is not a crew member")
                     .add(StationCommands.KEY + "released", "%s crew members released")
-                    .add(StationCommands.KEY + "unknown_order", "Unknown order: use hoist, reef or furl")
-                    .add(StationCommands.KEY + "ordered", "Order %s: %s of %s crew carry it out");
+                    .add(StationCommands.KEY_UNKNOWN_ORDER, "Unknown order: use hoist, reef, furl or pump")
+                    .add(StationCommands.KEY_ORDERED, "Order %s: %s of %s crew carry it out");
         });
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(StationGameTests.class);
+        return List.of(StationGameTests.class, PumpOrderGameTests.class);
     }
 }

@@ -22,7 +22,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class Stations {
 
-    public enum OrderResult { STARTED, NOTHING_TO_DO, NOT_OCCUPIED, NOT_APPLICABLE, NO_STATION, DISABLED }
+    /**
+     * What became of an order. {@link #WRONG_STATION}: this kind of station does not take this type of order (a pump
+     * order to a winch, a sail order to a pump); the work in progress goes on. {@link #NOT_APPLICABLE}: the station
+     * takes it but cannot carry it out here (a winch on a ship without sails, a pump that is switched off).
+     */
+    public enum OrderResult { STARTED, NOTHING_TO_DO, NOT_OCCUPIED, NOT_APPLICABLE, WRONG_STATION, NO_STATION, DISABLED }
 
     private record Entry(ResourceKey<Level> dimension, StationKind<?> kind, StationState<Object> state) { }
 
@@ -38,6 +43,12 @@ public final class Stations {
             return null;
         }
         return level.getBlockState(ref.pos()).getBlock() instanceof StationBlock b ? b.stationKind() : null;
+    }
+
+    /** Whether the station at {@code ref} is of a kind that takes {@code order}; false when there is no station. */
+    public static boolean accepts(ServerLevel level, StationRef ref, Object order) {
+        StationKind<?> kind = kindAt(level, ref);
+        return kind != null && kind.accepts(order);
     }
 
     /** The station whose block is at plot position {@code plotPos}, or null when it is not a station on a loaded ship. */
@@ -87,8 +98,8 @@ public final class Stations {
         if (kind == null) {
             return OrderResult.NO_STATION;
         }
-        if (!kind.orderType().isInstance(order)) {
-            return OrderResult.NOT_APPLICABLE;
+        if (!kind.accepts(order)) {
+            return OrderResult.WRONG_STATION;
         }
         int ticks = duration(kind, level, ref, order);
         if (ticks < 0) {

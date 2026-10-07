@@ -17,6 +17,11 @@ public interface StationKind<O> {
 
     Class<O> orderType();
 
+    /** Whether this kind of station carries out {@code order} at all (the order ↔ station kind mapping). */
+    default boolean accepts(Object order) {
+        return orderType().isInstance(order);
+    }
+
     /**
      * Work time of {@code order} at {@code station} in ticks: 0 when there is nothing to do, negative when the order
      * can't be carried out here (e.g. a winch on a ship without sails).

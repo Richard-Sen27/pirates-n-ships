@@ -1,5 +1,7 @@
 # Pirates 'n' Ships: how it works
 
+> In-game guide (GuideME): after changing this file, regenerate it with `python3 tools/gen_guideme.py` and commit the output.
+
 A guide to everything that exists in the mod today: what each block, item and system does and how to use it.
 It describes the code on `main`, not the plans. For the plans see [`design.md`](design.md), and for the state of
 the work see [`progress.md`](progress.md).

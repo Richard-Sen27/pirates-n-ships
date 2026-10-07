@@ -1,0 +1,13 @@
+{
+  "item_settings": {
+    "display_name": {
+      "translate": "guide.pirates_n_ships.guide.name"
+    },
+    "tooltip_lines": [
+      {
+        "translate": "guide.pirates_n_ships.guide.tooltip",
+        "color": "gray"
+      }
+    ]
+  }
+}

@@ -1,0 +1,50 @@
+---
+navigation:
+  title: "Configuration"
+  parent: index.md
+  position: 130
+  icon: minecraft:comparator
+---
+
+# Configuration
+
+Open it in game under Mods → Pirates 'n' Ships → Config. Gameplay settings are in the server config, which is synced to
+clients. Every feature has a switch and every strength or rate has a value.
+
+| Section | What it controls |
+|---|---|
+| `assembly` | Assembly on/off, block limit, how still and level a ship must be to disassemble, water handling. |
+| `dry_hull` | Dry hull on/off, buoyancy of the dry volume, weight of flood water. |
+| `flooding` | Flooding on/off, inflow rate; bilge pump on/off, rate, reach, use time and exhaustion; hull patch on/off. |
+| `wind` | Wind strength range, how fast it changes, weather multipliers, gusts, regional variation. |
+| `sailing` | Sail force, rudder strength, keel drag, anchor strength, roll and pitch damping. |
+| `anchor_chain` | Chain speeds, travel time limits, anchor sounds and volumes. |
+| `hull_creaking` | Creaking on/off, how often, volume and pitch ranges, the rolling rate that counts. |
+| `audio` (client) | Music on/off and volume, the gap between tracks, shanties aboard. |
+| `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore pull, entity damage, lost-hook rule. |
+| `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevation range and steps, blocks per hit, recoil and impact impulses, ball lifetime and water behaviour, `mobGriefing` and spawn protection, drops from destroyed blocks, glancing hits and the bounce angle. |
+| `cannons.swivel` | Swivel gun on/off, ammo item and count, damage, muzzle speed, reload, blocks per hit, recoil and impact impulses, ball lifetime, elevation limits, aim reach. |
+| `mobs` | Mob types on/off and peaceful, hostility toggles, detection and fight ranges, skill tiers, musket timings and ammo, shove, drops. |
+| `hazards` / `hazard_visuals` (client) | Waterspouts and whirlpools on/off, spawn chances and interval, distance band, lifetimes, radii, pull, lift, spin, drag-down, drift, sail tearing, ship force scale and mass cap; particle density and sounds. |
+| `mobs.shark` | Shark on/off and peaceful, spawn weight and group (server restart), detection, circle and give-up times, bite cooldown, damage and knockback, frenzy threshold. |
+| `melee_animations` (client) | Sword animations on/off, first-person mode, layer priority. |
+| `melee_input` / `melee_hud` (client) | Hold-to-thrust and parry-tap thresholds; stamina bar on/off, scale and offsets. |
+| `firearms.aim` / `firearm_view` (client) | Minimum hold, steady time and aimed spread factor, sneak lowers the gun; musket zoom. |
+| `firearms` | Firearms on/off, per gun: damage, muzzle velocity, spread, reload time, recoil; ball lifetime and gravity, cooldown, gunpowder use. |
+| `sailing_runtime` | Sailing forces on/off, heel scaling, steering and anchor on/off, rudder steps, chain length. |
+| `crew_stations` | Crew stations on/off, time per trim step. |
+| `flags` | Hoisting delay, flags following the wind (land and ship check intervals), banners as flags. |
+| `dry_hull` | Also: whether slabs, stairs and hatches are drawn dry in their empty half. |
+| `sea_chest` | Sea chest on/off, worn speed, sink pull, wind drift and its cap, draft. |
+| `survival` | Cold water on/off and freeze rate, warm effect length, swimming hunger multiplier. |
+| `provisions` | Consumption, rations, spoilage, scurvy, rum, water barrel capacity, rain refill. |
+| `cargo_trade.market_backend` | Desk reach, maximum trade quantity, refresh interval of open market screens. |
+| `cargo_trade` | Container sizes, prices, price recovery, contracts, plunder, port fees, cargo weight. |
+| `law` | Criminal score, severity of each crime, decay, fines, bounties, crime detection, theft; `law.bounty`: officer turn-ins on/off and delivery range, notice boards on/off and reach. |
+| `flags_brig` | False-colors detection, NPC surrender, capturing players, prisoner escapes. |
+| `brig` | Capture threshold, leading distances, cell size, escape chance, ransom. |
+| `melee` | Skill-based sword fighting: parry window, stamina, stagger, feint recovery, NPC feints on/off, sword sounds on/off and volume. |
+| `core` | Debug logging. |
+| `ships`, `waves`, `hazards`, `crew`, `combat`, `survival`, `world`, `world_simulation`, and the client sections `audio` and `wave_effects` | Settings for features that are not built yet. They do nothing so far. |
+
+Many defaults are first guesses that need playtesting. `progress.md` lists the ones to review.

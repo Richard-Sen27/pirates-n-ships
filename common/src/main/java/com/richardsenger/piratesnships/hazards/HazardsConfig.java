@@ -7,8 +7,8 @@ import com.richardsenger.piratesnships.core.config.ModConfigs;
 /**
  * Server config section {@code hazards} and client section {@code hazard_visuals} (docs/design.md §12, §17 "Hazards:
  * waterspouts / whirlpools / kraken: enabled + frequency each"). Takes over the {@code hazards} placeholder that
- * {@code core.settings} declared in {@code hazard.HazardConfig}; the kraken values are still placeholders that nothing
- * reads yet.
+ * {@code core.settings} declared in {@code hazard.HazardConfig}; the kraken's toggle and frequency are read by
+ * {@code mob.kraken} (its fight is configured in {@code mobs.kraken}).
  *
  * <p>Units: field strengths ({@code pull}, {@code lift}, {@code spin}, {@code drag_down}) are accelerations in
  * blocks/tick² at the centre, falling off linearly to 0 at {@code radius}. Ships get the same field as an acceleration of
@@ -82,8 +82,11 @@ public final class HazardsConfig {
     private static final ConfigSection KRAKEN = S.section("kraken", "The kraken boss of the deep ocean");
     public static final ConfigValue<Boolean> KRAKEN_ENABLED = KRAKEN.bool("enabled", true,
             "The kraken can appear in the deep ocean and attack ships");
-    public static final ConfigValue<Double> KRAKEN_CHANCE_PER_DAY = KRAKEN.doubleRange("chance_per_day", 0.02, 0.0, 1.0,
-            "Base chance per in-game day, for each player in the deep ocean, that the kraken appears (higher at night and in storms)");
+    // the night multiplier (×3 for half the day) doubles the average: 0.05 base is about 0.1 a day, one kraken per
+    // ten days at sea (K1a)
+    public static final ConfigValue<Double> KRAKEN_CHANCE_PER_DAY = KRAKEN.doubleRange("chance_per_day", 0.05, 0.0, 1.0,
+            "Base chance per in-game day, for each player in the deep ocean, that the kraken appears (×mobs.kraken.night_multiplier "
+                    + "at night, ×thunder_multiplier in storms; 0.05 is about one kraken per ten days at sea)");
 
     private static final ConfigSection VISUALS = ModConfigs.client("hazard_visuals", "Client-side look and sound of waterspouts and whirlpools");
     public static final ConfigValue<Double> PARTICLE_DENSITY = VISUALS.doubleRange("particle_density", 1.0, 0.0, 4.0,

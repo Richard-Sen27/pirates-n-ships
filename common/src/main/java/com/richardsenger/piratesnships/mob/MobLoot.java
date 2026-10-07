@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.mob;
 
 import com.richardsenger.piratesnships.combat.content.CombatContent;
+import com.richardsenger.piratesnships.mob.kraken.KrakenContent;
 import com.richardsenger.piratesnships.trade.content.TradeContent;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.storage.loot.LootPool;
@@ -17,8 +18,8 @@ import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
  * Entity loot tables of the humanoid mobs (written by datagen through vanilla's loot table codec; a datapack can
  * replace them at {@code data/pirates_n_ships/loot_table/entities/<mob>.json}). Pirates drop 1-3 doubloons and, when
  * killed by a player, a cutlass 1 time in 10; navy soldiers and officers drop 0-2 lead shot and 0-2 gunpowder; sailors
- * drop nothing; sharks drop 0-1 raw cod and, 1 time in 20, a prismarine shard. {@code mobs.drops} switches all of them
- * off.
+ * drop nothing; sharks drop 0-1 raw cod and, 1 time in 20, a prismarine shard; the kraken drops its beak (always one)
+ * and 2-5 kraken ink. {@code mobs.drops} switches all of them off.
  */
 public final class MobLoot {
 
@@ -48,6 +49,17 @@ public final class MobLoot {
                 .withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1))
                         .add(LootItem.lootTableItem(Items.GUNPOWDER)
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(0, 2)))))
+                .build();
+    }
+
+    /** The kraken (K1a): one beak, 2-5 ink. */
+    public static LootTable kraken() {
+        return LootTable.lootTable().setParamSet(LootContextParamSets.ENTITY)
+                .withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1))
+                        .add(LootItem.lootTableItem(KrakenContent.KRAKEN_BEAK.get())))
+                .withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1))
+                        .add(LootItem.lootTableItem(KrakenContent.KRAKEN_INK.get())
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2, 5)))))
                 .build();
     }
 

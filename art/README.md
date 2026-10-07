@@ -336,6 +336,30 @@ Items (doubloon and bounty proof, F8f):
   they live only in the running app.
 - The market screen draws the doubloon with `GuiGraphics.renderItem`, so the 3D model shows there without changes.
 
+Doubloon as a single coin (F8i, replaces the F8f stack after the playtest note "a doubloon should be a singular
+item"):
+- **16-gon from eight bars.** A regular 16-gon of width D is the union of eight D x D·tan 11.25° bars, one per
+  22.5° direction: bars along x at 0, ±22.5, ±45 and along y at 0, ±22.5 (a y bar at ±22.5 is a 67.5° direction), all
+  about the disc centre. Rounder than the four-bar octagon for twice the elements. The ±22.5 bars are 0.01 px and the
+  ±45 bars 0.02 px thinner in z so their faces do not fight the axis-aligned ones.
+- **Coin** (36 elements, `palette.png` only, particle `palette`): body 16-gon D 10.6, z 7.5..8.5 (1 px thick), faces
+  `brass` (the darker rim band), edge `brass_dark`; a field 16-gon D 8.8 0.05 px proud on each side in `gold`; a
+  `brass_light` highlight bar on the upper-left rim (`z 45`); the cross pattée on the front (two arms 1.2 wide and
+  four end flares, 0.4 px raised, `brass` face, `brass_dark` down and east faces as the emboss shadow); the reverse
+  (north) a raised `brass` diamond (`z 45`) and four dots. Built facing south like a sprite, centred on (8, 8, 8).
+- **Display** (left-hand slots repeat the right hand; the game mirrors them): `gui` `[-25, 25, 0]` / 1.1 (three-quarter
+  view, the edge shows lower left); third person `[0, 25, 0]` / `[0, 2.5, 1]` / 0.45 (the vanilla hand frame turns
+  model +z up the arm, so the identity transform already lays the coin flat on the fingers with the cross up; y 25
+  rolls it outwards); first person `[0, -70, 25]` / `[1.13, 4.2, 1.13]` / 0.55 (upright, the cross turned towards the
+  player); `ground` `[-90, 0, 0]` / `[0, -1.5, 0]` / 0.5 (lying flat, cross up); `fixed` and `head` stay vanilla (the
+  cross faces out of the frame). In display mode, the world normal of a face
+  (`new THREE.Vector3(0,0,1).transformDirection(cube.mesh.matrixWorld)`) settles which side faces up faster than the
+  previews do.
+- Built from a Python part list that writes the model JSON, then loaded into a new `java_block` tab with
+  `Codecs.java_block.parse` (faces re-pointed to the palette texture, display slots copied into
+  `Project.display_settings`); `Codecs.java_block.compile()` of the tab gives the same 36 elements and display. Script
+  not committed; rebuild it from these notes. Render `renders/doubloon.png`: GUI, third-person hand, ground, reverse.
+
 Items (brig door and brig key, F8g):
 - **Brig door** (34 elements, `brig_door_item`): the unlocked left-hinged door, both halves in one model, built from
   the elements of `brig_door_bottom_left` and `brig_door_top_left` (upper half raised 16 px, so y 0..32). The block

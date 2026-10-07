@@ -76,10 +76,12 @@
   },
   "combat.melee.miss": {
     "sounds": [
-      {
-        "type": "event",
-        "name": "minecraft:entity.player.attack.sweep"
-      }
+      "pirates_n_ships:combat/melee/miss_1",
+      "pirates_n_ships:combat/melee/miss_2",
+      "pirates_n_ships:combat/melee/miss_3",
+      "pirates_n_ships:combat/melee/miss_4",
+      "pirates_n_ships:combat/melee/miss_5",
+      "pirates_n_ships:combat/melee/miss_6"
     ],
     "subtitle": "subtitles.pirates_n_ships.combat.melee.miss"
   },

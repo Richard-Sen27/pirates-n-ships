@@ -133,7 +133,7 @@ class SettingsConfigTest {
         assertTrue(HazardConfig.WAVES_ENABLED.get());
         assertEquals(1.0, HazardConfig.WAVE_AMPLITUDE.get());
         assertTrue(HazardsConfig.KRAKEN_ENABLED.get());
-        assertEquals(0.02, HazardsConfig.KRAKEN_CHANCE_PER_DAY.get());
+        assertEquals(0.05, HazardsConfig.KRAKEN_CHANCE_PER_DAY.get());
         assertTrue(HazardConfig.CAMERA_SWAY.get());
         assertTrue(CrewConfig.WAGES_ENABLED.get());
         assertTrue(CrewConfig.MUTINY_ENABLED.get());

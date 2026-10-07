@@ -649,6 +649,16 @@ record the point forces in the `pirates_n_ships:sea_hazards` group every physics
 `applyImpulseNow` were far too weak against the water drag; the ship rate ended at a quarter of the entity rate
 (`HazardField.SHIP_ACCELERATION`), measured in the H1 GameTests.
 
+### 9.0j Splitting and entity-loaded chunks (K1a)
+- Sable splits a sub-level by itself when a part is cut off (`SableConfig` `sub_level_splitting`, the flood fill in
+  `sublevel/plot/heat/SubLevelHeatMapManager`): a cannonball or a kraken strike through the only mast block turns the
+  rig above it into its own body, marked "split from" the ship (`ServerSubLevel.setSplitFrom`). Tests that break a
+  connecting block must expect a second ship id; the kraken tests switch `mobGriefing` off instead. Sable has no
+  merge: rejoining pieces is ours to build.
+- `getEntitiesOfClass` and the other entity lookups do not see entities in chunks that are loaded but not
+  entity-ticking. Spawners that need to see their neighbours (the kraken's 200-block separation) must place and look
+  in entity-ticking chunks only.
+
 ### 9.1 How Sable tests sub-levels
 - Tests live in **`sable/neoforge/src/main/java/dev/ryanhcode/sable/neoforge/gametest/`** (`AssemblyTest`, `PhysicsTest`,
   `SableTestHelper`), registered with NeoForge's `@GameTestHolder(Sable.MOD_ID)` and vanilla `@GameTest(template = …)`. [V]

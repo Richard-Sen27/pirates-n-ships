@@ -21,6 +21,12 @@ The music and sound effects below come from Pixabay and are used under the Pixab
 | Empty Gun Shot | freesound_community | [link](https://pixabay.com/sound-effects/film-special-effects-empty-gun-shot-6209/) | `assets/pirates_n_ships/sounds/combat/pistol_empty.ogg` |
 | Cannon Shot | magiazzz | [link](https://pixabay.com/sound-effects/film-special-effects-cannon-shot-560886/) | `assets/pirates_n_ships/sounds/combat/cannon_shot.ogg` |
 | Artillery Gunfire | freesound_community | [link](https://pixabay.com/sound-effects/film-special-effects-artillery-gunfire-14607/) | `assets/pirates_n_ships/sounds/combat/cannon_volley.ogg` |
+| Sword swipes | freesound_community | [link](https://pixabay.com/sound-effects/sword-swipes-7174/) | `assets/pirates_n_ships/sounds/combat/melee/miss_1.ogg` |
+| Sword swipes | freesound_community | [link](https://pixabay.com/sound-effects/sword-swipes-7174/) | `assets/pirates_n_ships/sounds/combat/melee/miss_2.ogg` |
+| Sword swipes | freesound_community | [link](https://pixabay.com/sound-effects/sword-swipes-7174/) | `assets/pirates_n_ships/sounds/combat/melee/miss_3.ogg` |
+| Sword swipes | freesound_community | [link](https://pixabay.com/sound-effects/sword-swipes-7174/) | `assets/pirates_n_ships/sounds/combat/melee/miss_4.ogg` |
+| Sword swipes | freesound_community | [link](https://pixabay.com/sound-effects/sword-swipes-7174/) | `assets/pirates_n_ships/sounds/combat/melee/miss_5.ogg` |
+| Sword swipes | freesound_community | [link](https://pixabay.com/sound-effects/sword-swipes-7174/) | `assets/pirates_n_ships/sounds/combat/melee/miss_6.ogg` |
 | Sword Slice | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/sword-slice-393847/) | `assets/pirates_n_ships/sounds/combat/melee/hit1.ogg` |
 | Sword Slice 2 | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/sword-slice-2-393845/) | `assets/pirates_n_ships/sounds/combat/melee/hit2.ogg` |
 | Violent Sword Slice | DRAGON-STUDIO | [link](https://pixabay.com/sound-effects/violent-sword-slice-393839/) | `assets/pirates_n_ships/sounds/combat/melee/hit_heavy1.ogg` |

@@ -31,6 +31,7 @@ Minecraft mod. Full spec: `docs/design.md`. Read it at the start of every sessio
 - Logic tests (NeoForge runner): `./gradlew :neoforge:runGameTestServer`
 - Generate data: `./gradlew :neoforge:runData` (output goes to `common/src/generated/resources`)
 - Dev client (run by the human, not by you): `./gradlew :neoforge:runClient`
+- Releasing (the human tags, not you): local builds are `<mod_version>-dev`; pushing a tag `vX.Y.Z[-alpha.N|-beta.N]` builds, tests and publishes to Modrinth, CurseForge and GitHub. Scheme, release notes (`tools/release_notes.py`) and setup: `docs/releasing.md`.
 
 ## Conventions
 - Mod ID `pirates_n_ships`, root package `com.richardsenger.piratesnships`, one package per feature module as listed in design.md §3.2.

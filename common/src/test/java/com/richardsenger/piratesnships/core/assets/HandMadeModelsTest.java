@@ -219,7 +219,6 @@ class HandMadeModelsTest {
         int hidden = 0;
         for (Path file : jsonFiles(MAIN_MODELS)) {
             String name = file.getFileName().toString().replace(".json", "");
-            if (Z_FIGHT_EXCLUDED.contains(name)) continue;
             JsonObject json = JsonParser.parseString(Files.readString(file)).getAsJsonObject();
             ZFight.Result result = ZFight.check(json);
             for (String fight : result.visible()) visible.add(file.getParent().getFileName() + "/" + name + ": " + fight);
@@ -231,9 +230,6 @@ class HandMadeModelsTest {
         assertTrue(visible.isEmpty(), visible.size() + " visible z-fights (python3 tools/lint_models.py --fix):\n"
                 + String.join("\n", visible));
     }
-
-    /** V1 follow-up after P6: the gun models are being reworked in P6 and get their fix once it is merged. */
-    private static final Set<String> Z_FIGHT_EXCLUDED = Set.of("pistol", "musket", "pistol_loaded", "musket_loaded");
 
     /** The z-fighting rule of {@code tools/lint_models.py}, on raw model JSON. */
     static final class ZFight {

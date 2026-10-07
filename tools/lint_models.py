@@ -28,8 +28,12 @@ order) until no visible fight is left, one face pair at a time:
 Faces are never deleted by --fix (a covered face is reported as hidden; deleting it is a manual decision).
 Only `from`/`to` change (UVs, rotations and display entries stay); values are rounded to 5 decimals.
 
+--fix --mirror BASE VARIANT (the loaded guns, P6/V1b): fixes BASE first, gives every VARIANT element that is
+identical to the BASE element of the same name the same moves, then fixes the rest of VARIANT with those elements
+frozen, so the two models stay identical outside the parts the variant changes.
+
 Usage: python3 tools/lint_models.py [--tolerance 0.03] [--json] [--summary] [--warnings] [--exclude name ...]
-                                    [--fix] [files...]
+                                    [--fix [--mirror BASE VARIANT ...]] [files...]
 Without files it checks every model under common/src/main/resources/assets/pirates_n_ships/models/{block,item}.
 Exit code 1 when a visible fight is left.
 """
@@ -353,6 +357,8 @@ def move_face(model_elem, project_elem, face_dir, delta, whole=False):
     """Moves a face `delta` px along its outward normal (in the element's own frame); `whole` moves the element."""
     k, end = FACE_COORD[face_dir]
     sign = 1 if end == 'to' else -1
+    old = (list(model_elem['from']), list(model_elem['to']))
+    pold = project_elem and (list(project_elem['from']), list(project_elem['to']))
     for elem in filter(None, (model_elem, project_elem)):
         if whole:
             elem['from'][k] = rnd(elem['from'][k] + sign * delta)
@@ -361,6 +367,17 @@ def move_face(model_elem, project_elem, face_dir, delta, whole=False):
             elem['to'][k] = rnd(elem['to'][k] + delta)
         else:
             elem['from'][k] = rnd(elem['from'][k] - delta)
+    if project_elem:
+        sync_project(model_elem, project_elem, old, pold)
+
+
+def sync_project(model_elem, project_elem, old, pold):
+    """A project coordinate that rounded to the model's old value takes the model's new one, so a re-export of
+    the project writes exactly the fixed model JSON."""
+    for end, key in enumerate(('from', 'to')):
+        for k in range(3):
+            if old[end][k] != model_elem[key][k] and rnd(pold[end][k]) == old[end][k]:
+                project_elem[key][k] = model_elem[key][k]
 
 
 def thickness(elem, face_dir):
@@ -368,8 +385,10 @@ def thickness(elem, face_dir):
     return elem['to'][k] - elem['from'][k]
 
 
-def fix_model(model, project_elems, tolerance, log):
-    """Applies the --fix rules until no visible fight is left; returns the list of actions."""
+def fix_model(model, project_elems, tolerance, log, frozen=frozenset()):
+    """Applies the --fix rules until no visible fight is left; returns the list of actions.
+
+    Elements whose index is in `frozen` never move (--mirror: the variant's elements shared with its base)."""
     moved = set()           # (element index, face)
     actions = []
     for _ in range(200):
@@ -386,6 +405,11 @@ def fix_model(model, project_elems, tolerance, log):
             contained = [f for f in (a, b) if area >= f.area - AREA_EPS]
             action = None
             inlay = None
+            movable = [f for f in (a, b) if f.idx not in frozen]
+            if not movable:
+                raise RuntimeError('fight between two frozen elements: %s[%d].%s / %s[%d].%s'
+                                   % (a.elem, a.idx, a.dir, b.elem, b.idx, b.dir))
+            contained = [f for f in contained if f.idx not in frozen]
             if contained:
                 x = min(contained, key=lambda f: f.area)
                 y = b if x is a else a
@@ -406,7 +430,7 @@ def fix_model(model, project_elems, tolerance, log):
                     # a part that runs on through the other (a post through its cap): hide its end inside
                     x = min(contained, key=lambda f: f.area)
                 else:
-                    x = min((a, b), key=priority)
+                    x = min(movable, key=priority)
                 y = b if x is a else a
                 gap = dot(x.normal, x.corners[0]) - y.plane
                 elem = model['elements'][x.idx]
@@ -457,6 +481,8 @@ def dump_like(original_text, data):
         out = json.dumps(data, indent='\t', ensure_ascii=False)
     elif original_text.startswith('{\n  '):
         out = json.dumps(data, indent=2, ensure_ascii=False)
+    elif original_text.startswith('{"') and '": ' not in original_text[:40]:
+        out = json.dumps(data, ensure_ascii=False, separators=(',', ':'))   # a compact Blockbench save
     else:
         out = json.dumps(data, ensure_ascii=False)
     return out + ('\n' if original_text.endswith('\n') else '')
@@ -481,6 +507,23 @@ def describe(name, x):
         ' (rotated)' if x['rotated'] else ''))
 
 
+def shared_elements(base_path, variant_path):
+    """{variant index: base index} of the variant's elements that are identical to the base element of that name."""
+    with open(base_path) as fh:
+        base = json.load(fh)['elements']
+    with open(variant_path) as fh:
+        variant = json.load(fh)['elements']
+    by_name = {}
+    for i, e in enumerate(base):
+        by_name.setdefault(e.get('name'), []).append(i)
+    out = {}
+    for i, e in enumerate(variant):
+        match = by_name.get(e.get('name'), [])
+        if len(match) == 1 and base[match[0]] == e:
+            out[i] = match[0]
+    return out
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description='Z-fighting lint for the hand-made models.')
     ap.add_argument('files', nargs='*')
@@ -490,8 +533,19 @@ def main(argv=None):
     ap.add_argument('--warnings', action='store_true', help='also list same-look fights and hidden faces')
     ap.add_argument('--exclude', nargs='*', default=[], help='model names (item/pistol or pistol) to skip')
     ap.add_argument('--fix', action='store_true', help='fix visible fights in the model JSON and its project')
+    ap.add_argument('--mirror', nargs=2, action='append', default=[], metavar=('BASE', 'VARIANT'),
+                    help='with --fix: fix BASE, give the VARIANT\'s elements that are identical to the base the same '
+                         'moves, then fix the rest of the variant without moving them (repeatable)')
     args = ap.parse_args(argv)
-    files = args.files or default_files()
+    if args.mirror and not args.fix:
+        ap.error('--mirror needs --fix')
+    files = list(args.files or ([] if args.mirror else default_files()))
+    mirrored = {}           # variant path -> (base path, {variant index: base index} before the base is fixed)
+    for base, variant in args.mirror:
+        mirrored[os.path.abspath(variant)] = (os.path.abspath(base), shared_elements(base, variant))
+        files = [f for f in files if os.path.abspath(f) not in (os.path.abspath(base), os.path.abspath(variant))]
+        files += [base, variant]
+    base_moves = {}         # base path -> [(from, to) before, (from, to) after] per element
     report = {}
     for f in files:
         name = model_name(f)
@@ -515,8 +569,28 @@ def main(argv=None):
             else:
                 print('%s: no project %s; fixing the model only' % (name, ppath), file=sys.stderr)
             print('%s:' % name, file=sys.stderr)
-            actions = fix_model(model, pelems, args.tolerance, lambda s: print(s, file=sys.stderr))
-            if actions:
+            frozen = frozenset()
+            mirror = mirrored.get(os.path.abspath(f))
+            mirror_moved = False
+            if mirror:
+                before, after = base_moves[mirror[0]]
+                frozen = frozenset(mirror[1])
+                for vi, bi in mirror[1].items():
+                    if before[bi] == after[bi]:
+                        continue
+                    mirror_moved = True
+                    print('  mirror %s[%d] from the base' % (model['elements'][vi].get('name', '?'), vi),
+                          file=sys.stderr)
+                    elem = model['elements'][vi]
+                    old = (list(elem['from']), list(elem['to']))
+                    pold = pelems and (list(pelems[vi]['from']), list(pelems[vi]['to']))
+                    elem['from'], elem['to'] = list(after[bi][0]), list(after[bi][1])
+                    if pelems:
+                        sync_project(elem, pelems[vi], old, pold)
+            snapshot = [(list(e['from']), list(e['to'])) for e in model['elements']]
+            actions = fix_model(model, pelems, args.tolerance, lambda s: print(s, file=sys.stderr), frozen)
+            base_moves[os.path.abspath(f)] = (snapshot, [(list(e['from']), list(e['to'])) for e in model['elements']])
+            if actions or mirror_moved:
                 with open(f, 'w') as fh:
                     fh.write(dump_like(text, model))
                 if pelems is not None:

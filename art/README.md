@@ -25,8 +25,9 @@ Z-fighting lint (V1, after the playtest note "blocks and items shiver where two 
   there (texture, palette patch, UV mapping, tint, shading). Faces are compared in world space after the element
   rotation, so rotated parts (octagon bars, ring segments) are checked as well; nothing is left unchecked.
   Same-look fights and **hidden** faces (covered by an opposite face of a part sitting on it) are warnings only.
-  `HandMadeModelsTest.noVisibleZFighting` runs the same rule in Java (pistol and musket are excluded until the
-  follow-up after P6).
+  `HandMadeModelsTest.noVisibleZFighting` runs the same rule in Java on every model.
+- Loaded guns (V1b): `--fix --mirror <gun>.json <gun>_loaded.json` fixes the base, gives the variant's identical
+  elements the same moves and fixes only the lock parts of the variant, so P6's equality test keeps passing.
 - **Keep coplanar parts at least 0.05 px apart.** Insets of 0.005 to 0.02 px (the old "eps" of the octagon bars,
   the 0.02 px bore discs and ledger lines) still flicker at 10 to 30 blocks. `--fix` applies the V1 rules to the
   model JSON and its project together (elements matched in outliner order, only `from`/`to` change, UVs and display

@@ -639,3 +639,11 @@ Spikes 1–4 are throwaway-quality prototypes that prove feasibility. They may l
 - Stability: hollow block hulls barely right themselves (spike 3). Measured: a 5×5 plank boat, 4 high, lies about 20° bow up at rest and runs 35 to 46° bow down under a small sail, and a stone bottom layer brings that to about 16°. Do we keep scaling down the heel torque, add ballast or keel blocks with real mass low in the hull, add our own righting moment from the hull analysis, or apply the sail's drive lower? Decide after the milestone 3 playtest. This is the biggest open risk for how ships feel.
 - Sail force scale: the spike 3 agent thinks 1.0 is too strong for Sable's masses and expects something like 0.3 to 0.5. Decide in the milestone 3 playtest.
 - ~~Is the continuous rolling of a floating ship intended?~~ **Resolved (playtest):** no. It is undamped roll: nothing resists the rolling motion. A roll and pitch damping torque proportional to the angular velocity, with config values, is added in the sailing runtime (`HullDampingModel`, defaults 1.5 / 1.5: a kicked 7×17 hull settles in about 3 s instead of rocking for 8). To be confirmed in game: the endless rolling could not be reproduced headlessly.
+
+---
+
+## 22. Charts (fourth session)
+- Every player keeps a **chart** on their player data (not on an item): the coasts around them are sampled as they travel (cell classes: deep, shallow, beach, land, snow/ice, with a coast flag), drawn in a pirate style (ink coastlines, hatched shallows, parchment sea with doodles), never forgotten, capped per player.
+- A **chart item** is needed to open it (server option: the M key without an item); other players are hidden unless the server shows them; **markers** with icons and names are the player's own.
+- **Map tile (MAP2):** a block onto which a selected chart region is drawn for everyone to see, with or without the markers; once drawn, only a full redraw is possible.
+- **Implemented (MAP1):** `chart` module with the data, sampling, payloads, screen, item, key and config; MAP2 is open.

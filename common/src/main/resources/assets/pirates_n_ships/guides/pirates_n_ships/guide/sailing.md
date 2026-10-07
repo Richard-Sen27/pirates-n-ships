@@ -6,6 +6,7 @@ navigation:
   icon: pirates_n_ships:yard
 item_ids:
   - pirates_n_ships:capstan
+  - pirates_n_ships:chart
   - pirates_n_ships:sail_winch
 ---
 
@@ -92,3 +93,11 @@ of foam around a dark centre that pulls everything within 12 blocks inward and a
 boats and swimmers under, and a ship caught at its centre is slowly turned. Big ships barely notice either hazard.
 Operators: `/pirates hazard spawn <waterspout|whirlpool> [x y z]`, `/pirates hazard clear [radius]`; everything is
 in the server config under `hazards`, the particles under the client's `hazard_visuals`.
+
+## Chart
+Every captain keeps their own chart. As you sail, the coasts within about 96 blocks are drawn in automatically:
+ink coastlines, hatched shallows, sandy beaches, and the open sea, where the odd sea serpent lurks. Craft a
+Chart (paper, leather, a feather) and use it to open your map. Drag to pan, scroll to zoom, and right-click to
+place a marker (X, anchor, skull, port or danger) with a name; click a marker to rename or delete it. Your ship
+shows where you are and which way you are heading. If the server allows it, the M key opens the chart without
+one in hand, and other players can appear as ships. Only the overworld's seas are charted.

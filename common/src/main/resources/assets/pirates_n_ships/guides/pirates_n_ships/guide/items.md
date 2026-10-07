@@ -10,7 +10,6 @@ item_ids:
   - pirates_n_ships:brig_key
   - pirates_n_ships:cannonball
   - pirates_n_ships:captains_whistle
-  - pirates_n_ships:chart
   - pirates_n_ships:cloth
   - pirates_n_ships:cutlass
   - pirates_n_ships:hardtack
@@ -68,6 +67,7 @@ item_ids:
   <ItemIcon id="pirates_n_ships:merchant_flag" />
   <ItemIcon id="pirates_n_ships:navy_flag" />
   <ItemIcon id="pirates_n_ships:jolly_roger_flag" />
+  <ItemIcon id="pirates_n_ships:chart" />
   <ItemIcon id="pirates_n_ships:bounty_proof" />
   <ItemIcon id="pirates_n_ships:captains_whistle" />
 </ItemGrid>
@@ -97,6 +97,7 @@ item_ids:
 | <ItemLink id="pirates_n_ships:merchant_flag" /> | 1 stick, 2 white wool, 1 red dye | Flag for the flagpole. |
 | <ItemLink id="pirates_n_ships:navy_flag" /> | 1 stick, 2 blue wool, 1 white dye | Flag for the flagpole. |
 | <ItemLink id="pirates_n_ships:jolly_roger_flag" /> | 1 stick, 2 black wool, 1 bone | Flag for the flagpole. |
+| <ItemLink id="pirates_n_ships:chart" /> | paper, leather, feather | Opens your own chart (coastlines, markers). |
 | <ItemLink id="pirates_n_ships:bounty_proof" /> | none | Given for killing a target with a bounty. Hand it in for the reward. |
 | <ItemLink id="pirates_n_ships:captains_whistle" /> | none | Assigns crew to stations and gives orders from a radial menu. See [Crew](crew.md). |
 
@@ -120,6 +121,7 @@ item_ids:
   <RecipeFor id="pirates_n_ships:merchant_flag" />
   <RecipeFor id="pirates_n_ships:navy_flag" />
   <RecipeFor id="pirates_n_ships:jolly_roger_flag" />
+  <RecipeFor id="pirates_n_ships:chart" />
 </Row>
 
 Everything is in the "Pirates 'n' Ships" creative tab. Items without a recipe are meant to come from loot, trade or

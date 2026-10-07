@@ -220,6 +220,14 @@ boats and swimmers under, and a ship caught at its centre is slowly turned. Big 
 Operators: `/pirates hazard spawn <waterspout|whirlpool> [x y z]`, `/pirates hazard clear [radius]`; everything is
 in the server config under `hazards`, the particles under the client's `hazard_visuals`.
 
+### Chart
+Every captain keeps their own chart. As you sail, the coasts within about 96 blocks are drawn in automatically:
+ink coastlines, hatched shallows, sandy beaches, and the open sea, where the odd sea serpent lurks. Craft a
+Chart (paper, leather, a feather) and use it to open your map. Drag to pan, scroll to zoom, and right-click to
+place a marker (X, anchor, skull, port or danger) with a name; click a marker to rename or delete it. Your ship
+shows where you are and which way you are heading. If the server allows it, the M key opens the chart without
+one in hand, and other players can appear as ships. Only the overworld's seas are charted.
+
 ## 4. Crew
 
 A **crew member** is a simple NPC. There is no hiring yet: get one with `/pirates crew spawn`.
@@ -658,6 +666,7 @@ over leather, bone, leather (pirate hat), leather, white wool, leather (navy tri
 | Merchant Flag | 1 stick, 2 white wool, 1 red dye | Flag for the flagpole. |
 | Navy Flag | 1 stick, 2 blue wool, 1 white dye | Flag for the flagpole. |
 | Jolly Roger | 1 stick, 2 black wool, 1 bone | Flag for the flagpole. |
+| Chart | paper, leather, feather | Opens your own chart (coastlines, markers). |
 | Bounty Proof | none | Given for killing a target with a bounty. Hand it in for the reward. |
 | Captain's Whistle | none | Assigns crew to stations and gives orders from a radial menu. See [Crew](#4-crew). |
 
@@ -724,6 +733,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `mobs` | Mob types on/off and peaceful, hostility toggles, detection and fight ranges, skill tiers, musket timings and ammo, shove, drops. |
 | `hazards` / `hazard_visuals` (client) | Waterspouts and whirlpools on/off, spawn chances and interval, distance band, lifetimes, radii, pull, lift, spin, drag-down, drift, sail tearing, ship force scale and mass cap; particle density and sounds. |
 | `mobs.kraken` / `hazards.kraken` | Kraken on/off and chance per day; detection, grips, tentacle health and regrow, weak spots, strike and swipe intervals, damage, retreat. |
+| `chart` / `chart_visuals` (client) | Charts on/off, cell size, sampling radius and interval, shallow depth, the cell cap, opening without the item, other players visible, marker cap; doodles. |
 | `mobs.shark` | Shark on/off and peaceful, spawn weight and group (server restart), detection, circle and give-up times, bite cooldown, damage and knockback, frenzy threshold. |
 | `melee_hud` (client) | Stamina bar on/off, position (tight above the hotbar or left of it), scale, offsets, opacity, fade when full and its timing. |
 | `melee_animations` (client) | Sword animations on/off, first-person mode, layer priority. |

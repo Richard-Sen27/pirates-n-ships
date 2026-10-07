@@ -118,7 +118,8 @@ class ScriptedDuelTest {
         runTo(47);
         assertEquals(1, engine.heldHits(), "hit on a defender who could still parry is held");
         runTo(55);
-        assertEquals(new Event(46 + P.latencyAllowanceTicks(), 2, 1, Outcome.GUARDED, 3.5f, false), log.get(2));
+        // P9: a held guard absorbs the whole hit (was 3.5, the rapier's 50% reduction of the 7-damage slash)
+        assertEquals(new Event(46 + P.latencyAllowanceTicks(), 2, 1, Outcome.GUARDED, 0f, false), log.get(2));
         assertEquals(Phase.GUARDING, a.state.phase());
 
         // t60: B slashes, the hit lands at 65; A's parry input arrives one tick late (66): inside the allowance
@@ -155,7 +156,8 @@ class ScriptedDuelTest {
         assertEquals(new Event(138, 1, 2, Outcome.HIT, 9f, true), log.get(6), "thrust into recovery staggers");
         assertEquals(Phase.STAGGERED, b.state.phase());
         assertEquals(7, log.size());
-        assertEquals(riposte + 3.5f + 7f + 7f, a.damageTaken, 1e-3);
+        // P9: the guarded hit adds nothing (was 3.5)
+        assertEquals(riposte + 7f + 7f, a.damageTaken, 1e-3);
         assertEquals(9f, b.damageTaken, 1e-3);
     }
 

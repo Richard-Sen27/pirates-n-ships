@@ -2,8 +2,8 @@
 
 The rules (the sea state from the weather and its easing, the wave field, the torque rule with its size scaling and
 cap, the spill height, the sync payload) are covered by JUnit and GameTests: at storm the 7×17 test hull rolls
-ROLL_STORM, and settles within 10 s when the sea goes calm; a calm sea rolls it ROLL_CALM; a 32×12 hull rolls
-ROLL_BIG in a storm; a side hatch half a block above the waterline takes water in a storm and none in a calm sea; with
+4.3° to each side, and settles within 10 s when the sea goes calm; a calm sea rolls it 0.36°; a 32×12 hull rolls
+0.7° in a storm; a side hatch half a block above the waterline takes water in a storm and none in a calm sea; with
 `waves.enabled = false` nothing acts. This checklist covers what only the game shows: how the rolling feels, the spray,
 the camera sway and the state following real weather.
 
@@ -30,12 +30,12 @@ and `latest.log` if anything goes wrong.
 2. **Storm on the sloop.** Stand on the deck amidships and run `/pirates waves set storm`. Watch for 30 seconds, then
    turn the sloop (or wait) so the waves come from the side, then from ahead.
    - **Expected:** the sloop starts rolling and pitching at once, smoothly, with a period of several seconds (not a
-     jitter). Beam on, it rolls a few degrees to each side (the test hull rolls about ROLL_STORM; the sloop is
+     jitter). Beam on, it rolls a few degrees to each side (the test hull rolls about 4.3° to each side; the sloop is
      bigger, so somewhat less); head on, it mostly pitches. It never capsizes and never flips from the waves alone.
      In the force display the "Waves" arrows swing back and forth.
    - Please tell us how it feels next to the heel of the sails (`sailing_runtime.sail_heel_factor`, default 0.25): set
      sail on a beam reach in the storm. Is the wave roll too weak, about right, or too strong? `waves.ship_torque`
-     (default 6) scales it; `waves.max_torque_per_mass` (default 2) caps it for small boats.
+     (default 5.5) scales it; `waves.max_torque_per_mass` (default 2) caps it for small boats.
 3. **Calm again.** Run `/pirates waves set calm`.
    - **Expected:** within about 10 s the sloop lies still again (only the slow, tiny motion of the calm sea). Then run
      `/pirates waves clear`: "The sea follows the weather again".

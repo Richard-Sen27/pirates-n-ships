@@ -161,7 +161,9 @@ public final class SurvivalGameTests {
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200, batch = COLD)
     public static void boatProtects(GameTestHelper h) {
         coldPool(h);
-        Vec3 at = h.absoluteVec(POOL);
+        // on the surface (the water block is 8/9 high): a boat placed on the pool floor is under water, and a boat under
+        // water throws its passengers off
+        Vec3 at = h.absoluteVec(POOL.add(0, 0.45, 0));
         Boat boat = new Boat(h.getLevel(), at.x, at.y, at.z);
         h.getLevel().addFreshEntity(boat);
         SurvivalTestSupport.discardAtEnd(h, boat);
@@ -264,7 +266,10 @@ public final class SurvivalGameTests {
             SurvivalTestSupport.discardAtEnd(h, p);
             player[0] = p;
         });
-        h.runAfterDelay(61, () -> h.onEachTick(() -> h.assertValueEqual(player[0].getTicksFrozen(), 0, "ticks frozen")));
+        // registered now: the framework's task map must not change while it runs a task
+        h.onEachTick(() -> {
+            if (player[0] != null) h.assertValueEqual(player[0].getTicksFrozen(), 0, "ticks frozen");
+        });
         h.runAfterDelay(80, () -> h.assertTrue(ColdWater.isColdWater(h.getLevel(), player[0].blockPosition()),
                 "the ship is not over cold water"));
         h.runAfterDelay(60 + EXEMPT_TICKS, () -> {

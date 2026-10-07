@@ -60,8 +60,8 @@ class HandMadeModelsTest {
             "pantry", "sail_winch", "sea_chest", "swivel_gun", "swivel_gun_barrel", "swivel_gun_barrel_loaded", "swivel_gun_yoke",
             "water_barrel", "water_barrel_fill0", "water_barrel_fill1", "water_barrel_fill2",
             "water_barrel_fill3", "yard");
-    static final List<String> ITEM_MODELS = List.of("bounty_proof", "brig_door", "brig_key", "cannonball", "captains_whistle", "cloth", "cutlass", "doubloon",
-            "grappling_hook", "hardtack", "lead_shot", "lime", "musket", "pistol", "rapier", "rum", "saber", "salt_pork",
+    static final List<String> ITEM_MODELS = List.of("bandana", "bounty_proof", "brig_door", "brig_key", "cannonball", "captains_whistle", "cloth", "cutlass", "doubloon",
+            "grappling_hook", "hardtack", "lead_shot", "lime", "musket", "navy_hat", "officer_hat", "pirate_hat", "pistol", "rapier", "rum", "saber", "salt_pork",
             "salted_fish", "shackles", "spices", "tobacco");
 
     /** The display slots a hand-made item model copies from vanilla's {@code item/handheld} and {@code item/generated}. */

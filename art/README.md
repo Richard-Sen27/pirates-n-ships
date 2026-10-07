@@ -398,6 +398,27 @@ Items (brig door and brig key, F8g):
   `tools/gen_law_textures.py`) are gone; the law script had no other sprite and was deleted, and
   `gen_placeholder_textures.py` no longer writes the door sprite (it has no item sprites left).
 
+Items (wearable hats, H2):
+- `pirate_hat`, `bandana`, `navy_hat`, `officer_hat` are written by `tools/gen_hat_items.py` (no Blockbench project):
+  part lists copied from the hat cubes of `seafarer_models.js` (soldier's tricorn, officer's bicorne, pirate's bandana
+  with knot, tails and bone dots; the pirate hat is the tricorn in black with a skull and crossbones on the front),
+  colours from the item palettes. Rerun the script after changing a mob's hat; `HatModelTest` fails when the item and
+  the mob's geo drift more than 1 px apart.
+- **Worn through `CustomHeadLayer`:** a non-armour head item is drawn at the head's centre (4 px up, 180° about y,
+  scale 0.625 / −0.625 / −0.625), then the `head` display. An item point v (blocks, centred, after the display) lands
+  at geo `(−10 v.x, 28 + 10 v.y, 10 v.z)` (head bottom y 24). So the script builds each hat 1:1 in head pixels,
+  shifted to centre its box on (8, 8, 8) (item = `(8 + x, y − Y0, 8 + z − Z0)`, x = −geo x), and the `head` entry
+  is scale 1.6 (10 × 1.6 / 16 = 1), translation `(0, 1.6 (Y0 − 20), 1.6 Z0)`, no rotation.
+- **Angles:** GeckoLib negates a geo cube's x and y rotation, so in item space the soldier's right wall (`y −28.4` in
+  the geo) is `y +22.5` and the officer's front flap (`x −18`) is `x +22.5`. The tricorn's 28.4° walls become 22.5°
+  walls meeting a 2.5 px flat front piece (where the skull goes); edges (white, gold) are separate 0.8 px elements on
+  top of each wall or flap piece, so they show on every face.
+- Other slots: `gui` `[20, 200, 0]` (front three-quarter, top tilted towards the viewer), scale and translation fitted
+  to a 15 px box; `fixed` `[−15, 0, 0]` (front out of the frame); hands copy `block/block`; `ground` 0.5.
+- Check render (not the game): `renders/hats.png`, `python3 tools/gen_hat_items.py --render art/renders/hats.png`.
+  Per hat a row of front, left side and three-quarter view, each with the item through the head chain (left) beside
+  the mob's own hat cubes (right) on an 8 px head.
+
 Entity models use the Modded Entity format (Mojang mappings 1.17+); paste the body of the exported
 `createBodyLayer()` into the renderer's layer method (example: `AnchorRenderer.createLayer`).
 

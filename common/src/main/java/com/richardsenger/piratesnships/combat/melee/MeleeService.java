@@ -42,7 +42,7 @@ import java.util.function.BiFunction;
  * <pre>{@code
  * WeaponDefinition w = MeleeService.weaponInHand(player).orElse(null); // or any definition, e.g. for an NPC
  * if (MeleeService.skillBasedCombat() && w != null) {
- *     InputResult r = MeleeService.startSlash(player, w);    // or startThrust / guardDown / guardUp / parry
+ *     InputResult r = MeleeService.startSlash(player, w);    // or startThrust / guardDown / guardUp / parry / feint
  *     if (!r.accepted()) feedback(r.refusal());              // BUSY, NO_STAMINA, LOCKED_OUT, STAGGERED, DISABLED
  * }
  * CombatState s = MeleeService.state(entity);                // for HUD payloads and animation events
@@ -113,6 +113,14 @@ public final class MeleeService {
 
     public static InputResult parry(LivingEntity entity, WeaponDefinition weapon) {
         return input(entity, weapon, (s, p) -> CombatRules.parry(s, weapon, p));
+    }
+
+    /**
+     * Abort the current attack during its wind-up ({@link CombatRules#feint}). NPC duelists use it now; a player key
+     * binding only needs to call this (and a {@code MeleeActionPayload} action for it).
+     */
+    public static InputResult feint(LivingEntity entity) {
+        return input(entity, null, (s, p) -> CombatRules.feint(s, p));
     }
 
     private static InputResult input(LivingEntity e, @Nullable WeaponDefinition weapon,

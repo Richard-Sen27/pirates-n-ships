@@ -48,6 +48,10 @@ public final class MeleeConfig {
             "Poise multiplier at zero stamina (lower = staggered more easily, 0 = every hit staggers)");
     public static final ConfigValue<Double> NPC_SKILL = S.doubleRange("npc_skill_multiplier", D.npcSkillMultiplier(), 0.0, 10.0,
             "Scales NPC duelists' parry chance, reaction speed and feint frequency");
+    public static final ConfigValue<Integer> FEINT_RECOVERY = S.intRange("feint_recovery_ticks", D.feintRecoveryTicks(), 0, 200,
+            "Recovery after a feint (an attack aborted during its wind-up): no hit frames, no guard or parry, a new attack may start");
+    public static final ConfigValue<Boolean> NPC_FEINTS = S.bool("npc_feints", true,
+            "NPC duelists feint (start an attack and abort it when the opponent parries or guards), as often as their skill tier says");
     public static final ConfigValue<Integer> STAMINA_SYNC_INTERVAL = S.intRange("stamina_sync_interval_ticks", 5, 1, 100,
             "Shortest interval between two stamina updates sent to a player for the HUD (phase changes are sent at once)");
 
@@ -63,6 +67,6 @@ public final class MeleeConfig {
         return new MeleeParams(SKILL_BASED.get(), DIRECTIONAL_MODE.get(), PARRY_WINDOW.get(), LATENCY_ALLOWANCE.get(),
                 PARRY_LOCKOUT.get(), STAMINA_MAX.get().floatValue(), STAMINA_REGEN.get().floatValue(), STAMINA_REGEN_DELAY.get(),
                 STAMINA_COST_MULTIPLIER.get(), RIPOSTE_WINDOW.get(), RIPOSTE_BONUS.get(), STAGGER.get(), PARRY_STAGGER.get(),
-                GUARD_BREAK_STAGGER.get(), EXHAUSTED_POISE.get(), NPC_SKILL.get());
+                GUARD_BREAK_STAGGER.get(), EXHAUSTED_POISE.get(), NPC_SKILL.get(), FEINT_RECOVERY.get());
     }
 }

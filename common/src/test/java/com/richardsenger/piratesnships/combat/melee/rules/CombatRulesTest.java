@@ -260,4 +260,78 @@ class CombatRulesTest {
         assertFalse(withStamina(FRESH, 50).dormant(P.staminaMax()));
         assertFalse(CombatRules.parrySucceeded(FRESH, P).dormant(P.staminaMax()));
     }
+
+    // --- feints ------------------------------------------------------------------------------------------------
+
+    @ParameterizedTest
+    @EnumSource(AttackKind.class)
+    void feintIsAllowedOnlyDuringTheWindup(AttackKind kind) {
+        assertEquals(Refusal.BUSY, CombatRules.feint(FRESH, P).refusal(), "idle");
+        assertEquals(Refusal.BUSY, CombatRules.feint(ok(CombatRules.guardDown(FRESH, W, P)), P).refusal(), "guarding");
+        assertEquals(Refusal.BUSY, CombatRules.feint(ok(CombatRules.parry(FRESH, W, P)), P).refusal(), "parrying");
+        assertEquals(Refusal.STAGGERED, CombatRules.feint(CombatRules.stagger(FRESH, 10), P).refusal(), "staggered");
+        CombatState windup = ok(CombatRules.startAttack(FRESH, kind, W, P));
+        assertEquals(Refusal.DISABLED, CombatRules.feint(windup, P.withSkillBased(false)).refusal(), "disabled");
+        for (int i = 0; i < W.windupTicks(kind); i++) {
+            assertEquals(Phase.WINDUP, windup.phase());
+            assertTrue(CombatRules.feint(windup, P).accepted(), "wind-up tick " + i);
+            windup = CombatRules.tick(windup, W, P);
+        }
+        assertEquals(Phase.ACTIVE, windup.phase());
+        assertEquals(Refusal.BUSY, CombatRules.feint(windup, P).refusal(), "hit frames");
+        CombatState recovery = ticks(windup, W.activeTicks(kind));
+        assertEquals(Phase.RECOVERY, recovery.phase());
+        assertEquals(Refusal.BUSY, CombatRules.feint(recovery, P).refusal(), "recovery");
+    }
+
+    @Test
+    void feintRecoversForTheConfiguredTicksWithoutHitFrames() {
+        CombatState start = ok(CombatRules.startAttack(FRESH, AttackKind.THRUST, W, P));
+        CombatState s = ok(CombatRules.feint(CombatRules.tick(start, W, P), P));
+        assertEquals(Phase.RECOVERY, s.phase());
+        assertTrue(s.feint());
+        assertEquals(AttackKind.THRUST, s.attack());
+        assertEquals(P.feintRecoveryTicks(), s.duration());
+        assertEquals(6, MeleeParams.DEFAULTS.feintRecoveryTicks(), "default feint recovery");
+        assertEquals(start.stamina(), s.stamina(), 1e-4, "the aborted attack's stamina stays spent");
+        for (int i = 0; i < P.feintRecoveryTicks() - 1; i++) {
+            s = CombatRules.tick(s, W, P);
+            assertEquals(Phase.RECOVERY, s.phase(), "tick " + i);
+            assertTrue(s.feint());
+        }
+        s = CombatRules.tick(s, W, P);
+        assertEquals(Phase.IDLE, s.phase());
+        assertFalse(s.feint());
+
+        CombatState none = ok(CombatRules.feint(start, P.withFeintRecovery(0)));
+        assertEquals(Phase.IDLE, none.phase(), "no feint recovery: straight back to idle");
+        assertFalse(none.feint());
+    }
+
+    @Test
+    void feintRecoveryAllowsAnAttackButNoDefense() {
+        CombatState s = ok(CombatRules.feint(ok(CombatRules.startAttack(FRESH, AttackKind.SLASH, W, P)), P));
+        assertEquals(Refusal.BUSY, CombatRules.parry(s, W, P).refusal());
+        assertEquals(Refusal.BUSY, CombatRules.guardDown(s, W, P).refusal());
+        CombatState again = ok(CombatRules.startAttack(s, AttackKind.THRUST, W, P));
+        assertEquals(Phase.WINDUP, again.phase());
+        assertFalse(again.feint());
+        // an ordinary recovery still blocks attacks
+        CombatState recovery = ticks(ok(CombatRules.startAttack(FRESH, AttackKind.SLASH, W, P)),
+                W.windupTicks(AttackKind.SLASH) + W.activeTicks(AttackKind.SLASH));
+        assertEquals(Phase.RECOVERY, recovery.phase());
+        assertEquals(Refusal.BUSY, CombatRules.startAttack(recovery, AttackKind.SLASH, W, P).refusal());
+        // a stagger ends the feint recovery
+        assertFalse(CombatRules.stagger(s, 10).feint());
+    }
+
+    @Test
+    void feintedRiposteLosesTheRiposte() {
+        CombatState ready = CombatRules.parrySucceeded(ok(CombatRules.parry(FRESH, W, P)), P);
+        CombatState riposte = ok(CombatRules.startAttack(ready, AttackKind.SLASH, W, P));
+        assertTrue(riposte.riposteAttack());
+        CombatState feinted = ok(CombatRules.feint(riposte, P));
+        assertFalse(feinted.riposteAttack());
+        assertFalse(feinted.riposteReady());
+    }
 }

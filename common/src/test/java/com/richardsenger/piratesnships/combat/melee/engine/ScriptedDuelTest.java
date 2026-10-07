@@ -160,6 +160,31 @@ class ScriptedDuelTest {
     }
 
     @Test
+    void feintBaitsAParryThatWhiffsAndTheFollowUpLands() {
+        // t0: A starts a slash, t1: B parries early, t2: A feints. Nothing ever reaches B's parry window.
+        assertEquals(Refusal.NONE, a.input(s -> CombatRules.startAttack(s, AttackKind.SLASH, a.weapon, P)));
+        runTo(1);
+        assertEquals(Refusal.NONE, b.input(s -> CombatRules.parry(s, b.weapon, P)));
+        runTo(2);
+        assertEquals(Refusal.NONE, a.input(s -> CombatRules.feint(s, P)));
+        assertTrue(a.state.feint());
+        float stamina = b.state.stamina();
+        runTo(1 + P.parryWindowTicks() + 1);
+        assertTrue(log.isEmpty(), "a feint has no hit frames: " + log);
+        assertTrue(b.state.lockedOut(), "B's parry whiffed into the lockout");
+        assertEquals(stamina - b.weapon.parry().failedStaminaCost(), b.state.stamina(), 1e-3, "failed parry cost");
+        assertEquals(Phase.IDLE, a.state.phase(), "A's feint recovery is over");
+
+        // the real follow-up: B is locked out, so the slash lands
+        assertEquals(Refusal.NONE, a.input(s -> CombatRules.startAttack(s, AttackKind.SLASH, a.weapon, P)));
+        assertEquals(Refusal.LOCKED_OUT, b.input(s -> CombatRules.parry(s, b.weapon, P)));
+        runTo(now + a.weapon.windupTicks(AttackKind.SLASH) + a.weapon.activeTicks(AttackKind.SLASH));
+        assertEquals(1, log.size(), "one hit: " + log);
+        assertEquals(1, log.get(0).attacker());
+        assertEquals(Outcome.HIT, log.get(0).outcome());
+    }
+
+    @Test
     void parriedSlashStopsMidSweepAndThrustHitsFirstOnly() {
         F c = new F(3, DefaultWeapons.SABER, new Vec(1.8, 0, 1.2), new Vec(-1, 0, 0));
         List<F> three = List.of(a, b, c);

@@ -91,6 +91,8 @@ class MobRulesTest {
             }
         }
         assertEquals(MeleePose.IDLE, MeleePose.unpack(MeleePose.IDLE.pack()));
+        MeleePose feint = new MeleePose(Phase.RECOVERY, AttackKind.SLASH, false, 6, true);
+        assertEquals(feint, MeleePose.unpack(feint.pack()), "the feint bit survives packing");
     }
 
     @Test

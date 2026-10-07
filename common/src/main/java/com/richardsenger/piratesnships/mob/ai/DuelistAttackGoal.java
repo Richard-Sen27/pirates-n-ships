@@ -22,7 +22,9 @@ import java.util.EnumSet;
  * {@link DuelistBrain}'s decisions to {@link MeleeService} exactly like a player's keys (slash, thrust, guard, parry),
  * so its attacks have the same telegraphed wind-up and the same parry windows, a player's parry staggers it, and its
  * own parries open a riposte window that the brain uses at once. Skill: {@code mobs.pirate_skill} /
- * {@code mobs.officer_skill}, scaled by {@code melee.npc_skill_multiplier}.
+ * {@code mobs.officer_skill}, scaled by {@code melee.npc_skill_multiplier}. With the tier's feint frequency (and
+ * {@code melee.npc_feints} on) an attack is started as a feint: the brain aborts it when the opponent parries or
+ * guards, and the real follow-up comes without the usual pause.
  *
  * <p>Only while {@code melee.skill_based_combat} is on and the mob holds a skill-based sword; otherwise
  * {@link VanillaSwordGoal} fights with vanilla melee.
@@ -37,6 +39,11 @@ public class DuelistAttackGoal extends Goal {
     private long attackSeenAt = -1;
     private double parryRoll;
     private double thrustRoll;
+    private double feintRoll;
+    /** The current attack was started as a feint and is still in its wind-up. */
+    private boolean feintPlanned;
+    /** The last attack was a feint: the next one is real and follows without the pause. */
+    private boolean afterFeint;
     private boolean wasAttacking;
     private int repath;
 
@@ -71,6 +78,7 @@ public class DuelistAttackGoal extends Goal {
     public void start() {
         repath = 0;
         thrustRoll = mob.getRandom().nextDouble();
+        feintRoll = mob.getRandom().nextDouble();
     }
 
     @Override
@@ -78,6 +86,8 @@ public class DuelistAttackGoal extends Goal {
         if (MeleeService.isActive(mob) && MeleeService.state(mob).guardHeld()) MeleeService.guardUp(mob);
         mob.getNavigation().stop();
         attackSeenAt = -1;
+        feintPlanned = false;
+        afterFeint = false;
     }
 
     @Override
@@ -112,12 +122,13 @@ public class DuelistAttackGoal extends Goal {
             attackSeenAt = -1;
         }
 
-        // pause after each own attack
+        // pause after each own attack (none after a feint: the real attack follows at once)
         boolean attacking = self.phase().attacking();
         if (wasAttacking && !attacking) {
             int pause = MobConfig.DUELIST_ATTACK_PAUSE.get();
-            attackCooldown = pause + mob.getRandom().nextInt(pause + 1);
+            attackCooldown = afterFeint ? 0 : pause + mob.getRandom().nextInt(pause + 1);
         }
+        if (self.phase() != Phase.WINDUP) feintPlanned = false; // the wind-up ran out: the attack was real
         wasAttacking = attacking;
         if (attackCooldown > 0) attackCooldown--;
 
@@ -129,14 +140,20 @@ public class DuelistAttackGoal extends Goal {
 
         DuelistBrain.View view = new DuelistBrain.View(self, opp, inReach, threatened,
                 attackSeenAt < 0 ? -1 : (int) (now - attackSeenAt), MeleeConfig.PARRY_WINDOW.get(), attackCooldown,
-                MobConfig.DUELIST_GUARD_STAMINA.get().floatValue());
+                MobConfig.DUELIST_GUARD_STAMINA.get().floatValue(), feintPlanned);
         SkillTier tier = MobConfig.skill(mob.kind()).tier(MeleeConfig.NPC_SKILL.get());
         switch (DuelistBrain.decide(view, tier, parryRoll, thrustRoll)) {
             case SLASH -> {
-                if (MeleeService.startSlash(mob, w).accepted()) thrustRoll = mob.getRandom().nextDouble();
+                if (MeleeService.startSlash(mob, w).accepted()) attackStarted(tier, self.riposteReady());
             }
             case THRUST -> {
-                if (MeleeService.startThrust(mob, w).accepted()) thrustRoll = mob.getRandom().nextDouble();
+                if (MeleeService.startThrust(mob, w).accepted()) attackStarted(tier, self.riposteReady());
+            }
+            case FEINT -> {
+                if (MeleeService.feint(mob).accepted()) {
+                    feintPlanned = false;
+                    afterFeint = true;
+                }
             }
             case GUARD -> MeleeService.guardDown(mob, w);
             case RELEASE_GUARD -> MeleeService.guardUp(mob);
@@ -144,5 +161,13 @@ public class DuelistAttackGoal extends Goal {
             case NONE -> {
             }
         }
+    }
+
+    /** Bookkeeping when an own attack started: new rolls, and whether this one is a feint. */
+    private void attackStarted(SkillTier tier, boolean riposte) {
+        feintPlanned = MeleeConfig.NPC_FEINTS.get() && DuelistBrain.planFeint(tier, feintRoll, riposte, afterFeint);
+        afterFeint = false;
+        thrustRoll = mob.getRandom().nextDouble();
+        feintRoll = mob.getRandom().nextDouble();
     }
 }

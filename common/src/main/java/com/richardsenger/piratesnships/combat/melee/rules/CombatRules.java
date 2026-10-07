@@ -19,9 +19,12 @@ public final class CombatRules {
 
     // --- Inputs -------------------------------------------------------------------------------------------------
 
-    /** Start a slash or thrust. A started attack consumes an open riposte window and becomes a riposte. */
+    /**
+     * Start a slash or thrust. A started attack consumes an open riposte window and becomes a riposte. Allowed from a
+     * feint recovery (the follow-up after a feint), not from any other attack phase.
+     */
     public static InputResult startAttack(CombatState s, AttackKind kind, WeaponDefinition weapon, MeleeParams p) {
-        Refusal busy = actionGate(s, p);
+        Refusal busy = actionGate(s.feint() ? s.enter(Phase.IDLE, null, 0) : s, p);
         if (busy != Refusal.NONE) return InputResult.refused(s, busy);
         if (s.phase() == Phase.PARRYING) return InputResult.refused(s, Refusal.BUSY);
         float cost = cost(weapon.staminaCost(kind), p);
@@ -63,6 +66,23 @@ public final class CombatRules {
         if (s.lockedOut()) return InputResult.refused(s, Refusal.LOCKED_OUT);
         if (s.exhausted()) return InputResult.refused(s, Refusal.NO_STAMINA);
         return InputResult.accepted(s.enter(Phase.PARRYING, null, p.parryWindowTicks()));
+    }
+
+    /**
+     * Feint: abort the attack during its wind-up, before the hit frames (docs/design.md §8.5). The attack never hits,
+     * so there is nothing to parry: an opponent's parry opened against it runs out and fails (cost, lockout). The
+     * feinter goes into a short feint recovery of {@link MeleeParams#feintRecoveryTicks} (a {@link Phase#RECOVERY}
+     * with {@link CombatState#feint()} set, no hit frames): no guard or parry, a thrust into it staggers, a new attack
+     * may start at once. The stamina of the aborted attack stays spent; a riposte wind-up loses the riposte.
+     * Refused ({@link Refusal#BUSY}) outside a wind-up.
+     */
+    public static InputResult feint(CombatState s, MeleeParams p) {
+        if (!p.skillBased()) return InputResult.refused(s, Refusal.DISABLED);
+        if (s.phase() == Phase.STAGGERED) return InputResult.refused(s, Refusal.STAGGERED);
+        if (s.phase() != Phase.WINDUP) return InputResult.refused(s, Refusal.BUSY);
+        CombatState n = s.withRiposteAttack(false);
+        int rec = p.feintRecoveryTicks();
+        return InputResult.accepted(rec > 0 ? n.enter(Phase.RECOVERY, s.attack(), rec).withFeint(true) : n.enter(Phase.IDLE, null, 0));
     }
 
     /** DISABLED, STAGGERED and attacking checks shared by every action input. */

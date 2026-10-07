@@ -106,8 +106,6 @@ public final class GrappleRules {
     public static final int STALL_SUBSTEPS = 20;
     /** A distance decrease [blocks] smaller than this is no progress. */
     public static final double STALL_EPSILON = 0.01;
-    /** Separation speed [m/s] below which the ends still count as closing (never stalled). */
-    public static final double CLOSING_SPEED = -0.05;
     /** Margin [blocks] beyond the hold length within which a stall can start, and beyond which holding ends. */
     public static final double HOLD_HYSTERESIS = 1.0;
 
@@ -115,10 +113,14 @@ public final class GrappleRules {
      * The rope's holding state, updated once per physics substep (pure, one per hook). Hulls touch at a rope length
      * that depends on their shape, so the rope also holds, with no pull, once it has stopped making progress: when it
      * has pulled for at least {@link #STALL_SUBSTEPS} substeps, the distance has not dropped by more than
-     * {@link #STALL_EPSILON} for the last {@link #STALL_SUBSTEPS} of them, the ends are not closing (separation speed
-     * above {@link #CLOSING_SPEED}) and the distance is within {@link #HOLD_HYSTERESIS} of the hold length (a stall far
-     * out, e.g. a heavy ship slow to start, keeps pulling). Holding ends only when the distance grows beyond the hold
-     * length plus {@link #HOLD_HYSTERESIS}, so the ships do not oscillate between pulling and holding.
+     * {@link #STALL_EPSILON} for the last {@link #STALL_SUBSTEPS} of them, and the distance is within
+     * {@link #HOLD_HYSTERESIS} of the hold length (a stall far out, e.g. a heavy ship slow to start, keeps pulling).
+     * Holding ends only when the distance grows beyond the hold length plus {@link #HOLD_HYSTERESIS}, so the ships do
+     * not oscillate between pulling and holding.
+     *
+     * <p>Progress is judged from the distance alone, not from the bodies' velocities: with the hulls in contact the
+     * physics engine keeps reporting a closing velocity (about 0.12 to 0.17 m/s, measured in G11) produced by the rope
+     * force each substep, which the contact solver then cancels, so the distance does not change.
      */
     public static final class Holding {
         private boolean holding;
@@ -129,11 +131,10 @@ public final class GrappleRules {
         /**
          * One substep. Returns true while the rope holds (no pull).
          *
-         * @param distance        distance between the rope's ends [blocks]
-         * @param restLength      the hold length ({@link #holdLength}) [blocks]
-         * @param separationSpeed rate at which the distance grows [m/s]
+         * @param distance   distance between the rope's ends [blocks]
+         * @param restLength the hold length ({@link #holdLength}) [blocks]
          */
-        public boolean update(double distance, double restLength, double separationSpeed) {
+        public boolean update(double distance, double restLength) {
             if (holding) {
                 if (!(distance > restLength + HOLD_HYSTERESIS)) {
                     return true;
@@ -154,8 +155,7 @@ public final class GrappleRules {
             } else {
                 sinceProgress++;
             }
-            if (pulling >= STALL_SUBSTEPS && sinceProgress >= STALL_SUBSTEPS && separationSpeed > CLOSING_SPEED
-                    && distance <= restLength + HOLD_HYSTERESIS) {
+            if (pulling >= STALL_SUBSTEPS && sinceProgress >= STALL_SUBSTEPS && distance <= restLength + HOLD_HYSTERESIS) {
                 holding = true;
             }
             return holding;

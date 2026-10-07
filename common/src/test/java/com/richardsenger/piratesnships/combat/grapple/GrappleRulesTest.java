@@ -123,10 +123,10 @@ class GrappleRulesTest {
 
     private static final int N = GrappleRules.STALL_SUBSTEPS;
 
-    /** Feeds {@code count} substeps at a constant distance and speed; returns the last result. */
-    private static boolean feed(GrappleRules.Holding h, int count, double distance, double rest, double speed) {
+    /** Feeds {@code count} substeps at a constant distance; returns the last result. */
+    private static boolean feed(GrappleRules.Holding h, int count, double distance, double rest) {
         boolean r = false;
-        for (int i = 0; i < count; i++) r = h.update(distance, rest, speed);
+        for (int i = 0; i < count; i++) r = h.update(distance, rest);
         return r;
     }
 
@@ -136,32 +136,40 @@ class GrappleRulesTest {
         // closing from 8 to 3.05 blocks: never holding while the distance shrinks
         for (int i = 0; i < 100; i++) {
             double d = 8.0 - 0.05 * i;
-            assertFalse(h.update(d, 2.0, -1.0), "holding while closing at " + d);
+            assertFalse(h.update(d, 2.0), "holding while closing at " + d);
         }
         // the hulls touch at 2.3 (beyond the 2.0 hold length): the first substep there is progress, then N without
-        assertFalse(feed(h, N, 2.3, 2.0, 0.0), "holding too early");
-        assertTrue(h.update(2.3, 2.0, 0.0), "a stalled rope near the hold length does not hold");
+        assertFalse(feed(h, N, 2.3, 2.0), "holding too early");
+        assertTrue(h.update(2.3, 2.0), "a stalled rope near the hold length does not hold");
         assertTrue(h.holding());
+    }
+
+    @Test
+    void hullsCreepingAtContactStillHold() {
+        // measured in G11: at contact the distance creeps by a few thousandths per substep and jitters
+        GrappleRules.Holding h = new GrappleRules.Holding();
+        boolean held = false;
+        for (int i = 0; i < 3 * N && !held; i++) {
+            held = h.update(2.33 - 0.0002 * i + (i % 2 == 0 ? 0.004 : 0.0), 2.0);
+        }
+        assertTrue(held, "creeping hulls never held");
     }
 
     @Test
     void noStallBeforeTheRopeHasPulledForNSubsteps() {
         GrappleRules.Holding h = new GrappleRules.Holding();
         // just latched, ships at rest and not yet moving: N - 1 pulling substeps are not enough
-        assertFalse(feed(h, N - 1, 2.5, 2.0, 0.0));
+        assertFalse(feed(h, N - 1, 2.5, 2.0));
         assertFalse(h.holding());
     }
 
     @Test
-    void noStallWhileClosingOrFarOut() {
-        GrappleRules.Holding closing = new GrappleRules.Holding();
-        // no distance progress recorded, but the ends are still closing faster than the threshold
-        assertFalse(feed(closing, 3 * N, 2.4, 2.0, -0.2), "holding while closing at 0.2 m/s");
+    void noStallFarOutOrWhileSlack() {
         GrappleRules.Holding far = new GrappleRules.Holding();
         // a heavy ship slow to start far out keeps being pulled
-        assertFalse(feed(far, 5 * N, 12.0, 2.0, 0.0), "holding far beyond the hold length");
+        assertFalse(feed(far, 5 * N, 12.0, 2.0), "holding far beyond the hold length");
         GrappleRules.Holding slack = new GrappleRules.Holding();
-        assertFalse(feed(slack, 5 * N, 1.8, 2.0, 0.0), "a slack rope inside the dead band is not a stall");
+        assertFalse(feed(slack, 5 * N, 1.8, 2.0), "a slack rope inside the dead band is not a stall");
     }
 
     @Test
@@ -170,31 +178,31 @@ class GrappleRulesTest {
         double d = 2.9;
         for (int i = 0; i < 6 * N; i++) {
             if (i % (N / 2) == 0) d -= 0.02; // 0.02 blocks closer every N/2 substeps
-            assertFalse(h.update(d, 2.0, 0.0), "holding while still making progress at " + d);
+            assertFalse(h.update(d, 2.0), "holding while still making progress at " + d);
         }
     }
 
     @Test
     void holdingEndsOnlyBeyondTheHysteresisMargin() {
         GrappleRules.Holding h = new GrappleRules.Holding();
-        feed(h, 2 * N, 2.3, 2.0, 0.0);
+        feed(h, 2 * N, 2.3, 2.0);
         assertTrue(h.holding());
         // drifting apart within the margin keeps holding
-        assertTrue(h.update(2.9, 2.0, 0.3));
-        assertTrue(h.update(2.0 + GrappleRules.HOLD_HYSTERESIS, 2.0, 0.3));
+        assertTrue(h.update(2.9, 2.0));
+        assertTrue(h.update(2.0 + GrappleRules.HOLD_HYSTERESIS, 2.0));
         // beyond it the rope pulls again, and needs N substeps of pulling before it can hold again
-        assertFalse(h.update(3.2, 2.0, 0.3));
+        assertFalse(h.update(3.2, 2.0));
         assertFalse(h.holding());
-        assertFalse(feed(h, N - 2, 2.9, 2.0, 0.0));
+        assertFalse(feed(h, N - 2, 2.9, 2.0));
     }
 
     @Test
     void resetStartsOver() {
         GrappleRules.Holding h = new GrappleRules.Holding();
-        feed(h, 2 * N, 2.3, 2.0, 0.0);
+        feed(h, 2 * N, 2.3, 2.0);
         h.reset();
         assertFalse(h.holding());
-        assertFalse(feed(h, N - 1, 2.3, 2.0, 0.0));
+        assertFalse(feed(h, N - 1, 2.3, 2.0));
     }
 
     @Test

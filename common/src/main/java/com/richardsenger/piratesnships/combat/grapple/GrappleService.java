@@ -236,7 +236,7 @@ public final class GrappleService {
             }
             Vec3 u = new Vec3(dx / d, 0, dz / d);
             double extension = target.velocityAt(hookPlot).subtract(thrower.velocityAt(anchorPlot)).dot(u);
-            if (h.holding().update(d, hold, extension)) {
+            if (h.holding().update(d, hold)) {
                 return; // the hulls lie together: the rope holds without pulling
             }
             double t = GrappleRules.tension(d, hold, extension, GrappleConfig.HAUL_FORCE.get(), damping);
@@ -257,7 +257,7 @@ public final class GrappleService {
             }
             Vec3 u = new Vec3(dx / d, 0, dz / d);
             double extension = target.velocityAt(hookPlot).dot(u);
-            if (h.holding().update(d, hold, extension)) {
+            if (h.holding().update(d, hold)) {
                 return; // the ship lies at the shore: the rope holds without pulling
             }
             double t = GrappleRules.tension(d, hold, extension, GrappleConfig.SHORE_HAUL_FORCE.get(), damping);

@@ -18,13 +18,22 @@ import java.util.function.Supplier;
  * Model datagen context on top of vanilla's generators. Use the public helpers of {@link #blocks()} (e.g.
  * {@code createTrivialCube}), or build block states with {@code MultiVariantGenerator} / {@code ModelTemplates}
  * and write them to {@link #blockStates()} / {@link #models()}. Block items without an explicit item model get one
- * that points at the block model automatically.
+ * that points at the block model automatically, unless {@link #handMadeItem} marks it.
  */
 public record ModelContext(
         BlockModelGenerators blocks,
         ItemModelGenerators items,
         Consumer<BlockStateGenerator> blockStates,
-        BiConsumer<ResourceLocation, Supplier<JsonElement>> models) {
+        BiConsumer<ResourceLocation, Supplier<JsonElement>> models,
+        Consumer<Item> skippedItems) {
+
+    /**
+     * A block item whose item model is hand-made (design.md §4.8, {@code models/item/<name>.json} in the main
+     * resources): datagen writes no model for it, not even the automatic one that points at the block model.
+     */
+    public void handMadeItem(Item item) {
+        skippedItems.accept(item);
+    }
 
     /** A flat {@code item/generated} model using {@code textures/item/<name>.png}. */
     public void flatItem(Item item) {

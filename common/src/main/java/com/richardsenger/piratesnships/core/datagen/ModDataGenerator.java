@@ -165,7 +165,7 @@ public final class ModDataGenerator {
                 if (models.put(id, json) != null) throw new IllegalStateException("Duplicate model " + id);
             };
             ModelContext ctx = new ModelContext(new BlockModelGenerators(stateOut, modelOut, skipped::add),
-                    new ItemModelGenerators(modelOut), stateOut, modelOut);
+                    new ItemModelGenerators(modelOut), stateOut, modelOut, skipped::add);
             contributors.forEach(c -> c.accept(ctx));
 
             List<String> missing = new ArrayList<>();

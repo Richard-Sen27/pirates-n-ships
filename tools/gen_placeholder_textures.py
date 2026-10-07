@@ -5,18 +5,17 @@ Run (from the repository root):
     python3 -m venv tools/.venv
     tools/.venv/bin/pip install -r tools/requirements.txt
     tools/.venv/bin/python tools/gen_placeholder_textures.py            # write every texture
-    tools/.venv/bin/python tools/gen_placeholder_textures.py --only brig_door    # just these
+    tools/.venv/bin/python tools/gen_placeholder_textures.py --only <name>      # just these
     tools/.venv/bin/python tools/gen_placeholder_textures.py --list     # print the names
 
 Output: common/src/main/resources/assets/pirates_n_ships/textures/{item,block}/<name>.png
 Deterministic: same input, same bytes. One function per texture, registered in ITEMS / BLOCKS.
 Replacing a texture by hand: put its name into PROTECTED (or a line in tools/protected_textures.txt),
 then this script never overwrites it. Textures owned by other packages (test_block) are never written. The helm, nameplate,
-flagpole, cargo crate, cargo barrel, pantry, water barrel, brig bars and brig door (its block halves; the item
-sprite is here) have hand-made Blockbench models with vanilla textures
-(art/models/) and no textures here; the rapier, cutlass, saber,
+flagpole, cargo crate, cargo barrel, pantry, water barrel, brig bars and brig door (block and item) have hand-made
+Blockbench models with vanilla textures (art/models/) and no textures here; the rapier, cutlass, saber,
 pistol, musket, lead shot, cannonball, grappling hook, shackles, rum, hardtack, lime, salt pork, salted fish, cloth,
-spices, tobacco and the doubloon have hand-made item models textured from the item palettes
+spices, tobacco, the doubloon and the brig key have hand-made item models textured from the item palettes
 (tools/gen_item_palette.py).
 """
 import argparse
@@ -28,7 +27,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 TEX = ROOT / "common/src/main/resources/assets/pirates_n_ships/textures"
 PROTECTED_FILE = Path(__file__).resolve().parent / "protected_textures.txt"
-# Names of hand-made textures this script must not overwrite (e.g. "brig_door").
+# Names of hand-made textures this script must not overwrite.
 PROTECTED = set()
 FOREIGN_PREFIXES = ("test_block",)
 
@@ -124,21 +123,10 @@ def planks(name, base="plank", dark="plank_d", light="plank_l"):
 
 # ---------------------------------------------------------------- items
 
-def brig_door_item():
-    cv = Canvas()
-    cv.rect(4, 1, 11, 14, "wood")
-    cv.rect(4, 3, 11, 3, "iron"); cv.rect(4, 12, 11, 12, "iron")
-    cv.rect(6, 5, 9, 8, "black")
-    cv.rect(7, 5, 7, 8, "iron"); cv.rect(8, 5, 8, 8, "iron_d")
-    cv.px(10, 9, "steel")
-    return cv.outline()
-
-
 # ---------------------------------------------------------------- blocks
 
-ITEMS = {
-    "brig_door": brig_door_item,
-}
+# Every item sprite became a hand-made item model; the brig door's went in F8g.
+ITEMS = {}
 BLOCKS = {}
 
 

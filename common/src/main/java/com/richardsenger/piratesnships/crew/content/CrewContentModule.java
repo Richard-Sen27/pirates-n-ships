@@ -19,7 +19,6 @@ import com.richardsenger.piratesnships.crew.hammock.HammockBlock;
 import com.richardsenger.piratesnships.crew.hammock.HammockGameTests;
 import com.richardsenger.piratesnships.crew.hammock.HammockTags;
 import com.richardsenger.piratesnships.station.StationModule;
-import com.google.gson.JsonArray;
 import net.minecraft.advancements.critereon.StatePropertiesPredicate;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
@@ -211,17 +210,15 @@ public final class CrewContentModule implements ModModule {
     }
 
     /**
-     * Placeholder hammock models until ART1d's Blockbench model (design.md §4.8): {@code block/hammock_foot} and
-     * {@code block/hammock_head}, drawn facing north (the head lies north of the foot), each a thin canvas slab with two
-     * rope corners at its outer end. The block state picks the half's model and turns it by {@code FACING}; the item
-     * shows the foot. ART1d exports models under the same two names and deletes this method's model writes.
+     * The hammock's block state (design.md §4.8, ART1d): the hand-made Blockbench models {@code block/hammock_foot}
+     * and {@code block/hammock_head} ({@code art/models/hammock.bbmodel}), drawn facing north (the head lies north of
+     * the foot), picked by {@code PART} and turned by {@code FACING}. The item model {@code item/hammock} (the rolled-up
+     * hammock, {@code art/models/hammock_item.bbmodel}) is hand-made too, so datagen writes no item model.
      */
     private static void hammockModels(ModelContext m) {
         HammockBlock hammock = CrewContent.HAMMOCK.get();
         ResourceLocation foot = ModelLocationUtils.getModelLocation(hammock, "_foot");
         ResourceLocation head = ModelLocationUtils.getModelLocation(hammock, "_head");
-        m.models().accept(foot, () -> hammockHalf(true));
-        m.models().accept(head, () -> hammockHalf(false));
         m.blockStates().accept(MultiVariantGenerator.multiVariant(hammock)
                 .with(PropertyDispatch.properties(HammockBlock.FACING, HammockBlock.PART).generate((facing, part) -> Variant.variant()
                         .with(VariantProperties.MODEL, part == BedPart.FOOT ? foot : head)
@@ -231,52 +228,7 @@ public final class CrewContentModule implements ModModule {
                             case WEST -> VariantProperties.Rotation.R270;
                             default -> VariantProperties.Rotation.R0;
                         }))));
-        m.models().accept(ModelLocationUtils.getModelLocation(CrewContent.HAMMOCK_ITEM.get()), () -> {
-            JsonObject model = new JsonObject();
-            model.addProperty("parent", foot.toString());
-            return model;
-        });
-    }
-
-    /** One half: the canvas (pixels 2..14 across, 5..7 high, the whole block long) and two ropes at the outer end. */
-    private static JsonObject hammockHalf(boolean foot) {
-        JsonObject textures = new JsonObject();
-        textures.addProperty("canvas", Constants.MOD_ID + ":block/sail_cloth");
-        textures.addProperty("rope", Constants.MOD_ID + ":block/rope");
-        textures.addProperty("particle", Constants.MOD_ID + ":block/sail_cloth");
-        JsonArray elements = new JsonArray();
-        elements.add(box(2, HammockBlock.CANVAS_BOTTOM, 0, 14, HammockBlock.CANVAS_TOP, 16, "#canvas"));
-        // the outer end of the foot is south (z = 16), of the head north (z = 0)
-        int z0 = foot ? 14 : 0;
-        elements.add(box(2, HammockBlock.CANVAS_TOP, z0, 3, 12, z0 + 2, "#rope"));
-        elements.add(box(13, HammockBlock.CANVAS_TOP, z0, 14, 12, z0 + 2, "#rope"));
-        JsonObject model = new JsonObject();
-        model.addProperty("parent", "minecraft:block/block");
-        model.add("textures", textures);
-        model.add("elements", elements);
-        return model;
-    }
-
-    private static JsonObject box(int x0, int y0, int z0, int x1, int y1, int z1, String texture) {
-        JsonObject e = new JsonObject();
-        e.add("from", vec(x0, y0, z0));
-        e.add("to", vec(x1, y1, z1));
-        JsonObject faces = new JsonObject();
-        for (Direction d : Direction.values()) {
-            JsonObject face = new JsonObject();
-            face.addProperty("texture", texture);
-            faces.add(d.getSerializedName(), face);
-        }
-        e.add("faces", faces);
-        return e;
-    }
-
-    private static JsonArray vec(int x, int y, int z) {
-        JsonArray a = new JsonArray();
-        a.add(x);
-        a.add(y);
-        a.add(z);
-        return a;
+        m.handMadeItem(CrewContent.HAMMOCK_ITEM.get());
     }
 
     /** The texture slot of the water surface in the hand-made water barrel models. */

@@ -155,6 +155,30 @@ Give yourself hammocks (`/give @s pirates_n_ships:hammock 4`; recipe: 2 string o
 8. **Config off.** Set `crew.morale.enabled = false`, `/time set 13000`: nobody turns in; `/pirates crew info` shows
    morale 70 for everyone, whatever it was before; at dawn nothing changes and nobody grumbles.
 
+### ART1d: the hammock model and the lying pose
+The placeholder slab is replaced by the Blockbench hammock (`art/renders/hammock.png`, `hammock_item.png`) and sleepers
+play the rig's new `sleep` animation (`art/renders/anim_crew_sleep.png`). **Precondition:** `CrewMember#pose` must pass
+the resting flag to `CrewPose.choose(moving, working, seated, resting)` (a one-line change outside ART1d, see its
+hand-off); without it sleepers still play **sit** (with the head tilted 15 degrees down).
+
+9. **The model, four facings.** Hang a hammock between two fence posts facing north, east, south and west (in the
+   world and below deck on a ship). Expected per facing: white wool canvas 12 px wide with rolled side hems, flat in
+   the middle at about a quarter block, sloping up at 22.5 degrees to the ends, a rolled end hem round a spruce
+   spreader bar at each end, four strings (two from the bar ends, two from inside) meeting in a knot about 10 px (0.6
+   block) up, and one rope from the knot into the post. Check: **no visible seam** where the two halves meet (flat
+   canvas, hems in line); the rope ends **inside** the fence post, and into a wall post or the hull side (solid
+   block) without a gap; nothing flickers. The block outline/collision is the canvas box (3 to 7 px high).
+10. **The item.** In the hotbar: a rolled canvas with three rope windings, a knot and loop at the upper right, on the
+    diagonal like a tool; in hand held like a tool (roll forward from the fist); on the ground and in an item frame.
+11. **Lying.** At night (`/time set 13000`) a crew member turns in. Expected: lying on its back along the hammock,
+    hips in the middle where the halves meet, upper body and straight legs raised slightly with the canvas, head
+    raised a little (not looking around), arms folded over the belly; the chest breathes slowly (4 s). Report: the body
+    floating above or sinking more than a pixel or two into the canvas, the head or feet poking through the end hems
+    or ropes, or **the body lying across the hammock** (the sleeper's yaw is not yet fixed to the hammock's axis, see
+    the ART1d open problems; record which facings are wrong). Check it next to the hull side: hammock and sleeper do
+    not clip into the hull planks. On a sailing ship: no jitter between body and canvas.
+12. **Waking.** An order or dawn: the crew member stands up and walks off with the normal poses (no leftover tilt).
+
 ## CR2: crew upkeep (wages, desertion, mutiny)
 Covered by JUnit tests (`crew/upkeep/WageRulesTest`, `UpkeepDayTest`) and 8 GameTests (`crew/upkeep/UpkeepGameTests`).
 What the tests cannot show: how the lines read in a real game (action bar and chat), the deserter and the mutineers in

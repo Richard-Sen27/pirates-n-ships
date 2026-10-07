@@ -238,6 +238,13 @@ Everyone who passes by sees that part of your chart on the tile, and looking at 
 again replaces the picture. Break the tile and it keeps its drawing as an item, ready to hang somewhere else. Server
 options: `chart.tiles.enabled`, `redraw_allowed`, `require_chart_item`, `reach`, `tile_cells`.
 
+### Orders, not assignments
+You don't have to assign every sailor. Give an order with the whistle (or `/pirates crew order`), and every unmanned
+station that can carry it out becomes an open job: free crew standing on your ship take the nearest one by themselves
+within a second, get to work and stay there afterwards. Crew you put at a station yourself with the whistle stay put
+and are never moved. If nobody is free you hear "No free hands" once; the job waits for the next crew member who comes
+aboard. "Release crew" sends everyone off and cancels the open jobs. Server config `crew_stations.job_board`.
+
 ### Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks
 high with a low roar. Within 8 blocks of it you, your boat, loose items and light ships are pulled toward it and

@@ -57,6 +57,18 @@ public final class LawConfig {
     public static final ConfigValue<Double> SCORE_AFTER_CLAIM_FACTOR = LAW.doubleRange("score_after_claim_factor", 0.0, 0.0, 1.0,
             "The target's criminal score is multiplied by this when a bounty on them is claimed (0 = clean slate)");
 
+    private static final ConfigSection BOUNTY = LAW.section("bounty", "Turning in at navy officers and notice boards");
+
+    public static final ConfigValue<Boolean> TURN_IN_OFFICERS = BOUNTY.bool("turn_in_officers", true,
+            "Navy officers take bounty proofs and shackled prisoners (right-click with a proof or an empty hand). "
+                    + "The pirate turn-in reward is law.pirate_turn_in (0 = the navy pays nothing for a pirate without a bounty)");
+    public static final ConfigValue<Double> DELIVERY_RANGE = BOUNTY.doubleRange("delivery_range", 4.0, 1.0, 32.0,
+            "Blocks within which a shackled prisoner must stand from the navy officer to be delivered");
+    public static final ConfigValue<Boolean> NOTICE_BOARDS = BOUNTY.bool("notice_boards", true,
+            "Notice boards open a list of the active bounties and let players place bounties");
+    public static final ConfigValue<Double> NOTICE_BOARD_REACH = BOUNTY.doubleRange("notice_board_reach", 8.0, 2.0, 64.0,
+            "Blocks from a notice board within which its screen stays open");
+
     private static final ConfigSection SEVERITY = LAW.section("severity", "Criminal score points per crime");
     private static final ConfigSection COOLDOWN = LAW.section("repeat_cooldown_seconds",
             "The same crime against the same victim within this many seconds is not counted again");

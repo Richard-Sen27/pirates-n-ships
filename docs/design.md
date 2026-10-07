@@ -524,6 +524,7 @@ All hazards can be turned off individually and have frequency settings.
   - Press-gang captured sailors into your crew (low morale at first). Pirates only, raises the criminal score.
   - Release them (small reputation gain with their faction).
 - Captured enemy captains are worth extra and are needed for some quests.
+- **Interactions (LA2, decided 2026-10-07):** the outcomes that only commands reached become NPC interactions: using a navy officer with doubloons in hand pays the fine for the player's criminal score (`law.fine_cost_per_point`, whole points, change back); using a navy officer while leading a shackled navy officer or merchant ransoms them (`RansomRules`, paid in doubloons by the officer); using a shackled sailor standing on the player's own ship with the captain's whistle press-gangs it into the crew as a `CrewMember` with morale at `crew.morale.press_gang_start` and records `press_gang`; using a shackled prisoner with an empty hand while sneaking releases it (the mob is unshackled and wanders off, the release is recorded on the player's record for the reputation of §15). The `/pirates brig` and `/pirates law fine` commands stay for debugging.
 
 ---
 

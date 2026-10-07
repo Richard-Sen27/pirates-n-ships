@@ -10,6 +10,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -40,18 +41,16 @@ public final class FirearmService {
     }
 
     /**
-     * Finishes loading: takes one lead shot (and one gunpowder) unless the shooter has infinite materials, and marks
-     * the gun loaded. Returns false (and changes nothing) when the ammunition is gone by now.
+     * Finishes loading with what {@link FirearmLoads#forLoading} picks for the gun in the shooter's used hand (the
+     * lead ball unless another load is offered): the load takes its materials (none with infinite materials) and the
+     * gun is marked loaded. Returns false (and changes nothing) when the materials are gone by now.
      */
     public static boolean completeLoading(Level level, LivingEntity shooter, ItemStack gun) {
-        if (FirearmContent.isLoaded(gun)) return false;
-        if (shooter instanceof Player player) {
-            if (!canLoad(player)) return false;
-            if (!player.hasInfiniteMaterials()) {
-                consumeOne(player.getInventory(), CombatContent.LEAD_SHOT.get());
-                if (FirearmsConfig.CONSUME_GUNPOWDER.get()) consumeOne(player.getInventory(), Items.GUNPOWDER);
-            }
-        }
+        if (FirearmContent.isLoaded(gun) || !(gun.getItem() instanceof FirearmItem item)) return false;
+        InteractionHand hand = shooter.getMainHandItem() == gun ? InteractionHand.MAIN_HAND
+                : shooter.getOffhandItem() == gun ? InteractionHand.OFF_HAND : shooter.getUsedItemHand();
+        FirearmLoad load = FirearmLoads.forLoading(shooter, hand, gun, item.kind());
+        if (!load.load(level, shooter, hand, gun)) return false;
         FirearmContent.setLoaded(gun, true);
         level.playSound(null, shooter.getX(), shooter.getY(), shooter.getZ(), SoundEvents.CROSSBOW_LOADING_END.value(),
                 SoundSource.PLAYERS, 1.0f, 0.8f);
@@ -67,7 +66,8 @@ public final class FirearmService {
         return n;
     }
 
-    static void consumeOne(Inventory inventory, Item item) {
+    /** Takes one {@code item} from the first stack of it in {@code inventory}. */
+    public static void consumeOne(Inventory inventory, Item item) {
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack s = inventory.getItem(i);
             if (s.is(item)) {
@@ -90,8 +90,9 @@ public final class FirearmService {
 
     /**
      * Pulls the trigger of a loaded gun. A misfire (rain, {@link FirearmRules#misfires}) clicks and leaves the gun
-     * loaded; a shot spawns one {@link LeadBallEntity}, plays the shot, puffs smoke at the muzzle, applies recoil
-     * and unloads the gun. Either way the cooldown starts.
+     * loaded; a shot launches what the gun holds ({@link FirearmLoads#loadedIn}: a {@link LeadBallEntity}, or e.g. a
+     * grappling hook), plays the shot, puffs smoke at the muzzle, applies recoil and unloads the gun. Either way the
+     * cooldown starts.
      */
     public static Shot fire(ServerLevel level, LivingEntity shooter, ItemStack gun, FirearmKind kind) {
         return fire(level, shooter, gun, kind, 0);
@@ -113,34 +114,11 @@ public final class FirearmService {
             return Shot.MISFIRE;
         }
 
-        LeadBallEntity ball = new LeadBallEntity(level, shooter, type.damage(), FirearmsConfig.BALL_LIFETIME_TICKS.get());
         float[] rot = FirearmRules.spreadRotation(shooter.getXRot(), shooter.getYRot(), spread,
                 random.nextDouble(), random.nextDouble());
-        ball.shootFromRotation(shooter, rot[0], rot[1], 0.0f, type.muzzleVelocity(), 0.0f);
-        level.addFreshEntity(ball);
+        FirearmLoads.loadedIn(gun).launch(level, shooter, gun, kind, rot[0], rot[1]);
         FirearmContent.setLoaded(gun, false);
 
-        level.playSound(null, shooter.getX(), shooter.getEyeY(), shooter.getZ(), CombatSounds.PISTOL_SHOT.get(),
-                SoundSource.PLAYERS, 1.5f, type.soundPitch() * (0.95f + random.nextFloat() * 0.1f));
-        smoke(level, shooter);
-        recoil(shooter, kind);
-        return Shot.FIRED;
-    }
-
-    /**
-     * Fires a charge of powder without a ball (GR1: a grappling hook launched from the musket): the cooldown starts,
-     * a misfire in the rain clicks ({@link FirearmRules#misfires}, same chance as a shot), and a shot plays the same
-     * sound, smoke and recoil as {@link #fire}. Neither reads nor changes the gun's loaded state and spawns nothing;
-     * the caller launches its own projectile on {@link Shot#FIRED}.
-     */
-    public static Shot fireBlank(ServerLevel level, LivingEntity shooter, ItemStack gun, FirearmKind kind) {
-        FirearmType type = FirearmsConfig.type(kind);
-        RandomSource random = shooter.getRandom();
-        startCooldown(shooter, gun);
-        if (FirearmRules.misfires(inRain(shooter), type.misfireChanceInRain(), random.nextDouble())) {
-            playEmpty(level, shooter, type.soundPitch());
-            return Shot.MISFIRE;
-        }
         level.playSound(null, shooter.getX(), shooter.getEyeY(), shooter.getZ(), CombatSounds.PISTOL_SHOT.get(),
                 SoundSource.PLAYERS, 1.5f, type.soundPitch() * (0.95f + random.nextFloat() * 0.1f));
         smoke(level, shooter);

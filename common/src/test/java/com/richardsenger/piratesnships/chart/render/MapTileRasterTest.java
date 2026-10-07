@@ -201,4 +201,149 @@ class MapTileRasterTest {
             }
         }
     }
+
+    // --- zoom and boards (MAP3) ---------------------------------------------------------------------------------
+
+    private static CellLookup grid(int[][] g) {
+        return (cx, cz) -> cx < 0 || cz < 0 || cz >= g.length || cx >= g[0].length ? 0 : g[cz][cx];
+    }
+
+    private static int c(CellClass cls) {
+        return ChartCells.of(cls, false);
+    }
+
+    @Test
+    void downsamplingTakesTheMostCommonKnownClass() {
+        int land = c(CellClass.LAND);
+        int deep = c(CellClass.DEEP_WATER);
+        int shallow = c(CellClass.SHALLOW_WATER);
+        int beach = c(CellClass.BEACH);
+        assertEquals(land, MapTileRaster.downsample(grid(new int[][]{{land, land}, {land, deep}}), 0, 0, 2), "majority");
+        assertEquals(deep, MapTileRaster.downsample(grid(new int[][]{{shallow, deep}, {deep, shallow}}), 0, 0, 2), "tie: deeper water first");
+        assertEquals(shallow, MapTileRaster.downsample(grid(new int[][]{{land, shallow}, {shallow, land}}), 0, 0, 2), "tie: water before land");
+        assertEquals(beach, MapTileRaster.downsample(grid(new int[][]{{land, beach}, {beach, land}}), 0, 0, 2), "tie: land classes in order");
+        // unknown cells do not vote
+        assertEquals(land, MapTileRaster.downsample(grid(new int[][]{{0, 0}, {0, land}}), 0, 0, 2), "one known cell decides");
+        assertEquals(deep, MapTileRaster.downsample(grid(new int[][]{{0, deep}, {deep, land}}), 0, 0, 2));
+    }
+
+    @Test
+    void downsamplingKeepsCoastsAndIsUnknownOnlyWhenAllIs() {
+        int coastLand = ChartCells.of(CellClass.LAND, true);
+        int deep = c(CellClass.DEEP_WATER);
+        int down = MapTileRaster.downsample(grid(new int[][]{{deep, deep}, {deep, coastLand}}), 0, 0, 2);
+        assertEquals(CellClass.DEEP_WATER, ChartCells.cellClass(down));
+        assertTrue(ChartCells.coast(down), "any coast cell sets the flag");
+        int land = MapTileRaster.downsample(grid(new int[][]{{coastLand, c(CellClass.LAND)}, {0, 0}}), 0, 0, 2);
+        assertEquals(CellClass.LAND, ChartCells.cellClass(land));
+        assertTrue(ChartCells.coast(land));
+        assertEquals(0, MapTileRaster.downsample(grid(new int[][]{{0, 0}, {0, 0}}), 0, 0, 2), "nothing known");
+        assertEquals(0, MapTileRaster.downsample(grid(new int[][]{{deep}}), 5, 5, 4), "outside the known cells");
+        // zoom 1 is the cell itself
+        assertEquals(coastLand, MapTileRaster.downsample(grid(new int[][]{{coastLand}}), 0, 0, 1));
+    }
+
+    @Test
+    void zoomOneIsThePlainDrawing() {
+        CellLookup cells = coast(16, 1000);
+        assertArrayEquals(MapTileRaster.draw(cells, -5, 3, 32), MapTileRaster.draw(cells, -5, 3, 32, 1));
+    }
+
+    @Test
+    void zoomFourCoversAFourTimesLargerArea() {
+        // land west of cell 64: at zoom 4 the coast is pixel 16 of a tile starting at cell 0, and the tile spans 128 cells
+        CellLookup cells = coast(64, 1000);
+        byte[] px = MapTileRaster.draw(cells, 0, 0, 32, 4);
+        assertEquals(32 * 32, px.length);
+        assertEquals(MapTileRaster.Kind.LAND, MapTileRaster.kind(px[5 * 32 + 10] & 0xFF));
+        assertEquals(MapTileRaster.Kind.INK, MapTileRaster.kind(px[5 * 32 + 15] & 0xFF), "the coast block is inked");
+        assertEquals(MapTileRaster.Kind.WATER, MapTileRaster.kind(px[5 * 32 + 20] & 0xFF));
+        // the same coast at zoom 1 lies beyond a 32-cell tile
+        byte[] plain = MapTileRaster.draw(cells, 0, 0, 32);
+        assertEquals(MapTileRaster.Kind.LAND, MapTileRaster.kind(plain[5 * 32 + 31] & 0xFF));
+    }
+
+    @Test
+    void aZoomedPixelIsKnownExactlyWhenAnyCellOfItsBlockIs() {
+        Random random = new Random(11);
+        int size = 64;
+        int[][] g = new int[size][size];
+        CellClass[] classes = {CellClass.LAND, CellClass.BEACH, CellClass.SHALLOW_WATER, CellClass.DEEP_WATER, CellClass.SNOW_ICE};
+        for (int z = 0; z < size; z++) {
+            for (int x = 0; x < size; x++) {
+                // mostly unknown, so that whole blocks stay unknown
+                g[z][x] = random.nextInt(12) != 0 ? 0 : ChartCells.of(classes[random.nextInt(classes.length)], random.nextInt(4) == 0);
+            }
+        }
+        int zoom = 4;
+        int tile = size / zoom;
+        byte[] px = MapTileRaster.draw(grid(g), 0, 0, tile, zoom);
+        int unknownBlocks = 0;
+        for (int y = 0; y < tile; y++) {
+            for (int x = 0; x < tile; x++) {
+                boolean any = false;
+                for (int j = 0; j < zoom; j++) for (int i = 0; i < zoom; i++) any |= ChartCells.known(g[y * zoom + j][x * zoom + i]);
+                if (!any) unknownBlocks++;
+                assertEquals(any, MapTileRaster.known(px[y * tile + x] & 0xFF), "pixel " + x + "," + y);
+            }
+        }
+        assertTrue(unknownBlocks > 0, "the test has unknown blocks");
+    }
+
+    @Test
+    void slicesOfABoardLineUpWithOneLargeDrawing() {
+        // two slices side by side at zoom 2 are the two halves of one drawing twice as wide (patterns and coast strokes included)
+        CellLookup cells = coast(37, 1000);
+        int size = 16;
+        int zoom = 2;
+        int minCx = -11;
+        int minCz = 5;
+        byte[] left = MapTileRaster.draw(cells, minCx, minCz, size, zoom);
+        byte[] right = MapTileRaster.draw(cells, minCx + size * zoom, minCz, size, zoom);
+        byte[] whole = MapTileRaster.draw(cells, minCx, minCz, 2 * size, zoom);
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                assertEquals(whole[y * 2 * size + x], left[y * size + x], "left " + x + "," + y);
+                assertEquals(whole[y * 2 * size + size + x], right[y * size + x], "right " + x + "," + y);
+            }
+        }
+    }
+
+    @Test
+    void boardMarkersUseBoardPixelsAtTheZoom() {
+        int cb = 4;
+        List<ChartMarker> markers = List.of(new ChartMarker(1, 100 * cb, 9 * cb, MarkerIcon.SKULL, "in"),
+                new ChartMarker(2, -1, 0, MarkerIcon.X, "west of it"), new ChartMarker(3, 4 * 64 * cb, 0, MarkerIcon.PORT, "east of it"));
+        List<com.richardsenger.piratesnships.chart.data.BoardMarker> b = MapTileRaster.boardMarkers(markers, 0, 0, 64, 32, 4, cb, 512);
+        assertEquals(1, b.size());
+        assertEquals(25, b.get(0).bx(), "cell 100 at zoom 4");
+        assertEquals(2, b.get(0).by());
+        assertTrue(MapTileRaster.markerMargin(128) >= ChartSheet.ICON / 2, "a margin of half an icon at scale 1");
+        assertTrue(MapTileRaster.markerMargin(32) >= 1);
+    }
+
+    @Test
+    void aSliceDrawsTheFrameOnlyOnTheBoardsOuterEdges() {
+        CellLookup cells = coast(16, 1000);
+        int size = 32;
+        int scale = MapTileRaster.pictureScale(size);
+        int w = size * scale;
+        java.util.UUID id = java.util.UUID.randomUUID();
+        MapTileDrawing westTile = new MapTileDrawing(size, MapTileRaster.draw(cells, 0, 0, size), 0, 0, 4, "Anne", 3, List.of(), 1,
+                java.util.Optional.of(new com.richardsenger.piratesnships.chart.data.BoardSlice(id, 0, 0, 2, 1)));
+        int[] pic = MapTileRaster.picture(westTile, scale, null, 0, 0);
+        assertEquals(ChartRaster.INK, pic[(w / 2) * w], "the board's west edge");
+        assertEquals(ChartRaster.INK, pic[w / 2], "the board's north edge");
+        assertTrue(pic[(w / 2) * w + w - 1] != ChartRaster.INK, "no frame at the seam");
+        int[] sheet = new int[ChartSheet.WIDTH * ChartSheet.HEIGHT];
+        java.util.Arrays.fill(sheet, 0xFFFF0000);
+        int[] withSprites = MapTileRaster.picture(westTile, scale, sheet, ChartSheet.WIDTH, ChartSheet.HEIGHT);
+        assertTrue(withSprites[(3 + 8) * w + (w - 3 - 8)] != 0xFFFF0000, "the rose belongs to the top-right tile only");
+        // a marker of the east neighbour stamped just beyond the seam shows its west half here
+        MapTileDrawing seam = new MapTileDrawing(size, MapTileRaster.draw(cells, 0, 0, size), 0, 0, 4, "Anne", 3,
+                List.of(new TileMarker(MarkerIcon.X, size, 10, "")), 1,
+                java.util.Optional.of(new com.richardsenger.piratesnships.chart.data.BoardSlice(id, 0, 0, 2, 1)));
+        int[] seamPic = MapTileRaster.picture(seam, scale, sheet, ChartSheet.WIDTH, ChartSheet.HEIGHT);
+        assertEquals(0xFFFF0000, seamPic[(10 * scale) * w + w - 1], "the icon reaches over the seam");
+    }
 }

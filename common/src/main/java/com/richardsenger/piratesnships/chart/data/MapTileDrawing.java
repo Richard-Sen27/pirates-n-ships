@@ -19,12 +19,14 @@ import java.util.Optional;
  * cell, row-major, index {@code y * size + x}, north up; the palette is
  * {@link com.richardsenger.piratesnships.chart.render.MapTileRaster}'s, 0 = blank parchment), the drawn area (cell
  * {@code (minCx, minCz)} is the top-left pixel, cells of {@code cellBlocks} blocks, {@code zoom} cells per pixel side),
- * who drew it on which game day, the stamped markers, and (reserved for MAP3 boards) which {@link BoardSlice} of a
- * board it is. Immutable: the constructor copies the pixel array and {@link #pixels()} hands out a copy.
+ * who drew (or last updated, {@link #updated}) it on which game day, the stamped markers (MAP3: a slice also stamps
+ * its neighbours' markers a few pixels beyond its edges, so icons at a seam are whole), and which {@link BoardSlice}
+ * of a board it is. Immutable: the constructor copies the pixel array and {@link #pixels()} hands out a copy.
  *
  * <p>Pixel index 0 is always "nothing charted here" ({@link #known}): a later update can re-raster the same area
  * ({@link #minCx}, {@link #minCz}, {@link #size}, {@link #zoom}, {@link #cellBlocks}) and keep old pixels where the new
- * chart knows nothing. MAP2 itself always draws at zoom 1 and never sets a board.
+ * chart knows nothing ({@link com.richardsenger.piratesnships.chart.tile.BoardMerge}). MAP3 draws every tile as a slice of a
+ * board (a single tile is a 1x1 board); MAP2 drawings without a board record still load as single tiles.
  *
  * <p>Stored (block entity NBT, the item's {@code pirates_n_ships:map_tile_drawing} component) and synced with the
  * pixels packed by {@link PixelPack} (deflate; the chart's hatching and dots defeat a run-length encoding), so a
@@ -48,6 +50,7 @@ public final class MapTileDrawing {
     private final List<TileMarker> markers;
     private final int zoom;
     private final Optional<BoardSlice> board;
+    private final boolean updated;
     private final int hash;
 
     /** A single tile at zoom 1 (what MAP2 draws). */
@@ -57,6 +60,15 @@ public final class MapTileDrawing {
 
     public MapTileDrawing(int size, byte[] pixels, int minCx, int minCz, int cellBlocks, String drawer, long day, List<TileMarker> markers,
                           int zoom, Optional<BoardSlice> board) {
+        this(size, pixels, minCx, minCz, cellBlocks, drawer, day, markers, zoom, board, false);
+    }
+
+    /**
+     * A drawing with every field (MAP3). {@code updated}: the last change was an update of an existing board (the
+     * {@link #drawer} is then the last updater), not a first draw.
+     */
+    public MapTileDrawing(int size, byte[] pixels, int minCx, int minCz, int cellBlocks, String drawer, long day, List<TileMarker> markers,
+                          int zoom, Optional<BoardSlice> board, boolean updated) {
         if (size < MIN_SIZE || size > MAX_SIZE) throw new IllegalArgumentException("tile size " + size);
         if (zoom < 1 || zoom > MAX_ZOOM) throw new IllegalArgumentException("zoom " + zoom);
         if (pixels.length != size * size) throw new IllegalArgumentException(pixels.length + " pixels for a tile of " + size);
@@ -71,7 +83,8 @@ public final class MapTileDrawing {
         this.markers = List.copyOf(markers);
         this.zoom = zoom;
         this.board = Objects.requireNonNull(board);
-        this.hash = Objects.hash(size, Arrays.hashCode(this.pixels), minCx, minCz, this.cellBlocks, this.drawer, day, this.markers, zoom, board);
+        this.updated = updated;
+        this.hash = Objects.hash(size, Arrays.hashCode(this.pixels), minCx, minCz, this.cellBlocks, this.drawer, day, this.markers, zoom, board, updated);
     }
 
     public int size() {
@@ -127,6 +140,11 @@ public final class MapTileDrawing {
         return board;
     }
 
+    /** Whether the last change was an update (MAP3): {@link #drawer} is the last updater and {@link #day} the update's day. */
+    public boolean updated() {
+        return updated;
+    }
+
     /** Chart cells along each side of the drawn area. */
     public int cells() {
         return size * zoom;
@@ -160,7 +178,7 @@ public final class MapTileDrawing {
     // --- codecs --------------------------------------------------------------------------------------------------
 
     private record Stored(int size, byte[] packed, int minCx, int minCz, int cellBlocks, String drawer, long day, List<TileMarker> markers,
-                          int zoom, Optional<BoardSlice> board) {
+                          int zoom, Optional<BoardSlice> board, boolean updated) {
     }
 
     private static final Codec<byte[]> BYTES = Codec.BYTE_BUFFER.xmap(b -> {
@@ -179,7 +197,8 @@ public final class MapTileDrawing {
             Codec.LONG.optionalFieldOf("day", 0L).forGetter(Stored::day),
             TileMarker.CODEC.listOf().optionalFieldOf("markers", List.of()).forGetter(Stored::markers),
             Codec.INT.optionalFieldOf("zoom", 1).forGetter(Stored::zoom),
-            BoardSlice.CODEC.optionalFieldOf("board").forGetter(Stored::board)
+            BoardSlice.CODEC.optionalFieldOf("board").forGetter(Stored::board),
+            Codec.BOOL.optionalFieldOf("updated", false).forGetter(Stored::updated)
     ).apply(i, Stored::new));
 
     /** NBT / JSON form: pixels packed in a byte array. Bad data is a codec error, not an exception. */
@@ -188,14 +207,14 @@ public final class MapTileDrawing {
     private static DataResult<MapTileDrawing> fromStored(Stored s) {
         try {
             return DataResult.success(fromPacked(s.size(), s.packed(), s.minCx(), s.minCz(), s.cellBlocks(), s.drawer(), s.day(), s.markers(),
-                    s.zoom(), s.board()));
+                    s.zoom(), s.board(), s.updated()));
         } catch (IllegalArgumentException e) {
             return DataResult.error(() -> "bad map tile drawing: " + e.getMessage());
         }
     }
 
     private Stored toStored() {
-        return new Stored(size, packed(), minCx, minCz, cellBlocks, drawer, day, markers, zoom, board);
+        return new Stored(size, packed(), minCx, minCz, cellBlocks, drawer, day, markers, zoom, board, updated);
     }
 
     /** Builds a drawing from packed pixels; throws {@link IllegalArgumentException} on bad data. */
@@ -205,8 +224,13 @@ public final class MapTileDrawing {
 
     public static MapTileDrawing fromPacked(int size, byte[] packed, int minCx, int minCz, int cellBlocks, String drawer, long day, List<TileMarker> markers,
                                             int zoom, Optional<BoardSlice> board) {
+        return fromPacked(size, packed, minCx, minCz, cellBlocks, drawer, day, markers, zoom, board, false);
+    }
+
+    public static MapTileDrawing fromPacked(int size, byte[] packed, int minCx, int minCz, int cellBlocks, String drawer, long day, List<TileMarker> markers,
+                                            int zoom, Optional<BoardSlice> board, boolean updated) {
         if (size < MIN_SIZE || size > MAX_SIZE) throw new IllegalArgumentException("tile size " + size);
-        return new MapTileDrawing(size, PixelPack.unpack(packed, size * size), minCx, minCz, cellBlocks, drawer, day, markers, zoom, board);
+        return new MapTileDrawing(size, PixelPack.unpack(packed, size * size), minCx, minCz, cellBlocks, drawer, day, markers, zoom, board, updated);
     }
 
     private static final StreamCodec<ByteBuf, byte[]> PACKED_BYTES = ByteBufCodecs.byteArray(MAX_SIZE * MAX_SIZE * 2);
@@ -230,7 +254,8 @@ public final class MapTileDrawing {
             Optional<BoardSlice> board;
             try {
                 board = BOARD.decode(buf);
-                return fromPacked(size, packed, minCx, minCz, cellBlocks, drawer, day, markers, zoom, board);
+                boolean updated = ByteBufCodecs.BOOL.decode(buf);
+                return fromPacked(size, packed, minCx, minCz, cellBlocks, drawer, day, markers, zoom, board, updated);
             } catch (IllegalArgumentException e) {
                 throw new DecoderException("bad map tile drawing: " + e.getMessage(), e);
             }
@@ -248,6 +273,7 @@ public final class MapTileDrawing {
             MARKER_LIST.encode(buf, d.markers);
             ByteBufCodecs.VAR_INT.encode(buf, d.zoom);
             BOARD.encode(buf, d.board);
+            ByteBufCodecs.BOOL.encode(buf, d.updated);
         }
     };
 
@@ -257,7 +283,7 @@ public final class MapTileDrawing {
     public boolean equals(Object o) {
         return o instanceof MapTileDrawing d && d.hash == hash && d.size == size && d.minCx == minCx && d.minCz == minCz
                 && d.cellBlocks == cellBlocks && d.day == day && d.zoom == zoom && d.drawer.equals(drawer) && d.markers.equals(markers)
-                && d.board.equals(board)
+                && d.board.equals(board) && d.updated == updated
                 && Arrays.equals(d.pixels, pixels);
     }
 

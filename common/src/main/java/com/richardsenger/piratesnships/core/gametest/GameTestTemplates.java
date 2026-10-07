@@ -24,11 +24,15 @@ public final class GameTestTemplates {
     /** 40×12×40 of air, for ships that move (sailing tests). */
     public static final String EMPTY_40 = Constants.MOD_ID + ":empty_40x12x40";
 
+    /** 48×16×48 of air, for world structures (the seafarer village's dock head, pier and a street). */
+    public static final String EMPTY_48 = Constants.MOD_ID + ":empty_48x16x48";
+
     public static final List<Template> ALL = List.of(
             new Template(EMPTY_3, 3, 3, 3),
             new Template(EMPTY_9, 9, 6, 9),
             new Template(EMPTY_24, 24, 12, 24),
-            new Template(EMPTY_40, 40, 12, 40));
+            new Template(EMPTY_40, 40, 12, 40),
+            new Template(EMPTY_48, 48, 16, 48));
 
     private GameTestTemplates() {
     }

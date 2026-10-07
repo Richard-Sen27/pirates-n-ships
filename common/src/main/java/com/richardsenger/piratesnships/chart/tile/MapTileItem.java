@@ -32,5 +32,7 @@ public class MapTileItem extends BlockItem {
         }
         lines.add(ChartText.drawnBy(d).withStyle(ChatFormatting.GRAY));
         lines.add(ChartText.tileArea(d).withStyle(ChatFormatting.DARK_GRAY));
+        Component board = ChartText.board(d);
+        if (!board.getString().isEmpty()) lines.add(board.copy().withStyle(ChatFormatting.DARK_GRAY));
     }
 }

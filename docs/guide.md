@@ -238,11 +238,17 @@ lower end, following both ships as they move. Sneak to let go. A level rope is c
 crow's nest down to an enemy deck is the classic move. Server config `grapple.slide`.
 
 ### Map tiles
-Craft a Map Tile from 8 sticks around a paper and place it on a table or a wall. Use it with your chart in hand: the
-chart opens with a frame. Drag the frame over the part you want, choose whether your markers go on it, and press Draw.
-Everyone who passes by sees that part of your chart on the tile, and looking at it tells who drew it and when. Drawing
-again replaces the picture. Break the tile and it keeps its drawing as an item, ready to hang somewhere else. Server
-options: `chart.tiles.enabled`, `redraw_allowed`, `require_chart_item`, `reach`, `tile_cells`.
+Craft a Map Tile from 8 sticks around a paper and place it on a table or a wall. Put several side by side in a
+rectangle, all facing the same way, and they form one board of up to 8 by 8 tiles. Use any tile with your chart in
+hand: the chart opens with a frame the shape of the board. Drag it over the part you want, pick a zoom (each step shows
+a wider area, coarser), choose whether your markers go on it, and press Draw. Drawing costs ink: an ink sac or glow
+ink sac per tile, and a kraken's ink pays for eight; creative players draw for free. Later, anyone who has charted more
+can use the board again and press Update: what they know fills in the blank parchment, and what was drawn before
+stays. They pay only for the tiles that changed. "New" draws the board afresh at another area or zoom, and "Clear"
+wipes it. Looking at a tile tells who drew or last updated it, when, and the area. Break a tile and it keeps its part
+of the drawing as an item; put it back in its place and the board is whole again. Server options under
+`chart.tiles`: `enabled`, `redraw_allowed`, `require_chart_item`, `reach`, `tile_cells`, `max_board_side`, `max_zoom`,
+`ink_cost_enabled`, `ink_per_tile`, `kraken_ink_tile_value`.
 
 ### Orders, not assignments
 You don't have to assign every sailor. Give an order with the whistle (or `/pirates crew order`), and every unmanned
@@ -250,6 +256,14 @@ station that can carry it out becomes an open job: free crew standing on your sh
 within a second, get to work and stay there afterwards. Crew you put at a station yourself with the whistle stay put
 and are never moved. If nobody is free you hear "No free hands" once; the job waits for the next crew member who comes
 aboard. "Release crew" sends everyone off and cancels the open jobs. Server config `crew_stations.job_board`.
+
+### Seafarer villages
+Seafarer villages generate on beaches. A stone quay with the harbor master's hut faces the sea, and a plank pier runs
+straight out over the water with two ship berths, one on each side halfway out. Streets lead inland with cottages, a
+tavern and a shipwright's shed, and end in a small cobbled place. The harbor master's desk belongs to the village's
+port: use it to open the port's market. A desk you place anywhere inside a village joins that port too. Operators can
+list ports with `/pirates world ports` and find the nearest with `/pirates world port nearest`. Server config
+`world.structures.seafarer_village`.
 
 ### Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks
@@ -602,14 +616,18 @@ reloads by itself from that supply, so a manned, supplied gun keeps firing as fa
 `cannons.crew`).
 
 ### Grappling hook
-**Shooting the hook.** Hold the grappling hook in your main hand and a crossbow or an empty musket in your off
-hand. With a crossbow, hold use to draw (about a second) and let go to shoot: the hook flies faster and the rope
-reaches 36 blocks instead of 24. With a musket, use fires the hook at once for one gunpowder (no lead shot), the
-farthest of all with a 48-block rope; a loaded musket refuses, so fire it first; rain can make it misfire.
-**Mooring rings** (4 iron ingots make 2) mount on decks, walls or beams. Cleats work the same way: a hook flying close
-to a cleat catches on it, and using a cleat on your ship while your hook is out ties the rope off there.
+**Shooting the hook.** Put the grappling hook in your **off hand** and a crossbow or musket in your main hand. Hold
+use to load the hook into the weapon: the musket takes its full reload and one gunpowder, the crossbow a normal draw.
+A loaded musket shows the hook at its muzzle and a gold bar; hold use to aim and let go to fire, or sneak to lower. A
+loaded crossbow looks charged; click to shoot. The musket throws the hook farthest (48-block rope), the crossbow
+farther than a throw (36). Without a weapon in the other hand the hook is thrown by hand (24). Rain can make the
+musket misfire; the hook stays loaded. Left-handed players can turn off `grapple.launch.offhand_required` to swap the
+hands.
 
-**Mooring rings** mount on decks, walls or beams. A hook that flies within a block of a ring
+**Cleats** work like mooring rings: a hook flying close to a cleat catches on it, and using a cleat on your ship
+while your hook is out ties the rope off there.
+
+**Mooring rings** (4 iron ingots make 2) mount on decks, walls or beams. A hook that flies within a block of a ring
 on another ship catches on it and holds twice as far before tearing loose. With your hook latched, use a ring on
 your own ship to tie the rope there: the ships keep hauling together and you can walk away. Sneak and use with an
 empty hand, or breaking a ring, lets go.
@@ -769,7 +787,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `anchor_chain` | Chain speeds, travel time limits, anchor sounds and volumes. |
 | `hull_creaking` | Creaking on/off, how often, volume and pitch ranges, the rolling rate that counts. |
 | `audio` (client) | Music on/off and volume, the gap between tracks, shanties aboard. |
-| `grapple.launch` | Crossbow and musket launches on/off, their speeds, the draw time and the rope lengths per mode. |
+| `grapple.launch` | Crossbow and musket launches on/off, their speeds and rope lengths per mode, `offhand_required`. |
 | `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore pull, entity damage, lost-hook rule. |
 | `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevation range and steps, blocks per hit, recoil and impact impulses, ball lifetime and water behaviour, `mobGriefing` and spawn protection, drops from destroyed blocks, glancing hits and the bounce angle. |
 | `cannons.swivel` | Swivel gun on/off, ammo item and count, damage, muzzle speed, reload, blocks per hit, recoil and impact impulses, ball lifetime, elevation limits, aim reach. |

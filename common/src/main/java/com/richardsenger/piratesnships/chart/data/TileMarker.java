@@ -8,7 +8,8 @@ import net.minecraft.network.codec.StreamCodec;
 
 /**
  * A chart marker stamped onto a map tile's drawing (work package MAP2): its icon, its position in tile pixels (one
- * pixel per chart cell, {@code 0..size-1}) and its name (may be empty).
+ * pixel per chart cell, {@code 0..size-1}; on a board, MAP3, a neighbour's marker near the seam lies a few pixels outside)
+ * and its name (may be empty).
  */
 public record TileMarker(MarkerIcon icon, int px, int py, String name) {
 

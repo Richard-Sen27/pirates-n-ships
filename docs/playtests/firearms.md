@@ -82,3 +82,11 @@ Addendum (F8h): in third person the fist closes on the pistol's grip just behind
 
 ## P6: the cocked hammer
 For pistol and musket: an empty gun shows the hammer forward against the frizzen; once loaded the icon switches to the hammer cocked back with the frizzen upright (the gold bar still shows, the white bar during loading). In hand (third person) the hammer is cocked on a loaded gun with no jump of the grip when the state changes; first person likewise. Aiming and sneak-lowering keep the cocked model; the model stays empty until a reload completes; after firing it switches back at once. Item frame, ground and a navy soldier's hand (mobs' guns show the empty model, expected). No missing-model warnings in the log.
+
+
+## GR3 note: the grappling hook as a musket load
+The musket can also be loaded with a grappling hook held in the off hand (one gunpowder, no lead shot). Loading,
+the bar, "Loaded", aiming, lowering, cooldown, recoil and rain misfire are the same as for a ball; the item additionally
+says "With a grappling hook" and shows the `musket_hook` model. Steps in [`grapple.md`](grapple.md) "GR3". Check here
+only that a musket loaded with a ball still behaves exactly as in P1/P3/P5/P6 while a hook sits in the off hand (it
+says "The musket is loaded with shot…" once and fires the ball).

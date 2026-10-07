@@ -1227,3 +1227,72 @@ Renders: `art/renders/structures/pirate_island/*.png`.
 `SCHEMATIC_LAB_PORT` environment variable, else 8766. Agents building pieces in parallel each use their own port
 (ST2 was built on 8767: `SCHEMATIC_LAB_PORT=8767 python3 tools/build_structures.py pirate_island/tent`), so they never
 post to each other's lab session.
+
+### Navy outpost (ST3)
+The navy fort (design.md §10.1) as a third piece set, group `navy_outpost`, built with the same pipeline and
+conventions (y 0 the foundation row, pieces face north, the sea to the north). Look: stone bricks and polished
+andesite masonry, oak and spruce woodwork, blue wool and blue banners for the navy, lanterns on iron bars. The
+generators share `art/structures/navy_outpost/_style.py`: the palette, the jigsaw table, the fittings (doors, beds,
+tables, stools, lantern posts, brig doors, the cannon, the flagpole) and `curtain()`, the curtain wall's section that
+the gate, the wall and the tower share so the walkway runs through: foundation and solid body on z 0..4 up to the
+walkway (top row y 4, people stand on y 5), the seaward parapet on z 0 (y 5) with merlons above it.
+
+**Pools:** `pirates_n_ships:navy_outpost/start` (the fort gate), `navy_outpost/walls` (the wall), `navy_outpost/
+buildings` (barracks, brig, watchtower), `navy_outpost/quay` (the quay) and `navy_outpost/terminators` (the wall
+tower, the fallback once the walls' depth runs out). WG1 defines them.
+
+**Jigsaws** (all horizontal, `final_state` in brackets):
+
+| name | target | pool | joint | used by |
+|---|---|---|---|---|
+| `pirates_n_ships:quay_out` | `pirates_n_ships:quay_in` | `pirates_n_ships:navy_outpost/quay` | aligned | fort gate [7, 0, 0] north (chiseled stone bricks) |
+| `pirates_n_ships:quay_in` | `pirates_n_ships:quay_out` | `minecraft:empty` | aligned | quay [3, 5, 17] south (stone bricks) |
+| `pirates_n_ships:wall_east_out` | `pirates_n_ships:wall_east_in` | `pirates_n_ships:navy_outpost/walls` | aligned | fort gate [14, 0, 2], wall [6, 0, 2]; east (stone bricks) |
+| `pirates_n_ships:wall_east_in` | `pirates_n_ships:wall_east_out` | `minecraft:empty` | aligned | wall, wall tower [0, 0, 2]; west (stone bricks) |
+| `pirates_n_ships:wall_west_out` | `pirates_n_ships:wall_west_in` | `pirates_n_ships:navy_outpost/walls` | aligned | fort gate, wall [0, 0, 3]; west (stone bricks) |
+| `pirates_n_ships:wall_west_in` | `pirates_n_ships:wall_west_out` | `minecraft:empty` | aligned | wall, wall tower [6, 0, 3]; east (stone bricks) |
+| `pirates_n_ships:building_out` | `pirates_n_ships:building_in` | `pirates_n_ships:navy_outpost/buildings` | rollable | fort gate [14, 0, 14] south (gravel) |
+| `pirates_n_ships:building_in` | `pirates_n_ships:building_out` | `minecraft:empty` | rollable | barracks, brig, watchtower (north side, y 0; cobblestone) |
+| `pirates_n_ships:berth` | `minecraft:empty` | `minecraft:empty` | aligned | quay [0, 4, 9] and [6, 4, 9], north (water) |
+
+The names `building_out`/`building_in` are the village's too; the pool keeps the sets apart (a navy gate only pulls
+from `navy_outpost/buildings`). **Why the wall has two pairs:** the curtain wall runs both ways from the gate along x,
+and a jigsaw only turns a piece, it never mirrors one. A single `wall_in`/`wall_out` pair would turn every wall on the
+west run round by 180°, with its guns pointing inland. So each run has its own pair on its own row: the east run
+(`wall_east_*`, z 2) grows out of east faces into west faces, the west run (`wall_west_*`, z 3) the other way round.
+Every wall piece carries all four; the pair it does not attach by stays unused (its `_out` points back into the piece
+it hangs from, finds no room and becomes stone bricks). The tower carries both `_in`s, so it ends either run.
+
+**Sea level:** as the village. The gate's paving (y 0) sits one block above sea level; the quay's deck (y 5) continues
+it through the sea gate, its sea surface is row y 4, and its masonry reaches down to its y 0, five blocks below the
+paving. WG1 places the gate with y 0 at sea level + 1; the walls share the gate's y 0, so their seaward face stands at
+the waterline.
+
+| piece | size (x×y×z) | blocks | contents | mod blocks |
+|---|---|---|---|---|
+| `fort_gate` (start) | 15×10×15 | 837 | the curtain wall along the sea side with an arched sea gate (x 6..8) to the quay, the parade court (andesite path between the gates, the navy flag on a pole, lantern posts, cargo), stone stairs up to the walkway on the east side, the harbor master's office on the west side (door east; the desk facing the door, a notice board, a cartography table, shelves, a chest; its flat roof joins the walkway), and the landward gatehouse: an arched gate between two pillars with lanterns and blue banners, onto a gravel apron (row z 14) | `harbor_desk`, `notice_board`, `flagpole`, `cargo_crate`, `cargo_barrel` |
+| `quay` | 7×9×18 | 579 | a solid stone brick mole (x 1..5) from the seabed to the deck, mossy at the waterline; andesite kerbs, mooring rings and cleats along both edges, four bollards (stone brick walls under upside-down stairs), a crane at the seaward end (spruce post, fence jib to the deck edge, a hanging lantern), lantern posts, a ladder down to the water, cargo; berths [0, 4, 9] and [6, 4, 9] | `mooring_ring`, `cleat`, `cargo_crate`, `cargo_barrel` |
+| `wall` | 7×8×7 | 209 | a curtain wall segment: walkway, merlons, an embrasure in the parapet with a cannon behind it on an oak gun platform (master [3, 5, 1], rear [3, 5, 2], muzzle north), a powder barrel beside it, a ladder up the landward face, a lantern on the walkway, a gravel path at the foot | `cannon`, `cargo_barrel` |
+| `wall_tower` (terminator) | 7×12×7 | 345 | a crenellated corner tower: ground floor (door landward), a landing level with the walkway with doors out onto both sides, a roof platform at y 9 with lanterns on the corner merlons and the navy flag on a pole in the middle; one ladder through all floors | `flagpole`, `cargo_barrel` |
+| `barracks` | 11×9×9 | 360 | andesite walls on a stone brick plinth, spruce roof; six bunks (blue beds, two doubled up), sea chests, a mess table with stools, a weapon rack (fences with pressure plates), a hanging lantern | `cargo_crate` |
+| `brig` | 9×8×9 | 316 | a stone lock-up with a flat roof behind a parapet: a guard room (table, stool, chest, barrel, lanterns) and two cells, each fronted by brig bars with a brig door, with straw, a cauldron and a barred window | `brig_bars`, `brig_door` |
+| `watchtower` | 5×14×5 | 234 | a stone shaft with arrow slits, a ladder inside to a hatch in the lookout platform (y 10, overhanging the doorstep on a stair corbel), fence rails, a slab roof on four posts with a hanging lantern | |
+
+Renders: `art/renders/structures/navy_outpost/{fort_gate,quay,wall,wall_tower,barracks,brig,watchtower}.png`.
+
+**Notes for the world module:**
+- **The cannon** is two blocks, placed as a bed is: the master (`part=front`, the muzzle end, which owns the block
+  entity) and the rear one block behind it (`part=rear`), both with the muzzle's `facing` and `load=empty`. The
+  template stores the two states; the master's block entity is created on placement with default data (no elevation,
+  no cooldown). A jigsaw rotation turns `facing` with the piece, so the two halves stay together. The gun is unloaded;
+  the cargo barrel beside it is the "powder barrel" as decoration, it holds nothing. Firing needs powder and shot
+  (§8.2), so a garrison that should fire must be supplied by the world module or a loot table.
+- **The flag:** the top block of each flagpole (the gate's [10, 4, 9], the tower's [3, 11, 3]) is
+  `flagpole[flag=navy,facing=east]` with the block entity data `{flagpole: {kind: "navy", item: {id:
+  "pirates_n_ships:navy_flag", count: 1}}}`, the format `FlagpoleBlockEntity` saves. The poles below it are bare
+  (`flag=none`, no data). The pole turns the flag with the wind once it ticks. `Piece` has no general block entity
+  call, so `_style.flagpole` puts the hoisted pole into the piece's `jigsaws` map, which `Piece.spec()` emits as
+  `block_entity` operations.
+- **Brig doors** are closed and unlocked: a generated door has no owner (`BrigDoorBlockEntity` is created empty on
+  placement), and a locked door without an owner would open only with a key.
+- Chests and barrels are empty (no loot tables yet).

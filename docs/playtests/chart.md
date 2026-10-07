@@ -62,8 +62,8 @@ drawing itself is drawn by the block entity renderer.
    picture stays, no flicker or z-fighting against the parchment. A second player sees the same picture.
 9. **Redraw:** draw a different area: the whole picture (and the markers) is replaced, nothing of the old one stays.
 10. **Break and re-place:** break the drawn tile with an axe (fast) and by hand: it drops one tile whose tooltip names
-    the drawer and the area; place it elsewhere (also on a wall): the same picture appears. Two drawn tiles do not
-    stack with each other or with blank ones.
+    the drawer and the area; place it elsewhere (also on a wall): the same picture appears. A drawn tile does not stack with
+    blank ones or with tiles showing another drawing.
 11. **Refusals (action bar):** no chart in hand: "You need a chart in hand to draw on the tile"; walk more than 8
     blocks away with the screen open and click Draw: "You are too far from the map tile"; break the tile while the
     screen is open and click Draw: "That map tile is gone".

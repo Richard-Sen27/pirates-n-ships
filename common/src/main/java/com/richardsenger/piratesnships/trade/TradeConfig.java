@@ -133,6 +133,8 @@ public final class TradeConfig {
             "How far (blocks) a player may move from where the market was opened and still trade");
     public static final ConfigValue<Double> CONTAINER_REACH = BACKEND.doubleRange("container_reach", 16.0, 1.0, 256.0,
             "How far (blocks) a cargo container may be from the player to buy into it or sell or deliver from it");
+    public static final ConfigValue<Integer> MARKET_REFRESH_TICKS = BACKEND.intRange("market_refresh_ticks", 20, 1, 1200,
+            "How often (ticks) open market screens are re-sent when what they show changed (prices, stock, the viewer's doubloons)");
 
     // --- Harbor master's desks -------------------------------------------------------------------------------
     private static final ConfigSection DESKS = S.section("harbor_desks", "Harbor master's desks: the block that opens a port's market screen");

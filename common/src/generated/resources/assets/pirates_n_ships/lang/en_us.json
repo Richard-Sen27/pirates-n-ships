@@ -573,6 +573,8 @@
   "pirates_n_ships.configuration.cargo_trade.market_backend.container_reach.tooltip": "How far (blocks) a cargo container may be from the player to buy into it or sell or deliver from it",
   "pirates_n_ships.configuration.cargo_trade.market_backend.market_reach": "Market Reach",
   "pirates_n_ships.configuration.cargo_trade.market_backend.market_reach.tooltip": "How far (blocks) a player may move from where the market was opened and still trade",
+  "pirates_n_ships.configuration.cargo_trade.market_backend.market_refresh_ticks": "Market Refresh Ticks",
+  "pirates_n_ships.configuration.cargo_trade.market_backend.market_refresh_ticks.tooltip": "How often (ticks) open market screens are re-sent when what they show changed (prices, stock, the viewer's doubloons)",
   "pirates_n_ships.configuration.cargo_trade.market_backend.max_trade_quantity": "Max Trade Quantity",
   "pirates_n_ships.configuration.cargo_trade.market_backend.max_trade_quantity.tooltip": "Largest quantity one buy or sell request may move",
   "pirates_n_ships.configuration.cargo_trade.plunder": "Plunder",

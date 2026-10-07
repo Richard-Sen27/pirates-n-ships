@@ -10,13 +10,17 @@ F9.expand = function(p){
   const leanSh = [0, -10*(1-Math.cos(ln)), -10*Math.sin(ln)];
   const twR = [5*(1-Math.cos(tw)), 0, 5*Math.sin(tw)];
   const twL = [-5*(1-Math.cos(tw)), 0, -5*Math.sin(tw)];
-  return {
+  const e = {
     torso: {rotation: [p.lean||0, p.twist||0, 0], position: leanTop},
     head: {position: leanTop},
     right_arm: {rotation: p.ra, position: add(add(leanSh, twR), p.raPos||[0,0,0])},
     left_arm: {rotation: p.la, position: add(add(leanSh, twL), p.laPos||[0,0,0])},
     right_item: p.riPos ? {rotation: p.ri||[0,0,0], position: p.riPos} : {rotation: p.ri||[0,0,0]}
   };
+  // legs only when a pose sets them (GR2: they override vanilla's seated riding legs)
+  if (p.rl) e.right_leg = {rotation: p.rl};
+  if (p.ll) e.left_leg = {rotation: p.ll};
+  return e;
 };
 F9.toInternal = (ch, v) => ch==='rotation' ? [-v[0],-v[1],v[2]] : [-v[0],v[1],v[2]];
 F9.make = function(name, length, loop, keys){
@@ -441,5 +445,19 @@ F9.proxy = function(kind){
   for (const c of Cube.all) if (c.parent && c.parent.name==='right_item') c.visibility = kind==='sword' ? !/^(pistol|musket)_/.test(c.name) : c.name.startsWith(kind+'_');
   Canvas.updateVisibility();
 };
+// Rope slide pose (GR2): hanging from a grappling rope with both hands. Arms straight up and a little forward, z
+// tilts them in toward the rope above the head (z positive on a raised right arm = inwards); the legs hang straight
+// and slightly apart instead of vanilla's seated riding pose. rl / ll key the legs (rotation only). Exported to
+// common/src/main/resources/assets/pirates_n_ships/rope_animations/rope_slide.json (not player_animations/, see
+// PalRopeSlidePoses); the file was written by script from these values without Blockbench, so this pose has no
+// render strip yet. Same convention as above.
+F9.R = {
+ REST: {ra: [-18, 0, 0], la: [0, 0, 0], rl: [0, 0, 0], ll: [0, 0, 0]},
+ HANG: {ra: [-172, 0, 6], la: [-172, 0, -6], rl: [-6, 0, 3], ll: [-2, 0, -3]}
+};
+F9.buildRope = function(){
+F9.make('rope_slide', 0.25, 'hold', [{t:0,pose:F9.R.REST},{t:0.25,pose:F9.R.HANG}]);
+};
 F9.build();
 F9.buildFirearms();
+F9.buildRope();

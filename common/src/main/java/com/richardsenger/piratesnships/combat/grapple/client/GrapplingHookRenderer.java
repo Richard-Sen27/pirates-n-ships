@@ -5,10 +5,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.grapple.GrapplingHookEntity;
-import com.richardsenger.piratesnships.combat.grapple.MooringRingBlock;
-import net.minecraft.core.BlockPos;
-import org.jetbrains.annotations.Nullable;
-import com.richardsenger.piratesnships.ship.sable.ClientShipPoses;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -28,11 +24,15 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
+import java.util.List;
+
 /**
  * Draws a grappling hook (the hook item as a billboard) and its rope to the thrower's hand (docs/design.md §8.3). A
  * latched hook is drawn at its plot position through the ship's render pose ({@link ClientShipPoses}), so it sits on
  * the moving hull without lag; the rope is a thin square strip with the {@code rope.png} texture, like the stays of
- * {@code sailing.client.StayClothRenderer}, straight while taut and sagging otherwise.
+ * {@code sailing.client.StayClothRenderer}, straight while taut and sagging otherwise. The near end is the thrower's
+ * hand, the mooring ring it is tied to (GR1) or its pin (GR2, {@link ClientRopes#fixedNearEnd}); players sliding on it
+ * pull it into straight pieces through their hands.
  */
 public class GrapplingHookRenderer extends EntityRenderer<GrapplingHookEntity> {
 
@@ -56,7 +56,7 @@ public class GrapplingHookRenderer extends EntityRenderer<GrapplingHookEntity> {
     public boolean shouldRender(GrapplingHookEntity hook, Frustum frustum, double camX, double camY, double camZ) {
         Entity owner = hook.getOwner();
         AABB box = hook.getBoundingBox().inflate(0.5);
-        Vec3 ring = ringPos(hook, 1.0f);
+        Vec3 ring = ClientRopes.fixedNearEnd(hook, 1.0f);
         if (ring != null) {
             box = box.minmax(new AABB(ring, ring).inflate(0.5));
         } else if (owner != null) {
@@ -69,13 +69,7 @@ public class GrapplingHookRenderer extends EntityRenderer<GrapplingHookEntity> {
     public void render(GrapplingHookEntity hook, float yaw, float partialTick, PoseStack pose, MultiBufferSource buffers, int light) {
         Vec3 base = new Vec3(Mth.lerp(partialTick, hook.xOld, hook.getX()), Mth.lerp(partialTick, hook.yOld, hook.getY()),
                 Mth.lerp(partialTick, hook.zOld, hook.getZ()));
-        Vec3 at = base;
-        if (hook.state() == GrapplingHookEntity.State.LATCHED) {
-            Vec3 onShip = ClientShipPoses.toWorld(hook.level(), hook.syncedPlotPos(), partialTick);
-            if (onShip != null) {
-                at = onShip;
-            }
-        }
+        Vec3 at = ClientRopes.hookPos(hook, partialTick);
         Vec3 off = at.subtract(base);
 
         pose.pushPose();
@@ -86,31 +80,34 @@ public class GrapplingHookRenderer extends EntityRenderer<GrapplingHookEntity> {
         items.renderStatic(hook.getItem(), ItemDisplayContext.GROUND, light, OverlayTexture.NO_OVERLAY, pose, buffers, hook.level(), hook.getId());
         pose.popPose();
 
-        Vec3 ring = ringPos(hook, partialTick);
+        Vec3 ring = ClientRopes.fixedNearEnd(hook, partialTick);
         Vec3 end = ring != null ? ring : hook.getOwner() instanceof Player owner ? handPos(owner, partialTick) : null;
         if (end != null) {
             Vec3 hand = end.subtract(base);
             Vector3f from = new Vector3f((float) off.x, (float) off.y, (float) off.z);
             Vector3f to = new Vector3f((float) hand.x, (float) hand.y, (float) hand.z);
-            float len = from.distance(to);
-            float sag = hook.taut() ? 0f : Math.min(MAX_SAG, SAG_PER_BLOCK * len);
-            rope(buffers.getBuffer(RenderType.entityCutoutNoCull(ROPE_TEXTURE)), pose.last(), from, to, sag, light);
+            VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(ROPE_TEXTURE));
+            List<Vec3> grips = hook.state() == GrapplingHookEntity.State.LATCHED ? ClientRopes.grips(hook, at, end, partialTick) : List.of();
+            if (grips.isEmpty()) {
+                float len = from.distance(to);
+                float sag = hook.taut() ? 0f : Math.min(MAX_SAG, SAG_PER_BLOCK * len);
+                rope(vc, pose.last(), from, to, sag, light);
+            } else {
+                // riders pull the rope taut: straight pieces from the hook through every grip to the near end (GR2)
+                Vector3f prev = from;
+                float v = 0f;
+                for (Vec3 g : grips) {
+                    Vec3 rel = g.subtract(base);
+                    Vector3f next = new Vector3f((float) rel.x, (float) rel.y, (float) rel.z);
+                    float len = prev.distance(next);
+                    beam(vc, pose.last(), prev, next, v, v + len, light);
+                    v += len;
+                    prev = next;
+                }
+                beam(vc, pose.last(), prev, to, v, v + prev.distance(to), light);
+            }
         }
         super.render(hook, yaw, partialTick, pose, buffers, light);
-    }
-
-    /**
-     * The middle of the mooring ring the rope is tied to (GR1), through the ship's render pose for a ring on a ship, or
-     * null when the rope is not tied.
-     */
-    private static @Nullable Vec3 ringPos(GrapplingHookEntity hook, float partialTick) {
-        BlockPos pos = hook.syncedTiedRing().orElse(null);
-        if (pos == null) {
-            return null;
-        }
-        Vec3 center = MooringRingBlock.ringCenter(hook.level(), pos);
-        Vec3 onShip = ClientShipPoses.toWorld(hook.level(), center, partialTick);
-        return onShip != null ? onShip : center;
     }
 
     /** The rope as {@link #SEGMENTS} straight pieces along a parabola that hangs {@code sag} blocks at its middle. */

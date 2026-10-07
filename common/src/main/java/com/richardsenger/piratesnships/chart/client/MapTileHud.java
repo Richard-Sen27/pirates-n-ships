@@ -13,7 +13,8 @@ import net.minecraft.world.phys.HitResult;
 
 /**
  * A HUD layer (client only, work package MAP2): while the crosshair rests on a drawn map tile, two lines under it
- * name who drew it on which day and the area it shows, like a sign's text you read by looking at it.
+ * name who drew (or last updated) it on which day and the area it shows (a board's whole area, MAP3, with a third line
+ * for the board's size and zoom), like a sign's text you read by looking at it.
  */
 public final class MapTileHud {
 
@@ -38,5 +39,7 @@ public final class MapTileHud {
         Component area = ChartText.tileArea(d);
         g.drawString(mc.font, by, x - mc.font.width(by) / 2, y, COLOR, true);
         g.drawString(mc.font, area, x - mc.font.width(area) / 2, y + 10, DIM, true);
+        Component board = ChartText.board(d);
+        if (!board.getString().isEmpty()) g.drawString(mc.font, board, x - mc.font.width(board) / 2, y + 20, DIM, true);
     }
 }

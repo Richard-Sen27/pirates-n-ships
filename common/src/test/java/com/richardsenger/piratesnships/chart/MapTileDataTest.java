@@ -7,6 +7,8 @@ import com.richardsenger.piratesnships.chart.data.MarkerIcon;
 import com.richardsenger.piratesnships.chart.data.PixelPack;
 import com.richardsenger.piratesnships.chart.data.TileMarker;
 import com.richardsenger.piratesnships.chart.net.ChartOpenPayload;
+import com.richardsenger.piratesnships.chart.net.ClearBoardPayload;
+import com.richardsenger.piratesnships.chart.tile.BoardRules;
 import com.richardsenger.piratesnships.chart.net.ChartSettings;
 import com.richardsenger.piratesnships.chart.net.DrawTilePayload;
 import com.richardsenger.piratesnships.chart.net.TileTarget;
@@ -111,6 +113,35 @@ class MapTileDataTest {
         assertTrue(!a.known(0, 127), "the unknown bottom rows are not known");
     }
 
+    /** MAP3: the slices of one board, built from the board's area, are consistent and survive NBT, the network and the item. */
+    @Test
+    void boardSlicesAreConsistentAndSurviveTheItem() {
+        MapTileDrawing a = sample();
+        UUID id = new UUID(7, 9);
+        BoardRules.Area area = new BoardRules.Area(-10, 5, 128, 2, 4);
+        List<BoardRules.Slot> slots = new java.util.ArrayList<>();
+        for (int row = 0; row < 2; row++) {
+            for (int col = 0; col < 3; col++) {
+                MapTileDrawing d = new MapTileDrawing(128, a.pixels(), area.sliceMinCx(col), area.sliceMinCz(row), 4, "Mary Read", 50,
+                        List.of(new TileMarker(MarkerIcon.X, -2, 3, "seam")), 2, Optional.of(new BoardSlice(id, col, row, 3, 2)), true);
+                assertEquals(d, MapTileDrawing.CODEC.parse(NbtOps.INSTANCE, MapTileDrawing.CODEC.encodeStart(NbtOps.INSTANCE, d).getOrThrow()).getOrThrow());
+                assertEquals(d, roundTrip(MapTileDrawing.STREAM_CODEC, d), "the item component's network form");
+                assertTrue(d.updated(), "the update flag survives");
+                slots.add(new BoardRules.Slot(col, row, d));
+            }
+        }
+        BoardRules.Existing e = BoardRules.existing(slots, 3, 2);
+        assertEquals(BoardRules.State.INTACT, e.state());
+        assertEquals(area, e.area());
+        // the slice in column 2 starts 2 * 128 * 2 cells east of the board
+        assertEquals(-10 + 512, slots.get(2).drawing().minCx());
+        assertEquals(slots.get(2).drawing().minX(), (long) (-10 + 512) * 4);
+        // an older drawing without the flag reads as a first draw
+        CompoundTag tag = (CompoundTag) MapTileDrawing.CODEC.encodeStart(NbtOps.INSTANCE, slots.get(0).drawing()).getOrThrow();
+        tag.remove("updated");
+        assertTrue(!MapTileDrawing.CODEC.parse(NbtOps.INSTANCE, tag).getOrThrow().updated());
+    }
+
     @Test
     void badStoredPixelsAreACodecError() {
         CompoundTag tag = (CompoundTag) MapTileDrawing.CODEC.encodeStart(NbtOps.INSTANCE, sample()).getOrThrow();
@@ -153,7 +184,18 @@ class MapTileDataTest {
     void payloadsSurviveTheNetwork() {
         DrawTilePayload draw = new DrawTilePayload(new BlockPos(10, -3, 99), -1234, 567, true);
         assertEquals(draw, roundTrip(DrawTilePayload.CODEC, draw));
-        TileTarget target = new TileTarget(new BlockPos(1, 2, 3), 128, true, -70, 80);
+        assertEquals(1, draw.zoom(), "MAP2's draw is zoom 1");
+        DrawTilePayload zoomed = new DrawTilePayload(new BlockPos(10, -3, 99), -1234, 567, 6, false, false);
+        assertEquals(zoomed, roundTrip(DrawTilePayload.CODEC, zoomed));
+        DrawTilePayload update = DrawTilePayload.update(new BlockPos(4, 5, 6), true);
+        assertEquals(update, roundTrip(DrawTilePayload.CODEC, update));
+        assertTrue(update.update());
+        ClearBoardPayload clear = new ClearBoardPayload(new BlockPos(-8, 70, 12));
+        assertEquals(clear, roundTrip(ClearBoardPayload.CODEC, clear));
+        TileTarget target = new TileTarget(new BlockPos(1, 2, 3), 128, BoardRules.State.INTACT, -70, 80, 3, 2, 4, 8, false, 1, 8);
+        assertEquals(target, roundTrip(TileTarget.STREAM_CODEC, target));
+        assertTrue(target.drawn() && target.updatable());
+        assertEquals(6, target.tiles());
         ChartOpenPayload open = new ChartOpenPayload(ChartSettings.DEFAULT, List.of(), Optional.of(target));
         assertEquals(open, roundTrip(ChartOpenPayload.CODEC, open));
         ChartOpenPayload plain = new ChartOpenPayload(ChartSettings.DEFAULT, List.of());

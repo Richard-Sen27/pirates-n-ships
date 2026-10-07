@@ -93,7 +93,7 @@ public final class LawModule implements ModModule {
             tags.tag(LawTags.LAW_PROTECTED).add(EntityType.VILLAGER, EntityType.WANDERING_TRADER);
             tags.tag(LawTags.LAW_ENFORCERS).add(EntityType.IRON_GOLEM).addTag(LawTags.NAVY);
         });
-        data.models(m -> m.flatItem(ProofContent.BOUNTY_PROOF.get()));
+        // The bounty proof has a hand-made item model (art/models/bounty_proof.bbmodel), so datagen writes none
         data.lang(lang -> {
             lang.item(ProofContent.BOUNTY_PROOF, "Bounty Proof")
                     .add(BountyProofItem.TOOLTIP_TARGET, "Proof of the death of %s")

@@ -251,6 +251,28 @@ Items (trade goods batch: cloth, spices, tobacco, F8e):
   live only in the running app, like the F8d ones. One offscreen view renders whichever project is active, so it
   serves several projects in turn.
 
+Items (doubloon and bounty proof, F8f):
+- No new colours: the doubloon uses `gold` / `brass_light` / `brass` / `brass_dark` of `palette.png` (particle
+  `palette`); the bounty proof uses `paper` and `biscuit_light` / `biscuit_dark` (`palette_3`), `twine` (`palette_4`),
+  `red` and `leather_dark` (`palette`) and `spice_dark` (`palette_4`) for the stamp (particle `palette_3`).
+- **Four-bar octagons cannot also be tilted.** An element has one rotation axis; the octagon's diagonal bars already
+  use it (about the disc's normal), so the hardtack's `x -45` tilt on every element is not available. The doubloon
+  (22 elements: three coins of four bars, a 0.3 px face octagon inset as the worn rim, a raised cross pattée of six
+  0.5 px bars with `brass_dark` down and west faces as the emboss shadow) is therefore built facing south like a
+  sprite, stacked along z, and tilted only in the icon by an extra `gui` display entry, rotation `[-45, 0, 0]`
+  (negative x leans the top away, like the hardtack's element tilt). The seven vanilla `item/generated` slots stay
+  unchanged, so hand, ground and item frame show the coin face upright like the old sprite.
+- **Bounty proof** (12 elements): a rolled scroll on the 45 degree diagonal (built upright along y, `z -45` about
+  `[8, 8, 8]` like the cloth), so its rolls are two crossed boxes (D x 0.7 D), not four bars. The wider box's front and
+  back faces take the darker `biscuit_light`, so the roll reads round from the front. The inner roll (`twine`, ends
+  `biscuit_dark`) is 0.62 D and sticks out 0.5 px at both ends; ribbon band 0.1 px proud, wax seal of two crossed
+  boxes with a `spice_dark` stamp, two short ribbon tails towards the lower right.
+- Builders: `F8F.octZ(P, name, cx, cy, D, z0, z1, side, front, back, eps)` (four-bar octagon about z, using the F8E
+  part format), `F8F.doubloonParts(opts)`, `F8F.proofParts(opts)` / `F8F.proofBuild(opts)` and
+  `F8F.exportAll(name, particleSheet, gui)` (F8E's export plus an optional `gui` display entry); like the F8E helpers
+  they live only in the running app.
+- The market screen draws the doubloon with `GuiGraphics.renderItem`, so the 3D model shows there without changes.
+
 Entity models use the Modded Entity format (Mojang mappings 1.17+); paste the body of the exported
 `createBodyLayer()` into the renderer's layer method (example: `AnchorRenderer.createLayer`).
 

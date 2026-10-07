@@ -5,7 +5,7 @@ Run (from the repository root):
     python3 -m venv tools/.venv
     tools/.venv/bin/pip install -r tools/requirements.txt
     tools/.venv/bin/python tools/gen_placeholder_textures.py            # write every texture
-    tools/.venv/bin/python tools/gen_placeholder_textures.py --only doubloon brig_door    # just these
+    tools/.venv/bin/python tools/gen_placeholder_textures.py --only brig_door    # just these
     tools/.venv/bin/python tools/gen_placeholder_textures.py --list     # print the names
 
 Output: common/src/main/resources/assets/pirates_n_ships/textures/{item,block}/<name>.png
@@ -16,7 +16,7 @@ flagpole, cargo crate, cargo barrel, pantry, water barrel, brig bars and brig do
 sprite is here) have hand-made Blockbench models with vanilla textures
 (art/models/) and no textures here; the rapier, cutlass, saber,
 pistol, musket, lead shot, cannonball, grappling hook, shackles, rum, hardtack, lime, salt pork, salted fish, cloth,
-spices and tobacco have hand-made item models textured from the item palettes
+spices, tobacco and the doubloon have hand-made item models textured from the item palettes
 (tools/gen_item_palette.py).
 """
 import argparse
@@ -28,7 +28,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 TEX = ROOT / "common/src/main/resources/assets/pirates_n_ships/textures"
 PROTECTED_FILE = Path(__file__).resolve().parent / "protected_textures.txt"
-# Names of hand-made textures this script must not overwrite (e.g. "doubloon").
+# Names of hand-made textures this script must not overwrite (e.g. "brig_door").
 PROTECTED = set()
 FOREIGN_PREFIXES = ("test_block",)
 
@@ -124,15 +124,6 @@ def planks(name, base="plank", dark="plank_d", light="plank_l"):
 
 # ---------------------------------------------------------------- items
 
-def doubloon():
-    cv = Canvas()
-    cv.disc(7.5, 7.5, 5.6, "gold_d")
-    cv.disc(7.5, 7.5, 4.4, "gold")
-    cv.rect(7, 5, 8, 10, "gold_l")
-    cv.rect(5, 7, 10, 8, "gold_l")
-    return cv.outline()
-
-
 def brig_door_item():
     cv = Canvas()
     cv.rect(4, 1, 11, 14, "wood")
@@ -146,7 +137,6 @@ def brig_door_item():
 # ---------------------------------------------------------------- blocks
 
 ITEMS = {
-    "doubloon": doubloon,
     "brig_door": brig_door_item,
 }
 BLOCKS = {}

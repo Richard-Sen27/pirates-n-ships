@@ -3,8 +3,11 @@ package com.richardsenger.piratesnships.combat.grapple;
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
 import com.richardsenger.piratesnships.sailing.rope.RopeAnchorBlockEntity;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -13,8 +16,8 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 
 /**
- * Registered content of the grappling hook (docs/design.md §8.3): the thrown hook entity, the mooring ring (GR1)
- * and the rope rider (GR2).
+ * Registered content of the grappling hook (docs/design.md §8.3): the thrown hook entity, the mooring ring (GR1),
+ * the rope rider (GR2) and the {@code grapple_loaded} component of a hook-loaded launcher (GR3).
  * The item itself is {@code combat.content.CombatContent#GRAPPLING_HOOK}, a {@link GrapplingHookItem}.
  */
 public final class GrappleContent {
@@ -41,10 +44,26 @@ public final class GrappleContent {
             ModRegistry.blockEntity("mooring_ring",
                     (pos, state) -> new RopeAnchorBlockEntity(GrappleContent.MOORING_RING_BLOCK_ENTITY.get(), pos, state), MOORING_RING);
 
+    /**
+     * Present on a crossbow or musket that holds a grappling hook (GR3, {@link LoadedHook}); removed when it fires.
+     * Saved and synced to the client (the musket's {@code musket_hook} model reads it).
+     */
+    public static final RegistryEntry<DataComponentType<?>, DataComponentType<LoadedHook>> LOADED_HOOK = ModRegistry.dataComponent(
+            "grapple_loaded", b -> b.persistent(LoadedHook.CODEC).networkSynchronized(LoadedHook.STREAM_CODEC));
+
     private GrappleContent() {
     }
 
     public static void init() {
         // class load registers the entries
+    }
+
+    /** The hook sitting in {@code launcher}, or {@code null}. */
+    public static @Nullable LoadedHook loadedHook(ItemStack launcher) {
+        return launcher.get(LOADED_HOOK.get());
+    }
+
+    public static boolean isHookLoaded(ItemStack launcher) {
+        return launcher.has(LOADED_HOOK.get());
     }
 }

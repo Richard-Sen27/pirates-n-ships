@@ -140,7 +140,8 @@ class HandMadeModelsTest {
             JsonObject loaded = itemModel(gun + "_loaded");
             JsonArray overrides = base.getAsJsonArray("overrides");
             assertNotNull(overrides, gun + ": no overrides");
-            assertEquals(1, overrides.size(), gun + ": overrides");
+            // the musket also shows a loaded grappling hook (GR3), through a second override after this one
+            assertEquals(gun.equals("musket") ? 2 : 1, overrides.size(), gun + ": overrides");
             JsonObject override = overrides.get(0).getAsJsonObject();
             JsonObject predicate = override.getAsJsonObject("predicate");
             assertEquals(Set.of("pirates_n_ships:loaded"), predicate.keySet(), gun + ": predicate");
@@ -160,7 +161,22 @@ class HandMadeModelsTest {
         }
     }
 
-    /** Every override of a hand-made item model points at an existing hand-made model of ours. */
+    /** Generated models (datagen) that hand-made overrides may point at: placeholders until their Blockbench model. */
+    static final Path GENERATED_MODELS = Path.of("src/generated/resources/assets/pirates_n_ships/models");
+
+    /**
+     * The musket's hook override (GR3) comes after the cocked-hammer one, so it wins on a musket that is both loaded
+     * and holding a hook (vanilla resolves the last matching override).
+     */
+    @Test
+    void musketShowsALoadedHookLast() throws IOException {
+        JsonArray overrides = itemModel("musket").getAsJsonArray("overrides");
+        JsonObject last = overrides.get(overrides.size() - 1).getAsJsonObject();
+        assertEquals(Set.of("pirates_n_ships:grapple_loaded"), last.getAsJsonObject("predicate").keySet());
+        assertEquals("pirates_n_ships:item/musket_hook", last.get("model").getAsString());
+    }
+
+    /** Every override of a hand-made item model points at an existing model of ours (hand-made or generated). */
     @Test
     void everyItemModelOverrideTargetExists() throws IOException {
         for (Path file : jsonFiles(MAIN_MODELS.resolve("item"))) {
@@ -169,8 +185,9 @@ class HandMadeModelsTest {
             for (JsonElement o : json.getAsJsonArray("overrides")) {
                 String model = o.getAsJsonObject().get("model").getAsString();
                 assertTrue(model.startsWith("pirates_n_ships:item/"), file + ": override target " + model);
-                Path target = MAIN_MODELS.resolve(model.substring("pirates_n_ships:".length()) + ".json");
-                assertTrue(Files.isRegularFile(target), file + ": override target " + model + " has no hand-made file");
+                String path = model.substring("pirates_n_ships:".length()) + ".json";
+                assertTrue(Files.isRegularFile(MAIN_MODELS.resolve(path)) || Files.isRegularFile(GENERATED_MODELS.resolve(path)),
+                        file + ": override target " + model + " has no hand-made or generated file");
                 assertFalse(o.getAsJsonObject().getAsJsonObject("predicate").isEmpty(), file + ": empty predicate");
             }
         }

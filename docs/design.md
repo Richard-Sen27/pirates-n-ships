@@ -357,7 +357,7 @@ Firearms get a reload animation, smoke and recoil. Rain reduces reliability (a m
 
 ### 8.3 Grappling hook
 
-**Implemented (GR1):** the hook can be launched from a crossbow (a draw, 1.6× speed, rope 36) or a musket (one gunpowder, a blank shot with the musket's cooldown, recoil and rain rule, 2.4× speed, rope 48); the mooring ring block is a sure target (catch radius, double hold) and a tie-off point for the rope's near end, so a ship rather than a player holds the rope.
+**Launching (GR3, decided 2026-10-07 on the human's request; replaces GR1's launch path):** the hook is held in the **offhand** and the launcher, a crossbow or a musket, in the main hand. Holding use runs the launcher's own loading session and animation (the crossbow's draw; the musket's reload with one gunpowder) and moves the hook from the offhand into the weapon, which then shows it loaded; holding use again aims (the firearm aim session) and releasing fires the hook with the launcher's speed and rope length (crossbow 1.6× and rope 36, musket 2.4× and rope 48, musket recoil and rain misfire as for a shot). A plain click fires at once as with firearms. A hook in the main hand without a launcher is still thrown by hand (G11). The mooring ring (GR1) stays: a sure target (catch radius, double hold) and a tie-off point for the rope's near end, so a ship rather than a player holds the rope.
 - **Version 1:** throw or shoot the hook at a block (including blocks on a moving ship) and pull yourself to the hook point.
 - **Version 2:** rope physics: swing, climb up and down, balance on the rope between two ships.
 - The hook attaches in ship-local coordinates, so it follows the moving ship.

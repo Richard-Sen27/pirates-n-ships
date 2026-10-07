@@ -645,7 +645,6 @@ on by default; vanilla weapons are untouched):
 | Notice Board | 4 planks, 2 paper | Lists every bounty and places new ones for doubloons. |
 | Mermaid, Lion, Eagle and Skull Figurehead | 4 planks and a prismarine shard, gold ingot, feather or bone | Decoration for the bow. Click the hull block it should hang on: the plate lands there and the figure looks at you. |
 | Nameplate | any sign, 1 gold nugget | A board on two iron brackets that shows the ship's name once the ship is assembled and named (name tag on the helm); long names shrink to fit, renaming updates every plate within a second, disassembly clears them. Server option `ship_identity.nameplate_shows_name`. |
-| Test Block | none | A development block. |
 
 All blocks drop themselves. Wooden ones are mined with an axe, the bars and the door with a pickaxe.
 

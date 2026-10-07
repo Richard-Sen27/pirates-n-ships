@@ -76,4 +76,9 @@ dependencies {
     // GeckoLib (required on both sides, animated entities). The NeoForge jar contains GeckoLib's common classes and
     // declares no dependencies.
     implementation("software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}")
+    // GuideME (optional, docs/guide.md as an in-game book, tools/gen_guideme.py). Runtime only: the guide is pure
+    // resources (assets/pirates_n_ships/guideme_guides/, guides/), and nothing in our code compiles against GuideME.
+    // On the runtime classpath so the dev client, the GameTest server and runData see it. Maven Central, no
+    // dependencies in its POM.
+    runtimeOnly("org.appliedenergistics:guideme:${guideme_version}")
 }

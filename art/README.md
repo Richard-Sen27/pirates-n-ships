@@ -628,14 +628,15 @@ Item models (ART1a, ART1b):
   on the sea, a red X of two bars at +45 and -45 (the second 0.06 px above the first) and three route dots; built
   facing south like a sprite. Display as the doubloon (flat in the hand, `ground` lying flat), `gui` `[25, -20, 0]` /
   0.95 (top edge and right side show).
-- **`palette_5.png`** (texture `#4`, same script) holds the flag and map colours; two spare cells remain.
+- **`palette_5.png`** (texture `#4`, same script) holds the flag and map colours and, since ART1c, the kraken beak's
+  horn in the two former spare cells. It is full: the next new colour needs a `palette_6.png`.
 
   | v \ u | 0 | 4 | 8 | 12 |
   |---|---|---|---|---|
   | 0 | navy_light | navy | navy_dark | flag_white |
   | 4 | flag_white_shade | flag_red | flag_red_dark | flag_black |
   | 8 | flag_black_shade | flag_black_light | map_sea | map_sea_dark |
-  | 12 | map_land | map_ink | spare | spare_2 |
+  | 12 | map_land | map_ink | horn | horn_light |
 - Built like F8i: a Python part list (patch names resolved through `tools/gen_item_palette.py`'s `SHEETS`) wrote one
   JSON spec per model, and `ART1B.load(name)` in `risky_eval` built it cube by cube in a new `java_block` tab
   (palette textures from `fromPath` with `id`, `folder` and `namespace` set again, display slots into
@@ -646,8 +647,59 @@ Item models (ART1a, ART1b):
 - Sprites removed: `textures/block/hull_patch.png` (with its script `tools/gen_hull_textures.py`, which drew nothing
   else) and `textures/item/rope.png` (from `tools/gen_sailing_textures.py`; `textures/block/rope.png` stays, the stay
   renderer uses it). `textures/item/chart.png` and `textures/item/map_tile.png` stay for now because
-  `ChartTexturesTest` requires them; the flag sprites of `tools/gen_flag_textures.py` (`item/<flag>.png`) are no
-  longer referenced by any model either.
+  `ChartTexturesTest` requires them. The flag sprites (`item/<flag>.png`) and their code in
+  `tools/gen_flag_textures.py` were removed in ART1c; the script now writes only the flown cloth (`block/flag_*.png`).
+
+Item models (ART1c: kraken beak and ink, carpenter's hammer, saw, nails, Shipwright's Toolkit, hook-loaded musket):
+- One `java_block` project per model, no block of the same name, so lint finds each by name. Built like ART1b from a
+  Python part list (patch names through `SHEETS`) written as model JSON, then rebuilt cube by cube in a new tab
+  (`ART1C.load(name)`: palette textures from `fromPath` with `id`, `folder`, `namespace`; display slots into
+  `Project.display_settings`) and exported with `Codecs.java_block.compile()` plus `credit`, `gui_light`, the particle
+  and the source's full display entries (compile drops default rotation/translation/scale, the committed files keep
+  them like the older items). Helpers not committed; rebuild them from these notes.
+- **Bar helper.** `seg(cx, cy, angle, length, width, z0, z1)` places a bar whose axis points `angle` degrees clockwise
+  from up, in 22.5 degree steps: built along y and rotated `-angle` for -45..45, built along x and rotated
+  `90 - angle` (or `-90 - angle`) otherwise. `dseg` takes a diagonal frame instead (v along 45 degrees up-right, u
+  across towards the lower right), which is how all six new tools are laid out. Curves walk a spine of such bars (the
+  beak: 45, 45, 45, 67.5, 90, 112.5, 135 degrees, each 0.5 px longer than its step so the joints close).
+- **Kraken beak** (24 elements, `palette_5` only, handheld slots): each spine section is two crossed boxes (wide and
+  flat, narrow and deep) so it reads round from the side; base sections `horn`, the hook `flag_black`; a lower jaw on
+  the lower-right side under the hook; `horn_light` rims round both open ends.
+- **Kraken ink** (22, `item/generated` slots, particle `palette_2`): stacked crossed-box sections like the rum
+  bottle, body `gunmetal_dark` (blue-black), neck tied with `cord` (palette_4) and a `twine`/`cord` end; gloss is a
+  `steel_light` streak and a `gunmetal_light` dot 0.1 px proud of the deep boxes' south faces (the crossed-box front),
+  plus a `navy_dark` sheen on the right.
+- **Carpenter's hammer** (13, handheld): `wood` handle (two crossed boxes, `wood_dark` grip end), head across the
+  handle top, `steel_light` striking face on the upper-left end (faces down in third person like an axe blade),
+  claw on the lower right: a root bar at 135, then two prongs (split 0.24 px in z) at 157.5 and 180 bending back
+  towards the handle.
+- **Saw** (22, handheld, particle `palette_2`): blade in three steps (the toothed upper-left edge steps in towards
+  the tip, the back stays straight), a `steel_light` back strip, teeth as axis-aligned 0.72 px squares on the 45
+  degree edge (they stand out as diamonds), a closed `walnut` handle of four bars round a finger hole, a heel horn and
+  two brass screws through the front bar.
+- **Nails** (26, `item/generated`, particle `palette_2`): seven nails in a 5 + 2 bundle, each shank, point and head;
+  lengths differ so the heads never share a plane; head half-depths grow 0.02 px per nail for the same reason. Two
+  `twine` wraps, a `cord` knot and two twine ends on the front.
+- **Shipwright's Toolkit** (30, handheld): an opened tool roll; the roll (crossed boxes, `wood_dark` core showing at
+  the ends) with a `leather_dark` strap and brass buckle on the lower right, the flap's dark inner side on the upper
+  left, a lighter pocket band with two twine stitch lines; out of the pockets a 0.6 scale copy of the hammer (the
+  hammer builder with `small=True`), a saw blade with six teeth (inside the blade's z range, 0.05 px from its faces)
+  and three nails. The open flap is the GUI view, so no `gui` entry.
+- **Hook-loaded musket** (`musket_hook`, 33): the 24 elements of `musket_loaded` verbatim, then nine `hook_*` parts
+  built in the muzzle frame (origin at the muzzle centre (16.572, 17.584), the barrel's own −45 turn): the shank
+  seated 3 px in the bore and 1.7 px out, a crossbar of two crossed boxes just ahead of the muzzle, two arms at 45
+  degrees to the barrel (axis-aligned in the model: −x on the upper-left side, −y on the lower right) and the fluke
+  blades and points parallel to the barrel, ending beside the muzzle. Display entries and textures are copied from
+  `musket.json`, so the hook sits where the ball variant's barrel ends in every slot;
+  `HandMadeModelsTest.musketHookIsTheLoadedMusketWithAHookAtTheMuzzle` guards it. It replaced GR3's datagen
+  placeholder (`MusketHookModel`, deleted with its test); the override in the hand-made `musket.json` is unchanged.
+  If `musket_loaded` changes, rebuild `musket_hook` from it.
+- Renders: `renders/<name>.png` for all seven, each a strip of four orthographic views (front as in the GUI, two
+  three-quarter views, side) from a separate `THREE.WebGLRenderer` over Blockbench's scene (helpers and grid hidden).
+  No hand views (display mode was not used).
+- Sprites: `textures/item/kraken_beak.png` and `kraken_ink.png` (`tools/gen_kraken.py`) are no longer used by any model
+  but stay because `KrakenRigTest` reads them; `carpenters_hammer`, `saw`, `nails` and `shipwright_toolkit.png`
+  (`tools/gen_placeholder_textures.py`) are unused too and can go with their generator code in a cleanup.
 
 ## Entities
 

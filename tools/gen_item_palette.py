@@ -50,16 +50,17 @@ palette_4.png (texture "#3"; trade goods: cloth, spices, tobacco, F8e):
  v 8   spice_red          spice_orange     spice_gold       spice_dark
  v 12  tobacco_light      tobacco_dark     midrib           burlap_weave
 
-palette_5.png (texture "#4"; flag bundles and the map tile, ART1b):
+palette_5.png (texture "#4"; flag bundles and the map tile, ART1b; kraken beak, ART1c):
 
     u:   0                  4                8                12
  v 0   navy_light         navy             navy_dark        flag_white
  v 4   flag_white_shade   flag_red         flag_red_dark    flag_black
  v 8   flag_black_shade   flag_black_light map_sea          map_sea_dark
- v 12  map_land           map_ink          spare            spare
+ v 12  map_land           map_ink          horn             horn_light
 
 The navy, merchant and Jolly Roger colours follow the flown cloth (tools/gen_flag_textures.py: blue with a white
-cross, white with a red stripe, black with a bone skull); the spare cells repeat flag_white and stay unused.
+cross, white with a red stripe, black with a bone skull); horn and horn_light
+(the two former spare cells) colour the kraken beak (ART1c). palette_5 is full: a new colour needs palette_6.png.
 
 cloth_weave (undyed cloth, lighter and light rows) and burlap_weave (light and darker sacking rows) are striped.
 cloth_shadow colours the cloth bolt's end rings. Spare, not used by the F8e models: spice_dark.
@@ -107,7 +108,7 @@ SHEETS = {
         [("navy_light", (82, 120, 188)), ("navy", (52, 84, 150)), ("navy_dark", (30, 50, 98)), ("flag_white", (240, 236, 224))],
         [("flag_white_shade", (204, 198, 182)), ("flag_red", (180, 52, 44)), ("flag_red_dark", (122, 32, 30)), ("flag_black", (42, 40, 46))],
         [("flag_black_shade", (22, 20, 24)), ("flag_black_light", (70, 68, 76)), ("map_sea", (124, 164, 180)), ("map_sea_dark", (84, 124, 146))],
-        [("map_land", (178, 172, 110)), ("map_ink", (58, 44, 34)), ("spare", (240, 236, 224)), ("spare_2", (240, 236, 224))],
+        [("map_land", (178, 172, 110)), ("map_ink", (58, 44, 34)), ("horn", (72, 54, 48)), ("horn_light", (172, 146, 116))],
     ],
 }
 

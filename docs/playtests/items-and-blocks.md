@@ -217,3 +217,38 @@ Addendum (F8h): pistol and musket in the hand: see `firearms.md`.
       shows the old flat block model with the drawn map (only the item changed).
     - **Z-fighting:** no flicker on the cross arms, the red band, the skull and its eye holes, the lashings, the coast
       line, the island, the X or the nail heads in hand, GUI and frame.
+
+22. **Kraken drops, shipwright tools and the hook-loaded musket (ART1c):** renders `art/renders/kraken_beak.png`,
+    `kraken_ink.png`, `carpenters_hammer.png`, `saw.png`, `nails.png`, `shipwright_toolkit.png`, `musket_hook.png`
+    (front as in the GUI, two three-quarter views, side). Give yourself each item (`/give @s pirates_n_ships:<name>`).
+    - **Kraken beak:** in the inventory a curved beak on the diagonal: a broad dark-brown horn base at the lower left
+      with a pale tan rim round its open end, curling over into a black hook whose point turns down to the right,
+      a smaller lower jaw tucked under the hook. Held like a tool (base in the fist, hook forward and up); left hand
+      mirrored; on the ground a small beak on the diagonal; in a frame the same diagonal. Say if it reads as a claw
+      rather than a beak.
+    - **Kraken ink:** in the inventory an upright, bulging blue-black sac about 13 px tall with a pale gloss streak
+      and dot on the upper left, a faint dark-blue sheen on the right, a gathered neck tied with a brown cord whose end
+      hangs to the right. Held in the fist like the whistle (small, upright); on the ground small and upright; in a
+      frame upright. The map board still accepts it as ink.
+    - **Carpenter's hammer:** in the inventory a claw hammer on the diagonal: wooden handle from the lower left, a dark
+      iron head across the top with a bright striking face at the upper left and a split claw bending back down at the
+      right. Held like a vanilla axe (handle in the fist, striking face forward/down); first person at the lower right.
+    - **Saw:** in the inventory a hand saw on the diagonal: a closed walnut handle with a finger hole and two brass
+      screws at the lower left, a steel blade narrowing towards the upper right with small dark teeth along its
+      upper-left edge and a bright back edge. Held like a tool (handle in the fist, teeth down).
+    - **Nails:** in the inventory a small bundle of seven nails on the diagonal (heads at the upper right, points at the
+      lower left), two pale twine wraps round the middle with a brown knot and two short ends on the front. Held in the
+      fist (small, like the whistle); on the ground small; in a frame on the diagonal.
+    - **Shipwright's Toolkit:** in the inventory an opened leather tool roll on the diagonal: the rolled part with a
+      dark strap and brass buckle along the lower right, the dark inner side of the flap at the upper left with a
+      lighter pocket band (two stitch lines) across its lower end, and out of the pockets a small hammer (iron head at
+      the top), a steel saw blade with teeth and three nail heads. Held like a tool (the roll's lower end in the fist).
+      Say if the tools are too small to read in the hotbar.
+    - **Hook-loaded musket:** load a grappling hook into a musket (hook in the off hand, musket in the main hand, as in
+      `grapple.md` GR3). While loaded, the inventory icon and the hand show the cocked musket with the hook at the
+      muzzle: a short shank in the barrel, a crossbar just ahead of the muzzle and two flukes bent back along the barrel
+      on either side. Check first person (the hook at the far end of the barrel, not floating off it) and third person
+      F5 from the side and front (the hook sits where the barrel ends, the gun is held exactly as the ball-loaded
+      musket). Firing or unloading switches back to the plain musket.
+    - **Z-fighting:** no flicker on the beak's rims, the ink gloss, the hammer face, the saw teeth and screws, the
+      twine wraps, the toolkit's pockets, stitches and buckle, or the hook's crossbar in hand, GUI and frame.

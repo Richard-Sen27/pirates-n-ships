@@ -1,6 +1,5 @@
 package com.richardsenger.piratesnships.combat.grapple;
 
-import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.firearms.FirearmLoads;
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
@@ -12,7 +11,6 @@ import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipForces;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.core.Direction;
-import net.minecraft.data.PackOutput;
 import net.minecraft.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
@@ -105,8 +103,7 @@ public final class GrappleModule implements ModModule {
                 .add(GrappleContent.ROPE_RIDER.get().getDescriptionId(), "Rope Slide")
                 .add(RopeSlideService.DISABLED_KEY, "Sliding along ropes is disabled"));
         data.models(GrappleModule::ringModels);
-        // GR3: the hook-loaded musket's placeholder look (the override sits in the hand-made musket.json)
-        data.json(PackOutput.Target.RESOURCE_PACK, "models/item", Constants.id("musket_hook"), MusketHookModel::build);
+        // the hook-loaded musket's look is the hand-made item/musket_hook (ART1c), the override sits in musket.json
         data.blockLoot(loot -> loot.dropSelf(GrappleContent.MOORING_RING.get()));
         data.blockTags(tags -> {
             tags.tag(BlockTags.MINEABLE_WITH_PICKAXE).add(GrappleContent.MOORING_RING.get());

@@ -610,6 +610,12 @@ All blocks drop themselves. Wooden ones are mined with an axe, the bars and the 
 
 ---
 
+### Hats
+Wear a pirate hat, bandana, navy tricorn or officer's bicorne by right-clicking with it or putting it in the
+helmet slot. Each gives +1 armour (server config `apparel.hat_armor`; 0 turns it off). Crafted from three black wool
+over leather, bone, leather (pirate hat), leather, white wool, leather (navy tricorn) or leather, gold nugget, leather
+(officer's bicorne); red wool, string, red wool for the bandana.
+
 ## 11. All items
 
 | Item | Recipe | What it does |

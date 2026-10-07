@@ -493,7 +493,7 @@ All hazards can be turned off individually and have frequency settings.
 
 ### 13.2 Bounties (Kopfgeld)
 
-**Implemented (L1):** proofs and shackled prisoners are turned in by right-clicking a navy officer (hostile officers refuse); pirate NPCs pay `law.pirate_turn_in.<tier>`; the notice board block lists every bounty and places new ones for doubloons (`law.bounty.*`, `player_bounty_minimum`). Notices in villages and outposts wait for the world structures.
+**Hats (H2):** players can wear the navy tricorn, the officer's bicorne, the pirate hat and the bandana (`apparel`); whether a navy hat counts as a disguise for the false-flag rules is still open. **Implemented (L1):** proofs and shackled prisoners are turned in by right-clicking a navy officer (hostile officers refuse); pirate NPCs pay `law.pirate_turn_in.<tier>`; the notice board block lists every bounty and places new ones for doubloons (`law.bounty.*`, `player_bounty_minimum`). Notices in villages and outposts wait for the world structures.
 - When the criminal score passes a threshold, the navy automatically places a bounty that scales with the score.
 - Players can place bounties on other players or NPCs by paying doubloons at a notice board.
 - **Claiming a bounty:** defeat the target and bring a proof item, or capture the target alive (shackles) and deliver them to a navy officer.

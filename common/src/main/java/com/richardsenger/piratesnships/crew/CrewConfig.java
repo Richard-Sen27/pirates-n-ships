@@ -32,6 +32,8 @@ public final class CrewConfig {
             "Morale a crew member gains at dawn after a night in a hammock (capped at 100)");
     public static final ConfigValue<Integer> NO_HAMMOCK_PER_NIGHT = MORALE.intRange("no_hammock_per_night", 10, 0, 100,
             "Morale a crew member loses at dawn after a night on a ship without a free hammock for it (floored at 0)");
+    public static final ConfigValue<Integer> PRESS_GANG_START = MORALE.intRange("press_gang_start", 30, 0, 100,
+            "Morale of a sailor press-ganged into the crew (LA2)");
 
     private CrewConfig() {
     }

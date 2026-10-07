@@ -157,9 +157,8 @@ Give yourself hammocks (`/give @s pirates_n_ships:hammock 4`; recipe: 2 string o
 
 ### ART1d: the hammock model and the lying pose
 The placeholder slab is replaced by the Blockbench hammock (`art/renders/hammock.png`, `hammock_item.png`) and sleepers
-play the rig's new `sleep` animation (`art/renders/anim_crew_sleep.png`). **Precondition:** `CrewMember#pose` must pass
-the resting flag to `CrewPose.choose(moving, working, seated, resting)` (a one-line change outside ART1d, see its
-hand-off); without it sleepers still play **sit** (with the head tilted 15 degrees down).
+play the rig's new `sleep` animation (`art/renders/anim_crew_sleep.png`). Since HM2 `CrewMember#pose` passes the
+resting flag, so sleepers play **sleep**, and they lie along the hammock (steps 13 to 15).
 
 9. **The model, four facings.** Hang a hammock between two fence posts facing north, east, south and west (in the
    world and below deck on a ship). Expected per facing: white wool canvas 12 px wide with rolled side hems, flat in
@@ -174,10 +173,27 @@ hand-off); without it sleepers still play **sit** (with the head tilted 15 degre
     hips in the middle where the halves meet, upper body and straight legs raised slightly with the canvas, head
     raised a little (not looking around), arms folded over the belly; the chest breathes slowly (4 s). Report: the body
     floating above or sinking more than a pixel or two into the canvas, the head or feet poking through the end hems
-    or ropes, or **the body lying across the hammock** (the sleeper's yaw is not yet fixed to the hammock's axis, see
-    the ART1d open problems; record which facings are wrong). Check it next to the hull side: hammock and sleeper do
-    not clip into the hull planks. On a sailing ship: no jitter between body and canvas.
+    or ropes, or the body lying across the hammock (record the facing). Check it next to the hull side: hammock and
+    sleeper do not clip into the hull planks. On a sailing ship: no jitter between body and canvas.
 12. **Waking.** An order or dawn: the crew member stands up and walks off with the normal poses (no leftover tilt).
+
+**HM2: lying along the hammock.** Covered headlessly by `crew/hammock/SleepAxisTest` (the yaw maths for all four facings,
+ship turns, the render frame) and two GameTests in `HammockGameTests` (in the world and on a ship turned 90 degrees, 40
+ticks with a player beside it). The sleeper faces the **foot** half (the block you clicked when hanging it); its head
+lies over the **head** half (the block toward which you looked). Crew only turn in on ships, so check below deck.
+13. **Along the hammock, head on the head half.** Hang four hammocks in the hold, one per facing (remember where you
+    clicked: that is the foot), spawn four crew, `/time set 13000`. Expected for every facing: the body lies along the
+    canvas (never across it), the head over the half away from the clicked block, the feet toward the clicked block,
+    hips over the seam, nothing poking through the end hems. Report any facing that is reversed (head over the foot
+    half) or crossed.
+14. **Turning ship.** With the sleepers in their hammocks, sail and turn the ship through a full circle (and hold a
+    turn for a while). Expected: the sleepers turn with the hull and stay along their hammocks the whole time; no
+    sudden half or full spin of the body when the ship's heading passes south (yaw ±180), no lag of more than a few
+    degrees behind the canvas, no jitter between body and canvas while the ship rolls.
+15. **No twisting when you walk by.** Walk round a sleeper, stand close to its head and its feet, and crouch next to it.
+    Expected: neither head nor body turns toward you or looks around; the head keeps its slight chin-to-chest tilt.
+    Then give an order that gets it up (whistle "Hoist sails" with an unmanned winch) or `/time set 23500`: once up it
+    looks at you and around again as usual.
 
 ## CR2: crew upkeep (wages, desertion, mutiny)
 Covered by JUnit tests (`crew/upkeep/WageRulesTest`, `UpkeepDayTest`) and 8 GameTests (`crew/upkeep/UpkeepGameTests`).

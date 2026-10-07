@@ -36,12 +36,15 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Quaterniond;
 
 /**
  * The hammock, bunks and the hammock rule of HM1 (docs/design.md §7.1). The ship is the 5×4×5 hull of
@@ -426,6 +429,135 @@ public final class HammockGameTests {
             h.assertTrue(CrewMorale.get(a) == 70 && CrewMorale.get(b) == 70, "morale moved: " + CrewMorale.get(a) + ", " + CrewMorale.get(b));
             h.assertTrue(a.storedMorale() == 40, "the stored value changed: " + a.storedMorale());
             cleanup(a, b);
+            h.succeed();
+        });
+    }
+
+    // ------------------------------------------------------------------ lying along the hammock (HM2)
+
+    /** Ticks the sleeper is watched with a player beside it. */
+    private static final int WATCH = 40;
+
+    private static float off(float a, float b) {
+        return Math.abs(Mth.wrapDegrees(a - b));
+    }
+
+    /** Body, head and view yaw of {@code c} all within {@code tolerance} degrees of {@code axis}. */
+    private static void assertAlong(GameTestHelper h, CrewMember c, float axis, float tolerance, String when) {
+        h.assertTrue(off(c.yBodyRot, axis) <= tolerance && off(c.getYHeadRot(), axis) <= tolerance && off(c.getYRot(), axis) <= tolerance,
+                when + ": body " + c.yBodyRot + ", head " + c.getYHeadRot() + ", view " + c.getYRot() + ", hammock axis " + axis);
+    }
+
+    /** A mock player standing at {@code at} (world), in the level. */
+    private static Player bystander(GameTestHelper h, Vec3 at) {
+        Player p = h.makeMockPlayer(GameType.SURVIVAL);
+        p.moveTo(at.x, at.y, at.z, 0f, 0f);
+        h.getLevel().addFreshEntity(p);
+        return p;
+    }
+
+    /**
+     * HM2 in the world: a sleeper lies along a north-facing hammock (faces south, head over the head half), on the
+     * canvas at the seam; with a player beside it, a look at the player and a head turned away by hand do not move it
+     * for {@value #WATCH} ticks. Got up (as by an order) it looks around again: the head is no longer held.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 120, batch = NIGHT_BATCH + "axis_world")
+    public static void sleeperLiesAlongAWorldHammockAndWakesToLook(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        h.setBlock(new BlockPos(4, 2, 6), Blocks.OAK_FENCE);
+        h.setBlock(new BlockPos(4, 2, 3), Blocks.OAK_FENCE);
+        BlockState hammock = CrewContent.HAMMOCK.get().defaultBlockState().setValue(HammockBlock.FACING, Direction.NORTH);
+        h.setBlock(new BlockPos(4, 2, 5), hammock.setValue(HammockBlock.PART, BedPart.FOOT));
+        h.setBlock(new BlockPos(4, 2, 4), hammock.setValue(HammockBlock.PART, BedPart.HEAD));
+        BlockPos foot = h.absolutePos(new BlockPos(4, 2, 5));
+        CrewMember c = h.spawn(StationContent.CREW_MEMBER.get(), new BlockPos(6, 2, 5));
+        c.setYRot(130f);
+        c.setYHeadRot(130f);
+        c.yBodyRot = 130f;
+        Player p = bystander(h, h.absoluteVec(new Vec3(5.5, 2, 4.5)));
+        float axis = SleepAxis.yaw(Direction.NORTH, null);
+        h.assertTrue(off(axis, 0f) < 1e-3, "a north hammock's sleeper must face south: " + axis);
+        night(h);
+        int start = NIGHT_AT + 1;
+        h.runAfterDelay(start, () -> {
+            h.assertTrue(CrewRest.lieDown(level, c, UUID.randomUUID(), foot), "it did not lie down");
+            assertAlong(h, c, axis, 0.01f, "right after lying down");
+            h.assertTrue(c.yBodyRotO == c.yBodyRot && c.yHeadRotO == c.yHeadRot, "lying down sweeps round on the client");
+            Vec3 seam = Vec3.atBottomCenterOf(foot).add(0, HammockSeat.SEAM_CANVAS_TOP / 16.0 + 0.01, -0.5);
+            h.assertTrue(c.position().distanceTo(seam) < 1e-3, "feet at " + c.position() + ", not on the canvas at the seam " + seam);
+            h.assertTrue(c.pose(false) == com.richardsenger.piratesnships.crew.npc.CrewPose.SLEEP, "pose " + c.pose(false));
+        });
+        for (int i = 1; i <= WATCH; i++) {
+            int tick = i;
+            h.runAfterDelay(start + i, () -> {
+                h.assertTrue(c.isResting() && c.getVehicle() instanceof HammockSeat, "it left the hammock at tick " + tick);
+                h.assertTrue(!c.mayLookAround(), "the look goals may run while it sleeps");
+                assertAlong(h, c, axis, 1f, "tick " + tick + " with a player beside it");
+                c.getLookControl().setLookAt(p); // what LookAtPlayerGoal#tick does
+                if (tick == WATCH / 2) {
+                    c.setYHeadRot(axis + 60f); // a stray head turn is undone the next tick
+                }
+            });
+        }
+        h.runAfterDelay(start + WATCH + 1, () -> {
+            CrewRest.getUp(c, true); // an order gets it up
+            h.assertTrue(!c.isResting() && c.mayLookAround() && c.getVehicle() == null, "still lying after the order");
+            h.assertTrue(c.pose(false) != com.richardsenger.piratesnships.crew.npc.CrewPose.SLEEP, "still in the sleep pose");
+            c.setYHeadRot(axis + 45f);
+        });
+        h.runAfterDelay(start + WATCH + 2, () -> {
+            h.assertTrue(off(c.getYHeadRot(), axis) >= 25f, "the head is still held along the hammock after waking: " + c.getYHeadRot());
+            p.discard();
+            c.discard();
+            level.setDayTime(nextDay(h, 1000L));
+            h.succeed();
+        });
+    }
+
+    /**
+     * HM2 on a ship: the sleeper in the hold's east-facing hammock lies along it (faces west); the ship turned 90° about
+     * the vertical turns it to face south; it stays within 1° of the ship's hammock axis for {@value #WATCH} ticks with a
+     * player on the deck beside it, its AI on and a look at the player every tick.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 160, batch = NIGHT_BATCH + "axis_ship")
+    public static void sleeperLiesAlongTheHammockOnATurningShip(GameTestHelper h) {
+        upkeepOff(h);
+        Fixture f = ship(h, x -> { });
+        ServerLevel level = h.getLevel();
+        CrewMember sleeper = onDeck(h, f, 20, 20);
+        sleeper.setYRot(-150f);
+        sleeper.setYHeadRot(-150f);
+        Player[] p = new Player[1];
+        night(h);
+        int lying = NIGHT_AT + SETTLE;
+        h.runAfterDelay(lying, () -> {
+            h.assertTrue(sleeper.getVehicle() instanceof HammockSeat, "not in the hammock: " + sleeper.getVehicle());
+            sleeper.setNoAi(false);
+            float axis = SleepAxis.yaw(Direction.EAST, f.ship().orientation());
+            assertAlong(h, sleeper, axis, 1f, "in the hold");
+            h.assertTrue(off(axis, 90f) <= 3f, "an east hammock's sleeper on an unturned ship must face west: " + axis);
+            f.ship().setOrientation(new Quaterniond().rotateAxis(Math.toRadians(90), 0, 1, 0));
+        });
+        int turned = lying + SETTLE;
+        h.runAfterDelay(turned, () -> {
+            float axis = SleepAxis.yaw(Direction.EAST, f.ship().orientation());
+            h.assertTrue(off(axis, 0f) <= 3f, "the ship's east hammock should lie north-south now: " + axis);
+            assertAlong(h, sleeper, axis, 1f, "on the turned ship");
+            p[0] = bystander(h, f.ship().toWorld(Vec3.atBottomCenterOf(plot(f, 20, 9, 19))));
+        });
+        for (int i = 1; i <= WATCH; i++) {
+            int tick = i;
+            h.runAfterDelay(turned + i, () -> {
+                h.assertTrue(sleeper.isResting(), "it got up at tick " + tick);
+                assertAlong(h, sleeper, SleepAxis.yaw(Direction.EAST, f.ship().orientation()), 1f,
+                        "tick " + tick + " on the turned ship with a player beside it");
+                sleeper.getLookControl().setLookAt(p[0]);
+            });
+        }
+        h.runAfterDelay(turned + WATCH + 1, () -> {
+            p[0].discard();
+            cleanup(sleeper);
+            level.setDayTime(nextDay(h, 1000L));
             h.succeed();
         });
     }

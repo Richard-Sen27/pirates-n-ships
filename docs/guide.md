@@ -511,7 +511,7 @@ inventory to load (3 seconds for the pistol, 5 for the musket, with the bow pose
 nothing; creative mode needs no ammo). The tooltip shows "Loaded" or "Unloaded". With a loaded gun, hold right-click to aim (a quick click still fires at once): after a second of steady aiming the
 shot is tighter, the musket zooms in a little, and the shot leaves when you release. To lower an aimed gun without firing, press sneak: the gun goes down still
 loaded and stays down while you keep sneaking (server option `firearms.aim.lower_on_sneak`). While you load, a white
-bar under the gun's slot fills up; a loaded gun shows a full gold bar in the hotbar and inventory, and its tooltip
+bar under the gun's slot fills up; a loaded gun shows a full gold bar in the hotbar and inventory, its hammer cocked back, and its tooltip
 says "Loaded" or "Not loaded". You see yourself aim and reload (the Player Animation Library drives it, client option
 `firearm_animations.enabled`). Firing: a lead ball flies out with smoke and a small kick, the gun is unloaded again and needs half a second before it
 can be used. The pistol hits hard but scatters; the musket flies flatter and tighter. Standing in the rain, a quarter of

@@ -178,10 +178,15 @@ public final class FlagWorldGameTests {
         return LawService.record(player).recent().stream().filter(o -> o.type() == type).count();
     }
 
+    /** The plot block of {@code target}'s west wall at deck height, where {@link #fireAt} aims. */
+    private static BlockPos westWall(Ship target) {
+        return target.f().helmPlot().offset(-2, -1, 0);
+    }
+
     /** Fires a ball at the west wall of {@code target} (deck height) from 2 blocks west of it, as if from {@code firingShip}. */
     private static CannonballEntity fireAt(ServerLevel level, Ship target, @org.jetbrains.annotations.Nullable Player owner,
                                            @org.jetbrains.annotations.Nullable UUID firingShip) {
-        BlockPos wall = target.f().helmPlot().offset(-2, -1, 0);
+        BlockPos wall = westWall(target);
         Vec3 to = target.body().toWorld(Vec3.atCenterOf(wall));
         Vec3 from = to.add(-2.0, 0, 0);
         Vec3 v = to.subtract(from).normalize().scale(CannonConfig.MUZZLE_VELOCITY.get());
@@ -367,6 +372,7 @@ public final class FlagWorldGameTests {
         h.runAfterDelay(20, () -> ball[0] = fireAt(h.getLevel(), s.b(), shooter, s.a().id()));
         h.runAfterDelay(21, () -> h.succeedWhen(() -> {
             h.assertTrue(ball[0].isRemoved(), "the ball is still flying");
+            h.assertTrue(h.getLevel().getBlockState(westWall(s.b())).isAir(), "the ball did not hit ship B's wall");
             h.assertValueEqual(LawService.record(shooter).totalCrimes(), 0, "crimes for hitting one's own ship");
         }));
     }
@@ -395,7 +401,10 @@ public final class FlagWorldGameTests {
                     ball[0] = fireAt(h.getLevel(), ship, shooter, null);
                 })
                 .thenWaitUntil(() -> h.assertTrue(ball[0].isRemoved(), "the ball is still flying"))
-                .thenExecute(() -> h.assertValueEqual(LawService.record(shooter).totalCrimes(), 0, "crimes for hitting a merchant ship"))
+                .thenExecute(() -> {
+                    h.assertTrue(h.getLevel().getBlockState(westWall(ship)).isAir(), "the ball did not hit the ship's wall");
+                    h.assertValueEqual(LawService.record(shooter).totalCrimes(), 0, "crimes for hitting a merchant ship");
+                })
                 .thenSucceed();
     }
 

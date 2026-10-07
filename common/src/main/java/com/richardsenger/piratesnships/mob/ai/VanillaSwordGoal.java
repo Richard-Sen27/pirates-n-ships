@@ -1,7 +1,8 @@
 package com.richardsenger.piratesnships.mob.ai;
 
 import com.richardsenger.piratesnships.combat.melee.MeleeService;
-import net.minecraft.world.entity.PathfinderMob;
+import com.richardsenger.piratesnships.mob.entity.SeafarerMob;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 
 /**
@@ -10,21 +11,27 @@ import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
  */
 public class VanillaSwordGoal extends MeleeAttackGoal {
 
-    public VanillaSwordGoal(PathfinderMob mob, double speed) {
+    private final SeafarerMob seafarer;
+
+    public VanillaSwordGoal(SeafarerMob mob, double speed) {
         super(mob, speed, true);
+        this.seafarer = mob;
     }
 
-    private boolean duelistActive() {
-        return MeleeService.skillBasedCombat() && MeleeService.weaponInHand(mob).isPresent();
+    private boolean allowed() {
+        LivingEntity t = mob.getTarget();
+        boolean duelist = MeleeService.skillBasedCombat() && MeleeService.weaponInHand(mob).isPresent();
+        // keepsTarget: the goal selector ticks before customServerAiStep re-checks a target set from outside
+        return !duelist && t != null && seafarer.keepsTarget(t);
     }
 
     @Override
     public boolean canUse() {
-        return !duelistActive() && super.canUse();
+        return allowed() && super.canUse();
     }
 
     @Override
     public boolean canContinueToUse() {
-        return !duelistActive() && super.canContinueToUse();
+        return allowed() && super.canContinueToUse();
     }
 }

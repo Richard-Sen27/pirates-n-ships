@@ -62,6 +62,7 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity {
 
     private static final String TAG_GRUDGE = "pirates_n_ships:grudge";
     private static final String TAG_GRUDGE_UNTIL = "pirates_n_ships:grudge_until";
+    private static final String TAG_STATIONARY = "pirates_n_ships:stationary";
 
     private static final EntityDataAccessor<Integer> DATA_MELEE_POSE = SynchedEntityData.defineId(SeafarerMob.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_AIMING = SynchedEntityData.defineId(SeafarerMob.class, EntityDataSerializers.BOOLEAN);
@@ -81,6 +82,7 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity {
     private long grudgeUntil;
     /** Client: {@link #tickCount} when the melee pose last changed (for the pose's progress). */
     private int poseChangedAt;
+    private boolean stationary;
 
     protected SeafarerMob(EntityType<? extends SeafarerMob> type, Level level) {
         super(type, level);
@@ -114,7 +116,12 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity {
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
         addCombatGoals();
-        goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.6));
+        goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.6) {
+            @Override
+            public boolean canUse() {
+                return !stationary && super.canUse();
+            }
+        });
         goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0f));
         goalSelector.addGoal(8, new RandomLookAroundGoal(this));
         if (faction() != MobFaction.CIVILIAN) {
@@ -275,6 +282,7 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity {
             tag.putUUID(TAG_GRUDGE, grudgeTarget);
             tag.putLong(TAG_GRUDGE_UNTIL, grudgeUntil);
         }
+        if (stationary) tag.putBoolean(TAG_STATIONARY, true);
     }
 
     @Override
@@ -282,5 +290,18 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity {
         super.readAdditionalSaveData(tag);
         grudgeTarget = tag.hasUUID(TAG_GRUDGE) ? tag.getUUID(TAG_GRUDGE) : null;
         grudgeUntil = tag.getLong(TAG_GRUDGE_UNTIL);
+        stationary = tag.getBoolean(TAG_STATIONARY);
+    }
+
+    /**
+     * A stationary mob doesn't stroll about when idle (a guard at its post, a deckhand on a small deck); it still turns,
+     * fights, flees and is moved by the ship it stands on. Structures will place such mobs; saved with the entity.
+     */
+    public void setStationary(boolean stationary) {
+        this.stationary = stationary;
+    }
+
+    public boolean isStationary() {
+        return stationary;
     }
 }

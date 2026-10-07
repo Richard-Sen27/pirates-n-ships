@@ -48,6 +48,9 @@ import java.util.Set;
  */
 public final class MobGameTests {
 
+    /** Ticks a fresh test ship needs to rise and settle before mobs board it. */
+    private static final int SETTLE_TICKS = 60;
+
     private MobGameTests() {
     }
 
@@ -235,9 +238,10 @@ public final class MobGameTests {
 
     /**
      * Mobs standing on an assembled ship stay on its deck while it moves: Sable tracks entities standing on a sub-level
-     * (sable-notes §6). They have no AI here, so they can't walk off the small deck on their own.
+     * (sable-notes §6). They keep their AI (a no-AI mob never runs {@code travel}, so it hangs frozen in world space and
+     * Sable can't carry it) but are stationary, so they don't stroll off the small deck.
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200, batch = "pirates_n_ships_mob_ship")
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 300, batch = "pirates_n_ships_mob_ship")
     public static void mobsOnADeckMoveWithTheShip(GameTestHelper h) {
         for (int x = 0; x < 24; x++) {
             for (int z = 0; z < 24; z++) {
@@ -267,12 +271,22 @@ public final class MobGameTests {
                 .findFirst().orElseThrow(() -> new AssertionError("no helm on the ship"));
         Vec3 deckA = Vec3.atBottomCenterOf(helmPlot.offset(-1, 0, 2));
         Vec3 deckB = Vec3.atBottomCenterOf(helmPlot.offset(1, 0, 3));
-        SeafarerMob sailor = onDeck(h, ship, MobContent.SAILOR.get().create(h.getLevel()), deckA);
-        SeafarerMob soldier = onDeck(h, ship, MobContent.NAVY_SOLDIER.get().create(h.getLevel()), deckB);
-        Vec3 start = ship.toWorld(Vec3.atCenterOf(helmPlot));
-        h.runAfterDelay(10, () -> ship.addVelocity(new Vector3d(1.5, 0, 0), new Vector3d()));
-        h.runAfterDelay(80, () -> {
-            double moved = ship.toWorld(Vec3.atCenterOf(helmPlot)).distanceTo(start);
+        SeafarerMob[] mobs = new SeafarerMob[2];
+        Vec3[] start = new Vec3[1];
+        // a freshly assembled floating ship rises about 1.4 blocks first (GameTest notes in design.md §3.3): mobs placed
+        // before that would end up inside the deck, so they board once it has settled
+        h.runAfterDelay(SETTLE_TICKS, () -> {
+            mobs[0] = onDeck(h, ship, MobContent.SAILOR.get().create(h.getLevel()), deckA);
+            mobs[1] = onDeck(h, ship, MobContent.NAVY_SOLDIER.get().create(h.getLevel()), deckB);
+        });
+        h.runAfterDelay(SETTLE_TICKS + 10, () -> start[0] = ship.toWorld(Vec3.atCenterOf(helmPlot)));
+        // water drag stops a single kick within a second (0.9 blocks), so keep pushing like a sail would
+        for (int t = SETTLE_TICKS + 10; t < SETTLE_TICKS + 70; t += 10) {
+            h.runAfterDelay(t, () -> ship.addVelocity(new Vector3d(1.5, 0, 0), new Vector3d()));
+        }
+        h.runAfterDelay(SETTLE_TICKS + 80, () -> {
+            SeafarerMob sailor = mobs[0], soldier = mobs[1];
+            double moved = ship.toWorld(Vec3.atCenterOf(helmPlot)).distanceTo(start[0]);
             h.assertTrue(moved > 1.0, "the ship did not move: " + moved);
             for (SeafarerMob mob : new SeafarerMob[]{sailor, soldier}) {
                 Vec3 plot = ship.toPlot(mob.position());
@@ -290,7 +304,7 @@ public final class MobGameTests {
 
     private static SeafarerMob onDeck(GameTestHelper h, ShipBody ship, SeafarerMob mob, Vec3 plotPos) {
         Vec3 w = ship.toWorld(plotPos);
-        mob.setNoAi(true);
+        mob.setStationary(true);
         mob.moveTo(w.x, w.y + 0.05, w.z, 0, 0);
         h.getLevel().addFreshEntity(mob);
         return mob;

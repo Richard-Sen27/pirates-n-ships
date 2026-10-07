@@ -53,7 +53,8 @@ public class DuelistAttackGoal extends Goal {
     @Override
     public boolean canUse() {
         LivingEntity t = mob.getTarget();
-        return t != null && t.isAlive() && MeleeService.skillBasedCombat() && weapon() != null;
+        // keepsTarget: the goal selector ticks before customServerAiStep re-checks a target set from outside
+        return t != null && t.isAlive() && MeleeService.skillBasedCombat() && weapon() != null && mob.keepsTarget(t);
     }
 
     @Override

@@ -35,7 +35,8 @@ public class MusketeerGoal extends Goal {
     @Override
     public boolean canUse() {
         LivingEntity t = mob.getTarget();
-        return t != null && t.isAlive();
+        // keepsTarget: the goal selector ticks before customServerAiStep re-checks a target set from outside
+        return t != null && t.isAlive() && mob.keepsTarget(t);
     }
 
     @Override

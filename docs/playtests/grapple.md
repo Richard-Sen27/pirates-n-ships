@@ -38,3 +38,17 @@ ingots, 1 string). Please send `latest.log` if anything differs.
 6. **Holding:** a ring latch holds past 24 blocks and snaps at about 48; a plain latch snaps at 24.
 7. **Tying off:** with a hook latched, use a ring on your own ship: "Rope tied…", a knot sound, the rope drawn from the ring; walk off: the haul continues and the hulls end side by side; sneak-use the air empty-handed releases; breaking either ring releases.
 8. **Model:** the placeholder iron plate faces correctly on floor, wall and ceiling.
+
+## GR2: sliding along the rope
+Setup: two assembled ships on open water, about 10 to 15 blocks apart; ship A with a mast or a pillar you can stand on 5+ blocks above its deck (the crow's nest). Default config (`grapple.slide.*`). Survival, so fall damage counts.
+1. **Grab your own rope (crow's nest):** on top of A's mast, throw the hook at B's hull so it latches. Look at the rope just in front of you (within about 2.5 blocks) and press use with an empty main hand or the hook: a soft knot sound, you hang about 2 blocks below the rope with both arms up, and you start sliding toward B at once. Your end of the rope stays where your hand was (it does not follow you down).
+2. **Slide:** the slide speeds up on the way (steeper rope = faster), roughly 1.5 s for a 13-block rope from a 6-block-high nest. The rope stays drawn from the mast top to the hook the whole time, and you stay under it even while both ships bob or drift.
+3. **Landing:** within about 1 block of the hook you let go and stand on B's deck right above the hook (leather sound), no fall damage, no getting stuck in a block.
+4. **Hang pose, third person (F5):** both arms straight up and slightly inward to the rope, legs hanging straight (not the seated riding pose). Watch a second player on the same rope from another client too: same pose, smooth movement. The pose ends when they land or let go.
+5. **Hang pose, first person:** look up while sliding: both raised arms are visible, no item in the hands. With `melee_animations.first_person = OFF` (client config) the vanilla hand shows instead.
+6. **Grab someone else's rope:** a second player stands under or near the middle of the rope (or swims under it), looks at it and uses it: they slide to the lower end (B when the thrower stands higher than the hook). The thrower's end is not pinned by them.
+7. **Level rope:** both ends at about the same height (thrower on A's deck, hook in B's rail at the same height): the slide crawls slowly (about 2 blocks/s) toward the hook.
+8. **Sneak drop:** while sliding over water, press sneak: you let go where you hang and fall straight down (into the water: no damage; onto a deck from 2 blocks: no damage, fall distance only counts from the rope).
+9. **Rope gone:** while someone slides, the thrower sneak-uses the air empty-handed (release) or walks beyond 24 blocks (snap): the rider drops where they hang.
+10. **Things in the way:** looking at a block or a mob in front of the rope and pressing use uses that block or mob, not the rope.
+11. **Config off:** `/config` or the server config: `grapple.slide.enabled = false`: using the rope does nothing special (the click goes to whatever vanilla would do; the action-bar message "Sliding along ropes is disabled" only appears if the client has not received the new value yet); anyone still sliding drops off at once. Turn it back on: grabbing works again.

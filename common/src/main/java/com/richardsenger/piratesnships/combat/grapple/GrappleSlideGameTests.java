@@ -274,6 +274,85 @@ public final class GrappleSlideGameTests {
         }));
     }
 
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 120, batch = BATCH + "snap")
+    public static void aSnappedRopeDropsTheRider(GameTestHelper h) {
+        Ships s = twoShips(h, false);
+        ServerLevel level = h.getLevel();
+        Player thrower = player(h);
+        boolean[] hold = {true};
+        keepOn(h, thrower, s.a().ship(), s.a().helmPlot().east(), hold);
+        Player rider = player(h);
+        GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
+        Vec3[] hung = new Vec3[1];
+        h.runAfterDelay(20, () -> hook[0] = hookB(level, thrower, s.b()));
+        h.runAfterDelay(26, () -> {
+            GrapplingHookEntity g = hook[0];
+            h.assertTrue(g.state() == GrapplingHookEntity.State.LATCHED, "the hook did not latch: " + g.state());
+            Vec3 at = ropeAt(level, g, 0.3);
+            rider.setPos(at.x, at.y - 1.6, at.z - 0.5);
+            lookAt(rider, at);
+            h.assertTrue(RopeSlideService.tryBoard(level, rider, g, 0.0) == RopeSlideService.Board.OK, "grabbing the rope was refused");
+            h.assertTrue(g.pinPos() == null, "a rope grabbed by someone else was pinned");
+        });
+        h.runAfterDelay(29, () -> {
+            h.assertTrue(rider.isPassenger(), "the player let go by itself");
+            hung[0] = rider.position();
+            // the thrower walks away beyond the rope's length: it snaps
+            hold[0] = false;
+            Vec3 far = hook[0].position().add(-(GrappleConfig.MAX_ROPE_LENGTH.get() + 2.0), 0, 0);
+            thrower.setPos(far.x, far.y, far.z);
+        });
+        h.runAfterDelay(30, () -> h.succeedWhen(() -> {
+            h.assertTrue(hook[0].isRemoved(), "the rope did not snap");
+            h.assertTrue(!rider.isPassenger(), "the rider still hangs on a snapped rope");
+            h.assertTrue(rider.position().distanceTo(hung[0]) < 1.5, "the player did not drop where it hung");
+            assertNoRiders(h);
+        }));
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200, batch = BATCH + "level")
+    public static void aLevelRopeCrawlsTowardTheHook(GameTestHelper h) {
+        Ships s = twoShips(h, false);
+        ServerLevel level = h.getLevel();
+        Player thrower = player(h);
+        keepOn(h, thrower, s.a().ship(), s.a().helmPlot().east(), new boolean[]{true});
+        Player rider = player(h);
+        GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
+        double[] t0 = new double[1];
+        h.runAfterDelay(20, () -> hook[0] = hookB(level, thrower, s.b()));
+        h.runAfterDelay(26, () -> {
+            GrapplingHookEntity g = hook[0];
+            h.assertTrue(g.state() == GrapplingHookEntity.State.LATCHED, "the hook did not latch: " + g.state());
+            // pin the near end in the world, ten blocks west of the hook at the hook's height: a level rope
+            Vec3 far = g.ropeFarEnd(level);
+            g.pinNearEnd(far.add(-10.0, 0, 0), null);
+            Vec3 at = ropeAt(level, g, 0.3);
+            rider.setPos(at.x, at.y - 1.6, at.z - 0.5);
+            lookAt(rider, at);
+            h.assertTrue(RopeSlideService.tryBoard(level, rider, g, 0.0) == RopeSlideService.Board.OK, "grabbing the rope was refused");
+            t0[0] = ((RopeRiderEntity) rider.getVehicle()).t();
+        });
+        h.runAfterDelay(36, () -> {
+            h.assertTrue(rider.getVehicle() instanceof RopeRiderEntity, "the player let go on a level rope");
+            RopeRiderEntity r = (RopeRiderEntity) rider.getVehicle();
+            Vec3 a = hook[0].ropeNearEnd(level);
+            Vec3 b = hook[0].ropeFarEnd(level);
+            h.assertTrue(RopeSlide.level(RopeSlide.slope(a.y, b.y, a.distanceTo(b))), "the test rope is not level: " + a + " / " + b);
+            h.assertTrue(r.t() > t0[0], "the rider did not move toward the hook: t " + t0[0] + " -> " + r.t());
+            double min = GrappleConfig.SLIDE_MIN_SPEED.get();
+            h.assertTrue(Math.abs(r.speed() - min) < 1.0e-9, "a level rope is not crawled at slide_min_speed: " + r.speed());
+            // ten ticks at the crawling speed, with a little slack for the ships' bobbing
+            double moved = (r.t() - t0[0]) * a.distanceTo(b);
+            h.assertTrue(moved > 8 * min && moved < 12 * min, "crawled " + moved + " blocks in ten ticks");
+        });
+        h.runAfterDelay(37, () -> h.succeedWhen(() -> {
+            h.assertTrue(!rider.isPassenger(), "still crawling");
+            assertStandsOnB(h, level, rider, s.b());
+            assertNoRiders(h);
+            hook[0].release(GrappleRules.Release.NONE);
+        }));
+    }
+
     // ------------------------------------------------------------------ refusals
 
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 100, batch = BATCH + "disabled")

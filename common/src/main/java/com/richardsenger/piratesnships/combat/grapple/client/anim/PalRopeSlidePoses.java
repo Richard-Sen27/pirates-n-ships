@@ -1,11 +1,16 @@
 package com.richardsenger.piratesnships.combat.grapple.client.anim;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.combat.melee.MeleeClientConfig;
+import com.richardsenger.piratesnships.combat.melee.client.anim.FirstPersonRule;
+import com.richardsenger.piratesnships.platform.Services;
 import com.zigythebird.playeranim.animation.PlayerAnimationController;
 import com.zigythebird.playeranim.api.PlayerAnimationAccess;
 import com.zigythebird.playeranim.api.PlayerAnimationFactory;
 import com.zigythebird.playeranimcore.animation.Animation;
 import com.zigythebird.playeranimcore.animation.layered.IAnimation;
+import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonConfiguration;
+import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
 import com.zigythebird.playeranimcore.enums.PlayState;
 import com.zigythebird.playeranimcore.loading.UniversalAnimLoader;
 import net.minecraft.client.Minecraft;
@@ -58,6 +63,7 @@ final class PalRopeSlidePoses implements RopeSlidePoses.Driver {
         }
         Animation a = animation();
         if (a == null) return;
+        layer.firstPerson = FirstPersonRule.animateFirstPerson(MeleeClientConfig.ANIMATIONS_FIRST_PERSON.get(), Services.PLATFORM::isModLoaded);
         layer.triggerAnimation(a);
         layer.playing = true;
     }
@@ -89,13 +95,21 @@ final class PalRopeSlidePoses implements RopeSlidePoses.Driver {
         }
     }
 
-    /** One player's rope layer: plays only what {@link PalRopeSlidePoses} triggers. */
+    /**
+     * One player's rope layer: plays only what {@link PalRopeSlidePoses} triggers. In first person it shows both raised
+     * arms (no held items) under the same rule as the melee animations ({@code melee_animations.first_person}).
+     */
     static final class RopeLayer extends PlayerAnimationController {
 
+        private static final FirstPersonConfiguration BOTH_ARMS = new FirstPersonConfiguration(true, true, false, false);
+
         boolean playing;
+        boolean firstPerson = true;
 
         RopeLayer(AbstractClientPlayer player) {
             super(player, (controller, state, setter) -> PlayState.STOP);
+            setFirstPersonModeHandler(c -> firstPerson ? FirstPersonMode.THIRD_PERSON_MODEL : FirstPersonMode.NONE);
+            setFirstPersonConfigurationHandler(c -> BOTH_ARMS);
         }
     }
 }

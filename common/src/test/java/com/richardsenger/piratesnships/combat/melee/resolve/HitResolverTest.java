@@ -152,33 +152,118 @@ class HitResolverTest {
 
     // --- Guard --------------------------------------------------------------------------------------------------
 
+    // P9: a successful guard absorbs the whole frontal hit (melee.guard_absorbs_all, default on); the per-weapon
+    // reduction still applies to guard breaks and with the toggle off.
+
+    /** Expected cost of one blocked hit, written out independently of {@link HitResolver#guardCost}. */
+    static float blockCost(float damage, float absorbed, MeleeParams p) {
+        var g = D_W.guard();
+        return (float) ((g.staminaPerHit() + g.staminaPerDamage() * damage + p.guardAbsorbStaminaPerDamage() * absorbed)
+                * p.staminaCostMultiplier());
+    }
+
     @Test
-    void guardReducesFrontalDamageAndCostsStamina() {
+    void absorbSurchargeScalesWithTheHit() {
+        CombatState def = ok(CombatRules.guardDown(FRESH, D_W, P));
+        assertEquals(1.5, P.guardAbsorbStaminaPerDamage(), 1e-9, "default");
+        HitResult light = HitResolver.resolve(FRESH, def, D_W, IncomingHit.vanillaMelee(2f, true), 0, P);
+        HitResult heavy = HitResolver.resolve(FRESH, def, D_W, IncomingHit.vanillaMelee(8f, true), 0, P);
+        float lightCost = def.stamina() - light.defender().stamina();
+        float heavyCost = def.stamina() - heavy.defender().stamina();
+        // 6 more damage: weapon per-damage cost plus 1.5 surcharge per absorbed point
+        assertEquals(6f * (D_W.guard().staminaPerDamage() + 1.5f), heavyCost - lightCost, 1e-3, "a heavier hit drains more");
+        assertEquals(blockCost(8f, 8f, P), heavyCost, 1e-3);
+        assertEquals(D_W.guard().staminaPerHit() + 8f * D_W.guard().staminaPerDamage() + 1.5f * 8f, heavyCost, 1e-3);
+    }
+
+    @Test
+    void zeroAbsorbSurchargeRestoresTheWeaponCost() {
+        MeleeParams flat = P.withGuardAbsorbStaminaPerDamage(0);
+        CombatState def = ok(CombatRules.guardDown(FRESH, D_W, flat));
+        HitResult r = HitResolver.resolve(attacking(), def, D_W, slash(true), 0, flat);
+        float dmg = A_W.slash().damage();
+        assertEquals(0f, r.damage());
+        assertEquals(flat.staminaMax() - (D_W.guard().staminaPerHit() + D_W.guard().staminaPerDamage() * dmg), r.defender().stamina(), 1e-3);
+    }
+
+    @Test
+    void absorbSurchargeCanBreakTheGuard() {
+        float dmg = A_W.slash().damage();
+        float weaponOnly = D_W.guard().staminaPerHit() + D_W.guard().staminaPerDamage() * dmg;
+        // enough for the weapon's cost, not for the surcharge on top
+        CombatState def = new CombatState(Phase.GUARDING, null, 0, 0, weaponOnly + 1f, 0, 0, 0, true, false, java.util.Set.of());
+        assertEquals(HitResult.Outcome.GUARDED, HitResolver.resolve(attacking(), def, D_W, slash(true), 0,
+                P.withGuardAbsorbStaminaPerDamage(0)).outcome());
+        HitResult r = HitResolver.resolve(attacking(), def, D_W, slash(true), 0, P);
+        assertEquals(HitResult.Outcome.GUARD_BROKEN, r.outcome());
+        assertEquals(dmg * (1 - D_W.guard().damageReduction()), r.damage(), 1e-4);
+    }
+
+    @Test
+    void guardAbsorbsFrontalHitAndCostsStamina() {
         CombatState def = ok(CombatRules.guardDown(FRESH, D_W, P));
         HitResult r = HitResolver.resolve(attacking(), def, D_W, slash(true), 0, P);
         float dmg = A_W.slash().damage();
         assertEquals(HitResult.Outcome.GUARDED, r.outcome());
-        assertEquals(dmg * (1 - D_W.guard().damageReduction()), r.damage(), 1e-4);
-        assertEquals(P.staminaMax() - (D_W.guard().staminaPerHit() + D_W.guard().staminaPerDamage() * dmg), r.defender().stamina(), 1e-3);
+        assertEquals(0f, r.damage(), "P9: a held guard absorbs the whole hit");
+        assertEquals(P.staminaMax() - blockCost(dmg, dmg, P), r.defender().stamina(), 1e-3);
         assertEquals(Phase.GUARDING, r.defender().phase());
+        assertFalse(r.defenderStaggered());
+        assertEquals(attacking(), r.attacker(), "a guard does not stagger the attacker");
+    }
+
+    @Test
+    void guardOnlyReducesDamageWithToggleOff() {
+        MeleeParams off = P.withGuardAbsorbsAll(false);
+        CombatState def = ok(CombatRules.guardDown(FRESH, D_W, off));
+        HitResult r = HitResolver.resolve(attacking(), def, D_W, slash(true), 0, off);
+        float dmg = A_W.slash().damage();
+        assertEquals(HitResult.Outcome.GUARDED, r.outcome());
+        assertEquals(dmg * (1 - D_W.guard().damageReduction()), r.damage(), 1e-4);
+        // only the reduction is absorbed, so only that much pays the absorb surcharge
+        assertEquals(off.staminaMax() - blockCost(dmg, (float) (dmg * D_W.guard().damageReduction()), off), r.defender().stamina(), 1e-3);
         assertFalse(r.defenderStaggered());
     }
 
     @Test
     void vanillaMeleeIsGuarded() {
         CombatState def = ok(CombatRules.guardDown(FRESH, D_W, P));
-        assertEquals(HitResult.Outcome.GUARDED, HitResolver.resolve(FRESH, def, D_W, IncomingHit.vanillaMelee(4f, true), 0, P).outcome());
+        HitResult r = HitResolver.resolve(FRESH, def, D_W, IncomingHit.vanillaMelee(4f, true), 0, P);
+        assertEquals(HitResult.Outcome.GUARDED, r.outcome());
+        assertEquals(0f, r.damage(), "P9: vanilla melee against a held guard is absorbed");
+        assertEquals(P.staminaMax() - blockCost(4f, 4f, P), r.defender().stamina(), 1e-3);
+        // toggle off: reduced
+        assertEquals(4f * (1 - D_W.guard().damageReduction()),
+                HitResolver.resolve(FRESH, def, D_W, IncomingHit.vanillaMelee(4f, true), 0, P.withGuardAbsorbsAll(false)).damage(), 1e-4);
     }
 
-    @Test
-    void guardBreaksWhenStaminaRunsOut() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void guardIgnoresHitsFromBehind(boolean absorbsAll) {
+        MeleeParams p = P.withGuardAbsorbsAll(absorbsAll);
+        CombatState def = ok(CombatRules.guardDown(FRESH, D_W, p));
+        HitResult sword = HitResolver.resolve(attacking(), def, D_W, slash(false), 0, p);
+        assertEquals(HitResult.Outcome.HIT, sword.outcome());
+        assertEquals(A_W.slash().damage(), sword.damage(), 1e-4);
+        assertEquals(def.stamina(), sword.defender().stamina(), 1e-4, "no guard cost or absorb surcharge for a hit from behind");
+        HitResult vanilla = HitResolver.resolve(FRESH, def, D_W, IncomingHit.vanillaMelee(4f, false), 0, p);
+        assertEquals(HitResult.Outcome.HIT, vanilla.outcome());
+        assertEquals(4f, vanilla.damage(), 1e-4);
+        assertEquals(def.stamina(), vanilla.defender().stamina(), 1e-4, "vanilla hit from behind drains nothing");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void guardBreaksWhenStaminaRunsOut(boolean absorbsAll) {
+        MeleeParams p = P.withGuardAbsorbsAll(absorbsAll);
         CombatState def = new CombatState(Phase.GUARDING, null, 0, 0, 5f, 0, 0, 0, true, false, java.util.Set.of());
-        HitResult r = HitResolver.resolve(attacking(), def, D_W, slash(true), 0, P);
+        HitResult r = HitResolver.resolve(attacking(), def, D_W, slash(true), 0, p);
         assertEquals(HitResult.Outcome.GUARD_BROKEN, r.outcome());
         assertTrue(r.defenderStaggered());
         assertEquals(Phase.STAGGERED, r.defender().phase());
-        assertEquals(P.guardBreakStaggerTicks(), r.defender().duration());
+        assertEquals(p.guardBreakStaggerTicks(), r.defender().duration());
         assertEquals(0f, r.defender().stamina());
+        // P9: a broken guard lets the hit through with the weapon's guard reduction, whatever the toggle
         assertEquals(A_W.slash().damage() * (1 - D_W.guard().damageReduction()), r.damage(), 1e-4);
     }
 

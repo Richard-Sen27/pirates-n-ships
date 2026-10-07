@@ -51,3 +51,19 @@ pirates ignore players; say if that was your setup during the third playtest).
 7. **Parry and feints** still work (`melee.npc_skill_multiplier` 5 for feints).
 8. If anything is still off, keep debug on during the fight, send `latest.log` (search `[mob debug]`), then
    `/pirates mob debug off`.
+
+
+## M3-art: the looks
+1. **Front and back, each type.** Pirate: bandana with knot and tails, eyepatch on his right eye, earring, open dark
+   coat with lapels and gold buttons, sash ends on his left hip, coat tails, boot cuffs. Sailor: blue-grey knitted
+   cap, red and white stripes, black neckerchief, rope belt, rolled hems, buckled shoes. Soldier: tricorn pointing
+   forward, white cross belts with a brass plate front and back, red collar and cuffs, cartridge box at the back,
+   red-lined tails, black gaiters. Officer: bicorne side to side with a gold edge and loop, epaulettes, crimson sash
+   with gold tassels, gold-edged tails, tall boots. No missing textures, no z-fighting.
+2. **Walking:** limbs animate like the crew member; the legs passing through the back coat tails at full stride is
+   known, say if it looks bad.
+3. **Work and sit poses** (a station, or riding a boat): coat skirts and sash ends stay attached.
+4. **Weapons:** cutlass, saber and the musket's aim pose sit in the hand under the cuffs; the officer's epaulettes
+   follow the arm.
+5. **Head turning:** the bandana knot, cap, tricorn, bicorne and queue turn with the head; from above nothing pokes
+   through the bicorne flaps; the nameplate should clear the hats.

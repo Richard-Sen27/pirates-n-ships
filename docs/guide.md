@@ -235,8 +235,7 @@ early parry and striking while your guard is spent. Navy soldiers (blue coat, wh
 they leave you alone unless you are wanted, then keep their distance, aim for a second and fire, and shove you back if
 you get close. Officers (gold trim, bicorne) are skilled saber duelists. Pirates and navy fight each other on sight.
 Sailors never fight and run from danger. Hitting or killing navy is a crime; killing pirates is not. Pirates drop
-doubloons and sometimes a cutlass; navy drop lead shot and gunpowder. They look like recoloured sailors until their
-Blockbench models land. Operators spawn them with `/pirates mob spawn <pirate|sailor|navy_soldier|navy_officer>
+doubloons and sometimes a cutlass; navy drop lead shot and gunpowder. Operators spawn them with `/pirates mob spawn <pirate|sailor|navy_soldier|navy_officer>
 [count]` or with spawn eggs, and `/pirates mob debug on` traces what nearby duelists decide (it also shows the
 difficulty: on peaceful they ignore players); natural spawning comes with the world structures. Everything is in the `mobs` server
 config.

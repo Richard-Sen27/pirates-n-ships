@@ -20,6 +20,7 @@ import net.minecraft.world.Clearable;
 import net.minecraft.world.Containers;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -43,6 +44,8 @@ public class FlagpoleBlockEntity extends BlockEntity implements Clearable {
     private static final String TAG = "flagpole";
 
     private FlagpoleState state = FlagpoleState.EMPTY;
+    /** {@link FlagTint#clothTint(FlagpoleState)} of {@link #state}, cached for the render thread. */
+    private volatile int clothTint = FlagTint.NONE;
     /**
      * Players who used the pole and may still get items or feedback (the actor of a pending action), so these reach
      * them even if they are not in the level's player list (GameTest mock players). Not saved; after a reload the
@@ -56,6 +59,14 @@ public class FlagpoleBlockEntity extends BlockEntity implements Clearable {
 
     public FlagpoleState state() {
         return state;
+    }
+
+    /**
+     * RGB the cloth texture is multiplied with: the banner's base colour for a custom flag, white otherwise
+     * ({@link FlagTint}). Read by the client's block colour handler while meshing the chunk.
+     */
+    public int clothTint() {
+        return clothTint;
     }
 
     public FlagReading reading() {
@@ -97,6 +108,7 @@ public class FlagpoleBlockEntity extends BlockEntity implements Clearable {
     @Override
     public void clearContent() {
         state = FlagpoleState.EMPTY;
+        clothTint = FlagTint.NONE;
         setChanged();
     }
 
@@ -109,6 +121,7 @@ public class FlagpoleBlockEntity extends BlockEntity implements Clearable {
         FlagReading before = state.reading();
         boolean changed = !outcome.state().equals(state);
         state = outcome.state();
+        clothTint = FlagTint.clothTint(state);
         if (changed) setChanged();
         for (FlagpoleMachine.Delivery d : outcome.deliveries()) deliver(server, d);
         if (outcome.feedback() != FlagpoleMachine.Feedback.NONE && outcome.feedbackTo() != null) {
@@ -192,6 +205,13 @@ public class FlagpoleBlockEntity extends BlockEntity implements Clearable {
         state = data.flatMap(t -> FlagpoleState.CODEC.parse(registries.createSerializationContext(NbtOps.INSTANCE), t)
                         .resultOrPartial(e -> Constants.LOG.error("Could not load flagpole at {}: {}", worldPosition, e)))
                 .orElse(FlagpoleState.EMPTY);
+        int tint = FlagTint.clothTint(state);
+        if (tint != clothTint && level != null && level.isClientSide) {
+            // The cloth colour is baked into the chunk mesh: a new banner under the same block state (custom stays
+            // custom) must re-mesh the section, or the old colour stays until something else changes there.
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_IMMEDIATE);
+        }
+        clothTint = tint;
     }
 
     @Override

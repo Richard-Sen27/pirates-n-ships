@@ -25,7 +25,8 @@ import net.minecraft.resources.ResourceLocation;
  * <b>Faces</b>: east (front) shows the texture with the hoist at the pole; west (back) the same UVs reversed, i.e.
  * mirrored like a real flag seen from behind, hoist still at the pole; north (the tip) the last cloth column; up and
  * down the swatch. No south face (inside the pole), no cullface, no ambient occlusion (the cloth reaches past the
- * block, where the block's own AO samples would be wrong). Rendered cutout. No collision: the block's shape stays the
+ * block, where the block's own AO samples would be wrong). Rendered cutout. The custom (banner) flag's faces carry
+ * {@link FlagTint#TINT_INDEX}, so the client colours that cloth with the banner's base colour ({@link FlagTint}). No collision: the block's shape stays the
  * pole's, the cloth is a visual overlap into the space downwind.
  * <p>
  * <b>Rotation</b>: the block state rotates the whole model with {@code y = 0/90/180/270} for north/east/south/west
@@ -80,9 +81,18 @@ public final class FlagClothModel {
         };
     }
 
-    /** The cloth model JSON for a texture location such as {@code pirates_n_ships:block/flag_navy}. */
+    /** The cloth model JSON for a texture location such as {@code pirates_n_ships:block/flag_navy}, untinted. */
     public static JsonObject json(String texture) {
+        return json(texture, false);
+    }
+
+    /**
+     * The cloth model JSON; {@code tinted} puts {@link FlagTint#TINT_INDEX} on every face, so the block colour handler
+     * colours the cloth (custom banner flags, see {@link #tinted(FlagKind)}).
+     */
+    public static JsonObject json(String texture, boolean tinted) {
         String ref = "#" + TEXTURE_KEY;
+        int tint = tinted ? FlagTint.TINT_INDEX : -1;
         float swatchU = LENGTH * U_PER_COLUMN;
         return new ElementModel()
                 .renderType(RENDER_TYPE)
@@ -90,16 +100,21 @@ public final class FlagClothModel {
                 .texture("particle", texture)
                 .texture(TEXTURE_KEY, texture)
                 .element(X0, BOTTOM, TIP_Z, X1, TOP, HOIST_Z)
-                .face(ElementModel.Face.EAST, 0f, 0f, CLOTH_U1, 16f, ref)
-                .face(ElementModel.Face.WEST, CLOTH_U1, 0f, 0f, 16f, ref)
-                .face(ElementModel.Face.NORTH, CLOTH_U1 - U_PER_COLUMN, 0f, CLOTH_U1, 16f, ref)
-                .face(ElementModel.Face.UP, swatchU, 0f, swatchU + U_PER_COLUMN, 1f, ref)
-                .face(ElementModel.Face.DOWN, swatchU, 15f, swatchU + U_PER_COLUMN, 16f, ref)
+                .face(ElementModel.Face.EAST, 0f, 0f, CLOTH_U1, 16f, ref, tint)
+                .face(ElementModel.Face.WEST, CLOTH_U1, 0f, 0f, 16f, ref, tint)
+                .face(ElementModel.Face.NORTH, CLOTH_U1 - U_PER_COLUMN, 0f, CLOTH_U1, 16f, ref, tint)
+                .face(ElementModel.Face.UP, swatchU, 0f, swatchU + U_PER_COLUMN, 1f, ref, tint)
+                .face(ElementModel.Face.DOWN, swatchU, 15f, swatchU + U_PER_COLUMN, 16f, ref, tint)
                 .end()
                 .build();
     }
 
     public static JsonObject json(FlagKind kind) {
-        return json(texture(kind).toString());
+        return json(texture(kind).toString(), tinted(kind));
+    }
+
+    /** Only the custom (banner) flag's cloth takes the banner's colour; the other flags keep their own textures. */
+    public static boolean tinted(FlagKind kind) {
+        return kind == FlagKind.CUSTOM;
     }
 }

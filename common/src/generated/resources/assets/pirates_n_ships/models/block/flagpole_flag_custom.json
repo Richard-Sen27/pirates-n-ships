@@ -5,6 +5,7 @@
       "faces": {
         "down": {
           "texture": "#cloth",
+          "tintindex": 0,
           "uv": [
             12.0,
             15.0,
@@ -14,6 +15,7 @@
         },
         "east": {
           "texture": "#cloth",
+          "tintindex": 0,
           "uv": [
             0.0,
             0.0,
@@ -23,6 +25,7 @@
         },
         "north": {
           "texture": "#cloth",
+          "tintindex": 0,
           "uv": [
             11.5,
             0.0,
@@ -32,6 +35,7 @@
         },
         "up": {
           "texture": "#cloth",
+          "tintindex": 0,
           "uv": [
             12.0,
             0.0,
@@ -41,6 +45,7 @@
         },
         "west": {
           "texture": "#cloth",
+          "tintindex": 0,
           "uv": [
             12.0,
             0.0,

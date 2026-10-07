@@ -46,12 +46,14 @@ neoForge {
     }
 }
 
-// Every GameTest run starts from a fresh test world, as on CI. The world (with its serverconfig/) used to outlive
-// runs, so a changed config default never reached the tests on a machine that had run them before, and ships of
-// failed tests stayed in it.
+// Every GameTest run starts from a fresh test world and fresh mod config, as on CI. The world used to outlive runs
+// (ships of failed tests stayed in it), and the mod's config files in build/gametest/config/ still do unless deleted
+// here: a changed config default never reached the tests on a machine that had run them before (found when a stale
+// keel_lateral_drag = 2.0 made the beam-reach test fail only in the orchestrator's checkout).
 tasks.matching { it.name == 'runGameTestServer' }.configureEach {
     doFirst {
         project.delete(project.file('build/gametest/world'))
+        project.delete(project.fileTree('build/gametest/config') { include 'pirates_n_ships-*.toml' })
     }
 }
 

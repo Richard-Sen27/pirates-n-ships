@@ -18,6 +18,27 @@ Block model workflow:
    `./gradlew :neoforge:runData`.
 5. The JUnit tests in `core/assets` (`HandMadeModelsTest`, `AssetReferencesTest`) guard the result.
 
+Z-fighting lint (V1, after the playtest note "blocks and items shiver where two coloured layers overlap"):
+- `python3 tools/lint_models.py` checks every hand-made model (`--summary`, `--warnings`, `--json`, `--exclude`,
+  `--tolerance`, default 0.03 px). A **fight** is two faces of different elements in the same plane (within the
+  tolerance), facing the same way and overlapping in area; it is **visible** when they show something different
+  there (texture, palette patch, UV mapping, tint, shading). Faces are compared in world space after the element
+  rotation, so rotated parts (octagon bars, ring segments) are checked as well; nothing is left unchecked.
+  Same-look fights and **hidden** faces (covered by an opposite face of a part sitting on it) are warnings only.
+  `HandMadeModelsTest.noVisibleZFighting` runs the same rule in Java (pistol and musket are excluded until the
+  follow-up after P6).
+- **Keep coplanar parts at least 0.05 px apart.** Insets of 0.005 to 0.02 px (the old "eps" of the octagon bars,
+  the 0.02 px bore discs and ledger lines) still flicker at 10 to 30 blocks. `--fix` applies the V1 rules to the
+  model JSON and its project together (elements matched in outliner order, only `from`/`to` change, UVs and display
+  entries stay): an inlay (keyhole, writing, bore disc, a speck on a heap) moves out to 0.05 px proud; a part that
+  runs on through another (post through its cap, tiller into its knob) ends 0.05 px inside it; at a joint of two
+  partly overlapping faces the rotated (else the smaller) face steps 0.05 px back. Crossing octagon bars at 0, 45 and
+  -45 degrees therefore end up 0.05 and 0.1 px shorter than the axis-aligned pair.
+- The cannon and swivel gun JSON come from `tools/gen_cannon_models.py`: after regenerating them, run
+  `python3 tools/lint_models.py --fix` (it is deterministic) before rebuilding the projects.
+- Renders `renders/zfight_water_barrel.png`, `zfight_cannon_loaded.png`, `zfight_helm.png`: before and after, at
+  30 blocks and zoomed on a joint, from a camera 480 px away (near plane 0.8 px, like the game's 0.05 blocks).
+
 Workflow notes (figurehead batch):
 - `Codecs.java_block.compile()` drops the `block/` folder (`minecraft:oak_planks`) unless each texture's `folder` and
   `namespace` are set again after `fromPath(...).add()`; post-processing should add `block/` when it is missing.

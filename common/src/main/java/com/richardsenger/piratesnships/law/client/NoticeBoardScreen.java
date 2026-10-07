@@ -1,5 +1,10 @@
 package com.richardsenger.piratesnships.law.client;
 
+import com.richardsenger.piratesnships.core.client.gui.BrassButton;
+import com.richardsenger.piratesnships.core.client.gui.GuiKit;
+import com.richardsenger.piratesnships.core.client.gui.GuiSprites;
+import com.richardsenger.piratesnships.core.client.gui.ScrollBar;
+import com.richardsenger.piratesnships.core.client.gui.ScrollMath;
 import com.richardsenger.piratesnships.law.bounty.NoticeBoardListing;
 import com.richardsenger.piratesnships.law.net.NoticeBoardPayloads;
 import com.richardsenger.piratesnships.law.net.NoticeBoardText;
@@ -7,13 +12,10 @@ import com.richardsenger.piratesnships.law.net.NoticeBoardView;
 import com.richardsenger.piratesnships.platform.Services;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FormattedText;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.phys.Vec3;
 
@@ -21,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * The notice board screen (client only, docs/design.md §13.2). Opened by {@link NoticeBoardPayloads.Open}; shows
@@ -29,31 +32,31 @@ import java.util.Optional;
  * offered below the field, and an amount). The form only sends a request; the server decides and answers with a new
  * view, whose result shows on the status line. Closes on Escape, beyond the board's reach, or when the server ends
  * the session.
+ *
+ * <p>Look (U1, GUI kit in {@code core/client/gui}): a wooden board frame with a header plaque (title, the viewer's
+ * doubloons), the bounties as parchment notice cards pinned to the board in a scrollable list (a red wax seal for a
+ * player's notice, a navy anchor for the navy's; the viewer's own bounty on a red card), and the place form on a
+ * parchment strip with styled fields, a brass button and the names as tags.
  */
 public final class NoticeBoardScreen extends Screen {
 
     private record Chip(int x, int y, int w, String name) {
         boolean contains(double mx, double my) {
-            return mx >= x && mx < x + w && my >= y && my < y + 11;
+            return mx >= x && mx < x + w && my >= y && my < y + GuiKit.TAG_H;
         }
     }
 
-    private static final int ROW_H = 11;
-    private static final int PANEL = 0xF0241A10;
-    private static final int BORDER = 0xFF8B6B3A;
-    private static final int ROW_ALT = 0x14FFFFFF;
-    private static final int GOLD = 0xFFE8C060;
-    private static final int TEXT = 0xFFFFFFFF;
-    private static final int DIM = 0xFFA0A0A0;
-    private static final int GOOD = 0xFF8FE08F;
-    private static final int BAD = 0xFFFF8070;
+    private static final int CARD_H = 24;
+    private static final int CARD_PITCH = CARD_H + 3;
+    private static final int FORM_H = 60;
 
     private EditBox targetField;
     private EditBox amountField;
-    private Button placeButton;
+    private BrassButton placeButton;
     private final List<Chip> chips = new ArrayList<>();
+    private final ScrollBar scrollBar = new ScrollBar();
     private Component status = Component.empty();
-    private int statusColor = TEXT;
+    private int statusColor = GuiKit.INK;
     private long seenVersion = -1;
     private int scroll;
 
@@ -63,6 +66,8 @@ public final class NoticeBoardScreen extends Screen {
     private int panelH;
     private int listTop;
     private int listBottom;
+    private int cardLeft;
+    private int cardRight;
     private int formY;
 
     NoticeBoardScreen() {
@@ -87,26 +92,35 @@ public final class NoticeBoardScreen extends Screen {
         panelH = Math.min(240, height - 16);
         left = (width - panelW) / 2;
         top = (height - panelH) / 2;
-        listTop = top + 44;
-        formY = top + panelH - 54;
-        listBottom = formY - 6;
+        listTop = top + 41;
+        formY = top + panelH - GuiKit.FRAME_BORDER - FORM_H;
+        listBottom = formY - 4;
+        int barX = left + panelW - GuiKit.FRAME_BORDER - 3 - GuiKit.SCROLLBAR_W;
+        scrollBar.place(barX, listTop, listBottom - listTop);
+        cardLeft = left + GuiKit.FRAME_BORDER + 3;
+        cardRight = barX - 4;
+
         String oldTarget = targetField == null ? "" : targetField.getValue();
         String oldAmount = amountField == null ? "" : amountField.getValue();
-        int x = left + 6;
-        int fieldY = formY + 12;
-        targetField = new EditBox(font, x, fieldY, 120, 14, Component.translatable(NoticeBoardText.FORM_TARGET));
+        int x = left + GuiKit.FRAME_BORDER + 6;
+        int fieldY = formY + 17;
+        targetField = new EditBox(font, GuiKit.fieldTextX(x), GuiKit.fieldTextY(fieldY), GuiKit.fieldTextW(120), 10,
+                Component.translatable(NoticeBoardText.FORM_TARGET));
         targetField.setMaxLength(32);
-        targetField.setHint(Component.translatable(NoticeBoardText.FORM_TARGET));
+        GuiKit.styleField(targetField, Component.translatable(NoticeBoardText.FORM_TARGET));
         targetField.setValue(oldTarget);
         addRenderableWidget(targetField);
-        amountField = new EditBox(font, x + 126, fieldY, 56, 14, Component.translatable(NoticeBoardText.FORM_AMOUNT));
+        amountField = new EditBox(font, GuiKit.fieldTextX(x + 124), GuiKit.fieldTextY(fieldY), GuiKit.fieldTextW(58), 10,
+                Component.translatable(NoticeBoardText.FORM_AMOUNT));
         amountField.setMaxLength(7);
         amountField.setFilter(s -> s.chars().allMatch(Character::isDigit));
-        amountField.setHint(Component.translatable(NoticeBoardText.FORM_AMOUNT));
+        GuiKit.styleField(amountField, Component.translatable(NoticeBoardText.FORM_AMOUNT));
         amountField.setValue(oldAmount);
         addRenderableWidget(amountField);
-        placeButton = addRenderableWidget(Button.builder(Component.translatable(NoticeBoardText.FORM_PLACE), b -> place())
-                .bounds(x + 188, fieldY - 1, 70, 16).build());
+        int buttonX = x + 186;
+        int buttonW = Math.min(76, left + panelW - GuiKit.FRAME_BORDER - 6 - buttonX);
+        placeButton = addRenderableWidget(new BrassButton(buttonX, fieldY, buttonW, GuiKit.FIELD_H,
+                Component.translatable(NoticeBoardText.FORM_PLACE), this::place));
         updateButton();
     }
 
@@ -145,7 +159,7 @@ public final class NoticeBoardScreen extends Screen {
         if (result.isPresent()) {
             NoticeBoardPayloads.Result r = result.get();
             status = Component.translatable(r.key(), r.args().toArray());
-            statusColor = r.ok() ? GOOD : BAD;
+            statusColor = r.ok() ? GuiKit.INK_GREEN : GuiKit.INK_RED;
             if (r.ok()) {
                 targetField.setValue("");
                 mc.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.0f));
@@ -187,8 +201,19 @@ public final class NoticeBoardScreen extends Screen {
 
     // ------------------------------------------------------------------ input
 
+    private int rows() {
+        return ClientNoticeBoard.view().map(v -> v.lines().size()).orElse(0);
+    }
+
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0) {
+            int s = scrollBar.click(mouseX, mouseY, rows(), visibleRows(), scroll);
+            if (s >= 0) {
+                scroll = s;
+                return true;
+            }
+        }
         for (Chip c : chips) {
             if (c.contains(mouseX, mouseY)) {
                 targetField.setValue(c.name());
@@ -200,15 +225,29 @@ public final class NoticeBoardScreen extends Screen {
     }
 
     @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        int s = scrollBar.drag(mouseY, rows(), visibleRows());
+        if (s >= 0) {
+            scroll = s;
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        scrollBar.release();
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        int rows = ClientNoticeBoard.view().map(v -> v.lines().size()).orElse(0);
-        int max = Math.max(0, rows - visibleRows());
-        scroll = Math.clamp(scroll - (int) Math.signum(scrollY), 0, max);
+        scroll = ScrollMath.clamp(scroll - (int) Math.signum(scrollY), rows(), visibleRows());
         return true;
     }
 
     private int visibleRows() {
-        return Math.max(1, (listBottom - listTop - ROW_H) / ROW_H);
+        return Math.max(1, (listBottom - listTop + 3) / CARD_PITCH);
     }
 
     // ------------------------------------------------------------------ drawing
@@ -216,95 +255,106 @@ public final class NoticeBoardScreen extends Screen {
     @Override
     public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         super.renderBackground(g, mouseX, mouseY, partialTick);
-        g.fill(left, top, left + panelW, top + panelH, PANEL);
-        g.renderOutline(left, top, panelW, panelH, BORDER);
-        g.fill(left + 4, formY - 3, left + panelW - 4, formY - 2, BORDER);
+        GuiKit.frame(g, left, top, panelW, panelH);
+        int inner = left + GuiKit.FRAME_BORDER;
+        GuiKit.header(g, font, title, inner, top + GuiKit.FRAME_BORDER, panelW - 2 * GuiKit.FRAME_BORDER);
+        GuiKit.parchment(g, inner + 1, formY, panelW - 2 * GuiKit.FRAME_BORDER - 2, FORM_H);
+        GuiKit.field(g, targetField);
+        GuiKit.field(g, amountField);
     }
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         super.render(g, mouseX, mouseY, partialTick);
         chips.clear();
-        g.drawString(font, title, left + 6, top + 6, GOLD);
+        int inner = left + GuiKit.FRAME_BORDER;
+        int innerW = panelW - 2 * GuiKit.FRAME_BORDER;
         Optional<NoticeBoardView> view = ClientNoticeBoard.view();
         if (view.isEmpty()) {
-            g.drawCenteredString(font, Component.translatable(NoticeBoardText.LOADING), left + panelW / 2, listTop + 20, DIM);
+            g.drawCenteredString(font, Component.translatable(NoticeBoardText.LOADING), left + panelW / 2, listTop + 20, GuiKit.ON_WOOD_DIM);
             return;
         }
         NoticeBoardView v = view.get();
-        Component coins = Component.translatable(NoticeBoardText.COINS, v.coins());
-        g.drawString(font, coins, left + panelW - 6 - font.width(coins), top + 6, GOLD);
-        Component own = v.ownTotal() > 0
+        // doubloons on the header plaque's right end
+        GuiKit.coins(g, font, Component.literal(Long.toString(v.coins())), inner + innerW - 6, top + GuiKit.FRAME_BORDER + 4,
+                GuiKit.BRASS_TEXT, true);
+        boolean wanted = v.ownTotal() > 0;
+        Component own = wanted
                 ? Component.translatable(NoticeBoardText.OWN_BOUNTY, v.ownTotal())
                 : Component.translatable(NoticeBoardText.OWN_NONE);
-        drawClipped(g, own, left + 6, top + 20, panelW - 12, v.ownTotal() > 0 ? BAD : DIM);
-        renderList(g, v);
+        int ownX = inner + 4;
+        if (wanted) {
+            GuiKit.icon(g, GuiSprites.WAX_SEAL, ownX, top + 28);
+            ownX += GuiSprites.ICON + 3;
+        }
+        GuiKit.text(g, font, own, ownX, top + 29, inner + innerW - 4 - ownX, wanted ? GuiKit.ON_WOOD_RED : GuiKit.ON_WOOD_DIM, true);
+        renderList(g, v, mouseX, mouseY);
         renderForm(g, v, mouseX, mouseY);
-        if (!status.getString().isEmpty()) drawClipped(g, status, left + 6, top + panelH - 12, panelW - 12, statusColor);
     }
 
-    private void renderList(GuiGraphics g, NoticeBoardView v) {
-        int xTarget = left + 6;
-        int xAmount = left + 6 + (panelW - 12) * 40 / 100;
-        int xBy = left + 6 + (panelW - 12) * 58 / 100;
-        int xSince = left + 6 + (panelW - 12) * 82 / 100;
-        int y = listTop;
-        g.drawString(font, Component.translatable(NoticeBoardText.COL_TARGET), xTarget, y, DIM);
-        g.drawString(font, Component.translatable(NoticeBoardText.COL_AMOUNT), xAmount, y, DIM);
-        g.drawString(font, Component.translatable(NoticeBoardText.COL_PLACED_BY), xBy, y, DIM);
-        g.drawString(font, Component.translatable(NoticeBoardText.COL_SINCE), xSince, y, DIM);
-        y += ROW_H;
+    private void renderList(GuiGraphics g, NoticeBoardView v, int mouseX, int mouseY) {
+        int rows = visibleRows();
+        scroll = ScrollMath.clamp(scroll, v.lines().size(), rows);
+        scrollBar.render(g, v.lines().size(), rows, scroll, mouseX, mouseY);
         if (v.lines().isEmpty()) {
-            g.drawCenteredString(font, Component.translatable(NoticeBoardText.EMPTY), left + panelW / 2, y + 12, DIM);
+            g.drawCenteredString(font, Component.translatable(NoticeBoardText.EMPTY), (cardLeft + cardRight) / 2, listTop + 20, GuiKit.ON_WOOD_DIM);
             return;
         }
-        int rows = visibleRows();
-        scroll = Math.clamp(scroll, 0, Math.max(0, v.lines().size() - rows));
-        for (int i = scroll; i < Math.min(v.lines().size(), scroll + rows); i++) {
+        Minecraft mc = Minecraft.getInstance();
+        UUID me = mc.player == null ? null : mc.player.getUUID();
+        int w = cardRight - cardLeft;
+        int y = listTop;
+        for (int i = scroll; i < Math.min(v.lines().size(), scroll + rows); i++, y += CARD_PITCH) {
             NoticeBoardListing.Line line = v.lines().get(i);
-            boolean firstOfTarget = i == 0 || !v.lines().get(i - 1).target().equals(line.target());
-            if ((i & 1) == 1) g.fill(left + 4, y - 1, left + panelW - 4, y + ROW_H - 2, ROW_ALT);
-            if (firstOfTarget || i == scroll) {
-                Component name = Component.literal(line.targetName());
-                if (line.targetTotal() != line.amount()) {
-                    name = name.copy().append(Component.translatable(NoticeBoardText.TOTAL, line.targetTotal()).withColor(DIM));
-                }
-                drawClipped(g, name, xTarget, y, xAmount - xTarget - 4, line.targetIsPlayer() ? TEXT : 0xFFD0C8B0);
+            boolean mine = line.target().equals(me);
+            boolean hover = mouseX >= cardLeft && mouseX < cardRight && mouseY >= y && mouseY < y + CARD_H;
+            GuiKit.sprite(g, mine ? GuiSprites.CARD_OWN : hover ? GuiSprites.CARD_HOVER : GuiSprites.CARD, cardLeft, y, w, CARD_H);
+            GuiKit.sprite(g, GuiSprites.PIN, cardLeft + w / 2 - 2, y - 2, 5, 5);
+            GuiKit.icon(g, line.navy() ? GuiSprites.NAVY_ANCHOR : GuiSprites.WAX_SEAL, cardLeft + 5, y + 7);
+
+            // amount, right-aligned with the coin
+            int amountLeft = GuiKit.coins(g, font, Component.literal(Integer.toString(line.amount())), cardRight - 7, y + 4,
+                    GuiKit.INK_AMBER, false);
+            // headline: the target (plus the total when several bounties are on the same head)
+            int textX = cardLeft + 18;
+            Component name = Component.literal(line.targetName());
+            if (line.targetTotal() != line.amount()) {
+                name = name.copy().append(Component.translatable(NoticeBoardText.TOTAL, line.targetTotal()).withColor(GuiKit.INK_DIM));
             }
-            g.drawString(font, Integer.toString(line.amount()), xAmount, y, GOLD);
-            Component by = line.navy() ? Component.translatable(NoticeBoardText.NAVY) : Component.literal(line.placedBy());
-            drawClipped(g, by, xBy, y, xSince - xBy - 4, line.navy() ? 0xFF8FB4FF : TEXT);
+            int nameColor = mine ? GuiKit.INK_RED : line.targetIsPlayer() ? GuiKit.INK : 0xFF4A3A2A;
+            GuiKit.ink(g, font, name, textX, y + 4, amountLeft - 4 - textX, nameColor);
+            // second line: who placed it, how long ago
+            Component by = line.navy()
+                    ? Component.translatable(NoticeBoardText.NAVY).withColor(GuiKit.INK_NAVY)
+                    : Component.literal(line.placedBy());
             NoticeBoardListing.Age age = NoticeBoardListing.age(v.now() - line.createdAt());
-            drawClipped(g, Component.translatable(NoticeBoardText.age(age.unit()), age.value()), xSince, y, left + panelW - 6 - xSince, DIM);
-            y += ROW_H;
+            Component second = Component.translatable(NoticeBoardText.COL_PLACED_BY).append(": ").append(by)
+                    .append(Component.literal("  ·  ")).append(Component.translatable(NoticeBoardText.age(age.unit()), age.value()));
+            GuiKit.ink(g, font, second, textX, y + 14, cardRight - 7 - textX, GuiKit.INK_DIM);
         }
     }
 
     private void renderForm(GuiGraphics g, NoticeBoardView v, int mouseX, int mouseY) {
+        int x = left + GuiKit.FRAME_BORDER + 6;
+        int right = left + panelW - GuiKit.FRAME_BORDER - 6;
         Component label = v.placing()
-                ? Component.translatable(NoticeBoardText.FORM).append(" ").append(Component.translatable(NoticeBoardText.FORM_MINIMUM, v.minimum()).withColor(DIM))
+                ? Component.translatable(NoticeBoardText.FORM).append(" ")
+                        .append(Component.translatable(NoticeBoardText.FORM_MINIMUM, v.minimum()).withColor(GuiKit.INK_DIM))
                 : Component.translatable(NoticeBoardText.FORM_DISABLED);
-        drawClipped(g, label, left + 6, formY, panelW - 12, v.placing() ? GOLD : DIM);
+        GuiKit.ink(g, font, label, x, formY + 6, right - x, v.placing() ? GuiKit.INK : GuiKit.INK_DIM);
         // Name suggestions: those starting with what was typed (all when empty)
         String typed = targetField.getValue().trim().toLowerCase(Locale.ROOT);
-        int x = left + 6;
-        int y = formY + 30;
+        int cx = x;
+        int cy = formY + 34;
         for (String name : v.names()) {
             if (!typed.isEmpty() && (!name.toLowerCase(Locale.ROOT).startsWith(typed) || name.equalsIgnoreCase(typed))) continue;
-            int w = font.width(name) + 6;
-            if (x + w > left + panelW - 6) break;
-            Chip chip = new Chip(x, y, w, name);
+            int w = GuiKit.tagWidth(font, name);
+            if (cx + w > right) break;
+            Chip chip = new Chip(cx, cy, w, name);
             chips.add(chip);
-            boolean hover = chip.contains(mouseX, mouseY);
-            g.fill(x, y, x + w, y + 11, hover ? 0x40FFFFFF : 0x20FFFFFF);
-            g.drawString(font, name, x + 3, y + 2, hover ? GOLD : TEXT);
-            x += w + 3;
+            GuiKit.tag(g, font, cx, cy, w, name, chip.contains(mouseX, mouseY));
+            cx += w + 3;
         }
-    }
-
-    private void drawClipped(GuiGraphics g, Component text, int x, int y, int maxW, int color) {
-        FormattedText cut = font.width(text) <= maxW ? text : font.substrByWidth(text, Math.max(0, maxW - font.width("..")));
-        g.drawString(font, Language.getInstance().getVisualOrder(cut), x, y, color);
-        if (cut != text) g.drawString(font, "..", x + font.width(cut), y, color);
+        if (!status.getString().isEmpty()) GuiKit.ink(g, font, status, x, formY + 48, right - x, statusColor);
     }
 }

@@ -124,3 +124,10 @@ Addendum (A2): slashing into the air plays one short blade whoosh that varies fr
 3. A zombie hitting you from the front while guarding: no damage, no knockback, stamina drained; from behind: the full hit.
 4. `melee.guard_absorbs_all = false`: a guarded slash deals 30 % again; `guard_absorb_stamina_per_damage = 0`: a block costs about 13 instead of 23.5.
 5. Feel: is the guard now too strong, or too costly, against pirates and officers (they were not retuned)?
+
+
+## U1: the stamina bar
+1. Survival, default position: the bar sits just above the food row on the right half, not overlapping the experience bar or the level number; underwater it moves above the air bubbles; on a horse above the mount hearts. Creative: 2 px above the hotbar, centred.
+2. `melee_hud.position = LEFT_OF_HOTBAR`: an upright bar left of the offhand slot, bottom-aligned, filling upward, with tick marks.
+3. Fade: with full stamina and no fight the bar fades about 1 s after drawing the sword over half a second; it reappears instantly on a slash, guard, parry, a hit from a zombie or a stamina drop. Try `opacity`, `fade_when_full = false`, `scale`, `x_offset`, `y_offset`.
+4. Indicators: tick marks at 25, 50 and 75 %, the red flash on "Too exhausted", the riposte sparks, the lockout padlock, the stagger tint.

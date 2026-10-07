@@ -24,9 +24,11 @@ public final class MeleeClient {
     public static void init() {
         ClientEvents.INTERACTION_KEY.register(MeleeInput::onInteraction);
         ClientEvents.CLIENT_TICK_END.register(MeleeInput::onClientTickEnd);
+        ClientEvents.CLIENT_TICK_END.register(MeleeHud::tick);
         ClientEvents.CLIENT_DISCONNECT.register(mc -> {
             MeleeInput.reset();
             ClientMeleeState.reset();
+            MeleeHud.reset();
         });
         ClientEvents.registerHudLayer(Constants.id("melee_stamina"), MeleeHud::render);
         // PAL wants its layer factories registered at client setup, not during mod construction

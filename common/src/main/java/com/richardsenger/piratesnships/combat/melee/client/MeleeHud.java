@@ -1,87 +1,165 @@
 package com.richardsenger.piratesnships.combat.melee.client;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.richardsenger.piratesnships.combat.melee.MeleeClientConfig;
 import com.richardsenger.piratesnships.combat.melee.MeleeConfig;
 import com.richardsenger.piratesnships.combat.melee.MeleeService;
+import com.richardsenger.piratesnships.combat.melee.rules.Phase;
+import com.richardsenger.piratesnships.core.client.gui.GuiKit;
+import com.richardsenger.piratesnships.core.client.gui.GuiSprites;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
 
 /**
- * The stamina bar (docs/design.md §8.5, "Rules"): a thin bar centred above the health and food rows while a
- * skill-based sword is held. Gold = stamina left, dark = drained. A refused action flashes the frame red; during the
- * riposte window a white marker blinks on both ends; a stagger tints the bar violet with a shrinking violet line above
- * it; during a parry lockout the left end shows a small grey block. Client config {@code melee_hud}.
+ * The stamina bar (docs/design.md §8.5, "Rules"), shown while a skill-based sword is held: a brass-framed trough
+ * with a fill from deep red to amber and a tick mark every 25 %. Where it sits: {@link StaminaHudLayout} (client
+ * config {@code melee_hud.position}, offsets, scale). It fades out while stamina is full outside a fight and comes back
+ * at once ({@link StaminaHudFade}). A refused action flashes the frame red; during the riposte window white-gold
+ * sparks blink at both ends; a stagger tints the fill violet with a shrinking violet line beside it; during a parry
+ * lockout a grey padlock shows next to the bar.
  */
 public final class MeleeHud {
 
-    static final int WIDTH = 80;
-    static final int HEIGHT = 4;
-    /** Bar top, measured up from the bottom of the screen: just above the armor row and the item name. */
-    static final int BASE_Y = 64;
-
-    private static final int FRAME = 0xC0000000;
-    private static final int FILLED = 0xFFE0B040;
-    private static final int FILLED_LOW = 0xFFE07030;
-    private static final int DRAINED = 0xFF3A2E14;
+    private static final int TICK_MARK = 0xB0281A0E;
     private static final int STAGGER_TINT = 0x80A040D0;
     private static final int STAGGER_LINE = 0xFFC060F0;
-    private static final int RIPOSTE = 0xFFFFFFFF;
-    private static final int LOCKOUT = 0xFF808080;
-    private static final int FLASH_RGB = 0xE02020;
+
+    private static final StaminaHudFade FADE = new StaminaHudFade();
+    private static boolean shownLastTick;
 
     private MeleeHud() {
+    }
+
+    /** The bar could show: a skill-based sword in hand, HUD on. */
+    private static boolean active(Minecraft mc) {
+        LocalPlayer player = mc.player;
+        if (player == null || player.isSpectator() || !MeleeClientConfig.HUD_ENABLED.get()) return false;
+        return MeleeService.skillBasedCombat() && MeleeService.weaponInHand(player).isPresent();
+    }
+
+    private static float fraction() {
+        float fallback = MeleeConfig.STAMINA_MAX.get().floatValue();
+        float max = ClientMeleeState.maxStamina(fallback);
+        return Mth.clamp(ClientMeleeState.stamina(max) / max, 0f, 1f);
+    }
+
+    private static boolean full(float frac) {
+        return frac >= 0.999f;
+    }
+
+    /** Guard, attack, parry, stagger, riposte, lockout, a refusal or a hit taken. */
+    private static boolean fighting(LocalPlayer player) {
+        return ClientMeleeState.phase() != Phase.IDLE || ClientMeleeState.riposteTicks() > 0 || ClientMeleeState.lockoutTicks() > 0
+                || ClientMeleeState.flashTicks() > 0 || ClientMeleeState.staggerTicks() > 0 || player.hurtTime > 0;
+    }
+
+    /** Client tick: advances the fade. */
+    static void tick(Minecraft mc) {
+        boolean shown = active(mc);
+        if (!shown) {
+            if (shownLastTick) FADE.reset();
+        } else {
+            FADE.tick(full(fraction()), fighting(mc.player));
+        }
+        shownLastTick = shown;
+    }
+
+    /** Left the world. */
+    static void reset() {
+        FADE.reset();
+        shownLastTick = false;
+    }
+
+    private static StaminaHudLayout.Hud hud(Minecraft mc, GuiGraphics g) {
+        LocalPlayer player = mc.player;
+        boolean statusBars = mc.gameMode != null && mc.gameMode.canHurtPlayer();
+        int vehicleRows = 0;
+        if (player.getVehicle() instanceof LivingEntity vehicle && vehicle.showVehicleHealth()) {
+            int hearts = Math.min(30, (int) (vehicle.getMaxHealth() + 0.5f) / 2);
+            vehicleRows = (hearts + 9) / 10;
+        }
+        boolean air = player.isEyeInFluid(FluidTags.WATER) || player.getAirSupply() < player.getMaxAirSupply();
+        int above = Math.max(0, vehicleRows - 1) + (air ? 1 : 0);
+        return new StaminaHudLayout.Hud(g.guiWidth(), g.guiHeight(), statusBars, above);
     }
 
     /** HUD layer. */
     static void render(GuiGraphics g, DeltaTracker delta) {
         Minecraft mc = Minecraft.getInstance();
+        if (mc.options.hideGui || !active(mc)) return;
         LocalPlayer player = mc.player;
-        if (player == null || mc.options.hideGui || player.isSpectator() || !MeleeClientConfig.HUD_ENABLED.get()) return;
-        if (!MeleeService.skillBasedCombat() || MeleeService.weaponInHand(player).isEmpty()) return;
 
-        float fallback = MeleeConfig.STAMINA_MAX.get().floatValue();
-        float max = ClientMeleeState.maxStamina(fallback);
-        float frac = Mth.clamp(ClientMeleeState.stamina(max) / max, 0f, 1f);
-        float scale = MeleeClientConfig.HUD_SCALE.get().floatValue();
-        int cx = g.guiWidth() / 2 + MeleeClientConfig.HUD_X_OFFSET.get();
-        int top = g.guiHeight() - BASE_Y + MeleeClientConfig.HUD_Y_OFFSET.get();
+        float frac = fraction();
+        float alpha = MeleeClientConfig.HUD_OPACITY.get().floatValue();
+        if (MeleeClientConfig.HUD_FADE.get()) {
+            alpha *= FADE.visibility(full(frac), fighting(player), delta.getGameTimeDeltaPartialTick(false),
+                    MeleeClientConfig.HUD_FADE_DELAY.get(), MeleeClientConfig.HUD_FADE_TICKS.get());
+        }
+        if (alpha <= 0.01f) return;
+
+        double scale = MeleeClientConfig.HUD_SCALE.get();
+        StaminaHudLayout.Rect r = StaminaHudLayout.place(MeleeClientConfig.HUD_POSITION.get(), hud(mc, g), scale,
+                MeleeClientConfig.HUD_X_OFFSET.get(), MeleeClientConfig.HUD_Y_OFFSET.get());
+        boolean vertical = r.vertical();
+        int w = vertical ? StaminaHudLayout.VERTICAL_W : StaminaHudLayout.HORIZONTAL_W;
+        int h = vertical ? StaminaHudLayout.VERTICAL_H : StaminaHudLayout.HORIZONTAL_H;
+        int length = vertical ? StaminaHudLayout.FILL_LENGTH_V : StaminaHudLayout.FILL_LENGTH_H;
         long now = ClientMeleeState.now();
 
         PoseStack pose = g.pose();
         pose.pushPose();
-        pose.translate(cx, top, 0);
-        pose.scale(scale, scale, 1f);
-        int l = -WIDTH / 2;
-        int r = WIDTH / 2;
+        pose.translate(r.x(), r.y(), 0);
+        pose.scale((float) r.w() / w, (float) r.h() / h, 1f);
+        g.setColor(1f, 1f, 1f, alpha);
 
-        g.fill(l - 1, -1, r + 1, HEIGHT + 1, FRAME);
-        int split = l + Math.round(WIDTH * frac);
-        g.fill(l, 0, split, HEIGHT, frac < 0.25f ? FILLED_LOW : FILLED);
-        g.fill(split, 0, r, HEIGHT, DRAINED);
+        GuiKit.sprite(g, GuiSprites.STAMINA_TROUGH, 0, 0, w, h);
+        int filled = Math.round(length * frac);
+        RenderSystem.enableBlend();
+        if (filled > 0) {
+            if (vertical) {
+                g.blitSprite(GuiSprites.STAMINA_FILL_VERTICAL, 5, length, 0, length - filled, 1, 1 + length - filled, 5, filled);
+            } else {
+                g.blitSprite(GuiSprites.STAMINA_FILL, length, 5, 0, 0, 1, 1, filled, 5);
+            }
+        }
+        // tick marks every 25 %
+        for (int k = 1; k < 4; k++) {
+            int at = 1 + length * k / 4;
+            if (vertical) g.fill(1, at, 6, at + 1, TICK_MARK);
+            else g.fill(at, 1, at + 1, 6, TICK_MARK);
+        }
 
         int stagger = ClientMeleeState.staggerTicks();
         int staggerDur = ClientMeleeState.staggerDuration();
         if (stagger > 0 && staggerDur > 0) {
-            g.fill(l, 0, r, HEIGHT, STAGGER_TINT);
-            int len = Math.max(1, Math.round(WIDTH * Math.min(1f, stagger / (float) staggerDur)));
-            g.fill(-len / 2, -3, len - len / 2, -2, STAGGER_LINE);
+            if (vertical) g.fill(1, 1, 6, 1 + length, STAGGER_TINT);
+            else g.fill(1, 1, 1 + length, 6, STAGGER_TINT);
+            int len = Math.max(1, Math.round(length * Math.min(1f, stagger / (float) staggerDur)));
+            if (vertical) g.fill(w + 1, h - len, w + 2, h, STAGGER_LINE);
+            else g.fill(w / 2 - len / 2, -3, w / 2 + len - len / 2, -2, STAGGER_LINE);
         }
         if (ClientMeleeState.lockoutTicks() > 0) {
-            g.fill(l - 4, 0, l - 2, HEIGHT, LOCKOUT);
+            if (vertical) GuiKit.sprite(g, GuiSprites.LOCKOUT, 1, -9, 5, 7);
+            else GuiKit.sprite(g, GuiSprites.LOCKOUT, -11, 0, 5, 7);
         }
         if (ClientMeleeState.riposteTicks() > 0 && (now / 2) % 2 == 0) {
-            g.fill(l - 4, -1, l - 2, HEIGHT + 1, RIPOSTE);
-            g.fill(r + 2, -1, r + 4, HEIGHT + 1, RIPOSTE);
+            int ry = vertical ? (h - 9) / 2 : -1;
+            GuiKit.sprite(g, GuiSprites.RIPOSTE, -4, ry, 3, 9);
+            GuiKit.sprite(g, GuiSprites.RIPOSTE, w + 1, ry, 3, 9);
         }
         int flash = ClientMeleeState.flashTicks();
         if (flash > 0) {
-            int alpha = Math.round(0xD0 * flash / (float) ClientMeleeState.FLASH_TICKS);
-            g.fill(l - 1, -1, r + 1, HEIGHT + 1, (alpha << 24) | FLASH_RGB);
+            g.setColor(1f, 1f, 1f, alpha * flash / (float) ClientMeleeState.FLASH_TICKS);
+            GuiKit.sprite(g, GuiSprites.STAMINA_TROUGH_ALERT, 0, 0, w, h);
         }
+        g.setColor(1f, 1f, 1f, 1f);
+        RenderSystem.disableBlend();
         pose.popPose();
     }
 }

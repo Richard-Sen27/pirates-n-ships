@@ -28,6 +28,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `hazards` / `hazard_visuals` (client) | Waterspouts and whirlpools on/off, spawn chances and interval, distance band, lifetimes, radii, pull, lift, spin, drag-down, drift, sail tearing, ship force scale and mass cap; particle density and sounds. |
 | `mobs.kraken` / `hazards.kraken` | Kraken on/off and chance per day; detection, grips, tentacle health and regrow, weak spots, strike and swipe intervals, damage, retreat. |
 | `mobs.shark` | Shark on/off and peaceful, spawn weight and group (server restart), detection, circle and give-up times, bite cooldown, damage and knockback, frenzy threshold. |
+| `melee_hud` (client) | Stamina bar on/off, position (tight above the hotbar or left of it), scale, offsets, opacity, fade when full and its timing. |
 | `melee_animations` (client) | Sword animations on/off, first-person mode, layer priority. |
 | `melee_input` / `melee_hud` (client) | Hold-to-thrust and parry-tap thresholds; stamina bar on/off, scale and offsets. |
 | `firearms.aim` / `firearm_view` (client) | Minimum hold, steady time and aimed spread factor, sneak lowers the gun; musket zoom. |

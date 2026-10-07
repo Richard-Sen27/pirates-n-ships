@@ -25,8 +25,9 @@ Z-fighting lint (V1, after the playtest note "blocks and items shiver where two 
   there (texture, palette patch, UV mapping, tint, shading). Faces are compared in world space after the element
   rotation, so rotated parts (octagon bars, ring segments) are checked as well; nothing is left unchecked.
   Same-look fights and **hidden** faces (covered by an opposite face of a part sitting on it) are warnings only.
-  `HandMadeModelsTest.noVisibleZFighting` runs the same rule in Java (pistol and musket are excluded until the
-  follow-up after P6).
+  `HandMadeModelsTest.noVisibleZFighting` runs the same rule in Java on every model.
+- Loaded guns (V1b): `--fix --mirror <gun>.json <gun>_loaded.json` fixes the base, gives the variant's identical
+  elements the same moves and fixes only the lock parts of the variant, so P6's equality test keeps passing.
 - **Keep coplanar parts at least 0.05 px apart.** Insets of 0.005 to 0.02 px (the old "eps" of the octagon bars,
   the 0.02 px bore discs and ledger lines) still flicker at 10 to 30 blocks. `--fix` applies the V1 rules to the
   model JSON and its project together (elements matched in outliner order, only `from`/`to` change, UVs and display
@@ -903,3 +904,25 @@ game, nothing is keyed for that).
   | `surface` (2 s, once) | `mantle` rises 3 px with a 0.8 px overshoot at 1.2 s, scale from folded `[0.84, 0.9, 0.86]` to spread `[1.08, 1.04, 1.04]` at 1 s and back to 1; eyes open at 0.8–1.1 s; arms unfurl from curl 45° (`_2`) / 70° (`_3`) |
   | `grab` (1 s, once) | every `_2` curls 38°, `_3` 62° by 0.35 s (`easeOutQuad`), held to 0.55 s, relaxed by 1 s |
   | `submerge` (2 s, hold) | `mantle` sinks 3 px and contracts to `[0.82, 0.86, 0.88]` (fins folded), eyes close by 0.6 s, arms draw in (curl 20° / 32°) |
+## GUI kit (U1)
+
+Screen and HUD sprites come from `tools/gen_gui_textures.py` (standard library only; run it with `python3`, commit
+its output). They live in vanilla's GUI sprite atlas under
+`common/src/main/resources/assets/pirates_n_ships/textures/gui/sprites/{panel,widget,icon,hud}/`, each with a
+`.png.mcmeta` (`nine_slice` for frames, panels, buttons, fields, tags, dividers and the scrollbar; `stretch` for
+icons and the stamina fills). The ids are in `core/client/gui/GuiSprites`; `GuiTexturesTest` fails while the
+committed files differ from a fresh run. Pixel art at 16×16 scale, no anti-aliasing, two or three shades per material;
+nine-slice edges and centres repeat cleanly because vanilla tiles them.
+
+| Material | Dark | Mid | Light | Extra |
+|---|---|---|---|---|
+| Wood (frame, header) | 52,34,20 | 76,51,31 | 100,68,42 | bevel 132,94,58; board 60,40,24 / 50,33,20; outline 24,15,8 |
+| Brass (studs, buttons, dividers, trough) | 134,94,34 | 198,150,58 | 238,204,112 | outline 82,54,18; gold 252,216,78 |
+| Parchment (panels, cards, tags) | 196,170,124 | 222,201,156 | 238,224,188 | edge 160,128,84 |
+| Red wax (seal, own card, alert) | 104,18,18 | 156,32,28 | 206,72,56 | |
+| Navy (anchor badge) | 28,40,74 | 48,70,124 | 92,120,180 | |
+| Inset (fields, track, trough) | 20,13,8 | 34,23,14 | | |
+| Stamina fill | 112,18,16 (deep red) … 240,166,48 (amber) | eight 10 px bands | top row +34, bottom row ×0.72 | |
+
+Text: dark ink `#2C2018` (faded `#7A6852`) without shadow on parchment; light `#EEE0BC` or brass `#F4D27A` with
+shadow on wood.

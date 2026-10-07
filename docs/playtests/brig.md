@@ -64,3 +64,6 @@ Capture a fresh pillager for each step: summon it, weaken it (or `/data merge en
 4. With `flags_brig.player_capture = false`: "Capturing players is disabled on this server". A player without a bounty: "Only players with a bounty can be captured".
 
 Report: screenshots of the locked door texture and the particles, and the log if anything throws.
+
+
+Addendum (F7e): the bars and the door are now Blockbench models (iron posts and rails, a barred cell door with hinge straps and a padlock when locked). Check in each step that the connections, the open leaf and the padlock side look right; details in `items-and-blocks.md`, section "3D models", step 10.

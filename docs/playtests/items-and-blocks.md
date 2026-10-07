@@ -82,7 +82,16 @@ Renders of the intended look are in `art/renders/`.
    surface rises and falls through the five levels, the walls and floor never show through from any angle, the empty
    barrel shows a dark floor. Insert and take goods from crate and barrel, open the pantry, check comparator output:
    unchanged. Neighbouring blocks render normally. In hand, GUI, dropped and in a frame they look like small blocks.
-10. **All of them:** break each block; the particles match the block's wood or material, never the missing texture.
+10. **Cleat, bilge pump, brig bars and door (F7e):** a cleat on the floor in all four facings has its horns along the
+    facing, rising at both ends; on walls and the ceiling it sits upright inside its outline. A stay and a triangular
+    sail still attach near the cleats. The bilge pump's spout and handle point at the player who placed it; it pumps
+    as before. Brig bars: alone a capped post; in a row, an L, a T, a cross and next to a stone wall the rails and bars
+    continue across blocks, nothing dark or see-through; on a ship they move with the hull. Brig door, left and right
+    hinge, each facing: closed, the hinge straps are on the hinge edge and the lock plate on the free edge; open, the
+    leaf lies along the hinge edge with the straps at the hinge corner; locked (sneak-use), a brass padlock on the
+    lower half on the side you placed it from, staying on that face when the owner opens it. The door item is still
+    the flat wooden sprite (known).
+11. **All of them:** break each block; the particles match the block's wood or material, never the missing texture.
    `latest.log` has no model or texture warnings mentioning `pirates_n_ships`. On a moving ship the models render with
    correct lighting.
 
@@ -134,7 +143,7 @@ Compare each sword with a vanilla iron sword in the other hand or the next hotba
     and show the 3D icons.
 
 ## Known placeholders (for the later art pass)
-- Brig bars and door, the cleat, the bilge pump, the cannon and the harbor desk still use simple models (F7e and later batches).
+- The cannon and the harbor desk still use placeholder models (F7f in work).
 - The yard and stay cloths are flat grids with a simple belly; the cleat is a placeholder element model (F7e).
 - Only the doubloon, the bounty proof and the hull patch still use sprites (by decision).
 - The brig bars' transparency relies on a model field that only NeoForge reads. The Fabric port has to register a

@@ -136,7 +136,8 @@ class CrewMemberRigTest {
                 assertTrue(BONES.containsKey(b.boneName()), pose.animation() + " animates unknown bone " + b.boneName());
             }
         }
-        assertEquals(Set.of("idle", "walk", "work", "sit"), baked.animations().keySet());
+        // the four poses plus the navy soldier's musket animations (M6), which share the rig
+        assertEquals(Set.of("idle", "walk", "work", "sit", "musket_aim", "musket_reload", "musket_shove"), baked.animations().keySet());
     }
 
     @Test

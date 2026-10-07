@@ -12,7 +12,7 @@ import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 /** Data keys of the seafarer village (WG1): structure, structure set, biome tag and pools. No registration here. */
 public final class VillageKeys {
 
-    /** The structure type's id ({@link VillageStructures#PORT_VILLAGE}). */
+    /** The structure type's id ({@code world.structure.PortStructures#PORT_STRUCTURE}). */
     public static final net.minecraft.resources.ResourceLocation PORT_VILLAGE_TYPE = Constants.id("port_village");
 
     public static final ResourceKey<Structure> SEAFARER_VILLAGE = ResourceKey.create(Registries.STRUCTURE, Constants.id("seafarer_village"));

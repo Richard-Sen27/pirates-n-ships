@@ -12,7 +12,7 @@ import com.richardsenger.piratesnships.world.port.Berth;
 import com.richardsenger.piratesnships.world.port.Port;
 import com.richardsenger.piratesnships.world.port.PortRegistry;
 import com.richardsenger.piratesnships.world.port.PortService;
-import com.richardsenger.piratesnships.world.village.PortVillageStructure;
+import com.richardsenger.piratesnships.world.structure.PortStructure;
 import com.richardsenger.piratesnships.world.village.VillageKeys;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -49,13 +49,13 @@ import java.util.Optional;
  */
 public final class WorldGameTests {
 
-    private static final int SIZE = 48;
-    private static final int SEA_Y = 6;
+    static final int SIZE = 48;
+    static final int SEA_Y = 6;
     /** Canonical layout (sea to the north): water for z below this row, land from it on. */
-    private static final int SHORE_Z = 22;
+    static final int SHORE_Z = 22;
     /** Canonical site: 9 blocks inland from the first water row. */
-    private static final int SITE_X = 24;
-    private static final int SITE_Z = 30;
+    static final int SITE_X = 24;
+    static final int SITE_Z = 30;
 
     private WorldGameTests() {
     }
@@ -116,7 +116,7 @@ public final class WorldGameTests {
         ServerLevel level = helper.getLevel();
         BlockPos site = site(helper, sea);
         int seaY = seaSurface(helper);
-        PortVillageStructure structure = structure(level);
+        PortStructure structure = structure(level);
         Structure.GenerationContext context = context(level, site);
         Optional<Structure.GenerationStub> stub = structure.plan(context, site, seaY, terrain(helper), 1);
         helper.assertTrue(stub.isPresent(), "the shore gives a generation point");
@@ -171,7 +171,7 @@ public final class WorldGameTests {
     // --- Shore ------------------------------------------------------------------------------------------------
 
     /** Maps the canonical layout (sea to the north) to the test area turned so the sea lies toward {@code sea}. */
-    private static BlockPos canonical(Direction sea, int x, int y, int z) {
+    static BlockPos canonical(Direction sea, int x, int y, int z) {
         return switch (sea) {
             case EAST -> new BlockPos(SIZE - 1 - z, y, x);
             case SOUTH -> new BlockPos(SIZE - 1 - x, y, SIZE - 1 - z);
@@ -181,12 +181,12 @@ public final class WorldGameTests {
     }
 
     /** The world coordinate across the shore (z for north/south, x for east/west) of canonical row {@code z}. */
-    private static int canonicalToWorld(GameTestHelper helper, Direction sea, int x, int z) {
+    static int canonicalToWorld(GameTestHelper helper, Direction sea, int x, int z) {
         BlockPos p = helper.absolutePos(canonical(sea, x, 0, z));
         return sea.getAxis() == Direction.Axis.Z ? p.getZ() : p.getX();
     }
 
-    private static int seaEdge(BoundingBox box, Direction sea) {
+    static int seaEdge(BoundingBox box, Direction sea) {
         return switch (sea) {
             case NORTH -> box.minZ();
             case SOUTH -> box.maxZ();
@@ -195,7 +195,7 @@ public final class WorldGameTests {
         };
     }
 
-    private static boolean isOverWater(GameTestHelper helper, Direction sea, BoundingBox box) {
+    static boolean isOverWater(GameTestHelper helper, Direction sea, BoundingBox box) {
         int shore = canonicalToWorld(helper, sea, SITE_X, SHORE_Z);
         return switch (sea) {
             case NORTH -> box.maxZ() < shore;
@@ -205,7 +205,7 @@ public final class WorldGameTests {
         };
     }
 
-    private static void buildShore(GameTestHelper helper, Direction sea) {
+    static void buildShore(GameTestHelper helper, Direction sea) {
         for (int x = 0; x < SIZE; x++) {
             for (int z = 0; z < SIZE; z++) {
                 boolean water = z < SHORE_Z;
@@ -219,16 +219,16 @@ public final class WorldGameTests {
         }
     }
 
-    private static BlockPos site(GameTestHelper helper, Direction sea) {
+    static BlockPos site(GameTestHelper helper, Direction sea) {
         return helper.absolutePos(canonical(sea, SITE_X, SEA_Y, SITE_Z));
     }
 
-    private static int seaSurface(GameTestHelper helper) {
+    static int seaSurface(GameTestHelper helper) {
         return helper.absolutePos(new BlockPos(0, SEA_Y, 0)).getY();
     }
 
     /** First free height (fluids ignored) of the test area's columns; columns outside count as high land. */
-    private static PortVillageStructure.Terrain terrain(GameTestHelper helper) {
+    static PortStructure.Terrain terrain(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos a = helper.absolutePos(BlockPos.ZERO);
         BlockPos b = helper.absolutePos(new BlockPos(SIZE - 1, 15, SIZE - 1));
@@ -248,20 +248,20 @@ public final class WorldGameTests {
 
     // --- Structure --------------------------------------------------------------------------------------------
 
-    private static PortVillageStructure structure(ServerLevel level) {
+    private static PortStructure structure(ServerLevel level) {
         Structure s = level.registryAccess().registryOrThrow(Registries.STRUCTURE).get(VillageKeys.SEAFARER_VILLAGE);
-        if (!(s instanceof PortVillageStructure village)) throw new IllegalStateException("seafarer_village is not loaded: " + s);
+        if (!(s instanceof PortStructure village)) throw new IllegalStateException("seafarer_village is not loaded: " + s);
         return village;
     }
 
-    private static Structure.GenerationContext context(ServerLevel level, BlockPos site) {
+    static Structure.GenerationContext context(ServerLevel level, BlockPos site) {
         ChunkGenerator generator = level.getChunkSource().getGenerator();
         return new Structure.GenerationContext(level.registryAccess(), generator, generator.getBiomeSource(),
                 level.getChunkSource().randomState(), level.getStructureManager(), level.getSeed(), new ChunkPos(site), level, b -> true);
     }
 
     /** Places every chunk of {@code start}, as {@code /place structure} does. */
-    private static void place(ServerLevel level, StructureStart start) {
+    static void place(ServerLevel level, StructureStart start) {
         BoundingBox box = start.getBoundingBox();
         ChunkPos min = new ChunkPos(SectionPos.blockToSectionCoord(box.minX()), SectionPos.blockToSectionCoord(box.minZ()));
         ChunkPos max = new ChunkPos(SectionPos.blockToSectionCoord(box.maxX()), SectionPos.blockToSectionCoord(box.maxZ()));

@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.world.village;
 
+import com.richardsenger.piratesnships.world.structure.ShoreAnchor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.ChunkPos;
@@ -28,7 +29,7 @@ public final class VillageLayout {
      * ({@link #DOCK_PIER_X}, y, 0) lands on {@code seaEdge}. Templates rotate about their origin (pivot 0).
      */
     public static BlockPos startOrigin(BlockPos seaEdge, Rotation rotation) {
-        return seaEdge.subtract(new BlockPos(DOCK_PIER_X, 0, 0).rotate(rotation));
+        return ShoreAnchor.VILLAGE.startOrigin(seaEdge, rotation);
     }
 
     /** The last land column toward {@code sea}: {@code distance - 1} blocks from {@code candidate}. */

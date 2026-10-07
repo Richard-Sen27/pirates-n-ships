@@ -1,0 +1,11 @@
+{
+  "type": "pirates_n_ships:port_village",
+  "biomes": "#pirates_n_ships:has_structure/seafarer_village",
+  "max_distance_from_center": 80,
+  "size": 7,
+  "spawn_overrides": {},
+  "start_height": 1,
+  "start_pool": "pirates_n_ships:village/start",
+  "step": "surface_structures",
+  "terrain_adaptation": "none"
+}

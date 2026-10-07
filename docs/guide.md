@@ -48,8 +48,10 @@ guide as an in-game book with item links, recipes and search. Hold G over one of
 3. **Rig a square sail**: a mast of logs or fences with two rows of **yards** across it, one 2 to 8 blocks above the other, and a **sail winch** somewhere on deck. A **capstan** gives you an anchor.
 4. **Use the helm.** The connected blocks become a ship: a physics object that floats, with a dry hold.
 5. **Use the sail winch** to hoist the sails (furled → half → full). The wind pushes the ship.
-6. **Steer at the helm:** click the right third of the wheel for starboard, the left third for port, the middle for
-   midships.
+6. **Steer at the helm:** hold right-click on the helm to take the wheel, then move the mouse or hold A/D to turn it:
+   right or D turns it clockwise and the ship to starboard, left or A to port. The wheel turns three quarters of a turn
+   each way from midships, and the line above the hotbar shows the rudder angle. Let go to release it; the wheel stays
+   where you left it. (Server option `helm.wheel.drag_steering = false` brings back clicking the wheel's thirds.)
 7. **Use the capstan** to drop the anchor, and again to raise it.
 8. **Sneak-use the helm with an empty hand** to turn the ship back into normal blocks. The ship has to be nearly still
    and level.

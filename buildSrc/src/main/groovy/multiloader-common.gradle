@@ -141,7 +141,8 @@ processResources {
             'pal_version'                  : pal_version,
             'pal_version_range'            : pal_version_range,
             'geckolib_version'             : geckolib_version,
-            'geckolib_version_range'       : geckolib_version_range
+            'geckolib_version_range'       : geckolib_version_range,
+            'guideme_version_range'        : guideme_version_range
     ]
 
     filesMatching(['pack.mcmeta', 'fabric.mod.json', 'META-INF/neoforge.mods.toml', '*.mixins.json']) {

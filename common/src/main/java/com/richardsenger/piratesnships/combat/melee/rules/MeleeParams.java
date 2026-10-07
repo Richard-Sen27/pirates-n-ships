@@ -21,44 +21,64 @@ package com.richardsenger.piratesnships.combat.melee.rules;
  * @param exhaustedPoiseFactor poise multiplier at zero stamina (lower = staggered more easily)
  * @param npcSkillMultiplier   scales NPC duelist skill tiers
  * @param feintRecoveryTicks   recovery after a feint (an attack aborted during its wind-up); 0 = straight back to idle
+ * @param guardAbsorbsAll      a successful guard (enough stamina for the blocked hit) absorbs the whole frontal hit;
+ *                             off = it only takes off the weapon's guard {@code damageReduction} (the pre-P9 rule).
+ *                             A guard break always deals the reduced damage.
+ * @param guardAbsorbStaminaPerDamage extra stamina per point of damage a guard absorbs, on top of the weapon's own
+ *                             block cost (times {@code staminaCostMultiplier}); 0 = only the weapon's cost
  */
 public record MeleeParams(boolean skillBased, boolean directionalMode, int parryWindowTicks, int latencyAllowanceTicks,
                           int parryLockoutTicks, float staminaMax, float staminaRegenPerTick, int staminaRegenDelayTicks,
                           double staminaCostMultiplier, int riposteWindowTicks, double riposteDamageBonus, int staggerTicks,
                           int parryStaggerTicks, int guardBreakStaggerTicks, double exhaustedPoiseFactor,
-                          double npcSkillMultiplier, int feintRecoveryTicks) {
+                          double npcSkillMultiplier, int feintRecoveryTicks, boolean guardAbsorbsAll,
+                          double guardAbsorbStaminaPerDamage) {
 
     public static final MeleeParams DEFAULTS = new MeleeParams(true, false, 7, 2, 15, 100f, 1.0f, 20, 1.0,
-            20, 1.5, 20, 25, 30, 0.5, 1.0, 6);
+            20, 1.5, 20, 25, 30, 0.5, 1.0, 6, true, 1.5);
 
     public MeleeParams {
         if (parryWindowTicks < 1) throw new IllegalArgumentException("parryWindowTicks must be >= 1");
         if (latencyAllowanceTicks < 0) throw new IllegalArgumentException("latencyAllowanceTicks must be >= 0");
         if (!(staminaMax > 0)) throw new IllegalArgumentException("staminaMax must be > 0");
+        if (!(guardAbsorbStaminaPerDamage >= 0)) throw new IllegalArgumentException("guardAbsorbStaminaPerDamage must be >= 0");
         if (feintRecoveryTicks < 0) throw new IllegalArgumentException("feintRecoveryTicks must be >= 0");
     }
 
     public MeleeParams withSkillBased(boolean on) {
         return new MeleeParams(on, directionalMode, parryWindowTicks, latencyAllowanceTicks, parryLockoutTicks, staminaMax,
                 staminaRegenPerTick, staminaRegenDelayTicks, staminaCostMultiplier, riposteWindowTicks, riposteDamageBonus,
-                staggerTicks, parryStaggerTicks, guardBreakStaggerTicks, exhaustedPoiseFactor, npcSkillMultiplier, feintRecoveryTicks);
+                staggerTicks, parryStaggerTicks, guardBreakStaggerTicks, exhaustedPoiseFactor, npcSkillMultiplier, feintRecoveryTicks, guardAbsorbsAll, guardAbsorbStaminaPerDamage);
     }
 
     public MeleeParams withParryTiming(int window, int allowance, int lockout) {
         return new MeleeParams(skillBased, directionalMode, window, allowance, lockout, staminaMax,
                 staminaRegenPerTick, staminaRegenDelayTicks, staminaCostMultiplier, riposteWindowTicks, riposteDamageBonus,
-                staggerTicks, parryStaggerTicks, guardBreakStaggerTicks, exhaustedPoiseFactor, npcSkillMultiplier, feintRecoveryTicks);
+                staggerTicks, parryStaggerTicks, guardBreakStaggerTicks, exhaustedPoiseFactor, npcSkillMultiplier, feintRecoveryTicks, guardAbsorbsAll, guardAbsorbStaminaPerDamage);
     }
 
     public MeleeParams withStamina(float max, float regenPerTick, int regenDelay, double costMultiplier) {
         return new MeleeParams(skillBased, directionalMode, parryWindowTicks, latencyAllowanceTicks, parryLockoutTicks, max,
                 regenPerTick, regenDelay, costMultiplier, riposteWindowTicks, riposteDamageBonus,
-                staggerTicks, parryStaggerTicks, guardBreakStaggerTicks, exhaustedPoiseFactor, npcSkillMultiplier, feintRecoveryTicks);
+                staggerTicks, parryStaggerTicks, guardBreakStaggerTicks, exhaustedPoiseFactor, npcSkillMultiplier, feintRecoveryTicks, guardAbsorbsAll, guardAbsorbStaminaPerDamage);
     }
 
     public MeleeParams withFeintRecovery(int ticks) {
         return new MeleeParams(skillBased, directionalMode, parryWindowTicks, latencyAllowanceTicks, parryLockoutTicks, staminaMax,
                 staminaRegenPerTick, staminaRegenDelayTicks, staminaCostMultiplier, riposteWindowTicks, riposteDamageBonus,
-                staggerTicks, parryStaggerTicks, guardBreakStaggerTicks, exhaustedPoiseFactor, npcSkillMultiplier, ticks);
+                staggerTicks, parryStaggerTicks, guardBreakStaggerTicks, exhaustedPoiseFactor, npcSkillMultiplier, ticks, guardAbsorbsAll, guardAbsorbStaminaPerDamage);
+    }
+
+    public MeleeParams withGuardAbsorbsAll(boolean on) {
+        return new MeleeParams(skillBased, directionalMode, parryWindowTicks, latencyAllowanceTicks, parryLockoutTicks, staminaMax,
+                staminaRegenPerTick, staminaRegenDelayTicks, staminaCostMultiplier, riposteWindowTicks, riposteDamageBonus,
+                staggerTicks, parryStaggerTicks, guardBreakStaggerTicks, exhaustedPoiseFactor, npcSkillMultiplier, feintRecoveryTicks, on, guardAbsorbStaminaPerDamage);
+    }
+
+    public MeleeParams withGuardAbsorbStaminaPerDamage(double perDamage) {
+        return new MeleeParams(skillBased, directionalMode, parryWindowTicks, latencyAllowanceTicks, parryLockoutTicks, staminaMax,
+                staminaRegenPerTick, staminaRegenDelayTicks, staminaCostMultiplier, riposteWindowTicks, riposteDamageBonus,
+                staggerTicks, parryStaggerTicks, guardBreakStaggerTicks, exhaustedPoiseFactor, npcSkillMultiplier, feintRecoveryTicks,
+                guardAbsorbsAll, perDamage);
     }
 }

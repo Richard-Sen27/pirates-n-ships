@@ -15,8 +15,10 @@ import org.jetbrains.annotations.Nullable;
  *   <li>Defender parrying: a parryable hit (melee, frontal, not a riposte) within the window, counted with
  *       {@link ParryTiming}, is {@link HitResult.Outcome#PARRIED}. Anything else that hits a parrying defender
  *       (riposte, from behind, too late) breaks the parry: it counts as failed (cost, lockout) and the hit lands.</li>
- *   <li>Defender guarding with the hit inside the guard arc: reduced damage and stamina cost; if that empties the
- *       stamina the guard breaks (stagger).</li>
+ *   <li>Defender guarding with the hit inside the guard arc: the hit costs stamina ({@link #guardCost}). With enough stamina the guard
+ *       holds and absorbs the whole hit (0 damage; with {@code guardAbsorbsAll} off, the weapon's reduced damage).
+ *       If the cost empties the stamina the guard breaks: the hit lands with the weapon's reduced damage and the
+ *       defender is staggered (P9).</li>
  *   <li>Otherwise a full hit. It staggers when it is a thrust into the defender's recovery, or when the damage reaches
  *       the defender weapon's poise (times {@code exhaustedPoiseFactor} at zero stamina).</li>
  * </ol>
@@ -53,12 +55,13 @@ public final class HitResolver {
         if (def.phase() == Phase.GUARDING && defenderWeapon != null && hit.frontal()) {
             WeaponDefinition.Guard g = defenderWeapon.guard();
             float reduced = (float) (hit.damage() * (1.0 - g.damageReduction()));
-            float cost = (float) ((g.staminaPerHit() + g.staminaPerDamage() * hit.damage()) * p.staminaCostMultiplier());
+            float through = p.guardAbsorbsAll() ? 0f : reduced; // what a holding guard lets through
+            float cost = guardCost(g, hit.damage(), hit.damage() - through, p);
             if (def.stamina() - cost <= CombatState.EXHAUSTED_EPSILON) {
                 CombatState broken = CombatRules.stagger(spendAll(def), p.guardBreakStaggerTicks());
                 return new HitResult(HitResult.Outcome.GUARD_BROKEN, reduced, true, attacker, broken);
             }
-            return new HitResult(HitResult.Outcome.GUARDED, reduced, false, attacker, spend(def, cost));
+            return new HitResult(HitResult.Outcome.GUARDED, through, false, attacker, spend(def, cost));
         }
 
         boolean stagger = hit.attack() == AttackKind.THRUST && wasRecovering;
@@ -68,6 +71,17 @@ public final class HitResolver {
         }
         if (stagger) def = CombatRules.stagger(def, p.staggerTicks());
         return new HitResult(HitResult.Outcome.HIT, hit.damage(), stagger, attacker, def);
+    }
+
+    /**
+     * Stamina cost of one blocked frontal hit: the weapon's block cost ({@code staminaPerHit + staminaPerDamage x damage})
+     * plus {@code guardAbsorbStaminaPerDamage x absorbed}, all times {@code staminaCostMultiplier}. {@code absorbed} is
+     * what the holding guard would take off the hit (the whole hit by default). If the defender has no more stamina
+     * than this, the guard breaks.
+     */
+    public static float guardCost(WeaponDefinition.Guard g, float damage, float absorbed, MeleeParams p) {
+        return (float) ((g.staminaPerHit() + g.staminaPerDamage() * damage + p.guardAbsorbStaminaPerDamage() * absorbed)
+                * p.staminaCostMultiplier());
     }
 
     private static CombatState spend(CombatState s, float cost) {

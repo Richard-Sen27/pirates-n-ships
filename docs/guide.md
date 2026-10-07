@@ -1,5 +1,7 @@
 # Pirates 'n' Ships: how it works
 
+> In-game guide (GuideME): after changing this file, regenerate it with `python3 tools/gen_guideme.py` and commit the output.
+
 A guide to everything that exists in the mod today: what each block, item and system does and how to use it.
 It describes the code on `main`, not the plans. For the plans see [`design.md`](design.md), and for the state of
 the work see [`progress.md`](progress.md).
@@ -31,6 +33,10 @@ physics for moving ships.
 15. [What does not exist yet](#15-what-does-not-exist-yet)
 
 ---
+
+## 0. The guide book
+With GuideME installed you start with the **Pirates 'n' Ships Guide** (also craftable from a book and a feather): this
+guide as an in-game book with item links, recipes and search. Hold G over one of the mod's items to open its page.
 
 ## 1. Your first ship
 
@@ -250,6 +256,13 @@ doubloons and sometimes a cutlass; navy drop lead shot and gunpowder. Operators 
 difficulty: on peaceful they ignore players, and vanilla zeroes all mob damage to players there, so set
 `/difficulty normal` to fight); natural spawning comes with the world structures. Everything is in the `mobs` server
 config.
+
+### The kraken
+The kraken lurks in the deep ocean and rises beside ships within 32 blocks, more often at night and in storms. Its
+tentacles grip the hull near the waterline and drag the ship down, beat masts to splinters and sweep the deck;
+swimmers are pulled under. Its eyes are its weak spots (triple damage); 40 damage on a tentacle cuts it and it lets go
+until it grows back. Below 30 % health it sinks away. Drops a Kraken Beak and Kraken Ink. Switch it off with
+`hazards.kraken.enabled`; tune it under `mobs.kraken`. Operators: `/pirates mob spawn kraken`.
 
 ### Sharks
 Sharks roam every ocean, cruising a few blocks under the surface. A shark that spots you swimming circles you
@@ -498,7 +511,7 @@ inventory to load (3 seconds for the pistol, 5 for the musket, with the bow pose
 nothing; creative mode needs no ammo). The tooltip shows "Loaded" or "Unloaded". With a loaded gun, hold right-click to aim (a quick click still fires at once): after a second of steady aiming the
 shot is tighter, the musket zooms in a little, and the shot leaves when you release. To lower an aimed gun without firing, press sneak: the gun goes down still
 loaded and stays down while you keep sneaking (server option `firearms.aim.lower_on_sneak`). While you load, a white
-bar under the gun's slot fills up; a loaded gun shows a full gold bar in the hotbar and inventory, and its tooltip
+bar under the gun's slot fills up; a loaded gun shows a full gold bar in the hotbar and inventory, its hammer cocked back, and its tooltip
 says "Loaded" or "Not loaded". You see yourself aim and reload (the Player Animation Library drives it, client option
 `firearm_animations.enabled`). Firing: a lead ball flies out with smoke and a small kick, the gun is unloaded again and needs half a second before it
 can be used. The pistol hits hard but scatters; the musket flies flatter and tighter. Standing in the rain, a quarter of
@@ -553,7 +566,9 @@ on by default; vanilla weapons are untouched):
 - **Slash:** a quick left click. A wide, short arc after a brief wind-up.
 - **Thrust:** hold left click about half a second and release. Narrow, long reach, more damage, slow to recover if it
   misses.
-- **Guard:** hold right click. Frontal damage is reduced; it drains stamina while held and per blocked hit.
+- **Guard:** hold right click. It blocks every hit from the front completely, but each blocked blow costs stamina,
+  and heavier blows cost more. When you can't pay for a blow, your guard breaks: the hit gets through, softened by
+  your blade, and you stagger. Hits from behind or the side ignore your guard.
 - **Parry:** a quick right tap just before a hit lands. The hit is deflected, the attacker staggers, and for about a
   second you may **riposte** (attack for bonus damage). A parry with no hit coming costs stamina and locks parrying
   briefly.
@@ -685,6 +700,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `cannons.swivel` | Swivel gun on/off, ammo item and count, damage, muzzle speed, reload, blocks per hit, recoil and impact impulses, ball lifetime, elevation limits, aim reach. |
 | `mobs` | Mob types on/off and peaceful, hostility toggles, detection and fight ranges, skill tiers, musket timings and ammo, shove, drops. |
 | `hazards` / `hazard_visuals` (client) | Waterspouts and whirlpools on/off, spawn chances and interval, distance band, lifetimes, radii, pull, lift, spin, drag-down, drift, sail tearing, ship force scale and mass cap; particle density and sounds. |
+| `mobs.kraken` / `hazards.kraken` | Kraken on/off and chance per day; detection, grips, tentacle health and regrow, weak spots, strike and swipe intervals, damage, retreat. |
 | `mobs.shark` | Shark on/off and peaceful, spawn weight and group (server restart), detection, circle and give-up times, bite cooldown, damage and knockback, frenzy threshold. |
 | `melee_animations` (client) | Sword animations on/off, first-person mode, layer priority. |
 | `melee_input` / `melee_hud` (client) | Hold-to-thrust and parry-tap thresholds; stamina bar on/off, scale and offsets. |

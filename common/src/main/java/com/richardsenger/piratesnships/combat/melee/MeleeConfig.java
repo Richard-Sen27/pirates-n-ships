@@ -44,6 +44,10 @@ public final class MeleeConfig {
             "Stagger of an attacker whose hit was parried");
     public static final ConfigValue<Integer> GUARD_BREAK_STAGGER = S.intRange("guard_break_stagger_ticks", D.guardBreakStaggerTicks(), 0, 200,
             "Stagger when a blocked hit empties the defender's stamina");
+    public static final ConfigValue<Boolean> GUARD_ABSORBS_ALL = S.bool("guard_absorbs_all", D.guardAbsorbsAll(),
+            "A successful guard blocks the whole frontal hit (it still costs stamina). Off = a guard only reduces the damage by the weapon's guard reduction. A guard break always deals the reduced damage");
+    public static final ConfigValue<Double> GUARD_ABSORB_STAMINA = S.doubleRange("guard_absorb_stamina_per_damage", D.guardAbsorbStaminaPerDamage(), 0.0, 20.0,
+            "Extra stamina a blocked frontal hit costs per point of damage the guard absorbs, on top of the weapon's own block cost (0 = only the weapon's cost)");
     public static final ConfigValue<Double> EXHAUSTED_POISE = S.doubleRange("exhausted_poise_factor", D.exhaustedPoiseFactor(), 0.0, 1.0,
             "Poise multiplier at zero stamina (lower = staggered more easily, 0 = every hit staggers)");
     public static final ConfigValue<Double> NPC_SKILL = S.doubleRange("npc_skill_multiplier", D.npcSkillMultiplier(), 0.0, 10.0,
@@ -80,6 +84,7 @@ public final class MeleeConfig {
         return new MeleeParams(SKILL_BASED.get(), DIRECTIONAL_MODE.get(), PARRY_WINDOW.get(), LATENCY_ALLOWANCE.get(),
                 PARRY_LOCKOUT.get(), STAMINA_MAX.get().floatValue(), STAMINA_REGEN.get().floatValue(), STAMINA_REGEN_DELAY.get(),
                 STAMINA_COST_MULTIPLIER.get(), RIPOSTE_WINDOW.get(), RIPOSTE_BONUS.get(), STAGGER.get(), PARRY_STAGGER.get(),
-                GUARD_BREAK_STAGGER.get(), EXHAUSTED_POISE.get(), NPC_SKILL.get(), FEINT_RECOVERY.get());
+                GUARD_BREAK_STAGGER.get(), EXHAUSTED_POISE.get(), NPC_SKILL.get(), FEINT_RECOVERY.get(),
+                GUARD_ABSORBS_ALL.get(), GUARD_ABSORB_STAMINA.get());
     }
 }

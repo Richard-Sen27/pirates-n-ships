@@ -1610,5 +1610,13 @@
 				}
 			}
 		}
+	],
+	"overrides": [
+		{
+			"predicate": {
+				"pirates_n_ships:loaded": 1
+			},
+			"model": "pirates_n_ships:item/pistol_loaded"
+		}
 	]
 }

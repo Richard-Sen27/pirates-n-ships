@@ -35,3 +35,6 @@ Please send `latest.log` if anything differs.
 ## Also worth a look
 - Is the recoil (3° pistol, 5° musket) too much or too little? Is the reload too long?
 - Do the gun models (F8b) point where you aim when firing?
+
+
+Addendum (P1): loading shows no bow pose any more (and no pose at all, known); keep holding after the loading sounds end and release: no shot. Click a loaded gun: it fires at once. Hold, then release: it fires on release; after about a second of aiming the shot is visibly tighter, and the musket's view narrows while aiming (not while loading).

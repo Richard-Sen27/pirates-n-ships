@@ -5,7 +5,7 @@ Statuses: **todo** / **in progress** / **done** / **blocked: needs playtest** / 
 
 "Done" means: `./gradlew build` passes, `./gradlew :neoforge:runGameTestServer` passes, and the new logic has tests.
 
-Last updated: 2026-10-07 (fourth session: phase M: F9, M1, M2 merged, M3 running; phase P: P1 running, F8f's first half merged).
+Last updated: 2026-10-07 (fourth session: phase M: F9, M1, M2 merged, M3 verifying its tests; phase P: P1 and F8f merged, P2, P3 and P4 running).
 
 ## Phase F: first playtest feedback (done, F5 and F7 continue in phase G)
 
@@ -72,11 +72,12 @@ The human played with the phase G build on 2026-10-07 and reported: figureheads 
 
 | Package | Scope | Status |
 |---|---|---|
-| P1 | Code fixes: figureheads mount on the clicked block facing the player; the cloth bellies downwind (convention fix); brig bars connect to the door and a brig key locks and unlocks it; firearms load with the crossbow pose and a loaded gun aims while held and fires on release, with an aimed spread bonus | in progress |
+| P1 | Code fixes: figureheads mount on the clicked block facing the player; the cloth bellies downwind (convention fix); brig bars connect to the door and a brig key locks and unlocks it; firearms load with the crossbow pose and a loaded gun aims while held and fires on release, with an aimed spread bonus | done | Merged (`2f1f0d5`). Figureheads: `FACING` = the clicked face. Sails: **no inversion found**, client and server share the flow-vector convention (`ClothSide` extracted, 6 JUnit tests incl. the spec case); the likely cause of the report is the flag, whose wind facing ignores the ship's orientation (fixed in P4). Brig: bars connect to door halves; `brig_key` (ingot over nugget) toggles the lock, any key on any door, the owner still opens a locked door, sneak-use without a key does nothing. Firearms: hold sessions read from the remaining use time (loading 36000 ticks, aiming 72000), release fires, `firearms.aim` (`aim_min_ticks` 0, `aim_steady_ticks` 20, `aimed_spread_factor` 0.5), client `firearm_view.musket_zoom` 1.25 through a new `ClientEvents.COMPUTE_FOV`; **no pose** during loading or aiming because vanilla's crossbow poses are hard-wired to `CrossbowItem` (P3 adds poses through PAL). 10 JUnit and 6 GameTests. |
+| P4 | Flag wind direction in the ship's frame: `FlagpoleBlockEntity#windFacing` must turn the world wind into plot coordinates by the ship's orientation, re-evaluate when the ship turns, and sample the wind at the ship's world position | in progress |
 | F8f | Blockbench: doubloon and bounty proof as 3D items, a 3D brig door item (both halves in one item model), a brig key item | partly done | Doubloon (22 elements, a tilted stack of three coins with a cross pattée; the icon tilt is a `gui` display entry because an element rotates about one axis only) and bounty proof (12, a diagonal scroll with a wax seal) merged (`8077bc6`); the market screen renders the item, so its icon is the 3D stack. Every item of the mod is now a Blockbench model except the hull patch. The brig door and key items follow after P1 merges (F8g). |
-| P2 | Cannon sizes: the cannon becomes a two-block gun (master and part blocks like a bed, carriage two long and 1.5 high, barrel a block ahead) and a swivel gun that mounts on fences and railings with free yaw (block entity renderer), lower range and damage, faster reload; code with placeholder models first | todo, after P1 |
+| P2 | Cannon sizes: the cannon becomes a two-block gun (master and part blocks like a bed, carriage two long and 1.5 high, barrel a block ahead) and a swivel gun that mounts on fences and railings with free yaw (block entity renderer), lower range and damage, faster reload; code with placeholder models first | in progress |
 | F7g | Blockbench: the large cannon model spanning two blocks plus the barrel, the swivel gun | todo, after P2 and F8f |
-| P3 | Firearm and cannon animations through PAL on the player rig (aim pistol, aim musket, reload musket, light the fuse), musket zoom if P1 could not do it | todo, after P1 and M2 (Blockbench) |
+| P3 | Firearm animations through PAL on the player rig (aim pistol, aim musket, reload pistol, reload musket) triggered by the P1 hold sessions, first and third person; the cannon fuse animation follows P2 | in progress |
 
 ## Phase M: NPCs and animations (running)
 
@@ -96,6 +97,7 @@ Started 2026-10-07 on the human's request ("what about all the NPCs and the anim
 **Incident (F5b merge): stale GameTest config.** The F5b branch passed its GameTests in the agent's worktree but the beam-reach keel test failed deterministically on the merged tree (leeway 0.139 instead of 0.111 m/s). Cause: the GameTest server keeps the mod's config in `neoforge/build/gametest/config/`, which the fresh-world task did not clear, and the orchestrator's copy still had `keel_lateral_drag = 2.0` from an old default (the current default is 8.0), while every fresh agent worktree ran with 8.0. So orchestrator and agent measurements have differed for a while, which explains part of the earlier "flaky" sailing tests. Fixed in `neoforge/build.gradle`: `runGameTestServer` now also deletes `build/gametest/config/pirates_n_ships-*.toml`.
 
 Follow-ups from phase G (small):
+- Firearms: holding to aim slows walking like a bow; no pose feedback during loading beyond sounds (P3). Brig: `message...brig.door.not_owner` and `DoorLockRules.canChangeLock` are unused since the key. The brig key has a placeholder sprite (F8g).
 - Crew rig: a crew member standing on a moving deck may play `walk` if the vanilla limb swing picks up the deck motion; `sit` never plays at stations (the seat makes it stand); `CLAUDE.md` now lists GeckoLib and PAL as hard dependencies.
 - Sword animations: a crouched attack likely pops the upper body to standing height (the position channels replace vanilla's sneak offsets; fix by skipping the lean and twist compensation while sneaking, in Java, or additive positions); a stagger interrupting a pose and a slash riposte snap one frame; the rest pose ignores the walk arm swing (small jump while walking); first-person framing of the wide slash is unchecked.
 - Plunder crime: `/pirates trade sell … plundered` calls `MarketTransactions` directly and records no crime (desk sales and command-opened markets do); add a `MarketBackend.reportNoticed` call in `TradeCommands`. `station/order` imports `combat.cannon.CannonStation.CannonOrder`, a station-combat package cycle that an order registry would remove.

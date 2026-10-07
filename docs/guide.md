@@ -400,6 +400,10 @@ What is detected in the world today:
 - A prisoner left alone outside a cell tries to escape (about once per 10 minutes on average).
 
 ### Brig bars and brig door
+Locking and unlocking a brig door needs a **Brig Key** (an iron ingot over an iron nugget). Use the key on the door:
+"Brig door locked" with a padlock, again to unlock. Any key works on any brig door, so keep them from your prisoners.
+The owner of a door still opens it without a key; nobody else, no mob and no redstone can. Bars connect to the door.
+
 - **Brig bars** connect like iron bars.
 - The **brig door** belongs to the player who placed it. Sneak-use it with an empty hand to lock or unlock it. A locked
   door opens only for its owner and ignores redstone.
@@ -431,8 +435,8 @@ nothing lets a player use it yet: the input and animation layers are missing.
 ### Firearms
 The pistol and the musket are single-shot flintlocks. Hold right-click with one lead shot and one gunpowder in your
 inventory to load (3 seconds for the pistol, 5 for the musket, with the bow pose; letting go early cancels and costs
-nothing; creative mode needs no ammo). The tooltip shows "Loaded" or "Unloaded". Right-click a loaded gun to fire at
-once: a lead ball flies out with smoke and a small kick, the gun is unloaded again and needs half a second before it
+nothing; creative mode needs no ammo). The tooltip shows "Loaded" or "Unloaded". With a loaded gun, hold right-click to aim (a quick click still fires at once): after a second of steady aiming the
+shot is tighter, the musket zooms in a little, and the shot leaves when you release. Firing: a lead ball flies out with smoke and a small kick, the gun is unloaded again and needs half a second before it
 can be used. The pistol hits hard but scatters; the musket flies flatter and tighter. Standing in the rain, a quarter of
 the shots misfire with a click and the charge stays in. Without ammo the gun only clicks. Shooting someone counts as an
 attack for the law, and the death message names you. Everything is in the `firearms` server config (and the misfire
@@ -498,7 +502,7 @@ on by default; vanilla weapons are untouched):
 | Cargo Barrel | 6 planks, 2 iron nuggets | Bulk container for 1536 items of one kind. |
 | Brig Bars | 4 iron bars, 2 planks (gives 6) | Bars for cells. |
 | Brig Door | 4 iron ingots, 2 iron bars | Lockable door for cells. |
-| Mermaid, Lion, Eagle and Skull Figurehead | 4 planks and a prismarine shard, gold ingot, feather or bone | Decoration for the bow. Faces the way you look when placing it. |
+| Mermaid, Lion, Eagle and Skull Figurehead | 4 planks and a prismarine shard, gold ingot, feather or bone | Decoration for the bow. Click the hull block it should hang on: the plate lands there and the figure looks at you. |
 | Nameplate | any sign, 1 gold nugget | A board on two iron brackets that shows the ship's name once the ship is assembled and named (name tag on the helm); long names shrink to fit, renaming updates every plate within a second, disassembly clears them. Server option `ship_identity.nameplate_shows_name`. |
 | Test Block | none | A development block. |
 
@@ -595,6 +599,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevation range and steps, blocks per hit, recoil and impact impulses, ball lifetime and water behaviour. |
 | `melee_animations` (client) | Sword animations on/off, first-person mode, layer priority. |
 | `melee_input` / `melee_hud` (client) | Hold-to-thrust and parry-tap thresholds; stamina bar on/off, scale and offsets. |
+| `firearms.aim` / `firearm_view` (client) | Minimum hold, steady time and aimed spread factor; musket zoom. |
 | `firearms` | Firearms on/off, per gun: damage, muzzle velocity, spread, reload time, recoil; ball lifetime and gravity, cooldown, gunpowder use. |
 | `sailing_runtime` | Sailing forces on/off, heel scaling, steering and anchor on/off, rudder steps, chain length. |
 | `crew_stations` | Crew stations on/off, time per trim step. |

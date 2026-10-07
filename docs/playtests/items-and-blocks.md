@@ -68,8 +68,9 @@ Renders of the intended look are in `art/renders/`.
 7. **Yard:** yards along x and along z look the same, turned; the spar sits exactly on the hitbox outline; a row of
    yards joins seamlessly with a lashing band on every block. With a square sail hoisted, the cloth lines up with the
    spar at half and at full and does not clip badly through the band or the jackstay.
-8. **Figureheads (skull, eagle, lion, mermaid):** place each one facing north, east, south and west: the figure looks
-   the way you faced when placing it and the mounting plate is on the side nearest you. Against a planks block the
+8. **Figureheads (skull, eagle, lion, mermaid):** click the east, south, west and north faces of a hull block: the
+   plate sits on the hull and the figure looks at you, even if you look sideways while clicking; on a deck top it
+   faces you. Against a planks block the
    plate sits flush with no holes or x-ray around it. From the side: eagle and lion reach about ¾ block ahead, skull
    and mermaid about ½, parts hang below the block (the mermaid's tail almost a full block). From 10 blocks away each
    design is recognisable. In the GUI the figure is visible (not just the back plate); check hand, item frame and

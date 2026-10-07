@@ -88,3 +88,6 @@ Please send screenshots of steps 3, 7 and 10, and `latest.log` if anything goes 
    one is cut with "...". A plate placed on an already named ship shows the name within a second. Disassembly blanks
    the plates; reassembling and naming brings the name back. `ship_identity.nameplate_shows_name = false` blanks them.
 3. **Performance.** 30 or more nameplates and 30 or more banner flags on one ship: no noticeable FPS or TPS drop.
+
+
+Addendum (P1 finding, fixed in P4): on a ship that has turned since assembly the flag pointed the wrong way (180° after a half turn), because its wind facing ignored the ship's orientation. After P4 the flag must stream downwind on a turned ship too. When judging the sails, use `/pirates wind get`, not the flag.

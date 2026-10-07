@@ -566,7 +566,9 @@ on by default; vanilla weapons are untouched):
 - **Slash:** a quick left click. A wide, short arc after a brief wind-up.
 - **Thrust:** hold left click about half a second and release. Narrow, long reach, more damage, slow to recover if it
   misses.
-- **Guard:** hold right click. Frontal damage is reduced; it drains stamina while held and per blocked hit.
+- **Guard:** hold right click. It blocks every hit from the front completely, but each blocked blow costs stamina,
+  and heavier blows cost more. When you can't pay for a blow, your guard breaks: the hit gets through, softened by
+  your blade, and you stagger. Hits from behind or the side ignore your guard.
 - **Parry:** a quick right tap just before a hit lands. The hit is deflected, the attacker staggers, and for about a
   second you may **riposte** (attack for bonus damage). A parry with no hit coming costs stamina and locks parrying
   briefly.

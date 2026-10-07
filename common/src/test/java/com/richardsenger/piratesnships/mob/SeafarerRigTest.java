@@ -5,7 +5,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.richardsenger.piratesnships.Constants;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.richardsenger.piratesnships.mob.client.HumanoidGeoModel;
+import com.richardsenger.piratesnships.mob.client.HumanoidGeoRenderer;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import javax.imageio.ImageIO;
 import net.minecraft.SharedConstants;
+import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.Bootstrap;
 import java.util.Set;
@@ -25,6 +28,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import software.bernie.geckolib.animation.Animation;
 import software.bernie.geckolib.animation.keyframe.BoneAnimation;
+import software.bernie.geckolib.animation.keyframe.Keyframe;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.loading.json.raw.Model;
@@ -33,6 +37,9 @@ import com.richardsenger.piratesnships.mob.entity.NavySoldier;
 import software.bernie.geckolib.loading.object.BakedAnimations;
 import software.bernie.geckolib.loading.object.BakedModelFactory;
 import software.bernie.geckolib.loading.object.GeometryTree;
+import software.bernie.geckolib.loading.math.MathValue;
+import software.bernie.geckolib.util.RenderUtil;
+import org.joml.Vector3f;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -213,5 +220,125 @@ class SeafarerRigTest {
                 .getAsJsonObject("bones").getAsJsonObject("right_hand").getAsJsonObject("rotation");
         JsonArray last = hand.getAsJsonObject("0.35").getAsJsonArray("vector");
         assertTrue(last.get(0).getAsFloat() > 70f, "aim turns the musket level along the arm");
+    }
+
+    // ---- Where the held musket points (M6b) ----------------------------------------------------------------------
+
+    /** Butt, muzzle and hand of the soldier's musket in the model frame (px; y up, the mob faces -z, its right at +x). */
+    private record MusketPose(Vector3f butt, Vector3f muzzle, Vector3f hand) {
+        Vector3f barrel() {
+            return new Vector3f(muzzle).sub(butt).normalize();
+        }
+
+        /** Degrees above the horizontal. */
+        double pitch() {
+            return Math.toDegrees(Math.asin(barrel().y));
+        }
+
+        /** Degrees off straight ahead (-z) towards the mob's right. */
+        double yaw() {
+            Vector3f b = barrel();
+            return Math.toDegrees(Math.atan2(b.x, -b.z));
+        }
+    }
+
+    /** The value a keyframe channel reaches at {@code tick}, which must be a key time (GeckoLib keyframe lengths are in ticks). */
+    private static float keyedAt(List<Keyframe<MathValue>> frames, double tick, String what) {
+        double t = 0;
+        for (Keyframe<MathValue> k : frames) {
+            t += k.length();
+            if (Math.abs(t - tick) < 1e-6) return (float) k.endValue().get();
+        }
+        throw new AssertionError(what + " has no key at tick " + tick);
+    }
+
+    /** A point of the musket item model (px): the centre of the named element's rotation. */
+    private static Vector3f musketPoint(JsonObject model, String element) {
+        for (JsonElement e : model.getAsJsonArray("elements")) {
+            JsonObject o = e.getAsJsonObject();
+            if (element.equals(o.get("name").getAsString())) {
+                float[] at = floats(o.getAsJsonObject("rotation").getAsJsonArray("origin"));
+                return new Vector3f(at[0], at[1], at[2]);
+            }
+        }
+        throw new AssertionError("musket has no element " + element);
+    }
+
+    /**
+     * The soldier's musket at a key time of a musket animation, composed the way the game draws it: GeckoLib's loaded
+     * key values on the baked navy soldier bones, {@code GeoEntityRenderer#renderRecursively}'s bone transforms
+     * ({@link RenderUtil#prepMatrixForBone}) down {@code root -> waist -> right_arm -> right_hand}, the held-item layer's
+     * frame ({@link HumanoidGeoRenderer.ItemFrame}), then the musket model's {@code thirdperson_righthand} display
+     * transform and the item renderer's half-block offset.
+     */
+    private static MusketPose musketAt(String animation, double seconds) throws IOException {
+        Model model = KeyFramesAdapter.GEO_GSON.fromJson(read(geo(MobKind.NAVY_SOLDIER)), Model.class);
+        BakedGeoModel baked = BakedModelFactory.DEFAULT_FACTORY.constructGeoModel(GeometryTree.fromModel(model));
+        BakedAnimations anims = KeyFramesAdapter.GEO_GSON.fromJson(read(ANIMATIONS).getAsJsonObject("animations"), BakedAnimations.class);
+        Animation anim = anims.getAnimation(animation);
+        double tick = seconds * 20;
+        for (BoneAnimation b : anim.boneAnimations()) {
+            GeoBone bone = baked.getBone(b.boneName()).orElseThrow();
+            String what = animation + " " + b.boneName();
+            if (!b.rotationKeyFrames().xKeyframes().isEmpty()) {
+                bone.setRotX(keyedAt(b.rotationKeyFrames().xKeyframes(), tick, what));
+                bone.setRotY(keyedAt(b.rotationKeyFrames().yKeyframes(), tick, what));
+                bone.setRotZ(keyedAt(b.rotationKeyFrames().zKeyframes(), tick, what));
+            }
+            if (!b.positionKeyFrames().xKeyframes().isEmpty()) {
+                bone.setPosX(keyedAt(b.positionKeyFrames().xKeyframes(), tick, what));
+                bone.setPosY(keyedAt(b.positionKeyFrames().yKeyframes(), tick, what));
+                bone.setPosZ(keyedAt(b.positionKeyFrames().zKeyframes(), tick, what));
+            }
+        }
+        PoseStack pose = new PoseStack();
+        for (String name : List.of("root", "waist", "right_arm", "right_hand")) {
+            RenderUtil.prepMatrixForBone(pose, baked.getBone(name).orElseThrow());
+        }
+        HumanoidGeoRenderer.ItemFrame.apply(pose, baked.getBone("right_hand").orElseThrow());
+        Vector3f hand = pose.last().pose().transformPosition(new Vector3f());
+        JsonObject musket = read(ASSETS.resolve("models/item/musket.json"));
+        JsonObject display = musket.getAsJsonObject("display").getAsJsonObject("thirdperson_righthand");
+        float[] r = floats(display.getAsJsonArray("rotation")), t = floats(display.getAsJsonArray("translation")),
+                sc = floats(display.getAsJsonArray("scale"));
+        new ItemTransform(new Vector3f(r[0], r[1], r[2]), new Vector3f(t[0], t[1], t[2]).mul(1 / 16f),
+                new Vector3f(sc[0], sc[1], sc[2])).apply(false, pose);
+        pose.translate(-0.5f, -0.5f, -0.5f);
+        Vector3f butt = pose.last().pose().transformPosition(musketPoint(musket, "butt_plate").div(16f)).mul(16f);
+        Vector3f muzzle = pose.last().pose().transformPosition(musketPoint(musket, "muzzle_band").div(16f)).mul(16f);
+        return new MusketPose(butt, muzzle, hand.mul(16f));
+    }
+
+    @Test
+    void theAimHoldsTheMusketLevelAndStraightAhead() throws IOException {
+        MusketPose aim = musketAt(NavySoldier.ANIM_AIM, 0.35);
+        assertTrue(Math.abs(aim.pitch()) < 5, "barrel level while aiming, pitch " + aim.pitch());
+        assertTrue(Math.abs(aim.yaw()) < 5, "barrel straight ahead while aiming, yaw " + aim.yaw());
+        assertTrue(aim.muzzle().z < aim.butt().z - 15, "muzzle in front of the butt: " + aim);
+        assertTrue(aim.butt().y > 20, "stock at the shoulder: " + aim);
+    }
+
+    @Test
+    void theReloadStandsTheMusketOnItsButtWithTheMuzzleUp() throws IOException {
+        for (double pour : new double[]{0.75, 1.35, 2.1}) { // pour, pour again, rod down
+            MusketPose p = musketAt(NavySoldier.ANIM_RELOAD, pour);
+            double fromUp = Math.toDegrees(Math.acos(p.barrel().y));
+            assertTrue(fromUp < 20, "muzzle up at " + pour + " s, " + fromUp + " degrees off: " + p);
+            assertTrue(p.butt().y < p.hand().y, "butt below the hand at " + pour + " s: " + p);
+            assertTrue(p.butt().y < 3, "butt on the ground at " + pour + " s: " + p);
+            assertTrue(p.butt().z < -2, "butt in front of the feet at " + pour + " s: " + p);
+            assertTrue(p.muzzle().y > 16 && p.muzzle().y < 26, "muzzle at chest height at " + pour + " s: " + p);
+        }
+        MusketPose cock = musketAt(NavySoldier.ANIM_RELOAD, 4.3);
+        assertTrue(cock.pitch() > 10 && cock.pitch() < 45, "raised across the body to cock, pitch " + cock.pitch());
+        assertTrue(cock.muzzle().z < cock.butt().z, "muzzle forward while cocking: " + cock);
+    }
+
+    @Test
+    void theShoveDrivesTheButtForward() throws IOException {
+        MusketPose hit = musketAt(NavySoldier.ANIM_SHOVE, 0.25);
+        assertTrue(hit.butt().z < hit.muzzle().z - 10, "butt leads, muzzle back: " + hit);
+        assertTrue(hit.butt().z < -12, "butt well in front of the chest: " + hit);
+        assertTrue(Math.abs(hit.pitch()) < 25, "musket roughly level in the stroke, pitch " + hit.pitch());
     }
 }

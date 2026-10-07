@@ -83,3 +83,6 @@ pirates ignore players; say if that was your setup during the third playtest).
 
 
 Note (third playtest, "no damage from any mob attacks"): on peaceful difficulty vanilla zeroes every mob-caused hit on a player (`Player.hurt` scales with difficulty), so our pirates' swords and the navy's balls land without damage; test fights on normal (`/difficulty normal`). Since M5 mobs on peaceful ignore players entirely.
+
+
+Addendum (M6b, `/difficulty normal`, wanted): **aim** 8–15 blocks from a soldier: the musket rises to the shoulder, barrel level and pointing at you, following you higher and lower (this pose changes with the fix: it is the most important check). **Reload from the side:** the butt rests on the ground just in front of the feet, the muzzle stands up at chest height (within about 10° of vertical) through both pours and rams, then the musket rises at about 30° across the body for cocking. **From the front:** the musket stands before the right half of the body, the left hand near the muzzle. **Shove:** butt first, the muzzle back past the right shoulder at the hit. **Other mobs:** cutlass and saber look as before.

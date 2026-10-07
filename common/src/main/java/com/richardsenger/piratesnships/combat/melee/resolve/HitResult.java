@@ -6,7 +6,7 @@ import com.richardsenger.piratesnships.combat.melee.rules.CombatState;
  * Result of one hit.
  *
  * @param outcome           what happened
- * @param damage            damage to apply (0 when parried)
+ * @param damage            damage to apply (0 when parried or, by default, guarded)
  * @param defenderStaggered the defender was staggered by this hit
  * @param attacker          the attacker's new state
  * @param defender          the defender's new state
@@ -17,7 +17,7 @@ public record HitResult(Outcome outcome, float damage, boolean defenderStaggered
     public enum Outcome {
         /** Deflected: no damage, attacker staggered, defender gets a riposte window. */
         PARRIED,
-        /** Blocked by the guard: reduced damage, stamina drained. */
+        /** Blocked by the guard: no damage (reduced damage with {@code guard_absorbs_all} off), stamina drained. */
         GUARDED,
         /** Blocked, but the stamina ran out: reduced damage and the defender is staggered. */
         GUARD_BROKEN,

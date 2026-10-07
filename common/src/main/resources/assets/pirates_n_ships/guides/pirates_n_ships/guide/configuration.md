@@ -35,7 +35,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `firearms` | Firearms on/off, per gun: damage, muzzle velocity, spread, reload time, recoil; ball lifetime and gravity, cooldown, gunpowder use. |
 | `sailing_runtime` | Sailing forces on/off, heel scaling, steering and anchor on/off, rudder steps, chain length. |
 | `crew_stations` | Crew stations on/off, time per trim step. |
-| `flags` | Hoisting delay, flags following the wind (land and ship check intervals), banners as flags. |
+| `flags` | Hoisting delay, flags following the wind at its exact angle (land and ship check intervals), banners as flags. |
 | `dry_hull` | Also: whether slabs, stairs and hatches are drawn dry in their empty half. |
 | `sea_chest` | Sea chest on/off, worn speed, sink pull, wind drift and its cap, draft. |
 | `survival` | Cold water on/off and freeze rate, warm effect length, swimming hunger multiplier. |

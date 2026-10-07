@@ -94,3 +94,11 @@ Addendum (P1 finding, fixed in P4): on a ship that has turned since assembly the
 
 
 Addendum (P4): with the wind fixed from the north, a flag on land points south and stays. A ship's flag points south before turning; after turning the ship 90° it still points south in the world (sideways relative to the ship) within about a second; after 180° likewise (the opposite side of the ship). During a slow turn the flag jumps 90° at each 45° boundary (four-way facings). After disassembling a turned ship the flag on the ground points downwind within one land interval, up to 10 s.
+
+
+## FL1: the exact angle
+1. **Land, `/pirates wind set 225 8`:** the cloth points north-east, not snapped; `/pirates wind set 200 8`: it swings smoothly over about half a second to about 20° east of north; 170 then 190: it swings the short way across north. Around the pole the design reads on both sides, mirrored on the back, the hoist touches the pole, the pixels are square.
+2. **Ship turning slowly** with a fixed wind: the flag keeps pointing downwind in the world the whole time, no 90° jumps, no jitter at the end of each second; in F5 it sweeps smoothly around the ship's frame.
+3. **Banners:** red, blue, black and white show their base colour on both faces and the edges; swapping a banner changes the colour after the hoist.
+4. **Hoisting:** about 3 s, then the cloth appears already downwind; striking removes it; raising brings it back without a swing from an old angle.
+5. **Culling:** from 8–16 blocks the far end of the cloth stays visible when the pole's block is just off screen. An old pole starts at its old facing and turns at the next check.

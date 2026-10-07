@@ -13,7 +13,6 @@ item_ids:
   - pirates_n_ships:figurehead_skull
   - pirates_n_ships:flagpole
   - pirates_n_ships:hull_patch
-  - pirates_n_ships:map_tile
   - pirates_n_ships:mooring_ring
   - pirates_n_ships:nameplate
   - pirates_n_ships:notice_board

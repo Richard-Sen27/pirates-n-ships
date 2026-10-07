@@ -7,6 +7,7 @@ navigation:
 item_ids:
   - pirates_n_ships:capstan
   - pirates_n_ships:chart
+  - pirates_n_ships:map_tile
   - pirates_n_ships:rope
   - pirates_n_ships:sail_winch
 ---
@@ -95,6 +96,13 @@ bits under four blocks fall apart into items. `/pirates ship info` shows a piece
 Once a grappling rope is latched onto another ship, look at the rope and use it: you hang from it and slide down to the
 lower end, following both ships as they move. Sneak to let go. A level rope is crawled slowly toward the hook. From the
 crow's nest down to an enemy deck is the classic move. Server config `grapple.slide`.
+
+## Map tiles
+Craft a Map Tile from 8 sticks around a paper and place it on a table or a wall. Use it with your chart in hand: the
+chart opens with a frame. Drag the frame over the part you want, choose whether your markers go on it, and press Draw.
+Everyone who passes by sees that part of your chart on the tile, and looking at it tells who drew it and when. Drawing
+again replaces the picture. Break the tile and it keeps its drawing as an item, ready to hang somewhere else. Server
+options: `chart.tiles.enabled`, `redraw_allowed`, `require_chart_item`, `reach`, `tile_cells`.
 
 ## Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks

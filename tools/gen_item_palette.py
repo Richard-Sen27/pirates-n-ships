@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
-"""Item palette textures for the hand-made 3D item models (design.md §4.8, work packages F8a, F8b, F8d).
+"""Item palette textures for the hand-made 3D item models (design.md §4.8, work packages F8a, F8b, F8d, F8e).
 
 Run (from the repository root): tools/.venv/bin/python tools/gen_item_palette.py
 Output: common/src/main/resources/assets/pirates_n_ships/textures/item/palette.png
         common/src/main/resources/assets/pirates_n_ships/textures/item/palette_2.png
         common/src/main/resources/assets/pirates_n_ships/textures/item/palette_3.png
+        common/src/main/resources/assets/pirates_n_ships/textures/item/palette_4.png
 
-Three 16x16 sheets of 4x4 px colour patches. Blockbench item models map every face to the patch it needs with UVs
+Four 16x16 sheets of 4x4 px colour patches. Blockbench item models map every face to the patch it needs with UVs
 (a face of a 1 px edge may use a 1 px sliver of a patch), so all item models share one set of colours.
 Deterministic: same input, same bytes. Never move a patch: existing models point at these UVs.
 
 Why a second sheet instead of a wider one: a model's UVs are fractions of the sprite (FaceBakery maps uv / 16 onto
 the sprite's full width and height, whatever its pixel size). Growing palette.png to 32x16 would halve the meaning
 of every u in the sword models and move all their patches. A new colour therefore goes into a free cell of
-palette_2.png (texture "#1" in a model), or into palette_3.png ("#2"). palette_3 is full: the next new colour
-needs a new sheet palette_4.png.
+palette_2.png (texture "#1" in a model), palette_3.png ("#2") or palette_4.png ("#3"). palette_4 is full: the next
+new colour needs a new sheet palette_5.png.
 
 palette.png (texture "#0"; UV of the patch's top-left corner; each patch spans 4x4):
 
@@ -40,6 +41,17 @@ palette_3.png (texture "#2"; provisions: rum, hardtack, lime, salt pork, salted 
  v 8   fat                rind             fish_back        fish_belly
  v 12  glass_dark         glass_highlight  cork             paper
 
+palette_4.png (texture "#3"; trade goods: cloth, spices, tobacco, F8e):
+
+    u:   0                  4                8                12
+ v 0   cloth_light        cloth_dark       cloth_weave      cloth_shadow
+ v 4   burlap_light       burlap_dark      cord             twine
+ v 8   spice_red          spice_orange     spice_gold       spice_dark
+ v 12  tobacco_light      tobacco_dark     midrib           burlap_weave
+
+cloth_weave (undyed cloth, lighter and light rows) and burlap_weave (light and darker sacking rows) are striped.
+Spares not used by the F8e models (free for later trade goods): cloth_shadow, spice_dark, burlap_weave.
+
 The striped patches alternate a light and a dark row; a face whose v runs along a grip or a coil shows the winding.
 """
 from pathlib import Path
@@ -51,6 +63,8 @@ OUT_DIR = ROOT / "common/src/main/resources/assets/pirates_n_ships/textures/item
 
 WIRE = ((214, 218, 226), (112, 116, 128))
 ROPE_COIL = ((196, 164, 108), (128, 98, 58))
+CLOTH_WEAVE = ((246, 242, 228), (226, 218, 196))
+BURLAP_WEAVE = ((184, 150, 98), (156, 124, 80))
 
 SHEETS = {
     "palette.png": [
@@ -70,6 +84,12 @@ SHEETS = {
         [("biscuit_light", (228, 198, 140)), ("biscuit_dark", (178, 138, 84)), ("meat_light", (222, 130, 128)), ("meat_dark", (168, 72, 78))],
         [("fat", (242, 236, 224)), ("rind", (150, 92, 58)), ("fish_back", (86, 104, 124)), ("fish_belly", (198, 206, 212))],
         [("glass_dark", (52, 78, 58)), ("glass_highlight", (122, 156, 124)), ("cork", (176, 134, 86)), ("paper", (228, 214, 170))],
+    ],
+    "palette_4.png": [
+        [("cloth_light", (226, 218, 196)), ("cloth_dark", (178, 168, 142)), ("cloth_weave", CLOTH_WEAVE), ("cloth_shadow", (140, 130, 108))],
+        [("burlap_light", (184, 150, 98)), ("burlap_dark", (128, 98, 60)), ("cord", (96, 66, 40)), ("twine", (206, 184, 128))],
+        [("spice_red", (168, 48, 30)), ("spice_orange", (214, 112, 38)), ("spice_gold", (226, 174, 56)), ("spice_dark", (112, 36, 24))],
+        [("tobacco_light", (150, 100, 50)), ("tobacco_dark", (98, 62, 30)), ("midrib", (198, 164, 104)), ("burlap_weave", BURLAP_WEAVE)],
     ],
 }
 

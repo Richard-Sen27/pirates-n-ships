@@ -124,6 +124,55 @@ public final class CannonFollowUpGameTests {
         });
     }
 
+    // ------------------------------------------------------------------ destroyed blocks drop
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 60)
+    public static void aPlankShotOutOnLandDropsAPlank(GameTestHelper h) {
+        straightShotAtAPlank(h);
+        h.succeedWhen(() -> {
+            h.assertBlockPresent(Blocks.AIR, new BlockPos(4, 1, 4));
+            h.assertTrue(items(h, Items.OAK_PLANKS) == 1, "expected one plank item, got " + items(h, Items.OAK_PLANKS));
+        });
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 60, batch = NO_DROPS_BATCH)
+    public static void withoutDropsAPlankShotOutLeavesNothing(GameTestHelper h) {
+        ConfigOverrides.during(h, CannonConfig.DESTROYED_BLOCKS_DROP, false);
+        straightShotAtAPlank(h);
+        h.runAfterDelay(10, () -> {
+            h.assertBlockPresent(Blocks.AIR, new BlockPos(4, 1, 4));
+            h.assertTrue(items(h, Items.OAK_PLANKS) == 0, "the plank dropped with destroyed_blocks_drop off");
+            h.succeed();
+        });
+    }
+
+    /**
+     * A plank shot out of a floating hull (the west wall at deck height, above the water) drops a plank item in the
+     * world next to the hole, not in the plot.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200)
+    public static void aPlankShotOutOfAHullDropsAPlankBesideTheShip(GameTestHelper h) {
+        DryHullGameTests.basin(h, 0, 23, true);
+        Fixture f = DryHullGameTests.assemble(h, DryHullGameTests.hull(h, 9, false));
+        ServerLevel level = h.getLevel();
+        BlockPos wall = f.hold(-2, -1, 0);
+        Vec3[] target = new Vec3[1];
+        h.runAfterDelay(20, () -> {
+            h.assertTrue(level.getBlockState(wall).is(Blocks.OAK_PLANKS), "no wall at " + wall);
+            target[0] = f.ship().toWorld(Vec3.atCenterOf(wall));
+            shootWorld(level, target[0].add(-2.0, 0, 0), new Vec3(2.0, 0, 0));
+        });
+        h.runAfterDelay(21, () -> h.succeedWhen(() -> {
+            h.assertTrue(level.getBlockState(wall).isAir(), "the hull plank is still there");
+            ItemEntity plank = h.getEntities(EntityType.ITEM).stream().filter(e -> e.getItem().is(Items.OAK_PLANKS))
+                    .findFirst().orElse(null);
+            h.assertTrue(plank != null, "no plank item in the test area");
+            h.assertTrue(plank.position().distanceTo(target[0]) < 4.0,
+                    "the plank lies at " + plank.position() + ", not near the hole at " + target[0]);
+            h.getEntities(EntityType.ITEM).forEach(ItemEntity::discard);
+        }));
+    }
+
     // ------------------------------------------------------------------ a broken gun returns its load
 
     private static void loadCannon(GameTestHelper h, BlockPos master) {

@@ -387,6 +387,8 @@
   "pirates_n_ships.configuration.cannons.blocks_per_hit.tooltip": "Blocks one cannonball destroys: the hit block and the next ones along its path (times combat.damage_multipliers.cannon_block; combat.cannon_block_damage turns it off)",
   "pirates_n_ships.configuration.cannons.damage": "Damage",
   "pirates_n_ships.configuration.cannons.damage.tooltip": "Damage of a cannonball hitting an entity (times combat.damage_multipliers.cannon_entity)",
+  "pirates_n_ships.configuration.cannons.destroyed_blocks_drop": "Destroyed Blocks Drop",
+  "pirates_n_ships.configuration.cannons.destroyed_blocks_drop.tooltip": "Blocks a cannonball destroys drop their items as if mined",
   "pirates_n_ships.configuration.cannons.elevation_steps": "Elevation Steps",
   "pirates_n_ships.configuration.cannons.elevation_steps.tooltip": "Number of elevation steps from min_elevation_degrees to max_elevation_degrees",
   "pirates_n_ships.configuration.cannons.enabled": "Enabled",

@@ -150,6 +150,7 @@ public class CannonballEntity extends ThrowableItemProjectile {
                 level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING))) {
             limit = 0;
         }
+        boolean drops = CannonConfig.DESTROYED_BLOCKS_DROP.get();
         int destroyed = 0;
         for (BlockPos p : CannonImpact.blocksAlong(hitPos, hit, localDir, limit, pos -> !level.getBlockState(pos).isAir())) {
             BlockState state = level.getBlockState(p);
@@ -165,7 +166,10 @@ public class CannonballEntity extends ThrowableItemProjectile {
             }
             level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, state), worldHit.x, worldHit.y, worldHit.z,
                     24, 0.3, 0.3, 0.3, 0.15);
-            level.destroyBlock(p, false, this);
+            // The drops spawn at the plot position; Sable's popResource and addFreshEntity mixins move them into the
+            // world at the block's world position (refs/sable common mixin/entity/entity_kicking/BlockMixin and
+            // ServerLevelMixin).
+            level.destroyBlock(p, drops, this);
             destroyed++;
         }
         if (destroyed > 0) {

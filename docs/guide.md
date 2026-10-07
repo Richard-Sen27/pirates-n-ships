@@ -413,6 +413,22 @@ the shots misfire with a click and the charge stays in. Without ammo the gun onl
 attack for the law, and the death message names you. Everything is in the `firearms` server config (and the misfire
 chance in `combat`).
 
+### Swordplay
+With a rapier, cutlass or saber in hand the mouse works differently (server config `melee.skill_based_combat`,
+on by default; vanilla weapons are untouched):
+- **Slash:** a quick left click. A wide, short arc after a brief wind-up.
+- **Thrust:** hold left click about half a second and release. Narrow, long reach, more damage, slow to recover if it
+  misses.
+- **Guard:** hold right click. Frontal damage is reduced; it drains stamina while held and per blocked hit.
+- **Parry:** a quick right tap just before a hit lands. The hit is deflected, the attacker staggers, and for about a
+  second you may **riposte** (attack for bonus damage). A parry with no hit coming costs stamina and locks parrying
+  briefly.
+- **Stamina:** a small gold bar above the hotbar while you hold a sword. Attacks, guarding and failed parries drain
+  it; it refills after a moment of rest. Empty, you can neither guard nor parry and stagger easily. The bar turns
+  violet while you are staggered and shows a grey block during the parry lockout.
+- Right click is taken over while a mod sword is held, so swap to another item to open doors or use the helm.
+- Client config `melee_input` (tap and hold thresholds) and `melee_hud` (bar on/off, scale, offsets).
+
 ## 10. All blocks
 
 | Block | Recipe | What it does |
@@ -524,6 +540,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `anchor_chain` | Chain speeds, travel time limits, anchor sounds and volumes. |
 | `hull_creaking` | Creaking on/off, how often, volume and pitch ranges, the rolling rate that counts. |
 | `audio` (client) | Music on/off and volume, the gap between tracks, shanties aboard. |
+| `melee_input` / `melee_hud` (client) | Hold-to-thrust and parry-tap thresholds; stamina bar on/off, scale and offsets. |
 | `firearms` | Firearms on/off, per gun: damage, muzzle velocity, spread, reload time, recoil; ball lifetime and gravity, cooldown, gunpowder use. |
 | `sailing_runtime` | Sailing forces on/off, heel scaling, steering and anchor on/off, rudder steps, chain length. |
 | `crew_stations` | Crew stations on/off, time per trim step. |

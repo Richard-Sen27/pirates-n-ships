@@ -46,16 +46,17 @@ cheats on. Use survival for steps 5 to 9 (creative players are never attacked an
    in shackles, lead it to the officer and use the officer.
    - **Expected:** the officer takes the prisoner and pays `law.pirate_turn_in.<tier>` doubloons (as in the L1
      playtest, law-world.md). The soldiers do not interfere while you are not wanted.
-8. **Pay a fine.** Raise your criminal score (e.g. hit a villager), check it, then use the officer with doubloons in
-   hand.
-   - **Expected (needs LA2 merged):** the fine is paid for whole points at `law.fine_cost_per_point`, with change back.
-     Until LA2 lands, `/pirates law fine` does the same by command. With a bounty, expect the soldiers on the walls to
-     attack on sight (muskets) and the officer to refuse turn-ins.
+8. **Pay a fine.** Raise your criminal score (e.g. hit a villager), check it with `/pirates law score get @s` (or set it: `/pirates law score set @s 5`), then use the officer
+   with doubloons in hand.
+   - **Expected:** the fine is paid for whole points at `law.fine_cost_per_point`, with change back, and the score
+     drops. With a bounty, expect the soldiers on the walls to attack on sight (muskets) and the officer to refuse
+     turn-ins.
 9. **Ransom.** Capture a navy officer or a merchant elsewhere (shackles), lead it to the outpost's officer and use
-   him. Then set `law.ransom_needs_port = true` in the server config, and try the same once inside the outpost and
-   once far away from any outpost.
-   - **Expected (needs LA2 merged):** with the option on, ransom only works inside a navy outpost's port (the officer
-     of a generated outpost); far from one it is refused. Note whether the refusal message is clear.
+   him. Then set `law.ransom_needs_port = true` in the server config and try the same once at the outpost's officer
+   and once with a navy officer you summoned far away from any outpost.
+   - **Expected:** with the option off, both officers pay the ransom. With it on, only the outpost's officer pays (he
+     stands inside the outpost's port box); the summoned one far away refuses. Note whether the refusal message is
+     clear.
 10. **The brig.** If the outpost's building is the brig (or find another outpost): open the cell doors.
     - **Expected:** two cells of brig bars with brig doors, closed and unlocked (no owner), straw, a cauldron. A
       shackled prisoner led into a cell and the door locked with a brig key stays there (as on a ship, brig.md).

@@ -189,6 +189,8 @@ public final class NavyOutpostGameTests {
         // the officer stands in the gate's court
         SeafarerMob officer = garrison.stream().filter(m -> m instanceof NavyOfficer).findFirst().orElseThrow();
         helper.assertTrue(gateBox.isInside(officer.blockPosition()), "the officer stands in the fort gate");
+        // ... inside the port's box, so law.ransom_needs_port accepts his ransoms (OfficerTurnIns, LA2)
+        helper.assertTrue(port.contains(level.dimension(), officer.blockPosition()), "the officer stands inside the navy port");
 
         // placing the same structure again does not double the garrison
         WorldGameTests.place(level, start);

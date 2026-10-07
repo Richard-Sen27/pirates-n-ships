@@ -67,6 +67,25 @@ Workflow notes (containers batch: cargo crate, cargo barrel, pantry, water barre
 - When a hand-made model replaces a generated one, remove the generated file from version control before `runData`,
   or `processResources` fails on the duplicate entry.
 
+Workflow notes (cleat, bilge pump, brig bars, brig door, F7e):
+- **Cleat** (14 elements) and **bilge pump** (27): one model each, turned by the block state as before (the cleat for
+  floor, wall and ceiling like a button; the pump by `facing`, spout and handle towards it). A small model gets a
+  `display.gui` entry (cleat: scale 0.9, raised 3 px; pump: scale 0.5, lowered 1.5 px, its handle reaches y 20.6).
+- **Connecting blocks** (brig bars): a post model plus one arm per side, plugged into the pane-style multipart state.
+  `side` is the arm to the north (z 0..7), `side_alt` the same arm mirrored in z for the south; each is turned 90° for
+  east and west. An unconnected side needs no model when the post stands on its own, so the `noside` parts went. The
+  item uses a fourth model (`brig_bars`: post and both arms in a line). Opaque iron textures need no `render_type`,
+  which also spares the Fabric port a render layer registration.
+- **Doors**: a door model is the leaf of a door facing east (x 0..3). The hinge is at z 0 for `hinge=left` and at
+  z 16 for `hinge=right` (vanilla `DoorBlock#getShape`). Vanilla opens a door by turning the closed model 90° or
+  270° about the block centre, not about the hinge, so the model of an open door is the closed leaf turned by 180°
+  (x -> 3 - x, z -> 16 - z). A leaf symmetric front to back needs only two models per half (open left = right, open
+  right = left); an asymmetric one (the locked half with its padlock on the x < 0 side) needs four. Mirroring a part
+  list in z or x (swap the north/south or east/west faces, negate the rotation angles about the other two axes)
+  builds all of them from one list.
+- `F7E.mz(parts)`, `F7E.mx(parts, c)` and `F7E.bar(name, x, z, y0, y1, w, tex)` (a chamfered round bar of two crossed
+  boxes) joined the F7d helpers (copied as `F7E` with its own `ROOT`); they live only in the running app.
+
 Items (sword batch, F8a):
 - Item models are `java_block` projects exported to `common/src/main/resources/assets/pirates_n_ships/models/item/<name>.json`;
   datagen writes no model for them (drop the item's `m.handheldItem(...)` / `m.flatItem(...)` line).

@@ -198,7 +198,7 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
 
 ### 4.6 Damage
 - Cannonballs and explosions destroy ship blocks, which may create a breach.
-- There is no separate HP bar. Ship health = structural integrity + buoyancy. A HUD shows hull status and flooding per compartment.
+- There is no separate HP bar. Ship health = structural integrity + buoyancy. A HUD shows hull status and flooding per compartment. **HUD (HUD1, decided 2026-10-07):** while a player is aboard, a compact overlay at a configurable corner shows a compass rose with the ship's heading, the wind as an arrow with its strength, speed through the water and the rudder angle, and a hull strip with one cell per compartment (fill = water level, a red mark = an open breach, a pump icon while a pump runs on it); the server sends a throttled `ShipStatusPayload` (every `ship_status_sync_interval_ticks`) to players on the ship; client config `ship_hud.enabled`, `corner`, `scale`.
 
 ### 4.7 Flags
 - A **flagpole / mast-top flag** block. The flag a ship flies sets its **displayed allegiance**, which NPC ships, ports and forts react to.

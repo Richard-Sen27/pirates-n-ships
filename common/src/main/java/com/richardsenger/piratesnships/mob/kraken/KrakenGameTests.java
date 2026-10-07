@@ -100,7 +100,8 @@ public final class KrakenGameTests {
     /**
      * Switches {@code mobGriefing} off until the test ends, so the kraken leaves the masts alone. Breaking the fence
      * between the yards cuts the upper yard off the hull, the ship splits into two bodies, and the test's ship id may
-     * end up on either (seen once in three runs: the "ship" was the 0.55 kpg yard). Tests that measure the hull use this;
+     * end up on either (seen once in three runs: the "ship" was the 0.55 kpg yard, which then rose about 8 blocks).
+     * In play the same happens to a cannonball through a mast: the cut-off rig becomes a ship of its own. Tests that measure the hull use this;
      * the game rule is world-wide, so they run in their own {@code config} batch.
      */
     private static void noMastStrikes(GameTestHelper h) {

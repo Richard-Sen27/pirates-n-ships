@@ -807,7 +807,7 @@
   "pirates_n_ships.configuration.hazards": "Hazards",
   "pirates_n_ships.configuration.hazards.kraken": "Kraken",
   "pirates_n_ships.configuration.hazards.kraken.chance_per_day": "Chance Per Day",
-  "pirates_n_ships.configuration.hazards.kraken.chance_per_day.tooltip": "Base chance per in-game day, for each player in the deep ocean, that the kraken appears (higher at night and in storms)",
+  "pirates_n_ships.configuration.hazards.kraken.chance_per_day.tooltip": "Base chance per in-game day, for each player in the deep ocean, that the kraken appears (×mobs.kraken.night_multiplier at night, ×thunder_multiplier in storms; 0.05 is about one kraken per ten days at sea)",
   "pirates_n_ships.configuration.hazards.kraken.enabled": "Enabled",
   "pirates_n_ships.configuration.hazards.kraken.enabled.tooltip": "The kraken can appear in the deep ocean and attack ships",
   "pirates_n_ships.configuration.hazards.max_ship_mass_effect": "Max Ship Mass Effect",

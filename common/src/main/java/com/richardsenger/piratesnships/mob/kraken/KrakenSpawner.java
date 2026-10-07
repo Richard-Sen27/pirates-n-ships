@@ -54,7 +54,9 @@ public final class KrakenSpawner {
             BlockPos column = BlockPos.containing(x, level.getSeaLevel(), z);
             if (!level.isPositionEntityTicking(column)) {
                 // never load chunks for a kraken; and only where entities tick, so it moves at once and other
-                // krakens' separation checks (entity lookups skip sections that are not entity-loaded) can see it
+                // krakens' separation checks can see it: Level#getEntitiesOfClass skips entity sections that are not
+                // accessible, so an entity added to a chunk that is loaded but not entity-loaded is invisible to
+                // lookups (K1a: the spawner test missed such a kraken once in three runs)
                 return null;
             }
             int top = level.getHeight(Heightmap.Types.WORLD_SURFACE, column.getX(), column.getZ());

@@ -12,8 +12,9 @@ Please send a screenshot of the creative tab and of the blocks placed in a row, 
 1. **Creative tab.** It lists: rapier, cutlass, saber, pistol, musket, lead shot, cannonball, grappling hook, doubloon,
    tobacco, spices, cloth, rum, hardtack, salted fish, salt pork, lime, pantry, water barrel, shackles, brig bars,
    brig door, the four figureheads (mermaid, lion, eagle, skull), nameplate, flagpole, cargo crate, cargo barrel
-   (plus the helm and the test block).
-   - **Expected:** every entry has a readable 16×16 texture (no purple-black checkerboard) and an English name, not a
+   (plus the helm). There is no Test Block any more (removed in CT1).
+   - **Expected:** the tab's icon is the officer's bicorne (black two-cornered hat with a gold edge), not a blank or
+     a boat. Every entry has a readable 16×16 texture (no purple-black checkerboard) and an English name, not a
      raw `item.pirates_n_ships.*` key.
 2. **Handheld items.** Hold each sword, the pistol and the musket in first and third person.
    - **Expected:** they are held like tools, angled in the hand. Sword tooltips: rapier 5 damage / 2.0 speed,

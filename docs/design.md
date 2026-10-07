@@ -33,6 +33,7 @@ A Minecraft mod about sailing, piracy and life at sea. Players build **real bloc
 | Java | 21 |
 | Physics | **Sable** (`dev.ryanhcode.sable`) is the only hard dependency. It provides sub-levels (moving, interactive block structures), Rapier-based physics and basic buoyancy. License: PolyForm Shield 1.0.0. Depend on it, never copy or bundle its code. `common` compiles against `sable-common`, and each loader module uses its loader artifact. |
 | Animated entities | GeckoLib (required dependency). It is available for both loaders. |
+| Player animations | **Player Animation Library (PAL)** (`com.zigythebird.playeranim`, MIT), required on the client for both loaders. `common` compiles against `PlayerAnimationLibCommon` + `PlayerAnimationLibCore`; `neoforge` uses `PlayerAnimationLibNeo`, `fabric` uses `PlayerAnimationLibFabric`. Used only for the player's melee animations (§8.5); NPCs use GeckoLib. Decided 2026-10-07, see `docs/animation-libraries.md`. |
 | Config | A cross-loader config solution (e.g. Forge Config API Port), accessed only through our own `config` wrapper. See §21. |
 | Mappings | Official Mojang + Parchment |
 | Build | Based on the **MultiLoader-Template** (jaredlll08): `common` (vanilla only, via NeoForm), `neoforge` (ModDevGradle), `fabric` (Loom). The template's legacy Forge module was removed. |
@@ -382,7 +383,7 @@ Goal: sword fights are about timing and reading the opponent, not click spam. Th
 - `common`: combat state machine per entity (an attachment), weapon definitions (data-driven via datapack JSON: timings, damage, reach, arc, stamina costs), hit resolution (ray for thrust, arc sweep for slash), GameTests for resolution logic.
 - **Client:** intercepts attack/use input while holding a mod sword. It plays the animation immediately (prediction) and sends an action payload with a client timestamp.
 - **Server:** authoritative. It validates range, cone, cooldowns and stamina, then resolves parries using the server tick plus a latency allowance. It broadcasts the resulting state so other clients animate correctly.
-- **Animations:** a player animation library for first- and third-person player animations, which must be available on both loaders (§2 dependency rule). Choose it during this milestone, see §21. NPC animations use GeckoLib.
+- **Animations:** the Player Animation Library (PAL) for first- and third-person player animations, available on both loaders (§2; chosen in G5, see §21 and `docs/animation-libraries.md`). NPC animations use GeckoLib.
 - Works on moving ships: hit checks use positions relative to the sub-level where needed.
 
 **NPC duelists**
@@ -605,7 +606,7 @@ Spikes 1–4 are throwaway-quality prototypes that prove feasibility. They may l
 - ~~Per-ship buoyancy override~~ **Resolved:** not possible. Dry volume and flood water are applied as an extra force on top of Sable's hull buoyancy (§4.5).
 - ~~Cargo weight vs. Sable mass~~ **Resolved:** a load block-state with per-state mass for our own containers, and a downward force for vanilla containers (§4.9).
 - ~~Sub-level from a structure template~~ **Resolved:** yes, directly (§4.1, `docs/sable-notes.md` §2.5).
-- Player animation library for melee combat: which options are maintained for 1.21.1 on both NeoForge and Fabric, and do they support first-person animations? Decide in milestone 7.
+- ~~Player animation library for melee combat~~ **Resolved (G5, `docs/animation-libraries.md`):** Player Animation Library (PAL, `com.zigythebird.playeranim`, MIT) 1.1.6+mc.1.21.1, the maintained successor of PlayerAnimator, with builds for NeoForge and Fabric and a Mojang-named common artifact. It animates the third-person player model and, in its `THIRD_PERSON_MODEL` first-person mode, the first-person arms and held sword. It does no networking: our server broadcasts the melee phase and clients play one animation per phase. All PAL calls sit in one client package in `common` behind our `MeleeAnimations` interface. Fallback: PlayerAnimator 2.0.4+1.21.1. Still to check in milestone 8: the build with our NeoForm `common`, and first-person rendering on a rolling ship.
 - Melee input defaults: do hold-to-thrust and tap-to-parry feel good with mouse buttons, or are dedicated keybinds better? Decide by playtesting.
 - ~~Config library~~ **Resolved (milestone 0):** NeoForge's native `ModConfigSpec` on NeoForge, and Forge Config API Port (the same API) on Fabric, both hidden behind `Services.CONFIG`. Common declares values through our own wrapper (`core/config`, see §3.3).
 - ~~`sable-common` vs. loader artifacts~~ **Resolved:** everything we need, including event subscription, is in `sable-common`. Much of it is outside Sable's `api` packages, so all Sable calls go through one adapter package in `common` (`docs/sable-notes.md` §7).

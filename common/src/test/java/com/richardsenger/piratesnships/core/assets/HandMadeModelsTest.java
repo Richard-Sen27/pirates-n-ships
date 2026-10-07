@@ -51,10 +51,13 @@ class HandMadeModelsTest {
     }
 
     /** Every hand-made model by name; a new Blockbench model is added here, a missing or stray file fails. */
-    static final List<String> BLOCK_MODELS = List.of("capstan", "cargo_barrel", "cargo_crate", "figurehead_eagle",
-            "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flagpole", "helm", "nameplate", "pantry",
-            "sail_winch", "water_barrel", "water_barrel_fill0", "water_barrel_fill1", "water_barrel_fill2",
-            "water_barrel_fill3", "yard");
+    static final List<String> BLOCK_MODELS = List.of("bilge_pump", "brig_bars", "brig_bars_post", "brig_bars_side",
+            "brig_bars_side_alt", "brig_door_bottom_left", "brig_door_bottom_left_locked",
+            "brig_door_bottom_left_open_locked", "brig_door_bottom_right", "brig_door_bottom_right_locked",
+            "brig_door_bottom_right_open_locked", "brig_door_top_left", "brig_door_top_right", "capstan", "cargo_barrel",
+            "cargo_crate", "cleat", "figurehead_eagle", "figurehead_lion", "figurehead_mermaid", "figurehead_skull",
+            "flagpole", "helm", "nameplate", "pantry", "sail_winch", "water_barrel", "water_barrel_fill0",
+            "water_barrel_fill1", "water_barrel_fill2", "water_barrel_fill3", "yard");
     static final List<String> ITEM_MODELS = List.of("cannonball", "captains_whistle", "cloth", "cutlass",
             "grappling_hook", "hardtack", "lead_shot", "lime", "musket", "pistol", "rapier", "rum", "saber", "salt_pork",
             "salted_fish", "shackles", "spices", "tobacco");

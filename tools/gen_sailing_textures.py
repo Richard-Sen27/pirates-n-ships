@@ -12,7 +12,7 @@ Output in common/src/main/resources/assets/pirates_n_ships/textures/:
   beam, v along it, one copy per block). Twisted hemp: diagonal strands. Opaque.
 - item/rope.png: the rope item, a coil.
 
-The yard and the cleat use vanilla block textures; the sail winch has a Blockbench model (F7b).
+The yard and the cleat use vanilla block textures. The sail winch, the yard and the cleat have Blockbench models (F7b, F7e).
 Deterministic: same input, same bytes.
 """
 import random

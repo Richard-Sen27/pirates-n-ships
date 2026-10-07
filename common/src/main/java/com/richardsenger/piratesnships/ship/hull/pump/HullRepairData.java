@@ -3,7 +3,6 @@ package com.richardsenger.piratesnships.ship.hull.pump;
 import com.google.gson.JsonObject;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
-import com.richardsenger.piratesnships.ship.decor.flag.ElementModel;
 import com.richardsenger.piratesnships.ship.hull.HullTags;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.core.Direction;
@@ -93,26 +92,11 @@ public final class HullRepairData {
     }
 
     /**
-     * The bilge pump with its spout to the north: a plank foot, a log barrel with two iron bands, an iron spout and a
-     * wooden handle on a pivot. Turned by {@link BilgePumpBlock#FACING}. A placeholder until a Blockbench model.
+     * The bilge pump: a hand-made Blockbench model (art/models/bilge_pump.bbmodel, design.md §4.8) with its spout and
+     * its handle to the north, so only the block state is generated; turned by {@link BilgePumpBlock#FACING}.
      */
     private static void pump(ModelContext m, Block block) {
         ResourceLocation model = ModelLocationUtils.getModelLocation(block);
-        ElementModel e = new ElementModel().texture("wood", "minecraft:block/dark_oak_planks")
-                .texture("barrel", "minecraft:block/stripped_spruce_log").texture("iron", "minecraft:block/iron_block")
-                .texture("particle", "minecraft:block/stripped_spruce_log");
-        box(e, 3, 0, 3, 13, 2, 13, "#wood");
-        box(e, 5, 2, 5, 11, 14, 11, "#barrel");
-        box(e, 4.5f, 4, 4.5f, 11.5f, 5, 11.5f, "#iron");
-        box(e, 4.5f, 11, 4.5f, 11.5f, 12, 11.5f, "#iron");
-        box(e, 7, 10, 2, 9, 12, 5, "#iron");
-        box(e, 7, 14, 7, 9, 16, 9, "#iron");
-        box(e, 7.5f, 15, 3, 8.5f, 16, 14, "#wood");
-        m.models().accept(model, () -> {
-            JsonObject json = e.build();
-            json.addProperty("parent", "minecraft:block/block"); // display transforms for the item
-            return json;
-        });
         PropertyDispatch.C1<Direction> dispatch = PropertyDispatch.property(BilgePumpBlock.FACING);
         for (Direction d : Direction.Plane.HORIZONTAL) {
             dispatch.select(d, Variant.variant().with(VariantProperties.MODEL, model).with(VariantProperties.Y_ROT, switch (d) {
@@ -123,17 +107,5 @@ public final class HullRepairData {
             }));
         }
         m.blockStates().accept(MultiVariantGenerator.multiVariant(block).with(dispatch));
-    }
-
-    /** A cuboid with all six faces, each mapped to its own projection on the texture. */
-    private static void box(ElementModel e, float x0, float y0, float z0, float x1, float y1, float z1, String tex) {
-        e.element(x0, y0, z0, x1, y1, z1)
-                .face(ElementModel.Face.DOWN, x0, z0, x1, z1, tex)
-                .face(ElementModel.Face.UP, x0, z0, x1, z1, tex)
-                .face(ElementModel.Face.NORTH, 16 - x1, 16 - y1, 16 - x0, 16 - y0, tex)
-                .face(ElementModel.Face.SOUTH, x0, 16 - y1, x1, 16 - y0, tex)
-                .face(ElementModel.Face.WEST, z0, 16 - y1, z1, 16 - y0, tex)
-                .face(ElementModel.Face.EAST, 16 - z1, 16 - y1, 16 - z0, 16 - y0, tex)
-                .end();
     }
 }

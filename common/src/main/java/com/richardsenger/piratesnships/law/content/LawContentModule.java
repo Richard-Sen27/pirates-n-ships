@@ -1,6 +1,5 @@
 package com.richardsenger.piratesnships.law.content;
 
-import com.google.gson.JsonObject;
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
@@ -16,10 +15,6 @@ import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
 import net.minecraft.data.models.model.ModelLocationUtils;
-import net.minecraft.data.models.model.ModelTemplate;
-import net.minecraft.data.models.model.ModelTemplates;
-import net.minecraft.data.models.model.TextureMapping;
-import net.minecraft.data.models.model.TextureSlot;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
@@ -41,8 +36,8 @@ import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import java.util.List;
 
 /**
- * The {@code law.content} module: shackles, brig bars and brig door (design.md §13.3). Block states and models are
- * built from vanilla's glass pane and door templates, the same way vanilla generates its own panes and doors.
+ * The {@code law.content} module: shackles, brig bars and brig door (design.md §13.3). The bars and the door have
+ * hand-made Blockbench models; their block states follow vanilla's panes and doors.
  */
 public final class LawContentModule implements ModModule {
 
@@ -106,20 +101,17 @@ public final class LawContentModule implements ModModule {
     }
 
     /**
-     * Bars like vanilla glass panes (an IronBarsBlock has the same states): the pane templates with
-     * {@code pane = <name>} and {@code edge = <name>_edge}, a multipart block state and a flat item model.
-     * The models get NeoForge's {@code render_type: cutout} so the gaps between the bars are transparent; Fabric
-     * ignores the key and needs a render layer registration in the Fabric port.
+     * Bars: hand-made Blockbench models (art/models/brig_bars*.bbmodel, design.md §4.8), so only the block state is
+     * generated. A multipart state like vanilla's panes: the post always, {@code brig_bars_side} (the arm to the north)
+     * for north and, turned 90°, east, {@code brig_bars_side_alt} (the arm to the south) for south and, turned 90°, west.
+     * An unconnected side shows nothing (the pane's {@code noside} parts have no counterpart: the post stands alone).
+     * The item uses {@code block/brig_bars}, a straight piece of post and both arms. The models are opaque (iron and
+     * anvil textures, no transparent gaps), so they need no render type on either loader.
      */
     private static void bars(ModelContext m, Block block) {
-        ResourceLocation tex = TextureMapping.getBlockTexture(block);
-        TextureMapping textures = new TextureMapping().put(TextureSlot.PANE, tex).put(TextureSlot.EDGE, TextureMapping.getBlockTexture(block, "_edge"));
-        ResourceLocation post = cutout(ModelTemplates.STAINED_GLASS_PANE_POST, block, textures, m);
-        ResourceLocation side = cutout(ModelTemplates.STAINED_GLASS_PANE_SIDE, block, textures, m);
-        ResourceLocation sideAlt = cutout(ModelTemplates.STAINED_GLASS_PANE_SIDE_ALT, block, textures, m);
-        ResourceLocation noSide = cutout(ModelTemplates.STAINED_GLASS_PANE_NOSIDE, block, textures, m);
-        ResourceLocation noSideAlt = cutout(ModelTemplates.STAINED_GLASS_PANE_NOSIDE_ALT, block, textures, m);
-        ModelTemplates.FLAT_ITEM.create(ModelLocationUtils.getModelLocation(block.asItem()), TextureMapping.layer0(tex), m.models());
+        ResourceLocation post = ModelLocationUtils.getModelLocation(block, "_post");
+        ResourceLocation side = ModelLocationUtils.getModelLocation(block, "_side");
+        ResourceLocation sideAlt = ModelLocationUtils.getModelLocation(block, "_side_alt");
         m.blockStates().accept(MultiPartGenerator.multiPart(block)
                 .with(Variant.variant().with(VariantProperties.MODEL, post))
                 .with(Condition.condition().term(BlockStateProperties.NORTH, true), Variant.variant().with(VariantProperties.MODEL, side))
@@ -127,46 +119,32 @@ public final class LawContentModule implements ModModule {
                         Variant.variant().with(VariantProperties.MODEL, side).with(VariantProperties.Y_ROT, VariantProperties.Rotation.R90))
                 .with(Condition.condition().term(BlockStateProperties.SOUTH, true), Variant.variant().with(VariantProperties.MODEL, sideAlt))
                 .with(Condition.condition().term(BlockStateProperties.WEST, true),
-                        Variant.variant().with(VariantProperties.MODEL, sideAlt).with(VariantProperties.Y_ROT, VariantProperties.Rotation.R90))
-                .with(Condition.condition().term(BlockStateProperties.NORTH, false), Variant.variant().with(VariantProperties.MODEL, noSide))
-                .with(Condition.condition().term(BlockStateProperties.EAST, false), Variant.variant().with(VariantProperties.MODEL, noSideAlt))
-                .with(Condition.condition().term(BlockStateProperties.SOUTH, false),
-                        Variant.variant().with(VariantProperties.MODEL, noSideAlt).with(VariantProperties.Y_ROT, VariantProperties.Rotation.R90))
-                .with(Condition.condition().term(BlockStateProperties.WEST, false),
-                        Variant.variant().with(VariantProperties.MODEL, noSide).with(VariantProperties.Y_ROT, VariantProperties.Rotation.R270)));
-    }
-
-    private static ResourceLocation cutout(ModelTemplate template, Block block, TextureMapping textures, ModelContext m) {
-        return template.create(template.getDefaultModelLocation(block), textures, m.models(), (id, slots) -> {
-            JsonObject json = template.createBaseTemplate(id, slots);
-            json.addProperty("render_type", "minecraft:cutout");
-            return json;
-        });
+                        Variant.variant().with(VariantProperties.MODEL, sideAlt).with(VariantProperties.Y_ROT, VariantProperties.Rotation.R90)));
     }
 
     /**
-     * A door like vanilla's: the eight door templates with {@code <name>_top} / {@code <name>_bottom}, the same
-     * facing/half/hinge/open rotations vanilla uses, and a flat item model using {@code item/<name>}. A locked lower
-     * half uses four more models ({@code *_locked}) with the padlock texture {@code <name>_bottom_locked}.
+     * A door: hand-made Blockbench models (art/models/brig_door_*.bbmodel, design.md §4.8), so only the block state and
+     * the flat item model ({@code item/<name>}) are generated, with the same facing/half/hinge/open rotations vanilla
+     * uses. Each model is the leaf of a door facing east (x 0..3); the "left" models have the hinge at z 0, the "right"
+     * ones at z 16 (mirrored in z). Opening turns the leaf about its hinge, which in vanilla's scheme (open adds 90° or
+     * 270°) needs the leaf turned by 180° in the model: a left door's open model is the right model and the other way
+     * round. The unlocked halves are symmetric front to back, so that turned leaf is the mirrored one; the locked lower
+     * half carries a padlock on the side the placing player faced (x < 0) and has its own four models, so the padlock
+     * stays on the same side of the leaf when the door swings.
      */
     private static void door(ModelContext m, Block block) {
-        TextureMapping textures = TextureMapping.door(block);
-        TextureMapping lockedTextures = TextureMapping.door(block).put(TextureSlot.BOTTOM, TextureMapping.getBlockTexture(block, "_bottom_locked"));
-        ResourceLocation[] lower = {
-                ModelTemplates.DOOR_BOTTOM_LEFT.create(block, textures, m.models()),
-                ModelTemplates.DOOR_BOTTOM_LEFT_OPEN.create(block, textures, m.models()),
-                ModelTemplates.DOOR_BOTTOM_RIGHT.create(block, textures, m.models()),
-                ModelTemplates.DOOR_BOTTOM_RIGHT_OPEN.create(block, textures, m.models())};
+        ResourceLocation bottomLeft = ModelLocationUtils.getModelLocation(block, "_bottom_left");
+        ResourceLocation bottomRight = ModelLocationUtils.getModelLocation(block, "_bottom_right");
+        ResourceLocation topLeft = ModelLocationUtils.getModelLocation(block, "_top_left");
+        ResourceLocation topRight = ModelLocationUtils.getModelLocation(block, "_top_right");
+        // indexed like the loop below: left, left open, right, right open
+        ResourceLocation[] lower = {bottomLeft, bottomRight, bottomRight, bottomLeft};
         ResourceLocation[] lowerLocked = {
-                ModelTemplates.DOOR_BOTTOM_LEFT.createWithSuffix(block, "_locked", lockedTextures, m.models()),
-                ModelTemplates.DOOR_BOTTOM_LEFT_OPEN.createWithSuffix(block, "_locked", lockedTextures, m.models()),
-                ModelTemplates.DOOR_BOTTOM_RIGHT.createWithSuffix(block, "_locked", lockedTextures, m.models()),
-                ModelTemplates.DOOR_BOTTOM_RIGHT_OPEN.createWithSuffix(block, "_locked", lockedTextures, m.models())};
-        ResourceLocation[] upper = {
-                ModelTemplates.DOOR_TOP_LEFT.create(block, textures, m.models()),
-                ModelTemplates.DOOR_TOP_LEFT_OPEN.create(block, textures, m.models()),
-                ModelTemplates.DOOR_TOP_RIGHT.create(block, textures, m.models()),
-                ModelTemplates.DOOR_TOP_RIGHT_OPEN.create(block, textures, m.models())};
+                ModelLocationUtils.getModelLocation(block, "_bottom_left_locked"),
+                ModelLocationUtils.getModelLocation(block, "_bottom_left_open_locked"),
+                ModelLocationUtils.getModelLocation(block, "_bottom_right_locked"),
+                ModelLocationUtils.getModelLocation(block, "_bottom_right_open_locked")};
+        ResourceLocation[] upper = {topLeft, topRight, topRight, topLeft};
         m.flatItem(block.asItem());
         PropertyDispatch.C5<Direction, DoubleBlockHalf, DoorHingeSide, Boolean, Boolean> dispatch = PropertyDispatch.properties(
                 BlockStateProperties.HORIZONTAL_FACING, BlockStateProperties.DOUBLE_BLOCK_HALF, BlockStateProperties.DOOR_HINGE,

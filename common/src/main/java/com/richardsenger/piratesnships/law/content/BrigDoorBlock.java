@@ -40,6 +40,10 @@ import java.util.UUID;
  *       villagers and zombies treat it like an iron door and never open or break it, and mob pathfinding sees it as
  *       closed.</li>
  * </ul>
+ *
+ * <p>Model: a hand-made cell door (art/models/brig_door_*.bbmodel, design.md §4.8): an iron frame with four round
+ * bars per half, a cross band, hinge straps on the hinge side and a lock plate with a pull on the free side. A locked
+ * lower half also shows a brass padlock on the side the placing player faced.
  */
 public class BrigDoorBlock extends DoorBlock implements EntityBlock {
 

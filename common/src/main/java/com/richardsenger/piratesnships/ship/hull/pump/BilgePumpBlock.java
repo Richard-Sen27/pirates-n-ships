@@ -36,6 +36,11 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * <p>The block is a post, not a full cube, so the hull analysis counts its cell as air: a pump standing in the hold
  * takes no volume from it and lies inside the compartment it drains. {@link #FACING} is the side the spout points to,
  * visual only.
+ *
+ * <p>Model: a hand-made deck pump (art/models/bilge_pump.bbmodel, design.md §4.5, §4.8): a banded wooden casing on a
+ * plank foot with an intake ring, an iron cylinder with a piston rod, and a brake handle on a pivot at the back that
+ * rises 22.5 degrees towards {@link #FACING}. The spout with its drip points the same way, so both face the player who
+ * placed the pump.
  */
 public class BilgePumpBlock extends Block implements StationBlock {
 

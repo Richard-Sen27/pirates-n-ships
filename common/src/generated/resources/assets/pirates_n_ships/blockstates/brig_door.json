@@ -4,56 +4,56 @@
       "model": "pirates_n_ships:block/brig_door_bottom_left"
     },
     "facing=east,half=lower,hinge=left,locked=false,open=true": {
-      "model": "pirates_n_ships:block/brig_door_bottom_left_open",
+      "model": "pirates_n_ships:block/brig_door_bottom_right",
       "y": 90
     },
     "facing=east,half=lower,hinge=left,locked=true,open=false": {
-      "model": "pirates_n_ships:block/brig_door_locked_bottom_left"
+      "model": "pirates_n_ships:block/brig_door_bottom_left_locked"
     },
     "facing=east,half=lower,hinge=left,locked=true,open=true": {
-      "model": "pirates_n_ships:block/brig_door_locked_bottom_left_open",
+      "model": "pirates_n_ships:block/brig_door_bottom_left_open_locked",
       "y": 90
     },
     "facing=east,half=lower,hinge=right,locked=false,open=false": {
       "model": "pirates_n_ships:block/brig_door_bottom_right"
     },
     "facing=east,half=lower,hinge=right,locked=false,open=true": {
-      "model": "pirates_n_ships:block/brig_door_bottom_right_open",
+      "model": "pirates_n_ships:block/brig_door_bottom_left",
       "y": 270
     },
     "facing=east,half=lower,hinge=right,locked=true,open=false": {
-      "model": "pirates_n_ships:block/brig_door_locked_bottom_right"
+      "model": "pirates_n_ships:block/brig_door_bottom_right_locked"
     },
     "facing=east,half=lower,hinge=right,locked=true,open=true": {
-      "model": "pirates_n_ships:block/brig_door_locked_bottom_right_open",
+      "model": "pirates_n_ships:block/brig_door_bottom_right_open_locked",
       "y": 270
     },
     "facing=east,half=upper,hinge=left,locked=false,open=false": {
       "model": "pirates_n_ships:block/brig_door_top_left"
     },
     "facing=east,half=upper,hinge=left,locked=false,open=true": {
-      "model": "pirates_n_ships:block/brig_door_top_left_open",
+      "model": "pirates_n_ships:block/brig_door_top_right",
       "y": 90
     },
     "facing=east,half=upper,hinge=left,locked=true,open=false": {
       "model": "pirates_n_ships:block/brig_door_top_left"
     },
     "facing=east,half=upper,hinge=left,locked=true,open=true": {
-      "model": "pirates_n_ships:block/brig_door_top_left_open",
+      "model": "pirates_n_ships:block/brig_door_top_right",
       "y": 90
     },
     "facing=east,half=upper,hinge=right,locked=false,open=false": {
       "model": "pirates_n_ships:block/brig_door_top_right"
     },
     "facing=east,half=upper,hinge=right,locked=false,open=true": {
-      "model": "pirates_n_ships:block/brig_door_top_right_open",
+      "model": "pirates_n_ships:block/brig_door_top_left",
       "y": 270
     },
     "facing=east,half=upper,hinge=right,locked=true,open=false": {
       "model": "pirates_n_ships:block/brig_door_top_right"
     },
     "facing=east,half=upper,hinge=right,locked=true,open=true": {
-      "model": "pirates_n_ships:block/brig_door_top_right_open",
+      "model": "pirates_n_ships:block/brig_door_top_left",
       "y": 270
     },
     "facing=north,half=lower,hinge=left,locked=false,open=false": {
@@ -61,29 +61,29 @@
       "y": 270
     },
     "facing=north,half=lower,hinge=left,locked=false,open=true": {
-      "model": "pirates_n_ships:block/brig_door_bottom_left_open"
+      "model": "pirates_n_ships:block/brig_door_bottom_right"
     },
     "facing=north,half=lower,hinge=left,locked=true,open=false": {
-      "model": "pirates_n_ships:block/brig_door_locked_bottom_left",
+      "model": "pirates_n_ships:block/brig_door_bottom_left_locked",
       "y": 270
     },
     "facing=north,half=lower,hinge=left,locked=true,open=true": {
-      "model": "pirates_n_ships:block/brig_door_locked_bottom_left_open"
+      "model": "pirates_n_ships:block/brig_door_bottom_left_open_locked"
     },
     "facing=north,half=lower,hinge=right,locked=false,open=false": {
       "model": "pirates_n_ships:block/brig_door_bottom_right",
       "y": 270
     },
     "facing=north,half=lower,hinge=right,locked=false,open=true": {
-      "model": "pirates_n_ships:block/brig_door_bottom_right_open",
+      "model": "pirates_n_ships:block/brig_door_bottom_left",
       "y": 180
     },
     "facing=north,half=lower,hinge=right,locked=true,open=false": {
-      "model": "pirates_n_ships:block/brig_door_locked_bottom_right",
+      "model": "pirates_n_ships:block/brig_door_bottom_right_locked",
       "y": 270
     },
     "facing=north,half=lower,hinge=right,locked=true,open=true": {
-      "model": "pirates_n_ships:block/brig_door_locked_bottom_right_open",
+      "model": "pirates_n_ships:block/brig_door_bottom_right_open_locked",
       "y": 180
     },
     "facing=north,half=upper,hinge=left,locked=false,open=false": {
@@ -91,21 +91,21 @@
       "y": 270
     },
     "facing=north,half=upper,hinge=left,locked=false,open=true": {
-      "model": "pirates_n_ships:block/brig_door_top_left_open"
+      "model": "pirates_n_ships:block/brig_door_top_right"
     },
     "facing=north,half=upper,hinge=left,locked=true,open=false": {
       "model": "pirates_n_ships:block/brig_door_top_left",
       "y": 270
     },
     "facing=north,half=upper,hinge=left,locked=true,open=true": {
-      "model": "pirates_n_ships:block/brig_door_top_left_open"
+      "model": "pirates_n_ships:block/brig_door_top_right"
     },
     "facing=north,half=upper,hinge=right,locked=false,open=false": {
       "model": "pirates_n_ships:block/brig_door_top_right",
       "y": 270
     },
     "facing=north,half=upper,hinge=right,locked=false,open=true": {
-      "model": "pirates_n_ships:block/brig_door_top_right_open",
+      "model": "pirates_n_ships:block/brig_door_top_left",
       "y": 180
     },
     "facing=north,half=upper,hinge=right,locked=true,open=false": {
@@ -113,7 +113,7 @@
       "y": 270
     },
     "facing=north,half=upper,hinge=right,locked=true,open=true": {
-      "model": "pirates_n_ships:block/brig_door_top_right_open",
+      "model": "pirates_n_ships:block/brig_door_top_left",
       "y": 180
     },
     "facing=south,half=lower,hinge=left,locked=false,open=false": {
@@ -121,15 +121,15 @@
       "y": 90
     },
     "facing=south,half=lower,hinge=left,locked=false,open=true": {
-      "model": "pirates_n_ships:block/brig_door_bottom_left_open",
+      "model": "pirates_n_ships:block/brig_door_bottom_right",
       "y": 180
     },
     "facing=south,half=lower,hinge=left,locked=true,open=false": {
-      "model": "pirates_n_ships:block/brig_door_locked_bottom_left",
+      "model": "pirates_n_ships:block/brig_door_bottom_left_locked",
       "y": 90
     },
     "facing=south,half=lower,hinge=left,locked=true,open=true": {
-      "model": "pirates_n_ships:block/brig_door_locked_bottom_left_open",
+      "model": "pirates_n_ships:block/brig_door_bottom_left_open_locked",
       "y": 180
     },
     "facing=south,half=lower,hinge=right,locked=false,open=false": {
@@ -137,21 +137,21 @@
       "y": 90
     },
     "facing=south,half=lower,hinge=right,locked=false,open=true": {
-      "model": "pirates_n_ships:block/brig_door_bottom_right_open"
+      "model": "pirates_n_ships:block/brig_door_bottom_left"
     },
     "facing=south,half=lower,hinge=right,locked=true,open=false": {
-      "model": "pirates_n_ships:block/brig_door_locked_bottom_right",
+      "model": "pirates_n_ships:block/brig_door_bottom_right_locked",
       "y": 90
     },
     "facing=south,half=lower,hinge=right,locked=true,open=true": {
-      "model": "pirates_n_ships:block/brig_door_locked_bottom_right_open"
+      "model": "pirates_n_ships:block/brig_door_bottom_right_open_locked"
     },
     "facing=south,half=upper,hinge=left,locked=false,open=false": {
       "model": "pirates_n_ships:block/brig_door_top_left",
       "y": 90
     },
     "facing=south,half=upper,hinge=left,locked=false,open=true": {
-      "model": "pirates_n_ships:block/brig_door_top_left_open",
+      "model": "pirates_n_ships:block/brig_door_top_right",
       "y": 180
     },
     "facing=south,half=upper,hinge=left,locked=true,open=false": {
@@ -159,7 +159,7 @@
       "y": 90
     },
     "facing=south,half=upper,hinge=left,locked=true,open=true": {
-      "model": "pirates_n_ships:block/brig_door_top_left_open",
+      "model": "pirates_n_ships:block/brig_door_top_right",
       "y": 180
     },
     "facing=south,half=upper,hinge=right,locked=false,open=false": {
@@ -167,29 +167,29 @@
       "y": 90
     },
     "facing=south,half=upper,hinge=right,locked=false,open=true": {
-      "model": "pirates_n_ships:block/brig_door_top_right_open"
+      "model": "pirates_n_ships:block/brig_door_top_left"
     },
     "facing=south,half=upper,hinge=right,locked=true,open=false": {
       "model": "pirates_n_ships:block/brig_door_top_right",
       "y": 90
     },
     "facing=south,half=upper,hinge=right,locked=true,open=true": {
-      "model": "pirates_n_ships:block/brig_door_top_right_open"
+      "model": "pirates_n_ships:block/brig_door_top_left"
     },
     "facing=west,half=lower,hinge=left,locked=false,open=false": {
       "model": "pirates_n_ships:block/brig_door_bottom_left",
       "y": 180
     },
     "facing=west,half=lower,hinge=left,locked=false,open=true": {
-      "model": "pirates_n_ships:block/brig_door_bottom_left_open",
+      "model": "pirates_n_ships:block/brig_door_bottom_right",
       "y": 270
     },
     "facing=west,half=lower,hinge=left,locked=true,open=false": {
-      "model": "pirates_n_ships:block/brig_door_locked_bottom_left",
+      "model": "pirates_n_ships:block/brig_door_bottom_left_locked",
       "y": 180
     },
     "facing=west,half=lower,hinge=left,locked=true,open=true": {
-      "model": "pirates_n_ships:block/brig_door_locked_bottom_left_open",
+      "model": "pirates_n_ships:block/brig_door_bottom_left_open_locked",
       "y": 270
     },
     "facing=west,half=lower,hinge=right,locked=false,open=false": {
@@ -197,15 +197,15 @@
       "y": 180
     },
     "facing=west,half=lower,hinge=right,locked=false,open=true": {
-      "model": "pirates_n_ships:block/brig_door_bottom_right_open",
+      "model": "pirates_n_ships:block/brig_door_bottom_left",
       "y": 90
     },
     "facing=west,half=lower,hinge=right,locked=true,open=false": {
-      "model": "pirates_n_ships:block/brig_door_locked_bottom_right",
+      "model": "pirates_n_ships:block/brig_door_bottom_right_locked",
       "y": 180
     },
     "facing=west,half=lower,hinge=right,locked=true,open=true": {
-      "model": "pirates_n_ships:block/brig_door_locked_bottom_right_open",
+      "model": "pirates_n_ships:block/brig_door_bottom_right_open_locked",
       "y": 90
     },
     "facing=west,half=upper,hinge=left,locked=false,open=false": {
@@ -213,7 +213,7 @@
       "y": 180
     },
     "facing=west,half=upper,hinge=left,locked=false,open=true": {
-      "model": "pirates_n_ships:block/brig_door_top_left_open",
+      "model": "pirates_n_ships:block/brig_door_top_right",
       "y": 270
     },
     "facing=west,half=upper,hinge=left,locked=true,open=false": {
@@ -221,7 +221,7 @@
       "y": 180
     },
     "facing=west,half=upper,hinge=left,locked=true,open=true": {
-      "model": "pirates_n_ships:block/brig_door_top_left_open",
+      "model": "pirates_n_ships:block/brig_door_top_right",
       "y": 270
     },
     "facing=west,half=upper,hinge=right,locked=false,open=false": {
@@ -229,7 +229,7 @@
       "y": 180
     },
     "facing=west,half=upper,hinge=right,locked=false,open=true": {
-      "model": "pirates_n_ships:block/brig_door_top_right_open",
+      "model": "pirates_n_ships:block/brig_door_top_left",
       "y": 90
     },
     "facing=west,half=upper,hinge=right,locked=true,open=false": {
@@ -237,7 +237,7 @@
       "y": 180
     },
     "facing=west,half=upper,hinge=right,locked=true,open=true": {
-      "model": "pirates_n_ships:block/brig_door_top_right_open",
+      "model": "pirates_n_ships:block/brig_door_top_left",
       "y": 90
     }
   }

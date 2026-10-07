@@ -18,7 +18,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
 /**
- * Datagen of the swivel gun (docs/design.md §8.2, P2): block states and placeholder models, loot, tags (what it mounts
+ * Datagen of the swivel gun (docs/design.md §8.2, P2): block states (the models are hand-made, F7g), loot, tags (what it mounts
  * on), physical weight, recipe and lang. Called from {@code CannonModule.gatherData}.
  */
 public final class SwivelData {
@@ -66,21 +66,20 @@ public final class SwivelData {
                 .save(out, CannonContent.SWIVEL_GUN.id()));
     }
 
+    /**
+     * The swivel gun's pieces are hand-made (F7g, art/models/swivel_gun*.bbmodel), all with the muzzle to the north:
+     * {@code swivel_gun_yoke} (pintle from y 0 and the fork up to the trunnions; {@code SwivelGunRenderer} turns it by
+     * the yaw about the block's vertical centre line), {@code swivel_gun_barrel} and {@code swivel_gun_barrel_loaded}
+     * (axis at x 8, y 6, muzzle at z −6, breech at z 14, tiller to z 20; turned by the yaw and raised by the elevation
+     * about the pivot (8, 6, 8), {@link SwivelRules#PIVOT_HEIGHT}), and {@code swivel_gun}, the whole gun, which is the
+     * item's model. Only the block state is generated here.
+     */
     private static void models(ModelContext m) {
         Block block = CannonContent.SWIVEL_GUN.get();
         ResourceLocation base = ModelLocationUtils.getModelLocation(block);
         ResourceLocation yokeId = base.withSuffix("_yoke");
         ResourceLocation barrelId = base.withSuffix("_barrel");
         ResourceLocation loadedId = base.withSuffix("_barrel_loaded");
-        PlaceholderModel yoke = yoke();
-        PlaceholderModel barrel = barrel();
-        PlaceholderModel loaded = barrel.copy().texture("ball", "minecraft:block/iron_block")
-                .box(7.25, 5.25, -6.5, 8.75, 6.75, -6.05, "ball");
-        m.models().accept(yokeId, yoke::json);
-        m.models().accept(barrelId, barrel::json);
-        m.models().accept(loadedId, loaded::json);
-        // the item's model (the block item's model delegates to block/swivel_gun): the whole gun, level, muzzle north
-        m.models().accept(base, () -> yoke.copy().include(barrel).parent("minecraft:block/block").json());
 
         PropertyDispatch.C2<CannonLoad, SwivelPiece> dispatch = PropertyDispatch.properties(SwivelGunBlock.LOAD, SwivelGunBlock.PIECE);
         for (CannonLoad load : CannonLoad.values()) {
@@ -89,35 +88,5 @@ public final class SwivelData {
                     .with(VariantProperties.MODEL, load == CannonLoad.LOADED ? loadedId : barrelId));
         }
         m.blockStates().accept(MultiVariantGenerator.multiVariant(block).with(dispatch));
-    }
-
-    /**
-     * The placeholder yoke (pixels): a pintle down the block's centre into the mount and a fork whose arms hold the
-     * barrel's trunnions at y 6 ({@link SwivelRules#PIVOT_HEIGHT}), z 8. Turns with the yaw. F7g replaces it.
-     */
-    private static PlaceholderModel yoke() {
-        return new PlaceholderModel(CannonData.IRON)
-                .texture("iron", CannonData.IRON)
-                .box(7, 0, 7, 9, 3.5, 9, "iron")
-                .box(4.5, 3.5, 7, 11.5, 4.5, 9, "iron")
-                .box(4.5, 4.5, 7.25, 5.5, 7.5, 8.75, "iron")
-                .box(10.5, 4.5, 7.25, 11.5, 7.5, 8.75, "iron");
-    }
-
-    /**
-     * The placeholder barrel, muzzle north (pixels): axis at x 8, y 6, from the muzzle at z −6 (14 px ahead of the
-     * pivot at z 8, {@link SwivelRules#MUZZLE_LENGTH}) back to the breech at z 14 (6 px behind), trunnions through the
-     * pivot and a wooden tiller to z 20. Turns with the yaw and the elevation about the pivot. F7g replaces it.
-     */
-    private static PlaceholderModel barrel() {
-        return new PlaceholderModel(CannonData.IRON)
-                .texture("iron", CannonData.IRON)
-                .texture("wood", "minecraft:block/stripped_oak_log")
-                .texture("bore", "minecraft:block/coal_block")
-                .box(6.5, 4.5, -4.5, 9.5, 7.5, 14, "iron")
-                .box(6, 4, -6, 10, 8, -4.5, "iron")
-                .box(5.5, 5.5, 7.5, 10.5, 6.5, 8.5, "iron")
-                .box(7.5, 5.5, 14, 8.5, 6.5, 20, "wood")
-                .box(7, 5, -6.05, 9, 7, -6, "bore");
     }
 }

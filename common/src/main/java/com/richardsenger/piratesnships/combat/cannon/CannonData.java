@@ -28,7 +28,7 @@ import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePrope
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 
 /**
- * Datagen of the cannon (docs/design.md §8.2): block states and placeholder models (P2), loot, tags, physical weight,
+ * Datagen of the cannon (docs/design.md §8.2): block states (P2; the models are hand-made, F7g), loot, tags, physical weight,
  * recipe and lang. Called from {@code CannonModule.gatherData}.
  */
 public final class CannonData {
@@ -121,31 +121,28 @@ public final class CannonData {
     }
 
     /**
-     * The two-block cannon (P2): the master (front) shows a <b>placeholder</b> gun drawn across both blocks plus the
-     * barrel one block ahead ({@code cannon_placeholder}, {@code _powder}, {@code _loaded}, generated below, muzzle to
-     * the north, model z −16..32); the rear half shows nothing ({@code cannon_rear}). Turned by
-     * {@link CannonBlock#FACING} (north is unrotated). The hand-made one-block models {@code cannon}, {@code cannon_powder}
-     * and {@code cannon_loaded} (art/models/cannon*.bbmodel) stay untouched, and {@code cannon} is still the item's model;
-     * F7g makes the two-block Blockbench models and points these block states back at them.
+     * The two-block cannon (P2, models F7g): the master (front) shows the whole gun, drawn across both blocks with the
+     * barrel reaching one block ahead (the hand-made {@code cannon}, {@code cannon_powder}, {@code cannon_loaded} from
+     * art/models/cannon*.bbmodel, muzzle to the north, model z −16..32); the rear half shows nothing ({@code cannon_rear},
+     * generated: only a particle texture). Turned by {@link CannonBlock#FACING} (north is unrotated). {@code cannon} is
+     * also the item's model (its display entries fit the whole gun into the slot).
      */
     private static void cannon(ModelContext m, Block block) {
         ResourceLocation base = ModelLocationUtils.getModelLocation(block);
-        ResourceLocation placeholder = base.withSuffix("_placeholder");
         ResourceLocation rear = base.withSuffix("_rear");
-        PlaceholderModel empty = cannonPlaceholder();
-        PlaceholderModel powder = empty.copy().box(14, 4, 10, 15, 22, 11, "rammer");
-        PlaceholderModel loaded = powder.copy().box(6.5, 12.5, -16, 9.5, 15.5, -15, "ball");
-        m.models().accept(placeholder, empty::json);
-        m.models().accept(placeholder.withSuffix("_powder"), powder::json);
-        m.models().accept(placeholder.withSuffix("_loaded"), loaded::json);
-        m.models().accept(rear, () -> new PlaceholderModel(IRON).json());
+        m.models().accept(rear, () -> {
+            JsonObject textures = new JsonObject();
+            textures.addProperty("particle", IRON);
+            JsonObject json = new JsonObject();
+            json.add("textures", textures);
+            return json;
+        });
 
         PropertyDispatch.C3<Direction, CannonLoad, CannonPart> dispatch =
                 PropertyDispatch.properties(CannonBlock.FACING, CannonBlock.LOAD, CannonBlock.PART);
         for (Direction d : Direction.Plane.HORIZONTAL) {
             for (CannonLoad load : CannonLoad.values()) {
-                ResourceLocation front =
-                        load == CannonLoad.EMPTY ? placeholder : placeholder.withSuffix("_" + load.getSerializedName());
+                ResourceLocation front = load == CannonLoad.EMPTY ? base : base.withSuffix("_" + load.getSerializedName());
                 dispatch.select(d, load, CannonPart.FRONT, Variant.variant().with(VariantProperties.MODEL, front)
                         .with(VariantProperties.Y_ROT, yRotation(d)));
                 dispatch.select(d, load, CannonPart.REAR, Variant.variant().with(VariantProperties.MODEL, rear)
@@ -153,32 +150,5 @@ public final class CannonData {
             }
         }
         m.blockStates().accept(MultiVariantGenerator.multiVariant(block).with(dispatch));
-    }
-
-    /**
-     * The placeholder gun in the master's frame (pixels, muzzle north): carriage cheeks, bed, axles and four wheels over
-     * z 0..30 (both blocks), the barrel on its axis at x 8, y 14 ({@link CannonRules#PIVOT_HEIGHT}) from the muzzle at
-     * z −15 (bore face at −15.05, a loaded ball reaches −16) back to the breech at z 24, trunnions at z 8.
-     */
-    private static PlaceholderModel cannonPlaceholder() {
-        return new PlaceholderModel(IRON)
-                .texture("iron", IRON)
-                .texture("wood", "minecraft:block/spruce_planks")
-                .texture("wheel", "minecraft:block/stripped_spruce_log_top")
-                .texture("ball", "minecraft:block/coal_block")
-                .texture("rammer", "minecraft:block/stripped_oak_log")
-                // carriage
-                .box(2, 3, 0, 4, 12, 30, "wood").box(12, 3, 0, 14, 12, 30, "wood")
-                .box(4, 4, 1, 12, 7, 30, "wood")
-                .box(1, 2, 3, 15, 4, 5, "wood").box(1, 2, 25, 15, 4, 27, "wood")
-                .box(0, 0, 1, 2, 6, 7, "wheel").box(14, 0, 1, 16, 6, 7, "wheel")
-                .box(0, 0, 23, 2, 6, 29, "wheel").box(14, 0, 23, 16, 6, 29, "wheel")
-                // barrel
-                .box(3, 13, 7, 13, 15, 9, "iron")
-                .box(5, 11, -13, 11, 17, 22, "iron")
-                .box(4.5, 10.5, -15, 11.5, 17.5, -13, "iron")
-                .box(5.5, 11.5, 22, 10.5, 16.5, 24, "iron")
-                .box(7, 13, 24, 9, 15, 26, "iron")
-                .box(6.5, 12.5, -15.05, 9.5, 15.5, -15, "ball");
     }
 }

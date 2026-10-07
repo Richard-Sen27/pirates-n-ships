@@ -104,6 +104,46 @@ Workflow notes (cannon, harbor master's desk, F7f):
   `black_concrete` strips 0.02 px above the page; a coin stack is one octagon (stacking 0.15 px coins tripled the
   element count for no visible gain).
 
+Workflow notes (two-block cannon and swivel gun, F7g):
+- **Part lists outside the app.** The seven models were generated as Java block JSON by a small Python part list
+  (octagon prisms along x, y or z from the F7d/F7f four-bar recipe, boxes with position UVs wrapped into 0..16,
+  per-face texture keys) and then rebuilt cube by cube in Blockbench from that JSON (`F7G.load(name)`: new
+  `java_block` project, vanilla textures from `art/vanilla/` with namespace `minecraft` and folder `block`, display
+  slots copied into `Project.display_settings`). `Codecs.java_block.compile()` of the rebuilt project gives the same
+  elements, so the committed model files and the projects agree. Like the earlier helpers, script and loader are not
+  committed; rebuild them from these notes.
+- **Cannon** (`cannon` 140, `cannon_powder` 144, `cannon_loaded` 152 elements; one project each; `cannon_rear` stays
+  a generated particle-only model). Everything is drawn from the master block, muzzle north. Barrel axis at x 8, y 14
+  (`CannonRules.PIVOT_HEIGHT`), muzzle lip at z −15 (bore a black octagon 0.02 px in front), chase D 5.8 to 6.2,
+  rings, reinforces D 6.9 and 7.5, base ring D 8.3 at z 21.4..22.6, breech to z 24, neck and cascabel to z 26; a
+  vent on the vent ring. Trunnions through (8, 14, 8) under iron cap squares. Carriage z 1..31: dark oak cheeks in
+  four steps (tops y 12.6, 11, 9, 7), spruce bed split at the block border (z 16), front and rear transoms, a quoin
+  under the breech, axletrees with the grain along x, front trucks D 7.2 at z 4 and rear trucks D 6 at z 27 (wheel
+  octagons with log-top faces inside an iron tire octagon, hub caps outside), iron straps, breeching eyes and rings
+  at the cheek ends. `cannon_powder` adds the rammer leaning against the right cheek (foot at (14.15, 0.3, 15),
+  `x 22.5`, head up and back); `cannon_loaded` adds the ball (grey octagon plus cap, the cap ends at z −16).
+- **Cannon item** (`cannon.json` display): `gui` `[30, 225, 0]` / `[0.5, -0.7, 0]` / 0.33 (the 48 px gun fills the
+  slot like a block); `fixed` `[0, 90, 0]` / `[0, -0.5, 0]` / 0.33 (side view in the frame); `ground` 0.15;
+  third person `[75, 45, 0]` / `[0, 2.5, 0]` / 0.25; first person `[0, 45, 0]` (left `[0, 225, 0]`) / `[0, 1, 0]` /
+  0.2; `head` 0.3.
+- **Swivel gun** (`swivel_gun_yoke` 19, `swivel_gun_barrel` 43, `swivel_gun_barrel_loaded` 51, `swivel_gun` 62 =
+  yoke + barrel, the item's model; one project each). Matches `SwivelGunRenderer`: the yoke (collar and pintle on the
+  block's vertical centre line from y 0, a cross bar at y 2.8..3.8, arms at x 4.2..5.2 and 10.8..11.8 ending in
+  round bosses at y 6, z 8) turns with the yaw; the barrel (axis x 8, y 6, muzzle lip at z −6, base ring, breech to
+  z 14, socket and spruce tiller with an iron knob to z 20, trunnions through (8, 6, 8) into the arm bosses) turns
+  about the pivot, so nothing in it may stick out below the pivot near the yoke's cross bar (the barrel's bottom is
+  y 4.05 at the pivot, the bar's top 3.8). The loaded barrel adds a ball (D 1.4) at the muzzle.
+- **Swivel item** display: `gui` `[30, 225, 0]` / `[-0.45, 1.8, 0]` / 0.65; `fixed` `[0, 90, 0]` / `[0, 2.2, 0]` /
+  0.6; `ground` 0.3; third person `[75, 45, 0]` / `[0, 2.5, 0]` / 0.375; first person 0.4.
+- **Display check without the human's viewport:** in display mode an offscreen orthographic view at
+  `position [0, 0, 32]`, `target [0, 0, 0]`, `zoom 2` shows the GUI slot (16 px per slot unit at 1024 px); the model's
+  pixel bounds against the image centre give the translation needed (pixels / 16, y inverted).
+- `PlaceholderModel` (the P2 datagen builder) is gone; the generated `cannon_placeholder*` and `swivel_gun*` models
+  were removed from version control before `runData` (see the containers batch).
+- Renders: `renders/cannon.png` (placed three-quarter view, east side, GUI), `cannon_loaded.png` (ball in the muzzle,
+  rammer side) and `swivel_gun.png` (three-quarter view, east side, GUI); composed side by side on a 2D canvas in
+  the app and written with `fs`.
+
 Items (sword batch, F8a):
 - Item models are `java_block` projects exported to `common/src/main/resources/assets/pirates_n_ships/models/item/<name>.json`;
   datagen writes no model for them (drop the item's `m.handheldItem(...)` / `m.flatItem(...)` line).

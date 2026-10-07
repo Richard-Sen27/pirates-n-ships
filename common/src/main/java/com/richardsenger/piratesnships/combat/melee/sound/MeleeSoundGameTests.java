@@ -379,13 +379,20 @@ public final class MeleeSoundGameTests {
             helper.assertTrue(lang.has(key) && expected.get(sound).equals(lang.get(key).getAsString()),
                     key + " should read '" + expected.get(sound) + "', is " + lang.get(key));
         }
-        // the miss is vanilla's sweep whoosh, referenced as an event so a file of ours can replace it later
+        // the miss plays our six "Sword swipes" whooshes (A2), equal weights, no vanilla event reference left
         com.google.gson.JsonArray miss = sounds.getAsJsonObject(CombatSounds.MELEE_MISS.id().getPath()).getAsJsonArray("sounds");
-        helper.assertTrue(miss.size() == 1 && miss.get(0).isJsonObject()
-                        && "event".equals(miss.get(0).getAsJsonObject().get("type").getAsString())
-                        && CombatSounds.VANILLA_MISS.toString().equals(miss.get(0).getAsJsonObject().get("name").getAsString()),
-                "combat.melee.miss should reference " + CombatSounds.VANILLA_MISS + ": " + miss);
-        helper.assertTrue(BuiltInRegistries.SOUND_EVENT.containsKey(CombatSounds.VANILLA_MISS), "vanilla miss sound exists");
+        java.util.Set<String> names = new java.util.HashSet<>();
+        for (com.google.gson.JsonElement s : miss) {
+            helper.assertTrue(s.isJsonPrimitive(), "combat.melee.miss should list plain files (no event reference, no weight): " + s);
+            names.add(s.getAsString());
+        }
+        java.util.Set<String> expectedMiss = new java.util.HashSet<>();
+        for (int i = 1; i <= 6; i++) expectedMiss.add("pirates_n_ships:combat/melee/miss_" + i);
+        helper.assertTrue(miss.size() == 6 && names.equals(expectedMiss), "combat.melee.miss should play " + expectedMiss + ": " + miss);
+        for (String name : expectedMiss) {
+            String file = "/assets/pirates_n_ships/sounds/combat/melee/" + name.substring(name.lastIndexOf('/') + 1) + ".ogg";
+            helper.assertTrue(MeleeSoundGameTests.class.getResource(file) != null, file + " is missing");
+        }
         helper.succeed();
     }
 

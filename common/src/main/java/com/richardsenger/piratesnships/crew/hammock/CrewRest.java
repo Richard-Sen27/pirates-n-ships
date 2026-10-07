@@ -134,7 +134,33 @@ public final class CrewRest {
         }
         seat.positionRider(crew); // place it now (Sable maps it to world space)
         crew.setRest(new HammockRef(ship, foot));
+        orient(level, crew, foot, true);
         return true;
+    }
+
+    /**
+     * HM2: turns {@code crew} along its hammock (foot at plot or world position {@code foot}): body, head and view face
+     * the foot half ({@link SleepAxis}), turned by the ship's current orientation when the hammock is in a ship's plot.
+     * {@code snap}: also sets the previous tick's angles, so lying down does not sweep round on the client.
+     */
+    public static void orient(ServerLevel level, CrewMember crew, BlockPos foot, boolean snap) {
+        BlockState state = level.getBlockState(foot);
+        if (!(state.getBlock() instanceof HammockBlock)) {
+            return;
+        }
+        ShipBody ship = SableShips.containing(level, foot);
+        float yaw = SleepAxis.continuous(crew.getYRot(), SleepAxis.yaw(state.getValue(HammockBlock.FACING),
+                ship == null ? null : ship.orientation()));
+        crew.setYRot(yaw);
+        crew.setYHeadRot(yaw);
+        crew.setYBodyRot(yaw);
+        crew.setXRot(0);
+        if (snap) {
+            crew.yRotO = yaw;
+            crew.yHeadRotO = yaw;
+            crew.yBodyRotO = yaw;
+            crew.xRotO = 0;
+        }
     }
 
     /**
@@ -166,7 +192,10 @@ public final class CrewRest {
         }
     }
 
-    /** Every server tick of a crew member: dawn, or keep it in its hammock. */
+    /**
+     * Every server tick of a crew member (after its AI and movement): dawn, or keep it in its hammock, lying along it
+     * (HM2: recomputed every tick, so it turns with the ship).
+     */
     public static void tick(ServerLevel level, CrewMember crew) {
         ShipDayTick.observe(level); // CR2: the ship day tick comes before the hammock rule at dawn
         if (crew.isRemoved()) {
@@ -180,6 +209,10 @@ public final class CrewRest {
         if (rest != null && crew.tickCount % StationConfig.SEAT_CHECK_INTERVAL.get() == 0
                 && !(crew.getVehicle() instanceof HammockSeat seat && seat.foot().equals(rest.foot()))) {
             getUp(crew, false); // the hammock is gone, or it was taken off its seat: the night stays as it was
+            return;
+        }
+        if (rest != null && crew.getVehicle() instanceof HammockSeat seat && seat.foot().equals(rest.foot())) {
+            orient(level, crew, rest.foot(), false);
         }
     }
 }

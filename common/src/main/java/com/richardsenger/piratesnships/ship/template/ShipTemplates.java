@@ -45,6 +45,8 @@ public final class ShipTemplates {
         return "ship_template." + id.getNamespace() + "." + id.getPath().replace('/', '.');
     }
 
+    /** Loads the definition type and the shipwright orders' content (the ship receipt, SW1). */
     public static void init() {
+        ShipOrderContent.init();
     }
 }

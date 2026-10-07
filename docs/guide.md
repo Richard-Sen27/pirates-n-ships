@@ -250,6 +250,15 @@ of the drawing as an item; put it back in its place and the board is whole again
 `chart.tiles`: `enabled`, `redraw_allowed`, `require_chart_item`, `reach`, `tile_cells`, `max_board_side`, `max_zoom`,
 `ink_cost_enabled`, `ink_per_tile`, `kraken_ink_tile_value`.
 
+### Hammocks
+Your crew sleeps in hammocks. Hang one between two supports at the same height (fence posts, walls, logs, or a solid
+wall such as the hull side): click the block next to one support while looking toward the other. Recipe: 2 string
+over 3 wool. At nightfall every crew member who is not at a station turns in to the nearest free hammock and gets up at
+dawn. A night in a hammock raises its morale by 5; a night on a ship without a free hammock for it lowers it by 10 (it
+will grumble). Crew on duty all night are unaffected, and an order at night gets sleepers up at once. Each hammock is
+one bunk: use the captain's whistle on a crew member, or `/pirates crew info`, to see morale and "crew 3 / bunks 2".
+Players can't sleep in hammocks. Server config `crew.morale`.
+
 ### Orders, not assignments
 You don't have to assign every sailor. Give an order with the whistle (or `/pirates crew order`), and every unmanned
 station that can carry it out becomes an open job: free crew standing on your ship take the nearest one by themselves

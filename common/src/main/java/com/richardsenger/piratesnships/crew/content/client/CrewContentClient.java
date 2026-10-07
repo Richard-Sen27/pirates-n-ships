@@ -16,6 +16,7 @@ public final class CrewContentClient {
     }
 
     public static void init() {
+        ClientEvents.registerEntityRenderer(CrewContent.HAMMOCK_SEAT, net.minecraft.client.renderer.entity.NoopRenderer::new);
         // The water barrel's surface is greyscale water_still, tinted like water in the biome it stands in (on a Sable
         // ship: the biome of the ship's plot, like vanilla water blocks there)
         ClientEvents.registerBlockColor((state, level, pos, tintIndex) -> {

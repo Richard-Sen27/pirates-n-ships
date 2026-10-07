@@ -1,0 +1,36 @@
+{
+  "variants": {
+    "facing=east,shutters=false": {
+      "model": "pirates_n_ships:block/stern_window",
+      "y": 90
+    },
+    "facing=east,shutters=true": {
+      "model": "pirates_n_ships:block/stern_window_shutters",
+      "y": 90
+    },
+    "facing=north,shutters=false": {
+      "model": "pirates_n_ships:block/stern_window",
+      "y": 0
+    },
+    "facing=north,shutters=true": {
+      "model": "pirates_n_ships:block/stern_window_shutters",
+      "y": 0
+    },
+    "facing=south,shutters=false": {
+      "model": "pirates_n_ships:block/stern_window",
+      "y": 180
+    },
+    "facing=south,shutters=true": {
+      "model": "pirates_n_ships:block/stern_window_shutters",
+      "y": 180
+    },
+    "facing=west,shutters=false": {
+      "model": "pirates_n_ships:block/stern_window",
+      "y": 270
+    },
+    "facing=west,shutters=true": {
+      "model": "pirates_n_ships:block/stern_window_shutters",
+      "y": 270
+    }
+  }
+}

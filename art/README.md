@@ -727,6 +727,49 @@ Hammock (ART1d):
   and the body within the two blocks. Render `renders/anim_crew_sleep.png` (the hammock cubes added to the rig tab for
   the shot only, frames 0 s and 2 s: three-quarter, side, top).
 
+Ship decor (ART2): ship's lantern, ship's bell, rope coil, stern window, chart table, sea cot:
+- **Part lists in `tools/gen_decor_models.py`** (committed, like the cannon's): run it to rewrite the 17 model JSON
+  files, then `python3 tools/lint_models.py`, then rebuild the projects. Every model faces north; wall-mounted ones
+  hang on the south side (z 16). UVs are vanilla's position UVs wrapped into 0..16; log faces along x or z are turned
+  90 degrees with the UV rect transposed; palette faces (`brass`, `brass_dark`, `iron_dark` of `textures/item/palette`)
+  take the inner 3 x 3 px of the patch. No new textures.
+- **One project per block, one group per exported model**, all groups at the same position, the first visible
+  (`ship_lantern`: `ship_lantern`, `_wall`, `_ceiling`; `ships_bell`: `ships_bell`, `_ringing`, `_wall`,
+  `_wall_ringing`; `rope_coil`: `rope_coil_layers1..4`; `stern_window`: `stern_window`, `_shutters`; `chart_table`;
+  `sea_cot`: `sea_cot_item`, `sea_cot_head`, `sea_cot_foot`). Export a group with the other groups' cubes set to
+  `export = false`; compiling the whole project merges the variants. The projects were rebuilt from the JSON cube by
+  cube (`ART2.load` in `risky_eval`: textures from `art/vanilla/` with namespace `minecraft`, folder `block`, our own
+  from the resources, embedded) and `Codecs.java_block.compile()` of each group matches its JSON. The `lint --fix`
+  project lookup does not know these groups; fix the part list instead.
+- **Lantern** (12 / 17 / 14 elements): base, vanilla `lantern` glass sides (uv 0,3..6,9 of the animation frame, so the
+  glow animates), brass corner posts, top plate, two caps and a hanging ring. The ceiling variant is raised 2 px onto a
+  hook and a rose, the wall variant raised 1 px under a brass arm with a 45 degree brace into a stripped dark oak wall
+  block.
+- **Bell** (19 / 17 elements, the same with `_ringing`): crossed-box sections (crown, top, shoulder, waist with a band,
+  lip with a `black_concrete` mouth) of `gold_block`; a `palette` iron clapper and a rope lanyard that stay plumb
+  while the bell elements turn 22.5 degrees about x at the hanging point (lip north, away from a wall), which is why
+  the bell has no 45 degree octagon bars (one rotation per element). Floor: a dark oak belfry frame (base, two
+  uprights, log beam with brass pin and cap) meant to sit on a post; wall: backboard, arm and brace.
+- **Rope coil** (28 / 55 / 81 / 107 elements): per coil two octagonal rope rings (eight bars each, the four diagonal
+  bars 0.05 px shorter at both ends), a crossed-box heart and one upper ring in the groove, 3.9 px high, 4 px per
+  layer; the top coil has the loose end (on a stack it drops down the side) with a wool whipping. `block/rope` at its
+  own scale; a squashed or stretched rope UV was tried and read worse.
+- **Stern window** (19 / 26 elements, `render_type: minecraft:cutout` for the `glass` panes): full-depth stripped
+  dark oak frame, mullion and transoms 2.5..5.5 px behind the outer face with four panes at 4 px, casing, hood and a
+  brass sill on corbels outside (proud of the block), a stool inside; shutters: two `dark_oak_trapdoor` leaves with
+  `anvil` straps and an iron latch in the opening.
+- **Chart table** (46 elements): turned legs, aprons, drawer with a brass knob, H stretcher, a top overhanging 1 px with
+  fiddle rails, a `map_tile` chart turned 22.5 degrees with zero-height ink strips (black coast, red course, compass
+  cross) 0.05 px above it, a `packed_ice` glass weight, brass dividers (the two legs 0.05 px apart in height), an
+  inkwell and a quill.
+- **Sea cot** (head 17, foot 13, item 30 elements): built as one frame (head z -16..0, foot 0..16) and split at the
+  seam (seam faces left out); posts, panelled head- and footboard, side boards and rails, a red blanket with a white
+  sheet fold, pillow; the mattress shows only at the head. The item model (`block/sea_cot_item`, both halves shifted
+  8 px south) carries the display entries (GUI scale 0.42).
+- Renders: `renders/ship_lantern.png` (floor, wall, ceiling), `ships_bell.png` (floor, floor ringing, wall, wall
+  ringing), `rope_coil.png` (one and three coils), `stern_window.png` (open, shutters), `chart_table.png`,
+  `sea_cot.png`.
+
 ## Entities
 
 Animated mobs and NPCs (crew member, pirate, sailor, navy soldier and officer; design.md §9) are GeckoLib models

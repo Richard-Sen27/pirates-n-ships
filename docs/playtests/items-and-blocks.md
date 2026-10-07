@@ -252,3 +252,40 @@ Addendum (F8h): pistol and musket in the hand: see `firearms.md`.
       musket). Firing or unloading switches back to the plain musket.
     - **Z-fighting:** no flicker on the beak's rims, the ink gloss, the hammer face, the saw teeth and screws, the
       twine wraps, the toolkit's pockets, stitches and buckle, or the hook's crossbar in hand, GUI and frame.
+
+23. **Ship decor (ART2): lantern, bell, rope coil, stern window, chart table, sea cot.** Renders
+    `art/renders/ship_lantern.png`, `ships_bell.png`, `rope_coil.png`, `stern_window.png`, `chart_table.png`,
+    `sea_cot.png`. All six are in the creative tab; craft each once (recipes in the recipe book: lantern + 2 gold
+    nuggets; bell: 3 sticks / gold ingot / gold, iron nugget, gold; 4 rope -> coil; 2 windows from dark oak planks, glass
+    panes and a gold nugget; chart table: map over planks over sticks; cot: planks and wool over two sticks).
+    - **Ship's lantern:** click the top of a block (stands on the deck), the underside of a beam or a fence-less ceiling
+      (hangs from a brass rose on a hook), the side of a wall (hangs from a brass arm with a diagonal brace, wall block
+      behind). Turn it each way: the bracket stays on the wall. Light level 14 at night (compare a vanilla lantern next
+      to it). Place one in water: it stays waterlogged, no air pocket. Break the block it hangs on: it drops. Check the
+      glass sides (the vanilla lantern glow) have no dark or see-through pixels and the frame posts sit on the corners.
+    - **Ship's bell:** on top of a fence post (a small belfry frame, the beam across) and on a wall (bracket and brace).
+      Right-click: vanilla bell sound, and the bell swings for about a second (lip out away from the wall), the clapper
+      and the lanyard stay hanging straight, then it snaps back. Spam-click: it keeps ringing, no stuck swing. Say if the
+      snap back looks too abrupt (it is a two-model swing, no animation).
+    - **Rope coil:** place one on deck, then right-click its top with more coils: 2, 3, 4 coils stack, the loose end on
+      the top coil runs towards where you stood and drops down the side to the deck. A fifth does nothing. Break a stack
+      of four: four coils drop. Waterloggable. Say if the stacked coils read as rope or as a barrel.
+    - **Stern window:** build it into a wall from outside: the sill, hood and casing face you, four glass panes (you can
+      see through them, cutout like vanilla glass, no black pixels) set near the outside, the window stool inside the
+      cabin. Right-click: dark oak shutters with iron straps close on the outside, again to open; trapdoor sounds. Put
+      several side by side and above each other: the frames line up, no gaps, no flicker where hoods meet.
+    - **Chart table:** the top overhangs the block by a pixel on each side with fiddle rails; a chart turned slightly with
+      ink coastlines and a red course line, a pale blue glass weight, brass dividers, an inkwell with a quill. Walk
+      round it at 10 blocks: no flicker on the ink or the chart. The drawer side faces you when placed.
+    - **Sea cot:** placed like a bed (foot where you click, head away from you): a wooden box bed with taller head posts,
+      a pillow and turned-down sheet at the head, a red blanket. Break either half: one cot drops and both halves go.
+      At night on land, right-click: you sleep and the spawn is set like a bed; the sleeping player lies on the blanket
+      (say how far above it). In the Nether it explodes like a bed (vanilla). In the inventory the item shows the whole
+      cot.
+    - **On a ship:** put all six on a deck, assemble, sail a little: they ride along with their states (stacked coils,
+      closed shutters, a ringing bell), the lantern still lights the deck at night (say if the light moves with the
+      ship or stays behind), the window glass is still see-through on the moving ship. Right-click the cot on the ship:
+      "You can't sleep in a cot on a ship under way". Ring the bell on the ship. Disassemble: everything is back on the
+      grid where it was.
+    - **Config:** `ship_decor.sea_cot_sleeping` off: the cot says "This cot is just for show"; `ship_decor.bell_ring_ticks`
+      changes how long the bell swings.

@@ -1084,7 +1084,7 @@ human used for `art/schematics/starter_sloop.py`). Sources, schematics, renders 
 **Pipeline:** `python3 tools/build_structures.py` (all pieces) or `python3 tools/build_structures.py village/tavern`.
 For every source it:
 1. runs the generator, which prints the BuildSpec JSON;
-2. finds the lab on port **8766**, or starts it there (`npx -y github:SimoneRecchia/minecraft-schematic-lab#v0.1.0`,
+2. finds the lab on port **8766** (or `--port`, or `$SCHEMATIC_LAB_PORT`), or starts it there (`npx -y github:SimoneRecchia/minecraft-schematic-lab#v0.1.0`,
    HTTP mode, which never opens a browser) and stops it at the end. Port 8765 is left for the human's own MCP
    instance. The run fails on `valid: false` or on any lab warning (unknown block id, blocks outside the size);
 3. saves `art/schematics/structures/<group>/<piece>.schem` (Sponge v2, `export.schem?version=2`) and
@@ -1164,3 +1164,64 @@ front, connectors on the box faces), then run `python3 tools/build_structures.py
 render (and `--views`) for floating blocks, roofs that miss walls, doors without a path, and posts that don't reach
 the ground. Add the piece to `StructurePiecesTest` (the expected piece list and its connectors), and to its pool
 in the world module.
+
+### Pirate island (ST2)
+The pirate island camp (`pirate_island`, design.md §10.1) uses the same pipeline and conventions as the village: y 0
+is the foundation row, pieces face north (−z), connectors sit on the box face they point out of. Its own jigsaw
+vocabulary lives in `art/structures/pirate_island/_style.py` (it adds the names to `buildspec.CONNECTORS`), together
+with the group's palette (weathered spruce and dark oak, stripped logs as posts, white, grey and brown wool canvas,
+mossy cobblestone, no stone bricks) and fittings (torch posts, palisade stakes, tables, stools, bed rolls, the
+treasure marker, the flagpole).
+
+| name | target | pool | joint | used by |
+|---|---|---|---|---|
+| `pirates_n_ships:jetty_out` | `pirates_n_ships:jetty_in` | `pirates_n_ships:pirate_island/jetty` | aligned | camp (north edge) |
+| `pirates_n_ships:jetty_in` | `pirates_n_ships:jetty_out` | `minecraft:empty` | aligned | jetty (south end, deck row) |
+| `pirates_n_ships:path_out` | `pirates_n_ships:path_in` | `pirates_n_ships:pirate_island/paths` | aligned | camp (east and west edges), path (south end) |
+| `pirates_n_ships:path_in` | `pirates_n_ships:path_out` | `minecraft:empty` | aligned | path, path_end (north end) |
+| `pirates_n_ships:hut_out` | `pirates_n_ships:hut_in` | `pirates_n_ships:pirate_island/huts` | rollable | camp (south edge), path (both sides) |
+| `pirates_n_ships:hut_in` | `pirates_n_ships:hut_out` | `minecraft:empty` | rollable | tent, tavern hut, captain's hut (north side, y 0), treasure spot (north side, y 2) |
+| `pirates_n_ships:berth` | `minecraft:empty` | `minecraft:empty` | aligned | jetty (berth markers, as the village pier) |
+| `pirates_n_ships:treasure` | `minecraft:empty` | `minecraft:empty` | aligned | treasure spot (the buried treasure marker) |
+
+`final_state`: gravel where the trails meet (`jetty_out`, `path_out`, `path_in`), dirt path for the camp's
+`hut_out`, coarse dirt for the trail's `hut_out`, sand for every `hut_in`, spruce planks for `jetty_in`, water for the
+berths, sand for the treasure. Pools: `pirates_n_ships:pirate_island/start` (the camp), `pirate_island/paths`
+(`path`), `pirate_island/huts` (`tent`, `tavern_hut`, `captains_hut`, `treasure_spot`), `pirate_island/jetty`
+(`jetty`) and `pirate_island/terminators` (`path_end`, the fallback for `path_out` once the depth runs out). The world
+module (WG2) defines them.
+
+**Sea level:** as in the village. The camp's sand (its y 0) sits one block above sea level; the jetty's deck is its
+row y 5 (level with the sand), the sea surface its row y 4, its posts stand on footings on its row y 0. The berths are
+at `[0, 4, 7]` and `[4, 4, 7]`, both pointing north, one block out from the 3 wide deck.
+
+**Buried treasure marker:** a `minecraft:jigsaw` named `pirates_n_ships:treasure` (target and pool `minecraft:empty`,
+joint aligned, `final_state` `minecraft:sand`), pointing north. It sits **two blocks under the surface** at the
+treasure spot's centre, under two stripped logs crossed on the sand. The treasure spot is the one piece whose
+surface is not row y 0: its rows 0 and 1 are the sand the treasure is buried in, its surface is row y 2 and its
+`hut_in` sits on that row, so the surface lines up with the trail it hangs from. When WG2 places the structure, it
+replaces the marker with a buried chest (a treasure loot table) and records the position as a treasure map target;
+left alone, the jigsaw just becomes sand.
+
+**Jolly Roger:** the camp's flagpole is a stack of five `pirates_n_ships:flagpole` blocks. The top one carries
+`flag=jolly_roger` (the model) and the block entity data `{flagpole: {kind: "jolly_roger", item: {id:
+"pirates_n_ships:jolly_roger_flag", count: 1}}}` (the real state, `FlagpoleState`), written by `_style.flagpole` as a
+`block_entity` operation; it flies east over open sand.
+
+| piece | size (x×y×z) | blocks | contents | mod blocks |
+|---|---|---|---|---|
+| `camp_start` (start) | 13×8×13 | 298 | sandy clearing with gravel and dirt trails, a campfire on a cobblestone hearth with log seats, the Jolly Roger, a loot heap (barrels, crates, a chest), the fence's lean-to shack (desk as the counter, stock, cobwebs) with the notice board on its south side, torch posts; `jetty_out` [6, 0, 0], `path_out` [0, 0, 9] and [12, 0, 9], `hut_out` [6, 0, 12] | `flagpole`, `harbor_desk`, `notice_board`, `cargo_crate`, `cargo_barrel` |
+| `jetty` | 5×9×16 | 97 | 3 wide patched plank deck on mixed bark and stripped posts (two crooked ones leaning on stair braces) with footings, a lantern post and a rail at the seaward end, a ladder down; `jetty_in` [2, 5, 15], berths [0, 4, 7] and [4, 4, 7] | `cleat`, `mooring_ring` |
+| `path` | 7×4×7 | 68 | gravel and dirt trail on sand between palisade stakes (stripped log with a fence tip), two torches; `path_in` [3, 0, 0], `path_out` [3, 0, 6], `hut_out` [0, 0, 3] and [6, 0, 3] | |
+| `path_end` | 7×4×3 | 33 | the trail ends at a row of stakes with a torch post; `path_in` [3, 0, 0] | |
+| `tent` | 7×6×7 | 112 | A-frame of stepped wool (vanilla has no wool stairs or slabs) over a stripped log ridge, a bed roll, a chest, a barrel, a lantern; `hut_in` [3, 0, 0] | |
+| `tavern_hut` | 9×8×9 | 291 | open-sided hut (plank course, fence rail, log posts) under a dark oak thatch roof, a bar of barrels and a plank counter, kegs and rum behind it, two tables with stools, lanterns, cobwebs; `hut_in` [4, 0, 0] | `cargo_barrel` |
+| `captains_hut` | 9×9×9 | 313 | dark oak room on stripped log stilts (floor y 2), two steps up to a railed porch, a door, a bed, a cartography table with a map tile and a stool, the sea chest, a hanging lantern; `hut_in` [4, 0, 0] | `map_tile`, `sea_chest`, `cargo_crate` |
+| `treasure_spot` | 5×5×5 | 83 | sand with two crossed stripped logs, a skull and dead bushes, the treasure marker [2, 0, 2]; `hut_in` [2, 2, 0] | |
+
+Renders: `art/renders/structures/pirate_island/*.png`.
+
+**Lab port per agent:** `tools/build_structures.py` takes the lab's port from `--port`, else from the
+`SCHEMATIC_LAB_PORT` environment variable, else 8766. Agents building pieces in parallel each use their own port
+(ST2 was built on 8767: `SCHEMATIC_LAB_PORT=8767 python3 tools/build_structures.py pirate_island/tent`), so they never
+post to each other's lab session.

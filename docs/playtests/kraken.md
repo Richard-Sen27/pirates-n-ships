@@ -23,3 +23,14 @@ ship while standing on it.
 8. **Toggles.** `hazards.kraken.enabled = false` removes it and the command refuses; `mobs.kraken.peaceful = true`
    keeps it deep and passive.
 9. **Items.** The spawn egg colours, the beak and the ink sprites.
+
+
+## K1b: the look
+1. **Lurking:** a dark reddish-brown body deep down, tentacles trailing below.
+2. **Surfacing:** the mantle rises with the fins spreading, then settles; the eyes open about a second in; the arms unfurl. Above water: the tall tapering mantle with its pale-spotted crown and the two side fins.
+3. **Eyes:** two large gold eyes with a pale ring and a black pupil face the ship; they blink every 4 s while idle.
+4. **Grab:** on each grab every arm's middle and tip curl in with the sucker side closing over the target, then relax; say if an arm curls away from its target or the suckers face away.
+5. **Suckers:** two rows of pale discs with dark rims along each arm. **Beak:** dive under it: a black hooked beak in a ring of pink lips at the centre of the arm crown.
+6. **Cut tentacle:** a quarter-size stump at the root, not floating or hidden in the head.
+7. **Retreat:** fins fold, the mantle contracts and sinks, the eyes close, the arms draw in; the pose holds until it vanishes.
+8. **At 30+ blocks:** any flicker on the mantle steps or fins; at screen edges whether the mantle top pops out.

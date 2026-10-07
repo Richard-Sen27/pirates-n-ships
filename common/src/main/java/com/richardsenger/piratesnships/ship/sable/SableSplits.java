@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.BooleanSupplier;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +43,9 @@ import org.jetbrains.annotations.Nullable;
  *       without mass is removed again at once (l.246-250).</li>
  *   <li>The parent keeps the part still connected to its heat-map root, the first block ever added to it
  *       ({@code onSolidAdded} l.277-287; assembly adds blocks in the order given to {@code moveBlocks}, l.364-410), or
- *       the largest part when every block was cut off (l.221-228).</li>
+ *       the largest part when every block was cut off (l.221-228). When its block count is off, a cut that removes the
+ *       root moves every block into a new body and the emptied parent is removed before we deliver
+ *       ({@link #isSplitPending}).</li>
  *   <li>{@code SubLevelContainer#tick} ticks every sub-level, then calls each observer's {@code tick} (l.143-149): that
  *       is where a batch is complete and delivered.</li>
  * </ol>
@@ -58,10 +61,14 @@ public final class SableSplits {
         }
     }
 
-    /** Pieces Sable cut off one parent during one container tick. */
+    /**
+     * Pieces Sable cut off one parent during one container tick. {@code pieces} may be empty when Sable dropped every
+     * announced piece again. {@code parentUserData} is a copy of the parent's user data taken when the first piece was
+     * announced: the parent itself may be gone by now, see {@link #isSplitPending}.
+     */
     @FunctionalInterface
     public interface SplitListener {
-        void onSplit(ServerLevel level, UUID parent, List<Piece> pieces);
+        void onSplit(ServerLevel level, UUID parent, List<Piece> pieces, CompoundTag parentUserData);
     }
 
     /** A group announced by the split listener; {@link #child} is filled in when Sable allocates its sub-level. */
@@ -69,12 +76,14 @@ public final class SableSplits {
         final UUID parent;
         final BlockPos anchor;
         final List<BlockPos> blocks;
+        final CompoundTag parentUserData;
         @Nullable ServerSubLevel child;
 
-        Pending(UUID parent, List<BlockPos> blocks) {
+        Pending(UUID parent, List<BlockPos> blocks, CompoundTag parentUserData) {
             this.parent = parent;
             this.anchor = blocks.get(0);
             this.blocks = blocks;
+            this.parentUserData = parentUserData;
         }
     }
 
@@ -128,8 +137,35 @@ public final class SableSplits {
         if (parent == null) {
             return;
         }
+        // ServerSubLevel#getUserDataTag (l.548): copied now, while the parent surely exists
+        CompoundTag data = parent instanceof ServerSubLevel s && s.getUserDataTag() != null ? s.getUserDataTag().copy() : new CompoundTag();
         PENDING.computeIfAbsent(level, l -> new ArrayList<>())
-                .add(new Pending(parent.getUniqueId(), List.copyOf(copy)));
+                .add(new Pending(parent.getUniqueId(), List.copyOf(copy), data));
+    }
+
+    /**
+     * Whether Sable announced a split of {@code parent} this tick that is not delivered yet. Sable removes a parent that
+     * a split emptied completely (every block moved into new bodies) in {@code SubLevelContainer#processSubLevelRemovals}
+     * (l.153-168: its mass tracker is invalid), which {@code SubLevelContainer#tick} (l.141-147) runs after the
+     * sub-levels ticked (where the split happens) and before the observers' {@code tick} (where we deliver). A removal
+     * listener that sees {@code destroyed} for such a parent must leave the ship's identity to the split handling.
+     * This happens when Sable's heat map has lost count of the parent's blocks: after a split that cut every block off
+     * its root ({@code SubLevelHeatMapManager#split} l.224-227 rebuilds the count from the kept group with
+     * {@code rebuildHeatmapFrom}, l.254-266, before the other groups leave, whose removal, {@code onSolidRemoved}
+     * l.328-331, lowers it again), the next loss of the root sees one group that is not the "whole" sub-level
+     * (l.204, l.224) and moves all of it into a new body.
+     */
+    public static boolean isSplitPending(Level level, UUID parent) {
+        List<Pending> list = PENDING.get(level);
+        if (list == null) {
+            return false;
+        }
+        for (Pending p : list) {
+            if (p.parent.equals(parent)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** The sub-level allocated right after an announcement is the announced group's new body. */
@@ -150,7 +186,11 @@ public final class SableSplits {
             return;
         }
         Map<UUID, List<Piece>> byParent = new LinkedHashMap<>();
+        Map<UUID, CompoundTag> parentData = new LinkedHashMap<>();
         for (Pending p : list) {
+            // every announced parent is delivered, also with no surviving piece (its listeners may have held state back)
+            byParent.computeIfAbsent(p.parent, k -> new ArrayList<>());
+            parentData.putIfAbsent(p.parent, p.parentUserData);
             ServerSubLevel child = p.child;
             if (child == null || child.isRemoved()) {
                 continue; // Sable dropped a massless piece (l.246-250)
@@ -165,7 +205,7 @@ public final class SableSplits {
         for (Map.Entry<UUID, List<Piece>> e : byParent.entrySet()) {
             for (SplitListener l : List.copyOf(LISTENERS)) {
                 try {
-                    l.onSplit(level, e.getKey(), List.copyOf(e.getValue()));
+                    l.onSplit(level, e.getKey(), List.copyOf(e.getValue()), parentData.get(e.getKey()).copy());
                 } catch (RuntimeException ex) {
                     Constants.LOG.error("Ship split handling failed for {}", e.getKey(), ex);
                 }

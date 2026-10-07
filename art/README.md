@@ -273,6 +273,44 @@ Items (doubloon and bounty proof, F8f):
   they live only in the running app.
 - The market screen draws the doubloon with `GuiGraphics.renderItem`, so the 3D model shows there without changes.
 
+Items (brig door and brig key, F8g):
+- **Brig door** (34 elements, `brig_door_item`): the unlocked left-hinged door, both halves in one model, built from
+  the elements of `brig_door_bottom_left` and `brig_door_top_left` (upper half raised 16 px, so y 0..32). The block
+  leaf faces east (x 0..3); the item turns it into the sprite plane: item `(x, y, z)` = block `(z, y, 6.5 + x)`, so
+  the hinge is on the left at x 0, the lock plate on the right, the leaf centred on z = 8. Faces are remapped
+  (west -> north, east -> south, north -> west, south -> east) and the up/down UVs transposed; the vanilla textures
+  (`anvil`, `iron_block`, `black_wool`) stay, so the item matches the placed door. The parts were converted from the
+  block JSON in `risky_eval` (`F8G.doorParts()`), no hand placement, so a change to the door's block models can be
+  carried over the same way.
+- A block item with a hand-made item model needs `m.handMadeItem(item)` in the module's datagen: otherwise the model
+  provider writes the automatic `item/<name>` model that delegates to `block/<name>` (the door has none) and
+  `processResources` fails on the duplicate.
+- **Door display entries** (no vanilla entry fits: vanilla's door items are flat sprites). The model is 32 px tall, so
+  every slot scales it and re-centres y (bounding-box centre y 16 -> translation y = -8 * scale): `gui` rotation
+  `[0, 25, 0]` (a little of the hinge side shows), translation `[0.1, -4, 0]`, scale 0.5 (fills the slot's height);
+  `fixed` `[0, 180, 0]` / `[-0.1, -4, 0]` / 0.5; `ground` 0.25 raised 1 px; `head` 0.5. Third person
+  `[70, 90, 0]` / `[2.2, -1, -2]` / 0.3: x 70 stands the door upright against the arm's forward tilt (90 would lean it
+  back), y 90 turns its face to the side, translation x moves it outside the arm (at 0 it cuts through the arm and
+  leg), y/z lower it so the hand grips it about half-way up. First person `[0, -70, 0]` / `[1.5, 2.5, 1]` / 0.25. The
+  left hand negates the y rotation and keeps the translation.
+- **Brig key** (39 elements): an iron skeleton key on the 45 degree diagonal, 14 px long (bow bottom-left, bit
+  top-right like a tool sprite; the two teeth on the upper-left side, so they point up when it is held). Parts are
+  thirteen shapes in world coordinates, each a bar with a direction in 45 degree steps (an octagonal bow ring of
+  eight bars, a collar, the shank, two teeth and the web between them; `F8G.bar`, `F8G.keyShapes`). **Darker edge:**
+  each shape is three elements: a 1.2 px deep body with `iron_dark` front and back and `steel_dark` sides, and a
+  0.15 px plate in front (`steel`) and behind (`steel_dark`), inset 0.3 px. The plates of neighbouring shapes overlap,
+  so the dark rim follows only the outline of the whole key, also in the flat GUI view where side faces do not show.
+- **Key display entries:** `item/handheld`'s rotations with smaller scales, since a key at sword size (0.85) looks
+  huge: third person `[0, -90, 55]` / `[0, 2.5, 0.5]` / 0.55 (bow in the fist, shank forward and slightly up),
+  first person `[0, -90, 25]` / `[1.13, 3.2, 1.13]` / 0.55; `ground`, `head`, `fixed` from `item/generated` like the other items; no `gui`
+  entry. Particle `palette`.
+- Renders: `renders/brig_door_item.png` and `renders/brig_key.png` are strips of three views: GUI (display mode),
+  third person from the right side, first person (the display viewport's camera, copied into an offscreen view of
+  the same aspect).
+- The old sprites (`textures/item/brig_door.png`, the wooden door from C8, and `brig_key.png` from
+  `tools/gen_law_textures.py`) are gone; the law script had no other sprite and was deleted, and
+  `gen_placeholder_textures.py` no longer writes the door sprite (it has no item sprites left).
+
 Entity models use the Modded Entity format (Mojang mappings 1.17+); paste the body of the exported
 `createBodyLayer()` into the renderer's layer method (example: `AnchorRenderer.createLayer`).
 

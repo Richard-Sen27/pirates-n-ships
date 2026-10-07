@@ -67,11 +67,11 @@ public final class LawContentModule implements ModModule {
                 .block(LawContent.BRIG_BARS, "Brig Bars")
                 .block(LawContent.BRIG_DOOR, "Brig Door"));
         data.models(m -> {
-            // The shackles' item model is hand-made (art/models/shackles.bbmodel), so datagen writes none
-            // Flat placeholder sprite from tools/gen_law_textures.py until the 3D item batch (F8f)
-            m.flatItem(LawContent.BRIG_KEY.get());
+            // The shackles', brig key's and brig door's item models are hand-made (art/models/shackles.bbmodel,
+            // brig_key.bbmodel, brig_door_item.bbmodel), so datagen writes none
             bars(m, LawContent.BRIG_BARS.get());
             door(m, LawContent.BRIG_DOOR.get());
+            m.handMadeItem(LawContent.BRIG_DOOR.get().asItem());
         });
         data.blockLoot(loot -> {
             loot.dropSelf(LawContent.BRIG_BARS.get());
@@ -134,10 +134,10 @@ public final class LawContentModule implements ModModule {
     }
 
     /**
-     * A door: hand-made Blockbench models (art/models/brig_door_*.bbmodel, design.md §4.8), so only the block state and
-     * the flat item model ({@code item/<name>}) are generated, with the same facing/half/hinge/open rotations vanilla
-     * uses. Each model is the leaf of a door facing east (x 0..3); the "left" models have the hinge at z 0, the "right"
-     * ones at z 16 (mirrored in z). Opening turns the leaf about its hinge, which in vanilla's scheme (open adds 90° or
+     * A door: hand-made Blockbench models (art/models/brig_door_*.bbmodel, design.md §4.8), so only the block state is
+     * generated, with the same facing/half/hinge/open rotations vanilla uses. The item model is hand-made as well
+     * (art/models/brig_door_item.bbmodel: both halves in one piece), so datagen writes none. Each model is
+     * the leaf of a door facing east (x 0..3); the "left" models have the hinge at z 0, the "right" ones at z 16 (mirrored in z). Opening turns the leaf about its hinge, which in vanilla's scheme (open adds 90° or
      * 270°) needs the leaf turned by 180° in the model: a left door's open model is the right model and the other way
      * round. The unlocked halves are symmetric front to back, so that turned leaf is the mirrored one; the locked lower
      * half carries a padlock on the side the placing player faced (x < 0) and has its own four models, so the padlock
@@ -156,7 +156,6 @@ public final class LawContentModule implements ModModule {
                 ModelLocationUtils.getModelLocation(block, "_bottom_right_locked"),
                 ModelLocationUtils.getModelLocation(block, "_bottom_right_open_locked")};
         ResourceLocation[] upper = {topLeft, topRight, topRight, topLeft};
-        m.flatItem(block.asItem());
         PropertyDispatch.C5<Direction, DoubleBlockHalf, DoorHingeSide, Boolean, Boolean> dispatch = PropertyDispatch.properties(
                 BlockStateProperties.HORIZONTAL_FACING, BlockStateProperties.DOUBLE_BLOCK_HALF, BlockStateProperties.DOOR_HINGE,
                 BlockStateProperties.OPEN, BrigDoorBlock.LOCKED);

@@ -19,7 +19,7 @@ import net.minecraft.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
-import net.minecraft.data.models.model.TextureSlot;
+import net.minecraft.data.models.model.ModelLocationUtils;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
@@ -27,7 +27,6 @@ import net.minecraft.world.level.storage.loot.functions.CopyComponentsFunction;
 import net.minecraft.world.level.storage.loot.predicates.ExplosionCondition;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.data.models.model.TexturedModel;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
@@ -79,8 +78,9 @@ public final class CrewContentModule implements ModModule {
         data.models(m -> {
             // The provisions' item models are hand-made (art/models/{hardtack,salted_fish,salt_pork,lime}.bbmodel),
             // so datagen writes none
-            // cube_column: <name>_side around, <name>_top on top and bottom
-            m.blocks().createTrivialBlock(CrewContent.PANTRY.get(), TexturedModel.COLUMN);
+            // hand-made Blockbench model (art/models/pantry.bbmodel, design.md §4.8): only the block state is generated
+            m.blockStates().accept(MultiVariantGenerator.multiVariant(CrewContent.PANTRY.get(), Variant.variant()
+                    .with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(CrewContent.PANTRY.get()))));
             waterBarrelModels(m);
         });
         data.blockLoot(loot -> {
@@ -140,18 +140,17 @@ public final class CrewContentModule implements ModModule {
         CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> ProvisionsCommands.register(dispatcher));
     }
 
-    /** Fill 4 (full) is the plain {@code water_barrel} model (also the item model), fill 0..3 swap the top texture. */
+    /**
+     * Hand-made Blockbench models (art/models/water_barrel*.bbmodel, design.md §4.8): fill 0..3 use
+     * {@code water_barrel_fill<n>}, fill 4 (full, also the item model) the plain {@code water_barrel}. Only the block
+     * state is generated.
+     */
     private static void waterBarrelModels(ModelContext m) {
         WaterBarrelBlock barrel = CrewContent.WATER_BARREL.get();
-        ResourceLocation[] models = new ResourceLocation[WaterBarrelRules.MAX_FILL + 1];
-        for (int fill = 0; fill < WaterBarrelRules.MAX_FILL; fill++) {
-            ResourceLocation top = Constants.id("block/water_barrel_top_fill" + fill);
-            models[fill] = TexturedModel.COLUMN.get(barrel).updateTextures(t -> t.put(TextureSlot.END, top))
-                    .createWithSuffix(barrel, "_fill" + fill, m.models());
-        }
-        models[WaterBarrelRules.MAX_FILL] = TexturedModel.COLUMN.create(barrel, m.models());
         m.blockStates().accept(MultiVariantGenerator.multiVariant(barrel).with(PropertyDispatch.property(WaterBarrelBlock.FILL)
-                .generate(fill -> Variant.variant().with(VariantProperties.MODEL, models[fill]))));
+                .generate(fill -> Variant.variant().with(VariantProperties.MODEL, fill == WaterBarrelRules.MAX_FILL
+                        ? ModelLocationUtils.getModelLocation(barrel)
+                        : ModelLocationUtils.getModelLocation(barrel, "_fill" + fill)))));
     }
 
     @Override

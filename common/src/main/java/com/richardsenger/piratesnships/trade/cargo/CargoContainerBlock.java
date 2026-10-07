@@ -26,7 +26,9 @@ import net.minecraft.world.phys.BlockHitResult;
  *   <li>sneak-use with an empty hand: put in everything of the held kind from the inventory (vanilla skips the
  *       block when a sneaking player holds an item, so this is the only sneak interaction that reaches it).</li>
  * </ul>
- * Every interaction shows the content on the action bar. Breaking keeps the cargo in the dropped item.
+ * Every interaction shows the content on the action bar. Breaking keeps the cargo in the dropped item. The models are
+ * hand-made in Blockbench (art/models/cargo_crate.bbmodel, cargo_barrel.bbmodel, design.md §4.8) and do not change with
+ * the load; the blocks are registered with {@code noOcclusion} in {@code ShipDecor}.
  */
 public class CargoContainerBlock extends BaseEntityBlock {
 

@@ -34,7 +34,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The water barrel (design.md §7.4 "Fresh water", rules in {@link WaterBarrelRules}). Water buckets and bottles fill
  * it, empty buckets and glass bottles take water out, rain refills it when open to the sky, use with an empty hand
- * shows the rations. {@link #FILL} shows the level, comparators read it.
+ * shows the rations. {@link #FILL} shows the level, comparators read it: the hand-made Blockbench models
+ * (art/models/water_barrel*.bbmodel, design.md §4.8) are an open barrel with a ladle on the rim and a water surface at
+ * one of five heights ({@code water_barrel_fill0..3}, {@code water_barrel} when full). It does not occlude its
+ * neighbours ({@code noOcclusion} in {@code CrewContent}).
  */
 public class WaterBarrelBlock extends BaseEntityBlock {
 

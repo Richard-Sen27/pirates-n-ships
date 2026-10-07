@@ -1,7 +1,0 @@
-{
-  "parent": "minecraft:block/cube_column",
-  "textures": {
-    "end": "pirates_n_ships:block/cargo_barrel_top",
-    "side": "pirates_n_ships:block/cargo_barrel_side"
-  }
-}

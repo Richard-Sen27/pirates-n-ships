@@ -21,7 +21,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The pantry block: use opens the chest screen, use while sneaking with empty hands prints what it holds in
- * provisions terms (chat). Drops its contents when broken, comparator output like a chest.
+ * provisions terms (chat). Drops its contents when broken, comparator output like a chest. The model is a hand-made
+ * Blockbench larder cupboard (art/models/pantry.bbmodel, design.md §4.8); the block has no facing, so its doors always
+ * face north, and it does not occlude its neighbours ({@code noOcclusion} in {@code CrewContent}).
  */
 public class PantryBlock extends BaseEntityBlock {
 

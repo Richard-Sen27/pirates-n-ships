@@ -11,8 +11,9 @@ Run (from the repository root):
 Output: common/src/main/resources/assets/pirates_n_ships/textures/{item,block}/<name>.png
 Deterministic: same input, same bytes. One function per texture, registered in ITEMS / BLOCKS.
 Replacing a texture by hand: put its name into PROTECTED (or a line in tools/protected_textures.txt),
-then this script never overwrites it. Textures owned by other packages (test_block) are never written. The helm, nameplate and flagpole have
-hand-made Blockbench models with vanilla textures (art/models/) and no textures here; the rapier, cutlass, saber,
+then this script never overwrites it. Textures owned by other packages (test_block) are never written. The helm, nameplate,
+flagpole, cargo crate, cargo barrel, pantry and water barrel have hand-made Blockbench models with vanilla textures
+(art/models/) and no textures here; the rapier, cutlass, saber,
 pistol, musket, lead shot, cannonball, grappling hook, shackles, rum, hardtack, lime, salt pork, salted fish, cloth,
 spices and tobacco have hand-made item models textured from the item palettes
 (tools/gen_item_palette.py).
@@ -26,7 +27,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 TEX = ROOT / "common/src/main/resources/assets/pirates_n_ships/textures"
 PROTECTED_FILE = Path(__file__).resolve().parent / "protected_textures.txt"
-# Names of hand-made textures this script must not overwrite (e.g. "cargo_crate").
+# Names of hand-made textures this script must not overwrite (e.g. "brig_bars").
 PROTECTED = set()
 FOREIGN_PREFIXES = ("test_block",)
 
@@ -177,67 +178,6 @@ def brig_door(top):
     return cv
 
 
-def cargo_crate():
-    cv = planks("cargo_crate")
-    cv.line(1, 1, 14, 14, "wood"); cv.line(1, 2, 13, 14, "wood_d")
-    cv.rect(1, 1, 14, 1, "wood"); cv.rect(1, 14, 14, 14, "wood")
-    cv.rect(1, 1, 1, 14, "wood"); cv.rect(14, 1, 14, 14, "wood")
-    return cv.border()
-
-
-def barrel_side(name, band="iron"):
-    cv = Canvas("plank")
-    for x in range(0, 16, 3):
-        cv.rect(x, 0, x, 15, "plank_d")
-    noise(cv, name, ["plank_l"], 0.1)
-    for y in (2, 13):
-        cv.rect(0, y, 15, y + 1, band)
-        cv.rect(0, y, 15, y, "steel")
-    return cv.border()
-
-
-def barrel_top(name, inner):
-    cv = Canvas("plank")
-    noise(cv, name, ["plank_d", "plank_l"], 0.15)
-    cv.border("iron").rect(1, 1, 14, 1, "iron")
-    cv.rect(2, 2, 13, 13, inner) if inner else None
-    for y in (5, 10):
-        cv.rect(1, y, 14, y, "plank_d")
-    return cv
-
-
-def cargo_barrel_side(): return barrel_side("cargo_barrel_side")
-def cargo_barrel_top(): return barrel_top("cargo_barrel_top", None)
-
-
-def water_barrel_side():
-    cv = barrel_side("water_barrel_side", "blue_d")
-    cv.rect(6, 6, 9, 9, "blue"); cv.rect(7, 7, 8, 8, "blue_l")
-    return cv
-
-
-def water_barrel_top():
-    cv = barrel_top("water_barrel_top", None)
-    cv.disc(7.5, 7.5, 3.5, "blue")
-    cv.disc(6.5, 6.5, 1.5, "blue_l")
-    return cv
-
-
-def pantry_side():
-    cv = planks("pantry_side", "wood", "wood_d", "wood_l")
-    for y0 in (1, 8):
-        cv.rect(2, y0, 13, y0 + 5, "wood_d")
-        cv.rect(3, y0 + 3, 5, y0 + 5, "tan")        # bread
-        cv.rect(7, y0 + 2, 8, y0 + 5, "red")        # apple / jar
-        cv.rect(10, y0 + 3, 12, y0 + 5, "amber")
-        cv.rect(2, y0 + 5, 13, y0 + 5, "wood_l")
-    return cv.border()
-
-
-def pantry_top():
-    return planks("pantry_top", "wood", "wood_d", "wood_l").border()
-
-
 ITEMS = {
     "doubloon": doubloon,
     "brig_door": brig_door_item,
@@ -245,9 +185,6 @@ ITEMS = {
 BLOCKS = {
     "brig_bars": brig_bars, "brig_bars_edge": brig_bars_edge,
     "brig_door_top": lambda: brig_door(True), "brig_door_bottom": lambda: brig_door(False),
-    "cargo_crate": cargo_crate, "cargo_barrel_side": cargo_barrel_side, "cargo_barrel_top": cargo_barrel_top,
-    "pantry_side": pantry_side, "pantry_top": pantry_top,
-    "water_barrel_side": water_barrel_side, "water_barrel_top": water_barrel_top,
 }
 
 

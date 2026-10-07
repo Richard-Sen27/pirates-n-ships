@@ -39,33 +39,57 @@ import org.junit.jupiter.api.io.TempDir;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
- * Keeps the committed seafarer village pieces ({@code data/pirates_n_ships/structure/village/*.nbt}, ST1) honest:
- * they load as vanilla structure templates, stay within the size bounds, use only existing blocks and states, follow
- * the jigsaw convention of art/README.md ("Structures (ST1)") and are exactly what the converter makes from the
- * committed schematics. Mod blocks are checked against the datagen block states (every mod block has one).
+ * Keeps the committed structure pieces ({@code data/pirates_n_ships/structure/<group>/*.nbt}: the seafarer village,
+ * ST1, and the navy outpost, ST3) honest: they load as vanilla structure templates, stay within the size bounds, use
+ * only existing blocks and states, follow their group's jigsaw convention of art/README.md ("Structures (ST1)", "Navy
+ * outpost (ST3)") and are exactly what the converter makes from the committed schematics. Mod blocks are checked
+ * against the datagen block states (every mod block has one).
  */
 class StructurePiecesTest {
 
     private static final String MOD = "pirates_n_ships";
     private static final String EMPTY = "minecraft:empty";
-    private static final List<String> PIECES = List.of("dock_head", "house_small", "pier", "shipwright", "street", "tavern");
-    private static final Set<String> BUILDINGS = Set.of("house_small", "shipwright", "tavern");
     private static final int MAX_SIZE = 32;
 
-    /** Jigsaw name -> {target, pool, joint, final state or null for any}. */
-    private static final Map<String, List<String>> CONVENTION = Map.of(
-            MOD + ":street_out", List.of(MOD + ":street_in", MOD + ":village/streets", "aligned"),
-            MOD + ":street_in", List.of(MOD + ":street_out", EMPTY, "aligned"),
-            MOD + ":building_out", List.of(MOD + ":building_in", MOD + ":village/buildings", "rollable"),
-            MOD + ":building_in", List.of(MOD + ":building_out", EMPTY, "rollable"),
-            MOD + ":pier_out", List.of(MOD + ":pier_in", MOD + ":village/pier", "aligned"),
-            MOD + ":pier_in", List.of(MOD + ":pier_out", EMPTY, "aligned"),
-            MOD + ":berth", List.of(EMPTY, EMPTY, "aligned"));
+    /** A piece set: its folder under {@code structure/}, its pieces and its jigsaw convention (name -> target, pool, joint). */
+    private record Group(String name, List<String> pieces, Map<String, List<String>> convention) {
+    }
+
+    private static final Group VILLAGE = new Group("village",
+            List.of("dock_head", "house_small", "pier", "shipwright", "street", "tavern"),
+            Map.of(
+                    MOD + ":street_out", List.of(MOD + ":street_in", MOD + ":village/streets", "aligned"),
+                    MOD + ":street_in", List.of(MOD + ":street_out", EMPTY, "aligned"),
+                    MOD + ":building_out", List.of(MOD + ":building_in", MOD + ":village/buildings", "rollable"),
+                    MOD + ":building_in", List.of(MOD + ":building_out", EMPTY, "rollable"),
+                    MOD + ":pier_out", List.of(MOD + ":pier_in", MOD + ":village/pier", "aligned"),
+                    MOD + ":pier_in", List.of(MOD + ":pier_out", EMPTY, "aligned"),
+                    MOD + ":berth", List.of(EMPTY, EMPTY, "aligned")));
+    private static final Set<String> BUILDINGS = Set.of("house_small", "shipwright", "tavern");
+
+    /** The navy outpost (ST3): each run of the curtain wall has its own jigsaw pair (art/README.md). */
+    private static final Group NAVY = new Group("navy_outpost",
+            List.of("barracks", "brig", "fort_gate", "quay", "wall", "wall_tower", "watchtower"),
+            Map.of(
+                    MOD + ":wall_east_out", List.of(MOD + ":wall_east_in", MOD + ":navy_outpost/walls", "aligned"),
+                    MOD + ":wall_east_in", List.of(MOD + ":wall_east_out", EMPTY, "aligned"),
+                    MOD + ":wall_west_out", List.of(MOD + ":wall_west_in", MOD + ":navy_outpost/walls", "aligned"),
+                    MOD + ":wall_west_in", List.of(MOD + ":wall_west_out", EMPTY, "aligned"),
+                    MOD + ":building_out", List.of(MOD + ":building_in", MOD + ":navy_outpost/buildings", "rollable"),
+                    MOD + ":building_in", List.of(MOD + ":building_out", EMPTY, "rollable"),
+                    MOD + ":quay_out", List.of(MOD + ":quay_in", MOD + ":navy_outpost/quay", "aligned"),
+                    MOD + ":quay_in", List.of(MOD + ":quay_out", EMPTY, "aligned"),
+                    MOD + ":berth", List.of(EMPTY, EMPTY, "aligned")));
+    private static final Set<String> NAVY_BUILDINGS = Set.of("barracks", "brig", "watchtower");
+
+    private static final List<Group> GROUPS = List.of(VILLAGE, NAVY);
 
     private static Path root;
 
@@ -83,12 +107,38 @@ class StructurePiecesTest {
         assertNotNull(root, "repository root (tools/schem_to_structure.py) not found above the working directory");
     }
 
-    private static Path villageDir() {
-        return root.resolve("common/src/main/resources/data/" + MOD + "/structure/village");
+    private static Path dir(Group group) {
+        return root.resolve("common/src/main/resources/data/" + MOD + "/structure/" + group.name());
+    }
+
+    private static CompoundTag piece(Group group, String name) throws IOException {
+        return NbtIo.readCompressed(dir(group).resolve(name + ".nbt"), NbtAccounter.unlimitedHeap());
     }
 
     private static CompoundTag piece(String name) throws IOException {
-        return NbtIo.readCompressed(villageDir().resolve(name + ".nbt"), NbtAccounter.unlimitedHeap());
+        return piece(VILLAGE, name);
+    }
+
+    /** A block of a piece: position, properties and block entity data (empty when it has none). */
+    private record PieceBlock(BlockPos pos, CompoundTag props, CompoundTag nbt) {
+    }
+
+    /** Every block of a piece with the given id ({@code null}: every block that is not air). */
+    private static List<PieceBlock> blocks(CompoundTag structure, String id) {
+        ListTag palette = structure.getList("palette", Tag.TAG_COMPOUND);
+        ListTag blocks = structure.getList("blocks", Tag.TAG_COMPOUND);
+        List<PieceBlock> out = new ArrayList<>();
+        for (int i = 0; i < blocks.size(); i++) {
+            CompoundTag b = blocks.getCompound(i);
+            CompoundTag state = palette.getCompound(b.getInt("state"));
+            String name = state.getString("Name");
+            if (id == null ? !name.equals("minecraft:air") : name.equals(id)) {
+                ListTag pos = b.getList("pos", Tag.TAG_INT);
+                out.add(new PieceBlock(new BlockPos(pos.getInt(0), pos.getInt(1), pos.getInt(2)),
+                        state.getCompound("Properties"), b.getCompound("nbt")));
+            }
+        }
+        return out;
     }
 
     private static int[] size(CompoundTag structure) {
@@ -132,18 +182,20 @@ class StructurePiecesTest {
     }
 
     @Test
-    void exactlyTheSixPiecesAreCommitted() throws IOException {
-        Set<String> found = new TreeSet<>();
-        try (Stream<Path> files = Files.list(villageDir())) {
-            files.forEach(f -> found.add(f.getFileName().toString().replace(".nbt", "")));
+    void exactlyTheExpectedPiecesAreCommitted() throws IOException {
+        for (Group group : GROUPS) {
+            Set<String> found = new TreeSet<>();
+            try (Stream<Path> files = Files.list(dir(group))) {
+                files.forEach(f -> found.add(f.getFileName().toString().replace(".nbt", "")));
+            }
+            assertEquals(new TreeSet<>(group.pieces()), found, group.name());
         }
-        assertEquals(new TreeSet<>(PIECES), found);
     }
 
     @Test
     void piecesLoadAndStayWithinBounds() throws IOException {
-        for (String name : PIECES) {
-            CompoundTag structure = piece(name);
+        for (Group group : GROUPS) for (String name : group.pieces()) {
+            CompoundTag structure = piece(group, name);
             int[] size = size(structure);
             for (int s : size) {
                 assertTrue(s > 0 && s <= MAX_SIZE, name + ": size " + java.util.Arrays.toString(size));
@@ -160,8 +212,8 @@ class StructurePiecesTest {
     @Test
     void everyBlockAndStateExists() throws IOException {
         Map<String, Map<String, Set<String>>> modStates = new HashMap<>();
-        for (String name : PIECES) {
-            ListTag palette = piece(name).getList("palette", Tag.TAG_COMPOUND);
+        for (Group group : GROUPS) for (String name : group.pieces()) {
+            ListTag palette = piece(group, name).getList("palette", Tag.TAG_COMPOUND);
             for (int i = 0; i < palette.size(); i++) {
                 CompoundTag entry = palette.getCompound(i);
                 String id = entry.getString("Name");
@@ -218,6 +270,10 @@ class StructurePiecesTest {
                             if (when.get(key).isJsonPrimitive()) {
                                 for (String v : when.get(key).getAsString().split("\\|")) {
                                     out.computeIfAbsent(key, k -> new HashSet<>()).add(v);
+                                    // a part shown "when side=true" means the side is a boolean that can be false
+                                    if (v.equals("true") || v.equals("false")) {
+                                        out.get(key).addAll(Set.of("true", "false"));
+                                    }
                                 }
                             }
                         }
@@ -232,12 +288,12 @@ class StructurePiecesTest {
 
     @Test
     void jigsawsFollowTheConvention() throws IOException {
-        for (String name : PIECES) {
-            CompoundTag structure = piece(name);
+        for (Group group : GROUPS) for (String name : group.pieces()) {
+            CompoundTag structure = piece(group, name);
             int[] size = size(structure);
             for (Jigsaw j : jigsaws(structure)) {
-                String where = name + " jigsaw " + j.name() + " at " + j.pos().toShortString();
-                List<String> rule = CONVENTION.get(j.name());
+                String where = group.name() + "/" + name + " jigsaw " + j.name() + " at " + j.pos().toShortString();
+                List<String> rule = group.convention().get(j.name());
                 assertNotNull(rule, where + ": name not in the convention");
                 assertEquals(rule.get(0), j.nbt().getString("target"), where + ": target");
                 assertEquals(rule.get(1), j.nbt().getString("pool"), where + ": pool");
@@ -284,11 +340,19 @@ class StructurePiecesTest {
 
     @Test
     void pierBerthsSitAtSeaLevelBesideTheDeck() throws IOException {
-        CompoundTag pier = piece("pier");
+        assertBerthsBesideTheDeck(piece("pier"), "pier_in");
+    }
+
+    @Test
+    void quayBerthsSitAtSeaLevelBesideTheDeck() throws IOException {
+        assertBerthsBesideTheDeck(piece(NAVY, "quay"), "quay_in");
+    }
+
+    private static void assertBerthsBesideTheDeck(CompoundTag pier, String inName) {
         int[] size = size(pier);
         List<Jigsaw> jigsaws = jigsaws(pier);
-        Jigsaw in = jigsaws.stream().filter(j -> j.name().endsWith("pier_in")).findFirst().orElseThrow();
-        assertEquals(5, in.pos().getY(), "the deck (and pier_in) is at y 5");
+        Jigsaw in = jigsaws.stream().filter(j -> j.name().endsWith(inName)).findFirst().orElseThrow();
+        assertEquals(5, in.pos().getY(), "the deck (and " + inName + ") is at y 5");
         assertEquals("south", in.front());
         Set<Integer> sides = new HashSet<>();
         for (Jigsaw j : jigsaws) {
@@ -307,23 +371,171 @@ class StructurePiecesTest {
     @Test
     void committedPiecesAreUpToDate() throws Exception {
         Assumptions.assumeTrue(pythonWorks(), "python3 is not available");
-        List<String> cmd = new ArrayList<>(List.of("python3", "-I", root.resolve("tools/schem_to_structure.py").toString(),
-                "--out", tmp.toString()));
-        for (String name : PIECES) {
-            cmd.add(root.resolve("art/schematics/structures/village/" + name + ".schem").toString());
+        for (Group group : GROUPS) {
+            Path out = Files.createDirectories(tmp.resolve(group.name()));
+            List<String> cmd = new ArrayList<>(List.of("python3", "-I", root.resolve("tools/schem_to_structure.py").toString(),
+                    "--out", out.toString()));
+            for (String name : group.pieces()) {
+                cmd.add(root.resolve("art/schematics/structures/" + group.name() + "/" + name + ".schem").toString());
+            }
+            Process p = new ProcessBuilder(cmd).redirectErrorStream(true).start();
+            String log = new String(p.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            assertTrue(p.waitFor(60, TimeUnit.SECONDS), "converter timed out");
+            assertEquals(0, p.exitValue(), log);
+            for (String name : group.pieces()) {
+                assertArrayEquals(Files.readAllBytes(dir(group).resolve(name + ".nbt")),
+                        Files.readAllBytes(out.resolve(name + ".nbt")),
+                        group.name() + "/" + name + ": rerun python3 tools/build_structures.py (or tools/schem_to_structure.py) and commit the result");
+            }
+            assertTrue(log.contains("jigsaw at"), log);
+            assertFalse(log.contains("helm"), "pieces are converted as structures, not ships: " + log);
         }
-        Process p = new ProcessBuilder(cmd).redirectErrorStream(true).start();
-        String log = new String(p.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        assertTrue(p.waitFor(60, TimeUnit.SECONDS), "converter timed out");
-        assertEquals(0, p.exitValue(), log);
-        for (String name : PIECES) {
-            assertArrayEquals(Files.readAllBytes(villageDir().resolve(name + ".nbt")),
-                    Files.readAllBytes(tmp.resolve(name + ".nbt")),
-                    name + ": rerun python3 tools/build_structures.py (or tools/schem_to_structure.py) and commit the result");
-        }
-        assertTrue(log.contains("jigsaw at"), log);
-        assertFalse(log.contains("helm"), "pieces are converted as structures, not ships: " + log);
     }
+
+    // ------------------------------------------------------------------ navy outpost (ST3)
+
+    @Test
+    void navyConnectorsPerPiece() throws IOException {
+        assertEquals(Map.of("building_out", 1, "quay_out", 1, "wall_east_out", 1, "wall_west_out", 1),
+                countNames(jigsaws(piece(NAVY, "fort_gate"))));
+        assertEquals(Map.of("berth", 2, "quay_in", 1), countNames(jigsaws(piece(NAVY, "quay"))));
+        assertEquals(Map.of("wall_east_in", 1, "wall_east_out", 1, "wall_west_in", 1, "wall_west_out", 1),
+                countNames(jigsaws(piece(NAVY, "wall"))));
+        assertEquals(Map.of("wall_east_in", 1, "wall_west_in", 1), countNames(jigsaws(piece(NAVY, "wall_tower"))));
+        for (String building : NAVY_BUILDINGS) {
+            List<Jigsaw> jigsaws = jigsaws(piece(NAVY, building));
+            assertEquals(Map.of("building_in", 1), countNames(jigsaws), building);
+            assertEquals("north", jigsaws.get(0).front(), building + " faces north");
+            assertEquals(0, jigsaws.get(0).pos().getY(), building + ": the connector is on the foundation row");
+        }
+        // the gate: quay seaward (north), the wall runs east and west, the buildings landward (south); all on y 0
+        Map<String, String> fronts = Map.of("quay_out", "north", "wall_east_out", "east", "wall_west_out", "west",
+                "building_out", "south");
+        for (Jigsaw j : jigsaws(piece(NAVY, "fort_gate"))) {
+            String name = j.name().substring(MOD.length() + 1);
+            assertEquals(fronts.get(name), j.front(), name);
+            assertEquals(0, j.pos().getY(), name);
+        }
+    }
+
+    /**
+     * A jigsaw only turns a piece, it never mirrors one, so each run of the curtain wall has its own pair: the east pair
+     * (out on the east face, in on the west face) and the west pair (the other way round), each on its own row, the
+     * same in the gate, the wall and the tower. A wall attached either way lines up with the gate's wall (same z and y)
+     * and keeps its seaward side north.
+     */
+    @Test
+    void wallRunsLineUpWithTheGate() throws IOException {
+        Map<String, BlockPos> gate = byName(jigsaws(piece(NAVY, "fort_gate")));
+        for (String name : List.of("wall", "wall_tower")) {
+            Map<String, BlockPos> wall = byName(jigsaws(piece(NAVY, name)));
+            for (String run : List.of("east", "west")) {
+                BlockPos out = gate.get("wall_" + run + "_out");
+                BlockPos in = wall.get("wall_" + run + "_in");
+                assertEquals(out.getY(), in.getY(), name + " " + run + " run: row");
+                assertEquals(out.getZ(), in.getZ(), name + " " + run + " run: z");
+            }
+        }
+        Map<String, BlockPos> wall = byName(jigsaws(piece(NAVY, "wall")));
+        assertEquals(wall.get("wall_east_in").getZ(), wall.get("wall_east_out").getZ());
+        assertEquals(wall.get("wall_west_in").getZ(), wall.get("wall_west_out").getZ());
+        assertNotEquals(wall.get("wall_east_in").getZ(), wall.get("wall_west_in").getZ(), "the runs need their own rows");
+        for (String name : List.of("wall", "wall_tower")) {
+            for (Jigsaw j : jigsaws(piece(NAVY, name))) {
+                boolean eastFace = j.name().endsWith("east_out") || j.name().endsWith("west_in");
+                assertEquals(eastFace ? "east" : "west", j.front(), name + " " + j.name());
+            }
+        }
+    }
+
+    private static Map<String, BlockPos> byName(List<Jigsaw> jigsaws) {
+        Map<String, BlockPos> out = new HashMap<>();
+        for (Jigsaw j : jigsaws) {
+            assertNull(out.put(j.name().substring(MOD.length() + 1), j.pos()), "one " + j.name() + " per piece");
+        }
+        return out;
+    }
+
+    /** The wall carries one whole cannon facing the sea: the master (front) with the rear one block behind it. */
+    @Test
+    void wallHasOneCannonFacingTheSea() throws IOException {
+        CompoundTag wall = piece(NAVY, "wall");
+        List<PieceBlock> cannon = blocks(wall, MOD + ":cannon");
+        assertEquals(2, cannon.size(), "one two-block cannon");
+        PieceBlock front = cannon.stream().filter(b -> b.props().getString("part").equals("front")).findFirst().orElseThrow();
+        PieceBlock rear = cannon.stream().filter(b -> b.props().getString("part").equals("rear")).findFirst().orElseThrow();
+        assertEquals("north", front.props().getString("facing"), "the muzzle points out to sea");
+        assertEquals("north", rear.props().getString("facing"), "both halves share the facing");
+        assertEquals(front.pos().south(), rear.pos(), "the rear sits behind the master");
+        assertEquals("empty", front.props().getString("load"));
+        assertEquals("empty", rear.props().getString("load"));
+        assertEquals(1, blocks(wall, MOD + ":cargo_barrel").size(), "a powder barrel beside the gun");
+        // both halves stand on the walkway, and the embrasure in front of the muzzle is open to the box face
+        Set<BlockPos> solid = new HashSet<>();
+        for (PieceBlock b : blocks(wall, null)) {
+            solid.add(b.pos());
+        }
+        assertTrue(solid.contains(front.pos().below()) && solid.contains(rear.pos().below()), "the cannon stands on the walkway");
+        for (BlockPos p = front.pos().north(); p.getZ() >= 0; p = p.north()) {
+            assertFalse(solid.contains(p), "embrasure blocked at " + p.toShortString());
+        }
+    }
+
+    /** The gate and the tower fly the navy flag: one pole each, its top block holding the hoisted flag. */
+    @Test
+    void navyFlagsAreHoisted() throws IOException {
+        for (String name : List.of("fort_gate", "wall_tower")) {
+            List<PieceBlock> poles = blocks(piece(NAVY, name), MOD + ":flagpole");
+            List<PieceBlock> flying = poles.stream().filter(b -> b.props().getString("flag").equals("navy")).toList();
+            assertEquals(1, flying.size(), name + ": one navy flag");
+            CompoundTag flag = flying.get(0).nbt().getCompound("flagpole");
+            assertEquals("navy", flag.getString("kind"), name);
+            assertEquals(MOD + ":navy_flag", flag.getCompound("item").getString("id"), name);
+            assertEquals(1, flag.getCompound("item").getInt("count"), name);
+            int top = poles.stream().mapToInt(b -> b.pos().getY()).max().orElseThrow();
+            assertEquals(top, flying.get(0).pos().getY(), name + ": the flag flies from the top of the pole");
+            for (PieceBlock pole : poles) {
+                assertEquals(flying.get(0).pos().getX(), pole.pos().getX(), name + ": one pole");
+                assertEquals(flying.get(0).pos().getZ(), pole.pos().getZ(), name + ": one pole");
+                if (pole != flying.get(0)) {
+                    assertEquals("none", pole.props().getString("flag"), name + ": the lower poles fly nothing");
+                    assertFalse(pole.nbt().contains("flagpole"), name + ": the lower poles hold no flag");
+                }
+            }
+        }
+    }
+
+    /** The brig's cells: whole brig doors (both halves agree), closed and unlocked, in fronts of brig bars. */
+    @Test
+    void brigCellsHaveWholeDoors() throws IOException {
+        CompoundTag brig = piece(NAVY, "brig");
+        List<PieceBlock> doors = blocks(brig, MOD + ":brig_door");
+        assertEquals(4, doors.size(), "two doors, two halves each");
+        int lowers = 0;
+        for (PieceBlock lower : doors) {
+            if (!lower.props().getString("half").equals("lower")) {
+                continue;
+            }
+            lowers++;
+            PieceBlock upper = doors.stream().filter(d -> d.pos().equals(lower.pos().above())).findFirst().orElseThrow();
+            assertEquals("upper", upper.props().getString("half"));
+            for (String key : List.of("facing", "hinge", "locked", "open")) {
+                assertEquals(lower.props().getString(key), upper.props().getString(key), key);
+            }
+            assertEquals("false", lower.props().getString("locked"), "a generated door has no owner");
+            assertEquals("false", lower.props().getString("open"));
+        }
+        assertEquals(2, lowers);
+        assertTrue(blocks(brig, MOD + ":brig_bars").size() >= 8, "cell fronts of brig bars");
+    }
+
+    @Test
+    void fortGateHasTheOffice() throws IOException {
+        CompoundTag gate = piece(NAVY, "fort_gate");
+        assertEquals(1, blocks(gate, MOD + ":harbor_desk").size(), "the harbor master's desk");
+        assertEquals(1, blocks(gate, MOD + ":notice_board").size(), "a notice board");
+    }
+
 
     private static boolean pythonWorks() {
         try {

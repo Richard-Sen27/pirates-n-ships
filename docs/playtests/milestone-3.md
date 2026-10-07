@@ -151,6 +151,13 @@ On land is fine for all of this except step 5.
 5. **On a ship.** With the rig of §0 assembled and moving: the cloth follows the ship without jitter and is not culled
    when the upper yard's middle block is off screen (look away from the mast while the sail is still in view).
 6. **Whistle menu icons:** hoist shows a yard, reef shows white wool (`milestone-4.md` §9).
+7. **What the server sees (Q5).** On the deck of a ship with this rig: `/pirates ship rigging`. Expected: one line
+   per yard, the upper one "heads a sail N blocks deep, area A, <trim>", the lower one "foot of the sail above", a
+   yard that carries nothing with the reason (gap, a block in the mast, other axis, off the mast column, too long),
+   triangular sails by their head cleat, the sailing state's count ("Sailing state: N sails, M set"; a line "had X
+   sails and missed some" means the state was stale and is fixed now, please report it with `latest.log`), and the
+   crew aboard. Repeat step 1 (stone in the mast) and run the command: the upper yard's line names the stone and its
+   distance. The winch (empty hand) and the crew's "no sails" answer give the same reason.
 
 ## Tuning questions (server config, section in brackets)
 | Question | Config value |

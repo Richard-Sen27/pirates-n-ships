@@ -1,21 +1,27 @@
 package com.richardsenger.piratesnships.mob.kraken.client;
 
 /**
- * The aim of a kraken tentacle's first bone (K1c), pure maths without world access. Everything is in GeckoLib's baked
- * model frame in px (x flipped against the file, the kraken faces −z) relative to the bone's pivot. At rest a tentacle
- * points up (+y) with its sucker face towards the body's vertical axis: the inner normal {@code n0 = −(pivot x, 0,
- * pivot z)}, normalised. The aim turns that frame so the tentacle points along the wanted direction {@code d} and the
- * sucker face looks towards the axis again: the wanted normal is {@code n0} made perpendicular to {@code d}; when
- * {@code d} is (nearly) parallel to {@code n0} (the arm points straight at the axis or straight away from it,
- * horizontally) it falls back to the body's forward {@code (0, 0, −1)}, then to up. The rotation maps the rest basis
- * {@code (up, n0, up × n0)} onto {@code (d, n, d × n)} and is returned as GeckoLib's Euler angles: a bone renders with
- * {@code Rz(rotZ)·Ry(rotY)·Rx(rotX)} ({@code RenderUtil#rotateMatrixAroundBone}, JOML {@code rotationZYX}), right-handed,
- * radians, set with {@code GeoBone#setRotX/Y/Z} (no sign flips: those only apply to rotations read from files).
+ * The aim of a kraken tentacle's first bone (K1c, sucker side GL1), pure maths without world access. Everything is in
+ * GeckoLib's baked model frame in px (x flipped against the file, the kraken faces −z) relative to the bone's pivot;
+ * {@link #toBoneFrame} takes a world offset there. At rest a tentacle points up (+y) with its sucker face towards the
+ * body's vertical axis: the inner normal {@code n0 = −(pivot x, 0, pivot z)}, normalised. The aim turns that frame so
+ * the tentacle points along the wanted direction {@code d} and the sucker face looks along {@link #suckerNormal}: down
+ * for a raised or level arm (the tip curls down over its target), towards the axis for a hanging one. The rotation
+ * maps the rest basis {@code (up, n0, up × n0)} onto {@code (d, n, d × n)} and is returned as GeckoLib's Euler angles:
+ * a bone renders with {@code Rz(rotZ)·Ry(rotY)·Rx(rotX)} ({@code RenderUtil#rotateMatrixAroundBone}, JOML
+ * {@code rotationZYX}), right-handed, radians, set with {@code GeoBone#setRotX/Y/Z} as they are: the baked frame is
+ * the bone frame, so nothing is negated (only Minecraft angles and file values need the x/y flip).
+ * <p>
+ * K1c kept the suckers towards the axis in every pose. That frame maths was right (KrakenWorldPoseTest), but for an
+ * arm raised to a deck the axis direction made perpendicular to the arm points up, so the suckers faced the sky and
+ * the curled tip bent upwards (playtest 2026-10-07).
  */
 public final class KrakenAim {
 
     /** Below this length the perpendicular inner direction is too short to use. */
     private static final double DEGENERATE = 1e-4;
+    /** How far the sucker reference leans outwards per unit of the arm's upward component (see {@link #suckerNormal}). */
+    static final double OUTWARD_TILT = 0.5;
 
     private KrakenAim() {
     }
@@ -36,9 +42,19 @@ public final class KrakenAim {
         return new double[]{-in[0] * s, Math.cos(leanRad), -in[2] * s};
     }
 
-    /** The wanted sucker-side normal for a tentacle along the unit direction {@code d}. */
-    public static double[] innerNormal(double pivotX, double pivotZ, double[] d) {
-        double[] n = perpendicular(restNormal(pivotX, pivotZ), d);
+    /**
+     * The wanted sucker-side normal for a tentacle along the unit direction {@code d} (GL1): world down tilted by
+     * {@link #OUTWARD_TILT}{@code · d.y} outwards ({@code w = down − tilt · d.y · n0}), made perpendicular to
+     * {@code d}. So a raised or level arm shows its suckers below and hooks its tip down over the target, a hanging
+     * arm turns its suckers towards the body's axis, and the two meet without a jump; {@code w} is parallel to
+     * {@code d} only for arms pointing inwards about 24° off vertical (through the head or under the body), where the
+     * fallbacks (the axis, then forward, then up) take over.
+     */
+    public static double[] suckerNormal(double pivotX, double pivotZ, double[] d) {
+        double[] in = restNormal(pivotX, pivotZ);
+        double k = -OUTWARD_TILT * d[1];
+        double[] n = perpendicular(new double[]{k * in[0], -1, k * in[2]}, d);
+        if (n == null) n = perpendicular(in, d);
         if (n == null) n = perpendicular(new double[]{0, 0, -1}, d);
         if (n == null) n = perpendicular(new double[]{0, 1, 0}, d);
         return n;
@@ -46,12 +62,12 @@ public final class KrakenAim {
 
     /**
      * GeckoLib's {@code {rotX, rotY, rotZ}} that turn the tentacle rooted at {@code (pivotX, pivotZ)} from its rest pose
-     * (up, sucker face towards the axis) to point along {@code dir} (any length but zero) with its sucker face towards
-     * the axis.
+     * (up, sucker face towards the axis) to point along {@code dir} (any length but zero) with its sucker face along
+     * {@link #suckerNormal}.
      */
     public static float[] aim(double pivotX, double pivotZ, double[] dir) {
         double[] d = normalize(dir);
-        double[] n = innerNormal(pivotX, pivotZ, d);
+        double[] n = suckerNormal(pivotX, pivotZ, d);
         double[] b = cross(d, n);
         double[] u0 = {0, 1, 0};
         double[] n0 = restNormal(pivotX, pivotZ);
@@ -64,6 +80,35 @@ public final class KrakenAim {
             }
         }
         return eulerZYX(m);
+    }
+
+    /**
+     * A world offset from the entity's position (any unit) in the entity's bone frame: the inverse of
+     * {@code GeoEntityRenderer#applyRotations}' {@code Axis.YP.rotationDegrees(180 - bodyYaw)}, nothing else. GeckoLib
+     * draws the baked model without a mirror matrix (the file's x flip is baked into the pivots and cubes), so the
+     * result is in the frame of the baked pivots and of {@link #aim}.
+     */
+    public static double[] toBoneFrame(double x, double y, double z, double bodyYawDeg) {
+        double t = Math.toRadians(180.0 - bodyYawDeg), c = Math.cos(t), s = Math.sin(t);
+        // Ry(t)^-1 = Ry(-t): (x, z) -> (x cos t - z sin t, x sin t + z cos t)
+        return new double[]{x * c - z * s, y, x * s + z * c};
+    }
+
+    /** A first segment's pose: GeckoLib's {@code {rotX, rotY, rotZ}} and its y stretch. */
+    public record Reach(float[] rot, float stretch) {
+    }
+
+    /**
+     * The pose of the first segment pivoted at {@code pivot} (baked px) so the arm, {@code length} px at rest, ends at
+     * the world offset {@code target} (blocks, from the entity's position) of an entity turned to {@code bodyYawDeg};
+     * {@code null} when the target sits on the pivot.
+     */
+    public static Reach reach(double[] pivot, double[] target, double bodyYawDeg, double length, double minStretch, double maxStretch) {
+        double[] t = toBoneFrame(target[0], target[1], target[2], bodyYawDeg);
+        double[] d = {t[0] * 16 - pivot[0], t[1] * 16 - pivot[1], t[2] * 16 - pivot[2]};
+        double len = Math.sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
+        if (len < 1e-3) return null;
+        return new Reach(aim(pivot[0], pivot[2], d), (float) Math.max(minStretch, Math.min(maxStretch, len / length)));
     }
 
     /** {@code {x, y, z}} with {@code m = Rz(z)·Ry(y)·Rx(x)}. */

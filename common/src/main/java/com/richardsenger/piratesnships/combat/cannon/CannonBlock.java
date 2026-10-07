@@ -33,9 +33,11 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The cannon (docs/design.md §8.2): a barrel on a two-wheeled carriage, placed on a ship's deck or on land.
+ * The cannon (docs/design.md §8.2): an iron barrel on a four-wheeled truck carriage, placed on a ship's deck or on land.
  * {@link #FACING} is the way the muzzle points (the traverse), {@link #LOAD} what is in the barrel; the elevation and the
- * reload cooldown live in the {@link CannonBlockEntity}.
+ * reload cooldown live in the {@link CannonBlockEntity}. The models are hand-made in Blockbench
+ * ({@code art/models/cannon*.bbmodel}) with the muzzle to the north: {@code powder} shows a rammer leaning against the
+ * barrel, {@code loaded} also the ball in the muzzle. The muzzle reaches about 2.5 px past the block face.
  *
  * <p>Controls, all on the server through {@link CannonService}:
  * <ul>

@@ -82,6 +82,7 @@ public final class StationModule implements ModModule {
             tags.tag(SABLE_DESTROY_WITH_SUB_LEVEL).add(StationContent.STATION_SEAT.get());
         });
         // The whistle's item model is hand-made (art/models/captains_whistle.bbmodel), so datagen writes none
+        data.lang(OrderHints::lang); // Q5: order hints, /pirates ship rigging
         data.lang(lang -> {
             lang.item(StationContent.CAPTAINS_WHISTLE, "Captain's Whistle")
                     .add(StationContent.CREW_MEMBER.get().getDescriptionId(), "Crew Member")
@@ -137,6 +138,6 @@ public final class StationModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(StationGameTests.class, PumpOrderGameTests.class, JobBoardGameTests.class, com.richardsenger.piratesnships.crew.npc.CrewPoseGameTests.class);
+        return List.of(StationGameTests.class, PumpOrderGameTests.class, JobBoardGameTests.class, com.richardsenger.piratesnships.station.winch.WinchOrderGameTests.class, com.richardsenger.piratesnships.crew.npc.CrewPoseGameTests.class);
     }
 }

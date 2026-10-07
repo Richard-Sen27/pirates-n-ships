@@ -78,6 +78,43 @@ the deck yourself with the captain's whistle. Default config (`crew_stations.job
    member) and order "Hoist sails": the open winch job never takes the pinned one from the pump (open jobs themselves
    are not saved, so post the order after the reload).
 
+## Q5: "0 of 0 crew" and "no sails" next to a big sail (fix check)
+Covered by 11 GameTests (`station/winch/WinchOrderGameTests`: the reported command sequence right after assembly, on
+a floating ship, with the rig built after assembly, with a sailing state that missed the yards, free crew through the
+command and through the whistle, and every hint below) and 5 JUnit tests (`YardDiagnosisTest`). Headless, the
+reported sequence works: the cause in your world is not reproduced yet, so first collect the state.
+
+0. **First, on the ship from the report** (before changing anything): stand on its deck and run
+   `/pirates ship rigging`. Send a screenshot of the whole output and the `latest.log`. Expected lines: "Rigging of
+   <name>: N sails (Y yards, T triangular sails)", "Sailing state: N sails, M set", one line per yard ("Yard at x y z
+   (9 blocks along x): heads a sail 6 blocks deep, area 54, furled" / "foot of the sail above" / the reason it heads
+   none), and "Crew aboard: A at stations, F free on deck". If the log has a warning "Sailing state of ship ... was
+   stale", the old code had missed the yards: that warning is the root cause and the winch now repairs it by itself.
+1. **The reported sequence.** On the deck: `/pirates crew spawn`, then `/pirates crew order hoist`. Expected: "Order
+   hoist the sails: 0 of 0 crew carry it out" (nobody mans a station yet) followed by "1 open jobs posted: hoist the
+   sails"; within about a second the crew member sits at the winch, says "Aye, hoisting the sails!", and the sails go
+   up. The same with the whistle's "Hoist sails": "Order: hoist the sails (0 crew carry it out, 1 stations open for
+   free hands)".
+2. **Assigned by hand.** Select the crew member with the whistle and use the whistle on the winch, then "Hoist sails".
+   Expected: "Aye, hoisting the sails!" and the sails go up. If it still says "This ship has no sails, captain: ...",
+   the text after the colon names what the rule does not accept (step 4); report it with the `/pirates ship rigging`
+   output.
+3. **Hints instead of "0 of 0".** Each case shows one line saying what is missing:
+   - standing ashore: `/pirates crew order hoist` says "No ship under you: stand on the deck of an assembled ship to
+     give orders";
+   - on a ship without a bilge pump, whistle "Man the pumps": "No station on this ship can pump the bilge: place one on
+     the deck first";
+   - sails already furled, nobody aboard, "Furl sails": "Nothing to do: every station that can furl the sails is done
+     already";
+   - with `crew_stations.job_board.enabled = false` and nobody at the winch, "Hoist sails": "Nobody to hoist the sails:
+     no crew at a station that takes it and none free on this deck ...".
+4. **"No sails" with the reason.** Put a plank into the mast between the two yards, then "Hoist sails" with nobody
+   aboard. Expected: "No sails on this ship: the yard at x y z has Oak Planks in its mast column 3 blocks down; only
+   air, logs and wooden fences may be between two yards". Other reasons to try: lower yard 9+ blocks below ("has no
+   second yard 2 to 8 blocks straight below its middle block"), a 17-long yard ("is 17 blocks long, longer than 15"),
+   lower yard shifted sideways ("not centered on the same mast column"). The crew member at the winch answers with the
+   same reason.
+
 ## HM1: hammocks and morale
 Covered by 24 JUnit tests (`HammockRulesTest`, `ShipBunksTest`, `RestRulesTest`, `MoraleRulesTest`) and 8 GameTests
 (`crew/hammock/HammockGameTests`). What the tests cannot show: how the hammock looks (a datagen placeholder until ART1d:

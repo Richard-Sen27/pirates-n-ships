@@ -37,6 +37,12 @@ public final class WinchStation implements StationKind<SailOrder> {
     @Override
     public int durationTicks(ServerLevel level, StationRef station, SailOrder order) {
         SailingRuntime rt = runtime(level, station);
+        if (rt != null && rt.sailPositions().isEmpty()) {
+            // Q5: before the crew says "no sails", read the rigging again (a missed block change leaves the runtime
+            // without the sails the cloth shows); cheap, orders are rare
+            ShipBody ship = SableShips.byId(level, station.ship());
+            rt = ship == null ? null : SailingRuntimes.refreshSails(ship);
+        }
         if (rt == null || rt.sailPositions().isEmpty()) {
             return -1;
         }

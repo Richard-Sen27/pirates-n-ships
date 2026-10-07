@@ -45,6 +45,8 @@ public class SailWinchBlock extends Block implements StationBlock {
     static final String KEY = "message." + Constants.MOD_ID + ".sail_winch.";
     public static final String KEY_NOT_ON_SHIP = KEY + "not_on_ship";
     public static final String KEY_NO_SAILS = KEY + "no_sails";
+    /** "This ship has no sails: %s", with the rigging's first problem (Q5). */
+    public static final String KEY_NO_SAILS_WHY = KEY + "no_sails_why";
     public static final String KEY_SET = KEY + "set";
     public static final String KEY_SAIL_SET = KEY + "sail_set";
 
@@ -121,7 +123,9 @@ public class SailWinchBlock extends Block implements StationBlock {
             return Component.translatable(KEY_NOT_ON_SHIP);
         }
         if (r.sails() == 0) {
-            return Component.translatable(KEY_NO_SAILS);
+            var ship = com.richardsenger.piratesnships.ship.sable.SableShips.containing(level, pos);
+            Component problem = ship == null ? null : com.richardsenger.piratesnships.station.winch.RiggingReport.of(level, ship).problem();
+            return problem == null ? Component.translatable(KEY_NO_SAILS) : Component.translatable(KEY_NO_SAILS_WHY, problem);
         }
         return Component.translatable(KEY_SET, Component.translatable(trimKey(r.trim())), r.sails());
     }

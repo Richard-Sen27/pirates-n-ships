@@ -73,7 +73,7 @@ public final class ChartModule implements ModModule {
             ChartText.ENGLISH.forEach(lang::add);
         });
         data.models(m -> {
-            m.flatItem(ChartContent.CHART.get());
+            // The chart's item model is hand-made (art/models/chart.bbmodel, design.md §4.8)
             MapTileModels.generate(m);
         });
         data.recipes(out -> {

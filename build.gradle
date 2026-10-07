@@ -4,3 +4,18 @@ plugins {
     // see https://projects.neoforged.net/neoforged/moddevgradle for new versions
     id 'net.neoforged.moddev' version '2.0.140' apply false
 }
+// Versioning (docs/releasing.md). gradle.properties holds the next planned version as mod_version. Without
+// -Pversion=... every build is "<mod_version>-dev", so a local jar never looks like a release; the release workflow
+// passes the tag's version (X.Y.Z, X.Y.Z-alpha.N or X.Y.Z-beta.N), which is checked here.
+def requestedVersion = providers.gradleProperty('version').orNull
+def resolvedVersion
+if (requestedVersion == null || requestedVersion.isEmpty() || requestedVersion == 'unspecified') {
+    resolvedVersion = "${mod_version}-dev"
+} else if (requestedVersion ==~ /\d+\.\d+\.\d+(-(alpha|beta)\.\d+)?/) {
+    resolvedVersion = requestedVersion
+} else {
+    throw new GradleException("-Pversion=${requestedVersion} is not X.Y.Z, X.Y.Z-alpha.N or X.Y.Z-beta.N (docs/releasing.md)")
+}
+allprojects {
+    version = resolvedVersion
+}

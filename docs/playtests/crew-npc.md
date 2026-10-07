@@ -154,3 +154,48 @@ Give yourself hammocks (`/give @s pirates_n_ships:hammock 4`; recipe: 2 string o
    in a hammock.
 8. **Config off.** Set `crew.morale.enabled = false`, `/time set 13000`: nobody turns in; `/pirates crew info` shows
    morale 70 for everyone, whatever it was before; at dawn nothing changes and nobody grumbles.
+
+## CR2: crew upkeep (wages, desertion, mutiny)
+Covered by JUnit tests (`crew/upkeep/WageRulesTest`, `UpkeepDayTest`) and 8 GameTests (`crew/upkeep/UpkeepGameTests`).
+What the tests cannot show: how the lines read in a real game (action bar and chat), the deserter and the mutineers in
+the world, and the pay coming out of real chests and cargo crates.
+
+Every dawn (the night ends: `/time set 13000`, wait a second, then `/time set 23500`, or sleep in a bed) runs one **day
+of upkeep** for every loaded ship with crew aboard, before the hammock rule: provisions (`pantry.md`, CR2), wages, then
+mutiny or desertion. Note for the HM1 checks above: with CR2 a crew without food, water and pay loses much more at dawn
+than the hammock rule; to check HM1's numbers alone set `provisions.consumption_enabled = false` and
+`crew.wages.enabled = false`.
+
+Setup: an assembled ship **you assembled** (you are its owner), standing on its deck, two crew from `/pirates crew spawn`,
+default config (`crew.wages.per_day = 2`, `unpaid_per_day = 8`, `paid_per_day = 1`, `crew.desertion.desert_below = 20`,
+`desert_days = 2`, `crew.mutiny.enabled = false`). Give yourself doubloons (`/give @s pirates_n_ships:doubloon 64`) and a
+chest.
+
+1. **The pay chest.** A chest on the ship with 10 doubloons, a pantry and water barrel with food and water. Force a dawn.
+   Expected: action bar "Paid 2 crew, 4 doubloons"; the chest holds 6; `/pirates crew info` shows "Last pay: 2 paid, 0
+   unpaid, 4 doubloons", the supplies line, "Work speed 100%", and both crew one morale point up (plus the hammock
+   rule).
+2. **Nearest the helm first.** A second chest with 10 doubloons right next to the helm, the first one far from it. Force a
+   dawn. Expected: the 4 doubloons come out of the chest next to the helm. Put doubloons in a cargo crate instead of a
+   chest: they pay too. Doubloons in the pantry never pay.
+3. **Short pay.** 3 doubloons in total. Force a dawn. Expected: action bar "Could not pay 1 crew"; one crew member says
+   "No pay again? A sailor can't live on promises."; the whistle line of that member reads "…, off duty, unpaid"; 1
+   doubloon stays (a single coin is not a wage). Unpaid wages are not carried over to the next day.
+4. **A deserter walking off.** Take the chest, pantry and barrel away (no coins, no food, no water). Force dawns and watch
+   `/pirates crew info`: each dawn costs 35 (hunger and thirst) + 8 (unpaid) morale, plus 10 without a hammock. Expected:
+   once a member has been below 20 at two dawns in a row it says "I've had enough of this ship. I'm off.", you get
+   "Jack has deserted" in chat, and a neutral sailor stands where it stood and wanders off. It is gone from
+   `/pirates crew info`, from its station and from its hammock. Report how it looks (a plain sailor, not the crew look)
+   and whether it walks off the ship or stays on deck.
+5. **Mutiny with the toggle on.** `crew.mutiny.enabled = true`, two new crew, no supplies, no coins. Force dawns.
+   Expected: nobody deserts while the average morale is below 15 (they plot); at the third such dawn they shout "The
+   ship is ours now!", you get "Mutiny aboard <ship name>!" (or "your ship") in chat, and two hostile pirates stand where
+   the crew stood and attack you. The ship has no owner any more but keeps its name and flag: report what that changes
+   for you at the helm and with the whistle. Set the toggle back afterwards.
+6. **Wages off.** `crew.wages.enabled = false`: a dawn takes no coins, shows no pay line, nobody gains or loses morale for
+   pay; `/pirates crew info` says "Last pay: wages are off".
+7. **Save and reload.** After step 3, save and quit, reload: the unpaid member's whistle line still says "unpaid", and a
+   member one low dawn away from deserting still deserts at the next low dawn.
+
+Report: screenshots of the action bar after steps 1 and 3, the chat at steps 4 and 5, `/pirates crew info` after each
+step, and `logs/latest.log` if anything errors.

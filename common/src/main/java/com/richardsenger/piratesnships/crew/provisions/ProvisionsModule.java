@@ -2,6 +2,10 @@ package com.richardsenger.piratesnships.crew.provisions;
 
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
+import com.richardsenger.piratesnships.crew.upkeep.Upkeep;
+import com.richardsenger.piratesnships.crew.upkeep.UpkeepGameTests;
+import com.richardsenger.piratesnships.crew.upkeep.UpkeepText;
+import com.richardsenger.piratesnships.station.Stations;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
 
@@ -10,6 +14,10 @@ import java.util.List;
 /**
  * The {@code crew.provisions} module: provision rules (design.md §7.4), item classification and its tags, config.
  * The pantry block, crew and HUD that use it come from other modules.
+ * <p>
+ * CR2 hosts crew upkeep ({@code crew.upkeep}) here: the ship day tick itself is driven from
+ * {@code crew.hammock.CrewRest}; this module sets the work-speed source of the stations, writes the upkeep text and
+ * runs its GameTests.
  */
 public final class ProvisionsModule implements ModModule {
 
@@ -27,7 +35,13 @@ public final class ProvisionsModule implements ModModule {
     }
 
     @Override
+    public void registerContent() {
+        Stations.setWorkSpeed(Upkeep::workSpeed);
+    }
+
+    @Override
     public void gatherData(DataContributions data) {
+        data.lang(lang -> UpkeepText.LANG.forEach(lang::add));
         data.itemTags(tags -> {
             tags.tag(ProvisionTags.PRESERVED).add(Items.BREAD, Items.COOKIE, Items.DRIED_KELP, Items.HONEY_BOTTLE,
                     Items.GOLDEN_CARROT, Items.GOLDEN_APPLE, Items.ENCHANTED_GOLDEN_APPLE);
@@ -43,6 +57,6 @@ public final class ProvisionsModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(ProvisionsGameTests.class);
+        return List.of(ProvisionsGameTests.class, UpkeepGameTests.class);
     }
 }

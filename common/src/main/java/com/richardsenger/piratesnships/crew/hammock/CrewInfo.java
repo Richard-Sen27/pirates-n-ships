@@ -3,6 +3,7 @@ package com.richardsenger.piratesnships.crew.hammock;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.crew.morale.CrewMorale;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
+import com.richardsenger.piratesnships.crew.upkeep.UpkeepText;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import java.util.LinkedHashMap;
@@ -43,9 +44,13 @@ public final class CrewInfo {
     private CrewInfo() {
     }
 
-    /** "Jack: morale 65, off duty", followed by " · crew 3 / bunks 2" when it belongs to a loaded ship. */
+    /**
+     * "Jack: morale 65, off duty", followed by " · crew 3 / bunks 2" when it belongs to a loaded ship; "off duty,
+     * unpaid" when it went unpaid at the last dawn (CR2).
+     */
     public static Component crewLine(ServerLevel level, CrewMember crew) {
-        Component line = Component.translatable(KEY_CREW_LINE, crew.getDisplayName(), CrewMorale.get(crew), status(crew));
+        Component status = crew.isUnpaid() ? Component.translatable(UpkeepText.STATUS_UNPAID, status(crew)) : status(crew);
+        Component line = Component.translatable(KEY_CREW_LINE, crew.getDisplayName(), CrewMorale.get(crew), status);
         ShipBody ship = shipOf(level, crew);
         return ship == null ? line : Component.translatable(KEY_WITH_SHIP, line, shipLine(level, ship));
     }

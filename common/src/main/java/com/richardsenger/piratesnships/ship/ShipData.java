@@ -66,4 +66,9 @@ public record ShipData(UUID id, String name, Optional<UUID> owner, List<UUID> cr
     public boolean coverBlown(long now) {
         return now < blownCoverUntil;
     }
+
+    /** The same ship with another owner, or none (a mutiny takes the ship from its owner, CR2). */
+    public ShipData withOwner(Optional<UUID> newOwner) {
+        return new ShipData(id, name, newOwner, crew, flag, dimension);
+    }
 }

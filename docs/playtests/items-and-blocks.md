@@ -76,9 +76,25 @@ Renders of the intended look are in `art/renders/`.
    `latest.log` has no model or texture warnings mentioning `pirates_n_ships`. On a moving ship the models render with
    correct lighting.
 
+## 3D item models (F8a: rapier, cutlass, saber)
+Compare each sword with a vanilla iron sword in the other hand or the next hotbar slot. Renders in `art/renders/`.
+1. **First person, right hand:** the grip sits in the fist, blade up and forward at the iron sword's angle. The rapier
+   is visibly longer and thin, the cutlass short and broad with a brass basket, the saber curved with the tip bending
+   away from the edge.
+2. **Third person (F5, or another player):** grip in the hand, knuckle bow or basket on the underside over the fingers,
+   edge down; the curved tips of cutlass and saber rise forward.
+3. **Offhand (F), first and third person:** mirrored correctly, nothing floats outside the hand.
+4. **Attack swing:** nothing pops or clips oddly; the rapier tip may reach further than the iron sword's.
+5. **GUI (hotbar, inventory, creative tab):** the diagonal matches the iron sword's footprint; the rapier is slightly
+   scaled down and must not overflow the slot; flat lighting, no dark faces; brass and steel read clearly.
+6. **Dropped on the ground:** about half size, bobbing like the iron sword, no dark or missing faces.
+7. **Item frame:** flat and centred. The rapier's tip sticks about 2 px out of the frame (vanilla frame scale); say
+   whether that bothers you.
+8. **Texture:** no missing-texture faces; the rapier grip shows light and dark wire stripes.
+
 ## Known placeholders (for the later art pass)
 - Cargo crate and barrel, pantry, water barrel, brig bars and door still use simple models (F7d, F7e).
 - The yard and stay cloths are flat grids with a simple belly; the cleat is a placeholder element model (F7e).
-- Item sprites are script-made placeholders; 3D item models come with the F8 batches (weapons first).
+- Item sprites other than the swords are script-made placeholders; 3D item models come with the F8 batches.
 - The brig bars' transparency relies on a model field that only NeoForge reads. The Fabric port has to register a
   render layer for them.

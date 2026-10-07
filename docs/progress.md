@@ -5,7 +5,7 @@ Statuses: **todo** / **in progress** / **done** / **blocked: needs playtest** / 
 
 "Done" means: `./gradlew build` passes, `./gradlew :neoforge:runGameTestServer` passes, and the new logic has tests.
 
-Last updated: 2026-10-07 (fourth session: phase G; G1, F7a, F7c, F5a, F7b and F5b merged; F8a running).
+Last updated: 2026-10-07 (fourth session: phase G; G1, F7a, F7c, F5a, F7b, F5b and F8a merged; F8b next).
 
 ## Phase F: first playtest feedback (done, F5 and F7 continue in phase G)
 
@@ -45,13 +45,19 @@ Started 2026-10-07 after the session restart with the Blockbench MCP connected (
 | F7d | Blockbench models, batch 4: cargo crate, cargo barrel, pantry, water barrel | todo, after F7b |
 | F7c | Blockbench models, batch 3: the four figureheads | done | Merged (`c15b28c`). Skull 42 elements, eagle 35, lion 37, mermaid 33, all with a mounting plate against the hull, 8 to 15 px forward overhang, `noOcclusion()`. Renders in `art/renders/`. Playtest `items-and-blocks.md` (to be added to the 3D models section). |
 | F7e | Blockbench models, batch 5: cleat, brig bars and door, flag cloth at 2 blocks via a block entity renderer | todo, after F5b |
-| F8 | 3D item models in Blockbench (human request 2026-10-07): F8a melee weapons (rapier, cutlass, saber), F8b firearms and ammo (pistol, musket, lead shot, cannonball, grappling hook), F8c tools (captain's whistle, shackles), F8d food (rum, hardtack, lime, salt pork, salted fish), F8e trade goods (cloth, spices, tobacco). Doubloon and bounty proof stay flat | todo, one batch at a time after F7b (Blockbench is single-user) |
+| F8a | 3D item models, batch 1: rapier, cutlass, saber | done | Merged (`12f62ce`). Sprite-aligned models (16, 15 and 14 elements) with vanilla's handheld display entries copied in (a `builtin/generated` parent would discard the elements, `ModelBakery` 1.21.1 l.292), `gui_light: front`; the rapier runs 2 px past the footprint and scales its GUI entry to 0.8. Shared palette texture `textures/item/palette.png` from `tools/gen_item_palette.py` (16 patches, all used; grow to 32×16 for the next batch). `HandMadeModelsTest` now lists every hand-made model by name and checks item models carry all 7 display slots. Also restored the block-texture functions that F7c had accidentally dropped from `tools/gen_placeholder_textures.py`. Playtest `items-and-blocks.md`, section "3D item models". |
+| F8b | 3D item models, batch 2: pistol, musket, lead shot, cannonball, grappling hook | in progress |
+| F8c | 3D item models, batch 3: captain's whistle, shackles | todo, after F8b |
+| F8d | 3D item models, batch 4: rum, hardtack, lime, salt pork, salted fish | todo, after F8c |
+| F8e | 3D item models, batch 5: cloth, spices, tobacco | todo, after F8d (doubloon and bounty proof stay flat) |
 
 Only one agent at a time may use Blockbench (one desktop instance, one open project), so the F7 batches run one after another; G1 and F5 run next to them.
 
 **Incident (F5b merge): stale GameTest config.** The F5b branch passed its GameTests in the agent's worktree but the beam-reach keel test failed deterministically on the merged tree (leeway 0.139 instead of 0.111 m/s). Cause: the GameTest server keeps the mod's config in `neoforge/build/gametest/config/`, which the fresh-world task did not clear, and the orchestrator's copy still had `keel_lateral_drag = 2.0` from an old default (the current default is 8.0), while every fresh agent worktree ran with 8.0. So orchestrator and agent measurements have differed for a while, which explains part of the earlier "flaky" sailing tests. Fixed in `neoforge/build.gradle`: `runGameTestServer` now also deletes `build/gametest/config/pirates_n_ships-*.toml`.
 
 Follow-ups from phase G (small):
+- The rapier's item-frame (`fixed`) entry is at vanilla scale, so its tip sticks about 2 px out of the frame; very thin faces (0.5 px tip) may flicker at distance. Decide after the playtest.
+- `.gitattributes` marks `*.gradle` as CRLF (template leftover), so Git warns about `neoforge/build.gradle`; switch it to LF when convenient.
 - Stays and mirrored structure templates: the cleat facing is mirrored but the stored stay offset is not, so the stay is ignored after a mirrored placement. Matters once ship templates exist.
 - The beam-reach GameTests run close to their bounds (0.371 m/s against 0.3). Physics has been deterministic so far; watch them.
 - After a rotated disassembly the head cleat's cloth is wrong for up to 20 ticks until the periodic refresh.

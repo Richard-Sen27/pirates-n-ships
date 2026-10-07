@@ -237,6 +237,33 @@ public final class ShipBody {
         }
     }
 
+    // ---------------------------------------------------------------- cannons (G9)
+
+    /**
+     * World-frame velocity [m/s] of a plot point, including the ship's rotation: {@code ω × (p − pose position) + v}
+     * from the physics handle ({@code ActiveSableCompanion.java#getVelocity(Level, SubLevelAccess, Vector3dc, Vector3d)},
+     * l.379-397; {@code Sable.HELPER}, {@code Sable.java} l.35).
+     */
+    public Vec3 velocityAt(Vec3 plotPos) {
+        Vector3d v = dev.ryanhcode.sable.Sable.HELPER.getVelocity(sub.getLevel(), sub,
+                new Vector3d(plotPos.x, plotPos.y, plotPos.z), new Vector3d());
+        return new Vec3(v.x, v.y, v.z);
+    }
+
+    /**
+     * Applies an impulse [kpg·m/s] in the body (plot) frame at a plot position, at once and outside a physics substep
+     * ({@code api/physics/handle/RigidBodyHandle.java#applyImpulseAtPoint(Vector3dc, Vector3dc)} l.78, which goes straight
+     * to {@code PhysicsPipeline#applyImpulse}). Sable itself calls it from game-tick code for dispenser recoil
+     * ({@code mixin/recoil/ProjectileDispenseBehaviorMixin.java} l.40-43) and for arrows hitting a ship
+     * ({@code mixin/entity/arrows_hit_blocks/AbstractArrowMixin.java} l.56-59). Does nothing without a valid handle.
+     */
+    public void applyImpulseNow(Vec3 plotPos, Vec3 localImpulse) {
+        RigidBodyHandle h = RigidBodyHandle.of(sub);
+        if (h != null && h.isValid()) {
+            h.applyImpulseAtPoint(new Vector3d(plotPos.x, plotPos.y, plotPos.z), new Vector3d(localImpulse.x, localImpulse.y, localImpulse.z));
+        }
+    }
+
     /** Our sub-tree of the sub-level's persisted user data ({@code ServerSubLevel#getUserDataTag}, l.548). */
     public CompoundTag userData(String key) {
         CompoundTag root = sub.getUserDataTag();

@@ -1,5 +1,6 @@
-// 1.21.1	2026-10-07T03:00:02.983637	Recipes
+// 1.21.1	2026-10-07T03:32:09.441229	Recipes
 e1289c0eb7525c60669f4203ccd8af0d9d7b0744 data/pirates_n_ships/advancement/recipes/building_blocks/hull_patch.json
+8f98eb055171c739101420a0b9bbe9f3a8bf2903 data/pirates_n_ships/advancement/recipes/combat/cannon.json
 015749d8a9eaabd51b4c4c379ce38acafd30720e data/pirates_n_ships/advancement/recipes/combat/cannonball.json
 698d8285044f0e3429c2f6421d742fd348e5d011 data/pirates_n_ships/advancement/recipes/combat/cutlass.json
 1cdb4544445c73aa3f110cf02a93148f6195c77b data/pirates_n_ships/advancement/recipes/combat/lead_shot.json
@@ -39,6 +40,7 @@ c139515e0b538370d92991be3d0cb26765b3cd6f data/pirates_n_ships/advancement/recipe
 3442a5397f9a3d62801aad8aa393d5ef3be2f7fb data/pirates_n_ships/recipe/bilge_pump.json
 bf2da20e7fdc63124e2b02531cd70e8904a34cb1 data/pirates_n_ships/recipe/brig_bars.json
 ee31fa683c68b7dd3fbe347a19c643971a50d895 data/pirates_n_ships/recipe/brig_door.json
+8429061c3871e7940b3a01d2d9e70ba537aedf3b data/pirates_n_ships/recipe/cannon.json
 20bf4633140f6573784d9d9688ef7e59e3363558 data/pirates_n_ships/recipe/cannonball.json
 a8c074ca4609fbfdb0315cadfd6264ace56daa7c data/pirates_n_ships/recipe/capstan.json
 8e5ee9ea39d831d5a3dc1ef34f880688f3b74458 data/pirates_n_ships/recipe/cargo_barrel.json

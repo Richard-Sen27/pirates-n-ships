@@ -5,14 +5,15 @@ Run (from the repository root):
     python3 -m venv tools/.venv
     tools/.venv/bin/pip install -r tools/requirements.txt
     tools/.venv/bin/python tools/gen_placeholder_textures.py            # write every texture
-    tools/.venv/bin/python tools/gen_placeholder_textures.py --only rapier cutlass   # just these
+    tools/.venv/bin/python tools/gen_placeholder_textures.py --only pistol musket   # just these
     tools/.venv/bin/python tools/gen_placeholder_textures.py --list     # print the names
 
 Output: common/src/main/resources/assets/pirates_n_ships/textures/{item,block}/<name>.png
 Deterministic: same input, same bytes. One function per texture, registered in ITEMS / BLOCKS.
 Replacing a texture by hand: put its name into PROTECTED (or a line in tools/protected_textures.txt),
 then this script never overwrites it. Textures owned by other packages (test_block) are never written. The helm, nameplate and flagpole have
-hand-made Blockbench models with vanilla textures (art/models/) and no textures here.
+hand-made Blockbench models with vanilla textures (art/models/) and no textures here; the rapier, cutlass and saber
+have hand-made item models textured from the item palette (tools/gen_item_palette.py).
 """
 import argparse
 import random
@@ -23,7 +24,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 TEX = ROOT / "common/src/main/resources/assets/pirates_n_ships/textures"
 PROTECTED_FILE = Path(__file__).resolve().parent / "protected_textures.txt"
-# Names of hand-made textures this script must not overwrite (e.g. "rapier", "cargo_crate").
+# Names of hand-made textures this script must not overwrite (e.g. "pistol", "cargo_crate").
 PROTECTED = set()
 FOREIGN_PREFIXES = ("test_block",)
 
@@ -118,32 +119,6 @@ def planks(name, base="plank", dark="plank_d", light="plank_l"):
 
 
 # ---------------------------------------------------------------- items
-
-def sword(blade_w, curve, guard):
-    cv = Canvas()
-    pts = [(4 + i, 11 - i) for i in range(11)]  # handle bottom-left, tip top-right
-    for i, (x, y) in enumerate(pts):
-        bend = (i * (10 - i)) // 25 if curve else 0
-        cv.px(x + bend, y + bend, "steel_l" if i % 3 else "steel")
-        for w in range(1, blade_w):
-            cv.px(x + bend, y + bend + w, "steel_d")
-    cv.line(1, 14, 3, 12, "wood")
-    cv.px(1, 14, "gold")
-    if guard == "cup":
-        cv.rect(3, 10, 5, 12, "gold")
-        cv.px(4, 11, "gold_l")
-    elif guard == "bar":
-        cv.line(2, 10, 6, 14, "iron")
-    else:
-        cv.line(2, 10, 6, 14, "gold")
-        cv.px(4, 12, "gold_l")
-    return cv.outline()
-
-
-def rapier(): return sword(1, False, "cup")
-def cutlass(): return sword(3, True, "bar")
-def saber(): return sword(2, True, "knuckle")
-
 
 def pistol():
     cv = Canvas()
@@ -305,8 +280,105 @@ def brig_door_item():
     return cv.outline()
 
 
+# ---------------------------------------------------------------- blocks
+
+def brig_bars():
+    cv = Canvas()
+    for x in (1, 5, 10, 14):
+        cv.rect(x, 0, x + 1, 15, "iron")
+        cv.rect(x, 0, x, 15, "steel")
+    cv.rect(0, 1, 15, 2, "wood"); cv.rect(0, 13, 15, 14, "wood")
+    cv.rect(0, 1, 15, 1, "wood_l"); cv.rect(0, 14, 15, 14, "wood_d")
+    return cv
+
+
+def brig_bars_edge():
+    cv = Canvas("iron")
+    cv.rect(7, 0, 8, 15, "steel")
+    return cv
+
+
+def brig_door(top):
+    cv = planks("brig_door_" + ("top" if top else "bottom"), "wood", "wood_d", "wood_l")
+    for x in (0, 15):
+        cv.rect(x, 0, x, 15, "iron_d")
+    if top:
+        cv.rect(0, 2, 15, 3, "iron")
+        cv.rect(3, 6, 12, 13, "black")
+        for x in (4, 7, 10):
+            cv.rect(x, 6, x + 1, 13, "iron")
+            cv.rect(x, 6, x, 13, "steel")
+        cv.rect(0, 0, 15, 0, "iron_d")
+    else:
+        cv.rect(0, 12, 15, 13, "iron")
+        cv.rect(12, 1, 13, 3, "steel"); cv.px(12, 2, "black")
+        cv.rect(0, 15, 15, 15, "iron_d")
+    return cv
+
+
+def cargo_crate():
+    cv = planks("cargo_crate")
+    cv.line(1, 1, 14, 14, "wood"); cv.line(1, 2, 13, 14, "wood_d")
+    cv.rect(1, 1, 14, 1, "wood"); cv.rect(1, 14, 14, 14, "wood")
+    cv.rect(1, 1, 1, 14, "wood"); cv.rect(14, 1, 14, 14, "wood")
+    return cv.border()
+
+
+def barrel_side(name, band="iron"):
+    cv = Canvas("plank")
+    for x in range(0, 16, 3):
+        cv.rect(x, 0, x, 15, "plank_d")
+    noise(cv, name, ["plank_l"], 0.1)
+    for y in (2, 13):
+        cv.rect(0, y, 15, y + 1, band)
+        cv.rect(0, y, 15, y, "steel")
+    return cv.border()
+
+
+def barrel_top(name, inner):
+    cv = Canvas("plank")
+    noise(cv, name, ["plank_d", "plank_l"], 0.15)
+    cv.border("iron").rect(1, 1, 14, 1, "iron")
+    cv.rect(2, 2, 13, 13, inner) if inner else None
+    for y in (5, 10):
+        cv.rect(1, y, 14, y, "plank_d")
+    return cv
+
+
+def cargo_barrel_side(): return barrel_side("cargo_barrel_side")
+def cargo_barrel_top(): return barrel_top("cargo_barrel_top", None)
+
+
+def water_barrel_side():
+    cv = barrel_side("water_barrel_side", "blue_d")
+    cv.rect(6, 6, 9, 9, "blue"); cv.rect(7, 7, 8, 8, "blue_l")
+    return cv
+
+
+def water_barrel_top():
+    cv = barrel_top("water_barrel_top", None)
+    cv.disc(7.5, 7.5, 3.5, "blue")
+    cv.disc(6.5, 6.5, 1.5, "blue_l")
+    return cv
+
+
+def pantry_side():
+    cv = planks("pantry_side", "wood", "wood_d", "wood_l")
+    for y0 in (1, 8):
+        cv.rect(2, y0, 13, y0 + 5, "wood_d")
+        cv.rect(3, y0 + 3, 5, y0 + 5, "tan")        # bread
+        cv.rect(7, y0 + 2, 8, y0 + 5, "red")        # apple / jar
+        cv.rect(10, y0 + 3, 12, y0 + 5, "amber")
+        cv.rect(2, y0 + 5, 13, y0 + 5, "wood_l")
+    return cv.border()
+
+
+def pantry_top():
+    return planks("pantry_top", "wood", "wood_d", "wood_l").border()
+
+
 ITEMS = {
-    "rapier": rapier, "cutlass": cutlass, "saber": saber, "pistol": pistol, "musket": musket,
+    "pistol": pistol, "musket": musket,
     "lead_shot": lead_shot, "cannonball": cannonball, "grappling_hook": grappling_hook,
     "doubloon": doubloon, "tobacco": tobacco, "spices": spices, "cloth": cloth, "rum": rum,
     "hardtack": hardtack, "salted_fish": salted_fish, "salt_pork": salt_pork, "lime": lime,

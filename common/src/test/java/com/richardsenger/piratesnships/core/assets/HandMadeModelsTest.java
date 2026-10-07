@@ -56,8 +56,8 @@ class HandMadeModelsTest {
             "brig_door_bottom_left_open_locked", "brig_door_bottom_right", "brig_door_bottom_right_locked",
             "brig_door_bottom_right_open_locked", "brig_door_top_left", "brig_door_top_right", "cannon",
             "cannon_loaded", "cannon_powder", "capstan", "cargo_barrel", "cargo_crate", "cleat", "figurehead_eagle",
-            "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flagpole", "helm", "nameplate", "pantry",
-            "sail_winch", "water_barrel", "water_barrel_fill0", "water_barrel_fill1", "water_barrel_fill2",
+            "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flagpole", "harbor_desk", "helm", "nameplate",
+            "pantry", "sail_winch", "water_barrel", "water_barrel_fill0", "water_barrel_fill1", "water_barrel_fill2",
             "water_barrel_fill3", "yard");
     static final List<String> ITEM_MODELS = List.of("cannonball", "captains_whistle", "cloth", "cutlass",
             "grappling_hook", "hardtack", "lead_shot", "lime", "musket", "pistol", "rapier", "rum", "saber", "salt_pork",

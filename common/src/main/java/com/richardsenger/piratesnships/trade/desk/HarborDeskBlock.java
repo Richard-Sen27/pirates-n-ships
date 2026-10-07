@@ -34,6 +34,11 @@ import org.jetbrains.annotations.Nullable;
  * The harbor master's desk (design.md §10.3): a writing desk bound to one port ({@link HarborDeskBlockEntity}). Its
  * front faces the player who placed it. Using it opens the port's market screen ({@link HarborDeskService#use}); an
  * unbound desk says so on the action bar. With {@code harbor_desks.desks_enabled} off the desk is inert.
+ *
+ * <p>The model is hand-made in Blockbench ({@code art/models/harbor_desk.bbmodel}): a partner's desk with drawers and a
+ * kneehole on both sides. {@link #FACING} is the customer's side (towards the player who placed it; north in the
+ * unrotated model, with the bell); the open ledger, the quill in its inkwell and the coin stacks face the harbor
+ * master on the opposite side.
  */
 public class HarborDeskBlock extends BaseEntityBlock {
 

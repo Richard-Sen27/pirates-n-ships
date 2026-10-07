@@ -38,3 +38,24 @@ Please send `latest.log` if anything differs.
 
 
 Addendum (P1): loading shows no bow pose any more (and no pose at all, known); keep holding after the loading sounds end and release: no shot. Click a loaded gun: it fires at once. Hold, then release: it fires on release; after about a second of aiming the shot is visibly tighter, and the musket's view narrows while aiming (not while loading).
+
+
+## P3: aim and reload animations
+1. **Pistol aim, third person (F5):** hold use on a loaded pistol: the arm rises in about a quarter second and stays
+   out at eye height; look up and down and turn your head without moving: arm and barrel follow the crosshair.
+   Release: it fires and the arm drops at once.
+2. **Musket aim:** two-handed hold, left arm under the barrel, barrel straight ahead; the zoom still applies.
+3. **Pistol reload:** hold use on an empty pistol with ammo: pour, rod, two rams, cock, ending just as the gun becomes
+   loaded (3 s). With `firearms.pistol.reload_ticks = 120` it plays at half speed; releasing early stops it.
+4. **Musket reload:** butt to the ground, two rams, raise, cock; 5 s, ending when loading completes.
+5. **First person:** the animated arms and gun replace the vanilla hand, the musket shows the left arm; looking steeply
+   up and down keeps the gun in view. `melee_animations.first_person = OFF`: vanilla hand, third person still
+   animates.
+6. **Second client:** the other player sees your aims and reloads (someone joining mid-reload sees it from the start).
+7. **While moving:** walk, sprint and strafe while aiming or reloading: legs walk, arms keep the pose, the barrel stays
+   on the crosshair.
+8. **Left-handed, or the gun in the off hand:** mirrored, gun in the correct hand.
+9. **A sword stagger while aiming** shows over the gun pose, then the aim returns while held.
+10. **Toggle:** `firearm_animations.enabled = false` mid-aim: the pose stops; back on: the pose returns.
+11. **Look:** do the guns sit naturally in the hand during the aims, and do they jump during the reloads (the item
+    position channel is unverified)?

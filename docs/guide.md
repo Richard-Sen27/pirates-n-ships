@@ -448,7 +448,8 @@ nothing lets a player use it yet: the input and animation layers are missing.
 The pistol and the musket are single-shot flintlocks. Hold right-click with one lead shot and one gunpowder in your
 inventory to load (3 seconds for the pistol, 5 for the musket, with the bow pose; letting go early cancels and costs
 nothing; creative mode needs no ammo). The tooltip shows "Loaded" or "Unloaded". With a loaded gun, hold right-click to aim (a quick click still fires at once): after a second of steady aiming the
-shot is tighter, the musket zooms in a little, and the shot leaves when you release. Firing: a lead ball flies out with smoke and a small kick, the gun is unloaded again and needs half a second before it
+shot is tighter, the musket zooms in a little, and the shot leaves when you release; you see yourself aim and reload (the Player Animation Library drives it, client option
+`firearm_animations.enabled`). Firing: a lead ball flies out with smoke and a small kick, the gun is unloaded again and needs half a second before it
 can be used. The pistol hits hard but scatters; the musket flies flatter and tighter. Standing in the rain, a quarter of
 the shots misfire with a click and the charge stays in. Without ammo the gun only clicks. Shooting someone counts as an
 attack for the law, and the death message names you. Everything is in the `firearms` server config (and the misfire

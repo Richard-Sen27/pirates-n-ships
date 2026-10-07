@@ -5,7 +5,7 @@ Statuses: **todo** / **in progress** / **done** / **blocked: needs playtest** / 
 
 "Done" means: `./gradlew build` passes, `./gradlew :neoforge:runGameTestServer` passes, and the new logic has tests.
 
-Last updated: 2026-10-07 (fourth session: phase M: F9, M1 and M2 merged, M3 running; phase P: P1 running).
+Last updated: 2026-10-07 (fourth session: phase M: F9, M1, M2 merged, M3 running; phase P: P1 running, F8f's first half merged).
 
 ## Phase F: first playtest feedback (done, F5 and F7 continue in phase G)
 
@@ -73,7 +73,7 @@ The human played with the phase G build on 2026-10-07 and reported: figureheads 
 | Package | Scope | Status |
 |---|---|---|
 | P1 | Code fixes: figureheads mount on the clicked block facing the player; the cloth bellies downwind (convention fix); brig bars connect to the door and a brig key locks and unlocks it; firearms load with the crossbow pose and a loaded gun aims while held and fires on release, with an aimed spread bonus | in progress |
-| F8f | Blockbench: doubloon and bounty proof as 3D items, a 3D brig door item (both halves in one item model), a brig key item | todo, after M2 (Blockbench) |
+| F8f | Blockbench: doubloon and bounty proof as 3D items, a 3D brig door item (both halves in one item model), a brig key item | partly done | Doubloon (22 elements, a tilted stack of three coins with a cross pattée; the icon tilt is a `gui` display entry because an element rotates about one axis only) and bounty proof (12, a diagonal scroll with a wax seal) merged (`8077bc6`); the market screen renders the item, so its icon is the 3D stack. Every item of the mod is now a Blockbench model except the hull patch. The brig door and key items follow after P1 merges (F8g). |
 | P2 | Cannon sizes: the cannon becomes a two-block gun (master and part blocks like a bed, carriage two long and 1.5 high, barrel a block ahead) and a swivel gun that mounts on fences and railings with free yaw (block entity renderer), lower range and damage, faster reload; code with placeholder models first | todo, after P1 |
 | F7g | Blockbench: the large cannon model spanning two blocks plus the barrel, the swivel gun | todo, after P2 and F8f |
 | P3 | Firearm and cannon animations through PAL on the player rig (aim pistol, aim musket, reload musket, light the fuse), musket zoom if P1 could not do it | todo, after P1 and M2 (Blockbench) |

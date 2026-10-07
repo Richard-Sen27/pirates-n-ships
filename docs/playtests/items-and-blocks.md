@@ -140,6 +140,10 @@ Compare each sword with a vanilla iron sword in the other hand or the next hotba
     bobbing on the ground; centred in an item frame. Eating and drinking still work with their effects, the eating
     particles show tans, pinks, greens and blue-grey (never magenta or black), rum still counts as a drink and the
     pantry still accepts the provisions.
+16a. **Doubloon and bounty proof (F8f):** in the inventory a tilted gold stack of three coins with a raised cross and a
+    darker rim, centred in the slot; in hand, on the ground and in a frame the stack stands upright with the face out.
+    The market screen's header icon is the 3D stack. The bounty proof is a diagonal scroll with a red seal and ribbon
+    tails, held stick-like. Say if the cross on the coin is too low-contrast in the GUI.
 16. **Trade goods (cloth, spices, tobacco), GUI:** an off-white bolt on the diagonal with brown core stubs and a flap
     to the lower right; a brown sack with a dark cord and knot and an orange, red and gold heap; a fan of brown leaves
     from lower left to upper right with tan twine. Say whether the spice sack reads too plain and whether the middle
@@ -148,7 +152,7 @@ Compare each sword with a vanilla iron sword in the other hand or the next hotba
     and show the 3D icons.
 
 ## Known placeholders (for the later art pass)
-- Every block of the mod now has a Blockbench model. Only the doubloon, the bounty proof, the hull patch and the brig door item use sprites.
+- Every block and item of the mod now has a Blockbench model except the hull patch and the brig door item (F8g).
 - The yard and stay cloths are flat grids with a simple belly; the cleat is a placeholder element model (F7e).
 - Only the doubloon, the bounty proof and the hull patch still use sprites (by decision).
 - The brig bars' transparency relies on a model field that only NeoForge reads. The Fabric port has to register a

@@ -24,7 +24,7 @@ SF.C = {
   brass_d: [156, 104, 22], brass: [222, 170, 48], brass_l: [252, 226, 120],
   steel_d: [92, 98, 110], steel: [150, 156, 168],
   red_stripe: [168, 40, 40], red_stripe_d: [130, 28, 30],
-  cap_d: [52, 58, 70], cap: [74, 82, 98], cap_l: [96, 106, 124],
+  cap_d: [66, 76, 96], cap: [88, 100, 126], cap_l: [112, 126, 152],
   kerchief_d: [20, 20, 26], kerchief: [40, 40, 50],
   canvas_d: [150, 136, 106], canvas: [182, 168, 136], canvas_l: [204, 192, 162],
   shoe_d: [22, 20, 22], shoe: [38, 34, 36],
@@ -98,7 +98,13 @@ SF.head = function (s, o) {
   s.rect(...f.top, o.hair); s.speckle(...f.top, o.hair_d, 0.3);
   s.band(SF.HEAD, 0, o.hairRows || 2, o.hair, o.hair_d, 0.3);
   const bk = f.back; s.rect(bk[0], bk[1], bk[2], o.backRows || 5, o.hair); s.speckle(bk[0], bk[1], bk[2], o.backRows || 5, o.hair_d, 0.3);
-  for (const side of ['right', 'left']) { const r = f[side]; s.rect(r[0] + (side === 'right' ? 0 : 1), r[1] + 2, 3, 2, o.hair); s.px(r[0] + 4 + (side === 'right' ? 0 : -1), r[1] + 4, o.skin_d); }
+  // side faces: the back half (cols 0..3 of the right face, 4..7 of the left) has hair down to row 4, the ear is
+  // the column next to the middle
+  for (const side of ['right', 'left']) {
+    const r = f[side], back = side === 'right' ? 0 : 4, ear = side === 'right' ? 4 : 3;
+    s.rect(r[0] + back, r[1] + 2, 4, 3, o.hair); s.speckle(r[0] + back, r[1] + 2, 4, 3, o.hair_d, 0.3);
+    s.px(r[0] + ear, r[1] + 4, o.skin_d); s.px(r[0] + ear, r[1] + 5, o.skin_d);
+  }
   const [fx, fy] = f.front;
   s.rect(fx + 1, fy + 3, 2, 1, o.brow || o.hair_d); s.rect(fx + 5, fy + 3, 2, 1, o.brow || o.hair_d);
   s.px(fx + 1, fy + 4, 'white'); s.px(fx + 2, fy + 4, o.eye || 'eye');
@@ -109,8 +115,11 @@ SF.head = function (s, o) {
   return f;
 };
 
+// the front half of a head side face (cols), where cheeks, stubble and beard go
+SF.cheek = (s, f, side) => [f[side][0] + (side === 'right' ? 4 : 0), f[side][1]];
+
 SF.hands = function (s, skin, skin_d) {
-  for (const a of SF.ARMS) { s.band(a, 10, 2, skin, skin_d, 0.1); s.rect(...s.faces(a).bottom, skin); }
+  for (const a of SF.ARMS) { s.band(a, 10, 2, skin, skin_d, 0.04); s.rect(...s.faces(a).bottom, skin); }
 };
 
 // --- pirate -----------------------------------------------------------------------------------------------------
@@ -135,7 +144,7 @@ SF.pirate = function () {
   s.rect(fx + 2, fy + 6, 4, 1, 'hair_black'); s.px(fx + 1, fy + 6, 'hair_d'); s.px(fx + 6, fy + 6, 'hair_d');
   s.rect(fx + 2, fy + 7, 4, 1, 'hair_d'); s.rect(fx + 3, fy + 7, 2, 1, 'mouth');
   s.speckle(fx, fy + 5, 2, 3, 'hair_d', 0.5); s.speckle(fx + 6, fy + 5, 2, 3, 'hair_d', 0.5);
-  for (const side of ['right', 'left']) s.speckle(f[side][0], f[side][1] + 5, 4, 3, 'hair_d', 0.4);
+  for (const side of ['right', 'left']) { const [cx, cy] = SF.cheek(s, f, side); s.speckle(cx, cy + 5, 4, 3, 'hair_d', 0.4); }
   s.px(fx + 7, fy + 4, 'scar'); s.px(fx + 6, fy + 5, 'scar');
   s.rect(fx + 1, fy + 3, 2, 3, 'black'); s.px(fx, fy + 3, 'black'); s.px(fx + 3, fy + 3, 'black');
   for (const side of ['right', 'left', 'back']) { const r = f[side]; s.rect(r[0], r[1] + 3, r[2], 1, 'black'); }
@@ -197,7 +206,7 @@ SF.sailor = function () {
   const [fx, fy] = f.front;
   s.rect(fx + 1, fy + 6, 6, 2, 'hair'); s.speckle(fx + 1, fy + 6, 6, 2, 'hair_d', 0.35); s.px(fx, fy + 6, 'hair'); s.px(fx + 7, fy + 6, 'hair');
   s.rect(fx + 3, fy + 6, 2, 1, 'mouth'); s.px(fx + 2, fy + 5, 'hair'); s.px(fx + 5, fy + 5, 'hair');
-  for (const side of ['right', 'left']) s.speckle(f[side][0], f[side][1] + 4, 4, 4, 'hair', 0.5);
+  for (const side of ['right', 'left']) { const [cx, cy] = SF.cheek(s, f, side); s.rect(cx, cy + 5, 4, 3, 'hair'); s.speckle(cx, cy + 4, 4, 4, 'hair_d', 0.3); }
   // shirt: red and white stripes, open collar
   s.fill(SF.BODY, 'white', 'shirt_d', 0.08);
   for (let r = 1; r < 11; r += 2) s.band(SF.BODY, r, 1, 'red_stripe', 'red_stripe_d', 0.15);
@@ -205,22 +214,20 @@ SF.sailor = function () {
   s.rect(bx + 3, by, 2, 2, 'skin'); s.px(bx + 3, by + 2, 'skin_d');
   s.band(SF.BODY, 11, 1, 'canvas', 'canvas_d', 0.3);
   for (const a of SF.ARMS) {
-    s.fill(a, 'skin', 'skin_d', 0.06); s.rect(...s.faces(a).top, 'white');
+    s.fill(a, 'skin'); s.rect(...s.faces(a).top, 'white');
     s.band(a, 0, 6, 'white', 'shirt_d', 0.08); s.band(a, 1, 1, 'red_stripe'); s.band(a, 3, 1, 'red_stripe'); s.band(a, 5, 1, 'shirt_d');
   }
-  for (const a of SF.ARMS) { const fr = s.faces(a).right; s.speckle(fr[0], fr[1] + 6, 4, 4, 'hair', 0.15); }
   // slops: wide canvas trousers to mid-calf; the trousers layer flares them at the hem; shoes
   for (const l of SF.LEGS) {
-    s.fill(l, 'canvas', 'canvas_d', 0.18); s.band(l, 8, 3, 'skin', 'skin_d', 0.08); s.band(l, 11, 1, 'shoe');
+    s.fill(l, 'canvas', 'canvas_d', 0.07); s.band(l, 8, 3, 'skin', 'skin_d', 0.08); s.band(l, 11, 1, 'shoe');
     s.rect(...s.faces(l).bottom, 'shoe_d');
     s.column(s.faces(l).front, 2, 1, 6, 'canvas_d');
   }
-  for (const p of SF.PANTS) { s.band(p, 4, 4, 'canvas', 'canvas_d', 0.2); s.band(p, 7, 1, 'canvas_d'); }
+  for (const p of SF.PANTS) { s.band(p, 4, 4, 'canvas', 'canvas_d', 0.07); s.band(p, 7, 1, 'canvas_d'); }
   // knitted cap regions: ribs are alternating columns
-  const knit = (r, rib) => { s.region(r, 'cap', 'cap_d', 0.15); for (let x = r[0]; x < r[0] + r[2]; x += rib) s.rect(x, r[1], 1, r[3], 'cap_d'); };
+  const knit = (r, rib) => { s.region(r, 'cap', null, 0); for (let x = r[0]; x < r[0] + r[2]; x += rib) s.rect(x, r[1], 1, r[3], 'cap_d'); };
   knit(R.cap_brim, 2); s.rect(R.cap_brim[0], R.cap_brim[1], 8, 1, 'cap_l');
-  knit(R.cap_crown, 3); s.region(R.cap_top, 'cap', 'cap_d', 0.25);
-  for (let i = 0; i < 4; i++) { s.rect(R.cap_top[0] + i, R.cap_top[1] + i, 8 - 2 * i, 1, 'cap_d'); }
+  knit(R.cap_crown, 2); s.region(R.cap_top, 'cap', 'cap_d', 0.1); s.rect(R.cap_top[0] + 3, R.cap_top[1] + 3, 2, 2, 'cap_d');
   s.region(R.cap_peak, 'cap_d', 'cap', 0.3);
   s.region(R.slops, 'canvas_l', 'canvas', 0.2); s.rect(R.slops[0], R.slops[1] + 2, 8, 1, 'canvas_d');
   s.patches(SF.SAILOR_PATCHES);

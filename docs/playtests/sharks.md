@@ -38,3 +38,11 @@ Addendum (Q4): an idle shark in deep ocean cruises below the surface for a minut
 4. **Hunting:** the head turns at most about 30° and the body pitches when climbing or diving without fighting the animation.
 5. **The bite:** the jaw drops to about 35° showing a pink mouth and both rows of teeth, then snaps shut; the head dips and the body lunges slightly; lower teeth hidden while shut; watch for a seam at the back of the head.
 6. **Stranded on a beach:** the belly sits roughly on the ground, the lower tail lobe a little below.
+
+
+## GL1: body pitch
+Spawn a shark in deep water (`/pirates mob spawn shark`) and watch it from the side, level with it, about 5 blocks away (F3 helps to see its motion).
+1. **Diving:** when it swims down, the nose is lower than the tail (the back tilts forward, the belly faces the way it goes); when it climbs, the nose is higher than the tail. Before GL1 it was the other way round.
+2. **Head on the body:** while diving or climbing the head stays in line with the body (no kink at the gills); it only bends extra when the path is steeper than about 60°.
+3. **Level cruising:** the body is level, the head turns at most about 30° left and right towards its target.
+4. **Stranded:** on a beach the body lies level; only the head looks up or down.

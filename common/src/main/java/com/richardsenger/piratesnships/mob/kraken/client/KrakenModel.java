@@ -6,8 +6,6 @@ import com.richardsenger.piratesnships.mob.kraken.KrakenTentacles;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
 import software.bernie.geckolib.animation.AnimationState;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.model.GeoModel;
@@ -17,10 +15,11 @@ import software.bernie.geckolib.model.GeoModel;
  * animations ran, each tentacle's first segment {@code tentacle_<i>_1} is aimed at its hit box ({@code KrakenPart} i,
  * synced by the server) and stretched along its length so the tentacle's tip ({@link #TENTACLE_LENGTH} from the root)
  * ends at the part's centre; the animations bend the second and third segments. The aim controls the roll as well
- * ({@link KrakenAim}): the sucker face turns towards the body's axis, so the curls of the animations close towards it.
- * A tentacle whose part is not known yet leans {@link #REST_LEAN_DEG} outwards (straight up it would run through the
- * head); a cut tentacle shrinks to a stump in that pose. GeckoLib flips the file's x axis when baking and the renderer
- * turns the model by {@code 180 - bodyYaw}, so the aim is computed in that frame.
+ * ({@link KrakenAim#suckerNormal}): a raised or level arm turns its sucker face down, so the curled tip and the curls of
+ * the animations close down over the target; a hanging arm turns it towards the body's axis. A tentacle whose part is
+ * not known yet leans {@link #REST_LEAN_DEG} outwards (straight up it would run through the head); a cut tentacle
+ * shrinks to a stump in that pose. The part's world offset goes into the bone frame by undoing the renderer's turn by
+ * {@code 180 - bodyYaw} only ({@link KrakenAim#toBoneFrame}); the baked pivots already carry GeckoLib's x flip.
  */
 public class KrakenModel extends GeoModel<Kraken> {
 
@@ -60,8 +59,6 @@ public class KrakenModel extends GeoModel<Kraken> {
         float partialTick = state.getPartialTick();
         Vec3 origin = kraken.getPosition(partialTick);
         float bodyYaw = Mth.rotLerp(partialTick, kraken.yBodyRotO, kraken.yBodyRot);
-        // world (relative to the entity) -> model render frame: undo the renderer's rotateY(180 - bodyYaw)
-        Quaternionf toModel = new Quaternionf().rotationY(-(180f - bodyYaw) * Mth.DEG_TO_RAD);
         for (int i = 0; i < KrakenTentacles.COUNT; i++) {
             GeoBone bone = getAnimationProcessor().getBone(tentacleBone(i, 1));
             if (bone == null) continue;
@@ -74,19 +71,20 @@ public class KrakenModel extends GeoModel<Kraken> {
                 continue;
             }
             Vec3 tip = kraken.clientPartCentre(i, partialTick);
-            Vector3f d = tip == null ? null
-                    : toModel.transform(new Vector3f((float) (tip.x - origin.x), (float) (tip.y - origin.y), (float) (tip.z - origin.z)));
-            // render frame px; the baked pivot already has x flipped
-            if (d != null) d.mul(16f).sub(bone.getPivotX(), bone.getPivotY(), bone.getPivotZ());
+            // the baked pivot is in the frame GeckoLib draws in (x already flipped against the file)
+            KrakenAim.Reach reach = tip == null ? null : KrakenAim.reach(
+                    new double[]{px, bone.getPivotY(), pz},
+                    new double[]{tip.x - origin.x, tip.y - origin.y, tip.z - origin.z},
+                    bodyYaw, TENTACLE_LENGTH, MIN_STRETCH, MAX_STRETCH);
             bone.setScaleX(1f);
             bone.setScaleZ(1f);
-            if (d == null || d.length() < 1e-3f) {
+            if (reach == null) {
                 setAim(bone, KrakenAim.aim(px, pz, KrakenAim.restDirection(px, pz, REST_LEAN_DEG * Mth.DEG_TO_RAD)));
                 bone.setScaleY(1f);
                 continue;
             }
-            setAim(bone, KrakenAim.aim(px, pz, new double[]{d.x, d.y, d.z}));
-            bone.setScaleY(Mth.clamp(d.length() / TENTACLE_LENGTH, MIN_STRETCH, MAX_STRETCH));
+            setAim(bone, reach.rot());
+            bone.setScaleY(reach.stretch());
         }
     }
 

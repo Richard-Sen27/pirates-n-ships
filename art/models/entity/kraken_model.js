@@ -508,19 +508,23 @@ KRK.export = function () {
 
 // ---- renders: art/renders/kraken.png -----------------------------------------------------------------------------
 // views: [label, camera position (internal), look-at y, animation name or null, time, splay]. In game the code aims
-// every tentacle_<i>_1 at its hit box (KrakenAim: the arm along the aim, its sucker face turned towards the body's
-// axis); splay (degrees from straight up, outwards) poses each first segment the same way for the picture (only the
+// every tentacle_<i>_1 at its hit box (KrakenAim: the arm along the aim, its sucker face down when raised or level and
+// towards the body's axis when hanging, GL1); splay (degrees from straight up, outwards) poses each first segment the same way for the picture (only the
 // preview meshes, nothing is keyed). 50 is the attack rest, 155 the lurking rest (hanging 25 deg out).
 KRK.VIEWS = [['side (attack rest: arms 50 deg out)', [-270, 70, 0], 48, null, 0, 50],
   ['front', [0, 70, -270], 48, null, 0, 50], ['three-quarter, from a deck', [-175, 175, -195], 44, null, 0, 50],
   ['grab at 0.45 s', [-175, 175, -195], 44, 'grab', 0.45, 50], ['lurking (arms hang 25 deg out)', [-230, 30, -120], 30, null, 0, 155],
   ['from below: beak, suckers', [-110, -150, -165], 25, null, 0, 50]];
 // the rotation KrakenAim gives tentacle i for the unit direction d (internal = GeckoLib's baked frame): the rest frame
-// (up, inner normal towards the axis) onto (d, the inner direction made perpendicular to d)
+// (up, inner normal n0 towards the axis) onto (d, KrakenAim.suckerNormal: down tilted 0.5 * d.y outwards, made
+// perpendicular to d; fallbacks the axis, then forward). GL1: K1c used n0 made perpendicular to d, which showed the
+// suckers of raised arms to the sky.
 KRK.aimQuat = function (i, d) {
   const a = KRK.ang(i), px = Math.sin(a) * KRK.RING, pz = -Math.cos(a) * KRK.RING, r = Math.hypot(px, pz);
   const u0 = new THREE.Vector3(0, 1, 0), n0 = new THREE.Vector3(-px / r, 0, -pz / r);
-  const u = d.clone().normalize(), n = n0.clone().addScaledVector(u, -n0.dot(u));
+  const u = d.clone().normalize(), w = new THREE.Vector3(0, -1, 0).addScaledVector(n0, -0.5 * u.y);
+  let n = w.clone().addScaledVector(u, -w.dot(u));
+  if (n.length() < 1e-4) n = n0.clone().addScaledVector(u, -n0.dot(u));
   if (n.length() < 1e-4) n.set(0, 0, -1).addScaledVector(u, u.z);
   n.normalize();
   const b0 = new THREE.Vector3().crossVectors(u0, n0), b = new THREE.Vector3().crossVectors(u, n);

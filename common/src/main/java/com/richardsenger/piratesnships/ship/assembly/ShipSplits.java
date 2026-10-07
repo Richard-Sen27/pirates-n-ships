@@ -144,10 +144,15 @@ public final class ShipSplits {
     }
 
     /**
-     * Where {@code plotPos} on {@code ship} is now if {@code ship} split during the last
-     * {@link #RELOCATION_MEMORY_TICKS} ticks, else null (nothing happened to it).
+     * Where {@code plotPos} on {@code ship} is now if {@code ship} split, or was rejoined to its ship
+     * ({@link ShipRejoin}), during the last {@link #RELOCATION_MEMORY_TICKS} ticks, else null (nothing happened to it).
      */
     public static @Nullable Relocation relocate(ServerLevel level, UUID ship, BlockPos plotPos) {
+        // A piece rejoined to its ship (RS2) is gone for good: that is newer than any split it came from.
+        Relocation rejoined = ShipRejoin.relocate(level, ship, plotPos);
+        if (rejoined != null) {
+            return rejoined;
+        }
         Map<UUID, Remembered> m = RECENT.get(level);
         Remembered r = m == null ? null : m.get(ship);
         return r == null ? null : r.event().relocate(plotPos);

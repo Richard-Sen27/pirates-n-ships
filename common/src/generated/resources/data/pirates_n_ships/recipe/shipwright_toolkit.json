@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "pirates_n_ships:carpenters_hammer"
+    },
+    {
+      "item": "pirates_n_ships:saw"
+    },
+    {
+      "item": "pirates_n_ships:nails"
+    },
+    {
+      "item": "minecraft:leather"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:shipwright_toolkit"
+  }
+}

@@ -28,6 +28,18 @@ public final class AssemblyConfig {
     public static final ConfigValue<Boolean> MOVE_ENTITIES = S.bool("move_entities_on_disassembly", true,
             "Move players and mobs standing on deck onto the placed deck blocks when a ship is disassembled");
 
+
+    /** Sub-section {@code assembly.split}: a ship that Sable splits in two (RS1, {@link ShipSplits}). */
+    private static final ConfigSection SPLIT = S.section("split",
+            "A ship whose only connecting block is destroyed splits into pieces; the piece with the helm stays the ship");
+
+    public static final ConfigValue<Boolean> SPLIT_ENABLED = SPLIT.bool("enabled", true,
+            "Ships split when a part is cut off. Off = also switches Sable's sub_level_splitting off while this server runs, so ships never split");
+    public static final ConfigValue<Integer> WRECK_MIN_BLOCKS = SPLIT.intRange("wreck_min_blocks", 4, 1, 4096,
+            "A loose piece with fewer blocks than this breaks up into items instead of drifting off as a wreck");
+    public static final ConfigValue<Integer> WRECK_PERSIST_TICKS = SPLIT.intRange("wreck_persist_ticks", 0, 0, 100000000,
+            "Ticks a wreck piece stays while no player is near it before it is removed (0 = forever)");
+
     private AssemblyConfig() {
     }
 

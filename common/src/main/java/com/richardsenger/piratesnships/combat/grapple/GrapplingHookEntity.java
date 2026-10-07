@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.combat.grapple;
 
 import com.richardsenger.piratesnships.combat.content.CombatContent;
+import com.richardsenger.piratesnships.ship.assembly.ShipSplits;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import net.minecraft.core.BlockPos;
@@ -243,6 +244,26 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
 
     @Nullable Vec3 throwerPos() {
         return throwerPos;
+    }
+
+    /**
+     * The ship under the hook or the thrower split (RS1): a latched hook follows the block it bit into to the piece that
+     * holds it now (a wreck piece too), and the anchor on the thrower's ship is looked up again on the next tick.
+     */
+    void followSplit(ShipSplits.SplitEvent split) {
+        if (shipId != null && shipId.equals(split.parent()) && latchedBlock != null && plotPos != null) {
+            ShipSplits.Relocation r = split.relocate(latchedBlock);
+            if (r.moved(shipId, latchedBlock)) {
+                BlockPos d = r.pos().subtract(latchedBlock);
+                shipId = r.ship();
+                latchedBlock = r.pos();
+                plotPos = plotPos.add(d.getX(), d.getY(), d.getZ());
+                entityData.set(PLOT_BLOCK, latchedBlock); // PLOT_OFFSET is relative to the block and stays
+            }
+        }
+        if (split.parent().equals(throwerShipId)) {
+            anchorRefreshAt = 0;
+        }
     }
 
     /** The rope's holding state (server). */

@@ -208,7 +208,9 @@ public final class SailingRuntimes {
             HullRuntime hull = HullRuntimes.get(level, rt.id());
             double sea = hull == null || !hull.seesSea() ? Double.NaN : hull.seaWorldY();
             try {
-                rt.physicsTick(ship, sea, timeStep, now, fullDraft, needWater, heel, forces, damping);
+                // a wreck (a loose piece of a split ship, RS1) gets no sail, keel or rudder force, only the damping
+                boolean shipForces = forces && !com.richardsenger.piratesnships.ship.assembly.ShipSplits.isWreck(ship);
+                rt.physicsTick(ship, sea, timeStep, now, fullDraft, needWater, heel, shipForces, damping);
             } catch (RuntimeException e) {
                 Constants.LOG.error("Sailing forces of ship {} failed", rt.id(), e);
             }

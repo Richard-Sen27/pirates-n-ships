@@ -70,7 +70,16 @@ public final class ShipAssembler {
 
         // The new ship may get a plot freed earlier this tick: flush stale chunk lookups first (see ChunkCacheGuard).
         ChunkCacheGuard.flush(level);
-        ShipBody ship = SableShips.assemble(level, helm, blocks, gathered.min(), gathered.max());
+        // The helm goes first: Sable's heat map takes the first block it is given as its root, and a split leaves the
+        // part connected to the root in the original sub-level, so the helm side keeps the ship's id (see ShipSplits).
+        List<BlockPos> ordered = new ArrayList<>(blocks.size());
+        ordered.add(helm.immutable());
+        for (BlockPos b : blocks) {
+            if (!b.equals(helm)) {
+                ordered.add(b);
+            }
+        }
+        ShipBody ship = SableShips.assemble(level, helm, ordered, gathered.min(), gathered.max());
         if (ship == null) {
             Constants.LOG.error("Sable did not create a sub-level for the helm at {}", helm);
             return AssemblyResult.of(Outcome.FAILED);

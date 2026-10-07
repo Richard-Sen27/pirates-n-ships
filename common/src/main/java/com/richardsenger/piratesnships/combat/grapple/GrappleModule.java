@@ -65,6 +65,7 @@ public final class GrappleModule implements ModModule {
         CommonEvents.PLAYER_LOGOUT.register(GrappleService::onLogout);
         CommonEvents.SERVER_STOPPED.register(server -> GrappleService.onServerStopped());
         SableShips.onPhysicsTick(GrappleService::onPhysicsTick);
+        com.richardsenger.piratesnships.ship.assembly.ShipSplits.onSplit(GrappleService::onShipSplit); // RS1
     }
 
     @Override

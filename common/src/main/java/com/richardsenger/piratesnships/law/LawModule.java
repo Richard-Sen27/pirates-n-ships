@@ -2,9 +2,12 @@ package com.richardsenger.piratesnships.law;
 
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
+import com.richardsenger.piratesnships.law.bounty.NoticeBoardListing;
 import com.richardsenger.piratesnships.law.crime.WantedLevel;
 import com.richardsenger.piratesnships.law.client.ClientWanted;
 import com.richardsenger.piratesnships.law.client.LawClient;
+import com.richardsenger.piratesnships.law.net.NoticeBoardBackend;
+import com.richardsenger.piratesnships.law.net.NoticeBoardText;
 import com.richardsenger.piratesnships.law.proof.BountyProofItem;
 import com.richardsenger.piratesnships.law.proof.ProofContent;
 import com.richardsenger.piratesnships.law.proof.ProofDrops;
@@ -49,12 +52,14 @@ public final class LawModule implements ModModule {
     @Override
     public void registerPayloads() {
         Services.NETWORK.registerToClient(WantedSyncPayload.TYPE, WantedSyncPayload.CODEC, (p, player) -> ClientWanted.accept(p));
+        NoticeBoardBackend.registerPayloads();
     }
 
     @Override
     public void registerEvents() {
         CommonEvents.SERVER_TICK_END.register(LawService::onServerTick);
         CommonEvents.SERVER_TICK_END.register(WantedSync::onServerTick);
+        CommonEvents.SERVER_TICK_END.register(NoticeBoardBackend::onServerTick);
         CommonEvents.PLAYER_LOGIN.register(player -> {
             LawService.onLogin(player);
             WantedSync.sendNow(player);
@@ -62,9 +67,11 @@ public final class LawModule implements ModModule {
         CommonEvents.PLAYER_LOGOUT.register(player -> {
             WantedSync.onLogout(player);
             TheftDetector.onLogout(player);
+            NoticeBoardBackend.close(player);
         });
         CommonEvents.SERVER_STOPPED.register(server -> {
             WantedSync.onServerStopped(server);
+            NoticeBoardBackend.onServerStopped(server);
             TheftDetector.onServerStopped();
             CrimeLog.clear();
         });
@@ -140,6 +147,40 @@ public final class LawModule implements ModModule {
                     .add(o + "prisoner.released", "%s took you into custody. Your record is wiped and the shackles are off");
         });
         data.lang(lang -> {
+            String m = NoticeBoardBackend.MSG;
+            lang.add(NoticeBoardText.TITLE, "Notice Board")
+                    .add(NoticeBoardText.COINS, "%s doubloons")
+                    .add(NoticeBoardText.LOADING, "Reading the notices...")
+                    .add(NoticeBoardText.EMPTY, "No bounties are posted")
+                    .add(NoticeBoardText.OWN_BOUNTY, "There is a bounty of %s doubloons on your head!")
+                    .add(NoticeBoardText.OWN_NONE, "There is no bounty on you")
+                    .add(NoticeBoardText.COL_TARGET, "Wanted")
+                    .add(NoticeBoardText.COL_AMOUNT, "Doubloons")
+                    .add(NoticeBoardText.COL_PLACED_BY, "Placed by")
+                    .add(NoticeBoardText.COL_SINCE, "Since")
+                    .add(NoticeBoardText.NAVY, "The Navy")
+                    .add(NoticeBoardText.TOTAL, " (%s in all)")
+                    .add(NoticeBoardText.FORM, "Place a bounty:")
+                    .add(NoticeBoardText.FORM_TARGET, "Name")
+                    .add(NoticeBoardText.FORM_AMOUNT, "Amount")
+                    .add(NoticeBoardText.FORM_PLACE, "Place")
+                    .add(NoticeBoardText.FORM_MINIMUM, "(at least %s doubloons)")
+                    .add(NoticeBoardText.FORM_DISABLED, "Players can't place bounties on this server")
+                    .add(NoticeBoardText.CLOSED, "The notice board is out of reach")
+                    .add(NoticeBoardText.age(NoticeBoardListing.AgeUnit.JUST_NOW), "just now")
+                    .add(NoticeBoardText.age(NoticeBoardListing.AgeUnit.MINUTES), "%s min ago")
+                    .add(NoticeBoardText.age(NoticeBoardListing.AgeUnit.HOURS), "%s h ago")
+                    .add(NoticeBoardText.age(NoticeBoardListing.AgeUnit.DAYS), "%s d ago")
+                    .add(m + "placed", "Posted a bounty of %s doubloons on %s (%s in all)")
+                    .add(m + "refused.closed", "The notice board is out of reach")
+                    .add(m + "refused.disabled", "Players can't place bounties on this server")
+                    .add(m + "refused.below_minimum", "A bounty must be at least %s doubloons")
+                    .add(m + "refused.unknown_target", "Nobody called %s is online or on the board")
+                    .add(m + "refused.self", "You can't place a bounty on yourself")
+                    .add(m + "refused.self_target", "You can't place a bounty on yourself")
+                    .add(m + "refused.not_enough", "You need %s doubloons and carry %s");
+        });
+        data.lang(lang -> {
             for (CrimeType t : CrimeType.values()) {
                 lang.add(t.nameKey(), switch (t) {
                     case ATTACK_NAVY -> "Attacking the navy";
@@ -163,6 +204,6 @@ public final class LawModule implements ModModule {
     @Override
     public List<Class<?>> gameTestClasses() {
         return List.of(LawGameTests.class, LawWorldGameTests.class, PlunderCrimeGameTests.class,
-                BountyTurnInGameTests.class);
+                BountyTurnInGameTests.class, NoticeBoardGameTests.class);
     }
 }

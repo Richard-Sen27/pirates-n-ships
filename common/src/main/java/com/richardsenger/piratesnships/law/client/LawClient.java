@@ -9,6 +9,10 @@ public final class LawClient {
     }
 
     public static void init() {
-        ClientEvents.CLIENT_DISCONNECT.register(mc -> ClientWanted.reset());
+        ClientEvents.CLIENT_DISCONNECT.register(mc -> {
+            ClientWanted.reset();
+            ClientNoticeBoard.reset();
+        });
+        ClientNoticeBoard.setOpener(NoticeBoardScreen::open);
     }
 }

@@ -13,7 +13,10 @@ import net.minecraft.world.level.block.state.properties.BlockSetType;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 
-/** Brig content (design.md §13.3): shackles, brig bars, the lockable brig door and its key. Prisoners: {@code law.brig}. */
+/**
+ * Brig content (design.md §13.3): shackles, brig bars, the lockable brig door and its key. Prisoners: {@code law.brig}.
+ * And the notice board (§13.2).
+ */
 public final class LawContent {
 
     /**
@@ -42,6 +45,11 @@ public final class LawContent {
     public static final RegistryEntry<Block, BrigDoorBlock> BRIG_DOOR = ModRegistry.blockWithItem("brig_door",
             () -> new BrigDoorBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).requiresCorrectToolForDrops()
                     .strength(5.0f).noOcclusion().pushReaction(PushReaction.DESTROY)));
+
+    /** Lists the active bounties and takes new ones (design.md §13.2). */
+    public static final RegistryEntry<Block, NoticeBoardBlock> NOTICE_BOARD = ModRegistry.blockWithItem("notice_board",
+            () -> new NoticeBoardBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0f, 3.0f)
+                    .sound(SoundType.WOOD).noOcclusion().ignitedByLava()));
 
     /** Owner of a brig door (lower half). */
     @SuppressWarnings("unchecked")

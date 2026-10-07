@@ -33,7 +33,8 @@ import java.util.List;
  * The {@code combat.grapple} module (G11, docs/design.md §8.3 version 1, §8.4): the grappling hook is thrown, latches
  * onto another ship's hull at a plot position and hauls the two ships together with a rope force on both bodies until
  * they lie side by side. GR1 adds launching it from a crossbow or musket in the other hand ({@link GrappleLaunch}) and
- * the mooring ring ({@link MooringRingBlock}). Config section {@code grapple}. The item is
+ * the mooring ring ({@link MooringRingBlock}); GR2 lets players slide down a latched rope ({@link RopeSlideService}).
+ * Config section {@code grapple}. The item is
  * {@code combat.content.CombatContent#GRAPPLING_HOOK}.
  */
 public final class GrappleModule implements ModModule {
@@ -57,6 +58,7 @@ public final class GrappleModule implements ModModule {
     @Override
     public void registerPayloads() {
         Services.NETWORK.registerToServer(ReleaseHookPayload.TYPE, ReleaseHookPayload.CODEC, ReleaseHookPayload::handle);
+        Services.NETWORK.registerToServer(BoardRopePayload.TYPE, BoardRopePayload.CODEC, BoardRopePayload::handle);
     }
 
     @Override
@@ -88,7 +90,9 @@ public final class GrappleModule implements ModModule {
                 .add(GrappleService.TIED_KEY, "Rope tied to the mooring ring")
                 .add(GrappleService.ALREADY_TIED_KEY, "The rope is already tied to this ring")
                 .add(GrappleService.TIE_SAME_SHIP_KEY, "The hook hangs on this ship: tie the rope on your own ship")
-                .add(GrappleService.TIE_TOO_FAR_KEY, "The rope does not reach this ring"));
+                .add(GrappleService.TIE_TOO_FAR_KEY, "The rope does not reach this ring")
+                .add(GrappleContent.ROPE_RIDER.get().getDescriptionId(), "Rope Slide")
+                .add(RopeSlideService.DISABLED_KEY, "Sliding along ropes is disabled"));
         data.models(GrappleModule::ringModels);
         data.blockLoot(loot -> loot.dropSelf(GrappleContent.MOORING_RING.get()));
         data.blockTags(tags -> {
@@ -147,6 +151,6 @@ public final class GrappleModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(GrappleGameTests.class, GrappleLaunchGameTests.class);
+        return List.of(GrappleGameTests.class, GrappleLaunchGameTests.class, GrappleSlideGameTests.class);
     }
 }

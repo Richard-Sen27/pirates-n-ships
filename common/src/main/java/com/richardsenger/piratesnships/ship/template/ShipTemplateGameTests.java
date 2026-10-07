@@ -49,9 +49,12 @@ public final class ShipTemplateGameTests {
     private ShipTemplateGameTests() {
     }
 
+    /** These tests and the shipwright orders' ({@link ShipOrderGameTests}, SW1; this package's module class is not ours). */
     @GameTestGenerator
     public static Collection<TestFunction> tests() {
-        return ModGameTests.of(ShipTemplateGameTests.class);
+        List<TestFunction> all = new java.util.ArrayList<>(ModGameTests.of(ShipTemplateGameTests.class));
+        all.addAll(ModGameTests.of(ShipOrderGameTests.class));
+        return all;
     }
 
     // ------------------------------------------------------------------ fixtures

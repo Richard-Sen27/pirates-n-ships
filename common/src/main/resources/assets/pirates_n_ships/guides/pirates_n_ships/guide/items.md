@@ -39,6 +39,7 @@ item_ids:
   - pirates_n_ships:salted_fish
   - pirates_n_ships:saw
   - pirates_n_ships:shark_spawn_egg
+  - pirates_n_ships:ship_receipt
   - pirates_n_ships:shipwright_toolkit
   - pirates_n_ships:spices
   - pirates_n_ships:tobacco

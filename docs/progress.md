@@ -45,6 +45,7 @@ Started 2026-10-07 after the session restart with the Blockbench MCP connected (
 | F7d | Blockbench models, batch 4: cargo crate, cargo barrel, pantry, water barrel | todo, after F7b |
 | F7c | Blockbench models, batch 3: the four figureheads | done | Merged (`c15b28c`). Skull 42 elements, eagle 35, lion 37, mermaid 33, all with a mounting plate against the hull, 8 to 15 px forward overhang, `noOcclusion()`. Renders in `art/renders/`. Playtest `items-and-blocks.md` (to be added to the 3D models section). |
 | F7e | Blockbench models, batch 5: cleat, brig bars and door, flag cloth at 2 blocks via a block entity renderer | todo, after F5b |
+| G2 | Sailing follow-ups: sail winch facing (crank toward the player), cloth refresh right after a rotated disassembly, unused imports and dead helpers from F5a/F5b/F7b | in progress |
 | F8a | 3D item models, batch 1: rapier, cutlass, saber | done | Merged (`12f62ce`). Sprite-aligned models (16, 15 and 14 elements) with vanilla's handheld display entries copied in (a `builtin/generated` parent would discard the elements, `ModelBakery` 1.21.1 l.292), `gui_light: front`; the rapier runs 2 px past the footprint and scales its GUI entry to 0.8. Shared palette texture `textures/item/palette.png` from `tools/gen_item_palette.py` (16 patches, all used; grow to 32×16 for the next batch). `HandMadeModelsTest` now lists every hand-made model by name and checks item models carry all 7 display slots. Also restored the block-texture functions that F7c had accidentally dropped from `tools/gen_placeholder_textures.py`. Playtest `items-and-blocks.md`, section "3D item models". |
 | F8b | 3D item models, batch 2: pistol, musket, lead shot, cannonball, grappling hook | in progress |
 | F8c | 3D item models, batch 3: captain's whistle, shackles | todo, after F8b |
@@ -60,10 +61,7 @@ Follow-ups from phase G (small):
 - `.gitattributes` marks `*.gradle` as CRLF (template leftover), so Git warns about `neoforge/build.gradle`; switch it to LF when convenient.
 - Stays and mirrored structure templates: the cleat facing is mirrored but the stored stay offset is not, so the stay is ignored after a mirrored placement. Matters once ship templates exist.
 - The beam-reach GameTests run close to their bounds (0.371 m/s against 0.3). Physics has been deterministic so far; watch them.
-- After a rotated disassembly the head cleat's cloth is wrong for up to 20 ticks until the periodic refresh.
 - The yard cloth is a flat grid with a simple belly and one light value; the Fabric port needs a culling-box equivalent (`shouldRenderOffScreen` breaks Sable's sub-level path, see sable-notes §9.0g). F7 may give the cloth a better look.
-- `SailWinchBlock` has no facing, so its Blockbench model stands one way (crank east). Give it a horizontal facing with placement, rotate and mirror, plus the facing dispatch in datagen, after F5b has merged (both touch `sailing/`).
-- After F5b merges: remove the unused imports F7b left in `SailingModule` (`TexturedModel`, `ElementModel`), and have `HandMadeModelsTest.theFirstBatchOfModelsIsThere` list all hand-made models.
 - The yard model shows its rope band on every block of a yard (a model can't know which block meets the mast); the capstan bars and the winch crank reach 3 px into neighbouring blocks. Visual only; revisit after the playtest.
 - The rope on the winch and yard is vanilla stripped birch as a stand-in for a rope texture.
 - Saving a `.bbmodel` from Blockbench embeds the vanilla textures again; strip them before committing (F7a did it with an ad-hoc script; a `tools/strip_bbmodel_textures.py` would make it one command).

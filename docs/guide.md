@@ -81,6 +81,10 @@ its heading rounded to the nearest 90°. It is refused when:
 - it is tilted more than 6°,
 - something solid is in the way (the message names the position).
 
+**If your helm breaks,** the ship stays a ship: its stations keep working, but nothing steers or disassembles it until
+you place a helm anywhere on its deck. The first helm placed steers; a second helm on the same ship does nothing while
+the first stands. Using a helm on a floating hull the mod has lost track of makes it your ship again.
+
 Players and mobs on deck are set down on the deck blocks. Water inside the hull is removed.
 
 ### The dry hull
@@ -288,6 +292,15 @@ tavern and a shipwright's shed, and end in a small cobbled place. The harbor mas
 port: use it to open the port's market. A desk you place anywhere inside a village joins that port too. Operators can
 list ports with `/pirates world ports` and find the nearest with `/pirates world port nearest`. Server config
 `world.structures.seafarer_village`.
+
+### Ship HUD
+While you stand on a ship, a small panel in the top right corner shows its state. The compass rose turns a little
+ship-shaped needle to the bow's heading; the light arrow outside the rose sits on the side the wind comes from and
+points the way it blows: the longer it is, the stronger the wind, and it turns amber in a gust. Below it you read the
+speed (in knots, or blocks per second) and the rudder angle, then the ship's name and how heavily it is laden. The
+strip at the bottom is your hull from bow (left) to stern: one cell per compartment, filling blue as water comes in,
+with a red mark where a breach lets the sea in and a pump sign while a pump drains it. Client options under
+`ship_hud`: on/off, corner, size and speed unit; servers can switch it off with `ships.ship_status_hud`.
 
 ### Cargo weight
 What you carry weighs the ship down. Crates, cargo barrels, pantries and water barrels get heavier as they fill: a full
@@ -552,6 +565,14 @@ What is detected in the world today:
   can see you. Putting items in is fine.
 - The other crimes need ships, flags or the navy to react, and are reached through `/pirates law crime`.
 
+### Fines, ransom, press-gang and release
+Pay your fine at a navy officer: hold doubloons and right-click him. Each criminal-score point costs 3 doubloons by
+default, and he takes only the whole points you can afford; he won't deal with wanted criminals. Lead a shackled navy
+officer, navy soldier or merchant (sailor, villager, trader) to a navy officer and right-click him with an empty hand
+to ransom them. Hold the captain's whistle and right-click a shackled sailor standing on your own ship to press-gang
+them into your crew (low morale, and a crime). Sneak and right-click your own prisoner with an empty hand to let them
+go. Server config `law.officer_fines`, `law.ransom_needs_port`, `flags_brig.prisoner_interactions`.
+
 ### Bounties
 - At a score of 50 the navy puts a **bounty** on you of twice your score. It grows with the score and is withdrawn
   when the score falls below 25.
@@ -655,13 +676,13 @@ reloads by itself from that supply, so a manned, supplied gun keeps firing as fa
 `cannons.crew`).
 
 ### Grappling hook
-**Shooting the hook.** Put the grappling hook in your **off hand** and a crossbow or musket in your main hand. Hold
-use to load the hook into the weapon: the musket takes its full reload and one gunpowder, the crossbow a normal draw.
-A loaded musket shows the hook at its muzzle and a gold bar; hold use to aim and let go to fire, or sneak to lower. A
-loaded crossbow looks charged; click to shoot. The musket throws the hook farthest (48-block rope), the crossbow
-farther than a throw (36). Without a weapon in the other hand the hook is thrown by hand (24). Rain can make the
-musket misfire; the hook stays loaded. Left-handed players can turn off `grapple.launch.offhand_required` to swap the
-hands.
+**Shooting the hook.** Put the grappling hook in your **off hand** and a musket in your main hand. Hold use to load
+the hook into the musket (its full reload and one gunpowder), then aim and let go to fire it: a flat shot on a 64-block
+rope. Thrown by hand, the hook's rope is 32 blocks. The hook catches on any solid surface: another ship (the rope hauls
+both ships together), your own ship (a line to slide down, e.g. from the mast top), or land (from a ship it slowly
+hauls your ship toward that point like a kedge; from land it is a zip line). It slips off leaves and glass panes. To
+slide, look at the rope with an empty hand (or a hook in it) and use it; with a musket in hand, use always works the
+musket. Left-handed players can turn off `grapple.launch.offhand_required` to swap the hands.
 
 **Cleats** work like mooring rings: a hook flying close to a cleat catches on it, and using a cleat on your ship
 while your hook is out ties the rope off there.
@@ -826,8 +847,8 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `anchor_chain` | Chain speeds, travel time limits, anchor sounds and volumes. |
 | `hull_creaking` | Creaking on/off, how often, volume and pitch ranges, the rolling rate that counts. |
 | `audio` (client) | Music on/off and volume, the gap between tracks, shanties aboard. |
-| `grapple.launch` | Crossbow and musket launches on/off, their speeds and rope lengths per mode, `offhand_required`. |
-| `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore pull, entity damage, lost-hook rule. |
+| `grapple.launch` | Musket launch on/off, speed, gravity factor and rope length, `offhand_required`. |
+| `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore pull, entity damage, lost-hook rule, `latch_world_blocks`, `latch_own_ship`, `slide.grab_cooldown_ticks`. |
 | `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevation range and steps, blocks per hit, recoil and impact impulses, ball lifetime and water behaviour, `mobGriefing` and spawn protection, drops from destroyed blocks, glancing hits and the bounce angle. |
 | `cannons.swivel` | Swivel gun on/off, ammo item and count, damage, muzzle speed, reload, blocks per hit, recoil and impact impulses, ball lifetime, elevation limits, aim reach. |
 | `mobs` | Mob types on/off and peaceful, hostility toggles, detection and fight ranges, skill tiers, musket timings and ammo, shove, drops. |

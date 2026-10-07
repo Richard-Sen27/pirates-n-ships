@@ -1,9 +1,12 @@
 package com.richardsenger.piratesnships.combat.grapple;
 
+import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
 import com.richardsenger.piratesnships.sailing.rope.RopeAnchorBlockEntity;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.ItemStack;
@@ -45,11 +48,17 @@ public final class GrappleContent {
                     (pos, state) -> new RopeAnchorBlockEntity(GrappleContent.MOORING_RING_BLOCK_ENTITY.get(), pos, state), MOORING_RING);
 
     /**
-     * Present on a crossbow or musket that holds a grappling hook (GR3, {@link LoadedHook}); removed when it fires.
+     * Present on a musket that holds a grappling hook (GR3, {@link LoadedHook}); removed when it fires.
      * Saved and synced to the client (the musket's {@code musket_hook} model reads it).
      */
     public static final RegistryEntry<DataComponentType<?>, DataComponentType<LoadedHook>> LOADED_HOOK = ModRegistry.dataComponent(
             "grapple_loaded", b -> b.persistent(LoadedHook.CODEC).networkSynchronized(LoadedHook.STREAM_CODEC));
+
+    /**
+     * Blocks a flying hook slips off instead of latching (GR4: "non-solid" surfaces such as leaves and glass panes;
+     * water never stops the hook). Filled by datagen, extendable by data packs.
+     */
+    public static final TagKey<Block> HOOK_SLIPS = TagKey.create(Registries.BLOCK, Constants.id("grapple_slips"));
 
     private GrappleContent() {
     }

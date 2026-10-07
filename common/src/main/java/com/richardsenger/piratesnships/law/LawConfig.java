@@ -56,6 +56,10 @@ public final class LawConfig {
             "Bounty payout multiplier for delivering the target alive instead of a proof item");
     public static final ConfigValue<Double> SCORE_AFTER_CLAIM_FACTOR = LAW.doubleRange("score_after_claim_factor", 0.0, 0.0, 1.0,
             "The target's criminal score is multiplied by this when a bounty on them is claimed (0 = clean slate)");
+    public static final ConfigValue<Boolean> OFFICER_FINES = LAW.bool("officer_fines", true,
+            "Using a navy officer with doubloons in hand pays the fine for your criminal score (whole points, fine_cost_per_point each)");
+    public static final ConfigValue<Boolean> RANSOM_NEEDS_PORT = LAW.bool("ransom_needs_port", false,
+            "Only navy officers inside a navy outpost pay ransoms. Off = any navy officer ransoms led navy and merchant prisoners");
 
     private static final ConfigSection BOUNTY = LAW.section("bounty", "Turning in at navy officers and notice boards");
 
@@ -155,6 +159,8 @@ public final class LawConfig {
             "Players with a bounty can be captured in shackles (PvP)");
     public static final ConfigValue<Boolean> PRISONER_ESCAPES = FLAGS.bool("prisoner_escapes", true,
             "Prisoners may try to escape from the brig");
+    public static final ConfigValue<Boolean> PRISONER_INTERACTIONS = FLAGS.bool("prisoner_interactions", true,
+            "Prisoners can be ransomed at navy officers, press-ganged with the captain's whistle and released by sneak-using them with an empty hand");
 
     private LawConfig() {
     }

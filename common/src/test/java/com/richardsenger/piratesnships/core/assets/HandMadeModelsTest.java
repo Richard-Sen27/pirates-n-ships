@@ -62,11 +62,12 @@ class HandMadeModelsTest {
             "notice_board", "pantry", "sail_winch", "sea_chest", "swivel_gun", "swivel_gun_barrel", "swivel_gun_barrel_loaded", "swivel_gun_yoke",
             "water_barrel", "water_barrel_fill0", "water_barrel_fill1", "water_barrel_fill2",
             "water_barrel_fill3", "yard");
-    static final List<String> ITEM_MODELS = List.of("bandana", "bounty_proof", "brig_door", "brig_key", "cannonball", "captains_whistle", "chart", "cloth", "cutlass", "doubloon",
-            "grappling_hook", "hardtack", "hull_patch", "jolly_roger_flag", "lead_shot", "lime", "map_tile", "merchant_flag", "musket",
-            "musket_loaded", "navy_flag", "navy_hat", "officer_hat", "pirate_hat", "pistol",
-            "pistol_loaded", "rapier", "rope", "rum", "saber", "salt_pork",
-            "salted_fish", "shackles", "spices", "tobacco");
+    static final List<String> ITEM_MODELS = List.of("bandana", "bounty_proof", "brig_door", "brig_key", "cannonball", "captains_whistle",
+            "carpenters_hammer", "chart", "cloth", "cutlass", "doubloon", "grappling_hook", "hardtack", "hull_patch",
+            "jolly_roger_flag", "kraken_beak", "kraken_ink", "lead_shot", "lime", "map_tile", "merchant_flag", "musket",
+            "musket_hook", "musket_loaded", "nails", "navy_flag", "navy_hat", "officer_hat", "pirate_hat", "pistol",
+            "pistol_loaded", "rapier", "rope", "rum", "saber", "salt_pork", "salted_fish", "saw", "shackles",
+            "shipwright_toolkit", "spices", "tobacco");
 
     /** The display slots a hand-made item model copies from vanilla's {@code item/handheld} and {@code item/generated}. */
     private static final List<String> ITEM_DISPLAY_SLOTS = List.of("thirdperson_righthand", "thirdperson_lefthand",
@@ -175,6 +176,33 @@ class HandMadeModelsTest {
         JsonObject last = overrides.get(overrides.size() - 1).getAsJsonObject();
         assertEquals(Set.of("pirates_n_ships:grapple_loaded"), last.getAsJsonObject("predicate").keySet());
         assertEquals("pirates_n_ships:item/musket_hook", last.get("model").getAsString());
+    }
+
+    /**
+     * ART1c: the hook-loaded musket ({@code musket_hook}, Blockbench) is the cocked {@code musket_loaded} with the
+     * grappling hook seated at the muzzle: every element of {@code musket_loaded} comes first and unchanged, then only
+     * {@code hook_*} parts; display entries and textures are the musket's, so the hook sits where the loaded ball
+     * variant would in every slot.
+     */
+    @Test
+    void musketHookIsTheLoadedMusketWithAHookAtTheMuzzle() throws IOException {
+        JsonObject musket = itemModel("musket");
+        JsonObject loaded = itemModel("musket_loaded");
+        JsonObject hook = itemModel("musket_hook");
+        assertFalse(hook.has("overrides"), "musket_hook: overrides of an override target are never read");
+        assertEquals(musket.get("display"), hook.get("display"), "musket_hook: display entries differ from the musket");
+        assertEquals(musket.get("textures"), hook.get("textures"), "musket_hook: textures differ from the musket");
+        JsonArray base = loaded.getAsJsonArray("elements");
+        JsonArray elements = hook.getAsJsonArray("elements");
+        assertTrue(elements.size() > base.size(), "musket_hook: no hook elements");
+        for (int i = 0; i < elements.size(); i++) {
+            if (i < base.size()) {
+                assertEquals(base.get(i), elements.get(i), "musket_hook: element " + i + " differs from musket_loaded");
+            } else {
+                String name = elements.get(i).getAsJsonObject().get("name").getAsString();
+                assertTrue(name.startsWith("hook_"), "musket_hook: unexpected element " + name);
+            }
+        }
     }
 
     /** Every override of a hand-made item model points at an existing model of ours (hand-made or generated). */

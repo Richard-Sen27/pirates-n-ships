@@ -7,10 +7,10 @@ import com.richardsenger.piratesnships.core.config.ModConfigs;
 /**
  * Server config section {@code ships} (docs/design.md §17, group "Ships"; §4.1 shipwright orders, §4.5 sinking).
  * Max block count and assembly enabled belong to the assembly package and are not declared here. Declared ahead of
- * the features by the settings package ({@code core.settings.SettingsModule}). The shipwright orders (SW1,
- * {@code ship.template.ShipOrders}) read {@link #SHIPWRIGHT_ORDERS}, {@link #buildDays} and the order values below;
- * {@code order_price_doubloons.*} stays declared but unread (the price is the template's {@code price} times
- * {@link #ORDER_PRICE_FACTOR}).
+ * the features by the settings package ({@code core.settings.SettingsModule}). The ship HUD values are read by
+ * {@code ship.hull.net.ShipStatusSync} (HUD1). The shipwright orders (SW1, {@code ship.template.ShipOrders}) read
+ * {@link #SHIPWRIGHT_ORDERS}, {@link #buildDays} and the order values below; {@code order_price_doubloons.*} stays
+ * declared but unread (the price is the template's {@code price} times {@link #ORDER_PRICE_FACTOR}).
  */
 public final class ShipConfig {
 
@@ -29,6 +29,14 @@ public final class ShipConfig {
             "Multiplier on the logs and wool a shipwright wants for an ordered ship (0 = no materials)");
     public static final ConfigValue<Integer> MAX_ORDERS_PER_PORT = S.intRange("max_orders_per_port", 3, 0, 100,
             "Ship orders a seafarer village's shipwright takes at once (open orders of all players, picked up ones free a slot)");
+
+    // Ship HUD (HUD1, ship.hull.net.ShipStatusSync): read by the hull module
+    public static final ConfigValue<Boolean> SHIP_STATUS_HUD = S.bool("ship_status_hud", true,
+            "Send players aboard a ship its status (heading, speed, rudder, water per compartment) for the ship HUD. "
+                    + "Off = the HUD shows for nobody");
+    public static final ConfigValue<Integer> SHIP_STATUS_SYNC_INTERVAL_TICKS = S.intRange("ship_status_sync_interval_ticks", 20, 1, 200,
+            "How often (ticks) the server checks the ship status of players aboard and sends it when it changed "
+                    + "(unchanged, it still goes out every fifth time)");
 
     private static final ConfigSection BUILD_TIME = S.section("build_time_days",
             "In-game days a shipwright needs to build each ship type, for a ship of 500 blocks (scaled by the template's block count)");

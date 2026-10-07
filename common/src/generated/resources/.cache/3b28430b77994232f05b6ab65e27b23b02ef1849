@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-07T18:31:40.664461	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-07T19:33:17.3907	Block states and models: pirates_n_ships
 c189a7833975a61cf2c7c8fd326d27a32969cb9d assets/pirates_n_ships/blockstates/bilge_pump.json
 52e053a4f7334e9a78798b4b4b9a2ad80087f3d5 assets/pirates_n_ships/blockstates/brig_bars.json
 83716521a6f9785f7114fa5a9489defb1257975d assets/pirates_n_ships/blockstates/brig_door.json
@@ -37,7 +37,6 @@ f7fb3b356386931f9fe39ebac39ce5984c685200 assets/pirates_n_ships/models/item/cann
 6e2d9e4e9e945102afe0356dd536dd6bd2314eb5 assets/pirates_n_ships/models/item/capstan.json
 e762fd96625dae60f3cbfdcb33e82b84c2f742ab assets/pirates_n_ships/models/item/cargo_barrel.json
 724e2310f488c077c19808000615dc5c2378241c assets/pirates_n_ships/models/item/cargo_crate.json
-b2fe390433b462799f5eabd61010c9dd2d4e4bfb assets/pirates_n_ships/models/item/carpenters_hammer.json
 f1f1587eb52c46d53241c7cb9019de1506eee3b8 assets/pirates_n_ships/models/item/cleat.json
 c2828a89c739dcf7d31509c39dbef0032d04a8c0 assets/pirates_n_ships/models/item/figurehead_eagle.json
 8011b8a61cfe0370674b6b357d92ed5112191a79 assets/pirates_n_ships/models/item/figurehead_lion.json
@@ -47,11 +46,8 @@ cc79ca683cdbc9c26d9ace4c524deb0acab46534 assets/pirates_n_ships/models/item/figu
 6a3b484e3f6a19142bdd3a5e81fd5c0569cdc513 assets/pirates_n_ships/models/item/hammock.json
 382c62816867d3ffd70a053024bd24755156b42f assets/pirates_n_ships/models/item/harbor_desk.json
 9a8098ea730c2d69b5574f6f13ade25c717e6af7 assets/pirates_n_ships/models/item/helm.json
-9ae75a374b713128fe2d9b32d66ffd1e41345cbc assets/pirates_n_ships/models/item/kraken_beak.json
-21a6c6f62cc521f0d123f8990050b2559efbfcd2 assets/pirates_n_ships/models/item/kraken_ink.json
 63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets/pirates_n_ships/models/item/kraken_spawn_egg.json
 836fd8e7649ff60620300a97b544374de38b0d55 assets/pirates_n_ships/models/item/mooring_ring.json
-b70fa369f9c6e116bfa8306fde82d91daf5812ed assets/pirates_n_ships/models/item/nails.json
 0115d1b5ba50b99963c030a78b0184a09171a371 assets/pirates_n_ships/models/item/nameplate.json
 63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets/pirates_n_ships/models/item/navy_officer_spawn_egg.json
 63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets/pirates_n_ships/models/item/navy_soldier_spawn_egg.json
@@ -60,10 +56,8 @@ d830a7abbc232e7d496bb338343be03b894083fa assets/pirates_n_ships/models/item/pant
 63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets/pirates_n_ships/models/item/pirate_spawn_egg.json
 344a8933080d39bb3457d959748e850b869917c8 assets/pirates_n_ships/models/item/sail_winch.json
 63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets/pirates_n_ships/models/item/sailor_spawn_egg.json
-4737c04f423e6b40281c124de447ff7d62652ef6 assets/pirates_n_ships/models/item/saw.json
 f17814b5d3cd7f24789afe793b4dd73b361e6c79 assets/pirates_n_ships/models/item/sea_chest.json
 63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets/pirates_n_ships/models/item/shark_spawn_egg.json
-3823de387725868d66bb8ee719bebfb200dfff2e assets/pirates_n_ships/models/item/shipwright_toolkit.json
 2f69a7f53109b1bc48f7213ff2322daba1480042 assets/pirates_n_ships/models/item/swivel_gun.json
 57975a051f59bd0ccf1e8b128565f58120904cc6 assets/pirates_n_ships/models/item/water_barrel.json
 f6e4d1d5088efeadbfd348531d4b3fb9903e3010 assets/pirates_n_ships/models/item/yard.json

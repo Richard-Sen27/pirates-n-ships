@@ -10,6 +10,7 @@ import com.richardsenger.piratesnships.world.island.PirateIslandSpawns;
 import com.richardsenger.piratesnships.world.port.PortService;
 import com.richardsenger.piratesnships.world.structure.PortStructures;
 import com.richardsenger.piratesnships.world.village.VillageData;
+import com.richardsenger.piratesnships.world.wreck.WreckLoot;
 import net.minecraft.world.entity.SpawnPlacementTypes;
 import net.minecraft.world.level.levelgen.Heightmap;
 
@@ -55,6 +56,7 @@ public final class WorldModule implements ModModule {
     public void gatherData(DataContributions data) {
         VillageData.gather(data);
         IslandData.gather(data);
+        WreckLoot.gather(data);
         data.lang(WorldCommands::lang);
     }
 

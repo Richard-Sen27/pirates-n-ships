@@ -17,6 +17,12 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.Items;
+import com.richardsenger.piratesnships.combat.firearms.FirearmKind;
+import com.richardsenger.piratesnships.combat.firearms.FirearmRules;
+import com.richardsenger.piratesnships.combat.firearms.FirearmsConfig;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
@@ -25,7 +31,8 @@ import net.minecraft.world.phys.Vec3;
 import java.util.Collection;
 
 /**
- * Sliding along a latched grappling rope (GR2, docs/design.md §8.3) in a real server. Two closed 5×4×5 plank hulls of
+ * Sliding along a latched grappling rope (GR2, GR4, docs/design.md §8.3) in a real server. Ropes are grabbed
+ * {@code grab_cooldown_ticks} after the throw ({@link #grabAt()}). Two closed 5×4×5 plank hulls of
  * {@link DryHullGameTests} float in one basin as in {@link GrappleGameTests}: ship A at x 2..6 (the thrower's), ship B
  * at x 16..20; the hook bites into B's west wall at deck height. For the crow's nest A carries a three-plank mast on
  * its helm, the thrower standing on top. Hauling is switched off ({@code haul_force} 0, so every test that changes it
@@ -120,9 +127,14 @@ public final class GrappleSlideGameTests {
         h.assertTrue(h.getEntities(GrappleContent.ROPE_RIDER.get()).isEmpty(), "a rope rider is left");
     }
 
+    /** The test tick at which a rope thrown at tick 20 can first be grabbed ({@code grab_cooldown_ticks}, GR4), plus slack. */
+    private static int grabAt() {
+        return 22 + GrappleConfig.GRAB_COOLDOWN_TICKS.get();
+    }
+
     // ------------------------------------------------------------------ sliding
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200, batch = BATCH + "crows_nest")
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 220, batch = BATCH + "crows_nest")
     public static void thrownFromTheCrowsNestTheThrowerSlidesDownAndLandsOnTheOtherShip(GameTestHelper h) {
         Ships s = twoShips(h, true);
         ServerLevel level = h.getLevel();
@@ -132,7 +144,7 @@ public final class GrappleSlideGameTests {
         GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
         long[] boardedAt = {-1};
         h.runAfterDelay(20, () -> hook[0] = hookB(level, player, s.b()));
-        h.runAfterDelay(26, () -> {
+        h.runAfterDelay(grabAt(), () -> {
             GrapplingHookEntity g = hook[0];
             h.assertTrue(g.state() == GrapplingHookEntity.State.LATCHED, "the hook did not latch: " + g.state());
             Vec3 near = g.ropeNearEnd(level);
@@ -150,7 +162,7 @@ public final class GrappleSlideGameTests {
             h.assertTrue(player.fallDistance == 0.0f, "grabbing the rope did not reset the fall distance");
             boardedAt[0] = h.getTick();
         });
-        h.runAfterDelay(30, () -> {
+        h.runAfterDelay(grabAt() + 4, () -> {
             h.assertTrue(player.isPassenger(), "the player let go after a few ticks");
             Vec3 grip = player.position().add(0, GrappleConfig.HANG_OFFSET.get(), 0);
             GrapplingHookEntity g = hook[0];
@@ -160,7 +172,7 @@ public final class GrappleSlideGameTests {
             h.assertTrue(off < 0.3, "the player does not hang hang_offset below the rope: " + off + " off");
             h.assertTrue(player.fallDistance == 0.0f, "falling while sliding");
         });
-        h.runAfterDelay(31, () -> h.succeedWhen(() -> {
+        h.runAfterDelay(grabAt() + 5, () -> h.succeedWhen(() -> {
             h.assertTrue(!player.isPassenger(), "still sliding");
             long took = h.getTick() - boardedAt[0];
             // about 28 ticks for the 12.8 block rope (RopeSlideTest), a little slack for the ships' bobbing
@@ -175,7 +187,7 @@ public final class GrappleSlideGameTests {
         }));
     }
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 160, batch = BATCH + "water")
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 180, batch = BATCH + "water")
     public static void aSwimmerGrabsTheRopeMidwayAndSlidesToTheLowerShip(GameTestHelper h) {
         Ships s = twoShips(h, false);
         ServerLevel level = h.getLevel();
@@ -184,7 +196,7 @@ public final class GrappleSlideGameTests {
         Player swimmer = player(h);
         GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
         h.runAfterDelay(20, () -> hook[0] = hookB(level, thrower, s.b()));
-        h.runAfterDelay(26, () -> {
+        h.runAfterDelay(grabAt(), () -> {
             GrapplingHookEntity g = hook[0];
             h.assertTrue(g.state() == GrapplingHookEntity.State.LATCHED, "the hook did not latch: " + g.state());
             Vec3 mid = ropeAt(level, g, 0.5);
@@ -198,7 +210,7 @@ public final class GrappleSlideGameTests {
             h.assertTrue(Math.abs(rider.t() - 0.5) < 0.1, "grabbed the rope at t=" + rider.t() + " instead of the middle");
             h.assertTrue(g.pinPos() == null, "a rope grabbed by someone else was pinned");
         });
-        h.runAfterDelay(27, () -> h.succeedWhen(() -> {
+        h.runAfterDelay(grabAt() + 1, () -> h.succeedWhen(() -> {
             h.assertTrue(!swimmer.isPassenger(), "still sliding");
             assertStandsOnB(h, level, swimmer, s.b());
             h.assertTrue(swimmer.getHealth() == swimmer.getMaxHealth(), "hurt by the slide");
@@ -207,7 +219,7 @@ public final class GrappleSlideGameTests {
         }));
     }
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 120, batch = BATCH + "sneak")
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 140, batch = BATCH + "sneak")
     public static void sneakingLetsGoWhereThePlayerHangs(GameTestHelper h) {
         Ships s = twoShips(h, false);
         ServerLevel level = h.getLevel();
@@ -217,7 +229,7 @@ public final class GrappleSlideGameTests {
         GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
         Vec3[] hung = new Vec3[1];
         h.runAfterDelay(20, () -> hook[0] = hookB(level, thrower, s.b()));
-        h.runAfterDelay(26, () -> {
+        h.runAfterDelay(grabAt(), () -> {
             GrapplingHookEntity g = hook[0];
             h.assertTrue(g.state() == GrapplingHookEntity.State.LATCHED, "the hook did not latch: " + g.state());
             Vec3 at = ropeAt(level, g, 0.3);
@@ -225,16 +237,16 @@ public final class GrappleSlideGameTests {
             lookAt(rider, at);
             h.assertTrue(RopeSlideService.tryBoard(level, rider, g, 0.0) == RopeSlideService.Board.OK, "grabbing the rope was refused");
         });
-        h.runAfterDelay(29, () -> {
+        h.runAfterDelay(grabAt() + 3, () -> {
             h.assertTrue(rider.getVehicle() instanceof RopeRiderEntity, "the player let go by itself");
             rider.fallDistance = 4.0f; // as if it had been falling: the next ride tick resets it
         });
-        h.runAfterDelay(30, () -> {
+        h.runAfterDelay(grabAt() + 4, () -> {
             h.assertTrue(rider.fallDistance == 0.0f, "the slide does not reset the fall distance");
             hung[0] = rider.position();
             rider.setShiftKeyDown(true);
         });
-        h.runAfterDelay(31, () -> h.succeedWhen(() -> {
+        h.runAfterDelay(grabAt() + 5, () -> h.succeedWhen(() -> {
             h.assertTrue(!rider.isPassenger(), "sneaking did not let go");
             double moved = rider.position().distanceTo(hung[0]);
             h.assertTrue(moved < 1.0, "the player was moved " + moved + " blocks on letting go, it should drop where it hung");
@@ -244,7 +256,7 @@ public final class GrappleSlideGameTests {
         }));
     }
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 120, batch = BATCH + "release")
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 140, batch = BATCH + "release")
     public static void releasingTheHookDropsTheRider(GameTestHelper h) {
         Ships s = twoShips(h, false);
         ServerLevel level = h.getLevel();
@@ -254,7 +266,7 @@ public final class GrappleSlideGameTests {
         GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
         Vec3[] hung = new Vec3[1];
         h.runAfterDelay(20, () -> hook[0] = hookB(level, thrower, s.b()));
-        h.runAfterDelay(26, () -> {
+        h.runAfterDelay(grabAt(), () -> {
             GrapplingHookEntity g = hook[0];
             h.assertTrue(g.state() == GrapplingHookEntity.State.LATCHED, "the hook did not latch: " + g.state());
             Vec3 at = ropeAt(level, g, 0.3);
@@ -262,19 +274,19 @@ public final class GrappleSlideGameTests {
             lookAt(rider, at);
             h.assertTrue(RopeSlideService.tryBoard(level, rider, g, 0.0) == RopeSlideService.Board.OK, "grabbing the rope was refused");
         });
-        h.runAfterDelay(29, () -> {
+        h.runAfterDelay(grabAt() + 3, () -> {
             h.assertTrue(rider.isPassenger(), "the player let go by itself");
             hung[0] = rider.position();
             h.assertTrue(GrappleService.release(thrower), "the thrower had no hook to release");
         });
-        h.runAfterDelay(30, () -> h.succeedWhen(() -> {
+        h.runAfterDelay(grabAt() + 4, () -> h.succeedWhen(() -> {
             h.assertTrue(!rider.isPassenger(), "the rider still hangs on a released rope");
             h.assertTrue(rider.position().distanceTo(hung[0]) < 1.0, "the player did not drop where it hung");
             assertNoRiders(h);
         }));
     }
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 120, batch = BATCH + "snap")
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 140, batch = BATCH + "snap")
     public static void aSnappedRopeDropsTheRider(GameTestHelper h) {
         Ships s = twoShips(h, false);
         ServerLevel level = h.getLevel();
@@ -285,7 +297,7 @@ public final class GrappleSlideGameTests {
         GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
         Vec3[] hung = new Vec3[1];
         h.runAfterDelay(20, () -> hook[0] = hookB(level, thrower, s.b()));
-        h.runAfterDelay(26, () -> {
+        h.runAfterDelay(grabAt(), () -> {
             GrapplingHookEntity g = hook[0];
             h.assertTrue(g.state() == GrapplingHookEntity.State.LATCHED, "the hook did not latch: " + g.state());
             Vec3 at = ropeAt(level, g, 0.3);
@@ -294,7 +306,7 @@ public final class GrappleSlideGameTests {
             h.assertTrue(RopeSlideService.tryBoard(level, rider, g, 0.0) == RopeSlideService.Board.OK, "grabbing the rope was refused");
             h.assertTrue(g.pinPos() == null, "a rope grabbed by someone else was pinned");
         });
-        h.runAfterDelay(29, () -> {
+        h.runAfterDelay(grabAt() + 3, () -> {
             h.assertTrue(rider.isPassenger(), "the player let go by itself");
             hung[0] = rider.position();
             // the thrower walks away beyond the rope's length: it snaps
@@ -302,7 +314,7 @@ public final class GrappleSlideGameTests {
             Vec3 far = hook[0].position().add(-(GrappleConfig.MAX_ROPE_LENGTH.get() + 2.0), 0, 0);
             thrower.setPos(far.x, far.y, far.z);
         });
-        h.runAfterDelay(30, () -> h.succeedWhen(() -> {
+        h.runAfterDelay(grabAt() + 4, () -> h.succeedWhen(() -> {
             h.assertTrue(hook[0].isRemoved(), "the rope did not snap");
             h.assertTrue(!rider.isPassenger(), "the rider still hangs on a snapped rope");
             h.assertTrue(rider.position().distanceTo(hung[0]) < 1.5, "the player did not drop where it hung");
@@ -310,7 +322,7 @@ public final class GrappleSlideGameTests {
         }));
     }
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200, batch = BATCH + "level")
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 220, batch = BATCH + "level")
     public static void aLevelRopeCrawlsTowardTheHook(GameTestHelper h) {
         Ships s = twoShips(h, false);
         ServerLevel level = h.getLevel();
@@ -320,7 +332,7 @@ public final class GrappleSlideGameTests {
         GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
         double[] t0 = new double[1];
         h.runAfterDelay(20, () -> hook[0] = hookB(level, thrower, s.b()));
-        h.runAfterDelay(26, () -> {
+        h.runAfterDelay(grabAt(), () -> {
             GrapplingHookEntity g = hook[0];
             h.assertTrue(g.state() == GrapplingHookEntity.State.LATCHED, "the hook did not latch: " + g.state());
             // pin the near end in the world, ten blocks west of the hook at the hook's height: a level rope
@@ -332,7 +344,7 @@ public final class GrappleSlideGameTests {
             h.assertTrue(RopeSlideService.tryBoard(level, rider, g, 0.0) == RopeSlideService.Board.OK, "grabbing the rope was refused");
             t0[0] = ((RopeRiderEntity) rider.getVehicle()).t();
         });
-        h.runAfterDelay(36, () -> {
+        h.runAfterDelay(grabAt() + 10, () -> {
             h.assertTrue(rider.getVehicle() instanceof RopeRiderEntity, "the player let go on a level rope");
             RopeRiderEntity r = (RopeRiderEntity) rider.getVehicle();
             Vec3 a = hook[0].ropeNearEnd(level);
@@ -345,7 +357,7 @@ public final class GrappleSlideGameTests {
             double moved = (r.t() - t0[0]) * a.distanceTo(b);
             h.assertTrue(moved > 8 * min && moved < 12 * min, "crawled " + moved + " blocks in ten ticks");
         });
-        h.runAfterDelay(37, () -> h.succeedWhen(() -> {
+        h.runAfterDelay(grabAt() + 11, () -> h.succeedWhen(() -> {
             h.assertTrue(!rider.isPassenger(), "still crawling");
             assertStandsOnB(h, level, rider, s.b());
             assertNoRiders(h);
@@ -353,9 +365,193 @@ public final class GrappleSlideGameTests {
         }));
     }
 
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 220, batch = BATCH + "own_ship")
+    public static void aRopeFromTheMastTopToTheOwnDeckIsASlide(GameTestHelper h) {
+        Ships s = twoShips(h, true);
+        ServerLevel level = h.getLevel();
+        Player player = player(h);
+        boolean[] hold = {true};
+        keepOn(h, player, s.a().ship(), s.a().helmPlot().above(4), hold); // on top of the mast
+        BlockPos edge = s.a().helmPlot().offset(2, -1, 0); // A's own east wall at deck height
+        GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
+        h.runAfterDelay(20, () -> {
+            Vec3 target = s.a().ship().toWorld(Vec3.atCenterOf(edge));
+            hook[0] = GrappleService.launch(level, player, target.add(2.0, 0, 0), new Vec3(-GrappleConfig.THROW_VELOCITY.get(), 0, 0),
+                    new ItemStack(CombatContent.GRAPPLING_HOOK.get()), true);
+        });
+        h.runAfterDelay(grabAt(), () -> {
+            GrapplingHookEntity g = hook[0];
+            h.assertTrue(g.state() == GrapplingHookEntity.State.LATCHED, "the hook did not latch on the own ship: " + g.state());
+            h.assertTrue(s.a().ship().id().equals(g.shipId()) && edge.equals(g.latchedBlock()), "latched on " + g.shipId() + " " + g.latchedBlock());
+            h.assertTrue(g.haulKind() == GrappleRules.Haul.NONE, "a rope within one ship pulls: " + g.haulKind());
+            hold[0] = false;
+            lookAt(player, ropeAt(level, g, 0.1));
+            RopeSlideService.Board b = RopeSlideService.tryBoard(level, player, g, 0.0);
+            h.assertTrue(b == RopeSlideService.Board.OK, "grabbing the rope was refused: " + b);
+            h.assertTrue(g.pinPos() != null && s.a().ship().id().equals(g.pinShip()), "the rope end was not pinned on ship A");
+        });
+        h.runAfterDelay(grabAt() + 1, () -> h.succeedWhen(() -> {
+            h.assertTrue(!player.isPassenger(), "still sliding");
+            Vec3 spot = s.a().ship().toWorld(Vec3.atBottomCenterOf(edge.above()));
+            double d = player.position().distanceTo(spot);
+            h.assertTrue(d < 1.0, "the player landed " + d + " blocks from the deck spot above the hook");
+            h.assertTrue(player.getHealth() == player.getMaxHealth(), "hurt by the slide");
+            assertNoRiders(h);
+            h.assertTrue(!hook[0].isRemoved() && hook[0].state() == GrapplingHookEntity.State.LATCHED, "the rope let go");
+            hook[0].release(GrappleRules.Release.NONE);
+        }));
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 220, batch = BATCH + "zip_line")
+    public static void aRopeBetweenTwoCliffsIsAZipLine(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        // stone ground, a high cliff at x 0..3 (top at y 8) and a low one at x 18..23 (top at y 3)
+        for (int x = 0; x < 24; x++) {
+            for (int z = 0; z < 24; z++) {
+                h.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
+                boolean high = x <= 3 && z >= 8 && z <= 14;
+                boolean low = x >= 18 && z >= 8 && z <= 14;
+                for (int y = 1; y <= (high ? 8 : low ? 3 : 0); y++) h.setBlock(new BlockPos(x, y, z), Blocks.STONE);
+            }
+        }
+        Player player = player(h);
+        Vec3 top = h.absoluteVec(new Vec3(2.5, 9, 11.5));
+        player.setPos(top.x, top.y, top.z);
+        BlockPos face = new BlockPos(18, 3, 11);
+        GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
+        h.runAfterDelay(20, () -> hook[0] = GrappleService.launch(level, player, h.absoluteVec(new Vec3(16.5, 3.5, 11.5)),
+                new Vec3(GrappleConfig.THROW_VELOCITY.get(), 0, 0), new ItemStack(CombatContent.GRAPPLING_HOOK.get()), true));
+        h.runAfterDelay(grabAt(), () -> {
+            GrapplingHookEntity g = hook[0];
+            h.assertTrue(g.state() == GrapplingHookEntity.State.LATCHED && g.onWorldBlock(), "the hook did not latch on the cliff: " + g.state());
+            h.assertTrue(h.absolutePos(face).equals(g.latchedBlock()), "latched on " + g.latchedBlock());
+            h.assertTrue(g.haulKind() == GrappleRules.Haul.NONE && !g.taut(), "a rope between two cliffs pulls");
+            lookAt(player, ropeAt(level, g, 0.1));
+            RopeSlideService.Board b = RopeSlideService.tryBoard(level, player, g, 0.0);
+            h.assertTrue(b == RopeSlideService.Board.OK, "grabbing the zip line was refused: " + b);
+            h.assertTrue(g.pinPos() != null && g.pinShip() == null, "the rope end was not pinned in the world");
+        });
+        h.runAfterDelay(grabAt() + 1, () -> h.succeedWhen(() -> {
+            h.assertTrue(!player.isPassenger(), "still sliding");
+            Vec3 spot = h.absoluteVec(new Vec3(18.5, 4, 11.5));
+            double d = player.position().distanceTo(spot);
+            h.assertTrue(d < 1.0, "the player landed " + d + " blocks from the low cliff's top: " + player.position());
+            h.assertTrue(player.getHealth() == player.getMaxHealth(), "hurt by the zip line");
+            assertNoRiders(h);
+            h.assertTrue(!hook[0].isRemoved() && hook[0].state() == GrapplingHookEntity.State.LATCHED, "the zip line let go");
+            hook[0].release(GrappleRules.Release.NONE);
+        }));
+    }
+
+    // ------------------------------------------------------------------ the accidental grab (GR4)
+
+    /**
+     * Stone ground at y 0 and a stone wall at x 20 (y 1..6); a survival player at (3.5, 1, 11.5) looking along +x with
+     * a musket in the main hand, {@code offHooks} hooks in the off hand and gunpowder in the pack.
+     */
+    private static Player musketeer(GameTestHelper h, int offHooks) {
+        for (int x = 0; x < 24; x++) {
+            for (int z = 0; z < 24; z++) {
+                h.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
+                if (x == 20) {
+                    for (int y = 1; y <= 6; y++) h.setBlock(new BlockPos(x, y, z), Blocks.STONE);
+                }
+            }
+        }
+        Player p = player(h);
+        Vec3 at = h.absoluteVec(new Vec3(3.5, 1, 11.5));
+        p.setPos(at.x, at.y, at.z);
+        p.setYRot(-90.0f);
+        p.setXRot(0.0f);
+        p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(CombatContent.MUSKET.get()));
+        p.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(CombatContent.GRAPPLING_HOOK.get(), offHooks));
+        p.getInventory().add(new ItemStack(Items.GUNPOWDER, 4));
+        return p;
+    }
+
+    /** Loads the off-hand hook into the musket (a whole loading session) and fires it (an aim and release). */
+    private static GrapplingHookEntity fireFromMusket(GameTestHelper h, Player p) {
+        ServerLevel level = h.getLevel();
+        ItemStack gun = p.getMainHandItem();
+        int reload = FirearmsConfig.type(FirearmKind.MUSKET).reloadTicks();
+        h.assertTrue(gun.use(level, p, InteractionHand.MAIN_HAND).getResult().consumesAction(), "no loading session");
+        gun.getItem().onUseTick(level, p, gun, FirearmRules.LOAD_SESSION_TICKS - reload);
+        gun.releaseUsing(level, p, FirearmRules.LOAD_SESSION_TICKS - reload - 5);
+        p.stopUsingItem();
+        h.assertTrue(GrappleContent.isHookLoaded(gun), "the musket holds no hook");
+        h.assertTrue(gun.use(level, p, InteractionHand.MAIN_HAND).getResult().consumesAction(), "no aim");
+        gun.releaseUsing(level, p, FirearmRules.AIM_SESSION_TICKS - (FirearmsConfig.AIM_STEADY_TICKS.get() + 5));
+        p.stopUsingItem();
+        GrapplingHookEntity hook = GrappleService.hookOf(p);
+        h.assertTrue(hook != null, "the musket did not fire the hook");
+        return hook;
+    }
+
+    /**
+     * The human's playtest (GR4): fire the hook from the musket, then press use again. The thrower looks along their own
+     * rope (it runs from the hand to the hook), so the client's pick finds it and asks to grab it; before GR4 the server
+     * hung the player on the rope and pinned its near end where they stood. Now the musket's use wins, with the off hand
+     * empty or holding a spare hook, and a fresh rope cannot be grabbed even with an empty hand.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200, batch = BATCH + "reaim")
+    public static void reaimingTheMusketAfterAShotNeverGrabsTheRope(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        Player bare = musketeer(h, 1); // the only hook went into the musket: the off hand is empty after the shot
+        Player spare = musketeer(h, 2); // a second hook stays in the off hand
+        Player[] players = {bare, spare};
+        GrapplingHookEntity[] hooks = new GrapplingHookEntity[2];
+        h.runAfterDelay(1, () -> {
+            hooks[0] = fireFromMusket(h, bare);
+            hooks[1] = fireFromMusket(h, spare);
+            h.assertTrue(bare.getOffhandItem().isEmpty() && spare.getOffhandItem().getCount() == 1, "the off hands are not as planned");
+        });
+        h.runAfterDelay(8, () -> {
+            for (GrapplingHookEntity g : hooks) {
+                h.assertTrue(g.state() == GrapplingHookEntity.State.LATCHED && g.onWorldBlock(), "the hook did not latch on the wall: " + g.state());
+            }
+            // right after the shot not even an empty hand grabs the rope
+            ItemStack gun = bare.getMainHandItem();
+            bare.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+            RopeSlideService.Board early = RopeSlideService.tryBoard(level, bare, hooks[0], RopeSlideService.SERVER_TOLERANCE);
+            h.assertTrue(early == RopeSlideService.Board.TOO_SOON, "a fresh rope could be grabbed: " + early);
+            bare.setItemInHand(InteractionHand.MAIN_HAND, gun);
+        });
+        h.runAfterDelay(10 + GrappleConfig.GRAB_COOLDOWN_TICKS.get(), () -> {
+            for (int i = 0; i < 2; i++) {
+                Player p = players[i];
+                GrapplingHookEntity g = hooks[i];
+                Vec3 a = g.ropeNearEnd(level);
+                Vec3 b = g.ropeFarEnd(level);
+                // the client's pick finds the rope along the look ray: this is what sent the grab in the playtest
+                h.assertTrue(RopeSlide.pick(p.getEyePosition(), p.getLookAngle(), GrappleConfig.BOARD_REACH.get(), a, b,
+                        GrappleConfig.BOARD_PICK_RADIUS.get()) != null, "the test does not look along the rope");
+                RopeSlideService.Board r = RopeSlideService.tryBoard(level, p, g, RopeSlideService.SERVER_TOLERANCE);
+                h.assertTrue(r == RopeSlideService.Board.HAND_BUSY, "using the rope with the musket in hand was not refused: " + r);
+                h.assertTrue(!p.isPassenger(), "the player mounts the rope");
+                h.assertTrue(!g.nearEndFixed() && g.pinPos() == null, "the rope's near end was pinned where the player stands");
+            }
+            assertNoRiders(h);
+            // the use goes to the musket: with a spare hook in the off hand it loads it again
+            InteractionResult r = spare.getMainHandItem().use(level, spare, InteractionHand.MAIN_HAND).getResult();
+            h.assertTrue(r.consumesAction() && spare.isUsingItem(), "the musket did not start loading the spare hook: " + r);
+            spare.stopUsingItem();
+            // an intentional grab with an empty hand still works
+            bare.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+            RopeSlideService.Board ok = RopeSlideService.tryBoard(level, bare, hooks[0], RopeSlideService.SERVER_TOLERANCE);
+            h.assertTrue(ok == RopeSlideService.Board.OK && bare.getVehicle() instanceof RopeRiderEntity, "an empty hand could not grab the rope: " + ok);
+            hooks[0].release(GrappleRules.Release.NONE);
+            hooks[1].release(GrappleRules.Release.NONE);
+        });
+        h.runAfterDelay(13 + GrappleConfig.GRAB_COOLDOWN_TICKS.get(), () -> {
+            h.assertTrue(!bare.isPassenger(), "the rider still hangs on a released rope");
+            assertNoRiders(h);
+            h.succeed();
+        });
+    }
+
     // ------------------------------------------------------------------ refusals
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 100, batch = BATCH + "disabled")
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 120, batch = BATCH + "disabled")
     public static void disabledSlideRefusesTheRopeAndDropsRiders(GameTestHelper h) {
         Ships s = twoShips(h, false);
         ServerLevel level = h.getLevel();
@@ -365,7 +561,7 @@ public final class GrappleSlideGameTests {
         Player other = player(h);
         GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
         h.runAfterDelay(20, () -> hook[0] = hookB(level, thrower, s.b()));
-        h.runAfterDelay(26, () -> {
+        h.runAfterDelay(grabAt(), () -> {
             GrapplingHookEntity g = hook[0];
             h.assertTrue(g.state() == GrapplingHookEntity.State.LATCHED, "the hook did not latch: " + g.state());
             Vec3 at = ropeAt(level, g, 0.5);
@@ -379,7 +575,7 @@ public final class GrappleSlideGameTests {
             h.assertTrue(b == RopeSlideService.Board.DISABLED, "a disabled slide let the player grab the rope: " + b);
             h.assertTrue(!other.isPassenger(), "the refused player rides");
         });
-        h.runAfterDelay(28, () -> {
+        h.runAfterDelay(grabAt() + 2, () -> {
             h.assertTrue(!rider.isPassenger(), "a rider kept sliding after the slide was disabled");
             assertNoRiders(h);
             h.assertTrue(!hook[0].isRemoved(), "disabling the slide released the hook");

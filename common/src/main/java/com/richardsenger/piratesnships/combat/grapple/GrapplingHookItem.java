@@ -11,7 +11,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -21,17 +20,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * The grappling hook (docs/design.md §8.3, G11, GR3).
+ * The grappling hook (docs/design.md §8.3, G11, GR3, GR4).
  * <ul>
- *   <li><b>Thrown by hand</b> (G11): use without a launcher in the other hand throws it at {@code throw_velocity}
+ *   <li><b>Thrown by hand</b> (G11): use without a musket in the other hand throws it at {@code throw_velocity}
  *       ({@link GrappleService#throwHook}). The item leaves the hand (not in creative) and comes back when the hook
  *       is released or reeled in.</li>
- *   <li><b>Launched</b> (GR3): with the hook in the <i>off hand</i> and a launcher in the main hand (a crossbow with
- *       {@code grapple.launch.crossbow_enabled}, our musket with {@code musket_enabled}; with
- *       {@code offhand_required} off also the swapped hands), holding use runs the launcher's own loading session and
- *       moves the hook into it; the loaded launcher then fires it like a shot. The musket part is a firearm load
- *       ({@link MusketHookLoad}), the crossbow part {@link CrossbowHookLaunch}. The hook item itself never starts a
- *       use session: it only hands the use to the launcher when vanilla offers it the use first.</li>
+ *   <li><b>Launched</b> (GR3): with the hook in the <i>off hand</i> and our musket in the main hand (with
+ *       {@code grapple.launch.musket_enabled}; with {@code offhand_required} off also the swapped hands), holding use
+ *       runs the musket's own loading session and moves the hook into it ({@link MusketHookLoad}); the loaded musket
+ *       then fires it like a shot. The musket is the only launcher (GR4): next to any other item the hook in the off
+ *       hand is thrown when the main hand's own use passes. The hook item itself never starts a use session.</li>
  * </ul>
  * Sneak + use with an empty hand releases a hook that is out. With {@code grapple.enabled} off the item does nothing.
  */
@@ -52,22 +50,19 @@ public class GrapplingHookItem extends Item {
         if (stack.getItem() instanceof GrapplingHookItem) {
             return GrappleLaunch.Held.HOOK;
         }
-        if (stack.getItem() instanceof CrossbowItem) {
-            return GrappleLaunch.Held.CROSSBOW;
-        }
         if (stack.getItem() instanceof FirearmItem gun && gun.kind() == FirearmKind.MUSKET) {
             return GrappleLaunch.Held.MUSKET;
         }
         return GrappleLaunch.Held.OTHER;
     }
 
-    /** The hand of {@code entity} holding a launcher next to a hook in a valid arrangement (by config), or {@code null}. */
+    /** The hand of {@code entity} holding the musket next to a hook in a valid arrangement (by config), or {@code null}. */
     public static @Nullable InteractionHand launcherHand(LivingEntity entity) {
         if (!GrappleConfig.ENABLED.get()) {
             return null;
         }
         return GrappleLaunch.launcherHand(heldOf(entity.getMainHandItem()), heldOf(entity.getOffhandItem()),
-                GrappleConfig.OFFHAND_REQUIRED.get(), GrappleConfig.CROSSBOW_ENABLED.get(), musketEnabled());
+                GrappleConfig.OFFHAND_REQUIRED.get(), musketEnabled());
     }
 
     static boolean musketEnabled() {
@@ -81,7 +76,7 @@ public class GrapplingHookItem extends Item {
             return InteractionResultHolder.pass(stack);
         }
         GrappleLaunch.HookUse use = GrappleLaunch.hookUse(hand, heldOf(player.getMainHandItem()), heldOf(player.getOffhandItem()),
-                GrappleConfig.OFFHAND_REQUIRED.get(), GrappleConfig.CROSSBOW_ENABLED.get(), musketEnabled());
+                GrappleConfig.OFFHAND_REQUIRED.get(), musketEnabled());
         if (use == GrappleLaunch.HookUse.LAUNCHER) {
             return useLauncher(level, player, GrappleLaunch.other(hand), stack);
         }
@@ -96,26 +91,12 @@ public class GrapplingHookItem extends Item {
     }
 
     /**
-     * The hook was offered the use while a launcher in {@code launcherHand} is in a valid arrangement. A crossbow
-     * draws or fires ({@link CrossbowHookLaunch}); a musket in the off hand gets the use passed on (its own loading or
-     * aiming session). A musket in the main hand already had its turn (vanilla offers the main hand first), so the
-     * hook does nothing then.
+     * The hook was offered the use while the musket in {@code launcherHand} is in a valid arrangement: a musket in the
+     * off hand gets the use passed on (its own loading or aiming session). A musket in the main hand already had its
+     * turn (vanilla offers the main hand first), so the hook does nothing then.
      */
     private static InteractionResultHolder<ItemStack> useLauncher(Level level, Player player, InteractionHand launcherHand, ItemStack hook) {
         ItemStack launcher = player.getItemInHand(launcherHand);
-        if (launcher.getItem() instanceof CrossbowItem) {
-            return switch (CrossbowHookLaunch.use(launcher)) {
-                case DRAW -> CrossbowHookLaunch.startDraw(player, launcherHand)
-                        ? InteractionResultHolder.consume(hook) : InteractionResultHolder.fail(hook);
-                case FIRE -> {
-                    if (level instanceof ServerLevel server) {
-                        CrossbowHookLaunch.fire(server, player, launcherHand);
-                    }
-                    yield InteractionResultHolder.sidedSuccess(hook, level.isClientSide);
-                }
-                case VANILLA -> InteractionResultHolder.pass(hook);
-            };
-        }
         if (launcherHand == InteractionHand.OFF_HAND) {
             InteractionResultHolder<ItemStack> r = launcher.use(level, player, launcherHand);
             return new InteractionResultHolder<>(r.getResult(), hook);

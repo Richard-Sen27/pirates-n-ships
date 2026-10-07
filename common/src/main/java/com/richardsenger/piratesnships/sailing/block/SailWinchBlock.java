@@ -8,16 +8,23 @@ import com.richardsenger.piratesnships.station.StationKind;
 import com.richardsenger.piratesnships.station.Stations;
 import com.richardsenger.piratesnships.station.winch.WinchStation;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 
 /**
@@ -28,7 +35,10 @@ import net.minecraft.world.phys.BlockHitResult;
  *
  * <p>Model: hand-made in Blockbench ({@code art/models/sail_winch.bbmodel}, design.md §4.8), a rope drum along x
  * between two braced uprights, with an iron ratchet and pawl on the west end and the crank on the east end, reaching
- * 3 px past the block. The block has no facing, so the model always stands this way round.
+ * 3 px past the block. {@link #FACING} is the side the crank is on: set at placement so that the crank faces the
+ * placing player (as the helm's wheel does), turned and mirrored with the block. The unrotated model is
+ * {@code facing=east}, which is also the default state, so winches from before the facing existed keep their look.
+ * The facing is visual only: the trim cycle and the crew station do not depend on it.
  */
 public class SailWinchBlock extends Block implements StationBlock {
 
@@ -38,8 +48,33 @@ public class SailWinchBlock extends Block implements StationBlock {
     public static final String KEY_SET = KEY + "set";
     public static final String KEY_SAIL_SET = KEY + "sail_set";
 
+    /** The side the crank is on (the model's unrotated crank is east). */
+    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+
     public SailWinchBlock(Properties properties) {
         super(properties);
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.EAST));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING);
+    }
+
+    /** The crank faces the placing player. */
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+    }
+
+    @Override
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     /** Translation key of a trim name. */

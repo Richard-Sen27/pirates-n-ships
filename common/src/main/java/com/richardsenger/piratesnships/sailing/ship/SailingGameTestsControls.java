@@ -17,7 +17,6 @@ import com.richardsenger.piratesnships.sailing.force.SailTrim;
 import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips.Fixture;
 import com.richardsenger.piratesnships.sailing.wind.WindOverride;
 import com.richardsenger.piratesnships.sailing.wind.WindSample;
-import com.richardsenger.piratesnships.sailing.wind.WindService;
 import com.richardsenger.piratesnships.ship.assembly.HelmBlock;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipEntities;

@@ -24,13 +24,17 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>The server keeps it current from block changes ({@link YardSails#refreshAround}) and re-checks it every
  * {@code sailing.sails.yard_refresh_ticks} (a block placed into the gap between two yards on land triggers no yard
- * update). The client-only fields animate hoisting and remember the side the cloth bellies out to.
+ * update). It also re-checks on its first server tick, so a cloth loaded from saved data that no longer fits (a ship
+ * disassembled with a turn moves the block entities with their old cloth) is corrected at once rather than up to an
+ * interval later. The client-only fields animate hoisting and remember the side the cloth bellies out to.
  */
 public class YardBlockEntity extends BlockEntity {
 
     private static final String TAG = "cloth";
 
     private @Nullable ClothGeometry geometry;
+    /** Server: whether the first tick's re-check ran (not saved: every new or loaded block entity checks once). */
+    private boolean checked;
 
     // client only, for the renderer
     /** Drawn fraction shown last frame (NaN before the first frame). */
@@ -63,9 +67,10 @@ public class YardBlockEntity extends BlockEntity {
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, YardBlockEntity be) {
         int interval = SailingConfig.YARD_REFRESH_TICKS.get();
-        if ((level.getGameTime() + Math.floorMod(pos.asLong(), interval)) % interval != 0) {
+        if (be.checked && (level.getGameTime() + Math.floorMod(pos.asLong(), interval)) % interval != 0) {
             return;
         }
+        be.checked = true;
         be.setGeometry(YardSails.geometryAt(level, pos, SailingConfig.yardRules()));
     }
 

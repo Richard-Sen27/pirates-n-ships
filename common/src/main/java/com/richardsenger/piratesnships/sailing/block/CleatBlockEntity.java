@@ -28,7 +28,9 @@ import org.jetbrains.annotations.Nullable;
  * <p>On a sail's head the server also stores the {@link TriangleCloth} it computed, saved and synced to clients, so
  * that the renderer draws the cloth without knowing the rule. The stay is synced too: the head draws the rope. The
  * trim is the head's {@link CleatBlock#TRIM} block state. The server re-checks the cloth every
- * {@code sailing.sails.yard_refresh_ticks} (a block put into the gap below the head triggers no cleat update on land).
+ * {@code sailing.sails.yard_refresh_ticks} (a block put into the gap below the head triggers no cleat update on land),
+ * and once on its first server tick, so a cloth loaded from saved data that no longer fits (a ship disassembled with a
+ * turn moves the block entities with their old cloth, stored in world axes) is corrected at once.
  */
 public class CleatBlockEntity extends BlockEntity {
 
@@ -38,6 +40,8 @@ public class CleatBlockEntity extends BlockEntity {
     /** Offset to the other end of the stay in this cleat's frame, or null. */
     private @Nullable Vec3i stayLocal;
     private @Nullable TriangleCloth cloth;
+    /** Server: whether the first tick's re-check ran (not saved: every new or loaded block entity checks once). */
+    private boolean checked;
 
     // client only, for the renderer
     /** Drawn fraction shown last frame (NaN before the first frame). */
@@ -109,9 +113,10 @@ public class CleatBlockEntity extends BlockEntity {
             return;
         }
         int interval = SailingConfig.YARD_REFRESH_TICKS.get();
-        if ((level.getGameTime() + Math.floorMod(pos.asLong(), interval)) % interval != 0) {
+        if (be.checked && (level.getGameTime() + Math.floorMod(pos.asLong(), interval)) % interval != 0) {
             return;
         }
+        be.checked = true;
         TriangularSails.refresh(level, pos);
     }
 

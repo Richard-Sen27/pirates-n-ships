@@ -639,6 +639,16 @@ many regions. [V code; I cost]
 - With two bodies pressed together by a continuous queued force (the grapple rope), `RigidBodyHandle`'s linear velocity, and therefore `ShipBody.velocityAt`, keeps reporting about the velocity the force would produce each substep (about 0.1 m/s here), while the contact solver cancels nearly all of the motion: the actual distance changed by about 0.005 m/s. Contact and stall logic must measure positions, not velocities; velocity-based damping stays usable only as a brake.
 - `RigidBodyHandle.applyImpulseAtPoint` goes straight to the physics pipeline (Sable uses it for dispenser recoil and arrows hitting ships), while `QueuedForceGroup.applyAndRecordPointForce` is a per-substep force shown in Sable's force display; the cannon uses the first, the grapple the second.
 
+### 9.0i Waking sleeping bodies under a steady queued force (H1)
+A rigid body that has fallen asleep at rest is not woken by a queued force group whose total does not change
+(`ForceTotal#applyForces` only wakes when the total changes). A steady hazard force therefore never moved a ship
+lying still. Workaround in `hazards/HazardShipForces`: while a ship is inside a field, add a zero velocity through
+`ShipBody.addVelocity` once per game tick (`RigidBodyHandle#addLinearAndAngularVelocity` wakes the body), then
+record the point forces in the `pirates_n_ships:sea_hazards` group every physics substep (the grapple's path:
+`ServerSubLevel` l.395, `QueuedForceGroup` l.25, `ForceTotal` l.101-105). Impulses once per game tick through
+`applyImpulseNow` were far too weak against the water drag; the ship rate ended at a quarter of the entity rate
+(`HazardField.SHIP_ACCELERATION`), measured in the H1 GameTests.
+
 ### 9.1 How Sable tests sub-levels
 - Tests live in **`sable/neoforge/src/main/java/dev/ryanhcode/sable/neoforge/gametest/`** (`AssemblyTest`, `PhysicsTest`,
   `SableTestHelper`), registered with NeoForge's `@GameTestHolder(Sable.MOD_ID)` and vanilla `@GameTest(template = …)`. [V]

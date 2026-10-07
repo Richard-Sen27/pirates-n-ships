@@ -204,6 +204,16 @@ ship stays within about two blocks of the anchor point and swings with the wind.
 
 ---
 
+### Sea hazards
+In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks
+high with a low roar. Within 8 blocks of it you, your boat, loose items and light ships are pulled toward it and
+lifted; inside it the wind tears at set sails and drops them a step every few seconds (full to half, half to
+furled). Steer clear, or furl first. In the deep ocean, at any time, a whirlpool can appear: a slowly drifting ring
+of foam around a dark centre that pulls everything within 12 blocks inward and around. Close to its centre it drags
+boats and swimmers under, and a ship caught at its centre is slowly turned. Big ships barely notice either hazard.
+Operators: `/pirates hazard spawn <waterspout|whirlpool> [x y z]`, `/pirates hazard clear [radius]`; everything is
+in the server config under `hazards`, the particles under the client's `hazard_visuals`.
+
 ## 4. Crew
 
 A **crew member** is a simple NPC. There is no hiring yet: get one with `/pirates crew spawn`.
@@ -673,6 +683,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevation range and steps, blocks per hit, recoil and impact impulses, ball lifetime and water behaviour, `mobGriefing` and spawn protection, drops from destroyed blocks, glancing hits and the bounce angle. |
 | `cannons.swivel` | Swivel gun on/off, ammo item and count, damage, muzzle speed, reload, blocks per hit, recoil and impact impulses, ball lifetime, elevation limits, aim reach. |
 | `mobs` | Mob types on/off and peaceful, hostility toggles, detection and fight ranges, skill tiers, musket timings and ammo, shove, drops. |
+| `hazards` / `hazard_visuals` (client) | Waterspouts and whirlpools on/off, spawn chances and interval, distance band, lifetimes, radii, pull, lift, spin, drag-down, drift, sail tearing, ship force scale and mass cap; particle density and sounds. |
 | `mobs.shark` | Shark on/off and peaceful, spawn weight and group (server restart), detection, circle and give-up times, bite cooldown, damage and knockback, frenzy threshold. |
 | `melee_animations` (client) | Sword animations on/off, first-person mode, layer priority. |
 | `melee_input` / `melee_hud` (client) | Hold-to-thrust and parry-tap thresholds; stamina bar on/off, scale and offsets. |

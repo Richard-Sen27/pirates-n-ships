@@ -35,7 +35,7 @@ public record MeleeParams(boolean skillBased, boolean directionalMode, int parry
                           double guardAbsorbStaminaPerDamage) {
 
     public static final MeleeParams DEFAULTS = new MeleeParams(true, false, 7, 2, 15, 100f, 1.0f, 20, 1.0,
-            20, 1.5, 20, 25, 30, 0.5, 1.0, 6, true, 1.5);
+            20, 1.5, 20, 25, 30, 0.5, 1.0, 6, true, 1.0);
 
     public MeleeParams {
         if (parryWindowTicks < 1) throw new IllegalArgumentException("parryWindowTicks must be >= 1");

@@ -26,3 +26,20 @@ differs.
    upright and smoothly placed, with no new jitter. Also watch an unassigned crew member standing on deck: if it runs
    in place because the deck moves, say so.
 8. **Hurt and death.** The hurt flash and the death animation still show.
+
+
+## M2: the Blockbench sailor (replaces the look checks above)
+1. **Look.** A tanned sailor with a moustache, a navy and white striped shirt, a red bandana with white dots and a knot
+   and tails at the back, a mustard neckerchief, a brown belt with a brass buckle, a knife handle at the back left hip,
+   sleeves rolled to the elbow, dark canvas trousers rolled below the knee, bare feet with toes, a gold earring on the
+   left ear. No z-fighting at the belt, cuffs or hems; no missing-model or missing-texture errors in the log.
+2. **Idle.** A slow chest swell, a slight sideways weight shift, arms swaying; the head still follows you. Say whether
+   the eased motion looks smooth or stutters.
+3. **Walk.** Arms opposite to the legs and a small dip of the upper body at each stride. If a limb swings the wrong
+   way, name it.
+4. **Winch and pump.** Hand over hand: one hand reaches high in front while the other pulls down to the belt, the
+   hands meet in front of the chest, the forward lean deepens with each pull. Does it read as hauling at the winch and
+   as pumping at the pump? Do the hands pass through the station block?
+5. **Sit (boat).** Legs forward and slightly splayed, hands on the thighs, leaning back slightly.
+6. **Items in hand.** A sword in the main hand and a torch in the off hand follow the hands in every pose; in the work
+   pose the sword swings with the hauling arm.

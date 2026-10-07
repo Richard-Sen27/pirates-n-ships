@@ -221,7 +221,7 @@ A crew member is released when its station is broken, its ship is disassembled o
 ---
 
 The crew member is animated (idle, walking, working at a station, sitting in a boat) through GeckoLib, a required
-mod on both sides; its look is a placeholder sailor until the Blockbench model lands.
+mod on both sides; it is a Blockbench-made sailor (striped shirt, red bandana, neckerchief, belt and knife, bare feet) with idle, walking, hauling and sitting animations.
 
 ## 5. Flags
 

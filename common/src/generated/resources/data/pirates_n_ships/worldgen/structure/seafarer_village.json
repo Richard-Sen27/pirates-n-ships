@@ -2,6 +2,11 @@
   "type": "pirates_n_ships:port_village",
   "biomes": "#pirates_n_ships:has_structure/seafarer_village",
   "max_distance_from_center": 80,
+  "port_kind": "seafarer_village",
+  "shore_anchor": {
+    "x": 5,
+    "z": 0
+  },
   "size": 7,
   "spawn_overrides": {},
   "start_height": 1,

@@ -1,2 +1,7 @@
+<<<<<<< HEAD
 // 1.21.1	2026-10-07T19:58:24.995064	Lang: pirates_n_ships
 f870288f3f1cae03fd3c4599473216f1173fd400 assets/pirates_n_ships/lang/en_us.json
+=======
+// 1.21.1	2026-10-07T19:31:16.304895	Lang: pirates_n_ships
+232dfc14d2361a51f83605bd055d0746dc49880f assets/pirates_n_ships/lang/en_us.json
+>>>>>>> worktree-agent-a01f9010708f882ee

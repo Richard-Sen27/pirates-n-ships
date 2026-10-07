@@ -27,15 +27,20 @@ import java.util.function.Supplier;
 
 /**
  * The humanoid mobs (docs/design.md §9) and their spawn eggs. Category {@code MISC} like the crew member: they are
- * placed by spawn eggs, the {@code /pirates mob spawn} command and later by structures, not by the natural spawner.
+ * placed by spawn eggs, the {@code /pirates mob spawn} command and later by structures, not by the natural spawner;
+ * except the pirate, {@code MONSTER} since WG2, which the natural spawner places inside pirate island camps.
  * The shark (M4) is a {@code WATER_CREATURE}: it spawns naturally in ocean biomes and despawns like vanilla's fish.
  */
 public final class MobContent {
 
-    public static final RegistryEntry<EntityType<?>, EntityType<Pirate>> PIRATE = humanoid("pirate", Pirate::new);
-    public static final RegistryEntry<EntityType<?>, EntityType<Sailor>> SAILOR = humanoid("sailor", Sailor::new);
-    public static final RegistryEntry<EntityType<?>, EntityType<NavySoldier>> NAVY_SOLDIER = humanoid("navy_soldier", NavySoldier::new);
-    public static final RegistryEntry<EntityType<?>, EntityType<NavyOfficer>> NAVY_OFFICER = humanoid("navy_officer", NavyOfficer::new);
+    /**
+     * {@code MONSTER}, not {@code MISC} (WG2): vanilla's natural spawner never spawns a {@code MISC} type, and pirates
+     * spawn through the pirate island's {@code monster} spawn overrides (spawn rule: {@code world.island.PirateIslandSpawns}).
+     */
+    public static final RegistryEntry<EntityType<?>, EntityType<Pirate>> PIRATE = humanoid("pirate", Pirate::new, MobCategory.MONSTER);
+    public static final RegistryEntry<EntityType<?>, EntityType<Sailor>> SAILOR = humanoid("sailor", Sailor::new, MobCategory.MISC);
+    public static final RegistryEntry<EntityType<?>, EntityType<NavySoldier>> NAVY_SOLDIER = humanoid("navy_soldier", NavySoldier::new, MobCategory.MISC);
+    public static final RegistryEntry<EntityType<?>, EntityType<NavyOfficer>> NAVY_OFFICER = humanoid("navy_officer", NavyOfficer::new, MobCategory.MISC);
 
     /** 0.9 × 0.6 hitbox in the middle of a 2.4-block body (the model is longer than the box, like the dolphin's). */
     public static final RegistryEntry<EntityType<?>, EntityType<Shark>> SHARK = ModRegistry.entity("shark",
@@ -50,8 +55,9 @@ public final class MobContent {
     private MobContent() {
     }
 
-    private static <E extends SeafarerMob> RegistryEntry<EntityType<?>, EntityType<E>> humanoid(String name, EntityType.EntityFactory<E> factory) {
-        return ModRegistry.entity(name, () -> EntityType.Builder.of(factory, MobCategory.MISC).sized(0.6f, 1.95f)
+    private static <E extends SeafarerMob> RegistryEntry<EntityType<?>, EntityType<E>> humanoid(String name, EntityType.EntityFactory<E> factory,
+                                                                                                MobCategory category) {
+        return ModRegistry.entity(name, () -> EntityType.Builder.of(factory, category).sized(0.6f, 1.95f)
                 .eyeHeight(1.62f).clientTrackingRange(10));
     }
 

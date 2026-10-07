@@ -300,8 +300,9 @@ Player animations (melee, F9):
 
 Animated mobs and NPCs (crew member, pirate, sailor, navy soldier and officer; design.md §9) are GeckoLib models
 (GeckoLib 4.9.3). Code models in the Modded Entity format stay for static entities such as the anchor. The crew member
-(work package M1) defines the **humanoid rig** every humanoid mob follows; its placeholder files are hand-written and
-get replaced by Blockbench exports on the same contract.
+(work package M1) defines the **humanoid rig** every humanoid mob follows; since M2 its files are Blockbench exports on
+that contract (`art/models/entity/crew_member.bbmodel`, renders `renders/crew_member.png` and
+`renders/anim_crew_<name>.png`).
 
 **Files** (under `common/src/main/resources/assets/pirates_n_ships/`; GeckoLib loads every `*.geo.json` under `geo/`
 and every `*.animation.json` under `animations/` of every namespace):
@@ -340,18 +341,30 @@ wide arms):
 
 **Texture layout:** the vanilla 64×64 player skin layout (Steve, wide arms), outer layer included. Any player skin
 works as a test texture. Pixels of the outer layer (hat, jacket, sleeves, trousers) are transparent unless painted
-(the default render type cuts out alpha). `tools/gen_entity_textures.py` writes the placeholder sailor
-(`crew_member.png`: striped shirt, canvas trousers, shoes, a red bandana on the hat layer).
+(the default render type cuts out alpha). `tools/gen_entity_textures.py` is the source of `crew_member.png` (Breton
+shirt, canvas slops rolled below the knee, bare feet, red dotted bandana on the hat layer, moustache); the project
+embeds a copy, so re-import the texture there after running the script.
+
+**Detail cubes (M2):** the crew member's sailor details are extra cubes inside the contract bones, not extra bones
+(`CrewMemberRigTest` asserts the crew member's exact bone set; a variant with its own geo file may add child bones as
+described below). They use **per-face UV** (the format allows box and per-face UV per cube) onto 2×2 colour patches
+in the unused strip u 56..63, v 16..47 of the skin sheet (`PATCHES` in the script; never move a patch). Crew member:
+33 cubes, 12 contract cubes (with the inflate layers) and 21 details: bandana knot and two tails (`hat`), a gold
+earring (`head`), neckerchief band, flap, tip, point and knot, belt, buckle and buckle hole, a knife lying across the
+small of the back in its sheath with guard and handle (`body`), rolled cuffs (arms), rolled trouser hems and toes
+(legs). Details sit 0.1 to 0.4 px outside the 0.25 inflate layers; a face hidden against the head gets `null`.
 
 **Animations** (all loop; names without prefix; rotations in degrees with the vanilla player model's signs: negative x
-swings an arm or leg forward, positive x leans `waist` forward):
+swings an arm or leg forward, positive x leans `waist` forward, positive z lifts the right arm outwards and the left
+arm inwards, positive y swings a raised arm towards the mob's right; checked in the Blockbench preview of the
+GeckoLib project). Every keyframe uses GeckoLib's `easeInOutSine` easing. Source: `models/entity/crew_member_animations.js`.
 
-| Name | When | Placeholder content |
+| Name | When | Content (M2) |
 |---|---|---|
-| `idle` | standing still | 3 s: slow arm sway (z ±5°), slight chest swell (`body` scale) |
-| `walk` | the legs move (GeckoLib's limb swing) | 1 s: arms ±30°, legs ±35°, opposite phase |
-| `work` | at its station while the station carries out an order (winch, pump, cannon, …) | 1.2 s: hand-over-hand hauling (arms −50°/−105° alternating), `waist` leaning 6–16°, legs braced |
-| `sit` | riding something that seats it (boat, minecart; **not** the station seat, where it stands) | legs −81° x and ±18° y, arms −36° (vanilla riding pose) |
+| `idle` | standing still | 4 s: chest swell (`body` scale up to 1.02/1.012/1.05), weight shift from the waist (z ±1.2°, x −1°), arms swaying out of phase (z 3–6°, x ±4°) |
+| `walk` | the legs move (GeckoLib's limb swing) | 1 s: legs ±32°, arms ±28° in opposite phase, waist dips 0.6 px at full stride, leans 3° and twists ±3° |
+| `work` | at its station while the station carries out an order (winch, pump, cannon, …) | 2 s: hand over hand; each arm reaches to −125° (high front), pulls down to −52° in 1.2 s and swings back up in 0.8 s, the left arm 1 s behind the right; arms turned 10–16° inwards so the hands meet in front of the chest; waist leans 12° and dips to 20° in each pull; right foot forward (−16°), left back (14°) |
+| `sit` | riding something that seats it (boat, minecart; **not** the station seat, where it stands) | 4 s: legs −81° x, ±18° y, ±4° z (vanilla riding pose), hands resting on the thighs (−38° to −40°, 10° inwards), leaning back 3–4°, breathing |
 
 Priority: `work` > `sit` > `walk` > `idle` (`crew/npc/CrewPose`). One controller (`body`) plays them with a 5-tick
 blend. A mob with more states adds animations with new names and its own controller logic; triggered one-shots
@@ -363,13 +376,37 @@ shared `crew_member.animation.json`. A variant that needs extra shapes (coat tai
 own `geo/<mob>.geo.json`, copied from the crew member with child bones added under the contract bones, and keeps the
 shared animations working because every contract bone is still there.
 
-**Blockbench export** (model batches): create the project with **GeckoLib Animated Model** (the GeckoLib plugin's
-`geckolib_model` format), type *Entity*; build on the bones above (to keep names and pivots, open
-`geo/crew_member.geo.json` as a Bedrock model and convert it with *File → Convert Project*; menu names unverified);
-use box UV on a 64×64 texture. Then
-- *File → Export → Export GeckoLib Model* → `geo/<mob>.geo.json` (check that it says `"format_version": "1.12.0"`);
-- *Animation → Export Animations* → `animations/<mob>.animation.json` (keep the names above);
-- *Texture → Save As* → `textures/entity/<mob>.png`;
-- save the project to `art/models/entity/<mob>.bbmodel` and a render to `art/renders/`.
+**Blockbench export recipe (verified in M2, Blockbench 5.2.1, GeckoLib plugin 4.2.5):**
+- **Format.** The plugin registers the format `geckolib_model` ("GeckoLib Animated Model"). Its `new()` opens a
+  project settings dialog; from `risky_eval`, `setupProject(Formats.geckolib_model)` creates the project without it.
+  Then set `Project.name`, `Project.geometry_name` and `Project.model_identifier` to `<mob>` (the identifier becomes
+  `geometry.<mob>`), `Project.texture_width/height = 64` and `Project.visible_box = [3, 3, 1.5]`.
+- **Building.** `art/models/entity/crew_member_model.js` rebuilds the whole crew member from a part list (bones,
+  contract cubes, detail cubes in file coordinates); `crew_member_animations.js` then builds the four animations. A
+  variant copies the model script, changes the detail list and keeps `M2.BONES` and `M2.CONTRACT`.
+- **Mirrored x.** The Bedrock codec negates x on export and import, so in Blockbench the right arm sits at internal
+  +x (pivot `[5, 22, 0]`), which is the viewer's left when looking at the face; the export writes −5 as the contract
+  wants. The model script keeps file coordinates and flips each element (`M2.mirror`: x range, origin x, y and z
+  rotations, east/west faces) before building it.
+- **Geometry.** The plugin's menu action is `export_geckolib_model` (*File → Export → Export GeckoLib Model*); it
+  uses Blockbench's own `Codecs.bedrock`, and the plugin hooks the codec's `compile` event to strip
+  `item_display_transforms` and force `format_version` 1.12.0. So `Codecs.bedrock.compile({raw: true})` in a
+  GeckoLib project gives exactly the file. Post-processing: only rounding (floats like 3.8000000000000003 to 4
+  decimals); write it with `autoStringify` (tab indentation). Box-UV cubes export as `"uv": [u, v]`, per-face cubes as
+  `"uv": {face: {uv, uv_size}}` (up and down with negative sizes, which GeckoLib reads), a `null` face is left out.
+- **Animations.** `export_geckolib_animations` just triggers Blockbench's `export_animation_file`; the codec is
+  `Codecs.bedrock.format.animation_codec`, and the plugin patches `Animator.buildFile` to add
+  `"geckolib_format_version": 2`. `Animator.buildFile(null, ['idle', 'walk', 'work', 'sit'])` gives the whole file:
+  names without prefix, `"loop": true` for loop mode `'loop'`, `animation_length`, each keyframe as
+  `{"vector": [...], "easing": "..."}` when the keyframe has the plugin's `easing` property set (otherwise a bare
+  array; a channel with one keyframe compiles to a bare vector). Keyframes are stored negated as in F9
+  (rotation `[-x, -y, z]`, position `[-x, y, z]`; scale unchanged); the animation script converts.
+- **Project file.** `Codecs.project.compile({raw: true})`, the texture embedded (our own) with `path` `""` and
+  `relative_path` pointing at the PNG in `common/src/main/resources`; written to `art/models/entity/<mob>.bbmodel`.
+- **Renders.** An extra `THREE.WebGLRenderer({preserveDrawingBuffer: true, alpha: true})` renders `scene` from
+  scripted cameras with `three_grid` hidden; `Timeline.setTime(t)` plus `Animator.preview()` poses each frame,
+  `Animator.showDefaultPose()` resets for the still. Strips: front three-quarter on top, left side below, evenly
+  spaced frames (6, walk 5).
+- `risky_eval` rejects code containing `//` anywhere, even inside a string; build such strings from `'/' + '/'`.
 Run `./gradlew build` afterwards: `CrewMemberRigTest` parses the files with GeckoLib's loader and checks bones,
 pivots, parents and animation names.

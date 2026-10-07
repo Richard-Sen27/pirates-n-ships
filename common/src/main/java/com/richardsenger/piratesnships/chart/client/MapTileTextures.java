@@ -21,12 +21,12 @@ import java.util.Optional;
  * GPU textures of map tile drawings (client only, work package MAP2): one {@link DynamicTexture} per distinct drawing
  * (tiles showing the same drawing share it), the picture of {@link MapTileRaster#picture} with the compass rose and
  * marker icons taken from the chart sheet. A block entity whose drawing changes simply asks for the new drawing's
- * texture; the old one ages out. At most {@link #MAX_TEXTURES} are kept (least recently used released first), at most
+ * texture; the old one ages out. At most {@link #MAX_TEXTURES} are kept (a full 8x8 board needs 64) (least recently used released first), at most
  * {@link #BUILDS_PER_TICK} are built per client tick. Render thread only.
  */
 public final class MapTileTextures {
 
-    public static final int MAX_TEXTURES = 64;
+    public static final int MAX_TEXTURES = 160;
     public static final int BUILDS_PER_TICK = 8;
 
     private record Entry(ResourceLocation id, DynamicTexture texture) {

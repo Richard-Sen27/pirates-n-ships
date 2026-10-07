@@ -80,6 +80,18 @@ class Piece:
                 self.put(x0, y, z, key)
                 self.put(x1, y, z, key)
 
+    def inside(self, x, y, z) -> bool:
+        """Whether (x, y, z) lies inside the piece's box."""
+        sx, sy, sz = self.size
+        return 0 <= x < sx and 0 <= y < sy and 0 <= z < sz
+
+    def put_inside(self, x, y, z, key: str) -> bool:
+        """``put`` that skips (and returns False for) positions outside the box, for fittings near the box faces."""
+        if not self.inside(x, y, z):
+            return False
+        self.put(x, y, z, key)
+        return True
+
     def clear(self, x, y, z):
         self.blocks.pop((x, y, z), None)
 

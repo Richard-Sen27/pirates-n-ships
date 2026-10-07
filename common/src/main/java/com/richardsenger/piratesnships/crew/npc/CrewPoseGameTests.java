@@ -33,7 +33,22 @@ import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 public final class CrewPoseGameTests {
 
     private static final int STEP = 10;
+    /**
+     * Distance of the checks from the expected flag changes. The order starts in a test callback in server tick T
+     * (the GameTest ticker runs after the level ticks); the station counts it down at the end of each level tick
+     * ({@code Stations.onLevelTick}, ticks T+1..T+20) and the crew member copies the phase into the flag in its entity
+     * tick, which comes before that, so the flag is set in T+1 and cleared in T+21. The checks at T+3 and T+2·STEP+6
+     * keep 2 and 5 ticks to those; nothing on this path depends on wall-clock time or on a check interval.
+     */
     private static final int MARGIN = 3;
+    /*
+     * Each test has its own batch. Tests of one batch run at the same time but do not start on the same tick (each
+     * waits for its chunks, which load asynchronously), and ConfigOverrides restores a value to what it was when that
+     * test set it. With both tests in one batch, the release test (started about 6 ticks earlier) restored the outer
+     * ticks_per_trim_step (40) around the moment the other test started; under CPU load the other test took its
+     * override before that restore and gave its order after it, so the hoist took 80 ticks instead of 20 (Q3).
+     */
+    private static final String BATCH = "pirates_n_ships_config_crew_npc_pose_";
 
     @GameTestGenerator
     public static Collection<TestFunction> tests() {
@@ -74,7 +89,7 @@ public final class CrewPoseGameTests {
     }
 
     /** Hoisting from furled takes 2 steps × 10 ticks: working during the order, not before and not after. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = "pirates_n_ships_config_crew_npc_pose")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = BATCH + "working")
     public static void workingFlagFollowsTheOrder(GameTestHelper h) {
         ConfigOverrides.during(h, StationConfig.ENABLED, true);
         ConfigOverrides.during(h, StationConfig.TICKS_PER_TRIM_STEP, STEP);
@@ -102,7 +117,7 @@ public final class CrewPoseGameTests {
     }
 
     /** Released from its station, the crew member stops working at once even if an order was running. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = "pirates_n_ships_config_crew_npc_pose")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = BATCH + "release")
     public static void releaseStopsWorking(GameTestHelper h) {
         ConfigOverrides.during(h, StationConfig.ENABLED, true);
         ConfigOverrides.during(h, StationConfig.TICKS_PER_TRIM_STEP, STEP);

@@ -43,13 +43,18 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * Spike 4 GameTests: a crew member at the sail winch of an assembled ship (docs/design.md §6, milestone 4). All tests
- * pin {@code ticks_per_trim_step = 10} (so hoisting from furled takes 20 ticks) and therefore run in config batches.
+ * pin {@code ticks_per_trim_step = 10} (so hoisting from furled takes 20 ticks) and therefore run in config batches,
+ * one per test: tests of one batch start a few ticks apart (each waits for its chunks), and a test that ends early
+ * would restore the value it found, mid-way through a test that overrode it after it (the Q3 failure of
+ * {@code CrewPoseGameTests}).
  */
 public final class StationGameTests {
 
     private static final int STEP = 10;
     /** Checks of "not before" and "after" keep this margin to the expected completion tick (tick order within a tick). */
     private static final int MARGIN = 3;
+    /** Prefix of the per-test config batches (see the class comment). */
+    private static final String BATCH = "pirates_n_ships_config_station_winch_";
 
     @GameTestGenerator
     public static Collection<TestFunction> tests() {
@@ -158,7 +163,7 @@ public final class StationGameTests {
     // ------------------------------------------------------------------ tests
 
     /** Seated at the winch; hoist takes 2 steps × 10 ticks: furled at +17, full at +23; furl brings them down; one occupant. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = "pirates_n_ships_config_station_winch")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = BATCH + "crewhoistsandfurlsaftertheworktime")
     public static void crewHoistsAndFurlsAfterTheWorkTime(GameTestHelper h) {
         pin(h);
         Fixture f = ship(h, true);
@@ -227,7 +232,7 @@ public final class StationGameTests {
     }
 
     /** Releasing removes the seat and leaves the crew member on deck (inside the ship's world bounds, standing). */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = "pirates_n_ships_config_station_winch")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = BATCH + "releaseleavescrewondeck")
     public static void releaseLeavesCrewOnDeck(GameTestHelper h) {
         pin(h);
         Fixture f = ship(h, false);
@@ -252,7 +257,7 @@ public final class StationGameTests {
      * Disassembly: the crew member stands at the seat's world spot (within 0.75 blocks horizontally, 0.6 vertically) on
      * the deck, is released, and no seat entity is left.
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = "pirates_n_ships_config_station_winch")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = BATCH + "disassemblyleavescrewatthestation")
     public static void disassemblyLeavesCrewAtTheStation(GameTestHelper h) {
         pin(h);
         Fixture f = ship(h, false);
@@ -288,16 +293,16 @@ public final class StationGameTests {
 
     /**
      * A seat no live ship holds. Seats live in a plot, and the disassembled ship is gone; but Sable hands its freed
-     * plot to the next ship at once, and a station test of the same batch that starts late assembles the same hull
-     * there and seats its crew at the very same plot position (seen: the whistle test's seat, 8 ticks after its ship
-     * took over this test's plot). That seat is not ours.
+     * plot to the next ship at once, and a station test running at the same time assembles the same hull there and
+     * seats its crew at the very same plot position (seen when these tests still shared a batch: the whistle test's
+     * seat, 8 ticks after its ship took over this test's plot). That seat is not ours.
      */
     private static boolean orphan(GameTestHelper h, StationSeat s) {
         return SableShips.containing(h.getLevel(), s.blockPosition()) == null;
     }
 
     /** A seat without passenger removes itself after MAX_IDLE_TICKS (20): seats in a plot tick like any entity. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = "pirates_n_ships_config_station_winch")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = BATCH + "idleseatremovesitself")
     public static void idleSeatRemovesItself(GameTestHelper h) {
         pin(h);
         Fixture f = ship(h, false);
@@ -311,7 +316,7 @@ public final class StationGameTests {
     }
 
     /** Breaking the winch frees the station, removes the seat and releases the crew member. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = "pirates_n_ships_config_station_winch")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = BATCH + "breakingthewinchreleasesthecrew")
     public static void breakingTheWinchReleasesTheCrew(GameTestHelper h) {
         pin(h);
         Fixture f = ship(h, false);
@@ -330,7 +335,7 @@ public final class StationGameTests {
     }
 
     /** The assignment is saved with the crew member, and the seat saves the crew member as its passenger. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = "pirates_n_ships_config_station_winch")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = BATCH + "assignmentsurvivessaveandload")
     public static void assignmentSurvivesSaveAndLoad(GameTestHelper h) {
         pin(h);
         Fixture f = ship(h, false);
@@ -352,7 +357,7 @@ public final class StationGameTests {
      * using it in the air gives no order on the server, the radial menu's "hoist" (its server handler) issues the
      * order to the ship's crew, use on the crew member again releases it.
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = "pirates_n_ships_config_station_winch")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = BATCH + "whistleassignsordersandreleases")
     public static void whistleAssignsOrdersAndReleases(GameTestHelper h) {
         pin(h);
         Fixture f = ship(h, false);
@@ -398,7 +403,7 @@ public final class StationGameTests {
     }
 
     /** The menu's "reef" reaches the seated crew and is remembered on the whistle; "release crew" frees the station. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = "pirates_n_ships_config_station_winch")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = BATCH + "menuorderreachesseatedcrew")
     public static void menuOrderReachesSeatedCrew(GameTestHelper h) {
         pin(h);
         Fixture f = ship(h, false);
@@ -421,7 +426,7 @@ public final class StationGameTests {
     }
 
     /** A player without a whistle cannot order through the payload. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = "pirates_n_ships_config_station_winch")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = BATCH + "menuorderrefusedwithoutwhistle")
     public static void menuOrderRefusedWithoutWhistle(GameTestHelper h) {
         pin(h);
         Fixture f = ship(h, false);
@@ -435,7 +440,7 @@ public final class StationGameTests {
     }
 
     /** An unknown order id (newer or modified client) is ignored: nothing changes. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = "pirates_n_ships_config_station_winch")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = BATCH + "menuignoresunknownorder")
     public static void menuIgnoresUnknownOrder(GameTestHelper h) {
         pin(h);
         Fixture f = ship(h, false);
@@ -452,7 +457,7 @@ public final class StationGameTests {
     }
 
     /** A crew member that dies frees its station at once, and its seat goes. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = "pirates_n_ships_config_station_winch")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = BATCH + "deathfreesthestation")
     public static void deathFreesTheStation(GameTestHelper h) {
         pin(h);
         Fixture f = ship(h, false);
@@ -469,7 +474,7 @@ public final class StationGameTests {
     }
 
     /** Removing the ship for good kills the seat (Sable, #sable:destroy_with_sub_level) and the crew is released. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = "pirates_n_ships_config_station_winch")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = BATCH + "removingtheshipleavesnoseats")
     public static void removingTheShipLeavesNoSeats(GameTestHelper h) {
         pin(h);
         Fixture f = ship(h, false);

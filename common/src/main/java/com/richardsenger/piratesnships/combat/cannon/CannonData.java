@@ -21,7 +21,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
 /**
- * Datagen of the cannon (docs/design.md §8.2): block states (the models are hand-made), loot, tags, physical weight, recipe and lang.
+ * Datagen of the cannon (docs/design.md §8.2): block states (the models are hand-made), loot, tags, physical weight,
+ * recipe and lang.
  * Called from {@code CannonModule.gatherData}.
  */
 public final class CannonData {
@@ -89,20 +90,25 @@ public final class CannonData {
     /**
      * Block states only: the models are hand-made in Blockbench (art/models/cannon*.bbmodel, design.md §4.8), with the
      * muzzle to the north. {@code cannon} is the empty gun, {@code cannon_powder} adds the rammer leaning against the
-     * barrel, {@code cannon_loaded} also the ball in the muzzle. Turned by {@link CannonBlock#FACING} (north unrotated).
+     * barrel, {@code cannon_loaded} also the ball in the muzzle. Turned by {@link CannonBlock#FACING} (north is
+     * unrotated).
      */
     private static void cannon(ModelContext m, Block block) {
         ResourceLocation model = ModelLocationUtils.getModelLocation(block);
-        PropertyDispatch.C2<Direction, CannonLoad> dispatch = PropertyDispatch.properties(CannonBlock.FACING, CannonBlock.LOAD);
+        PropertyDispatch.C2<Direction, CannonLoad> dispatch =
+                PropertyDispatch.properties(CannonBlock.FACING, CannonBlock.LOAD);
         for (Direction d : Direction.Plane.HORIZONTAL) {
+            VariantProperties.Rotation yRot = switch (d) {
+                case EAST -> VariantProperties.Rotation.R90;
+                case SOUTH -> VariantProperties.Rotation.R180;
+                case WEST -> VariantProperties.Rotation.R270;
+                default -> VariantProperties.Rotation.R0;
+            };
             for (CannonLoad load : CannonLoad.values()) {
-                ResourceLocation variant = load == CannonLoad.EMPTY ? model : model.withSuffix("_" + load.getSerializedName());
-                dispatch.select(d, load, Variant.variant().with(VariantProperties.MODEL, variant).with(VariantProperties.Y_ROT, switch (d) {
-                    case EAST -> VariantProperties.Rotation.R90;
-                    case SOUTH -> VariantProperties.Rotation.R180;
-                    case WEST -> VariantProperties.Rotation.R270;
-                    default -> VariantProperties.Rotation.R0;
-                }));
+                ResourceLocation variant =
+                        load == CannonLoad.EMPTY ? model : model.withSuffix("_" + load.getSerializedName());
+                dispatch.select(d, load, Variant.variant().with(VariantProperties.MODEL, variant)
+                        .with(VariantProperties.Y_ROT, yRot));
             }
         }
         m.blockStates().accept(MultiVariantGenerator.multiVariant(block).with(dispatch));

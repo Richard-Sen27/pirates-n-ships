@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.combat.content;
 
+import com.richardsenger.piratesnships.combat.firearms.FirearmItem;
+import com.richardsenger.piratesnships.combat.firearms.FirearmKind;
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
 import net.minecraft.world.item.Item;
@@ -31,8 +33,8 @@ public final class CombatContent {
     /** Balanced (like an iron sword): 6 damage, 1.6 attacks per second. */
     public static final RegistryEntry<Item, SwordItem> SABER = sword("saber", SABER_DAMAGE, SABER_SPEED);
 
-    public static final RegistryEntry<Item, Item> PISTOL = ModRegistry.item("pistol", () -> new Item(new Item.Properties().stacksTo(1)));
-    public static final RegistryEntry<Item, Item> MUSKET = ModRegistry.item("musket", () -> new Item(new Item.Properties().stacksTo(1)));
+    public static final RegistryEntry<Item, Item> PISTOL = ModRegistry.item("pistol", () -> new FirearmItem(new Item.Properties().stacksTo(1), FirearmKind.PISTOL));
+    public static final RegistryEntry<Item, Item> MUSKET = ModRegistry.item("musket", () -> new FirearmItem(new Item.Properties().stacksTo(1), FirearmKind.MUSKET));
     public static final RegistryEntry<Item, Item> LEAD_SHOT = ModRegistry.item("lead_shot", () -> new Item(new Item.Properties()));
     public static final RegistryEntry<Item, Item> CANNONBALL = ModRegistry.item("cannonball", () -> new Item(new Item.Properties().stacksTo(16)));
     public static final RegistryEntry<Item, Item> GRAPPLING_HOOK = ModRegistry.item("grappling_hook", () -> new Item(new Item.Properties().stacksTo(1)));

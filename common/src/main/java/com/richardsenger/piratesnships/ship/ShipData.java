@@ -41,4 +41,9 @@ public record ShipData(UUID id, String name, Optional<UUID> owner, List<UUID> cr
     public ShipData withName(String newName) {
         return new ShipData(id, newName, owner, crew, flag, dimension);
     }
+
+    /** The same ship with another owner, or none (a mutiny takes the ship from its owner, CR2). */
+    public ShipData withOwner(Optional<UUID> newOwner) {
+        return new ShipData(id, name, newOwner, crew, flag, dimension);
+    }
 }

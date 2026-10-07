@@ -5,6 +5,7 @@ import com.richardsenger.piratesnships.crew.morale.MoraleRules;
 import com.richardsenger.piratesnships.crew.morale.NightOutcome;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
+import com.richardsenger.piratesnships.crew.upkeep.ShipDayTick;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.station.StationConfig;
@@ -38,6 +39,9 @@ import net.minecraft.world.phys.Vec3;
  *       it counts as on duty for that night.</li>
  * </ul>
  * With {@code crew.morale.enabled} off nobody is sent to a hammock and morale stays frozen; sleepers still get up.
+ * <p>
+ * CR2: the ship day tick of crew upkeep ({@link ShipDayTick}: provisions, wages, desertion, mutiny) runs at the same
+ * dawn <em>before</em> the hammock rule: every crew tick and every level tick first lets it look at the clock.
  */
 public final class CrewRest {
 
@@ -54,6 +58,7 @@ public final class CrewRest {
 
     /** End of each level tick: nightfall once per night. */
     public static void onLevelTick(ServerLevel level) {
+        ShipDayTick.observe(level);
         boolean night = isNight(level);
         Boolean before = NIGHT.put(level.dimension(), night);
         if (night && !Boolean.TRUE.equals(before)) {
@@ -63,6 +68,7 @@ public final class CrewRest {
 
     public static void onServerStopped() {
         NIGHT.clear();
+        ShipDayTick.onServerStopped();
     }
 
     /** Nightfall in {@code level}: every ship's crew turns in. Public for the GameTests. */
@@ -162,6 +168,10 @@ public final class CrewRest {
 
     /** Every server tick of a crew member: dawn, or keep it in its hammock. */
     public static void tick(ServerLevel level, CrewMember crew) {
+        ShipDayTick.observe(level); // CR2: the ship day tick comes before the hammock rule at dawn
+        if (crew.isRemoved()) {
+            return; // deserted or mutinied at this dawn
+        }
         if ((crew.nightOutcome() != NightOutcome.NONE || crew.rest() != null) && !isNight(level)) {
             dawn(level, crew);
             return;

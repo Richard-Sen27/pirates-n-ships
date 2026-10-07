@@ -156,6 +156,9 @@ public final class StationCommands {
             }
             ShipBunks.Count n = ShipBunks.count(level, ship);
             c.getSource().sendSuccess(() -> Component.translatable(CrewInfo.KEY_COMMAND_SHIP, CrewInfo.shipLine(level, ship), n.hammocks()), false);
+            for (Component line : com.richardsenger.piratesnships.crew.upkeep.UpkeepInfo.lines(level, ship)) {
+                c.getSource().sendSuccess(() -> line, false); // CR2: supplies, last pay, work speed
+            }
             crew.addAll(ShipBunks.crewOf(level, ship));
         } else {
             for (Entity e : targets) if (e instanceof CrewMember m) crew.add(m);

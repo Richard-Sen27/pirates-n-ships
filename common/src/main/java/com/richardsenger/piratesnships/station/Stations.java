@@ -34,6 +34,21 @@ public final class Stations {
 
     private static final Map<StationRef, Entry> STATES = new ConcurrentHashMap<>();
 
+    /**
+     * How fast the crew of a ship works (CR2, docs/design.md §7.4: hungry, thirsty and drunk crew work slower): a
+     * factor on station work speed, 1 = normal. Set by the crew module ({@code crew.upkeep.Upkeep}); the station
+     * module does not know the crew.
+     */
+    @FunctionalInterface
+    public interface WorkSpeed {
+        double factor(ServerLevel level, UUID ship);
+    }
+
+    /** The slowest work speed a factor is clamped to, so that work always ends. */
+    public static final double MIN_WORK_SPEED = 0.05;
+
+    private static volatile WorkSpeed workSpeed = (level, ship) -> 1.0;
+
     private Stations() {
     }
 
@@ -137,6 +152,24 @@ public final class Stations {
         return duration(kind, level, ref, order);
     }
 
+    /** Sets the work-speed source (once, from the crew module). */
+    public static void setWorkSpeed(WorkSpeed source) {
+        workSpeed = source;
+    }
+
+    /**
+     * Work time {@code ticks} at work speed {@code factor}: {@code ceil(ticks / factor)} for positive ticks, with the
+     * factor clamped to [{@link #MIN_WORK_SPEED}, 1]; 0 (nothing to do) and negative values (cannot) stay as they are.
+     * Pure.
+     */
+    public static int scaledTicks(int ticks, double factor) {
+        if (ticks <= 0 || !(factor < 1.0)) {
+            return ticks;
+        }
+        double f = Math.max(MIN_WORK_SPEED, factor);
+        return (int) Math.min(Integer.MAX_VALUE, (long) Math.ceil(ticks / f - 1e-9));
+    }
+
     /** Whether somebody (crew member or player) occupies the station at {@code ref}. */
     public static boolean isManned(StationRef ref) {
         Entry e = STATES.get(ref);
@@ -197,7 +230,8 @@ public final class Stations {
 
     @SuppressWarnings("unchecked")
     private static <O> int duration(StationKind<O> kind, ServerLevel level, StationRef ref, Object order) {
-        return kind.durationTicks(level, ref, (O) order);
+        int ticks = kind.durationTicks(level, ref, (O) order);
+        return ticks > 0 ? scaledTicks(ticks, workSpeed.factor(level, ref.ship())) : ticks;
     }
 
     @SuppressWarnings("unchecked")

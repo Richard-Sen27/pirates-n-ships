@@ -9,16 +9,14 @@ import com.richardsenger.piratesnships.core.config.ModConfigs;
  * section ({@code crew.provisions.ProvisionsConfig}). Declared ahead of the feature by
  * {@code core.settings.SettingsModule}. Read so far: {@link #MAX_CREW_MULTIPLIER} (the bunk limit,
  * {@code crew.hammock.ShipBunks}) and the {@code morale} sub-section (HM1, {@code crew.morale.CrewMorale},
- * {@code crew.hammock.CrewRest}); wages and mutiny come with CR2.
+ * {@code crew.hammock.CrewRest}) and the upkeep sub-sections {@code wages}, {@code desertion} and {@code mutiny}
+ * (CR2, {@code crew.upkeep}). CR2 moved the old top-level keys {@code wages_enabled} and {@code mutiny_enabled} to
+ * {@code wages.enabled} and {@code mutiny.enabled}; old values in a config file are dropped and read as the defaults.
  */
 public final class CrewConfig {
 
     private static final ConfigSection S = ModConfigs.server("crew", "Crew wages, morale and crew size");
 
-    public static final ConfigValue<Boolean> WAGES_ENABLED = S.bool("wages_enabled", true,
-            "Crew members are paid wages in doubloons from the ship's chest and lose morale when unpaid. Off = crew work for free");
-    public static final ConfigValue<Boolean> MUTINY_ENABLED = S.bool("mutiny_enabled", true,
-            "Crew with very low morale may mutiny. Off = they only desert");
     public static final ConfigValue<Double> MAX_CREW_MULTIPLIER = S.doubleRange("max_crew_multiplier", 1.0, 0.1, 10.0,
             "Multiplier on the crew limit a ship gets from its bunks and hammocks");
 
@@ -32,6 +30,35 @@ public final class CrewConfig {
             "Morale a crew member gains at dawn after a night in a hammock (capped at 100)");
     public static final ConfigValue<Integer> NO_HAMMOCK_PER_NIGHT = MORALE.intRange("no_hammock_per_night", 10, 0, 100,
             "Morale a crew member loses at dawn after a night on a ship without a free hammock for it (floored at 0)");
+
+    private static final ConfigSection WAGES = S.section("wages", "Daily wages in doubloons, paid at dawn from the coins in the ship's containers (CR2)");
+
+    public static final ConfigValue<Boolean> WAGES_ENABLED = WAGES.bool("enabled", true,
+            "Crew members are paid wages in doubloons from the coins in the ship's crates, barrels and chests at dawn and lose morale when unpaid. Off = crew work for free");
+    public static final ConfigValue<Integer> WAGE_PER_DAY = WAGES.intRange("per_day", 2, 0, 1000,
+            "Doubloons one crew member costs per day");
+    public static final ConfigValue<Integer> UNPAID_PER_DAY = WAGES.intRange("unpaid_per_day", 8, 0, 100,
+            "Morale an unpaid crew member loses at dawn");
+    public static final ConfigValue<Integer> PAID_PER_DAY = WAGES.intRange("paid_per_day", 1, 0, 100,
+            "Morale a paid crew member gains at dawn");
+
+    private static final ConfigSection DESERTION = S.section("desertion", "Crew with low morale leave the ship (CR2)");
+
+    public static final ConfigValue<Boolean> DESERTION_ENABLED = DESERTION.bool("enabled", true,
+            "A crew member whose morale stays low for several dawns deserts and becomes a neutral sailor. Off = crew never desert");
+    public static final ConfigValue<Integer> DESERT_BELOW = DESERTION.intRange("desert_below", 20, 0, 101,
+            "Morale below which a dawn counts toward desertion");
+    public static final ConfigValue<Integer> DESERT_DAYS = DESERTION.intRange("desert_days", 2, 1, 100,
+            "Consecutive dawns with low morale after which a crew member deserts");
+
+    private static final ConfigSection MUTINY = S.section("mutiny", "A whole crew with very low morale takes the ship (CR2)");
+
+    public static final ConfigValue<Boolean> MUTINY_ENABLED = MUTINY.bool("enabled", false,
+            "Crew with very low average morale may mutiny: they turn into hostile pirates and the ship loses its owner. While the average is that low nobody deserts (they plot instead). Off = they only desert");
+    public static final ConfigValue<Integer> MUTINY_BELOW = MUTINY.intRange("mutiny_below", 15, 0, 101,
+            "Average crew morale below which a dawn counts toward mutiny");
+    public static final ConfigValue<Integer> MUTINY_DAYS = MUTINY.intRange("mutiny_days", 3, 1, 100,
+            "Consecutive dawns with low average morale after which the crew mutinies");
 
     private CrewConfig() {
     }

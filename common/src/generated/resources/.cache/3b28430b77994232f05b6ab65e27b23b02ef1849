@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-// 1.21.1	2026-10-07T17:27:14.852586	Block states and models: pirates_n_ships
-=======
-// 1.21.1	2026-10-07T17:43:29.539438	Block states and models: pirates_n_ships
->>>>>>> worktree-agent-ad8a35a9503282348
+// 1.21.1	2026-10-07T18:30:27.241774	Block states and models: pirates_n_ships
 c189a7833975a61cf2c7c8fd326d27a32969cb9d assets/pirates_n_ships/blockstates/bilge_pump.json
 52e053a4f7334e9a78798b4b4b9a2ad80087f3d5 assets/pirates_n_ships/blockstates/brig_bars.json
 83716521a6f9785f7114fa5a9489defb1257975d assets/pirates_n_ships/blockstates/brig_door.json
@@ -31,12 +27,8 @@ e6693690b1a2de5def4d4ee1b77abcdb3ac5acb1 assets/pirates_n_ships/blockstates/swiv
 6c80c8b0903433be2a48dfec98c3f4337c95808c assets/pirates_n_ships/blockstates/water_barrel.json
 0b12aae142cc2820b4f73c0ec793251dc3bc9fec assets/pirates_n_ships/blockstates/yard.json
 e2b8a59635f01479e9fe04f09cad8c517664bff3 assets/pirates_n_ships/models/block/cannon_rear.json
-<<<<<<< HEAD
-=======
 80e4870b7a0a6de60414d295226ddd953bbc0dbf assets/pirates_n_ships/models/block/hammock_foot.json
 69ef355015e18cc8fff5cc9b35ad130d4e3f5e94 assets/pirates_n_ships/models/block/hammock_head.json
-454079474672d450268ce92edd45fedf1223408e assets/pirates_n_ships/models/block/hull_patch.json
->>>>>>> worktree-agent-ad8a35a9503282348
 c5ac1bd7624a36a4b6b4ab37906b56c61e277091 assets/pirates_n_ships/models/block/map_tile.json
 89e01c1b067ee1bcf2baf70cecd1e748e48114ad assets/pirates_n_ships/models/block/mooring_ring.json
 5982e307cbb43d7cd8267060c04e3d13c79444f7 assets/pirates_n_ships/models/item/bilge_pump.json

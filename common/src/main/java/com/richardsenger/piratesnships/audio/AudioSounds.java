@@ -8,7 +8,7 @@ import net.minecraft.sounds.SoundEvent;
 /** Sound events of the {@code audio} module. Their {@code sounds.json} entries come from {@link AudioModule#gatherData}. */
 public final class AudioSounds {
 
-    /** The creak of a rolling ship's planks (docs/design.md §16). Placeholder sounds: see {@link AudioModule}. */
+    /** The creak of a rolling ship's planks (docs/design.md §16). Sound files: see {@link AudioModule}. */
     public static final RegistryEntry<SoundEvent, SoundEvent> SHIP_CREAK = ModRegistry.sound("ship.creak");
 
     /** Ambient sea music, played at sea but not aboard (docs/design.md §16, pool {@code music.sea}). */

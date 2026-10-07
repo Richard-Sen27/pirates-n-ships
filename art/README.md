@@ -51,6 +51,17 @@ Workflow notes (figurehead batch):
 - A block whose model is not a full cube needs `noOcclusion()` in its properties, or neighbours cull their faces
   against it and the model renders dark.
 
+Workflow notes (helm split, HELM1):
+- `helm.bbmodel` has two groups: `wheel` (rim, spokes, handles, hub, hub cap; 39 elements, origin = the axle at
+  (8, 13, 3.75) px) and `pedestal` (axle, head, post, foot, base, cap; 7 elements). Three files are exported from it
+  with `Codecs.java_block.compile()` and the other group's cubes set to `export = false`: `block/helm.json` (pedestal,
+  the block model), `block/helm_wheel.json` (wheel, drawn and turned about the axle by `HelmWheelRenderer`) and
+  `block/helm_item.json` (both, with the `gui` display; the item model points at it). `HandMadeModelsTest` checks that
+  `helm_item` is exactly `helm_wheel` followed by `helm`.
+- Render `renders/helm_wheel.png`: the helm at wheel 0° and +60° (clockwise from the helmsman's side = starboard),
+  drawn with a `THREE.WebGLRenderer` in `risky_eval` (wheel meshes turned about the axle for the shot only) and
+  written with `fs`.
+
 Workflow notes (capstan, sail winch, yard batch):
 - Building from a spec list in `risky_eval` works well: a small helper creates each cube with `autouv: 0` and sets
   position-based UVs (north/south `x`, `16-y`; east/west `z`, `16-y`; up/down `x`, `z`, each wrapped into 0..16) and a

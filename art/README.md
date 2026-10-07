@@ -524,6 +524,19 @@ Priority: `work` > `sit` > `walk` > `idle` (`crew/npc/CrewPose`). One controller
 blend. A mob with more states adds animations with new names and its own controller logic; triggered one-shots
 (attack swings, a cannon fuse) go through GeckoLib triggerable animations on a second controller.
 
+**Musket animations (M6)** in the same file, for the navy soldier (any type on the rig can play them): `musket_aim`
+(0.35 s, hold on last frame), `musket_reload` (5 s, once; the soldier's controller plays it at `100 /
+musket_reload_ticks` speed), `musket_shove` (0.5 s, once, a butt-stroke). Source `models/entity/musket_animations.js`
+(run after `crew_member_animations.js`; `SF.make` loads it too), project `crew_member.bbmodel`; strips
+`renders/anim_mob_musket_<name>.png` (front three-quarter, left side; `MSK.render`). The poses are the player's P3/F8h
+firearm poses (`player_poses.js`, `F9.G`) mapped onto this rig: `right_hand` carries the gun rotation/position (the
+held item turns with the locator), `waist` the twist (y) and lean (x); the arms hang from `waist` here, so the script
+subtracts the waist's turn from the arm angles. Only `right_arm`, `left_arm`, `right_hand` and `waist` are keyed (legs
+keep walking, the head follows the look; `SeafarerRigTest` checks). Checked with the player rig's musket proxy cubes
+added to `right_hand` for the preview only (not saved): the aim's barrel is level and straight ahead (measured), the
+left hand sits under the rear of the barrel (a 10 px arm cannot reach further). In game `SeafarerModel` adds the look
+pitch to both arms while aiming.
+
 **Variants:** a pirate, sailor, navy soldier or officer is the same geometry with its own texture (a new
 `textures/entity/<mob>.png` painted on the skin layout, its own renderer's `GeoModel` returning that texture) and the
 shared `crew_member.animation.json`. A variant that needs extra shapes (coat tails, a tricorn, an epaulette) gets its

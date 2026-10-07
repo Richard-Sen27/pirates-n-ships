@@ -16,8 +16,8 @@ public final class SeaChestConfig {
             "Sea chests can be worn on the back and float in water (off = a plain block item: no wearing, no floating; a worn chest is inert)");
     public static final ConfigValue<Double> WORN_SPEED_MULTIPLIER = S.doubleRange("worn_speed_multiplier", 0.6, 0.05, 1.0,
             "Walking speed while wearing a sea chest, as a factor of the normal speed");
-    public static final ConfigValue<Double> SINK_PULL = S.doubleRange("sink_pull", 0.02, 0.0, 0.2,
-            "Blocks per tick the worn chest drags its wearer down while in water (swimming up adds 0.04, sinking without input is about 0.005)");
+    public static final ConfigValue<Double> SINK_PULL = S.doubleRange("sink_pull", 0.035, 0.0, 0.2,
+            "Blocks per tick the worn chest drags its wearer down while in water (holding jump adds 0.04 per tick against fluid gravity 0.005: from 0.035 on a wearer can no longer swim up)");
     public static final ConfigValue<Double> DRIFT_FACTOR = S.doubleRange("drift_factor", 0.3, 0.0, 2.0,
             "A floating sea chest drifts with the wind at this fraction of the wind speed");
     public static final ConfigValue<Double> MAX_DRIFT_SPEED = S.doubleRange("max_drift_speed", 3.0, 0.0, 20.0,

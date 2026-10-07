@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class WornRulesTest {
 
-    private static final WornRules.Params DEFAULTS = new WornRules.Params(true, 0.6, 0.02);
+    private static final WornRules.Params DEFAULTS = new WornRules.Params(true, 0.6, 0.035);
 
     @Test
     void notWornMeansNoEffects() {
@@ -53,18 +53,23 @@ class WornRulesTest {
 
     @Test
     void dragsTheWearerDownInWaterButNotWhileFlying() {
-        assertEquals(-0.02, WornRules.effects(true, true, false, false, false, DEFAULTS).extraVy(), 1e-12);
+        assertEquals(-0.035, WornRules.effects(true, true, false, false, false, DEFAULTS).extraVy(), 1e-12);
         assertEquals(0.0, WornRules.effects(true, true, true, false, false, DEFAULTS).extraVy(), "flying in creative");
         assertEquals(0.0, WornRules.effects(true, true, false, false, false, new WornRules.Params(true, 0.6, -1.0)).extraVy(),
                 "a negative pull is no pull");
     }
 
     @Test
-    void defaultPullOutweighsDriftingButNotActiveSwimmingUp() {
-        // Steady state in water: v = (v + pull) * 0.8 - 0.005 (vanilla drag and fluid gravity), swimming up adds 0.04
-        double pull = WornRules.effects(true, true, false, false, false, DEFAULTS).extraVy();
-        double idle = (pull * 0.8 - 0.005) / 0.2;
+    void defaultPullSinksTheWearerAndHoldingJumpNoLongerLiftsIt() {
+        // Vanilla water physics per tick (measured in the GameTests): the displacement m becomes 0.8 m - 0.005
+        // (drag 0.8, fluid gravity 0.005), holding jump adds 0.04, the chest subtracts the pull. Steady state:
+        // m = (jump - 0.005 - pull) / 0.2.
+        double pull = -WornRules.effects(true, true, false, false, false, DEFAULTS).extraVy();
+        double idle = (-0.005 - pull) / 0.2;
+        double swimming = (0.04 - 0.005 - pull) / 0.2;
         double vanillaIdle = -0.005 / 0.2;
-        assertTrue(idle < 4 * vanillaIdle, "sinks over four times as fast as without the chest: " + idle);
+        assertEquals(-0.2, idle, 1e-9, "sinks at 0.2 blocks per tick");
+        assertTrue(idle < 4 * vanillaIdle, "over four times as fast as without the chest");
+        assertTrue(swimming <= 1e-9, "holding jump must not lift a wearer: " + swimming);
     }
 }

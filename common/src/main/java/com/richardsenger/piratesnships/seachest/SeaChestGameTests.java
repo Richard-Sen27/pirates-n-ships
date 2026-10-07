@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.seachest;
 
+import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.content.ContentTestSupport;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
@@ -155,19 +156,29 @@ public final class SeaChestGameTests {
         h.succeed();
     }
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 100)
+    /**
+     * Fully submerged the chest rises at up to 0.15 blocks/tick, then settles as a damped oscillation (per tick:
+     * vertical damping 0.85, stiffness 0.04 / (draft x height) per block, so about 15 ticks per bob and a decay of
+     * 0.85 per tick). After 100 ticks the bottom sits {@code draft x height} below the surface.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 140)
     public static void risesToTheSurfaceWhenSpawnedUnderWater(GameTestHelper h) {
         SeaChestTestSupport.basin(h, 9, 5);
         ServerLevel level = h.getLevel();
         SeaChestEntity chest = SeaChestEntity.fromItem(level, h.absoluteVec(new Vec3(4.5, 2.05, 4.5)), 0f, SeaChestTestSupport.filledChest());
         level.addFreshEntity(chest);
+        double y0 = chest.getY();
+        // The top water block has air above it: a source's surface is 8/9 of a block up
         double surface = h.absolutePos(new BlockPos(0, 5, 0)).getY() + 8.0 / 9.0;
         double draft = SeaChestConfig.DRAFT.get() * chest.getBbHeight();
-        // Settled: the bottom within a quarter block of the rest draft below the waterline, and nearly still
-        h.succeedWhen(() -> {
+        h.runAfterDelay(100, () -> {
             double depth = surface - chest.getY();
-            h.assertTrue(Math.abs(depth - draft) < 0.25, "draft " + depth + ", expected about " + draft);
-            h.assertTrue(Math.abs(chest.getDeltaMovement().y) < 0.03, "still moving: " + chest.getDeltaMovement().y);
+            double vy = chest.getDeltaMovement().y;
+            Constants.LOG.info("[S1] sea chest after 100 ticks: rose {}, draft {} (expected {}), vy {}", chest.getY() - y0, depth, draft, vy);
+            h.assertTrue(chest.getY() - y0 > 2.5, "should have risen to the surface, rose " + (chest.getY() - y0));
+            h.assertTrue(Math.abs(depth - draft) < 0.05, "draft " + depth + ", expected about " + draft);
+            h.assertTrue(Math.abs(vy) < 0.005, "still moving: " + vy);
+            h.succeed();
         });
     }
 
@@ -185,6 +196,7 @@ public final class SeaChestGameTests {
             WindOverride.clear(dim);
             double dx = chest.getX() - x0;
             double dz = chest.getZ() - z0;
+            Constants.LOG.info("[S1] sea chest drift in 100 ticks of 6 b/s west wind: dx {} dz {}", dx, dz);
             h.assertTrue(dx > 3.0, "drifted only " + dx + " blocks east in 100 ticks");
             h.assertTrue(Math.abs(dz) < 1.0, "drifted sideways by " + dz);
             h.succeed();
@@ -225,19 +237,53 @@ public final class SeaChestGameTests {
         });
     }
 
+    /**
+     * Per tick the displacement m in water becomes 0.8 m - 0.005 - pull: a wearer sinks toward 0.2 blocks/tick
+     * (default pull 0.035), a player without the chest toward 0.025. Over 20 ticks from rest that is about 3 against
+     * 0.4 blocks (40 ticks would reach the basin floor).
+     */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 100)
     public static void wornChestSinksItsWearer(GameTestHelper h) {
         SeaChestTestSupport.basin(h, 24, 11);
-        Player wearer = SeaChestTestSupport.playerInLevel(h, new Vec3(6.5, 7.0, 12.5));
-        Player control = SeaChestTestSupport.playerInLevel(h, new Vec3(17.5, 7.0, 12.5));
+        Player wearer = SeaChestTestSupport.playerInLevel(h, new Vec3(6.5, 9.5, 12.5));
+        Player control = SeaChestTestSupport.playerInLevel(h, new Vec3(17.5, 9.5, 12.5));
         wearer.setItemSlot(EquipmentSlot.CHEST, new ItemStack(SeaChestContent.ITEM.get()));
         double w0 = wearer.getY();
         double c0 = control.getY();
-        h.runAfterDelay(40, () -> {
+        h.runAfterDelay(20, () -> {
             double dw = wearer.getY() - w0;
             double dc = control.getY() - c0;
+            Constants.LOG.info("[S1] 20 ticks in water: wearer dy {}, control dy {}", dw, dc);
             h.assertTrue(dw < -2.0, "the wearer should sink, moved " + dw);
             h.assertTrue(dw < dc - 1.5, "the wearer should sink much faster than a player without the chest (" + dw + " vs " + dc + ")");
+            h.succeed();
+        });
+    }
+
+    /**
+     * Holding jump in water adds 0.04 per tick, so the displacement m becomes 0.8 m + 0.04 - 0.005 - pull: a plain
+     * swimmer rises toward 0.175 blocks/tick, a wearer with the default pull 0.035 toward 0 (design.md par. 11: the
+     * chest drags its wearer down; a larger pull sinks it). Measured after the start-up transient of 0.04 / 0.2 = 0.2.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 100)
+    public static void wornChestKeepsASwimmerFromRising(GameTestHelper h) {
+        SeaChestTestSupport.basin(h, 24, 11);
+        Player wearer = SeaChestTestSupport.playerInLevel(h, new Vec3(6.5, 5.0, 12.5));
+        Player control = SeaChestTestSupport.playerInLevel(h, new Vec3(17.5, 3.0, 12.5));
+        wearer.setItemSlot(EquipmentSlot.CHEST, new ItemStack(SeaChestContent.ITEM.get()));
+        wearer.setJumping(true);
+        control.setJumping(true);
+        double[] start = new double[2];
+        h.runAfterDelay(15, () -> {
+            start[0] = wearer.getY();
+            start[1] = control.getY();
+        });
+        h.runAfterDelay(45, () -> {
+            double dw = wearer.getY() - start[0];
+            double dc = control.getY() - start[1];
+            Constants.LOG.info("[S1] ticks 15-45 holding jump in water: wearer dy {}, control dy {}", dw, dc);
+            h.assertTrue(dc > 2.0, "control should swim up, moved " + dc);
+            h.assertTrue(dw < 0.05, "the wearer should not rise while holding jump, moved " + dw);
             h.succeed();
         });
     }

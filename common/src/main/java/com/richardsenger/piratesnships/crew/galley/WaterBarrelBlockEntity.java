@@ -3,6 +3,8 @@ package com.richardsenger.piratesnships.crew.galley;
 import com.richardsenger.piratesnships.crew.content.CrewContent;
 import com.richardsenger.piratesnships.crew.provisions.ProvisionSettings;
 import com.richardsenger.piratesnships.crew.provisions.ProvisionStore;
+import com.richardsenger.piratesnships.trade.cargo.CargoLoad;
+import com.richardsenger.piratesnships.trade.cargo.CargoMass;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
@@ -39,8 +41,13 @@ public class WaterBarrelBlockEntity extends BlockEntity implements ProvisionCont
         if (level != null && !level.isClientSide) {
             BlockState state = getBlockState();
             int fill = WaterBarrelRules.fillLevel(rations, WaterBarrelRules.capacity(s));
-            if (state.hasProperty(WaterBarrelBlock.FILL) && state.getValue(WaterBarrelBlock.FILL) != fill) {
-                level.setBlock(worldPosition, state.setValue(WaterBarrelBlock.FILL, fill), Block.UPDATE_ALL);
+            // the water's weight as Sable mass (CW1): rations × weight per ration, see CargoMass.WATER_BARREL
+            int load = CargoLoad.stateFor(rations * s.waterWeightPerRation(), CargoMass.WATER_BARREL);
+            BlockState next = state;
+            if (next.hasProperty(WaterBarrelBlock.FILL)) next = next.setValue(WaterBarrelBlock.FILL, fill);
+            if (next.hasProperty(CargoLoad.LOAD)) next = next.setValue(CargoLoad.LOAD, load);
+            if (next != state) {
+                level.setBlock(worldPosition, next, Block.UPDATE_ALL);
             }
             level.updateNeighbourForOutputSignal(worldPosition, state.getBlock());
         }

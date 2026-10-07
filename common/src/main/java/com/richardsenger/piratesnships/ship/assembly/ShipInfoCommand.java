@@ -15,7 +15,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-/** {@code /pirates ship info}: id, name, origin and wreck flag of the ship the source stands on or next to (RS1). */
+/**
+ * {@code /pirates ship info}: id, name, origin and wreck flag of the ship the source stands on or next to (RS1), then its
+ * cargo load level (CW1).
+ */
 public final class ShipInfoCommand {
 
     static final String KEY = "commands." + Constants.MOD_ID + ".ship.info";
@@ -49,6 +52,9 @@ public final class ShipInfoCommand {
         } else {
             s.sendSuccess(() -> Component.translatable(KEY_SHIP, ship.id().toString(), shown, line.origin().toString()), false);
         }
+        // CW1: cargo load level, weight and capacity
+        Component load = com.richardsenger.piratesnships.ship.cargo.ShipCargo.infoLine(ship);
+        s.sendSuccess(() -> load, false);
         return 1;
     }
 

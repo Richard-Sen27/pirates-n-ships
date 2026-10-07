@@ -12,6 +12,8 @@ import com.richardsenger.piratesnships.trade.exchange.TransactionResult;
 import com.richardsenger.piratesnships.trade.good.TradeGood;
 import com.richardsenger.piratesnships.trade.market.Market;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import com.richardsenger.piratesnships.trade.desk.HarborDeskService;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -30,8 +32,9 @@ import java.util.function.Consumer;
 
 /**
  * Server side of the market protocol. A market is opened for a player by server code ({@link #open}: the harbor
- * master later, the debug command now), which starts a session at the player's position. Client requests are only
- * honoured for the session's port, in the same dimension and within {@code market_reach} of where it was opened;
+ * master's desk ({@link #openDesk}) or the debug command), which starts a session at the player's position. Client requests are only
+ * honoured for the session's port, in the same dimension and within {@code market_reach} of where it was opened (desk
+ * sessions: within {@code desk_reach} of a desk still bound to the port, with desks enabled);
  * quantities must be 1..{@code max_trade_quantity}; a container must be a loaded cargo container within
  * {@code container_reach} of the player. Every request is answered with a {@link MarketPayloads.State}.
  *
@@ -39,10 +42,18 @@ import java.util.function.Consumer;
  */
 public final class MarketBackend {
 
-    record Session(ResourceLocation port, ResourceKey<Level> dimension, Vec3 origin) {
+    /**
+     * {@code desk} = opened at a harbor master's desk (reach and binding checked against it on every request);
+     * {@code quantity} = the quote quantity last sent, kept for answers to requests without one (contracts).
+     */
+    record Session(ResourceLocation port, ResourceKey<Level> dimension, Vec3 origin, Optional<BlockPos> desk, int quantity) {
+        Session withQuantity(int q) {
+            return new Session(port, dimension, origin, desk, q);
+        }
     }
 
     private static final Map<UUID, Session> SESSIONS = new ConcurrentHashMap<>();
+    private static final Map<UUID, List<CustomPacketPayload>> RECORDINGS = new ConcurrentHashMap<>();
     private static volatile Consumer<NoticedSale> noticedListener = s -> { };
 
     /** A plunder sale a port noticed. */
@@ -64,6 +75,8 @@ public final class MarketBackend {
                 (p, player) -> handleTrade((ServerPlayer) player, p));
         Services.NETWORK.registerToServer(MarketPayloads.ContractAction.TYPE, MarketPayloads.ContractAction.CODEC,
                 (p, player) -> handleContract((ServerPlayer) player, p));
+        Services.NETWORK.registerToClient(MarketPayloads.OpenMarket.TYPE, MarketPayloads.OpenMarket.CODEC,
+                (p, player) -> com.richardsenger.piratesnships.trade.client.ClientMarketState.open(p));
         Services.NETWORK.registerToClient(MarketPayloads.State.TYPE, MarketPayloads.State.CODEC,
                 (p, player) -> com.richardsenger.piratesnships.trade.client.ClientMarketState.accept(p));
     }
@@ -73,8 +86,20 @@ public final class MarketBackend {
     /** Opens the port's market (it must exist) for the player and sends the state; false if there is no market. */
     public static boolean open(ServerPlayer player, ResourceLocation port, int quantity) {
         if (TradeService.market(player.server, port).isEmpty()) return false;
-        SESSIONS.put(player.getUUID(), new Session(port, player.level().dimension(), player.position()));
+        SESSIONS.put(player.getUUID(), new Session(port, player.level().dimension(), player.position(), Optional.empty(), quantity));
         send(player, port, quantity, Optional.empty());
+        return true;
+    }
+
+    /**
+     * Opens the port's market at a harbor master's desk: tells the client to open the market screen, then sends the
+     * state (quotes for one unit). Later requests are checked against the desk ({@link HarborDeskService#sessionValid}).
+     */
+    public static boolean openDesk(ServerPlayer player, ResourceLocation port, BlockPos desk) {
+        if (TradeService.market(player.server, port).isEmpty()) return false;
+        SESSIONS.put(player.getUUID(), new Session(port, player.level().dimension(), Vec3.atCenterOf(desk), Optional.of(desk), 1));
+        deliver(player, new MarketPayloads.OpenMarket(port, desk, TradeConfig.DESK_REACH.get()));
+        send(player, port, 1, Optional.empty());
         return true;
     }
 
@@ -84,12 +109,16 @@ public final class MarketBackend {
 
     public static void clear() {
         SESSIONS.clear();
+        RECORDINGS.clear();
     }
 
     /** Whether the player may trade at {@code port} right now. */
     public static boolean canUse(ServerPlayer player, ResourceLocation port) {
         Session s = SESSIONS.get(player.getUUID());
         if (s == null || !s.port().equals(port) || !s.dimension().equals(player.level().dimension())) return false;
+        if (s.desk().isPresent()) {
+            return HarborDeskService.sessionValid(player, s.desk().get(), port) && TradeService.market(player.server, port).isPresent();
+        }
         double reach = TradeConfig.MARKET_REACH.get();
         return s.origin().distanceToSqr(player.position()) <= reach * reach && TradeService.market(player.server, port).isPresent();
     }
@@ -113,7 +142,7 @@ public final class MarketBackend {
 
     // --- Handlers -----------------------------------------------------------------------------------------------
 
-    static void handleRefresh(ServerPlayer player, MarketPayloads.Refresh p) {
+    public static void handleRefresh(ServerPlayer player, MarketPayloads.Refresh p) {
         if (!canUse(player, p.port())) {
             refuse(player, TransactionResult.failed(TransactionResult.Status.NO_MARKET, p.port()));
             return;
@@ -121,7 +150,7 @@ public final class MarketBackend {
         send(player, p.port(), clampQuantity(p.quantity()), Optional.empty());
     }
 
-    static void handleTrade(ServerPlayer player, MarketPayloads.Trade p) {
+    public static void handleTrade(ServerPlayer player, MarketPayloads.Trade p) {
         if (!canUse(player, p.port())) {
             refuse(player, TransactionResult.failed(TransactionResult.Status.NO_MARKET, p.good()));
             return;
@@ -149,7 +178,7 @@ public final class MarketBackend {
                 .orElse(p.plundered());
     }
 
-    static void handleContract(ServerPlayer player, MarketPayloads.ContractAction p) {
+    public static void handleContract(ServerPlayer player, MarketPayloads.ContractAction p) {
         if (!canUse(player, p.port())) {
             refuse(player, TransactionResult.failed(TransactionResult.Status.NO_MARKET, p.port()));
             return;
@@ -167,7 +196,8 @@ public final class MarketBackend {
             r = holder.isEmpty() ? TransactionResult.failed(TransactionResult.Status.NO_CONTAINER, c.get().good())
                     : MarketTransactions.deliverContract(player, p.port(), p.contract(), holder.get());
         }
-        send(player, p.port(), clampQuantity(64), Optional.of(r));
+        Session s = SESSIONS.get(player.getUUID());
+        send(player, p.port(), clampQuantity(s == null ? 64 : s.quantity()), Optional.of(r));
     }
 
     private static Optional<MarketTransactions.Holder> holder(ServerPlayer player, Optional<BlockPos> pos) {
@@ -178,11 +208,36 @@ public final class MarketBackend {
     // --- State --------------------------------------------------------------------------------------------------
 
     private static void refuse(ServerPlayer player, TransactionResult result) {
-        Services.NETWORK.sendToPlayer(player, new MarketPayloads.State(Optional.empty(), Optional.of(result)));
+        deliver(player, new MarketPayloads.State(Optional.empty(), Optional.of(result)));
     }
 
     private static void send(ServerPlayer player, ResourceLocation port, int quantity, Optional<TransactionResult> result) {
-        Services.NETWORK.sendToPlayer(player, new MarketPayloads.State(view(player, port, quantity), result));
+        SESSIONS.computeIfPresent(player.getUUID(), (k, s) -> s.port().equals(port) ? s.withQuantity(quantity) : s);
+        deliver(player, new MarketPayloads.State(view(player, port, quantity), result));
+    }
+
+    private static void deliver(ServerPlayer player, CustomPacketPayload payload) {
+        List<CustomPacketPayload> rec = RECORDINGS.get(player.getUUID());
+        if (rec != null) {
+            // A recorded (GameTest) player has a mock connection without negotiated channels: record instead of sending
+            rec.add(payload);
+            return;
+        }
+        Services.NETWORK.sendToPlayer(player, payload);
+    }
+
+    // --- Test support -------------------------------------------------------------------------------------------
+
+    /**
+     * GameTests: from now on every market payload for {@code player} goes into the returned list instead of the
+     * network (the mock player's connection has no negotiated channels). Call {@link #stopRecording} at the end.
+     */
+    public static List<CustomPacketPayload> record(UUID player) {
+        return RECORDINGS.computeIfAbsent(player, id -> java.util.Collections.synchronizedList(new ArrayList<>()));
+    }
+
+    public static void stopRecording(UUID player) {
+        RECORDINGS.remove(player);
     }
 
     /** The state of {@code port} for {@code player} with quotes for {@code quantity} units. */

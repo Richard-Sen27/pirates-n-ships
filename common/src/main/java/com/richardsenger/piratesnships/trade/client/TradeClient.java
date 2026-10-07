@@ -11,6 +11,7 @@ public final class TradeClient {
 
     public static void init() {
         ClientEvents.CLIENT_DISCONNECT.register(mc -> ClientMarketState.reset());
+        ClientMarketState.setOpener(MarketScreen::open);
         ClientEvents.ITEM_TOOLTIP.register((stack, context, flag, player, lines) -> CargoTooltip.insertBelowName(lines, CargoTooltip.lines(stack)));
     }
 }

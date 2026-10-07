@@ -10,8 +10,9 @@ import java.util.List;
 
 /**
  * The {@code trade} module (design.md §10.3, §4.9 cargo weight): trade good definitions, port markets with dynamic
- * prices, delivery contracts, plunder and port fee rules, cargo weight. Items ({@code trade.content}), ports, the
- * market screen and cargo containers come from other packages and call {@link TradeService}.
+ * prices, delivery contracts, plunder and port fee rules, cargo weight. Items ({@code trade.content}), the harbor
+ * master's desk and market screen ({@code trade.desk}, {@code trade.client}) and cargo containers come from other
+ * packages and call {@link TradeService}.
  */
 public final class TradeModule implements ModModule {
 
@@ -30,6 +31,7 @@ public final class TradeModule implements ModModule {
         TradeGoods.init();
         PlunderMark.init();
         com.richardsenger.piratesnships.trade.cargo.CargoContainers.init();
+        com.richardsenger.piratesnships.trade.desk.HarborDesks.init();
     }
 
     @Override
@@ -39,7 +41,10 @@ public final class TradeModule implements ModModule {
 
     @Override
     public void registerEvents() {
-        com.richardsenger.piratesnships.platform.event.CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> TradeCommands.register(dispatcher));
+        com.richardsenger.piratesnships.platform.event.CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> {
+            TradeCommands.register(dispatcher);
+            com.richardsenger.piratesnships.trade.desk.HarborDeskCommands.register(dispatcher);
+        });
         com.richardsenger.piratesnships.platform.event.CommonEvents.PLAYER_LOGOUT.register(p -> {
             if (p instanceof net.minecraft.server.level.ServerPlayer sp) com.richardsenger.piratesnships.trade.net.MarketBackend.close(sp);
         });
@@ -61,10 +66,11 @@ public final class TradeModule implements ModModule {
                 .add(CargoWeight.LoadLevel.OVERLOADED.translationKey(), "Overloaded"));
         data.lang(com.richardsenger.piratesnships.trade.cargo.CargoText::lang);
         data.lang(TradeCommands::lang);
+        com.richardsenger.piratesnships.trade.desk.HarborDeskData.gather(data);
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(TradeGameTests.class, CargoGameTests.class);
+        return List.of(TradeGameTests.class, CargoGameTests.class, com.richardsenger.piratesnships.trade.desk.HarborDeskGameTests.class);
     }
 }

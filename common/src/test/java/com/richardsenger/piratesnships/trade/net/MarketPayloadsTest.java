@@ -54,6 +54,12 @@ class MarketPayloadsTest {
     }
 
     @Test
+    void openMarketRoundTrips() {
+        var open = new MarketPayloads.OpenMarket(Constants.id("debug/a"), new BlockPos(-12, 64, 300), 8.0);
+        assertEquals(open, roundTrip(MarketPayloads.OpenMarket.CODEC, open));
+    }
+
+    @Test
     void stateRoundTrips() {
         var port = Constants.id("debug/a");
         var c = new DeliveryContract(UUID.randomUUID(), Constants.id("sugar"), 20, port, Constants.id("debug/b"), 1, 3, 9, 100, 30,

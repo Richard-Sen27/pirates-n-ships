@@ -82,6 +82,25 @@ public final class MarketPayloads {
         }
     }
 
+    /**
+     * Server → client: a harbor master's desk at {@code desk} opened {@code port}'s market; the client opens the market
+     * screen and closes it beyond {@code reach} blocks from the desk. A {@link State} follows.
+     */
+    public record OpenMarket(ResourceLocation port, BlockPos desk, double reach) implements CustomPacketPayload {
+        public static final Type<OpenMarket> TYPE = payloadType("market_open");
+        static final Codec<OpenMarket> C = RecordCodecBuilder.create(i -> i.group(
+                ResourceLocation.CODEC.fieldOf("port").forGetter(OpenMarket::port),
+                BlockPos.CODEC.fieldOf("desk").forGetter(OpenMarket::desk),
+                Codec.DOUBLE.fieldOf("reach").forGetter(OpenMarket::reach)
+        ).apply(i, OpenMarket::new));
+        public static final StreamCodec<RegistryFriendlyByteBuf, OpenMarket> CODEC = ByteBufCodecs.fromCodec(C).cast();
+
+        @Override
+        public Type<OpenMarket> type() {
+            return TYPE;
+        }
+    }
+
     /** Server → client: the market state (empty = no open market, e.g. after a refused request) and the last result. */
     public record State(Optional<MarketView> view, Optional<TransactionResult> result) implements CustomPacketPayload {
         public static final Type<State> TYPE = payloadType("market_state");

@@ -765,3 +765,26 @@ from above).
 
   `head` and `root` rotation are never keyed; the bite keys only positions on `head` and `body`, so it never fights
   the body controller's yaw or the code's head turn.
+
+## GUI kit (U1)
+
+Screen and HUD sprites come from `tools/gen_gui_textures.py` (standard library only; run it with `python3`, commit
+its output). They live in vanilla's GUI sprite atlas under
+`common/src/main/resources/assets/pirates_n_ships/textures/gui/sprites/{panel,widget,icon,hud}/`, each with a
+`.png.mcmeta` (`nine_slice` for frames, panels, buttons, fields, tags, dividers and the scrollbar; `stretch` for
+icons and the stamina fills). The ids are in `core/client/gui/GuiSprites`; `GuiTexturesTest` fails while the
+committed files differ from a fresh run. Pixel art at 16×16 scale, no anti-aliasing, two or three shades per material;
+nine-slice edges and centres repeat cleanly because vanilla tiles them.
+
+| Material | Dark | Mid | Light | Extra |
+|---|---|---|---|---|
+| Wood (frame, header) | 52,34,20 | 76,51,31 | 100,68,42 | bevel 132,94,58; board 60,40,24 / 50,33,20; outline 24,15,8 |
+| Brass (studs, buttons, dividers, trough) | 134,94,34 | 198,150,58 | 238,204,112 | outline 82,54,18; gold 252,216,78 |
+| Parchment (panels, cards, tags) | 196,170,124 | 222,201,156 | 238,224,188 | edge 160,128,84 |
+| Red wax (seal, own card, alert) | 104,18,18 | 156,32,28 | 206,72,56 | |
+| Navy (anchor badge) | 28,40,74 | 48,70,124 | 92,120,180 | |
+| Inset (fields, track, trough) | 20,13,8 | 34,23,14 | | |
+| Stamina fill | 112,18,16 (deep red) … 240,166,48 (amber) | eight 10 px bands | top row +34, bottom row ×0.72 | |
+
+Text: dark ink `#2C2018` (faded `#7A6852`) without shadow on parchment; light `#EEE0BC` or brass `#F4D27A` with
+shadow on wood.

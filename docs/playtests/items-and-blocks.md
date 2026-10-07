@@ -79,7 +79,7 @@ Renders of the intended look are in `art/renders/`.
    `latest.log` has no model or texture warnings mentioning `pirates_n_ships`. On a moving ship the models render with
    correct lighting.
 
-## 3D item models (F8a swords; F8b firearms, ammunition, grappling hook; F8c whistle, shackles; F8d provisions)
+## 3D item models (F8a swords; F8b firearms, ammunition, grappling hook; F8c whistle, shackles; F8d provisions; F8e trade goods)
 Compare each sword with a vanilla iron sword in the other hand or the next hotbar slot. Renders in `art/renders/`.
 1. **First person, right hand:** the grip sits in the fist, blade up and forward at the iron sword's angle. The rapier
    is visibly longer and thin, the cutlass short and broad with a brass basket, the saber curved with the tip bending
@@ -119,10 +119,16 @@ Compare each sword with a vanilla iron sword in the other hand or the next hotba
     bobbing on the ground; centred in an item frame. Eating and drinking still work with their effects, the eating
     particles show tans, pinks, greens and blue-grey (never magenta or black), rum still counts as a drink and the
     pantry still accepts the provisions.
+16. **Trade goods (cloth, spices, tobacco), GUI:** an off-white bolt on the diagonal with brown core stubs and a flap
+    to the lower right; a brown sack with a dark cord and knot and an orange, red and gold heap; a fan of brown leaves
+    from lower left to upper right with tan twine. Say whether the spice sack reads too plain and whether the middle
+    tobacco leaves blend together. Held like the food items in first and third person and the offhand; floating at
+    half size on the ground; centred in an item frame. Selling at a test market and the cargo containers still work
+    and show the 3D icons.
 
 ## Known placeholders (for the later art pass)
 - Cargo crate and barrel, pantry, water barrel, brig bars and door, and the bilge pump still use simple models (F7d, F7e).
 - The yard and stay cloths are flat grids with a simple belly; the cleat is a placeholder element model (F7e).
-- Only cloth, spices and tobacco (F8e in work), the doubloon, the bounty proof and the hull patch still use sprites.
+- Only the doubloon, the bounty proof and the hull patch still use sprites (by decision).
 - The brig bars' transparency relies on a model field that only NeoForge reads. The Fabric port has to register a
   render layer for them.

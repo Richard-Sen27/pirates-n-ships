@@ -1,6 +1,5 @@
 package com.richardsenger.piratesnships.law.content;
 
-import com.google.gson.JsonObject;
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
@@ -16,10 +15,6 @@ import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
 import net.minecraft.data.models.model.ModelLocationUtils;
-import net.minecraft.data.models.model.ModelTemplate;
-import net.minecraft.data.models.model.ModelTemplates;
-import net.minecraft.data.models.model.TextureMapping;
-import net.minecraft.data.models.model.TextureSlot;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
@@ -41,8 +36,8 @@ import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import java.util.List;
 
 /**
- * The {@code law.content} module: shackles, brig bars and brig door (design.md §13.3). Block states and models are
- * built from vanilla's glass pane and door templates, the same way vanilla generates its own panes and doors.
+ * The {@code law.content} module: shackles, brig bars and brig door (design.md §13.3). The bars and the door have
+ * hand-made Blockbench models; their block states follow vanilla's panes and doors.
  */
 public final class LawContentModule implements ModModule {
 
@@ -128,28 +123,28 @@ public final class LawContentModule implements ModModule {
     }
 
     /**
-     * A door like vanilla's: the eight door templates with {@code <name>_top} / {@code <name>_bottom}, the same
-     * facing/half/hinge/open rotations vanilla uses, and a flat item model using {@code item/<name>}. A locked lower
-     * half uses four more models ({@code *_locked}) with the padlock texture {@code <name>_bottom_locked}.
+     * A door: hand-made Blockbench models (art/models/brig_door_*.bbmodel, design.md §4.8), so only the block state and
+     * the flat item model ({@code item/<name>}) are generated, with the same facing/half/hinge/open rotations vanilla
+     * uses. Each model is the leaf of a door facing east (x 0..3); the "left" models have the hinge at z 0, the "right"
+     * ones at z 16 (mirrored in z). Opening turns the leaf about its hinge, which in vanilla's scheme (open adds 90° or
+     * 270°) needs the leaf turned by 180° in the model: a left door's open model is the right model and the other way
+     * round. The unlocked halves are symmetric front to back, so that turned leaf is the mirrored one; the locked lower
+     * half carries a padlock on the side the placing player faced (x < 0) and has its own four models, so the padlock
+     * stays on the same side of the leaf when the door swings.
      */
     private static void door(ModelContext m, Block block) {
-        TextureMapping textures = TextureMapping.door(block);
-        TextureMapping lockedTextures = TextureMapping.door(block).put(TextureSlot.BOTTOM, TextureMapping.getBlockTexture(block, "_bottom_locked"));
-        ResourceLocation[] lower = {
-                ModelTemplates.DOOR_BOTTOM_LEFT.create(block, textures, m.models()),
-                ModelTemplates.DOOR_BOTTOM_LEFT_OPEN.create(block, textures, m.models()),
-                ModelTemplates.DOOR_BOTTOM_RIGHT.create(block, textures, m.models()),
-                ModelTemplates.DOOR_BOTTOM_RIGHT_OPEN.create(block, textures, m.models())};
+        ResourceLocation bottomLeft = ModelLocationUtils.getModelLocation(block, "_bottom_left");
+        ResourceLocation bottomRight = ModelLocationUtils.getModelLocation(block, "_bottom_right");
+        ResourceLocation topLeft = ModelLocationUtils.getModelLocation(block, "_top_left");
+        ResourceLocation topRight = ModelLocationUtils.getModelLocation(block, "_top_right");
+        // indexed like the loop below: left, left open, right, right open
+        ResourceLocation[] lower = {bottomLeft, bottomRight, bottomRight, bottomLeft};
         ResourceLocation[] lowerLocked = {
-                ModelTemplates.DOOR_BOTTOM_LEFT.createWithSuffix(block, "_locked", lockedTextures, m.models()),
-                ModelTemplates.DOOR_BOTTOM_LEFT_OPEN.createWithSuffix(block, "_locked", lockedTextures, m.models()),
-                ModelTemplates.DOOR_BOTTOM_RIGHT.createWithSuffix(block, "_locked", lockedTextures, m.models()),
-                ModelTemplates.DOOR_BOTTOM_RIGHT_OPEN.createWithSuffix(block, "_locked", lockedTextures, m.models())};
-        ResourceLocation[] upper = {
-                ModelTemplates.DOOR_TOP_LEFT.create(block, textures, m.models()),
-                ModelTemplates.DOOR_TOP_LEFT_OPEN.create(block, textures, m.models()),
-                ModelTemplates.DOOR_TOP_RIGHT.create(block, textures, m.models()),
-                ModelTemplates.DOOR_TOP_RIGHT_OPEN.create(block, textures, m.models())};
+                ModelLocationUtils.getModelLocation(block, "_bottom_left_locked"),
+                ModelLocationUtils.getModelLocation(block, "_bottom_left_open_locked"),
+                ModelLocationUtils.getModelLocation(block, "_bottom_right_locked"),
+                ModelLocationUtils.getModelLocation(block, "_bottom_right_open_locked")};
+        ResourceLocation[] upper = {topLeft, topRight, topRight, topLeft};
         m.flatItem(block.asItem());
         PropertyDispatch.C5<Direction, DoubleBlockHalf, DoorHingeSide, Boolean, Boolean> dispatch = PropertyDispatch.properties(
                 BlockStateProperties.HORIZONTAL_FACING, BlockStateProperties.DOUBLE_BLOCK_HALF, BlockStateProperties.DOOR_HINGE,

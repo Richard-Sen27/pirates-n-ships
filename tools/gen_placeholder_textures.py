@@ -12,7 +12,8 @@ Output: common/src/main/resources/assets/pirates_n_ships/textures/{item,block}/<
 Deterministic: same input, same bytes. One function per texture, registered in ITEMS / BLOCKS.
 Replacing a texture by hand: put its name into PROTECTED (or a line in tools/protected_textures.txt),
 then this script never overwrites it. Textures owned by other packages (test_block) are never written. The helm, nameplate,
-flagpole, cargo crate, cargo barrel, pantry, water barrel and brig bars have hand-made Blockbench models with vanilla textures
+flagpole, cargo crate, cargo barrel, pantry, water barrel, brig bars and brig door (its block halves; the item
+sprite is here) have hand-made Blockbench models with vanilla textures
 (art/models/) and no textures here; the rapier, cutlass, saber,
 pistol, musket, lead shot, cannonball, grappling hook, shackles, rum, hardtack, lime, salt pork, salted fish, cloth,
 spices and tobacco have hand-made item models textured from the item palettes
@@ -144,31 +145,11 @@ def brig_door_item():
 
 # ---------------------------------------------------------------- blocks
 
-def brig_door(top):
-    cv = planks("brig_door_" + ("top" if top else "bottom"), "wood", "wood_d", "wood_l")
-    for x in (0, 15):
-        cv.rect(x, 0, x, 15, "iron_d")
-    if top:
-        cv.rect(0, 2, 15, 3, "iron")
-        cv.rect(3, 6, 12, 13, "black")
-        for x in (4, 7, 10):
-            cv.rect(x, 6, x + 1, 13, "iron")
-            cv.rect(x, 6, x, 13, "steel")
-        cv.rect(0, 0, 15, 0, "iron_d")
-    else:
-        cv.rect(0, 12, 15, 13, "iron")
-        cv.rect(12, 1, 13, 3, "steel"); cv.px(12, 2, "black")
-        cv.rect(0, 15, 15, 15, "iron_d")
-    return cv
-
-
 ITEMS = {
     "doubloon": doubloon,
     "brig_door": brig_door_item,
 }
-BLOCKS = {
-    "brig_door_top": lambda: brig_door(True), "brig_door_bottom": lambda: brig_door(False),
-}
+BLOCKS = {}
 
 
 def protected():

@@ -1254,15 +1254,30 @@ deeper, the footings hang in the water.
 
 | piece | size (x×y×z) | blocks | contents | mod blocks |
 |---|---|---|---|---|
-| `dock_head` (start) | 11×8×11 | 289 | stone quay, harbor master's hut (desk facing the door, cargo, lectern), notice board beside the door, two lantern posts at the pier landing, mooring rings on the sea edge, crates and barrels; `pier_out` [5, 0, 0], `street_out` [2, 0, 10] | `harbor_desk`, `notice_board`, `mooring_ring`, `cargo_crate`, `cargo_barrel` |
-| `pier` | 7×9×20 | 197 | 5 wide plank deck on spruce piles with footings, cross beams, a rail and two lantern posts at the seaward end, a ladder down; `pier_in` [3, 5, 19], berths [0, 4, 9] and [6, 4, 9] | `mooring_ring`, `cleat` |
-| `street` | 7×4×7 | 52 | cobbled street with gravel and moss patches, dirt path verges, a lantern post; `street_in` [3, 0, 0], `street_out` [3, 0, 6], `building_out` [0, 0, 3] and [6, 0, 3] | |
-| `street_end` (terminator) | 7×4×3 | 26 | cobbled turning place at a street's end, a lantern post and two barrels; `street_in` [3, 0, 0] | |
-| `house_small` | 7×9×9 | 237 | 7×7 cottage of white render (calcite) on stripped spruce posts, red tile roof, bed, table and stool, chest, barrel, crafting table; `building_in` [3, 0, 0] | |
-| `tavern` | 11×15×11 | 695 | 11×9, two floors: bar with barrels, two tables with stools, a hanging lantern, stairs, two beds upstairs; a dark oak panel above the door for a sign; `building_in` [5, 0, 0] | `cargo_barrel` |
-| `shipwright` | 11×13×10 | 441 | open shed on posts with a dark roof, a half-built hull (keel, stem, three frames, a strake) on a gravel slipway, sawhorses, stacked logs and planks, crafting and smithing tables; `building_in` [5, 0, 0] | |
+| `dock_head` (start) | 11×8×11 | 308 | stone quay (mossy towards the sea, cracked inland), harbor master's hut (desk facing the door, cargo, lectern): render on a cobblestone plinth between spruce corner posts, framed door under a hood, windows with sills (shutters where the box allows), spruce band in the gables, rafter ends; notice board beside the door, two lantern posts at the pier landing, mooring rings on the sea edge, crates and barrels, a bench at the hut's west wall, a barrel with a flower pot by the street; `pier_out` [5, 0, 0], `street_out` [2, 0, 10] | `harbor_desk`, `notice_board`, `mooring_ring`, `cargo_crate`, `cargo_barrel` |
+| `pier` | 7×9×20 | 240 | 5 wide plank deck (a few weathered dark oak boards) on spruce piles with mostly mossy footings, cross beams, stripped spruce wales at the waterline, a rail and two lantern posts at the seaward end, a ladder down; at the landward end (clear of the berths) a lantern post and rail on each edge and cargo (barrels, crates); `pier_in` [3, 5, 19], berths [0, 4, 9] and [6, 4, 9] | `mooring_ring`, `cleat`, `cargo_crate`, `cargo_barrel` |
+| `street` | 7×4×7 | 54 | cobbled crown with gravel and moss patches between stone brick kerbs (some mossy or cracked), dirt path verges with coarse patches, a lantern post, a barrel with a flower pot (both clear of the doors at z 3); `street_in` [3, 0, 0], `street_out` [3, 0, 6], `building_out` [0, 0, 3] and [6, 0, 3] | |
+| `street_end` (terminator) | 7×4×3 | 29 | cobbled turning place, the kerbs turning along the far edge, a lantern post between two benches, two barrels (one with a flower pot); `street_in` [3, 0, 0] | |
+| `house_small` | 7×9×9 | 261 | 7×7 cottage: mossy cobblestone plinth, white render between stripped spruce corner posts, framed door under a hood, windows with sills (outside on the front and back, set into the wall on the gables), shutters on the back, spruce wall plate and gable band, rafter ends under both eaves, render gables with attic lights, brick chimney on the east gable over a furnace hearth, red tile roof; bed, table and stool, chest, barrel with lantern, crafting table with flower pot, bookshelf, rug, a lantern on a tie beam; `building_in` [3, 0, 0] | |
+| `tavern` | 11×15×11 | 774 | 11×9, two floors: mossy plinth, render between stripped spruce corner and mid posts and oak door posts, spruce band at the upper floor, tall framed ground floor windows and single upper ones with shutters and sills, a gallery rail on a slab ledge and brackets over the porch with a french door behind it, lanterns either side of the door, rafter ends, boarded gables with lights, brick chimney on the east gable over a hearth; bar with barrels, two tables with stools, a hanging lantern, stairs, two beds upstairs, a crate, rugs, a lantern on a tie beam; a dark oak panel above the door for a sign; `building_in` [5, 0, 0] | `cargo_barrel`, `cargo_crate` |
+| `shipwright` | 11×13×10 | 469 | open shed on posts (mossy cobblestone footings, knee braces under the beams) with a dark roof, a king post truss in the open front gable, a back wall of two cobblestone courses, a spruce band and render with three windows, an oak boarded gable with a light; a half-built hull (keel, stem, three frames, a strake) on a gravel slipway, a hoist chain from a collar beam over the bow, sawhorses, stacked logs and planks, crafting and smithing tables, a grindstone, a tar cauldron; `building_in` [5, 0, 0] | |
 
 Renders: `art/renders/structures/village/{dock_head,pier,street,street_end,house_small,tavern,shipwright}.png`.
+
+**ST4a pass (the look):** every village piece follows design.md §10.1 "Look of the buildings" with one palette from
+`art/structures/village/_style.py`: spruce for the frame (stripped spruce posts, plates, bands, rafter ends, shutters,
+doors, sills), oak for the joinery around openings (stripped oak lintels and door frames, the shipwright's boards),
+cobblestone for plinths and footings (mossy towards the ground) and stone bricks for the quay and the street kerbs,
+red brick as the accent (tile roofs, ridges, chimneys) with dark shingle roofs on the working buildings, white render
+(calcite) as the infill. The fittings: `corner_post`, `plinth` (cobblestone course over a mostly mossy foundation row,
+a fixed scatter so the output stays byte-identical), `trim_band` (stripped logs over the infill only), `window` (panes,
+an oak lintel, spruce slab sill and open trapdoor shutters outside; where the outside is beyond the box, e.g. the east
+and west walls that are the box faces, an upside-down stair set into the wall as the sill and no shutters),
+`door_frame` (door, oak posts and lintel, an upside-down stair hood), `rafter_ends` (upside-down stairs under the
+eaves), `chimney` (bricks with a brick wall pot, no campfire) and `hearth` (a furnace at its foot). `buildspec.Piece`
+gained `inside` and `put_inside` for fittings near the box faces. Box sizes, jigsaws, berths, final states and doors
+are unchanged. Note the lab's preview colours whole cubes by name (stairs, trapdoors and fences render as full blocks,
+mod blocks in hashed colours), so the committed renders look heavier than the game.
 
 **Adding a piece:** copy a generator in the group's folder, keep the conventions above (foundation row, north
 front, connectors on the box faces), then run `python3 tools/build_structures.py <group>/<piece>`. Look at the

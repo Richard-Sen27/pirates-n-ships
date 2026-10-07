@@ -565,6 +565,53 @@ shared animations working because every contract bone is still there.
 Run `./gradlew build` afterwards: `CrewMemberRigTest` parses the files with GeckoLib's loader and checks bones,
 pivots, parents and animation names.
 
+### Mob looks (M3-art)
+
+The pirate, sailor, navy soldier and officer are Blockbench models on the crew rig: `art/models/entity/<type>.bbmodel`,
+exported to `geo/<type>.geo.json` (identifier `geometry.<type>`) and `textures/entity/<type>.png`, renders
+`renders/mob_<type>.png` (front three-quarter, left side, back three-quarter). They share `crew_member.animation.json`.
+`HumanoidGeoModel` resolves the geometry from the texture name (`textures/entity/<type>.png` → `geo/<type>.geo.json`),
+so `SeafarerModel` needs no change; the crew member keeps `geo/crew_member.geo.json`. `SeafarerRigTest` checks per type:
+the crew member's exact bone set, parents, pivots and contract cubes, no rest rotation on a bone, every face UV on the
+sheet, GeckoLib bakes it and finds every animated bone, the texture is 64×64.
+
+- **Sources.** `seafarer_skins.js` paints the four skins (seeded, deterministic; the source of the PNGs, which
+  `tools/gen_entity_textures.py` no longer writes unless named), `seafarer_models.js` holds the detail cube lists and
+  `SF.make(type, repo)` (new GeckoLib project tab: paint, build with `M2.BONES`/`M2.CONTRACT`, the crew animations),
+  `SF.exportAll(repo)` (geo, PNG, project file) and `SF.render(repo, file)`. Load `crew_member_model.js` only inside
+  `SF.make`: it builds into whatever project is open.
+- **Details are cubes in the contract bones** (no extra bones), with per-face UV: a face names a 2×2 colour patch
+  (`SF.PATCHES[type]`, packed from u 56, v 16, four per row, at most 32: v 16..31) or a painted region
+  (`SF.REGIONS[type]`) in the free corners of the skin layout. `SF.mirror` makes the left copy of a right-side part.
+- **Pirate** (36 cubes): bandana with knot and tails (`hat`), eyepatch and earring (`head`), lapels, back tails and side
+  skirts of the long coat (tails lean 9° back), red sash with knot and two ends, belt and buckle (`body`), turned-back
+  cuffs, boot cuffs and toe caps. Coat on the jacket and sleeve layers with an open front.
+- **Sailor** (32): knitted cap of brim, crown and a slouched fold (`hat`), black neckerchief, rope belt with knot and
+  ends, rolled sleeve cuffs, slop hems over the trousers layer, shoes with brass buckles.
+- **Navy soldier** (39): tricorn of a crown, a back wall and two front walls turned ±28.4° about y meeting at the front
+  point, each with a floor plate, a black cockade on the left wall (`hat`); queue and bow (`head`); red collar, brass
+  plate where the white cross belts (painted on the jacket layer over a buff waistcoat) cross, cartridge box, coat tails
+  and skirts with red turnbacks (`body`); red cuffs; shoes, buckles, gaiter tops (gaiters on the trousers layer).
+  The tricorn's crown corners show past the front walls from above (a square head under a triangle).
+- **Navy officer** (55): bicorne worn athwart, front and back flaps in three steps each (centre 6 px high), leaning 18°
+  towards each other, outer face 0.35 px in front of the head so the head never pokes through, end plates, gold loop,
+  button and black cockade on the front flap (`hat`); queue and bow; collar, crimson sash with knot, ends and gold
+  tassels on the left hip, coat tails and skirts edged in gold (`body`); epaulettes with fringe on three sides and
+  gold-ringed cuffs (arms); boot tops and toe caps.
+
+Sheet allocation (outside the box-UV contract areas; the same free corners in every sheet, used per type):
+
+| Area | Pirate | Sailor | Navy soldier | Navy officer |
+|---|---|---|---|---|
+| 0..8 × 0..8 | | | tricorn brim outer (0,0,8,4), inner (0,4,8,4) | bicorne flap outer (0,0,8,5), inner (0,5,8,3) |
+| 24..32 × 0..8 | | cap brim, crown, fold (3+3+2 rows) | crown sides (3 rows), gaiter top (3 rows) | crown sides (3 rows), cuff (3 rows) |
+| 32..40 × 0..8 | | cap top | crown top | crown top |
+| 0..4 × 16..20 | lapel | | | |
+| 12..20 × 16..20 | boot cuff (8×3) | | collar (8×2) | epaulette top (8×4) |
+| 36..44 × 16..20 | coat cuff (8×3) | | cuff (8×3) | fringe (8×2) |
+| 56..64 × 16..32 | 22 patches | 17 patches | 17 patches | 17 patches |
+| 56..64 × 32..48 | tail back (4×9), side (4×9), tail inside (8×2) | slop hem (8×3) | tail back (4×7), side (4×7) | tail back (4×8), side (4×8), sash (8×2), boot top (8×2) |
+
 ### Shark rig (M4)
 
 The shark (design.md §9, §12) is a GeckoLib model on its own rig. M4 ships a **script placeholder**:

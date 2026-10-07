@@ -53,7 +53,9 @@ public class HostileTargetGoal extends TargetGoal {
             double max = e instanceof Player ? players : factions;
             double d = mob.distanceToSqr(e);
             if (d > max * max || d >= bestSq) continue;
-            if (!mob.getSensing().hasLineOfSight(e) || !seafarer.attacksOnSight(e)) continue;
+            // canAttack: the check canContinueToUse makes (no players on peaceful); without it the target would be
+            // picked here and dropped again on the next tick, every scan
+            if (!mob.canAttack(e) || !mob.getSensing().hasLineOfSight(e) || !seafarer.attacksOnSight(e)) continue;
             best = e;
             bestSq = d;
         }
@@ -64,6 +66,30 @@ public class HostileTargetGoal extends TargetGoal {
     public void start() {
         mob.setTarget(found);
         super.start();
+        DuelistDebug.stats(mob).targetsAcquired++;
+        DuelistDebug.report(mob, "target", "acquired", found, "");
+    }
+
+    @Override
+    public boolean canContinueToUse() {
+        LivingEntity target = mob.getTarget();
+        boolean keep = super.canContinueToUse();
+        if (!keep && DuelistDebug.active()) DuelistDebug.report(mob, "target", "dropped (" + dropReason(target) + ")", target, "");
+        return keep;
+    }
+
+    @Override
+    public void stop() {
+        if (mob.getTarget() != null) DuelistDebug.stats(mob).targetsLost++;
+        super.stop();
+    }
+
+    private String dropReason(@Nullable LivingEntity target) {
+        if (target == null) return "no target";
+        if (!mob.canAttack(target)) return "can't attack: peaceful difficulty or invulnerable";
+        double range = getFollowDistance();
+        if (mob.distanceToSqr(target) > range * range) return "beyond mobs.detection_range";
+        return "out of sight";
     }
 
     @Override

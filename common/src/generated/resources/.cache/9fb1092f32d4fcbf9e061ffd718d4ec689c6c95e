@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-07T08:33:47.637239	Recipes
+// 1.21.1	2026-10-07T09:39:12.647242	Recipes
 e1289c0eb7525c60669f4203ccd8af0d9d7b0744 data/pirates_n_ships/advancement/recipes/building_blocks/hull_patch.json
 8f98eb055171c739101420a0b9bbe9f3a8bf2903 data/pirates_n_ships/advancement/recipes/combat/cannon.json
 015749d8a9eaabd51b4c4c379ce38acafd30720e data/pirates_n_ships/advancement/recipes/combat/cannonball.json
@@ -23,6 +23,7 @@ e2b270492cba5435b088d6e7fc3330413a80e288 data/pirates_n_ships/advancement/recipe
 3f92520700f06e1abe525267746f118ade0342c7 data/pirates_n_ships/advancement/recipes/decorations/nameplate.json
 9803d6ed44f7f441f59c712df3720671d5483306 data/pirates_n_ships/advancement/recipes/decorations/navy_flag.json
 828bcded2b4c917ce606a20648c3c64c7bbc5421 data/pirates_n_ships/advancement/recipes/decorations/pantry.json
+d41fedbbd5ba002d59032ede6885441418985708 data/pirates_n_ships/advancement/recipes/decorations/sea_chest.json
 24acbd4c3d3089c166c287f17cff2b42a52f7f76 data/pirates_n_ships/advancement/recipes/decorations/water_barrel.json
 2fbce99b46f6f5ee2a0b579c1beef4d6c4b30e71 data/pirates_n_ships/advancement/recipes/food/hardtack.json
 23eb0c8d0fa056956f1a18d93529f5741ecddc0e data/pirates_n_ships/advancement/recipes/food/rum.json
@@ -77,6 +78,7 @@ ff99d921b82145e6964a5fcd101f6a8181c13e27 data/pirates_n_ships/recipe/pantry.json
 08b79a7e2a0c6e706a234165d6e337274abce0d9 data/pirates_n_ships/recipe/sail_winch.json
 536af96ca6a4b673d5b9b55e405c92aeff68e45d data/pirates_n_ships/recipe/salt_pork.json
 bfda73ccf86f5d9e8e44937fcdb3a35a4915a4f4 data/pirates_n_ships/recipe/salted_fish.json
+4fba343e5b50c6f994740a1b3a8b6d9b9771720e data/pirates_n_ships/recipe/sea_chest.json
 ac2246f9028680daca94ec84163dd9ee1f9dd335 data/pirates_n_ships/recipe/shackles.json
 5440ef63e69e61a5f4f9311e95ac4fe10972af4b data/pirates_n_ships/recipe/swivel_gun.json
 1439e002784305e98c5e832a33e122efb3321232 data/pirates_n_ships/recipe/water_barrel.json

@@ -235,9 +235,9 @@ early parry and striking while your guard is spent. Navy soldiers (blue coat, wh
 they leave you alone unless you are wanted, then keep their distance, aim for a second and fire, and shove you back if
 you get close. Officers (gold trim, bicorne) are skilled saber duelists. Pirates and navy fight each other on sight.
 Sailors never fight and run from danger. Hitting or killing navy is a crime; killing pirates is not. Pirates drop
-doubloons and sometimes a cutlass; navy drop lead shot and gunpowder. They look like recoloured sailors until their
-Blockbench models land. Operators spawn them with `/pirates mob spawn <pirate|sailor|navy_soldier|navy_officer>
-[count]` or with spawn eggs; natural spawning comes with the world structures. Everything is in the `mobs` server
+doubloons and sometimes a cutlass; navy drop lead shot and gunpowder. Operators spawn them with `/pirates mob spawn <pirate|sailor|navy_soldier|navy_officer>
+[count]` or with spawn eggs, and `/pirates mob debug on` traces what nearby duelists decide (it also shows the
+difficulty: on peaceful they ignore players); natural spawning comes with the world structures. Everything is in the `mobs` server
 config.
 
 ### Sharks
@@ -311,6 +311,13 @@ Swimming or wading in frozen or cold oceans and frozen rivers fills the freezing
 about 7 seconds you are frozen and take damage every 2 seconds. You are safe in a boat, on a ship's deck or inside
 a dry hull, in any piece of leather armour, or after a bottle of rum ("Warm", 2 minutes). Swimming makes you hungry
 half again as fast as in vanilla. Server config `survival`.
+
+### Sea chest
+Craft it from three leather over iron, chest, iron. It holds 54 stacks and keeps them when broken, carried or
+floated. Use it in the air to carry it on your back: you can't jump, sprint or swim, you walk slower, and in water
+it drags you under. Place it on water to float it; it drifts with the wind and the current. Use it to open,
+sneak-use to pick it up, or hit it to knock it loose as an item. On a ship's deck it is placed as a block. Server
+config `sea_chest`.
 
 ## 7. Cargo and trade
 
@@ -661,6 +668,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `crew_stations` | Crew stations on/off, time per trim step. |
 | `flags` | Hoisting delay, flags following the wind (land and ship check intervals), banners as flags. |
 | `dry_hull` | Also: whether slabs, stairs and hatches are drawn dry in their empty half. |
+| `sea_chest` | Sea chest on/off, worn speed, sink pull, wind drift and its cap, draft. |
 | `survival` | Cold water on/off and freeze rate, warm effect length, swimming hunger multiplier. |
 | `provisions` | Consumption, rations, spoilage, scurvy, rum, water barrel capacity, rain refill. |
 | `cargo_trade` | Container sizes, prices, price recovery, contracts, plunder, port fees, cargo weight. |

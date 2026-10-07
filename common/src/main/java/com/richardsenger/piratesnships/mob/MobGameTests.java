@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.mob;
 
+import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.melee.MeleeConfig;
 import com.richardsenger.piratesnships.combat.melee.MeleeService;
 import com.richardsenger.piratesnships.combat.melee.npc.DuelistBrain;
@@ -12,6 +13,7 @@ import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
 import com.richardsenger.piratesnships.law.LawService;
 import com.richardsenger.piratesnships.law.crime.WantedLevel;
+import com.richardsenger.piratesnships.mob.ai.DuelistDebug;
 import com.richardsenger.piratesnships.mob.entity.NavyOfficer;
 import com.richardsenger.piratesnships.mob.entity.NavySoldier;
 import com.richardsenger.piratesnships.mob.entity.Pirate;
@@ -29,6 +31,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
@@ -189,6 +192,141 @@ public final class MobGameTests {
         });
     }
 
+    // ------------------------------------------------------------------ duelists against moving targets (M5)
+
+    /** Vanilla walking speed in blocks per tick (4.317 blocks per second). */
+    private static final double WALK = 0.2158;
+    private static final int CHASE_FLOOR = 40;
+    /** The strafing player keeps this far from the pirate's centre: just beyond the cutlass's reach. */
+    private static final double STRAFE_RADIUS = 3.2;
+    /** The player walking away starts walking when the pirate is this close (its centre to the player's box). */
+    private static final double WALK_AWAY_GAP = 4.0;
+
+    /** How the scripted player moves: the human walks and turns, the mock player of the other duel tests stands. */
+    private enum Mover { STAND, WALK_AWAY, STRAFE, KITE }
+
+    /** A standing player is hit within 3 s. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = "pirates_n_ships_mob_chase_stand")
+    public static void pirateHitsAStandingPlayer(GameTestHelper h) {
+        chase(h, Mover.STAND, 200, 60);
+    }
+
+    /**
+     * A player that turns and walks straight away at walking speed when the pirate comes running is caught and hit within
+     * 8 s, before it reaches the far corner. The pirate ({@code mobs.duelist_chase_speed} 1.15) is only about a fifth
+     * faster than a walking player, and each hit knocks the player a block further away.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = "pirates_n_ships_mob_chase_walk")
+    public static void pirateCatchesAPlayerWalkingAway(GameTestHelper h) {
+        chase(h, Mover.WALK_AWAY, 220, 160);
+    }
+
+    /**
+     * A player strafing sideways around the pirate at walking speed (facing it), keeping just beyond the cutlass's reach,
+     * is hit within 5 s.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = "pirates_n_ships_mob_chase_strafe")
+    public static void pirateHitsAStrafingPlayer(GameTestHelper h) {
+        chase(h, Mover.STRAFE, 200, 100);
+    }
+
+    /** A player that backs off a block whenever the pirate comes within reach (kiting) is hit within 10 s. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = "pirates_n_ships_mob_chase_kite")
+    public static void pirateHitsAKitingPlayer(GameTestHelper h) {
+        chase(h, Mover.KITE, 240, 200);
+    }
+
+    /**
+     * Runs a pirate against a scripted survival player for {@code ticks} and checks: the first hit lands within
+     * {@code firstHitBound} ticks, at most 5 path recalculations per second, and the target is never dropped. The numbers
+     * are logged ({@code [chase]}) so a regression shows how far off it is.
+     */
+    private static void chase(GameTestHelper h, Mover mover, int ticks, int firstHitBound) {
+        floor(h, CHASE_FLOOR);
+        // kiting players go +X from near the -X wall, walking ones diagonally from a corner (the longest walk), the
+        // others stay in the middle
+        boolean walk = mover == Mover.WALK_AWAY;
+        int x0 = mover == Mover.KITE ? 4 : walk ? 3 : 17;
+        int z0 = walk ? 3 : 20;
+        Pirate pirate = spawn(h, MobContent.PIRATE.get(), x0, z0, walk ? -45 : -90);
+        Player player = MobTestSupport.playerInLevel(h, walk ? new Vec3(x0 + 4.0, 1, z0 + 4.0) : new Vec3(x0 + 5.5, 1, z0 + 0.5), 90);
+        float max = player.getMaxHealth();
+        double reach = DefaultWeapons.CUTLASS.slash().reach();
+        int[] tick = {0}, hits = {0}, firstHit = {-1}, lost = {0}, kite = {0}, wall = {-1};
+        boolean[] fleeing = {false};
+        // the pirate's state trace goes to the log, so a failure shows what the pirate was doing
+        String traceKey = "chase test " + mover;
+        DuelistDebug.listen(traceKey, h.getLevel().dimension(), h.absoluteVec(new Vec3(CHASE_FLOOR / 2.0, 1, CHASE_FLOOR / 2.0)));
+        LivingEntity[] last = {null};
+        h.onEachTick(() -> {
+            int t = tick[0]++;
+            if (player.getHealth() < max) {
+                hits[0]++;
+                if (firstHit[0] < 0) firstHit[0] = t;
+                player.setHealth(max);
+                Constants.LOG.info("[chase] {}: hit at tick {} (game time {})", mover, t, h.getLevel().getGameTime());
+            }
+            LivingEntity target = pirate.getTarget();
+            if (last[0] == player && target != player) lost[0]++;
+            last[0] = target;
+
+            Vec3 pp = player.position(), mp = pirate.position();
+            Vec3 away = new Vec3(pp.x - mp.x, 0, pp.z - mp.z);
+            double dist = away.length();
+            away = dist < 1.0e-6 ? new Vec3(1, 0, 0) : away.scale(1 / dist);
+            Vec3 step = switch (mover) {
+                case STAND -> Vec3.ZERO;
+                case WALK_AWAY -> {
+                    // turns and walks away once the pirate comes running (4 blocks), and keeps walking
+                    if (dist - player.getBbWidth() / 2 <= WALK_AWAY_GAP) fleeing[0] = true;
+                    yield fleeing[0] ? new Vec3(WALK, 0, WALK).scale(Math.sqrt(0.5)) : Vec3.ZERO;
+                }
+                case STRAFE -> {
+                    // sideways around the pirate, stepping out towards just beyond its reach (at most walking speed)
+                    double radial = Math.max(-0.6 * WALK, Math.min(0.6 * WALK, STRAFE_RADIUS - dist));
+                    double side = Math.sqrt(WALK * WALK - radial * radial);
+                    yield away.scale(radial).add(new Vec3(-away.z, 0, away.x).scale(side));
+                }
+                case KITE -> {
+                    // the gap the slash measures: the pirate's centre to the player's box
+                    double gap = dist - player.getBbWidth() / 2;
+                    if (kite[0] == 0 && gap <= reach) kite[0] = 5; // a block at walking speed
+                    if (kite[0] > 0) {
+                        kite[0]--;
+                        yield away.scale(WALK);
+                    }
+                    yield Vec3.ZERO;
+                }
+            };
+            Vec3 lo = h.absoluteVec(new Vec3(1.5, 0, 1.5)), hi = h.absoluteVec(new Vec3(CHASE_FLOOR - 1.5, 0, CHASE_FLOOR - 1.5));
+            double nx = Math.max(Math.min(lo.x, hi.x), Math.min(Math.max(lo.x, hi.x), pp.x + step.x));
+            double nz = Math.max(Math.min(lo.z, hi.z), Math.min(Math.max(lo.z, hi.z), pp.z + step.z));
+            if (wall[0] < 0 && (Math.abs(nx - pp.x - step.x) > 1.0e-6 || Math.abs(nz - pp.z - step.z) > 1.0e-6)) {
+                wall[0] = t; // cornered from here on
+            }
+            float yaw = (float) Math.toDegrees(Math.atan2(-(mp.x - nx), mp.z - nz)); // face the pirate
+            player.moveTo(nx, pp.y, nz, yaw, 0f);
+            player.setYHeadRot(yaw);
+            player.yBodyRot = yaw;
+        });
+        h.runAfterDelay(ticks, () -> {
+            DuelistDebug.unlisten(traceKey);
+            DuelistDebug.Stats stats = DuelistDebug.stats(pirate);
+            double repathsPerSecond = stats.repaths * 20.0 / ticks;
+            Constants.LOG.info("[chase] {}: first hit at tick {}, {} hits landed of {} attacks started, {} path recalculations "
+                            + "({}/s), target lost {} times, player cornered at tick {}, difficulty {}", mover, firstHit[0], hits[0],
+                    stats.attacksStarted, stats.repaths, String.format(java.util.Locale.ROOT, "%.2f", repathsPerSecond), lost[0],
+                    wall[0], h.getLevel().getDifficulty());
+            h.assertTrue(firstHit[0] >= 0, mover + ": the pirate never hit the player (" + stats.attacksStarted + " attacks started)");
+            h.assertTrue(firstHit[0] <= firstHitBound, mover + ": first hit at tick " + firstHit[0] + ", expected by " + firstHitBound);
+            h.assertTrue(wall[0] < 0 || firstHit[0] < wall[0], mover + ": first hit at tick " + firstHit[0]
+                    + " only after the player was cornered at tick " + wall[0]);
+            h.assertTrue(repathsPerSecond <= 5.0, mover + ": " + repathsPerSecond + " path recalculations per second");
+            h.assertValueEqual(lost[0], 0, mover + ": times the target was dropped");
+            h.succeed();
+        });
+    }
+
     // ------------------------------------------------------------------ musketeers
 
     /** A navy soldier fires at a wanted player within aim time plus reload time. */
@@ -239,6 +377,31 @@ public final class MobGameTests {
     }
 
     // ------------------------------------------------------------------ spawning and config
+
+    /**
+     * {@code /pirates mob debug on} traces a nearby pirate's state changes (target acquired, approaching, attacking) to
+     * the log; {@code off} stops it.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 200, batch = "pirates_n_ships_mob_debug")
+    public static void debugCommandTracesNearbyDuelists(GameTestHelper h) {
+        floor(h, 9);
+        run(h, "pirates mob debug on");
+        h.assertTrue(DuelistDebug.active(), "debug did not turn on");
+        int before = DuelistDebug.linesLogged();
+        spawn(h, MobContent.PIRATE.get(), 2, 4, -90);
+        MobTestSupport.playerInLevel(h, new Vec3(6.5, 1, 4.5), 90);
+        h.runAfterDelay(60, () -> {
+            int lines = DuelistDebug.linesLogged() - before;
+            run(h, "pirates mob debug off");
+            h.assertTrue(!DuelistDebug.active(), "debug did not turn off");
+            h.assertTrue(lines >= 3, "only " + lines + " trace lines (target, duelist, brain expected)");
+            int after = DuelistDebug.linesLogged();
+            h.runAfterDelay(20, () -> {
+                h.assertValueEqual(DuelistDebug.linesLogged(), after, "trace lines after debug off");
+                h.succeed();
+            });
+        });
+    }
 
     /** {@code /pirates mob spawn sailor 3} spawns three sailors; an unknown type spawns nothing. */
     @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = "pirates_n_ships_mob_command")

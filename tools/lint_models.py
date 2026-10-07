@@ -47,7 +47,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODELS = os.path.join(ROOT, 'common/src/main/resources/assets/pirates_n_ships/models')
 PROJECTS = os.path.join(ROOT, 'art/models')
-PROJECT_NAMES = {'item/brig_door': 'brig_door_item', 'item/hull_patch': 'hull_patch_item'}
+PROJECT_NAMES = {'item/brig_door': 'brig_door_item', 'item/hull_patch': 'hull_patch_item', 'item/hammock': 'hammock_item'}
 AREA_EPS = 1e-3          # px^2: smaller overlaps are edge contacts
 PARALLEL_EPS = 1e-6      # 1 - |n1 . n2|
 UV_EPS = 0.02            # texture units: mapped UVs closer than this look the same

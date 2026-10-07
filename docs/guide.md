@@ -285,6 +285,15 @@ within a second, get to work and stay there afterwards. Crew you put at a statio
 and are never moved. If nobody is free you hear "No free hands" once; the job waits for the next crew member who comes
 aboard. "Release crew" sends everyone off and cancels the open jobs. Server config `crew_stations.job_board`.
 
+### Ordering a ship
+At a seafarer village, open the harbor master's desk and switch to the **Orders** tab. Each ship shows its price in
+doubloons, how many days the shipwright needs, and the logs and wool he wants. Click **Order** to pay and receive a
+**Ship Receipt**; its tooltip shows how long the ship still needs. When the receipt says "Ready for pickup", use the
+same desk while holding it: your ship appears assembled at a free berth beside the pier, and it is yours. If both
+berths are taken, come back later; the receipt stays valid. The shipwright works on at most three ships at once.
+Server config `ships.shipwright_orders`, `build_time_days`, `order_price_factor`, `order_materials_factor`,
+`max_orders_per_port`.
+
 ### Seafarer villages
 Seafarer villages generate on beaches. A stone quay with the harbor master's hut faces the sea, and a plank pier runs
 straight out over the water with two ship berths, one on each side halfway out. Streets lead inland with cottages, a
@@ -309,6 +318,13 @@ chest in the bow trims the ship by the bow. Spread heavy cargo and keep it low a
 line shows the load: Light, Laden, Heavily laden or Overloaded (`/pirates ship info` shows the numbers). A laden ship
 sits lower, so it floods sooner through a breach, and it is slower to accelerate and turn. Server config
 `cargo_trade.cargo_weight_affects_ships`, `weight_factor`, `weigh_interval_ticks`, `load_levels`.
+
+### Pirate islands
+Pirate camps sit on beaches, rarer than villages, with a jetty (two berths), tents, a tavern hut, a captain's hut and
+a fence's shack under the Jolly Roger. Pirates hang about the camp day and night and attack strangers. The fence's
+desk opens a market that buys plunder and rum dear and sells little. Somewhere under two crossed logs a chest lies
+buried two blocks deep: dig at the cross for doubloons, rum, provisions and, with luck, a pistol. Server config
+`world.structures.pirate_island`.
 
 ### Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks

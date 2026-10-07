@@ -41,6 +41,15 @@ public final class PortRegistry extends SavedData {
         return true;
     }
 
+    /** Replaces the known port with {@code port}'s id (e.g. its shipwright orders changed); false if unknown. */
+    public boolean update(Port port) {
+        PortIndex next = index.replace(port);
+        if (next == index) return false;
+        index = next;
+        setDirty();
+        return true;
+    }
+
     public boolean remove(net.minecraft.resources.ResourceLocation id) {
         PortIndex next = index.without(id);
         if (next == index) return false;

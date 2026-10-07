@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.trade.net;
 
 import com.richardsenger.piratesnships.platform.Services;
+import com.richardsenger.piratesnships.ship.template.ShipOrders;
 import com.richardsenger.piratesnships.trade.TradeConfig;
 import com.richardsenger.piratesnships.trade.TradeData;
 import com.richardsenger.piratesnships.trade.TradeService;
@@ -99,6 +100,11 @@ public final class MarketBackend {
                 (p, player) -> com.richardsenger.piratesnships.trade.client.ClientMarketState.open(p));
         Services.NETWORK.registerToClient(MarketPayloads.State.TYPE, MarketPayloads.State.CODEC,
                 (p, player) -> com.richardsenger.piratesnships.trade.client.ClientMarketState.accept(p));
+        // SW1: the shipwright's Orders tab
+        Services.NETWORK.registerToServer(OrderPayloads.PlaceOrder.TYPE, OrderPayloads.PlaceOrder.CODEC,
+                (p, player) -> handleOrder((ServerPlayer) player, p));
+        Services.NETWORK.registerToClient(OrderPayloads.Orders.TYPE, OrderPayloads.Orders.CODEC,
+                (p, player) -> com.richardsenger.piratesnships.trade.client.ClientMarketState.acceptOrders(p));
     }
 
     // --- Sessions -----------------------------------------------------------------------------------------------
@@ -122,6 +128,8 @@ public final class MarketBackend {
                 Optional.of(desk.immutable()), 1, Optional.empty()));
         deliver(player, new MarketPayloads.OpenMarket(port, desk, TradeConfig.DESK_REACH.get()));
         send(player, port, 1, Optional.empty());
+        // A seafarer village's desk also has the shipwright's Orders tab (SW1)
+        ShipOrders.view(player, port).ifPresent(v -> deliver(player, new OrderPayloads.Orders(Optional.of(v), Optional.empty())));
         return true;
     }
 
@@ -317,6 +325,24 @@ public final class MarketBackend {
         return container(player, pos.get()).map(MarketTransactions.Holder::of);
     }
 
+    /**
+     * A shipwright order from the Orders tab (SW1): refused without a valid desk session for the port (reach,
+     * binding); everything else is checked by {@link ShipOrders#place}. Answers with the tab's new content and the
+     * result.
+     */
+    public static void handleOrder(ServerPlayer player, OrderPayloads.PlaceOrder p) {
+        if (!canUse(player, p.port())) {
+            deliver(player, new OrderPayloads.Orders(Optional.empty(),
+                    Optional.of(new OrderPayloads.OrderResult(false, ShipOrders.KEY_NO_SESSION, List.of()))));
+            return;
+        }
+        OrderPayloads.OrderResult r = ShipOrders.place(player, p.port(), p.template());
+        deliver(player, new OrderPayloads.Orders(ShipOrders.view(player, p.port()), Optional.of(r)));
+        // the doubloons changed: the market view follows
+        Session s = SESSIONS.get(player.getUUID());
+        send(player, p.port(), clampQuantity(s == null ? 1 : s.quantity()), Optional.empty());
+    }
+
     // --- State --------------------------------------------------------------------------------------------------
 
     private static void refuse(ServerPlayer player, TransactionResult result) {
@@ -329,7 +355,8 @@ public final class MarketBackend {
         deliver(player, new MarketPayloads.State(view, result));
     }
 
-    private static void deliver(ServerPlayer player, CustomPacketPayload payload) {
+    /** Sends a market payload to the player, or records it for a GameTest ({@link #record}). */
+    public static void deliver(ServerPlayer player, CustomPacketPayload payload) {
         List<CustomPacketPayload> rec = RECORDINGS.get(player.getUUID());
         if (rec != null) {
             // A recorded (GameTest) player has a mock connection without negotiated channels: record instead of sending

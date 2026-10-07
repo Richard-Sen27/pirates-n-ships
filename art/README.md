@@ -949,3 +949,33 @@ nine-slice edges and centres repeat cleanly because vanilla tiles them.
 
 Text: dark ink `#2C2018` (faded `#7A6852`) without shadow on parchment; light `#EEE0BC` or brass `#F4D27A` with
 shadow on wood.
+
+## Ship templates (W0)
+Prebuilt ships (the starter sloop now, shipwright orders later) are built in a creative world and exported with
+WorldEdit as Sponge schematics. `art/schematics/<name>.schem` is the source; `tools/schem_to_structure.py` (standard
+library only) turns it into the vanilla structure `common/src/main/resources/data/pirates_n_ships/structure/ships/<name>.nbt`
+(`pirates_n_ships:ships/<name>`), and both files are committed. `SchemToStructureTest` fails while the committed
+`starter_sloop.nbt` differs from a fresh conversion.
+
+1. **Build** the ship with its bow pointing **north** (−Z), or note the bow direction for the definition. Put the
+   **helm** on it (and the yards, cleats, winch and so on that it should sail with): a template without a helm can
+   be placed but not assembled.
+2. **Export:** stand anywhere, select the ship with the wand (`//pos1`, `//pos2`, keep the selection tight around
+   the ship; air in the box is dropped), then `//copy` and `//schem save <name>` (WorldEdit 7.2+ writes Sponge v3,
+   older versions v2; both work). The file lands in `config/worldedit/schematics/` (`.minecraft/config/...` on the
+   client). Copy it to `art/schematics/<name>.schem`.
+3. **Convert:** `python3 tools/schem_to_structure.py` (all schematics) or `python3 tools/schem_to_structure.py
+   art/schematics/<name>.schem`. It prints the size, the block count and the template position of every helm.
+   Block entity data (chest contents, names) is kept; entities (item frames, armor stands) are not.
+4. **Define** the template in `ship/template/ShipTemplates` (datagen writes
+   `data/pirates_n_ships/pirates_n_ships/ship_template/<name>.json`): the structure id, the name key (and its English
+   name in `ShipTemplateCommands.lang`), the helm position the converter printed, the **waterline** (the template row
+   that sits at the water surface: the lowest dry row is one above it; default helm y − 1) and the price. Run
+   `./gradlew :neoforge:runData`.
+5. **Test** in game: `/pirates ship templates`, then stand at the shore facing the sea and run
+   `/pirates ship place <name>` (or `... assemble` to make it a ship at once, `... force` to overwrite what is in
+   the way). The ship appears 3 blocks ahead, bow away from you, centred on you.
+
+Keep templates under the ship block limit (2048 by default), keep every block connected to the helm (the assembler
+gathers only connected blocks), and leave no loose terrain blocks (dirt, sand, stone) in the selection: they never
+become part of a ship.

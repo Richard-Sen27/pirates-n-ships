@@ -88,6 +88,8 @@ public final class AudioGameTests {
             h.assertTrue(!root.getAsJsonObject(AudioSounds.MUSIC_SEA.id().getPath()).has("subtitle"), "music has no subtitle");
             h.assertTrue(root.getAsJsonObject(CombatSounds.MELEE_CLASH.id().getPath()).getAsJsonArray("sounds").size() == 6,
                     "combat.melee.clash should have six variants");
+            h.assertTrue(root.getAsJsonObject(CombatSounds.MELEE_MISS.id().getPath()).getAsJsonArray("sounds").size() == 6,
+                    "combat.melee.miss should have six variants");
         } catch (java.io.IOException ex) {
             throw new AssertionError("could not read sounds.json", ex);
         }

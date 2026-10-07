@@ -5,9 +5,7 @@ import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.datagen.SoundEntries;
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 
 import java.util.Arrays;
 import java.util.List;
@@ -17,7 +15,7 @@ import java.util.List;
  * (G1); gameplay uses them once firearms, cannons (milestone 5) and the melee input layer work. Files come from
  * {@code tools/sounds/manifest.json}; an event with several files picks one at random each time it plays (equal
  * weights). The melee events play through {@code combat.melee.sound.MeleeSoundPlayer}, one per attack by its outcome
- * (P8): {@code miss} (no file of ours yet: vanilla's sweep whoosh, referenced as an event so a file can replace it),
+ * (P8): {@code miss} ("Sword swipes": six single whooshes cut from one clip, A2, played lower for a thrust),
  * {@code hit} ("Sword Slice"), {@code hit_heavy} ("Violent Sword Slice"), {@code clash} ("Sword Clashhit" and single
  * clangs cut from the two "Sword Fight" clips), {@code hit_armor}; {@code disarm} and {@code weapon_break} stay unused
  * until those mechanics exist.
@@ -52,19 +50,12 @@ public final class CombatSounds {
 
     private static final String M = Constants.MOD_ID + ":combat/melee/";
 
-    /**
-     * The whoosh of {@code combat.melee.miss}: vanilla's sweep attack (a clear blade whoosh; {@code attack.nodamage} is
-     * a dull thud). Played through our event at a lower pitch for a thrust, so a resource pack or a later file of ours
-     * replaces it in one place.
-     */
-    public static final ResourceLocation VANILLA_MISS = SoundEvents.PLAYER_ATTACK_SWEEP.getLocation();
-
     public static final List<Def> ALL = List.of(
             new Def(PISTOL_SHOT, "Pistol fires", Constants.MOD_ID + ":combat/pistol_shot"),
             new Def(PISTOL_EMPTY, "Pistol clicks", Constants.MOD_ID + ":combat/pistol_empty"),
             new Def(CANNON_SHOT, "Cannon fires", Constants.MOD_ID + ":combat/cannon_shot"),
             new Def(CANNON_VOLLEY, "Cannons fire in the distance", Constants.MOD_ID + ":combat/cannon_volley"),
-            new Def(MELEE_MISS, List.of(SoundEntries.file(VANILLA_MISS.toString()).asEvent()), "Sword misses"),
+            new Def(MELEE_MISS, "Sword misses", M + "miss_1", M + "miss_2", M + "miss_3", M + "miss_4", M + "miss_5", M + "miss_6"),
             new Def(MELEE_HIT, "Sword hits", M + "hit1", M + "hit2"),
             new Def(MELEE_HIT_HEAVY, "Sword hits", M + "hit_heavy1", M + "hit_heavy2"),
             new Def(MELEE_CLASH, "Blades clash", M + "clash1", M + "clash2", M + "clash3", M + "clash4", M + "clash5", M + "clash6"),

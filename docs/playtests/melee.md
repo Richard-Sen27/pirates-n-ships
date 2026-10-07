@@ -113,3 +113,6 @@ differs.
 7. **Armour:** an iron chestplate rings.
 8. **Pirate fight:** never two sword sounds for one attack, no bone cracks anywhere, feints silent.
 9. **Drawing** a sword sounds as before.
+
+
+Addendum (A2): slashing into the air plays one short blade whoosh that varies from swing to swing, no vanilla sweep, subtitle "Sword misses"; thrusts into the air are clearly lower; the miss should sit at the level of a hit on a mob (say if too quiet); listen for clicks at the start or end of a whoosh and whether the longest, slowest one feels out of place.

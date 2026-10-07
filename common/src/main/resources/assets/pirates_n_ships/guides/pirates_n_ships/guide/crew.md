@@ -41,6 +41,13 @@ difficulty: on peaceful they ignore players, and vanilla zeroes all mob damage t
 `/difficulty normal` to fight); natural spawning comes with the world structures. Everything is in the `mobs` server
 config.
 
+## The kraken
+The kraken lurks in the deep ocean and rises beside ships within 32 blocks, more often at night and in storms. Its
+tentacles grip the hull near the waterline and drag the ship down, beat masts to splinters and sweep the deck;
+swimmers are pulled under. Its eyes are its weak spots (triple damage); 40 damage on a tentacle cuts it and it lets go
+until it grows back. Below 30 % health it sinks away. Drops a Kraken Beak and Kraken Ink. Switch it off with
+`hazards.kraken.enabled`; tune it under `mobs.kraken`. Operators: `/pirates mob spawn kraken`.
+
 ## Sharks
 Sharks roam every ocean, cruising a few blocks under the surface. A shark that spots you swimming circles you
 before it charges and bites. Wounded swimmers drive it into a blood frenzy, and then it charges straight in. Stay

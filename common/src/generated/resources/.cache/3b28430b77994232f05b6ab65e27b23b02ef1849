@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-07T11:03:00.559792	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-07T11:34:01.748709	Block states and models: pirates_n_ships
 c189a7833975a61cf2c7c8fd326d27a32969cb9d assets/pirates_n_ships/blockstates/bilge_pump.json
 52e053a4f7334e9a78798b4b4b9a2ad80087f3d5 assets/pirates_n_ships/blockstates/brig_bars.json
 83716521a6f9785f7114fa5a9489defb1257975d assets/pirates_n_ships/blockstates/brig_door.json
@@ -48,6 +48,9 @@ cc79ca683cdbc9c26d9ace4c524deb0acab46534 assets/pirates_n_ships/models/item/figu
 ee032feb25e676092a205d8740cf094a32b5cccc assets/pirates_n_ships/models/item/helm.json
 9c569c888fd7e454e2916b0db4f6d30912bec33e assets/pirates_n_ships/models/item/hull_patch.json
 f399a5322f83e89b272f7efbdfc19ccff371f439 assets/pirates_n_ships/models/item/jolly_roger_flag.json
+9ae75a374b713128fe2d9b32d66ffd1e41345cbc assets/pirates_n_ships/models/item/kraken_beak.json
+21a6c6f62cc521f0d123f8990050b2559efbfcd2 assets/pirates_n_ships/models/item/kraken_ink.json
+63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets/pirates_n_ships/models/item/kraken_spawn_egg.json
 4738f6156fcd947997765648f524f28c44b4a4da assets/pirates_n_ships/models/item/merchant_flag.json
 0115d1b5ba50b99963c030a78b0184a09171a371 assets/pirates_n_ships/models/item/nameplate.json
 6eb672094a831d56cf44b1dd215b3733a06feaa0 assets/pirates_n_ships/models/item/navy_flag.json

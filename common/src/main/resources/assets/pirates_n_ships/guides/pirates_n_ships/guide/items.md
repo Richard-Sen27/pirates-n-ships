@@ -13,6 +13,9 @@ item_ids:
   - pirates_n_ships:cutlass
   - pirates_n_ships:hardtack
   - pirates_n_ships:jolly_roger_flag
+  - pirates_n_ships:kraken_beak
+  - pirates_n_ships:kraken_ink
+  - pirates_n_ships:kraken_spawn_egg
   - pirates_n_ships:lead_shot
   - pirates_n_ships:lime
   - pirates_n_ships:merchant_flag

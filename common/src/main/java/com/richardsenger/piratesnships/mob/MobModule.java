@@ -4,6 +4,8 @@ import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.law.world.LawTags;
+import com.richardsenger.piratesnships.mob.kraken.KrakenContent;
+import com.richardsenger.piratesnships.mob.kraken.KrakenGameTests;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.models.model.ModelLocationUtils;
@@ -20,7 +22,7 @@ import java.util.Optional;
  * officer on the shared GeckoLib rig, with hostility rules, sword duelists through the melee engine, musketeers
  * through the firearm service, law crimes through {@code #pirates_n_ships:navy}, loot tables and
  * {@code /pirates mob spawn}. Since M4 also the shark (docs/design.md §12): a water creature that spawns naturally in
- * ocean biomes and hunts swimmers.
+ * ocean biomes and hunts swimmers. Since K1a also the kraken ({@code mob.kraken}), a rare boss of the deep ocean.
  */
 public final class MobModule implements ModModule {
 
@@ -45,6 +47,7 @@ public final class MobModule implements ModModule {
     @Override
     public void registerEvents() {
         CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> MobCommands.register(dispatcher));
+        KrakenContent.registerEvents();
     }
 
     @Override
@@ -63,6 +66,7 @@ public final class MobModule implements ModModule {
         lootTable(data, MobKind.NAVY_SOLDIER, MobLoot.navy());
         lootTable(data, MobKind.NAVY_OFFICER, MobLoot.navy());
         data.encoded(PackOutput.Target.DATA_PACK, "loot_table", Constants.id("entities/" + MobCommands.SHARK), LootTable.DIRECT_CODEC, MobLoot.shark());
+        KrakenContent.gatherData(data);
         data.lang(lang -> {
             lang.add(MobContent.PIRATE.get().getDescriptionId(), "Pirate")
                     .add(MobContent.SAILOR.get().getDescriptionId(), "Sailor")
@@ -75,7 +79,7 @@ public final class MobModule implements ModModule {
                     .add(MobContent.SHARK.get().getDescriptionId(), "Shark")
                     .item(MobContent.SHARK_SPAWN_EGG, "Shark Spawn Egg")
                     .add(MobCommands.KEY_SPAWNED, "Spawned %s × %s")
-                    .add(MobCommands.KEY_UNKNOWN, "Unknown mob: %s (pirate, sailor, navy_soldier, navy_officer or shark)")
+                    .add(MobCommands.KEY_UNKNOWN, "Unknown mob: %s (pirate, sailor, navy_soldier, navy_officer, shark or kraken)")
                     .add(MobCommands.KEY_DISABLED, "%s is disabled in the server config (mobs)");
         });
     }
@@ -86,6 +90,6 @@ public final class MobModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(MobGameTests.class, SharkGameTests.class);
+        return List.of(MobGameTests.class, SharkGameTests.class, KrakenGameTests.class);
     }
 }

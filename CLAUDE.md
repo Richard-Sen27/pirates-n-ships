@@ -23,6 +23,7 @@ Minecraft mod. Full spec: `docs/design.md`. Read it at the start of every sessio
 - `refs/sable`: the Sable source. **Always read it before using any Sable API.** Never invent Sable methods. Note which APIs are in `sable-common` and which are loader-only.
 - `refs/create-aeronautics`: an example of a real mod using Sable (assembly, forces).
 - `refs/multiloader-template`: the original template, for reference on build setup.
+- `refs/guideme`: the GuideME source (branch `1.21.1`), the in-game guidebook framework; read it before using its page format, tags or API.
 - `refs/` is read-only and excluded from the build. Never copy code from `refs/` into the mod (licenses).
 
 ## Commands
@@ -30,6 +31,7 @@ Minecraft mod. Full spec: `docs/design.md`. Read it at the start of every sessio
 - Logic tests (NeoForge runner): `./gradlew :neoforge:runGameTestServer`
 - Generate data: `./gradlew :neoforge:runData` (output goes to `common/src/generated/resources`)
 - Dev client (run by the human, not by you): `./gradlew :neoforge:runClient`
+- Releasing (the human tags, not you): local builds are `<mod_version>-dev`; pushing a tag `vX.Y.Z[-alpha.N|-beta.N]` builds, tests and publishes to Modrinth, CurseForge and GitHub. Scheme, release notes (`tools/release_notes.py`) and setup: `docs/releasing.md`.
 
 ## Conventions
 - Mod ID `pirates_n_ships`, root package `com.richardsenger.piratesnships`, one package per feature module as listed in design.md §3.2.

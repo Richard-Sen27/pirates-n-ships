@@ -168,3 +168,5 @@ Compare each sword with a vanilla iron sword in the other hand or the next hotba
     door: same textures. Breaking a door still gives anvil particles.
 
 Addendum (F8h): pistol and musket in the hand: see `firearms.md`.
+
+18. **Doubloon (F8i):** one gold coin in the inventory, tilted so its edge shows at the lower left, cross on the front, about 11 px of the slot, the stack count readable; in third person flat at the fingertips with the cross up; in first person upright in the lower corner; on the ground flat with the cross up (say if it touches the ground at the bottom of the bob); in an item frame the cross faces out; the market screen's coin icon reads as a single coin. Faint seam lines across the field are a known risk at a distance.

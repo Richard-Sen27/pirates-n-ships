@@ -11,16 +11,18 @@ import com.richardsenger.piratesnships.core.config.ModConfigs;
  */
 public final class GrappleConfig {
 
-    private static final ConfigSection S = ModConfigs.server("grapple", "Grappling hook: throwing, latching onto ships, hauling them together");
+    private static final ConfigSection S = ModConfigs.server("grapple", "Grappling hook: throwing or firing it, latching onto ships and blocks, hauling ships");
 
     public static final ConfigValue<Boolean> ENABLED = S.bool("enabled", true,
             "Grappling hooks can be thrown. Off = the item does nothing and hooks already out are released");
-    public static final ConfigValue<Double> THROW_VELOCITY = S.doubleRange("throw_velocity", 1.5, 0.1, 5.0,
-            "Start speed of a thrown hook in blocks per tick (a snowball: 1.5)");
-    public static final ConfigValue<Double> GRAVITY = S.doubleRange("gravity", 0.03, 0.0, 1.0,
-            "Downward acceleration of a flying hook in blocks per tick squared");
-    public static final ConfigValue<Double> MAX_ROPE_LENGTH = S.doubleRange("max_rope_length", 24.0, 2.0, 128.0,
-            "Rope length in blocks: a flying hook stops there, and a thrower farther than this from a latched hook snaps the rope");
+    public static final ConfigValue<Double> THROW_VELOCITY = S.doubleRange("throw_velocity", 3.0, 0.1, 5.0,
+            "Start speed of a thrown hook in blocks per tick. With the default gravity a level throw from standing height "
+                    + "would land about 39.4 blocks away (measured), past the 32-block rope, so the rope is the reach");
+    public static final ConfigValue<Double> GRAVITY = S.doubleRange("gravity", 0.02, 0.0, 1.0,
+            "Downward acceleration of a flying hook in blocks per tick squared (a musket shot uses launch.musket_gravity_factor times this)");
+    public static final ConfigValue<Double> MAX_ROPE_LENGTH = S.doubleRange("max_rope_length", 32.0, 2.0, 128.0,
+            "Rope length in blocks of a thrown hook: a flying hook stops there, and a thrower farther than this from a "
+                    + "latched hook snaps the rope");
     public static final ConfigValue<Double> HAUL_FORCE = S.doubleRange("haul_force", 120.0, 0.0, 100000.0,
             "Pull of a taut rope between two ships in kpg*m/s^2, on each ship in opposite directions "
                     + "(about 2.4 m/s^2 on a small 50 kpg hull; 0 = ships are not hauled)");
@@ -40,7 +42,15 @@ public final class GrappleConfig {
     public static final ConfigValue<Boolean> ROPE_BREAKS_LOSE_HOOK = S.bool("rope_breaks_lose_hook", false,
             "A snapped rope loses the hook (dropped where it hung). Off = the hook returns to the thrower");
     public static final ConfigValue<Integer> RETRACT_TICKS = S.intRange("retract_ticks", 40, 0, 1200,
-            "Ticks a hook that missed (land, water, an entity, the thrower's own ship) lies there before the rope pulls it back");
+            "Ticks a hook that missed (water, an entity, a block it slips off, or a surface its latch toggle forbids) lies there "
+                    + "before the rope pulls it back");
+    public static final ConfigValue<Boolean> LATCH_WORLD_BLOCKS = S.bool("latch_world_blocks", true,
+            "A hook latches on solid world blocks (land, cliffs, a quay). Thrown from a ship, the rope hauls that ship "
+                    + "toward the block (a kedge line, haul_force); thrown from land it is a fixed line to slide along. "
+                    + "Off = a hook on a world block drops and is pulled back");
+    public static final ConfigValue<Boolean> LATCH_OWN_SHIP = S.bool("latch_own_ship", true,
+            "A hook latches on the thrower's own ship without hauling it (a line between two points of the ship to slide "
+                    + "along, e.g. from the mast top to the deck). Off = it drops and is pulled back");
 
     public static final ConfigValue<Boolean> RINGS_ENABLED = S.bool("rings_enabled", true,
             "Mooring rings catch hooks passing close by, hold them harder, and take the rope's near end when tied off. "
@@ -54,30 +64,31 @@ public final class GrappleConfig {
             "A hook latched on a mooring ring (or cleat) snaps only when the rope's ends are this many times its length apart");
 
     private static final ConfigSection LAUNCH = S.section("launch",
-            "Loading the hook into a crossbow or a musket (hook in the off hand, weapon in the main hand) and firing it");
+            "Loading the hook into a musket (hook in the off hand, musket in the main hand) and firing it");
     public static final ConfigValue<Boolean> OFFHAND_REQUIRED = LAUNCH.bool("offhand_required", true,
-            "The hook must be in the off hand and the weapon in the main hand. Off = the swapped hands work too (hook in "
-                    + "the main hand, weapon in the off hand, e.g. for left-handed players)");
-    public static final ConfigValue<Boolean> CROSSBOW_ENABLED = LAUNCH.bool("crossbow_enabled", true,
-            "A crossbow next to the hook draws it in (vanilla's charge) and shoots it. Off = the hook is thrown");
-    public static final ConfigValue<Double> CROSSBOW_SPEED = LAUNCH.doubleRange("crossbow_speed", 1.6, 0.1, 10.0,
-            "Start speed of a hook shot from a crossbow, as a multiple of throw_velocity");
-    public static final ConfigValue<Double> CROSSBOW_ROPE_LENGTH = LAUNCH.doubleRange("crossbow_rope_length", 36.0, 2.0, 128.0,
-            "Rope length in blocks of a hook shot from a crossbow (never shorter than max_rope_length)");
+            "The hook must be in the off hand and the musket in the main hand. Off = the swapped hands work too (hook in "
+                    + "the main hand, musket in the off hand, e.g. for left-handed players)");
     public static final ConfigValue<Boolean> MUSKET_ENABLED = LAUNCH.bool("musket_enabled", true,
             "A musket next to the hook loads it (the musket's reload time, one gunpowder) and fires it like a shot "
                     + "(cooldown, recoil, rain misfire). Off = the hook is thrown");
-    public static final ConfigValue<Double> MUSKET_SPEED = LAUNCH.doubleRange("musket_speed", 2.4, 0.1, 10.0,
-            "Start speed of a hook fired from a musket, as a multiple of throw_velocity");
-    public static final ConfigValue<Double> MUSKET_ROPE_LENGTH = LAUNCH.doubleRange("musket_rope_length", 48.0, 2.0, 128.0,
+    public static final ConfigValue<Double> MUSKET_SPEED = LAUNCH.doubleRange("musket_speed", 1.6, 0.1, 10.0,
+            "Start speed of a hook fired from a musket, as a multiple of throw_velocity. With the default gravity factor "
+                    + "a level shot from standing height would land about 83.4 blocks away (measured), past the 64-block rope");
+    public static final ConfigValue<Double> MUSKET_GRAVITY_FACTOR = LAUNCH.doubleRange("musket_gravity_factor", 0.5, 0.0, 4.0,
+            "Gravity of a hook fired from a musket as a multiple of grapple.gravity: a flatter shot than a throw");
+    public static final ConfigValue<Double> MUSKET_ROPE_LENGTH = LAUNCH.doubleRange("musket_rope_length", 64.0, 2.0, 128.0,
             "Rope length in blocks of a hook fired from a musket (never shorter than max_rope_length)");
 
     private static final ConfigSection SLIDE = S.section("slide",
-            "Sliding along a latched rope (e.g. from the crow's nest down to the other ship): use the rope while looking at it");
+            "Sliding along a latched rope (e.g. from the crow's nest down to the other ship): use the rope while looking at it, "
+                    + "with an empty main hand or a grappling hook in it");
     public static final ConfigValue<Boolean> SLIDE_ENABLED = SLIDE.bool("enabled", true,
             "Players can hang on a latched grappling rope and slide down it. Off = using the rope does nothing and riders drop off");
     public static final ConfigValue<Double> BOARD_REACH = SLIDE.doubleRange("board_reach", 2.5, 0.5, 8.0,
             "How far [blocks] from the eyes a player can grab the rope");
+    public static final ConfigValue<Integer> GRAB_COOLDOWN_TICKS = SLIDE.intRange("grab_cooldown_ticks", 20, 0, 200,
+            "Ticks after a hook is thrown or fired during which its rope cannot be grabbed (a use right after the shot "
+                    + "never hangs the player on their own rope)");
     public static final ConfigValue<Double> BOARD_PICK_RADIUS = SLIDE.doubleRange("board_pick_radius", 0.6, 0.1, 2.0,
             "How close [blocks] the look ray must pass the rope to grab it");
     public static final ConfigValue<Double> SLIDE_SPEED = SLIDE.doubleRange("slide_speed", 0.35, 0.01, 2.0,
@@ -102,12 +113,17 @@ public final class GrappleConfig {
 
     /** Start speed [blocks per tick] of a hook launched in {@code mode}. */
     public static double speed(GrappleLaunch.Mode mode) {
-        return GrappleLaunch.speed(mode, THROW_VELOCITY.get(), CROSSBOW_SPEED.get(), MUSKET_SPEED.get());
+        return GrappleLaunch.speed(mode, THROW_VELOCITY.get(), MUSKET_SPEED.get());
     }
 
     /** Rope length [blocks] of a hook launched in {@code mode}. */
     public static double ropeLength(GrappleLaunch.Mode mode) {
-        return GrappleLaunch.ropeLength(mode, MAX_ROPE_LENGTH.get(), CROSSBOW_ROPE_LENGTH.get(), MUSKET_ROPE_LENGTH.get());
+        return GrappleLaunch.ropeLength(mode, MAX_ROPE_LENGTH.get(), MUSKET_ROPE_LENGTH.get());
+    }
+
+    /** Gravity factor of a hook launched in {@code mode} ({@link GrappleLaunch#gravityFactor}). */
+    public static double gravityFactor(GrappleLaunch.Mode mode) {
+        return GrappleLaunch.gravityFactor(mode, MUSKET_GRAVITY_FACTOR.get());
     }
 
     /** The slide's speeds and distances ({@link RopeSlide}). */

@@ -10,6 +10,24 @@ class RopeSlideTest {
     private static final double EPS = 1e-9;
     private static final RopeSlide.Params P = new RopeSlide.Params(0.35, 0.02, 0.1, 0.8, 1.0);
 
+    // ---- grabbing (GR4) ----
+
+    @Test
+    void onlyAnEmptyHandOrAHookGrabsTheRope() {
+        assertEquals(RopeSlide.Grab.OK, RopeSlide.grab(GrappleLaunch.Held.EMPTY, 40, 20));
+        assertEquals(RopeSlide.Grab.OK, RopeSlide.grab(GrappleLaunch.Held.HOOK, 40, 20));
+        assertEquals(RopeSlide.Grab.HAND_BUSY, RopeSlide.grab(GrappleLaunch.Held.MUSKET, 40, 20), "the musket's use wins");
+        assertEquals(RopeSlide.Grab.HAND_BUSY, RopeSlide.grab(GrappleLaunch.Held.OTHER, 40, 20), "any item with its own use wins");
+    }
+
+    @Test
+    void aFreshRopeCannotBeGrabbed() {
+        assertEquals(RopeSlide.Grab.TOO_SOON, RopeSlide.grab(GrappleLaunch.Held.EMPTY, 19, 20));
+        assertEquals(RopeSlide.Grab.OK, RopeSlide.grab(GrappleLaunch.Held.EMPTY, 20, 20));
+        assertEquals(RopeSlide.Grab.OK, RopeSlide.grab(GrappleLaunch.Held.EMPTY, 0, 0), "no cooldown");
+        assertEquals(RopeSlide.Grab.HAND_BUSY, RopeSlide.grab(GrappleLaunch.Held.MUSKET, 0, 20), "the hand is checked first");
+    }
+
     // ---- parameter ----
 
     @Test

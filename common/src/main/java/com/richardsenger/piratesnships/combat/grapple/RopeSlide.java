@@ -42,6 +42,32 @@ public final class RopeSlide {
     public record Pick(double t, double rayDistance, double eyeDistance) {
     }
 
+    // ------------------------------------------------------------------ grabbing (GR4)
+
+    /** Whether a use may grab a rope. */
+    public enum Grab {
+        OK,
+        /**
+         * The main hand holds a musket or any other item with its own use: that use always wins, the rope is never
+         * grabbed (GR4: re-aiming the musket right after a shot hung the player on their own rope).
+         */
+        HAND_BUSY,
+        /** The hook left less than {@code grab_cooldown_ticks} ago. */
+        TOO_SOON
+    }
+
+    /**
+     * The grab rule (GR4): only an intentional use with an empty main hand or a grappling hook in it grabs a rope, and
+     * not within {@code cooldownTicks} of the hook being thrown or fired ({@code hookAge}, ticks since it left).
+     * Checked on the client before it asks and again on the server ({@code RopeSlideService#tryBoard}).
+     */
+    public static Grab grab(GrappleLaunch.Held mainHand, int hookAge, int cooldownTicks) {
+        if (mainHand != GrappleLaunch.Held.EMPTY && mainHand != GrappleLaunch.Held.HOOK) {
+            return Grab.HAND_BUSY;
+        }
+        return hookAge < cooldownTicks ? Grab.TOO_SOON : Grab.OK;
+    }
+
     // ------------------------------------------------------------------ geometry
 
     /** Parameter in [0, 1] of the point of segment {@code a}-{@code b} nearest to {@code p} (0 for a point-like rope). */

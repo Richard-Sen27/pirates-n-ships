@@ -7,7 +7,7 @@ set back between the pilasters from a sloped plinth up to a corbel table under t
 door, a blue banner hangs high on the front, arrow slits of iron bars light the stair. Inside, a ladder on the back
 wall climbs from the ground through a hatch in the platform (y 10). The platform is planked, railed with spruce fences,
 and roofed on four bark posts with a low hipped spruce roof (dark oak eaves) with a lantern hanging in the middle."""
-from _style import (PALETTE, age, arrow_slit, banner, bars, buttress, connector, door, fence_run, fort_face, stair,
+from _style import (dry, PALETTE, age, arrow_slit, banner, bars, buttress, connector, door, fence_run, fort_face, stair,
                     stair_shape)
 from buildspec import Piece
 
@@ -85,6 +85,7 @@ age(p, where=lambda x, y, z: y < DECK)
 
 connector(p, 2, 0, 0, "building_in", "north", "minecraft:cobblestone")
 
+dry(p)
 p.emit("tall stone watchtower with buttresses, set-back sides, a ladder and a roofed lookout platform",
        ["Door and building_in [2, 0, 0] on the north side; row z 0 is the doorstep.",
         "Lookout platform floor y 10 (hatch at [2, 10, 3]), roof y 13."])

@@ -354,6 +354,15 @@ def chimney(piece, x, z, y0, y1, smoke=True):
                             "west=none]")
 
 
+def dry(piece):
+    """Drops ``waterlogged=false`` (the default) from every block state of the piece before it is emitted: the lab's
+    preview colours any state that mentions water as water, which painted every stair, bar and fence blue."""
+    for k, v in list(piece.palette.items()):
+        if "waterlogged=false" in v:
+            v = v.replace(",waterlogged=false", "").replace("waterlogged=false,", "").replace("[waterlogged=false]", "")
+            piece.palette[k] = v
+
+
 def chain(piece, x, y0, y1, z):
     """A chain from ``y0`` up to ``y1`` (hanging from the block above it)."""
     piece.fill(x, y0, z, x, y1, z, "chain")

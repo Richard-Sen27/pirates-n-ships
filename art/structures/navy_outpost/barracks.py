@@ -10,7 +10,7 @@ rises past the eave with smoke from its top.
 Inside: bunks along the back wall (blue beds, the outer two pairs doubled up), a sea chest at each bunk pair, the
 hearth between the bunks with a blue banner over it, a mess table with stools, a weapon rack (a row of fences with
 pressure plates), stores and a lantern hanging from the ridge."""
-from _style import (PALETTE, banner, bed, chimney, connector, door, rafter_ends, stair_shape, stool, table,
+from _style import (dry, PALETTE, banner, bed, chimney, connector, door, rafter_ends, stair_shape, stool, table,
                     window, age)
 from buildspec import Piece
 
@@ -102,5 +102,6 @@ age(p, where=lambda x, y, z: not (X0 < x < X1 and Z0 < z < Z1))
 
 connector(p, 5, 0, 0, "building_in", "north", "minecraft:cobblestone")
 
+dry(p)
 p.emit("timber-framed barracks on a stone plinth under a spruce roof, with a chimney, bunks, a hearth and a mess table",
        ["Door and building_in [5, 0, 0] on the north side; row z 0 is the doorstep."])

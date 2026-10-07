@@ -11,7 +11,7 @@ Inside, a guard room across the front (the guard's table with a stool, a chest a
 of chain) and two cells along the back, divided by a stone wall. Each cell is fronted by a row of brig bars with a brig
 door in the middle (both halves closed and unlocked: a generated door has no owner, see BrigDoorBlock), straw bedding,
 a cauldron, shackle chains from the ceiling and a barred window in the back wall."""
-from _style import (PALETTE, age, bars, brig_door, buttress, chain, connector, door, fort_face, lantern_post, merlons,
+from _style import (dry, PALETTE, age, bars, brig_door, buttress, chain, connector, door, fort_face, lantern_post, merlons,
                     stool, table)
 from buildspec import Piece
 
@@ -101,6 +101,7 @@ age(p, where=lambda x, y, z: not (X0 < x < X1 and Z0 < z < Z1 and y == 0))
 
 connector(p, 4, 0, 0, "building_in", "north", "minecraft:cobblestone")
 
+dry(p)
 p.emit("stone brig with buttresses, recessed bays and a crenellated roof, a guard room and two cells of brig bars",
        ["Door and building_in [4, 0, 0] on the north side; row z 0 is the doorstep.",
         "Cell fronts on z 4: brig bars with a brig door (closed, unlocked) at x 2 and x 6."])

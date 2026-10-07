@@ -14,7 +14,7 @@ lantern stands at its head. z 5..6 is a gravel path along the foot of the wall.
 
 Connectors (foundation row): wall_east_in [0, 0, 2] (west face) and wall_east_out [6, 0, 2] (east face) for the run
 that grows east, wall_west_out [0, 0, 3] and wall_west_in [6, 0, 3] for the one that grows west (see _style)."""
-from _style import (EAST_Z, PALETTE, WALK, WEST_Z, age, cannon, connector, curtain, fence_run, lantern_post,
+from _style import (dry, EAST_Z, PALETTE, WALK, WEST_Z, age, cannon, connector, curtain, fence_run, lantern_post,
                     rafter_ends, stair_shape)
 from buildspec import Piece
 
@@ -69,6 +69,7 @@ connector(p, W - 1, 0, EAST_Z, "wall_east_out", "east", "minecraft:stone_bricks"
 connector(p, 0, 0, WEST_Z, "wall_west_out", "west", "minecraft:stone_bricks")
 connector(p, W - 1, 0, WEST_Z, "wall_west_in", "east", "minecraft:stone_bricks")
 
+dry(p)
 p.emit("stone curtain wall with pilasters, a recessed bay, corbelled parapet, a cannon and a timber hoarding",
        ["Sea to the north. Walkway top y 4; cannon master [3, 5, 1] facing north, rear [3, 5, 2].",
         "East run: wall_east_in [0, 0, 2] -> wall_east_out [6, 0, 2]; west run: wall_west_in [6, 0, 3] -> "

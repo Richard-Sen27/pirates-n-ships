@@ -19,7 +19,7 @@ stairs up to the walkway on the east side. On the west side the harbor master's 
 framed in dark oak under a blue panel; a shuttered window south): the harbor master's desk facing the door and a notice
 board, a cartography table, shelves, a chest, a blue banner. Its flat roof joins the curtain's walkway to the west
 wall's."""
-from _style import (PALETTE, WALK, age, arrow_slit, banner, buttress, connector, curtain, door, flagpole,
+from _style import (dry, PALETTE, WALK, age, arrow_slit, banner, buttress, connector, curtain, door, flagpole,
                     fort_face, lantern_post, merlons, stair, stair_shape, stool, window)
 from buildspec import Piece
 
@@ -198,6 +198,7 @@ connector(p, S - 1, 0, 2, "wall_east_out", "east", "minecraft:stone_bricks")
 connector(p, 0, 0, 3, "wall_west_out", "west", "minecraft:stone_bricks")
 connector(p, S - 1, 0, APRON_Z, "building_out", "south", "minecraft:gravel")
 
+dry(p)
 p.emit("walled fort gate: sea gate to the quay under a guard shelter, parade court with the navy flag, harbor master's "
        "office, towered gatehouse with a portcullis",
        ["Start piece. Sea to the north: quay_out [7, 0, 0]; the paving (y 0) sits one block above sea level.",

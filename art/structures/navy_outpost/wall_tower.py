@@ -14,7 +14,7 @@ ledge level with the walkway, so the walkway runs on to the doors in the core. T
 Inside, a ladder on the core's north wall climbs from the ground floor through a landing level with the walkway (y 4; a
 door in each side wall at z 2 leads out onto the curtain's walkway, the one away from the wall stays shut) to the
 roof. The ground floor's door on the landward face (z 5) opens under a blue banner onto the path at the wall's foot."""
-from _style import (EAST_Z, PALETTE, WALK, WEST_Z, age, arrow_slit, banner, connector, door, flagpole, fort_face,
+from _style import (dry, EAST_Z, PALETTE, WALK, WEST_Z, age, arrow_slit, banner, connector, door, flagpole, fort_face,
                     merlons, stair_shape)
 from buildspec import Piece
 
@@ -99,6 +99,7 @@ age(p)
 connector(p, 0, 0, EAST_Z, "wall_east_in", "west", "minecraft:stone_bricks")
 connector(p, S - 1, 0, WEST_Z, "wall_west_in", "east", "minecraft:stone_bricks")
 
+dry(p)
 p.emit("crenellated corner tower: a set-back core between corner pilasters, corbelled roof, lanterns and the navy flag",
        ["Ends a wall run: wall_east_in [0, 0, 2] (west face) or wall_west_in [6, 0, 3] (east face).",
         "Landing at the walkway's height (y 4) with doors west and east at z 2; roof platform y 9."])

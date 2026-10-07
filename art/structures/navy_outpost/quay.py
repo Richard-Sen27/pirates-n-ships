@@ -9,7 +9,7 @@ On the deck: mooring rings and cleats along both edges, bollards (stone brick wa
 crane at the seaward end (a spruce post with a fence jib to the west edge and a lantern hanging from it; nothing
 reaches over the berths), lantern
 posts, a ladder down to the water at the end, and a few crates waiting to be loaded."""
-from _style import PALETTE, age, banner, chain, connector, lantern_post, stair, stair_shape
+from _style import dry, PALETTE, age, banner, chain, connector, lantern_post, stair, stair_shape
 from buildspec import Piece
 
 W, H, L = 7, 9, 18
@@ -93,6 +93,7 @@ p.berth(0, SEA, BERTH_Z, "north")
 p.berth(W - 1, SEA, BERTH_Z, "north")
 connector(p, 3, DECK, L - 1, "quay_in", "south", "minecraft:stone_bricks")
 
+dry(p)
 p.emit("stone quay with mooring rings, cleats, bollards, a crane and two berths",
        ["Runs north from quay_in (south end, deck y 5 = the fort gate's paving row).",
         "Sea level is row y 4; berth markers at [0, 4, 9] and [6, 4, 9], bow north."])

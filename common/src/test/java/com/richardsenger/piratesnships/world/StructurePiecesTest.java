@@ -53,7 +53,7 @@ class StructurePiecesTest {
 
     private static final String MOD = "pirates_n_ships";
     private static final String EMPTY = "minecraft:empty";
-    private static final List<String> PIECES = List.of("dock_head", "house_small", "pier", "shipwright", "street", "tavern");
+    private static final List<String> PIECES = List.of("dock_head", "house_small", "pier", "shipwright", "street", "street_end", "tavern");
     private static final Set<String> BUILDINGS = Set.of("house_small", "shipwright", "tavern");
     private static final int MAX_SIZE = 32;
 
@@ -132,7 +132,7 @@ class StructurePiecesTest {
     }
 
     @Test
-    void exactlyTheSixPiecesAreCommitted() throws IOException {
+    void exactlyTheVillagePiecesAreCommitted() throws IOException {
         Set<String> found = new TreeSet<>();
         try (Stream<Path> files = Files.list(villageDir())) {
             files.forEach(f -> found.add(f.getFileName().toString().replace(".nbt", "")));
@@ -269,6 +269,7 @@ class StructurePiecesTest {
         assertEquals(Map.of("pier_out", 1, "street_out", 1), countNames(jigsaws(piece("dock_head"))));
         assertEquals(Map.of("berth", 2, "pier_in", 1), countNames(jigsaws(piece("pier"))));
         assertEquals(Map.of("building_out", 2, "street_in", 1, "street_out", 1), countNames(jigsaws(piece("street"))));
+        assertEquals(Map.of("street_in", 1), countNames(jigsaws(piece("street_end"))), "the terminator spawns nothing");
         for (String building : BUILDINGS) {
             List<Jigsaw> jigsaws = jigsaws(piece(building));
             assertEquals(Map.of("building_in", 1), countNames(jigsaws), building);

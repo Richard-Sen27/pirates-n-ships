@@ -1088,7 +1088,8 @@ operations):
 dirt path for the street verges, chiseled or plain stone bricks on the quay, spruce planks on the pier deck, gravel
 for the shipwright's apron. The pools are `pirates_n_ships:village/start` (the dock head), `village/streets`,
 `village/buildings`, `village/pier` and `village/terminators` (the fallback for `street_out` once the depth runs
-out; WG1 defines it, and no piece exists for it yet).
+out; its piece is `street_end`). The terminators pool must never be empty: vanilla skips a connector whose
+fallback pool is empty, so an empty pool would stop every street at the dock head.
 
 **Berth markers:** a `minecraft:jigsaw` named `pirates_n_ships:berth` (target and pool `minecraft:empty`,
 `final_state` `minecraft:water`). It sits at sea level, one block out from the pier's side, at the berth's
@@ -1110,11 +1111,12 @@ deeper, the footings hang in the water.
 | `dock_head` (start) | 11×8×11 | 289 | stone quay, harbor master's hut (desk facing the door, cargo, lectern), notice board beside the door, two lantern posts at the pier landing, mooring rings on the sea edge, crates and barrels; `pier_out` [5, 0, 0], `street_out` [2, 0, 10] | `harbor_desk`, `notice_board`, `mooring_ring`, `cargo_crate`, `cargo_barrel` |
 | `pier` | 7×9×20 | 197 | 5 wide plank deck on spruce piles with footings, cross beams, a rail and two lantern posts at the seaward end, a ladder down; `pier_in` [3, 5, 19], berths [0, 4, 9] and [6, 4, 9] | `mooring_ring`, `cleat` |
 | `street` | 7×4×7 | 52 | cobbled street with gravel and moss patches, dirt path verges, a lantern post; `street_in` [3, 0, 0], `street_out` [3, 0, 6], `building_out` [0, 0, 3] and [6, 0, 3] | |
+| `street_end` (terminator) | 7×4×3 | 26 | cobbled turning place at a street's end, a lantern post and two barrels; `street_in` [3, 0, 0] | |
 | `house_small` | 7×9×9 | 237 | 7×7 cottage of white render (calcite) on stripped spruce posts, red tile roof, bed, table and stool, chest, barrel, crafting table; `building_in` [3, 0, 0] | |
 | `tavern` | 11×15×11 | 695 | 11×9, two floors: bar with barrels, two tables with stools, a hanging lantern, stairs, two beds upstairs; a dark oak panel above the door for a sign; `building_in` [5, 0, 0] | `cargo_barrel` |
 | `shipwright` | 11×13×10 | 441 | open shed on posts with a dark roof, a half-built hull (keel, stem, three frames, a strake) on a gravel slipway, sawhorses, stacked logs and planks, crafting and smithing tables; `building_in` [5, 0, 0] | |
 
-Renders: `art/renders/structures/village/{dock_head,pier,street,house_small,tavern,shipwright}.png`.
+Renders: `art/renders/structures/village/{dock_head,pier,street,street_end,house_small,tavern,shipwright}.png`.
 
 **Adding a piece:** copy a generator in the group's folder, keep the conventions above (foundation row, north
 front, connectors on the box faces), then run `python3 tools/build_structures.py <group>/<piece>`. Look at the

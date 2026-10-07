@@ -5,7 +5,7 @@ Statuses: **todo** / **in progress** / **done** / **blocked: needs playtest** / 
 
 "Done" means: `./gradlew build` passes, `./gradlew :neoforge:runGameTestServer` passes, and the new logic has tests.
 
-Last updated: 2026-10-07 (fourth session: phase G complete; phase M: F9 and M1 merged, M2 running).
+Last updated: 2026-10-07 (fourth session: phase G complete; phase M: F9 and M1 merged, M2 and M3 running).
 
 ## Phase F: first playtest feedback (done, F5 and F7 continue in phase G)
 
@@ -75,7 +75,7 @@ Started 2026-10-07 on the human's request ("what about all the NPCs and the anim
 | M1 | GeckoLib dependency (both loaders, like the PAL integration), the crew member as a `GeoEntity` with a hand-written placeholder rig (vanilla player proportions, skin-layout texture), controller states idle/walk/work/sit, item in hand; the rig contract written into `art/README.md` for the mob batches | done | Merged (`2026736`). GeckoLib 4.9.3: `common` compiles against `geckolib-common-1.21.1` (Mojang-named, unlike PAL's common jar), `neoforge` uses `geckolib-neoforge-1.21.1`, required on both sides; it loads on the dedicated test server. `CrewMember implements GeoEntity` with a synced `working` flag, `CrewPose.choose` (work > sit > walk > idle), `CrewMemberModel`/`CrewMemberRenderer` with a held-item layer on the hand locators; rig `root/waist/body/head/hat/right_arm/right_hand/left_arm/left_hand/right_leg/left_leg`, 64×64 skin layout from `tools/gen_entity_textures.py`; animations idle/walk/work/sit. 11 JUnit (the geo file baked with GeckoLib's own parser) and 2 GameTests. Rotation signs and the hand-item transform unverified in game. Playtest `crew-npc.md`. |
 | F9 | Sword animations authored in Blockbench on a player rig (`art/animations/player_rig.bbmodel`), exported into the 11 PAL files, replacing the G12 placeholders; matching poses at phase boundaries | done | Merged (`38234a8`). Rig and pose table (`art/animations/player_poses.js` rebuilds every animation in Blockbench), render strips `art/renders/anim_*.png`, workflow and the confirmed rotation conventions in `art/README.md` (PAL writes file values straight into `ModelPart` angles; Blockbench 5.2 stores keyframes negated). Lengths follow the saber's timings; wind-up ends equal active starts. Known: a crouched attack probably shows a standing upper body (position channels replace vanilla's sneak offsets); a slash riposte jumps one frame from the low draw. Playtest `melee.md` §F9. |
 | M2 | Blockbench crew member model and textures in GeckoLib format on the M1 rig, with idle/walk/work/sit animations | in progress |
-| M3 | Mob variants on the rig: pirate, sailor, navy soldier, navy officer (textures, hats, coats), with entity registration, spawn rules per structure later (11) and the melee duelist hook (§8.5 NPC duelists) | todo, after M2 |
+| M3 | Mob variants on the rig: pirate, sailor, navy soldier, navy officer (textures, hats, coats), with entity registration, spawn rules per structure later (11) and the melee duelist hook (§8.5 NPC duelists) | in progress (code side on placeholder textures; the Blockbench looks follow as M3-art) |
 | M4 | Shark (own rig, swim and bite), later the kraken (multi-part, §12) | todo, after M3 |
 
 

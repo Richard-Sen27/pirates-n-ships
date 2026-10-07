@@ -49,6 +49,6 @@ public final class CannonModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(CannonGameTests.class, CannonOrderGameTests.class, SwivelGunGameTests.class);
+        return List.of(CannonGameTests.class, CannonOrderGameTests.class, SwivelGunGameTests.class, CannonFollowUpGameTests.class);
     }
 }

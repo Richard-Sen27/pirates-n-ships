@@ -8,14 +8,17 @@ import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -29,7 +32,8 @@ import net.minecraft.world.phys.Vec3;
  * direct and the firing player as the causing entity (law, kill credit, "was shot by"). On a block it destroys up to
  * {@link CannonConfig#blocksPerHit()} blocks along its path (the hit block first) that {@link CannonRules#destroyable}
  * allows, pushes a ship it hits and is gone. A ship block destroyed below the waterline becomes a breach through the
- * hull runtime's block-change listener like any removed hull block. In water it splashes once, slows down hard and
+ * hull runtime's block-change listener like any removed hull block. Q2: a glancing hit breaks fewer blocks and pushes
+ * less ({@link CannonImpact#glancingBlocks}); a grazing one bounces off and flies on. In water it splashes once, slows down hard and
  * sinks; it is removed when slower than {@code cannons.sink_speed} or after {@code cannons.ball_lifetime_ticks}.
  *
  * <p>Fired with an explicit velocity (not {@code shootFromRotation}), so neither vanilla nor Sable's
@@ -44,6 +48,8 @@ public class CannonballEntity extends ThrowableItemProjectile {
     private int blocksPerHit = -1;
     /** Impulse on a hit ship; negative = the cannon's config. */
     private double impactImpulse = -1;
+    /** Set by a glancing hit that bounced (Q2) for {@link #onHit}: the ball flies on. Not saved. */
+    private boolean bounced;
 
     public CannonballEntity(EntityType<? extends CannonballEntity> type, Level level) {
         super(type, level);
@@ -129,31 +135,66 @@ public class CannonballEntity extends ThrowableItemProjectile {
         if (!(level() instanceof ServerLevel level)) return;
         BlockPos hitPos = result.getBlockPos();
         // A ship block is hit in plot space (Sable's clip returns the sub-level result as is, sable-notes §9.0e), so the
-        // hit point and the block positions are plot coordinates; the flight direction is turned into the plot frame.
+        // hit point, the block positions and the hit face are plot coordinates; the flight direction is turned into the
+        // plot frame.
         ShipBody ship = SableShips.containing(level, hitPos);
         Vec3 flight = getDeltaMovement();
         Vec3 dir = flight.lengthSqr() < 1.0e-9 ? Vec3.ZERO : flight.normalize();
         Vec3 localDir = ship != null ? CannonService.rotateInverse(ship.orientation(), dir) : dir;
         Vec3 hit = result.getLocation();
         Vec3 worldHit = ship != null ? ship.toWorld(hit) : hit;
+        Vec3 localNormal = Vec3.atLowerCornerOf(result.getDirection().getNormal());
 
-        double push = impactImpulse >= 0 ? impactImpulse : CannonConfig.IMPACT_IMPULSE.get();
+        // Glancing hits (Q2): how squarely the ball meets the face scales the push and the blocks it breaks.
+        boolean glancing = CannonConfig.GLANCING_HITS.get();
+        double square = glancing ? CannonImpact.squareness(localDir, localNormal) : 1.0;
+        boolean bounce = glancing && CannonImpact.bounces(square, CannonConfig.GLANCING_BOUNCE_DEGREES.get());
+
+        double push = (impactImpulse >= 0 ? impactImpulse : CannonConfig.IMPACT_IMPULSE.get()) * square;
         if (ship != null && push > 0 && localDir != Vec3.ZERO) {
             ship.applyImpulseNow(hit, localDir.scale(push));
         }
 
-        int destroyed = 0;
+        if (bounce) {
+            Vec3 worldNormal = ship != null ? CannonService.rotate(ship.orientation(), localNormal) : localNormal;
+            setDeltaMovement(CannonImpact.deflect(flight, worldNormal, CannonConfig.GLANCING_BOUNCE_FACTOR.get()));
+            // off the face, so this tick's move starts outside the block
+            setPos(worldHit.add(worldNormal.scale(0.05)));
+            hasImpulse = true;
+            bounced = true;
+            level.playSound(null, worldHit.x, worldHit.y, worldHit.z, SoundEvents.ANVIL_LAND, SoundSource.BLOCKS, 0.4f, 1.6f);
+            level.sendParticles(ParticleTypes.CRIT, worldHit.x, worldHit.y, worldHit.z, 6, 0.1, 0.1, 0.1, 0.1);
+            return;
+        }
+
         int limit = blocksPerHit >= 0 ? blocksPerHit : CannonConfig.blocksPerHit();
+        if (glancing) {
+            limit = CannonImpact.glancingBlocks(limit, square);
+        }
+        if (!CannonRules.worldAllowsBlockDamage(CannonConfig.RESPECT_MOB_GRIEFING.get(),
+                level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING))) {
+            limit = 0;
+        }
+        boolean drops = CannonConfig.DESTROYED_BLOCKS_DROP.get();
+        int destroyed = 0;
         for (BlockPos p : CannonImpact.blocksAlong(hitPos, hit, localDir, limit, pos -> !level.getBlockState(pos).isAir())) {
             BlockState state = level.getBlockState(p);
-            boolean onShip = ship != null || SableShips.containing(level, p) != null;
-            if (!CannonRules.destroyable(true, state.isAir(), state.getDestroySpeed(level, p), onShip,
+            ShipBody owner = ship != null ? ship : SableShips.containing(level, p);
+            if (!CannonRules.destroyable(true, state.isAir(), state.getDestroySpeed(level, p), owner != null,
                     state.is(CannonContent.BREAKABLE), state.is(CannonContent.PROOF))) {
                 break; // a block that holds stops the ball
             }
+            // spawn protection is a world-space rule: a ship block counts where it is in the world
+            BlockPos worldPos = owner != null ? BlockPos.containing(owner.toWorld(Vec3.atCenterOf(p))) : p;
+            if (spawnProtected(level, worldPos)) {
+                break; // a protected block holds like a cannon-proof one
+            }
             level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, state), worldHit.x, worldHit.y, worldHit.z,
                     24, 0.3, 0.3, 0.3, 0.15);
-            level.destroyBlock(p, false, this);
+            // The drops spawn at the plot position; Sable's popResource and addFreshEntity mixins move them into the
+            // world at the block's world position (refs/sable common mixin/entity/entity_kicking/BlockMixin and
+            // ServerLevelMixin).
+            level.destroyBlock(p, drops, this);
             destroyed++;
         }
         if (destroyed > 0) {
@@ -165,11 +206,33 @@ public class CannonballEntity extends ThrowableItemProjectile {
         level.sendParticles(ParticleTypes.POOF, worldHit.x, worldHit.y, worldHit.z, 8, 0.2, 0.2, 0.2, 0.05);
     }
 
+    /**
+     * Whether the block at the world position {@code worldPos} is under the server's spawn protection
+     * ({@code cannons.respect_spawn_protection}). A ball fired by a player asks the server as a block break by that
+     * player would; any other ball follows the same vanilla rule for a shooter who is no operator. Claims of claim mods
+     * have no vanilla API and are not checked.
+     */
+    private boolean spawnProtected(ServerLevel level, BlockPos worldPos) {
+        if (!CannonConfig.RESPECT_SPAWN_PROTECTION.get()) return false;
+        MinecraftServer server = level.getServer();
+        if (getOwner() instanceof Player player) {
+            return server.isUnderSpawnProtection(level, worldPos, player);
+        }
+        BlockPos spawn = level.getSharedSpawnPos();
+        return CannonRules.spawnProtected(server.isDedicatedServer(), level.dimension() == Level.OVERWORLD,
+                !server.getPlayerList().getOps().isEmpty(), false, server.getSpawnProtectionRadius(),
+                spawn.getX(), spawn.getZ(), worldPos.getX(), worldPos.getZ());
+    }
+
     @Override
     protected void onHit(HitResult result) {
         super.onHit(result);
         if (!level().isClientSide) {
-            discard();
+            if (bounced) {
+                bounced = false; // a glancing ball flies on
+            } else {
+                discard();
+            }
         }
     }
 

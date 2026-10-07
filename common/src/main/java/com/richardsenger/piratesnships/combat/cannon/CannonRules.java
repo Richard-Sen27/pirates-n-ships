@@ -199,4 +199,22 @@ public final class CannonRules {
     public static float entityDamage(double configured, double multiplier) {
         return (float) Math.max(0, configured * multiplier);
     }
+
+    // ---- world rules (Q2) -----------------------------------------------------------------------------------------
+
+    /** Whether the world lets a ball break blocks: not while the {@code mobGriefing} rule is off, if that is respected. */
+    public static boolean worldAllowsBlockDamage(boolean respectMobGriefing, boolean mobGriefing) {
+        return !respectMobGriefing || mobGriefing;
+    }
+
+    /**
+     * Vanilla's spawn protection (as {@code DedicatedServer.isUnderSpawnProtection}) for a ball without a player behind
+     * it: only on a dedicated server, in the overworld, once the server has an operator, for a shooter who is not one,
+     * with a radius above 0, for blocks within that radius (horizontal Chebyshev distance) of the world spawn.
+     */
+    public static boolean spawnProtected(boolean dedicated, boolean overworld, boolean opsExist, boolean shooterIsOp,
+                                         int radius, int spawnX, int spawnZ, int x, int z) {
+        if (!dedicated || !overworld || !opsExist || shooterIsOp || radius <= 0) return false;
+        return Math.max(Math.abs(x - spawnX), Math.abs(z - spawnZ)) <= radius;
+    }
 }

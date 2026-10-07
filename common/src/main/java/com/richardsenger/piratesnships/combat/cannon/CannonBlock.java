@@ -255,6 +255,20 @@ public class CannonBlock extends Block implements EntityBlock, StationBlock {
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
+    /**
+     * A cannon broken with drops (by a player in survival, a ball, an explosion, the other half going) gives back its
+     * powder and ball next to the cannon item (Q2). Only the master holds the load. A creative break drops nothing: the
+     * master then goes without drops ({@link #playerWillDestroy}, or the creative player's own break).
+     */
+    @Override
+    protected void spawnAfterBreak(BlockState state, ServerLevel level, BlockPos pos, ItemStack tool, boolean dropExperience) {
+        super.spawnAfterBreak(state, level, pos, tool, dropExperience);
+        if (!state.getValue(PART).isMaster()) return;
+        CannonLoad load = state.getValue(LOAD);
+        if (load != CannonLoad.EMPTY) popResource(level, pos, new ItemStack(Items.GUNPOWDER));
+        if (load == CannonLoad.LOADED) popResource(level, pos, new ItemStack(CombatContent.CANNONBALL.get()));
+    }
+
     /** Breaking the cannon frees the station and removes its seat (a station taken at the rear, if any, too). */
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {

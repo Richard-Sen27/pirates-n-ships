@@ -1204,6 +1204,14 @@ pieces load, stay within 32 blocks per axis, use only existing blocks and states
 block states), follow the jigsaw convention below, have the expected connectors and berths, and match a fresh
 conversion of the committed `.schem`.
 
+**Four-corner review:** `python3 tools/iso_render.py art/schematics/structures/village/tavern.schem --out <dir>`
+writes `<piece>_{se,ne,nw,sw}.png`, the piece seen from each corner. It draws slabs, stairs, open and closed
+trapdoors, doors, ladders, glass panes, fences, walls, lanterns, beds and carpets as their real shapes in rough
+Minecraft colours (everything else as cubes, jigsaws as small magenta cubes), so sills, shutters, rafter ends and
+plinths show; `--cut Y` hides the rows above Y to look inside. It is the tool for reviewing a piece from all four
+corners. The lab's render (and `--views`) is only a colour check: it draws every block as a whole cube coloured by its
+name. Standard library only (it reads the schematic through `tools/schem_to_structure.py`).
+
 **Generators:** `art/structures/buildspec.py` holds the shared `Piece` helper: `put`/`fill`/`ring` take a palette
 key or a literal state, `roof_ridge_x`/`roof_ridge_z` build stair roofs with gables, and `connector`/`berth` add the
 jigsaws. `Piece.emit` merges runs along x into `box` operations and adds the jigsaws as `block_entity` operations.

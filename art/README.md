@@ -253,3 +253,81 @@ Items (trade goods batch: cloth, spices, tobacco, F8e):
 
 Entity models use the Modded Entity format (Mojang mappings 1.17+); paste the body of the exported
 `createBodyLayer()` into the renderer's layer method (example: `AnchorRenderer.createLayer`).
+
+## Entities
+
+Animated mobs and NPCs (crew member, pirate, sailor, navy soldier and officer; design.md §9) are GeckoLib models
+(GeckoLib 4.9.3). Code models in the Modded Entity format stay for static entities such as the anchor. The crew member
+(work package M1) defines the **humanoid rig** every humanoid mob follows; its placeholder files are hand-written and
+get replaced by Blockbench exports on the same contract.
+
+**Files** (under `common/src/main/resources/assets/pirates_n_ships/`; GeckoLib loads every `*.geo.json` under `geo/`
+and every `*.animation.json` under `animations/` of every namespace):
+- `geo/<mob>.geo.json`: Bedrock geometry, `format_version` **1.12.0** (GeckoLib rejects 1.14 and 1.21 files),
+  `texture_width`/`texture_height` 64.
+- `animations/<mob>.animation.json`: Bedrock animations (`format_version` 1.8.0) with `geckolib_format_version` 2.
+- `textures/entity/<mob>.png`: 64×64 sheet in the vanilla player skin layout.
+- Blockbench project: `art/models/entity/<mob>.bbmodel`.
+
+**Bones** (Bedrock coordinates, 1 unit = 1 pixel, y up, the model faces −z; the same as the vanilla player model with
+wide arms):
+
+| Bone | Parent | Pivot | Cubes (origin, size, box UV) |
+|---|---|---|---|
+| `root` | | 0, 0, 0 | none; moves the whole model |
+| `waist` | `root` | 0, 12, 0 | none; bends the upper body over the hips |
+| `body` | `waist` | 0, 24, 0 | −4 12 −2, 8×12×4, uv 16 16; jacket layer inflate 0.25, uv 16 32 |
+| `head` | `waist` | 0, 24, 0 | −4 24 −4, 8×8×8, uv 0 0 |
+| `hat` | `head` | 0, 24, 0 | as the head, inflate 0.5, uv 32 0 |
+| `right_arm` | `waist` | −5, 22, 0 | −8 12 −2, 4×12×4, uv 40 16; sleeve inflate 0.25, uv 40 32 |
+| `right_hand` | `right_arm` | −6, 12, −2 | none (locator for the held item) |
+| `left_arm` | `waist` | 5, 22, 0 | 4 12 −2, 4×12×4, uv 32 48; sleeve inflate 0.25, uv 48 48 |
+| `left_hand` | `left_arm` | 6, 12, −2 | none (locator for the held item) |
+| `right_leg` | `root` | −1.9, 12, 0 | −3.9 0 −2, 4×12×4, uv 0 16; trousers inflate 0.25, uv 0 32 |
+| `left_leg` | `root` | 1.9, 12, 0 | −0.1 0 −2, 4×12×4, uv 16 48; trousers inflate 0.25, uv 0 48 |
+
+- Names are lower snake case and fixed: code looks up `head`, `right_hand` and `left_hand` by name, and animations
+  address bones by name. A model may add cubes to these bones and add child bones (a beard, a tricorn on `hat`, a
+  sword sheath on `body`), but never renames or re-parents the contract bones.
+- `right_hand`/`left_hand` sit where vanilla's hand transform ends (arm centre, bottom face, front edge). The renderer
+  (`crew/npc/client/CrewMemberRenderer`) draws the main-hand and off-hand item there with vanilla's third-person item
+  transforms, so they hold items like the player does. Keep them empty and keep them at the hand when re-shaping arms.
+- `head` turns with the look direction in code (`CrewMemberModel#setCustomAnimations` sets its x and y rotation after
+  the animations), so **animations never key the head's x/y rotation** (JUnit `CrewMemberRigTest` checks). Animate
+  `hat` or a child bone of the head instead.
+
+**Texture layout:** the vanilla 64×64 player skin layout (Steve, wide arms), outer layer included. Any player skin
+works as a test texture. Pixels of the outer layer (hat, jacket, sleeves, trousers) are transparent unless painted
+(the default render type cuts out alpha). `tools/gen_entity_textures.py` writes the placeholder sailor
+(`crew_member.png`: striped shirt, canvas trousers, shoes, a red bandana on the hat layer).
+
+**Animations** (all loop; names without prefix; rotations in degrees with the vanilla player model's signs: negative x
+swings an arm or leg forward, positive x leans `waist` forward):
+
+| Name | When | Placeholder content |
+|---|---|---|
+| `idle` | standing still | 3 s: slow arm sway (z ±5°), slight chest swell (`body` scale) |
+| `walk` | the legs move (GeckoLib's limb swing) | 1 s: arms ±30°, legs ±35°, opposite phase |
+| `work` | at its station while the station carries out an order (winch, pump, cannon, …) | 1.2 s: hand-over-hand hauling (arms −50°/−105° alternating), `waist` leaning 6–16°, legs braced |
+| `sit` | riding something that seats it (boat, minecart; **not** the station seat, where it stands) | legs −81° x and ±18° y, arms −36° (vanilla riding pose) |
+
+Priority: `work` > `sit` > `walk` > `idle` (`crew/npc/CrewPose`). One controller (`body`) plays them with a 5-tick
+blend. A mob with more states adds animations with new names and its own controller logic; triggered one-shots
+(attack swings, a cannon fuse) go through GeckoLib triggerable animations on a second controller.
+
+**Variants:** a pirate, sailor, navy soldier or officer is the same geometry with its own texture (a new
+`textures/entity/<mob>.png` painted on the skin layout, its own renderer's `GeoModel` returning that texture) and the
+shared `crew_member.animation.json`. A variant that needs extra shapes (coat tails, a tricorn, an epaulette) gets its
+own `geo/<mob>.geo.json`, copied from the crew member with child bones added under the contract bones, and keeps the
+shared animations working because every contract bone is still there.
+
+**Blockbench export** (model batches): create the project with **GeckoLib Animated Model** (the GeckoLib plugin's
+`geckolib_model` format), type *Entity*; build on the bones above (to keep names and pivots, open
+`geo/crew_member.geo.json` as a Bedrock model and convert it with *File → Convert Project*; menu names unverified);
+use box UV on a 64×64 texture. Then
+- *File → Export → Export GeckoLib Model* → `geo/<mob>.geo.json` (check that it says `"format_version": "1.12.0"`);
+- *Animation → Export Animations* → `animations/<mob>.animation.json` (keep the names above);
+- *Texture → Save As* → `textures/entity/<mob>.png`;
+- save the project to `art/models/entity/<mob>.bbmodel` and a render to `art/renders/`.
+Run `./gradlew build` afterwards: `CrewMemberRigTest` parses the files with GeckoLib's loader and checks bones,
+pivots, parents and animation names.

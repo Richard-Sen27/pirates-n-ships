@@ -5,6 +5,7 @@ navigation:
   position: 110
   icon: pirates_n_ships:rope
 item_ids:
+  - pirates_n_ships:bandana
   - pirates_n_ships:bounty_proof
   - pirates_n_ships:brig_key
   - pirates_n_ships:cannonball
@@ -21,8 +22,11 @@ item_ids:
   - pirates_n_ships:merchant_flag
   - pirates_n_ships:musket
   - pirates_n_ships:navy_flag
+  - pirates_n_ships:navy_hat
   - pirates_n_ships:navy_officer_spawn_egg
   - pirates_n_ships:navy_soldier_spawn_egg
+  - pirates_n_ships:officer_hat
+  - pirates_n_ships:pirate_hat
   - pirates_n_ships:pirate_spawn_egg
   - pirates_n_ships:pistol
   - pirates_n_ships:rapier

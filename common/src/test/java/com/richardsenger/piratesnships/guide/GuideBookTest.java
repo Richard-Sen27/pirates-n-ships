@@ -272,6 +272,89 @@ class GuideBookTest {
         }
     }
 
+    /**
+     * The generator's item inventory is the registered items (lang keys): an item model that is only an
+     * {@code overrides} target of another (a variant like pistol_loaded) is ignored, an item model nothing names or
+     * references is an orphan that stops it. Runs against a temp copy of the inputs with fake models added.
+     */
+    @Test
+    void generatorIgnoresOverrideVariantsAndRejectsOrphanModels(@TempDir Path tmp) throws Exception {
+        Path root = tmp.resolve("repo");
+        copyFiles(GUIDE_MD, root.resolve("docs/guide.md"));
+        copyFiles(ASSETS.resolve("models/item"), root.resolve("common/src/main/resources/assets/" + NS + "/models/item"));
+        copyFiles(GENERATED.resolve("assets/" + NS + "/models/item"), root.resolve("common/src/generated/resources/assets/" + NS + "/models/item"));
+        copyFiles(RECIPES, root.resolve("common/src/generated/resources/data/" + NS + "/recipe"));
+        JsonObject lang = lang();
+        lang.addProperty("item." + NS + ".foo", "Foo");
+        Path langFile = root.resolve("common/src/generated/resources/assets/" + NS + "/lang/en_us.json");
+        Files.createDirectories(langFile.getParent());
+        Files.writeString(langFile, lang.toString());
+        Path models = root.resolve("common/src/main/resources/assets/" + NS + "/models/item");
+        Files.writeString(models.resolve("foo.json"), """
+                {"parent": "minecraft:item/generated", "textures": {"layer0": "%1$s:item/foo"},
+                 "overrides": [{"predicate": {"%1$s:loaded": 1.0}, "model": "%1$s:item/foo_loaded"}]}
+                """.formatted(NS));
+        Files.writeString(models.resolve("foo_loaded.json"), """
+                {"parent": "minecraft:item/generated", "textures": {"layer0": "%s:item/foo_loaded"}}
+                """.formatted(NS));
+
+        Path out = tmp.resolve("out");
+        Generated ok = runGenerator(root, out);
+        assertEquals(0, ok.exit(), "generator failed on an override variant:\n" + ok.output());
+        List<String> owned = new ArrayList<>();
+        for (String f : relativeFiles(out)) {
+            String text = Files.readString(out.resolve(f));
+            assertFalse(text.contains(NS + ":foo_loaded"), f + " lists the variant model foo_loaded as an item");
+            for (String line : text.split("\n")) {
+                if (line.startsWith("  - ")) owned.add(line.substring(4).trim());
+            }
+        }
+        assertTrue(owned.contains(NS + ":foo"), "the fake item foo is in no page's item_ids: " + owned);
+        assertEquals(new TreeSet<>(owned).size(), owned.size(), "an item is owned twice: " + owned);
+        JsonObject realLang = lang();
+        for (String id : owned) {
+            String path = id.substring(id.indexOf(':') + 1);
+            assertTrue(id.equals(NS + ":foo") || realLang.has("item." + NS + "." + path) || realLang.has("block." + NS + "." + path),
+                    id + " is listed but is no registered item");
+        }
+
+        Files.writeString(models.resolve("bar_orphan.json"), """
+                {"parent": "minecraft:item/generated", "textures": {"layer0": "%s:item/bar_orphan"}}
+                """.formatted(NS));
+        Generated orphan = runGenerator(root, tmp.resolve("out2"));
+        assertTrue(orphan.exit() != 0, "generator accepted an orphan item model:\n" + orphan.output());
+        assertTrue(orphan.output().contains(NS + ":bar_orphan"), "failure does not name the orphan:\n" + orphan.output());
+        assertFalse(orphan.output().contains(NS + ":foo_loaded"), "failure blames the variant:\n" + orphan.output());
+    }
+
+    private record Generated(int exit, String output) {
+    }
+
+    private static Generated runGenerator(Path root, Path out) throws Exception {
+        Process p = new ProcessBuilder("python3", REPO.resolve("tools/gen_guideme.py").toString(),
+                "--root", root.toString(), "--out", out.toString())
+                .directory(REPO.toFile()).redirectErrorStream(true).start();
+        String output = new String(p.getInputStream().readAllBytes());
+        assertTrue(p.waitFor(60, TimeUnit.SECONDS), "generator timed out");
+        return new Generated(p.exitValue(), output);
+    }
+
+    /** Copies a file, or the files directly in a directory, to target. */
+    private static void copyFiles(Path source, Path target) throws IOException {
+        if (Files.isRegularFile(source)) {
+            Files.createDirectories(target.getParent());
+            Files.copy(source, target);
+            return;
+        }
+        Files.createDirectories(target);
+        if (!Files.isDirectory(source)) return;
+        try (Stream<Path> files = Files.list(source)) {
+            for (Path f : files.filter(Files::isRegularFile).toList()) {
+                Files.copy(f, target.resolve(f.getFileName().toString()));
+            }
+        }
+    }
+
     private static Set<String> relativeFiles(Path root) throws IOException {
         Set<String> out = new TreeSet<>();
         if (!Files.isDirectory(root)) return out;

@@ -78,3 +78,7 @@ Addendum (P1): loading shows no bow pose any more (and no pose at all, known); k
 
 
 Addendum (F8h): in third person the fist closes on the pistol's grip just behind the trigger guard (butt cap below and behind the fist, barrel forward and slightly up), the musket is held at the wrist of the stock behind the lock with the butt under the forearm; off hand mirrored; first person unchanged. During the reloads watch for a visible snap at the start and end (the gun slides 1.6 px / 2.5 px along the arm between rest and the fore-stock poses) and for the musket butt sinking or hovering.
+
+
+## P6: the cocked hammer
+For pistol and musket: an empty gun shows the hammer forward against the frizzen; once loaded the icon switches to the hammer cocked back with the frizzen upright (the gold bar still shows, the white bar during loading). In hand (third person) the hammer is cocked on a loaded gun with no jump of the grip when the state changes; first person likewise. Aiming and sneak-lowering keep the cocked model; the model stays empty until a reload completes; after firing it switches back at once. Item frame, ground and a navy soldier's hand (mobs' guns show the empty model, expected). No missing-model warnings in the log.

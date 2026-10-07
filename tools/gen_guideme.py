@@ -5,6 +5,7 @@ Run (from the repository root, Python 3 standard library only):
 
     python3 tools/gen_guideme.py            # writes into common/src/main/resources/assets/pirates_n_ships/
     python3 tools/gen_guideme.py --out DIR  # writes the same files under DIR (GuideBookTest compares the two)
+    python3 tools/gen_guideme.py --root R --out DIR  # reads the inputs below from R instead of the repository (tests)
 
 Run it after every change to docs/guide.md, the lang file or the recipes, and commit the output. The JUnit test
 GuideBookTest fails while the committed pages differ from a fresh run. Output is deterministic (same input, same
@@ -18,8 +19,14 @@ Output (relative to the assets root of our namespace):
 Inputs:
     docs/guide.md                                                         the player guide (single source of truth)
     common/src/generated/resources/assets/pirates_n_ships/lang/en_us.json display names -> registry ids
-    common/src/{generated,main}/resources/assets/pirates_n_ships/models/item/*.json   which ids are items
+    common/src/{generated,main}/resources/assets/pirates_n_ships/models/item/*.json   item models (checked, below)
     common/src/generated/resources/data/pirates_n_ships/recipe/*.json     which items have a recipe
+
+Which ids are items: the registered items, i.e. the ids with an "item.pirates_n_ships.<id>" lang key, plus the
+"block.pirates_n_ships.<id>" keys that have an item model (block items; a block key without one is a block without an
+item and is skipped). Every "item." id must have an item model, or the script stops naming it. An item model file
+without a lang key is ignored when another item model lists it as an "overrides" target (a variant such as
+pistol_loaded, selected by an item property predicate), and stops the script as an orphan otherwise.
 
 What it does to each section:
     - "### Heading" becomes "## Heading" (the page title is the only "#"); "---" separators are dropped.
@@ -68,15 +75,23 @@ from pathlib import Path
 
 sys.dont_write_bytecode = True  # no __pycache__ next to the tools
 
-ROOT = Path(__file__).resolve().parent.parent
 NS = "pirates_n_ships"
 GUIDE_PATH = "guide"
-GUIDE_MD = ROOT / "docs" / "guide.md"
-COMMON = ROOT / "common" / "src"
-ASSETS_MAIN = COMMON / "main" / "resources" / "assets" / NS
-ASSETS_GEN = COMMON / "generated" / "resources" / "assets" / NS
-LANG = ASSETS_GEN / "lang" / "en_us.json"
-RECIPES = COMMON / "generated" / "resources" / "data" / NS / "recipe"
+
+
+def set_root(root):
+    """Points the input paths at a repository root (the real one by default; GuideBookTest passes a temp copy)."""
+    global ROOT, GUIDE_MD, ASSETS_MAIN, ASSETS_GEN, LANG, RECIPES
+    ROOT = Path(root).resolve()
+    GUIDE_MD = ROOT / "docs" / "guide.md"
+    common = ROOT / "common" / "src"
+    ASSETS_MAIN = common / "main" / "resources" / "assets" / NS
+    ASSETS_GEN = common / "generated" / "resources" / "assets" / NS
+    LANG = ASSETS_GEN / "lang" / "en_us.json"
+    RECIPES = common / "generated" / "resources" / "data" / NS / "recipe"
+
+
+set_root(Path(__file__).resolve().parent.parent)
 
 # Lang keys of the guide item's name and tooltip (written by GuideModule's datagen, checked by GuideBookTest).
 NAME_KEY = f"guide.{NS}.{GUIDE_PATH}.name"
@@ -180,36 +195,55 @@ def full_id(item):
 
 # ---------------------------------------------------------------------------------------------------- inputs
 
+def override_target(model):
+    """The item model id ("pirates_n_ships:x") an "overrides" entry's model reference names, else None."""
+    if not isinstance(model, str):
+        return None
+    ns, _, path = model.rpartition(":")
+    if (ns or "minecraft") != NS or not path.startswith("item/"):
+        return None
+    return f"{NS}:{path[len('item/'):]}"
+
+
 def load_items():
     """(display name lower -> id, id -> display name, set of item ids) of our items.
 
-    An item is an id with an item model (generated or hand-made). Fails, naming the ids, when an item has no lang
-    name ("item." or "block." key) or an "item." lang key has no item model: the guide could not name or show it.
-    A "block." key without an item model is a block without an item and is skipped.
+    The items are the registered ones: every "item." lang key, and every "block." key with an item model (generated
+    or hand-made). Fails, naming the ids, when an "item." key has no item model (the guide could not show it) or an
+    item model has no lang key and is no "overrides" target of another item model (an orphan: a model of nothing, or
+    an item without a name). Override targets without a lang key are variants of an item (pistol_loaded), ignored.
     """
     lang = json.loads(LANG.read_text(encoding="utf-8"))
-    item_ids = set()
+    models = {}
     for base in (ASSETS_MAIN, ASSETS_GEN):
         d = base / "models" / "item"
         if d.is_dir():
-            item_ids.update(f"{NS}:{p.stem}" for p in d.glob("*.json"))
+            models.update((f"{NS}:{p.stem}", p) for p in d.glob("*.json"))
+    variants = set()
+    for rid in sorted(models):
+        overrides = json.loads(models[rid].read_text(encoding="utf-8")).get("overrides")
+        for entry in overrides if isinstance(overrides, list) else []:
+            target = override_target(entry.get("model")) if isinstance(entry, dict) else None
+            if target is not None and target != rid:
+                variants.add(target)
     by_name, names, problems = {}, {}, []
     for key in sorted(lang):
         m = re.fullmatch(rf"(item|block)\.{NS}\.([a-z0-9_]+)", key)
         if not m:
             continue
         rid = f"{NS}:{m.group(2)}"
-        if rid not in item_ids:
+        if rid not in models:
             if m.group(1) == "item":
                 problems.append(f"{rid}: lang key {key} but no item model (models/item/{m.group(2)}.json)")
             continue
         names.setdefault(rid, lang[key])
         by_name.setdefault(lang[key].lower(), rid)
-    for rid in sorted(item_ids - set(names)):
-        problems.append(f"{rid}: item model but no lang name (item.{NS}.{rid.split(':')[1]} or block.{NS}.…)")
+    for rid in sorted(set(models) - set(names) - variants):
+        problems.append(f"{rid}: item model but no lang name (item.{NS}.{rid.split(':')[1]} or block.{NS}.…) "
+                        f"and no item model lists it under \"overrides\"")
     if problems:
         raise SystemExit("gen_guideme: items the guide cannot name or show:\n  " + "\n  ".join(problems))
-    return by_name, names, item_ids
+    return by_name, names, set(names)
 
 
 def load_recipe_results():
@@ -528,7 +562,11 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--out", type=Path, default=ASSETS_MAIN,
                     help="assets root to write into (default: the mod's assets/pirates_n_ships)")
+    ap.add_argument("--root", type=Path, default=None,
+                    help="repository root to read the inputs from (default: this script's repository)")
     args = ap.parse_args()
+    if args.root is not None:
+        set_root(args.root)
     files = build(args.out.resolve())
     print(f"wrote {len(files)} pages and guideme_guides/{GUIDE_PATH}.json under {args.out}")
 

@@ -42,3 +42,6 @@ anything differs.
 ## Also worth a look
 - Should the screen pause the game in single player? Should a sale of noticed plunder already count as a crime (it does
   not yet)?
+
+
+Addendum (G13): with `cargo_trade.plunder.navy_notice_chance = 1.0`, a noticed plunder sale at a navy desk raises `/pirates law score get @s` by 15 and `/pirates law last @s` shows "Selling plunder" with the port id; selling again within a minute does not raise it again; a pirate fence never does. The direct `/pirates trade sell` command does not record the crime yet (known gap).

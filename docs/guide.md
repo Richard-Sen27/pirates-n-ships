@@ -338,6 +338,10 @@ blocks of the desk; walking away closes the screen. A desk that belongs to no po
 check with `/pirates trade desk info`, and `/pirates trade desk unbind`. Server config: Cargo Trade → Harbor Desks
 (`desks_enabled`, `desk_reach`). The `/pirates trade` commands remain as a debugging fallback.
 
+Selling plunder at a navy outpost is risky: if the harbor master notices it the goods are confiscated and it counts as
+a crime, +15 criminal score (`law.severity.fence_plunder`; several noticed sales at one port within a minute count
+once). Pirate fences never report you.
+
 ### Contracts
 A port offers delivery contracts: bring an amount of a good to another port by a deadline for a reward. Accepting
 takes a deposit of 20% of the reward, and delivering pays the reward and returns the deposit. A player can hold three
@@ -439,7 +443,9 @@ from −5° to +20° in 5° steps (the action bar shows the angle). **Fire** by 
 needs 5 seconds to cool before new powder goes in. A ball hits for 20 damage and smashes the wooden block it hits; a
 hole below a ship's waterline lets the sea in, so pump and patch. From a moving ship the shot carries the ship's speed,
 and each shot pushes your ship back a little; a hit pushes the other ship. Balls that hit water splash and sink. A crew
-member at a cannon can fire it once you have loaded it. Server options: section `cannons` (on/off, damage, speed,
+member at a cannon fires it on the whistle order **Fire!** (or `/pirates crew order fire`) once you have loaded it:
+"Aye, firing!", and the gun goes off half a second later; crew at unloaded guns answer "The gun is not loaded,
+captain!". Server options: section `cannons` (on/off, damage, speed,
 gravity, reload, elevations, blocks per hit, recoil and impact push) and `combat.cannon_block_damage`.
 
 ### Grappling hook

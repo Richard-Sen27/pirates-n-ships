@@ -28,8 +28,11 @@ gunpowder and cannonballs. Please send `latest.log` if anything differs.
 8. **Toggles.** `combat.cannon_block_damage = false`: balls stop at planks without breaking them. `cannons.enabled =
    false`: "Cannons are disabled on this server". `cannons.recoil_impulse = 0`: no push. `cannons.blocks_per_hit = 3`:
    three planks deep.
-9. **Crew.** Assign a crew member to a cannon with the whistle, load it yourself, and give the fire order with
-   `/pirates crew order fire` (there is no whistle entry yet). Expected: it fires after a short fuse.
+9. **Crew.** Assign crew to two cannons with the whistle and load only one. The whistle wheel has six sectors with
+   "Fire!" on the cannon icon. Choose it: the crew at the loaded gun says "Aye, firing!" and it fires after about half
+   a second, the other says "The gun is not loaded, captain!", the action bar reads "Order: fire the cannons (1 crew
+   carry it out)", and the whistle's last-order marker stays on the sail order. `/pirates crew order fire` behaves the
+   same; aimed at a winch crew it answers "I can't fire the cannons from this station, captain!".
 10. **Reload of the world.** A loaded cannon stays loaded; a cannon on a ship keeps its aim after leaving and rejoining.
 11. **Sounds.** The shot is heard from a distance (volume 4), subtitle "Cannon fires".
 

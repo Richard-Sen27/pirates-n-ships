@@ -5,6 +5,12 @@ import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
+import com.richardsenger.piratesnships.crew.npc.CrewStations;
+import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
+import com.richardsenger.piratesnships.station.StationConfig;
+import com.richardsenger.piratesnships.station.StationRef;
+import com.richardsenger.piratesnships.station.StationState;
+import com.richardsenger.piratesnships.station.Stations;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.ShipTestCleanup;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
@@ -306,6 +312,9 @@ public final class RejoinGameTests {
                 // every block of the original layout is where it was, in the keeper's plot
                 for (int x = 4; x <= 10; x++) {
                     for (int z = 4; z <= 6; z++) {
+                        if (x == 7 && z != 5) {
+                            continue; // the joint is one plank wide
+                        }
                         BlockPos cell = pieces.keeperPlot(new BlockPos(x, 2, z));
                         h.assertTrue(level.getBlockState(cell).is(Blocks.OAK_PLANKS), "no plank at " + x + ",2," + z + ": " + level.getBlockState(cell));
                     }
@@ -398,7 +407,7 @@ public final class RejoinGameTests {
     }
 
     /** A piece bigger than {@code max_piece_blocks} is refused, before alignment. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 120, batch = BATCH + "too_big")
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 120, batch = "pirates_n_ships_config_assembly_rejoin_size")
     public static void bigPieceIsRefused(GameTestHelper h) {
         ConfigOverrides.during(h, AssemblyConfig.REJOIN_MAX_PIECE_BLOCKS, 5);
         splitDumbbell(h, g -> { }, pieces -> {
@@ -430,7 +439,7 @@ public final class RejoinGameTests {
     }
 
     /** {@code assembly.rejoin.enabled = false}: the toolkit neither marks nor joins. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 120, batch = BATCH + "disabled")
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 120, batch = "pirates_n_ships_config_assembly_rejoin")
     public static void disabledRejoinIsRefused(GameTestHelper h) {
         splitDumbbell(h, g -> { }, pieces -> {
             h.getLevel().setBlockAndUpdate(pieces.keeperPlot(JOINT), Blocks.OAK_PLANKS.defaultBlockState());
@@ -443,6 +452,58 @@ public final class RejoinGameTests {
             expect(h, ShipRejoin.mark(h.getLevel(), p, p.getMainHandItem(), pieces.keeperPlot(A_EDGE)), ShipRejoin.Outcome.DISABLED);
             h.assertTrue(shipsHere(h).size() == 2 && nails(p) == 8, "a disabled rejoin changed something");
             h.succeed();
+        });
+    }
+
+    /** Lined up and touching, but without enough nails: refused, nothing changes. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 120, batch = BATCH + "no_nails")
+    public static void withoutNailsIsRefused(GameTestHelper h) {
+        splitDumbbell(h, g -> { }, pieces -> {
+            h.getLevel().setBlockAndUpdate(pieces.keeperPlot(JOINT), Blocks.OAK_PLANKS.defaultBlockState());
+            pieces.poseBack();
+            Player p = player(h, 3);
+            expect(h, markAndUse(h, p, pieces.keeperPlot(A_EDGE), pieces.wreckPlot(B_CENTER)), ShipRejoin.Outcome.NO_NAILS);
+            h.assertTrue(!ShipRejoin.working(h.getLevel(), p) && nails(p) == 3, "a refused rejoin started or used nails");
+            h.assertTrue(shipsHere(h).size() == 2, "a refused rejoin changed the pieces");
+            h.succeed();
+        });
+    }
+
+    /**
+     * A crew member put at a station (a sail winch) on the wreck after the split keeps manning it once the wreck is
+     * rejoined: its assignment moves to the winch's new place in the keeper's plot and it sits there again.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 240, batch = "pirates_n_ships_config_assembly_rejoin_crew")
+    public static void crewAtAStationOnThePieceFollowsIt(GameTestHelper h) {
+        ConfigOverrides.during(h, StationConfig.ENABLED, true);
+        ConfigOverrides.during(h, StationConfig.SEAT_CHECK_INTERVAL, 5);
+        BlockPos winchRel = new BlockPos(9, 3, 5);
+        splitDumbbell(h, g -> g.setBlock(winchRel, SailingBlocks.SAIL_WINCH.get()), pieces -> {
+            ServerLevel level = h.getLevel();
+            BlockPos winchOnWreck = pieces.wreckPlot(winchRel);
+            h.assertTrue(level.getBlockState(winchOnWreck).is(SailingBlocks.SAIL_WINCH.get()), "the winch is not on the wreck");
+            CrewMember crew = h.spawn(StationContent.CREW_MEMBER.get(), new BlockPos(9, 3, 6));
+            h.assertTrue(CrewStations.assign(level, crew, winchOnWreck) == CrewStations.AssignResult.ASSIGNED,
+                    "could not assign the crew to the wreck's winch");
+            level.setBlockAndUpdate(pieces.keeperPlot(JOINT), Blocks.OAK_PLANKS.defaultBlockState());
+            h.runAfterDelay(10, () -> {
+                h.assertTrue(crew.isAtStation(), "the crew member did not take the wreck's winch");
+                pieces.poseBack();
+                Player p = player(h, 4);
+                expect(h, markAndUse(h, p, pieces.keeperPlot(A_EDGE), pieces.wreckPlot(B_CENTER)), ShipRejoin.Outcome.STARTED);
+                whenDone(h, p, () -> {
+                    BlockPos winchOnKeeper = pieces.keeperPlot(winchRel);
+                    h.assertTrue(level.getBlockState(winchOnKeeper).is(SailingBlocks.SAIL_WINCH.get()), "the winch is not back in place");
+                    StationRef expected = new StationRef(pieces.keeper().id(), winchOnKeeper);
+                    h.succeedWhen(() -> {
+                        h.assertTrue(expected.equals(crew.assignment()), "the crew's station did not follow: " + crew.assignment());
+                        h.assertTrue(crew.isAtStation(), "the crew member is not seated at the winch again");
+                        StationState<Object> st = Stations.state(expected);
+                        h.assertTrue(st != null && st.isOccupiedBy(crew.getUUID()), "the winch is not occupied by the crew member");
+                        crew.discard();
+                    });
+                });
+            });
         });
     }
 }

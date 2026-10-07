@@ -9,6 +9,7 @@ import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
 import com.richardsenger.piratesnships.crew.CrewConfig;
 import com.richardsenger.piratesnships.hazard.HazardConfig;
+import com.richardsenger.piratesnships.hazards.HazardsConfig;
 import com.richardsenger.piratesnships.ship.ShipConfig;
 import com.richardsenger.piratesnships.survival.SurvivalConfig;
 import com.richardsenger.piratesnships.world.WorldConfig;
@@ -49,7 +50,7 @@ public final class SettingsGameTests {
     public static void serverSettingsReturnDefaults(GameTestHelper helper) {
         List<ConfigValue<?>> samples = List.of(
                 ShipConfig.SINKING_ENABLED, ShipConfig.BUILD_DAYS_BRIGANTINE,
-                HazardConfig.WAVE_AMPLITUDE, HazardConfig.KRAKEN_ENABLED,
+                HazardConfig.WAVE_AMPLITUDE, HazardsConfig.KRAKEN_ENABLED,
                 CrewConfig.MAX_CREW_MULTIPLIER,
                 CombatConfig.RAIN_MISFIRE_CHANCE,
                 SurvivalConfig.FREEZE_TICKS_PER_TICK,

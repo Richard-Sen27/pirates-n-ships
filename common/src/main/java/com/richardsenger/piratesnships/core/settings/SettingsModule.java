@@ -20,7 +20,7 @@ public final class SettingsModule implements ModModule {
 
     /** Top-level server sections declared by this module. */
     public static final List<String> SERVER_SECTIONS = List.of(
-            "ships", "waves", "hazards", "crew", "combat", "world", "world_simulation");
+            "ships", "waves", "crew", "combat", "world", "world_simulation");
 
     /** Top-level client sections declared by this module. */
     public static final List<String> CLIENT_SECTIONS = List.of("wave_effects");

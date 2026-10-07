@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-07T12:08:26.063229	Raw JSON (data): pirates_n_ships
+// 1.21.1	2026-10-07T13:50:35.446348	Raw JSON (data): pirates_n_ships
 48a3d1396f56a1821c2e6dd2a2ce6f5dc32fc15c data/pirates_n_ships/advancement/recipes/misc/guide_book.json
 a36329422f25984fa5698ac8ec14f9a580f2a13a data/pirates_n_ships/loot_table/entities/kraken.json
 fe7053acbb25918c89e2aa78604271fe9aed9b86 data/pirates_n_ships/loot_table/entities/navy_officer.json
@@ -12,6 +12,7 @@ a765a14b00c58afdeac06dec7c2951b7de50d707 data/pirates_n_ships/physics_block_prop
 f51d35b4fe313cf899a1835d0076c39c73bec5f8 data/pirates_n_ships/physics_block_properties/swivel_gun.json
 b75487df5ae1bab409d28fc82e318867b315f79a data/pirates_n_ships/physics_block_properties/test_block.json
 607cc5f271dd005d9c97359d52918668395791bd data/pirates_n_ships/physics_block_properties/yard.json
+24ed5d6a0f5c3d20d6845282d68164dcd5dd7410 data/pirates_n_ships/pirates_n_ships/ship_template/starter_sloop.json
 6605efa70f733dc8e58d9f3e77fbb953ca58419a data/pirates_n_ships/pirates_n_ships/test_marker/example.json
 7d086d7cc40b54a94b97cb2520bb9fe55c85d7bc data/pirates_n_ships/pirates_n_ships/trade_good/cloth.json
 8a4fc551bb5e5ca41d81175cc4a1e89a43583bb4 data/pirates_n_ships/pirates_n_ships/trade_good/cocoa.json

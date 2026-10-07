@@ -6,6 +6,12 @@ Run (from the repository root, Python 3 standard library only, no Pillow):
     python3 tools/gen_gui_textures.py            # writes into common/src/main/resources/assets/pirates_n_ships/textures/gui/sprites/
     python3 tools/gen_gui_textures.py --out DIR  # writes the same files under DIR (GuiTexturesTest compares the two)
     python3 tools/gen_gui_textures.py --preview FILE.png   # also writes a 4x contact sheet of every sprite (not committed)
+    python3 tools/gen_gui_textures.py --out DIR --textures-out DIR2   # also the chart textures, under DIR2 (ChartTexturesTest)
+
+The chart textures (work package MAP1: textures/gui/chart/sheet.png with the compass rose, doodles, marker and ship
+icons, and the chart item's textures/item/chart.png) are plain textures outside the sprite atlas. A run without
+--out writes them into the mod's textures folder; with --out they are written only under --textures-out, so
+GuiTexturesTest's run (--out alone) sees just the atlas sprites.
 
 Every sprite is a PNG in vanilla's GUI sprite atlas (textures/gui/sprites/**, id pirates_n_ships:<path>) plus a
 .png.mcmeta with its GuiSpriteScaling: nine_slice for panels and buttons (vanilla tiles the edges and the centre, so
@@ -19,13 +25,15 @@ uses stored (uncompressed) deflate blocks, so the bytes never depend on the zlib
 """
 import argparse
 import json
+import math
 import struct
 import sys
 import zlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "common/src/main/resources/assets/pirates_n_ships/textures/gui/sprites"
+TEXTURES = ROOT / "common/src/main/resources/assets/pirates_n_ships/textures"
+OUT = TEXTURES / "gui/sprites"
 
 T = (0, 0, 0, 0)
 
@@ -635,6 +643,318 @@ def lockout():
     ], {"O": GREY_OUT, "L": GREY_L, "G": GREY, "D": GREY_OUT})
 
 
+# ---------------------------------------------------------------- chart (work package MAP1)
+# Not in the GUI sprite atlas: plain textures drawn with GuiGraphics.blit by UV, written under textures/ (see
+# write_extras). The UV layout of gui/chart/sheet.png is mirrored in chart/render/ChartSheet.java; never move a part.
+#
+#   sheet.png, 128x64:
+#     (0, 0)   compass rose, 32x32 (the screen's corner rose)
+#     (32, 0)  sea serpent doodle, 32x16
+#     (32, 16) whale doodle, 32x16
+#     (0, 32)  small compass rose doodle, 16x16
+#     (64, 0)  marker icons, 9x9 each, 10 px apart: X, anchor, skull, port, danger
+#     (64, 10) selection ring, 11x11
+#     (76, 10) own ship (bow up = north), 9x9
+#     (86, 10) other player's ship, 9x9
+#   item/chart.png, 16x16: the chart item, a rolled parchment with a red wax seal (placeholder until a Blockbench model)
+EXTRAS = {}
+
+INK = rgb(44, 32, 24)
+INK_SOFT = rgb(44, 32, 24, 150)
+SEA_INK = rgb(58, 94, 112)
+SERPENT_D = rgb(46, 84, 60)
+SERPENT = rgb(74, 120, 84)
+SERPENT_L = rgb(118, 158, 104)
+WHALE_D = rgb(52, 62, 84)
+WHALE = rgb(84, 98, 124)
+WHALE_L = rgb(150, 162, 180)
+SPRAY = rgb(150, 190, 210)
+BONE = rgb(236, 228, 206)
+AMBER = rgb(226, 160, 40)
+
+
+def extra(path):
+    def register(fn):
+        EXTRAS[path] = fn
+        return fn
+    return register
+
+
+def blit(dst, src, ox, oy):
+    for y in range(src.h):
+        for x in range(src.w):
+            col = src.get(x, y)
+            if col[3]:
+                dst.set(ox + x, oy + y, col)
+
+
+def in_triangle(px, py, a, b, c):
+    def side(p, q, r):
+        return (p[0] - r[0]) * (q[1] - r[1]) - (q[0] - r[0]) * (p[1] - r[1])
+    d1, d2, d3 = side((px, py), a, b), side((px, py), b, c), side((px, py), c, a)
+    neg = d1 < 0 or d2 < 0 or d3 < 0
+    pos = d1 > 0 or d2 > 0 or d3 > 0
+    return not (neg and pos)
+
+
+def outline(c, colour):
+    """Every transparent pixel next (4-neighbour) to a drawn pixel of another colour becomes colour."""
+    marks = []
+    for y in range(c.h):
+        for x in range(c.w):
+            if c.get(x, y)[3]:
+                continue
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < c.w and 0 <= ny < c.h and c.get(nx, ny)[3] and c.get(nx, ny) != colour:
+                    marks.append((x, y))
+                    break
+    for (x, y) in marks:
+        c.set(x, y, colour)
+
+
+def rose(size, points, long_r, short_r, ring):
+    """A compass rose: `points` long points (north first, in red) and as many short diagonal ones, two-tone, inked."""
+    c = Canvas(size, size)
+    cx = cy = (size - 1) / 2
+    if ring:
+        for y in range(size):
+            for x in range(size):
+                d = math.hypot(x - cx, y - cy)
+                if ring - 0.5 <= d < ring + 0.5:
+                    c.set(x, y, INK_SOFT)
+    star = []
+    for i in range(points * 2):
+        ang = math.pi * 2 * i / (points * 2) - math.pi / 2
+        r = long_r if i % 2 == 0 else short_r
+        w = long_r * 0.26 if i % 2 == 0 else short_r * 0.3
+        tip = (cx + math.cos(ang) * r, cy + math.sin(ang) * r)
+        left = (cx + math.cos(ang - math.pi / 2) * w, cy + math.sin(ang - math.pi / 2) * w)
+        right = (cx + math.cos(ang + math.pi / 2) * w, cy + math.sin(ang + math.pi / 2) * w)
+        star.append((i, tip, left, right))
+    # short points first, so the long ones lie on top
+    for i, tip, left, right in sorted(star, key=lambda s: (s[0] % 2 == 0, s[0])):
+        north = i == 0
+        for y in range(size):
+            for x in range(size):
+                if in_triangle(x, y, tip, left, (cx, cy)):
+                    c.set(x, y, WAX if north else INK)
+                elif in_triangle(x, y, tip, right, (cx, cy)):
+                    c.set(x, y, WAX_L if north else PAPER_L)
+    outline(c, INK)
+    m = int(cx)
+    c.set(m, m, BRASS)
+    c.set(m + 1, m, BRASS_D)
+    c.set(m, m + 1, BRASS_D)
+    c.set(m + 1, m + 1, BRASS)
+    return c
+
+
+def serpent():
+    """A sea serpent (32x16): two humps and a head rising from the waves, facing east."""
+    c = Canvas(32, 16)
+    water = 11
+    for x in range(2, 22):
+        t = ((x - 2) % 10) / 10
+        lift = math.sin(math.pi * t)
+        if lift <= 0.05:
+            continue
+        yc = int(round(water - 1 - 6 * lift))
+        for y in range(yc - 1, min(water, yc + 2)):
+            c.set(x, y, SERPENT_L if y == yc - 1 else SERPENT)
+        if yc + 1 < water:
+            c.set(x, yc + 1, SERPENT_D)
+    # neck and head
+    for y in range(4, water):
+        for x in (22, 23, 24):
+            c.set(x, y, SERPENT if x != 22 else SERPENT_L)
+    for y in range(1, 6):
+        for x in range(23, 29):
+            if (x - 25.5) ** 2 / 9 + (y - 3.2) ** 2 / 4.2 <= 1:
+                c.set(x, y, SERPENT_L if y < 3 else SERPENT)
+    outline(c, INK)
+    c.set(26, 2, BONE)
+    c.set(29, 4, WAX)
+    c.set(30, 5, WAX)
+    # waves under the body
+    for x in range(0, 32):
+        k = x % 6
+        if k in (0, 1):
+            c.set(x, water + 1, SEA_INK)
+        elif k in (2, 3):
+            c.set(x, water, SEA_INK)
+    for x in range(3, 29, 6):
+        c.set(x, water + 3, SEA_INK)
+        c.set(x + 1, water + 3, SEA_INK)
+    return c
+
+
+def whale():
+    """A whale (32x16) with its spout, facing west, the tail flukes east."""
+    c = Canvas(32, 16)
+    for y in range(16):
+        for x in range(32):
+            if (x - 13) ** 2 / 110 + (y - 10) ** 2 / 14 <= 1 and y <= 13:
+                col = WHALE_L if y >= 12 else WHALE if y >= 8 else WHALE_D
+                c.set(x, y, col)
+    for (x, y) in ((24, 9), (25, 9), (25, 8), (26, 8), (26, 7), (27, 7), (27, 6), (28, 6), (28, 10), (27, 10),
+                   (26, 10), (27, 11), (28, 11), (29, 12)):
+        c.set(x, y, WHALE_D)
+    outline(c, INK)
+    c.set(5, 9, BONE)
+    for y in (11, 12):
+        for x in range(4, 9, 2):
+            c.set(x, y, WHALE_D)
+    for (x, y) in ((9, 4), (9, 3), (8, 2), (7, 1), (10, 2), (11, 1), (9, 1), (6, 2), (12, 2)):
+        c.set(x, y, SPRAY)
+    for x in range(0, 32):
+        if x % 7 in (0, 1):
+            c.set(x, 15, SEA_INK)
+        elif x % 7 in (2, 3):
+            c.set(x, 14, SEA_INK)
+    return c
+
+
+MARKERS = [
+    ([  # X marks the spot
+        "R.......R",
+        "RW.....WR",
+        ".RW...WR.",
+        "..RW.WR..",
+        "...RWR...",
+        "..RW.WR..",
+        ".RW...WR.",
+        "RW.....WR",
+        "R.......R",
+    ], {"R": WAX_D, "W": WAX}),
+    ([  # anchor
+        "...OOO...",
+        "...O.O...",
+        "...OOO...",
+        ".OOOOOOO.",
+        "....O....",
+        "....O....",
+        "O...O...O",
+        ".O..O..O.",
+        "..OOOOO..",
+    ], {"O": NAVY_D}),
+    ([  # skull
+        "..OOOOO..",
+        ".OWWWWWO.",
+        "OWWWWWWWO",
+        "OWOOWOOWO",
+        "OWOOWOOWO",
+        "OWWWOWWWO",
+        ".OWWWWWO.",
+        "..OWOWO..",
+        "..OOOOO..",
+    ], {"O": INK, "W": BONE}),
+    ([  # port: a house with a red roof
+        "....O....",
+        "...ORO...",
+        "..ORRRO..",
+        ".ORRRRRO.",
+        "OOOOOOOOO",
+        ".OBBOBBO.",
+        ".OBBOBBO.",
+        ".OBBBBBO.",
+        ".OOOOOOO.",
+    ], {"O": INK, "R": WAX, "B": BRASS}),
+    ([  # danger: a warning triangle
+        "....O....",
+        "...OYO...",
+        "...OYO...",
+        "..OYOYO..",
+        "..OYOYO..",
+        ".OYYOYYO.",
+        ".OYYYYYO.",
+        "OYYYOYYYO",
+        "OOOOOOOOO",
+    ], {"O": INK, "Y": AMBER}),
+]
+
+SHIP = [
+    "....O....",
+    "...OBO...",
+    "..OBBBO..",
+    "OSSSSSSSO",
+    "..OBBBO..",
+    "OSSSSSSSO",
+    "..OBBBO..",
+    "..OBBBO..",
+    "..OOOOO..",
+]
+
+RING = [
+    "...OOOOO...",
+    "..O.....O..",
+    ".O.......O.",
+    "O.........O",
+    "O.........O",
+    "O.........O",
+    "O.........O",
+    "O.........O",
+    ".O.......O.",
+    "..O.....O..",
+    "...OOOOO...",
+]
+
+
+@extra("gui/chart/sheet.png")
+def chart_sheet():
+    c = Canvas(128, 64)
+    blit(c, rose(32, 4, 15, 10, 13), 0, 0)
+    blit(c, serpent(), 32, 0)
+    blit(c, whale(), 32, 16)
+    blit(c, rose(16, 4, 7, 5, 0), 0, 32)
+    for i, (rows, colours) in enumerate(MARKERS):
+        assert len(rows) == 9 and all(len(r) == 9 for r in rows), i
+        blit(c, from_pattern(rows, colours), 64 + 10 * i, 0)
+    blit(c, from_pattern(RING, {"O": BRASS_L}), 64, 10)
+    blit(c, from_pattern(SHIP, {"O": INK, "B": WOOD_L, "S": PAPER_L}), 76, 10)
+    blit(c, from_pattern(SHIP, {"O": INK, "B": WOOD_L, "S": NAVY_L}), 86, 10)
+    return c
+
+
+@extra("item/chart.png")
+def chart_item():
+    """A rolled parchment lying diagonally, a red wax seal on a ribbon in the middle (16x16)."""
+    c = Canvas(16, 16)
+    ax, ay, bx, by = 3.5, 12.5, 12.5, 3.5
+    dx, dy = bx - ax, by - ay
+    length = math.hypot(dx, dy)
+    for y in range(16):
+        for x in range(16):
+            px, py = x + 0.5, y + 0.5
+            t = ((px - ax) * dx + (py - ay) * dy) / (length * length)
+            # signed distance across the roll: negative is the upper-left (lit) side
+            s = ((px - ax) * dy - (py - ay) * dx) / length
+            if t < -0.06 or t > 1.06 or abs(s) > 2.6:
+                continue
+            if t < 0.02 or t > 0.98:
+                col = PAPER_EDGE if abs(s) > 1 else PAPER_D
+            elif 0.44 <= t <= 0.56:
+                col = WAX_L if s < -1 else WAX if s < 1 else WAX_D
+            else:
+                col = PAPER_L if s < -1.2 else PAPER if s < 1.2 else PAPER_D
+            c.set(x, y, col)
+    outline(c, OUTLINE)
+    for (x, y) in ((7, 8), (8, 7), (8, 8)):
+        c.set(x, y, WAX_D)
+    c.set(7, 7, WAX_L)
+    return c
+
+
+def write_extras(out_dir):
+    written = set()
+    for path, fn in sorted(EXTRAS.items()):
+        f = out_dir / path
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_bytes(fn().png())
+        written.add(f)
+    return written
+
+
 # ---------------------------------------------------------------- output
 def mcmeta(scaling):
     return json.dumps({"gui": {"scaling": scaling}}, indent=2, sort_keys=False) + "\n"
@@ -685,8 +1005,14 @@ def main(argv):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", type=Path, default=OUT)
     parser.add_argument("--preview", type=Path)
+    parser.add_argument("--textures-out", type=Path,
+                        help="where the chart textures go (gui/chart/sheet.png, item/chart.png); default: the mod's "
+                             "textures folder, but only when --out is not given")
     args = parser.parse_args(argv)
     files = write_all(args.out)
+    textures = args.textures_out or (TEXTURES if args.out == OUT else None)
+    if textures is not None:
+        files |= write_extras(textures)
     if args.preview:
         preview(args.preview)
     print(f"wrote {len(files)} files under {args.out}")

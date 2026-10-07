@@ -80,6 +80,15 @@ public class Kraken extends WaterAnimal implements GeoEntity {
     static final double LURK_DEPTH = 14.0;
     /** Blocks between the ship's side and the body's centre at the attack spot (beyond its half width). */
     static final double STANDOFF = 1.75 + 1.0;
+    /**
+     * Rest length of a tentacle in blocks, root (its {@link #anchor}) to tip: three 20 px segments of the model
+     * ({@code KrakenModel} stretches the drawn arm so its tip ends at the part's centre; at rest the stretch is 1).
+     */
+    public static final double TENTACLE_LENGTH = 60.0 / 16.0;
+    /** A free tentacle's lean while the kraken is up (surfacing, attacking): degrees out from straight up. */
+    static final double REST_LEAN_UP = 50.0;
+    /** A free tentacle's lean while it hangs (lurking, retreating, cut): degrees out from straight down. */
+    static final double REST_LEAN_DOWN = 25.0;
     /** A tentacle's tip is "at" its target within this many blocks. */
     static final double CONTACT = 1.6;
     static final double TENTACLE_SPEED = 0.7;
@@ -813,17 +822,21 @@ public class Kraken extends WaterAnimal implements GeoEntity {
         return position().add(fx * 1.55 + rx * 0.7, getBbHeight() * 0.72, fz * 1.55 + rz * 0.7);
     }
 
-    /** The resting place of a free tentacle's tip: out from its anchor, swaying; trailing below the body when cut or lurking. */
+    /**
+     * The resting place of a free tentacle's tip: one {@link #TENTACLE_LENGTH} from its anchor, leaning out (so the
+     * model draws it unstretched, clear of the head), swaying by a few degrees; hanging below the ring when cut or
+     * lurking.
+     */
     private Vec3 rest(int i) {
         Vec3 a = anchor(i);
         Vec3 out = a.subtract(position());
         out = new Vec3(out.x, 0, out.z).normalize();
-        double sway = Math.sin(tickCount * 0.05 + i * 0.8) * 0.4;
+        double sway = Math.sin(tickCount * 0.05 + i * 0.8) * 6.0;
         KrakenBrain.State s = brain.state();
-        if (tentacles.isCut(i) || s == KrakenBrain.State.LURK || s == KrakenBrain.State.RETREAT) {
-            return a.add(out.scale(1.0 + sway)).add(0, -2.5, 0);
-        }
-        return a.add(out.scale(2.0 + sway)).add(0, 1.5, 0);
+        boolean hang = tentacles.isCut(i) || s == KrakenBrain.State.LURK || s == KrakenBrain.State.RETREAT;
+        double lean = Math.toRadians(hang ? REST_LEAN_DOWN + sway : REST_LEAN_UP + sway);
+        double up = hang ? -Math.cos(lean) : Math.cos(lean);
+        return a.add(out.scale(Math.sin(lean) * TENTACLE_LENGTH)).add(0, up * TENTACLE_LENGTH, 0);
     }
 
     private void updateParts() {

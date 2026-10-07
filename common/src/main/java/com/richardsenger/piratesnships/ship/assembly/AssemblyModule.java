@@ -6,6 +6,10 @@ import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.assembly.AssemblyResult.Outcome;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
+import com.richardsenger.piratesnships.ship.template.ShipTemplateCommands;
+import com.richardsenger.piratesnships.ship.template.ShipTemplateGameTests;
+import com.richardsenger.piratesnships.ship.template.ShipTemplates;
+import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import java.util.List;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.core.Direction;
@@ -24,7 +28,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
-/** Module {@code ship.assembly}: the helm, assembly into a Sable sub-level and disassembly back to blocks (spike 1). */
+/** Module {@code ship.assembly}: the helm, assembly into a Sable sub-level and disassembly back to blocks (spike 1), and
+ * ship templates ({@code ship.template}: prebuilt ships placed by command, later by the shipwright). */
 public final class AssemblyModule implements ModModule {
 
     @Override
@@ -40,10 +45,12 @@ public final class AssemblyModule implements ModModule {
     @Override
     public void registerContent() {
         AssemblyContent.init();
+        ShipTemplates.init();
     }
 
     @Override
     public void registerEvents() {
+        CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> ShipTemplateCommands.register(dispatcher));
         // A ship destroyed for good (removed, emptied, /sable remove) loses its record; a plain unload keeps it.
         SableShips.onShipRemoved((level, id, destroyed) -> {
             if (destroyed) {
@@ -80,6 +87,7 @@ public final class AssemblyModule implements ModModule {
             lang.add(ShipInfoCommand.KEY_SHIP, "Ship %s, name %s, origin %s");
             lang.add(ShipInfoCommand.KEY_WRECK, "Wreck %s of %s, origin %s");
             lang.add(ShipInfoCommand.KEY_UNNAMED, "(unnamed)");
+            ShipTemplateCommands.lang(lang);
         });
         data.models(m -> {
             // Hand-made Blockbench model (art/models/helm.bbmodel, design.md §4.8): only the block state is generated.
@@ -92,6 +100,7 @@ public final class AssemblyModule implements ModModule {
                             .select(Direction.SOUTH, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R180))
                             .select(Direction.WEST, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R270))));
         });
+        data.definitions(ShipTemplates.TYPE, ShipTemplates.DEFAULTS);
         data.blockLoot(loot -> loot.dropSelf(helm));
         data.recipes(out -> ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, helm)
                 .pattern("S S").pattern(" P ").pattern("S S")
@@ -125,6 +134,6 @@ public final class AssemblyModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(AssemblyGameTests.class, SplitGameTests.class);
+        return List.of(AssemblyGameTests.class, SplitGameTests.class, ShipTemplateGameTests.class);
     }
 }

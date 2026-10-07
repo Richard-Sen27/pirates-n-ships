@@ -418,6 +418,17 @@ the shots misfire with a click and the charge stays in. Without ammo the gun onl
 attack for the law, and the death message names you. Everything is in the `firearms` server config (and the misfire
 chance in `combat`).
 
+### Cannons
+Craft a cannon (2 iron ingots, 1 iron block, 2 logs, 1 planks) and place it on a deck or on land; the muzzle points
+the way you face. **Load** it by using it with gunpowder, then with a cannonball (powder first, always). **Aim** by
+sneaking and using it with an empty hand: the upper half of the block raises the barrel, the lower half lowers it,
+from −5° to +20° in 5° steps (the action bar shows the angle). **Fire** by using it with an empty hand. The barrel
+needs 5 seconds to cool before new powder goes in. A ball hits for 20 damage and smashes the wooden block it hits; a
+hole below a ship's waterline lets the sea in, so pump and patch. From a moving ship the shot carries the ship's speed,
+and each shot pushes your ship back a little; a hit pushes the other ship. Balls that hit water splash and sink. A crew
+member at a cannon can fire it once you have loaded it. Server options: section `cannons` (on/off, damage, speed,
+gravity, reload, elevations, blocks per hit, recoil and impact push) and `combat.cannon_block_damage`.
+
 ### Swordplay
 With a rapier, cutlass or saber in hand the mouse works differently (server config `melee.skill_based_combat`,
 on by default; vanilla weapons are untouched):
@@ -443,6 +454,7 @@ on by default; vanilla weapons are untouched):
 | Cleat | iron ingot, planks | Attaches to floors, walls and masts. Three cleats and a rope make a triangular sail. See [Sails](#sails). |
 | Sail Winch | 2 string, 1 iron ingot, 3 planks | Sets the trim of all sails on its ship. A crew station. The crank faces you when placed. |
 | Capstan | 2 logs, 1 stick, 2 chains, 1 iron block, 3 planks | Drops and raises the anchor. |
+| Cannon | 2 iron ingots, 1 iron block, 2 logs, 1 planks | Loads powder and a cannonball, aims by elevation, fires. A crew station. See [Cannons](#cannons). |
 | Bilge Pump | stick, 3 planks, 1 bucket, 1 plank | Pumps water out of the hold below it. A crew station. See [Fighting a leak](#fighting-a-leak). |
 | Hull Patch (block) | placed by the item | A tarred plank that closes a breach. Watertight hull block. |
 | Flagpole | 3 sticks (gives 2) | Flies a flag. A thin pole with a finial and a cleat (Blockbench model). See [Flags](#5-flags). |
@@ -470,7 +482,7 @@ All blocks drop themselves. Wooden ones are mined with an axe, the bars and the 
 | Pistol | 2 iron ingots, 1 flint, 1 planks | Single-shot flintlock: load with lead shot and gunpowder, fire. See [Firearms](#firearms). |
 | Musket | 2 iron ingots, 1 flint, 1 planks | Longer reload, flatter and tighter shot. See [Firearms](#firearms). |
 | Lead Shot | 2 iron nuggets (gives 4) | Ammunition for pistol and musket, one per load, with one gunpowder. |
-| Cannonball | 4 iron ingots (gives 2) | No function yet. |
+| Cannonball | 4 iron ingots (gives 2) | Ammunition for the cannon, loaded after the gunpowder. |
 | Grappling Hook | 3 iron ingots, 1 string | No function yet. |
 | Rope | string | Use it on one cleat, then on a second one 2 to 16 blocks away and lower, to rig a stay. It glints while it remembers the first cleat. |
 | Hull Patch | 2 planks, 1 coal or charcoal (gives 2) | Use on the edge of a hole in an assembled hull to close the breach. See [Fighting a leak](#fighting-a-leak). |
@@ -545,6 +557,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `anchor_chain` | Chain speeds, travel time limits, anchor sounds and volumes. |
 | `hull_creaking` | Creaking on/off, how often, volume and pitch ranges, the rolling rate that counts. |
 | `audio` (client) | Music on/off and volume, the gap between tracks, shanties aboard. |
+| `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevation range and steps, blocks per hit, recoil and impact impulses, ball lifetime and water behaviour. |
 | `melee_input` / `melee_hud` (client) | Hold-to-thrust and parry-tap thresholds; stamina bar on/off, scale and offsets. |
 | `firearms` | Firearms on/off, per gun: damage, muzzle velocity, spread, reload time, recoil; ball lifetime and gravity, cooldown, gunpowder use. |
 | `sailing_runtime` | Sailing forces on/off, heel scaling, steering and anchor on/off, rudder steps, chain length. |

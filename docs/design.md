@@ -346,6 +346,8 @@ Firearms get a reload animation, smoke and recoil. Rain reduces reliability (a m
 - The projectile is a physics-aware entity that damages ship blocks (§4.6) and applies an impulse to the hit ship.
 - Recoil applies an impulse to the firing ship.
 
+**Implemented (G9, `combat/cannon`):** the cannon is a station block with a facing and an elevation step; powder then ball loads it, sneak-use aims, use fires. The ball leaves the world-space muzzle with the ship's velocity at that point added (`ShipBody.velocityAt`), recoil and impact push the hulls through `ShipBody.applyImpulseNow`; a ball breaks the ship block it hits (plus `blocks_per_hit − 1` along its path), and a hole below the waterline becomes a breach through the hull runtime. Balls splash into water and sink over a few blocks. Crew at a cannon can fire it once a player has loaded it.
+
 ### 8.3 Grappling hook
 - **Version 1:** throw or shoot the hook at a block (including blocks on a moving ship) and pull yourself to the hook point.
 - **Version 2:** rope physics: swing, climb up and down, balance on the rope between two ships.

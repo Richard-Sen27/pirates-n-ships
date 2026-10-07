@@ -4,7 +4,10 @@
 Run (from the repository root, with the venv of tools/gen_placeholder_textures.py):
     tools/.venv/bin/python tools/gen_entity_textures.py
 
-Output: common/src/main/resources/assets/pirates_n_ships/textures/entity/<name>.png, 64x64.
+    tools/.venv/bin/python tools/gen_entity_textures.py pirate sailor navy_soldier navy_officer   # only these
+
+Output: common/src/main/resources/assets/pirates_n_ships/textures/entity/<name>.png, 64x64: crew_member (M1), and the
+M3 mob variants pirate, sailor, navy_soldier and navy_officer (placeholders until the Blockbench textures, M3-art).
 The layout is the vanilla player skin layout (Steve, wide arms): every cube of the rig uses Minecraft box UV at the
 same offset as the player model, so a variant mob (pirate, sailor, navy soldier, officer) is a new texture painted on
 this sheet, and any 64x64 player skin works as a test texture. The second skin layer (hat, jacket, sleeves, trousers)
@@ -152,14 +155,219 @@ def sailor():
     return s
 
 
-TEXTURES = {"crew_member": sailor}
+# --- mob variants (work package M3): the same rig and skin layout, own palettes ----------------------------------
+# Added after sailor() so its output stays byte-identical (the new colours don't touch its pixels or its random seed).
+
+COLORS.update({
+    "skin_tan_d": (140, 92, 62, 255), "skin_tan": (176, 122, 86, 255),
+    "hair_black": (30, 26, 28, 255), "hair_grey": (176, 172, 168, 255), "hair_grey_d": (132, 128, 126, 255),
+    "coat_d": (40, 30, 26, 255), "coat": (62, 46, 38, 255), "coat_l": (86, 66, 52, 255),
+    "sash_d": (110, 22, 30, 255), "sash": (150, 34, 40, 255),
+    "breeches_d": (84, 74, 62, 255), "breeches": (108, 96, 80, 255),
+    "boot_d": (22, 18, 16, 255), "boot": (40, 32, 28, 255),
+    "cap_d": (36, 62, 96, 255), "cap": (52, 86, 128, 255),
+    "canvas_d": (138, 112, 76, 255), "canvas": (164, 136, 96, 255),
+    "navy_d": (22, 34, 72, 255), "navy": (34, 52, 104, 255),
+    "facing": (156, 30, 34, 255),
+    "belt_white": (240, 238, 230, 255), "belt_shade": (204, 200, 190, 255),
+    "hat_d": (18, 16, 20, 255), "hat": (32, 30, 36, 255),
+})
+
+# Jacket layer of the body (outer skin layer): coat tails hang over the hips there.
+JACKET = (16, 32, 8, 12, 4)
+
+
+def face(s, skin, skin_d, hair, hair_d, beard=None, patch=False):
+    """A mob's head: skin, hair on top, back and upper sides, brows, eyes, nose, mouth; optional beard and eyepatch."""
+    s.fill_box(HEAD, skin, skin_d, 0.06)
+    f = s.faces(HEAD)
+    s.rect(*f["top"], hair)
+    s.speckle(*f["top"], hair_d, 0.3)
+    s.band(HEAD, 0, 2, hair, hair_d, 0.3)
+    bx, by, bw, _ = f["back"]
+    s.rect(bx, by, bw, 5, hair)
+    s.speckle(bx, by, bw, 5, hair_d, 0.3)
+    fx, fy = f["front"][0], f["front"][1]
+    s.rect(fx + 1, fy + 3, 2, 1, hair_d)        # brows
+    s.rect(fx + 5, fy + 3, 2, 1, hair_d)
+    s.px(fx + 1, fy + 4, "white")               # eyes
+    s.px(fx + 2, fy + 4, "eye")
+    s.px(fx + 5, fy + 4, "eye")
+    s.px(fx + 6, fy + 4, "white")
+    s.rect(fx + 3, fy + 5, 2, 1, skin_d)        # nose
+    if beard:
+        s.rect(fx + 1, fy + 6, 6, 2, beard)
+        s.speckle(fx + 1, fy + 6, 6, 2, hair_d, 0.3)
+        s.px(fx, fy + 5, beard)
+        s.px(fx + 7, fy + 5, beard)
+        for side in ("right", "left"):          # sideburns
+            x, y, w, _ = f[side]
+            s.rect(x, y + 2, w, 4, beard)
+            s.speckle(x, y + 2, w, 4, skin, 0.4)
+    s.rect(fx + 3, fy + 6, 2, 1, "red_d")       # mouth
+    if patch:                                   # over one eye, the strap runs around the head
+        s.rect(fx + 1, fy + 3, 2, 3, "black")
+        s.rect(fx + 3, fy + 3, 5, 1, "black")
+        for side in ("right", "left", "back"):
+            x, y, w, _ = f[side]
+            s.rect(x, y + 3, w, 1, "black")
+
+
+def hat_layer(s, c, shade, rows):
+    """A hat or cap painted on the hat layer: the top and the upper rows of the four sides."""
+    t = s.faces(HAT)["top"]
+    s.rect(*t, c)
+    s.speckle(*t, shade, 0.15)
+    s.band(HAT, 0, rows, c, shade, 0.15)
+
+
+def boots(s, c, shade, rows):
+    for leg in (RIGHT_LEG, LEFT_LEG):
+        s.band(leg, 12 - rows, rows, c, shade, 0.15)
+        s.rect(*s.faces(leg)["bottom"], c)
+
+
+def coat_arms(s, c, shade, cuff, skin, skin_d):
+    """Full coat sleeves with a cuff, bare hands on the last two rows."""
+    for arm in (RIGHT_ARM, LEFT_ARM):
+        s.fill_box(arm, c, shade, 0.1)
+        s.band(arm, 8, 2, cuff)
+        s.band(arm, 10, 2, skin, skin_d, 0.1)
+        s.rect(*s.faces(arm)["bottom"], skin)
+
+
+def pirate():
+    """Pirate: tanned, black beard, eyepatch, dark red bandana, dark open coat over a white shirt, red sash, boots."""
+    s = Sheet("pirate")
+    face(s, "skin_tan", "skin_tan_d", "hair_black", "black", beard="hair_black", patch=True)
+    hat_layer(s, "sash_d", "black", 3)
+    hx, hy, _, _ = s.faces(HAT)["back"]
+    s.rect(hx + 3, hy + 3, 2, 3, "sash_d")      # knot and tails
+    s.px(hx + 2, hy + 5, "sash")
+    for (x, y, w, _) in s.sides(HAT):
+        for xx in range(x + 1, x + w, 3):
+            s.px(xx, y + 1, "bone")
+    s.fill_box(BODY, "coat", "coat_d", 0.15)
+    bfx, bfy, _, _ = s.faces(BODY)["front"]
+    s.rect(bfx + 3, bfy, 2, 8, "white")         # shirt between the open coat fronts
+    s.speckle(bfx + 3, bfy, 2, 8, "shirt_d", 0.2)
+    s.rect(bfx + 3, bfy, 2, 2, "skin_tan")
+    for row in range(bfy, bfy + 12):            # coat edges
+        s.px(bfx + 2, row, "coat_l")
+        s.px(bfx + 5, row, "coat_l")
+    s.band(BODY, 7, 2, "sash", "sash_d", 0.25)
+    s.band(BODY, 9, 1, "brown", "wood_d", 0.2)
+    s.rect(bfx + 1, bfy + 9, 2, 1, "gold")
+    for (x, y, w, _) in s.sides(JACKET):
+        s.rect(x, y + 10, w, 2, "coat_d")
+    coat_arms(s, "coat", "coat_d", "coat_l", "skin_tan", "skin_tan_d")
+    for leg in (RIGHT_LEG, LEFT_LEG):
+        s.fill_box(leg, "breeches", "breeches_d", 0.15)
+    boots(s, "boot", "boot_d", 6)
+    return s
+
+
+def deckhand():
+    """Sailor mob: the crew member's cut in other colours (red stripes, blue knit cap, canvas trousers, bare feet)."""
+    s = Sheet("sailor")
+    face(s, "skin", "skin_d", "hair", "hair_d", beard="hair")
+    hat_layer(s, "cap", "cap_d", 3)
+    for (x, y, w, _) in s.sides(HAT):           # rolled brim
+        s.rect(x, y + 2, w, 1, "cap_d")
+    s.fill_box(BODY, "white", "shirt_d", 0.08)
+    for row in range(1, 10, 3):
+        s.band(BODY, row, 1, "red")
+    s.band(BODY, 10, 2, "brown", "wood_d", 0.2)
+    bfx, bfy, _, _ = s.faces(BODY)["front"]
+    s.rect(bfx + 3, bfy, 2, 2, "skin")
+    for arm in (RIGHT_ARM, LEFT_ARM):
+        s.fill_box(arm, "skin", "skin_d", 0.06)
+        s.rect(*s.faces(arm)["top"], "white")
+        s.band(arm, 0, 4, "white", "shirt_d", 0.08)
+        s.band(arm, 1, 1, "red")
+        s.band(arm, 4, 1, "shirt_d")
+    for leg in (RIGHT_LEG, LEFT_LEG):
+        s.fill_box(leg, "canvas", "canvas_d", 0.15)
+        s.band(leg, 10, 2, "skin", "skin_d", 0.1)
+        s.rect(*s.faces(leg)["bottom"], "skin_d")
+    return s
+
+
+def navy_body(s, trim):
+    """Blue coat with a coloured collar and cuffs, white waistcoat with gold buttons, white breeches, black boots."""
+    s.fill_box(BODY, "navy", "navy_d", 0.12)
+    bfx, bfy, _, _ = s.faces(BODY)["front"]
+    s.rect(bfx + 2, bfy, 4, 10, "white")
+    s.speckle(bfx + 2, bfy, 4, 10, "belt_shade", 0.15)
+    for row in range(bfy + 2, bfy + 10, 2):
+        s.px(bfx + 3, row, "gold")
+    s.rect(bfx + 2, bfy, 4, 1, trim)
+    s.band(BODY, 11, 1, "navy_d")
+    for (x, y, w, _) in s.sides(JACKET):
+        s.rect(x, y + 10, w, 2, "navy_d")
+    coat_arms(s, "navy", "navy_d", trim, "skin", "skin_d")
+    for leg in (RIGHT_LEG, LEFT_LEG):
+        s.fill_box(leg, "white", "belt_shade", 0.1)
+    boots(s, "boot", "boot_d", 5)
+
+
+def navy_soldier():
+    """Navy soldier: blue coat with red facings, white cross belts, grey queue, black tricorn with a white edge."""
+    s = Sheet("navy_soldier")
+    face(s, "skin", "skin_d", "hair_grey", "hair_grey_d")
+    hx, hy, _, _ = s.faces(HEAD)["back"]
+    s.rect(hx + 3, hy + 5, 2, 3, "black")       # queue ribbon
+    navy_body(s, "facing")
+    for name in ("front", "back"):              # cross belts with a plate where they cross
+        x, y, _, _ = s.faces(BODY)[name]
+        for i in range(8):
+            s.px(x + i, y + i, "belt_white")
+            s.px(x + 7 - i, y + i, "belt_white")
+        s.rect(x + 3, y + 3, 2, 2, "steel_l")
+    hat_layer(s, "hat", "hat_d", 3)             # tricorn
+    for (x, y, w, _) in s.sides(HAT):
+        s.rect(x, y + 2, w, 1, "belt_white")
+        s.px(x + w // 2, y, "hat_d")
+    fx, fy, _, _ = s.faces(HAT)["front"]
+    s.px(fx + 1, fy + 1, "facing")              # cockade
+    return s
+
+
+def navy_officer():
+    """Navy officer: blue coat with gold trim and epaulettes, sword belt, black bicorne with a gold edge."""
+    s = Sheet("navy_officer")
+    face(s, "skin_l", "skin", "hair_grey", "hair_grey_d")
+    navy_body(s, "gold")
+    bfx, bfy, _, _ = s.faces(BODY)["front"]
+    for row in range(bfy, bfy + 12):
+        s.px(bfx + 1, row, "gold")
+        s.px(bfx + 6, row, "gold")
+    s.band(BODY, 8, 1, "gold_d")
+    for arm in (RIGHT_ARM, LEFT_ARM):           # epaulettes
+        s.rect(*s.faces(arm)["top"], "gold")
+        s.band(arm, 0, 1, "gold_l")
+        s.band(arm, 1, 1, "gold_d")
+    hat_layer(s, "hat", "hat_d", 3)             # bicorne, worn athwart
+    for (x, y, w, _) in s.sides(HAT):
+        s.rect(x, y + 2, w, 1, "gold")
+    for side in ("right", "left"):
+        x, y, w, _ = s.faces(HAT)[side]
+        s.rect(x + 1, y, w - 2, 2, "hat_d")
+    fx, fy, _, _ = s.faces(HAT)["front"]
+    s.rect(fx + 3, fy, 2, 2, "gold_l")
+    return s
+
+
+TEXTURES = {"crew_member": sailor, "pirate": pirate, "sailor": deckhand,
+            "navy_soldier": navy_soldier, "navy_officer": navy_officer}
 
 
 def main():
+    """Writes every texture, or only those named on the command line (e.g. to leave a Blockbench texture alone)."""
     out = TEX / "entity"
     out.mkdir(parents=True, exist_ok=True)
-    for name, fn in TEXTURES.items():
-        fn().img.save(out / f"{name}.png", format="PNG", optimize=False)
+    for name in sys.argv[1:] or list(TEXTURES):
+        TEXTURES[name]().img.save(out / f"{name}.png", format="PNG", optimize=False)
         print(f"wrote  entity/{name}")
 
 

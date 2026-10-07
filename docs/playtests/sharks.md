@@ -29,3 +29,12 @@ model until its Blockbench pass. Please send `latest.log` if anything differs.
 
 
 Addendum (Q4): an idle shark in deep ocean cruises below the surface for a minute without bobbing or breaching; when it hunts a surface swimmer it bites from just under the surface (the back may show, it never jumps out); stranding still flops it into the water.
+
+
+## M4-art: the look
+1. **Idle:** slow tail sway, slight fin roll, the jaw breathing a little; no popping between idle and swim.
+2. **Cruising:** the tail beats in an S-curve (the tail fin lags the rear body), faster at speed; the body yaws slightly; the pectoral fins flap together.
+3. **From all sides:** grey-blue back, white belly, five pale gill slits per side, black eyes, the white tooth line under the snout; pectoral fins swept back and drooping, a tall dorsal fin, the upper tail lobe longer than the lower; no holes or z-fighting between body sections; the right side mirrors the left.
+4. **Hunting:** the head turns at most about 30° and the body pitches when climbing or diving without fighting the animation.
+5. **The bite:** the jaw drops to about 35° showing a pink mouth and both rows of teeth, then snaps shut; the head dips and the body lunges slightly; lower teeth hidden while shut; watch for a seam at the back of the head.
+6. **Stranded on a beach:** the belly sits roughly on the ground, the lower tail lobe a little below.

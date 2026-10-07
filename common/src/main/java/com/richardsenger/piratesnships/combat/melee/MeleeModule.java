@@ -44,6 +44,7 @@ public final class MeleeModule implements ModModule {
         CommonEvents.SERVER_TICK_END.register(MeleeService::onServerTick);
         CommonEvents.SERVER_STOPPED.register(MeleeService::onServerStopped);
         CommonEvents.LIVING_INCOMING_DAMAGE.register(MeleeService::onIncomingDamage);
+        CommonEvents.PLAYER_TICK_END.register(com.richardsenger.piratesnships.combat.melee.sound.MeleeSoundPlayer::onPlayerTick);
     }
 
     @Override
@@ -62,6 +63,7 @@ public final class MeleeModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(MeleeGameTests.class, MeleeNetGameTests.class);
+        return List.of(MeleeGameTests.class, MeleeNetGameTests.class,
+                com.richardsenger.piratesnships.combat.melee.sound.MeleeSoundGameTests.class);
     }
 }

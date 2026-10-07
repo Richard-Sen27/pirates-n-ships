@@ -9,7 +9,6 @@ import com.richardsenger.piratesnships.law.LawService;
 import com.richardsenger.piratesnships.law.bounty.BountyTarget;
 import com.richardsenger.piratesnships.law.content.BrigDoorBlock;
 import com.richardsenger.piratesnships.law.content.LawContent;
-import com.richardsenger.piratesnships.law.crime.CriminalRecord;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import net.minecraft.core.BlockPos;
@@ -396,12 +395,13 @@ public final class BrigGameTests {
         helper.assertValueEqual(ransom.amount(), BrigConfig.RANSOM_MERCHANT.get(), "merchant ransom");
         helper.assertTrue(merchant.isRemoved(), "ransomed prisoner goes home");
 
-        Mob sailor = captured(helper, player, new BlockPos(1, 1, 1));
-        PrisonerOutcomes.PressGangResult pg = PrisonerOutcomes.pressGang(sailor, player);
-        helper.assertTrue(pg.success() && pg.recruit() != null, "press-ganged");
-        helper.assertValueEqual(pg.recruit().crime().outcome(), CriminalRecord.CrimeOutcome.COUNTED, "press-ganging is a crime");
-        helper.assertTrue(LawService.record(player).score() > 0, "captain's criminal score rose");
-        helper.assertTrue(sailor.isRemoved(), "the recruit leaves as an entity, the crew system spawns it");
+        // LA2: only sailors on the captain's ship are press-ganged (PrisonerInteractionGameTests); a pillager is refused
+        Mob pillager = captured(helper, player, new BlockPos(1, 1, 1));
+        PrisonerOutcomes.PressGangResult pg = PrisonerOutcomes.pressGang(pillager, player);
+        helper.assertValueEqual(pg.failure(), PrisonerOutcomes.Failure.NOT_A_SAILOR, "a pillager is no sailor");
+        helper.assertTrue(BrigService.isPrisoner(pillager) && !pillager.isRemoved(), "a refused press-gang keeps the prisoner");
+        helper.assertTrue(LawService.record(player).score() == 0, "no crime for a refused press-gang");
+        pillager.discard();
         helper.succeed();
     }
 }

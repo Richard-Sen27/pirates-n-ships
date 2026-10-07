@@ -40,8 +40,6 @@ public final class BrigConfig {
             "Ransom in doubloons for a captured navy officer");
     public static final ConfigValue<Double> CAPTAIN_RANSOM_MULTIPLIER = S.doubleRange("captain_ransom_multiplier", 3.0, 1.0, 100.0,
             "Ransom multiplier for a captured captain");
-    public static final ConfigValue<Double> PRESS_GANG_MORALE = S.doubleRange("press_gang_morale", 0.2, 0.0, 1.0,
-            "Starting morale (0..1) of a press-ganged sailor, for the crew system");
 
     private BrigConfig() {
     }

@@ -30,6 +30,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3d;
 
@@ -47,6 +48,8 @@ import java.util.List;
 public final class GrappleGameTests {
 
     private static final String DISABLED_BATCH = "pirates_n_ships_config_grapple_disabled";
+    private static final String OWN_SHIP_OFF_BATCH = "pirates_n_ships_config_grapple_own_ship_off";
+    private static final String WORLD_OFF_BATCH = "pirates_n_ships_config_grapple_world_off";
 
     private GrappleGameTests() {
     }
@@ -219,8 +222,10 @@ public final class GrappleGameTests {
         }));
     }
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200)
+    /** {@code grapple.latch_own_ship} off: a hook on the thrower's own ship misses and comes back (the pre-GR4 rule). */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200, batch = OWN_SHIP_OFF_BATCH)
     public static void hookOnTheThrowersOwnShipDoesNotLatchAndComesBack(GameTestHelper h) {
+        ConfigOverrides.during(h, GrappleConfig.LATCH_OWN_SHIP, false);
         Ships s = twoShips(h);
         ServerLevel level = h.getLevel();
         Player player = thrower(h);
@@ -246,8 +251,10 @@ public final class GrappleGameTests {
         }));
     }
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 120)
+    /** {@code grapple.latch_world_blocks} off: a hook on land misses and comes back (the pre-GR4 rule). */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 120, batch = WORLD_OFF_BATCH)
     public static void hookOnLandDoesNotLatchAndComesBackAfterTheRetractTime(GameTestHelper h) {
+        ConfigOverrides.during(h, GrappleConfig.LATCH_WORLD_BLOCKS, false);
         ServerLevel level = h.getLevel();
         for (int x = 0; x < 9; x++) {
             for (int z = 0; z < 9; z++) h.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
@@ -269,6 +276,141 @@ public final class GrappleGameTests {
             h.assertTrue(hook.isRemoved(), "the hook is still out");
             h.assertTrue(hooksInInventory(player) == 1, "the hook did not come back");
         }));
+    }
+
+    // ------------------------------------------------------------------ any surface (GR4)
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200)
+    public static void hookOnTheThrowersOwnShipLatchesWithoutHauling(GameTestHelper h) {
+        Ships s = twoShips(h);
+        ServerLevel level = h.getLevel();
+        Player player = thrower(h);
+        keepAboard(h, player, s.a());
+        BlockPos own = eastDeckEdge(s.a());
+        GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
+        Vec3[] start = new Vec3[2];
+        h.runAfterDelay(20, () -> hook[0] = throwAt(level, player, s.a().ship(), own, 2.0));
+        h.runAfterDelay(25, () -> {
+            GrapplingHookEntity g = hook[0];
+            h.assertTrue(g.state() == GrapplingHookEntity.State.LATCHED, "a hook on the thrower's own ship should latch, it is " + g.state());
+            h.assertTrue(s.a().ship().id().equals(g.shipId()), "latched onto the wrong body: " + g.shipId());
+            h.assertTrue(own.equals(g.latchedBlock()), "latched block " + g.latchedBlock() + ", expected " + own);
+            h.assertTrue(g.haulKind() == GrappleRules.Haul.NONE, "a rope within one ship pulls: " + g.haulKind());
+            h.assertTrue(!g.taut(), "a rope within one ship is taut");
+            start[0] = comWorld(s.a().ship());
+            start[1] = comWorld(s.b().ship());
+        });
+        h.runAfterDelay(65, () -> {
+            GrapplingHookEntity g = hook[0];
+            h.assertTrue(!g.isRemoved() && g.state() == GrapplingHookEntity.State.LATCHED, "the hook let go");
+            double movedA = horizontal(start[0], comWorld(s.a().ship()));
+            double movedB = horizontal(start[1], comWorld(s.b().ship()));
+            h.assertTrue(movedA < 0.5 && movedB < 0.5, "the ships moved: A " + movedA + ", B " + movedB);
+            h.assertTrue(g.ropeFarEnd(level).distanceTo(s.a().ship().toWorld(g.plotPos())) < 1.0e-6, "the far end does not follow ship A");
+            g.release(GrappleRules.Release.NONE);
+            h.assertTrue(hooksInInventory(player) == 1, "the released hook did not come back");
+            h.succeed();
+        });
+    }
+
+    /**
+     * A kedge line (GR4). Only one ship pulls (against the water alone, about 0.34 blocks per second for this hull with
+     * the default haul_force, measured), so it takes about twice as long as two ships hauling each other.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 1200)
+    public static void hookOnAWorldBlockFromAShipHaulsTheShipTowardIt(GameTestHelper h) {
+        // only ship A in the basin; the hook bites into the basin's east wall (a world block), 16 blocks away
+        DryHullGameTests.basin(h, 0, 23, true);
+        SailingGameTestsShips.openSky(h, 24);
+        Fixture a = DryHullGameTests.assemble(h, DryHullGameTests.hull(h, 2, false));
+        ServerLevel level = h.getLevel();
+        Player player = thrower(h);
+        keepAboard(h, player, a);
+        BlockPos wall = new BlockPos(23, 8, 11);
+        GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
+        double[] startX = {0};
+        h.runAfterDelay(20, () -> {
+            h.assertTrue(h.getBlockState(wall).is(Blocks.STONE), "no basin wall at " + wall);
+            startX[0] = comWorld(a.ship()).x;
+            Vec3 target = h.absoluteVec(Vec3.atCenterOf(wall));
+            hook[0] = GrappleService.launch(level, player, target.add(-2.0, 0, 0), new Vec3(GrappleConfig.THROW_VELOCITY.get(), 0, 0),
+                    new ItemStack(CombatContent.GRAPPLING_HOOK.get()), true);
+        });
+        h.runAfterDelay(24, () -> {
+            GrapplingHookEntity g = hook[0];
+            h.assertTrue(g.state() == GrapplingHookEntity.State.LATCHED && g.onWorldBlock(), "the hook did not latch on the wall: " + g.state());
+            h.assertTrue(h.absolutePos(wall).equals(g.latchedBlock()), "latched on " + g.latchedBlock());
+            h.assertTrue(g.haulKind() == GrappleRules.Haul.KEDGE, "a world block from a ship is no kedge: " + g.haulKind());
+            h.assertTrue(a.ship().id().equals(g.throwerShipId()), "ship A is not the hauled end");
+            h.assertTrue(g.taut(), "the kedge line is not taut");
+        });
+        h.runAfterDelay(30, () -> h.succeedWhen(() -> {
+            GrapplingHookEntity g = hook[0];
+            h.assertTrue(!g.isRemoved() && g.state() == GrapplingHookEntity.State.LATCHED, "the hook let go");
+            double moved = comWorld(a.ship()).x - startX[0];
+            Vec3 anchor = g.anchorPlot() == null ? null : a.ship().toWorld(g.anchorPlot());
+            String state = "moved " + moved + ", rope " + (anchor == null ? "?" : horizontal(anchor, g.position()))
+                    + ", holding " + g.holding().holding() + ", anchor " + anchor;
+            h.assertTrue(moved > 8.0, "ship A is not hauled toward the wall yet: " + state);
+            h.assertTrue(!g.taut(), "the kedge line is still hauling: " + state);
+            h.assertTrue(g.position().distanceTo(h.absoluteVec(new Vec3(23.0, 8.5, 11.5))) < 0.6, "the hook left the wall: " + g.position());
+            g.release(GrappleRules.Release.NONE);
+            a.ship().addVelocity(a.ship().linearVelocity().negate(), new Vector3d());
+        }));
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 120)
+    public static void hookOnLandLatchesAndHoldsTheWorldPoint(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        for (int x = 0; x < 9; x++) {
+            for (int z = 0; z < 9; z++) h.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
+        }
+        for (int y = 1; y <= 3; y++) h.setBlock(new BlockPos(7, y, 4), Blocks.STONE);
+        Player player = thrower(h);
+        Vec3 stand = h.absoluteVec(new Vec3(1.5, 1, 4.5));
+        player.setPos(stand.x, stand.y, stand.z);
+        GrapplingHookEntity hook = GrappleService.launch(level, player, h.absoluteVec(new Vec3(3.5, 2.5, 4.5)),
+                new Vec3(GrappleConfig.THROW_VELOCITY.get(), 0, 0), new ItemStack(CombatContent.GRAPPLING_HOOK.get()), true);
+        h.runAfterDelay(5, () -> {
+            h.assertTrue(hook.state() == GrapplingHookEntity.State.LATCHED && hook.onWorldBlock(), "a hook on land should latch, it is " + hook.state());
+            h.assertTrue(hook.shipId() == null, "latched onto a ship");
+            h.assertTrue(h.absolutePos(new BlockPos(7, 2, 4)).equals(hook.latchedBlock()), "latched on " + hook.latchedBlock());
+            h.assertTrue(hook.haulKind() == GrappleRules.Haul.NONE && !hook.taut(), "a rope between two land points pulls");
+            Vec3 far = hook.ropeFarEnd(level);
+            h.assertTrue(far != null && Math.abs(far.x - h.absoluteVec(new Vec3(7.0, 0, 0)).x) < 0.2, "the far end is not on the stone face: " + far);
+        });
+        h.runAfterDelay(GrappleConfig.RETRACT_TICKS.get() + 10, () -> {
+            h.assertTrue(!hook.isRemoved() && hook.state() == GrapplingHookEntity.State.LATCHED, "the latched hook came back by itself");
+            // breaking the block lets the hook go
+            h.setBlock(new BlockPos(7, 2, 4), Blocks.AIR);
+        });
+        h.runAfterDelay(GrappleConfig.RETRACT_TICKS.get() + 12, () -> {
+            h.assertTrue(hook.isRemoved(), "the hook still holds a broken block");
+            h.assertTrue(hooksInInventory(player) == 1, "the hook did not come back");
+            h.succeed();
+        });
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 60)
+    public static void hookSlipsOffLeaves(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        for (int x = 0; x < 9; x++) {
+            for (int z = 0; z < 9; z++) h.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
+        }
+        for (int y = 1; y <= 3; y++) {
+            h.setBlock(new BlockPos(7, y, 4), Blocks.OAK_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true));
+        }
+        Player player = thrower(h);
+        Vec3 stand = h.absoluteVec(new Vec3(1.5, 1, 4.5));
+        player.setPos(stand.x, stand.y, stand.z);
+        GrapplingHookEntity hook = GrappleService.launch(level, player, h.absoluteVec(new Vec3(3.5, 2.5, 4.5)),
+                new Vec3(GrappleConfig.THROW_VELOCITY.get(), 0, 0), new ItemStack(CombatContent.GRAPPLING_HOOK.get()), true);
+        h.runAfterDelay(5, () -> {
+            h.assertTrue(h.getBlockState(new BlockPos(7, 2, 4)).is(GrappleContent.HOOK_SLIPS), "leaves are not in the slip tag");
+            h.assertTrue(hook.state() == GrapplingHookEntity.State.RETRACTING, "a hook on leaves should slip off, it is " + hook.state());
+            hook.release(GrappleRules.Release.NONE);
+            h.succeed();
+        });
     }
 
     @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 60)

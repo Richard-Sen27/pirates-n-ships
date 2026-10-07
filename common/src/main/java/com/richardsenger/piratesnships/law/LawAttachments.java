@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.law;
 
+import com.richardsenger.piratesnships.law.brig.ReleaseRecord;
 import com.richardsenger.piratesnships.law.crime.CriminalRecord;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.platform.attachment.AttachmentKey;
@@ -18,11 +19,19 @@ public final class LawAttachments {
                     .copyOnDeath()
                     .build();
 
+    /** Prisoners a player released, per faction (LA2, docs/design.md §13.3), for the reputation of §15. */
+    public static final AttachmentKey<ReleaseRecord> RELEASES =
+            AttachmentKey.builder("prisoner_releases", () -> ReleaseRecord.EMPTY)
+                    .persistent(ReleaseRecord.CODEC)
+                    .copyOnDeath()
+                    .build();
+
     private LawAttachments() {
     }
 
     /** Called from {@code LawModule.registerContent()}. */
     public static void init() {
         Services.ATTACHMENTS.register(CRIMINAL_RECORD);
+        Services.ATTACHMENTS.register(RELEASES);
     }
 }

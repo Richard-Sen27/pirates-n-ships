@@ -164,6 +164,15 @@ port: use it to open the port's market. A desk you place anywhere inside a villa
 list ports with `/pirates world ports` and find the nearest with `/pirates world port nearest`. Server config
 `world.structures.seafarer_village`.
 
+## Ship HUD
+While you stand on a ship, a small panel in the top right corner shows its state. The compass rose turns a little
+ship-shaped needle to the bow's heading; the light arrow outside the rose sits on the side the wind comes from and
+points the way it blows: the longer it is, the stronger the wind, and it turns amber in a gust. Below it you read the
+speed (in knots, or blocks per second) and the rudder angle, then the ship's name and how heavily it is laden. The
+strip at the bottom is your hull from bow (left) to stern: one cell per compartment, filling blue as water comes in,
+with a red mark where a breach lets the sea in and a pump sign while a pump drains it. Client options under
+`ship_hud`: on/off, corner, size and speed unit; servers can switch it off with `ships.ship_status_hud`.
+
 ## Cargo weight
 What you carry weighs the ship down. Crates, cargo barrels, pantries and water barrels get heavier as they fill: a full
 crate weighs as much as forty planks. Chests and other vanilla containers press down where they stand, so a heavy

@@ -28,6 +28,10 @@ its heading rounded to the nearest 90°. It is refused when:
 - it is tilted more than 6°,
 - something solid is in the way (the message names the position).
 
+**If your helm breaks,** the ship stays a ship: its stations keep working, but nothing steers or disassembles it until
+you place a helm anywhere on its deck. The first helm placed steers; a second helm on the same ship does nothing while
+the first stands. Using a helm on a floating hull the mod has lost track of makes it your ship again.
+
 Players and mobs on deck are set down on the deck blocks. Water inside the hull is removed.
 
 ## The dry hull

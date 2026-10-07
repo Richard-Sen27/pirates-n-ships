@@ -5,6 +5,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.crew.hammock.CrewInfo;
+import com.richardsenger.piratesnships.crew.hammock.ShipBunks;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
@@ -33,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Operator commands for crew stations (permission 2), for tests and playtests:
  * {@code /pirates crew spawn}, {@code assign <crew> <station pos>}, {@code release <crew>},
- * {@code order <hoist|reef|furl|pump> [crew]}. A station position may be the block's world position (as seen in game,
+ * {@code order <hoist|reef|furl|pump> [crew]}, {@code info [crew]} (morale, crew and bunks, HM1). A station position may be the block's world position (as seen in game,
  * F3) or its plot position.
  */
 public final class StationCommands {
@@ -48,6 +50,8 @@ public final class StationCommands {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("pirates").then(Commands.literal("crew").requires(s -> s.hasPermission(2))
                 .then(Commands.literal("spawn").executes(StationCommands::spawn))
+                .then(Commands.literal("info").executes(c -> info(c, null))
+                        .then(Commands.argument("crew", EntityArgument.entities()).executes(c -> info(c, EntityArgument.getEntities(c, "crew")))))
                 .then(Commands.literal("assign").then(Commands.argument("crew", EntityArgument.entity())
                         .then(Commands.argument("station", BlockPosArgument.blockPos()).executes(StationCommands::assign))))
                 .then(Commands.literal("release").then(Commands.argument("crew", EntityArgument.entities()).executes(StationCommands::release)))
@@ -135,6 +139,32 @@ public final class StationCommands {
             c.getSource().sendSuccess(() -> Component.translatable(JobBoard.KEY_NO_FREE_HANDS, Component.translatable(order.nameKey())), true);
         }
         return n;
+    }
+
+    /**
+     * HM1: without a crew argument the ship at the source ("This ship: crew 3 / bunks 2 (2 hammocks)") and a line per
+     * crew member on board; with one, a line per named crew member ({@link CrewInfo#crewLine}).
+     */
+    private static int info(CommandContext<CommandSourceStack> c, @Nullable Collection<? extends Entity> targets) {
+        ServerLevel level = c.getSource().getLevel();
+        List<CrewMember> crew = new ArrayList<>();
+        if (targets == null) {
+            ShipBody ship = shipAt(c.getSource());
+            if (ship == null) {
+                c.getSource().sendFailure(Component.translatable(CrewInfo.KEY_COMMAND_NO_SHIP));
+                return 0;
+            }
+            ShipBunks.Count n = ShipBunks.count(level, ship);
+            c.getSource().sendSuccess(() -> Component.translatable(CrewInfo.KEY_COMMAND_SHIP, CrewInfo.shipLine(level, ship), n.hammocks()), false);
+            crew.addAll(ShipBunks.crewOf(level, ship));
+        } else {
+            for (Entity e : targets) if (e instanceof CrewMember m) crew.add(m);
+        }
+        for (CrewMember m : crew) {
+            Component line = CrewInfo.crewLine(level, m);
+            c.getSource().sendSuccess(() -> line, false);
+        }
+        return Math.max(1, crew.size());
     }
 
     /** The ship the command's entity stands on, else the ship whose deck is at the command's position, else null. */

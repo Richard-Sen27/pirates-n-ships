@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-07T16:59:35.715799	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-07T17:43:29.539438	Block states and models: pirates_n_ships
 c189a7833975a61cf2c7c8fd326d27a32969cb9d assets/pirates_n_ships/blockstates/bilge_pump.json
 52e053a4f7334e9a78798b4b4b9a2ad80087f3d5 assets/pirates_n_ships/blockstates/brig_bars.json
 83716521a6f9785f7114fa5a9489defb1257975d assets/pirates_n_ships/blockstates/brig_door.json
@@ -12,6 +12,7 @@ d241f11bb103a4cdbc981e78e9b0b5005b4befcc assets/pirates_n_ships/blockstates/figu
 0c84c5b83e1e180af8ddb93675fe66630e4cc789 assets/pirates_n_ships/blockstates/figurehead_mermaid.json
 9b62daf7aefbff7e9ad767a2bf6fe06ac1c815db assets/pirates_n_ships/blockstates/figurehead_skull.json
 afe0259da386ced5685cc135d6f4a5de99c787fd assets/pirates_n_ships/blockstates/flagpole.json
+02e36cd4399982f75c0629eb7527dd3b7ee03b2f assets/pirates_n_ships/blockstates/hammock.json
 5bd8105b9ceffa6e0e2024763582a30ec0b88b1f assets/pirates_n_ships/blockstates/harbor_desk.json
 694925a53d4c91f4cdba40ce99770a22223d0d59 assets/pirates_n_ships/blockstates/helm.json
 79e724dfe0672bdaaf34c50e457782586fdf37ea assets/pirates_n_ships/blockstates/hull_patch.json
@@ -26,6 +27,8 @@ e6693690b1a2de5def4d4ee1b77abcdb3ac5acb1 assets/pirates_n_ships/blockstates/swiv
 6c80c8b0903433be2a48dfec98c3f4337c95808c assets/pirates_n_ships/blockstates/water_barrel.json
 0b12aae142cc2820b4f73c0ec793251dc3bc9fec assets/pirates_n_ships/blockstates/yard.json
 e2b8a59635f01479e9fe04f09cad8c517664bff3 assets/pirates_n_ships/models/block/cannon_rear.json
+80e4870b7a0a6de60414d295226ddd953bbc0dbf assets/pirates_n_ships/models/block/hammock_foot.json
+69ef355015e18cc8fff5cc9b35ad130d4e3f5e94 assets/pirates_n_ships/models/block/hammock_head.json
 454079474672d450268ce92edd45fedf1223408e assets/pirates_n_ships/models/block/hull_patch.json
 c5ac1bd7624a36a4b6b4ab37906b56c61e277091 assets/pirates_n_ships/models/block/map_tile.json
 89e01c1b067ee1bcf2baf70cecd1e748e48114ad assets/pirates_n_ships/models/block/mooring_ring.json
@@ -43,6 +46,7 @@ c2828a89c739dcf7d31509c39dbef0032d04a8c0 assets/pirates_n_ships/models/item/figu
 9c494019b08c2cdab4ac80af298cd351a0f0e200 assets/pirates_n_ships/models/item/figurehead_mermaid.json
 cc79ca683cdbc9c26d9ace4c524deb0acab46534 assets/pirates_n_ships/models/item/figurehead_skull.json
 801c31e2cd8b59209585cb057659e90b8696f843 assets/pirates_n_ships/models/item/flagpole.json
+6a3b484e3f6a19142bdd3a5e81fd5c0569cdc513 assets/pirates_n_ships/models/item/hammock.json
 382c62816867d3ffd70a053024bd24755156b42f assets/pirates_n_ships/models/item/harbor_desk.json
 9a8098ea730c2d69b5574f6f13ade25c717e6af7 assets/pirates_n_ships/models/item/helm.json
 9c569c888fd7e454e2916b0db4f6d30912bec33e assets/pirates_n_ships/models/item/hull_patch.json

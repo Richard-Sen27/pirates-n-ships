@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.station.winch;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.crew.hammock.CrewInfo;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
@@ -31,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
  *   <li>use on an unassigned crew member: select it; then use on a station block: assign it there (pinned: the
  *       ship's job board never moves it, CR1);</li>
  *   <li>use on an assigned crew member: release it;</li>
+ *   <li>either way the chat shows its crew line: morale, status, and its ship's crew and bunks (HM1,
+ *       {@link CrewInfo});</li>
  *   <li>use anywhere else: opens the radial order menu on the client ({@link WhistleMenu}). Nothing happens on the
  *       server until the client sends the chosen order ({@code WhistleOrderPayload}, handled by
  *       {@link com.richardsenger.piratesnships.station.order.WhistleOrders}), which goes to all crew at stations of
@@ -67,6 +70,8 @@ public class CaptainsWhistleItem extends Item implements StationBlock.Tool {
                 SELECTED.put(player.getUUID(), crew.getUUID());
                 player.displayClientMessage(Component.translatable(KEY_SELECTED, crew.getDisplayName()), true);
             }
+            // HM1: the crew line in chat, "Jack: morale 65, off duty · crew 3 / bunks 2"
+            player.displayClientMessage(CrewInfo.crewLine(level, crew), false);
         }
         return InteractionResult.sidedSuccess(player.level().isClientSide);
     }

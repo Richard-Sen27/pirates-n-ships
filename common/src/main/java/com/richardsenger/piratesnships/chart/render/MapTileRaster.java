@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.chart.render;
 
+import com.richardsenger.piratesnships.chart.data.ChartCells;
 import com.richardsenger.piratesnships.chart.data.ChartMarker;
 import com.richardsenger.piratesnships.chart.data.MapTileDrawing;
 import com.richardsenger.piratesnships.chart.data.TileMarker;
@@ -112,8 +113,17 @@ public final class MapTileRaster {
     // --- drawing -------------------------------------------------------------------------------------------------
 
     /**
+     * Whether palette index {@code index} shows charted ground or sea. {@link #draw} guarantees that a pixel is
+     * {@code known} exactly when its cell is known in the chart it was drawn from, so a later update (MAP3) can merge
+     * two drawings of the same area pixel by pixel, keeping old pixels where the newer chart knows nothing.
+     */
+    public static boolean known(int index) {
+        return index != 0;
+    }
+
+    /**
      * The {@code size x size} cells from cell {@code (minCx, minCz)} as palette bytes, one pixel per cell, drawn by
-     * {@link ChartRaster} (unknown cells stay parchment).
+     * {@link ChartRaster}: unknown cells are always parchment (index 0), known cells never are (see {@link #known}).
      */
     public static byte[] draw(CellLookup cells, int minCx, int minCz, int size) {
         int[] argb = ChartRaster.render(cells, minCx, minCz, size, size, 1);
@@ -126,9 +136,25 @@ public final class MapTileRaster {
                 lastIn = c;
                 lastOut = quantise(c);
             }
-            out[i] = (byte) lastOut;
+            boolean cellKnown = ChartCells.known(cells.cell(minCx + i % size, minCz + i / size));
+            out[i] = (byte) (!cellKnown ? 0 : lastOut != 0 ? lastOut : nearestInked(c));
         }
         return out;
+    }
+
+    /** The nearest palette entry other than parchment, for a known cell whose colour is (almost) the paper's. */
+    private static int nearestInked(int argb) {
+        int c = over(argb, PARCHMENT);
+        int best = 1;
+        long bestD = Long.MAX_VALUE;
+        for (int i = 1; i < PALETTE.length; i++) {
+            long d = distance(c, PALETTE[i]);
+            if (d < bestD) {
+                bestD = d;
+                best = i;
+            }
+        }
+        return best;
     }
 
     /**
@@ -146,6 +172,16 @@ public final class MapTileRaster {
             out.add(new TileMarker(m.icon(), (int) px, (int) py, m.name()));
         }
         return out;
+    }
+
+    /** Whether the area of {@code size x size} cells from cell {@code (minCx, minCz)} holds at least one known cell. */
+    public static boolean anyKnown(CellLookup cells, int minCx, int minCz, int size) {
+        for (int z = 0; z < size; z++) {
+            for (int x = 0; x < size; x++) {
+                if (ChartCells.known(cells.cell(minCx + x, minCz + z))) return true;
+            }
+        }
+        return false;
     }
 
     // --- the selection -------------------------------------------------------------------------------------------

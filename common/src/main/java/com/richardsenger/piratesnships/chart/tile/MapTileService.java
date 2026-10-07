@@ -57,7 +57,7 @@ public final class MapTileService {
     /** Opens the chart of {@code player} in draw mode for the tile at {@code pos}; false (and a message) when refused. */
     public static boolean openDrawMode(ServerPlayer player, BlockPos pos) {
         MapTileBlockEntity tile = tileAt(player.serverLevel(), pos);
-        MapTileRules.Refusal refusal = MapTileRules.check(request(player, pos, tile, true));
+        MapTileRules.Refusal refusal = MapTileRules.check(request(player, pos, tile));
         if (refusal != MapTileRules.Refusal.NONE) {
             tell(player, refusal);
             return false;
@@ -93,7 +93,11 @@ public final class MapTileService {
         ChartData data = ChartService.data(player);
         int cb = cellBlocks(data);
         boolean inWorld = MapTileRaster.inWorld(request.minCx(), request.minCz(), size, cb, MarkerRules.MAX_COORDINATE);
-        MapTileRules.Refusal refusal = MapTileRules.check(withArea(request(player, pos, tile, true), inWorld));
+        MapTileRules.Request rules = request(player, pos, tile).withArea(inWorld, true);
+        MapTileRules.Refusal refusal = MapTileRules.check(rules);
+        if (refusal != MapTileRules.Refusal.NONE) return new Outcome(refusal, null);
+        // only now is the area known to be sane: an area without a single charted cell would draw blank parchment
+        refusal = MapTileRules.check(rules.withArea(true, MapTileRaster.anyKnown(CellLookup.of(data), request.minCx(), request.minCz(), size)));
         if (refusal != MapTileRules.Refusal.NONE) return new Outcome(refusal, null);
         byte[] pixels = MapTileRaster.draw(CellLookup.of(data), request.minCx(), request.minCz(), size);
         List<TileMarker> markers = request.includeMarkers()
@@ -108,16 +112,11 @@ public final class MapTileService {
 
     // --- rules -----------------------------------------------------------------------------------------------------
 
-    private static MapTileRules.Request request(ServerPlayer player, BlockPos pos, @Nullable MapTileBlockEntity tile, boolean areaInWorld) {
+    private static MapTileRules.Request request(ServerPlayer player, BlockPos pos, @Nullable MapTileBlockEntity tile) {
         boolean holds = player.getMainHandItem().is(ChartContent.CHART.get()) || player.getOffhandItem().is(ChartContent.CHART.get());
         return new MapTileRules.Request(ChartConfig.ENABLED.get(), ChartConfig.TILES_ENABLED.get(), tile != null,
                 tile != null && inReach(player, pos), ChartConfig.REQUIRE_CHART_ITEM.get(), holds,
-                tile != null && tile.drawing() != null, ChartConfig.REDRAW_ALLOWED.get(), areaInWorld);
-    }
-
-    private static MapTileRules.Request withArea(MapTileRules.Request r, boolean areaInWorld) {
-        return new MapTileRules.Request(r.chartsEnabled(), r.tilesEnabled(), r.isTile(), r.inReach(), r.requireChart(), r.holdsChart(),
-                r.drawn(), r.redrawAllowed(), areaInWorld);
+                tile != null && tile.drawing() != null, ChartConfig.REDRAW_ALLOWED.get(), true, true);
     }
 
     /** Whether the player stands within {@code chart.tiles.reach} of the tile (in the world, also for a tile on a ship). */

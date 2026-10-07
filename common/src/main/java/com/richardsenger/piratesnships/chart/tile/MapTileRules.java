@@ -10,16 +10,23 @@ public final class MapTileRules {
 
     /** Why a draw is refused. {@link #key()} names the message {@code message.pirates_n_ships.chart.tile.<key>}. */
     public enum Refusal {
-        NONE, CHARTS_DISABLED, TILES_DISABLED, NO_TILE, TOO_FAR, NEEDS_CHART, PERMANENT, OUT_OF_WORLD;
+        NONE, CHARTS_DISABLED, TILES_DISABLED, NO_TILE, TOO_FAR, NEEDS_CHART, PERMANENT, OUT_OF_WORLD, UNCHARTED;
 
         public String key() {
             return name().toLowerCase(Locale.ROOT);
         }
     }
 
-    /** What the server knows about a request. {@code areaInWorld} is true when no area is asked yet. */
+    /**
+     * What the server knows about a request. {@code areaInWorld} and {@code areaCharted} (the area holds at least one
+     * cell of the drawer's own chart) are true when no area is asked yet.
+     */
     public record Request(boolean chartsEnabled, boolean tilesEnabled, boolean isTile, boolean inReach, boolean requireChart,
-                          boolean holdsChart, boolean drawn, boolean redrawAllowed, boolean areaInWorld) {
+                          boolean holdsChart, boolean drawn, boolean redrawAllowed, boolean areaInWorld, boolean areaCharted) {
+
+        public Request withArea(boolean inWorld, boolean charted) {
+            return new Request(chartsEnabled, tilesEnabled, isTile, inReach, requireChart, holdsChart, drawn, redrawAllowed, inWorld, charted);
+        }
     }
 
     private MapTileRules() {
@@ -33,6 +40,7 @@ public final class MapTileRules {
         if (r.requireChart() && !r.holdsChart()) return Refusal.NEEDS_CHART;
         if (r.drawn() && !r.redrawAllowed()) return Refusal.PERMANENT;
         if (!r.areaInWorld()) return Refusal.OUT_OF_WORLD;
+        if (!r.areaCharted()) return Refusal.UNCHARTED;
         return Refusal.NONE;
     }
 }

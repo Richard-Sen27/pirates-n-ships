@@ -4,7 +4,7 @@ import com.richardsenger.piratesnships.chart.data.ChartCells;
 import com.richardsenger.piratesnships.chart.data.CellClass;
 import com.richardsenger.piratesnships.chart.data.MapTileDrawing;
 import com.richardsenger.piratesnships.chart.data.MarkerIcon;
-import com.richardsenger.piratesnships.chart.data.RegionRle;
+import com.richardsenger.piratesnships.chart.data.PixelPack;
 import com.richardsenger.piratesnships.chart.data.TileMarker;
 import com.richardsenger.piratesnships.chart.net.ChartOpenPayload;
 import com.richardsenger.piratesnships.chart.net.ChartSettings;
@@ -26,6 +26,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import com.richardsenger.piratesnships.chart.data.BoardSlice;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -59,12 +61,24 @@ class MapTileDataTest {
     }
 
     @Test
-    void rleRoundTripOfATile() {
+    void packedRoundTripOfATile() {
         MapTileDrawing d = sample();
-        byte[] rle = d.rle();
-        assertTrue(rle.length < 128 * 128 / 4, "a coast compresses well: " + rle.length + " bytes");
-        assertArrayEquals(d.pixels(), RegionRle.decode(rle, 128 * 128));
-        assertEquals(d, MapTileDrawing.fromRle(128, rle, -10, 5, 4, "Anne Bonny", 42, d.markers()));
+        byte[] packed = d.packed();
+        // The hatched shallows and dotted land repeat every few pixels: deflate must get well under a quarter.
+        assertTrue(packed.length < 128 * 128 / 4, "a coast compresses well: " + packed.length + " bytes");
+        assertArrayEquals(d.pixels(), PixelPack.unpack(packed, 128 * 128));
+        assertEquals(d, MapTileDrawing.fromPacked(128, packed, -10, 5, 4, "Anne Bonny", 42, d.markers()));
+    }
+
+    @Test
+    void malformedPackedPixelsAreRejected() {
+        byte[] packed = sample().packed();
+        assertThrows(IllegalArgumentException.class, () -> PixelPack.unpack(packed, 128 * 128 - 1), "longer than expected");
+        assertThrows(IllegalArgumentException.class, () -> PixelPack.unpack(packed, 128 * 128 + 1), "shorter than expected");
+        assertThrows(IllegalArgumentException.class, () -> PixelPack.unpack(new byte[]{1, 2, 3, 4}, 16), "not deflate");
+        byte[] blank = new byte[256 * 256];
+        assertTrue(PixelPack.pack(blank).length < 200, "a blank tile is tiny");
+        assertArrayEquals(blank, PixelPack.unpack(PixelPack.pack(blank), blank.length));
     }
 
     @Test
@@ -76,6 +90,25 @@ class MapTileDataTest {
         assertEquals(d.hashCode(), back.hashCode());
         assertEquals(-40, back.minX());
         assertEquals((5 + 128) * 4, back.maxZ());
+    }
+
+    @Test
+    void zoomAndBoardSliceSurviveNbtAndTheNetwork() {
+        MapTileDrawing a = sample();
+        assertEquals(1, a.zoom(), "MAP2 draws at zoom 1");
+        assertTrue(a.board().isEmpty(), "and single tiles");
+        BoardSlice slice = new BoardSlice(new UUID(1, 2), 1, 0, 3, 2);
+        MapTileDrawing b = new MapTileDrawing(128, a.pixels(), -10, 5, 4, "Anne Bonny", 42, a.markers(), 2, Optional.of(slice));
+        assertNotEquals(a, b);
+        assertEquals((-10 + 256) * 4, b.maxX(), "the area grows with the zoom");
+        assertEquals(b, MapTileDrawing.CODEC.parse(NbtOps.INSTANCE, MapTileDrawing.CODEC.encodeStart(NbtOps.INSTANCE, b).getOrThrow()).getOrThrow());
+        assertEquals(b, roundTrip(MapTileDrawing.STREAM_CODEC, b));
+        CompoundTag old = (CompoundTag) MapTileDrawing.CODEC.encodeStart(NbtOps.INSTANCE, a).getOrThrow();
+        assertTrue(!old.contains("board"), "a single tile stores no board");
+        assertThrows(IllegalArgumentException.class, () -> new BoardSlice(new UUID(0, 0), 3, 0, 3, 1), "slice outside its board");
+        assertThrows(IllegalArgumentException.class, () -> new MapTileDrawing(128, a.pixels(), 0, 0, 4, "", 0, List.of(), 0, Optional.empty()));
+        assertEquals(MapTileRaster.known(a.pixel(0, 0)), a.known(0, 0));
+        assertTrue(!a.known(0, 127), "the unknown bottom rows are not known");
     }
 
     @Test
@@ -108,8 +141,11 @@ class MapTileDataTest {
         px[500] = (byte) ((px[500] + 1) % MapTileRaster.paletteSize());
         MapTileDrawing b = new MapTileDrawing(128, px, -10, 5, 4, "Anne Bonny", 42, a.markers());
         assertNotEquals(a, b);
-        px[0] = 9;
-        assertNotEquals(9, a.pixel(0, 0), "the drawing keeps its own copy");
+        int before = b.pixel(0, 0);
+        px[0] = (byte) ((before + 1) % MapTileRaster.paletteSize());
+        assertEquals(before, b.pixel(0, 0), "the drawing keeps its own copy of the array it was built from");
+        b.pixels()[0] = px[0];
+        assertEquals(before, b.pixel(0, 0), "pixels() hands out a copy");
         assertThrows(IllegalArgumentException.class, () -> new MapTileDrawing(128, new byte[10], 0, 0, 4, "", 0, List.of()));
     }
 
@@ -126,19 +162,19 @@ class MapTileDataTest {
 
     @Test
     void rulesRefuseInOrder() {
-        MapTileRules.Request ok = new MapTileRules.Request(true, true, true, true, true, true, false, true, true);
+        MapTileRules.Request ok = new MapTileRules.Request(true, true, true, true, true, true, false, true, true, true);
         assertEquals(MapTileRules.Refusal.NONE, MapTileRules.check(ok));
-        assertEquals(MapTileRules.Refusal.CHARTS_DISABLED, MapTileRules.check(new MapTileRules.Request(false, false, false, false, true, false, true, false, false)));
-        assertEquals(MapTileRules.Refusal.TILES_DISABLED, MapTileRules.check(new MapTileRules.Request(true, false, true, true, true, true, false, true, true)));
-        assertEquals(MapTileRules.Refusal.NO_TILE, MapTileRules.check(new MapTileRules.Request(true, true, false, false, true, true, false, true, true)));
-        assertEquals(MapTileRules.Refusal.TOO_FAR, MapTileRules.check(new MapTileRules.Request(true, true, true, false, true, true, false, true, true)));
-        assertEquals(MapTileRules.Refusal.NEEDS_CHART, MapTileRules.check(new MapTileRules.Request(true, true, true, true, true, false, false, true, true)));
-        assertEquals(MapTileRules.Refusal.NONE, MapTileRules.check(new MapTileRules.Request(true, true, true, true, false, false, false, true, true)),
+        assertEquals(MapTileRules.Refusal.CHARTS_DISABLED, MapTileRules.check(new MapTileRules.Request(false, false, false, false, true, false, true, false, false, true)));
+        assertEquals(MapTileRules.Refusal.TILES_DISABLED, MapTileRules.check(new MapTileRules.Request(true, false, true, true, true, true, false, true, true, true)));
+        assertEquals(MapTileRules.Refusal.NO_TILE, MapTileRules.check(new MapTileRules.Request(true, true, false, false, true, true, false, true, true, true)));
+        assertEquals(MapTileRules.Refusal.TOO_FAR, MapTileRules.check(new MapTileRules.Request(true, true, true, false, true, true, false, true, true, true)));
+        assertEquals(MapTileRules.Refusal.NEEDS_CHART, MapTileRules.check(new MapTileRules.Request(true, true, true, true, true, false, false, true, true, true)));
+        assertEquals(MapTileRules.Refusal.NONE, MapTileRules.check(new MapTileRules.Request(true, true, true, true, false, false, false, true, true, true)),
                 "no chart needed when require_chart_item is off");
-        assertEquals(MapTileRules.Refusal.NONE, MapTileRules.check(new MapTileRules.Request(true, true, true, true, true, true, true, true, true)), "redraw allowed");
-        assertEquals(MapTileRules.Refusal.PERMANENT, MapTileRules.check(new MapTileRules.Request(true, true, true, true, true, true, true, false, true)));
-        assertEquals(MapTileRules.Refusal.NONE, MapTileRules.check(new MapTileRules.Request(true, true, true, true, true, true, false, false, true)),
+        assertEquals(MapTileRules.Refusal.NONE, MapTileRules.check(new MapTileRules.Request(true, true, true, true, true, true, true, true, true, true)), "redraw allowed");
+        assertEquals(MapTileRules.Refusal.PERMANENT, MapTileRules.check(new MapTileRules.Request(true, true, true, true, true, true, true, false, true, true)));
+        assertEquals(MapTileRules.Refusal.NONE, MapTileRules.check(new MapTileRules.Request(true, true, true, true, true, true, false, false, true, true)),
                 "a blank tile can be drawn even when drawings are permanent");
-        assertEquals(MapTileRules.Refusal.OUT_OF_WORLD, MapTileRules.check(new MapTileRules.Request(true, true, true, true, true, true, false, true, false)));
+        assertEquals(MapTileRules.Refusal.OUT_OF_WORLD, MapTileRules.check(new MapTileRules.Request(true, true, true, true, true, true, false, true, false, true)));
     }
 }

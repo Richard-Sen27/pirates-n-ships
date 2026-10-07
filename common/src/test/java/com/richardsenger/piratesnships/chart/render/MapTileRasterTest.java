@@ -170,4 +170,35 @@ class MapTileRasterTest {
         assertEquals(plain[(w / 2) * w + 2], withSprites[(w / 2) * w + 2], "elsewhere unchanged");
         assertArrayEquals(withSprites, MapTileRaster.picture(d, scale, sheet, ChartSheet.WIDTH, ChartSheet.HEIGHT), "deterministic");
     }
+
+    @Test
+    void anyKnownFindsASingleChartedCell() {
+        CellLookup one = (cx, cz) -> cx == 70 && cz == -3 ? ChartCells.of(CellClass.DEEP_WATER, false) : 0;
+        assertTrue(MapTileRaster.anyKnown(one, 0, -10, 128), "the cell lies inside");
+        assertFalse(MapTileRaster.anyKnown(one, 71, -10, 128), "the area starts east of it");
+        assertFalse(MapTileRaster.anyKnown(one, 0, -2, 128), "the area starts south of it");
+        assertFalse(MapTileRaster.anyKnown((cx, cz) -> 0, 0, 0, 32), "nothing charted");
+    }
+
+    @Test
+    void aPixelIsKnownExactlyWhenItsCellIs() {
+        // a ragged coast with unknown holes: ripples and ink must never spill onto unknown cells, and no known cell
+        // may come out as blank parchment
+        Random random = new Random(7);
+        int size = 64;
+        int[][] grid = new int[size][size];
+        CellClass[] classes = {CellClass.LAND, CellClass.BEACH, CellClass.SHALLOW_WATER, CellClass.DEEP_WATER, CellClass.SNOW_ICE};
+        for (int z = 0; z < size; z++) {
+            for (int x = 0; x < size; x++) {
+                grid[z][x] = random.nextInt(4) == 0 ? 0 : ChartCells.of(classes[random.nextInt(classes.length)], random.nextInt(5) == 0);
+            }
+        }
+        CellLookup cells = (cx, cz) -> cx < 0 || cz < 0 || cx >= size || cz >= size ? 0 : grid[cz][cx];
+        byte[] px = MapTileRaster.draw(cells, 0, 0, size);
+        for (int z = 0; z < size; z++) {
+            for (int x = 0; x < size; x++) {
+                assertEquals(ChartCells.known(grid[z][x]), MapTileRaster.known(px[z * size + x] & 0xFF), "pixel " + x + "," + z);
+            }
+        }
+    }
 }

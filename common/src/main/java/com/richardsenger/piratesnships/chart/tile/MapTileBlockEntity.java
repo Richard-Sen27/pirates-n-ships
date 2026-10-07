@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The drawing on a map tile (work package MAP2), {@code null} while the tile is blank. Saved with the world under
- * {@code drawing} ({@link MapTileDrawing#CODEC}, pixels run-length encoded) and synced to every client that has the
+ * {@code drawing} ({@link MapTileDrawing#CODEC}, pixels deflated) and synced to every client that has the
  * chunk through the block entity's update tag (the chunk data when a player comes into range, a block entity data
  * packet when the drawing changes). The tile item carries the drawing as the {@code pirates_n_ships:map_tile_drawing}
  * component: placing the item applies it, the loot table copies it back when the tile is broken.

@@ -120,6 +120,7 @@ public final class ChartText {
                 case NEEDS_CHART -> "You need a chart in hand to draw on the tile";
                 case PERMANENT -> "This tile's drawing is permanent";
                 case OUT_OF_WORLD -> "That area is beyond the edge of the world";
+                case UNCHARTED -> "You have charted nothing in that area";
                 case NONE -> "";
             });
         }

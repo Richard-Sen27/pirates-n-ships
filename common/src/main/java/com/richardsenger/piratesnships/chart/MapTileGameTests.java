@@ -204,7 +204,7 @@ public final class MapTileGameTests {
     }
 
     /** Own batch: changes config. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = "pirates_n_ships_config_chart_tiles_disabled")
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = "pirates_n_ships_config_chart_tiles")
     public static void disabledTilesRefuse(GameTestHelper helper) {
         ConfigOverrides.during(helper, ChartConfig.TILES_ENABLED, false);
         Fixture f = fixture(helper, "tile_disabled", true);
@@ -229,6 +229,9 @@ public final class MapTileGameTests {
                 MapTileRules.Refusal.NO_TILE, "no tile there");
         helper.assertValueEqual(MapTileService.draw(f.player(), new DrawTilePayload(f.tile(), 40_000_000, f.minCz(), false)).refusal(),
                 MapTileRules.Refusal.OUT_OF_WORLD, "beyond the world's edge");
+        helper.assertValueEqual(MapTileService.draw(f.player(), new DrawTilePayload(f.tile(), f.minCx() + 1000, f.minCz(), false)).refusal(),
+                MapTileRules.Refusal.UNCHARTED, "an area outside the player's chart");
+        helper.assertTrue(f.be(helper).drawing() == null, "still blank after the refusals");
         helper.assertTrue(MapTileService.draw(f.player(), f.request(false)).ok(), "a chart in the off hand will do");
         finish(helper, f.player());
     }
@@ -239,6 +242,73 @@ public final class MapTileGameTests {
         ConfigOverrides.during(helper, ChartConfig.REQUIRE_CHART_ITEM, false);
         Fixture f = fixture(helper, "tile_free", false);
         helper.assertTrue(MapTileService.draw(f.player(), f.request(false)).ok(), "empty hands draw");
+        finish(helper, f.player());
+    }
+
+    /** The drawing reaches clients: the update tag and packet carry it, and a client-side copy loads the same drawing. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void drawingSyncsThroughTheUpdateTag(GameTestHelper helper) {
+        Fixture f = fixture(helper, "tile_sync", true);
+        MapTileBlockEntity be = f.be(helper);
+        var registries = helper.getLevel().registryAccess();
+        MapTileBlockEntity blankCopy = new MapTileBlockEntity(f.tile(), be.getBlockState());
+        blankCopy.loadWithComponents(be.getUpdateTag(registries), registries);
+        helper.assertTrue(blankCopy.drawing() == null, "a blank tile syncs as blank");
+
+        helper.assertTrue(MapTileService.draw(f.player(), f.request(true)).ok(), "drawn");
+        helper.assertTrue(be.getUpdatePacket() != null, "the tile sends a block entity data packet");
+        var tag = be.getUpdateTag(registries);
+        helper.assertTrue(tag.contains(MapTileBlockEntity.TAG_DRAWING), "the update tag carries the drawing");
+        helper.assertTrue(tag.getCompound(MapTileBlockEntity.TAG_DRAWING).getByteArray("pixels").length < f.size() * f.size() / 4,
+                "packed well below the raw raster");
+        MapTileBlockEntity clientCopy = new MapTileBlockEntity(f.tile(), be.getBlockState());
+        clientCopy.loadWithComponents(tag, registries);
+        helper.assertValueEqual(clientCopy.drawing(), be.drawing(), "the client sees the same drawing");
+
+        // the redraw replaces the client's drawing as a whole
+        helper.assertTrue(MapTileService.draw(f.player(), new DrawTilePayload(f.tile(), f.minCx() + 5, f.minCz(), false)).ok(), "redrawn");
+        clientCopy.loadWithComponents(be.getUpdateTag(registries), registries);
+        helper.assertValueEqual(clientCopy.drawing(), be.drawing(), "the client follows the redraw");
+        helper.assertTrue(clientCopy.drawing().markers().isEmpty(), "with the markers gone");
+        finish(helper, f.player());
+    }
+
+    /** A tile hangs on a wall (facing out of it), keeps standing there, and takes a drawing like a floor tile. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void tileHangsOnAWallAndTakesADrawing(GameTestHelper helper) {
+        BlockPos wallRel = new BlockPos(3, 2, 4);
+        BlockPos tileRel = wallRel.north();
+        helper.setBlock(wallRel, Blocks.STONE);
+        Player placer = helper.makeMockPlayer(GameType.SURVIVAL);
+        placer.setXRot(0f);
+        placer.setYRot(0f); // looking south, at the wall's north face
+        ItemStack item = new ItemStack(ChartContent.MAP_TILE_ITEM.get());
+        placer.setItemInHand(InteractionHand.MAIN_HAND, item);
+        BlockPos wall = helper.absolutePos(wallRel);
+        BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(wall).add(0, 0, -0.5), Direction.NORTH, wall, false);
+        InteractionResult placed = item.useOn(new UseOnContext(placer, InteractionHand.MAIN_HAND, hit));
+        helper.assertTrue(placed.consumesAction(), "placed on the wall, got " + placed);
+        helper.assertBlockPresent(ChartContent.MAP_TILE.get(), tileRel);
+        BlockState state = helper.getBlockState(tileRel);
+        helper.assertValueEqual(state.getValue(com.richardsenger.piratesnships.chart.tile.MapTileBlock.FACE),
+                net.minecraft.world.level.block.state.properties.AttachFace.WALL, "a wall tile");
+        helper.assertValueEqual(state.getValue(com.richardsenger.piratesnships.chart.tile.MapTileBlock.FACING), Direction.NORTH, "facing out of the wall");
+        helper.assertTrue(state.canSurvive(helper.getLevel(), helper.absolutePos(tileRel)), "it holds on the wall");
+
+        // draw onto it with the fixture's chart (the fixture also puts a floor tile at TILE; this one is on the wall)
+        Fixture f = fixture(helper, "tile_wall", true);
+        BlockPos onWall = helper.absolutePos(tileRel);
+        f.player().setPos(Vec3.atCenterOf(onWall).add(0, 0, -1.5));
+        MapTileService.Outcome outcome = MapTileService.draw(f.player(), new DrawTilePayload(onWall, f.minCx(), f.minCz(), true));
+        helper.assertTrue(outcome.ok(), "the wall tile is drawn, got " + outcome.refusal());
+        if (!(helper.getLevel().getBlockEntity(onWall) instanceof MapTileBlockEntity be)) throw new AssertionError("no block entity on the wall tile");
+        helper.assertValueEqual(be.drawing(), outcome.drawing(), "the wall tile holds the drawing");
+        helper.assertTrue(f.be(helper).drawing() == null, "the floor tile stays blank");
+
+        // without the wall it cannot stay
+        helper.setBlock(wallRel, Blocks.AIR);
+        helper.assertFalse(helper.getBlockState(tileRel).is(ChartContent.MAP_TILE.get())
+                && helper.getBlockState(tileRel).canSurvive(helper.getLevel(), onWall), "a wall tile needs its wall");
         finish(helper, f.player());
     }
 

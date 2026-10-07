@@ -78,7 +78,7 @@ Renders of the intended look are in `art/renders/`.
 
 ## Known placeholders (for the later art pass)
 - Cargo crate and barrel, pantry, water barrel, brig bars and door still use simple models (F7d, F7e).
-- The yard cloth is a flat grid with a simple belly; the stay and triangular sail of F5b arrive with their own look.
+- The yard and stay cloths are flat grids with a simple belly; the cleat is a placeholder element model (F7e).
 - Item sprites are script-made placeholders; 3D item models come with the F8 batches (weapons first).
 - The brig bars' transparency relies on a model field that only NeoForge reads. The Fabric port has to register a
   render layer for them.

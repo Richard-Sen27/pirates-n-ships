@@ -125,21 +125,29 @@ yard, half reaches half way down, full reaches the lower yard. Its area is the m
 between the yards, so two 5-wide yards 5 apart give 25. Three yards on one mast make two sails. A yard that heads no
 sail tells you so when you click it.
 
+A **triangular (fore-and-aft) sail** is rigged with a rope and three **cleats**. Put one cleat high on the mast's side
+(the head), one on the deck or a bowsprit further forward and at least 2 blocks lower (the tack), and one straight
+below the head (the clew). Use a **rope** on the head cleat, then on the tack cleat (at most 16 blocks away): the rope
+is used up and a stay runs between them. The cloth fills the triangle between the stay and the clew: furled is a bundle
+along the stay, half reaches half way down the mast, full fills the triangle. Its area is half of head-to-tack times
+head-to-clew. Click the head cleat with the empty hand to cycle its trim. Breaking the clew hides the cloth but keeps
+the stay; breaking the tack drops the rope (not in creative).
+
 | Sail | Area | Good at |
 |---|---|---|
 | Square sail (two yards) | yard length × distance | Wind from astern. Useless close to the wind. |
-| Fore-and-Aft Sail (one block, until the cleat-and-rope sail arrives) | 16 | Wind from the side. Still drives at 45° to the wind. |
+| Triangular sail (a stay and three cleats) | half of head-to-tack × head-to-clew | Wind from the side. Still drives at 45° to the wind. |
 
 - **Trim:** furled (no force), half, full. The cloth shows the trim and bellies to the downwind side.
 - The force grows with the wind you feel on board, the sail's area and its trim. A ship running before the wind can't
   go faster than the wind.
 - **No-go zone:** within 30° of the wind no sail drives the ship forward.
 - Sails only work on a ship that is afloat.
-- Yards run across the ship, a fore-and-aft sail block stands along the hull. The direction is only visual: the crew is assumed to trim the sails optimally.
+- Yards run across the ship, stays run along it. Directions are only visual: the crew is assumed to trim the sails optimally.
 
 ### Sail winch
-Using it cycles the trim of **all** sails on its ship: furled → half → full → furled. Clicking an upper yard (or the fore-and-aft
-sail block) with the empty hand cycles only that sail.
+Using it cycles the trim of **all** sails on its ship: furled → half → full → furled. Clicking an upper yard or a head cleat with the
+empty hand cycles only that sail.
 
 ### Keel
 A ship in water resists moving sideways much more than moving forward, so a sail on a beam reach drives it ahead
@@ -384,7 +392,7 @@ nothing lets a player use it yet: the input and animation layers are missing.
 |---|---|---|
 | Helm | 4 sticks, 1 planks | Assembles, steers and disassembles a ship. A real ship's wheel on a pedestal (Blockbench model). See [Ships](#2-ships) and [Sailing](#3-sailing). |
 | Yard | 3 logs in a row (gives 3) | A spar. Two rows on one mast make a square sail; the cloth is drawn between them. See [Sails](#sails). |
-| Fore-and-Aft Sail | 3 sticks, 3 wool | One-block sail, area 16, sails closer to the wind. Replaced by cleat and rope soon. |
+| Cleat | iron ingot, planks | Attaches to floors, walls and masts. Three cleats and a rope make a triangular sail. See [Sails](#sails). |
 | Sail Winch | 2 string, 1 iron ingot, 3 planks | Sets the trim of all sails on its ship. A crew station. |
 | Capstan | 2 logs, 1 stick, 2 chains, 1 iron block, 3 planks | Drops and raises the anchor. |
 | Flagpole | 3 sticks (gives 2) | Flies a flag. A thin pole with a finial and a cleat (Blockbench model). See [Flags](#5-flags). |
@@ -414,6 +422,7 @@ All blocks drop themselves. Wooden ones are mined with an axe, the bars and the 
 | Lead Shot | 2 iron nuggets (gives 4) | No function yet. |
 | Cannonball | 4 iron ingots (gives 2) | No function yet. |
 | Grappling Hook | 3 iron ingots, 1 string | No function yet. |
+| Rope | string | Use it on one cleat, then on a second one 2 to 16 blocks away and lower, to rig a stay. It glints while it remembers the first cleat. |
 | Doubloon | none | Currency. |
 | Tobacco | none | Trade good. |
 | Spices | none | Trade good. |

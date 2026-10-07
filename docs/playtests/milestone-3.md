@@ -15,9 +15,8 @@ in milestone 1):
 /setblock ~4 ~-2 ~-1 pirates_n_ships:sail_winch
 ```
 The two yards run across the ship (axis z, the bow points +X); the upper one at y+5 is the sail's head, the lower one
-at y+2 its foot, 3 blocks apart with fence (mast) between their middle blocks, area 3 × 3 = 9. A fore-and-aft sail
-(still one block) stands along the hull, so it faces north or south here. Directions are visual only (the crew is
-assumed to trim the sail optimally). Then use the helm to assemble (milestone-1 §4).
+at y+2 its foot, 3 blocks apart with fence (mast) between their middle blocks, area 3 × 3 = 9. A triangular sail is rigged
+in §3 from three cleats and a rope. Directions are visual only (the crew is assumed to trim the sail optimally). Then use the helm to assemble (milestone-1 §4).
 - Expected: a rolled cloth bundle hangs under the upper yard; the lower yard shows nothing. Clicking the lower yard
   says it heads no sail.
 
@@ -38,12 +37,38 @@ assumed to trim the sail optimally). Then use the helm to assemble (milestone-1 
 
 ## 3. Wind on the beam and from ahead
 1. `/pirates wind set 0 6` (from the north, on the port beam). A square sail: slow forward drive and some drift south.
-2. Remove the two yards and put `pirates_n_ships:fore_and_aft_sail[facing=north,trim=full]` on top of the mast
-   (break and place, the ship picks it up). Expected: clearly faster than the square sail on this course, mostly forward, little sideways drift
+2. Remove the two yards and rig a triangular sail instead: a cleat on the mast's east side near the top (head), a
+   cleat on the deck straight below it (clew), and a cleat on a 4-plank bowsprit forward of the bow (tack). Use a rope
+   on the head, then on the tack ("Stay rigged"), and set full sail at the winch; the ship picks up the rig within a
+   second. Expected: clearly faster than the square sail on this course, mostly forward, little sideways drift
    (GameTest at 3 blocks/s: 0.38 m/s forward, 0.11 m/s sideways; with `keel_enabled=false`: 0.33 forward, 0.26 sideways).
 3. `/pirates wind set 90 6` (from ahead). Expected: no forward motion; the boat is pushed slowly backward
    (GameTest: −0.16 m/s).
 4. Furl (winch until "furled"). Expected: the boat coasts to a stop; no force from the sail.
+
+## 3b. Triangular sails up close (F5b)
+On land is fine for all of this except steps 7 to 9.
+1. **Build the rig.** A fence or log mast. A cleat on the mast's side at the top (A), one on the floor straight below it
+   (C), one on the floor 4 to 6 blocks forward (B). Expected: each cleat attaches to the face it was placed on, wall
+   cleats stand upright.
+2. **Rig the stay.** Use the rope on A ("Rope tied…", the rope glints), then on B ("Stay rigged…"): one rope is used up,
+   a thin rope runs from A to B with a furled bundle along it.
+3. **Cycle the trim.** Click A with the empty hand three times: half (cloth from A to B to half way down A-C), full (the
+   whole triangle), furled (the bundle). Each change animates over about a second; the cloth bellies to the downwind
+   side and only switches sides when the wind clearly crosses.
+4. **Texture.** The cloth texture repeats once per block without stretching. Report clamping or smearing: the wrap mode
+   could not be checked headlessly.
+5. **Rope refusals.** A cleat more than 16 blocks away: "Too far…". Cleats less than 2 blocks apart in height: "Too
+   flat…". The same cleat twice: "Use the rope on a second cleat…". A first cleat on land, then a cleat on a ship: the
+   rope re-ties to the new cleat with a message that the first one is gone or on another ship.
+6. **Break things.** Break C: the cloth vanishes, the rope stays; put C back: the cloth returns with the same trim.
+   Break B in survival: the rope drops and the stay vanishes.
+7. **On a ship.** Assemble a hull with this rig and a bowsprit: stay and cloth travel with the ship, winch and whistle
+   hoist and furl it. Beam reach: the ship makes way with little leeway. Close-hauled, 45 to 60° off the wind: it still
+   makes headway, while the square rig of §0 does not.
+8. **Disassemble with rotation** (the ship turned since assembly). Stay and cloth survive; the cloth may take up to a
+   second to reorient.
+9. **From far away.** Cloth and rope don't pop out when the head cleat goes off screen.
 
 ## 4. Debug output
 Stand on the deck: `/pirates ship forces`. Expected: one line with speed (fwd/port), heading (compass, 90 = east),
@@ -109,7 +134,7 @@ client setting `audio.ambience_volume` does not affect it yet.
 
 ## 6. A second, bigger ship
 Build a longer hull (e.g. 13 x 7) with two masts: a square sail from two 5-wide yards 5 blocks apart (area 25) on one,
-a `fore_and_aft_sail` on the other, one winch. Expected: the winch sets both sails; the ship is slower to accelerate
+a triangular sail (stay and three cleats) on the other, one winch. Expected: the winch sets both sails; the ship is slower to accelerate
 (more mass) but reaches a similar top speed; `/pirates ship forces` lists `sail[0]:square` with area 25.
 
 ## 6b. Yard sails up close (F5a)

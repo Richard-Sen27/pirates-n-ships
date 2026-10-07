@@ -4,6 +4,8 @@ import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
+import com.richardsenger.piratesnships.ship.sable.SableShips;
+import com.richardsenger.piratesnships.ship.sable.ShipForces;
 
 import java.util.List;
 
@@ -28,6 +30,7 @@ public final class HazardsModule implements ModModule {
     @Override
     public void registerContent() {
         HazardsContent.init();
+        ShipForces.registerHazards();
     }
 
     @Override
@@ -38,6 +41,8 @@ public final class HazardsModule implements ModModule {
     @Override
     public void registerEvents() {
         CommonEvents.LEVEL_TICK_END.register(HazardSpawner::onLevelTick);
+        CommonEvents.SERVER_STOPPED.register(server -> HazardShipForces.clear());
+        SableShips.onPhysicsTick(HazardShipForces::onPhysicsTick);
         CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> HazardCommands.register(dispatcher));
     }
 
@@ -55,7 +60,8 @@ public final class HazardsModule implements ModModule {
                 .add(HazardCommands.KEY_UNKNOWN, "Unknown hazard: %s (waterspout or whirlpool)")
                 .add(HazardCommands.KEY_DISABLED, "%s is disabled in the server config (hazards)")
                 .add(HazardCommands.KEY_FAILED, "Could not spawn the %s here")
-                .add(HazardCommands.KEY_CLEARED, "Removed %s hazards"));
+                .add(HazardCommands.KEY_CLEARED, "Removed %s hazards")
+                .add(ShipForces.HAZARDS_KEY, "Sea Hazards"));
     }
 
     @Override

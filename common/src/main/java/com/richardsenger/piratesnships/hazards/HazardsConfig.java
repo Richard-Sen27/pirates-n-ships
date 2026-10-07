@@ -11,9 +11,9 @@ import com.richardsenger.piratesnships.core.config.ModConfigs;
  * reads yet.
  *
  * <p>Units: field strengths ({@code pull}, {@code lift}, {@code spin}, {@code drag_down}) are accelerations in
- * blocks/tick² at the centre, falling off linearly to 0 at {@code radius}. Ships get the same field, with their velocity
- * changing by that number in m/s per tick (1/20 of an entity's rate) times {@code ship_force_scale} times the mass effect
- * {@code min(1, max_ship_mass_effect / mass)} (see {@link HazardField}).
+ * blocks/tick² at the centre, falling off linearly to 0 at {@code radius}. Ships get the same field as an acceleration of
+ * {@code 100 × strength} m/s² (a quarter of an entity's) times {@code ship_force_scale} times the mass effect
+ * {@code min(1, max_ship_mass_effect / mass)} (see {@link HazardField#shipForce}).
  */
 public final class HazardsConfig {
 
@@ -26,8 +26,8 @@ public final class HazardsConfig {
     public static final ConfigValue<Integer> SPAWN_MAX_DISTANCE = S.intRange("spawn_max_distance", 96, 8, 256,
             "Farthest distance in blocks from the player at which a hazard forms (the chunk must be loaded)");
     public static final ConfigValue<Double> SHIP_FORCE_SCALE = S.doubleRange("ship_force_scale", 1.0, 0.0, 20.0,
-            "Multiplier on the pull, lift and spin of hazards on ships (1 = a light ship's velocity changes by the field "
-                    + "strength in m/s per tick, 0 = ships are not affected)");
+            "Multiplier on the pull, lift and spin of hazards on ships (1 = a light ship is accelerated at 100 m/s² per "
+                    + "blocks/tick² of field, a quarter of what entities get; 0 = ships are not affected)");
     public static final ConfigValue<Double> MAX_SHIP_MASS_EFFECT = S.doubleRange("max_ship_mass_effect", 400.0, 1.0, 1_000_000.0,
             "Ship mass (Sable mass units, about 1 per plank) up to which a ship feels the full hazard force; heavier ships "
                     + "feel it scaled by this mass divided by theirs, so big ships barely notice");

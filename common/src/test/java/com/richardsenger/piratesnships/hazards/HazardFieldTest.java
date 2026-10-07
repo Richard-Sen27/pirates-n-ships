@@ -98,13 +98,14 @@ class HazardFieldTest {
         assertEquals(0.0, HazardField.massEffect(0, 400), EPS);
 
         HazardField.Vec a = new HazardField.Vec(0.05, 0.1, 0);
-        HazardField.Vec light = HazardField.shipImpulse(a, 50, 400, 1.0);
-        assertEquals(2.5, light.x(), EPS, "impulse = a × mass below the cap");
-        HazardField.Vec heavy = HazardField.shipImpulse(a, 1600, 400, 1.0);
-        assertEquals(20.0, heavy.x(), EPS, "impulse = a × cap above it");
-        assertEquals(heavy.x() / 1600, a.x() * 0.25, EPS, "so the heavy ship's velocity changes by a quarter");
-        assertEquals(40.0, HazardField.shipImpulse(a, 1600, 400, 2.0).x(), EPS, "scaled");
-        assertEquals(0.0, HazardField.shipImpulse(a, 1600, 400, 0.0).x(), EPS);
+        HazardField.Vec light = HazardField.shipForce(a, 50, 400, 1.0);
+        assertEquals(250.0, light.x(), EPS, "force = a × 100 × mass below the cap");
+        assertEquals(5.0, light.x() / 50, EPS, "so a light ship accelerates at 100·a m/s²");
+        HazardField.Vec heavy = HazardField.shipForce(a, 1600, 400, 1.0);
+        assertEquals(2000.0, heavy.x(), EPS, "force = a × 100 × cap above it");
+        assertEquals(heavy.x() / 1600, light.x() / 50 * 0.25, EPS, "so the heavy ship accelerates a quarter as much");
+        assertEquals(4000.0, HazardField.shipForce(a, 1600, 400, 2.0).x(), EPS, "scaled");
+        assertEquals(0.0, HazardField.shipForce(a, 1600, 400, 0.0).x(), EPS);
     }
 
     @Test

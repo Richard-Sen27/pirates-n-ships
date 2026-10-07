@@ -11,9 +11,9 @@ package com.richardsenger.piratesnships.hazards;
  *     funnel (so a lifted entity hovers where lift and gravity balance instead of being thrown out of the top).</li>
  * <li>Whirlpool: a pull toward the centre and a spin along the circle, counter-clockwise seen from above; boats and
  *     swimmers in the inner third are also dragged down with the full {@code drag_down}.</li>
- * <li>Ships ({@link #shipImpulse}): the field acceleration {@code a} becomes an impulse of
- *     {@code a × scale × min(mass, cap)} kpg·m/s per tick, i.e. a light ship's velocity changes by {@code a} m/s per
- *     tick (1/20 of an entity's), a ship heavier than the cap by {@code a × cap / mass}.</li>
+ * <li>Ships ({@link #shipForce}): the field acceleration {@code a} becomes a force of
+ *     {@code a × SHIP_ACCELERATION × scale × min(mass, cap)} newtons, i.e. a light ship is accelerated at
+ *     {@code 100·a} m/s² (a quarter of an entity's {@code 400·a}), a ship heavier than the cap at {@code 100·a × cap / mass}.</li>
  * </ul>
  */
 public final class HazardField {
@@ -122,10 +122,19 @@ public final class HazardField {
     }
 
     /**
-     * World-frame impulse in kpg·m/s for one game tick on a ship of {@code mass} from field acceleration {@code a}:
-     * {@code a × scale × mass × massEffect(mass, cap)} = {@code a × scale × min(mass, cap)}.
+     * Ship acceleration in m/s² per blocks/tick² of field. An entity gets {@code a} blocks/tick per tick, i.e.
+     * {@code 400·a} m/s²; ships get a quarter of that. Measured (H1 GameTests): Sable's water drag holds the 43 kpg test
+     * hull to about 0.1 m/s under 28 N, so at 1/20 of the entity rate (the first try) a whirlpool moved a small ship only
+     * about 0.5 blocks in 5 s; at 100 the waterspout's centre lift (12 m/s²) just beats gravity (11 m/s²), the design's
+     * "lifts small ships".
      */
-    public static Vec shipImpulse(Vec a, double mass, double cap, double scale) {
-        return a.scale(scale * mass * massEffect(mass, cap));
+    public static final double SHIP_ACCELERATION = 100.0;
+
+    /**
+     * World-frame force in newtons (kpg·m/s²) on a ship of {@code mass} from field acceleration {@code a}:
+     * {@code a × SHIP_ACCELERATION × scale × mass × massEffect(mass, cap)} = {@code a × 100 × scale × min(mass, cap)}.
+     */
+    public static Vec shipForce(Vec a, double mass, double cap, double scale) {
+        return a.scale(SHIP_ACCELERATION * scale * mass * massEffect(mass, cap));
     }
 }

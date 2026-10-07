@@ -20,13 +20,15 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 
+import java.util.List;
+
 /**
  * Applies a hazard's field to the world each server tick (docs/design.md §12): entities get the acceleration of
  * {@link HazardField} added to their velocity; players (and the boats they steer) move on their own client, so they get
  * it through {@link HazardPushPayload}; Sable ships get an impulse at five points of the hull (the centre of mass and
  * the middle of each side), so a field that differs across the hull, like the whirlpool's spin at its centre, also turns
- * the ship. Ship impulses go straight to the physics pipeline through {@link ShipBody#applyImpulseNow} (as the cannon's
- * recoil does), once per game tick.
+ * the ship. Ship forces are computed here once per game tick and recorded every physics substep by
+ * {@link HazardShipForces} in our sea hazards force group (the grappling rope's path).
  */
 public final class HazardForces {
 
@@ -70,11 +72,13 @@ public final class HazardForces {
             push(e, a, maxLift);
         }
         ShipField field = (dx, dy, dz) -> dy < -SPOUT_BELOW ? HazardField.Vec.ZERO : HazardField.waterspout(dx, dy, dz, p);
+        List<HazardShipForces.PointForce> forces = HazardShipForces.newList();
         for (ShipBody ship : SableShips.all(level)) {
             if (!ship.isRemoved() && ship.worldBounds().intersects(box)) {
-                pushShip(ship, base, field);
+                pushShip(ship, base, field, forces);
             }
         }
+        HazardShipForces.set(level, spout.getUUID(), forces);
     }
 
     /** One tick of a whirlpool: pull and spin on entities and ships, drag-down on boats and swimmers. */
@@ -87,11 +91,13 @@ public final class HazardForces {
             push(e, a, Double.MAX_VALUE);
         }
         ShipField field = (dx, dy, dz) -> HazardField.whirlpool(dx, dz, false, p);
+        List<HazardShipForces.PointForce> forces = HazardShipForces.newList();
         for (ShipBody ship : SableShips.all(level)) {
             if (!ship.isRemoved() && ship.worldBounds().intersects(box)) {
-                pushShip(ship, base, field);
+                pushShip(ship, base, field, forces);
             }
         }
+        HazardShipForces.set(level, pool.getUUID(), forces);
     }
 
     /**
@@ -125,9 +131,9 @@ public final class HazardForces {
 
     /**
      * The field on a ship: at the centre of mass and the middle of each side of the plot bounds (at centre-of-mass
-     * height, so lift adds no pitch), each point carrying a fifth of {@link HazardField#shipImpulse}, in the body frame.
+     * height, so lift adds no pitch), each point carrying a fifth of {@link HazardField#shipForce}, in the body frame.
      */
-    static void pushShip(ShipBody ship, Vec3 base, ShipField field) {
+    static void pushShip(ShipBody ship, Vec3 base, ShipField field, List<HazardShipForces.PointForce> out) {
         double mass = ship.mass();
         Vector3d com = new Vector3d();
         if (mass <= 0 || !ship.centerOfMass(com)) {
@@ -146,15 +152,22 @@ public final class HazardForces {
                 new Vector3d(com).add(0, 0, hz), new Vector3d(com).sub(0, 0, hz)};
         Quaterniond q = ship.orientation(new Quaterniond());
         Vector3d world = new Vector3d();
+        int before = out.size();
         for (Vector3d point : points) {
             ship.toWorld(point, world);
             HazardField.Vec a = field.at(world.x - base.x, world.y - base.y, world.z - base.z);
             if (a.x() == 0 && a.y() == 0 && a.z() == 0) {
                 continue;
             }
-            HazardField.Vec j = HazardField.shipImpulse(a, mass, cap, scale).scale(1.0 / points.length);
-            Vector3d local = q.transformInverse(new Vector3d(j.x(), j.y(), j.z()));
-            ship.applyImpulseNow(new Vec3(point.x, point.y, point.z), new Vec3(local.x, local.y, local.z));
+            HazardField.Vec force = HazardField.shipForce(a, mass, cap, scale).scale(1.0 / points.length);
+            Vector3d local = q.transformInverse(new Vector3d(force.x(), force.y(), force.z()));
+            out.add(new HazardShipForces.PointForce(ship.id(), new Vector3d(point), local));
+        }
+        if (out.size() > before) {
+            // Sable wakes a sleeping body only when a queued group's total changes (ForceTotal#applyForces l.25-30),
+            // so a steady hazard force would never wake a ship that fell asleep at rest; adding zero velocity wakes it
+            // (RigidBodyHandle#addLinearAndAngularVelocity, RapierPhysicsPipeline l.478: wakeUp true)
+            ship.addVelocity(new Vector3d(), new Vector3d());
         }
     }
 

@@ -32,6 +32,8 @@ public final class HarborDeskData {
                 .add(HarborDeskService.Use.NO_MARKET.message(), "This desk's port has no market"));
         data.lang(HarborDeskCommands::lang);
         data.lang(MarketText::lang);
+        // SW1: the shipwright's Orders tab and the ship receipt
+        com.richardsenger.piratesnships.ship.template.ShipOrderData.gather(data);
         // hand-made Blockbench model (art/models/harbor_desk.bbmodel, design.md §4.8): only the block state is
         // generated. The model's north side (bell) is the customer's front, unrotated for FACING north; the ledger, the
         // inkwell and the coins face the harbor master on the south side.

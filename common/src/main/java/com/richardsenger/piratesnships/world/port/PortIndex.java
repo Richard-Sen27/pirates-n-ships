@@ -54,6 +54,14 @@ public record PortIndex(Map<ResourceLocation, Port> ports) {
         return new PortIndex(map);
     }
 
+    /** A copy with {@code port} replacing the known port of the same id; unchanged if that id is unknown. */
+    public PortIndex replace(Port port) {
+        if (!ports.containsKey(port.id())) return this;
+        Map<ResourceLocation, Port> map = new LinkedHashMap<>(ports);
+        map.put(port.id(), port);
+        return new PortIndex(map);
+    }
+
     /** A copy without the port {@code id}. */
     public PortIndex without(ResourceLocation id) {
         if (!ports.containsKey(id)) return this;

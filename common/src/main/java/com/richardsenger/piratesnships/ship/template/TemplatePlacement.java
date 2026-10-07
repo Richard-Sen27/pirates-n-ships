@@ -78,6 +78,42 @@ public final class TemplatePlacement {
         return new BlockPos(minX - box.minX(), surfaceY - waterline, minZ - box.minZ());
     }
 
+    /**
+     * The template origin for a ship moored at a berth (SW1): its rotated box is centred on {@code berth} along the
+     * bow axis, lies on the {@code side} of the berth (perpendicular to {@code bow}) with its near side {@code gap}
+     * blocks beyond the berth's column, and its {@code waterline} row on {@code surfaceY}. With gap 1 the berth's own
+     * column (the first water column beside the pier) stays open water, so the assembler does not gather the pier.
+     */
+    public static BlockPos berthOrigin(Vec3i size, Rotation rotation, Direction bow, Direction side, BlockPos berth, int gap,
+                                       int surfaceY, int waterline) {
+        if (!bow.getAxis().isHorizontal() || side.getAxis() == bow.getAxis() || !side.getAxis().isHorizontal()) {
+            throw new IllegalArgumentException("side must be horizontal and perpendicular to the bow: " + bow + ", " + side);
+        }
+        BoundingBox box = rotatedBox(size, rotation);
+        int minX, minZ;
+        if (bow.getAxis() == Direction.Axis.Z) {
+            minZ = berth.getZ() - (box.getZSpan() - 1) / 2;
+            minX = side.getStepX() > 0 ? berth.getX() + gap : berth.getX() - gap - (box.getXSpan() - 1);
+        } else {
+            minX = berth.getX() - (box.getXSpan() - 1) / 2;
+            minZ = side.getStepZ() > 0 ? berth.getZ() + gap : berth.getZ() - gap - (box.getZSpan() - 1);
+        }
+        return new BlockPos(minX - box.minX(), surfaceY - waterline, minZ - box.minZ());
+    }
+
+    /**
+     * The sides of a berth to try, in order: away from the pier first. {@code pierOn} tells whether the pier lies on
+     * a side (a solid block right beside the berth); with no pier or piers on both sides, starboard of the bow
+     * (clockwise) comes first.
+     */
+    public static java.util.List<Direction> berthSides(Direction bow, Predicate<Direction> pierOn) {
+        Direction right = bow.getClockWise();
+        Direction left = bow.getCounterClockWise();
+        boolean pierRight = pierOn.test(right);
+        boolean pierLeft = pierOn.test(left);
+        return pierRight && !pierLeft ? java.util.List.of(left, right) : java.util.List.of(right, left);
+    }
+
     /** Where template-local {@code local} ends up in the world. */
     public static BlockPos toWorld(BlockPos local, Rotation rotation, BlockPos origin) {
         return rotate(local, rotation).offset(origin);

@@ -154,9 +154,9 @@ Compare each sword with a vanilla iron sword in the other hand or the next hotba
     and show the 3D icons.
 
 ## Known placeholders (for the later art pass)
-- Every block and item of the mod now has a Blockbench model except the hull patch and the brig door item (F8g).
+- Every block of the mod has a Blockbench model (the hull patch since ART1a); the rope and chart items got theirs in ART1a.
 - The yard and stay cloths are flat grids with a simple belly; the cleat is a placeholder element model (F7e).
-- Only the doubloon, the bounty proof and the hull patch still use sprites (by decision).
+- Still flat (ART1b, ART1c): the three flag items, map tile, kraken beak and ink, the toolkit items.
 - The brig bars' transparency relies on a model field that only NeoForge reads. The Fabric port has to register a
   render layer for them.
 
@@ -173,3 +173,26 @@ Addendum (F8h): pistol and musket in the hand: see `firearms.md`.
 18. **Doubloon (F8i):** one gold coin in the inventory, tilted so its edge shows at the lower left, cross on the front, about 11 px of the slot, the stack count readable; in third person flat at the fingertips with the cross up; in first person upright in the lower corner; on the ground flat with the cross up (say if it touches the ground at the bottom of the bob); in an item frame the cross faces out; the market screen's coin icon reads as a single coin. Faint seam lines across the field are a known risk at a distance.
 
 19. **Z-fighting (V1):** water barrel (all fills), loaded cannon and helm from 10 and 30 blocks while walking sideways: no shimmer on rim corners, hoops, the water surface, the muzzle face or the helm's ring joints; the black bore ring still shows. Walk past every hand-made block at 10 and 30 blocks: no flickering patches, the desk's ledger lines, the sea chest keyhole and the crate marks still visible, no see-through hairline gaps at joints. Every item in hand, GUI and frame: no flicker on rings, rolls or joints.
+
+20. **Hull patch, rope and chart (ART1a):** renders `art/renders/hull_patch.png`, `hull_patch_item.png`, `rope.png`,
+    `chart.png`.
+    - **Hull patch block:** patch a breach in a ship's hull (or place a few patches in a plank wall). Each side shows
+      two spruce boards over the dark tarred planks, a black pitch seam round them and between them, a dark diagonal
+      batten from top left to bottom right, and dark nail heads at the board ends and along the batten; top and bottom
+      are plain dark planks. Check from **outside and inside the hull**: the patch reads the same from both sides. The
+      panel stands about 1.5 px proud of the block on purpose (it is "nailed on"): walking against it, collision is
+      still a plain full block, and water still stays out. Next to other hull blocks no board pokes visibly into the
+      neighbour, and no face of the neighbour goes missing (see-through gaps).
+    - **Hull patch item:** in the inventory a small plank panel seen slightly from the left, batten and nails in front;
+      in the right hand (F5) an upright board held at the side like a small shield, the boards facing outwards, not
+      cutting through the leg while walking; left hand mirrored; first person a board at the lower right; on the ground
+      a small panel; in an item frame the batten side faces out.
+    - **Rope:** in the inventory a coil of three turns (a striped front turn and two darker turns peeking out at the
+      upper left) with a loose end and a pale whipping hanging down at the lower right; held like a tool (coil in the
+      fist, the loose end pointing forward and up; say if it should hang down instead); on the ground and in a frame
+      the coil stands upright.
+    - **Chart:** in the inventory a parchment roll on the diagonal with a dark cord tie and knot near the lower end and
+      a loose sheet standing off the upper end with a black coastline and a red mark; held like a scroll (the bounty
+      proof's pose); on the ground and in a frame the same diagonal roll. Opening the chart by use still works.
+    - **Z-fighting:** no flicker on the board edges, the pitch seam, the batten, the nail heads, the rope turns or the
+      ink on the chart sheet at 10 and 30 blocks (patch) or in hand, GUI and frame (items).

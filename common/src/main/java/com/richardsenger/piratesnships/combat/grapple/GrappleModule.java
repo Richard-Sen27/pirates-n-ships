@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.combat.grapple;
 
+import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.combat.firearms.FirearmLoads;
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
@@ -10,6 +12,7 @@ import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipForces;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.core.Direction;
+import net.minecraft.data.PackOutput;
 import net.minecraft.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
@@ -32,8 +35,9 @@ import java.util.List;
 /**
  * The {@code combat.grapple} module (G11, docs/design.md §8.3 version 1, §8.4): the grappling hook is thrown, latches
  * onto another ship's hull at a plot position and hauls the two ships together with a rope force on both bodies until
- * they lie side by side. GR1 adds launching it from a crossbow or musket in the other hand ({@link GrappleLaunch}) and
- * the mooring ring ({@link MooringRingBlock}); GR2 lets players slide down a latched rope ({@link RopeSlideService}).
+ * they lie side by side. GR1 adds the mooring ring ({@link MooringRingBlock}); GR2 lets players slide down a latched
+ * rope ({@link RopeSlideService}); GR3 loads the hook from the off hand into a crossbow or musket and fires it from
+ * there ({@link GrappleLaunch}, {@link MusketHookLoad}, {@link CrossbowHookLaunch}).
  * Config section {@code grapple}. The item is
  * {@code combat.content.CombatContent#GRAPPLING_HOOK}.
  */
@@ -52,13 +56,17 @@ public final class GrappleModule implements ModModule {
     @Override
     public void registerContent() {
         GrappleContent.init();
+        // cleats tie off the grappling rope like mooring rings (RP1)
+        com.richardsenger.piratesnships.sailing.rope.RopeAnchorUse.install(GrappleService::tieOffAtAnchor, GrappleService::willTieOffAtAnchor);
         ShipForces.registerGrapple();
+        FirearmLoads.register(MusketHookLoad.INSTANCE); // GR3: the hook as a musket load
     }
 
     @Override
     public void registerPayloads() {
         Services.NETWORK.registerToServer(ReleaseHookPayload.TYPE, ReleaseHookPayload.CODEC, ReleaseHookPayload::handle);
         Services.NETWORK.registerToServer(BoardRopePayload.TYPE, BoardRopePayload.CODEC, BoardRopePayload::handle);
+        Services.NETWORK.registerToServer(FireLoadedHookPayload.TYPE, FireLoadedHookPayload.CODEC, FireLoadedHookPayload::handle);
     }
 
     @Override
@@ -69,6 +77,7 @@ public final class GrappleModule implements ModModule {
         SableShips.onPhysicsTick(GrappleService::onPhysicsTick);
         com.richardsenger.piratesnships.ship.assembly.ShipSplits.onSplit(GrappleService::onShipSplit); // RS1
         com.richardsenger.piratesnships.ship.assembly.ShipRejoin.onRejoin(GrappleService::onShipRejoined); // RS2
+        CommonEvents.PLAYER_TICK_END.register(CrossbowHookLaunch::onPlayerTick); // GR3: the crossbow's draw loads the hook
     }
 
     @Override
@@ -81,20 +90,23 @@ public final class GrappleModule implements ModModule {
         data.lang(lang -> lang
                 .add(GrappleContent.HOOK.get().getDescriptionId(), "Grappling Hook")
                 .add(GrapplingHookItem.TOOLTIP_KEY, "Throw at another ship to haul it alongside. Sneak + use with an empty hand to let go")
-                .add(GrapplingHookItem.LAUNCH_TOOLTIP_KEY, "With a crossbow in the other hand: hold to draw, let go to shoot it farther. "
-                        + "With an empty musket: fire it farthest for one gunpowder")
-                .add(GrapplingHookItem.MUSKET_LOADED_KEY, "Unload the musket first: it still holds a ball")
-                .add(GrapplingHookItem.NO_POWDER_KEY, "Firing the hook from the musket takes one gunpowder")
+                .add(GrapplingHookItem.LAUNCH_TOOLTIP_KEY, "In the off hand with a crossbow or musket in the main hand: "
+                        + "hold use to load it into the weapon, then use again to fire it farther")
+                .add(MusketHookLoad.OCCUPIED_KEY, "The musket is loaded with shot: fire it before loading the hook")
+                .add(MusketHookLoad.NO_POWDER_KEY, "Loading the hook into the musket takes one gunpowder")
+                .add(MusketHookLoad.DESCRIPTION_KEY, "With a grappling hook")
                 .add(ShipForces.GRAPPLE_KEY, "Grappling Rope")
                 .block(GrappleContent.MOORING_RING, "Mooring Ring")
                 .add(MooringRingBlock.TOOLTIP_KEY, "Hooks passing close catch on it and hold fast. Use it with a hook out to tie off the rope")
-                .add(GrappleService.TIED_KEY, "Rope tied to the mooring ring")
-                .add(GrappleService.ALREADY_TIED_KEY, "The rope is already tied to this ring")
+                .add(GrappleService.TIED_KEY, "Rope tied off here")
+                .add(GrappleService.ALREADY_TIED_KEY, "The rope is already tied off here")
                 .add(GrappleService.TIE_SAME_SHIP_KEY, "The hook hangs on this ship: tie the rope on your own ship")
-                .add(GrappleService.TIE_TOO_FAR_KEY, "The rope does not reach this ring")
+                .add(GrappleService.TIE_TOO_FAR_KEY, "The rope does not reach this far")
                 .add(GrappleContent.ROPE_RIDER.get().getDescriptionId(), "Rope Slide")
                 .add(RopeSlideService.DISABLED_KEY, "Sliding along ropes is disabled"));
         data.models(GrappleModule::ringModels);
+        // GR3: the hook-loaded musket's placeholder look (the override sits in the hand-made musket.json)
+        data.json(PackOutput.Target.RESOURCE_PACK, "models/item", Constants.id("musket_hook"), MusketHookModel::build);
         data.blockLoot(loot -> loot.dropSelf(GrappleContent.MOORING_RING.get()));
         data.blockTags(tags -> {
             tags.tag(BlockTags.MINEABLE_WITH_PICKAXE).add(GrappleContent.MOORING_RING.get());

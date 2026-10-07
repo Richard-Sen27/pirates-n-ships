@@ -85,7 +85,7 @@ item_ids:
 | <ItemLink id="pirates_n_ships:lead_shot" /> | 2 iron nuggets (gives 4) | Ammunition for pistol and musket, one per load, with one gunpowder. |
 | <ItemLink id="pirates_n_ships:cannonball" /> | 4 iron ingots (gives 2) | Ammunition for the cannon, loaded after the gunpowder. |
 | <ItemLink id="pirates_n_ships:grappling_hook" /> | 3 iron ingots, 1 string | Throw it at another ship to hook it and haul the hulls together. See [Grappling hook](combat.md#grappling-hook). |
-| <ItemLink id="pirates_n_ships:rope" /> | string | Use it on one cleat, then on a second one 2 to 16 blocks away and lower, to rig a stay. It glints while it remembers the first cleat. |
+| <ItemLink id="pirates_n_ships:rope" /> | string | Use it on a cleat or mooring ring, then on a second one up to 16 blocks away on the same ship: a stay (2+ blocks lower, cleats only) or a decorative rope line. It glints while it remembers the first anchor. |
 | <ItemLink id="pirates_n_ships:hull_patch" /> | 2 planks, 1 coal or charcoal (gives 2) | Use on the edge of a hole in an assembled hull to close the breach. See [Fighting a leak](ships.md#fighting-a-leak). |
 | <ItemLink id="pirates_n_ships:doubloon" /> | none | Currency. |
 | <ItemLink id="pirates_n_ships:tobacco" /> | none | Trade good. |

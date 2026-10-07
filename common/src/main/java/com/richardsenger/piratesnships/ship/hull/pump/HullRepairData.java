@@ -87,7 +87,12 @@ public final class HullRepairData {
     }
 
     private static void models(ModelContext m) {
-        m.blocks().createTrivialCube(HullRepairContent.HULL_PATCH_BLOCK.get());
+        // The hull patch's block and item models are hand-made (art/models/hull_patch.bbmodel and
+        // hull_patch_item.bbmodel, design.md §4.8): datagen writes only the block state
+        Block patch = HullRepairContent.HULL_PATCH_BLOCK.get();
+        m.blockStates().accept(MultiVariantGenerator.multiVariant(patch,
+                Variant.variant().with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(patch))));
+        m.handMadeItem(HullRepairContent.HULL_PATCH.get());
         pump(m, HullRepairContent.BILGE_PUMP.get());
     }
 

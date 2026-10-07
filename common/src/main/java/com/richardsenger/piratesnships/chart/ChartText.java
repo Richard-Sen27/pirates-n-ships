@@ -50,15 +50,45 @@ public final class ChartText {
     public static final String TILE_BLANK_TOOLTIP = "item." + Constants.MOD_ID + ".map_tile.blank";
     public static final String TILE_DRAWN_BY = "item." + Constants.MOD_ID + ".map_tile.drawn_by";
     public static final String TILE_AREA = "item." + Constants.MOD_ID + ".map_tile.area";
+    // map boards (MAP3)
+    public static final String UPDATE = SCREEN + "update";
+    public static final String NEW_DRAWING = SCREEN + "new_drawing";
+    public static final String CLEAR = SCREEN + "clear";
+    public static final String CLEAR_CONFIRM = SCREEN + "clear_confirm";
+    public static final String BOARD_SIZE = SCREEN + "board_size";
+    public static final String BOARD_ZOOM = SCREEN + "board_zoom";
+    public static final String BOARD_ZOOM_LOCKED = SCREEN + "board_zoom_locked";
+    public static final String INK_COST = SCREEN + "ink_cost";
+    public static final String INK_COST_UPDATE = SCREEN + "ink_cost_update";
+    public static final String INK_FREE = SCREEN + "ink_free";
+    public static final String INK_SHORT = SCREEN + "ink_short";
+    public static final String UPDATE_HINT = SCREEN + "update_hint";
+    public static final String DRAW_BOARD_AREA = SCREEN + "draw_board_area";
+    public static final String TILE_UPDATED_BY = "item." + Constants.MOD_ID + ".map_tile.updated_by";
+    public static final String TILE_BOARD = "item." + Constants.MOD_ID + ".map_tile.board";
 
-    /** "Drawn by NAME on day N". */
+    /** "Drawn by NAME on day N", or "Updated by NAME on day N" after an update (MAP3). */
     public static MutableComponent drawnBy(MapTileDrawing d) {
-        return Component.translatable(TILE_DRAWN_BY, d.drawer(), d.day());
+        return Component.translatable(d.updated() ? TILE_UPDATED_BY : TILE_DRAWN_BY, d.drawer(), d.day());
     }
 
-    /** "x A to B, z C to D" (blocks). */
+    /** "x A to B, z C to D" (blocks): the whole board's area for a slice of a board. */
     public static MutableComponent tileArea(MapTileDrawing d) {
-        return Component.translatable(TILE_AREA, d.minX(), d.maxX() - 1, d.minZ(), d.maxZ() - 1);
+        long cb = d.cellBlocks();
+        long span = (long) d.size() * d.zoom();
+        long minCx = d.minCx() - d.board().map(b -> b.column() * span).orElse(0L);
+        long minCz = d.minCz() - d.board().map(b -> b.row() * span).orElse(0L);
+        long w = span * d.board().map(b -> b.columns()).orElse(1);
+        long h = span * d.board().map(b -> b.rows()).orElse(1);
+        return Component.translatable(TILE_AREA, minCx * cb, (minCx + w) * cb - 1, minCz * cb, (minCz + h) * cb - 1);
+    }
+
+    /** "Board of C x R tiles, zoom Z" for a board or a zoomed tile, else empty (MAP3). */
+    public static MutableComponent board(MapTileDrawing d) {
+        int columns = d.board().map(b -> b.columns()).orElse(1);
+        int rows = d.board().map(b -> b.rows()).orElse(1);
+        if (columns * rows == 1 && d.zoom() == 1) return Component.empty();
+        return Component.translatable(TILE_BOARD, columns, rows, d.zoom());
     }
 
     public static String icon(MarkerIcon icon) {
@@ -109,7 +139,25 @@ public final class ChartText {
         m.put(TILE_BLANK_TOOLTIP, "Use with a chart to draw a part of it onto the tile");
         m.put(TILE_DRAWN_BY, "Drawn by %s on day %s");
         m.put(TILE_AREA, "x %s to %s, z %s to %s");
-        m.put(MapTileService.DRAWN, "You draw your chart onto the tile");
+        m.put(MapTileService.DRAWN, "You draw your chart onto the board");
+        m.put(MapTileService.UPDATED, "You add what you have charted to the board");
+        m.put(MapTileService.CLEARED, "You wipe the board clean");
+        m.put(MapTileService.NO_INK_AMOUNT, "You need %s ink for this (you have %s): ink sacs, or kraken ink");
+        m.put(UPDATE, "Update");
+        m.put(NEW_DRAWING, "New");
+        m.put(CLEAR, "Clear");
+        m.put(CLEAR_CONFIRM, "Clear?");
+        m.put(BOARD_SIZE, "Board %s x %s");
+        m.put(BOARD_ZOOM, "zoom %s");
+        m.put(BOARD_ZOOM_LOCKED, "zoom %s (as drawn)");
+        m.put(INK_COST, "Ink: %s (you have %s)");
+        m.put(INK_COST_UPDATE, "Ink: up to %s (you have %s)");
+        m.put(INK_FREE, "Ink: free");
+        m.put(INK_SHORT, "Not enough ink: %s needed, you have %s");
+        m.put(UPDATE_HINT, "Update adds what you have charted since; New draws the board afresh");
+        m.put(DRAW_BOARD_AREA, "x %s, z %s (%s x %s blocks)");
+        m.put(TILE_UPDATED_BY, "Updated by %s on day %s");
+        m.put(TILE_BOARD, "Board of %s x %s tiles, zoom %s");
         for (MapTileRules.Refusal r : MapTileRules.Refusal.values()) {
             if (r == MapTileRules.Refusal.NONE) continue;
             m.put(MapTileService.MSG + r.key(), switch (r) {
@@ -121,6 +169,11 @@ public final class ChartText {
                 case PERMANENT -> "This tile's drawing is permanent";
                 case OUT_OF_WORLD -> "That area is beyond the edge of the world";
                 case UNCHARTED -> "You have charted nothing in that area";
+                case NOT_RECTANGLE -> "The tiles do not form a rectangle";
+                case TOO_BIG -> "The board is too big";
+                case NO_INK -> "You do not have enough ink";
+                case NOTHING_NEW -> "Your chart adds nothing new to this board";
+                case BLANK -> "The board is already blank";
                 case NONE -> "";
             });
         }

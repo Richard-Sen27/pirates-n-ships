@@ -2,12 +2,19 @@ package com.richardsenger.piratesnships.combat.grapple;
 
 import com.mojang.serialization.MapCodec;
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.sailing.item.RopeItem;
+import com.richardsenger.piratesnships.sailing.rope.RopeAnchor;
+import com.richardsenger.piratesnships.sailing.rope.RopeAnchorBlockEntity;
+import com.richardsenger.piratesnships.sailing.rope.RopeLines;
+import com.richardsenger.piratesnships.sailing.sail.TriangularSailContent;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -17,6 +24,8 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.FaceAttachedHorizontalDirectionalBlock;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -45,16 +54,18 @@ import java.util.List;
  *       ({@link GrappleService#tieOff}): the rope then runs from the ring to the hook, the ring's ship hauls instead of
  *       yours, and you can let go. The release action, or breaking either ring, lets the hook go.</li>
  * </ul>
- * With {@code grapple.rings_enabled} off the ring is decoration.
+ * With {@code grapple.rings_enabled} off the ring is decoration. The ring is a {@link RopeAnchor} (RP1): the grapple
+ * treats cleats the same way, and a rope item run from a ring to a cleat or another ring on the same body makes a
+ * decorative rope line, stored in the ring's {@link RopeAnchorBlockEntity}.
  */
-public class MooringRingBlock extends FaceAttachedHorizontalDirectionalBlock implements SimpleWaterloggedBlock {
+public class MooringRingBlock extends FaceAttachedHorizontalDirectionalBlock implements SimpleWaterloggedBlock, EntityBlock, RopeAnchor {
 
     public static final MapCodec<MooringRingBlock> CODEC = simpleCodec(MooringRingBlock::new);
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
     public static final String TOOLTIP_KEY = "block." + Constants.MOD_ID + ".mooring_ring.tooltip";
 
     /** Distance of the ring's middle from the block center toward its support [blocks]. */
-    private static final double RING_INSET = 0.35;
+    public static final double RING_INSET = 0.35;
 
     private static final VoxelShape FLOOR = box(4, 0, 4, 12, 3, 12);
     private static final VoxelShape CEILING = box(4, 13, 4, 12, 16, 12);
@@ -114,23 +125,71 @@ public class MooringRingBlock extends FaceAttachedHorizontalDirectionalBlock imp
         };
     }
 
+    @Override
+    public Kind anchorKind() {
+        return Kind.RING;
+    }
+
+    @Override
+    public double anchorInset() {
+        return RING_INSET;
+    }
+
     /**
      * The middle of the ring, where the rope ties and hooks are caught: {@code pos}'s center moved toward the block the
-     * ring is mounted on. In the coordinates of {@code pos} (plot coordinates for a ring on a ship).
+     * ring is mounted on ({@link RopeAnchor#anchorPoint}). In the coordinates of {@code pos} (plot coordinates for a
+     * ring on a ship).
      */
     public static Vec3 ringCenter(BlockState state, BlockPos pos) {
-        Direction out = getConnectedDirection(state);
-        return Vec3.atCenterOf(pos).subtract(out.getStepX() * RING_INSET, out.getStepY() * RING_INSET, out.getStepZ() * RING_INSET);
+        return state.getBlock() instanceof MooringRingBlock ring ? ring.anchorPoint(state, pos) : Vec3.atCenterOf(pos);
     }
 
     /** {@link #ringCenter} of the ring at {@code pos}, or the block center when there is none. */
     public static Vec3 ringCenter(BlockGetter level, BlockPos pos) {
-        BlockState state = level.getBlockState(pos);
-        return state.getBlock() instanceof MooringRingBlock ? ringCenter(state, pos) : Vec3.atCenterOf(pos);
+        return ringCenter(level.getBlockState(pos), pos);
     }
 
     public static boolean isRing(BlockGetter level, @Nullable BlockPos pos) {
         return pos != null && level.getBlockState(pos).getBlock() instanceof MooringRingBlock;
+    }
+
+    /** The ring's rope lines (RP1) live in a plain {@link RopeAnchorBlockEntity}. */
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new RopeAnchorBlockEntity(GrappleContent.MOORING_RING_BLOCK_ENTITY.get(), pos, state);
+    }
+
+    /** A rope in hand goes to the rope item (it rigs rope lines, RP1), not to the tie-off. */
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
+                                              InteractionHand hand, BlockHitResult hit) {
+        if (stack.getItem() instanceof RopeItem) {
+            return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
+        }
+        return super.useItemOn(stack, state, level, pos, player, hand, hit);
+    }
+
+    /** A player breaking the ring gets back one rope per rope line on it (not in creative mode). */
+    @Override
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (level instanceof ServerLevel && !player.isCreative()) {
+            RopeLines.dropRopes(level, pos, new ItemStack(TriangularSailContent.ROPE.get()));
+        }
+        return super.playerWillDestroy(level, pos, state, player);
+    }
+
+    /** Breaking the ring takes its rope lines down; moved by Sable's assembly ({@code movedByPiston}) it keeps them. */
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        List<BlockPos> partners = List.of();
+        boolean gone = !newState.is(this) && !movedByPiston && level instanceof ServerLevel;
+        if (gone) {
+            partners = RopeLines.partners(level, pos);
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
+        if (gone) {
+            RopeLines.onAnchorRemoved((ServerLevel) level, pos, partners);
+        }
     }
 
     /**
@@ -140,7 +199,7 @@ public class MooringRingBlock extends FaceAttachedHorizontalDirectionalBlock imp
      */
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (!GrappleConfig.ENABLED.get() || !GrappleConfig.RINGS_ENABLED.get()) {
+        if (!GrappleConfig.ENABLED.get() || !GrappleService.anchorEnabled(this)) {
             return InteractionResult.PASS;
         }
         if (level instanceof ServerLevel server) {

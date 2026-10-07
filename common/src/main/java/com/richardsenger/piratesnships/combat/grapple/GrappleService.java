@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.combat.grapple;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.sailing.rope.RopeAnchor;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.ship.sable.ShipEntities;
@@ -14,6 +15,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -99,8 +101,43 @@ public final class GrappleService {
     public static final String ALREADY_TIED_KEY = "message." + Constants.MOD_ID + ".grapple.already_tied";
 
     /**
-     * The player used the mooring ring at {@code ringPos} (plot position for a ring on a ship): ties the near end of
-     * their hook's rope to it ({@link GrappleRules#tie}). PASS without a hook out, so an item in hand is used as usual.
+     * Whether the anchor block {@code anchor} takes part in the grapple (RP1): mooring rings with
+     * {@code rings_enabled}, cleats also need {@code cleats_enabled}.
+     */
+    public static boolean anchorEnabled(RopeAnchor anchor) {
+        return GrappleConfig.RINGS_ENABLED.get()
+                && (anchor.anchorKind() != RopeAnchor.Kind.CLEAT || GrappleConfig.CLEATS_ENABLED.get());
+    }
+
+    /** Whether the block at {@code pos} is a rope anchor the grapple uses ({@link #anchorEnabled}). */
+    public static boolean isGrappleAnchor(BlockGetter level, @Nullable BlockPos pos) {
+        if (pos == null) {
+            return false;
+        }
+        RopeAnchor a = RopeAnchor.of(level.getBlockState(pos));
+        return a != null && anchorEnabled(a);
+    }
+
+    /**
+     * Tie-off at any anchor the grapple uses (installed for the cleat through {@code RopeAnchorUse}, RP1): PASS when
+     * the grapple or this kind of anchor is off, or the player has no hook out.
+     */
+    public static InteractionResult tieOffAtAnchor(ServerLevel level, Player player, BlockPos anchorPos) {
+        if (!GrappleConfig.ENABLED.get() || !isGrappleAnchor(level, anchorPos)) {
+            return InteractionResult.PASS;
+        }
+        return tieOff(level, player, anchorPos);
+    }
+
+    /** Client prediction of {@link #tieOffAtAnchor}. */
+    public static boolean willTieOffAtAnchor(Level level, Player player, BlockPos anchorPos) {
+        return GrappleConfig.ENABLED.get() && isGrappleAnchor(level, anchorPos) && hasHookOutClientSide(level, player);
+    }
+
+    /**
+     * The player used the rope anchor (a mooring ring, or a cleat, RP1) at {@code ringPos} (plot position for an
+     * anchor on a ship): ties the near end of their hook's rope to it ({@link GrappleRules#tie}). PASS without a hook
+     * out, so an item in hand is used as usual.
      */
     public static InteractionResult tieOff(ServerLevel level, Player player, BlockPos ringPos) {
         GrapplingHookEntity hook = hookOf(player);
@@ -112,7 +149,7 @@ public final class GrappleService {
             return InteractionResult.SUCCESS;
         }
         ShipBody ringShip = SableShips.containing(level, ringPos);
-        Vec3 ringPlot = MooringRingBlock.ringCenter(level, ringPos);
+        Vec3 ringPlot = RopeAnchor.point(level, ringPos);
         Vec3 ringWorld = ringShip != null ? ringShip.toWorld(ringPlot) : ringPlot;
         UUID hookShip = hook.state() == GrapplingHookEntity.State.LATCHED ? hook.shipId() : null;
         GrappleRules.Tie tie = GrappleRules.tie(true, ringShip == null ? null : ringShip.id(), hookShip,
@@ -136,14 +173,15 @@ public final class GrappleService {
                 h -> h.getOwner() == player).isEmpty();
     }
 
-    /** A ring found near a hook's path: its ship, block (plot position) and middle (plot coordinates). */
+    /** An anchor found near a hook's path: its ship, block (plot position) and tie point (plot coordinates). */
     record RingCatch(ShipBody ship, BlockPos block, Vec3 center) {
     }
 
     /**
-     * The mooring ring on a ship other than {@code exclude} whose middle lies nearest to the segment {@code from}-{@code to}
-     * (world coordinates), within {@code radius}, or null. Searches only ships whose world bounds come close to the
-     * segment, and in each only the plot blocks around the segment.
+     * The rope anchor the grapple uses ({@link #anchorEnabled}: mooring rings, and cleats, RP1) on a ship other than
+     * {@code exclude} whose tie point lies nearest to the segment {@code from}-{@code to} (world coordinates), within
+     * {@code radius}, or null. Searches only ships whose world bounds come close to the segment, and in each only the
+     * plot blocks around the segment.
      */
     static @Nullable RingCatch findRing(ServerLevel level, Vec3 from, Vec3 to, double radius, @Nullable UUID exclude) {
         if (radius <= 0) {
@@ -163,10 +201,10 @@ public final class GrappleService {
             BlockPos max = BlockPos.containing(Math.max(a.x, b.x) + r, Math.max(a.y, b.y) + r, Math.max(a.z, b.z) + r);
             for (BlockPos p : BlockPos.betweenClosed(min, max)) {
                 BlockState state = level.getBlockState(p);
-                if (!(state.getBlock() instanceof MooringRingBlock)) {
+                if (!(state.getBlock() instanceof RopeAnchor anchor) || !anchorEnabled(anchor)) {
                     continue;
                 }
-                Vec3 c = MooringRingBlock.ringCenter(state, p);
+                Vec3 c = anchor.anchorPoint(state, p);
                 double d = GrappleRules.segmentDistance(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
                 if (GrappleRules.ringCatches(d, radius) && d < bestD) {
                     bestD = d;

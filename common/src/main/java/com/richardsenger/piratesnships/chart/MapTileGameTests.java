@@ -34,6 +34,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
@@ -88,6 +89,8 @@ public final class MapTileGameTests {
         ServerPlayer p = ChartGameTests.player(helper, name);
         p.setPos(Vec3.atCenterOf(tile).add(1, 0, 1));
         if (chartInHand) p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ChartContent.CHART.get()));
+        // MAP3: drawing costs ink
+        p.getInventory().setItem(9, new ItemStack(Items.INK_SAC, 64));
 
         int cb = ChartConfig.CELL_BLOCKS.get();
         int tileCx = Math.floorDiv(tile.getX(), cb);
@@ -187,7 +190,10 @@ public final class MapTileGameTests {
         }
     }
 
-    /** Own batch: changes config. With redraw_allowed off the first drawing is permanent. */
+    /**
+     * Own batch: changes config. With redraw_allowed off the first drawing stays: a redraw elsewhere and a clear are
+     * refused, but the draw mode opens for an update (MAP3: updates only add what was charted since).
+     */
     @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = "pirates_n_ships_config_chart_tile_redraw")
     public static void permanentTilesRefuseARedraw(GameTestHelper helper) {
         ConfigOverrides.during(helper, ChartConfig.REDRAW_ALLOWED, false);
@@ -197,9 +203,15 @@ public final class MapTileGameTests {
         MapTileService.Outcome again = MapTileService.draw(f.player(), new DrawTilePayload(f.tile(), f.minCx() + 3, f.minCz(), false));
         helper.assertValueEqual(again.refusal(), MapTileRules.Refusal.PERMANENT, "the second draw is refused");
         helper.assertTrue(f.be(helper).drawing() == first, "the drawing is untouched");
+        helper.assertValueEqual(MapTileService.clear(f.player(), f.tile()).refusal(), MapTileRules.Refusal.PERMANENT, "no clearing either");
+        helper.assertTrue(f.be(helper).drawing() == first, "still untouched");
         List<CustomPacketPayload> sent = ChartBackend.record(f.player().getUUID());
-        helper.assertFalse(MapTileService.openDrawMode(f.player(), f.tile()), "the draw mode does not even open");
-        helper.assertTrue(sent.isEmpty(), "no chart opened");
+        helper.assertTrue(MapTileService.openDrawMode(f.player(), f.tile()), "the draw mode opens for an update");
+        TileTarget target = opened(helper, sent, 1);
+        helper.assertTrue(target.updatable(), "an intact drawing to update");
+        helper.assertFalse(target.redrawAllowed(), "the screen offers no redraw and no clear");
+        helper.assertValueEqual(MapTileService.draw(f.player(), DrawTilePayload.update(f.tile(), true)).refusal(), MapTileRules.Refusal.NOTHING_NEW,
+                "an update with the same chart adds nothing (and is not refused as a redraw)");
         finish(helper, f.player());
     }
 

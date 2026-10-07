@@ -10,9 +10,9 @@ import net.minecraft.network.codec.StreamCodec;
 import java.util.UUID;
 
 /**
- * Which slice of a map board a tile's drawing is (reserved for MAP3, where tiles placed side by side form one board
- * showing one chart region): the board's id, this tile's column and row, and the board's size in tiles. MAP2 draws
- * single tiles only and never sets it; it is stored and synced so that boards need no new data format.
+ * Which slice of a map board a tile's drawing is (work package MAP3: tiles placed side by side form one board showing
+ * one chart region): the board's id (new on every first draw or redraw, kept by updates), this tile's column (0 = the
+ * drawing's west edge) and row (0 = its north edge), and the board's size in tiles.
  */
 public record BoardSlice(UUID board, int column, int row, int columns, int rows) {
 

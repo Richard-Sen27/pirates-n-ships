@@ -51,9 +51,15 @@ public class HammockSeat extends Entity {
         return seat;
     }
 
+    /**
+     * Height of the canvas top where the two halves meet, in pixels: the ART1d model sags from {@code CANVAS_TOP} at
+     * the ends to this in the middle. The crew rig's {@code sleep} animation drops the hips onto it from here.
+     */
+    public static final double SEAM_CANVAS_TOP = 4;
+
     /** Plot position of the seat: on the canvas, where foot and head meet. */
     public static Vec3 spot(BlockPos foot, Direction facing) {
-        return Vec3.atBottomCenterOf(foot).add(facing.getStepX() * 0.5, HammockBlock.CANVAS_TOP / 16.0, facing.getStepZ() * 0.5);
+        return Vec3.atBottomCenterOf(foot).add(facing.getStepX() * 0.5, SEAM_CANVAS_TOP / 16.0, facing.getStepZ() * 0.5);
     }
 
     /** All seats of the hammock whose foot is at {@code foot}. */

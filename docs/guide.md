@@ -460,7 +460,10 @@ nothing lets a player use it yet: the input and animation layers are missing.
 The pistol and the musket are single-shot flintlocks. Hold right-click with one lead shot and one gunpowder in your
 inventory to load (3 seconds for the pistol, 5 for the musket, with the bow pose; letting go early cancels and costs
 nothing; creative mode needs no ammo). The tooltip shows "Loaded" or "Unloaded". With a loaded gun, hold right-click to aim (a quick click still fires at once): after a second of steady aiming the
-shot is tighter, the musket zooms in a little, and the shot leaves when you release; you see yourself aim and reload (the Player Animation Library drives it, client option
+shot is tighter, the musket zooms in a little, and the shot leaves when you release. To lower an aimed gun without firing, press sneak: the gun goes down still
+loaded and stays down while you keep sneaking (server option `firearms.aim.lower_on_sneak`). While you load, a white
+bar under the gun's slot fills up; a loaded gun shows a full gold bar in the hotbar and inventory, and its tooltip
+says "Loaded" or "Not loaded". You see yourself aim and reload (the Player Animation Library drives it, client option
 `firearm_animations.enabled`). Firing: a lead ball flies out with smoke and a small kick, the gun is unloaded again and needs half a second before it
 can be used. The pistol hits hard but scatters; the musket flies flatter and tighter. Standing in the rain, a quarter of
 the shots misfire with a click and the charge stays in. Without ammo the gun only clicks. Shooting someone counts as an
@@ -642,7 +645,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `mobs.shark` | Shark on/off and peaceful, spawn weight and group (server restart), detection, circle and give-up times, bite cooldown, damage and knockback, frenzy threshold. |
 | `melee_animations` (client) | Sword animations on/off, first-person mode, layer priority. |
 | `melee_input` / `melee_hud` (client) | Hold-to-thrust and parry-tap thresholds; stamina bar on/off, scale and offsets. |
-| `firearms.aim` / `firearm_view` (client) | Minimum hold, steady time and aimed spread factor; musket zoom. |
+| `firearms.aim` / `firearm_view` (client) | Minimum hold, steady time and aimed spread factor, sneak lowers the gun; musket zoom. |
 | `firearms` | Firearms on/off, per gun: damage, muzzle velocity, spread, reload time, recoil; ball lifetime and gravity, cooldown, gunpowder use. |
 | `sailing_runtime` | Sailing forces on/off, heel scaling, steering and anchor on/off, rudder steps, chain length. |
 | `crew_stations` | Crew stations on/off, time per trim step. |

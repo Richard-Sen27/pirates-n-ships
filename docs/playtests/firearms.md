@@ -59,3 +59,19 @@ Addendum (P1): loading shows no bow pose any more (and no pose at all, known); k
 10. **Toggle:** `firearm_animations.enabled = false` mid-aim: the pose stops; back on: the pose returns.
 11. **Look:** do the guns sit naturally in the hand during the aims, and do they jump during the reloads (the item
     position channel is unverified)?
+
+
+## P5: lowering, loading bar, loaded state
+1. Load a pistol by holding right-click: a white bar under the hotbar slot fills over about 3 s (musket 5 s), also
+   in the inventory. Let go half way: the bar disappears, the gun stays unloaded, no ammo used.
+2. Finished loading: the bar is full and gold, in the hotbar, the inventory and after relogging; tooltip "Loaded",
+   "Hold to aim, release to fire", "Sneak to lower without firing".
+3. Aim, then press sneak while still holding: the aim pose and musket zoom end at once, no shot, no click, the gold
+   bar stays; keep holding right-click and sneak: the gun stays down; let go of sneak: it rises again; release: it
+   fires.
+4. A quick click and a normal hold-and-release still fire; afterwards no bar and "Not loaded".
+5. Sneak and right-click a loaded gun: nothing; an unloaded gun with ammo: it loads.
+6. `firearms.aim.lower_on_sneak = false`: sneaking no longer lowers, a release while crouched fires, the hint line is
+   gone. Say whether you want to fire while crouched by default (then lowering becomes a sneak *press*, not the
+   sneaking state).
+7. LAN if possible: the other player sees your aim animation stop when you sneak.

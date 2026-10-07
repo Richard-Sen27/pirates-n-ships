@@ -868,16 +868,18 @@ from above).
 
 Blockbench model, skin and animations on the kraken rig of K1a; the placeholder in `tools/gen_kraken.py` is gone (the
 script now writes only the two loot sprites, and only when they are named, and keeps the rig contract in its
-docstring). Sources: `art/models/entity/kraken.bbmodel` (405 cubes), `kraken_model.js` (part list, UV packer, skin
-painter, V1 check, export, render) and `kraken_animations.js`; render `renders/kraken.png` (side, front,
-three-quarter from a deck, grab at 0.45 s, from below; the arms lean out 50° in the pictures as the code aims them in
-game, nothing is keyed for that).
+docstring). Sources: `art/models/entity/kraken.bbmodel` (533 cubes since K1c), `kraken_model.js` (part list, UV
+packer, skin painter, V1 check, export, render) and `kraken_animations.js`; render `renders/kraken.png` (side, front,
+three-quarter from a deck, grab at 0.45 s, lurking, from below; the arms are posed in the pictures as the code aims
+them in game (`KRK.aimQuat`, the same maths as `KrakenAim`): 50° out at the attack rest, hanging 25° out when
+lurking; nothing is keyed for that).
 
 - **Rig contract** (KrakenRigTest): 1 px per unit, y up, faces −z, +x (file) is its left, hit box 56 × 56 px. Bones
   `root [0,0,0]` → `mantle [0,30,0]` → `eye_left [12,40,−20]`, `eye_right [−12,40,−20]`; `tentacle_<i>_1` (i = 0..7)
   under `root` on a ring of radius 22.4 at y 20, angle a = (i + 0.5)·45°, x = −sin a·22.4, z = −cos a·22.4, with
-  `tentacle_<i>_2` 12 px and `tentacle_<i>_3` 24 px above it (the ring is `Kraken#anchor`'s). Rest: arms straight up,
-  34 px. Code aims and stretches `root` and every `tentacle_<i>_1`: never key them. Animations `idle` (loop), `surface`
+  `tentacle_<i>_2` 20 px and `tentacle_<i>_3` 40 px above it (K1c; K1b had 12 and 24; the ring is `Kraken#anchor`'s).
+  Rest: arms straight up, 60 px to the curled tip (`Kraken#TENTACLE_LENGTH` 3.75 blocks, `KrakenModel#TENTACLE_LENGTH`).
+  Code aims and stretches `root` and every `tentacle_<i>_1`: never key them. Animations `idle` (loop), `surface`
   and `grab` (once), `submerge` (hold). Texture 128×64. Only cubes were added, no bones, no bone rest rotations.
 - **Rebuild.** In `risky_eval`: `setupProject(Formats.geckolib_model)`, name/geometry/identifier `kraken`, texture
   128×64, `visible_box [8, 6, 1.5]`; `window.KRK = {REPO: '<repo>', UUID: Project.uuid}`; eval `kraken_model.js`,
@@ -890,25 +892,26 @@ game, nothing is keyed for that).
   Blockbench's internal space from one canonical arm (axis on x = z = 0, sucker side +z): arm i is turned about its
   axis by cube rotation y = −a so the suckers face the body's axis, and moved to its ring point; the curled tip cubes
   add a tilt x towards the sucker side (cube rotation `[tilt, −a, 0]`, ZYX like GeckoLib). Measured in the preview:
-  the sucker face is the inner one, the rest-pose tip curls 3.7 px inwards.
+  the sucker face is the inner one, the rest-pose tip curls inwards (3.7 px in K1b; `KrakenRigTest` checks the side).
 - **Cubes per bone.** `mantle` 93: head of five round layers (y 12..52, radius 10.8 → 14.6 → 18.4 → 21.4 → 18.2),
   mantle of eight layers tapering from radius 15.6 at y 52 to a 2 px point at y 94.6, each round layer a square core
   plus four side slabs (a rounded square; slabs 0.1 px longer than the core at both ends, so no shared planes); two
   fins of 12 strips each (rhombus, y 62.3..86.3, out to x ±24.3, 2.2 px thick at the middle, thinner at the ends);
   a ring of lips (5) and the beak (upper mandible, lower mandible, hook; black) at the centre of the arm crown on the
   underside. `eye_left`/`eye_right` 4 each: lid rim 11.2 × 11.2, iris disc 9.6 (gold, pale ring, dark edge), pupil
-  4 × 4, glint. Per arm: `_1` 12 (two cubes 7 and 6.2 px wide, 10 suckers), `_2` 12 (5.4 and 4.6 px, 10 suckers),
-  `_3` 14 (3.8 px straight, then 3.2, 2.5, 1.7 px tilted 14°, 32°, 56°; 10 suckers). Suckers are 1.2 → 0.6 px discs in
-  two rows on the inner face, 0.35 px proud.
+  4 × 4, glint. Per arm (K1c lengths): `_1` 16 (cubes 13 and 11.4 px long, 7 and 6.2 px wide, 14 suckers), `_2` 18
+  (10.6 and 10.6 px, 5.4 and 4.6 px wide, 16 suckers), `_3` 20 (3.8 px wide, 10 px straight, then 5, 4.4, 3 px long
+  and 3.2, 2.5, 1.7 px wide, tilted 14°, 32°, 56°; 16 suckers). Suckers are 1.2 → 0.55 px discs in two rows on the
+  inner face, 0.35 px proud.
 - **Sheet (128×64, per-face UV).** `KRK.pack` packs one rectangle per primary face on shelves at two densities: fine
   parts (arms, eyes, beak, lips) 1 texel per px, the body 0.68 (its up/down faces 0.6 of that, 0.41: rims seen from
   above and the pale underside). Sharing: all eight arms use arm 0's rectangles; the right eye and fin are x-mirrors of
   the left; centred cubes reuse west for east and north for south (u reversed); each round layer repeats its sides
   four times (core west = north, side slab's outer face = front slab's front, side slab's front = front slab's side;
   the crown pattern has 8 spots per turn, so the repeat has no seam). Faces fully inside another body cube are left
-  out. Areas (texels): body sides 3005, body tops and bottoms 1625, fins 191, eyes 646, beak and lips 400, arms 1074;
-  patches at u 120..127, v 60..63 (sucker 4×4 pale with a dark rim at u 124, sucker side, pupil, glint, beak 2×2);
-  1219 texels free.
+  out. Patches at u 120..127, v 60..63 (sucker 4×4 pale with a dark rim at u 124, sucker side, pupil, glint, beak
+  2×2). Since K1c the longer arms take more of the sheet: the packer settles at body density 0.66 (K1b 0.68), arms
+  still 1 texel per px, 1099 texels free.
 - **Painting** (`KRK.paint`, per texel from the rest-pose mesh like the shark): dark reddish-brown skin with a two-octave
   value-noise mottle, paler underside below y 23 and on down faces, a crown pattern above y 69 (rows of pale spots
   with dark rings, offset every other row), fins darkening to their outer edge, arms with a pale sucker face and sides
@@ -920,6 +923,13 @@ game, nothing is keyed for that).
   the mantle's x scale). Arm bends are quaternions about the ring's tangent ("curl", the tip moves to the body's axis,
   the sucker side closes) and radial axis ("side"), stored as internal ZYX Euler keys. Smooth sums of waves are sampled
   every 0.5 s with linear keys.
+- **Aim (K1c, `KrakenAim`).** The code turns `tentacle_<i>_1` so the arm points at its hit box and, unlike K1b's
+  Z·X look-at, also sets the roll: the rest basis (up, inner normal towards the axis, their cross product) goes onto
+  (aim, the inner direction made perpendicular to the aim, their cross product), converted to GeckoLib's Z·Y·X angles.
+  So the sucker face (and the curl of the tip and of the animations) turns towards the body's axis in every pose. When
+  an arm points straight away from (or at) the axis horizontally that direction is undefined: it falls back to the
+  body's forward, and the roll flips there. A tentacle without a known part leans 25° out (straight up it runs
+  through the head); `KrakenAimTest` checks 72 aims, the curl side and the head clearance.
 
   | Name | Content |
   |---|---|

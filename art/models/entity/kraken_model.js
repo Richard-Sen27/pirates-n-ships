@@ -6,8 +6,9 @@
 //
 // Rig contract (K1a, KrakenRigTest): 1 px per unit, y up, the kraken faces -z, +x (file) is its left. Bones
 // root [0,0,0] > mantle [0,30,0] > eye_left [12,40,-20], eye_right [-12,40,-20]; tentacle_<i>_1 under root on a ring of
-// radius 22.4 at y 20, angle a = (i + 0.5) * 45 deg, x = -sin(a) * 22.4, z = -cos(a) * 22.4; tentacle_<i>_2 12 px and
-// tentacle_<i>_3 24 px above it. Only cubes are added, never bones; no bone has a rest rotation.
+// radius 22.4 at y 20, angle a = (i + 0.5) * 45 deg, x = -sin(a) * 22.4, z = -cos(a) * 22.4; tentacle_<i>_2 20 px and
+// tentacle_<i>_3 40 px above it (KRK.SEG; K1c, was 12), a tentacle is 60 px long. Only cubes are added, never bones;
+// no bone has a rest rotation.
 //
 // Coordinates: the body (head, mantle, fins, beak, eyes) is listed in file coordinates and mirrored in x for the build
 // (Blockbench's internal x = -file x, so eye_left sits at internal -12). The tentacles are built directly in internal
@@ -26,7 +27,7 @@ window.KRK = window.KRK || {};
 // (not "KR": Blockbench has a global KR of its own)
 KRK.REPO = KRK.REPO || '';
 KRK.W = 128; KRK.H = 64;
-KRK.HS = 0.6; KRK.N = 8; KRK.RING = 22.4; KRK.RING_Y = 20; KRK.SEG = 12;
+KRK.HS = 0.6; KRK.N = 8; KRK.RING = 22.4; KRK.RING_Y = 20; KRK.SEG = 20;
 KRK.check = function () {
   if (!KRK.UUID || !Project || Project.uuid !== KRK.UUID) throw new Error('not the kraken project: ' + (Project && Project.uuid));
 };
@@ -37,8 +38,8 @@ KRK.BONES = (function () {
   for (let i = 0; i < KRK.N; i++) {
     const a = KRK.ang(i), x = Math.round(-Math.sin(a) * KRK.RING * 10000) / 10000 + 0, z = Math.round(-Math.cos(a) * KRK.RING * 10000) / 10000 + 0;
     B.push(['tentacle_' + i + '_1', 'root', [x, 20, z]]);
-    B.push(['tentacle_' + i + '_2', 'tentacle_' + i + '_1', [x, 32, z]]);
-    B.push(['tentacle_' + i + '_3', 'tentacle_' + i + '_2', [x, 44, z]]);
+    B.push(['tentacle_' + i + '_2', 'tentacle_' + i + '_1', [x, KRK.RING_Y + KRK.SEG, z]]);
+    B.push(['tentacle_' + i + '_3', 'tentacle_' + i + '_2', [x, KRK.RING_Y + 2 * KRK.SEG, z]]);
   }
   return B;
 })();
@@ -110,11 +111,13 @@ KRK.bodyParts = function () {
 
 // ---- canonical tentacle (internal coordinates, axis x = z = 0, inner side +z) ---------------------------------------
 // segment cubes: [seg (1..3), name, y0 or null (chained), length, width, tilt]
-KRK.TSEG = [[1, 'a', 17, 9, 7, 0], [1, 'b', 25.6, 7.4, 6.2, 0], [2, 'a', 32, 6.6, 5.4, 0], [2, 'b', 38.4, 6.6, 4.6, 0],
-  [3, 'a', 44.4, 4.4, 3.8, 0], [3, 'b', null, 3.4, 3.2, 14], [3, 'c', null, 3.2, 2.5, 32], [3, 'd', null, 2.2, 1.7, 56]];
+// (K1c: segments 20 px apart, so _1 spans y 17..41, _2 40..61, _3 60.4 to the curled tip near y 80)
+KRK.TSEG = [[1, 'a', 17, 13, 7, 0], [1, 'b', 29.6, 11.4, 6.2, 0], [2, 'a', 40, 10.6, 5.4, 0], [2, 'b', 50.4, 10.6, 4.6, 0],
+  [3, 'a', 60.4, 10, 3.8, 0], [3, 'b', null, 5, 3.2, 14], [3, 'c', null, 4.4, 2.5, 32], [3, 'd', null, 3, 1.7, 56]];
 // suckers per segment cube: local heights from the cube's base and size
-KRK.TSUCK = {'1a': [[5, 1.2], [7.2, 1.2]], '1b': [[1.6, 1.1], [4, 1.1], [6.4, 1.05]], '2a': [[2, 1], [4.2, 1]],
-  '2b': [[1.2, 0.9], [3.4, 0.9], [5.4, 0.9]], '3a': [[1, 0.8], [3, 0.8]], '3b': [[0.9, 0.7], [2.5, 0.7]], '3c': [[1.3, 0.6]]};
+KRK.TSUCK = {'1a': [[5, 1.2], [7.8, 1.2], [10.6, 1.2]], '1b': [[1.6, 1.1], [4.3, 1.1], [7, 1.1], [9.7, 1.05]],
+  '2a': [[1.6, 1], [4.2, 1], [6.8, 1], [9.3, 1]], '2b': [[1.2, 0.9], [3.7, 0.9], [6.2, 0.9], [8.7, 0.9]],
+  '3a': [[1.2, 0.8], [3.4, 0.8], [5.6, 0.8], [7.8, 0.8]], '3b': [[0.9, 0.7], [3, 0.7]], '3c': [[1.4, 0.6], [3, 0.55]]};
 KRK.tentacleCanon = function () {
   const out = [];
   let end = null; // chained base: [y, z] of the previous cube's end on the curl
@@ -373,7 +376,7 @@ KRK.colour = function (pr, p, n) {
       // the sides lighten towards the sucker face; banding gets darker towards the tip
       const lat = ((p[0] - ax[0]) * inw[0] + (p[2] - ax[1]) * inw[1]) / L;
       c = KRK.mix(c, C.inner, KRK.smooth(0.2, 3.4, lat) * 0.5 * (Math.abs(dot) < 0.3 ? 1 : 0));
-      return KRK.mix(c, C.skin_d, KRK.smooth(40, 54, y) * 0.5);
+      return KRK.mix(c, C.skin_d, KRK.smooth(55, 78, y) * 0.5);
     }
     case 'lip': {
       const a = Math.atan2(p[0], p[2]);
@@ -505,16 +508,31 @@ KRK.export = function () {
 
 // ---- renders: art/renders/kraken.png -----------------------------------------------------------------------------
 // views: [label, camera position (internal), look-at y, animation name or null, time, splay]. In game the code aims
-// every tentacle_<i>_1 at its hit box; splay (degrees) leans each first segment outwards like that for the picture
-// (only the preview meshes, nothing is keyed).
-KRK.VIEWS = [['side (arms leaning out 50 deg, as aimed in game)', [-185, 62, 0], 46, null, 0, 50],
-  ['front', [0, 62, -185], 46, null, 0, 50], ['three-quarter, from a deck', [-120, 120, -135], 42, null, 0, 50],
-  ['grab at 0.45 s', [-120, 120, -135], 42, 'grab', 0.45, 50], ['from below: beak, suckers', [-70, -95, -110], 30, null, 0, 50]];
+// every tentacle_<i>_1 at its hit box (KrakenAim: the arm along the aim, its sucker face turned towards the body's
+// axis); splay (degrees from straight up, outwards) poses each first segment the same way for the picture (only the
+// preview meshes, nothing is keyed). 50 is the attack rest, 155 the lurking rest (hanging 25 deg out).
+KRK.VIEWS = [['side (attack rest: arms 50 deg out)', [-270, 70, 0], 48, null, 0, 50],
+  ['front', [0, 70, -270], 48, null, 0, 50], ['three-quarter, from a deck', [-175, 175, -195], 44, null, 0, 50],
+  ['grab at 0.45 s', [-175, 175, -195], 44, 'grab', 0.45, 50], ['lurking (arms hang 25 deg out)', [-230, 30, -120], 30, null, 0, 155],
+  ['from below: beak, suckers', [-110, -150, -165], 25, null, 0, 50]];
+// the rotation KrakenAim gives tentacle i for the unit direction d (internal = GeckoLib's baked frame): the rest frame
+// (up, inner normal towards the axis) onto (d, the inner direction made perpendicular to d)
+KRK.aimQuat = function (i, d) {
+  const a = KRK.ang(i), px = Math.sin(a) * KRK.RING, pz = -Math.cos(a) * KRK.RING, r = Math.hypot(px, pz);
+  const u0 = new THREE.Vector3(0, 1, 0), n0 = new THREE.Vector3(-px / r, 0, -pz / r);
+  const u = d.clone().normalize(), n = n0.clone().addScaledVector(u, -n0.dot(u));
+  if (n.length() < 1e-4) n.set(0, 0, -1).addScaledVector(u, u.z);
+  n.normalize();
+  const b0 = new THREE.Vector3().crossVectors(u0, n0), b = new THREE.Vector3().crossVectors(u, n);
+  const m0 = new THREE.Matrix4().makeBasis(u0, n0, b0), m = new THREE.Matrix4().makeBasis(u, n, b);
+  return new THREE.Quaternion().setFromRotationMatrix(m.multiply(m0.transpose()));
+};
 KRK.splay = function (deg) {
+  const t = deg * Math.PI / 180;
   for (let i = 0; i < KRK.N; i++) {
     const g = Group.all.find(x => x.name === 'tentacle_' + i + '_1'), a = KRK.ang(i);
-    const axis = new THREE.Vector3(-Math.cos(a), 0, -Math.sin(a));
-    g.mesh.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(axis, deg * Math.PI / 180));
+    const d = new THREE.Vector3(Math.sin(a) * Math.sin(t), Math.cos(t), -Math.cos(a) * Math.sin(t));
+    g.mesh.quaternion.premultiply(KRK.aimQuat(i, d));
     g.mesh.updateMatrixWorld(true);
   }
 };

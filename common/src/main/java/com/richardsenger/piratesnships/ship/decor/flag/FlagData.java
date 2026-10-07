@@ -5,12 +5,9 @@ import com.richardsenger.piratesnships.core.datagen.LangBuilder;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
 import com.richardsenger.piratesnships.law.flag.FlagKind;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
-import com.richardsenger.piratesnships.ship.decor.FlagpoleBlock;
 import com.richardsenger.piratesnships.ship.decor.ShipDecor;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
-import net.minecraft.core.Direction;
-import net.minecraft.data.models.blockstates.Condition;
-import net.minecraft.data.models.blockstates.MultiPartGenerator;
+import net.minecraft.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
 import net.minecraft.data.models.model.ModelLocationUtils;
@@ -26,11 +23,9 @@ import net.minecraft.world.level.block.Block;
 import java.util.Map;
 
 /**
- * Datagen for flags. The flagpole's look: a multipart block state with the pole (hand-made {@code block/flagpole}) always and,
- * per shown flag kind and facing, the kind's cloth model ({@link FlagClothModel}: one block high, 1.5 blocks long,
- * built in code and written through {@link ModelContext#models()}), rotated by the block state to the facing. The
- * cloth model points north; other facings rotate it by {@link FlagClothModel#yRotation}. A struck flag
- * ({@code flag=none}) shows only the pole.
+ * Datagen for flags. The flagpole's block state shows only the pole (hand-made {@code block/flagpole}) in every state;
+ * the cloth is drawn by the block entity renderer ({@code client/FlagClothRenderer}, geometry in
+ * {@link FlagClothModel}) at the flag's continuous downwind yaw.
  */
 public final class FlagData {
 
@@ -83,29 +78,10 @@ public final class FlagData {
     private static void models(ModelContext m) {
         for (RegistryEntry<Item, Item> flag : Flags.flagItems()) m.flatItem(flag.get());
         Block pole = ShipDecor.FLAGPOLE.get();
-        // Hand-made Blockbench model (art/models/flagpole.bbmodel): 3 px pole at the block centre, so the cloth's
-        // hoist (from the centre) stays inside it; the cleat sits on a diagonal, clear of the cloth in every facing.
+        // Hand-made Blockbench model (art/models/flagpole.bbmodel) in every state: the cloth is drawn by the
+        // FlagClothRenderer at the flag's exact downwind yaw (FL1), not by the block model.
         ResourceLocation poleModel = ModelLocationUtils.getModelLocation(pole);
-        MultiPartGenerator gen = MultiPartGenerator.multiPart(pole).with(Variant.variant().with(VariantProperties.MODEL, poleModel));
-        for (FlagKind kind : FlagKind.values()) {
-            if (kind == FlagKind.NONE) continue;
-            ResourceLocation cloth = FlagClothModel.modelId(kind);
-            m.models().accept(cloth, () -> FlagClothModel.json(kind));
-            for (Direction d : Direction.Plane.HORIZONTAL) {
-                gen.with(Condition.condition().term(FlagpoleBlock.FLAG, kind).term(FlagpoleBlock.FACING, d),
-                        Variant.variant().with(VariantProperties.MODEL, cloth).with(VariantProperties.Y_ROT, rotation(d)));
-            }
-        }
-        m.blockStates().accept(gen);
-    }
-
-    private static VariantProperties.Rotation rotation(Direction d) {
-        return switch (FlagClothModel.yRotation(d)) {
-            case 90 -> VariantProperties.Rotation.R90;
-            case 180 -> VariantProperties.Rotation.R180;
-            case 270 -> VariantProperties.Rotation.R270;
-            default -> VariantProperties.Rotation.R0;
-        };
+        m.blockStates().accept(MultiVariantGenerator.multiVariant(pole, Variant.variant().with(VariantProperties.MODEL, poleModel)));
     }
 
     private static void recipes(RecipeOutput out) {

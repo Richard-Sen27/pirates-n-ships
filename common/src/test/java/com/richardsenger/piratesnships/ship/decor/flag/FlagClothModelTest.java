@@ -1,141 +1,137 @@
 package com.richardsenger.piratesnships.ship.decor.flag;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.richardsenger.piratesnships.law.flag.FlagKind;
-import net.minecraft.core.Direction;
+import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** The cloth model JSON (pure) and, run from {@code common/}, the committed block state and models that use it. */
+/**
+ * The cloth geometry the renderer draws (pure) and, run from {@code common/}, the committed block state, which since
+ * FL1 shows only the pole.
+ */
 class FlagClothModelTest {
 
     private static final Path ASSETS = Path.of("src/generated/resources/assets/pirates_n_ships");
+    private static final float EPS = 1.0e-6f;
 
-    private static List<FlagKind> shownKinds() {
-        List<FlagKind> kinds = new ArrayList<>(List.of(FlagKind.values()));
-        kinds.remove(FlagKind.NONE);
-        return kinds;
+    private static Map<String, FlagClothModel.Face> faces() {
+        Map<String, FlagClothModel.Face> m = new HashMap<>();
+        for (FlagClothModel.Face f : FlagClothModel.faces()) m.put(f.name(), f);
+        return m;
     }
 
-    private static float[] floats(JsonArray a) {
-        float[] f = new float[a.size()];
-        for (int i = 0; i < f.length; i++) f[i] = a.get(i).getAsFloat();
-        return f;
+    private static float min(int axis) {
+        float v = Float.MAX_VALUE;
+        for (FlagClothModel.Face f : FlagClothModel.faces()) for (float[] c : f.corners()) v = Math.min(v, c[axis]);
+        return v;
+    }
+
+    private static float max(int axis) {
+        float v = -Float.MAX_VALUE;
+        for (FlagClothModel.Face f : FlagClothModel.faces()) for (float[] c : f.corners()) v = Math.max(v, c[axis]);
+        return v;
     }
 
     @Test
-    void clothIsOneBlockHighAndReachesTheModelLimitFromThePoleCenter() {
-        JsonObject json = FlagClothModel.json("pirates_n_ships:block/flag_navy");
-        JsonArray elements = json.getAsJsonArray("elements");
-        assertEquals(1, elements.size());
-        JsonObject e = elements.get(0).getAsJsonObject();
-        float[] from = floats(e.getAsJsonArray("from"));
-        float[] to = floats(e.getAsJsonArray("to"));
-        assertEquals(List.of(7.5f, 0f, -16f), List.of(from[0], from[1], from[2]));
-        assertEquals(List.of(8.5f, 16f, 8f), List.of(to[0], to[1], to[2]));
-        assertEquals(16f, to[1] - from[1], "one block high");
+    void clothIsOneBlockHighAndOneAndAHalfLongFromThePoleAxis() {
+        assertEquals(0f, min(1), EPS);
+        assertEquals(1f, max(1), EPS, "one block high");
+        assertEquals(0f, max(2), EPS, "starts on the pole's axis: no gap at the pole");
+        assertEquals(-1.5f, min(2), EPS, "1.5 blocks from the pole's axis, pointing north at yaw 0");
         assertEquals(24, FlagClothModel.LENGTH);
-        assertEquals(24f, to[2] - from[2], "1.5 blocks from the pole's center");
-        assertTrue(from[2] <= 6f && to[2] >= 6f, "starts inside the pole (pole surface at z=6): no gap");
-        assertEquals(1f, to[0] - from[0], "1 px thick");
+        assertEquals(1f / 16f, max(0) - min(0), EPS, "1 px thick");
+        assertEquals(0f, max(0) + min(0), EPS, "centred on the pole");
     }
 
     @Test
-    void facesUseTheTextureWithinItsBoundsAndTheBackIsMirrored() {
-        JsonObject json = FlagClothModel.json("pirates_n_ships:block/flag_merchant");
-        assertEquals("minecraft:cutout", json.get("render_type").getAsString());
-        assertFalse(json.get("ambientocclusion").getAsBoolean());
-        assertEquals("pirates_n_ships:block/flag_merchant", json.getAsJsonObject("textures").get("cloth").getAsString());
-        JsonObject faces = json.getAsJsonArray("elements").get(0).getAsJsonObject().getAsJsonObject("faces");
-        assertEquals(Set.of("east", "west", "north", "up", "down"), faces.keySet(), "no face hidden inside the pole");
-        for (Map.Entry<String, JsonElement> f : faces.entrySet()) {
-            JsonObject face = f.getValue().getAsJsonObject();
-            assertEquals("#cloth", face.get("texture").getAsString());
-            float[] uv = floats(face.getAsJsonArray("uv"));
+    void facesAreTheFrontBackTipAndEdgesWithOutwardNormals() {
+        assertEquals(Set.of("east", "west", "north", "up", "down"),
+                FlagClothModel.faces().stream().map(FlagClothModel.Face::name).collect(Collectors.toSet()),
+                "no face hidden inside the pole");
+        for (FlagClothModel.Face f : FlagClothModel.faces()) {
+            float[][] c = f.corners();
+            assertEquals(4, c.length);
+            Vector3f a = new Vector3f(c[0]), b = new Vector3f(c[1]), d = new Vector3f(c[3]);
+            Vector3f n = new Vector3f(b).sub(a).cross(new Vector3f(d).sub(a)).normalize();
+            assertEquals(f.nx(), n.x, EPS, f.name());
+            assertEquals(f.ny(), n.y, EPS, f.name());
+            assertEquals(f.nz(), n.z, EPS, f.name());
             for (int i = 0; i < 4; i++) {
-                // texture pixels: u * 2 over 32 columns, v over 16 rows
-                float px = i % 2 == 0 ? uv[i] * FlagClothModel.TEXTURE_WIDTH / 16f : uv[i] * FlagClothModel.TEXTURE_HEIGHT / 16f;
-                float max = i % 2 == 0 ? FlagClothModel.TEXTURE_WIDTH : FlagClothModel.TEXTURE_HEIGHT;
-                assertTrue(px >= 0 && px <= max, f.getKey() + " uv " + i + " = " + px + " px outside 0.." + max);
+                assertTrue(f.u()[i] >= 0f && f.u()[i] <= 1f && f.v()[i] >= 0f && f.v()[i] <= 1f, f.name() + " uv " + i);
             }
         }
-        float[] east = floats(faces.getAsJsonObject("east").getAsJsonArray("uv"));
-        float[] west = floats(faces.getAsJsonObject("west").getAsJsonArray("uv"));
-        // 24 texture columns over 24 model pixels: square texels
-        assertEquals(List.of(0f, 0f, 12f, 16f), List.of(east[0], east[1], east[2], east[3]));
-        assertEquals(List.of(12f, 0f, 0f, 16f), List.of(west[0], west[1], west[2], west[3]));
     }
 
     @Test
-    void builderRejectsWhatVanillaRejects() {
-        assertThrows(IllegalArgumentException.class, () -> new ElementModel().element(0, 0, -16.5f, 1, 1, 1));
-        assertThrows(IllegalArgumentException.class, () -> new ElementModel().element(0, 0, 0, 1, 1, 32.5f));
-        assertThrows(IllegalArgumentException.class, () -> new ElementModel().element(2, 0, 0, 1, 1, 1));
-        assertThrows(IllegalArgumentException.class, () -> new ElementModel().element(0, 0, 0, 1, 1, 1)
-                .face(ElementModel.Face.UP, 0, 0, 17, 1, "#t"));
-        assertThrows(IllegalStateException.class, () -> new ElementModel().element(0, 0, 0, 1, 1, 1).end());
-    }
-
-    @Test
-    void everyKindAndFacingHasADistinctModelAndRotation() {
-        Set<String> models = new HashSet<>();
-        Set<String> variants = new HashSet<>();
-        for (FlagKind kind : shownKinds()) {
-            assertTrue(models.add(FlagClothModel.modelId(kind).toString()));
-            for (Direction d : Direction.Plane.HORIZONTAL) {
-                assertTrue(variants.add(FlagClothModel.modelId(kind) + "@" + FlagClothModel.yRotation(d)));
+    void frontAndBackShowTheClothWithSquareTexelsAndTheHoistAtThePole() {
+        Map<String, FlagClothModel.Face> faces = faces();
+        for (String side : List.of("east", "west")) {
+            FlagClothModel.Face f = faces.get(side);
+            for (int i = 0; i < 4; i++) {
+                float z = f.corners()[i][2];
+                float y = f.corners()[i][1];
+                // column = distance from the pole in pixels: 1 texel per model pixel along the cloth
+                assertEquals(-z * 16f, f.u()[i] * FlagClothModel.TEXTURE_WIDTH, 1.0e-4f, side + " corner " + i);
+                // row 0 at the top, 16 rows over the block height
+                assertEquals((1f - y) * 16f, f.v()[i] * FlagClothModel.TEXTURE_HEIGHT, 1.0e-4f, side + " corner " + i);
             }
         }
-        assertEquals(shownKinds().size() * 4, variants.size());
-        assertThrows(IllegalArgumentException.class, () -> FlagClothModel.modelId(FlagKind.NONE));
+        // The front faces +X and the back -X: the same columns seen from opposite sides read mirrored.
+        assertEquals(1f, faces.get("east").nx());
+        assertEquals(-1f, faces.get("west").nx());
     }
 
-    /** The committed block state lists exactly one cloth per shown kind and facing, and nothing for {@code none}. */
     @Test
-    void generatedBlockStateReferencesEveryClothVariant() throws IOException {
-        JsonArray parts = JsonParser.parseString(Files.readString(ASSETS.resolve("blockstates/flagpole.json")))
-                .getAsJsonObject().getAsJsonArray("multipart");
+    void tipAndEdgesUseTheLastColumnAndTheSwatch() {
+        Map<String, FlagClothModel.Face> faces = faces();
+        for (float u : faces.get("north").u()) {
+            assertTrue(u >= FlagClothModel.CLOTH_U1 - FlagClothModel.COLUMN_U - EPS && u <= FlagClothModel.CLOTH_U1 + EPS, "tip u " + u);
+        }
+        for (String edge : List.of("up", "down")) {
+            for (float u : faces.get(edge).u()) {
+                assertTrue(u >= FlagClothModel.CLOTH_U1 - EPS, edge + " u " + u + " must sample the swatch, not the cloth");
+            }
+        }
+    }
+
+    @Test
+    void texturesAndTint() {
+        assertEquals("pirates_n_ships:textures/block/flag_navy.png", FlagClothModel.textureFile(FlagKind.NAVY).toString());
+        assertEquals("pirates_n_ships:block/flag_jolly_roger", FlagClothModel.texture(FlagKind.JOLLY_ROGER).toString());
+        assertThrows(IllegalArgumentException.class, () -> FlagClothModel.texture(FlagKind.NONE));
         for (FlagKind kind : FlagKind.values()) {
-            for (Direction d : Direction.Plane.HORIZONTAL) {
-                List<JsonObject> cloths = new ArrayList<>();
-                for (JsonElement p : parts) {
-                    JsonObject part = p.getAsJsonObject();
-                    if (!part.has("when")) continue;
-                    JsonObject when = part.getAsJsonObject("when");
-                    if (when.get("flag").getAsString().equals(kind.getSerializedName()) && when.get("facing").getAsString().equals(d.getSerializedName())) {
-                        cloths.add(part.getAsJsonObject("apply"));
-                    }
-                }
-                if (kind == FlagKind.NONE) {
-                    assertTrue(cloths.isEmpty(), "a struck flag shows no cloth");
-                    continue;
-                }
-                assertEquals(1, cloths.size(), kind + " " + d);
-                JsonObject apply = cloths.get(0);
-                assertEquals(FlagClothModel.modelId(kind).toString(), apply.get("model").getAsString());
-                assertEquals(FlagClothModel.yRotation(d), apply.has("y") ? apply.get("y").getAsInt() : 0);
-                assertFalse(apply.has("uvlock") && apply.get("uvlock").getAsBoolean(), "no uvlock on the cloth");
-            }
+            if (kind == FlagKind.NONE) continue;
+            assertTrue(Files.exists(Path.of("src/main/resources/assets/pirates_n_ships")
+                    .resolve(FlagClothModel.textureFile(kind).getPath())), "missing texture for " + kind);
         }
-        for (FlagKind kind : shownKinds()) {
-            Path model = ASSETS.resolve("models/block/flagpole_flag_" + kind.getSerializedName() + ".json");
-            assertEquals(FlagClothModel.json(kind), JsonParser.parseString(Files.readString(model)), "stale datagen output for " + kind);
+    }
+
+    /** The committed block state shows the hand-made pole in every state and no cloth model (FL1). */
+    @Test
+    void generatedBlockStateShowsOnlyThePole() throws IOException {
+        JsonObject root = JsonParser.parseString(Files.readString(ASSETS.resolve("blockstates/flagpole.json"))).getAsJsonObject();
+        assertFalse(root.has("multipart"), "the cloth is no longer part of the block model");
+        JsonObject variants = root.getAsJsonObject("variants");
+        assertEquals(1, variants.size());
+        assertEquals("pirates_n_ships:block/flagpole", variants.entrySet().iterator().next().getValue().getAsJsonObject().get("model").getAsString());
+        for (FlagKind kind : FlagKind.values()) {
+            assertFalse(Files.exists(ASSETS.resolve("models/block/flagpole_flag_" + kind.getSerializedName() + ".json")),
+                    "stale cloth model for " + kind);
         }
     }
 }

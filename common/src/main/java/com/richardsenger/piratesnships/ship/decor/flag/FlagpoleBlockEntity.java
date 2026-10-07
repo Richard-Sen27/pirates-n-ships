@@ -36,7 +36,15 @@ import java.util.UUID;
 /**
  * Holds a flagpole's {@link FlagpoleState} (a block entity because a custom banner flag keeps its patterns as item
  * data). Thin: the rules are in {@link FlagpoleMachine}; this class feeds it game time and config, applies the
- * outcome (block state for the look, items, feedback, {@link FlagpoleEvents}) and saves and syncs the state.
+ * outcome (block state, items, feedback, {@link FlagpoleEvents}) and saves and syncs the state.
+ * <p>
+ * <b>Wind (FL1).</b> The cloth points exactly downwind, drawn by {@code client/FlagClothRenderer} at a continuous
+ * yaw. The server samples the wind every {@code flags.wind_update_interval_ticks} on land and every
+ * {@code flags.ship_update_interval_ticks} on a ship and stores, saves and syncs two angles: {@link #windBearing()},
+ * the world bearing the wind blows toward, and {@link #yaw()}, the exact downwind angle in the frame the cloth is
+ * drawn in (the plot frame on a ship, {@link FlagWind#downwindAngle}). The client draws the plot angle derived from
+ * the synced wind bearing and the ship's render orientation each frame (as the sails do with the synced wind), and
+ * falls back to {@link #yaw()} on land or while the flag does not follow the wind.
  * <p>
  * {@link Clearable} so that ship assembly (which saves the block entity, then clears the old one before removing the
  * block, docs/sable-notes.md §4) moves the flag instead of dropping a copy.
@@ -44,10 +52,27 @@ import java.util.UUID;
 public class FlagpoleBlockEntity extends BlockEntity implements Clearable {
 
     private static final String TAG = "flagpole";
+    private static final String YAW_TAG = "yaw";
+    private static final String WIND_TAG = "wind_bearing";
+    /** Smaller wind or yaw changes (degrees) are not synced. */
+    static final float SYNC_THRESHOLD_DEGREES = 0.25f;
 
     private FlagpoleState state = FlagpoleState.EMPTY;
     /** {@link FlagTint#clothTint(FlagpoleState)} of {@link #state}, cached for the render thread. */
     private volatile int clothTint = FlagTint.NONE;
+    /**
+     * The bearing the cloth points to in the frame it is drawn in ({@link FlagWind}; 0 = north): the exact downwind
+     * angle in the plot frame on a ship, in the world on land. Saved and synced.
+     */
+    private volatile float yaw;
+    /**
+     * The world bearing the wind at the pole blows toward, as last sampled, or NaN while the flag does not follow the
+     * wind ({@code flags.follow_wind} off, or no wind sampled yet). Saved and synced.
+     */
+    private volatile float windBearing = Float.NaN;
+    /** Client only, for the renderer: the yaw drawn last frame (NaN: nothing drawn yet) and when (game time + partial). */
+    public float shownYaw = Float.NaN;
+    public double shownTime = Double.NaN;
     /**
      * Players who used the pole and may still get items or feedback (the actor of a pending action), so these reach
      * them even if they are not in the level's player list (GameTest mock players). Not saved; after a reload the
@@ -57,6 +82,13 @@ public class FlagpoleBlockEntity extends BlockEntity implements Clearable {
 
     public FlagpoleBlockEntity(BlockPos pos, BlockState blockState) {
         super(Flags.FLAGPOLE_BLOCK_ENTITY.get(), pos, blockState);
+        // Poles saved before FL1 only had the four-way FACING: start from it until the wind is checked.
+        yaw = blockState.hasProperty(FlagpoleBlock.FACING) ? facingYaw(blockState.getValue(FlagpoleBlock.FACING)) : 0f;
+    }
+
+    /** The compass bearing of a horizontal facing (north 0, east 90, south 180, west 270). */
+    static float facingYaw(Direction facing) {
+        return FlagYaw.wrap(facing.toYRot() + 180f);
     }
 
     public FlagpoleState state() {
@@ -65,10 +97,20 @@ public class FlagpoleBlockEntity extends BlockEntity implements Clearable {
 
     /**
      * RGB the cloth texture is multiplied with: the banner's base colour for a custom flag, white otherwise
-     * ({@link FlagTint}). Read by the client's block colour handler while meshing the chunk.
+     * ({@link FlagTint}). Read by the client's cloth renderer every frame.
      */
     public int clothTint() {
         return clothTint;
+    }
+
+    /** The cloth's yaw in the frame it is drawn in (the plot frame on a ship), as the server last set it. */
+    public float yaw() {
+        return yaw;
+    }
+
+    /** The world bearing the wind blows toward at the pole, or NaN while the flag does not follow the wind. */
+    public float windBearing() {
+        return windBearing;
     }
 
     public FlagReading reading() {
@@ -87,13 +129,21 @@ public class FlagpoleBlockEntity extends BlockEntity implements Clearable {
         if (!(level instanceof ServerLevel)) return;
         long now = level.getGameTime();
         if (state.pending().isPresent()) apply(FlagpoleMachine.tick(state, now));
+        if (!FlagConfig.FOLLOW_WIND.get()) {
+            // The cloth keeps its yaw in its own frame; stop the client from turning it with the wind.
+            if (!Float.isNaN(windBearing)) {
+                windBearing = Float.NaN;
+                sync();
+            }
+            return;
+        }
         long phase = now + worldPosition.hashCode();
         int interval = FlagConfig.WIND_UPDATE_INTERVAL_TICKS.get();
         boolean landDue = interval > 0 && Math.floorMod(phase, interval) == 0;
         int shipInterval = FlagConfig.SHIP_UPDATE_INTERVAL_TICKS.get();
         boolean shipDue = shipInterval > 0 && Math.floorMod(phase, shipInterval) == 0;
-        // On a ship FACING is in plot coordinates and the ship turns under the flag, so it re-checks more often there.
-        if (landDue || shipDue) updateFacing(landDue, shipDue);
+        // On a ship the yaw is in plot coordinates and the ship turns under the flag, so it re-checks more often there.
+        if (landDue || shipDue) updateWind(landDue, shipDue);
     }
 
     /** The pole was removed: drop the flag and a pending flag at its position. */
@@ -156,45 +206,56 @@ public class FlagpoleBlockEntity extends BlockEntity implements Clearable {
         return "flag." + Constants.MOD_ID + "." + kind.getSerializedName();
     }
 
-    /** Shown flag into the block state (the model shows it); a newly shown flag turns downwind at once. */
+    /** Shown flag into the block state; a newly shown flag turns downwind at once. */
     private void updateBlockState(boolean shownChanged) {
         BlockState bs = getBlockState();
         if (!(bs.getBlock() instanceof FlagpoleBlock)) return;
+        if (shownChanged && state.reading().shown() != FlagKind.NONE && FlagConfig.FOLLOW_WIND.get()) {
+            refreshWind(SableShips.containing(this), false);
+        }
         BlockState next = bs.setValue(FlagpoleBlock.FLAG, state.reading().shown());
-        if (shownChanged && state.reading().shown() != FlagKind.NONE) next = next.setValue(FlagpoleBlock.FACING, windFacing(bs));
+        // Either way the block entity data (state, yaw) reaches the clients with the block update.
         if (next != bs) level.setBlock(worldPosition, next, 3);
         else level.sendBlockUpdated(worldPosition, bs, bs, 3);
     }
 
-    private void updateFacing(boolean landDue, boolean shipDue) {
-        BlockState bs = getBlockState();
-        if (!(bs.getBlock() instanceof FlagpoleBlock) || bs.getValue(FlagpoleBlock.FLAG) == FlagKind.NONE) return;
-        if (!FlagConfig.FOLLOW_WIND.get()) return;
+    private void updateWind(boolean landDue, boolean shipDue) {
+        if (state.reading().shown() == FlagKind.NONE) return;
         ShipBody ship = SableShips.containing(this);
         if (!(ship == null ? landDue : shipDue)) return;
-        Direction d = windFacing(bs, ship);
-        if (d != bs.getValue(FlagpoleBlock.FACING)) level.setBlock(worldPosition, bs.setValue(FlagpoleBlock.FACING, d), 3);
-    }
-
-    private Direction windFacing(BlockState bs) {
-        return windFacing(bs, level instanceof ServerLevel ? SableShips.containing(this) : null);
+        refreshWind(ship, true);
     }
 
     /**
-     * Downwind as a {@code FACING} value. On land: the world wind at the pole. On a ship: the wind sampled at the pole's
-     * world position, turned into the ship's plot frame, since the block state lives in the plot
-     * (docs/sable-notes.md §2).
+     * Samples the wind and sets {@link #windBearing} and {@link #yaw}. On land: the world wind at the pole. On a ship:
+     * the wind sampled at the pole's world position, turned into the ship's plot frame by its orientation, since the
+     * cloth is drawn in the plot (docs/sable-notes.md §2). A calm keeps the last angles. Syncs (when {@code sync})
+     * only if either angle moved by more than {@link #SYNC_THRESHOLD_DEGREES}.
      */
-    private Direction windFacing(BlockState bs, @Nullable ShipBody ship) {
-        Direction current = bs.getValue(FlagpoleBlock.FACING);
-        if (!FlagConfig.FOLLOW_WIND.get() || !(level instanceof ServerLevel server)) return current;
+    private void refreshWind(@Nullable ShipBody ship, boolean sync) {
+        if (!(level instanceof ServerLevel server)) return;
         Vec3 at = Vec3.atCenterOf(worldPosition);
-        if (ship == null) {
-            WindSample wind = WindService.sample(server, at);
-            return FlagWind.downwind(wind.dirX(), wind.dirZ(), current);
-        }
-        WindSample wind = WindService.sample(server, ship.toWorld(at));
-        return FlagWind.downwindOnShip(wind.dirX(), wind.dirZ(), ship.orientation(), current);
+        WindSample wind = WindService.sample(server, ship == null ? at : ship.toWorld(at));
+        double vx = wind.dirX() * wind.strength();
+        double vz = wind.dirZ() * wind.strength();
+        float bearing = FlagWind.bearing(vx, vz, windBearing);
+        float plot = FlagWind.downwindAngle(vx, vz, ship == null ? null : ship.orientation(), yaw);
+        if (!moved(windBearing, bearing) && !moved(yaw, plot)) return;
+        windBearing = bearing;
+        yaw = plot;
+        if (sync) sync();
+        else setChanged();
+    }
+
+    private static boolean moved(float before, float after) {
+        if (Float.isNaN(before) || Float.isNaN(after)) return Float.isNaN(before) != Float.isNaN(after);
+        return Math.abs(FlagYaw.delta(before, after)) > SYNC_THRESHOLD_DEGREES;
+    }
+
+    /** Saves and sends the block entity data to the clients tracking the pole (no block state change, no re-mesh). */
+    private void sync() {
+        setChanged();
+        if (level != null && !level.isClientSide) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
     }
 
     private void deliver(ServerLevel server, FlagpoleMachine.Delivery d) {
@@ -220,6 +281,8 @@ public class FlagpoleBlockEntity extends BlockEntity implements Clearable {
         FlagpoleState.CODEC.encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), state)
                 .resultOrPartial(e -> Constants.LOG.error("Could not save flagpole at {}: {}", worldPosition, e))
                 .ifPresent(t -> tag.put(TAG, t));
+        tag.putFloat(YAW_TAG, yaw);
+        if (!Float.isNaN(windBearing)) tag.putFloat(WIND_TAG, windBearing);
     }
 
     @Override
@@ -229,13 +292,10 @@ public class FlagpoleBlockEntity extends BlockEntity implements Clearable {
         state = data.flatMap(t -> FlagpoleState.CODEC.parse(registries.createSerializationContext(NbtOps.INSTANCE), t)
                         .resultOrPartial(e -> Constants.LOG.error("Could not load flagpole at {}: {}", worldPosition, e)))
                 .orElse(FlagpoleState.EMPTY);
-        int tint = FlagTint.clothTint(state);
-        if (tint != clothTint && level != null && level.isClientSide) {
-            // The cloth colour is baked into the chunk mesh: a new banner under the same block state (custom stays
-            // custom) must re-mesh the section, or the old colour stays until something else changes there.
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_IMMEDIATE);
-        }
-        clothTint = tint;
+        if (tag.contains(YAW_TAG, Tag.TAG_FLOAT)) yaw = FlagYaw.wrap(tag.getFloat(YAW_TAG));
+        windBearing = tag.contains(WIND_TAG, Tag.TAG_FLOAT) ? FlagYaw.wrap(tag.getFloat(WIND_TAG)) : Float.NaN;
+        // The renderer reads the tint every frame, so a new banner needs no re-mesh (before FL1 it was baked into the chunk).
+        clothTint = FlagTint.clothTint(state);
     }
 
     @Override

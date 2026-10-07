@@ -227,8 +227,8 @@ public final class FirearmGameTests {
     public static void disabledFirearmsAreInert(GameTestHelper helper) {
         ConfigOverrides.during(helper, FirearmsConfig.ENABLED, false);
         Player player = shooter(helper, new Vec3(4.5, 1, 1.5), 0, 0);
-        giveAmmo(player, 1, 1);
         ItemStack loaded = hold(player, CombatContent.PISTOL.get(), true);
+        giveAmmo(player, 1, 1); // after hold: add() fills the selected slot first, which hold() would overwrite
         helper.assertValueEqual(use(helper, player), InteractionResult.PASS, "use of a loaded gun while disabled");
         helper.assertTrue(balls(helper).isEmpty(), "a disabled gun must not fire");
         helper.assertTrue(FirearmContent.isLoaded(loaded), "a disabled gun keeps its state");

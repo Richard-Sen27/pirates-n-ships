@@ -231,7 +231,8 @@ public final class MeleeGameTests {
     /**
      * P9: the pirate slashes into the held guard again and again. Every blocked hit is absorbed and drains the block
      * cost (weapon cost plus the absorb surcharge); the first hit the stamina can't pay breaks the guard: it lands with
-     * the cutlass guard's reduction and the player staggers.
+     * the cutlass guard's reduction and the player staggers. The pirate times its last slash so that hit arrives while
+     * the guard still holds (stamina above zero but below the block cost).
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 400)
     public static void drainedGuardBreaksAndTheHitLands(GameTestHelper helper) {
@@ -270,7 +271,11 @@ public final class MeleeGameTests {
                     helper.assertTrue(spent >= blockCost - 0.01f, "blocked hit cost " + spent + ", expected at least " + blockCost);
                 }
                 stamina[0] = s.stamina();
-                if (MeleeService.state(pirate).phase() == Phase.IDLE) MeleeService.startSlash(pirate, DefaultWeapons.CUTLASS);
+                // Hold the next slash while the guard could just pay for it but would be left too low to last until the
+                // following hit: the hold drain would then empty the stamina and drop the guard before a hit breaks it.
+                // Holding until the stamina is below the block cost makes the next hit the guard break, whatever the tuning.
+                boolean marginal = s.stamina() >= blockCost && s.stamina() < blockCost + 15f;
+                if (!marginal && MeleeService.state(pirate).phase() == Phase.IDLE) MeleeService.startSlash(pirate, DefaultWeapons.CUTLASS);
             });
         });
     }

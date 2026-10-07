@@ -57,6 +57,13 @@ tasks.matching { it.name == 'runGameTestServer' }.configureEach {
     }
 }
 
+// Mods that only the dev runs load (client, server, GameTest, data). runtimeClasspath is never published, unlike
+// runtimeElements, so nothing in localRuntime reaches the POM or mods.toml.
+configurations {
+    localRuntime
+    runtimeClasspath.extendsFrom localRuntime
+}
+
 dependencies {
     // Sable (hard dependency). Its published runtime variant also lists Create, Ponder, Flywheel and
     // Registrate, which Sable only uses for optional compat. We have no Create dependency, so exclude them.
@@ -81,4 +88,7 @@ dependencies {
     // On the runtime classpath so the dev client, the GameTest server and runData see it. Maven Central, no
     // dependencies in its POM.
     runtimeOnly("org.appliedenergistics:guideme:${guideme_version}")
+    // WorldEdit (dev only, for pasting test ships from art/schematics/). localRuntime puts it on the dev runs'
+    // classpath without listing it in the published POM or mods.toml, so players never need it.
+    localRuntime("maven.modrinth:worldedit:${worldedit_version}")
 }

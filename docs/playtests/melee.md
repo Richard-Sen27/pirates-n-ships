@@ -119,10 +119,10 @@ Addendum (A2): slashing into the air plays one short blade whoosh that varies fr
 
 
 ## P9: the guard
-1. Guard with a cutlass facing a pirate and let it slash: no health loss, the clash sound, the stamina bar dropping noticeably per hit (about a quarter per cutlass slash).
+1. Guard with a cutlass facing a pirate and let it slash: no health loss, the clash sound, the stamina bar dropping noticeably per hit (about a fifth per cutlass slash since P9b).
 2. Keep guarding without attacking: after three or four blocked slashes the guard breaks: a small hit, clash plus stagger thud, about 1.5 s of no actions.
 3. A zombie hitting you from the front while guarding: no damage, no knockback, stamina drained; from behind: the full hit.
-4. `melee.guard_absorbs_all = false`: a guarded slash deals 30 % again; `guard_absorb_stamina_per_damage = 0`: a block costs about 13 instead of 23.5.
+4. `melee.guard_absorbs_all = false`: a guarded slash deals 30 % again; `guard_absorb_stamina_per_damage = 0`: a block costs about 13 instead of 20. With little stamina left, a held guard may now drop from the hold drain before a hit breaks it.
 5. Feel: is the guard now too strong, or too costly, against pirates and officers (they were not retuned)?
 
 

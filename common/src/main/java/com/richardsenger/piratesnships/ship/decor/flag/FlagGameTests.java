@@ -287,6 +287,9 @@ public final class FlagGameTests {
         BlockEntity loaded = BlockEntity.loadStatic(abs, helper.getLevel().getBlockState(abs), tag, registries);
         helper.assertTrue(loaded instanceof FlagpoleBlockEntity f && f.state().equals(be.state()),
                 "reloaded state differs: " + (loaded instanceof FlagpoleBlockEntity f ? f.state() : loaded) + " vs " + be.state());
+        FlagpoleBlockEntity f = (FlagpoleBlockEntity) loaded;
+        helper.assertTrue(f.yaw() == be.yaw() && Float.compare(f.windBearing(), be.windBearing()) == 0,
+                "reloaded angles differ: " + f.yaw() + "/" + f.windBearing() + " vs " + be.yaw() + "/" + be.windBearing());
         helper.succeed();
     }
 
@@ -322,11 +325,14 @@ public final class FlagGameTests {
     @ModGameTest
     public static void hoistedFlagPointsDownwind(GameTestHelper helper) {
         BlockPos rel = new BlockPos(1, 1, 1);
-        pole(helper, rel).commandSet(FlagKind.MERCHANT, false, null);
+        FlagpoleBlockEntity be = pole(helper, rel);
+        float before = be.yaw();
+        be.commandSet(FlagKind.MERCHANT, false, null);
         BlockPos abs = helper.absolutePos(rel);
         WindSample wind = WindService.sample(helper.getLevel(), Vec3.atCenterOf(abs));
-        Direction expected = FlagConfig.FOLLOW_WIND.get() ? FlagWind.downwind(wind.dirX(), wind.dirZ(), Direction.NORTH) : Direction.NORTH;
-        helper.assertBlockProperty(rel, FlagpoleBlock.FACING, expected);
+        float expected = FlagConfig.FOLLOW_WIND.get()
+                ? FlagWind.downwindAngle(wind.dirX() * wind.strength(), wind.dirZ() * wind.strength(), null, before) : before;
+        assertYaw(helper, be, expected, 0.01f, "freshly hoisted on land");
         helper.succeed();
     }
 
@@ -356,24 +362,28 @@ public final class FlagGameTests {
     }
 
     /**
-     * A flag on an assembled ship points downwind in the ship's frame (its {@code FACING} is stored in plot
-     * coordinates): with the wind blowing south, it faces plot south at first, plot north once the ship has turned
-     * 180 degrees and plot west after a turn to +90 degrees (plot west is world south then), each within the ship
-     * re-check interval. A flag on land next to it keeps facing world south. Own batch: it fixes the dimension's wind
-     * and pins the ship re-check interval.
+     * A flag on an assembled ship points exactly downwind in the ship's frame (its yaw is stored in plot
+     * coordinates; P4, FL1): with the wind blowing south (bearing 180), it points to plot 180 at first, plot 0 once the
+     * ship has turned 180 degrees, plot 270 after a turn to +90 degrees (plot west is world south then) and plot 225
+     * after a turn to +45 degrees: 45 degrees off the world downwind, not a four-way facing. Then the wind is set as
+     * {@code /pirates wind set 225} does (from the south-west, blowing toward bearing 45): within the interval the land
+     * flag points to 45 and the ship's to 90 in its frame. A flag on land next to it follows the world wind. Each step
+     * waits one re-check interval. Own batch: it fixes the dimension's wind and pins the re-check intervals.
      */
-    @ModGameTest(timeoutTicks = 200, batch = "pirates_n_ships_config_flags_ship_wind")
+    @ModGameTest(timeoutTicks = 300, batch = "pirates_n_ships_config_flags_ship_wind")
     public static void flagOnTurnedShipStreamsDownwind(GameTestHelper helper) {
         if (!FlagConfig.FOLLOW_WIND.get()) {
             helper.succeed();
             return;
         }
         int interval = 20;
+        int step = interval + 5;
         ConfigOverrides.during(helper, FlagConfig.SHIP_UPDATE_INTERVAL_TICKS, interval);
+        ConfigOverrides.during(helper, FlagConfig.WIND_UPDATE_INTERVAL_TICKS, interval);
         // From the north: blows toward +Z (south). Only for as long as the test needs it (cleared at the end; on a
         // failure it expires by itself shortly after), since the override applies to the whole dimension and later
         // batches sample the real wind.
-        fixWind(helper, 0.0, 2 * (interval + 5) + 20);
+        fixWind(helper, 0.0, 4 * step + 20);
         for (int x = 1; x <= 7; x++) {
             for (int z = 1; z <= 7; z++) helper.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
         }
@@ -383,11 +393,13 @@ public final class FlagGameTests {
         BlockPos helm = new BlockPos(4, 3, 4);
         helper.setBlock(helm, AssemblyContent.HELM.get());
         BlockPos shipPole = new BlockPos(3, 3, 3);
-        pole(helper, shipPole).commandSet(FlagKind.MERCHANT, false, null);
-        helper.assertBlockProperty(shipPole, FlagpoleBlock.FACING, Direction.SOUTH);
+        FlagpoleBlockEntity shipBe = pole(helper, shipPole);
+        shipBe.commandSet(FlagKind.MERCHANT, false, null);
+        assertYaw(helper, shipBe, 180f, 0.5f, "hoisted before assembly");
         BlockPos landPole = new BlockPos(1, 2, 7);
-        pole(helper, landPole).commandSet(FlagKind.NAVY, false, null);
-        helper.assertBlockProperty(landPole, FlagpoleBlock.FACING, Direction.SOUTH);
+        FlagpoleBlockEntity landBe = pole(helper, landPole);
+        landBe.commandSet(FlagKind.NAVY, false, null);
+        assertYaw(helper, landBe, 180f, 0.5f, "hoisted on land");
 
         AssemblyResult r = ShipTestCleanup.assemble(helper, helm);
         helper.assertTrue(r.success() && r.shipId() != null, "assembly failed: " + r);
@@ -396,30 +408,55 @@ public final class FlagGameTests {
         BlockPos plotPole = ship.plotBlocks().stream()
                 .filter(p -> helper.getLevel().getBlockState(p).is(ShipDecor.FLAGPOLE.get())).findFirst().orElse(null);
         helper.assertTrue(plotPole != null, "the flagpole was not assembled into the ship");
-        assertPlotFacing(helper, plotPole, Direction.SOUTH, "after assembly");
+        assertPlotYaw(helper, plotPole, 180f, "after assembly");
+        String dim = helper.getLevel().dimension().location().toString();
 
         helper.startSequence()
-                .thenExecute(() -> ship.setOrientation(new Quaterniond().rotateAxis(Math.toRadians(180), 0, 1, 0)))
-                .thenExecuteAfter(interval + 5, () -> {
-                    assertPlotFacing(helper, plotPole, Direction.NORTH, "after a half turn");
-                    ship.setOrientation(new Quaterniond().rotateAxis(Math.toRadians(90), 0, 1, 0));
+                .thenExecute(() -> ship.setOrientation(yawTurn(180)))
+                .thenExecuteAfter(step, () -> {
+                    assertPlotYaw(helper, plotPole, 0f, "after a half turn");
+                    ship.setOrientation(yawTurn(90));
                 })
-                .thenExecuteAfter(interval + 5, () -> {
+                .thenExecuteAfter(step, () -> {
+                    assertPlotYaw(helper, plotPole, 270f, "after a turn to +90 degrees");
+                    ship.setOrientation(yawTurn(45));
+                })
+                .thenExecuteAfter(step, () -> {
+                    FlagpoleBlockEntity be = assertPlotYaw(helper, plotPole, 225f, "after a turn to +45 degrees");
+                    float off = Math.abs(FlagYaw.delta(be.windBearing(), be.yaw()));
+                    helper.assertTrue(Math.abs(off - 45f) <= 2f, "the ship's flag is " + off + " degrees off the world downwind, expected 45");
+                    float toFacing = Math.abs(FlagYaw.delta(Math.round(be.yaw() / 90f) * 90f, be.yaw()));
+                    helper.assertTrue(toFacing > 2f, "the ship's flag snapped to a four-way facing: " + be.yaw());
+                    assertYaw(helper, landBe, 180f, 2f, "on land, unchanged wind");
+                    // What /pirates wind set 225 8 does (WindOverride.set), with an expiry so a failure cannot leak it.
+                    WindOverride.set(dim, 225.0, 8.0, helper.getLevel().getGameTime() + step + 20);
+                })
+                .thenExecuteAfter(step, () -> {
                     try {
-                        assertPlotFacing(helper, plotPole, Direction.WEST, "after a turn to +90 degrees");
-                        helper.assertBlockProperty(landPole, FlagpoleBlock.FACING, Direction.SOUTH);
+                        assertYaw(helper, landBe, 45f, 2f, "on land after the wind was set from 225");
+                        FlagpoleBlockEntity be = assertPlotYaw(helper, plotPole, 90f, "after the wind was set from 225");
+                        helper.assertTrue(Math.abs(FlagYaw.delta(45f, be.windBearing())) <= 2f, "ship's wind bearing " + be.windBearing() + ", expected 45");
                     } finally {
-                        WindOverride.clear(helper.getLevel().dimension().location().toString());
+                        WindOverride.clear(dim);
                     }
                 })
                 .thenSucceed();
     }
 
-    private static void assertPlotFacing(GameTestHelper helper, BlockPos plotPos, Direction expected, String when) {
-        BlockState bs = helper.getLevel().getBlockState(plotPos);
-        helper.assertTrue(bs.getBlock() instanceof FlagpoleBlock, "no flagpole at plot " + plotPos + " " + when);
-        Direction actual = bs.getValue(FlagpoleBlock.FACING);
-        helper.assertTrue(actual == expected, "ship flag faces plot " + actual + " " + when + ", expected " + expected);
+    private static Quaterniond yawTurn(double degrees) {
+        return new Quaterniond().rotateAxis(Math.toRadians(degrees), 0, 1, 0);
+    }
+
+    private static void assertYaw(GameTestHelper helper, FlagpoleBlockEntity be, float expected, float tolerance, String when) {
+        float off = Math.abs(FlagYaw.delta(expected, be.yaw()));
+        helper.assertTrue(off <= tolerance, "flag at " + be.getBlockPos() + " points to " + be.yaw() + " " + when + ", expected " + expected);
+    }
+
+    private static FlagpoleBlockEntity assertPlotYaw(GameTestHelper helper, BlockPos plotPos, float expected, String when) {
+        helper.assertTrue(helper.getLevel().getBlockEntity(plotPos) instanceof FlagpoleBlockEntity, "no flagpole at plot " + plotPos + " " + when);
+        FlagpoleBlockEntity be = (FlagpoleBlockEntity) helper.getLevel().getBlockEntity(plotPos);
+        assertYaw(helper, be, expected, 2f, "(plot frame) " + when);
+        return be;
     }
 
     /** Fixes the test dimension's wind for {@code ticks} ticks. */

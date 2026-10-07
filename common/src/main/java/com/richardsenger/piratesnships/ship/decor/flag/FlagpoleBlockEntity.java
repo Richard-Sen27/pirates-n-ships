@@ -5,6 +5,8 @@ import com.richardsenger.piratesnships.law.flag.FlagKind;
 import com.richardsenger.piratesnships.sailing.wind.WindSample;
 import com.richardsenger.piratesnships.sailing.wind.WindService;
 import com.richardsenger.piratesnships.ship.decor.FlagpoleBlock;
+import com.richardsenger.piratesnships.ship.sable.SableShips;
+import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -85,8 +87,13 @@ public class FlagpoleBlockEntity extends BlockEntity implements Clearable {
         if (!(level instanceof ServerLevel)) return;
         long now = level.getGameTime();
         if (state.pending().isPresent()) apply(FlagpoleMachine.tick(state, now));
+        long phase = now + worldPosition.hashCode();
         int interval = FlagConfig.WIND_UPDATE_INTERVAL_TICKS.get();
-        if (interval > 0 && Math.floorMod(now + worldPosition.hashCode(), interval) == 0) updateFacing();
+        boolean landDue = interval > 0 && Math.floorMod(phase, interval) == 0;
+        int shipInterval = FlagConfig.SHIP_UPDATE_INTERVAL_TICKS.get();
+        boolean shipDue = shipInterval > 0 && Math.floorMod(phase, shipInterval) == 0;
+        // On a ship FACING is in plot coordinates and the ship turns under the flag, so it re-checks more often there.
+        if (landDue || shipDue) updateFacing(landDue, shipDue);
     }
 
     /** The pole was removed: drop the flag and a pending flag at its position. */
@@ -159,18 +166,35 @@ public class FlagpoleBlockEntity extends BlockEntity implements Clearable {
         else level.sendBlockUpdated(worldPosition, bs, bs, 3);
     }
 
-    private void updateFacing() {
+    private void updateFacing(boolean landDue, boolean shipDue) {
         BlockState bs = getBlockState();
         if (!(bs.getBlock() instanceof FlagpoleBlock) || bs.getValue(FlagpoleBlock.FLAG) == FlagKind.NONE) return;
-        Direction d = windFacing(bs);
+        if (!FlagConfig.FOLLOW_WIND.get()) return;
+        ShipBody ship = SableShips.containing(this);
+        if (!(ship == null ? landDue : shipDue)) return;
+        Direction d = windFacing(bs, ship);
         if (d != bs.getValue(FlagpoleBlock.FACING)) level.setBlock(worldPosition, bs.setValue(FlagpoleBlock.FACING, d), 3);
     }
 
     private Direction windFacing(BlockState bs) {
+        return windFacing(bs, level instanceof ServerLevel ? SableShips.containing(this) : null);
+    }
+
+    /**
+     * Downwind as a {@code FACING} value. On land: the world wind at the pole. On a ship: the wind sampled at the pole's
+     * world position, turned into the ship's plot frame, since the block state lives in the plot
+     * (docs/sable-notes.md §2).
+     */
+    private Direction windFacing(BlockState bs, @Nullable ShipBody ship) {
         Direction current = bs.getValue(FlagpoleBlock.FACING);
         if (!FlagConfig.FOLLOW_WIND.get() || !(level instanceof ServerLevel server)) return current;
-        WindSample wind = WindService.sample(server, Vec3.atCenterOf(worldPosition));
-        return FlagWind.downwind(wind.dirX(), wind.dirZ(), current);
+        Vec3 at = Vec3.atCenterOf(worldPosition);
+        if (ship == null) {
+            WindSample wind = WindService.sample(server, at);
+            return FlagWind.downwind(wind.dirX(), wind.dirZ(), current);
+        }
+        WindSample wind = WindService.sample(server, ship.toWorld(at));
+        return FlagWind.downwindOnShip(wind.dirX(), wind.dirZ(), ship.orientation(), current);
     }
 
     private void deliver(ServerLevel server, FlagpoleMachine.Delivery d) {

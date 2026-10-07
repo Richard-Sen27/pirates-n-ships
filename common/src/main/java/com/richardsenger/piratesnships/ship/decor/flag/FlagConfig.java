@@ -18,6 +18,8 @@ public final class FlagConfig {
             "Flags turn to point downwind (in 90 degree steps), doubling as a wind indicator");
     public static final ConfigValue<Integer> WIND_UPDATE_INTERVAL_TICKS = SECTION.intRange("wind_update_interval_ticks", 200, 20, 24000,
             "How often a flying flag checks the wind direction, in ticks");
+    public static final ConfigValue<Integer> SHIP_UPDATE_INTERVAL_TICKS = SECTION.intRange("ship_update_interval_ticks", 20, 1, 24000,
+            "How often a flying flag on a ship re-checks which way is downwind, in ticks (the ship turns under it)");
     public static final ConfigValue<Boolean> CUSTOM_BANNER_FLAGS = SECTION.bool("custom_banner_flags", true,
             "Vanilla banners can be hoisted as custom flags (treated as neutral)");
 

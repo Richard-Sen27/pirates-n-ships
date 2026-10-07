@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.combat.grapple;
 
 import com.richardsenger.piratesnships.combat.content.CombatContent;
+import com.richardsenger.piratesnships.ship.assembly.ShipRejoin;
 import com.richardsenger.piratesnships.ship.assembly.ShipSplits;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
@@ -324,6 +325,24 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
             }
         }
         if (split.parent().equals(throwerShipId)) {
+            anchorRefreshAt = 0;
+        }
+    }
+
+    /**
+     * The piece under the hook or the thrower was rejoined to its ship (RS2): a latched hook follows its block into the
+     * ship's plot (moved and turned like the block), and the thrower's anchor is looked up again on the next tick.
+     */
+    void followRejoin(ShipRejoin.Rejoined rejoin) {
+        if (shipId != null && shipId.equals(rejoin.absorbed()) && latchedBlock != null && plotPos != null) {
+            shipId = rejoin.keeper();
+            latchedBlock = rejoin.transform().apply(latchedBlock);
+            plotPos = rejoin.transform().apply(plotPos);
+            entityData.set(PLOT_BLOCK, latchedBlock);
+            entityData.set(PLOT_OFFSET, new Vector3f((float) (plotPos.x - latchedBlock.getX()), (float) (plotPos.y - latchedBlock.getY()),
+                    (float) (plotPos.z - latchedBlock.getZ())));
+        }
+        if (rejoin.absorbed().equals(throwerShipId)) {
             anchorRefreshAt = 0;
         }
     }

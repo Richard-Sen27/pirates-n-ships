@@ -123,10 +123,63 @@ def planks(name, base="plank", dark="plank_d", light="plank_l"):
 
 # ---------------------------------------------------------------- items
 
+# The Shipwright's Toolkit and its parts (RS2): placeholders until the Blockbench models come.
+
+def carpenters_hammer():
+    cv = Canvas()
+    cv.line(3, 13, 9, 7, "wood")
+    cv.line(4, 13, 10, 7, "wood_d")
+    cv.rect(8, 2, 13, 5, "iron")
+    cv.rect(8, 2, 13, 2, "steel_l")
+    cv.rect(12, 3, 13, 5, "iron_d")
+    cv.rect(9, 6, 10, 7, "iron_d")
+    return cv.outline()
+
+
+def saw():
+    cv = Canvas()
+    for i in range(9):
+        cv.line(5 + i, 10 - i, 5 + i, 12 - i if i < 8 else 4, "steel")
+    cv.line(5, 10, 13, 2, "steel_l")
+    for i in range(0, 9, 2):
+        cv.px(6 + i, 13 - i, "steel_d")
+    cv.rect(2, 11, 5, 14, "wood")
+    cv.rect(3, 12, 4, 13, "wood_d")
+    return cv.outline()
+
+
+def nails():
+    cv = Canvas()
+    for x, top in ((4, 3), (8, 5), (12, 2)):
+        cv.rect(x - 1, top, x + 1, top, "steel_l")
+        cv.line(x, top + 1, x, top + 8, "steel")
+        cv.px(x, top + 9, "steel_d")
+    return cv.outline()
+
+
+def shipwright_toolkit():
+    cv = Canvas()
+    cv.line(4, 3, 9, 8, "wood")        # hammer handle
+    cv.rect(2, 1, 6, 3, "iron")        # hammer head
+    cv.rect(10, 2, 13, 7, "steel")     # saw blade
+    cv.line(10, 7, 13, 7, "steel_d")
+    cv.rect(2, 7, 13, 13, "brown")     # leather roll
+    cv.rect(2, 7, 13, 7, "tan")
+    cv.line(2, 13, 13, 13, "wood_d")
+    cv.rect(7, 7, 8, 13, "red_d")      # the strap
+    cv.px(7, 10, "gold")
+    return cv.outline()
+
+
 # ---------------------------------------------------------------- blocks
 
-# Every item sprite became a hand-made item model; the brig door's went in F8g.
-ITEMS = {}
+# Every older item sprite became a hand-made item model; the brig door's went in F8g.
+ITEMS = {
+    "carpenters_hammer": carpenters_hammer,
+    "saw": saw,
+    "nails": nails,
+    "shipwright_toolkit": shipwright_toolkit,
+}
 BLOCKS = {}
 
 

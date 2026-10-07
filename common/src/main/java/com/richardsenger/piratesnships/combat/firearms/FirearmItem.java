@@ -22,11 +22,14 @@ import java.util.List;
 /**
  * Pistol and musket (docs/design.md §8.1). Holding use is a <b>session</b> ({@link FirearmRules#isAimSession}):
  * <ul>
- *   <li><b>Loading</b> (the gun was unloaded at the press, the player has one lead shot and one gunpowder, none in
- *       creative): after the reload time the gun loads ({@link #onUseTick}); the player keeps holding without effect,
+ *   <li><b>Loading</b> (the gun was unloaded at the press and the player has what the load takes: by default one
+ *       lead shot and one gunpowder, none in creative; another module can offer another load through
+ *       {@link FirearmLoads}, e.g. the grappling hook held in the other hand): after the reload time the gun loads
+ *       ({@link #onUseTick}); the player keeps holding without effect,
  *       so letting go never fires a gun that was just loaded. Letting go before the reload time cancels and takes
  *       nothing.</li>
- *   <li><b>Aiming</b> (the gun was loaded at the press): the shot leaves when the player lets go
+ *   <li><b>Aiming</b> (the gun was loaded at the press): the shot (whatever the gun holds,
+ *       {@link FirearmLoads#loadedIn}) leaves when the player lets go
  *       ({@link #releaseUsing}), if held at least {@code firearms.aim.aim_min_ticks} (default 0: a click fires at once).
  *       After {@code aim_steady_ticks} of aiming the spread is multiplied by {@code aimed_spread_factor}; a loaded
  *       musket also zooms in on the client ({@code firearm_view.musket_zoom}).</li>
@@ -72,6 +75,11 @@ public class FirearmItem extends Item {
         ItemStack stack = player.getItemInHand(hand);
         if (!FirearmsConfig.ENABLED.get()) return InteractionResultHolder.pass(stack);
         if (FirearmContent.isLoaded(stack)) {
+            // another load is offered (e.g. a hook in the other hand) but the gun holds something else: say so, then aim
+            FirearmLoad offered = FirearmLoads.forLoading(player, hand, stack, kind);
+            if (!level.isClientSide && offered != FirearmLoads.LEAD_BALL && !offered.isIn(stack) && offered.occupiedMessage() != null) {
+                player.displayClientMessage(offered.occupiedMessage(), true);
+            }
             // sneaking keeps a loaded gun lowered (so holding use after lowering doesn't raise it again)
             if (!FirearmRules.aimsOnUse(player.isShiftKeyDown(), FirearmsConfig.LOWER_ON_SNEAK.get())) {
                 return InteractionResultHolder.pass(stack);
@@ -79,7 +87,8 @@ public class FirearmItem extends Item {
             player.startUsingItem(hand); // aim; the shot leaves on release
             return InteractionResultHolder.consume(stack);
         }
-        if (FirearmService.canLoad(player)) {
+        FirearmLoad load = FirearmLoads.forLoading(player, hand, stack, kind);
+        if (load.canLoad(player, hand, stack)) {
             player.startUsingItem(hand);
             if (!level.isClientSide) {
                 level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.CROSSBOW_LOADING_START.value(),
@@ -89,6 +98,7 @@ public class FirearmItem extends Item {
         }
         if (!level.isClientSide) {
             FirearmService.playEmpty(level, player, type().soundPitch());
+            if (load.missingMessage() != null) player.displayClientMessage(load.missingMessage(), true);
         }
         return InteractionResultHolder.fail(stack);
     }
@@ -168,6 +178,8 @@ public class FirearmItem extends Item {
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
         if (FirearmContent.isLoaded(stack)) {
             lines.add(Component.translatable(LOADED_KEY).withStyle(ChatFormatting.GOLD));
+            Component what = FirearmLoads.loadedIn(stack).describe(stack);
+            if (what != null) lines.add(what.copy().withStyle(ChatFormatting.GOLD));
             lines.add(Component.translatable(AIM_HINT_KEY).withStyle(ChatFormatting.GRAY));
             if (FirearmsConfig.LOWER_ON_SNEAK.get()) {
                 lines.add(Component.translatable(LOWER_HINT_KEY).withStyle(ChatFormatting.GRAY));

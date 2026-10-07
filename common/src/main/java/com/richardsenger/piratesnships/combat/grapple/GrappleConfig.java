@@ -54,17 +54,19 @@ public final class GrappleConfig {
             "A hook latched on a mooring ring (or cleat) snaps only when the rope's ends are this many times its length apart");
 
     private static final ConfigSection LAUNCH = S.section("launch",
-            "Launching the hook with a crossbow or a musket held in the other hand instead of throwing it");
+            "Loading the hook into a crossbow or a musket (hook in the off hand, weapon in the main hand) and firing it");
+    public static final ConfigValue<Boolean> OFFHAND_REQUIRED = LAUNCH.bool("offhand_required", true,
+            "The hook must be in the off hand and the weapon in the main hand. Off = the swapped hands work too (hook in "
+                    + "the main hand, weapon in the off hand, e.g. for left-handed players)");
     public static final ConfigValue<Boolean> CROSSBOW_ENABLED = LAUNCH.bool("crossbow_enabled", true,
-            "A crossbow in the other hand draws and shoots the hook. Off = the hook is thrown");
+            "A crossbow next to the hook draws it in (vanilla's charge) and shoots it. Off = the hook is thrown");
     public static final ConfigValue<Double> CROSSBOW_SPEED = LAUNCH.doubleRange("crossbow_speed", 1.6, 0.1, 10.0,
             "Start speed of a hook shot from a crossbow, as a multiple of throw_velocity");
-    public static final ConfigValue<Integer> CROSSBOW_DRAW_TICKS = LAUNCH.intRange("crossbow_draw_ticks", 25, 0, 200,
-            "Ticks the use key must be held to draw the crossbow; letting go after that shoots, before it cancels (a crossbow charge: 25)");
     public static final ConfigValue<Double> CROSSBOW_ROPE_LENGTH = LAUNCH.doubleRange("crossbow_rope_length", 36.0, 2.0, 128.0,
             "Rope length in blocks of a hook shot from a crossbow (never shorter than max_rope_length)");
     public static final ConfigValue<Boolean> MUSKET_ENABLED = LAUNCH.bool("musket_enabled", true,
-            "An empty musket in the other hand fires the hook with one gunpowder. Off = the hook is thrown");
+            "A musket next to the hook loads it (the musket's reload time, one gunpowder) and fires it like a shot "
+                    + "(cooldown, recoil, rain misfire). Off = the hook is thrown");
     public static final ConfigValue<Double> MUSKET_SPEED = LAUNCH.doubleRange("musket_speed", 2.4, 0.1, 10.0,
             "Start speed of a hook fired from a musket, as a multiple of throw_velocity");
     public static final ConfigValue<Double> MUSKET_ROPE_LENGTH = LAUNCH.doubleRange("musket_rope_length", 48.0, 2.0, 128.0,

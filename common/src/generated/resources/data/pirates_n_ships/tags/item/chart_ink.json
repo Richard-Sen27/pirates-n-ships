@@ -1,0 +1,10 @@
+{
+  "values": [
+    "minecraft:ink_sac",
+    "minecraft:glow_ink_sac",
+    {
+      "id": "pirates_n_ships:kraken_ink",
+      "required": false
+    }
+  ]
+}

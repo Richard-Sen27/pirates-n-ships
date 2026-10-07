@@ -1,7 +1,13 @@
 package com.richardsenger.piratesnships.combat.grapple;
 
+import com.richardsenger.piratesnships.combat.CombatConfig;
 import com.richardsenger.piratesnships.combat.content.CombatContent;
 import com.richardsenger.piratesnships.combat.firearms.FirearmContent;
+import com.richardsenger.piratesnships.combat.firearms.FirearmKind;
+import com.richardsenger.piratesnships.combat.firearms.FirearmRules;
+import com.richardsenger.piratesnships.combat.firearms.FirearmService;
+import com.richardsenger.piratesnships.combat.firearms.FirearmsConfig;
+import com.richardsenger.piratesnships.combat.firearms.LeadBallEntity;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
@@ -20,9 +26,11 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.phys.BlockHitResult;
@@ -32,10 +40,12 @@ import org.joml.Vector3d;
 import java.util.Collection;
 
 /**
- * GR1 in a real server: launching the grappling hook from a crossbow or a musket in the other hand, and the mooring ring
- * (docs/design.md §8.3). The launch tests use a survival mock player looking up, drive the crossbow draw the way
- * {@code LivingEntity} does ({@code use}, then {@code releaseUsing} with the remaining use time) and measure the hook's
- * speed right after the launch. The ring tests use the two hulls of {@link GrappleGameTests} (ship A at x 2..6, ship B
+ * GR3 and GR1 in a real server: loading the grappling hook from the off hand into a musket or crossbow and firing it
+ * (GR3), and the mooring ring (GR1) (docs/design.md §8.3). The launch tests use a survival mock player looking up and
+ * drive the sessions the way {@code LivingEntity} does ({@code use}, {@code onUseTick} at the held time, then
+ * {@code releaseUsing} with the remaining use time; the crossbow's draw through {@link CrossbowHookLaunch#tickDraw},
+ * its press through {@link CrossbowHookLaunch#fire}, which the client's payload calls) and measure the hook's speed
+ * right after the launch. The ring tests use the two hulls of {@link GrappleGameTests} (ship A at x 2..6, ship B
  * at x 16..20, both z 9..13, deck top at y 9) with rings placed on the deck before assembly.
  */
 public final class GrappleLaunchGameTests {
@@ -43,6 +53,8 @@ public final class GrappleLaunchGameTests {
     private static final String LAUNCH_BATCH = "pirates_n_ships_grapple_launch";
     private static final String RING_BATCH = "pirates_n_ships_grapple_ring";
     private static final String CROSSBOW_DISABLED_BATCH = "pirates_n_ships_config_grapple_crossbow_disabled";
+    private static final String OFFHAND_BATCH = "pirates_n_ships_config_grapple_launch";
+    private static final String MISFIRE_BATCH = "pirates_n_ships_config_grapple_launch_misfire";
     /** Relative tolerance of a measured launch speed (the weapon's inaccuracy changes the length very slightly). */
     private static final double SPEED_TOLERANCE = 0.03;
 
@@ -56,20 +68,50 @@ public final class GrappleLaunchGameTests {
 
     // ------------------------------------------------------------------ launch fixtures
 
-    /** A survival mock player with an empty inventory, standing in the middle, looking up (the hook stays in the air). */
-    private static Player shooter(GameTestHelper h, ItemStack offHand) {
+    /**
+     * A survival mock player with an empty inventory, standing in the middle, looking up (the hook stays in the air),
+     * holding {@code main} and {@code off}.
+     */
+    private static Player shooter(GameTestHelper h, ItemStack main, ItemStack off) {
         Player p = h.makeMockPlayer(GameType.SURVIVAL);
         p.getInventory().clearContent();
         Vec3 stand = h.absoluteVec(new Vec3(4.5, 1, 4.5));
         p.setPos(stand.x, stand.y, stand.z);
         p.setXRot(-60.0f);
-        p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(CombatContent.GRAPPLING_HOOK.get()));
-        p.setItemInHand(InteractionHand.OFF_HAND, offHand);
+        p.setItemInHand(InteractionHand.MAIN_HAND, main);
+        p.setItemInHand(InteractionHand.OFF_HAND, off);
         return p;
+    }
+
+    private static ItemStack hook() {
+        return new ItemStack(CombatContent.GRAPPLING_HOOK.get());
+    }
+
+    private static ItemStack musket() {
+        return new ItemStack(CombatContent.MUSKET.get());
+    }
+
+    /** Puts {@code stack} into the first free slot that is not the selected hotbar slot (the main hand). */
+    private static void give(Player p, ItemStack stack) {
+        for (int i = 0; i < p.getInventory().items.size(); i++) {
+            if (i != p.getInventory().selected && p.getInventory().items.get(i).isEmpty()) {
+                p.getInventory().items.set(i, stack);
+                return;
+            }
+        }
+        throw new GameTestAssertException("no free slot");
     }
 
     private static int hooks(Player p) {
         return p.getInventory().countItem(CombatContent.GRAPPLING_HOOK.get());
+    }
+
+    private static int powder(Player p) {
+        return p.getInventory().countItem(Items.GUNPOWDER);
+    }
+
+    private static int reload() {
+        return FirearmsConfig.type(FirearmKind.MUSKET).reloadTicks();
     }
 
     private static void assertSpeed(GameTestHelper h, GrapplingHookEntity hook, double expected, String what) {
@@ -78,37 +120,174 @@ public final class GrappleLaunchGameTests {
                 what + " launched at " + v + " blocks/tick, expected " + expected);
     }
 
+    /** Holds use on the musket in {@code hand} through a whole loading session (the reload time) and lets go. */
+    private static void loadMusket(GameTestHelper h, Player p, InteractionHand hand) {
+        ServerLevel level = h.getLevel();
+        ItemStack gun = p.getItemInHand(hand);
+        InteractionResult r = gun.use(level, p, hand).getResult();
+        h.assertTrue(r.consumesAction(), "loading the musket was refused: " + r);
+        h.assertTrue(p.isUsingItem() && p.getUseItem() == gun, "no loading session on the musket");
+        h.assertTrue(!FirearmRules.isAimSession(p.getUseItemRemainingTicks()), "the session is not a loading session");
+        gun.getItem().onUseTick(level, p, gun, FirearmRules.LOAD_SESSION_TICKS - reload());
+        gun.releaseUsing(level, p, FirearmRules.LOAD_SESSION_TICKS - reload() - 5);
+        p.stopUsingItem();
+    }
+
+    /** Aims the loaded musket in {@code hand} for {@code ticks} and lets go (the shot leaves on release). */
+    private static void aimAndRelease(GameTestHelper h, Player p, InteractionHand hand, int ticks) {
+        ServerLevel level = h.getLevel();
+        ItemStack gun = p.getItemInHand(hand);
+        InteractionResult r = gun.use(level, p, hand).getResult();
+        h.assertTrue(r.consumesAction(), "aiming the musket was refused: " + r);
+        h.assertTrue(FirearmRules.isAimSession(p.getUseItemRemainingTicks()), "the session is not an aim");
+        gun.releaseUsing(level, p, FirearmRules.AIM_SESSION_TICKS - ticks);
+        p.stopUsingItem();
+    }
+
+    // ------------------------------------------------------------------ musket
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = LAUNCH_BATCH)
+    public static void musketLoadsTheHookFromTheOffHand(GameTestHelper h) {
+        Player player = shooter(h, musket(), hook());
+        give(player, new ItemStack(Items.GUNPOWDER, 3));
+        give(player, new ItemStack(CombatContent.LEAD_SHOT.get(), 2));
+        loadMusket(h, player, InteractionHand.MAIN_HAND);
+        ItemStack gun = player.getMainHandItem();
+        h.assertTrue(GrappleContent.isHookLoaded(gun), "the musket holds no hook");
+        h.assertTrue(FirearmContent.isLoaded(gun), "the musket is not marked loaded (bar, tooltip)");
+        h.assertTrue(player.getOffhandItem().isEmpty(), "the hook is still in the off hand");
+        h.assertTrue(powder(player) == 2, "not exactly one gunpowder was used: " + powder(player) + " left of 3");
+        h.assertTrue(player.getInventory().countItem(CombatContent.LEAD_SHOT.get()) == 2, "a lead shot was used for the hook");
+        h.assertTrue(GrappleService.hookOf(player) == null, "letting go after the load fired the hook");
+        LoadedHook loaded = GrappleContent.loadedHook(gun);
+        h.assertTrue(loaded != null && loaded.taken() && loaded.hook().is(CombatContent.GRAPPLING_HOOK.get()), "loaded " + loaded);
+        h.succeed();
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = LAUNCH_BATCH)
+    public static void cancelledMusketLoadTakesNothing(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        Player player = shooter(h, musket(), hook());
+        give(player, new ItemStack(Items.GUNPOWDER, 3));
+        ItemStack gun = player.getMainHandItem();
+        h.assertTrue(gun.use(level, player, InteractionHand.MAIN_HAND).getResult().consumesAction(), "no loading session");
+        int early = FirearmRules.LOAD_SESSION_TICKS - (reload() - 1);
+        gun.getItem().onUseTick(level, player, gun, early);
+        gun.releaseUsing(level, player, early);
+        player.stopUsingItem();
+        h.assertTrue(!GrappleContent.isHookLoaded(gun) && !FirearmContent.isLoaded(gun), "an early release loaded the musket");
+        h.assertTrue(player.getOffhandItem().is(CombatContent.GRAPPLING_HOOK.get()), "the hook left the off hand");
+        h.assertTrue(powder(player) == 3, "powder was used");
+        h.assertTrue(GrappleService.hookOf(player) == null, "a hook is out");
+        h.succeed();
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = LAUNCH_BATCH)
+    public static void aimedMusketFiresTheHookOnRelease(GameTestHelper h) {
+        Player player = shooter(h, musket(), hook());
+        give(player, new ItemStack(Items.GUNPOWDER, 1));
+        loadMusket(h, player, InteractionHand.MAIN_HAND);
+        aimAndRelease(h, player, InteractionHand.MAIN_HAND, FirearmsConfig.AIM_STEADY_TICKS.get() + 5);
+        ItemStack gun = player.getMainHandItem();
+        GrapplingHookEntity out = GrappleService.hookOf(player);
+        h.assertTrue(out != null, "no hook out after firing the musket (a misfire? the test area has a roof)");
+        double musket = GrappleConfig.THROW_VELOCITY.get() * GrappleConfig.MUSKET_SPEED.get();
+        assertSpeed(h, out, musket, "the musket hook");
+        h.assertTrue(out.ropeLength() == GrappleConfig.ropeLength(GrappleLaunch.Mode.MUSKET)
+                && out.ropeLength() > GrappleConfig.ropeLength(GrappleLaunch.Mode.CROSSBOW), "rope length " + out.ropeLength());
+        h.assertTrue(!GrappleContent.isHookLoaded(gun), "the musket still holds the hook");
+        h.assertTrue(!FirearmContent.isLoaded(gun), "the musket is still marked loaded");
+        h.assertTrue(player.getCooldowns().isOnCooldown(CombatContent.MUSKET.get()), "the musket's cooldown did not start");
+        h.assertTrue(h.getLevel().getEntitiesOfClass(LeadBallEntity.class, player.getBoundingBox().inflate(16)).isEmpty(),
+                "a lead ball left with the hook");
+        h.assertTrue(GrappleService.release(player) && hooks(player) == 1, "the released hook did not come back");
+        h.succeed();
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = LAUNCH_BATCH)
+    public static void musketLoadedWithShotRefusesTheHook(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ItemStack gun = musket();
+        FirearmContent.setLoaded(gun, true);
+        Player player = shooter(h, gun, hook());
+        give(player, new ItemStack(Items.GUNPOWDER, 3));
+        InteractionResult r = gun.use(level, player, InteractionHand.MAIN_HAND).getResult();
+        h.assertTrue(r.consumesAction() && FirearmRules.isAimSession(player.getUseItemRemainingTicks()),
+                "a musket loaded with shot does not aim its shot: " + r);
+        player.stopUsingItem();
+        h.assertTrue(!GrappleContent.isHookLoaded(gun), "the hook was loaded on top of the shot");
+        h.assertTrue(player.getOffhandItem().is(CombatContent.GRAPPLING_HOOK.get()), "the hook left the off hand");
+        h.assertTrue(powder(player) == 3, "powder was used");
+        // the hook's own use does not load or throw it either (the musket had its turn)
+        player.getOffhandItem().use(level, player, InteractionHand.OFF_HAND);
+        h.assertTrue(GrappleService.hookOf(player) == null && hooks(player) == 1, "the hook was thrown");
+        h.succeed();
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = LAUNCH_BATCH)
+    public static void musketWithoutGunpowderClicksAndKeepsTheHook(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        Player player = shooter(h, musket(), hook());
+        give(player, new ItemStack(CombatContent.LEAD_SHOT.get(), 1)); // shot alone loads nothing: the hook asks for powder
+        InteractionResult r = player.getMainHandItem().use(level, player, InteractionHand.MAIN_HAND).getResult();
+        h.assertTrue(r == InteractionResult.FAIL, "a musket without powder started loading: " + r);
+        h.assertTrue(!player.isUsingItem(), "a loading session started");
+        h.assertTrue(player.getOffhandItem().getCount() == 1, "the hook left the hand");
+        h.succeed();
+    }
+
     // ------------------------------------------------------------------ crossbow
 
     @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = LAUNCH_BATCH)
-    public static void crossbowShootsTheHookAfterTheDrawAtTheCrossbowSpeed(GameTestHelper h) {
+    public static void crossbowDrawLoadsTheHookAndAPressShootsIt(GameTestHelper h) {
         ServerLevel level = h.getLevel();
-        Player player = shooter(h, new ItemStack(Items.CROSSBOW));
-        ItemStack hook = player.getMainHandItem();
-        int draw = GrappleConfig.CROSSBOW_DRAW_TICKS.get();
+        Player player = shooter(h, new ItemStack(Items.CROSSBOW), hook());
+        give(player, new ItemStack(Items.ARROW, 5));
+        ItemStack crossbow = player.getMainHandItem();
+        int charge = CrossbowItem.getChargeDuration(crossbow, player);
 
-        InteractionResult r = hook.use(level, player, InteractionHand.MAIN_HAND).getResult();
+        InteractionResult r = player.getOffhandItem().use(level, player, InteractionHand.OFF_HAND).getResult();
         h.assertTrue(r.consumesAction(), "the draw was refused: " + r);
-        h.assertTrue(player.isUsingItem(), "using the hook with a crossbow did not start a draw");
-        h.assertTrue(GrappleService.hookOf(player) == null, "the hook left before the draw");
-        // let go too early: nothing happens
-        hook.releaseUsing(level, player, GrapplingHookItem.DRAW_SESSION_TICKS - (draw - 1));
+        h.assertTrue(player.isUsingItem() && player.getUseItem() == crossbow && player.getUsedItemHand() == InteractionHand.MAIN_HAND,
+                "the crossbow is not being drawn");
+        h.assertTrue(!CrossbowHookLaunch.tickDraw(player, charge - 1), "the hook was loaded before the full draw");
+        h.assertTrue(CrossbowHookLaunch.tickDraw(player, charge), "the hook was not loaded at the full draw");
+        h.assertTrue(CrossbowHookLaunch.isHookLoaded(crossbow) && CrossbowItem.isCharged(crossbow), "the crossbow is not hook-loaded");
+        h.assertTrue(player.getOffhandItem().isEmpty(), "the hook is still in the off hand");
+        // vanilla's release of the charged crossbow does nothing: no arrows are loaded on top
+        crossbow.releaseUsing(level, player, crossbow.getUseDuration(player) - (charge + 5));
         player.stopUsingItem();
-        h.assertTrue(GrappleService.hookOf(player) == null, "a hook was shot before the crossbow was drawn");
-        h.assertTrue(hook.getCount() == 1, "an early release used up the hook");
+        h.assertTrue(player.getInventory().countItem(Items.ARROW) == 5, "arrows were loaded");
+        h.assertTrue(GrappleService.hookOf(player) == null, "letting go after the draw shot the hook");
 
-        hook.use(level, player, InteractionHand.MAIN_HAND);
-        hook.releaseUsing(level, player, GrapplingHookItem.DRAW_SESSION_TICKS - draw);
-        player.stopUsingItem();
+        h.assertTrue(CrossbowHookLaunch.fire(level, player, InteractionHand.MAIN_HAND), "the press did not shoot");
         GrapplingHookEntity out = GrappleService.hookOf(player);
-        h.assertTrue(out != null, "no hook out after a full draw");
+        h.assertTrue(out != null, "no hook out after the shot");
         assertSpeed(h, out, GrappleConfig.THROW_VELOCITY.get() * GrappleConfig.CROSSBOW_SPEED.get(), "the crossbow hook");
-        h.assertTrue(out.ropeLength() == GrappleConfig.ropeLength(GrappleLaunch.Mode.CROSSBOW),
-                "rope length " + out.ropeLength() + ", expected the crossbow's");
-        h.assertTrue(out.ropeLength() > GrappleConfig.MAX_ROPE_LENGTH.get(), "the crossbow rope is not longer than the thrown one");
-        h.assertTrue(player.getMainHandItem().isEmpty(), "the shot hook is still in the hand");
-        h.assertTrue(player.getOffhandItem().getDamageValue() == 1, "the crossbow took no wear");
+        h.assertTrue(out.ropeLength() == GrappleConfig.ropeLength(GrappleLaunch.Mode.CROSSBOW)
+                && out.ropeLength() > GrappleConfig.MAX_ROPE_LENGTH.get(), "rope length " + out.ropeLength());
+        h.assertTrue(!CrossbowItem.isCharged(crossbow) && !GrappleContent.isHookLoaded(crossbow), "the crossbow is still loaded");
+        h.assertTrue(crossbow.getDamageValue() == 1, "the crossbow took no wear");
+        h.assertTrue(!CrossbowHookLaunch.fire(level, player, InteractionHand.MAIN_HAND), "an empty crossbow shot again");
         h.assertTrue(GrappleService.release(player) && hooks(player) == 1, "the released hook did not come back");
+        h.succeed();
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = LAUNCH_BATCH)
+    public static void earlyCrossbowReleaseTakesNothing(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        Player player = shooter(h, new ItemStack(Items.CROSSBOW), hook());
+        give(player, new ItemStack(Items.ARROW, 5));
+        ItemStack crossbow = player.getMainHandItem();
+        int charge = CrossbowItem.getChargeDuration(crossbow, player);
+        player.getOffhandItem().use(level, player, InteractionHand.OFF_HAND);
+        h.assertTrue(player.isUsingItem(), "the crossbow is not being drawn");
+        CrossbowHookLaunch.tickDraw(player, charge - 3);
+        crossbow.releaseUsing(level, player, crossbow.getUseDuration(player) - (charge - 3));
+        player.stopUsingItem();
+        h.assertTrue(!CrossbowItem.isCharged(crossbow) && !GrappleContent.isHookLoaded(crossbow), "the crossbow got loaded");
+        h.assertTrue(player.getOffhandItem().is(CombatContent.GRAPPLING_HOOK.get()), "the hook left the off hand");
+        h.assertTrue(player.getInventory().countItem(Items.ARROW) == 5, "arrows were used");
         h.succeed();
     }
 
@@ -116,69 +295,97 @@ public final class GrappleLaunchGameTests {
     public static void crossbowLaunchSwitchedOffThrowsTheHook(GameTestHelper h) {
         ConfigOverrides.during(h, GrappleConfig.CROSSBOW_ENABLED, false);
         ServerLevel level = h.getLevel();
-        Player player = shooter(h, new ItemStack(Items.CROSSBOW));
-        InteractionResult r = player.getMainHandItem().use(level, player, InteractionHand.MAIN_HAND).getResult();
+        Player player = shooter(h, new ItemStack(Items.CROSSBOW), hook());
+        InteractionResult r = player.getOffhandItem().use(level, player, InteractionHand.OFF_HAND).getResult();
         h.assertTrue(r.consumesAction(), "the throw was refused: " + r);
         h.assertTrue(!player.isUsingItem(), "a switched-off crossbow launch still draws");
         GrapplingHookEntity out = GrappleService.hookOf(player);
         h.assertTrue(out != null, "the hook was not thrown");
         assertSpeed(h, out, GrappleConfig.THROW_VELOCITY.get(), "the thrown hook");
-        h.assertTrue(out.ropeLength() == GrappleConfig.MAX_ROPE_LENGTH.get(), "a thrown hook has rope " + out.ropeLength());
-        h.assertTrue(player.getOffhandItem().getDamageValue() == 0, "a throw wore the crossbow");
         h.assertTrue(GrappleService.release(player) && hooks(player) == 1, "the released hook did not come back");
         h.succeed();
     }
 
-    // ------------------------------------------------------------------ musket
+    // ------------------------------------------------------------------ throw, hands, misfire
 
     @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = LAUNCH_BATCH)
-    public static void musketFiresTheHookFastestForOneGunpowder(GameTestHelper h) {
+    public static void hookInTheMainHandWithoutALauncherIsThrown(GameTestHelper h) {
         ServerLevel level = h.getLevel();
-        Player player = shooter(h, new ItemStack(CombatContent.MUSKET.get()));
-        player.getInventory().add(new ItemStack(Items.GUNPOWDER, 3));
+        Player player = shooter(h, hook(), ItemStack.EMPTY);
         InteractionResult r = player.getMainHandItem().use(level, player, InteractionHand.MAIN_HAND).getResult();
-        h.assertTrue(r.consumesAction(), "the musket launch was refused: " + r);
+        h.assertTrue(r.consumesAction(), "the throw was refused: " + r);
         GrapplingHookEntity out = GrappleService.hookOf(player);
-        h.assertTrue(out != null, "no hook out after firing the musket (a misfire? the test area has a roof)");
-        double musket = GrappleConfig.THROW_VELOCITY.get() * GrappleConfig.MUSKET_SPEED.get();
-        assertSpeed(h, out, musket, "the musket hook");
-        h.assertTrue(musket > GrappleConfig.THROW_VELOCITY.get() * GrappleConfig.CROSSBOW_SPEED.get(), "the musket is not the fastest");
-        h.assertTrue(out.ropeLength() == GrappleConfig.ropeLength(GrappleLaunch.Mode.MUSKET)
-                && out.ropeLength() > GrappleConfig.ropeLength(GrappleLaunch.Mode.CROSSBOW), "rope length " + out.ropeLength());
-        h.assertTrue(player.getInventory().countItem(Items.GUNPOWDER) == 2, "not exactly one gunpowder was burnt: "
-                + player.getInventory().countItem(Items.GUNPOWDER) + " left of 3");
-        h.assertTrue(player.getInventory().countItem(CombatContent.LEAD_SHOT.get()) == 0, "lead shot appeared");
-        h.assertTrue(!FirearmContent.isLoaded(player.getOffhandItem()), "the musket became loaded");
-        h.assertTrue(player.getCooldowns().isOnCooldown(CombatContent.MUSKET.get()), "the musket's cooldown did not start");
-        h.assertTrue(player.getMainHandItem().isEmpty(), "the fired hook is still in the hand");
+        h.assertTrue(out != null, "the hook was not thrown");
+        assertSpeed(h, out, GrappleConfig.THROW_VELOCITY.get(), "the thrown hook");
+        h.assertTrue(out.ropeLength() == GrappleConfig.MAX_ROPE_LENGTH.get(), "a thrown hook has rope " + out.ropeLength());
+        h.assertTrue(player.getMainHandItem().isEmpty(), "the thrown hook is still in the hand");
         h.assertTrue(GrappleService.release(player) && hooks(player) == 1, "the released hook did not come back");
         h.succeed();
     }
 
     @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = LAUNCH_BATCH)
-    public static void loadedMusketRefusesToFireTheHook(GameTestHelper h) {
+    public static void swappedHandsThrowWhileTheOffHandIsRequired(GameTestHelper h) {
         ServerLevel level = h.getLevel();
-        ItemStack musket = new ItemStack(CombatContent.MUSKET.get());
-        FirearmContent.setLoaded(musket, true);
-        Player player = shooter(h, musket);
-        player.getInventory().add(new ItemStack(Items.GUNPOWDER, 3));
-        InteractionResult r = player.getMainHandItem().use(level, player, InteractionHand.MAIN_HAND).getResult();
-        h.assertTrue(r == InteractionResult.FAIL, "a loaded musket fired the hook: " + r);
-        h.assertTrue(GrappleService.hookOf(player) == null, "a hook is out");
-        h.assertTrue(player.getMainHandItem().getCount() == 1, "the hook left the hand");
-        h.assertTrue(player.getInventory().countItem(Items.GUNPOWDER) == 3, "powder was burnt");
-        h.assertTrue(FirearmContent.isLoaded(player.getOffhandItem()), "the musket lost its ball");
+        Player player = shooter(h, hook(), musket());
+        give(player, new ItemStack(Items.GUNPOWDER, 3));
+        player.getMainHandItem().use(level, player, InteractionHand.MAIN_HAND);
+        h.assertTrue(!player.isUsingItem(), "the musket in the off hand started loading");
+        h.assertTrue(GrappleService.hookOf(player) != null, "the hook was not thrown");
+        h.assertTrue(powder(player) == 3, "powder was used");
+        h.assertTrue(GrappleService.release(player) && hooks(player) == 1, "the released hook did not come back");
         h.succeed();
     }
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = LAUNCH_BATCH)
-    public static void musketWithoutGunpowderClicksAndKeepsTheHook(GameTestHelper h) {
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = OFFHAND_BATCH)
+    public static void offhandNotRequiredAcceptsTheSwappedHands(GameTestHelper h) {
+        ConfigOverrides.during(h, GrappleConfig.OFFHAND_REQUIRED, false);
         ServerLevel level = h.getLevel();
-        Player player = shooter(h, new ItemStack(CombatContent.MUSKET.get()));
+        Player player = shooter(h, hook(), musket());
+        give(player, new ItemStack(Items.GUNPOWDER, 3));
         InteractionResult r = player.getMainHandItem().use(level, player, InteractionHand.MAIN_HAND).getResult();
-        h.assertTrue(r == InteractionResult.FAIL, "a musket without powder fired the hook: " + r);
-        h.assertTrue(GrappleService.hookOf(player) == null, "a hook is out");
-        h.assertTrue(player.getMainHandItem().getCount() == 1, "the hook left the hand");
+        h.assertTrue(r.consumesAction(), "the hook did not hand the use to the musket: " + r);
+        h.assertTrue(player.isUsingItem() && player.getUsedItemHand() == InteractionHand.OFF_HAND, "the musket is not loading");
+        ItemStack gun = player.getOffhandItem();
+        gun.getItem().onUseTick(level, player, gun, FirearmRules.LOAD_SESSION_TICKS - reload());
+        player.stopUsingItem();
+        h.assertTrue(GrappleContent.isHookLoaded(gun) && FirearmContent.isLoaded(gun), "the musket in the off hand holds no hook");
+        h.assertTrue(player.getMainHandItem().isEmpty(), "the hook is still in the main hand");
+        h.assertTrue(powder(player) == 2, "not one gunpowder used");
+        aimAndRelease(h, player, InteractionHand.OFF_HAND, 3);
+        GrapplingHookEntity out = GrappleService.hookOf(player);
+        h.assertTrue(out != null, "the off-hand musket did not fire the hook");
+        assertSpeed(h, out, GrappleConfig.THROW_VELOCITY.get() * GrappleConfig.MUSKET_SPEED.get(), "the musket hook");
+        h.assertTrue(GrappleService.release(player) && hooks(player) == 1, "the released hook did not come back");
+        h.succeed();
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = MISFIRE_BATCH)
+    public static void rainMisfireKeepsTheHookInTheMusket(GameTestHelper h) {
+        ConfigOverrides.during(h, CombatConfig.FIREARM_MISFIRE_IN_RAIN, true);
+        ConfigOverrides.during(h, CombatConfig.RAIN_MISFIRE_CHANCE, 1.0);
+        ServerLevel level = h.getLevel();
+        float rain = level.getRainLevel(1.0f);
+        // clear the barrier ceiling above the shooter so rain can reach it
+        for (int y = 2; y < 32; y++) {
+            BlockPos p = new BlockPos(4, y, 4);
+            if (h.getBlockState(p).is(Blocks.BARRIER)) h.setBlock(p, Blocks.AIR);
+        }
+        Player player = shooter(h, musket(), hook());
+        give(player, new ItemStack(Items.GUNPOWDER, 1));
+        loadMusket(h, player, InteractionHand.MAIN_HAND);
+        ItemStack gun = player.getMainHandItem();
+        try {
+            level.setWeatherParameters(0, 6000, true, false);
+            level.setRainLevel(1.0f);
+            h.assertTrue(FirearmService.inRain(player), "the shooter should stand in the rain");
+            aimAndRelease(h, player, InteractionHand.MAIN_HAND, 3);
+            h.assertTrue(GrappleService.hookOf(player) == null, "a misfire launched the hook");
+            h.assertTrue(GrappleContent.isHookLoaded(gun) && FirearmContent.isLoaded(gun), "a misfire lost the hook");
+            h.assertTrue(player.getCooldowns().isOnCooldown(gun.getItem()), "a misfire still starts the cooldown");
+        } finally {
+            level.setWeatherParameters(20000000, 20000000, false, false);
+            level.setRainLevel(rain);
+        }
         h.succeed();
     }
 

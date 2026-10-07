@@ -112,11 +112,17 @@ lower end, following both ships as they move. Sneak to let go. A level rope is c
 crow's nest down to an enemy deck is the classic move. Server config `grapple.slide`.
 
 ## Map tiles
-Craft a Map Tile from 8 sticks around a paper and place it on a table or a wall. Use it with your chart in hand: the
-chart opens with a frame. Drag the frame over the part you want, choose whether your markers go on it, and press Draw.
-Everyone who passes by sees that part of your chart on the tile, and looking at it tells who drew it and when. Drawing
-again replaces the picture. Break the tile and it keeps its drawing as an item, ready to hang somewhere else. Server
-options: `chart.tiles.enabled`, `redraw_allowed`, `require_chart_item`, `reach`, `tile_cells`.
+Craft a Map Tile from 8 sticks around a paper and place it on a table or a wall. Put several side by side in a
+rectangle, all facing the same way, and they form one board of up to 8 by 8 tiles. Use any tile with your chart in
+hand: the chart opens with a frame the shape of the board. Drag it over the part you want, pick a zoom (each step shows
+a wider area, coarser), choose whether your markers go on it, and press Draw. Drawing costs ink: an ink sac or glow
+ink sac per tile, and a kraken's ink pays for eight; creative players draw for free. Later, anyone who has charted more
+can use the board again and press Update: what they know fills in the blank parchment, and what was drawn before
+stays. They pay only for the tiles that changed. "New" draws the board afresh at another area or zoom, and "Clear"
+wipes it. Looking at a tile tells who drew or last updated it, when, and the area. Break a tile and it keeps its part
+of the drawing as an item; put it back in its place and the board is whole again. Server options under
+`chart.tiles`: `enabled`, `redraw_allowed`, `require_chart_item`, `reach`, `tile_cells`, `max_board_side`, `max_zoom`,
+`ink_cost_enabled`, `ink_per_tile`, `kraken_ink_tile_value`.
 
 ## Orders, not assignments
 You don't have to assign every sailor. Give an order with the whistle (or `/pirates crew order`), and every unmanned
@@ -124,6 +130,14 @@ station that can carry it out becomes an open job: free crew standing on your sh
 within a second, get to work and stay there afterwards. Crew you put at a station yourself with the whistle stay put
 and are never moved. If nobody is free you hear "No free hands" once; the job waits for the next crew member who comes
 aboard. "Release crew" sends everyone off and cancels the open jobs. Server config `crew_stations.job_board`.
+
+## Seafarer villages
+Seafarer villages generate on beaches. A stone quay with the harbor master's hut faces the sea, and a plank pier runs
+straight out over the water with two ship berths, one on each side halfway out. Streets lead inland with cottages, a
+tavern and a shipwright's shed, and end in a small cobbled place. The harbor master's desk belongs to the village's
+port: use it to open the port's market. A desk you place anywhere inside a village joins that port too. Operators can
+list ports with `/pirates world ports` and find the nearest with `/pirates world port nearest`. Server config
+`world.structures.seafarer_village`.
 
 ## Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks

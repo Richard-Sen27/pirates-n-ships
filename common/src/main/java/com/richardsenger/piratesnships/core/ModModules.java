@@ -40,6 +40,7 @@ public final class ModModules {
             new com.richardsenger.piratesnships.hazards.HazardsModule(),
             new com.richardsenger.piratesnships.guide.GuideModule(),
             new com.richardsenger.piratesnships.apparel.ApparelModule(),
-            new com.richardsenger.piratesnships.chart.ChartModule()
+            new com.richardsenger.piratesnships.chart.ChartModule(),
+            new com.richardsenger.piratesnships.world.WorldModule()
     );
 }

@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-07T14:07:35.683279	Recipes
+// 1.21.1	2026-10-07T15:02:16.049317	Recipes
 e1289c0eb7525c60669f4203ccd8af0d9d7b0744 data/pirates_n_ships/advancement/recipes/building_blocks/hull_patch.json
 dc908cf23933449a8a82c8037e57e8f3143c20f2 data/pirates_n_ships/advancement/recipes/combat/bandana.json
 8f98eb055171c739101420a0b9bbe9f3a8bf2903 data/pirates_n_ships/advancement/recipes/combat/cannon.json
@@ -38,6 +38,7 @@ f7e885188dc6f141897463c4c13c231ee16c9c9b data/pirates_n_ships/advancement/recipe
 4c42f624146f1bf49bfa62d375de17078bf27322 data/pirates_n_ships/advancement/recipes/misc/cloth.json
 dc645eb64a6aaf129d1c677f5a0cea8e270db46b data/pirates_n_ships/advancement/recipes/redstone/brig_door.json
 88d50c7baa78bb0d4dc27459e14004cd9a979f8a data/pirates_n_ships/advancement/recipes/tools/brig_key.json
+1daedb04441a8008d3d0ea8aea1c3c4af0b9e22c data/pirates_n_ships/advancement/recipes/tools/chart.json
 2a957e058c302fff24bcf63d3b56764ed66eee7a data/pirates_n_ships/advancement/recipes/tools/grappling_hook.json
 50bbc3a5283b5ecd156269afff156a249c60d350 data/pirates_n_ships/advancement/recipes/tools/shackles.json
 dabb55b5be124c511fdf02edafd66b731afe2cec data/pirates_n_ships/advancement/recipes/transportation/bilge_pump.json
@@ -57,6 +58,7 @@ ee31fa683c68b7dd3fbe347a19c643971a50d895 data/pirates_n_ships/recipe/brig_door.j
 a8c074ca4609fbfdb0315cadfd6264ace56daa7c data/pirates_n_ships/recipe/capstan.json
 8e5ee9ea39d831d5a3dc1ef34f880688f3b74458 data/pirates_n_ships/recipe/cargo_barrel.json
 e79d3d2ce55c93cd8e75ea48e8b4013497b627eb data/pirates_n_ships/recipe/cargo_crate.json
+aa98b09b5fe592a6a0b513413247f829c329b15d data/pirates_n_ships/recipe/chart.json
 8b65467d0ca8f4b2e5af950aef86056a3712db43 data/pirates_n_ships/recipe/cleat.json
 ceccb5e0c6d3a0b2ea95cbe0c892b0a617f94c84 data/pirates_n_ships/recipe/cloth.json
 1353c50bbe239fe6bd3a26cf7eff7b76dca0e66d data/pirates_n_ships/recipe/cutlass.json

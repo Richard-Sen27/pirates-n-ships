@@ -155,12 +155,14 @@ class IslandDataTest {
         assertEquals(1, pools.size());
         JsonObject pool = pools.get(0).getAsJsonObject();
         JsonObject rolls = pool.getAsJsonObject("rolls");
+        assertEquals("minecraft:uniform", rolls.get("type").getAsString());
         assertEquals(3.0, rolls.get("min").getAsDouble());
         assertEquals(5.0, rolls.get("max").getAsDouble());
         Map<String, Integer> weights = new TreeMap<>();
         for (JsonElement e : pool.getAsJsonArray("entries")) {
             JsonObject entry = e.getAsJsonObject();
-            weights.put(entry.get("name").getAsString(), entry.get("weight").getAsInt());
+            // The loot codec omits "weight" when it is the default (1).
+            weights.put(entry.get("name").getAsString(), entry.has("weight") ? entry.get("weight").getAsInt() : 1);
         }
         assertEquals(Map.of("pirates_n_ships:doubloon", 25, "pirates_n_ships:rum", 15, "pirates_n_ships:salt_pork", 15,
                 "minecraft:iron_ingot", 12, "minecraft:emerald", 8, "pirates_n_ships:lead_shot", 6, "pirates_n_ships:pistol", 3,

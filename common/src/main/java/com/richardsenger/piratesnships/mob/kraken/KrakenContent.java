@@ -75,8 +75,7 @@ public final class KrakenContent {
         data.encoded(PackOutput.Target.DATA_PACK, "loot_table", Constants.id("entities/" + ID), LootTable.DIRECT_CODEC, MobLoot.kraken());
         data.models(m -> {
             SPAWN_EGG_MODEL.create(ModelLocationUtils.getModelLocation(SPAWN_EGG.get()), new TextureMapping(), m.models());
-            m.flatItem(KRAKEN_BEAK.get());
-            m.flatItem(KRAKEN_INK.get());
+            // kraken_beak and kraken_ink are hand-made Blockbench item models (ART1c, art/models/)
         });
         data.lang(lang -> lang
                 .add(KRAKEN.get().getDescriptionId(), "Kraken")

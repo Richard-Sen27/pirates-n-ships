@@ -113,13 +113,7 @@ public final class AssemblyModule implements ModModule {
                             .select(Direction.SOUTH, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R180))
                             .select(Direction.WEST, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R270))));
         });
-        data.models(m -> {
-            // Placeholder sprites (tools/gen_placeholder_textures.py) until the Blockbench models come
-            m.handheldItem(AssemblyContent.CARPENTERS_HAMMER.get());
-            m.handheldItem(AssemblyContent.SAW.get());
-            m.flatItem(AssemblyContent.NAILS.get());
-            m.flatItem(AssemblyContent.SHIPWRIGHT_TOOLKIT.get());
-        });
+        // carpenters_hammer, saw, nails and shipwright_toolkit are hand-made Blockbench item models (ART1c, art/models/)
         data.recipes(AssemblyModule::rejoinRecipes);
         data.definitions(ShipTemplates.TYPE, ShipTemplates.DEFAULTS);
         data.blockLoot(loot -> loot.dropSelf(helm));

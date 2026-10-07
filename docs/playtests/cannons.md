@@ -90,3 +90,13 @@ Result (third playtest, 2026-10-07): the large cannon's size is right (two-block
 4. **Swivel on a fence:** turn 360° (the yoke turns about the post centre), elevate fully up and down (the trunnions
    stay in the yoke bosses, the barrel never cuts the crossbar), the loaded ball shows at the muzzle.
 5. **Both items** in the GUI, hotbar, hand (first and third person), on the ground and in an item frame.
+
+
+## C9: crew loading
+An assembled ship with a manned cannon and a chest within 4 blocks holding 5 gunpowder and 5 cannonballs.
+1. **Load!** (gunpowder icon next to Fire! on the whistle): "Aye, loading!", the crew works about 4 s, then the loaded model, the powder and iron-door sounds, the chest down by one of each.
+2. **Fire! and auto-reload:** the shot leaves, the crew works again, after 5 s the gun is loaded and the chest down one more; Fire! again shoots; with the chest empty the crew stays idle and Load! says "No powder and shot within reach, captain!".
+3. **Fire! during the reload:** it finishes the load and fires, no "not loaded".
+4. **Swivel:** loads in about 2 s; with `cannons.swivel.ammo_count` 3 it takes 3 balls and a broken gun returns 3.
+5. **Refusals:** a loaded gun ("already loaded"); a chest beyond 4 blocks, on the dock, or with only powder; two cargo crates (powder and balls) work.
+6. **Toggles:** `cannons.crew.enabled = false` refuses Load! and skips the reload; `auto_reload = false` leaves the gun empty; `supply_range` changes the reach. Hand-loading still works. The whistle wheel's 7 sectors still read well.

@@ -67,6 +67,11 @@ hand: the gun turns wherever you look while you hold, up to 45° up and 30° dow
 you what it needs. It hits less hard and less far than the cannon and breaks no planks unless the server allows it;
 it reloads in three seconds. Crew assigned to it fire it on the whistle's "Fire!".
 
+Crew at a gun can also load it: put gunpowder and cannonballs (or the swivel's shot) in a chest, barrel or cargo
+crate within 4 blocks of the gun on the same ship, then blow "Load!" on the whistle. After every "Fire!" the crew
+reloads by itself from that supply, so a manned, supplied gun keeps firing as fast as it cools down (server config
+`cannons.crew`).
+
 ## Grappling hook
 Right-click to throw the hook. If it hits the hull of another ship it bites in and hangs there, following the ship.
 If you stand on your own ship, the taut rope hauls both ships together until they lie side by side, ready for

@@ -21,6 +21,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `anchor_chain` | Chain speeds, travel time limits, anchor sounds and volumes. |
 | `hull_creaking` | Creaking on/off, how often, volume and pitch ranges, the rolling rate that counts. |
 | `audio` (client) | Music on/off and volume, the gap between tracks, shanties aboard. |
+| `grapple.launch` | Crossbow and musket launches on/off, their speeds, the draw time and the rope lengths per mode. |
 | `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore pull, entity damage, lost-hook rule. |
 | `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevation range and steps, blocks per hit, recoil and impact impulses, ball lifetime and water behaviour, `mobGriefing` and spawn protection, drops from destroyed blocks, glancing hits and the bounce angle. |
 | `cannons.swivel` | Swivel gun on/off, ammo item and count, damage, muzzle speed, reload, blocks per hit, recoil and impact impulses, ball lifetime, elevation limits, aim reach. |
@@ -35,7 +36,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `firearms` | Firearms on/off, per gun: damage, muzzle velocity, spread, reload time, recoil; ball lifetime and gravity, cooldown, gunpowder use. |
 | `sailing_runtime` | Sailing forces on/off, heel scaling, steering and anchor on/off, rudder steps, chain length. |
 | `crew_stations` | Crew stations on/off, time per trim step. |
-| `flags` | Hoisting delay, flags following the wind (land and ship check intervals), banners as flags. |
+| `flags` | Hoisting delay, flags following the wind at its exact angle (land and ship check intervals), banners as flags. |
 | `dry_hull` | Also: whether slabs, stairs and hatches are drawn dry in their empty half. |
 | `sea_chest` | Sea chest on/off, worn speed, sink pull, wind drift and its cap, draft. |
 | `survival` | Cold water on/off and freeze rate, warm effect length, swimming hunger multiplier. |

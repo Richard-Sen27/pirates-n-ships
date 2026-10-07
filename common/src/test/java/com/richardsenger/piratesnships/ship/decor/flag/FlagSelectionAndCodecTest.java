@@ -5,7 +5,6 @@ import com.richardsenger.piratesnships.law.flag.FlagKind;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagSelection.PoleReading;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
@@ -86,11 +85,11 @@ class FlagSelectionAndCodecTest {
 
     @Test
     void flagPointsDownwind() {
-        assertEquals(Direction.SOUTH, FlagWind.downwind(0.0, 1.0, Direction.NORTH));
-        assertEquals(Direction.NORTH, FlagWind.downwind(0.1, -0.9, Direction.EAST));
-        assertEquals(Direction.EAST, FlagWind.downwind(0.8, 0.6, Direction.NORTH));
-        assertEquals(Direction.WEST, FlagWind.downwind(-0.8, -0.6, Direction.NORTH));
-        assertEquals(Direction.EAST, FlagWind.downwind(0.0, 0.0, Direction.EAST), "calm keeps the current side");
+        assertEquals(180f, FlagWind.downwindAngle(0.0, 1.0, null, 0f), 1.0e-3f);
+        assertEquals(FlagYaw.wrap((float) Math.toDegrees(Math.atan2(0.1, 0.9))), FlagWind.downwindAngle(0.1, -0.9, null, 90f), 1.0e-3f);
+        assertEquals(FlagYaw.wrap((float) Math.toDegrees(Math.atan2(0.8, -0.6))), FlagWind.downwindAngle(0.8, 0.6, null, 0f), 1.0e-3f);
+        assertEquals(FlagYaw.wrap((float) Math.toDegrees(Math.atan2(-0.8, 0.6))), FlagWind.downwindAngle(-0.8, -0.6, null, 0f), 1.0e-3f);
+        assertEquals(90f, FlagWind.downwindAngle(0.0, 0.0, null, 90f), "calm keeps the current angle");
     }
 
     private static FlagpoleState roundTrip(FlagpoleState s) {

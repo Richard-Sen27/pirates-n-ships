@@ -1,25 +1,36 @@
 package com.richardsenger.piratesnships.ship.decor.flag;
 
-import net.minecraft.core.Direction;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Quaterniondc;
 import org.joml.Vector3d;
 
 /**
- * Which way a flag points (pure): downwind, snapped to the nearest horizontal direction (§4.7 "flags flutter in the
- * wind direction", §5.1). The wind vector is the direction the wind blows <em>toward</em> ({@code WindSample.dirX/Z}).
- * On a ship the flag's {@code FACING} is stored in plot coordinates, so the world wind is first turned into the ship's
- * frame with {@link #shipFrame}.
+ * Which way a flag points (pure): exactly downwind, as a compass bearing (§4.7 "flags flutter in the wind
+ * direction", §5.1). The wind vector is the direction the wind blows <em>toward</em> ({@code WindSample.dirX/Z}).
+ * Bearings use Minecraft's compass, as {@code WindSample#towardDegrees()}: 0 = north (−Z), 90 = east (+X),
+ * 180 = south (+Z), 270 = west (−X), always in {@code [0, 360)}.
+ * <p>
+ * On a ship the cloth is drawn in the ship's plot frame, so the world wind is first turned into that frame with
+ * {@link #shipFrame} ({@link #downwindAngle}).
  */
 public final class FlagWind {
+
+    /** A horizontal wind vector shorter than this is a dead calm: the flag keeps its angle. */
+    public static final double CALM = 1.0e-6;
 
     private FlagWind() {
     }
 
-    /** The downwind direction, or {@code current} in a dead calm (zero vector). */
-    public static Direction downwind(double dirX, double dirZ, Direction current) {
-        if (Math.abs(dirX) < 1.0e-6 && Math.abs(dirZ) < 1.0e-6) return current;
-        if (Math.abs(dirX) > Math.abs(dirZ)) return dirX > 0 ? Direction.EAST : Direction.WEST;
-        return dirZ > 0 ? Direction.SOUTH : Direction.NORTH;
+    /** The compass bearing of the horizontal vector {@code (x, z)}, or {@code current} when it is (almost) zero. */
+    public static float bearing(double x, double z, float current) {
+        if (Math.hypot(x, z) < CALM) return current;
+        return FlagYaw.wrap((float) Math.toDegrees(Math.atan2(x, -z)));
+    }
+
+    /** The unit vector {@code {x, z}} of a compass bearing (inverse of {@link #bearing}). */
+    public static double[] toward(double bearingDegrees) {
+        double rad = Math.toRadians(bearingDegrees);
+        return new double[]{Math.sin(rad), -Math.cos(rad)};
     }
 
     /**
@@ -32,9 +43,19 @@ public final class FlagWind {
         return new double[]{v.x, v.z};
     }
 
-    /** {@link #downwind} of the world wind as seen from a ship with this orientation (a plot-frame direction). */
-    public static Direction downwindOnShip(double worldX, double worldZ, Quaterniondc orientation, Direction current) {
+    /**
+     * The bearing the cloth points to in the frame it is drawn in: downwind of the world wind {@code (worldX, worldZ)}
+     * (the direction it blows toward, any length), turned into the ship's plot frame when {@code orientation} is given
+     * (null on land: the world bearing). No snapping. A calm, or a ship heeled so far that the wind has no horizontal
+     * part in its frame, keeps {@code current}.
+     */
+    public static float downwindAngle(double worldX, double worldZ, @Nullable Quaterniondc orientation, float current) {
+        double length = Math.hypot(worldX, worldZ);
+        if (length < CALM) return current;
+        if (orientation == null) return bearing(worldX, worldZ, current);
         double[] local = shipFrame(worldX, worldZ, orientation);
-        return downwind(local[0], local[1], current);
+        // Relative threshold: a strong wind on a ship heeled almost onto its side has no usable direction either.
+        if (Math.hypot(local[0], local[1]) < 1.0e-3 * length) return current;
+        return bearing(local[0], local[1], current);
     }
 }

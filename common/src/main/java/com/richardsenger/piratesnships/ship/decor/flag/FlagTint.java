@@ -7,15 +7,13 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The colour of a custom (banner) flag's cloth (pure, vanilla classes only). The cloth model of
- * {@link FlagKind#CUSTOM} has {@link #TINT_INDEX} on its faces, and the client's block colour handler multiplies the
- * cloth texture by {@link #clothTint(FlagpoleState)}: the banner's base dye colour, as vanilla draws the banner's
- * base layer ({@link DyeColor#getTextureDiffuseColor()}). Banner patterns are not shown (only the base colour).
+ * The colour of a custom (banner) flag's cloth (pure, vanilla classes only). The client's cloth renderer draws the
+ * cloth of {@link FlagKind#CUSTOM} ({@link FlagClothModel#tinted}) with {@link #clothTint(FlagpoleState)} as vertex
+ * colour: the banner's base dye colour, as vanilla draws the banner's base layer
+ * ({@link DyeColor#getTextureDiffuseColor()}). Banner patterns are not shown (only the base colour).
  */
 public final class FlagTint {
 
-    /** The tint index on the custom cloth's faces. */
-    public static final int TINT_INDEX = 0;
     /** No tint (white multiplies to the texture's own colours). */
     public static final int NONE = 0xFFFFFF;
 

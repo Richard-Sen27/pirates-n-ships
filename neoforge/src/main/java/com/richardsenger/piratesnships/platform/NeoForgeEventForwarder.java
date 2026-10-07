@@ -11,6 +11,7 @@ import net.neoforged.neoforge.event.OnDatapackSyncEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerContainerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -79,6 +80,7 @@ public final class NeoForgeEventForwarder {
         bus.addListener(LivingDeathEvent.class, e -> {
             if (CommonEvents.LIVING_DEATH.invoker().onDeath(e.getEntity(), e.getSource())) e.setCanceled(true);
         });
+        bus.addListener(LivingEntityUseItemEvent.Finish.class, e -> CommonEvents.ITEM_USE_FINISH.invoker().onFinish(e.getEntity(), e.getItem(), e.getResultStack()));
 
         bus.addListener(BlockEvent.BreakEvent.class, e -> {
             if (e.getLevel() instanceof Level l && CommonEvents.BLOCK_BREAK.invoker().onBreak(l, e.getPos(), e.getState(), e.getPlayer())) e.setCanceled(true);

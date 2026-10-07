@@ -52,7 +52,7 @@ public final class SettingsGameTests {
                 HazardConfig.WAVE_AMPLITUDE, HazardConfig.KRAKEN_ENABLED,
                 CrewConfig.MAX_CREW_MULTIPLIER,
                 CombatConfig.RAIN_MISFIRE_CHANCE,
-                SurvivalConfig.TIME_TO_FREEZE_SECONDS,
+                SurvivalConfig.FREEZE_TICKS_PER_TICK,
                 WorldConfig.WRECK.spacing(), WorldConfig.SPAWN_WEIGHT_SHARK,
                 WorldSimConfig.MAX_SIMULTANEOUS_VOYAGES);
         for (ConfigValue<?> v : samples) {

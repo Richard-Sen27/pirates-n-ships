@@ -17,6 +17,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
@@ -92,6 +93,13 @@ public final class CommonEvents {
         for (LivingDeath l : ls) if (l.onDeath(e, src)) return true;
         return false;
     });
+    /**
+     * An entity finished using an item: ate, drank, or another use that runs to its end
+     * ({@code LivingEntity.completeUsingItem}, after the item's {@code finishUsingItem}). {@code used} is a copy of the
+     * stack as it was before the use, {@code result} what replaces it in the hand. Both logical sides; notification
+     * only. Fired from NeoForge's {@code LivingEntityUseItemEvent.Finish}.
+     */
+    public static final Event<ItemUseFinish> ITEM_USE_FINISH = Event.create(ls -> (e, used, result) -> ls.forEach(l -> l.onFinish(e, used, result)));
 
     /**
      * A player right-clicks an entity, before the entity's own interaction ({@code Entity.interact}, e.g. a villager
@@ -150,6 +158,7 @@ public final class CommonEvents {
     @FunctionalInterface public interface LivingDamage { float onDamage(LivingEntity entity, DamageSource source, float amount); }
     @FunctionalInterface public interface EntityInteract { InteractionResult onInteract(Player player, Entity target, InteractionHand hand); }
     @FunctionalInterface public interface LivingDeath { boolean onDeath(LivingEntity entity, DamageSource source); }
+    @FunctionalInterface public interface ItemUseFinish { void onFinish(LivingEntity entity, ItemStack used, ItemStack result); }
     @FunctionalInterface public interface BlockBreak { boolean onBreak(Level level, BlockPos pos, BlockState state, Player player); }
     @FunctionalInterface public interface BlockPlace { boolean onPlace(Level level, BlockPos pos, BlockState placed, @Nullable Entity placer); }
     @FunctionalInterface public interface RegisterCommands { void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context, Commands.CommandSelection selection); }

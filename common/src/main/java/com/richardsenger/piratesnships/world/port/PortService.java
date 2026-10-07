@@ -7,6 +7,8 @@ import com.richardsenger.piratesnships.trade.desk.HarborDeskService;
 import com.richardsenger.piratesnships.trade.desk.HarborDesks;
 import com.richardsenger.piratesnships.trade.market.Climate;
 import com.richardsenger.piratesnships.trade.market.PortKind;
+import com.richardsenger.piratesnships.world.WorldConfig;
+import com.richardsenger.piratesnships.world.island.TreasureMarkers;
 import com.richardsenger.piratesnships.world.village.BerthMarkers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -42,7 +44,20 @@ public final class PortService {
 
     /** Market id of a seafarer village whose start piece is centred at (x, z): {@code pirates_n_ships:village_<x>_<z>}. */
     public static ResourceLocation villageId(BlockPos centre) {
-        return Constants.id("village_" + centre.getX() + "_" + centre.getZ());
+        return portId(PortKind.SEAFARER_VILLAGE, centre);
+    }
+
+    /**
+     * Market id of a port of {@code kind} whose start piece is centred at (x, z): {@code pirates_n_ships:village_<x>_<z>},
+     * {@code pirates_n_ships:pirate_island_<x>_<z>} or {@code pirates_n_ships:navy_outpost_<x>_<z>}.
+     */
+    public static ResourceLocation portId(PortKind kind, BlockPos centre) {
+        String prefix = switch (kind) {
+            case SEAFARER_VILLAGE -> "village";
+            case PIRATE_ISLAND -> "pirate_island";
+            case NAVY_OUTPOST -> "navy_outpost";
+        };
+        return Constants.id(prefix + "_" + centre.getX() + "_" + centre.getZ());
     }
 
     /** The start piece's centre at its foundation row (as {@code StructureStart} uses as the pivot). */
@@ -63,17 +78,32 @@ public final class PortService {
         return out;
     }
 
+    /** Buried treasure markers of every pool piece, read from the pieces' templates (WG2). */
+    public static List<BlockPos> treasureMarkersOf(PiecesContainer pieces, StructureTemplateManager templates) {
+        List<BlockPos> out = new ArrayList<>();
+        for (StructurePiece piece : pieces.pieces()) {
+            if (!(piece instanceof PoolElementStructurePiece p)) continue;
+            out.addAll(TreasureMarkers.fromJigsaws(p.getElement().getShuffledJigsawBlocks(
+                    templates, p.getPosition(), p.getRotation(), RandomSource.create(0L))));
+        }
+        return out;
+    }
+
     /**
-     * The port record of a generated village. Safe on a world generation thread: the climate comes from the biome
-     * source (noise), not from loaded chunks.
+     * The port record of a generated port structure of {@code kind}. Safe on a world generation thread: the climate
+     * comes from the biome source (noise), not from loaded chunks. Treasure markers become treasure sites unless
+     * {@code world.structures.pirate_island.buried_treasure} is off.
      */
-    public static Port villagePort(ServerLevel level, ChunkGenerator generator, PiecesContainer pieces) {
+    public static Port portOf(ServerLevel level, ChunkGenerator generator, PiecesContainer pieces, PortKind kind) {
         BlockPos centre = centreOf(pieces);
         Holder<Biome> biome = generator.getBiomeSource().getNoiseBiome(QuartPos.fromBlock(centre.getX()),
                 QuartPos.fromBlock(centre.getY()), QuartPos.fromBlock(centre.getZ()), level.getChunkSource().randomState().sampler());
         Climate climate = PortClimate.of(biome.value().getBaseTemperature(), biome.value().hasPrecipitation());
-        return new Port(villageId(centre), PortKind.SEAFARER_VILLAGE, level.dimension(), centre,
-                pieces.calculateBoundingBox(), climate, berthsOf(pieces, level.getStructureManager()));
+        List<TreasureSite> treasures = WorldConfig.PIRATE_ISLAND_BURIED_TREASURE.get()
+                ? treasureMarkersOf(pieces, level.getStructureManager()).stream().map(p -> new TreasureSite(p, false)).toList()
+                : List.of();
+        return new Port(portId(kind, centre), kind, level.dimension(), centre,
+                pieces.calculateBoundingBox(), climate, berthsOf(pieces, level.getStructureManager()), treasures);
     }
 
     /**

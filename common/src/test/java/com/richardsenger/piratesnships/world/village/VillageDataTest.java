@@ -1,6 +1,9 @@
 package com.richardsenger.piratesnships.world.village;
 
 import com.google.gson.JsonElement;
+import com.richardsenger.piratesnships.trade.market.PortKind;
+import com.richardsenger.piratesnships.world.structure.PortStructure;
+import com.richardsenger.piratesnships.world.structure.ShoreAnchor;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
@@ -95,12 +98,14 @@ class VillageDataTest {
     void structureParses() throws IOException {
         JsonObject json = generated("worldgen/structure/seafarer_village").getAsJsonObject();
         assertEquals("pirates_n_ships:port_village", json.get("type").getAsString());
-        PortVillageStructure s = PortVillageStructure.CODEC.codec().parse(ops, json).getOrThrow();
+        PortStructure s = PortStructure.CODEC.codec().parse(ops, json).getOrThrow();
         assertEquals(GenerationStep.Decoration.SURFACE_STRUCTURES, s.step());
         assertEquals(TerrainAdjustment.NONE, s.terrainAdaptation());
         assertEquals(VillageData.SIZE, s.maxDepth());
         assertEquals(Optional.of(VillageKeys.HAS_SEAFARER_VILLAGE), s.biomes().unwrapKey());
-        assertTrue(PortVillageStructure.CODEC.codec().encodeStart(ops, s).isSuccess(), "encodes again");
+        assertEquals(ShoreAnchor.VILLAGE, s.shoreAnchor());
+        assertEquals(PortKind.SEAFARER_VILLAGE, s.portKind());
+        assertTrue(PortStructure.CODEC.codec().encodeStart(ops, s).isSuccess(), "encodes again");
     }
 
     @Test

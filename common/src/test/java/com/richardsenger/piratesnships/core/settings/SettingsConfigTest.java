@@ -147,7 +147,7 @@ class SettingsConfigTest {
         assertEquals(2400, SurvivalConfig.WARM_EFFECT_TICKS.get());
         assertTrue(SurvivalConfig.SWIM_HUNGER_ENABLED.get());
         assertEquals(1.5, SurvivalConfig.SWIM_EXHAUSTION_MULTIPLIER.get());
-        assertEquals(40, WorldConfig.PIRATE_ISLAND.spacing().get());
+        assertEquals(64, WorldConfig.PIRATE_ISLAND.spacing().get());
         assertEquals(1.0, WorldConfig.WRECK.frequency().get());
         assertEquals(List.of("world", "structures", "navy_outpost", "spacing"), WorldConfig.NAVY_OUTPOST.spacing().path());
         assertEquals(10, WorldConfig.SPAWN_WEIGHT_PIRATE.get());

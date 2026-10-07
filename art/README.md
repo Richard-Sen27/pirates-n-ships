@@ -1399,3 +1399,44 @@ Renders: `art/renders/structures/navy_outpost/{fort_gate,quay,wall,wall_tower,ba
 - **Brig doors** are closed and unlocked: a generated door has no owner (`BrigDoorBlockEntity` is created empty on
   placement), and a locked door without an owner would open only with a key.
 - Chests and barrels are empty (no loot tables yet).
+
+### Wrecks (ST5)
+Wrecks (`wreck`, design.md §10.1) use the ST1 pipeline but are **single pieces**: no jigsaw blocks, no pools. A later
+world package places one piece per wreck on the ocean floor. Sources are `art/structures/wreck/*.py`; the group's
+`_style.py` holds the drowned palette (dark oak and spruce planks, stripped dark oak and spruce logs, spruce log
+masts, mossy and plain cobblestone ballast, tuff and prismarine speckles for the barnacle crust, iron bars and chains,
+a sand, gravel and clay seabed), the loot chest, and seabed helpers (`bed_disc` for the ragged bed, `drift` for sand
+banked against the wreck, `underpin` so nothing on row y 1 floats over the bed's edge). The random parts (missing
+planks, speckles, the bed's edge) come from a fixed `random.Random` seed per piece, so a rebuild changes nothing.
+
+**Coordinates:** y 0 is the **seabed row**: the top row of the terrain's sand or gravel, which the piece's own thin
+bed replaces. Everything above it stands in water. Placement puts the piece's y 0 on the ocean floor surface
+(`OCEAN_FLOOR_WG` height minus one) and may rotate it freely; the pieces have no front.
+
+**Under water:** every block that has a `waterlogged` property is written with `waterlogged=true` (stairs, slabs,
+fences, trapdoors, panes, chains, iron bars, lanterns, walls and the chests; vanilla chests can be waterlogged). Mod
+blocks without the property (cargo crates and barrels, the cannon, cleat, nameplate, yard, sea chest) simply take
+their cell. Air is never written (the converter drops it), so the sea fills every gap, the hulls' insides included:
+the dry-hull system of ships (§4) does not apply to world blocks. A wreck placed so that it reaches above sea level
+would carry its waterlogged blocks into the air as water sources, so placement must keep the piece's top under the
+surface (the tallest, `mast_stump`, needs 12 blocks of water above its seabed row). The lab's render colours every
+state containing `water` blue, so waterlogged blocks show as blue in `art/renders/structures/wreck/*.png`.
+
+**Loot:** every vanilla chest carries `{LootTable: "pirates_n_ships:chests/wreck"}` (no `LootTableSeed`, so the loot is
+rolled when a player first opens it), written by `_style.loot_chest` as a `block_entity` operation. The loot table
+is datagen (`world/wreck/WreckLoot`, called from `WorldModule.gatherData`): always 3-12 doubloons; two to four rolls
+of rum, salted fish, rope, nails, lead shot (8-16) and, at weight 1, a cutlass; kraken ink in one chest of 40. The
+sea chest in the sloop's hold is empty: `SeaChestBlockEntity` is a plain container without a loot table.
+
+| piece | size (x×y×z) | blocks | contents | mod blocks |
+|---|---|---|---|---|
+| `sunken_sloop` | 14×10×27 | 1091 | the starter sloop's hull (same half-widths, rocker, hold, forecastle, stern cabin and quarterdeck) heeled to starboard, the fore half 22°, the after half 27° and one block to starboard; each cross-section turned about the keel by sampling the upright hull, closed where blocks only meet at an edge. Frames (stripped spruce ribs) at the break with jagged planking either side, patches of missing planking (frames left standing in them), barnacle crust on the bottom, the mast snapped above the deck and fallen across the after deck into the sand, the lower yard and its chain beside the hull, sand banked against the starboard side and silting the low side of the hold and cabin, spilled ballast; bow north (−z) | `sea_chest` (forward hold), `cargo_barrel`, `cargo_crate` (slid to starboard in the after hold), `yard` |
+| `cargo_field` | 15×4×15 | 231 | a round, ragged bed with ballast stones; crates and barrels set into it with sand over their edges or sitting on it half buried, a toppled stack, kegs on their sides, a broken yard in two pieces with its chain, a cannon with its rear in a sand drift (it turns only horizontally, so it stands upright), loose planks and hatch covers, the chest under a fallen plank | `cargo_crate`, `cargo_barrel`, `yard`, `cannon` |
+| `mast_stump` | 7×12×7 | 92 | a broken square of deck planking in the bed with mast partners and heaved-up ballast, the mast (spruce log, an iron band of chain, a stripped fished section, a splintered stub on top), the remains of the fighting top, the yard with one arm snapped and hanging, a hanging lantern, torn rigging (chains), a stepped fence shroud, a cleat with a rope coil (chain), the chest at the foot half buried | `yard`, `cleat` |
+| `stern` | 9×8×11 | 441 | the stern of a larger ship, half buried: a framed transom facing north (−z) with quarter posts, trim bands at the cabin floor and the poop deck, four cabin windows round a mullion (two broken out) with sills and a hood, the nameplate above the rudder head, the taffrail; the rudder with iron straps; sides with a wale, a trim band, a quarter window and a frame post, falling away in steps to the broken end with its frames showing; the great cabin with a table and chairs, a keg, a lantern, a hanging lantern and the chest, the poop deck half fallen in, sand in the hold and drifting in at the broken end | `nameplate`, `cargo_crate` |
+
+Renders: `art/renders/structures/wreck/*.png`. `WreckPiecesTest` checks the committed pieces: the four files and no
+others, sizes within bounds, every row used, existing blocks and states (mod blocks against the datagen block
+states), `waterlogged=true` wherever the block has the property, no jigsaws, the wreck loot table (and no seed) in
+every chest, the sea chest in the sloop, the generated loot table's items and doubloon count, and a fresh conversion
+equal to the committed NBT. The wrecks were built on lab port 8769.

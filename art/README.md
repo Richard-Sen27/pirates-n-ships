@@ -42,6 +42,31 @@ Workflow notes (capstan, sail winch, yard batch):
   `risky_eval` with `require('fs')`.
 - Put a `display.gui` block (scale about 0.5) into a model whose parts reach past the block, so the item fits its slot.
 
+Workflow notes (containers batch: cargo crate, cargo barrel, pantry, water barrel, F7d):
+- **Solid round bodies** (cargo barrel, 29 elements): each section is a regular octagon of four bars
+  D × D·tan 22.5° at 0°, 90° and ±45° about y. Two crossed D × 0.7 D boxes plus the same pair at 45° give a spiky
+  star, not a 16-gon. The rotated bars sit 0.05 px lower at top and bottom so their up faces (with a 45°-turned
+  position UV) never z-fight the axis-aligned ones. Bulge: three stacked sections (D 12 / 13.6 / 12); hoops are the
+  same octagons 0.4 px wider and 1 px high, over the section steps and near the ends.
+- **Hollow round bodies** (water barrel, 64 to 68 elements): solid octagon bars cannot be hollowed, and their up faces
+  would show as floors inside. Build each section from eight 1 px wall boards instead: a north board of length
+  D·tan 22.5° (outer face on the octagon side), the same board at ±45° about the centre, the south board likewise,
+  and axis-aligned east and west boards; their outer corners meet at the octagon vertices, the inner corners overlap.
+  Board ends are hidden (`null`), the outer face carries the staves, the inner face the inside, the up face the rim.
+- **Liquid surfaces** are zero-height elements (`from.y == to.y`) with only an up face: an octagon of four bars as wide
+  as the wall's centre line, the two rotated bars 0.02 px lower. `minecraft:block/water_still` is greyscale (the game
+  tints it per biome through a block colour handler, which we do not register), so the surface uses
+  `minecraft:block/blue_ice`. One model per fill level (`water_barrel_fill0..3`, `water_barrel` = full), each with its
+  own project file, built from one helper with the level as a parameter.
+- **Slatted boxes** (cargo crate, 41 elements): an inner dark box (`dark_oak_planks`) behind recessed slats shows
+  through the gaps. Keep the inner faces of parts whose inside can be seen from above (the top rails), or the step
+  between rail and lid shows the background. One side's parts are built once and turned in 90° steps around the
+  block centre (x and z swap, a z rotation becomes an x rotation).
+- Neither cargo block has a load property, so the load does not show; the pantry has no facing, so its doors face
+  north (the item in the GUI shows them).
+- When a hand-made model replaces a generated one, remove the generated file from version control before `runData`,
+  or `processResources` fails on the duplicate entry.
+
 Items (sword batch, F8a):
 - Item models are `java_block` projects exported to `common/src/main/resources/assets/pirates_n_ships/models/item/<name>.json`;
   datagen writes no model for them (drop the item's `m.handheldItem(...)` / `m.flatItem(...)` line).

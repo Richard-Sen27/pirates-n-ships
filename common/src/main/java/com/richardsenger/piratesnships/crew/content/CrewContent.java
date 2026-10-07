@@ -34,8 +34,8 @@ public final class CrewContent {
     public static final RegistryEntry<Item, Item> SALT_PORK = food("salt_pork", SALT_PORK_FOOD);
     public static final RegistryEntry<Item, Item> LIME = food("lime", LIME_FOOD);
 
-    public static final RegistryEntry<Block, PantryBlock> PANTRY = ModRegistry.blockWithItem("pantry", () -> new PantryBlock(woodProps()));
-    public static final RegistryEntry<Block, WaterBarrelBlock> WATER_BARREL = ModRegistry.blockWithItem("water_barrel", () -> new WaterBarrelBlock(woodProps()));
+    public static final RegistryEntry<Block, PantryBlock> PANTRY = ModRegistry.blockWithItem("pantry", () -> new PantryBlock(woodProps().noOcclusion()));
+    public static final RegistryEntry<Block, WaterBarrelBlock> WATER_BARREL = ModRegistry.blockWithItem("water_barrel", () -> new WaterBarrelBlock(woodProps().noOcclusion()));
 
     public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<PantryBlockEntity>> PANTRY_BLOCK_ENTITY =
             ModRegistry.blockEntity("pantry", PantryBlockEntity::new, PANTRY);

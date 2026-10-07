@@ -83,8 +83,12 @@ public final class ShipDecorModule implements ModModule {
             for (RegistryEntry<Block, FigureheadBlock> f : ShipDecor.figureheads()) figurehead(m, f.get());
             nameplate(m, ShipDecor.NAMEPLATE.get());
             // flagpole: model and block state in FlagData
-            m.blocks().createTrivialCube(ShipDecor.CARGO_CRATE.get());
-            m.blocks().createTrivialBlock(ShipDecor.CARGO_BARREL.get(), TexturedModel.COLUMN);
+            // hand-made Blockbench models (art/models/cargo_{crate,barrel}.bbmodel, design.md §4.8): only the block
+            // states are generated; the load does not show (the blocks have no load property)
+            for (Block cargo : List.of(ShipDecor.CARGO_CRATE.get(), ShipDecor.CARGO_BARREL.get())) {
+                m.blockStates().accept(MultiVariantGenerator.multiVariant(cargo, Variant.variant()
+                        .with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(cargo))));
+            }
         });
         FlagData.gather(data);
         data.blockLoot(loot -> {

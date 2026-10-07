@@ -8,6 +8,8 @@ import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.world.island.IslandData;
 import com.richardsenger.piratesnships.world.island.PirateIslandSpawns;
 import com.richardsenger.piratesnships.world.port.PortService;
+import com.richardsenger.piratesnships.world.structure.ConnectionsGameTests;
+import com.richardsenger.piratesnships.world.structure.ConnectionsProcessor;
 import com.richardsenger.piratesnships.world.structure.PortStructures;
 import com.richardsenger.piratesnships.world.village.VillageData;
 import com.richardsenger.piratesnships.world.wreck.WreckData;
@@ -58,6 +60,7 @@ public final class WorldModule implements ModModule {
 
     @Override
     public void gatherData(DataContributions data) {
+        ConnectionsProcessor.gather(data);
         VillageData.gather(data);
         WreckLoot.gather(data);
         IslandData.gather(data);
@@ -67,6 +70,6 @@ public final class WorldModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(WorldGameTests.class, PirateIslandGameTests.class, WreckGameTests.class);
+        return List.of(WorldGameTests.class, PirateIslandGameTests.class, WreckGameTests.class, ConnectionsGameTests.class);
     }
 }

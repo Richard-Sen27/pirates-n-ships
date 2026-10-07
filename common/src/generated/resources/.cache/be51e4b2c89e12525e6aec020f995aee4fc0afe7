@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-07T20:19:10.922893	Raw JSON (data): pirates_n_ships
+// 1.21.1	2026-10-07T21:16:44.039327	Raw JSON (data): pirates_n_ships
 48a3d1396f56a1821c2e6dd2a2ce6f5dc32fc15c data/pirates_n_ships/advancement/recipes/misc/guide_book.json
 81e4547184aef1c6ab27c144e370d0ff6cb85b3d data/pirates_n_ships/loot_table/chests/buried_treasure.json
 d6223d05558546af059e94912cbe6adda923d245 data/pirates_n_ships/loot_table/chests/wreck.json
@@ -39,10 +39,14 @@ ee4ab89c271de3f30b57621e15919ed9188d1957 data/pirates_n_ships/recipe/guide_book.
 b035207a5bd361f8f0c83f4d75192bdc83591bf0 data/pirates_n_ships/tags/worldgen/biome/cold_water.json
 ff13fafcc6c847d2ce8a4262842bf1316dc580ea data/pirates_n_ships/tags/worldgen/biome/has_structure/pirate_island.json
 ff13fafcc6c847d2ce8a4262842bf1316dc580ea data/pirates_n_ships/tags/worldgen/biome/has_structure/seafarer_village.json
+74a855e481dd684fc14e843ffbf7634328669190 data/pirates_n_ships/tags/worldgen/biome/has_structure/wreck.json
+06fe24ce811aec802fa7ddcb2419856ff5da2560 data/pirates_n_ships/worldgen/processor_list/connections.json
 6761c895831008accbd61775f7494c59f73d6c24 data/pirates_n_ships/worldgen/structure/pirate_island.json
 94324d2eca972d772cecb22f86c34b89b25d2a5e data/pirates_n_ships/worldgen/structure/seafarer_village.json
+251023302fd8f076f6c85e28f31b2d1f97286ca3 data/pirates_n_ships/worldgen/structure/wreck.json
 4a8342bbc207a1ef17962d4240160f6211b820e5 data/pirates_n_ships/worldgen/structure_set/pirate_islands.json
 94b31922c31621842e348214cfec91739d53ed1d data/pirates_n_ships/worldgen/structure_set/seafarer_villages.json
+04805a4044555b776c958b1cdfe380047a6d6300 data/pirates_n_ships/worldgen/structure_set/wrecks.json
 409601b1a89fef61deac899003608c3be673b5e1 data/pirates_n_ships/worldgen/template_pool/pirate_island/huts.json
 8436e4700d67d7a96fcee02e337b1cfaf0499389 data/pirates_n_ships/worldgen/template_pool/pirate_island/jetty.json
 574031393312573be6e20415809bd2e5f7622c9e data/pirates_n_ships/worldgen/template_pool/pirate_island/paths.json

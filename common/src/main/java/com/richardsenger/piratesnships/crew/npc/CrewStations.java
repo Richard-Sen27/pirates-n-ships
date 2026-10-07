@@ -9,7 +9,7 @@ import com.richardsenger.piratesnships.station.StationSpot;
 import com.richardsenger.piratesnships.station.StationState;
 import com.richardsenger.piratesnships.station.Stations;
 import com.richardsenger.piratesnships.station.seat.StationSeat;
-import com.richardsenger.piratesnships.station.winch.SailOrder;
+import com.richardsenger.piratesnships.station.order.CrewOrder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -21,7 +21,7 @@ import net.minecraft.world.phys.AABB;
 
 /**
  * Crew ↔ station glue (docs/design.md §6, §7.2): assign a crew member to a station (it takes the station's seat),
- * release it, and give sail orders. Used by the captain's whistle, the {@code /pirates crew} commands and the
+ * release it, and give orders ({@link CrewOrder}: sail orders, the pump order). Used by the captain's whistle, the {@code /pirates crew} commands and the
  * GameTests alike.
  * <p>
  * Life cycle: an assigned crew member that is not seated retries every {@code seat_check_interval} ticks. It is
@@ -39,6 +39,7 @@ public final class CrewStations {
     public static final String KEY_NOTHING_TO_DO = KEY + "nothing_to_do";
     public static final String KEY_NO_SAILS = KEY + "no_sails";
     public static final String KEY_DISABLED = KEY + "disabled";
+    public static final String KEY_WRONG_STATION = KEY + "wrong_station";
 
     public enum AssignResult { ASSIGNED, TAKEN, NOT_A_STATION, DISABLED }
 
@@ -151,24 +152,38 @@ public final class CrewStations {
         }
     }
 
-    /** Gives a sail order to one crew member; it acknowledges near itself. */
-    public static Stations.OrderResult order(ServerLevel level, CrewMember crew, SailOrder order) {
+    /**
+     * Gives an order to one crew member; it answers near itself. A crew member at a station of another kind (a pump
+     * order at the winch, a sail order at the pump) refuses with {@link #KEY_WRONG_STATION} and keeps its work.
+     */
+    public static Stations.OrderResult order(ServerLevel level, CrewMember crew, CrewOrder order) {
         StationRef ref = crew.assignment();
         Stations.OrderResult r = ref == null ? Stations.OrderResult.NOT_OCCUPIED : Stations.order(level, ref, order);
+        Component name = Component.translatable(order.nameKey());
         switch (r) {
             case STARTED -> say(level, crew, Component.translatable(order.ackKey()));
-            case NOTHING_TO_DO -> say(level, crew, Component.translatable(KEY_NOTHING_TO_DO, Component.translatable(order.nameKey())));
-            case NOT_APPLICABLE -> say(level, crew, Component.translatable(KEY_NO_SAILS));
+            case NOTHING_TO_DO -> say(level, crew, Component.translatable(order.nothingToDoKey(), name));
+            case NOT_APPLICABLE -> say(level, crew, Component.translatable(order.unableKey()));
+            case WRONG_STATION -> say(level, crew, Component.translatable(KEY_WRONG_STATION, name));
             default -> { }
         }
         return r;
     }
 
-    /** Gives a sail order to every crew member at a station on {@code ship}; returns how many carry it out. */
-    public static int orderShip(ServerLevel level, UUID ship, SailOrder order) {
+    /** Whether {@code crew} mans a station that takes {@code order} (whatever it is doing now). */
+    public static boolean takes(ServerLevel level, CrewMember crew, CrewOrder order) {
+        StationRef ref = crew.assignment();
+        return ref != null && Stations.accepts(level, ref, order);
+    }
+
+    /**
+     * Gives an order to the crew at stations of {@code ship} that take it (sail orders to the winches, pump orders to
+     * the pumps); crew at other stations do not hear it. Returns how many carry it out.
+     */
+    public static int orderShip(ServerLevel level, UUID ship, CrewOrder order) {
         int n = 0;
         for (CrewMember c : crewOf(level, ship)) {
-            if (order(level, c, order) == Stations.OrderResult.STARTED) n++;
+            if (takes(level, c, order) && order(level, c, order) == Stations.OrderResult.STARTED) n++;
         }
         return n;
     }

@@ -19,7 +19,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Server side of the whistle's radial menu: registers {@link WhistleOrderPayload} and carries out a chosen order. The
  * client only asks; this class checks that the sender holds a whistle, that the order exists and that the sender
- * stands on a ship, then issues the order to that ship's crew through {@link CrewStations}.
+ * stands on a ship, then issues the order to that ship's crew through {@link CrewStations}: a {@link CrewOrder} goes to
+ * the crew at the stations whose kind takes it (sail orders to the winches, "pump" to the bilge pumps).
  */
 public final class WhistleOrders {
 
@@ -74,14 +75,17 @@ public final class WhistleOrders {
             player.displayClientMessage(Component.translatable(CaptainsWhistleItem.KEY_NOT_ON_SHIP), true);
             return Result.of(Outcome.NOT_ON_SHIP);
         }
-        SailOrder sail = order.get().sail();
+        CrewOrder crewOrder = order.get().order();
         int n;
-        if (sail != null) {
-            n = CrewStations.orderShip(level, ship.id(), sail);
-            whistle.set(StationContent.WHISTLE_ORDER.get(), sail);
-            player.displayClientMessage(Component.translatable(CaptainsWhistleItem.KEY_ORDER, Component.translatable(sail.nameKey()), n), true);
+        if (crewOrder != null) {
+            // only the crew at stations that take this order hear it (CrewStations#orderShip)
+            n = CrewStations.orderShip(level, ship.id(), crewOrder);
+            if (crewOrder instanceof SailOrder sail) {
+                whistle.set(StationContent.WHISTLE_ORDER.get(), sail); // the menu marks the last sail order
+            }
+            player.displayClientMessage(Component.translatable(CaptainsWhistleItem.KEY_ORDER, Component.translatable(crewOrder.nameKey()), n), true);
         } else {
-            // RELEASE, the only order that is not a sail order so far
+            // RELEASE, the only entry that is not a crew order so far
             n = CrewStations.releaseShip(level, ship.id());
             player.displayClientMessage(Component.translatable(KEY_RELEASED_ALL, n), true);
         }

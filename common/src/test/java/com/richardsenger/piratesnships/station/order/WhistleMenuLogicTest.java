@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.station.pump.PumpOrder;
 import com.richardsenger.piratesnships.station.winch.SailOrder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -113,16 +115,33 @@ class WhistleMenuLogicTest {
     // ------------------------------------------------------------------ entries
 
     @Test
-    void entriesAreTheSailOrdersThenRelease() {
+    void entriesAreTheSailOrdersThenPumpThenRelease() {
         List<WhistleOrder> e = WhistleOrder.entries();
-        assertEquals(List.of(WhistleOrder.HOIST, WhistleOrder.REEF, WhistleOrder.FURL, WhistleOrder.RELEASE), e);
+        assertEquals(List.of(WhistleOrder.HOIST, WhistleOrder.REEF, WhistleOrder.FURL, WhistleOrder.PUMP, WhistleOrder.RELEASE), e);
         assertEquals(SailOrder.HOIST, WhistleOrder.HOIST.sail());
         assertEquals(SailOrder.REEF, WhistleOrder.REEF.sail());
         assertEquals(SailOrder.FURL, WhistleOrder.FURL.sail());
+        assertNull(WhistleOrder.PUMP.sail());
+        assertEquals(PumpOrder.PUMP, WhistleOrder.PUMP.order());
         assertNull(WhistleOrder.RELEASE.sail());
-        // every sail order has an entry
-        for (SailOrder s : SailOrder.values()) {
-            assertTrue(e.stream().anyMatch(o -> o.sail() == s), "no entry for " + s);
+        assertNull(WhistleOrder.RELEASE.order());
+        for (WhistleOrder o : e) {
+            if (o.sail() != null) assertEquals(o.sail(), o.order());
+        }
+        // every crew order has an entry
+        for (CrewOrder c : CrewOrder.all()) {
+            assertTrue(e.stream().anyMatch(o -> o.order() == c), "no entry for " + c);
+        }
+        assertEquals(Constants.id("bilge_pump"), WhistleOrder.PUMP.icon());
+    }
+
+    @Test
+    void fiveEntriesSplitTheWheelEvenly() {
+        RadialLayout l = RadialLayout.forWindow(WhistleOrder.entries().size(), 480, 270, 1.0);
+        assertEquals(5, l.count());
+        for (int i = 0; i < l.count(); i++) {
+            double a = l.centerAngle(i);
+            assertEquals(i, l.sectorAt(RadialLayout.x(a, l.iconRadius()), RadialLayout.y(a, l.iconRadius())), "sector " + i);
         }
     }
 

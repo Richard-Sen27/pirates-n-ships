@@ -10,7 +10,7 @@ import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.station.winch.CaptainsWhistleItem;
-import com.richardsenger.piratesnships.station.winch.SailOrder;
+import com.richardsenger.piratesnships.station.order.CrewOrder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -32,12 +32,14 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Operator commands for crew stations (permission 2), for tests and playtests:
  * {@code /pirates crew spawn}, {@code assign <crew> <station pos>}, {@code release <crew>},
- * {@code order <hoist|reef|furl> [crew]}. A station position may be the block's world position (as seen in game,
+ * {@code order <hoist|reef|furl|pump> [crew]}. A station position may be the block's world position (as seen in game,
  * F3) or its plot position.
  */
 public final class StationCommands {
 
     static final String KEY = "commands." + Constants.MOD_ID + ".crew.";
+    public static final String KEY_UNKNOWN_ORDER = KEY + "unknown_order";
+    public static final String KEY_ORDERED = KEY + "ordered";
 
     private StationCommands() {
     }
@@ -49,7 +51,7 @@ public final class StationCommands {
                         .then(Commands.argument("station", BlockPosArgument.blockPos()).executes(StationCommands::assign))))
                 .then(Commands.literal("release").then(Commands.argument("crew", EntityArgument.entities()).executes(StationCommands::release)))
                 .then(Commands.literal("order").then(Commands.argument("order", StringArgumentType.word())
-                        .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("hoist", "reef", "furl"), b))
+                        .suggests((c, b) -> SharedSuggestionProvider.suggest(CrewOrder.ids(), b))
                         .executes(c -> order(c, null))
                         .then(Commands.argument("crew", EntityArgument.entities()).executes(c -> order(c, EntityArgument.getEntities(c, "crew"))))))));
     }
@@ -97,12 +99,14 @@ public final class StationCommands {
         return n;
     }
 
+    /**
+     * Without a crew argument the order goes to the assigned crew within {@code order_radius} whose station takes it
+     * (as the whistle's orders do); named crew members at another kind of station refuse it.
+     */
     private static int order(CommandContext<CommandSourceStack> c, @Nullable Collection<? extends Entity> targets) {
-        SailOrder order;
-        try {
-            order = SailOrder.valueOf(StringArgumentType.getString(c, "order").toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException ex) {
-            c.getSource().sendFailure(Component.translatable(KEY + "unknown_order"));
+        CrewOrder order = CrewOrder.byId(StringArgumentType.getString(c, "order").toLowerCase(Locale.ROOT)).orElse(null);
+        if (order == null) {
+            c.getSource().sendFailure(Component.translatable(KEY_UNKNOWN_ORDER));
             return 0;
         }
         ServerLevel level = c.getSource().getLevel();
@@ -110,7 +114,7 @@ public final class StationCommands {
         if (targets == null) {
             double r = StationConfig.ORDER_RADIUS.get();
             crew.addAll(level.getEntitiesOfClass(CrewMember.class, new AABB(c.getSource().getPosition(), c.getSource().getPosition()).inflate(r),
-                    m -> m.assignment() != null));
+                    m -> CrewStations.takes(level, m, order)));
         } else {
             for (Entity e : targets) if (e instanceof CrewMember m && m.assignment() != null) crew.add(m);
         }
@@ -119,7 +123,7 @@ public final class StationCommands {
             if (CrewStations.order(level, m, order) == Stations.OrderResult.STARTED) n++;
         }
         int started = n;
-        c.getSource().sendSuccess(() -> Component.translatable(KEY + "ordered", Component.translatable(order.nameKey()), started, crew.size()), true);
+        c.getSource().sendSuccess(() -> Component.translatable(KEY_ORDERED, Component.translatable(order.nameKey()), started, crew.size()), true);
         return n;
     }
 

@@ -32,7 +32,8 @@ import net.minecraft.world.phys.Vec3;
  * direct and the firing player as the causing entity (law, kill credit, "was shot by"). On a block it destroys up to
  * {@link CannonConfig#blocksPerHit()} blocks along its path (the hit block first) that {@link CannonRules#destroyable}
  * allows, pushes a ship it hits and is gone. A ship block destroyed below the waterline becomes a breach through the
- * hull runtime's block-change listener like any removed hull block. In water it splashes once, slows down hard and
+ * hull runtime's block-change listener like any removed hull block. Q2: a glancing hit breaks fewer blocks and pushes
+ * less ({@link CannonImpact#glancingBlocks}); a grazing one bounces off and flies on. In water it splashes once, slows down hard and
  * sinks; it is removed when slower than {@code cannons.sink_speed} or after {@code cannons.ball_lifetime_ticks}.
  *
  * <p>Fired with an explicit velocity (not {@code shootFromRotation}), so neither vanilla nor Sable's
@@ -47,6 +48,8 @@ public class CannonballEntity extends ThrowableItemProjectile {
     private int blocksPerHit = -1;
     /** Impulse on a hit ship; negative = the cannon's config. */
     private double impactImpulse = -1;
+    /** Set by a glancing hit that bounced (Q2) for {@link #onHit}: the ball flies on. Not saved. */
+    private boolean bounced;
 
     public CannonballEntity(EntityType<? extends CannonballEntity> type, Level level) {
         super(type, level);
@@ -132,20 +135,42 @@ public class CannonballEntity extends ThrowableItemProjectile {
         if (!(level() instanceof ServerLevel level)) return;
         BlockPos hitPos = result.getBlockPos();
         // A ship block is hit in plot space (Sable's clip returns the sub-level result as is, sable-notes §9.0e), so the
-        // hit point and the block positions are plot coordinates; the flight direction is turned into the plot frame.
+        // hit point, the block positions and the hit face are plot coordinates; the flight direction is turned into the
+        // plot frame.
         ShipBody ship = SableShips.containing(level, hitPos);
         Vec3 flight = getDeltaMovement();
         Vec3 dir = flight.lengthSqr() < 1.0e-9 ? Vec3.ZERO : flight.normalize();
         Vec3 localDir = ship != null ? CannonService.rotateInverse(ship.orientation(), dir) : dir;
         Vec3 hit = result.getLocation();
         Vec3 worldHit = ship != null ? ship.toWorld(hit) : hit;
+        Vec3 localNormal = Vec3.atLowerCornerOf(result.getDirection().getNormal());
 
-        double push = impactImpulse >= 0 ? impactImpulse : CannonConfig.IMPACT_IMPULSE.get();
+        // Glancing hits (Q2): how squarely the ball meets the face scales the push and the blocks it breaks.
+        boolean glancing = CannonConfig.GLANCING_HITS.get();
+        double square = glancing ? CannonImpact.squareness(localDir, localNormal) : 1.0;
+        boolean bounce = glancing && CannonImpact.bounces(square, CannonConfig.GLANCING_BOUNCE_DEGREES.get());
+
+        double push = (impactImpulse >= 0 ? impactImpulse : CannonConfig.IMPACT_IMPULSE.get()) * square;
         if (ship != null && push > 0 && localDir != Vec3.ZERO) {
             ship.applyImpulseNow(hit, localDir.scale(push));
         }
 
+        if (bounce) {
+            Vec3 worldNormal = ship != null ? CannonService.rotate(ship.orientation(), localNormal) : localNormal;
+            setDeltaMovement(CannonImpact.deflect(flight, worldNormal, CannonConfig.GLANCING_BOUNCE_FACTOR.get()));
+            // off the face, so this tick's move starts outside the block
+            setPos(worldHit.add(worldNormal.scale(0.05)));
+            hasImpulse = true;
+            bounced = true;
+            level.playSound(null, worldHit.x, worldHit.y, worldHit.z, SoundEvents.ANVIL_LAND, SoundSource.BLOCKS, 0.4f, 1.6f);
+            level.sendParticles(ParticleTypes.CRIT, worldHit.x, worldHit.y, worldHit.z, 6, 0.1, 0.1, 0.1, 0.1);
+            return;
+        }
+
         int limit = blocksPerHit >= 0 ? blocksPerHit : CannonConfig.blocksPerHit();
+        if (glancing) {
+            limit = CannonImpact.glancingBlocks(limit, square);
+        }
         if (!CannonRules.worldAllowsBlockDamage(CannonConfig.RESPECT_MOB_GRIEFING.get(),
                 level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING))) {
             limit = 0;
@@ -203,7 +228,11 @@ public class CannonballEntity extends ThrowableItemProjectile {
     protected void onHit(HitResult result) {
         super.onHit(result);
         if (!level().isClientSide) {
-            discard();
+            if (bounced) {
+                bounced = false; // a glancing ball flies on
+            } else {
+                discard();
+            }
         }
     }
 

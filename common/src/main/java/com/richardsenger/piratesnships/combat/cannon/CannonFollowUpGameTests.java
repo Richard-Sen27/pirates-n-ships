@@ -275,4 +275,56 @@ public final class CannonFollowUpGameTests {
                 "expected 2 swivels, 1 gunpowder, " + ammoCount + " shot, got " + swivels + ", " + powder + ", " + shot);
         h.succeed();
     }
+
+    // ------------------------------------------------------------------ glancing hits
+
+    /** A ball grazing a plank wall at about 81.5° bounces off: no plank breaks and it flies on away from the wall. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 40)
+    public static void aGrazingBallBouncesOffWithoutBreakingAnything(GameTestHelper h) {
+        plankWall(h, 1);
+        int before = planksLeft(h, 1);
+        CannonballEntity ball = shoot(h, new Vec3(2.0, 1.5, 3.9), new Vec3(1.0, 0, 0.15));
+        h.succeedWhen(() -> {
+            h.assertTrue(ball.getDeltaMovement().z < 0, "the ball has not bounced off the wall yet: " + ball.getDeltaMovement());
+            h.assertTrue(planksLeft(h, 1) == before, "a grazing ball broke " + (before - planksLeft(h, 1)) + " planks");
+        });
+    }
+
+    /** With three blocks per hit, a ball at 65° to the face (cos ≈ 0.42) breaks one plank, not three. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 60, batch = GLANCING_BATCH)
+    public static void aBallAtAnAngleBreaksFewerBlocks(GameTestHelper h) {
+        ConfigOverrides.during(h, CannonConfig.BLOCKS_PER_HIT, 3);
+        plankWall(h, 3);
+        int before = planksLeft(h, 3);
+        double a = Math.toRadians(65);
+        shoot(h, new Vec3(2.0, 1.5, 3.5), new Vec3(Math.sin(a), 0, Math.cos(a)));
+        h.succeedWhen(() -> {
+            h.assertTrue(h.getEntities(CannonContent.CANNONBALL.get()).isEmpty(), "the ball is still flying");
+            h.assertTrue(before - planksLeft(h, 3) == 1, "expected one broken plank, got " + (before - planksLeft(h, 3)));
+            h.getEntities(EntityType.ITEM).forEach(ItemEntity::discard);
+        });
+    }
+
+    /**
+     * A ball grazing the west wall of a floating hull at about 83° bounces off it (the face normal is turned from the
+     * plot into the world): the plank stays and the ball flies on westwards, away from the hull.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200)
+    public static void aBallGrazingAHullBouncesOff(GameTestHelper h) {
+        DryHullGameTests.basin(h, 0, 23, true);
+        Fixture f = DryHullGameTests.assemble(h, DryHullGameTests.hull(h, 9, false));
+        ServerLevel level = h.getLevel();
+        BlockPos wall = f.hold(-2, -1, 0);
+        CannonballEntity[] ball = new CannonballEntity[1];
+        h.runAfterDelay(20, () -> {
+            h.assertTrue(level.getBlockState(wall).is(Blocks.OAK_PLANKS), "no wall at " + wall);
+            Vec3 target = f.ship().toWorld(Vec3.atCenterOf(wall));
+            ball[0] = shootWorld(level, target.add(-0.8, 0, -2.5), new Vec3(0.12, 0, 1.0));
+        });
+        h.runAfterDelay(21, () -> h.succeedWhen(() -> {
+            h.assertTrue(ball[0].getDeltaMovement().x < 0, "the ball has not bounced off the hull: " + ball[0].getDeltaMovement());
+            h.assertTrue(level.getBlockState(wall).is(Blocks.OAK_PLANKS), "the grazed hull plank broke");
+            ball[0].discard();
+        }));
+    }
 }

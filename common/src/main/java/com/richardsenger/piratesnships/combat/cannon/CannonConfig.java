@@ -45,7 +45,7 @@ public final class CannonConfig {
     public static final ConfigValue<Double> SINK_SPEED = S.doubleRange("sink_speed", 0.3, 0.0, 10.0,
             "A cannonball in water slower than this (blocks per tick) has sunk and is removed");
 
-    // ---- world rules and drops (Q2) -------------------------- -----------------------------------------------------------------
+    // ---- world rules, drops and glancing hits (Q2) -----------------------------------------------------------------
 
     public static final ConfigValue<Boolean> RESPECT_MOB_GRIEFING = S.bool("respect_mob_griefing", true,
             "Cannonballs break no blocks while the mobGriefing game rule is off");
@@ -53,6 +53,13 @@ public final class CannonConfig {
             "Cannonballs break no blocks inside the server's spawn protection (server.properties spawn-protection)");
     public static final ConfigValue<Boolean> DESTROYED_BLOCKS_DROP = S.bool("destroyed_blocks_drop", true,
             "Blocks a cannonball destroys drop their items as if mined");
+    public static final ConfigValue<Boolean> GLANCING_HITS = S.bool("glancing_hits", true,
+            "A ball that hits at an angle breaks fewer blocks (blocks_per_hit times the cosine of the angle to the face, "
+                    + "at least 1) and pushes less; past glancing_bounce_degrees it bounces off without breaking anything");
+    public static final ConfigValue<Double> GLANCING_BOUNCE_DEGREES = S.doubleRange("glancing_bounce_degrees", 75.0, 0.0, 90.0,
+            "A ball whose flight is more than this many degrees off the hit face's normal bounces off (90 = never)");
+    public static final ConfigValue<Double> GLANCING_BOUNCE_FACTOR = S.doubleRange("glancing_bounce_factor", 0.3, 0.0, 1.0,
+            "Share of its speed towards the face a bouncing ball keeps, turned away from the face");
 
     // ---- the swivel gun (P2) ---------------------------------------------------------------------------------------
 

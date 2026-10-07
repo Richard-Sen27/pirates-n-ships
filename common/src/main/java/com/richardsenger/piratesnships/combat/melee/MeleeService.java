@@ -14,6 +14,7 @@ import com.richardsenger.piratesnships.combat.melee.rules.CombatState;
 import com.richardsenger.piratesnships.combat.melee.rules.InputResult;
 import com.richardsenger.piratesnships.combat.melee.rules.MeleeParams;
 import com.richardsenger.piratesnships.combat.melee.rules.Refusal;
+import com.richardsenger.piratesnships.combat.melee.sound.MeleeSoundPlayer;
 import com.richardsenger.piratesnships.combat.melee.weapon.MeleeWeapons;
 import com.richardsenger.piratesnships.combat.melee.weapon.WeaponDefinition;
 import com.richardsenger.piratesnships.platform.Services;
@@ -162,6 +163,7 @@ public final class MeleeService {
         EXPLICIT_WEAPONS.clear();
         ENGINE.clear();
         MeleeStateSync.onServerStopped();
+        MeleeSoundPlayer.onServerStopped();
     }
 
     /** {@code LIVING_INCOMING_DAMAGE}: guard and parry against vanilla melee from the front. Returns the new amount. */
@@ -182,6 +184,7 @@ public final class MeleeService {
         HitResult r = HitResolver.resolve(attackerState, def.state(), w, IncomingHit.vanillaMelee(amount, frontal), 0, p);
         def.setState(r.defender());
         if (!r.attacker().equals(attackerState)) fighter(attacker).setState(r.attacker());
+        MeleeSoundPlayer.onHit(attacker, defender, r, false); // sound: a vanilla hit parried, guarded or staggering
         return r.damage();
     }
 
@@ -213,6 +216,7 @@ public final class MeleeService {
             LivingEntity a = ((EntityFighter) attacker).entity;
             LivingEntity t = ((EntityFighter) target).entity;
             fighter(t); // keep ticking the target (stagger, riposte window, regeneration)
+            MeleeSoundPlayer.onHit(a, t, result, true); // sound: sword hit lands, is parried or guarded, staggers
             if (result.damage() <= 0) return;
             DamageSource src = a instanceof Player player ? a.damageSources().playerAttack(player) : a.damageSources().mobAttack(a);
             applying = true;
@@ -236,8 +240,10 @@ public final class MeleeService {
         @Override public int id() { return entity.getId(); }
         @Override public CombatState state() { return MeleeService.state(entity); }
         @Override public void setState(CombatState state) {
+            CombatState before = MeleeService.state(entity);
             Services.ATTACHMENTS.set(entity, MeleeAttachments.COMBAT_STATE, state);
             ACTIVE.putIfAbsent(entity, this);
+            MeleeSoundPlayer.onStateChange(entity, before, state); // sound: hit frames begin (swing), feint
         }
         @Override public @Nullable WeaponDefinition weapon() { return MeleeService.weapon(entity); }
         @Override public Vec eye() { return vec(entity.getEyePosition()); }

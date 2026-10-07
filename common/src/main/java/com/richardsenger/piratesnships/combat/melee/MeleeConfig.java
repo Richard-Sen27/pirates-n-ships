@@ -55,11 +55,24 @@ public final class MeleeConfig {
     public static final ConfigValue<Integer> STAMINA_SYNC_INTERVAL = S.intRange("stamina_sync_interval_ticks", 5, 1, 100,
             "Shortest interval between two stamina updates sent to a player for the HUD (phase changes are sent at once)");
 
+    private static final ConfigSection SOUNDS = S.section("sounds", "Sword sounds: swings, hits, parries, guards, staggers and drawing a sword");
+    public static final ConfigValue<Boolean> SOUNDS_ENABLED = SOUNDS.bool("enabled", true,
+            "Sword fights play sounds (swing, hit, armour, parry, guard, stagger, feint, drawing a sword). Heard by every nearby player");
+    public static final ConfigValue<Double> SOUNDS_VOLUME = SOUNDS.doubleRange("volume", 1.0, 0.0, 4.0,
+            "Multiplies the volume of every sword sound (above 1 they also carry further)");
+    public static final ConfigValue<Integer> UNSHEATHE_COOLDOWN = SOUNDS.intRange("unsheathe_cooldown_ticks", 10, 0, 200,
+            "Shortest interval between two sword-drawing sounds of one player (scrolling the hotbar across two swords sounds once)");
+
     private MeleeConfig() {
     }
 
     /** Loads the class so the values above are declared in time. Called from {@code registerConfig()}. */
     public static void init() {
+    }
+
+    /** The sound settings from the current config. */
+    public static com.richardsenger.piratesnships.combat.melee.sound.MeleeSoundRules.Params soundParams() {
+        return new com.richardsenger.piratesnships.combat.melee.sound.MeleeSoundRules.Params(SOUNDS_ENABLED.get(), SOUNDS_VOLUME.get());
     }
 
     /** The melee rules from the current config. */

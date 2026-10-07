@@ -12,7 +12,9 @@ import java.util.List;
 /**
  * Sound events of firearms, cannons and swords (docs/design.md §8.1, §8.2, §8.5, §16). Registered with their files
  * (G1); gameplay uses them once firearms, cannons (milestone 5) and the melee input layer work. Files come from
- * {@code tools/sounds/manifest.json}; an event with several files picks one at random each time it plays.
+ * {@code tools/sounds/manifest.json}; an event with several files picks one at random each time it plays. The melee
+ * events play through {@code combat.melee.sound.MeleeSoundPlayer} (P7); {@code disarm} and {@code weapon_break} stay
+ * unused until those mechanics exist.
  */
 public final class CombatSounds {
 
@@ -45,8 +47,8 @@ public final class CombatSounds {
             new Def(CANNON_VOLLEY, List.of(Constants.MOD_ID + ":combat/cannon_volley"), "Cannons fire in the distance"),
             new Def(MELEE_SWING, List.of(M + "swing1", M + "swing2", M + "swing3", M + "swing4"), "Sword swings"),
             new Def(MELEE_PARRY, List.of(M + "parry"), "Blades clash"),
-            new Def(MELEE_HIT_ARMOR, List.of(M + "hit_armor"), "Blade hits armor"),
-            new Def(MELEE_HIT_HEAVY, List.of(M + "hit_heavy1", M + "hit_heavy2", M + "hit_heavy3"), "Heavy blow lands"),
+            new Def(MELEE_HIT_ARMOR, List.of(M + "hit_armor"), "Armour rings"),
+            new Def(MELEE_HIT_HEAVY, List.of(M + "hit_heavy1", M + "hit_heavy2", M + "hit_heavy3"), "Sword hits"),
             new Def(MELEE_UNSHEATHE, List.of(M + "unsheathe"), "Sword drawn"),
             new Def(MELEE_DISARM, List.of(M + "disarm"), "Sword clatters to the ground"),
             new Def(MELEE_WEAPON_BREAK, List.of(M + "weapon_break"), "Sword breaks"));

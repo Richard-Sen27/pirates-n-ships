@@ -220,6 +220,9 @@ A crew member is released when its station is broken, its ship is disassembled o
 
 ---
 
+The crew member is animated (idle, walking, working at a station, sitting in a boat) through GeckoLib, a required
+mod on both sides; its look is a placeholder sailor until the Blockbench model lands.
+
 ## 5. Flags
 
 The **flagpole** flies a flag that shows a ship's allegiance.

@@ -18,7 +18,7 @@ Please send `latest.log` if anything differs.
 1. **Make a ship that splits.** Build a hull of two halves joined by a single plank (a "dumbbell"), helm on one half,
    a chest with some items and a sail winch on the other half. Assemble with the helm and name the ship.
 2. **Split it.** Shoot or break the joining plank. The helm half keeps the name; the other half becomes "Wreck of
-   <name>" (`/pns shipinfo` or the nameplate). The chest stays on the wreck.
+   <name>" (`/pirates ship info` while standing on it, or the nameplate). The chest stays on the wreck.
 3. **Mark the keeper.** Sneak-use the toolkit on a block of the helm half: the action bar says "Marked for repair:
    <name>. Now use the toolkit on the piece to join to it", the toolkit glints and its tooltip shows the mark.
 4. **Seam particles.** Hold the marked toolkit and sail the pieces within about 6 blocks of each other: green sparkles

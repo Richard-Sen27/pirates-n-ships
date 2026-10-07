@@ -73,3 +73,6 @@ Edit `serverconfig/pirates_n_ships-server.toml` (or the config screen), section 
 - `theft_detection = false`: step 3.1 gives no theft.
 - `bounty_proof_drops = false`: step 4.2 gives no proof.
 Set them back afterwards.
+
+
+Addendum (Q1): `/pirates trade port test navy_outpost tropical`, then `/pirates trade plunder` holding sugar, then `/pirates trade sell test pirates_n_ships:sugar 16 plundered` (with `navy_notice_chance` at 1): the "port noticed the plunder" line appears and the score rises by the `fence_plunder` severity; selling clean sugar raises nothing.

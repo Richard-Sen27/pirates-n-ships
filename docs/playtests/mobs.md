@@ -34,3 +34,6 @@ Please send `latest.log` if anything differs.
     ignore each other; `sailor.enabled = false`: sailors disappear and the command refuses them;
     `melee.skill_based_combat = false`: pirates fight with vanilla melee; `navy_infinite_ammo = false`: soldiers stop
     after 12 shots.
+
+
+Addendum (Q1, feints): spawn a pirate (set `melee.npc_skill_multiplier` to 5 so it always feints), hold a sword and parry as soon as it raises its arm: it sometimes stops the swing (no hit, a brief recovery), your parry runs out into the lockout, and its next swing hits you. With `melee.npc_feints = false` it never does this. Say how the aborted swing looks on the mob (the arm pose treats the feint recovery like a normal recovery).

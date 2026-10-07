@@ -63,3 +63,5 @@ gunpowder and cannonballs. Please send `latest.log` if anything differs.
 8. **Config:** `cannons.swivel.ammo = LEAD_SHOT` takes lead shot and draws it; `blocks_per_hit = 1` breaks planks;
    `enabled = false` makes the gun inert with a message.
 9. **Visuals:** the placeholders and the swivel item icon in the GUI and in hand are stand-ins; judge sizes only.
+
+Result (third playtest, 2026-10-07): the large cannon's size is right (two-block carriage, barrel a block ahead); F7g keeps the P2 geometry.

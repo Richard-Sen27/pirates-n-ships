@@ -226,7 +226,8 @@ mod on both sides; it is a Blockbench-made sailor (striped shirt, red bandana, n
 ### Pirates, sailors and the navy
 Pirates (dark coat, bandana, eyepatch, cutlass) attack players and the navy on sight. They fight with the same
 swordplay as you: watch for the raised arm before a slash or the drawn-back arm before a thrust, and parry just
-before the blow lands to stagger them and riposte. Navy soldiers (blue coat, white cross belts, tricorn) carry muskets:
+before the blow lands to stagger them and riposte. Beware: a pirate sometimes feints, stopping a swing to bait an
+early parry and striking while your guard is spent. Navy soldiers (blue coat, white cross belts, tricorn) carry muskets:
 they leave you alone unless you are wanted, then keep their distance, aim for a second and fire, and shove you back if
 you get close. Officers (gold trim, bicorne) are skilled saber duelists. Pirates and navy fight each other on sight.
 Sailors never fight and run from danger. Hitting or killing navy is a crime; killing pirates is not. Pirates drop
@@ -265,6 +266,7 @@ shown).
 ## 6. Provisions
 
 ### Pantry
+The doors face you when you place it.
 A container with 27 slots that opens like a chest. It is the ship's food store.
 - Anything edible counts as food, weighted by its nutrition. One crew member needs 6 nutrition per day (about one
   loaf of bread and a bit).
@@ -275,6 +277,8 @@ A container with 27 slots that opens like a chest. It is the ship's food store.
   flesh). So a hopper below works as a waste chute.
 
 ### Water barrel
+The water in a placed barrel takes the colour of the water around it (blue at sea, murky in a swamp); the item
+shows plain blue water.
 Holds up to 16 rations of fresh water. One crew member drinks one ration per day.
 - A water bucket adds 3 rations, a water bottle 1. An empty bucket takes 3 out, a glass bottle 1.
 - Rain slowly refills a barrel under the open sky.
@@ -636,7 +640,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `law` | Criminal score, severity of each crime, decay, fines, bounties, crime detection, theft. |
 | `flags_brig` | False-colors detection, NPC surrender, capturing players, prisoner escapes. |
 | `brig` | Capture threshold, leading distances, cell size, escape chance, ransom. |
-| `melee` | Skill-based sword fighting: parry window, stamina, stagger. |
+| `melee` | Skill-based sword fighting: parry window, stamina, stagger, feint recovery, NPC feints on/off. |
 | `core` | Debug logging. |
 | `ships`, `waves`, `hazards`, `crew`, `combat`, `survival`, `world`, `world_simulation`, and the client sections `audio` and `wave_effects` | Settings for features that are not built yet. They do nothing so far. |
 

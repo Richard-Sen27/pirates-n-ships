@@ -46,3 +46,6 @@ Commands work on the block you look at (within 8 blocks) plus every pantry and w
 2. Fill a pantry with fresh food, run `/pirates provisions advance 3 0`, save and quit, rejoin. Sneak-use it. **Expect:** same contents, "Next to spoil … in 2.0 days" (ages survive the reload).
 
 Report: screenshots of the chat output for 2.2, 3.2 and the barrel top textures at 16, 7 and 0 rations, plus `logs/latest.log` if anything errors.
+
+
+Addendum (Q1): place a pantry facing north, east, south and west: the doors always face you; opening and breaking still work. Fill a water barrel with a bucket at sea and in a swamp: the water takes the colour of the water around it (blue, then murky green), animated, not grey; the barrel item in the inventory still shows light-blue water. A barrel on a ship uses the plot's biome colour (probably plains blue), like vanilla water on the ship; say if it looks wrong.

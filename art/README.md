@@ -54,9 +54,10 @@ Workflow notes (containers batch: cargo crate, cargo barrel, pantry, water barre
   and axis-aligned east and west boards; their outer corners meet at the octagon vertices, the inner corners overlap.
   Board ends are hidden (`null`), the outer face carries the staves, the inner face the inside, the up face the rim.
 - **Liquid surfaces** are zero-height elements (`from.y == to.y`) with only an up face: an octagon of four bars as wide
-  as the wall's centre line, the two rotated bars 0.02 px lower. `minecraft:block/water_still` is greyscale (the game
-  tints it per biome through a block colour handler, which we do not register), so the surface uses
-  `minecraft:block/blue_ice`. One model per fill level (`water_barrel_fill0..3`, `water_barrel` = full), each with its
+  as the wall's centre line, the two rotated bars 0.02 px lower. the surface uses
+  `minecraft:block/water_still` with `tintindex 0` on the water faces (the exported models were edited by hand in Q1;
+  `CrewContentClient` registers the biome water colour; the projects still carry `blue_ice`, and the item model keeps
+  `blue_ice` because items have no colour hook yet). One model per fill level (`water_barrel_fill0..3`, `water_barrel` = full), each with its
   own project file, built from one helper with the level as a parameter.
 - **Slatted boxes** (cargo crate, 41 elements): an inner dark box (`dark_oak_planks`) behind recessed slats shows
   through the gaps. Keep the inner faces of parts whose inside can be seen from above (the top rails), or the step

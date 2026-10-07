@@ -375,7 +375,7 @@ Goal: sword fights are about timing and reading the opponent, not click spam. Th
 | Guard | Hold right click | Reduces frontal damage (per weapon), drains stamina while held and per blocked hit. |
 | Parry | Tap right click shortly before a hit lands | Deflects the hit completely, staggers the attacker, opens a **riposte** window. |
 | Riposte | Attack during the riposte window | Bonus damage, can't be parried. |
-| Feint (later) | Cancel an attack during wind-up | Baits a mistimed parry. |
+| Feint (Q1, NPCs; player input later) | Cancel an attack during wind-up (`CombatRules.feint`): a short recovery without guard or parry, the baited parry runs out into its lockout | Baits a mistimed parry. |
 | Directional attacks/parries (later, optional) | Mouse movement picks the direction | A parry only works in the matching direction (Mount & Blade style). Off by default, config toggle. |
 
 **Rules**
@@ -392,7 +392,7 @@ Goal: sword fights are about timing and reading the opponent, not click spam. Th
 - **Animations:** the Player Animation Library (PAL) for first- and third-person player animations, available on both loaders (§2; chosen in G5, see §21 and `docs/animation-libraries.md`). NPC animations use GeckoLib.
 - Works on moving ships: hit checks use positions relative to the sub-level where needed.
 
-**NPC duelists** (implemented in M3, `mob/ai/DuelistAttackGoal` with the pure `combat/melee/npc/DuelistBrain`: reaction delay, one parry roll per incoming attack from the skill tier, guard on a failed roll, riposte at once, thrust into recovery or stagger; feints are not possible yet because the state machine has no abort-wind-up input)
+**NPC duelists** (implemented in M3, `mob/ai/DuelistAttackGoal` with the pure `combat/melee/npc/DuelistBrain`: reaction delay, one parry roll per incoming attack from the skill tier, guard on a failed roll, riposte at once, thrust into recovery or stagger; feints since Q1: `planFeint` rolls the tier's `feintFrequency`, the planned attack aborts when the opponent begins a parry or at wind-up tick 2 against a guard, and the follow-up skips the attack pause; `melee.npc_feints` toggles it)
 - Pirates, navy soldiers and officers use the same state machine and the same rules as players: they telegraph attacks, guard, parry and riposte.
 - Skill tiers per NPC type set the parry chance, reaction time and how often they use feints. For example, a sailor is clumsy and a pirate captain is dangerous.
 - Duel bosses: named pirate captains with unique movesets, as quest and boarding targets.

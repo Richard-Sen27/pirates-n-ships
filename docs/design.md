@@ -602,7 +602,7 @@ All gameplay settings live in the **server config** (synced to clients). Audio a
 
 | # | Milestone | Done when |
 |---|---|---|
-| 0 | Project setup | MultiLoader-Template builds. `common` + `neoforge` enabled. Sable loads in the NeoForge dev client. A test block registered from `common` and a GameTest from `common` both run. Platform service skeleton exists. |
+| 0 | Project setup | MultiLoader-Template builds. `common` + `neoforge` enabled. Sable loads in the NeoForge dev client. A test block registered from `common` and a GameTest from `common` both run (the test block was removed again in CT1 once real content existed; the creative tab's icon is the officer's bicorne). Platform service skeleton exists. |
 | 1 | **Spike: assembly** | A helm assembles a small hull into a floating sub-level, which disassembles back to blocks |
 | 2 | **Spike: dry hull** | No water renders inside the hull, and the player doesn't swim below deck |
 | 3 | **Spike: wind + sails** | A sail moves the ship relative to the wind, the helm steers, the anchor holds |

@@ -524,6 +524,11 @@ go, sneak and right-click with an empty hand. More than 24 blocks from the hook 
 (or is lost, if the server says so). Throwing a second hook releases the first. Server options: section `grapple`.
 
 ### Swordplay
+Swords make themselves heard: each swing whooshes as the blade comes through (a thrust sounds sharper), hits thud
+on flesh and ring on a chestplate, a parry rings out loudly while a blocked blow clashes dully, and a staggered
+fighter takes a heavy thud. Drawing a sword plays a short scrape. Server owners turn sword sounds off or change
+their volume under `melee.sounds`.
+
 With a rapier, cutlass or saber in hand the mouse works differently (server config `melee.skill_based_combat`,
 on by default; vanilla weapons are untouched):
 - **Slash:** a quick left click. A wide, short arc after a brief wind-up.
@@ -675,7 +680,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `law` | Criminal score, severity of each crime, decay, fines, bounties, crime detection, theft. |
 | `flags_brig` | False-colors detection, NPC surrender, capturing players, prisoner escapes. |
 | `brig` | Capture threshold, leading distances, cell size, escape chance, ransom. |
-| `melee` | Skill-based sword fighting: parry window, stamina, stagger, feint recovery, NPC feints on/off. |
+| `melee` | Skill-based sword fighting: parry window, stamina, stagger, feint recovery, NPC feints on/off, sword sounds on/off and volume. |
 | `core` | Debug logging. |
 | `ships`, `waves`, `hazards`, `crew`, `combat`, `survival`, `world`, `world_simulation`, and the client sections `audio` and `wave_effects` | Settings for features that are not built yet. They do nothing so far. |
 

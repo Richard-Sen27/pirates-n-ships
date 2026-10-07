@@ -79,3 +79,23 @@ differs.
 7. **Sneaking while attacking (known risk):** the upper body probably pops to standing height on crouched legs. Report
    how bad it looks.
 8. **Walking while attacking:** the legs keep walking; the left arm stops its walk swing while animated.
+
+
+## P7: sword sounds (turn subtitles on)
+1. **Swing:** slash at the air with a cutlass: one whoosh as the blade comes through, not on the click ("Sword
+   swings"); a thrust whooshes audibly higher.
+2. **Hit, flesh:** slash a zombie or a pirate: a thud at the target ("Sword hits").
+3. **Hit, armour:** hit a mob or player wearing a chestplate: a metallic ring ("Armour rings"); with only a helmet it
+   thuds.
+4. **Parry:** parry a pirate's hit: a loud clash at you ("Blades clash"), no hit thud; parrying a zombie's punch
+   clashes too.
+5. **Guard:** hold guard against a pirate: a quieter, lower clash per blocked blow; when the guard breaks, a low thud
+   follows.
+6. **Stagger:** thrust into a pirate during its recovery: the hit thud plus a deeper, quieter thud (say if it sounds
+   muddy).
+7. **Feint:** with `melee.npc_skill_multiplier` 5, an aborted wind-up gives a faint high whoosh and no full swing.
+8. **Drawing:** scroll from an empty slot onto a cutlass: one draw sound ("Sword drawn"); straight on to a rapier
+   quickly: no second sound; an iron sword: none; logging in with a sword in hand: none; a second player hears
+   your draw.
+9. **With a pirate:** its swings and your guard and parry clashes come from the right positions.
+10. **Toggle:** `melee.sounds.enabled = false` silences everything; `volume = 0.3` makes it quieter.

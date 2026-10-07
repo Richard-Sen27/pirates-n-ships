@@ -310,6 +310,13 @@ line shows the load: Light, Laden, Heavily laden or Overloaded (`/pirates ship i
 sits lower, so it floods sooner through a breach, and it is slower to accelerate and turn. Server config
 `cargo_trade.cargo_weight_affects_ships`, `weight_factor`, `weigh_interval_ticks`, `load_levels`.
 
+### Pirate islands
+Pirate camps sit on beaches, rarer than villages, with a jetty (two berths), tents, a tavern hut, a captain's hut and
+a fence's shack under the Jolly Roger. Pirates hang about the camp day and night and attack strangers. The fence's
+desk opens a market that buys plunder and rum dear and sells little. Somewhere under two crossed logs a chest lies
+buried two blocks deep: dig at the cross for doubloons, rum, provisions and, with luck, a pistol. Server config
+`world.structures.pirate_island`.
+
 ### Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks
 high with a low roar. Within 8 blocks of it you, your boat, loose items and light ships are pulled toward it and

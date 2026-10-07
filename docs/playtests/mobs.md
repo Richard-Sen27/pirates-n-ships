@@ -37,3 +37,17 @@ Please send `latest.log` if anything differs.
 
 
 Addendum (Q1, feints): spawn a pirate (set `melee.npc_skill_multiplier` to 5 so it always feints), hold a sword and parry as soon as it raises its arm: it sometimes stops the swing (no hit, a brief recovery), your parry runs out into the lockout, and its next swing hits you. With `melee.npc_feints = false` it never does this. Say how the aborted swing looks on the mob (the arm pose treats the feint recovery like a normal recovery).
+
+
+## M5: approach and hits
+Survival, difficulty Easy or higher. Run `/pirates mob debug on` first: its reply shows the difficulty (on peaceful
+pirates ignore players; say if that was your setup during the third playtest).
+1. **Standing still** 5 blocks away: the pirate walks up and hits within about a second, then every 1–2 s.
+2. **Walking away** at normal speed: it catches up within several seconds and hits; sprinting gets away.
+3. **Strafing** around it at 3 blocks: it closes in and hits within a few seconds, without stuttering.
+4. **Kiting** (step back whenever it gets close): it still lands hits within about 10 s.
+5. **Hitting it:** after the knockback it resumes the chase at once.
+6. **On a deck:** it chases and hits on the deck and does not run off the edge after you.
+7. **Parry and feints** still work (`melee.npc_skill_multiplier` 5 for feints).
+8. If anything is still off, keep debug on during the fight, send `latest.log` (search `[mob debug]`), then
+   `/pirates mob debug off`.

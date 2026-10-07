@@ -5,7 +5,9 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.hazards.HazardsConfig;
 import com.richardsenger.piratesnships.mob.ai.DuelistDebug;
+import com.richardsenger.piratesnships.mob.kraken.KrakenContent;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -23,7 +25,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
- * {@code /pirates mob spawn <pirate|sailor|navy_soldier|navy_officer|shark> [count]} (permission 2): spawns mobs
+ * {@code /pirates mob spawn <pirate|sailor|navy_soldier|navy_officer|shark|kraken> [count]} (permission 2): spawns mobs
  * around the source position, up to {@link #MAX_COUNT} at once. Disabled types ({@code mobs.<type>.enabled}) are
  * refused. The humanoids' natural spawning waits for the world structures (docs/design.md §10.1); sharks also spawn
  * naturally in oceans.
@@ -39,6 +41,8 @@ public final class MobCommands {
     public static final int MAX_COUNT = 64;
     /** The shark's command argument (not a {@link MobKind}: it has no faction, duelist skill or humanoid rig). */
     public static final String SHARK = "shark";
+    /** The kraken's command argument (K1a); its toggle is {@code hazards.kraken.enabled}. */
+    public static final String KRAKEN = KrakenContent.ID;
     private static final double SPREAD = 1.5;
 
     private MobCommands() {
@@ -48,7 +52,7 @@ public final class MobCommands {
         dispatcher.register(Commands.literal("pirates").then(Commands.literal("mob").requires(s -> s.hasPermission(2))
                 .then(Commands.literal("spawn").then(Commands.argument("type", StringArgumentType.word())
                         .suggests((c, b) -> SharedSuggestionProvider.suggest(
-                                Stream.concat(Arrays.stream(MobKind.values()).map(MobKind::id), Stream.of(SHARK)), b))
+                                Stream.concat(Arrays.stream(MobKind.values()).map(MobKind::id), Stream.of(SHARK, KRAKEN)), b))
                         .executes(c -> spawn(c, 1))
                         .then(Commands.argument("count", IntegerArgumentType.integer(1, MAX_COUNT))
                                 .executes(c -> spawn(c, IntegerArgumentType.getInteger(c, "count"))))))
@@ -85,6 +89,15 @@ public final class MobCommands {
                 return 0;
             }
             int n = spawn(c.getSource().getLevel(), MobContent.SHARK.get(), c.getSource().getPosition(), count);
+            c.getSource().sendSuccess(() -> Component.translatable(KEY_SPAWNED, n, id), true);
+            return n;
+        }
+        if (KRAKEN.equals(id)) {
+            if (!HazardsConfig.KRAKEN_ENABLED.get()) {
+                c.getSource().sendFailure(Component.translatable(KrakenContent.KEY_DISABLED));
+                return 0;
+            }
+            int n = spawn(c.getSource().getLevel(), KrakenContent.KRAKEN.get(), c.getSource().getPosition(), count);
             c.getSource().sendSuccess(() -> Component.translatable(KEY_SPAWNED, n, id), true);
             return n;
         }

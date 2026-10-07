@@ -7,6 +7,7 @@ import com.richardsenger.piratesnships.mob.entity.Pirate;
 import com.richardsenger.piratesnships.mob.entity.Sailor;
 import com.richardsenger.piratesnships.mob.entity.SeafarerMob;
 import com.richardsenger.piratesnships.mob.entity.Shark;
+import com.richardsenger.piratesnships.mob.kraken.KrakenContent;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.platform.registry.NaturalSpawn;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
@@ -86,6 +87,7 @@ public final class MobContent {
         Services.REGISTRY.registerEntityAttributes(NAVY_SOLDIER, NavySoldier::createAttributes);
         Services.REGISTRY.registerEntityAttributes(NAVY_OFFICER, NavyOfficer::createAttributes);
         Services.REGISTRY.registerEntityAttributes(SHARK, Shark::createAttributes);
+        KrakenContent.init();
         Services.REGISTRY.registerSpawnPlacement(SHARK, SpawnPlacementTypes.IN_WATER, Heightmap.Types.OCEAN_FLOOR, Shark::checkSpawnRules);
         Services.REGISTRY.registerNaturalSpawn(new NaturalSpawn(SHARK, MobCategory.WATER_CREATURE,
                 List.of(BiomeTags.IS_OCEAN, BiomeTags.IS_DEEP_OCEAN), MobConfig.SHARK_SPAWN_WEIGHT::get,

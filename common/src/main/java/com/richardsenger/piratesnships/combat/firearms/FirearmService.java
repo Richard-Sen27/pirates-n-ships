@@ -127,6 +127,27 @@ public final class FirearmService {
         return Shot.FIRED;
     }
 
+    /**
+     * Fires a charge of powder without a ball (GR1: a grappling hook launched from the musket): the cooldown starts,
+     * a misfire in the rain clicks ({@link FirearmRules#misfires}, same chance as a shot), and a shot plays the same
+     * sound, smoke and recoil as {@link #fire}. Neither reads nor changes the gun's loaded state and spawns nothing;
+     * the caller launches its own projectile on {@link Shot#FIRED}.
+     */
+    public static Shot fireBlank(ServerLevel level, LivingEntity shooter, ItemStack gun, FirearmKind kind) {
+        FirearmType type = FirearmsConfig.type(kind);
+        RandomSource random = shooter.getRandom();
+        startCooldown(shooter, gun);
+        if (FirearmRules.misfires(inRain(shooter), type.misfireChanceInRain(), random.nextDouble())) {
+            playEmpty(level, shooter, type.soundPitch());
+            return Shot.MISFIRE;
+        }
+        level.playSound(null, shooter.getX(), shooter.getEyeY(), shooter.getZ(), CombatSounds.PISTOL_SHOT.get(),
+                SoundSource.PLAYERS, 1.5f, type.soundPitch() * (0.95f + random.nextFloat() * 0.1f));
+        smoke(level, shooter);
+        recoil(shooter, kind);
+        return Shot.FIRED;
+    }
+
     /** The dry click of an unloaded gun or a misfire. */
     public static void playEmpty(Level level, LivingEntity shooter, float pitch) {
         level.playSound(null, shooter.getX(), shooter.getEyeY(), shooter.getZ(), CombatSounds.PISTOL_EMPTY.get(),

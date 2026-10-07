@@ -4,10 +4,15 @@ import com.richardsenger.piratesnships.core.registry.ModRegistry;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.PushReaction;
 
 /**
- * Registered content of the grappling hook (docs/design.md §8.3): the thrown hook entity. The item itself is
- * {@code combat.content.CombatContent#GRAPPLING_HOOK}, a {@link GrapplingHookItem}.
+ * Registered content of the grappling hook (docs/design.md §8.3): the thrown hook entity and the mooring ring (GR1).
+ * The item itself is {@code combat.content.CombatContent#GRAPPLING_HOOK}, a {@link GrapplingHookItem}.
  */
 public final class GrappleContent {
 
@@ -15,6 +20,11 @@ public final class GrappleContent {
     public static final RegistryEntry<EntityType<?>, EntityType<GrapplingHookEntity>> HOOK = ModRegistry.entity("grappling_hook",
             () -> EntityType.Builder.<GrapplingHookEntity>of(GrapplingHookEntity::new, MobCategory.MISC)
                     .sized(0.3f, 0.3f).noSummon().clientTrackingRange(10).updateInterval(2));
+
+    /** A small iron ring on a plate: a sure target for hooks and a tie-off for the rope (see {@link MooringRingBlock}). */
+    public static final RegistryEntry<Block, MooringRingBlock> MOORING_RING = ModRegistry.blockWithItem("mooring_ring",
+            () -> new MooringRingBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(1.5f, 6.0f)
+                    .sound(SoundType.CHAIN).noOcclusion().pushReaction(PushReaction.DESTROY)));
 
     private GrappleContent() {
     }

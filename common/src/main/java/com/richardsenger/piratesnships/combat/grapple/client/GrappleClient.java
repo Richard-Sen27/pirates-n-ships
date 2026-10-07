@@ -2,12 +2,15 @@ package com.richardsenger.piratesnships.combat.grapple.client;
 
 import com.richardsenger.piratesnships.combat.grapple.GrappleContent;
 import com.richardsenger.piratesnships.combat.grapple.GrapplingHookEntity;
+import com.richardsenger.piratesnships.combat.grapple.MooringRingBlock;
 import com.richardsenger.piratesnships.combat.grapple.ReleaseHookPayload;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.platform.event.ClientEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 
 /** Client setup of the grappling hook (physical client only, from {@code GrappleModule.initClient()}). */
 public final class GrappleClient {
@@ -26,10 +29,19 @@ public final class GrappleClient {
      */
     private static ClientEvents.InteractionKeyResult onInteraction(Minecraft mc, ClientEvents.InteractionInput input, InteractionHand hand) {
         if (input == ClientEvents.InteractionInput.USE && hand == InteractionHand.MAIN_HAND && mc.player != null && mc.level != null
-                && mc.player.isShiftKeyDown() && mc.player.getMainHandItem().isEmpty() && hasHookOut(mc)) {
+                && mc.player.isShiftKeyDown() && mc.player.getMainHandItem().isEmpty() && hasHookOut(mc) && !aimsAtRing(mc)) {
             Services.NETWORK.sendToServer(ReleaseHookPayload.INSTANCE);
         }
         return ClientEvents.InteractionKeyResult.PASS;
+    }
+
+    /**
+     * The use aims at a mooring ring: it ties the rope there instead (GR1, {@code MooringRingBlock#useWithoutItem}),
+     * so no release is sent. Ship blocks come back from the pick in plot coordinates, where the client has them too.
+     */
+    private static boolean aimsAtRing(Minecraft mc) {
+        return mc.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK
+                && MooringRingBlock.isRing(mc.level, hit.getBlockPos());
     }
 
     private static boolean hasHookOut(Minecraft mc) {

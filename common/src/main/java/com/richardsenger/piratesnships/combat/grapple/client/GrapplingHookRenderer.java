@@ -5,6 +5,9 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.grapple.GrapplingHookEntity;
+import com.richardsenger.piratesnships.combat.grapple.MooringRingBlock;
+import net.minecraft.core.BlockPos;
+import org.jetbrains.annotations.Nullable;
 import com.richardsenger.piratesnships.ship.sable.ClientShipPoses;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -53,7 +56,10 @@ public class GrapplingHookRenderer extends EntityRenderer<GrapplingHookEntity> {
     public boolean shouldRender(GrapplingHookEntity hook, Frustum frustum, double camX, double camY, double camZ) {
         Entity owner = hook.getOwner();
         AABB box = hook.getBoundingBox().inflate(0.5);
-        if (owner != null) {
+        Vec3 ring = ringPos(hook, 1.0f);
+        if (ring != null) {
+            box = box.minmax(new AABB(ring, ring).inflate(0.5));
+        } else if (owner != null) {
             box = box.minmax(owner.getBoundingBox());
         }
         return frustum.isVisible(box);
@@ -80,8 +86,10 @@ public class GrapplingHookRenderer extends EntityRenderer<GrapplingHookEntity> {
         items.renderStatic(hook.getItem(), ItemDisplayContext.GROUND, light, OverlayTexture.NO_OVERLAY, pose, buffers, hook.level(), hook.getId());
         pose.popPose();
 
-        if (hook.getOwner() instanceof Player owner) {
-            Vec3 hand = handPos(owner, partialTick).subtract(base);
+        Vec3 ring = ringPos(hook, partialTick);
+        Vec3 end = ring != null ? ring : hook.getOwner() instanceof Player owner ? handPos(owner, partialTick) : null;
+        if (end != null) {
+            Vec3 hand = end.subtract(base);
             Vector3f from = new Vector3f((float) off.x, (float) off.y, (float) off.z);
             Vector3f to = new Vector3f((float) hand.x, (float) hand.y, (float) hand.z);
             float len = from.distance(to);
@@ -89,6 +97,20 @@ public class GrapplingHookRenderer extends EntityRenderer<GrapplingHookEntity> {
             rope(buffers.getBuffer(RenderType.entityCutoutNoCull(ROPE_TEXTURE)), pose.last(), from, to, sag, light);
         }
         super.render(hook, yaw, partialTick, pose, buffers, light);
+    }
+
+    /**
+     * The middle of the mooring ring the rope is tied to (GR1), through the ship's render pose for a ring on a ship, or
+     * null when the rope is not tied.
+     */
+    private static @Nullable Vec3 ringPos(GrapplingHookEntity hook, float partialTick) {
+        BlockPos pos = hook.syncedTiedRing().orElse(null);
+        if (pos == null) {
+            return null;
+        }
+        Vec3 center = MooringRingBlock.ringCenter(hook.level(), pos);
+        Vec3 onShip = ClientShipPoses.toWorld(hook.level(), center, partialTick);
+        return onShip != null ? onShip : center;
     }
 
     /** The rope as {@link #SEGMENTS} straight pieces along a parabola that hangs {@code sag} blocks at its middle. */

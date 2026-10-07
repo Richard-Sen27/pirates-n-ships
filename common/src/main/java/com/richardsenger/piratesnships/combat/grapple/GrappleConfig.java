@@ -42,11 +42,46 @@ public final class GrappleConfig {
     public static final ConfigValue<Integer> RETRACT_TICKS = S.intRange("retract_ticks", 40, 0, 1200,
             "Ticks a hook that missed (land, water, an entity, the thrower's own ship) lies there before the rope pulls it back");
 
+    public static final ConfigValue<Boolean> RINGS_ENABLED = S.bool("rings_enabled", true,
+            "Mooring rings catch hooks passing close by, hold them harder, and take the rope's near end when tied off. "
+                    + "Off = a ring is a plain ship block");
+    public static final ConfigValue<Double> RING_CATCH_RADIUS = S.doubleRange("ring_catch_radius", 1.0, 0.0, 4.0,
+            "A flying hook passing this close [blocks] to a mooring ring on another ship latches onto the ring (0 = only a direct hit)");
+    public static final ConfigValue<Double> RING_HOLD_MULTIPLIER = S.doubleRange("ring_hold_multiplier", 2.0, 1.0, 8.0,
+            "A hook latched on a mooring ring snaps only when the rope's ends are this many times its length apart");
+
+    private static final ConfigSection LAUNCH = S.section("launch",
+            "Launching the hook with a crossbow or a musket held in the other hand instead of throwing it");
+    public static final ConfigValue<Boolean> CROSSBOW_ENABLED = LAUNCH.bool("crossbow_enabled", true,
+            "A crossbow in the other hand draws and shoots the hook. Off = the hook is thrown");
+    public static final ConfigValue<Double> CROSSBOW_SPEED = LAUNCH.doubleRange("crossbow_speed", 1.6, 0.1, 10.0,
+            "Start speed of a hook shot from a crossbow, as a multiple of throw_velocity");
+    public static final ConfigValue<Integer> CROSSBOW_DRAW_TICKS = LAUNCH.intRange("crossbow_draw_ticks", 25, 0, 200,
+            "Ticks the use key must be held to draw the crossbow; letting go after that shoots, before it cancels (a crossbow charge: 25)");
+    public static final ConfigValue<Double> CROSSBOW_ROPE_LENGTH = LAUNCH.doubleRange("crossbow_rope_length", 36.0, 2.0, 128.0,
+            "Rope length in blocks of a hook shot from a crossbow (never shorter than max_rope_length)");
+    public static final ConfigValue<Boolean> MUSKET_ENABLED = LAUNCH.bool("musket_enabled", true,
+            "An empty musket in the other hand fires the hook with one gunpowder. Off = the hook is thrown");
+    public static final ConfigValue<Double> MUSKET_SPEED = LAUNCH.doubleRange("musket_speed", 2.4, 0.1, 10.0,
+            "Start speed of a hook fired from a musket, as a multiple of throw_velocity");
+    public static final ConfigValue<Double> MUSKET_ROPE_LENGTH = LAUNCH.doubleRange("musket_rope_length", 48.0, 2.0, 128.0,
+            "Rope length in blocks of a hook fired from a musket (never shorter than max_rope_length)");
+
     private GrappleConfig() {
     }
 
     /** Loads the class so the values above are declared in time. Called from {@code registerConfig()}. */
     public static void init() {
+    }
+
+    /** Start speed [blocks per tick] of a hook launched in {@code mode}. */
+    public static double speed(GrappleLaunch.Mode mode) {
+        return GrappleLaunch.speed(mode, THROW_VELOCITY.get(), CROSSBOW_SPEED.get(), MUSKET_SPEED.get());
+    }
+
+    /** Rope length [blocks] of a hook launched in {@code mode}. */
+    public static double ropeLength(GrappleLaunch.Mode mode) {
+        return GrappleLaunch.ropeLength(mode, MAX_ROPE_LENGTH.get(), CROSSBOW_ROPE_LENGTH.get(), MUSKET_ROPE_LENGTH.get());
     }
 
     /** Distance up to which the rope holds without pulling: {@code hold_distance + hold_slack}. */

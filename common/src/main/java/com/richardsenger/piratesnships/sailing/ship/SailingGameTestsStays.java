@@ -98,7 +98,7 @@ public final class SailingGameTestsStays {
             h.getLevel().destroyBlock(tack, false);
             h.assertTrue(rt.sailCount() == 0, "the sail survived its tack");
             h.assertTrue(TriangularSails.partner(h.getLevel(), head) == null
-                            && h.getLevel().getBlockEntity(head) instanceof CleatBlockEntity be && be.stayTarget() == null,
+                            && h.getLevel().getBlockEntity(head) instanceof CleatBlockEntity be && !be.hasRopes(),
                     "the head kept the stay after the tack was broken");
             h.assertTrue(cloth(h, head) == null, "the head still has cloth without a stay");
             h.succeed();
@@ -108,13 +108,14 @@ public final class SailingGameTestsStays {
     /**
      * On land: the rope remembers a first cleat and rigs a stay on a second one (one rope used up), the head gets its
      * cloth at once, the head cycles the trim when clicked; a stone put between head and clew is noticed by the periodic
-     * check. The rope refuses cleats too far apart, too flat, or the same cleat twice.
+     * check. With rope lines off (RP1), the rope refuses cleats too far apart, too flat, or the same cleat twice.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 60, batch = "pirates_n_ships_config_sailing_stay_refresh")
     public static void ropeRigsStaysAndRefusesBadOnes(GameTestHelper h) {
         ConfigOverrides.during(h, SailingConfig.YARD_REFRESH_TICKS, 5);
         ConfigOverrides.during(h, SailingConfig.STAY_MAX_LENGTH, 16);
         ConfigOverrides.during(h, SailingConfig.STAY_MIN_DROP, 2);
+        ConfigOverrides.during(h, SailingConfig.ROPE_LINES, false); // the F5b rule as it was: a flat rope is refused (RP1)
         for (int x = 1; x <= 22; x++) for (int z = 1; z <= 22; z++) h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
         for (int y = 2; y <= 7; y++) h.setBlock(new BlockPos(5, y, 5), Blocks.OAK_LOG);
         BlockPos headRel = new BlockPos(5, 7, 6); // on the mast's south face

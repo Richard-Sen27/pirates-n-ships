@@ -8,6 +8,7 @@ import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
 import com.richardsenger.piratesnships.sailing.block.YardBlock;
 import com.richardsenger.piratesnships.sailing.block.YardBlockEntity;
 import com.richardsenger.piratesnships.sailing.sail.StayRules;
+import com.richardsenger.piratesnships.sailing.rope.RopeLines;
 import com.richardsenger.piratesnships.sailing.sail.TriangularSail;
 import com.richardsenger.piratesnships.sailing.sail.TriangularSails;
 import com.richardsenger.piratesnships.sailing.sail.YardLinker;
@@ -334,9 +335,14 @@ public final class SailingRuntimes {
         List<TriangularSail> sails = new ArrayList<>();
         List<int[]> columns = new ArrayList<>();
         for (BlockPos p : rt.cleatBlocks()) {
-            BlockPos partner = TriangularSails.partner(level, p);
-            if (partner != null && partner.getY() < p.getY()) {
-                columns.add(new int[] {p.getX(), p.getZ(), partner.getY(), p.getY() - 1});
+            boolean head = false;
+            for (BlockPos partner : RopeLines.partners(level, p)) { // RP1: a cleat may hold several ropes
+                if (partner.getY() < p.getY() && RopeLines.isCleat(level, partner)) {
+                    columns.add(new int[] {p.getX(), p.getZ(), partner.getY(), p.getY() - 1});
+                    head = true;
+                }
+            }
+            if (head) {
                 TriangularSail t = TriangularSails.sailHeadedAt(level, p, rules);
                 if (t != null) sails.add(t);
             }

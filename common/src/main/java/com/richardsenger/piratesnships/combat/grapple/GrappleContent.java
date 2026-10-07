@@ -2,10 +2,12 @@ package com.richardsenger.piratesnships.combat.grapple;
 
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
+import com.richardsenger.piratesnships.sailing.rope.RopeAnchorBlockEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
@@ -34,6 +36,10 @@ public final class GrappleContent {
     public static final RegistryEntry<Block, MooringRingBlock> MOORING_RING = ModRegistry.blockWithItem("mooring_ring",
             () -> new MooringRingBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(1.5f, 6.0f)
                     .sound(SoundType.CHAIN).noOcclusion().pushReaction(PushReaction.DESTROY)));
+    /** The ring's rope lines (RP1): a plain rope anchor block entity. */
+    public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<RopeAnchorBlockEntity>> MOORING_RING_BLOCK_ENTITY =
+            ModRegistry.blockEntity("mooring_ring",
+                    (pos, state) -> new RopeAnchorBlockEntity(GrappleContent.MOORING_RING_BLOCK_ENTITY.get(), pos, state), MOORING_RING);
 
     private GrappleContent() {
     }

@@ -4,13 +4,20 @@ import com.mojang.serialization.MapCodec;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.sailing.SailingConfig;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
+import com.richardsenger.piratesnships.sailing.item.RopeItem;
+import com.richardsenger.piratesnships.sailing.rope.RopeAnchor;
+import com.richardsenger.piratesnships.sailing.rope.RopeAnchorUse;
+import com.richardsenger.piratesnships.sailing.rope.RopeLines;
 import com.richardsenger.piratesnships.sailing.sail.TriangularSailContent;
 import com.richardsenger.piratesnships.sailing.sail.TriangularSails;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -37,6 +44,10 @@ import org.jetbrains.annotations.Nullable;
  * ({@link com.richardsenger.piratesnships.sailing.item.RopeItem}); the higher one is the stay's head, and with a third
  * cleat straight below the head they carry a triangular sail ({@link com.richardsenger.piratesnships.sailing.sail.StayLinker}).
  *
+ * <p>A cleat is a general rope anchor ({@link RopeAnchor}, RP1): a rope between it and another cleat or a mooring ring
+ * that makes no sail is a decorative rope line, a flying grappling hook latches onto its horn, and the grappling
+ * rope's near end can be tied off on it.
+ *
  * <p>{@link #TRIM} is the sail's trim; only the head's counts (as with the yards). Every cleat has a
  * {@link CleatBlockEntity} that holds its end of the stay and, on the head, the cloth for the renderer. Besides
  * sturdy faces, a cleat also holds on a mast block ({@link SailingBlocks#MASTS}), so it can be fixed to a fence mast.
@@ -45,12 +56,15 @@ import org.jetbrains.annotations.Nullable;
  * dark wooden pad, modelled on the floor with its horns along {@link #FACING} and turned for the wall and the ceiling
  * by the block state. {@link #TRIM} does not change the model (the cloth is drawn by the stay renderer).
  */
-public class CleatBlock extends FaceAttachedHorizontalDirectionalBlock implements EntityBlock {
+public class CleatBlock extends FaceAttachedHorizontalDirectionalBlock implements EntityBlock, RopeAnchor {
 
     public static final EnumProperty<SailTrim> TRIM = EnumProperty.create("trim", SailTrim.class);
     public static final MapCodec<CleatBlock> CODEC = simpleCodec(CleatBlock::new);
 
     public static final String KEY_NO_SAIL = "message." + Constants.MOD_ID + ".cleat.no_sail";
+
+    /** Distance of the horn bar's middle (where ropes tie) from the block center toward the support [blocks]. */
+    public static final double HORN_INSET = 0.27;
 
     // horns along the facing on a floor or ceiling, upright on a wall (the wall shape sits against the supporting face)
     private static final VoxelShape FLOOR_NS = Block.box(5, 0, 2, 11, 5, 14);
@@ -104,7 +118,39 @@ public class CleatBlock extends FaceAttachedHorizontalDirectionalBlock implement
     }
 
     @Override
+    public Kind anchorKind() {
+        return Kind.CLEAT;
+    }
+
+    @Override
+    public double anchorInset() {
+        return HORN_INSET;
+    }
+
+    /** A rope in hand goes to the rope item (it rigs stays and lines), not to the trim. */
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
+                                              InteractionHand hand, BlockHitResult hit) {
+        if (stack.getItem() instanceof RopeItem) {
+            return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
+        }
+        return super.useItemOn(stack, state, level, pos, player, hand, hit);
+    }
+
+    /**
+     * With a grappling hook out, using the cleat ties the hook's rope off here, as on a mooring ring (RP1,
+     * {@link RopeAnchorUse}); otherwise it cycles the trim of the sail it heads.
+     */
+    @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+        if (level instanceof ServerLevel serverLevel) {
+            InteractionResult tie = RopeAnchorUse.tieOff(serverLevel, player, pos);
+            if (tie != InteractionResult.PASS) {
+                return tie;
+            }
+        } else if (RopeAnchorUse.willTieOff(level, player, pos)) {
+            return InteractionResult.SUCCESS;
+        }
         if (!SailingConfig.SAIL_BLOCK_TRIM.get()) {
             return InteractionResult.PASS;
         }
@@ -124,35 +170,30 @@ public class CleatBlock extends FaceAttachedHorizontalDirectionalBlock implement
         }
     }
 
-    /** A player breaking one end of a stay gets the rope back (not in creative mode). */
+    /** A player breaking a cleat gets back one rope per stay or rope line on it (not in creative mode). */
     @Override
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-        if (level instanceof ServerLevel serverLevel && !player.isCreative() && TriangularSails.partner(serverLevel, pos) != null) {
-            Block.popResource(level, pos, new ItemStack(TriangularSailContent.ROPE.get()));
+        if (level instanceof ServerLevel && !player.isCreative()) {
+            RopeLines.dropRopes(level, pos, new ItemStack(TriangularSailContent.ROPE.get()));
         }
         return super.playerWillDestroy(level, pos, state, player);
     }
 
     /**
-     * Breaking a cleat takes its stay down (the other end forgets it) and updates the sails around it. A cleat moved by
-     * Sable's assembly ({@code movedByPiston} is true there, see {@code SubLevelAssemblyHelper#moveBlocks}) keeps its
-     * stay: its block entity data travels with it, and the offset it stores is relative.
+     * Breaking a cleat takes its ropes down (the other ends forget them) and updates the sails around it. A cleat moved
+     * by Sable's assembly ({@code movedByPiston} is true there, see {@code SubLevelAssemblyHelper#moveBlocks}) keeps its
+     * ropes: its block entity data travels with it, and the offsets it stores are relative.
      */
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        BlockPos partner = null;
-        if (!newState.is(this) && !movedByPiston && level instanceof ServerLevel serverLevel) {
-            partner = TriangularSails.partner(serverLevel, pos);
+        List<BlockPos> partners = List.of();
+        boolean gone = !newState.is(this) && !movedByPiston && level instanceof ServerLevel;
+        if (gone) {
+            partners = RopeLines.partners(level, pos);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
-        if (!newState.is(this) && !movedByPiston && level instanceof ServerLevel serverLevel) {
-            if (partner != null && serverLevel.getBlockEntity(partner) instanceof CleatBlockEntity other) {
-                other.setStay(null);
-            }
-            TriangularSails.refreshAround(serverLevel, pos);
-            if (partner != null) {
-                TriangularSails.refresh(serverLevel, partner);
-            }
+        if (gone) {
+            RopeLines.onAnchorRemoved((ServerLevel) level, pos, partners);
         }
     }
 

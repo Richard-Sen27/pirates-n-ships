@@ -207,6 +207,7 @@ public final class SailingModule implements ModModule {
     public List<Class<?>> gameTestClasses() {
         return List.of(SailingGameTests.class, SailingGameTestsShips.class, SailingGameTestsControls.class,
                 com.richardsenger.piratesnships.sailing.ship.SailingGameTestsStays.class,
-                com.richardsenger.piratesnships.sailing.ship.SailingGameTestsRigging.class);
+                com.richardsenger.piratesnships.sailing.ship.SailingGameTestsRigging.class,
+                com.richardsenger.piratesnships.sailing.rope.RopeLineGameTests.class);
     }
 }

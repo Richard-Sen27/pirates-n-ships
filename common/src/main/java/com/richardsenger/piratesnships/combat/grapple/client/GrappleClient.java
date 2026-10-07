@@ -1,10 +1,11 @@
 package com.richardsenger.piratesnships.combat.grapple.client;
 
+import com.richardsenger.piratesnships.sailing.client.RopeLineRenderer;
+import com.richardsenger.piratesnships.combat.grapple.GrappleService;
 import com.richardsenger.piratesnships.combat.grapple.BoardRopePayload;
 import com.richardsenger.piratesnships.combat.grapple.GrappleConfig;
 import com.richardsenger.piratesnships.combat.grapple.GrappleContent;
 import com.richardsenger.piratesnships.combat.grapple.GrapplingHookEntity;
-import com.richardsenger.piratesnships.combat.grapple.MooringRingBlock;
 import com.richardsenger.piratesnships.combat.grapple.ReleaseHookPayload;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.combat.grapple.client.anim.RopeSlidePoses;
@@ -28,6 +29,8 @@ public final class GrappleClient {
     public static void init() {
         ClientEvents.registerEntityRenderer(GrappleContent.HOOK, GrapplingHookRenderer::new);
         ClientEvents.registerEntityRenderer(GrappleContent.ROPE_RIDER, NoopRenderer::new);
+        // the rope lines (RP1) whose drawing end is a mooring ring
+        ClientEvents.registerBlockEntityRenderer(GrappleContent.MOORING_RING_BLOCK_ENTITY, RopeLineRenderer::new);
         ClientEvents.INTERACTION_KEY.register(GrappleClient::onInteraction);
         ClientEvents.CLIENT_SETUP.register(RopeSlidePoses::onClientSetup);
         ClientEvents.CLIENT_TICK_END.register(RopeSlidePoses::onClientTickEnd);
@@ -85,12 +88,12 @@ public final class GrappleClient {
     }
 
     /**
-     * The use aims at a mooring ring: it ties the rope there instead (GR1, {@code MooringRingBlock#useWithoutItem}),
+     * The use aims at a mooring ring or a cleat: it ties the rope there instead (GR1, RP1, {@code MooringRingBlock#useWithoutItem}),
      * so no release is sent. Ship blocks come back from the pick in plot coordinates, where the client has them too.
      */
     private static boolean aimsAtRing(Minecraft mc) {
         return mc.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK
-                && MooringRingBlock.isRing(mc.level, hit.getBlockPos());
+                && GrappleService.isGrappleAnchor(mc.level, hit.getBlockPos());
     }
 
     private static boolean hasHookOut(Minecraft mc) {

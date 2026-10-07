@@ -59,8 +59,11 @@ public final class HazardsConfig {
     public static final ConfigValue<Boolean> WHIRLPOOLS_ENABLED = POOLS.bool("enabled", true,
             "Whirlpools appear in the deep ocean, pull ships toward their centre, turn them and can drag small boats under. "
                     + "Off also removes existing whirlpools");
-    public static final ConfigValue<Double> WHIRLPOOL_CHANCE = POOLS.doubleRange("chance_per_check", 0.005, 0.0, 1.0,
-            "Chance per spawn check, for each player in the deep ocean, that a whirlpool appears nearby");
+    // 0.002 × 120 checks per in-game day (24000 / 200 ticks) = 0.24 expected per day in the deep ocean, a 21 % chance
+    // of at least one: rarer than one a day, between C7's 0.05 per day and daily
+    public static final ConfigValue<Double> WHIRLPOOL_CHANCE = POOLS.doubleRange("chance_per_check", 0.002, 0.0, 1.0,
+            "Chance per spawn check, for each player in the deep ocean, that a whirlpool appears nearby "
+                    + "(0.002 at the default interval is about one whirlpool every four in-game days spent in the deep ocean)");
     public static final ConfigValue<Integer> WHIRLPOOL_MAX_PER_PLAYER = POOLS.intRange("max_per_player", 1, 0, 16,
             "Most whirlpools alive near one player at once");
     public static final ConfigValue<Integer> WHIRLPOOL_DURATION = POOLS.intRange("duration_ticks", 2400, 20, 72000,

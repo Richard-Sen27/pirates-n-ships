@@ -456,6 +456,8 @@ A server-wide simulation that makes the sea feel alive between the ports, withou
 ---
 
 ## 11. Sea chest (Seemannstruhe)
+
+**Implemented (S1, `seachest`):** block, item with contents, worn in the chest slot (no jump, no sprint, no swim, slower, dragged down in water), floating entity with buoyancy, current and wind drift, contents preserved in every state; paddling is still open.
 - An item and block with **double-chest capacity**.
 - **Carried on the back:** while worn, the player can't jump, sprint or swim. Walking is slowed (configurable). Drowning risk applies, since the chest drags the player down.
 - **Placed in water:** becomes a floating entity that drifts with currents and wind.

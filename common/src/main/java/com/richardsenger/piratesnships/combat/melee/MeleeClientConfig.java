@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.combat.melee;
 
 import com.richardsenger.piratesnships.combat.melee.client.MeleeInputClassifier;
+import com.richardsenger.piratesnships.combat.melee.client.StaminaHudLayout;
 import com.richardsenger.piratesnships.combat.melee.client.anim.FirstPersonRule;
 import com.richardsenger.piratesnships.core.config.ConfigSection;
 import com.richardsenger.piratesnships.core.config.ConfigValue;
@@ -26,13 +27,26 @@ public final class MeleeClientConfig {
     private static final ConfigSection HUD = ModConfigs.client("melee_hud", "Stamina bar shown while holding a skill-based sword");
 
     public static final ConfigValue<Boolean> HUD_ENABLED = HUD.bool("enabled", true,
-            "Show the stamina bar above the hotbar while holding a skill-based sword");
+            "Show the stamina bar near the hotbar while holding a skill-based sword");
+    public static final ConfigValue<StaminaHudLayout.Position> HUD_POSITION = HUD.enumValue("position", StaminaHudLayout.Position.ABOVE_HOTBAR_TIGHT,
+            "Where the stamina bar sits. ABOVE_HOTBAR_TIGHT = 2 px above the hotbar in creative, over the right half just above "
+                    + "the food row in survival (the experience bar takes the space above the hotbar); LEFT_OF_HOTBAR = an upright bar "
+                    + "left of the hotbar and offhand slot, aligned to the hotbar's bottom");
     public static final ConfigValue<Double> HUD_SCALE = HUD.doubleRange("scale", 1.0, 0.25, 4.0,
             "Size of the stamina bar");
     public static final ConfigValue<Integer> HUD_X_OFFSET = HUD.intRange("x_offset", 0, -2000, 2000,
-            "Horizontal shift of the stamina bar from the screen center, in GUI pixels (positive = right)");
+            "Horizontal shift of the stamina bar from its position, in GUI pixels (positive = right)");
     public static final ConfigValue<Integer> HUD_Y_OFFSET = HUD.intRange("y_offset", 0, -2000, 2000,
-            "Vertical shift of the stamina bar from its place above the health and food rows, in GUI pixels (positive = down)");
+            "Vertical shift of the stamina bar from its position, in GUI pixels (positive = down)");
+    public static final ConfigValue<Double> HUD_OPACITY = HUD.doubleRange("opacity", 1.0, 0.1, 1.0,
+            "Opacity of the visible stamina bar (1 = solid)");
+    public static final ConfigValue<Boolean> HUD_FADE = HUD.bool("fade_when_full", true,
+            "Fade the stamina bar out while stamina is full and you are not fighting; it comes back at once when stamina "
+                    + "drops, you guard, attack, parry, are staggered or get hit");
+    public static final ConfigValue<Integer> HUD_FADE_DELAY = HUD.intRange("fade_delay_ticks", 20, 0, 1200,
+            "Ticks (20 per second) the stamina bar stays after stamina is full before it starts to fade");
+    public static final ConfigValue<Integer> HUD_FADE_TICKS = HUD.intRange("fade_ticks", 10, 1, 200,
+            "Ticks the stamina bar takes to fade from visible to transparent");
 
     private static final ConfigSection ANIM = ModConfigs.client("melee_animations", "Sword animations of players (Player Animation Library)");
 

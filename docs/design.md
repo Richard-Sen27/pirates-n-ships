@@ -373,7 +373,7 @@ Goal: sword fights are about timing and reading the opponent, not click spam. Th
 |---|---|---|
 | Slash | Left click | Wide, short arc. Medium damage, fast recovery. |
 | Thrust | Hold left click, release | Narrow ray, long reach. High damage, slower, long recovery if it misses. |
-| Guard | Hold right click | Reduces frontal damage (per weapon), drains stamina while held and per blocked hit. |
+| Guard | Hold right click | Blocks frontal hits completely (`melee.guard_absorbs_all`; off = only the weapon's guard reduction); drains stamina while held and per blocked hit: the weapon's block cost plus `melee.guard_absorb_stamina_per_damage` × absorbed damage. A hit the stamina cannot pay breaks the guard: it lands with the weapon's reduction and the defender staggers. Hits from outside the guard arc ignore the guard (P9). |
 | Parry | Tap right click shortly before a hit lands | Deflects the hit completely, staggers the attacker, opens a **riposte** window. |
 | Riposte | Attack during the riposte window | Bonus damage, can't be parried. |
 | Feint (Q1, NPCs; player input later) | Cancel an attack during wind-up (`CombatRules.feint`): a short recovery without guard or parry, the baited parry runs out into its lockout | Baits a mistimed parry. |

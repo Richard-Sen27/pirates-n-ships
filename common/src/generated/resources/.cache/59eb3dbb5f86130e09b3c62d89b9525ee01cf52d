@@ -1,7 +1,8 @@
-// 1.21.1	2026-10-07T03:00:02.983438	Loot Tables
+// 1.21.1	2026-10-07T03:32:09.440559	Loot Tables
 33f1e05aa0902148ab52be6fa554ddd1f5962f4b data/pirates_n_ships/loot_table/blocks/bilge_pump.json
 8e9ddd746834d4dadbbd184d940b2f7faf794ccd data/pirates_n_ships/loot_table/blocks/brig_bars.json
 aaf14b20ff74118c573ba3a6e9b68b745b92dee2 data/pirates_n_ships/loot_table/blocks/brig_door.json
+6ef8a2b134d98e6ca64a028f102958b5fd688088 data/pirates_n_ships/loot_table/blocks/cannon.json
 8fe33c8bc9f5a48235f626ecfac350903f727f2e data/pirates_n_ships/loot_table/blocks/capstan.json
 fa46de5702c601e54e4c45cf49f73cb62cc9fc9c data/pirates_n_ships/loot_table/blocks/cargo_barrel.json
 c6ef7028b0de381fde2af376cca7e0c671d46ac1 data/pirates_n_ships/loot_table/blocks/cargo_crate.json

@@ -1,0 +1,8 @@
+{
+  "priority": 1001,
+  "properties": {
+    "sable:mass": 4.0,
+    "sable:volume": 0.5
+  },
+  "selector": "pirates_n_ships:cannon"
+}

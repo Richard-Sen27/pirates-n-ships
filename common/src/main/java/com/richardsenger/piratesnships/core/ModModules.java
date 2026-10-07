@@ -31,6 +31,7 @@ public final class ModModules {
             new com.richardsenger.piratesnships.trade.TradeModule(),
             new com.richardsenger.piratesnships.combat.melee.MeleeModule(),
             new com.richardsenger.piratesnships.combat.firearms.FirearmsModule(),
+            new com.richardsenger.piratesnships.combat.cannon.CannonModule(),
             new com.richardsenger.piratesnships.audio.AudioModule()
     );
 }

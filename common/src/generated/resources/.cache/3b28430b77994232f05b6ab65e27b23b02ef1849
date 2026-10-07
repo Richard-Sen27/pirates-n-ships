@@ -1,7 +1,8 @@
-// 1.21.1	2026-10-07T03:41:57.158424	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-07T03:46:02.100552	Block states and models: pirates_n_ships
 c189a7833975a61cf2c7c8fd326d27a32969cb9d assets/pirates_n_ships/blockstates/bilge_pump.json
 9282899a10c2af6fbcc1fd07e91ba10d9ba8a732 assets/pirates_n_ships/blockstates/brig_bars.json
 09e096c3979b4e82e1fab125e8a03e835e8c7aca assets/pirates_n_ships/blockstates/brig_door.json
+c31e37baf3f46c581451adcbcf3821667ded78ea assets/pirates_n_ships/blockstates/cannon.json
 1ca2bd2df3602ba7b137ae7b56ec9fd3f195588c assets/pirates_n_ships/blockstates/capstan.json
 6b0277aae77bdb656ee4e3eee02204c69eb48c50 assets/pirates_n_ships/blockstates/cargo_barrel.json
 d8feff695031e5decd3607e4c40a9f86e1513034 assets/pirates_n_ships/blockstates/cargo_crate.json
@@ -37,6 +38,7 @@ a99c2356791a99fe6b8298ab8fa46947f3a9ed07 assets/pirates_n_ships/models/block/bri
 7482abca9ef27fec9ca3ebc0fe6e9865e86d15e8 assets/pirates_n_ships/models/block/brig_door_top_left_open.json
 63bcc958619c001bc644905799ff78e8bde9f686 assets/pirates_n_ships/models/block/brig_door_top_right.json
 738466abab81da2d62c423cc2ca313062938e30d assets/pirates_n_ships/models/block/brig_door_top_right_open.json
+bbc18223ed388df9075653acd6b802cf32649917 assets/pirates_n_ships/models/block/cannon.json
 953b4c60f5b478f0e296838822f76239f63bb814 assets/pirates_n_ships/models/block/cleat.json
 dd68515d96e33439d6762d355c8f01b61dca01ad assets/pirates_n_ships/models/block/flagpole_flag_custom.json
 f7c82b786e5bb6b0fc708a615845f0ef2c84bd44 assets/pirates_n_ships/models/block/flagpole_flag_jolly_roger.json
@@ -48,6 +50,7 @@ e5b3569e1b8c4192055ef64e81a0d3f84ebb3c03 assets/pirates_n_ships/models/block/fla
 1b6e953aa823a324abc6e1b6f94fdc847859297b assets/pirates_n_ships/models/item/bounty_proof.json
 fa17719dd41d5a45e5be74ae0f9113cb63ceadc6 assets/pirates_n_ships/models/item/brig_bars.json
 4cdbc3195a70e9000fd4656cf68fb6a35cdf084a assets/pirates_n_ships/models/item/brig_door.json
+f7fb3b356386931f9fe39ebac39ce5984c685200 assets/pirates_n_ships/models/item/cannon.json
 6e2d9e4e9e945102afe0356dd536dd6bd2314eb5 assets/pirates_n_ships/models/item/capstan.json
 e762fd96625dae60f3cbfdcb33e82b84c2f742ab assets/pirates_n_ships/models/item/cargo_barrel.json
 724e2310f488c077c19808000615dc5c2378241c assets/pirates_n_ships/models/item/cargo_crate.json

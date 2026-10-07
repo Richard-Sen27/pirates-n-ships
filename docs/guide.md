@@ -432,7 +432,15 @@ What is detected in the world today:
 - Players can add bounties on anyone (`/pirates law bounty place`, 10 doubloons or more).
 - **Claiming:** killing a target with a bounty puts a **Bounty Proof** into the killer's inventory. Handing it in pays
   the bounty. Delivering the target alive pays 1.5 times as much. A claim wipes the target's score.
-- There is no navy officer yet, so claims go through `/pirates law bounty claim`.
+- **Turning in:** right-click a navy officer with a Bounty Proof to collect the bounty in doubloons. To deliver
+  prisoners alive, walk up to an officer with your shackled prisoners within 4 blocks and right-click him with an
+  empty hand: a bounty pays 1.5 times, and a captured pirate earns 10 doubloons on top. The navy leads NPC prisoners
+  away; a captured player is set free on the spot with a clean record. You get your shackles back. Officers won't
+  deal with you while the navy hunts you.
+- **Notice board:** craft it from planks and paper (planks, paper, planks, twice). Use it to see every bounty: who is
+  wanted, for how much, who placed it and when, and whether there is a bounty on you. To place one, type a name (an
+  online player or anyone already on the board, or click a suggested name), enter at least 10 doubloons and press
+  Place; the doubloons come out of your inventory. The list updates while it is open.
 
 ### Shackles and prisoners
 - **Use shackles on a mob** that is at 25% health or less: it becomes your prisoner. It stops fighting and can't
@@ -451,7 +459,7 @@ The owner of a door still opens it without a key; nobody else, no mob and no red
 - A prisoner is **in a cell** when it stands in a closed space of at most 64 blocks, bounded by solid blocks, brig bars
   and a closed, locked brig door. There it stays, and it doesn't try to escape.
 
-What you can do with a prisoner (through `/pirates brig` until navy officers exist): deliver it for its bounty,
+What you can do with a prisoner (deliver at a navy officer; the rest through `/pirates brig`): deliver it for its bounty,
 ransom it, press-gang it (a crime), or release it.
 
 ---
@@ -567,6 +575,7 @@ on by default; vanilla weapons are untouched):
 | Cargo Barrel | 6 planks, 2 iron nuggets | Bulk container for 1536 items of one kind. |
 | Brig Bars | 4 iron bars, 2 planks (gives 6) | Bars for cells. |
 | Brig Door | 4 iron ingots, 2 iron bars | Lockable door for cells. |
+| Notice Board | 4 planks, 2 paper | Lists every bounty and places new ones for doubloons. |
 | Mermaid, Lion, Eagle and Skull Figurehead | 4 planks and a prismarine shard, gold ingot, feather or bone | Decoration for the bow. Click the hull block it should hang on: the plate lands there and the figure looks at you. |
 | Nameplate | any sign, 1 gold nugget | A board on two iron brackets that shows the ship's name once the ship is assembled and named (name tag on the helm); long names shrink to fit, renaming updates every plate within a second, disassembly clears them. Server option `ship_identity.nameplate_shows_name`. |
 | Test Block | none | A development block. |
@@ -677,7 +686,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `survival` | Cold water on/off and freeze rate, warm effect length, swimming hunger multiplier. |
 | `provisions` | Consumption, rations, spoilage, scurvy, rum, water barrel capacity, rain refill. |
 | `cargo_trade` | Container sizes, prices, price recovery, contracts, plunder, port fees, cargo weight. |
-| `law` | Criminal score, severity of each crime, decay, fines, bounties, crime detection, theft. |
+| `law` | Criminal score, severity of each crime, decay, fines, bounties, crime detection, theft; `law.bounty`: officer turn-ins on/off and delivery range, notice boards on/off and reach. |
 | `flags_brig` | False-colors detection, NPC surrender, capturing players, prisoner escapes. |
 | `brig` | Capture threshold, leading distances, cell size, escape chance, ransom. |
 | `melee` | Skill-based sword fighting: parry window, stamina, stagger, feint recovery, NPC feints on/off, sword sounds on/off and volume. |

@@ -76,3 +76,29 @@ Set them back afterwards.
 
 
 Addendum (Q1): `/pirates trade port test navy_outpost tropical`, then `/pirates trade plunder` holding sugar, then `/pirates trade sell test pirates_n_ships:sugar 16 plundered` (with `navy_notice_chance` at 1): the "port noticed the plunder" line appears and the score rises by the `fence_plunder` severity; selling clean sugar raises nothing.
+
+
+## L1: turn-ins and the notice board
+1. **Proof turn-in.** Put a bounty on a mob (`/pirates law score set @e[type=pillager,limit=1,sort=nearest] 60`), kill
+   it, spawn an officer (`/pirates mob spawn navy_officer`), right-click him with the proof: a gold line "The
+   officer takes the proof of … and pays you 120 doubloons", 120 doubloons in the inventory, the proof gone, a
+   villager "yes" and an orb sound, `/pirates law bounty list` empty.
+2. **Refusal when wanted** (survival; in creative the navy is never hostile): `/pirates law score set @s 100` with a
+   proof in hand: "The officer won't deal with a wanted criminal" on the action bar, proof kept.
+3. **Used proof:** a second proof of the same kill: "There is no bounty left to claim on …", proof kept.
+4. **Pirate delivered alive:** weaken a pirate below 25 %, shackle it, lead it within 4 blocks of an officer,
+   right-click with an empty hand: "… is led away by the navy" with a poof, "The navy takes 1 prisoner(s) … pays you
+   10 doubloons", shackles back.
+5. **Reward 0:** `law.pirate_turn_in.deckhand = 0`: "The navy pays nothing for Pirate", the pirate stays shackled;
+   with a bounty on it, bounty × 1.5 is still paid.
+6. **Player delivered alive** (two players): place a bounty on B, shackle B at low health, lead B to an officer,
+   empty-hand click: A gets 1.5× the bounty, B is freed in place with a message and score 0.
+7. **Out of range:** a prisoner more than 4 blocks away is not delivered; the click does nothing.
+8. **Turn-ins off:** `law.bounty.turn_in_officers = false`: proof and empty-hand clicks do nothing.
+9. **Notice board:** craft, place (notices face you), use: the list shows "The Navy" or the payer, "x min ago", totals
+   for targets with several bounties, your own bounty at the top in red if any, coins top right. Place 30 on an
+   online name or a chip: "Posted a bounty …", 30 doubloons taken, the list updates. Try 5, more than you carry, an
+   unknown name and your own name: a red status line each, nothing charged. A second player placing a bounty shows
+   within a second. Walking 8 blocks away closes it; Escape closes it; no errors in the log.
+10. **Boards off:** `law.bounty.notice_boards = false`: using the board does nothing.
+11. **Model:** the placeholder in the world, hand and inventory in all four facings; an axe drops it.

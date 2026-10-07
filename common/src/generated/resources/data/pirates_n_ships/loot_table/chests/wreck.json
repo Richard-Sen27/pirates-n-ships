@@ -108,6 +108,11 @@
         {
           "type": "minecraft:item",
           "name": "pirates_n_ships:cutlass"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "pirates_n_ships:treasure_map",
+          "weight": 2
         }
       ],
       "rolls": {

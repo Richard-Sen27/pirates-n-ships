@@ -1,6 +1,7 @@
-// 1.21.1	2026-10-07T19:31:16.305438	Raw JSON (data): pirates_n_ships
+// 1.21.1	2026-10-07T21:04:23.362451	Raw JSON (data): pirates_n_ships
 48a3d1396f56a1821c2e6dd2a2ce6f5dc32fc15c data/pirates_n_ships/advancement/recipes/misc/guide_book.json
 81e4547184aef1c6ab27c144e370d0ff6cb85b3d data/pirates_n_ships/loot_table/chests/buried_treasure.json
+917a78912c9b82231026bd2ea966eb7535e5da69 data/pirates_n_ships/loot_table/chests/wreck.json
 a36329422f25984fa5698ac8ec14f9a580f2a13a data/pirates_n_ships/loot_table/entities/kraken.json
 fe7053acbb25918c89e2aa78604271fe9aed9b86 data/pirates_n_ships/loot_table/entities/navy_officer.json
 fe7053acbb25918c89e2aa78604271fe9aed9b86 data/pirates_n_ships/loot_table/entities/navy_soldier.json

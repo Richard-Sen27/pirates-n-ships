@@ -268,7 +268,8 @@ public final class MarketScreen extends Screen {
     // ------------------------------------------------------------------ helpers
 
     private static ItemStack goodStack(ResourceLocation good) {
-        Optional<ResourceLocation> item = TradeService.goods(true).tradeable().get(good).map(TradeGood::item);
+        // a special offer (TM1) is no trade good: its id is its item's id
+        Optional<ResourceLocation> item = TradeService.goods(true).tradeable().get(good).map(TradeGood::item).or(() -> Optional.of(good));
         Item i = item.map(BuiltInRegistries.ITEM::get).orElse(Items.AIR);
         return i == Items.AIR ? new ItemStack(Items.BARRIER) : new ItemStack(i);
     }

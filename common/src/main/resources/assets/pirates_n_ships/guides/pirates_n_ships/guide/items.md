@@ -42,6 +42,7 @@ item_ids:
   - pirates_n_ships:shipwright_toolkit
   - pirates_n_ships:spices
   - pirates_n_ships:tobacco
+  - pirates_n_ships:treasure_map
 ---
 
 # All items

@@ -1,4 +1,6 @@
-# Playtest: milestone 0 (Sable loads, test block appears)
+# Playtest: milestone 0 (Sable loads, the creative tab appears)
+
+The milestone-0 test block was removed in CT1; steps 4 and 5 were adjusted.
 
 Headless checks already pass (`./gradlew build`, `./gradlew :neoforge:runGameTestServer`). This checklist covers what
 only the real client shows. Please send screenshots of steps 2, 4 and 6 and the `latest.log` if anything fails.
@@ -19,10 +21,9 @@ only the real client shows. Please send screenshots of steps 2, 4 and 6 and the 
      **Core** section with a **Debug** toggle whose tooltip reads "Log extra debug information from Pirates 'n'
      Ships systems". No raw translation keys are shown.
 4. Create a new Creative world (Superflat is fine, cheats on) and open the creative inventory.
-   - **Expected:** a tab named **Pirates 'n' Ships** with the test block as its icon, containing **Test Block**.
-5. Place a Test Block, look at it, then break it in Survival (`/gamemode survival`) with an axe.
-   - **Expected:** a wooden-sounding cube with an orange checkered placeholder texture and a dark border (no
-     purple/black missing texture). It drops itself. The item in hand shows the same cube.
+   - **Expected:** a tab named **Pirates 'n' Ships** with the officer's bicorne as its icon.
+5. (Removed in CT1.) This step placed and broke the milestone-0 Test Block, which no longer exists; the creative tab
+   icon is now the officer's bicorne (step 4).
 6. Sable sanity check: run `/sable spawn sphere 3` (command defined in
    `refs/sable/common/src/main/java/dev/ryanhcode/sable/command/SableSpawnCommands.java`, needs op level 2).
    - **Expected:** a small sphere of blocks appears near you, falls and rolls as a physics object. No crash and

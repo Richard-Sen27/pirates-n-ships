@@ -2,9 +2,11 @@ package com.richardsenger.piratesnships.sailing.sail;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
 import com.richardsenger.piratesnships.sailing.sail.CleatLookup.Cell;
@@ -151,5 +153,61 @@ class StayLinkerTest {
         StayRules r = new StayRules(0, 0);
         assertEquals(1, r.maxLength());
         assertEquals(1, r.minDrop());
+    }
+
+    // ---- RP1: stay, line or refusal ----
+
+    private static StayLinker.Rig decide(World w, BlockPoint a, boolean aCleat, BlockPoint b, boolean bCleat, boolean sameBody,
+                                         boolean lines) {
+        return StayLinker.decide(w, a, aCleat, b, bCleat, sameBody, lines, R);
+    }
+
+    @Test
+    void twoCleatsWithAClewMakeASailAndWithoutOneAStay() {
+        World w = new World().cleat(A).cleat(B).cleat(C);
+        assertEquals(StayLinker.Rig.SAIL, decide(w, A, true, B, true, true, true));
+        assertEquals(StayLinker.Rig.SAIL, decide(w, B, true, A, true, true, false), "lines off: the F5b stay is unchanged");
+        World bare = new World().cleat(A).cleat(B);
+        assertEquals(StayLinker.Rig.STAY, decide(bare, A, true, B, true, true, true));
+        assertEquals(StayLinker.Rig.STAY, decide(bare, A, true, B, true, true, false));
+    }
+
+    @Test
+    void flatRopesAreLinesOnlyWhileLinesAreOn() {
+        BlockPoint level = new BlockPoint(0, 10, 6);
+        World w = new World().cleat(A).cleat(level);
+        assertEquals(StayLinker.Rig.LINE, decide(w, A, true, level, true, true, true), "same height");
+        assertEquals(StayLinker.Rig.TOO_FLAT, decide(w, A, true, level, true, true, false));
+        BlockPoint oneDown = new BlockPoint(0, 9, 6);
+        assertEquals(StayLinker.Rig.LINE, decide(w, A, true, oneDown, true, true, true));
+        assertEquals(StayLinker.Rig.TOO_FLAT, decide(w, A, true, oneDown, true, true, false));
+        assertTrue(StayLinker.Rig.LINE.rigged() && StayLinker.Rig.STAY.rigged() && StayLinker.Rig.SAIL.rigged());
+        assertFalse(StayLinker.Rig.TOO_FLAT.rigged());
+    }
+
+    @Test
+    void ringEndsAreAlwaysLines() {
+        // a ring above a cleat with a clew below the ring's column: still a line, stays run between cleats only
+        World w = new World().cleat(B).cleat(C);
+        assertEquals(StayLinker.Rig.LINE, decide(w, A, false, B, true, true, true), "ring to cleat");
+        assertEquals(StayLinker.Rig.LINE, decide(w, B, true, A, false, true, true), "cleat to ring");
+        assertEquals(StayLinker.Rig.LINE, decide(w, A, false, B, false, true, true), "ring to ring");
+        assertEquals(StayLinker.Rig.NO_LINES, decide(w, A, false, B, true, true, false));
+        assertEquals(StayLinker.Rig.NO_LINES, decide(w, A, false, B, false, true, false));
+    }
+
+    @Test
+    void ropesOnDifferentBodiesTooLongOrOnOneAnchorAreRefused() {
+        World w = new World().cleat(A).cleat(B).cleat(C);
+        assertEquals(StayLinker.Rig.OTHER_BODY, decide(w, A, true, B, true, false, true));
+        assertEquals(StayLinker.Rig.OTHER_BODY, decide(w, A, false, B, true, false, false));
+        assertEquals(StayLinker.Rig.SAME, decide(w, A, true, A, true, true, true));
+        BlockPoint far = new BlockPoint(0, 10, 17);
+        assertEquals(StayLinker.Rig.TOO_LONG, decide(w, A, true, far, true, true, true), "a line has the stay's length limit");
+        assertEquals(StayLinker.Rig.TOO_LONG, decide(w, A, false, far, false, true, true));
+        BlockPoint edge = new BlockPoint(0, 10, 16);
+        assertEquals(StayLinker.Rig.LINE, decide(w, A, true, edge, true, true, true), "exactly 16 blocks is allowed");
+        // the order of the checks: same, then body, then length
+        assertEquals(StayLinker.Rig.OTHER_BODY, decide(w, A, true, far, true, false, true));
     }
 }

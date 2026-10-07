@@ -16,3 +16,15 @@ and 5 GameTests. What only a client shows: how the sloop floats, how the turned 
    moves and the helm steers; optional jib with a rope from the mast-head cleat to the bowsprit cleat.
 5. **Refusal:** `/pirates ship place starter_sloop` facing land: "Something is in the way at x y z (add force …)"; on
    open water without `assemble` the hull stands in the water with a dry hold and helm-use assembles it.
+
+## Basic sloop (W0b)
+`starter_sloop_basic` is the same 9×21×29 hull with the helm at 4 8 22, but less fitted out: no cleats (so no jib
+rope), the two yards one block forward in front of an unbroken mast, and three extra planks closing the stern of the
+hold (row 2). Covered by the converter check and 2 GameTests (palette and helm; place and assemble facing north).
+1. `/pirates ship templates` now lists two lines; the new one is `pirates_n_ships:starter_sloop_basic (Starter Sloop
+   (basic)): 9×21×29, helm 4 8 22, waterline row 2, price 300`.
+2. On open water, `/pirates ship place starter_sloop_basic assemble`: "Placed Starter Sloop (basic) (682 blocks) …",
+   then "Ship assembled: 682 blocks". On board: the helm, the two yards (with sails), the winch, capstan, pump,
+   flagpole, figurehead and nameplate, and no cleats. It floats like the full sloop and the hold is dry.
+3. It sails: winch the sails out, set `/pirates wind set <from> 8`, and the ship moves and steers with the helm. Check
+   that the forward-shifted yards still carry and show their sails.

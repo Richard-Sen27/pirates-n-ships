@@ -28,12 +28,14 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Captain's whistle (docs/design.md §7.2):
  * <ul>
- *   <li>use on an unassigned crew member: select it; then use on a station block: assign it there;</li>
+ *   <li>use on an unassigned crew member: select it; then use on a station block: assign it there (pinned: the
+ *       ship's job board never moves it, CR1);</li>
  *   <li>use on an assigned crew member: release it;</li>
  *   <li>use anywhere else: opens the radial order menu on the client ({@link WhistleMenu}). Nothing happens on the
  *       server until the client sends the chosen order ({@code WhistleOrderPayload}, handled by
  *       {@link com.richardsenger.piratesnships.station.order.WhistleOrders}), which goes to all crew at stations of
- *       the ship the player stands on.</li>
+ *       the ship the player stands on; unmanned stations that take it become open jobs for free crew
+ *       ({@link com.richardsenger.piratesnships.station.jobs.JobBoard}).</li>
  * </ul>
  */
 public class CaptainsWhistleItem extends Item implements StationBlock.Tool {

@@ -4,6 +4,7 @@ import com.richardsenger.piratesnships.platform.event.ClientEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.Block;
@@ -18,6 +19,8 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.event.ModelEvent;
+import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
@@ -50,11 +53,16 @@ public final class NeoForgeClientSetup {
         });
         modBus.addListener(EntityRenderersEvent.RegisterLayerDefinitions.class,
                 e -> ClientEvents.modelLayers().forEach(l -> e.registerLayerDefinition(l.location(), l.definition())));
+        ClientEvents.setAdditionalModelKey(ModelResourceLocation::standalone);
+        modBus.addListener(ModelEvent.RegisterAdditional.class,
+                e -> ClientEvents.additionalModels().forEach(id -> e.register(ModelResourceLocation.standalone(id))));
         modBus.addListener(RegisterColorHandlersEvent.Block.class, e -> ClientEvents.blockColors().forEach(c ->
                 e.register(c.color(), c.blocks().stream().map(Supplier::get).toArray(Block[]::new))));
 
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Pre.class, e -> ClientEvents.CLIENT_TICK_START.invoker().onTick(Minecraft.getInstance()));
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> ClientEvents.CLIENT_TICK_END.invoker().onTick(Minecraft.getInstance()));
+        // after the frame's mouse movement turned the player, before the frame is drawn
+        NeoForge.EVENT_BUS.addListener(RenderFrameEvent.Pre.class, e -> ClientEvents.RENDER_FRAME_PRE.invoker().onTick(Minecraft.getInstance()));
         NeoForge.EVENT_BUS.addListener(ItemTooltipEvent.class, e -> ClientEvents.ITEM_TOOLTIP.invoker().onTooltip(e.getItemStack(), e.getContext(), e.getFlags(), e.getEntity(), e.getToolTip()));
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> ClientEvents.CLIENT_DISCONNECT.invoker().onDisconnect(Minecraft.getInstance()));
         // LOW: situational music (ours depends on the ship and biome) should run after broad biome/dimension listeners

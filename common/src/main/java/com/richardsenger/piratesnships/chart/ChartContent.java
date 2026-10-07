@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.chart;
 
+import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.chart.data.MapTileDrawing;
 import com.richardsenger.piratesnships.chart.tile.MapTileBlock;
 import com.richardsenger.piratesnships.chart.tile.MapTileBlockEntity;
@@ -7,6 +8,9 @@ import com.richardsenger.piratesnships.chart.tile.MapTileItem;
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
@@ -36,6 +40,11 @@ public final class ChartContent {
 
     public static final RegistryEntry<net.minecraft.core.component.DataComponentType<?>, DataComponentType<MapTileDrawing>> MAP_TILE_DRAWING =
             ModRegistry.dataComponent("map_tile_drawing", b -> b.persistent(MapTileDrawing.CODEC).networkSynchronized(MapTileDrawing.STREAM_CODEC));
+
+    /** Items that pay for drawing on a map board (work package MAP3): ink sacs, glow ink sacs and the kraken's ink. */
+    public static final TagKey<Item> CHART_INK = TagKey.create(Registries.ITEM, Constants.id("chart_ink"));
+    /** The kraken's ink (module {@code mob}), worth {@code chart.tiles.kraken_ink_tile_value} tiles; named by id, not imported. */
+    public static final ResourceLocation KRAKEN_INK = Constants.id("kraken_ink");
 
     private ChartContent() {
     }

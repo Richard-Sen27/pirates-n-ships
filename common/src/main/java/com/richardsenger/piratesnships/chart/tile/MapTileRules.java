@@ -10,7 +10,17 @@ public final class MapTileRules {
 
     /** Why a draw is refused. {@link #key()} names the message {@code message.pirates_n_ships.chart.tile.<key>}. */
     public enum Refusal {
-        NONE, CHARTS_DISABLED, TILES_DISABLED, NO_TILE, TOO_FAR, NEEDS_CHART, PERMANENT, OUT_OF_WORLD, UNCHARTED;
+        NONE, CHARTS_DISABLED, TILES_DISABLED, NO_TILE, TOO_FAR, NEEDS_CHART, PERMANENT, OUT_OF_WORLD, UNCHARTED,
+        /** MAP3: the tiles around the used one do not fill a rectangle. */
+        NOT_RECTANGLE,
+        /** MAP3: the board is longer than {@code chart.tiles.max_board_side} on a side. */
+        TOO_BIG,
+        /** MAP3: the player cannot pay the ink. */
+        NO_INK,
+        /** MAP3: an update would change nothing. */
+        NOTHING_NEW,
+        /** MAP3: there is nothing to clear. */
+        BLANK;
 
         public String key() {
             return name().toLowerCase(Locale.ROOT);

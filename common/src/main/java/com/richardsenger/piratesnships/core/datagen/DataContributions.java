@@ -25,10 +25,10 @@ import java.util.function.Supplier;
  * runs when the matching provider runs. All providers use vanilla datagen only, so this works on every loader.
  *
  * <pre>{@code
- * data.lang(lang -> lang.block(CoreContent.TEST_BLOCK, "Test Block"));
- * data.models(m -> m.blocks().createTrivialCube(CoreContent.TEST_BLOCK.get()));
- * data.blockLoot(loot -> loot.dropSelf(CoreContent.TEST_BLOCK.get()));
- * data.blockTags(tags -> tags.tag(BlockTags.MINEABLE_WITH_PICKAXE).add(CoreContent.TEST_BLOCK.get()));
+ * data.lang(lang -> lang.block(MyContent.MY_BLOCK, "My Block"));
+ * data.models(m -> m.blocks().createTrivialCube(MyContent.MY_BLOCK.get()));
+ * data.blockLoot(loot -> loot.dropSelf(MyContent.MY_BLOCK.get()));
+ * data.blockTags(tags -> tags.tag(BlockTags.MINEABLE_WITH_PICKAXE).add(MyContent.MY_BLOCK.get()));
  * data.blockTags(tags -> tags.tag(CoreTags.TEST_GROUND).addTag(BlockTags.DIRT).addOptionalTag(ResourceLocation.fromNamespaceAndPath("c", "sands")));
  * data.entityTypeTags(tags -> tags.tag(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath("sable", "retain_in_sub_level"))).add(MY_ENTITY.get()));
  * data.recipes(out -> ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ...).save(out));

@@ -92,7 +92,8 @@ public class MapTileRenderer implements BlockEntityRenderer<MapTileBlockEntity> 
         // glyphs 7 font units tall become about 4 tile pixels
         float s = pixel * 4f / 7f;
         for (TileMarker marker : d.markers()) {
-            if (marker.name().isEmpty()) continue;
+            // a marker stamped from a neighbouring slice (MAP3) is named on its own tile only
+            if (marker.name().isEmpty() || marker.px() < 0 || marker.py() < 0 || marker.px() >= d.size() || marker.py() >= d.size()) continue;
             float u = (marker.px() + 0.5f) * pixel - 0.5f;
             float v = 0.5f - (marker.py() + 0.5f) * pixel;
             Vector3f at = corner(centre, right, up, u, v - 5 * pixel).add(new Vector3f(normal).mul(0.002f));

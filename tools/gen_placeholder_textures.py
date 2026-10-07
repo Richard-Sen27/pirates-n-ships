@@ -11,7 +11,7 @@ Run (from the repository root):
 Output: common/src/main/resources/assets/pirates_n_ships/textures/{item,block}/<name>.png
 Deterministic: same input, same bytes. One function per texture, registered in ITEMS / BLOCKS.
 Replacing a texture by hand: put its name into PROTECTED (or a line in tools/protected_textures.txt),
-then this script never overwrites it. Textures owned by other packages (test_block) are never written. The helm, nameplate,
+then this script never overwrites it. The helm, nameplate,
 flagpole, cargo crate, cargo barrel, pantry, water barrel, brig bars and brig door (block and item) have hand-made
 Blockbench models with vanilla textures (art/models/) and no textures here; the rapier, cutlass, saber,
 pistol, musket, lead shot, cannonball, grappling hook, shackles, rum, hardtack, lime, salt pork, salted fish, cloth,
@@ -29,7 +29,6 @@ TEX = ROOT / "common/src/main/resources/assets/pirates_n_ships/textures"
 PROTECTED_FILE = Path(__file__).resolve().parent / "protected_textures.txt"
 # Names of hand-made textures this script must not overwrite.
 PROTECTED = set()
-FOREIGN_PREFIXES = ("test_block",)
 
 # Palette: every texture uses only these colors.
 P = {
@@ -204,7 +203,7 @@ def main():
     for kind, name, fn in jobs:
         if args.only and name not in args.only:
             continue
-        if name in skip or name.startswith(FOREIGN_PREFIXES):
+        if name in skip:
             print(f"skip   {kind}/{name} (protected)")
             continue
         out = TEX / kind / f"{name}.png"

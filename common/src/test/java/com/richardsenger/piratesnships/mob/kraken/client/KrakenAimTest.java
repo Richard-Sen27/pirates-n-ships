@@ -8,9 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The tentacle aim (K1c): the first bone points at the target and its sucker face turns towards the body's axis, with
- * GeckoLib's rotation order and signs (checked against JOML's {@code rotationZYX}, the call GeckoLib renders with).
- * Pivots are the rig's ring in the baked frame (x flipped against the file).
+ * The tentacle aim (K1c, sucker side GL1): the first bone points at the target and its sucker face turns down for a
+ * raised or level arm and towards the body's axis for a hanging one, with GeckoLib's rotation order and signs (checked
+ * against JOML's {@code rotationZYX}, the call GeckoLib renders with). Pivots are the rig's ring in the baked frame (x
+ * flipped against the file). The world-space version with the renderer's yaw turn is {@code KrakenWorldPoseTest}.
  */
 class KrakenAimTest {
 
@@ -39,6 +40,10 @@ class KrakenAimTest {
         return new double[]{w[0] - k * d[0], w[1] - k * d[1], w[2] - k * d[2]};
     }
 
+    private static double dot(double[] a, double[] b) {
+        return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    }
+
     /** The same vector turned the way GeckoLib turns the bone: {@code Quaternionf.rotationZYX(z, y, x)}. */
     private static double[] joml(float[] e, double[] v) {
         Vector3f r = new Quaternionf().rotationZYX(e[2], e[1], e[0]).transform(new Vector3f((float) v[0], (float) v[1], (float) v[2]));
@@ -46,7 +51,7 @@ class KrakenAimTest {
     }
 
     @Test
-    void armsPointAtTheTargetWithTheirSuckersTowardsTheAxis() {
+    void armsPointAtTheTargetWithTheirSuckersDownOrTowardsTheAxis() {
         double worstAim = 0, worstRoll = 0;
         int cases = 0;
         for (int i = 0; i < 8; i++) {
@@ -59,10 +64,12 @@ class KrakenAimTest {
                     double[] d = {Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)};
                     float[] e = KrakenAim.aim(p[0], p[2], new double[]{d[0] * 37, d[1] * 37, d[2] * 37});
                     double[] arm = joml(e, UP), normal = joml(e, n0);
-                    double aim = angleDeg(arm, d), roll = angleDeg(normal, towardsAxis(p, d));
+                    double aim = angleDeg(arm, d), roll = angleDeg(normal, KrakenAim.suckerNormal(p[0], p[2], d));
                     String what = "arm " + i + " side " + side + " elevation " + elevation;
                     assertTrue(aim < 1.0, what + ": points " + aim + " deg off the target");
-                    assertTrue(roll < 15.0, what + ": suckers " + roll + " deg off the body's axis");
+                    assertTrue(roll < 0.01, what + ": suckers " + roll + " deg off the wanted normal");
+                    if (elevation >= 0) assertTrue(normal[1] < -0.3, what + ": raised, the suckers face up " + normal[1]);
+                    else assertTrue(dot(normal, towardsAxis(p, d)) > 0.5, what + ": hanging, the suckers face away from the axis");
                     // our own rotate() is GeckoLib's order
                     double[] mine = KrakenAim.rotate(e, n0);
                     for (int k = 0; k < 3; k++) assertEquals(normal[k], mine[k], 1e-5, what + " rotate()");
@@ -77,21 +84,46 @@ class KrakenAimTest {
     }
 
     @Test
-    void theCurlStillClosesTowardsTheAxisAfterAiming() {
-        // a point of the curled tip at rest: up the arm and towards the sucker side; after the aim it lies on the
-        // axis side of the arm (the animations' curl and the geometry's tilt close over the target side)
+    void theCurlClosesDownWhenRaisedAndTowardsTheAxisWhenHanging() {
+        // a point of the curled tip at rest: up the arm and towards the sucker side; after the aim it lies below the arm
+        // when the arm is raised or level, and on the axis side when it hangs (the animations' curl and the geometry's
+        // tilt close the same way)
         for (int i = 0; i < 8; i++) {
             double[] p = pivot(i);
             double[] n0 = KrakenAim.restNormal(p[0], p[2]);
             double[] tip = {n0[0] * 4, 58, n0[2] * 4};
-            for (double elevation : new double[]{60, 25, -50}) {
+            for (double elevation : new double[]{60, 25, 0, -50, -89}) {
                 double az = Math.atan2(p[0], -p[2]), el = Math.toRadians(elevation);
                 double[] d = {Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)};
                 float[] e = KrakenAim.aim(p[0], p[2], d);
                 double[] t = joml(e, tip);
-                double[] towards = towardsAxis(p, d);
-                double side = t[0] * towards[0] + t[1] * towards[1] + t[2] * towards[2];
-                assertTrue(side > 0, "arm " + i + " elevation " + elevation + ": the tip curls away from the axis");
+                // the tip's offset from the arm's line
+                double along = dot(t, d);
+                double[] off = {t[0] - along * d[0], t[1] - along * d[1], t[2] - along * d[2]};
+                String what = "arm " + i + " elevation " + elevation;
+                if (elevation >= 0) assertTrue(off[1] < -1, what + ": the tip curls up " + off[1]);
+                else assertTrue(dot(off, towardsAxis(p, d)) > 0, what + ": the tip curls away from the axis");
+            }
+        }
+    }
+
+    @Test
+    void theSuckerNormalTurnsSmoothlyFromHangingToRaised() {
+        // sweeping an arm from straight down over the outside to straight up never flips its suckers
+        for (int i = 0; i < 8; i++) {
+            double[] p = pivot(i);
+            double az = Math.atan2(p[0], -p[2]);
+            for (double side : new double[]{0, 40, 90, -90, 150}) {
+                double[] prev = null;
+                for (double el = -89.5; el <= 89.5; el += 0.5) {
+                    double a = az + Math.toRadians(side), r = Math.toRadians(el);
+                    double[] d = {Math.sin(a) * Math.cos(r), Math.sin(r), -Math.cos(a) * Math.cos(r)};
+                    double[] n = KrakenAim.suckerNormal(p[0], p[2], d);
+                    if (prev != null) {
+                        assertTrue(angleDeg(prev, n) < 3, "arm " + i + " side " + side + " elevation " + el + ": roll jumps " + angleDeg(prev, n));
+                    }
+                    prev = n;
+                }
             }
         }
     }
@@ -100,7 +132,10 @@ class KrakenAimTest {
     void degenerateAimsStillGiveARotation() {
         for (int i = 0; i < 8; i++) {
             double[] p = pivot(i);
-            for (double[] d : new double[][]{{p[0], 0, p[2]}, {-p[0], 0, -p[2]}, {0, 1, 0}, {0, -1, 0}}) {
+            // the sucker reference is parallel to the arm for arms pointing inwards 24.5 deg off vertical (r = -0.5 y^2)
+            double y = Math.sqrt(2 * (Math.sqrt(2) - 1)), r = 0.5 * y * y / RING;
+            for (double[] d : new double[][]{{p[0], 0, p[2]}, {-p[0], 0, -p[2]}, {0, 1, 0}, {0, -1, 0},
+                    {-p[0] * r, y, -p[2] * r}, {-p[0] * r, -y, -p[2] * r}}) {
                 float[] e = KrakenAim.aim(p[0], p[2], d);
                 for (float v : e) assertTrue(Float.isFinite(v), "arm " + i + ": no angle for " + java.util.Arrays.toString(d));
                 assertTrue(angleDeg(joml(e, UP), d) < 1.0, "arm " + i + " misses " + java.util.Arrays.toString(d));

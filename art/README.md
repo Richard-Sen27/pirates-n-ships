@@ -51,6 +51,17 @@ Workflow notes (figurehead batch):
 - A block whose model is not a full cube needs `noOcclusion()` in its properties, or neighbours cull their faces
   against it and the model renders dark.
 
+Workflow notes (helm split, HELM1):
+- `helm.bbmodel` has two groups: `wheel` (rim, spokes, handles, hub, hub cap; 39 elements, origin = the axle at
+  (8, 13, 3.75) px) and `pedestal` (axle, head, post, foot, base, cap; 7 elements). Three files are exported from it
+  with `Codecs.java_block.compile()` and the other group's cubes set to `export = false`: `block/helm.json` (pedestal,
+  the block model), `block/helm_wheel.json` (wheel, drawn and turned about the axle by `HelmWheelRenderer`) and
+  `block/helm_item.json` (both, with the `gui` display; the item model points at it). `HandMadeModelsTest` checks that
+  `helm_item` is exactly `helm_wheel` followed by `helm`.
+- Render `renders/helm_wheel.png`: the helm at wheel 0° and +60° (clockwise from the helmsman's side = starboard),
+  drawn with a `THREE.WebGLRenderer` in `risky_eval` (wheel meshes turned about the axle for the shot only) and
+  written with `fs`.
+
 Workflow notes (capstan, sail winch, yard batch):
 - Building from a spec list in `risky_eval` works well: a small helper creates each cube with `autouv: 0` and sets
   position-based UVs (north/south `x`, `16-y`; east/west `z`, `16-y`; up/down `x`, `z`, each wrapped into 0..16) and a
@@ -628,11 +639,12 @@ the same flip GeckoLib applies to file values. The shark did `root.setRotX(viewX
 `head.setRotY(data.netHeadYaw() * DEG_TO_RAD)` are correct as they stand (`HumanoidGeoModel`, the shark's head). Do
 not negate these a second time, and do not mix them with raw entity angles in one formula.
 
-**Rule 3: directions from the world go through the same mirror.** A bone aimed at a world direction (the kraken's
-tentacles, a turret) must take the direction into GeckoLib's bone space first: into the entity's local frame (undo
-the `180 − bodyYaw` turn), then mirror x (the geometry's `-x`), then decompose with `rotationZYX`. A decomposition
-that is exact against JOML in a unit test but skips the frame change renders mirrored in game (K1c passed its 72 aims
-and still pointed the suckers up).
+**Rule 3: directions from the world need only the yaw turn undone.** A bone aimed at a world direction (the kraken's
+tentacles, a turret) takes the direction into the entity's frame by undoing the `180 − bodyYaw` turn, and that *is*
+the bone frame: GeckoLib draws with no mirror matrix, the file's x flip is already in the baked pivots and cubes
+(`bone.getPivotX()` is `−file x`). So subtract the baked pivot and decompose with `rotationZYX`; do not mirror x
+again (that mirrors the aim). Only angles from Minecraft (rule 1) and values in file or Blockbench coordinates need
+the flip. (GL1 checked the kraken's frame end to end: it was right; see below.)
 
 **Rule 4: held items are moved by the hand bone once, not twice.** GeckoLib 4.9.3 applies the hand bone in
 `renderRecursively` and again in `BlockAndItemGeoLayer.renderForBone` (through `translateAndRotateMatrixForBone`);
@@ -644,6 +656,37 @@ offset) and asserts a world-space fact ("the muzzle points forward and level", "
 its tail", "the tentacle tip is below its root") catches every sign error headlessly; `SeafarerRigTest` and
 `KrakenRigTest` are the pattern. A render in `art/renders/` from a side view is the second check. Writing
 `setRotX(angle)` because it compiled is how the three bugs above shipped.
+
+**What GL1 found** (playtest 2026-10-07; tests `SharkRigTest#theBodyPitchesWithTheSwimmingDirection`,
+`KrakenWorldPoseTest`, `SeafarerRigTest#theHeadLooksWhereTheEntityLooks`, all composed with a real `PoseStack`, the
+renderer's `Axis.YP.rotationDegrees(180 − bodyYaw)`, the baked model and `RenderUtil.prepMatrixForBone`):
+- **Shark:** rule 1. `SharkModel` wrote `root.setRotX(getViewXRot · DEG_TO_RAD)`, Minecraft's pitch unflipped, so a
+  shark swimming down raised its nose. Now `SharkPose` negates it once (`rootRotX = −clamp(pitch, 60°)`). The head,
+  a child of the body, also took the whole look pitch from `EntityModelData` (it then bent twice as far once the body
+  was right); it now takes only what the body's 60° clamp leaves (zero in water up to 60°), within 30°.
+- **Kraken:** no frame step was skipped. `KrakenWorldPoseTest` puts every arm's end on its target within 1/16 block for
+  body yaws 0°, 90°, 180°, 270° and 37° with the old and the new code. The fault was the sucker direction K1c chose:
+  "towards the body's axis, made perpendicular to the arm". For an arm raised to a deck (the 50° attack rest, a hull
+  grab) that vector points inwards **and up** (y +0.77 at the attack rest), so the suckers faced the sky and the
+  geometry's curled tip and the animations' curls, which close on the sucker side, bent upwards. `KrakenAim.suckerNormal`
+  now uses world down tilted outwards by `0.5 · d.y` (`w = down − 0.5·d.y·n0`), made perpendicular to the arm: a raised
+  or level arm shows its suckers below and hooks its tip down (straight up: outwards), a hanging arm turns them to the
+  axis (straight down: exactly the axis), smoothly in between. `w` is parallel to the arm only for arms pointing
+  inwards 24.5° off vertical (through the head, or under the body), where the old fallbacks take over and the roll can
+  turn fast. The render script's `KRK.aimQuat` shares the change; `renders/kraken.png` still shows the K1c roll (not
+  re-rendered in GL1).
+
+| Bone (class) | Angle source | Status |
+|---|---|---|
+| shark `root` x (`SharkModel` → `SharkPose.rootRotX`) | raw `getViewXRot` | **fixed** (was unflipped) |
+| shark `head` x (`SharkPose.headRotX`) | raw `getViewXRot` minus the body's share, negated | **fixed** (was `EntityModelData` pitch on top of the body's) |
+| shark `head` y (`SharkModel`) | `EntityModelData.netHeadYaw` as is | correct |
+| humanoid `head` x/y (`HumanoidGeoModel`, so `CrewMemberModel` and every seafarer) | `EntityModelData` as is | correct (test added) |
+| seafarer both arms x/y while aiming (`SeafarerModel`, M6) | `EntityModelData` added to the animated value | correct sign (Euler addition, approximate for large turns) |
+| seafarer `head` x while aiming (`SeafarerModel`) | constant −6° (nose down) in bone space | correct |
+| seafarer sword arm x/y/z, `waist` x (`SeafarerModel.set`, `DuelistArmPose`) | file-convention degrees, x and y negated | correct |
+| kraken `tentacle_<i>_1` x/y/z (`KrakenModel` → `KrakenAim.reach`) | world offset, yaw turn undone, baked pivot | frame correct; sucker roll **fixed** |
+| animation keyframes written from code | none (all keys come from `.animation.json`) | n/a |
 
 **Bones** (Bedrock coordinates, 1 unit = 1 pixel, y up, the model faces −z; the same as the vanilla player model with
 wide arms):
@@ -968,9 +1011,9 @@ lurking; nothing is keyed for that).
 - **Aim (K1c, `KrakenAim`).** The code turns `tentacle_<i>_1` so the arm points at its hit box and, unlike K1b's
   Z·X look-at, also sets the roll: the rest basis (up, inner normal towards the axis, their cross product) goes onto
   (aim, the inner direction made perpendicular to the aim, their cross product), converted to GeckoLib's Z·Y·X angles.
-  So the sucker face (and the curl of the tip and of the animations) turns towards the body's axis in every pose. When
-  an arm points straight away from (or at) the axis horizontally that direction is undefined: it falls back to the
-  body's forward, and the roll flips there. A tentacle without a known part leans 25° out (straight up it runs
+  K1c turned the sucker face (and the curl of the tip and of the animations) towards the body's axis in every pose,
+  which showed raised arms' suckers to the sky; since GL1 the sucker face of a raised or level arm turns down and that
+  of a hanging arm towards the axis (`KrakenAim.suckerNormal`, see "GeckoLib bone rotations in code"). A tentacle without a known part leans 25° out (straight up it runs
   through the head); `KrakenAimTest` checks 72 aims, the curl side and the head clearance.
 
   | Name | Content |

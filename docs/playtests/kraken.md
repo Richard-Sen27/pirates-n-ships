@@ -44,3 +44,13 @@ ship while standing on it.
 5. **Mast strike and swipe:** arms reaching the mast or deck stretch up to about 2.7×: say if that looks too thin or too long.
 6. **Swimmer drag:** watch for a sudden 180° roll of an arm as it passes horizontal (known singular direction).
 7. **Cut:** a quarter-size stump leaning out; after 30 s the arm is full width again.
+
+
+## GL1: tips and suckers down
+Spawn a kraken next to a ship (`/pirates mob spawn kraken`) and let it surface and attack.
+1. **From above (on deck, looking down over the rail):** the raised arms (50° out at the attack rest) show their dark backs; the curled tips hook **down and outwards**, away from the sky. No pale sucker rows face up.
+2. **From the side, level with the waterline:** the pale sucker rows of a raised arm are on its underside; an arm reaching onto the deck curls its tip down over the planks with the suckers inside the curl (towards the deck).
+3. **Grab animation:** every grab curls the middle and the tip downwards over the target, not up and back towards the kraken's head.
+4. **Hanging arms (lurking, retreating, cut stumps):** the sucker rows face the body's centre line, as before.
+5. **Turning:** walk around the kraken while it turns to face the ship (try it with the ship north, east, south and west of it): the arms still end at their targets and the suckers stay down on every side.
+6. **Sweeping arms:** an arm swinging from hanging to raised (a swimmer pulled up, a mast strike) rolls smoothly; say if any arm suddenly flips its suckers by half a turn (the old flip at horizontal is gone; a fast roll can remain only for an arm pointing steeply inwards, over the head or under the body).

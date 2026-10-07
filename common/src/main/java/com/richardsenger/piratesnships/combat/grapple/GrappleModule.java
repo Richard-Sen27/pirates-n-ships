@@ -52,6 +52,8 @@ public final class GrappleModule implements ModModule {
     @Override
     public void registerContent() {
         GrappleContent.init();
+        // cleats tie off the grappling rope like mooring rings (RP1)
+        com.richardsenger.piratesnships.sailing.rope.RopeAnchorUse.install(GrappleService::tieOffAtAnchor, GrappleService::willTieOffAtAnchor);
         ShipForces.registerGrapple();
     }
 
@@ -88,10 +90,10 @@ public final class GrappleModule implements ModModule {
                 .add(ShipForces.GRAPPLE_KEY, "Grappling Rope")
                 .block(GrappleContent.MOORING_RING, "Mooring Ring")
                 .add(MooringRingBlock.TOOLTIP_KEY, "Hooks passing close catch on it and hold fast. Use it with a hook out to tie off the rope")
-                .add(GrappleService.TIED_KEY, "Rope tied to the mooring ring")
-                .add(GrappleService.ALREADY_TIED_KEY, "The rope is already tied to this ring")
+                .add(GrappleService.TIED_KEY, "Rope tied off here")
+                .add(GrappleService.ALREADY_TIED_KEY, "The rope is already tied off here")
                 .add(GrappleService.TIE_SAME_SHIP_KEY, "The hook hangs on this ship: tie the rope on your own ship")
-                .add(GrappleService.TIE_TOO_FAR_KEY, "The rope does not reach this ring")
+                .add(GrappleService.TIE_TOO_FAR_KEY, "The rope does not reach this far")
                 .add(GrappleContent.ROPE_RIDER.get().getDescriptionId(), "Rope Slide")
                 .add(RopeSlideService.DISABLED_KEY, "Sliding along ropes is disabled"));
         data.models(GrappleModule::ringModels);

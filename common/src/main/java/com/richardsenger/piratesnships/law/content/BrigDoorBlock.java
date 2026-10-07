@@ -8,7 +8,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -33,9 +35,12 @@ import java.util.UUID;
  * own models). The owner (the player who placed it) is stored in a {@link BrigDoorBlockEntity} on the lower half.
  * <ul>
  *   <li>Use: opens and closes like a wooden door, unless locked; a locked door opens only for its owner (and
- *       {@link BrigDoorAccess} rules), like a key. Locking does not change {@code open}.</li>
- *   <li>Sneak-use with an empty hand: the owner (or anyone, for a door without an owner, who then becomes the owner)
- *       locks or unlocks it.</li>
+ *       {@link BrigDoorAccess} rules) without a key. Locking does not change {@code open}.</li>
+ *   <li>Use with a {@link BrigKeyItem} (plain or sneaking): locks or unlocks both halves, with a click and an action
+ *       bar message. Any key fits any brig door (keys are the security, cells are shared among a crew); the key never
+ *       changes the owner.</li>
+ *   <li>Sneak-use without a key: changes nothing, only says that a key is needed (P1, second playtest; before that the
+ *       owner locked by sneak-use).</li>
  *   <li>Mobs and redstone can't open or close a locked door. Its block set has {@code canOpenByHand = false}, so
  *       villagers and zombies treat it like an iron door and never open or break it, and mob pathfinding sees it as
  *       closed.</li>
@@ -49,6 +54,8 @@ public class BrigDoorBlock extends DoorBlock implements EntityBlock {
 
     public static final MapCodec<BrigDoorBlock> CODEC = simpleCodec(BrigDoorBlock::new);
     public static final BooleanProperty LOCKED = BooleanProperty.create("locked");
+    /** Action bar message for a sneak-use without a key. */
+    public static final String NEEDS_KEY = "message.pirates_n_ships.brig.door.needs_key";
 
     public BrigDoorBlock(Properties properties) {
         super(LawContent.BRIG_SET, properties);
@@ -116,22 +123,41 @@ public class BrigDoorBlock extends DoorBlock implements EntityBlock {
         if (!level.isClientSide && placer instanceof Player player) setOwner(level, pos, player);
     }
 
+    /** A brig key locks or unlocks the door instead of opening it; any other item behaves like an empty hand. */
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
+                                              InteractionHand hand, BlockHitResult hit) {
+        if (!(stack.getItem() instanceof BrigKeyItem)) return super.useItemOn(stack, state, level, pos, player, hand, hit);
+        if (!level.isClientSide) useKey(level, pos, player);
+        return ItemInteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    /**
+     * Toggles the lock of the door at {@code anyHalf} with a key: both halves, a click sound and an action bar message
+     * for {@code player} (may be null). Server side. Returns the new lock state.
+     */
+    public static boolean useKey(Level level, BlockPos anyHalf, @Nullable Player player) {
+        BlockState state = level.getBlockState(anyHalf);
+        if (!(state.getBlock() instanceof BrigDoorBlock)) return false;
+        boolean locked = !state.getValue(LOCKED);
+        setLocked(level, anyHalf, locked);
+        level.playSound(null, anyHalf, locked ? SoundEvents.IRON_TRAPDOOR_CLOSE : SoundEvents.IRON_TRAPDOOR_OPEN, SoundSource.BLOCKS, 0.8f, 1.4f);
+        level.playSound(null, anyHalf, SoundEvents.TRIPWIRE_CLICK_ON, SoundSource.BLOCKS, 0.6f, locked ? 1.2f : 1.6f);
+        if (player != null) {
+            player.displayClientMessage(Component.translatable(locked
+                    ? "message.pirates_n_ships.brig.door.locked" : "message.pirates_n_ships.brig.door.unlocked"), true);
+        }
+        return locked;
+    }
+
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide) return InteractionResult.SUCCESS;
         UUID owner = owner(level, pos);
         boolean access = hasAccess(level, pos, player);
         if (player.isSecondaryUseActive()) {
-            if (!DoorLockRules.canChangeLock(owner, player.getUUID(), access)) {
-                player.displayClientMessage(Component.translatable("message.pirates_n_ships.brig.door.not_owner"), true);
-                return InteractionResult.CONSUME;
-            }
-            if (owner == null) setOwner(level, pos, player);
-            boolean locked = !state.getValue(LOCKED);
-            setLocked(level, pos, locked);
-            level.playSound(null, pos, locked ? SoundEvents.IRON_TRAPDOOR_CLOSE : SoundEvents.IRON_TRAPDOOR_OPEN, SoundSource.BLOCKS, 0.8f, 1.4f);
-            player.displayClientMessage(Component.translatable(locked
-                    ? "message.pirates_n_ships.brig.door.locked" : "message.pirates_n_ships.brig.door.unlocked"), true);
+            // Locking and unlocking need the brig key; the sneak-use only explains that
+            player.displayClientMessage(Component.translatable(NEEDS_KEY), true);
             return InteractionResult.CONSUME;
         }
         if (!DoorLockRules.canOpen(state.getValue(LOCKED), owner, player.getUUID(), access)) {

@@ -28,12 +28,15 @@ import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.npc.WanderingTrader;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Collection;
 import java.util.UUID;
@@ -216,25 +219,39 @@ public final class BrigGameTests {
 
     // --- Brig door ----------------------------------------------------------------------------------------------
 
+    /**
+     * The brig key locks and unlocks (P1): sneak-use without a key changes nothing, a key in anyone's hand locks and
+     * unlocks both halves without changing the owner, the owner still opens the locked door without a key, others,
+     * mobs and redstone don't.
+     */
     @ModGameTest(template = GameTestTemplates.EMPTY_9)
     public static void lockedDoorRefusesOthersMobsAndRedstone(GameTestHelper helper) {
         floor(helper, 9);
         BlockPos lower = placeDoor(helper, new BlockPos(4, 1, 4), Direction.NORTH);
         Player owner = helper.makeMockPlayer(GameType.SURVIVAL);
         Player other = helper.makeMockPlayer(GameType.SURVIVAL);
-        // The first player to lock an ownerless door becomes its owner
+        BrigDoorBlock.setOwner(helper.getLevel(), helper.absolutePos(lower), owner);
+        // Sneak-use without a key no longer locks, not even for the owner
         owner.setShiftKeyDown(true);
         helper.useBlock(lower, owner);
         owner.setShiftKeyDown(false);
-        helper.assertTrue(helper.getBlockState(lower).getValue(BrigDoorBlock.LOCKED), "locked by sneak-use");
+        helper.assertFalse(helper.getBlockState(lower).getValue(BrigDoorBlock.LOCKED), "sneak-use without a key must not lock");
+        helper.assertFalse(helper.getBlockState(lower).getValue(DoorBlock.OPEN), "sneak-use without a key must not open");
+        // Another player with a key locks it (on the upper half); the owner stays
+        other.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(LawContent.BRIG_KEY.get()));
+        helper.useBlock(lower.above(), other);
+        helper.assertTrue(helper.getBlockState(lower).getValue(BrigDoorBlock.LOCKED), "locked with the key");
         helper.assertTrue(helper.getBlockState(lower.above()).getValue(BrigDoorBlock.LOCKED), "upper half locked too");
-        helper.assertValueEqual(BrigDoorBlock.owner(helper.getLevel(), helper.absolutePos(lower)), owner.getUUID(), "owner");
-        // Another player can neither open nor unlock it
+        helper.assertFalse(helper.getBlockState(lower).getValue(DoorBlock.OPEN), "the key does not open the door");
+        helper.assertValueEqual(BrigDoorBlock.owner(helper.getLevel(), helper.absolutePos(lower)), owner.getUUID(), "owner unchanged");
+        // Without the key that player can neither open nor unlock it
+        other.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
         helper.useBlock(lower, other);
         helper.assertFalse(helper.getBlockState(lower).getValue(DoorBlock.OPEN), "other player can't open");
         other.setShiftKeyDown(true);
         helper.useBlock(lower, other);
-        helper.assertTrue(helper.getBlockState(lower).getValue(BrigDoorBlock.LOCKED), "other player can't unlock");
+        other.setShiftKeyDown(false);
+        helper.assertTrue(helper.getBlockState(lower).getValue(BrigDoorBlock.LOCKED), "other player can't unlock without a key");
         // A mob (villager door behavior) and redstone can't open it
         Mob mob = helper.spawnWithNoFreeWill(EntityType.VILLAGER, new BlockPos(2, 1, 2));
         BlockPos abs = helper.absolutePos(lower);
@@ -243,17 +260,25 @@ public final class BrigGameTests {
         helper.setBlock(lower.east(), Blocks.REDSTONE_BLOCK);
         helper.assertFalse(helper.getBlockState(lower).getValue(DoorBlock.OPEN), "redstone can't open");
         helper.setBlock(lower.east(), Blocks.AIR);
-        // The owner opens it like with a key, and it stays locked
+        // The owner opens it without a key, and it stays locked
         helper.useBlock(lower, owner);
         helper.assertTrue(helper.getBlockState(lower).getValue(DoorBlock.OPEN), "owner opens the locked door");
         helper.assertTrue(helper.getBlockState(lower.above()).getValue(DoorBlock.OPEN), "upper half opens too");
+        helper.assertTrue(helper.getBlockState(lower).getValue(BrigDoorBlock.LOCKED), "still locked");
         helper.useBlock(lower, owner);
         helper.assertFalse(helper.getBlockState(lower).getValue(DoorBlock.OPEN), "owner closes it again");
-        // Unlocked, anyone opens it
+        // The owner can't unlock it by sneak-use any more, but with a key (sneaking: the item's own use)
         owner.setShiftKeyDown(true);
         helper.useBlock(lower, owner);
-        helper.assertFalse(helper.getBlockState(lower).getValue(BrigDoorBlock.LOCKED), "owner unlocks");
-        other.setShiftKeyDown(false);
+        helper.assertTrue(helper.getBlockState(lower).getValue(BrigDoorBlock.LOCKED), "sneak-use without a key must not unlock");
+        owner.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(LawContent.BRIG_KEY.get()));
+        BlockPos absLower = helper.absolutePos(lower);
+        LawContent.BRIG_KEY.get().useOn(new UseOnContext(owner, InteractionHand.MAIN_HAND,
+                new BlockHitResult(Vec3.atCenterOf(absLower), Direction.NORTH, absLower, false)));
+        owner.setShiftKeyDown(false);
+        helper.assertFalse(helper.getBlockState(lower).getValue(BrigDoorBlock.LOCKED), "unlocked with the key");
+        helper.assertFalse(helper.getBlockState(lower.above()).getValue(BrigDoorBlock.LOCKED), "upper half unlocked too");
+        // Unlocked, anyone opens it
         helper.useBlock(lower, other);
         helper.assertTrue(helper.getBlockState(lower).getValue(DoorBlock.OPEN), "unlocked door opens for anyone");
         mob.discard();

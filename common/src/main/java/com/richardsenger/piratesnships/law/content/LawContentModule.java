@@ -36,7 +36,7 @@ import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import java.util.List;
 
 /**
- * The {@code law.content} module: shackles, brig bars and brig door (design.md §13.3). The bars and the door have
+ * The {@code law.content} module: shackles, brig bars, brig door and brig key (design.md §13.3). The bars and the door have
  * hand-made Blockbench models; their block states follow vanilla's panes and doors.
  */
 public final class LawContentModule implements ModModule {
@@ -61,10 +61,15 @@ public final class LawContentModule implements ModModule {
     public void gatherData(DataContributions data) {
         data.lang(lang -> lang
                 .item(LawContent.SHACKLES, "Shackles")
+                .item(LawContent.BRIG_KEY, "Brig Key")
+                .add("item.pirates_n_ships.brig_key.tooltip", "Use on a brig door to lock or unlock it")
+                .add(BrigDoorBlock.NEEDS_KEY, "You need a brig key to lock or unlock this door")
                 .block(LawContent.BRIG_BARS, "Brig Bars")
                 .block(LawContent.BRIG_DOOR, "Brig Door"));
         data.models(m -> {
             // The shackles' item model is hand-made (art/models/shackles.bbmodel), so datagen writes none
+            // Flat placeholder sprite from tools/gen_law_textures.py until the 3D item batch (F8f)
+            m.flatItem(LawContent.BRIG_KEY.get());
             bars(m, LawContent.BRIG_BARS.get());
             door(m, LawContent.BRIG_DOOR.get());
         });
@@ -87,6 +92,12 @@ public final class LawContentModule implements ModModule {
                     .define('I', Items.IRON_INGOT).define('C', Items.CHAIN)
                     .unlockedBy("has_chain", InventoryChangeTrigger.TriggerInstance.hasItems(Items.CHAIN))
                     .save(out, LawContent.SHACKLES.id());
+            // An iron ingot (the bow and shaft) over an iron nugget (the bit)
+            ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, LawContent.BRIG_KEY.get())
+                    .pattern("I").pattern("N")
+                    .define('I', Items.IRON_INGOT).define('N', Items.IRON_NUGGET)
+                    .unlockedBy("has_iron_bars", InventoryChangeTrigger.TriggerInstance.hasItems(Items.IRON_BARS))
+                    .save(out, LawContent.BRIG_KEY.id());
             ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, LawContent.BRIG_BARS.get(), 6)
                     .pattern("BPB").pattern("BPB")
                     .define('B', Items.IRON_BARS).define('P', ItemTags.PLANKS)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Placeholder textures (16x16 pixel art) of the law package (work package E1a): the bounty proof.
+"""Placeholder textures (16x16 pixel art) of the law package: the bounty proof (E1a) and the brig key (P1).
 
 Reuses the canvas, palette and protection list of gen_placeholder_textures.py, so the style matches.
 Run (from the repository root, with the venv from gen_placeholder_textures.py):
@@ -33,7 +33,24 @@ def bounty_proof():
     return cv.outline()
 
 
-ITEMS = {"bounty_proof": bounty_proof}
+def brig_key():
+    """A heavy iron key, diagonal: a round bow at the top left, the shaft, a two-toothed bit at the bottom right.
+    Flat placeholder until the 3D item batch (F8f)."""
+    cv = Canvas()
+    cv.disc(4, 4, 3.2, "iron")         # bow
+    cv.px(4, 4, "outline"); cv.px(3, 4, "outline"); cv.px(4, 3, "outline"); cv.px(3, 3, "outline")
+    cv.px(2, 3, "steel_l"); cv.px(3, 2, "steel_l")
+    for i in range(6, 13):             # shaft
+        cv.px(i, i, "steel")
+        cv.px(i + 1, i, "iron_d")
+    cv.px(12, 12, "steel"); cv.px(13, 13, "steel")
+    cv.rect(10, 13, 11, 14, "iron")    # bit
+    cv.rect(13, 10, 14, 11, "iron")
+    cv.px(11, 14, "iron_d"); cv.px(14, 11, "iron_d")
+    return cv.outline()
+
+
+ITEMS = {"bounty_proof": bounty_proof, "brig_key": brig_key}
 
 
 def main():

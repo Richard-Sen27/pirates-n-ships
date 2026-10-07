@@ -6,6 +6,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.sounds.Music;
@@ -16,6 +17,7 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.SelectMusicEvent;
@@ -24,6 +26,8 @@ import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
+
+import java.util.function.Supplier;
 
 /** Client-only wiring: forwards {@link ClientEvents} registrations and ticks, enables NeoForge's config screen. */
 public final class NeoForgeClientSetup {
@@ -42,6 +46,8 @@ public final class NeoForgeClientSetup {
         });
         modBus.addListener(EntityRenderersEvent.RegisterLayerDefinitions.class,
                 e -> ClientEvents.modelLayers().forEach(l -> e.registerLayerDefinition(l.location(), l.definition())));
+        modBus.addListener(RegisterColorHandlersEvent.Block.class, e -> ClientEvents.blockColors().forEach(c ->
+                e.register(c.color(), c.blocks().stream().map(Supplier::get).toArray(Block[]::new))));
 
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Pre.class, e -> ClientEvents.CLIENT_TICK_START.invoker().onTick(Minecraft.getInstance()));
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> ClientEvents.CLIENT_TICK_END.invoker().onTick(Minecraft.getInstance()));

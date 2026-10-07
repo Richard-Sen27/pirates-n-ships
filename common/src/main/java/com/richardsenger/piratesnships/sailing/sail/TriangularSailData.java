@@ -73,7 +73,7 @@ public final class TriangularSailData {
     }
 
     private static void models(ModelContext m) {
-        m.flatItem(TriangularSailContent.ROPE.get());
+        // The rope's item model is hand-made (art/models/rope.bbmodel, design.md §4.8)
         cleat(m, TriangularSailContent.CLEAT.get());
     }
 

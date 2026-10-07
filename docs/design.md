@@ -310,6 +310,7 @@ The crew operates a station by being attached to it, much like being seated. Thi
   - prepare to board
   - all hands to stations
 - Assignment: automatic by skill, or manually per station.
+  - **Job board (CR1, decided 2026-10-07):** the captain gives orders, not assignments. Every order posted to the ship (whistle or command) is executed at once by manned stations that take it; every unmanned station that takes it becomes an **open job** on the ship's board, and free crew on board (not at a station, not prisoners) claim the nearest open job by themselves every `claim_interval_ticks`, are seated there and carry the order out. A crew member assigned by hand with the whistle is **pinned** and the board never moves it; a board-assigned member stays at its station until released or re-tasked by a later job. "Release crew" frees everyone and clears the board. Skill-based choice comes with crew skills (§7.1). Config `crew_stations.job_board.enabled`, `claim_interval_ticks`, `max_claim_distance` (0 = the whole ship).
 - Feedback: crew members respond with voice lines or text, and the HUD shows which stations are manned.
 
 ### 7.3 Crew upkeep

@@ -1,7 +1,19 @@
 {
   "variants": {
-    "": {
+    "facing=east": {
       "model": "pirates_n_ships:block/sail_winch"
+    },
+    "facing=north": {
+      "model": "pirates_n_ships:block/sail_winch",
+      "y": 270
+    },
+    "facing=south": {
+      "model": "pirates_n_ships:block/sail_winch",
+      "y": 90
+    },
+    "facing=west": {
+      "model": "pirates_n_ships:block/sail_winch",
+      "y": 180
     }
   }
 }

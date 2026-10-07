@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.sailing;
 
+import com.google.gson.JsonObject;
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
@@ -7,38 +8,32 @@ import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.sailing.block.SailWinchBlock;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
 import com.richardsenger.piratesnships.sailing.block.YardBlock;
-import com.google.gson.JsonObject;
-import com.richardsenger.piratesnships.ship.decor.flag.ElementModel;
-import net.minecraft.data.PackOutput;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
 import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsControls;
 import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips;
 import com.richardsenger.piratesnships.sailing.ship.SailingRuntimes;
 import com.richardsenger.piratesnships.sailing.ship.ShipControls;
-import com.richardsenger.piratesnships.ship.assembly.HelmBlock;
-import net.minecraft.data.models.model.TexturedModel;
 import com.richardsenger.piratesnships.sailing.wind.WindSync;
 import com.richardsenger.piratesnships.ship.ShipBlockChanges;
+import com.richardsenger.piratesnships.ship.assembly.HelmBlock;
 import com.richardsenger.piratesnships.ship.decor.SableWeightTags;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipForces;
 import java.util.List;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.core.Direction;
+import net.minecraft.data.PackOutput;
 import net.minecraft.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
 import net.minecraft.data.models.model.ModelLocationUtils;
-import net.minecraft.data.models.model.ModelTemplates;
-import net.minecraft.data.models.model.TextureMapping;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Block;
 
 /**
  * The {@code sailing} module (docs/design.md §5): the wind field and its client sync, the pure force model
@@ -122,9 +117,7 @@ public final class SailingModule implements ModModule {
         });
         data.models(m -> {
             yard(m, SailingBlocks.YARD.get());
-            // hand-made Blockbench model (art/models/sail_winch.bbmodel, design.md §4.8): only the block state is generated
-            m.blockStates().accept(MultiVariantGenerator.multiVariant(SailingBlocks.SAIL_WINCH.get(), Variant.variant()
-                    .with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(SailingBlocks.SAIL_WINCH.get()))));
+            sailWinch(m, SailingBlocks.SAIL_WINCH.get());
             // hand-made Blockbench model (art/models/capstan.bbmodel, design.md §4.8): only the block state is generated
             m.blockStates().accept(MultiVariantGenerator.multiVariant(SailingBlocks.CAPSTAN.get(), Variant.variant()
                     .with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(SailingBlocks.CAPSTAN.get()))));
@@ -189,6 +182,21 @@ public final class SailingModule implements ModModule {
                         .with(VariantProperties.Y_ROT, VariantProperties.Rotation.R90))));
     }
 
+    /**
+     * The sail winch: a hand-made Blockbench model (art/models/sail_winch.bbmodel, design.md §4.8) with its crank on the
+     * east side, so only the block state is generated. {@code facing} is the crank's side: {@code east} is the unrotated
+     * model, and each further quarter turn clockwise seen from above (vanilla's y rotation, as for the helm) adds 90°.
+     */
+    private static void sailWinch(ModelContext m, SailWinchBlock block) {
+        ResourceLocation model = ModelLocationUtils.getModelLocation(block);
+        m.blockStates().accept(MultiVariantGenerator.multiVariant(block, Variant.variant().with(VariantProperties.MODEL, model))
+                .with(PropertyDispatch.property(SailWinchBlock.FACING)
+                        .select(Direction.EAST, Variant.variant())
+                        .select(Direction.SOUTH, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R90))
+                        .select(Direction.WEST, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R180))
+                        .select(Direction.NORTH, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R270))));
+    }
+
     @Override
     public void initClient() {
         com.richardsenger.piratesnships.sailing.client.SailingClient.init();
@@ -198,6 +206,7 @@ public final class SailingModule implements ModModule {
     @Override
     public List<Class<?>> gameTestClasses() {
         return List.of(SailingGameTests.class, SailingGameTestsShips.class, SailingGameTestsControls.class,
-                com.richardsenger.piratesnships.sailing.ship.SailingGameTestsStays.class);
+                com.richardsenger.piratesnships.sailing.ship.SailingGameTestsStays.class,
+                com.richardsenger.piratesnships.sailing.ship.SailingGameTestsRigging.class);
     }
 }

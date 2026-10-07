@@ -7,6 +7,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.GameTestInfo;
 import net.minecraft.gametest.framework.GameTestListener;
 import net.minecraft.gametest.framework.GameTestRunner;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -31,18 +32,27 @@ import java.util.Set;
  * after another, so a test alone in its batch cannot leak into others. Do not put two tests that override
  * the same value in one batch.
  *
+ * <p>Since Q3 that rule is a safety net, not the only guard. Tests of one batch start a few ticks apart (each waits
+ * for its chunks) and end in any order, so an override can be restored while a newer override of the same value is
+ * still running. Such a restore writes nothing and hands its saved value to the next newer active override instead:
+ * the value stays overridden while any override of it is active and returns to the original once all have ended, in
+ * whatever order. Before, the test that ended first put its saved value back in the middle of the other one (a hoist
+ * that took 80 ticks instead of 20), and the last one could leak the override into later batches. Two tests that set
+ * the same value to different values in one batch still see each other's value, so the rule stays.
+ *
  * <p>The value is restored when the test passes, fails, times out or is rerun, and, as a safety net, when the server
  * stops. In JUnit (no game), use {@link #apply} and call {@link Handle#restore()} in a {@code finally} block or
- * {@code @AfterEach}. Overrides of the same value must be restored in reverse order.
+ * {@code @AfterEach}. Overrides of the same value may be restored in any order.
  */
 public final class ConfigOverrides {
 
     /** One active override. {@link #restore()} is idempotent. */
     public static final class Handle<T> {
         private final ConfigValue<T> value;
-        private final T previous;
-        /** Unbound value without a prior local override: restore by clearing the override. */
-        private final boolean clearOnRestore;
+        /** The value to put back; taken over from an older override of the same value that was restored first. */
+        private T previous;
+        /** Unbound value without a prior local override: restore by clearing the override. Taken over like {@link #previous}. */
+        private boolean clearOnRestore;
         private boolean restored;
 
         private Handle(ConfigValue<T> value) {
@@ -51,15 +61,38 @@ public final class ConfigOverrides {
             this.clearOnRestore = !value.isLive() && !value.hasOverride();
         }
 
-        /** Puts the previous value back (no-op if already restored). */
+        /**
+         * Puts the previous value back (no-op if already restored). While a newer override of the same value is still
+         * active, writes nothing and hands the previous value to the next newer one, which puts it back in the end.
+         */
         public void restore() {
             synchronized (ACTIVE) {
                 if (restored) return;
                 restored = true;
+                Handle<T> newer = nextNewer();
                 ACTIVE.remove(this);
+                if (newer != null) {
+                    newer.previous = previous;
+                    newer.clearOnRestore = clearOnRestore;
+                    return;
+                }
             }
             if (clearOnRestore && !value.isLive()) value.reset();
             else value.set(previous);
+        }
+
+        /** The next active override of the same value applied after this one, or null. Called holding {@code ACTIVE}. */
+        @SuppressWarnings("unchecked")
+        private @Nullable Handle<T> nextNewer() {
+            boolean after = false;
+            for (Handle<?> h : ACTIVE) { // a LinkedHashSet: in the order applied
+                if (h == this) {
+                    after = true;
+                } else if (after && h.value == value) {
+                    return (Handle<T>) h;
+                }
+            }
+            return null;
         }
 
         public boolean isRestored() {

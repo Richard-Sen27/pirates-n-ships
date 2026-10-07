@@ -630,7 +630,7 @@ public final class SailingGameTestsShips {
      * With hull damping on, the kicked long hull settles: 3.5 to 5 s after the kick its roll rate is small (measured
      * 0.01 rad/s, against about 0.11 without damping and 0.7 right after the kick).
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 320, batch = "pirates_n_ships_config_sailing_damping_on")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 320, batch = "pirates_n_ships_config_sailing_damping_on_rolling")
     public static void rollingShipSettlesWithDamping(GameTestHelper h) {
         ConfigOverrides.during(h, SailingConfig.HULL_DAMPING_ENABLED, true);
         ConfigOverrides.during(h, SailingConfig.ROLL_DAMPING, HullDampingModel.Params.DEFAULTS.roll());
@@ -658,7 +658,7 @@ public final class SailingGameTestsShips {
     }
 
     /** A floating ship at rest stays at rest with damping on (the damping adds no motion). */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = "pirates_n_ships_config_sailing_damping_on")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = "pirates_n_ships_config_sailing_damping_on_at_rest")
     public static void shipAtRestStaysAtRest(GameTestHelper h) {
         ConfigOverrides.during(h, SailingConfig.HULL_DAMPING_ENABLED, true);
         basin(h, true);

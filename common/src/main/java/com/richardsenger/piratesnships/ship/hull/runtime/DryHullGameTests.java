@@ -170,7 +170,7 @@ public final class DryHullGameTests {
         });
     }
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 300, batch = "pirates_n_ships_dry_hull_inflow")
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 300, batch = "pirates_n_ships_config_dry_hull_inflow_breach")
     public static void breachBelowWaterlineFloodsTheHold(GameTestHelper h) {
         // At the default rate one breached block needs well over the timeout to submerge a whole hold layer; ten times
         // faster keeps the test short while the flow law stays the same.
@@ -403,7 +403,7 @@ public final class DryHullGameTests {
         });
     }
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 300, batch = "pirates_n_ships_dry_hull_inflow")
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 300, batch = "pirates_n_ships_config_dry_hull_inflow_floor_slab")
     public static void floorSlabLeavesTheRegionWhenTheHoldFloods(GameTestHelper h) {
         com.richardsenger.piratesnships.core.gametest.ConfigOverrides.during(h,
                 com.richardsenger.piratesnships.ship.hull.FloodingConfig.INFLOW_RATE, 10.0);

@@ -3,10 +3,13 @@ package com.richardsenger.piratesnships.sailing.ship;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.sailing.SailingConfig;
 import com.richardsenger.piratesnships.sailing.block.CapstanBlock;
-import com.richardsenger.piratesnships.sailing.block.SailBlock;
+import com.richardsenger.piratesnships.sailing.block.CleatBlock;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
 import com.richardsenger.piratesnships.sailing.block.YardBlock;
 import com.richardsenger.piratesnships.sailing.block.YardBlockEntity;
+import com.richardsenger.piratesnships.sailing.sail.StayRules;
+import com.richardsenger.piratesnships.sailing.sail.TriangularSail;
+import com.richardsenger.piratesnships.sailing.sail.TriangularSails;
 import com.richardsenger.piratesnships.sailing.sail.YardLinker;
 import com.richardsenger.piratesnships.sailing.sail.YardLookup;
 import com.richardsenger.piratesnships.sailing.sail.YardRow;
@@ -37,7 +40,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
@@ -114,8 +116,8 @@ public final class SailingRuntimes {
         SailingRuntime rt = new SailingRuntime(ship.id(), bow, b);
         for (BlockPos p : blocks) {
             BlockState s = level.getBlockState(p);
-            if (s.getBlock() instanceof SailBlock sail) {
-                rt.putSail(p, sail.type(), s.getValue(SailBlock.TRIM));
+            if (s.getBlock() instanceof CleatBlock) {
+                rt.addCleat(p);
             } else if (s.getBlock() instanceof YardBlock) {
                 rt.addYardBlock(p);
             }
@@ -219,16 +221,16 @@ public final class SailingRuntimes {
         if (m == null || m.isEmpty()) {
             return;
         }
-        boolean oldSail = oldState.getBlock() instanceof SailBlock;
-        boolean newSail = newState.getBlock() instanceof SailBlock;
+        boolean oldCleat = oldState.getBlock() instanceof CleatBlock;
+        boolean newCleat = newState.getBlock() instanceof CleatBlock;
         boolean oldYard = oldState.getBlock() instanceof YardBlock;
         boolean newYard = newState.getBlock() instanceof YardBlock;
         boolean helm = oldState.getBlock() instanceof HelmBlock || newState.getBlock() instanceof HelmBlock;
         boolean capstanGone = oldState.getBlock() instanceof CapstanBlock && !(newState.getBlock() instanceof CapstanBlock);
         boolean mastChanged = oldState.is(SailingBlocks.MASTS) != newState.is(SailingBlocks.MASTS);
-        if (!oldSail && !newSail && !oldYard && !newYard && !helm && !capstanGone && !mastChanged
+        if (!oldCleat && !newCleat && !oldYard && !newYard && !helm && !capstanGone && !mastChanged
                 && oldState.isAir() == newState.isAir()) {
-            // only sails, yards, the helm, a removed capstan, masts, and cells that were filled (the plot box may grow)
+            // only cleats, yards, the helm, a removed capstan, masts, and cells that were filled (the plot box may grow)
             // or cleared (a square sail's gap may open) matter
             return;
         }
@@ -250,15 +252,12 @@ public final class SailingRuntimes {
             rt.setTrim(pos, newState.getValue(YardBlock.TRIM)); // a trim change; only a sail's head counts
             return;
         }
-        if (newState.getBlock() instanceof SailBlock sail) {
-            rt.putSail(pos, sail.type(), newState.getValue(SailBlock.TRIM));
-        } else {
-            if (oldSail) {
-                rt.removeSail(pos);
-            }
-            if (!newState.isAir()) {
-                rt.include(pos);
-            }
+        if (oldCleat && newCleat) {
+            rt.setTrim(pos, newState.getValue(CleatBlock.TRIM)); // a trim change; only a sail's head counts
+            return;
+        }
+        if (!newState.isAir()) {
+            rt.include(pos);
         }
         boolean yardsChanged = false;
         if (oldYard) {
@@ -267,7 +266,26 @@ public final class SailingRuntimes {
         if (newYard) {
             yardsChanged |= rt.addYardBlock(pos);
         }
+        if (oldCleat) {
+            yardsChanged |= rt.removeCleat(pos);
+        }
+        if (newCleat) {
+            yardsChanged |= rt.addCleat(pos);
+        }
         if (yardsChanged || rt.watchesGap(pos)) {
+            relink(level, rt);
+        }
+    }
+
+    /**
+     * A stay was rigged or dropped at {@code pos} without a block change (the rope only writes block entities):
+     * relinks the sails of the ship containing {@code pos}, if it has a runtime.
+     */
+    public static void onRigChanged(ServerLevel level, BlockPos pos) {
+        Map<UUID, SailingRuntime> m = SERVER.get(level);
+        ShipBody ship = m == null || m.isEmpty() ? null : SableShips.containing(level, pos);
+        SailingRuntime rt = ship == null ? null : m.get(ship.id());
+        if (rt != null) {
             relink(level, rt);
         }
     }
@@ -302,23 +320,44 @@ public final class SailingRuntimes {
         for (YardRow r : linked.rows()) {
             YardSails.refreshRow(level, lookup, r, rules);
         }
+        relinkTriangles(level, rt);
+    }
+
+    /**
+     * Finds the ship's triangular sails again (rule F5b): every cleat that is the higher end of a valid stay is a head;
+     * with a clew below it, it heads a sail. Brings the cloth of the cleats' block entities up to date.
+     */
+    private static void relinkTriangles(ServerLevel level, SailingRuntime rt) {
+        StayRules rules = SailingConfig.stayRules();
+        List<TriangularSail> sails = new ArrayList<>();
+        List<int[]> columns = new ArrayList<>();
+        for (BlockPos p : rt.cleatBlocks()) {
+            BlockPos partner = TriangularSails.partner(level, p);
+            if (partner != null && partner.getY() < p.getY()) {
+                columns.add(new int[] {p.getX(), p.getZ(), partner.getY(), p.getY() - 1});
+                TriangularSail t = TriangularSails.sailHeadedAt(level, p, rules);
+                if (t != null) sails.add(t);
+            }
+            TriangularSails.refresh(level, p);
+        }
+        rt.replaceTriangularSails(sails, head -> {
+            BlockState s = level.getBlockState(head);
+            return s.getBlock() instanceof CleatBlock ? s.getValue(CleatBlock.TRIM) : SailTrim.FURLED;
+        }, columns);
     }
 
     /**
      * Sets the trim of the sail at {@code sailPos} (a position from {@link SailingRuntime#sailPositions()}): on every
-     * block of a square sail's upper yard, or on a one-block sail. The block changes update the runtime. False when
-     * there is no sail block at {@code sailPos}.
+     * block of a square sail's upper yard, or on a triangular sail's head cleat. The block changes update the runtime.
+     * False when there is no yard or cleat at {@code sailPos}.
      */
     public static boolean setTrim(ServerLevel level, BlockPos sailPos, SailTrim trim) {
         BlockState s = level.getBlockState(sailPos);
         if (s.getBlock() instanceof YardBlock) {
             return YardSails.setTrim(level, sailPos, trim);
         }
-        if (s.getBlock() instanceof SailBlock) {
-            if (s.getValue(SailBlock.TRIM) != trim) {
-                level.setBlock(sailPos, s.setValue(SailBlock.TRIM, trim), Block.UPDATE_ALL);
-            }
-            return true;
+        if (s.getBlock() instanceof CleatBlock) {
+            return TriangularSails.setTrim(level, sailPos, trim);
         }
         return false;
     }

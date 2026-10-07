@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-07T00:55:06.436867	Recipes
+// 1.21.1	2026-10-07T01:48:49.119911	Recipes
 015749d8a9eaabd51b4c4c379ce38acafd30720e data/pirates_n_ships/advancement/recipes/combat/cannonball.json
 698d8285044f0e3429c2f6421d742fd348e5d011 data/pirates_n_ships/advancement/recipes/combat/cutlass.json
 1cdb4544445c73aa3f110cf02a93148f6195c77b data/pirates_n_ships/advancement/recipes/combat/lead_shot.json
@@ -29,8 +29,9 @@ dc645eb64a6aaf129d1c677f5a0cea8e270db46b data/pirates_n_ships/advancement/recipe
 2a957e058c302fff24bcf63d3b56764ed66eee7a data/pirates_n_ships/advancement/recipes/tools/grappling_hook.json
 50bbc3a5283b5ecd156269afff156a249c60d350 data/pirates_n_ships/advancement/recipes/tools/shackles.json
 1d2b2d4b56f8d693e61a6b7c8681101991a5df3d data/pirates_n_ships/advancement/recipes/transportation/capstan.json
-e4cee4631518ec7db5430bc2e34d163d3cb5ca11 data/pirates_n_ships/advancement/recipes/transportation/fore_and_aft_sail.json
+1a045b9c80433083ff8b59eded369b0ea390920c data/pirates_n_ships/advancement/recipes/transportation/cleat.json
 5df45ae9d559d81a65dc99c2738d2d6fb7130bab data/pirates_n_ships/advancement/recipes/transportation/helm.json
+6319a94ced9269df50297b4ac3b9b2608567addb data/pirates_n_ships/advancement/recipes/transportation/rope.json
 b18b23653494e41fd857e8bb42f9290a64350e06 data/pirates_n_ships/advancement/recipes/transportation/sail_winch.json
 c139515e0b538370d92991be3d0cb26765b3cd6f data/pirates_n_ships/advancement/recipes/transportation/yard.json
 bf2da20e7fdc63124e2b02531cd70e8904a34cb1 data/pirates_n_ships/recipe/brig_bars.json
@@ -39,6 +40,7 @@ ee31fa683c68b7dd3fbe347a19c643971a50d895 data/pirates_n_ships/recipe/brig_door.j
 a8c074ca4609fbfdb0315cadfd6264ace56daa7c data/pirates_n_ships/recipe/capstan.json
 8e5ee9ea39d831d5a3dc1ef34f880688f3b74458 data/pirates_n_ships/recipe/cargo_barrel.json
 e79d3d2ce55c93cd8e75ea48e8b4013497b627eb data/pirates_n_ships/recipe/cargo_crate.json
+8b65467d0ca8f4b2e5af950aef86056a3712db43 data/pirates_n_ships/recipe/cleat.json
 ceccb5e0c6d3a0b2ea95cbe0c892b0a617f94c84 data/pirates_n_ships/recipe/cloth.json
 1353c50bbe239fe6bd3a26cf7eff7b76dca0e66d data/pirates_n_ships/recipe/cutlass.json
 406226151565700a161382891d143c9d8963103f data/pirates_n_ships/recipe/figurehead_eagle.json
@@ -46,7 +48,6 @@ ceccb5e0c6d3a0b2ea95cbe0c892b0a617f94c84 data/pirates_n_ships/recipe/cloth.json
 a45bf208e422724c8cd80b70e6c4d79e99380b02 data/pirates_n_ships/recipe/figurehead_mermaid.json
 83cdc3fb82141f16ab65856b33c20e123ca9deb0 data/pirates_n_ships/recipe/figurehead_skull.json
 32cc9920392d1de43336d4900d37318183df0334 data/pirates_n_ships/recipe/flagpole.json
-2a85ed869abe19d24318d25236d6514a61f58e90 data/pirates_n_ships/recipe/fore_and_aft_sail.json
 3d025d6dfbe0a002b63f0e49211600e94a8eb347 data/pirates_n_ships/recipe/grappling_hook.json
 289b9c39423d643c407f4dca3abda9cd8bfe06c6 data/pirates_n_ships/recipe/hardtack.json
 df19e78ee08b13dfc5a3753f8db8ba239bb70608 data/pirates_n_ships/recipe/helm.json
@@ -59,6 +60,7 @@ f3293314602bc2f8489df1b00cd44ea77ffdc5e0 data/pirates_n_ships/recipe/musket.json
 ff99d921b82145e6964a5fcd101f6a8181c13e27 data/pirates_n_ships/recipe/pantry.json
 789faf529148bcfbf77e9ca727ed22a778739226 data/pirates_n_ships/recipe/pistol.json
 78d739302fa344dbcd74f857e488d0a348238167 data/pirates_n_ships/recipe/rapier.json
+7b76aaaa20f6d0355e173e6cb3bea938c353aad3 data/pirates_n_ships/recipe/rope.json
 0f93bf2bccb2e9d8bf5097b9f7ef6e2ce34bcc08 data/pirates_n_ships/recipe/rum.json
 567d647e57373e07888e9c8ca6c22060c0ab65bc data/pirates_n_ships/recipe/saber.json
 08b79a7e2a0c6e706a234165d6e337274abce0d9 data/pirates_n_ships/recipe/sail_winch.json

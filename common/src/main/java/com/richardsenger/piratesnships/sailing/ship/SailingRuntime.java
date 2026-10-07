@@ -11,6 +11,7 @@ import com.richardsenger.piratesnships.sailing.force.ShipForceModel;
 import com.richardsenger.piratesnships.sailing.force.ShipState;
 import com.richardsenger.piratesnships.sailing.force.SailTypes;
 import com.richardsenger.piratesnships.sailing.sail.SquareSail;
+import com.richardsenger.piratesnships.sailing.sail.TriangularSail;
 import com.richardsenger.piratesnships.sailing.sail.YardLinker;
 import com.richardsenger.piratesnships.sailing.sail.YardRow;
 import com.richardsenger.piratesnships.sailing.wind.WindSample;
@@ -51,9 +52,9 @@ public final class SailingRuntime {
 
     /**
      * One sail, keyed by its plot position: a square sail's head (its upper yard's middle block, with {@code square}
-     * set) or a one-block sail (fore-and-aft).
+     * set) or a triangular sail's head cleat (with {@code triangle} set).
      */
-    record Sail(SailType type, SailTrim trim, double area, @Nullable SquareSail square) { }
+    record Sail(SailType type, SailTrim trim, double area, @Nullable SquareSail square, @Nullable TriangularSail triangle) { }
 
     private final UUID id;
     private final BowFrame bow;
@@ -62,6 +63,9 @@ public final class SailingRuntime {
     private final Set<BlockPos> yardBlocks = new HashSet<>();
     private List<YardRow> yards = List.of();
     private int watchedGap;
+    // every cleat of the ship, and the columns watched below each stay's head: {x, z, minY, maxY}
+    private final Set<BlockPos> cleatBlocks = new HashSet<>();
+    private List<int[]> watchedColumns = List.of();
     private int minX, minY, minZ, maxX, maxY, maxZ;
     private int unfurled;
 
@@ -185,11 +189,6 @@ public final class SailingRuntime {
         this.anchorEnabled = anchorEnabled;
     }
 
-    /** A one-block sail (its type's area). */
-    void putSail(BlockPos plotPos, SailType type, SailTrim trim) {
-        put(plotPos, new Sail(type, trim, type.area(), null));
-    }
-
     private void put(BlockPos plotPos, Sail sail) {
         Sail old = sails.put(plotPos.immutable(), sail);
         if (old != null && old.trim() != SailTrim.FURLED) unfurled--;
@@ -205,7 +204,7 @@ public final class SailingRuntime {
             return false;
         }
         if (s.trim() != trim) {
-            put(plotPos, new Sail(s.type(), trim, s.area(), s.square()));
+            put(plotPos, new Sail(s.type(), trim, s.area(), s.square(), s.triangle()));
         }
         return true;
     }
@@ -241,6 +240,11 @@ public final class SailingRuntime {
                 return true;
             }
         }
+        for (int[] c : watchedColumns) {
+            if (p.getX() == c[0] && p.getZ() == c[1] && p.getY() >= c[2] && p.getY() <= c[3]) {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -249,17 +253,64 @@ public final class SailingRuntime {
      */
     void replaceSquareSails(YardLinker.Linked linked, Function<BlockPos, SailTrim> trims, int maxGap) {
         sails.entrySet().removeIf(e -> e.getValue().square() != null);
-        unfurled = 0;
-        for (Sail s : sails.values()) {
-            if (s.trim() != SailTrim.FURLED) unfurled++;
-        }
+        recountUnfurled();
         for (SquareSail s : linked.sails()) {
             BlockPos head = new BlockPos(s.upper().middleX(), s.upper().y(), s.upper().middleZ());
-            put(head, new Sail(SailTypes.SQUARE, trims.apply(head), s.area(), s));
+            put(head, new Sail(SailTypes.SQUARE, trims.apply(head), s.area(), s, null));
         }
         yards = linked.rows();
         watchedGap = maxGap;
         instancesDirty = true;
+    }
+
+    private void recountUnfurled() {
+        unfurled = 0;
+        for (Sail s : sails.values()) {
+            if (s.trim() != SailTrim.FURLED) unfurled++;
+        }
+    }
+
+    // ------------------------------------------------------------------ triangular sails (stays and cleats, rule F5b)
+
+    /** Every cleat position of the ship (copy). */
+    List<BlockPos> cleatBlocks() {
+        return new ArrayList<>(cleatBlocks);
+    }
+
+    boolean addCleat(BlockPos p) {
+        include(p);
+        return cleatBlocks.add(p.immutable());
+    }
+
+    boolean removeCleat(BlockPos p) {
+        return cleatBlocks.remove(p);
+    }
+
+    /**
+     * Replaces all triangular sails. {@code trims} reads the trim of a head (its block state); {@code columns} are the
+     * cells {x, z, minY, maxY} below every stay's head where a block change may make or break a sail.
+     */
+    void replaceTriangularSails(List<TriangularSail> triangles, Function<BlockPos, SailTrim> trims, List<int[]> columns) {
+        sails.entrySet().removeIf(e -> e.getValue().triangle() != null);
+        recountUnfurled();
+        for (TriangularSail t : triangles) {
+            BlockPos head = new BlockPos(t.head().x(), t.head().y(), t.head().z());
+            put(head, new Sail(SailTypes.FORE_AND_AFT, trims.apply(head), t.area(), null, t));
+        }
+        watchedColumns = List.copyOf(columns);
+        instancesDirty = true;
+    }
+
+    /** The triangular sail headed at {@code plotPos}, or null. */
+    public @Nullable TriangularSail triangularSailAt(BlockPos plotPos) {
+        Sail s = sails.get(plotPos);
+        return s == null ? null : s.triangle();
+    }
+
+    /** Type of the sail at {@code plotPos}, or null when there is none. */
+    public @Nullable SailType typeAt(BlockPos plotPos) {
+        Sail s = sails.get(plotPos);
+        return s == null ? null : s.type();
     }
 
     /** Area of the sail at {@code plotPos} [blocks²], or NaN when there is none. */
@@ -268,18 +319,10 @@ public final class SailingRuntime {
         return s == null ? Double.NaN : s.area();
     }
 
-    /** The square sail headed at {@code plotPos}, or null (none, or a one-block sail). */
+    /** The square sail headed at {@code plotPos}, or null (none, or a triangular sail). */
     public @Nullable SquareSail squareSailAt(BlockPos plotPos) {
         Sail s = sails.get(plotPos);
         return s == null ? null : s.square();
-    }
-
-    void removeSail(BlockPos plotPos) {
-        Sail old = sails.remove(plotPos);
-        if (old != null) {
-            if (old.trim() != SailTrim.FURLED) unfurled--;
-            instancesDirty = true;
-        }
     }
 
     /** Grows the plot box to include a new block (removals do not shrink it until the next full scan). */
@@ -390,8 +433,8 @@ public final class SailingRuntime {
 
     /**
      * Sail instances relative to {@code com} (ship frame), rebuilt only after a sail change or a COM shift. A square
-     * sail acts at the centroid of its drawn cloth ({@link SquareSail#centroid}), a one-block sail at its block center
-     * (its type adds the center of effort height).
+     * sail acts at the centroid of its drawn cloth ({@link SquareSail#centroid}), a triangular sail too
+     * ({@link TriangularSail#centroid}); both types have a center of effort height of 0.
      */
     private List<SailInstance> instances(Vector3d com) {
         if (instancesDirty || com.distanceSquared(cachedCom) > 1.0e-4) {
@@ -404,6 +447,9 @@ public final class SailingRuntime {
                 if (s.square() != null) {
                     double[] c = s.square().centroid(s.trim());
                     rel.add(s.square().upper().alongX() ? c[0] : 0.0, -c[1], s.square().upper().alongX() ? 0.0 : c[0]);
+                } else if (s.triangle() != null) {
+                    double[] c = s.triangle().centroid(s.trim());
+                    rel.add(c[0], c[1], c[2]);
                 }
                 out.add(new SailInstance(s.type(), s.area(), s.trim(), bow.toShip(rel, new Vector3d())));
             }

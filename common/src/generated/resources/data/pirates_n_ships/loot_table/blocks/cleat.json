@@ -11,11 +11,11 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "pirates_n_ships:fore_and_aft_sail"
+          "name": "pirates_n_ships:cleat"
         }
       ],
       "rolls": 1.0
     }
   ],
-  "random_sequence": "pirates_n_ships:blocks/fore_and_aft_sail"
+  "random_sequence": "pirates_n_ships:blocks/cleat"
 }

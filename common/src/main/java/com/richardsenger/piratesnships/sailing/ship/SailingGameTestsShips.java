@@ -6,13 +6,15 @@ import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
 import com.richardsenger.piratesnships.sailing.SailingConfig;
-import com.richardsenger.piratesnships.sailing.block.SailBlock;
+import com.richardsenger.piratesnships.sailing.block.CleatBlock;
 import com.richardsenger.piratesnships.sailing.block.SailWinchBlock;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
 import com.richardsenger.piratesnships.sailing.block.YardBlock;
 import com.richardsenger.piratesnships.sailing.block.YardBlockEntity;
 import com.richardsenger.piratesnships.sailing.sail.ClothGeometry;
 import com.richardsenger.piratesnships.sailing.sail.SquareSail;
+import com.richardsenger.piratesnships.sailing.sail.TriangularSailContent;
+import com.richardsenger.piratesnships.sailing.sail.TriangularSails;
 import com.richardsenger.piratesnships.sailing.sail.YardSails;
 import org.jetbrains.annotations.Nullable;
 import com.richardsenger.piratesnships.sailing.force.ForceBreakdown;
@@ -37,12 +39,13 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.AttachFace;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 
 /**
  * Spike 3 and F5a GameTests: a closed 5×4×5 plank hull (floor y=5, deck y=8) with a helm facing north (so the bow is
- * +Z), a fence mast and one sail (a square sail between two yards, or the one-block fore-and-aft sail), floating in a
+ * +Z), a fence mast and one sail (a square sail between two yards, or a triangular sail on a stay), floating in a
  * 40×40 stone basin of water (y=2..7). The wind is fixed with
  * {@link WindOverride}, which is level-wide, so every wind test has its own batch and clears the override itself
  * (with an expiry as a safety net if a test fails).
@@ -139,13 +142,34 @@ public final class SailingGameTestsShips {
         }
     }
 
-    /** Hull at x in [x0, x0+4], z in [z0, z0+4]; helm at the stern (z0+1) facing north, mast and a one-block sail amidships. Returns the helm. */
-    public static BlockPos hull(GameTestHelper h, int x0, int z0, Block sail, Direction sailFacing, SailTrim trim) {
+    /**
+     * Hull at x in [x0, x0+4], z in [z0, z0+4] with a triangular (fore-and-aft) sail (rule F5b): a fence mast amidships
+     * (y 9..14), a bowsprit of four planks (y=8, z0+5..z0+8), the head cleat A on the mast's forward face at y=14, the
+     * clew cleat C on the deck straight below it (y=9) and the tack cleat B on the bowsprit's end, with a stay from A
+     * to B. Area 0.5 × 5 (drop A-C) × 5 (B forward of A) = 12.5. The mast reaches above the template: build it in a
+     * {@link #basin}. Returns the helm.
+     */
+    public static BlockPos foreAndAftHull(GameTestHelper h, int x0, int z0, SailTrim trim) {
         BlockPos helm = bareHull(h, x0, z0);
-        h.setBlock(new BlockPos(x0 + 2, 9, z0 + 2), Blocks.OAK_FENCE);
-        h.setBlock(new BlockPos(x0 + 2, 10, z0 + 2), sail.defaultBlockState()
-                .setValue(HorizontalDirectionalBlock.FACING, sailFacing).setValue(SailBlock.TRIM, trim));
+        int mx = x0 + 2, mz = z0 + 2;
+        for (int y = 9; y <= 14; y++) {
+            h.setBlock(new BlockPos(mx, y, mz), Blocks.OAK_FENCE);
+        }
+        for (int z = z0 + 5; z <= z0 + 8; z++) {
+            h.setBlock(new BlockPos(mx, 8, z), Blocks.OAK_PLANKS);
+        }
+        BlockPos head = new BlockPos(mx, 14, mz + 1);
+        BlockPos tack = new BlockPos(mx, 9, z0 + 8);
+        h.setBlock(head, cleat(AttachFace.WALL, Direction.SOUTH).setValue(CleatBlock.TRIM, trim));
+        h.setBlock(new BlockPos(mx, 9, mz + 1), cleat(AttachFace.FLOOR, Direction.NORTH));
+        h.setBlock(tack, cleat(AttachFace.FLOOR, Direction.NORTH));
+        TriangularSails.rig(h.getLevel(), h.absolutePos(head), h.absolutePos(tack));
         return helm;
+    }
+
+    /** A cleat state ({@code facing} points away from the supporting block for a wall cleat). */
+    public static BlockState cleat(AttachFace face, Direction facing) {
+        return TriangularSailContent.CLEAT.get().defaultBlockState().setValue(CleatBlock.FACE, face).setValue(CleatBlock.FACING, facing);
     }
 
     /** The 5×4×5 plank hull with its helm and nothing on deck. Returns the helm. */
@@ -164,21 +188,21 @@ public final class SailingGameTestsShips {
     }
 
     /**
-     * Turns the bottom layer of a {@link #hull} into stone ballast. The plain hull is a hollow, top-heavy plank box
-     * with a metacentric height of about 0.1 blocks: it lists about 22° at rest from the helm's weight alone, runs
-     * downwind 35 to 46° bow down under the small sail, and, heeled a few degrees, sheers off its course by up to 4° in
-     * 10 s, to port or starboard with the sign of the heel (D5, measured). Ballasted it runs about 16° bow down and
-     * holds its course.
+     * Turns the bottom layer of a test hull into cobblestone ballast: a ship block (not {@code pirates_n_ships:terrain},
+     * so it is gathered) in Sable's {@code #sable:heavy} (through {@code #c:cobblestones}, 2 kpg against the planks' 1).
+     * The plain hull is a hollow, top-heavy plank box with a metacentric height of about 0.1 blocks: it lists about 22°
+     * at rest from the helm's weight alone, runs downwind 35 to 46° bow down under the small sail, and, heeled a few
+     * degrees, sheers off its course by up to 4° in 10 s, to port or starboard with the sign of the heel (D5, measured).
+     * Ballasted (81.6 kpg with the square rig) it runs about 3.4° bow down at 0.38 m/s and holds its course (F5b,
+     * measured).
      *
-     * <p><b>Caution (found in F5a):</b> stone is terrain ({@code ShipBlockRule.TERRAIN}) and is never gathered, so this
-     * "ballast" stays behind as a submerged plate and the ship floats without its floor (30.6 kpg instead of 43). What
-     * D5 measured is that floorless hull. A ship heavy enough to settle onto the plate sticks to it. Real ballast
-     * would be a heavy ship block such as cobblestone (Sable {@code #c:cobblestones} → heavy).
+     * <p>Until F5b this was stone, which is terrain ({@code ShipBlockRule.TERRAIN}): it was never gathered and stayed
+     * behind as a submerged plate, so the D5 numbers were measured on a floorless 30.6 kpg hull.
      */
     public static void ballast(GameTestHelper h, int x0, int z0) {
         for (int x = x0; x <= x0 + 4; x++) {
             for (int z = z0; z <= z0 + 4; z++) {
-                h.setBlock(new BlockPos(x, 5, z), Blocks.STONE);
+                h.setBlock(new BlockPos(x, 5, z), Blocks.COBBLESTONE);
             }
         }
     }
@@ -305,18 +329,28 @@ public final class SailingGameTestsShips {
         });
     }
 
-    /** Wind from the east (on the starboard beam) with a fore-and-aft sail: mostly forward, the keel holds. */
+    /*
+     * Beam reach tolerances (F5b, triangular sail of 12.5 blocks² on the unballasted hull, wind 3 blocks/s, measured in
+     * four full suite runs): with the keel 0.371 to 0.373 m/s forward and 0.108 to 0.111 m/s to leeward (leeway ratio
+     * 0.29 to 0.30), without it 0.359 to 0.363 and 0.162 to 0.166 (0.45 to 0.46). The square hull's own water drag is the same in all directions, so without the keel the
+     * leeway follows the sail's side-to-drive ratio. LEEWAY_RATIO (0.37) lies between the two. Spike 3's one-block sail
+     * (16 blocks², center of effort 2 blocks above the block) made 0.425 / 0.113 with the keel and 0.362 / 0.299
+     * without, against a ratio of 0.5.
+     */
+    private static final double LEEWAY_RATIO = 0.37;
+
+    /** Wind from the east (on the starboard beam) with a triangular fore-and-aft sail: mostly forward, the keel holds. */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = "pirates_n_ships_sail_beam")
     public static void beamReachForeAndAftSailsForward(GameTestHelper h) {
         fixWind(h, 90.0, BEAM_WIND);
         basin(h, true);
-        Fixture f = assemble(h, hull(h, 22, 3, SailingBlocks.FORE_AND_AFT_SAIL.get(), Direction.EAST, SailTrim.FULL));
+        Fixture f = assemble(h, foreAndAftHull(h, 22, 3, SailTrim.FULL));
         double[] a = measure(h, f);
         h.runAfterDelay(TO + 1, () -> {
             clearWind(h);
             log("beam reach keel", f, a);
             h.assertTrue(fwd(a) > 0.3, "beam reach too slow: " + fwd(a));
-            h.assertTrue(Math.abs(port(a)) < 0.5 * fwd(a), "beam reach drifts sideways: fwd " + fwd(a) + ", port " + port(a));
+            h.assertTrue(Math.abs(port(a)) < LEEWAY_RATIO * fwd(a), "beam reach drifts sideways: fwd " + fwd(a) + ", port " + port(a));
             h.succeed();
         });
     }
@@ -327,13 +361,13 @@ public final class SailingGameTestsShips {
         ConfigOverrides.during(h, SailingConfig.KEEL_ENABLED, false);
         fixWind(h, 90.0, BEAM_WIND);
         basin(h, true);
-        Fixture f = assemble(h, hull(h, 22, 3, SailingBlocks.FORE_AND_AFT_SAIL.get(), Direction.EAST, SailTrim.FULL));
+        Fixture f = assemble(h, foreAndAftHull(h, 22, 3, SailTrim.FULL));
         double[] a = measure(h, f);
         h.runAfterDelay(TO + 1, () -> {
             clearWind(h);
             log("beam reach no keel", f, a);
             // the wind blows toward −X, which is the ship's starboard→port... port is +X, so leeward is −X = starboard side
-            h.assertTrue(Math.abs(port(a)) > 0.5 * Math.abs(fwd(a)), "without keel the ship should drift: fwd " + fwd(a) + ", port " + port(a));
+            h.assertTrue(Math.abs(port(a)) > LEEWAY_RATIO * Math.abs(fwd(a)), "without keel the ship should drift: fwd " + fwd(a) + ", port " + port(a));
             h.succeed();
         });
     }
@@ -368,7 +402,7 @@ public final class SailingGameTestsShips {
         basin(h, true);
         BlockPos helmA = squareHull(h, 5, 17, SailTrim.FURLED);
         h.setBlock(new BlockPos(6, 9, 18), SailingBlocks.SAIL_WINCH.get());
-        BlockPos helmB = hull(h, 28, 17, SailingBlocks.FORE_AND_AFT_SAIL.get(), Direction.EAST, SailTrim.FURLED);
+        BlockPos helmB = foreAndAftHull(h, 28, 17, SailTrim.FURLED);
         Fixture a = assemble(h, helmA);
         Fixture b = assemble(h, helmB);
         BlockPos winch = a.ship().plotBlocks().stream()
@@ -385,7 +419,7 @@ public final class SailingGameTestsShips {
             }
             h.assertTrue(h.getLevel().getBlockState(sailA.below(3)).getValue(YardBlock.TRIM) == SailTrim.FURLED, "the lower yard got a trim");
             h.assertTrue(a.runtime().trimAt(sailA) == e, "runtime trim " + a.runtime().trimAt(sailA) + ", expected " + e);
-            h.assertTrue(h.getLevel().getBlockState(sailB).getValue(SailBlock.TRIM) == SailTrim.FURLED, "the other ship's sail changed");
+            h.assertTrue(h.getLevel().getBlockState(sailB).getValue(CleatBlock.TRIM) == SailTrim.FURLED, "the other ship's sail changed");
             h.assertTrue(b.runtime().unfurledCount() == 0, "the other ship's runtime changed");
         }
         h.succeed();

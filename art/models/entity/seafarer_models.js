@@ -202,6 +202,7 @@ SF.make = function (type, repo) {
   eval(fs.readFileSync(repo + '/art/models/entity/crew_member_model.js', 'utf8'));
   const res = SF.build(type);
   eval(fs.readFileSync(repo + '/art/models/entity/crew_member_animations.js', 'utf8'));
+  eval(fs.readFileSync(repo + '/art/models/entity/musket_animations.js', 'utf8'));
   return res;
 };
 

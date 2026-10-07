@@ -23,6 +23,7 @@ Minecraft mod. Full spec: `docs/design.md`. Read it at the start of every sessio
 - `refs/sable`: the Sable source. **Always read it before using any Sable API.** Never invent Sable methods. Note which APIs are in `sable-common` and which are loader-only.
 - `refs/create-aeronautics`: an example of a real mod using Sable (assembly, forces).
 - `refs/multiloader-template`: the original template, for reference on build setup.
+- `refs/guideme`: the GuideME source (branch `1.21.1`), the in-game guidebook framework; read it before using its page format, tags or API.
 - `refs/` is read-only and excluded from the build. Never copy code from `refs/` into the mod (licenses).
 
 ## Commands

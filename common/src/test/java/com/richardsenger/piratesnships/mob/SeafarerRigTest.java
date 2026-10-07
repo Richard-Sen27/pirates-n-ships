@@ -18,7 +18,9 @@ import javax.imageio.ImageIO;
 import net.minecraft.SharedConstants;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.Bootstrap;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import software.bernie.geckolib.animation.Animation;
@@ -27,6 +29,7 @@ import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.loading.json.raw.Model;
 import software.bernie.geckolib.loading.json.typeadapter.KeyFramesAdapter;
+import com.richardsenger.piratesnships.mob.entity.NavySoldier;
 import software.bernie.geckolib.loading.object.BakedAnimations;
 import software.bernie.geckolib.loading.object.BakedModelFactory;
 import software.bernie.geckolib.loading.object.GeometryTree;
@@ -176,5 +179,39 @@ class SeafarerRigTest {
         assertTrue(Files.isRegularFile(ASSETS.resolve(geo.getPath())), geo + " exists");
         assertEquals(HumanoidGeoModel.RIG_GEO, HumanoidGeoModel.geoFor(HumanoidGeoModel.entityTexture("crew_member")),
                 "the crew member keeps its geometry");
+    }
+
+    /** Bones the musket animations may key (M6): arms, the right hand locator (turns the held musket) and the waist. */
+    private static final Set<String> MUSKET_BONES = Set.of("right_arm", "left_arm", "right_hand", "waist");
+
+    @Test
+    void musketAnimationsExistWithTheirLengthsAndLoopModesAndKeyOnlyTheUpperBody() throws IOException {
+        BakedAnimations anims = KeyFramesAdapter.GEO_GSON.fromJson(read(ANIMATIONS).getAsJsonObject("animations"), BakedAnimations.class);
+        Animation aim = anims.getAnimation(NavySoldier.ANIM_AIM);
+        Animation reload = anims.getAnimation(NavySoldier.ANIM_RELOAD);
+        Animation shove = anims.getAnimation(NavySoldier.ANIM_SHOVE);
+        assertNotNull(aim, "musket_aim");
+        assertNotNull(reload, "musket_reload");
+        assertNotNull(shove, "musket_shove");
+        assertEquals(Animation.LoopType.HOLD_ON_LAST_FRAME, aim.loopType(), "the aim holds its last frame");
+        assertEquals(Animation.LoopType.PLAY_ONCE, reload.loopType(), "the reload plays once");
+        assertEquals(Animation.LoopType.PLAY_ONCE, shove.loopType(), "the shove plays once");
+        // GeckoLib lengths are in ticks
+        assertEquals(7.0, aim.length(), 1e-6, "aim rises in 0.35 s");
+        assertEquals(MusketAction.RELOAD_ANIMATION_TICKS, reload.length(), 1e-6, "reload is 5 s (the speed stretches it)");
+        assertEquals(MusketAction.SHOVE_TICKS, shove.length(), 1e-6, "shove is 0.5 s");
+        for (Animation anim : List.of(aim, reload, shove)) {
+            Set<String> keyed = new java.util.HashSet<>();
+            for (BoneAnimation b : anim.boneAnimations()) {
+                assertTrue(MUSKET_BONES.contains(b.boneName()), anim.name() + " keys " + b.boneName() + " (legs walk, the head looks)");
+                keyed.add(b.boneName());
+            }
+            assertEquals(MUSKET_BONES, keyed, anim.name() + " keys both arms, the musket hand and the waist");
+        }
+        // the musket lies along the aim: the hand locator turns the barrel level (about +84 in file convention)
+        JsonObject hand = read(ANIMATIONS).getAsJsonObject("animations").getAsJsonObject(NavySoldier.ANIM_AIM)
+                .getAsJsonObject("bones").getAsJsonObject("right_hand").getAsJsonObject("rotation");
+        JsonArray last = hand.getAsJsonObject("0.35").getAsJsonArray("vector");
+        assertTrue(last.get(0).getAsFloat() > 70f, "aim turns the musket level along the arm");
     }
 }

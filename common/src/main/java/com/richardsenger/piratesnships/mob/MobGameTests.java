@@ -343,6 +343,34 @@ public final class MobGameTests {
         });
     }
 
+    /**
+     * The soldier's synced musket action (M6, server side): {@code AIM} while it aims at a wanted player before the shot,
+     * {@code RELOAD} with the configured reload length right after it.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200, batch = "pirates_n_ships_mob_navy_action")
+    public static void navySoldierReportsAimThenReload(GameTestHelper h) {
+        floor(h, 24);
+        NavySoldier soldier = spawn(h, MobContent.NAVY_SOLDIER.get(), 4, 12, -90);
+        Player player = MobTestSupport.playerInLevel(h, new Vec3(12.5, 1, 12.5), 90);
+        LawService.setScore(player, 100);
+        int[] aimTicks = {0};
+        MusketAction[] afterShot = {null};
+        h.onEachTick(() -> {
+            if (soldier.shotsFired() == 0) {
+                if (soldier.musketAction() == MusketAction.AIM) aimTicks[0]++;
+            } else if (afterShot[0] == null) {
+                afterShot[0] = soldier.musketAction();
+            }
+        });
+        h.succeedWhen(() -> {
+            h.assertTrue(afterShot[0] != null, "soldier has not fired");
+            int aim = MobConfig.MUSKET_AIM_TICKS.get();
+            h.assertTrue(aimTicks[0] >= aim, "AIM reported for " + aimTicks[0] + " ticks before the shot, expected at least " + aim);
+            h.assertValueEqual(afterShot[0], MusketAction.RELOAD, "action right after the shot");
+            h.assertValueEqual(soldier.musketReloadTicks(), MobConfig.MUSKET_RELOAD_TICKS.get(), "synced reload length");
+        });
+    }
+
     /** A navy soldier leaves an innocent player alone. */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200, batch = "pirates_n_ships_mob_navy_innocent")
     public static void navySoldierIgnoresAnInnocentPlayer(GameTestHelper h) {

@@ -247,7 +247,8 @@ you get close. Officers (gold trim, bicorne) are skilled saber duelists. Pirates
 Sailors never fight and run from danger. Hitting or killing navy is a crime; killing pirates is not. Pirates drop
 doubloons and sometimes a cutlass; navy drop lead shot and gunpowder. Operators spawn them with `/pirates mob spawn <pirate|sailor|navy_soldier|navy_officer>
 [count]` or with spawn eggs, and `/pirates mob debug on` traces what nearby duelists decide (it also shows the
-difficulty: on peaceful they ignore players); natural spawning comes with the world structures. Everything is in the `mobs` server
+difficulty: on peaceful they ignore players, and vanilla zeroes all mob damage to players there, so set
+`/difficulty normal` to fight); natural spawning comes with the world structures. Everything is in the `mobs` server
 config.
 
 ### Sharks
@@ -542,9 +543,9 @@ go, sneak and right-click with an empty hand. More than 24 blocks from the hook 
 (or is lost, if the server says so). Throwing a second hook releases the first. Server options: section `grapple`.
 
 ### Swordplay
-Swords make themselves heard: each swing whooshes as the blade comes through (a thrust sounds sharper), hits thud
-on flesh and ring on a chestplate, a parry rings out loudly while a blocked blow clashes dully, and a staggered
-fighter takes a heavy thud. Drawing a sword plays a short scrape. Server owners turn sword sounds off or change
+Swords make themselves heard, one sound per attack: a miss whooshes (lower for a thrust), a hit slices flesh and a
+thrust bites harder, a chestplate rings, and blade on blade clangs, loudly for a parry, dully for a blocked blow
+or when you catch an opponent mid-swing. Drawing a sword plays a short scrape. Server owners turn sword sounds off or change
 their volume under `melee.sounds`.
 
 With a rapier, cutlass or saber in hand the mouse works differently (server config `melee.skill_based_combat`,
@@ -696,6 +697,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `sea_chest` | Sea chest on/off, worn speed, sink pull, wind drift and its cap, draft. |
 | `survival` | Cold water on/off and freeze rate, warm effect length, swimming hunger multiplier. |
 | `provisions` | Consumption, rations, spoilage, scurvy, rum, water barrel capacity, rain refill. |
+| `cargo_trade.market_backend` | Desk reach, maximum trade quantity, refresh interval of open market screens. |
 | `cargo_trade` | Container sizes, prices, price recovery, contracts, plunder, port fees, cargo weight. |
 | `law` | Criminal score, severity of each crime, decay, fines, bounties, crime detection, theft; `law.bounty`: officer turn-ins on/off and delivery range, notice boards on/off and reach. |
 | `flags_brig` | False-colors detection, NPC surrender, capturing players, prisoner escapes. |

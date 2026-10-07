@@ -99,3 +99,17 @@ differs.
    your draw.
 9. **With a pirate:** its swings and your guard and parry clashes come from the right positions.
 10. **Toggle:** `melee.sounds.enabled = false` silences everything; `volume = 0.3` makes it quieter.
+
+
+## P8: one sound per attack
+1. **Miss:** slash into the air: one whoosh at the end of the swing, nothing during the wind-up; a thrust into the air
+   whooshes once, audibly lower.
+2. **Hit:** slash an unarmoured zombie or villager: one slice, no whoosh before it; subtitles show only "Sword hits".
+3. **Thrust:** one heavier slice.
+4. **Blade on blade:** hit a pirate while it winds up: one clang ("Blades clash"), not a slice.
+5. **Parry:** one loud clang; over many parries the six variants vary without sounding like different weapons (say
+   if one is noticeably weak).
+6. **Guard:** a quieter, lower clang per blocked blow.
+7. **Armour:** an iron chestplate rings.
+8. **Pirate fight:** never two sword sounds for one attack, no bone cracks anywhere, feints silent.
+9. **Drawing** a sword sounds as before.

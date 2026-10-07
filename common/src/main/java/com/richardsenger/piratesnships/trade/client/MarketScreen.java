@@ -38,8 +38,9 @@ import java.util.Optional;
  * doubloons, a "Goods" tab (each good with its role, buy and sell totals for the chosen quantity, what the player
  * carries, buy and sell buttons) and a "Contracts" tab (today's offers with accept, the player's contracts with
  * deliver). Every button only sends a request; the server decides and answers with a new state, whose result shows
- * on the status line. Closes on Escape, when the player is farther than the desk's reach, or when the server refuses
- * the session.
+ * on the status line. The server pushes a new state when what the screen shows changed (another player's trade,
+ * prices, doubloons). Closes on Escape, the inventory key, when the player is farther than the desk's reach, or when
+ * the server refuses the session; closing sends {@link MarketPayloads.CloseMarket}.
  */
 public final class MarketScreen extends Screen {
 
@@ -73,6 +74,7 @@ public final class MarketScreen extends Screen {
     private boolean sellPlundered;
     private int scroll;
     private long seenVersion = -1;
+    private long seenResultVersion = ClientMarketState.resultVersion();
     private Action pending = Action.NONE;
     private Component status = Component.empty();
     private int statusColor = TEXT;
@@ -201,16 +203,27 @@ public final class MarketScreen extends Screen {
     private void onState(Minecraft mc) {
         Optional<MarketView> view = ClientMarketState.view();
         Optional<TransactionResult> result = ClientMarketState.lastResult();
-        if (view.isEmpty() && result.isPresent()) {
+        boolean newResult = ClientMarketState.resultVersion() != seenResultVersion;
+        seenResultVersion = ClientMarketState.resultVersion();
+        if (view.isEmpty() && result.isPresent() && newResult) {
             // The server refused the session (desk gone, unbound, too far, desks disabled)
             if (mc.player != null) mc.player.displayClientMessage(Component.translatable(MarketText.CLOSED), true);
             onClose();
             return;
         }
-        if (result.isPresent()) {
+        if (result.isPresent() && newResult) {
             status = message(result.get(), view);
             statusColor = result.get().done() ? GOOD : BAD;
             pending = Action.NONE;
+        }
+    }
+
+    @Override
+    public void removed() {
+        super.removed();
+        // Escape, the inventory key, out of reach or refused: end the session on the server
+        if (ClientMarketState.desk().isPresent() && Minecraft.getInstance().getConnection() != null) {
+            Services.NETWORK.sendToServer(MarketPayloads.CloseMarket.INSTANCE);
         }
     }
 
@@ -437,6 +450,18 @@ public final class MarketScreen extends Screen {
     }
 
     // ------------------------------------------------------------------ input
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (super.keyPressed(keyCode, scanCode, modifiers)) return true;
+        // The inventory key closes the screen like a container screen, unless the quantity field takes the key
+        boolean typing = quantityField != null && quantityField.isFocused();
+        if (!typing && Minecraft.getInstance().options.keyInventory.matches(keyCode, scanCode)) {
+            onClose();
+            return true;
+        }
+        return false;
+    }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {

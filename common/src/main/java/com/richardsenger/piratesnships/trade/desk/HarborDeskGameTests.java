@@ -47,6 +47,7 @@ import java.util.UUID;
 public final class HarborDeskGameTests {
 
     static final String CONFIG_DISABLED_BATCH = "pirates_n_ships_config_trade_desks_disabled";
+    static final String REFRESH_BATCH = "pirates_n_ships_config_trade_market_refresh";
 
     private static final BlockPos DESK = new BlockPos(1, 1, 1);
 
@@ -251,6 +252,78 @@ public final class HarborDeskGameTests {
         helper.assertValueEqual(HarborDeskCommands.resolvePort(helper.getLevel().getServer(), port), Optional.of(port), "full port id resolves");
         helper.assertValueEqual(HarborDeskService.use(p, helper.absolutePos(DESK)), HarborDeskService.Use.OPENED, "opens once bound");
         finish(helper, p);
+    }
+
+    private static List<MarketView> views(List<CustomPacketPayload> sent) {
+        return of(sent, MarketPayloads.State.class).stream().flatMap(st -> st.view().stream()).toList();
+    }
+
+    private static MarketView.GoodLine sugar(MarketView v) {
+        return v.goods().stream().filter(l -> l.good().equals(TradeGoods.SUGAR)).findFirst()
+                .orElseThrow(() -> new AssertionError("sugar not listed"));
+    }
+
+    /**
+     * Two players at one desk: a sale by A is pushed to B at once, a change outside the protocol (B's doubloons)
+     * reaches B within {@code market_refresh_ticks}, and after A closes the screen A gets no more states while B does.
+     */
+    @ModGameTest(batch = REFRESH_BATCH, timeoutTicks = 200)
+    public static void openSessionsRefreshAndCloseEndsOne(GameTestHelper helper) {
+        int interval = 10;
+        ConfigOverrides.during(helper, TradeConfig.MARKET_REFRESH_TICKS, interval);
+        ResourceLocation port = port(helper, PortKind.SEAFARER_VILLAGE);
+        desk(helper, Optional.of(port));
+        ServerPlayer a = player(helper, 0);
+        ServerPlayer b = player(helper, 100);
+        List<CustomPacketPayload> sentA = MarketBackend.record(a.getUUID());
+        List<CustomPacketPayload> sentB = MarketBackend.record(b.getUUID());
+        long[] mark = new long[2];
+        helper.startSequence()
+                .thenExecute(() -> {
+                    use(helper, a);
+                    use(helper, b);
+                    helper.assertTrue(MarketBackend.isOpen(a.getUUID(), port) && MarketBackend.isOpen(b.getUUID(), port), "both sessions open");
+                    MarketView before = lastState(helper, sentB).view().orElseThrow();
+                    // A sells: B's session gets the new stock and price at once, without a request of its own
+                    a.getInventory().add(new ItemStack(Items.SUGAR, 32));
+                    int statesB = of(sentB, MarketPayloads.State.class).size();
+                    MarketBackend.handleTrade(a, new MarketPayloads.Trade(port, false, TradeGoods.SUGAR, 32, false, Optional.empty()));
+                    helper.assertValueEqual(lastState(helper, sentA).result().orElseThrow().status(), TransactionResult.Status.OK, "A sold");
+                    List<MarketPayloads.State> states = of(sentB, MarketPayloads.State.class);
+                    helper.assertTrue(states.size() > statesB, "the sale is pushed to B");
+                    MarketPayloads.State pushed = states.get(states.size() - 1);
+                    helper.assertTrue(pushed.result().isEmpty(), "a push carries no result");
+                    MarketView after = pushed.view().orElseThrow();
+                    helper.assertValueEqual(after, MarketBackend.view(b, port, 1).orElseThrow(), "B sees the current market");
+                    helper.assertFalse(sugar(after).buy().equals(sugar(before).buy()) && sugar(after).sell().equals(sugar(before).sell()),
+                            "B's sugar quote moved: " + sugar(before) + " -> " + sugar(after));
+                    // A change outside the protocol: B's doubloons
+                    Wallet.give(b, 7);
+                    mark[0] = helper.getTick();
+                })
+                .thenWaitUntil(() -> {
+                    helper.assertTrue(views(sentB).stream().anyMatch(v -> v.coins() == 107L), "B's refreshed doubloons");
+                    helper.assertTrue(helper.getTick() - mark[0] <= interval + 1, "refreshed within the interval");
+                })
+                .thenExecute(() -> {
+                    MarketBackend.handleClose(a, MarketPayloads.CloseMarket.INSTANCE);
+                    helper.assertFalse(MarketBackend.isOpen(a.getUUID(), port), "A's session ended");
+                    helper.assertFalse(MarketBackend.canUse(a, port), "A can no longer trade");
+                    helper.assertTrue(MarketBackend.isOpen(b.getUUID(), port), "B's session continues");
+                    mark[1] = of(sentA, MarketPayloads.State.class).size();
+                    Wallet.give(a, 5);
+                    Wallet.give(b, 5);
+                })
+                .thenIdle(interval + 2)
+                .thenExecute(() -> {
+                    helper.assertValueEqual((long) of(sentA, MarketPayloads.State.class).size(), mark[1], "no refresh after A closed");
+                    helper.assertTrue(views(sentB).stream().anyMatch(v -> v.coins() == 112L), "B still refreshed");
+                    MarketBackend.close(a);
+                    MarketBackend.close(b);
+                    MarketBackend.stopRecording(a.getUUID());
+                    MarketBackend.stopRecording(b.getUUID());
+                })
+                .thenSucceed();
     }
 
     @ModGameTest(batch = CONFIG_DISABLED_BATCH)

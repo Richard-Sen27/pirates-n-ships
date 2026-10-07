@@ -45,8 +45,6 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
     private static final float HOIST_PER_SECOND = 1.0f;
     /** Cells per block of cloth along each edge. */
     private static final int CELLS_PER_BLOCK = 2;
-    /** |cos| of the wind against the cloth's normal below which the cloth keeps its side (hysteresis). */
-    private static final double SIDE_SWITCH = 0.15;
     /** Half the thickness of the rope [blocks]. */
     private static final float ROPE_HALF = 0.03f;
     /** Bulge at the middle of a full sail, per block of the square root of its area (capped). */
@@ -106,7 +104,7 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
         return be.shownFraction;
     }
 
-    /** The cloth bellies toward the side the wind blows to (in the ship's frame when on a ship). */
+    /** The cloth bellies toward the side the wind blows to (in the ship's frame when on a ship), see {@link ClothSide}. */
     private static void updateSide(CleatBlockEntity be, Vector3f normal, Level level, double now, float partialTick) {
         if (!ClientWind.hasData()) {
             return;
@@ -115,21 +113,8 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
         if (w.strength() <= 0.01) {
             return;
         }
-        Vector3d n = new Vector3d(normal.x, normal.y, normal.z);
         Quaterniond q = ClientShipPoses.orientation(level, Vec3.atCenterOf(be.getBlockPos()), partialTick);
-        if (q != null) {
-            q.transform(n);
-        }
-        double h = Math.hypot(n.x, n.z);
-        if (h < 1.0e-6) {
-            return;
-        }
-        double dot = (n.x * w.dirX() + n.z * w.dirZ()) / h;
-        if (dot > SIDE_SWITCH) {
-            be.side = 1;
-        } else if (dot < -SIDE_SWITCH) {
-            be.side = -1;
-        }
+        be.side = ClothSide.side(be.side, new Vector3d(normal.x, normal.y, normal.z), q, w.dirX(), w.dirZ());
     }
 
     /**

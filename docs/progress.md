@@ -5,7 +5,7 @@ Statuses: **todo** / **in progress** / **done** / **blocked: needs playtest** / 
 
 "Done" means: `./gradlew build` passes, `./gradlew :neoforge:runGameTestServer` passes, and the new logic has tests.
 
-Last updated: 2026-10-07 (fourth session: phase M: F9, M1, M2, M3 merged, M4 running; phase P: P1, P2, P3, P4 and F8f merged; F8g and Q1 running).
+Last updated: 2026-10-07 (fourth session: phase M: F9, M1, M2, M3 merged, M4 running; phase P: P1, P2, P3, P4 and F8f merged; F8g, Q1 and Q2 running).
 
 ## Phase F: first playtest feedback (done, F5 and F7 continue in phase G)
 
@@ -79,6 +79,7 @@ The human played with the phase G build on 2026-10-07 and reported: figureheads 
 | F7g | Blockbench: the large cannon model spanning two blocks plus the barrel (empty, powder, loaded; rear empty), the swivel gun (yoke and barrel pieces, loaded variant, item) | todo, after F8g frees Blockbench | Geometry from P2 (master frame, muzzle north, px): carriage z 0..32 (master 0..16, rear 16..32), ~24 high with the barrel; trunnion pivot (8, 14, 8); muzzle face z −16; barrel axis y 14 from z −15 to the breech at 24, cascabel 26. Swivel: yoke turns about the block's vertical centre line, pintle from y 0; barrel pivots at (8, 6, 8), muzzle 14 px ahead (z −6), breech z 14, tiller to z 20; item model is the whole gun. |
 | F8g | Blockbench: 3D item models for the brig door (both halves as one piece) and the brig key; the old door sprite and the key placeholder go | in progress |
 | Q1 | Four follow-ups: the direct `/pirates trade sell … plundered` records the plunder crime; pantry facing and the water barrel tinted through the block colour hook; duelist feints (abort-wind-up input in the melee rules, `DuelistBrain` uses `feintFrequency`); `*.gradle` as LF | in progress |
+| Q2 | Cannon follow-ups: block damage respects `mobGriefing` and spawn protection, a broken gun returns its load, destroyed blocks drop their loot, glancing hits break fewer blocks or bounce | in progress |
 | P3 | Firearm animations through PAL on the player rig (aim pistol, aim musket, reload pistol, reload musket) triggered by the P1 hold sessions, first and third person; the cannon fuse animation follows P2 | done | Merged (`b4cbff1`). Four animations on the F9 rig (aims hold, reloads 3 s and 5 s play once, stretched to the configured reload ticks), proxy guns on the rig placed through vanilla's hand math, `FirearmAnimationDriver` at `CLIENT_TICK_END` for every player (sessions read from the synced use time, no payload), `PalFirearmAnimations` layer `pirates_n_ships:firearms` at priority melee − 100 with an aim adjustment that pitches both arms with the look, speed and mirror modifiers; first person through PAL with both arms. Client `firearm_animations.enabled`. 11 JUnit tests. The `right_item` position channel in the reloads is unverified in game. Playtest `firearms.md` §P3. |
 
 ## Phase M: NPCs and animations (running)

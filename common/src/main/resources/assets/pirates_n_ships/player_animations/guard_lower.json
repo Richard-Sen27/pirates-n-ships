@@ -1,0 +1,53 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "guard_lower": {
+      "animation_length": 0.2,
+      "loop": false,
+      "bones": {
+        "right_arm": {
+          "rotation": {
+            "0.0": [
+              -75,
+              -45,
+              0
+            ],
+            "0.2": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "right_item": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              60
+            ],
+            "0.2": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "left_arm": {
+          "rotation": {
+            "0.0": [
+              -20,
+              20,
+              0
+            ],
+            "0.2": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    }
+  }
+}

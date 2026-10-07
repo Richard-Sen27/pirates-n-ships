@@ -1,0 +1,44 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "riposte_windup": {
+      "animation_length": 0.3,
+      "loop": "hold_on_last_frame",
+      "bones": {
+        "right_arm": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "0.15": [
+              -60,
+              40,
+              50
+            ],
+            "0.3": [
+              -30,
+              40,
+              45
+            ]
+          }
+        },
+        "right_item": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "0.3": [
+              0,
+              0,
+              -30
+            ]
+          }
+        }
+      }
+    }
+  }
+}

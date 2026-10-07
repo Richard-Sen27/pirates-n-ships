@@ -9,14 +9,14 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Melee animations, client only: the only thing the rest of the mod sees of the animation library
- * (docs/animation-libraries.md, "Code layout"). Milestone 7 installs {@link NoopMeleeAnimations}; milestone 8 adds a
- * PAL implementation and installs it with {@link #install}.
+ * (docs/animation-libraries.md, "Code layout"). {@link NoopMeleeAnimations} is the default; at client setup
+ * {@link MeleeAnimationsSetup} installs {@link PalMeleeAnimations} when the Player Animation Library is loaded.
  *
  * <p>Phase changes map to animations like this ({@code play} arguments):
  * <ul>
  *   <li>slash / thrust wind-up, active, recovery: {@code WINDUP / ACTIVE / RECOVERY} with {@code attack}</li>
  *   <li>riposte: any attack phase with {@code riposte = true}</li>
- *   <li>guard down: {@code GUARDING}; guard up: {@code IDLE} (or {@link #stop})</li>
+ *   <li>guard down: {@code GUARDING}; guard up: {@link #stop} (the server's {@code IDLE} arrives as {@code stop})</li>
  *   <li>parry: {@code PARRYING}; stagger: {@code STAGGERED}</li>
  * </ul>
  * Every {@code play} carries the time already spent in the phase and its length (0 = open-ended), so an animation

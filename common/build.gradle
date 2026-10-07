@@ -33,10 +33,24 @@ dependencies {
     // Sable (hard dependency). Only the loader-independent API is visible to common.
     compileOnly "dev.ryanhcode.sable:sable-common-${minecraft_version}:${sable_version}"
 
+    // Player Animation Library (melee animations, used only in combat/melee/client/anim/PalMeleeAnimations).
+    // PlayerAnimationLibCommon is published remapped to Fabric intermediary names (net.minecraft.class_742 ...), so a
+    // Mojang-named common module cannot compile against it. The NeoForge jar contains the same Common + Core classes
+    // in Mojang names, and we only reference those (no NeoForge class), so common compiles against it instead.
+    // Not transitive: its POM would put Core (already inside the jar) and newer gson/fastutil on our classpath.
+    compileOnly("com.zigythebird.playeranim:PlayerAnimationLibNeo:${pal_version}") { transitive = false }
+    // PAL's Molang engine (mochafloats, a Mocha fork): part of PlayerAnimationController's constructor signatures
+    compileOnly("com.zigythebird:mochafloats:4.1.0") { transitive = false }
+
     // Unit tests for pure logic and codecs (see docs/design.md §3.3)
     testImplementation platform('org.junit:junit-bom:5.11.3')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // PalAnimationFilesTest parses our player_animations/*.json with PAL's own loader (loader- and Minecraft-free Core).
+    // Not transitive: Minecraft's gson/fastutil/slf4j stay the versions on the test classpath.
+    testImplementation("com.zigythebird.playeranim:PlayerAnimationLibCore:${pal_version}") { transitive = false }
+    testImplementation("com.zigythebird:mochafloats:4.1.0") { transitive = false }
+    testRuntimeOnly("org.javassist:javassist:3.30.2-GA")
 }
 
 tasks.named('test', Test) {

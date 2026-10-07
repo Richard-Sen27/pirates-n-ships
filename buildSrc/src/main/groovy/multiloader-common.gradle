@@ -56,6 +56,16 @@ repositories {
             includeGroup('dev.ryanhcode.sable-companion')
         }
     }
+    // Player Animation Library (PAL, melee animations, docs/animation-libraries.md) and its Molang fork mochafloats
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Redlance'
+                url = 'https://repo.redlance.org/public'
+            }
+        }
+        filter { includeGroupAndSubgroups('com.zigythebird') }
+    }
 }
 
 // Declare capabilities on the outgoing configurations.
@@ -117,7 +127,9 @@ processResources {
             'neoforge_loader_version_range': neoforge_loader_version_range,
             'credits'                      : credits,
             'java_version'                 : java_version,
-            'sable_version'                : sable_version
+            'sable_version'                : sable_version,
+            'pal_version'                  : pal_version,
+            'pal_version_range'            : pal_version_range
     ]
 
     filesMatching(['pack.mcmeta', 'fabric.mod.json', 'META-INF/neoforge.mods.toml', '*.mixins.json']) {

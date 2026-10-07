@@ -6,6 +6,12 @@ import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
 import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips;
+import com.richardsenger.piratesnships.sailing.block.CleatBlock;
+import com.richardsenger.piratesnships.sailing.force.SailTrim;
+import com.richardsenger.piratesnships.sailing.rope.RopeAnchor;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.properties.AttachFace;
+import net.minecraft.world.phys.BlockHitResult;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests.Fixture;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
@@ -36,7 +42,7 @@ import java.util.List;
  * so their facing walls are 9 blocks apart. The thrower is a mock player (not in the level, so Sable does not carry
  * it): tests that need it aboard put it back onto A's deck every tick. Hooks are launched straight at their target
  * with {@link GrappleService#launch}, as the item does after aiming; ships are removed by {@code ShipTestCleanup} and
- * hooks are released at the end.
+ * hooks are released at the end. The RP1 tests put a cleat on each deck, where the GR1 ring tests put their rings.
  */
 public final class GrappleGameTests {
 
@@ -335,6 +341,146 @@ public final class GrappleGameTests {
             h.assertTrue(hooksInInventory(other) == 1, "the released hook did not come back");
             List<GrapplingHookEntity> left = h.getEntities(GrappleContent.HOOK.get());
             h.assertTrue(left.isEmpty(), "hooks left: " + left.size());
+            h.succeed();
+        });
+    }
+
+    // ------------------------------------------------------------------ cleats as rope anchors (RP1)
+
+    private static final String CLEAT_BATCH = "pirates_n_ships_grapple_cleat";
+    private static final String CLEATS_OFF_BATCH = "pirates_n_ships_config_grapple_cleats_off";
+
+    /** The two hulls with a floor cleat on each deck: A's at (5, 9, 12), B's at (17, 9, 10) (where the ring tests put rings). */
+    private static Ships twoShipsWithCleats(GameTestHelper h) {
+        DryHullGameTests.basin(h, 0, 23, true);
+        SailingGameTestsShips.openSky(h, 24);
+        BlockPos helmA = DryHullGameTests.hull(h, 2, false);
+        BlockPos helmB = DryHullGameTests.hull(h, 16, false);
+        h.setBlock(new BlockPos(5, 9, 12), SailingGameTestsShips.cleat(AttachFace.FLOOR, Direction.NORTH));
+        h.setBlock(new BlockPos(17, 9, 10), SailingGameTestsShips.cleat(AttachFace.FLOOR, Direction.EAST));
+        return new Ships(DryHullGameTests.assemble(h, helmA), DryHullGameTests.assemble(h, helmB));
+    }
+
+    /** Plot position of A's cleat (one east and one south of the helm). */
+    private static BlockPos cleatA(Fixture a) {
+        return a.helmPlot().offset(1, 0, 1);
+    }
+
+    /** Plot position of B's cleat (one west and one north of the helm). */
+    private static BlockPos cleatB(Fixture b) {
+        return b.helmPlot().offset(-1, 0, -1);
+    }
+
+    /** A hook flying along +z over B's cleat, passing {@code above} blocks over its horn. */
+    private static GrapplingHookEntity passOverCleat(ServerLevel level, Player player, Fixture b, double above) {
+        Vec3 horn = b.ship().toWorld(RopeAnchor.point(level, cleatB(b)));
+        Vec3 from = horn.add(0, above, -4.5);
+        return GrappleService.launch(level, player, from, new Vec3(0, 0, GrappleConfig.THROW_VELOCITY.get()),
+                new ItemStack(CombatContent.GRAPPLING_HOOK.get()), true);
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 120, batch = CLEAT_BATCH)
+    public static void hookPassingCloseToACleatLatchesOntoItsHorn(GameTestHelper h) {
+        Ships s = twoShipsWithCleats(h);
+        ServerLevel level = h.getLevel();
+        Player player = thrower(h);
+        keepAboard(h, player, s.a());
+        GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
+        h.runAfterDelay(20, () -> {
+            h.assertTrue(level.getBlockState(cleatB(s.b())).getBlock() instanceof CleatBlock, "no cleat on ship B at " + cleatB(s.b()));
+            hook[0] = passOverCleat(level, player, s.b(), 0.8);
+        });
+        h.runAfterDelay(21, () -> h.succeedWhen(() -> {
+            GrapplingHookEntity g = hook[0];
+            h.assertTrue(g.state() == GrapplingHookEntity.State.LATCHED, "the hook is " + g.state());
+            h.assertTrue(s.b().ship().id().equals(g.shipId()), "latched onto the wrong ship");
+            h.assertTrue(cleatB(s.b()).equals(g.latchedBlock()), "latched on " + g.latchedBlock() + ", not the cleat " + cleatB(s.b()));
+            h.assertTrue(g.onRing(), "the latch on a cleat does not hold like a ring");
+            h.assertTrue(g.plotPos().distanceTo(RopeAnchor.point(level, cleatB(s.b()))) < 1.0e-6, "the hook is not on the horn: " + g.plotPos());
+            g.release(GrappleRules.Release.NONE);
+        }));
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 700, batch = CLEAT_BATCH)
+    public static void ropeTiedToACleatHoldsTheShipNotThePlayer(GameTestHelper h) {
+        Ships s = twoShipsWithCleats(h);
+        ServerLevel level = h.getLevel();
+        Player player = thrower(h);
+        boolean[] aboard = {true};
+        Runnable put = () -> {
+            if (aboard[0] && !s.a().ship().isRemoved()) {
+                Vec3 at = s.a().ship().toWorld(Vec3.atBottomCenterOf(s.a().helmPlot().east()));
+                player.setPos(at.x, at.y, at.z);
+            }
+        };
+        put.run();
+        h.onEachTick(put);
+        GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
+        double[] start = {-1};
+        BlockPos cleat = cleatA(s.a());
+        BlockPos target = westDeckEdge(s.b());
+        h.runAfterDelay(20, () -> {
+            h.assertTrue(level.getBlockState(cleat).getBlock() instanceof CleatBlock, "no cleat on ship A at " + cleat);
+            start[0] = horizontal(comWorld(s.a().ship()), comWorld(s.b().ship()));
+            hook[0] = throwAt(level, player, s.b().ship(), target, -2.0);
+        });
+        h.runAfterDelay(27, () -> {
+            GrapplingHookEntity g = hook[0];
+            h.assertTrue(g.state() == GrapplingHookEntity.State.LATCHED, "the hook did not latch: " + g.state());
+            player.setShiftKeyDown(true);
+            BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(cleat), Direction.UP, cleat, false);
+            InteractionResult r = level.getBlockState(cleat).useWithoutItem(level, player, hit);
+            h.assertTrue(r.consumesAction(), "using the cleat did nothing: " + r);
+            h.assertTrue(cleat.equals(g.tiedRing()), "the rope is not tied to the cleat: " + g.tiedRing());
+            h.assertTrue(level.getBlockState(cleat).getValue(CleatBlock.TRIM) == SailTrim.FURLED, "tying off also cycled the trim");
+            // the player lets go and walks far away, beyond any rope length
+            aboard[0] = false;
+            player.setShiftKeyDown(false);
+            Vec3 away = g.position().add(-2.5 * GrappleConfig.MAX_ROPE_LENGTH.get(), 0, 0);
+            player.setPos(away.x, away.y, away.z);
+        });
+        h.runAfterDelay(40, () -> h.succeedWhen(() -> {
+            GrapplingHookEntity g = hook[0];
+            h.assertTrue(!g.isRemoved() && g.state() == GrapplingHookEntity.State.LATCHED, "the hook let go");
+            h.assertTrue(s.a().ship().id().equals(g.throwerShipId()), "the cleat's ship is not the hauling end");
+            Vec3 near = g.ropeNearEnd(level);
+            Vec3 horn = s.a().ship().toWorld(RopeAnchor.point(level, cleat));
+            h.assertTrue(near != null && near.distanceTo(horn) < 1.0e-6, "the rope's near end is not the cleat's horn: " + near);
+            double d = horizontal(comWorld(s.a().ship()), comWorld(s.b().ship()));
+            h.assertTrue(d < start[0] - 5.0, "the ships are not hauled together yet: " + start[0] + " -> " + d);
+            h.assertTrue(!g.taut(), "the rope is still hauling");
+            h.assertTrue(d > 4.0, "the hulls overlap: centers " + d + " apart");
+            g.release(GrappleRules.Release.NONE);
+            h.assertTrue(hooksInInventory(player) == 1, "the released hook did not come back");
+            s.a().ship().addVelocity(s.a().ship().linearVelocity().negate(), new Vector3d());
+            s.b().ship().addVelocity(s.b().ship().linearVelocity().negate(), new Vector3d());
+        }));
+    }
+
+    /** With {@code grapple.cleats_enabled} off a hook flies past a cleat, and using the cleat does not tie the rope. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 120, batch = CLEATS_OFF_BATCH)
+    public static void cleatsOffNeitherCatchNorTieOff(GameTestHelper h) {
+        Ships s = twoShipsWithCleats(h);
+        ConfigOverrides.during(h, GrappleConfig.CLEATS_ENABLED, false);
+        ServerLevel level = h.getLevel();
+        Player player = thrower(h);
+        keepAboard(h, player, s.a());
+        GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
+        h.runAfterDelay(20, () -> hook[0] = passOverCleat(level, player, s.b(), 0.8));
+        h.runAfterDelay(26, () -> {
+            GrapplingHookEntity g = hook[0];
+            h.assertTrue(!cleatB(s.b()).equals(g.latchedBlock()) && !g.onRing(), "a hook latched on a cleat while cleats are off");
+            g.release(GrappleRules.Release.NONE);
+            hook[0] = throwAt(level, player, s.b().ship(), westDeckEdge(s.b()), -2.0);
+        });
+        h.runAfterDelay(33, () -> {
+            GrapplingHookEntity g = hook[0];
+            h.assertTrue(g.state() == GrapplingHookEntity.State.LATCHED, "the hook did not latch: " + g.state());
+            BlockPos cleat = cleatA(s.a());
+            BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(cleat), Direction.UP, cleat, false);
+            level.getBlockState(cleat).useWithoutItem(level, player, hit);
+            h.assertTrue(g.tiedRing() == null, "the rope was tied to a cleat while cleats are off");
+            g.release(GrappleRules.Release.NONE);
             h.succeed();
         });
     }

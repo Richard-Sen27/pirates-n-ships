@@ -5,7 +5,7 @@ import com.richardsenger.piratesnships.sailing.block.CleatBlock;
 import com.richardsenger.piratesnships.sailing.block.CleatBlockEntity;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
-import com.richardsenger.piratesnships.sailing.ship.SailingRuntimes;
+import com.richardsenger.piratesnships.sailing.rope.RopeLines;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.BlockGetter;
@@ -15,8 +15,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The triangular sail rule ({@link StayLinker}) applied to a level: the block lookup, the stays stored in the cleats'
- * block entities, the cloth of the head cleats, and setting a sail's trim. Works the same on land and in a ship's plot
+ * The triangular sail rule ({@link StayLinker}) applied to a level: the block lookup, the stays among the ropes stored
+ * in the cleats' block entities ({@link RopeLines}, RP1), the cloth of the head cleats, and setting a sail's trim. Works the same on land and in a ship's plot
  * (server side); on a ship, the sailing runtime is told when a stay is rigged.
  */
 public final class TriangularSails {
@@ -49,30 +49,40 @@ public final class TriangularSails {
     }
 
     /**
-     * The other end of the stay of the cleat at {@code pos}, or null: only when that cleat's stay points back here (a
-     * stay whose other end was broken, moved without it or replaced does not count).
+     * The other end of the stay of the cleat at {@code pos}, or null: the first rope ({@link RopeLines#partners}, both
+     * ends agree) to another cleat that passes the stay rule ({@link StayLinker#check}). Ropes to rings and flat ropes
+     * are lines, not stays (RP1).
      */
     public static @Nullable BlockPos partner(BlockGetter level, BlockPos pos) {
-        if (!(level.getBlockEntity(pos) instanceof CleatBlockEntity be)) {
-            return null;
+        StayRules rules = SailingConfig.stayRules();
+        for (BlockPos p : RopeLines.partners(level, pos)) {
+            if (RopeLines.isCleat(level, p) && StayLinker.check(point(pos), point(p), rules) == StayLinker.Check.OK) {
+                return p;
+            }
         }
-        BlockPos target = be.stayTarget();
-        if (target == null || target.equals(pos) || !(level.getBlockEntity(target) instanceof CleatBlockEntity other)) {
-            return null;
-        }
-        return pos.equals(other.stayTarget()) ? target : null;
+        return null;
     }
 
-    /** The sail headed by the cleat at {@code pos} (it must be the higher end of a valid stay), or null. */
+    /**
+     * The sail headed by the cleat at {@code pos} (it must be the higher end of a valid stay to another cleat), or null.
+     * With several ropes down to cleats, the first that makes a sail.
+     */
     public static @Nullable TriangularSail sailHeadedAt(BlockGetter level, BlockPos pos, StayRules rules) {
-        BlockPos partner = partner(level, pos);
-        if (partner == null || partner.getY() >= pos.getY()) {
+        if (!(level.getBlockState(pos).getBlock() instanceof CleatBlock)) {
             return null;
         }
-        return StayLinker.sail(lookup(level), point(pos), point(partner), rules);
+        for (BlockPos p : RopeLines.partners(level, pos)) {
+            if (p.getY() < pos.getY() && RopeLines.isCleat(level, p)) {
+                TriangularSail s = StayLinker.sail(lookup(level), point(pos), point(p), rules);
+                if (s != null) {
+                    return s;
+                }
+            }
+        }
+        return null;
     }
 
-    /** Whether the cleat at {@code pos} is the higher end of a valid stay (it draws the rope). */
+    /** Whether the cleat at {@code pos} is the higher end of a valid stay. */
     public static boolean isStayHead(BlockGetter level, BlockPos pos) {
         BlockPos partner = partner(level, pos);
         return partner != null && partner.getY() < pos.getY();
@@ -92,8 +102,7 @@ public final class TriangularSails {
      */
     public static void refreshAround(ServerLevel level, BlockPos pos) {
         refresh(level, pos);
-        BlockPos partner = partner(level, pos);
-        if (partner != null) {
+        for (BlockPos partner : RopeLines.partners(level, pos)) {
             refresh(level, partner);
         }
         int reach = SailingConfig.stayRules().maxLength();
@@ -105,22 +114,12 @@ public final class TriangularSails {
         }
     }
 
-    /** Rigs a stay between the cleats at {@code a} and {@code b} (the caller checked the rule), dropping their old stays. */
+    /**
+     * Rigs a rope between the anchors at {@code a} and {@code b} (the caller checked the rule; {@link RopeLines#rig}),
+     * which is a stay when it passes the rule. Earlier ropes of either anchor stay.
+     */
     public static void rig(ServerLevel level, BlockPos a, BlockPos b) {
-        for (BlockPos p : new BlockPos[] {a, b}) {
-            BlockPos old = partner(level, p);
-            if (old != null && level.getBlockEntity(old) instanceof CleatBlockEntity o) {
-                o.setStay(null);
-                refresh(level, old);
-            }
-        }
-        if (level.getBlockEntity(a) instanceof CleatBlockEntity ea && level.getBlockEntity(b) instanceof CleatBlockEntity eb) {
-            ea.setStay(b);
-            eb.setStay(a);
-        }
-        refresh(level, a);
-        refresh(level, b);
-        SailingRuntimes.onRigChanged(level, a); // no block changed: tell the ship's runtime
+        RopeLines.rig(level, a, b);
     }
 
     /**

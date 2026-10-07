@@ -92,7 +92,7 @@ public final class SailingConfig {
     public static final ConfigValue<Double> PITCH_DAMPING = SAILING.doubleRange("pitch_damping", D.pitch(), 0.0, 10.0,
             "How fast the bow-up, bow-down pitching dies down, per second");
 
-    private static final ConfigSection SAILS = SAILING.section("sails", "Square sails (two yards on one mast) and triangular sails (a rope stay between cleats)");
+    private static final ConfigSection SAILS = SAILING.section("sails", "Square sails (two yards on one mast), triangular sails (a rope stay between cleats) and rope lines");
     public static final ConfigValue<Integer> YARD_MIN_GAP = SAILS.intRange("yard_min_gap", YardRules.DEFAULTS.minGap(), 1, 32,
             "Smallest height difference, in blocks, between the upper and the lower yard of a square sail");
     public static final ConfigValue<Integer> YARD_MAX_GAP = SAILS.intRange("yard_max_gap", YardRules.DEFAULTS.maxGap(), 1, 32,
@@ -105,6 +105,11 @@ public final class SailingConfig {
             "Longest rope stay of a triangular sail: largest distance in blocks between its two cleats");
     public static final ConfigValue<Integer> STAY_MIN_DROP = SAILS.intRange("stay_min_drop", StayRules.DEFAULTS.minDrop(), 1, 32,
             "Smallest height difference in blocks between the two cleats of a rope stay");
+    public static final ConfigValue<Boolean> ROPE_LINES = SAILS.bool("rope_lines", true,
+            "A rope between two cleats, a cleat and a mooring ring, or two rings on one ship (or both on land) that makes no sail "
+                    + "stays as a decorative rope line, up to stay_max_length long. Off = the rope only rigs stays, and existing lines are not drawn");
+    public static final ConfigValue<Double> ROPE_SAG = SAILS.doubleRange("rope_sag", 0.08, 0.0, 0.5,
+            "How far a rope line hangs down in the middle, as a fraction of its horizontal span (0 = taut)");
 
     private static final ConfigSection SHIPS = ModConfigs.server("sailing_runtime", "How sails and the keel act on assembled ships");
     public static final ConfigValue<Boolean> FORCES_ENABLED = SHIPS.bool("forces_enabled", true,

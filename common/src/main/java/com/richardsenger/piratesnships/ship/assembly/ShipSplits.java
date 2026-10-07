@@ -2,6 +2,7 @@ package com.richardsenger.piratesnships.ship.assembly;
 
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.ship.ShipData;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagReading;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.SableSplits;
@@ -200,7 +201,8 @@ public final class ShipSplits {
             // The identity moves to the new body: its id becomes the ship's id. The parent gets a wreck record below,
             // or none if it is dropped or has no blocks left.
             registry.remove(parentId);
-            registry.put(new ShipData(keeper, data.name(), data.owner(), data.crew(), data.flag(), data.dimension()));
+            registry.put(new ShipData(keeper, data.name(), data.owner(), data.crew(), data.flag(), data.dimension(),
+                    data.blownCoverUntil()));
             ShipBody body = SableShips.byId(level, keeper);
             if (body != null) {
                 writePointer(body, keeper, origin, lineIsWreck, lineIsWreck ? lineName : "");
@@ -224,7 +226,7 @@ public final class ShipSplits {
                 continue;
             }
             wrecks.add(p.id());
-            registry.put(new ShipData(p.id(), "", data.owner(), List.of(), "", data.dimension()));
+            registry.put(new ShipData(p.id(), "", data.owner(), List.of(), FlagReading.NO_FLAG, data.dimension())); // a wreck flies nothing
             writePointer(body, p.id(), origin, true, lineName);
             body.setName(sableName(true, "", lineName));
         }

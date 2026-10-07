@@ -6,6 +6,7 @@ import com.richardsenger.piratesnships.core.datagen.ModelContext;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagCommands;
+import com.richardsenger.piratesnships.ship.decor.flag.ShipAllegiance;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagConfig;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagData;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagGameTests;
@@ -65,6 +66,7 @@ public final class ShipDecorModule implements ModModule {
     @Override
     public void registerEvents() {
         CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> FlagCommands.register(dispatcher));
+        ShipAllegiance.register(); // FL2: refresh the keeper's flag after a split or rejoin
     }
 
     @Override

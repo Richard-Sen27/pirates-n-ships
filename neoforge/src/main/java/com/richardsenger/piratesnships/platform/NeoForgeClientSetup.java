@@ -13,6 +13,7 @@ import net.minecraft.sounds.Music;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
@@ -38,6 +39,8 @@ public final class NeoForgeClientSetup {
     public static void attach(IEventBus modBus, ModContainer container) {
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
 
+        // enqueueWork: on the main thread after parallel setup (PAL requires its layer factories to be registered here)
+        modBus.addListener(FMLClientSetupEvent.class, e -> e.enqueueWork(() -> ClientEvents.CLIENT_SETUP.invoker().onSetup()));
         modBus.addListener(RegisterKeyMappingsEvent.class, e -> ClientEvents.keyMappings().forEach(e::register));
         modBus.addListener(RegisterGuiLayersEvent.class, e -> ClientEvents.hudLayers().forEach(l -> e.registerAboveAll(l.id(), l.layer())));
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class, e -> {

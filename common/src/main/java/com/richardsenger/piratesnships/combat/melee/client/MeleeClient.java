@@ -2,6 +2,7 @@ package com.richardsenger.piratesnships.combat.melee.client;
 
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.melee.client.anim.MeleeAnimations;
+import com.richardsenger.piratesnships.combat.melee.client.anim.MeleeAnimationsSetup;
 import com.richardsenger.piratesnships.combat.melee.net.MeleeActions;
 import com.richardsenger.piratesnships.combat.melee.net.MeleeNet;
 import com.richardsenger.piratesnships.combat.melee.net.MeleeStatePayload;
@@ -28,6 +29,8 @@ public final class MeleeClient {
             ClientMeleeState.reset();
         });
         ClientEvents.registerHudLayer(Constants.id("melee_stamina"), MeleeHud::render);
+        // PAL wants its layer factories registered at client setup, not during mod construction
+        ClientEvents.CLIENT_SETUP.register(MeleeAnimationsSetup::onClientSetup);
         MeleeNet.setClientReceiver(MeleeClient::onState);
     }
 

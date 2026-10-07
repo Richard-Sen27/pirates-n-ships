@@ -1,0 +1,65 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "thrust_windup": {
+      "animation_length": 0.5,
+      "loop": "hold_on_last_frame",
+      "bones": {
+        "right_arm": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "0.5": [
+              25,
+              0,
+              10
+            ]
+          },
+          "position": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "0.5": [
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "right_item": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "0.5": [
+              60,
+              0,
+              0
+            ]
+          }
+        },
+        "torso": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "0.5": [
+              0,
+              15,
+              0
+            ]
+          }
+        }
+      }
+    }
+  }
+}

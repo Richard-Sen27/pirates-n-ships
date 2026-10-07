@@ -47,6 +47,14 @@ public final class ClientEvents {
     private ClientEvents() {
     }
 
+    /**
+     * Fired once at client setup, on the client main thread, after mod construction and registration (NeoForge:
+     * inside {@code FMLClientSetupEvent.enqueueWork}). For client initialisation that libraries require to happen at
+     * setup time rather than in {@code initClient()} (which runs during mod construction), e.g. registering a Player
+     * Animation Library layer. The client config is loaded by then.
+     */
+    public static final Event<ClientSetup> CLIENT_SETUP = Event.create(ls -> () -> ls.forEach(ClientSetup::onSetup));
+
     public static final Event<ClientTick> CLIENT_TICK_START = Event.create(ls -> mc -> ls.forEach(l -> l.onTick(mc)));
     public static final Event<ClientTick> CLIENT_TICK_END = Event.create(ls -> mc -> ls.forEach(l -> l.onTick(mc)));
 
@@ -119,6 +127,8 @@ public final class ClientEvents {
     @FunctionalInterface public interface SelectMusic { @Nullable Music select(@Nullable Music vanillaChoice); }
 
     @FunctionalInterface public interface SoundStreamStarted { void onStarted(SoundInstance sound, Channel channel); }
+
+    @FunctionalInterface public interface ClientSetup { void onSetup(); }
 
     @FunctionalInterface public interface ClientTick { void onTick(Minecraft minecraft); }
 

@@ -1,0 +1,49 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "parry": {
+      "animation_length": 0.3,
+      "loop": "hold_on_last_frame",
+      "bones": {
+        "right_arm": {
+          "rotation": {
+            "0.0": [
+              -75,
+              -45,
+              0
+            ],
+            "0.1": [
+              -115,
+              25,
+              20
+            ],
+            "0.3": [
+              -100,
+              15,
+              10
+            ]
+          }
+        },
+        "right_item": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              60
+            ],
+            "0.1": [
+              0,
+              0,
+              -20
+            ],
+            "0.3": [
+              0,
+              0,
+              -10
+            ]
+          }
+        }
+      }
+    }
+  }
+}

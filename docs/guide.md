@@ -471,7 +471,7 @@ on by default; vanilla weapons are untouched):
   violet while you are staggered and shows a grey block during the parry lockout.
 - Right click is taken over while a mod sword is held, so swap to another item to open doors or use the helm.
 - Your attacks, guard, parry and stagger are animated in first and third person through the Player Animation
-  Library (a required client mod); the animations are placeholders until the art pass. Client config
+  Library (a required client mod); the animations are authored in Blockbench (`art/animations/`). Client config
   `melee_animations`: on/off, first person auto/on/off (auto steps back for camera mods), layer priority.
 - Client config `melee_input` (tap and hold thresholds) and `melee_hud` (bar on/off, scale, offsets).
 

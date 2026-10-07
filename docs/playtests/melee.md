@@ -56,3 +56,26 @@ differs.
    mod). A dedicated server starts with or without it.
 7. **At sea on a rolling ship:** first-person arms line up with the camera; third-person animations look right on a
    moving deck.
+
+
+## F9: the Blockbench animations (replace the G12 placeholder checks)
+1. **Third person, saber, standing still.** Slash: the arm rises to the right with the blade upright, sweeps
+   horizontally across to the left, settles; nothing swings backward. Thrust: the arm pulls back low with the blade
+   level, punches straight forward with the torso leaning in, pulls back. Guard: blade raised diagonally across the
+   chest, off hand forward; releasing lowers it smoothly. Parry tap: a quick upward-outward flick. Staggered: lean back
+   with arms out, then rest. Riposte after a parry: a low twirl instead of the high wind-up.
+2. **Phase transitions.** Compare the rapier (fastest) with the cutlass (slowest): no visible jump between wind-up,
+   active and recovery, or into idle. Expect a one-frame jump only on a slash riposte.
+3. **Sword orientation (most uncertain).** From the side in F5: at the thrust draw and lunge the blade is close to
+   level and points at the target; in the guard it points up-left in front of the body, not into the head. Report any
+   animation whose blade points backward or down.
+4. **Shoulders and lean.** During the slash twist and the thrust lean, arms and head stay attached to the torso and
+   the hips stay over the legs.
+5. **First person** (`first_person = AUTO`, no camera mods): the slash arc crosses the view right to left, the thrust
+   pushes forward along the view with the blade level, the guard blade sits diagonally in the lower left; say whether
+   the slash wind-up arm leaves the frame.
+6. **Left-handed:** every animation mirrored onto the left arm, including the twist direction and the guard leaning
+   right; check on a second client too.
+7. **Sneaking while attacking (known risk):** the upper body probably pops to standing height on crouched legs. Report
+   how bad it looks.
+8. **Walking while attacking:** the legs keep walking; the left arm stops its walk swing while animated.

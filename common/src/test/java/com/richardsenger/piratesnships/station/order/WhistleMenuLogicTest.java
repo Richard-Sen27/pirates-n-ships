@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.combat.cannon.CannonStation.CannonOrder;
 import com.richardsenger.piratesnships.station.pump.PumpOrder;
 import com.richardsenger.piratesnships.station.winch.SailOrder;
 import io.netty.buffer.ByteBuf;
@@ -115,9 +116,14 @@ class WhistleMenuLogicTest {
     // ------------------------------------------------------------------ entries
 
     @Test
-    void entriesAreTheSailOrdersThenPumpThenRelease() {
+    void entriesAreTheSailOrdersThenPumpThenFireThenRelease() {
         List<WhistleOrder> e = WhistleOrder.entries();
-        assertEquals(List.of(WhistleOrder.HOIST, WhistleOrder.REEF, WhistleOrder.FURL, WhistleOrder.PUMP, WhistleOrder.RELEASE), e);
+        assertEquals(List.of(WhistleOrder.HOIST, WhistleOrder.REEF, WhistleOrder.FURL, WhistleOrder.PUMP, WhistleOrder.FIRE,
+                WhistleOrder.RELEASE), e);
+        assertEquals(CannonOrder.FIRE, WhistleOrder.FIRE.order());
+        assertNull(WhistleOrder.FIRE.sail(), "the fire order is no sail order and is not remembered");
+        assertEquals(Constants.id("cannon"), WhistleOrder.FIRE.icon());
+        assertEquals("fire", WhistleOrder.FIRE.id());
         assertEquals(SailOrder.HOIST, WhistleOrder.HOIST.sail());
         assertEquals(SailOrder.REEF, WhistleOrder.REEF.sail());
         assertEquals(SailOrder.FURL, WhistleOrder.FURL.sail());
@@ -136,9 +142,9 @@ class WhistleMenuLogicTest {
     }
 
     @Test
-    void fiveEntriesSplitTheWheelEvenly() {
+    void sixEntriesSplitTheWheelEvenly() {
         RadialLayout l = RadialLayout.forWindow(WhistleOrder.entries().size(), 480, 270, 1.0);
-        assertEquals(5, l.count());
+        assertEquals(6, l.count());
         for (int i = 0; i < l.count(); i++) {
             double a = l.centerAngle(i);
             assertEquals(i, l.sectorAt(RadialLayout.x(a, l.iconRadius()), RadialLayout.y(a, l.iconRadius())), "sector " + i);

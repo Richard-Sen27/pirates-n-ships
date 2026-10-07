@@ -49,6 +49,12 @@ public final class CannonData {
                     case NOT_A_CANNON -> "That is not a cannon";
                 });
             }
+            // the crew order (G13); the whistle entry's lang is the station module's
+            CannonStation.CannonOrder fire = CannonStation.CannonOrder.FIRE;
+            lang.add(fire.nameKey(), "fire the cannons")
+                    .add(fire.ackKey(), "Aye, firing!")
+                    .add(fire.nothingToDoKey(), "The gun is not loaded, captain!")
+                    .add(fire.unableKey(), "This gun won't fire, captain!");
         });
         data.models(CannonData::models);
         data.blockLoot(loot -> loot.dropSelf(CannonContent.CANNON.get()));

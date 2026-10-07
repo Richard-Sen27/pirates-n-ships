@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.station.order;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.combat.cannon.CannonStation.CannonOrder;
 import com.richardsenger.piratesnships.station.pump.PumpOrder;
 import com.richardsenger.piratesnships.station.winch.SailOrder;
 import java.util.List;
@@ -11,8 +12,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The orders of the captain's whistle radial menu (docs/design.md §7.2), in wheel order: entry 0 sits at the top, the
- * others follow clockwise. The wheel lays out whatever this list holds, so a later station order (cannons, crow's
- * nest, anchor, repair, boarding) is one more constant here with its {@link CrewOrder}; {@link WhistleOrders} gives it
+ * others follow clockwise. The wheel lays out whatever this list holds, so a later station order (crow's nest,
+ * anchor, repair, boarding) is one more constant here with its {@link CrewOrder}; {@link WhistleOrders} gives it
  * to the crew at the stations that take it. An entry without a crew order is a whistle action of its own
  * ({@link #RELEASE}). Pure data: the icon is an item id that the client resolves.
  */
@@ -21,6 +22,7 @@ public enum WhistleOrder {
     REEF(SailOrder.REEF, ResourceLocation.withDefaultNamespace("white_wool")),
     FURL(SailOrder.FURL, ResourceLocation.withDefaultNamespace("lead")),
     PUMP(PumpOrder.PUMP, Constants.id("bilge_pump")),
+    FIRE(CannonOrder.FIRE, Constants.id("cannon")),
     RELEASE(null, Constants.id("sail_winch"));
 
     private static final List<WhistleOrder> ENTRIES = List.of(values());

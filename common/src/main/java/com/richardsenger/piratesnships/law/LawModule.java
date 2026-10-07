@@ -15,6 +15,9 @@ import com.richardsenger.piratesnships.law.world.CrimeLog;
 import com.richardsenger.piratesnships.law.world.LawTags;
 import com.richardsenger.piratesnships.law.world.LawWorldGameTests;
 import com.richardsenger.piratesnships.law.world.PlacedBlocks;
+import com.richardsenger.piratesnships.law.world.PlunderCrimeGameTests;
+import com.richardsenger.piratesnships.law.world.PlunderCrimes;
+import com.richardsenger.piratesnships.law.crime.CrimeType;
 import com.richardsenger.piratesnships.law.world.TheftDetector;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
@@ -73,6 +76,8 @@ public final class LawModule implements ModModule {
         CommonEvents.CONTAINER_CLOSE.register(TheftDetector::onContainerClose);
         CommonEvents.BLOCK_PLACE.register(PlacedBlocks::onBlockPlace);
         CommonEvents.BLOCK_BREAK.register(PlacedBlocks::onBlockBreak);
+        // Trade integration (docs/design.md §10.3): plunder a navy port noticed is a crime
+        PlunderCrimes.register();
     }
 
     @Override
@@ -121,10 +126,29 @@ public final class LawModule implements ModModule {
                     .add(k + "bounty.claim.failed", "Could not claim a bounty: %s")
                     .add(k + "bounty.clear", "Removed all bounties on %s");
         });
+        data.lang(lang -> {
+            for (CrimeType t : CrimeType.values()) {
+                lang.add(t.nameKey(), switch (t) {
+                    case ATTACK_NAVY -> "Attacking the navy";
+                    case KILL_NAVY -> "Killing a navy sailor";
+                    case ATTACK_VILLAGER -> "Attacking a villager";
+                    case KILL_VILLAGER -> "Killing a villager";
+                    case ATTACK_NEUTRAL_SHIP -> "Attacking a neutral ship";
+                    case THEFT -> "Theft";
+                    case PIRACY -> "Piracy";
+                    case SEEN_UNDER_JOLLY_ROGER -> "Sailing under the Jolly Roger";
+                    case CAUGHT_FALSE_COLORS -> "Flying false colors";
+                    case ATTACK_STRUCK_COLORS -> "Attacking a ship that struck its colors";
+                    case PRESS_GANG -> "Press-ganging a prisoner";
+                    case DESERTION -> "Desertion";
+                    case FENCE_PLUNDER -> "Selling plunder";
+                });
+            }
+        });
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(LawGameTests.class, LawWorldGameTests.class);
+        return List.of(LawGameTests.class, LawWorldGameTests.class, PlunderCrimeGameTests.class);
     }
 }

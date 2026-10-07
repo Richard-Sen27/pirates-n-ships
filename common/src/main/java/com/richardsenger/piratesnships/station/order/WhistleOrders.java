@@ -20,7 +20,8 @@ import org.jetbrains.annotations.Nullable;
  * Server side of the whistle's radial menu: registers {@link WhistleOrderPayload} and carries out a chosen order. The
  * client only asks; this class checks that the sender holds a whistle, that the order exists and that the sender
  * stands on a ship, then issues the order to that ship's crew through {@link CrewStations}: a {@link CrewOrder} goes to
- * the crew at the stations whose kind takes it (sail orders to the winches, "pump" to the bilge pumps).
+ * the crew at the stations whose kind takes it (sail orders to the winches, "pump" to the bilge pumps, "fire" to the cannons). Only sail orders are remembered
+ * on the whistle as its last order.
  */
 public final class WhistleOrders {
 

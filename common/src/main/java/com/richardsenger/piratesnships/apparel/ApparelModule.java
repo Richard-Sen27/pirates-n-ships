@@ -1,10 +1,12 @@
 package com.richardsenger.piratesnships.apparel;
 
+import com.richardsenger.piratesnships.core.CoreContent;
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 import java.util.List;
@@ -29,6 +31,7 @@ public final class ApparelModule implements ModModule {
     @Override
     public void registerContent() {
         ApparelContent.init();
+        CoreContent.setTabIcon(() -> new ItemStack(ApparelContent.OFFICER_HAT.get()));
     }
 
     @Override

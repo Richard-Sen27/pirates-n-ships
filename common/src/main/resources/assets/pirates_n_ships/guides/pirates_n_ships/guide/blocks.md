@@ -16,7 +16,6 @@ item_ids:
   - pirates_n_ships:mooring_ring
   - pirates_n_ships:nameplate
   - pirates_n_ships:notice_board
-  - pirates_n_ships:test_block
   - pirates_n_ships:yard
 ---
 
@@ -45,7 +44,6 @@ item_ids:
   <ItemIcon id="pirates_n_ships:figurehead_eagle" />
   <ItemIcon id="pirates_n_ships:figurehead_skull" />
   <ItemIcon id="pirates_n_ships:nameplate" />
-  <ItemIcon id="pirates_n_ships:test_block" />
 </ItemGrid>
 
 | Block | Recipe | What it does |
@@ -69,7 +67,7 @@ item_ids:
 | <ItemLink id="pirates_n_ships:notice_board" /> | 4 planks, 2 paper | Lists every bounty and places new ones for doubloons. |
 | <ItemLink id="pirates_n_ships:figurehead_mermaid" />, <ItemLink id="pirates_n_ships:figurehead_lion" />, <ItemLink id="pirates_n_ships:figurehead_eagle" />, <ItemLink id="pirates_n_ships:figurehead_skull" /> | 4 planks and a prismarine shard, gold ingot, feather or bone | Decoration for the bow. Click the hull block it should hang on: the plate lands there and the figure looks at you. |
 | <ItemLink id="pirates_n_ships:nameplate" /> | any sign, 1 gold nugget | A board on two iron brackets that shows the ship's name once the ship is assembled and named (name tag on the helm); long names shrink to fit, renaming updates every plate within a second, disassembly clears them. Server option `ship_identity.nameplate_shows_name`. |
-| <ItemLink id="pirates_n_ships:test_block" /> | none | A development block. |
+| Test Block | none | A development block. |
 
 <Row>
   <RecipeFor id="pirates_n_ships:helm" />

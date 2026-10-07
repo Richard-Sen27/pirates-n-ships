@@ -39,3 +39,27 @@ gunpowder and cannonballs. Please send `latest.log` if anything differs.
 ## Also worth a look
 - Is 5 s reload right? Is one plank per hit enough, or should a ball at close range go deeper?
 - The ball is a large cannonball sprite in flight; say if it should be a sphere.
+
+
+## P2: two-block cannon and swivel gun (placeholder models until F7g)
+1. **Place a cannon** on land facing east: the clicked block holds the carriage front, the rear is one block west, the
+   barrel overhangs one block east. With the rear spot blocked, or air under the rear: refused, item kept.
+2. **Break the rear** in survival: both halves vanish, one cannon drops; the same from the front. In creative: both
+   vanish, no drop.
+3. **Use from the rear:** powder, then a ball, on the rear half; sneak-click to aim; fire with an empty hand on the
+   rear. The shot leaves about a block ahead of the front block at about 0.9 blocks height. You can't walk over the
+   gun; the outline is about 1.25 blocks tall.
+4. **On a ship:** place on deck, assemble: both halves move, the model draws across both blocks without gaps or
+   flicker at section borders, it fires from the world muzzle while sailing. Disassemble turned 90°: the halves stay
+   together and keep facing the right way. Assign crew by clicking the rear: the crew sits beside the gun, not on it,
+   and a second crew member is refused.
+5. **Swivel on a fence:** hold right-click with an empty hand: the gun turns smoothly with your view (yaw and pitch,
+   clamped at −30/+45). Let go while loaded: it fires where it points, the shot is a cannonball sprite, clearly
+   shorter range than the cannon, planks intact. Another player sees it turn. Break the fence: the gun drops.
+6. **Swivel on a ship:** with the ship turned, the gun still points where you look. While aiming, nothing else gets
+   used (doors, items).
+7. **Crew:** assign a crew member to a loaded swivel with the whistle, blow "Fire!": it fires after about half a
+   second.
+8. **Config:** `cannons.swivel.ammo = LEAD_SHOT` takes lead shot and draws it; `blocks_per_hit = 1` breaks planks;
+   `enabled = false` makes the gun inert with a message.
+9. **Visuals:** the placeholders and the swivel item icon in the GUI and in hand are stand-ins; judge sizes only.

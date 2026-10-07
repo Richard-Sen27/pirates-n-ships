@@ -468,6 +468,17 @@ member at a cannon fires it on the whistle order **Fire!** (or `/pirates crew or
 captain!". Server options: section `cannons` (on/off, damage, speed,
 gravity, reload, elevations, blocks per hit, recoil and impact push) and `combat.cannon_block_damage`.
 
+Placing a cannon: click the deck block where the **front** of the carriage should stand; the rear takes the block
+toward you and the barrel overhangs one block ahead, so click the spot by the rail. Both halves need a block
+underneath. Load, aim and fire on either half; breaking either half gives the whole cannon back.
+
+### Swivel gun
+A small gun on a yoke (three iron ingots over a stick) that mounts on a fence, wall, iron bars, brig bars or any
+full block. Load gunpowder, then a cannonball (or lead shot if the server says so). Hold right-click with an empty
+hand: the gun turns wherever you look while you hold, up to 45° up and 30° down; let go to fire. Sneak-use tells
+you what it needs. It hits less hard and less far than the cannon and breaks no planks unless the server allows it;
+it reloads in three seconds. Crew assigned to it fire it on the whistle's "Fire!".
+
 ### Grappling hook
 Right-click to throw the hook. If it hits the hull of another ship it bites in and hangs there, following the ship.
 If you stand on your own ship, the taut rope hauls both ships together until they lie side by side, ready for
@@ -610,6 +621,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `audio` (client) | Music on/off and volume, the gap between tracks, shanties aboard. |
 | `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore pull, entity damage, lost-hook rule. |
 | `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevation range and steps, blocks per hit, recoil and impact impulses, ball lifetime and water behaviour. |
+| `cannons.swivel` | Swivel gun on/off, ammo item and count, damage, muzzle speed, reload, blocks per hit, recoil and impact impulses, ball lifetime, elevation limits, aim reach. |
 | `mobs` | Mob types on/off and peaceful, hostility toggles, detection and fight ranges, skill tiers, musket timings and ammo, shove, drops. |
 | `melee_animations` (client) | Sword animations on/off, first-person mode, layer priority. |
 | `melee_input` / `melee_hud` (client) | Hold-to-thrust and parry-tap thresholds; stamina bar on/off, scale and offsets. |

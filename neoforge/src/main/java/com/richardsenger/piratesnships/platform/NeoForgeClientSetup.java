@@ -15,6 +15,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.SelectMusicEvent;
@@ -50,6 +51,15 @@ public final class NeoForgeClientSetup {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, false, SelectMusicEvent.class, e -> {
             Music music = ClientEvents.SELECT_MUSIC.invoker().select(e.getMusic());
             if (music != null) e.setMusic(music);
+        });
+        NeoForge.EVENT_BUS.addListener(InputEvent.InteractionKeyMappingTriggered.class, e -> {
+            ClientEvents.InteractionInput input = e.isAttack() ? ClientEvents.InteractionInput.ATTACK
+                    : e.isUseItem() ? ClientEvents.InteractionInput.USE : ClientEvents.InteractionInput.PICK_BLOCK;
+            if (ClientEvents.INTERACTION_KEY.invoker().onInteraction(Minecraft.getInstance(), input, e.getHand())
+                    == ClientEvents.InteractionKeyResult.CANCEL) {
+                e.setCanceled(true);
+                e.setSwingHand(false);
+            }
         });
         // fired on the sound thread, inside the channel's executor
         NeoForge.EVENT_BUS.addListener(PlayStreamingSourceEvent.class, e -> ClientEvents.SOUND_STREAM_STARTED.invoker().onStarted(e.getSound(), e.getChannel()));

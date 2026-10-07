@@ -3,6 +3,7 @@ package com.richardsenger.piratesnships.combat.melee.sound;
 import com.richardsenger.piratesnships.combat.content.CombatSounds;
 import com.richardsenger.piratesnships.combat.melee.MeleeConfig;
 import com.richardsenger.piratesnships.combat.melee.resolve.HitResult;
+import com.richardsenger.piratesnships.combat.melee.resolve.IncomingHit;
 import com.richardsenger.piratesnships.combat.melee.rules.CombatState;
 import com.richardsenger.piratesnships.combat.melee.weapon.MeleeWeapons;
 import net.minecraft.sounds.SoundEvent;
@@ -23,7 +24,7 @@ import java.util.WeakHashMap;
 
 /**
  * Plays the sword sounds of {@link MeleeSoundRules} server-side at the fighters (docs/design.md §8.5, §16). Called by
- * {@code MeleeService} at its transition points (state changes, resolved hits) and every player tick for drawing a
+ * {@code MeleeService} at its transition points (state changes, resolved hits; one cue per attack, P8) and every player tick for drawing a
  * sword. Sounds go through {@link #sink} ({@link SoundSink#WORLD} unless a test installs another) with
  * {@link SoundSource#PLAYERS} for players and {@link SoundSource#HOSTILE} for every other entity. Server thread only.
  */
@@ -44,7 +45,7 @@ public final class MeleeSoundPlayer {
 
     // --- Hooks --------------------------------------------------------------------------------------------------
 
-    /** A combatant's state changed (swing, feint). */
+    /** A combatant's state changed: an attack whose hit frames ended without a hit whooshes (miss). */
     public static void onStateChange(LivingEntity entity, CombatState before, CombatState after) {
         if (entity.level().isClientSide() || before.equals(after)) return;
         for (MeleeSoundRules.Cue c : MeleeSoundRules.stateChange(before, after, MeleeConfig.soundParams())) {
@@ -52,13 +53,31 @@ public final class MeleeSoundPlayer {
         }
     }
 
-    /** A hit was resolved (parry, guard, hit, stagger). {@code modMelee} false = a vanilla melee hit. */
-    public static void onHit(LivingEntity attacker, LivingEntity defender, HitResult result, boolean modMelee) {
+    /**
+     * A sword hit was resolved by the engine: one cue at the target (flesh, heavy, armour, blade on blade, parry or
+     * guard clash).
+     *
+     * @param defenderBefore the target's state before this hit was resolved ({@code null} if unknown)
+     * @param defenderArmed  the target holds a mod sword
+     */
+    public static void onSwordHit(LivingEntity attacker, LivingEntity defender, IncomingHit hit, HitResult result,
+                                  @Nullable CombatState defenderBefore, boolean defenderArmed) {
         if (defender.level().isClientSide()) return;
-        for (MeleeSoundRules.Cue c : MeleeSoundRules.hit(result.outcome(), result.defenderStaggered(), modMelee,
-                armoured(defender), MeleeConfig.soundParams())) {
-            play(c.at() == MeleeSoundRules.At.ATTACKER ? attacker : defender, c);
-        }
+        MeleeSoundRules.Hit h = new MeleeSoundRules.Hit(result.outcome(), true,
+                MeleeSoundRules.heavy(hit.attack(), hit.riposte(), result.defenderStaggered()),
+                MeleeSoundRules.bladeOnBlade(defenderBefore, defenderArmed), armoured(defender));
+        play(attacker, defender, MeleeSoundRules.hit(h, MeleeConfig.soundParams()));
+    }
+
+    /** A vanilla melee hit met a sword fighter: a parry or guard clashes, a landed hit leaves the sound to vanilla. */
+    public static void onVanillaHit(LivingEntity attacker, LivingEntity defender, HitResult result) {
+        if (defender.level().isClientSide()) return;
+        MeleeSoundRules.Hit h = new MeleeSoundRules.Hit(result.outcome(), false, false, false, armoured(defender));
+        play(attacker, defender, MeleeSoundRules.hit(h, MeleeConfig.soundParams()));
+    }
+
+    private static void play(LivingEntity attacker, LivingEntity defender, List<MeleeSoundRules.Cue> cues) {
+        for (MeleeSoundRules.Cue c : cues) play(c.at() == MeleeSoundRules.At.ATTACKER ? attacker : defender, c);
     }
 
     /** {@code PLAYER_TICK_END}: drawing a mod sword into the main hand sounds (server side, heard by everyone nearby). */
@@ -87,9 +106,10 @@ public final class MeleeSoundPlayer {
 
     public static SoundEvent event(MeleeSoundRules.Sound sound) {
         return switch (sound) {
-            case SWING -> CombatSounds.MELEE_SWING.get();
-            case PARRY -> CombatSounds.MELEE_PARRY.get();
-            case HIT_FLESH -> CombatSounds.MELEE_HIT_HEAVY.get();
+            case MISS -> CombatSounds.MELEE_MISS.get();
+            case HIT -> CombatSounds.MELEE_HIT.get();
+            case HIT_HEAVY -> CombatSounds.MELEE_HIT_HEAVY.get();
+            case CLASH -> CombatSounds.MELEE_CLASH.get();
             case HIT_ARMOR -> CombatSounds.MELEE_HIT_ARMOR.get();
             case UNSHEATHE -> CombatSounds.MELEE_UNSHEATHE.get();
         };

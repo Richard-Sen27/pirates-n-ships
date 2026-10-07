@@ -184,7 +184,7 @@ public final class MeleeService {
         HitResult r = HitResolver.resolve(attackerState, def.state(), w, IncomingHit.vanillaMelee(amount, frontal), 0, p);
         def.setState(r.defender());
         if (!r.attacker().equals(attackerState)) fighter(attacker).setState(r.attacker());
-        MeleeSoundPlayer.onHit(attacker, defender, r, false); // sound: a vanilla hit parried, guarded or staggering
+        MeleeSoundPlayer.onVanillaHit(attacker, defender, r); // sound: a vanilla hit parried or guarded
         return r.damage();
     }
 
@@ -216,7 +216,9 @@ public final class MeleeService {
             LivingEntity a = ((EntityFighter) attacker).entity;
             LivingEntity t = ((EntityFighter) target).entity;
             fighter(t); // keep ticking the target (stagger, riposte window, regeneration)
-            MeleeSoundPlayer.onHit(a, t, result, true); // sound: sword hit lands, is parried or guarded, staggers
+            // sound: the one cue of this hit (flesh, heavy, armour, blade on blade, parry, guard); the engine has just
+            // set the target's state, so its lastBefore is the state the hit met
+            MeleeSoundPlayer.onSwordHit(a, t, hit, result, ((EntityFighter) target).lastBefore, target.weapon() != null);
             if (result.damage() <= 0) return;
             DamageSource src = a instanceof Player player ? a.damageSources().playerAttack(player) : a.damageSources().mobAttack(a);
             applying = true;
@@ -232,6 +234,8 @@ public final class MeleeService {
     /** Engine view of a living entity; state lives in the attachment. */
     private static final class EntityFighter implements MeleeEngine.Fighter {
         final LivingEntity entity;
+        /** The state before the last {@link #setState} on this view (sound: what a hit met, see {@code ARENA.apply}). */
+        @Nullable CombatState lastBefore;
 
         EntityFighter(LivingEntity entity) {
             this.entity = entity;
@@ -241,9 +245,10 @@ public final class MeleeService {
         @Override public CombatState state() { return MeleeService.state(entity); }
         @Override public void setState(CombatState state) {
             CombatState before = MeleeService.state(entity);
+            lastBefore = before;
             Services.ATTACHMENTS.set(entity, MeleeAttachments.COMBAT_STATE, state);
             ACTIVE.putIfAbsent(entity, this);
-            MeleeSoundPlayer.onStateChange(entity, before, state); // sound: hit frames begin (swing), feint
+            MeleeSoundPlayer.onStateChange(entity, before, state); // sound: hit frames ended without a hit (miss)
         }
         @Override public @Nullable WeaponDefinition weapon() { return MeleeService.weapon(entity); }
         @Override public Vec eye() { return vec(entity.getEyePosition()); }

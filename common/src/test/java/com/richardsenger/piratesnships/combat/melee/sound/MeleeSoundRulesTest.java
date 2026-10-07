@@ -9,6 +9,7 @@ import com.richardsenger.piratesnships.combat.melee.rules.MeleeParams;
 import com.richardsenger.piratesnships.combat.melee.rules.Phase;
 import com.richardsenger.piratesnships.combat.melee.sound.MeleeSoundRules.At;
 import com.richardsenger.piratesnships.combat.melee.sound.MeleeSoundRules.Cue;
+import com.richardsenger.piratesnships.combat.melee.sound.MeleeSoundRules.Hit;
 import com.richardsenger.piratesnships.combat.melee.sound.MeleeSoundRules.Params;
 import com.richardsenger.piratesnships.combat.melee.sound.MeleeSoundRules.Sound;
 import com.richardsenger.piratesnships.combat.melee.weapon.DefaultWeapons;
@@ -34,12 +35,21 @@ class MeleeSoundRulesTest {
         return r.state();
     }
 
-    /** Runs an attack tick by tick and collects every cue of its state changes. */
-    static List<Cue> attackCues(AttackKind kind, CombatState start, Params params) {
+    /**
+     * Runs an attack tick by tick and collects every cue of its state changes; on tick {@code hitAt} (counted from the
+     * attack start, -1 = never) the attack hits a target as the engine's sweep would.
+     */
+    static List<Cue> attackCues(AttackKind kind, CombatState start, Params params, int hitAt) {
         List<Cue> cues = new ArrayList<>();
         CombatState s = ok(CombatRules.startAttack(start, kind, W, P));
         cues.addAll(MeleeSoundRules.stateChange(start, s, params));
         for (int i = 0; i < 40; i++) {
+            if (i == hitAt) {
+                assertEquals(Phase.ACTIVE, s.phase(), "the hit lands in the hit frames");
+                CombatState n = s.withHitTarget(42);
+                cues.addAll(MeleeSoundRules.stateChange(s, n, params));
+                s = n;
+            }
             CombatState n = CombatRules.tick(s, W, P);
             cues.addAll(MeleeSoundRules.stateChange(s, n, params));
             s = n;
@@ -48,53 +58,77 @@ class MeleeSoundRulesTest {
         return cues;
     }
 
+    static int firstActiveTick(AttackKind kind) {
+        CombatState s = ok(CombatRules.startAttack(CombatState.fresh(P.staminaMax()), kind, W, P));
+        int i = 0;
+        while (s.phase() != Phase.ACTIVE) {
+            s = CombatRules.tick(s, W, P);
+            i++;
+        }
+        return i;
+    }
+
+    static Hit swordHit(Outcome o, boolean heavy, boolean blade, boolean armoured) {
+        return new Hit(o, true, heavy, blade, armoured);
+    }
+
     @ParameterizedTest
     @EnumSource(AttackKind.class)
-    void anAttackSwingsOnceWhenItsHitFramesBegin(AttackKind kind) {
-        List<Cue> cues = attackCues(kind, CombatState.fresh(P.staminaMax()), ON);
-        assertEquals(1, cues.size(), () -> "cues " + cues);
-        Cue c = cues.get(0);
-        assertEquals(Sound.SWING, c.sound());
-        assertEquals(At.SELF, c.at());
-        assertEquals(kind == AttackKind.THRUST ? MeleeSoundRules.SWING_THRUST : MeleeSoundRules.SWING_SLASH, c);
+    void anAttackIntoTheAirWhooshesOnceWhenItsHitFramesEnd(AttackKind kind) {
+        List<Cue> cues = attackCues(kind, CombatState.fresh(P.staminaMax()), ON, -1);
+        assertEquals(List.of(kind == AttackKind.THRUST ? MeleeSoundRules.MISS_THRUST : MeleeSoundRules.MISS_SLASH), cues);
+        assertEquals(Sound.MISS, cues.get(0).sound());
+        assertEquals(At.SELF, cues.get(0).at());
+    }
+
+    @ParameterizedTest
+    @EnumSource(AttackKind.class)
+    void anAttackThatHitsHasNoCueOfItsOwnStateChanges(AttackKind kind) {
+        assertEquals(List.of(), attackCues(kind, CombatState.fresh(P.staminaMax()), ON, firstActiveTick(kind)));
     }
 
     @Test
-    void theSwingStartsExactlyOnEnteringTheHitFrames() {
+    void theMissSoundsExactlyOnLeavingTheHitFramesForTheRecovery() {
         CombatState s = ok(CombatRules.startAttack(CombatState.fresh(P.staminaMax()), AttackKind.SLASH, W, P));
-        while (s.phase() == Phase.WINDUP) {
+        int misses = 0;
+        while (s.phase() != Phase.IDLE) {
             CombatState n = CombatRules.tick(s, W, P);
-            List<Cue> cues = MeleeSoundRules.stateChange(s, n, ON);
-            assertEquals(n.phase() == Phase.ACTIVE ? 1 : 0, cues.size(), () -> "at " + n);
+            boolean miss = s.phase() == Phase.ACTIVE && n.phase() == Phase.RECOVERY;
+            CombatState from = s;
+            assertEquals(miss ? 1 : 0, MeleeSoundRules.stateChange(s, n, ON).size(), () -> from + " -> " + n);
+            if (miss) misses++;
             s = n;
         }
-        assertEquals(Phase.ACTIVE, s.phase());
+        assertEquals(1, misses);
     }
 
     @Test
-    void aThrustSwingsHigherThanASlash() {
-        Cue slash = MeleeSoundRules.SWING_SLASH, thrust = MeleeSoundRules.SWING_THRUST;
-        assertTrue(thrust.minPitch() >= slash.maxPitch(), "thrust pitch range lies above the slash's");
+    void aParriedAttackerStaggeringOutOfTheHitFramesIsSilent() {
+        CombatState s = ok(CombatRules.startAttack(CombatState.fresh(P.staminaMax()), AttackKind.SLASH, W, P));
+        while (s.phase() != Phase.ACTIVE) s = CombatRules.tick(s, W, P);
+        assertEquals(List.of(), MeleeSoundRules.stateChange(s, CombatRules.stagger(s, P.parryStaggerTicks()), ON));
+    }
+
+    @Test
+    void aThrustMissIsLowerThanASlashMiss() {
+        Cue slash = MeleeSoundRules.MISS_SLASH, thrust = MeleeSoundRules.MISS_THRUST;
+        assertTrue(thrust.maxPitch() < slash.minPitch(), "thrust whoosh lies below the slash's");
         assertEquals(slash.minVolume(), thrust.minVolume());
         assertEquals(slash.maxVolume(), thrust.maxVolume());
     }
 
     @Test
-    void aRiposteSwingsLikeANormalAttack() {
+    void aRiposteIntoTheAirWhooshesLikeANormalAttack() {
         CombatState parried = CombatRules.parrySucceeded(ok(CombatRules.parry(CombatState.fresh(P.staminaMax()), W, P)), P);
         assertTrue(parried.riposteReady());
-        assertEquals(List.of(MeleeSoundRules.SWING_SLASH), attackCues(AttackKind.SLASH, parried, ON));
+        assertEquals(List.of(MeleeSoundRules.MISS_SLASH), attackCues(AttackKind.SLASH, parried, ON, -1));
     }
 
     @Test
-    void aFeintWhooshesQuietlyAndHighInsteadOfSwinging() {
+    void aFeintIsSilent() {
         CombatState s = ok(CombatRules.startAttack(CombatState.fresh(P.staminaMax()), AttackKind.SLASH, W, P));
         CombatState f = ok(CombatRules.feint(s, P));
-        assertEquals(List.of(MeleeSoundRules.FEINT), MeleeSoundRules.stateChange(s, f, ON));
-        Cue feint = MeleeSoundRules.FEINT;
-        assertEquals(Sound.SWING, feint.sound());
-        assertTrue(feint.maxVolume() < MeleeSoundRules.SWING_SLASH.minVolume(), "quieter than a swing");
-        assertTrue(feint.minPitch() > MeleeSoundRules.SWING_THRUST.maxPitch(), "higher than any swing");
+        assertEquals(List.of(), MeleeSoundRules.stateChange(s, f, ON));
         for (int i = 0; i < 20; i++) {
             CombatState n = CombatRules.tick(f, W, P);
             assertEquals(List.of(), MeleeSoundRules.stateChange(f, n, ON), "the feint recovery runs out silently");
@@ -111,75 +145,123 @@ class MeleeSoundRulesTest {
     }
 
     @Test
-    void aSwordHitRingsOnArmourAndThudsOnFlesh() {
-        assertEquals(List.of(MeleeSoundRules.HIT_FLESH), MeleeSoundRules.hit(Outcome.HIT, false, true, false, ON));
-        assertEquals(List.of(MeleeSoundRules.HIT_ARMOR), MeleeSoundRules.hit(Outcome.HIT, false, true, true, ON));
-        assertEquals(Sound.HIT_FLESH, MeleeSoundRules.HIT_FLESH.sound());
-        assertEquals(Sound.HIT_ARMOR, MeleeSoundRules.HIT_ARMOR.sound());
+    void aSlashOnFleshHitsLightAndAHeavyHitHitsHeavy() {
+        assertEquals(List.of(MeleeSoundRules.HIT_FLESH), MeleeSoundRules.hit(swordHit(Outcome.HIT, false, false, false), ON));
+        assertEquals(List.of(MeleeSoundRules.HIT_HEAVY), MeleeSoundRules.hit(swordHit(Outcome.HIT, true, false, false), ON));
+        assertEquals(Sound.HIT, MeleeSoundRules.HIT_FLESH.sound());
+        assertEquals(Sound.HIT_HEAVY, MeleeSoundRules.HIT_HEAVY.sound());
         assertEquals(At.DEFENDER, MeleeSoundRules.HIT_FLESH.at());
+        assertEquals(At.DEFENDER, MeleeSoundRules.HIT_HEAVY.at());
+    }
+
+    @Test
+    void heavyMeansThrustRiposteOrStagger() {
+        assertFalse(MeleeSoundRules.heavy(AttackKind.SLASH, false, false));
+        assertTrue(MeleeSoundRules.heavy(AttackKind.THRUST, false, false));
+        assertTrue(MeleeSoundRules.heavy(AttackKind.SLASH, true, false));
+        assertTrue(MeleeSoundRules.heavy(AttackKind.SLASH, false, true));
+        assertFalse(MeleeSoundRules.heavy(null, false, false));
+    }
+
+    @Test
+    void aChestplateRingsWhateverTheWeight() {
+        assertEquals(List.of(MeleeSoundRules.HIT_ARMOR), MeleeSoundRules.hit(swordHit(Outcome.HIT, false, false, true), ON));
+        assertEquals(List.of(MeleeSoundRules.HIT_ARMOR), MeleeSoundRules.hit(swordHit(Outcome.HIT, true, false, true), ON));
+        assertEquals(Sound.HIT_ARMOR, MeleeSoundRules.HIT_ARMOR.sound());
         assertEquals(At.DEFENDER, MeleeSoundRules.HIT_ARMOR.at());
     }
 
     @Test
-    void aStaggeringHitAddsALowThudAtTheDefender() {
-        assertEquals(List.of(MeleeSoundRules.HIT_FLESH, MeleeSoundRules.STAGGER), MeleeSoundRules.hit(Outcome.HIT, true, true, false, ON));
-        Cue st = MeleeSoundRules.STAGGER;
-        assertEquals(Sound.HIT_FLESH, st.sound());
-        assertEquals(At.DEFENDER, st.at());
-        assertTrue(st.maxPitch() < MeleeSoundRules.HIT_FLESH.minPitch(), "lower than a hit");
-        assertTrue(st.maxVolume() < MeleeSoundRules.HIT_FLESH.minVolume(), "quieter than a hit");
+    void bladeOnBladeClashesInsteadOfHitting() {
+        assertEquals(List.of(MeleeSoundRules.BLADE_CLASH), MeleeSoundRules.hit(swordHit(Outcome.HIT, false, true, false), ON));
+        assertEquals(List.of(MeleeSoundRules.BLADE_CLASH), MeleeSoundRules.hit(swordHit(Outcome.HIT, true, true, true), ON));
+        assertEquals(Sound.CLASH, MeleeSoundRules.BLADE_CLASH.sound());
+        assertEquals(At.DEFENDER, MeleeSoundRules.BLADE_CLASH.at());
+        assertTrue(MeleeSoundRules.BLADE_CLASH.maxVolume() <= MeleeSoundRules.PARRY.minVolume(), "not louder than a parry");
+        assertTrue(MeleeSoundRules.BLADE_CLASH.minVolume() > MeleeSoundRules.GUARD.maxVolume(), "louder than a guard");
     }
 
     @Test
-    void aParryClashesLoudAtTheDefenderWithoutAStaggerCue() {
-        assertEquals(List.of(MeleeSoundRules.PARRY), MeleeSoundRules.hit(Outcome.PARRIED, false, true, true, ON));
-        assertEquals(List.of(MeleeSoundRules.PARRY), MeleeSoundRules.hit(Outcome.PARRIED, false, false, false, ON));
+    void bladeOnBladeNeedsADefenderMidAttackWithASword() {
+        CombatState fresh = CombatState.fresh(P.staminaMax());
+        CombatState windup = ok(CombatRules.startAttack(fresh, AttackKind.SLASH, W, P));
+        CombatState active = windup;
+        while (active.phase() != Phase.ACTIVE) active = CombatRules.tick(active, W, P);
+        CombatState recovery = active;
+        while (recovery.phase() != Phase.RECOVERY) recovery = CombatRules.tick(recovery, W, P);
+        assertTrue(MeleeSoundRules.bladeOnBlade(windup, true));
+        assertTrue(MeleeSoundRules.bladeOnBlade(active, true));
+        assertFalse(MeleeSoundRules.bladeOnBlade(windup, false), "an unarmed attacker has no blade");
+        assertFalse(MeleeSoundRules.bladeOnBlade(recovery, true), "a recovering defender is open");
+        assertFalse(MeleeSoundRules.bladeOnBlade(fresh, true));
+        assertFalse(MeleeSoundRules.bladeOnBlade(ok(CombatRules.guardDown(fresh, W, P)), true), "a guard is its own outcome");
+        assertFalse(MeleeSoundRules.bladeOnBlade(null, true));
+    }
+
+    @Test
+    void aParryClashesLoudAtTheDefender() {
+        assertEquals(List.of(MeleeSoundRules.PARRY), MeleeSoundRules.hit(swordHit(Outcome.PARRIED, false, false, true), ON));
+        assertEquals(List.of(MeleeSoundRules.PARRY), MeleeSoundRules.hit(new Hit(Outcome.PARRIED, false, false, false, false), ON));
         Cue p = MeleeSoundRules.PARRY;
-        assertEquals(Sound.PARRY, p.sound());
+        assertEquals(Sound.CLASH, p.sound());
         assertEquals(At.DEFENDER, p.at());
         assertEquals(1.0f, p.minVolume());
-        assertEquals(0.9f, p.minPitch());
-        assertEquals(1.1f, p.maxPitch());
     }
 
     @Test
-    void aGuardClashesLowAndQuiet() {
-        assertEquals(List.of(MeleeSoundRules.GUARD), MeleeSoundRules.hit(Outcome.GUARDED, false, true, false, ON));
-        assertEquals(List.of(MeleeSoundRules.GUARD, MeleeSoundRules.STAGGER), MeleeSoundRules.hit(Outcome.GUARD_BROKEN, true, true, false, ON));
+    void aGuardClashesLowAndQuietAlsoWhenItBreaks() {
+        assertEquals(List.of(MeleeSoundRules.GUARD), MeleeSoundRules.hit(swordHit(Outcome.GUARDED, false, false, false), ON));
+        assertEquals(List.of(MeleeSoundRules.GUARD), MeleeSoundRules.hit(swordHit(Outcome.GUARD_BROKEN, true, false, false), ON));
         Cue g = MeleeSoundRules.GUARD;
-        assertEquals(Sound.PARRY, g.sound());
-        assertEquals(0.7f, g.minPitch());
-        assertEquals(0.8f, g.maxPitch());
+        assertEquals(Sound.CLASH, g.sound());
+        assertTrue(g.maxPitch() < MeleeSoundRules.PARRY.minPitch(), "lower than a parry");
         assertTrue(g.maxVolume() < MeleeSoundRules.PARRY.minVolume(), "quieter than a parry");
     }
 
     @Test
-    void vanillaHitsOnlySoundWhenParriedGuardedOrStaggering() {
-        assertEquals(List.of(), MeleeSoundRules.hit(Outcome.HIT, false, false, true, ON));
-        assertEquals(List.of(MeleeSoundRules.STAGGER), MeleeSoundRules.hit(Outcome.HIT, true, false, false, ON));
-        assertEquals(List.of(MeleeSoundRules.GUARD), MeleeSoundRules.hit(Outcome.GUARDED, false, false, false, ON));
-        assertEquals(List.of(), MeleeSoundRules.hit(Outcome.UNAFFECTED, false, false, false, ON));
-        assertEquals(List.of(), MeleeSoundRules.hit(Outcome.UNAFFECTED, true, true, true, ON));
+    void vanillaHitsOnlySoundWhenParriedOrGuarded() {
+        assertEquals(List.of(), MeleeSoundRules.hit(new Hit(Outcome.HIT, false, false, false, true), ON));
+        assertEquals(List.of(), MeleeSoundRules.hit(new Hit(Outcome.HIT, false, true, true, false), ON));
+        assertEquals(List.of(MeleeSoundRules.GUARD), MeleeSoundRules.hit(new Hit(Outcome.GUARDED, false, false, false, false), ON));
+        assertEquals(List.of(), MeleeSoundRules.hit(new Hit(Outcome.UNAFFECTED, false, false, false, false), ON));
+        assertEquals(List.of(), MeleeSoundRules.hit(swordHit(Outcome.UNAFFECTED, true, true, true), ON));
+    }
+
+    @Test
+    void everyOutcomeHasAtMostOneCue() {
+        for (Outcome o : Outcome.values()) {
+            for (int bits = 0; bits < 16; bits++) {
+                Hit h = new Hit(o, (bits & 1) != 0, (bits & 2) != 0, (bits & 4) != 0, (bits & 8) != 0);
+                assertTrue(MeleeSoundRules.hit(h, ON).size() <= 1, h::toString);
+            }
+        }
     }
 
     @Test
     void disabledPlaysNothing() {
-        assertEquals(List.of(), attackCues(AttackKind.SLASH, CombatState.fresh(P.staminaMax()), OFF));
-        assertEquals(List.of(), attackCues(AttackKind.THRUST, CombatState.fresh(P.staminaMax()), OFF));
-        CombatState s = ok(CombatRules.startAttack(CombatState.fresh(P.staminaMax()), AttackKind.SLASH, W, P));
-        assertEquals(List.of(), MeleeSoundRules.stateChange(s, ok(CombatRules.feint(s, P)), OFF));
+        assertEquals(List.of(), attackCues(AttackKind.SLASH, CombatState.fresh(P.staminaMax()), OFF, -1));
+        assertEquals(List.of(), attackCues(AttackKind.THRUST, CombatState.fresh(P.staminaMax()), OFF, -1));
         for (Outcome o : Outcome.values()) {
-            assertEquals(List.of(), MeleeSoundRules.hit(o, true, true, true, OFF), o::name);
+            assertEquals(List.of(), MeleeSoundRules.hit(swordHit(o, true, true, true), OFF), o::name);
+            assertEquals(List.of(), MeleeSoundRules.hit(swordHit(o, false, false, false), OFF), o::name);
         }
         assertEquals(List.of(), MeleeSoundRules.unsheathe(OFF));
         assertEquals(List.of(MeleeSoundRules.UNSHEATHE), MeleeSoundRules.unsheathe(ON));
     }
 
     @Test
+    void pitchVariesByAtMostFivePercent() {
+        for (Cue c : MeleeSoundRules.ALL) {
+            double centre = (c.minPitch() + c.maxPitch()) / 2.0;
+            assertTrue(c.minPitch() >= centre * 0.95 - 1e-6 && c.maxPitch() <= centre * 1.05 + 1e-6,
+                    () -> "pitch range wider than ±5 %: " + c);
+        }
+    }
+
+    @Test
     void volumeAndPitchStayInTheirRangesAndVolumeScales() {
-        for (Cue c : List.of(MeleeSoundRules.SWING_SLASH, MeleeSoundRules.SWING_THRUST, MeleeSoundRules.FEINT,
-                MeleeSoundRules.HIT_FLESH, MeleeSoundRules.HIT_ARMOR, MeleeSoundRules.PARRY, MeleeSoundRules.GUARD,
-                MeleeSoundRules.STAGGER, MeleeSoundRules.UNSHEATHE)) {
+        assertEquals(9, MeleeSoundRules.ALL.size());
+        for (Cue c : MeleeSoundRules.ALL) {
             assertTrue(c.minVolume() <= c.maxVolume() && c.minPitch() <= c.maxPitch(), c::toString);
             assertTrue(c.minPitch() >= 0.5f && c.maxPitch() <= 2.0f, () -> "vanilla clamps pitch to 0.5..2: " + c);
             for (double u : new double[]{0.0, 0.25, 0.5, 0.999}) {
@@ -190,8 +272,8 @@ class MeleeSoundRulesTest {
                 assertEquals(0f, c.volume(u, 0.0));
             }
         }
-        assertEquals(0.7f, MeleeSoundRules.SWING_SLASH.volume(0.0, 1.0), 1e-6);
-        assertEquals(0.9f, MeleeSoundRules.SWING_SLASH.volume(1.0, 1.0), 1e-6);
-        assertEquals(1.3f, MeleeSoundRules.SWING_THRUST.pitch(1.0), 1e-6);
+        assertEquals(0.7f, MeleeSoundRules.MISS_SLASH.volume(0.0, 1.0), 1e-6);
+        assertEquals(0.8f, MeleeSoundRules.MISS_SLASH.volume(1.0, 1.0), 1e-6);
+        assertEquals(0.84f, MeleeSoundRules.MISS_THRUST.pitch(1.0), 1e-6);
     }
 }

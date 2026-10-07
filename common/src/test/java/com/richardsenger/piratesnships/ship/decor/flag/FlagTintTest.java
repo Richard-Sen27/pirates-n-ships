@@ -1,7 +1,5 @@
 package com.richardsenger.piratesnships.ship.decor.flag;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.richardsenger.piratesnships.law.flag.FlagKind;
 import net.minecraft.SharedConstants;
 import net.minecraft.server.Bootstrap;
@@ -11,7 +9,6 @@ import net.minecraft.world.item.Items;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** The banner colour of custom flags and the tint index on the custom cloth model. */
+/** The banner colour of custom flags and which cloth takes it. */
 class FlagTintTest {
 
     @BeforeAll
@@ -65,18 +62,13 @@ class FlagTintTest {
     }
 
     @Test
-    void onlyTheCustomClothModelCarriesTheTintIndex() {
+    void onlyTheCustomClothIsTinted() {
         for (FlagKind kind : FlagKind.values()) {
             if (kind == FlagKind.NONE) continue;
-            JsonObject faces = FlagClothModel.json(kind).getAsJsonArray("elements").get(0).getAsJsonObject().getAsJsonObject("faces");
-            for (Map.Entry<String, JsonElement> f : faces.entrySet()) {
-                JsonObject face = f.getValue().getAsJsonObject();
-                if (kind == FlagKind.CUSTOM) {
-                    assertTrue(face.has("tintindex"), kind + " " + f.getKey() + " has no tint index");
-                    assertEquals(FlagTint.TINT_INDEX, face.get("tintindex").getAsInt());
-                } else {
-                    assertFalse(face.has("tintindex"), kind + " " + f.getKey() + " must keep its own colours");
-                }
+            if (kind == FlagKind.CUSTOM) {
+                assertTrue(FlagClothModel.tinted(kind), kind + " must take the banner's colour");
+            } else {
+                assertFalse(FlagClothModel.tinted(kind), kind + " must keep its own colours");
             }
         }
     }

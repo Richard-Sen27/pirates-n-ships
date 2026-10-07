@@ -37,7 +37,7 @@ public final class CombatContent {
     public static final RegistryEntry<Item, Item> MUSKET = ModRegistry.item("musket", () -> new FirearmItem(new Item.Properties().stacksTo(1), FirearmKind.MUSKET));
     public static final RegistryEntry<Item, Item> LEAD_SHOT = ModRegistry.item("lead_shot", () -> new Item(new Item.Properties()));
     public static final RegistryEntry<Item, Item> CANNONBALL = ModRegistry.item("cannonball", () -> new Item(new Item.Properties().stacksTo(16)));
-    public static final RegistryEntry<Item, Item> GRAPPLING_HOOK = ModRegistry.item("grappling_hook", () -> new Item(new Item.Properties().stacksTo(1)));
+    public static final RegistryEntry<Item, Item> GRAPPLING_HOOK = ModRegistry.item("grappling_hook", () -> new com.richardsenger.piratesnships.combat.grapple.GrapplingHookItem(new Item.Properties().stacksTo(1)));
 
     private CombatContent() {
     }

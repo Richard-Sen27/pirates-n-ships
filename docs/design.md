@@ -429,7 +429,7 @@ Models and animations use GeckoLib. Textures are 16×16-scale pixel art.
 
 ### 10.3 Trade and cargo
 - **Trade goods:** a set of cargo items, each with a base price. Vanilla items are reused where they exist (sugar, fish, timber/logs, iron). New items only for typical colonial goods vanilla lacks (tobacco, spices, cloth, rum). Stored in cargo crates and barrels (cargo containers hold one good type in bulk).
-- **Markets:** every port (seafarer village, navy outpost, pirate island) has a harbor master or trader with a market screen. Each port has goods it **produces** (cheap) and goods it **demands** (expensive), derived from its biome and type.
+- **Markets:** every port (seafarer village, navy outpost, pirate island) has a harbor master or trader with a market screen. **Implemented (G10, `trade/desk`, `trade/client/MarketScreen`):** the harbor master's desk block is bound to a port (by world generation through a port-locator hook, or by `/pirates trade desk bind`); using it opens the market screen, and every request is checked against the desk's binding and reach on the server. Each port has goods it **produces** (cheap) and goods it **demands** (expensive), derived from its biome and type.
 - **Dynamic prices:** buying raises a good's price and selling lowers it, recovering slowly over time. This prevents infinite money loops.
 - **Trade runs:** buy cheap in one port and sell where demand is high. Longer and riskier routes (through pirate waters) pay more.
 - **Contracts:** harbor masters offer delivery contracts (bring X to port Y by day Z) as a simpler entry point to trading. They link to the quest system (§15).

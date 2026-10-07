@@ -325,6 +325,19 @@ There are no ports in the world yet. A market is created with `/pirates trade po
   demands them pays, but less with every stack.
 - You can trade from your inventory or from a cargo container next to you.
 
+### Harbor master's desk
+Every port's market is run from a **harbor master's desk** (a book and a gold nugget over three planks, planks below
+in the corners). Right-click a desk to open the market screen: the port's name and kind, your doubloons, and every good
+the port trades. Green goods are produced here (cheap to buy), orange goods are wanted here (good to sell). Pick a
+quantity (1, 8, 16, 64 or type one), then Buy or Sell; the prices shown are totals for that quantity and move as you
+trade. The toggle next to the quantity decides whether Sell takes your clean or your plundered stacks: fences on
+pirate islands pay less for plunder, navy outposts may notice and confiscate it. The Contracts tab lists today's
+delivery offers (Accept pays the deposit) and your accepted contracts (Deliver at the destination port). Stay within 8
+blocks of the desk; walking away closes the screen. A desk that belongs to no port says so. Operators bind desks with
+`/pirates trade desk bind <port>` while looking at the desk (`<port>` is a full id or a test port name such as `cane`),
+check with `/pirates trade desk info`, and `/pirates trade desk unbind`. Server config: Cargo Trade → Harbor Desks
+(`desks_enabled`, `desk_reach`). The `/pirates trade` commands remain as a debugging fallback.
+
 ### Contracts
 A port offers delivery contracts: bring an amount of a good to another port by a deadline for a reward. Accepting
 takes a deposit of 20% of the reward, and delivering pays the reward and returns the deposit. A player can hold three
@@ -454,6 +467,7 @@ on by default; vanilla weapons are untouched):
 | Cleat | iron ingot, planks | Attaches to floors, walls and masts. Three cleats and a rope make a triangular sail. See [Sails](#sails). |
 | Sail Winch | 2 string, 1 iron ingot, 3 planks | Sets the trim of all sails on its ship. A crew station. The crank faces you when placed. |
 | Capstan | 2 logs, 1 stick, 2 chains, 1 iron block, 3 planks | Drops and raises the anchor. |
+| Harbor Master's Desk | book, gold nugget, 5 planks | Opens a port's market screen when bound to the port. See [Harbor master's desk](#harbor-masters-desk). |
 | Cannon | 2 iron ingots, 1 iron block, 2 logs, 1 planks | Loads powder and a cannonball, aims by elevation, fires. A crew station. See [Cannons](#cannons). |
 | Bilge Pump | stick, 3 planks, 1 bucket, 1 plank | Pumps water out of the hold below it. A crew station. See [Fighting a leak](#fighting-a-leak). |
 | Hull Patch (block) | placed by the item | A tarred plank that closes a breach. Watertight hull block. |

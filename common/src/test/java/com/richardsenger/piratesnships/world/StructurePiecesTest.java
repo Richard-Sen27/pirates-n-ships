@@ -56,7 +56,7 @@ class StructurePiecesTest {
     private static final String EMPTY = "minecraft:empty";
     /** Group -> its committed pieces. */
     private static final Map<String, List<String>> GROUPS = Map.of(
-            "village", List.of("dock_head", "house_small", "pier", "shipwright", "street", "tavern"),
+            "village", List.of("dock_head", "house_small", "pier", "shipwright", "street", "street_end", "tavern"),
             "pirate_island", List.of("camp_start", "captains_hut", "jetty", "path", "path_end", "tavern_hut", "tent",
                     "treasure_spot"));
     private static final Set<String> BUILDINGS = Set.of("house_small", "shipwright", "tavern");
@@ -308,6 +308,7 @@ class StructurePiecesTest {
         assertEquals(Map.of("pier_out", 1, "street_out", 1), countNames(jigsaws(village("dock_head"))));
         assertEquals(Map.of("berth", 2, "pier_in", 1), countNames(jigsaws(village("pier"))));
         assertEquals(Map.of("building_out", 2, "street_in", 1, "street_out", 1), countNames(jigsaws(village("street"))));
+        assertEquals(Map.of("street_in", 1), countNames(jigsaws(village("street_end"))), "the terminator spawns nothing");
         for (String building : BUILDINGS) {
             List<Jigsaw> jigsaws = jigsaws(village(building));
             assertEquals(Map.of("building_in", 1), countNames(jigsaws), building);

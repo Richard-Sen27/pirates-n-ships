@@ -13,6 +13,16 @@ import com.richardsenger.piratesnships.crew.galley.PantryBlock;
 import com.richardsenger.piratesnships.crew.galley.ProvisionsCommands;
 import com.richardsenger.piratesnships.crew.galley.WaterBarrelBlock;
 import com.richardsenger.piratesnships.crew.galley.WaterBarrelRules;
+import com.richardsenger.piratesnships.crew.hammock.CrewInfo;
+import com.richardsenger.piratesnships.crew.hammock.CrewRest;
+import com.richardsenger.piratesnships.crew.hammock.HammockBlock;
+import com.richardsenger.piratesnships.crew.hammock.HammockGameTests;
+import com.richardsenger.piratesnships.crew.hammock.HammockTags;
+import com.richardsenger.piratesnships.station.StationModule;
+import com.google.gson.JsonArray;
+import net.minecraft.advancements.critereon.StatePropertiesPredicate;
+import net.minecraft.world.level.block.state.properties.BedPart;
+import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.google.gson.JsonObject;
@@ -48,6 +58,9 @@ import java.util.List;
  * their {@code pirates_n_ships:provisions/*} tags (including rum from {@code trade.content}). The lime has no recipe:
  * it is a fruit that comes from loot and trade (apples and berries already prevent scurvy). The blocks' behavior, the
  * ship-level provisions entry point and the {@code /pirates provisions} debug commands live in {@code crew.galley}.
+ * <p>
+ * Also the hammock (HM1, design.md §7.1): block, item, seat entity, {@code #pirates_n_ships:hammock_supports}, the
+ * placeholder models (until ART1d), and the nightfall tick of {@code crew.hammock.CrewRest}.
  */
 public final class CrewContentModule implements ModModule {
 
@@ -76,8 +89,11 @@ public final class CrewContentModule implements ModModule {
                 .item(CrewContent.LIME, "Lime")
                 .block(CrewContent.PANTRY, "Pantry")
                 .block(CrewContent.WATER_BARREL, "Water Barrel")
+                .block(CrewContent.HAMMOCK, "Hammock")
+                .add(CrewContent.HAMMOCK_SEAT.get().getDescriptionId(), "Hammock Seat")
                 .add("container." + Constants.MOD_ID + ".pantry", "Pantry"));
         data.lang(lang -> GalleyText.LANG.forEach(lang::add));
+        data.lang(lang -> CrewInfo.LANG.forEach(lang::add));
         data.models(m -> {
             // The provisions' item models are hand-made (art/models/{hardtack,salted_fish,salt_pork,lime}.bbmodel),
             // so datagen writes none
@@ -91,6 +107,7 @@ public final class CrewContentModule implements ModModule {
                             .select(Direction.SOUTH, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R180))
                             .select(Direction.WEST, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R270))));
             waterBarrelModels(m);
+            hammockModels(m);
         });
         data.blockLoot(loot -> {
             loot.dropSelf(CrewContent.PANTRY.get());
@@ -101,10 +118,24 @@ public final class CrewContentModule implements ModModule {
                             .apply(CopyComponentsFunction.copyComponents(CopyComponentsFunction.Source.BLOCK_ENTITY)
                                     .include(CrewContent.WATER_RATIONS.get())))
                     .when(ExplosionCondition.survivesExplosion())));
+            // like a bed: only the foot drops, so breaking either half (or a support) yields one hammock
+            HammockBlock hammock = CrewContent.HAMMOCK.get();
+            loot.add(hammock, LootTable.lootTable().withPool(LootPool.lootPool()
+                    .setRolls(ConstantValue.exactly(1))
+                    .add(LootItem.lootTableItem(CrewContent.HAMMOCK_ITEM.get())
+                            .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(hammock)
+                                    .setProperties(StatePropertiesPredicate.Builder.properties().hasProperty(HammockBlock.PART, BedPart.FOOT))))
+                    .when(ExplosionCondition.survivesExplosion())));
+        });
+        data.entityTypeTags(tags -> {
+            // the hammock seat lives inside the ship's plot like the station seat
+            tags.tag(StationModule.SABLE_RETAIN).add(CrewContent.HAMMOCK_SEAT.get());
+            tags.tag(StationModule.SABLE_DESTROY_WITH_SUB_LEVEL).add(CrewContent.HAMMOCK_SEAT.get());
         });
         data.blockTags(tags -> {
             tags.tag(BlockTags.MINEABLE_WITH_AXE).add(CrewContent.PANTRY.get(), CrewContent.WATER_BARREL.get());
-            tags.tag(SableWeightTags.LIGHT).add(CrewContent.PANTRY.get());
+            tags.tag(SableWeightTags.LIGHT).add(CrewContent.PANTRY.get(), CrewContent.HAMMOCK.get());
+            tags.tag(HammockTags.SUPPORTS).addTag(BlockTags.FENCES).addTag(BlockTags.WALLS).addTag(BlockTags.LOGS);
             // Full of water: heavier than a wooden block until containers get load-dependent mass (§4.9)
             tags.tag(SableWeightTags.HEAVY).add(CrewContent.WATER_BARREL.get());
         });
@@ -141,12 +172,19 @@ public final class CrewContentModule implements ModModule {
                     .define('P', ItemTags.PLANKS).define('I', Items.IRON_NUGGET).define('W', Items.WATER_BUCKET)
                     .unlockedBy("has_water_bucket", InventoryChangeTrigger.TriggerInstance.hasItems(Items.WATER_BUCKET))
                     .save(out, CrewContent.WATER_BARREL.id());
+            ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, CrewContent.HAMMOCK_ITEM.get())
+                    .pattern("S S").pattern("WWW")
+                    .define('S', Items.STRING).define('W', ItemTags.WOOL)
+                    .unlockedBy("has_string", InventoryChangeTrigger.TriggerInstance.hasItems(Items.STRING))
+                    .save(out, CrewContent.HAMMOCK_ITEM.id());
         });
     }
 
     @Override
     public void registerEvents() {
         CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> ProvisionsCommands.register(dispatcher));
+        CommonEvents.LEVEL_TICK_END.register(CrewRest::onLevelTick);
+        CommonEvents.SERVER_STOPPED.register(server -> CrewRest.onServerStopped());
     }
 
     /**
@@ -172,6 +210,75 @@ public final class CrewContentModule implements ModModule {
         });
     }
 
+    /**
+     * Placeholder hammock models until ART1d's Blockbench model (design.md §4.8): {@code block/hammock_foot} and
+     * {@code block/hammock_head}, drawn facing north (the head lies north of the foot), each a thin canvas slab with two
+     * rope corners at its outer end. The block state picks the half's model and turns it by {@code FACING}; the item
+     * shows the foot. ART1d exports models under the same two names and deletes this method's model writes.
+     */
+    private static void hammockModels(ModelContext m) {
+        HammockBlock hammock = CrewContent.HAMMOCK.get();
+        ResourceLocation foot = ModelLocationUtils.getModelLocation(hammock, "_foot");
+        ResourceLocation head = ModelLocationUtils.getModelLocation(hammock, "_head");
+        m.models().accept(foot, () -> hammockHalf(true));
+        m.models().accept(head, () -> hammockHalf(false));
+        m.blockStates().accept(MultiVariantGenerator.multiVariant(hammock)
+                .with(PropertyDispatch.properties(HammockBlock.FACING, HammockBlock.PART).generate((facing, part) -> Variant.variant()
+                        .with(VariantProperties.MODEL, part == BedPart.FOOT ? foot : head)
+                        .with(VariantProperties.Y_ROT, switch (facing) {
+                            case EAST -> VariantProperties.Rotation.R90;
+                            case SOUTH -> VariantProperties.Rotation.R180;
+                            case WEST -> VariantProperties.Rotation.R270;
+                            default -> VariantProperties.Rotation.R0;
+                        }))));
+        m.models().accept(ModelLocationUtils.getModelLocation(CrewContent.HAMMOCK_ITEM.get()), () -> {
+            JsonObject model = new JsonObject();
+            model.addProperty("parent", foot.toString());
+            return model;
+        });
+    }
+
+    /** One half: the canvas (pixels 2..14 across, 5..7 high, the whole block long) and two ropes at the outer end. */
+    private static JsonObject hammockHalf(boolean foot) {
+        JsonObject textures = new JsonObject();
+        textures.addProperty("canvas", Constants.MOD_ID + ":block/sail_cloth");
+        textures.addProperty("rope", Constants.MOD_ID + ":block/rope");
+        textures.addProperty("particle", Constants.MOD_ID + ":block/sail_cloth");
+        JsonArray elements = new JsonArray();
+        elements.add(box(2, HammockBlock.CANVAS_BOTTOM, 0, 14, HammockBlock.CANVAS_TOP, 16, "#canvas"));
+        // the outer end of the foot is south (z = 16), of the head north (z = 0)
+        int z0 = foot ? 14 : 0;
+        elements.add(box(2, HammockBlock.CANVAS_TOP, z0, 3, 12, z0 + 2, "#rope"));
+        elements.add(box(13, HammockBlock.CANVAS_TOP, z0, 14, 12, z0 + 2, "#rope"));
+        JsonObject model = new JsonObject();
+        model.addProperty("parent", "minecraft:block/block");
+        model.add("textures", textures);
+        model.add("elements", elements);
+        return model;
+    }
+
+    private static JsonObject box(int x0, int y0, int z0, int x1, int y1, int z1, String texture) {
+        JsonObject e = new JsonObject();
+        e.add("from", vec(x0, y0, z0));
+        e.add("to", vec(x1, y1, z1));
+        JsonObject faces = new JsonObject();
+        for (Direction d : Direction.values()) {
+            JsonObject face = new JsonObject();
+            face.addProperty("texture", texture);
+            faces.add(d.getSerializedName(), face);
+        }
+        e.add("faces", faces);
+        return e;
+    }
+
+    private static JsonArray vec(int x, int y, int z) {
+        JsonArray a = new JsonArray();
+        a.add(x);
+        a.add(y);
+        a.add(z);
+        return a;
+    }
+
     /** The texture slot of the water surface in the hand-made water barrel models. */
     static final String WATER_TEXTURE_SLOT = "7";
 
@@ -182,7 +289,7 @@ public final class CrewContentModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(CrewContentGameTests.class, GalleyGameTests.class);
+        return List.of(CrewContentGameTests.class, GalleyGameTests.class, HammockGameTests.class);
     }
 
     private static TagKey<Item> cTag(String path) {

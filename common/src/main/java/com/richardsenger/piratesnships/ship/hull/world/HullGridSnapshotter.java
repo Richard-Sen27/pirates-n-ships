@@ -7,6 +7,8 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * Snapshots a block region into an immutable {@link HullGrid} (main thread; the analysis can then run elsewhere).
@@ -30,6 +32,15 @@ public final class HullGridSnapshotter {
      * limited rate instead of the cells turning into outside air at once.
      */
     public static HullGrid snapshot(BlockGetter level, BlockPos min, BlockPos max, Set<BlockPos> breaches) {
+        return snapshot(level, min, max, breaches, state -> false, pos -> { });
+    }
+
+    /**
+     * {@link #snapshot(BlockGetter, BlockPos, BlockPos, Set)} that also reports, in the same pass, the positions of the
+     * blocks matching {@code mark} (e.g. the ship's bilge pumps) to {@code marked}.
+     */
+    public static HullGrid snapshot(BlockGetter level, BlockPos min, BlockPos max, Set<BlockPos> breaches,
+                                    Predicate<BlockState> mark, Consumer<BlockPos> marked) {
         int sx = max.getX() - min.getX() + 1, sy = max.getY() - min.getY() + 1, sz = max.getZ() - min.getZ() + 1;
         HullGrid.Builder b = HullGrid.builder(sx, sy, sz).origin(min.getX(), min.getY(), min.getZ());
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
@@ -38,6 +49,9 @@ public final class HullGridSnapshotter {
                 for (int x = 0; x < sx; x++) {
                     pos.set(min.getX() + x, min.getY() + y, min.getZ() + z);
                     BlockState state = level.getBlockState(pos);
+                    if (!state.isAir() && mark.test(state)) {
+                        marked.accept(pos.immutable());
+                    }
                     CellKind kind = HullBlockClassifier.classify(state, level, pos);
                     if (kind == CellKind.AIR && !breaches.isEmpty() && breaches.contains(pos)) {
                         b.breach(x, y, z);

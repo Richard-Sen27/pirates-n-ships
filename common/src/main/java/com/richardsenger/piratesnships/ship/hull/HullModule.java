@@ -4,6 +4,9 @@ import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
+import com.richardsenger.piratesnships.ship.hull.pump.HullRepairContent;
+import com.richardsenger.piratesnships.ship.hull.pump.HullRepairData;
+import com.richardsenger.piratesnships.ship.hull.pump.PumpPatchGameTests;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullConfig;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests;
 import com.richardsenger.piratesnships.ship.hull.runtime.HullRegionsPayload;
@@ -16,7 +19,8 @@ import java.util.List;
 /**
  * The {@code ship.hull} module: hull analysis (compartments, docs/design.md §4.2) and the flooding model (§4.5). Pure
  * logic plus a small world adapter ({@code world.*}), and the per-ship runtime ({@code runtime.*}, spike 2): water
- * occlusion of dry compartments, their client sync, flooding ticks and the buoyancy correction.
+ * occlusion of dry compartments, their client sync, flooding ticks and the buoyancy correction. The counter-measures
+ * to flooding ({@code pump.*}, G4): the bilge pump (also a crew station) and the hull patch.
  */
 public final class HullModule implements ModModule {
 
@@ -34,6 +38,7 @@ public final class HullModule implements ModModule {
     @Override
     public void registerContent() {
         ShipForces.register();
+        HullRepairContent.init();
     }
 
     @Override
@@ -53,17 +58,18 @@ public final class HullModule implements ModModule {
 
     @Override
     public void gatherData(DataContributions data) {
-        // Both tags ship empty: they are pack-maker overrides on top of the built-in rules of
-        // world.HullBlockClassifier (which read vanilla tags such as #minecraft:slabs directly).
+        // Pack-maker overrides on top of the built-in rules of world.HullBlockClassifier (which read vanilla tags such
+        // as #minecraft:slabs directly). Only our hull patch is in WATERTIGHT (pump.HullRepairData).
         data.blockTags(tags -> {
             tags.tag(HullTags.WATERTIGHT);
             tags.tag(HullTags.NOT_WATERTIGHT);
         });
         data.lang(lang -> lang.add(ShipForces.BUOYANCY_KEY, "Hull Buoyancy"));
+        HullRepairData.gather(data); // bilge pump and hull patch (G4)
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(HullGameTests.class, DryHullGameTests.class);
+        return List.of(HullGameTests.class, DryHullGameTests.class, PumpPatchGameTests.class);
     }
 }

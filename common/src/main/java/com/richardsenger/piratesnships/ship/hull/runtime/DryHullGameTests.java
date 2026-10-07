@@ -48,7 +48,7 @@ public final class DryHullGameTests {
     // ------------------------------------------------------------------ fixtures
 
     /** Stone basin over x in [x0, x1], all z, floor y=1, walls y=2..8, water y=2..7 (a dry basin is solid up to y=4). */
-    private static void basin(GameTestHelper h, int x0, int x1, boolean water) {
+    public static void basin(GameTestHelper h, int x0, int x1, boolean water) {
         for (int x = x0; x <= x1; x++) {
             for (int z = 0; z < 24; z++) {
                 h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
@@ -63,7 +63,7 @@ public final class DryHullGameTests {
     }
 
     /** The hull at x in [a, a+4], z in [9, 13]; returns the helm's relative position. */
-    private static BlockPos hull(GameTestHelper h, int a, boolean hatch) {
+    public static BlockPos hull(GameTestHelper h, int a, boolean hatch) {
         for (int x = a; x <= a + 4; x++) {
             for (int z = 9; z <= 13; z++) {
                 for (int y = 5; y <= 8; y++) {
@@ -80,14 +80,14 @@ public final class DryHullGameTests {
         return helm;
     }
 
-    private record Fixture(ShipBody ship, HullRuntime runtime, BlockPos helmPlot) {
+    public record Fixture(ShipBody ship, HullRuntime runtime, BlockPos helmPlot) {
         /** Plot position of a hold cell, relative to the helm (hold spans dx/dz −1..1, dy −3..−2). */
-        BlockPos hold(int dx, int dy, int dz) {
+        public BlockPos hold(int dx, int dy, int dz) {
             return helmPlot.offset(dx, dy, dz);
         }
     }
 
-    private static Fixture assemble(GameTestHelper h, BlockPos helm) {
+    public static Fixture assemble(GameTestHelper h, BlockPos helm) {
         ServerLevel level = h.getLevel();
         AssemblyResult r = com.richardsenger.piratesnships.ship.ShipTestCleanup.assemble(h, helm);
         if (r.shipId() == null) {

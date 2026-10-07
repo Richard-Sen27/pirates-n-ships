@@ -15,6 +15,10 @@ import com.richardsenger.piratesnships.ship.hull.flooding.FloodReport;
 import com.richardsenger.piratesnships.ship.hull.flooding.FloodSimulation;
 import com.richardsenger.piratesnships.ship.hull.flooding.FloodTickInput;
 import com.richardsenger.piratesnships.ship.hull.flooding.RecomputeDebouncer;
+import com.richardsenger.piratesnships.ship.hull.pump.BilgePumpBlock;
+import com.richardsenger.piratesnships.ship.hull.pump.BilgePumps;
+import com.richardsenger.piratesnships.ship.hull.pump.PumpIntake;
+import com.richardsenger.piratesnships.ship.hull.pump.PumpSet;
 import com.richardsenger.piratesnships.ship.hull.world.HullBlockClassifier;
 import com.richardsenger.piratesnships.ship.hull.world.HullGridSnapshotter;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
@@ -60,6 +64,8 @@ public final class HullRuntime {
     private final ServerLevel level;
     private final UUID id;
     private final BreachSet breaches = new BreachSet();
+    /** Bilge pumps on this ship (from the grid snapshot, kept current on block changes) and the players' uses. */
+    private final PumpSet pumps = new PumpSet();
     private final RecomputeDebouncer debouncer = FloodingConfig.newDebouncer();
     private FloodSimulation sim;
 
@@ -120,6 +126,21 @@ public final class HullRuntime {
         return breaches;
     }
 
+    public PumpSet pumps() {
+        return pumps;
+    }
+
+    /**
+     * The compartment the bilge pump at plot position {@code pumpPos} drains ({@link PumpIntake}), with the configured
+     * reach, against the current analysis and water; -1 when its intake reaches none.
+     */
+    public int pumpIntake(BlockPos pumpPos) {
+        HullAnalysis a = sim.analysis();
+        HullGrid g = a.grid();
+        return PumpIntake.find(a, pumpPos.getX() - g.originX(), pumpPos.getY() - g.originY(), pumpPos.getZ() - g.originZ(),
+                FloodingConfig.PUMP_REACH.get(), c -> sim.volume(c) > PumpIntake.DRY);
+    }
+
     public List<CellSet> regionCells() {
         return regionCells;
     }
@@ -170,7 +191,9 @@ public final class HullRuntime {
         ticks++;
         sim.setParams(FloodingConfig.params());
         sampleSea(ship);
-        lastReport = sim.tick(FloodTickInput.calm(seaShipFrame));
+        FloodTickInput input = FloodTickInput.calm(seaShipFrame);
+        int[] working = workingPumps();
+        lastReport = sim.tick(working == null ? input : input.withPumps(working));
         if (lastReport.inflow() > 0 || lastReport.outflow() > 0 || lastReport.pumped() > 0) {
             saveDirty = true;
         }
@@ -190,6 +213,19 @@ public final class HullRuntime {
         if (saveDirty && ticks % DryHullConfig.SAVE_INTERVAL_TICKS.get() == 0) {
             save(ship);
         }
+    }
+
+    /** Working pumps per compartment this tick (players' uses and crew orders), or null for none. */
+    private int @Nullable [] workingPumps() {
+        if (pumps.isEmpty()) {
+            return null;
+        }
+        if (!FloodingConfig.PUMP_ENABLED.get()) {
+            pumps.clearUses();
+            return null;
+        }
+        return pumps.activeCounts(level.getGameTime(), sim.analysis().compartments().size(),
+                p -> BilgePumps.crewOperating(id, p), this::pumpIntake);
     }
 
     private void startAnalysis(ShipBody ship, HullVec up) {
@@ -239,7 +275,11 @@ public final class HullRuntime {
 
     private HullGrid snapshot(ShipBody ship) {
         BlockPos[] b = ship.plotBounds();
-        return HullGridSnapshotter.snapshot(level, b[0].offset(-1, -1, -1), b[1].offset(1, 1, 1), breaches.positions());
+        Set<BlockPos> found = new HashSet<>();
+        HullGrid grid = HullGridSnapshotter.snapshot(level, b[0].offset(-1, -1, -1), b[1].offset(1, 1, 1), breaches.positions(),
+                state -> state.getBlock() instanceof BilgePumpBlock, found::add);
+        pumps.replace(found);
+        return grid;
     }
 
     // ------------------------------------------------------------------ sea level
@@ -332,6 +372,12 @@ public final class HullRuntime {
 
     /** A block in the ship's plot changed (already set in the level). */
     void onBlockChanged(BlockPos pos, BlockState oldState, BlockState newState) {
+        boolean wasPump = oldState.getBlock() instanceof BilgePumpBlock, isPump = newState.getBlock() instanceof BilgePumpBlock;
+        if (isPump && !wasPump) {
+            pumps.add(pos);
+        } else if (wasPump && !isPump) {
+            pumps.remove(pos);
+        }
         CellKind oldKind = HullBlockClassifier.classify(oldState, level, pos);
         CellKind newKind = HullBlockClassifier.classify(newState, level, pos);
         boolean shapeChanged = HullBlockClassifier.uncoveredFaces(oldState, level, pos, oldKind)
@@ -349,6 +395,11 @@ public final class HullRuntime {
         if (breaches.onBlockChanged(pos, inGrid ? g.kind(x, y, z) : null, newKind)) {
             saveDirty = true;
             debouncer.markDirty();
+            // A breach patched (a hull patch or any watertight block put back): close its opening at once, so the
+            // inflow stops now instead of after the debounced re-analysis that turns the cell solid.
+            if (newKind == CellKind.SOLID && inGrid && g.kind(x, y, z) == CellKind.OPENING && sim.setOpen(x, y, z, false)) {
+                togglesSinceSnapshot.add(new long[] {pos.asLong(), 0});
+            }
         }
         if (oldKind != newKind || shapeChanged || !inGrid) {
             debouncer.markDirty();

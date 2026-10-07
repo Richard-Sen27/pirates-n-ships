@@ -7,8 +7,8 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 
 /**
- * Block tags that let pack makers override the built-in watertightness rules of {@code world.HullBlockClassifier}. Both
- * ship empty.
+ * Block tags that let pack makers override the built-in watertightness rules of {@code world.HullBlockClassifier}.
+ * {@link #NOT_WATERTIGHT} ships empty; {@link #WATERTIGHT} holds only our hull patch.
  */
 public final class HullTags {
 

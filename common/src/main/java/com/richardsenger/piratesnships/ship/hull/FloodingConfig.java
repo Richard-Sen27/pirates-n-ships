@@ -17,6 +17,16 @@ public final class FloodingConfig {
             "Multiplier for how fast water flows through breaches, holes and open doors or hatches");
     public static final ConfigValue<Double> PUMP_RATE = SECTION.doubleRange("pump_rate", 1.0, 0.0, 100.0,
             "Blocks of water one working pump removes per second");
+    public static final ConfigValue<Boolean> PUMP_ENABLED = SECTION.bool("pump_enabled", true,
+            "Bilge pumps work: a player using one, or a crew member ordered to it, removes flood water");
+    public static final ConfigValue<Integer> PUMP_REACH = SECTION.intRange("pump_reach", 4, 0, 16,
+            "Blocks below its own cell a bilge pump's intake reaches (through decks) to find a flooded compartment");
+    public static final ConfigValue<Integer> PUMP_USE_TICKS = SECTION.intRange("pump_use_ticks", 8, 1, 100,
+            "Ticks one use keeps a pump working. Holding the use key repeats the use every 4 ticks, so keep this above 4");
+    public static final ConfigValue<Double> PUMP_EXHAUSTION = SECTION.doubleRange("pump_exhaustion", 0.025, 0.0, 4.0,
+            "Food exhaustion per pump use (4 = one hunger point; holding the key uses the pump 5 times per second)");
+    public static final ConfigValue<Boolean> PATCH_ENABLED = SECTION.bool("patch_enabled", true,
+            "Hull patches can be placed into breaches to close them");
     public static final ConfigValue<Integer> DEBOUNCE_TICKS = SECTION.intRange("debounce_ticks", 10, 0, 200,
             "Ticks a hull must stay unchanged before it is re-analyzed after block changes");
     public static final ConfigValue<Integer> MAX_DEBOUNCE_TICKS = SECTION.intRange("max_debounce_ticks", 60, 0, 1200,

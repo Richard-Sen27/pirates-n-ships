@@ -158,3 +158,11 @@ Compare each sword with a vanilla iron sword in the other hand or the next hotba
 - Only the doubloon, the bounty proof and the hull patch still use sprites (by decision).
 - The brig bars' transparency relies on a model field that only NeoForge reads. The Fabric port has to register a
   render layer for them.
+
+17. **Brig door and brig key items (F8g):** in the inventory the door is an upright iron cell door filling the slot
+    height, seen slightly from the front-left (hinge knuckles left, lock plate right); the key is a diagonal iron key
+    with a dark outline, bow lower-left, teeth upper-right. Door in the right hand (F5): upright outside the arm,
+    face sideways, not cutting through the leg while walking; left hand mirrored. First person: a small upright door
+    at the lower right. Key held: bow in the fist, shank forward and slightly up. Both on the ground (door about half
+    a block tall) and in item frames (door centred and upright, key diagonal). Hold the door item next to a placed
+    door: same textures. Breaking a door still gives anvil particles.

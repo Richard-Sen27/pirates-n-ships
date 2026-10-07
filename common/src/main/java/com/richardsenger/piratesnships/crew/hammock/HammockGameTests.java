@@ -154,8 +154,13 @@ public final class HammockGameTests {
         return s.is(CrewContent.HAMMOCK.get()) && s.getValue(HammockBlock.PART) == part && s.getValue(HammockBlock.FACING) == facing;
     }
 
+    /**
+     * Hammock items lying in this test's own structure. Only its own box: tests of a batch run side by side a few blocks
+     * apart in one world, and a box of ±12 blocks round the corner counted a neighbouring breaking test's drop (seen once
+     * in six runs as "dropped hammocks: 3"). Drops land within a quarter block of the broken block.
+     */
     private static int droppedHammocks(GameTestHelper h) {
-        AABB box = new AABB(h.absolutePos(BlockPos.ZERO)).inflate(12);
+        AABB box = h.getBounds().inflate(0.5);
         int n = 0;
         for (ItemEntity e : h.getLevel().getEntitiesOfClass(ItemEntity.class, box, e -> e.getItem().is(CrewContent.HAMMOCK_ITEM.get()))) {
             n += e.getItem().getCount();

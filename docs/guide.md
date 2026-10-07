@@ -484,6 +484,10 @@ Placing a cannon: click the deck block where the **front** of the carriage shoul
 toward you and the barrel overhangs one block ahead, so click the spot by the rail. Both halves need a block
 underneath. Load, aim and fire on either half; breaking either half gives the whole cannon back.
 
+Cannonballs obey the world's rules: with `mobGriefing` off or inside the spawn protection nothing breaks. Blocks
+they smash drop their items, a gun you break gives back its powder and shot, and a ball that grazes a hull at a
+shallow angle pings off instead of breaking it; a square hit does the most damage.
+
 ### Swivel gun
 A small gun on a yoke (three iron ingots over a stick) that mounts on a fence, wall, iron bars, brig bars or any
 full block. Load gunpowder, then a cannonball (or lead shot if the server says so). Hold right-click with an empty
@@ -632,7 +636,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `hull_creaking` | Creaking on/off, how often, volume and pitch ranges, the rolling rate that counts. |
 | `audio` (client) | Music on/off and volume, the gap between tracks, shanties aboard. |
 | `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore pull, entity damage, lost-hook rule. |
-| `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevation range and steps, blocks per hit, recoil and impact impulses, ball lifetime and water behaviour. |
+| `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevation range and steps, blocks per hit, recoil and impact impulses, ball lifetime and water behaviour, `mobGriefing` and spawn protection, drops from destroyed blocks, glancing hits and the bounce angle. |
 | `cannons.swivel` | Swivel gun on/off, ammo item and count, damage, muzzle speed, reload, blocks per hit, recoil and impact impulses, ball lifetime, elevation limits, aim reach. |
 | `mobs` | Mob types on/off and peaceful, hostility toggles, detection and fight ranges, skill tiers, musket timings and ammo, shove, drops. |
 | `mobs.shark` | Shark on/off and peaceful, spawn weight and group (server restart), detection, circle and give-up times, bite cooldown, damage and knockback, frenzy threshold. |

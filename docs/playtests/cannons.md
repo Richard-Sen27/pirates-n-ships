@@ -65,3 +65,16 @@ gunpowder and cannonballs. Please send `latest.log` if anything differs.
 9. **Visuals:** the placeholders and the swivel item icon in the GUI and in hand are stand-ins; judge sizes only.
 
 Result (third playtest, 2026-10-07): the large cannon's size is right (two-block carriage, barrel a block ahead); F7g keeps the P2 geometry.
+
+## Q2: world rules, drops and glancing hits
+1. `/gamerule mobGriefing false`, fire at a hull: nothing breaks and the ball stops; back to true: the hull breaks.
+2. Load a cannon (powder and ball) in survival and break the rear half: one cannon, one gunpowder, one cannonball
+   drop; in creative nothing drops.
+3. Load a swivel gun and break it, or its fence: swivel, gunpowder and the loaded shot drop.
+4. Shoot a hull: the plank items appear beside the hole in the water or air, not inside the ship and not far away;
+   holes below the waterline still flood.
+5. Fire along a hull side at a shallow angle: the ball pings off and flies on, the hull is intact, and the ball
+   looks smooth on the client (say if it sticks at the face for a moment). At about 45° with `blocks_per_hit` 3 two
+   blocks break; straight on three.
+6. Dedicated server with spawn protection and an op set: a non-op's shots break nothing near spawn, a moored ship
+   inside the radius included.

@@ -75,6 +75,20 @@ class SoundResourcesTest {
         }
     }
 
+    /** The sword miss plays our own whooshes (A2), not a reference to vanilla's sweep sound event. */
+    @Test
+    void meleeMissPlaysOwnFiles() throws IOException {
+        JsonObject root = soundsJson();
+        JsonObject miss = new JsonObject();
+        miss.add("combat.melee.miss", root.get("combat.melee.miss"));
+        List<String> files = fileNames(miss);
+        assertTrue(files.size() == root.getAsJsonObject("combat.melee.miss").getAsJsonArray("sounds").size(),
+                "combat.melee.miss still references a sound event: " + root.get("combat.melee.miss"));
+        List<String> expected = new ArrayList<>();
+        for (int i = 1; i <= 6; i++) expected.add(NS + ":combat/melee/miss_" + i);
+        assertTrue(files.equals(expected), "combat.melee.miss should play " + expected + ", plays " + files);
+    }
+
     @Test
     void everyManifestTargetExists() throws IOException {
         JsonObject manifest = JsonParser.parseString(Files.readString(MANIFEST)).getAsJsonObject();

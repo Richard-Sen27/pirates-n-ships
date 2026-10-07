@@ -81,6 +81,78 @@
       "license": "Pixabay Content License"
     },
     {
+      "source": "sword/freesound_community-sword-swipes-7174.mp3",
+      "target": "combat/melee/miss_1.ogg",
+      "start": 1.05,
+      "duration": 0.7,
+      "kind": "effect",
+      "event": "combat.melee.miss",
+      "title": "Sword swipes",
+      "author": "freesound_community",
+      "url": "https://pixabay.com/sound-effects/sword-swipes-7174/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "sword/freesound_community-sword-swipes-7174.mp3",
+      "target": "combat/melee/miss_2.ogg",
+      "start": 2.43,
+      "duration": 0.62,
+      "kind": "effect",
+      "event": "combat.melee.miss",
+      "title": "Sword swipes",
+      "author": "freesound_community",
+      "url": "https://pixabay.com/sound-effects/sword-swipes-7174/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "sword/freesound_community-sword-swipes-7174.mp3",
+      "target": "combat/melee/miss_3.ogg",
+      "start": 3.44,
+      "duration": 0.5,
+      "kind": "effect",
+      "event": "combat.melee.miss",
+      "title": "Sword swipes",
+      "author": "freesound_community",
+      "url": "https://pixabay.com/sound-effects/sword-swipes-7174/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "sword/freesound_community-sword-swipes-7174.mp3",
+      "target": "combat/melee/miss_4.ogg",
+      "start": 4.17,
+      "duration": 0.48,
+      "kind": "effect",
+      "event": "combat.melee.miss",
+      "title": "Sword swipes",
+      "author": "freesound_community",
+      "url": "https://pixabay.com/sound-effects/sword-swipes-7174/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "sword/freesound_community-sword-swipes-7174.mp3",
+      "target": "combat/melee/miss_5.ogg",
+      "start": 4.98,
+      "duration": 0.55,
+      "kind": "effect",
+      "event": "combat.melee.miss",
+      "title": "Sword swipes",
+      "author": "freesound_community",
+      "url": "https://pixabay.com/sound-effects/sword-swipes-7174/",
+      "license": "Pixabay Content License"
+    },
+    {
+      "source": "sword/freesound_community-sword-swipes-7174.mp3",
+      "target": "combat/melee/miss_6.ogg",
+      "start": 5.84,
+      "duration": 0.4,
+      "kind": "effect",
+      "event": "combat.melee.miss",
+      "title": "Sword swipes",
+      "author": "freesound_community",
+      "url": "https://pixabay.com/sound-effects/sword-swipes-7174/",
+      "license": "Pixabay Content License"
+    },
+    {
       "source": "sword/dragon-studio-sword-slice-393847.mp3",
       "target": "combat/melee/hit1.ogg",
       "kind": "effect",

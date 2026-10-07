@@ -41,7 +41,8 @@ step and `latest.log`.
      second after you let go. After patching, the red tick goes away.
 7. **Name.** Rename the ship (name tag on the helm).
    - **Expected:** the new name shows above the strip within about a second; a very long name ends in `…` inside the
-     HUD's width.
+     HUD's width. Once the ship has been weighed (CW1; e.g. after `/pirates ship info` or a while at sea) the load level
+     follows the name, dimmed (`Black Pearl · Laden`); load cargo crates until it changes.
 8. **Corners and scale.** In the mod's client config (`ship_hud`), try each `corner` and `scale` 0.5, 1.0, 2.0, and
    `speed_unit = BLOCKS`; give yourself a potion effect and then a bad one (e.g. `/effect give @s minecraft:speed`,
    `/effect give @s minecraft:slowness`).

@@ -86,6 +86,23 @@ Workflow notes (cleat, bilge pump, brig bars, brig door, F7e):
 - `F7E.mz(parts)`, `F7E.mx(parts, c)` and `F7E.bar(name, x, z, y0, y1, w, tex)` (a chamfered round bar of two crossed
   boxes) joined the F7d helpers (copied as `F7E` with its own `ROOT`); they live only in the running app.
 
+Workflow notes (cannon, harbor master's desk, F7f):
+- **Round parts along any axis**: `F7F.oct(name, axis, centre, D, a0, a1, side, end0, end1, {four, eps})` builds the
+  four-bar octagon of the F7d notes about x, y or z (the two diagonal bars rotate ±45 about that axis and are `eps`
+  shorter along it). With `four: true` it gives the cheaper two crossed D × 0.7 D boxes for small parts (knobs, hubs,
+  poles). A part that leans is the same list with one extra rotation about its foot (the rammer: `z 22.5`).
+- **Cannon** (123 / 127 / 135 elements, `cannon`, `cannon_powder`, `cannon_loaded`, one project each): the barrel runs
+  along z with its axis at y 9.5 (`CannonRules.PIVOT_HEIGHT`) and the trunnions at z 8, muzzle north at z −2.45; the
+  sections step from D 5.8 at the breech to 3.8 at the chase, with rings and a muzzle swell. The bore is a
+  zero-depth black octagon 0.02 px in front of the muzzle; the ball (`loaded`) is a smaller grey octagon plus cap in
+  front of it, so a black ring stays visible around it. `coal_block` on black does not read. Wheels are octagon discs
+  (`stripped_spruce_log_top` on the faces) inside a slightly larger iron tire octagon whose end faces are left out.
+- **Desk** (81 elements): a partner's desk, drawers and a kneehole on both sides with a modesty panel in the middle,
+  so the knobs show from the customer's side and in the GUI as well. `stripped_dark_oak_log` drawer fronts vanish on
+  a `dark_oak_planks` carcass; `stripped_spruce_log` (grain along x) reads. Writing on the ledger pages is zero-height
+  `black_concrete` strips 0.02 px above the page; a coin stack is one octagon (stacking 0.15 px coins tripled the
+  element count for no visible gain).
+
 Items (sword batch, F8a):
 - Item models are `java_block` projects exported to `common/src/main/resources/assets/pirates_n_ships/models/item/<name>.json`;
   datagen writes no model for them (drop the item's `m.handheldItem(...)` / `m.flatItem(...)` line).

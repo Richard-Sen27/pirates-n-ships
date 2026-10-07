@@ -34,3 +34,13 @@ ship while standing on it.
 6. **Cut tentacle:** a quarter-size stump at the root, not floating or hidden in the head.
 7. **Retreat:** fins fold, the mantle contracts and sinks, the eyes close, the arms draw in; the pose holds until it vanishes.
 8. **At 30+ blocks:** any flicker on the mantle steps or fins; at screen edges whether the mantle top pops out.
+
+
+## K1c: the arms
+1. **Length:** lurking or retreating, the arms hang about two-thirds of the mantle's height, 25° out; surfacing, they rise to about 50° out, roughly 3.75 blocks long.
+2. **Suckers at rest:** on hanging arms the pale sucker rows face the body's centre line, not sideways; raised arms show their dark backs from outside.
+3. **No arms through the head** in any state, including the first frames after spawning.
+4. **Grab:** tips reach the hull spots at the waterline without looking strongly stretched; during the grab the tips curl toward the body side with the suckers inside the curl.
+5. **Mast strike and swipe:** arms reaching the mast or deck stretch up to about 2.7×: say if that looks too thin or too long.
+6. **Swimmer drag:** watch for a sudden 180° roll of an arm as it passes horizontal (known singular direction).
+7. **Cut:** a quarter-size stump leaning out; after 30 s the arm is full width again.

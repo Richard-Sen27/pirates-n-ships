@@ -23,15 +23,16 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * The notice board (docs/design.md §13.2): a standing wooden board with bounty notices pinned to it. Using it opens
  * the notice board screen ({@link NoticeBoardBackend#open}): every active bounty, the bounty on the viewer's own head
  * and a form to place one. With {@code law.bounty.notice_boards} off it is decoration. {@link #FACING} is the side
- * with the notices (towards the player who placed it; north in the unrotated model). The model is a datagen
- * placeholder until a Blockbench model replaces it.
+ * with the notices (towards the player who placed it; north in the unrotated model). The model is hand-made
+ * ({@code art/models/notice_board.bbmodel}).
  */
 public class NoticeBoardBlock extends HorizontalDirectionalBlock {
 
     public static final MapCodec<NoticeBoardBlock> CODEC = simpleCodec(NoticeBoardBlock::new);
 
-    private static final VoxelShape SHAPE_NS = Block.box(0, 0, 6, 16, 16, 10);
-    private static final VoxelShape SHAPE_EW = Block.box(6, 0, 0, 10, 16, 16);
+    /** Posts, board and feet of the model (x 1..15, z 6..10 facing north); the roof overhang stays outside. */
+    private static final VoxelShape SHAPE_NS = Block.box(1, 0, 6, 15, 16, 10);
+    private static final VoxelShape SHAPE_EW = Block.box(6, 0, 1, 10, 16, 15);
 
     public NoticeBoardBlock(Properties properties) {
         super(properties);

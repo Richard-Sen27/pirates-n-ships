@@ -6,6 +6,7 @@ import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.assembly.AssemblyResult.Outcome;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
+import com.richardsenger.piratesnships.ship.sable.SableSplits;
 import com.richardsenger.piratesnships.ship.template.ShipTemplateCommands;
 import com.richardsenger.piratesnships.ship.template.ShipTemplateGameTests;
 import com.richardsenger.piratesnships.ship.template.ShipTemplates;
@@ -53,9 +54,11 @@ public final class AssemblyModule implements ModModule {
     @Override
     public void registerEvents() {
         CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> ShipTemplateCommands.register(dispatcher));
-        // A ship destroyed for good (removed, emptied, /sable remove) loses its record; a plain unload keeps it.
+        // A ship destroyed for good (removed, emptied, /sable remove) loses its record; a plain unload keeps it. A ship
+        // that Sable emptied by moving all its blocks into new bodies this tick keeps it until the split is processed:
+        // the record follows the body that keeps the identity (HL1, ShipSplits.process).
         SableShips.onShipRemoved((level, id, destroyed) -> {
-            if (destroyed) {
+            if (destroyed && !SableSplits.isSplitPending(level, id)) {
                 ShipRegistry.get(level.getServer()).remove(id);
             }
         });
@@ -87,6 +90,10 @@ public final class AssemblyModule implements ModModule {
             lang.add(Outcome.OUT_OF_WORLD.key(), "The ship would end up outside the world at %s %s %s");
             lang.add(Outcome.NO_SHIP.key(), "This helm is not part of an assembled ship");
             lang.add(HelmBlock.KEY_DISASSEMBLE_HINT, "Sneak-use the helm with an empty hand to disassemble the ship");
+            lang.add(Outcome.ADOPTED.key(), "This helm now steers the body it stands on: a ship of %s blocks");
+            lang.add(ShipHelm.KEY_ATTACHED, "This helm now steers %s");
+            lang.add(ShipHelm.KEY_UNNAMED, "the ship");
+            lang.add(ShipHelm.KEY_SECOND, "This ship is steered from its other helm. Break that one to steer from here");
             lang.add(Outcome.FAILED.key(), "Assembly failed, see the server log");
             lang.add(ShipInfoCommand.KEY_NONE, "No ship here");
             lang.add(ShipInfoCommand.KEY_SHIP, "Ship %s, name %s, origin %s");
@@ -199,6 +206,7 @@ public final class AssemblyModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(AssemblyGameTests.class, SplitGameTests.class, ShipTemplateGameTests.class, RejoinGameTests.class);
+        return List.of(AssemblyGameTests.class, SplitGameTests.class, ShipTemplateGameTests.class, RejoinGameTests.class,
+                HelmReplaceGameTests.class);
     }
 }

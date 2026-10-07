@@ -392,7 +392,7 @@ Goal: sword fights are about timing and reading the opponent, not click spam. Th
 - **Animations:** the Player Animation Library (PAL) for first- and third-person player animations, available on both loaders (§2; chosen in G5, see §21 and `docs/animation-libraries.md`). NPC animations use GeckoLib.
 - Works on moving ships: hit checks use positions relative to the sub-level where needed.
 
-**NPC duelists**
+**NPC duelists** (implemented in M3, `mob/ai/DuelistAttackGoal` with the pure `combat/melee/npc/DuelistBrain`: reaction delay, one parry roll per incoming attack from the skill tier, guard on a failed roll, riposte at once, thrust into recovery or stagger; feints are not possible yet because the state machine has no abort-wind-up input)
 - Pirates, navy soldiers and officers use the same state machine and the same rules as players: they telegraph attacks, guard, parry and riposte.
 - Skill tiers per NPC type set the parry chance, reaction time and how often they use feints. For example, a sailor is clumsy and a pirate captain is dangerous.
 - Duel bosses: named pirate captains with unique movesets, as quest and boarding targets.

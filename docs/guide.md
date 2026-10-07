@@ -223,6 +223,18 @@ A crew member is released when its station is broken, its ship is disassembled o
 The crew member is animated (idle, walking, working at a station, sitting in a boat) through GeckoLib, a required
 mod on both sides; it is a Blockbench-made sailor (striped shirt, red bandana, neckerchief, belt and knife, bare feet) with idle, walking, hauling and sitting animations.
 
+### Pirates, sailors and the navy
+Pirates (dark coat, bandana, eyepatch, cutlass) attack players and the navy on sight. They fight with the same
+swordplay as you: watch for the raised arm before a slash or the drawn-back arm before a thrust, and parry just
+before the blow lands to stagger them and riposte. Navy soldiers (blue coat, white cross belts, tricorn) carry muskets:
+they leave you alone unless you are wanted, then keep their distance, aim for a second and fire, and shove you back if
+you get close. Officers (gold trim, bicorne) are skilled saber duelists. Pirates and navy fight each other on sight.
+Sailors never fight and run from danger. Hitting or killing navy is a crime; killing pirates is not. Pirates drop
+doubloons and sometimes a cutlass; navy drop lead shot and gunpowder. They look like recoloured sailors until their
+Blockbench models land. Operators spawn them with `/pirates mob spawn <pirate|sailor|navy_soldier|navy_officer>
+[count]` or with spawn eggs; natural spawning comes with the world structures. Everything is in the `mobs` server
+config.
+
 ## 5. Flags
 
 The **flagpole** flies a flag that shows a ship's allegiance.
@@ -597,6 +609,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `audio` (client) | Music on/off and volume, the gap between tracks, shanties aboard. |
 | `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore pull, entity damage, lost-hook rule. |
 | `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevation range and steps, blocks per hit, recoil and impact impulses, ball lifetime and water behaviour. |
+| `mobs` | Mob types on/off and peaceful, hostility toggles, detection and fight ranges, skill tiers, musket timings and ammo, shove, drops. |
 | `melee_animations` (client) | Sword animations on/off, first-person mode, layer priority. |
 | `melee_input` / `melee_hud` (client) | Hold-to-thrust and parry-tap thresholds; stamina bar on/off, scale and offsets. |
 | `firearms.aim` / `firearm_view` (client) | Minimum hold, steady time and aimed spread factor; musket zoom. |

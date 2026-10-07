@@ -30,6 +30,7 @@ import com.richardsenger.piratesnships.sailing.helm.HelmConfig;
 import com.richardsenger.piratesnships.sailing.helm.WheelMath;
 import com.richardsenger.piratesnships.ship.assembly.HelmBlock;
 import com.richardsenger.piratesnships.ship.assembly.ShipAssembler;
+import com.richardsenger.piratesnships.ship.assembly.ShipHelm;
 import com.richardsenger.piratesnships.ship.hull.runtime.HullRuntime;
 import com.richardsenger.piratesnships.ship.hull.runtime.HullRuntimes;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
@@ -102,13 +103,26 @@ public final class SailingRuntimes {
                 helmFacing = s.getValue(HorizontalDirectionalBlock.FACING);
                 helm = p.immutable();
                 rudder = RudderSteps.fromProperty(s.getValue(HelmBlock.RUDDER));
-                wheel = level.getBlockEntity(p) instanceof HelmBlockEntity be ? be.wheel() : 0.0;
+                wheel = wheelOf(level, p);
             } else if (s.getBlock() instanceof CapstanBlock) {
                 capstans.add(p.immutable());
             }
         }
         if (blocks.isEmpty()) {
             b = new int[6];
+        }
+        // HL1b: the ship record's steering helm drives the rudder; a ship that has recorded one but lost it is helmless
+        // (a second helm waits until it is used); a ship from before HL1 (nothing recorded) keeps the first helm found
+        BlockPos steering = ShipHelm.steering(ship);
+        if (steering != null) {
+            BlockState s = level.getBlockState(steering);
+            helm = steering;
+            rudder = RudderSteps.fromProperty(s.getValue(HelmBlock.RUDDER));
+            wheel = wheelOf(level, steering);
+        } else if (ship.userData(ShipAssembler.USER_DATA_KEY).contains(ShipHelm.TAG_HELM)) {
+            helm = null;
+            rudder = 0;
+            wheel = 0.0;
         }
         CompoundTag data = ship.userData(USER_DATA_KEY);
         BowFrame bow;
@@ -145,6 +159,39 @@ public final class SailingRuntimes {
             }
         }
         return rt;
+    }
+
+    private static double wheelOf(ServerLevel level, BlockPos helm) {
+        return level.getBlockEntity(helm) instanceof HelmBlockEntity be ? be.wheel() : 0.0;
+    }
+
+    /**
+     * Points the runtime at the helm at {@code helm} (plot) with its rudder step and wheel, or at no helm (rudder and
+     * wheel midships) when {@code helm} is null or holds no helm.
+     */
+    private static void useHelm(ServerLevel level, SailingRuntime rt, @Nullable BlockPos helm) {
+        BlockState s = helm == null ? null : level.getBlockState(helm);
+        if (s == null || !(s.getBlock() instanceof HelmBlock)) {
+            rt.setHelm(null, 0); // no helm, no rudder
+            rt.setWheelAngle(0.0);
+        } else {
+            rt.setHelm(helm, RudderSteps.fromProperty(s.getValue(HelmBlock.RUDDER)));
+            rt.setWheelAngle(wheelOf(level, helm));
+        }
+    }
+
+    /**
+     * HL1b: a helmless runtime takes the ship's steering helm once the ship has one again (a second helm claimed by its
+     * first use, which with wheel steering changes no block). Cheap: only helmless runtimes look, and only at the ship
+     * pointer and one block.
+     */
+    private static void followSteeringHelm(ServerLevel level, ShipBody ship, SailingRuntime rt) {
+        if (rt.helm() == null) {
+            BlockPos steering = ShipHelm.steering(ship);
+            if (steering != null) {
+                useHelm(level, rt, steering);
+            }
+        }
     }
 
     /**
@@ -229,6 +276,7 @@ public final class SailingRuntimes {
         for (SailingRuntime rt : List.copyOf(m.values())) {
             ShipBody ship = SableShips.byId(level, rt.id());
             if (ship != null) {
+                followSteeringHelm(level, ship, rt);
                 WindSample w = WindService.sample(level, ship.worldBounds().getCenter());
                 rt.setTickInputs(now, w, params);
                 // HELM1: with wheel steering the rudder follows the helm wheel, else the click steps of the block state
@@ -300,10 +348,18 @@ public final class SailingRuntimes {
             return;
         }
         if (newState.getBlock() instanceof HelmBlock) {
-            rt.setHelm(pos, RudderSteps.fromProperty(newState.getValue(HelmBlock.RUDDER)));
+            // HL1b: the runtime's own helm turned its rudder, or a helm came to a runtime without a (standing) helm; a
+            // second helm placed beside the steering one changes nothing
+            BlockPos current = rt.helm();
+            if (pos.equals(current)) {
+                rt.setHelm(pos, RudderSteps.fromProperty(newState.getValue(HelmBlock.RUDDER)));
+            } else if (current == null || !(level.getBlockState(current).getBlock() instanceof HelmBlock)) {
+                useHelm(level, rt, pos);
+            }
         } else if (oldState.getBlock() instanceof HelmBlock && pos.equals(rt.helm())) {
-            rt.setHelm(null, 0); // no helm, no rudder
-            rt.setWheelAngle(0.0);
+            // HL1b: the ship record's steering helm takes over if another one stands, else the ship is helmless
+            BlockPos steering = ShipHelm.steering(ship);
+            useHelm(level, rt, pos.equals(steering) ? null : steering);
         }
         ShipAnchor anchor = rt.anchor();
         if (capstanGone && anchor != null && anchor.capstan().equals(pos)) {

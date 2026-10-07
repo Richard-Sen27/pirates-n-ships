@@ -113,12 +113,14 @@ public final class StationModule implements ModModule {
                     .add(WhistleOrder.FURL.descriptionKey(), "Crew at the winches furl the sails")
                     .add(WhistleOrder.PUMP.nameKey(), "Man the pumps")
                     .add(WhistleOrder.PUMP.descriptionKey(), "Crew at the bilge pumps pump until the bilge is dry")
+                    .add(WhistleOrder.FIRE.nameKey(), "Fire!")
+                    .add(WhistleOrder.FIRE.descriptionKey(), "Crew at loaded cannons fire them")
                     .add(WhistleOrder.RELEASE.nameKey(), "Release crew")
                     .add(WhistleOrder.RELEASE.descriptionKey(), "All crew of this ship leave their stations")
                     .add(StationCommands.KEY + "spawned", "Crew member spawned")
                     .add(StationCommands.KEY + "not_crew", "That entity is not a crew member")
                     .add(StationCommands.KEY + "released", "%s crew members released")
-                    .add(StationCommands.KEY_UNKNOWN_ORDER, "Unknown order: use hoist, reef, furl or pump")
+                    .add(StationCommands.KEY_UNKNOWN_ORDER, "Unknown order: use hoist, reef, furl, pump or fire")
                     .add(StationCommands.KEY_ORDERED, "Order %s: %s of %s crew carry it out");
         });
     }

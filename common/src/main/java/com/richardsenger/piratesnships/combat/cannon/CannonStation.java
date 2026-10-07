@@ -1,7 +1,10 @@
 package com.richardsenger.piratesnships.combat.cannon;
 
+import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.station.StationKind;
 import com.richardsenger.piratesnships.station.StationRef;
+import com.richardsenger.piratesnships.station.order.CrewOrder;
+import java.util.Locale;
 import net.minecraft.server.level.ServerLevel;
 
 /**
@@ -16,9 +19,42 @@ public final class CannonStation implements StationKind<CannonStation.CannonOrde
     /** Ticks from the order to the shot (lighting the fuse). */
     public static final int FUSE_TICKS = 10;
 
-    /** Orders of the cannon station. */
-    public enum CannonOrder {
-        FIRE
+    /**
+     * Orders of the cannon station. A {@link CrewOrder}: the whistle's "Fire!" entry and {@code /pirates crew order fire}
+     * give it. A ship-wide "Fire!" reaches the crew at every cannon of the ship; those at an unloaded cannon answer
+     * that it is not loaded.
+     */
+    public enum CannonOrder implements CrewOrder {
+        FIRE;
+
+        @Override
+        public String id() {
+            return name().toLowerCase(Locale.ROOT);
+        }
+
+        /** Translation key of the order name ("fire the cannons"). */
+        @Override
+        public String nameKey() {
+            return "cannon_order." + Constants.MOD_ID + "." + id();
+        }
+
+        /** "Aye, firing!" */
+        @Override
+        public String ackKey() {
+            return "message." + Constants.MOD_ID + ".crew.ack." + id();
+        }
+
+        /** "The gun is not loaded, captain!" */
+        @Override
+        public String nothingToDoKey() {
+            return "message." + Constants.MOD_ID + ".crew.cannon_not_loaded";
+        }
+
+        /** "This gun won't fire, captain!" (cannons disabled on the server). */
+        @Override
+        public String unableKey() {
+            return "message." + Constants.MOD_ID + ".crew.cannon_unable";
+        }
     }
 
     private CannonStation() {

@@ -107,6 +107,32 @@ public final class SableShips {
         remove(ship);
     }
 
+    /**
+     * Moves blocks from one ship's plot into another ship's plot (rejoining, RS2): {@code anchor} (plot of {@code from})
+     * lands on {@code target} (plot of {@code to}), rotated by {@code quarterTurns} counter-clockwise 90° steps; block
+     * states are rotated and block entities keep their data. Overwrites whatever is at the targets, so the caller must
+     * check for overlaps first. Log-out tracking points on {@code from} move to {@code to}. {@code from} is left empty,
+     * the caller removes it.
+     * Backed by {@code api/SubLevelAssemblyHelper.java} {@code AssemblyTransform} (l.513-560), {@code moveBlocks}
+     * (l.327-463: creates missing chunks in the target plot, l.354-365, then for each block saves the block entity with
+     * {@code saveWithFullMetadata}, writes the rotated state, loads the data with {@code loadWithComponents} and clears
+     * the old cell) and {@code moveTrackingPoints} (l.279-295). The same calls that assembly (world to plot) and our
+     * disassembly (plot to world) use; plot to plot is the third case of the same transform.
+     */
+    public static void moveBlocksBetween(ShipBody from, ShipBody to, BlockPos anchor, BlockPos target, int quarterTurns,
+                                         List<BlockPos> plotBlocks) {
+        ServerSubLevel sub = from.raw();
+        ServerLevel level = sub.getLevel();
+        int turns = Math.floorMod(quarterTurns, 4);
+        SubLevelAssemblyHelper.AssemblyTransform transform =
+                new SubLevelAssemblyHelper.AssemblyTransform(anchor, target, turns, rotationFor(turns), level);
+        BoundingBox3i plotBounds = new BoundingBox3i(sub.getPlot().getBoundingBox());
+        if (!plotBlocks.isEmpty()) {
+            SubLevelAssemblyHelper.moveBlocks(level, transform, plotBlocks);
+        }
+        SubLevelAssemblyHelper.moveTrackingPoints(level, plotBounds, to.raw(), transform);
+    }
+
     /** The block-state rotation matching {@code quarterTurns} counter-clockwise steps (the inverse of Aeronautics' mapping). */
     static Rotation rotationFor(int quarterTurns) {
         return switch (Math.floorMod(quarterTurns, 4)) {

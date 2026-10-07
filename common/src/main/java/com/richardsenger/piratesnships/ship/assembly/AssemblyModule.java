@@ -20,6 +20,8 @@ import net.minecraft.data.models.blockstates.VariantProperties;
 import net.minecraft.data.models.model.ModelLocationUtils;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import net.minecraft.data.recipes.ShapelessRecipeBuilder;
+import com.richardsenger.piratesnships.core.datagen.LangBuilder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
@@ -63,6 +65,9 @@ public final class AssemblyModule implements ModModule {
         CommonEvents.SERVER_TICK_END.register(server -> ShipSplits.onServerTick());
         CommonEvents.SERVER_STOPPED.register(server -> ShipSplits.onServerStopped());
         CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> ShipInfoCommand.register(dispatcher));
+        // Rejoining split pieces with the Shipwright's Toolkit (RS2)
+        CommonEvents.LEVEL_TICK_END.register(ShipRejoin::onLevelTick);
+        CommonEvents.SERVER_STOPPED.register(server -> ShipRejoin.onServerStopped());
     }
 
     @Override
@@ -88,6 +93,7 @@ public final class AssemblyModule implements ModModule {
             lang.add(ShipInfoCommand.KEY_SHIP, "Ship %s, name %s, origin %s");
             lang.add(ShipInfoCommand.KEY_WRECK, "Wreck %s of %s, origin %s");
             lang.add(ShipInfoCommand.KEY_UNNAMED, "(unnamed)");
+            rejoinLang(lang);
         });
         data.models(m -> {
             // Hand-made Blockbench model (art/models/helm.bbmodel, design.md §4.8): only the block state is generated.
@@ -100,6 +106,14 @@ public final class AssemblyModule implements ModModule {
                             .select(Direction.SOUTH, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R180))
                             .select(Direction.WEST, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R270))));
         });
+        data.models(m -> {
+            // Placeholder sprites (tools/gen_placeholder_textures.py) until the Blockbench models come
+            m.handheldItem(AssemblyContent.CARPENTERS_HAMMER.get());
+            m.handheldItem(AssemblyContent.SAW.get());
+            m.flatItem(AssemblyContent.NAILS.get());
+            m.flatItem(AssemblyContent.SHIPWRIGHT_TOOLKIT.get());
+        });
+        data.recipes(AssemblyModule::rejoinRecipes);
         data.definitions(ShipTemplates.TYPE, ShipTemplates.DEFAULTS);
         data.blockLoot(loot -> loot.dropSelf(helm));
         data.recipes(out -> ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, helm)
@@ -132,8 +146,59 @@ public final class AssemblyModule implements ModModule {
         });
     }
 
+    private static void rejoinLang(LangBuilder lang) {
+        lang.item(AssemblyContent.CARPENTERS_HAMMER, "Carpenter's Hammer")
+                .item(AssemblyContent.SAW, "Saw")
+                .item(AssemblyContent.NAILS, "Nails")
+                .item(AssemblyContent.SHIPWRIGHT_TOOLKIT, "Shipwright's Toolkit")
+                .add(ShipwrightToolkitItem.KEY_TOOLTIP, "Sneak-use on the piece to keep, then use on a split-off piece lying against it to nail it back on")
+                .add(ShipwrightToolkitItem.KEY_MARKED, "Marked for repair: %s")
+                .add(ShipwrightToolkitItem.KEY_MARKED_UNNAMED, "Marked for repair: a piece without a name");
+        lang.add(ShipRejoin.Outcome.MARKED.key(), "Marked for repair: %s. Now use the toolkit on the piece to join to it")
+                .add(ShipRejoin.Outcome.STARTED.key(), "Hammering %s blocks into place…")
+                .add(ShipRejoin.Outcome.REJOINED.key(), "Rejoined %s blocks")
+                .add(ShipRejoin.Outcome.DISABLED.key(), "Rejoining ship pieces is disabled on this server")
+                .add(ShipRejoin.Outcome.NOT_A_SHIP.key(), "This is not part of a ship")
+                .add(ShipRejoin.Outcome.NO_MARK.key(), "First sneak-use the toolkit on the piece to keep")
+                .add(ShipRejoin.Outcome.SAME_PIECE.key(), "This is the marked piece. Use the toolkit on the piece to join to it")
+                .add(ShipRejoin.Outcome.MARK_GONE.key(), "The marked piece is gone. Mark the piece to keep again")
+                .add(ShipRejoin.Outcome.BUSY.key(), "Still hammering")
+                .add(ShipRejoin.Outcome.NO_TOOLKIT.key(), "You put the toolkit away")
+                .add(ShipRejoin.Outcome.DIFFERENT_SHIP.key(), "These pieces belong to a different ship")
+                .add(ShipRejoin.Outcome.TOO_BIG.key(), "This piece is too big to nail on: %s blocks, at most %s. A shipwright can join bigger halves")
+                .add(ShipRejoin.Outcome.NOT_ALIGNED.key(), "The pieces are not lined up: bring them within %s° and %s blocks of their places")
+                .add(ShipRejoin.Outcome.ADD_PLANKS.key(), "Add planks to bridge the gap")
+                .add(ShipRejoin.Outcome.TOO_FAR.key(), "Bring the pieces together")
+                .add(ShipRejoin.Outcome.OVERLAP.key(), "The pieces overlap: something is in the way")
+                .add(ShipRejoin.Outcome.OUT_OF_PLOT.key(), "This piece reaches too far from the ship to join it")
+                .add(ShipRejoin.Outcome.NO_NAILS.key(), "You need %s nails")
+                .add(ShipRejoin.Outcome.FAILED.key(), "Rejoining failed, see the server log");
+    }
+
+    private static void rejoinRecipes(net.minecraft.data.recipes.RecipeOutput out) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, AssemblyContent.CARPENTERS_HAMMER.get())
+                .pattern("II").pattern(" S")
+                .define('I', Items.IRON_INGOT).define('S', Items.STICK)
+                .unlockedBy("has_iron_ingot", InventoryChangeTrigger.TriggerInstance.hasItems(Items.IRON_INGOT))
+                .save(out, AssemblyContent.CARPENTERS_HAMMER.id());
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, AssemblyContent.SAW.get())
+                .pattern("SI").pattern("S ")
+                .define('I', Items.IRON_INGOT).define('S', Items.STICK)
+                .unlockedBy("has_iron_ingot", InventoryChangeTrigger.TriggerInstance.hasItems(Items.IRON_INGOT))
+                .save(out, AssemblyContent.SAW.id());
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, AssemblyContent.NAILS.get(), 8)
+                .requires(Items.IRON_NUGGET, 3)
+                .unlockedBy("has_iron_nugget", InventoryChangeTrigger.TriggerInstance.hasItems(Items.IRON_NUGGET))
+                .save(out, AssemblyContent.NAILS.id());
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.TOOLS, AssemblyContent.SHIPWRIGHT_TOOLKIT.get())
+                .requires(AssemblyContent.CARPENTERS_HAMMER.get()).requires(AssemblyContent.SAW.get())
+                .requires(AssemblyContent.NAILS.get()).requires(Items.LEATHER)
+                .unlockedBy("has_hammer", InventoryChangeTrigger.TriggerInstance.hasItems(AssemblyContent.CARPENTERS_HAMMER.get()))
+                .save(out, AssemblyContent.SHIPWRIGHT_TOOLKIT.id());
+    }
+
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(AssemblyGameTests.class, ShipTemplateGameTests.class, SplitGameTests.class);
+        return List.of(AssemblyGameTests.class, ShipTemplateGameTests.class, SplitGameTests.class, RejoinGameTests.class);
     }
 }

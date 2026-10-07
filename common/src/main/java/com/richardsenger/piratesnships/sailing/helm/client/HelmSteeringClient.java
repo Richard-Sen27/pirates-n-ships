@@ -35,9 +35,9 @@ import org.jetbrains.annotations.Nullable;
  *   <li>Letting go of use sends {@link HelmReleasePayload}; the wheel stays where it is.</li>
  * </ul>
  *
- * <p>The mouse is read and the view held per frame from {@link HelmOverlay} (drawn after the world, so the view shows
- * at most one frame's mouse movement) and once per tick as a fallback (F1 hides the HUD). A per-frame event that fires
- * after the mouse turned the player and before the world is drawn would remove that one frame.
+ * <p>The mouse is read and the view held per frame from {@link ClientEvents#RENDER_FRAME_PRE} (after the mouse turned
+ * the player, before the frame is drawn, so the turn never shows) and once per tick as a fallback (no frames are drawn
+ * while rendering is off).
  */
 public final class HelmSteeringClient {
 
@@ -58,6 +58,7 @@ public final class HelmSteeringClient {
     public static void init() {
         ClientEvents.INTERACTION_KEY.register(HelmSteeringClient::onInteraction);
         ClientEvents.CLIENT_TICK_START.register(HelmSteeringClient::onTick);
+        ClientEvents.RENDER_FRAME_PRE.register(HelmSteeringClient::frame);
         ClientEvents.CLIENT_DISCONNECT.register(mc -> stop());
     }
 
@@ -164,7 +165,7 @@ public final class HelmSteeringClient {
 
     /**
      * Reads the mouse since the last call into the wheel input and, with the view lock, takes the mouse's share of the
-     * yaw back. Called per frame (from the HUD) and per tick; each call only sees the movement since the last one.
+     * yaw back. Called per frame ({@link ClientEvents#RENDER_FRAME_PRE}) and per tick; each call only sees the movement since the last one.
      */
     public static void frame(Minecraft mc) {
         if (active == null) {

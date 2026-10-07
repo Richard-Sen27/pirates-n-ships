@@ -10,8 +10,7 @@ import net.minecraft.network.chat.Component;
 
 /**
  * The helmsman's HUD while holding the wheel (HELM1): the rudder angle and side ("Rudder 12° starboard", "Rudder
- * midships") above the action bar, from the locally predicted wheel, behind {@code helm_view.show_rudder_angle}. It is
- * also the per-frame hook of {@link HelmSteeringClient#frame} (drawn every frame after the world).
+ * midships") above the action bar, from the locally predicted wheel, behind {@code helm_view.show_rudder_angle}.
  */
 public final class HelmOverlay {
 
@@ -20,7 +19,6 @@ public final class HelmOverlay {
 
     public static void render(GuiGraphics graphics, DeltaTracker delta) {
         Minecraft mc = Minecraft.getInstance();
-        HelmSteeringClient.frame(mc);
         if (HelmSteeringClient.activeHelm() == null || mc.options.hideGui || !HelmConfig.SHOW_RUDDER_ANGLE.get()) {
             return;
         }

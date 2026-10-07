@@ -66,7 +66,7 @@ anything goes wrong.
 
 ## Known limits to report on
 
-- While the mouse moves fast, the view may lag by at most one frame of movement before it is held (the mouse is read
-  after the world is drawn; a per-frame event would remove it). If you see the view shaking sideways while steering,
-  report it with your frame rate.
+- The view lock runs every frame right after the mouse turned the view and before the frame is drawn (HELM1b), so
+  the view should hold **without any lag or sideways jitter**, even with fast mouse moves and at low frame rates. If
+  you see the view twitch sideways while steering, report it with your frame rate.
 - With "cinematic camera" (smooth camera) on, the view may drift slowly while steering.

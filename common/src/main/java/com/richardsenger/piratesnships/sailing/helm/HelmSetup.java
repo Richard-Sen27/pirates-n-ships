@@ -6,9 +6,6 @@ import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.ship.assembly.AssemblyContent;
 import com.richardsenger.piratesnships.ship.assembly.HelmBlock;
-import net.minecraft.data.models.blockstates.MultiVariantGenerator;
-import net.minecraft.data.models.blockstates.Variant;
-import net.minecraft.data.models.blockstates.VariantProperties;
 import net.minecraft.data.models.model.DelegatedModel;
 import net.minecraft.data.models.model.ModelLocationUtils;
 import net.minecraft.resources.ResourceLocation;
@@ -51,16 +48,13 @@ public final class HelmSetup {
 
     public static void gatherData(DataContributions data) {
         data.lang(lang -> lang
-                .block(HelmContent.WHEEL_MODEL, "Helm Wheel")
                 .add(HelmService.KEY_HOLDING, "At the wheel (%s): move the mouse or hold strafe left/right to turn it, let go of use to release")
                 .add(HelmService.KEY_RUDDER, "Rudder %s° %s")
                 .add(HelmService.KEY_BUSY, "Someone else is at the wheel"));
         data.models(m -> {
             // hand-made Blockbench models (art/models/helm.bbmodel, design.md §4.8): block/helm is the pedestal (its
-            // block state comes from ship.assembly), block/helm_wheel the wheel drawn by client/HelmWheelRenderer, and
-            // block/helm_item both together for the item
-            m.blockStates().accept(MultiVariantGenerator.multiVariant(HelmContent.WHEEL_MODEL.get(), Variant.variant()
-                    .with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(HelmContent.WHEEL_MODEL.get()))));
+            // block state comes from ship.assembly), block/helm_wheel the wheel drawn by client/HelmWheelRenderer (a
+            // stand-alone model, no block state), and block/helm_item both together for the item
             ResourceLocation item = ModelLocationUtils.getModelLocation(AssemblyContent.HELM.get().asItem());
             m.models().accept(item, new DelegatedModel(Constants.id("block/helm_item")));
         });

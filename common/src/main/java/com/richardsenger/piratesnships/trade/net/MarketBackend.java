@@ -93,8 +93,6 @@ public final class MarketBackend {
                 (p, player) -> com.richardsenger.piratesnships.trade.client.ClientMarketState.open(p));
         Services.NETWORK.registerToClient(MarketPayloads.State.TYPE, MarketPayloads.State.CODEC,
                 (p, player) -> com.richardsenger.piratesnships.trade.client.ClientMarketState.accept(p));
-        // The live refresh belongs to the protocol; subscribed here so the module's event list stays unchanged
-        com.richardsenger.piratesnships.platform.event.CommonEvents.SERVER_TICK_END.register(MarketBackend::onServerTick);
     }
 
     // --- Sessions -----------------------------------------------------------------------------------------------
@@ -132,7 +130,7 @@ public final class MarketBackend {
     }
 
     /**
-     * Every server tick (subscribed in {@link #registerPayloads}): on refresh ticks, drops the sessions of players
+     * Every server tick (subscribed in {@code TradeModule.registerEvents}): on refresh ticks, drops the sessions of players
      * who logged out or died and re-sends the state to every valid session whose view changed.
      */
     public static void onServerTick(MinecraftServer server) {

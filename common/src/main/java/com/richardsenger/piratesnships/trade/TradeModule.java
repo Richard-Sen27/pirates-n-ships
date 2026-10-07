@@ -49,6 +49,7 @@ public final class TradeModule implements ModModule {
             if (p instanceof net.minecraft.server.level.ServerPlayer sp) com.richardsenger.piratesnships.trade.net.MarketBackend.close(sp);
         });
         com.richardsenger.piratesnships.platform.event.CommonEvents.SERVER_STOPPED.register(s -> com.richardsenger.piratesnships.trade.net.MarketBackend.clear());
+        com.richardsenger.piratesnships.platform.event.CommonEvents.SERVER_TICK_END.register(com.richardsenger.piratesnships.trade.net.MarketBackend::onServerTick);
     }
 
     @Override

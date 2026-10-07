@@ -394,6 +394,22 @@ Firearm animations (P3):
 - Head rotation is still never keyed: the head follows the look, so "head down to the sights" is only the torso
   lean. Cannon fuse animation: not part of P3.
 
+Gun grip in the hand (F8h):
+- The F8b third-person translations put the fist on the pistol's butt cap and the musket's butt. Only the translation
+  changed (rotations, scales and first person stay): `thirdperson_righthand`/`lefthand` translation pistol
+  `[0, 4, 2.5]` -> `[0, 3, 1.25]`, musket `[0, 5.5, 1.5]` -> `[0, 3, 1.5]`. Now the pistol grip enters the fist just
+  behind the trigger guard and the butt cap sticks out under it; the musket's wrist sits in the fist with the lock
+  just in front and the butt under the forearm. Checked through `ItemInHandLayer`'s chain (item origin in the arm frame
+  `(-1, 10, -2)`, display translation `(x, y, z)` moves the item by `(-x, -z, -y)` in the arm frame: y forward, z up
+  the arm) and in display mode. Renders: `renders/pistol_hand.png`, `renders/musket_hand.png` (before/after, side and
+  front, plus first person). First person has no hand, so its values stayed.
+- P3 consistency: the rig's gun proxies moved by the same amount (pistol y −1.25, z +1; musket z +2.5 in the
+  `right_item` frame). The aims only translate the gun along/under the barrel, so `pistol_aim` and `musket_aim` are
+  unchanged (re-export byte-identical, barrel still straight ahead). The reloads were re-solved: the fore-stock poses'
+  `riPos` (pistol `[0, -2.4, -0.1]`, musket `[0, -6.1, -0.65]`) put the guns back exactly where P3 had them (butt on
+  the ground, muzzle at the left hand), and the cocking left arms (`P_COCK*`, `M_COCK*`) were solved onto the moved
+  locks (Gauss-Newton on the hand point over left-arm x/y, residual < 0.2 px).
+
 ## Entities
 
 Animated mobs and NPCs (crew member, pirate, sailor, navy soldier and officer; design.md §9) are GeckoLib models

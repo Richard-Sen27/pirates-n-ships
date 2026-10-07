@@ -59,9 +59,12 @@ Renders of the intended look are in `art/renders/`.
 5. **Capstan:** on deck, base, drum, whelps and drumhead look right, four bars reach about 3 px into the neighbouring
    blocks; neither it nor its neighbours render dark or with missing faces. On a ship the anchor drops and raises as
    before and the model does not change between anchor phases. Full-block hitbox.
-6. **Sail winch:** place it facing each way; it looks the same each time, crank on the east side (known, a facing comes
-   later). Alternating rope rings on the drum, the pawl touches the ratchet on the west side. Using it still cycles the
-   trim; the crew station still works (whistle, assign, seat).
+6. **Sail winch:** place it while looking north, east, south and west: the crank is on the side facing you each time,
+   the ratchet on the far side. A winch from a world saved before G2 still shows its crank to the east. Alternating
+   rope rings on the drum. Using it still cycles the trim; the crew station still works (whistle, assign, seat) and the
+   crew member sits in the same spot whatever the facing (known: the seat ignores the facing). After turning a ship
+   about 90° and disassembling it, the crank turned with the ship and the sail cloth is right at once, with no
+   one-second flash of wrongly turned cloth.
 7. **Yard:** yards along x and along z look the same, turned; the spar sits exactly on the hitbox outline; a row of
    yards joins seamlessly with a lashing band on every block. With a square sail hoisted, the cloth lines up with the
    spar at half and at full and does not clip badly through the band or the jackstay.

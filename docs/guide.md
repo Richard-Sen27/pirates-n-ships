@@ -393,7 +393,7 @@ nothing lets a player use it yet: the input and animation layers are missing.
 | Helm | 4 sticks, 1 planks | Assembles, steers and disassembles a ship. A real ship's wheel on a pedestal (Blockbench model). See [Ships](#2-ships) and [Sailing](#3-sailing). |
 | Yard | 3 logs in a row (gives 3) | A spar. Two rows on one mast make a square sail; the cloth is drawn between them. See [Sails](#sails). |
 | Cleat | iron ingot, planks | Attaches to floors, walls and masts. Three cleats and a rope make a triangular sail. See [Sails](#sails). |
-| Sail Winch | 2 string, 1 iron ingot, 3 planks | Sets the trim of all sails on its ship. A crew station. |
+| Sail Winch | 2 string, 1 iron ingot, 3 planks | Sets the trim of all sails on its ship. A crew station. The crank faces you when placed. |
 | Capstan | 2 logs, 1 stick, 2 chains, 1 iron block, 3 planks | Drops and raises the anchor. |
 | Flagpole | 3 sticks (gives 2) | Flies a flag. A thin pole with a finial and a cleat (Blockbench model). See [Flags](#5-flags). |
 | Pantry | 8 planks, 1 wheat | Food store with spoilage. See [Provisions](#6-provisions). |

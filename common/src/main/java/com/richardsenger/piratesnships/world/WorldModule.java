@@ -6,14 +6,18 @@ import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.world.port.PortService;
 import com.richardsenger.piratesnships.world.village.VillageData;
 import com.richardsenger.piratesnships.world.village.VillageStructures;
+import com.richardsenger.piratesnships.world.wreck.WreckData;
+import com.richardsenger.piratesnships.world.wreck.WreckGameTests;
 import com.richardsenger.piratesnships.world.wreck.WreckLoot;
+import com.richardsenger.piratesnships.world.wreck.WreckStructures;
 
 import java.util.List;
 
 /**
  * The {@code world} module (design.md §10.1, §10.4, WG1): the seafarer village structure (custom structure type
  * {@code pirates_n_ships:port_village} over vanilla jigsaw pools), the port registry with berths, and the binding of
- * harbor desks to the port they stand in.
+ * harbor desks to the port they stand in; the wrecks on the ocean floor (custom structure type {@code pirates_n_ships:wreck},
+ * WK1).
  */
 public final class WorldModule implements ModModule {
 
@@ -30,6 +34,7 @@ public final class WorldModule implements ModModule {
     @Override
     public void registerContent() {
         VillageStructures.init();
+        WreckStructures.init();
     }
 
     @Override
@@ -46,11 +51,12 @@ public final class WorldModule implements ModModule {
     public void gatherData(DataContributions data) {
         VillageData.gather(data);
         WreckLoot.gather(data);
+        WreckData.gather(data);
         data.lang(WorldCommands::lang);
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(WorldGameTests.class);
+        return List.of(WorldGameTests.class, WreckGameTests.class);
     }
 }

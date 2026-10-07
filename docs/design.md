@@ -316,6 +316,7 @@ The crew operates a station by being attached to it, much like being seated. Thi
 
 ### 7.3 Crew upkeep
 - Wages are paid periodically from the ship's chest. Unpaid or starving crew lose morale, and low morale leads to desertion or mutiny (mutiny behind a config toggle).
+- **Upkeep (CR2, decided 2026-10-07):** one **ship day tick at dawn** per ship runs the provisions rules (§7.4) over the pantries and water barrels aboard for the crew headcount, applies their morale deltas through `CrewMorale.adjust`, their work-speed factor to station work ticks and scurvy as weakness; then pays **wages**: every crew member costs `crew.wages.per_day` doubloons, taken from doubloons in any cargo container or chest on the ship (the pay chest is wherever the coins are), and an unpaid member loses `unpaid_per_day` morale and the owner is told. A member whose morale stays below `desert_below` for `desert_days` dawns **deserts**: it is released, becomes a neutral sailor and walks off at the next chance (`crew.desertion_enabled`). With `crew.mutiny_enabled` (off by default) a ship whose average morale stays below `mutiny_below` for `mutiny_days` dawns **mutinies**: the crew turns into hostile pirates and the ship loses its owner. Supplies left and pay state show in `/pirates crew info`.
 
 ### 7.4 Provisions
 - A **galley / provisions store** on the ship (a pantry container block) holds food, fresh water and rum.

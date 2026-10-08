@@ -345,6 +345,11 @@ The crew operates a station by being attached to it, much like being seated. Thi
 
 ---
 
+### 7.5 Crew and port packages (decided 2026-10-08, details in `docs/plans/crew-and-ports.md`)
+- CRW0 shared helpers (`CrewConfig.sub`, a `StationKind.begin` hook called at order start, `CrewReplacement.replace` and `ShipCoins` extracted from the upkeep day tick, `ReturnToPostGoal` extracted from the pirate captain); CRW1 hiring at a Crew tab of the harbor desk (candidates per port kind regenerated daily: sailors at villages, pirates at islands for players the pirates like or with enough infamy, navy ratings at outposts for the enlisted; a fee from the wallet; the recruit spawns on the player's ship moored at the port; bunks cap the crew; dismissal by sneak-using the whistle on a crew member); CRW2 wages falling back to the captain's wallet, deserters leaving only at a port, visible meals at the pantry twice a day; CRW3 the capstan as a station with drop and raise orders and the `capstan_push` animation; PRT1a a harbor master mob behind every desk, placed at generation, talking to him opens the desk; PRT1b docking fees charged once per visit to a ship tied up or anchored in a navy outpost's box, with the rank and reputation waivers, dues owed blocking the desk; BRD1 a boarding plank laid as a block run from one gunwale over the gap to a ship lying alongside, breaking when the hulls part.
+
+---
+
 ## 8. Combat
 
 ### 8.1 Weapons (Waffen)

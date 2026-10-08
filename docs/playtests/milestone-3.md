@@ -208,6 +208,42 @@ On land is fine for all of this except step 5.
    crew aboard. Repeat step 1 (stone in the mast) and run the command: the upper yard's line names the stone and its
    distance. The winch (empty hand) and the crew's "no sails" answer give the same reason.
 
+## 6c. VIS1b: sails moving in the wind
+Render only; nothing here changes speed or heel. Rig the §6 ship (a square sail from two 5-wide yards 5 apart and a
+triangular sail), add a flagpole with a flag on deck for comparison, assemble, full sail. Default client config
+(`sail_visuals.enabled` on, `max_belly` 0.6, `flutter_amplitude` 0.15, `segments` 8). Watch every step from the deck
+and once from the water about 15 blocks off the beam. "Leeward" = the side the flag streams to.
+1. **Running** (`/pirates wind set <from the stern> 8`, sail a minute so the ship has speed). Expected: the square sail
+   bellies toward the bow (leeward) with a smooth round belly, deepest in the middle, flat at both yards and at the
+   side edges, about half a block deep; the belly breathes slowly (a few percent, every 4 to 5 s); no flapping. The
+   cloth texture (seams, reef bands, frayed foot) is not torn or stretched; light and shade follow the curve. The belly
+   is shallower than when the ship stood still (the ship runs away from the wind). The triangular sail, its cloth
+   along the wind, hangs slack and shakes.
+2. **Reaching** (wind on the beam). Expected: the triangular sail bellies to leeward and draws; the square sail, whose
+   cloth now lies along the wind, hangs slack and shakes (a fast ripple running across it).
+3. **Close-hauled** (wind about 50° off the bow). Expected: the triangular sail still draws; the square sail luffs and
+   shakes.
+4. **Head to wind** (turn the bow into the wind while the ship still moves forward). Expected: both sails luff and
+   shake, the flutter stronger in a stronger wind; no belly. Note: a square sail on a ship that has never moved reads
+   the wind as from astern and keeps drawing (it does not know where the bow is until the ship moves; see the report).
+5. **Reefed** (winch to half). Expected: the same behaviour with a visibly smaller belly and swing; the free foot of the
+   square sail curves out a little; no jump when the trim changes, the belly eases over about half a second.
+6. **Furled.** Expected: the bundle under the yard / along the stay, exactly as before VIS1b, no motion.
+7. **Calm** (`/pirates wind set 0 0`). Expected: the cloth hangs slack with a slight sag (a few pixels) to the side it
+   last bellied to, perfectly still. Raise the wind again: the belly grows smoothly, no pop.
+8. **Wind flip** (`/pirates wind set` to the opposite bearing). Expected: the cloth crosses to the other side over
+   about a second instead of snapping; it briefly passes the yard line.
+9. **Gust** (`/weather thunder` and wait for gusts, or switch the wind from 4 to 14). Expected: the belly deepens
+   smoothly with the gust and relaxes after; a luffing sail shakes harder.
+10. **On land.** Yards and a stay on land with wind across the cloth: they belly to leeward; with the wind along the
+    cloth they shake. Nothing moves on land in a calm.
+11. **Culling.** With the deepest belly (`max_belly` 1.5) look past the sail so the head yard leaves the screen: the
+    cloth must not vanish while it is still in view.
+12. **Off switch.** `sail_visuals.enabled = false`: the fixed belly of before (no breathing, no flutter, the side
+    snaps when the wind flips).
+13. **Cost.** F3 frame time with the ship in view, `sail_visuals.enabled` on and off: report any visible difference.
+Report screenshots of 1, 2, 4, 5 and 7 from the deck and of 1 from the water, with the flag in the frame.
+
 ## Tuning questions (server config, section in brackets)
 | Question | Config value |
 |---|---|

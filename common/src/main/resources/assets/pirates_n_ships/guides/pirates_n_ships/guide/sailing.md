@@ -65,6 +65,12 @@ Server config `sailing.sails.rope_lines`, `rope_sag`.
 - Sails only work on a ship that is afloat.
 - Yards run across the ship, stays run along it. Directions are only visual: the crew is assumed to trim the sails optimally.
 
+**Sails in the wind.** The cloth shows how a sail meets the wind you feel on board. A sail that draws bellies out to
+leeward, deeper the stronger the wind, and breathes slowly. A sail that luffs, with the wind running along its cloth
+or coming from too close ahead, hangs slack and shakes. Half sail bellies less, a furled sail stays a bundle, and in a
+calm the cloth just sags a little. It is only a look: the force comes from the rules above. Client config
+`sail_visuals.enabled`, `max_belly`, `flutter_amplitude`, `segments`.
+
 ## Sail winch
 Using it cycles the trim of **all** sails on its ship: furled → half → full → furled. Clicking an upper yard or a head cleat with the
 empty hand cycles only that sail.

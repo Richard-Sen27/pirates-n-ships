@@ -11,6 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 import com.richardsenger.piratesnships.sailing.block.CleatBlock;
 import com.richardsenger.piratesnships.sailing.block.CleatBlockEntity;
+import com.richardsenger.piratesnships.sailing.force.SailTrim;
+import com.richardsenger.piratesnships.sailing.force.SailTypes;
+import com.richardsenger.piratesnships.sailing.sail.SailShape;
+import com.richardsenger.piratesnships.sailing.sail.SailVisualsConfig;
 import com.richardsenger.piratesnships.sailing.sail.TriangleCloth;
 import com.richardsenger.piratesnships.sailing.sail.TriangularSail;
 import com.richardsenger.piratesnships.sailing.wind.ClientWind;
@@ -41,6 +45,10 @@ import org.joml.Vector3f;
  * two blocks ({@link SailFoot}, ART5). Every other rope of the cleat (RP1: lines to cleats
  * or mooring rings, and a stay without a sail) is drawn with sag by {@link RopeLineRenderer#drawLines}.
  *
+ * <p><b>In the wind (VIS1b).</b> With client {@code sail_visuals.enabled} the cloth moves in its own frame like a
+ * square sail's ({@link SailShape#triangle}, {@link SailAirTracker}; the bow is taken toward the tack until the ship's
+ * motion says otherwise); off: the fixed bulge of before.
+ *
  * <p>Like {@link YardClothRenderer} it works on land and on ships (Sable renders a sub-level's block entities with the
  * ship's pose on the pose stack), and it does not set {@code shouldRenderOffScreen} (see the note there); the
  * NeoForge culling box comes from {@link #getRenderBoundingBox}.
@@ -60,6 +68,16 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
     /** Bulge at the middle of a full sail, per block of the square root of its area (capped). */
     private static final float BELLY_PER_SIZE = 0.08f;
     private static final float MAX_BELLY = 0.5f;
+
+    /** Per-sail looks and the apparent wind (VIS1b). */
+    private final SailAirTracker air = new SailAirTracker();
+    /** The cloth grid ({@code (i, j)} at {@code i * (n + 1) + j}), refilled per sail and frame; grown for a bigger sail. */
+    private float[] px = new float[0];
+    private float[] py = new float[0];
+    private float[] pz = new float[0];
+    private float[] nx = new float[0];
+    private float[] ny = new float[0];
+    private float[] nz = new float[0];
 
     public StayClothRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -83,19 +101,29 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
         TriangleCloth g = be.cloth();
         if (g != null && g.drop() > 0) {
             double now = level.getGameTime() + (double) partialTick;
-            float shown = animate(be, (float) TriangularSail.drawnFraction(state.getValue(CleatBlock.TRIM)), now);
+            SailTrim trim = state.getValue(CleatBlock.TRIM);
+            float shown = animate(be, (float) TriangularSail.drawnFraction(trim), now);
             Vector3f normal = new Vector3f(g.tackZ(), 0f, -g.tackX());
             if (normal.lengthSquared() > 1.0e-6f) {
                 normal.normalize();
-                updateSide(be, normal, level, now, partialTick);
+                SailShape.Look look = null;
+                if (SailVisualsConfig.ENABLED.get()) {
+                    // a stay runs along the ship with its tack forward (the sign corrected by the ship's motion)
+                    look = air.look(be, be.side, 1);
+                    float hx = (float) Math.hypot(g.tackX(), g.tackZ());
+                    be.side = air.update(look, level, Vec3.atCenterOf(p), partialTick, now, SailTypes.FORE_AND_AFT_CURVE, trim,
+                            g.tackX() / hx, g.tackZ() / hx, normal.x, normal.z, g.drop(), be.side);
+                } else {
+                    updateSide(be, normal, level, now, partialTick);
+                }
                 Vector3f gTack = new Vector3f(g.tackX(), g.tackY(), g.tackZ());
                 if (shown * g.drop() > 0.05f) {
-                    Vector3f out = normal.mul(be.side, new Vector3f());
                     float bottom = shown * g.drop();
+                    int n = grid(gTack, bottom, normal, g, be, look, now);
                     // each buffer is taken right before it is written: asking for another render type ends the batch
-                    cloth(buffers.getBuffer(RenderType.entityCutoutNoCull(CLOTH_TEXTURE)), last, gTack, bottom, out, g, false, light, overlay);
+                    cloth(buffers.getBuffer(RenderType.entityCutoutNoCull(CLOTH_TEXTURE)), last, n, gTack, bottom, false, light, overlay);
                     if (SailFoot.shown(bottom)) {
-                        cloth(buffers.getBuffer(RenderType.entityCutoutNoCull(FOOT_TEXTURE)), last, gTack, bottom, out, g, true, light, overlay);
+                        cloth(buffers.getBuffer(RenderType.entityCutoutNoCull(FOOT_TEXTURE)), last, n, gTack, bottom, true, light, overlay);
                     }
                 }
                 if (shown < 0.999f) {
@@ -162,42 +190,116 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
     }
 
     /**
-     * The drawn triangle head (origin) - tack - clew point {@code (0, -bottom, 0)}, as a grid of small triangles that
-     * bulges along {@code out} (the downwind normal), most in the middle. Called twice: {@code foot} false draws the
-     * triangles on the plain tile, true those on the foot tile ({@link SailFoot#stayFootTriangle}: wholly within the
-     * bottom block above the tack-clew edge). The grid's rows {@code i + j = const} run parallel to that edge.
+     * Fills the grid of the drawn triangle head (origin) - tack - clew point {@code (0, -bottom, 0)} and its per-vertex
+     * normals, and returns its size {@code n}: points {@code (i, j)} with {@code i + j <= n} at {@code tack * i/n +
+     * clew * j/n}, pushed along the cloth's normal. With a {@code look} (VIS1b) by {@link SailShape#triangle} on a
+     * finer grid (at least {@code sail_visuals.segments} cells along each edge and half as many per block); without one
+     * by the fixed bulge of before, to the downwind side, most in the middle. The grid's rows {@code i + j = const} run
+     * parallel to the tack-clew edge.
      */
-    private static void cloth(VertexConsumer vc, PoseStack.Pose p, Vector3f tack, float bottom, Vector3f out, TriangleCloth g,
-                              boolean foot, int light, int overlay) {
-        Vector3f clew = new Vector3f(0f, -bottom, 0f);
+    private int grid(Vector3f tack, float bottom, Vector3f normal, TriangleCloth g, CleatBlockEntity be, SailShape.Look look,
+                     double now) {
         float size = Math.max(tack.length(), bottom);
         int n = Math.max(2, (int) Math.ceil(size * CELLS_PER_BLOCK));
+        if (look != null) {
+            int segments = SailVisualsConfig.SEGMENTS.get();
+            n = Math.max(n, Math.max(segments, (int) Math.ceil(size * segments / 2f)));
+        }
+        int stride = n + 1;
+        ensure(stride * stride);
         double area = 0.5 * Math.hypot(g.tackX(), g.tackZ()) * g.drop();
         float belly = Math.min(MAX_BELLY, BELLY_PER_SIZE * (float) Math.sqrt(area)) * (bottom / g.drop());
-        float hx = (float) Math.hypot(tack.x, tack.z);
-        Vector3f along = hx < 1.0e-6f ? new Vector3f(1f, 0f, 0f) : new Vector3f(tack.x / hx, 0f, tack.z / hx);
-        Vector3f[][] pts = new Vector3f[n + 1][];
+        float phase = SailShape.phase(be.getBlockPos().asLong());
         for (int i = 0; i <= n; i++) {
-            pts[i] = new Vector3f[n - i + 1];
             for (int j = 0; j <= n - i; j++) {
                 float u = (float) i / n, v = (float) j / n;
-                float bulge = 27f * u * v * (1f - u - v) * belly;
-                pts[i][j] = new Vector3f(tack).mul(u).add(new Vector3f(clew).mul(v)).add(new Vector3f(out).mul(bulge));
+                float off = look == null ? be.side * 27f * u * v * (1f - u - v) * belly
+                        : SailShape.triangle(look, u, v, size, now, phase);
+                int k = i * stride + j;
+                px[k] = tack.x * u + normal.x * off;
+                py[k] = tack.y * u - bottom * v + normal.y * off;
+                pz[k] = tack.z * u + normal.z * off;
             }
         }
+        java.util.Arrays.fill(nx, 0, stride * stride, 0f);
+        java.util.Arrays.fill(ny, 0, stride * stride, 0f);
+        java.util.Arrays.fill(nz, 0, stride * stride, 0f);
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n - i; j++) {
+                int a = i * stride + j, b = a + stride, c = a + 1;
+                faceNormal(a, b, c);
+                if (j < n - i - 1) {
+                    faceNormal(b, b + 1, c);
+                }
+            }
+        }
+        for (int i = 0; i <= n; i++) {
+            for (int j = 0; j <= n - i; j++) {
+                int k = i * stride + j;
+                float l = (float) Math.sqrt(nx[k] * nx[k] + ny[k] * ny[k] + nz[k] * nz[k]);
+                if (l > 1.0e-12f) {
+                    nx[k] /= l;
+                    ny[k] /= l;
+                    nz[k] /= l;
+                } else {
+                    ny[k] = 1f;
+                }
+            }
+        }
+        return n;
+    }
+
+    /** Adds the normal {@code (b - a) x (c - a)} of one grid triangle to its three corners (area-weighted). */
+    private void faceNormal(int a, int b, int c) {
+        float ex = px[b] - px[a], ey = py[b] - py[a], ez = pz[b] - pz[a];
+        float fx = px[c] - px[a], fy = py[c] - py[a], fz = pz[c] - pz[a];
+        float cx = ey * fz - ez * fy, cy = ez * fx - ex * fz, cz = ex * fy - ey * fx;
+        nx[a] += cx;
+        ny[a] += cy;
+        nz[a] += cz;
+        nx[b] += cx;
+        ny[b] += cy;
+        nz[b] += cz;
+        nx[c] += cx;
+        ny[c] += cy;
+        nz[c] += cz;
+    }
+
+    private void ensure(int size) {
+        if (px.length < size) {
+            px = new float[size];
+            py = new float[size];
+            pz = new float[size];
+            nx = new float[size];
+            ny = new float[size];
+            nz = new float[size];
+        }
+    }
+
+    /**
+     * Draws the grid filled by {@link #grid}. Called twice: {@code foot} false draws the triangles on the plain tile,
+     * true those on the foot tile ({@link SailFoot#stayFootTriangle}: wholly within the bottom block above the
+     * tack-clew edge).
+     */
+    private void cloth(VertexConsumer vc, PoseStack.Pose p, int n, Vector3f tack, float bottom, boolean foot, int light, int overlay) {
+        float hx = (float) Math.hypot(tack.x, tack.z);
+        float ax = hx < 1.0e-6f ? 1f : tack.x / hx;
+        float az = hx < 1.0e-6f ? 0f : tack.z / hx;
+        int stride = n + 1;
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n - i; j++) {
                 // the first triangle's highest corner is (i, j), the second's lies one grid row lower
                 float hA = SailFoot.heightAboveFoot((float) i / n, (float) j / n, bottom);
                 float hB = SailFoot.heightAboveFoot((float) (i + 1) / n, (float) j / n, bottom);
                 float hC = SailFoot.heightAboveFoot((float) i / n, (float) (j + 1) / n, bottom);
+                int a = i * stride + j, b = a + stride, c = a + 1;
                 if (SailFoot.stayFootTriangle(hA, bottom) == foot) {
-                    tri(vc, p, pts[i][j], pts[i + 1][j], pts[i][j + 1], hA, hB, hC, along, bottom, light, overlay);
+                    tri(vc, p, a, b, c, hA, hB, hC, ax, az, bottom, light, overlay);
                 }
                 if (j < n - i - 1) {
                     float hD = SailFoot.heightAboveFoot((float) (i + 1) / n, (float) (j + 1) / n, bottom);
                     if (SailFoot.stayFootTriangle(hB, bottom) == foot) {
-                        tri(vc, p, pts[i + 1][j], pts[i + 1][j + 1], pts[i][j + 1], hB, hD, hC, along, bottom, light, overlay);
+                        tri(vc, p, b, b + 1, c, hB, hD, hC, ax, az, bottom, light, overlay);
                     }
                 }
             }
@@ -205,18 +307,21 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
     }
 
     /**
-     * One triangle, as a quad with its last corner doubled. Texture u is the horizontal position along the tack in
-     * blocks, v counts whole tiles up from the foot ({@link SailFoot#stayV}), so the bands run parallel to the foot.
+     * One triangle of grid points, as a quad with its last corner doubled. Texture u is the horizontal position along
+     * the tack in blocks ({@code (ax, az)}), v counts whole tiles up from the foot ({@link SailFoot#stayV}), so the bands
+     * run parallel to the foot.
      */
-    private static void tri(VertexConsumer vc, PoseStack.Pose p, Vector3f a, Vector3f b, Vector3f c, float ha, float hb, float hc,
-                            Vector3f along, float bottom, int light, int overlay) {
-        Vector3f n = new Vector3f(b).sub(a).cross(new Vector3f(c).sub(a));
-        if (n.lengthSquared() < 1.0e-12f) return;
-        n.normalize();
-        vertex(vc, p, a, a.dot(along), SailFoot.stayV(ha, bottom), n, light, overlay);
-        vertex(vc, p, b, b.dot(along), SailFoot.stayV(hb, bottom), n, light, overlay);
-        vertex(vc, p, c, c.dot(along), SailFoot.stayV(hc, bottom), n, light, overlay);
-        vertex(vc, p, c, c.dot(along), SailFoot.stayV(hc, bottom), n, light, overlay);
+    private void tri(VertexConsumer vc, PoseStack.Pose p, int a, int b, int c, float ha, float hb, float hc, float ax, float az,
+                     float bottom, int light, int overlay) {
+        gridVertex(vc, p, a, px[a] * ax + pz[a] * az, SailFoot.stayV(ha, bottom), light, overlay);
+        gridVertex(vc, p, b, px[b] * ax + pz[b] * az, SailFoot.stayV(hb, bottom), light, overlay);
+        gridVertex(vc, p, c, px[c] * ax + pz[c] * az, SailFoot.stayV(hc, bottom), light, overlay);
+        gridVertex(vc, p, c, px[c] * ax + pz[c] * az, SailFoot.stayV(hc, bottom), light, overlay);
+    }
+
+    private void gridVertex(VertexConsumer vc, PoseStack.Pose p, int k, float u, float v, int light, int overlay) {
+        vc.addVertex(p, px[k], py[k], pz[k]).setColor(255, 255, 255, 255).setUv(u, v).setOverlay(overlay).setLight(light)
+                .setNormal(p, nx[k], ny[k], nz[k]);
     }
 
     /** A square beam of half width {@code half} from {@code from} to {@code to} (four sides, open ends). */
@@ -266,8 +371,9 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
         }
         BlockPos t = p.offset(g.tackX(), g.tackY(), g.tackZ());
         int drop = g.drop();
-        return box.minmax(new AABB(Math.min(p.getX(), t.getX()) - MAX_BELLY, Math.min(Math.min(p.getY(), t.getY()), p.getY() - drop) - MAX_BELLY,
-                Math.min(p.getZ(), t.getZ()) - MAX_BELLY, Math.max(p.getX(), t.getX()) + 1 + MAX_BELLY,
-                Math.max(p.getY(), t.getY()) + 1 + MAX_BELLY, Math.max(p.getZ(), t.getZ()) + 1 + MAX_BELLY));
+        double m = Math.max(MAX_BELLY, YardClothRenderer.bellyReach());
+        return box.minmax(new AABB(Math.min(p.getX(), t.getX()) - m, Math.min(Math.min(p.getY(), t.getY()), p.getY() - drop) - m,
+                Math.min(p.getZ(), t.getZ()) - m, Math.max(p.getX(), t.getX()) + 1 + m,
+                Math.max(p.getY(), t.getY()) + 1 + m, Math.max(p.getZ(), t.getZ()) + 1 + m));
     }
 }

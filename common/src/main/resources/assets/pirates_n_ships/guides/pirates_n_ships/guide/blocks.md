@@ -6,6 +6,7 @@ navigation:
   icon: pirates_n_ships:cargo_crate
 item_ids:
   - pirates_n_ships:bilge_pump
+  - pirates_n_ships:chart_table
   - pirates_n_ships:cleat
   - pirates_n_ships:figurehead_eagle
   - pirates_n_ships:figurehead_lion
@@ -16,6 +17,11 @@ item_ids:
   - pirates_n_ships:mooring_ring
   - pirates_n_ships:nameplate
   - pirates_n_ships:notice_board
+  - pirates_n_ships:rope_coil
+  - pirates_n_ships:sea_cot
+  - pirates_n_ships:ship_lantern
+  - pirates_n_ships:ships_bell
+  - pirates_n_ships:stern_window
   - pirates_n_ships:yard
 ---
 

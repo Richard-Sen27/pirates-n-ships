@@ -1,0 +1,68 @@
+{
+  "variants": {
+    "face=floor,facing=east,ringing=false": {
+      "model": "pirates_n_ships:block/ships_bell",
+      "y": 90
+    },
+    "face=floor,facing=east,ringing=true": {
+      "model": "pirates_n_ships:block/ships_bell_ringing",
+      "y": 90
+    },
+    "face=floor,facing=north,ringing=false": {
+      "model": "pirates_n_ships:block/ships_bell",
+      "y": 0
+    },
+    "face=floor,facing=north,ringing=true": {
+      "model": "pirates_n_ships:block/ships_bell_ringing",
+      "y": 0
+    },
+    "face=floor,facing=south,ringing=false": {
+      "model": "pirates_n_ships:block/ships_bell",
+      "y": 180
+    },
+    "face=floor,facing=south,ringing=true": {
+      "model": "pirates_n_ships:block/ships_bell_ringing",
+      "y": 180
+    },
+    "face=floor,facing=west,ringing=false": {
+      "model": "pirates_n_ships:block/ships_bell",
+      "y": 270
+    },
+    "face=floor,facing=west,ringing=true": {
+      "model": "pirates_n_ships:block/ships_bell_ringing",
+      "y": 270
+    },
+    "face=wall,facing=east,ringing=false": {
+      "model": "pirates_n_ships:block/ships_bell_wall",
+      "y": 90
+    },
+    "face=wall,facing=east,ringing=true": {
+      "model": "pirates_n_ships:block/ships_bell_wall_ringing",
+      "y": 90
+    },
+    "face=wall,facing=north,ringing=false": {
+      "model": "pirates_n_ships:block/ships_bell_wall",
+      "y": 0
+    },
+    "face=wall,facing=north,ringing=true": {
+      "model": "pirates_n_ships:block/ships_bell_wall_ringing",
+      "y": 0
+    },
+    "face=wall,facing=south,ringing=false": {
+      "model": "pirates_n_ships:block/ships_bell_wall",
+      "y": 180
+    },
+    "face=wall,facing=south,ringing=true": {
+      "model": "pirates_n_ships:block/ships_bell_wall_ringing",
+      "y": 180
+    },
+    "face=wall,facing=west,ringing=false": {
+      "model": "pirates_n_ships:block/ships_bell_wall",
+      "y": 270
+    },
+    "face=wall,facing=west,ringing=true": {
+      "model": "pirates_n_ships:block/ships_bell_wall_ringing",
+      "y": 270
+    }
+  }
+}

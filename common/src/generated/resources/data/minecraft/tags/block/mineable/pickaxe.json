@@ -2,6 +2,8 @@
   "values": [
     "pirates_n_ships:brig_bars",
     "pirates_n_ships:brig_door",
+    "pirates_n_ships:ship_lantern",
+    "pirates_n_ships:ships_bell",
     "pirates_n_ships:cannon",
     "pirates_n_ships:swivel_gun",
     "pirates_n_ships:mooring_ring"

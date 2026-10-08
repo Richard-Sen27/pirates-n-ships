@@ -31,3 +31,41 @@ its Blockbench pass.
 2. The outline hugs the chest (about 14 wide, 12 deep, 10 high); walking against it and standing on it (10 px high) behave accordingly.
 3. The floating chest bobs and rocks with the new model, centred in its shadow, front toward the player who launched it.
 4. The item in the GUI (three-quarter view, front on the right, a bit smaller than a block), in hand (first and third person, not clipping the arm), on the ground (small, just above it) and in an item frame (hasp facing out, centred).
+
+## SC2: paddling
+Covered headless by 9 JUnit tests (`PaddleRulesTest`) and 7 GameTests (`PaddleGameTests`): mounting, 60 ticks of
+forward input (about 3.8 blocks), a left turn of 60 degrees per second, no headway without the paddle in hand,
+sneak to dismount, refusals (worn, placed, beached, occupied), hunger and the toggle. What only a client shows: the
+feel, the rider's seat and camera, the sync of a server-moved vehicle, and cold water on the rider.
+
+Setup: survival, a floating sea chest (step 4 above), a paddle (two planks and a stick, diagonal: ` P` / ` P` / `S `).
+The paddle is a placeholder model (a wooden shovel) until its Blockbench pass.
+
+1. **Mounting.** Swim or stand at the shore next to the chest, paddle in hand, use it on the chest: you sit on its
+   lid, facing where you looked; the chest turns to that heading. A second player using a paddle on it gets
+   "Someone is sitting on this sea chest". A paddle on a placed chest block or on a player wearing one does nothing;
+   on a chest washed up on dry land you get "The sea chest must float to be paddled".
+2. **Seat and camera.** The sitting pose sits on the lid (not inside the chest, not floating above it); legs about at
+   the waterline. Say if the seat should be lower or higher. Looking around is limited to about 105 degrees either
+   side of the heading, like a boat.
+3. **Paddling.** W: the chest moves the way its hasp faces (front first), building up to about 1.5 blocks per second
+   (a slow walk) within half a second; S backs at half speed; A/D turn left/right at about 60 degrees per second, also
+   on the spot. Your view turns with the chest. A paddle stroke sound and an arm swing about once a second while a
+   key is held. Say whether the speed and turn rate feel right, and whether the motion stutters (the chest is moved
+   by the server and interpolated, unlike a vanilla boat; test on a dedicated server and with some ping too).
+4. **Paddle in hand.** Switch to another hotbar slot while riding: the keys do nothing, the chest only drifts. Paddle
+   in the off hand works too.
+5. **Wind and buoyancy.** `/pirates wind set 270 6`: while paddling south the chest also drifts east; with no keys it
+   drifts like an empty one. It keeps floating at the same height with you on it.
+6. **Hunger.** Paddle for a few minutes with full food: the hunger bar goes down about as fast as swimming the same
+   distance (F3 or the saturation mod of your choice; 1.35 exhaustion a minute of continuous strokes, a third of a
+   drumstick).
+7. **Cold water.** In a frozen or cold ocean, sit on the chest: the frost overlay builds up as if you were swimming
+   (about 7 s to full), and freezing damage follows; leather armour or rum prevents it. In a boat it does not.
+8. **Dismounting.** Sneak: you get off into the water next to the chest. The rider cannot open the chest (use shows
+   "Get off first (sneak) to open the sea chest") or knock it loose by hitting it; after getting off, use opens it and
+   sneak-use picks it up as before. Nobody can pick it up while you sit on it, but another player's hit still knocks
+   it loose (and you fall in).
+9. **Relog while seated.** Log out on the chest and back in: you are still seated (vanilla's root vehicle saving).
+10. **Toggle.** `sea_chest.paddle_enabled = false`: using a paddle on the chest opens it instead; a rider seated
+   before the switch only drifts.

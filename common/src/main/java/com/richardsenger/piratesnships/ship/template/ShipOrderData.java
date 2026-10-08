@@ -1,14 +1,10 @@
 package com.richardsenger.piratesnships.ship.template;
 
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
-import net.minecraft.data.models.model.ModelLocationUtils;
-import net.minecraft.data.models.model.ModelTemplates;
-import net.minecraft.data.models.model.TextureMapping;
-import net.minecraft.world.item.Items;
 
 /**
- * Datagen of the shipwright orders (SW1): lang of the receipt, the order and pickup messages and the commands, and the
- * receipt's item model. Called from {@code trade.desk.HarborDeskData} (the desk carries the Orders tab).
+ * Datagen of the shipwright orders (SW1): lang of the receipt, the order and pickup messages and the commands, (the receipt's
+ * item model is hand-made). Called from {@code trade.desk.HarborDeskData} (the desk carries the Orders tab).
  */
 public final class ShipOrderData {
 
@@ -39,8 +35,6 @@ public final class ShipOrderData {
                     .add(ShipOrders.KEY_WRONG_PORT, "This receipt belongs to the shipwright at %s");
             ShipOrderCommands.lang(lang);
         });
-        // Placeholder: a flat model on vanilla's paper sprite until an art batch draws the receipt
-        data.models(m -> ModelTemplates.FLAT_ITEM.create(ModelLocationUtils.getModelLocation(ShipOrderContent.SHIP_RECEIPT.get()),
-                TextureMapping.layer0(Items.PAPER), m.models()));
+        // The receipt's item model is hand-made (art/models/ship_receipt.bbmodel, design.md §4.8, ART4)
     }
 }

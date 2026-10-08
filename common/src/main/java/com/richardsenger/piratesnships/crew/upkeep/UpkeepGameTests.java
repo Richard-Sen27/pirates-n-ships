@@ -353,22 +353,28 @@ public final class UpkeepGameTests {
     }
 
     /**
-     * A real server player in the player list (online in the test level), owner of the ship, carrying {@code coins}
-     * doubloons. Taken out of the player list again by {@link #logOut}. The GameTest helper is deprecated for removal
-     * in a later Minecraft; 1.21.1 still has it.
+     * A real server player with a mock connection (the hiring and market tests' pattern), owner of the ship, carrying
+     * {@code coins} doubloons, put into the test level's player list only (online in this level: what the wage step
+     * looks for) without a login, so no login events or packets run. Taken out again by {@link #logOut}.
      */
-    @SuppressWarnings("removal")
     private static ServerPlayer owner(GameTestHelper h, Ship s, int coins) {
-        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        var profile = new com.mojang.authlib.GameProfile(UUID.randomUUID(), "test-owner");
+        var cookie = net.minecraft.server.network.CommonListenerCookie.createInitial(profile, false);
+        ServerPlayer p = new ServerPlayer(h.getLevel().getServer(), h.getLevel(), profile, cookie.clientInformation());
+        var connection = new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND);
+        new io.netty.channel.embedded.EmbeddedChannel(connection);
+        new net.minecraft.server.network.ServerGamePacketListenerImpl(h.getLevel().getServer(), connection, p, cookie);
+        p.setPos(Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(5, 5, 5))));
         p.getInventory().clearContent();
         Wallet.give(p, coins);
+        h.getLevel().players().add(p);
         ShipRegistry registry = ShipRegistry.get(h.getLevel().getServer());
         registry.put(registry.find(s.id()).orElseThrow(() -> new AssertionError("no ship record")).withOwner(Optional.of(p.getUUID())));
         return p;
     }
 
     private static void logOut(GameTestHelper h, ServerPlayer p) {
-        h.getLevel().getServer().getPlayerList().remove(p);
+        h.getLevel().players().remove(p);
     }
 
     /**

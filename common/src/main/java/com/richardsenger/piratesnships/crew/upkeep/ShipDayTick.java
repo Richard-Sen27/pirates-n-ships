@@ -156,9 +156,13 @@ public final class ShipDayTick {
         boolean ownerAboard = owner != null && owner.serverLevel() == level && isAboard(level, ship, owner);
 
         // 2. wages (the owner's wallet last, CRW2), 3. mutiny and desertion (pure)
-        boolean wallet = s.wagesEnabled() && CrewConfig.WAGES_FROM_WALLET.get() && owner != null && owner.serverLevel() == level;
-        List<WageRules.Source<PayKey>> sources = PayKey.sources(scan.coins(), wallet ? owner.getUUID() : null,
-                wallet ? Wallet.count(owner) : 0);
+        // the owner's purse pays while the owner is a player in this level (online here)
+        @Nullable ServerPlayer payer = s.wagesEnabled() && CrewConfig.WAGES_FROM_WALLET.get()
+                ? record.flatMap(ShipData::owner).map(level::getPlayerByUUID)
+                        .filter(ServerPlayer.class::isInstance).map(ServerPlayer.class::cast).orElse(null)
+                : null;
+        List<WageRules.Source<PayKey>> sources = PayKey.sources(scan.coins(), payer != null ? payer.getUUID() : null,
+                payer != null ? Wallet.count(payer) : 0);
         WageRules.Payment<PayKey> payment = s.wagesEnabled()
                 ? WageRules.pay(crew.size(), s.wagePerDay(), sources)
                 : WageRules.Payment.none();
@@ -184,7 +188,7 @@ public final class ShipDayTick {
         }
         ShipCoins.take(level, PayKey.containers(payment));
         long fromWallet = PayKey.walletCoins(payment);
-        if (fromWallet > 0 && !Wallet.take(owner, fromWallet)) {
+        if (fromWallet > 0 && !Wallet.take(payer, fromWallet)) {
             fromWallet = 0; // counted in this same tick, so this cannot happen; never book coins nobody gave
         }
         if (fx.scurvy() && ownerAboard && ProvisionsConfig.SCURVY_AFFECTS_PLAYERS.get()) {

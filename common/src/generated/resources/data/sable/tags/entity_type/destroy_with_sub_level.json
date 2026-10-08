@@ -2,6 +2,7 @@
   "values": [
     "pirates_n_ships:anchor",
     "pirates_n_ships:station_seat",
-    "pirates_n_ships:hammock_seat"
+    "pirates_n_ships:hammock_seat",
+    "pirates_n_ships:meal_seat"
   ]
 }

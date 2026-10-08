@@ -14,7 +14,9 @@ import org.junit.jupiter.api.Test;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,6 +30,13 @@ class QuestGeneratorTest {
             List.of(new QuestGenerator.DeliveryOption(Constants.id("sugar"), 64, DEST, 200));
     private static final List<QuestGenerator.TreasureOption> TREASURES =
             List.of(new QuestGenerator.TreasureOption(Constants.id("tortuga"), new BlockPos(100, 60, 200)));
+    private static final UUID NEAR = UUID.fromString("00000000-0000-0000-0000-00000000000a");
+    private static final UUID FAR = UUID.fromString("00000000-0000-0000-0000-00000000000b");
+    private static final UUID OUT = UUID.fromString("00000000-0000-0000-0000-00000000000c");
+    private static final List<QuestGenerator.CaptainOption> CAPTAINS = List.of(
+            new QuestGenerator.CaptainOption(FAR, "Black-Tooth Bartholomew Kidd", 2500, "north"),
+            new QuestGenerator.CaptainOption(OUT, "Mad Anne Vane", 3500, "south"),
+            new QuestGenerator.CaptainOption(NEAR, "Cutthroat Jacquotte Stroud", 1200, "east"));
 
     @BeforeAll
     static void bootstrap() {
@@ -41,14 +50,18 @@ class QuestGeneratorTest {
     }
 
     private static QuestGenerator.Context ctx(PortKind kind, long day) {
-        return ctx(kind, Climate.TEMPERATE, day, DELIVERIES, TREASURES);
+        return new QuestGenerator.Context(PORT, kind, Climate.TEMPERATE, day, 12345L, DELIVERIES, TREASURES, CAPTAINS);
+    }
+
+    private static QuestGenerator.Context captains(PortKind kind, long day, List<QuestGenerator.CaptainOption> captains) {
+        return new QuestGenerator.Context(PORT, kind, Climate.TEMPERATE, day, 12345L, DELIVERIES, TREASURES, captains);
     }
 
     private static QuestParams with(boolean treasure, boolean deeds, double scale, double krakenChance) {
         QuestParams d = QuestParams.DEFAULTS;
         return new QuestParams(d.offersPerPort(), d.offerDays(), d.deadlineDays(), d.maxActive(), scale, d.huntMin(), d.huntMax(),
                 d.monsterMin(), d.monsterMax(), d.turnInMax(), krakenChance, d.perPirate(), d.perNavy(), d.perPrisoner(), d.perShark(),
-                d.kraken(), d.treasure(), d.deliverMultiplier(), treasure, deeds, d.types());
+                d.kraken(), d.treasure(), d.captain(), d.deliverMultiplier(), d.captainRadius(), treasure, deeds, d.types());
     }
 
     @Test
@@ -89,7 +102,9 @@ class QuestGeneratorTest {
         }
         assertFalse(QuestType.HUNT_NAVY.allowedAt(PortKind.NAVY_OUTPOST));
         assertFalse(QuestType.HUNT_PIRATES.allowedAt(PortKind.PIRATE_ISLAND));
-        for (QuestType later : List.of(QuestType.HUNT_CAPTAIN, QuestType.ESCORT, QuestType.PLUNDER_CONVOY, QuestType.HUNT_PATROL, QuestType.HUNT_SHIP)) {
+        assertFalse(QuestType.HUNT_CAPTAIN.allowedAt(PortKind.PIRATE_ISLAND));
+        assertTrue(QuestType.HUNT_CAPTAIN.available());
+        for (QuestType later : List.of(QuestType.ESCORT, QuestType.PLUNDER_CONVOY, QuestType.HUNT_PATROL, QuestType.HUNT_SHIP)) {
             assertFalse(later.available(), later + " is not offered yet");
         }
     }
@@ -100,7 +115,7 @@ class QuestGeneratorTest {
         QuestParams d = QuestParams.DEFAULTS;
         QuestParams odd = new QuestParams(d.offersPerPort(), d.offerDays(), d.deadlineDays(), d.maxActive(), d.rewardScale(), d.huntMin(),
                 d.huntMax(), d.monsterMin(), d.monsterMax(), d.turnInMax(), d.krakenChance(), d.perPirate(), d.perNavy(), d.perPrisoner(),
-                d.perShark(), d.kraken(), d.treasure(), d.deliverMultiplier(), true, true,
+                d.perShark(), d.kraken(), d.treasure(), d.captain(), d.deliverMultiplier(), d.captainRadius(), true, true,
                 Map.of(PortKind.SEAFARER_VILLAGE, List.of(QuestType.HUNT_NAVY, QuestType.ESCORT, QuestType.DELIVER, QuestType.FIND_TREASURE)));
         assertEquals(List.of(QuestType.DELIVER, QuestType.FIND_TREASURE), QuestGenerator.offerable(ctx(PortKind.SEAFARER_VILLAGE, 1), odd));
         assertEquals(List.of(), QuestGenerator.offerable(ctx(PortKind.NAVY_OUTPOST, 1), odd), "nothing listed for outposts");
@@ -152,6 +167,11 @@ class QuestGeneratorTest {
                             assertEquals(TREASURES.get(0).site(), ((QuestTarget.Treasure) q.target()).site());
                             assertEquals(p.treasure(), q.rewardCoins());
                         }
+                        case HUNT_CAPTAIN -> {
+                            assertEquals(new QuestTarget.Victim(NEAR, "Cutthroat Jacquotte Stroud", Optional.of("east")), q.target());
+                            assertEquals(1, q.needed());
+                            assertEquals(p.captain(), q.rewardCoins());
+                        }
                         default -> fail("unexpected type " + q.type());
                     }
                 }
@@ -172,5 +192,63 @@ class QuestGeneratorTest {
         assertTrue(QuestGenerator.offer(QuestType.KILL_MONSTER, ctx(PortKind.SEAFARER_VILLAGE, 4), 9, with(true, true, 1, 1.0))
                 .map(q -> ((QuestTarget.Kill) q.target()).entity()).filter(QuestGenerator.KRAKEN::equals).isPresent());
         assertTrue(QuestGenerator.offer(QuestType.HUNT_NAVY, ctx(PortKind.NAVY_OUTPOST, 4), 9, QuestParams.DEFAULTS).isEmpty());
+    }
+
+    // ------------------------------------------------------------------ captain hunts (QST1b)
+
+    @Test
+    void captainHuntGoesAfterTheNearestCaptainInReach() {
+        assertEquals(Optional.of(NEAR), QuestGenerator.quarry(ctx(PortKind.SEAFARER_VILLAGE, 1), QuestParams.DEFAULTS)
+                .map(QuestGenerator.CaptainOption::id));
+        Quest q = QuestGenerator.offer(QuestType.HUNT_CAPTAIN, ctx(PortKind.NAVY_OUTPOST, 1), 3, QuestParams.DEFAULTS).orElseThrow();
+        assertEquals(NEAR, ((QuestTarget.Victim) q.target()).id());
+        assertEquals(400, q.rewardCoins());
+        assertEquals(Deed.COMPLETE_NAVY_QUEST, q.rewardDeed());
+        assertEquals(800, QuestGenerator.offer(QuestType.HUNT_CAPTAIN, ctx(PortKind.NAVY_OUTPOST, 1), 3, with(true, true, 2.0, 0.15))
+                .orElseThrow().rewardCoins(), "× reward_scale");
+        // only the one beyond the radius: none in reach, no captain hunt
+        List<QuestGenerator.CaptainOption> farOnly = List.of(CAPTAINS.get(1));
+        assertTrue(QuestGenerator.quarry(captains(PortKind.SEAFARER_VILLAGE, 1, farOnly), QuestParams.DEFAULTS).isEmpty());
+        assertFalse(QuestGenerator.offerable(captains(PortKind.SEAFARER_VILLAGE, 1, farOnly), QuestParams.DEFAULTS)
+                .contains(QuestType.HUNT_CAPTAIN));
+        assertTrue(QuestGenerator.offer(QuestType.HUNT_CAPTAIN, captains(PortKind.SEAFARER_VILLAGE, 1, List.of()), 3, QuestParams.DEFAULTS).isEmpty());
+        // exactly at the radius still counts
+        List<QuestGenerator.CaptainOption> edge = List.of(new QuestGenerator.CaptainOption(OUT, "Edge", 3000, "west"));
+        assertTrue(QuestGenerator.offerable(captains(PortKind.SEAFARER_VILLAGE, 1, edge), QuestParams.DEFAULTS).contains(QuestType.HUNT_CAPTAIN));
+        // never at a pirate island
+        assertFalse(QuestGenerator.offerable(ctx(PortKind.PIRATE_ISLAND, 1), QuestParams.DEFAULTS).contains(QuestType.HUNT_CAPTAIN));
+        assertTrue(QuestGenerator.offer(QuestType.HUNT_CAPTAIN, ctx(PortKind.PIRATE_ISLAND, 1), 3, QuestParams.DEFAULTS).isEmpty());
+    }
+
+    @Test
+    void atMostOneCaptainHuntPerPort() {
+        boolean seen = false;
+        for (long day = 0; day < 40; day++) {
+            for (PortKind kind : List.of(PortKind.SEAFARER_VILLAGE, PortKind.NAVY_OUTPOST)) {
+                List<Quest> offers = QuestGenerator.offers(ctx(kind, day), 12, QuestParams.DEFAULTS);
+                assertEquals(12, offers.size(), "the other types fill up");
+                long hunts = offers.stream().filter(q -> q.type() == QuestType.HUNT_CAPTAIN).count();
+                assertTrue(hunts <= 1, "captain hunts on day " + day + " at " + kind + ": " + hunts);
+                seen |= hunts == 1;
+                assertTrue(QuestGenerator.offers(ctx(kind, day).withoutCaptains(), 12, QuestParams.DEFAULTS).stream()
+                        .noneMatch(q -> q.type() == QuestType.HUNT_CAPTAIN), "none when the port already offers one");
+            }
+        }
+        assertTrue(seen, "captain hunts are offered");
+        // a port that can only offer a captain hunt makes one offer, not several
+        QuestParams only = QuestParams.DEFAULTS.withTypes(Map.of(PortKind.SEAFARER_VILLAGE, List.of(QuestType.HUNT_CAPTAIN)));
+        assertEquals(1, QuestGenerator.offers(ctx(PortKind.SEAFARER_VILLAGE, 2), 3, only).size());
+    }
+
+    @Test
+    void bearingsAreCompassPoints() {
+        assertEquals("north", QuestGenerator.bearing(0, -100));
+        assertEquals("east", QuestGenerator.bearing(100, 0));
+        assertEquals("south", QuestGenerator.bearing(0, 100));
+        assertEquals("west", QuestGenerator.bearing(-100, 0));
+        assertEquals("north_east", QuestGenerator.bearing(100, -100));
+        assertEquals("south_west", QuestGenerator.bearing(-90, 110));
+        assertEquals("east", QuestGenerator.bearing(100, 30), "within 22.5° of east");
+        assertEquals("north", QuestGenerator.bearing(0, 0));
     }
 }

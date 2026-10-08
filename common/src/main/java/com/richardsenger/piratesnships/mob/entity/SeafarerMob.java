@@ -213,18 +213,25 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity {
     @Override
     public boolean hurt(DamageSource source, float amount) {
         boolean hurt = super.hurt(source, amount);
-        if (hurt && !level().isClientSide && source.getEntity() instanceof LivingEntity attacker && attacker != this) {
-            HostilityRules.Target t = describe(attacker);
-            if (HostilityRules.retaliates(faction(), t, MobConfig.hostility(kind()))) {
-                grudgeTarget = attacker.getUUID();
-                grudgeUntil = level().getGameTime() + MobConfig.GRUDGE_TICKS.get();
-                if (getTarget() == null || !getTarget().isAlive()) {
-                    setTarget(attacker);
-                    DuelistDebug.report(this, "target", "acquired (fights back)", attacker, "");
-                }
-            }
-        }
+        if (hurt && !level().isClientSide && source.getEntity() instanceof LivingEntity attacker) takeGrudge(attacker);
         return hurt;
+    }
+
+    /**
+     * Takes a grudge against {@code attacker} as if it had hit this mob (the retaliation rule of
+     * {@link HostilityRules#retaliates}), and targets it if this mob has no living target. Called when this mob is hit
+     * and when a squad mate is (MOB2, {@code mob.squad.SquadCombat}). Returns whether the grudge was taken.
+     */
+    public boolean takeGrudge(LivingEntity attacker) {
+        if (attacker == this || level().isClientSide) return false;
+        if (!HostilityRules.retaliates(faction(), describe(attacker), MobConfig.hostility(kind()))) return false;
+        grudgeTarget = attacker.getUUID();
+        grudgeUntil = level().getGameTime() + MobConfig.GRUDGE_TICKS.get();
+        if (getTarget() == null || !getTarget().isAlive()) {
+            setTarget(attacker);
+            DuelistDebug.report(this, "target", "acquired (fights back)", attacker, "");
+        }
+        return true;
     }
 
     @Override

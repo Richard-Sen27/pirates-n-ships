@@ -89,6 +89,10 @@ public final class MobConfig {
      */
     public static final ConfigSection HARBOR_MASTER = S.section("harbor_master",
             "The harbor master behind every port's harbor desk: talking to him opens the desk");
+
+    /** The {@code mobs.squad} section (MOB2), filled by {@code mob.squad.SquadConfig}. */
+    public static final ConfigSection SQUAD = S.section("squad",
+            "Navy officers leading squads of their outpost's garrison on patrol");
     private static final Map<MobKind, ConfigValue<Boolean>> ENABLED = new EnumMap<>(MobKind.class);
     private static final Map<MobKind, ConfigValue<Boolean>> PEACEFUL = new EnumMap<>(MobKind.class);
 

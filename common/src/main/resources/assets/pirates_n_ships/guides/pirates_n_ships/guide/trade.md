@@ -78,6 +78,22 @@ Selling plunder at a navy outpost is risky: if the harbor master notices it the 
 a crime, +15 criminal score (`law.severity.fence_plunder`; several noticed sales at one port within a minute count
 once). Pirate fences never report you.
 
+## The harbor master
+Every port's desk has a harbor master behind it: in the village's dock-head hut, in the navy fort's office, and behind
+the fence's counter on pirate islands. He wears a green frock coat and a peaked cap. Right-click him (not sneaking) to
+open the port's market, just as using the desk does; he greets you when it opens. If you hit him, or he is running
+from pirates, he waves you off ("not now") for a while. He keeps to his post and walks back if pushed away. If he
+dies, a new harbor master takes the post after 3 days (`mobs.harbor_master.respawn_days`). With
+`cargo_trade.harbor_desks.direct_use` off, the desk only says "Talk to the harbor master" and the market opens
+through him. Server config `mobs.harbor_master`.
+
+## Harbor dues
+Navy outposts charge a small docking fee (5 doubloons) when your ship ties up at a berth or drops anchor inside the
+outpost, once per day per ship. It comes from your purse, or from the doubloons in your ship's chests when your purse
+is short. If nobody can pay, the dues are owed: the outpost's harbor desk will not trade with you until you use it
+with doubloons in hand. Captains the navy trusts, and navy officers from Lieutenant up, dock for free. Sailing through
+the harbor without stopping costs nothing. Server config `cargo_trade.port_fees`.
+
 ## Contracts
 A port offers delivery contracts: bring an amount of a good to another port by a deadline for a reward. Accepting
 takes a deposit of 20% of the reward, and delivering pays the reward and returns the deposit. A player can hold three

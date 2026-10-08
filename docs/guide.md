@@ -239,6 +239,13 @@ stopped. Using the capstan again heaves the chain in at 2.5 blocks a second and 
 up to the hull; using it mid-way lets go again. If the chain runs out before the seabed, the anchor hangs at its end
 and does not hold. Server config `anchor`.
 
+You can also put a crew member on the capstan: use the Captain's Whistle on the crew member, then on the
+capstan. In the whistle menu, "Drop anchor" makes the hand lean into the bars for two seconds before the anchor runs
+out, and "Weigh anchor" starts the winding at once; he keeps pushing until the anchor is stowed. A free hand on deck
+takes an unmanned capstan by himself when you give the order. Over water deeper than the chain he refuses: "No
+ground for the anchor within the chain's reach, captain!" Commands: `/pirates crew order drop_anchor` and
+`raise_anchor`. Server config `crew_stations.capstan`.
+
 ---
 
 ### When a ship breaks apart
@@ -501,7 +508,8 @@ one in hand, and other players can appear as ships. Only the overworld's seas ar
 
 ## 4. Crew
 
-A **crew member** is a simple NPC. There is no hiring yet: get one with `/pirates crew spawn`.
+A **crew member** is a simple NPC. Hire one at a harbor desk (see "Hiring crew" below) or spawn one with
+`/pirates crew spawn`.
 
 **Stations** are blocks a crew member can man. Only the sail winch is one so far. A crew member at a station stands on
 an invisible seat that travels with the ship, so it stays at its post while the ship moves.
@@ -521,6 +529,17 @@ A crew member is released when its station is broken, its ship is disassembled o
 
 The crew member is animated (idle, walking, working at a station, sitting in a boat) through GeckoLib, a required
 mod on both sides; it is a Blockbench-made sailor (striped shirt, red bandana, neckerchief, belt and knife, bare feet) with idle, walking, hauling and sitting animations.
+
+### Hiring crew
+Every harbor desk has a **Crew** tab. Each day a port has a few people looking for a berth: sailors at seafarer
+villages, pirates at pirate islands, navy ratings at navy outposts. Each asks a one-time fee (10, 20 or 15 doubloons)
+and then the daily wage. Villagers won't sign on with someone they refuse to trade with. Pirates sign on only with a
+friend of the pirates or a captain of some infamy (Buccaneer and up). Navy ratings sign on only with an enlisted
+officer. Before you hire, moor your own ship at the port: the recruit walks straight aboard and waits on the deck
+nearest the desk. Every crew member needs a free hammock, so hang more hammocks to take on more hands. To let someone
+go, sneak and use your captain's whistle on them: they leave your service as an ordinary sailor. Only you or whoever
+hired them can do that, or anyone at all if the ship has no owner. Operators: `/pirates crew hire <sailor|pirate|navy>`
+and `/pirates crew dismiss`. Server config `crew.hiring`.
 
 ### Pirates, sailors and the navy
 Pirates (dark coat, bandana, eyepatch, cutlass) attack players and the navy on sight. They fight with the same
@@ -704,6 +723,22 @@ check with `/pirates trade desk info`, and `/pirates trade desk unbind`. Server 
 Selling plunder at a navy outpost is risky: if the harbor master notices it the goods are confiscated and it counts as
 a crime, +15 criminal score (`law.severity.fence_plunder`; several noticed sales at one port within a minute count
 once). Pirate fences never report you.
+
+### The harbor master
+Every port's desk has a harbor master behind it: in the village's dock-head hut, in the navy fort's office, and behind
+the fence's counter on pirate islands. He wears a green frock coat and a peaked cap. Right-click him (not sneaking) to
+open the port's market, just as using the desk does; he greets you when it opens. If you hit him, or he is running
+from pirates, he waves you off ("not now") for a while. He keeps to his post and walks back if pushed away. If he
+dies, a new harbor master takes the post after 3 days (`mobs.harbor_master.respawn_days`). With
+`cargo_trade.harbor_desks.direct_use` off, the desk only says "Talk to the harbor master" and the market opens
+through him. Server config `mobs.harbor_master`.
+
+### Harbor dues
+Navy outposts charge a small docking fee (5 doubloons) when your ship ties up at a berth or drops anchor inside the
+outpost, once per day per ship. It comes from your purse, or from the doubloons in your ship's chests when your purse
+is short. If nobody can pay, the dues are owed: the outpost's harbor desk will not trade with you until you use it
+with doubloons in hand. Captains the navy trusts, and navy officers from Lieutenant up, dock for free. Sailing through
+the harbor without stopping costs nothing. Server config `cargo_trade.port_fees`.
 
 ### Contracts
 A port offers delivery contracts: bring an amount of a good to another port by a deadline for a reward. Accepting

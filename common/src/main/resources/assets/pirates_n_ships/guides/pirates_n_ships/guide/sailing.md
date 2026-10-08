@@ -113,6 +113,13 @@ stopped. Using the capstan again heaves the chain in at 2.5 blocks a second and 
 up to the hull; using it mid-way lets go again. If the chain runs out before the seabed, the anchor hangs at its end
 and does not hold. Server config `anchor`.
 
+You can also put a crew member on the capstan: use the Captain's Whistle on the crew member, then on the
+capstan. In the whistle menu, "Drop anchor" makes the hand lean into the bars for two seconds before the anchor runs
+out, and "Weigh anchor" starts the winding at once; he keeps pushing until the anchor is stowed. A free hand on deck
+takes an unmanned capstan by himself when you give the order. Over water deeper than the chain he refuses: "No
+ground for the anchor within the chain's reach, captain!" Commands: `/pirates crew order drop_anchor` and
+`raise_anchor`. Server config `crew_stations.capstan`.
+
 ## When a ship breaks apart
 Shoot or break the only block joining two parts of a ship and it splits: the part with the helm stays your ship, the
 other part becomes a wreck (its nameplate says "Wreck of …") that drifts but no longer sails; crew on it stay aboard;

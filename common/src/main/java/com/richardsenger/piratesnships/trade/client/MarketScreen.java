@@ -6,6 +6,11 @@ import com.richardsenger.piratesnships.core.client.gui.GuiSprites;
 import com.richardsenger.piratesnships.core.client.gui.ScrollBar;
 import com.richardsenger.piratesnships.core.client.gui.ScrollMath;
 import com.richardsenger.piratesnships.platform.Services;
+import com.richardsenger.piratesnships.rpg.quest.Quest;
+import com.richardsenger.piratesnships.rpg.quest.QuestPayloads;
+import com.richardsenger.piratesnships.rpg.quest.QuestTarget;
+import com.richardsenger.piratesnships.rpg.quest.QuestText;
+import com.richardsenger.piratesnships.world.treasure.TreasureMapContent;
 import com.richardsenger.piratesnships.trade.TradeConfig;
 import com.richardsenger.piratesnships.trade.TradeService;
 import com.richardsenger.piratesnships.trade.contract.DeliveryContract;
@@ -57,9 +62,9 @@ import java.util.Optional;
  */
 public final class MarketScreen extends Screen {
 
-    private enum Tab { GOODS, CONTRACTS, ORDERS }
+    private enum Tab { GOODS, CONTRACTS, ORDERS, QUESTS }
 
-    private enum Action { NONE, BUY, SELL, CONTRACT, ORDER }
+    private enum Action { NONE, BUY, SELL, CONTRACT, ORDER, QUEST }
 
     /** A button drawn in a list row; {@code tooltip} (may be null) explains a disabled button. */
     private record RowButton(int x, int y, int w, int h, Component label, boolean active, Component tooltip, Runnable action) {
@@ -76,6 +81,10 @@ public final class MarketScreen extends Screen {
     private record OrderRow(Component header, boolean heading, OrderPayloads.OrderLine ship, OrderPayloads.MyOrder mine) {
     }
 
+    /** A line of the quests tab (QST1): a section header, an offer, one of the player's active quests, or a note. */
+    private record QuestRow(Component header, boolean heading, Quest quest, boolean mine) {
+    }
+
     private static final int ROW_H = 22;
     private static final int FOOTER_H = 16;
     private static final int PRICE_W = 46;
@@ -90,6 +99,8 @@ public final class MarketScreen extends Screen {
     private long seenResultVersion = ClientMarketState.resultVersion();
     private long seenOrderResultVersion = ClientMarketState.orderResultVersion();
     private boolean ordersShown;
+    private boolean questsShown;
+    private long seenQuestResultVersion = ClientMarketState.questResultVersion();
     private Action pending = Action.NONE;
     private Component status = Component.empty();
     private int statusColor = GuiKit.INK;
@@ -152,6 +163,14 @@ public final class MarketScreen extends Screen {
         if (ordersShown) {
             addRenderableWidget(new BrassButton(x0 + 144, y, 70, 14, Component.translatable(MarketText.TAB_ORDERS), () -> switchTab(Tab.ORDERS))
                     .selected(tab == Tab.ORDERS)).active = tab != Tab.ORDERS;
+        }
+        // QST1: every desk has a Quests tab while quests are on
+        questsShown = ClientMarketState.quests().isPresent();
+        if (!questsShown && tab == Tab.QUESTS) tab = Tab.GOODS;
+        if (questsShown) {
+            int qx = x0 + (ordersShown ? 216 : 144);
+            addRenderableWidget(new BrassButton(qx, y, 70, 14, Component.translatable(MarketText.TAB_QUESTS), () -> switchTab(Tab.QUESTS))
+                    .selected(tab == Tab.QUESTS)).active = tab != Tab.QUESTS;
         }
         if (tab == Tab.GOODS) {
             int qy = top + 46;
@@ -239,7 +258,7 @@ public final class MarketScreen extends Screen {
         if (ClientMarketState.version() != seenVersion) {
             seenVersion = ClientMarketState.version();
             onState(mc);
-            if (ClientMarketState.orders().isPresent() != ordersShown) rebuildWidgets();
+            if (ClientMarketState.orders().isPresent() != ordersShown || ClientMarketState.quests().isPresent() != questsShown) rebuildWidgets();
         }
     }
 
@@ -268,6 +287,15 @@ public final class MarketScreen extends Screen {
             status = Component.translatable(r.key(), args);
             statusColor = r.done() ? GuiKit.INK_GREEN : GuiKit.INK_RED;
             if (pending == Action.ORDER) pending = Action.NONE;
+        }
+        Optional<QuestPayloads.QuestResult> quest = ClientMarketState.lastQuestResult();
+        if (quest.isPresent() && ClientMarketState.questResultVersion() != seenQuestResultVersion) {
+            seenQuestResultVersion = ClientMarketState.questResultVersion();
+            QuestPayloads.QuestResult r = quest.get();
+            Component name = r.quest().map(q -> QuestText.title(q, true)).orElse(Component.empty());
+            status = Component.translatable(QuestText.result(r.key()), name);
+            statusColor = r.done() ? GuiKit.INK_GREEN : GuiKit.INK_RED;
+            if (pending == Action.QUEST) pending = Action.NONE;
         }
     }
 
@@ -337,6 +365,7 @@ public final class MarketScreen extends Screen {
     /** Rows of the open tab (for scrolling). */
     private int rowCount() {
         if (tab == Tab.ORDERS) return ClientMarketState.orders().map(o -> orderRows(o).size()).orElse(0);
+        if (tab == Tab.QUESTS) return ClientMarketState.quests().map(q -> questRows(q).size()).orElse(0);
         return ClientMarketState.view().map(v -> tab == Tab.GOODS ? MarketLines.order(v.goods()).size() : contractRows(v).size()).orElse(0);
     }
 
@@ -387,6 +416,8 @@ public final class MarketScreen extends Screen {
         } else if (tab == Tab.ORDERS) {
             MarketView v = view.get();
             total = ClientMarketState.orders().map(o -> renderOrders(g, v, o, mouseX, mouseY)).orElse(0);
+        } else if (tab == Tab.QUESTS) {
+            total = ClientMarketState.quests().map(q -> renderQuests(g, q, mouseX, mouseY)).orElse(0);
         } else {
             total = renderContracts(g, view.get(), mouseX, mouseY);
         }
@@ -609,6 +640,69 @@ public final class MarketScreen extends Screen {
             rowButtons.add(new RowButton(right - CONTRACT_BUTTON_W, y + 4, CONTRACT_BUTTON_W, 14, Component.translatable(MarketText.ORDER),
                     pending == Action.NONE && free && enough, tip,
                     () -> send(Action.ORDER, new OrderPayloads.PlaceOrder(port, template))));
+        }
+        return rows.size();
+    }
+
+    private List<QuestRow> questRows(QuestPayloads.QuestsView q) {
+        List<QuestRow> rows = new ArrayList<>();
+        rows.add(new QuestRow(Component.translatable(QuestText.OFFERS, q.mine().size(), q.maxActive()), true, null, false));
+        if (q.offers().isEmpty()) rows.add(new QuestRow(Component.translatable(QuestText.NO_OFFERS), false, null, false));
+        for (Quest o : q.offers()) rows.add(new QuestRow(null, false, o, false));
+        rows.add(new QuestRow(Component.translatable(QuestText.MINE), true, null, true));
+        if (q.mine().isEmpty()) rows.add(new QuestRow(Component.translatable(QuestText.NO_MINE), false, null, true));
+        for (Quest m : q.mine()) rows.add(new QuestRow(null, false, m, true));
+        return rows;
+    }
+
+    /** The icon of a quest row: the cargo for a delivery, a map, a sword, ... */
+    private static ItemStack questIcon(Quest q) {
+        if (q.target() instanceof QuestTarget.Cargo c) return goodStack(c.good());
+        return switch (q.type()) {
+            case FIND_TREASURE -> new ItemStack(TreasureMapContent.TREASURE_MAP.get());
+            case KILL_MONSTER -> new ItemStack(Items.TRIDENT);
+            case TURN_IN -> new ItemStack(Items.CHAIN);
+            case HUNT_NAVY -> new ItemStack(Items.GOLDEN_SWORD);
+            default -> new ItemStack(Items.IRON_SWORD);
+        };
+    }
+
+    private int renderQuests(GuiGraphics g, QuestPayloads.QuestsView q, int mouseX, int mouseY) {
+        List<QuestRow> rows = questRows(q);
+        scroll = ScrollMath.clamp(scroll, rows.size(), visibleRows());
+        int right = tableRight - 2;
+        int textX = inner() + 24;
+        boolean full = q.mine().size() >= q.maxActive();
+        for (int i = scroll; i < rows.size() && i < scroll + visibleRows(); i++) {
+            QuestRow row = rows.get(i);
+            int y = listTop + (i - scroll) * ROW_H;
+            if (row.quest() == null) {
+                if (row.heading()) {
+                    g.drawString(font, row.header(), inner() + 6, y + 8, GuiKit.INK, false);
+                    GuiKit.divider(g, inner() + 4, y + 18, tableRight - inner() - 4);
+                } else {
+                    g.drawString(font, row.header(), textX, y + 8, GuiKit.INK_DIM, false);
+                }
+                continue;
+            }
+            Quest quest = row.quest();
+            rowWash(g, i, y, mouseX, mouseY);
+            g.renderItem(questIcon(quest), inner() + 5, y + 3);
+            int textW = right - CONTRACT_BUTTON_W - 4 - textX;
+            GuiKit.ink(g, font, QuestText.title(quest, true), textX, y + 2, textW, GuiKit.INK);
+            Component detail = row.mine() ? QuestText.activeDetail(quest) : QuestText.offerDetail(quest, q.deadlineDays());
+            GuiKit.ink(g, font, detail, textX, y + 12, textW, GuiKit.INK_DIM);
+            ResourceLocation port = q.port();
+            java.util.UUID id = quest.id();
+            boolean idle = pending == Action.NONE;
+            if (row.mine()) {
+                rowButtons.add(new RowButton(right - CONTRACT_BUTTON_W, y + 4, CONTRACT_BUTTON_W, 14, Component.translatable(QuestText.ABANDON),
+                        idle, null, () -> send(Action.QUEST, new QuestPayloads.QuestAction(port, false, id))));
+            } else {
+                rowButtons.add(new RowButton(right - CONTRACT_BUTTON_W, y + 4, CONTRACT_BUTTON_W, 14, Component.translatable(QuestText.ACCEPT),
+                        idle && !full, full ? Component.translatable(QuestText.FULL) : null,
+                        () -> send(Action.QUEST, new QuestPayloads.QuestAction(port, true, id))));
+            }
         }
         return rows.size();
     }

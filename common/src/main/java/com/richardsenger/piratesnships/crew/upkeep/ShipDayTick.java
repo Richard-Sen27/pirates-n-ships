@@ -14,15 +14,11 @@ import com.richardsenger.piratesnships.crew.provisions.ProvisionOutcome;
 import com.richardsenger.piratesnships.crew.provisions.ProvisionsConfig;
 import com.richardsenger.piratesnships.law.brig.BrigService;
 import com.richardsenger.piratesnships.mob.MobContent;
-import com.richardsenger.piratesnships.mob.entity.SeafarerMob;
 import com.richardsenger.piratesnships.ship.ShipData;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
-import com.richardsenger.piratesnships.ship.assembly.AssemblyContent;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.station.winch.CaptainsWhistleItem;
-import com.richardsenger.piratesnships.trade.cargo.CargoContainerBlockEntity;
-import com.richardsenger.piratesnships.trade.coin.Wallet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,14 +30,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.Container;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -175,7 +167,7 @@ public final class ShipDayTick {
                 CrewStations.say(level, c, Component.translatable(UpkeepText.SAY_UNPAID));
             }
         }
-        takeCoins(level, payment);
+        ShipCoins.take(level, payment);
 
         Optional<ShipData> record = ShipRegistry.get(level.getServer()).find(ship.id());
         @Nullable ServerPlayer owner = record.flatMap(ShipData::owner)
@@ -203,7 +195,7 @@ public final class ShipDayTick {
             Component name = shipName(record);
             for (CrewMember c : crew) {
                 CrewStations.say(level, c, Component.translatable(UpkeepText.SAY_MUTINY));
-                replace(level, c, MobContent.PIRATE.get());
+                CrewReplacement.replace(level, c, MobContent.PIRATE.get());
             }
             record.ifPresent(d -> ShipRegistry.get(level.getServer()).put(d.withOwner(Optional.empty())));
             chat.add(Component.translatable(UpkeepText.MUTINY, name));
@@ -214,7 +206,7 @@ public final class ShipDayTick {
                 Component name = c.getDisplayName();
                 CrewStations.say(level, c, Component.translatable(UpkeepText.SAY_DESERT));
                 deserters.add(c.getUUID());
-                replace(level, c, MobContent.SAILOR.get());
+                CrewReplacement.replace(level, c, MobContent.SAILOR.get());
                 chat.add(Component.translatable(UpkeepText.DESERTED, name));
             }
         }
@@ -268,79 +260,12 @@ public final class ShipDayTick {
         return n;
     }
 
-    /**
-     * The ship's pantries and water barrels, and its coin sources with their distance to the helm (to the plot
-     * center without a helm): cargo crates and barrels holding doubloons, and every other container block (chests,
-     * barrels, ...) that is not a provisions container.
-     */
+    /** The ship's containers: its pantries and water barrels, and its coin sources ({@link ShipCoins#scan}). */
     private static Scan scan(ServerLevel level, ShipBody ship) {
-        List<BlockPos> blocks = ship.plotBlocks();
-        Vec3 helm = null;
-        for (BlockPos p : blocks) {
-            if (level.getBlockState(p).is(AssemblyContent.HELM.get())) {
-                helm = Vec3.atCenterOf(p);
-                break;
-            }
-        }
-        if (helm == null) {
-            BlockPos[] b = ship.plotBounds();
-            helm = Vec3.atLowerCornerOf(b[0]).add(Vec3.atLowerCornerOf(b[1]).add(1, 1, 1)).scale(0.5);
-        }
         List<BlockPos> provisions = new ArrayList<>();
-        List<WageRules.Source<BlockPos>> coins = new ArrayList<>();
-        for (BlockPos p : blocks) {
-            BlockEntity be = level.getBlockEntity(p);
-            if (be == null) continue;
-            if (be instanceof ProvisionContainer) {
-                provisions.add(p.immutable());
-                continue;
-            }
-            long n = coinsIn(be);
-            if (n > 0) coins.add(new WageRules.Source<>(p.immutable(), Vec3.atCenterOf(p).distanceTo(helm), n));
+        for (BlockPos p : ship.plotBlocks()) {
+            if (level.getBlockEntity(p) instanceof ProvisionContainer) provisions.add(p.immutable());
         }
-        return new Scan(provisions, coins);
-    }
-
-    /** Doubloons in a block entity that may pay wages (never a provisions container). */
-    private static long coinsIn(BlockEntity be) {
-        if (be instanceof ProvisionContainer) return 0;
-        if (be instanceof CargoContainerBlockEntity cargo) {
-            return Wallet.isCoin(cargo.heldKind()) ? cargo.count() : 0;
-        }
-        return be instanceof Container c ? Wallet.count(c) : 0;
-    }
-
-    private static void takeCoins(ServerLevel level, WageRules.Payment<BlockPos> payment) {
-        for (Map.Entry<BlockPos, Long> e : payment.takes().entrySet()) {
-            BlockEntity be = level.getBlockEntity(e.getKey());
-            int n = (int) Math.min(Integer.MAX_VALUE, e.getValue());
-            if (be instanceof CargoContainerBlockEntity cargo) {
-                cargo.extract(n);
-            } else if (be instanceof Container c) {
-                Wallet.take(c, n);
-            }
-        }
-    }
-
-    /**
-     * Replaces a crew member by a {@code type} mob at its place (desertion: a neutral sailor; mutiny: a hostile pirate):
-     * released from its station and hammock, name and AI flag carried over, then removed. The mob's own look (GL1's
-     * seafarer rig) replaces the crew look.
-     */
-    static @Nullable SeafarerMob replace(ServerLevel level, CrewMember crew, EntityType<? extends SeafarerMob> type) {
-        if (crew.assignment() != null) CrewStations.release(level, crew);
-        CrewRest.getUp(crew, false);
-        crew.stopRiding();
-        SeafarerMob mob = type.create(level);
-        if (mob != null) {
-            mob.moveTo(crew.getX(), crew.getY(), crew.getZ(), crew.getYRot(), crew.getXRot());
-            mob.setYHeadRot(crew.getYHeadRot());
-            if (crew.hasCustomName()) mob.setCustomName(crew.getCustomName());
-            mob.setNoAi(crew.isNoAi());
-            mob.setPersistenceRequired();
-            level.addFreshEntity(mob);
-        }
-        crew.discard();
-        return mob;
+        return new Scan(provisions, ShipCoins.scan(level, ship));
     }
 }

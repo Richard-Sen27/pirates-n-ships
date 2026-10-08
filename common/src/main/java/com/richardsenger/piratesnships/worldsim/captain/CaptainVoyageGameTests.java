@@ -373,6 +373,43 @@ public final class CaptainVoyageGameTests {
         });
     }
 
+    /**
+     * Shackled aboard, he leaves his voyage: no longer at sea or its fighter, so his ship becoming a record leaves him
+     * behind as a prisoner; handed over (removed alive), the registry marks him lost as on land.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "prisoner")
+    public static void shackledAtSeaHeLeavesHisVoyage(GameTestHelper h) {
+        basin(h);
+        ResourceLocation island = island();
+        UUID id = captainAtPost(h, island).getUUID();
+        Voyage v = sail(h, island);
+        MinecraftServer server = h.getLevel().getServer();
+        ShipBody[] ship = new ShipBody[1];
+        PirateCaptain[] captain = new PirateCaptain[1];
+        h.runAtTickTime(5, () -> {
+            ship[0] = materialize(h, v);
+            captain[0] = board(h, v);
+            captain[0].setHealth(captain[0].getMaxHealth() * 0.1f);
+            ServerPlayer captor = serverPlayer(h, "bos2_captor");
+            h.assertTrue(com.richardsenger.piratesnships.law.brig.BrigService.capture(captor, captain[0]).ok(), "captured");
+            h.assertTrue(CaptainVoyages.board(server, v.id()).isEmpty(), "a prisoner still counts as aboard");
+            CaptainEntry e = entry(h, island);
+            h.assertTrue(e.alive() && !e.atSea(), "registry " + e);
+            h.assertTrue(captain[0].seaVoyage() == null && !captain[0].getTags().contains(VoyageCrew.FIGHTER_TAG), "tags " + captain[0].getTags());
+            h.assertValueEqual(VoyageCrew.alive(h.getLevel(), ship[0], v.id(), VoyageCrew.FIGHTER_TAG).size(), expectedFighters() - 1,
+                    "fighters without him");
+        });
+        h.runAtTickTime(15, () -> {
+            h.assertTrue(Materializer.dematerialize(server, v.id()), "dematerialize refused");
+            h.assertTrue(!captain[0].isRemoved() && captain[0].isAlive(), "the prisoner left with his ship");
+            h.assertTrue(entry(h, island).alive(), "lost before he was handed over");
+            captain[0].discard(); // handed over to the navy
+            h.assertTrue(!entry(h, island).alive(), "handed over, he is lost");
+            finish(h, island, id, Voyages.get(server, v.id()));
+            h.succeed();
+        });
+    }
+
     /** An abstract voyage that arrives brings him back to his post, the same captain with the health he left with. */
     @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "home")
     public static void homecomingPutsHimBackAtHisPost(GameTestHelper h) {

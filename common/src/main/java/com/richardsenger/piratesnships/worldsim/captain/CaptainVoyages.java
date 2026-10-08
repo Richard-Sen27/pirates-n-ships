@@ -5,6 +5,7 @@ import com.richardsenger.piratesnships.core.datagen.LangBuilder;
 import com.richardsenger.piratesnships.law.LawService;
 import com.richardsenger.piratesnships.law.brig.BrigService;
 import com.richardsenger.piratesnships.law.flag.Faction;
+import com.richardsenger.piratesnships.mob.captain.CaptainConfig;
 import com.richardsenger.piratesnships.mob.captain.CaptainEntry;
 import com.richardsenger.piratesnships.mob.captain.CaptainRegistry;
 import com.richardsenger.piratesnships.mob.captain.CaptainSeaHook;
@@ -301,7 +302,7 @@ public final class CaptainVoyages implements CaptainSeaHook {
         if (found.isEmpty() || found.get().state() != Voyage.State.MATERIALISED || found.get().shipId().isEmpty()) return Optional.empty();
         Voyage v = found.get();
         Optional<CaptainEntry> entry = captainOf(server, v);
-        if (entry.isEmpty()) return Optional.empty();
+        if (entry.isEmpty() || !CaptainConfig.enabled()) return Optional.empty(); // disabled captains vanish (BOS1)
         ServerLevel level = Materializer.levelOf(server, v);
         ShipBody ship = SableShips.byId(level, v.shipId().get());
         if (ship == null || ship.isRemoved()) return Optional.empty();
@@ -310,7 +311,11 @@ public final class CaptainVoyages implements CaptainSeaHook {
         ResourceLocation port = v.from();
         PirateCaptain existing = loaded(level, entry.get().id());
         if (existing != null) {
-            if (existing.isAlive() && existing.getTags().contains(tag)) return Optional.of(existing);
+            if (existing.isAlive() && existing.getTags().contains(tag)) {
+                if (!BrigService.isPrisoner(existing)) return Optional.of(existing);
+                takenPrisoner(server, existing, entry.get());
+                return Optional.empty();
+            }
             if (BrigService.isPrisoner(existing)) return Optional.empty();
             // his copy at the post (it was unloaded when he sailed) or a stale one: it goes, he keeps its state
             CaptainSeaData.Sea s = data.seaOrNew(port, today(server));
@@ -497,7 +502,8 @@ public final class CaptainVoyages implements CaptainSeaHook {
         }
         CaptainEntry entry = found.get();
         ServerLevel level = server.getLevel(entry.dimension());
-        if (level == null || !level.isPositionEntityTicking(entry.post())) return false;
+        // while captains are switched off he waits at sea's end: placed now he would vanish and be lost (BOS1)
+        if (!CaptainConfig.enabled() || level == null || !level.isPositionEntityTicking(entry.post())) return false;
         PirateCaptain existing = loaded(level, entry.id());
         CaptainSeaData.Sea s = sea.get();
         if (existing != null) {

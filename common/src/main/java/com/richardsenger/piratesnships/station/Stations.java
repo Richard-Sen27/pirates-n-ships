@@ -123,19 +123,30 @@ public final class Stations {
         if (kind == null) {
             return OrderResult.NO_STATION;
         }
+        return start(kind, e.state(), level, ref, order);
+    }
+
+    /**
+     * Starts {@code order} on the occupied {@code state} of a station of {@code kind}: the work time, then
+     * {@link StationState#start} and {@link StationKind#begin}. Package-private for the logic test.
+     */
+    static OrderResult start(StationKind<?> kind, StationState<Object> state, ServerLevel level, StationRef ref, Object order) {
         if (!kind.accepts(order)) {
             return OrderResult.WRONG_STATION;
         }
         int ticks = duration(kind, level, ref, order);
         if (ticks < 0) {
-            e.state().interrupt();
+            state.interrupt();
             return OrderResult.NOT_APPLICABLE;
         }
         if (ticks == 0) {
-            e.state().interrupt();
+            state.interrupt();
             return OrderResult.NOTHING_TO_DO;
         }
-        e.state().start(order, ticks);
+        if (!state.start(order, ticks)) {
+            return OrderResult.NOT_OCCUPIED;
+        }
+        begin(kind, level, ref, order);
         return OrderResult.STARTED;
     }
 
@@ -232,6 +243,11 @@ public final class Stations {
     private static <O> int duration(StationKind<O> kind, ServerLevel level, StationRef ref, Object order) {
         int ticks = kind.durationTicks(level, ref, (O) order);
         return ticks > 0 ? scaledTicks(ticks, workSpeed.factor(level, ref.ship())) : ticks;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <O> void begin(StationKind<O> kind, ServerLevel level, StationRef ref, Object order) {
+        kind.begin(level, ref, (O) order);
     }
 
     @SuppressWarnings("unchecked")

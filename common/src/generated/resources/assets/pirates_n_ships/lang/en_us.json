@@ -1537,6 +1537,8 @@
   "pirates_n_ships.configuration.dry_hull.dry_buoyancy_scale.tooltip": "Multiplier on the lift of the submerged dry volume (1.0 = Sable's own float force per block)",
   "pirates_n_ships.configuration.dry_hull.enabled": "Enabled",
   "pirates_n_ships.configuration.dry_hull.enabled.tooltip": "Keep the inside of closed hulls free of water (no water rendered, no swimming below deck)",
+  "pirates_n_ships.configuration.dry_hull.flood_breath": "Flood Breath",
+  "pirates_n_ships.configuration.dry_hull.flood_breath.tooltip": "Breath runs out below the flood water inside a ship's rooms, also where the room still counts as dry or the flood stands higher than the sea",
   "pirates_n_ships.configuration.dry_hull.flood_weight": "Flood Weight",
   "pirates_n_ships.configuration.dry_hull.flood_weight.tooltip": "Water inside a hull weighs the ship down",
   "pirates_n_ships.configuration.dry_hull.flood_weight_scale": "Flood Weight Scale",

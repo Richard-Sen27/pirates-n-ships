@@ -15,7 +15,7 @@ While working:
 - Only touch the files and packages your task says you own. If you need a change to a shared file (central registries, `Services`, mixin config, root build files), don't make it. Describe the exact change needed in your final message instead.
 - Put pure logic in plain Java classes without world access and test it with JUnit 5. Use GameTests for the parts that need a world.
 - Every Sable call needs a backing file reference in `refs/sable`. If the API you need doesn't exist, stop and report it rather than working around it.
-- Run `./gradlew build` and `./gradlew :neoforge:runGameTestServer` before finishing. Fix failures. Don't disable or weaken tests to make them pass.
+- Run `./gradlew build` (JUnit) and the GameTests scoped to the classes you created or changed: `JAVA_TOOL_OPTIONS="-Dpirates_n_ships.gametest.only=YourGameTests,OtherGameTests" ./gradlew :neoforge:runGameTestServer`. Never run the full suite (the merge stage does), and run at most one GameTest server at a time. Fix failures. Don't disable or weaken tests to make them pass.
 - Commit on your branch with clear messages.
 
 Your final message (it goes to the orchestrator, not the human) must contain:

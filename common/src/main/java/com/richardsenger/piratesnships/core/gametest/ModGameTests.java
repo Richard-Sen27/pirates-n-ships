@@ -23,8 +23,25 @@ public final class ModGameTests {
      * All {@link ModGameTest} methods of {@code testClass}, named {@code pirates_n_ships.<class>.<method>}
      * (lower case). Use from a {@code @GameTestGenerator} method.
      */
+    /**
+     * Scoped runs: the system property {@code pirates_n_ships.gametest.only} (set it on the forked server through
+     * {@code JAVA_TOOL_OPTIONS="-Dpirates_n_ships.gametest.only=FlagGameTests,FlagStackGameTests"}) lists the test
+     * classes to register, by simple name, case-insensitive; every other class registers nothing. Unset: everything
+     * runs. Agents verify their own classes this way; the merge stage always runs the whole suite.
+     */
+    public static final String ONLY_PROPERTY = "pirates_n_ships.gametest.only";
+
+    static boolean selected(String simpleClassName, String only) {
+        if (only == null || only.isBlank()) return true;
+        for (String part : only.split(",")) {
+            if (part.trim().equalsIgnoreCase(simpleClassName)) return true;
+        }
+        return false;
+    }
+
     public static Collection<TestFunction> of(Class<?> testClass) {
         List<TestFunction> tests = new ArrayList<>();
+        if (!selected(testClass.getSimpleName(), System.getProperty(ONLY_PROPERTY))) return tests;
         Method[] methods = testClass.getDeclaredMethods();
         java.util.Arrays.sort(methods, Comparator.comparing(Method::getName));
         for (Method m : methods) {

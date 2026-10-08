@@ -142,6 +142,19 @@ public final class TradeService {
         }
     }
 
+    /**
+     * LAW3 (§13.4): whether {@code port} refuses plunder-marked goods outright. Only the pirate fence buys them; every
+     * other port refuses while plunder marks matter ({@code cargo_trade.plunder.enabled}). False without a market.
+     */
+    public static boolean refusesPlunder(MinecraftServer server, ResourceLocation port) {
+        return market(server, port).map(m -> refusesPlunder(m.profile().kind(), TradeConfig.PLUNDER_ENABLED.get())).orElse(false);
+    }
+
+    /** Pure: the refusal rule of {@link #refusesPlunder(MinecraftServer, ResourceLocation)}. */
+    public static boolean refusesPlunder(PortKind kind, boolean marksMatter) {
+        return marksMatter && kind != PortKind.PIRATE_ISLAND;
+    }
+
     /** The customer sells; plundered goods go through {@link PlunderRules} with the port kind and {@code random}. */
     public static Sale sell(MinecraftServer server, ResourceLocation port, ResourceLocation good, int quantity,
                             boolean plundered, RandomSource random) {

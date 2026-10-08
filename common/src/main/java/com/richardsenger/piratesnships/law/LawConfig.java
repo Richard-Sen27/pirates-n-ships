@@ -9,6 +9,7 @@ import com.richardsenger.piratesnships.law.crime.CrimeRules;
 import com.richardsenger.piratesnships.law.crime.CrimeType;
 import com.richardsenger.piratesnships.law.crime.WantedLevel;
 import com.richardsenger.piratesnships.law.flag.FalseColorsDetection;
+import com.richardsenger.piratesnships.law.world.PlunderNotice;
 import com.richardsenger.piratesnships.law.world.TheftRule;
 
 import java.util.Collections;
@@ -60,6 +61,13 @@ public final class LawConfig {
             "Using a navy officer with doubloons in hand pays the fine for your criminal score (whole points, fine_cost_per_point each)");
     public static final ConfigValue<Boolean> RANSOM_NEEDS_PORT = LAW.bool("ransom_needs_port", false,
             "Only navy officers inside a navy outpost pay ransoms. Off = any navy officer ransoms led navy and merchant prisoners");
+
+    public static final ConfigValue<Boolean> PLUNDER_NOTICE = LAW.bool("plunder_notice", true,
+            "Village and navy outpost desks refuse plunder-marked goods either way; on = the harbor master reports the seller "
+                    + "(selling_plunder, first refusal per port and day) and a navy observer that sees more than "
+                    + "plunder_notice_units marked units in a ship's containers records suspected_piracy (once per ship and day)");
+    public static final ConfigValue<Integer> PLUNDER_NOTICE_UNITS = LAW.intRange("plunder_notice_units", 16, 0, 1000000,
+            "Plunder-marked units a ship's containers may hold before a navy observer suspects piracy (more than this is noticed)");
 
     private static final ConfigSection BOUNTY = LAW.section("bounty", "Turning in at navy officers and notice boards");
 
@@ -200,6 +208,11 @@ public final class LawConfig {
     public static TheftRule.Params theftParams() {
         return new TheftRule.Params(CRIMINAL_SCORE_ENABLED.get() && THEFT_DETECTION.get(), THEFT_REQUIRE_VILLAGE.get(),
                 THEFT_WITNESS_RANGE.get(), THEFT_WITNESS_LINE_OF_SIGHT.get());
+    }
+
+    /** The noticed-plunder parameters (LAW3) from the current config. */
+    public static PlunderNotice.Params plunderNoticeParams() {
+        return new PlunderNotice.Params(PLUNDER_NOTICE.get(), PLUNDER_NOTICE_UNITS.get());
     }
 
     /** The false-colors detection parameters from the current config. */

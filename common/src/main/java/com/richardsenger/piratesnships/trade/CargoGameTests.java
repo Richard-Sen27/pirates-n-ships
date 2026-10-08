@@ -243,16 +243,21 @@ public final class CargoGameTests {
     }
 
     @ModGameTest(batch = CONFIG_NOTICE_BATCH)
-    public static void navyPortNoticesPlunder(GameTestHelper helper) {
-        ConfigOverrides.during(helper, TradeConfig.NAVY_NOTICE_CHANCE, 1.0);
+    public static void navyPortRefusesPlunder(GameTestHelper helper) {
+        // LAW3: only the fence takes plunder; a navy outpost refuses it (and notices it), nothing moves
         ResourceLocation port = port(helper, PortKind.NAVY_OUTPOST);
         ServerPlayer p = player(helper, 0);
         p.getInventory().add(PlunderMark.mark(new ItemStack(Items.SUGAR, 32)));
         TransactionResult r = MarketTransactions.sell(p, port, TradeGoods.SUGAR, 32, true, MarketTransactions.Holder.of(p));
         helper.assertTrue(r.noticedPlunder(), "noticed: " + r);
-        helper.assertValueEqual(r.status(), TransactionResult.Status.CONFISCATED, "confiscated");
+        helper.assertValueEqual(r.status(), TransactionResult.Status.PLUNDER_REFUSED, "refused");
         helper.assertValueEqual(Wallet.count(p), 0L, "no payout");
-        helper.assertValueEqual(countOf(p, Items.SUGAR), 0, "goods taken");
+        helper.assertValueEqual(countOf(p, Items.SUGAR), 32, "goods kept");
+        // With plunder marks off, plunder sells like any other goods
+        ConfigOverrides.during(helper, TradeConfig.PLUNDER_ENABLED, false);
+        r = MarketTransactions.sell(p, port, TradeGoods.SUGAR, 32, true, MarketTransactions.Holder.of(p));
+        helper.assertValueEqual(r.status(), TransactionResult.Status.OK, "sold with plunder marks off");
+        helper.assertValueEqual(countOf(p, Items.SUGAR), 0, "goods sold");
         helper.succeed();
     }
 

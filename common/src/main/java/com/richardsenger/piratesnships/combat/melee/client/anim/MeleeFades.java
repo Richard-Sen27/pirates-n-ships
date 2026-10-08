@@ -118,13 +118,17 @@ public final class MeleeFades {
 
         /**
          * {@code name} starts now at {@code speed} (animation ticks per game tick) from animation tick
-         * {@code startTick}. Returns the fade to use.
+         * {@code startTick}. Returns the fade to use. An animation joined part-way (a late packet, a remote player
+         * first seen mid-phase) does not start at its first frame, so it always fades in.
          *
          * @param lengthTicks the animation's length in animation ticks
          * @param toDuration  the phase's length in game ticks (0 = open-ended)
          */
         public int play(String name, float lengthTicks, float startTick, float speed, long now, int configured, int toDuration) {
-            int fade = fadeTicks(current, remaining(now), name, configured, toDuration);
+            boolean joinedLate = startTick > Math.max(speed, 0f) * END_TOLERANCE_TICKS;
+            // a "remaining" beyond the tolerance makes fadeTicks treat the switch as a jump
+            float from = joinedLate ? Float.POSITIVE_INFINITY : remaining(now);
+            int fade = fadeTicks(current, from, name, configured, toDuration);
             current = name;
             float left = Math.max(0f, lengthTicks - startTick);
             endsAt = now + (speed > 0f ? left / speed : left);

@@ -167,9 +167,13 @@ class MeleeFadesTest {
         assertEquals(4, t.stop(123, 4));
         assertEquals(4f, t.remaining(123));
         assertEquals(4, t.play(RIPOSTE_WINDUP, 4f, 0f, 1f, 125, 4, 5));
-        // a late start offset shortens the remaining time
+        // joined part-way (a late packet, a remote player first seen mid-phase): fades in, and ends sooner
+        t.halt(199);
         assertEquals(4, t.play(SLASH_WINDUP, 5f, 3f, 1f, 200, 4, 5));
         assertEquals(2f, t.remaining(200));
+        // one tick late is still the start (no fade from rest)
+        t.halt(209);
+        assertEquals(0, t.play(SLASH_WINDUP, 5f, 1f, 1f, 210, 4, 5));
         t.halt(300);
         assertNull(t.current());
         assertEquals(0f, t.remaining(300));

@@ -133,17 +133,26 @@ def cannon(piece, x, y, z, facing="north"):
     piece.put(x + dx, y, z + dz, f"{MOD}:cannon[facing={facing},load=empty,part=rear]")
 
 
+def pole_part(i: int, height: int) -> str:
+    """The ``part`` block state of the ``i``-th block (from the foot) of a pole ``height`` flagpoles tall (VIS1a's
+    FlagpolePart: a lone block is single, then bottom, middle..., top)."""
+    if height == 1:
+        return "single"
+    return "bottom" if i == 0 else "top" if i == height - 1 else "middle"
+
+
 def flagpole(piece, x, y, z, height=3, flies="east"):
     """A pole of ``height`` stacked flagpoles on (x, y - 1, z); the top one flies the navy flag toward ``flies`` (its
-    block entity holds the hoisted flag as FlagpoleBlockEntity saves it: ``flagpole.kind`` and ``flagpole.item``)."""
+    block entity holds the hoisted flag as FlagpoleBlockEntity saves it: ``flagpole.kind`` and ``flagpole.item``).
+    Every block stores the part of the pole it shows (``pole_part``), so the pole looks right before its first tick."""
     for dy in range(height - 1):
-        piece.put(x, y + dy, z, f"{MOD}:flagpole[facing={flies},flag=none]")
+        piece.put(x, y + dy, z, f"{MOD}:flagpole[facing={flies},flag=none,part={pole_part(dy, height)}]")
     top = (x, y + height - 1, z)
     piece._check(*top)
     piece.blocks.pop(top, None)
     # Piece emits every entry of ``jigsaws`` as a block_entity operation; the flag rides along there (it is no jigsaw)
     piece.jigsaws[top] = {
-        "block": f"{MOD}:flagpole[facing={flies},flag=navy]",
+        "block": f"{MOD}:flagpole[facing={flies},flag=navy,part={pole_part(height - 1, height)}]",
         "data": {"flagpole": {"kind": "navy", "item": {"id": f"{MOD}:navy_flag", "count": 1}}},
     }
 

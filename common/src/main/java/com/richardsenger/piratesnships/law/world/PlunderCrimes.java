@@ -25,10 +25,9 @@ import java.util.UUID;
  *       ({@link TransactionResult.Status#PLUNDER_REFUSED}). With {@code law.plunder_notice} on, the harbor master
  *       reports the seller: {@link CrimeType#SELLING_PLUNDER} against the port, its repeat window (one in-game day)
  *       keeping it to the first refusal per player, port and day, and the seller is told.</li>
- *   <li><b>Noticed sale</b> (G13, legacy): a plunder sale that went through but was noticed is
- *       {@link CrimeType#FENCE_PLUNDER} against the port. Since LAW3 no port sells noticed plunder (the fence never
- *       notices, the others refuse), so this path only stays for results made elsewhere.</li>
  * </ul>
+ * Before LAW3 a noticed sale that went through was {@link CrimeType#FENCE_PLUNDER}; no port sells noticed plunder any
+ * more (the fence never notices, the others refuse), so nothing records that crime now (LAW3b).
  */
 public final class PlunderCrimes {
 
@@ -43,13 +42,9 @@ public final class PlunderCrimes {
         MarketBackend.onNoticedPlunder(PlunderCrimes::onNoticedSale);
     }
 
-    /** Reports the noticed sale (or refused offer) as a crime of the seller against the port. */
+    /** Reports a refused plunder offer as a crime of the seller against the port; other results are ignored. */
     public static void onNoticedSale(MarketBackend.NoticedSale sale) {
-        if (sale.result().status() == TransactionResult.Status.PLUNDER_REFUSED) {
-            onRefusedPlunder(sale.player(), sale.port());
-            return;
-        }
-        LawService.reportCrime(sale.player(), CrimeType.FENCE_PLUNDER, portVictim(sale.port()), sale.port().toString());
+        if (sale.result().status() == TransactionResult.Status.PLUNDER_REFUSED) onRefusedPlunder(sale.player(), sale.port());
     }
 
     /**

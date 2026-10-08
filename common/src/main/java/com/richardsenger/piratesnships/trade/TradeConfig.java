@@ -108,12 +108,6 @@ public final class TradeConfig {
             "Plundered goods are marked and treated differently by fences and navy ports");
     public static final ConfigValue<Double> FENCE_DISCOUNT = PLUNDER.doubleRange("fence_discount", P.fenceDiscount(), 0.0, 1.0,
             "Share a pirate fence takes off the price of plundered goods");
-    public static final ConfigValue<Double> NAVY_NOTICE_CHANCE = PLUNDER.doubleRange("navy_notice_chance", P.navyNoticeChance(), 0.0, 1.0,
-            "Chance per 64 units that a navy outpost notices plundered goods");
-    public static final ConfigValue<Double> VILLAGE_NOTICE_CHANCE = PLUNDER.doubleRange("village_notice_chance", P.villageNoticeChance(), 0.0, 1.0,
-            "Chance per 64 units that a seafarer village notices plundered goods");
-    public static final ConfigValue<Boolean> CONFISCATE = PLUNDER.bool("confiscate_when_noticed", P.confiscateWhenNoticed(),
-            "Noticed plundered goods are confiscated without payment");
 
     // --- Fees -------------------------------------------------------------------------------------------------
     private static final ConfigSection FEES = S.section("port_fees", "Docking fees in navy ports");
@@ -191,8 +185,7 @@ public final class TradeConfig {
     }
 
     public static PlunderRules.Params plunderParams() {
-        return new PlunderRules.Params(PLUNDER_ENABLED.get(), FENCE_DISCOUNT.get(), NAVY_NOTICE_CHANCE.get(),
-                VILLAGE_NOTICE_CHANCE.get(), CONFISCATE.get());
+        return new PlunderRules.Params(PLUNDER_ENABLED.get(), FENCE_DISCOUNT.get());
     }
 
     public static PortFees.Params feeParams() {

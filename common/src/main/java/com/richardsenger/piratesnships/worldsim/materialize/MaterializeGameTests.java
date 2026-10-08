@@ -213,7 +213,7 @@ public final class MaterializeGameTests {
         h.runAtTickTime(5, () -> {
             ship[0] = materialize(h, v);
             Vec3 c = Materializer.centre(ship[0]);
-            Lane.Position p = v.position();
+            Lane.Position p = Voyages.get(h.getLevel().getServer(), v.id()).orElseThrow().position(); // the scheduler may have moved the record before tick 5
             double off = Math.hypot(c.x - p.x(), c.z - p.z());
             h.assertTrue(off <= 2.0, "centre " + off + " blocks from the lane point (by the blocks "
                     + Math.hypot(ship[0].toWorld(Materializer.plotCentre(ship[0])).x - p.x(), ship[0].toWorld(Materializer.plotCentre(ship[0])).z - p.z()) + ")");

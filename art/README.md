@@ -817,10 +817,16 @@ Flagpole parts (VIS1a, tall poles):
   end at 15.95 under the truck as before.
 - **Halyard:** two `stripped_birch_log` lines 0.4 x 0.4 px at local x 10.3..10.7, z 7.15..7.55 and 8.45..8.85, turned
   45 degrees about y round (8, 4, 8) like the cleat, so they stand about 0.6 px off the pole's corner on the cleat's
-  diagonal (the cloth flies on the other side). They leave the wound cleat at y 5.6 (single, bottom), run through the
+  diagonal (the cloth flies on the other side). They leave the wound cleat at y 10.7 (single, bottom), run through the
   middle segments 0..16 and end under the truck at 15 (top, single). The single pole's one 0.5 px halyard became the
   same two lines. In the render the pair reads as one thin rope from a few blocks away, which is what a halyard looks
   like; up close the two parts of the loop show.
+- **Foot (VIS1a-b, playtest note "the rope only in the top third of the lowest block"):** on `flagpole_bottom` and
+  `flagpole` the halyard lines start at y 10.7 (the top third), so the lower two thirds of the foot block are a bare
+  pole. The cleat and its wound rope moved up with them by 5.1 px (horn y 6.6..11.6, body 8.35..9.85, rope rings
+  7.5..8.3 and 9.9..10.7, rotation origin (8, 9.1, 8)); the anvil and rope side UVs moved with the parts (position
+  UVs), the rings' rotated UVs stayed. Done in Blockbench on the committed projects (opened with `loadModelFile` from
+  `fs`), re-exported and re-saved like VIS1a; pole, truck, finial, middle and top unchanged.
 - Built from a part list (a scratch Python script derived the parts from the single pole's JSON), loaded cube by cube
   into a `java_block` project per model (`VIS1A.load2` in `risky_eval`: textures from `art/vanilla/` with namespace
   `minecraft`, folder `block`), exported with `Codecs.java_block.compile()` (names and zero rotations stripped,
@@ -830,6 +836,8 @@ Flagpole parts (VIS1a, tall poles):
 - Render `renders/flagpole_parts.png`: a four-block pole (bottom, two middles, top), the single pole and a two-block
   pole (left: overview; middle: the cleat and halyard at the foot; right: the joint under the top's truck). Rendered
   from a scratch Generic (`free`) project holding all parts stacked, with a `THREE.WebGLRenderer` in `risky_eval`.
+  VIS1a-b re-rendered it without a scratch project: each part's `Project.model_3d` cloned (non-mesh children dropped)
+  and stacked in a plain `THREE.Scene`, three 1200 x 900 viewports in one 3600 x 900 canvas.
 
 Treasure map and receipt (ART4):
 - Two `java_block` item projects, `treasure_map.bbmodel` and `ship_receipt.bbmodel`, no block of the same name. No new
@@ -1838,7 +1846,7 @@ the waterline.
 |---|---|---|---|---|
 | `fort_gate` (start) | 15×10×15 | 934 | the curtain wall along the sea side (pilasters, recessed bays with arrow slits on a mossy sloped plinth, corbelled parapet, capped merlons) with an arched sea gate (x 6..8, chiseled keystone) to the quay and a timber guard shelter with the alarm bell over it; flanks and landward wall two thick with the same skin, embrasures for the guards; the parade court (andesite path between the gates, the navy flag on a pole on a stepped pedestal, lantern posts, cargo), stone stairs up to the walkway on the east side, the harbor master's office on the west side (door east in a dark oak frame under a blue panel, a shuttered window south; the desk facing the door, a notice board, a cartography table, shelves, a chest, a barrel, a blue banner; its flat roof joins the walkway), and the landward gatehouse: an arched gate between two square towers (lanterns and capped merlons, arrow slits, blue banners), a raised portcullis of iron bars in its slot under the navy's colours, buttresses onto a gravel apron (row z 14) | `harbor_desk`, `notice_board`, `flagpole`, `cargo_crate`, `cargo_barrel` |
 | `quay` | 7×9×18 | 591 | a solid stone brick mole (x 1..5) from the seabed to the deck, weathered mossy at and below the waterline; andesite kerbs and bands across the deck, mooring rings and cleats along both edges, four bollards (stone brick walls under upside-down stairs), a crane at the seaward end (spruce log post with dark oak braces, fence jib to the deck edge with a hanging lantern and a hoist chain, a crate counterweight, a blue banner), a capstan, chains on the deck, lantern posts, a ladder down to the water, cargo; berths [0, 4, 9] and [6, 4, 9] | `mooring_ring`, `cleat`, `cargo_crate`, `cargo_barrel` |
-| `wall` | 7×8×7 | 215 | a curtain wall segment: pilasters at both ends, a recessed bay with two arrow slits on a mossy sloped plinth, a corbel table under the parapet, slab-capped merlons; an embrasure with a cannon behind it on a dark oak gun deck (master [3, 5, 1], rear [3, 5, 2], muzzle north), a powder barrel and a shot locker beside it; landward a timber hoarding (spruce deck on dark oak brackets, fence rail) over an arched store niche with powder and shot, a ladder up, a lantern on the walkway, a gravel path at the foot | `cannon`, `cargo_barrel`, `cargo_crate` |
+| `wall` | 7×8×7 | 213 | a curtain wall segment: pilasters at both ends, a recessed bay with two arrow slits on a mossy sloped plinth, a corbel table under the parapet, slab-capped merlons; an embrasure with a cannon behind it on a dark oak gun deck (master [3, 5, 1], rear [3, 5, 2], muzzle north), a powder barrel [2, 5, 1] and a shot locker [4, 5, 1] against the parapet either side of the muzzle, the walkway behind the gun clear two wide (z 3..4) from end to end (ST3b); landward a timber hoarding (spruce deck on dark oak brackets, fence rail) over an arched store niche with powder and shot, a ladder up, a lantern on the rail beside the ladder's head, a gravel path at the foot | `cannon`, `cargo_barrel`, `cargo_crate` |
 | `wall_tower` (terminator) | 7×12×7 | 358 | a crenellated corner tower: a 5×5 core set back between four full-height corner pilasters, sloped mossy plinth, barred arrow slits, a corbel table carrying the 7×7 roof platform (y 9) with capped merlons, lanterns on the corner merlons and the navy flag on a pole in the middle; ground floor (door landward under a blue banner, a barrel with a lantern, a crate), a landing level with the walkway (corbelled ledges outside, doors out onto both sides, powder, a chest), one ladder through all floors, a blue banner on the sea face | `flagpole`, `cargo_barrel`, `cargo_crate` |
 | `barracks` | 11×9×9 | 395 | a timber frame (spruce log corners, stripped posts, a beam course) with polished andesite infill on a mossy stone brick plinth, dark oak door posts under a blue panel, shuttered windows with sills front and back, spruce gables with a tie beam and window, a spruce roof with dark oak eaves over dark oak rafter ends, two lanterns hanging by the door, a stone chimney breast and stack with smoke at the back; six bunks (blue beds, two doubled up), sea chests, the hearth with a blue banner over it, a mess table with stools, a weapon rack (fences with pressure plates), stores, a runner, a hanging lantern | `cargo_crate` |
 | `brig` | 9×8×9 | 351 | a stone lock-up: pilasters and recessed bays on a mossy sloped plinth on the sides and back (the cells' barred windows in the recesses), corner buttresses and a stone portal (chiseled keystone, slab hood) round the door in front, barred windows, lantern posts, a flat roof behind slab-capped merlons with lanterns on the front corners; a guard room (table, stool, chest, barrel, crate, lanterns, key chain) and two cells, each fronted by brig bars with a brig door, with straw, a cauldron, shackle chains and a barred window | `brig_bars`, `brig_door`, `cargo_crate` |
@@ -1854,11 +1862,25 @@ Renders: `art/renders/structures/navy_outpost/{fort_gate,quay,wall,wall_tower,ba
   the cargo barrel beside it is the "powder barrel" as decoration, it holds nothing. Firing needs powder and shot
   (§8.2), so a garrison that should fire must be supplied by the world module or a loot table.
 - **The flag:** the top block of each flagpole (the gate's [10, 4, 9], the tower's [3, 11, 3]) is
-  `flagpole[flag=navy,facing=east]` with the block entity data `{flagpole: {kind: "navy", item: {id:
+  `flagpole[flag=navy,facing=east,part=top]` with the block entity data `{flagpole: {kind: "navy", item: {id:
   "pirates_n_ships:navy_flag", count: 1}}}`, the format `FlagpoleBlockEntity` saves. The poles below it are bare
   (`flag=none`, no data). The pole turns the flag with the wind once it ticks. `Piece` has no general block entity
   call, so `_style.flagpole` puts the hoisted pole into the piece's `jigsaws` map, which `Piece.spec()` emits as
-  `block_entity` operations.
+  `block_entity` operations. **Parts (ST3b):** every flagpole block stores the `part` it shows (VIS1a's tall poles:
+  `bottom`, `middle`..., `top`, a lone block `single`; `_style.pole_part`), so a placed pole looks right before its
+  first tick. The pirate camp's Jolly Roger pole (`pirate_island/_style.flagpole`) does the same; the ship templates'
+  poles are single blocks and store the default `single`.
+- **Walkway (ST3b):** the walkway (people stand on y 5) runs clear and two blocks wide through every piece of the
+  curtain: rows z 3..4 along the whole wall segment (the powder barrel and the shot locker stand against the parapet
+  either side of the muzzle, the lantern sits on the hoarding's rail), rows z 2..3 across the fort gate (between the
+  guard shelter's posts and the lantern posts), and all four rows z 1..4 free in the end columns where two pieces
+  meet, so mobs walk from the gate along a whole wall run and back (`SquadRoutesTest` checks the lanes in the
+  committed templates). The squad route (`mob/squad/SquadRoutes`, MOB2) uses it: after the quay the officer climbs the
+  court's stairs, walks out along the east run to the far end of every wall, back along it and the gate to the west
+  run and out to the far end of every wall there, and back to the head of the stairs. The towers' roofs (reached only
+  by a ladder) stay off the route. A wall guard on the west run walks some 35 blocks to the court (east to the stairs
+  and back), longer than vanilla's path search allows for our mobs' 32-block follow range, so the squad plans its
+  paths with a wider range (`mob/squad/SquadReach`).
 - **Brig doors** are closed and unlocked: a generated door has no owner (`BrigDoorBlockEntity` is created empty on
   placement), and a locked door without an owner would open only with a key.
 - Chests and barrels are empty (no loot tables yet).

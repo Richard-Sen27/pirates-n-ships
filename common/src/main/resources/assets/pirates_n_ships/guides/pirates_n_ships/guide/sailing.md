@@ -218,10 +218,16 @@ rigging` lists every yard and what it carries, the triangular sails and the crew
 Every dawn your crew eats and drinks one day of provisions from the pantries and water barrels aboard and wants its
 pay: 2 doubloons each, taken from any chest, barrel or cargo crate on the ship (the ones nearest the helm first).
 Hungry or thirsty crew lose morale and work slower; rum cheers them up; weeks without citrus or fresh food bring
-scurvy. Unpaid crew lose 8 morale, paid crew gain 1. A sailor whose morale stays below 20 for two dawns deserts. If
-mutiny is enabled in the config, a crew whose average stays below 15 for three dawns turns pirate and takes your ship.
-`/pirates crew info` shows supplies left, the last payday and the work speed; the whistle shows "unpaid" next to
-anyone you could not pay. Server config `crew.wages`, `crew.desertion`, `crew.mutiny`, `provisions`.
+scurvy. Unpaid crew lose 8 morale, paid crew gain 1. If the coins aboard run short, the rest of the wages comes out of your
+own purse while you are online in that dimension (chests and crates always pay first). A sailor whose morale stays
+below 20 for two dawns means to desert: he tells you and walks off at the next port the ship comes within 48 blocks
+of, onto the quay by the berth, or wherever the ship is after three more dawns; feed and pay him back above 20 and he
+changes his mind. Twice a day, at noon and at sunset, the crew not at a station sit down by the pantry (or the water
+barrel) to eat for a few seconds; an order gets them up at once. The meal is only a sight: rations are still taken
+once a day at dawn. If mutiny is enabled in the config, a crew whose average stays below 15 for three dawns turns
+pirate and takes your ship. `/pirates crew info` shows supplies left, the last payday and what your purse paid; the
+whistle shows "unpaid", "deserting", who hired a sailor and the days of food and water left. Server config
+`crew.wages`, `crew.desertion`, `crew.mutiny`, `crew.meals`, `provisions`.
 
 ## Orders, not assignments
 You don't have to assign every sailor. Give an order with the whistle (or `/pirates crew order`), and every unmanned
@@ -317,6 +323,28 @@ yours. Kill every fighter aboard and hold her deck for a few seconds, and she is
 merchant is piracy in the navy's eyes. Operators: `/pirates world voyages spawn near convoy|patrol|raid`. Server
 config `world_simulation.materialize`.
 
+## Navy patrols
+The navy sends patrols between its outposts, or out toward the nearest pirate island and back when an outpost stands
+alone; an aggressive navy sends more. A patrol keeps a lookout of about 256 blocks. It gives chase to any player's
+ship that flies the Jolly Roger, whose false colours it has seen through, or whose captain is wanted or carries a
+bounty of 50 doubloons or more, whatever flag that ship flies. You'll get word when a patrol sights you. Once it
+closes in, the patrol circles you at about 20 blocks while its gun crews fire. Strike your colours and its guns fall
+silent: it keeps you in sight for half a minute, then sails on. Raise the Jolly Roger again and the chase is back on.
+Outrun it (no contact within 64 blocks for two minutes, or more than 384 blocks between you) and it breaks off.
+Patrols that kill pirates, and patrols lost at sea, stir up the bad blood between the navy and the pirates.
+Operators: `/pirates world patrols`. Server config `world_simulation.navy`.
+
+## Raids
+Stay long at a navy outpost or a seafarer village and the pirates take notice: every minute a player spends there
+raises the chance of a raid a little (capped), and the more bad blood between the Navy and the Pirates, the faster it
+rises. When a raid comes, the settlement hears "Sails on the horizon!" and its bells ring (the fort's alarm bell; a
+village has none and only hears the warning). Pirate sloops under the Jolly Roger sail in from the nearest pirate
+island, guns ready; off the quay they drop anchor and put their fighters ashore, who fight the garrison and you. Kill
+them all and the raiders are beaten off; if they hold the shore for five minutes they sail off having had their way.
+Either way the ships leave, and the settlement is safe from raids for five days. Raiders do not loot. Operators can
+force a raid with `/pirates world raid <port>` and see the chances with `/pirates world raid chance`. Server config
+`world_simulation.raids`, `world_simulation.retaliation_enabled`.
+
 ## Careers
 Two ladders, and you can only climb one. *Navy:* talk to a navy officer with an empty hand and enlist once the navy
 trusts you (navy reputation 10, no bounty, no friends among the pirates). Killing or turning in pirates, navy quests
@@ -328,9 +356,9 @@ a navy officer (200 doubloons, navy reputation 20). Every pirate you kill under 
 pirate captain 50) that any navy officer pays out. Attacking the navy or a merchant voids it for three days.
 `/pirates career` shows where you stand. **What a rank is worth:** from Lieutenant the navy flag is yours by right: an
 officer flying it is never charged with false colours for low navy reputation (a bounty still is), and navy outposts
-let you dock for free. Each new rank comes with a gift: a Lieutenant receives the officer's bicorne and a saber (once;
-a full pack drops them at your feet); the Officer's Coat (blue wool, white wool and a gold ingot) is chest armour
-that marks you as navy. From Captain the harbor master's desk at a navy outpost has an Orders tab: the
+let you dock for free. Each new rank comes with a gift: a Lieutenant receives the officer's bicorne, a saber and the
+Officer's Coat (once; a full pack drops them at your feet). The coat is chest armour that marks you as navy; you can
+also craft it from blue wool, white wool and a gold ingot. From Captain the harbor master's desk at a navy outpost has an Orders tab: the
 navy shipyard builds you any ship the village shipwrights do, at 70 % of the price (Commodore 50 %, Admiral 40 %),
 delivered to the outpost's quay. On the other side, infamy talks at the fences: a Buccaneer, Dread Captain or Pirate
 Lord trades as if the pirates liked him 7, 13 or 20 points more, and from Dread Captain up pirates leave you alone

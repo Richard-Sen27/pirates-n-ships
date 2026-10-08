@@ -133,9 +133,7 @@ public final class MarketText {
             lang.add(sold(o), switch (o) {
                 case NORMAL -> "Sold %s %s for %s doubloons";
                 case FENCED -> "The fence took %s %s at a discount for %s doubloons";
-                case UNNOTICED -> "Sold %s plundered %s for %s doubloons, nobody noticed";
-                case NOTICED_SOLD -> "Sold %s %s for %s doubloons, but the port noticed the plunder";
-                case CONFISCATED -> "The port noticed the plunder and confiscated %s %s (%s doubloons)";
+                case REFUSED -> "The harbor master refused %s plundered %s (%s doubloons)";
             });
         }
         for (DeliveryContract.Outcome o : DeliveryContract.Outcome.values()) {

@@ -98,6 +98,7 @@ public final class CrewContentModule implements ModModule {
                 .block(CrewContent.WATER_BARREL, "Water Barrel")
                 .block(CrewContent.HAMMOCK, "Hammock")
                 .add(CrewContent.HAMMOCK_SEAT.get().getDescriptionId(), "Hammock Seat")
+                .add(CrewContent.MEAL_SEAT.get().getDescriptionId(), "Meal Seat")
                 .add("container." + Constants.MOD_ID + ".pantry", "Pantry"));
         data.lang(lang -> GalleyText.LANG.forEach(lang::add));
         data.lang(lang -> CrewInfo.LANG.forEach(lang::add));
@@ -138,6 +139,9 @@ public final class CrewContentModule implements ModModule {
             // the hammock seat lives inside the ship's plot like the station seat
             tags.tag(StationModule.SABLE_RETAIN).add(CrewContent.HAMMOCK_SEAT.get());
             tags.tag(StationModule.SABLE_DESTROY_WITH_SUB_LEVEL).add(CrewContent.HAMMOCK_SEAT.get());
+            // so does the meal seat beside the pantry (CRW2)
+            tags.tag(StationModule.SABLE_RETAIN).add(CrewContent.MEAL_SEAT.get());
+            tags.tag(StationModule.SABLE_DESTROY_WITH_SUB_LEVEL).add(CrewContent.MEAL_SEAT.get());
         });
         data.blockTags(tags -> {
             tags.tag(BlockTags.MINEABLE_WITH_AXE).add(CrewContent.PANTRY.get(), CrewContent.WATER_BARREL.get());

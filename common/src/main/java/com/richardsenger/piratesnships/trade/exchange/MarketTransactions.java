@@ -181,13 +181,12 @@ public final class MarketTransactions {
         if (s != TransactionResult.Status.OK) return TransactionResult.failed(s, good);
         // LAW3: only the fence takes plunder; any other desk refuses it (and the law integration hears of it)
         if (plundered && TradeService.refusesPlunder(server, port)) return TransactionResult.plunderRefused(good);
-        TradeService.Sale sale = TradeService.sell(server, port, good, quantity, plundered, player.getRandom());
+        TradeService.Sale sale = TradeService.sell(server, port, good, quantity, plundered);
         if (!sale.unitsTaken()) return TransactionResult.failed(TradePlan.ofQuote(sale.quote().outcome()), good);
         from.remove(item.get(), plundered, quantity);
         long payout = price.applyAsLong(sale.payout());
         Wallet.give(player, payout);
-        TransactionResult.Status status = sale.verdict().sold() ? TransactionResult.Status.OK : TransactionResult.Status.CONFISCATED;
-        return new TransactionResult(status, good, quantity, payout, sale.verdict().outcome(), sale.verdict().noticed(), Optional.empty());
+        return new TransactionResult(TransactionResult.Status.OK, good, quantity, payout, sale.verdict().outcome(), false, Optional.empty());
     }
 
     /** Accepts a contract offer and takes its deposit (nothing changes without the coins). */

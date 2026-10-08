@@ -240,6 +240,57 @@ chest.
 Report: screenshots of the action bar after steps 1 and 3, the chat at steps 4 and 5, `/pirates crew info` after each
 step, and `logs/latest.log` if anything errors.
 
+## CRW2: wages from the wallet, deserters at a port, meals
+Covered by JUnit tests (`crew/upkeep/PayKeyTest`, `DesertionRulesTest`, `crew/galley/MealRulesTest`) and GameTests
+(`crew/upkeep/UpkeepGameTests` wallet tests, `DesertionGameTests`, `crew/galley/MealGameTests`). What the tests cannot
+show: how the meal looks (the diner's place beside the pantry, facing it, the `work` pose, a sailing ship), the deserter
+on a real quay, and the chat and action-bar lines in a real game.
+
+Setup: an assembled ship **you assembled** (you are its owner), two crew from `/pirates crew spawn` (or hired at a desk,
+`crew-hiring.md`), a pantry with food and a water barrel aboard with room to stand beside them, default config
+(`crew.wages.from_wallet = true`, `crew.desertion.at_port_only = true`, `desert_port_radius = 48`,
+`desert_anywhere_after_days = 3`, `crew.meals.enabled = true`, `meal_times = ["6000", "12000"]`, `meal_ticks = 100`).
+Force a dawn as in CR2 above.
+
+1. **Purse pays the rest.** One chest aboard with 3 doubloons, 10 doubloons in your inventory, standing on the deck.
+   Force a dawn. Expected: action bar "Paid 2 crew, 4 doubloons, 1 of them from your purse"; the chest is empty, you
+   carry 9; `/pirates crew info` says "Last pay: 2 paid, 0 unpaid, 4 doubloons, 1 of them from the owner's purse".
+2. **Purse while ashore.** Same, but stand on land next to the ship (still loaded, same dimension). Expected: no action
+   bar, a chat line "Wages from your purse: 1 doubloons", your purse loses 1.
+3. **Purse off or away.** `crew.wages.from_wallet = false` (or log out a second player who owns the ship, or be in
+   another dimension): an empty chest and coins in your inventory. Expected: "Could not pay 2 crew", your coins stay.
+4. **A deserter waits for a port.** No food, no water, no coins (see CR2 step 4) far from any port. Force dawns until a
+   member deserts. Expected: it says "That's it. I'm off at the next port.", you get "Jack means to desert and will
+   walk off at the next port", it stays aboard and keeps working; its whistle line reads "…, off duty, unpaid,
+   deserting". Feed and pay it (morale back above 20 at a dawn): "Jack has changed their mind and stays aboard" and the
+   mark is gone.
+5. **Walking off at the quay.** With a marked deserter, sail into a seafarer village (`/locate structure` for one, or
+   `world-village.md`) until the ship is within 48 blocks of the village. Expected: within 5 seconds it says "Fair
+   winds, captain. Find yourself another fool.", you get "Jack walked off at <village name>", and a neutral sailor
+   stands on the pier next to the nearest berth (not in the water, not aboard). Report where it stood and the screenshot.
+6. **Leaving anywhere.** A marked deserter kept at sea for 3 more dawns: at the next look (5 s) it leaves where it
+   stands as before CR2 ("Jack has deserted", a sailor on the deck). With `crew.desertion.at_port_only = false` a
+   deserter leaves at the dawn it deserts, as in CR2 step 4.
+7. **Meals.** Daytime, both crew free on deck: `/time set 5900`, wait 5 seconds (do not `/time set` over 6000: a jump
+   skips the meal). Expected at 6000: each free crew member is on a place right beside the pantry (the second one
+   beside the pantry too if there is room, else beside the water barrel), facing it, in the working pose, not looking
+   around; after 5 seconds (100 ticks) they stand up where they sat. Repeat at `/time set 11900` (supper at 12000,
+   before the crew turns in at 12542). Report how the place looks (feet on the floor, not in the block, not floating)
+   and whether they stay beside the pantry while the ship sails and turns.
+8. **An order at the table.** During a meal, whistle "Hoist sails" (or assign a diner with the whistle). Expected: the
+   diner goes to its station at once; nobody sits at the station's place afterwards.
+9. **Who eats.** A crew member at a station keeps working through the meal; crew in hammocks at night are not woken.
+   No pantry and no water barrel aboard: nobody moves. `crew.meals.enabled = false`: nobody moves.
+10. **Nothing is eaten at a meal.** Count the hardtack before and after a meal: unchanged. The rations still go at dawn
+    (`/pirates crew info` days left move once a day).
+11. **Whistle line.** Use the whistle on a hired crew member: the line ends with "· hired by <your name>" and the ship part
+    shows "crew 2 / bunks 1 · food 3.5 days, water 2.0 days" (or "plenty").
+12. **Save and reload** during a meal and with a marked deserter: after reload the diner gets up at the meal's end (or
+    at once if it is past), and the deserter is still marked (whistle line "deserting").
+
+Report: screenshots of steps 1, 5 and 7 (third person), the chat at steps 4 to 6, and `logs/latest.log` if anything
+errors.
+
 ## ART7: crew station animations (helmsman, gun crew, hauling)
 
 Setup: a small ship with a helm (put the deck free on the helm's wheel side, the side the player stands on to steer, so

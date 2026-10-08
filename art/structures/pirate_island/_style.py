@@ -122,19 +122,28 @@ def treasure(piece, x, y, z):
                   "aligned")
 
 
+def pole_part(i: int, height: int) -> str:
+    """The ``part`` block state of the ``i``-th block (from the foot) of a pole ``height`` flagpoles tall (VIS1a's
+    FlagpolePart: a lone block is single, then bottom, middle..., top)."""
+    if height == 1:
+        return "single"
+    return "bottom" if i == 0 else "top" if i == height - 1 else "middle"
+
+
 def flagpole(piece, x, y, z, height, facing):
     """A stack of ``height`` flagpoles standing on (x, y - 1, z); the top one flies the Jolly Roger toward ``facing``.
 
     The flag lives in the pole's block entity (``FlagpoleState``: kind and flag item); the ``flag`` block state only
     drives the model, so both are set. The block entity goes out as a ``block_entity`` operation through the same list
-    as the jigsaws (``Piece.spec`` writes every entry of ``piece.jigsaws`` that way)."""
+    as the jigsaws (``Piece.spec`` writes every entry of ``piece.jigsaws`` that way). Every block stores the part of
+    the pole it shows (``pole_part``), so the pole looks right before its first tick."""
     for dy in range(height - 1):
-        piece.put(x, y + dy, z, f"{MOD}:flagpole[facing={facing},flag=none]")
+        piece.put(x, y + dy, z, f"{MOD}:flagpole[facing={facing},flag=none,part={pole_part(dy, height)}]")
     top = (x, y + height - 1, z)
     piece._check(*top)
     piece.blocks.pop(top, None)
     piece.jigsaws[top] = {
-        "block": f"{MOD}:flagpole[facing={facing},flag=jolly_roger]",
+        "block": f"{MOD}:flagpole[facing={facing},flag=jolly_roger,part={pole_part(height - 1, height)}]",
         "data": {"flagpole": {"kind": "jolly_roger", "item": {"id": f"{MOD}:jolly_roger_flag", "count": 1}}},
     }
 

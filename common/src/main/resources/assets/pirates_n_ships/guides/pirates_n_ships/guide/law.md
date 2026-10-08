@@ -21,7 +21,8 @@ Every player and mob has a score. Crimes raise it:
 | Attacking a villager | 5 |
 | Attacking the navy | 10 |
 | Seen under the Jolly Roger | 10 |
-| Attacking a neutral ship, press-ganging | 15 |
+| Attacking a neutral ship, press-ganging, suspected piracy (plunder seen aboard) | 15 |
+| Offering stolen goods at a village or navy desk | 17 |
 | Killing a villager | 20 |
 | Killing a navy member | 30 |
 | Caught under false colors, attacking a ship that struck its colors | 40 |

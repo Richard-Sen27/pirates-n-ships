@@ -1,14 +1,17 @@
 package com.richardsenger.piratesnships.mob.squad;
 
+import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
+import com.richardsenger.piratesnships.mob.MobContent;
 import com.richardsenger.piratesnships.mob.entity.NavyOfficer;
 import com.richardsenger.piratesnships.mob.entity.NavySoldier;
 import com.richardsenger.piratesnships.mob.entity.SeafarerMob;
 import com.richardsenger.piratesnships.world.OutpostFixture;
 import com.richardsenger.piratesnships.world.WorldConfig;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -17,6 +20,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Husk;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -24,6 +30,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 
 /**
@@ -247,6 +255,144 @@ public final class SquadGameTests {
             garrison.forEach(SeafarerMob::discard);
             helper.succeed();
         });
+    }
+
+    /**
+     * ST3b: a forced patrol walks the whole route of the fixture's outpost, out to the far end of the east wall and of
+     * the west wall (past their guns) and back to the stairs, reaching every waypoint (none skipped as stuck or
+     * blocked) with the file closed up.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 6000, batch = BATCH + "full_route")
+    public static void squadWalksEveryWaypointOfTheRoute(GameTestHelper helper) {
+        ConfigOverrides.during(helper, SquadConfig.POST_PAUSE_SECONDS, 1);
+        ServerLevel level = helper.getLevel();
+        OutpostFixture.Placed outpost = OutpostFixture.place(helper, Direction.NORTH);
+        NavyOfficer officer = officer(helper, outpost);
+        Squad squad = SquadService.of(officer);
+        helper.assertTrue(squad != null, "the garrison's officer leads a squad");
+        int size = squad.route().size();
+        BlockPos anchor = squad.outpost();
+        helper.assertTrue(squad.route().stream().filter(p -> p.getY() == anchor.getY() + 5).count() >= 5,
+                "the route climbs onto the walkway: the gate's both sides, a wall each way, the stairs' head; " + squad.route());
+
+        Set<Integer> reached = new TreeSet<>();
+        helper.onEachTick(() -> {
+            Squad.Arrival a = squad.lastArrival();
+            if (a == null || reached.contains(a.waypoint())) return;
+            reached.add(a.waypoint());
+            if (a.maxGap() > FileFollowing.MAX_GAP) {
+                helper.fail("at waypoint " + a.waypoint() + " " + squad.route().get(a.waypoint()).toShortString()
+                        + " the file was " + String.format("%.2f", a.maxGap()) + " blocks apart");
+            }
+        });
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE_TICKS, () -> helper.assertTrue(squad.startPatrol(true), "the patrol starts"))
+                .thenWaitUntil(() -> helper.assertTrue(squad.state() != SquadState.PATROLLING,
+                        "the squad is still on its round: " + squad))
+                .thenExecute(() -> {
+                    List<Integer> missed = new ArrayList<>();
+                    for (int i = 0; i < size; i++) {
+                        if (!reached.contains(i)) missed.add(i);
+                    }
+                    helper.assertTrue(missed.isEmpty(), "every waypoint reached, missed " + missed.stream()
+                            .map(i -> i + " " + squad.route().get(i).toShortString()).toList() + " of " + squad.route());
+                    helper.assertValueEqual(squad.state(), SquadState.RETURNING, "after the last waypoint the squad walks home");
+                    OutpostFixture.navy(level, outpost.box()).forEach(SeafarerMob::discard);
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * ST3b: the west run's wall guard stands beyond his wall's gun, yet he can walk to the officer through the cleared
+     * gun deck, so a squad of four draws him (the land gate's two guards and both walls' guards; never a tower roof
+     * guard, who has only a ladder).
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 400, batch = BATCH + "west_guard")
+    public static void theSquadDrawsTheWestWallGuard(GameTestHelper helper) {
+        ConfigOverrides.during(helper, SquadConfig.SIZE, 4);
+        ServerLevel level = helper.getLevel();
+        OutpostFixture.Placed outpost = OutpostFixture.place(helper, Direction.NORTH);
+        NavyOfficer officer = officer(helper, outpost);
+        Squad squad = SquadService.of(officer);
+        helper.assertTrue(squad != null, "the garrison's officer leads a squad");
+        BlockPos anchor = squad.outpost();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE_TICKS, () -> {
+                    // with the sea to the north the gate is not turned: the west run lies at smaller x, its walkway at y + 5
+                    NavySoldier westGuard = OutpostFixture.navy(level, outpost.box()).stream()
+                            .filter(m -> m instanceof NavySoldier).map(m -> (NavySoldier) m)
+                            .filter(m -> {
+                                GarrisonPost post = SquadService.post(m);
+                                return post != null && post.pos().getY() == anchor.getY() + 5 && post.pos().getX() < anchor.getX() - 7;
+                            })
+                            .findFirst().orElse(null);
+                    helper.assertTrue(westGuard != null, "the west wall has its guard");
+                    helper.assertTrue(squad.startPatrol(true), "the patrol starts");
+                    helper.assertValueEqual(squad.members().size(), 4, "four soldiers follow the officer: " + squad);
+                    helper.assertTrue(squad.hasMember(westGuard.getUUID()), "the west wall's guard was drawn: " + squad);
+                    for (SeafarerMob m : squad.mobs(level)) {
+                        helper.assertTrue(m.getY() < anchor.getY() + 9, m + " is no tower roof guard");
+                    }
+                    OutpostFixture.navy(level, outpost.box()).forEach(SeafarerMob::discard);
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * ST3b: a navy soldier walks a wall segment's walkway end to end, past its gun, and on into the next segment, both
+     * ways (the east run's and the west run's direction). Two committed wall templates side by side on the test floor,
+     * as the jigsaw joins them (pilaster to pilaster).
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 1200, batch = BATCH + "wall_walk")
+    public static void aSoldierWalksAlongTheWallsAndOnIntoTheNext(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        StructureTemplate wall = level.getStructureManager().get(Constants.id("navy_outpost/wall"))
+                .orElseThrow(() -> new IllegalStateException("navy_outpost/wall is missing"));
+        BlockPos west = new BlockPos(10, 1, 10);
+        BlockPos east = west.east(7);
+        for (BlockPos origin : List.of(west, east)) {
+            BlockPos at = helper.absolutePos(origin);
+            wall.placeInWorld(level, at, at, new StructurePlaceSettings(), level.getRandom(), Block.UPDATE_CLIENTS);
+        }
+        // the walkway (people stand on y 5): the west wall's west end and the east wall's east end
+        BlockPos start = west.offset(0, 5, 3);
+        BlockPos end = east.offset(6, 5, 3);
+        NavySoldier soldier = helper.spawn(MobContent.NAVY_SOLDIER.get(), start);
+        soldier.setStationary(true);   // no strolling: only the test moves him
+        soldier.setPersistenceRequired();
+        BlockPos[] goal = {end};
+        int[] legs = {0};
+        helper.onEachTick(() -> {
+            if (soldier.getNavigation().isDone()) {
+                BlockPos g = helper.absolutePos(goal[0]);
+                soldier.getNavigation().moveTo(g.getX() + 0.5, g.getY(), g.getZ() + 0.5, 1.0);
+            }
+        });
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE_TICKS, () -> {
+                    BlockPos g = helper.absolutePos(end);
+                    var path = soldier.getNavigation().createPath(g, 0);
+                    helper.assertTrue(path != null && path.canReach(), "a path along both walls, east: " + path);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(arrived(helper, soldier, end), "walking east, at " + soldier.blockPosition().toShortString()))
+                .thenExecute(() -> {
+                    legs[0]++;
+                    goal[0] = start;
+                    soldier.getNavigation().stop();
+                    BlockPos g = helper.absolutePos(start);
+                    var path = soldier.getNavigation().createPath(g, 0);
+                    helper.assertTrue(path != null && path.canReach(), "a path along both walls, west: " + path);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(arrived(helper, soldier, start), "walking west, at " + soldier.blockPosition().toShortString()))
+                .thenExecute(() -> {
+                    helper.assertValueEqual(legs[0], 1, "both legs walked");
+                    soldier.discard();
+                })
+                .thenSucceed();
+    }
+
+    private static boolean arrived(GameTestHelper helper, NavySoldier soldier, BlockPos relative) {
+        return Squad.reached(soldier, helper.absolutePos(relative));
     }
 
     private static NavyOfficer officer(GameTestHelper helper, OutpostFixture.Placed outpost) {

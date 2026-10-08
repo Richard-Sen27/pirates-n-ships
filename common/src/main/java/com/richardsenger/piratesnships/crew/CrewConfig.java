@@ -10,7 +10,7 @@ import com.richardsenger.piratesnships.core.config.ModConfigs;
  * {@code core.settings.SettingsModule}. Read so far: {@link #MAX_CREW_MULTIPLIER} (the bunk limit,
  * {@code crew.hammock.ShipBunks}) and the {@code morale} sub-section (HM1, {@code crew.morale.CrewMorale},
  * {@code crew.hammock.CrewRest}) and the upkeep sub-sections {@code wages}, {@code desertion} and {@code mutiny}
- * (CR2, {@code crew.upkeep}). CR2 moved the old top-level keys {@code wages_enabled} and {@code mutiny_enabled} to
+ * (CR2, {@code crew.upkeep}; CRW2 added {@code wages.from_wallet} and the deserters' port keys). CR2 moved the old top-level keys {@code wages_enabled} and {@code mutiny_enabled} to
  * {@code wages.enabled} and {@code mutiny.enabled}; old values in a config file are dropped and read as the defaults.
  */
 public final class CrewConfig {
@@ -43,6 +43,8 @@ public final class CrewConfig {
             "Morale an unpaid crew member loses at dawn");
     public static final ConfigValue<Integer> PAID_PER_DAY = WAGES.intRange("paid_per_day", 1, 0, 100,
             "Morale a paid crew member gains at dawn");
+    public static final ConfigValue<Boolean> WAGES_FROM_WALLET = WAGES.bool("from_wallet", true,
+            "When the coins aboard do not cover the wages, the rest comes from the doubloons the ship's owner carries, while the owner is online in the ship's dimension (CRW2). Chests and crates aboard always pay first. Off = only coins aboard pay");
 
     private static final ConfigSection DESERTION = S.section("desertion", "Crew with low morale leave the ship (CR2)");
 
@@ -52,6 +54,12 @@ public final class CrewConfig {
             "Morale below which a dawn counts toward desertion");
     public static final ConfigValue<Integer> DESERT_DAYS = DESERTION.intRange("desert_days", 2, 1, 100,
             "Consecutive dawns with low morale after which a crew member deserts");
+    public static final ConfigValue<Boolean> DESERT_AT_PORT_ONLY = DESERTION.bool("at_port_only", true,
+            "A deserter does not leave at once: it stays aboard, marked as deserting, and walks off onto the quay when the ship is at a port (CRW2), or anywhere after desert_anywhere_after_days. Off = it leaves the ship at the dawn it deserts (the old behaviour)");
+    public static final ConfigValue<Integer> DESERT_PORT_RADIUS = DESERTION.intRange("desert_port_radius", 48, 0, 512,
+            "Blocks around a port's area within which a ship counts as at that port for deserters");
+    public static final ConfigValue<Integer> DESERT_ANYWHERE_AFTER_DAYS = DESERTION.intRange("desert_anywhere_after_days", 3, 0, 100,
+            "Dawns a deserter waits for a port; after that it leaves wherever the ship is (0 = at once)");
 
     private static final ConfigSection MUTINY = S.section("mutiny", "A whole crew with very low morale takes the ship (CR2)");
 

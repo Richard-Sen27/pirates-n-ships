@@ -144,3 +144,136 @@ logs every appearance, dematerialisation, adoption and ending).
 
 Report: screenshots of steps 1, 4 and 5, the list output before and after steps 6 and 7, `latest.log`, and anything a
 ship did that looked wrong (spawning inside land, fighters falling off, a crew member walking overboard).
+
+## WS4b: navy patrols and the hunt
+
+Covered headless: which ship the navy hunts (Jolly Roger, blown cover, a bounty from `hunt_bounty_minimum`, a wanted
+owner; never NPC ships or struck colours), the nearest pick within `hunt_radius`, the chase verdicts (contact, give-up,
+lost, out of range, surrender linger, colours raised again), the patrol routes (outpost to outpost, out and back
+toward a pirate island, the pursuit line capped at the first land after open sea, the ring around the quarry, the way
+back to the route) and the spawn chance under aggression 0 and 1 (JUnit `HuntRulesTest`, `PatrolRoutesTest`,
+`PatrolPlannerTest`); in basins (`NavyGameTests`): a Jolly Roger player ship 100 blocks from an abstract patrol is
+chased after one check, a clean merchant ship is ignored, a bountied owner is hunted from 50 doubloons, a patrol out of
+contact gives up and heads back to its route, the toggle stops the hunt, a materialised patrol sets its gun crew on
+the quarry and hits it, striking the colours silences the gun and the patrol leaves after the linger, a patrol
+soldier killing a pirate raises Navy–Pirates tension. Not covered: a real patrol ship circling a moving ship at sea,
+real outposts and lanes, players switching flags in the middle of a chase.
+
+**Known gap:** the default navy templates (`voyages.navy_templates`: the two starter sloops) carry no cannons, so a
+patrol chases and circles but cannot fire unless its ship has a cannon with powder and balls aboard (step 4 adds one
+by hand).
+
+### Setup
+A creative world with cheats and open ocean. Your own ship at sea (assembled by you, so you are its owner) with a
+flagpole, and you aboard it. `/pirates law score set @s 0` and `/pirates law bounty clear @s` so you start clean. Keep
+`logs/latest.log`, with the `pirates_n_ships` log level at debug if you can (the hunt logs every chase and its end).
+
+### Steps
+1. **A clean ship is left alone.** Fly the merchant flag. Face the open sea and run
+   `/pirates world voyages spawn near patrol`, then `/pirates world patrols`.
+   - **Expected:** a navy sloop with the navy flag, an officer and soldiers appears about 50 blocks ahead and sails
+     across your view. The list shows it `materialised ... on patrol from ...`. It does not turn toward you.
+2. **The Jolly Roger is hunted.** Raise the Jolly Roger on your flagpole.
+   - **Expected:** within about a second the chat says "A navy patrol has sighted the <your ship> and gives chase!".
+     `/pirates world patrols` shows `chasing ship <id>`. The patrol turns toward you and, once there, circles you at
+     about 20 blocks (`standoff_distance`). Sail away slowly: it follows; its course is renewed every 2 seconds while
+     you move. Note how often its helmsman's course lines appear in chat (they repeat with each new course).
+3. **The guns (only with a gun aboard).** With the patrol circling you, land on its deck, place a cannon facing
+   outboard and a chest with gunpowder and cannonballs next to it, and step back aboard your own ship.
+   - **Expected:** within about 2 seconds a deckhand mans the cannon (it is posted on the patrol's job board), loads,
+     and fires whenever your ship is within 15° of its barrel and 64 blocks (WS4a). Its balls break about half the
+     blocks a player's would (`cannons.npc.npc_block_damage_multiplier`).
+4. **Striking the colours.** While it fires, strike your colours at your flagpole.
+   - **Expected:** the chat says the patrol "holds its fire"; at most one more shot (a fuse already lit), then none.
+     The patrol keeps circling you for 30 seconds (`surrender_linger_ticks` 600), then the chat says it "returns to its
+     route", and it sails back to its line. `/pirates world patrols` shows it `on patrol` again. Raising the Jolly
+     Roger again during the 30 seconds makes it chase and fire again.
+5. **A bounty is hunted whatever you fly.** Fly the merchant flag. `/pirates law bounty place @s 60`, then spawn a
+   patrol (step 1).
+   - **Expected:** it gives chase as in step 2. With `/pirates law bounty clear @s` during the chase it breaks off
+     ("returns to its route" is not said; it simply heads back) within a second. A bounty of 40 alone is not enough
+     (`hunt_bounty_minimum` 50).
+6. **Giving up.** Set `world_simulation.navy.give_up_ticks` to 400, raise the Jolly Roger, spawn a patrol and sail away
+   from it at full speed, keeping more than 64 blocks (`contact_distance`) between you.
+   - **Expected:** 20 seconds after it last came within 64 blocks the chat says it "has lost the <ship> and breaks off
+     the chase", and it turns back. Fleeing beyond 384 blocks (`lose_distance`) ends the chase at once.
+7. **Abstract patrols.** Set `world_simulation.patrols_per_day` to 100 and stand by a navy outpost (another outpost
+   within 3000 blocks, or a pirate island). Wait a few minutes and watch `/pirates world patrols`.
+   - **Expected:** patrols set out (more while `/pirates world factions` shows a high navy aggression), sail outpost
+     to outpost or out to about 400 blocks toward the pirate island and back, and appear as ships when they come
+     within the materialise radius of you. Under the Jolly Roger a patrol that is still a record turns toward you from
+     up to 256 blocks (the chat line comes before you can see it) and appears as a ship when it comes close.
+8. **Toggle.** `world_simulation.navy.enabled = false`: no patrols set out, a chasing patrol breaks off within a
+   second, and the Jolly Roger draws no chase.
+
+Report: screenshots of steps 2 and 4, the `/pirates world patrols` output during steps 2 and 4, `latest.log`, and
+anything a patrol ship did that looked wrong (circling too wide or ramming you, spinning on the spot, sailing onto land
+during a chase, chat spam from its helmsman).
+
+## WS5: raids on navy settlements
+
+Covered headless: the chance rules (linear growth, cap, cooldown, presence count, retaliation multiplier, approach and
+home routes; JUnit `RaidRulesTest`); in GameTests (`RaidGameTests`): three minutes of a mock player in a fake outpost
+count three minutes with the chance at the cap, a forced raid rings a vanilla bell in the box and spawns a RAID voyage
+`approach_distance` out from the berth, starts the cooldown and refuses a second raid; a real raider in a basin within
+`landing_distance` of the berth puts its four pirates on the shore and turns for home; killing them all withdraws the
+ship and reports `raid_repelled` with the cooldown from today; with retaliation off the tension does not change the
+chance. Not covered: real sailing to the berth, the anchor holding off a real quay, pirates fighting the garrison, the
+bells of a generated fort, the minute-by-minute roll with real players, a save and reload during a raid.
+
+### Setup
+A creative world with cheats and a generated navy outpost on the coast (`/locate structure pirates_n_ships:navy_outpost`)
+and, ideally, a pirate island within a few hundred blocks (`/locate structure pirates_n_ships:pirate_island`). Note
+the outpost's port id with `/pirates world port nearest` while standing in it. For a quicker raid set
+`world_simulation.raids.approach_distance` to 120 in the server config (the default 320 is outside the materialise
+radius, so the ships first sail in as records and appear when they come within about 150 blocks). Keep
+`logs/latest.log` with `pirates_n_ships` at debug if you can (the raid logs its start, landing, withdrawal and end).
+
+### Steps
+1. **Chance.** Stand inside the outpost for three minutes, then run `/pirates world raid chance`.
+   - **Expected:** the first line shows growth 0.0005 per minute × about 1.2 (retaliation from the starting Navy–Pirates
+     tension 0.2), cap 0.02, cooldown 5 days; the outpost's line shows 3 minutes of presence and a chance of about
+     0.18 % per minute, "raided on its own". Leave the outpost for over a minute and run it again: the outpost is gone
+     from the list (the count started over).
+2. **Forced raid, announcement.** Stand on the fort's sea wall and run `/pirates world raid <port id>`.
+   - **Expected:** "Raid on <port>: 1 ship(s) … along the lane from the nearest pirate island" (or "straight in from the
+     sea" without an island or a cached lane) and the number of bells; in chat "Sails on the horizon! Pirates are
+     making for the settlement"; the alarm bell over the sea gate rings at once and every 5 seconds for 30 seconds.
+     `/pirates world voyages` lists a `raid` voyage to the outpost.
+3. **Approach.** Watch the sea in the direction of the island (or straight out from the quay).
+   - **Expected:** a sloop under the Jolly Roger appears (at once with approach 120, else when it comes within about
+     150 blocks) and sails toward the quay. If it has crewed cannons they fire at your ship if you sail out to meet it.
+4. **Landing.** Wait at the quay.
+   - **Expected:** about 24 blocks from the quay the sloop furls its sails and drops its anchor (it may swing a little
+     on the chain); its four pirates appear on the shore next to the quay and attack the garrison and you. The ship
+     stays anchored, not drifting onto the quay.
+5. **Repelled.** Kill the four pirates (with the garrison's help).
+   - **Expected:** within a second "The raiders are beaten off!" in chat; the sloop raises its anchor, hoists its sails
+     and sails back out the way it came; it disappears when you are far from it. `/pirates world factions` shows
+     Pirates' aggression down and Navy–Pirates tension up (`raid_repelled`).
+6. **Cooldown.** Run `/pirates world raid chance` again in the outpost.
+   - **Expected:** "cooldown 5.000 days left" and a chance of 0 %, while you stay there; after `/time add 120000`
+     (5 days) the chance grows again.
+7. **Held shore.** Set `raid_duration_ticks` to 600, force a raid, let it land and do not kill the pirates (fly up out
+   of reach).
+   - **Expected:** 30 seconds after the landing the pirates vanish, "The raiders held the shore and sail off", the ship
+     withdraws; `/pirates world factions` shows `raid_succeeded` (Pirates' wealth up).
+8. **Sinking a raider.** Force a raid and sink the sloop with cannons before it lands.
+   - **Expected:** the voyage ends as sunk (your `sink_pirate` deed, WS3b), the raid ends as repelled ("The raiders
+     are beaten off!", `raid_repelled`).
+9. **Village.** Force a raid on a seafarer village (`/pirates world raid <village port id>`).
+   - **Expected:** the chat line only (the village has no bell); the landing works the same way, but there is no garrison,
+     so only you and the villagers face the pirates (the pirates attack you; whether they attack villagers depends on
+     the mobs' hostility rules). With `world_simulation.raids.target_villages = false` a village never counts presence
+     on its own (`/pirates world raid chance` shows "not raided on its own"), but forcing still works.
+10. **Natural raid.** Set `world_simulation.raids.chance_growth_per_minute` to 0.01 and `chance_cap` to 0.5, stay in
+    the outpost (with a pirate island in the world) for a few minutes.
+    - **Expected:** a raid starts on its own within roughly 3–6 minutes, announced as in step 2. Without any pirate
+      island in the dimension no raid starts on its own.
+11. **Toggles.** `world_simulation.raids.enabled = false`: no presence is counted and no raid starts on its own (forcing
+    still works); `world_simulation.raids.announce = false`: no chat lines (the bells still ring; `bell_ticks = 0`
+    silences them); `world_simulation.retaliation_enabled = false`: the growth multiplier in step 1 is 1.
+
+Report: screenshots of steps 2, 4 and 5, the `/pirates world raid chance` output of steps 1 and 6, `latest.log`, and
+anything that looked wrong (the ship running onto the quay or getting stuck before it lands, pirates appearing inside
+walls or in the water, bells not ringing, the ship not leaving).

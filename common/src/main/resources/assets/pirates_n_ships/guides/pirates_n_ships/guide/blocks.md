@@ -6,6 +6,7 @@ navigation:
   icon: pirates_n_ships:cargo_crate
 item_ids:
   - pirates_n_ships:bilge_pump
+  - pirates_n_ships:boarding_plank
   - pirates_n_ships:chart_table
   - pirates_n_ships:cleat
   - pirates_n_ships:figurehead_eagle

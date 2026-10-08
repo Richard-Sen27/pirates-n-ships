@@ -252,11 +252,12 @@ public final class ShipStatusGameTests {
                 sender.tick(level, List.of(player[0]), (p, s) -> sent.add(new Sent(p, s, now)));
                 return;
             }
+            long began = start[0];
             start[0] = -2;
             int interval = ShipConfig.SHIP_STATUS_SYNC_INTERVAL_TICKS.get();
             h.assertTrue(sent.size() >= 200 / ShipStatusThrottle.KEEPALIVE_TICKS,
                     "only " + sent.size() + " statuses in 200 ticks aboard");
-            h.assertTrue(sent.get(0).time() - start[0] < interval, "the first status took " + (sent.get(0).time() - start[0]));
+            h.assertTrue(sent.get(0).time() - began < interval, "the first status took " + (sent.get(0).time() - began));
             for (int i = 1; i < sent.size(); i++) {
                 long gap = sent.get(i).time() - sent.get(i - 1).time();
                 int fresh = sent.get(i - 1).payload().freshTicks();

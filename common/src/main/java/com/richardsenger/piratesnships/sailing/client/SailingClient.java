@@ -2,6 +2,7 @@ package com.richardsenger.piratesnships.sailing.client;
 
 import com.richardsenger.piratesnships.platform.event.ClientEvents;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
+import com.richardsenger.piratesnships.sailing.effects.client.SeaEffectsClient;
 import com.richardsenger.piratesnships.sailing.sail.TriangularSailContent;
 import com.richardsenger.piratesnships.sailing.wind.ClientWind;
 
@@ -18,5 +19,7 @@ public final class SailingClient {
         ClientEvents.registerBlockEntityRenderer(SailingBlocks.YARD_BLOCK_ENTITY, YardClothRenderer::new);
         // The stay and the cloth of triangular sails, drawn from the head cleat's block entity (F5b)
         ClientEvents.registerBlockEntityRenderer(TriangularSailContent.CLEAT_BLOCK_ENTITY, StayClothRenderer::new);
+        // Wind streaks in the air and foam on the water (WD1)
+        SeaEffectsClient.init();
     }
 }

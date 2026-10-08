@@ -52,6 +52,7 @@ public final class SailingModule implements ModModule {
         SailingConfig.init();
         com.richardsenger.piratesnships.sailing.anchor.AnchorConfig.init(); // visible anchor (F4)
         HelmSetup.registerConfig(); // wheel steering (HELM1)
+        com.richardsenger.piratesnships.sailing.effects.SeaEffectsConfig.init(); // wind streaks (WD1)
     }
 
     @Override

@@ -1,7 +1,7 @@
-// 1.21.1	2026-10-07T20:08:45.789506	Raw JSON (data): pirates_n_ships
+// 1.21.1	2026-10-08T02:03:45.428683	Raw JSON (data): pirates_n_ships
 48a3d1396f56a1821c2e6dd2a2ce6f5dc32fc15c data/pirates_n_ships/advancement/recipes/misc/guide_book.json
 81e4547184aef1c6ab27c144e370d0ff6cb85b3d data/pirates_n_ships/loot_table/chests/buried_treasure.json
-d6223d05558546af059e94912cbe6adda923d245 data/pirates_n_ships/loot_table/chests/wreck.json
+917a78912c9b82231026bd2ea966eb7535e5da69 data/pirates_n_ships/loot_table/chests/wreck.json
 a36329422f25984fa5698ac8ec14f9a580f2a13a data/pirates_n_ships/loot_table/entities/kraken.json
 fe7053acbb25918c89e2aa78604271fe9aed9b86 data/pirates_n_ships/loot_table/entities/navy_officer.json
 fe7053acbb25918c89e2aa78604271fe9aed9b86 data/pirates_n_ships/loot_table/entities/navy_soldier.json
@@ -40,12 +40,15 @@ b035207a5bd361f8f0c83f4d75192bdc83591bf0 data/pirates_n_ships/tags/worldgen/biom
 ff13fafcc6c847d2ce8a4262842bf1316dc580ea data/pirates_n_ships/tags/worldgen/biome/has_structure/navy_outpost.json
 ff13fafcc6c847d2ce8a4262842bf1316dc580ea data/pirates_n_ships/tags/worldgen/biome/has_structure/pirate_island.json
 ff13fafcc6c847d2ce8a4262842bf1316dc580ea data/pirates_n_ships/tags/worldgen/biome/has_structure/seafarer_village.json
+74a855e481dd684fc14e843ffbf7634328669190 data/pirates_n_ships/tags/worldgen/biome/has_structure/wreck.json
 0303dee61ad9a86d723d3836be2c1ddf7f6831f1 data/pirates_n_ships/worldgen/structure/navy_outpost.json
 6761c895831008accbd61775f7494c59f73d6c24 data/pirates_n_ships/worldgen/structure/pirate_island.json
 94324d2eca972d772cecb22f86c34b89b25d2a5e data/pirates_n_ships/worldgen/structure/seafarer_village.json
+251023302fd8f076f6c85e28f31b2d1f97286ca3 data/pirates_n_ships/worldgen/structure/wreck.json
 500585a336c63db79aa027e28670c2e2ec91647c data/pirates_n_ships/worldgen/structure_set/navy_outposts.json
 4a8342bbc207a1ef17962d4240160f6211b820e5 data/pirates_n_ships/worldgen/structure_set/pirate_islands.json
 94b31922c31621842e348214cfec91739d53ed1d data/pirates_n_ships/worldgen/structure_set/seafarer_villages.json
+04805a4044555b776c958b1cdfe380047a6d6300 data/pirates_n_ships/worldgen/structure_set/wrecks.json
 2534cb82878da34d26c124c19f0b16f3b6d34a65 data/pirates_n_ships/worldgen/template_pool/navy_outpost/buildings.json
 2f29084a90638e32069a1612ee4c9b1303730bfa data/pirates_n_ships/worldgen/template_pool/navy_outpost/quay.json
 56ac763121b9f0863bb41b5b932094bbe14b34e9 data/pirates_n_ships/worldgen/template_pool/navy_outpost/start.json

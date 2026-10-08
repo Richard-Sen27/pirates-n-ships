@@ -261,7 +261,17 @@ class WreckPiecesTest {
             }
         }
         assertEquals(new TreeSet<>(List.of(MOD + ":doubloon", MOD + ":rum", MOD + ":salted_fish", MOD + ":rope",
-                MOD + ":nails", MOD + ":lead_shot", MOD + ":cutlass", MOD + ":kraken_ink")), items);
+                MOD + ":nails", MOD + ":lead_shot", MOD + ":cutlass", MOD + ":treasure_map", MOD + ":kraken_ink")), items);
+        // TM1: one blank treasure map among the ship's stores at weight 2
+        boolean map = false;
+        for (JsonElement entry : pools.get(1).getAsJsonObject().getAsJsonArray("entries")) {
+            JsonObject e = entry.getAsJsonObject();
+            if (!e.get("name").getAsString().equals(MOD + ":treasure_map")) continue;
+            assertEquals(2, e.get("weight").getAsInt(), "treasure map weight");
+            assertFalse(e.has("functions"), "one map at a time");
+            map = true;
+        }
+        assertTrue(map, "the treasure map is among the ship's stores");
         // the first pool: always 3-12 doubloons
         JsonObject doubloons = pools.get(0).getAsJsonObject().getAsJsonArray("entries").get(0).getAsJsonObject();
         assertEquals(MOD + ":doubloon", doubloons.get("name").getAsString());

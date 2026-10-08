@@ -37,7 +37,8 @@ import java.util.List;
  * (skull with crossed bones, spread-winged eagle, maned lion with its paws on a scroll, mermaid with her tail curling
  * under the bow), the nameplate and the flagpole use hand-made Blockbench models ({@code art/models/}, design.md §4.8;
  * datagen writes only their block states). Flags (items, the flagpole's block entity, block state and look, config,
- * commands) are in the {@code flag} sub-package.
+ * commands) are in the {@code flag} sub-package. The ART2 decor blocks (lantern, bell, rope coil, stern window, chart
+ * table, sea cot) have their datagen in {@link DecorData}.
  */
 public final class ShipDecorModule implements ModModule {
 
@@ -50,6 +51,7 @@ public final class ShipDecorModule implements ModModule {
     public void registerConfig() {
         FlagConfig.init();
         ShipIdentityConfig.init();
+        DecorConfig.init();
     }
 
     @Override
@@ -93,6 +95,7 @@ public final class ShipDecorModule implements ModModule {
             }
         });
         FlagData.gather(data);
+        DecorData.gather(data);
         data.blockLoot(loot -> {
             for (RegistryEntry<Block, FigureheadBlock> f : ShipDecor.figureheads()) loot.dropSelf(f.get());
             loot.dropSelf(ShipDecor.NAMEPLATE.get());
@@ -181,6 +184,7 @@ public final class ShipDecorModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(ShipDecorGameTests.class, FlagGameTests.class, FlagModelGameTests.class, NameplateGameTests.class);
+        return List.of(ShipDecorGameTests.class, FlagGameTests.class, FlagModelGameTests.class, NameplateGameTests.class,
+                DecorGameTests.class);
     }
 }

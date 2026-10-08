@@ -3,8 +3,13 @@ along z) and prints the BuildSpec as JSON. The building connector is on the nort
 apron in front of the open shed.
 
 Inside: a half-built hull frame of stripped logs (keel, stem, three ribs, a strake of planks), sawhorses, a stack of
-logs, stacked planks and a workbench along the closed back wall."""
-from _style import DARK, PALETTE, lantern_post
+logs, stacked planks and a workbench along the closed back wall, a grindstone, a tar cauldron, a hoist chain from a
+collar beam over the bow.
+
+Look (ST4a): posts on mossy cobblestone footings with knee braces (upside-down stairs) under the beams, a king post
+truss in the open front gable, a back wall of two cobblestone courses (mossy towards the ground), a spruce band and
+render with three windows, the gable above it boarded in oak with a round light."""
+from _style import DARK, PALETTE, lantern_post, stairs_state, window
 from buildspec import Piece
 
 X0, X1, Z0, Z1 = 0, 10, 1, 9          # the posts' outline
@@ -21,7 +26,7 @@ p.fill(3, 0, 0, 7, 0, 0, "gravel")
 # posts and beams: open front and sides, a closed plank back wall
 posts = [(x, z) for x in (X0, X1) for z in (Z0, 5, Z1)] + [(3, Z1), (7, Z1)]
 for x, z in posts:
-    p.put(x, 0, z, "cobble")
+    p.put(x, 0, z, "plinth_mossy" if (x + z) % 2 else "plinth")
     p.fill(x, 1, z, x, BEAM - 1, z, "post")
 p.fill(X0, BEAM, Z0, X0, BEAM, Z1, "beam_z")
 p.fill(X1, BEAM, Z0, X1, BEAM, Z1, "beam_z")
@@ -29,12 +34,38 @@ for z in (Z0, 5, Z1):
     p.fill(X0 + 1, BEAM, z, X1 - 1, BEAM, z, "beam_x")
 for x in range(X0 + 1, X1):
     if (x, Z1) not in posts:
-        p.fill(x, 1, Z1, x, BEAM - 1, Z1, "spruce")
+        p.put(x, 1, Z1, "plinth_mossy" if x % 3 == 0 else "plinth")
+        p.put(x, 2, Z1, "plinth_mossy" if x % 4 == 1 else "plinth")
+        p.put(x, 3, Z1, "beam_x")
+        p.fill(x, 4, Z1, x, BEAM - 1, Z1, "render")
+for x in (2, 5, 8):
+    window(p, x, 4, Z1, "south", lintel=False)
+
+# knee braces under the beams beside the open posts, along the sides and across
+for x, inward in ((X0, "east"), (X1, "west")):
+    across = 1 if x == X0 else -1
+    for z in (Z0, 5):
+        if z == 5:
+            p.put(x, BEAM - 1, z - 1, stairs_state("spruce", "south", "top"))
+        p.put(x, BEAM - 1, z + 1, stairs_state("spruce", "north", "top"))
+        p.put(x + across, BEAM - 1, z, stairs_state("spruce", "west" if x == X0 else "east", "top"))
+    p.put(x, BEAM - 1, Z1 - 1, stairs_state("spruce", "south", "top"))
 
 # roof: ridge along z over the whole shed (it overhangs the apron at z 0), gable closed at the back
-p.roof_ridge_z(0, Z1, X0, X1, BEAM + 1, DARK, "dark_ridge", gable="spruce", gable_ends=(False, True))
-p.put(1, BEAM - 1, Z0, "lantern_hanging")
-p.put(9, BEAM - 1, Z0, "lantern_hanging")
+p.roof_ridge_z(0, Z1, X0, X1, BEAM + 1, DARK, "dark_ridge", gable="oak", gable_ends=(False, True))
+p.put(2, BEAM - 1, Z0, "lantern_hanging")
+p.put(8, BEAM - 1, Z0, "lantern_hanging")
+trim = [(x, BEAM + 1, Z1) for x in range(X0 + 1, X1) if p.get(x, BEAM + 1, Z1) == "oak"]
+for x, y, z in trim:
+    p.put(x, y, z, "beam_x")                     # the band where the gable starts
+p.put(5, BEAM + 3, Z1, "pane")                   # a round light in the gable
+
+# a king post truss in the open front gable (on the first frame), a hoist chain from a collar beam over the bow
+p.fill(5, BEAM + 1, Z0, 5, BEAM + 5, Z0, "post")
+p.put(4, BEAM + 1, Z0, stairs_state("spruce", "east", "top"))
+p.put(6, BEAM + 1, Z0, stairs_state("spruce", "west", "top"))
+p.fill(X0 + 3, BEAM + 3, 3, X1 - 3, BEAM + 3, 3, "beam_x")
+p.fill(5, BEAM + 1, 3, 5, BEAM + 2, 3, "minecraft:chain[axis=y]")
 p.put(5, BEAM - 1, 5, "lantern_hanging")
 
 # the hull frame: keel along z on the slipway, stem post at the bow (north), three ribs, a strake of planks
@@ -66,6 +97,8 @@ p.put(1, 1, 8, "minecraft:crafting_table")
 p.put(2, 1, 8, "minecraft:smithing_table")
 p.put(8, 1, 1, "minecraft:barrel[facing=up]")
 p.put(8, 2, 1, "lantern")
+p.put(2, 1, 1, "minecraft:cauldron")                                  # the tar pot
+p.put(8, 1, 6, "minecraft:grindstone[face=floor,facing=north]")
 
 # the apron: a lantern post either side of the way in, the connector in the middle
 lantern_post(p, 3, 1, 0)

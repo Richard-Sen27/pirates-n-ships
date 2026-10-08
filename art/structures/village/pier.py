@@ -15,21 +15,30 @@ BERTH_Z = 9                    # berth centre along the pier
 
 p = Piece("village_pier", "Seafarer Pier", (W, 9, L), PALETTE)
 
-# piles on footings every four blocks along both edges and the centre line, cross beams under the deck at sea level
+# piles on cobblestone footings (mostly mossy) every four blocks along both edges and the centre line, cross beams
+# under the deck at sea level
 for z in range(1, L, 4):
     for x in (WEST, 3, EAST):
         if x == 3 and z % 8 != 1:
             continue
-        p.put(x, 0, z, "cobble")
+        p.put(x, 0, z, "mossy" if (x + z) % 3 else "cobble")
         p.fill(x, 1, z, x, SEA, z, "pile")
     for x in range(WEST + 1, EAST):
         if p.get(x, SEA, z) is None:
             p.put(x, SEA, z, "beam_x")
 
+# wales: a stripped spruce timber along both edges at the waterline, between the piles
+for x in (WEST, EAST):
+    for z in range(L):
+        if p.get(x, SEA, z) is None:
+            p.put(x, SEA, z, "beam_z")
+
 # deck: stripped spruce stringers along the edges, planks between
 p.fill(WEST, DECK, 0, WEST, DECK, L - 1, "beam_z")
 p.fill(EAST, DECK, 0, EAST, DECK, L - 1, "beam_z")
 p.fill(WEST + 1, DECK, 0, EAST - 1, DECK, L - 1, "spruce")
+for x, z in ((2, 2), (4, 5), (3, 8), (2, 12), (4, 14), (3, 17)):      # weathered replacement boards
+    p.put(x, DECK, z, "dark")
 
 # the seaward end: a rail between two lantern posts, open in the middle over a ladder down the centre pile
 lantern_post(p, WEST, DECK + 1, 0)
@@ -46,6 +55,16 @@ for z in (3, 15):
 for z in (7, 11):
     p.put(WEST, DECK + 1, z, "pirates_n_ships:cleat[face=floor,facing=north]")
     p.put(EAST, DECK + 1, z, "pirates_n_ships:cleat[face=floor,facing=north]")
+
+# the landward end, clear of the berths: a lantern post and a rail on either edge, cargo waiting to be loaded
+for x in (WEST, EAST):
+    lantern_post(p, x, DECK + 1, L - 2)
+    p.put(x, DECK + 1, L - 1, "fence")
+p.put(WEST, DECK + 1, L - 4, "minecraft:barrel[facing=up]")
+p.put(WEST, DECK + 1, L - 3, "pirates_n_ships:cargo_barrel")
+p.put(EAST, DECK + 1, L - 4, "pirates_n_ships:cargo_crate")
+p.put(EAST, DECK + 1, L - 3, "pirates_n_ships:cargo_crate")
+p.put(EAST, DECK + 2, L - 3, "pirates_n_ships:cargo_crate")
 
 p.berth(0, SEA, BERTH_Z, "north")
 p.berth(W - 1, SEA, BERTH_Z, "north")

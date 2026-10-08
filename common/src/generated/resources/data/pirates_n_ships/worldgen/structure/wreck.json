@@ -1,0 +1,30 @@
+{
+  "type": "pirates_n_ships:wreck",
+  "biomes": "#pirates_n_ships:has_structure/wreck",
+  "depth_below_floor": 1,
+  "pieces": [
+    {
+      "template": "pirates_n_ships:wreck/cargo_field",
+      "water_above": 4,
+      "weight": 3
+    },
+    {
+      "template": "pirates_n_ships:wreck/mast_stump",
+      "water_above": 12,
+      "weight": 3
+    },
+    {
+      "template": "pirates_n_ships:wreck/stern",
+      "water_above": 8,
+      "weight": 2
+    },
+    {
+      "template": "pirates_n_ships:wreck/sunken_sloop",
+      "water_above": 10,
+      "weight": 1
+    }
+  ],
+  "spawn_overrides": {},
+  "step": "surface_structures",
+  "terrain_adaptation": "none"
+}

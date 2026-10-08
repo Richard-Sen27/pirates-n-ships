@@ -935,6 +935,19 @@ Paddle (ART8):
   `SeaChestModule.gatherPaddleData`) has to go when both land: datagen writes nothing for the paddle's item model,
   the hand-made file is found by the item's id.
 
+Boarding plank (BRD1):
+- **`boarding_plank.bbmodel`**, one project with four groups at the same position (`boarding_plank_base`,
+  `boarding_plank`, `boarding_plank_tip`, `boarding_plank_item`; export a group with the others' cubes set to
+  `export = false`), exported to `block/boarding_plank_base.json` (6 elements), `block/boarding_plank.json` (5),
+  `block/boarding_plank_tip.json` (10) and the hand-made item model `item/boarding_plank.json` (11, handheld display
+  slots, GUI seen from above at 30/225 degrees). Textures vanilla `spruce_planks` (boards), `stripped_spruce_log`
+  (cleats), `anvil` (hooks) and our `block/rope` (lashing); particle `spruce_planks`. No new textures.
+- The run goes north (block state `facing` = north needs no rotation): three boards x 1..15, y 0..2 (the collision
+  box), with 0.1 px gaps; foot cleats 0.6 px high across the boards; the gunwale end (south) has a rope lashing round
+  the boards with a knot underneath; the far end (north) has two iron straps that bend down into hooks with barbs,
+  3 px below the board, biting into the deck the plank lies on. The hook tops end 0.05 px inside the board (no z-fight).
+- Render: `renders/boarding_plank.png` (base, middle and tip as a three-cell run, the far end on the left).
+
 ## Entities
 
 Animated mobs and NPCs (crew member, pirate, sailor, navy soldier and officer; design.md §9) are GeckoLib models

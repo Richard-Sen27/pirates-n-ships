@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "conditions": [
+            {
+              "block": "pirates_n_ships:boarding_plank",
+              "condition": "minecraft:block_state_property",
+              "properties": {
+                "segment": "0"
+              }
+            }
+          ],
+          "name": "pirates_n_ships:boarding_plank"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "pirates_n_ships:blocks/boarding_plank"
+}

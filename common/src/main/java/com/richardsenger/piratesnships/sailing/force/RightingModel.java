@@ -66,7 +66,13 @@ public final class RightingModel {
                          double maxMetacentricHeight, double rightingDamping, double maxHeelTorquePerMass, double maxHeelDegrees) {
 
         /** The defaults; the server config declares its defaults from this instance. Chosen by measurement (SH1). */
-        public static final Params DEFAULTS = new Params(true, 1.0, 0.0, 30.0, 4.0, 0.4, 3.0, 25.0);
+        /**
+         * The defaults; the server config declares its defaults from this instance. Chosen by measurement (SH1): factor
+         * 1.0 holds the starter sloop to 2.3 degrees at 6 blocks/s and 4.6 at 12; the metacentric height cap of 1.5
+         * leaves the sloop (estimate 1.47) alone and keeps wide, shallow hulls from going rigid (the 7×17 test hull's
+         * estimate is about 2.7, and at 4 its storm roll in waves fell from 4.35 to 1.3 degrees; at 1.5 it is 1.85).
+         */
+        public static final Params DEFAULTS = new Params(true, 1.0, 0.0, 30.0, 1.5, 0.4, 3.0, 25.0);
 
         public Params {
             rightingFactor = Math.max(0.0, rightingFactor);

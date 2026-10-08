@@ -178,7 +178,7 @@ Tuning values (server config, section `[stability]`):
 | Comes back too slowly / swings through | `righting_damping` (0.4, a damping ratio on top of `[sailing] roll_damping`) |
 | Strong winds still heel too far | `max_heel_torque_per_mass` (3.0), `max_heel_degrees` (25) |
 | Bow digs in or rides up under sail | `pitch_righting_factor` (0 = off) |
-| Very wide or shallow ships too rigid | `max_metacentric_height` (4 blocks), `max_righting_degrees` (30) |
+| Very wide or shallow ships too rigid | `max_metacentric_height` (1.5 blocks), `max_righting_degrees` (30) |
 | Everything off | `enabled` |
 
 ## 6. A second, bigger ship

@@ -663,6 +663,32 @@ record the point forces in the `pirates_n_ships:sea_hazards` group every physics
 
 - **Block count and body moves (HL1):** after a split that cuts every block off the heat-map root, `rebuildHeatmapFrom` resets `solidCount` to the largest group (l.224-227, l.254-266) and each later removal of the other groups' blocks lowers it again (`onSolidRemoved` l.328-331 from `SableCommonEvents` l.78-79), so the count is too low. At the next root loss the remaining blocks match neither the "whole" nor the "all pieces" branch (l.204, l.224) and Sable moves every block into a new sub-level. `SubLevelContainer#tick` (l.141-147) ticks the sub-levels, then `processSubLevelRemovals` (l.153-168) removes the emptied parent as REMOVED, and only then do the observers deliver the split: a removal listener must not drop per-ship state while a split of that ship is pending.
 
+### 9.0k Physics timing under load, and the calm-basin flake (Q6, measured)
+- **Sable's physics is a fixed step per server tick, not wall-clock time.** `SubLevelPhysicsSystem#tickPipelinePhysics`
+  (l.250-298) runs `config.substepsPerTick` substeps (default 2, `SableServerConfig` l.15-17, `PhysicsConfigData` l.33-36)
+  of exactly `1/20/substeps` s each, on the server thread, from `ServerLevelMixin#sable$tickPlotContainer` (l.80-90,
+  skipped only when the vanilla `TickRateManager` is frozen). A slow server runs fewer ticks per second but the same
+  physics per tick. The GameTest server does not even wait between ticks (`GameTestServer#waitUntilNextTick` only runs
+  tasks), so "Can't keep up" never appears and test time is pure tick count. [V]
+- The native solver is built with Rapier's `parallel` feature (`sable_rapier/src/main/rust/rapier/Cargo.toml` l.15-18)
+  and `algo.rs` collects collision pairs with rayon: results are not bit-exact between runs, but the spread is tiny
+  (the basin hull's speed at tick 40 differed in the 14th digit, its heel by 1e-5 degrees). [V]
+- `hullAfloatInBasinStaysCalm` (5x4x5 plank hull in a still basin) gave the same trajectory in about 30 full-suite runs:
+  alone, with three to six GameTest servers at once (load averages 45 to 265 on 8 cores, one run took 13.6 minutes),
+  replayed at the exact positions of the three failing merge-stage runs, and with its plot freed by another ship in the
+  same tick: bob peak 1.8 m/s at tick 10, 0.657 m/s at tick 40 (the first tick the limit checks), at rest from tick 140,
+  heel below 1e-4 degrees. No force of ours breaks the symmetry: no container (CW1's cargo force needs one), sailing
+  damping and keel act on angular and lateral motion only, the dry-volume lift is at the symmetric dry centroid. The
+  hull's chunks were all loaded and entity-ticking from tick 0, and the assembler refills the footprint with water in
+  the assembly tick, so fluid ticks play no part. [V]
+- The three failures (9.17 degrees; 1.063 and 1.050 m/s) all came from merge-stage runs with six to nine GameTest
+  servers plus Gradle builds, with 49 other tests in the same batch. The cause was not reproduced. What the hull is
+  sensitive to was measured: water missing under two of its five columns for 30 ticks heels it 53 degrees, the
+  footprint dry for 20 ticks makes it bob at 3.6 m/s after tick 40; a delay of the whole bob by about 20 ticks would
+  give the observed 1.05 m/s at tick 40. The test now runs in its own batch and names every other ship and entity near
+  its area, plus a trace, in its failure message, and it gained a rest check (from tick 140: below 0.05 m/s and
+  0.5 degrees). [V for the measurements; the cause is open]
+
 ### 9.1 How Sable tests sub-levels
 - Tests live in **`sable/neoforge/src/main/java/dev/ryanhcode/sable/neoforge/gametest/`** (`AssemblyTest`, `PhysicsTest`,
   `SableTestHelper`), registered with NeoForge's `@GameTestHolder(Sable.MOD_ID)` and vanilla `@GameTest(template = …)`. [V]

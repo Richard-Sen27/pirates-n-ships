@@ -10,8 +10,12 @@ import com.richardsenger.piratesnships.ship.hull.flooding.FloodReport;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.ship.sable.WaterRegions;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.SlabBlock;
@@ -22,11 +26,13 @@ import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.TrapDoorBlock;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -328,28 +334,80 @@ public final class DryHullGameTests {
         });
     }
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 400)
+    /**
+     * A floating hull in still water settles and stays calm. Alone, this test's trajectory is bit-for-bit the same in
+     * every run (Q6: about 30 full-suite runs, alone and with up to six GameTest servers at load averages up to 265 on
+     * 8 cores, and replayed at the three positions of the failing runs): bob peak 1.8 m/s at tick 10, 0.657 m/s at
+     * tick 40, at rest from tick 140, heel below 1e-4 degrees. Sable's physics is a fixed step per server tick, not
+     * wall-clock time (docs/sable-notes.md §9.0k). Three merge-stage runs still failed (9.2 degrees; 1.06 and 1.05 m/s)
+     * while 49 other tests ran beside it, so it runs in its own batch, and a failure names every other ship and entity
+     * that came near and when the maximum happened.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 400, batch = "pirates_n_ships_dry_hull_calm")
     public static void hullAfloatInBasinStaysCalm(GameTestHelper h) {
         basin(h, 0, 23, true);
         Fixture f = assemble(h, hull(h, 9, false));
-        double[] max = {0, 0};
+        ServerLevel level = h.getLevel();
+        // the test area, the gap the grid leaves to the next test, and the air up to the barrier ceiling and above
+        AABB area = new AABB(Vec3.atLowerCornerOf(h.absolutePos(BlockPos.ZERO)),
+                Vec3.atLowerCornerOf(h.absolutePos(new BlockPos(24, 16, 24)))).inflate(2);
+        // [0] speed and [1] tilt from tick 40 (settling), [2] speed and [3] tilt from tick 140 (at rest); ticks of each
+        double[] max = {0, 0, 0, 0};
+        long[] at = {-1, -1, -1, -1};
+        StringBuilder trace = new StringBuilder();
+        Map<String, Long> near = new LinkedHashMap<>();
         h.onEachTick(() -> {
-            if (!f.ship().isRemoved() && h.getTick() >= 40) {
-                max[0] = Math.max(max[0], f.ship().linearVelocity().length());
-                max[1] = Math.max(max[1], com.richardsenger.piratesnships.ship.assembly.DisassemblyMath.tiltDegrees(f.ship().orientation()));
+            if (f.ship().isRemoved()) {
+                return;
+            }
+            long t = h.getTick();
+            double speed = f.ship().linearVelocity().length();
+            double tilt = com.richardsenger.piratesnships.ship.assembly.DisassemblyMath.tiltDegrees(f.ship().orientation());
+            for (String other : othersIn(level, area, f.ship())) {
+                near.putIfAbsent(other, t);
+            }
+            double[] v = {speed, tilt, speed, tilt};
+            for (int i = 0; i < 4; i++) {
+                if (t >= (i < 2 ? 40 : 140) && v[i] > max[i]) {
+                    max[i] = v[i];
+                    at[i] = t;
+                }
+            }
+            if (t % 20 == 0) {
+                trace.append(String.format(Locale.ROOT, " t%d %.2f deg %.3f m/s;", t, tilt, speed));
             }
         });
         h.runAfterDelay(340, () -> {
+            String why = "; others near (first tick): " + (near.isEmpty() ? "none" : near) + "; trace" + trace;
+            com.richardsenger.piratesnships.Constants.LOG.debug("Calm basin ship: max {} m/s at t{}, {} deg at t{}{}",
+                    max[0], at[0], max[1], at[1], why);
             // Limits: after 40 ticks of settling, a 5x4x5 hull in still water must not move faster than 1 m/s (a bob,
             // not a launch: the bad runs reached 15 and 72 m/s) nor heel past 5 degrees (it is symmetric; the bad
-            // run reached 16); and it must still float: its sea is found and its helm is above the water.
-            h.assertTrue(max[0] < 1.0, "the floating ship moved at up to " + max[0] + " m/s");
-            h.assertTrue(max[1] < 5.0, "the floating ship tilted up to " + max[1] + " degrees");
+            // run reached 16); from tick 140 on it must be at rest (measured: 0.000 m/s, 1e-4 degrees); and it must
+            // still float: its sea is found and its helm is above the water.
+            h.assertTrue(max[0] < 1.0, "the floating ship moved at up to " + max[0] + " m/s at tick " + at[0] + why);
+            h.assertTrue(max[1] < 5.0, "the floating ship tilted up to " + max[1] + " degrees at tick " + at[1] + why);
+            h.assertTrue(max[2] < 0.05, "the floating ship did not come to rest: " + max[2] + " m/s at tick " + at[2] + why);
+            h.assertTrue(max[3] < 0.5, "the floating ship did not come to rest upright: " + max[3] + " degrees at tick " + at[3] + why);
             h.assertTrue(f.runtime().seesSea(), "the floating ship sees no sea");
             double helmY = world(f, f.helmPlot()).y, water = h.absolutePos(new BlockPos(0, 7, 0)).getY() + 0.9;
             h.assertTrue(helmY > water, "the ship sank: helm at " + helmY + ", water at " + water);
             h.succeed();
         });
+    }
+
+    /** Other ships and any entities inside {@code area} now, for the failure message of a physics test. */
+    private static List<String> othersIn(ServerLevel level, AABB area, ShipBody own) {
+        List<String> out = new ArrayList<>();
+        for (ShipBody o : SableShips.all(level)) {
+            if (!o.id().equals(own.id()) && !o.isRemoved() && o.worldBounds().intersects(area)) {
+                out.add("ship " + o.id().toString().substring(0, 8));
+            }
+        }
+        for (Entity e : level.getEntities((Entity) null, area, e -> true)) {
+            out.add(EntityType.getKey(e.getType()).getPath() + " #" + e.getId() + " at " + e.blockPosition());
+        }
+        return out;
     }
 
     // ------------------------------------------------------------------ partial blocks (design.md §4.3)

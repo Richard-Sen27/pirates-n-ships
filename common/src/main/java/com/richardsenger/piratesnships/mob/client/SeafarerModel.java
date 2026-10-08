@@ -26,6 +26,11 @@ public class SeafarerModel<T extends SeafarerMob> extends HumanoidGeoModel<T> {
         super(entityTexture(textureName));
     }
 
+    /** A texture variant on another kind's geometry ({@code geo/<geoName>.geo.json}), e.g. the harbor master on the sailor's. */
+    public SeafarerModel(String geoName, String textureName) {
+        super(geoFor(entityTexture(geoName)), entityTexture(textureName), RIG_ANIMATIONS);
+    }
+
     @Override
     public void setCustomAnimations(T animatable, long instanceId, AnimationState<T> animationState) {
         super.setCustomAnimations(animatable, instanceId, animationState);

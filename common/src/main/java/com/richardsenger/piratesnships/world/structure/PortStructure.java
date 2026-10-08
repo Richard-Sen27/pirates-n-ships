@@ -234,6 +234,7 @@ public final class PortStructure extends Structure {
         }
         if (portKind == PortKind.NAVY_OUTPOST) Garrison.place(level, chunkBox, pieces);
         if (portKind == PortKind.PIRATE_ISLAND) IslandCaptains.place(level, chunkBox, pieces, port);
+        com.richardsenger.piratesnships.mob.harbor.HarborMasters.place(level, chunkBox, pieces, port);
     }
 
     @Override

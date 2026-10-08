@@ -20,6 +20,7 @@ if [ -z "${CONTINUE:-}" ]; then
   if [ -n "$(git status --short | grep -v '^??')" ]; then echo "merge worktree dirty"; git status --short | head; exit 2; fi
   git checkout -q --detach main || exit 2
   echo "base: $(git rev-parse --short HEAD) $(git log -1 --format=%s)"
+  if git log main.."$BRANCH" --format=%b | grep -qi 'co-authored-by\|generated with'; then echo "ATTRIBUTION TRAILER in $BRANCH (CLAUDE.md forbids it); strip it with: git -C <worktree> filter-branch -f --msg-filter 'grep -vi co-authored-by' -- main..HEAD"; exit 10; fi
   if ! git merge --no-ff --no-commit "$BRANCH" > "$LOG/merge.log" 2>&1; then
     CONF=$(git diff --name-only --diff-filter=U)
     GEN=$(echo "$CONF" | grep -E "$GEN_RE" || true)

@@ -256,6 +256,26 @@ a second, faster before the wind and slower into it. Harbor masters now reckon c
 and routes that pass near a pirate island pay a risk bonus. Operators can watch the traffic with
 `/pirates world voyages`. Server config `world_simulation.lanes`, `world_simulation.voyages`.
 
+## Careers
+Two ladders, and you can only climb one. *Navy:* talk to a navy officer with an empty hand and enlist once the navy
+trusts you (navy reputation 10, no bounty, no friends among the pirates). Killing or turning in pirates, navy quests
+and a growing navy reputation promote you: Midshipman, Lieutenant, Captain, Commodore, Admiral. Firing on the navy
+or a merchant while in service is desertion: you lose your rank and the navy wants you for it. You may resign at any
+officer. *Infamy:* plunder fenced, captures and pirate reputation make you a Buccaneer, Dread Captain and finally
+Pirate Lord; a known pirate is never taken into the navy. *Letter of marque:* not ready to serve? Buy a letter from
+a navy officer (200 doubloons, navy reputation 20). Every pirate you kill under it earns prize money (5 doubloons, a
+pirate captain 50) that any navy officer pays out. Attacking the navy or a merchant voids it for three days.
+`/pirates career` shows where you stand. Server config `careers`.
+
+## Quests
+Every harbor master's desk has a Quests tab with up to three offers, which the port renews when they run out after
+two days. Accept up to three at once; each must be done within five days. Pirate hunts and prisoner deliveries come
+from villages and navy outposts, navy raids only from pirate islands. Monster hunts ask for sharks or, rarely (always
+in cold waters), the kraken. A cargo run puts a contract in your Contracts tab: deliver it at the destination's desk
+for a raised reward with no deposit. A treasure hunt hands you a treasure map; open the chest to finish. Completing a
+quest pays doubloons and raises your reputation with the giver's side (navy, pirates or villagers). Drop a quest in
+the tab or with `/pirates quest abandon <id>`; `/pirates quest list` shows your quests. Server config `quests`.
+
 ## Pirate islands
 Pirate camps sit on beaches, rarer than villages, with a jetty (two berths), tents, a tavern hut, a captain's hut and
 a fence's shack under the Jolly Roger. Pirates hang about the camp day and night and attack strangers. The fence's

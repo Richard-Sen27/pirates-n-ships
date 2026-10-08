@@ -30,7 +30,13 @@ public enum Deed {
     TURN_IN_PIRATE(6, -5, 0),
     PAY_FINE(3, 0, 0),
     /** Caught by the navy under false colours. */
-    FLY_FALSE_COLOURS(-10, 0, 0);
+    FLY_FALSE_COLOURS(-10, 0, 0),
+    /** A quest of a navy outpost completed (QST1). */
+    COMPLETE_NAVY_QUEST(6, -2, 0),
+    /** A quest of a pirate island completed (QST1). */
+    COMPLETE_PIRATE_QUEST(-2, 6, 0),
+    /** A quest of a seafarer village completed (QST1). */
+    COMPLETE_VILLAGE_QUEST(0, 0, 4);
 
     private final int navy;
     private final int pirates;

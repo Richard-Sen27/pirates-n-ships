@@ -6,9 +6,13 @@ import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
 import com.richardsenger.piratesnships.sailing.SailingConfig;
+import com.richardsenger.piratesnships.sailing.anchor.AnchorChain;
 import com.richardsenger.piratesnships.sailing.anchor.AnchorConfig;
 import com.richardsenger.piratesnships.sailing.anchor.AnchorEntities;
 import com.richardsenger.piratesnships.sailing.anchor.AnchorEntity;
+import com.richardsenger.piratesnships.sailing.anchor.AnchorMotion;
+import com.richardsenger.piratesnships.sailing.anchor.AnchorPhysics;
+import com.richardsenger.piratesnships.sailing.anchor.AnchorStatus;
 import com.richardsenger.piratesnships.sailing.anchor.AnchorTravel;
 import com.richardsenger.piratesnships.sailing.block.CapstanBlock;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
@@ -254,17 +258,16 @@ public final class SailingGameTestsControls {
     // ------------------------------------------------------------------ anchor
 
     /*
-     * Tolerance: at the defaults (slack 2, stiffness 0.5/s²) the sail's pull of well under 1 block/s² per unit mass
-     * stretches the rode about one block beyond the slack, so the hawse stays within 4 blocks of the anchor point.
-     *
-     * Measured 2.08 blocks at x=55k.
+     * The anchor's physics (AN2a) has its own tests on a bigger hull (sailing.anchor.AnchorPhysicsGameTests); these are
+     * the capstan's commands, persistence and the visible anchor on the small test hull.
      *
      * Release: checked by the forward velocity of the free ship, not by its displacement. Sable's physics is 32-bit and
      * the test grid lies up to 250,000 blocks from the origin, where one f32 step is 1/64 block: at 0.3 m/s a substep
      * moves less than half a step, and the ship reports velocity but does not move (measured at x=-191k: 0.2 blocks in
      * 9 s at 0.33 m/s; at x=55k it sailed 6.3 blocks). A stronger wind (15 blocks/s) pitched the hull over.
      */
-    private static final double HOLD_RADIUS = 4.0;
+    /** Largest stretch of the chain beyond its paid-out length while it holds the small hull under full sail [blocks]. */
+    private static final double HOLD_STRETCH = 1.0;
 
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 640, batch = "pirates_n_ships_anchor_hold")
     public static void anchorHoldsUnderFullSailAndReleases(GameTestHelper h) {
@@ -277,17 +280,18 @@ public final class SailingGameTestsControls {
         BlockPos capstan = find(f.ship(), SailingBlocks.CAPSTAN.get());
         Component dropped = ShipControls.useCapstan(h.getLevel(), capstan);
         h.assertTrue(key(dropped).equals(ShipControls.KEY_DROPPING), "drop refused: " + dropped.getString());
-        double[] maxDist = new double[1];
+        double[] maxStretch = {Double.NEGATIVE_INFINITY};
         Vec3[] released = new Vec3[1];
         boolean[] pulled = new boolean[1];
         double[] free = new double[2];
         h.onEachTick(() -> {
             long t = h.getTick();
             ShipAnchor a = f.runtime().anchor();
+            AnchorStatus st = f.runtime().anchorStatus();
             if (f.ship().isRemoved()) return;
             Vec3 hawse = f.ship().toWorld(Vec3.atCenterOf(capstan));
-            if (t >= 60 && t < 300 && a != null) {
-                maxDist[0] = Math.max(maxDist[0], Math.hypot(hawse.x - a.point().x, hawse.z - a.point().z));
+            if (t >= 100 && t < 300 && a != null && st != null) {
+                maxStretch[0] = Math.max(maxStretch[0], st.distance() - st.paidOut());
             }
             if (t == 60) heading[0] = f.runtime().headingDegrees(f.ship());
             if (t == 300) {
@@ -296,7 +300,7 @@ public final class SailingGameTestsControls {
                 h.assertTrue(key(raised).equals(ShipControls.KEY_RAISING), "raise refused: " + raised.getString());
             }
             if (t == 420) released[0] = hawse;
-            if (t == 290) pulled[0] = hasAnchorForce(f);
+            if (t == 290) pulled[0] = hasAnchorForce(h, f);
             if (t >= 440 && t < 600) {
                 free[0] += f.runtime().shipFrameVelocity(f.ship(), new Vector3d()).z;
                 free[1]++;
@@ -307,69 +311,95 @@ public final class SailingGameTestsControls {
             Vec3 end = f.ship().toWorld(Vec3.atCenterOf(capstan));
             double sailed = released[0] == null ? 0 : Math.hypot(end.x - released[0].x, end.z - released[0].z);
             double freeFwd = free[1] == 0 ? 0 : free[0] / free[1];
-            Constants.LOG.info("[sailing test] anchor at {}: max distance to the anchor point while holding {} blocks, heading {}° -> {}° while held, "
+            Constants.LOG.info("[sailing test] anchor at {}: max stretch of the chain while holding {} blocks, heading {}° -> {}° while held, "
                             + "after raising mean forward {} m/s and {} blocks sailed in 180 ticks", end,
-                    String.format("%.2f", maxDist[0]), String.format("%.1f", heading[0]), String.format("%.1f", heading[1]),
+                    String.format("%.2f", maxStretch[0]), String.format("%.1f", heading[0]), String.format("%.1f", heading[1]),
                     String.format("%.2f", freeFwd), String.format("%.2f", sailed));
-            h.assertTrue(pulled[0], "no anchor force while holding");
-            h.assertTrue(maxDist[0] > 0 && maxDist[0] < HOLD_RADIUS, "anchored ship drifted " + maxDist[0] + " blocks");
-            h.assertTrue(f.runtime().anchor() == null && !hasAnchorForce(f), "anchor not stowed after raising");
+            h.assertTrue(pulled[0], "no chain force while holding");
+            h.assertTrue(maxStretch[0] < HOLD_STRETCH, "anchored ship pulled the chain " + maxStretch[0] + " blocks past its length");
+            h.assertTrue(f.runtime().anchor() == null && !hasAnchorForce(h, f), "anchor not stowed after raising");
             // 0.15 m/s: the free ship under this sail makes about 0.3 m/s (sail tests: > 0.3 m/s mean)
             h.assertTrue(freeFwd > 0.15, "ship did not sail away after raising the anchor: mean forward " + freeFwd);
             h.succeed();
         });
     }
 
-    private static boolean hasAnchorForce(Fixture f) {
-        var b = f.runtime().lastBreakdown();
-        return b != null && b.contributions().stream().anyMatch(c -> c.source().equals("anchor") && c.force().length() > 0);
+    private static boolean hasAnchorForce(GameTestHelper h, Fixture f) {
+        Vector3d force = AnchorPhysics.lastForce(h.getLevel(), f.ship().id());
+        return force != null && force.length() > 0;
     }
 
-    /** Drop takes anchor_drop_ticks, using the capstan mid-way reverses the ramp, the capstan shows the phase. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = "pirates_n_ships_config_sailing_anchor_fixed_times")
-    public static void anchorStateMachineTimingAndReversal(GameTestHelper h) {
-        ConfigOverrides.during(h, AnchorConfig.DEPTH_TRAVEL, false);
-        ConfigOverrides.during(h, SailingConfig.ANCHOR_DROP_TICKS, 40);
-        ConfigOverrides.during(h, SailingConfig.ANCHOR_RAISE_TICKS, 100);
+    /**
+     * The capstan's commands follow the anchor's body: dropping falls and lands (holding), raising winds it in, using
+     * the capstan mid-way lets it go again from where it is, and it is stowed when the chain is in. The capstan shows
+     * the phase.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 500, batch = "pirates_n_ships_config_sailing_anchor_reversal")
+    public static void anchorPhasesFollowTheBodyAndReverse(GameTestHelper h) {
+        pinChain(h);
         SailingGameTestsShips.basin(h, true);
         Fixture f = SailingGameTestsShips.assemble(h, ship(h, SailTrim.FURLED, 0));
         BlockPos capstan = find(f.ship(), SailingBlocks.CAPSTAN.get());
-        long[] start = new long[1];
-        long[] t0 = {-1};
+        int[] stage = {0};
+        long[] since = {0};
         h.onEachTick(() -> {
             long t = h.getTick();
-            if (t0[0] < 0) {
-                t0[0] = t;
-                ShipControls.useCapstan(h.getLevel(), capstan);
-                start[0] = t;
-            }
-            long dt = t - start[0];
             ShipAnchor a = f.runtime().anchor();
-            if (dt == 30) {
-                h.assertTrue(a != null && a.state().phase() == AnchorState.Phase.DROPPING && shown(h, capstan) == CapstanBlock.Phase.DROPPING,
-                        "not dropping after 30 ticks: " + a);
-            }
-            if (dt == 45) {
-                h.assertTrue(a != null && a.state().phase() == AnchorState.Phase.HOLDING && shown(h, capstan) == CapstanBlock.Phase.HOLDING,
-                        "not holding after 45 ticks: " + a);
-                ShipControls.useCapstan(h.getLevel(), capstan); // raise: 100 ticks from full hold
-            }
-            if (dt == 95) {
-                // half raised (hold 0.5): reverse; the drop resumes from 0.5 and holds again after 20 more ticks
-                h.assertTrue(a != null && a.state().phase() == AnchorState.Phase.RAISING && Math.abs(a.state().hold() - 0.5) < 0.03,
-                        "not half raised after 50 ticks: " + a);
-                ShipControls.useCapstan(h.getLevel(), capstan);
-            }
-            if (dt == 110) {
-                h.assertTrue(a != null && a.state().phase() == AnchorState.Phase.DROPPING, "reversal did not drop again: " + a);
-            }
-            if (dt == 120) {
-                h.assertTrue(a != null && a.state().phase() == AnchorState.Phase.HOLDING, "reversed drop not holding after 25 ticks: " + a);
-                ShipControls.useCapstan(h.getLevel(), capstan);
-            }
-            if (dt == 230) {
-                h.assertTrue(a == null && shown(h, capstan) == CapstanBlock.Phase.RAISED, "not stowed 110 ticks after raising: " + a);
-                h.succeed();
+            switch (stage[0]) {
+                case 0 -> {
+                    if (t < 3) return;
+                    Component c = ShipControls.useCapstan(h.getLevel(), capstan);
+                    h.assertTrue(key(c).equals(ShipControls.KEY_DROPPING), "drop refused: " + c.getString());
+                    h.assertTrue(f.runtime().anchor() != null && f.runtime().anchor().state().phase() == AnchorState.Phase.DROPPING,
+                            "not dropping");
+                    stage[0] = 1;
+                    since[0] = t;
+                }
+                case 1 -> {
+                    if (a != null && a.state().phase() == AnchorState.Phase.HOLDING) {
+                        h.assertTrue(a.resting() && shown(h, capstan) == CapstanBlock.Phase.HOLDING, "holding but not resting: " + a);
+                        Component c = ShipControls.useCapstan(h.getLevel(), capstan);
+                        h.assertTrue(key(c).equals(ShipControls.KEY_RAISING), "raise refused: " + c.getString());
+                        stage[0] = 2;
+                        since[0] = t;
+                    } else {
+                        h.assertTrue(a != null && a.state().phase() == AnchorState.Phase.DROPPING
+                                && shown(h, capstan) == CapstanBlock.Phase.DROPPING, "not dropping at " + (t - since[0]) + ": " + a);
+                        h.assertTrue(t - since[0] < 80, "the anchor did not land within 4 s: " + a);
+                    }
+                }
+                case 2 -> {
+                    h.assertTrue(a != null && a.state().phase() == AnchorState.Phase.RAISING && shown(h, capstan) == CapstanBlock.Phase.RAISING,
+                            "not raising: " + a);
+                    if (t - since[0] == 20) {
+                        Component c = ShipControls.useCapstan(h.getLevel(), capstan); // reversed: lets it go again
+                        h.assertTrue(key(c).equals(ShipControls.KEY_DROPPING), "reversal refused: " + c.getString());
+                        stage[0] = 3;
+                        since[0] = t;
+                    }
+                }
+                case 3 -> {
+                    if (a != null && a.state().phase() == AnchorState.Phase.HOLDING) {
+                        ShipControls.useCapstan(h.getLevel(), capstan);
+                        stage[0] = 4;
+                        since[0] = t;
+                    } else {
+                        h.assertTrue(a != null && a.state().phase() == AnchorState.Phase.DROPPING, "reversal did not drop again: " + a);
+                        h.assertTrue(t - since[0] < 80, "the reversed anchor did not land within 4 s: " + a);
+                    }
+                }
+                case 4 -> {
+                    if (a == null) {
+                        h.assertTrue(shown(h, capstan) == CapstanBlock.Phase.RAISED, "capstan not showing raised");
+                        AnchorEntity e = anchorEntity(h, f);
+                        h.assertTrue(!e.isOut() && inPlot(e, f), "not stowed in the plot after raising");
+                        h.succeed();
+                    } else {
+                        h.assertTrue(a.state().phase() == AnchorState.Phase.RAISING, "not raising: " + a);
+                        h.assertTrue(t - since[0] < 200, "the anchor was not stowed within 10 s: " + a);
+                    }
+                }
+                default -> { }
             }
         });
     }
@@ -432,13 +462,13 @@ public final class SailingGameTestsControls {
         return s != null && s.id().equals(f.ship().id());
     }
 
-    /** Pins the chain travel config: 6 blocks/s out, 2.5 in, no clamping in this basin. */
-    private static void pinTravel(GameTestHelper h) {
-        ConfigOverrides.during(h, AnchorConfig.DEPTH_TRAVEL, true);
-        ConfigOverrides.during(h, AnchorConfig.DROP_SPEED, 6.0);
+    /** Pins the anchor's config: sinks at 4 blocks/s, heaved in at 2.5, the default chain. */
+    private static void pinChain(GameTestHelper h) {
+        ConfigOverrides.during(h, AnchorConfig.SINK_SPEED, 4.0);
+        ConfigOverrides.during(h, AnchorConfig.WATER_DRAG, 2.0);
         ConfigOverrides.during(h, AnchorConfig.RAISE_SPEED, 2.5);
-        ConfigOverrides.during(h, AnchorConfig.MIN_TRAVEL_TICKS, 1);
-        ConfigOverrides.during(h, AnchorConfig.MAX_TRAVEL_TICKS, 400);
+        ConfigOverrides.during(h, AnchorConfig.HOLDING_FORCE, AnchorChain.Params.DEFAULTS.holding());
+        ConfigOverrides.during(h, SailingConfig.ANCHOR_CHAIN_LENGTH, 32);
     }
 
     /** A ship with a capstan has one stowed anchor inside its plot, hanging in the first cell outside the hull. */
@@ -464,63 +494,67 @@ public final class SailingGameTestsControls {
     }
 
     /**
-     * Dropping: the anchor leaves the plot, runs down at the chain speed and lands on the anchor point in the trip's
-     * time, and the ship holds from that tick on. Raising brings it back in the raise time and stows it in the plot.
+     * Dropping: the anchor leaves the plot, sinks no faster than the sink speed (once in the water) and comes to rest on
+     * the basin's floor, where the ship holds; the entity is where the anchor's body is, and carries the chain's state.
+     * Raising winds the chain in at the raise speed and stows the anchor in the plot.
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = "pirates_n_ships_config_sailing_anchor_travel")
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = "pirates_n_ships_config_sailing_anchor_travel")
     public static void anchorRunsOutLandsAndIsHeavedBackIn(GameTestHelper h) {
-        pinTravel(h);
+        pinChain(h);
         SailingGameTestsShips.basin(h, true);
         Fixture f = SailingGameTestsShips.assemble(h, ship(h, SailTrim.FURLED, 0));
         BlockPos capstan = find(f.ship(), SailingBlocks.CAPSTAN.get());
         long[] drop = {-1};
+        long[] landed = {-1};
         long[] raise = {-1};
-        ShipAnchor[] trip = new ShipAnchor[1];
+        double[] chain = new double[1];
+        double floor = h.absolutePos(BlockPos.ZERO).getY() + 2.0; // top of the stone at y=1
         h.onEachTick(() -> {
             long t = h.getTick();
             if (t == 3) {
                 Component c = ShipControls.useCapstan(h.getLevel(), capstan);
                 h.assertTrue(key(c).equals(ShipControls.KEY_DROPPING), "drop refused: " + c.getString());
-                trip[0] = f.runtime().anchor();
                 drop[0] = t;
-                double depth = AnchorTravel.distance(f.ship().toWorld(trip[0].hawse()).y, trip[0].point().y);
-                h.assertTrue(depth > 3.0 && trip[0].dropTicks() == AnchorTravel.ticks(depth, 6.0, 1, 400)
-                        && trip[0].raiseTicks() == AnchorTravel.ticks(depth, 2.5, 1, 400), "trip times " + trip[0] + " for depth " + depth);
                 return;
             }
             if (drop[0] < 0) {
                 return;
             }
             ShipAnchor a = f.runtime().anchor();
-            long dt = t - drop[0];
-            int dropTicks = trip[0].dropTicks();
-            if (raise[0] < 0 && dt >= 1 && dt < dropTicks) {
+            if (landed[0] < 0) {
                 AnchorEntity e = anchorEntity(h, f);
-                h.assertTrue(e.isOut() && !inPlot(e, f), "dropping anchor still in the plot at dt " + dt);
-                h.assertTrue(a.state().phase() == AnchorState.Phase.DROPPING && e.getY() > a.point().y + 0.05,
-                        "landed early at dt " + dt + ": " + a + ", y " + e.getY());
+                h.assertTrue(e.isOut() && !inPlot(e, f), "dropping anchor still in the plot at " + (t - drop[0]));
+                h.assertTrue(a != null && e.position().distanceTo(a.position()) < 1e-6, "entity not on the anchor's body");
+                if (a.state().phase() == AnchorState.Phase.DROPPING) {
+                    h.assertTrue(!AnchorMotion.inWater(a.position(), AnchorPhysics.terrain(h.getLevel()))
+                            || a.velocity().y >= -4.0 - 1e-6, "sinking faster than the sink speed: " + a.velocity());
+                    h.assertTrue(t - drop[0] < 60, "not landed within 3 s: " + a);
+                } else {
+                    h.assertTrue(a.state().phase() == AnchorState.Phase.HOLDING && a.resting(), "landed but not holding: " + a);
+                    h.assertTrue(Math.abs(a.position().y - floor) < 1e-6, "not on the floor: " + a.position().y + " vs " + floor);
+                    landed[0] = t;
+                }
+                return;
             }
-            if (raise[0] < 0 && dt >= dropTicks && dt <= dropTicks + 10) {
+            if (raise[0] < 0 && t == landed[0] + 10) {
                 AnchorEntity e = anchorEntity(h, f);
-                h.assertTrue(a.state().phase() == AnchorState.Phase.HOLDING && a.state().hold() == 1.0,
-                        "not holding at dt " + dt + " (drop " + dropTicks + " ticks): " + a);
-                h.assertTrue(e.position().distanceTo(a.point()) < 0.05, "anchor not on the point at dt " + dt + ": " + e.position() + " vs " + a.point());
-            }
-            if (raise[0] < 0 && dt == dropTicks + 10) {
+                h.assertTrue(e.isResting() && e.paidOut() > 3.0f, "entity does not carry the chain: resting " + e.isResting()
+                        + ", paid out " + e.paidOut());
+                chain[0] = a.paidOut();
                 ShipControls.useCapstan(h.getLevel(), capstan);
                 raise[0] = t;
                 return;
             }
             if (raise[0] >= 0) {
                 long rt = t - raise[0];
-                int raiseTicks = trip[0].raiseTicks();
-                if (rt >= 1 && rt < raiseTicks) {
+                int expected = (int) Math.ceil(chain[0] / 2.5 * 20.0);
+                if (a != null) {
+                    h.assertTrue(a.state().phase() == AnchorState.Phase.RAISING && anchorEntity(h, f).isOut(), "not raising at " + rt + ": " + a);
+                    h.assertTrue(rt <= expected + 2, "not stowed after " + rt + " ticks, expected " + expected + ": " + a);
+                } else {
+                    h.assertTrue(rt >= expected - 2, "stowed too early: " + rt + " ticks, expected " + expected);
                     AnchorEntity e = anchorEntity(h, f);
-                    h.assertTrue(a != null && a.state().phase() == AnchorState.Phase.RAISING && e.isOut(), "not raising at rt " + rt + ": " + a);
-                }
-                if (rt == raiseTicks + 2) {
-                    AnchorEntity e = anchorEntity(h, f);
-                    h.assertTrue(a == null && !e.isOut() && inPlot(e, f), "not stowed " + rt + " ticks after raising: " + a);
+                    h.assertTrue(!e.isOut() && inPlot(e, f), "not stowed in the plot after raising");
                     h.assertTrue(shown(h, capstan) == CapstanBlock.Phase.RAISED, "capstan not showing raised");
                     h.succeed();
                 }
@@ -570,10 +604,10 @@ public final class SailingGameTestsControls {
         });
     }
 
-    /** The anchor's trip and its entity come back after the runtime is rebuilt from storage and the entity was lost. */
+    /** The anchor's fall and its entity come back after the runtime is rebuilt from storage and the entity was lost. */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = "pirates_n_ships_config_sailing_anchor_reload")
     public static void droppingAnchorSurvivesReload(GameTestHelper h) {
-        pinTravel(h);
+        pinChain(h);
         SailingGameTestsShips.basin(h, true);
         Fixture f = SailingGameTestsShips.assemble(h, ship(h, SailTrim.FURLED, 0));
         BlockPos capstan = find(f.ship(), SailingBlocks.CAPSTAN.get());
@@ -593,13 +627,12 @@ public final class SailingGameTestsControls {
         h.runAfterDelay(11, () -> {
             AnchorEntity e = anchorEntity(h, f);
             ShipAnchor a = fresh[0].anchor();
-            Vec3 expected = AnchorEntities.position(f.ship().toWorld(a.hawse()), a);
-            h.assertTrue(e.isOut() && e.position().distanceTo(expected) < 1e-3, "anchor not restored on its chain: " + e.position() + " vs " + expected);
+            h.assertTrue(e.isOut() && e.position().distanceTo(a.position()) < 1e-3, "anchor not restored on its body: " + e.position() + " vs " + a.position());
         });
-        h.runAfterDelay(3 + 40, () -> {
+        h.runAfterDelay(3 + 80, () -> {
             ShipAnchor a = fresh[0].anchor();
             h.assertTrue(a != null && a.state().phase() == AnchorState.Phase.HOLDING, "restored drop did not land: " + a);
-            h.assertTrue(anchorEntity(h, f).position().distanceTo(a.point()) < 0.05, "anchor not on the point");
+            h.assertTrue(anchorEntity(h, f).position().distanceTo(a.position()) < 1e-3, "anchor entity not on the anchor");
             h.succeed();
         });
     }

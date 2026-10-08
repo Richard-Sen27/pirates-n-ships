@@ -2,61 +2,83 @@ package com.richardsenger.piratesnships.sailing.ship;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.richardsenger.piratesnships.sailing.anchor.AnchorMotion;
 import com.richardsenger.piratesnships.sailing.force.AnchorState;
-import com.richardsenger.piratesnships.sailing.force.SailingParams;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * The one anchor of a ship, as persisted in the ship's Sable user data ({@code pirates_n_ships_sailing.anchor}):
- * state machine, the world point where it lies on the ground, the plot position of the capstan that works it, the
- * plot position of the hawse (where the chain leaves the ship: the ring of the stowed anchor, at the hull side), and
- * the drop and raise times of this trip ({@code sailing.anchor.AnchorTravel}). The anchor's position along the chain
- * is {@code state.hold()}: 0 at the hawse, 1 on the ground.
+ * The one anchor of a ship, as persisted in the ship's Sable user data ({@code pirates_n_ships_sailing.anchor}), AN2a:
+ * the phase, the anchor's body (its crown's world position, its velocity, the chain paid out from the hawse to its
+ * ring, whether it rests on the ground), the plot position of the capstan that works it and the plot position of the
+ * hawse (where the chain leaves the ship: the ring of the stowed anchor, at the hull side).
  *
- * <p>Saves from before the visible anchor have no hawse and no times: the hawse falls back to the capstan's centre
- * and the times to the old defaults (40 and 100 ticks).
+ * <p>Saves from before AN2a (a timed drop to a fixed point: {@code state}, {@code point}, optional {@code hawse}) load
+ * with the anchor at that point, resting when it held, and an unknown paid-out length ({@link #UNKNOWN_CHAIN}) that
+ * the next tick sets to the distance it finds; the hawse falls back to the capstan's centre.
  */
-public record ShipAnchor(AnchorState state, Vec3 point, BlockPos capstan, Vec3 hawse, int dropTicks, int raiseTicks) {
+public record ShipAnchor(AnchorState state, Vec3 position, Vec3 velocity, double paidOut, boolean resting,
+                         BlockPos capstan, Vec3 hawse) {
 
-    public static final int LEGACY_DROP_TICKS = 40;
-    public static final int LEGACY_RAISE_TICKS = 100;
+    /** Paid-out length of an anchor loaded from an old save: the next tick takes the current distance. */
+    public static final double UNKNOWN_CHAIN = -1.0;
 
-    public static final Codec<AnchorState> STATE_CODEC = RecordCodecBuilder.create(i -> i.group(
-            Codec.STRING.xmap(AnchorState.Phase::valueOf, AnchorState.Phase::name).fieldOf("phase").forGetter(AnchorState::phase),
-            Codec.DOUBLE.fieldOf("hold").forGetter(AnchorState::hold)
-    ).apply(i, AnchorState::new));
+    private static final Codec<AnchorState.Phase> PHASE = Codec.STRING.xmap(AnchorState.Phase::valueOf, AnchorState.Phase::name);
 
-    /** Encoded hawse; empty on legacy saves. */
-    private record Stored(AnchorState state, Vec3 point, BlockPos capstan, java.util.Optional<Vec3> hawse, int dropTicks, int raiseTicks) { }
+    private static final Codec<ShipAnchor> CURRENT = RecordCodecBuilder.create(i -> i.group(
+            PHASE.fieldOf("phase").forGetter(a -> a.state().phase()),
+            Vec3.CODEC.fieldOf("pos").forGetter(ShipAnchor::position),
+            Vec3.CODEC.optionalFieldOf("vel", Vec3.ZERO).forGetter(ShipAnchor::velocity),
+            Codec.DOUBLE.fieldOf("paid_out").forGetter(ShipAnchor::paidOut),
+            Codec.BOOL.fieldOf("resting").forGetter(ShipAnchor::resting),
+            BlockPos.CODEC.fieldOf("capstan").forGetter(ShipAnchor::capstan),
+            Vec3.CODEC.fieldOf("hawse").forGetter(ShipAnchor::hawse)
+    ).apply(i, (phase, pos, vel, paidOut, resting, capstan, hawse) ->
+            new ShipAnchor(AnchorState.of(phase), pos, vel, paidOut, resting, capstan, hawse)));
 
-    public static final Codec<ShipAnchor> CODEC = RecordCodecBuilder.<Stored>create(i -> i.group(
-            STATE_CODEC.fieldOf("state").forGetter(Stored::state),
-            Vec3.CODEC.fieldOf("point").forGetter(Stored::point),
-            BlockPos.CODEC.fieldOf("capstan").forGetter(Stored::capstan),
-            Vec3.CODEC.optionalFieldOf("hawse").forGetter(Stored::hawse),
-            Codec.intRange(1, 100_000).optionalFieldOf("drop_ticks", LEGACY_DROP_TICKS).forGetter(Stored::dropTicks),
-            Codec.intRange(1, 100_000).optionalFieldOf("raise_ticks", LEGACY_RAISE_TICKS).forGetter(Stored::raiseTicks)
-    ).apply(i, Stored::new)).xmap(
-            s -> new ShipAnchor(s.state(), s.point(), s.capstan(), s.hawse().orElse(Vec3.atCenterOf(s.capstan())), s.dropTicks(), s.raiseTicks()),
-            a -> new Stored(a.state(), a.point(), a.capstan(), java.util.Optional.of(a.hawse()), a.dropTicks(), a.raiseTicks()));
+    /** The format before AN2a: {@code state {phase, hold}}, {@code point}, {@code capstan}, optional {@code hawse}. */
+    private record Legacy(AnchorState.Phase phase, Vec3 point, BlockPos capstan, Optional<Vec3> hawse) {
 
-    public ShipAnchor {
-        dropTicks = Math.max(1, dropTicks);
-        raiseTicks = Math.max(1, raiseTicks);
+        static final Codec<Legacy> CODEC = RecordCodecBuilder.create(i -> i.group(
+                PHASE.fieldOf("phase").codec().fieldOf("state").forGetter(Legacy::phase),
+                Vec3.CODEC.fieldOf("point").forGetter(Legacy::point),
+                BlockPos.CODEC.fieldOf("capstan").forGetter(Legacy::capstan),
+                Vec3.CODEC.optionalFieldOf("hawse").forGetter(Legacy::hawse)
+        ).apply(i, Legacy::new));
+
+        ShipAnchor upgrade() {
+            AnchorState.Phase p = phase == AnchorState.Phase.RAISED ? AnchorState.Phase.RAISING : phase;
+            return new ShipAnchor(AnchorState.of(p), point, Vec3.ZERO, UNKNOWN_CHAIN, p == AnchorState.Phase.HOLDING,
+                    capstan, hawse.orElse(Vec3.atCenterOf(capstan)));
+        }
     }
 
-    /** An anchor as before the visible anchor: hawse at the capstan's centre, the old default times. */
-    public ShipAnchor(AnchorState state, Vec3 point, BlockPos capstan) {
-        this(state, point, capstan, Vec3.atCenterOf(capstan), LEGACY_DROP_TICKS, LEGACY_RAISE_TICKS);
+    public static final Codec<ShipAnchor> CODEC = Codec.withAlternative(CURRENT,
+            Legacy.CODEC.xmap(Legacy::upgrade, a -> new Legacy(a.state().phase(), a.position(), a.capstan(), Optional.of(a.hawse()))));
+
+    /** A new drop: the anchor leaves the hawse (its ring at {@code hawseWorld}) with the hawse's velocity. */
+    public static ShipAnchor dropped(BlockPos capstan, Vec3 hawsePlot, Vec3 hawseWorld, Vec3 hawseVelocity) {
+        return new ShipAnchor(AnchorState.DROPPING, AnchorMotion.crown(hawseWorld), hawseVelocity, 0.0, false,
+                capstan.immutable(), hawsePlot);
     }
 
     public ShipAnchor withState(AnchorState s) {
-        return new ShipAnchor(s, point, capstan, hawse, dropTicks, raiseTicks);
+        return new ShipAnchor(s, position, velocity, paidOut, resting, capstan, hawse);
     }
 
-    /** {@code p} with this trip's drop and raise times, so {@link AnchorState#tick} moves in step with the chain. */
-    public SailingParams.AnchorParams travelParams(SailingParams.AnchorParams p) {
-        return new SailingParams.AnchorParams(p.stiffness(), p.damping(), p.maxAcceleration(), p.slack(), dropTicks, raiseTicks);
+    /** The anchor's body for {@link AnchorMotion}. */
+    public AnchorMotion.Body body() {
+        return new AnchorMotion.Body(position, velocity, Math.max(0.0, paidOut), resting, false);
+    }
+
+    /** This anchor with the body {@code b}. */
+    public ShipAnchor withBody(AnchorMotion.Body b) {
+        return new ShipAnchor(state, b.pos(), b.vel(), b.paidOut(), b.resting(), capstan, hawse);
+    }
+
+    /** The anchor's ring (where the chain is shackled), world. */
+    public Vec3 ring() {
+        return AnchorMotion.ring(position);
     }
 }

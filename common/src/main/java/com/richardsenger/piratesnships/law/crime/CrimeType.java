@@ -4,6 +4,9 @@ import com.mojang.serialization.Codec;
 import com.richardsenger.piratesnships.Constants;
 import net.minecraft.util.StringRepresentable;
 
+import java.util.Arrays;
+import java.util.stream.Stream;
+
 /**
  * The crime catalogue (docs/design.md §13.1, §4.7, §13.3, §15). Each crime has a default severity (criminal score
  * points) and a default repeat cooldown: the same crime against the same victim within the cooldown is not counted
@@ -36,8 +39,9 @@ public enum CrimeType implements StringRepresentable {
     /** Attacking navy or merchant ships while in navy service (§15). */
     DESERTION("desertion", 60, 600),
     /**
-     * Selling plundered goods that a navy port noticed (§10.3). Victim = the port (one victim id per port, see
-     * {@code law.world.PlunderCrimes#portVictim}), so several noticed sales at one port within the window count once.
+     * <b>Legacy</b> (G13, produced by nothing since LAW3): selling plundered goods that a navy port noticed. Since LAW3
+     * ports refuse plunder instead ({@link #SELLING_PLUNDER}); the constant only stays so saved criminal records that
+     * hold it still load. Never offered as a crime one can commit ({@link #committable()}).
      */
     FENCE_PLUNDER("fence_plunder", 15, 60),
     /**
@@ -69,7 +73,7 @@ public enum CrimeType implements StringRepresentable {
         return id;
     }
 
-    /** Translation key of the crime's display name ("Fencing plunder"). */
+    /** Translation key of the crime's display name ("Offering stolen goods"). */
     public String nameKey() {
         return "crime." + Constants.MOD_ID + "." + id;
     }
@@ -80,6 +84,16 @@ public enum CrimeType implements StringRepresentable {
 
     public int defaultCooldownSeconds() {
         return defaultCooldownSeconds;
+    }
+
+    /** Kept only so old saves load; nothing records it any more (LAW3b). */
+    public boolean legacy() {
+        return this == FENCE_PLUNDER;
+    }
+
+    /** The crimes the game can still record, in catalogue order (what commands suggest and accept). */
+    public static Stream<CrimeType> committable() {
+        return Arrays.stream(values()).filter(t -> !t.legacy());
     }
 
     @Override

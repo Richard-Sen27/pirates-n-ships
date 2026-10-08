@@ -19,7 +19,6 @@ import com.richardsenger.piratesnships.trade.plunder.PlunderRules;
 import com.richardsenger.piratesnships.trade.plunder.PortFees;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
@@ -41,9 +40,8 @@ import java.util.function.Supplier;
  * Market.Quote q = TradeService.quote(server, portId, TradeGoods.SUGAR, Market.Side.BUY, 64);
  * Market.Quote bought = TradeService.buy(server, portId, TradeGoods.SUGAR, 64);
  * if (bought.ok()) { takeDoubloons(player, bought.total()); giveItems(player, sugar, 64); }
- * TradeService.Sale sale = TradeService.sell(server, portId, goodId, count, PlunderMark.isPlundered(stack), player.getRandom());
- * if (sale.unitsTaken()) { removeItems(player, count); giveDoubloons(player, sale.payout()); } // payout 0 if confiscated
- * if (sale.verdict().noticed()) LawService.reportCrime(player, ..., null);  // the integration picks the crime type
+ * TradeService.Sale sale = TradeService.sell(server, portId, goodId, count, PlunderMark.isPlundered(stack));
+ * if (sale.unitsTaken()) { removeItems(player, count); giveDoubloons(player, sale.payout()); } // plunder is refused but at the fence
  * // harbor master
  * List<DeliveryContract> offers = TradeService.offers(server, portId, destinations);
  * TradeService.accept(server, contractId, player.getUUID());           // take depositDue
@@ -129,16 +127,16 @@ public final class TradeService {
         return trade(server, port, good, Market.Side.BUY, quantity);
     }
 
-    /** A sale with its plunder verdict. The market moved only if {@code verdict.sold()} and {@code quote.ok()}. */
+    /** A sale with its plunder verdict. The market moved only if {@link #unitsTaken()}. */
     public record Sale(Market.Quote quote, PlunderRules.Verdict verdict) {
         /** Doubloons to pay the seller. */
         public long payout() {
             return quote.ok() ? verdict.payout() : 0;
         }
 
-        /** Whether the units leave the seller (sold or confiscated). */
+        /** Whether the units leave the seller (sold; refused plunder stays with the seller). */
         public boolean unitsTaken() {
-            return quote.ok();
+            return quote.ok() && verdict.sold();
         }
     }
 
@@ -152,16 +150,15 @@ public final class TradeService {
 
     /** Pure: the refusal rule of {@link #refusesPlunder(MinecraftServer, ResourceLocation)}. */
     public static boolean refusesPlunder(PortKind kind, boolean marksMatter) {
-        return marksMatter && kind != PortKind.PIRATE_ISLAND;
+        return PlunderRules.refuses(kind, marksMatter);
     }
 
-    /** The customer sells; plundered goods go through {@link PlunderRules} with the port kind and {@code random}. */
-    public static Sale sell(MinecraftServer server, ResourceLocation port, ResourceLocation good, int quantity,
-                            boolean plundered, RandomSource random) {
+    /** The customer sells; plundered goods go through {@link PlunderRules} with the port kind. */
+    public static Sale sell(MinecraftServer server, ResourceLocation port, ResourceLocation good, int quantity, boolean plundered) {
         Market.Quote q = quote(server, port, good, Market.Side.SELL, quantity);
-        if (!q.ok()) return new Sale(q, new PlunderRules.Verdict(PlunderRules.Outcome.NORMAL, 0, false, false));
+        if (!q.ok()) return new Sale(q, new PlunderRules.Verdict(PlunderRules.Outcome.NORMAL, 0));
         PortKind kind = TradeData.get(server).market(port).orElseThrow().profile().kind();
-        PlunderRules.Verdict verdict = PlunderRules.judge(kind, plundered, quantity, q.total(), random, TradeConfig.plunderParams());
+        PlunderRules.Verdict verdict = PlunderRules.judge(kind, plundered, q.total(), TradeConfig.plunderParams());
         if (verdict.sold()) trade(server, port, good, Market.Side.SELL, quantity);
         return new Sale(q, verdict);
     }

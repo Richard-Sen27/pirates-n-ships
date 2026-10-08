@@ -15,7 +15,8 @@ import java.util.Optional;
  * accept) or received (sell, deliver); {@code units} the goods moved.
  *
  * @param plunder        the plunder verdict of a sale ({@link PlunderRules.Outcome#NORMAL} for clean goods and buys)
- * @param noticed        a plunder sale the port noticed: the caller reports the crime (this package never calls the law)
+ * @param noticed        plunder the port noticed (since LAW3 only a refused offer): the law integration reports the
+ *                       seller (this package never calls the law)
  * @param contractOutcome the contract outcome for accept and deliver
  */
 public record TransactionResult(Status status, ResourceLocation good, int units, long coins,
@@ -23,8 +24,6 @@ public record TransactionResult(Status status, ResourceLocation good, int units,
 
     public enum Status implements StringRepresentable {
         OK,
-        /** Noticed plunder taken without payment: the goods are gone (still {@link #done()}). */
-        CONFISCATED,
         NO_MARKET, NOT_TRADED, STOCK_LIMIT, INVALID_QUANTITY,
         NOT_ENOUGH_COINS, NOT_ENOUGH_SPACE, NOT_ENOUGH_GOODS,
         NO_CONTAINER, NO_CONTRACT, CONTRACT_REFUSED,
@@ -64,7 +63,7 @@ public record TransactionResult(Status status, ResourceLocation good, int units,
 
     /** LAW3: the port refused plundered goods and noticed them (nothing moved). */
     public static TransactionResult plunderRefused(ResourceLocation good) {
-        return new TransactionResult(Status.PLUNDER_REFUSED, good, 0, 0, PlunderRules.Outcome.NORMAL, true, Optional.empty());
+        return new TransactionResult(Status.PLUNDER_REFUSED, good, 0, 0, PlunderRules.Outcome.REFUSED, true, Optional.empty());
     }
 
     public static TransactionResult contract(Status status, ResourceLocation good, int units, long coins, DeliveryContract.Outcome outcome) {
@@ -73,10 +72,10 @@ public record TransactionResult(Status status, ResourceLocation good, int units,
 
     /** Whether the transaction went through (goods and coins moved). */
     public boolean done() {
-        return status == Status.OK || status == Status.CONFISCATED;
+        return status == Status.OK;
     }
 
-    /** A sale the port noticed as plunder (sold, confiscated or refused): the law integration should report it. */
+    /** Plunder the port noticed (a refused offer, LAW3): the law integration should report the seller. */
     public boolean noticedPlunder() {
         return noticed;
     }

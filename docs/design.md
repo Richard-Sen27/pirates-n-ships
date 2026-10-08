@@ -478,7 +478,7 @@ Models and animations use GeckoLib. Textures are 16×16-scale pixel art.
 - **Trade runs:** buy cheap in one port and sell where demand is high. Longer and riskier routes (through pirate waters) pay more.
 - **Contracts:** harbor masters offer delivery contracts (bring X to port Y by day Z) as a simpler entry point to trading. They link to the quest system (§15).
 - **Plunder:** cargo on captured or sunk ships can be taken. Pirate fences buy plundered goods at a discount, no questions asked. Selling plundered goods in navy ports is risky and can raise the criminal score.
-- **Port fees (optional):** small docking fees in navy ports, waived for high navy reputation.
+- **Port fees (optional):** small docking fees in navy ports, waived for high navy reputation. **Implemented (PRT1b, `trade/fees`):** every `check_interval_ticks` (100) each loaded owned ship whose centre lies in a navy outpost's box and that is docked (anchored, or with its hull within `berth_radius` 6 of a berth slower than `berth_max_speed` 0.1 m/s) is charged `TradeService.dockingFee` (rank and reputation waivers inside) once per `fee_period_days` (1) per ship and port, saved in `pirates_n_ships_port_visits`; from the owner's wallet, else the coins aboard (`charge_ship_chest`), else owed at that port, and the port's desk refuses the owner while owed (`refuse_desk_when_owed`) until they use it with doubloons in hand. The fee needs the owner online (the waivers are the captain's), so ships of offline owners wait until the owner is back. The owner hears "Harbor dues at <port>: 5 doubloons" / "waived".
 - Cargo weight affects the ship (§4.9), so a fully laden merchant ship is slow and an easy target.
 
 ### 10.4 World simulation (later stage)

@@ -56,7 +56,9 @@ public final class HarborDeskService {
 
     /** What using a desk did, with the action bar message (null = none). */
     public enum Use {
-        OPENED(null), DISABLED(null), UNBOUND(KEY + "unbound"), NO_MARKET(KEY + "no_market");
+        OPENED(null), DISABLED(null), UNBOUND(KEY + "unbound"), NO_MARKET(KEY + "no_market"),
+        /** Harbor dues are owed at the desk's port (PRT1b); {@code DockingFees.atDesk} already told the player. */
+        DUES_OWED(null);
 
         private final String message;
 
@@ -130,6 +132,7 @@ public final class HarborDeskService {
         if (port.isEmpty()) return Use.UNBOUND;
         MinecraftServer server = player.server;
         if (TradeService.market(server, port.get()).isEmpty()) return Use.NO_MARKET;
+        if (com.richardsenger.piratesnships.trade.fees.DockingFees.atDesk(player, port.get())) return Use.DUES_OWED;
         TradeService.offers(server, port.get(), destinations(server, port.get()));
         return MarketBackend.openDesk(player, port.get(), pos.immutable()) ? Use.OPENED : Use.NO_MARKET;
     }

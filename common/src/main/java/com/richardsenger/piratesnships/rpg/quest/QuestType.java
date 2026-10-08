@@ -8,9 +8,9 @@ import java.util.Locale;
 import java.util.Optional;
 
 /**
- * What a quest asks for (docs/design.md §15, QST1). The first six are offered now; {@link #HUNT_CAPTAIN} waits for the
- * named pirate captains (QST1b) and {@link #ESCORT}, {@link #PLUNDER_CONVOY}, {@link #HUNT_PATROL}, {@link #HUNT_SHIP}
- * for the world simulation's NPC ships (QST2). They are declared so saves and configs stay stable, but never offered.
+ * What a quest asks for (docs/design.md §15, QST1, QST1b). The first seven are offered now; {@link #ESCORT},
+ * {@link #PLUNDER_CONVOY}, {@link #HUNT_PATROL}, {@link #HUNT_SHIP} wait for the world simulation's NPC ships (QST2).
+ * They are declared so saves and configs stay stable, but never offered.
  */
 public enum QuestType implements StringRepresentable {
     /** Kill N pirates (counted from the {@code kill_pirate} deed). Villages and navy outposts. */
@@ -25,7 +25,12 @@ public enum QuestType implements StringRepresentable {
     FIND_TREASURE(true),
     /** Kill N navy sailors (the {@code kill_navy} deed; a crime as always). Pirate islands only. */
     HUNT_NAVY(true),
-    HUNT_CAPTAIN(false),
+    /**
+     * Bring down one named pirate captain (QST1b): the nearest pirate island's living captain within
+     * {@code quests.captain_hunt_radius}; done when the player kills him or turns him in alive, failed when he is lost
+     * otherwise. Villages and navy outposts.
+     */
+    HUNT_CAPTAIN(true),
     ESCORT(false),
     PLUNDER_CONVOY(false),
     HUNT_PATROL(false),
@@ -47,7 +52,7 @@ public enum QuestType implements StringRepresentable {
     /** Whether ports of {@code kind} may offer the type at all (before the config lists). */
     public boolean allowedAt(PortKind kind) {
         return switch (this) {
-            case HUNT_PIRATES -> kind != PortKind.PIRATE_ISLAND;
+            case HUNT_PIRATES, HUNT_CAPTAIN -> kind != PortKind.PIRATE_ISLAND;
             case TURN_IN -> kind == PortKind.NAVY_OUTPOST;
             case HUNT_NAVY -> kind == PortKind.PIRATE_ISLAND;
             default -> available;

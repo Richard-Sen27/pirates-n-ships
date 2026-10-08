@@ -64,6 +64,13 @@ for y in range(1, 5):
             elif y == 4:
                 put(x, y, zs, "deck")
 
+# close the bottom: the rocker of layer 1 ends before layer 2 does, which left the hold open to the sea aft (x 3..5,
+# z 25; SH1b). Every hollow hold cell of layer 2 gets a bottom plank under it.
+for zs in range(OFF, STERN + 1):
+    for x in range(0, 9):
+        if inside(x, 2, zs) and (x, 2, zs) not in blocks and (x, 1, zs) not in blocks:
+            put(x, 1, zs, side_block(1))
+
 # y 5: bulwarks everywhere, forecastle floor forward, cabin walls aft
 for zs in range(OFF, STERN + 1):
     for x in range(0, 9):

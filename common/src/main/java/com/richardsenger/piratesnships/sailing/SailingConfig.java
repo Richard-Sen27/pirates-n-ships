@@ -4,13 +4,14 @@ import com.richardsenger.piratesnships.core.config.ConfigSection;
 import com.richardsenger.piratesnships.core.config.ConfigValue;
 import com.richardsenger.piratesnships.core.config.ModConfigs;
 import com.richardsenger.piratesnships.sailing.force.HullDampingModel;
+import com.richardsenger.piratesnships.sailing.force.RightingModel;
 import com.richardsenger.piratesnships.sailing.force.SailingParams;
 import com.richardsenger.piratesnships.sailing.sail.StayRules;
 import com.richardsenger.piratesnships.sailing.sail.YardRules;
 import com.richardsenger.piratesnships.sailing.wind.WindParams;
 
 /**
- * Server config sections {@code wind} and {@code sailing} (docs/design.md §17). Defaults come from
+ * Server config sections {@code wind}, {@code sailing}, {@code sailing_runtime} and {@code stability} (docs/design.md §17). Defaults come from
  * {@link WindParams#DEFAULTS} and {@link SailingParams#DEFAULTS}, so the pure model and the config can't disagree.
  * {@link #windParams()} and {@link #sailingParams()} are the only adapters from config to the pure logic.
  */
@@ -19,6 +20,7 @@ public final class SailingConfig {
     private static final WindParams W = WindParams.DEFAULTS;
     private static final SailingParams S = SailingParams.DEFAULTS;
     private static final HullDampingModel.Params D = HullDampingModel.Params.DEFAULTS;
+    private static final RightingModel.Params R = RightingModel.Params.DEFAULTS;
 
     private static final ConfigSection WIND = ModConfigs.server("wind", "Global wind field: direction, strength, weather and gusts");
 
@@ -119,6 +121,28 @@ public final class SailingConfig {
     public static final ConfigValue<Integer> ANCHOR_CHAIN_LENGTH = SHIPS.intRange("anchor_chain_length", 32, 1, 256,
             "Length of the anchor chain in blocks: how far the falling anchor can run out from the hawse. No ground this far below the hawse: the anchor can't be dropped");
 
+    private static final ConfigSection STABILITY = ModConfigs.server("stability",
+            "How floating ships stay upright: the hull's righting moment and the limit on how far sails heel a ship (SH1)");
+    public static final ConfigValue<Boolean> STABILITY_ENABLED = STABILITY.bool("enabled", R.enabled(),
+            "Floating ships right themselves like a real hull and sails can't heel them past max_heel_degrees. "
+                    + "Off: only the blocks' own buoyancy keeps ships upright (tender, they heel far and may capsize)");
+    public static final ConfigValue<Double> RIGHTING_FACTOR = STABILITY.doubleRange("righting_factor", R.rightingFactor(), 0.0, 10.0,
+            "Strength of the righting moment: multiplier on the estimated metacentric height beam^2 / (12 x draft). "
+                    + "Higher = stiffer ships that heel less");
+    public static final ConfigValue<Double> PITCH_RIGHTING_FACTOR = STABILITY.doubleRange("pitch_righting_factor", R.pitchRightingFactor(), 0.0, 10.0,
+            "Righting moment along the length (bow up or down) as a fraction of righting_factor, from length^2 / (12 x draft). "
+                    + "0 = only the blocks' own buoyancy sets the trim (the default; cargo and rigging trim a ship)");
+    public static final ConfigValue<Double> MAX_RIGHTING_DEGREES = STABILITY.doubleRange("max_righting_degrees", R.maxRightingDegrees(), 1.0, 180.0,
+            "The righting moment grows with the heel up to this angle in degrees and stays the same beyond");
+    public static final ConfigValue<Double> MAX_METACENTRIC_HEIGHT = STABILITY.doubleRange("max_metacentric_height", R.maxMetacentricHeight(), 0.0, 32.0,
+            "Upper limit of the estimated metacentric height in blocks (keeps wide, shallow hulls and the bow-to-stern trim from getting rigid)");
+    public static final ConfigValue<Double> RIGHTING_DAMPING = STABILITY.doubleRange("righting_damping", R.rightingDamping(), 0.0, 5.0,
+            "Damping ratio of the righting motion on top of sailing.roll_damping (1 = comes back upright without swinging through, 0 = swings)");
+    public static final ConfigValue<Double> MAX_HEEL_TORQUE_PER_MASS = STABILITY.doubleRange("max_heel_torque_per_mass", R.maxHeelTorquePerMass(), 0.0, 100.0,
+            "Cap of the heeling moment of sails and keel per unit of ship mass, after sailing_runtime.sail_heel_factor (strong winds heel no further)");
+    public static final ConfigValue<Double> MAX_HEEL_DEGREES = STABILITY.doubleRange("max_heel_degrees", R.maxHeelDegrees(), 1.0, 90.0,
+            "Heel in degrees at which the sails stop heeling a ship further (they spill their wind over the last 10 degrees)");
+
     private SailingConfig() {
     }
 
@@ -148,6 +172,12 @@ public final class SailingConfig {
     /** Current hull damping tuning from the server config. */
     public static HullDampingModel.Params hullDampingParams() {
         return new HullDampingModel.Params(HULL_DAMPING_ENABLED.get(), ROLL_DAMPING.get(), PITCH_DAMPING.get());
+    }
+
+    /** Current stability tuning from the server config (SH1). */
+    public static RightingModel.Params stabilityParams() {
+        return new RightingModel.Params(STABILITY_ENABLED.get(), RIGHTING_FACTOR.get(), PITCH_RIGHTING_FACTOR.get(), MAX_RIGHTING_DEGREES.get(),
+                MAX_METACENTRIC_HEIGHT.get(), RIGHTING_DAMPING.get(), MAX_HEEL_TORQUE_PER_MASS.get(), MAX_HEEL_DEGREES.get());
     }
 
     /** Current sailing tuning from the server config. */

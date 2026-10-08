@@ -29,13 +29,17 @@ public final class ModModules {
             new com.richardsenger.piratesnships.law.brig.BrigModule(),
             new com.richardsenger.piratesnships.ship.decor.ShipDecorModule(),
             new com.richardsenger.piratesnships.trade.TradeModule(),
+            new com.richardsenger.piratesnships.trade.fees.FeesModule(),
             new com.richardsenger.piratesnships.combat.melee.MeleeModule(),
             new com.richardsenger.piratesnships.combat.firearms.FirearmsModule(),
             new com.richardsenger.piratesnships.combat.cannon.CannonModule(),
             new com.richardsenger.piratesnships.combat.grapple.GrappleModule(),
+            new com.richardsenger.piratesnships.combat.boarding.BoardingModule(),
             new com.richardsenger.piratesnships.audio.AudioModule(),
             new com.richardsenger.piratesnships.mob.MobModule(),
             new com.richardsenger.piratesnships.mob.captain.CaptainModule(),
+            new com.richardsenger.piratesnships.mob.harbor.HarborMasterModule(),
+            new com.richardsenger.piratesnships.mob.squad.SquadModule(),
             new com.richardsenger.piratesnships.survival.SurvivalModule(),
             new com.richardsenger.piratesnships.seachest.SeaChestModule(),
             new com.richardsenger.piratesnships.hazards.HazardsModule(),
@@ -48,6 +52,7 @@ public final class ModModules {
             new com.richardsenger.piratesnships.rpg.career.CareerModule(),
             new com.richardsenger.piratesnships.rpg.quest.QuestModule(),
             new com.richardsenger.piratesnships.crew.hiring.HiringModule(),
-            new com.richardsenger.piratesnships.worldsim.voyage.VoyageModule()
+            new com.richardsenger.piratesnships.worldsim.voyage.VoyageModule(),
+            new com.richardsenger.piratesnships.worldsim.materialize.MaterializeModule()
     );
 }

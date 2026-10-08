@@ -29,7 +29,12 @@ public record TransactionResult(Status status, ResourceLocation good, int units,
         NOT_ENOUGH_COINS, NOT_ENOUGH_SPACE, NOT_ENOUGH_GOODS,
         NO_CONTAINER, NO_CONTRACT, CONTRACT_REFUSED,
         /** The market won't deal with the player (REP1: villager reputation below {@code villager_trade_threshold}). */
-        REPUTATION_REFUSED;
+        REPUTATION_REFUSED,
+        /**
+         * Plunder-marked goods offered at a village or navy outpost desk (LAW3, §13.4): refused, nothing moved. The
+         * result is {@link #noticedPlunder() noticed}, so the law integration can report the seller.
+         */
+        PLUNDER_REFUSED;
 
         public static final Codec<Status> CODEC = StringRepresentable.fromEnum(Status::values);
 
@@ -57,6 +62,11 @@ public record TransactionResult(Status status, ResourceLocation good, int units,
         return new TransactionResult(status, good, 0, 0, PlunderRules.Outcome.NORMAL, false, Optional.empty());
     }
 
+    /** LAW3: the port refused plundered goods and noticed them (nothing moved). */
+    public static TransactionResult plunderRefused(ResourceLocation good) {
+        return new TransactionResult(Status.PLUNDER_REFUSED, good, 0, 0, PlunderRules.Outcome.NORMAL, true, Optional.empty());
+    }
+
     public static TransactionResult contract(Status status, ResourceLocation good, int units, long coins, DeliveryContract.Outcome outcome) {
         return new TransactionResult(status, good, units, coins, PlunderRules.Outcome.NORMAL, false, Optional.of(outcome));
     }
@@ -66,7 +76,7 @@ public record TransactionResult(Status status, ResourceLocation good, int units,
         return status == Status.OK || status == Status.CONFISCATED;
     }
 
-    /** A sale the port noticed as plunder: the law integration should report it. */
+    /** A sale the port noticed as plunder (sold, confiscated or refused): the law integration should report it. */
     public boolean noticedPlunder() {
         return noticed;
     }

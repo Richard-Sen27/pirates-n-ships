@@ -141,6 +141,8 @@ public final class PirateIslandGameTests {
                 .map(BlockPos::immutable).findFirst().orElse(null);
         helper.assertTrue(desk != null, "the camp has the fence's desk");
         helper.assertValueEqual(HarborDeskService.boundPort(level, desk), Optional.of(port.id()), "fence's desk bound to the port");
+        // PRT1a: the fence's harbor master stands behind the counter
+        com.richardsenger.piratesnships.mob.harbor.HarborMasterGameTests.assertPlacedAtDesk(helper, level, start.getBoundingBox(), desk, port.id());
         helper.succeed();
     }
 

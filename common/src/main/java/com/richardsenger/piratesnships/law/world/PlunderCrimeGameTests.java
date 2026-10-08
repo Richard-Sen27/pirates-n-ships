@@ -12,8 +12,8 @@ import com.richardsenger.piratesnships.law.crime.CrimeType;
 import com.richardsenger.piratesnships.law.crime.CriminalRecord;
 import com.richardsenger.piratesnships.law.crime.CriminalRecord.CrimeOutcome;
 import com.richardsenger.piratesnships.platform.Services;
-import com.richardsenger.piratesnships.trade.TradeConfig;
 import com.richardsenger.piratesnships.trade.TradeService;
+import com.richardsenger.piratesnships.trade.coin.Wallet;
 import com.richardsenger.piratesnships.trade.exchange.TransactionResult;
 import com.richardsenger.piratesnships.trade.good.TradeGoods;
 import com.richardsenger.piratesnships.trade.market.Climate;
@@ -23,6 +23,7 @@ import com.richardsenger.piratesnships.trade.market.PortProfile;
 import com.richardsenger.piratesnships.trade.net.MarketBackend;
 import com.richardsenger.piratesnships.trade.net.MarketPayloads;
 import com.richardsenger.piratesnships.trade.plunder.PlunderMark;
+import com.richardsenger.piratesnships.trade.plunder.PlunderRules;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -41,17 +42,16 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Noticed plunder is a crime (G13, docs/design.md §10.3, §13.1): a plundered sale that a navy port notices through the
- * market protocol ({@link MarketBackend#handleTrade}, as the harbor master's desk and the market command send it,
- * or the direct sell command)
- * raises the seller's criminal score by {@code law.severity.fence_plunder}. The notice chance is forced to 1.0, so
- * each test changes config and runs in a batch of its own.
+ * Plunder at the harbor master's desk (LAW3, docs/design.md §13.4; G13 before it): a village or navy outpost desk
+ * refuses plunder-marked goods ({@link TransactionResult.Status#PLUNDER_REFUSED}) and, with {@code law.plunder_notice},
+ * reports the seller once per port and day as {@code selling_plunder}; the fence buys silently. Sales go through the
+ * market protocol ({@link MarketBackend#handleTrade}, as the desk sends it) or the direct sell command. Each test has a
+ * batch of its own.
  */
 public final class PlunderCrimeGameTests {
 
-    static final String NOTICED_BATCH = "pirates_n_ships_config_law_fence_plunder";
-    static final String DISABLED_BATCH = "pirates_n_ships_config_law_fence_plunder_disabled";
-    static final String COMMAND_BATCH = "pirates_n_ships_config_law_fence_plunder_command";
+    static final String BATCH = "pirates_n_ships_law_plunder_";
+    static final String CONFIG_BATCH = "pirates_n_ships_config_law_plunder_";
 
     private PlunderCrimeGameTests() {
     }
@@ -61,10 +61,10 @@ public final class PlunderCrimeGameTests {
         return ModGameTests.of(PlunderCrimeGameTests.class);
     }
 
-    private static ResourceLocation navyPort(GameTestHelper helper) {
+    private static ResourceLocation port(GameTestHelper helper, PortKind kind) {
         ResourceLocation id = Constants.id("gametest/law_plunder_" + UUID.randomUUID());
         TradeService.openMarket(helper.getLevel().getServer(), id,
-                () -> new PortProfile(PortKind.NAVY_OUTPOST, Climate.TROPICAL, 1L, Map.of(TradeGoods.SUGAR, GoodRole.NEUTRAL)));
+                () -> new PortProfile(kind, Climate.TROPICAL, 1L, Map.of(TradeGoods.SUGAR, GoodRole.NEUTRAL)));
         return id;
     }
 
@@ -81,9 +81,8 @@ public final class PlunderCrimeGameTests {
         return p;
     }
 
-    /** Sells {@code quantity} plundered sugar through the market protocol and returns the transaction result. */
-    private static TransactionResult sellPlunder(GameTestHelper helper, ServerPlayer p, ResourceLocation port, int quantity,
-                                                 List<CustomPacketPayload> sent) {
+    /** Offers {@code quantity} plundered sugar through the market protocol and returns the transaction result. */
+    private static TransactionResult sellPlunder(ServerPlayer p, ResourceLocation port, int quantity, List<CustomPacketPayload> sent) {
         p.getInventory().add(PlunderMark.mark(new ItemStack(Items.SUGAR, quantity)));
         MarketBackend.handleTrade(p, new MarketPayloads.Trade(port, false, TradeGoods.SUGAR, quantity, true, Optional.empty()));
         synchronized (sent) {
@@ -94,44 +93,121 @@ public final class PlunderCrimeGameTests {
         throw new AssertionError("no trade result was sent: " + sent);
     }
 
+    private static int markedSugar(ServerPlayer p) {
+        int n = 0;
+        for (ItemStack s : p.getInventory().items) if (s.is(Items.SUGAR) && PlunderMark.isPlundered(s)) n += s.getCount();
+        return n;
+    }
+
+    private static int crimes(ServerPlayer p) {
+        return Services.ATTACHMENTS.get(p, LawAttachments.CRIMINAL_RECORD).totalCrimes();
+    }
+
     private static void finish(GameTestHelper helper, ServerPlayer p) {
         MarketBackend.close(p);
         MarketBackend.stopRecording(p.getUUID());
         helper.succeed();
     }
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = NOTICED_BATCH)
-    public static void noticedPlunderSaleRaisesTheCriminalScore(GameTestHelper helper) {
-        ConfigOverrides.during(helper, TradeConfig.NAVY_NOTICE_CHANCE, 1.0);
-        ResourceLocation port = navyPort(helper);
+    /**
+     * A desk of {@code kind} refuses the plunder (goods kept, no coins) and reports the seller once: a second refusal at
+     * the same port the same day records nothing more, another port is another victim.
+     */
+    private static void refusesAndReportsOncePerDay(GameTestHelper helper, PortKind kind) {
+        ResourceLocation port = port(helper, kind);
         ServerPlayer p = seller(helper);
         List<CustomPacketPayload> sent = MarketBackend.record(p.getUUID());
         helper.assertTrue(MarketBackend.open(p, port, 1), "the market did not open");
-        helper.assertValueEqual(LawService.displayScore(p), 0, "score before the sale");
+        helper.assertValueEqual(LawService.displayScore(p), 0, "score before the offer");
 
-        TransactionResult r = sellPlunder(helper, p, port, 32, sent);
-        helper.assertTrue(r.noticedPlunder(), "the port did not notice: " + r);
-        int severity = LawConfig.SEVERITIES.get(CrimeType.FENCE_PLUNDER).get();
-        helper.assertValueEqual(severity, CrimeType.FENCE_PLUNDER.defaultSeverity(), "configured severity");
-        helper.assertValueEqual(LawService.displayScore(p), severity, "score after the noticed sale");
-        CriminalRecord stored = Services.ATTACHMENTS.get(p, LawAttachments.CRIMINAL_RECORD);
-        helper.assertValueEqual(stored.totalCrimes(), 1, "crimes on record");
+        TransactionResult r = sellPlunder(p, port, 32, sent);
+        helper.assertValueEqual(r.status(), TransactionResult.Status.PLUNDER_REFUSED, "status");
+        helper.assertFalse(r.done(), "a refused offer moved goods: " + r);
+        helper.assertValueEqual(markedSugar(p), 32, "the plunder stays with the seller");
+        helper.assertValueEqual(Wallet.count(p), 0L, "no coins for refused plunder");
+        int severity = LawConfig.SEVERITIES.get(CrimeType.SELLING_PLUNDER).get();
+        helper.assertValueEqual(severity, CrimeType.SELLING_PLUNDER.defaultSeverity(), "configured severity");
+        helper.assertValueEqual(LawService.displayScore(p), severity, "score after the refusal");
+        helper.assertValueEqual(crimes(p), 1, "crimes on record");
         CrimeLog.Entry last = CrimeLog.last(p.getUUID()).orElseThrow(() -> new AssertionError("nothing in the crime log"));
-        helper.assertValueEqual(last.type(), CrimeType.FENCE_PLUNDER, "crime type");
+        helper.assertValueEqual(last.type(), CrimeType.SELLING_PLUNDER, "crime type");
         helper.assertValueEqual(last.outcome(), CrimeOutcome.COUNTED, "crime outcome");
         helper.assertValueEqual(last.victim(), port.toString(), "the port is the victim");
 
-        // A second noticed sale at the same port within the repeat window is not counted again
-        TransactionResult again = sellPlunder(helper, p, port, 16, sent);
-        helper.assertTrue(again.noticedPlunder(), "the second sale was not noticed: " + again);
+        // A second refusal at the same port the same day records nothing more
+        TransactionResult again = sellPlunder(p, port, 16, sent);
+        helper.assertValueEqual(again.status(), TransactionResult.Status.PLUNDER_REFUSED, "second status");
+        helper.assertValueEqual(markedSugar(p), 48, "the plunder still stays with the seller");
         helper.assertValueEqual(CrimeLog.last(p.getUUID()).orElseThrow().outcome(), CrimeOutcome.REPEAT_IGNORED, "repeat outcome");
         helper.assertValueEqual(LawService.displayScore(p), severity, "score after the repeat");
+        helper.assertValueEqual(crimes(p), 1, "crimes after the repeat");
 
-        // Another navy port is another victim
-        ResourceLocation other = navyPort(helper);
+        // Another port of the kind is another victim
+        ResourceLocation other = port(helper, kind);
         MarketBackend.open(p, other, 1);
-        sellPlunder(helper, p, other, 16, sent);
-        helper.assertValueEqual(LawService.displayScore(p), 2 * severity, "score after a sale at a second port");
+        sellPlunder(p, other, 16, sent);
+        helper.assertValueEqual(LawService.displayScore(p), 2 * severity, "score after a refusal at a second port");
+        finish(helper, p);
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = BATCH + "village")
+    public static void villageDeskRefusesPlunderAndReportsOncePerDay(GameTestHelper helper) {
+        refusesAndReportsOncePerDay(helper, PortKind.SEAFARER_VILLAGE);
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = BATCH + "outpost")
+    public static void outpostDeskRefusesPlunderAndReportsOncePerDay(GameTestHelper helper) {
+        refusesAndReportsOncePerDay(helper, PortKind.NAVY_OUTPOST);
+    }
+
+    /** The report raises the score like any crime: a seller just below the bounty threshold gets a navy bounty. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = BATCH + "bounty")
+    public static void reportedPlunderLeadsToABountyThroughTheScore(GameTestHelper helper) {
+        ResourceLocation port = port(helper, PortKind.NAVY_OUTPOST);
+        ServerPlayer p = seller(helper);
+        List<CustomPacketPayload> sent = MarketBackend.record(p.getUUID());
+        helper.assertTrue(MarketBackend.open(p, port, 1), "the market did not open");
+        int threshold = LawConfig.BOUNTY_THRESHOLD.get();
+        LawService.setScore(p, threshold - 1);
+        helper.assertTrue(LawService.board(helper.getLevel().getServer()).navyBounty(p.getUUID()).isEmpty(), "a bounty before the report");
+        sellPlunder(p, port, 8, sent);
+        helper.assertTrue(LawService.board(helper.getLevel().getServer()).navyBounty(p.getUUID()).isPresent(),
+                "no navy bounty after the report, score " + LawService.score(p));
+        finish(helper, p);
+    }
+
+    /** The fence stays the legal outlet: it buys plunder at its discount, notices nothing and reports nobody. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = BATCH + "fence")
+    public static void fenceBuysPlunderAndReportsNobody(GameTestHelper helper) {
+        ResourceLocation port = port(helper, PortKind.PIRATE_ISLAND);
+        ServerPlayer p = seller(helper);
+        List<CustomPacketPayload> sent = MarketBackend.record(p.getUUID());
+        helper.assertTrue(MarketBackend.open(p, port, 1), "the market did not open");
+        TransactionResult r = sellPlunder(p, port, 32, sent);
+        helper.assertValueEqual(r.status(), TransactionResult.Status.OK, "status");
+        helper.assertValueEqual(r.plunder(), PlunderRules.Outcome.FENCED, "fenced");
+        helper.assertFalse(r.noticedPlunder(), "the fence noticed");
+        helper.assertValueEqual(markedSugar(p), 0, "the plunder was sold");
+        helper.assertTrue(Wallet.count(p) > 0, "the fence paid nothing");
+        helper.assertValueEqual(crimes(p), 0, "crimes after fencing");
+        helper.assertValueEqual(LawService.displayScore(p), 0, "score after fencing");
+        finish(helper, p);
+    }
+
+    /** {@code law.plunder_notice = false}: the desk still refuses, but nobody is reported. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = CONFIG_BATCH + "notice_off")
+    public static void plunderNoticeOffRefusesButRecordsNothing(GameTestHelper helper) {
+        ConfigOverrides.during(helper, LawConfig.PLUNDER_NOTICE, false);
+        ResourceLocation port = port(helper, PortKind.SEAFARER_VILLAGE);
+        ServerPlayer p = seller(helper);
+        List<CustomPacketPayload> sent = MarketBackend.record(p.getUUID());
+        helper.assertTrue(MarketBackend.open(p, port, 1), "the market did not open");
+        TransactionResult r = sellPlunder(p, port, 32, sent);
+        helper.assertValueEqual(r.status(), TransactionResult.Status.PLUNDER_REFUSED, "status");
+        helper.assertValueEqual(markedSugar(p), 32, "the plunder stays with the seller");
+        helper.assertValueEqual(crimes(p), 0, "crimes on record");
+        helper.assertValueEqual(LawService.displayScore(p), 0, "score");
+        helper.assertTrue(CrimeLog.last(p.getUUID()).isEmpty(), "something was logged: " + CrimeLog.last(p.getUUID()));
         finish(helper, p);
     }
 
@@ -142,9 +218,8 @@ public final class PlunderCrimeGameTests {
         helper.getLevel().getServer().getCommands().performPrefixedCommand(source, command);
     }
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = COMMAND_BATCH)
-    public static void directSellCommandReportsNoticedPlunder(GameTestHelper helper) {
-        ConfigOverrides.during(helper, TradeConfig.NAVY_NOTICE_CHANCE, 1.0);
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = BATCH + "command")
+    public static void directSellCommandRefusesAndReportsPlunder(GameTestHelper helper) {
         String name = "law_plunder_cmd_" + UUID.randomUUID().toString().substring(0, 8);
         ResourceLocation port = com.richardsenger.piratesnships.trade.TradeCommands.portId(name);
         TradeService.openMarket(helper.getLevel().getServer(), port,
@@ -155,33 +230,30 @@ public final class PlunderCrimeGameTests {
         p.getInventory().add(new ItemStack(Items.SUGAR, 16));
         sellByCommand(helper, p, name, 16, false);
         helper.assertValueEqual(p.getInventory().countItem(Items.SUGAR), 0, "clean sugar left after the sale");
-        helper.assertValueEqual(Services.ATTACHMENTS.get(p, LawAttachments.CRIMINAL_RECORD).totalCrimes(), 0, "crimes after a clean sale");
-        helper.assertValueEqual(LawService.displayScore(p), 0, "score after a clean sale");
+        helper.assertValueEqual(crimes(p), 0, "crimes after a clean sale");
 
-        // Plundered goods: the port notices, the seller commits fence_plunder against it
+        // Plundered goods: refused, and the seller commits selling_plunder against the port
         p.getInventory().add(PlunderMark.mark(new ItemStack(Items.SUGAR, 32)));
         sellByCommand(helper, p, name, 32, true);
-        int severity = LawConfig.SEVERITIES.get(CrimeType.FENCE_PLUNDER).get();
-        helper.assertValueEqual(Services.ATTACHMENTS.get(p, LawAttachments.CRIMINAL_RECORD).totalCrimes(), 1, "crimes after a plundered sale");
-        helper.assertValueEqual(LawService.displayScore(p), severity, "score after the noticed sale");
+        helper.assertValueEqual(markedSugar(p), 32, "the plunder stays with the seller");
+        helper.assertValueEqual(crimes(p), 1, "crimes after offering plunder");
+        helper.assertValueEqual(LawService.displayScore(p), LawConfig.SEVERITIES.get(CrimeType.SELLING_PLUNDER).get(), "score");
         CrimeLog.Entry last = CrimeLog.last(p.getUUID()).orElseThrow(() -> new AssertionError("nothing in the crime log"));
-        helper.assertValueEqual(last.type(), CrimeType.FENCE_PLUNDER, "crime type");
-        helper.assertValueEqual(last.outcome(), CrimeOutcome.COUNTED, "crime outcome");
+        helper.assertValueEqual(last.type(), CrimeType.SELLING_PLUNDER, "crime type");
         helper.assertValueEqual(last.victim(), port.toString(), "the port is the victim");
         helper.succeed();
     }
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = DISABLED_BATCH)
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = CONFIG_BATCH + "score_disabled")
     public static void disabledCriminalScoreRecordsNoPlunderCrime(GameTestHelper helper) {
-        ConfigOverrides.during(helper, TradeConfig.NAVY_NOTICE_CHANCE, 1.0);
         ConfigOverrides.during(helper, LawConfig.CRIMINAL_SCORE_ENABLED, false);
-        ResourceLocation port = navyPort(helper);
+        ResourceLocation port = port(helper, PortKind.NAVY_OUTPOST);
         ServerPlayer p = seller(helper);
         List<CustomPacketPayload> sent = MarketBackend.record(p.getUUID());
         helper.assertTrue(MarketBackend.open(p, port, 1), "the market did not open");
 
-        TransactionResult r = sellPlunder(helper, p, port, 32, sent);
-        helper.assertTrue(r.noticedPlunder(), "the port did not notice: " + r);
+        TransactionResult r = sellPlunder(p, port, 32, sent);
+        helper.assertValueEqual(r.status(), TransactionResult.Status.PLUNDER_REFUSED, "status");
         CriminalRecord stored = Services.ATTACHMENTS.get(p, LawAttachments.CRIMINAL_RECORD);
         helper.assertValueEqual(stored.totalCrimes(), 0, "crimes on record");
         helper.assertTrue(stored.score() == 0.0, "score on record: " + stored.score());

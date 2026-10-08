@@ -807,6 +807,30 @@ Cloth and flags (ART3):
 - **Blockbench global names:** besides `KR`, Blockbench defines a global `FC`; `window.FC = {...}` does not shadow it
   inside `risky_eval` (properties land on Blockbench's function). ART3 used `window.ART3`.
 
+Flagpole parts (VIS1a, tall poles):
+- Four models, one project each: `flagpole` (single: pole, truck, finial, cleat; 12 elements), `flagpole_bottom`
+  (pole and cleat, 8), `flagpole_middle` (pole only, 3), `flagpole_top` (pole, truck and finial, 7). The block state
+  picks them by `part` (single/bottom/middle/top, from the flagpole neighbours), never turned; the item keeps
+  `flagpole`. All four share the 3 px `stripped_spruce_log` pole at x/z 6.5..9.5 with the same position UVs; a part
+  with a pole above it (bottom, middle) runs it the full 0..16 px (side UV 0..16) and leaves out the up face, a part on
+  a pole (middle, top) leaves out the down face, so stacked segments meet without a seam. The top and single poles
+  end at 15.95 under the truck as before.
+- **Halyard:** two `stripped_birch_log` lines 0.4 x 0.4 px at local x 10.3..10.7, z 7.15..7.55 and 8.45..8.85, turned
+  45 degrees about y round (8, 4, 8) like the cleat, so they stand about 0.6 px off the pole's corner on the cleat's
+  diagonal (the cloth flies on the other side). They leave the wound cleat at y 5.6 (single, bottom), run through the
+  middle segments 0..16 and end under the truck at 15 (top, single). The single pole's one 0.5 px halyard became the
+  same two lines. In the render the pair reads as one thin rope from a few blocks away, which is what a halyard looks
+  like; up close the two parts of the loop show.
+- Built from a part list (a scratch Python script derived the parts from the single pole's JSON), loaded cube by cube
+  into a `java_block` project per model (`VIS1A.load2` in `risky_eval`: textures from `art/vanilla/` with namespace
+  `minecraft`, folder `block`), exported with `Codecs.java_block.compile()` (names and zero rotations stripped,
+  `minecraft:` prefix, `parent` and `particle` added) and saved with `Codecs.project.compile({raw: true})`; the export
+  matches the part list exactly. `HandMadeModelsTest` lists all four; `FlagModelGameTests` checks the block state, the
+  crown and cleat per part and the full-height pole of the segments that carry another.
+- Render `renders/flagpole_parts.png`: a four-block pole (bottom, two middles, top), the single pole and a two-block
+  pole (left: overview; middle: the cleat and halyard at the foot; right: the joint under the top's truck). Rendered
+  from a scratch Generic (`free`) project holding all parts stacked, with a `THREE.WebGLRenderer` in `risky_eval`.
+
 Treasure map and receipt (ART4):
 - Two `java_block` item projects, `treasure_map.bbmodel` and `ship_receipt.bbmodel`, no block of the same name. No new
   colours: `paper`, `biscuit_light`, `biscuit_dark` (`palette_3`), `map_land`, `map_ink`, `map_sea_dark`,
@@ -934,6 +958,19 @@ Paddle (ART8):
 - **Wiring:** SC2's datagen placeholder (`ModelTemplates.FLAT_HANDHELD_ITEM` on the wooden shovel texture in
   `SeaChestModule.gatherPaddleData`) has to go when both land: datagen writes nothing for the paddle's item model,
   the hand-made file is found by the item's id.
+
+Boarding plank (BRD1):
+- **`boarding_plank.bbmodel`**, one project with four groups at the same position (`boarding_plank_base`,
+  `boarding_plank`, `boarding_plank_tip`, `boarding_plank_item`; export a group with the others' cubes set to
+  `export = false`), exported to `block/boarding_plank_base.json` (6 elements), `block/boarding_plank.json` (5),
+  `block/boarding_plank_tip.json` (10) and the hand-made item model `item/boarding_plank.json` (11, handheld display
+  slots, GUI seen from above at 30/225 degrees). Textures vanilla `spruce_planks` (boards), `stripped_spruce_log`
+  (cleats), `anvil` (hooks) and our `block/rope` (lashing); particle `spruce_planks`. No new textures.
+- The run goes north (block state `facing` = north needs no rotation): three boards x 1..15, y 0..2 (the collision
+  box), with 0.1 px gaps; foot cleats 0.6 px high across the boards; the gunwale end (south) has a rope lashing round
+  the boards with a knot underneath; the far end (north) has two iron straps that bend down into hooks with barbs,
+  3 px below the board, biting into the deck the plank lies on. The hook tops end 0.05 px inside the board (no z-fight).
+- Render: `renders/boarding_plank.png` (base, middle and tip as a three-cell run, the far end on the left).
 
 ## Entities
 
@@ -1164,7 +1201,7 @@ for the gun; not saved).
 | `cannon_aim` | 2 s | loop | leaning in 25–28° over the gun, root 1 px forward, right hand on the breech (12.5 px up, 10 px ahead), left hand on the thigh |
 | `cannon_load` | 1.5 s | loop | ramming: both hands forward on an (invisible) level rammer, right hand ahead; drawn back at 0 s, driven home at 0.6–0.85 s with the waist 8° → 22° and the body 1.5 px forward; right foot forward |
 | `cannon_fire` | 0.75 s | once | linstock hand raised high (arm −150°), lunge to the touch hole at 0.25 s (waist 30°, root 2 px forward, right leg −30°), held to 0.4 s, standing clear at 0.6 s (leaning back 8°, arm up and out), rest at 0.75 s |
-| `capstan_push` | 1.2 s | loop | chest to the bars (waist 30–33°), arms forward on them (−75° to −78°, 14° inwards), walking strides ±25° with a 0.6 px dip; **not played yet**: no capstan crew station exists (AN2a raises the anchor by a use of the capstan, an instant action) |
+| `capstan_push` | 1.2 s | loop | chest to the bars (waist 30–33°), arms forward on them (−75° to −78°, 14° inwards), walking strides ±25° with a 0.6 px dip; played at the capstan station (CRW3, `station/capstan/CapstanPoses`) while it drops or raises the anchor, facing the capstan from the station spot |
 
 - **Wheel geometry (helm poses).** The helmsman stands at the station spot on the helm's `FACING` side, facing the
   wheel. In the model frame (feet at the origin, facing −z) the axle is 11.75 px ahead (8 px to the block edge plus the

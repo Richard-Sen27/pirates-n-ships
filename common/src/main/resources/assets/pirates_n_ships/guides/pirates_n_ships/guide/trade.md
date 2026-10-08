@@ -67,16 +67,36 @@ in the corners). Right-click a desk to open the market screen: the port's name a
 the port trades. Green goods are produced here (cheap to buy), orange goods are wanted here (good to sell). Pick a
 quantity (1, 8, 16, 64 or type one), then Buy or Sell; the prices shown are totals for that quantity and move as you
 trade. The toggle next to the quantity decides whether Sell takes your clean or your plundered stacks: fences on
-pirate islands pay less for plunder, navy outposts may notice and confiscate it. The Contracts tab lists today's
+pirate islands pay less for plunder, village and navy desks refuse it (see "Stolen goods"). The Contracts tab lists today's
 delivery offers (Accept pays the deposit) and your accepted contracts (Deliver at the destination port). Stay within 8
 blocks of the desk; walking away closes the screen. A desk that belongs to no port says so. Operators bind desks with
 `/pirates trade desk bind <port>` while looking at the desk (`<port>` is a full id or a test port name such as `cane`),
 check with `/pirates trade desk info`, and `/pirates trade desk unbind`. Server config: Cargo Trade → Harbor Desks
 (`desks_enabled`, `desk_reach`). The `/pirates trade` commands remain as a debugging fallback.
 
-Selling plunder at a navy outpost is risky: if the harbor master notices it the goods are confiscated and it counts as
-a crime, +15 criminal score (`law.severity.fence_plunder`; several noticed sales at one port within a minute count
-once). Pirate fences never report you.
+**Stolen goods.** Goods taken from captured or sunk ships carry a plunder mark. Only a pirate fence buys them, at a
+discount and with no questions. A village or navy harbor master turns them away ("The harbor master wants no stolen
+goods") and reports you to the navy: the first time each day at each port adds to your criminal score
+(`law.severity.selling_plunder`), and a high enough score puts a bounty on your head. The navy also looks into your
+hold: sail within sight of navy soldiers or an outpost with more than 16 marked goods aboard, under any flag, and you
+are suspected of piracy once per ship and day. Fence your plunder before you go near the navy. Server config
+`law.plunder_notice`, `law.plunder_notice_units`.
+
+## The harbor master
+Every port's desk has a harbor master behind it: in the village's dock-head hut, in the navy fort's office, and behind
+the fence's counter on pirate islands. He wears a green frock coat and a peaked cap. Right-click him (not sneaking) to
+open the port's market, just as using the desk does; he greets you when it opens. If you hit him, or he is running
+from pirates, he waves you off ("not now") for a while. He keeps to his post and walks back if pushed away. If he
+dies, a new harbor master takes the post after 3 days (`mobs.harbor_master.respawn_days`). With
+`cargo_trade.harbor_desks.direct_use` off, the desk only says "Talk to the harbor master" and the market opens
+through him. Server config `mobs.harbor_master`.
+
+## Harbor dues
+Navy outposts charge a small docking fee (5 doubloons) when your ship ties up at a berth or drops anchor inside the
+outpost, once per day per ship. It comes from your purse, or from the doubloons in your ship's chests when your purse
+is short. If nobody can pay, the dues are owed: the outpost's harbor desk will not trade with you until you use it
+with doubloons in hand. Captains the navy trusts, and navy officers from Lieutenant up, dock for free. Sailing through
+the harbor without stopping costs nothing. Server config `cargo_trade.port_fees`.
 
 ## Contracts
 A port offers delivery contracts: bring an amount of a good to another port by a deadline for a reward. Accepting
@@ -85,4 +105,5 @@ at a time.
 
 ## Plunder
 Goods can carry a **plundered** mark (shown in the tooltip). A pirate island buys them at 35% less, no questions asked.
-A navy outpost may notice and confiscate them. Nothing marks goods yet except `/pirates trade plunder`.
+Village and navy desks turn them away and report you (see "Stolen goods" above). Goods taken from an NPC ship's
+hold carry the mark; operators can mark stacks with `/pirates trade plunder`.

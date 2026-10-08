@@ -53,19 +53,19 @@ class HandMadeModelsTest {
     }
 
     /** Every hand-made model by name; a new Blockbench model is added here, a missing or stray file fails. */
-    static final List<String> BLOCK_MODELS = List.of("bilge_pump", "brig_bars", "brig_bars_post", "brig_bars_side",
+    static final List<String> BLOCK_MODELS = List.of("bilge_pump", "boarding_plank", "boarding_plank_base", "boarding_plank_tip", "brig_bars", "brig_bars_post", "brig_bars_side",
             "brig_bars_side_alt", "brig_door_bottom_left", "brig_door_bottom_left_locked",
             "brig_door_bottom_left_open_locked", "brig_door_bottom_right", "brig_door_bottom_right_locked",
             "brig_door_bottom_right_open_locked", "brig_door_top_left", "brig_door_top_right", "cannon",
             "cannon_loaded", "cannon_powder", "capstan", "cargo_barrel", "cargo_crate", "chart_table", "cleat", "figurehead_eagle",
-            "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flagpole", "hammock_foot", "hammock_head", "harbor_desk", "helm", "helm_item", "helm_wheel", "hull_patch", "mooring_ring", "nameplate",
+            "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flagpole", "flagpole_bottom", "flagpole_middle", "flagpole_top", "hammock_foot", "hammock_head", "harbor_desk", "helm", "helm_item", "helm_wheel", "hull_patch", "mooring_ring", "nameplate",
             "notice_board", "pantry", "rope_coil_layers1", "rope_coil_layers2", "rope_coil_layers3", "rope_coil_layers4",
             "sail_winch", "sea_chest", "sea_cot_foot", "sea_cot_head", "sea_cot_item", "ship_lantern", "ship_lantern_ceiling",
             "ship_lantern_wall", "ships_bell", "ships_bell_ringing", "ships_bell_wall", "ships_bell_wall_ringing", "stern_window",
             "stern_window_shutters", "swivel_gun", "swivel_gun_barrel", "swivel_gun_barrel_loaded", "swivel_gun_yoke",
             "water_barrel", "water_barrel_fill0", "water_barrel_fill1", "water_barrel_fill2",
             "water_barrel_fill3", "yard");
-    static final List<String> ITEM_MODELS = List.of("bandana", "bounty_proof", "brig_door", "brig_key", "cannonball", "captains_hat", "captains_whistle",
+    static final List<String> ITEM_MODELS = List.of("bandana", "boarding_plank", "bounty_proof", "brig_door", "brig_key", "cannonball", "captains_hat", "captains_whistle",
             "carpenters_hammer", "chart", "cloth", "cutlass", "doubloon", "grappling_hook", "hammock", "hardtack", "hull_patch",
             "jolly_roger_flag", "kraken_beak", "kraken_ink", "lead_shot", "lime", "map_tile", "merchant_flag", "musket",
             "musket_hook", "musket_loaded", "nails", "navy_flag", "navy_hat", "officer_hat", "officers_coat", "paddle", "pirate_hat", "pistol",

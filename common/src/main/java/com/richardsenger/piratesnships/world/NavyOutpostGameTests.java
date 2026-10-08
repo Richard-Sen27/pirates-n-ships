@@ -196,6 +196,8 @@ public final class NavyOutpostGameTests {
         WorldGameTests.place(level, start);
         assertGarrison(helper, navy(level, box), box);
 
+        // PRT1a: one harbor master behind the desk, not doubled by the second placement
+        com.richardsenger.piratesnships.mob.harbor.HarborMasterGameTests.assertPlacedAtDesk(helper, level, box, desk, port.id());
         // leave no armed garrison behind for neighbouring tests
         navy(level, box).forEach(SeafarerMob::discard);
         helper.succeed();

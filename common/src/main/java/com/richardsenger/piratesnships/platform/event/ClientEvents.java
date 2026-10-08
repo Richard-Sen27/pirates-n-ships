@@ -151,6 +151,22 @@ public final class ClientEvents {
 
     @FunctionalInterface public interface ComputeCameraRoll { float modify(float partialTick, float roll); }
 
+    /**
+     * The world's translucent block layer (the sea, ship windows) was just drawn for this frame (client thread). Draw
+     * translucent world geometry here: the model-view matrix ({@code RenderSystem.getModelViewMatrix()}) holds the camera
+     * rotation, so vertex positions are world positions minus {@code camera.getPosition()}. Use a {@code RenderType} and
+     * draw it before returning (e.g. {@code bufferSource.endBatch(type)}). With Fabulous graphics the translucent target
+     * is bound; a render type with its own output target (such as {@code RenderType.translucentMovingBlock()}) switches
+     * to it and back. Fired from NeoForge's {@code RenderLevelStageEvent} at {@code AFTER_TRANSLUCENT_BLOCKS}. Used by
+     * {@code ship.hull.client.FloodSurfaceRenderer} (FLD1).
+     */
+    public static final Event<RenderLevelStage> RENDER_AFTER_TRANSLUCENT = Event.create(ls -> (camera, frustum, partialTick) ->
+            ls.forEach(l -> l.onRender(camera, frustum, partialTick)));
+
+    @FunctionalInterface public interface RenderLevelStage {
+        void onRender(net.minecraft.client.Camera camera, net.minecraft.client.renderer.culling.Frustum frustum, float partialTick);
+    }
+
     /** Which interaction key fired {@link #INTERACTION_KEY}. */
     public enum InteractionInput { ATTACK, USE, PICK_BLOCK }
 

@@ -15,6 +15,8 @@ import com.richardsenger.piratesnships.ship.hull.net.ShipStatusSync;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullConfig;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullViewGameTests;
+import com.richardsenger.piratesnships.ship.hull.client.FloodSurfaceStore;
+import com.richardsenger.piratesnships.ship.hull.runtime.FloodSurfacePayload;
 import com.richardsenger.piratesnships.ship.hull.runtime.HullRegionsPayload;
 import com.richardsenger.piratesnships.ship.hull.runtime.HullRuntimes;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
@@ -52,6 +54,9 @@ public final class HullModule implements ModModule {
     @Override
     public void registerPayloads() {
         Services.NETWORK.registerToClient(HullRegionsPayload.TYPE, HullRegionsPayload.CODEC, HullRuntimes::onRegionsPayload);
+        // flood surfaces (FLD1): plain data into the client store, drawn by client.FloodSurfaceRenderer
+        Services.NETWORK.registerToClient(FloodSurfacePayload.TYPE, FloodSurfacePayload.CODEC,
+                (p, player) -> FloodSurfaceStore.CLIENT.accept(p, player.level().getGameTime()));
         Services.NETWORK.registerToClient(ShipStatusPayload.TYPE, ShipStatusPayload.CODEC, (p, player) -> ClientShipStatus.accept(p));
     }
 
@@ -63,6 +68,7 @@ public final class HullModule implements ModModule {
         CommonEvents.SERVER_STOPPED.register(server -> ShipStatusSync.onServerStopped());
         SableShips.onShipRemoved(HullRuntimes::onShipRemoved);
         SableShips.onClientShipRemoved(HullRuntimes::onClientShipRemoved);
+        SableShips.onClientShipRemoved((level, ship) -> FloodSurfaceStore.CLIENT.remove(ship));
         SableShips.onPhysicsTick(HullRuntimes::onPhysicsTick);
         com.richardsenger.piratesnships.ship.ShipBlockChanges.register(HullRuntimes::onBlockChanged);
     }
@@ -75,6 +81,8 @@ public final class HullModule implements ModModule {
                 com.richardsenger.piratesnships.ship.hull.client.HiddenWaterPlants::tick);
         com.richardsenger.piratesnships.platform.event.ClientEvents.CLIENT_DISCONNECT.register(
                 mc -> com.richardsenger.piratesnships.ship.hull.client.HiddenWaterPlants.reset());
+        // the water surface inside flooded compartments (FLD1)
+        com.richardsenger.piratesnships.ship.hull.client.FloodSurfaceRenderer.init();
     }
 
     @Override

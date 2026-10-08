@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.cannon.CannonStation.CannonOrder;
+import com.richardsenger.piratesnships.station.capstan.AnchorOrder;
 import com.richardsenger.piratesnships.station.pump.PumpOrder;
 import com.richardsenger.piratesnships.station.winch.SailOrder;
 import io.netty.buffer.ByteBuf;
@@ -116,10 +117,15 @@ class WhistleMenuLogicTest {
     // ------------------------------------------------------------------ entries
 
     @Test
-    void entriesAreTheSailOrdersThenPumpThenTheGunOrdersThenRelease() {
+    void entriesAreTheSailOrdersThenPumpThenTheGunOrdersThenTheAnchorThenRelease() {
         List<WhistleOrder> e = WhistleOrder.entries();
         assertEquals(List.of(WhistleOrder.HOIST, WhistleOrder.REEF, WhistleOrder.FURL, WhistleOrder.PUMP, WhistleOrder.FIRE,
-                WhistleOrder.LOAD, WhistleOrder.FIRE_AT_WILL, WhistleOrder.RELEASE), e);
+                WhistleOrder.LOAD, WhistleOrder.FIRE_AT_WILL, WhistleOrder.DROP_ANCHOR, WhistleOrder.RAISE_ANCHOR, WhistleOrder.RELEASE), e);
+        assertEquals(AnchorOrder.DROP_ANCHOR, WhistleOrder.DROP_ANCHOR.order());
+        assertEquals(AnchorOrder.RAISE_ANCHOR, WhistleOrder.RAISE_ANCHOR.order());
+        assertEquals("drop_anchor", WhistleOrder.DROP_ANCHOR.id());
+        assertEquals("raise_anchor", WhistleOrder.RAISE_ANCHOR.id());
+        assertNull(WhistleOrder.DROP_ANCHOR.sail());
         assertEquals(CannonOrder.FIRE_AT_WILL, WhistleOrder.FIRE_AT_WILL.order());
         assertEquals("fire_at_will", WhistleOrder.FIRE_AT_WILL.id());
         assertNull(WhistleOrder.FIRE_AT_WILL.sail());
@@ -148,9 +154,9 @@ class WhistleMenuLogicTest {
     }
 
     @Test
-    void eightEntriesSplitTheWheelEvenly() {
+    void tenEntriesSplitTheWheelEvenly() {
         RadialLayout l = RadialLayout.forWindow(WhistleOrder.entries().size(), 480, 270, 1.0);
-        assertEquals(8, l.count());
+        assertEquals(10, l.count());
         for (int i = 0; i < l.count(); i++) {
             double a = l.centerAngle(i);
             assertEquals(i, l.sectorAt(RadialLayout.x(a, l.iconRadius()), RadialLayout.y(a, l.iconRadius())), "sector " + i);

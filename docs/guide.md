@@ -107,7 +107,8 @@ An assembled ship analyses its own hull:
 - Placing a block into the breach stops the inflow.
 - **Buoyancy:** the dry volume under water lifts the ship, and flood water weighs it down. A fully flooded ship sinks.
 - The flood state is saved with the ship.
-- Not there yet: a visible water surface inside a flooding room, pumps, patch items, and damage from cannons.
+- Flood water shows as a level water surface inside the room, rising and falling with the flood (client config
+  `dry_hull_view.flood_surface`); below it you get the underwater view.
 
 ### Fighting a leak
 A hull block destroyed below the waterline leaves a breach, and water runs into that room at a rate; deeper holes leak
@@ -239,6 +240,13 @@ stopped. Using the capstan again heaves the chain in at 2.5 blocks a second and 
 up to the hull; using it mid-way lets go again. If the chain runs out before the seabed, the anchor hangs at its end
 and does not hold. Server config `anchor`.
 
+You can also put a crew member on the capstan: use the Captain's Whistle on the crew member, then on the
+capstan. In the whistle menu, "Drop anchor" makes the hand lean into the bars for two seconds before the anchor runs
+out, and "Weigh anchor" starts the winding at once; he keeps pushing until the anchor is stowed. A free hand on deck
+takes an unmanned capstan by himself when you give the order. Over water deeper than the chain he refuses: "No
+ground for the anchor within the chain's reach, captain!" Commands: `/pirates crew order drop_anchor` and
+`raise_anchor`. Server config `crew_stations.capstan`.
+
 ---
 
 ### When a ship breaks apart
@@ -280,6 +288,15 @@ it. Turn the ship to bring the guns to bear: a cannon cannot turn sideways. Serv
 Once a grappling rope is latched onto another ship, look at the rope and use it: you hang from it and slide down to the
 lower end, following both ships as they move. Sneak to let go. A level rope is crawled slowly toward the hook. From the
 crow's nest down to an enemy deck is the classic move. Server config `grapple.slide`.
+
+### Boarding plank
+Craft one from three wooden slabs over two iron nuggets. When your ship lies alongside another (haul her in with the
+grappling hook first), stand at your gunwale and use the plank on the top of a gunwale or rail block, facing the other
+ship. A plank up to four blocks long runs straight out, level with the top of that block, and hooks onto the other
+deck. Used on the side of the block, it lies a block lower. The far deck may sit one block higher or lower than the
+plank. Walk across, but keep the ships together: when they drift apart by more than a block and a half, the whole
+plank breaks and drops back as one item. Breaking any part of it takes the whole plank down. Server config
+`boarding.plank`.
 
 ### Map tiles
 Craft a Map Tile from 8 sticks around a paper and place it on a table or a wall. Put several side by side in a
@@ -361,6 +378,14 @@ officers or merchants. With `law.ransom_needs_port` on, only an outpost's office
 soldiers open fire on sight. `/locate structure pirates_n_ships:navy_outpost` finds one; `/pirates world ports`
 lists it. Server config `world.structures.navy_outpost`.
 
+### The watch
+A navy outpost never sleeps. Every so often the officer of the fort calls three of his soldiers from their posts and
+leads them round the fort in file: across the parade court, through the land and sea gates, out onto the quay, up the
+stairs and along the walls, stopping a while at each post. Strike one of them and the whole squad turns on you, the
+officer's blade first; kill a man and another leaves his post to fill the file at the next stop. At nightfall the
+watch returns to the posts, and the guards stand fast again until morning. Operators: `/pirates mob squad
+info|patrol|return`. Server config `mobs.squad`.
+
 ### Ship HUD
 While you stand on a ship, a small panel in the top right corner shows its state. The compass rose turns a little
 ship-shaped needle to the bow's heading; the light arrow outside the rose sits on the side the wind comes from and
@@ -402,6 +427,15 @@ little more for what it bought, the port it reaches pays a little less once it h
 a second, faster before the wind and slower into it. Harbor masters now reckon contract distances along these lanes,
 and routes that pass near a pirate island pay a risk bonus. Operators can watch the traffic with
 `/pirates world voyages`. Server config `world_simulation.lanes`, `world_simulation.voyages`.
+
+### Ships on the horizon
+NPC ships sail the sea lanes between ports even when nobody watches. When you come within sight of one, it becomes a
+real ship: a merchantman under the merchant flag with goods in her hold and a few armed sailors, a navy patrol, or a
+pirate under the Jolly Roger. She sails on to her destination and fades back into the distance when you leave. Take
+goods from a merchant's hold while aboard and you have plundered her. Sink her with your cannons and the deed is
+yours. Kill every fighter aboard and hold her deck for a few seconds, and she is yours, crew and all. Capturing a
+merchant is piracy in the navy's eyes. Operators: `/pirates world voyages spawn near convoy|patrol|raid`. Server
+config `world_simulation.materialize`.
 
 ### Careers
 Two ladders, and you can only climb one. *Navy:* talk to a navy officer with an empty hand and enlist once the navy
@@ -501,7 +535,8 @@ one in hand, and other players can appear as ships. Only the overworld's seas ar
 
 ## 4. Crew
 
-A **crew member** is a simple NPC. There is no hiring yet: get one with `/pirates crew spawn`.
+A **crew member** is a simple NPC. Hire one at a harbor desk (see "Hiring crew" below) or spawn one with
+`/pirates crew spawn`.
 
 **Stations** are blocks a crew member can man. Only the sail winch is one so far. A crew member at a station stands on
 an invisible seat that travels with the ship, so it stays at its post while the ship moves.
@@ -521,6 +556,17 @@ A crew member is released when its station is broken, its ship is disassembled o
 
 The crew member is animated (idle, walking, working at a station, sitting in a boat) through GeckoLib, a required
 mod on both sides; it is a Blockbench-made sailor (striped shirt, red bandana, neckerchief, belt and knife, bare feet) with idle, walking, hauling and sitting animations.
+
+### Hiring crew
+Every harbor desk has a **Crew** tab. Each day a port has a few people looking for a berth: sailors at seafarer
+villages, pirates at pirate islands, navy ratings at navy outposts. Each asks a one-time fee (10, 20 or 15 doubloons)
+and then the daily wage. Villagers won't sign on with someone they refuse to trade with. Pirates sign on only with a
+friend of the pirates or a captain of some infamy (Buccaneer and up). Navy ratings sign on only with an enlisted
+officer. Before you hire, moor your own ship at the port: the recruit walks straight aboard and waits on the deck
+nearest the desk. Every crew member needs a free hammock, so hang more hammocks to take on more hands. To let someone
+go, sneak and use your captain's whistle on them: they leave your service as an ordinary sailor. Only you or whoever
+hired them can do that, or anyone at all if the ship has no owner. Operators: `/pirates crew hire <sailor|pirate|navy>`
+and `/pirates crew dismiss`. Server config `crew.hiring`.
 
 ### Pirates, sailors and the navy
 Pirates (dark coat, bandana, eyepatch, cutlass) attack players and the navy on sight. They fight with the same
@@ -557,6 +603,17 @@ The **flagpole** flies a flag that shows a ship's allegiance.
 
 The flag cloth is one block high and one and a half blocks long and hangs downwind from the top of the pole, so a
 pole needs free space downwind.
+
+**Tall poles.** Stack flagpoles on each other to build one tall pole, up to 6 blocks (server config
+`flags.max_pole_height`; a taller pole is refused). The top block flies the flag: the pole shows its iron cleat at the
+foot and its gilded finial at the top. You can use any block of the pole, the flag is always worked at the top.
+Placing another flagpole on a pole that flies a flag takes the flag up with it, nothing drops; breaking the top block
+drops the flag, breaking a block in the middle splits the pole in two (the upper part keeps the flag). With
+`flags.stacked_poles` off every block is a pole of its own.
+
+**The flag runs along the pole.** While you hoist or raise a flag it climbs from the foot of the pole to the top, and
+while you strike or take it down it runs down again, over the 3 seconds the work takes. Client config
+`flag_visuals.hoist_animation` turns this off (the flag then appears and vanishes at once).
 
 | Flag | Meaning for the law rules |
 |---|---|
@@ -694,16 +751,36 @@ in the corners). Right-click a desk to open the market screen: the port's name a
 the port trades. Green goods are produced here (cheap to buy), orange goods are wanted here (good to sell). Pick a
 quantity (1, 8, 16, 64 or type one), then Buy or Sell; the prices shown are totals for that quantity and move as you
 trade. The toggle next to the quantity decides whether Sell takes your clean or your plundered stacks: fences on
-pirate islands pay less for plunder, navy outposts may notice and confiscate it. The Contracts tab lists today's
+pirate islands pay less for plunder, village and navy desks refuse it (see "Stolen goods"). The Contracts tab lists today's
 delivery offers (Accept pays the deposit) and your accepted contracts (Deliver at the destination port). Stay within 8
 blocks of the desk; walking away closes the screen. A desk that belongs to no port says so. Operators bind desks with
 `/pirates trade desk bind <port>` while looking at the desk (`<port>` is a full id or a test port name such as `cane`),
 check with `/pirates trade desk info`, and `/pirates trade desk unbind`. Server config: Cargo Trade → Harbor Desks
 (`desks_enabled`, `desk_reach`). The `/pirates trade` commands remain as a debugging fallback.
 
-Selling plunder at a navy outpost is risky: if the harbor master notices it the goods are confiscated and it counts as
-a crime, +15 criminal score (`law.severity.fence_plunder`; several noticed sales at one port within a minute count
-once). Pirate fences never report you.
+**Stolen goods.** Goods taken from captured or sunk ships carry a plunder mark. Only a pirate fence buys them, at a
+discount and with no questions. A village or navy harbor master turns them away ("The harbor master wants no stolen
+goods") and reports you to the navy: the first time each day at each port adds to your criminal score
+(`law.severity.selling_plunder`), and a high enough score puts a bounty on your head. The navy also looks into your
+hold: sail within sight of navy soldiers or an outpost with more than 16 marked goods aboard, under any flag, and you
+are suspected of piracy once per ship and day. Fence your plunder before you go near the navy. Server config
+`law.plunder_notice`, `law.plunder_notice_units`.
+
+### The harbor master
+Every port's desk has a harbor master behind it: in the village's dock-head hut, in the navy fort's office, and behind
+the fence's counter on pirate islands. He wears a green frock coat and a peaked cap. Right-click him (not sneaking) to
+open the port's market, just as using the desk does; he greets you when it opens. If you hit him, or he is running
+from pirates, he waves you off ("not now") for a while. He keeps to his post and walks back if pushed away. If he
+dies, a new harbor master takes the post after 3 days (`mobs.harbor_master.respawn_days`). With
+`cargo_trade.harbor_desks.direct_use` off, the desk only says "Talk to the harbor master" and the market opens
+through him. Server config `mobs.harbor_master`.
+
+### Harbor dues
+Navy outposts charge a small docking fee (5 doubloons) when your ship ties up at a berth or drops anchor inside the
+outpost, once per day per ship. It comes from your purse, or from the doubloons in your ship's chests when your purse
+is short. If nobody can pay, the dues are owed: the outpost's harbor desk will not trade with you until you use it
+with doubloons in hand. Captains the navy trusts, and navy officers from Lieutenant up, dock for free. Sailing through
+the harbor without stopping costs nothing. Server config `cargo_trade.port_fees`.
 
 ### Contracts
 A port offers delivery contracts: bring an amount of a good to another port by a deadline for a reward. Accepting
@@ -712,7 +789,8 @@ at a time.
 
 ### Plunder
 Goods can carry a **plundered** mark (shown in the tooltip). A pirate island buys them at 35% less, no questions asked.
-A navy outpost may notice and confiscate them. Nothing marks goods yet except `/pirates trade plunder`.
+Village and navy desks turn them away and report you (see "Stolen goods" above). Goods taken from an NPC ship's
+hold carry the mark; operators can mark stacks with `/pirates trade plunder`.
 
 ---
 

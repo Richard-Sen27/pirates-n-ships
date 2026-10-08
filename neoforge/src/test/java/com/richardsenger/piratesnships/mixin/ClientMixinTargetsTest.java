@@ -145,6 +145,32 @@ class ClientMixinTargetsTest {
                 + "(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"));
     }
 
+    /**
+     * FLD1: the underwater overlay wrap lands on the one eye-in-water test of {@code renderScreenEffect} (NeoForge keeps
+     * the call on {@code LocalPlayer}, the receiver's static type), and the camera's fluid method exists once with the
+     * signature the {@code @ModifyReturnValue} returns.
+     */
+    @Test
+    void floodSurfaceMixinsHitTheirTargets() {
+        ClassNode screen = readClass("net/minecraft/client/renderer/ScreenEffectRenderer");
+        List<MethodNode> render = select(Selector.parse("renderScreenEffect"), screen);
+        assertEquals(1, render.size());
+        assertEquals(1, countCalls(render.get(0), "Lnet/minecraft/client/player/LocalPlayer;isEyeInFluid(Lnet/minecraft/tags/TagKey;)Z"),
+                "exactly one eye-in-fluid test in renderScreenEffect");
+        assertTrue((render.get(0).access & org.objectweb.asm.Opcodes.ACC_STATIC) != 0, "the wrap handler is static");
+
+        ClassNode camera = readClass("net/minecraft/client/Camera");
+        // the @Shadow fields of MixinCamera
+        assertTrue(camera.fields.stream().anyMatch(f -> f.name.equals("level") && f.desc.equals("Lnet/minecraft/world/level/BlockGetter;")));
+        assertTrue(camera.fields.stream().anyMatch(f -> f.name.equals("position") && f.desc.equals("Lnet/minecraft/world/phys/Vec3;")));
+        List<MethodNode> fluid = select(Selector.parse("getFluidInCamera"), camera);
+        assertEquals(1, fluid.size());
+        assertEquals("()Lnet/minecraft/world/level/material/FogType;", fluid.get(0).desc);
+        ClassNode mixin = readClass("com/richardsenger/piratesnships/mixin/MixinCamera");
+        assertTrue(mixin.methods.stream().anyMatch(m -> m.name.equals("pirates_n_ships$underFloodSurface")
+                && m.desc.equals("(Lnet/minecraft/world/level/material/FogType;)Lnet/minecraft/world/level/material/FogType;")));
+    }
+
     // ---- injector check ----
 
     private static int checkInjector(AnnotationNode injector, ClassNode target, int defaultRequire, String where,

@@ -84,6 +84,10 @@ public final class HullRuntime {
     private boolean regionsDirty = true;
     private long lastRegionBuild = Long.MIN_VALUE / 2;
     private final Set<UUID> sentTo = new HashSet<>();
+    /** Flood surfaces (FLD1): what the clients were last sent and who has it. */
+    private final FloodSurfaces floodSurfaces = new FloodSurfaces();
+    private @Nullable FloodSurfacePayload surfacePayload;
+    private final Set<UUID> surfaceSentTo = new HashSet<>();
 
     /** Footprint probes of the current analysis ({@link SeaLevel#probes}), grid coordinates. */
     private List<int[]> probes = List.of();
@@ -190,6 +194,11 @@ public final class HullRuntime {
         return compartment >= 0 && compartment < pumpingNow.length && pumpingNow[compartment] > 0;
     }
 
+    /** The flood surfaces last sent to the ship's clients (FLD1), or null before the first. */
+    public @Nullable FloodSurfacePayload floodSurfaces() {
+        return surfacePayload;
+    }
+
     public boolean isAnalysing() {
         return pending != null || debouncer.isDirty();
     }
@@ -219,6 +228,7 @@ public final class HullRuntime {
         }
 
         updateRegions(ship);
+        updateFloodSurfaces(ship);
         if (ticks % DryHullConfig.SYNC_CHECK_TICKS.get() == 0) {
             syncNewViewers(ship);
         }
@@ -485,8 +495,34 @@ public final class HullRuntime {
         syncNewViewers(ship);
     }
 
+    /**
+     * Sends the water surfaces of the partly flooded compartments (FLD1) when they changed, at most every
+     * {@code region_rebuild_ticks}. Without dry hulls there is no occlusion and the world's own water shows inside.
+     */
+    private void updateFloodSurfaces(ShipBody ship) {
+        List<FloodSurfacePayload.Surface> now = DryHullConfig.ENABLED.get() ? floodSurfaces.build(sim) : List.of();
+        int interval = DryHullConfig.REGION_REBUILD_TICKS.get();
+        if (!floodSurfaces.due(ticks, interval, now)) {
+            return;
+        }
+        floodSurfaces.markSent(ticks, now);
+        HullVec up = sim.analysis().up();
+        surfacePayload = new FloodSurfacePayload(id, (float) up.x(), (float) up.y(), (float) up.z(), interval, now);
+        surfaceSentTo.clear();
+        syncNewViewers(ship);
+    }
+
     private void syncNewViewers(ShipBody ship) {
         List<UUID> tracking = ship.trackingPlayers();
+        surfaceSentTo.retainAll(tracking);
+        if (surfacePayload != null) {
+            for (UUID uuid : tracking) {
+                if (!surfaceSentTo.contains(uuid) && level.getPlayerByUUID(uuid) instanceof ServerPlayer player) {
+                    Services.NETWORK.sendToPlayer(player, surfacePayload);
+                    surfaceSentTo.add(uuid);
+                }
+            }
+        }
         sentTo.retainAll(tracking);
         HullRegionsPayload payload = null;
         for (UUID uuid : tracking) {

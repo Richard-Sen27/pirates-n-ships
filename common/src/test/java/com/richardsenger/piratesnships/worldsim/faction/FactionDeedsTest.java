@@ -24,6 +24,11 @@ class FactionDeedsTest {
         expected.put(Deed.TURN_IN_PIRATE, FactionEvent.PIRATE_TURNED_IN);
         expected.put(Deed.FENCE_PLUNDER, FactionEvent.PLUNDER_FENCED);
         expected.put(Deed.TRADE_VILLAGE, FactionEvent.PORT_TRADE);
+        expected.put(Deed.SINK_MERCHANT, FactionEvent.CONVOY_SUNK);
+        expected.put(Deed.SINK_NAVY, FactionEvent.PATROL_LOST);
+        expected.put(Deed.CAPTURE_NAVY, FactionEvent.PATROL_LOST);
+        expected.put(Deed.SINK_PIRATE, FactionEvent.PIRATE_SHIP_LOST);
+        expected.put(Deed.CAPTURE_PIRATE, FactionEvent.PIRATE_SHIP_LOST);
         for (Deed deed : Deed.values()) {
             assertEquals(Optional.ofNullable(expected.get(deed)), FactionDeeds.eventFor(deed, 0), deed.id());
         }

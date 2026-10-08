@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-08T22:07:34.904085	Recipes
+// 1.21.1	2026-10-08T22:34:25.867226	Recipes
 e1289c0eb7525c60669f4203ccd8af0d9d7b0744 data/pirates_n_ships/advancement/recipes/building_blocks/hull_patch.json
 dc908cf23933449a8a82c8037e57e8f3143c20f2 data/pirates_n_ships/advancement/recipes/combat/bandana.json
 8f98eb055171c739101420a0b9bbe9f3a8bf2903 data/pirates_n_ships/advancement/recipes/combat/cannon.json
@@ -55,6 +55,7 @@ e1761f84bb63ca1054973a2a741f91125c2ab349 data/pirates_n_ships/advancement/recipe
 50bbc3a5283b5ecd156269afff156a249c60d350 data/pirates_n_ships/advancement/recipes/tools/shackles.json
 c0031434535fcfd6baa7129c6609be45d9eabb0c data/pirates_n_ships/advancement/recipes/tools/shipwright_toolkit.json
 dabb55b5be124c511fdf02edafd66b731afe2cec data/pirates_n_ships/advancement/recipes/transportation/bilge_pump.json
+529082c5a6c5f201501101c8dbbab5a43b205f0d data/pirates_n_ships/advancement/recipes/transportation/boarding_plank.json
 1d2b2d4b56f8d693e61a6b7c8681101991a5df3d data/pirates_n_ships/advancement/recipes/transportation/capstan.json
 1a045b9c80433083ff8b59eded369b0ea390920c data/pirates_n_ships/advancement/recipes/transportation/cleat.json
 5df45ae9d559d81a65dc99c2738d2d6fb7130bab data/pirates_n_ships/advancement/recipes/transportation/helm.json
@@ -64,6 +65,7 @@ b18b23653494e41fd857e8bb42f9290a64350e06 data/pirates_n_ships/advancement/recipe
 c139515e0b538370d92991be3d0cb26765b3cd6f data/pirates_n_ships/advancement/recipes/transportation/yard.json
 89a35f12aa95b7a823b451d3561373ded79824a8 data/pirates_n_ships/recipe/bandana.json
 3442a5397f9a3d62801aad8aa393d5ef3be2f7fb data/pirates_n_ships/recipe/bilge_pump.json
+e5461b7670a1a06c0fd6f2d78b99efbec9afa290 data/pirates_n_ships/recipe/boarding_plank.json
 bf2da20e7fdc63124e2b02531cd70e8904a34cb1 data/pirates_n_ships/recipe/brig_bars.json
 ee31fa683c68b7dd3fbe347a19c643971a50d895 data/pirates_n_ships/recipe/brig_door.json
 3eff97701e3c48443f788c8c3d065284475f1abc data/pirates_n_ships/recipe/brig_key.json

@@ -5,6 +5,7 @@ import com.richardsenger.piratesnships.mob.MobContent;
 import com.richardsenger.piratesnships.mob.MobFaction;
 import com.richardsenger.piratesnships.mob.MobKind;
 import com.richardsenger.piratesnships.mob.entity.SeafarerMob;
+import com.richardsenger.piratesnships.mob.squad.SquadService;
 import com.richardsenger.piratesnships.world.WorldConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.EntityType;
@@ -29,6 +30,9 @@ import java.util.List;
  * post is placed exactly once by world generation. Placing the structure again over a loaded outpost (a GameTest,
  * {@code /place structure}) skips posts where a navy mob already stands; during world generation the region sees no
  * entities, and none are needed there. A post filled by terrain stays empty ({@link #free}).
+ *
+ * <p>Since MOB2 each mob also remembers its post, and the officer the patrol route of his squad
+ * ({@link SquadService#onGarrisonPlaced}); from time to time he leads soldiers of the garrison on patrol.
  */
 public final class Garrison {
 
@@ -54,6 +58,7 @@ public final class Garrison {
     /** Places the garrison's posts inside {@code chunkBox}. Returns the number of mobs placed. */
     public static int place(WorldGenLevel level, BoundingBox chunkBox, PiecesContainer pieces) {
         int placed = 0;
+        List<GarrisonPosts.PlacedPiece> placedPieces = placedPieces(pieces);
         for (GarrisonPosts.Assignment a : plan(pieces)) {
             if (!chunkBox.isInside(a.pos())) continue;
             boolean officer = a.role() == GarrisonPosts.Role.OFFICER;
@@ -68,6 +73,8 @@ public final class Garrison {
             mob.setYBodyRot(yaw);
             mob.setStationary(true);
             mob.setPersistenceRequired();
+            // MOB2: every mob keeps its post, the officer gets his squad's patrol route
+            SquadService.onGarrisonPlaced(mob, a.pos(), a.facing(), placedPieces);
             mob.finalizeSpawn(level, level.getCurrentDifficultyAt(a.pos()), MobSpawnType.STRUCTURE, null);
             if (level.addFreshEntity(mob)) placed++;
         }

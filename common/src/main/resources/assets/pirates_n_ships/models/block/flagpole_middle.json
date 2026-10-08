@@ -1,0 +1,179 @@
+{
+	"credit": "Made with Blockbench, source art/models/flagpole_middle.bbmodel",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"0": "minecraft:block/stripped_spruce_log",
+		"5": "minecraft:block/stripped_birch_log",
+		"particle": "minecraft:block/stripped_spruce_log"
+	},
+	"elements": [
+		{
+			"from": [
+				6.5,
+				0,
+				6.5
+			],
+			"to": [
+				9.5,
+				16,
+				9.5
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						6.5,
+						0,
+						9.5,
+						16
+					],
+					"texture": "#0"
+				},
+				"east": {
+					"uv": [
+						6.5,
+						0,
+						9.5,
+						16
+					],
+					"texture": "#0"
+				},
+				"south": {
+					"uv": [
+						6.5,
+						0,
+						9.5,
+						16
+					],
+					"texture": "#0"
+				},
+				"west": {
+					"uv": [
+						6.5,
+						0,
+						9.5,
+						16
+					],
+					"texture": "#0"
+				}
+			}
+		},
+		{
+			"from": [
+				10.3,
+				0,
+				7.15
+			],
+			"to": [
+				10.7,
+				16,
+				7.55
+			],
+			"rotation": {
+				"angle": 45,
+				"axis": "y",
+				"origin": [
+					8,
+					4,
+					8
+				]
+			},
+			"faces": {
+				"north": {
+					"uv": [
+						10.3,
+						0,
+						10.7,
+						16
+					],
+					"texture": "#5"
+				},
+				"east": {
+					"uv": [
+						7.15,
+						0,
+						7.55,
+						16
+					],
+					"texture": "#5"
+				},
+				"south": {
+					"uv": [
+						10.3,
+						0,
+						10.7,
+						16
+					],
+					"texture": "#5"
+				},
+				"west": {
+					"uv": [
+						7.15,
+						0,
+						7.55,
+						16
+					],
+					"texture": "#5"
+				}
+			}
+		},
+		{
+			"from": [
+				10.3,
+				0,
+				8.45
+			],
+			"to": [
+				10.7,
+				16,
+				8.85
+			],
+			"rotation": {
+				"angle": 45,
+				"axis": "y",
+				"origin": [
+					8,
+					4,
+					8
+				]
+			},
+			"faces": {
+				"north": {
+					"uv": [
+						10.3,
+						0,
+						10.7,
+						16
+					],
+					"texture": "#5"
+				},
+				"east": {
+					"uv": [
+						8.45,
+						0,
+						8.85,
+						16
+					],
+					"texture": "#5"
+				},
+				"south": {
+					"uv": [
+						10.3,
+						0,
+						10.7,
+						16
+					],
+					"texture": "#5"
+				},
+				"west": {
+					"uv": [
+						8.45,
+						0,
+						8.85,
+						16
+					],
+					"texture": "#5"
+				}
+			}
+		}
+	]
+}

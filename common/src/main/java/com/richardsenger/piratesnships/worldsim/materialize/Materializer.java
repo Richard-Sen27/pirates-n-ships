@@ -209,10 +209,12 @@ public final class Materializer {
             retryLater(server, id);
             return Outcome.FAILED;
         }
-        turnOnto(ship, facing, pos);
+        Vec3 plotCentre = templateCentre(ship, structure, r);
+        turnOnto(ship, plotCentre, facing, pos);
         ShipAssembler.name(ship, name(v));
         raiseFlag(ship, v);
         VoyageShips.Active link = new VoyageShips.Active(id, ship.id(), level.dimension(), level.getGameTime());
+        link.plotCentre = plotCentre;
         link.overflow = VoyageShips.load(level, ship, v.cargo(), MaterializeConfig.CARGO_IS_PLUNDER.get());
         link.lastUnits = VoyageShips.units(VoyageShips.read(level, ship));
         VoyageShips.put(link);
@@ -229,14 +231,29 @@ public final class Materializer {
     }
 
     /** Turns the freshly assembled {@code ship} (bow toward {@code facing}) to the leg heading, its centre on the point. */
-    static void turnOnto(ShipBody ship, Direction facing, Lane.Position pos) {
+    static void turnOnto(ShipBody ship, Vec3 plotCentre, Direction facing, Lane.Position pos) {
         double facingCompass = (facing.toYRot() + 180.0) % 360.0;
         // A turn by +a about +y takes compass heading h to h - a, so turn by (facing - heading).
         Quaterniond turn = new Quaterniond().rotateAxis(Math.toRadians(facingCompass - pos.headingDegrees()), 0, 1, 0);
         Quaterniond q = turn.mul(ship.orientation());
-        Vec3 plotCentre = plotCentre(ship);
         Vec3 worldCentre = ship.toWorld(plotCentre);
         ship.placeAt(plotCentre, new Vec3(pos.x(), worldCentre.y, pos.z()), q);
+    }
+
+    /**
+     * The centre of the template's box in plot coordinates, from the placement alone: the assembly moved the blocks by
+     * one translation (helm world → helm plot). No plot reads: right after an assembly, while other ships are removed
+     * in the same tick, plot block reads can come from a stale chunk memo (docs/sable-notes.md §9.0c), which put a
+     * GameTest ship 4 blocks off its point.
+     */
+    private static Vec3 templateCentre(ShipBody ship, StructureTemplate structure, ShipTemplatePlacer.Result r) {
+        BlockPos helmPlot = ShipHelm.steering(ship);
+        if (helmPlot == null || r.helm() == null || r.origin() == null) return plotCentre(ship);
+        net.minecraft.world.level.levelgen.structure.BoundingBox box =
+                com.richardsenger.piratesnships.ship.template.TemplatePlacement.worldBox(structure.getSize(), r.rotation(), r.origin());
+        Vec3 worldCentre = new Vec3((box.minX() + box.maxX() + 1) * 0.5, (box.minY() + box.maxY() + 1) * 0.5,
+                (box.minZ() + box.maxZ() + 1) * 0.5);
+        return worldCentre.add(Vec3.atLowerCornerOf(helmPlot.subtract(r.helm())));
     }
 
     /** The plot y of the template's waterline row (decks are searched from there up). */
@@ -539,14 +556,31 @@ public final class Materializer {
         return best;
     }
 
+    /**
+     * The centre of the ship's blocks in plot coordinates. From the blocks, not {@code ShipBody.plotBounds}: right after
+     * assembly on a plot Sable reused, the plot's bounding box can still span the previous ship (docs/sable-notes.md
+     * §9.0c); a ship in the GameTests was placed 4 blocks off by it.
+     */
     static Vec3 plotCentre(ShipBody ship) {
-        BlockPos[] b = ship.plotBounds();
-        return Vec3.atLowerCornerOf(b[0]).add(Vec3.atLowerCornerOf(b[1]).add(1, 1, 1)).scale(0.5);
+        List<BlockPos> blocks = ship.plotBlocks();
+        if (blocks.isEmpty()) {
+            BlockPos[] b = ship.plotBounds();
+            return Vec3.atLowerCornerOf(b[0]).add(Vec3.atLowerCornerOf(b[1]).add(1, 1, 1)).scale(0.5);
+        }
+        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
+        for (BlockPos p : blocks) {
+            minX = Math.min(minX, p.getX()); minY = Math.min(minY, p.getY()); minZ = Math.min(minZ, p.getZ());
+            maxX = Math.max(maxX, p.getX()); maxY = Math.max(maxY, p.getY()); maxZ = Math.max(maxZ, p.getZ());
+        }
+        return new Vec3((minX + maxX + 1) * 0.5, (minY + maxY + 1) * 0.5, (minZ + maxZ + 1) * 0.5);
     }
 
-    /** The world position of the centre of the ship's plot bounds. */
+    /** The world position of the centre of the ship's blocks. */
     public static Vec3 centre(ShipBody ship) {
-        return ship.toWorld(plotCentre(ship));
+        VoyageShips.Active a = VoyageShips.voyageOf(ship.id()).map(VoyageShips::get).orElse(null);
+        Vec3 plot = a != null && a.plotCentre != null && a.ship.equals(ship.id()) ? a.plotCentre : plotCentre(ship);
+        return ship.toWorld(plot);
     }
 
     /** Ships of voyages near a position (commands). */

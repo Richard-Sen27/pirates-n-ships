@@ -215,7 +215,8 @@ public final class MaterializeGameTests {
             Vec3 c = Materializer.centre(ship[0]);
             Lane.Position p = v.position();
             double off = Math.hypot(c.x - p.x(), c.z - p.z());
-            h.assertTrue(off <= 2.0, "centre " + off + " blocks from the lane point");
+            h.assertTrue(off <= 2.0, "centre " + off + " blocks from the lane point (by the blocks "
+                    + Math.hypot(ship[0].toWorld(Materializer.plotCentre(ship[0])).x - p.x(), ship[0].toWorld(Materializer.plotCentre(ship[0])).z - p.z()) + ")");
         });
         h.runAtTickTime(15, () -> {
             SailingRuntime rt = SailingRuntimes.getOrCreate(ship[0]);
@@ -274,7 +275,7 @@ public final class MaterializeGameTests {
         h.runAtTickTime(15, () -> {
             Vec3 c = Materializer.centre(ship[0]);
             double before = RouteMath.project(v.waypoints(), c.x, c.z, v.progress());
-            Vec3 plot = Materializer.plotCentre(ship[0]);
+            Vec3 plot = ship[0].toPlot(c);
             double dx = Math.sin(Math.toRadians(HEADING)) * 6, dz = -Math.cos(Math.toRadians(HEADING)) * 6;
             ship[0].placeAt(plot, c.add(dx, 0, dz), ship[0].orientation());
             h.assertTrue(Materializer.dematerialize(server, v.id()), "dematerialize refused");

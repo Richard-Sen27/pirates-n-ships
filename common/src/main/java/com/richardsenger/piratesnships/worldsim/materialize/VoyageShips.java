@@ -45,6 +45,8 @@ public final class VoyageShips {
         int lastUnits = -1;
         boolean plundered;
         Map<ResourceLocation, Integer> overflow = Map.of();
+        /** The ship's centre in plot coordinates, from the template (null after a reload or a split: read the blocks). */
+        @org.jetbrains.annotations.Nullable net.minecraft.world.phys.Vec3 plotCentre;
 
         Active(UUID voyage, UUID ship, ResourceKey<Level> dimension, long now) {
             this.voyage = voyage;
@@ -98,6 +100,7 @@ public final class VoyageShips {
     static void relink(Active a, UUID newShip) {
         BY_SHIP.remove(a.ship, a.voyage);
         a.ship = newShip;
+        a.plotCentre = null;
         BY_SHIP.put(newShip, a.voyage);
     }
 

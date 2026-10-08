@@ -436,6 +436,11 @@ Goal: sword fights are about timing and reading the opponent, not click spam. Th
 
 ---
 
+### 8.5b Melee polish (MEL1, 2026-10-08)
+- Sneaking: rules unchanged; the third-person sword animations keep vanilla's crouch (client `melee_animations.keep_crouch`); interrupted animations cross-fade over `melee_animations.fade_ticks` (cosmetic, the server's phase timing is untouched). Open: whether sneak-use with a sword should stay the parry or be freed for interactions such as the captain's duel challenge.
+
+---
+
 ## 9. Mobs and NPCs
 
 | Mob | Behavior |
@@ -504,7 +509,7 @@ A server-wide simulation that makes the sea feel alive between the ports, withou
 - An item and block with **double-chest capacity**.
 - **Carried on the back:** while worn, the player can't jump, sprint or swim. Walking is slowed (configurable). Drowning risk applies, since the chest drags the player down.
 - **Placed in water:** becomes a floating entity that drifts with currents and wind.
-- **With a paddle:** a player sitting on it can paddle it like a small boat.
+- **With a paddle:** a player sitting on it can paddle it like a small boat. **Implemented (SC2):** a paddle item seats one player on a floating chest; the movement keys paddle it at `sea_chest.paddle_speed` with turning, wind and current still applying; hunger as for swimming and cold water as for a swimmer; sneak to get off; the paddle's 3D model came with ART8.
 - Contents are preserved in every state (item, worn, block, entity).
 
 ---

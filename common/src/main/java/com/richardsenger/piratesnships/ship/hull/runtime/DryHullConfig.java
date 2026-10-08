@@ -33,6 +33,9 @@ public final class DryHullConfig {
             "How far up from the hull's bottom to follow the water that touches it when finding the sea surface");
     public static final ConfigValue<Boolean> ASYNC_ANALYSIS = SECTION.bool("async_analysis", true,
             "Run hull re-analysis on a background thread (the first analysis after assembly or loading is synchronous)");
+    public static final ConfigValue<Boolean> FLOOD_BREATH = SECTION.bool("flood_breath", true,
+            "Breath runs out below the flood water inside a ship's rooms, also where the room still counts as dry or the "
+                    + "flood stands higher than the sea");
 
 
     /**

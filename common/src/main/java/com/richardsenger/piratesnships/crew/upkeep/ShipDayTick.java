@@ -138,6 +138,24 @@ public final class ShipDayTick {
 
     /** Runs the day tick of one ship with {@code crew} aboard. */
     public static DayReport run(ServerLevel level, ShipBody ship, List<CrewMember> crew) {
+        return run(level, ship, crew, payer(level, ship));
+    }
+
+    /**
+     * The player whose purse pays what the coins aboard cannot (CRW2): the ship's owner while it is a player in
+     * {@code level} (online in this dimension); null when there is none.
+     */
+    public static @Nullable ServerPlayer payer(ServerLevel level, ShipBody ship) {
+        return ShipRegistry.get(level.getServer()).find(ship.id()).flatMap(ShipData::owner).map(level::getPlayerByUUID)
+                .filter(ServerPlayer.class::isInstance).map(ServerPlayer.class::cast).orElse(null);
+    }
+
+    /**
+     * Runs the day tick of one ship with {@code crew} aboard; {@code payer} ({@link #payer}) pays the rest of the wages
+     * from its purse while {@code crew.wages.from_wallet} is on. Public for the GameTests, which cannot put a player
+     * into a level (Sable sends it packets a mock connection refuses).
+     */
+    public static DayReport run(ServerLevel level, ShipBody ship, List<CrewMember> crew, @Nullable ServerPlayer payer) {
         ShipUpkeepData data = ShipUpkeepData.get(level.getServer());
         ShipUpkeep before = data.get(ship.id());
         UpkeepSettings s = Upkeep.settings();
@@ -156,11 +174,9 @@ public final class ShipDayTick {
         boolean ownerAboard = owner != null && owner.serverLevel() == level && isAboard(level, ship, owner);
 
         // 2. wages (the owner's wallet last, CRW2), 3. mutiny and desertion (pure)
-        // the owner's purse pays while the owner is a player in this level (online here)
-        @Nullable ServerPlayer payer = s.wagesEnabled() && CrewConfig.WAGES_FROM_WALLET.get()
-                ? record.flatMap(ShipData::owner).map(level::getPlayerByUUID)
-                        .filter(ServerPlayer.class::isInstance).map(ServerPlayer.class::cast).orElse(null)
-                : null;
+        if (!s.wagesEnabled() || !CrewConfig.WAGES_FROM_WALLET.get()) {
+            payer = null;
+        }
         List<WageRules.Source<PayKey>> sources = PayKey.sources(scan.coins(), payer != null ? payer.getUUID() : null,
                 payer != null ? Wallet.count(payer) : 0);
         WageRules.Payment<PayKey> payment = s.wagesEnabled()

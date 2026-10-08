@@ -354,8 +354,10 @@ public final class UpkeepGameTests {
 
     /**
      * A real server player with a mock connection (the hiring and market tests' pattern), owner of the ship, carrying
-     * {@code coins} doubloons, put into the test level's player list only (online in this level: what the wage step
-     * looks for) without a login, so no login events or packets run. Taken out again by {@link #logOut}.
+     * {@code coins} doubloons. It is not put into the level (Sable would send it packets the mock connection refuses),
+     * so the tests hand it to {@code ShipDayTick.run(level, ship, crew, payer)} as the
+     * payer instead of forcing a dawn; {@link ShipDayTick#payer} (the owner among the level's players) is for the
+     * playtest.
      */
     private static ServerPlayer owner(GameTestHelper h, Ship s, int coins) {
         var profile = new com.mojang.authlib.GameProfile(UUID.randomUUID(), "test-owner");
@@ -367,14 +369,14 @@ public final class UpkeepGameTests {
         p.setPos(Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(5, 5, 5))));
         p.getInventory().clearContent();
         Wallet.give(p, coins);
-        h.getLevel().players().add(p);
         ShipRegistry registry = ShipRegistry.get(h.getLevel().getServer());
         registry.put(registry.find(s.id()).orElseThrow(() -> new AssertionError("no ship record")).withOwner(Optional.of(p.getUUID())));
         return p;
     }
 
-    private static void logOut(GameTestHelper h, ServerPlayer p) {
-        h.getLevel().players().remove(p);
+    /** The day tick of the test ship now, with {@code payer} online. */
+    private static ShipDayTick.DayReport payday(GameTestHelper h, Ship s, ServerPlayer payer) {
+        return ShipDayTick.run(h.getLevel(), s.f().ship(), ShipBunks.crewOf(h.getLevel(), s.f().ship()), payer);
     }
 
     /**
@@ -388,10 +390,10 @@ public final class UpkeepGameTests {
         Ship s = ship(h, UpkeepGameTests::chest);
         coins(h, s, 3);
         ServerPlayer owner = owner(h, s, 10);
-        dawnAt(h, 0);
-        h.runAfterDelay(DAWN + 1, () -> {
+        h.runAfterDelay(2, () -> {
             try {
-                ShipDayTick.DayReport r = report(h, s);
+                h.assertTrue(ShipBunks.crewOf(h.getLevel(), s.f().ship()).size() == 2, "crew aboard: " + ShipBunks.crewOf(h.getLevel(), s.f().ship()));
+                ShipDayTick.DayReport r = payday(h, s, owner);
                 h.assertTrue(r.day().paid() == 2 && r.day().unpaid() == 0, "paid / unpaid: " + r.day());
                 h.assertTrue(Wallet.count(chestOf(h, s)) == 0, "coins left in the chest: " + Wallet.count(chestOf(h, s)));
                 h.assertTrue(Wallet.count(owner) == 9, "coins left in the purse: " + Wallet.count(owner));
@@ -402,7 +404,6 @@ public final class UpkeepGameTests {
                 h.assertTrue(info.stream().anyMatch(c -> containsKey(c, UpkeepText.INFO_PAY_WALLET, 2, 0, 4L, 1L)), "info: " + info);
                 h.assertTrue(CrewMorale.get(s.a()) == 71 && CrewMorale.get(s.b()) == 71, "morale: " + CrewMorale.get(s.a()) + ", " + CrewMorale.get(s.b()));
             } finally {
-                logOut(h, owner);
                 cleanup(h, s);
             }
             h.succeed();
@@ -416,17 +417,15 @@ public final class UpkeepGameTests {
         ConfigOverrides.during(h, CrewConfig.WAGES_FROM_WALLET, false);
         Ship s = ship(h, UpkeepGameTests::chest);
         ServerPlayer owner = owner(h, s, 10);
-        dawnAt(h, 0);
-        h.runAfterDelay(DAWN + 1, () -> {
+        h.runAfterDelay(2, () -> {
             try {
-                ShipDayTick.DayReport r = report(h, s);
+                ShipDayTick.DayReport r = payday(h, s, owner);
                 h.assertTrue(r.day().paid() == 0 && r.day().unpaid() == 2, "paid / unpaid: " + r.day());
                 h.assertTrue(Wallet.count(owner) == 10, "coins taken from the purse: " + Wallet.count(owner));
                 ShipUpkeep up = ShipUpkeepData.get(h.getLevel().getServer()).get(s.id());
                 h.assertTrue(up.lastPay().equals(new ShipUpkeep.PayRecord(true, 0, 2, 0, 0)), "pay record: " + up.lastPay());
                 h.assertTrue(s.a().isUnpaid() && s.b().isUnpaid(), "not marked unpaid");
             } finally {
-                logOut(h, owner);
                 cleanup(h, s);
             }
             h.succeed();

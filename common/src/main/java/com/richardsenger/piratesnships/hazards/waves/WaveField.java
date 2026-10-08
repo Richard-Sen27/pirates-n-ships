@@ -24,6 +24,12 @@ import java.util.List;
  * </ul>
  * {@link #height(double, double, double)} and {@link #slope(double, double, double)} use the point itself as the
  * anchor.
+ *
+ * <h2>Origin (tests)</h2>
+ * An {@link Origin} shifts the whole field in time and space: {@code t} and {@code a} are measured from it. Gameplay
+ * always uses {@link Origin#NONE}; GameTests pin the origin to the test's start and its hull (through
+ * {@link SeaStateModel.Tracker#setOverride(SeaState, Double, long, Origin)}), so the phase the waves meet the hull at no
+ * longer depends on the game time the test starts at or on where the runner placed its structure.
  */
 public final class WaveField {
 
@@ -48,6 +54,18 @@ public final class WaveField {
         }
     }
 
+    /**
+     * Where the field's time and space start: {@code t − ticks} and {@code a − (x, z)} enter the phases.
+     *
+     * @param ticks game time of phase zero [ticks]
+     * @param x     world x of phase zero [blocks]
+     * @param z     world z of phase zero [blocks]
+     */
+    public record Origin(double ticks, double x, double z) {
+        /** Phase zero at game time 0 and the world origin: the gameplay field. */
+        public static final Origin NONE = new Origin(0.0, 0.0, 0.0);
+    }
+
     /** The two trains of every sea: a long swell and a shorter crossing sea. */
     public static final List<Component> COMPONENTS = List.of(
             new Component(34.0, 180.0, 0.6, 0.0, 0.0, 90.0),
@@ -59,6 +77,7 @@ public final class WaveField {
     private final double amplitude;
     private final double directionDeg;
     private final List<Component> components;
+    private final Origin origin;
     // per component: k, omega, weight, phase, dir x/z, ref x/z
     private final double[][] c;
 
@@ -71,6 +90,12 @@ public final class WaveField {
     }
 
     public WaveField(double amplitude, double directionDeg, List<Component> components) {
+        this(amplitude, directionDeg, components, Origin.NONE);
+    }
+
+    /** A field whose time and anchor are measured from {@code origin} (tests; gameplay uses {@link Origin#NONE}). */
+    public WaveField(double amplitude, double directionDeg, List<Component> components, Origin origin) {
+        this.origin = origin;
         this.amplitude = Math.max(0.0, amplitude);
         this.directionDeg = directionDeg;
         this.components = List.copyOf(components);
@@ -96,6 +121,10 @@ public final class WaveField {
         return components;
     }
 
+    public Origin origin() {
+        return origin;
+    }
+
     public boolean isFlat() {
         return amplitude <= 0.0;
     }
@@ -112,8 +141,9 @@ public final class WaveField {
         }
         double h = 0.0;
         double dx = x - ax, dz = z - az;
+        double oax = ax - origin.x(), oaz = az - origin.z(), ot = t - origin.ticks();
         for (double[] w : c) {
-            h += w[2] * Math.sin(phase(w, ax, az, dx, dz, t));
+            h += w[2] * Math.sin(phase(w, oax, oaz, dx, dz, ot));
         }
         return amplitude * h;
     }
@@ -130,8 +160,9 @@ public final class WaveField {
             return g;
         }
         double dx = x - ax, dz = z - az;
+        double oax = ax - origin.x(), oaz = az - origin.z(), ot = t - origin.ticks();
         for (double[] w : c) {
-            double s = amplitude * w[2] * w[0] * Math.cos(phase(w, ax, az, dx, dz, t));
+            double s = amplitude * w[2] * w[0] * Math.cos(phase(w, oax, oaz, dx, dz, ot));
             g[0] += s * w[4];
             g[1] += s * w[5];
         }

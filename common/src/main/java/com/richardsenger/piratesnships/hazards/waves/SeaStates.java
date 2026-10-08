@@ -45,7 +45,7 @@ public final class SeaStates {
         Double fixed = t.overrideDirection();
         double direction = fixed != null ? fixed
                 : SeaStateModel.directionDegrees(WindService.sample(level, Vec3.ZERO).towardDegrees(), level.getSeed(), now);
-        return new WaveField(amplitude, direction);
+        return new WaveField(amplitude, direction, WaveField.COMPONENTS, t.origin());
     }
 
     /**
@@ -88,8 +88,18 @@ public final class SeaStates {
      * (compass bearing; null follows the wind), until {@link #clear} or game time {@code untilGameTime}.
      */
     public static synchronized void set(ServerLevel level, SeaState state, @Nullable Double directionDegrees, long untilGameTime) {
+        set(level, state, directionDegrees, untilGameTime, WaveField.Origin.NONE);
+    }
+
+    /**
+     * {@link #set(ServerLevel, SeaState, Double, long)} with the field's phases pinned to {@code origin} while the
+     * override holds (GameTests only; see {@link WaveField.Origin}). Clients keep the unpinned phase, which only their
+     * cosmetic wave sampling uses.
+     */
+    public static synchronized void set(ServerLevel level, SeaState state, @Nullable Double directionDegrees, long untilGameTime,
+                                        WaveField.Origin origin) {
         Entry e = LEVELS.computeIfAbsent(level, l -> new Entry());
-        e.tracker.setOverride(state, directionDegrees, untilGameTime);
+        e.tracker.setOverride(state, directionDegrees, untilGameTime, origin);
         e.field = build(level, e.tracker, level.getGameTime());
     }
 

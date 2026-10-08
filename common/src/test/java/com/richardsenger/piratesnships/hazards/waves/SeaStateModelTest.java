@@ -76,6 +76,20 @@ class SeaStateModelTest {
     }
 
     @Test
+    void anOverrideCanPinTheOriginUntilItEnds() {
+        SeaStateModel.Tracker t = new SeaStateModel.Tracker();
+        assertEquals(WaveField.Origin.NONE, t.origin());
+        WaveField.Origin o = new WaveField.Origin(40.0, 1.0, 2.0);
+        t.setOverride(SeaState.STORM, 90.0, 100, o);
+        t.tick(SeaState.CALM, 0.001, 50);
+        assertEquals(o, t.origin());
+        t.tick(SeaState.CALM, 0.001, 100);
+        assertEquals(WaveField.Origin.NONE, t.origin());
+        t.setOverride(SeaState.ROUGH, null, SeaStateModel.Tracker.FOREVER);
+        assertEquals(WaveField.Origin.NONE, t.origin());
+    }
+
+    @Test
     void nearestStateAndIds() {
         assertEquals(SeaState.MODERATE, SeaState.nearest(0.35));
         assertEquals(SeaState.ROUGH, SeaState.nearest(0.9));

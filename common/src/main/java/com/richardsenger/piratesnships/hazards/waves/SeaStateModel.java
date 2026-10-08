@@ -83,6 +83,7 @@ public final class SeaStateModel {
         private @Nullable SeaState override;
         private @Nullable Double overrideDirection;
         private long overrideUntil = FOREVER;
+        private WaveField.Origin origin = WaveField.Origin.NONE;
 
         /**
          * One tick at {@code gameTime}: eases toward the weather's {@code target}, or holds the override (dropped once
@@ -105,6 +106,15 @@ public final class SeaStateModel {
          * {@code untilGameTime} (exclusive; {@link #FOREVER} for none).
          */
         public void setOverride(SeaState state, @Nullable Double directionDegrees, long untilGameTime) {
+            setOverride(state, directionDegrees, untilGameTime, WaveField.Origin.NONE);
+        }
+
+        /**
+         * {@link #setOverride(SeaState, Double, long)} with the field's time and space pinned to {@code origin} while the
+         * override holds (tests: a phase that does not depend on the game time or the structure's place).
+         */
+        public void setOverride(SeaState state, @Nullable Double directionDegrees, long untilGameTime, WaveField.Origin origin) {
+            this.origin = origin;
             override = state;
             overrideDirection = directionDegrees;
             overrideUntil = untilGameTime;
@@ -117,6 +127,12 @@ public final class SeaStateModel {
             override = null;
             overrideDirection = null;
             overrideUntil = FOREVER;
+            origin = WaveField.Origin.NONE;
+        }
+
+        /** Origin of the field's phases: {@link WaveField.Origin#NONE} unless an override pinned one. */
+        public WaveField.Origin origin() {
+            return origin;
         }
 
         public @Nullable SeaState override() {

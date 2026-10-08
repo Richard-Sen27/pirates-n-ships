@@ -64,9 +64,25 @@ public final class WaveGameTests {
 
     // ------------------------------------------------------------------ fixtures
 
+    /**
+     * Holds the sea at {@code state} (at once, no easing) toward +X, with the field's phases pinned to the test
+     * ({@link #origin}), for {@code ticks} as a safety net.
+     */
     private static void hold(GameTestHelper h, SeaState state, long ticks) {
         ServerLevel level = h.getLevel();
-        SeaStates.set(level, state, FROM_WEST + 180.0, level.getGameTime() + ticks);
+        SeaStates.set(level, state, FROM_WEST + 180.0, level.getGameTime() + ticks, origin(h, 0));
+    }
+
+    /**
+     * The wave field's origin for test {@code h} (WV1b): phase zero at the game time the test started, minus
+     * {@code phaseTicks}, and at the middle of its structure. Without it the phase the waves meet a hull at depends on
+     * the game time the test happens to start at and on where the runner placed the structure (the anchor term of
+     * {@link WaveField}), and the spill test measured anything from 0.17 to 18 blocks of water. Every call within one
+     * test gives the same origin.
+     */
+    private static WaveField.Origin origin(GameTestHelper h, int phaseTicks) {
+        net.minecraft.world.phys.Vec3 mid = h.absoluteVec(new net.minecraft.world.phys.Vec3(11.5, 0.0, 11.5));
+        return new WaveField.Origin(h.getLevel().getGameTime() - h.getTick() - phaseTicks, mid.x, mid.z);
     }
 
     private static void release(GameTestHelper h) {
@@ -234,26 +250,17 @@ public final class WaveGameTests {
 
     // ------------------------------------------------------------------ spilling
 
-    /** The 5×4×5 hull of the dry hull tests with an open trapdoor low in its west wall (plot cell y=7, deck y=8). */
+    /**
+     * The 5×4×5 hull of the dry hull tests with an open trapdoor low in its south wall, in the middle (plot cell y=7,
+     * deck y=8). The waves run toward +X, so the hull rolls about the Z axis and the hatch sits on the roll axis: its
+     * height follows the hull's heave and the small pitch of the crossing train, not the roll. (WV1 put the hatch in the
+     * west wall; the hull rolls it up and down by more than a block there, phase-locked to the crests, so whether a crest
+     * found the sill up or down, and how much water came in, depended on the wave phase at the start: WV1b.)
+     */
     private static DryHullGameTests.Fixture hatchHull(GameTestHelper h) {
-        return hatchHull(h, HATCH_BALLAST);
-    }
-
-    /** Cobblestone ballast blocks in the floor: the middle {@code ballast} cells (1, 5, 9, 13, ...) by distance. */
-    private static DryHullGameTests.Fixture hatchHull(GameTestHelper h, int ballast) {
         DryHullGameTests.basin(h, 0, 23, true);
         BlockPos helm = DryHullGameTests.hull(h, 9, false);
-        java.util.List<BlockPos> floor = new java.util.ArrayList<>();
-        for (int x = 9; x <= 13; x++) {
-            for (int z = 9; z <= 13; z++) {
-                floor.add(new BlockPos(x, 5, z));
-            }
-        }
-        floor.sort(java.util.Comparator.comparingInt(p -> Math.abs(p.getX() - 11) + Math.abs(p.getZ() - 11)));
-        for (int i = 0; i < ballast && i < floor.size(); i++) {
-            h.setBlock(floor.get(i), Blocks.COBBLESTONE); // ballast: the hull floats deeper
-        }
-        h.setBlock(new BlockPos(9, 7, 11), Blocks.OAK_TRAPDOOR.defaultBlockState().setValue(TrapDoorBlock.FACING, Direction.WEST));
+        h.setBlock(new BlockPos(11, 7, 13), Blocks.OAK_TRAPDOOR.defaultBlockState().setValue(TrapDoorBlock.FACING, Direction.SOUTH));
         DryHullGameTests.Fixture f = DryHullGameTests.assemble(h, helm);
         SailingRuntimes.getOrCreate(f.ship());
         return f;
@@ -268,56 +275,96 @@ public final class WaveGameTests {
                 if (!p.isPourPoint()) sill = Math.min(sill, p.sill());
             }
         }
-        return Double.isFinite(sill) ? sill - f.runtime().seaShipFrame() : Double.NaN;
+        double sea = f.runtime().seaShipFrame();
+        return Double.isFinite(sill) && Math.abs(sill - sea) < 100.0 ? sill - sea : Double.NaN;
     }
 
+    /** The hatch opens once the hull floats: during the first ticks after assembly it still sits a block deeper. */
     private static final int OPEN_AT = 60;
+    /** Water the hold takes: 3×3 cells, 2 high, under the deck (the hatch's cell is the upper layer). */
+    private static final double HOLD_VOLUME = 18.0;
     /**
-     * No ballast: the plain hull floats with the hatch's sill about 0.4 blocks above the still sea (measured: 0.38;
-     * 5 cobblestone blocks bring it to 0.03, 9 put it under water), above a calm crest (0.1) and well below a storm's
-     * (up to 1.2).
+     * Phase of the waves at the hull when the spill tests start [ticks of the field's time]; 0 in the suite. Any value
+     * must pass: WV1b ran the suite with the hatch opening in a trough too.
      */
-    private static final int HATCH_BALLAST = 0;
+    private static final int SPILL_PHASE = 0;
 
-
+    /**
+     * Opens the hatch at {@link #OPEN_AT} and measures the water that comes in over one beat of the wave trains
+     * ({@link #WINDOW}), with the field pinned to the test ({@link #origin}).
+     *
+     * <p><b>Threshold.</b> With the hull held still, the orifice law of the flooding simulation would let in
+     * {@code E = Σₜ c · min(1, eₜ) · √eₜ}, {@code eₜ = max(0, h(t) − s)}, over the window, with {@code h(t)} the crest at
+     * the hull's middle (the spill feed is the highest of five crests, so it is at least this), {@code s} the sill's
+     * height above the still sea when the hatch opens, and {@code c = BASE_FLOW · inflow_rate} (area 1). The hull rides
+     * the swell, so the test asks for half: a storm must put at least {@code min(E, HOLD_VOLUME) / 2} through the hatch,
+     * and {@code E} must be at least 1 block (the window holds a crest over the sill; with a storm's 1.2 and a sill near
+     * 0.3 it is about 15). A calm sea (crest 0.1, under the sill) must put in nothing.
+     */
     private static void spill(GameTestHelper h, SeaState state, boolean floods) {
-        ConfigOverrides.during(h, FloodingConfig.INFLOW_RATE, 10.0);
-        hold(h, state, 500);
-        DryHullGameTests.Fixture f = hatchHull(h);
-        BlockPos hatch = f.hold(-2, -2, 0);
+        double inflowRate = 10.0;
+        ConfigOverrides.during(h, FloodingConfig.INFLOW_RATE, inflowRate);
         ServerLevel level = h.getLevel();
-        // opened once the hull floats: during the first ticks after assembly it still sits a block deeper
+        SeaStates.set(level, state, FROM_WEST + 180.0, level.getGameTime() + OPEN_AT + WINDOW + 100, origin(h, SPILL_PHASE));
+        DryHullGameTests.Fixture f = hatchHull(h);
+        BlockPos hatch = f.hold(0, -2, 2);
+        BlockPos mid = f.hold(0, -2, 0);
+        double c = com.richardsenger.piratesnships.ship.hull.flooding.FloodParams.BASE_FLOW * inflowRate;
         h.runAfterDelay(OPEN_AT, () -> {
             h.assertTrue(level.getBlockState(hatch).is(Blocks.OAK_TRAPDOOR), "no hatch in the plot at " + hatch);
             level.setBlock(hatch, level.getBlockState(hatch).setValue(TrapDoorBlock.OPEN, true), net.minecraft.world.level.block.Block.UPDATE_ALL);
         });
-        double[] maxSpill = {0};
-        double[] before = {0};
-        h.runAfterDelay(OPEN_AT, () -> before[0] = f.runtime().simulation().totalVolume());
+        double[] before = {Double.NaN};
+        double[] sill = {Double.NaN};
+        double[] expected = {0};
+        double[] maxFeed = {0};
         h.onEachTick(() -> {
-            if (!f.ship().isRemoved()) {
-                maxSpill[0] = Math.max(maxSpill[0], WaveForces.spillHeight(h.getLevel(), f.ship().id()));
-                if (h.getTick() % 20 == 0) {
-                    Constants.LOG.info("[wave test] spill {} t={} hatch sill above sea {} spill {} water {}", state.id(), h.getTick(),
-                            String.format("%.2f", freeboard(f)),
-                            String.format("%.2f", WaveForces.spillHeight(h.getLevel(), f.ship().id())),
-                            String.format("%.2f", f.runtime().simulation().totalVolume()));
-                }
+            long t = h.getTick();
+            if (f.ship().isRemoved() || t < OPEN_AT || t >= OPEN_AT + WINDOW) {
+                return;
+            }
+            if (Double.isNaN(before[0])) {
+                before[0] = f.runtime().simulation().totalVolume();
+            }
+            net.minecraft.world.phys.Vec3 centre = f.ship().toWorld(net.minecraft.world.phys.Vec3.atCenterOf(mid));
+            if (Double.isNaN(sill[0]) && Double.isFinite(f.runtime().seaWorldY())) {
+                net.minecraft.world.phys.Vec3 sillWorld = f.ship().toWorld(
+                        new net.minecraft.world.phys.Vec3(hatch.getX() + 0.5, hatch.getY(), hatch.getZ() + 0.5));
+                sill[0] = sillWorld.y - f.runtime().seaWorldY();
+            }
+            double crest = SeaStates.field(level).heightAround(centre.x, centre.z, centre.x, centre.z, level.getGameTime());
+            double feed = WaveForces.spillHeight(level, f.ship().id());
+            maxFeed[0] = Math.max(maxFeed[0], feed);
+            if (Double.isFinite(sill[0])) {
+                double e = Math.max(0.0, crest - sill[0]);
+                expected[0] += c * Math.min(1.0, e) * Math.sqrt(e);
+            }
+            if ((t - OPEN_AT) % 20 == 0) {
+                Constants.LOG.info("[wave test] spill {} t={} crest at the middle {} feed {} hatch sill above sea {} water {}", state.id(), t,
+                        String.format("%.2f", crest), String.format("%.2f", feed), String.format("%.2f", freeboard(f)),
+                        String.format("%.2f", f.runtime().simulation().totalVolume() - before[0]));
             }
         });
-        h.runAfterDelay(OPEN_AT + 300, () -> {
+        h.runAfterDelay(OPEN_AT + WINDOW, () -> {
             double water = f.runtime().simulation().totalVolume() - before[0];
-            Constants.LOG.info("[wave test] spill {}: water {} in 300 ticks with the hatch open ({} before), highest crest feed {}, sill above sea {}",
-                    state.id(), String.format("%.2f", water), String.format("%.2f", before[0]), String.format("%.2f", maxSpill[0]),
-                    String.format("%.2f", freeboard(f)));
+            double threshold = Math.min(expected[0], HOLD_VOLUME) / 2.0;
+            Constants.LOG.info("[wave test] spill {}: water {} in {} ticks with the hatch open, still-hull estimate {}, threshold {}, "
+                            + "highest crest feed {}, sill above sea at opening {}", state.id(), String.format("%.2f", water), WINDOW,
+                    String.format("%.2f", expected[0]), String.format("%.2f", threshold), String.format("%.2f", maxFeed[0]),
+                    String.format("%.2f", sill[0]));
             release(h);
-            h.assertTrue(f.runtime().simulation().isOpen(f.runtime().simulation().analysis().grid().index(
-                    hatch.getX() - f.runtime().simulation().analysis().grid().originX(),
-                    hatch.getY() - f.runtime().simulation().analysis().grid().originY(),
-                    hatch.getZ() - f.runtime().simulation().analysis().grid().originZ())), "the open hatch did not reach the simulation");
+            var grid = f.runtime().simulation().analysis().grid();
+            h.assertTrue(f.runtime().simulation().isOpen(grid.index(hatch.getX() - grid.originX(), hatch.getY() - grid.originY(),
+                    hatch.getZ() - grid.originZ())), "the open hatch did not reach the simulation");
+            h.assertTrue(Double.isFinite(sill[0]), "never found the sea at the hull");
             if (floods) {
-                h.assertTrue(water > 0.5, "a storm put only " + water + " blocks of water through the low hatch");
+                h.assertTrue(sill[0] > 0.0 && sill[0] < SeaState.STORM.amplitude(),
+                        "the hatch's sill is not between the still sea and a storm crest: " + sill[0]);
+                h.assertTrue(expected[0] >= 1.0, "no storm crest rose over the sill in the window: estimate " + expected[0]);
+                h.assertTrue(water >= threshold, "a storm put only " + water + " blocks of water through the low hatch (threshold "
+                        + threshold + " from a still-hull estimate of " + expected[0] + ")");
             } else {
+                h.assertTrue(sill[0] > SeaState.CALM.amplitude(), "the hatch's sill is under a calm crest: " + sill[0]);
                 h.assertTrue(water < 0.01, "a calm sea put " + water + " blocks of water through the low hatch");
             }
             SableShips.remove(f.ship());
@@ -325,14 +372,14 @@ public final class WaveGameTests {
         });
     }
 
-    /** In a storm the crests spill water through an open hatch about 0.4 blocks above the still sea. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 460, batch = "pirates_n_ships_config_waves_spill_storm")
+    /** In a storm the crests spill water through an open hatch about 0.3 blocks above the still sea. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 640, batch = "pirates_n_ships_config_waves_spill_storm")
     public static void stormSpillsThroughALowHatch(GameTestHelper h) {
         spill(h, SeaState.STORM, true);
     }
 
     /** In a calm sea the same hatch stays dry. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 460, batch = "pirates_n_ships_config_waves_spill_calm")
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 640, batch = "pirates_n_ships_config_waves_spill_calm")
     public static void calmSeaKeepsALowHatchDry(GameTestHelper h) {
         spill(h, SeaState.CALM, false);
     }

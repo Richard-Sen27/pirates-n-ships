@@ -100,4 +100,20 @@ class WaveFieldTest {
         }
         assertEquals(1.0, weights, 1e-12);
     }
+
+    @Test
+    void anOriginShiftsTheFieldInTimeAndSpace() {
+        WaveField.Origin o = new WaveField.Origin(1000.0, 3000.0, -1200.0);
+        WaveField plain = new WaveField(1.2, 90.0);
+        WaveField pinned = new WaveField(1.2, 90.0, WaveField.COMPONENTS, o);
+        assertEquals(WaveField.Origin.NONE, plain.origin());
+        for (int i = 0; i < 50; i++) {
+            double ax = 3000 + i * 1.7, az = -1200 - i * 0.9, x = ax + 2, z = az - 1, t = 1000 + i * 11;
+            assertEquals(plain.heightAround(ax - 3000, az + 1200, x - 3000, z + 1200, t - 1000), pinned.heightAround(ax, az, x, z, t), 1e-9);
+            double[] a = plain.slopeAround(ax - 3000, az + 1200, x - 3000, z + 1200, t - 1000);
+            double[] b = pinned.slopeAround(ax, az, x, z, t);
+            assertEquals(a[0], b[0], 1e-9);
+            assertEquals(a[1], b[1], 1e-9);
+        }
+    }
 }

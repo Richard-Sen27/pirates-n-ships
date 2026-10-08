@@ -6,22 +6,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Predicate;
 
 /**
- * Where people stand on a ship's deck (WS3b): pure, in the ship's own (plot) coordinates. A spot is a floor block (a
- * block with a sturdy top, as the caller decides) between {@code minY} and {@code maxY} with {@value #HEADROOM} empty
- * cells above it; per column only the highest such floor counts, so the main deck wins over the hold below it and a
- * mast top above {@code maxY} never counts. The returned positions are the floor blocks (the feet stand on top).
+ * Where people stand on a ship's deck (WS3b): pure, in the ship's own (plot) coordinates. A spot is the topmost block
+ * of its column (so nothing of the ship is above it: open deck, never the hold below it) when that block is a floor (a
+ * sturdy top, as the caller decides) between {@code minY} and {@code maxY}; columns under a mast, a yard or a rail are
+ * left out, and a mast top above {@code maxY} never counts. The returned positions are the floor blocks (the feet
+ * stand on top).
  */
 public final class DeckSpots {
 
-    /** Empty cells needed above a floor. */
-    public static final int HEADROOM = 2;
     /** How far above the waterline a deck may lie (the sloop's deck is 5 above, a cabin roof 8 or 9). */
     public static final int MAX_DECK_HEIGHT = 10;
 
@@ -33,25 +30,17 @@ public final class DeckSpots {
      * a block of the set can be stood on.
      */
     public static List<BlockPos> candidates(Collection<BlockPos> blocks, Predicate<BlockPos> floor, int minY, int maxY) {
-        Set<BlockPos> occupied = new HashSet<>();
-        for (BlockPos b : blocks) occupied.add(b.immutable());
-        Map<Long, BlockPos> best = new HashMap<>();
-        for (BlockPos b : occupied) {
-            if (b.getY() < minY || b.getY() > maxY || !floor.test(b)) continue;
-            boolean clear = true;
-            for (int dy = 1; dy <= HEADROOM; dy++) {
-                if (occupied.contains(b.above(dy))) {
-                    clear = false;
-                    break;
-                }
-            }
-            if (!clear) continue;
+        Map<Long, BlockPos> top = new HashMap<>();
+        for (BlockPos b : blocks) {
             long column = ((long) b.getX() << 32) ^ (b.getZ() & 0xFFFFFFFFL);
-            BlockPos prev = best.get(column);
-            if (prev == null || prev.getY() < b.getY()) best.put(column, b);
+            BlockPos prev = top.get(column);
+            if (prev == null || prev.getY() < b.getY()) top.put(column, b.immutable());
         }
-        List<BlockPos> out = new ArrayList<>(best.values());
-        out.sort(Comparator.comparingInt(BlockPos::getZ).thenComparingInt(BlockPos::getX).thenComparingInt(BlockPos::getY));
+        List<BlockPos> out = new ArrayList<>();
+        for (BlockPos b : top.values()) {
+            if (b.getY() >= minY && b.getY() <= maxY && floor.test(b)) out.add(b);
+        }
+        out.sort(Comparator.comparingInt((BlockPos p) -> p.getZ()).thenComparingInt(p -> p.getX()).thenComparingInt(p -> p.getY()));
         return out;
     }
 

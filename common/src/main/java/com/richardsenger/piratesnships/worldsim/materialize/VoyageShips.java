@@ -40,8 +40,8 @@ public final class VoyageShips {
         ResourceKey<Level> dimension;
         long lastNear;
         long lastUpdate;
-        int submerged;
-        int capture;
+        int submerged = EndingRules.NOT_HELD;
+        int capture = EndingRules.NOT_HELD;
         int lastUnits = -1;
         boolean plundered;
         Map<ResourceLocation, Integer> overflow = Map.of();

@@ -6,9 +6,9 @@ import com.richardsenger.piratesnships.worldsim.faction.FactionEvent;
 import java.util.Locale;
 
 /**
- * A player's deed against an NPC ship (WS3b). The reputation layer (REP1, {@code rpg/deeds/Deeds}) records these
- * under the same ids once it is merged ({@link VoyageEndings#setDeedRecorder}); until then the faction side of the deed
- * is reported through {@code Factions.reportDeed} with {@link #factionEvent()}.
+ * A player's deed against an NPC ship (WS3b). {@link VoyageEndings} records it as the REP1 reputation deed
+ * {@link #reputationDeed()} (when the player is online) and reports its faction side through
+ * {@code Factions.reportDeed} with {@link #factionEvent()} (there is no deed-to-faction adapter on main yet).
  */
 public enum VoyageDeed {
     SINK_MERCHANT(Faction.MERCHANTS),
@@ -51,6 +51,22 @@ public enum VoyageDeed {
             case NAVY -> CAPTURE_NAVY;
             case PIRATES -> CAPTURE_PIRATE;
         };
+    }
+
+    /**
+     * The reputation deed (REP1) recorded for this act; empty for {@link #CAPTURE_MERCHANT}, which the law reports as
+     * the crime {@code piracy} and REP1's {@code LawDeeds} turns into {@code plunder_merchant}.
+     */
+    public java.util.Optional<com.richardsenger.piratesnships.rpg.deeds.Deed> reputationDeed() {
+        return java.util.Optional.ofNullable(switch (this) {
+            case SINK_MERCHANT -> com.richardsenger.piratesnships.rpg.deeds.Deed.SINK_MERCHANT;
+            case SINK_NAVY -> com.richardsenger.piratesnships.rpg.deeds.Deed.SINK_NAVY;
+            case SINK_PIRATE -> com.richardsenger.piratesnships.rpg.deeds.Deed.SINK_PIRATE;
+            case CAPTURE_MERCHANT -> null;
+            case CAPTURE_NAVY -> com.richardsenger.piratesnships.rpg.deeds.Deed.CAPTURE_NAVY;
+            case CAPTURE_PIRATE -> com.richardsenger.piratesnships.rpg.deeds.Deed.CAPTURE_PIRATE;
+            case PLUNDER_MERCHANT -> com.richardsenger.piratesnships.rpg.deeds.Deed.PLUNDER_MERCHANT;
+        });
     }
 
     /** The faction event that describes this deed's effect on the faction state. */

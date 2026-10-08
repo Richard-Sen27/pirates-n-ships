@@ -46,8 +46,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *       for the firing ship's owner); without one the faction event of the lost ship is reported as a world event.</li>
  *   <li><b>CAPTURED</b> (all fighters dead, a player aboard for {@code capture_hold_ticks}): the ship becomes the
  *       player's ({@code ShipData.withOwner}), the crew is released and stays aboard as ordinary crew, the voyage ends
- *       {@link VoyageEnd#CAPTURED}, the deed {@code capture_<faction>} and, for a non-pirate ship, the crime
- *       {@code piracy}.</li>
+ *       {@link VoyageEnd#CAPTURED}, the deed {@code capture_<faction>}; a merchant ship is the crime {@code piracy}
+ *       instead (REP1 records that as {@code plunder_merchant}).</li>
  *   <li><b>PLUNDERED</b> (cargo taken with a player aboard): the deed {@code plunder_merchant} once per voyage (merchant
  *       ships), the record's cargo follows the containers, the voyage sails on.</li>
  * </ul>
@@ -70,15 +70,26 @@ public final class VoyageEndings {
     public record Ending(Voyage voyage, UUID ship, Outcome outcome, Optional<UUID> player, @Nullable VoyageDeed deed,
                          @Nullable com.richardsenger.piratesnships.worldsim.faction.FactionEvent worldEvent) { }
 
-    /** Records a player's deed. REP1 replaces the default (faction side only) with {@code Deeds.record}. */
+    /** Records a player's deed. */
     @FunctionalInterface
     public interface DeedRecorder {
         void record(MinecraftServer server, UUID player, VoyageDeed deed);
     }
 
-    public static final DeedRecorder FACTION_ONLY = (server, player, deed) -> Factions.reportDeed(server, deed.factionEvent());
+    /**
+     * The default: the REP1 deed for an online player ({@code Deeds.record}) and the faction side through
+     * {@code Factions.reportDeed}. When a deed-to-faction adapter ({@code FactionDeeds}) lands, drop the second call.
+     */
+    public static final DeedRecorder DEFAULT = (server, player, deed) -> {
+        net.minecraft.server.level.ServerPlayer online = server.getPlayerList().getPlayer(player);
+        if (online != null) {
+            deed.reputationDeed().ifPresent(d -> com.richardsenger.piratesnships.rpg.deeds.Deeds.record(online, d,
+                    com.richardsenger.piratesnships.rpg.deeds.DeedContext.NONE));
+        }
+        Factions.reportDeed(server, deed.factionEvent());
+    };
 
-    private static volatile DeedRecorder recorder = FACTION_ONLY;
+    private static volatile DeedRecorder recorder = DEFAULT;
     private static final List<java.util.function.Consumer<Ending>> LISTENERS = new CopyOnWriteArrayList<>();
     private static final Map<UUID, EndingRules.Hit> HITS = new ConcurrentHashMap<>();
 
@@ -87,7 +98,7 @@ public final class VoyageEndings {
 
     /** Replaces how deeds are recorded (REP1 adapter). */
     public static void setDeedRecorder(DeedRecorder r) {
-        recorder = r == null ? FACTION_ONLY : r;
+        recorder = r == null ? DEFAULT : r;
     }
 
     /** Listens to every ending and plunder (WS4b, WS5, tests). */
@@ -221,7 +232,8 @@ public final class VoyageEndings {
         Voyages.end(server, v.id(), VoyageEnd.CAPTURED);
         VoyageDeed deed = VoyageDeed.capture(v.faction());
         recorder.record(server, player.getUUID(), deed);
-        if (v.faction() != Faction.PIRATES) {
+        if (v.faction() == Faction.MERCHANTS) {
+            // the law's piracy; REP1's LawDeeds turns it into plunder_merchant, so no capture_merchant deed here
             LawService.reportCrime(player, CrimeType.PIRACY, ship.id());
         }
         String name = registry.find(ship.id()).map(ShipData::name).orElse("");

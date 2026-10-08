@@ -84,6 +84,8 @@ public final class Materializer {
         }
     }
 
+    /** GameTest voyages older than this are ended by the check (longer than any test runs). */
+    static final long TEST_VOYAGE_TICKS = 1200;
     private static final Map<UUID, Long> RETRY_AFTER = new ConcurrentHashMap<>();
     private static final Map<UUID, CourseEvent.Type> PENDING = new ConcurrentHashMap<>();
     private static final List<String> MERCHANT_NAMES = List.of("Fair Wind", "Silver Gull", "Morning Star", "Good Hope",
@@ -107,15 +109,22 @@ public final class Materializer {
     /**
      * One check: tickets that ran out are released, loaded voyage ships are adopted (after a reload), every
      * materialised voyage is updated (endings, plunder, course, progress, dematerialisation), then the nearest voyage
-     * may appear. GameTest voyages ({@code gametest/…} origins) are left to their tests. Nothing appears in a check
+     * may appear. GameTest voyages ({@code gametest/…} origins) are left to their tests, and ended after
+     * {@value #TEST_VOYAGE_TICKS} ticks. Nothing appears in a check
      * that removed a ship (Sable reuses a freed plot at once, docs/sable-notes.md §9.0c).
      */
     public static void check(MinecraftServer server) {
         for (ServerLevel level : server.getAllLevels()) VoyageChunks.tick(level, level.getGameTime());
         if (!com.richardsenger.piratesnships.worldsim.WorldSimConfig.ENABLED.get()) return;
         boolean removed = adopt(server);
+        long now = server.overworld().getGameTime();
         for (Voyage v : Voyages.active(server)) {
-            if (v.state() == Voyage.State.MATERIALISED && !isTest(v)) removed |= update(server, v.id());
+            if (isTest(v)) {
+                // a GameTest that failed before it ended its voyage leaves the record behind
+                if (now - v.departedTick() > TEST_VOYAGE_TICKS) Voyages.end(server, v.id(), VoyageEnd.CANCELLED);
+                continue;
+            }
+            if (v.state() == Voyage.State.MATERIALISED) removed |= update(server, v.id());
         }
         if (!removed && MaterializeConfig.active()) trigger(server);
     }
@@ -273,7 +282,8 @@ public final class Materializer {
         int top = level.getHeight(Heightmap.Types.WORLD_SURFACE, bx, bz);
         BlockPos surface = new BlockPos(bx, top - 1, bz);
         FluidState water = level.getFluidState(surface);
-        if (!water.is(FluidTags.WATER) || !water.isSource() || !level.canSeeSky(surface.above())) return OptionalInt.empty();
+        // the heightmap's top is open to the sky already (no roof, no ice); sky light is not trusted, it updates late
+        if (!water.is(FluidTags.WATER) || !water.isSource()) return OptionalInt.empty();
         for (int d = 1; d <= 2; d++) {
             if (!level.getFluidState(surface.below(d)).is(FluidTags.WATER)) return OptionalInt.empty();
         }
@@ -504,12 +514,6 @@ public final class Materializer {
         VoyageChunks.clear();
         VoyageEndings.clear();
         RETRY_AFTER.clear();
-        PENDING.clear();
-    }
-
-    /** Forgets the in-memory links as a restart does (GameTests). */
-    static void forgetLinks() {
-        VoyageShips.clear();
         PENDING.clear();
     }
 

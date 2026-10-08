@@ -50,22 +50,34 @@ public final class EndingRules {
         return Math.min(1.0, floodVolume / insideVolume);
     }
 
-    /** Ticks the ship has been fully under the sea surface after {@code dt} more ticks. */
+    /** A hold (submerged, capture) that is not going on. */
+    public static final int NOT_HELD = -1;
+
+    /**
+     * How long a condition has held after {@code dt} more ticks: {@link #NOT_HELD} while it does not hold, 0 at the
+     * check that first sees it (the time before that check does not count), then growing by {@code dt}.
+     */
+    public static int held(int previous, boolean holds, int dt) {
+        if (!holds) return NOT_HELD;
+        return previous < 0 ? 0 : previous + Math.max(0, dt);
+    }
+
+    /** Ticks the ship has been fully under the sea surface after {@code dt} more ticks ({@link #held}). */
     public static int submergedTicks(int previous, boolean topUnderSea, int dt) {
-        return topUnderSea ? previous + Math.max(0, dt) : 0;
+        return held(previous, topUnderSea, dt);
     }
 
     public static boolean sunk(double floodFraction, boolean wreck, int submergedTicks, Params p) {
-        return wreck || floodFraction >= p.sunkFloodFraction() || submergedTicks >= p.submergedTicks();
+        return wreck || floodFraction >= p.sunkFloodFraction() || (submergedTicks >= 0 && submergedTicks >= p.submergedTicks());
     }
 
-    /** Ticks of an uninterrupted capture hold after {@code dt} more ticks. */
+    /** Ticks of an uninterrupted capture hold after {@code dt} more ticks ({@link #held}). */
     public static int captureTicks(int previous, int fightersAlive, boolean playerAboard, int dt) {
-        return fightersAlive <= 0 && playerAboard ? previous + Math.max(0, dt) : 0;
+        return held(previous, fightersAlive <= 0 && playerAboard, dt);
     }
 
     public static boolean captured(int captureTicks, Params p) {
-        return captureTicks >= p.captureHoldTicks();
+        return captureTicks >= 0 && captureTicks >= p.captureHoldTicks();
     }
 
     /** How a change of the cargo count from {@code before} to {@code after} counts. */

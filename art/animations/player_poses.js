@@ -458,6 +458,20 @@ F9.R = {
 F9.buildRope = function(){
 F9.make('rope_slide', 0.25, 'hold', [{t:0,pose:F9.R.REST},{t:0.25,pose:F9.R.HANG}]);
 };
+// Hauling pose (GR5, ART7): hand over hand on a rope frozen by sneaking, leaning back against it. One arm reaches
+// forward and up along the rope while the other pulls in to the belly, then they change over; the torso leans 18 to 22
+// degrees back (pivoted at the hips like every lean of this builder), right foot braced forward, left foot back.
+// Exported to common/src/main/resources/assets/pirates_n_ships/rope_animations/haul.json (loop), played by
+// PalRopeSlidePoses while the player hauls. Same convention as above.
+F9.H = {
+ REACH_R: {ra: [-115, -8, 0], la: [-55, 8, 0], lean: -18, rl: [-22, 0, 2], ll: [16, 0, -2]},
+ PASS_A: {ra: [-85, -8, 0], la: [-85, 8, 0], lean: -20, rl: [-22, 0, 2], ll: [16, 0, -2]},
+ REACH_L: {ra: [-55, -8, 0], la: [-115, 8, 0], lean: -22, rl: [-22, 0, 2], ll: [16, 0, -2]}
+};
+F9.buildHaul = function(){
+F9.make('haul', 1.0, 'loop', [{t:0,pose:F9.H.REACH_R},{t:0.25,pose:F9.H.PASS_A},{t:0.5,pose:F9.H.REACH_L},{t:0.75,pose:F9.H.PASS_A},{t:1.0,pose:F9.H.REACH_R}]);
+};
 F9.build();
 F9.buildFirearms();
 F9.buildRope();
+F9.buildHaul();

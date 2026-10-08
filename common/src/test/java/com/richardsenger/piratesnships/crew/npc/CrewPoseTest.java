@@ -3,8 +3,14 @@ package com.richardsenger.piratesnships.crew.npc;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** The animation controller's state choice: work beats sleeping beats sitting beats walking beats idle. */
+/**
+ * The animation controller's state choice: a station pose (ART7) beats work beats sleeping beats sitting beats walking
+ * beats idle.
+ */
 class CrewPoseTest {
 
     @Test
@@ -49,5 +55,46 @@ class CrewPoseTest {
         assertEquals("work", CrewPose.WORK.animation());
         assertEquals("sit", CrewPose.SIT.animation());
         assertEquals("sleep", CrewPose.SLEEP.animation());
+    }
+
+    @Test
+    void aStationPoseWinsOverEverythingElse() {
+        for (CrewPose station : new CrewPose[]{CrewPose.HELM, CrewPose.HELM_TURN_LEFT, CrewPose.HELM_TURN_RIGHT,
+                CrewPose.CANNON_AIM, CrewPose.CANNON_LOAD, CrewPose.CANNON_FIRE}) {
+            assertEquals(station, CrewPose.choose(false, false, false, false, station));
+            assertEquals(station, CrewPose.choose(true, true, false, false, station), "working at the station");
+        }
+        assertEquals(CrewPose.WORK, CrewPose.choose(false, true, false, false, null));
+        assertEquals(CrewPose.WORK, CrewPose.choose(false, true, false, false, CrewPose.IDLE), "not a station pose: ignored");
+    }
+
+    @Test
+    void stationPosesRoundTripThroughTheirSyncedId() {
+        int n = 0;
+        for (CrewPose p : CrewPose.values()) {
+            if (!p.isStationPose()) {
+                assertEquals(-1, p.stationId());
+                continue;
+            }
+            n++;
+            assertEquals(p, CrewPose.byStationId(p.stationId()));
+        }
+        assertEquals(6, n);
+        assertNull(CrewPose.byStationId(-1));
+        assertNull(CrewPose.byStationId(99));
+        assertTrue(CrewPose.values().length < Byte.MAX_VALUE, "the id is synced as a byte");
+    }
+
+    @Test
+    void stationAnimationNamesAndLoopModes() {
+        assertEquals("helm_hold", CrewPose.HELM.animation());
+        assertEquals("helm_turn_left", CrewPose.HELM_TURN_LEFT.animation());
+        assertEquals("helm_turn_right", CrewPose.HELM_TURN_RIGHT.animation());
+        assertEquals("cannon_aim", CrewPose.CANNON_AIM.animation());
+        assertEquals("cannon_load", CrewPose.CANNON_LOAD.animation());
+        assertEquals("cannon_fire", CrewPose.CANNON_FIRE.animation());
+        assertFalse(CrewPose.CANNON_FIRE.loops(), "the lunge plays once");
+        assertTrue(CrewPose.CANNON_LOAD.loops());
+        assertTrue(CrewPose.HELM.loops());
     }
 }

@@ -24,6 +24,8 @@ public enum WhistleOrder {
     PUMP(PumpOrder.PUMP, Constants.id("bilge_pump")),
     FIRE(CannonOrder.FIRE, Constants.id("cannon")),
     LOAD(CannonOrder.LOAD, ResourceLocation.withDefaultNamespace("gunpowder")),
+    /** WS4a: the gun crews aim and fire at hostile ships by themselves until released. */
+    FIRE_AT_WILL(CannonOrder.FIRE_AT_WILL, ResourceLocation.withDefaultNamespace("fire_charge")),
     RELEASE(null, Constants.id("sail_winch"));
 
     private static final List<WhistleOrder> ENTRIES = List.of(values());

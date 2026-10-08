@@ -168,6 +168,15 @@ public final class CannonService {
      * cooldown starts. An unloaded cannon only says what it needs.
      */
     public static Use fire(ServerLevel level, BlockPos pos, @Nullable Entity owner) {
+        return fire(level, pos, owner, 1.0);
+    }
+
+    /**
+     * {@link #fire(ServerLevel, BlockPos, Entity)} with the ball's block damage scaled by {@code blockDamageFactor}
+     * ({@link CannonRules#scaledBlocks}; WS4a: a crew firing by itself breaks {@code cannons.npc.npc_block_damage_multiplier}
+     * times the blocks).
+     */
+    public static Use fire(ServerLevel level, BlockPos pos, @Nullable Entity owner, double blockDamageFactor) {
         pos = master(level, pos);
         CannonBlockEntity be = cannon(level, pos);
         if (be == null) return Use.of(Outcome.NOT_A_CANNON);
@@ -192,6 +201,7 @@ public final class CannonService {
                 CannonConfig.BALL_LIFETIME_TICKS.get());
         ball.setOwner(owner);
         ball.setFiringShip(ship == null ? null : ship.id()); // FL2: who fired at whom
+        ball.setBlockDamageFactor(blockDamageFactor);
         level.addFreshEntity(ball);
 
         level.setBlock(pos, state.setValue(CannonBlock.LOAD, CannonLoad.EMPTY), Block.UPDATE_ALL);

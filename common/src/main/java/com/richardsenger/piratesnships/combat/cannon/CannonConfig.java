@@ -114,6 +114,14 @@ public final class CannonConfig {
     public static void init() {
     }
 
+    /**
+     * A sub-section {@code cannons.<name>} declared from another class of the cannon module (WS4a's
+     * {@code cannons.npc}, {@code combat.cannon.npc.GunneryConfig}), so that class needs no edit here.
+     */
+    public static ConfigSection section(String name, String comment) {
+        return S.section(name, comment);
+    }
+
     public static double elevationDegrees(int index) {
         return CannonRules.elevationDegrees(index, ELEVATION_STEPS.get(), MIN_ELEVATION.get(), MAX_ELEVATION.get());
     }

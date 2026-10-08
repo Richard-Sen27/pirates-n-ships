@@ -129,6 +129,16 @@ hauled by hand. **Pulling yourself in:** right-click the rope you are holding to
 sneak to let go. Only a rope tied off on a cleat or mooring ring is a line others can slide along. Server config
 `grapple.hauling`, `haul_stiffness`, `haul_damping`, `haul_max_force`, `haul_player_pull`.
 
+## Fire at will
+Pick "Fire at will" on the captain's whistle and your gun crews take over their cannons. Every second each crew
+raises or lowers its barrel one step toward the best elevation for the nearest hostile ship within its arc (15°
+either side of the barrel) and 64 blocks, leads a moving target, loads from powder and shot nearby, and fires when
+the shot will hit. Who counts as hostile depends on your own flag: under a navy flag they fire on the Jolly Roger
+and on wanted captains; under the Jolly Roger they fire on navy and merchant ships; under a merchant flag or none
+they fire only on the Jolly Roger. Nobody fires on a ship that has struck its colours, and your crew holds fire if
+you strike yours. Shots your crew fires on its own break fewer planks than a captain's "Fire!". "Release crew" ends
+it. Turn the ship to bring the guns to bear: a cannon cannot turn sideways. Server config `cannons.npc`.
+
 ## Boarding along the rope
 Once a grappling rope is latched onto another ship, look at the rope and use it: you hang from it and slide down to the
 lower end, following both ships as they move. Sneak to let go. A level rope is crawled slowly toward the hook. From the
@@ -275,6 +285,17 @@ in cold waters), the kraken. A cargo run puts a contract in your Contracts tab: 
 for a raised reward with no deposit. A treasure hunt hands you a treasure map; open the chest to finish. Completing a
 quest pays doubloons and raises your reputation with the giver's side (navy, pirates or villagers). Drop a quest in
 the tab or with `/pirates quest abandon <id>`; `/pirates quest list` shows your quests. Server config `quests`.
+
+## Pirate captains
+Every pirate island has a captain: a named pirate (for example "Black-Tooth Bartholomew Crowe") who keeps to the
+middle of his hut, or to the camp trail if the island has no captain's hut. He is a dangerous swordsman with 40
+health, and the navy keeps a standing bounty of 300 doubloons on him, posted on every notice board. To fight him
+one-on-one, sneak and use him with a sword in hand: if he accepts, his crew within 16 blocks keep out of the duel
+unless you strike them. The duel ends when one of you falls, when you run more than 32 blocks away, or after five
+minutes. If you hit him first he refuses: no honour, no duel. Slain, he drops his pirate hat, a purse of doubloons
+and a treasure map of his island, and you get a bounty proof to hand to a navy officer. Taken alive in shackles, the
+navy pays the captain's reward of 150 plus his bounty alive. Five days after his fall a successor with a new name and
+a new bounty takes his post. Server config `mobs.captain`.
 
 ## Pirate islands
 Pirate camps sit on beaches, rarer than villages, with a jetty (two berths), tents, a tavern hut, a captain's hut and

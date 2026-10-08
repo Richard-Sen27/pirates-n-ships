@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.mob.captain.IslandCaptains;
 import com.richardsenger.piratesnships.trade.market.PortKind;
 import com.richardsenger.piratesnships.world.WorldConfig;
 import com.richardsenger.piratesnships.world.island.TreasureChests;
@@ -62,7 +63,7 @@ import java.util.Optional;
  *     <li><b>Port.</b> {@link #afterPlace} records the port of {@code port_kind} with the berths and treasure markers
  *     read from the pieces' templates, binds the harbor desks, buries the treasure chests and (navy outposts, WG3)
  *     places the garrison posts of the chunk being placed ({@link PortService}, {@link TreasureChests},
- *     {@link Garrison}).</li>
+ *     {@link Garrison}); a pirate island places its named captain (BOS1, {@link IslandCaptains}).</li>
  * </ol>
  * Terrain adaptation comes from the JSON; all three ports use {@code none}, because vanilla's beardifier treats every
  * rigid piece alike and would raise land under the pier and around the quay (see {@code VillageData}).
@@ -232,6 +233,7 @@ public final class PortStructure extends Structure {
             if (chunkBox.isInside(site.pos())) TreasureChests.bury(level, site.pos(), random);
         }
         if (portKind == PortKind.NAVY_OUTPOST) Garrison.place(level, chunkBox, pieces);
+        if (portKind == PortKind.PIRATE_ISLAND) IslandCaptains.place(level, chunkBox, pieces, port);
     }
 
     @Override

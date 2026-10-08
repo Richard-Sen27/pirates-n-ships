@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.station.order;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.combat.cannon.npc.Gunnery;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
@@ -24,7 +25,8 @@ import org.jetbrains.annotations.Nullable;
  * stands on a ship, then issues the order to that ship's crew through {@link CrewStations}: a {@link CrewOrder} goes to
  * the crew at the stations whose kind takes it (sail orders to the winches, "pump" to the bilge pumps, "fire" and "load" to the cannons and swivel guns), and the
  * unmanned stations that take it become open jobs on the ship's {@link JobBoard} for free crew to claim (CR1). Only
- * sail orders are remembered on the whistle as its last order. "Release crew" frees everyone and clears the board.
+ * sail orders are remembered on the whistle as its last order. "Release crew" frees everyone, clears the board and ends
+ * "Fire at will" (WS4a, {@link Gunnery#clear}).
  */
 public final class WhistleOrders {
 
@@ -110,6 +112,7 @@ public final class WhistleOrders {
             // RELEASE, the only entry that is not a crew order so far: everyone leaves, the open jobs go too
             n = CrewStations.releaseShip(level, ship.id());
             JobBoard.clear(ship.id());
+            Gunnery.clear(ship); // WS4a: "Fire at will" ends with the release
             player.displayClientMessage(Component.translatable(KEY_RELEASED_ALL, n), true);
         }
         return new Result(Outcome.ISSUED, n, jobs);

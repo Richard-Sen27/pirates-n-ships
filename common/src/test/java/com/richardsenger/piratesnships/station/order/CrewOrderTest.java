@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.richardsenger.piratesnships.combat.cannon.CannonStation;
 import com.richardsenger.piratesnships.combat.cannon.CannonStation.CannonOrder;
+import com.richardsenger.piratesnships.combat.cannon.SwivelStation;
 import com.richardsenger.piratesnships.station.StationKind;
 import com.richardsenger.piratesnships.station.pump.PumpOrder;
 import com.richardsenger.piratesnships.station.pump.PumpStation;
@@ -21,9 +22,10 @@ class CrewOrderTest {
 
     @Test
     void allHoldsTheSailOrdersThenPumpThenTheGunOrders() {
-        assertEquals(List.of(SailOrder.HOIST, SailOrder.REEF, SailOrder.FURL, PumpOrder.PUMP, CannonOrder.FIRE, CannonOrder.LOAD),
+        assertEquals(List.of(SailOrder.HOIST, SailOrder.REEF, SailOrder.FURL, PumpOrder.PUMP, CannonOrder.FIRE, CannonOrder.LOAD,
+                        CannonOrder.FIRE_AT_WILL),
                 CrewOrder.all());
-        assertEquals(List.of("hoist", "reef", "furl", "pump", "fire", "load"), CrewOrder.ids());
+        assertEquals(List.of("hoist", "reef", "furl", "pump", "fire", "load", "fire_at_will"), CrewOrder.ids());
     }
 
     @Test
@@ -43,6 +45,20 @@ class CrewOrderTest {
         assertEquals("message.pirates_n_ships.crew.cannon_already_loaded", CannonOrder.LOAD.nothingToDoKey());
         assertEquals("message.pirates_n_ships.crew.cannon_no_supply", CannonOrder.LOAD.unableKey());
         assertTrue(CannonStation.INSTANCE.accepts(CannonOrder.LOAD));
+    }
+
+    /** WS4a: "Fire at will" has its own name and acknowledgement, shares the fire answers, and is a cannon order only. */
+    @Test
+    void fireAtWillIsACannonOrderOnly() {
+        assertEquals(CannonOrder.FIRE_AT_WILL, CrewOrder.byId("fire_at_will").orElseThrow());
+        assertEquals("cannon_order.pirates_n_ships.fire_at_will", CannonOrder.FIRE_AT_WILL.nameKey());
+        assertEquals("message.pirates_n_ships.crew.ack.fire_at_will", CannonOrder.FIRE_AT_WILL.ackKey());
+        assertEquals(CannonOrder.FIRE.unableKey(), CannonOrder.FIRE_AT_WILL.unableKey());
+        assertEquals(CannonOrder.FIRE.nothingToDoKey(), CannonOrder.FIRE_AT_WILL.nothingToDoKey());
+        assertTrue(CannonStation.INSTANCE.accepts(CannonOrder.FIRE_AT_WILL));
+        assertFalse(SwivelStation.INSTANCE.accepts(CannonOrder.FIRE_AT_WILL));
+        assertTrue(SwivelStation.INSTANCE.accepts(CannonOrder.FIRE));
+        assertTrue(SwivelStation.INSTANCE.accepts(CannonOrder.LOAD));
     }
 
     @Test

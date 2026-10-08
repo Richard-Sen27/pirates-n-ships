@@ -25,6 +25,8 @@ import java.util.UUID;
  *       {@code kraken}, else {@code monsterMin..monsterMax} sharks × {@code perShark};</li>
  *   <li>deliveries: the option's contract reward × {@code deliverMultiplier};</li>
  *   <li>treasure: {@code treasure};</li>
+ *   <li>captain hunts (QST1b): the nearest living captain ({@link CaptainOption}) within {@code captainRadius},
+ *       {@code captain}; at most one captain hunt among one port's offers;</li>
  * </ul>
  * every reward × {@code rewardScale}, at least 1. An offer is open from its day through {@code day + offerDays − 1}.
  */
@@ -41,12 +43,34 @@ public final class QuestGenerator {
     public record TreasureOption(ResourceLocation port, BlockPos site) {
     }
 
-    /** Where and when the offers are made, and what the world can back. */
+    /**
+     * A living pirate captain the port could send a player after (QST1b): his entity id and name, his post's
+     * horizontal {@code distance} from the port and the compass {@code bearing} to it ({@link #bearing}).
+     */
+    public record CaptainOption(UUID id, String name, double distance, String bearing) {
+    }
+
+    /**
+     * Where and when the offers are made, and what the world can back.
+     *
+     * @param captains the living captains in the port's dimension (any distance; the generator applies the radius)
+     */
     public record Context(ResourceLocation port, PortKind kind, Climate climate, long day, long seed,
-                          List<DeliveryOption> deliveries, List<TreasureOption> treasures) {
+                          List<DeliveryOption> deliveries, List<TreasureOption> treasures, List<CaptainOption> captains) {
         public Context {
             deliveries = List.copyOf(deliveries);
             treasures = List.copyOf(treasures);
+            captains = List.copyOf(captains);
+        }
+
+        public Context(ResourceLocation port, PortKind kind, Climate climate, long day, long seed,
+                       List<DeliveryOption> deliveries, List<TreasureOption> treasures) {
+            this(port, kind, climate, day, seed, deliveries, treasures, List.of());
+        }
+
+        /** The same context without captains (the port already offers a captain hunt). */
+        public Context withoutCaptains() {
+            return new Context(port, kind, climate, day, seed, deliveries, treasures, List.of());
         }
     }
 
@@ -61,24 +85,54 @@ public final class QuestGenerator {
             if (t.deedTracked() && !p.deedsTracked()) continue;
             if (t == QuestType.DELIVER && ctx.deliveries().isEmpty()) continue;
             if (t == QuestType.FIND_TREASURE && (!p.treasureEnabled() || ctx.treasures().isEmpty())) continue;
+            if (t == QuestType.HUNT_CAPTAIN && quarry(ctx, p).isEmpty()) continue;
             out.add(t);
         }
         return out;
     }
 
-    /** {@code count} offers for the port and day of {@code ctx} (fewer only if no type is offerable). */
+    /**
+     * {@code count} offers for the port and day of {@code ctx} (fewer only if no type is offerable). A captain hunt is
+     * made at most once (the port has one quarry); pass {@link Context#withoutCaptains} if the port already offers one.
+     */
     public static List<Quest> offers(Context ctx, int count, QuestParams p) {
-        List<QuestType> types = offerable(ctx, p);
+        List<QuestType> types = new ArrayList<>(offerable(ctx, p));
         if (types.isEmpty() || count <= 0) return List.of();
         TradeRandom.Stream rng = stream(ctx, "offers");
         List<Quest> out = new ArrayList<>();
         List<QuestType> pool = new ArrayList<>(types);
         while (out.size() < count) {
-            if (pool.isEmpty()) pool.addAll(types);
+            if (pool.isEmpty()) {
+                if (types.isEmpty()) break;
+                pool.addAll(types);
+            }
             QuestType t = pool.remove(rng.nextInt(pool.size()));
+            if (t == QuestType.HUNT_CAPTAIN) types.remove(t);
             out.add(make(t, ctx, rng, p));
         }
         return List.copyOf(out);
+    }
+
+    /** The captain a hunt from {@code ctx}'s port goes after: the nearest within {@code captainRadius}, if any. */
+    public static Optional<CaptainOption> quarry(Context ctx, QuestParams p) {
+        CaptainOption best = null;
+        for (CaptainOption c : ctx.captains()) {
+            if (c.distance() > p.captainRadius()) continue;
+            if (best == null || c.distance() < best.distance()) best = c;
+        }
+        return Optional.ofNullable(best);
+    }
+
+    /**
+     * The compass point (eight of them) of a direction {@code dx} east, {@code dz} south: {@code north},
+     * {@code north_east}, {@code east}, ... ({@code north} for no offset).
+     */
+    public static String bearing(double dx, double dz) {
+        String[] points = {"north", "north_east", "east", "south_east", "south", "south_west", "west", "north_west"};
+        if (dx == 0 && dz == 0) return points[0];
+        double deg = Math.toDegrees(Math.atan2(dx, -dz));
+        int i = (int) Math.floorMod(Math.round(deg / 45.0), 8L);
+        return points[i];
     }
 
     /** One offer of {@code type} (the operator command); empty if the port can't offer it now. */
@@ -137,6 +191,12 @@ public final class QuestGenerator {
                 target = new QuestTarget.Treasure(o.port(), o.site());
                 needed = 1;
                 reward = p.treasure();
+            }
+            case HUNT_CAPTAIN -> {
+                CaptainOption c = quarry(ctx, p).orElseThrow(() -> new IllegalArgumentException("No captain in reach of " + ctx.port()));
+                target = new QuestTarget.Victim(c.id(), c.name(), Optional.of(c.bearing()));
+                needed = 1;
+                reward = p.captain();
             }
             default -> throw new IllegalArgumentException("Quest type " + type.id() + " is not offered yet");
         }

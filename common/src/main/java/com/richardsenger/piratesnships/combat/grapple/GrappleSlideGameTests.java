@@ -38,8 +38,9 @@ import java.util.Collection;
  * {@link DryHullGameTests} float in one basin as in {@link GrappleGameTests}: ship A at x 2..6 (the thrower's), ship B
  * at x 16..20; the hook bites into B's west wall at deck height. For the crow's nest A carries a three-plank mast on
  * its helm, the thrower standing on top. GR5: a rope is a line to slide along only when its near end is tied off, so
- * the slide tests tie the thrower's rope to a cleat on A's deck ({@link #tieToCleat}); a thrower using their own
- * hand-held rope pulls themselves along it to the hook instead (the crow's nest, own ship and musket tests). Hauling is switched off ({@code haul_force} 0, so every test that changes it
+ * the slide tests tie the thrower's rope to a cleat on A's deck ({@link #tieToCleat}). GR6: a thrower using their own
+ * hand-held rope is pulled along it only as a climb; the crow's nest, own ship and musket tests have the hook level
+ * with or below the thrower and expect the refusal ({@code NOT_A_CLIMB}). Hauling is switched off ({@code haul_force} 0, so every test that changes it
  * has its own batch) so the ships lie still while the riders slide. Players are mock players (not in the level):
  * riding, the level ticks them as passengers of the rider, which is all the slide needs. Ships are removed by
  * {@code ShipTestCleanup}; hooks are released at the end.
@@ -151,20 +152,19 @@ public final class GrappleSlideGameTests {
     // ------------------------------------------------------------------ sliding
 
     /**
-     * GR5: the thrower in the crow's nest uses their own hand-held rope. Its near end is not pinned in mid-air; they
-     * are pulled hand over hand along it at {@code slide_min_speed} and land on the other ship, the rope running from
-     * the hook to their hand all the way.
+     * GR6 (was GR5's pull from the crow's nest): the thrower on the mast top uses their own hand-held rope to B's deck,
+     * far below them. A hand-held rope is only climbed, so nothing happens but the tie-off hint: no rider, the player
+     * stays where they are, the rope keeps running from the hook to their hand and its near end is not fixed.
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 320, batch = BATCH + "crows_nest")
-    public static void fromTheCrowsNestTheThrowerPullsThemselvesAlongTheRopeToTheOtherShip(GameTestHelper h) {
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 120, batch = BATCH + "crows_nest")
+    public static void fromTheCrowsNestTheThrowersOwnRopeIsNoClimb(GameTestHelper h) {
         Ships s = twoShips(h, true);
         ServerLevel level = h.getLevel();
         Player player = player(h);
         boolean[] hold = {true};
         keepOn(h, player, s.a().ship(), s.a().helmPlot().above(4), hold); // on top of the mast
         GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
-        long[] boardedAt = {-1};
-        double[] startDistance = {0};
+        Vec3[] at = new Vec3[1];
         h.runAfterDelay(20, () -> hook[0] = hookB(level, player, s.b()));
         h.runAfterDelay(grabAt(), () -> {
             GrapplingHookEntity g = hook[0];
@@ -173,40 +173,26 @@ public final class GrappleSlideGameTests {
             Vec3 far = g.ropeFarEnd(level);
             h.assertTrue(near.y > far.y + 4.0, "the crow's nest is not high above the hook: " + near + " / " + far);
             hold[0] = false;
-            player.fallDistance = 6.0f;
+            at[0] = player.position();
             lookAt(player, ropeAt(level, g, 0.1));
             RopeSlideService.Board b = RopeSlideService.tryBoard(level, player, g, 0.0);
-            h.assertTrue(b == RopeSlideService.Board.OK, "grabbing the rope was refused: " + b);
-            h.assertTrue(player.getVehicle() instanceof RopeRiderEntity r && r.pulling(), "the player is not pulled along the rope");
+            h.assertTrue(b == RopeSlideService.Board.NOT_A_CLIMB, "a rope down from the crow's nest was used: " + b);
+            h.assertTrue(RopeSlideService.lastHint(player) == level.getGameTime(), "no tie-off hint");
+            h.assertTrue(!player.isPassenger(), "the player mounts the rope");
+            assertNoRiders(h);
             h.assertTrue(!g.nearEndFixed(), "the thrower's rope end was fixed in mid-air");
-            h.assertTrue(player.fallDistance == 0.0f, "grabbing the rope did not reset the fall distance");
-            startDistance[0] = player.position().distanceTo(g.ropeFarEnd(level));
-            boardedAt[0] = h.getTick();
         });
         h.runAfterDelay(grabAt() + 10, () -> {
-            h.assertTrue(player.isPassenger(), "the player let go after a few ticks");
             GrapplingHookEntity g = hook[0];
+            h.assertTrue(!player.isPassenger(), "the player rides the rope");
+            assertNoRiders(h);
+            h.assertTrue(player.position().distanceTo(at[0]) < 0.1, "the player moved: " + player.position() + " vs " + at[0]);
             Vec3 hand = player.getEyePosition().subtract(0, GrapplingHookEntity.HAND_BELOW_EYES, 0);
             h.assertTrue(g.ropeNearEnd(level).distanceTo(hand) < 1.0e-6, "the rope does not run to the player's hand: " + g.ropeNearEnd(level));
-            double closer = startDistance[0] - player.position().distanceTo(g.ropeFarEnd(level));
-            h.assertTrue(closer > 0.5, "the player was not pulled toward the hook: " + closer + " blocks closer");
-            h.assertTrue(player.fallDistance == 0.0f, "falling while pulled");
-        });
-        h.runAfterDelay(grabAt() + 11, () -> h.succeedWhen(() -> {
-            h.assertTrue(!player.isPassenger(), "still pulling");
-            long took = h.getTick() - boardedAt[0];
-            // about 13 blocks from the mast top to B's deck at slide_min_speed, a little slack for the ships' bobbing
-            double expected = startDistance[0] / GrappleConfig.SLIDE_MIN_SPEED.get();
-            h.assertTrue(took <= expected + 20, "the pull took " + took + " ticks, expected about " + expected);
-            assertStandsOnB(h, level, player, s.b());
-            h.assertTrue(player.fallDistance == 0.0f, "landed with fall distance " + player.fallDistance);
-            h.assertTrue(player.getHealth() == player.getMaxHealth(), "hurt by the slide");
-            assertNoRiders(h);
-            GrapplingHookEntity g = hook[0];
-            h.assertTrue(!g.isRemoved() && g.state() == GrapplingHookEntity.State.LATCHED, "the rope let go when the thrower arrived");
-            h.assertTrue(!g.nearEndFixed(), "the rope's near end was left behind");
+            h.assertTrue(!g.isRemoved() && g.state() == GrapplingHookEntity.State.LATCHED && !g.nearEndFixed(), "the rope changed");
             g.release(GrappleRules.Release.NONE);
-        }));
+            h.succeed();
+        });
     }
 
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 180, batch = BATCH + "water")
@@ -415,8 +401,12 @@ public final class GrappleSlideGameTests {
         }));
     }
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 220, batch = BATCH + "own_ship")
-    public static void aRopeFromTheMastTopToTheOwnDeckPullsTheThrowerDown(GameTestHelper h) {
+    /**
+     * GR6 (was GR5's pull down the own ship): from the mast top the thrower hooks their own deck below. Their hand-held
+     * rope is no climb, so using it does nothing but hint; a line down the own ship needs the rope tied off.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 120, batch = BATCH + "own_ship")
+    public static void aRopeFromTheMastTopToTheOwnDeckIsNoClimb(GameTestHelper h) {
         Ships s = twoShips(h, true);
         ServerLevel level = h.getLevel();
         Player player = player(h);
@@ -424,6 +414,7 @@ public final class GrappleSlideGameTests {
         keepOn(h, player, s.a().ship(), s.a().helmPlot().above(4), hold); // on top of the mast
         BlockPos edge = s.a().helmPlot().offset(2, -1, 0); // A's own east wall at deck height
         GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
+        Vec3[] at = new Vec3[1];
         h.runAfterDelay(20, () -> {
             Vec3 target = s.a().ship().toWorld(Vec3.atCenterOf(edge));
             hook[0] = GrappleService.launch(level, player, target.add(2.0, 0, 0), new Vec3(-GrappleConfig.THROW_VELOCITY.get(), 0, 0),
@@ -435,22 +426,21 @@ public final class GrappleSlideGameTests {
             h.assertTrue(s.a().ship().id().equals(g.shipId()) && edge.equals(g.latchedBlock()), "latched on " + g.shipId() + " " + g.latchedBlock());
             h.assertTrue(g.haulKind() == GrappleRules.Haul.NONE, "a rope within one ship pulls: " + g.haulKind());
             hold[0] = false;
+            at[0] = player.position();
             lookAt(player, ropeAt(level, g, 0.1));
             RopeSlideService.Board b = RopeSlideService.tryBoard(level, player, g, 0.0);
-            h.assertTrue(b == RopeSlideService.Board.OK, "grabbing the rope was refused: " + b);
-            h.assertTrue(player.getVehicle() instanceof RopeRiderEntity r && r.pulling(), "the thrower is not pulled along the rope");
-            h.assertTrue(!g.nearEndFixed(), "the rope end was fixed in mid-air");
+            h.assertTrue(b == RopeSlideService.Board.NOT_A_CLIMB, "a rope down to the own deck was used: " + b);
+            h.assertTrue(RopeSlideService.lastHint(player) == level.getGameTime(), "no tie-off hint");
+            h.assertTrue(!player.isPassenger() && !g.nearEndFixed(), "the player mounts the rope or its end was fixed");
         });
-        h.runAfterDelay(grabAt() + 1, () -> h.succeedWhen(() -> {
-            h.assertTrue(!player.isPassenger(), "still pulling");
-            Vec3 spot = s.a().ship().toWorld(Vec3.atBottomCenterOf(edge.above()));
-            double d = player.position().distanceTo(spot);
-            h.assertTrue(d < 1.0, "the player landed " + d + " blocks from the deck spot above the hook");
-            h.assertTrue(player.getHealth() == player.getMaxHealth(), "hurt by the slide");
+        h.runAfterDelay(grabAt() + 10, () -> {
+            h.assertTrue(!player.isPassenger(), "the player rides the rope");
             assertNoRiders(h);
+            h.assertTrue(player.position().distanceTo(at[0]) < 0.1, "the player moved");
             h.assertTrue(!hook[0].isRemoved() && hook[0].state() == GrapplingHookEntity.State.LATCHED, "the rope let go");
             hook[0].release(GrappleRules.Release.NONE);
-        }));
+            h.succeed();
+        });
     }
 
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 220, batch = BATCH + "zip_line")
@@ -590,12 +580,13 @@ public final class GrappleSlideGameTests {
             InteractionResult r = spare.getMainHandItem().use(level, spare, InteractionHand.MAIN_HAND).getResult();
             h.assertTrue(r.consumesAction() && spare.isUsingItem(), "the musket did not start loading the spare hook: " + r);
             spare.stopUsingItem();
-            // an intentional use with an empty hand still works: it pulls the thrower along the rope (GR5)
+            // an intentional use with an empty hand gets past the musket guard, but the hook sits at eye height, less
+            // than climb_min_rise above the feet: no climb, only the tie-off hint (GR6)
             bare.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
             RopeSlideService.Board ok = RopeSlideService.tryBoard(level, bare, hooks[0], RopeSlideService.SERVER_TOLERANCE);
-            h.assertTrue(ok == RopeSlideService.Board.OK && bare.getVehicle() instanceof RopeRiderEntity puller && puller.pulling(),
-                    "an empty hand could not pull along the rope: " + ok);
-            h.assertTrue(!hooks[0].nearEndFixed(), "the pull fixed the rope's near end");
+            h.assertTrue(ok == RopeSlideService.Board.NOT_A_CLIMB && !bare.isPassenger(),
+                    "an empty hand on a level rope was not refused as no climb: " + ok);
+            h.assertTrue(!hooks[0].nearEndFixed(), "the use fixed the rope's near end");
             hooks[0].release(GrappleRules.Release.NONE);
             hooks[1].release(GrappleRules.Release.NONE);
         });

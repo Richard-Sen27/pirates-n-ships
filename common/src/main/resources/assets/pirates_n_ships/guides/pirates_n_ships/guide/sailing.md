@@ -412,6 +412,17 @@ and a treasure map of his island, and you get a bounty proof to hand to a navy o
 navy pays the captain's reward of 150 plus his bounty alive. Five days after his fall a successor with a new name and
 a new bounty takes his post. Server config `mobs.captain`.
 
+A captain does not always stay home. Every two days he may put to sea (an even chance) on a pirate ship under the
+Jolly Roger, out to 600 blocks along the lane toward a village or navy outpost, or into open sea, and back again;
+while he is away his hut stands empty and `/pirates mob captain list` says he is at sea. He sails as the ship's lead
+fighter, and his ship fires on navy and merchant ships it meets. Carry a letter of marque or a bounty proof and he
+hunts you: within 192 blocks his ship circles yours and its guns take you as their target, until you get away,
+strike your colours, or he loses you. He never strikes his own colours. Killing him at sea counts as on land (duel
+him aboard, shoot him, or sink his ship: if it goes down with him, whoever hit it last gets his bounty proof), and
+his ship is yours to capture once he and his fighters are dead. Shackled aboard, he is your prisoner and his ship
+sails on without him. Otherwise he comes home to his post when his voyage ends. Server config
+`world_simulation.captain`.
+
 ## Pirate islands
 Pirate camps sit on beaches, rarer than villages, with a jetty (two berths), tents, a tavern hut, a captain's hut and
 a fence's shack under the Jolly Roger. Pirates hang about the camp day and night and attack strangers. The fence's

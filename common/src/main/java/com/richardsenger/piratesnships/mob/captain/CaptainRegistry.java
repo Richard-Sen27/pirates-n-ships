@@ -71,6 +71,17 @@ public final class CaptainRegistry extends SavedData {
         return true;
     }
 
+    /**
+     * Marks the living captain {@code id} of {@code port} at sea on {@code voyage}, or back at his post ({@code empty});
+     * false if he is not that island's living captain (BOS2).
+     */
+    public boolean setVoyage(ResourceLocation port, UUID id, Optional<UUID> voyage) {
+        CaptainEntry e = captains.get(port);
+        if (e == null || !e.alive() || !e.id().equals(id)) return false;
+        if (!e.voyage().equals(voyage)) put(port, e.withVoyage(voyage));
+        return true;
+    }
+
     public static CaptainRegistry load(CompoundTag tag, HolderLookup.Provider registries) {
         CaptainRegistry r = new CaptainRegistry();
         if (tag.contains("captains", Tag.TAG_COMPOUND)) {

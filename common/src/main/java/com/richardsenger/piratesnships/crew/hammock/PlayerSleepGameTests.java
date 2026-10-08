@@ -136,6 +136,10 @@ public final class PlayerSleepGameTests {
             }
         };
         p.moveTo(at.x, at.y, at.z, 0f, 0f);
+        // No gravity: doTick moves this player on the server, where it sinks through a ship's deck at about 0.08
+        // blocks a tick (measured); a real player is moved by its client, which collides with the ship. The tests check
+        // where the sleeper is put, not that fall.
+        p.setNoGravity(true);
         level.addNewPlayer(p);
         removeWhenDone(h, p);
         h.onEachTick(() -> {

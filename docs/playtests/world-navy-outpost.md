@@ -95,10 +95,11 @@ in the fort's court. Switch to survival for the combat steps. For quicker checks
      walls). In an outpost generated before MOB2 the same works: the squad is built from the outpost when its officer
      first loads.
 2. **Patrol.** `/pirates mob squad patrol`.
-   - **Expected:** the officer and three soldiers (the two land-gate guards and the nearer wall guard; never a tower
-     roof guard, who only has a ladder) leave their posts at once. They walk in file, about 1.5 blocks apart, the
+   - **Expected:** the officer and three soldiers (the two land-gate guards and the east wall's guard, the nearest
+     ones that can walk to him; never a tower roof guard, who only has a ladder) leave their posts at once. They walk in file, about 1.5 blocks apart, the
      officer first: the court, the land gate, the sea gate, out onto the quay, then up the court's stone stairs to the
-     walkway and along the east walls, back along the sea-side walkway and along the west walls. At each waypoint the
+     walkway and to each wall of the east run, back along the sea-side walkway and to each wall of the west run (each wall's
+     waypoint is at its end toward the gate, short of its gun deck). At each waypoint the
      officer waits for the file to close up, then they stand for `post_pause_seconds`. A soldier who falls far behind
      runs. After the last wall they walk back to their posts, stand still again and face their post's way (wall
      guards to the sea, gate guards landward).
@@ -115,8 +116,10 @@ in the fort's court. Switch to survival for the combat steps. For quicker checks
      officer's target becomes the soldiers' target. After the fight (you leave or die) the squad gathers on the officer
      where it stands and walks on to the waypoint.
 5. **Refill.** Kill one soldier of the squad (`/kill` on him) during a patrol.
-   - **Expected:** at the next waypoint another garrison soldier (the other wall's guard) leaves his post and runs to
-     join the file at the end. Kill the officer instead: the soldiers walk back to their posts on their own after
+   - **Expected:** at the next waypoint another garrison soldier who can walk to the officer leaves his post and runs
+     to join the file at the end. With the default garrison (6) that may be nobody: the west wall's guard stands
+     beyond his wall's gun deck and vanilla pathfinding found no way out in the GameTests (see open problems); with
+     `world.structures.navy_outpost.garrison_soldiers = 9` a gate walkway guard joins. Kill the officer instead: the soldiers walk back to their posts on their own after
      about five seconds.
 6. **Night.** Let night fall during a patrol started by itself (`/time set 12000` and wait, or wait for the timer).
    - **Expected:** with `mobs.squad.night_at_posts = true` the squad turns back at nightfall and no patrol starts until
@@ -131,9 +134,12 @@ in the fort's court. Switch to survival for the combat steps. For quicker checks
    - **Expected:** the squad goes on (or walks home if it was fighting); nobody stays stuck away from his post.
 
 ### Open problems to watch (MOB2)
-- **Pathing on the walls.** The walkway is reached only by the court's stairs on the gate's east side; walls far out
-  on long runs (depth 5) make a long walk with pathfinding limited to the mobs' follow range (32). A waypoint the
-  officer gets no closer to for 10 seconds is skipped; please report where that happens.
+- **Pathing on the walls.** The walkway is reached only by the court's stairs on the gate's east side. Each wall's
+  gun deck (cannon, barrels, shot locker, a closed trapdoor) leaves a one-block passage along the hoarding that
+  vanilla pathfinding handles badly: in the GameTests the west wall's guard (beyond his deck) could not plan a path
+  to the court, so he is never drawn; the route's wall waypoints stop short of the decks, and walls farther out need
+  the squad to cross a deck. A waypoint the officer gets no closer to for 10 seconds is skipped; please report where
+  that happens, and whether anyone gets stuck at a gun.
 - **Ladders.** Vanilla mobs don't climb ladders on purpose: tower roof guards are never drafted, and a soldier who
   fell off a wall and can only get back by ladder keeps trying to reach his post.
 - **Terrain.** A waypoint that terrain filled is skipped; a post filled by terrain has no guard (WG3).

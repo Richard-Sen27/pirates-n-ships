@@ -1,8 +1,11 @@
 package com.richardsenger.piratesnships.rpg.quest;
 
+import com.richardsenger.piratesnships.law.flag.Faction;
 import com.richardsenger.piratesnships.rpg.deeds.Deed;
 import com.richardsenger.piratesnships.trade.contract.DeliveryContract;
 import com.richardsenger.piratesnships.trade.market.PortKind;
+import com.richardsenger.piratesnships.worldsim.voyage.VoyageEnd;
+import com.richardsenger.piratesnships.worldsim.voyage.VoyageKind;
 
 import java.util.Optional;
 
@@ -37,9 +40,57 @@ public final class QuestRules {
             case QuestEvent.ContractChanged c -> contract(quest, c);
             case QuestEvent.TreasureLooted l -> quest.type() == QuestType.FIND_TREASURE && quest.target() instanceof QuestTarget.Treasure t
                     && t.port().equals(l.port()) && t.site().equals(l.site()) ? done(quest) : quest;
+            case QuestEvent.ShipDefeated s -> countsShip(quest.type(), s) ? step(quest, 1) : quest;
+            case QuestEvent.EscortSeen e -> escortSeen(quest, e);
+            case QuestEvent.VoyageEnded e -> escortEnded(quest, e);
             case QuestEvent.Day d -> d.day() > quest.deadlineDay() ? quest.withState(QuestState.FAILED) : quest;
             case QuestEvent.Complete c -> done(quest);
         };
+    }
+
+    /**
+     * Whether getting the better of a ship counts toward a quest of {@code type} (QST2): a convoy raid counts plundered
+     * merchant convoys; a patrol hunt navy patrols sunk or captured; a ship hunt any ship under the pirates' colours sunk
+     * or captured (pirate voyages and WS5's raiders alike).
+     */
+    public static boolean countsShip(QuestType type, QuestEvent.ShipDefeated s) {
+        boolean beaten = s.how() == QuestEvent.How.SUNK || s.how() == QuestEvent.How.CAPTURED;
+        return switch (type) {
+            case PLUNDER_CONVOY -> s.how() == QuestEvent.How.PLUNDERED && s.kind() == VoyageKind.CONVOY && s.faction() == Faction.MERCHANTS;
+            case HUNT_PATROL -> beaten && s.kind() == VoyageKind.PATROL;
+            case HUNT_SHIP -> beaten && s.faction() == Faction.PIRATES;
+            default -> false;
+        };
+    }
+
+    /**
+     * Legs of an escorted convoy's route the player must have been close by on: {@code fraction} of {@code legs},
+     * rounded up, at least 1 and at most {@code legs}.
+     */
+    public static int escortLegsNeeded(int legs, double fraction) {
+        int l = Math.max(1, legs);
+        int n = (int) Math.ceil(l * Math.max(0.0, Math.min(1.0, fraction)) - 1e-9);
+        return Math.max(1, Math.min(l, n));
+    }
+
+    /**
+     * The player was close to the escorted convoy on leg {@code leg}: a leg after the last one counted adds one to the
+     * progress (never more than {@code needed}); the quest stays active until the convoy arrives.
+     */
+    private static Quest escortSeen(Quest quest, QuestEvent.EscortSeen e) {
+        if (quest.type() != QuestType.ESCORT || !(quest.target() instanceof QuestTarget.Escort t) || !t.follows(e.voyage())) return quest;
+        if (e.leg() <= t.lastLeg()) return quest;
+        return quest.withTarget(t.withLastLeg(e.leg())).withProgress(Math.min(quest.needed(), quest.progress() + 1));
+    }
+
+    /**
+     * The escorted convoy's voyage ended: arrived with enough legs escorted completes the quest, arrived with too few,
+     * sunk, captured, lost or cancelled fails it.
+     */
+    private static Quest escortEnded(Quest quest, QuestEvent.VoyageEnded e) {
+        if (quest.type() != QuestType.ESCORT || !(quest.target() instanceof QuestTarget.Escort t) || !t.follows(e.voyage())) return quest;
+        if (e.reason() == VoyageEnd.ARRIVED && quest.progress() >= quest.needed()) return done(quest);
+        return quest.withState(QuestState.FAILED);
     }
 
     /** Whether {@code deed} counts toward a quest of {@code type}. */
@@ -81,6 +132,16 @@ public final class QuestRules {
     /** The offer, accepted on {@code day}: active, with its deadline {@code deadlineDays} days later. */
     public static Quest accept(Quest offer, long day, int deadlineDays) {
         return offer.withState(QuestState.ACTIVE).withProgress(0).withDeadline(day + Math.max(0, deadlineDays));
+    }
+
+    /**
+     * An accepted escort bound to its convoy: the voyage {@code voyage} named {@code name} sailing {@code legs} legs;
+     * {@code needed} becomes {@link #escortLegsNeeded}. Other quests are returned unchanged.
+     */
+    public static Quest bindEscort(Quest quest, java.util.UUID voyage, String name, int legs, double fraction) {
+        if (!(quest.target() instanceof QuestTarget.Escort t)) return quest;
+        QuestTarget.Escort bound = t.withConvoy(voyage, name, legs);
+        return quest.withTarget(bound).withNeeded(escortLegsNeeded(bound.legs(), fraction)).withProgress(0);
     }
 
     /** Whether the offer can no longer be accepted on {@code day}. */

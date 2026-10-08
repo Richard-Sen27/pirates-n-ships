@@ -51,7 +51,21 @@ public final class QuestConfig {
             "Blocks from a village or navy outpost within which the nearest pirate island's living captain can be hunted "
                     + "(hunt_captain; none in reach = no captain hunt offered)");
     public static final ConfigValue<Integer> POLL_TICKS = S.intRange("poll_ticks", 20, 1, 1200,
-            "How often (ticks) deliveries, treasure hunts and deadlines of online players are checked");
+            "How often (ticks) deliveries, treasure hunts, escorts and deadlines of online players are checked");
+    private static final QuestParams.Sea SEA = QuestParams.Sea.DEFAULTS;
+    public static final ConfigValue<Boolean> SEA_QUESTS = S.bool("sea_quests", SEA.enabled(),
+            "Offer quests at sea: escorts (villages, navy outposts), convoy raids and patrol hunts (pirate islands), ship hunts "
+                    + "(navy outposts). Off = none offered; quests already accepted still finish");
+    public static final ConfigValue<Integer> SEA_COUNT_MIN = S.intRange("sea_count_min", SEA.countMin(), 1, 50,
+            "Fewest ships a convoy raid, patrol hunt or ship hunt asks for");
+    public static final ConfigValue<Integer> SEA_COUNT_MAX = S.intRange("sea_count_max", SEA.countMax(), 1, 50,
+            "Most ships a convoy raid, patrol hunt or ship hunt asks for");
+    public static final ConfigValue<Integer> ESCORT_RADIUS = S.intRange("escort_radius", SEA.escortRadius(), 8, 1024,
+            "Blocks from an escorted convoy within which you count as sailing with it");
+    public static final ConfigValue<Double> ESCORT_FRACTION = S.doubleRange("escort_fraction", SEA.escortFraction(), 0.0, 1.0,
+            "Share of the convoy's legs you must sail within escort_radius of it for the escort to count when it arrives");
+    public static final ConfigValue<Integer> ESCORT_MAX_DISTANCE = S.intRange("escort_max_distance", SEA.escortMaxDistance(), 100, 100_000,
+            "Farthest destination (blocks, straight line) a port sends an escorted convoy to");
 
     private static final ConfigSection REWARDS = S.section("rewards", "Doubloons per quest, before reward_scale");
     public static final ConfigValue<Integer> PER_PIRATE = REWARDS.intRange("per_pirate", 30, 0, 100_000, "Per pirate of a hunt");
@@ -66,11 +80,22 @@ public final class QuestConfig {
             "For bringing down a named pirate captain (the navy's bounty on him comes on top)");
     public static final ConfigValue<Double> DELIVER_MULTIPLIER = REWARDS.doubleRange("deliver_multiplier", 1.5, 0.0, 100.0,
             "A delivery quest pays this times what an ordinary contract for the same cargo would (paid on delivery, no deposit)");
+    public static final ConfigValue<Integer> PER_CONVOY = REWARDS.intRange("per_convoy", (int) SEA.perConvoy(), 0, 100_000,
+            "Per merchant convoy plundered for a convoy raid");
+    public static final ConfigValue<Integer> PER_PATROL = REWARDS.intRange("per_patrol", (int) SEA.perPatrol(), 0, 100_000,
+            "Per navy patrol sunk or captured for a patrol hunt");
+    public static final ConfigValue<Integer> PER_SHIP = REWARDS.intRange("per_ship", (int) SEA.perShip(), 0, 100_000,
+            "Per pirate ship sunk or captured for a ship hunt");
+    public static final ConfigValue<Integer> ESCORT = REWARDS.intRange("escort", (int) SEA.escort(), 0, 1_000_000,
+            "Base reward of an escort");
+    public static final ConfigValue<Integer> ESCORT_PER_1000 = REWARDS.intRange("escort_per_1000", (int) SEA.escortPer1000(), 0, 1_000_000,
+            "Escort reward per 1000 blocks between the two ports (straight line)");
 
     private static final ConfigSection TYPES = S.section("types",
             "Quest types each port kind offers (hunt_pirates, kill_monster, turn_in, deliver, find_treasure, hunt_navy, "
-                    + "hunt_captain). hunt_navy is only offered at pirate islands, turn_in only at navy outposts, hunt_pirates and "
-                    + "hunt_captain never at pirate islands");
+                    + "hunt_captain, escort, plunder_convoy, hunt_patrol, hunt_ship). hunt_navy, plunder_convoy and hunt_patrol are "
+                    + "only offered at pirate islands, turn_in and hunt_ship only at navy outposts, hunt_pirates, hunt_captain and "
+                    + "escort never at pirate islands");
 
     /** {@code quests.types.<kind>}. */
     public static final Map<PortKind, ConfigValue<List<String>>> TYPE_LISTS;
@@ -106,6 +131,13 @@ public final class QuestConfig {
         return new QuestParams(OFFERS_PER_PORT.get(), OFFER_DAYS.get(), DEADLINE_DAYS.get(), MAX_ACTIVE.get(), REWARD_SCALE.get(),
                 HUNT_COUNT_MIN.get(), HUNT_COUNT_MAX.get(), MONSTER_COUNT_MIN.get(), MONSTER_COUNT_MAX.get(), TURN_IN_COUNT_MAX.get(),
                 KRAKEN_CHANCE.get(), PER_PIRATE.get(), PER_NAVY.get(), PER_PRISONER.get(), PER_SHARK.get(), KRAKEN.get(), TREASURE.get(),
-                CAPTAIN.get(), DELIVER_MULTIPLIER.get(), CAPTAIN_HUNT_RADIUS.get(), TREASURE_QUEST_ENABLED.get(), Reputation.enabled(), types);
+                CAPTAIN.get(), DELIVER_MULTIPLIER.get(), CAPTAIN_HUNT_RADIUS.get(), TREASURE_QUEST_ENABLED.get(), Reputation.enabled(), types,
+                sea());
+    }
+
+    /** The sea quests' settings (QST2). */
+    public static QuestParams.Sea sea() {
+        return new QuestParams.Sea(SEA_QUESTS.get(), SEA_COUNT_MIN.get(), SEA_COUNT_MAX.get(), PER_CONVOY.get(), PER_PATROL.get(),
+                PER_SHIP.get(), ESCORT.get(), ESCORT_PER_1000.get(), ESCORT_MAX_DISTANCE.get(), ESCORT_FRACTION.get(), ESCORT_RADIUS.get());
     }
 }

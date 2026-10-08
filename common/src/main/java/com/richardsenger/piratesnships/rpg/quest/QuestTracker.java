@@ -28,8 +28,9 @@ import java.util.Optional;
  *   <li>{@link #onDeath} ({@code LIVING_DEATH}): a kill by a player (the shooter of a projectile, a pet's owner, as the
  *       law counts it) for the monster quests;</li>
  *   <li>{@link #onServerTick}: every {@code quests.poll_ticks}, each online player's deliveries (the contract's state),
- *       treasure hunts ({@link TreasureBinding#found}), captain hunts (his {@code CaptainRegistry} entry) and
- *       deadlines.</li>
+ *       treasure hunts ({@link TreasureBinding#found}), captain hunts (his {@code CaptainRegistry} entry), escorts
+ *       ({@link SeaQuests#pollEscort}) and deadlines;</li>
+ *   <li>the sea quests' endings and escorted convoys: {@link SeaQuests} (QST2).</li>
  * </ul>
  * A captain hunt (QST1b) completes on {@link QuestEvent.VictimDown}: his death with the player as offender
  * ({@link #onDeath}), or the {@code kill_pirate} / {@code turn_in_pirate} deed whose context names him. Both happen in
@@ -82,6 +83,8 @@ public final class QuestTracker {
             } else if (q.target() instanceof QuestTarget.Treasure t
                     && TreasureBinding.found(PortRegistry.get(server).index().byId(t.port()), t.site())) {
                 changed.addAll(Quests.apply(player, new QuestEvent.TreasureLooted(t.port(), t.site())));
+            } else if (q.target() instanceof QuestTarget.Escort e) {
+                changed.addAll(SeaQuests.pollEscort(player, e));
             } else if (q.type() == QuestType.HUNT_CAPTAIN && q.target() instanceof QuestTarget.Victim v && !Quests.captainAlive(server, v.id())) {
                 List<Quest> lost = Quests.apply(player, new QuestEvent.VictimLost(v.id()));
                 if (!lost.isEmpty()) player.displayClientMessage(Component.translatable(QuestText.TARGET_LOST, v.name()), false);

@@ -16,12 +16,13 @@ import java.util.UUID;
  * What exactly a quest is about, as a sum type with a dispatch codec ({@code {"kind": "cargo", ...}}):
  * nothing more than the type ({@link None}: hunts and turn-ins count deeds), an entity type ({@link Kill}), a cargo
  * run ({@link Cargo}, with the contract made on accepting), a buried treasure ({@link Treasure}) or one entity
- * ({@link Victim}, for the later captain and ship hunts).
+ * ({@link Victim}, for the captain hunt) or a convoy to escort ({@link Escort}, QST2).
  */
-public sealed interface QuestTarget permits QuestTarget.None, QuestTarget.Kill, QuestTarget.Cargo, QuestTarget.Treasure, QuestTarget.Victim {
+public sealed interface QuestTarget permits QuestTarget.None, QuestTarget.Kill, QuestTarget.Cargo, QuestTarget.Treasure, QuestTarget.Victim,
+        QuestTarget.Escort {
 
     enum Kind implements StringRepresentable {
-        NONE, KILL, CARGO, TREASURE, VICTIM;
+        NONE, KILL, CARGO, TREASURE, VICTIM, ESCORT;
 
         public static final Codec<Kind> CODEC = StringRepresentable.fromEnum(Kind::values);
 
@@ -32,6 +33,7 @@ public sealed interface QuestTarget permits QuestTarget.None, QuestTarget.Kill, 
                 case CARGO -> Cargo.MAP_CODEC;
                 case TREASURE -> Treasure.MAP_CODEC;
                 case VICTIM -> Victim.MAP_CODEC;
+                case ESCORT -> Escort.MAP_CODEC;
             };
         }
 
@@ -122,6 +124,46 @@ public sealed interface QuestTarget permits QuestTarget.None, QuestTarget.Kill, 
         @Override
         public Kind kind() {
             return Kind.VICTIM;
+        }
+    }
+
+    /**
+     * A convoy to {@code destination} to sail with (QST2). While offered, {@code voyage} is empty and {@code name} blank:
+     * accepting makes the convoy leave the giving port. {@code legs} is the number of legs of its route and
+     * {@code lastLeg} the last leg on which the player was seen close by (−1: none yet); the quest's progress counts
+     * such legs and its {@code needed} is {@link QuestRules#escortLegsNeeded}.
+     */
+    record Escort(ResourceLocation destination, Optional<UUID> voyage, String name, int legs, int lastLeg) implements QuestTarget {
+        static final MapCodec<Escort> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+                ResourceLocation.CODEC.fieldOf("destination").forGetter(Escort::destination),
+                UUIDUtil.STRING_CODEC.optionalFieldOf("voyage").forGetter(Escort::voyage),
+                Codec.STRING.optionalFieldOf("name", "").forGetter(Escort::name),
+                Codec.INT.optionalFieldOf("legs", 0).forGetter(Escort::legs),
+                Codec.INT.optionalFieldOf("last_leg", -1).forGetter(Escort::lastLeg)
+        ).apply(i, Escort::new));
+
+        /** An offer: no convoy yet. */
+        public Escort(ResourceLocation destination) {
+            this(destination, Optional.empty(), "", 0, -1);
+        }
+
+        /** Accepted: the convoy {@code voyage} named {@code name} with {@code legs} legs (at least 1). */
+        public Escort withConvoy(UUID voyage, String name, int legs) {
+            return new Escort(destination, Optional.of(voyage), name, Math.max(1, legs), -1);
+        }
+
+        public Escort withLastLeg(int leg) {
+            return new Escort(destination, voyage, name, legs, leg);
+        }
+
+        /** Whether this escort follows the voyage {@code id}. */
+        public boolean follows(UUID id) {
+            return voyage.isPresent() && voyage.get().equals(id);
+        }
+
+        @Override
+        public Kind kind() {
+            return Kind.ESCORT;
         }
     }
 }

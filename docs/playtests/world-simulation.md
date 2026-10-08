@@ -144,3 +144,68 @@ logs every appearance, dematerialisation, adoption and ending).
 
 Report: screenshots of steps 1, 4 and 5, the list output before and after steps 6 and 7, `latest.log`, and anything a
 ship did that looked wrong (spawning inside land, fighters falling off, a crew member walking overboard).
+
+## WS4b: navy patrols and the hunt
+
+Covered headless: which ship the navy hunts (Jolly Roger, blown cover, a bounty from `hunt_bounty_minimum`, a wanted
+owner; never NPC ships or struck colours), the nearest pick within `hunt_radius`, the chase verdicts (contact, give-up,
+lost, out of range, surrender linger, colours raised again), the patrol routes (outpost to outpost, out and back
+toward a pirate island, the pursuit line capped at the first land after open sea, the ring around the quarry, the way
+back to the route) and the spawn chance under aggression 0 and 1 (JUnit `HuntRulesTest`, `PatrolRoutesTest`,
+`PatrolPlannerTest`); in basins (`NavyGameTests`): a Jolly Roger player ship 100 blocks from an abstract patrol is
+chased after one check, a clean merchant ship is ignored, a bountied owner is hunted from 50 doubloons, a patrol out of
+contact gives up and heads back to its route, the toggle stops the hunt, a materialised patrol sets its gun crew on
+the quarry and hits it, striking the colours silences the gun and the patrol leaves after the linger, a patrol
+soldier killing a pirate raises Navy–Pirates tension. Not covered: a real patrol ship circling a moving ship at sea,
+real outposts and lanes, players switching flags in the middle of a chase.
+
+**Known gap:** the default navy templates (`voyages.navy_templates`: the two starter sloops) carry no cannons, so a
+patrol chases and circles but cannot fire unless its ship has a cannon with powder and balls aboard (step 4 adds one
+by hand).
+
+### Setup
+A creative world with cheats and open ocean. Your own ship at sea (assembled by you, so you are its owner) with a
+flagpole, and you aboard it. `/pirates law score set @s 0` and `/pirates law bounty clear @s` so you start clean. Keep
+`logs/latest.log`, with the `pirates_n_ships` log level at debug if you can (the hunt logs every chase and its end).
+
+### Steps
+1. **A clean ship is left alone.** Fly the merchant flag. Face the open sea and run
+   `/pirates world voyages spawn near patrol`, then `/pirates world patrols`.
+   - **Expected:** a navy sloop with the navy flag, an officer and soldiers appears about 50 blocks ahead and sails
+     across your view. The list shows it `materialised ... on patrol from ...`. It does not turn toward you.
+2. **The Jolly Roger is hunted.** Raise the Jolly Roger on your flagpole.
+   - **Expected:** within about a second the chat says "A navy patrol has sighted the <your ship> and gives chase!".
+     `/pirates world patrols` shows `chasing ship <id>`. The patrol turns toward you and, once there, circles you at
+     about 20 blocks (`standoff_distance`). Sail away slowly: it follows; its course is renewed every 2 seconds while
+     you move. Note how often its helmsman's course lines appear in chat (they repeat with each new course).
+3. **The guns (only with a gun aboard).** With the patrol circling you, land on its deck, place a cannon facing
+   outboard and a chest with gunpowder and cannonballs next to it, and step back aboard your own ship.
+   - **Expected:** within about 2 seconds a deckhand mans the cannon (it is posted on the patrol's job board), loads,
+     and fires whenever your ship is within 15° of its barrel and 64 blocks (WS4a). Its balls break about half the
+     blocks a player's would (`cannons.npc.npc_block_damage_multiplier`).
+4. **Striking the colours.** While it fires, strike your colours at your flagpole.
+   - **Expected:** the chat says the patrol "holds its fire"; at most one more shot (a fuse already lit), then none.
+     The patrol keeps circling you for 30 seconds (`surrender_linger_ticks` 600), then the chat says it "returns to its
+     route", and it sails back to its line. `/pirates world patrols` shows it `on patrol` again. Raising the Jolly
+     Roger again during the 30 seconds makes it chase and fire again.
+5. **A bounty is hunted whatever you fly.** Fly the merchant flag. `/pirates law bounty place @s 60`, then spawn a
+   patrol (step 1).
+   - **Expected:** it gives chase as in step 2. With `/pirates law bounty clear @s` during the chase it breaks off
+     ("returns to its route" is not said; it simply heads back) within a second. A bounty of 40 alone is not enough
+     (`hunt_bounty_minimum` 50).
+6. **Giving up.** Set `world_simulation.navy.give_up_ticks` to 400, raise the Jolly Roger, spawn a patrol and sail away
+   from it at full speed, keeping more than 64 blocks (`contact_distance`) between you.
+   - **Expected:** 20 seconds after it last came within 64 blocks the chat says it "has lost the <ship> and breaks off
+     the chase", and it turns back. Fleeing beyond 384 blocks (`lose_distance`) ends the chase at once.
+7. **Abstract patrols.** Set `world_simulation.patrols_per_day` to 100 and stand by a navy outpost (another outpost
+   within 3000 blocks, or a pirate island). Wait a few minutes and watch `/pirates world patrols`.
+   - **Expected:** patrols set out (more while `/pirates world factions` shows a high navy aggression), sail outpost
+     to outpost or out to about 400 blocks toward the pirate island and back, and appear as ships when they come
+     within the materialise radius of you. Under the Jolly Roger a patrol that is still a record turns toward you from
+     up to 256 blocks (the chat line comes before you can see it) and appears as a ship when it comes close.
+8. **Toggle.** `world_simulation.navy.enabled = false`: no patrols set out, a chasing patrol breaks off within a
+   second, and the Jolly Roger draws no chase.
+
+Report: screenshots of steps 2 and 4, the `/pirates world patrols` output during steps 2 and 4, `latest.log`, and
+anything a patrol ship did that looked wrong (circling too wide or ramming you, spinning on the spot, sailing onto land
+during a chase, chat spam from its helmsman).

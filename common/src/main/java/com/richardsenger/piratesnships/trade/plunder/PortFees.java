@@ -17,7 +17,10 @@ public final class PortFees {
     private PortFees() {
     }
 
-    /** The fee a ship pays to dock, given the captain's navy standing (a plain number from the reputation system). */
+    /**
+     * The fee a ship pays to dock, given the captain's navy standing: the navy reputation (−100..100, REP1), read by
+     * {@code TradeService.dockingFee(PortKind, Player)} through {@code rpg.reputation.Reputation#navyStanding}.
+     */
     public static int dockingFee(PortKind kind, int navyStanding, Params p) {
         if (!p.enabled() || kind != PortKind.NAVY_OUTPOST) return 0;
         if (navyStanding >= p.waiverStanding()) return 0;

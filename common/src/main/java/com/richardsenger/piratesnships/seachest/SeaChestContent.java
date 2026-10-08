@@ -29,6 +29,10 @@ public final class SeaChestContent {
     public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<SeaChestBlockEntity>> BLOCK_ENTITY =
             ModRegistry.blockEntity("sea_chest", SeaChestBlockEntity::new, BLOCK);
 
+    /** Seats its holder on a floating sea chest and paddles it (SC2). */
+    public static final RegistryEntry<Item, PaddleItem> PADDLE = ModRegistry.item("paddle",
+            () -> new PaddleItem(new Item.Properties().stacksTo(1)));
+
     /** 0.875 wide like the block model's footprint when floating, 0.75 high. */
     public static final RegistryEntry<EntityType<?>, EntityType<SeaChestEntity>> ENTITY = ModRegistry.entity("sea_chest",
             () -> EntityType.Builder.<SeaChestEntity>of(SeaChestEntity::new, MobCategory.MISC).sized(0.875f, 0.75f)

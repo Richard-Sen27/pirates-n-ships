@@ -39,7 +39,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `crew_stations` | Crew stations on/off, time per trim step. |
 | `flags` | Hoisting delay, flags following the wind at its exact angle (land and ship check intervals), banners as flags. |
 | `dry_hull` | Also: whether slabs, stairs and hatches are drawn dry in their empty half. |
-| `sea_chest` | Sea chest on/off, worn speed, sink pull, wind drift and its cap, draft. |
+| `sea_chest` | Sea chest on/off, worn speed, sink pull, wind drift and its cap, draft; paddling on/off, speed, backing speed, turn rate, hunger. |
 | `survival` | Cold water on/off and freeze rate, warm effect length, swimming hunger multiplier. |
 | `provisions` | Consumption, rations, spoilage, scurvy, rum, water barrel capacity, rain refill. |
 | `cargo_trade.market_backend` | Desk reach, maximum trade quantity, refresh interval of open market screens. |

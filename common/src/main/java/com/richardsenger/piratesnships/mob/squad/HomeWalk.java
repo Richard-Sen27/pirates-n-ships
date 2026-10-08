@@ -56,7 +56,7 @@ final class HomeWalk {
         }
         if (--repath <= 0 || mob.getNavigation().isDone()) {
             BlockPos p = post.pos();
-            mob.getNavigation().moveTo(p.getX() + 0.5, p.getY(), p.getZ() + 0.5, 0, speed); // accuracy 0: onto the post itself
+            SquadReach.wide(mob, () -> mob.getNavigation().moveTo(p.getX() + 0.5, p.getY(), p.getZ() + 0.5, 0, speed)); // accuracy 0: onto the post itself
             repath = 20;
         }
     }

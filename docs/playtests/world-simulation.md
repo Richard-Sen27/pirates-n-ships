@@ -27,8 +27,14 @@ Setup: `./gradlew :neoforge:runClient`, a new creative world with cheats, operat
 5. **Toggle.** Config `world_simulation.factions.enabled = false` (or `world_simulation.enabled = false`).
    - **Expected:** `report` answers "... changed nothing", `/time add 24000` leaves the values as they are.
 6. **Reset.** `/pirates world factions reset` puts the start state back.
-7. **Later (once WS4b exists):** kill a pirate near a navy mob, or let a navy patrol kill one; the Navy–Pirates tension
-   rises by 0.05 per kill.
+7. **A deed moves the factions (WS1b).** `/pirates world factions reset`, then in survival kill a navy soldier
+   (`/summon pirates_n_ships:navy_soldier`), and sell plundered cargo at a pirate fence (or plunder a merchant ship).
+   - **Expected:** after the kill, Navy–Pirates tension 0.28 and Navy's aggression 0.35 (the first hit counts as
+     attack_navy, the death as kill_navy); after the sale, the pirates' wealth up by 50. With your navy reputation at 0
+     or above (`/pirates rep`, set it with `/pirates rep set`), killing a pirate raises
+     Navy–Pirates tension by 0.05; at −1 or below it leaves the factions alone. With `reputation.enabled = false` or
+     `world_simulation.factions.enabled = false` no deed changes the values.
+8. **Later (once WS4b exists):** let a navy patrol kill a pirate; the Navy–Pirates tension rises by 0.05 per kill.
 
 ## WS2: sea lanes, voyages, convoys
 

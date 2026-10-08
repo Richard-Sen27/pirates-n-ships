@@ -29,6 +29,7 @@ Minecraft mod. Full spec: `docs/design.md`. Read it at the start of every sessio
 ## Commands
 - Build all enabled modules: `./gradlew build`
 - Logic tests (NeoForge runner): `./gradlew :neoforge:runGameTestServer`
+- Scoped GameTests (what an agent runs; the merge stage runs the whole suite): `JAVA_TOOL_OPTIONS="-Dpirates_n_ships.gametest.only=FooGameTests,BarGameTests" ./gradlew :neoforge:runGameTestServer` (class simple names, case-insensitive; `ModGameTests.ONLY_PROPERTY`).
 - Generate data: `./gradlew :neoforge:runData` (output goes to `common/src/generated/resources`)
 - Dev client (run by the human, not by you): `./gradlew :neoforge:runClient`
 - Releasing (the human tags, not you): local builds are `<mod_version>-dev`; pushing a tag `vX.Y.Z[-alpha.N|-beta.N]` builds, tests and publishes to Modrinth, CurseForge and GitHub. Scheme, release notes (`tools/release_notes.py`) and setup: `docs/releasing.md`.
@@ -46,6 +47,6 @@ Minecraft mod. Full spec: `docs/design.md`. Read it at the start of every sessio
 
 ## Workflow
 - Plan before implementing any feature that touches more than 2 files. List the files (with their module: common / neoforge / fabric) and the approach first.
-- One feature per session. Make sure `./gradlew build` and GameTests pass before declaring something done.
+- One feature per session. Make sure `./gradlew build` and the GameTests of the classes you created or changed pass (scoped run) before declaring something done; the full suite runs once in the merge stage, never in every agent (the machine has 16 GB and a full run costs a server for 25 minutes).
 - Spikes (milestones 1–4) may temporarily live in `neoforge/`. Move them into `common` before milestone 5.
 - The human playtests in-game and reports back with screenshots and logs. Ask for a playtest when a feature can't be verified headlessly, and state exactly what to check.

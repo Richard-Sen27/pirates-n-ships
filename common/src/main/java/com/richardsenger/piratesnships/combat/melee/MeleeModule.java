@@ -63,7 +63,7 @@ public final class MeleeModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(MeleeGameTests.class, MeleeNetGameTests.class,
+        return List.of(MeleeGameTests.class, MeleeNetGameTests.class, MeleeSneakGameTests.class,
                 com.richardsenger.piratesnships.combat.melee.sound.MeleeSoundGameTests.class);
     }
 }

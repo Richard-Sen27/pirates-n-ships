@@ -93,6 +93,11 @@ public final class RpgModule implements ModModule {
                     case COMPLETE_NAVY_QUEST -> "Completing a navy quest";
                     case COMPLETE_PIRATE_QUEST -> "Completing a pirate quest";
                     case COMPLETE_VILLAGE_QUEST -> "Completing a village quest";
+                    case SINK_MERCHANT -> "Sinking a merchant ship";
+                    case SINK_NAVY -> "Sinking a navy ship";
+                    case SINK_PIRATE -> "Sinking a pirate ship";
+                    case CAPTURE_NAVY -> "Capturing a navy ship";
+                    case CAPTURE_PIRATE -> "Capturing a pirate ship";
                 });
             }
         });

@@ -129,9 +129,9 @@ public final class LawConfig {
             "Blocks within which navy soldiers and officers notice a ship's flag (Jolly Roger, false colours)");
     public static final ConfigValue<Integer> OBSERVE_INTERVAL_TICKS = FLAGS_WORLD.intRange("observe_interval_ticks", 40, 1, 12000,
             "How often (ticks) the navy looks at the flags of ships in range and rolls for false colours");
-    public static final ConfigValue<Integer> FALSE_FLAG_WANTED_THRESHOLD = FLAGS_WORLD.intRange("false_flag_wanted_threshold", 1, 0, 3,
-            "Until reputation exists: a navy flag is false colours when the ship's owner has at least this wanted level "
-                    + "(0 clean, 1 suspect, 2 wanted, 3 notorious)");
+    public static final ConfigValue<Integer> FALSE_FLAG_WANTED_THRESHOLD = FLAGS_WORLD.intRange("false_flag_wanted_threshold", 1, 0, 4,
+            "A navy flag is also false colours when the ship's owner has at least this wanted level, whatever their navy "
+                    + "reputation (0 clean, 1 suspect, 2 wanted, 3 notorious, 4 = reputation and bounties only)");
     public static final ConfigValue<Integer> BLOWN_COVER_TICKS = FLAGS_WORLD.intRange("blown_cover_ticks", 6000, 0, 1728000,
             "Ticks the navy treats a ship caught under false colours as hostile, whatever it flies");
 
@@ -151,8 +151,9 @@ public final class LawConfig {
             "Detection rate multiplier for an observer with a manned crow's nest");
     public static final ConfigValue<Double> DETECTION_SCORE_SCALE = FLAGS.doubleRange("detection_score_scale", 100.0, 1.0, 1000000.0,
             "Criminal score that doubles the detection rate");
-    public static final ConfigValue<Integer> NAVY_FLAG_MIN_STANDING = FLAGS.intRange("navy_flag_min_standing", 100, -1000000, 1000000,
-            "Navy reputation needed to fly the navy flag legitimately");
+    public static final ConfigValue<Integer> NAVY_FLAG_MIN_STANDING = FLAGS.intRange("navy_flag_min_standing", 0, -101, 101,
+            "Navy reputation (-100 to 100, reputation.deeds) needed to fly the navy flag legitimately; below it a navy flag is "
+                    + "false colours (-101 = any reputation, 101 = never legitimate)");
     public static final ConfigValue<Boolean> NPC_SURRENDER = FLAGS.bool("npc_surrender", true,
             "Merchant NPC ships may surrender to a ship flying the Jolly Roger");
     public static final ConfigValue<Boolean> PLAYER_CAPTURE = FLAGS.bool("player_capture", true,

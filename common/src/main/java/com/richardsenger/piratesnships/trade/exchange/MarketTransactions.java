@@ -20,6 +20,7 @@ import net.minecraft.world.item.Items;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.LongUnaryOperator;
 
 /**
  * Market trades with real coins and items on top of {@link TradeService}, each all or nothing: everything is checked
@@ -130,21 +131,31 @@ public final class MarketTransactions {
 
     /** Buys {@code quantity} clean units into {@code to}, paid from the player's wallet. */
     public static TransactionResult buy(ServerPlayer player, ResourceLocation port, ResourceLocation good, int quantity, Holder to) {
+        return buy(player, port, good, quantity, to, LongUnaryOperator.identity());
+    }
+
+    /**
+     * Buys like {@link #buy(ServerPlayer, ResourceLocation, ResourceLocation, int, Holder)}, but the player pays
+     * {@code price} of the market total (REP1: the reputation price swing); the market moves as for the plain total.
+     */
+    public static TransactionResult buy(ServerPlayer player, ResourceLocation port, ResourceLocation good, int quantity, Holder to,
+                                        LongUnaryOperator price) {
         MinecraftServer server = player.server;
         if (TradeService.market(server, port).isEmpty()) return TransactionResult.failed(TransactionResult.Status.NO_MARKET, good);
         Optional<Item> item = itemOf(good);
         if (item.isEmpty()) return TransactionResult.failed(TransactionResult.Status.NOT_TRADED, good);
         Market.Quote q = TradeService.quote(server, port, good, Market.Side.BUY, quantity);
-        TransactionResult.Status s = TradePlan.buy(q.outcome(), Wallet.count(player), q.total(), to.room(item.get()), quantity);
+        TransactionResult.Status s = TradePlan.buy(q.outcome(), Wallet.count(player), price.applyAsLong(q.total()), to.room(item.get()), quantity);
         if (s != TransactionResult.Status.OK) return TransactionResult.failed(s, good);
         Market before = TradeData.get(server).market(port).orElseThrow();
         Market.Quote bought = TradeService.buy(server, port, good, quantity);
-        if (!bought.ok() || !Wallet.take(player, bought.total())) {
+        long paid = bought.ok() ? price.applyAsLong(bought.total()) : 0;
+        if (!bought.ok() || !Wallet.take(player, paid)) {
             TradeData.get(server).setMarket(port, before); // roll back the price move
             return TransactionResult.failed(bought.ok() ? TransactionResult.Status.NOT_ENOUGH_COINS : TradePlan.ofQuote(bought.outcome()), good);
         }
         to.add(item.get(), quantity);
-        return new TransactionResult(TransactionResult.Status.OK, good, quantity, bought.total(), PlunderRules.Outcome.NORMAL, false, Optional.empty());
+        return new TransactionResult(TransactionResult.Status.OK, good, quantity, paid, PlunderRules.Outcome.NORMAL, false, Optional.empty());
     }
 
     /**
@@ -153,6 +164,12 @@ public final class MarketTransactions {
      */
     public static TransactionResult sell(ServerPlayer player, ResourceLocation port, ResourceLocation good, int quantity,
                                          boolean plundered, Holder from) {
+        return sell(player, port, good, quantity, plundered, from, LongUnaryOperator.identity());
+    }
+
+    /** Sells like the plain {@code sell}, but the player receives {@code price} of the payout (REP1: the price swing). */
+    public static TransactionResult sell(ServerPlayer player, ResourceLocation port, ResourceLocation good, int quantity,
+                                         boolean plundered, Holder from, LongUnaryOperator price) {
         MinecraftServer server = player.server;
         if (TradeService.market(server, port).isEmpty()) return TransactionResult.failed(TransactionResult.Status.NO_MARKET, good);
         Optional<Item> item = itemOf(good);
@@ -164,9 +181,10 @@ public final class MarketTransactions {
         TradeService.Sale sale = TradeService.sell(server, port, good, quantity, plundered, player.getRandom());
         if (!sale.unitsTaken()) return TransactionResult.failed(TradePlan.ofQuote(sale.quote().outcome()), good);
         from.remove(item.get(), plundered, quantity);
-        Wallet.give(player, sale.payout());
+        long payout = price.applyAsLong(sale.payout());
+        Wallet.give(player, payout);
         TransactionResult.Status status = sale.verdict().sold() ? TransactionResult.Status.OK : TransactionResult.Status.CONFISCATED;
-        return new TransactionResult(status, good, quantity, sale.payout(), sale.verdict().outcome(), sale.verdict().noticed(), Optional.empty());
+        return new TransactionResult(status, good, quantity, payout, sale.verdict().outcome(), sale.verdict().noticed(), Optional.empty());
     }
 
     /** Accepts a contract offer and takes its deposit (nothing changes without the coins). */

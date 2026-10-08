@@ -256,6 +256,11 @@ public final class TradeService {
         return PortFees.dockingFee(kind, navyStanding, TradeConfig.feeParams());
     }
 
+    /** The fee {@code captain} pays to dock: the navy standing is the captain's navy reputation (REP1, {@link PortFees}). */
+    public static int dockingFee(PortKind kind, net.minecraft.world.entity.player.Player captain) {
+        return dockingFee(kind, com.richardsenger.piratesnships.rpg.reputation.Reputation.navyStanding(captain));
+    }
+
     /** Weight of cargo stacks (not provisions, see {@link CargoWeight}). */
     public static double cargoWeight(Level level, Iterable<ItemStack> stacks) {
         return CargoWeight.total(stacks, goods(level), TradeConfig.cargoParams());

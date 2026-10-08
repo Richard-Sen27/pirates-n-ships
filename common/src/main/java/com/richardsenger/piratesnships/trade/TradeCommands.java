@@ -293,6 +293,7 @@ public final class TradeCommands {
                 case NO_CONTAINER -> "No cargo container in reach";
                 case NO_CONTRACT -> "No such contract";
                 case CONTRACT_REFUSED -> "Contract refused";
+                case REPUTATION_REFUSED -> "The villagers won't trade with you: your reputation with them is too low";
             });
         }
     }

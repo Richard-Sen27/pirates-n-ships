@@ -302,6 +302,17 @@ port: use it to open the port's market. A desk you place anywhere inside a villa
 list ports with `/pirates world ports` and find the nearest with `/pirates world port nearest`. Server config
 `world.structures.seafarer_village`.
 
+### Navy outposts
+Navy outposts are stone forts on beaches, rarer than villages. A sea gate leads to a quay with two berths. The
+curtain walls carry cannons (unloaded) and end in corner towers. One building stands outside the land gate: a
+barracks, a brig with two cells, or a watchtower. The harbor master's office in the court holds the navy market's
+desk and a notice board. Every outpost has a garrison that stands at its posts and never wanders, despawns or
+respawns: by default one officer beside the office door and six soldiers at the land gate and on the walls. Use the
+officer to turn in shackled pirates and bounty proofs, to pay fines with doubloons, and to ransom captured navy
+officers or merchants. With `law.ransom_needs_port` on, only an outpost's officer pays ransoms. With a bounty, the
+soldiers open fire on sight. `/locate structure pirates_n_ships:navy_outpost` finds one; `/pirates world ports`
+lists it. Server config `world.structures.navy_outpost`.
+
 ### Ship HUD
 While you stand on a ship, a small panel in the top right corner shows its state. The compass rose turns a little
 ship-shaped needle to the bow's heading; the light arrow outside the rose sits on the side the wind comes from and

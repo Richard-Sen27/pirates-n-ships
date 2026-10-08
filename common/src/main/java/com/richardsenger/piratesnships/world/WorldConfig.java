@@ -10,9 +10,11 @@ import java.util.Optional;
 /**
  * Server config section {@code world} (docs/design.md §17, group "World"; §9, §10.1): placement of each structure
  * type and natural spawn weights of each mob. Declared ahead of the features by {@code core.settings.SettingsModule}.
- * The seafarer village and pirate island values are read by {@code world.structure.PortStructure} (WG1, WG2) through
- * {@link #placement}; the pirate spawn weight and island cap by {@code world.island.PirateIslandSpawns}; the wreck
- * values by {@code world.wreck.WreckStructure} (WK1); the other structures and spawn weights are not read yet.
+ * The seafarer village, pirate island and navy outpost values are read by {@code world.structure.PortStructure} (WG1,
+ * WG2, WG3) through {@link #placement}; the outpost's garrison by {@code world.outpost.Garrison}; the pirate spawn
+ * weight and island cap by {@code world.island.PirateIslandSpawns}; the wreck values by {@code world.wreck.WreckStructure}
+ * (WK1); the other structures and spawn weights are not read yet (the navy's spawn weights stay unused: the garrison
+ * is placed, navy mobs never spawn naturally).
  */
 public final class WorldConfig {
 
@@ -97,7 +99,41 @@ public final class WorldConfig {
             SEAFARER_VILLAGE.frequency(), SEAFARER_VILLAGE.spacing(), SEAFARER_VILLAGE_SEPARATION, SEAFARER_VILLAGE_SHORE_PROBE,
             SEAFARER_VILLAGE_MAX_DISTANCE_FROM_WATER, SEAFARER_VILLAGE_MAX_SHORE_HEIGHT);
 
-    public static final StructurePlacement NAVY_OUTPOST = structure("navy_outpost", "navy outposts", 48, 0.8);
+    private static final ConfigSection OUTPOST = STRUCTURES.section("navy_outpost", "Placement and garrison of navy outposts");
+
+    /**
+     * Navy outposts (WG3). {@code spacing} and {@code separation} are datapack values (structure set
+     * {@code pirates_n_ships:navy_outposts}); {@code frequency} is read at placement time.
+     */
+    public static final StructurePlacement NAVY_OUTPOST = new StructurePlacement(
+            OUTPOST.intRange("spacing", 48, 2, 4096,
+                    "Average distance in chunks between two navy outposts. Datapack value: this default is written into "
+                            + "the structure set pirates_n_ships:navy_outposts; change it with a datapack, not here"),
+            OUTPOST.doubleRange("frequency", 0.8, 0.0, 1.0,
+                    "Chance that navy outposts generate at a possible location (0 = never, 1 = always); read at placement"));
+    public static final ConfigValue<Boolean> NAVY_OUTPOST_ENABLED = OUTPOST.bool("enabled", true,
+            "Navy outposts generate in new chunks (off = no new outposts; existing ones stay)");
+    public static final ConfigValue<Integer> NAVY_OUTPOST_SEPARATION = OUTPOST.intRange("separation", 20, 1, 4095,
+            "Minimum distance in chunks between two navy outposts. Datapack value: this default is written into the "
+                    + "structure set pirates_n_ships:navy_outposts; change it with a datapack, not here");
+    public static final ConfigValue<Integer> NAVY_OUTPOST_SHORE_PROBE = OUTPOST.intRange("shore_probe_blocks", 24, 4, 64,
+            "How far (blocks) an outpost site looks in each direction for the sea; the direction with the most water gets the quay");
+    public static final ConfigValue<Integer> NAVY_OUTPOST_MAX_DISTANCE_FROM_WATER = OUTPOST.intRange("max_distance_from_water", 12, 1, 64,
+            "An outpost site farther than this (blocks) from sea water is skipped");
+    public static final ConfigValue<Integer> NAVY_OUTPOST_MAX_SHORE_HEIGHT = OUTPOST.intRange("max_shore_height", 4, 0, 32,
+            "An outpost site whose ground at the fort gate is more than this many blocks above sea level is skipped "
+                    + "(the gate's paving is laid one block above the sea)");
+    public static final ConfigValue<Integer> NAVY_OUTPOST_GARRISON_SOLDIERS = OUTPOST.intRange("garrison_soldiers", 6, 0, 16,
+            "Navy soldiers placed at their posts (gate, walls, the building) when a new outpost generates; they stand guard "
+                    + "and never despawn or respawn. Capped by the posts the outpost's layout has (at least 6). 0 = none");
+    public static final ConfigValue<Integer> NAVY_OUTPOST_GARRISON_OFFICERS = OUTPOST.intRange("garrison_officers", 1, 0, 3,
+            "Navy officers placed in the fort's court beside the harbor master's office when a new outpost generates "
+                    + "(they take turn-ins, fines and ransoms); never despawn or respawn. 0 = none");
+
+    public static final PortPlacement NAVY_OUTPOST_PLACEMENT = new PortPlacement(NAVY_OUTPOST_ENABLED, NAVY_OUTPOST.frequency(),
+            NAVY_OUTPOST.spacing(), NAVY_OUTPOST_SEPARATION, NAVY_OUTPOST_SHORE_PROBE, NAVY_OUTPOST_MAX_DISTANCE_FROM_WATER,
+            NAVY_OUTPOST_MAX_SHORE_HEIGHT);
+
     private static final ConfigSection WRECKS = STRUCTURES.section("wreck", "Placement of wrecks on the ocean floor");
 
     /**
@@ -139,21 +175,13 @@ public final class WorldConfig {
     public static void init() {
     }
 
-    /** The placement values of a port kind; empty for kinds without a placed structure yet (the navy outpost). */
+    /** The placement values of a port kind (all three kinds have a placed structure since WG3). */
     public static Optional<PortPlacement> placement(PortKind kind) {
         return switch (kind) {
             case SEAFARER_VILLAGE -> Optional.of(SEAFARER_VILLAGE_PLACEMENT);
             case PIRATE_ISLAND -> Optional.of(PIRATE_ISLAND_PLACEMENT);
-            case NAVY_OUTPOST -> Optional.empty();
+            case NAVY_OUTPOST -> Optional.of(NAVY_OUTPOST_PLACEMENT);
         };
     }
 
-    private static StructurePlacement structure(String name, String plural, int spacing, double frequency) {
-        ConfigSection s = STRUCTURES.section(name, "Placement of " + plural);
-        return new StructurePlacement(
-                s.intRange("spacing", spacing, 2, 4096,
-                        "Average distance in chunks between two " + plural),
-                s.doubleRange("frequency", frequency, 0.0, 1.0,
-                        "Chance that " + plural + " generate at a possible location (0 = never, 1 = always)"));
-    }
 }

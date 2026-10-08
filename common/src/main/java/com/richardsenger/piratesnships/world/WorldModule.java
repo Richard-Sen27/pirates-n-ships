@@ -7,6 +7,7 @@ import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.world.island.IslandData;
 import com.richardsenger.piratesnships.world.island.PirateIslandSpawns;
+import com.richardsenger.piratesnships.world.outpost.OutpostData;
 import com.richardsenger.piratesnships.world.port.PortService;
 import com.richardsenger.piratesnships.world.structure.ConnectionsGameTests;
 import com.richardsenger.piratesnships.world.structure.ConnectionsProcessor;
@@ -22,10 +23,11 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import java.util.List;
 
 /**
- * The {@code world} module (design.md §10.1, §10.4, WG1, WG2, WK1): the port structures (custom structure type
- * {@code pirates_n_ships:port_village} over vanilla jigsaw pools: the seafarer village and the pirate island with its
- * buried treasure and pirate spawns), the port registry with berths and treasure sites, the binding of harbor
- * desks to the port they stand in, and the wrecks on the ocean floor (custom structure type {@code pirates_n_ships:wreck}).
+ * The {@code world} module (design.md §10.1, §10.4, WG1, WG2, WG3, WK1): the port structures (custom structure type
+ * {@code pirates_n_ships:port_village} over vanilla jigsaw pools: the seafarer village, the pirate island with its
+ * buried treasure and pirate spawns, and the navy outpost with its garrison), the port registry with berths and
+ * treasure sites, the binding of harbor desks to the port they stand in, and the wrecks on the ocean floor (custom
+ * structure type {@code pirates_n_ships:wreck}). Port pieces and wrecks share the connections processor (WG4).
  */
 public final class WorldModule implements ModModule {
 
@@ -65,11 +67,13 @@ public final class WorldModule implements ModModule {
         WreckLoot.gather(data);
         IslandData.gather(data);
         WreckData.gather(data);
+        OutpostData.gather(data);
         data.lang(WorldCommands::lang);
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(WorldGameTests.class, PirateIslandGameTests.class, WreckGameTests.class, ConnectionsGameTests.class);
+        return List.of(WorldGameTests.class, PirateIslandGameTests.class, NavyOutpostGameTests.class, WreckGameTests.class,
+                ConnectionsGameTests.class);
     }
 }

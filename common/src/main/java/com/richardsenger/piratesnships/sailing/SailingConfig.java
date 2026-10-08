@@ -63,6 +63,8 @@ public final class SailingConfig {
             "Fraction of the full sail force a half-set sail produces");
     public static final ConfigValue<Double> RUDDER_STRENGTH = SAILING.doubleRange("rudder_strength", S.rudderStrength(), 0.0, 20.0,
             "Rudder side force per unit of ship mass, forward speed and rudder deflection");
+    public static final ConfigValue<Double> RUDDER_FORCE_FACTOR = SAILING.doubleRange("rudder_force_factor", S.rudderForceFactor(), 0.0, 20.0,
+            "Turning authority: multiplier on the rudder's side force (higher = tighter turning circle). 1 = the weaker rudder before SH2");
     public static final ConfigValue<Double> MAX_RUDDER_ANGLE = SAILING.doubleRange("max_rudder_angle", S.maxRudderAngleDeg(), 0.0, 90.0,
             "Largest rudder deflection in degrees");
     public static final ConfigValue<Boolean> KEEL_ENABLED = SAILING.bool("keel_enabled", S.keelEnabled(),
@@ -183,7 +185,7 @@ public final class SailingConfig {
     /** Current sailing tuning from the server config. */
     public static SailingParams sailingParams() {
         return new SailingParams(SAIL_FORCE_SCALE.get(), HALF_TRIM_FACTOR.get(), RUDDER_STRENGTH.get(),
-                MAX_RUDDER_ANGLE.get(), KEEL_ENABLED.get(), KEEL_LONGITUDINAL_DRAG.get(), KEEL_LATERAL_DRAG.get(),
+                RUDDER_FORCE_FACTOR.get(), MAX_RUDDER_ANGLE.get(), KEEL_ENABLED.get(), KEEL_LONGITUDINAL_DRAG.get(), KEEL_LATERAL_DRAG.get(),
                 KEEL_YAW_DRAG.get());
     }
 }

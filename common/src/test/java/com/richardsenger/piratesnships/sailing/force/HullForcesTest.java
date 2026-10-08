@@ -51,6 +51,54 @@ class HullForcesTest {
                 RudderModel.compute(20, STERN, moving(4, 3), P).force().length(), 1e-9);
     }
 
+    private static SailingParams withFactor(double factor) {
+        return new SailingParams(P.sailForceScale(), P.halfTrimFactor(), P.rudderStrength(), factor, P.maxRudderAngleDeg(),
+                P.keelEnabled(), P.keelLongitudinalDrag(), P.keelLateralDrag(), P.keelYawDragFactor());
+    }
+
+    /** SH2: the turning authority multiplies the rudder force and its torque, nothing else; 0 disables the rudder. */
+    @Test
+    void rudderForceFactorScalesTheRudderLinearly() {
+        ShipState s = moving(3, 0);
+        ForceContribution one = RudderModel.compute(-25, STERN, s, withFactor(1.0));
+        ForceContribution three = RudderModel.compute(-25, STERN, s, withFactor(3.0));
+        assertEquals(3.0, three.force().length() / one.force().length(), 1e-9);
+        assertEquals(3.0, three.torque().y() / one.torque().y(), 1e-9);
+        assertEquals(0.0, RudderModel.compute(-25, STERN, s, withFactor(0.0)).force().length());
+        assertEquals(0.0, RudderModel.compute(-25, STERN, REST, withFactor(3.0)).force().length(), "still no force without way");
+        assertEquals(0.0, withFactor(-2.0).rudderForceFactor(), "negative factors clamp to 0");
+        // factor 1 is the rudder of milestone 3: F = rudderStrength · mass · submerged · v_fwd · sin δ
+        double old = P.rudderStrength() * s.mass() * s.submergedFraction() * 3.0 * Math.sin(Math.toRadians(25));
+        assertEquals(old, one.force().length(), 1e-9);
+        // the factor is not the keel's business
+        assertEquals(KeelModel.compute(moving(2, 2), withFactor(1.0)).force().length(),
+                KeelModel.compute(moving(2, 2), withFactor(5.0)).force().length(), 1e-12);
+    }
+
+    /**
+     * SH2: the force grows linearly with the forward speed (not with its square), so the steady turning circle
+     * (radius = v / ω with ω ∝ v against the keel's yaw damping) does not depend on the speed: a slow ship answers the
+     * helm with the same circle, only more slowly. No minimum steerage term is needed.
+     */
+    @Test
+    void steadyTurningCircleDoesNotDependOnSpeed() {
+        double inertia = REST.mass() * 20 * 20 / 12.0;
+        double[] radius = new double[2];
+        double[] speeds = {1.0, 5.0};
+        for (int k = 0; k < 2; k++) {
+            ShipState s = moving(speeds[k], 0);
+            double w = 0;
+            for (int i = 0; i < 20 * 60; i++) {
+                ShipState now = s.withAngularVelocity(new Vector3d(0, w, 0));
+                double tau = RudderModel.compute(P.maxRudderAngleDeg(), STERN, now, P).torque().y()
+                        + KeelModel.compute(now.withLinearVelocity(new Vector3d()), P).torque().y();
+                w += tau / inertia * 0.05;
+            }
+            radius[k] = speeds[k] / Math.abs(w);
+        }
+        assertEquals(radius[0], radius[1], radius[1] * 1e-3);
+    }
+
     @Test
     void keelResistsSidewaysMuchMoreThanForward() {
         ForceContribution fwd = KeelModel.compute(moving(3, 0), P);

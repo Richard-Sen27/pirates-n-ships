@@ -2574,6 +2574,8 @@
   "pirates_n_ships.configuration.sailing.pitch_damping.tooltip": "How fast the bow-up, bow-down pitching dies down, per second",
   "pirates_n_ships.configuration.sailing.roll_damping": "Roll Damping",
   "pirates_n_ships.configuration.sailing.roll_damping.tooltip": "How fast the side-to-side rolling dies down, per second (higher = settles sooner, too high looks glued to the water)",
+  "pirates_n_ships.configuration.sailing.rudder_force_factor": "Rudder Force Factor",
+  "pirates_n_ships.configuration.sailing.rudder_force_factor.tooltip": "Turning authority: multiplier on the rudder's side force (higher = tighter turning circle). 1 = the weaker rudder before SH2",
   "pirates_n_ships.configuration.sailing.rudder_strength": "Rudder Strength",
   "pirates_n_ships.configuration.sailing.rudder_strength.tooltip": "Rudder side force per unit of ship mass, forward speed and rudder deflection",
   "pirates_n_ships.configuration.sailing.sail_force_scale": "Sail Force Scale",

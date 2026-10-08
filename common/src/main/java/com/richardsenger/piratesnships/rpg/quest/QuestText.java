@@ -38,6 +38,7 @@ public final class QuestText {
     public static final String COMPLETED_PAID = KEY + "completed_paid";
     public static final String FAILED = KEY + "failed";
     public static final String MAP_GIVEN = KEY + "map_given";
+    public static final String TARGET_LOST = KEY + "target_lost";
 
     // commands
     public static final String LIST_HEADER = COMMANDS + "list.header";
@@ -65,6 +66,16 @@ public final class QuestText {
         return KEY + "title." + type.id();
     }
 
+    /** A captain hunt's title when the bearing to his island is known. */
+    private static final String CAPTAIN_TITLE_BEARING = KEY + "title.hunt_captain.bearing";
+
+    /** The eight compass points of {@code QuestGenerator.bearing}. */
+    public static final List<String> BEARINGS = List.of("north", "north_east", "east", "south_east", "south", "south_west", "west", "north_west");
+
+    public static String bearingKey(String bearing) {
+        return KEY + "bearing." + bearing;
+    }
+
     /** A port's shown name. */
     public static String portName(ResourceLocation port) {
         return MarketLines.portName(port);
@@ -87,6 +98,8 @@ public final class QuestText {
             case QuestTarget.Kill k -> Component.translatable(titleKey(q.type()), q.needed(), entityName(k.entity()));
             case QuestTarget.Cargo c -> Component.translatable(titleKey(q.type()), c.quantity(), goodName(c.good(), client), portName(c.destination()));
             case QuestTarget.Treasure t -> Component.translatable(titleKey(q.type()), portName(t.port()));
+            case QuestTarget.Victim v when q.type() == QuestType.HUNT_CAPTAIN && v.bearing().isPresent() ->
+                    Component.translatable(CAPTAIN_TITLE_BEARING, v.name(), Component.translatable(bearingKey(v.bearing().get())));
             case QuestTarget.Victim v -> Component.translatable(titleKey(q.type()), v.name());
             case QuestTarget.None n -> Component.translatable(titleKey(q.type()), q.needed());
         };
@@ -117,7 +130,10 @@ public final class QuestText {
                 .add(COMPLETED, "Quest complete: %s")
                 .add(COMPLETED_PAID, "Quest complete: %s. %s doubloons paid")
                 .add(FAILED, "Quest failed: %s")
-                .add(MAP_GIVEN, "You received a treasure map");
+                .add(MAP_GIVEN, "You received a treasure map")
+                .add(TARGET_LOST, "%s is gone, and not by your hand")
+                .add(CAPTAIN_TITLE_BEARING, "Bring down %s of the island to the %s");
+        for (String b : BEARINGS) lang.add(bearingKey(b), b.replace("_", ""));
         for (QuestType t : QuestType.values()) {
             lang.add(typeName(t), switch (t) {
                 case HUNT_PIRATES -> "Pirate hunt";
@@ -139,12 +155,12 @@ public final class QuestText {
                 case DELIVER -> "Deliver %s × %s to %s";
                 case FIND_TREASURE -> "Find the buried treasure of %s";
                 case HUNT_NAVY -> "Kill %s navy sailors";
-                case HUNT_CAPTAIN -> "Hunt down %s";
+                case HUNT_CAPTAIN -> "Bring down %s";
                 case ESCORT, PLUNDER_CONVOY, HUNT_PATROL, HUNT_SHIP -> "%s";
             });
         }
         for (String id : List.of(Quests.ACCEPTED, Quests.ABANDONED, QuestRules.TOO_MANY, QuestRules.EXPIRED, QuestRules.NOT_OFFERED,
-                Quests.DISABLED, Quests.NO_SESSION, Quests.TREASURE_GONE, Quests.NO_PORT, Quests.UNKNOWN)) {
+                Quests.DISABLED, Quests.NO_SESSION, Quests.TREASURE_GONE, Quests.NO_PORT, Quests.CAPTAIN_GONE, Quests.UNKNOWN)) {
             lang.add(result(id), switch (id) {
                 case Quests.ACCEPTED -> "Quest accepted: %s";
                 case Quests.ABANDONED -> "Quest dropped: %s";
@@ -155,6 +171,7 @@ public final class QuestText {
                 case Quests.NO_SESSION -> "Stand at the harbor master's desk";
                 case Quests.TREASURE_GONE -> "Somebody already dug up that treasure";
                 case Quests.NO_PORT -> "That port is gone";
+                case Quests.CAPTAIN_GONE -> "That captain is already gone";
                 default -> "No such quest";
             });
         }

@@ -64,9 +64,12 @@ public final class SailingGameTestsShips {
     private SailingGameTestsShips() {
     }
 
+    /** These tests and the SH1 heel tests ({@link SailingGameTestsHeel}). */
     @GameTestGenerator
     public static Collection<TestFunction> tests() {
-        return ModGameTests.of(SailingGameTestsShips.class);
+        java.util.List<TestFunction> all = new java.util.ArrayList<>(ModGameTests.of(SailingGameTestsShips.class));
+        all.addAll(ModGameTests.of(SailingGameTestsHeel.class));
+        return all;
     }
 
     // ------------------------------------------------------------------ fixtures
@@ -336,8 +339,12 @@ public final class SailingGameTestsShips {
      * leeway follows the sail's side-to-drive ratio. LEEWAY_RATIO (0.37) lies between the two. Spike 3's one-block sail
      * (16 blocks², center of effort 2 blocks above the block) made 0.425 / 0.113 with the keel and 0.362 / 0.299
      * without, against a ratio of 0.5.
+     *
+     * <p>Since SH1 the righting torque keeps the hull upright on the beam reach, and an upright hull makes less leeway:
+     * with the keel 0.48 m/s forward and 0.04 to leeward (ratio 0.08), without it 0.40 to 0.42 and 0.14 to 0.15 (0.35).
+     * LEEWAY_RATIO moved from 0.37 to 0.2, again between the two.
      */
-    private static final double LEEWAY_RATIO = 0.37;
+    private static final double LEEWAY_RATIO = 0.2;
 
     /** Wind from the east (on the starboard beam) with a triangular fore-and-aft sail: mostly forward, the keel holds. */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = "pirates_n_ships_sail_beam")
@@ -644,10 +651,14 @@ public final class SailingGameTestsShips {
         });
     }
 
-    /** With hull damping off, the same kick still rolls the ship clearly at the same time. */
+    /**
+     * With hull damping off, the same kick still rolls the ship clearly at the same time. The righting torque's own
+     * damping (SH1, {@code stability.righting_damping}) is switched off too; its stiffness stays.
+     */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 320, batch = "pirates_n_ships_config_sailing_damping_off")
     public static void rollingShipKeepsRollingWithoutDamping(GameTestHelper h) {
         ConfigOverrides.during(h, SailingConfig.HULL_DAMPING_ENABLED, false);
+        ConfigOverrides.during(h, SailingConfig.RIGHTING_DAMPING, 0.0);
         double[] amp = rollAfterKick(h, "damping off");
         h.runAfterDelay(KICK_AT + (long) WINDOWS * WINDOW + 2, () -> {
             h.assertTrue(amp[0] > 0.3, "the kick did not roll the ship: " + amp[0] + " rad/s");

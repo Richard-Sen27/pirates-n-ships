@@ -68,4 +68,9 @@ public final class CrewConfig {
     /** Loads the class so the values above are declared in time. Called from {@code registerConfig()}. */
     public static void init() {
     }
+
+    /** A sub-section {@code crew.<name>} for a crew package's own config class. */
+    public static ConfigSection sub(String name, String comment) {
+        return S.section(name, comment);
+    }
 }

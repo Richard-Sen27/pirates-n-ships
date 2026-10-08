@@ -116,3 +116,41 @@ Setup as for AN2a. Look at the chain from a boat or from a second player beside 
 
 Tell us: is the sag convincing (too deep, too shallow)? Are the jolt and capstan placeholders acceptable until real
 recordings exist, and are their volumes right?
+
+# Playtest: the capstan crew (work package CRW3)
+
+A crew member at the capstan drops and raises the anchor on order (design.md §6, §7.5). Setup: an assembled ship
+afloat over ground within the chain's reach (water less than 32 blocks deep), a capstan on the deck with free deck on
+at least one side, a captain's whistle, and one crew member (`/pirates crew spawn` on the deck). Config defaults:
+`crew_stations.capstan.enabled = true`, `drop_ticks = 40`, `min_raise_ticks = 20`.
+
+## Steps
+1. **Manning the capstan.** Use the whistle on the crew member, then on the capstan.
+   - **Expected:** "… mans the station"; the crew member stands beside the capstan (the first free side of north,
+     east, south, west) and idles there. Using the capstan with the whistle in hand does not drop the anchor.
+2. **Drop anchor.** Open the whistle menu (use in the air): two new entries, "Drop anchor" (capstan icon) and "Weigh
+   anchor" (chain icon), between "Fire at will" and "Release crew". Choose "Drop anchor".
+   - **Expected:** "Aye, letting go the anchor!"; for 2 s the crew member faces the capstan and pushes the bars
+     (`capstan_push`: chest to the bars, arms forward, walking on the spot), the anchor still stowed; then the anchor
+     falls and lands as for a player's drop, and the crew member goes back to idle. Choose "Drop anchor" again:
+     "The anchor is out already, captain".
+3. **Weigh anchor.** Choose "Weigh anchor".
+   - **Expected:** "Aye, heave away!"; the capstan starts winding at once (chain rattle, capstan clank), the crew
+     member pushes the bars the whole time, and stops when the anchor is stowed (at most a second after it). Choose
+     "Weigh anchor" again: "The anchor is stowed already, captain".
+4. **Leaving mid-raise.** Drop the anchor, weigh it, and choose "Release crew" while it is coming up.
+   - **Expected:** the crew member leaves the capstan; the anchor still comes up and is stowed.
+5. **The job board.** With the crew member free on deck (released) and nobody at the capstan, choose "Drop anchor".
+   - **Expected:** within a second the crew member walks to the capstan by itself, pushes the bars for 2 s, and the
+     anchor goes.
+6. **No ground.** Over water deeper than the chain (or with `sailing_runtime.anchor_chain_length` set to 3), order
+   "Drop anchor" to a manned capstan.
+   - **Expected:** "No ground for the anchor within the chain's reach, captain!"; nothing moves.
+7. **The command.** `/pirates crew order drop_anchor` and `/pirates crew order raise_anchor` near the ship.
+   - **Expected:** as steps 2 and 3, with "Order …: 1 of 1 crew carry it out".
+8. **Off switch.** Set `crew_stations.capstan.enabled = false`, give "Drop anchor".
+   - **Expected:** the crew member says "No ground …" (the station's "can't" line) and nothing moves; using the capstan
+     by hand still works.
+
+Tell us: does the push read as working the capstan from beside it, or does it need the crew member to walk round the
+drum? Which side does he stand on, and do his hands reach the bars?

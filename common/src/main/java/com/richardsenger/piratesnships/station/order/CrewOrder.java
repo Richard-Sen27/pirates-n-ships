@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.station.order;
 
 import com.richardsenger.piratesnships.combat.cannon.CannonStation.CannonOrder;
+import com.richardsenger.piratesnships.station.capstan.AnchorOrder;
 import com.richardsenger.piratesnships.station.pump.PumpOrder;
 import com.richardsenger.piratesnships.station.winch.SailOrder;
 import java.util.ArrayList;
@@ -11,7 +12,7 @@ import java.util.Optional;
 /**
  * An order the captain gives a crew member at a station (docs/design.md §6, §7.2), by whistle or by
  * {@code /pirates crew order}. Which station carries it out follows from its type: a station kind takes the orders of
- * its {@code StationKind#orderType()} ({@link SailOrder} → sail winch, {@link PumpOrder} → bilge pump, {@link CannonOrder} → cannon). A ship-wide
+ * its {@code StationKind#orderType()} ({@link SailOrder} → sail winch, {@link PumpOrder} → bilge pump, {@link CannonOrder} → cannon, {@link AnchorOrder} → capstan). A ship-wide
  * order (whistle, command without a crew argument) reaches only the crew at stations that take it; the others ignore
  * it. An order addressed to one crew member at another kind of station is refused
  * ({@code Stations.OrderResult#WRONG_STATION}). Pure data: ids and translation keys.
@@ -33,11 +34,12 @@ public interface CrewOrder {
     /** Translation key of the crew's answer when its station cannot carry the order out here (no sails, pump off). */
     String unableKey();
 
-    /** Every crew order: sail orders, then the pump, then the cannon. */
+    /** Every crew order: sail orders, then the pump, then the cannon, then the anchor (CRW3). */
     static List<CrewOrder> all() {
         List<CrewOrder> out = new ArrayList<>(List.of(SailOrder.values()));
         out.addAll(List.of(PumpOrder.values()));
         out.addAll(List.of(CannonOrder.values()));
+        out.addAll(List.of(AnchorOrder.values()));
         return Collections.unmodifiableList(out);
     }
 

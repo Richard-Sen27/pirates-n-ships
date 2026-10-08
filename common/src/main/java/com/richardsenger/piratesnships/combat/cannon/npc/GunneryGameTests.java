@@ -55,7 +55,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * NPC gunnery (WS4a): a crew at a cannon of one hull fires at will at another hull 24 blocks away in a 40×40 basin.
  *
- * <p>Layout (relative): water y 2..7 over x and z 1..38; the gunner's 5×5 plank hull at x 3..7, z 17..21 (deck y 8,
+ * <p>Layout (relative): a dry dock, stone up to y 4 over x and z 1..38; the gunner's 5×5 plank hull at x 3..7, z 17..21 (deck y 8,
  * helm at (5, 9, 19)), its cannon's master at (6, 9, 18) facing east with the rear at (5, 9, 18), a chest at
  * (4, 9, 18); the target hull at x 27..31, same z, 24 blocks east, with a flagpole at (28, 9, 18). Every test runs in a
  * batch of its own, because the crews look for targets within 64 blocks and would see the ships of a parallel test.
@@ -99,14 +99,18 @@ public final class GunneryGameTests {
         return l == null ? 0 : l.size();
     }
 
-    /** Stone basin over the whole template, water y 2..7, open sky. */
+    /**
+     * A dry stone dock over the whole template, solid up to y 4, so both hulls rest on it (bottom y 5) and hold their
+     * heading: a 5×5 hull afloat yaws freely under its own recoil and the hits, and a crew whose target drifts out of
+     * line rightly holds fire. Open sky.
+     */
     private static void basin(GameTestHelper h) {
         for (int x = 0; x < SIZE; x++) {
             for (int z = 0; z < SIZE; z++) {
                 h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
                 boolean wall = x == 0 || x == SIZE - 1 || z == 0 || z == SIZE - 1;
                 for (int y = 2; y <= 8; y++) {
-                    h.setBlock(new BlockPos(x, y, z), wall ? Blocks.STONE : y <= 7 ? Blocks.WATER : Blocks.AIR);
+                    h.setBlock(new BlockPos(x, y, z), wall || y <= 4 ? Blocks.STONE : Blocks.AIR);
                 }
             }
         }
@@ -131,7 +135,7 @@ public final class GunneryGameTests {
     /**
      * Both hulls, assembled: the gunner with a cannon facing {@code facing} (master one block east and north of the
      * helm) and a chest, the target flying {@code flag} (struck when asked). A raised target rests on a stone pier
-     * whose top is at y {@code targetBottom − 1}; otherwise ({@code targetBottom} 5) it floats.
+     * whose top is at y {@code targetBottom − 1}; otherwise ({@code targetBottom} 5) it rests on the dock.
      */
     private static Setup setup(GameTestHelper h, Direction facing, FlagKind flag, boolean struck, int targetBottom) {
         listen();
@@ -146,7 +150,7 @@ public final class GunneryGameTests {
         if (targetBottom > 5) {
             for (int x = TARGET_X - 1; x <= TARGET_X + 5; x++) {
                 for (int z = Z - 1; z <= Z + 5; z++) {
-                    for (int y = 2; y < targetBottom; y++) h.setBlock(new BlockPos(x, y, z), Blocks.STONE);
+                    for (int y = 5; y < targetBottom; y++) h.setBlock(new BlockPos(x, y, z), Blocks.STONE);
                 }
             }
         }
@@ -346,7 +350,7 @@ public final class GunneryGameTests {
 
     /**
      * Hit rate: with a supply of five shots, auto reload and short timers, the crew fires all five at will and at least
-     * four of them hit the floating Jolly Roger hull. The rate is logged.
+     * four of them hit the Jolly Roger hull. The rate is logged.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 900, batch = CONFIG_BATCH + "hit_rate")
     public static void atWillHitsMostShots(GameTestHelper h) {
@@ -367,7 +371,8 @@ public final class GunneryGameTests {
             }
         });
         h.succeedWhen(() -> {
-            h.assertTrue(shots[0] >= 5, "shots so far: " + shots[0] + ", hits " + hits(s.targetId()) + ", " + explain(h, s));
+            h.assertTrue(shots[0] >= 5, "shots so far: " + shots[0] + ", hits " + hits(s.targetId())
+                    + ", crew alive " + crew.isAlive() + " at " + crew.assignment() + ", " + explain(h, s));
             h.assertTrue(h.getEntities(CannonContent.CANNONBALL.get()).isEmpty(), "a ball is still flying");
             int hit = hits(s.targetId());
             Constants.LOG.info("WS4a gunnery hit rate: {} of {} shots at 24 blocks", hit, shots[0]);

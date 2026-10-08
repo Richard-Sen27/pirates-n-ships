@@ -153,6 +153,20 @@ public final class TradeService {
         return new Sale(q, verdict);
     }
 
+    /**
+     * An NPC trade (world simulation, WS2: a convoy buying its cargo at the origin or selling it at the destination).
+     * Trades up to {@code quantity} units, as many as the market allows right now ({@link Market#available}); no
+     * plunder verdict and no coins. The returned quote is for the units actually traded ({@code ok()} with
+     * {@code quantity() ≤} the request), or not ok when nothing could be traded.
+     */
+    public static Market.Quote npcTrade(MinecraftServer server, ResourceLocation port, ResourceLocation good, Market.Side side, int quantity) {
+        Market.Quote q = quote(server, port, good, side, Math.max(1, quantity));
+        if (q.outcome() == Market.Outcome.NOT_TRADED || quantity < 1) return q;
+        int units = Math.min(quantity, q.available());
+        if (units < 1) return q;
+        return trade(server, port, good, side, units);
+    }
+
     private static Market.Quote trade(MinecraftServer server, ResourceLocation port, ResourceLocation good, Market.Side side, int quantity) {
         TradeData data = TradeData.get(server);
         Optional<Market> market = data.market(port);

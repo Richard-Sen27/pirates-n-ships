@@ -227,15 +227,30 @@ public final class Materializer {
         link.lastUnits = VoyageShips.units(VoyageShips.read(level, ship));
         VoyageShips.put(link);
         VoyageShips.writeLink(ship, link.link());
+        drifted(v, ship, plotCentre, pos, "the link");
         int crew = v.crew() == Voyage.UNMANNED ? MaterializeConfig.CREW_PER_SHIP.get() + 1 : v.crew();
         int fighters = v.fighters() == Voyage.UNMANNED ? MaterializeConfig.fighters(v.faction()) : v.fighters();
         VoyageCrew.man(level, ship, id, v.faction(), crew, fighters, waterlinePlotY(ship, template, r));
+        drifted(v, ship, plotCentre, pos, "manning");
         Voyage m = v.withCrew(crew, fighters).withState(Voyage.State.MATERIALISED, Optional.of(ship.id()));
         Voyages.update(server, m);
         setCourse(level, ship, m);
+        if (drifted(v, ship, plotCentre, pos, "the course")) {
+            // something moved the hull after it was placed (seen in loaded GameTest runs); put it back on its point
+            turnOnto(ship, plotCentre, facing, pos);
+        }
         RETRY_AFTER.remove(id);
         Constants.LOG.debug("Voyage {} materialised as ship {} at {} {}", v.shortId(), ship.id(), (int) pos.x(), (int) pos.z());
         return Outcome.SPAWNED;
+    }
+
+    /** Whether the ship's centre left its lane point by more than a block; logs the step after which it did. */
+    private static boolean drifted(Voyage v, ShipBody ship, Vec3 plotCentre, Lane.Position pos, String step) {
+        Vec3 c = ship.toWorld(plotCentre);
+        double off = Math.hypot(c.x - pos.x(), c.z - pos.z());
+        if (off <= 1.0) return false;
+        Constants.LOG.warn("Voyage {}: ship centre {} blocks off its lane point after {}", v.shortId(), off, step);
+        return true;
     }
 
     /** Turns the freshly assembled {@code ship} (bow toward {@code facing}) to the leg heading, its centre on the point. */

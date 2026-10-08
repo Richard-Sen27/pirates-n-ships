@@ -16,7 +16,7 @@ import net.minecraft.server.Bootstrap;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-/** The ship status payload (HUD1): codec round trip, rounding and the send rule. */
+/** The ship status payload (HUD1): codec round trip, rounding and the send rule (HUD1, HUD2). */
 class ShipStatusPayloadTest {
 
     @BeforeAll
@@ -39,6 +39,9 @@ class ShipStatusPayloadTest {
         for (int i = 0; i < 16; i++) cells.add(new ShipStatusPayload.Cell(i, 10 + i, i * 0.5f, i % 3, i % 2 == 0));
         ShipStatusPayload p = new ShipStatusPayload(UUID.randomUUID(), "Black Pearl", 271.5f, 4.25f, -12f, 2, cells);
         assertEquals(p, roundTrip(p));
+        ShipStatusPayload slow = p.withFreshTicks(620);
+        assertEquals(620, roundTrip(slow).freshTicks(), "the freshness travels");
+        assertEquals(620, slow.quantize().freshTicks(), "and survives rounding");
         ShipStatusPayload noHelm = new ShipStatusPayload(UUID.randomUUID(), "", 0f, 0f, Float.NaN, -1, List.of());
         ShipStatusPayload back = roundTrip(noHelm);
         assertEquals(noHelm, back);
@@ -78,22 +81,24 @@ class ShipStatusPayloadTest {
     }
 
     @Test
-    void throttleSendsChangesAndEveryFifthInterval() {
+    void throttleSendsChangesAndAKeepalive() {
         ShipStatusThrottle t = new ShipStatusThrottle();
         UUID player = UUID.randomUUID(), other = UUID.randomUUID();
         ShipStatusPayload a = new ShipStatusPayload(UUID.randomUUID(), "A", 10, 1, 0, -1, List.of());
         ShipStatusPayload b = new ShipStatusPayload(a.ship(), "A", 11, 1, 0, -1, List.of());
-        assertTrue(t.offer(player, a), "the first status goes out");
-        for (int i = 1; i < ShipStatusThrottle.KEEPALIVE_INTERVALS; i++) {
-            assertFalse(t.offer(player, a), "unchanged at interval " + i);
+        assertTrue(t.offer(player, a, 5), "the first status goes out");
+        for (int i = 1; i < 5; i++) {
+            assertFalse(t.offer(player, a, 5), "unchanged at interval " + i);
         }
-        assertTrue(t.offer(player, a), "every fifth interval");
-        assertFalse(t.offer(player, a));
-        assertTrue(t.offer(player, b), "a change goes out at once");
-        assertFalse(t.offer(player, b));
-        assertTrue(t.offer(other, b), "players are counted apart");
+        assertTrue(t.offer(player, a, 5), "every fifth interval when asked for five");
+        assertFalse(t.offer(player, a, 5));
+        assertTrue(t.offer(player, b, 5), "a change goes out at once");
+        assertFalse(t.offer(player, b, 5));
+        assertTrue(t.offer(other, b, 5), "players are counted apart");
         t.forget(player);
-        assertTrue(t.offer(player, b), "back aboard: at once");
+        assertTrue(t.offer(player, b, 5), "back aboard: at once");
+        assertTrue(t.offer(player, b, 1), "a keepalive of one interval sends every time");
+        assertTrue(t.offer(player, b, 1));
         t.retain(List.of(other));
         assertEquals(1, t.size());
     }

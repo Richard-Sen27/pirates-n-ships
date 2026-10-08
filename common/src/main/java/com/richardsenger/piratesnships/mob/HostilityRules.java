@@ -19,6 +19,9 @@ import org.jetbrains.annotations.Nullable;
  *   <li>Flags (FL2, docs/design.md §4.7): people aboard a ship that struck its colours ({@link ShipStance#SURRENDERED})
  *       are attacked by nobody on sight; the navy attacks people aboard a ship under the Jolly Roger or whose cover is
  *       blown ({@code mobs.navy_hostile}); pirates leave players aboard a Jolly Roger ship alone.</li>
+ *   <li>Reputation (REP1, docs/design.md §15): pirates leave a player they like alone (pirate reputation above
+ *       {@code reputation.pirate_friendly_threshold}) until it hits them; the navy's "wanted" input also covers a
+ *       player whose navy reputation is below {@code reputation.navy_hostile_threshold}.</li>
  *   <li>Retaliation: a fighter that is not peaceful keeps fighting an attacker outside its own faction for
  *       {@code mobs.grudge_ticks} after being hit, even one it would not attack on sight.</li>
  * </ul>
@@ -41,11 +44,23 @@ public final class HostilityRules {
      * @param wantedByNavy the law wants it ({@code LawService.navyShouldAttack}); only asked by navy mobs
      * @param monster      a vanilla monster ({@code Enemy})
      * @param ship         what the ship it is aboard tells NPCs (FL2); {@link ShipStance#NONE} if not aboard or not a person
+     * @param likedByPirates a player the pirates like (REP1: pirate reputation above
+     *                     {@code reputation.pirate_friendly_threshold}); only asked by pirate mobs
      */
     public record Target(@Nullable MobFaction faction, boolean player, boolean exempt, boolean wantedByNavy, boolean monster,
-                         ShipStance ship) {
+                         ShipStance ship, boolean likedByPirates) {
+        public Target(@Nullable MobFaction faction, boolean player, boolean exempt, boolean wantedByNavy, boolean monster,
+                      ShipStance ship) {
+            this(faction, player, exempt, wantedByNavy, monster, ship, false);
+        }
+
         public Target(@Nullable MobFaction faction, boolean player, boolean exempt, boolean wantedByNavy, boolean monster) {
             this(faction, player, exempt, wantedByNavy, monster, ShipStance.NONE);
+        }
+
+        /** The same target, liked by the pirates or not (REP1). */
+        public Target withLikedByPirates(boolean liked) {
+            return new Target(faction, player, exempt, wantedByNavy, monster, ship, liked);
         }
 
         public static Target ofPlayer(boolean exempt, boolean wanted) {
@@ -57,7 +72,7 @@ public final class HostilityRules {
         }
 
         public Target withShip(ShipStance stance) {
-            return new Target(faction, player, exempt, wantedByNavy, monster, stance);
+            return new Target(faction, player, exempt, wantedByNavy, monster, stance, likedByPirates);
         }
 
         public static Target ofMob(MobFaction faction) {
@@ -76,7 +91,7 @@ public final class HostilityRules {
         return switch (self) {
             case CIVILIAN -> false;
             case PIRATE -> t.player()
-                    ? p.piratesHostile() && t.ship() != ShipStance.JOLLY_ROGER
+                    ? p.piratesHostile() && t.ship() != ShipStance.JOLLY_ROGER && !t.likedByPirates()
                     : t.faction() == MobFaction.NAVY && p.factionsFight();
             case NAVY -> {
                 if (t.faction() == MobFaction.NAVY) yield false;

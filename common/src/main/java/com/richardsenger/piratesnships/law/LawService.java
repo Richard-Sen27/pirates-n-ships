@@ -28,6 +28,8 @@ import com.richardsenger.piratesnships.law.world.CrimeLog;
 import com.richardsenger.piratesnships.law.world.LawTags;
 import com.richardsenger.piratesnships.law.world.NavyHostility;
 import com.richardsenger.piratesnships.platform.Services;
+import com.richardsenger.piratesnships.rpg.deeds.LawDeeds;
+import com.richardsenger.piratesnships.rpg.reputation.Reputation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -125,6 +127,7 @@ public final class LawService {
      * id for {@link CrimeType#FENCE_PLUNDER}); {@code null} = no particular victim.
      */
     public static CrimeResult reportCrime(LivingEntity offender, CrimeType type, @Nullable UUID victimId, String victimName) {
+        LawDeeds.onCrime(offender, type, victimId); // REP1: crimes that are reputation deeds (false colours, piracy, ...)
         CrimeRules rules = LawConfig.crimeRules();
         long now = now(server(offender));
         if (!rules.enabled()) {
@@ -169,6 +172,7 @@ public final class LawService {
         FineResult result = stored.payFine(doubloons, now(server(entity)), rules);
         store(entity, result.record());
         syncNavyBounty(entity);
+        LawDeeds.onFinePaid(entity, result); // REP1: the pay_fine deed
         return result;
     }
 
@@ -302,6 +306,7 @@ public final class LawService {
     /** A captured pirate NPC is delivered to the navy. Pay the claimant {@code total()}. */
     public static TurnInResult turnInPirate(LivingEntity pirate, PirateTier tier, Player claimant) {
         int reward = LawConfig.bountyRules().turnInReward(tier);
+        LawDeeds.onPirateTurnedIn(claimant, pirate); // REP1: the turn_in_pirate deed
         return new TurnInResult(reward, claimBounty(pirate, claimant, ClaimMethod.ALIVE));
     }
 
@@ -325,7 +330,17 @@ public final class LawService {
         return FlagLaw.react(observer, flag, LawConfig.NPC_SURRENDER.get());
     }
 
-    /** Whether {@code captain} flies a false flag. {@code navyStanding} comes from the reputation system. */
+    /** Whether {@code captain} flies a false flag, with the captain's navy reputation as the standing (REP1). */
+    public static boolean isFalseFlag(LivingEntity captain, FlagKind flag) {
+        return isFalseFlag(captain, flag, navyStanding(captain));
+    }
+
+    /** The captain's navy standing: the navy reputation of a player (0 while reputation is off), 0 for anyone else. */
+    public static int navyStanding(LivingEntity captain) {
+        return captain instanceof Player p ? Reputation.navyStanding(p) : 0;
+    }
+
+    /** Whether {@code captain} flies a false flag, judged with an explicit {@code navyStanding}. */
     public static boolean isFalseFlag(LivingEntity captain, FlagKind flag, int navyStanding) {
         boolean bounty = hasBounty(server(captain), captain.getUUID());
         return FlagLaw.isFalseFlag(flag, new FlagLaw.CaptainStanding(navyStanding, bounty), LawConfig.NAVY_FLAG_MIN_STANDING.get());
@@ -347,13 +362,14 @@ public final class LawService {
     }
 
     /**
-     * FL2's interim false-colours rule for the captain of a ship showing {@code shown}: standing 0 for everyone and the
-     * wanted check of {@code law.flags.false_flag_wanted_threshold} on top ({@link FlagLaw#fliesFalseColours}).
+     * The false-colours rule for the captain of a ship showing {@code shown} (FL2, REP1): only a navy flag is judged; it
+     * is false colours when it is a false flag for the captain ({@link #isFalseFlag(LivingEntity, FlagKind)}: a bounty,
+     * or a navy reputation below {@code flags_brig.navy_flag_min_standing}), or when the captain is at least
+     * {@code law.flags.false_flag_wanted_threshold} wanted (a known criminal can't hide behind the navy flag).
      */
     public static boolean fliesFalseColours(LivingEntity captain, FlagKind shown) {
-        boolean bounty = hasBounty(server(captain), captain.getUUID());
-        return FlagLaw.fliesFalseColours(shown, new FlagLaw.CaptainStanding(0, bounty), LawConfig.NAVY_FLAG_MIN_STANDING.get(),
-                wantedLevel(captain), LawConfig.FALSE_FLAG_WANTED_THRESHOLD.get());
+        if (shown != FlagKind.NAVY) return false;
+        return isFalseFlag(captain, shown) || wantedLevel(captain).ordinal() >= LawConfig.FALSE_FLAG_WANTED_THRESHOLD.get();
     }
 
     /**

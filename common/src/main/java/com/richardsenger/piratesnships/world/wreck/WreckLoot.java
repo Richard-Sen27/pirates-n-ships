@@ -8,6 +8,7 @@ import com.richardsenger.piratesnships.mob.kraken.KrakenContent;
 import com.richardsenger.piratesnships.sailing.sail.TriangularSailContent;
 import com.richardsenger.piratesnships.ship.assembly.AssemblyContent;
 import com.richardsenger.piratesnships.trade.content.TradeContent;
+import com.richardsenger.piratesnships.world.treasure.TreasureMapContent;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceKey;
@@ -27,7 +28,7 @@ import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
  * {@code data/pirates_n_ships/loot_table/chests/wreck.json}.
  *
  * <p>Always 3-12 doubloons; two to four rolls of ship's stores (rum, salted fish, rope, nails, a stack of lead shot,
- * now and then a cutlass at a low weight); one chest in 40 also holds a little kraken ink.
+ * now and then a cutlass or a blank treasure map at a low weight); one chest in 40 also holds a little kraken ink.
  */
 public final class WreckLoot {
 
@@ -35,6 +36,8 @@ public final class WreckLoot {
     public static final int MIN_DOUBLOONS = 3;
     public static final int MAX_DOUBLOONS = 12;
     public static final float KRAKEN_INK_CHANCE = 0.025f;
+    /** Weight of a blank treasure map among the ship's stores (of 45). */
+    public static final int TREASURE_MAP_WEIGHT = 2;
 
     private WreckLoot() {
     }
@@ -60,7 +63,9 @@ public final class WreckLoot {
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(2, 8))))
                         .add(LootItem.lootTableItem(CombatContent.LEAD_SHOT.get()).setWeight(6)
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(8, 16))))
-                        .add(LootItem.lootTableItem(CombatContent.CUTLASS.get()).setWeight(1)))
+                        .add(LootItem.lootTableItem(CombatContent.CUTLASS.get()).setWeight(1))
+                        // a blank treasure map (TM1): binds to the nearest island's treasure when used
+                        .add(LootItem.lootTableItem(TreasureMapContent.TREASURE_MAP.get()).setWeight(TREASURE_MAP_WEIGHT)))
                 .withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1))
                         .add(LootItem.lootTableItem(KrakenContent.KRAKEN_INK.get())
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(1, 2))))

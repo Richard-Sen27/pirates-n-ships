@@ -727,6 +727,144 @@ Hammock (ART1d):
   and the body within the two blocks. Render `renders/anim_crew_sleep.png` (the hammock cubes added to the rig tab for
   the shot only, frames 0 s and 2 s: three-quarter, side, top).
 
+Ship decor (ART2): ship's lantern, ship's bell, rope coil, stern window, chart table, sea cot:
+- **Part lists in `tools/gen_decor_models.py`** (committed, like the cannon's): run it to rewrite the 17 model JSON
+  files, then `python3 tools/lint_models.py`, then rebuild the projects. Every model faces north; wall-mounted ones
+  hang on the south side (z 16). UVs are vanilla's position UVs wrapped into 0..16; log faces along x or z are turned
+  90 degrees with the UV rect transposed; palette faces (`brass`, `brass_dark`, `iron_dark` of `textures/item/palette`)
+  take the inner 3 x 3 px of the patch. No new textures.
+- **One project per block, one group per exported model**, all groups at the same position, the first visible
+  (`ship_lantern`: `ship_lantern`, `_wall`, `_ceiling`; `ships_bell`: `ships_bell`, `_ringing`, `_wall`,
+  `_wall_ringing`; `rope_coil`: `rope_coil_layers1..4`; `stern_window`: `stern_window`, `_shutters`; `chart_table`;
+  `sea_cot`: `sea_cot_item`, `sea_cot_head`, `sea_cot_foot`). Export a group with the other groups' cubes set to
+  `export = false`; compiling the whole project merges the variants. The projects were rebuilt from the JSON cube by
+  cube (`ART2.load` in `risky_eval`: textures from `art/vanilla/` with namespace `minecraft`, folder `block`, our own
+  from the resources, embedded) and `Codecs.java_block.compile()` of each group matches its JSON. The `lint --fix`
+  project lookup does not know these groups; fix the part list instead.
+- **Lantern** (12 / 17 / 14 elements): base, vanilla `lantern` glass sides (uv 0,3..6,9 of the animation frame, so the
+  glow animates), brass corner posts, top plate, two caps and a hanging ring. The ceiling variant is raised 2 px onto a
+  hook and a rose, the wall variant raised 1 px under a brass arm with a 45 degree brace into a stripped dark oak wall
+  block.
+- **Bell** (19 / 17 elements, the same with `_ringing`): crossed-box sections (crown, top, shoulder, waist with a band,
+  lip with a `black_concrete` mouth) of `gold_block`; a `palette` iron clapper and a rope lanyard that stay plumb
+  while the bell elements turn 22.5 degrees about x at the hanging point (lip north, away from a wall), which is why
+  the bell has no 45 degree octagon bars (one rotation per element). Floor: a dark oak belfry frame (base, two
+  uprights, log beam with brass pin and cap) meant to sit on a post; wall: backboard, arm and brace.
+- **Rope coil** (28 / 55 / 81 / 107 elements): per coil two octagonal rope rings (eight bars each, the four diagonal
+  bars 0.05 px shorter at both ends), a crossed-box heart and one upper ring in the groove, 3.9 px high, 4 px per
+  layer; the top coil has the loose end (on a stack it drops down the side) with a wool whipping. `block/rope` at its
+  own scale; a squashed or stretched rope UV was tried and read worse.
+- **Stern window** (19 / 26 elements, `render_type: minecraft:cutout` for the `glass` panes): full-depth stripped
+  dark oak frame, mullion and transoms 2.5..5.5 px behind the outer face with four panes at 4 px, casing, hood and a
+  brass sill on corbels outside (proud of the block), a stool inside; shutters: two `dark_oak_trapdoor` leaves with
+  `anvil` straps and an iron latch in the opening.
+- **Chart table** (46 elements): turned legs, aprons, drawer with a brass knob, H stretcher, a top overhanging 1 px with
+  fiddle rails, a `map_tile` chart turned 22.5 degrees with zero-height ink strips (black coast, red course, compass
+  cross) 0.05 px above it, a `packed_ice` glass weight, brass dividers (the two legs 0.05 px apart in height), an
+  inkwell and a quill.
+- **Sea cot** (head 17, foot 13, item 30 elements): built as one frame (head z -16..0, foot 0..16) and split at the
+  seam (seam faces left out); posts, panelled head- and footboard, side boards and rails, a red blanket with a white
+  sheet fold, pillow; the mattress shows only at the head. The item model (`block/sea_cot_item`, both halves shifted
+  8 px south) carries the display entries (GUI scale 0.42).
+- Renders: `renders/ship_lantern.png` (floor, wall, ceiling), `ships_bell.png` (floor, floor ringing, wall, wall
+  ringing), `rope_coil.png` (one and three coils), `stern_window.png` (open, shutters), `chart_table.png`,
+  `sea_cot.png`.
+
+Cloth and flags (ART3):
+- **Sail cloth** `textures/block/sail_cloth.png` (32x32, opaque, `tools/gen_sailing_textures.py`, deterministic): one
+  tile per block, seamless both ways (the yard renderer maps every block of cloth onto the whole tile, the stay
+  renderer repeats it by planar position in blocks). Plain weave (alternate texels +-3, a thread variation per row and
+  column), double-stitched vertical panel seams every 8 px (dark fold, light overlap ridge, stitches every 3 px on both
+  sides), **one reef band per block** (rows 12..14, doubled darker canvas, stitched along both edges, a tan reef point
+  knotted on the band in the middle of every panel and hanging 4 px), stains and faint rain streaks. The furled bundle
+  samples rows 0..7 only, so it shows seamed canvas without the band. The sails have no colour variants yet (design.md
+  §4.8 "dyeable" is not implemented), so there is one file. A frayed foot is not possible with this tiling: the
+  renderers give every block of cloth the same tile, so an edge drawn into the tile would repeat in mid-sail; it needs
+  a foot tile picked by the renderers (open point). Render `renders/sail_cloth.png` (full 3 x 3, half with the bundle
+  under the yard, furled; flat planes in a scratch Blockbench project, not saved).
+- **Flag cloth** `textures/block/flag_<kind>.png` (32x16, layout unchanged, `tools/gen_flag_textures.py`): every design
+  gets `finish()` on top: plain weave over the field (+-5 per texel plus row/column variation; greyscale on the banner
+  cloth, which is tinted), a canvas heading tape on hoist column 2 with grommets in rows 1 and 14, a stitch line in
+  column 3 (every other row 40 darker), and a frayed fly: rows 3, 7, 8 and 12 of the tip column 23 are transparent
+  (the renderer is `entityCutoutNoCull`), column 22 a shade darker there.
+- **Ripple** (`ship/decor/flag/FlagRipple`, pure, `FlagRippleTest`; drawn by `FlagClothRenderer`): the cloth of
+  `FlagClothModel` (1 x 1.5 blocks, unchanged) is drawn as 8 vertical strips of 3 texture columns. Strip boundary k
+  (s = k / 8) is pushed along the cloth normal by `A * s * sin(2 pi (1.25 s - t / 36) + phase)`: the hoist stays on
+  the pole, the swing grows to the tip, a crest takes 36 ticks to pass and travels from the pole to the tip. A is 0.6 px
+  in calm air and 1.6 px at 12 blocks/s of wind (sampled once per game tick for all flags), the phase is a hash of the
+  pole's block position. Normals follow the slope, so the folds shade. Front and back faces per strip, the swatch
+  edges per strip, one tip face. The renderer keeps three float arrays and refills them per flag: no allocation per
+  frame. Kept in code (the renderer draws quads); `models/flag_cloth.bbmodel` is a reference model only (Generic
+  format, the four flags at one moment, each strip a cube turned about y; nothing is exported from it). Render
+  `renders/flag_cloth.png` (front three-quarter, the navy flag from above, back). Rebuild: a `free` project, the
+  four textures from `textures/block/`, per strip a 1 x 16 px cube from boundary k to k + 1 with east uv
+  `[3k, 0, 3k + 3, 16]`, west reversed, up/down on the swatch column 24.
+- **Kraken re-render:** `renders/kraken.png` was re-rendered after GL1 with `KRK.render()` on the unchanged
+  `kraken.bbmodel` (see "Kraken (K1b)": open the project, `window.KRK = {REPO, UUID: Project.uuid}`, eval
+  `kraken_model.js`, `KRK.render()`). The rest pose of the model never pointed the suckers wrong; only the aim did, and
+  `KRK.aimQuat` already had the GL1 sucker normal, so the raised arms now hook their tips down and show their suckers
+  from below. Model, geo and rig tests unchanged.
+- **Blockbench global names:** besides `KR`, Blockbench defines a global `FC`; `window.FC = {...}` does not shadow it
+  inside `risky_eval` (properties land on Blockbench's function). ART3 used `window.ART3`.
+
+Treasure map and receipt (ART4):
+- Two `java_block` item projects, `treasure_map.bbmodel` and `ship_receipt.bbmodel`, no block of the same name. No new
+  colours: `paper`, `biscuit_light`, `biscuit_dark` (`palette_3`), `map_land`, `map_ink`, `map_sea_dark`,
+  `flag_red`, `flag_red_dark` (`palette_5`), `red` (`palette`), `spice_dark` (`palette_4`); particle `palette_3`
+  for both. Datagen writes no model for either item any more (`TreasureMaps.gatherData` dropped its delegation to
+  `item/chart`, `ShipOrderData` its flat `minecraft:item/paper` model); they are plain items, so no `handMadeItem`
+  call is needed.
+- **Treasure map** (47 elements): a parchment folded once down the middle, built facing south like a sprite
+  (x 1..15, y 2..14, sheet z 7.75..8.25). The right half lies flat; the left half and everything drawn on it turn
+  `y 22.5` about `[8, 8, 8]` (the fold), so its outer edge comes 2.7 px towards the viewer and the map opens like a
+  shallow book. Its top-left corner is rolled over towards the front: the sheet stops at y 12.4 under a roll of two
+  crossed boxes along x (D 2, `biscuit_dark` ends with a `biscuit_light` core disc, `biscuit_dark` underside),
+  turned with the half. Aged edges are rim inlays of uneven width (`biscuit_light`, 0.05 px proud) with
+  `biscuit_dark` stains on the corners (0.1 px proud), a `biscuit_dark` crease beside the fold; the back is
+  `biscuit_light`. Drawing: left half a mainland coast along the bottom, two wave marks, an ink compass rose with a
+  red north tip and three route dots; right half an island of six `map_land` rows over `map_ink` rows 0.35 px wider
+  (the ink rows alternate between 0.05 and 0.1 px proud so neighbours never share a plane; land 0.15 px proud), a
+  palm as an ink T, a fourth route dot and the red X (two `flag_red` bars at +45 and -45, 0.2 and 0.26 px proud).
+  Inlays are zero-depth elements with only their south face. Lint: no fights; two same-look warnings where the
+  turned half's top and bottom faces meet the flat half's at the fold (0.012 px², same paper patch).
+- **Treasure map display:** held open on the fingers and tilted up towards the holder like a map being read:
+  third person `[40, 15, 0]` / `[0, 2.5, 1]` / 0.5; first person (the doubloon's) `[0, -70, 25]` /
+  `[1.13, 4.2, 1.13]` / 0.55; `gui` `[20, -15, 0]` / 1.1 (the fold and the roll show); `ground` lying flat, face up,
+  `[-90, 0, 0]` / `[0, -1.5, 0]` / 0.5; `fixed` and `head` vanilla (the drawing faces out of the frame). Left-hand
+  slots repeat the right hand.
+- **Ship receipt** (16 elements): a letter with its top third folded down over the front. Sheet x 2..14, y 3.5..12.5,
+  z 7.7..8.3 (`biscuit_light` edges); the flap y 8..12.5, z 8.3..8.5 with a `biscuit_light` crease band along its
+  top and a `biscuit_light` shadow band on the sheet just under its folded edge. Ink (`map_ink`, 0.05 px proud):
+  three address lines and a signature on the sheet, a heading of two lines and the shipwright's number on the flap.
+  The wax seal straddles the flap's edge at (8, 8): two crossed boxes (`red`, `flag_red_dark` sides, 0.05 px apart
+  in depth), a raised `spice_dark` stamp and a `flag_red_dark` drip below the seal.
+- **Receipt display:** held upright between the fingers like a letter, its face turned outwards: third person
+  `[70, -90, 0]` / `[0, 3, 1]` / 0.55; first person `[0, -70, 25]` / `[1.13, 4.2, 1.13]` / 0.6; `gui`
+  `[20, -15, 0]` / 1.25; `ground` flat face up as the map; `fixed`, `head` vanilla.
+- Built like ART1b-ART1d: a Python part list (patch names through the `SHEETS` cells) wrote the model JSON, and
+  `ART4.load(name)` in `risky_eval` opened it in a new `java_block` tab with `Codecs.java_block.parse(json, path)`
+  (given the JSON's path under `models/item/`, the parser resolves the palette textures itself, with folder and
+  namespace set). `Codecs.java_block.compile()` of the tab gives the same 47 / 16 elements (checked element by
+  element); the project is `Codecs.project.compile({raw: true})` with each texture's `path` emptied and
+  `relative_path` pointing at the sheet under `common/src/main/resources`. Script and helpers are not committed.
+- Renders: `renders/treasure_map.png`, `renders/ship_receipt.png`: front, three-quarter and back views (a separate
+  `THREE.WebGLRenderer` over a clone of `Project.model_3d`), then the GUI slot and third person in the right hand
+  (display mode, `scene` rendered from the display preview's camera with the gizmo hidden), composed on a 2D canvas.
+- **Audit: items whose item model is still not a Blockbench model** (the backlog for the next batch; checked against
+  every `item.` / `block.pirates_n_ships.*` lang key; the ART2/ART3 branches may change it when they land):
+
+  | Item | Model now | Declared in |
+  |---|---|---|
+  | `mooring_ring` | `minecraft:block/button_inventory` in iron (block: `minecraft:block/button`) | `combat/grapple/GrappleModule.ringModels` |
+  | `pirate_spawn_egg`, `sailor_spawn_egg`, `navy_soldier_spawn_egg`, `navy_officer_spawn_egg`, `shark_spawn_egg` | `minecraft:item/template_spawn_egg` | `mob/MobModule.gatherData` (`SPAWN_EGG`) |
+  | `kraken_spawn_egg` | `minecraft:item/template_spawn_egg` | `mob/kraken/KrakenContent` (`SPAWN_EGG_MODEL`) |
+
+  Spawn eggs keep vanilla's look by design (design.md §4.8), so the mooring ring (block and item) is the only real
+  backlog entry. Every other item has a hand-made model under `models/item/` or delegates to a hand-made block model.
+  Unused sprites that could go in a cleanup: `textures/item/carpenters_hammer.png`, `saw.png`, `nails.png`,
+  `shipwright_toolkit.png` (ART1c); `chart.png`, `map_tile.png`, `kraken_beak.png`, `kraken_ink.png` stay while tests
+  read them.
+
 ## Entities
 
 Animated mobs and NPCs (crew member, pirate, sailor, navy soldier and officer; design.md §9) are GeckoLib models
@@ -1231,11 +1369,27 @@ pieces load, stay within 32 blocks per axis, use only existing blocks and states
 block states), follow the jigsaw convention below, have the expected connectors and berths, and match a fresh
 conversion of the committed `.schem`.
 
+**Four-corner review:** `python3 tools/iso_render.py art/schematics/structures/village/tavern.schem --out <dir>`
+writes `<piece>_{se,ne,nw,sw}.png`, the piece seen from each corner. It draws slabs, stairs, open and closed
+trapdoors, doors, ladders, glass panes, fences, walls, lanterns, beds and carpets as their real shapes in rough
+Minecraft colours (everything else as cubes, jigsaws as small magenta cubes), so sills, shutters, rafter ends and
+plinths show; `--cut Y` hides the rows above Y to look inside. It is the tool for reviewing a piece from all four
+corners. The lab's render (and `--views`) is only a colour check: it draws every block as a whole cube coloured by its
+name. Standard library only (it reads the schematic through `tools/schem_to_structure.py`).
+
 **Generators:** `art/structures/buildspec.py` holds the shared `Piece` helper: `put`/`fill`/`ring` take a palette
 key or a literal state, `roof_ridge_x`/`roof_ridge_z` build stair roofs with gables, and `connector`/`berth` add the
 jigsaws. `Piece.emit` merges runs along x into `box` operations and adds the jigsaws as `block_entity` operations.
 `art/structures/<group>/_style.py` holds the group's palette and small fittings (doors, beds, tables, lantern posts).
 Files starting with `_` are helpers, not pieces.
+
+**Connecting blocks need no side properties (WG4).** Fences, glass panes, iron bars (and brig bars) and walls get
+their `north`/`east`/`south`/`west` (and a wall's `up`) at placement from the processor `pirates_n_ships:connections`
+(`world.structure.ConnectionsProcessor`), which every port pool element (processor list `pirates_n_ships:connections`)
+and every wreck piece runs. It connects each block to its neighbours in the same template, in the template's frame,
+so generators may write plain `spruce_fence` or `iron_bars`; any side values a generator does write are recomputed
+for sides whose neighbour is in the template. A side facing outside the template (the terrain, another piece) keeps
+the value the template stores, so a rail that must meet a neighbouring piece needs that side written explicitly.
 
 **Coordinates:** y 0 is the piece's **foundation row**. It sits level with the terrain surface (WG1 sinks land
 pieces by one). Pieces face **north (−z)**: a building's door and its `building_in` jigsaw are on the −z side,
@@ -1281,15 +1435,30 @@ deeper, the footings hang in the water.
 
 | piece | size (x×y×z) | blocks | contents | mod blocks |
 |---|---|---|---|---|
-| `dock_head` (start) | 11×8×11 | 289 | stone quay, harbor master's hut (desk facing the door, cargo, lectern), notice board beside the door, two lantern posts at the pier landing, mooring rings on the sea edge, crates and barrels; `pier_out` [5, 0, 0], `street_out` [2, 0, 10] | `harbor_desk`, `notice_board`, `mooring_ring`, `cargo_crate`, `cargo_barrel` |
-| `pier` | 7×9×20 | 197 | 5 wide plank deck on spruce piles with footings, cross beams, a rail and two lantern posts at the seaward end, a ladder down; `pier_in` [3, 5, 19], berths [0, 4, 9] and [6, 4, 9] | `mooring_ring`, `cleat` |
-| `street` | 7×4×7 | 52 | cobbled street with gravel and moss patches, dirt path verges, a lantern post; `street_in` [3, 0, 0], `street_out` [3, 0, 6], `building_out` [0, 0, 3] and [6, 0, 3] | |
-| `street_end` (terminator) | 7×4×3 | 26 | cobbled turning place at a street's end, a lantern post and two barrels; `street_in` [3, 0, 0] | |
-| `house_small` | 7×9×9 | 237 | 7×7 cottage of white render (calcite) on stripped spruce posts, red tile roof, bed, table and stool, chest, barrel, crafting table; `building_in` [3, 0, 0] | |
-| `tavern` | 11×15×11 | 695 | 11×9, two floors: bar with barrels, two tables with stools, a hanging lantern, stairs, two beds upstairs; a dark oak panel above the door for a sign; `building_in` [5, 0, 0] | `cargo_barrel` |
-| `shipwright` | 11×13×10 | 441 | open shed on posts with a dark roof, a half-built hull (keel, stem, three frames, a strake) on a gravel slipway, sawhorses, stacked logs and planks, crafting and smithing tables; `building_in` [5, 0, 0] | |
+| `dock_head` (start) | 11×8×11 | 308 | stone quay (mossy towards the sea, cracked inland), harbor master's hut (desk facing the door, cargo, lectern): render on a cobblestone plinth between spruce corner posts, framed door under a hood, windows with sills (shutters where the box allows), spruce band in the gables, rafter ends; notice board beside the door, two lantern posts at the pier landing, mooring rings on the sea edge, crates and barrels, a bench at the hut's west wall, a barrel with a flower pot by the street; `pier_out` [5, 0, 0], `street_out` [2, 0, 10] | `harbor_desk`, `notice_board`, `mooring_ring`, `cargo_crate`, `cargo_barrel` |
+| `pier` | 7×9×20 | 240 | 5 wide plank deck (a few weathered dark oak boards) on spruce piles with mostly mossy footings, cross beams, stripped spruce wales at the waterline, a rail and two lantern posts at the seaward end, a ladder down; at the landward end (clear of the berths) a lantern post and rail on each edge and cargo (barrels, crates); `pier_in` [3, 5, 19], berths [0, 4, 9] and [6, 4, 9] | `mooring_ring`, `cleat`, `cargo_crate`, `cargo_barrel` |
+| `street` | 7×4×7 | 54 | cobbled crown with gravel and moss patches between stone brick kerbs (some mossy or cracked), dirt path verges with coarse patches, a lantern post, a barrel with a flower pot (both clear of the doors at z 3); `street_in` [3, 0, 0], `street_out` [3, 0, 6], `building_out` [0, 0, 3] and [6, 0, 3] | |
+| `street_end` (terminator) | 7×4×3 | 29 | cobbled turning place, the kerbs turning along the far edge, a lantern post between two benches, two barrels (one with a flower pot); `street_in` [3, 0, 0] | |
+| `house_small` | 7×9×9 | 261 | 7×7 cottage: mossy cobblestone plinth, white render between stripped spruce corner posts, framed door under a hood, windows with sills (outside on the front and back, set into the wall on the gables), shutters on the back, spruce wall plate and gable band, rafter ends under both eaves, render gables with attic lights, brick chimney on the east gable over a furnace hearth, red tile roof; bed, table and stool, chest, barrel with lantern, crafting table with flower pot, bookshelf, rug, a lantern on a tie beam; `building_in` [3, 0, 0] | |
+| `tavern` | 11×15×11 | 774 | 11×9, two floors: mossy plinth, render between stripped spruce corner and mid posts and oak door posts, spruce band at the upper floor, tall framed ground floor windows and single upper ones with shutters and sills, a gallery rail on a slab ledge and brackets over the porch with a french door behind it, lanterns either side of the door, rafter ends, boarded gables with lights, brick chimney on the east gable over a hearth; bar with barrels, two tables with stools, a hanging lantern, stairs, two beds upstairs, a crate, rugs, a lantern on a tie beam; a dark oak panel above the door for a sign; `building_in` [5, 0, 0] | `cargo_barrel`, `cargo_crate` |
+| `shipwright` | 11×13×10 | 469 | open shed on posts (mossy cobblestone footings, knee braces under the beams) with a dark roof, a king post truss in the open front gable, a back wall of two cobblestone courses, a spruce band and render with three windows, an oak boarded gable with a light; a half-built hull (keel, stem, three frames, a strake) on a gravel slipway, a hoist chain from a collar beam over the bow, sawhorses, stacked logs and planks, crafting and smithing tables, a grindstone, a tar cauldron; `building_in` [5, 0, 0] | |
 
 Renders: `art/renders/structures/village/{dock_head,pier,street,street_end,house_small,tavern,shipwright}.png`.
+
+**ST4a pass (the look):** every village piece follows design.md §10.1 "Look of the buildings" with one palette from
+`art/structures/village/_style.py`: spruce for the frame (stripped spruce posts, plates, bands, rafter ends, shutters,
+doors, sills), oak for the joinery around openings (stripped oak lintels and door frames, the shipwright's boards),
+cobblestone for plinths and footings (mossy towards the ground) and stone bricks for the quay and the street kerbs,
+red brick as the accent (tile roofs, ridges, chimneys) with dark shingle roofs on the working buildings, white render
+(calcite) as the infill. The fittings: `corner_post`, `plinth` (cobblestone course over a mostly mossy foundation row,
+a fixed scatter so the output stays byte-identical), `trim_band` (stripped logs over the infill only), `window` (panes,
+an oak lintel, spruce slab sill and open trapdoor shutters outside; where the outside is beyond the box, e.g. the east
+and west walls that are the box faces, an upside-down stair set into the wall as the sill and no shutters),
+`door_frame` (door, oak posts and lintel, an upside-down stair hood), `rafter_ends` (upside-down stairs under the
+eaves), `chimney` (bricks with a brick wall pot, no campfire) and `hearth` (a furnace at its foot). `buildspec.Piece`
+gained `inside` and `put_inside` for fittings near the box faces. Box sizes, jigsaws, berths, final states and doors
+are unchanged. Note the lab's preview colours whole cubes by name (stairs, trapdoors and fences render as full blocks,
+mod blocks in hashed colours), so the committed renders look heavier than the game.
 
 **Adding a piece:** copy a generator in the group's folder, keep the conventions above (foundation row, north
 front, connectors on the box faces), then run `python3 tools/build_structures.py <group>/<piece>`. Look at the
@@ -1342,16 +1511,31 @@ left alone, the jigsaw just becomes sand.
 
 | piece | size (x×y×z) | blocks | contents | mod blocks |
 |---|---|---|---|---|
-| `camp_start` (start) | 13×8×13 | 298 | sandy clearing with gravel and dirt trails, a campfire on a cobblestone hearth with log seats, the Jolly Roger, a loot heap (barrels, crates, a chest), the fence's lean-to shack (desk as the counter, stock, cobwebs) with the notice board on its south side, torch posts; `jetty_out` [6, 0, 0], `path_out` [0, 0, 9] and [12, 0, 9], `hut_out` [6, 0, 12] | `flagpole`, `harbor_desk`, `notice_board`, `cargo_crate`, `cargo_barrel` |
-| `jetty` | 5×9×16 | 97 | 3 wide patched plank deck on mixed bark and stripped posts (two crooked ones leaning on stair braces) with footings, a lantern post and a rail at the seaward end, a ladder down; `jetty_in` [2, 5, 15], berths [0, 4, 7] and [4, 4, 7] | `cleat`, `mooring_ring` |
-| `path` | 7×4×7 | 68 | gravel and dirt trail on sand between palisade stakes (stripped log with a fence tip), two torches; `path_in` [3, 0, 0], `path_out` [3, 0, 6], `hut_out` [0, 0, 3] and [6, 0, 3] | |
-| `path_end` | 7×4×3 | 33 | the trail ends at a row of stakes with a torch post; `path_in` [3, 0, 0] | |
-| `tent` | 7×6×7 | 112 | A-frame of stepped wool (vanilla has no wool stairs or slabs) over a stripped log ridge, a bed roll, a chest, a barrel, a lantern; `hut_in` [3, 0, 0] | |
-| `tavern_hut` | 9×8×9 | 291 | open-sided hut (plank course, fence rail, log posts) under a dark oak thatch roof, a bar of barrels and a plank counter, kegs and rum behind it, two tables with stools, lanterns, cobwebs; `hut_in` [4, 0, 0] | `cargo_barrel` |
-| `captains_hut` | 9×9×9 | 313 | dark oak room on stripped log stilts (floor y 2), two steps up to a railed porch, a door, a bed, a cartography table with a map tile and a stool, the sea chest, a hanging lantern; `hut_in` [4, 0, 0] | `map_tile`, `sea_chest`, `cargo_crate` |
-| `treasure_spot` | 5×5×5 | 83 | sand with two crossed stripped logs, a skull and dead bushes, the treasure marker [2, 0, 2]; `hut_in` [2, 2, 0] | |
+| `camp_start` (start) | 13×8×13 | 399 | sandy clearing with gravel and dirt trails, a campfire on a cobblestone hearth with driftwood log seats and a roasting spit, a keg, the Jolly Roger, a loot heap (barrels, crates, a chest) under a striped sailcloth lean-to, the fence's lean-to shack (desk as the counter, stock, cobwebs; vertical dark and spruce boards with salvaged patches, palm front posts, sill beam, rafter ends, barred and shuttered windows) with the notice board on its south side under a striped awning, a crude palisade of uneven stakes on the inland sides with taller gate posts (a skull and a torch on the south gate), lantern posts, gravel and mossy skirts; `jetty_out` [6, 0, 0], `path_out` [0, 0, 9] and [12, 0, 9], `hut_out` [6, 0, 12] | `flagpole`, `harbor_desk`, `notice_board`, `cargo_crate`, `cargo_barrel` |
+| `jetty` | 5×9×16 | 117 | 3 wide patched plank deck (dark oak, a salvaged jungle board, sagging slabs) on mixed bark and stripped posts (two crooked ones leaning on stair braces) with footings, palm bollards and a rope rail at the seaward end, a lantern post and a rail with a net, a ladder down, a crude crane (palm mast, fence jib on a stair brace, chain hook with a crate) and a rope rail at the landward end, barrels and a lantern post; columns x 0 and x 4 stay clear; `jetty_in` [2, 5, 15], berths [0, 4, 7] and [4, 4, 7] | `cleat`, `mooring_ring`, `cargo_crate`, `cargo_barrel` |
+| `path` | 7×4×7 | 73 | gravel and dirt trail on sand between uneven palisade stakes (palm, stripped spruce, dark oak, fence tips), one propped on a stair, a lantern and a torch, a barrel and dead bushes, gravel at the stakes' feet; `path_in` [3, 0, 0], `path_out` [3, 0, 6], `hut_out` [0, 0, 3] and [6, 0, 3] | |
+| `path_end` | 7×4×3 | 42 | the trail ends at a row of uneven stakes with a palm warning post carrying a skull, a lantern, a crate and a dead bush; `path_in` [3, 0, 0] | `cargo_crate` |
+| `tent` | 7×6×7 | 125 | A-frame of stepped wool (vanilla has no wool stairs or slabs) in patched sailcloth (white, grey and brown patches, a red patch, brown hem) over a stripped log ridge that runs on over a fly on two poles, a hanging lantern at the front, a red pennant at the back, a guy stake and a crate, a bed roll, a chest, a barrel, lanterns, a rug; `hut_in` [3, 0, 0] | `cargo_crate` |
+| `tavern_hut` | 9×8×9 | 309 | open-sided hut (board course of alternating dark and spruce boards, fence rail, palm corner posts, stripped door posts) on a cobblestone plinth going mossy, under a patched dark oak thatch roof with rafter ends; gables on a tie beam with vertical boards, king post and vents; a shuttered back window and a fieldstone chimney with a smoking top; a bar of barrels and a plank counter with a skull, kegs and rum behind it, two tables with stools, lanterns (one over the doorway), cobwebs; `hut_in` [4, 0, 0] | `cargo_barrel` |
+| `captains_hut` | 9×9×9 | 336 | room on palm and stripped dark oak stilts (floor y 2, sill beam round it, salvage stowed below), walls of vertical dark and spruce boards between stripped posts, a door between dark frame posts, shuttered windows (sills on the back), gables on a tie beam with king post and vent, a patched thatch roof with rafter ends, two steps up to a porch with rope rails and a skull, a lantern post; a bed, a cartography table with a map tile and a stool, the sea chest, a rug, a black banner, a hanging lantern; `hut_in` [4, 0, 0] | `map_tile`, `sea_chest`, `cargo_crate` |
+| `treasure_spot` | 5×5×5 | 89 | sand speckled with gravel and coarse dirt, two crossed stripped logs, a skull, a bone, an old trapdoor lid, dead bushes, a mossy cairn and a palm marker stake; the column over the marker stays sand; the treasure marker [2, 0, 2]; `hut_in` [2, 2, 0] | |
 
 Renders: `art/renders/structures/pirate_island/*.png`.
+
+**ST4b pass (the look of the buildings, design.md §10.1):** every island piece was rebuilt to the camp style with
+the same sizes, connectors, berths, treasure marker and doorsteps. `_style.py` holds the camp palette: two woods,
+spruce and dark oak, with jungle logs as palm-trunk posts and stripped jungle as pale driftwood; one stone,
+cobblestone going mossy where it meets the ground; one accent, sailcloth (white wool with red stripes and brown
+patches). It also holds the reusable fittings: `awning` (striped sailcloth on fence poles), `palisade_post` (an uneven
+palm, spruce or dark oak stake with a fence tip), `shutter_window` (an opening with a trapdoor sill and open
+trapdoor shutters folded against the wall, one or both), `rope_rail` (posts with chain slung between),
+`rafter_ends` (upside-down stair corbels under an eave), `campfire_ring` (a hearth, seats and a spit), `sand_skirt`
+(the gravel, coarse dirt and mossy gradient at the foot of everything), `weatherboard` (vertical boards of two
+woods with the odd salvaged jungle board), `roof_patches` (spruce mends in a dark oak thatch), `chimney` (fieldstone
+with a smoking campfire on top), `lantern_post`, and `jit`, a fixed per-position hash that makes the irregularity
+repeatable byte for byte. States leave `waterlogged` at its default: the lab's preview colours any state string
+containing "water" as water. Every piece was reviewed from all four corners with `tools/iso_render.py`
+(shape-aware); the lab's preview draws whole cubes and one colour for all wool.
 
 **Lab port per agent:** `tools/build_structures.py` takes the lab's port from `--port`, else from the
 `SCHEMATIC_LAB_PORT` environment variable, else 8766. Agents building pieces in parallel each use their own port
@@ -1361,11 +1545,26 @@ post to each other's lab session.
 ### Navy outpost (ST3)
 The navy fort (design.md §10.1) as a third piece set, group `navy_outpost`, built with the same pipeline and
 conventions (y 0 the foundation row, pieces face north, the sea to the north). Look: stone bricks and polished
-andesite masonry, oak and spruce woodwork, blue wool and blue banners for the navy, lanterns on iron bars. The
+andesite masonry, spruce and dark oak woodwork (since ST4c), blue wool and blue banners for the navy, lanterns on iron bars. The
 generators share `art/structures/navy_outpost/_style.py`: the palette, the jigsaw table, the fittings (doors, beds,
 tables, stools, lantern posts, brig doors, the cannon, the flagpole) and `curtain()`, the curtain wall's section that
 the gate, the wall and the tower share so the walkway runs through: foundation and solid body on z 0..4 up to the
 walkway (top row y 4, people stand on y 5), the seaward parapet on z 0 (y 5) with merlons above it.
+
+**ST4c pass (look of the buildings, design.md §10.1):** every outpost piece was rebuilt to the standing rule, with the
+same boxes, connectors, berths, garrison posts, gate openings, court level, cannon and cell doors. The set's palette is
+one stone (stone bricks with mossy, cracked and chiseled variants; polished andesite for string courses, kerbs and
+walkways), two woods (spruce for structure, roofs, hoardings and floors; dark oak for trim: shutters, sills, brackets,
+rafter ends, gun decks, door posts) and the navy's blue as the accent. `_style.py` gained the fittings every piece uses:
+`fort_face` (the outer skin of a fort wall: pilasters, recessed bays on a sloped plinth, an upside-down stair corbel
+table; `curtain()` now builds its seaward skin with it, pilasters at both ends so walls meet flush pilaster to
+pilaster), `merlons` (slab-capped), `string_course`, `arrow_slit` (open or barred), `buttress`, `window` (pane or iron
+bars, trapdoor sill and open trapdoor shutters where the box has room), `rafter_ends`, `chimney` (a stack with a smoking
+campfire), `chain`, `fence_run` (joined fence rails), `bars`/`pane`/`fence`/`stair_shape` (full states), `age` (a
+deterministic weathering gradient: mossy on the ground row, less one and two rows up, cracked bricks scattered; a
+position hash, never `random`, so rebuilds are byte-identical) and `dry` (drops the default `waterlogged=false` from
+the emitted states, because the lab's preview paints any state that mentions water blue). Pieces were reviewed from
+all four corners (the lab's renders and `--views`) and as face-on elevations.
 
 **Pools:** `pirates_n_ships:navy_outpost/start` (the fort gate), `navy_outpost/walls` (the wall), `navy_outpost/
 buildings` (barracks, brig, watchtower), `navy_outpost/quay` (the quay) and `navy_outpost/terminators` (the wall
@@ -1400,13 +1599,13 @@ the waterline.
 
 | piece | size (x×y×z) | blocks | contents | mod blocks |
 |---|---|---|---|---|
-| `fort_gate` (start) | 15×10×15 | 837 | the curtain wall along the sea side with an arched sea gate (x 6..8) to the quay, the parade court (andesite path between the gates, the navy flag on a pole, lantern posts, cargo), stone stairs up to the walkway on the east side, the harbor master's office on the west side (door east; the desk facing the door, a notice board, a cartography table, shelves, a chest; its flat roof joins the walkway), and the landward gatehouse: an arched gate between two pillars with lanterns and blue banners, onto a gravel apron (row z 14) | `harbor_desk`, `notice_board`, `flagpole`, `cargo_crate`, `cargo_barrel` |
-| `quay` | 7×9×18 | 579 | a solid stone brick mole (x 1..5) from the seabed to the deck, mossy at the waterline; andesite kerbs, mooring rings and cleats along both edges, four bollards (stone brick walls under upside-down stairs), a crane at the seaward end (spruce post, fence jib to the deck edge, a hanging lantern), lantern posts, a ladder down to the water, cargo; berths [0, 4, 9] and [6, 4, 9] | `mooring_ring`, `cleat`, `cargo_crate`, `cargo_barrel` |
-| `wall` | 7×8×7 | 209 | a curtain wall segment: walkway, merlons, an embrasure in the parapet with a cannon behind it on an oak gun platform (master [3, 5, 1], rear [3, 5, 2], muzzle north), a powder barrel beside it, a ladder up the landward face, a lantern on the walkway, a gravel path at the foot | `cannon`, `cargo_barrel` |
-| `wall_tower` (terminator) | 7×12×7 | 345 | a crenellated corner tower: ground floor (door landward), a landing level with the walkway with doors out onto both sides, a roof platform at y 9 with lanterns on the corner merlons and the navy flag on a pole in the middle; one ladder through all floors | `flagpole`, `cargo_barrel` |
-| `barracks` | 11×9×9 | 360 | andesite walls on a stone brick plinth, spruce roof; six bunks (blue beds, two doubled up), sea chests, a mess table with stools, a weapon rack (fences with pressure plates), a hanging lantern | `cargo_crate` |
-| `brig` | 9×8×9 | 316 | a stone lock-up with a flat roof behind a parapet: a guard room (table, stool, chest, barrel, lanterns) and two cells, each fronted by brig bars with a brig door, with straw, a cauldron and a barred window | `brig_bars`, `brig_door` |
-| `watchtower` | 5×14×5 | 234 | a stone shaft with arrow slits, a ladder inside to a hatch in the lookout platform (y 10, overhanging the doorstep on a stair corbel), fence rails, a slab roof on four posts with a hanging lantern | |
+| `fort_gate` (start) | 15×10×15 | 934 | the curtain wall along the sea side (pilasters, recessed bays with arrow slits on a mossy sloped plinth, corbelled parapet, capped merlons) with an arched sea gate (x 6..8, chiseled keystone) to the quay and a timber guard shelter with the alarm bell over it; flanks and landward wall two thick with the same skin, embrasures for the guards; the parade court (andesite path between the gates, the navy flag on a pole on a stepped pedestal, lantern posts, cargo), stone stairs up to the walkway on the east side, the harbor master's office on the west side (door east in a dark oak frame under a blue panel, a shuttered window south; the desk facing the door, a notice board, a cartography table, shelves, a chest, a barrel, a blue banner; its flat roof joins the walkway), and the landward gatehouse: an arched gate between two square towers (lanterns and capped merlons, arrow slits, blue banners), a raised portcullis of iron bars in its slot under the navy's colours, buttresses onto a gravel apron (row z 14) | `harbor_desk`, `notice_board`, `flagpole`, `cargo_crate`, `cargo_barrel` |
+| `quay` | 7×9×18 | 591 | a solid stone brick mole (x 1..5) from the seabed to the deck, weathered mossy at and below the waterline; andesite kerbs and bands across the deck, mooring rings and cleats along both edges, four bollards (stone brick walls under upside-down stairs), a crane at the seaward end (spruce log post with dark oak braces, fence jib to the deck edge with a hanging lantern and a hoist chain, a crate counterweight, a blue banner), a capstan, chains on the deck, lantern posts, a ladder down to the water, cargo; berths [0, 4, 9] and [6, 4, 9] | `mooring_ring`, `cleat`, `cargo_crate`, `cargo_barrel` |
+| `wall` | 7×8×7 | 215 | a curtain wall segment: pilasters at both ends, a recessed bay with two arrow slits on a mossy sloped plinth, a corbel table under the parapet, slab-capped merlons; an embrasure with a cannon behind it on a dark oak gun deck (master [3, 5, 1], rear [3, 5, 2], muzzle north), a powder barrel and a shot locker beside it; landward a timber hoarding (spruce deck on dark oak brackets, fence rail) over an arched store niche with powder and shot, a ladder up, a lantern on the walkway, a gravel path at the foot | `cannon`, `cargo_barrel`, `cargo_crate` |
+| `wall_tower` (terminator) | 7×12×7 | 358 | a crenellated corner tower: a 5×5 core set back between four full-height corner pilasters, sloped mossy plinth, barred arrow slits, a corbel table carrying the 7×7 roof platform (y 9) with capped merlons, lanterns on the corner merlons and the navy flag on a pole in the middle; ground floor (door landward under a blue banner, a barrel with a lantern, a crate), a landing level with the walkway (corbelled ledges outside, doors out onto both sides, powder, a chest), one ladder through all floors, a blue banner on the sea face | `flagpole`, `cargo_barrel`, `cargo_crate` |
+| `barracks` | 11×9×9 | 395 | a timber frame (spruce log corners, stripped posts, a beam course) with polished andesite infill on a mossy stone brick plinth, dark oak door posts under a blue panel, shuttered windows with sills front and back, spruce gables with a tie beam and window, a spruce roof with dark oak eaves over dark oak rafter ends, two lanterns hanging by the door, a stone chimney breast and stack with smoke at the back; six bunks (blue beds, two doubled up), sea chests, the hearth with a blue banner over it, a mess table with stools, a weapon rack (fences with pressure plates), stores, a runner, a hanging lantern | `cargo_crate` |
+| `brig` | 9×8×9 | 351 | a stone lock-up: pilasters and recessed bays on a mossy sloped plinth on the sides and back (the cells' barred windows in the recesses), corner buttresses and a stone portal (chiseled keystone, slab hood) round the door in front, barred windows, lantern posts, a flat roof behind slab-capped merlons with lanterns on the front corners; a guard room (table, stool, chest, barrel, crate, lanterns, key chain) and two cells, each fronted by brig bars with a brig door, with straw, a cauldron, shackle chains and a barred window | `brig_bars`, `brig_door`, `cargo_crate` |
+| `watchtower` | 5×14×5 | 249 | a stone shaft with corner pilasters, set-back sides on a sloped mossy plinth under corbels, an andesite band, buttresses flanking the door, a blue banner high on the front, barred arrow slits, a ladder inside to a hatch in the lookout platform (y 10, overhanging the doorstep on a stair corbel), fence rails, a low hipped spruce roof with dark oak eaves on four bark posts with a hanging lantern | |
 
 Renders: `art/renders/structures/navy_outpost/{fort_gate,quay,wall,wall_tower,barracks,brig,watchtower}.png`.
 
@@ -1459,7 +1658,7 @@ sea chest in the sloop's hold is empty: `SeaChestBlockEntity` is a plain contain
 |---|---|---|---|---|
 | `sunken_sloop` | 14×10×27 | 1091 | the starter sloop's hull (same half-widths, rocker, hold, forecastle, stern cabin and quarterdeck) heeled to starboard, the fore half 22°, the after half 27° and one block to starboard; each cross-section turned about the keel by sampling the upright hull, closed where blocks only meet at an edge. Frames (stripped spruce ribs) at the break with jagged planking either side, patches of missing planking (frames left standing in them), barnacle crust on the bottom, the mast snapped above the deck and fallen across the after deck into the sand, the lower yard and its chain beside the hull, sand banked against the starboard side and silting the low side of the hold and cabin, spilled ballast; bow north (−z) | `sea_chest` (forward hold), `cargo_barrel`, `cargo_crate` (slid to starboard in the after hold), `yard` |
 | `cargo_field` | 15×4×15 | 231 | a round, ragged bed with ballast stones; crates and barrels set into it with sand over their edges or sitting on it half buried, a toppled stack, kegs on their sides, a broken yard in two pieces with its chain, a cannon with its rear in a sand drift (it turns only horizontally, so it stands upright), loose planks and hatch covers, the chest under a fallen plank | `cargo_crate`, `cargo_barrel`, `yard`, `cannon` |
-| `mast_stump` | 7×12×7 | 92 | a broken square of deck planking in the bed with mast partners and heaved-up ballast, the mast (spruce log, an iron band of chain, a stripped fished section, a splintered stub on top), the remains of the fighting top, the yard with one arm snapped and hanging, a hanging lantern, torn rigging (chains), a stepped fence shroud, a cleat with a rope coil (chain), the chest at the foot half buried | `yard`, `cleat` |
+| `mast_stump` | 7×12×7 | 93 | a broken square of deck planking in the bed with mast partners and heaved-up ballast, the mast (spruce log, an iron band of chain, a stripped fished section, a splintered stub on top), the remains of the fighting top, the yard with one arm snapped and hanging, a lantern hanging from the yard on a short chain (the yard's underside cannot hold a hanging lantern: placement would drop it, WK1), torn rigging (chains), a stepped fence shroud, a cleat with a rope coil (chain), the chest at the foot half buried | `yard`, `cleat` |
 | `stern` | 9×8×11 | 441 | the stern of a larger ship, half buried: a framed transom facing north (−z) with quarter posts, trim bands at the cabin floor and the poop deck, four cabin windows round a mullion (two broken out) with sills and a hood, the nameplate above the rudder head, the taffrail; the rudder with iron straps; sides with a wale, a trim band, a quarter window and a frame post, falling away in steps to the broken end with its frames showing; the great cabin with a table and chairs, a keg, a lantern, a hanging lantern and the chest, the poop deck half fallen in, sand in the hold and drifting in at the broken end | `nameplate`, `cargo_crate` |
 
 Renders: `art/renders/structures/wreck/*.png`. `WreckPiecesTest` checks the committed pieces: the four files and no

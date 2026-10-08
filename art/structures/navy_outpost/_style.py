@@ -64,6 +64,13 @@ PALETTE = {
     "lantern_hanging": "minecraft:lantern[hanging=true]",
     "ladder_s": "minecraft:ladder[facing=south]",
     "ladder_n": "minecraft:ladder[facing=north]",
+    # ST4c: the second wood (dark oak trim: shutters, sills, brackets, rafter ends, gun decks), bark posts, chains
+    "dark_oak": "minecraft:dark_oak_planks",
+    "dark_post": "minecraft:stripped_dark_oak_log[axis=y]",
+    "log": "minecraft:spruce_log[axis=y]",
+    "chain": "minecraft:chain[axis=y,waterlogged=false]",
+    "brick_slab_top": "minecraft:stone_brick_slab[type=top]",
+    "spruce_slab_top": "minecraft:spruce_slab[type=top]",
 }
 
 DIRS = {"north": (0, -1), "south": (0, 1), "east": (1, 0), "west": (-1, 0)}
@@ -146,22 +153,31 @@ def banner(piece, x, y, z, facing, colour="blue"):
     piece.put(x, y, z, f"minecraft:{colour}_wall_banner[facing={facing}]")
 
 
-def curtain(piece, x0, x1, merlons=None, gaps=()):
-    """The curtain wall's section over x0..x1: foundation and solid body up to the walkway (y WALK) on z 0..4, the
-    seaward parapet (z 0) one row higher, and merlons on it at ``merlons`` (default every even x). ``gaps`` are the x
-    where the parapet is cut down to the walkway (embrasures for guns). The face gets a chiseled plinth at y 1 and a
-    polished andesite string course at the walkway's height; the walkway is paved with polished andesite."""
-    z0, z1 = BODY_Z
-    piece.fill(x0, 0, PARAPET_Z, x1, WALK, z1, "bricks")
-    piece.fill(x0, 1, PARAPET_Z, x1, 1, PARAPET_Z, "chiseled")
-    piece.fill(x0, WALK, PARAPET_Z, x1, WALK, PARAPET_Z, "andesite")
-    piece.fill(x0, WALK, z0, x1, WALK, z1, "andesite")
+def curtain(piece, x0, x1, merlons=None, gaps=(), pilasters=None, slits=()):
+    """The curtain wall's section over x0..x1: foundation and solid body up to the walkway (y WALK) on z 1..4, paved
+    with polished andesite, and the seaward skin on z 0 (``fort_face``): pilasters at ``pilasters`` (default both ends,
+    so walls meet flush pilaster to pilaster), recessed bays between them on a sloped plinth under a corbel table at
+    the walkway's height. On the corbels the parapet (z 0, y WALK + 1) and the merlons at ``merlons`` (default every
+    even x) with slab caps. ``gaps`` are the x where the parapet is cut down to the walkway (embrasures for guns);
+    ``slits`` the x of arrow slits in the recessed body face."""
+    zb0, zb1 = BODY_Z
+    piece.fill(x0, 0, zb0, x1, WALK, zb1, "bricks")
+    piece.fill(x0, WALK, zb0, x1, WALK, zb1, "andesite")
+    pil = {x0, x1} if pilasters is None else set(pilasters)
+    fort_face(piece, [(x, PARAPET_Z) for x in range(x0, x1 + 1)], "south",
+              pilasters={(x, PARAPET_Z) for x in pil}, corbel=WALK)
+    for x in pil:
+        piece.put(x, WALK, PARAPET_Z, "andesite")
+    for x in slits:
+        arrow_slit(piece, x, 2, zb0, "x")
+    cells = []
     for x in range(x0, x1 + 1):
         if x in gaps:
             continue
         piece.put(x, WALK + 1, PARAPET_Z, "bricks")
         if (x % 2 == 0) if merlons is None else (x in merlons):
-            piece.put(x, MERLON, PARAPET_Z, "bricks")
+            cells.append((x, PARAPET_Z))
+    _merlons(piece, cells, MERLON)   # (the parameter ``merlons`` shadows the fitting of that name here)
 
 
 def weather(piece, spots):
@@ -169,3 +185,184 @@ def weather(piece, spots):
     for x, y, z, key in spots:
         if piece.get(x, y, z) == "bricks":
             piece.put(x, y, z, key)
+
+
+# ---------------------------------------------------------------------------------------------- ST4c fittings
+# The fort's look (design.md §10.1 "Look of the buildings"): one stone (stone bricks with their mossy, cracked and
+# chiseled variants, polished andesite for bands, kerbs and walkways), two woods (spruce for structure, roofs and
+# hoardings, dark oak for trim: shutters, sills, brackets, rafter ends, gun decks) and the navy's blue as the accent.
+# Walls get depth from recessed bays between pilasters (``fort_face``), buttresses, corbels and string courses;
+# masonry is weathered from the ground up by ``age``. Everything is deterministic (a hash of the position, never
+# ``random``), so a rebuild is byte-identical.
+
+H_AXIS = {"north": "x", "south": "x", "east": "z", "west": "z"}   # the axis a wall that faces that way runs along
+
+
+def h01(x, y, z, salt=0) -> float:
+    """A stable pseudo-random number in [0, 1) for a position."""
+    n = (x * 73856093) ^ (y * 19349663) ^ (z * 83492791) ^ (salt * 2654435761)
+    n &= 0xFFFFFFFF
+    n = ((n ^ (n >> 13)) * 1274126177) & 0xFFFFFFFF
+    n ^= n >> 16
+    return n / 2 ** 32
+
+
+def inside(piece, x, y, z) -> bool:
+    sx, sy, sz = piece.size
+    return 0 <= x < sx and 0 <= y < sy and 0 <= z < sz
+
+
+def stair_shape(block: str, facing: str, half: str = "bottom", shape: str = "straight") -> str:
+    return f"minecraft:{block}_stairs[facing={facing},half={half},shape={shape},waterlogged=false]"
+
+
+def bars(axis: str) -> str:
+    """Iron bars joined to their neighbours along ``axis`` (a grille in a wall that runs along that axis)."""
+    if axis == "x":
+        return "minecraft:iron_bars[east=true,north=false,south=false,waterlogged=false,west=true]"
+    return "minecraft:iron_bars[east=false,north=true,south=true,waterlogged=false,west=false]"
+
+
+def pane(axis: str) -> str:
+    if axis == "x":
+        return "minecraft:glass_pane[east=true,north=false,south=false,waterlogged=false,west=true]"
+    return "minecraft:glass_pane[east=false,north=true,south=true,waterlogged=false,west=false]"
+
+
+def fence(wood="spruce", north=False, south=False, east=False, west=False) -> str:
+    def b(v):
+        return "true" if v else "false"
+    return (f"minecraft:{wood}_fence[east={b(east)},north={b(north)},south={b(south)},waterlogged=false,"
+            f"west={b(west)}]")
+
+
+def fence_run(piece, cells, y, wood="spruce"):
+    """A rail of fences over ``cells`` [(x, z)] on row ``y``, each joined to its neighbours in the run."""
+    run = set(cells)
+    for x, z in cells:
+        piece.put(x, y, z, fence(wood, north=(x, z - 1) in run, south=(x, z + 1) in run,
+                                 east=(x + 1, z) in run, west=(x - 1, z) in run))
+
+
+def age(piece, ground=0, salt=0, where=None):
+    """Weathers the masonry where stone meets ground: plain stone bricks (and their stairs, slabs and walls) turn mossy
+    often on the ground row (and below it), less often one and two rows up, rarely above; cracked bricks are
+    scattered over the whole height, a little more often low down. ``where(x, y, z)`` limits it (paving, floors)."""
+    for (x, y, z), key in sorted(piece.blocks.items()):
+        if where is not None and not where(x, y, z):
+            continue
+        state = piece.palette[key]
+        d = y - ground
+        moss = 0.6 if d <= 0 else {1: 0.3, 2: 0.1}.get(d, 0.025)
+        r = h01(x, y, z, salt)
+        if state == "minecraft:stone_bricks":
+            if r < moss:
+                piece.put(x, y, z, "bricks_mossy")
+            elif r < moss + (0.12 if d <= 1 else 0.06):
+                piece.put(x, y, z, "bricks_cracked")
+        elif state.startswith(("minecraft:stone_brick_stairs", "minecraft:stone_brick_slab",
+                                "minecraft:stone_brick_wall")) and r < moss:
+            piece.put(x, y, z, state.replace("minecraft:stone_brick", "minecraft:mossy_stone_brick", 1))
+
+
+def merlons(piece, cells, y, cap=True, key="bricks"):
+    """Merlons at ``cells`` [(x, z)] on row ``y``, each capped with a stone brick slab when the box has room."""
+    for x, z in cells:
+        piece.put(x, y, z, key)
+        if cap and inside(piece, x, y + 1, z):
+            piece.put(x, y + 1, z, "brick_slab")
+
+
+_merlons = merlons
+
+
+def string_course(piece, cells, y, key="andesite"):
+    """A horizontal band (polished andesite by default) over ``cells`` [(x, z)] on row ``y``."""
+    for x, z in cells:
+        piece.put(x, y, z, key)
+
+
+def fort_face(piece, cells, inward, pilasters=(), ground=0, corbel=WALK):
+    """The outer skin of a fort wall: pilasters stand full from ``ground`` to ``corbel`` (chiseled one row up); the bays
+    between them have a base course on the ground row, a sloped plinth (a stair rising toward the wall), a recess open
+    up to the corbel row, and an upside-down stair corbel on ``corbel`` that carries whatever stands above. The wall
+    body behind the recess (one block toward ``inward``) is the caller's. ``cells`` are (x, z) on the face line."""
+    for x, z in cells:
+        if (x, z) in pilasters:
+            piece.fill(x, ground, z, x, corbel, z, "bricks")
+            piece.put(x, ground + 1, z, "chiseled")
+            continue
+        piece.put(x, ground, z, "bricks")
+        piece.put(x, ground + 1, z, stair_shape("stone_brick", inward))
+        for y in range(ground + 2, corbel):
+            piece.clear(x, y, z)
+        piece.put(x, corbel, z, stair_shape("stone_brick", inward, "top"))
+
+
+def arrow_slit(piece, x, y, z, axis, height=2, grille=False):
+    """A slit ``height`` tall in a wall that runs along ``axis``: left open, or barred with iron bars (``grille``)."""
+    for dy in range(height):
+        if grille:
+            piece.put(x, y + dy, z, bars(axis))
+        else:
+            piece.clear(x, y + dy, z)
+
+
+def buttress(piece, x, z, top, outward, ground=0):
+    """A buttress standing in front of a wall (the wall lies opposite ``outward``): stone bricks from ``ground`` to
+    ``top`` - 1, chiseled one row up, under a stair that slopes down away from the wall."""
+    piece.fill(x, ground, z, x, top - 1, z, "bricks")
+    piece.put(x, ground + 1, z, "chiseled")
+    piece.put(x, top, z, stair_shape("stone_brick", OPPOSITE[outward]))
+
+
+def window(piece, x, y, z, outward, glass=True, shutters=True, sill=True, wood="dark_oak"):
+    """A window in the wall cell (x, y, z) that looks ``outward``: a glass pane (or iron bars), and on the outside a
+    trapdoor sill under it and open trapdoor shutters folded back against the wall on both sides, where the box has
+    room and the cell is free."""
+    axis = H_AXIS[outward]
+    piece.put(x, y, z, pane(axis) if glass else bars(axis))
+    dx, dz = DIRS[outward]
+    ox, oz = x + dx, z + dz
+    trap = f"minecraft:{wood}_trapdoor[facing={outward},half={{half}},open={{open}},powered=false,waterlogged=false]"
+    if sill and inside(piece, ox, y - 1, oz) and piece.get(ox, y - 1, oz) is None:
+        piece.put(ox, y - 1, oz, trap.format(half="top", open="false"))
+    if shutters:
+        ax, az = (1, 0) if axis == "x" else (0, 1)
+        for s in (-1, 1):
+            sx, sz = ox + s * ax, oz + s * az
+            if inside(piece, sx, y, sz) and piece.get(sx, y, sz) is None:
+                piece.put(sx, y, sz, trap.format(half="bottom", open="true"))
+
+
+def rafter_ends(piece, cells, y, outward, wood="dark_oak"):
+    """Rafter ends under the eaves: upside-down stairs at ``cells`` [(x, z)] on row ``y``, their full side against
+    the wall (opposite ``outward``)."""
+    for x, z in cells:
+        piece.put(x, y, z, stair_shape(wood, OPPOSITE[outward], "top"))
+
+
+def chimney(piece, x, z, y0, y1, smoke=True):
+    """A stone brick chimney stack from ``y0`` to ``y1`` - 1 with a polished andesite band under the top, crowned on
+    ``y1`` by a lit campfire (smoke) or a stone brick wall cap."""
+    piece.fill(x, y0, z, x, y1 - 1, z, "bricks")
+    piece.put(x, y1 - 1, z, "andesite")
+    if smoke:
+        piece.put(x, y1, z, "minecraft:campfire[facing=north,lit=true,signal_fire=false,waterlogged=false]")
+    else:
+        piece.put(x, y1, z, "minecraft:stone_brick_wall[east=none,north=none,south=none,up=true,waterlogged=false,"
+                            "west=none]")
+
+
+def dry(piece):
+    """Drops ``waterlogged=false`` (the default) from every block state of the piece before it is emitted: the lab's
+    preview colours any state that mentions water as water, which painted every stair, bar and fence blue."""
+    for k, v in list(piece.palette.items()):
+        if "waterlogged=false" in v:
+            v = v.replace(",waterlogged=false", "").replace("waterlogged=false,", "").replace("[waterlogged=false]", "")
+            piece.palette[k] = v
+
+
+def chain(piece, x, y0, y1, z):
+    """A chain from ``y0`` up to ``y1`` (hanging from the block above it)."""
+    piece.fill(x, y0, z, x, y1, z, "chain")

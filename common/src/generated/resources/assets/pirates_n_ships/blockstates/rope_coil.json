@@ -1,0 +1,68 @@
+{
+  "variants": {
+    "facing=east,layers=1": {
+      "model": "pirates_n_ships:block/rope_coil_layers1",
+      "y": 90
+    },
+    "facing=east,layers=2": {
+      "model": "pirates_n_ships:block/rope_coil_layers2",
+      "y": 90
+    },
+    "facing=east,layers=3": {
+      "model": "pirates_n_ships:block/rope_coil_layers3",
+      "y": 90
+    },
+    "facing=east,layers=4": {
+      "model": "pirates_n_ships:block/rope_coil_layers4",
+      "y": 90
+    },
+    "facing=north,layers=1": {
+      "model": "pirates_n_ships:block/rope_coil_layers1",
+      "y": 0
+    },
+    "facing=north,layers=2": {
+      "model": "pirates_n_ships:block/rope_coil_layers2",
+      "y": 0
+    },
+    "facing=north,layers=3": {
+      "model": "pirates_n_ships:block/rope_coil_layers3",
+      "y": 0
+    },
+    "facing=north,layers=4": {
+      "model": "pirates_n_ships:block/rope_coil_layers4",
+      "y": 0
+    },
+    "facing=south,layers=1": {
+      "model": "pirates_n_ships:block/rope_coil_layers1",
+      "y": 180
+    },
+    "facing=south,layers=2": {
+      "model": "pirates_n_ships:block/rope_coil_layers2",
+      "y": 180
+    },
+    "facing=south,layers=3": {
+      "model": "pirates_n_ships:block/rope_coil_layers3",
+      "y": 180
+    },
+    "facing=south,layers=4": {
+      "model": "pirates_n_ships:block/rope_coil_layers4",
+      "y": 180
+    },
+    "facing=west,layers=1": {
+      "model": "pirates_n_ships:block/rope_coil_layers1",
+      "y": 270
+    },
+    "facing=west,layers=2": {
+      "model": "pirates_n_ships:block/rope_coil_layers2",
+      "y": 270
+    },
+    "facing=west,layers=3": {
+      "model": "pirates_n_ships:block/rope_coil_layers3",
+      "y": 270
+    },
+    "facing=west,layers=4": {
+      "model": "pirates_n_ships:block/rope_coil_layers4",
+      "y": 270
+    }
+  }
+}

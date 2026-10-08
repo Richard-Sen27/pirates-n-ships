@@ -78,6 +78,8 @@ public final class HullRuntime {
     /** Partial-block candidates of the current analysis ({@link PartialCellRule}), computed once per analysis. */
     private PartialCellRule partials = PartialCellRule.NONE;
     private boolean partialsEnabled = true;
+    /** Partial cells the sea vetoed at the last check ({@link PartialCellRule#submergedCount}); a change rebuilds. */
+    private int partialsSubmerged = -1;
     private int[] floodedCounts = new int[0];
     private boolean regionsDirty = true;
     private long lastRegionBuild = Long.MIN_VALUE / 2;
@@ -198,7 +200,9 @@ public final class HullRuntime {
         ticks++;
         sim.setParams(FloodingConfig.params());
         sampleSea(ship);
-        FloodTickInput input = FloodTickInput.calm(seaShipFrame);
+        // WV1: wave crests at the hull raise the sea at the outside ports (0 without waves or sea)
+        FloodTickInput input = FloodTickInput.calm(seaShipFrame)
+                .withWaves(com.richardsenger.piratesnships.sailing.waves.WaveForces.spillHeight(level, id));
         int[] working = workingPumps();
         pumpingNow = working == null ? new int[0] : working;
         lastReport = sim.tick(working == null ? input : input.withPumps(working));
@@ -434,6 +438,12 @@ public final class HullRuntime {
             partialsEnabled = partialsNow;
             regionsDirty = true;
         }
+        // deck hatches and doors join while the outside air they open to is above the sea (HV1, PartialCellRule)
+        int submerged = partials.submergedCount(seaShipFrame);
+        if (submerged != partialsSubmerged) {
+            partialsSubmerged = submerged;
+            regionsDirty = true;
+        }
         if (!regionsDirty || ticks - lastRegionBuild < DryHullConfig.REGION_REBUILD_TICKS.get()) {
             return;
         }
@@ -446,8 +456,9 @@ public final class HullRuntime {
             for (Compartment c : sim.analysis().compartments()) {
                 dry.add(sim.dryCells(c.id()));
             }
-            // watertight partial blocks whose empty part faces only dry cells are drawn dry too (design.md §4.3)
-            BitSet[] extra = partialsEnabled && partials.candidateCount() > 0 ? partials.additions(dry) : null;
+            // partial blocks whose empty part faces only dry cells, or outside air above the sea, are drawn dry too
+            // (design.md §4.3, §4.4 HV1)
+            BitSet[] extra = partialsEnabled && partials.candidateCount() > 0 ? partials.additions(dry, seaShipFrame) : null;
             for (Compartment c : sim.analysis().compartments()) {
                 BitSet d = dry.get(c.id());
                 if (extra != null && !d.isEmpty()) {

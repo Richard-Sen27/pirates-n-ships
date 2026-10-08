@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "face=ceiling,facing=east": {
+      "model": "pirates_n_ships:block/ship_lantern_ceiling",
+      "y": 90
+    },
+    "face=ceiling,facing=north": {
+      "model": "pirates_n_ships:block/ship_lantern_ceiling",
+      "y": 0
+    },
+    "face=ceiling,facing=south": {
+      "model": "pirates_n_ships:block/ship_lantern_ceiling",
+      "y": 180
+    },
+    "face=ceiling,facing=west": {
+      "model": "pirates_n_ships:block/ship_lantern_ceiling",
+      "y": 270
+    },
+    "face=floor,facing=east": {
+      "model": "pirates_n_ships:block/ship_lantern",
+      "y": 90
+    },
+    "face=floor,facing=north": {
+      "model": "pirates_n_ships:block/ship_lantern",
+      "y": 0
+    },
+    "face=floor,facing=south": {
+      "model": "pirates_n_ships:block/ship_lantern",
+      "y": 180
+    },
+    "face=floor,facing=west": {
+      "model": "pirates_n_ships:block/ship_lantern",
+      "y": 270
+    },
+    "face=wall,facing=east": {
+      "model": "pirates_n_ships:block/ship_lantern_wall",
+      "y": 90
+    },
+    "face=wall,facing=north": {
+      "model": "pirates_n_ships:block/ship_lantern_wall",
+      "y": 0
+    },
+    "face=wall,facing=south": {
+      "model": "pirates_n_ships:block/ship_lantern_wall",
+      "y": 180
+    },
+    "face=wall,facing=west": {
+      "model": "pirates_n_ships:block/ship_lantern_wall",
+      "y": 270
+    }
+  }
+}

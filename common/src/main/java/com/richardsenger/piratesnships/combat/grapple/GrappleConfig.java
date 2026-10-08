@@ -52,6 +52,23 @@ public final class GrappleConfig {
             "A hook latches on the thrower's own ship without hauling it (a line between two points of the ship to slide "
                     + "along, e.g. from the mast top to the deck). Off = it drops and is pulled back");
 
+    public static final ConfigValue<Boolean> HAULING = S.bool("hauling", true,
+            "Hauling by hand (GR5): holding sneak with the rope's near end in hand and the hook in a ship freezes the rope's "
+                    + "length, and walking away pulls the hooked ship toward the player. A hand-held rope from land no longer "
+                    + "drags the hooked ship by itself (shore_haul_force then applies only to ropes tied off on land). "
+                    + "Off = sneaking does nothing and shore_haul_force pulls as before");
+    public static final ConfigValue<Double> HAUL_STIFFNESS = S.doubleRange("haul_stiffness", 60.0, 0.0, 100000.0,
+            "Spring of a frozen rope in kpg/s^2: the pull on the hooked ship per block the rope's ends are beyond the frozen "
+                    + "length (60: two blocks pull with 120 kpg*m/s^2, about 2.4 m/s^2 on a small 50 kpg hull)");
+    public static final ConfigValue<Double> HAUL_DAMPING = S.doubleRange("haul_damping", 30.0, 0.0, 100000.0,
+            "Damping of a frozen rope in kpg/s: less pull the faster the hooked ship closes in, more while the player walks away");
+    public static final ConfigValue<Double> HAUL_MAX_FORCE = S.doubleRange("haul_max_force", 200.0, 0.0, 100000.0,
+            "Strongest pull of a frozen rope in kpg*m/s^2. Beyond it the rope slips through the hand (its frozen length "
+                    + "grows) instead of snapping or stopping the player");
+    public static final ConfigValue<Double> HAUL_PLAYER_PULL = S.doubleRange("haul_player_pull", 0.08, 0.0, 1.0,
+            "Velocity in blocks per tick added every tick to an airborne or swimming player on a frozen rope at full tension, "
+                    + "toward the hook (players standing on the ground or a deck feel nothing)");
+
     public static final ConfigValue<Boolean> RINGS_ENABLED = S.bool("rings_enabled", true,
             "Mooring rings catch hooks passing close by, hold them harder, and take the rope's near end when tied off. "
                     + "Off = a ring is a plain ship block");
@@ -80,8 +97,9 @@ public final class GrappleConfig {
             "Rope length in blocks of a hook fired from a musket (never shorter than max_rope_length)");
 
     private static final ConfigSection SLIDE = S.section("slide",
-            "Sliding along a latched rope (e.g. from the crow's nest down to the other ship): use the rope while looking at it, "
-                    + "with an empty main hand or a grappling hook in it");
+            "Sliding along a latched rope tied off on a cleat or mooring ring (e.g. from the crow's nest down to the other ship): "
+                    + "use the rope while looking at it, with an empty main hand or a grappling hook in it. Using a rope still in "
+                    + "your hand pulls you along it to the hook instead");
     public static final ConfigValue<Boolean> SLIDE_ENABLED = SLIDE.bool("enabled", true,
             "Players can hang on a latched grappling rope and slide down it. Off = using the rope does nothing and riders drop off");
     public static final ConfigValue<Double> BOARD_REACH = SLIDE.doubleRange("board_reach", 2.5, 0.5, 8.0,
@@ -96,7 +114,8 @@ public final class GrappleConfig {
     public static final ConfigValue<Double> SLIDE_GRAVITY = SLIDE.doubleRange("slide_gravity", 0.02, 0.0, 0.5,
             "Speed gained per tick, in blocks per tick, times the rope's slope (height difference per block of rope): steeper is faster");
     public static final ConfigValue<Double> SLIDE_MIN_SPEED = SLIDE.doubleRange("slide_min_speed", 0.1, 0.01, 2.0,
-            "Crawling speed in blocks per tick along a level rope, toward the hook");
+            "Crawling speed in blocks per tick along a level rope, toward the hook; also the speed at which a player pulls "
+                    + "themselves along their own hand-held rope to the hook");
     public static final ConfigValue<Double> SLIDE_MAX_SPEED = SLIDE.doubleRange("slide_max_speed", 0.8, 0.01, 4.0,
             "Top speed of the slide in blocks per tick");
     public static final ConfigValue<Double> HANG_OFFSET = SLIDE.doubleRange("hang_offset", 2.0, 0.0, 4.0,

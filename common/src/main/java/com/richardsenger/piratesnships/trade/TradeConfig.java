@@ -33,6 +33,9 @@ public final class TradeConfig {
             "Cargo weight of one item that is not a trade good");
     public static final ConfigValue<Integer> WEIGH_INTERVAL_TICKS = S.intRange("weigh_interval_ticks", 40, 1, 1200,
             "Ticks between two weighings of a ship's cargo (vanilla containers' downward force, load level)");
+    /** Read by {@code world.treasure} (TM1): the fence's market line for blank treasure maps on pirate islands. */
+    public static final ConfigValue<Integer> TREASURE_MAP_PRICE = S.intRange("treasure_map_price", 60, 0, 100_000,
+            "Doubloons a fence on a pirate island asks for one blank treasure map");
     private static final ConfigSection LOAD = S.section("load_levels", "Load level thresholds as weight / ship capacity");
     public static final ConfigValue<Double> LADEN_AT = LOAD.doubleRange("laden_at", W.ladenAt(), 0.0, 10.0, "Ratio from which a ship is laden");
     public static final ConfigValue<Double> HEAVY_AT = LOAD.doubleRange("heavily_laden_at", W.heavyAt(), 0.0, 10.0, "Ratio from which a ship is heavily laden");

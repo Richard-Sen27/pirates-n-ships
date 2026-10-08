@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-07T17:43:29.54152	Loot Tables
+// 1.21.1	2026-10-07T20:43:46.31635	Loot Tables
 33f1e05aa0902148ab52be6fa554ddd1f5962f4b data/pirates_n_ships/loot_table/blocks/bilge_pump.json
 8e9ddd746834d4dadbbd184d940b2f7faf794ccd data/pirates_n_ships/loot_table/blocks/brig_bars.json
 aaf14b20ff74118c573ba3a6e9b68b745b92dee2 data/pirates_n_ships/loot_table/blocks/brig_door.json
@@ -6,6 +6,7 @@ aaf14b20ff74118c573ba3a6e9b68b745b92dee2 data/pirates_n_ships/loot_table/blocks/
 8fe33c8bc9f5a48235f626ecfac350903f727f2e data/pirates_n_ships/loot_table/blocks/capstan.json
 fa46de5702c601e54e4c45cf49f73cb62cc9fc9c data/pirates_n_ships/loot_table/blocks/cargo_barrel.json
 c6ef7028b0de381fde2af376cca7e0c671d46ac1 data/pirates_n_ships/loot_table/blocks/cargo_crate.json
+3cf9d831d54781b165e4763457824f9acd55017c data/pirates_n_ships/loot_table/blocks/chart_table.json
 0339f023731e0bacda27316521640b0d6cae08a8 data/pirates_n_ships/loot_table/blocks/cleat.json
 d5a51e96542e5c6d2fadb0fde7f18af44529daa1 data/pirates_n_ships/loot_table/blocks/figurehead_eagle.json
 f39dbe603ced061414ef4ced929beeeae17df330 data/pirates_n_ships/loot_table/blocks/figurehead_lion.json
@@ -21,8 +22,13 @@ f936d6d7f08f8eea984446d915971955c92854e8 data/pirates_n_ships/loot_table/blocks/
 16583145bb6a8246fb8825b7bacc6aae49286901 data/pirates_n_ships/loot_table/blocks/nameplate.json
 418632a25e4e5ca84da50a562fd37127bfbf592a data/pirates_n_ships/loot_table/blocks/notice_board.json
 38cf3cd499cbf7780ab44ee4c58e11c82a7e884b data/pirates_n_ships/loot_table/blocks/pantry.json
+dd9e52a7331f4c6837101b6bd5ea0b39b41aa5fd data/pirates_n_ships/loot_table/blocks/rope_coil.json
 12f062da47d72466bcf7dea87ff5c49789a70cc9 data/pirates_n_ships/loot_table/blocks/sail_winch.json
 93d0684e30458eece41eb19356f6f221964019dd data/pirates_n_ships/loot_table/blocks/sea_chest.json
+eb05599af9806103b092184f2b726e07d6562926 data/pirates_n_ships/loot_table/blocks/sea_cot.json
+765b3dadf8f6e1480e4444020b086ff1fe9fed7b data/pirates_n_ships/loot_table/blocks/ship_lantern.json
+5159259efb3ba90ea1b74303285b5cf90f43a38c data/pirates_n_ships/loot_table/blocks/ships_bell.json
+f2de91b8ffac278b305cac3b9d9064ebb9cf7d76 data/pirates_n_ships/loot_table/blocks/stern_window.json
 05c89f77853a5634834a9e95f6684cfb3d07c454 data/pirates_n_ships/loot_table/blocks/swivel_gun.json
 35f76bb2053097f9bf42114bfc03431dde3282f8 data/pirates_n_ships/loot_table/blocks/water_barrel.json
 db4d3078eaa36803d04186b86cf1d3f3e7694482 data/pirates_n_ships/loot_table/blocks/yard.json

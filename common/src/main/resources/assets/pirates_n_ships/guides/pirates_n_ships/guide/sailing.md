@@ -11,6 +11,7 @@ item_ids:
   - pirates_n_ships:map_tile
   - pirates_n_ships:rope
   - pirates_n_ships:sail_winch
+  - pirates_n_ships:treasure_map
 ---
 
 # Sailing
@@ -107,6 +108,15 @@ it first. Then use the toolkit on the broken-off piece: after a second of hammer
 chests and stations, and the ship keeps its name. Each repair uses 4 nails. Only pieces of the same ship can be
 joined, and only pieces up to 200 blocks; bigger halves need a shipwright. Server config `assembly.rejoin`.
 
+## Hauling with the rope
+With your hook set in a ship and the rope in your hand, hold sneak: the rope's length freezes. Walk back and the
+rope pulls the ship toward you; a hook near the bow or stern swings it round. Let go of sneak and the rope pays out
+again. Pull too hard and the rope slips through your hand rather than snapping. Standing on the ground or a deck
+you feel nothing; in the air or in the water the rope pulls you toward the hook. A rope tied to a cleat can't be
+hauled by hand. **Pulling yourself in:** right-click the rope you are holding to climb hand over hand to the hook;
+sneak to let go. Only a rope tied off on a cleat or mooring ring is a line others can slide along. Server config
+`grapple.hauling`, `haul_stiffness`, `haul_damping`, `haul_max_force`, `haul_player_pull`.
+
 ## Boarding along the rope
 Once a grappling rope is latched onto another ship, look at the rope and use it: you hang from it and slide down to the
 lower end, following both ships as they move. Sneak to let go. A level rope is crawled slowly toward the hook. From the
@@ -124,6 +134,14 @@ wipes it. Looking at a tile tells who drew or last updated it, when, and the are
 of the drawing as an item; put it back in its place and the board is whole again. Server options under
 `chart.tiles`: `enabled`, `redraw_allowed`, `require_chart_item`, `reach`, `tile_cells`, `max_board_side`, `max_zoom`,
 `ink_cost_enabled`, `ink_per_tile`, `kraken_ink_tile_value`.
+
+## Decor
+Dress up your ship. The **Ship's Lantern** (a lantern and two gold nuggets) stands on deck, hangs from a beam or
+from a bracket on a wall, and lights like a lantern, even underwater. The **Ship's Bell** sits on a post or a wall;
+right-click to ring it. **Rope Coils** (four rope) stack up to four on one spot. **Stern Windows** go into a wall
+from outside; right-click to close or open the shutters. The **Chart Table** is a captain's table with a chart
+spread out on it. The **Sea Cot** is a wooden bed for the captain's cabin: on land you can sleep in it and set your
+spawn like a bed, but not while it is aboard a ship at sea. Server config `ship_decor`.
 
 ## Hammocks
 Your crew sleeps in hammocks. Hang one between two supports at the same height (fence posts, walls, logs, or a solid
@@ -207,6 +225,29 @@ a fence's shack under the Jolly Roger. Pirates hang about the camp day and night
 desk opens a market that buys plunder and rum dear and sells little. Somewhere under two crossed logs a chest lies
 buried two blocks deep: dig at the cross for doubloons, rum, provisions and, with luck, a pistol. Server config
 `world.structures.pirate_island`.
+
+## Wrecks
+Sunken ships lie on the ocean floor of every ocean: a broken sloop, a scattered cargo field, a mast stump with its
+yard, or the stern of a larger ship. Each has a chest of ship's stores (doubloons, rum, salted fish, rope, nails,
+lead shot, now and then a cutlass, rarely kraken ink). Tall wrecks only lie in deep water; in shallow seas you find
+cargo fields. Bring water breathing or night vision. `/locate structure pirates_n_ships:wreck` finds the nearest.
+The sea chest in the sloop's hold is empty. Server config `world.structures.wreck.enabled`, `frequency`.
+
+## Treasure maps
+Fences on pirate islands sell blank treasure maps (60 doubloons), and wreck chests hold one now and then. Use a
+blank map and it marks the nearest pirate island's buried treasure that nobody has found yet (within about 2000
+blocks); otherwise it stays blank. While you hold the map, it shows the island in chart style with a red X and
+tells you the way: "NW, 340 blocks". At the X, dig about two blocks into the sand and open the chest. The treasure
+is found: every map of it turns grey and keeps as a souvenir, and the next blank map leads to another treasure.
+Operators: `/pirates world treasure give [port]`. Server config `world.treasure_maps`, `cargo_trade.treasure_map_price`.
+
+## Waves
+The sea follows the weather: calm or a light chop in fair weather, rough in rain, a storm in thunder, changing over
+about a minute. Ships roll and pitch with the waves (big ships far less than small boats). In rough seas the bow
+throws spray, and any open hatch or low rim close to the waterline lets water in at the crests, so close your hatches
+and keep a pump ready before a storm. `/pirates waves` shows the sea; operators can hold a state with `/pirates waves
+set storm` and release it with `/pirates waves clear`. The camera can roll with the ship (client setting
+`wave_effects.camera_sway`, off by default). Server config `waves`.
 
 ## Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks

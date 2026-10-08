@@ -4,67 +4,102 @@ walls pool's depth runs out.
 
 It ends either run: wall_east_in on the west face [0, 0, 2] when it closes the eastward run, wall_west_in on the east
 face [6, 0, 3] when it closes the westward one; it pulls nothing itself. The sea is to the north like the wall's.
-Inside, a ladder on the north wall climbs from the ground floor through a landing level with the walkway (y 4; a
+
+Build: a 5x5 stone core (walls on x 1..5, z 1..5) between four corner pilasters that stand the full height of the box.
+On the sea and land faces the core is set back behind the pilasters from a sloped, mossy plinth up to a corbel table
+under the roof; on the side faces the curtain's body continues to the walkway's height (y 4) and ends in a corbelled
+ledge level with the walkway, so the walkway runs on to the doors in the core. The corbels carry the roof platform
+(y 9, the full 7x7) with slab-capped merlons, lanterns on the corner merlons and the navy flag on a pole in the middle.
+
+Inside, a ladder on the core's north wall climbs from the ground floor through a landing level with the walkway (y 4; a
 door in each side wall at z 2 leads out onto the curtain's walkway, the one away from the wall stays shut) to the
-roof: a crenellated platform at y 9 with lanterns on the corner merlons and the navy flag on a pole in the middle.
-The ground floor's door on the landward face (z 6) opens onto the path at the wall's foot."""
-from _style import EAST_Z, PALETTE, WALK, WEST_Z, connector, door, flagpole, weather
+roof. The ground floor's door on the landward face (z 5) opens under a blue banner onto the path at the wall's foot."""
+from _style import (dry, EAST_Z, PALETTE, WALK, WEST_Z, age, arrow_slit, banner, connector, door, flagpole, fort_face,
+                    merlons, stair_shape)
 from buildspec import Piece
 
 S, H = 7, 12
 ROOF = 9                # the roof platform's floor row (people stand on y 10)
-LX, LZ = 3, 1           # the ladder column (against the north wall, facing south)
+CORBEL = ROOF - 1
+C0, C1 = 1, 5           # the core's walls
+LX, LZ = 3, 2           # the ladder column (against the core's north wall, facing south)
 
 p = Piece("navy_outpost_wall_tower", "Navy Outpost Wall Tower", (S, H, S), PALETTE)
 
-# the shell: stone bricks on a chiseled plinth, a polished andesite band at the landing, floors of planks
+# the foundation and the four corner pilasters (chiseled plinth, the walkway's andesite band)
 p.fill(0, 0, 0, S - 1, 0, S - 1, "bricks")
-p.ring(0, 0, S - 1, S - 1, 1, ROOF, "bricks")
-p.ring(0, 0, S - 1, S - 1, 1, 1, "chiseled")
-p.ring(0, 0, S - 1, S - 1, WALK, WALK, "andesite")
-p.fill(1, 0, 1, S - 2, 0, S - 2, "spruce")
-p.fill(1, WALK, 1, S - 2, WALK, S - 2, "spruce")
+for x, z in ((0, 0), (S - 1, 0), (0, S - 1), (S - 1, S - 1)):
+    p.fill(x, 1, z, x, CORBEL, z, "bricks")
+    p.put(x, 1, z, "chiseled")
+    p.put(x, WALK, z, "andesite")
+
+# the core, floors of spruce planks
+p.ring(C0, C0, C1, C1, 1, CORBEL, "bricks")
+p.fill(C0 + 1, 0, C0 + 1, C1 - 1, 0, C1 - 1, "spruce")
+p.fill(C0 + 1, WALK, C0 + 1, C1 - 1, WALK, C1 - 1, "spruce")
+
+# the skin: sea and land faces set back up to the corbels; the side faces carry the curtain to the walkway and end in a
+# corbelled ledge there, then set back up to the roof corbels
+fort_face(p, [(x, 0) for x in range(1, S - 1)], "south", corbel=CORBEL)
+fort_face(p, [(x, S - 1) for x in range(1, S - 1)], "north", corbel=CORBEL)
+for x, inward in ((0, "east"), (S - 1, "west")):
+    cells = [(x, z) for z in range(1, S - 1)]
+    fort_face(p, cells, inward, corbel=WALK)
+    for z in range(1, S - 1):
+        for y in range(WALK + 1, CORBEL):
+            p.clear(x, y, z)
+        p.put(x, CORBEL, z, stair_shape("stone_brick", inward, "top"))
+p.fill(C0, WALK, C0, C1, WALK, C0, "andesite")          # the band round the core at the landing
+p.fill(C0, WALK, C1, C1, WALK, C1, "andesite")
+
+# the roof platform over the whole box, merlons round it (lanterns on the corner ones), the navy flag in the middle
 p.fill(0, ROOF, 0, S - 1, ROOF, S - 1, "andesite")
-weather(p, ((1, 2, 0, "bricks_mossy"), (5, 6, 0, "bricks_cracked"), (0, 3, 5, "bricks_mossy"),
-            (6, 7, 4, "bricks_cracked"), (4, 8, 6, "bricks_mossy"), (2, 2, 6, "bricks_cracked")))
+ring = sorted({(i, 0) for i in range(S)} | {(i, S - 1) for i in range(S)} | {(0, i) for i in range(S)}
+              | {(S - 1, i) for i in range(S)})
+corners = {(0, 0), (S - 1, 0), (0, S - 1), (S - 1, S - 1)}
+merlons(p, [(x, z) for x, z in ring if (x + z) % 2 == 0 and (x, z) not in corners], ROOF + 1)
+merlons(p, sorted(corners), ROOF + 1, cap=False)
+for x, z in sorted(corners):
+    p.put(x, ROOF + 2, z, "lantern")
+flagpole(p, 3, ROOF + 1, 3, height=2, flies="east")
 
-# merlons round the roof at the corners and every other block
-for i in range(S):
-    for x, z in ((i, 0), (i, S - 1), (0, i), (S - 1, i)):
-        if i % 2 == 0:
-            p.put(x, ROOF + 1, z, "bricks")
-
-# the ladder from the ground floor through the landing to the roof
+# the ladder from the ground floor through the landing to a hatch in the roof
 for y in range(1, ROOF + 1):
     p.put(LX, y, LZ, "ladder_s")
 
-# doors: ground floor landward, landing onto the walkway on both sides (walkway rows z 1..4)
-door(p, 3, 1, S - 1, facing="south")
-door(p, 0, WALK + 1, 2, facing="west")
-door(p, S - 1, WALK + 1, 2, facing="east", hinge="right")
+# doors: ground floor landward under a banner, landing onto the walkway on both sides
+door(p, 3, 1, C1, facing="south")
+p.clear(3, 1, S - 1)
+p.put(3, 0, S - 1, "cobble")
+banner(p, 3, 4, S - 1, "south")
+banner(p, 3, 6, 0, "north")
+door(p, C0, WALK + 1, 2, facing="west")
+door(p, C1, WALK + 1, 2, facing="east", hinge="right")
 
-# arrow slits of iron bars, a lantern inside on each floor
-for y in (2, WALK + 2, 7):
-    p.put(3, y, 0, "bars")
-for y in (2, 7):
-    p.put(0, y, 4, "bars")
-    p.put(S - 1, y, 4, "bars")
-p.put(5, 1, 5, "minecraft:barrel[facing=up,open=false]")
-p.put(5, 2, 5, "lantern")
-p.put(1, WALK + 1, 5, "pirates_n_ships:cargo_barrel")
-p.put(1, WALK + 2, 5, "lantern")
-p.put(5, WALK + 1, 5, "minecraft:chest[facing=west,type=single,waterlogged=false]")
+# arrow slits (barred) in the core on every side, both floors
+arrow_slit(p, 2, 2, C0, "x", grille=True)
+arrow_slit(p, 4, 6, C0, "x", grille=True)
+arrow_slit(p, 2, 6, C1, "x", grille=True)
+arrow_slit(p, 4, 2, C1, "x", grille=True)
+for x in (C0, C1):
+    arrow_slit(p, x, 2, 4, "z", grille=True)
+    arrow_slit(p, x, 6, 4, "z", grille=True)
 
-# the roof: lanterns on the corner merlons, the navy flag in the middle
-for x, z in ((0, 0), (S - 1, 0), (0, S - 1), (S - 1, S - 1)):
-    p.put(x, ROOF + 2, z, "lantern")
-flagpole(p, 3, ROOF + 1, 3, height=2, flies="east")
-for x in (2, 4):
-    p.put(x, 3, S - 1, "wool")     # the navy's blue beside the landward door
+# stores and lights: a barrel with a lantern on the ground floor, powder and a chest on the landing
+p.put(4, 1, 4, "minecraft:barrel[facing=up,open=false]")
+p.put(4, 2, 4, "lantern")
+p.put(2, 1, 3, "pirates_n_ships:cargo_crate")
+p.put(2, WALK + 1, 4, "pirates_n_ships:cargo_barrel")
+p.put(2, WALK + 2, 4, "lantern")
+p.put(4, WALK + 1, 4, "minecraft:chest[facing=west,type=single,waterlogged=false]")
+p.put(3, CORBEL, 3, "lantern_hanging")
+
+age(p)
 
 connector(p, 0, 0, EAST_Z, "wall_east_in", "west", "minecraft:stone_bricks")
 connector(p, S - 1, 0, WEST_Z, "wall_west_in", "east", "minecraft:stone_bricks")
 
-p.emit("crenellated corner tower with a ladder, lanterns on the merlons and the navy flag",
+dry(p)
+p.emit("crenellated corner tower: a set-back core between corner pilasters, corbelled roof, lanterns and the navy flag",
        ["Ends a wall run: wall_east_in [0, 0, 2] (west face) or wall_west_in [6, 0, 3] (east face).",
         "Landing at the walkway's height (y 4) with doors west and east at z 2; roof platform y 9."])

@@ -34,6 +34,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.function.Supplier;
 
 /**
  * Ratlines (RL1, docs/design.md §4.8 "Visual backlog 2", item 1) in a real server: placing with the item against a
@@ -283,21 +284,36 @@ public final class RatlinesGameTests {
 
     // ------------------------------------------------------------------ climbing
 
-    /** Holds jump each tick and tracks the highest feet height; succeeds once it rose {@code rise} blocks. */
-    private static void climb(GameTestHelper h, Player player, boolean jump, double rise, int forTicks, String what) {
-        double y0 = player.getY();
-        double[] max = {y0};
-        int[] ticks = {0};
+    /**
+     * At tick {@code start} spawns a player with {@code spawn}, then each tick holds jump (or walks forward) and tracks
+     * the highest feet height; {@code forTicks} later it must have risen {@code rise} blocks. Everything is scheduled
+     * up front: scheduling from inside a scheduled task changes the test's task map while it is iterated (a crash).
+     */
+    private static void climb(GameTestHelper h, int start, Supplier<Player> spawn, boolean jump, double rise,
+                              int forTicks, String what) {
+        Player[] player = {null};
+        double[] y0 = {0};
+        double[] max = {0};
+        int[] tick = {0};
         h.onEachTick(() -> {
-            if (player.isRemoved()) return;
-            player.setJumping(jump);
-            player.zza = jump ? 0f : 1f;
-            max[0] = Math.max(max[0], player.getY());
-            ticks[0]++;
+            int t = tick[0]++;
+            if (t == start) {
+                player[0] = spawn.get();
+                y0[0] = player[0].getY();
+                max[0] = y0[0];
+            }
+            Player p = player[0];
+            if (p == null || p.isRemoved()) {
+                return;
+            }
+            p.setJumping(jump);
+            p.zza = jump ? 0f : 1f;
+            max[0] = Math.max(max[0], p.getY());
         });
-        h.runAfterDelay(forTicks, () -> {
-            Constants.LOG.info("[RL1] {}: start y {}, highest {}, now {} after {} ticks", what, y0, max[0], player.getY(), ticks[0]);
-            h.assertTrue(max[0] - y0 >= rise, what + ": rose only " + (max[0] - y0) + " blocks (from " + y0 + ")");
+        h.runAfterDelay(start + forTicks, () -> {
+            h.assertTrue(player[0] != null, what + ": no player was spawned");
+            Constants.LOG.info("[RL1] {}: start y {}, highest {}, now {}", what, y0[0], max[0], player[0].getY());
+            h.assertTrue(max[0] - y0[0] >= rise, what + ": rose only " + (max[0] - y0[0]) + " blocks (from " + y0[0] + ")");
             h.succeed();
         });
     }
@@ -310,8 +326,8 @@ public final class RatlinesGameTests {
             h.setBlock(new BlockPos(4, y, 4), Blocks.OAK_LOG);
             h.setBlock(new BlockPos(3, y, 4), ratlines(Kind.WALL, Direction.WEST));
         }
-        Player p = playerInLevel(h, h.absoluteVec(new Vec3(3.4, 1.0, 4.5)), Direction.EAST.toYRot());
-        climb(h, p, true, 2.0, 30, "hung run on land");
+        climb(h, 0, () -> playerInLevel(h, h.absoluteVec(new Vec3(3.4, 1.0, 4.5)), Direction.EAST.toYRot()),
+                true, 2.0, 30, "hung run on land");
     }
 
     /**
@@ -332,14 +348,13 @@ public final class RatlinesGameTests {
         BlockPos bottom = f.helmPlot().offset(-2, 0, 0);
         h.assertTrue(level.getBlockState(bottom).equals(ratlines(Kind.WALL, Direction.WEST)),
                 "the net did not come along into the plot: " + level.getBlockState(bottom));
-        h.runAfterDelay(SETTLE, () -> {
+        climb(h, SETTLE, () -> {
             for (int dy = 0; dy < 3; dy++) {
                 h.assertTrue(level.getBlockState(bottom.above(dy)).is(RiggingContent.RATLINES.get()), "net " + dy + " fell off the ship");
             }
             Vec3 at = f.ship().toWorld(new Vec3(bottom.getX() + 0.4, bottom.getY() + 0.05, bottom.getZ() + 0.5));
-            Player p = playerInLevel(h, at, Direction.EAST.toYRot());
-            climb(h, p, true, 1.5, 40, "hung run on a ship");
-        });
+            return playerInLevel(h, at, Direction.EAST.toYRot());
+        }, true, 1.5, 40, "hung run on a ship");
     }
 
     /**
@@ -362,15 +377,14 @@ public final class RatlinesGameTests {
         BlockPos low = f.helmPlot().offset(-1, 0, -1);
         h.assertTrue(level.getBlockState(low).equals(ratlines(Kind.SLOPE, Direction.EAST)),
                 "the run did not come along into the plot: " + level.getBlockState(low));
-        h.runAfterDelay(SETTLE, () -> {
+        climb(h, SETTLE, () -> {
             for (int i = 0; i < 3; i++) {
                 h.assertTrue(level.getBlockState(low.offset(i, i, 0)).is(RiggingContent.RATLINES.get()), "link " + i + " fell off the ship");
             }
             // on the deck one block west of the first link
             Vec3 at = f.ship().toWorld(new Vec3(low.getX() - 0.5, low.getY() + 0.02, low.getZ() + 0.5));
-            Player p = playerInLevel(h, at, Direction.EAST.toYRot());
-            climb(h, p, false, 1.5, 60, "sloped run on a ship");
-        });
+            return playerInLevel(h, at, Direction.EAST.toYRot());
+        }, false, 1.5, 60, "sloped run on a ship");
     }
 
     // ------------------------------------------------------------------ toggle

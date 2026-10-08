@@ -100,3 +100,32 @@ An assembled ship with a manned cannon and a chest within 4 blocks holding 5 gun
 4. **Swivel:** loads in about 2 s; with `cannons.swivel.ammo_count` 3 it takes 3 balls and a broken gun returns 3.
 5. **Refusals:** a loaded gun ("already loaded"); a chest beyond 4 blocks, on the dock, or with only powder; two cargo crates (powder and balls) work.
 6. **Toggles:** `cannons.crew.enabled = false` refuses Load! and skips the reload; `auto_reload = false` leaves the gun empty; `supply_range` changes the reach. Hand-loading still works. The whistle wheel's 7 sectors still read well.
+
+## WS4a: NPC gunnery ("Fire at will")
+Two assembled ships about 25 blocks apart on open water. Yours has a cannon facing the other ship (broadside or bow),
+a crew member at it and a chest within 4 blocks with 5 gunpowder and 5 cannonballs. The other ship (the dummy) has
+no crew and a flagpole flying the Jolly Roger (by hand, or `/pirates flag set <pole pos> jolly_roger`; `/pirates flag strike <pos>` / `raise <pos>` for step 4).
+Your own ship flies nothing or a merchant flag.
+1. **Fire at will:** whistle, the new "Fire at will" entry (fire-charge icon, 8 sectors now). The crew answers
+   "Aye, firing at will!", loads, then every second or so the barrel visibly steps up or down (the wood-knock sound)
+   until it is aimed, and fires by itself. Most shots should hit the dummy's hull at 25 blocks; say roughly how many of
+   five hit. It keeps firing and reloading until the chest is empty.
+2. **The arc:** turn your ship (or the dummy) until the dummy is more than about 15° off the barrel: the crew stops
+   firing and the barrel stays; turn back and it resumes. A cannon facing the bow never fires at a ship abeam.
+3. **Moving target:** sail the dummy across the barrel at a few blocks per second (or sail your own ship past it):
+   the crew still hits now and then (it leads the target). Say whether shots fall short or behind.
+4. **Striking the colours:** strike the dummy's flag at its pole: the crew stops within one aim interval (1 s) and
+   never fires again while it is struck; raise it again and the crew resumes. Strike your own ship's flag instead:
+   your crew holds fire.
+5. **Not hostile:** set the dummy to a merchant or navy flag: an unflagged or merchant gunner ignores it. Hoist the
+   navy flag on your own ship: it now fires at the Jolly Roger only; hoist the Jolly Roger on yours: it fires at a
+   navy or merchant dummy (and you commit the crimes for hitting a merchant, as for any crew shot).
+6. **Release crew** on the whistle: the crew leaves the gun and gunnery stops; manning the gun again with "Load!"
+   does not restart it until "Fire at will" is given again.
+7. **Damage multiplier on your own hull:** swap roles: put a crew and supply on the dummy with its cannon facing your
+   ship, fly the Jolly Roger on yours, and `/pirates crew order fire_at_will` standing on the dummy. About half of the
+   hits on your hull break a plank (`cannons.npc.npc_block_damage_multiplier` 0.5); set it to 0 and hits only push,
+   set it to 1 and every hit breaks one. A plain "Fire!" from your own crew always breaks the full amount.
+8. **Toggles:** `cannons.npc.enabled = false`: "Fire at will" is refused ("This gun won't fire, captain!") and nothing
+   fires by itself; `arc_degrees`, `engage_range` (the dummy beyond it is ignored), `aim_interval_ticks` (slower
+   barrel steps) and `fire_interval_ticks` change what their names say.

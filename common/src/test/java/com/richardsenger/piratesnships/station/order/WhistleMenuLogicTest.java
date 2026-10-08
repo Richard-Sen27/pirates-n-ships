@@ -116,10 +116,13 @@ class WhistleMenuLogicTest {
     // ------------------------------------------------------------------ entries
 
     @Test
-    void entriesAreTheSailOrdersThenPumpThenFireThenLoadThenRelease() {
+    void entriesAreTheSailOrdersThenPumpThenTheGunOrdersThenRelease() {
         List<WhistleOrder> e = WhistleOrder.entries();
         assertEquals(List.of(WhistleOrder.HOIST, WhistleOrder.REEF, WhistleOrder.FURL, WhistleOrder.PUMP, WhistleOrder.FIRE,
-                WhistleOrder.LOAD, WhistleOrder.RELEASE), e);
+                WhistleOrder.LOAD, WhistleOrder.FIRE_AT_WILL, WhistleOrder.RELEASE), e);
+        assertEquals(CannonOrder.FIRE_AT_WILL, WhistleOrder.FIRE_AT_WILL.order());
+        assertEquals("fire_at_will", WhistleOrder.FIRE_AT_WILL.id());
+        assertNull(WhistleOrder.FIRE_AT_WILL.sail());
         assertEquals(CannonOrder.FIRE, WhistleOrder.FIRE.order());
         assertEquals(CannonOrder.LOAD, WhistleOrder.LOAD.order());
         assertNull(WhistleOrder.LOAD.sail(), "the load order is no sail order and is not remembered");
@@ -145,9 +148,9 @@ class WhistleMenuLogicTest {
     }
 
     @Test
-    void sevenEntriesSplitTheWheelEvenly() {
+    void eightEntriesSplitTheWheelEvenly() {
         RadialLayout l = RadialLayout.forWindow(WhistleOrder.entries().size(), 480, 270, 1.0);
-        assertEquals(7, l.count());
+        assertEquals(8, l.count());
         for (int i = 0; i < l.count(); i++) {
             double a = l.centerAngle(i);
             assertEquals(i, l.sectorAt(RadialLayout.x(a, l.iconRadius()), RadialLayout.y(a, l.iconRadius())), "sector " + i);
@@ -165,7 +168,7 @@ class WhistleMenuLogicTest {
             assertTrue(o.icon() != null);
             assertEquals(o, WhistleOrder.byId(o.id()).orElseThrow());
         }
-        assertTrue(WhistleOrder.byId("fire_at_will").isEmpty());
+        assertTrue(WhistleOrder.byId("board").isEmpty());
         assertTrue(WhistleOrder.byId("HOIST").isEmpty());
     }
 
@@ -177,7 +180,7 @@ class WhistleMenuLogicTest {
             assertEquals(new WhistleOrderPayload(o.id()), roundTrip(new WhistleOrderPayload(o)));
         }
         // an unknown id survives the wire, so the server can see and ignore it
-        assertEquals(new WhistleOrderPayload("fire_at_will"), roundTrip(new WhistleOrderPayload("fire_at_will")));
+        assertEquals(new WhistleOrderPayload("board"), roundTrip(new WhistleOrderPayload("board")));
     }
 
     @Test

@@ -1057,8 +1057,9 @@ GeckoLib project). Every keyframe uses GeckoLib's `easeInOutSine` easing. Source
 | `work` | at its station while the station carries out an order (winch, pump, cannon, …) | 2 s: hand over hand; each arm reaches to −125° (high front), pulls down to −52° in 1.2 s and swings back up in 0.8 s, the left arm 1 s behind the right; arms turned 10–16° inwards so the hands meet in front of the chest; waist leans 12° and dips to 20° in each pull; right foot forward (−16°), left back (14°) |
 | `sit` | riding something that seats it (boat, minecart; **not** the station seat, where it stands) | 4 s: legs −81° x, ±18° y, ±4° z (vanilla riding pose), hands resting on the thighs (−38° to −40°, 10° inwards), leaning back 3–4°, breathing |
 | `sleep` | lying in a hammock (ART1d; `CrewMember#isResting`) | 4 s: on the back in the hammock, see "Hammock (ART1d)" above |
+| `helm_hold`, `helm_turn_left/right`, `cannon_aim`, `cannon_load`, `cannon_fire`, `capstan_push` | at a station (ART7) | see "Crew station animations (ART7)" below |
 
-Priority: `work` > `sleep` > `sit` > `walk` > `idle` (`crew/npc/CrewPose`). One controller (`body`) plays them with a 5-tick
+Priority: station pose (ART7) > `work` > `sleep` > `sit` > `walk` > `idle` (`crew/npc/CrewPose`). One controller (`body`) plays them with a 5-tick
 blend. A mob with more states adds animations with new names and its own controller logic; triggered one-shots
 (attack swings, a cannon fuse) go through GeckoLib triggerable animations on a second controller.
 
@@ -1122,6 +1123,58 @@ shared animations working because every contract bone is still there.
 - `risky_eval` rejects code containing `//` anywhere, even inside a string; build such strings from `'/' + '/'`.
 Run `./gradlew build` afterwards: `CrewMemberRigTest` parses the files with GeckoLib's loader and checks bones,
 pivots, parents and animation names.
+
+### Crew station animations (ART7)
+
+Seven animations on the crew rig for the stations, in `crew_member.animation.json` (exported from
+`models/entity/crew_member.bbmodel`; the four seafarer projects carry copies for preview) and one player animation for
+hauling. Source `models/entity/station_animations.js` (run after `crew_member_animations.js`, `ST.build()`; `ST.render`
+writes the contact sheet). Values in file convention as in `crew_member_animations.js`; keyframes `easeInOutSine`;
+the head is never keyed. Contact sheet `renders/crew_poses_art7.png`: one row per animation, four frames from the front
+three-quarter, four from the mob's right side, with proxy props for the shot only (the helm wheel and post, a cylinder
+for the gun; not saved).
+
+| Name | Length | Loop | Content |
+|---|---|---|---|
+| `helm_hold` | 4 s | loop | root 2 px forward, waist 10° forward (10.5° at 2 s), arms `[-52.1, ∓0.3, ∓10.4]`: hands on the rim at 2 and 10 o'clock; legs slightly apart |
+| `helm_turn_right` | 1 s | loop | hand over hand clockwise as the helmsman sees it (to starboard): gripping from 0 to 0.6 s, the right hand from 35° to 82° clockwise of the top, the left from −85° to −30°, the waist rocking (lean 2–16°, twist +8° to −8°); back for a new grip by 1 s, the hands about 2 px off the rim |
+| `helm_turn_left` | 1 s | loop | `helm_turn_right` mirrored (arms swapped, y and z negated, twist negated) |
+| `cannon_aim` | 2 s | loop | leaning in 25–28° over the gun, root 1 px forward, right hand on the breech (12.5 px up, 10 px ahead), left hand on the thigh |
+| `cannon_load` | 1.5 s | loop | ramming: both hands forward on an (invisible) level rammer, right hand ahead; drawn back at 0 s, driven home at 0.6–0.85 s with the waist 8° → 22° and the body 1.5 px forward; right foot forward |
+| `cannon_fire` | 0.75 s | once | linstock hand raised high (arm −150°), lunge to the touch hole at 0.25 s (waist 30°, root 2 px forward, right leg −30°), held to 0.4 s, standing clear at 0.6 s (leaning back 8°, arm up and out), rest at 0.75 s |
+| `capstan_push` | 1.2 s | loop | chest to the bars (waist 30–33°), arms forward on them (−75° to −78°, 14° inwards), walking strides ±25° with a 0.6 px dip; **not played yet**: no capstan crew station exists (AN2a raises the anchor by a use of the capstan, an instant action) |
+
+- **Wheel geometry (helm poses).** The helmsman stands at the station spot on the helm's `FACING` side, facing the
+  wheel. In the model frame (feet at the origin, facing −z) the axle is 11.75 px ahead (8 px to the block edge plus the
+  axle's 3.75 px in `HelmWheelRenderer`) and 12.84 px up (13 px over the deck minus the station seat's 0.16 px); the rim
+  radius is 5.9 px. The arm values were solved by forward kinematics with GeckoLib's transforms (baked pivots, x and y
+  negated, `rotationZYX`, root position `(-x, y, z)`), the root shift, waist lean and twist searched per key so the
+  `right_hand`/`left_hand` locators land on the rim (`helm_hold` 0.2 px off; turn keys within 1 px while gripping).
+  A helmsman on another side of the helm faces the helm block but his hands do not reach the rim (StationSpot tries
+  north, east, south, west in that order).
+- **Wiring.** The server picks the pose every tick (`crew/npc/StationPoses`, one resolver per station kind:
+  `station/helm/HelmPoses`, `combat/cannon/npc/GunCrewPoses`) and syncs it on the crew member (`DATA_STATION_POSE`); a
+  station pose wins over every other pose (`CrewPose.choose`) and also turns the crew member to face the wheel or gun
+  (yaw from the plot direction through the ship's orientation, as `SleepAxis` does for hammocks) and stops its look
+  goals. Helm: `helm_hold`, and for 20 ticks after each change of the wheel angle `helm_turn_right` (wheel to
+  starboard) or `helm_turn_left` (`HelmTurn`). Cannon: `cannon_load` while the station carries out "Load!",
+  `cannon_fire` during "Fire!" (the fuse; played once), `cannon_aim` during "Fire at will" and whenever its crew has a
+  target (`Gunnery#aiming`); otherwise the ordinary poses.
+- **Rig tests** (`CrewStationPoseTest`, composed like `SeafarerRigTest`: GeckoLib's baked rig and loaded keys,
+  `RenderUtil.prepMatrixForBone`, the renderer's `180 − bodyYaw` turn, the wheel placed as `HelmWheelRenderer` places
+  it, for helms facing all four directions): both hands within 1 px of the rim at 2 and 10 o'clock in `helm_hold`,
+  turning more than 30° clockwise (counter-clockwise) within 1.5 px of the rim in `helm_turn_right` (`left`), the linstock hand well below the
+  shoulder and forward at the lunge, the aiming hand at breech height in the next block while the head leans over it.
+- **`haul` (player, PAL).** Built by `F9.buildHaul()` in `animations/player_poses.js` on `animations/player_rig.bbmodel`
+  (which now also holds `rope_slide`); exported to `rope_animations/haul.json` (one animation, `"loop": true`, 1 s):
+  hand over hand (arms −115° ↔ −55°, passing at −85°), the torso leaning 18–22° back pivoted at the hips, right foot
+  braced forward (−22°), left back (16°). Strip `renders/anim_haul.png` (proxy sword hidden). Played by
+  `combat/grapple/client/anim/PalRopeSlidePoses` on the rope layer while the player hauls: their hook latched, the rope
+  taut (synced) and in the hand, sneaking, not riding (`RopeSlidePoses.hauls`). `HaulAnimationFileTest` checks the
+  hips stay put while the neck lies 3–4 px behind them.
+- **Export.** As in the recipe above: `Animator.buildFile(null, names)` with `autoStringify` plus a newline; the
+  project files were saved by appending the new animation entries to the committed JSON (the committed animations are
+  kept byte for byte, uuids included).
 
 ### Mob looks (M3-art)
 

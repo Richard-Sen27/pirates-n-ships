@@ -20,6 +20,8 @@ import java.util.UUID;
  *   <li><b>Navy bounty:</b> at most one per target (its id is derived from the target). Placed when the score reaches
  *       the threshold, raised (never lowered) while the score rises, kept while the score decays, and withdrawn once
  *       the score falls below {@code threshold * withdrawRatio}. Never expires.</li>
+ *   <li><b>Standing navy bounty</b> (BOS1): a fixed amount the navy puts on a named NPC (a pirate captain), under a
+ *       fresh id, so {@link #syncNavy} never raises or withdraws it. Never expires; paid like any bounty.</li>
  *   <li><b>Player bounties:</b> any number per target, each its own entry; they add up. Optional expiry.</li>
  *   <li><b>Claim:</b> pays every active bounty on the target to the claimant ({@code aliveFactor} more when
  *       delivered alive) and removes them. A target can't claim its own bounty; a payer's own bounties on the target
@@ -112,6 +114,18 @@ public record BountyBoard(List<Bounty> bounties) {
             return new NavySync(replace(raised), NavyChange.RAISED);
         }
         return new NavySync(this, NavyChange.UNCHANGED);
+    }
+
+    // --- Standing navy bounty (BOS1) -----------------------------------------------------------------------------
+
+    /**
+     * The navy puts a fixed {@code amount} on {@code target} (a named pirate captain, docs/design.md §15). {@code bountyId}
+     * must be fresh (the service uses a random UUID): it is not the target's {@link #navyBountyId}, so the score-driven
+     * {@link #syncNavy} never touches it. Returns this board unchanged for an amount below 1.
+     */
+    public BountyBoard placeStandingBounty(UUID bountyId, BountyTarget target, int amount, long now) {
+        if (amount < 1) return this;
+        return with(new Bounty(bountyId, target, Bounty.Source.NAVY, Optional.empty(), "", amount, now, Bounty.NEVER));
     }
 
     // --- Player bounties ----------------------------------------------------------------------------------------

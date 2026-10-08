@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.mob;
 
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
+import com.richardsenger.piratesnships.mob.captain.PirateCaptain;
 import com.richardsenger.piratesnships.mob.entity.NavyOfficer;
 import com.richardsenger.piratesnships.mob.entity.NavySoldier;
 import com.richardsenger.piratesnships.mob.entity.Pirate;
@@ -41,6 +42,8 @@ public final class MobContent {
     public static final RegistryEntry<EntityType<?>, EntityType<Sailor>> SAILOR = humanoid("sailor", Sailor::new, MobCategory.MISC);
     public static final RegistryEntry<EntityType<?>, EntityType<NavySoldier>> NAVY_SOLDIER = humanoid("navy_soldier", NavySoldier::new, MobCategory.MISC);
     public static final RegistryEntry<EntityType<?>, EntityType<NavyOfficer>> NAVY_OFFICER = humanoid("navy_officer", NavyOfficer::new, MobCategory.MISC);
+    /** BOS1: the named captain of a pirate island, placed in the captain's hut ({@code mob.captain.IslandCaptains}); no spawn egg. */
+    public static final RegistryEntry<EntityType<?>, EntityType<PirateCaptain>> PIRATE_CAPTAIN = humanoid("pirate_captain", PirateCaptain::new, MobCategory.MISC);
 
     /** 0.9 × 0.6 hitbox in the middle of a 2.4-block body (the model is longer than the box, like the dolphin's). */
     public static final RegistryEntry<EntityType<?>, EntityType<Shark>> SHARK = ModRegistry.entity("shark",
@@ -75,6 +78,7 @@ public final class MobContent {
             case SAILOR -> SAILOR.get();
             case NAVY_SOLDIER -> NAVY_SOLDIER.get();
             case NAVY_OFFICER -> NAVY_OFFICER.get();
+            case PIRATE_CAPTAIN -> PIRATE_CAPTAIN.get();
         };
     }
 
@@ -92,6 +96,7 @@ public final class MobContent {
         Services.REGISTRY.registerEntityAttributes(SAILOR, Sailor::createAttributes);
         Services.REGISTRY.registerEntityAttributes(NAVY_SOLDIER, NavySoldier::createAttributes);
         Services.REGISTRY.registerEntityAttributes(NAVY_OFFICER, NavyOfficer::createAttributes);
+        Services.REGISTRY.registerEntityAttributes(PIRATE_CAPTAIN, PirateCaptain::createAttributes);
         Services.REGISTRY.registerEntityAttributes(SHARK, Shark::createAttributes);
         KrakenContent.init();
         Services.REGISTRY.registerSpawnPlacement(SHARK, SpawnPlacementTypes.IN_WATER, Heightmap.Types.OCEAN_FLOOR, Shark::checkSpawnRules);

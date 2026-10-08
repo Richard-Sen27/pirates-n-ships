@@ -6,6 +6,8 @@ import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
+import com.richardsenger.piratesnships.crew.npc.CrewPose;
+import com.richardsenger.piratesnships.crew.npc.StationPoses;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.sailing.SailingConfig;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
@@ -24,6 +26,7 @@ import com.richardsenger.piratesnships.station.StationRef;
 import com.richardsenger.piratesnships.station.StationState;
 import com.richardsenger.piratesnships.station.Stations;
 import com.richardsenger.piratesnships.station.jobs.JobBoard;
+import com.richardsenger.piratesnships.station.seat.StationSeat;
 import com.richardsenger.piratesnships.station.winch.SailOrder;
 import java.util.Collection;
 import java.util.List;
@@ -32,9 +35,11 @@ import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -431,6 +436,40 @@ public final class HelmStationGameTests {
 
     private static int step(GameTestHelper h, Ship s) {
         return RudderSteps.fromProperty(h.getLevel().getBlockState(s.helm()).getValue(HelmBlock.RUDDER));
+    }
+
+    // ------------------------------------------------------------------ the helmsman's pose (ART7)
+
+    /**
+     * A helmsman at the helm shows the {@code helm_hold} pose (synced) and faces the helm block from his spot; a step
+     * of the wheel to starboard shows {@code helm_turn_right} for one loop, a step to port {@code helm_turn_left}, and
+     * then he holds the wheel again.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = BATCH + "pose")
+    public static void helmsmanHoldsAndTurnsTheWheel(GameTestHelper h) {
+        Ship s = ship(h, SailTrim.FURLED, false);
+        CrewMember c = helmsman(h, s);
+        h.runAfterDelay(3, () -> {
+            h.assertTrue(c.stationPose() == CrewPose.HELM, "pose at the helm: " + c.stationPose());
+            h.assertTrue(!c.mayLookAround(), "the helmsman still looks around");
+            if (!(c.getVehicle() instanceof StationSeat seat)) throw new GameTestAssertException("not on the station seat");
+            Direction toward = StationPoses.toward(seat.blockPosition(), s.helm());
+            h.assertTrue(toward != null, "the spot " + seat.blockPosition() + " is not beside the helm " + s.helm());
+            float want = StationPoses.yaw(toward, s.f().ship().orientation());
+            h.assertTrue(Math.abs(Mth.wrapDegrees(c.getYRot() - want)) < 1f && Math.abs(Mth.wrapDegrees(c.yBodyRot - want)) < 1f,
+                    "faces " + c.getYRot() + "/" + c.yBodyRot + " instead of the helm at " + want);
+            ShipControls.setRudderAngle(h.getLevel(), s.helm(), 20.0);
+        });
+        h.runAfterDelay(5, () -> h.assertTrue(c.stationPose() == CrewPose.HELM_TURN_RIGHT, "turning to starboard: " + c.stationPose()));
+        h.runAfterDelay(6 + HelmTurn.HOLD_TICKS, () -> {
+            h.assertTrue(c.stationPose() == CrewPose.HELM, "holding after the turn: " + c.stationPose());
+            ShipControls.setRudderAngle(h.getLevel(), s.helm(), -20.0);
+        });
+        h.runAfterDelay(8 + HelmTurn.HOLD_TICKS, () -> {
+            h.assertTrue(c.stationPose() == CrewPose.HELM_TURN_LEFT, "turning to port: " + c.stationPose());
+            h.assertTrue(c.pose(false) == CrewPose.HELM_TURN_LEFT, "the animation follows the synced pose: " + c.pose(false));
+            h.succeed();
+        });
     }
 
     /** With {@code crew_stations.course.enabled} off no course is set and the helm takes no course order. */

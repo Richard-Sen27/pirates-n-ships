@@ -42,6 +42,7 @@ import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -86,6 +87,8 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity {
     /** Client: {@link #tickCount} when the melee pose last changed (for the pose's progress). */
     private int poseChangedAt;
     private boolean stationary;
+    /** BOS1: who this mob holds a truce with, until which game time (a pirate captain's duel). Not saved. */
+    private final Map<UUID, Long> truces = new HashMap<>();
 
     protected SeafarerMob(EntityType<? extends SeafarerMob> type, Level level) {
         super(type, level);
@@ -154,7 +157,8 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity {
             // REP1: the navy also attacks players it hates, pirates leave players they like alone (rpg.reputation)
             boolean wanted = navy && (LawService.navyShouldAttack(this, p) || Reputation.navyHostile(p));
             return HostilityRules.Target.ofPlayer(false, wanted, LawService.shipStance(p))
-                    .withLikedByPirates(faction() == MobFaction.PIRATE && Reputation.piratesFriendly(p));
+                    .withLikedByPirates(faction() == MobFaction.PIRATE && Reputation.piratesFriendly(p))
+                    .withTruce(hasTruce(p));
         }
         MobFaction faction = LawService.isNavy(e) ? MobFaction.NAVY : null;
         // only entities that already have a criminal record can be wanted (don't attach records to every animal)
@@ -167,6 +171,31 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity {
     /** Whether this mob attacks {@code e} on sight. */
     public boolean attacksOnSight(LivingEntity e) {
         return e != this && e.isAlive() && HostilityRules.attacksOnSight(faction(), describe(e), MobConfig.hostility(kind()));
+    }
+
+    /**
+     * Holds a truce with {@code e} until game time {@code until} (BOS1, a pirate captain's duel): this mob does not attack
+     * it on sight meanwhile ({@link HostilityRules.Target#truce}) and drops it as a target, unless it holds a grudge
+     * (it was hit by it). Kept in memory only: a reloaded mob has no truces.
+     */
+    public void truce(LivingEntity e, long until) {
+        truces.put(e.getUUID(), until);
+        LivingEntity target = getTarget();
+        if (target != null && target.getUUID().equals(e.getUUID()) && !hasGrudge(e)) setTarget(null);
+    }
+
+    /** Ends the truce with the entity of {@code id}, if any. */
+    public void endTruce(UUID id) {
+        truces.remove(id);
+    }
+
+    /** Whether this mob holds a truce with {@code e} now. */
+    public boolean hasTruce(LivingEntity e) {
+        Long until = truces.get(e.getUUID());
+        if (until == null) return false;
+        if (level().getGameTime() < until) return true;
+        truces.remove(e.getUUID());
+        return false;
     }
 
     /** {@code e} hit this mob within the last {@code mobs.grudge_ticks}. */

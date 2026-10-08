@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.trade.client;
 
+import com.richardsenger.piratesnships.rpg.quest.QuestPayloads;
 import com.richardsenger.piratesnships.trade.exchange.TransactionResult;
 import com.richardsenger.piratesnships.trade.net.MarketPayloads;
 import com.richardsenger.piratesnships.trade.net.OrderPayloads;
@@ -23,6 +24,9 @@ public final class ClientMarketState {
     private static volatile Optional<OrderPayloads.OrdersView> orders = Optional.empty();
     private static volatile Optional<OrderPayloads.OrderResult> lastOrderResult = Optional.empty();
     private static volatile long orderResultVersion;
+    private static volatile Optional<QuestPayloads.QuestsView> quests = Optional.empty();
+    private static volatile Optional<QuestPayloads.QuestResult> lastQuestResult = Optional.empty();
+    private static volatile long questResultVersion;
 
     private ClientMarketState() {
     }
@@ -40,6 +44,8 @@ public final class ClientMarketState {
         lastResult = Optional.empty();
         orders = Optional.empty();
         lastOrderResult = Optional.empty();
+        quests = Optional.empty();
+        lastQuestResult = Optional.empty();
         version++;
         opener.run();
     }
@@ -105,12 +111,40 @@ public final class ClientMarketState {
         return orderResultVersion;
     }
 
+    /**
+     * The Quests tab (QST1). A payload without a view (a refused action) keeps the last tab content;
+     * {@link #questResultVersion()} grows with every result.
+     */
+    public static void acceptQuests(QuestPayloads.QuestsPayload payload) {
+        if (payload.view().isPresent()) quests = payload.view();
+        if (payload.result().isPresent()) {
+            lastQuestResult = payload.result();
+            questResultVersion++;
+        }
+        version++;
+    }
+
+    /** The Quests tab of the open desk (present while quests are on). */
+    public static Optional<QuestPayloads.QuestsView> quests() {
+        return quests;
+    }
+
+    public static Optional<QuestPayloads.QuestResult> lastQuestResult() {
+        return lastQuestResult;
+    }
+
+    public static long questResultVersion() {
+        return questResultVersion;
+    }
+
     public static void reset() {
         desk = Optional.empty();
         view = Optional.empty();
         lastResult = Optional.empty();
         orders = Optional.empty();
         lastOrderResult = Optional.empty();
+        quests = Optional.empty();
+        lastQuestResult = Optional.empty();
         version++;
     }
 }

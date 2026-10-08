@@ -54,6 +54,8 @@ public final class MarketText {
     public static final String ORDER_NEEDS = KEY + "order_needs";
     public static final String MY_ORDER_WAITING = KEY + "my_order_waiting";
     public static final String MY_ORDER_READY = KEY + "my_order_ready";
+    // QST1: the Quests tab (its rows' texts are in rpg.quest.QuestText)
+    public static final String TAB_QUESTS = KEY + "tab_quests";
 
     private MarketText() {
     }
@@ -103,6 +105,7 @@ public final class MarketText {
                 .add(DELIVERED, "Contract delivered: %s units, %s doubloons paid out")
                 .add(REFUSED, "%s: %s")
                 .add(CLOSED, "The harbor master has closed the books");
+        lang.add(TAB_QUESTS, "Quests");
         lang.add(TAB_ORDERS, "Orders")
                 .add(SHIPS, "The shipwright builds (%s of %s slipways taken)")
                 .add(NO_SHIPS, "The shipwright has no ship plans")

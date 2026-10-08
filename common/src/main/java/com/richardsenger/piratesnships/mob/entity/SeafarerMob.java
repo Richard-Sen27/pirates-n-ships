@@ -13,6 +13,7 @@ import com.richardsenger.piratesnships.mob.MobKind;
 import com.richardsenger.piratesnships.mob.ai.DuelistDebug;
 import com.richardsenger.piratesnships.mob.ai.HostileTargetGoal;
 import com.richardsenger.piratesnships.platform.Services;
+import com.richardsenger.piratesnships.rpg.reputation.Reputation;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -150,7 +151,10 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity {
         if (e instanceof Player p) {
             boolean exempt = p.isCreative() || p.isSpectator();
             if (exempt) return HostilityRules.Target.ofPlayer(true, false);
-            return HostilityRules.Target.ofPlayer(false, navy && LawService.navyShouldAttack(this, p), LawService.shipStance(p));
+            // REP1: the navy also attacks players it hates, pirates leave players they like alone (rpg.reputation)
+            boolean wanted = navy && (LawService.navyShouldAttack(this, p) || Reputation.navyHostile(p));
+            return HostilityRules.Target.ofPlayer(false, wanted, LawService.shipStance(p))
+                    .withLikedByPirates(faction() == MobFaction.PIRATE && Reputation.piratesFriendly(p));
         }
         MobFaction faction = LawService.isNavy(e) ? MobFaction.NAVY : null;
         // only entities that already have a criminal record can be wanted (don't attach records to every animal)

@@ -27,7 +27,9 @@ public record TransactionResult(Status status, ResourceLocation good, int units,
         CONFISCATED,
         NO_MARKET, NOT_TRADED, STOCK_LIMIT, INVALID_QUANTITY,
         NOT_ENOUGH_COINS, NOT_ENOUGH_SPACE, NOT_ENOUGH_GOODS,
-        NO_CONTAINER, NO_CONTRACT, CONTRACT_REFUSED;
+        NO_CONTAINER, NO_CONTRACT, CONTRACT_REFUSED,
+        /** The market won't deal with the player (REP1: villager reputation below {@code villager_trade_threshold}). */
+        REPUTATION_REFUSED;
 
         public static final Codec<Status> CODEC = StringRepresentable.fromEnum(Status::values);
 

@@ -29,6 +29,13 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Pig;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.level.GameType;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.TrapDoorBlock;
@@ -483,6 +490,137 @@ public final class DryHullGameTests {
             h.assertFalse(WaterRegions.isOccluded(level, worldAt(f, slab, 0.5, 0.75, 0.5)), "the flooded slab half is still occluded");
             SableShips.remove(f.ship());
         }));
+    }
+
+    // ------------------------------------------------------------------ breath below the flood water (FLD1b)
+
+    /**
+     * 12.6 blocks of water: the bottom layer full and the level 1.4 above the hold floor, so the top layer (centre 1.5)
+     * is still dry for the server and a crouching player's eye (1.27) is under the water.
+     */
+    private static final double OVER_CROUCHING_EYE = 12.6;
+    /** 9 blocks of water: the level 1.0 above the hold floor, under a crouching player's eye. */
+    private static final double UNDER_CROUCHING_EYE = 9.0;
+
+    /**
+     * A crouching survival mock player in the level, held on the middle of the hold floor every tick (the ship bobs),
+     * while the hold's water stays at {@code water} blocks. Discarded with the ship.
+     */
+    private static Player crouchingInHold(GameTestHelper h, Fixture f, double water) {
+        Player p = h.makeMockPlayer(GameType.SURVIVAL);
+        p.setShiftKeyDown(true);
+        BlockPos floor = f.hold(0, -3, 0);
+        Runnable place = () -> {
+            Vec3 at = f.ship().toWorld(new Vec3(floor.getX() + 0.5, floor.getY(), floor.getZ() + 0.5));
+            p.moveTo(at.x, at.y, at.z, 0f, 0f);
+            p.setDeltaMovement(Vec3.ZERO);
+            p.resetFallDistance();
+        };
+        f.runtime().simulation().setVolume(0, water);
+        place.run();
+        h.getLevel().addFreshEntity(p);
+        h.onEachTick(() -> {
+            if (f.ship().isRemoved()) {
+                p.discard();
+                return;
+            }
+            f.runtime().simulation().setVolume(0, water);
+            place.run();
+        });
+        return p;
+    }
+
+    /** Whether the player's eye is under the hold's flood water by {@link FloodBreath}'s rule. */
+    private static boolean eyeUnder(Fixture f, Player p) {
+        Vec3 eye = f.ship().toPlot(new Vec3(p.getX(), p.getEyeY(), p.getZ()));
+        return FloodBreath.floodedCompartmentAt(f.runtime().simulation(), eye.x, eye.y, eye.z) >= 0;
+    }
+
+    private static String breath(Fixture f, Player p) {
+        Vec3 eye = f.ship().toPlot(new Vec3(p.getX(), p.getEyeY(), p.getZ()));
+        int floor = f.hold(0, -3, 0).getY();
+        return String.format(Locale.ROOT, "eye %.2f and level %.2f above the floor, pose %s, air %d, eye in world water %s, under %d",
+                eye.y - floor, f.runtime().simulation().level(0) - floor, p.getPose(), p.getAirSupply(),
+                p.isEyeInFluid(FluidTags.WATER), f.runtime().underFloodWater());
+    }
+
+    private static boolean drowned(Player p) {
+        DamageSource s = p.getLastDamageSource();
+        return s != null && s.is(DamageTypes.DROWN);
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 300)
+    public static void breathRunsOutBelowFloodWaterInACellStillDry(GameTestHelper h) {
+        basin(h, 0, 23, true);
+        Fixture f = assemble(h, hull(h, 9, false));
+        Player p = crouchingInHold(h, f, OVER_CROUCHING_EYE);
+        BlockPos eyeCell = f.hold(0, -2, 0);
+        h.runAfterDelay(60, () -> {
+            h.assertTrue(p.isCrouching(), "the mock player does not crouch: " + breath(f, p));
+            h.assertTrue(eyeUnder(f, p), "the eye is not under the flood water: " + breath(f, p));
+            h.assertTrue(f.runtime().inRegion(eyeCell), "the eye's cell is not dry for the server: " + breath(f, p));
+            h.assertFalse(p.isEyeInFluid(FluidTags.WATER), "vanilla sees water at the eye, not the case under test: " + breath(f, p));
+            // about 59 ticks under: 300 - 59 without vanilla's refill, 300 with it
+            h.assertTrue(p.getAirSupply() < p.getMaxAirSupply() - 30, "the air did not run down: " + breath(f, p));
+            h.assertFalse(drowned(p), "drowned with air left: " + breath(f, p));
+            p.setAirSupply(3);
+        });
+        h.runAfterDelay(61, () -> h.succeedWhen(() -> {
+            h.assertTrue(drowned(p), "no drowning damage yet: " + breath(f, p));
+            p.discard();
+            SableShips.remove(f.ship());
+        }));
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200)
+    public static void breathHoldsWithTheFloodWaterBelowTheEye(GameTestHelper h) {
+        basin(h, 0, 23, true);
+        Fixture f = assemble(h, hull(h, 9, false));
+        Player p = crouchingInHold(h, f, UNDER_CROUCHING_EYE);
+        h.runAfterDelay(80, () -> {
+            h.assertTrue(p.isCrouching(), "the mock player does not crouch: " + breath(f, p));
+            h.assertTrue(f.runtime().simulation().level(0) > f.hold(0, -3, 0).getY() + 0.9, "the hold is not flooded: " + breath(f, p));
+            h.assertFalse(eyeUnder(f, p), "the eye is under the flood water: " + breath(f, p));
+            h.assertTrue(f.runtime().underFloodWater() == 0, "counted as under the flood water: " + breath(f, p));
+            h.assertTrue(p.getAirSupply() == p.getMaxAirSupply(), "the air ran down: " + breath(f, p));
+            h.assertFalse(drowned(p), "drowned: " + breath(f, p));
+            p.discard();
+            SableShips.remove(f.ship());
+            h.succeed();
+        });
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200)
+    public static void waterBreathingKeepsBreathBelowFloodWater(GameTestHelper h) {
+        basin(h, 0, 23, true);
+        Fixture f = assemble(h, hull(h, 9, false));
+        Player p = crouchingInHold(h, f, OVER_CROUCHING_EYE);
+        p.addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, 2400));
+        h.runAfterDelay(80, () -> {
+            h.assertTrue(eyeUnder(f, p) && f.runtime().underFloodWater() == 1, "the eye is not under the flood water: " + breath(f, p));
+            h.assertTrue(p.getAirSupply() == p.getMaxAirSupply(), "the air ran down despite Water Breathing: " + breath(f, p));
+            h.assertTrue(p.getHealth() == p.getMaxHealth() && !drowned(p), "hurt despite Water Breathing: " + breath(f, p));
+            p.discard();
+            SableShips.remove(f.ship());
+            h.succeed();
+        });
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200, batch = "pirates_n_ships_config_dry_hull_flood_breath")
+    public static void floodBreathCanBeTurnedOff(GameTestHelper h) {
+        com.richardsenger.piratesnships.core.gametest.ConfigOverrides.during(h, DryHullConfig.FLOOD_BREATH, false);
+        basin(h, 0, 23, true);
+        Fixture f = assemble(h, hull(h, 9, false));
+        Player p = crouchingInHold(h, f, OVER_CROUCHING_EYE);
+        h.runAfterDelay(80, () -> {
+            h.assertTrue(eyeUnder(f, p), "the eye is not under the flood water: " + breath(f, p));
+            h.assertFalse(p.isEyeInFluid(FluidTags.WATER), "vanilla sees water at the eye: " + breath(f, p));
+            h.assertTrue(f.runtime().underFloodWater() == 0, "counted as under with the toggle off: " + breath(f, p));
+            h.assertTrue(p.getAirSupply() == p.getMaxAirSupply(), "the air ran down with the toggle off: " + breath(f, p));
+            p.discard();
+            SableShips.remove(f.ship());
+            h.succeed();
+        });
     }
 
     private static int gridIndex(Fixture f, BlockPos plot) {

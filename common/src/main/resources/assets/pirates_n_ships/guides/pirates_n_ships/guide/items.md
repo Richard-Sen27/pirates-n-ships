@@ -9,6 +9,7 @@ item_ids:
   - pirates_n_ships:bounty_proof
   - pirates_n_ships:brig_key
   - pirates_n_ships:cannonball
+  - pirates_n_ships:captains_hat
   - pirates_n_ships:captains_whistle
   - pirates_n_ships:carpenters_hammer
   - pirates_n_ships:cloth
@@ -28,6 +29,7 @@ item_ids:
   - pirates_n_ships:navy_officer_spawn_egg
   - pirates_n_ships:navy_soldier_spawn_egg
   - pirates_n_ships:officer_hat
+  - pirates_n_ships:officers_coat
   - pirates_n_ships:paddle
   - pirates_n_ships:pirate_hat
   - pirates_n_ships:pirate_spawn_egg

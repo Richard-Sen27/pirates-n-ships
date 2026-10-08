@@ -1170,6 +1170,72 @@ Sheet allocation (outside the box-UV contract areas; the same free corners in ev
 | 56..64 × 16..32 | 22 patches | 17 patches | 17 patches | 17 patches |
 | 56..64 × 32..48 | tail back (4×9), side (4×9), tail inside (8×2) | slop hem (8×3) | tail back (4×7), side (4×7) | tail back (4×8), side (4×8), sash (8×2), boot top (8×2) |
 
+### Pirate captain and officer's coat (ART6)
+
+**Pirate captain** (BOS1's named captain, `mob/captain/PirateCaptain`): his own type on the crew rig,
+`art/models/entity/pirate_captain.bbmodel` -> `geo/pirate_captain.geo.json` + `textures/entity/pirate_captain.png`,
+built like the M3 types (`SF.make('pirate_captain', repo)` then `SF.exportAll(repo)`; the painter `SF.pirate_captain` in
+`seafarer_skins.js`, the cubes `SF.DETAILS.pirate_captain` and `SF.plume()` in `seafarer_models.js`). `MobKind.artId()`
+now returns every kind's own id; `SeafarerRigTest` checks the captain like the other types (exact crew bones, pivots and
+contract cubes, UVs on the sheet, GeckoLib bakes it, 64x64 texture). **No new bones**: 48 cubes, the details inside the
+contract bones, so the shared `crew_member.animation.json` drives him unchanged (`renders/pirate_captain_walk.png`).
+- Look: wide black hat (crown, red band, gold-edged brim, the left part of the brim a separate cube turned 60 degrees
+  about z to cock it up, a gold clasp and a white plume of five vanes in the yz plane, each turned about x where the
+  last ends: 20, 50, 85, 120, 150 degrees), all on `hat`; full black beard cube with two braids and gold beads, a gold
+  earring (`head`); a scar through the left brow, grey temples (painted); charcoal coat (jacket and sleeve layers, open
+  front edged in gold, brass buttons, back vent) with knee-long tails and skirts (y 2.4), lapels, a white jabot, a gold
+  brocade waistcoat, a red sash with knot and ends on the left hip, a leather baldric over the right shoulder with a
+  brass buckle (three cubes turned 33.7 degrees about z, front, back and buckle) (`body`); wide crimson cuffs with gold
+  rings and brass buttons (arms); bucket-top boot cuffs and toe caps (legs). The hat layer is empty.
+- Sheet: 27 patches; regions brim top (0,0,8,8, gold edge), brim under (56,0,8,8), crown sides (24,0,8,3), band
+  (24,3,8,2), plume (24,5,8,3), crown top (32,0,8,8), lapel (0,16,4,4), jabot (52,16,4,4), cuff (36,16,8,4), boot cuff
+  (12,16,8,4), tail back (56,32,4,12), tail side (60,32,4,12), sash (56,44,8,2), baldric (56,46,8,2).
+- Known: at full stride the legs pass through the long tails (as with the plain pirate's).
+- Renders: `renders/pirate_captain.png` (front three-quarter, front, left side, back three-quarter),
+  `renders/pirate_captain_walk.png`. No sword pose: ART7's poses were not on the branch; his sword arm comes from
+  `DuelistArmPose` in code.
+- **Pitfall:** `SF.build` on an open project replaces the groups, and the animations made by `SF.make` then point at
+  the old group uuids (the preview stops moving and the saved project's animations are detached). Close the tab and
+  run `SF.make` again instead of rebuilding in place. Export in a **second** `risky_eval` call after `SF.make`: in the
+  same call the texture canvas can still be the 16x16 placeholder (it wrote a 16x16 PNG once; `SeafarerRigTest`
+  caught it).
+
+**Captain's hat** (`pirates_n_ships:captains_hat`, a `HatItem` like the four H2 hats, not craftable; the captain wears it
+in his head slot and drops it): `art/models/captains_hat.bbmodel` -> `models/item/captains_hat.json`, 10 elements,
+palettes `palette` (black, gold, gold_l), `palette_2` (shade), `palette_4` (spice_gold), `palette_5` (flag_white for
+the plume, flag_red for the band). The part list is written in head coordinates as in `tools/gen_hat_items.py` (whose
+`write()` also gave the display entries: `head` scale 1.6, Y0 27.57, Z0 0) and rebuilt cube by cube in Blockbench
+(`Codecs.java_block.parse` of the spec, export through `Codecs.java_block.compile()` plus credit, `gui_light` and the
+spec's full display entries). Vanilla element angles only: the cocked brim turns 45 degrees (the mob's 60), the plume
+runs 22.5, 45, 90 (unrotated, built along z), 135 (built along z, turned 45) and 157.5 degrees (built downwards,
+turned -22.5). `HatModelTest` pairs it with `geo/pirate_captain.geo.json` (within 1 px; x max differs by 0.47 px for the
+brim angle). Render `renders/captains_hat.png` (three-quarter, front, side, back three-quarter).
+
+**Officer's coat** (`pirates_n_ships:officers_coat`, `apparel/CoatItem`, design.md §15 "officer gear"): a chest-slot
+`ArmorItem` on our own armour material `pirates_n_ships:officers_coat` (registered through `Services.REGISTRY` in
+`Registries.ARMOR_MATERIAL`), so vanilla's `HumanoidArmorLayer` draws it on players, armour stands and vanilla humanoids
+on both loaders; no new renderer. Armour `apparel.officers_coat_armor` (default 3, like a leather tunic; 0 = none),
+computed live by `CoatArmor`; no durability. Recipe: blue wool round a white wool centre with a gold ingot top middle.
+- Source script `art/models/officers_coat.js` (load in `risky_eval`): `OC.build(repo)` builds the item model in a new
+  `java_block` tab from `OC.PARTS` (palette patches: navy, white, red of `palette_5`, gold and brass of `palette`; no new
+  colour), `OC.export(repo)` writes `models/item/officers_coat.json` (item/generated's display entries, particle
+  `palette_5`) and `art/models/officers_coat.bbmodel`, `OC.paintArmor(repo)` writes the worn texture
+  `textures/models/armor/officers_coat_layer_1.png`.
+- Item (28 elements): the coat lies in the XY plane facing south like a sprite (z 7..9): back panel, shoulders, a
+  wider skirt 0.05 px inside the panel in z, collar with gold lace, white lapels and waistcoat with gold and brass
+  buttons, a gold hem, sleeves hanging out at 22.5 degrees with red cuffs and gold rings, gold epaulettes with fringe.
+  Lint: 0 visible fights.
+- Worn texture: vanilla's 64x32 armour layer 1, only the body (box UV 16,16) and arm (40,16) areas painted: navy coat,
+  white lapels and waistcoat with gold buttons, gold waist band, darker back vent, gold epaulette on the arm tops and
+  the shoulder band, red cuffs ringed in gold. The left sleeve mirrors the right one (vanilla). `CoatArmorTest` checks
+  the size and that those faces are opaque.
+- Known limit: a vanilla armour layer has no skirt or tails, so the worn coat ends at the waist. Tails would need a
+  custom armour model through the loaders' armour-model hooks (NeoForge `IClientItemExtensions#getHumanoidArmorModel`,
+  Fabric `ArmorRenderer`) behind a platform service.
+- Renders: `renders/officers_coat.png` (front, three-quarter, side, back), `renders/officers_coat_worn.png` (on a
+  stand-in figure in a throwaway GeckoLib tab; a Bedrock-style project draws every cube with its one texture, so the
+  preview merged a base skin and the coat layer into one sheet).
+
 ### Shark rig (M4)
 
 The shark (design.md §9, §12) is a GeckoLib model on its own rig. M4 shipped a script placeholder

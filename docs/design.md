@@ -189,7 +189,7 @@ How a feature module plugs in. Copy the `core` module (`common/.../core/CoreModu
 ### 4.5 Flooding and sinking
 - Each compartment stores `waterLevel` (0..volume).
 - **Breach:** when a hull block below the waterline is destroyed, or an opening is left open below the waterline, the compartment connects to the sea. Inflow rate scales with the opening size and its depth below the waterline.
-- Water renders inside flooded compartments, either as a mask cut at the current water level or as a flat rendered surface.
+- Water renders inside flooded compartments, either as a mask cut at the current water level or as a flat rendered surface. **Decided (FLD1, 2026-10-08):** a flat rendered surface per flooded compartment on the client: the hull runtime already syncs the compartments' flood levels (`HullRegionsPayload`/`FloodState`); the client draws one translucent water quad per compartment at its level inside the compartment's cells (clipped to the dry region so it never shows outside the hull), with vanilla's water texture, tint and animation, lit by the compartment's light, rising and falling with the synced level; the eye-in-fluid state below that surface (fog, breath) stays Sable's and ours as today. Toggle `dry_hull_view.flood_surface` (client).
 - Compartments connected through open doors or hatches equalize.
 - **Pump / bailing station:** removes water at a set rate. A player or crew member operates it.
 - **Patching:** a repair item (planks + tar/pitch) placed in a breach closes it. **Implemented (G4, `ship/hull/pump`):** the bilge pump is a station block (`station/pump/PumpStation`) whose intake runs down its ship-local column through decks up to `pump_reach`; players pump by holding use, crew by a `PumpOrder`; the hull patch item places a watertight `hull_patch` block only into a tracked breach, and any watertight block in a breach closes its opening at once. Charcoal stands in for pine tar in the recipe.
@@ -451,6 +451,10 @@ Models and animations use GeckoLib. Textures are 16×16-scale pixel art.
 
 ---
 
+- **Officers leading squads (MOB2, decided 2026-10-08; milestone 12's last gap):** at a navy outpost the garrison's officer leads a squad of `mobs.squad.size` (3) soldiers drawn from the garrison on a patrol route around the fort's court, walls and quay (waypoints from the fort pieces' posts, `GarrisonPosts`), walking in file behind him, stopping at each post for a while and returning to the garrison posts at night; the squad fights as one (a soldier attacked alerts the squad, the officer's target becomes the squad's), re-forms after a fight and refills from the garrison when a member dies; officers of a navy patrol ship at sea (WS4b) use the same squad logic on deck later. Toggle `mobs.squad.enabled`, `patrol_interval_minutes`.
+
+---
+
 ## 10. World and economy
 
 ### 10.1 Structures
@@ -552,6 +556,11 @@ All hazards can be turned off individually and have frequency settings.
 ---
 
 **Brig key (P1):** locking and unlocking a brig door needs a brig key (an iron ingot over an iron nugget); any key works on any brig door (keys are the security, cells are shared among a crew); the key never changes the owner; the owner can still open a locked door bare-handed; without a key nobody else, no mob and no redstone opens a locked door; brig bars connect to door halves.
+
+### 13.4 Noticed plunder (LAW3, decided 2026-10-08)
+- Plunder-marked goods (§10.3) have one legal outlet, the fence. Selling them at a village or outpost desk is **refused** ("The harbor master wants no stolen goods") and, when `law.plunder_notice` is on, **reported**: the first refusal per day per port records the crime `selling_plunder` (points `law.crimes.selling_plunder`, default a third of piracy) and the port's harbor master tells the navy (a bounty follows through the usual score). A navy observer (the FL2 observation of a ship within `observe_range`) that sees plunder aboard (marked goods in the ship's containers above `law.plunder_notice_units`, default 16) records `suspected_piracy` once per ship and day. Dropping or fencing the plunder clears nothing already recorded; the fence remains silent.
+
+---
 
 ## 14. Survival
 

@@ -28,6 +28,14 @@ public interface StationKind<O> {
      */
     int durationTicks(ServerLevel level, StationRef station, O order);
 
+    /**
+     * Side effect at the start of {@code order} at {@code station}: called by {@link Stations#order} once, right after
+     * the order was started with the work time {@link #durationTicks} gave (which stays a pure query: the job board
+     * asks it through {@link Stations#workTicks} without starting anything). Default: nothing.
+     */
+    default void begin(ServerLevel level, StationRef station, O order) {
+    }
+
     /** Applies a finished order to the world. */
     void complete(ServerLevel level, StationRef station, O order);
 }

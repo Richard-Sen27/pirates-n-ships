@@ -3,6 +3,7 @@ package com.richardsenger.piratesnships.mob.captain;
 import com.richardsenger.piratesnships.apparel.ApparelContent;
 import com.richardsenger.piratesnships.mob.MobConfig;
 import com.richardsenger.piratesnships.mob.MobKind;
+import com.richardsenger.piratesnships.mob.ai.ReturnToPostGoal;
 import com.richardsenger.piratesnships.mob.entity.Pirate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,13 +18,11 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
-import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumSet;
 import java.util.UUID;
 
 /**
@@ -76,7 +75,7 @@ public class PirateCaptain extends Pirate {
     @Override
     protected void registerGoals() {
         super.registerGoals();
-        goalSelector.addGoal(5, new ReturnToPostGoal(this));
+        goalSelector.addGoal(5, new ReturnToPostGoal(this, this::post, this::postFacing, POST_SLACK));
     }
 
     // --- island -------------------------------------------------------------------------------------------------
@@ -202,50 +201,5 @@ public class PirateCaptain extends Pirate {
         post = NbtUtils.readBlockPos(tag, TAG_POST).orElse(null);
         Direction facing = Direction.byName(tag.getString(TAG_FACING));
         postFacing = facing != null && facing.getAxis().isHorizontal() ? facing : Direction.NORTH;
-    }
-
-    /** An idle captain more than {@link #POST_SLACK} blocks from his post walks back to it and turns to his door. */
-    static final class ReturnToPostGoal extends Goal {
-
-        private final PirateCaptain captain;
-        private int cooldown;
-
-        ReturnToPostGoal(PirateCaptain captain) {
-            this.captain = captain;
-            setFlags(EnumSet.of(Flag.MOVE));
-        }
-
-        @Override
-        public boolean canUse() {
-            if (captain.getTarget() != null || captain.post == null) return false;
-            if (cooldown > 0) {
-                cooldown--;
-                return false;
-            }
-            cooldown = reducedTickDelay(40);
-            return captain.post.distToCenterSqr(captain.position()) > POST_SLACK * POST_SLACK;
-        }
-
-        @Override
-        public void start() {
-            BlockPos p = captain.post;
-            if (p != null) captain.getNavigation().moveTo(p.getX() + 0.5, p.getY(), p.getZ() + 0.5, 0.8);
-        }
-
-        @Override
-        public boolean canContinueToUse() {
-            return captain.getTarget() == null && !captain.getNavigation().isDone();
-        }
-
-        @Override
-        public void stop() {
-            captain.getNavigation().stop();
-            if (captain.post != null && captain.post.distToCenterSqr(captain.position()) <= POST_SLACK * POST_SLACK) {
-                float yaw = captain.postFacing.toYRot();
-                captain.setYRot(yaw);
-                captain.setYHeadRot(yaw);
-                captain.yBodyRot = yaw;
-            }
-        }
     }
 }

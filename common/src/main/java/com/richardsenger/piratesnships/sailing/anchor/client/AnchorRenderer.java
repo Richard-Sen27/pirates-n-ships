@@ -6,6 +6,7 @@ import com.mojang.math.Axis;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.sailing.anchor.AnchorEntity;
 import com.richardsenger.piratesnships.sailing.anchor.AnchorTravel;
+import com.richardsenger.piratesnships.sailing.anchor.ChainCurve;
 import com.richardsenger.piratesnships.ship.sable.ClientShipPoses;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -16,11 +17,13 @@ import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
@@ -29,8 +32,9 @@ import org.joml.Vector3d;
 
 /**
  * Renders the visible anchor (docs/design.md §5.3): a code-built anchor model about two blocks tall (ring, stock,
- * shank, crown, two arms with flukes) and, while the anchor is out, its chain from the hawse to the ring. The hawse
- * is computed from the ship's render pose every frame, so the chain stays attached to the moving hull.
+ * shank, crown, two arms with flukes) and, while the anchor is out, its chain from the hawse to the ring (AN2b: a
+ * sagging catenary of the paid-out length while the anchor rests, {@link ChainCurve}). The hawse is computed from the
+ * ship's render pose every frame, so the chain and its curve follow the moving, swinging hull without lag.
  *
  * <p>A stowed anchor lives in the ship's plot, so Sable already moves and rotates it with the ship
  * ({@code LevelRendererMixin}); an anchor that is out lives in world space and hangs straight down, turned with the
@@ -43,8 +47,13 @@ public class AnchorRenderer extends EntityRenderer<AnchorEntity> {
     /** Vanilla's chain block texture: two 3-pixel strips (u 0..3 and 3..6), as in vanilla's chain model. */
     static final ResourceLocation CHAIN = ResourceLocation.withDefaultNamespace("textures/block/chain.png");
     private static final float CHAIN_WIDTH = 3f / 16f;
+    /** Height above the anchor's feet (the seabed) at which the slack chain lies [blocks]. */
+    private static final double FLOOR_LIFT = 0.1;
 
     private final ModelPart model;
+    /** Reused every frame (render thread only), so drawing the chain allocates nothing. */
+    private final ChainCurve curve = new ChainCurve();
+    private final BlockPos.MutableBlockPos lightPos = new BlockPos.MutableBlockPos();
 
     public AnchorRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
@@ -121,46 +130,94 @@ public class AnchorRenderer extends EntityRenderer<AnchorEntity> {
             Vec3 hawse = ClientShipPoses.toWorld(e.level(), hawsePlot, pt);
             if (hawse != null) {
                 double x = Mth.lerp(pt, e.xo, e.getX()), y = Mth.lerp(pt, e.yo, e.getY()), z = Mth.lerp(pt, e.zo, e.getZ());
-                Vec3 ring = new Vec3(0.0, AnchorTravel.HEIGHT, 0.0);
-                chain(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(CHAIN)), ring,
-                        new Vec3(hawse.x - x, hawse.y - y, hawse.z - z), light);
+                chain(e, pose, buffers.getBuffer(RenderType.entityCutoutNoCull(CHAIN)), x, y, z,
+                        hawse.x - x, hawse.y - y, hawse.z - z);
             }
         }
         super.render(e, yaw, pt, pose, buffers, light);
     }
 
-    /** The chain as one-block segments of two crossed quads (vanilla chain strips) from {@code from} to {@code to}. */
-    static void chain(PoseStack pose, VertexConsumer vc, Vec3 from, Vec3 to, int light) {
-        Vec3 d = to.subtract(from);
-        double len = d.length();
-        if (len < 0.05) {
+    /**
+     * The chain from the ring to the hawse (AN2b), relative to the anchor's render position {@code (x, y, z)}: a
+     * {@link ChainCurve} of the paid-out length, slack only while the anchor rests (then its lowest part lies on the
+     * seabed); falling, hanging or heaved up, the chain runs straight from the hawse, since it pays out or is wound in
+     * as the anchor moves. Lit per point from the world, since it can reach from the seabed to the deck.
+     */
+    private void chain(AnchorEntity e, PoseStack pose, VertexConsumer vc, double x, double y, double z, double hx, double hy, double hz) {
+        double ry = AnchorTravel.HEIGHT;
+        double distance = Math.sqrt(hx * hx + (hy - ry) * (hy - ry) + hz * hz);
+        double length = Math.max(e.paidOut(), distance);
+        boolean resting = e.isResting();
+        double floor = resting ? FLOOR_LIFT : Double.NEGATIVE_INFINITY;
+        int n = curve.compute(0.0, ry, 0.0, hx, hy, hz, length, e.isTaut() || !resting, floor, ChainCurve.segmentsFor(length));
+        PoseStack.Pose p = pose.last();
+        int lightFrom = light(e, x, y, z, 0);
+        for (int i = 0; i < n; i++) {
+            int lightTo = light(e, x, y, z, i + 1);
+            segment(p, vc, curve.x(i), curve.y(i), curve.z(i), curve.x(i + 1), curve.y(i + 1), curve.z(i + 1), lightFrom, lightTo);
+            lightFrom = lightTo;
+        }
+    }
+
+    private int light(AnchorEntity e, double x, double y, double z, int i) {
+        lightPos.set(Mth.floor(x + curve.x(i)), Mth.floor(y + curve.y(i)), Mth.floor(z + curve.z(i)));
+        return LevelRenderer.getLightColor(e.level(), lightPos);
+    }
+
+    /**
+     * One curve segment as two crossed quads (vanilla chain strips), split into pieces of at most a block so the strip
+     * texture is never stretched beyond its 16 pixels.
+     */
+    private static void segment(PoseStack.Pose p, VertexConsumer vc, double x0, double y0, double z0, double x1, double y1, double z1,
+                                int light0, int light1) {
+        double dx = x1 - x0, dy = y1 - y0, dz = z1 - z0;
+        double len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (len < 1.0e-4) {
             return;
         }
-        Vec3 dir = d.scale(1.0 / len);
-        Vec3 a = Math.abs(dir.y) > 0.99 ? new Vec3(1, 0, 0) : dir.cross(new Vec3(0, 1, 0)).normalize();
-        Vec3 b = dir.cross(a).normalize();
-        PoseStack.Pose p = pose.last();
-        for (double s = 0.0; s < len; s += 1.0) {
-            double segment = Math.min(1.0, len - s);
-            Vec3 p0 = from.add(dir.scale(s));
-            Vec3 p1 = from.add(dir.scale(s + segment));
-            strip(p, vc, p0, p1, a, 0f, b, light, (float) segment);
-            strip(p, vc, p0, p1, b, 3f / 16f, a, light, (float) segment);
+        dx /= len;
+        dy /= len;
+        dz /= len;
+        // a: horizontal, across the chain (dir × up); b = dir × a
+        double ax, ay, az;
+        if (Math.abs(dy) > 0.99) {
+            ax = 1.0;
+            ay = 0.0;
+            az = 0.0;
+        } else {
+            double h = Math.sqrt(dx * dx + dz * dz);
+            ax = -dz / h;
+            ay = 0.0;
+            az = dx / h;
+        }
+        double bx = dy * az - dz * ay, by = dz * ax - dx * az, bz = dx * ay - dy * ax;
+        int pieces = Math.max(1, (int) Math.ceil(len - 1.0e-6));
+        float v = (float) (len / pieces);
+        for (int k = 0; k < pieces; k++) {
+            double t0 = (double) k / pieces, t1 = (double) (k + 1) / pieces;
+            double sx = x0 + dx * len * t0, sy = y0 + dy * len * t0, sz = z0 + dz * len * t0;
+            double ex = x0 + dx * len * t1, ey = y0 + dy * len * t1, ez = z0 + dz * len * t1;
+            int l0 = pieces == 1 ? light0 : (k == 0 ? light0 : light1);
+            strip(p, vc, sx, sy, sz, ex, ey, ez, ax, ay, az, 0f, bx, by, bz, l0, light1, v);
+            strip(p, vc, sx, sy, sz, ex, ey, ez, bx, by, bz, 3f / 16f, ax, ay, az, l0, light1, v);
         }
     }
 
-    private static void strip(PoseStack.Pose p, VertexConsumer vc, Vec3 p0, Vec3 p1, Vec3 side, float u0, Vec3 normal, int light, float v) {
-        Vec3 h = side.scale(CHAIN_WIDTH / 2);
+    private static void strip(PoseStack.Pose p, VertexConsumer vc, double sx, double sy, double sz, double ex, double ey, double ez,
+                              double cx, double cy, double cz, float u0, double nx, double ny, double nz, int light0, int light1, float v) {
+        float hx = (float) (cx * CHAIN_WIDTH / 2), hy = (float) (cy * CHAIN_WIDTH / 2), hz = (float) (cz * CHAIN_WIDTH / 2);
         float u1 = u0 + 3f / 16f;
-        vertex(p, vc, p0.subtract(h), u0, 0f, normal, light);
-        vertex(p, vc, p0.add(h), u1, 0f, normal, light);
-        vertex(p, vc, p1.add(h), u1, v, normal, light);
-        vertex(p, vc, p1.subtract(h), u0, v, normal, light);
+        float fx = (float) nx, fy = (float) ny, fz = (float) nz;
+        vertex(p, vc, (float) sx - hx, (float) sy - hy, (float) sz - hz, u0, 0f, fx, fy, fz, light0);
+        vertex(p, vc, (float) sx + hx, (float) sy + hy, (float) sz + hz, u1, 0f, fx, fy, fz, light0);
+        vertex(p, vc, (float) ex + hx, (float) ey + hy, (float) ez + hz, u1, v, fx, fy, fz, light1);
+        vertex(p, vc, (float) ex - hx, (float) ey - hy, (float) ez - hz, u0, v, fx, fy, fz, light1);
     }
 
-    private static void vertex(PoseStack.Pose p, VertexConsumer vc, Vec3 at, float u, float v, Vec3 n, int light) {
-        vc.addVertex(p, (float) at.x, (float) at.y, (float) at.z).setColor(255, 255, 255, 255).setUv(u, v)
-                .setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(p, (float) n.x, (float) n.y, (float) n.z);
+    private static void vertex(PoseStack.Pose p, VertexConsumer vc, float x, float y, float z, float u, float v,
+                               float nx, float ny, float nz, int light) {
+        vc.addVertex(p, x, y, z).setColor(255, 255, 255, 255).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(light).setNormal(p, nx, ny, nz);
     }
 
     @Override

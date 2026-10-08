@@ -6,7 +6,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 
-/** Registered content of the visible anchor: the anchor entity and its three sound events. */
+/** Registered content of the visible anchor: the anchor entity and its sound events. */
 public final class AnchorContent {
 
     public static final RegistryEntry<EntityType<?>, EntityType<AnchorEntity>> ANCHOR = ModRegistry.entity("anchor",
@@ -19,6 +19,10 @@ public final class AnchorContent {
     public static final RegistryEntry<SoundEvent, SoundEvent> SPLASH = ModRegistry.sound("anchor.splash");
     /** The anchor landing on the ground (placeholder: vanilla stone digging sounds). */
     public static final RegistryEntry<SoundEvent, SoundEvent> THUD = ModRegistry.sound("anchor.thud");
+    /** The chain snapping taut (AN2b; placeholder: vanilla anvil landing, played low). */
+    public static final RegistryEntry<SoundEvent, SoundEvent> JOLT = ModRegistry.sound("anchor.jolt");
+    /** The capstan's pawl while it winds the chain in (AN2b; placeholder: vanilla iron trapdoor closing). */
+    public static final RegistryEntry<SoundEvent, SoundEvent> CAPSTAN = ModRegistry.sound("anchor.capstan");
 
     /** The sound of the running chain ({@code anchor.chain}; its {@code sounds.json} entry comes from {@link AnchorData}). */
     static SoundEvent chainSound() {
@@ -31,6 +35,14 @@ public final class AnchorContent {
 
     static SoundEvent thudSound() {
         return THUD.get();
+    }
+
+    static SoundEvent joltSound() {
+        return JOLT.get();
+    }
+
+    static SoundEvent capstanSound() {
+        return CAPSTAN.get();
     }
 
     private AnchorContent() {

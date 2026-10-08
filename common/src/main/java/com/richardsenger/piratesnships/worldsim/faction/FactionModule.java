@@ -26,6 +26,7 @@ public final class FactionModule implements ModModule {
     public void registerEvents() {
         CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> FactionCommands.register(dispatcher));
         CommonEvents.SERVER_TICK_END.register(Factions::observeDay);
+        FactionDeeds.register();
     }
 
     @Override

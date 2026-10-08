@@ -209,6 +209,22 @@ public final class FeesGameTests {
         });
     }
 
+    /** A navy officer of {@code careers.rewards.fee_waiver_rank} (CAR2, Lieutenant) docks for free, reputation 0. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 400)
+    public static void navyOfficerAtABerthIsWaived(GameTestHelper h) {
+        ServerPlayer owner = player(h, 20);
+        com.richardsenger.piratesnships.rpg.career.Careers.setNavy(owner,
+                com.richardsenger.piratesnships.rpg.career.CareerConfig.FEE_WAIVER_RANK.get());
+        h.assertValueEqual(com.richardsenger.piratesnships.trade.TradeService.dockingFee(PortKind.NAVY_OUTPOST, owner), 0, "officer's fee");
+        Fixture f = hull(h, owner, false, x -> { });
+        Port port = navyPort(h, BERTH_NEAR);
+        onFirstCharge(h, owner, f, charges -> {
+            h.assertValueEqual(charges.get(0).payer(), DockingRules.Payer.WAIVED, "payer");
+            h.assertValueEqual(Wallet.count(owner), 20L, "coins");
+            finish(h, port, f.ship(), owner);
+        });
+    }
+
     /** An empty wallet: the coins in a chest aboard pay. */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 400)
     public static void shipChestPaysWhenTheWalletIsEmpty(GameTestHelper h) {

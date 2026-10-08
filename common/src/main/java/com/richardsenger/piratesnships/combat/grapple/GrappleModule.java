@@ -105,7 +105,8 @@ public final class GrappleModule implements ModModule {
                 .add(GrappleService.TIE_SAME_SHIP_KEY, "The hook hangs on this ship: tie the rope on your own ship")
                 .add(GrappleService.TIE_TOO_FAR_KEY, "The rope does not reach this far")
                 .add(GrappleContent.ROPE_RIDER.get().getDescriptionId(), "Rope Slide")
-                .add(RopeSlideService.DISABLED_KEY, "Sliding along ropes is disabled"));
+                .add(RopeSlideService.DISABLED_KEY, "Sliding along ropes is disabled")
+                .add(RopeSlideService.TIE_OFF_HINT_KEY, "Tie the rope off on a cleat to use it as a line"));
         data.models(GrappleModule::ringModels);
         // the hook-loaded musket's look is the hand-made item/musket_hook (ART1c), the override sits in musket.json
         data.blockLoot(loot -> loot.dropSelf(GrappleContent.MOORING_RING.get()));

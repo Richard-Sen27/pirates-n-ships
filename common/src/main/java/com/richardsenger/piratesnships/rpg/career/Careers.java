@@ -53,10 +53,23 @@ public final class Careers {
         return record(player).infamy();
     }
 
-    /** Stores {@code record} and syncs it to the player's client when it changed. */
+    /** Stores {@code record}, syncs it to the player's client when it changed and moves the player's title team. */
     public static void store(Player player, CareerRecord record) {
+        CareerRecord before = record(player);
         Services.ATTACHMENTS.set(player, CareerAttachments.CAREER, record);
-        if (player instanceof ServerPlayer sp) CareerSync.sendIfChanged(sp, record);
+        if (player instanceof ServerPlayer sp) {
+            CareerSync.sendIfChanged(sp, record);
+            CareerTeams.refresh(sp, record); // HON1: the title prefix follows promotion, demotion and resignation
+        }
+        CareerRewards.afterStore(player, before, record); // CAR2: promotion gifts
+    }
+
+    /**
+     * The navy standing the false-flag rule and the docking fee judge (CAR2): the navy reputation, raised to
+     * {@code law.flags.navy_flag_min_standing} for an officer of {@code careers.rewards.flag_right_rank} and up.
+     */
+    public static int effectiveNavyStanding(Player player) {
+        return CareerRewards.effectiveNavyStanding(player);
     }
 
     static long now(Player player) {

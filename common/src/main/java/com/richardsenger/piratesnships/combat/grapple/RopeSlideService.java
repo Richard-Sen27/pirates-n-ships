@@ -13,7 +13,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.UUID;
+import java.util.WeakHashMap;
 
 /**
  * Server side of sliding along a grappling rope (GR2, docs/design.md §8.3): grabbing the rope and the rider's tick.
@@ -25,7 +27,9 @@ import java.util.UUID;
  * when both ends are fixed, the hook and a cleat or mooring ring it is tied to; then the player rides a
  * {@link RopeRiderEntity} at the picked point. A rope whose near end is in the thrower's hand is never pinned in mid-air:
  * its thrower using it is pulled hand over hand toward the hook instead ({@link #tickPull}, the rope still running from
- * the hook to their hand), and nobody else can mount it.
+ * the hook to their hand), and nobody else can mount it. GR6: that pull is only a climb, allowed when the hook is at
+ * least {@code climb_min_rise} above the thrower's feet ({@link #isClimb}); otherwise the use does nothing but show a
+ * hint to tie the rope off.
  *
  * <p><b>Riding.</b> {@link #tickRider} moves the rider by {@link RopeSlide#step} along the rope's live ends and hangs
  * the player {@code hang_offset} below it. Arriving, the player lands on the standing spot of that end
@@ -34,6 +38,10 @@ import java.util.UUID;
 public final class RopeSlideService {
 
     public static final String DISABLED_KEY = "message." + Constants.MOD_ID + ".grapple.slide_disabled";
+    /** GR6: the hint for a use of a hand-held rope whose hook is not high enough above the thrower to climb to it. */
+    public static final String TIE_OFF_HINT_KEY = "message." + Constants.MOD_ID + ".grapple.tie_off_hint";
+    /** GR6: the tie-off hint is shown at most once per this many ticks to the same player. */
+    static final long HINT_INTERVAL_TICKS = 20;
 
     /** Extra reach and pick radius the server allows over the client's pick [blocks] (look direction latency). */
     static final double SERVER_TOLERANCE = 0.75;
@@ -50,6 +58,11 @@ public final class RopeSlideService {
         OK, DISABLED, BUSY,
         /** GR5: the near end is in its thrower's hand, not tied off: only the thrower can use it, to pull themselves in. */
         NOT_FIXED,
+        /**
+         * GR6: the thrower's own hand-held rope, but the hook is less than {@code climb_min_rise} above their feet: a
+         * hand-held rope is only climbed, never slid along. Nothing happens but the tie-off hint.
+         */
+        NOT_A_CLIMB,
         /** GR4: the main hand holds a musket or another item with its own use ({@link RopeSlide.Grab#HAND_BUSY}). */
         HAND_BUSY,
         /** GR4: the hook left less than {@code grab_cooldown_ticks} ago ({@link RopeSlide.Grab#TOO_SOON}). */
@@ -114,6 +127,10 @@ public final class RopeSlideService {
         if (pick == null) {
             return Board.OUT_OF_REACH;
         }
+        if (pull && !isClimb(b.y, player.getY(), GrappleConfig.CLIMB_MIN_RISE.get())) {
+            hintTieOff(level, player);
+            return Board.NOT_A_CLIMB; // GR6: level, below or across a gap: tie the rope off to use it as a line
+        }
         RopeRiderEntity rider = pull ? RopeRiderEntity.createPull(level, hook, player.position())
                 : RopeRiderEntity.create(level, hook, pick.t(), hangPos(RopeSlide.at(a, b, pick.t())));
         level.addFreshEntity(rider);
@@ -125,6 +142,42 @@ public final class RopeSlideService {
         level.playSound(null, rider.getX(), rider.getY() + GrappleConfig.HANG_OFFSET.get(), rider.getZ(), SoundEvents.LEASH_KNOT_PLACE,
                 SoundSource.PLAYERS, 0.7f, 1.3f);
         return Board.OK;
+    }
+
+    /**
+     * GR6, the climb rule: the thrower may pull themselves along their own hand-held rope only when the hook
+     * ({@code hookY}, world) is at least {@code minRise} blocks above their feet ({@code feetY}). A rise of 0 lets every
+     * pull through (GR5).
+     */
+    static boolean isClimb(double hookY, double feetY, double minRise) {
+        return minRise <= 0.0 || hookY - feetY >= minRise;
+    }
+
+    /** GR6: whether a hint last shown at game time {@code last} ({@code Long.MIN_VALUE}: never) may be shown again at {@code now}. */
+    static boolean hintDue(long now, long last) {
+        return last == Long.MIN_VALUE || now - last >= HINT_INTERVAL_TICKS || now < last;
+    }
+
+    /** Game time at which each player last saw the tie-off hint (weak: players come and go). */
+    private static final Map<Player, Long> LAST_HINT = new WeakHashMap<>();
+
+    /** Shows {@code player} the tie-off hint on the status bar, at most once per {@link #HINT_INTERVAL_TICKS}. */
+    private static void hintTieOff(ServerLevel level, Player player) {
+        long now = level.getGameTime();
+        synchronized (LAST_HINT) {
+            if (!hintDue(now, LAST_HINT.getOrDefault(player, Long.MIN_VALUE))) {
+                return;
+            }
+            LAST_HINT.put(player, now);
+        }
+        player.displayClientMessage(Component.translatable(TIE_OFF_HINT_KEY), true);
+    }
+
+    /** Game time at which {@code player} last got the tie-off hint, or {@code Long.MIN_VALUE} (for tests). */
+    static long lastHint(Player player) {
+        synchronized (LAST_HINT) {
+            return LAST_HINT.getOrDefault(player, Long.MIN_VALUE);
+        }
     }
 
     /** Where the hanging player's feet are for a rope point. */
@@ -181,12 +234,16 @@ public final class RopeSlideService {
 
     /** Gap kept between the pulled player's box and the blocks around it when checking for a way ahead [blocks]. */
     private static final double PULL_CLEARANCE = 1.0e-3;
+    /** Shortest leg [blocks] of the pull worth trying a step along (a shorter one would stand still for ever). */
+    private static final double MIN_PULL_STEP = 1.0e-3;
 
     /**
      * One tick of the thrower pulling themselves along their own hand-held rope (GR5): their feet move straight toward
      * the standing spot at the hook ({@link #landing}) at {@code slide_min_speed}, the rope's crawling speed, until they
      * are within {@code dismount_distance} of it (they land there) or the way ahead is blocked (they let go where they
-     * are). The rope keeps running from the hook to their hand. A rope tied off meanwhile drops the puller.
+     * are). GR6: a straight step that is blocked is tried as its vertical leg (up the face of the wall or cliff the hook
+     * bit into, the way a climb runs into the lip), then as its horizontal leg; only when both are blocked too do they
+     * let go. The rope keeps running from the hook to their hand. A rope tied off meanwhile drops the puller.
      */
     static void tickPull(ServerLevel level, RopeRiderEntity rider, Player player, GrapplingHookEntity hook) {
         Vec3 b = hook.ropeFarEnd(level);
@@ -205,13 +262,26 @@ public final class RopeSlideService {
             return;
         }
         double v = Math.min(p.minSpeed(), dist);
-        Vec3 next = feet.add(to.scale(v / dist));
-        Vec3 move = next.subtract(player.position());
-        if (!level.noCollision(player, player.getBoundingBox().move(move).deflate(PULL_CLEARANCE))) {
-            rider.letGo(null); // blocked: the player lets go where they are
+        Vec3 next = null;
+        // GR6: straight toward the spot; blocked (the lip of a wall or cliff the hook bit into), climb straight up the
+        // face first, or (under an overhang) work along it; blocked every way, the player lets go where they are
+        for (Vec3 dir : new Vec3[]{to, new Vec3(0, to.y, 0), new Vec3(to.x, 0, to.z)}) {
+            double len = dir.length();
+            if (len < MIN_PULL_STEP) {
+                continue;
+            }
+            Vec3 cand = feet.add(dir.scale(Math.min(v, len) / len));
+            Vec3 move = cand.subtract(player.position());
+            if (level.noCollision(player, player.getBoundingBox().move(move).deflate(PULL_CLEARANCE))) {
+                next = cand;
+                break;
+            }
+        }
+        if (next == null) {
+            rider.letGo(null);
             return;
         }
-        rider.slideTo(0.0, v, 1, next);
+        rider.slideTo(0.0, next.distanceTo(feet), 1, next);
         player.resetFallDistance();
     }
 

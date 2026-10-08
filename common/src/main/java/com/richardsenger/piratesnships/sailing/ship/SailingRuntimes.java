@@ -19,6 +19,7 @@ import com.richardsenger.piratesnships.sailing.sail.YardSails;
 import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
 import com.richardsenger.piratesnships.sailing.force.HullDampingModel;
+import com.richardsenger.piratesnships.sailing.force.RightingModel;
 import com.richardsenger.piratesnships.sailing.force.SailingParams;
 import com.richardsenger.piratesnships.sailing.wind.WindOverride;
 import com.richardsenger.piratesnships.sailing.wind.WindSample;
@@ -297,7 +298,7 @@ public final class SailingRuntimes {
         }
     }
 
-    /** Physics substep: applies sail and keel forces and the hull damping to every ship with a runtime. */
+    /** Physics substep: applies sail and keel forces, the hull damping and the righting torque to every ship with a runtime. */
     public static void onPhysicsTick(ServerLevel level, double timeStep) {
         Map<UUID, SailingRuntime> m = SERVER.get(level);
         if (m == null || m.isEmpty()) {
@@ -305,7 +306,8 @@ public final class SailingRuntimes {
         }
         boolean forces = SailingConfig.FORCES_ENABLED.get();
         HullDampingModel.Params damping = SailingConfig.hullDampingParams();
-        if (!forces && !damping.enabled()) {
+        RightingModel.Params stability = SailingConfig.stabilityParams();
+        if (!forces && !damping.enabled() && !stability.enabled()) {
             return;
         }
         double fullDraft = SailingConfig.FULL_DRAFT.get();
@@ -325,7 +327,8 @@ public final class SailingRuntimes {
             try {
                 // a wreck (a loose piece of a split ship, RS1) gets no sail, keel or rudder force, only the damping
                 boolean shipForces = forces && !com.richardsenger.piratesnships.ship.assembly.ShipSplits.isWreck(ship);
-                rt.physicsTick(ship, sea, timeStep, now, fullDraft, needWater, heel, shipForces, damping);
+                rt.physicsTick(ship, sea, timeStep, now, fullDraft, needWater, heel, shipForces, damping, stability,
+                        stability.enabled() ? ship.gravity().length() : 0.0);
             } catch (RuntimeException e) {
                 Constants.LOG.error("Sailing forces of ship {} failed", rt.id(), e);
             }

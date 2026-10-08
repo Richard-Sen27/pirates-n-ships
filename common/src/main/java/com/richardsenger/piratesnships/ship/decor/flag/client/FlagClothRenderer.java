@@ -7,7 +7,10 @@ import com.richardsenger.piratesnships.law.flag.FlagKind;
 import com.richardsenger.piratesnships.ship.decor.FlagpoleBlock;
 import com.richardsenger.piratesnships.sailing.wind.ClientWind;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagClothModel;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagHoist;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagRipple;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagVisualsConfig;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagpoleRun;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagTint;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagWind;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagYaw;
@@ -26,9 +29,16 @@ import org.joml.Quaterniond;
 
 /**
  * Draws a flying flag's cloth (docs/design.md §4.7, FL1) at its exact downwind yaw; the pole stays the block model.
- * The kind comes from the block state's {@link FlagpoleBlock#FLAG} (none while struck: nothing is drawn), the
- * geometry from {@link FlagClothModel}, cut into strips that ripple slowly ({@link FlagRipple}, ART3; render only, the
- * swing follows the synced wind's strength), the banner colour of a custom flag from {@link FlagpoleBlockEntity#clothTint()}.
+ * The kind and the place on the pole come from the synced {@link FlagpoleBlockEntity#state()} through
+ * {@link FlagHoist} (VIS1a: while an action is pending the cloth runs up or down the pole, the flag being hoisted is
+ * drawn during a hoist; struck: nothing is drawn; client {@code flag_visuals.hoist_animation} off: what the pole shows,
+ * at the head), the geometry from {@link FlagClothModel}, cut into strips that ripple slowly ({@link FlagRipple}, ART3;
+ * render only, the swing follows the synced wind's strength), the banner colour of a custom flag from the flag item.
+ *
+ * <p><b>Tall poles (VIS1a).</b> The head of a pole ({@link FlagpoleRun}) owns the flag. The cloth is drawn by the
+ * block of the pole that holds the cloth's middle ({@link FlagHoist#drawerBelowHead}): the head while it flies, a
+ * shaft while a hoist or strike runs it past, so it is lit and culled where it is. The angle smoothing and the ripple
+ * phase always belong to the head.
  *
  * <p><b>The angle.</b> On land the server's {@link FlagpoleBlockEntity#yaw()}. On a ship, while the flag follows the
  * wind, the synced world wind bearing ({@link FlagpoleBlockEntity#windBearing()}) turned into the ship's plot frame
@@ -79,26 +89,40 @@ public class FlagClothRenderer implements BlockEntityRenderer<FlagpoleBlockEntit
         Level level = be.getLevel();
         BlockState state = be.getBlockState();
         if (level == null || !(state.getBlock() instanceof FlagpoleBlock)) return;
-        FlagKind kind = state.getValue(FlagpoleBlock.FLAG);
-        if (kind == FlagKind.NONE) {
-            be.shownYaw = Float.NaN; // a raised flag starts at the current angle, not where it was struck
-            return;
+        BlockPos pos = be.getBlockPos();
+        // VIS1a: the head owns the flag; a shaft draws only while the head's cloth runs past it
+        FlagpoleBlockEntity head = be;
+        BlockPos headPos = pos;
+        if (FlagpoleRun.stacked() && FlagpoleRun.isPole(level, pos.above())) {
+            headPos = FlagpoleRun.head(level, pos);
+            if (!(level.getBlockEntity(headPos) instanceof FlagpoleBlockEntity h) || h.state().pending().isEmpty()) return;
+            head = h;
         }
         double now = level.getGameTime() + (double) partialTick;
-        float target = targetYaw(be, level, partialTick);
-        float shown = Double.isNaN(be.shownTime) ? target : FlagYaw.approach(be.shownYaw, target, now - be.shownTime, FlagYaw.SMOOTHING_TICKS);
-        be.shownYaw = shown;
-        be.shownTime = now;
+        boolean animate = FlagVisualsConfig.HOIST_ANIMATION.get();
+        int height = animate && head.state().pending().isPresent() ? FlagpoleRun.height(level, headPos) : 1;
+        FlagHoist.Frame frame = FlagHoist.frame(head.state(), now, height, animate);
+        FlagKind kind = frame.kind();
+        if (kind == FlagKind.NONE) {
+            if (head == be) be.shownYaw = Float.NaN; // a raised flag starts at the current angle, not where it was struck
+            return;
+        }
+        if (headPos.getY() - FlagHoist.drawerBelowHead(frame.drop(), height) != pos.getY()) return;
+        float target = targetYaw(head, level, partialTick);
+        float shown = Double.isNaN(head.shownTime) || Float.isNaN(head.shownYaw) ? target
+                : FlagYaw.approach(head.shownYaw, target, now - head.shownTime, FlagYaw.SMOOTHING_TICKS);
+        head.shownYaw = shown;
+        head.shownTime = now;
 
-        int tint = FlagClothModel.tinted(kind) ? be.clothTint() : FlagTint.NONE;
+        int tint = FlagClothModel.tinted(kind) ? frame.tint() : FlagTint.NONE;
         int r = (tint >> 16) & 0xFF, g = (tint >> 8) & 0xFF, b = tint & 0xFF;
         VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(FlagClothModel.textureFile(kind)));
         pose.pushPose();
-        pose.translate(0.5f, 0f, 0.5f);
+        pose.translate(0.5f, (float) (headPos.getY() - frame.drop() - pos.getY()), 0.5f);
         // Yaw 0 points north (-Z); a compass bearing turns clockwise seen from above, i.e. negative about +Y.
         pose.mulPose(Axis.YP.rotationDegrees(-shown));
         PoseStack.Pose p = pose.last();
-        FlagRipple.fill(now, FlagRipple.phase(be.getBlockPos().asLong()), amplitude(level), x, nx, nz);
+        FlagRipple.fill(now, FlagRipple.phase(headPos.asLong()), amplitude(level), x, nx, nz);
         drawCloth(vc, p, r, g, b, light, overlay);
         pose.popPose();
     }
@@ -165,10 +189,15 @@ public class FlagClothRenderer implements BlockEntityRenderer<FlagpoleBlockEntit
      * ({@code IBlockEntityRendererExtension#getRenderBoundingBox}, which this method overrides when the NeoForge module
      * compiles the common sources; without it the cloth would vanish whenever the pole block leaves the view). Plain
      * vanilla (and later Fabric) has no such check, so there it is an unused method.
+     * <p>VIS1a: while the cloth runs along a tall pole it is drawn by the block holding its middle
+     * ({@link FlagHoist#drawerBelowHead}), at most half a block above or below that block, so the box of every block
+     * covers half a block more up and down. That is also why this renderer does not set {@code shouldRenderOffScreen}
+     * to reach a low cloth from the head: Sable's sub-level path only renders the per-section block entities
+     * (docs/sable-notes.md, "Block entity renderers run in client sub-levels").
      */
     public AABB getRenderBoundingBox(FlagpoleBlockEntity be) {
         BlockPos p = be.getBlockPos();
-        return new AABB(p.getX() + 0.5 - REACH, p.getY(), p.getZ() + 0.5 - REACH,
-                p.getX() + 0.5 + REACH, p.getY() + 1.0, p.getZ() + 0.5 + REACH);
+        return new AABB(p.getX() + 0.5 - REACH, p.getY() - 0.5, p.getZ() + 0.5 - REACH,
+                p.getX() + 0.5 + REACH, p.getY() + 1.5, p.getZ() + 0.5 + REACH);
     }
 }

@@ -68,6 +68,11 @@ public final class GrappleConfig {
     public static final ConfigValue<Double> HAUL_PLAYER_PULL = S.doubleRange("haul_player_pull", 0.08, 0.0, 1.0,
             "Velocity in blocks per tick added every tick to an airborne or swimming player on a frozen rope at full tension, "
                     + "toward the hook (players standing on the ground or a deck feel nothing)");
+    public static final ConfigValue<Double> CLIMB_MIN_RISE = S.doubleRange("climb_min_rise", 2.0, 0.0, 16.0,
+            "Using a rope still in your hand pulls you hand over hand to the hook only as a climb (GR6): when the hook is at "
+                    + "least this many blocks above your feet (up a mast, a cliff or a hull side from the water). With the "
+                    + "hook lower (level, below, across a gap) the use does nothing but a hint to tie the rope off on a cleat. "
+                    + "0 = every use pulls you to the hook (GR5)");
 
     public static final ConfigValue<Boolean> RINGS_ENABLED = S.bool("rings_enabled", true,
             "Mooring rings catch hooks passing close by, hold them harder, and take the rope's near end when tied off. "
@@ -99,7 +104,7 @@ public final class GrappleConfig {
     private static final ConfigSection SLIDE = S.section("slide",
             "Sliding along a latched rope tied off on a cleat or mooring ring (e.g. from the crow's nest down to the other ship): "
                     + "use the rope while looking at it, with an empty main hand or a grappling hook in it. Using a rope still in "
-                    + "your hand pulls you along it to the hook instead");
+                    + "your hand pulls you along it to the hook instead, when the hook is high enough above you to climb (climb_min_rise)");
     public static final ConfigValue<Boolean> SLIDE_ENABLED = SLIDE.bool("enabled", true,
             "Players can hang on a latched grappling rope and slide down it. Off = using the rope does nothing and riders drop off");
     public static final ConfigValue<Double> BOARD_REACH = SLIDE.doubleRange("board_reach", 2.5, 0.5, 8.0,

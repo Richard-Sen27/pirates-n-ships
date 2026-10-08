@@ -94,6 +94,13 @@ reached ("We've arrived, captain!"). He does not touch the sails: order "Hoist s
 yourself at any time and he lets go; release it and he steers on. Only the ship's steering helm holds a course, and
 if the ship stops making headway with its sails set he tells you it is stuck. Server config `crew_stations.course`.
 
+## Heel
+Wind on the side of a sail pushes the ship over. A hull rights itself: the wider and the shallower it is, the stiffer
+it stands. The starter sloop leans about 2° in a moderate beam wind and about 5° in a strong one, and comes back
+upright a second or two after you furl. Sails spill their wind as the heel nears 25°, so even a storm will not lay a
+ship on its side under sail alone. Cargo stowed to one side and water in the hold still make a ship list; pump it out
+and trim the load. Server config `stability`.
+
 ## Capstan and anchor
 The anchor is a real object: it hangs outside the hull on the side nearer to the capstan, just below the deck, and
 moves with the ship. The anchor is heavy and falls on its own: let it go while the ship has way on and it keeps the
@@ -125,8 +132,10 @@ With your hook set in a ship and the rope in your hand, hold sneak: the rope's l
 rope pulls the ship toward you; a hook near the bow or stern swings it round. Let go of sneak and the rope pays out
 again. Pull too hard and the rope slips through your hand rather than snapping. Standing on the ground or a deck
 you feel nothing; in the air or in the water the rope pulls you toward the hook. A rope tied to a cleat can't be
-hauled by hand. **Pulling yourself in:** right-click the rope you are holding to climb hand over hand to the hook;
-sneak to let go. Only a rope tied off on a cleat or mooring ring is a line others can slide along. Server config
+hauled by hand. **Climbing:** right-click your own rope while it is still in your hand to climb it: you are pulled hand over hand to
+the hook when it is at least two blocks above your feet (a mast, a cliff, a hull side from the water); sneak to let
+go. A hook level with you or below is no climb; tie the rope off on a cleat to use it as a line, and only such a tied
+rope is a line others can slide along. Server config
 `grapple.hauling`, `haul_stiffness`, `haul_damping`, `haul_max_force`, `haul_player_pull`.
 
 ## Fire at will
@@ -275,7 +284,20 @@ officer. *Infamy:* plunder fenced, captures and pirate reputation make you a Buc
 Pirate Lord; a known pirate is never taken into the navy. *Letter of marque:* not ready to serve? Buy a letter from
 a navy officer (200 doubloons, navy reputation 20). Every pirate you kill under it earns prize money (5 doubloons, a
 pirate captain 50) that any navy officer pays out. Attacking the navy or a merchant voids it for three days.
-`/pirates career` shows where you stand. Server config `careers`.
+`/pirates career` shows where you stand. **What a rank is worth:** from Lieutenant the navy flag is yours by right: an
+officer flying it is never charged with false colours for low navy reputation (a bounty still is), and navy outposts
+let you dock for free. Each new rank comes with a gift: a Lieutenant receives the officer's bicorne and a saber (once;
+a full pack drops them at your feet). From Captain the harbor master's desk at a navy outpost has an Orders tab: the
+navy shipyard builds you any ship the village shipwrights do, at 70 % of the price (Commodore 50 %, Admiral 40 %),
+delivered to the outpost's quay. On the other side, infamy talks at the fences: a Buccaneer, Dread Captain or Pirate
+Lord trades as if the pirates liked him 7, 13 or 20 points more, and from Dread Captain up pirates leave you alone
+until you attack them. **Titles:** navy officers carry their rank before their name (Mid., Lt., Capt., Cdre. or
+Adm.), a letter of marque makes you a Privateer, and growing infamy calls you Buccaneer, Dread Pirate and finally
+Pirate Lord, in chat, in the player list and over your head unless you already belong to another team. A small box at
+the top left shows your rank, your navy and pirate reputation and your letter; move or hide it in the client config
+(`career_hud`). When you name your own ship with a name tag at the helm, your title goes in front of its name
+("Capt. Black Gull"); after a promotion, rename it to show the new title. Server config `careers`,
+`careers.rewards`, `careers.name_prefix`, `careers.title_on_ship`.
 
 ## Quests
 Every harbor master's desk has a Quests tab with up to three offers, which the port renews when they run out after
@@ -283,8 +305,11 @@ two days. Accept up to three at once; each must be done within five days. Pirate
 from villages and navy outposts, navy raids only from pirate islands. Monster hunts ask for sharks or, rarely (always
 in cold waters), the kraken. A cargo run puts a contract in your Contracts tab: deliver it at the destination's desk
 for a raised reward with no deposit. A treasure hunt hands you a treasure map; open the chest to finish. Completing a
-quest pays doubloons and raises your reputation with the giver's side (navy, pirates or villagers). Drop a quest in
-the tab or with `/pirates quest abandon <id>`; `/pirates quest list` shows your quests. Server config `quests`.
+quest pays doubloons and raises your reputation with the giver's side (navy, pirates or villagers). Villages and navy outposts may also send
+you after the nearest pirate island's named captain (within 3000 blocks): bring him down yourself or hand him to a
+navy officer in shackles for 400 doubloons on top of his bounty; if someone else gets him first, the quest fails,
+and his successor doesn't count. Drop a quest in the tab or with `/pirates quest abandon <id>`;
+`/pirates quest list` shows your quests. Server config `quests`.
 
 ## Pirate captains
 Every pirate island has a captain: a named pirate (for example "Black-Tooth Bartholomew Crowe") who keeps to the

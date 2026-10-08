@@ -39,6 +39,16 @@ public final class CareerConfig {
     public static final ConfigValue<List<String>> OFFICER_KINDS = S.stringList("officer_kinds", List.of("pirates_n_ships:navy_officer"),
             "Entity types that count as navy officers (a pirate's 'captures or captains')");
 
+    /** HON1: the title as a name prefix through one vanilla scoreboard team per title ({@link CareerTeams}). */
+    public static final ConfigValue<Boolean> NAME_PREFIX = S.bool("name_prefix", true,
+            "Show the career title (Lt., Capt., Privateer, Dread Pirate, ...) in front of the player's name in chat, the "
+                    + "tab list and over the head, through a scoreboard team per title. Players on another team keep it. "
+                    + "Off = players are taken off the title teams when they next log in");
+    /** HON1: the title in front of a ship's name when its owner names it ({@link CareerShipTitles}). */
+    public static final ConfigValue<Boolean> TITLE_ON_SHIP = S.bool("title_on_ship", true,
+            "Naming a ship you own with a name tag puts your career title in front of the name (\"Capt. Black Gull\"); "
+                    + "a title typed into the name tag is always replaced by your own");
+
     private static final ConfigSection NAVY = S.section("navy", "What each navy rank needs. Midshipman = what enlisting needs");
     private static final ConfigSection INFAMY = S.section("infamy", "What each pirate infamy rank needs");
 
@@ -96,6 +106,77 @@ public final class CareerConfig {
             "Prize money (doubloons) per pirate killed under a letter");
     public static final ConfigValue<Integer> PRIZE_CAPTAIN = LETTER.intRange("prize_captain", (int) D.letter().prizeCaptain(), 0, 100_000,
             "Prize money (doubloons) per pirate captain killed under a letter");
+
+    // ------------------------------------------------------------------ CAR2: rank rewards
+
+    private static final CareerRewardRules.Params R = CareerRewardRules.Params.defaults();
+    private static final ConfigSection REWARDS = S.section("rewards",
+            "What the ranks give (CAR2): the navy flag right, free docking, the navy shipyard, promotion gifts, fence prices and "
+                    + "the pirates' friendship");
+
+    public static final ConfigValue<Boolean> FLAG_RIGHT = REWARDS.bool("flag_right", R.flagRight(),
+            "Navy officers from flag_right_rank up fly the navy flag legitimately whatever their navy reputation (a bounty still "
+                    + "makes it false colours)");
+    public static final ConfigValue<NavyRank> FLAG_RIGHT_RANK = REWARDS.enumValue("flag_right_rank", R.flagRightRank(),
+            "Lowest navy rank with the right to fly the navy flag");
+    public static final ConfigValue<Boolean> FEE_WAIVER = REWARDS.bool("fee_waiver", R.feeWaiver(),
+            "Navy officers from fee_waiver_rank up pay no docking fee at navy outposts");
+    public static final ConfigValue<NavyRank> FEE_WAIVER_RANK = REWARDS.enumValue("fee_waiver_rank", R.feeWaiverRank(),
+            "Lowest navy rank that docks at navy outposts for free");
+    public static final ConfigValue<Boolean> NAVY_SHIPYARD = REWARDS.bool("navy_shipyard", R.navyShipyard(),
+            "The harbor master's desk of a navy outpost takes ship orders from navy officers of navy_orders_min_rank and up");
+    public static final ConfigValue<NavyRank> NAVY_ORDERS_MIN_RANK = REWARDS.enumValue("navy_orders_min_rank", R.ordersMinRank(),
+            "Lowest navy rank the navy shipyard builds for");
+    private static final ConfigSection SHIP_PRICE = REWARDS.section("navy_ship_price",
+            "Price factor (on top of ships.order_price_factor) of a ship ordered at a navy outpost, by navy rank");
+    /** {@code careers.rewards.navy_ship_price.<rank>} for every rank from midshipman up. */
+    public static final Map<NavyRank, ConfigValue<Double>> NAVY_SHIP_PRICE;
+    public static final ConfigValue<Boolean> PROMOTION_GIFTS = REWARDS.bool("promotion_gifts", true,
+            "A new rank comes with the items of <rank>_items (once per rank and player; dropped at the feet if the inventory is full)");
+    /** {@code careers.rewards.<rank>_items} for every navy rank from midshipman up and every infamy rank from buccaneer up. */
+    public static final Map<String, ConfigValue<List<String>>> RANK_ITEMS;
+    public static final ConfigValue<Boolean> INFAMY_PRICES = REWARDS.bool("infamy_prices", R.infamyPrices(),
+            "Fences at pirate islands give the infamous better prices (on top of the pirates' reputation)");
+    public static final ConfigValue<Integer> INFAMY_PRICE_BONUS = REWARDS.intRange("infamy_price_bonus", R.infamyPriceBonus(), 0, 200,
+            "Price score (as pirate reputation points, see reputation.price_swing) a Pirate Lord gains at fences; lower infamy "
+                    + "ranks get a linear share (Buccaneer a third, Dread Captain two thirds)");
+    public static final ConfigValue<Boolean> INFAMY_PIRATES_FRIENDLY = REWARDS.bool("infamy_pirates_friendly", R.infamyFriendly(),
+            "Pirates leave players of infamy_pirates_friendly_rank and up alone until attacked, whatever their reputation");
+    public static final ConfigValue<InfamyRank> INFAMY_PIRATES_FRIENDLY_RANK = REWARDS.enumValue("infamy_pirates_friendly_rank",
+            R.piratesFriendlyRank(), "Lowest infamy rank the pirates treat as one of their own");
+
+    static {
+        Map<NavyRank, ConfigValue<Double>> prices = new EnumMap<>(NavyRank.class);
+        Map<String, ConfigValue<List<String>>> items = new java.util.LinkedHashMap<>();
+        for (NavyRank r : NavyRank.values()) {
+            if (r == NavyRank.NONE) continue;
+            prices.put(r, SHIP_PRICE.doubleRange(r.id(), CareerRewardRules.defaultShipPrice(r), 0.0, 1.0,
+                    "Price factor for the navy rank " + r.id()));
+            items.put(CareerRewardRules.giftKey(r), REWARDS.stringList(r.id() + "_items", defaultItems(r),
+                    "Item ids given on reaching the navy rank " + r.id() + " (repeat an id for more than one)"));
+        }
+        for (InfamyRank r : InfamyRank.values()) {
+            if (r == InfamyRank.DECKHAND) continue;
+            items.put(CareerRewardRules.giftKey(r), REWARDS.stringList(r.id() + "_items", List.of(),
+                    "Item ids given on reaching the infamy rank " + r.id() + " (repeat an id for more than one)"));
+        }
+        NAVY_SHIP_PRICE = Collections.unmodifiableMap(prices);
+        RANK_ITEMS = Collections.unmodifiableMap(items);
+    }
+
+    /** Default gifts: a Lieutenant receives the officer's bicorne and a saber; every other rank nothing. */
+    static List<String> defaultItems(NavyRank rank) {
+        return rank == NavyRank.LIEUTENANT ? List.of("pirates_n_ships:officer_hat", "pirates_n_ships:saber") : List.of();
+    }
+
+    /** The rewards' view of the current config. */
+    public static CareerRewardRules.Params rewards() {
+        Map<NavyRank, Double> prices = new EnumMap<>(NavyRank.class);
+        NAVY_SHIP_PRICE.forEach((r, v) -> prices.put(r, v.get()));
+        return new CareerRewardRules.Params(FLAG_RIGHT.get(), FLAG_RIGHT_RANK.get(), FEE_WAIVER.get(), FEE_WAIVER_RANK.get(),
+                NAVY_SHIPYARD.get(), NAVY_ORDERS_MIN_RANK.get(), prices, INFAMY_PRICES.get(), INFAMY_PRICE_BONUS.get(),
+                INFAMY_PIRATES_FRIENDLY.get(), INFAMY_PIRATES_FRIENDLY_RANK.get());
+    }
 
     private CareerConfig() {
     }

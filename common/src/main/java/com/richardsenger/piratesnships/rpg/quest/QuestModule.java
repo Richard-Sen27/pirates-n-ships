@@ -8,7 +8,7 @@ import com.richardsenger.piratesnships.rpg.deeds.Deeds;
 import java.util.List;
 
 /**
- * The quests module {@code rpg.quest} (docs/design.md §15, QST1): offers per port, the player's quest log, progress
+ * The quests module {@code rpg.quest} (docs/design.md §15, QST1, QST1b): offers per port, the player's quest log, progress
  * from deeds, kills and a poll, rewards, {@code /pirates quest}. The Quests tab's payloads are registered with the
  * market's ({@code trade.net.MarketBackend}), whose desk sessions they use.
  */
@@ -44,6 +44,6 @@ public final class QuestModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(QuestGameTests.class);
+        return List.of(QuestGameTests.class, CaptainHuntGameTests.class);
     }
 }

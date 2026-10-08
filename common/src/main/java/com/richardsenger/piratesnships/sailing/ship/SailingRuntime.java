@@ -3,6 +3,7 @@ package com.richardsenger.piratesnships.sailing.ship;
 import com.richardsenger.piratesnships.sailing.force.ForceBreakdown;
 import com.richardsenger.piratesnships.sailing.force.ForceContribution;
 import com.richardsenger.piratesnships.sailing.force.HullDampingModel;
+import com.richardsenger.piratesnships.sailing.force.RightingModel;
 import com.richardsenger.piratesnships.sailing.force.SailInstance;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
 import com.richardsenger.piratesnships.sailing.force.SailType;
@@ -46,6 +47,12 @@ import org.joml.Vector3d;
  *   <li><b>Hull length</b> = the plot box's extent along the bow axis, <b>beam</b> the extent across it.</li>
  *   <li><b>Hull damping</b> ({@link HullDampingModel}) is applied to every afloat ship that turns, also one without
  *       sails or with the sailing forces off, as a full torque about the COM.</li>
+ *   <li><b>Righting torque</b> ({@link RightingModel}, SH1) is applied to every afloat ship the same way. It lives here
+ *       and not with the dry-volume lift in {@code HullRuntime} because this is where the hull's beam, length, height
+ *       and draft (the plot box and the sea probes), its heel in the ship frame and the damping already are; the dry
+ *       lift only knows compartment volumes.</li>
+ *   <li><b>Heel cap</b>: the roll and pitch moment of sails and keel is scaled by {@code sail_heel_factor}, then limited
+ *       by {@link RightingModel#limitHeel} ({@code stability.max_heel_torque_per_mass}, {@code max_heel_degrees}).</li>
  * </ul>
  */
 public final class SailingRuntime {
@@ -355,11 +362,14 @@ public final class SailingRuntime {
 
     /**
      * One force evaluation and application. {@code seaWorldY} is NaN without sea. With {@code forcesEnabled} false only
-     * the hull damping is applied. Returns false when nothing was applied: no unfurled sail, no anchor and not moving in
-     * water (an idle ship that still rocks gets its damping and returns true).
+     * the hull damping and the righting torque are applied. Returns false when nothing was applied: out of the water, or
+     * no unfurled sail, no anchor, not moving and neither damping nor righting on.
+     *
+     * @param gravity magnitude of the level's gravity [blocks/s²], for the righting torque
      */
     boolean physicsTick(ShipBody ship, double seaWorldY, double timeStep, long gameTime, double fullDraft, boolean sailsNeedWater,
-                        double heelFactor, boolean forcesEnabled, HullDampingModel.Params damping) {
+                        double heelFactor, boolean forcesEnabled, HullDampingModel.Params damping,
+                        RightingModel.Params stability, double gravity) {
         double mass = ship.mass();
         if (!(mass > 0.0) || !ship.centerOfMass(com)) {
             return false;
@@ -373,7 +383,8 @@ public final class SailingRuntime {
         boolean anchorOut = anchor != null && anchorEnabled;
         boolean idle = !forcesEnabled || unfurled == 0 && !anchorOut && (submerged <= 0.0 || !moving);
         boolean damp = damping.enabled() && submerged > 0.0 && ang.lengthSquared() > 1.0e-8;
-        if (idle && !damp) {
+        boolean right = stability.enabled() && submerged > 0.0 && gravity > 0.0;
+        if (idle && !damp && !right) {
             lastBreakdown = null;
             return false;
         }
@@ -392,11 +403,17 @@ public final class SailingRuntime {
         // Hull damping: a pure torque, applied in full (never scaled by heelFactor, which is for the heeling of sails
         // and keel), also for a ship without sails, so that every floating ship stops rocking.
         ForceContribution d = damp ? HullDampingModel.compute(state, beam, damping) : null;
+        // Righting torque (SH1): what Sable's block buoyancy lacks of a real hull's stability, never scaled by heelFactor.
+        ForceContribution r = right ? RightingModel.compute(state,
+                new RightingModel.Hull(beam, length, maxY - minY + 1, Math.max(0.0, draft)), gravity, stability) : null;
         ForceBreakdown f;
         double tx, ty, tz;
         Vector3d impulse;
         if (idle) {
-            f = ForceBreakdown.of(List.of(d));
+            List<ForceContribution> own = new ArrayList<>(2);
+            if (d != null) own.add(d);
+            if (r != null) own.add(r);
+            f = ForceBreakdown.of(own);
             tx = 0.0; ty = 0.0; tz = 0.0;
             impulse = tmp.zero();
         } else {
@@ -420,19 +437,24 @@ public final class SailingRuntime {
             // Roll (ship z) and pitch (ship x) moments of sails and keel are scaled by heelFactor; yaw is kept. Minecraft
             // hulls are hollow and unballasted, so the full sail moment plus the keel's heeling couple capsized the 5x4x5
             // test hull within 2 s on a beam reach (spike 3 finding). The breakdown keeps the unscaled, physical values.
-            tx = forces.torque().x() * heelFactor;
+            // SH1: the scaled moments are then capped per mass and faded out toward stability.max_heel_degrees.
+            tx = RightingModel.limitHeel(forces.torque().x() * heelFactor, RightingModel.pitch(state), mass, stability);
             ty = forces.torque().y();
-            tz = forces.torque().z() * heelFactor;
+            tz = RightingModel.limitHeel(forces.torque().z() * heelFactor, RightingModel.roll(state), mass, stability);
             impulse = bow.toPlot(forces.force(), tmp).mul(timeStep);
             f = d == null ? forces : ShipForceModel.withContribution(forces, d);
+            f = r == null ? f : ShipForceModel.withContribution(f, r);
         }
-        if (d != null) {
-            if (!d.isFinite()) {
+        for (ForceContribution own : new ForceContribution[] {d, r}) {
+            if (own == null) {
+                continue;
+            }
+            if (!own.isFinite()) {
                 return false;
             }
-            tx += d.torque().x();
-            ty += d.torque().y();
-            tz += d.torque().z();
+            tx += own.torque().x();
+            ty += own.torque().y();
+            tz += own.torque().z();
         }
         Vector3d angular = bow.toPlot(tmp2.set(tx, ty, tz), tmp2).mul(timeStep);
         ship.applySailingImpulse(impulse, angular);

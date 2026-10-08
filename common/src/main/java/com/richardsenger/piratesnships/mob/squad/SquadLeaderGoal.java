@@ -77,7 +77,7 @@ public class SquadLeaderGoal extends Goal {
             return;
         }
         if (--repath <= 0 || officer.getNavigation().isDone()) {
-            officer.getNavigation().moveTo(wp.getX() + 0.5, wp.getY(), wp.getZ() + 0.5, 0, PATROL_SPEED); // accuracy 0: onto the waypoint
+            SquadReach.wide(officer, () -> officer.getNavigation().moveTo(wp.getX() + 0.5, wp.getY(), wp.getZ() + 0.5, 0, PATROL_SPEED)); // accuracy 0: onto the waypoint
             repath = 20;
         }
     }

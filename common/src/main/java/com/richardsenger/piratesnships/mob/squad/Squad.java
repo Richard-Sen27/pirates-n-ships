@@ -420,7 +420,7 @@ public final class Squad {
             if (members.size() >= size) break;
             // the walkway's one stair makes long detours (a wall guard on the far run): search wider than a chase does
             s.getNavigation().setMaxVisitedNodesMultiplier(DRAFT_SEARCH_MULTIPLIER);
-            Path path = s.getNavigation().createPath(leader, 1);
+            Path path = SquadReach.wide(s, () -> s.getNavigation().createPath(leader, 1));
             s.getNavigation().resetMaxVisitedNodesMultiplier();
             if (path == null || !path.canReach()) continue;
             members.add(s.getUUID());

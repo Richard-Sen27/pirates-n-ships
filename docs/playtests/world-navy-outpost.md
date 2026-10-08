@@ -146,13 +146,13 @@ in the fort's court. Switch to survival for the combat steps. For quicker checks
 ### ST3b check: walk a soldier along the walls
 1. In a **new** world, find a navy outpost generated after ST3b (`/locate structure pirates_n_ships:navy_outpost`)
    that has at least two walls on a run (most do; size 5 grows up to five each way). Set `mobs.squad.post_pause_seconds
-   = 5` and `mobs.squad.size = 5`.
+   = 5` and `mobs.squad.size = 4`.
    - **Expected:** on each wall the cannon stands in its embrasure with a barrel on each side of the muzzle against
      the parapet; behind the gun the walkway is open two blocks wide; the lantern stands on the hoarding's rail beside
      the ladder. The flags on the court's pole and the towers show the tall pole at once (no single-pole look in the
      first moment); the pirate camp's pole likewise.
 2. `/pirates mob squad info`, then `/pirates mob squad patrol`, and follow the squad up the stairs.
-   - **Expected:** five soldiers follow (the two land-gate guards, the wall guards nearest the gate on both runs; never
+   - **Expected:** four soldiers follow (the two land-gate guards and the wall guards nearest the gate on both runs, not
      a tower roof guard). The file walks out along the east run to the last wall before the tower, stopping at the far
      end of each wall, turns back along the walls, crosses the gate's walkway, walks out along the west run the same
      way and comes back to the head of the stairs, then everyone walks home. Nobody squeezes past a gun, gets stuck

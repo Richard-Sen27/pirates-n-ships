@@ -1869,8 +1869,10 @@ Renders: `art/renders/structures/navy_outpost/{fort_gate,quay,wall,wall_tower,ba
   meet, so mobs walk from the gate along a whole wall run and back (`SquadRoutesTest` checks the lanes in the
   committed templates). The squad route (`mob/squad/SquadRoutes`, MOB2) uses it: after the quay the officer climbs the
   court's stairs, walks out along the east run to the far end of every wall, back along it and the gate to the west
-  run and out to the far end of every wall there, and back to the head of the stairs. Ladders are still impassable to
-  vanilla mobs, so the towers' roofs stay off the route and their guards are never drafted.
+  run and out to the far end of every wall there, and back to the head of the stairs. The towers' roofs (reached only
+  by a ladder) stay off the route. A wall guard on the west run walks some 35 blocks to the court (east to the stairs
+  and back), longer than vanilla's path search allows for our mobs' 32-block follow range, so the squad plans its
+  paths with a wider range (`mob/squad/SquadReach`).
 - **Brig doors** are closed and unlocked: a generated door has no owner (`BrigDoorBlockEntity` is created empty on
   placement), and a locked door without an owner would open only with a key.
 - Chests and barrels are empty (no loot tables yet).

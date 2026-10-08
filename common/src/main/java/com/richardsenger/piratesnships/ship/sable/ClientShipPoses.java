@@ -4,6 +4,8 @@ import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.companion.math.Pose3dc;
 import dev.ryanhcode.sable.sublevel.ClientSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -53,6 +55,29 @@ public final class ClientShipPoses {
     public static @Nullable Quaterniond shipOrientation(Entity entity, float partialTick) {
         SubLevel sub = Sable.HELPER.getTrackingOrVehicleSubLevel(entity);
         return sub instanceof ClientSubLevel c && !c.isRemoved() ? new Quaterniond(c.renderPose(partialTick).orientation()) : null;
+    }
+
+    /**
+     * Render pose (plot to world, interpolated for the partial tick) of the client ship containing plot position
+     * {@code plotPos}, or null. The returned pose is Sable's own: read it right away, do not keep it. Same lookup as
+     * {@link #toWorld} ({@code ActiveSableCompanion#getContaining(Level, Position)} l.97,
+     * {@code ClientSubLevel#renderPose(float)} l.313); its {@code transformPosition}, {@code transformNormalInverse} and
+     * {@code transformPositionInverse} are {@code companion.math.Pose3dc} defaults (sable-companion 1.6.0, l.47-164).
+     */
+    public static @Nullable Pose3dc renderPose(Level level, Vec3 plotPos, float partialTick) {
+        return pose(level, plotPos, partialTick);
+    }
+
+    /**
+     * Packed light at plot block {@code plotPos} the way Sable lights block entities on ships
+     * ({@code mixin/sublevel_render/BlockEntityRenderDispatcherMixin} l.24-30): vanilla's
+     * {@code LevelRenderer#getLightColor} in the plot, its sky part scaled by {@code ClientSubLevel#scaleLightColor}
+     * (l.162). Plain {@code getLightColor} when no client ship contains the position.
+     */
+    public static int plotLight(Level level, BlockPos plotPos) {
+        int light = LevelRenderer.getLightColor(level, plotPos);
+        SubLevel sub = Sable.HELPER.getContaining(level, plotPos);
+        return sub instanceof ClientSubLevel c && !c.isRemoved() ? c.scaleLightColor(light) : light;
     }
 
     private static @Nullable Pose3dc pose(Level level, Vec3 plotPos, float partialTick) {

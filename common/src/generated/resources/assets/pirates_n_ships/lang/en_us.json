@@ -1322,6 +1322,8 @@
   "pirates_n_ships.configuration.dry_hull.sync_check_ticks": "Sync Check Ticks",
   "pirates_n_ships.configuration.dry_hull.sync_check_ticks.tooltip": "How often (ticks) the server looks for players who started seeing a ship and sends them its dry regions",
   "pirates_n_ships.configuration.dry_hull_view": "Dry Hull View",
+  "pirates_n_ships.configuration.dry_hull_view.flood_surface": "Flood Surface",
+  "pirates_n_ships.configuration.dry_hull_view.flood_surface.tooltip": "Draw a water surface inside flooded rooms of a ship, and the underwater view below it",
   "pirates_n_ships.configuration.dry_hull_view.hidden_plants_refresh_ticks": "Hidden Plants Refresh Ticks",
   "pirates_n_ships.configuration.dry_hull_view.hidden_plants_refresh_ticks.tooltip": "How often (ticks) the hidden water plants follow a moving ship; lower is quicker but redraws more chunk sections",
   "pirates_n_ships.configuration.dry_hull_view.hide_water_plants": "Hide Water Plants",

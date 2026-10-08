@@ -6,8 +6,11 @@ import com.richardsenger.piratesnships.core.gametest.ModGameTests;
 import com.richardsenger.piratesnships.ship.hull.HullTags;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.WaterRegions;
+import io.netty.buffer.Unpooled;
 import java.util.Collection;
 import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.GameTestAssertException;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
@@ -101,5 +104,42 @@ public final class DryHullViewGameTests {
             h.assertFalse(b.defaultBlockState().is(HullTags.HIDDEN_IN_DRY_HULL), b + " is in #hidden_in_dry_hull");
         }
         h.succeed();
+    }
+
+    /**
+     * FLD1: a partly flooded hold is synced as one water surface carrying the hold's 18 cells and its level (0.7 blocks
+     * above the hold floor for 6.3 blocks of water in the 3×3 floor layer), through the payload codec; drained, the
+     * next payload clears it.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200)
+    public static void floodSurfaceSyncCarriesTheCellsAndTheLevel(GameTestHelper h) {
+        DryHullGameTests.basin(h, 0, 23, true);
+        DryHullGameTests.Fixture f = DryHullGameTests.assemble(h, DryHullGameTests.hull(h, 9, false));
+        f.runtime().simulation().setVolume(0, 6.3);
+        BlockPos floor = f.hold(0, -3, 0);
+        boolean[] drained = {false};
+        h.succeedWhen(() -> {
+            FloodSurfacePayload p = f.runtime().floodSurfaces();
+            h.assertTrue(p != null && p.ship().equals(f.ship().id()), "no flood surface payload for the ship yet");
+            if (!drained[0]) {
+                h.assertTrue(p.surfaces().size() == 1, "expected one flooded compartment, got " + p.surfaces());
+                FloodSurfacePayload.Surface s = p.surfaces().get(0);
+                h.assertTrue(s.cells().count() == 18 && s.cells().contains(floor.getX(), floor.getY(), floor.getZ())
+                                && s.cells().contains(floor.getX() + 1, floor.getY() + 1, floor.getZ() + 1),
+                        "the surface does not carry the hold's cells: " + s.cells().count() + " cells");
+                h.assertTrue(s.cells().minY() == floor.getY(), "the cell set does not start at the hold floor");
+                h.assertTrue(Math.abs(s.level() - 0.7f) < 0.05f, "level " + s.level() + " is not 0.7 blocks above the floor");
+                h.assertTrue(p.upY() > 0.99f, "up vector " + p.upX() + ", " + p.upY() + ", " + p.upZ());
+                RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), h.getLevel().registryAccess());
+                FloodSurfacePayload.CODEC.encode(buf, p);
+                h.assertTrue(FloodSurfacePayload.CODEC.decode(buf).equals(p), "the payload does not survive its codec");
+                h.assertFalse(f.runtime().inRegion(floor), "the flooded floor cell is still in the dry region");
+                drained[0] = true;
+                f.runtime().simulation().setVolume(0, 0);
+                throw new GameTestAssertException("waiting for the drained payload");
+            }
+            h.assertTrue(p.surfaces().isEmpty(), "the drained hold still has a surface: " + p.surfaces());
+            SableShips.remove(f.ship());
+        });
     }
 }

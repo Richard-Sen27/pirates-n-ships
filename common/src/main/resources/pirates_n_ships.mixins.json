@@ -9,6 +9,8 @@
     "MixinLevelChunk"
   ],
   "client": [
+    "MixinCamera",
+    "MixinScreenEffectRenderer",
     "MixinSectionCompiler"
   ],
   "server": [],

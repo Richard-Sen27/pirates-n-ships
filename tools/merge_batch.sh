@@ -32,6 +32,7 @@ fi
 echo "$BASE" > "${STAGE_LOG_DIR:-$ROOT/.claude/worktrees/stage-logs}/last-batch-base"
 for ENTRY in "$@"; do
   PKG=${ENTRY%%|*}; REST=${ENTRY#*|}; BRANCH=${REST%%|*}; SUBJECT=${REST#*|}
+  if git log main.."$BRANCH" --format=%b | grep -qi 'co-authored-by\|generated with'; then echo "ATTRIBUTION TRAILER in $BRANCH (CLAUDE.md forbids it); strip it with: git -C <worktree> filter-branch -f --msg-filter 'grep -vi co-authored-by' -- main..HEAD"; exit 10; fi
   if ! git merge --no-ff --no-commit "$BRANCH" > "$LOG/merge-$PKG.log" 2>&1; then
     CONF=$(git diff --name-only --diff-filter=U)
     GEN=$(echo "$CONF" | grep -E "$GEN_RE" || true)

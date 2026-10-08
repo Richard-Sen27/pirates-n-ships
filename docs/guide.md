@@ -75,7 +75,9 @@ Using a **helm** that stands in the world assembles a ship:
 - The ship gets a record (its id, a name, the owner). Use a **name tag** on the helm of an assembled ship to name it.
 
 ### Disassembly
-Sneak-use the helm with an empty hand. The ship is put back into the world as blocks, snapped to the block grid with
+Sneak-use the helm with an empty hand to open the [ship screen](#ship-screen), then press **Disassemble** on its Ship
+tab twice (the second click confirms). With the ship screen switched off (`ship_screen.enabled`), the sneak-use
+disassembles at once, as it used to. The ship is put back into the world as blocks, snapped to the block grid with
 its heading rounded to the nearest 90°. It is refused when:
 - the ship moves faster than 0.3 m/s or turns too fast,
 - it is tilted more than 6°,
@@ -86,6 +88,29 @@ you place a helm anywhere on its deck. The first helm placed steers; a second he
 the first stands. Using a helm on a floating hull the mod has lost track of makes it your ship again.
 
 Players and mobs on deck are set down on the deck blocks. Water inside the hull is removed.
+
+### Ship screen
+Sneak-use the helm of your assembled ship with an empty hand to open the **ship screen**: the ship and her crew on one
+page, three tabs.
+- **Ship:** her name (type a new one and press Rename or Enter; your career title goes in front, as with a name tag),
+  the flag she flies and what it tells others (struck colours, and whether the navy has seen through a false flag),
+  her captain with his title, the hull (compartments, how many flood, open breaches, pumps working), the load and
+  speed, the anchor (stowed, running out, down while she still moves, anchored, weighing), the sails (full, reefed,
+  furled), crew and bunks, the supplies left in days and the last payday. **Disassemble** (click twice) disassembles
+  her at this helm.
+- **Crew:** the captain's whistle orders as buttons (hoist, reef, furl, man the pumps, fire, load, fire at will, drop
+  and weigh anchor, release crew; "Release crew" also ends "Fire at will"), then every hand aboard with morale, station
+  or off duty, the order being carried out, who hired them, unpaid, and a warning when low morale has them close to
+  deserting. **Release** takes a hand off their station, **Dismiss** lets them go as the whistle's sneak-use does.
+- **Stations:** every station aboard (winches, pumps, cannons, capstans, the helm), who mans it, the order worked
+  there or an open job waiting for a free hand. **Release** frees it; **Man** lists your free hands, pick one with
+  **Send** and they go there and stay (like assigning with the whistle).
+
+The orders go out exactly as from the whistle: hands at the stations that take them start at once, unmanned stations
+become open jobs. Only the ship's owner opens the screen (anyone, on a ship without an owner); others are told it is
+not their ship. Release and Dismiss follow the whistle's rules: the captain or whoever hired that hand. The screen
+updates every second while open and closes when you step more than 8 blocks from the helm (`ship_screen.reach`). The
+whistle keeps working as before. Server config `ship_screen` (`enabled`, `reach`, `refresh_ticks`).
 
 ### The dry hull
 An assembled ship analyses its own hull:
@@ -561,6 +586,9 @@ The **captain's whistle** (creative tab) gives orders:
 - Use it on an assigned crew member: it is released.
 - Use it in the air: opens the order wheel. Point at an order (hoist, reef, furl, release crew) and click, or hold the
   use key, aim and release. The order goes to all crew at stations on the ship you stand on. Esc closes the wheel.
+
+The [ship screen](#ship-screen) at the helm (sneak-use with an empty hand) gives the same orders, assigns and releases
+hands and shows every hand's morale, station and order at a glance.
 
 A crew member answers in chat ("Aye, hoisting the sails!") and then works: each trim step takes 2 seconds, and the
 sails change when the work is done. A player can still use the winch directly.
@@ -1136,6 +1164,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `firearms` | Firearms on/off, per gun: damage, muzzle velocity, spread, reload time, recoil; ball lifetime and gravity, cooldown, gunpowder use. |
 | `sailing_runtime` | Sailing forces on/off, heel scaling, steering and anchor on/off, rudder steps, chain length. |
 | `crew_stations` | Crew stations on/off, time per trim step. |
+| `ship_screen` | The ship screen at the helm on/off (off: sneak-use disassembles at once), its reach, how often it refreshes. |
 | `flags` | Hoisting delay, flags following the wind at its exact angle (land and ship check intervals), banners as flags. |
 | `dry_hull` | Also: whether slabs, stairs and hatches are drawn dry in their empty half. |
 | `sea_chest` | Sea chest on/off, worn speed, sink pull, wind drift and its cap, draft; paddling on/off, speed, backing speed, turn rate, hunger. |

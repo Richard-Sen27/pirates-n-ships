@@ -78,10 +78,13 @@ public final class ShipScreens {
 
     // ------------------------------------------------------------------ opening
 
-    /** {@link HelmBlock.ManageHandler}: takes the sneak-use while the screen is on. */
+    /**
+     * {@link HelmBlock.ManageHandler}: takes the sneak-use while the screen is on. A player that is no server player
+     * (no connection, so no screen to show) keeps the old sneak-use, which disassembles.
+     */
     public static boolean onSneakUse(ServerLevel level, ShipBody ship, BlockPos helm, Player player) {
-        if (!ShipScreenConfig.ENABLED.get()) return false;
-        if (player instanceof ServerPlayer sp) open(sp, level, ship, helm);
+        if (!ShipScreenConfig.ENABLED.get() || !(player instanceof ServerPlayer sp)) return false;
+        open(sp, level, ship, helm);
         return true;
     }
 

@@ -156,7 +156,10 @@ public final class ShipScreenRules {
         return lowDays + 1 >= desertDays ? Desertion.LEAVING : Desertion.LOW;
     }
 
-    /** The name a rename stores before the title rule: trimmed, control characters and formatting codes removed; empty when nothing is left. */
+    /**
+     * The name a rename stores before the title rule: trimmed, control characters and formatting codes removed, at
+     * most {@link ShipScreenView#MAX_NAME} characters; empty when nothing is left.
+     */
     public static Optional<String> cleanName(String typed) {
         StringBuilder b = new StringBuilder();
         for (int i = 0; i < typed.length(); i++) {

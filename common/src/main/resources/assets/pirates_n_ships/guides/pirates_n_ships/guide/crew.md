@@ -20,6 +20,9 @@ The **captain's whistle** (creative tab) gives orders:
 - Use it in the air: opens the order wheel. Point at an order (hoist, reef, furl, release crew) and click, or hold the
   use key, aim and release. The order goes to all crew at stations on the ship you stand on. Esc closes the wheel.
 
+The [ship screen](ships.md#ship-screen) at the helm (sneak-use with an empty hand) gives the same orders, assigns and releases
+hands and shows every hand's morale, station and order at a glance.
+
 A crew member answers in chat ("Aye, hoisting the sails!") and then works: each trim step takes 2 seconds, and the
 sails change when the work is done. A player can still use the winch directly.
 

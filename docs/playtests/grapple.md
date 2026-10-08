@@ -100,24 +100,27 @@ gunpowder, two hooks, flat land with a cliff or a tower, two assembled ships on 
    - with the off hand empty: the musket does its own thing (a click / nothing to load); you never hang on the rope,
      the rope's near end keeps following you (walk around: it is not fixed where you stood);
    - with a second hook in the off hand: the musket starts loading it again (reload pose, white bar).
-3. **Grabbing still works:** empty main hand (or a hook in it), look at the rope within about 2.5 blocks, right-click:
-   you hang and slide (GR2). Within the first second after a throw or shot (`grapple.slide.grab_cooldown_ticks` 20)
-   nothing happens, the use goes to vanilla.
+3. **Grabbing still works:** tie the rope off on a cleat or ring first (GR5), then with an empty main hand (or a hook
+   in it) look at the rope within about 2.5 blocks and right-click: you hang and slide (GR2). Your own rope still in
+   your hand is only climbed (GR6, see below). Within the first second after a throw or shot
+   (`grapple.slide.grab_cooldown_ticks` 20) nothing happens, the use goes to vanilla.
 4. **Hand throw reach:** on flat land, aim level and throw: the hook flies about 32 blocks before the rope stops it
    (measured: it would land about 39 blocks away). Aimed higher it still stops at 32.
 5. **Musket reach:** aim level and fire: the hook flies a flat arc and the rope stops it at about 64 blocks (measured:
    it would land about 83 blocks away). Say whether the speed and the flatness feel right.
 6. **Another ship:** unchanged: the hook latches on the hull and both ships are hauled together.
 7. **Your own ship:** from the mast top throw at your own deck rail: the hook latches, nothing pulls, the ship does not
-   move or heel; grab the rope (empty hand): you slide down to the deck. The rope end stays at the mast top while the
-   ship moves.
+   move or heel. Right-clicking the rope still in your hand does nothing but the hint "Tie the rope off on a cleat to
+   use it as a line" (the hook is below you, no climb, GR6); you stay on the mast top. To slide down, tie the rope to a
+   cleat up there first.
 8. **Kedge off a sandbank:** a ship aground or at anchor near shore: stand on it and throw at a cliff, a rock or a
    quay block within 32 blocks: the hook latches on the block and the ship is slowly hauled toward it (about 0.3 m/s
    for a small hull; slower than two ships hauling each other), the force shows as "Grappling Rope" in `/sable`; it
    stops alongside the block. Breaking the block lets the hook go.
 9. **Zip line between two cliffs:** stand on a high cliff, throw at the face or top of a lower cliff across a gap: the
-   hook latches, nothing pulls; grab the rope with an empty hand: you slide down and land on top of the lower cliff.
-   A second player can use the same line.
+   hook latches, nothing pulls. Right-clicking the rope in your hand only shows the tie-off hint. Place a cleat on the
+   high cliff, use it with the hook out (the rope is tied off), then grab the rope with an empty hand: you slide down
+   and land on top of the lower cliff. A second player can use the same line.
 10. **Slipping:** throw at leaves or a glass pane: the hook does not latch, it drops and comes back after two seconds.
     Into water: the same (a splash).
 11. **Toggles:** `grapple.latch_world_blocks = false`: land, cliffs and quays are misses again; `grapple.latch_own_ship
@@ -148,21 +151,29 @@ ship by itself (it pays out); a rope tied to a cleat or ring on land still does 
 8. **Toggle:** `grapple.hauling = false`: sneaking does nothing, and a hand-held rope from land drags the hooked ship
    gently toward you again (the old G11 behaviour).
 
-## GR5 no floating rope end
+## GR5 no floating rope end, GR6 climb only
 
-The rope's near end is fixed only by a cleat or mooring ring; using a rope still in your hand pulls you along it.
+The rope's near end is fixed only by a cleat or mooring ring. A rope still in your hand is only climbed (GR6):
+right-click pulls you to the hook only when the hook is at least `grapple.climb_min_rise` (2) blocks above your feet.
 
-1. **The reported bug:** throw or fire the hook at a ship or a cliff, wait a second, then with an empty hand (or a hook
-   in hand) look along the rope and right-click: you are pulled hand over hand toward the hook (about 2 blocks/s,
-   `grapple.slide.slide_min_speed`) and land on top of the block the hook bit into. At no point is a rope end left
-   floating where you stood: the rope always runs from the hook to your hand. Sneak during the pull to let go.
-2. **Blocked:** pull toward a hook whose straight path runs into terrain (e.g. a hook lower than you behind a ledge):
-   you let go where the way is blocked. Ship blocks do not block the pull (Sable's ships are not in the world's
+1. **The reported bug (GR6):** on flat ground throw the hook across a gap at a wall, about level with you or one block
+   up. Wait a second, then with an empty hand (or a hook in hand) look along the rope and right-click: nothing moves,
+   you do not slide or hang, and the status bar says "Tie the rope off on a cleat to use it as a line". Spam
+   right-click: the hint shows at most once a second. The same from a quay at a ship's deck level with you.
+2. **Climbing:** throw at a wall or cliff face 4+ blocks above your feet (or at a mast, or from the water at a hull's
+   deck edge), wait a second, right-click along the rope: you are pulled hand over hand toward the hook (about
+   2 blocks/s, `grapple.slide.slide_min_speed`), up the face where the straight way meets the edge, and land on top
+   of the block the hook bit into. The rope always runs from the hook to your hand. Sneak during the climb to let go.
+   Say whether the climb looks right where it goes straight up the face near the top.
+3. **Blocked:** climb toward a hook under an overhang so that neither the straight way, nor straight up, nor straight
+   across is free: you let go where you are. Ship blocks do not block the climb (Sable's ships are not in the world's
    collision query), so check that you are not dragged visibly through a hull.
-3. **Someone else's hand-held rope:** a second player right-clicking your rope while you hold it gets nothing (the use
+4. **Config:** `grapple.climb_min_rise = 0`: every right-click on your hand-held rope pulls you to the hook again (GR5).
+5. **Someone else's hand-held rope:** a second player right-clicking your rope while you hold it gets nothing (the use
    goes to whatever is behind it).
-4. **Cleat-tied line:** tie the rope to a cleat on your ship (or a cleat on a cliff for a zip line), then right-click
+6. **Cleat-tied line:** tie the rope to a cleat on your ship (or a cleat on a cliff for a zip line), then right-click
    it: you hang and slide toward the lower end as in GR2; a second player can slide too.
-5. **Haul and pull together:** sneak (the rope freezes), right-click with an empty hand: the hook is released (sneak +
-   use lets go, unchanged), you are never pulled while sneaking. Without sneak, right-click: you are pulled; sneak
-   during the pull: you let go and, still holding sneak (press it again if needed), the rope freezes where you are.
+7. **Haul and climb together:** with a climb (hook 2+ blocks above your feet, e.g. swimming below a hull), sneak (the
+   rope freezes), right-click with an empty hand: the hook is released (sneak + use lets go, unchanged), you are never
+   pulled while sneaking. Without sneak, right-click: you climb; sneak
+   during the climb: you let go and, still holding sneak (press it again if needed), the rope freezes where you are.

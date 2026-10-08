@@ -9,6 +9,7 @@ import com.richardsenger.piratesnships.trade.contract.DeliveryContract;
 import com.richardsenger.piratesnships.world.port.PortRegistry;
 import com.richardsenger.piratesnships.world.treasure.TreasureBinding;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
@@ -27,8 +28,13 @@ import java.util.Optional;
  *   <li>{@link #onDeath} ({@code LIVING_DEATH}): a kill by a player (the shooter of a projectile, a pet's owner, as the
  *       law counts it) for the monster quests;</li>
  *   <li>{@link #onServerTick}: every {@code quests.poll_ticks}, each online player's deliveries (the contract's state),
- *       treasure hunts ({@link TreasureBinding#found}) and deadlines.</li>
+ *       treasure hunts ({@link TreasureBinding#found}), captain hunts (his {@code CaptainRegistry} entry) and
+ *       deadlines.</li>
  * </ul>
+ * A captain hunt (QST1b) completes on {@link QuestEvent.VictimDown}: his death with the player as offender
+ * ({@link #onDeath}), or the {@code kill_pirate} / {@code turn_in_pirate} deed whose context names him. Both happen in
+ * the tick of the kill or the hand-over, before the poll; the poll then fails the hunt of anyone else whose captain is
+ * no longer an island's living captain ({@link QuestEvent.VictimLost}). A successor has another id and never counts.
  */
 public final class QuestTracker {
 
@@ -37,6 +43,9 @@ public final class QuestTracker {
 
     public static void onDeed(ServerPlayer player, Deed deed, DeedContext context, Map<Faction, Integer> applied) {
         Quests.apply(player, new QuestEvent.DeedDone(deed));
+        if ((deed == Deed.KILL_PIRATE || deed == Deed.TURN_IN_PIRATE) && context.victim().isPresent()) {
+            Quests.apply(player, new QuestEvent.VictimDown(context.victim().get()));
+        }
     }
 
     /** Never cancels the death. */
@@ -44,6 +53,7 @@ public final class QuestTracker {
         if (victim.level().isClientSide()) return false;
         if (CombatCrimeDetector.offender(source) instanceof ServerPlayer player && player != victim) {
             Quests.apply(player, new QuestEvent.Killed(BuiltInRegistries.ENTITY_TYPE.getKey(victim.getType())));
+            Quests.apply(player, new QuestEvent.VictimDown(victim.getUUID()));
         }
         return false;
     }
@@ -72,6 +82,10 @@ public final class QuestTracker {
             } else if (q.target() instanceof QuestTarget.Treasure t
                     && TreasureBinding.found(PortRegistry.get(server).index().byId(t.port()), t.site())) {
                 changed.addAll(Quests.apply(player, new QuestEvent.TreasureLooted(t.port(), t.site())));
+            } else if (q.type() == QuestType.HUNT_CAPTAIN && q.target() instanceof QuestTarget.Victim v && !Quests.captainAlive(server, v.id())) {
+                List<Quest> lost = Quests.apply(player, new QuestEvent.VictimLost(v.id()));
+                if (!lost.isEmpty()) player.displayClientMessage(Component.translatable(QuestText.TARGET_LOST, v.name()), false);
+                changed.addAll(lost);
             }
         }
         changed.addAll(Quests.apply(player, new QuestEvent.Day(day)));

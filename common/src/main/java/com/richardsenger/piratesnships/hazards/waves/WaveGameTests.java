@@ -157,8 +157,8 @@ public final class WaveGameTests {
     // ------------------------------------------------------------------ roll
 
     /**
-     * The 7×17 hull at storm amplitude rolls 3 to 15 degrees (half range over one beat of the wave trains, 24 s, at steady state), and once the sea
-     * goes calm it settles within 10 s.
+     * The 7×17 hull at storm amplitude rolls 1 to 15 degrees (half range over one beat of the wave trains, 24 s, at steady state), and once the sea
+     * goes calm it settles within 10 s. Measured 4.35 degrees before SH1's righting torque, 1.85 since.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 1000, batch = "pirates_n_ships_waves_storm_roll")
     public static void stormRollsTheTestHullAndCalmSettlesIt(GameTestHelper h) {
@@ -176,7 +176,7 @@ public final class WaveGameTests {
                     String.format("%.2f", s), String.format("%.1f", storm[0]), String.format("%.1f", storm[1]),
                     String.format("%.2f", c), String.format("%.1f", f.ship().mass()), HazardConfig.MAX_TORQUE_PER_MASS.get());
             release(h);
-            h.assertTrue(s >= 3.0 && s <= 15.0, "storm roll of the 7x17 hull outside 3..15 deg: " + s);
+            h.assertTrue(s >= 1.0 && s <= 15.0, "storm roll of the 7x17 hull outside 1..15 deg: " + s);
             h.assertTrue(c < 0.5, "the 7x17 hull still rolls " + c + " deg 10 s after the sea went calm");
             SableShips.remove(f.ship());
             h.succeed();

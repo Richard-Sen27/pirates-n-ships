@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.ship.template;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.rpg.career.CareerRewards;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
 import com.richardsenger.piratesnships.ship.ShipConfig;
 import com.richardsenger.piratesnships.ship.assembly.AssemblyResult;
@@ -41,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Shipwright orders (design.md §4.1, SW1), server side: the Orders tab of a seafarer village's harbor master's desk
+ * (and of a navy outpost's desk for navy captains, at their rank's price: CAR2, {@link #orderPort})
  * lists the ship templates with price, build time and materials ({@link ShipOrderMath}); {@link #place} takes the
  * coins and materials, records a {@link ShipOrder} on the port and hands out a {@link ShipReceiptItem};
  * {@link #pickup} (the desk used with the receipt) places the template, assembled, at the first free berth of the
@@ -104,8 +106,13 @@ public final class ShipOrders {
     }
 
     public static Optional<Quote> quote(ServerLevel level, ResourceLocation id, ShipTemplate template) {
+        return quote(level, id, template, 1.0);
+    }
+
+    /** {@link #quote} with the price also multiplied by {@code priceFactor} (a navy officer's discount, CAR2). */
+    public static Optional<Quote> quote(ServerLevel level, ResourceLocation id, ShipTemplate template, double priceFactor) {
         return stats(level, template).map(s -> new Quote(id, template,
-                ShipOrderMath.price(template.price(), ShipConfig.ORDER_PRICE_FACTOR.get()),
+                ShipOrderMath.price(template.price(), ShipConfig.ORDER_PRICE_FACTOR.get() * priceFactor),
                 ShipOrderMath.buildDays(ShipConfig.buildDays(id.getPath()), s.blocks()),
                 ShipOrderMath.logs(s.blocks(), ShipConfig.ORDER_MATERIALS_FACTOR.get()),
                 ShipOrderMath.wool(s.yards(), ShipConfig.ORDER_MATERIALS_FACTOR.get())));
@@ -113,10 +120,15 @@ public final class ShipOrders {
 
     /** Every template the shipwright builds (its structure exists), by id. */
     public static List<Quote> quotes(ServerLevel level) {
+        return quotes(level, 1.0);
+    }
+
+    /** {@link #quotes} with every price also multiplied by {@code priceFactor}. */
+    public static List<Quote> quotes(ServerLevel level, double priceFactor) {
         List<Quote> out = new ArrayList<>();
         Map<ResourceLocation, ShipTemplate> all = ShipTemplates.TYPE.server().all();
         all.keySet().stream().sorted(Comparator.comparing(ResourceLocation::toString))
-                .forEach(id -> quote(level, id, all.get(id)).ifPresent(out::add));
+                .forEach(id -> quote(level, id, all.get(id), priceFactor).ifPresent(out::add));
         return out;
     }
 
@@ -125,14 +137,29 @@ public final class ShipOrders {
         return PortRegistry.get(server).index().byId(id).filter(p -> p.kind() == PortKind.SEAFARER_VILLAGE);
     }
 
+    /**
+     * The registered port {@code id} if its shipwright builds for {@code player}: a seafarer village, or a navy outpost
+     * for a navy officer of {@code careers.rewards.navy_orders_min_rank} and up (the navy shipyard, CAR2).
+     */
+    public static Optional<Port> orderPort(ServerPlayer player, ResourceLocation id) {
+        return PortRegistry.get(player.server).index().byId(id).filter(p -> p.kind() == PortKind.SEAFARER_VILLAGE
+                || p.kind() == PortKind.NAVY_OUTPOST && CareerRewards.navyShipyard(player));
+    }
+
+    /** The price factor {@code player} gets at {@code port}: the navy officer's rank discount at an outpost (CAR2), else 1. */
+    public static double priceFactor(ServerPlayer player, Port port) {
+        return port.kind() == PortKind.NAVY_OUTPOST ? CareerRewards.shipPriceFactor(player) : 1.0;
+    }
+
     // ------------------------------------------------------------------ the Orders tab
 
-    /** The Orders tab of {@code port} for {@code player}; empty unless the port is a registered seafarer village. */
+    /** The Orders tab of {@code port} for {@code player}; empty unless {@link #orderPort} builds for the player there. */
     public static Optional<OrderPayloads.OrdersView> view(ServerPlayer player, ResourceLocation port) {
-        Optional<Port> p = villagePort(player.server, port);
+        Optional<Port> p = orderPort(player, port);
         if (p.isEmpty()) return Optional.empty();
         boolean enabled = ShipConfig.SHIPWRIGHT_ORDERS.get();
-        List<OrderPayloads.OrderLine> lines = enabled ? quotes(player.serverLevel()).stream().map(Quote::line).toList() : List.of();
+        double factor = priceFactor(player, p.get());
+        List<OrderPayloads.OrderLine> lines = enabled ? quotes(player.serverLevel(), factor).stream().map(Quote::line).toList() : List.of();
         List<OrderPayloads.MyOrder> mine = new ArrayList<>();
         for (ShipOrder o : p.get().orders()) {
             if (o.owner().equals(player.getUUID())) mine.add(new OrderPayloads.MyOrder(nameOf(o.template()), o.finishDay()));
@@ -155,10 +182,11 @@ public final class ShipOrders {
     public static OrderPayloads.OrderResult place(ServerPlayer player, ResourceLocation portId, ResourceLocation templateId) {
         if (!ShipConfig.SHIPWRIGHT_ORDERS.get()) return refused(KEY_DISABLED);
         MinecraftServer server = player.server;
-        Optional<Port> port = villagePort(server, portId);
+        Optional<Port> port = orderPort(player, portId);
         if (port.isEmpty()) return refused(KEY_NOT_VILLAGE);
         Optional<ShipTemplate> template = ShipTemplates.TYPE.server().get(templateId);
-        Optional<Quote> quote = template.flatMap(t -> quote(player.serverLevel(), templateId, t));
+        double factor = priceFactor(player, port.get());
+        Optional<Quote> quote = template.flatMap(t -> quote(player.serverLevel(), templateId, t, factor));
         if (quote.isEmpty()) return refused(KEY_UNKNOWN_TEMPLATE, templateId.toString());
         int max = ShipConfig.MAX_ORDERS_PER_PORT.get();
         if (!ShipOrderMath.takesOrder(port.get().orders().size(), max)) return refused(KEY_TOO_MANY, Integer.toString(max));

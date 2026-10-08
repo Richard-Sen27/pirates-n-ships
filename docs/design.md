@@ -557,6 +557,11 @@ All hazards can be turned off individually and have frequency settings.
 
 **Brig key (P1):** locking and unlocking a brig door needs a brig key (an iron ingot over an iron nugget); any key works on any brig door (keys are the security, cells are shared among a crew); the key never changes the owner; the owner can still open a locked door bare-handed; without a key nobody else, no mob and no redstone opens a locked door; brig bars connect to door halves.
 
+### 13.4 Noticed plunder (LAW3, decided 2026-10-08)
+- Plunder-marked goods (§10.3) have one legal outlet, the fence. Selling them at a village or outpost desk is **refused** ("The harbor master wants no stolen goods") and, when `law.plunder_notice` is on, **reported**: the first refusal per day per port records the crime `selling_plunder` (points `law.crimes.selling_plunder`, default a third of piracy) and the port's harbor master tells the navy (a bounty follows through the usual score). A navy observer (the FL2 observation of a ship within `observe_range`) that sees plunder aboard (marked goods in the ship's containers above `law.plunder_notice_units`, default 16) records `suspected_piracy` once per ship and day. Dropping or fencing the plunder clears nothing already recorded; the fence remains silent.
+
+---
+
 ## 14. Survival
 
 **Implemented (S2, `survival`):** cold water adds to vanilla's freezing meter in `#pirates_n_ships:cold_water` (frozen and cold oceans, frozen river), so the frost overlay, slowdown and freeze damage are vanilla's; boats, ship decks and dry hulls, leather armour, creative and the `warm` effect (rum, `#warming`) prevent it; swimming costs `swim_exhaustion_multiplier` × vanilla's exhaustion. New hook `CommonEvents.ITEM_USE_FINISH`.

@@ -36,7 +36,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The helm (docs/design.md §4.1, §5.3). In the world, using it assembles the connected blocks into a ship. On an
  * assembled ship, using it steers (handled by the {@link SteeringHandler} the sailing module installs), and sneak-use
- * with an empty hand disassembles the ship. A named name tag names the ship. All logic runs on the server.
+ * with an empty hand opens the ship screen ({@link ManageHandler}, HGUI1) or, with the screen switched off, disassembles
+ * the ship. A named name tag names the ship. All logic runs on the server.
  *
  * <p>HL1: breaking the helm of a ship leaves it a registered, helmless ship; a helm placed anywhere on it becomes its
  * steering helm, and while that one stands, any further helm on the ship is a second helm that neither steers nor
@@ -70,12 +71,28 @@ public class HelmBlock extends HorizontalDirectionalBlock implements EntityBlock
         @Nullable BlockEntity create(BlockPos pos, BlockState state);
     }
 
+    /**
+     * HGUI1: sneak-use with an empty hand on the steering helm of an assembled ship (installed by {@code ship.screen}).
+     * Returns true when it took the use (the ship screen opened, or the player was refused); false lets the helm
+     * disassemble the ship as before (the screen switched off).
+     */
+    @FunctionalInterface
+    public interface ManageHandler {
+        boolean manage(ServerLevel level, ShipBody ship, BlockPos pos, Player player);
+    }
+
     private static volatile @Nullable SteeringHandler steering;
+    private static volatile @Nullable ManageHandler manage;
     private static volatile @Nullable BlockEntityFactory blockEntities;
 
     /** Installed by the sailing module. Without one, helms have no block entity. */
     public static void setBlockEntityFactory(@Nullable BlockEntityFactory factory) {
         blockEntities = factory;
+    }
+
+    /** Installed by the ship screen module (HGUI1). Without one, sneak-use disassembles. */
+    public static void setManageHandler(@Nullable ManageHandler handler) {
+        manage = handler;
     }
 
     /** Installed by the sailing module. Without one, using the helm on a ship only shows the disassembly hint. */
@@ -139,7 +156,11 @@ public class HelmBlock extends HorizontalDirectionalBlock implements EntityBlock
             } else if (role == HelmRules.Role.SECOND) {
                 player.displayClientMessage(Component.translatable(ShipHelm.KEY_SECOND), true);
             } else if (player.isShiftKeyDown() && player.getMainHandItem().isEmpty()) {
-                player.displayClientMessage(ShipAssembler.disassemble(ship, pos, player).message(), false);
+                // HGUI1: the ship screen, whose Ship tab disassembles; without it (switched off), disassembly at once
+                ManageHandler m = manage;
+                if (m == null || !m.manage(serverLevel, ship, pos, player)) {
+                    player.displayClientMessage(ShipAssembler.disassemble(ship, pos, player).message(), false);
+                }
             } else {
                 SteeringHandler h = steering;
                 player.displayClientMessage(h == null ? Component.translatable(KEY_DISASSEMBLE_HINT)

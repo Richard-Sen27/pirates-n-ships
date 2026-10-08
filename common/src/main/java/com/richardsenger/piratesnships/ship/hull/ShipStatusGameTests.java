@@ -7,6 +7,7 @@ import com.richardsenger.piratesnships.core.gametest.ModGameTests;
 import com.richardsenger.piratesnships.ship.ShipConfig;
 import com.richardsenger.piratesnships.ship.hull.net.ShipStatusPayload;
 import com.richardsenger.piratesnships.ship.hull.net.ShipStatusSync;
+import com.richardsenger.piratesnships.ship.hull.net.ShipStatusThrottle;
 import com.richardsenger.piratesnships.ship.hull.pump.BilgePumps;
 import com.richardsenger.piratesnships.ship.hull.pump.HullRepairContent;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests;
@@ -164,8 +165,9 @@ public final class ShipStatusGameTests {
 
     /**
      * {@code ship_status_sync_interval_ticks} from config (7): with the water changing every tick, a status goes out at
-     * every multiple of 7 and at no other tick. Then, within one tick (nothing changes): an unchanged status is held
-     * back, every fifth interval it goes out anyway, and a change goes out at once.
+     * every multiple of 7 and at no other tick, each fresh for {@link ShipStatusThrottle#freshTicks} of 7. Then, within
+     * one tick (nothing changes): an unchanged status is held back, every fifth interval (35 ticks, about the 40-tick
+     * keepalive) it goes out anyway, and a change goes out at once.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 300, batch = "pirates_n_ships_config_ship_status")
     public static void intervalFromConfigAndChangeOnly(GameTestHelper h) {
@@ -195,6 +197,9 @@ public final class ShipStatusGameTests {
             h.assertTrue(dueTicks[0] == 3, "expected three intervals in 21 ticks, got " + dueTicks[0]);
             h.assertTrue(sent.size() == dueTicks[0], "expected a status at each of " + dueTicks[0] + " intervals, got " + sent.size());
             for (Sent s : sent) h.assertTrue(s.time() % 7 == 0, "a status went out at tick " + s.time());
+            int fresh = ShipStatusThrottle.freshTicks(7);
+            for (Sent s : sent) h.assertTrue(s.payload().freshTicks() == fresh,
+                    "the status says it is fresh for " + s.payload().freshTicks() + " ticks, not " + fresh);
 
             // change-only and keepalive, all within this tick
             ShipStatusSync again = new ShipStatusSync();
@@ -202,7 +207,9 @@ public final class ShipStatusGameTests {
             List<Player> aboard = List.of(player[0]);
             again.sync(level, aboard, (p, s) -> count[0]++);
             h.assertTrue(count[0] == 1, "the first status was not sent");
-            for (int i = 1; i <= 4; i++) {
+            int keepalive = ShipStatusThrottle.keepaliveIntervals(7);
+            h.assertTrue(keepalive == 5, "keepalive of " + keepalive + " intervals at 7 ticks, expected 5 (35 ticks)");
+            for (int i = 1; i < keepalive; i++) {
                 again.sync(level, aboard, (p, s) -> count[0]++);
                 h.assertTrue(count[0] == 1, "an unchanged status was sent again at interval " + i);
             }
@@ -211,6 +218,52 @@ public final class ShipStatusGameTests {
             f.runtime().simulation().setVolume(0, 7.5);
             again.sync(level, aboard, (p, s) -> count[0]++);
             h.assertTrue(count[0] == 3, "a changed status was held back");
+            discard(player);
+            h.succeed();
+        });
+    }
+
+    /**
+     * HUD2's flicker on the server side: a ship at rest with a player standing aboard, the game's sync interval (20).
+     * Nothing changes, so only the keepalive goes out: never more than {@link ShipStatusThrottle#KEEPALIVE_TICKS}
+     * apart, and every status stays fresh on the client for well over the gap (HUD1 sent one every 100 ticks while
+     * the client dropped it after 60).
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 400)
+    public static void aShipAtRestKeepsItsStatusFresh(GameTestHelper h) {
+        Fixture f = ship(h, false);
+        ServerLevel level = h.getLevel();
+        Player[] player = new Player[1];
+        h.runAfterDelay(BOARD_AT, () -> player[0] = boardPlayer(h, f));
+        ShipStatusSync sender = new ShipStatusSync();
+        List<Sent> sent = new ArrayList<>();
+        long[] start = {-1};
+        h.onEachTick(() -> {
+            if (player[0] == null || start[0] == -2) return;
+            long now = level.getGameTime();
+            if (start[0] < 0) {
+                if (!aboard(player[0], f.ship())) return;
+                start[0] = now;
+                // the settled ship at rest: one status first, so only keepalives follow
+                f.runtime().simulation().setVolume(0, 2.0);
+            }
+            if (now - start[0] < 200) {
+                h.assertTrue(aboard(player[0], f.ship()), "the player fell off the deck");
+                sender.tick(level, List.of(player[0]), (p, s) -> sent.add(new Sent(p, s, now)));
+                return;
+            }
+            start[0] = -2;
+            int interval = ShipConfig.SHIP_STATUS_SYNC_INTERVAL_TICKS.get();
+            h.assertTrue(sent.size() >= 200 / ShipStatusThrottle.KEEPALIVE_TICKS,
+                    "only " + sent.size() + " statuses in 200 ticks aboard");
+            h.assertTrue(sent.get(0).time() - start[0] < interval, "the first status took " + (sent.get(0).time() - start[0]));
+            for (int i = 1; i < sent.size(); i++) {
+                long gap = sent.get(i).time() - sent.get(i - 1).time();
+                int fresh = sent.get(i - 1).payload().freshTicks();
+                h.assertTrue(gap <= Math.max(interval, ShipStatusThrottle.KEEPALIVE_TICKS),
+                        "a gap of " + gap + " ticks between two statuses");
+                h.assertTrue(fresh >= 3 * gap, "a status fresh for " + fresh + " ticks with " + gap + " ticks to the next");
+            }
             discard(player);
             h.succeed();
         });

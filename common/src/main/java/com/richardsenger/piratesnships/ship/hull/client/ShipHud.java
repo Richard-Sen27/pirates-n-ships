@@ -3,26 +3,36 @@ package com.richardsenger.piratesnships.ship.hull.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import com.richardsenger.piratesnships.combat.melee.MeleeClientConfig;
+import com.richardsenger.piratesnships.combat.melee.client.StaminaHudLayout;
 import com.richardsenger.piratesnships.sailing.wind.ClientWind;
 import com.richardsenger.piratesnships.sailing.wind.WindSample;
 import com.richardsenger.piratesnships.ship.hull.net.ShipStatusPayload;
 import com.richardsenger.piratesnships.ship.sable.ClientShipPoses;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.ChatVisiblity;
 
 /**
- * The ship HUD (docs/design.md §4.6, HUD1), a HUD layer drawn while the player is aboard and a fresh
- * {@link ShipStatusPayload} is in {@link ClientShipStatus}: a north-up compass rose with a ship-shaped needle for the
- * heading and the wind as an arrow outside the rose (on the side it blows from, pointing where it blows, longer for
- * stronger wind, amber in a gust); under it speed and rudder; then the ship's name, followed by the cargo load level
- * (CW1) when known, and the hull strip, bow on the left: one cell per compartment filling blue with water, a red tick
- * on a cell with an open breach and a pump glyph while a pump drains it. Layout: {@link ShipHudLayout}; texture: {@link ShipHudSheet}; config {@code ship_hud}.
+ * The ship HUD (docs/design.md §4.6, HUD1, HUD2), a HUD layer drawn while the player is aboard and a fresh
+ * {@link ShipStatusPayload} is in {@link ClientShipStatus}, in two panels. The compass panel (bottom left by default,
+ * above the chat): a north-up compass rose with a ship-shaped needle for the heading and the wind as an arrow outside
+ * the rose (on the side it blows from, pointing where it blows, longer for stronger wind, amber in a gust); under it
+ * speed and rudder; then the ship's name, followed by the cargo load level (CW1) when known. The hull panel (bottom
+ * right by default, clear of the hotbar and the stamina bar): the hull strip, bow on the left, one cell per compartment
+ * filling blue with water, a red tick on a cell with an open breach and a pump glyph while a pump drains it. Layout:
+ * {@link ShipHudLayout}; texture: {@link ShipHudSheet}; config {@code ship_hud}.
  */
 public final class ShipHud {
 
@@ -43,7 +53,13 @@ public final class ShipHud {
     /** Client tick end. */
     static void tick(Minecraft mc) {
         LocalPlayer p = mc.player;
-        ClientShipStatus.tick(p != null && mc.level != null && ClientShipPoses.onShip(p));
+        if (p == null || mc.level == null) {
+            ClientShipStatus.tick(false, false);
+            return;
+        }
+        // Sable drops the client's tracking whenever the player does not touch the ship from above (jump, ladder)
+        boolean holding = p.onClimbable() || (!p.onGround() && !p.isInWater() && !p.getAbilities().flying);
+        ClientShipStatus.tick(ClientShipPoses.onShip(p), holding);
     }
 
     /** HUD layer. */
@@ -54,22 +70,77 @@ public final class ShipHud {
         if (s == null) return;
         float partial = delta.getGameTimeDeltaPartialTick(false);
 
-        ShipHudLayout.Rect r = ShipHudLayout.place(ShipHudConfig.CORNER.get(), g.guiWidth(), g.guiHeight(),
-                ShipHudConfig.SCALE.get(), effectsInset(mc.player));
+        ChatComponent chat = mc.gui.getChat();
+        boolean chatOpen = chat.isChatFocused();
+        ShipHudLayout.Placement placed = ShipHudLayout.place(ShipHudConfig.COMPASS_CORNER.get(),
+                ShipHudConfig.HULL_CORNER.get(), screen(mc, g, chat, chatOpen), ShipHudConfig.SCALE.get());
+
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        // a panel that cannot get clear of the open chat on this screen waits until the chat closes
+        if (placed.compass().clear() || !chatOpen) {
+            begin(g, placed.compass().rect());
+            compass(g, mc, ClientShipStatus.heading(partial), partial);
+            text(g, mc.font, s);
+            g.pose().popPose();
+        }
+        if (placed.hull().clear() || !chatOpen) {
+            begin(g, placed.hull().rect());
+            strip(g, s.cells());
+            g.pose().popPose();
+        }
+        RenderSystem.disableBlend();
+    }
+
+    private static void begin(GuiGraphics g, ShipHudLayout.Rect r) {
         float f = ShipHudLayout.factor(r);
         PoseStack pose = g.pose();
         pose.pushPose();
         pose.translate(r.x(), r.y(), 0);
         pose.scale(f, f, 1f);
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
+    }
 
-        compass(g, mc, ClientShipStatus.heading(partial), partial);
-        text(g, mc.font, s);
-        strip(g, s.cells());
+    /** What vanilla and the stamina bar draw where the panels might go (HUD2). */
+    private static ShipHudLayout.Screen screen(Minecraft mc, GuiGraphics g, ChatComponent chat, boolean chatOpen) {
+        int gw = g.guiWidth(), gh = g.guiHeight();
+        LocalPlayer player = mc.player;
+        List<ShipHudLayout.Rect> obstacles = new ArrayList<>(ShipHudLayout.effects(gw, effectsInset(player)));
 
-        RenderSystem.disableBlend();
-        pose.popPose();
+        boolean hidden = mc.options.chatVisibility().get() == ChatVisiblity.HIDDEN;
+        double cs = chat.getScale();
+        int chatW = hidden ? 0 : (int) Math.ceil(chat.getWidth() + 12 * cs);
+        int chatH = hidden ? 0 : (int) Math.ceil(chat.getHeight() * cs);
+        obstacles.addAll(ShipHudLayout.chat(gw, gh, chatW, chatH, chatOpen));
+
+        boolean statusBars = mc.gameMode != null && mc.gameMode.canHurtPlayer();
+        int right = rightRowsAbove(player);
+        obstacles.addAll(ShipHudLayout.hotbar(gw, gh, statusBars, Math.max(leftRowsAbove(player), right)));
+        if (MeleeClientConfig.HUD_ENABLED.get()) {
+            // reserved whether or not a sword is in hand, so the panels do not jump when one is drawn
+            StaminaHudLayout.Rect bar = StaminaHudLayout.place(MeleeClientConfig.HUD_POSITION.get(),
+                    new StaminaHudLayout.Hud(gw, gh, statusBars, right), MeleeClientConfig.HUD_SCALE.get(),
+                    MeleeClientConfig.HUD_X_OFFSET.get(), MeleeClientConfig.HUD_Y_OFFSET.get());
+            obstacles.add(new ShipHudLayout.Rect(bar.x(), bar.y(), bar.w(), bar.h()));
+        }
+        return new ShipHudLayout.Screen(gw, gh, obstacles);
+    }
+
+    /** Rows above the hearts: armour and further heart rows (max health and absorption). */
+    private static int leftRowsAbove(LocalPlayer player) {
+        int hearts = Mth.ceil((player.getMaxHealth() + player.getAbsorptionAmount()) / 2f);
+        int rows = Math.max(1, (hearts + 9) / 10);
+        return rows - 1 + (player.getArmorValue() > 0 ? 1 : 0);
+    }
+
+    /** Rows above the food row: air bubbles, and mount hearts beyond the first row (the same as the stamina bar's). */
+    private static int rightRowsAbove(LocalPlayer player) {
+        int vehicleRows = 0;
+        if (player.getVehicle() instanceof LivingEntity vehicle && vehicle.showVehicleHealth()) {
+            int hearts = Math.min(30, (int) (vehicle.getMaxHealth() + 0.5f) / 2);
+            vehicleRows = (hearts + 9) / 10;
+        }
+        boolean air = player.isEyeInFluid(FluidTags.WATER) || player.getAirSupply() < player.getMaxAirSupply();
+        return Math.max(0, vehicleRows - 1) + (air ? 1 : 0);
     }
 
     /** Vanilla's status effect icons at the top right: one row for good effects, a second one below for bad ones. */

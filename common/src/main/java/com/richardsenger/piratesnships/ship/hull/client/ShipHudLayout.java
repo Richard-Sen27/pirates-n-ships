@@ -1,20 +1,46 @@
 package com.richardsenger.piratesnships.ship.hull.client;
 
+import java.util.ArrayList;
+import java.util.List;
+import org.jetbrains.annotations.Nullable;
+
 /**
- * Where the ship HUD goes and how its parts are laid out (pure, tested with JUnit; HUD1). The panel is
- * {@link #W} × {@link #H} GUI pixels at scale 1, drawn in its own coordinates and scaled from the corner it sits in.
- * Inside the panel, top to bottom: the compass rose with a ring of room for the wind arrow, the speed and rudder line,
- * the ship's name and the hull strip (bow on the left, one cell per compartment, widths by volume).
+ * Where the ship HUD's two panels go and how their parts are laid out (pure, tested with JUnit; HUD1, HUD2).
+ *
+ * <p>The <b>compass panel</b> ({@link #W} × {@link #COMPASS_H} GUI pixels at scale 1): the compass rose with a ring of
+ * room for the wind arrow, the speed and rudder line and the ship's name with its load. The <b>hull panel</b>
+ * ({@link #W} × {@link #HULL_H}): the hull strip (bow on the left, one cell per compartment, widths by volume). Each
+ * panel is drawn in its own coordinates and scaled from the corner it sits in.
+ *
+ * <p>Placement ({@link #place}): a panel starts {@link #MARGIN} from its corner and, while it overlaps something the
+ * vanilla HUD draws there ({@link Screen#obstacles}: the chat, the hotbar with the status rows, the stamina bar, the
+ * status effect icons), moves away from the screen edge to {@link #MARGIN} beyond that obstacle. Both panels in one
+ * corner stack as one block, the compass above the hull strip (the HUD1 look); in different corners the hull panel
+ * also keeps clear of the compass panel. A panel that cannot get clear on screen keeps its corner and reports
+ * {@link Placed#clear()} false; the renderer hides such a panel while the chat is open.
  */
 public final class ShipHudLayout {
 
-    /** The screen corner of the HUD (client config {@code ship_hud.corner}). */
-    public enum Corner { TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT }
+    /** A screen corner (client config {@code ship_hud.compass_corner}, {@code ship_hud.hull_corner}). */
+    public enum Corner {
+        TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT;
 
-    /** Unscaled panel size. */
+        public boolean right() {
+            return this == TOP_RIGHT || this == BOTTOM_RIGHT;
+        }
+
+        public boolean top() {
+            return this == TOP_LEFT || this == TOP_RIGHT;
+        }
+    }
+
+    /** Unscaled panel width (both panels). */
     public static final int W = 112;
-    public static final int H = 104;
-    /** Distance of the panel from the screen edges. */
+    /** Unscaled height of the compass panel. */
+    public static final int COMPASS_H = 88;
+    /** Unscaled height of the hull panel. */
+    public static final int HULL_H = 17;
+    /** Distance of a panel from the screen edges and from whatever it keeps clear of. */
     public static final int MARGIN = 4;
 
     /** Compass: centre and the radius of the rose sprite, then the wind arrow's ring outside it. */
@@ -28,47 +54,173 @@ public final class ShipHudLayout {
     /** Wind speed [blocks/s] that draws the longest arrow (default storm winds reach about 26). */
     public static final double ARROW_FULL_WIND = 20.0;
 
-    /** Text rows (top y, font line height 9). */
+    /** Text rows of the compass panel (top y, font line height 9). */
     public static final int SPEED_Y = 66;
     public static final int NAME_Y = 78;
 
-    /** Hull strip: left of it the bow cap, then the cells. */
+    /** Hull strip in the hull panel: left of it the bow cap, then the cells; the breach tick reaches 2 px above it. */
     public static final int STRIP_X = 4 + ShipHudSheet.BOW.w();
-    public static final int STRIP_Y = 89;
+    public static final int STRIP_Y = 2;
     public static final int STRIP_W = W - 4 - STRIP_X;
     public static final int STRIP_H = ShipHudSheet.BOW.h();
     public static final int CELL_GAP = 1;
     public static final int CELL_MIN_W = 4;
 
-    /** A screen rectangle (scaled size). */
+    /** Vanilla's HUD in GUI pixels (1.21.1 {@code Gui}, {@code ChatComponent}, {@code ChatScreen}). */
+    static final int HOTBAR_HALF = 91;
+    static final int HOTBAR_H = 23;
+    /** The offhand slot beside the hotbar (either side, by the main hand). */
+    static final int OFFHAND_W = 29;
+    /** Top of the hearts and food row, measured up from the bottom; each further row is 10 higher. */
+    static final int STATUS_ROW = 39;
+    static final int STATUS_ROW_H = 10;
+    /** The chat's lowest line ends this far above the bottom ({@code Gui#renderChat}, {@code ChatComponent#render}). */
+    public static final int CHAT_BOTTOM = 40;
+    /** The open chat's input box: full width, from 14 above the bottom ({@code ChatScreen#render}). */
+    public static final int CHAT_INPUT_H = 14;
+
+    /** A screen rectangle. */
     public record Rect(int x, int y, int w, int h) {
+
+        public int right() {
+            return x + w;
+        }
+
+        public int bottom() {
+            return y + h;
+        }
+
+        public boolean intersects(Rect o) {
+            return x < o.right() && o.x < right() && y < o.bottom() && o.y < bottom();
+        }
     }
 
     /** One cell of the strip, relative to {@link #STRIP_X}. */
     public record Span(int x, int w) {
     }
 
+    /** A placed panel; {@code clear} = it overlaps none of the obstacles and fits on screen. */
+    public record Placed(Rect rect, boolean clear) {
+    }
+
+    /** Both panels. */
+    public record Placement(Placed compass, Placed hull) {
+    }
+
+    /** The GUI's size and what vanilla (and our other HUD parts) draw on it right now. */
+    public record Screen(int guiWidth, int guiHeight, List<Rect> obstacles) {
+
+        public Screen {
+            obstacles = List.copyOf(obstacles);
+        }
+    }
+
     private ShipHudLayout() {
     }
 
     /**
-     * The panel's screen rectangle.
+     * Both panels' screen rectangles.
      *
-     * @param topRightInset GUI pixels to keep free at the top right (vanilla's status effect icons, 0 when none)
+     * @param scale the HUD's size ({@code ship_hud.scale})
      */
-    public static Rect place(Corner corner, int guiWidth, int guiHeight, double scale, int topRightInset) {
-        int w = scaled(W, scale), h = scaled(H, scale);
-        boolean right = corner == Corner.TOP_RIGHT || corner == Corner.BOTTOM_RIGHT;
-        boolean top = corner == Corner.TOP_LEFT || corner == Corner.TOP_RIGHT;
-        int x = right ? guiWidth - MARGIN - w : MARGIN;
-        int y = top ? MARGIN + (corner == Corner.TOP_RIGHT ? Math.max(0, topRightInset) : 0) : guiHeight - MARGIN - h;
-        // a panel larger than the screen keeps its top left corner visible
-        x = Math.max(0, Math.min(x, guiWidth - w));
-        y = Math.max(0, Math.min(y, guiHeight - h));
-        return new Rect(x, y, w, h);
+    public static Placement place(Corner compassCorner, Corner hullCorner, Screen screen, double scale) {
+        int w = scaled(W, scale), ch = scaled(COMPASS_H, scale), hh = scaled(HULL_H, scale);
+        if (compassCorner == hullCorner) {
+            Placed block = placeBlock(compassCorner, w, ch + hh, screen.guiWidth(), screen.guiHeight(), screen.obstacles());
+            Rect b = block.rect();
+            return new Placement(new Placed(new Rect(b.x(), b.y(), w, ch), block.clear()),
+                    new Placed(new Rect(b.x(), b.y() + ch, w, hh), block.clear()));
+        }
+        Placed compass = placeBlock(compassCorner, w, ch, screen.guiWidth(), screen.guiHeight(), screen.obstacles());
+        List<Rect> withCompass = new ArrayList<>(screen.obstacles());
+        withCompass.add(compass.rect());
+        Placed hull = placeBlock(hullCorner, w, hh, screen.guiWidth(), screen.guiHeight(), withCompass);
+        return new Placement(compass, hull);
     }
 
-    /** The factor the renderer scales the unscaled panel by, so it fills {@code r} exactly. */
+    /**
+     * A {@code w} × {@code h} block at {@code corner}, moved away from the corner's top or bottom edge past every
+     * obstacle it overlaps. When it runs off the screen it stays at the corner, not clear.
+     */
+    static Placed placeBlock(Corner corner, int w, int h, int guiWidth, int guiHeight, List<Rect> obstacles) {
+        int x = corner.right() ? guiWidth - MARGIN - w : MARGIN;
+        x = Math.max(0, Math.min(x, guiWidth - w));
+        int y0 = corner.top() ? MARGIN : guiHeight - MARGIN - h;
+        int y = y0;
+        // every obstacle is passed at most once (the block only moves away from the edge), so this ends
+        for (int step = 0; step <= obstacles.size(); step++) {
+            Rect r = new Rect(x, y, w, h);
+            Rect hit = firstHit(r, obstacles);
+            if (hit == null) {
+                if (y >= 0 && y + h <= guiHeight) {
+                    return new Placed(r, true);
+                }
+                break;
+            }
+            y = corner.top() ? hit.bottom() + MARGIN : hit.y() - MARGIN - h;
+            if (y < 0 || y + h > guiHeight) {
+                break;
+            }
+        }
+        // no clear spot: the corner, kept on screen (a block larger than the screen keeps its top left visible)
+        int yc = Math.max(0, Math.min(y0, guiHeight - h));
+        return new Placed(new Rect(x, yc, w, h), false);
+    }
+
+    private static @Nullable Rect firstHit(Rect r, List<Rect> obstacles) {
+        for (Rect o : obstacles) {
+            if (o.w() > 0 && o.h() > 0 && r.intersects(o)) {
+                return o;
+            }
+        }
+        return null;
+    }
+
+    // ------------------------------------------------------------------ vanilla's HUD as obstacles
+
+    /**
+     * The chat ({@code ChatComponent#render}): its lines run up from {@link #CHAT_BOTTOM} above the bottom over
+     * {@code height} GUI pixels and {@code width} across from the left edge; while it is open ({@code focused}) the
+     * input box takes the full width at the bottom as well. No lines when the chat is hidden ({@code height} 0).
+     *
+     * @param width  the chat's width with its backing, GUI pixels (chat width × chat scale + 8)
+     * @param height the chat's height, GUI pixels (focused or unfocused chat height × chat scale)
+     */
+    public static List<Rect> chat(int guiWidth, int guiHeight, int width, int height, boolean focused) {
+        List<Rect> out = new ArrayList<>(2);
+        if (height > 0 && width > 0) {
+            out.add(new Rect(0, guiHeight - CHAT_BOTTOM - height, width, height));
+        }
+        if (focused) {
+            out.add(new Rect(0, guiHeight - CHAT_INPUT_H, guiWidth, CHAT_INPUT_H));
+        }
+        return out;
+    }
+
+    /**
+     * The hotbar with both offhand slots, and above it (with {@code statusBars}, survival and adventure) the
+     * experience bar and the status rows: hearts and armour on the left, food, air and mount hearts on the right.
+     *
+     * @param rowsAbove status rows above the hearts and food row (armour, extra heart rows, air, mount hearts; the
+     *                  larger of the two sides)
+     */
+    public static List<Rect> hotbar(int guiWidth, int guiHeight, boolean statusBars, int rowsAbove) {
+        int cx = guiWidth / 2;
+        List<Rect> out = new ArrayList<>(2);
+        out.add(new Rect(cx - HOTBAR_HALF - OFFHAND_W, guiHeight - HOTBAR_H, 2 * (HOTBAR_HALF + OFFHAND_W), HOTBAR_H));
+        if (statusBars) {
+            int top = STATUS_ROW + STATUS_ROW_H * Math.max(0, rowsAbove);
+            out.add(new Rect(cx - HOTBAR_HALF, guiHeight - top, 2 * HOTBAR_HALF, top - HOTBAR_H));
+        }
+        return out;
+    }
+
+    /** Vanilla's status effect icons at the top right: {@code inset} GUI pixels high (0 when none show). */
+    public static List<Rect> effects(int guiWidth, int inset) {
+        return inset <= 0 ? List.of() : List.of(new Rect(guiWidth / 2, 0, guiWidth - guiWidth / 2, inset));
+    }
+
+    /** The factor the renderer scales an unscaled panel by, so it fills {@code r} exactly. */
     public static float factor(Rect r) {
         return r.w() / (float) W;
     }
@@ -76,6 +228,8 @@ public final class ShipHudLayout {
     static int scaled(int size, double scale) {
         return Math.max(1, (int) Math.round(size * scale));
     }
+
+    // ------------------------------------------------------------------ panel contents
 
     /**
      * Cells of the strip for compartments of the given volumes (bow first), side by side over {@code width} pixels

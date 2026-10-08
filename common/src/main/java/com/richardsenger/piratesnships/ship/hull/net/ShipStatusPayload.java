@@ -14,22 +14,40 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Server → client: the status of the ship the player is aboard, for the ship HUD (docs/design.md §4.6, HUD1). Sent by
- * {@link ShipStatusSync} every {@code ships.ship_status_sync_interval_ticks} while something changed, and every fifth
- * interval regardless ({@link ShipStatusThrottle}), to players standing on or riding in the ship. The values are rounded
- * ({@link #quantize}) so that a ship at rest produces equal payloads.
+ * {@link ShipStatusSync} every {@code ships.ship_status_sync_interval_ticks} while something changed, and about every
+ * two seconds regardless ({@link ShipStatusThrottle}), to players standing on or riding in the ship. The values are
+ * rounded ({@link #quantize}) so that a ship at rest produces equal payloads.
  *
- * @param ship    the ship's id
- * @param name    the ship's name, empty when it has none
- * @param heading compass bearing of the bow [degrees, 0 = north, 90 = east]
- * @param speed   horizontal speed through the water [blocks/s]
- * @param rudder  rudder angle [degrees, positive = starboard], {@code NaN} when the ship has no helm
- * @param load    the ship's cargo load level ({@code CargoWeight.LoadLevel} ordinal, CW1's last weighing), -1 when unknown
- * @param cells   the compartments, bow first, at most {@link CompartmentStrip#MAX_CELLS}
+ * @param ship       the ship's id
+ * @param name       the ship's name, empty when it has none
+ * @param heading    compass bearing of the bow [degrees, 0 = north, 90 = east]
+ * @param speed      horizontal speed through the water [blocks/s]
+ * @param rudder     rudder angle [degrees, positive = starboard], {@code NaN} when the ship has no helm
+ * @param load       the ship's cargo load level ({@code CargoWeight.LoadLevel} ordinal, CW1's last weighing), -1 when unknown
+ * @param cells      the compartments, bow first, at most {@link CompartmentStrip#MAX_CELLS}
+ * @param freshTicks how long the client may show this status without a newer one [ticks]
+ *                   ({@link ShipStatusThrottle#freshTicks}, from the server's sync interval; HUD2)
  */
-public record ShipStatusPayload(UUID ship, String name, float heading, float speed, float rudder, int load, List<Cell> cells)
+public record ShipStatusPayload(UUID ship, String name, float heading, float speed, float rudder, int load, List<Cell> cells,
+                                int freshTicks)
         implements CustomPacketPayload {
 
     public static final Type<ShipStatusPayload> TYPE = new Type<>(Constants.id("ship_status"));
+
+    /** Freshness of a status built at the default sync interval (20 ticks). */
+    public static final int DEFAULT_FRESH_TICKS = ShipStatusThrottle.freshTicks(20);
+    /** The client never treats a status as fresh for less than this. */
+    public static final int MIN_FRESH_TICKS = 40;
+
+    /** A status with the {@link #DEFAULT_FRESH_TICKS default freshness}. */
+    public ShipStatusPayload(UUID ship, String name, float heading, float speed, float rudder, int load, List<Cell> cells) {
+        this(ship, name, heading, speed, rudder, load, cells, DEFAULT_FRESH_TICKS);
+    }
+
+    /** This status with another freshness. */
+    public ShipStatusPayload withFreshTicks(int ticks) {
+        return new ShipStatusPayload(ship, name, heading, speed, rudder, load, cells, ticks);
+    }
 
     /** Longest name sent (anvil names are shorter). */
     public static final int MAX_NAME = 64;
@@ -61,7 +79,7 @@ public record ShipStatusPayload(UUID ship, String name, float heading, float spe
 
     private static final StreamCodec<ByteBuf, List<Cell>> CELLS = Cell.CODEC.apply(ByteBufCodecs.list(CompartmentStrip.MAX_CELLS));
 
-    /** Seven fields: more than {@code StreamCodec.composite} takes in 1.21.1, so written out. */
+    /** Eight fields: more than {@code StreamCodec.composite} takes in 1.21.1, so written out. */
     public static final StreamCodec<RegistryFriendlyByteBuf, ShipStatusPayload> CODEC = StreamCodec.of(
             (buf, p) -> {
                 UUIDUtil.STREAM_CODEC.encode(buf, p.ship());
@@ -71,9 +89,11 @@ public record ShipStatusPayload(UUID ship, String name, float heading, float spe
                 buf.writeFloat(p.rudder());
                 ByteBufCodecs.VAR_INT.encode(buf, p.load());
                 CELLS.encode(buf, p.cells());
+                ByteBufCodecs.VAR_INT.encode(buf, p.freshTicks());
             },
             buf -> new ShipStatusPayload(UUIDUtil.STREAM_CODEC.decode(buf), ByteBufCodecs.stringUtf8(MAX_NAME).decode(buf),
-                    buf.readFloat(), buf.readFloat(), buf.readFloat(), ByteBufCodecs.VAR_INT.decode(buf), CELLS.decode(buf)));
+                    buf.readFloat(), buf.readFloat(), buf.readFloat(), ByteBufCodecs.VAR_INT.decode(buf), CELLS.decode(buf),
+                    ByteBufCodecs.VAR_INT.decode(buf)));
 
     public ShipStatusPayload {
         name = name.length() > MAX_NAME ? name.substring(0, MAX_NAME) : name;
@@ -102,7 +122,7 @@ public record ShipStatusPayload(UUID ship, String name, float heading, float spe
                 .toList();
         int h = Math.floorMod(Math.round(heading), 360);
         return new ShipStatusPayload(ship, name, h, round(Math.max(0f, speed)),
-                Float.isNaN(rudder) ? Float.NaN : Math.round(rudder), load, q);
+                Float.isNaN(rudder) ? Float.NaN : Math.round(rudder), load, q, freshTicks);
     }
 
     /** Rounds to a multiple of 0.05 (never −0). */

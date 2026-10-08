@@ -415,7 +415,8 @@ pirate captain 50) that any navy officer pays out. Attacking the navy or a merch
 `/pirates career` shows where you stand. **What a rank is worth:** from Lieutenant the navy flag is yours by right: an
 officer flying it is never charged with false colours for low navy reputation (a bounty still is), and navy outposts
 let you dock for free. Each new rank comes with a gift: a Lieutenant receives the officer's bicorne and a saber (once;
-a full pack drops them at your feet). From Captain the harbor master's desk at a navy outpost has an Orders tab: the
+a full pack drops them at your feet); the Officer's Coat (blue wool, white wool and a gold ingot) is chest armour
+that marks you as navy. From Captain the harbor master's desk at a navy outpost has an Orders tab: the
 navy shipyard builds you any ship the village shipwrights do, at 70 % of the price (Commodore 50 %, Admiral 40 %),
 delivered to the outpost's quay. On the other side, infamy talks at the fences: a Buccaneer, Dread Captain or Pirate
 Lord trades as if the pirates liked him 7, 13 or 20 points more, and from Dread Captain up pirates leave you alone
@@ -445,7 +446,7 @@ middle of his hut, or to the camp trail if the island has no captain's hut. He i
 health, and the navy keeps a standing bounty of 300 doubloons on him, posted on every notice board. To fight him
 one-on-one, sneak and use him with a sword in hand: if he accepts, his crew within 16 blocks keep out of the duel
 unless you strike them. The duel ends when one of you falls, when you run more than 32 blocks away, or after five
-minutes. If you hit him first he refuses: no honour, no duel. Slain, he drops his pirate hat, a purse of doubloons
+minutes. If you hit him first he refuses: no honour, no duel. Slain, he drops his captain's hat (wear it yourself), a purse of doubloons
 and a treasure map of his island, and you get a bounty proof to hand to a navy officer. Taken alive in shackles, the
 navy pays the captain's reward of 150 plus his bounty alive. Five days after his fall a successor with a new name and
 a new bounty takes his post. Server config `mobs.captain`.
@@ -638,6 +639,15 @@ floated. Use it in the air to carry it on your back: you can't jump, sprint or s
 it drags you under. Place it on water to float it; it drifts with the wind and the current. Use it to open,
 sneak-use to pick it up, or hit it to knock it loose as an item. On a ship's deck it is placed as a block. Server
 config `sea_chest`.
+
+### Paddling a sea chest
+Craft a paddle from two planks and a stick (planks up the right side, the stick bottom left). Use it on a floating
+sea chest, from the water or the shore, to sit on the lid. With the paddle in either hand, forward and back paddle
+it (about 1.5 blocks a second, half that backwards) and left and right turn it; it still drifts with the wind and
+the current, and without the paddle in hand it only drifts. One rider at a time. Paddling makes you hungry like
+swimming, and in cold water your legs hang in it, so you freeze as if swimming. Sneak to get off. You can't open
+the chest while sitting on it: get off first, then use it. Server config `sea_chest` (`paddle_enabled`,
+`paddle_speed`, `paddle_turn_degrees`, `paddle_hunger_factor`).
 
 ## 7. Cargo and trade
 
@@ -1046,7 +1056,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `crew_stations` | Crew stations on/off, time per trim step. |
 | `flags` | Hoisting delay, flags following the wind at its exact angle (land and ship check intervals), banners as flags. |
 | `dry_hull` | Also: whether slabs, stairs and hatches are drawn dry in their empty half. |
-| `sea_chest` | Sea chest on/off, worn speed, sink pull, wind drift and its cap, draft. |
+| `sea_chest` | Sea chest on/off, worn speed, sink pull, wind drift and its cap, draft; paddling on/off, speed, backing speed, turn rate, hunger. |
 | `survival` | Cold water on/off and freeze rate, warm effect length, swimming hunger multiplier. |
 | `provisions` | Consumption, rations, spoilage, scurvy, rum, water barrel capacity, rain refill. |
 | `cargo_trade.market_backend` | Desk reach, maximum trade quantity, refresh interval of open market screens. |

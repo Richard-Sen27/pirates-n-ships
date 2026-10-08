@@ -58,6 +58,13 @@ public final class MeleeClientConfig {
     public static final ConfigValue<Integer> ANIMATIONS_LAYER_PRIORITY = ANIM.intRange("layer_priority", 1500, 0, 100000,
             "Priority of the sword animation layer among other mods' player animations (higher = drawn over them; "
                     + "emotes typically use 1000). Applied at game start");
+    public static final ConfigValue<Integer> ANIMATIONS_FADE_TICKS = ANIM.intRange("fade_ticks", 4, 0, 20,
+            "Ticks (20 per second) a sword animation takes to blend in when it does not start from the pose on screen "
+                    + "(an attack cut short by a parry or a hit, a riposte, a parry from rest, going back to idle mid-swing). "
+                    + "Cosmetic only: hit timing is unchanged. 0 = snap");
+    public static final ConfigValue<Boolean> ANIMATIONS_KEEP_CROUCH = ANIM.bool("keep_crouch", true,
+            "Keep the crouch while a sneaking player's sword animation plays (lowered, leaning upper body). "
+                    + "Off = the sword animation shows a standing upper body on crouched legs");
 
     // Declared here (not in FirearmsConfig) because this class is already loaded on both sides by MeleeModule; the
     // firearm layer shares first_person and sits 100 below layer_priority (FirearmAnimationsSetup).

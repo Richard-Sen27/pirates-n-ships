@@ -51,3 +51,12 @@ floated. Use it in the air to carry it on your back: you can't jump, sprint or s
 it drags you under. Place it on water to float it; it drifts with the wind and the current. Use it to open,
 sneak-use to pick it up, or hit it to knock it loose as an item. On a ship's deck it is placed as a block. Server
 config `sea_chest`.
+
+## Paddling a sea chest
+Craft a paddle from two planks and a stick (planks up the right side, the stick bottom left). Use it on a floating
+sea chest, from the water or the shore, to sit on the lid. With the paddle in either hand, forward and back paddle
+it (about 1.5 blocks a second, half that backwards) and left and right turn it; it still drifts with the wind and
+the current, and without the paddle in hand it only drifts. One rider at a time. Paddling makes you hungry like
+swimming, and in cold water your legs hang in it, so you freeze as if swimming. Sneak to get off. You can't open
+the chest while sitting on it: get off first, then use it. Server config `sea_chest` (`paddle_enabled`,
+`paddle_speed`, `paddle_turn_degrees`, `paddle_hunger_factor`).

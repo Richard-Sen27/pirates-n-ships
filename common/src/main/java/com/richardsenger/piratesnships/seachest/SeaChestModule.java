@@ -12,6 +12,7 @@ import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
 import net.minecraft.data.models.model.ModelLocationUtils;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
@@ -99,10 +100,30 @@ public final class SeaChestModule implements ModModule {
                 .define('L', Items.LEATHER).define('I', Items.IRON_INGOT).define('C', Items.CHEST)
                 .unlockedBy("has_chest", InventoryChangeTrigger.TriggerInstance.hasItems(Items.CHEST))
                 .save(out, SeaChestContent.ITEM.id()));
+        gatherPaddleData(data);
+    }
+
+    /** The paddle (SC2): name, hints, refusals and the recipe; its model is hand-made (ART8, {@code item/paddle}). */
+    private static void gatherPaddleData(DataContributions data) {
+        PaddleItem paddle = SeaChestContent.PADDLE.get();
+        data.lang(lang -> lang
+                .item(SeaChestContent.PADDLE, "Paddle")
+                .add(PaddleItem.HINT_KEY, "Use on a floating sea chest to sit on it and paddle; sneak to get off")
+                .add(SeaChestEntity.MountRefusal.DISABLED.key(), "Paddling is disabled on this server")
+                .add(SeaChestEntity.MountRefusal.NOT_FLOATING.key(), "The sea chest must float to be paddled")
+                .add(SeaChestEntity.MountRefusal.OCCUPIED.key(), "Someone is sitting on this sea chest")
+                .add(SeaChestEntity.MountRefusal.CANNOT_RIDE.key(), "You can't sit on the sea chest now")
+                .add(SeaChestEntity.DISMOUNT_FIRST_KEY, "Get off first (sneak) to open the sea chest"));
+        // Diagonal like a tool, two planks and a stick (a straight column would be the wooden sword)
+        data.recipes(out -> ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, paddle)
+                .pattern(" P").pattern(" P").pattern("S ")
+                .define('P', ItemTags.PLANKS).define('S', Items.STICK)
+                .unlockedBy("has_sea_chest", InventoryChangeTrigger.TriggerInstance.hasItems(SeaChestContent.ITEM.get()))
+                .save(out, SeaChestContent.PADDLE.id()));
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(SeaChestGameTests.class);
+        return List.of(SeaChestGameTests.class, PaddleGameTests.class);
     }
 }

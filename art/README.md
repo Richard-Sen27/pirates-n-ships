@@ -937,6 +937,28 @@ Mooring ring and sail foot (ART5):
   Each renderer takes the foot buffer right after the plain rows (asking a buffer source for another render type ends
   the previous shared batch), and the bundle asks for the plain buffer again.
 
+Paddle (ART8):
+- `paddle.bbmodel` -> `models/item/paddle.json` (13 elements, `palette` `#0` and `palette_2` `#1`, particle
+  `palette_2`; no new colours) for SC2's sea chest paddle (design.md §11). Laid out like ART1c's tools in a diagonal
+  frame: every element built along y and turned `z -45` about its own centre, s along the up-right diagonal from
+  (8, 8), lower left to upper right: a `wood_dark` T-grip (crossbar plus a crossed box, s -11.3..-9.9), the shaft as
+  two crossed boxes (`wood`, ends `wood_dark`, s -9.9..1.8, the second box 0.05 px shorter at both ends), two
+  `leather` wraps (`leather_dark` fronts) at the grip and mid-shaft, a `rope_coil` whipping at the throat (s
+  -0.6..0.4), then the blade in steps, all `walnut_dark` edges and `walnut_light` faces: shoulder 2.8 wide, blade 4.4
+  wide and 0.7 thick (s 2.2..9.4), tip 3.6 wide and a 2.2 wide tip end to round it; a `walnut` centre rib 1.1 deep
+  down the blade, narrowing to 0.6 before the tip. The grip end reaches x -1.1 (inside the vanilla -16..32 limit).
+- **Display:** vanilla `item/handheld` slots with third person scaled 0.95 (a sword is 0.85; the paddle reads longer);
+  first person, ground, head and fixed vanilla; no `gui` entry (the diagonal is the GUI view).
+- Lint: no visible or same-look fights, five hidden end-to-end face pairs (warnings). Built from a Python part list
+  that writes the model JSON, rebuilt cube by cube in a `java_block` tab (palette textures from `fromPath` with `id`,
+  `folder`, `namespace`; display slots as `DisplaySlot`s); `Codecs.java_block.compile()` of the tab gives the same 13
+  elements and faces. Script not committed; rebuild it from these notes.
+- Render `renders/paddle.png`: front (as in the GUI), two three-quarter views, back. No hand views (display mode not
+  used).
+- **Wiring:** SC2's datagen placeholder (`ModelTemplates.FLAT_HANDHELD_ITEM` on the wooden shovel texture in
+  `SeaChestModule.gatherPaddleData`) has to go when both land: datagen writes nothing for the paddle's item model,
+  the hand-made file is found by the item's id.
+
 ## Entities
 
 Animated mobs and NPCs (crew member, pirate, sailor, navy soldier and officer; design.md §9) are GeckoLib models

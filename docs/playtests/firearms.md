@@ -90,3 +90,37 @@ the bar, "Loaded", aiming, lowering, cooldown, recoil and rain misfire are the s
 says "With a grappling hook" and shows the `musket_hook` model. Steps in [`grapple.md`](grapple.md) "GR3". Check here
 only that a musket loaded with a ball still behaves exactly as in P1/P3/P5/P6 while a hook sits in the off hand (it
 says "The musket is loaded with shot…" once and fires the ball).
+
+
+## FA1: left click fires, right click aims
+Default `firearms.fire_on_attack = true`. Survival, a pistol and a musket, lead shot and gunpowder, a zombie or a
+target 10 to 20 blocks away; F3 off, subtitles on. Send `latest.log` if anything differs.
+1. **Aimed shot.** Load the pistol (hold right-click, 3 s), let go, hold right-click again: the aim pose comes up (musket:
+   zoom). Keep holding for over a second, press left-click: the shot leaves at once (sound, smoke, view kick, gold bar
+   gone, "Not loaded"). Still holding right-click: nothing more happens; let go: no second shot, no click.
+2. **Hip shot.** Load, then without touching right-click press left-click: it fires from the hip. Fire ten hip shots and
+   ten aimed shots (held a second) at a wall 20 blocks away: hip shots scatter visibly wider (pistol 4 degrees, musket 1).
+3. **Release does not fire.** Load, hold right-click to aim, let go without left-click: the gun goes down, still loaded,
+   gold bar stays, no sound, no cooldown on the hotbar slot. Do it with a quick click too: no shot.
+4. **No sword swing with a gun.** Gun in the main hand (loaded or not): left-click air, a block and a mob. Expected: no
+   arm swing in first or third person, no punch damage, no block cracks while holding left-click on a block (also in
+   creative), no "attack" crit particles.
+5. **Empty and reloading.** Left-click an empty gun: the dry click ("Pistol clicks" subtitle), nothing else. While
+   loading (holding right-click on an empty gun with ammo) press left-click several times: nothing fires, the white bar
+   keeps filling and the load completes; ammunition is used once.
+6. **Cooldown.** Fire, reload instantly in creative and spam left-click: at most one shot per half second.
+7. **Sneak.** Aiming, press sneak: the gun lowers as before (P5), no shot. Sneaking with a loaded gun, left-click: a hip
+   shot (say if you would rather block this).
+8. **Off-hand gun.** Empty main hand, pistol in the off hand: right-click aims the off-hand pistol, left-click while
+   aiming fires it. Without aiming, left-click with the empty main hand is a normal punch (the off-hand gun only fires
+   while it is raised). With a sword in the main hand and a loaded pistol in the off hand, left-click is the sword.
+9. **Grappling hook.** Hook in the off hand, musket loaded with it: aim with right-click, fire with left-click; letting go
+   of right-click does not launch it.
+10. **Tooltip.** A loaded gun reads "Hold use to aim, attack to fire".
+11. **Toggle.** Set `firearms.fire_on_attack = false` (the mod's config screen, or the world's server config file):
+    left-click is a normal punch with a swing, holding and
+    releasing right-click fires as in P1, a quick right-click fires at once, the tooltip reads "Hold to aim, release to
+    fire".
+12. **Multiplayer** (LAN if possible): the other player sees the shot, smoke and the aim pose; on a dedicated server
+    with the toggle off, the client follows the server's value (it is a synced server option).
+13. **Melee untouched.** Switch to a rapier: slashes, thrusts and guards work as before.

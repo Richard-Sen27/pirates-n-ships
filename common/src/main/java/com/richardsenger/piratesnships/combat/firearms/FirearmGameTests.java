@@ -39,6 +39,7 @@ public final class FirearmGameTests {
     private static final String AIM_MIN_BATCH = "pirates_n_ships_config_firearms_aim_min";
     private static final String AIMED_SPREAD_BATCH = "pirates_n_ships_config_firearms_aimed_spread";
     private static final String LOWER_ON_SNEAK_BATCH = "pirates_n_ships_config_firearms_lower_on_sneak";
+    private static final String RELEASE_CLICK_BATCH = "pirates_n_ships_config_firearms_release_click";
 
     private FirearmGameTests() {
     }
@@ -83,11 +84,16 @@ public final class FirearmGameTests {
         gun.onUseTick(helper.getLevel(), player, FirearmRules.LOAD_SESSION_TICKS - heldTicks);
     }
 
-    /** Presses use on the held (loaded) gun, aims for {@code heldTicks} and lets go. */
+    /**
+     * Presses use on the held (loaded) gun, aims for {@code heldTicks} and fires the way the current scheme does: the
+     * attack key with {@code firearms.fire_on_attack} on (FA1, {@link FirearmTrigger}), then lets go (which only
+     * lowers); with it off, letting go fires.
+     */
     private static void aimAndRelease(GameTestHelper helper, Player player, int heldTicks) {
         ItemStack gun = player.getMainHandItem();
         helper.assertValueEqual(use(helper, player), InteractionResult.CONSUME, "use of a loaded gun");
         helper.assertTrue(player.isUsingItem(), "a loaded gun is held to aim");
+        if (FirearmsConfig.FIRE_ON_ATTACK.get()) FirearmTrigger.pullAimedFor(helper.getLevel(), player, heldTicks);
         gun.releaseUsing(helper.getLevel(), player, FirearmRules.AIM_SESSION_TICKS - heldTicks);
         player.stopUsingItem();
     }
@@ -194,7 +200,8 @@ public final class FirearmGameTests {
         helper.assertTrue(player.isUsingItem(), "a loaded gun is held to aim");
         helper.assertValueEqual(gun.getUseDuration(player), FirearmRules.AIM_SESSION_TICKS, "use duration of an aim");
         helper.assertTrue(balls(helper).isEmpty(), "pressing use only aims");
-        // let go after aiming for 10 ticks: the shot leaves
+        // the attack key while aiming (FA1): the shot leaves; letting go afterwards adds nothing
+        FirearmTrigger.pull(helper.getLevel(), player);
         gun.releaseUsing(helper.getLevel(), player, FirearmRules.AIM_SESSION_TICKS - 10);
         player.stopUsingItem();
         List<LeadBallEntity> balls = balls(helper);
@@ -238,9 +245,10 @@ public final class FirearmGameTests {
         helper.succeedWhen(() -> helper.assertTrue(ball.isRemoved(), "the ball should vanish after its lifetime"));
     }
 
-    /** A plain click (let go in the same tick) fires at once with the default minimum hold of 0. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    /** Release scheme ({@code fire_on_attack} off): a plain click (let go in the same tick) fires at once with the default minimum hold of 0. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = RELEASE_CLICK_BATCH)
     public static void anInstantClickStillFires(GameTestHelper helper) {
+        ConfigOverrides.during(helper, FirearmsConfig.FIRE_ON_ATTACK, false);
         Player player = shooter(helper, new Vec3(4.5, 1, 1.5), 0, 0);
         ItemStack gun = hold(player, CombatContent.PISTOL.get(), true);
         aimAndRelease(helper, player, 0);
@@ -341,9 +349,10 @@ public final class FirearmGameTests {
 
     // ---- config -----------------------------------------------------------------------------------------------
 
-    /** With a minimum hold, letting go too early puts the gun down still loaded; after the minimum it fires. */
+    /** Release scheme: with a minimum hold, letting go too early puts the gun down still loaded; after the minimum it fires. */
     @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = AIM_MIN_BATCH)
     public static void releaseFiresAfterTheMinimumHold(GameTestHelper helper) {
+        ConfigOverrides.during(helper, FirearmsConfig.FIRE_ON_ATTACK, false);
         ConfigOverrides.during(helper, FirearmsConfig.AIM_MIN_TICKS, 5);
         Player player = shooter(helper, new Vec3(4.5, 1, 1.5), 0, 0);
         ItemStack gun = hold(player, CombatContent.PISTOL.get(), true);

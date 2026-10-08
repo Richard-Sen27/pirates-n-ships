@@ -5,6 +5,7 @@ import com.richardsenger.piratesnships.combat.content.CombatContent;
 import com.richardsenger.piratesnships.combat.firearms.FirearmContent;
 import com.richardsenger.piratesnships.combat.firearms.FirearmKind;
 import com.richardsenger.piratesnships.combat.firearms.FirearmRules;
+import com.richardsenger.piratesnships.combat.firearms.FirearmTrigger;
 import com.richardsenger.piratesnships.combat.firearms.FirearmService;
 import com.richardsenger.piratesnships.combat.firearms.FirearmsConfig;
 import com.richardsenger.piratesnships.combat.firearms.LeadBallEntity;
@@ -133,13 +134,17 @@ public final class GrappleLaunchGameTests {
         p.stopUsingItem();
     }
 
-    /** Aims the loaded musket in {@code hand} for {@code ticks} and lets go (the shot leaves on release). */
+    /**
+     * Aims the loaded musket in {@code hand} for {@code ticks}, pulls the trigger (the attack key, FA1) and lets go
+     * (which only lowers the gun).
+     */
     private static void aimAndRelease(GameTestHelper h, Player p, InteractionHand hand, int ticks) {
         ServerLevel level = h.getLevel();
         ItemStack gun = p.getItemInHand(hand);
         InteractionResult r = gun.use(level, p, hand).getResult();
         h.assertTrue(r.consumesAction(), "aiming the musket was refused: " + r);
         h.assertTrue(FirearmRules.isAimSession(p.getUseItemRemainingTicks()), "the session is not an aim");
+        FirearmTrigger.pullAimedFor(level, p, ticks);
         gun.releaseUsing(level, p, FirearmRules.AIM_SESSION_TICKS - ticks);
         p.stopUsingItem();
     }

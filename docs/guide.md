@@ -889,9 +889,15 @@ nothing lets a player use it yet: the input and animation layers are missing.
 ### Firearms
 The pistol and the musket are single-shot flintlocks. Hold right-click with one lead shot and one gunpowder in your
 inventory to load (3 seconds for the pistol, 5 for the musket, with the bow pose; letting go early cancels and costs
-nothing; creative mode needs no ammo). The tooltip shows "Loaded" or "Unloaded". With a loaded gun, hold right-click to aim (a quick click still fires at once): after a second of steady aiming the
-shot is tighter, the musket zooms in a little, and the shot leaves when you release. To lower an aimed gun without firing, press sneak: the gun goes down still
-loaded and stays down while you keep sneaking (server option `firearms.aim.lower_on_sneak`). While you load, a white
+nothing; creative mode needs no ammo). The tooltip shows "Loaded" or "Unloaded". **Left-click fires, right-click
+aims.** With a loaded gun, hold right-click to aim: after a second of steady aiming the shot is tighter and the musket
+zooms in a little. Press left-click to fire, either while aiming or straight from the hip (no right-click: the full,
+wider spread of the gun). Letting go of right-click never fires, it only lowers the gun, which stays loaded. A gun in
+your main hand never swings, hits or breaks blocks with left-click, and left-click does nothing while you load. To
+lower an aimed gun, you can also press sneak: the gun goes down still loaded and stays down while you keep sneaking
+(server option `firearms.aim.lower_on_sneak`). The server option `firearms.fire_on_attack` (on by default) switches
+back to the old scheme when turned off: hold right-click to aim and release to fire (a quick click fires at once), and
+left-click is an ordinary attack again. While you load, a white
 bar under the gun's slot fills up; a loaded gun shows a full gold bar in the hotbar and inventory, its hammer cocked back, and its tooltip
 says "Loaded" or "Not loaded". You see yourself aim and reload (the Player Animation Library drives it, client option
 `firearm_animations.enabled`). Firing: a lead ball flies out with smoke and a small kick, the gun is unloaded again and needs half a second before it
@@ -935,7 +941,7 @@ reloads by itself from that supply, so a manned, supplied gun keeps firing as fa
 
 ### Grappling hook
 **Shooting the hook.** Put the grappling hook in your **off hand** and a musket in your main hand. Hold use to load
-the hook into the musket (its full reload and one gunpowder), then aim and let go to fire it: a flat shot on a 64-block
+the hook into the musket (its full reload and one gunpowder), then aim with right-click and fire it with left-click: a flat shot on a 64-block
 rope. Thrown by hand, the hook's rope is 32 blocks. The hook catches on any solid surface: another ship (the rope hauls
 both ships together), your own ship (a line to slide down, e.g. from the mast top), or land (from a ship it slowly
 hauls your ship toward that point like a kedge; from land it is a zip line). It slips off leaves and glass panes. To
@@ -1118,7 +1124,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `melee_animations` (client) | Sword animations on/off, first-person mode, layer priority. |
 | `melee_input` / `melee_hud` (client) | Hold-to-thrust and parry-tap thresholds; stamina bar on/off, scale and offsets. |
 | `firearms.aim` / `firearm_view` (client) | Minimum hold, steady time and aimed spread factor, sneak lowers the gun; musket zoom. |
-| `firearms` | Firearms on/off, per gun: damage, muzzle velocity, spread, reload time, recoil; ball lifetime and gravity, cooldown, gunpowder use. |
+| `firearms` | Firearms on/off, `fire_on_attack` (left-click fires; off = release to fire), per gun: damage, muzzle velocity, spread, reload time, recoil; ball lifetime and gravity, cooldown, gunpowder use. |
 | `sailing_runtime` | Sailing forces on/off, heel scaling, steering and anchor on/off, rudder steps, chain length. |
 | `crew_stations` | Crew stations on/off, time per trim step. |
 | `flags` | Hoisting delay, flags following the wind at its exact angle (land and ship check intervals), banners as flags. |

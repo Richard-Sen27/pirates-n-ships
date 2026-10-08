@@ -24,6 +24,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Items;
 import com.richardsenger.piratesnships.combat.firearms.FirearmKind;
 import com.richardsenger.piratesnships.combat.firearms.FirearmRules;
+import com.richardsenger.piratesnships.combat.firearms.FirearmTrigger;
 import com.richardsenger.piratesnships.combat.firearms.FirearmsConfig;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
@@ -525,6 +526,8 @@ public final class GrappleSlideGameTests {
         p.stopUsingItem();
         h.assertTrue(GrappleContent.isHookLoaded(gun), "the musket holds no hook");
         h.assertTrue(gun.use(level, p, InteractionHand.MAIN_HAND).getResult().consumesAction(), "no aim");
+        // the attack key fires (FA1); letting go only lowers the gun
+        FirearmTrigger.pullAimedFor(level, p, FirearmsConfig.AIM_STEADY_TICKS.get() + 5);
         gun.releaseUsing(level, p, FirearmRules.AIM_SESSION_TICKS - (FirearmsConfig.AIM_STEADY_TICKS.get() + 5));
         p.stopUsingItem();
         GrapplingHookEntity hook = GrappleService.hookOf(p);

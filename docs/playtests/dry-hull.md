@@ -38,6 +38,8 @@ server sync (cells and level) is covered by a GameTest and the geometry by JUnit
 underwater fog and the overlay below the surface are client-only and have never been seen in game. Two new client
 mixins (`MixinCamera`, `MixinScreenEffectRenderer`) load only in a real client: if the client crashes on world load,
 send `latest.log` (look for "Mixin" and "pirates_n_ships").
+Breath below the surface (FLD1b) is server logic covered by GameTests with a crouching mock player; what they cannot
+show is whether the bubbles on screen match the overlay (step 3).
 
 Setup: the same as above (the starter sloop moored on calm deep water, a hold below the waterline with a ladder and a
 deck hatch). A pickaxe, a few hull patches, and a bilge pump in the hold (or crew to man it). Fancy graphics first, then
@@ -56,8 +58,14 @@ surfaces").
    blue underwater fog appear as soon as your eyes go below the surface, and vanish when they come up; looking up from
    below you see the underside of the surface. Watch especially the moment your eyes cross the surface: the overlay
    should switch at the drawn surface, not half a block above or below it. In third person (F5) the fog follows the
-   camera, the overlay your eyes. Note whether you lose breath under the surface (see open problems: breath comes
-   from the world's water, not from the drawn surface).
+   camera, the overlay your eyes. Breath (FLD1b): with your eyes under the surface the air bubbles appear and run
+   down at the sea's pace (about 15 seconds from full), then you take drowning damage every second; with your head
+   above the surface they refill. Check this in two places: just under the surface while the hold is still filling
+   (the cell your head is in still counts as dry for the server), and in a hold whose water stands higher than the
+   sea outside (let the hold fill above head height, patch the breach, then break a few deck blocks well away from
+   the hold so the lighter ship rises and carries its water above the sea). Expected in both: the bubbles drain
+   only while the overlay shows, and never faster than in the open sea (no double drain where the sea itself fills
+   the hold). Repeat once in creative (no drain) and once after drinking a Water Breathing potion (no drain).
 4. **Pump it down.** Patch the breach with a hull patch, then work the bilge pump. Expected: the surface sinks smoothly
    and disappears when the hold is dry (the last film of water vanishes at once).
 5. **A rolling ship.** With some water in the hold, sail into waves or turn hard so the ship heels. Expected: the
@@ -68,4 +76,6 @@ surfaces").
 7. **Toggle.** Set `dry_hull_view.flood_surface = false` in the client config (`pirates_n_ships-client.toml` or the
    config screen). Expected: the surface disappears at once (the hold looks dry again, as before FLD1), and diving
    below the old level no longer shows the overlay or fog unless the world's sea is there. Set it back to true.
+   Then set the server config `dry_hull.flood_breath = false` (`pirates_n_ships-server.toml`): diving under the
+   surface where the world's sea is not shows the overlay but no longer drains the air bubbles. Set it back to true.
 8. **Shaders and other renderers.** If you use Iris or Sodium, note whether the surface draws at all.

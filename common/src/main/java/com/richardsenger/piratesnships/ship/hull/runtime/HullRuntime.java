@@ -88,6 +88,8 @@ public final class HullRuntime {
     private final FloodSurfaces floodSurfaces = new FloodSurfaces();
     private @Nullable FloodSurfacePayload surfacePayload;
     private final Set<UUID> surfaceSentTo = new HashSet<>();
+    /** Breath below the flood water (FLD1b). */
+    private final FloodBreathing breathing = new FloodBreathing();
 
     /** Footprint probes of the current analysis ({@link SeaLevel#probes}), grid coordinates. */
     private List<int[]> probes = List.of();
@@ -199,6 +201,11 @@ public final class HullRuntime {
         return surfacePayload;
     }
 
+    /** Living entities whose eyes are under this ship's flood water right now (FLD1b; tests). */
+    public int underFloodWater() {
+        return breathing.underCount();
+    }
+
     public boolean isAnalysing() {
         return pending != null || debouncer.isDirty();
     }
@@ -229,6 +236,7 @@ public final class HullRuntime {
 
         updateRegions(ship);
         updateFloodSurfaces(ship);
+        breathing.tick(level, ship, sim);
         if (ticks % DryHullConfig.SYNC_CHECK_TICKS.get() == 0) {
             syncNewViewers(ship);
         }

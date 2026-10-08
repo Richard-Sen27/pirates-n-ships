@@ -154,6 +154,15 @@ public final class WorldConfig {
             "Minimum distance in chunks between two wrecks. Datapack value: this default is written into the structure "
                     + "set pirates_n_ships:wrecks; change it with a datapack, not here");
 
+    private static final ConfigSection TREASURE_MAPS = S.section("treasure_maps",
+            "Treasure maps (TM1): blank maps bind to a pirate island's buried treasure and lead the way there");
+
+    public static final ConfigValue<Boolean> TREASURE_MAPS_ENABLED = TREASURE_MAPS.bool("enabled", true,
+            "Blank treasure maps bind to a treasure when used and fences sell them (off = blank maps stay blank, fences "
+                    + "stop selling them; bound maps keep their picture)");
+    public static final ConfigValue<Integer> TREASURE_MAP_SEARCH_RADIUS = TREASURE_MAPS.intRange("search_radius", 2000, 64, 30_000_000,
+            "How far (blocks, to the island's centre) a blank map looks for a pirate island with an unfound treasure");
+
     private static final ConfigSection SPAWNS = S.section("spawn_weights",
             "Natural spawn weight of each mob (higher = more common, 0 = never spawns naturally)");
 

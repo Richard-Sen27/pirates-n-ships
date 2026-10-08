@@ -10,6 +10,8 @@ import com.richardsenger.piratesnships.world.island.PirateIslandSpawns;
 import com.richardsenger.piratesnships.world.outpost.OutpostData;
 import com.richardsenger.piratesnships.world.port.PortService;
 import com.richardsenger.piratesnships.world.structure.PortStructures;
+import com.richardsenger.piratesnships.world.treasure.TreasureMapGameTests;
+import com.richardsenger.piratesnships.world.treasure.TreasureMaps;
 import com.richardsenger.piratesnships.world.village.VillageData;
 import com.richardsenger.piratesnships.world.wreck.WreckData;
 import com.richardsenger.piratesnships.world.wreck.WreckGameTests;
@@ -25,7 +27,8 @@ import java.util.List;
  * {@code pirates_n_ships:port_village} over vanilla jigsaw pools: the seafarer village, the pirate island with its
  * buried treasure and pirate spawns, and the navy outpost with its garrison), the port registry with berths and treasure sites, and the binding of harbor
  * desks to the port they stand in.
- * Also the wrecks on the ocean floor (custom structure type {@code pirates_n_ships:wreck}, WK1).
+ * Also the wrecks on the ocean floor (custom structure type {@code pirates_n_ships:wreck}, WK1) and the treasure
+ * maps (TM1, {@link TreasureMaps}).
  */
 public final class WorldModule implements ModModule {
 
@@ -43,6 +46,7 @@ public final class WorldModule implements ModModule {
     public void registerContent() {
         PortStructures.init();
         WreckStructures.init();
+        TreasureMaps.registerContent();
         // The pirate's spawn rule lives here because its only natural spawns are the island's (WG2)
         Services.REGISTRY.registerSpawnPlacement(MobContent.PIRATE, SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, PirateIslandSpawns::check);
@@ -56,6 +60,12 @@ public final class WorldModule implements ModModule {
             PortService.openAllMarkets(server);
         });
         CommonEvents.SERVER_STOPPED.register(server -> PortService.removeDeskLocator());
+        TreasureMaps.registerEvents();
+    }
+
+    @Override
+    public void initClient() {
+        TreasureMaps.initClient();
     }
 
     @Override
@@ -66,10 +76,11 @@ public final class WorldModule implements ModModule {
         OutpostData.gather(data);
         WreckData.gather(data);
         data.lang(WorldCommands::lang);
+        TreasureMaps.gatherData(data);
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(WorldGameTests.class, PirateIslandGameTests.class, NavyOutpostGameTests.class, WreckGameTests.class);
+        return List.of(WorldGameTests.class, PirateIslandGameTests.class, NavyOutpostGameTests.class, WreckGameTests.class, TreasureMapGameTests.class);
     }
 }

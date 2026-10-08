@@ -11,7 +11,12 @@ import com.richardsenger.piratesnships.trade.contract.DeliveryContract;
 import com.richardsenger.piratesnships.trade.exchange.MarketTransactions;
 import com.richardsenger.piratesnships.trade.exchange.TransactionResult;
 import com.richardsenger.piratesnships.trade.good.TradeGood;
+import com.richardsenger.piratesnships.trade.market.GoodRole;
 import com.richardsenger.piratesnships.trade.market.Market;
+import com.richardsenger.piratesnships.trade.market.PortKind;
+import com.richardsenger.piratesnships.trade.market.SpecialOffer;
+import com.richardsenger.piratesnships.trade.market.SpecialOffers;
+import com.richardsenger.piratesnships.trade.plunder.PlunderRules;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import com.richardsenger.piratesnships.trade.desk.HarborDeskService;
@@ -19,6 +24,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
@@ -232,6 +238,8 @@ public final class MarketBackend {
     /** Runs a validated trade request (the session check is the caller's). */
     public static TransactionResult trade(ServerPlayer player, MarketPayloads.Trade p) {
         if (!validQuantity(p.quantity())) return TransactionResult.failed(TransactionResult.Status.INVALID_QUANTITY, p.good());
+        Optional<SpecialOffer> special = SpecialOffers.byId(p.good());
+        if (special.isPresent()) return buySpecial(player, p.port(), p.buy(), p.quantity(), special.get());
         Optional<MarketTransactions.Holder> holder = holder(player, p.container());
         if (holder.isEmpty()) return TransactionResult.failed(TransactionResult.Status.NO_CONTAINER, p.good());
         TransactionResult r = p.buy()
@@ -239,6 +247,36 @@ public final class MarketBackend {
                 : MarketTransactions.sell(player, p.port(), p.good(), p.quantity(), effectivePlunder(p, player), holder.get());
         reportNoticed(player, p.port(), r);
         return r;
+    }
+
+    /**
+     * Buys a {@link SpecialOffer} (TM1): only where the port's kind lists it, never sold back; the doubloons come from
+     * the player (a selected container is ignored) and the items go into the player's inventory (dropped when full).
+     */
+    public static TransactionResult buySpecial(Player player, ResourceLocation port, boolean buy, int quantity, SpecialOffer offer) {
+        MinecraftServer server = player.getServer();
+        Optional<Market> market = server == null ? Optional.empty() : TradeService.market(server, port);
+        if (market.isEmpty()) return TransactionResult.failed(TransactionResult.Status.NO_MARKET, offer.id());
+        if (!buy || !offer.offeredAt(market.get().profile().kind())) {
+            return TransactionResult.failed(TransactionResult.Status.NOT_TRADED, offer.id());
+        }
+        if (!validQuantity(quantity)) return TransactionResult.failed(TransactionResult.Status.INVALID_QUANTITY, offer.id());
+        long total = SpecialOffer.total(offer.unitPrice().getAsLong(), quantity);
+        if (!Wallet.take(player, total)) return TransactionResult.failed(TransactionResult.Status.NOT_ENOUGH_COINS, offer.id());
+        for (int i = 0; i < quantity; i++) player.getInventory().placeItemBackInInventory(offer.stack().get());
+        player.containerMenu.broadcastChanges();
+        return new TransactionResult(TransactionResult.Status.OK, offer.id(), quantity, total, PlunderRules.Outcome.NORMAL, false, Optional.empty());
+    }
+
+    /** The market lines of the special offers ports of {@code kind} list, quoted for {@code quantity} units. */
+    public static List<MarketView.GoodLine> specialLines(PortKind kind, int quantity) {
+        List<MarketView.GoodLine> lines = new ArrayList<>();
+        for (SpecialOffer o : SpecialOffers.offeredAt(kind)) {
+            lines.add(new MarketView.GoodLine(o.id(), o.item(), GoodRole.PRODUCES,
+                    new MarketView.Price(SpecialOffer.total(o.unitPrice().getAsLong(), quantity), Integer.MAX_VALUE, Market.Outcome.OK),
+                    new MarketView.Price(0, 0, Market.Outcome.NOT_TRADED)));
+        }
+        return lines;
     }
 
     /**
@@ -358,6 +396,8 @@ public final class MarketBackend {
                     MarketView.Price.of(TradeService.quote(server, port, id, Market.Side.BUY, quantity)),
                     MarketView.Price.of(TradeService.quote(server, port, id, Market.Side.SELL, quantity))));
         }
+        // special offers (TM1): a fixed price, no stock, never bought back
+        lines.addAll(specialLines(market.get().profile().kind(), quantity));
         TradeService.update(server);
         List<DeliveryContract> offers = new ArrayList<>();
         for (DeliveryContract c : TradeData.get(server).contracts()) {

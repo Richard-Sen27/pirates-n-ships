@@ -132,6 +132,55 @@ Tuning values (server config, `serverconfig/pirates_n_ships-server.toml`):
 The creak volume follows the game's "Blocks" volume slider (it is played by the server like any block sound); the
 client setting `audio.ambience_volume` does not affect it yet.
 
+## 5d. SH1 heel: the starter sloop under sail (added for SH1)
+The human's report: "when getting a little thrust in the sails, the boat tends to tip to one side extremely." SH1 adds
+a righting torque (server section `[stability]`) and a cap on the sails' heeling moment. Headless numbers below are
+from `SailingGameTestsHeel` (the starter sloop template in a basin, wind on the beam, 10 s of sail, then furled).
+
+Setup: a creative world, default config. `/pirates ship place starter_sloop assemble` in open sea, take the wheel.
+`/pirates ship forces` lists a `righting` line (a pure roll torque) next to `hull_damping`.
+
+1. **Full sail across the wind.** `/pirates wind set <bearing> 6` with the wind on the beam (from the side), set the sail
+   full with the winch, let it run 10 s, then `/pirates wind set <bearing> 12` and run 10 s more.
+   - **Measured headlessly:** about 2.3° of heel at 6 blocks/s, 4.6° at 12 (before SH1: 8.5° and 14°), reached in
+     about 3 s, no capsize.
+   - **Expected:** a visible but modest lean to leeward that settles; no slow creep further over.
+   - Report: too stiff (looks glued upright), about right, or still too tender.
+2. **Furl.** With the ship heeled in the 12 blocks/s wind, furl the sail.
+   - **Measured headlessly:** back below 2° within about 1.5 s, no swinging through to the other side (before SH1 it
+     stayed heeled 4 to 6°).
+   - Report: does it come up smoothly, too fast (snaps upright), or rock?
+3. **Storm.** `/weather thunder`, `/pirates wind clear` (the storm wind reaches 26 blocks/s, gusts up to 37), full sail
+   on the beam. With waves (WV1) on, sail a minute in each direction to the waves.
+   - **Measured headlessly** (calm water, 37 blocks/s): about 10° and never past 25° (`max_heel_degrees`); 5 s after
+     furling about 1.5 to 2° remain, because the template's hold is open to the sea at the stern (see the note below)
+     and water that came over the low side stays in small pockets.
+   - **Expected:** heeled hard but never on its beam ends; waves rock it on top of the heel and it comes back.
+   - Report: any capsize, any heel that stays after the wind drops, how the roll in waves looks.
+4. **Cargo aboard.** Fill two or three crates or a chest with iron on one side of the deck (starboard), sail with the
+   wind from the other side and from the same side.
+   - **Expected:** a small list toward the cargo at rest (the righting torque reduces it, it does not hide it); under
+     sail the list adds to or takes from the heel. Since SH1 a small 5x5 test hull with a chest of iron lists about
+     1.2 blocks over its diagonal instead of 1.7.
+   - Report: whether a loaded ship looks believable.
+5. **Toggle.** Set `enabled=false` in `[stability]` and repeat step 1 at 12 blocks/s to compare (before SH1 numbers:
+   about 14°, still 5° heeled 5 s after furling).
+6. **Hold of the starter sloop.** Look into the hold of a freshly placed `starter_sloop` floating in the sea.
+   - **Found headlessly:** the template's bottom has a 3-block gap at the stern (template y=1, z=25, x=3..5), so the hold
+     is open to the sea, is no dry compartment and the sloop floats about one block deeper than designed (the
+     `starter_sloop_basic` is closed there). Report whether water shows in the hold.
+
+Tuning values (server config, section `[stability]`):
+
+| What | Values |
+|------|--------|
+| Heels too much / too little | `righting_factor` (1.0; the estimated metacentric height beam² / (12 × draft) is multiplied by it) |
+| Comes back too slowly / swings through | `righting_damping` (0.4, a damping ratio on top of `[sailing] roll_damping`) |
+| Strong winds still heel too far | `max_heel_torque_per_mass` (3.0), `max_heel_degrees` (25) |
+| Bow digs in or rides up under sail | `pitch_righting_factor` (0 = off) |
+| Very wide or shallow ships too rigid | `max_metacentric_height` (4 blocks), `max_righting_degrees` (30) |
+| Everything off | `enabled` |
+
 ## 6. A second, bigger ship
 Build a longer hull (e.g. 13 x 7) with two masts: a square sail from two 5-wide yards 5 blocks apart (area 25) on one,
 a triangular sail (stay and three cleats) on the other, one winch. Expected: the winch sets both sails; the ship is slower to accelerate
@@ -163,7 +212,7 @@ On land is fine for all of this except step 5.
 | Question | Config value |
 |---|---|
 | Is the speed right? Too slow or too fast in a steady wind | `sail_force_scale` [sailing], wind `min_strength`/`max_strength` [wind] |
-| Does it heel too much or capsize on a beam reach? | `sail_heel_factor` [sailing_runtime] (0.25; 1 = physical) |
+| Does it heel too much or capsize on a beam reach? | `righting_factor`, `max_heel_torque_per_mass` [stability] (section 5d), `sail_heel_factor` [sailing_runtime] (0.25; 1 = physical) |
 | Does it slide sideways on a beam reach? | `keel_lateral_drag` [sailing] (8.0) |
 | Does it coast too long or stop too fast after furling? | `keel_longitudinal_drag` [sailing] |
 | Does it turn by itself / spin too freely? | `keel_yaw_drag` [sailing] |

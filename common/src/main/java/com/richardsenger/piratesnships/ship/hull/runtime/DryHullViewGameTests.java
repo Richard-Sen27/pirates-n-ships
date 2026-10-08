@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.ship.hull.runtime;
 
+import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
@@ -164,6 +165,8 @@ public final class DryHullViewGameTests {
             h.assertTrue(far != null, "no block a full block outside the region found near the ship");
             h.assertFalse(footprint.hides(grass, far), "seagrass at " + far + ", a full block outside the region, is hidden");
             h.assertFalse(footprint.hides(Blocks.OAK_PLANKS.defaultBlockState(), cut), "an untagged block is hidden");
+            Constants.LOG.info("HV1c GameTest: partly cut cell {}, tall seagrass root {}, far cell {}, footprint {} + {} "
+                    + "offset blocks", cut, tallRoot, far, footprint.cells().size(), footprint.offsetCells().size());
             SableShips.remove(f.ship());
         }));
     }

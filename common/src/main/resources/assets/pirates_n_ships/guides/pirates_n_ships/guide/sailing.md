@@ -320,9 +320,9 @@ a navy officer (200 doubloons, navy reputation 20). Every pirate you kill under 
 pirate captain 50) that any navy officer pays out. Attacking the navy or a merchant voids it for three days.
 `/pirates career` shows where you stand. **What a rank is worth:** from Lieutenant the navy flag is yours by right: an
 officer flying it is never charged with false colours for low navy reputation (a bounty still is), and navy outposts
-let you dock for free. Each new rank comes with a gift: a Lieutenant receives the officer's bicorne and a saber (once;
-a full pack drops them at your feet); the Officer's Coat (blue wool, white wool and a gold ingot) is chest armour
-that marks you as navy. From Captain the harbor master's desk at a navy outpost has an Orders tab: the
+let you dock for free. Each new rank comes with a gift: a Lieutenant receives the officer's bicorne, a saber and the
+Officer's Coat (once; a full pack drops them at your feet). The coat is chest armour that marks you as navy; you can
+also craft it from blue wool, white wool and a gold ingot. From Captain the harbor master's desk at a navy outpost has an Orders tab: the
 navy shipyard builds you any ship the village shipwrights do, at 70 % of the price (Commodore 50 %, Admiral 40 %),
 delivered to the outpost's quay. On the other side, infamy talks at the fences: a Buccaneer, Dread Captain or Pirate
 Lord trades as if the pirates liked him 7, 13 or 20 points more, and from Dread Captain up pirates leave you alone

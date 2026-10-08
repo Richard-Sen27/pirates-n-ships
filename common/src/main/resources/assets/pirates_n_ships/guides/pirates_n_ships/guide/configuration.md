@@ -43,7 +43,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `survival` | Cold water on/off and freeze rate, warm effect length, swimming hunger multiplier. |
 | `provisions` | Consumption, rations, spoilage, scurvy, rum, water barrel capacity, rain refill. |
 | `cargo_trade.market_backend` | Desk reach, maximum trade quantity, refresh interval of open market screens. |
-| `cargo_trade` | Container sizes, prices, price recovery, contracts, plunder, port fees, cargo weight. |
+| `cargo_trade` | Container sizes, prices, price recovery, contracts, plunder on/off and the fence's discount, port fees, cargo weight. |
 | `law` | Criminal score, severity of each crime, decay, fines, bounties, crime detection, theft; `law.bounty`: officer turn-ins on/off and delivery range, notice boards on/off and reach. |
 | `flags_brig` | False-colors detection, NPC surrender, capturing players, prisoner escapes. |
 | `brig` | Capture threshold, leading distances, cell size, escape chance, ransom. |

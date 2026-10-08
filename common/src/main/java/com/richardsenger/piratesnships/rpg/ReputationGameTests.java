@@ -300,7 +300,7 @@ public final class ReputationGameTests {
         Reputation.set(p, Faction.PIRATES, 50, "test");
         int q = 32;
         long normal = quote(h, port, Market.Side.SELL, q);
-        PlunderRules.Verdict fenced = PlunderRules.judge(PortKind.PIRATE_ISLAND, true, q, normal, 0.0, TradeConfig.plunderParams());
+        PlunderRules.Verdict fenced = PlunderRules.judge(PortKind.PIRATE_ISLAND, true, normal, TradeConfig.plunderParams());
         h.assertValueEqual(fenced.outcome(), PlunderRules.Outcome.FENCED, "fence verdict");
         long expected = ReputationRules.sellPrice(fenced.payout(), 50, ReputationConfig.PRICE_SWING.get());
         p.getInventory().add(PlunderMark.mark(new ItemStack(Items.SUGAR, q)));

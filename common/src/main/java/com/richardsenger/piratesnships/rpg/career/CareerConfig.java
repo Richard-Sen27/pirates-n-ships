@@ -164,9 +164,11 @@ public final class CareerConfig {
         RANK_ITEMS = Collections.unmodifiableMap(items);
     }
 
-    /** Default gifts: a Lieutenant receives the officer's bicorne and a saber; every other rank nothing. */
+    /** Default gifts: a Lieutenant receives the officer's bicorne, a saber and the officer's coat; every other rank nothing. */
     static List<String> defaultItems(NavyRank rank) {
-        return rank == NavyRank.LIEUTENANT ? List.of("pirates_n_ships:officer_hat", "pirates_n_ships:saber") : List.of();
+        return rank == NavyRank.LIEUTENANT
+                ? List.of("pirates_n_ships:officer_hat", "pirates_n_ships:saber", "pirates_n_ships:officers_coat")
+                : List.of();
     }
 
     /** The rewards' view of the current config. */

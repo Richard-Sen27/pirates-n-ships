@@ -23,7 +23,8 @@ public final class QuestRules {
     /**
      * {@code quest} after {@code event}. Only an {@link QuestState#ACTIVE} quest changes: progress counts up to
      * {@code needed} and then the quest is {@link QuestState#DONE}; a passed deadline, a failed or vanished contract
-     * fail it. Returns the same instance when nothing changed.
+     * fail it; the quest's one victim brought down by the player completes it, lost otherwise fails it. Returns the
+     * same instance when nothing changed.
      */
     public static Quest advance(Quest quest, QuestEvent event) {
         if (quest.state() != QuestState.ACTIVE) return quest;
@@ -31,6 +32,8 @@ public final class QuestRules {
             case QuestEvent.DeedDone d -> counts(quest.type(), d.deed()) ? step(quest, 1) : quest;
             case QuestEvent.Killed k -> quest.type() == QuestType.KILL_MONSTER && quest.target() instanceof QuestTarget.Kill t
                     && t.entity().equals(k.entity()) ? step(quest, 1) : quest;
+            case QuestEvent.VictimDown v -> isVictim(quest, v.victim()) ? done(quest) : quest;
+            case QuestEvent.VictimLost v -> isVictim(quest, v.victim()) ? quest.withState(QuestState.FAILED) : quest;
             case QuestEvent.ContractChanged c -> contract(quest, c);
             case QuestEvent.TreasureLooted l -> quest.type() == QuestType.FIND_TREASURE && quest.target() instanceof QuestTarget.Treasure t
                     && t.port().equals(l.port()) && t.site().equals(l.site()) ? done(quest) : quest;
@@ -47,6 +50,11 @@ public final class QuestRules {
             case TURN_IN -> deed == Deed.TURN_IN_PIRATE;
             default -> false;
         };
+    }
+
+    /** Whether {@code quest} is about the one entity {@code id} (a captain hunt's target; a successor is another id). */
+    public static boolean isVictim(Quest quest, java.util.UUID id) {
+        return quest.target() instanceof QuestTarget.Victim v && v.id().equals(id);
     }
 
     private static Quest contract(Quest quest, QuestEvent.ContractChanged c) {

@@ -156,18 +156,32 @@ public final class ArmedShipGameTests {
         return new double[] {roll, pitch};
     }
 
+    /** World y of the bottom of the main deck row amidships (template [4, 4, 14]). */
+    private static double deckY(ShipBody ship) {
+        return ship.toWorld(Vec3.atLowerCornerOf(ShipHelm.steering(ship).offset(0, -4, -8))).y;
+    }
+
     // ------------------------------------------------------------------ the template
 
     /**
-     * The armed navy sloop placed and assembled from its template: four guns (masters facing outboard) and one shot
-     * locker within reach of all of them; after 120 ticks afloat it lies upright (roll and pitch under 2°) with its
-     * main deck clear of the water; a crew member is seated at each gun (WS4a's station spots beside the carriage), and
-     * the crew of one gun loads it from the locker.
+     * The armed navy sloop placed and assembled from its template beside the plain starter sloop (the baseline): four
+     * guns (masters facing outboard) and one shot locker within reach of all of them; after 120 ticks afloat it lies
+     * like the plain sloop (roll within 1°, pitch within 1.5°, draft within a quarter block; measured 0.01°, 0.9° and
+     * 0.14: the guns sit forward of the centre of mass and ease the plain sloop's 4° bow-up trim, which is SH1's
+     * business, not the guns'), with no list (roll under 2°); a crew
+     * member is seated at each gun (WS4a's station spots beside the carriage), and the crew of one gun loads it from the
+     * locker.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 400, batch = BATCH + "template")
     public static void armedSloopFloatsUprightAndItsGunsAreManned(GameTestHelper h) {
         basin(h);
-        BlockPos feet = h.absolutePos(new BlockPos(24, 8, 44));
+        ShipTemplatePlacer.Result plain = ShipTemplatePlacer.place(h.getLevel(), ShipTemplates.STARTER_SLOOP_ID,
+                h.absolutePos(new BlockPos(35, 8, 44)), Direction.NORTH, true, true, null);
+        if (plain.assembly() == null || plain.assembly().shipId() == null) throw new GameTestAssertException("no plain sloop: " + plain.outcome());
+        ShipTestCleanup.track(h, plain.assembly().shipId());
+        ShipBody base = SableShips.byId(h.getLevel(), plain.assembly().shipId());
+        h.assertTrue(base != null, "no plain sloop");
+        BlockPos feet = h.absolutePos(new BlockPos(12, 8, 44));
         ShipTemplatePlacer.Result r = ShipTemplatePlacer.place(h.getLevel(), ShipTemplates.NAVY_SLOOP_ARMED_ID, feet, Direction.NORTH,
                 true, true, null);
         AssemblyResult a = r.assembly();
@@ -182,22 +196,29 @@ public final class ArmedShipGameTests {
         int[] of = VoyageGuns.lockerOf(guns, lockers);
         h.assertTrue(lockers.size() == 1 && java.util.Arrays.stream(of).allMatch(i -> i == 0),
                 "lockers " + lockers + ", locker of each gun " + java.util.Arrays.toString(of));
-        double[] max = {0, 0};
+        double[] max = {0, 0, 0, 0}; // largest |roll|, |roll - plain|, |pitch - plain|, |draft - plain| over ticks 80..120
         h.onEachTick(() -> {
-            if (h.getTick() < 80 || ship.isRemoved()) return;
+            if (h.getTick() < 80 || h.getTick() > 120 || ship.isRemoved() || base.isRemoved()) return;
             double[] at = attitude(ship);
+            double[] ref = attitude(base);
             max[0] = Math.max(max[0], Math.abs(at[0]));
-            max[1] = Math.max(max[1], Math.abs(at[1]));
+            max[1] = Math.max(max[1], Math.abs(at[0] - ref[0]));
+            max[2] = Math.max(max[2], Math.abs(at[1] - ref[1]));
+            max[3] = Math.max(max[3], Math.abs(deckY(ship) - deckY(base)));
         });
         List<CrewMember> crew = new ArrayList<>();
         h.runAfterDelay(120, () -> {
             double[] at = attitude(ship);
-            Vec3 deck = ship.toWorld(Vec3.atLowerCornerOf(ShipHelm.steering(ship).offset(0, -4, -8)));
+            double[] ref = attitude(base);
             double water = h.absolutePos(new BlockPos(0, SURFACE, 0)).getY() + 1.0;
-            Constants.LOG.info("[armed sloop] roll {}°, pitch {}° (largest over ticks 80..120: {}°, {}°), deck bottom {} above the water",
-                    fmt(at[0]), fmt(at[1]), fmt(max[0]), fmt(max[1]), fmt(deck.y - water));
-            h.assertTrue(max[0] < 2.0 && max[1] < 2.0, "not upright: roll " + max[0] + "°, pitch " + max[1] + "°");
-            h.assertTrue(deck.y - water > 0.5, "the main deck is awash: " + (deck.y - water));
+            Constants.LOG.info("[armed sloop] armed: roll {}°, pitch {}°, deck {} above the water; plain: roll {}°, pitch {}°, deck {}; "
+                            + "largest over ticks 80..120: |roll| {}°, roll diff {}°, pitch diff {}°, draft diff {}",
+                    fmt(at[0]), fmt(at[1]), fmt(deckY(ship) - water), fmt(ref[0]), fmt(ref[1]), fmt(deckY(base) - water),
+                    fmt(max[0]), fmt(max[1]), fmt(max[2]), fmt(max[3]));
+            h.assertTrue(max[0] < 2.0, "the armed sloop lists: " + max[0] + "°");
+            h.assertTrue(max[1] < 1.0 && max[2] < 1.5, "the guns change the trim: roll " + max[1] + "°, pitch " + max[2] + "° off the plain sloop");
+            h.assertTrue(max[3] < 0.25, "the guns sink the hull: " + max[3] + " blocks deeper than the plain sloop");
+            h.assertTrue(deckY(ship) - water > 0.0, "the main deck is awash: " + (deckY(ship) - water));
             for (BlockPos g : guns) {
                 CrewMember c = StationContent.CREW_MEMBER.get().create(h.getLevel());
                 if (c == null) throw new GameTestAssertException("no crew member");

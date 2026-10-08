@@ -16,12 +16,22 @@ public final class UpkeepText {
     public static final String SCURVY = KEY + "scurvy";
     /** Owner, action bar: "Paid %s crew, %s doubloons". */
     public static final String PAID = KEY + "paid";
+    /** Owner, action bar: "Paid %s crew, %s doubloons, %s of them from your purse" (CRW2). */
+    public static final String PAID_WALLET = KEY + "paid_wallet";
+    /** Owner, chat when not aboard: "Wages from your purse: %s doubloons" (CRW2). */
+    public static final String WALLET_PAID = KEY + "wallet_paid";
     /** Owner, action bar: "Could not pay %s crew". */
     public static final String UNPAID = KEY + "unpaid";
     /** Joins two owner lines into one action-bar line. */
     public static final String JOIN = KEY + "join";
     /** Owner, chat: "%s has deserted". */
     public static final String DESERTED = KEY + "deserted";
+    /** Owner, chat: "%s means to desert: off at the next port" (CRW2). */
+    public static final String DESERTING = KEY + "deserting";
+    /** Owner, chat: "%s walked off at %s" (CRW2: name, port). */
+    public static final String WALKED_OFF = KEY + "walked_off";
+    /** Owner, chat: "%s changed their mind and stays aboard" (CRW2). */
+    public static final String STAYS = KEY + "stays";
     /** Owner, chat: "Mutiny aboard %s!". */
     public static final String MUTINY = KEY + "mutiny";
     /** The ship's name when it has none. */
@@ -30,6 +40,10 @@ public final class UpkeepText {
     public static final String SAY_UNPAID = KEY + "say.unpaid";
     /** Said by a deserter. */
     public static final String SAY_DESERT = KEY + "say.desert";
+    /** Said by a crew member that marks itself as a deserter (CRW2). */
+    public static final String SAY_DESERTING = KEY + "say.deserting";
+    /** Said by a deserter walking off at a port (CRW2). */
+    public static final String SAY_WALK_OFF = KEY + "say.walk_off";
     /** Said by the mutineers. */
     public static final String SAY_MUTINY = KEY + "say.mutiny";
 
@@ -37,6 +51,8 @@ public final class UpkeepText {
     public static final String INFO_SUPPLIES = KEY + "info.supplies";
     /** {@code /pirates crew info}: "Last pay: %s paid, %s unpaid, %s doubloons". */
     public static final String INFO_PAY = KEY + "info.pay";
+    /** {@code /pirates crew info}: "Last pay: %s paid, %s unpaid, %s doubloons, %s from the owner's purse" (CRW2). */
+    public static final String INFO_PAY_WALLET = KEY + "info.pay_wallet";
     public static final String INFO_PAY_NONE = KEY + "info.pay_none";
     public static final String INFO_PAY_OFF = KEY + "info.pay_off";
     /** {@code /pirates crew info}: "Work speed %s%%" with the reasons. */
@@ -45,6 +61,12 @@ public final class UpkeepText {
     public static final String INFO_PLENTY = KEY + "info.plenty";
     /** Appended to the whistle's crew line: ", unpaid". */
     public static final String STATUS_UNPAID = KEY + "status.unpaid";
+    /** Appended to the whistle's crew line: ", deserting" (CRW2). */
+    public static final String STATUS_DESERTING = KEY + "status.deserting";
+    /** The whistle's crew line: "%s · hired by %s" (CRW2). */
+    public static final String STATUS_HIRED_BY = KEY + "status.hired_by";
+    /** The whistle's ship line: "%s · food %s days, water %s days" (CRW2). */
+    public static final String STATUS_SUPPLIES = KEY + "status.supplies";
 
     public static final Map<String, String> LANG = lang();
 
@@ -57,21 +79,32 @@ public final class UpkeepText {
         m.put(NO_WATER, "The crew has no water");
         m.put(SCURVY, "Scurvy aboard: the crew needs citrus or fresh food");
         m.put(PAID, "Paid %s crew, %s doubloons");
+        m.put(PAID_WALLET, "Paid %s crew, %s doubloons, %s of them from your purse");
+        m.put(WALLET_PAID, "Wages from your purse: %s doubloons");
         m.put(UNPAID, "Could not pay %s crew");
         m.put(JOIN, "%s · %s");
         m.put(DESERTED, "%s has deserted");
+        m.put(DESERTING, "%s means to desert and will walk off at the next port");
+        m.put(WALKED_OFF, "%s walked off at %s");
+        m.put(STAYS, "%s has changed their mind and stays aboard");
         m.put(MUTINY, "Mutiny aboard %s!");
         m.put(UNNAMED_SHIP, "your ship");
         m.put(SAY_UNPAID, "No pay again? A sailor can't live on promises.");
         m.put(SAY_DESERT, "I've had enough of this ship. I'm off.");
+        m.put(SAY_DESERTING, "That's it. I'm off at the next port.");
+        m.put(SAY_WALK_OFF, "Fair winds, captain. Find yourself another fool.");
         m.put(SAY_MUTINY, "The ship is ours now!");
         m.put(INFO_SUPPLIES, "Supplies: food %s days, water %s days, rum %s days");
         m.put(INFO_PAY, "Last pay: %s paid, %s unpaid, %s doubloons");
+        m.put(INFO_PAY_WALLET, "Last pay: %s paid, %s unpaid, %s doubloons, %s of them from the owner's purse");
         m.put(INFO_PAY_NONE, "Last pay: no payday yet");
         m.put(INFO_PAY_OFF, "Last pay: wages are off");
         m.put(INFO_WORK, "Work speed %s%%");
         m.put(INFO_PLENTY, "plenty");
         m.put(STATUS_UNPAID, "%s, unpaid");
+        m.put(STATUS_DESERTING, "%s, deserting");
+        m.put(STATUS_HIRED_BY, "%s · hired by %s");
+        m.put(STATUS_SUPPLIES, "%s · food %s days, water %s days");
         return Map.copyOf(m);
     }
 }

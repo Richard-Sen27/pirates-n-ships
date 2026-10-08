@@ -2,9 +2,15 @@ package com.richardsenger.piratesnships.crew.provisions;
 
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
+import com.richardsenger.piratesnships.crew.galley.MealConfig;
+import com.richardsenger.piratesnships.crew.galley.MealGameTests;
+import com.richardsenger.piratesnships.crew.galley.MealVisits;
+import com.richardsenger.piratesnships.crew.upkeep.DesertionGameTests;
+import com.richardsenger.piratesnships.crew.upkeep.Desertions;
 import com.richardsenger.piratesnships.crew.upkeep.Upkeep;
 import com.richardsenger.piratesnships.crew.upkeep.UpkeepGameTests;
 import com.richardsenger.piratesnships.crew.upkeep.UpkeepText;
+import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.station.Stations;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
@@ -17,7 +23,8 @@ import java.util.List;
  * <p>
  * CR2 hosts crew upkeep ({@code crew.upkeep}) here: the ship day tick itself is driven from
  * {@code crew.hammock.CrewRest}; this module sets the work-speed source of the stations, writes the upkeep text and
- * runs its GameTests.
+ * runs its GameTests. CRW2 adds the deserters' level tick ({@code crew.upkeep.Desertions}) and the crew's meals
+ * ({@code crew.galley.MealVisits}, config {@code crew.meals}).
  */
 public final class ProvisionsModule implements ModModule {
 
@@ -32,11 +39,19 @@ public final class ProvisionsModule implements ModModule {
     @Override
     public void registerConfig() {
         ProvisionsConfig.init();
+        MealConfig.init();
     }
 
     @Override
     public void registerContent() {
         Stations.setWorkSpeed(Upkeep::workSpeed);
+    }
+
+    @Override
+    public void registerEvents() {
+        CommonEvents.LEVEL_TICK_END.register(Desertions::onLevelTick);
+        CommonEvents.LEVEL_TICK_END.register(MealVisits::onLevelTick);
+        CommonEvents.SERVER_STOPPED.register(server -> MealVisits.onServerStopped());
     }
 
     @Override
@@ -57,6 +72,6 @@ public final class ProvisionsModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(ProvisionsGameTests.class, UpkeepGameTests.class);
+        return List.of(ProvisionsGameTests.class, UpkeepGameTests.class, DesertionGameTests.class, MealGameTests.class);
     }
 }

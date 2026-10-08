@@ -23,18 +23,31 @@ public record ShipUpkeep(ProvisioningState provisioning, double workSpeed, boole
     /**
      * The pay of one day: {@code wagesOn} false when wages were off (or no day tick ran yet).
      *
-     * @param paid   members paid in full
-     * @param unpaid members not paid
-     * @param coins  doubloons taken
+     * @param paid        members paid in full
+     * @param unpaid      members not paid
+     * @param coins       doubloons taken in all
+     * @param walletCoins of these, doubloons taken from the owner's wallet (CRW2, {@code crew.wages.from_wallet}); the
+     *                    rest came from containers aboard
      */
-    public record PayRecord(boolean wagesOn, int paid, int unpaid, long coins) {
-        public static final PayRecord NONE = new PayRecord(false, 0, 0, 0);
+    public record PayRecord(boolean wagesOn, int paid, int unpaid, long coins, long walletCoins) {
+        public static final PayRecord NONE = new PayRecord(false, 0, 0, 0, 0);
+
+        /** A pay record with every coin from containers aboard. */
+        public PayRecord(boolean wagesOn, int paid, int unpaid, long coins) {
+            this(wagesOn, paid, unpaid, coins, 0);
+        }
+
+        /** Doubloons taken from containers aboard. */
+        public long shipCoins() {
+            return coins - walletCoins;
+        }
 
         public static final Codec<PayRecord> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("wages_on", false).forGetter(PayRecord::wagesOn),
                 Codec.INT.optionalFieldOf("paid", 0).forGetter(PayRecord::paid),
                 Codec.INT.optionalFieldOf("unpaid", 0).forGetter(PayRecord::unpaid),
-                Codec.LONG.optionalFieldOf("coins", 0L).forGetter(PayRecord::coins)
+                Codec.LONG.optionalFieldOf("coins", 0L).forGetter(PayRecord::coins),
+                Codec.LONG.optionalFieldOf("wallet_coins", 0L).forGetter(PayRecord::walletCoins)
         ).apply(i, PayRecord::new));
     }
 

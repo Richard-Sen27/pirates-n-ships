@@ -98,8 +98,8 @@ public final class CrewRest {
             return;
         }
         List<RestRules.Bed<BlockPos>> beds = new ArrayList<>();
-        for (BlockPos foot : ShipBunks.hammocks(level, ship)) {
-            if (taken.contains(foot) || !HammockSeat.at(level, foot).isEmpty()) continue;
+        for (BlockPos foot : ShipBunks.freeHammocks(level, ship)) { // SLP1: a sleeping player's hammock is taken too
+            if (taken.contains(foot)) continue;
             Vec3 w = ship.toWorld(Vec3.atCenterOf(foot));
             beds.add(new RestRules.Bed<>(foot, w.x, w.y, w.z));
         }

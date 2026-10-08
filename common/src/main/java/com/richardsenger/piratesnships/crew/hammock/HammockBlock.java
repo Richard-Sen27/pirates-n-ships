@@ -5,6 +5,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
+import java.util.Optional;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -12,6 +15,7 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -34,10 +38,14 @@ import org.jetbrains.annotations.Nullable;
  * without code changes.
  * <p>
  * Losing either half or either support brings the whole hammock down; only the foot has loot, so that drops one
- * hammock ({@link #updateShape} returns air, which vanilla destroys with drops). Players cannot sleep in it: it is
- * crew-only (vanilla's bed sleeping is tied to {@code BedBlock} and world positions, not to a block in a ship's plot).
+ * hammock ({@link #updateShape} returns air, which vanilla destroys with drops).
+ * <p>
+ * SLP1: players sleep in it too, on land and on a ship ({@link PlayerSleep}, {@code crew.hammock.player_sleep}); with
+ * that off it stays crew-only. For vanilla's sleeping code it is a bed: the sleeper's sleeping position is the head
+ * half, and the loader extension methods below say so ({@link #isBed}, {@link #setBedOccupied},
+ * {@link #getRespawnPosition}).
  */
-public class HammockBlock extends HorizontalDirectionalBlock {
+public class HammockBlock extends HorizontalDirectionalBlock implements Bunk {
 
     public static final MapCodec<HammockBlock> CODEC = simpleCodec(HammockBlock::new);
     public static final EnumProperty<BedPart> PART = BlockStateProperties.BED_PART;
@@ -143,9 +151,66 @@ public class HammockBlock extends HorizontalDirectionalBlock {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!level.isClientSide) {
-            player.displayClientMessage(Component.translatable(KEY_CREW_ONLY), true);
+            if (HammockConfig.PLAYER_SLEEP.get() && player instanceof ServerPlayer sp) {
+                PlayerSleep.use(sp, pos, state);
+            } else {
+                player.displayClientMessage(Component.translatable(KEY_CREW_ONLY), true);
+            }
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    // ------------------------------------------------------------------ players sleeping (SLP1)
+
+    /** The sleeper's feet: 2 px above the canvas where it sags across the head half (ART1d model), as at a bed. */
+    public static final double LYING_HEIGHT = 6;
+
+    @Override
+    public double lyingHeight() {
+        return LYING_HEIGHT;
+    }
+
+    /** It hangs low under a deck beam: no headroom check. */
+    @Override
+    public boolean needsHeadroom() {
+        return false;
+    }
+
+    @Override
+    public boolean sleepsOnSeat(Level level, BlockPos pos) {
+        return true;
+    }
+
+    /*
+     * Loader extension methods. These have the names and parameters of NeoForge's IBlockExtension methods (no import:
+     * common stays vanilla), so on NeoForge they override them; on other loaders they are plain methods nobody calls
+     * (the Fabric port needs Fabric API's EntitySleepEvents.ALLOW_BED and MODIFY_SLEEPING_DIRECTION instead).
+     * Without isBed vanilla's checkBedExists would wake a sleeper every tick and the client would draw it lying the
+     * wrong way (getBedOrientation).
+     */
+
+    /** NeoForge {@code IBlockExtension#isBed}: a sleeper's sleeping position may be a hammock. */
+    public boolean isBed(BlockState state, BlockGetter level, BlockPos pos, @Nullable LivingEntity sleeper) {
+        return true;
+    }
+
+    /** NeoForge {@code IBlockExtension#setBedOccupied}: a hammock has no {@code OCCUPIED} property (its seat says so). */
+    public void setBedOccupied(BlockState state, Level level, BlockPos pos, LivingEntity sleeper, boolean occupied) {
+    }
+
+    /**
+     * NeoForge {@code IBlockExtension#getRespawnPosition}: an unforced respawn point at a hammock on land puts the
+     * player where it gets up from it ({@link PlayerSleep#standUpInFrame}: beside it, on the floor below it). On a ship Sable answers before this
+     * is asked (a tracking point, see {@link PlayerSleep}).
+     */
+    public Optional<ServerPlayer.RespawnPosAngle> getRespawnPosition(BlockState state, EntityType<?> type, LevelReader level,
+                                                                     BlockPos pos, float orientation) {
+        if (!(state.getBlock() instanceof HammockBlock)) {
+            return Optional.empty();
+        }
+        BlockPos head = Bunk.head(state, pos);
+        return PlayerSleep.standUpInFrame(level, Bunk.foot(state, pos), Bunk.facing(state), orientation)
+                .map(v -> ServerPlayer.RespawnPosAngle.of(v, head));
     }
 
     @Override

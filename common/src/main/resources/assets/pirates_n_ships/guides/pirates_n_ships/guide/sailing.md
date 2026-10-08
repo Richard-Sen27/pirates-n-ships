@@ -188,8 +188,10 @@ Dress up your ship. The **Ship's Lantern** (a lantern and two gold nuggets) stan
 from a bracket on a wall, and lights like a lantern, even underwater. The **Ship's Bell** sits on a post or a wall;
 right-click to ring it. **Rope Coils** (four rope) stack up to four on one spot. **Stern Windows** go into a wall
 from outside; right-click to close or open the shutters. The **Chart Table** is a captain's table with a chart
-spread out on it. The **Sea Cot** is a wooden bed for the captain's cabin: on land you can sleep in it and set your
-spawn like a bed, but not while it is aboard a ship at sea. Server config `ship_decor`.
+spread out on it. The **Sea Cot** is a wooden bed for the captain's cabin: sleep in it and set your spawn like in a
+bed, on land and aboard an assembled ship. Aboard you lie in it as the ship sails on, count toward skipping the night,
+get up on the deck beside it, and respawn at the cot wherever the ship has gone. Server config `ship_decor`
+(`sea_cot_sleeping`, `sea_cot_sleeping_aboard`).
 
 ## Hammocks
 Your crew sleeps in hammocks. Hang one between two supports at the same height (fence posts, walls, logs, or a solid
@@ -198,7 +200,13 @@ over 3 wool. At nightfall every crew member who is not at a station turns in to 
 dawn. A night in a hammock raises its morale by 5; a night on a ship without a free hammock for it lowers it by 10 (it
 will grumble). Crew on duty all night are unaffected, and an order at night gets sleepers up at once. Each hammock is
 one bunk: use the captain's whistle on a crew member, or `/pirates crew info`, to see morale and "crew 3 / bunks 2".
-Players can't sleep in hammocks. Server config `crew.morale`.
+
+You can sleep in a hammock too, on land or aboard: right-click a free one at night (or in a thunderstorm) and you lie
+in it like in a bed. Aboard you stay in it while the ship sails and turns, you count toward skipping the night, and
+"Leave Bed" (or the dawn) puts you on your feet beside it. The usual bed rules apply: not by day, not with monsters
+nearby, not in a hammock a crew member sleeps in. A hammock you sleep in is taken: no crew member turns in to it that
+night. Using a hammock sets your respawn point there, as a bed does; on a ship the point sails with the ship, so you
+respawn at the hammock wherever the ship is. Server config `crew.morale`, `crew.hammock.player_sleep`.
 
 ## When an order reaches nobody
 If the whistle or `/pirates crew order` says nobody carries an order out, the line now tells you why: no ship under

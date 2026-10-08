@@ -51,6 +51,23 @@ public final class ShipBunks {
         return out;
     }
 
+    /**
+     * Whether the hammock with its foot at {@code foot} is free: nobody lies in it, crew or (SLP1) a sleeping player.
+     * Both lie on a {@link HammockSeat} of that foot.
+     */
+    public static boolean isFree(ServerLevel level, BlockPos foot) {
+        return HammockSeat.at(level, foot).isEmpty();
+    }
+
+    /** The plot positions of the feet of the free hammocks on {@code ship} ({@link #isFree}). */
+    public static List<BlockPos> freeHammocks(ServerLevel level, ShipBody ship) {
+        List<BlockPos> out = new ArrayList<>();
+        for (BlockPos foot : hammocks(level, ship)) {
+            if (isFree(level, foot)) out.add(foot);
+        }
+        return out;
+    }
+
     /** The crew of {@code ship} now: on board, at its stations or in its hammocks; prisoners do not count. */
     public static Count count(ServerLevel level, ShipBody ship) {
         int hammocks = hammocks(level, ship).size();

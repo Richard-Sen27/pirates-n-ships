@@ -84,6 +84,8 @@ public final class CrewInfo {
         m.put(KEY_COMMAND_SHIP, "This ship: %s (%s hammocks)");
         m.put(KEY_COMMAND_NO_SHIP, "Stand on a ship, or name the crew members");
         m.put(HammockBlock.KEY_CREW_ONLY, "Hammocks are for the crew: they turn in here at night");
+        m.put(PlayerSleep.KEY_CREW_IN_IT, "A crew member is sleeping in this hammock");
+        m.put(PlayerSleep.KEY_NOT_HERE, "You can't sleep here");
         m.put(HammockItem.KEY_NO_SUPPORT, "A hammock hangs between two supports at the same height: a fence, wall, log or solid block at each end");
         return Map.copyOf(m);
     }

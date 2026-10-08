@@ -61,6 +61,13 @@ public final class CommonEvents {
 
     public static final Event<PlayerEvent> PLAYER_LOGIN = Event.create(ls -> p -> ls.forEach(l -> l.on(p)));
     public static final Event<PlayerEvent> PLAYER_LOGOUT = Event.create(ls -> p -> ls.forEach(l -> l.on(p)));
+    /**
+     * A player is about to wake up ({@code Player#stopSleepInBed}: at dawn, by "Leave Bed", when the night is skipped,
+     * when hurt), before vanilla stands it up beside its bed and clears its sleeping position. Both logical sides;
+     * notification only. A listener may move the player and clear the sleeping position itself: vanilla then leaves the
+     * position alone. NeoForge: {@code PlayerWakeUpEvent}; Fabric port: {@code EntitySleepEvents.STOP_SLEEPING}.
+     */
+    public static final Event<PlayerWake> PLAYER_WAKE_UP = Event.create(ls -> p -> ls.forEach(l -> l.onWake(p)));
     /** A new player object replaces an old one (respawn or returning from the End). */
     public static final Event<PlayerClone> PLAYER_CLONE = Event.create(ls -> (o, n, d) -> ls.forEach(l -> l.onClone(o, n, d)));
 
@@ -151,6 +158,7 @@ public final class CommonEvents {
     @FunctionalInterface public interface LevelTick { void onTick(ServerLevel level); }
     @FunctionalInterface public interface PlayerTick { void onTick(Player player); }
     @FunctionalInterface public interface PlayerEvent { void on(ServerPlayer player); }
+    @FunctionalInterface public interface PlayerWake { void onWake(Player player); }
     @FunctionalInterface public interface ContainerMenuEvent { void on(Player player, AbstractContainerMenu menu); }
     @FunctionalInterface public interface PlayerClone { void onClone(ServerPlayer oldPlayer, ServerPlayer newPlayer, boolean wasDeath); }
     @FunctionalInterface public interface EntityJoinLevel { boolean onJoin(Entity entity, Level level); }

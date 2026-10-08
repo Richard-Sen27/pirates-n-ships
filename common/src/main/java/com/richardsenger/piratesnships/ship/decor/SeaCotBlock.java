@@ -1,10 +1,13 @@
 package com.richardsenger.piratesnships.ship.decor;
 
 import com.mojang.serialization.MapCodec;
+import com.richardsenger.piratesnships.crew.hammock.Bunk;
+import com.richardsenger.piratesnships.crew.hammock.PlayerSleep;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
@@ -28,11 +31,15 @@ import java.util.Map;
  * vanilla {@link BedBlock} drawn with our hand-made models ({@code block/sea_cot_head}, {@code block/sea_cot_foot},
  * {@code art/models/sea_cot.bbmodel}) instead of the bed's block entity renderer, so a player can sleep in it and set
  * the spawn there through vanilla's (and the loader's {@code isBed}) bed handling, with
- * {@code ship_decor.sea_cot_sleeping} on. On an assembled ship it is decor only: vanilla sleeping works in world
- * coordinates, and the ship's blocks sit in a far-away plot, so the sleeper and the spawn point would end up there.
+ * {@code ship_decor.sea_cot_sleeping} on.
+ * <p>
+ * On an assembled ship (SLP1, with {@code ship_decor.sea_cot_sleeping_aboard} on as well) the player sleeps on a seat
+ * that sails with the ship ({@link PlayerSleep}, shared with the hammock): vanilla's bed handling alone would lay the
+ * sleeper at the cot's world position once and leave it behind as the ship moves. The respawn point is the cot's plot
+ * position, which Sable keeps track of as the ship moves. On land the cot stays pure vanilla.
  * No block entity: vanilla's {@code BedBlockEntity} is valid only for vanilla beds and only carries the colour.
  */
-public class SeaCotBlock extends BedBlock {
+public class SeaCotBlock extends BedBlock implements Bunk {
 
     public static final MapCodec<SeaCotBlock> CODEC = simpleCodec(SeaCotBlock::new);
     public static final String KEY_ON_SHIP = "message.pirates_n_ships.sea_cot.on_ship";
@@ -64,10 +71,31 @@ public class SeaCotBlock extends BedBlock {
             return InteractionResult.SUCCESS;
         }
         if (SableShips.containing(level, pos) != null) {
-            player.displayClientMessage(Component.translatable(KEY_ON_SHIP), true);
+            if (!DecorConfig.SEA_COT_SLEEPING_ABOARD.get()) {
+                player.displayClientMessage(Component.translatable(KEY_ON_SHIP), true);
+            } else if (player instanceof ServerPlayer sp) {
+                PlayerSleep.use(sp, pos, state);
+            }
             return InteractionResult.SUCCESS;
         }
         return super.useWithoutItem(state, level, pos, player, hit);
+    }
+
+    /** Vanilla's bed height: the sleeper's feet 2 px above the blanket (the mattress top is at 9 px). */
+    @Override
+    public double lyingHeight() {
+        return 11;
+    }
+
+    @Override
+    public boolean needsHeadroom() {
+        return true;
+    }
+
+    /** On an assembled ship: on land vanilla's bed handling does it all. */
+    @Override
+    public boolean sleepsOnSeat(Level level, BlockPos pos) {
+        return SableShips.containing(level, pos) != null;
     }
 
     @Override

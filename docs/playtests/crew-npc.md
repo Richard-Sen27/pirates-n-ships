@@ -276,3 +276,54 @@ a captain's whistle; F5 for third person. Compare with `art/renders/crew_poses_a
 Report: a screenshot of steps 1, 2 (mid-turn), 4, 5 (the lunge) and 7 from the side, and whether the turn directions in
 step 2 match the wheel. Not in game: `capstan_push` is authored (crew rig, 1.2 s loop) but no capstan station exists
 yet, so nothing plays it.
+
+## SLP1: players sleep in hammocks and in the sea cot aboard
+Covered by `crew/hammock/PlayerSleepRulesTest` (JUnit: refusals in vanilla's order, when the spawn is set, reach),
+`neoforge` `crew/HammockBedExtensionTest` (the hammock's NeoForge bed methods really override), and 10 GameTests in
+`crew/hammock/PlayerSleepGameTests` (a real server player on the test ship: hammock aboard, sneak to wake, crew finds no
+free hammock, the ship moved and turned under the sleeper, Leave Bed, crew already in it, daytime, a zombie on deck,
+the night skipped, a hammock on land, the cot aboard, both toggles). What they cannot show: how lying looks and feels
+in a client (pose, camera, the "Leave Bed" screen), how a sleeper moves on a sailing ship, and respawning.
+
+Setup: an assembled ship with a hammock hung in the hold (two posts, see step 1 of HM1) and a sea cot on deck or in a
+cabin; a second hammock on land. Default config (`crew.hammock.player_sleep = true`,
+`ship_decor.sea_cot_sleeping = true`, `ship_decor.sea_cot_sleeping_aboard = true`). Survival mode for steps 3 and 9.
+
+1. **Hammock aboard, at night.** `/time set 13000`, right-click the hammock (either half). Expected: you lie down in
+   it like in a bed: the screen shows "Leave Bed", the view is low over the canvas, "Respawn point set" in chat. In
+   third person (F5): the body lies **along** the hammock, head over the half you looked toward when hanging it (not
+   the clicked one), feet toward the clicked half, resting on the canvas: report the body floating above it or sinking
+   through it (the height is a constant, `HammockBlock.LYING_HEIGHT`, 6 px), or lying across it.
+2. **Leave Bed.** Press "Leave Bed" (or Esc). Expected: you stand up beside the hammock on the hold's floor (or on the
+   deck next to it), not inside the deck above and not in a wall; no damage. Try a hammock hung right under the deck
+   planks and one hung at floor height.
+3. **Monsters and day.** By day: action bar "You can only sleep at night" (the respawn point is still set, as at a
+   bed). At night with a zombie within 8 blocks (`/summon zombie` on deck, survival): "You may not rest now; there are
+   monsters nearby".
+4. **Sailing while asleep.** Lie down in the hold's hammock, have someone else (or a crew helmsman with a course) sail
+   and turn the ship for a minute. Expected: you stay in the hammock the whole time, turning with the hull; the camera
+   follows the ship without jitter. Report the body or camera drifting off the hammock, lagging behind, or snapping
+   back every few ticks, and whether the camera's facing turns with the ship (vanilla aims the sleeping camera along
+   the bed's block direction; on a turned ship that may look off by the ship's heading: screenshot it).
+5. **Night skip.** Alone on the server, stay in the hammock: after about 5 seconds the night is skipped, you wake
+   beside the hammock at dawn. With two players: "1/2 players sleeping" counts you.
+6. **Crew and the hammock.** With one hammock and one free crew member aboard, `/time set 11000` and `/weather
+   thunder` (players may sleep in a thunderstorm by day), lie down in the hammock, then `/time set 13000`: the crew
+   member finds no hammock at nightfall, keeps standing, and grumbles "No hammock for me…" at dawn. The other way
+   round: when a crew member already sleeps in it, right-click: "A crew member is sleeping in this hammock".
+7. **Respawn on the ship.** Sleep in the hammock (or just use it by day to set the spawn), sail the ship a few hundred
+   blocks, then die (`/kill`). Expected: you respawn on the ship, at the hammock, wherever the ship is now (Sable keeps
+   the point with the ship). Break the hammock and die again: report where you respawn (Sable does not check the bed
+   still exists, so possibly still on the ship).
+8. **Sea cot aboard.** Right-click the cot on the assembled ship at night. Expected: you lie in it like in a bed, on
+   the mattress (vanilla's bed height), and sail with the ship as in step 4; another player right-clicking it gets
+   "This bed is occupied"; Leave Bed puts you on the deck beside it. On land the cot is a plain bed as before.
+9. **Hammock on land.** Sleep in the land hammock, Leave Bed, then die: you respawn beside the hammock (not at the world
+   spawn). Break it and die again: "You have no home bed or charged respawn anchor, or it was obstructed".
+10. **Reconnect while asleep.** Lie in the hammock aboard, disconnect, reconnect. Expected: you are awake, standing
+    beside the hammock or on deck, not stuck in a lying pose on an invisible seat.
+11. **Toggles.** `crew.hammock.player_sleep = false`: right-click a hammock shows "Hammocks are for the crew: they
+    turn in here at night". `ship_decor.sea_cot_sleeping_aboard = false`: the cot on a ship shows "This cot is just for
+    show while it is aboard a ship"; on land it still works.
+
+Report: screenshots of steps 1 and 8 in third person, step 4 from outside the ship, and where you stood up in step 2.

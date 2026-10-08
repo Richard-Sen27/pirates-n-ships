@@ -6,6 +6,9 @@ import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.assembly.ShipSplits;
+import com.richardsenger.piratesnships.station.helm.HelmCourses;
+import com.richardsenger.piratesnships.station.helm.HelmStationGameTests;
+import com.richardsenger.piratesnships.station.helm.HelmStationLang;
 import com.richardsenger.piratesnships.station.jobs.JobBoard;
 import com.richardsenger.piratesnships.station.jobs.JobBoardGameTests;
 import com.richardsenger.piratesnships.station.order.WhistleMenu;
@@ -24,7 +27,8 @@ import net.minecraft.world.entity.EntityType;
 /**
  * Crew stations, spike 4 (docs/design.md §6, §7.2, roadmap milestone 4): the station contract, the sail winch as a
  * station, the invisible seat inside the ship's plot, the test crew member, the captain's whistle with its radial
- * order menu ({@code station/order}, screen in {@code station/client}) and {@code /pirates crew}.
+ * order menu ({@code station/order}, screen in {@code station/client}) and {@code /pirates crew}. WS3a: the helm as a
+ * station and the NPC helmsman's courses ({@code station/helm}).
  */
 public final class StationModule implements ModModule {
 
@@ -43,6 +47,7 @@ public final class StationModule implements ModModule {
     @Override
     public void registerConfig() {
         StationConfig.init();
+        com.richardsenger.piratesnships.station.helm.CourseConfig.init();
     }
 
     @Override
@@ -59,14 +64,17 @@ public final class StationModule implements ModModule {
     public void registerEvents() {
         CommonEvents.LEVEL_TICK_END.register(Stations::onLevelTick);
         CommonEvents.LEVEL_TICK_END.register(JobBoard::onLevelTick);
+        CommonEvents.LEVEL_TICK_END.register(HelmCourses::onLevelTick);
         CommonEvents.SERVER_STOPPED.register(server -> {
             Stations.onServerStopped();
             CaptainsWhistleItem.onServerStopped();
             JobBoard.onServerStopped();
+            HelmCourses.onServerStopped();
         });
         CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> StationCommands.register(dispatcher));
         SableShips.onShipRemoved(Stations::onShipRemoved);
         SableShips.onShipRemoved(JobBoard::onShipRemoved);
+        SableShips.onShipRemoved(HelmCourses::onShipRemoved);
         ShipSplits.onSplit(JobBoard::onSplit);
     }
 
@@ -83,6 +91,7 @@ public final class StationModule implements ModModule {
         });
         // The whistle's item model is hand-made (art/models/captains_whistle.bbmodel), so datagen writes none
         data.lang(OrderHints::lang); // Q5: order hints, /pirates ship rigging
+        data.lang(HelmStationLang::lang); // WS3a: the NPC helmsman
         data.lang(lang -> {
             lang.item(StationContent.CAPTAINS_WHISTLE, "Captain's Whistle")
                     .add(StationContent.CREW_MEMBER.get().getDescriptionId(), "Crew Member")
@@ -138,6 +147,6 @@ public final class StationModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(StationGameTests.class, PumpOrderGameTests.class, JobBoardGameTests.class, com.richardsenger.piratesnships.station.winch.WinchOrderGameTests.class, com.richardsenger.piratesnships.crew.npc.CrewPoseGameTests.class);
+        return List.of(StationGameTests.class, PumpOrderGameTests.class, JobBoardGameTests.class, com.richardsenger.piratesnships.station.winch.WinchOrderGameTests.class, com.richardsenger.piratesnships.crew.npc.CrewPoseGameTests.class, HelmStationGameTests.class);
     }
 }

@@ -26,7 +26,7 @@ public final class WorldSimConfig {
     public static final ConfigValue<Boolean> RETALIATION_ENABLED = S.bool("retaliation_enabled", true,
             "High tension between factions makes them raid each other's settlements and convoys more often");
 
-    private static final ConfigSection RAIDS = S.section("raids",
+    public static final ConfigSection RAIDS = S.section("raids",
             "Pirate raids on navy settlements while a player stays there");
 
     public static final ConfigValue<Double> RAID_CHANCE_GROWTH = RAIDS.doubleRange("chance_growth_per_minute", 0.0005, 0.0, 1.0,

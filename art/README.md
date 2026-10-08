@@ -1325,6 +1325,14 @@ jigsaws. `Piece.emit` merges runs along x into `box` operations and adds the jig
 `art/structures/<group>/_style.py` holds the group's palette and small fittings (doors, beds, tables, lantern posts).
 Files starting with `_` are helpers, not pieces.
 
+**Connecting blocks need no side properties (WG4).** Fences, glass panes, iron bars (and brig bars) and walls get
+their `north`/`east`/`south`/`west` (and a wall's `up`) at placement from the processor `pirates_n_ships:connections`
+(`world.structure.ConnectionsProcessor`), which every port pool element (processor list `pirates_n_ships:connections`)
+and every wreck piece runs. It connects each block to its neighbours in the same template, in the template's frame,
+so generators may write plain `spruce_fence` or `iron_bars`; any side values a generator does write are recomputed
+for sides whose neighbour is in the template. A side facing outside the template (the terrain, another piece) keeps
+the value the template stores, so a rail that must meet a neighbouring piece needs that side written explicitly.
+
 **Coordinates:** y 0 is the piece's **foundation row**. It sits level with the terrain surface (WG1 sinks land
 pieces by one). Pieces face **north (−z)**: a building's door and its `building_in` jigsaw are on the −z side,
 in front of the door on row z 0 (doorstep, porch or apron). Keep every block inside the piece's box. A jigsaw sits

@@ -1606,6 +1606,8 @@
   "pirates_n_ships.configuration.firearms.pistol.spread_degrees": "Spread Degrees",
   "pirates_n_ships.configuration.firearms.pistol.spread_degrees.tooltip": "Half angle of the cone a pistol ball leaves in, in degrees",
   "pirates_n_ships.configuration.flag_visuals": "Flag Visuals",
+  "pirates_n_ships.configuration.flag_visuals.banner_upright": "Banner Upright",
+  "pirates_n_ships.configuration.flag_visuals.banner_upright.tooltip": "Draw a banner flag's design upright (its top at the top of the cloth, stretched along the fly); off: the banner hangs sideways from the pole, its top at the pole",
   "pirates_n_ships.configuration.flag_visuals.hoist_animation": "Hoist Animation",
   "pirates_n_ships.configuration.flag_visuals.hoist_animation.tooltip": "While a flag is hoisted, struck, raised or taken down, draw the cloth running along the pole; off: it appears and vanishes at once",
   "pirates_n_ships.configuration.flags": "Flags",

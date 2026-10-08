@@ -620,7 +620,7 @@ while you strike or take it down it runs down again, over the 3 seconds the work
 | none or Merchant Flag | Neutral to everyone. |
 | Navy Flag | Navy and merchants friendly, pirates hostile. A false flag if the captain has a bounty or too little navy standing. |
 | Jolly Roger | Pirates friendly, navy hostile, merchants may surrender. Being seen under it is a crime. |
-| any vanilla banner | A custom flag: neutral. It keeps its patterns, but the pole shows a generic cloth. |
+| any vanilla banner | A custom flag: neutral. The cloth shows the banner's colour and patterns. |
 
 At the pole:
 - **Use it with a flag item:** hoists that flag after 3 seconds and gives back the old one.
@@ -639,8 +639,10 @@ The flag points downwind, in 90° steps. Nothing reacts to flags in the world ye
 
 ---
 
-Hoist any banner on a flagpole to fly a custom flag: the cloth takes the banner's base colour (its patterns are not
-shown).
+Hoist any banner on a flagpole to fly a custom flag: the cloth takes the banner's base colour and shows every pattern
+of the banner, as if the banner were hung sideways from the pole (its top edge at the pole, its length along the
+cloth); the back of the flag shows the design mirrored, like a real flag. Client config `flag_visuals.banner_upright`
+stands the design upright instead (its top at the top of the cloth, stretched to the cloth's length).
 
 ## 6. Provisions
 

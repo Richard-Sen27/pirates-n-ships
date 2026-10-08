@@ -16,9 +16,6 @@ import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
 import net.minecraft.data.models.model.ModelLocationUtils;
-import net.minecraft.data.models.model.ModelTemplates;
-import net.minecraft.data.models.model.TextureMapping;
-import net.minecraft.data.models.model.TextureSlot;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
@@ -129,14 +126,15 @@ public final class GrappleModule implements ModModule {
     }
 
     /**
-     * Placeholder look of the mooring ring until its Blockbench model (design.md §4.8): vanilla's button shape in iron,
-     * turned like a button for floor, wall and ceiling; the item uses the button's inventory model.
+     * The mooring ring's look (ART5): a hand-made Blockbench model (art/models/mooring_ring.bbmodel, design.md §4.8),
+     * an iron ring held by a staple on a bolted plate, made for the floor with the staple to the south. Turned like a
+     * button for floor, wall (the ring hangs below its staple) and ceiling, so only the block state is generated. The
+     * model carries the item's display transforms (the plate upright, the ring hanging), and the item model datagen
+     * writes for a block item points at it.
      */
     private static void ringModels(ModelContext m) {
         Block ring = GrappleContent.MOORING_RING.get();
-        TextureMapping iron = new TextureMapping().put(TextureSlot.TEXTURE, ResourceLocation.withDefaultNamespace("block/iron_block"));
-        ResourceLocation model = ModelTemplates.BUTTON.create(ring, iron, m.models());
-        ModelTemplates.BUTTON_INVENTORY.create(ModelLocationUtils.getModelLocation(ring.asItem()), iron, m.models());
+        ResourceLocation model = ModelLocationUtils.getModelLocation(ring);
         m.blockStates().accept(MultiVariantGenerator.multiVariant(ring, Variant.variant().with(VariantProperties.MODEL, model))
                 .with(faceAndFacing()));
     }
@@ -152,10 +150,10 @@ public final class GrappleModule implements ModModule {
                 .select(AttachFace.FLOOR, Direction.EAST, rot(r0, r90))
                 .select(AttachFace.FLOOR, Direction.SOUTH, rot(r0, r180))
                 .select(AttachFace.FLOOR, Direction.WEST, rot(r0, r270))
-                .select(AttachFace.WALL, Direction.NORTH, rot(r90, r0).with(VariantProperties.UV_LOCK, true))
-                .select(AttachFace.WALL, Direction.EAST, rot(r90, r90).with(VariantProperties.UV_LOCK, true))
-                .select(AttachFace.WALL, Direction.SOUTH, rot(r90, r180).with(VariantProperties.UV_LOCK, true))
-                .select(AttachFace.WALL, Direction.WEST, rot(r90, r270).with(VariantProperties.UV_LOCK, true))
+                .select(AttachFace.WALL, Direction.NORTH, rot(r90, r0))
+                .select(AttachFace.WALL, Direction.EAST, rot(r90, r90))
+                .select(AttachFace.WALL, Direction.SOUTH, rot(r90, r180))
+                .select(AttachFace.WALL, Direction.WEST, rot(r90, r270))
                 .select(AttachFace.CEILING, Direction.NORTH, rot(r180, r180))
                 .select(AttachFace.CEILING, Direction.EAST, rot(r180, r270))
                 .select(AttachFace.CEILING, Direction.SOUTH, rot(r180, r0))

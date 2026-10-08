@@ -1,6 +1,3 @@
 {
-  "parent": "minecraft:block/button_inventory",
-  "textures": {
-    "texture": "minecraft:block/iron_block"
-  }
+  "parent": "pirates_n_ships:block/mooring_ring"
 }

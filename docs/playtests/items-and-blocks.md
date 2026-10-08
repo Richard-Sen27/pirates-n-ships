@@ -289,3 +289,17 @@ Addendum (F8h): pistol and musket in the hand: see `firearms.md`.
       grid where it was.
     - **Config:** `ship_decor.sea_cot_sleeping` off: the cot says "This cot is just for show"; `ship_decor.bell_ring_ticks`
       changes how long the bell swings.
+
+## Paddle (ART8)
+
+Needs SC2's `pirates_n_ships:paddle` item merged; `/give @s pirates_n_ships:paddle`.
+- **Inventory:** a 3D paddle lying diagonally like a tool, T-grip lower left, blade upper right with a raised centre
+  rib, a twine whipping at the throat and two dark leather wraps on the shaft. No purple-black missing-model cube, no
+  missing-model warning in the log.
+- **Third person (F5), right and left hand:** held like a sword or shovel, the fist on the lower wrap just above the
+  T-grip, the blade up and forward past the shoulder, a little larger than a sword (scale 0.95). Say if it should be
+  held lower on the shaft or be longer.
+- **First person:** the blade reaches up and out of the right of the screen, the grip in the hand; off hand mirrored.
+- **Dropped and in an item frame:** it lies at half size on the ground; in a frame it fills the frame diagonally.
+- **On the sea chest:** sit on a floating sea chest with the paddle in hand and paddle: the paddle stays in the hand
+  pose above (no rowing animation is part of ART8).

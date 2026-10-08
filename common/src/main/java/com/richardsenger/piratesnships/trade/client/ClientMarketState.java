@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.trade.client;
 
+import com.richardsenger.piratesnships.crew.hiring.CrewPayloads;
 import com.richardsenger.piratesnships.rpg.quest.QuestPayloads;
 import com.richardsenger.piratesnships.trade.exchange.TransactionResult;
 import com.richardsenger.piratesnships.trade.net.MarketPayloads;
@@ -27,6 +28,9 @@ public final class ClientMarketState {
     private static volatile Optional<QuestPayloads.QuestsView> quests = Optional.empty();
     private static volatile Optional<QuestPayloads.QuestResult> lastQuestResult = Optional.empty();
     private static volatile long questResultVersion;
+    private static volatile Optional<CrewPayloads.CrewView> crew = Optional.empty();
+    private static volatile Optional<CrewPayloads.CrewResult> lastCrewResult = Optional.empty();
+    private static volatile long crewResultVersion;
 
     private ClientMarketState() {
     }
@@ -46,6 +50,8 @@ public final class ClientMarketState {
         lastOrderResult = Optional.empty();
         quests = Optional.empty();
         lastQuestResult = Optional.empty();
+        crew = Optional.empty();
+        lastCrewResult = Optional.empty();
         version++;
         opener.run();
     }
@@ -137,6 +143,32 @@ public final class ClientMarketState {
         return questResultVersion;
     }
 
+    /**
+     * The Crew tab (CRW1). A payload without a view (a refused action) keeps the last tab content;
+     * {@link #crewResultVersion()} grows with every result.
+     */
+    public static void acceptCrew(CrewPayloads.CrewPayload payload) {
+        if (payload.view().isPresent()) crew = payload.view();
+        if (payload.result().isPresent()) {
+            lastCrewResult = payload.result();
+            crewResultVersion++;
+        }
+        version++;
+    }
+
+    /** The Crew tab of the open desk (present while hiring is on). */
+    public static Optional<CrewPayloads.CrewView> crew() {
+        return crew;
+    }
+
+    public static Optional<CrewPayloads.CrewResult> lastCrewResult() {
+        return lastCrewResult;
+    }
+
+    public static long crewResultVersion() {
+        return crewResultVersion;
+    }
+
     public static void reset() {
         desk = Optional.empty();
         view = Optional.empty();
@@ -145,6 +177,8 @@ public final class ClientMarketState {
         lastOrderResult = Optional.empty();
         quests = Optional.empty();
         lastQuestResult = Optional.empty();
+        crew = Optional.empty();
+        lastCrewResult = Optional.empty();
         version++;
     }
 }

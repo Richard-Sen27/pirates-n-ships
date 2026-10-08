@@ -415,7 +415,8 @@ pirate captain 50) that any navy officer pays out. Attacking the navy or a merch
 `/pirates career` shows where you stand. **What a rank is worth:** from Lieutenant the navy flag is yours by right: an
 officer flying it is never charged with false colours for low navy reputation (a bounty still is), and navy outposts
 let you dock for free. Each new rank comes with a gift: a Lieutenant receives the officer's bicorne and a saber (once;
-a full pack drops them at your feet). From Captain the harbor master's desk at a navy outpost has an Orders tab: the
+a full pack drops them at your feet); the Officer's Coat (blue wool, white wool and a gold ingot) is chest armour
+that marks you as navy. From Captain the harbor master's desk at a navy outpost has an Orders tab: the
 navy shipyard builds you any ship the village shipwrights do, at 70 % of the price (Commodore 50 %, Admiral 40 %),
 delivered to the outpost's quay. On the other side, infamy talks at the fences: a Buccaneer, Dread Captain or Pirate
 Lord trades as if the pirates liked him 7, 13 or 20 points more, and from Dread Captain up pirates leave you alone
@@ -445,7 +446,7 @@ middle of his hut, or to the camp trail if the island has no captain's hut. He i
 health, and the navy keeps a standing bounty of 300 doubloons on him, posted on every notice board. To fight him
 one-on-one, sneak and use him with a sword in hand: if he accepts, his crew within 16 blocks keep out of the duel
 unless you strike them. The duel ends when one of you falls, when you run more than 32 blocks away, or after five
-minutes. If you hit him first he refuses: no honour, no duel. Slain, he drops his pirate hat, a purse of doubloons
+minutes. If you hit him first he refuses: no honour, no duel. Slain, he drops his captain's hat (wear it yourself), a purse of doubloons
 and a treasure map of his island, and you get a bounty proof to hand to a navy officer. Taken alive in shackles, the
 navy pays the captain's reward of 150 plus his bounty alive. Five days after his fall a successor with a new name and
 a new bounty takes his post. Server config `mobs.captain`.

@@ -7,13 +7,20 @@ import org.joml.Vector3d;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 /**
  * Pure aiming of a gun crew (WS4a, docs/design.md §8.2, plan {@code docs/plans/world-simulation.md} "WS4a"): which of
- * the cannon's elevation steps sends a ball closest to a target ship, whether the target lies in the gun's arc and in
- * range, and whether that best shot would hit at all. No world access; the caller turns the cannon's barrel into world
- * space ({@link #worldShot}) and reads the target's bounds and velocity.
+ * the cannon's elevation steps sends a ball into a solid block of a target ship closest to the aim point, whether the
+ * target lies in the gun's arc and in range, and whether that best shot would hit at all. No world access; the caller
+ * turns the cannon's barrel into world space ({@link #worldShot}) and reads the target's bounds, velocity and blocks.
+ *
+ * <p>WS4a-b: a shot counts as a hit only when its path crosses a solid block of the target ({@link Target#solid}), not
+ * merely the target's bounds. A gun fires every ball along the same line, so each hit that breaks a block opens a
+ * tunnel along it; a crew that aimed at the bounds alone kept firing through its own holes (measured: once a near and a
+ * far wall block on the line were broken, every further ball flew through the hull).
  *
  * <p>The ball is flown with vanilla's thrown-projectile step ({@code ThrowableProjectile#tick}, 1.21.1): each tick the
  * ball moves by its velocity, then the velocity is scaled by the air drag (0.99) and gravity is subtracted. The target
@@ -38,8 +45,16 @@ public final class GunCrewAim {
     public record Ballistics(double muzzleSpeed, double gravity, int lifetimeTicks) {
     }
 
-    /** A target ship: its world bounds and velocity (blocks/tick). */
-    public record Target(AABB bounds, Vec3 velocityPerTick) {
+    /**
+     * A target ship: its world bounds, velocity (blocks/tick), and whether a world point (at the target's pose now) lies
+     * in one of its solid blocks, as a ball's collision clip sees them.
+     */
+    public record Target(AABB bounds, Vec3 velocityPerTick, Predicate<Vec3> solid) {
+
+        /** A target solid all through its bounds (a box with no holes). */
+        public Target(AABB bounds, Vec3 velocityPerTick) {
+            this(bounds, velocityPerTick, bounds::contains);
+        }
     }
 
     /**
@@ -48,17 +63,17 @@ public final class GunCrewAim {
      * @param arcDegrees      half-width of the gun's horizontal arc: a target further off the barrel's heading is not shot at
      * @param rangeBlocks     largest horizontal distance from the muzzle to the aim point
      * @param aimHeight       where on the target's height the crew aims (0 = bottom of the bounds, 1 = top)
-     * @param toleranceBlocks the best shot counts as a hit when it passes through the target's bounds grown by this much
      */
-    public record Rules(double arcDegrees, double rangeBlocks, double aimHeight, double toleranceBlocks) {
+    public record Rules(double arcDegrees, double rangeBlocks, double aimHeight) {
     }
 
     /**
      * The crew's answer for one target.
      *
-     * @param bestStep   elevation step whose ball passes closest to the aim point
+     * @param bestStep   of the elevation steps whose ball strikes a solid block of the target, the one passing closest to
+     *                   the aim point; when no step strikes one, the step passing closest to the aim point
      * @param miss       that closest distance, in blocks
-     * @param hits       the best step's ball passes through the target's bounds (grown by the tolerance)
+     * @param hits       the best step's ball strikes a solid block of the target
      * @param inArc      the aim point (led by the target's motion) lies within the arc
      * @param inRange    the aim point lies within the range
      * @param offDegrees horizontal angle between the barrel and the led aim point
@@ -151,6 +166,31 @@ public final class GunCrewAim {
         return best;
     }
 
+    /** Sampling distance along a path inside the target's bounds when looking for a solid block, in blocks. */
+    static final double SAMPLE = 0.05;
+
+    /**
+     * The first point of a path (relative to the target, {@link #relativePath}) inside a solid block of {@code target}:
+     * each segment is clipped to the bounds and walked in steps of {@link #SAMPLE}. Empty when the ball crosses no solid
+     * block, e.g. when it passes the target or flies through a hole.
+     */
+    public static Optional<Vec3> firstSolid(List<Vec3> path, Target target) {
+        AABB box = target.bounds();
+        for (int i = 1; i < path.size(); i++) {
+            Vec3 a = path.get(i - 1), c = path.get(i);
+            Vec3 from = box.contains(a) ? a : box.clip(a, c).orElse(null);
+            if (from == null) continue;
+            Vec3 to = box.contains(c) ? c : box.clip(c, a).orElse(from);
+            Vec3 d = to.subtract(from);
+            int n = Math.max(1, (int) Math.ceil(d.length() / SAMPLE));
+            for (int k = 0; k <= n; k++) {
+                Vec3 p = from.add(d.scale((double) k / n));
+                if (target.solid().test(p)) return Optional.of(p);
+            }
+        }
+        return Optional.empty();
+    }
+
     /** Whether a path passes through {@code box}. */
     public static boolean passesThrough(List<Vec3> path, AABB box) {
         for (int i = 1; i < path.size(); i++) {
@@ -161,15 +201,14 @@ public final class GunCrewAim {
     }
 
     /**
-     * Solves one target for a gun whose elevation steps are {@code steps} (index = elevation step, lowest first): the
-     * step whose ball passes closest to the aim point, whether that ball hits the target's bounds (grown by the
-     * tolerance), and whether the aim point, led by the target's motion over the straight flight time, lies in the arc
-     * of the step's barrel and within range.
+     * Solves one target for a gun whose elevation steps are {@code steps} (index = elevation step, lowest first): of the
+     * steps whose ball strikes a solid block of the target ({@link #firstSolid}), the one passing closest to the aim
+     * point (else the closest step, which does not hit), and whether the aim point, led by the target's motion over the
+     * straight flight time, lies in the arc of the step's barrel and within range.
      */
     public static Solution solve(List<Shot> steps, Target target, Ballistics b, Rules rules) {
         if (steps.isEmpty()) throw new IllegalArgumentException("a gun has at least one elevation step");
         Vec3 aim = aimPoint(target.bounds(), rules.aimHeight());
-        AABB box = target.bounds().inflate(Math.max(0.0, rules.toleranceBlocks()));
         int best = 0;
         double bestMiss = Double.MAX_VALUE;
         boolean bestHits = false;
@@ -177,10 +216,12 @@ public final class GunCrewAim {
             Shot s = steps.get(i);
             List<Vec3> path = relativePath(s, target.velocityPerTick(), b, flightTicks(horizontal(s.muzzle(), aim), b));
             double miss = closest(path, aim);
-            if (miss < bestMiss) {
+            boolean hits = firstSolid(path, target).isPresent();
+            // a striking step beats any that does not; among equals the one closer to the aim point
+            if (hits && !bestHits || hits == bestHits && miss < bestMiss) {
                 bestMiss = miss;
                 best = i;
-                bestHits = passesThrough(path, box);
+                bestHits = hits;
             }
         }
         Shot s = steps.get(best);

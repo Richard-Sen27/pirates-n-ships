@@ -9,6 +9,7 @@ import com.richardsenger.piratesnships.combat.cannon.CannonLoad;
 import com.richardsenger.piratesnships.combat.cannon.CannonRules;
 import com.richardsenger.piratesnships.combat.cannon.CannonService;
 import com.richardsenger.piratesnships.combat.cannon.CannonShipHits;
+import com.richardsenger.piratesnships.combat.cannon.CannonStation;
 import com.richardsenger.piratesnships.combat.cannon.CannonballEntity;
 import com.richardsenger.piratesnships.combat.content.CombatContent;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
@@ -26,6 +27,8 @@ import com.richardsenger.piratesnships.ship.decor.flag.ShipAllegiance;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests.Fixture;
 import com.richardsenger.piratesnships.station.StationContent;
+import com.richardsenger.piratesnships.station.StationRef;
+import com.richardsenger.piratesnships.station.Stations;
 import com.richardsenger.piratesnships.station.order.WhistleOrder;
 import com.richardsenger.piratesnships.station.order.WhistleOrders;
 import net.minecraft.core.BlockPos;
@@ -137,7 +140,7 @@ public final class GunneryGameTests {
      * helm) and a chest, the target flying {@code flag} (struck when asked). A raised target rests on a stone pier
      * whose top is at y {@code targetBottom − 1}; otherwise ({@code targetBottom} 5) it rests on the dock.
      */
-    private static Setup setup(GameTestHelper h, Direction facing, FlagKind flag, boolean struck, int targetBottom) {
+    private static Setup setup(GameTestHelper h, Direction facing, FlagKind flag, boolean struck, int targetBottom, BlockPos... holes) {
         listen();
         basin(h);
         BlockPos helm = hull(h, GUNNER_X, 5);
@@ -155,6 +158,7 @@ public final class GunneryGameTests {
             }
         }
         BlockPos targetHelm = hull(h, TARGET_X, targetBottom);
+        for (BlockPos hole : holes) h.setBlock(hole, Blocks.AIR);
         BlockPos pole = targetHelm.offset(-1, 0, -1);
         h.setBlock(pole, ShipDecor.FLAGPOLE.get());
         if (!(h.getBlockEntity(pole) instanceof FlagpoleBlockEntity be)) throw new GameTestAssertException("no flagpole at " + pole);
@@ -348,37 +352,111 @@ public final class GunneryGameTests {
         });
     }
 
+    /** Shots fired so far (each start of the cannon's reload timer) and the elevation step of each. */
+    private static final class Volley {
+        final List<Integer> steps = new CopyOnWriteArrayList<>();
+        long last;
+
+        int shots() {
+            return steps.size();
+        }
+    }
+
     /**
-     * Hit rate: with a supply of five shots, auto reload and short timers, the crew fires all five at will and at least
-     * three of them hit the Jolly Roger hull (measured 4 and 5 of 5: each hit pushes the target, so a later
-     * shot can pass beside it). The rate is logged.
+     * A supplied, crewed gun with auto reload and short timers (20 ticks to reload, load and between shots) firing at
+     * will; the volley records every shot. {@code damage} is {@code npc_block_damage_multiplier}.
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 900, batch = CONFIG_BATCH + "hit_rate")
-    public static void atWillHitsMostShots(GameTestHelper h) {
+    private static Volley volley(GameTestHelper h, Setup s, int supply, double damage) {
         ConfigOverrides.during(h, CannonConfig.RELOAD_TICKS, 20);
         ConfigOverrides.during(h, CannonConfig.CREW_LOAD_TICKS, 20);
         ConfigOverrides.during(h, GunneryConfig.FIRE_INTERVAL_TICKS, 20);
-        Setup s = setup(h, Direction.EAST, FlagKind.JOLLY_ROGER, false);
-        supply(h, s, 5);
-        CrewMember crew = gunner(h, s);
-        fireAtWill(h, s);
-        long[] last = {0};
-        int[] shots = {0};
+        ConfigOverrides.during(h, GunneryConfig.NPC_BLOCK_DAMAGE_MULTIPLIER, damage);
+        supply(h, s, supply);
+        Volley v = new Volley();
         h.onEachTick(() -> {
             long r = cannon(h, s).reloadUntil();
-            if (r != last[0]) {
-                last[0] = r;
-                shots[0]++;
+            if (r != v.last) {
+                v.last = r;
+                v.steps.add(cannon(h, s).elevationStep());
             }
         });
+        return v;
+    }
+
+    /**
+     * Hit rate (WS4a-b): five shots at will at the Jolly Roger hull 24 blocks away all hit. Deterministic: with
+     * {@code npc_block_damage_multiplier} 0 no ball breaks a block, and the flight has no random part (no spread; the
+     * measured start position and velocity of every ball were identical to 1e-5 across runs). The WS4a flake (2 of 5)
+     * came from breaches, covered by {@link #aBreachedLineMakesTheCrewTakeAnotherStep} and
+     * {@link #withBlockDamageEveryShotFiredHits}. The rate is logged.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 900, batch = CONFIG_BATCH + "hit_rate")
+    public static void atWillHitsEveryShot(GameTestHelper h) {
+        Setup s = setup(h, Direction.EAST, FlagKind.JOLLY_ROGER, false);
+        Volley v = volley(h, s, 5, 0.0);
+        CrewMember crew = gunner(h, s);
+        fireAtWill(h, s);
         h.succeedWhen(() -> {
-            h.assertTrue(shots[0] >= 5, "shots so far: " + shots[0] + ", hits " + hits(s.targetId())
+            h.assertTrue(v.shots() >= 5, "shots so far: " + v.shots() + ", hits " + hits(s.targetId())
                     + ", crew alive " + crew.isAlive() + " at " + crew.assignment() + ", " + explain(h, s));
             h.assertTrue(h.getEntities(CannonContent.CANNONBALL.get()).isEmpty(), "a ball is still flying");
             int hit = hits(s.targetId());
-            Constants.LOG.info("WS4a gunnery hit rate: {} of {} shots at 24 blocks", hit, shots[0]);
-            h.assertTrue(hit >= 3, "only " + hit + " of " + shots[0] + " shots hit");
+            Constants.LOG.info("WS4a gunnery hit rate: {} of {} shots at 24 blocks, steps {}", hit, v.shots(), v.steps);
+            h.assertTrue(hit == v.shots(), "only " + hit + " of " + v.shots() + " shots hit, steps " + v.steps);
             cleanup(h, s, crew);
+        });
+    }
+
+    /**
+     * The cause of the WS4a flake, built in: the target's walls are breached where the lowest elevation's ball crosses
+     * them (near wall x 27, far wall x 31, rows y 6 and 7, z 18), as earlier hits that each broke a block left them. That
+     * step still passes closest to the aim point, but its ball flies through; the crew takes a step whose ball strikes a
+     * block instead (no block damage, so the test is deterministic). Every one of three shots hits.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 700, batch = CONFIG_BATCH + "breach")
+    public static void aBreachedLineMakesTheCrewTakeAnotherStep(GameTestHelper h) {
+        int z = Z + 1;
+        Setup s = setup(h, Direction.EAST, FlagKind.JOLLY_ROGER, false, 5,
+                new BlockPos(TARGET_X, 6, z), new BlockPos(TARGET_X, 7, z),
+                new BlockPos(TARGET_X + 4, 6, z), new BlockPos(TARGET_X + 4, 7, z));
+        Volley v = volley(h, s, 3, 0.0);
+        CrewMember crew = gunner(h, s);
+        fireAtWill(h, s);
+        h.succeedWhen(() -> {
+            h.assertTrue(v.shots() >= 3, "shots so far: " + v.shots() + ", hits " + hits(s.targetId()) + ", " + explain(h, s));
+            h.assertTrue(h.getEntities(CannonContent.CANNONBALL.get()).isEmpty(), "a ball is still flying");
+            int hit = hits(s.targetId());
+            h.assertTrue(hit == v.shots(), hit + " of " + v.shots() + " shots hit, steps " + v.steps);
+            h.assertTrue(v.steps.stream().noneMatch(st -> st == 0), "fired through the breach at step 0: " + v.steps);
+            cleanup(h, s, crew);
+        });
+    }
+
+    /**
+     * With the default block damage factor, hits break blocks at random and open breaches along the gun's lines: for
+     * 400 ticks the crew fires at will, and every shot it fires hits (it changes step, or holds fire once every line
+     * runs through a breach). At least two shots go off: the first line needs two breaches before a ball passes.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 800, batch = CONFIG_BATCH + "breaches")
+    public static void withBlockDamageEveryShotFiredHits(GameTestHelper h) {
+        Setup s = setup(h, Direction.EAST, FlagKind.JOLLY_ROGER, false);
+        Volley v = volley(h, s, 16, 0.5);
+        CrewMember crew = gunner(h, s);
+        fireAtWill(h, s);
+        h.runAfterDelay(400, () -> {
+            Gunnery.clear(s.gunner().ship()); // no new shots; a lit fuse still fires
+            h.succeedWhen(() -> {
+                h.assertTrue(h.getEntities(CannonContent.CANNONBALL.get()).isEmpty(), "a ball is still flying");
+                var st = Stations.state(
+                        new StationRef(s.gunner().ship().id(), s.cannon()));
+                h.assertTrue(st == null || st.order() != CannonStation.CannonOrder.FIRE,
+                        "a fuse is lit");
+                int hit = hits(s.targetId());
+                Constants.LOG.info("WS4a-b gunnery with block damage: {} of {} shots hit, steps {}", hit, v.shots(), v.steps);
+                h.assertTrue(v.shots() >= 2, "only " + v.shots() + " shots: " + explain(h, s));
+                h.assertTrue(hit == v.shots(), hit + " of " + v.shots() + " shots hit, steps " + v.steps);
+                cleanup(h, s, crew);
+            });
         });
     }
 }

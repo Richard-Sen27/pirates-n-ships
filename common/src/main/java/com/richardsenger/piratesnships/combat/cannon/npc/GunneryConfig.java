@@ -30,8 +30,6 @@ public final class GunneryConfig {
                     + "Shots on a captain's \"Fire!\" break the full amount");
     public static final ConfigValue<Double> AIM_HEIGHT = S.doubleRange("aim_height", 0.5, 0.0, 1.0,
             "Where crews aim on a target ship's height: 0 = the bottom of its bounds, 0.5 = the middle, 1 = the top");
-    public static final ConfigValue<Double> AIM_TOLERANCE = S.doubleRange("aim_tolerance", 0.5, 0.0, 8.0,
-            "A crew fires only when its best elevation sends the ball through the target's bounds grown by this many blocks");
 
     private GunneryConfig() {
     }

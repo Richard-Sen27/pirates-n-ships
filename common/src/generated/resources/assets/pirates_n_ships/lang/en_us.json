@@ -792,8 +792,6 @@
   "pirates_n_ships.configuration.cannons.npc.aim_height.tooltip": "Where crews aim on a target ship's height: 0 = the bottom of its bounds, 0.5 = the middle, 1 = the top",
   "pirates_n_ships.configuration.cannons.npc.aim_interval_ticks": "Aim Interval Ticks",
   "pirates_n_ships.configuration.cannons.npc.aim_interval_ticks.tooltip": "Ticks between two aiming moves of a crew: each move turns the barrel one elevation step or fires",
-  "pirates_n_ships.configuration.cannons.npc.aim_tolerance": "Aim Tolerance",
-  "pirates_n_ships.configuration.cannons.npc.aim_tolerance.tooltip": "A crew fires only when its best elevation sends the ball through the target's bounds grown by this many blocks",
   "pirates_n_ships.configuration.cannons.npc.arc_degrees": "Arc Degrees",
   "pirates_n_ships.configuration.cannons.npc.arc_degrees.tooltip": "A crew fires only at a target within this many degrees left or right of its cannon's barrel",
   "pirates_n_ships.configuration.cannons.npc.enabled": "Enabled",

@@ -7,7 +7,10 @@ import org.joml.Quaterniond;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -20,7 +23,7 @@ class GunCrewAimTest {
     private static final double EPS = 1e-9;
     /** The cannon's defaults: 3 blocks/tick, gravity 0.03, 200 ticks; 6 steps from −5° to 20°. */
     private static final GunCrewAim.Ballistics BALL = new GunCrewAim.Ballistics(3.0, 0.03, 200);
-    private static final GunCrewAim.Rules RULES = new GunCrewAim.Rules(15.0, 64.0, 0.5, 0.5);
+    private static final GunCrewAim.Rules RULES = new GunCrewAim.Rules(15.0, 64.0, 0.5);
 
     /** The six elevation steps of a gun at the origin's pivot with its barrel toward +x (east), standing still. */
     private static List<GunCrewAim.Shot> eastGun(Vec3 pivot) {
@@ -158,6 +161,79 @@ class GunCrewAimTest {
         int still = solve(new Vec3(40, -1.5, 0), Vec3.ZERO).bestStep();
         int receding = solve(new Vec3(40, -1.5, 0), new Vec3(0.6, 0, 0)).bestStep();
         assertTrue(receding >= still, "receding " + receding + " vs still " + still);
+    }
+
+    // ---- solid blocks and breaches (WS4a-b) ----
+
+    /** Block cells (floored x, y, z) of a point. */
+    private static List<Integer> cell(Vec3 p) {
+        return List.of((int) Math.floor(p.x), (int) Math.floor(p.y), (int) Math.floor(p.z));
+    }
+
+    /** A hollow 5×4×5 hull of unit blocks over x 22..26, y −4..−1, z −2..2 (its shell), minus the cells in {@code holes}. */
+    private static Predicate<Vec3> hollowHull(Set<List<Integer>> holes) {
+        return p -> {
+            List<Integer> c = cell(p);
+            int x = c.get(0), y = c.get(1), z = c.get(2);
+            if (x < 22 || x > 26 || y < -4 || y > -1 || z < -2 || z > 2) return false;
+            boolean shell = x == 22 || x == 26 || y == -4 || y == -1 || z == -2 || z == 2;
+            return shell && !holes.contains(c);
+        };
+    }
+
+    private static final AABB HOLLOW = new AABB(22, -4, -2, 27, 0, 3);
+
+    /** Every cell of the hull's shell a step's ball passes through before it leaves the bounds. */
+    private static Set<List<Integer>> cellsOnLine(GunCrewAim.Shot shot) {
+        Set<List<Integer>> out = new HashSet<>();
+        List<Vec3> path = GunCrewAim.relativePath(shot, Vec3.ZERO, BALL, 40);
+        Predicate<Vec3> shell = hollowHull(Set.of());
+        for (int i = 1; i < path.size(); i++) {
+            Vec3 a = path.get(i - 1), d = path.get(i).subtract(a);
+            for (int k = 0; k <= 200; k++) {
+                Vec3 p = a.add(d.scale(k / 200.0));
+                if (shell.test(p)) out.add(cell(p));
+            }
+        }
+        return out;
+    }
+
+    @Test
+    void firstSolidFindsTheWallAndNotTheHoleInIt() {
+        List<Vec3> path = List.of(new Vec3(0, -2.5, 0.5), new Vec3(40, -2.5, 0.5));
+        GunCrewAim.Target whole = new GunCrewAim.Target(HOLLOW, Vec3.ZERO, hollowHull(Set.of()));
+        assertEquals(22.0, GunCrewAim.firstSolid(path, whole).orElseThrow().x, GunCrewAim.SAMPLE + EPS, "the near wall");
+        GunCrewAim.Target breached = new GunCrewAim.Target(HOLLOW, Vec3.ZERO, hollowHull(Set.of(List.of(22, -3, 0))));
+        assertEquals(26.0, GunCrewAim.firstSolid(path, breached).orElseThrow().x, GunCrewAim.SAMPLE + EPS, "the far wall");
+        GunCrewAim.Target tunnel = new GunCrewAim.Target(HOLLOW, Vec3.ZERO,
+                hollowHull(Set.of(List.of(22, -3, 0), List.of(26, -3, 0))));
+        assertTrue(GunCrewAim.firstSolid(path, tunnel).isEmpty(), "through a near and a far breach");
+        assertTrue(GunCrewAim.firstSolid(List.of(new Vec3(0, 5, 0), new Vec3(40, 5, 0)), whole).isEmpty(), "over the top");
+    }
+
+    /**
+     * The measured WS4a flake: every ball of a gun flies one line, so hits that break blocks open a tunnel through the
+     * hull along it. The crew then takes another step whose ball strikes a block, and holds fire when none does.
+     */
+    @Test
+    void aBreachOnTheBestLineMakesTheCrewTakeAnotherStepOrHoldFire() {
+        List<GunCrewAim.Shot> gun = eastGun(Vec3.ZERO);
+        Set<List<Integer>> holes = new HashSet<>();
+        GunCrewAim.Solution whole = GunCrewAim.solve(gun, new GunCrewAim.Target(HOLLOW, Vec3.ZERO, hollowHull(holes)), BALL, RULES);
+        assertTrue(whole.fires(), "an intact hull: " + whole);
+
+        holes.addAll(cellsOnLine(gun.get(whole.bestStep())));
+        GunCrewAim.Target breached = new GunCrewAim.Target(HOLLOW, Vec3.ZERO, hollowHull(holes));
+        assertTrue(GunCrewAim.firstSolid(GunCrewAim.relativePath(gun.get(whole.bestStep()), Vec3.ZERO, BALL, 40), breached).isEmpty(),
+                "the old line runs through the breach");
+        GunCrewAim.Solution other = GunCrewAim.solve(gun, breached, BALL, RULES);
+        assertTrue(other.hits(), "another step strikes the hull: " + other);
+        assertTrue(other.bestStep() != whole.bestStep(), "a different step: " + other);
+
+        for (GunCrewAim.Shot shot : gun) holes.addAll(cellsOnLine(shot));
+        GunCrewAim.Solution none = GunCrewAim.solve(gun, new GunCrewAim.Target(HOLLOW, Vec3.ZERO, hollowHull(holes)), BALL, RULES);
+        assertFalse(none.hits(), "every line runs through a breach: " + none);
+        assertFalse(none.fires());
     }
 
     @Test

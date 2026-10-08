@@ -34,6 +34,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 
@@ -45,6 +46,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 /**
  * NPC gunnery (WS4a, docs/design.md §8.2, §10.4): the gun crews of a ship aim and fire by themselves. A ship's
@@ -55,7 +57,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * {@code cannons.npc.aim_interval_ticks}) picks the nearest target its arc and range allow ({@link GunCrewAim}): any
  * hostile ship ({@link ShipHostility}) within {@code engage_range} when firing at will, else the chosen ship. The crew
  * then either turns the barrel one elevation step toward the best elevation ({@link CannonService#aim}), starts a load
- * when the gun is empty, or, aimed and loaded, is given {@link CannonOrder#FIRE} through the station (the fuse, the shot
+ * when the gun is empty, or, aimed and loaded with a shot that strikes a solid block of the target (not a breach,
+ * WS4a-b), is given {@link CannonOrder#FIRE} through the station (the fuse, the shot
  * and the auto-reload are the station's as for a captain's "Fire!"), at most once per {@code fire_interval_ticks}.
  * A ship that has struck its colours holds fire, and no ship that has struck its colours is fired upon.
  *
@@ -91,7 +94,7 @@ public final class Gunnery {
     }
 
     /** A candidate target ship as the crews see it this tick. */
-    private record Candidate(UUID id, AABB bounds, Vec3 velocityPerTick) {
+    private record Candidate(UUID id, GunCrewAim.Target target) {
     }
 
     private Gunnery() {
@@ -207,7 +210,7 @@ public final class Gunnery {
         if (state.mode() == GunneryState.Mode.TARGET) {
             ShipBody target = SableShips.byId(level, state.target());
             if (target != null && !target.isRemoved() && !ShipAllegiance.of(target).isStruck() && !ShipSplits.isWreck(target)) {
-                out.add(candidate(target));
+                out.add(candidate(level, target));
             }
             return out;
         }
@@ -228,7 +231,7 @@ public final class Gunnery {
             FlagReading flag = data.get().flag();
             ShipStance stance = ShipStance.of(flag.shown(), flag.isStruck(), data.get().coverBlown(lawNow));
             boolean wanted = owner.map(id -> ownerWanted(server, id)).orElse(false);
-            if (ShipHostility.hostile(faction, flag, wanted, stance)) out.add(candidate(other));
+            if (ShipHostility.hostile(faction, flag, wanted, stance)) out.add(candidate(level, other));
         }
         return out;
     }
@@ -241,9 +244,32 @@ public final class Gunnery {
                 && LawService.wantedLevel(e).atLeast(LawConfig.NAVY_HOSTILITY_THRESHOLD.get());
     }
 
-    private static Candidate candidate(ShipBody ship) {
+    private static Candidate candidate(ServerLevel level, ShipBody ship) {
         Vector3d v = ship.linearVelocity();
-        return new Candidate(ship.id(), ship.worldBounds(), new Vec3(v.x, v.y, v.z).scale(1.0 / 20.0));
+        return new Candidate(ship.id(), new GunCrewAim.Target(ship.worldBounds(), new Vec3(v.x, v.y, v.z).scale(1.0 / 20.0),
+                solidAt(level, ship)));
+    }
+
+    /**
+     * Whether a world point lies inside a block of {@code ship} that stops a ball: a block of its plot whose collision
+     * shape contains the point (a ball's clip uses the collision shape, {@code ProjectileUtil} with
+     * {@code ClipContext.Block.COLLIDER}). A breach the ship's own guns or anyone else knocked open is no hit (WS4a-b).
+     */
+    static Predicate<Vec3> solidAt(ServerLevel level, ShipBody ship) {
+        return world -> {
+            Vec3 plot = ship.toPlot(world);
+            BlockPos pos = BlockPos.containing(plot);
+            if (!ship.plotContains(pos)) return false;
+            BlockState state = level.getBlockState(pos);
+            if (state.isAir()) return false;
+            VoxelShape shape = state.getCollisionShape(level, pos);
+            if (shape.isEmpty()) return false;
+            Vec3 in = plot.subtract(pos.getX(), pos.getY(), pos.getZ());
+            for (AABB box : shape.toAabbs()) {
+                if (box.contains(in)) return true;
+            }
+            return false;
+        };
     }
 
     /** One crew's move: pick a target, then step the barrel, load, or fire. */
@@ -258,7 +284,7 @@ public final class Gunnery {
         Candidate chosen = null;
         GunCrewAim.Solution solution = null;
         for (Candidate c : candidates) {
-            GunCrewAim.Solution s = GunCrewAim.solve(steps, new GunCrewAim.Target(c.bounds(), c.velocityPerTick()), ballistics, rules);
+            GunCrewAim.Solution s = GunCrewAim.solve(steps, c.target(), ballistics, rules);
             if (!s.engageable()) continue;
             if (c.id().equals(gun.target)) { // stay on the target already engaged while it is in the arc
                 chosen = c;
@@ -309,13 +335,13 @@ public final class Gunnery {
     static String explain(ServerLevel level, ShipBody self, BlockPos cannon, ShipBody target) {
         BlockState state = level.getBlockState(cannon);
         if (!(level.getBlockEntity(cannon) instanceof CannonBlockEntity be)) return "no cannon at " + cannon;
-        Candidate c = candidate(target);
-        GunCrewAim.Solution s = GunCrewAim.solve(steps(self, cannon, state.getValue(CannonBlock.FACING)),
-                new GunCrewAim.Target(c.bounds(), c.velocityPerTick()), ballistics(), rules());
+        Candidate c = candidate(level, target);
+        GunCrewAim.Solution s = GunCrewAim.solve(steps(self, cannon, state.getValue(CannonBlock.FACING)), c.target(),
+                ballistics(), rules());
         Engagement e = SHIPS.get(self.id());
         StationState<Object> st = Stations.state(new StationRef(self.id(), cannon));
         return "state " + state(self.id()) + ", step " + be.elevationStep() + ", load " + state.getValue(CannonBlock.LOAD)
-                + ", station " + (st == null ? "none" : st.phase() + "/" + st.order()) + ", target bounds " + c.bounds()
+                + ", station " + (st == null ? "none" : st.phase() + "/" + st.order()) + ", target bounds " + c.target().bounds()
                 + ", " + s + ", gun target " + (e == null ? "-" : e.guns.get(cannon) == null ? "-" : e.guns.get(cannon).target);
     }
 
@@ -326,6 +352,6 @@ public final class Gunnery {
 
     static GunCrewAim.Rules rules() {
         return new GunCrewAim.Rules(GunneryConfig.ARC_DEGREES.get(), GunneryConfig.ENGAGE_RANGE.get(),
-                GunneryConfig.AIM_HEIGHT.get(), GunneryConfig.AIM_TOLERANCE.get());
+                GunneryConfig.AIM_HEIGHT.get());
     }
 }

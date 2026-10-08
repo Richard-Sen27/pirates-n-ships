@@ -245,7 +245,7 @@ Started 2026-10-07 after the weekly model limit reset. The previous orchestrator
 | WS1b | The deeds adapter between REP1 and WS1: map each deed to a faction event through `Factions.reportDeed`, with its GameTest | in progress | Started 2026-10-08 on top of the REP1 and WS1 branches. |
 | WS2 | World simulation: sea lanes, voyage records, the scheduler and convoy economics (plan WS2) | in progress | Started 2026-10-08. |
 | WS3a | NPC helmsman: the helm as a station with a hold-course order (plan WS3a) | in progress | Started 2026-10-08. |
-| WS3b | World simulation: materialisation of voyages near players (plan WS3b) | todo | After WS2 and WS3a. |
+| WS3b | World simulation: materialisation of voyages near players (plan WS3b) | in progress | Started 2026-10-08 on top of the WS2 and WS3a branches. |
 | WS4a | NPC gunnery: fire at will, aim and hostility rules (plan WS4a) | in progress | Started 2026-10-08. |
 | WS4b | Navy patrols and hunting (plan WS4b) | todo | After WS3b, WS4a, WS1. |
 | WS5 | Raids and retaliation (plan WS5) | todo | After WS3b, WS1. |

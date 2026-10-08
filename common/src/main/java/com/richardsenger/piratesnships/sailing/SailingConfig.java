@@ -18,7 +18,6 @@ public final class SailingConfig {
 
     private static final WindParams W = WindParams.DEFAULTS;
     private static final SailingParams S = SailingParams.DEFAULTS;
-    private static final SailingParams.AnchorParams A = SailingParams.AnchorParams.DEFAULTS;
     private static final HullDampingModel.Params D = HullDampingModel.Params.DEFAULTS;
 
     private static final ConfigSection WIND = ModConfigs.server("wind", "Global wind field: direction, strength, weather and gusts");
@@ -54,7 +53,7 @@ public final class SailingConfig {
     public static final ConfigValue<Integer> SYNC_INTERVAL = WIND.intRange("sync_interval_ticks", 20, 1, 1200,
             "How often the wind is sent to each player, in ticks");
 
-    private static final ConfigSection SAILING = ModConfigs.server("sailing", "Sail, rudder, keel, anchor and hull damping forces");
+    private static final ConfigSection SAILING = ModConfigs.server("sailing", "Sail, rudder, keel and hull damping forces (the anchor's chain: anchor_chain)");
 
     public static final ConfigValue<Double> SAIL_FORCE_SCALE = SAILING.doubleRange("sail_force_scale", S.sailForceScale(), 0.0, 100.0,
             "Sail force per block of sail area and per block/s of apparent wind");
@@ -72,19 +71,6 @@ public final class SailingConfig {
             "Extra water drag across the hull, per second");
     public static final ConfigValue<Double> KEEL_YAW_DRAG = SAILING.doubleRange("keel_yaw_drag", S.keelYawDragFactor(), 0.0, 10.0,
             "Multiplier on the turning resistance the keel causes");
-    public static final ConfigValue<Double> ANCHOR_STIFFNESS = SAILING.doubleRange("anchor_stiffness", A.stiffness(), 0.0, 10.0,
-            "How hard a holding anchor pulls the ship back per block beyond the slack");
-    public static final ConfigValue<Double> ANCHOR_DAMPING = SAILING.doubleRange("anchor_damping", A.damping(), 0.0, 20.0,
-            "How strongly a holding anchor brakes the ship's horizontal motion");
-    public static final ConfigValue<Double> ANCHOR_MAX_ACCELERATION = SAILING.doubleRange("anchor_max_acceleration", A.maxAcceleration(), 0.0, 100.0,
-            "Cap of the anchor force divided by ship mass, in blocks per second squared");
-    public static final ConfigValue<Double> ANCHOR_SLACK = SAILING.doubleRange("anchor_slack", A.slack(), 0.0, 64.0,
-            "Distance in blocks an anchored ship may drift before the rode pulls it back");
-    public static final ConfigValue<Integer> ANCHOR_DROP_TICKS = SAILING.intRange("anchor_drop_ticks", A.dropTicks(), 1, 1200,
-            "Ticks from dropping the anchor until it holds fully");
-    public static final ConfigValue<Integer> ANCHOR_RAISE_TICKS = SAILING.intRange("anchor_raise_ticks", A.raiseTicks(), 1, 2400,
-            "Ticks from raising the anchor until it is stowed");
-
     public static final ConfigValue<Boolean> HULL_DAMPING_ENABLED = SAILING.bool("hull_damping_enabled", D.enabled(),
             "The water damps a floating ship's rolling and pitching, so it settles after a wave or a gust. Off: it rocks on without end");
     public static final ConfigValue<Double> ROLL_DAMPING = SAILING.doubleRange("roll_damping", D.roll(), 0.0, 10.0,
@@ -129,9 +115,9 @@ public final class SailingConfig {
     public static final ConfigValue<Integer> RUDDER_STEPS = SHIPS.intRange("rudder_steps", 3, 1, 5,
             "Rudder steps on each side of midships; the last step is max_rudder_angle");
     public static final ConfigValue<Boolean> ANCHOR_ENABLED = SHIPS.bool("anchor_enabled", true,
-            "The capstan drops and raises an anchor that holds the ship. Off: capstans do nothing and dropped anchors stop holding");
+            "The capstan drops and raises an anchor whose chain holds the ship. Off: capstans do nothing and dropped anchors stop holding");
     public static final ConfigValue<Integer> ANCHOR_CHAIN_LENGTH = SHIPS.intRange("anchor_chain_length", 32, 1, 256,
-            "How far below the capstan, in blocks, the anchor can reach the ground. Deeper water: the anchor can't be dropped");
+            "Length of the anchor chain in blocks: how far the falling anchor can run out from the hawse. No ground this far below the hawse: the anchor can't be dropped");
 
     private SailingConfig() {
     }
@@ -168,7 +154,6 @@ public final class SailingConfig {
     public static SailingParams sailingParams() {
         return new SailingParams(SAIL_FORCE_SCALE.get(), HALF_TRIM_FACTOR.get(), RUDDER_STRENGTH.get(),
                 MAX_RUDDER_ANGLE.get(), KEEL_ENABLED.get(), KEEL_LONGITUDINAL_DRAG.get(), KEEL_LATERAL_DRAG.get(),
-                KEEL_YAW_DRAG.get(), new SailingParams.AnchorParams(ANCHOR_STIFFNESS.get(), ANCHOR_DAMPING.get(),
-                ANCHOR_MAX_ACCELERATION.get(), ANCHOR_SLACK.get(), ANCHOR_DROP_TICKS.get(), ANCHOR_RAISE_TICKS.get()));
+                KEEL_YAW_DRAG.get());
     }
 }

@@ -81,3 +81,24 @@ island +6 pirates / −2 navy, village +4 villagers (`/pirates rep` shows it).
    active quests stand still (no progress, no deadline) until it is turned back on.
 2. Set `reputation.enabled = false`. Expected: ports offer no pirate hunts, navy raids or prisoner deliveries (they count
    deeds, which are off); the others work.
+
+## 10. QST1b: captain hunt (village or navy outpost)
+Setup: a world with the named pirate captains (BOS1). An existing server config keeps its old type lists: add
+`hunt_captain` to `quests.types.seafarer_village` and `quests.types.navy_outpost` (or delete the `quests` section so the
+new defaults are written). Stand at a village or navy outpost within 3000 blocks of a pirate island whose captain lives
+(`/pirates mob captain list`; in an open field `/pirates mob captain spawn` works too).
+1. `/pirates quest offer <port> hunt_captain` (or wait for a day's offers). Expected: the Quests tab shows "Bring down
+   `<Name>` of the island to the `<east|northwest|…>`", reward 400. The name matches `/pirates mob captain list`, the
+   direction matches where his island lies from the port. At a pirate island the command answers "can't offer that
+   quest now". A port farther than 3000 blocks from any living captain never offers it. One port never lists two.
+2. Accept it, sail to the island and kill him (sword, pistol or in a duel). Expected: the moment he falls, "Quest
+   complete: Bring down …. 400 doubloons paid"; his bounty proof and drops as before (the bounty pays on top).
+3. Accept another hunt, capture him instead (shackles below the capture threshold) and hand him to a navy officer.
+   Expected: the officer pays as before and the quest completes at the hand-over. (Needs `reputation.enabled`, the
+   default: the hand-over is seen through the `turn_in_pirate` deed.)
+4. Accept a hunt, then let somebody else kill him (another player, or `/kill @e[type=pirates_n_ships:pirate_captain]`).
+   Expected: within a second "Quest failed: Bring down …" and "`<Name>` is gone, and not by your hand"; no reward. The
+   port's open offer for him disappears from the Quests tab. A successor who later takes the post does not count;
+   killing him leaves no trace in the quest log.
+5. An offer accepted after its captain died (open tab, someone kills him, click Accept) says "That captain is already
+   gone".

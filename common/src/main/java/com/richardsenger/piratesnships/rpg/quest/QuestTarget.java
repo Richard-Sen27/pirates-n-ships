@@ -104,12 +104,20 @@ public sealed interface QuestTarget permits QuestTarget.None, QuestTarget.Kill, 
         }
     }
 
-    /** One entity or ship by id, with a name to show (later packages: captains, ships). */
-    record Victim(UUID id, String name) implements QuestTarget {
+    /**
+     * One entity or ship by id, with a name to show and, for a captain hunt (QST1b), the compass {@code bearing} from
+     * the giving port to his island ({@code north}, {@code north_east}, ...; {@link QuestGenerator#bearing}).
+     */
+    record Victim(UUID id, String name, Optional<String> bearing) implements QuestTarget {
         static final MapCodec<Victim> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
                 UUIDUtil.STRING_CODEC.fieldOf("id").forGetter(Victim::id),
-                Codec.STRING.fieldOf("name").forGetter(Victim::name)
+                Codec.STRING.fieldOf("name").forGetter(Victim::name),
+                Codec.STRING.optionalFieldOf("bearing").forGetter(Victim::bearing)
         ).apply(i, Victim::new));
+
+        public Victim(UUID id, String name) {
+            this(id, name, Optional.empty());
+        }
 
         @Override
         public Kind kind() {

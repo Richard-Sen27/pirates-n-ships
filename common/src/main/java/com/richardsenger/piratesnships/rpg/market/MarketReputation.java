@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.rpg.market;
 
+import com.richardsenger.piratesnships.rpg.career.CareerRewards;
 import com.richardsenger.piratesnships.rpg.deeds.Deed;
 import com.richardsenger.piratesnships.rpg.deeds.DeedContext;
 import com.richardsenger.piratesnships.rpg.deeds.Deeds;
@@ -50,9 +51,11 @@ public final class MarketReputation {
         return TradeService.market(player.getServer(), port).map(m -> m.profile().kind());
     }
 
-    /** The player's score that swings prices at {@code port}; 0 for no swing. */
+    /** The player's score that swings prices at {@code port}; 0 for no swing. Infamy adds its bonus at pirate islands (CAR2). */
     public static int priceScore(Player player, ResourceLocation port) {
-        return kindOf(player, port).flatMap(MarketReputation::priceFaction).map(f -> Reputation.priceScore(player, f)).orElse(0);
+        Optional<PortKind> kind = kindOf(player, port);
+        int infamy = kind.orElse(null) == PortKind.PIRATE_ISLAND ? CareerRewards.infamyPriceBonus(player) : 0;
+        return kind.flatMap(MarketReputation::priceFaction).map(f -> Reputation.priceScore(player, f) + infamy).orElse(0);
     }
 
     /** What the player pays for goods whose market total is the operand. */

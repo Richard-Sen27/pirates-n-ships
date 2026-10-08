@@ -47,6 +47,9 @@ public final class QuestConfig {
             "Chance that a monster quest asks for the kraken instead of sharks (always the kraken in a cold climate)");
     public static final ConfigValue<Boolean> TREASURE_QUEST_ENABLED = S.bool("treasure_quest_enabled", true,
             "Offer treasure hunts (they hand out a bound treasure map; also needs world.treasure_maps.enabled)");
+    public static final ConfigValue<Integer> CAPTAIN_HUNT_RADIUS = S.intRange("captain_hunt_radius", 3000, 0, 100_000,
+            "Blocks from a village or navy outpost within which the nearest pirate island's living captain can be hunted "
+                    + "(hunt_captain; none in reach = no captain hunt offered)");
     public static final ConfigValue<Integer> POLL_TICKS = S.intRange("poll_ticks", 20, 1, 1200,
             "How often (ticks) deliveries, treasure hunts and deadlines of online players are checked");
 
@@ -59,12 +62,15 @@ public final class QuestConfig {
     public static final ConfigValue<Integer> KRAKEN = REWARDS.intRange("kraken", 500, 0, 1_000_000, "For the kraken");
     public static final ConfigValue<Integer> TREASURE = REWARDS.intRange("treasure", 100, 0, 1_000_000,
             "For finding a treasure (the chest's loot comes on top)");
+    public static final ConfigValue<Integer> CAPTAIN = REWARDS.intRange("captain", 400, 0, 1_000_000,
+            "For bringing down a named pirate captain (the navy's bounty on him comes on top)");
     public static final ConfigValue<Double> DELIVER_MULTIPLIER = REWARDS.doubleRange("deliver_multiplier", 1.5, 0.0, 100.0,
             "A delivery quest pays this times what an ordinary contract for the same cargo would (paid on delivery, no deposit)");
 
     private static final ConfigSection TYPES = S.section("types",
-            "Quest types each port kind offers (hunt_pirates, kill_monster, turn_in, deliver, find_treasure, hunt_navy). "
-                    + "hunt_navy is only offered at pirate islands, turn_in only at navy outposts, hunt_pirates never at pirate islands");
+            "Quest types each port kind offers (hunt_pirates, kill_monster, turn_in, deliver, find_treasure, hunt_navy, "
+                    + "hunt_captain). hunt_navy is only offered at pirate islands, turn_in only at navy outposts, hunt_pirates and "
+                    + "hunt_captain never at pirate islands");
 
     /** {@code quests.types.<kind>}. */
     public static final Map<PortKind, ConfigValue<List<String>>> TYPE_LISTS;
@@ -100,6 +106,6 @@ public final class QuestConfig {
         return new QuestParams(OFFERS_PER_PORT.get(), OFFER_DAYS.get(), DEADLINE_DAYS.get(), MAX_ACTIVE.get(), REWARD_SCALE.get(),
                 HUNT_COUNT_MIN.get(), HUNT_COUNT_MAX.get(), MONSTER_COUNT_MIN.get(), MONSTER_COUNT_MAX.get(), TURN_IN_COUNT_MAX.get(),
                 KRAKEN_CHANCE.get(), PER_PIRATE.get(), PER_NAVY.get(), PER_PRISONER.get(), PER_SHARK.get(), KRAKEN.get(), TREASURE.get(),
-                DELIVER_MULTIPLIER.get(), TREASURE_QUEST_ENABLED.get(), Reputation.enabled(), types);
+                CAPTAIN.get(), DELIVER_MULTIPLIER.get(), CAPTAIN_HUNT_RADIUS.get(), TREASURE_QUEST_ENABLED.get(), Reputation.enabled(), types);
     }
 }

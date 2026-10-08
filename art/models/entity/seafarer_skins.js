@@ -1,4 +1,5 @@
-// Skin painter for pirate.bbmodel, sailor.bbmodel, navy_soldier.bbmodel and navy_officer.bbmodel (M3-art).
+// Skin painter for pirate.bbmodel, sailor.bbmodel, navy_soldier.bbmodel, navy_officer.bbmodel (M3-art) and
+// pirate_captain.bbmodel (ART6).
 // Load in Blockbench (risky_eval) before seafarer_models.js:
 //   eval(require('fs').readFileSync('<repo>/art/models/entity/seafarer_skins.js', 'utf8'))
 // SF.paint(type) returns a 64x64 sheet on the vanilla player skin layout (wide arms, outer layer included). Detail
@@ -34,7 +35,9 @@ SF.C = {
   belt_white: [240, 238, 230], belt_shade: [200, 198, 190],
   hat_d: [16, 14, 18], hat: [32, 30, 36], hat_l: [52, 50, 58],
   gold_d: [156, 104, 22], gold: [222, 170, 48], gold_l: [252, 226, 120],
-  cockade: [236, 232, 220], crimson_d: [110, 18, 36], crimson: [150, 28, 50], crimson_l: [184, 56, 74]
+  cockade: [236, 232, 220], crimson_d: [110, 18, 36], crimson: [150, 28, 50], crimson_l: [184, 56, 74],
+  cc_d: [20, 17, 22], cc: [34, 29, 36], cc_l: [56, 48, 58], cc_ll: [78, 68, 80],
+  brocade_d: [112, 78, 26], brocade: [150, 110, 40], brocade_l: [184, 146, 70]
 };
 
 SF.rng = function (seed) {
@@ -332,6 +335,82 @@ SF.navy_officer = function () {
   return s;
 };
 
-SF.TYPES = ['pirate', 'sailor', 'navy_soldier', 'navy_officer'];
-SF.PATCHES = {pirate: SF.PIRATE_PATCHES, sailor: SF.SAILOR_PATCHES, navy_soldier: SF.NAVY_SOLDIER_PATCHES, navy_officer: SF.NAVY_OFFICER_PATCHES};
+// --- pirate captain (ART6) --------------------------------------------------------------------------------------
+// The named captain of the pirate island (BOS1): weathered, black hair going grey at the temples, a full black beard
+// with two braids tied with gold beads (cubes), a scar through the left brow and cheek, a gold earring; a wide black
+// hat with a gold edge, a red band, the brim cocked up on the left and a white plume (cubes on `hat`; the hat layer
+// stays empty); a long charcoal coat to the knee edged in gold with brass buttons and wide crimson cuffs (jacket and
+// sleeve layers plus cube tails, skirts, lapels and cuffs), a white jabot, a gold brocade waistcoat, a red sash with a
+// knot on the left hip, a leather baldric over the right shoulder, dark breeches and tall bucket-top boots.
+SF.PIRATE_CAPTAIN_PATCHES = ['cc', 'cc_d', 'cc_l', 'cc_ll', 'gold', 'gold_d', 'gold_l', 'sash', 'sash_d', 'sash_l',
+  'belt', 'belt_d', 'boot', 'boot_d', 'boot_l', 'hat', 'hat_d', 'white', 'shirt_d', 'hair_black', 'black', 'crimson',
+  'crimson_d', 'brass', 'brass_d', 'brocade', 'steel'];
+SF.REGIONS.pirate_captain = {
+  brim_top: [0, 0, 8, 8], brim_under: [56, 0, 8, 8], crown: [24, 0, 8, 3], band: [24, 3, 8, 2], plume: [24, 5, 8, 3],
+  crown_top: [32, 0, 8, 8], lapel: [0, 16, 4, 4], jabot: [52, 16, 4, 4], cuff: [36, 16, 8, 4], boot_cuff: [12, 16, 8, 4],
+  tail_back: [56, 32, 4, 12], tail_side: [60, 32, 4, 12], sash: [56, 44, 8, 2], baldric: [56, 46, 8, 2]
+};
+SF.pirate_captain = function () {
+  const s = new SF.Sheet('pirate_captain'), R = SF.REGIONS.pirate_captain;
+  const f = SF.head(s, {skin: 'tan', skin_d: 'tan_d', skin_l: 'tan_l', hair: 'hair_black', hair_d: 'black', eye: 'eye_brown', brow: 'black', hairRows: 2, backRows: 7});
+  const [fx, fy] = f.front;
+  // grey at the temples
+  for (const side of ['right', 'left']) { const r = f[side], c = side === 'right' ? 3 : 4; s.px(r[0] + c, r[1] + 2, 'grey'); s.px(r[0] + c, r[1] + 3, 'grey_d'); }
+  // full beard: moustache on row 5, beard from the cheeks down, the mouth inside it
+  s.rect(fx, fy + 5, 8, 3, 'hair_black'); s.speckle(fx, fy + 5, 8, 3, 'black', 0.3);
+  s.rect(fx + 3, fy + 4, 2, 1, 'tan_l'); s.rect(fx + 1, fy + 5, 2, 1, 'black'); s.rect(fx + 5, fy + 5, 2, 1, 'black');
+  s.rect(fx + 3, fy + 5, 2, 1, 'tan_d'); s.rect(fx + 3, fy + 6, 2, 1, 'mouth');
+  for (const side of ['right', 'left']) { const [cx, cy] = SF.cheek(s, f, side); s.rect(cx, cy + 5, 4, 3, 'hair_black'); s.speckle(cx, cy + 4, 4, 1, 'hair_black', 0.6); }
+  // scar through the left brow, past the eye, onto the cheek
+  s.px(fx + 6, fy + 2, 'scar'); s.px(fx + 6, fy + 3, 'scar'); s.px(fx + 7, fy + 4, 'scar'); s.px(fx + 7, fy + 5, 'scar');
+  // shirt, brocade waistcoat, breeches
+  s.fill(SF.BODY, 'white', 'shirt_d', 0.12);
+  const b = s.faces(SF.BODY), [bx, by] = b.front;
+  s.rect(bx + 2, by + 3, 4, 6, 'brocade'); s.speckle(bx + 2, by + 3, 4, 6, 'brocade_d', 0.3); s.speckle(bx + 2, by + 3, 4, 6, 'brocade_l', 0.15);
+  for (const r of [4, 6, 8]) s.px(bx + 4, by + r, 'gold_l');
+  s.band(SF.BODY, 9, 3, 'belt_d', 'black', 0.2);
+  // coat on the jacket layer: open front edged in gold, brass buttons, a vent at the back
+  s.fill(SF.JACKET, 'cc', 'cc_d', 0.12); for (const r of Object.values(s.faces(SF.JACKET))) s.speckle(...r, 'cc_l', 0.05);
+  const j = s.faces(SF.JACKET), [jx, jy] = j.front;
+  s.rect(...j.bottom, null); s.rect(...j.top, null);
+  s.rect(jx + 2, jy, 4, 12, null);
+  for (let r = 0; r < 12; r++) { s.px(jx + 1, jy + r, 'gold_d'); s.px(jx + 6, jy + r, 'gold_d'); }
+  for (const r of [2, 4, 6, 8, 10]) { s.px(jx, jy + r, 'brass'); s.px(jx + 7, jy + r, 'brass'); }
+  for (const k of ['right', 'left', 'back']) { const r = j[k]; s.rect(r[0], r[1] + 11, r[2], 1, 'gold_d'); }
+  s.column(j.back, 3, 5, 7, 'cc_d'); s.column(j.back, 4, 5, 7, 'cc_d');
+  s.px(j.back[0] + 2, j.back[1] + 5, 'brass'); s.px(j.back[0] + 5, j.back[1] + 5, 'brass');
+  // arms: shirt under the coat sleeves, hands; sleeves end where the cuff cubes sit
+  for (const a of SF.ARMS) s.fill(a, 'white', 'shirt_d', 0.1);
+  SF.hands(s, 'tan', 'tan_d');
+  for (const sl of SF.SLEEVES) { s.fill(sl, 'cc', 'cc_d', 0.15); s.band(sl, 9, 3, null); s.rect(...s.faces(sl).bottom, null); s.band(sl, 0, 1, 'cc_l'); }
+  // legs: dark breeches, tall boots from row 4
+  for (const l of SF.LEGS) {
+    s.fill(l, 'belt_d', 'black', 0.2); s.band(l, 4, 8, 'boot', 'boot_d', 0.25); s.band(l, 11, 1, 'boot_d');
+    s.rect(...s.faces(l).bottom, 'boot_d'); s.column(s.faces(l).front, 1, 7, 4, 'boot_l');
+  }
+  // hat regions: black felt, a gold edge on the brim, a red band, a white plume with grey barbs
+  s.region(R.brim_top, 'hat', 'hat_d', 0.2); s.rect(R.brim_top[0], R.brim_top[1], 8, 1, 'gold'); s.rect(R.brim_top[0], R.brim_top[1] + 7, 8, 1, 'gold');
+  s.rect(R.brim_top[0], R.brim_top[1], 1, 8, 'gold'); s.rect(R.brim_top[0] + 7, R.brim_top[1], 1, 8, 'gold');
+  s.region(R.brim_under, 'hat_d', 'hat', 0.2);
+  s.region(R.crown, 'hat', 'hat_d', 0.2); s.region(R.crown_top, 'hat', 'hat_d', 0.25); s.rect(R.crown_top[0] + 2, R.crown_top[1] + 3, 4, 2, 'hat_d');
+  s.region(R.band, 'sash', 'sash_d', 0.25, 'sash_l');
+  s.region(R.plume, 'white', 'shirt_d', 0.2); for (let x = R.plume[0]; x < R.plume[0] + 8; x += 2) s.px(x, R.plume[1] + 2, 'shirt_d');
+  // coat regions
+  s.region(R.tail_back, 'cc', 'cc_d', 0.18); s.rect(R.tail_back[0], R.tail_back[1] + 11, 4, 1, 'gold_d'); s.rect(R.tail_back[0] + 3, R.tail_back[1], 1, 12, 'gold_d');
+  s.px(R.tail_back[0] + 1, R.tail_back[1] + 1, 'brass');
+  s.region(R.tail_side, 'cc', 'cc_d', 0.18); s.rect(R.tail_side[0], R.tail_side[1] + 11, 4, 1, 'gold_d'); s.rect(R.tail_side[0], R.tail_side[1], 1, 12, 'gold_d');
+  s.region(R.cuff, 'crimson', 'crimson_d', 0.2, 'gold'); s.rect(R.cuff[0], R.cuff[1] + 3, 8, 1, 'gold_d');
+  for (const x of [1, 3, 5, 7]) s.px(R.cuff[0] + x, R.cuff[1] + 2, 'brass');
+  s.region(R.boot_cuff, 'boot_l', 'boot', 0.25); s.rect(R.boot_cuff[0], R.boot_cuff[1] + 3, 8, 1, 'boot');
+  s.region(R.lapel, 'cc_l', 'cc', 0.1); s.rect(R.lapel[0], R.lapel[1], 1, 4, 'gold');
+  s.region(R.jabot, 'white', 'shirt_d', 0.2); s.rect(R.jabot[0], R.jabot[1] + 1, 4, 1, 'shirt_d'); s.rect(R.jabot[0], R.jabot[1] + 3, 4, 1, 'shirt_d');
+  s.region(R.sash, 'sash', 'sash_d', 0.3); s.rect(R.sash[0], R.sash[1], 8, 1, 'sash_l');
+  s.region(R.baldric, 'belt', 'belt_d', 0.3); s.rect(R.baldric[0], R.baldric[1], 8, 1, 'belt_d');
+  s.patches(SF.PIRATE_CAPTAIN_PATCHES);
+  return s;
+};
+
+SF.TYPES = ['pirate', 'sailor', 'navy_soldier', 'navy_officer', 'pirate_captain'];
+SF.PATCHES = {pirate: SF.PIRATE_PATCHES, sailor: SF.SAILOR_PATCHES, navy_soldier: SF.NAVY_SOLDIER_PATCHES, navy_officer: SF.NAVY_OFFICER_PATCHES,
+  pirate_captain: SF.PIRATE_CAPTAIN_PATCHES};
 SF.paint = type => SF[type]();

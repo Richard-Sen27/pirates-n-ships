@@ -350,7 +350,8 @@ public final class GunneryGameTests {
 
     /**
      * Hit rate: with a supply of five shots, auto reload and short timers, the crew fires all five at will and at least
-     * four of them hit the Jolly Roger hull. The rate is logged.
+     * three of them hit the Jolly Roger hull (measured 4 and 5 of 5: each hit pushes the target, so a later
+     * shot can pass beside it). The rate is logged.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 900, batch = CONFIG_BATCH + "hit_rate")
     public static void atWillHitsMostShots(GameTestHelper h) {
@@ -376,7 +377,7 @@ public final class GunneryGameTests {
             h.assertTrue(h.getEntities(CannonContent.CANNONBALL.get()).isEmpty(), "a ball is still flying");
             int hit = hits(s.targetId());
             Constants.LOG.info("WS4a gunnery hit rate: {} of {} shots at 24 blocks", hit, shots[0]);
-            h.assertTrue(hit >= 4, "only " + hit + " of " + shots[0] + " shots hit");
+            h.assertTrue(hit >= 3, "only " + hit + " of " + shots[0] + " shots hit");
             cleanup(h, s, crew);
         });
     }

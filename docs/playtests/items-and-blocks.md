@@ -289,3 +289,27 @@ Addendum (F8h): pistol and musket in the hand: see `firearms.md`.
       grid where it was.
     - **Config:** `ship_decor.sea_cot_sleeping` off: the cot says "This cot is just for show"; `ship_decor.bell_ring_ticks`
       changes how long the bell swings.
+
+18. **Captain's Hat and Officer's Coat (ART6).** `/give @s pirates_n_ships:captains_hat` and
+    `/give @s pirates_n_ships:officers_coat` (the coat also crafts: blue wool around, a gold ingot top middle, white
+    wool in the centre; the hat only drops from a pirate captain). Renders: `art/renders/captains_hat.png`,
+    `art/renders/officers_coat.png` (item) and `art/renders/officers_coat_worn.png` (worn).
+    - **GUI:** the hat as a 3D black hat seen from the front three-quarter with the plume on top, fitting the slot like
+      the other hats; the coat flat facing you: blue coat with white lapels and gold buttons, white waistcoat, gold
+      epaulettes, sleeves hanging out at an angle with red cuffs ringed in gold, a gold hem. Both have English names
+      ("Captain's Hat", "Officer's Coat"); neither shows a checkerboard.
+    - **In hand:** the hat held like the other hats (small, tilted); the coat held like a flat item (cloth, map) in first
+      and third person and the offhand. On the ground both bob at half size; in an item frame both face out, centred.
+    - **Worn, hat:** right-click with the hat (or shift-click into the helmet slot): it goes on the head, the old helmet
+      comes back to the hand; tooltip "+1 Armor When on Head". In F5 it sits like the captain's (brim ~2 px above the
+      eyes, cocked brim and plume on **your** left). Stand next to a spawned captain and compare height and width.
+    - **Worn, coat:** right-click with the coat (or shift-click into the chestplate slot): it goes on the chest, a worn
+      chestplate comes back to the hand; tooltip "+3 Armor When on Body". F5 front: blue coat over the body and both
+      arms, white lapels and waistcoat down the middle with gold buttons, gold epaulettes on top of the shoulders, red
+      cuffs with a gold ring at the wrists, a gold band round the waist. Back: blue with a darker vent and two gold
+      buttons. It is vanilla armour-style (a shell 1 px off the body), so it ends at the waist: no tails (a known limit,
+      say whether you want tails through a custom armour model later).
+    - **On others:** an armour stand and a zombie wear both (`/item replace entity @e[type=zombie,limit=1] armor.chest
+      with pirates_n_ships:officers_coat`). The left arm's sleeve mirrors the right arm's pixels (vanilla).
+    - **Config:** `apparel.officers_coat_armor = 0` after a restart: no tooltip line, no armour; `= 8`: "+8 Armor".
+      The coat never loses durability (no bar).

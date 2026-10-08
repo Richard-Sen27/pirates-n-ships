@@ -28,10 +28,11 @@ import net.minecraft.world.level.GameType;
 import java.util.Collection;
 import java.util.List;
 
-/** The hats of the {@code apparel} module: registration, wearing, the armour bonus and the recipes. */
+/** The hats and the officer's coat of the {@code apparel} module: registration, wearing, the armour bonus and the recipes. */
 public final class ApparelGameTests {
 
-    public static final List<String> ITEM_IDS = List.of("pirate_hat", "bandana", "navy_hat", "officer_hat");
+    public static final List<String> ITEM_IDS = List.of("pirate_hat", "bandana", "navy_hat", "officer_hat", "captains_hat",
+            "officers_coat");
 
     private ApparelGameTests() {
     }
@@ -124,9 +125,77 @@ public final class ApparelGameTests {
 
     @ModGameTest
     public static void hatRecipesAreLoaded(GameTestHelper helper) {
-        for (RegistryEntry<Item, HatItem> hat : ApparelContent.HATS) {
+        for (RegistryEntry<Item, HatItem> hat : ApparelContent.CRAFTED_HATS) {
             ContentTestSupport.assertRecipe(helper, hat.id().getPath(), hat.get(), 1);
         }
+        ContentTestSupport.assertRecipe(helper, "officers_coat", ApparelContent.OFFICERS_COAT.get(), 1);
+        helper.succeed();
+    }
+
+    /** The captain's hat is a drop of the named pirate captain (ART6), never crafted. */
+    @ModGameTest
+    public static void captainsHatHasNoRecipe(GameTestHelper helper) {
+        boolean crafted = helper.getLevel().getRecipeManager().getRecipes().stream()
+                .anyMatch(r -> r.value().getResultItem(helper.getLevel().registryAccess()).is(ApparelContent.CAPTAINS_HAT.get()));
+        helper.assertFalse(crafted, "no recipe should make the captain's hat");
+        helper.succeed();
+    }
+
+    // --- officer's coat (ART6) ----------------------------------------------------------------------------------
+
+    /** The coat is chest armour: right-click puts it on the chest, swapping with what was there, and it stacks to 1. */
+    @ModGameTest
+    public static void coatGoesOnTheChest(GameTestHelper helper) {
+        ItemStack coat = new ItemStack(ApparelContent.OFFICERS_COAT.get());
+        Equipable equipable = Equipable.get(coat);
+        helper.assertTrue(equipable != null && equipable.getEquipmentSlot() == EquipmentSlot.CHEST, "the coat should be worn on the chest");
+        helper.assertValueEqual(coat.getMaxStackSize(), 1, "coat stack size");
+        helper.assertFalse(coat.isDamageableItem(), "the coat has no durability, like the hats");
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemSlot(EquipmentSlot.CHEST, new ItemStack(Items.LEATHER_CHESTPLATE));
+        player.setItemInHand(InteractionHand.MAIN_HAND, coat);
+        use(helper, player);
+        helper.assertTrue(player.getItemBySlot(EquipmentSlot.CHEST).is(ApparelContent.OFFICERS_COAT.get()), "the coat should be on the chest, got " + player.getItemBySlot(EquipmentSlot.CHEST));
+        helper.assertTrue(player.getMainHandItem().is(Items.LEATHER_CHESTPLATE), "the old chestplate should be in the hand, got " + player.getMainHandItem());
+        helper.assertTrue(player.getItemBySlot(EquipmentSlot.HEAD).isEmpty(), "nothing on the head");
+        helper.succeed();
+    }
+
+    @ModGameTest
+    public static void coatGivesTheConfiguredArmour(GameTestHelper helper) {
+        ItemStack coat = new ItemStack(ApparelContent.OFFICERS_COAT.get());
+        assertArmor(helper, coat, EquipmentSlot.CHEST, ApparelConfig.OFFICERS_COAT_ARMOR.get());
+        assertArmor(helper, coat, EquipmentSlot.HEAD, 0);
+        assertArmor(helper, coat, EquipmentSlot.MAINHAND, 0);
+        helper.succeed();
+    }
+
+    /** Own batch: changes config. */
+    @ModGameTest(batch = "pirates_n_ships_config_apparel_coat_armor")
+    public static void coatArmourFollowsTheConfig(GameTestHelper helper) {
+        ConfigOverrides.during(helper, ApparelConfig.OFFICERS_COAT_ARMOR, 5);
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ApparelContent.OFFICERS_COAT.get()));
+        use(helper, player);
+        ItemStack worn = player.getItemBySlot(EquipmentSlot.CHEST);
+        assertArmor(helper, worn, EquipmentSlot.CHEST, 5);
+        Multimap<Holder<Attribute>, AttributeModifier> map = HashMultimap.create();
+        worn.forEachModifier(EquipmentSlot.CHEST, map::put);
+        player.getAttributes().addTransientAttributeModifiers(map);
+        helper.assertValueEqual(player.getAttributeValue(Attributes.ARMOR), 5.0, "armour with the coat on");
+        helper.succeed();
+    }
+
+    /** Own batch: changes config. */
+    @ModGameTest(batch = "pirates_n_ships_config_apparel_coat_armor_off")
+    public static void coatArmourZeroGivesNoModifier(GameTestHelper helper) {
+        ConfigOverrides.during(helper, ApparelConfig.OFFICERS_COAT_ARMOR, 0);
+        ItemStack coat = new ItemStack(ApparelContent.OFFICERS_COAT.get());
+        int[] count = {0};
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            coat.forEachModifier(slot, (attribute, modifier) -> count[0]++);
+        }
+        helper.assertValueEqual(count[0], 0, "coat modifiers with officers_coat_armor 0");
         helper.succeed();
     }
 

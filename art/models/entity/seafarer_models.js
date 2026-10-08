@@ -1,5 +1,5 @@
-// Model builder and exporter for pirate.bbmodel, sailor.bbmodel, navy_soldier.bbmodel and navy_officer.bbmodel
-// (M3-art). Run in Blockbench (risky_eval) after seafarer_skins.js:
+// Model builder and exporter for pirate.bbmodel, sailor.bbmodel, navy_soldier.bbmodel, navy_officer.bbmodel
+// (M3-art) and pirate_captain.bbmodel (ART6). Run in Blockbench (risky_eval) after seafarer_skins.js:
 //   eval(require('fs').readFileSync('<repo>/art/models/entity/seafarer_models.js', 'utf8'))
 //   SF.make('pirate', '<repo>')    opens a new GeckoLib project tab, builds, paints and animates it
 //   SF.exportAll('<repo>')         writes geo, texture and project file of the open project
@@ -138,6 +138,48 @@ SF.DETAILS.navy_officer = [
   ...pair(T('right_arm', 'x', [-8.45, 13.9, -2.45], [-3.55, 16.7, 2.45], 'navy_d', {faces: sides('R:cuff')}), 'cuff_right', 'cuff_left').map((c, i) => Object.assign(c, {bone: i ? 'left_arm' : 'right_arm'})),
   ...pair(T('right_leg', 'x', [-4.35, 6.4, -2.45], [0.35, 8.3, 2.45], 'boot_d', {faces: sides('R:boot_top')}), 'boot_top_right', 'boot_top_left').map((c, i) => Object.assign(c, {bone: i ? 'left_leg' : 'right_leg'})),
   ...pair(T('right_leg', 'x', [-3.6, 0, -2.6], [-0.2, 1.2, -2.0], 'boot', {faces: {down: 'boot_d', up: 'boot_l'}}), 'toe_right', 'toe_left').map((c, i) => Object.assign(c, {bone: i ? 'left_leg' : 'right_leg'}))
+];
+
+// pirate captain (ART6): a wide hat with the brim cocked up on the left and a white plume sweeping back (`hat`), beard
+// with two beaded braids and an earring (`head`), knee-long coat tails and skirts, lapels, jabot, red sash with a
+// knot and long ends on the left hip, a leather baldric over the right shoulder (`body`), wide crimson cuffs, bucket-top
+// boots. The plume is a chain of vanes in the yz plane, each turned about x from where the last one ends.
+SF.plume = function () {
+  const segs = [[20, 3.0, 2.0], [50, 3.2, 2.8], [85, 3.2, 2.6], [120, 2.6, 2.0], [150, 1.8, 1.2]];
+  let o = [3.0, 34.2, -3.4];
+  return segs.map(([a, len, w], i) => {
+    const c = T('hat', 'plume_' + (i + 1), [o[0] - 0.5, o[1], o[2] - w / 2], [o[0] + 0.5, o[1] + len, o[2] + w / 2], 'white',
+      {faces: {east: 'R:plume', west: 'R:plume', down: null}, rot: [a, 0, 0], origin: o.slice()});
+    const r = a * Math.PI / 180;
+    o = [o[0], o[1] + len * Math.cos(r), o[2] + len * Math.sin(r)];
+    return c;
+  });
+};
+SF.DETAILS.pirate_captain = [
+  T('hat', 'hat_crown', [-4.3, 31.0, -4.3], [4.3, 34.8, 4.3], 'hat', {faces: sides('R:crown', {up: 'R:crown_top', down: null})}),
+  T('hat', 'hat_band', [-4.45, 31.2, -4.45], [4.45, 32.1, 4.45], 'sash', {faces: sides('R:band', {up: null, down: null})}),
+  T('hat', 'hat_brim', [-7.0, 30.6, -7.0], [4.3, 31.2, 7.0], 'gold', {faces: {up: 'R:brim_top', down: 'R:brim_under'}}),
+  T('hat', 'hat_brim_cocked', [4.3, 30.6, -7.0], [6.8, 31.2, 7.0], 'gold', {faces: {up: 'R:brim_top', down: 'R:brim_under', west: null}, rot: [0, 0, 60], origin: [4.3, 30.9, 0]}),
+  T('hat', 'plume_clasp', [2.4, 33.0, -4.6], [3.6, 34.2, -4.3], 'gold_l', {faces: {down: 'gold_d', east: 'gold_d', west: 'gold_d'}}),
+  ...SF.plume(),
+  T('head', 'beard', [-3.2, 21.6, -4.4], [3.2, 24.4, -2.6], 'hair_black', {faces: {up: null, south: null}}),
+  ...pair(T('head', 'x', [-2.0, 19.4, -4.2], [-1.0, 21.8, -3.2], 'hair_black', {faces: {up: null}}), 'braid_right', 'braid_left'),
+  ...pair(T('head', 'x', [-2.15, 20.0, -4.35], [-0.85, 20.7, -3.05], 'gold', {faces: {down: 'gold_d'}}), 'braid_bead_right', 'braid_bead_left'),
+  T('head', 'earring', [4, 25.2, -0.2], [4.4, 26.2, 0.4], 'gold'),
+  ...pair(T('body', 'x', [-2.7, 15.5, -2.62], [-1.6, 24, -2.25], 'cc_l', {faces: {north: 'R:lapel', up: 'cc_ll'}}), 'lapel_right', 'lapel_left'),
+  T('body', 'jabot', [-1.0, 19.4, -2.6], [1.0, 23.6, -2.25], 'white', {faces: {north: 'R:jabot', up: null}}),
+  ...pair(T('body', 'x', [-4.3, 2.4, 2.3], [-0.15, 12.4, 2.85], 'cc_d', {faces: {south: 'R:tail_back', up: null}, rot: [-9, 0, 0], origin: [-2.2, 12.4, 2.55]}), 'coat_tail_right', 'coat_tail_left'),
+  ...pair(T('body', 'x', [-4.85, 2.4, -2.3], [-4.3, 12.4, 2.85], 'cc_d', {faces: {west: 'R:tail_side', up: null}, rot: [0, 0, -5], origin: [-4.55, 12.4, 0]}), 'coat_skirt_right', 'coat_skirt_left'),
+  T('body', 'sash', [-4.45, 12.4, -2.45], [4.45, 14.6, 2.45], 'sash', {faces: sides('R:sash', {up: 'sash_d', down: 'sash_d'})}),
+  T('body', 'sash_knot', [2.4, 12.1, -2.9], [4.0, 14.2, -2.4], 'sash_l', {faces: {down: 'sash_d'}}),
+  T('body', 'sash_end_a', [2.6, 8.4, -2.8], [3.4, 12.2, -2.5], 'sash', {rot: [0, 0, 6], origin: [3.0, 12.2, -2.65]}),
+  T('body', 'sash_end_b', [3.3, 9.0, -2.77], [4.0, 12.2, -2.52], 'sash_d', {rot: [0, 0, -8], origin: [3.65, 12.2, -2.65]}),
+  T('body', 'baldric_front', [-0.6, 12.0, -2.8], [0.6, 24.6, -2.5], 'belt', {faces: {north: 'R:baldric'}, rot: [0, 0, 33.7], origin: [0, 18.3, -2.65]}),
+  T('body', 'baldric_back', [-0.6, 12.0, 2.5], [0.6, 24.6, 2.8], 'belt', {faces: {south: 'R:baldric'}, rot: [0, 0, 33.7], origin: [0, 18.3, 2.65]}),
+  T('body', 'baldric_buckle', [-0.7, 17.6, -2.95], [0.7, 18.9, -2.75], 'brass', {faces: {down: 'brass_d'}, rot: [0, 0, 33.7], origin: [0, 18.3, -2.65]}),
+  ...pair(T('right_arm', 'x', [-8.65, 13.6, -2.65], [-3.35, 17.4, 2.65], 'crimson_d', {faces: sides('R:cuff', {down: 'cc_d'})}), 'cuff_right', 'cuff_left').map((c, i) => Object.assign(c, {bone: i ? 'left_arm' : 'right_arm'})),
+  ...pair(T('right_leg', 'x', [-4.5, 6.4, -2.6], [0.5, 9.4, 2.6], 'boot_l', {faces: sides('R:boot_cuff', {up: 'boot_d'})}), 'boot_cuff_right', 'boot_cuff_left').map((c, i) => Object.assign(c, {bone: i ? 'left_leg' : 'right_leg'})),
+  ...pair(T('right_leg', 'x', [-3.6, 0, -2.6], [-0.2, 1.3, -2.0], 'boot', {faces: {down: 'boot_d', up: 'boot_l'}}), 'toe_right', 'toe_left').map((c, i) => Object.assign(c, {bone: i ? 'left_leg' : 'right_leg'}))
 ];
 
 // --- building ---------------------------------------------------------------------------------------------------

@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:blue_wool"
+    },
+    "G": {
+      "item": "minecraft:gold_ingot"
+    },
+    "W": {
+      "item": "minecraft:white_wool"
+    }
+  },
+  "pattern": [
+    "BGB",
+    "BWB",
+    "BBB"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:officers_coat"
+  }
+}

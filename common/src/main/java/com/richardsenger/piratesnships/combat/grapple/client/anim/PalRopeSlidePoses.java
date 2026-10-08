@@ -22,25 +22,30 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /**
- * The rope slide pose through PAL (GR2). The only class of the grapple that imports {@code com.zigythebird.playeranim*};
+ * The rope poses through PAL: the slide (GR2) and the haul (ART7). The only class of the grapple that imports {@code com.zigythebird.playeranim*};
  * load it only when PAL is installed ({@link RopeSlidePoses#onClientSetup}).
  *
  * <p>Every player gets a layer {@code pirates_n_ships:rope_slide} above the melee layer. While the player rides a rope
- * it plays {@code rope_slide} (held on its last frame); otherwise it is stopped. The animation file lives in
- * {@code assets/pirates_n_ships/rope_animations/}, not in PAL's {@code player_animations/} folder (whose contents
- * {@code PalAnimationFilesTest} pins to the melee and firearm animations), and is read once through the resource
- * manager with PAL's own loader, so a resource pack can still replace it.
+ * it plays {@code rope_slide} (held on its last frame), while the player hauls {@code haul} (looped); otherwise it is
+ * stopped. The animation files live in {@code assets/pirates_n_ships/rope_animations/}, not in PAL's
+ * {@code player_animations/} folder (whose contents {@code PalAnimationFilesTest} pins to the melee and firearm
+ * animations), and are read once each through the resource manager with PAL's own loader, so a resource pack can still
+ * replace them.
  */
 final class PalRopeSlidePoses implements RopeSlidePoses.Driver {
 
     private static final ResourceLocation LAYER = Constants.id(RopeSlidePoses.ANIMATION);
-    static final ResourceLocation FILE = Constants.id("rope_animations/" + RopeSlidePoses.ANIMATION + ".json");
 
-    private @Nullable Animation animation;
-    private boolean missingReported;
+    private final Map<String, Animation> animations = new HashMap<>();
+    private final Set<String> missingReported = new HashSet<>();
 
     private PalRopeSlidePoses() {
     }
@@ -52,37 +57,46 @@ final class PalRopeSlidePoses implements RopeSlidePoses.Driver {
     }
 
     @Override
-    public void update(Player player, boolean sliding) {
+    public void update(Player player, @Nullable String name) {
         RopeLayer layer = layer(player);
-        if (layer == null || layer.playing == sliding) return;
-        if (!sliding) {
+        if (layer == null || Objects.equals(layer.playing, name)) return;
+        if (name == null) {
             layer.stopTriggeredAnimation();
             layer.stop();
-            layer.playing = false;
+            layer.playing = null;
             return;
         }
-        Animation a = animation();
+        Animation a = animation(name);
         if (a == null) return;
         layer.firstPerson = FirstPersonRule.animateFirstPerson(MeleeClientConfig.ANIMATIONS_FIRST_PERSON.get(), Services.PLATFORM::isModLoaded);
         layer.triggerAnimation(a);
-        layer.playing = true;
+        layer.playing = name;
     }
 
-    private @Nullable Animation animation() {
-        if (animation != null || missingReported) return animation;
-        Optional<Resource> res = Minecraft.getInstance().getResourceManager().getResource(FILE);
+    static ResourceLocation file(String animation) {
+        return Constants.id("rope_animations/" + animation + ".json");
+    }
+
+    private @Nullable Animation animation(String name) {
+        Animation cached = animations.get(name);
+        if (cached != null || missingReported.contains(name)) return cached;
+        ResourceLocation file = file(name);
+        Optional<Resource> res = Minecraft.getInstance().getResourceManager().getResource(file);
+        Animation loaded = null;
         if (res.isPresent()) {
             try (InputStream in = res.get().open()) {
-                animation = UniversalAnimLoader.loadAnimations(in).get(RopeSlidePoses.ANIMATION);
+                loaded = UniversalAnimLoader.loadAnimations(in).get(name);
             } catch (IOException | RuntimeException e) {
-                Constants.LOG.warn("Could not read the rope slide animation {}", FILE, e);
+                Constants.LOG.warn("Could not read the rope animation {}", file, e);
             }
         }
-        if (animation == null && !missingReported) {
-            missingReported = true;
-            Constants.LOG.warn("Rope slide animation {} is missing (resource pack?)", FILE);
+        if (loaded == null) {
+            missingReported.add(name);
+            Constants.LOG.warn("Rope animation {} is missing (resource pack?)", file);
+            return null;
         }
-        return animation;
+        animations.put(name, loaded);
+        return loaded;
     }
 
     private static @Nullable RopeLayer layer(Player player) {
@@ -103,7 +117,7 @@ final class PalRopeSlidePoses implements RopeSlidePoses.Driver {
 
         private static final FirstPersonConfiguration BOTH_ARMS = new FirstPersonConfiguration(true, true, false, false);
 
-        boolean playing;
+        @Nullable String playing;
         boolean firstPerson = true;
 
         RopeLayer(AbstractClientPlayer player) {

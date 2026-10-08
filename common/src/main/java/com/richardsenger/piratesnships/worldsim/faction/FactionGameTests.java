@@ -12,10 +12,19 @@ import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
+import com.richardsenger.piratesnships.rpg.deeds.Deed;
+import com.richardsenger.piratesnships.rpg.deeds.DeedContext;
+import com.richardsenger.piratesnships.rpg.deeds.Deeds;
+import com.richardsenger.piratesnships.rpg.reputation.Reputation;
+import com.richardsenger.piratesnships.rpg.reputation.ReputationConfig;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -124,6 +133,75 @@ public final class FactionGameTests {
                 h.assertTrue(c.getContents() instanceof TranslatableContents t && t.getKey().equals(FactionCommands.KEY_LINE),
                         "not a faction line: " + c);
             }
+        });
+    }
+
+    // ------------------------------------------------------------------ deeds (WS1b, FactionDeeds)
+
+    /** A real server player with a mock connection, not added to the level (pattern of the reputation tests). */
+    private static ServerPlayer serverPlayer(GameTestHelper h) {
+        var profile = new com.mojang.authlib.GameProfile(UUID.randomUUID(), "faction_deeds");
+        var cookie = net.minecraft.server.network.CommonListenerCookie.createInitial(profile, false);
+        ServerPlayer p = new ServerPlayer(h.getLevel().getServer(), h.getLevel(), profile, cookie.clientInformation());
+        var connection = new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND);
+        new io.netty.channel.embedded.EmbeddedChannel(connection);
+        new net.minecraft.server.network.ServerGamePacketListenerImpl(h.getLevel().getServer(), connection, p, cookie);
+        p.setPos(Vec3.atCenterOf(h.absolutePos(new BlockPos(1, 1, 1))));
+        return p;
+    }
+
+    /** Plundering a merchant raises Pirates–Merchants tension and moves wealth from the merchants to the pirates. */
+    @ModGameTest(batch = "pirates_n_ships_worldsim_faction_deed_plunder")
+    public static void plunderDeedShiftsTheFactions(GameTestHelper h) {
+        withCleanState(h, server -> {
+            ServerPlayer p = serverPlayer(h);
+            double tension = Factions.tension(server, Faction.PIRATES, Faction.MERCHANTS);
+            long merchants = Factions.wealth(server, Faction.MERCHANTS);
+            long pirates = Factions.wealth(server, Faction.PIRATES);
+            Deeds.record(p, Deed.PLUNDER_MERCHANT, DeedContext.NONE);
+            h.assertTrue(Factions.tension(server, Faction.MERCHANTS, Faction.PIRATES) > tension, "pirates–merchants tension rises");
+            h.assertTrue(Factions.wealth(server, Faction.MERCHANTS) < merchants, "merchants lose wealth");
+            h.assertTrue(Factions.wealth(server, Faction.PIRATES) > pirates, "pirates gain wealth");
+            h.assertValueEqual(Factions.state(server),
+                    FactionRules.apply(FactionState.INITIAL, FactionEvent.MERCHANT_PLUNDERED, FactionConfig.DEED_SCALE.get(),
+                            FactionConfig.MAX_WEALTH.get()), "exactly one merchant_plundered at deed_scale");
+        });
+    }
+
+    /** A pirate killed by a navy-aligned player counts for the navy; by a player the navy hates (−50) it does not. */
+    @ModGameTest(batch = "pirates_n_ships_worldsim_faction_deed_kill_pirate")
+    public static void pirateKillDeedCountsOnlyWhenNavyAligned(GameTestHelper h) {
+        withCleanState(h, server -> {
+            ServerPlayer outlaw = serverPlayer(h);
+            Reputation.set(outlaw, com.richardsenger.piratesnships.rpg.reputation.Faction.NAVY, -50, "test");
+            Deeds.record(outlaw, Deed.KILL_PIRATE, DeedContext.NONE);
+            h.assertValueEqual(Factions.state(server), FactionState.INITIAL, "an outlaw's pirate kill is not reported");
+
+            ServerPlayer officer = serverPlayer(h);
+            Deeds.record(officer, Deed.KILL_PIRATE, DeedContext.NONE);
+            h.assertTrue(Factions.tension(server, Faction.NAVY, Faction.PIRATES) > FactionState.INITIAL.tension(Faction.NAVY, Faction.PIRATES),
+                    "a navy-aligned player's pirate kill raises navy–pirates tension");
+        });
+    }
+
+    /** {@code reputation.enabled = false}: deeds are not recorded, so the factions do not move. */
+    @ModGameTest(batch = "pirates_n_ships_config_worldsim_faction_deed_reputation_off")
+    public static void deedsIgnoredWithReputationOff(GameTestHelper h) {
+        ConfigOverrides.during(h, ReputationConfig.ENABLED, false);
+        withCleanState(h, server -> {
+            Deeds.record(serverPlayer(h), Deed.PLUNDER_MERCHANT, DeedContext.NONE);
+            h.assertValueEqual(Factions.state(server), FactionState.INITIAL, "state unchanged");
+        });
+    }
+
+    /** {@code world_simulation.factions.enabled = false}: deeds still move reputation but not the factions. */
+    @ModGameTest(batch = "pirates_n_ships_config_worldsim_faction_deed_factions_off")
+    public static void deedsIgnoredWithFactionsOff(GameTestHelper h) {
+        ConfigOverrides.during(h, FactionConfig.ENABLED, false);
+        withCleanState(h, server -> {
+            ServerPlayer p = serverPlayer(h);
+            h.assertFalse(Deeds.record(p, Deed.PLUNDER_MERCHANT, DeedContext.NONE).isEmpty(), "reputation still applies");
+            h.assertValueEqual(Factions.state(server), FactionState.INITIAL, "state unchanged");
         });
     }
 

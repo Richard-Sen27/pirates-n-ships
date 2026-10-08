@@ -48,5 +48,6 @@ Minecraft mod. Full spec: `docs/design.md`. Read it at the start of every sessio
 ## Workflow
 - Plan before implementing any feature that touches more than 2 files. List the files (with their module: common / neoforge / fabric) and the approach first.
 - One feature per session. Make sure `./gradlew build` and the GameTests of the classes you created or changed pass (scoped run) before declaring something done; the full suite runs once in the merge stage, never in every agent (the machine has 16 GB and a full run costs a server for 25 minutes).
+- **Never kill processes you did not start.** No `pkill`, `killall`, `gradle --stop` or `kill` of a pid you did not launch: other agents and the merge stage share this machine, and one `pkill -f gametest` on 2026-10-09 killed every running test server. Stop only your own run by its pid.
 - Spikes (milestones 1–4) may temporarily live in `neoforge/`. Move them into `common` before milestone 5.
 - The human playtests in-game and reports back with screenshots and logs. Ask for a playtest when a feature can't be verified headlessly, and state exactly what to check.

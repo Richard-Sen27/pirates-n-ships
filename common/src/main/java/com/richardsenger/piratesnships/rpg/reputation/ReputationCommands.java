@@ -51,7 +51,8 @@ public final class ReputationCommands {
     private static int show(CommandContext<CommandSourceStack> c, ServerPlayer player) {
         ReputationRecord r = Reputation.record(player);
         Component line = Component.translatable(KEY + (Reputation.enabled() ? "show" : "show.off"), player.getDisplayName(),
-                r.display(Faction.NAVY), r.display(Faction.PIRATES), r.display(Faction.VILLAGERS));
+                r.display(Faction.NAVY), r.display(Faction.PIRATES), r.display(Faction.VILLAGERS))
+                .append(". ").append(com.richardsenger.piratesnships.rpg.career.Careers.describe(player));
         c.getSource().sendSuccess(() -> line, false);
         return r.display(Faction.NAVY);
     }

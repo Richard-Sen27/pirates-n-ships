@@ -4,10 +4,10 @@ import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.sailing.SailingConfig;
 import com.richardsenger.piratesnships.sailing.anchor.AnchorConfig;
 import com.richardsenger.piratesnships.sailing.anchor.AnchorEntities;
+import com.richardsenger.piratesnships.sailing.anchor.AnchorPhysics;
 import com.richardsenger.piratesnships.sailing.anchor.AnchorTravel;
 import com.richardsenger.piratesnships.sailing.block.CapstanBlock;
 import com.richardsenger.piratesnships.sailing.force.AnchorState;
-import com.richardsenger.piratesnships.sailing.force.SailingParams;
 import com.richardsenger.piratesnships.sailing.helm.HelmBlockEntity;
 import com.richardsenger.piratesnships.sailing.helm.HelmConfig;
 import com.richardsenger.piratesnships.sailing.helm.WheelMath;
@@ -41,8 +41,9 @@ import org.jetbrains.annotations.Nullable;
  *   <li><b>Anchor:</b> one per ship, in the runtime and persisted in the ship's Sable user data
  *       ({@code pirates_n_ships_sailing.anchor}, {@link ShipAnchor#CODEC}) at every change. Every capstan of a ship
  *       works the same anchor; dropping hangs it from the capstan used, and only that capstan's block state shows the
- *       phase. Breaking that capstan loses the anchor. The anchor is a visible entity ({@code sailing.anchor}) that
- *       runs out from the hawse at the hull side; a trip takes as long as the chain needs for the depth.</li>
+ *       phase. Breaking that capstan loses the anchor. The anchor is a visible entity ({@code sailing.anchor}) and,
+ *       since AN2a, a body of its own: it falls from the hawse at the hull side, lands where it falls, and its chain
+ *       pulls the ship ({@code AnchorPhysics}).</li>
  * </ul>
  */
 public final class ShipControls {
@@ -107,6 +108,54 @@ public final class ShipControls {
         }
     }
 
+    /** What {@link #setRudderAngle} did. */
+    public enum RudderResult {
+        /** The wheel and the rudder step now show the angle. */
+        SET,
+        /** A player holds the wheel of this helm (HELM1 session): nothing changed. */
+        PLAYER_AT_WHEEL,
+        /** No helm at that position. */
+        NOT_A_HELM
+    }
+
+    /**
+     * WS3a: puts the rudder of the helm at {@code helmPlotPos} to {@code degrees} (positive = starboard, clamped to
+     * {@code sailing.max_rudder_angle}) whichever way the ship is steered: turns the wheel to the matching angle (the
+     * rudder's source with {@code helm.wheel.drag_steering}) and sets the nearest click step in the block state (its
+     * source without). For the NPC helmsman ({@code station.helm.HelmCourses}); refused while a player holds that
+     * wheel. Writes nothing that already shows the angle, so calling it every few ticks sends no needless updates.
+     */
+    public static RudderResult setRudderAngle(ServerLevel level, BlockPos helmPlotPos, double degrees) {
+        BlockState state = level.getBlockState(helmPlotPos);
+        if (!(state.getBlock() instanceof HelmBlock)) {
+            return RudderResult.NOT_A_HELM;
+        }
+        if (playerAtWheel(level, helmPlotPos)) {
+            return RudderResult.PLAYER_AT_WHEEL;
+        }
+        double max = SailingConfig.MAX_RUDDER_ANGLE.get();
+        double fraction = max <= 0.0 || !Double.isFinite(degrees) ? 0.0 : Math.max(-1.0, Math.min(1.0, degrees / max));
+        int steps = SailingConfig.RUDDER_STEPS.get();
+        int step = (int) Math.round(fraction * Math.max(1, Math.min(RudderSteps.MAX_STEPS, steps)));
+        int property = RudderSteps.toProperty(step);
+        if (state.getValue(HelmBlock.RUDDER) != property) {
+            level.setBlock(helmPlotPos, state.setValue(HelmBlock.RUDDER, property), Block.UPDATE_ALL); // runtime follows the block change
+        }
+        double wheel = WheelMath.wheelForFraction(fraction, HelmConfig.lockAngle());
+        ShipBody ship = SableShips.containing(level, helmPlotPos);
+        SailingRuntime rt = ship == null ? null : SailingRuntimes.get(level, ship.id());
+        boolean shown = level.getBlockEntity(helmPlotPos) instanceof HelmBlockEntity be && Math.abs(be.wheel() - wheel) < 1e-3;
+        if (!shown || rt != null && Math.abs(rt.wheelAngle() - wheel) >= 1e-3) {
+            setWheel(level, helmPlotPos, wheel);
+        }
+        return RudderResult.SET;
+    }
+
+    /** Whether a player holds the wheel of the helm at {@code helmPlotPos} right now (HELM1 session). */
+    public static boolean playerAtWheel(ServerLevel level, BlockPos helmPlotPos) {
+        return com.richardsenger.piratesnships.sailing.helm.HelmService.isHeld(level, helmPlotPos);
+    }
+
     public static Component rudderMessage(int step, int stepsPerSide, double maxAngle) {
         if (step == 0) {
             return Component.translatable(KEY_RUDDER_MIDSHIPS);
@@ -118,7 +167,12 @@ public final class ShipControls {
 
     // ------------------------------------------------------------------ capstan
 
-    /** Use of a capstan at {@code pos} (plot): drops the ship's anchor, or raises it when it is out. */
+    /**
+     * Use of a capstan at {@code pos} (plot): drops the ship's anchor, or raises it when it is out (AN2a). A drop lets the
+     * anchor go from the hawse with the hawse's velocity ({@link ShipAnchor#dropped}); it is refused when there is no
+     * ground within the chain's length straight below the hawse. Raising winds the chain in at
+     * {@code anchor_chain.raise_speed}; using the capstan while it winds lets the anchor go again from where it is.
+     */
     public static Component useCapstan(ServerLevel level, BlockPos pos) {
         ShipBody ship = SableShips.containing(level, pos);
         SailingRuntime rt = ship == null ? null : SailingRuntimes.getOrCreate(ship);
@@ -131,60 +185,59 @@ public final class ShipControls {
         ShipAnchor a = rt.anchor();
         if (a != null && (a.state().phase() == AnchorState.Phase.DROPPING || a.state().phase() == AnchorState.Phase.HOLDING)) {
             setAnchor(ship, rt, a.withState(a.state().raise()));
-            return Component.translatable(KEY_RAISING, seconds(a.state().hold() * a.raiseTicks()));
+            double chain = Math.max(a.paidOut(), a.ring().distanceTo(ship.toWorld(a.hawse())));
+            return Component.translatable(KEY_RAISING, seconds(chain / AnchorConfig.RAISE_SPEED.get() * 20.0));
         }
         if (a != null && a.state().phase() == AnchorState.Phase.RAISING) {
-            // reversed mid-way: the anchor runs out again from where it is to the same point
+            // reversed mid-way: the anchor runs out again from where it is
             setAnchor(ship, rt, a.withState(a.state().drop()));
-            return Component.translatable(KEY_DROPPING, fmt(ship.toWorld(a.hawse()).y - AnchorTravel.HEIGHT - a.point().y),
-                    seconds((1.0 - a.state().hold()) * a.dropTicks()));
+            Vec3 ring = a.ring();
+            OptionalInt ground = groundBelow(level, ring, SailingConfig.ANCHOR_CHAIN_LENGTH.get());
+            double depth = ground.isEmpty() ? 0.0 : Math.max(0.0, ring.y - AnchorTravel.HEIGHT - ground.getAsInt());
+            return Component.translatable(KEY_DROPPING, fmt(depth), seconds(depth / AnchorConfig.SINK_SPEED.get() * 20.0));
         }
-        // the anchor runs out from the hawse at the hull side, straight down to the first solid block in reach
+        // the anchor leaves the hawse at the hull side with the ship's velocity there; refused without ground in reach
         Vec3 hawsePlot = AnchorEntities.hawse(level, rt.bow(), pos);
         Vec3 hawse = ship.toWorld(hawsePlot);
-        int x = (int) Math.floor(hawse.x), z = (int) Math.floor(hawse.z);
-        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
-        OptionalInt floor = AnchorGround.floorY((int) Math.floor(hawse.y), SailingConfig.ANCHOR_CHAIN_LENGTH.get(),
-                y -> level.getBlockState(m.set(x, y, z)).blocksMotion());
+        OptionalInt floor = groundBelow(level, hawse, SailingConfig.ANCHOR_CHAIN_LENGTH.get());
         if (floor.isEmpty()) {
             return Component.translatable(KEY_NO_GROUND, SailingConfig.ANCHOR_CHAIN_LENGTH.get());
         }
-        Vec3 point = new Vec3(hawse.x, floor.getAsInt(), hawse.z);
-        double distance = AnchorTravel.distance(hawse.y, point.y);
-        int dropTicks, raiseTicks;
-        if (AnchorConfig.DEPTH_TRAVEL.get()) {
-            int min = AnchorConfig.MIN_TRAVEL_TICKS.get(), max = AnchorConfig.MAX_TRAVEL_TICKS.get();
-            dropTicks = AnchorTravel.ticks(distance, AnchorConfig.DROP_SPEED.get(), min, max);
-            raiseTicks = AnchorTravel.ticks(distance, AnchorConfig.RAISE_SPEED.get(), min, max);
-        } else {
-            SailingParams.AnchorParams p = SailingConfig.sailingParams().anchor();
-            dropTicks = p.dropTicks();
-            raiseTicks = p.raiseTicks();
-        }
-        ShipAnchor dropped = new ShipAnchor(AnchorState.RAISED.drop(), point, pos.immutable(), hawsePlot, dropTicks, raiseTicks);
+        double depth = AnchorTravel.distance(hawse.y, floor.getAsInt());
+        ShipAnchor dropped = ShipAnchor.dropped(pos, hawsePlot, hawse, ship.velocityAt(hawsePlot));
         if (a != null && !a.capstan().equals(pos)) {
             showPhase(level, a.capstan(), AnchorState.Phase.RAISED);
         }
         setAnchor(ship, rt, dropped);
-        return Component.translatable(KEY_DROPPING, fmt(distance), seconds(dropTicks));
+        return Component.translatable(KEY_DROPPING, fmt(depth), seconds(depth / AnchorConfig.SINK_SPEED.get() * 20.0));
+    }
+
+    /** Top of the first solid block straight below {@code from} within {@code reach} blocks ({@link AnchorGround}). */
+    private static OptionalInt groundBelow(ServerLevel level, Vec3 from, int reach) {
+        int x = (int) Math.floor(from.x), z = (int) Math.floor(from.z);
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        return AnchorGround.floorY((int) Math.floor(from.y), reach, y -> level.getBlockState(m.set(x, y, z)).blocksMotion());
     }
 
     /**
-     * Game tick: advances the anchor state machine of one ship at this trip's travel times, keeps the capstan's block
-     * state in step and places the visible anchor ({@link AnchorEntities#sync}).
+     * Game tick: moves the anchor of one ship ({@link AnchorPhysics#tick}: falling, dragging, winding in), keeps its
+     * state in the runtime, the ship's user data and the capstan's block state, and places the visible anchor
+     * ({@link AnchorEntities#sync}).
      */
-    static void tickAnchor(ShipBody ship, SailingRuntime rt, SailingParams.AnchorParams p) {
+    static void tickAnchor(ShipBody ship, SailingRuntime rt) {
         ShipAnchor a = rt.anchor();
         if (a != null) {
-            AnchorState next = a.state().tick(a.travelParams(p));
-            if (!next.equals(a.state())) {
-                setAnchor(ship, rt, next.phase() == AnchorState.Phase.RAISED ? null : a.withState(next));
-                if (next.phase() == AnchorState.Phase.RAISED) {
-                    showPhase(ship.level(), a.capstan(), AnchorState.Phase.RAISED);
-                }
+            AnchorPhysics.Step step = AnchorPhysics.tick(ship, a, rt.anchorEnabled());
+            ShipAnchor next = step.anchor();
+            if (next == null) {
+                setAnchor(ship, rt, null);
+                showPhase(ship.level(), a.capstan(), AnchorState.Phase.RAISED);
+            } else if (!next.equals(a)) {
+                setAnchor(ship, rt, next);
             }
+            rt.setAnchorStatus(step.status());
         }
-        AnchorEntities.sync(ship, rt.bow(), rt.anchor());
+        AnchorEntities.sync(ship, rt.bow(), rt.anchor(), rt.anchorStatus());
     }
 
     /** Sets the ship's anchor in the runtime and its user data and shows the phase on the capstan. Null = stowed. */

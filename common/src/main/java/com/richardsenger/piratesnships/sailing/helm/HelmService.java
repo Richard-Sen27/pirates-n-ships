@@ -126,6 +126,16 @@ public final class HelmService {
         return s == null || s.player != player ? null : s.pos;
     }
 
+    /** Whether a player holds the wheel of the helm at {@code pos} (plot) in {@code level} right now (WS3a: the NPC helmsman yields). */
+    public static boolean isHeld(ServerLevel level, BlockPos pos) {
+        for (Session s : SESSIONS.values()) {
+            if (s.level == level && s.pos.equals(pos) && present(s.player)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** The wheel angle of the helm at {@code pos}, 0 without a block entity. */
     public static float wheel(ServerLevel level, BlockPos pos) {
         return level.getBlockEntity(pos) instanceof HelmBlockEntity be ? be.wheel() : 0f;

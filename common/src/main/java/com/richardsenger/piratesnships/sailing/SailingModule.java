@@ -58,6 +58,7 @@ public final class SailingModule implements ModModule {
     public void registerContent() {
         SailingBlocks.init();
         ShipForces.register();
+        ShipForces.registerAnchor(); // the anchor's chain (AN2a)
         com.richardsenger.piratesnships.sailing.anchor.AnchorContent.init(); // visible anchor (F4)
         HelmSetup.registerContent(); // wheel steering (HELM1)
     }
@@ -90,6 +91,7 @@ public final class SailingModule implements ModModule {
         // ShipControls.steer when helm.wheel.drag_steering is off
         HelmSetup.registerEvents();
         com.richardsenger.piratesnships.sailing.anchor.AnchorEntities.registerEvents(); // visible anchor (F4)
+        com.richardsenger.piratesnships.sailing.anchor.AnchorPhysics.registerEvents(); // the anchor's chain force (AN2a)
     }
 
     @Override
@@ -102,6 +104,7 @@ public final class SailingModule implements ModModule {
                     .add(YardBlock.KEY_NO_SAIL, "This yard heads no sail: hang a second yard %s to %s blocks straight below its middle, on the same mast")
                     .block(SailingBlocks.SAIL_WINCH, "Sail Winch")
                     .add(ShipForces.SAILING_KEY, "Sails and Keel")
+                    .add(ShipForces.ANCHOR_KEY, "Anchor Chain")
                     .add(SailWinchBlock.trimKey(SailTrim.FURLED), "furled")
                     .add(SailWinchBlock.trimKey(SailTrim.HALF), "half sail")
                     .add(SailWinchBlock.trimKey(SailTrim.FULL), "full sail")
@@ -118,7 +121,7 @@ public final class SailingModule implements ModModule {
                     .add(ShipControls.KEY_CAPSTAN_NOT_ON_SHIP, "The capstan must be on an assembled ship")
                     .add(ShipControls.KEY_CAPSTAN_OFF, "Anchors are disabled on this server")
                     .add(ShipControls.KEY_NO_GROUND, "No ground within %s blocks below: the anchor would not hold")
-                    .add(ShipControls.KEY_DROPPING, "Anchor dropping to the ground %s blocks below, holds in %s s")
+                    .add(ShipControls.KEY_DROPPING, "Anchor dropping to the ground %s blocks below, lands in about %s s")
                     .add(ShipControls.KEY_RAISING, "Raising the anchor, stowed in %s s");
             String k = SailingCommands.KEY;
             lang.add(k + "wind.get", "Wind from %s° at %s blocks/s (%s)")
@@ -225,6 +228,7 @@ public final class SailingModule implements ModModule {
                 com.richardsenger.piratesnships.sailing.ship.SailingGameTestsRigging.class,
                 com.richardsenger.piratesnships.sailing.helm.HelmSteeringGameTests.class,
                 com.richardsenger.piratesnships.sailing.rope.RopeLineGameTests.class,
-                com.richardsenger.piratesnships.sailing.ship.HelmHandoverGameTests.class);
+                com.richardsenger.piratesnships.sailing.ship.HelmHandoverGameTests.class,
+                com.richardsenger.piratesnships.sailing.anchor.AnchorPhysicsGameTests.class);
     }
 }

@@ -10,13 +10,17 @@ import java.util.Optional;
  * The humanoid mobs of docs/design.md §9, with their faction and default duelist skill. Pure: the entity types
  * live in {@code MobContent}, the per-type config in {@code MobConfig}. The pirate captain (BOS1, §15) is a named pirate
  * of the island's captain's hut ({@code mob.captain}); it wears the pirate's model and texture ({@link #artId()}).
+ * The harbor master (PRT1a, §10.3) stands behind the harbor desks ({@code mob.harbor}): the sailor's geometry with his
+ * own coat-and-hat texture ({@link #geoId()}).
  */
 public enum MobKind {
     PIRATE(MobFaction.PIRATE, DuelistSkill.PIRATE),
     SAILOR(MobFaction.CIVILIAN, null),
     NAVY_SOLDIER(MobFaction.NAVY, null),
     NAVY_OFFICER(MobFaction.NAVY, DuelistSkill.NAVY_OFFICER),
-    PIRATE_CAPTAIN(MobFaction.PIRATE, DuelistSkill.PIRATE_CAPTAIN);
+    PIRATE_CAPTAIN(MobFaction.PIRATE, DuelistSkill.PIRATE_CAPTAIN),
+    /** PRT1a: the harbor master behind every port's desk ({@code mob.harbor}); a sailor in a coat and hat. */
+    HARBOR_MASTER(MobFaction.CIVILIAN, null);
 
     private final MobFaction faction;
     private final @Nullable DuelistSkill defaultSkill;
@@ -37,6 +41,14 @@ public enum MobKind {
      */
     public String artId() {
         return this == PIRATE_CAPTAIN ? PIRATE.id() : id();
+    }
+
+    /**
+     * The name of the geometry the kind is drawn with ({@code geo/<geoId>.geo.json}): its {@link #artId()}, except the
+     * harbor master, who is a texture variant on the sailor's geometry.
+     */
+    public String geoId() {
+        return this == HARBOR_MASTER ? SAILOR.id() : artId();
     }
 
     public MobFaction faction() {

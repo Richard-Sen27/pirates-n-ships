@@ -34,7 +34,9 @@ SF.C = {
   belt_white: [240, 238, 230], belt_shade: [200, 198, 190],
   hat_d: [16, 14, 18], hat: [32, 30, 36], hat_l: [52, 50, 58],
   gold_d: [156, 104, 22], gold: [222, 170, 48], gold_l: [252, 226, 120],
-  cockade: [236, 232, 220], crimson_d: [110, 18, 36], crimson: [150, 28, 50], crimson_l: [184, 56, 74]
+  cockade: [236, 232, 220], crimson_d: [110, 18, 36], crimson: [150, 28, 50], crimson_l: [184, 56, 74],
+  hm_coat_d: [22, 46, 42], hm_coat: [34, 68, 60], hm_coat_l: [54, 94, 82],
+  hm_cap_d: [20, 24, 40], hm_cap: [32, 38, 62], hm_trouser_d: [42, 42, 48], hm_trouser: [62, 62, 70]
 };
 
 SF.rng = function (seed) {
@@ -332,6 +334,65 @@ SF.navy_officer = function () {
   return s;
 };
 
+// --- harbor master (PRT1a) ----------------------------------------------------------------------------------------
+// A texture variant on the sailor's model (no geometry of its own, SF.VARIANTS): an older man, grey hair and grey
+// side-whiskers, a dark navy peaked cap with a gold band (the sailor's cap cubes), a bottle-green frock coat (jacket,
+// sleeve and the upper trousers layer as its skirts; open front over a buff waistcoat, brass buttons), a white cravat
+// (the neckerchief cubes), dark trousers with turn-ups (the slops cubes) and black shoes with brass buckles. The patch
+// list keeps the sailor's order: the sailor's cubes read their colours by position.
+SF.HARBOR_MASTER_PATCHES = ['white', 'shirt_d', 'hm_trouser', 'hm_trouser_d', 'hm_trouser', 'hm_coat_d', 'brass', 'shoe',
+  'shoe_d', 'brass', 'brass_d', 'hm_cap', 'hm_cap_d', 'pale', 'pale_d', 'hm_coat_l', 'hm_coat_d'];
+SF.harbor_master = function () {
+  const s = new SF.Sheet('harbor_master'), R = SF.REGIONS.sailor;
+  const f = SF.head(s, {skin: 'pale', skin_d: 'pale_d', skin_l: 'skin_l', hair: 'grey', hair_d: 'grey_d', brow: 'grey_d', hairRows: 2, backRows: 6});
+  const [fx, fy] = f.front;
+  s.rect(fx + 2, fy + 6, 4, 1, 'grey'); s.px(fx + 1, fy + 6, 'grey_d'); s.px(fx + 6, fy + 6, 'grey_d');   // moustache
+  s.rect(fx + 3, fy + 7, 2, 1, 'mouth');
+  s.rect(fx, fy + 4, 1, 4, 'grey'); s.rect(fx + 7, fy + 4, 1, 4, 'grey');                                     // whiskers
+  for (const side of ['right', 'left']) { const [cx, cy] = SF.cheek(s, f, side); s.rect(cx, cy + 3, 4, 5, 'grey'); s.speckle(cx, cy + 3, 4, 5, 'grey_d', 0.3); }
+  // a buff waistcoat over a white shirt; the coat's sides and back on the base layer
+  s.fill(SF.BODY, 'buff', 'buff_d', 0.12);
+  const b = s.faces(SF.BODY), [bx, by] = b.front;
+  s.rect(bx + 2, by, 4, 2, 'white'); s.px(bx + 3, by + 2, 'white'); s.px(bx + 4, by + 2, 'white');
+  for (let r = 3; r < 10; r += 2) s.px(bx + 4, by + r, 'brass');
+  s.rect(...b.right, 'hm_coat'); s.rect(...b.left, 'hm_coat'); s.rect(...b.back, 'hm_coat'); s.rect(...b.top, 'hm_coat');
+  for (const k of ['right', 'left', 'back']) s.speckle(...b[k], 'hm_coat_d', 0.12);
+  // the frock coat on the jacket layer: open front with lapels and brass buttons, a back seam and two back buttons
+  s.fill(SF.JACKET, 'hm_coat', 'hm_coat_d', 0.12);
+  const j = s.faces(SF.JACKET), [jx, jy] = j.front;
+  s.rect(...j.bottom, null); s.rect(...j.top, null);
+  s.rect(jx + 2, jy, 4, 12, null);
+  for (let r = 0; r < 12; r++) { s.px(jx + 1, jy + r, r < 4 ? 'hm_coat_l' : 'hm_coat'); s.px(jx + 6, jy + r, r < 4 ? 'hm_coat_l' : 'hm_coat'); }
+  for (const r of [2, 5, 8]) { s.px(jx, jy + r, 'brass'); s.px(jx + 7, jy + r, 'brass'); }
+  s.column(j.back, 3, 7, 5, 'hm_coat_d'); s.column(j.back, 4, 7, 5, 'hm_coat_d');
+  s.px(j.back[0] + 2, j.back[1] + 7, 'brass'); s.px(j.back[0] + 5, j.back[1] + 7, 'brass');
+  // sleeves: coat to the wrist with turned-back cuffs, hands bare
+  for (const a of SF.ARMS) { s.fill(a, 'hm_coat', 'hm_coat_d', 0.12); s.band(a, 8, 2, 'hm_coat_l'); s.band(a, 0, 1, 'hm_coat_l'); }
+  SF.hands(s, 'pale', 'pale_d');
+  for (const sl of SF.SLEEVES) {
+    s.fill(sl, 'hm_coat', 'hm_coat_d', 0.12); s.band(sl, 8, 2, 'hm_coat_l'); s.band(sl, 10, 2, null);
+    s.rect(...s.faces(sl).bottom, null); s.px(s.faces(sl).front[0] + 1, s.faces(sl).front[1] + 8, 'brass');
+  }
+  // dark trousers to the shoes; the coat's skirts on the upper trousers layer
+  for (const l of SF.LEGS) {
+    s.fill(l, 'hm_trouser', 'hm_trouser_d', 0.1); s.band(l, 11, 1, 'shoe');
+    s.rect(...s.faces(l).bottom, 'shoe_d'); s.column(s.faces(l).front, 2, 0, 9, 'hm_trouser_d');
+  }
+  for (const p of SF.PANTS) { s.band(p, 0, 4, 'hm_coat', 'hm_coat_d', 0.12); s.band(p, 3, 1, 'hm_coat_d'); }
+  s.rect(...s.faces(SF.RPANTS).left, null); s.rect(...s.faces(SF.LPANTS).right, null);
+  // the peaked cap: a black band edged in gold under a navy crown
+  s.region(R.cap_brim, 'hm_cap_d', 'black', 0.2); s.rect(R.cap_brim[0], R.cap_brim[1] + 1, 8, 1, 'gold');
+  s.rect(R.cap_brim[0] + 3, R.cap_brim[1], 2, 1, 'gold_l');
+  s.region(R.cap_crown, 'hm_cap', 'hm_cap_d', 0.15); s.rect(R.cap_crown[0], R.cap_crown[1] + 2, 8, 1, 'hm_cap_d');
+  s.region(R.cap_top, 'hm_cap', 'hm_cap_d', 0.12); s.rect(R.cap_top[0] + 3, R.cap_top[1] + 3, 2, 2, 'hm_cap_d');
+  s.region(R.cap_peak, 'hm_cap_d', 'hm_cap', 0.3);
+  s.region(R.slops, 'hm_trouser', 'hm_trouser_d', 0.2); s.rect(R.slops[0], R.slops[1] + 2, 8, 1, 'hm_trouser_d');
+  s.patches(SF.HARBOR_MASTER_PATCHES);
+  return s;
+};
+
 SF.TYPES = ['pirate', 'sailor', 'navy_soldier', 'navy_officer'];
 SF.PATCHES = {pirate: SF.PIRATE_PATCHES, sailor: SF.SAILOR_PATCHES, navy_soldier: SF.NAVY_SOLDIER_PATCHES, navy_officer: SF.NAVY_OFFICER_PATCHES};
 SF.paint = type => SF[type]();
+// Texture variants drawn on another type's model (MobKind.geoId in the mod): painted by SF.paint, never built.
+SF.VARIANTS = {harbor_master: 'sailor'};

@@ -56,7 +56,9 @@ public final class HarborDeskService {
 
     /** What using a desk did, with the action bar message (null = none). */
     public enum Use {
-        OPENED(null), DISABLED(null), UNBOUND(KEY + "unbound"), NO_MARKET(KEY + "no_market");
+        OPENED(null), DISABLED(null), UNBOUND(KEY + "unbound"), NO_MARKET(KEY + "no_market"),
+        /** PRT1a: {@code harbor_desks.direct_use} is off and the desk was used directly, not through its harbor master. */
+        TALK_TO_MASTER(KEY + "talk_to_master");
 
         private final String message;
 
@@ -70,6 +72,9 @@ public final class HarborDeskService {
     }
 
     private static volatile BiFunction<ServerLevel, BlockPos, Optional<ResourceLocation>> portLocator = (level, pos) -> Optional.empty();
+
+    /** PRT1a: set while {@link #useViaHarborMaster} runs {@link #use} (server thread), so {@code direct_use} lets it pass. */
+    private static final ThreadLocal<Boolean> VIA_HARBOR_MASTER = ThreadLocal.withInitial(() -> false);
 
     private HarborDeskService() {
     }
@@ -126,12 +131,26 @@ public final class HarborDeskService {
     /** A player uses the desk at {@code pos}: opens the bound port's market screen when everything checks out. */
     public static Use use(ServerPlayer player, BlockPos pos) {
         if (!TradeConfig.DESKS_ENABLED.get()) return Use.DISABLED;
+        if (!TradeConfig.DESK_DIRECT_USE.get() && !VIA_HARBOR_MASTER.get()) return Use.TALK_TO_MASTER;
         Optional<ResourceLocation> port = boundPort(player.level(), pos);
         if (port.isEmpty()) return Use.UNBOUND;
         MinecraftServer server = player.server;
         if (TradeService.market(server, port.get()).isEmpty()) return Use.NO_MARKET;
         TradeService.offers(server, port.get(), destinations(server, port.get()));
         return MarketBackend.openDesk(player, port.get(), pos.immutable()) ? Use.OPENED : Use.NO_MARKET;
+    }
+
+    /**
+     * PRT1a: {@code player} talked to the harbor master of the desk at {@code pos} ({@code mob.harbor}): the same as
+     * {@link #use}, every check included, except that {@code harbor_desks.direct_use} does not refuse it.
+     */
+    public static Use useViaHarborMaster(ServerPlayer player, BlockPos pos) {
+        VIA_HARBOR_MASTER.set(true);
+        try {
+            return use(player, pos);
+        } finally {
+            VIA_HARBOR_MASTER.set(false);
+        }
     }
 
     /**

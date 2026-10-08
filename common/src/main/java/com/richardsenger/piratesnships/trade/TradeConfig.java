@@ -149,6 +149,8 @@ public final class TradeConfig {
             "Harbor master's desks open the market screen (off = desks are inert; the debug commands still work)");
     public static final ConfigValue<Double> DESK_REACH = DESKS.doubleRange("desk_reach", 8.0, 1.0, 64.0,
             "How far (blocks) a player may be from the desk and still trade; the screen closes beyond it");
+    public static final ConfigValue<Boolean> DESK_DIRECT_USE = DESKS.bool("direct_use", true,
+            "Using the desk block opens the market (off = only talking to the port's harbor master opens it)");
 
     private TradeConfig() {
     }

@@ -20,6 +20,9 @@ public final class MobClient {
         ClientEvents.registerEntityRenderer(MobContent.NAVY_OFFICER, ctx -> new HumanoidGeoRenderer<>(ctx, new SeafarerModel<>(MobKind.NAVY_OFFICER.id())));
         // BOS1: the captain wears the pirate's model and texture (MobKind.artId), named by his custom name
         ClientEvents.registerEntityRenderer(MobContent.PIRATE_CAPTAIN, ctx -> new HumanoidGeoRenderer<>(ctx, new SeafarerModel<>(MobKind.PIRATE_CAPTAIN.artId())));
+        // PRT1a: the harbor master is a texture variant on the sailor's geometry (MobKind.geoId)
+        ClientEvents.registerEntityRenderer(MobContent.HARBOR_MASTER, ctx -> new HumanoidGeoRenderer<>(ctx,
+                new SeafarerModel<>(MobKind.HARBOR_MASTER.geoId(), MobKind.HARBOR_MASTER.artId())));
         ClientEvents.registerEntityRenderer(MobContent.SHARK, SharkRenderer::new);
         ClientEvents.registerEntityRenderer(KrakenContent.KRAKEN, KrakenRenderer::new);
         ClientEvents.registerEntityRenderer(KrakenContent.PART, NoopRenderer::new);

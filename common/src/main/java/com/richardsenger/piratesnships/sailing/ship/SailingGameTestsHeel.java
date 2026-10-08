@@ -317,11 +317,10 @@ public final class SailingGameTestsHeel {
 
     @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = TIMEOUT, batch = "pirates_n_ships_config_sailing_heel_sloop_full_strongest")
     public static void sloopFullStrongest(GameTestHelper h) {
+        // SH1 had to relax this to 5 degrees: the template's hold was open to the sea at the stern (y=1, z=25). SH1b
+        // closed it, so the 2 degree rule of every other run holds here too.
         run(h, "sloop full 37", SailingGameTestsHeel::sloop, STRONGEST, SailTrim.FULL, -1, r -> {
-            sane(h, r);
-            // The template's hold is open to the sea at the stern (y=1, z=25), so the sloop floats a block deep and water
-            // that came over the low side stays in small pockets: a residual list of about 2 degrees (SH1 measurement).
-            h.assertTrue(r.finalHeel() < 5.0, "still heeled " + r.finalHeel() + " deg 5 s after furling; " + r.row());
+            rights(h, r);
             h.succeed();
         });
     }

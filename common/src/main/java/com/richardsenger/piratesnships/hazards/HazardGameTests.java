@@ -203,8 +203,10 @@ public final class HazardGameTests {
             double end = horizontal(com(ship), pool.position());
             Constants.LOG.info("[hazard test] small ship: mass {}, distance {} -> {}", ship.ship().mass(), start[0], end);
             h.assertTrue(start[0] > 4.5 && start[0] < 7.5, "the ship did not start about 6 blocks out: " + start[0]);
-            // measured 5.90 -> 4.25..4.38 over four runs (1.5-1.7 blocks; Sable's water drag holds the hull to about 0.3-0.5 m/s); a third of that
-            h.assertTrue(end < start[0] - 0.5, "the ship was not pulled toward the centre: " + start[0] + " -> " + end);
+            // Before SH1 the unballasted hull rolled over to 57 degrees while it slid in and moved 1.5-1.7 blocks (5.90 ->
+            // 4.25..4.38 over four runs). Since SH1's righting torque it stays upright, presents its full draft to Sable's
+            // water drag and moves 0.44-0.45 blocks (three runs); a third of that
+            h.assertTrue(end < start[0] - 0.15, "the ship was not pulled toward the centre: " + start[0] + " -> " + end);
             h.succeed();
         });
     }

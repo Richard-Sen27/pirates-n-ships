@@ -608,6 +608,17 @@ The **flagpole** flies a flag that shows a ship's allegiance.
 The flag cloth is one block high and one and a half blocks long and hangs downwind from the top of the pole, so a
 pole needs free space downwind.
 
+**Tall poles.** Stack flagpoles on each other to build one tall pole, up to 6 blocks (server config
+`flags.max_pole_height`; a taller pole is refused). The top block flies the flag: the pole shows its iron cleat at the
+foot and its gilded finial at the top. You can use any block of the pole, the flag is always worked at the top.
+Placing another flagpole on a pole that flies a flag takes the flag up with it, nothing drops; breaking the top block
+drops the flag, breaking a block in the middle splits the pole in two (the upper part keeps the flag). With
+`flags.stacked_poles` off every block is a pole of its own.
+
+**The flag runs along the pole.** While you hoist or raise a flag it climbs from the foot of the pole to the top, and
+while you strike or take it down it runs down again, over the 3 seconds the work takes. Client config
+`flag_visuals.hoist_animation` turns this off (the flag then appears and vanishes at once).
+
 | Flag | Meaning for the law rules |
 |---|---|
 | none or Merchant Flag | Neutral to everyone. |

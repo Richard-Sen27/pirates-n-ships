@@ -56,7 +56,12 @@ public final class FlagpoleMachine {
 
     /** Why the shown flag changed, for {@link FlagpoleEvents}. */
     public enum Cause {
-        HOISTED, STRUCK, RAISED, TAKEN_DOWN, BROKEN, COMMAND
+        HOISTED, STRUCK, RAISED, TAKEN_DOWN, BROKEN, COMMAND,
+        /**
+         * VIS1a: a flagpole was stacked on the pole's head and the flag went up to the new head with everything the
+         * pole held. Reported at the new head; {@code before} and {@code after} are the same reading.
+         */
+        MOVED
     }
 
     /** An item to hand out: to {@code recipient}, or dropped at the pole when the recipient is null. */
@@ -89,18 +94,18 @@ public final class FlagpoleMachine {
         Feedback started;
         switch (input) {
             case Input.Hoist h -> {
-                pending = new Pending(Action.HOIST, actor, now + delayTicks, h.kind(), h.item().copyWithCount(1));
+                pending = new Pending(Action.HOIST, actor, now, now + delayTicks, h.kind(), h.item().copyWithCount(1));
                 started = Feedback.STARTED_HOIST;
             }
             case Input.Toggle t -> {
                 if (!state.hasFlag()) return new Outcome(state, deliveries, Feedback.NO_FLAG, actor, Optional.empty());
                 Action a = state.struck() ? Action.RAISE : Action.STRIKE;
-                pending = new Pending(a, actor, now + delayTicks, FlagKind.NONE, ItemStack.EMPTY);
+                pending = new Pending(a, actor, now, now + delayTicks, FlagKind.NONE, ItemStack.EMPTY);
                 started = a == Action.RAISE ? Feedback.STARTED_RAISE : Feedback.STARTED_STRIKE;
             }
             case Input.TakeDown d -> {
                 if (!state.hasFlag()) return new Outcome(state, deliveries, Feedback.NO_FLAG, actor, Optional.empty());
-                pending = new Pending(Action.TAKE_DOWN, actor, now + delayTicks, FlagKind.NONE, ItemStack.EMPTY);
+                pending = new Pending(Action.TAKE_DOWN, actor, now, now + delayTicks, FlagKind.NONE, ItemStack.EMPTY);
                 started = Feedback.STARTED_TAKE_DOWN;
             }
         }

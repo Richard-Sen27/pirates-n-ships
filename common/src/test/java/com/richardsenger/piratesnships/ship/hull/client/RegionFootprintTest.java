@@ -38,7 +38,8 @@ class RegionFootprintTest {
 
     private static LongSet footprint(int x0, int y0, int z0, int x1, int y1, int z1, Pose pose) {
         LongSet out = new LongOpenHashSet();
-        RegionFootprint.collect(x0, y0, z0, x1, y1, z1, box(x0, y0, z0, x1, y1, z1), pose::toWorld, pose::toPlot, out);
+        RegionFootprint.collect(x0, y0, z0, x1, y1, z1, box(x0, y0, z0, x1, y1, z1), pose::toWorld, pose::toPlot,
+                (x, z) -> Vec3.ZERO, out, new LongOpenHashSet());
         return out;
     }
 
@@ -55,20 +56,162 @@ class RegionFootprintTest {
     }
 
     @Test
-    void halfBlockOffsetStillCoversByBlockCenter() {
-        // shifted by 0.4: every world block center stays inside the same cell; by 0.6 it moves one block on
+    void partlyCoveredBlocksCount() {
+        // HV1c: shifted by 0.4 (or 0.6), the region cuts world blocks 0 and 4 only in part; both count
         Pose a = new Pose(Vec3.ZERO, 0, new Vec3(0.4, 0, 0));
         Pose b = new Pose(Vec3.ZERO, 0, new Vec3(0.6, 0, 0));
-        assertTrue(footprint(0, 0, 0, 3, 0, 0, a).contains(BlockPos.asLong(0, 0, 0)));
-        assertFalse(footprint(0, 0, 0, 3, 0, 0, b).contains(BlockPos.asLong(0, 0, 0)));
-        assertTrue(footprint(0, 0, 0, 3, 0, 0, b).contains(BlockPos.asLong(4, 0, 0)));
-        assertEquals(4, footprint(0, 0, 0, 3, 0, 0, b).size());
+        for (Pose p : new Pose[] {a, b}) {
+            LongSet f = footprint(0, 0, 0, 3, 0, 0, p);
+            assertEquals(5, f.size(), "footprint " + f);
+            assertTrue(f.contains(BlockPos.asLong(0, 0, 0)));
+            assertTrue(f.contains(BlockPos.asLong(4, 0, 0)));
+            assertFalse(f.contains(BlockPos.asLong(-1, 0, 0)));
+            assertFalse(f.contains(BlockPos.asLong(5, 0, 0)));
+        }
+    }
+
+    @Test
+    void waterLineCutsTheTopAndBottomLayers() {
+        // a two-layer hold raised by 0.3: world layers 0 (0.3..1), 1 and 2 (2..2.3) are cut, -1 and 3 are not
+        LongSet f = footprint(0, 0, 0, 1, 1, 1, new Pose(Vec3.ZERO, 0, new Vec3(0, 0.3, 0)));
+        assertEquals(2 * 2 * 3, f.size(), "footprint " + f);
+        assertTrue(f.contains(BlockPos.asLong(0, 2, 0)));
+        assertFalse(f.contains(BlockPos.asLong(0, 3, 0)));
+        assertFalse(f.contains(BlockPos.asLong(0, -1, 0)));
+    }
+
+    @Test
+    void touchingFacesDoNotCount() {
+        // grid-aligned: neighbours share a face with the region but are not cut by it
+        assertEquals(3 * 2 * 4, footprint(5, 5, 5, 7, 6, 8, new Pose(Vec3.ZERO, 0, Vec3.ZERO)).size());
+        // a sliver thinner than EPS is a touch too
+        assertEquals(4, footprint(0, 0, 0, 3, 0, 0, new Pose(Vec3.ZERO, 0, new Vec3(RegionFootprint.EPS / 2, 0, 0))).size());
+    }
+
+    @Test
+    void aTurnedCellCutsItsEdgeNeighboursButNotItsCornerNeighbours() {
+        // one plot cell turned by 45 degrees about its center, which sits on the world cell center (0.5, 0.5): a diamond
+        // reaching 0.707 out, so its tips cut the four edge neighbours, while the corner neighbours (from 1.0) stay clear
+        Pose pose = new Pose(new Vec3(0.5, 0, 0.5), 45, new Vec3(0.5, 0, 0.5));
+        LongSet f = footprint(0, 0, 0, 0, 0, 0, pose);
+        assertEquals(5, f.size(), "footprint " + f);
+        for (int[] d : new int[][] {{0, 0}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
+            assertTrue(f.contains(BlockPos.asLong(d[0], 0, d[1])), "no block at " + d[0] + ", " + d[1] + ": " + f);
+        }
+        assertFalse(f.contains(BlockPos.asLong(1, 0, 1)));
+    }
+
+    @Test
+    void offsetCellsFollowTheModelOffset() {
+        // a row x 0..3; a plant one block west (x = -1) pokes in only when its model is shifted east
+        Pose aligned = new Pose(Vec3.ZERO, 0, Vec3.ZERO);
+        for (double ox : new double[] {0.2, -0.2}) {
+            LongSet cells = new LongOpenHashSet(), offset = new LongOpenHashSet();
+            RegionFootprint.collect(0, 0, 0, 3, 0, 0, box(0, 0, 0, 3, 0, 0), aligned::toWorld, aligned::toPlot,
+                    (x, z) -> new Vec3(ox, 0, 0), cells, offset);
+            assertFalse(cells.contains(BlockPos.asLong(-1, 0, 0)));
+            assertEquals(ox > 0, offset.contains(BlockPos.asLong(-1, 0, 0)), "offset " + ox + ": " + offset);
+            assertEquals(ox < 0, offset.contains(BlockPos.asLong(4, 0, 0)), "offset " + ox + ": " + offset);
+            assertTrue(offset.contains(BlockPos.asLong(0, 0, 0)) && offset.contains(BlockPos.asLong(3, 0, 0)));
+        }
+    }
+
+    /** A general rigid pose: plot → world = rotate (yaw about y, then pitch about x, then roll about z) and translate. */
+    private record Rigid(double[] m, Vec3 t) {
+        static Rigid of(double yaw, double pitch, double roll, Vec3 t) {
+            double[] ry = rot(1, yaw), rx = rot(0, pitch), rz = rot(2, roll);
+            return new Rigid(mul(rz, mul(rx, ry)), t);
+        }
+
+        private static double[] rot(int axis, double deg) {
+            double a = Math.toRadians(deg), c = Math.cos(a), s = Math.sin(a);
+            return switch (axis) {
+                case 0 -> new double[] {1, 0, 0, 0, c, -s, 0, s, c};
+                case 1 -> new double[] {c, 0, s, 0, 1, 0, -s, 0, c};
+                default -> new double[] {c, -s, 0, s, c, 0, 0, 0, 1};
+            };
+        }
+
+        private static double[] mul(double[] a, double[] b) {
+            double[] r = new double[9];
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    for (int k = 0; k < 3; k++) {
+                        r[i * 3 + j] += a[i * 3 + k] * b[k * 3 + j];
+                    }
+                }
+            }
+            return r;
+        }
+
+        Vec3 toWorld(Vec3 p) {
+            return new Vec3(m[0] * p.x + m[1] * p.y + m[2] * p.z + t.x, m[3] * p.x + m[4] * p.y + m[5] * p.z + t.y,
+                    m[6] * p.x + m[7] * p.y + m[8] * p.z + t.z);
+        }
+
+        Vec3 toPlot(Vec3 w) {
+            double x = w.x - t.x, y = w.y - t.y, z = w.z - t.z;
+            return new Vec3(m[0] * x + m[3] * y + m[6] * z, m[1] * x + m[4] * y + m[7] * z, m[2] * x + m[5] * y + m[8] * z);
+        }
+    }
+
+    /**
+     * The exact cell test against brute force: for random tilted poses and a ragged region, every world block that a
+     * dense grid of sample points finds inside the region is in the footprint (nothing that pokes in is missed), and
+     * every block in the footprint has a sample point in the region within 0.25 blocks of its cell (nothing far is hidden).
+     */
+    @Test
+    void matchesSamplingOnTiltedPoses() {
+        java.util.Random random = new java.util.Random(42);
+        RegionFootprint.Cells ragged = (x, y, z) -> x >= 0 && x <= 4 && y >= 0 && y <= 2 && z >= 0 && z <= 3
+                && ((x * 7 + y * 3 + z * 5) % 4 != 0);
+        for (int round = 0; round < 6; round++) {
+            Rigid pose = Rigid.of(random.nextDouble() * 360, random.nextDouble() * 30 - 15, random.nextDouble() * 30 - 15,
+                    new Vec3(1000.3 + random.nextDouble(), 60 + random.nextDouble(), -200 + random.nextDouble()));
+            LongSet f = new LongOpenHashSet();
+            RegionFootprint.collect(0, 0, 0, 4, 2, 3, ragged, pose::toWorld, pose::toPlot, (x, z) -> Vec3.ZERO, f,
+                    new LongOpenHashSet());
+            int n = 12;
+            for (int x = 990; x <= 1012; x++) {
+                for (int y = 54; y <= 68; y++) {
+                    for (int z = -210; z <= -188; z++) {
+                        boolean inside = sampled(pose, ragged, x, y, z, 0.0, n);
+                        long key = BlockPos.asLong(x, y, z);
+                        if (inside) {
+                            assertTrue(f.contains(key), "round " + round + ": block " + x + ", " + y + ", " + z
+                                    + " pokes into the region but is not in the footprint");
+                        }
+                        if (f.contains(key) && !inside) {
+                            assertTrue(sampled(pose, ragged, x, y, z, 0.25, n), "round " + round + ": block " + x + ", " + y
+                                    + ", " + z + " is in the footprint but no point within 0.25 of it is in the region");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /** Whether one of n³ sample points of the block grown by {@code grow} lies in an occupied plot cell. */
+    private static boolean sampled(Rigid pose, RegionFootprint.Cells cells, int x, int y, int z, double grow, int n) {
+        double size = 1 + 2 * grow;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                for (int k = 0; k < n; k++) {
+                    Vec3 p = pose.toPlot(new Vec3(x - grow + size * (i + 0.5) / n, y - grow + size * (j + 0.5) / n,
+                            z - grow + size * (k + 0.5) / n));
+                    if (cells.occupied((int) Math.floor(p.x), (int) Math.floor(p.y), (int) Math.floor(p.z))) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     @Test
     void quarterTurnSwapsTheAxes() {
-        // a 4 (x) by 1 (z) row turned by 90 degrees about its origin lies along z
-        Pose pose = new Pose(Vec3.ZERO, 90, new Vec3(0.5, 0, 0.5));
+        // a 4 (x) by 1 (z) row turned by 90 degrees about its origin lies along z (plot x 0..4 -> world z 0..4)
+        Pose pose = new Pose(Vec3.ZERO, 90, new Vec3(1, 0, 0));
         LongSet f = footprint(0, 0, 0, 3, 0, 0, pose);
         assertEquals(4, f.size(), "footprint " + f);
         for (int z = 0; z < 4; z++) {

@@ -238,11 +238,11 @@ Started 2026-10-07 after the weekly model limit reset. The previous orchestrator
 | ART7 | Blockbench batch: crew animations for the new stations (the helmsman at the wheel, gun crews loading and firing, the capstan, hauling a rope) with rig tests | in progress | Started 2026-10-08. |
 | ART6 | Blockbench batch: the pirate captain's own look (coat, bicorne, texture) and an officer's coat as career gear | todo | After BOS1 hands back. |
 | CAR1 | Careers: navy ranks, pirate infamy, the letter of marque (§15, plan CAR1) | in progress | Started 2026-10-08 on top of the REP1 branch. |
-| CAR2 | Rank rewards (plan CAR2) | todo | After CAR1. |
-| HON1 | Honor and status: title prefix, rank HUD, the title on a ship (plan HON1) | todo | After CAR1. |
+| CAR2 | Rank rewards (plan CAR2) | in progress | Started 2026-10-08 on top of the CAR1 branch. |
+| HON1 | Honor and status: title prefix, rank HUD, the title on a ship (plan HON1) | in progress | Started 2026-10-08 on top of the CAR1 branch. |
 | QST1 | Quests: offers, log, rewards, the Quests tab; hunt, monster, turn-in, deliver, treasure and hunt-navy types (plan QST1) | in progress | Started 2026-10-08 on top of the REP1 branch. |
 | BOS1 | Named pirate captains with a standing bounty and a duel (plan BOS1) | in progress | Started 2026-10-08 on top of the REP1 branch. |
-| QST1b | Hunt-captain quests (after QST1 and BOS1) | todo | |
+| QST1b | Hunt-captain quests (after QST1 and BOS1) | in progress | Started 2026-10-08 on top of the QST1 and BOS1 branches. |
 | QST2 | Escort, plunder-convoy, hunt-patrol and hunt-ship quests (after WS3b and WS4b) | todo | |
 | BOS2 | The captain's hunted voyage (after WS3b) | todo | |
 | WS1b | The deeds adapter between REP1 and WS1 | done | Merged (`f9a688af`). `worldsim/faction/FactionDeeds` (registered once from `FactionModule`; pure `eventFor(deed, navyReputationBefore)`): plunder_merchant → MERCHANT_PLUNDERED, kill_navy → NAVY_KILLED_BY_PIRATE, attack_navy → NAVY_ATTACKED, kill_pirate → PIRATE_KILLED_BY_NAVY only while the navy score before the deed is ≥ 0 (the deed itself adds +5), attack_villager and attack_merchant_ship → MERCHANT_ATTACKED, turn_in_pirate → PIRATE_TURNED_IN, fence_plunder → PLUNDER_FENCED, trade_village → PORT_TRADE; both toggles respected; reports through `Factions.reportDeed`. 3 JUnit, 4 GameTests (own batches), 668 GameTests ×1 before the final merge (the second run was blocked by the classifier; the stage verified). Open: a navy kill reports attack and kill (+0.08 tension); alignment could instead be navy ≥ pirates. Playtest `world-simulation.md` step 7. |

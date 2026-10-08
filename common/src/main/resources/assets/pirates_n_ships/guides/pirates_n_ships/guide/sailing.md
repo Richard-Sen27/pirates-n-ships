@@ -22,6 +22,14 @@ Each dimension has one wind: a direction and a strength of 3 to 12 blocks per se
 Rain makes it 1.5 times stronger and a thunderstorm 2.2 times, with gusts during thunderstorms. It is the same for
 every player and is sent to clients (nothing displays it yet, except the flags).
 
+**Seeing the wind.** Over the sea, thin white streaks drift through the air around you, from deck height up into the
+rigging, flying with the wind at the wind's own speed: they come from where the wind comes from and show its strength
+by how many there are and how fast they go. In a light breeze there are none, in a gale many, and a gust brings a
+flurry. They hang in the world, not on your ship, so on a sailing ship you see the true wind and your ship moving
+through it, as the HUD's wind arrow shows it. They are only a picture: nothing in the game depends on them. Client
+settings `wind_effects` (`streaks` turns them off; `density`, `min_strength`, `radius`, `height`, `life_ticks`); the
+video setting "Particles: Decreased" halves them and "Minimal" hides them.
+
 ## Sails
 A **square sail** is built from two **yards**. A yard is a straight row of yard blocks (a thin spar; place them against
 each other's ends to extend one); its middle block marks the mast column. Put a second yard with the same direction
@@ -385,7 +393,9 @@ about a minute. Ships roll and pitch with the waves (big ships far less than sma
 throws spray, and any open hatch or low rim close to the waterline lets water in at the crests, so close your hatches
 and keep a pump ready before a storm. `/pirates waves` shows the sea; operators can hold a state with `/pirates waves
 set storm` and release it with `/pirates waves clear`. The camera can roll with the ship (client setting
-`wave_effects.camera_sway`, off by default). Server config `waves`.
+`wave_effects.camera_sway`, off by default). Faint foam streaks lie on the water around you, stretched along the
+direction the waves run and gathered on the crests: none in a calm sea, a few in a moderate one, many in a storm, and
+none inside a dry hull (client setting `wave_effects.foam`). Server config `waves`.
 
 ## Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks

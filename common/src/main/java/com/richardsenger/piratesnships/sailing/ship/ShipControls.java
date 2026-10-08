@@ -108,6 +108,54 @@ public final class ShipControls {
         }
     }
 
+    /** What {@link #setRudderAngle} did. */
+    public enum RudderResult {
+        /** The wheel and the rudder step now show the angle. */
+        SET,
+        /** A player holds the wheel of this helm (HELM1 session): nothing changed. */
+        PLAYER_AT_WHEEL,
+        /** No helm at that position. */
+        NOT_A_HELM
+    }
+
+    /**
+     * WS3a: puts the rudder of the helm at {@code helmPlotPos} to {@code degrees} (positive = starboard, clamped to
+     * {@code sailing.max_rudder_angle}) whichever way the ship is steered: turns the wheel to the matching angle (the
+     * rudder's source with {@code helm.wheel.drag_steering}) and sets the nearest click step in the block state (its
+     * source without). For the NPC helmsman ({@code station.helm.HelmCourses}); refused while a player holds that
+     * wheel. Writes nothing that already shows the angle, so calling it every few ticks sends no needless updates.
+     */
+    public static RudderResult setRudderAngle(ServerLevel level, BlockPos helmPlotPos, double degrees) {
+        BlockState state = level.getBlockState(helmPlotPos);
+        if (!(state.getBlock() instanceof HelmBlock)) {
+            return RudderResult.NOT_A_HELM;
+        }
+        if (playerAtWheel(level, helmPlotPos)) {
+            return RudderResult.PLAYER_AT_WHEEL;
+        }
+        double max = SailingConfig.MAX_RUDDER_ANGLE.get();
+        double fraction = max <= 0.0 || !Double.isFinite(degrees) ? 0.0 : Math.max(-1.0, Math.min(1.0, degrees / max));
+        int steps = SailingConfig.RUDDER_STEPS.get();
+        int step = (int) Math.round(fraction * Math.max(1, Math.min(RudderSteps.MAX_STEPS, steps)));
+        int property = RudderSteps.toProperty(step);
+        if (state.getValue(HelmBlock.RUDDER) != property) {
+            level.setBlock(helmPlotPos, state.setValue(HelmBlock.RUDDER, property), Block.UPDATE_ALL); // runtime follows the block change
+        }
+        double wheel = WheelMath.wheelForFraction(fraction, HelmConfig.lockAngle());
+        ShipBody ship = SableShips.containing(level, helmPlotPos);
+        SailingRuntime rt = ship == null ? null : SailingRuntimes.get(level, ship.id());
+        boolean shown = level.getBlockEntity(helmPlotPos) instanceof HelmBlockEntity be && Math.abs(be.wheel() - wheel) < 1e-3;
+        if (!shown || rt != null && Math.abs(rt.wheelAngle() - wheel) >= 1e-3) {
+            setWheel(level, helmPlotPos, wheel);
+        }
+        return RudderResult.SET;
+    }
+
+    /** Whether a player holds the wheel of the helm at {@code helmPlotPos} right now (HELM1 session). */
+    public static boolean playerAtWheel(ServerLevel level, BlockPos helmPlotPos) {
+        return com.richardsenger.piratesnships.sailing.helm.HelmService.isHeld(level, helmPlotPos);
+    }
+
     public static Component rudderMessage(int step, int stepsPerSide, double maxAngle) {
         if (step == 0) {
             return Component.translatable(KEY_RUDDER_MIDSHIPS);

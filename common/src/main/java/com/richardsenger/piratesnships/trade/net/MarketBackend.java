@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.trade.net;
 
 import com.richardsenger.piratesnships.platform.Services;
+import com.richardsenger.piratesnships.rpg.market.MarketReputation;
 import com.richardsenger.piratesnships.ship.template.ShipOrders;
 import com.richardsenger.piratesnships.trade.TradeConfig;
 import com.richardsenger.piratesnships.trade.TradeData;
@@ -238,14 +239,18 @@ public final class MarketBackend {
     /** Runs a validated trade request (the session check is the caller's). */
     public static TransactionResult trade(ServerPlayer player, MarketPayloads.Trade p) {
         if (!validQuantity(p.quantity())) return TransactionResult.failed(TransactionResult.Status.INVALID_QUANTITY, p.good());
+        if (MarketReputation.refuses(player, p.port())) return MarketReputation.refusal(p.good()); // REP1: disliked at a village
         Optional<SpecialOffer> special = SpecialOffers.byId(p.good());
         if (special.isPresent()) return buySpecial(player, p.port(), p.buy(), p.quantity(), special.get());
         Optional<MarketTransactions.Holder> holder = holder(player, p.container());
         if (holder.isEmpty()) return TransactionResult.failed(TransactionResult.Status.NO_CONTAINER, p.good());
+        // REP1: prices swing with the player's reputation (MarketReputation), the same functions as in view()
         TransactionResult r = p.buy()
-                ? MarketTransactions.buy(player, p.port(), p.good(), p.quantity(), holder.get())
-                : MarketTransactions.sell(player, p.port(), p.good(), p.quantity(), effectivePlunder(p, player), holder.get());
+                ? MarketTransactions.buy(player, p.port(), p.good(), p.quantity(), holder.get(), MarketReputation.buyPrice(player, p.port()))
+                : MarketTransactions.sell(player, p.port(), p.good(), p.quantity(), effectivePlunder(p, player), holder.get(),
+                        MarketReputation.sellPrice(player, p.port()));
         reportNoticed(player, p.port(), r);
+        MarketReputation.afterTrade(player, p.port(), r); // REP1: village trade and fence deeds
         return r;
     }
 
@@ -392,9 +397,10 @@ public final class MarketBackend {
         for (ResourceLocation id : ids) {
             Optional<TradeGood> def = tradeable.get(id);
             if (def.isEmpty()) continue;
+            // REP1: quotes as this player pays them (reputation price swing)
             lines.add(new MarketView.GoodLine(id, def.get().item(), market.get().profile().role(id),
-                    MarketView.Price.of(TradeService.quote(server, port, id, Market.Side.BUY, quantity)),
-                    MarketView.Price.of(TradeService.quote(server, port, id, Market.Side.SELL, quantity))));
+                    MarketView.Price.of(MarketReputation.quoteFor(player, port, TradeService.quote(server, port, id, Market.Side.BUY, quantity))),
+                    MarketView.Price.of(MarketReputation.quoteFor(player, port, TradeService.quote(server, port, id, Market.Side.SELL, quantity)))));
         }
         // special offers (TM1): a fixed price, no stock, never bought back
         lines.addAll(specialLines(market.get().profile().kind(), quantity));

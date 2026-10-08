@@ -58,6 +58,10 @@ public final class FactionDeeds {
             case TURN_IN_PIRATE -> FactionEvent.PIRATE_TURNED_IN;
             case FENCE_PLUNDER -> FactionEvent.PLUNDER_FENCED;
             case TRADE_VILLAGE -> FactionEvent.PORT_TRADE;
+            // WS3b: a player sinking or capturing an NPC ship
+            case SINK_MERCHANT -> FactionEvent.CONVOY_SUNK;
+            case SINK_NAVY, CAPTURE_NAVY -> FactionEvent.PATROL_LOST;
+            case SINK_PIRATE, CAPTURE_PIRATE -> FactionEvent.PIRATE_SHIP_LOST;
             // the quest deeds (QST1) are a player's reward, not a faction outcome
             case ATTACK_PIRATE, KILL_VILLAGER, PAY_FINE, FLY_FALSE_COLOURS,
                  COMPLETE_NAVY_QUEST, COMPLETE_PIRATE_QUEST, COMPLETE_VILLAGE_QUEST -> null;

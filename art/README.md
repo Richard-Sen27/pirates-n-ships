@@ -1440,6 +1440,17 @@ library only) turns it into the vanilla structure `common/src/main/resources/dat
    `/pirates ship place <name>` (or `... assemble` to make it a ship at once, `... force` to overwrite what is in
    the way). The ship appears 3 blocks ahead, bow away from you, centred on you.
 
+**Generated templates:** the starter sloop is not built by hand. Its source is the BuildSpec generator
+`art/schematics/starter_sloop.py` (the format of the structure pieces below); the schematic lab turns it into
+`art/schematics/starter_sloop.schem`, which is converted as in step 3. `tools/build_structures.py` only knows
+`art/structures/`, so for a ship run the same steps by hand: start the lab on port 8766, `POST` the generator's JSON to
+`/api/session/validate` and `/api/session/build` (no warnings), save `GET /api/session/export.schem?version=2` over the
+`.schem` and run `python3 tools/schem_to_structure.py art/schematics/<name>.schem` (the `Lab` class and
+`write_if_changed` of `build_structures.py` can be imported for this). Edit the generator, never the `.schem`: the two
+must agree. SH1b closed a three-block hole in the sloop's bottom at the stern this way (layer 1 ended before layer 2 at
+z 25, so the hold was open to the sea); the generator now puts a bottom plank under every hollow hold cell.
+`starter_sloop_basic.schem` has no generator.
+
 Keep templates under the ship block limit (2048 by default), keep every block connected to the helm (the assembler
 gathers only connected blocks), and leave no loose terrain blocks (dirt, sand, stone) in the selection: they never
 become part of a ship.

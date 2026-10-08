@@ -36,7 +36,17 @@ public enum Deed {
     /** A quest of a pirate island completed (QST1). */
     COMPLETE_PIRATE_QUEST(-2, 6, 0),
     /** A quest of a seafarer village completed (QST1). */
-    COMPLETE_VILLAGE_QUEST(0, 0, 4);
+    COMPLETE_VILLAGE_QUEST(0, 0, 4),
+    /** Sinking an NPC merchant ship (WS3b; the player's cannon hit it last). */
+    SINK_MERCHANT(-10, 5, -8),
+    /** Sinking an NPC navy ship (WS3b). */
+    SINK_NAVY(-20, 10, 0),
+    /** Sinking an NPC pirate ship (WS3b). */
+    SINK_PIRATE(8, -15, 3),
+    /** Capturing an NPC navy ship (WS3b). A merchant capture is the law's {@code piracy}, i.e. {@link #PLUNDER_MERCHANT}. */
+    CAPTURE_NAVY(-20, 10, 0),
+    /** Capturing an NPC pirate ship (WS3b). */
+    CAPTURE_PIRATE(8, -12, 2);
 
     private final int navy;
     private final int pirates;

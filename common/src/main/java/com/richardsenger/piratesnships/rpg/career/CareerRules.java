@@ -76,6 +76,7 @@ public final class CareerRules {
                 if (victim == Victim.OFFICER) m.put(CareerCounter.OFFICERS_KILLED, 1L);
             }
             case PLUNDER_MERCHANT -> m.put(CareerCounter.MERCHANTS_PLUNDERED, 1L);
+            case CAPTURE_NAVY, CAPTURE_PIRATE -> m.put(CareerCounter.SHIPS_CAPTURED, 1L); // WS3b
             case FENCE_PLUNDER -> {
                 if (amount > 0) m.put(CareerCounter.PLUNDER_COINS, amount);
             }

@@ -58,8 +58,9 @@ public final class FactionDeeds {
             case TURN_IN_PIRATE -> FactionEvent.PIRATE_TURNED_IN;
             case FENCE_PLUNDER -> FactionEvent.PLUNDER_FENCED;
             case TRADE_VILLAGE -> FactionEvent.PORT_TRADE;
-            case ATTACK_PIRATE, KILL_VILLAGER, PAY_FINE, FLY_FALSE_COLOURS, COMPLETE_NAVY_QUEST, COMPLETE_PIRATE_QUEST,
-                 COMPLETE_VILLAGE_QUEST -> null;
+            // the quest deeds (QST1) are a player's reward, not a faction outcome
+            case ATTACK_PIRATE, KILL_VILLAGER, PAY_FINE, FLY_FALSE_COLOURS,
+                 COMPLETE_NAVY_QUEST, COMPLETE_PIRATE_QUEST, COMPLETE_VILLAGE_QUEST -> null;
         });
     }
 }

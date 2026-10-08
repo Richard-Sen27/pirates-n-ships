@@ -103,9 +103,14 @@ public final class SailingCommands {
                 speed, v.z, v.x, heading, rt.bow().name(), w.fromDegrees(), w.strength(), awa, rt.lastSubmerged(),
                 rt.sailCount(), rt.unfurledCount())), false);
         com.richardsenger.piratesnships.sailing.ship.ShipAnchor anchor = rt.anchor();
-        String anchorText = anchor == null ? "stowed" : String.format(Locale.ROOT, "%s, hold %.2f, %.1f blocks from the anchor point",
-                anchor.state().phase().name().toLowerCase(Locale.ROOT), anchor.state().hold(),
-                horizontalDistance(ship.toWorld(net.minecraft.world.phys.Vec3.atCenterOf(anchor.capstan())), anchor.point()));
+        com.richardsenger.piratesnships.sailing.anchor.AnchorStatus as = rt.anchorStatus();
+        Vector3d chainForce = com.richardsenger.piratesnships.sailing.anchor.AnchorPhysics.lastForce(s.getLevel(), ship.id());
+        String anchorText = anchor == null ? "stowed" : String.format(Locale.ROOT,
+                "%s%s, chain %.1f of %.1f blocks out%s%s%s, pull %.1f",
+                anchor.state().phase().name().toLowerCase(Locale.ROOT), rt.isAnchored() ? " (anchored)" : " (anchor down, way on)",
+                as == null ? 0.0 : as.distance(), anchor.paidOut(), as != null && as.taut() ? ", taut" : "",
+                as != null && as.dragging() ? ", dragging" : "", anchor.resting() ? ", on the ground" : "",
+                chainForce == null ? 0.0 : chainForce.length());
         s.sendSuccess(() -> Component.literal(String.format(Locale.ROOT, "rudder %s (step %d, %.0f°), anchor %s",
                 rt.helm() == null ? "none (no helm)" : "set", rt.rudderStep(), rt.rudderAngle(), anchorText)), false);
         ForceBreakdown f = rt.lastBreakdown();
@@ -135,11 +140,6 @@ public final class SailingCommands {
         }
         ShipBody inPlot = SableShips.containing(level, BlockPos.containing(pos));
         return inPlot;
-    }
-
-    private static double horizontalDistance(Vec3 a, Vec3 b) {
-        double dx = a.x - b.x, dz = a.z - b.z;
-        return Math.sqrt(dx * dx + dz * dz);
     }
 
     private static String fmt(double d) {

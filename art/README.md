@@ -770,6 +770,101 @@ Ship decor (ART2): ship's lantern, ship's bell, rope coil, stern window, chart t
   ringing), `rope_coil.png` (one and three coils), `stern_window.png` (open, shutters), `chart_table.png`,
   `sea_cot.png`.
 
+Cloth and flags (ART3):
+- **Sail cloth** `textures/block/sail_cloth.png` (32x32, opaque, `tools/gen_sailing_textures.py`, deterministic): one
+  tile per block, seamless both ways (the yard renderer maps every block of cloth onto the whole tile, the stay
+  renderer repeats it by planar position in blocks). Plain weave (alternate texels +-3, a thread variation per row and
+  column), double-stitched vertical panel seams every 8 px (dark fold, light overlap ridge, stitches every 3 px on both
+  sides), **one reef band per block** (rows 12..14, doubled darker canvas, stitched along both edges, a tan reef point
+  knotted on the band in the middle of every panel and hanging 4 px), stains and faint rain streaks. The furled bundle
+  samples rows 0..7 only, so it shows seamed canvas without the band. The sails have no colour variants yet (design.md
+  §4.8 "dyeable" is not implemented), so there is one file. A frayed foot is not possible with this tiling: the
+  renderers give every block of cloth the same tile, so an edge drawn into the tile would repeat in mid-sail; it needs
+  a foot tile picked by the renderers (open point). Render `renders/sail_cloth.png` (full 3 x 3, half with the bundle
+  under the yard, furled; flat planes in a scratch Blockbench project, not saved).
+- **Flag cloth** `textures/block/flag_<kind>.png` (32x16, layout unchanged, `tools/gen_flag_textures.py`): every design
+  gets `finish()` on top: plain weave over the field (+-5 per texel plus row/column variation; greyscale on the banner
+  cloth, which is tinted), a canvas heading tape on hoist column 2 with grommets in rows 1 and 14, a stitch line in
+  column 3 (every other row 40 darker), and a frayed fly: rows 3, 7, 8 and 12 of the tip column 23 are transparent
+  (the renderer is `entityCutoutNoCull`), column 22 a shade darker there.
+- **Ripple** (`ship/decor/flag/FlagRipple`, pure, `FlagRippleTest`; drawn by `FlagClothRenderer`): the cloth of
+  `FlagClothModel` (1 x 1.5 blocks, unchanged) is drawn as 8 vertical strips of 3 texture columns. Strip boundary k
+  (s = k / 8) is pushed along the cloth normal by `A * s * sin(2 pi (1.25 s - t / 36) + phase)`: the hoist stays on
+  the pole, the swing grows to the tip, a crest takes 36 ticks to pass and travels from the pole to the tip. A is 0.6 px
+  in calm air and 1.6 px at 12 blocks/s of wind (sampled once per game tick for all flags), the phase is a hash of the
+  pole's block position. Normals follow the slope, so the folds shade. Front and back faces per strip, the swatch
+  edges per strip, one tip face. The renderer keeps three float arrays and refills them per flag: no allocation per
+  frame. Kept in code (the renderer draws quads); `models/flag_cloth.bbmodel` is a reference model only (Generic
+  format, the four flags at one moment, each strip a cube turned about y; nothing is exported from it). Render
+  `renders/flag_cloth.png` (front three-quarter, the navy flag from above, back). Rebuild: a `free` project, the
+  four textures from `textures/block/`, per strip a 1 x 16 px cube from boundary k to k + 1 with east uv
+  `[3k, 0, 3k + 3, 16]`, west reversed, up/down on the swatch column 24.
+- **Kraken re-render:** `renders/kraken.png` was re-rendered after GL1 with `KRK.render()` on the unchanged
+  `kraken.bbmodel` (see "Kraken (K1b)": open the project, `window.KRK = {REPO, UUID: Project.uuid}`, eval
+  `kraken_model.js`, `KRK.render()`). The rest pose of the model never pointed the suckers wrong; only the aim did, and
+  `KRK.aimQuat` already had the GL1 sucker normal, so the raised arms now hook their tips down and show their suckers
+  from below. Model, geo and rig tests unchanged.
+- **Blockbench global names:** besides `KR`, Blockbench defines a global `FC`; `window.FC = {...}` does not shadow it
+  inside `risky_eval` (properties land on Blockbench's function). ART3 used `window.ART3`.
+
+Treasure map and receipt (ART4):
+- Two `java_block` item projects, `treasure_map.bbmodel` and `ship_receipt.bbmodel`, no block of the same name. No new
+  colours: `paper`, `biscuit_light`, `biscuit_dark` (`palette_3`), `map_land`, `map_ink`, `map_sea_dark`,
+  `flag_red`, `flag_red_dark` (`palette_5`), `red` (`palette`), `spice_dark` (`palette_4`); particle `palette_3`
+  for both. Datagen writes no model for either item any more (`TreasureMaps.gatherData` dropped its delegation to
+  `item/chart`, `ShipOrderData` its flat `minecraft:item/paper` model); they are plain items, so no `handMadeItem`
+  call is needed.
+- **Treasure map** (47 elements): a parchment folded once down the middle, built facing south like a sprite
+  (x 1..15, y 2..14, sheet z 7.75..8.25). The right half lies flat; the left half and everything drawn on it turn
+  `y 22.5` about `[8, 8, 8]` (the fold), so its outer edge comes 2.7 px towards the viewer and the map opens like a
+  shallow book. Its top-left corner is rolled over towards the front: the sheet stops at y 12.4 under a roll of two
+  crossed boxes along x (D 2, `biscuit_dark` ends with a `biscuit_light` core disc, `biscuit_dark` underside),
+  turned with the half. Aged edges are rim inlays of uneven width (`biscuit_light`, 0.05 px proud) with
+  `biscuit_dark` stains on the corners (0.1 px proud), a `biscuit_dark` crease beside the fold; the back is
+  `biscuit_light`. Drawing: left half a mainland coast along the bottom, two wave marks, an ink compass rose with a
+  red north tip and three route dots; right half an island of six `map_land` rows over `map_ink` rows 0.35 px wider
+  (the ink rows alternate between 0.05 and 0.1 px proud so neighbours never share a plane; land 0.15 px proud), a
+  palm as an ink T, a fourth route dot and the red X (two `flag_red` bars at +45 and -45, 0.2 and 0.26 px proud).
+  Inlays are zero-depth elements with only their south face. Lint: no fights; two same-look warnings where the
+  turned half's top and bottom faces meet the flat half's at the fold (0.012 px², same paper patch).
+- **Treasure map display:** held open on the fingers and tilted up towards the holder like a map being read:
+  third person `[40, 15, 0]` / `[0, 2.5, 1]` / 0.5; first person (the doubloon's) `[0, -70, 25]` /
+  `[1.13, 4.2, 1.13]` / 0.55; `gui` `[20, -15, 0]` / 1.1 (the fold and the roll show); `ground` lying flat, face up,
+  `[-90, 0, 0]` / `[0, -1.5, 0]` / 0.5; `fixed` and `head` vanilla (the drawing faces out of the frame). Left-hand
+  slots repeat the right hand.
+- **Ship receipt** (16 elements): a letter with its top third folded down over the front. Sheet x 2..14, y 3.5..12.5,
+  z 7.7..8.3 (`biscuit_light` edges); the flap y 8..12.5, z 8.3..8.5 with a `biscuit_light` crease band along its
+  top and a `biscuit_light` shadow band on the sheet just under its folded edge. Ink (`map_ink`, 0.05 px proud):
+  three address lines and a signature on the sheet, a heading of two lines and the shipwright's number on the flap.
+  The wax seal straddles the flap's edge at (8, 8): two crossed boxes (`red`, `flag_red_dark` sides, 0.05 px apart
+  in depth), a raised `spice_dark` stamp and a `flag_red_dark` drip below the seal.
+- **Receipt display:** held upright between the fingers like a letter, its face turned outwards: third person
+  `[70, -90, 0]` / `[0, 3, 1]` / 0.55; first person `[0, -70, 25]` / `[1.13, 4.2, 1.13]` / 0.6; `gui`
+  `[20, -15, 0]` / 1.25; `ground` flat face up as the map; `fixed`, `head` vanilla.
+- Built like ART1b-ART1d: a Python part list (patch names through the `SHEETS` cells) wrote the model JSON, and
+  `ART4.load(name)` in `risky_eval` opened it in a new `java_block` tab with `Codecs.java_block.parse(json, path)`
+  (given the JSON's path under `models/item/`, the parser resolves the palette textures itself, with folder and
+  namespace set). `Codecs.java_block.compile()` of the tab gives the same 47 / 16 elements (checked element by
+  element); the project is `Codecs.project.compile({raw: true})` with each texture's `path` emptied and
+  `relative_path` pointing at the sheet under `common/src/main/resources`. Script and helpers are not committed.
+- Renders: `renders/treasure_map.png`, `renders/ship_receipt.png`: front, three-quarter and back views (a separate
+  `THREE.WebGLRenderer` over a clone of `Project.model_3d`), then the GUI slot and third person in the right hand
+  (display mode, `scene` rendered from the display preview's camera with the gizmo hidden), composed on a 2D canvas.
+- **Audit: items whose item model is still not a Blockbench model** (the backlog for the next batch; checked against
+  every `item.` / `block.pirates_n_ships.*` lang key; the ART2/ART3 branches may change it when they land):
+
+  | Item | Model now | Declared in |
+  |---|---|---|
+  | `mooring_ring` | `minecraft:block/button_inventory` in iron (block: `minecraft:block/button`) | `combat/grapple/GrappleModule.ringModels` |
+  | `pirate_spawn_egg`, `sailor_spawn_egg`, `navy_soldier_spawn_egg`, `navy_officer_spawn_egg`, `shark_spawn_egg` | `minecraft:item/template_spawn_egg` | `mob/MobModule.gatherData` (`SPAWN_EGG`) |
+  | `kraken_spawn_egg` | `minecraft:item/template_spawn_egg` | `mob/kraken/KrakenContent` (`SPAWN_EGG_MODEL`) |
+
+  Spawn eggs keep vanilla's look by design (design.md §4.8), so the mooring ring (block and item) is the only real
+  backlog entry. Every other item has a hand-made model under `models/item/` or delegates to a hand-made block model.
+  Unused sprites that could go in a cleanup: `textures/item/carpenters_hammer.png`, `saw.png`, `nails.png`,
+  `shipwright_toolkit.png` (ART1c); `chart.png`, `map_tile.png`, `kraken_beak.png`, `kraken_ink.png` stay while tests
+  read them.
+
 ## Entities
 
 Animated mobs and NPCs (crew member, pirate, sailor, navy soldier and officer; design.md §9) are GeckoLib models
@@ -1287,6 +1382,14 @@ key or a literal state, `roof_ridge_x`/`roof_ridge_z` build stair roofs with gab
 jigsaws. `Piece.emit` merges runs along x into `box` operations and adds the jigsaws as `block_entity` operations.
 `art/structures/<group>/_style.py` holds the group's palette and small fittings (doors, beds, tables, lantern posts).
 Files starting with `_` are helpers, not pieces.
+
+**Connecting blocks need no side properties (WG4).** Fences, glass panes, iron bars (and brig bars) and walls get
+their `north`/`east`/`south`/`west` (and a wall's `up`) at placement from the processor `pirates_n_ships:connections`
+(`world.structure.ConnectionsProcessor`), which every port pool element (processor list `pirates_n_ships:connections`)
+and every wreck piece runs. It connects each block to its neighbours in the same template, in the template's frame,
+so generators may write plain `spruce_fence` or `iron_bars`; any side values a generator does write are recomputed
+for sides whose neighbour is in the template. A side facing outside the template (the terrain, another piece) keeps
+the value the template stores, so a rail that must meet a neighbouring piece needs that side written explicitly.
 
 **Coordinates:** y 0 is the piece's **foundation row**. It sits level with the terrain surface (WG1 sinks land
 pieces by one). Pieces face **north (−z)**: a building's door and its `building_in` jigsaw are on the −z side,

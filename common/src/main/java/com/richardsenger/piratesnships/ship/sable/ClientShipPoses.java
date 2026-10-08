@@ -45,6 +45,16 @@ public final class ClientShipPoses {
         return sub instanceof ClientSubLevel c && !c.isRemoved();
     }
 
+    /**
+     * Plot-to-world rotation (copy) at render time of the client ship the entity stands on or rides in, or null
+     * (WV1 camera sway). Same lookup as {@link #onShip}: {@code ActiveSableCompanion#getTrackingOrVehicleSubLevel}
+     * (l.449) and {@code ClientSubLevel#renderPose(float)} (l.313).
+     */
+    public static @Nullable Quaterniond shipOrientation(Entity entity, float partialTick) {
+        SubLevel sub = Sable.HELPER.getTrackingOrVehicleSubLevel(entity);
+        return sub instanceof ClientSubLevel c && !c.isRemoved() ? new Quaterniond(c.renderPose(partialTick).orientation()) : null;
+    }
+
     private static @Nullable Pose3dc pose(Level level, Vec3 plotPos, float partialTick) {
         SubLevel sub = Sable.HELPER.getContaining(level, plotPos);
         return sub instanceof ClientSubLevel c && !c.isRemoved() ? c.renderPose(partialTick) : null;

@@ -21,9 +21,11 @@ import java.util.UUID;
  * <p><b>Grabbing.</b> A player uses the rope while looking at it, with an empty main hand or a hook in it (GR4) (the client sends {@link BoardRopePayload} when its
  * own pick hits a rope; {@link #tryBoard} checks again with the server's view of the player, a little more lenient
  * for the latency). The rope must be latched; the player must be within {@code board_reach} of the rope point the look
- * ray passes within {@code board_pick_radius} of. A thrower grabbing their own untied rope pins its near end where
- * their hand is ({@link GrapplingHookEntity#pinNearEnd}), so the rope stays strung when they slide away. The player
- * then rides a {@link RopeRiderEntity} at the picked point.
+ * ray passes within {@code board_pick_radius} of. GR5 ("no floating near end"): a rope is a line to slide along only
+ * when both ends are fixed, the hook and a cleat or mooring ring it is tied to; then the player rides a
+ * {@link RopeRiderEntity} at the picked point. A rope whose near end is in the thrower's hand is never pinned in mid-air:
+ * its thrower using it is pulled hand over hand toward the hook instead ({@link #tickPull}, the rope still running from
+ * the hook to their hand), and nobody else can mount it.
  *
  * <p><b>Riding.</b> {@link #tickRider} moves the rider by {@link RopeSlide#step} along the rope's live ends and hangs
  * the player {@code hang_offset} below it. Arriving, the player lands on the standing spot of that end
@@ -46,6 +48,8 @@ public final class RopeSlideService {
     /** Outcome of a grab. */
     public enum Board {
         OK, DISABLED, BUSY,
+        /** GR5: the near end is in its thrower's hand, not tied off: only the thrower can use it, to pull themselves in. */
+        NOT_FIXED,
         /** GR4: the main hand holds a musket or another item with its own use ({@link RopeSlide.Grab#HAND_BUSY}). */
         HAND_BUSY,
         /** GR4: the hook left less than {@code grab_cooldown_ticks} ago ({@link RopeSlide.Grab#TOO_SOON}). */
@@ -93,6 +97,13 @@ public final class RopeSlideService {
         if (hook.isRemoved() || hook.level() != level || hook.state() != GrapplingHookEntity.State.LATCHED) {
             return Board.NOT_LATCHED;
         }
+        boolean pull = !hook.nearEndFixed();
+        if (pull && hook.getOwner() != player) {
+            return Board.NOT_FIXED; // GR5: a hand-held rope is no line to slide along
+        }
+        if (pull && player.isShiftKeyDown()) {
+            return Board.BUSY; // sneaking hauls the rope (GR5) and sneak + use lets go of it: no pull
+        }
         Vec3 a = hook.ropeNearEnd(level);
         Vec3 b = hook.ropeFarEnd(level);
         if (a == null || b == null || a.distanceTo(b) < RopeSlide.MIN_LENGTH) {
@@ -103,10 +114,8 @@ public final class RopeSlideService {
         if (pick == null) {
             return Board.OUT_OF_REACH;
         }
-        if (hook.getOwner() == player && !hook.nearEndFixed()) {
-            pin(level, hook, player, a);
-        }
-        RopeRiderEntity rider = RopeRiderEntity.create(level, hook, pick.t(), hangPos(RopeSlide.at(a, b, pick.t())));
+        RopeRiderEntity rider = pull ? RopeRiderEntity.createPull(level, hook, player.position())
+                : RopeRiderEntity.create(level, hook, pick.t(), hangPos(RopeSlide.at(a, b, pick.t())));
         level.addFreshEntity(rider);
         if (!player.startRiding(rider)) {
             rider.discard();
@@ -116,19 +125,6 @@ public final class RopeSlideService {
         level.playSound(null, rider.getX(), rider.getY() + GrappleConfig.HANG_OFFSET.get(), rider.getZ(), SoundEvents.LEASH_KNOT_PLACE,
                 SoundSource.PLAYERS, 0.7f, 1.3f);
         return Board.OK;
-    }
-
-    /**
-     * Pins the thrower's rope at their hand {@code hand} (world), on the ship they stand on or in the world. GR4: also
-     * on the ship the hook holds (a line within one ship, e.g. mast top to deck), so the line moves with that ship.
-     */
-    private static void pin(ServerLevel level, GrapplingHookEntity hook, Player thrower, Vec3 hand) {
-        ShipBody ship = GrappleService.shipOf(level, thrower);
-        if (ship != null) {
-            hook.pinNearEnd(ship.toPlot(hand), ship.id());
-        } else {
-            hook.pinNearEnd(hand, null);
-        }
     }
 
     /** Where the hanging player's feet are for a rope point. */
@@ -157,6 +153,14 @@ public final class RopeSlideService {
             rider.letGo(null);
             return;
         }
+        if (rider.pulling()) {
+            tickPull(level, rider, player, hook);
+            return;
+        }
+        if (!hook.nearEndFixed()) {
+            rider.letGo(null); // GR5: the rope's anchor was lost, it is no line to slide along any more
+            return;
+        }
         Vec3 a = hook.ropeNearEnd(level);
         Vec3 b = hook.ropeFarEnd(level);
         if (a == null || b == null) {
@@ -175,12 +179,48 @@ public final class RopeSlideService {
         player.resetFallDistance();
     }
 
+    /** Gap kept between the pulled player's box and the blocks around it when checking for a way ahead [blocks]. */
+    private static final double PULL_CLEARANCE = 1.0e-3;
+
+    /**
+     * One tick of the thrower pulling themselves along their own hand-held rope (GR5): their feet move straight toward
+     * the standing spot at the hook ({@link #landing}) at {@code slide_min_speed}, the rope's crawling speed, until they
+     * are within {@code dismount_distance} of it (they land there) or the way ahead is blocked (they let go where they
+     * are). The rope keeps running from the hook to their hand. A rope tied off meanwhile drops the puller.
+     */
+    static void tickPull(ServerLevel level, RopeRiderEntity rider, Player player, GrapplingHookEntity hook) {
+        Vec3 b = hook.ropeFarEnd(level);
+        if (b == null || hook.nearEndFixed()) {
+            rider.letGo(null);
+            return;
+        }
+        Vec3 land = landing(level, hook, true, b);
+        Vec3 feet = rider.position();
+        Vec3 to = land.subtract(feet);
+        double dist = to.length();
+        RopeSlide.Params p = GrappleConfig.slideParams();
+        if (dist <= p.dismountDistance()) {
+            rider.letGo(land.add(0, LANDING_NUDGE, 0));
+            level.playSound(null, land.x, land.y, land.z, SoundEvents.ARMOR_EQUIP_LEATHER.value(), SoundSource.PLAYERS, 0.8f, 1.0f);
+            return;
+        }
+        double v = Math.min(p.minSpeed(), dist);
+        Vec3 next = feet.add(to.scale(v / dist));
+        Vec3 move = next.subtract(player.position());
+        if (!level.noCollision(player, player.getBoundingBox().move(move).deflate(PULL_CLEARANCE))) {
+            rider.letGo(null); // blocked: the player lets go where they are
+            return;
+        }
+        rider.slideTo(0.0, v, 1, next);
+        player.resetFallDistance();
+    }
+
     // ------------------------------------------------------------------ landing
 
     /**
      * Where a rider arriving at an end of {@code hook}'s rope stands (world, feet): on the hook's end the top of the
      * ship block the hook bit into (or the nearest standable block just above or below it), on the near end the same
-     * around the ring or the pin, or the thrower's own feet when the thrower holds the rope. {@code ropeEnd} (world)
+     * around the ring, or the thrower's own feet when the thrower holds the rope. {@code ropeEnd} (world)
      * when nothing standable is found.
      */
     static Vec3 landing(ServerLevel level, GrapplingHookEntity hook, boolean hookEnd, Vec3 ropeEnd) {
@@ -192,12 +232,6 @@ public final class RopeSlideService {
         if (hook.tiedRing() != null) {
             UUID id = hook.tiedShip();
             return standingSpot(level, id == null ? null : SableShips.byId(level, id), hook.tiedRing(), ropeEnd);
-        }
-        Vec3 pin = hook.pinPos();
-        if (pin != null) {
-            UUID id = hook.pinShip();
-            BlockPos feet = BlockPos.containing(pin.subtract(0, 1.0, 0)); // the hand was above the thrower's feet
-            return standingSpot(level, id == null ? null : SableShips.byId(level, id), feet.below(), ropeEnd);
         }
         Entity owner = hook.getOwner();
         return owner != null ? owner.position() : ropeEnd;

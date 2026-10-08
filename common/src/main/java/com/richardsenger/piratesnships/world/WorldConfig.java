@@ -12,9 +12,9 @@ import java.util.Optional;
  * type and natural spawn weights of each mob. Declared ahead of the features by {@code core.settings.SettingsModule}.
  * The seafarer village, pirate island and navy outpost values are read by {@code world.structure.PortStructure} (WG1,
  * WG2, WG3) through {@link #placement}; the outpost's garrison by {@code world.outpost.Garrison}; the pirate spawn
- * weight and island cap by {@code world.island.PirateIslandSpawns}; the wreck values by {@code world.wreck.WreckStructure} (WK1); the
- * other structures and spawn weights are not
- * read yet (the navy's spawn weights stay unused: the garrison is placed, navy mobs never spawn naturally).
+ * weight and island cap by {@code world.island.PirateIslandSpawns}; the wreck values by {@code world.wreck.WreckStructure}
+ * (WK1); the other structures and spawn weights are not read yet (the navy's spawn weights stay unused: the garrison
+ * is placed, navy mobs never spawn naturally).
  */
 public final class WorldConfig {
 
@@ -191,14 +191,5 @@ public final class WorldConfig {
             case PIRATE_ISLAND -> Optional.of(PIRATE_ISLAND_PLACEMENT);
             case NAVY_OUTPOST -> Optional.of(NAVY_OUTPOST_PLACEMENT);
         };
-    }
-
-    private static StructurePlacement structure(String name, String plural, int spacing, double frequency) {
-        ConfigSection s = STRUCTURES.section(name, "Placement of " + plural);
-        return new StructurePlacement(
-                s.intRange("spacing", spacing, 2, 4096,
-                        "Average distance in chunks between two " + plural),
-                s.doubleRange("frequency", frequency, 0.0, 1.0,
-                        "Chance that " + plural + " generate at a possible location (0 = never, 1 = always)"));
     }
 }

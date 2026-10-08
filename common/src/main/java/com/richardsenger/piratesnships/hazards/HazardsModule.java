@@ -31,11 +31,13 @@ public final class HazardsModule implements ModModule {
     public void registerContent() {
         HazardsContent.init();
         ShipForces.registerHazards();
+        com.richardsenger.piratesnships.hazards.waves.Waves.registerContent(); // WV1
     }
 
     @Override
     public void registerPayloads() {
         Services.NETWORK.registerToClient(HazardPushPayload.TYPE, HazardPushPayload.CODEC, HazardPushPayload::apply);
+        com.richardsenger.piratesnships.hazards.waves.Waves.registerPayloads(); // WV1
     }
 
     @Override
@@ -44,11 +46,13 @@ public final class HazardsModule implements ModModule {
         CommonEvents.SERVER_STOPPED.register(server -> HazardShipForces.clear());
         SableShips.onPhysicsTick(HazardShipForces::onPhysicsTick);
         CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> HazardCommands.register(dispatcher));
+        com.richardsenger.piratesnships.hazards.waves.Waves.registerEvents(); // WV1
     }
 
     @Override
     public void initClient() {
         com.richardsenger.piratesnships.hazards.client.HazardsClient.init();
+        com.richardsenger.piratesnships.hazards.waves.Waves.initClient(); // WV1
     }
 
     @Override
@@ -62,10 +66,11 @@ public final class HazardsModule implements ModModule {
                 .add(HazardCommands.KEY_FAILED, "Could not spawn the %s here")
                 .add(HazardCommands.KEY_CLEARED, "Removed %s hazards")
                 .add(ShipForces.HAZARDS_KEY, "Sea Hazards"));
+        data.lang(com.richardsenger.piratesnships.hazards.waves.Waves::lang); // WV1
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(HazardGameTests.class);
+        return List.of(HazardGameTests.class, com.richardsenger.piratesnships.hazards.waves.WaveGameTests.class); // WV1
     }
 }

@@ -14,6 +14,7 @@ import com.richardsenger.piratesnships.ship.hull.net.ShipStatusPayload;
 import com.richardsenger.piratesnships.ship.hull.net.ShipStatusSync;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullConfig;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests;
+import com.richardsenger.piratesnships.ship.hull.runtime.DryHullViewGameTests;
 import com.richardsenger.piratesnships.ship.hull.runtime.HullRegionsPayload;
 import com.richardsenger.piratesnships.ship.hull.runtime.HullRuntimes;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
@@ -69,6 +70,11 @@ public final class HullModule implements ModModule {
     @Override
     public void initClient() {
         com.richardsenger.piratesnships.ship.hull.client.ShipHudClient.init();
+        // water plants of the world are not drawn inside dry hulls (HV1)
+        com.richardsenger.piratesnships.platform.event.ClientEvents.CLIENT_TICK_END.register(
+                com.richardsenger.piratesnships.ship.hull.client.HiddenWaterPlants::tick);
+        com.richardsenger.piratesnships.platform.event.ClientEvents.CLIENT_DISCONNECT.register(
+                mc -> com.richardsenger.piratesnships.ship.hull.client.HiddenWaterPlants.reset());
     }
 
     @Override
@@ -78,6 +84,11 @@ public final class HullModule implements ModModule {
         data.blockTags(tags -> {
             tags.tag(HullTags.WATERTIGHT);
             tags.tag(HullTags.NOT_WATERTIGHT);
+            // world blocks the client hides inside dry hulls (HV1)
+            tags.tag(HullTags.HIDDEN_IN_DRY_HULL).add(net.minecraft.world.level.block.Blocks.SEAGRASS,
+                    net.minecraft.world.level.block.Blocks.TALL_SEAGRASS, net.minecraft.world.level.block.Blocks.KELP,
+                    net.minecraft.world.level.block.Blocks.KELP_PLANT, net.minecraft.world.level.block.Blocks.SEA_PICKLE,
+                    net.minecraft.world.level.block.Blocks.BUBBLE_COLUMN);
         });
         data.lang(lang -> lang.add(ShipForces.BUOYANCY_KEY, "Hull Buoyancy"));
         HullRepairData.gather(data); // bilge pump and hull patch (G4)
@@ -86,7 +97,7 @@ public final class HullModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(HullGameTests.class, DryHullGameTests.class, PumpPatchGameTests.class,
-                ShipStatusGameTests.class);
+        return List.of(HullGameTests.class, DryHullGameTests.class, DryHullViewGameTests.class,
+                PumpPatchGameTests.class, ShipStatusGameTests.class);
     }
 }

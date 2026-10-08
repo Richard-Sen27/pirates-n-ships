@@ -7,7 +7,8 @@ removed functions). Usage:
 
 Output in common/src/main/resources/assets/pirates_n_ships/textures/:
 - block/sail_cloth.png (32x32): the cloth of square and triangular sails, drawn by the yard and stay renderers (one
-  copy per block). Weathered off-white canvas: vertical panel seams, a faint weave, a few stains. Opaque.
+  copy per block). Weathered canvas (ART3): plain weave, double-stitched vertical panel seams every 8 px, one reef
+  band with reef points per block, stains and rain streaks. Opaque.
 - block/rope.png (16x16): the stay of a triangular sail, drawn by the stay renderer as a thin beam (u around the
   beam, v along it, one copy per block). Twisted hemp: diagonal strands. Opaque.
 
@@ -35,28 +36,58 @@ def shade(rgb, d):
 
 
 def cloth():
-    """32x32 weathered canvas. Seams every 8 px (one cloth panel per quarter block), tileable in both directions."""
+    """32x32 sailcloth, one tile per block, seamless in both directions (the stay renderer repeats it by world
+    position, the yard renderer once per block). ART3:
+    - plain weave: alternate texels lighter and darker, plus a thread variation per row and per column;
+    - vertical panel seams every 8 px (x = 0, 8, 16, 24): a dark fold line, a light overlap ridge beside it and a
+      row of stitches on both sides every 3 px (double-stitched);
+    - one reef band per block (rows 12..14): a doubled strip of darker canvas, stitched along both edges, with a reef
+      point (a short tan tie, knotted on the band and hanging 4 px) in the middle of every panel;
+    - weathering: soft darker stains and faint vertical rain streaks.
+    The furled bundle samples rows 0..7 (u 0..1, v 0..0.25): plain seamed canvas, no band.
+    Opaque."""
     rnd = random.Random(0x5A11)
-    base = P["white"]
+    base = (234, 226, 206, 255)
     img = Image.new("RGBA", (32, 32), base)
+    row = [rnd.randint(-3, 3) for _ in range(32)]
+    col = [rnd.randint(-3, 3) for _ in range(32)]
     for y in range(32):
         for x in range(32):
-            d = rnd.randint(-6, 4)
-            if (x + y) % 2 == 0:  # faint weave
-                d -= 3
+            d = (3 if (x + y) % 2 == 0 else -3) + row[y] + col[x] + rnd.randint(-2, 1)
             img.putpixel((x, y), shade(base, d))
-    for x in (0, 8, 16, 24):  # panel seams, double-stitched
+    for x in (2, 13, 21, 29):  # faint rain streaks
         for y in range(32):
-            img.putpixel((x, y), shade(P["bone"], rnd.randint(-8, 0)))
-            if y % 4 == 1:
-                img.putpixel(((x + 1) % 32, y), shade(P["bone"], -14))
-    for _ in range(5):  # weathering stains
+            if rnd.random() < 0.7:
+                img.putpixel((x, y), shade(img.getpixel((x, y)), -5))
+    for _ in range(4):  # weathering stains
         cx, cy, r = rnd.randrange(32), rnd.randrange(32), rnd.randint(2, 4)
         for y in range(cy - r, cy + r + 1):
             for x in range(cx - r, cx + r + 1):
-                if (x - cx) ** 2 + (y - cy) ** 2 <= r * r and rnd.random() < 0.7:
+                if (x - cx) ** 2 + (y - cy) ** 2 <= r * r and rnd.random() < 0.75:
                     px, py = x % 32, y % 32
-                    img.putpixel((px, py), shade(img.getpixel((px, py)), -10))
+                    img.putpixel((px, py), shade(img.getpixel((px, py)), -9))
+    for x in (0, 8, 16, 24):  # panel seams
+        for y in range(32):
+            img.putpixel((x, y), shade(img.getpixel((x, y)), -22))
+            img.putpixel((x + 1, y), shade(img.getpixel((x + 1, y)), 8))
+            if y % 3 == 1:
+                img.putpixel(((x - 1) % 32, y), shade(base, -34))
+                img.putpixel((x + 2, y), shade(base, -34))
+    for y in (12, 13, 14):  # reef band: doubled canvas
+        for x in range(32):
+            img.putpixel((x, y), shade(img.getpixel((x, y)), -20 if y != 13 else -26))
+    for x in range(32):  # stitched along both edges
+        if x % 2 == 0:
+            img.putpixel((x, 11), shade(base, -36))
+            img.putpixel((x, 15), shade(base, -36))
+    for x in (4, 12, 20, 28):  # reef points
+        img.putpixel((x, 13), shade(P["brown"], 10))
+        img.putpixel((x + 1, 13), shade(P["brown"], 10))
+        for i, y in enumerate(range(14, 19)):
+            tx = x + (1 if i % 2 else 0)
+            img.putpixel((tx, y), shade(P["tan"], -10 if i % 2 else 4))
+            if y == 18:
+                img.putpixel((tx, y), shade(P["tan"], -30))
     return img
 
 

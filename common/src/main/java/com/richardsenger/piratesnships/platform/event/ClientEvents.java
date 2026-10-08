@@ -137,6 +137,20 @@ public final class ClientEvents {
         return result;
     });
 
+    /**
+     * The camera's roll is computed for a rendered frame (client thread). {@code roll} is the value so far in degrees
+     * (vanilla's 0 and earlier listeners); return it unchanged or a new one. Listeners are chained in registration
+     * order. Fired from NeoForge's {@code ViewportEvent.ComputeCameraAngles}. Used by
+     * {@code hazards.waves.client.WaveCameraSway} (WV1).
+     */
+    public static final Event<ComputeCameraRoll> COMPUTE_CAMERA_ROLL = Event.create(ls -> (partialTick, roll) -> {
+        float result = roll;
+        for (ComputeCameraRoll l : ls) result = l.modify(partialTick, result);
+        return result;
+    });
+
+    @FunctionalInterface public interface ComputeCameraRoll { float modify(float partialTick, float roll); }
+
     /** Which interaction key fired {@link #INTERACTION_KEY}. */
     public enum InteractionInput { ATTACK, USE, PICK_BLOCK }
 

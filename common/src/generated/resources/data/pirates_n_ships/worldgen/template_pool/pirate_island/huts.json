@@ -4,7 +4,7 @@
       "element": {
         "element_type": "minecraft:single_pool_element",
         "location": "pirates_n_ships:pirate_island/tent",
-        "processors": "minecraft:empty",
+        "processors": "pirates_n_ships:connections",
         "projection": "rigid"
       },
       "weight": 3
@@ -13,7 +13,7 @@
       "element": {
         "element_type": "minecraft:single_pool_element",
         "location": "pirates_n_ships:pirate_island/tavern_hut",
-        "processors": "minecraft:empty",
+        "processors": "pirates_n_ships:connections",
         "projection": "rigid"
       },
       "weight": 1
@@ -22,7 +22,7 @@
       "element": {
         "element_type": "minecraft:single_pool_element",
         "location": "pirates_n_ships:pirate_island/captains_hut",
-        "processors": "minecraft:empty",
+        "processors": "pirates_n_ships:connections",
         "projection": "rigid"
       },
       "weight": 1
@@ -31,7 +31,7 @@
       "element": {
         "element_type": "minecraft:single_pool_element",
         "location": "pirates_n_ships:pirate_island/treasure_spot",
-        "processors": "minecraft:empty",
+        "processors": "pirates_n_ships:connections",
         "projection": "rigid"
       },
       "weight": 1

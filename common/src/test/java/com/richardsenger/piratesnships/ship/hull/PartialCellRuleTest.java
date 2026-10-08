@@ -44,6 +44,11 @@ class PartialCellRuleTest {
         return PartialCellRule.of(a).additions(dry)[compartment].get(a.grid().index(x, y, z));
     }
 
+    /** Whether the cell joins with the sea at ship-frame height {@code sea} (grid origin 0, up = +y: cell y spans y..y+1). */
+    private static boolean joinsAt(HullAnalysis a, int compartment, int x, int y, int z, double sea) {
+        return PartialCellRule.of(a).additions(allDry(a), sea)[compartment].get(a.grid().index(x, y, z));
+    }
+
     @Test
     void gridRecordsPartialCellsAndTheirFaces() {
         HullGrid g = room().partial(3, 1, 3, UP | SIDES).partial(2, 2, 2, ALL).build();
@@ -78,16 +83,31 @@ class PartialCellRuleTest {
 
     @Test
     void topSlabAsHullBottomNeverJoins() {
-        // its empty half is below, in the sea
+        // its empty half is below, open to the sea; its full top faces the room, so no dry cell touches the empty half
         HullAnalysis a = HullAnalyzer.analyze(room().partial(3, 1, 3, DOWN | SIDES).build());
         assertEquals(0, PartialCellRule.of(a).candidateCount());
-        assertFalse(joins(a, allDry(a), 0, 3, 1, 3));
+        assertFalse(joinsAt(a, 0, 3, 1, 3, Double.NEGATIVE_INFINITY), "even with no sea at the hull");
+    }
+
+    @Test
+    void wallTrapdoorJoinsOnlyWhileItsOutsideIsAboveTheSea() {
+        // a trapdoor in the west wall at y 3: the room behind it, outside air (y 3..4) in front of it
+        HullAnalysis a = HullAnalyzer.analyze(room().set(1, 3, 3, CellKind.OPENING).partial(1, 3, 3, ALL).build());
+        assertFalse(joins(a, allDry(a), 0, 1, 3, 3), "every outside neighbour counted as sea");
+        assertFalse(joinsAt(a, 0, 1, 3, 3, 5.0), "the sea in front of it would get a dry hole");
+        assertFalse(joinsAt(a, 0, 1, 3, 3, 3.3), "a quarter block of sea already vetoes");
+        assertTrue(joinsAt(a, 0, 1, 3, 3, 3.2), "a sliver of water does not veto");
+        assertTrue(joinsAt(a, 0, 1, 3, 3, 2.0), "above the waterline");
+        assertTrue(joinsAt(a, 0, 1, 3, 3, Double.NEGATIVE_INFINITY), "no sea at the hull (a dry dock): nothing to cut");
     }
 
     @Test
     void cellAtTheGridEdgeIsOutside() {
         HullAnalysis a = HullAnalyzer.analyze(TestHulls.box5().partial(2, 0, 2, UP | DOWN).build());
-        assertEquals(0, PartialCellRule.of(a).candidateCount());
+        BitSet[] add = PartialCellRule.of(a).additions(allDry(a));
+        for (BitSet b : add) {
+            assertFalse(b.get(a.grid().index(2, 0, 2)));
+        }
     }
 
     @Test
@@ -111,10 +131,31 @@ class PartialCellRuleTest {
     }
 
     @Test
-    void deckHatchUnderTheSkyNeverJoins() {
-        // an opening in the roof: union of both states uncovers all faces, the top one is outside air
+    void deckHatchUnderTheSkyJoinsAboveTheSea() {
+        // an opening in the roof (y 5): union of both states uncovers all faces, the top one is outside air (y 6..7).
+        // HV1: a camera in the hatch is inside the ship as long as that air is not under the sea.
         HullAnalysis a = HullAnalyzer.analyze(room().set(3, 5, 3, CellKind.OPENING).partial(3, 5, 3, ALL).build());
-        assertEquals(0, PartialCellRule.of(a).candidateCount());
+        PartialCellRule rule = PartialCellRule.of(a);
+        assertEquals(1, rule.candidateCount());
+        assertTrue(joinsAt(a, 0, 3, 5, 3, 4.0), "hatch above the waterline");
+        assertTrue(joinsAt(a, 0, 3, 5, 3, 5.9), "deck at the waterline, the hatch cell itself awash");
+        assertFalse(joinsAt(a, 0, 3, 5, 3, 6.5), "deck under water: the sea comes in through the hatch");
+        assertEquals(0, rule.submergedCount(5.9));
+        assertEquals(1, rule.submergedCount(6.5));
+        assertEquals(0, rule.submergedCount(Double.NEGATIVE_INFINITY));
+    }
+
+    @Test
+    void submergedCountCountsVetoedCandidates() {
+        // a roof hatch (outside air from y 6) and a wall trapdoor (outside air from y 3); a floor slab never vetoes
+        HullAnalysis a = HullAnalyzer.analyze(room().set(3, 5, 3, CellKind.OPENING).partial(3, 5, 3, ALL)
+                .set(1, 3, 3, CellKind.OPENING).partial(1, 3, 3, ALL).partial(4, 1, 4, UP | SIDES).build());
+        PartialCellRule rule = PartialCellRule.of(a);
+        assertEquals(3, rule.candidateCount());
+        assertEquals(0, rule.submergedCount(0.2));
+        assertEquals(1, rule.submergedCount(4.0));
+        assertEquals(2, rule.submergedCount(7.0));
+        assertEquals(2, rule.submergedCount(Double.POSITIVE_INFINITY));
     }
 
     @Test
@@ -159,16 +200,18 @@ class PartialCellRuleTest {
     void halfSlabWallWithItsEmptySideOutsideNeverJoins() {
         // a vertical half block in the west wall whose empty half faces the sea (west), its east side the room
         HullAnalysis a = HullAnalyzer.analyze(room().partial(1, 3, 3, WEST | UP | DOWN | NORTH | SOUTH).build());
-        assertEquals(0, PartialCellRule.of(a).candidateCount());
+        assertFalse(joinsAt(a, 0, 1, 3, 3, 10.0), "the sea beside the hull would get a dry hole");
         HullAnalysis in = HullAnalyzer.analyze(room().partial(1, 3, 3, EAST | UP | DOWN | NORTH | SOUTH).build());
         assertTrue(joins(in, allDry(in), 0, 1, 3, 3), "empty half facing the room joins");
     }
 
     @Test
     void openHullRimSlabIsOutside() {
-        // a bottom slab on top of an open hull's wall: its top is outside air
+        // a bottom slab on top of an open hull's wall: its top and outer side are outside air
         HullGrid.Builder b = TestHulls.openBox(HullGrid.builder(7, 7, 7), 1, 1, 1, 5, 5, 5);
         HullAnalysis a = HullAnalyzer.analyze(b.partial(1, 5, 3, UP | SIDES).build());
-        assertEquals(0, PartialCellRule.of(a).candidateCount());
+        for (BitSet add : PartialCellRule.of(a).additions(allDry(a), 10.0)) {
+            assertFalse(add.get(a.grid().index(1, 5, 3)));
+        }
     }
 }

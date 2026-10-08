@@ -4,7 +4,7 @@
       "element": {
         "element_type": "minecraft:single_pool_element",
         "location": "pirates_n_ships:village/pier",
-        "processors": "minecraft:empty",
+        "processors": "pirates_n_ships:connections",
         "projection": "rigid"
       },
       "weight": 1

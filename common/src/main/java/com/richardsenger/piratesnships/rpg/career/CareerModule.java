@@ -61,10 +61,11 @@ public final class CareerModule implements ModModule {
     @Override
     public void gatherData(DataContributions data) {
         data.lang(CareerText::lang);
+        data.lang(CareerRewards::lang);
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(CareerGameTests.class);
+        return List.of(CareerGameTests.class, CareerRewardsGameTests.class);
     }
 }

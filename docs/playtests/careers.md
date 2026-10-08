@@ -65,3 +65,45 @@ kill, 50 per pirate captain, a void letter blocks a new one for 3 days.
 ## 6. Toggle
 1. Set `careers.enabled = false` in the server config, reload. Expected: right-clicking an officer with an empty hand
    opens nothing; kills count nothing; `/pirates career` adds "(careers are off on this server)".
+
+# CAR2: rank rewards
+
+The rules (flag right, fee waiver, navy shipyard and its discount, the fence's infamy bonus, the pirates' friendship,
+the gift ledger) are covered by JUnit (`CareerRewardRulesTest`) and 8 GameTests (`CareerRewardsGameTests`). This part
+checks them in a real world. Defaults (`careers.rewards.*`): flag right and free docking from Lieutenant; the navy
+shipyard from Captain at price × 0.7 (Captain), 0.5 (Commodore), 0.4 (Admiral); a Lieutenant receives the officer's
+bicorne and a saber; fences add a price score of 7 / 13 / 20 (Buccaneer / Dread Captain / Pirate Lord, as pirate
+reputation points on top of the pirates' reputation, capped at 100); pirates leave a Dread Captain and up alone.
+
+## 7. Promotion gifts
+1. Reset, then `/pirates rep set @s navy 25`, enlist at an officer, kill five pirates and do one navy quest (or
+   `/pirates career set @s navy lieutenant`). Expected: "You have been promoted to Lieutenant!", then two gold lines
+   "With your new rank you receive: Officer's Bicorne" and "... Saber"; both items are in the inventory.
+2. Resign at the officer and enlist again (you are promoted straight back to Lieutenant). Expected: no second bicorne.
+3. Fill the inventory with dirt, `/pirates career set @s navy captain` on a fresh player (or another account) who was
+   never a Lieutenant. Expected: bicorne and saber lie at your feet, "Your pack is full: the rest lies at your feet."
+
+## 8. The navy flag right
+1. `/pirates career set @s navy lieutenant`, `/pirates rep set @s navy -20` (below `law.flags.navy_flag_min_standing`,
+   default 0). Sail a ship under the navy flag past an outpost's garrison for a minute.
+   Expected: no "Your cover is blown" message, no "caught false colours" crime (`/pirates law record @s`).
+2. `/pirates career set @s navy midshipman`, same pass. Expected: sooner or later the cover is blown and the crime recorded.
+
+## 9. The navy shipyard
+1. As a Midshipman, open the harbor master's desk at a navy outpost. Expected: Goods and Contracts only, no Orders tab.
+2. `/pirates career set @s navy captain`, reopen the desk. Expected: an Orders tab; the basic sloop costs 210
+   doubloons (300 × 0.7). Order it with logs and wool: 210 doubloons are taken and a ship receipt arrives.
+3. `/pirates ship orders finish <id>`, use the desk with the receipt. Expected: the sloop appears at a free berth of
+   the outpost's quay, assembled, owned by you. (Report if the quay's berths are blocked or missing.)
+4. `/pirates career set @s navy commodore`, reopen. Expected: the sloop costs 150.
+
+## 10. Fences and pirates
+1. `/pirates rep set @s pirates 0`, `/pirates career set @s infamy deckhand`, note the buy price of a good at a pirate
+   island's fence. `/pirates career set @s infamy dread_captain`, reopen. Expected: the buy price is about 1.3 % lower
+   (13 points of the 10 % swing), plunder pays about 1.3 % more; a Pirate Lord gets 2 %.
+2. As a Dread Captain with pirate reputation 0, walk into a pirate camp. Expected: the pirates do not attack until you
+   hit one. As a Buccaneer they attack.
+
+## 11. Toggles
+1. `careers.rewards.flag_right = false`: section 8.1 now ends with blown cover. `navy_shipyard = false`: no Orders tab
+   at outposts for a Captain. `promotion_gifts = false`: no items on promotion. `careers.enabled = false`: all rewards off.

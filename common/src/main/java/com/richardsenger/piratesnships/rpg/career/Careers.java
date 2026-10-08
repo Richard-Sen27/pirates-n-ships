@@ -55,8 +55,18 @@ public final class Careers {
 
     /** Stores {@code record} and syncs it to the player's client when it changed. */
     public static void store(Player player, CareerRecord record) {
+        CareerRecord before = record(player);
         Services.ATTACHMENTS.set(player, CareerAttachments.CAREER, record);
         if (player instanceof ServerPlayer sp) CareerSync.sendIfChanged(sp, record);
+        CareerRewards.afterStore(player, before, record); // CAR2: promotion gifts
+    }
+
+    /**
+     * The navy standing the false-flag rule and the docking fee judge (CAR2): the navy reputation, raised to
+     * {@code law.flags.navy_flag_min_standing} for an officer of {@code careers.rewards.flag_right_rank} and up.
+     */
+    public static int effectiveNavyStanding(Player player) {
+        return CareerRewards.effectiveNavyStanding(player);
     }
 
     static long now(Player player) {

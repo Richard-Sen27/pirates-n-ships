@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.crew.npc;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.crew.galley.MealSeat;
 import com.richardsenger.piratesnships.crew.hammock.CrewRest;
 import com.richardsenger.piratesnships.crew.hammock.HammockRef;
 import com.richardsenger.piratesnships.crew.hammock.SleepAxis;
@@ -53,7 +54,8 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * Animated with GeckoLib (M1): one controller {@code body} loops the {@link CrewPose} animation of the rig contract
  * ({@code art/README.md}, "Entities"). The controller runs on the client only; the server's part is the synced
  * {@link #isWorking()} flag and, since ART7, the synced station pose ({@link #stationPose()}, {@link StationPoses}),
- * with which the crew member also turns to face its wheel or gun. CR2 adds its low-morale day counter and whether it went unpaid at the last dawn (saved); CRW1 the player who hired it ({@link #hiredBy()}, saved).
+ * with which the crew member also turns to face its wheel or gun. CR2 adds its low-morale day counter and whether it went unpaid at the last dawn (saved); CRW1 the player who hired it ({@link #hiredBy()}, saved); CRW2 its deserting mark
+ * ({@link #isDeserting()}, saved) and whether it sits at a meal ({@link #isEating()}, synced).
  * This class and {@code crew/npc/client/} are the only GeckoLib importers.
  */
 public class CrewMember extends PathfinderMob implements GeoEntity {
@@ -66,6 +68,8 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     static final String TAG_LOW_MORALE_DAYS = Constants.MOD_ID + ":low_morale_days";
     static final String TAG_UNPAID = Constants.MOD_ID + ":unpaid";
     static final String TAG_HIRED_BY = Constants.MOD_ID + ":hired_by";
+    static final String TAG_DESERTING = Constants.MOD_ID + ":deserting";
+    static final String TAG_DESERTING_DAYS = Constants.MOD_ID + ":deserting_days";
 
     /** Ticks GeckoLib blends from one pose animation into the next. */
     private static final int POSE_TRANSITION_TICKS = 5;
@@ -76,6 +80,8 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     private static final EntityDataAccessor<Boolean> DATA_RESTING = SynchedEntityData.defineId(CrewMember.class, EntityDataSerializers.BOOLEAN);
     /** The station pose's synced id ({@link CrewPose#stationId()}), -1 for none (ART7); set by the server. */
     private static final EntityDataAccessor<Byte> DATA_STATION_POSE = SynchedEntityData.defineId(CrewMember.class, EntityDataSerializers.BYTE);
+    /** True while it sits at a meal beside the pantry or water barrel (CRW2); set by the server, read by the animation. */
+    private static final EntityDataAccessor<Boolean> DATA_EATING = SynchedEntityData.defineId(CrewMember.class, EntityDataSerializers.BOOLEAN);
 
     private static final Map<CrewPose, RawAnimation> POSE_ANIMATIONS = new EnumMap<>(CrewPose.class);
 
@@ -104,6 +110,10 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     private boolean unpaid;
     /** The player who hired it at a harbor desk (CRW1), who may dismiss it. Server only, saved. */
     private Optional<UUID> hiredBy = Optional.empty();
+    /** It deserts and leaves at the next port (CRW2, {@code crew.upkeep.Desertions}). Server only, saved. */
+    private boolean deserting;
+    /** Dawns it has been deserting (CRW2). Server only, saved. */
+    private int desertingDays;
     /** Its station pose faces it towards the wheel or gun (ART7): the look goals leave its head alone. Server only. */
     private boolean facingStation;
 
@@ -124,7 +134,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.6) {
             @Override
             public boolean canUse() {
-                return assignment == null && rest == null && super.canUse();
+                return assignment == null && rest == null && !isPassenger() && super.canUse();
             }
         });
         // HM2: a sleeper keeps its head and body along the hammock (CrewRest#orient); awake, it looks around again
@@ -157,7 +167,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
      * where {@code crew.hammock.CrewRest#orient} holds head and body along the hammock.
      */
     public boolean mayLookAround() {
-        return !isResting() && !facingStation;
+        return !isResting() && !facingStation && !isEating();
     }
 
     @Override
@@ -166,6 +176,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         builder.define(DATA_WORKING, false);
         builder.define(DATA_RESTING, false);
         builder.define(DATA_STATION_POSE, (byte) -1);
+        builder.define(DATA_EATING, false);
     }
 
     /** Whether this crew member is at its station while the station carries out an order (synced to clients). */
@@ -181,6 +192,15 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         return getVehicle() != null && !(getVehicle() instanceof StationSeat);
     }
 
+    /**
+     * Whether it sits at a meal beside the pantry or water barrel (CRW2, {@code crew.galley.MealVisits}; synced, the
+     * client may not know the meal seat in the plot). It shows the {@link CrewPose#WORK} pose until the rig has an
+     * eating clip.
+     */
+    public boolean isEating() {
+        return entityData.get(DATA_EATING);
+    }
+
     /** Whether it lies in a hammock (synced to clients; the client may not know the hammock seat in the plot). */
     public boolean isResting() {
         return entityData.get(DATA_RESTING);
@@ -191,7 +211,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
      * plays {@link CrewPose#SLEEP} (ART1d), lying along the hammock ({@code crew.hammock.CrewRest#orient}, HM2).
      */
     public CrewPose pose(boolean legsMoving) {
-        return CrewPose.choose(legsMoving, isWorking(), isSeated(), isResting(), stationPose());
+        return CrewPose.choose(legsMoving, isWorking() || isEating(), isSeated(), isResting(), stationPose());
     }
 
     /**
@@ -294,6 +314,25 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         this.hiredBy = hiredBy;
     }
 
+    /**
+     * Whether it deserts and walks off at the next port (CRW2, {@code crew.upkeep.DesertionRules}); set at the dawn it
+     * deserts, cleared when a dawn finds its morale fine again.
+     */
+    public boolean isDeserting() {
+        return deserting;
+    }
+
+    /** Dawns it has been deserting; 0 when it is not. */
+    public int desertingDays() {
+        return deserting ? desertingDays : 0;
+    }
+
+    /** Sets the deserting mark and its dawns ({@code crew.upkeep.ShipDayTick}). */
+    public void setDeserting(boolean deserting, int days) {
+        this.deserting = deserting;
+        this.desertingDays = deserting ? Math.max(0, days) : 0;
+    }
+
     /** True when this crew member rides the seat of its assigned station. */
     public boolean isAtStation() {
         return assignment != null && getVehicle() instanceof StationSeat seat && seat.station().equals(assignment.pos());
@@ -312,6 +351,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         if (level() instanceof ServerLevel level) {
             CrewRest.tick(level, this);
             entityData.set(DATA_WORKING, operatingHere()); // only sends when the value changes
+            entityData.set(DATA_EATING, getVehicle() instanceof MealSeat);
             showStationPose(level);
         }
     }
@@ -386,6 +426,10 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
             tag.putBoolean(TAG_UNPAID, true);
         }
         hiredBy.ifPresent(id -> tag.putUUID(TAG_HIRED_BY, id));
+        if (deserting) {
+            tag.putBoolean(TAG_DESERTING, true);
+            tag.putInt(TAG_DESERTING_DAYS, desertingDays);
+        }
     }
 
     @Override
@@ -402,5 +446,6 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         lowMoraleDays = Math.max(0, tag.getInt(TAG_LOW_MORALE_DAYS));
         unpaid = tag.getBoolean(TAG_UNPAID);
         hiredBy = tag.hasUUID(TAG_HIRED_BY) ? Optional.of(tag.getUUID(TAG_HIRED_BY)) : Optional.empty();
+        setDeserting(tag.getBoolean(TAG_DESERTING), tag.getInt(TAG_DESERTING_DAYS));
     }
 }

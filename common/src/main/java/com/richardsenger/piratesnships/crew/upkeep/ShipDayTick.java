@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.crew.upkeep;
 
+import com.richardsenger.piratesnships.crew.CrewConfig;
 import com.richardsenger.piratesnships.crew.galley.ProvisionContainer;
 import com.richardsenger.piratesnships.crew.galley.ShipProvisions;
 import com.richardsenger.piratesnships.crew.hammock.CrewRest;
@@ -19,6 +20,7 @@ import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.station.winch.CaptainsWhistleItem;
+import com.richardsenger.piratesnships.trade.coin.Wallet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -46,8 +48,11 @@ import org.jetbrains.annotations.Nullable;
  *       kept for {@code station.Stations} until the next dawn; scurvy gives weakness for a day to the crew and, with
  *       {@code provisions.scurvy_affects_players}, to the owner aboard.</li>
  *   <li><b>Wages</b> ({@link WageRules}): from doubloons in the ship's cargo crates and barrels and any other container
- *       aboard except provisions, nearest the helm first.</li>
- *   <li><b>Mutiny, then desertion</b> ({@link UpkeepDay}).</li>
+ *       aboard except provisions, nearest the helm first; then (CRW2, {@code crew.wages.from_wallet}) from the doubloons
+ *       the owner carries while online in this level ({@link PayKey}).</li>
+ *   <li><b>Mutiny, then desertion</b> ({@link UpkeepDay}). Since CRW2 a deserter is only marked
+ *       ({@link CrewMember#isDeserting()}, {@link DesertionRules}) and walks off at a port ({@link Desertions}); with
+ *       {@code crew.desertion.at_port_only} off it leaves at once as before.</li>
  * </ol>
  * HM1's hammock rule settles each member's night afterwards: {@link #observe} runs at the start of every crew member's
  * tick (before {@link CrewRest#dawn}) and at the end of the level tick, so the first one to notice the dawn runs the day
@@ -76,13 +81,15 @@ public final class ShipDayTick {
      * @param provisions  the provisions outcome of the day
      * @param moraleDelta the provisions' morale change per member
      * @param day         the settled crew day (pay, desertion, mutiny)
-     * @param deserters   the deserted members
+     * @param deserters   the members that left the ship at this dawn
+     * @param deserting   the members marked as deserting at this dawn (CRW2; they leave at a port)
      * @param ownerLines  everything the owner was told (action-bar lines first, then chat lines)
      */
     public record DayReport(ProvisionOutcome provisions, int moraleDelta, UpkeepDay.Result day, List<UUID> deserters,
-                            List<Component> ownerLines) {
+                            List<UUID> deserting, List<Component> ownerLines) {
         public DayReport {
             deserters = List.copyOf(deserters);
+            deserting = List.copyOf(deserting);
             ownerLines = List.copyOf(ownerLines);
         }
 
@@ -143,9 +150,17 @@ public final class ShipDayTick {
         ProvisionEffects fx = outcome.effects();
         int provisionsDelta = UpkeepDay.provisionsDelta(fx);
 
-        // 2. wages, 3. mutiny and desertion (pure)
-        WageRules.Payment<BlockPos> payment = s.wagesEnabled()
-                ? WageRules.pay(crew.size(), s.wagePerDay(), scan.coins())
+        Optional<ShipData> record = ShipRegistry.get(level.getServer()).find(ship.id());
+        @Nullable ServerPlayer owner = record.flatMap(ShipData::owner)
+                .map(id -> level.getServer().getPlayerList().getPlayer(id)).orElse(null);
+        boolean ownerAboard = owner != null && owner.serverLevel() == level && isAboard(level, ship, owner);
+
+        // 2. wages (the owner's wallet last, CRW2), 3. mutiny and desertion (pure)
+        boolean wallet = s.wagesEnabled() && CrewConfig.WAGES_FROM_WALLET.get() && owner != null && owner.serverLevel() == level;
+        List<WageRules.Source<PayKey>> sources = PayKey.sources(scan.coins(), wallet ? owner.getUUID() : null,
+                wallet ? Wallet.count(owner) : 0);
+        WageRules.Payment<PayKey> payment = s.wagesEnabled()
+                ? WageRules.pay(crew.size(), s.wagePerDay(), sources)
                 : WageRules.Payment.none();
         List<UpkeepDay.Member> members = new ArrayList<>();
         for (CrewMember c : crew) {
@@ -167,12 +182,11 @@ public final class ShipDayTick {
                 CrewStations.say(level, c, Component.translatable(UpkeepText.SAY_UNPAID));
             }
         }
-        ShipCoins.take(level, payment);
-
-        Optional<ShipData> record = ShipRegistry.get(level.getServer()).find(ship.id());
-        @Nullable ServerPlayer owner = record.flatMap(ShipData::owner)
-                .map(id -> level.getServer().getPlayerList().getPlayer(id)).orElse(null);
-        boolean ownerAboard = owner != null && owner.serverLevel() == level && isAboard(level, ship, owner);
+        ShipCoins.take(level, PayKey.containers(payment));
+        long fromWallet = PayKey.walletCoins(payment);
+        if (fromWallet > 0 && !Wallet.take(owner, fromWallet)) {
+            fromWallet = 0; // counted in this same tick, so this cannot happen; never book coins nobody gave
+        }
         if (fx.scurvy() && ownerAboard && ProvisionsConfig.SCURVY_AFFECTS_PLAYERS.get()) {
             scurvy(owner);
         }
@@ -185,12 +199,19 @@ public final class ShipDayTick {
         if (s.wagesEnabled()) {
             bar.add(day.unpaid() > 0
                     ? Component.translatable(UpkeepText.UNPAID, day.unpaid())
+                    : fromWallet > 0
+                    ? Component.translatable(UpkeepText.PAID_WALLET, day.paid(), payment.coinsTaken(), fromWallet)
                     : Component.translatable(UpkeepText.PAID, day.paid(), payment.coinsTaken()));
         }
         List<Component> chat = new ArrayList<>();
+        if (fromWallet > 0 && !ownerAboard) {
+            chat.add(Component.translatable(UpkeepText.WALLET_PAID, fromWallet));
+        }
 
         // 3. mutiny or desertion
         List<UUID> deserters = new ArrayList<>();
+        List<UUID> marked = new ArrayList<>();
+        DesertionRules.Settings ds = Desertions.settings();
         if (day.mutiny()) {
             Component name = shipName(record);
             for (CrewMember c : crew) {
@@ -201,13 +222,26 @@ public final class ShipDayTick {
             chat.add(Component.translatable(UpkeepText.MUTINY, name));
         } else {
             for (int i = 0; i < crew.size(); i++) {
-                if (!day.members().get(i).deserts()) continue;
+                UpkeepDay.MemberResult r = day.members().get(i);
                 CrewMember c = crew.get(i);
                 Component name = c.getDisplayName();
-                CrewStations.say(level, c, Component.translatable(UpkeepText.SAY_DESERT));
-                deserters.add(c.getUUID());
-                CrewReplacement.replace(level, c, MobContent.SAILOR.get());
-                chat.add(Component.translatable(UpkeepText.DESERTED, name));
+                if (r.deserts() && !c.isDeserting() && DesertionRules.leavesAtOnce(ds)) {
+                    CrewStations.say(level, c, Component.translatable(UpkeepText.SAY_DESERT));
+                    deserters.add(c.getUUID());
+                    CrewReplacement.replace(level, c, MobContent.SAILOR.get());
+                    chat.add(Component.translatable(UpkeepText.DESERTED, name));
+                    continue;
+                }
+                DesertionRules.Mark was = new DesertionRules.Mark(c.isDeserting(), c.desertingDays());
+                DesertionRules.Mark now = DesertionRules.afterDawn(was, r.deserts(), r.lowDays());
+                c.setDeserting(now.deserting(), now.days());
+                if (now.deserting() && !was.deserting()) {
+                    CrewStations.say(level, c, Component.translatable(UpkeepText.SAY_DESERTING));
+                    marked.add(c.getUUID());
+                    chat.add(Component.translatable(UpkeepText.DESERTING, name));
+                } else if (was.deserting() && !now.deserting()) {
+                    chat.add(Component.translatable(UpkeepText.STAYS, name));
+                }
             }
         }
 
@@ -218,11 +252,11 @@ public final class ShipDayTick {
 
         data.put(ship.id(), new ShipUpkeep(pr.state(), fx.workSpeedMultiplier(), fx.scurvy(), outcome.hungry(), outcome.thirsty(),
                 day.shipLowDays(), s.wagesEnabled()
-                        ? new ShipUpkeep.PayRecord(true, day.paid(), day.unpaid(), payment.coinsTaken())
+                        ? new ShipUpkeep.PayRecord(true, day.paid(), day.unpaid(), payment.coinsTaken(), fromWallet)
                         : ShipUpkeep.PayRecord.NONE));
         List<Component> lines = new ArrayList<>(bar);
         lines.addAll(chat);
-        return new DayReport(outcome, provisionsDelta, day, deserters, lines);
+        return new DayReport(outcome, provisionsDelta, day, deserters, marked, lines);
     }
 
     /** Joins the action-bar lines into one. */

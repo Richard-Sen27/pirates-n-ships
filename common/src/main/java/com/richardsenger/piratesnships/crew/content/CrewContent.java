@@ -8,6 +8,7 @@ import com.richardsenger.piratesnships.crew.galley.WaterBarrelBlock;
 import com.richardsenger.piratesnships.crew.galley.WaterBarrelBlockEntity;
 import com.richardsenger.piratesnships.crew.hammock.HammockBlock;
 import com.richardsenger.piratesnships.crew.hammock.HammockItem;
+import com.richardsenger.piratesnships.crew.galley.MealSeat;
 import com.richardsenger.piratesnships.crew.hammock.HammockSeat;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -58,6 +59,10 @@ public final class CrewContent {
     /** The invisible place a sleeping crew member lies on, inside the ship's plot (like the station seat). */
     public static final RegistryEntry<EntityType<?>, EntityType<HammockSeat>> HAMMOCK_SEAT = ModRegistry.entity("hammock_seat",
             () -> EntityType.Builder.<HammockSeat>of(HammockSeat::new, MobCategory.MISC)
+                    .sized(0.25f, 0.01f).noSummon().fireImmune().clientTrackingRange(10).updateInterval(1));
+    /** The invisible place a crew member takes at a meal beside the pantry (CRW2), inside the ship's plot. */
+    public static final RegistryEntry<EntityType<?>, EntityType<MealSeat>> MEAL_SEAT = ModRegistry.entity("meal_seat",
+            () -> EntityType.Builder.<MealSeat>of(MealSeat::new, MobCategory.MISC)
                     .sized(0.25f, 0.01f).noSummon().fireImmune().clientTrackingRange(10).updateInterval(1));
 
     /** Water rations in a water barrel item (from a broken barrel). Absent = a full barrel. */

@@ -46,15 +46,27 @@ public record ClothGeometry(boolean alongX, float upperNeg, float upperPos, floa
      * hangs free above the lower yard (half sail), its foot keeps the standoff.
      */
     public float standoff(float v, float t, float bottom) {
-        boolean toLowerYard = bottom >= drop - 1.0e-3f;
-        float fromYard = toLowerYard ? Math.min(v, drop - v) : v;
-        float s = smoothstep(Math.min(1f, Math.max(0f, fromYard / 0.5f)));
-        float base = AT_YARD + (STANDOFF - AT_YARD) * s;
+        float base = clearance(v, bottom);
         float width = upperNeg + upperPos;
         float belly = Math.min(MAX_BELLY, BELLY_PER_WIDTH * width);
         float depth = bottom <= 0f ? 0f : (float) Math.sin(Math.PI * Math.min(1f, Math.max(0f, v / bottom)));
         float across = 1f - (2f * t - 1f) * (2f * t - 1f);
         return base + belly * depth * across;
+    }
+
+    /**
+     * The part of {@link #standoff} without the belly: {@link #AT_YARD} at a yard, {@link #STANDOFF} half a block away
+     * from it, the same for every point across. VIS1b adds its own moving belly ({@link SailShape}) to this.
+     */
+    public float clearance(float v, float bottom) {
+        float fromYard = hangsToLowerYard(bottom) ? Math.min(v, drop - v) : v;
+        float s = smoothstep(Math.min(1f, Math.max(0f, fromYard / 0.5f)));
+        return AT_YARD + (STANDOFF - AT_YARD) * s;
+    }
+
+    /** Whether a cloth reaching down to {@code bottom} is held by the lower yard (else its foot hangs free). */
+    public boolean hangsToLowerYard(float bottom) {
+        return bottom >= drop - 1.0e-3f;
     }
 
     private static float smoothstep(float x) {

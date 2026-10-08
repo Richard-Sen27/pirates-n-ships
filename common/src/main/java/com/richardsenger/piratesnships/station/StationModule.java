@@ -7,6 +7,7 @@ import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.assembly.ShipSplits;
 import com.richardsenger.piratesnships.station.helm.HelmCourses;
+import com.richardsenger.piratesnships.station.helm.HelmPoses;
 import com.richardsenger.piratesnships.station.helm.HelmStationGameTests;
 import com.richardsenger.piratesnships.station.helm.HelmStationLang;
 import com.richardsenger.piratesnships.station.jobs.JobBoard;
@@ -65,11 +66,13 @@ public final class StationModule implements ModModule {
         CommonEvents.LEVEL_TICK_END.register(Stations::onLevelTick);
         CommonEvents.LEVEL_TICK_END.register(JobBoard::onLevelTick);
         CommonEvents.LEVEL_TICK_END.register(HelmCourses::onLevelTick);
+        HelmPoses.register(); // ART7: the helmsman's pose
         CommonEvents.SERVER_STOPPED.register(server -> {
             Stations.onServerStopped();
             CaptainsWhistleItem.onServerStopped();
             JobBoard.onServerStopped();
             HelmCourses.onServerStopped();
+            HelmPoses.clear();
         });
         CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> StationCommands.register(dispatcher));
         SableShips.onShipRemoved(Stations::onShipRemoved);

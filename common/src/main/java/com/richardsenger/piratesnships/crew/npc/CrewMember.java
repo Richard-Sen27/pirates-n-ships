@@ -3,8 +3,11 @@ package com.richardsenger.piratesnships.crew.npc;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.crew.hammock.CrewRest;
 import com.richardsenger.piratesnships.crew.hammock.HammockRef;
+import com.richardsenger.piratesnships.crew.hammock.SleepAxis;
 import com.richardsenger.piratesnships.crew.morale.MoraleRules;
 import com.richardsenger.piratesnships.crew.morale.NightOutcome;
+import com.richardsenger.piratesnships.ship.sable.SableShips;
+import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.station.StationConfig;
 import com.richardsenger.piratesnships.station.StationRef;
 import com.richardsenger.piratesnships.station.StationState;
@@ -47,7 +50,8 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * <p>
  * Animated with GeckoLib (M1): one controller {@code body} loops the {@link CrewPose} animation of the rig contract
  * ({@code art/README.md}, "Entities"). The controller runs on the client only; the server's part is the synced
- * {@link #isWorking()} flag. CR2 adds its low-morale day counter and whether it went unpaid at the last dawn (saved).
+ * {@link #isWorking()} flag and, since ART7, the synced station pose ({@link #stationPose()}, {@link StationPoses}),
+ * with which the crew member also turns to face its wheel or gun. CR2 adds its low-morale day counter and whether it went unpaid at the last dawn (saved).
  * This class and {@code crew/npc/client/} are the only GeckoLib importers.
  */
 public class CrewMember extends PathfinderMob implements GeoEntity {
@@ -67,12 +71,16 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     private static final EntityDataAccessor<Boolean> DATA_WORKING = SynchedEntityData.defineId(CrewMember.class, EntityDataSerializers.BOOLEAN);
     /** True while it lies in a hammock (HM1); set by the server, read by the animation. */
     private static final EntityDataAccessor<Boolean> DATA_RESTING = SynchedEntityData.defineId(CrewMember.class, EntityDataSerializers.BOOLEAN);
+    /** The station pose's synced id ({@link CrewPose#stationId()}), -1 for none (ART7); set by the server. */
+    private static final EntityDataAccessor<Byte> DATA_STATION_POSE = SynchedEntityData.defineId(CrewMember.class, EntityDataSerializers.BYTE);
 
     private static final Map<CrewPose, RawAnimation> POSE_ANIMATIONS = new EnumMap<>(CrewPose.class);
 
     static {
         for (CrewPose pose : CrewPose.values()) {
-            POSE_ANIMATIONS.put(pose, RawAnimation.begin().thenLoop(pose.animation()));
+            POSE_ANIMATIONS.put(pose, pose.loops()
+                    ? RawAnimation.begin().thenLoop(pose.animation())
+                    : RawAnimation.begin().thenPlay(pose.animation()));
         }
     }
 
@@ -91,6 +99,8 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     private int lowMoraleDays;
     /** It was not paid at the last dawn (CR2). Server only, saved. */
     private boolean unpaid;
+    /** Its station pose faces it towards the wheel or gun (ART7): the look goals leave its head alone. Server only. */
+    private boolean facingStation;
 
     public CrewMember(EntityType<? extends CrewMember> type, Level level) {
         super(type, level);
@@ -142,7 +152,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
      * where {@code crew.hammock.CrewRest#orient} holds head and body along the hammock.
      */
     public boolean mayLookAround() {
-        return !isResting();
+        return !isResting() && !facingStation;
     }
 
     @Override
@@ -150,6 +160,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         super.defineSynchedData(builder);
         builder.define(DATA_WORKING, false);
         builder.define(DATA_RESTING, false);
+        builder.define(DATA_STATION_POSE, (byte) -1);
     }
 
     /** Whether this crew member is at its station while the station carries out an order (synced to clients). */
@@ -175,7 +186,15 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
      * plays {@link CrewPose#SLEEP} (ART1d), lying along the hammock ({@code crew.hammock.CrewRest#orient}, HM2).
      */
     public CrewPose pose(boolean legsMoving) {
-        return CrewPose.choose(legsMoving, isWorking(), isSeated(), isResting());
+        return CrewPose.choose(legsMoving, isWorking(), isSeated(), isResting(), stationPose());
+    }
+
+    /**
+     * The pose its station shows (ART7: helmsman, gun crew; {@link StationPoses}), synced; null when it is not at a
+     * station or its station has no pose for what it is doing now.
+     */
+    public @Nullable CrewPose stationPose() {
+        return CrewPose.byStationId(entityData.get(DATA_STATION_POSE));
     }
 
     @Override
@@ -279,6 +298,23 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         if (level() instanceof ServerLevel level) {
             CrewRest.tick(level, this);
             entityData.set(DATA_WORKING, operatingHere()); // only sends when the value changes
+            showStationPose(level);
+        }
+    }
+
+    /** Server, every tick: the station pose ({@link StationPoses}) into the synced data, and the turn to face it. */
+    private void showStationPose(ServerLevel level) {
+        StationPoses.Shown shown = assignment != null && isAtStation() && getVehicle() instanceof StationSeat seat
+                ? StationPoses.resolve(level, assignment, seat.blockPosition()) : null;
+        entityData.set(DATA_STATION_POSE, (byte) (shown == null ? -1 : shown.pose().stationId()));
+        facingStation = shown != null && shown.facing() != null;
+        if (facingStation) {
+            ShipBody ship = SableShips.byId(level, assignment.ship());
+            float yaw = SleepAxis.continuous(getYRot(), StationPoses.yaw(shown.facing(), ship == null ? null : ship.orientation()));
+            setYRot(yaw);
+            setYHeadRot(yaw);
+            setYBodyRot(yaw);
+            setXRot(0);
         }
     }
 

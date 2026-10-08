@@ -129,15 +129,20 @@ class CrewMemberRigTest {
         for (CrewPose pose : CrewPose.values()) {
             Animation anim = baked.getAnimation(pose.animation());
             assertNotNull(anim, "missing animation " + pose.animation());
-            assertEquals(Animation.LoopType.LOOP, anim.loopType(), pose.animation() + " must loop");
+            assertEquals(pose.loops() ? Animation.LoopType.LOOP : Animation.LoopType.PLAY_ONCE, anim.loopType(),
+                    pose.animation() + (pose.loops() ? " must loop" : " must play once"));
             assertTrue(anim.length() > 0, pose.animation() + " has no length");
             assertTrue(anim.boneAnimations().length > 0, pose.animation() + " animates nothing");
             for (BoneAnimation b : anim.boneAnimations()) {
                 assertTrue(BONES.containsKey(b.boneName()), pose.animation() + " animates unknown bone " + b.boneName());
             }
         }
-        // the five poses (sleep: ART1d) plus the navy soldier's musket animations (M6), which share the rig
-        assertEquals(Set.of("idle", "walk", "work", "sit", "sleep", "musket_aim", "musket_reload", "musket_shove"), baked.animations().keySet());
+        // the five poses (sleep: ART1d), the navy soldier's musket animations (M6), which share the rig, and the station
+        // animations (ART7; capstan_push is authored but no station plays it yet)
+        assertEquals(Set.of("idle", "walk", "work", "sit", "sleep", "musket_aim", "musket_reload", "musket_shove",
+                "helm_hold", "helm_turn_left", "helm_turn_right", "cannon_aim", "cannon_load", "cannon_fire", "capstan_push"),
+                baked.animations().keySet());
+        assertEquals(Animation.LoopType.LOOP, baked.getAnimation("capstan_push").loopType(), "capstan_push loops");
     }
 
     @Test

@@ -110,6 +110,7 @@ public final class Gunnery {
         SableShips.onShipRemoved((level, ship, destroyed) -> {
             if (destroyed) SHIPS.remove(ship);
         });
+        GunCrewPoses.register(); // ART7: the gun crew's poses
     }
 
     // ---- API --------------------------------------------------------------------------------------------------------
@@ -147,6 +148,16 @@ public final class Gunnery {
     public static Optional<UUID> engaged(ShipBody ship) {
         Engagement e = SHIPS.get(ship.id());
         return e == null ? Optional.empty() : Optional.ofNullable(e.lastTarget);
+    }
+
+    /**
+     * Whether the crew at the cannon {@code station} (its master) has a target now, so it is aiming (ART7, the
+     * {@code cannon_aim} pose); false while the ship's gunnery is off.
+     */
+    public static boolean aiming(StationRef station) {
+        Engagement e = SHIPS.get(station.ship());
+        Gun gun = e == null ? null : e.guns.get(station.pos());
+        return gun != null && gun.target != null;
     }
 
     /**

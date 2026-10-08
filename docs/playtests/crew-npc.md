@@ -239,3 +239,40 @@ chest.
 
 Report: screenshots of the action bar after steps 1 and 3, the chat at steps 4 and 5, `/pirates crew info` after each
 step, and `logs/latest.log` if anything errors.
+
+## ART7: crew station animations (helmsman, gun crew, hauling)
+
+Setup: a small ship with a helm (put the deck free on the helm's wheel side, the side the player stands on to steer, so
+the helmsman's spot is there), a cannon on deck with a chest of gunpowder and cannonballs within reach, two crew members,
+a captain's whistle; F5 for third person. Compare with `art/renders/crew_poses_art7.png` and `anim_haul.png`.
+
+1. **Helmsman holds the wheel.** Assign a crew member to the helm (whistle or `/pirates crew assign`). Expected: he turns
+   to face the wheel and stops looking around; both hands rest on the rim at about 2 and 10 o'clock, leaning slightly in
+   (`helm_hold`, slow breathing). Report if the hands sink into the rim, float more than a hand's width off it, or if
+   his feet clip into the helm. If the free side of your helm is not the wheel side, he stands beside the helm, faces
+   it and reaches past the wheel: screenshot that too.
+2. **Helmsman turns the wheel.** Hoist the sails (`/pirates crew order hoist`) and give a course to a point off the
+   starboard bow (`/pirates crew order course <x> <z>`, see `crew-helm.md`), later one to port. Expected: whenever the wheel jumps to a new angle, he works it hand over
+   hand for one second clockwise (to starboard, `helm_turn_right`) or counter-clockwise (to port, `helm_turn_left`),
+   then holds it again. Check the direction against the wheel's own turn.
+3. **Turning ship.** While the ship turns, he keeps facing the wheel (his yaw follows the ship). Report any spin when
+   the ship's heading crosses south (yaw ±180).
+4. **Gun crew loads.** Assign a crew member to the cannon, whistle "Load!". Expected: he faces the gun and rams
+   (`cannon_load`, both hands on an invisible rammer, pushing forward every 1.5 s) until the gun is loaded, then stands
+   normally and looks around again.
+5. **Gun crew fires.** Whistle "Fire!". Expected: during the half-second fuse he raises the linstock hand and lunges
+   down to the touch hole, then steps back clear (`cannon_fire`, once); with auto-reload he goes straight on to
+   ramming.
+6. **Fire at will.** With a hostile ship in range (navy or pirate ship), whistle "Fire at will". Expected: between
+   loads and shots the gunner leans over the breech with a hand on it, sighting (`cannon_aim`). With no target in
+   reach he stands normally.
+7. **Hauling (player, PAL).** Hook a ship with the grappling hook, hold the rope in your hand (not tied), sneak until
+   the rope goes taut. Expected (F5): you lean back with the right foot braced forward and pull hand over hand
+   (`haul`, one second per cycle). Releasing sneak or tying the rope stops it; riding a rope still shows the slide pose.
+   Check that another player sees it too.
+8. **Seafarer variants.** If any pirate or navy crew stand at stations (they share the animation file), the same poses
+   apply; report anything that looks off on their models (coat tails, tricorns).
+
+Report: a screenshot of steps 1, 2 (mid-turn), 4, 5 (the lunge) and 7 from the side, and whether the turn directions in
+step 2 match the wheel. Not in game: `capstan_push` is authored (crew rig, 1.2 s loop) but no capstan station exists
+yet, so nothing plays it.

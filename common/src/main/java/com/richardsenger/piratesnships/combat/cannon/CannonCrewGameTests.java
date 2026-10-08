@@ -7,6 +7,8 @@ import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
+import com.richardsenger.piratesnships.crew.npc.CrewPose;
+import com.richardsenger.piratesnships.crew.npc.StationPoses;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests.Fixture;
@@ -16,6 +18,7 @@ import com.richardsenger.piratesnships.station.StationState;
 import com.richardsenger.piratesnships.station.Stations;
 import com.richardsenger.piratesnships.station.order.WhistleOrder;
 import com.richardsenger.piratesnships.station.order.WhistleOrders;
+import com.richardsenger.piratesnships.station.seat.StationSeat;
 import java.util.Collection;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -24,6 +27,7 @@ import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -346,6 +350,43 @@ public final class CannonCrewGameTests {
         h.runAfterDelay(fuse + reload + 4 + fuse + 3, () -> {
             h.assertTrue(cannonLoad(h, s) == CannonLoad.EMPTY && shotAt(h, s) > first[0], "the second shot did not leave");
             h.assertTrue(orderAt(ref) == CannonOrder.LOAD, "the crew did not reload after the second shot");
+            cleanup(h, gunner);
+            h.succeed();
+        });
+    }
+
+    /**
+     * ART7: the gunner stands at an idle gun in the ordinary pose and looks around; "Fire!" shows the linstock lunge
+     * ({@code cannon_fire}) for the fuse, facing the gun, and the reload after the shot shows the ramming
+     * ({@code cannon_load}).
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200, batch = BATCH)
+    public static void theGunnerLungesToFireAndRamsToLoad(GameTestHelper h) {
+        Ship s = ship(h);
+        ServerLevel level = h.getLevel();
+        supplied(h, s);
+        CrewMember gunner = manned(h, s.cannon());
+        loadByHand(h, s);
+        h.runAfterDelay(2, () -> {
+            h.assertTrue(gunner.stationPose() == null, "a pose at an idle gun: " + gunner.stationPose());
+            h.assertTrue(gunner.mayLookAround(), "the gunner may not look around at an idle gun");
+            h.assertTrue(CrewStations.order(level, gunner, CannonOrder.FIRE) == Stations.OrderResult.STARTED, "fire was refused");
+        });
+        h.runAfterDelay(4, () -> {
+            h.assertTrue(gunner.stationPose() == CrewPose.CANNON_FIRE, "pose during the fuse: " + gunner.stationPose());
+            if (!(gunner.getVehicle() instanceof StationSeat seat)) throw new GameTestAssertException("not on the station seat");
+            Direction toward = null;
+            for (Direction d : Direction.Plane.HORIZONTAL) {
+                if (level.getBlockState(seat.blockPosition().relative(d)).getBlock() instanceof CannonBlock) toward = d;
+            }
+            h.assertTrue(toward != null, "the gunner's spot " + seat.blockPosition() + " is not beside the gun");
+            Direction want = StationPoses.toward(seat.blockPosition(), s.cannon());
+            float yaw = StationPoses.yaw(want != null ? want : toward, s.f().ship().orientation());
+            h.assertTrue(Math.abs(Mth.wrapDegrees(gunner.getYRot() - yaw)) < 1f, "faces " + gunner.getYRot() + " instead of the gun at " + yaw);
+        });
+        h.runAfterDelay(CannonStation.FUSE_TICKS + 5, () -> {
+            h.assertTrue(gunner.stationPose() == CrewPose.CANNON_LOAD, "pose while reloading: " + gunner.stationPose());
+            h.assertTrue(gunner.pose(false) == CrewPose.CANNON_LOAD, "the animation follows the synced pose: " + gunner.pose(false));
             cleanup(h, gunner);
             h.succeed();
         });

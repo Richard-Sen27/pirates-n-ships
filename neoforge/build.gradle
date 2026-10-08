@@ -44,6 +44,9 @@ neoForge {
             sourceSet sourceSets.main
         }
     }
+    // ClientMixinTargetsTest (HV1b) reads the NeoForge-patched Minecraft classes the dev client loads (the
+    // neoforge-<version>-minecraft-merged jar) from the JUnit classpath, to check every mixin target without a client.
+    addModdingDependenciesTo(sourceSets.test)
 }
 
 // Every GameTest run starts from a fresh test world and fresh mod config, as on CI. The world used to outlive runs
@@ -91,4 +94,18 @@ dependencies {
     // WorldEdit (dev only, for pasting test ships from art/schematics/). localRuntime puts it on the dev runs'
     // classpath without listing it in the published POM or mods.toml, so players never need it.
     localRuntime("maven.modrinth:worldedit:${worldedit_version}")
+
+    // ClientMixinTargetsTest (HV1b): JUnit, plus ASM's tree API to read the mixin and target classes. Same ASM
+    // version as the one Mixin runs on in the dev runs.
+    testImplementation platform('org.junit:junit-bom:5.11.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.ow2.asm:asm-tree:9.8'
+}
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
+    testLogging {
+        showStandardStreams = true
+    }
 }

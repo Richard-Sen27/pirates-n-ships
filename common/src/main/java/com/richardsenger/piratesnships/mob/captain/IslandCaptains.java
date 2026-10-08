@@ -163,6 +163,40 @@ public final class IslandCaptains {
         return captain;
     }
 
+    /**
+     * The registered captain {@code entry} of {@code port} as a new entity with his identity (UUID, name, post), not
+     * yet added and not yet placed (BOS2: going aboard his ship, coming back to his post). From {@code stash} (his saved
+     * state: health, equipment) when there is one, else as he was first placed, at full health. Null when the level
+     * refuses to make the entity.
+     */
+    public static @Nullable PirateCaptain recreate(ServerLevel level, ResourceLocation port, CaptainEntry entry,
+                                                   @Nullable net.minecraft.nbt.CompoundTag stash) {
+        PirateCaptain captain = MobContent.PIRATE_CAPTAIN.get().create(level);
+        if (captain == null) return null;
+        boolean loaded = false;
+        if (stash != null) {
+            try {
+                captain.load(stash);
+                loaded = true;
+            } catch (RuntimeException e) {
+                Constants.LOG.warn("Could not restore pirate captain {} from his saved state; he comes back fresh", entry.name(), e);
+            }
+        }
+        if (!loaded) {
+            captain.moveTo(entry.post().getX() + 0.5, entry.post().getY(), entry.post().getZ() + 0.5, entry.facing().toYRot(), 0f);
+            captain.finalizeSpawn(level, level.getCurrentDifficultyAt(entry.post()), MobSpawnType.EVENT, null);
+            var health = captain.getAttribute(Attributes.MAX_HEALTH);
+            if (health != null) health.setBaseValue(CaptainConfig.HEALTH.get());
+            captain.setHealth(captain.getMaxHealth());
+        }
+        captain.setUUID(entry.id());
+        captain.setStationary(true);
+        captain.setPersistenceRequired();
+        captain.assign(port, entry.post(), entry.facing());
+        captain.setCustomName(Component.literal(entry.name()));
+        return captain;
+    }
+
     // --- loss and succession ------------------------------------------------------------------------------------
 
     /** From {@code PirateCaptain#die}: the island lost its captain; an unclaimable bounty is withdrawn. */

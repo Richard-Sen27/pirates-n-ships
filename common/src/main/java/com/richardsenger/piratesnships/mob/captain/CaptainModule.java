@@ -51,7 +51,8 @@ public final class CaptainModule implements ModModule {
                 .add(CaptainCommands.KEY_REFUSED, "No captain spawned for %s: captains are disabled (mobs.captain.enabled) or its captain still lives")
                 .add(CaptainCommands.KEY_NONE, "No pirate captains yet")
                 .add(CaptainCommands.KEY_LINE_ALIVE, "%s of %s at %s, alive, bounty %s doubloons")
-                .add(CaptainCommands.KEY_LINE_LOST, "%s of %s at %s, lost on day %s"));
+                .add(CaptainCommands.KEY_LINE_LOST, "%s of %s at %s, lost on day %s")
+                .add(CaptainCommands.KEY_LINE_AT_SEA, "%s of %s at sea (voyage %s), bounty %s doubloons"));
     }
 
     @Override

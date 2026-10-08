@@ -129,7 +129,7 @@ public final class MaterializeCommands {
         List<String> templates = switch (kind) {
             case CONVOY -> VoyageConfig.MERCHANT_TEMPLATES.get();
             case PATROL -> VoyageConfig.NAVY_TEMPLATES.get();
-            case RAID -> VoyageConfig.PIRATE_TEMPLATES.get();
+            case RAID, CAPTAIN -> VoyageConfig.PIRATE_TEMPLATES.get();
         };
         ResourceLocation here = Constants.id("command/near");
         Voyage v = Voyage.depart(UUID.randomUUID(), kind, kind.defaultFaction(), Voyages.pickTemplate(templates, rng), here, here,

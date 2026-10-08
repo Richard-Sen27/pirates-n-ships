@@ -40,8 +40,13 @@ public class PirateCaptain extends Pirate {
     private static final String TAG_PORT = "pirates_n_ships:port";
     private static final String TAG_POST = "pirates_n_ships:post";
     private static final String TAG_FACING = "pirates_n_ships:post_facing";
+    private static final String TAG_SEA_VOYAGE = "pirates_n_ships:sea_voyage";
     /** Blocks from his post beyond which an idle captain walks back. */
     static final double POST_SLACK = 2.0;
+    /** How often (ticks) a loaded captain asks the sea hook whether he is where he belongs (BOS2). */
+    public static final int SEA_CHECK_INTERVAL = 20;
+
+    private static volatile CaptainSeaHook seaHook = CaptainSeaHook.NONE;
 
     private @Nullable ResourceLocation port;
     private @Nullable BlockPos post;
@@ -49,6 +54,10 @@ public class PirateCaptain extends Pirate {
     /** The challenger of the running duel (memory only: a reloaded captain duels nobody). */
     private @Nullable UUID duelOpponent;
     private long duelDeadline;
+    /** The voyage he is aboard (BOS2): no post to walk back to while it is set. Saved. */
+    private @Nullable UUID seaVoyage;
+    /** Leaving the world without being lost or stowed (a stale copy, BOS2). Memory only. */
+    private boolean vanishing;
 
     public PirateCaptain(EntityType<? extends PirateCaptain> type, Level level) {
         super(type, level);
@@ -75,7 +84,8 @@ public class PirateCaptain extends Pirate {
     @Override
     protected void registerGoals() {
         super.registerGoals();
-        goalSelector.addGoal(5, new ReturnToPostGoal(this, this::post, this::postFacing, POST_SLACK));
+        // at sea (BOS2) he has no post to walk back to
+        goalSelector.addGoal(5, new ReturnToPostGoal(this, () -> seaVoyage == null ? post : null, this::postFacing, POST_SLACK));
     }
 
     // --- island -------------------------------------------------------------------------------------------------
@@ -98,6 +108,29 @@ public class PirateCaptain extends Pirate {
         this.port = port;
         this.post = post == null ? null : post.immutable();
         this.postFacing = facing;
+    }
+
+    // --- at sea (BOS2) ------------------------------------------------------------------------------------------
+
+    /** Sets what the captain's voyages hear from captains ({@code worldsim.captain}). */
+    public static void setSeaHook(CaptainSeaHook hook) {
+        seaHook = hook == null ? CaptainSeaHook.NONE : hook;
+    }
+
+    /** The voyage he is aboard, or null at his post. */
+    public @Nullable UUID seaVoyage() {
+        return seaVoyage;
+    }
+
+    /** Aboard {@code voyage}'s ship (no post to walk back to), or back ashore ({@code null}). */
+    public void setSeaVoyage(@Nullable UUID voyage) {
+        seaVoyage = voyage;
+    }
+
+    /** Removes this copy of the captain without losing him: he lives on elsewhere (at sea, or at his post). */
+    public void vanish() {
+        vanishing = true;
+        discard();
     }
 
     // --- duel ---------------------------------------------------------------------------------------------------
@@ -152,6 +185,7 @@ public class PirateCaptain extends Pirate {
     protected void customServerAiStep() {
         super.customServerAiStep();
         if (inDuel() && tickCount % 20 == 0) DuelChallenge.tick(this);
+        if (tickCount % SEA_CHECK_INTERVAL == 7 && !isRemoved()) seaHook.check(this);
     }
 
     // --- death and removal --------------------------------------------------------------------------------------
@@ -169,8 +203,16 @@ public class PirateCaptain extends Pirate {
     @Override
     public void remove(RemovalReason reason) {
         if (!level().isClientSide && reason == RemovalReason.DISCARDED && !dead) {
-            if (inDuel()) DuelChallenge.end(this, DuelRules.End.CAPTAIN_DIED);
-            IslandCaptains.onLost(this);
+            if (vanishing) {
+                if (inDuel()) DuelChallenge.end(this, DuelRules.End.TIMED_OUT);
+            } else if (seaHook.stows(this)) {
+                // his ship became a record again (BOS2): he sails on in it; a duel aboard is off
+                if (inDuel()) DuelChallenge.end(this, DuelRules.End.TIMED_OUT);
+                seaHook.stow(this);
+            } else {
+                if (inDuel()) DuelChallenge.end(this, DuelRules.End.CAPTAIN_DIED);
+                IslandCaptains.onLost(this);
+            }
         }
         super.remove(reason);
     }
@@ -192,6 +234,7 @@ public class PirateCaptain extends Pirate {
         if (port != null) tag.putString(TAG_PORT, port.toString());
         if (post != null) tag.put(TAG_POST, NbtUtils.writeBlockPos(post));
         tag.putString(TAG_FACING, postFacing.getSerializedName());
+        if (seaVoyage != null) tag.putUUID(TAG_SEA_VOYAGE, seaVoyage);
     }
 
     @Override
@@ -201,5 +244,6 @@ public class PirateCaptain extends Pirate {
         post = NbtUtils.readBlockPos(tag, TAG_POST).orElse(null);
         Direction facing = Direction.byName(tag.getString(TAG_FACING));
         postFacing = facing != null && facing.getAxis().isHorizontal() ? facing : Direction.NORTH;
+        seaVoyage = tag.hasUUID(TAG_SEA_VOYAGE) ? tag.getUUID(TAG_SEA_VOYAGE) : null;
     }
 }

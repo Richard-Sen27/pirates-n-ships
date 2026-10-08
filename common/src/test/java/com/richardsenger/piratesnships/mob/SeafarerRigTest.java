@@ -69,7 +69,7 @@ class SeafarerRigTest {
     }
 
     private static Path geo(MobKind kind) {
-        return ASSETS.resolve("geo/" + kind.artId() + ".geo.json");
+        return ASSETS.resolve("geo/" + kind.geoId() + ".geo.json");
     }
 
     private static JsonObject read(Path file) throws IOException {
@@ -109,7 +109,7 @@ class SeafarerRigTest {
         JsonObject json = read(geo(kind));
         assertEquals("1.12.0", json.get("format_version").getAsString(), "GeckoLib supports geometry 1.12.0 only");
         JsonObject desc = geometry(geo(kind)).getAsJsonObject("description");
-        assertEquals("geometry." + kind.artId(), desc.get("identifier").getAsString());
+        assertEquals("geometry." + kind.geoId(), desc.get("identifier").getAsString());
         assertEquals(64, desc.get("texture_width").getAsInt());
         assertEquals(64, desc.get("texture_height").getAsInt());
     }
@@ -183,8 +183,10 @@ class SeafarerRigTest {
     @ParameterizedTest
     @EnumSource(MobKind.class)
     void theModelResolvesTheTypesGeometryFromItsTexture(MobKind kind) {
-        ResourceLocation geo = HumanoidGeoModel.geoFor(HumanoidGeoModel.entityTexture(kind.artId()));
-        assertEquals(Constants.id("geo/" + kind.artId() + ".geo.json"), geo);
+        // a texture variant (the harbor master, PRT1a) is drawn on another kind's geometry (MobKind.geoId)
+        ResourceLocation geo = HumanoidGeoModel.geoFor(HumanoidGeoModel.entityTexture(kind.geoId()));
+        assertEquals(Constants.id("geo/" + kind.geoId() + ".geo.json"), geo);
+        assertTrue(Files.isRegularFile(ASSETS.resolve("textures/entity/" + kind.artId() + ".png")), kind.artId() + " texture exists");
         assertTrue(Files.isRegularFile(ASSETS.resolve(geo.getPath())), geo + " exists");
         assertEquals(HumanoidGeoModel.RIG_GEO, HumanoidGeoModel.geoFor(HumanoidGeoModel.entityTexture("crew_member")),
                 "the crew member keeps its geometry");

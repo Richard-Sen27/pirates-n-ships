@@ -47,6 +47,10 @@ import java.util.UUID;
  *       crow's nest (that station does not exist yet) and the owner's score; a detection records
  *       {@link CrimeType#CAUGHT_FALSE_COLORS}, blows the ship's cover for {@code blown_cover_ticks} and tells the
  *       owner. Observers need no line of sight: a ship is big and the range is the limit.</li>
+ *   <li><b>Plunder aboard</b> (LAW3, {@code law.plunder_notice}, independent of {@code law.flags.enabled}): the same
+ *       observers look at every owned ship whatever it flies; more than {@code law.plunder_notice_units}
+ *       plunder-marked units in its containers ({@link PlunderAboard}, {@link PlunderNotice}) records
+ *       {@link CrimeType#SUSPECTED_PIRACY} once per ship and repeat window and tells the owner.</li>
  *   <li><b>Ship hits</b> ({@link #onShipHit}, from {@link CannonShipHits}): a ball from another ship or from land
  *       hitting a ship that struck its colours or flies a neutral flag is a crime of the shooter (a player), else of
  *       the firing ship's owner ({@link FlagLaw#crimeForShipHit}).</li>
@@ -93,7 +97,9 @@ public final class FlagCrimes {
 
     /** Throttled to {@code law.flags.observe_interval_ticks}. */
     public static void onServerTick(MinecraftServer server) {
-        if (!LawConfig.FLAGS_ENABLED.get()) return;
+        boolean flags = LawConfig.FLAGS_ENABLED.get();
+        PlunderNotice.Params plunder = LawConfig.plunderNoticeParams();
+        if (!flags && !plunder.enabled()) return;
         int interval = LawConfig.OBSERVE_INTERVAL_TICKS.get();
         if (server.getTickCount() % interval != 0) return;
         ShipRegistry registry = ShipRegistry.get(server);
@@ -103,14 +109,16 @@ public final class FlagCrimes {
                 Optional<ShipData> data = registry.find(ship.id());
                 if (data.isEmpty() || data.get().owner().isEmpty()) continue;
                 FlagKind shown = data.get().flag().shown();
-                if (shown == FlagKind.JOLLY_ROGER || shown == FlagKind.NAVY && !data.get().coverBlown(now)) {
-                    observe(level, ship, data.get(), shown, now, interval);
+                boolean watchFlag = flags && (shown == FlagKind.JOLLY_ROGER || shown == FlagKind.NAVY && !data.get().coverBlown(now));
+                if (watchFlag || plunder.enabled()) {
+                    observe(level, ship, data.get(), shown, now, interval, watchFlag, plunder);
                 }
             }
         }
     }
 
-    private static void observe(ServerLevel level, ShipBody ship, ShipData data, FlagKind shown, long now, int interval) {
+    private static void observe(ServerLevel level, ShipBody ship, ShipData data, FlagKind shown, long now, int interval,
+                                boolean watchFlag, PlunderNotice.Params plunder) {
         double range = LawConfig.OBSERVE_RANGE.get();
         AABB hull = ship.worldBounds();
         List<LivingEntity> observers = level.getEntitiesOfClass(LivingEntity.class, hull.inflate(range),
@@ -119,6 +127,8 @@ public final class FlagCrimes {
         LivingEntity owner = LawService.findLoaded(level.getServer(), data.owner().orElseThrow());
         if (owner == null) return;
         String name = victimName(data);
+        if (plunder.enabled()) observePlunder(ship, data, owner, name, now, plunder);
+        if (!watchFlag) return;
         if (shown == FlagKind.JOLLY_ROGER) {
             LawService.reportCrime(owner, CrimeType.SEEN_UNDER_JOLLY_ROGER, data.id(), name);
             return;
@@ -142,6 +152,28 @@ public final class FlagCrimes {
         ShipData current = registry.find(data.id()).orElse(data);
         registry.put(current.withBlownCoverUntil(now + LawConfig.BLOWN_COVER_TICKS.get()));
         owner.sendSystemMessage(Component.translatable(COVER_BLOWN_KEY).withStyle(ChatFormatting.RED));
+    }
+
+    /**
+     * LAW3 (§13.4): the navy looks into the ship's containers; more than {@code law.plunder_notice_units} marked units
+     * is {@link CrimeType#SUSPECTED_PIRACY} of the owner against the ship, once per ship and repeat window (one in-game
+     * day). The containers are only counted while that window is closed.
+     */
+    private static void observePlunder(ShipBody ship, ShipData data, LivingEntity owner, String name, long now, PlunderNotice.Params p) {
+        if (recentlyCharged(owner, CrimeType.SUSPECTED_PIRACY, data.id(), now)) return;
+        long marked = PlunderAboard.markedUnits(ship.plotBlockEntities());
+        if (!PlunderNotice.noticed(marked, p)) return;
+        if (LawService.reportCrime(owner, CrimeType.SUSPECTED_PIRACY, data.id(), name).counted()) {
+            owner.sendSystemMessage(Component.translatable(PlunderNotice.SPOTTED_KEY).withStyle(ChatFormatting.RED));
+        }
+    }
+
+    /** Whether {@code offender} has a counted {@code type} against {@code victim} still inside its repeat window. */
+    private static boolean recentlyCharged(LivingEntity offender, CrimeType type, UUID victim, long now) {
+        if (!LawConfig.CRIMINAL_SCORE_ENABLED.get()) return false;
+        long window = LawConfig.crimeRules().cooldownOf(type);
+        return LawService.record(offender).recent().stream()
+                .anyMatch(o -> o.type() == type && o.victim().filter(victim::equals).isPresent() && now - o.time() < window);
     }
 
     /** Distance from {@code p} to the nearest point of {@code box} (0 inside). */

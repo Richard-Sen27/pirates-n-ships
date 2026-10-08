@@ -9,6 +9,7 @@ import com.richardsenger.piratesnships.mob.MobConfig;
 import com.richardsenger.piratesnships.mob.MobKind;
 import com.richardsenger.piratesnships.mob.MusketAction;
 import com.richardsenger.piratesnships.mob.ai.MusketeerGoal;
+import com.richardsenger.piratesnships.mob.squad.SquadMemberGoal;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -99,6 +100,13 @@ public class NavySoldier extends SeafarerMob {
     @Override
     protected void addCombatGoals() {
         goalSelector.addGoal(2, new MusketeerGoal(this, 0.9));
+    }
+
+    /** In an officer's squad he follows in file and walks back to his post (MOB2, {@code mob.squad}). */
+    @Override
+    protected void registerGoals() {
+        super.registerGoals();
+        goalSelector.addGoal(4, new SquadMemberGoal(this));
     }
 
     @Override

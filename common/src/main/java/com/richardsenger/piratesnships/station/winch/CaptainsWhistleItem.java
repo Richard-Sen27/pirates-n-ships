@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.station.winch;
 
+import com.richardsenger.piratesnships.crew.hiring.Hiring;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.crew.hammock.CrewInfo;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
  *   <li>use on an unassigned crew member: select it; then use on a station block: assign it there (pinned: the
  *       ship's job board never moves it, CR1);</li>
  *   <li>use on an assigned crew member: release it;</li>
+ *   <li>sneak-use on a crew member: dismiss it (CRW1, {@link Hiring#dismiss}: its hirer or its ship's owner, anyone
+ *       on an ownerless ship; it becomes a neutral sailor), while {@code crew.hiring.enabled};</li>
  *   <li>either way the chat shows its crew line: morale, status, and its ship's crew and bunks (HM1,
  *       {@link CrewInfo});</li>
  *   <li>use anywhere else: opens the radial order menu on the client ({@link WhistleMenu}). Nothing happens on the
@@ -60,6 +63,15 @@ public class CaptainsWhistleItem extends Item implements StationBlock.Tool {
     public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity target, InteractionHand hand) {
         if (!(target instanceof CrewMember crew)) {
             return InteractionResult.PASS;
+        }
+        if (player.isSecondaryUseActive() && Hiring.enabled()) {
+            // CRW1: sneak-use dismisses
+            if (player.level() instanceof ServerLevel) {
+                Hiring.Result r = Hiring.dismiss(player, crew);
+                if (r.done()) SELECTED.remove(player.getUUID());
+                player.displayClientMessage(r.message(), true);
+            }
+            return InteractionResult.sidedSuccess(player.level().isClientSide);
         }
         if (player.level() instanceof ServerLevel level) {
             if (crew.assignment() != null) {

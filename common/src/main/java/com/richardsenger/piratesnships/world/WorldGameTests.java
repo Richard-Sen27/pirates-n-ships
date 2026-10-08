@@ -155,6 +155,8 @@ public final class WorldGameTests {
                 .map(BlockPos::immutable).findFirst().orElse(null);
         helper.assertTrue(desk != null, "the dock head has a harbor desk");
         helper.assertValueEqual(HarborDeskService.boundPort(level, desk), Optional.of(port.id()), "generated desk bound to the port");
+        // PRT1a: the harbor master stands behind it
+        com.richardsenger.piratesnships.mob.harbor.HarborMasterGameTests.assertPlacedAtDesk(helper, level, start.getBoundingBox(), desk, port.id());
 
         // A desk placed later inside the port's box binds through the locator (installed on server start; reinstalled
         // here because another module's GameTest swaps the locator)

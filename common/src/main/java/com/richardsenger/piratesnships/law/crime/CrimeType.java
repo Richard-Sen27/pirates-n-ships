@@ -39,7 +39,18 @@ public enum CrimeType implements StringRepresentable {
      * Selling plundered goods that a navy port noticed (§10.3). Victim = the port (one victim id per port, see
      * {@code law.world.PlunderCrimes#portVictim}), so several noticed sales at one port within the window count once.
      */
-    FENCE_PLUNDER("fence_plunder", 15, 60);
+    FENCE_PLUNDER("fence_plunder", 15, 60),
+    /**
+     * Offering plunder-marked goods at a village or navy outpost desk, which refuses them and reports the seller
+     * (LAW3, §13.4). Victim = the port ({@code law.world.PlunderCrimes#portVictim}); the repeat window of one in-game
+     * day (1200 s) keeps it to the first refusal per player, port and day. Default points: a third of {@link #PIRACY}.
+     */
+    SELLING_PLUNDER("selling_plunder", 17, 1200),
+    /**
+     * A navy observer saw more than {@code law.plunder_notice_units} plunder-marked units in a ship's containers (LAW3,
+     * §13.4). Victim = the ship; the repeat window of one in-game day keeps it to once per ship and day.
+     */
+    SUSPECTED_PIRACY("suspected_piracy", 15, 1200);
 
     public static final Codec<CrimeType> CODEC = StringRepresentable.fromEnum(CrimeType::values);
 

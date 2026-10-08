@@ -59,6 +59,10 @@ public final class ShipControls {
     public static final String KEY_NO_GROUND = KEY + "capstan.no_ground";
     public static final String KEY_DROPPING = KEY + "capstan.dropping";
     public static final String KEY_RAISING = KEY + "capstan.raising";
+    /** CRW3: a drop while the anchor is out. */
+    public static final String KEY_ALREADY_OUT = KEY + "capstan.already_out";
+    /** CRW3: a raise while the anchor is stowed. */
+    public static final String KEY_STOWED = KEY + "capstan.stowed";
 
     static final String ANCHOR_TAG = "anchor";
 
@@ -167,49 +171,197 @@ public final class ShipControls {
 
     // ------------------------------------------------------------------ capstan
 
+    /** What {@link #dropAnchor} or {@link #raiseAnchor} did, or what {@link #dropCheck} says a drop would do. */
+    public enum AnchorResult {
+        /** The anchor was let go (or would be): it falls from the hawse, or runs out again from where it was winding in. */
+        DROPPING,
+        /** The capstan winds the chain in. */
+        RAISING,
+        /** A drop: the anchor is out already (falling or holding). */
+        ALREADY_OUT,
+        /** A raise: the capstan winds the chain in already. */
+        ALREADY_RAISING,
+        /** A raise: the anchor is stowed at the hawse. */
+        STOWED,
+        /** A drop: no ground within the chain's length straight below the hawse. */
+        NO_GROUND,
+        /** {@code sailing_runtime.anchor_enabled} is off. */
+        DISABLED,
+        /** The capstan is not on an assembled ship. */
+        NOT_ON_SHIP;
+
+        /** Whether the anchor's phase changed (or, for {@link #dropCheck}, would change). */
+        public boolean changed() {
+            return this == DROPPING || this == RAISING;
+        }
+    }
+
+    /** The outcome of a capstan command (CRW3) and the line the player is shown. */
+    public record CapstanResult(AnchorResult result, Component message) {
+    }
+
+    /** {@link #dropCheck}'s answer: {@code depth} [blocks] is meaningful for {@link AnchorResult#DROPPING} only. */
+    public record DropCheck(AnchorResult result, double depth) {
+    }
+
     /**
-     * Use of a capstan at {@code pos} (plot): drops the ship's anchor, or raises it when it is out (AN2a). A drop lets the
-     * anchor go from the hawse with the hawse's velocity ({@link ShipAnchor#dropped}); it is refused when there is no
-     * ground within the chain's length straight below the hawse. Raising winds the chain in at
-     * {@code anchor_chain.raise_speed}; using the capstan while it winds lets the anchor go again from where it is.
+     * What a drop at the capstan {@code pos} (plot) would do now, without doing it: {@link AnchorResult#DROPPING} with
+     * the depth the anchor falls when it can go, else why not. No side effects on the anchor or the world (the ship's
+     * sailing runtime may be created, it is a cache). The crew's capstan station asks it before an order starts.
      */
-    public static Component useCapstan(ServerLevel level, BlockPos pos) {
+    public static DropCheck dropCheck(ServerLevel level, BlockPos pos) {
+        return planDrop(level, pos).check();
+    }
+
+    /** A planned drop: the check and what applying it needs (a fresh drop has a hawse, a reversal has none). */
+    private record DropPlan(DropCheck check, @Nullable ShipBody ship, @Nullable SailingRuntime rt, @Nullable ShipAnchor anchor,
+                            @Nullable Vec3 hawsePlot, @Nullable Vec3 hawse) {
+        static DropPlan of(AnchorResult r) {
+            return new DropPlan(new DropCheck(r, 0.0), null, null, null, null, null);
+        }
+    }
+
+    private static DropPlan planDrop(ServerLevel level, BlockPos pos) {
         ShipBody ship = SableShips.containing(level, pos);
         SailingRuntime rt = ship == null ? null : SailingRuntimes.getOrCreate(ship);
         if (ship == null || rt == null) {
-            return Component.translatable(KEY_CAPSTAN_NOT_ON_SHIP);
+            return DropPlan.of(AnchorResult.NOT_ON_SHIP);
         }
         if (!SailingConfig.ANCHOR_ENABLED.get()) {
-            return Component.translatable(KEY_CAPSTAN_OFF);
+            return DropPlan.of(AnchorResult.DISABLED);
         }
         ShipAnchor a = rt.anchor();
-        if (a != null && (a.state().phase() == AnchorState.Phase.DROPPING || a.state().phase() == AnchorState.Phase.HOLDING)) {
-            setAnchor(ship, rt, a.withState(a.state().raise()));
-            double chain = Math.max(a.paidOut(), a.ring().distanceTo(ship.toWorld(a.hawse())));
-            return Component.translatable(KEY_RAISING, seconds(chain / AnchorConfig.RAISE_SPEED.get() * 20.0));
+        AnchorState.Phase phase = a == null ? AnchorState.Phase.RAISED : a.state().phase();
+        if (phase == AnchorState.Phase.DROPPING || phase == AnchorState.Phase.HOLDING) {
+            return DropPlan.of(AnchorResult.ALREADY_OUT);
         }
-        if (a != null && a.state().phase() == AnchorState.Phase.RAISING) {
+        if (phase == AnchorState.Phase.RAISING) {
             // reversed mid-way: the anchor runs out again from where it is
-            setAnchor(ship, rt, a.withState(a.state().drop()));
             Vec3 ring = a.ring();
             OptionalInt ground = groundBelow(level, ring, SailingConfig.ANCHOR_CHAIN_LENGTH.get());
             double depth = ground.isEmpty() ? 0.0 : Math.max(0.0, ring.y - AnchorTravel.HEIGHT - ground.getAsInt());
-            return Component.translatable(KEY_DROPPING, fmt(depth), seconds(depth / AnchorConfig.SINK_SPEED.get() * 20.0));
+            return new DropPlan(new DropCheck(AnchorResult.DROPPING, depth), ship, rt, a, null, null);
         }
         // the anchor leaves the hawse at the hull side with the ship's velocity there; refused without ground in reach
         Vec3 hawsePlot = AnchorEntities.hawse(level, rt.bow(), pos);
         Vec3 hawse = ship.toWorld(hawsePlot);
         OptionalInt floor = groundBelow(level, hawse, SailingConfig.ANCHOR_CHAIN_LENGTH.get());
         if (floor.isEmpty()) {
-            return Component.translatable(KEY_NO_GROUND, SailingConfig.ANCHOR_CHAIN_LENGTH.get());
+            return DropPlan.of(AnchorResult.NO_GROUND);
         }
-        double depth = AnchorTravel.distance(hawse.y, floor.getAsInt());
-        ShipAnchor dropped = ShipAnchor.dropped(pos, hawsePlot, hawse, ship.velocityAt(hawsePlot));
-        if (a != null && !a.capstan().equals(pos)) {
-            showPhase(level, a.capstan(), AnchorState.Phase.RAISED);
+        return new DropPlan(new DropCheck(AnchorResult.DROPPING, AnchorTravel.distance(hawse.y, floor.getAsInt())),
+                ship, rt, a, hawsePlot, hawse);
+    }
+
+    /**
+     * Lets the ship's anchor go from the capstan at {@code pos} (plot), AN2a: from the hawse with the hawse's velocity
+     * ({@link ShipAnchor#dropped}), or, while the capstan winds it in, again from where it is. Refused when there is no
+     * ground within the chain's length straight below the hawse; nothing happens when it is out already.
+     */
+    public static CapstanResult dropAnchor(ServerLevel level, BlockPos pos) {
+        DropPlan plan = planDrop(level, pos);
+        AnchorResult r = plan.check().result();
+        if (r != AnchorResult.DROPPING) {
+            return new CapstanResult(r, message(r));
         }
-        setAnchor(ship, rt, dropped);
-        return Component.translatable(KEY_DROPPING, fmt(depth), seconds(depth / AnchorConfig.SINK_SPEED.get() * 20.0));
+        ShipBody ship = plan.ship();
+        SailingRuntime rt = plan.rt();
+        ShipAnchor a = plan.anchor();
+        if (plan.hawse() == null) {
+            setAnchor(ship, rt, a.withState(a.state().drop()));
+        } else {
+            ShipAnchor dropped = ShipAnchor.dropped(pos, plan.hawsePlot(), plan.hawse(), ship.velocityAt(plan.hawsePlot()));
+            if (a != null && !a.capstan().equals(pos)) {
+                showPhase(level, a.capstan(), AnchorState.Phase.RAISED);
+            }
+            setAnchor(ship, rt, dropped);
+        }
+        double depth = plan.check().depth();
+        return new CapstanResult(r, Component.translatable(KEY_DROPPING, fmt(depth), seconds(depth / AnchorConfig.SINK_SPEED.get() * 20.0)));
+    }
+
+    /**
+     * Heaves the ship's anchor in from the capstan at {@code pos} (plot), AN2a: the capstan winds the chain in at
+     * {@code anchor_chain.raise_speed} by itself until the anchor is stowed. Nothing happens when it winds already
+     * ({@link AnchorResult#ALREADY_RAISING}) or the anchor is stowed ({@link AnchorResult#STOWED}).
+     */
+    public static CapstanResult raiseAnchor(ServerLevel level, BlockPos pos) {
+        ShipBody ship = SableShips.containing(level, pos);
+        SailingRuntime rt = ship == null ? null : SailingRuntimes.getOrCreate(ship);
+        if (ship == null || rt == null) {
+            return new CapstanResult(AnchorResult.NOT_ON_SHIP, message(AnchorResult.NOT_ON_SHIP));
+        }
+        if (!SailingConfig.ANCHOR_ENABLED.get()) {
+            return new CapstanResult(AnchorResult.DISABLED, message(AnchorResult.DISABLED));
+        }
+        ShipAnchor a = rt.anchor();
+        AnchorState.Phase phase = a == null ? AnchorState.Phase.RAISED : a.state().phase();
+        if (phase == AnchorState.Phase.RAISED) {
+            return new CapstanResult(AnchorResult.STOWED, message(AnchorResult.STOWED));
+        }
+        Component raising = Component.translatable(KEY_RAISING, seconds(raiseTicks(chainOut(ship, a))));
+        if (phase == AnchorState.Phase.RAISING) {
+            return new CapstanResult(AnchorResult.ALREADY_RAISING, raising);
+        }
+        setAnchor(ship, rt, a.withState(a.state().raise()));
+        return new CapstanResult(AnchorResult.RAISING, raising);
+    }
+
+    /**
+     * Use of a capstan at {@code pos} (plot) by a player: drops the ship's anchor, or raises it when it is out (AN2a);
+     * using the capstan while it winds lets the anchor go again from where it is. The toggle over {@link #dropAnchor}
+     * and {@link #raiseAnchor} (CRW3 split them for the crew's capstan station).
+     */
+    public static Component useCapstan(ServerLevel level, BlockPos pos) {
+        AnchorState.Phase phase = anchorPhase(level, pos);
+        boolean out = phase == AnchorState.Phase.DROPPING || phase == AnchorState.Phase.HOLDING;
+        return (out ? raiseAnchor(level, pos) : dropAnchor(level, pos)).message();
+    }
+
+    /**
+     * The phase of the anchor of the ship the capstan at {@code pos} (plot) stands on ({@link AnchorState.Phase#RAISED}
+     * when it is stowed), or null when it is on no assembled ship. A query.
+     */
+    public static AnchorState.@Nullable Phase anchorPhase(ServerLevel level, BlockPos pos) {
+        ShipBody ship = SableShips.containing(level, pos);
+        SailingRuntime rt = ship == null ? null : SailingRuntimes.getOrCreate(ship);
+        if (rt == null) {
+            return null;
+        }
+        ShipAnchor a = rt.anchor();
+        return a == null ? AnchorState.Phase.RAISED : a.state().phase();
+    }
+
+    /**
+     * Chain the capstan at {@code pos} (plot) still has to wind in to stow the anchor [blocks]: the paid-out length or
+     * the distance from the hawse to the anchor's ring, whichever is longer; 0 when the anchor is stowed or there is no
+     * ship. A query.
+     */
+    public static double chainOut(ServerLevel level, BlockPos pos) {
+        ShipBody ship = SableShips.containing(level, pos);
+        SailingRuntime rt = ship == null ? null : SailingRuntimes.getOrCreate(ship);
+        ShipAnchor a = rt == null ? null : rt.anchor();
+        return a == null ? 0.0 : chainOut(ship, a);
+    }
+
+    private static double chainOut(ShipBody ship, ShipAnchor a) {
+        return Math.max(a.paidOut(), a.ring().distanceTo(ship.toWorld(a.hawse())));
+    }
+
+    /** Ticks the capstan needs to wind {@code chain} blocks in at {@code anchor_chain.raise_speed}. */
+    public static double raiseTicks(double chain) {
+        return chain / AnchorConfig.RAISE_SPEED.get() * 20.0;
+    }
+
+    private static Component message(AnchorResult r) {
+        return switch (r) {
+            case NOT_ON_SHIP -> Component.translatable(KEY_CAPSTAN_NOT_ON_SHIP);
+            case DISABLED -> Component.translatable(KEY_CAPSTAN_OFF);
+            case NO_GROUND -> Component.translatable(KEY_NO_GROUND, SailingConfig.ANCHOR_CHAIN_LENGTH.get());
+            case ALREADY_OUT -> Component.translatable(KEY_ALREADY_OUT);
+            case STOWED -> Component.translatable(KEY_STOWED);
+            default -> Component.empty();
+        };
     }
 
     /** Top of the first solid block straight below {@code from} within {@code reach} blocks ({@link AnchorGround}). */

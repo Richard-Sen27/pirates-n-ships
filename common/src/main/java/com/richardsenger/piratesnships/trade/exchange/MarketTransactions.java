@@ -159,8 +159,9 @@ public final class MarketTransactions {
     }
 
     /**
-     * Sells {@code quantity} units with plunder state {@code plundered} from {@code from}. Plundered goods are judged by
-     * the port kind ({@link TradeService#sell}): fenced at a discount, unnoticed, noticed and sold, or confiscated.
+     * Sells {@code quantity} units with plunder state {@code plundered} from {@code from}. Plundered goods are fenced at
+     * a discount at a pirate island and refused everywhere else ({@link TransactionResult.Status#PLUNDER_REFUSED},
+     * LAW3; {@link TradeService#refusesPlunder}), once the seller is shown to hold them.
      */
     public static TransactionResult sell(ServerPlayer player, ResourceLocation port, ResourceLocation good, int quantity,
                                          boolean plundered, Holder from) {
@@ -178,6 +179,8 @@ public final class MarketTransactions {
         if (!q.ok()) return TransactionResult.failed(TradePlan.ofQuote(q.outcome()), good);
         TransactionResult.Status s = TradePlan.sell(from.count(item.get(), plundered), quantity);
         if (s != TransactionResult.Status.OK) return TransactionResult.failed(s, good);
+        // LAW3: only the fence takes plunder; any other desk refuses it (and the law integration hears of it)
+        if (plundered && TradeService.refusesPlunder(server, port)) return TransactionResult.plunderRefused(good);
         TradeService.Sale sale = TradeService.sell(server, port, good, quantity, plundered, player.getRandom());
         if (!sale.unitsTaken()) return TransactionResult.failed(TradePlan.ofQuote(sale.quote().outcome()), good);
         from.remove(item.get(), plundered, quantity);

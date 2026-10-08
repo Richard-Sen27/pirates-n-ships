@@ -138,7 +138,7 @@ class CrewMemberRigTest {
             }
         }
         // the five poses (sleep: ART1d), the navy soldier's musket animations (M6), which share the rig, and the station
-        // animations (ART7; capstan_push is authored but no station plays it yet)
+        // animations (ART7; capstan_push is played at the capstan since CRW3)
         assertEquals(Set.of("idle", "walk", "work", "sit", "sleep", "musket_aim", "musket_reload", "musket_shove",
                 "helm_hold", "helm_turn_left", "helm_turn_right", "cannon_aim", "cannon_load", "cannon_fire", "capstan_push"),
                 baked.animations().keySet());

@@ -6,6 +6,9 @@ import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.assembly.ShipSplits;
+import com.richardsenger.piratesnships.station.capstan.CapstanGameTests;
+import com.richardsenger.piratesnships.station.capstan.CapstanLang;
+import com.richardsenger.piratesnships.station.capstan.CapstanPoses;
 import com.richardsenger.piratesnships.station.helm.HelmCourses;
 import com.richardsenger.piratesnships.station.helm.HelmPoses;
 import com.richardsenger.piratesnships.station.helm.HelmStationGameTests;
@@ -49,6 +52,7 @@ public final class StationModule implements ModModule {
     public void registerConfig() {
         StationConfig.init();
         com.richardsenger.piratesnships.station.helm.CourseConfig.init();
+        com.richardsenger.piratesnships.station.capstan.CapstanConfig.init(); // CRW3
     }
 
     @Override
@@ -67,6 +71,7 @@ public final class StationModule implements ModModule {
         CommonEvents.LEVEL_TICK_END.register(JobBoard::onLevelTick);
         CommonEvents.LEVEL_TICK_END.register(HelmCourses::onLevelTick);
         HelmPoses.register(); // ART7: the helmsman's pose
+        CapstanPoses.register(); // CRW3: the capstan crew pushes the bars
         CommonEvents.SERVER_STOPPED.register(server -> {
             Stations.onServerStopped();
             CaptainsWhistleItem.onServerStopped();
@@ -95,6 +100,7 @@ public final class StationModule implements ModModule {
         // The whistle's item model is hand-made (art/models/captains_whistle.bbmodel), so datagen writes none
         data.lang(OrderHints::lang); // Q5: order hints, /pirates ship rigging
         data.lang(HelmStationLang::lang); // WS3a: the NPC helmsman
+        data.lang(CapstanLang::lang); // CRW3: the capstan station
         data.lang(lang -> {
             lang.item(StationContent.CAPTAINS_WHISTLE, "Captain's Whistle")
                     .add(StationContent.CREW_MEMBER.get().getDescriptionId(), "Crew Member")
@@ -143,13 +149,13 @@ public final class StationModule implements ModModule {
                     .add(StationCommands.KEY + "spawned", "Crew member spawned")
                     .add(StationCommands.KEY + "not_crew", "That entity is not a crew member")
                     .add(StationCommands.KEY + "released", "%s crew members released")
-                    .add(StationCommands.KEY_UNKNOWN_ORDER, "Unknown order: use hoist, reef, furl, pump or fire")
+                    .add(StationCommands.KEY_UNKNOWN_ORDER, "Unknown order: use hoist, reef, furl, pump, fire, load, fire_at_will, drop_anchor or raise_anchor")
                     .add(StationCommands.KEY_ORDERED, "Order %s: %s of %s crew carry it out");
         });
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(StationGameTests.class, PumpOrderGameTests.class, JobBoardGameTests.class, com.richardsenger.piratesnships.station.winch.WinchOrderGameTests.class, com.richardsenger.piratesnships.crew.npc.CrewPoseGameTests.class, HelmStationGameTests.class);
+        return List.of(StationGameTests.class, PumpOrderGameTests.class, JobBoardGameTests.class, com.richardsenger.piratesnships.station.winch.WinchOrderGameTests.class, com.richardsenger.piratesnships.crew.npc.CrewPoseGameTests.class, HelmStationGameTests.class, CapstanGameTests.class);
     }
 }

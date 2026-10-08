@@ -47,6 +47,8 @@ public final class DryHullConfig {
                     + "(block tag pirates_n_ships:hidden_in_dry_hull)");
     public static final ConfigValue<Integer> HIDDEN_PLANTS_REFRESH_TICKS = VIEW.intRange("hidden_plants_refresh_ticks", 5, 1, 100,
             "How often (ticks) the hidden water plants follow a moving ship; lower is quicker but redraws more chunk sections");
+    public static final ConfigValue<Boolean> FLOOD_SURFACE = VIEW.bool("flood_surface", true,
+            "Draw a water surface inside flooded rooms of a ship, and the underwater view below it");
 
     private DryHullConfig() {
     }

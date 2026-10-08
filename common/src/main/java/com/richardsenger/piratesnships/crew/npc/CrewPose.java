@@ -28,10 +28,12 @@ public enum CrewPose {
     /** ART7: at a gun while the station loads it: ramming. */
     CANNON_LOAD("cannon_load"),
     /** ART7: at a gun while the station fires it (the fuse): the lunge with the linstock, played once. */
-    CANNON_FIRE("cannon_fire", false);
+    CANNON_FIRE("cannon_fire", false),
+    /** ART7, played since CRW3: at the capstan while the station drops or raises the anchor, chest to the bars, walking them. */
+    CAPSTAN_PUSH("capstan_push");
 
     /** Station poses in the order of their synced id ({@link #stationId()}); never reorder, append only. */
-    private static final CrewPose[] STATION = {HELM, HELM_TURN_LEFT, HELM_TURN_RIGHT, CANNON_AIM, CANNON_LOAD, CANNON_FIRE};
+    private static final CrewPose[] STATION = {HELM, HELM_TURN_LEFT, HELM_TURN_RIGHT, CANNON_AIM, CANNON_LOAD, CANNON_FIRE, CAPSTAN_PUSH};
 
     private final String animation;
     private final boolean loops;

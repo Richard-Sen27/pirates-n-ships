@@ -18,7 +18,6 @@ import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -49,7 +48,7 @@ class HarborMasterPostsTest {
         root = StandAloneOps.root();
     }
 
-    private record Template(int[] size, Map<BlockPos, BlockState> blocks, Map<BlockPos, String> names) {
+    private record Template(int[] size, Map<BlockPos, BlockState> blocks, Map<BlockPos, String> names, Map<BlockPos, CompoundTag> props) {
         BlockState at(BlockPos pos) {
             return blocks.getOrDefault(pos, Blocks.AIR.defaultBlockState());
         }
@@ -64,15 +63,17 @@ class HarborMasterPostsTest {
         ListTag palette = tag.getList("palette", Tag.TAG_COMPOUND);
         Map<BlockPos, BlockState> blocks = new HashMap<>();
         Map<BlockPos, String> names = new HashMap<>();
+        Map<BlockPos, CompoundTag> props = new HashMap<>();
         for (Tag t : tag.getList("blocks", Tag.TAG_COMPOUND)) {
             CompoundTag b = (CompoundTag) t;
             ListTag p = b.getList("pos", Tag.TAG_INT);
             BlockPos pos = new BlockPos(p.getInt(0), p.getInt(1), p.getInt(2));
             CompoundTag state = palette.getCompound(b.getInt("state"));
             names.put(pos, state.getString("Name"));
+            props.put(pos, state.getCompound("Properties"));
             blocks.put(pos, NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), state));
         }
-        return new Template(size, blocks, names);
+        return new Template(size, blocks, names, props);
     }
 
     /** Free (air or nothing placed) at the post and above it, a solid floor below. */
@@ -107,7 +108,8 @@ class HarborMasterPostsTest {
         assertTrue(Math.abs(d.getX()) <= 1 && Math.abs(d.getZ()) <= 1, piece + ": the desk " + desk.toShortString() + " is next to him");
         Direction f = post.facing();
         assertEquals(1, d.getX() * f.getStepX() + d.getZ() * f.getStepZ(), piece + ": the desk is in front of him");
-        assertEquals(f, t.at(desk).getValue(BlockStateProperties.HORIZONTAL_FACING), piece + ": the desk's customer side faces his way");
+        // the mod's blocks are not registered in a unit test: read the desk's facing from the template's palette
+        assertEquals(f.getSerializedName(), t.props().get(desk).getString("facing"), piece + ": the desk's customer side faces his way");
     }
 
     @Test

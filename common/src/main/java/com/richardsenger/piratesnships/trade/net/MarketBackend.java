@@ -129,7 +129,7 @@ public final class MarketBackend {
                 Optional.of(desk.immutable()), 1, Optional.empty()));
         deliver(player, new MarketPayloads.OpenMarket(port, desk, TradeConfig.DESK_REACH.get()));
         send(player, port, 1, Optional.empty());
-        // A seafarer village's desk also has the shipwright's Orders tab (SW1)
+        // A seafarer village's desk also has the shipwright's Orders tab (SW1), a navy outpost's for navy captains (CAR2)
         ShipOrders.view(player, port).ifPresent(v -> deliver(player, new OrderPayloads.Orders(Optional.of(v), Optional.empty())));
         return true;
     }

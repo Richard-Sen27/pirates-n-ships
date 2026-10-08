@@ -335,9 +335,12 @@ public final class LawService {
         return isFalseFlag(captain, flag, navyStanding(captain));
     }
 
-    /** The captain's navy standing: the navy reputation of a player (0 while reputation is off), 0 for anyone else. */
+    /**
+     * The captain's navy standing: the navy reputation of a player (0 while reputation is off), raised to
+     * {@code navy_flag_min_standing} for a navy officer with the flag right (CAR2); 0 for anyone else.
+     */
     public static int navyStanding(LivingEntity captain) {
-        return captain instanceof Player p ? Reputation.navyStanding(p) : 0;
+        return captain instanceof Player p ? com.richardsenger.piratesnships.rpg.career.Careers.effectiveNavyStanding(p) : 0;
     }
 
     /** Whether {@code captain} flies a false flag, judged with an explicit {@code navyStanding}. */

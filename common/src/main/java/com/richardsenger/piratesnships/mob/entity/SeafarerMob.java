@@ -154,7 +154,8 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity {
             // REP1: the navy also attacks players it hates, pirates leave players they like alone (rpg.reputation)
             boolean wanted = navy && (LawService.navyShouldAttack(this, p) || Reputation.navyHostile(p));
             return HostilityRules.Target.ofPlayer(false, wanted, LawService.shipStance(p))
-                    .withLikedByPirates(faction() == MobFaction.PIRATE && Reputation.piratesFriendly(p));
+                    .withLikedByPirates(faction() == MobFaction.PIRATE && (Reputation.piratesFriendly(p)
+                            || com.richardsenger.piratesnships.rpg.career.CareerRewards.piratesFriendly(p))); // CAR2: infamy
         }
         MobFaction faction = LawService.isNavy(e) ? MobFaction.NAVY : null;
         // only entities that already have a criminal record can be wanted (don't attach records to every animal)

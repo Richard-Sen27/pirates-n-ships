@@ -817,10 +817,16 @@ Flagpole parts (VIS1a, tall poles):
   end at 15.95 under the truck as before.
 - **Halyard:** two `stripped_birch_log` lines 0.4 x 0.4 px at local x 10.3..10.7, z 7.15..7.55 and 8.45..8.85, turned
   45 degrees about y round (8, 4, 8) like the cleat, so they stand about 0.6 px off the pole's corner on the cleat's
-  diagonal (the cloth flies on the other side). They leave the wound cleat at y 5.6 (single, bottom), run through the
+  diagonal (the cloth flies on the other side). They leave the wound cleat at y 10.7 (single, bottom), run through the
   middle segments 0..16 and end under the truck at 15 (top, single). The single pole's one 0.5 px halyard became the
   same two lines. In the render the pair reads as one thin rope from a few blocks away, which is what a halyard looks
   like; up close the two parts of the loop show.
+- **Foot (VIS1a-b, playtest note "the rope only in the top third of the lowest block"):** on `flagpole_bottom` and
+  `flagpole` the halyard lines start at y 10.7 (the top third), so the lower two thirds of the foot block are a bare
+  pole. The cleat and its wound rope moved up with them by 5.1 px (horn y 6.6..11.6, body 8.35..9.85, rope rings
+  7.5..8.3 and 9.9..10.7, rotation origin (8, 9.1, 8)); the anvil and rope side UVs moved with the parts (position
+  UVs), the rings' rotated UVs stayed. Done in Blockbench on the committed projects (opened with `loadModelFile` from
+  `fs`), re-exported and re-saved like VIS1a; pole, truck, finial, middle and top unchanged.
 - Built from a part list (a scratch Python script derived the parts from the single pole's JSON), loaded cube by cube
   into a `java_block` project per model (`VIS1A.load2` in `risky_eval`: textures from `art/vanilla/` with namespace
   `minecraft`, folder `block`), exported with `Codecs.java_block.compile()` (names and zero rotations stripped,
@@ -830,6 +836,8 @@ Flagpole parts (VIS1a, tall poles):
 - Render `renders/flagpole_parts.png`: a four-block pole (bottom, two middles, top), the single pole and a two-block
   pole (left: overview; middle: the cleat and halyard at the foot; right: the joint under the top's truck). Rendered
   from a scratch Generic (`free`) project holding all parts stacked, with a `THREE.WebGLRenderer` in `risky_eval`.
+  VIS1a-b re-rendered it without a scratch project: each part's `Project.model_3d` cloned (non-mesh children dropped)
+  and stacked in a plain `THREE.Scene`, three 1200 x 900 viewports in one 3600 x 900 canvas.
 
 Treasure map and receipt (ART4):
 - Two `java_block` item projects, `treasure_map.bbmodel` and `ship_receipt.bbmodel`, no block of the same name. No new

@@ -109,6 +109,10 @@ An assembled ship analyses its own hull:
 - The flood state is saved with the ship.
 - Flood water shows as a level water surface inside the room, rising and falling with the flood (client config
   `dry_hull_view.flood_surface`); below it you get the underwater view.
+- Below that surface you hold your breath as in the sea: with your head under the flood water your air runs out and
+  you start to drown, even where the flood stands higher than the sea outside. Respiration, Water Breathing, Conduit
+  Power and a turtle helmet help as usual; lift your head above the water and you breathe again (server config
+  `dry_hull.flood_breath`).
 
 ### Fighting a leak
 A hull block destroyed below the waterline leaves a breach, and water runs into that room at a rate; deeper holes leak
@@ -449,6 +453,17 @@ at about 20 blocks and its free hands man the guns that bear on you and open fir
 its fire, shadows you for half a minute and returns to its route. Outrun it beyond 64 blocks for a while, or beyond
 384 blocks at once, and it breaks off the chase. Its helmsman acknowledges the chase once and keeps quiet while he
 circles. Operators: `/pirates world patrols`. Server config `world_simulation.navy`.
+
+### Navy patrols
+The navy sends patrols between its outposts, or out toward the nearest pirate island and back when an outpost stands
+alone; an aggressive navy sends more. A patrol keeps a lookout of about 256 blocks. It gives chase to any player's
+ship that flies the Jolly Roger, whose false colours it has seen through, or whose captain is wanted or carries a
+bounty of 50 doubloons or more, whatever flag that ship flies. You'll get word when a patrol sights you. Once it
+closes in, the patrol circles you at about 20 blocks while its gun crews fire. Strike your colours and its guns fall
+silent: it keeps you in sight for half a minute, then sails on. Raise the Jolly Roger again and the chase is back on.
+Outrun it (no contact within 64 blocks for two minutes, or more than 384 blocks between you) and it breaks off.
+Patrols that kill pirates, and patrols lost at sea, stir up the bad blood between the navy and the pirates.
+Operators: `/pirates world patrols`. Server config `world_simulation.navy`.
 
 ### Careers
 Two ladders, and you can only climb one. *Navy:* talk to a navy officer with an empty hand and enlist once the navy

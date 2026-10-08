@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.sailing.ship;
 
+import com.richardsenger.piratesnships.sailing.anchor.AnchorStatus;
 import com.richardsenger.piratesnships.sailing.force.ForceBreakdown;
 import com.richardsenger.piratesnships.sailing.force.ForceContribution;
 import com.richardsenger.piratesnships.sailing.force.HullDampingModel;
@@ -79,6 +80,7 @@ public final class SailingRuntime {
     private volatile int rudderStep;
     private volatile double wheelAngle; // HELM1: the helm wheel's angle [degrees, positive = starboard]
     private volatile @Nullable ShipAnchor anchor;
+    private volatile @Nullable AnchorStatus anchorStatus;
 
     // per-tick caches
     private long windTime = Long.MIN_VALUE;
@@ -174,6 +176,33 @@ public final class SailingRuntime {
         return anchor;
     }
 
+    /** What the anchor did on the last game tick (AN2a), or null when it is stowed. */
+    public @Nullable AnchorStatus anchorStatus() {
+        return anchorStatus;
+    }
+
+    /**
+     * Whether the ship counts as <b>anchored</b> (the predicate for mooring, crew, the HUD and other modules): its anchor
+     * rests on the seabed and holds without dragging, and the ship is slower than {@code anchor_chain.at_rest_speed}.
+     * Until then a dropped anchor is "anchor down, way on" ({@link #anchorDown()}). AN2a: before, any holding anchor
+     * counted at once; now a ship dropping its anchor at speed is not anchored until the chain has stopped it.
+     */
+    public boolean isAnchored() {
+        AnchorStatus s = anchorStatus;
+        return anchor != null && s != null && s.anchored();
+    }
+
+    /** Whether the anchor is out (dropping, holding or raising), anchored or not. */
+    public boolean anchorDown() {
+        ShipAnchor a = anchor;
+        return a != null && a.state().isOut();
+    }
+
+    /** Whether anchors are enabled for this ship this tick ({@code sailing_runtime.anchor_enabled}). */
+    public boolean anchorEnabled() {
+        return anchorEnabled;
+    }
+
     /** Plot box {minX, minY, minZ, maxX, maxY, maxZ} (copy). */
     public int[] bounds() {
         return new int[] {minX, minY, minZ, maxX, maxY, maxZ};
@@ -192,6 +221,13 @@ public final class SailingRuntime {
 
     void setAnchor(@Nullable ShipAnchor anchor) {
         this.anchor = anchor;
+        if (anchor == null) {
+            this.anchorStatus = null;
+        }
+    }
+
+    void setAnchorStatus(@Nullable AnchorStatus status) {
+        this.anchorStatus = status;
     }
 
     void setControlInputs(double rudderAngle, boolean anchorEnabled) {
@@ -355,8 +391,9 @@ public final class SailingRuntime {
 
     /**
      * One force evaluation and application. {@code seaWorldY} is NaN without sea. With {@code forcesEnabled} false only
-     * the hull damping is applied. Returns false when nothing was applied: no unfurled sail, no anchor and not moving in
-     * water (an idle ship that still rocks gets its damping and returns true).
+     * the hull damping is applied. Returns false when nothing was applied: no unfurled sail and not moving in water (an
+     * idle ship that still rocks gets its damping and returns true). The anchor's chain is not applied here since AN2a
+     * ({@code sailing.anchor.AnchorPhysics}, force group {@code pirates_n_ships:anchor}).
      */
     boolean physicsTick(ShipBody ship, double seaWorldY, double timeStep, long gameTime, double fullDraft, boolean sailsNeedWater,
                         double heelFactor, boolean forcesEnabled, HullDampingModel.Params damping) {
@@ -370,8 +407,7 @@ public final class SailingRuntime {
         double submerged = Math.min(Math.max(draft / fullDraft, 0.0), 1.0);
         lastSubmerged = submerged;
         boolean moving = lin.lengthSquared() > 1.0e-4 || ang.lengthSquared() > 1.0e-4;
-        boolean anchorOut = anchor != null && anchorEnabled;
-        boolean idle = !forcesEnabled || unfurled == 0 && !anchorOut && (submerged <= 0.0 || !moving);
+        boolean idle = !forcesEnabled || unfurled == 0 && (submerged <= 0.0 || !moving);
         boolean damp = damping.enabled() && submerged > 0.0 && ang.lengthSquared() > 1.0e-8;
         if (idle && !damp) {
             lastBreakdown = null;
@@ -406,14 +442,7 @@ public final class SailingRuntime {
                 Vector3d rel = HullPoints.rudderPlot(bow, new int[] {minX, minY, minZ, maxX, maxY, maxZ}, new Vector3d()).sub(com);
                 rudder = new ShipForceModel.Rudder(rudderAngle, bow.toShip(rel, rel));
             }
-            ShipAnchor a = anchor;
-            ShipForceModel.Anchor anchorInput = null;
-            if (a != null && anchorEnabled && a.state().isOut()) {
-                Vector3d hawse = new Vector3d(a.capstan().getX() + 0.5, a.capstan().getY() + 0.5, a.capstan().getZ() + 0.5).sub(com);
-                anchorInput = new ShipForceModel.Anchor(a.state(), new Vector3d(a.point().x, a.point().y, a.point().z),
-                        bow.toShip(hawse, hawse));
-            }
-            ForceBreakdown forces = ShipForceModel.compute(wind, state, active, rudder, anchorInput, params);
+            ForceBreakdown forces = ShipForceModel.compute(wind, state, active, rudder, params);
             if (!forces.force().isFinite() || !forces.torque().isFinite()) {
                 return false;
             }

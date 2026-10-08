@@ -15,6 +15,8 @@ import com.richardsenger.piratesnships.ship.ShipData;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
+import com.richardsenger.piratesnships.station.helm.CourseOrder;
+import com.richardsenger.piratesnships.station.helm.HelmCourses;
 import com.richardsenger.piratesnships.station.jobs.JobBoard;
 import com.richardsenger.piratesnships.station.winch.CaptainsWhistleItem;
 import com.richardsenger.piratesnships.station.winch.RiggingReport;
@@ -40,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Operator commands for crew stations (permission 2), for tests and playtests:
  * {@code /pirates crew spawn}, {@code assign <crew> <station pos>}, {@code release <crew>},
- * {@code order <hoist|reef|furl|pump> [crew]}, {@code info [crew]} (morale, crew and bunks, HM1), and
+ * {@code order <hoist|reef|furl|pump> [crew]}, {@code order course <x> <z> ...} (WS3a), {@code info [crew]} (morale, crew and bunks, HM1), and
  * {@code /pirates ship rigging} (Q5: the ship's sails, why yards carry none, and its crew). A station position may be
  * the block's world position (as seen in game, F3) or its plot position.
  */
@@ -49,6 +51,9 @@ public final class StationCommands {
     static final String KEY = "commands." + Constants.MOD_ID + ".crew.";
     public static final String KEY_UNKNOWN_ORDER = KEY + "unknown_order";
     public static final String KEY_ORDERED = KEY + "ordered";
+    /** WS3a: {@code /pirates crew order course}; the result's name in lower case is appended. */
+    public static final String KEY_COURSE = KEY + "course.";
+    public static final String KEY_COURSE_SYNTAX = KEY + "course_syntax";
 
     private StationCommands() {
     }
@@ -61,7 +66,10 @@ public final class StationCommands {
                 .then(Commands.literal("assign").then(Commands.argument("crew", EntityArgument.entity())
                         .then(Commands.argument("station", BlockPosArgument.blockPos()).executes(StationCommands::assign))))
                 .then(Commands.literal("release").then(Commands.argument("crew", EntityArgument.entities()).executes(StationCommands::release)))
-                .then(Commands.literal("order").then(Commands.argument("order", StringArgumentType.word())
+                .then(Commands.literal("order")
+                        .then(Commands.literal("course").then(Commands.argument("waypoints", StringArgumentType.greedyString())
+                                .executes(StationCommands::course)))
+                        .then(Commands.argument("order", StringArgumentType.word())
                         .suggests((c, b) -> SharedSuggestionProvider.suggest(CrewOrder.ids(), b))
                         .executes(c -> order(c, null))
                         .then(Commands.argument("crew", EntityArgument.entities()).executes(c -> order(c, EntityArgument.getEntities(c, "crew"))))))));
@@ -152,6 +160,32 @@ public final class StationCommands {
             c.getSource().sendSuccess(() -> why, false);
         }
         return n;
+    }
+
+    /**
+     * WS3a: {@code /pirates crew order course <x> <z> [<x> <z> ...] [loop]} sets the course of the ship the source
+     * stands on ({@link HelmCourses#set}): its helmsman holds it, or a free hand takes the helm from the job board.
+     * Coordinates may be relative ({@code ~}, {@code ~10}).
+     */
+    private static int course(CommandContext<CommandSourceStack> c) {
+        CourseOrder order = CourseOrder.parse(StringArgumentType.getString(c, "waypoints"), c.getSource().getPosition()).orElse(null);
+        if (order == null) {
+            c.getSource().sendFailure(Component.translatable(KEY_COURSE_SYNTAX));
+            return 0;
+        }
+        ShipBody ship = shipAt(c.getSource());
+        if (ship == null) {
+            c.getSource().sendFailure(Component.translatable(OrderHints.KEY_NO_SHIP));
+            return 0;
+        }
+        HelmCourses.SetResult r = HelmCourses.set(c.getSource().getLevel(), ship, order);
+        Component msg = Component.translatable(KEY_COURSE + r.name().toLowerCase(Locale.ROOT), order.waypoints().size());
+        if (r == HelmCourses.SetResult.STARTED || r == HelmCourses.SetResult.POSTED) {
+            c.getSource().sendSuccess(() -> msg, true);
+            return order.waypoints().size();
+        }
+        c.getSource().sendFailure(msg);
+        return 0;
     }
 
     /**

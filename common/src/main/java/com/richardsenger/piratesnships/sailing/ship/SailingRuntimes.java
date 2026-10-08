@@ -71,6 +71,15 @@ public final class SailingRuntimes {
         return m == null ? null : m.get(ship);
     }
 
+    /**
+     * Every runtime of {@code level}, a read-only view for the server thread (the anchor's physics substep,
+     * {@code sailing.anchor.AnchorPhysics}); do not keep it.
+     */
+    public static java.util.Collection<SailingRuntime> runtimes(ServerLevel level) {
+        Map<UUID, SailingRuntime> m = SERVER.get(level);
+        return m == null ? List.of() : java.util.Collections.unmodifiableCollection(m.values());
+    }
+
     /** The runtime of {@code ship}, scanning it now if there is none yet. Null if the ship is not one of ours. */
     public static @Nullable SailingRuntime getOrCreate(ShipBody ship) {
         SailingRuntime rt = get(ship.level(), ship.id());
@@ -283,7 +292,7 @@ public final class SailingRuntimes {
                 double rudder = !steering ? 0.0 : wheel ? WheelMath.rudderAngle(rt.wheelAngle(), lock, params.maxRudderAngleDeg())
                         : RudderSteps.angle(rt.rudderStep(), steps, params.maxRudderAngleDeg());
                 rt.setControlInputs(rudder, anchors);
-                ShipControls.tickAnchor(ship, rt, params.anchor());
+                ShipControls.tickAnchor(ship, rt);
             }
         }
     }

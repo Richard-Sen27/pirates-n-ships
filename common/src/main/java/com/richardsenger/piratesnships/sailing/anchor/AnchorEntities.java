@@ -23,9 +23,9 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Server side of the visible anchor (docs/design.md §5.3): keeps exactly one {@link AnchorEntity} per ship with a
- * capstan, placed from the ship's {@link ShipAnchor} every game tick, and plays the chain, splash and landing
- * effects.
+ * Server side of the visible anchor (docs/design.md §5.2): keeps exactly one {@link AnchorEntity} per ship with a
+ * capstan, placed where the ship's {@link ShipAnchor} body is every game tick (its motion is {@link AnchorPhysics}),
+ * and plays the chain (running out, heaving in, dragging), splash and landing effects.
  *
  * <p>Life cycle: the entity is spawned by {@link #sync} (called for every ship with a sailing runtime each tick), so
  * a placed capstan, an assembled ship and a loaded ship all get their anchor on the next tick. It is discarded when
@@ -50,6 +50,7 @@ public final class AnchorEntities {
         long nextScan;
         boolean wasInWater;
         AnchorState.Phase lastPhase = AnchorState.Phase.RAISED;
+        boolean wasResting;
         int chainCooldown;
     }
 
@@ -77,8 +78,11 @@ public final class AnchorEntities {
         return new Vec3(capstan.getX() + o[0], capstan.getY() + o[1], capstan.getZ() + o[2]);
     }
 
-    /** Game tick of one ship: spawns, moves or removes its anchor entity to match {@code anchor} (null = stowed). */
-    public static void sync(ShipBody ship, BowFrame bow, @Nullable ShipAnchor anchor) {
+    /**
+     * Game tick of one ship: spawns, moves or removes its anchor entity to match {@code anchor} (null = stowed), which
+     * lies where its body is (AN2a), and hands it the chain's {@code status}.
+     */
+    public static void sync(ShipBody ship, BowFrame bow, @Nullable ShipAnchor anchor, @Nullable AnchorStatus status) {
         ServerLevel level = ship.level();
         Track t = TRACKS.computeIfAbsent(level, l -> new HashMap<>()).computeIfAbsent(ship.id(), k -> new Track());
         boolean out = anchor != null && anchor.state().isOut();
@@ -103,10 +107,11 @@ public final class AnchorEntities {
                 t.entity.markSynced();
             }
             t.lastPhase = AnchorState.Phase.RAISED;
+            t.wasResting = false;
             return;
         }
         Vec3 hawseWorld = ship.toWorld(anchor.hawse());
-        Vec3 pos = position(hawseWorld, anchor);
+        Vec3 pos = anchor.position();
         if (!valid || !e.isOut()) {
             discard(t);
             e = AnchorEntity.create(level, ship.id(), capstan, anchor.hawse(), armsAlongX, true);
@@ -114,22 +119,17 @@ public final class AnchorEntities {
             t.entity = level.addFreshEntity(e) ? e : null;
             t.wasInWater = inWater(level, pos);
             t.lastPhase = anchor.state().phase();
+            t.wasResting = anchor.resting();
         } else {
             e.setPos(pos);
         }
         if (t.entity != null) {
             t.entity.markSynced();
+            t.entity.setChain(status, pos);
         }
-        effects(level, t, anchor, hawseWorld, pos);
+        effects(level, t, anchor, status, hawseWorld, pos);
         t.lastPhase = anchor.state().phase();
-    }
-
-    /** World position of an anchor that is out: its crown, {@code hold} of the way from the stowed crown to the point. */
-    public static Vec3 position(Vec3 hawseWorld, ShipAnchor a) {
-        double f = a.state().hold();
-        return new Vec3(AnchorTravel.lerp(hawseWorld.x, a.point().x, f),
-                AnchorTravel.lerp(hawseWorld.y - AnchorTravel.HEIGHT, a.point().y, f),
-                AnchorTravel.lerp(hawseWorld.z, a.point().z, f));
+        t.wasResting = anchor.resting();
     }
 
     /** {@link CapstanBlock#onPlace}: a capstan on a ship makes the ship look for its anchor's capstan at once. */
@@ -194,7 +194,7 @@ public final class AnchorEntities {
         return level.getFluidState(BlockPos.containing(pos.x, pos.y + 0.2, pos.z)).is(FluidTags.WATER);
     }
 
-    private static void effects(ServerLevel level, Track t, ShipAnchor a, Vec3 hawseWorld, Vec3 pos) {
+    private static void effects(ServerLevel level, Track t, ShipAnchor a, @Nullable AnchorStatus status, Vec3 hawseWorld, Vec3 pos) {
         AnchorState.Phase phase = a.state().phase();
         boolean water = inWater(level, pos);
         boolean wasInWater = t.wasInWater;
@@ -202,12 +202,13 @@ public final class AnchorEntities {
         if (!AnchorConfig.SOUNDS.get()) {
             return;
         }
-        boolean moving = phase == AnchorState.Phase.DROPPING || phase == AnchorState.Phase.RAISING;
+        boolean dragging = status != null && status.dragging();
+        boolean moving = phase == AnchorState.Phase.DROPPING || phase == AnchorState.Phase.RAISING || dragging;
         if (moving && --t.chainCooldown <= 0) {
             t.chainCooldown = CHAIN_INTERVAL;
             play(level, hawseWorld, AnchorContent.chainSound(), AnchorConfig.CHAIN_VOLUME.get(), 0.75f + level.random.nextFloat() * 0.3f);
         }
-        if (moving && water != wasInWater) {
+        if ((phase == AnchorState.Phase.DROPPING || phase == AnchorState.Phase.RAISING) && water != wasInWater) {
             double surface = Math.floor(pos.y + 0.2) + (water ? 1.0 : 0.0);
             play(level, new Vec3(pos.x, surface, pos.z), AnchorContent.splashSound(), AnchorConfig.SPLASH_VOLUME.get(), 0.9f + level.random.nextFloat() * 0.2f);
             level.sendParticles(ParticleTypes.SPLASH, pos.x, surface, pos.z, 40, 0.5, 0.05, 0.5, 0.2);
@@ -215,16 +216,23 @@ public final class AnchorEntities {
                 level.sendParticles(ParticleTypes.BUBBLE, pos.x, surface - 0.6, pos.z, 20, 0.3, 0.3, 0.3, 0.05);
             }
         }
-        if (t.lastPhase == AnchorState.Phase.DROPPING && phase == AnchorState.Phase.HOLDING) {
-            play(level, a.point(), AnchorContent.thudSound(), AnchorConfig.THUD_VOLUME.get(), 0.7f + level.random.nextFloat() * 0.2f);
-            BlockState ground = level.getBlockState(BlockPos.containing(a.point().x, a.point().y - 0.5, a.point().z));
-            if (!ground.isAir()) {
-                level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, ground), a.point().x, a.point().y + 0.1, a.point().z,
-                        30, 0.6, 0.1, 0.6, 0.1);
-            }
+        if (a.resting() && !t.wasResting && phase != AnchorState.Phase.RAISING) {
+            play(level, pos, AnchorContent.thudSound(), AnchorConfig.THUD_VOLUME.get(), 0.7f + level.random.nextFloat() * 0.2f);
+            groundPuff(level, pos, 30, 0.6, 0.1);
             if (water) {
-                level.sendParticles(ParticleTypes.BUBBLE, a.point().x, a.point().y + 0.5, a.point().z, 25, 0.6, 0.3, 0.6, 0.05);
+                level.sendParticles(ParticleTypes.BUBBLE, pos.x, pos.y + 0.5, pos.z, 25, 0.6, 0.3, 0.6, 0.05);
             }
+        }
+        if (dragging && level.getGameTime() % 5 == 0) {
+            groundPuff(level, pos, 6, 0.4, 0.05); // the anchor ploughs the seabed
+        }
+    }
+
+    private static void groundPuff(ServerLevel level, Vec3 pos, int count, double spread, double speed) {
+        BlockState ground = level.getBlockState(BlockPos.containing(pos.x, pos.y - 0.5, pos.z));
+        if (!ground.isAir()) {
+            level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, ground), pos.x, pos.y + 0.1, pos.z,
+                    count, spread, 0.05, spread, speed);
         }
     }
 

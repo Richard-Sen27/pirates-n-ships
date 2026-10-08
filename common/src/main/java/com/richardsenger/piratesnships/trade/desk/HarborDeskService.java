@@ -35,9 +35,24 @@ public final class HarborDeskService {
 
     public static final String KEY = "message." + Constants.MOD_ID + ".harbor_desk.";
 
-    /** Contract destinations get this distance and risk until ports have positions (as the debug command does). */
+    /**
+     * Contract destinations get this distance and risk when the {@link #setRouteLocator route locator} knows no route
+     * (no world simulation installed, or a market without a registered port, as the debug command makes).
+     */
     public static final double DEFAULT_DISTANCE = 1000.0;
     public static final double DEFAULT_RISK = 0.5;
+
+    /** Distance (blocks) and risk (0..1) of a delivery route between two ports. */
+    public record ContractRoute(double distance, double risk) {
+    }
+
+    /** Finds the route between two ports; installed by the world simulation's sea lanes (WS2). */
+    @FunctionalInterface
+    public interface RouteLocator {
+        Optional<ContractRoute> route(MinecraftServer server, ResourceLocation origin, ResourceLocation destination);
+    }
+
+    private static volatile RouteLocator routeLocator = (server, origin, destination) -> Optional.empty();
 
     /** What using a desk did, with the action bar message (null = none). */
     public enum Use {
@@ -62,6 +77,11 @@ public final class HarborDeskService {
     /** The world generator (later) installs the lookup "which port's area contains this position". */
     public static void setPortLocator(BiFunction<ServerLevel, BlockPos, Optional<ResourceLocation>> locator) {
         portLocator = locator;
+    }
+
+    /** The world simulation (WS2) installs the route lookup: lane length and pirate risk between two ports. */
+    public static void setRouteLocator(RouteLocator locator) {
+        routeLocator = locator;
     }
 
     /** Binds a freshly placed desk to the port whose area it is in, if the locator knows one. */
@@ -114,7 +134,10 @@ public final class HarborDeskService {
         return MarketBackend.openDesk(player, port.get(), pos.immutable()) ? Use.OPENED : Use.NO_MARKET;
     }
 
-    /** Every other known port as a contract destination (fixed distance and risk until ports have positions). */
+    /**
+     * Every other known port as a contract destination, with the route locator's distance and risk (the sea lane's
+     * length when it is cached, else the straight distance; {@link #DEFAULT_DISTANCE}/{@link #DEFAULT_RISK} without one).
+     */
     public static List<ContractGenerator.Destination> destinations(MinecraftServer server, ResourceLocation origin) {
         List<ContractGenerator.Destination> out = new ArrayList<>();
         Map<ResourceLocation, Market> markets = TradeData.get(server).snapshot().markets();
@@ -122,7 +145,8 @@ public final class HarborDeskService {
         ids.sort(Comparator.comparing(ResourceLocation::toString));
         for (ResourceLocation id : ids) {
             if (id.equals(origin)) continue;
-            out.add(new ContractGenerator.Destination(id, markets.get(id).profile(), DEFAULT_DISTANCE, DEFAULT_RISK));
+            ContractRoute route = routeLocator.route(server, origin, id).orElse(new ContractRoute(DEFAULT_DISTANCE, DEFAULT_RISK));
+            out.add(new ContractGenerator.Destination(id, markets.get(id).profile(), route.distance(), route.risk()));
         }
         return out;
     }

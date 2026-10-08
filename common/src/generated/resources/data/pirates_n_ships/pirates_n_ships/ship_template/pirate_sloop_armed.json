@@ -1,0 +1,11 @@
+{
+  "helm": [
+    4,
+    8,
+    22
+  ],
+  "name": "ship_template.pirates_n_ships.pirate_sloop_armed",
+  "orderable": false,
+  "structure": "pirates_n_ships:ships/pirate_sloop_armed",
+  "waterline": 2
+}

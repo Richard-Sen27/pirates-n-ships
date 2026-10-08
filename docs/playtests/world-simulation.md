@@ -159,9 +159,9 @@ the quarry and hits it, striking the colours silences the gun and the patrol lea
 soldier killing a pirate raises Navy–Pirates tension. Not covered: a real patrol ship circling a moving ship at sea,
 real outposts and lanes, players switching flags in the middle of a chase.
 
-**Known gap:** the default navy templates (`voyages.navy_templates`: the two starter sloops) carry no cannons, so a
-patrol chases and circles but cannot fire unless its ship has a cannon with powder and balls aboard (step 4 adds one
-by hand).
+**Known gap (closed by WS4c):** the default navy templates (`voyages.navy_templates`: the two starter sloops) carried
+no cannons, so a patrol chased and circled but could not fire unless its ship had a cannon with powder and balls
+aboard (step 3 adds one by hand). Since WS4c the default is the armed navy sloop; see the WS4c section below.
 
 ### Setup
 A creative world with cheats and open ocean. Your own ship at sea (assembled by you, so you are its owner) with a
@@ -209,3 +209,62 @@ flagpole, and you aboard it. `/pirates law score set @s 0` and `/pirates law bou
 Report: screenshots of steps 2 and 4, the `/pirates world patrols` output during steps 2 and 4, `latest.log`, and
 anything a patrol ship did that looked wrong (circling too wide or ramming you, spinning on the spot, sailing onto land
 during a chase, chat spam from its helmsman).
+
+## WS4c: patrols that can fight
+
+Covered headless: the armed sloops differ from the starter sloop only by the four guns, their gun ports and the shot
+locker, which is within the gun crews' supply range of every gun (JUnit `ArmedSloopLayoutTest`, the committed
+structures pinned by `SchemToStructureTest`); the locker and rounds rules (`GunStockingTest`); in basins
+(`ArmedShipGameTests`): the armed navy sloop places, assembles and settles upright with its main deck dry, a crew
+member can be seated at each of the four guns and loads one from the locker; a materialised navy patrol appears with
+4 × `cannon_rounds` powder and shot in the locker and loaded guns, and dematerialising carries no ammunition as cargo;
+a pirate raider gets the default 12 per gun; a merchant on the same hull gets nothing; (`NavyGameTests`) a patrol
+materialised on the default navy template fires at a Jolly Roger hull with its own guns and hits it;
+(`HelmStationGameTests`) a course renewed silently says nothing, the first course of a chase is acknowledged once
+without waypoint calls. Not covered: a real chase at sea with the wind, how the gun crews fare while the patrol
+circles, how the armed sloop sails and heels compared with the plain one.
+
+### Setup
+As for WS4b: a creative world with cheats and open ocean, your own ship with a flagpole and you aboard,
+`/pirates law score set @s 0` and `/pirates law bounty clear @s`. In an existing world check
+`config/pirates_n_ships-server.toml` (or the world's `serverconfig`): `world_simulation.voyages.navy_templates` and
+`pirate_templates` keep their old values (the two starter sloops) in a config written before WS4c; set them to
+`["pirates_n_ships:navy_sloop_armed"]` and `["pirates_n_ships:pirate_sloop_armed"]`, or delete the two lines.
+
+### Steps
+1. **The armed sloop.** `/pirates ship place navy_sloop_armed assemble` at the shore.
+   - **Expected:** the starter sloop with two cannons a side in the waist, just forward and aft of the winch, each
+     muzzle in a one-block gap of the bulwark. A barrel on a plank stand in the hold beside the mast (down the hatch
+     ladder). The ship floats level, like the plain starter sloop (compare `/pirates ship place starter_sloop
+     assemble`), and does not lie deeper in a way you can see. `/pirates ship templates` lists both armed sloops; the
+     shipwright's Orders tab does not.
+2. **A patrol appears armed.** Fly the merchant flag, face the open sea, `/pirates world voyages spawn near patrol`.
+   Fly over and land on its deck.
+   - **Expected:** the patrol's ship is the armed sloop with the navy flag. All four cannons show loaded (use one with
+     an empty hand from the side: it says it is loaded, or look at the barrel). The barrel in the hold holds 48
+     gunpowder and 48 cannonballs (12 rounds × 4 guns). Its cargo crates and barrels on deck are empty.
+3. **A raider and a convoy.** `/pirates world voyages spawn near raid`, then `... convoy`.
+   - **Expected:** the raider is the same armed sloop under the Jolly Roger, stocked the same way. The convoy is a
+     plain starter sloop (merchants unchanged) with goods and no powder anywhere.
+4. **The chase fires without help.** Back on your own ship, raise the Jolly Roger near the patrol from step 2 (or
+   spawn a new one).
+   - **Expected:** "A navy patrol has sighted the <ship> and gives chase!" once. Its helmsman says "Aye, holding the
+     course!" once at the start of the chase and nothing more while it circles you (no waypoint lines, no repeated
+     acknowledgements, even with you sailing away slowly). Within a few seconds two deckhands go to the guns on the
+     side facing you; once you are within about 15° of a barrel and 64 blocks, they fire. No cannon was placed by
+     hand. After each shot the crew reloads from the barrel in the hold (watch its count go down).
+5. **Out of shot.** Let the patrol keep firing at you (or set `world_simulation.materialize.cannon_rounds` to 1 and
+   spawn a new patrol).
+   - **Expected:** when the barrel is empty the guns fall silent after their last shot; the patrol keeps circling.
+6. **Striking the colours** as in WS4b step 4.
+   - **Expected:** as in WS4b; the guns stay loaded and manned but silent.
+7. **Dematerialise and come back.** Fly away beyond the linger distance and come back to a patrol that has fired.
+   - **Expected:** when it appears again its locker holds the full 48 rounds again and its guns are loaded (the
+     ammunition is not part of the record). `/pirates world voyages` shows no gunpowder or cannonballs as its cargo.
+8. **Toggles.** `world_simulation.materialize.guns_start_loaded = false`: a new patrol's guns are empty; its crew
+   loads them from the locker when the chase begins (the first shot comes later). `cannon_rounds = 0`: the locker is
+   empty, loaded guns fire once and then stay silent.
+
+Report: screenshots of steps 1 (the waist from above and the hold), 2 (the locker's contents) and 4, the chat during
+step 4, `latest.log`, and anything that looked wrong (a gun facing inboard, a crew member standing in a gun port or
+falling overboard, the ship heeling to one side, balls hitting the patrol's own bulwark).

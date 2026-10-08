@@ -60,10 +60,10 @@ public final class VoyageConfig {
             List.of("pirates_n_ships:starter_sloop", "pirates_n_ships:starter_sloop_basic"),
             "Ship templates merchant convoys sail (one is picked at random)");
     public static final ConfigValue<List<String>> NAVY_TEMPLATES = VOYAGES.stringList("navy_templates",
-            List.of("pirates_n_ships:starter_sloop", "pirates_n_ships:starter_sloop_basic"),
+            List.of("pirates_n_ships:navy_sloop_armed"),
             "Ship templates navy patrols sail (one is picked at random)");
     public static final ConfigValue<List<String>> PIRATE_TEMPLATES = VOYAGES.stringList("pirate_templates",
-            List.of("pirates_n_ships:starter_sloop", "pirates_n_ships:starter_sloop_basic"),
+            List.of("pirates_n_ships:pirate_sloop_armed"),
             "Ship templates pirate raiders sail (one is picked at random)");
 
     private VoyageConfig() {

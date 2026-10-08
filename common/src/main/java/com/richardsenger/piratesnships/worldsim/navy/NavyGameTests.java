@@ -40,7 +40,14 @@ import com.richardsenger.piratesnships.station.StationContent;
 import com.richardsenger.piratesnships.worldsim.faction.FactionConfig;
 import com.richardsenger.piratesnships.worldsim.faction.Factions;
 import com.richardsenger.piratesnships.worldsim.lane.Lane;
+import com.richardsenger.piratesnships.worldsim.materialize.Materializer;
 import com.richardsenger.piratesnships.worldsim.materialize.VoyageCrew;
+import com.richardsenger.piratesnships.worldsim.materialize.VoyageGuns;
+import com.richardsenger.piratesnships.worldsim.voyage.VoyageConfig;
+import com.richardsenger.piratesnships.sailing.wind.WindOverride;
+import com.richardsenger.piratesnships.ship.ShipTestCleanup;
+import com.richardsenger.piratesnships.ship.sable.SableShips;
+import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.worldsim.voyage.Voyage;
 import com.richardsenger.piratesnships.worldsim.voyage.VoyageData;
 import com.richardsenger.piratesnships.worldsim.voyage.VoyageEnd;
@@ -470,6 +477,72 @@ public final class NavyGameTests {
             h.assertTrue(hits(e.quarry().id()) >= 1, "the shots before the strike missed");
             cleanup(h, e);
         });
+    }
+
+    /**
+     * WS4c: a navy patrol materialised from its record on the default navy template (the armed sloop) in a 48×48 water
+     * basin, heading north with its starboard side to a player's Jolly Roger hull 17 blocks east, the wind calm so
+     * neither ship sails off. Nobody places a cannon: the patrol appears with loaded guns and a stocked shot locker,
+     * the first hunting check seats its free hands at the guns bearing on the quarry, and they fire and hit.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 600, batch = CONFIG_BATCH + "armed")
+    public static void aMaterialisedPatrolFiresWithItsOwnGuns(GameTestHelper h) {
+        listen();
+        waterBasin(h);
+        WindOverride.set(h.getLevel().dimension().location().toString(), 0.0, 0.0, h.getLevel().getGameTime() + 1200);
+        MinecraftServer server = h.getLevel().getServer();
+        ResourceLocation template = ResourceLocation.parse(VoyageConfig.NAVY_TEMPLATES.get().get(0));
+        h.assertTrue(template.equals(ShipTemplates.NAVY_SLOOP_ARMED_ID), "default navy template " + template);
+        Quarry q = quarry(h, FlagKind.JOLLY_ROGER);
+        BlockPos at = h.absolutePos(new BlockPos(12, 7, Z + 2));
+        List<Lane.Point> route = List.of(new Lane.Point(at.getX(), at.getZ() + 100), new Lane.Point(at.getX(), at.getZ() - 100));
+        ResourceLocation from = Constants.id("gametest/ws4c_" + UUID.randomUUID().toString().substring(0, 8));
+        Voyage v = Voyage.depart(UUID.randomUUID(), VoyageKind.PATROL, Faction.NAVY, template, from, from, route, Map.of(),
+                h.getLevel().getGameTime()).withProgress(100);
+        VoyageData.get(server).put(v);
+        Materializer.Outcome o = Materializer.materialize(server, v.id());
+        Voyage m = voyage(h, v);
+        m.shipId().ifPresent(id -> ShipTestCleanup.track(h, id));
+        h.assertTrue(o == Materializer.Outcome.SPAWNED, "materialize: " + o);
+        ShipBody patrol = SableShips.byId(h.getLevel(), m.shipId().orElseThrow());
+        h.assertTrue(patrol != null, "no patrol ship");
+        List<BlockPos> guns = VoyageGuns.guns(h.getLevel(), patrol);
+        h.assertTrue(guns.size() == 4 && guns.stream().allMatch(g -> VoyageGuns.isLoaded(h.getLevel(), g)), "guns " + guns);
+        long start = h.getLevel().getGameTime();
+        h.onEachTick(() -> {
+            if ((h.getLevel().getGameTime() - start) % 20 == 0) Hunting.updateMaterialised(server, v.id());
+        });
+        h.succeedWhen(() -> {
+            h.assertTrue(voyage(h, v).pursuit().equals(Optional.of(q.id())), "no chase: " + seen(h, q));
+            long manned = guns.stream().filter(g -> com.richardsenger.piratesnships.station.Stations.isManned(
+                    new com.richardsenger.piratesnships.station.StationRef(patrol.id(), g))).count();
+            h.assertTrue(manned >= 1, "no gun manned");
+            h.assertTrue(hits(q.id()) >= 1, "no hit on the quarry yet (" + manned + " guns manned, "
+                    + guns.stream().map(g -> String.valueOf(VoyageGuns.isLoaded(h.getLevel(), g))).toList() + " loaded)");
+            Gunnery.clear(patrol);
+            h.getEntities(CannonContent.CANNONBALL.get()).forEach(CannonballEntity::discard);
+            HITS.remove(q.id());
+            WindOverride.clear(h.getLevel().dimension().location().toString());
+            end(h, v);
+            VoyageCrew.discard(h.getLevel(), v.id());
+        });
+    }
+
+    /** Stone floor, water up to y 7, walls, the barrier ceiling removed (the sloop's mast). */
+    private static void waterBasin(GameTestHelper h) {
+        for (int x = 0; x < 48; x++) {
+            for (int z = 0; z < 48; z++) {
+                h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
+                boolean wall = x == 0 || x == 47 || z == 0 || z == 47;
+                for (int y = 2; y <= 8; y++) {
+                    h.setBlock(new BlockPos(x, y, z), wall ? Blocks.STONE : y <= 7 ? Blocks.WATER : Blocks.AIR);
+                }
+                for (int y = 9; y <= 20; y++) {
+                    BlockPos p = new BlockPos(x, y, z);
+                    if (h.getBlockState(p).is(Blocks.BARRIER)) h.setBlock(p, Blocks.AIR);
+                }
+            }
+        }
     }
 
     // ------------------------------------------------------------------ world events

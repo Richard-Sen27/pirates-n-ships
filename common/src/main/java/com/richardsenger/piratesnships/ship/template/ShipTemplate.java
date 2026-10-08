@@ -22,12 +22,13 @@ import org.jetbrains.annotations.Nullable;
  *   "waterline": 2,        // optional: the template row that sits at the water surface (top water block);
  *                          //           missing = helm y - 1, or 0 for a template without a helm
  *   "bow": "north",        // optional: where the bow points inside the template (default north)
- *   "price": 400           // optional: doubloons at a shipwright (later), default 0
+ *   "price": 400,          // optional: doubloons at a shipwright (later), default 0
+ *   "orderable": false     // optional: whether shipwrights build it (default true; NPC-only ships say false)
  * }
  * }</pre>
  */
 public record ShipTemplate(ResourceLocation structure, String name, Optional<BlockPos> helm, Optional<Integer> waterline,
-                           Direction bow, int price) {
+                           Direction bow, int price, boolean orderable) {
 
     private static final Codec<Direction> HORIZONTAL = Direction.CODEC.comapFlatMap(
             d -> d.getAxis().isHorizontal() ? DataResult.success(d) : DataResult.error(() -> "bow must be horizontal: " + d),
@@ -39,8 +40,15 @@ public record ShipTemplate(ResourceLocation structure, String name, Optional<Blo
             BlockPos.CODEC.optionalFieldOf("helm").forGetter(ShipTemplate::helm),
             Codec.intRange(0, 4096).optionalFieldOf("waterline").forGetter(ShipTemplate::waterline),
             HORIZONTAL.optionalFieldOf("bow", Direction.NORTH).forGetter(ShipTemplate::bow),
-            Codec.intRange(0, Integer.MAX_VALUE).optionalFieldOf("price", 0).forGetter(ShipTemplate::price)
+            Codec.intRange(0, Integer.MAX_VALUE).optionalFieldOf("price", 0).forGetter(ShipTemplate::price),
+            Codec.BOOL.optionalFieldOf("orderable", true).forGetter(ShipTemplate::orderable)
     ).apply(i, ShipTemplate::new));
+
+    /** A template shipwrights build. */
+    public ShipTemplate(ResourceLocation structure, String name, Optional<BlockPos> helm, Optional<Integer> waterline,
+                        Direction bow, int price) {
+        this(structure, name, helm, waterline, bow, price, true);
+    }
 
     /** The waterline row: the explicit one, else one row below the helm, else the bottom row. */
     public int waterlineFor(@Nullable BlockPos resolvedHelm) {

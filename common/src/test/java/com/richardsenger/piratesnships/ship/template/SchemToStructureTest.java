@@ -277,7 +277,7 @@ class SchemToStructureTest {
 
     /** Each committed ship structure is exactly what the converter makes from its committed schematic. */
     @ParameterizedTest
-    @ValueSource(strings = {"starter_sloop", "starter_sloop_basic"})
+    @ValueSource(strings = {"starter_sloop", "starter_sloop_basic", "navy_sloop_armed", "pirate_sloop_armed"})
     void committedShipIsUpToDate(String name) throws Exception {
         Path schem = root.resolve("art/schematics/" + name + ".schem");
         Path committed = root.resolve("common/src/main/resources/data/pirates_n_ships/structure/ships/" + name + ".nbt");

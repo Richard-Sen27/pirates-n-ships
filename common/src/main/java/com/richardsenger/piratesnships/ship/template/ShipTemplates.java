@@ -35,8 +35,26 @@ public final class ShipTemplates {
     public static final ShipTemplate STARTER_SLOOP_BASIC = new ShipTemplate(Constants.id("ships/starter_sloop_basic"),
             nameKey(STARTER_SLOOP_BASIC_ID), Optional.of(new BlockPos(4, 8, 22)), Optional.of(2), Direction.NORTH, 300);
 
+    public static final ResourceLocation NAVY_SLOOP_ARMED_ID = Constants.id("navy_sloop_armed");
+
+    /**
+     * The navy patrols' sloop (WS4c, art/schematics/navy_sloop_armed.py): {@link #STARTER_SLOOP} with two cannons a side
+     * in the waist, firing through gun ports cut in the bulwark, and a shot locker (barrel) in the hold beside the mast
+     * at [4, 3, 14], within the gun crews' supply range of all four guns. Same hull, helm and waterline. Not sold at
+     * the shipwright.
+     */
+    public static final ShipTemplate NAVY_SLOOP_ARMED = new ShipTemplate(Constants.id("ships/navy_sloop_armed"),
+            nameKey(NAVY_SLOOP_ARMED_ID), Optional.of(new BlockPos(4, 8, 22)), Optional.of(2), Direction.NORTH, 0, false);
+
+    public static final ResourceLocation PIRATE_SLOOP_ARMED_ID = Constants.id("pirate_sloop_armed");
+
+    /** The pirate raiders' sloop (WS4c): the same hull and guns as {@link #NAVY_SLOOP_ARMED}. Not sold at the shipwright. */
+    public static final ShipTemplate PIRATE_SLOOP_ARMED = new ShipTemplate(Constants.id("ships/pirate_sloop_armed"),
+            nameKey(PIRATE_SLOOP_ARMED_ID), Optional.of(new BlockPos(4, 8, 22)), Optional.of(2), Direction.NORTH, 0, false);
+
     public static final Map<ResourceLocation, ShipTemplate> DEFAULTS = Map.of(STARTER_SLOOP_ID, STARTER_SLOOP,
-            STARTER_SLOOP_BASIC_ID, STARTER_SLOOP_BASIC);
+            STARTER_SLOOP_BASIC_ID, STARTER_SLOOP_BASIC, NAVY_SLOOP_ARMED_ID, NAVY_SLOOP_ARMED,
+            PIRATE_SLOOP_ARMED_ID, PIRATE_SLOOP_ARMED);
 
     private ShipTemplates() {
     }

@@ -20,6 +20,7 @@ import com.richardsenger.piratesnships.worldsim.lane.BiomeSeaGrid;
 import com.richardsenger.piratesnships.worldsim.lane.Lane;
 import com.richardsenger.piratesnships.worldsim.lane.SeaGrid;
 import com.richardsenger.piratesnships.worldsim.materialize.Materializer;
+import com.richardsenger.piratesnships.worldsim.materialize.VoyageGuns;
 import com.richardsenger.piratesnships.worldsim.voyage.Voyage;
 import com.richardsenger.piratesnships.worldsim.voyage.VoyageConfig;
 import com.richardsenger.piratesnships.worldsim.voyage.VoyageEnd;
@@ -53,9 +54,10 @@ import java.util.concurrent.ConcurrentHashMap;
  *       is kept in {@link NavyData}.</li>
  *   <li><b>Materialised</b> ({@link #updateMaterialised}, on the server tick with the voyage checks): the helmsman gets
  *       a looping course on a ring of {@code standoff_distance} around the quarry ({@link PatrolRoutes#ring}), given anew
- *       every {@code course_interval_ticks} when the quarry moved; the gun crews get the quarry as their target
- *       ({@link Gunnery#set}, WS4a), and unmanned guns are posted on the job board for free hands every
- *       {@code course_interval_ticks}. The record follows the ship.</li>
+ *       every {@code course_interval_ticks} when the quarry moved (acknowledged the first time only, WS4c); the gun
+ *       crews get the quarry as their target ({@link Gunnery#set}, WS4a), and every {@code course_interval_ticks} empty
+ *       unmanned guns are posted on the job board for free hands while free hands are seated at the loaded ones,
+ *       those bearing on the quarry first ({@link VoyageGuns#manLoaded}, WS4c). The record follows the ship.</li>
  *   <li><b>Ending</b> ({@link HuntRules#judge}): a quarry that struck its colours is shadowed with silent guns for
  *       {@code surrender_linger_ticks}; a quarry lost, out of range, no longer hunted, or out of contact for
  *       {@code give_up_ticks} is left. The patrol then returns to the nearest point of its route
@@ -183,6 +185,8 @@ public final class Hunting {
                 // free hands to the unmanned guns (no-op on a ship without guns, or with every gun manned)
                 e.lastGunPost = now;
                 JobBoard.post(level, ship, CannonOrder.LOAD);
+                // a loaded gun has no LOAD work, so the board never posts it: free hands are seated there directly
+                VoyageGuns.manLoaded(level, ship, voyageId, target.x(), target.z());
             }
         } else {
             Gunnery.clear(ship); // struck colours: guns silent at once
@@ -204,7 +208,8 @@ public final class Hunting {
         }
         CourseOrder order = new CourseOrder(PatrolRoutes.ring(target.x(), target.z(), NavyConfig.STANDOFF_DISTANCE.get(), at.x, at.z,
                 RING_POINTS, level.getSeaLevel()), true);
-        HelmCourses.set(level, ship, order);
+        // the first ring of a chase is acknowledged once; every renewal is given silently (WS4c)
+        HelmCourses.set(level, ship, order, e.order == null ? HelmCourses.Voice.ACK_ONLY : HelmCourses.Voice.SILENT);
         e.order = order;
         e.courseAt = t;
         e.lastCourse = now;

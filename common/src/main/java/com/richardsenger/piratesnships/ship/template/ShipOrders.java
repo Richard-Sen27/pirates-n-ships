@@ -111,6 +111,7 @@ public final class ShipOrders {
 
     /** {@link #quote} with the price also multiplied by {@code priceFactor} (a navy officer's discount, CAR2). */
     public static Optional<Quote> quote(ServerLevel level, ResourceLocation id, ShipTemplate template, double priceFactor) {
+        if (!template.orderable()) return Optional.empty(); // an NPC-only ship (WS4c's armed sloops)
         return stats(level, template).map(s -> new Quote(id, template,
                 ShipOrderMath.price(template.price(), ShipConfig.ORDER_PRICE_FACTOR.get() * priceFactor),
                 ShipOrderMath.buildDays(ShipConfig.buildDays(id.getPath()), s.blocks()),

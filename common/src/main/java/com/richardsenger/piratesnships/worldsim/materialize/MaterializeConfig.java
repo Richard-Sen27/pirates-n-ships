@@ -44,6 +44,10 @@ public final class MaterializeConfig {
             "Navy soldiers on a navy ship (the first is an officer)");
     public static final ConfigValue<Integer> FIGHTERS_PIRATE = S.intRange("fighters_pirate", 4, 0, 16,
             "Pirates on a pirate ship");
+    public static final ConfigValue<Integer> CANNON_ROUNDS = S.intRange("cannon_rounds", 12, 0, 256,
+            "Rounds (one gunpowder and one cannonball each) per cannon put in the shot locker of a navy or pirate ship when it appears (0 = none; merchants carry none)");
+    public static final ConfigValue<Boolean> GUNS_START_LOADED = S.bool("guns_start_loaded", true,
+            "The cannons of a navy or pirate ship appear loaded, so its first shot needs no reload");
     public static final ConfigValue<Boolean> CARGO_IS_PLUNDER = S.bool("cargo_is_plunder", true,
             "Goods aboard an NPC ship carry the plunder mark, so whatever a player takes from it sells as plunder");
 

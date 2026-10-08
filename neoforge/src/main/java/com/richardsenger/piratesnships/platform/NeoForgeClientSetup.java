@@ -82,6 +82,8 @@ public final class NeoForgeClientSetup {
         // fired on the sound thread, inside the channel's executor
         NeoForge.EVENT_BUS.addListener(ComputeFovModifierEvent.class,
                 e -> e.setNewFovModifier(ClientEvents.COMPUTE_FOV.invoker().modify(e.getPlayer(), e.getNewFovModifier())));
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ViewportEvent.ComputeCameraAngles.class,
+                e -> e.setRoll(ClientEvents.COMPUTE_CAMERA_ROLL.invoker().modify((float) e.getPartialTick(), e.getRoll())));
         NeoForge.EVENT_BUS.addListener(PlayStreamingSourceEvent.class, e -> ClientEvents.SOUND_STREAM_STARTED.invoker().onStarted(e.getSound(), e.getChannel()));
     }
 

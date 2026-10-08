@@ -355,6 +355,21 @@ public final class ShipBody {
         }
     }
 
+    // ---------------------------------------------------------------- waves (WV1)
+
+    /**
+     * Records an angular impulse (torque × time step) about the center of mass, in the body (plot) frame, in our waves
+     * force group. Physics substep only, like {@link #applySailingImpulse} ({@code ServerSubLevel#getOrCreateQueuedForceGroup}
+     * l.395, {@code api/physics/force/QueuedForceGroup.java#getForceTotal} l.21,
+     * {@code api/physics/force/ForceTotal.java#applyLinearAndAngularImpulse} l.63).
+     */
+    public void applyWaveImpulse(Vector3dc localAngularImpulse) {
+        dev.ryanhcode.sable.api.physics.force.ForceGroup group = ShipForces.waves();
+        if (group != null) {
+            sub.getOrCreateQueuedForceGroup(group).getForceTotal().applyLinearAndAngularImpulse(new Vector3d(), localAngularImpulse);
+        }
+    }
+
     /**
      * The level's gravity vector in the world frame [m/s²], {@code (0, -11, 0)} by default
      * ({@code physics/config/dimension_physics/DimensionPhysicsData.java#getGravity(Level)}, l.49-60; the same call

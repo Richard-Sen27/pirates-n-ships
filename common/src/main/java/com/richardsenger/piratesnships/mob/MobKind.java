@@ -9,7 +9,7 @@ import java.util.Optional;
 /**
  * The humanoid mobs of docs/design.md §9, with their faction and default duelist skill. Pure: the entity types
  * live in {@code MobContent}, the per-type config in {@code MobConfig}. The pirate captain (BOS1, §15) is a named pirate
- * of the island's captain's hut ({@code mob.captain}); it wears the pirate's model and texture ({@link #artId()}).
+ * of the island's captain's hut ({@code mob.captain}); since ART6 he has his own look on the crew rig ({@link #artId()}).
  */
 public enum MobKind {
     PIRATE(MobFaction.PIRATE, DuelistSkill.PIRATE),
@@ -33,10 +33,11 @@ public enum MobKind {
 
     /**
      * The name of the geometry and texture the kind is drawn with ({@code geo/<artId>.geo.json},
-     * {@code textures/entity/<artId>.png}): its own id, except the pirate captain, who wears the pirate's.
+     * {@code textures/entity/<artId>.png}): its own id for every kind. BOS1 drew the pirate captain with the pirate's
+     * art; ART6 gave him his own ({@code art/models/entity/pirate_captain.bbmodel}).
      */
     public String artId() {
-        return this == PIRATE_CAPTAIN ? PIRATE.id() : id();
+        return id();
     }
 
     public MobFaction faction() {

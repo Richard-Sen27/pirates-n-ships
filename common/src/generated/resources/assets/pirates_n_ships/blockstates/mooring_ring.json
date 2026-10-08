@@ -36,24 +36,20 @@
     },
     "face=wall,facing=east": {
       "model": "pirates_n_ships:block/mooring_ring",
-      "uvlock": true,
       "x": 90,
       "y": 90
     },
     "face=wall,facing=north": {
       "model": "pirates_n_ships:block/mooring_ring",
-      "uvlock": true,
       "x": 90
     },
     "face=wall,facing=south": {
       "model": "pirates_n_ships:block/mooring_ring",
-      "uvlock": true,
       "x": 90,
       "y": 180
     },
     "face=wall,facing=west": {
       "model": "pirates_n_ships:block/mooring_ring",
-      "uvlock": true,
       "x": 90,
       "y": 270
     }

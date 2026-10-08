@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.rpg.quest;
 
+import com.richardsenger.piratesnships.mob.captain.CaptainEntry;
+import com.richardsenger.piratesnships.mob.captain.CaptainRegistry;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.trade.TradeConfig;
 import com.richardsenger.piratesnships.trade.TradeData;
@@ -54,6 +56,7 @@ public final class Quests {
     public static final String NO_SESSION = "no_session";
     public static final String TREASURE_GONE = "treasure_gone";
     public static final String NO_PORT = "no_port";
+    public static final String CAPTAIN_GONE = "captain_gone";
     public static final String UNKNOWN = "unknown";
 
     /** The answer to an accept or abandon: done or not, a result id ({@link QuestText#result}) and the quest. */
@@ -86,11 +89,20 @@ public final class Quests {
 
     // --- Offers -------------------------------------------------------------------------------------------------
 
-    /** The port's open offers, made or replaced first if this is the port's first look today; none while disabled. */
+    /**
+     * The port's open offers, made or replaced first if this is the port's first look today; none while disabled.
+     * A captain hunt whose captain is no longer alive is withdrawn at once.
+     */
     public static List<Quest> offers(MinecraftServer server, ResourceLocation port) {
         if (!enabled()) return List.of();
         refresh(server, port);
-        return QuestData.get(server).offers(port);
+        QuestData data = QuestData.get(server);
+        for (Quest q : data.offers(port)) {
+            if (q.type() == QuestType.HUNT_CAPTAIN && q.target() instanceof QuestTarget.Victim v && !captainAlive(server, v.id())) {
+                data.removeOffer(port, q.id());
+            }
+        }
+        return data.offers(port);
     }
 
     /** Drops expired offers and fills up to {@code offers_per_port}, once per port and day. */
@@ -102,6 +114,8 @@ public final class Quests {
         for (Quest q : data.offers(port)) if (!QuestRules.expired(q, day)) kept.add(q);
         QuestParams params = QuestConfig.params();
         Optional<QuestGenerator.Context> ctx = context(server, port, day);
+        // one captain hunt per port: a kept one leaves the captains out of today's new offers
+        if (kept.stream().anyMatch(q -> q.type() == QuestType.HUNT_CAPTAIN)) ctx = ctx.map(QuestGenerator.Context::withoutCaptains);
         int missing = params.offersPerPort() - kept.size();
         if (ctx.isPresent() && missing > 0) kept.addAll(QuestGenerator.offers(ctx.get(), missing, params));
         data.setOffers(port, kept);
@@ -115,11 +129,8 @@ public final class Quests {
     public static Optional<Quest> offerOfType(MinecraftServer server, ResourceLocation port, QuestType type) {
         long day = day(server);
         QuestParams params = QuestConfig.params();
-        QuestParams all = new QuestParams(params.offersPerPort(), params.offerDays(), params.deadlineDays(), params.maxActive(),
-                params.rewardScale(), params.huntMin(), params.huntMax(), params.monsterMin(), params.monsterMax(), params.turnInMax(),
-                params.krakenChance(), params.perPirate(), params.perNavy(), params.perPrisoner(), params.perShark(), params.kraken(),
-                params.treasure(), params.deliverMultiplier(), params.treasureEnabled(), params.deedsTracked(),
-                java.util.Map.of(PortKind.SEAFARER_VILLAGE, List.of(type), PortKind.NAVY_OUTPOST, List.of(type), PortKind.PIRATE_ISLAND, List.of(type)));
+        QuestParams all = params.withTypes(java.util.Map.of(PortKind.SEAFARER_VILLAGE, List.of(type), PortKind.NAVY_OUTPOST, List.of(type),
+                PortKind.PIRATE_ISLAND, List.of(type)));
         Optional<Quest> q = context(server, port, day).flatMap(ctx -> QuestGenerator.offer(type, ctx, server.overworld().getGameTime(), all));
         q.ifPresent(QuestData.get(server)::addOffer);
         return q;
@@ -141,7 +152,29 @@ public final class Quests {
         }
         long seed = server.overworld().getSeed();
         return Optional.of(new QuestGenerator.Context(port, kind, climate, day, seed, deliveries(server, port, day, seed),
-                treasures(server, known)));
+                treasures(server, known), captains(server, known)));
+    }
+
+    /**
+     * The living pirate captains in the port's dimension (QST1b), with their posts' distance and bearing from the port's
+     * centre; the generator keeps the nearest within {@code captain_hunt_radius}. None for a port that isn't registered.
+     */
+    private static List<QuestGenerator.CaptainOption> captains(MinecraftServer server, Optional<Port> port) {
+        if (port.isEmpty()) return List.of();
+        Port p = port.get();
+        List<QuestGenerator.CaptainOption> out = new ArrayList<>();
+        for (CaptainEntry e : CaptainRegistry.get(server).all().values()) {
+            if (!e.alive() || !e.dimension().equals(p.dimension())) continue;
+            double dx = e.post().getX() - p.centre().getX();
+            double dz = e.post().getZ() - p.centre().getZ();
+            out.add(new QuestGenerator.CaptainOption(e.id(), e.name(), Math.sqrt(dx * dx + dz * dz), QuestGenerator.bearing(dx, dz)));
+        }
+        return out;
+    }
+
+    /** Whether the pirate captain {@code id} is still an island's living captain ({@code CaptainRegistry}). */
+    public static boolean captainAlive(MinecraftServer server, UUID id) {
+        return CaptainRegistry.get(server).all().values().stream().anyMatch(e -> e.alive() && e.id().equals(id));
     }
 
     /** Two cargo runs the trade module's contract generator would make from this port today (any destination). */
@@ -194,6 +227,10 @@ public final class Quests {
         Optional<String> refusal = QuestRules.canAccept(log(player), offer.get(), day, params.maxActive());
         if (refusal.isPresent()) return Result.fail(refusal.get());
         Quest quest = QuestRules.accept(offer.get(), day, params.deadlineDays());
+        if (quest.type() == QuestType.HUNT_CAPTAIN && quest.target() instanceof QuestTarget.Victim v && !captainAlive(server, v.id())) {
+            data.removeOffer(port, id);
+            return Result.fail(CAPTAIN_GONE);
+        }
         ItemStack map = ItemStack.EMPTY;
         if (quest.target() instanceof QuestTarget.Treasure t) {
             Optional<Port> island = PortRegistry.get(server).index().byId(t.port());

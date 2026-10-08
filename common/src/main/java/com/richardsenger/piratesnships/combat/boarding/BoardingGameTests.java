@@ -87,19 +87,23 @@ public final class BoardingGameTests {
     }
 
     private static int plankItems(GameTestHelper h, Fixture a) {
+        return plankItemEntities(h, a).stream().mapToInt(e -> e.getItem().getCount()).sum();
+    }
+
+    private static java.util.Set<ItemEntity> plankItemEntities(GameTestHelper h, Fixture a) {
         ServerLevel level = h.getLevel();
         // the test's own structure only: the neighbouring tests of the batch lie right next to it
         AABB area = h.getBounds().expandTowards(0, 8, 0);
         // also where an item spawned in A's plot would be if Sable had not moved it out
         AABB plot = new AABB(eastGunwale(a)).inflate(6);
-        int n = 0;
+        // Sable's entity lookups also find world entities for a box in plot space, so one item can turn up in both
+        // boxes: count each entity once
+        java.util.Set<ItemEntity> seen = new java.util.HashSet<>();
         for (AABB box : List.of(area, plot)) {
-            for (ItemEntity e : level.getEntitiesOfClass(ItemEntity.class, box, e -> e.isAlive()
-                    && e.getItem().is(BoardingContent.PLANK_ITEM.get()))) {
-                n += e.getItem().getCount();
-            }
+            seen.addAll(level.getEntitiesOfClass(ItemEntity.class, box, e -> e.isAlive()
+                    && e.getItem().is(BoardingContent.PLANK_ITEM.get())));
         }
-        return n;
+        return seen;
     }
 
     private static void assertRunGone(GameTestHelper h, Fixture a, int length) {
@@ -210,7 +214,8 @@ public final class BoardingGameTests {
         h.runAfterDelay(SETTLE + 20, () -> {
             assertRunGone(h, s.a(), 4);
             int items = plankItems(h, s.a());
-            h.assertTrue(items == 1, "expected one dropped plank, found " + items);
+            h.assertTrue(items == 1, "expected one dropped plank, found " + items + ": "
+                    + plankItemEntities(h, s.a()).stream().map(e -> e.getId() + "@" + e.position()).toList());
             h.assertTrue(BoardingPlanks.between(s.a().ship(), b).isEmpty(), "between(A,B) still lists the plank");
             h.succeed();
         });
@@ -227,7 +232,8 @@ public final class BoardingGameTests {
         });
         h.runAfterDelay(SETTLE + 5, () -> {
             int items = plankItems(h, s.a());
-            h.assertTrue(items == 1, "expected one dropped plank, found " + items);
+            h.assertTrue(items == 1, "expected one dropped plank, found " + items + ": "
+                    + plankItemEntities(h, s.a()).stream().map(e -> e.getId() + "@" + e.position()).toList());
             h.succeed();
         });
     }

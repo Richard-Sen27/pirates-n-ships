@@ -43,6 +43,7 @@ public final class ModModules {
             new com.richardsenger.piratesnships.chart.ChartModule(),
             new com.richardsenger.piratesnships.world.WorldModule(),
             new com.richardsenger.piratesnships.worldsim.faction.FactionModule(),
-            new com.richardsenger.piratesnships.rpg.RpgModule()
+            new com.richardsenger.piratesnships.rpg.RpgModule(),
+            new com.richardsenger.piratesnships.worldsim.voyage.VoyageModule()
     );
 }

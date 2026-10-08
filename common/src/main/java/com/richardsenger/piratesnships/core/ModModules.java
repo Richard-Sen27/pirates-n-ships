@@ -36,6 +36,7 @@ public final class ModModules {
             new com.richardsenger.piratesnships.audio.AudioModule(),
             new com.richardsenger.piratesnships.mob.MobModule(),
             new com.richardsenger.piratesnships.mob.captain.CaptainModule(),
+            new com.richardsenger.piratesnships.mob.squad.SquadModule(),
             new com.richardsenger.piratesnships.survival.SurvivalModule(),
             new com.richardsenger.piratesnships.seachest.SeaChestModule(),
             new com.richardsenger.piratesnships.hazards.HazardsModule(),

@@ -82,3 +82,58 @@ cheats on. Use survival for steps 5 to 9 (creative players are never attacked an
   wall runs stand rigidly at the gate's height, so on an uneven coast they may cut into a hill or stand on air over a
   bay. Please report how often that looks bad.
 - **Guards on the towers** stand on the roof platform; check that they do not fall through the ladder hatch.
+
+## MOB2: officers leading squads
+
+Setup: as above (a creative world, find a navy outpost with `/locate structure pirates_n_ships:navy_outpost`), stand
+in the fort's court. Switch to survival for the combat steps. For quicker checks set
+`mobs.squad.post_pause_seconds = 5` in the server config.
+
+1. **Info.** `/pirates mob squad info` near the officer.
+   - **Expected:** `Squad of Navy Officer: at_post, waypoint 1 of N, 0 soldiers, next patrol in ... s` with N about 9
+     for a full fort (court, land gate, sea gate, quay, gate east walkway, the east walls, gate west walkway, the west
+     walls). In an outpost generated before MOB2 the same works: the squad is built from the outpost when its officer
+     first loads.
+2. **Patrol.** `/pirates mob squad patrol`.
+   - **Expected:** the officer and three soldiers (the two land-gate guards and the nearer wall guard; never a tower
+     roof guard, who only has a ladder) leave their posts at once. They walk in file, about 1.5 blocks apart, the
+     officer first: the court, the land gate, the sea gate, out onto the quay, then up the court's stone stairs to the
+     walkway and along the east walls, back along the sea-side walkway and along the west walls. At each waypoint the
+     officer waits for the file to close up, then they stand for `post_pause_seconds`. A soldier who falls far behind
+     runs. After the last wall they walk back to their posts, stand still again and face their post's way (wall
+     guards to the sea, gate guards landward).
+   - Please watch and report: the stairs up to the walkway (does anyone get stuck at the top step or in the
+     1-wide passage between the quay and the sea gate?), the guns on the walkway (do they squeeze past the cannon?),
+     a soldier stuck behind a merlon, anyone walking off the walkway's open landward edge.
+3. **Return.** During a patrol `/pirates mob squad return`.
+   - **Expected:** everyone walks straight back to his own post and stands there (stationary: no strolling about
+     afterwards). `/pirates mob squad info` shows `at_post` and the next patrol in about `patrol_interval_minutes`.
+4. **Fighting as one.** Get wanted or hit a soldier of the patrolling squad once (survival).
+   - **Expected:** the whole squad turns on you within a second: the officer draws his saber and closes in, the
+     soldiers aim their muskets. Hit a soldier as a creative player: nobody reacts. Kill a summoned pirate near the
+     patrol's route (`/summon pirates_n_ships:pirate`) or let one walk in: whoever sees him first engages, and the
+     officer's target becomes the soldiers' target. After the fight (you leave or die) the squad gathers on the officer
+     where it stands and walks on to the waypoint.
+5. **Refill.** Kill one soldier of the squad (`/kill` on him) during a patrol.
+   - **Expected:** at the next waypoint another garrison soldier (the other wall's guard) leaves his post and runs to
+     join the file at the end. Kill the officer instead: the soldiers walk back to their posts on their own after
+     about five seconds.
+6. **Night.** Let night fall during a patrol started by itself (`/time set 12000` and wait, or wait for the timer).
+   - **Expected:** with `mobs.squad.night_at_posts = true` the squad turns back at nightfall and no patrol starts until
+     morning. A patrol ordered with the command keeps going until its round is done.
+7. **Timer.** Leave the squad at its posts for `patrol_interval_minutes` (default 10; try 1).
+   - **Expected:** the officer sets off on his own with three soldiers; the next patrol starts that many minutes after
+     the squad got back.
+8. **Config.** `mobs.squad.enabled = false`: `/pirates mob squad patrol` is refused and the garrison keeps its posts; a
+   squad on patrol when you switch it off walks back to its posts. `mobs.squad.size = 5`: five soldiers follow (the
+   tower roof guards never). `size = 0`: the officer patrols alone.
+9. **Save and reload** during a patrol (leave and rejoin the world).
+   - **Expected:** the squad goes on (or walks home if it was fighting); nobody stays stuck away from his post.
+
+### Open problems to watch (MOB2)
+- **Pathing on the walls.** The walkway is reached only by the court's stairs on the gate's east side; walls far out
+  on long runs (depth 5) make a long walk with pathfinding limited to the mobs' follow range (32). A waypoint the
+  officer gets no closer to for 10 seconds is skipped; please report where that happens.
+- **Ladders.** Vanilla mobs don't climb ladders on purpose: tower roof guards are never drafted, and a soldier who
+  fell off a wall and can only get back by ladder keeps trying to reach his post.
+- **Terrain.** A waypoint that terrain filled is skipped; a post filled by terrain has no guard (WG3).

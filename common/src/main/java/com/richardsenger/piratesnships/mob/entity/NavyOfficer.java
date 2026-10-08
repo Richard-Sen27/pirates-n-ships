@@ -7,6 +7,8 @@ import com.richardsenger.piratesnships.mob.MobKind;
 import com.richardsenger.piratesnships.mob.captain.PirateCaptain;
 import com.richardsenger.piratesnships.mob.ai.DuelistAttackGoal;
 import com.richardsenger.piratesnships.mob.ai.VanillaSwordGoal;
+import com.richardsenger.piratesnships.mob.squad.SquadLeaderGoal;
+import com.richardsenger.piratesnships.mob.squad.SquadService;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
@@ -22,8 +24,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Navy officer (docs/design.md §9): a skilled saber duelist ({@link DuelistAttackGoal}, skill
  * {@code mobs.officer_skill}), hostile like the soldiers. Takes bounty proofs and shackled prisoners from players he
- * is not hostile to ({@link OfficerTurnIns}, docs/design.md §13.2). Leading soldiers and quests come later. Hitting
- * or killing it is a crime ({@code #pirates_n_ships:navy}).
+ * is not hostile to ({@link OfficerTurnIns}, docs/design.md §13.2). A garrison officer leads a squad of his outpost's
+ * soldiers on patrol (MOB2, {@code mob.squad}: {@link SquadLeaderGoal}, the squad's brain ticked from
+ * {@link #customServerAiStep}). Quests come later. Hitting or killing it is a crime ({@code #pirates_n_ships:navy}).
  */
 public class NavyOfficer extends SeafarerMob {
 
@@ -49,6 +52,18 @@ public class NavyOfficer extends SeafarerMob {
     protected void addCombatGoals() {
         goalSelector.addGoal(2, new DuelistAttackGoal(this, 1.0));
         goalSelector.addGoal(3, new VanillaSwordGoal(this, 1.0));
+    }
+
+    @Override
+    protected void registerGoals() {
+        super.registerGoals();
+        goalSelector.addGoal(4, new SquadLeaderGoal(this));
+    }
+
+    @Override
+    protected void customServerAiStep() {
+        super.customServerAiStep();
+        SquadService.tickLeader(this);
     }
 
     /** Turn-ins: a bounty proof in the hand used, or an empty main hand with a shackled prisoner close by. */

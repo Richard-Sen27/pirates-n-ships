@@ -83,6 +83,9 @@ public final class MobConfig {
      */
     public static final ConfigSection CAPTAIN = S.section("captain",
             "The named pirate captain of each pirate island (captain's hut), his bounty and his duel");
+    /** The {@code mobs.squad} section (MOB2), filled by {@code mob.squad.SquadConfig}. */
+    public static final ConfigSection SQUAD = S.section("squad",
+            "Navy officers leading squads of their outpost's garrison on patrol");
     private static final Map<MobKind, ConfigValue<Boolean>> ENABLED = new EnumMap<>(MobKind.class);
     private static final Map<MobKind, ConfigValue<Boolean>> PEACEFUL = new EnumMap<>(MobKind.class);
 

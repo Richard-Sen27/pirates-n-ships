@@ -25,7 +25,8 @@ import net.minecraft.world.level.block.Block;
 import java.util.Map;
 
 /**
- * Datagen for flags. The flagpole's block state shows only the pole (hand-made {@code block/flagpole}) in every state;
+ * Datagen for flags. The flagpole's block state shows only the pole (hand-made {@code block/flagpole} and, VIS1a,
+ * {@code block/flagpole_<part>} by {@link FlagpolePart});
  * the cloth is drawn by the block entity renderer ({@code client/FlagClothRenderer}, geometry in
  * {@link FlagClothModel}) at the flag's continuous downwind yaw.
  */

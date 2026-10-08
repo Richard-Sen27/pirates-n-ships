@@ -17,8 +17,10 @@ import java.util.Collection;
 
 /**
  * The flagpole's look, checked headlessly. A server has no resource manager for assets, so this reads the generated
- * block state, the pole model and the cloth textures from the mod's resources on the classpath: since FL1 every state
- * shows only the hand-made pole (the cloth is drawn by {@code client/FlagClothRenderer}), and every flag kind's cloth
+ * block state, the pole models and the cloth textures from the mod's resources on the classpath: since FL1 every state
+ * shows only a hand-made pole (the cloth is drawn by {@code client/FlagClothRenderer}), since VIS1a one per
+ * {@link FlagpolePart} (the crown only at the head, the cleat only at the foot, segments that carry another pole run
+ * it the full block), and every flag kind's cloth
  * texture the renderer binds exists at 32 × 16.
  */
 public final class FlagModelGameTests {

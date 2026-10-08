@@ -12,8 +12,6 @@ import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
 import net.minecraft.data.models.model.ModelLocationUtils;
-import net.minecraft.data.models.model.ModelTemplates;
-import net.minecraft.data.models.model.TextureMapping;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
@@ -105,7 +103,7 @@ public final class SeaChestModule implements ModModule {
         gatherPaddleData(data);
     }
 
-    /** The paddle (SC2): name, hints, refusals, a placeholder model and the recipe. */
+    /** The paddle (SC2): name, hints, refusals and the recipe; its model is hand-made (ART8, {@code item/paddle}). */
     private static void gatherPaddleData(DataContributions data) {
         PaddleItem paddle = SeaChestContent.PADDLE.get();
         data.lang(lang -> lang
@@ -116,10 +114,6 @@ public final class SeaChestModule implements ModModule {
                 .add(SeaChestEntity.MountRefusal.OCCUPIED.key(), "Someone is sitting on this sea chest")
                 .add(SeaChestEntity.MountRefusal.CANNOT_RIDE.key(), "You can't sit on the sea chest now")
                 .add(SeaChestEntity.DISMOUNT_FIRST_KEY, "Get off first (sneak) to open the sea chest"));
-        // Placeholder until the art batch models the paddle in Blockbench (design.md §4.8: held items are 3D): a
-        // handheld model on vanilla's wooden shovel texture, so no texture is drawn for a model that gets replaced.
-        data.models(m -> ModelTemplates.FLAT_HANDHELD_ITEM.create(ModelLocationUtils.getModelLocation(paddle),
-                TextureMapping.layer0(Items.WOODEN_SHOVEL), m.models()));
         // Diagonal like a tool, two planks and a stick (a straight column would be the wooden sword)
         data.recipes(out -> ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, paddle)
                 .pattern(" P").pattern(" P").pattern("S ")

@@ -235,10 +235,12 @@ public final class HazardGameTests {
             Constants.LOG.info("[hazard test] mass cap 20: light {} kpg moved {}, heavy {} kpg moved {}",
                     light.ship().mass(), moveLight, heavy.ship().mass(), moveHeavy);
             h.assertTrue(heavy.ship().mass() > light.ship().mass() * 1.5, "the ballast did not make the ship heavier");
-            // measured over four runs: light 0.66-0.83 blocks in, heavy between 0.25 out and 0.29 in (its slower inward
-            // drift partly loses to the outward drift of the orbit the spin puts it on); the light bound is about half the
-            // lowest measurement, the heavy one asks for clearly less than the light ship (worst case 0.29 < 0.8 × 0.66)
-            h.assertTrue(moveLight > 0.3, "the light ship was not pulled in: " + moveLight);
+            // measured over four runs before SH1: light 0.66-0.83 blocks in, heavy between 0.25 out and 0.29 in (its slower
+            // inward drift partly loses to the outward drift of the orbit the spin puts it on). Since SH1's righting torque
+            // the light hull stays upright and drifts about half as far, like smallShipIsPulledTowardTheCentre: light
+            // 0.26-0.35 in, heavy between 0.14 out and 0.32 in (four runs). The light bound is about half the lowest
+            // measurement, the heavy one asks for clearly less than the light ship
+            h.assertTrue(moveLight > 0.13, "the light ship was not pulled in: " + moveLight);
             h.assertTrue(moveHeavy < moveLight * 0.8, "the heavy ship moved as much as the light one: " + moveHeavy + " vs " + moveLight);
             h.succeed();
         });

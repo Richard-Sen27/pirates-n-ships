@@ -8,7 +8,9 @@
     "MixinGameTestServer",
     "MixinLevelChunk"
   ],
-  "client": [],
+  "client": [
+    "MixinSectionCompiler"
+  ],
   "server": [],
   "injectors": {
     "defaultRequire": 1

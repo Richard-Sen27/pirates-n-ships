@@ -389,16 +389,17 @@ public final class DryHullGameTests {
                 "expected one 17-cell compartment, got " + f.runtime().simulation().analysis().compartments());
         h.succeedWhen(() -> {
             h.assertTrue(f.runtime().regionCount() == 1, "no dry region yet");
-            // 17 hold cells + the stair + 7 bottom slabs (the one under the stair touches no dry cell)
+            // 17 hold cells + the stair + 7 bottom slabs (the one under the stair touches no dry cell) + the deck hatch
+            // (its sky is above the sea, HV1)
             int count = f.runtime().regionCells().get(0).count();
-            h.assertTrue(count == HOLD - 1 + 1 + 7, "expected 25 occluded cells, got " + count);
+            h.assertTrue(count == HOLD - 1 + 1 + 7 + 1, "expected 26 occluded cells, got " + count);
             h.assertFalse(f.runtime().inRegion(f.hold(-1, -4, 1)), "the slab under the stair is in the region");
             h.assertTrue(WaterRegions.isOccluded(level, worldAt(f, slab, 0.5, 0.75, 0.5)), "empty half of the floor slab shows water");
             h.assertTrue(WaterRegions.isOccluded(level, worldAt(f, stair, 0.5, 0.75, 0.25)), "empty part of the stair shows water");
             h.assertFalse(f.runtime().inRegion(topSlab), "the top slab over the sea is in the region");
             h.assertFalse(WaterRegions.isOccluded(level, worldAt(f, topSlab, 0.5, 0.25, 0.5)), "the sea in the top slab's lower half is hidden");
             h.assertFalse(WaterRegions.isOccluded(level, worldAt(f, topSlab, 0.5, -0.5, 0.5)), "the sea under the hull is hidden");
-            h.assertFalse(f.runtime().inRegion(hatch), "a deck hatch under the open sky is in the region");
+            h.assertTrue(f.runtime().inRegion(hatch), "a deck hatch above the sea is not in the region (HV1)");
             SableShips.remove(f.ship());
         });
     }

@@ -778,10 +778,10 @@ Cloth and flags (ART3):
   sides), **one reef band per block** (rows 12..14, doubled darker canvas, stitched along both edges, a tan reef point
   knotted on the band in the middle of every panel and hanging 4 px), stains and faint rain streaks. The furled bundle
   samples rows 0..7 only, so it shows seamed canvas without the band. The sails have no colour variants yet (design.md
-  §4.8 "dyeable" is not implemented), so there is one file. A frayed foot is not possible with this tiling: the
-  renderers give every block of cloth the same tile, so an edge drawn into the tile would repeat in mid-sail; it needs
-  a foot tile picked by the renderers (open point). Render `renders/sail_cloth.png` (full 3 x 3, half with the bundle
-  under the yard, furled; flat planes in a scratch Blockbench project, not saved).
+  §4.8 "dyeable" is not implemented), so there is one file. An edge drawn into this tile would repeat in mid-sail, so
+  the frayed foot is a second tile, `sail_cloth_foot.png`, that the renderers pick for the bottom block of the cloth
+  (ART5, see "Mooring ring and sail foot (ART5)" below). Render `renders/sail_cloth.png` (full 3 x 3, half with the
+  bundle under the yard, furled; flat planes in a scratch Blockbench project, not saved).
 - **Flag cloth** `textures/block/flag_<kind>.png` (32x16, layout unchanged, `tools/gen_flag_textures.py`): every design
   gets `finish()` on top: plain weave over the field (+-5 per texel plus row/column variation; greyscale on the banner
   cloth, which is tinted), a canvas heading tape on hoist column 2 with grommets in rows 1 and 14, a stitch line in
@@ -855,15 +855,63 @@ Treasure map and receipt (ART4):
 
   | Item | Model now | Declared in |
   |---|---|---|
-  | `mooring_ring` | `minecraft:block/button_inventory` in iron (block: `minecraft:block/button`) | `combat/grapple/GrappleModule.ringModels` |
   | `pirate_spawn_egg`, `sailor_spawn_egg`, `navy_soldier_spawn_egg`, `navy_officer_spawn_egg`, `shark_spawn_egg` | `minecraft:item/template_spawn_egg` | `mob/MobModule.gatherData` (`SPAWN_EGG`) |
   | `kraken_spawn_egg` | `minecraft:item/template_spawn_egg` | `mob/kraken/KrakenContent` (`SPAWN_EGG_MODEL`) |
 
-  Spawn eggs keep vanilla's look by design (design.md §4.8), so the mooring ring (block and item) is the only real
-  backlog entry. Every other item has a hand-made model under `models/item/` or delegates to a hand-made block model.
+  Spawn eggs keep vanilla's look by design (design.md §4.8), so there is no real backlog left: the mooring ring, the
+  last entry, got its Blockbench model in ART5 (below). Every other item has a hand-made model under `models/item/` or
+  delegates to a hand-made block model.
   Unused sprites that could go in a cleanup: `textures/item/carpenters_hammer.png`, `saw.png`, `nails.png`,
   `shipwright_toolkit.png` (ART1c); `chart.png`, `map_tile.png`, `kraken_beak.png`, `kraken_ink.png` stay while tests
   read them.
+
+Mooring ring and sail foot (ART5):
+- **Mooring ring** (`mooring_ring.bbmodel`, `block/mooring_ring.json`, 21 elements, textures vanilla `anvil` and
+  `palette_2`; particle `anvil`): one model made for the floor, facing north, turned by the block state like a button
+  (floor; wall `x 90`; ceiling `x 180`; then `y` by the facing; no uvlock any more, it would smear the palette faces).
+  Parts: an 8 x 8 x 0.7 anvil plate (exactly the floor shape's footprint, x/z 4..12) with a 7 x 7 x 0.3 top step for a
+  bevel; four bolt heads in the corners (two crossed boxes each, the second 0.05 px lower; `cast_iron_light` tops,
+  `cast_iron` sides); the ring, a flat octagon of eight 1 x 1 px bars round the block centre (outer apothem 3, inner 2;
+  the four diagonal bars are the north and south bars turned +-45 about y, 0.05 px shorter at both ends and 0.05 px
+  thinner at top and bottom; `lead_light` tops, `lead` sides, no down faces on the plate) lying on the plate at y 1..2;
+  a `cast_iron` staple across the ring's south bar (a leg inside and one outside the ring, a strap 0.05 px above the
+  bar). On a wall the staple comes out on top and the ring hangs below it, its centre on the block centre, where
+  `MooringRingBlock.ringCenter` ties the rope. On the ceiling it lies flat against the beam (one model; a hanging
+  ceiling ring would leave the block's shape). Everything stays within the shape (x/z 4..12, y 0..2.55);
+  `HandMadeModelsTest.mooringRingFitsItsShapeAndIsHeldUpright` checks it.
+- **Ring item:** no `_item` project. The block model carries `gui_light: front` and display entries for every held
+  slot, and datagen's automatic block-item model points at it. The entries are the doubloon's (ART1) applied to the
+  ring "stood up like a sprite": a base turn `[90, 180, 0]` (plate face to the viewer, staple up, ring hanging) composed
+  with the doubloon's rotation into one XYZ Euler, scale x 1.25 (the plate is smaller than a coin), and a translation
+  that puts the plate's middle (y 1.25, 6.75 px below the model centre) back where the coin's middle is. Values: gui
+  `[-115, 0, -155]` / `[3.92, 3.55, 7.62]` / 1.375, third person `[-90, 0, -155]` / `[1.6, 2.5, 4.44]` / 0.5625,
+  first person `[-113.66, -8.31, 108.26]` / `[-3.23, 4.2, 2.72]` / 0.6875, fixed `[-90, 0, 0]` / `[0, 0, -8.44]` /
+  1.25, ground flat `[0, 0, 0]` / `[0, 3, 0]` / 0.5; left hands repeat the right. Head stays the block default.
+- Built like ART4: a Python part list (scratch, not committed) wrote the JSON, `ART5.load()` in `risky_eval` opened it
+  with `Codecs.java_block.parse(json, path)` and reloaded `anvil` from `art/vanilla/` (namespace `minecraft`, folder
+  `block`); `Codecs.java_block.compile()` gives the same 21 elements. Lint: no fights, no warnings for the ring.
+- Render `renders/mooring_ring.png`: on the floor, on a wall (hanging), under a ceiling (each turned by the block
+  state's rotation next to a stand-in support block) and the GUI slot, drawn with a separate `THREE.WebGLRenderer`
+  over a clone of `Project.model_3d`. No hand view (the Blockbench window was hidden, display mode does not repaint).
+- **Sail foot** `textures/block/sail_cloth_foot.png` (32x32, `tools/gen_sailing_textures.py`, deterministic;
+  `sail_cloth.png` and `rope.png` are pixel-identical to before; a newer Pillow encodes them with other bytes, so only
+  the new file was committed from the run): the plain tile's pixels in rows 0..22, then a foot tabling (rows 24..27,
+  doubled darker canvas, stitched in rows 23 and 28) and a frayed edge (rows 28..31 turning grimy towards the edge;
+  each column ends 0 to 4 texels short of the edge, at most 1 at the seams; a few loose dark threads). The renderers
+  draw `entityCutoutNoCull`, so the notches are transparent.
+- **Which block is the foot** (`sailing/client/SailFoot`, pure, `SailFootTest`): the bottom block of the drawn cloth,
+  only when the drawn cloth hangs at least 2 blocks (`MIN_HEIGHT`); shorter cloth and the furled bundle keep the plain
+  tile. Square sails (`YardClothRenderer`): the cloth's lowest edge is the lower yard (full) or the cloth's lower edge
+  (half trim; a square sail is reefed from the head, so its lower edge is still the foot); the last two half-block
+  grid rows take the foot tile, and the tile phase is now counted up from the bottom (`yardV0`), so a whole tile always
+  ends at the foot (with an even row count, every full or 2/4/6-block sail, the phase is unchanged). Triangular sails
+  (`StayClothRenderer`): the foot is the tack-clew edge. The texture v is now the height above that edge
+  (`bottom * (1 - u - v)` in the grid's barycentric coordinates, `stayV`), so the tiles and reef bands run parallel to
+  the foot; for a horizontal foot (tack level with the clew) this equals the old `v = -y`. A grid triangle takes the
+  foot tile when its highest corner is at most 1 block above the foot; the grid's cells are at most half a block, so
+  the row on the edge always does. Both tiles share every pixel above row 23, so the jagged switch line never shows.
+  Each renderer takes the foot buffer right after the plain rows (asking a buffer source for another render type ends
+  the previous shared batch), and the bundle asks for the plain buffer again.
 
 ## Entities
 

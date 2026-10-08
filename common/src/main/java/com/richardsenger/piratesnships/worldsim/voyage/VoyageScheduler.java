@@ -17,7 +17,7 @@ import java.util.Optional;
 
 /**
  * Moves the abstract voyages (WS2): every {@code world_simulation.voyages.tick_interval_ticks} on the server tick end,
- * a check computes at most one queued lane, moves every SAILING voyage by speed × wind factor (the wind sampled at its
+ * a check works on one queued lane for at most {@code lanes.millis_per_check} ms, moves every SAILING voyage by speed × wind factor (the wind sampled at its
  * position in its origin port's dimension), lets arrivals trade or continue, and rolls one departure per registered
  * {@link VoyagePlanner} under the voyage cap. Off with {@code world_simulation.enabled} (records freeze).
  */

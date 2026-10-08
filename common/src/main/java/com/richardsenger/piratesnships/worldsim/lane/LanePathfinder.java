@@ -48,29 +48,97 @@ public final class LanePathfinder {
     private LanePathfinder() {
     }
 
-    /** Finds a lane from block {@code (fromX, fromZ)} to block {@code (toX, toZ)}. */
+    /** Finds a lane from block {@code (fromX, fromZ)} to block {@code (toX, toZ)} in one go. */
     public static Result find(SeaGrid grid, int fromX, int fromZ, int toX, int toZ, Params p) {
-        Optional<long[]> start = nearestSea(grid, grid.cellOf(fromX), grid.cellOf(fromZ), p.endpointRadius());
-        if (start.isEmpty()) return new Result(Status.NO_START, List.of(), 0, 0);
-        Optional<long[]> end = nearestSea(grid, grid.cellOf(toX), grid.cellOf(toZ), p.endpointRadius());
-        if (end.isEmpty()) return new Result(Status.NO_END, List.of(), 0, 0);
-        int sx = (int) start.get()[0], sz = (int) start.get()[1];
-        int ex = (int) end.get()[0], ez = (int) end.get()[1];
+        return new Search(grid, fromX, fromZ, toX, toZ, p).run();
+    }
 
-        Long2DoubleOpenHashMap g = new Long2DoubleOpenHashMap();
-        g.defaultReturnValue(Double.POSITIVE_INFINITY);
-        Long2LongOpenHashMap parent = new Long2LongOpenHashMap();
-        LongOpenHashSet closed = new LongOpenHashSet();
-        PriorityQueue<Node> open = new PriorityQueue<>();
-        long startKey = key(sx, sz);
-        long endKey = key(ex, ez);
-        g.put(startKey, 0.0);
-        open.add(new Node(sx, sz, octile(sx, sz, ex, ez), 0.0));
-        int expanded = 0;
-        while (!open.isEmpty()) {
+    /**
+     * A resumable search: {@link #step} expands cells until the search ends or a deadline passes, so a long search can
+     * be spread over several server ticks. Not thread-safe.
+     */
+    public static final class Search {
+        private final SeaGrid grid;
+        private final Params p;
+        private final int fromX, fromZ, toX, toZ;
+        private final Long2DoubleOpenHashMap g = new Long2DoubleOpenHashMap();
+        private final Long2LongOpenHashMap parent = new Long2LongOpenHashMap();
+        private final LongOpenHashSet closed = new LongOpenHashSet();
+        private final PriorityQueue<Node> open = new PriorityQueue<>();
+        private long startKey, endKey;
+        private int ex, ez;
+        private int expanded;
+        private Result result;
+
+        public Search(SeaGrid grid, int fromX, int fromZ, int toX, int toZ, Params p) {
+            this.grid = grid;
+            this.p = p;
+            this.fromX = fromX;
+            this.fromZ = fromZ;
+            this.toX = toX;
+            this.toZ = toZ;
+            Optional<long[]> start = nearestSea(grid, grid.cellOf(fromX), grid.cellOf(fromZ), p.endpointRadius());
+            if (start.isEmpty()) {
+                result = new Result(Status.NO_START, List.of(), 0, 0);
+                return;
+            }
+            Optional<long[]> end = nearestSea(grid, grid.cellOf(toX), grid.cellOf(toZ), p.endpointRadius());
+            if (end.isEmpty()) {
+                result = new Result(Status.NO_END, List.of(), 0, 0);
+                return;
+            }
+            int sx = (int) start.get()[0], sz = (int) start.get()[1];
+            ex = (int) end.get()[0];
+            ez = (int) end.get()[1];
+            g.defaultReturnValue(Double.POSITIVE_INFINITY);
+            startKey = key(sx, sz);
+            endKey = key(ex, ez);
+            g.put(startKey, 0.0);
+            open.add(new Node(sx, sz, octile(sx, sz, ex, ez), 0.0));
+        }
+
+        /** The result once the search has ended, else null. */
+        public Result result() {
+            return result;
+        }
+
+        public boolean done() {
+            return result != null;
+        }
+
+        /** Cells expanded so far. */
+        public int expanded() {
+            return expanded;
+        }
+
+        /** Runs to the end. */
+        public Result run() {
+            while (result == null) expandOne();
+            return result;
+        }
+
+        /**
+         * Expands cells until the search ends or {@code System.nanoTime()} passes {@code deadlineNanos} (checked every
+         * 8 cells). Returns the result if it ended.
+         */
+        public Optional<Result> step(long deadlineNanos) {
+            int n = 0;
+            while (result == null) {
+                expandOne();
+                if (++n % 8 == 0 && System.nanoTime() - deadlineNanos > 0) break;
+            }
+            return Optional.ofNullable(result);
+        }
+
+        private void expandOne() {
+            if (result != null) return;
             Node n = open.poll();
+            if (n == null) {
+                result = new Result(Status.NO_PATH, List.of(), expanded, 0);
+                return;
+            }
             long k = key(n.x, n.z);
-            if (!closed.add(k)) continue;
+            if (!closed.add(k)) return;
             if (k == endKey) {
                 List<long[]> cells = new ArrayList<>();
                 long c = k;
@@ -80,9 +148,14 @@ public final class LanePathfinder {
                     cells.add(new long[]{unpackX(c), unpackZ(c)});
                 }
                 Collections.reverse(cells);
-                return new Result(Status.FOUND, waypoints(grid, cells, fromX, fromZ, toX, toZ), expanded, n.g);
+                result = new Result(Status.FOUND, waypoints(grid, cells, fromX, fromZ, toX, toZ), expanded, n.g);
+                return;
             }
-            if (++expanded > p.maxCells()) return new Result(Status.BUDGET, List.of(), expanded - 1, 0);
+            if (expanded >= p.maxCells()) {
+                result = new Result(Status.BUDGET, List.of(), expanded, 0);
+                return;
+            }
+            expanded++;
             for (int d = 0; d < 8; d++) {
                 int nx = n.x + DX[d], nz = n.z + DZ[d];
                 long nk = key(nx, nz);
@@ -98,7 +171,6 @@ public final class LanePathfinder {
                 }
             }
         }
-        return new Result(Status.NO_PATH, List.of(), expanded, 0);
     }
 
     /** Whether any of the 8 neighbours of a cell is not sea. */

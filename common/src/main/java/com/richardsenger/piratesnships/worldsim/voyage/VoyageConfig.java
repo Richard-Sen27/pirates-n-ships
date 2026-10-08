@@ -22,6 +22,8 @@ public final class VoyageConfig {
             "Cost multiplier for sea cells next to land, so lanes keep off the coasts (1 = hug the coast)");
     public static final ConfigValue<Integer> MAX_CELLS = LANES.intRange("max_cells", 20_000, 100, 1_000_000,
             "Most grid cells one lane search may expand before it gives up");
+    public static final ConfigValue<Integer> MILLIS_PER_CHECK = LANES.intRange("millis_per_check", 5, 1, 1000,
+            "Server time in milliseconds a background lane search may use per voyage check; a longer search continues in the next check");
     public static final ConfigValue<Integer> ENDPOINT_RADIUS_CELLS = LANES.intRange("endpoint_radius_cells", 8, 0, 64,
             "How far (in cells) from a port's berth the lane may start when the berth's own cell is not sea");
     public static final ConfigValue<Integer> RETRY_FAILED_TICKS = LANES.intRange("retry_failed_ticks", 24_000, 0, 10_000_000,

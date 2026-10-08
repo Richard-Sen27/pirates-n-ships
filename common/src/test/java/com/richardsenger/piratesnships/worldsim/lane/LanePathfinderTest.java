@@ -124,6 +124,20 @@ class LanePathfinderTest {
     }
 
     @Test
+    void steppedSearchEqualsOneGo() {
+        SeaGrid grid = SeaGrid.of(CELL, (cx, cz) -> !(cx == 5 && cz >= -20 && cz <= 20));
+        LanePathfinder.Result once = LanePathfinder.find(grid, 16, 16, 16 + 12 * CELL, 16, P);
+        LanePathfinder.Search search = new LanePathfinder.Search(grid, 16, 16, 16 + 12 * CELL, 16, P);
+        int calls = 0;
+        while (!search.done()) {
+            search.step(System.nanoTime() - 1); // deadline passed: 8 cells per call
+            calls++;
+        }
+        assertTrue(calls > 1, "spread over several calls: " + calls);
+        assertEquals(once, search.result());
+    }
+
+    @Test
     void positionAlongWalksTheLegs() {
         List<Lane.Point> pts = List.of(new Lane.Point(0, 0), new Lane.Point(100, 0), new Lane.Point(100, 50));
         Lane.Position a = Lane.positionAlong(pts, 40);

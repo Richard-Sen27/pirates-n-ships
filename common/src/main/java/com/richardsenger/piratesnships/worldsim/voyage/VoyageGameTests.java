@@ -291,6 +291,27 @@ public final class VoyageGameTests {
         });
     }
 
+    /** A pair asked for with {@code between} is queued and searched by {@code computeNext} (here: fails on land). */
+    @ModGameTest(batch = BATCH)
+    public static void queuedLaneIsSearchedInTheBackground(GameTestHelper h) {
+        MinecraftServer server = h.getLevel().getServer();
+        Port a = port(h, "bg_a", 0, PortKind.SEAFARER_VILLAGE);
+        Port b = port(h, "bg_b", DISTANCE, PortKind.SEAFARER_VILLAGE);
+        PortRegistry.get(server).add(a);
+        PortRegistry.get(server).add(b);
+        Harbors hb = new Harbors(server, a, b, List.of());
+        run(h, hb, () -> {
+            h.assertTrue(Lanes.between(server, a.id(), b.id()).isEmpty(), "not cached");
+            h.assertValueEqual(Lanes.status(server, a.id(), b.id()), Lanes.Status.QUEUED, "queued");
+            int calls = 0;
+            while (Lanes.status(server, a.id(), b.id()) == Lanes.Status.QUEUED && calls < 100) {
+                Lanes.computeNext(server);
+                calls++;
+            }
+            h.assertValueEqual(Lanes.status(server, a.id(), b.id()), Lanes.Status.FAILED, "searched (no sea in the flat world)");
+        });
+    }
+
     /** Contract destinations get the lane's length, and a pirate island beside the lane raises the risk. */
     @ModGameTest(batch = BATCH)
     public static void contractsUseLaneLengthAndPirateRisk(GameTestHelper h) {
@@ -336,8 +357,11 @@ public final class VoyageGameTests {
         int tries = 0;
         String found = null;
         StringBuilder log = new StringBuilder();
-        for (int i = 0; i < sea.size() && tries < 6 && found == null; i++) {
-            for (int j = i + 1; j < sea.size() && tries < 6 && found == null; j++) {
+        // One partner per start point, start points spread over the list (a closed sea fails for every partner)
+        int stride = Math.max(1, sea.size() / 23);
+        int founds = 0;
+        for (int i = 0; i < sea.size() && tries < 16 && founds < 3; i += stride) {
+            for (int j = 0; j < sea.size(); j++) {
                 int[] p = sea.get(i), q = sea.get(j);
                 double d = Math.hypot(p[0] - q[0], p[1] - q[1]);
                 if (d < 1900 || d > 2100) continue;
@@ -346,12 +370,20 @@ public final class VoyageGameTests {
                 long t0 = System.nanoTime();
                 LanePathfinder.Result r = LanePathfinder.find(grid, p[0], p[1], q[0], q[1], LanePathfinder.Params.DEFAULT);
                 long ms = (System.nanoTime() - t0) / 1_000_000;
-                String line = String.format("%s (%d %d)->(%d %d) straight %.0f: %s, lane %.0f, %d waypoints, %d cells, %d biome samples, %d ms",
-                        "WS2 lane cost", p[0], p[1], q[0], q[1], d, r.status(), Lane.length(r.waypoints()), r.waypoints().size(),
-                        r.expanded(), grid.samples(), ms);
+                long t1 = System.nanoTime();
+                LanePathfinder.find(grid, p[0], p[1], q[0], q[1], LanePathfinder.Params.DEFAULT);
+                long warm = (System.nanoTime() - t1) / 1_000_000;
+                String line = String.format("WS2 lane cost (%d %d)->(%d %d) straight %.0f: %s, lane %.0f, %d waypoints, %d cells,"
+                                + " %d biome samples, %d ms cold, %d ms with the samples cached",
+                        p[0], p[1], q[0], q[1], d, r.status(), Lane.length(r.waypoints()), r.waypoints().size(),
+                        r.expanded(), grid.samples(), ms, warm);
                 Constants.LOG.info(line);
                 log.append(line).append('\n');
-                if (r.found()) found = line;
+                if (r.found()) {
+                    found = line;
+                    founds++;
+                }
+                break;
             }
         }
         h.assertTrue(found != null, "no 2000-block lane found in " + tries + " tries (" + sea.size() + " sea points)\n" + log);

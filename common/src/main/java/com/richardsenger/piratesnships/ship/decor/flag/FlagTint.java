@@ -32,8 +32,13 @@ public final class FlagTint {
 
     /** The cloth tint of a flagpole: the banner's base colour for a custom flag, {@link #NONE} otherwise. */
     public static int clothTint(FlagpoleState state) {
-        if (state.kind() != FlagKind.CUSTOM) return NONE;
-        DyeColor base = bannerBase(state.flagItem());
+        return clothTint(state.kind(), state.flagItem());
+    }
+
+    /** The cloth tint of a flag of {@code kind} made from {@code item} (VIS1a: the flag being hoisted). */
+    public static int clothTint(FlagKind kind, ItemStack item) {
+        if (kind != FlagKind.CUSTOM) return NONE;
+        DyeColor base = bannerBase(item);
         return base == null ? NONE : rgb(base);
     }
 }

@@ -121,14 +121,20 @@ class FlagClothModelTest {
         }
     }
 
-    /** The committed block state shows the hand-made pole in every state and no cloth model (FL1). */
+    /**
+     * The committed block state shows the hand-made pole and no cloth model (FL1): one variant per part of a tall pole
+     * (VIS1a), whatever the flag.
+     */
     @Test
     void generatedBlockStateShowsOnlyThePole() throws IOException {
         JsonObject root = JsonParser.parseString(Files.readString(ASSETS.resolve("blockstates/flagpole.json"))).getAsJsonObject();
         assertFalse(root.has("multipart"), "the cloth is no longer part of the block model");
         JsonObject variants = root.getAsJsonObject("variants");
-        assertEquals(1, variants.size());
-        assertEquals("pirates_n_ships:block/flagpole", variants.entrySet().iterator().next().getValue().getAsJsonObject().get("model").getAsString());
+        assertEquals(FlagpolePart.values().length, variants.size());
+        for (FlagpolePart part : FlagpolePart.values()) {
+            String model = variants.getAsJsonObject("part=" + part.getSerializedName()).get("model").getAsString();
+            assertEquals(part == FlagpolePart.SINGLE ? "pirates_n_ships:block/flagpole" : "pirates_n_ships:block/flagpole_" + part.getSerializedName(), model);
+        }
         for (FlagKind kind : FlagKind.values()) {
             assertFalse(Files.exists(ASSETS.resolve("models/block/flagpole_flag_" + kind.getSerializedName() + ".json")),
                     "stale cloth model for " + kind);

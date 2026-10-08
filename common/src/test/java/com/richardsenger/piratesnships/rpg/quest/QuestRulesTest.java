@@ -161,4 +161,20 @@ class QuestRulesTest {
         assertEquals(log, back);
         assertEquals(QuestLog.EMPTY, QuestLog.CODEC.parse(JsonOps.INSTANCE, new com.google.gson.JsonObject()).getOrThrow());
     }
+
+    @Test
+    void captainHuntCompletesOnHisFallAndFailsWhenLost() {
+        UUID him = UUID.randomUUID();
+        UUID successor = UUID.randomUUID();
+        Quest q = active(QuestType.HUNT_CAPTAIN, new QuestTarget.Victim(him, "Cutthroat Jacquotte Stroud", Optional.of("east")), 1);
+        assertSame(q, QuestRules.advance(q, new QuestEvent.VictimDown(successor)), "a successor does not count");
+        assertSame(q, QuestRules.advance(q, new QuestEvent.VictimLost(successor)));
+        assertSame(q, QuestRules.advance(q, new QuestEvent.DeedDone(Deed.KILL_PIRATE)), "any pirate kill does not count");
+        Quest done = QuestRules.advance(q, new QuestEvent.VictimDown(him));
+        assertEquals(QuestState.DONE, done.state());
+        assertEquals(1, done.progress());
+        assertEquals(QuestState.FAILED, QuestRules.advance(q, new QuestEvent.VictimLost(him)).state());
+        assertSame(done, QuestRules.advance(done, new QuestEvent.VictimLost(him)), "a done hunt stays done");
+        assertEquals(400, QuestRules.coinsOnCompletion(done.withState(QuestState.DONE)) == done.rewardCoins() ? 400 : -1);
+    }
 }

@@ -19,6 +19,17 @@ public sealed interface QuestEvent {
     record Killed(ResourceLocation entity) implements QuestEvent {
     }
 
+    /**
+     * The player brought down the entity {@code victim}: killed it ({@code LIVING_DEATH} with the player as offender,
+     * or the {@code kill_pirate} deed) or turned it in alive (the {@code turn_in_pirate} deed). QST1b.
+     */
+    record VictimDown(UUID victim) implements QuestEvent {
+    }
+
+    /** The entity {@code victim} is gone and not by the player's hand (another killer, handed over by someone else). */
+    record VictimLost(UUID victim) implements QuestEvent {
+    }
+
     /** The delivery contract {@code contract} is in {@code state}; {@code null} = the contract is gone. */
     record ContractChanged(UUID contract, @Nullable DeliveryContract.State state) implements QuestEvent {
     }

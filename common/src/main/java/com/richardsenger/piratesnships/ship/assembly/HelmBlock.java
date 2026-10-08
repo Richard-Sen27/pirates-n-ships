@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.ship.assembly;
 
 import com.mojang.serialization.MapCodec;
+import com.richardsenger.piratesnships.rpg.career.CareerShipTitles;
 import com.richardsenger.piratesnships.ship.ShipData;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
@@ -197,13 +198,15 @@ public class HelmBlock extends HorizontalDirectionalBlock implements EntityBlock
         }
         if (level instanceof ServerLevel serverLevel) {
             ShipBody ship = SableShips.containing(serverLevel, pos);
+            // HON1: the owner's career title goes in front of the name ("Capt. Black Gull"), careers.title_on_ship
+            String shipName = ship == null ? name.getString() : CareerShipTitles.forNaming(player, ship, name.getString());
             AssemblyResult result = ship == null ? AssemblyResult.of(AssemblyResult.Outcome.NO_SHIP)
-                    : ShipAssembler.name(ship, name.getString());
+                    : ShipAssembler.name(ship, shipName);
             if (result.success() && !player.getAbilities().instabuild) {
                 stack.shrink(1);
             }
             player.displayClientMessage(result.success()
-                    ? Component.translatable(result.outcome().key(), name.getString()) : result.message(), false);
+                    ? Component.translatable(result.outcome().key(), shipName) : result.message(), false);
         }
         return ItemInteractionResult.sidedSuccess(level.isClientSide);
     }

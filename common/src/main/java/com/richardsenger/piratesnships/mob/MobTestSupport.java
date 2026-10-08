@@ -16,7 +16,7 @@ import java.lang.reflect.Field;
  * framework never clears players from a test area, so the player is discarded when the test passes, fails or is
  * rerun. It is a plain {@link Player} (no connection), so nothing is ever sent to it.
  */
-final class MobTestSupport {
+public final class MobTestSupport {
 
     private static volatile Field testInfoField;
 
@@ -24,7 +24,7 @@ final class MobTestSupport {
     }
 
     /** A survival mock player at the test-relative position, facing {@code yaw} (0 = +Z, 90 = -X, -90 = +X). */
-    static Player playerInLevel(GameTestHelper helper, Vec3 relative, float yaw) {
+    public static Player playerInLevel(GameTestHelper helper, Vec3 relative, float yaw) {
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
         Vec3 at = helper.absoluteVec(relative);
         player.moveTo(at.x, at.y, at.z, yaw, 0f);

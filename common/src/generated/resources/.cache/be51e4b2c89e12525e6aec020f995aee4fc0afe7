@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-08T02:28:12.609921	Raw JSON (data): pirates_n_ships
+// 1.21.1	2026-10-08T10:39:59.393879	Raw JSON (data): pirates_n_ships
 48a3d1396f56a1821c2e6dd2a2ce6f5dc32fc15c data/pirates_n_ships/advancement/recipes/misc/guide_book.json
 81e4547184aef1c6ab27c144e370d0ff6cb85b3d data/pirates_n_ships/loot_table/chests/buried_treasure.json
 917a78912c9b82231026bd2ea966eb7535e5da69 data/pirates_n_ships/loot_table/chests/wreck.json
@@ -6,6 +6,7 @@ a36329422f25984fa5698ac8ec14f9a580f2a13a data/pirates_n_ships/loot_table/entitie
 fe7053acbb25918c89e2aa78604271fe9aed9b86 data/pirates_n_ships/loot_table/entities/navy_officer.json
 fe7053acbb25918c89e2aa78604271fe9aed9b86 data/pirates_n_ships/loot_table/entities/navy_soldier.json
 b0418bb17a7a2fdb50483d5529c1ce229810413d data/pirates_n_ships/loot_table/entities/pirate.json
+1412dfd030d260a26879551c112ed6789ad5da08 data/pirates_n_ships/loot_table/entities/pirate_captain.json
 3aa0bd40e87edebf8b2b3e0b3c8fd78c4a83be72 data/pirates_n_ships/loot_table/entities/shark.json
 6d43d8ef5831dc3173fdc34fded2cf864b258292 data/pirates_n_ships/physics_block_properties/bilge_pump.json
 a765a14b00c58afdeac06dec7c2951b7de50d707 data/pirates_n_ships/physics_block_properties/cannon.json

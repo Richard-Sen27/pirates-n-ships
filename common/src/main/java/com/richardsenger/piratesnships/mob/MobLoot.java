@@ -19,12 +19,17 @@ import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
  * replace them at {@code data/pirates_n_ships/loot_table/entities/<mob>.json}). Pirates drop 1-3 doubloons and, when
  * killed by a player, a cutlass 1 time in 10; navy soldiers and officers drop 0-2 lead shot and 0-2 gunpowder; sailors
  * drop nothing; sharks drop 0-1 raw cod and, 1 time in 20, a prismarine shard; the kraken drops its beak (always one)
- * and 2-5 kraken ink. {@code mobs.drops} switches all of them off.
+ * and 2-5 kraken ink. The pirate captain (BOS1) drops 8-16 doubloons and, when killed by a player, his cutlass 1 time
+ * in 4; his hat and the map of his island come from {@code PirateCaptain#dropCustomDeathLoot}. {@code mobs.drops}
+ * switches all of them off.
  */
 public final class MobLoot {
 
     public static final float CUTLASS_CHANCE = 0.1f;
     public static final float SHARK_SHARD_CHANCE = 0.05f;
+    public static final float CAPTAIN_CUTLASS_CHANCE = 0.25f;
+    public static final int CAPTAIN_DOUBLOONS_MIN = 8;
+    public static final int CAPTAIN_DOUBLOONS_MAX = 16;
 
     private MobLoot() {
     }
@@ -38,6 +43,19 @@ public final class MobLoot {
                         .add(LootItem.lootTableItem(CombatContent.CUTLASS.get()))
                         .when(LootItemKilledByPlayerCondition.killedByPlayer())
                         .when(LootItemRandomChanceCondition.randomChance(CUTLASS_CHANCE)))
+                .build();
+    }
+
+    /** The pirate captain (BOS1): a purse of doubloons, sometimes his cutlass. */
+    public static LootTable pirateCaptain() {
+        return LootTable.lootTable().setParamSet(LootContextParamSets.ENTITY)
+                .withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1))
+                        .add(LootItem.lootTableItem(TradeContent.DOUBLOON.get())
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(CAPTAIN_DOUBLOONS_MIN, CAPTAIN_DOUBLOONS_MAX)))))
+                .withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1))
+                        .add(LootItem.lootTableItem(CombatContent.CUTLASS.get()))
+                        .when(LootItemKilledByPlayerCondition.killedByPlayer())
+                        .when(LootItemRandomChanceCondition.randomChance(CAPTAIN_CUTLASS_CHANCE)))
                 .build();
     }
 

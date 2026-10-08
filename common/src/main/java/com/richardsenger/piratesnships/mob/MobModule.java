@@ -65,6 +65,7 @@ public final class MobModule implements ModModule {
         lootTable(data, MobKind.PIRATE, MobLoot.pirate());
         lootTable(data, MobKind.NAVY_SOLDIER, MobLoot.navy());
         lootTable(data, MobKind.NAVY_OFFICER, MobLoot.navy());
+        lootTable(data, MobKind.PIRATE_CAPTAIN, MobLoot.pirateCaptain());
         data.encoded(PackOutput.Target.DATA_PACK, "loot_table", Constants.id("entities/" + MobCommands.SHARK), LootTable.DIRECT_CODEC, MobLoot.shark());
         KrakenContent.gatherData(data);
         data.lang(lang -> {
@@ -72,6 +73,7 @@ public final class MobModule implements ModModule {
                     .add(MobContent.SAILOR.get().getDescriptionId(), "Sailor")
                     .add(MobContent.NAVY_SOLDIER.get().getDescriptionId(), "Navy Soldier")
                     .add(MobContent.NAVY_OFFICER.get().getDescriptionId(), "Navy Officer")
+                    .add(MobContent.PIRATE_CAPTAIN.get().getDescriptionId(), "Pirate Captain")
                     .item(MobContent.PIRATE_SPAWN_EGG, "Pirate Spawn Egg")
                     .item(MobContent.SAILOR_SPAWN_EGG, "Sailor Spawn Egg")
                     .item(MobContent.NAVY_SOLDIER_SPAWN_EGG, "Navy Soldier Spawn Egg")
@@ -79,7 +81,7 @@ public final class MobModule implements ModModule {
                     .add(MobContent.SHARK.get().getDescriptionId(), "Shark")
                     .item(MobContent.SHARK_SPAWN_EGG, "Shark Spawn Egg")
                     .add(MobCommands.KEY_SPAWNED, "Spawned %s × %s")
-                    .add(MobCommands.KEY_UNKNOWN, "Unknown mob: %s (pirate, sailor, navy_soldier, navy_officer, shark or kraken)")
+                    .add(MobCommands.KEY_UNKNOWN, "Unknown mob: %s (pirate, sailor, navy_soldier, navy_officer, pirate_captain, shark or kraken)")
                     .add(MobCommands.KEY_DISABLED, "%s is disabled in the server config (mobs)");
         });
     }

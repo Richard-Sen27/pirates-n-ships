@@ -1,5 +1,6 @@
-// 1.21.1	2026-10-08T22:26:20.400169	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-08T22:40:46.990979	Block states and models: pirates_n_ships
 c189a7833975a61cf2c7c8fd326d27a32969cb9d assets/pirates_n_ships/blockstates/bilge_pump.json
+66226c130d39627104000bbfa87d4776c87b9ed0 assets/pirates_n_ships/blockstates/boarding_plank.json
 52e053a4f7334e9a78798b4b4b9a2ad80087f3d5 assets/pirates_n_ships/blockstates/brig_bars.json
 83716521a6f9785f7114fa5a9489defb1257975d assets/pirates_n_ships/blockstates/brig_door.json
 a60cf1a7f98dc1aff8e6d0791acd4e00e17049e6 assets/pirates_n_ships/blockstates/cannon.json

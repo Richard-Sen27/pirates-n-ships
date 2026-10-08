@@ -17,6 +17,10 @@ public final class FlagVisualsConfig {
     public static final ConfigValue<Boolean> HOIST_ANIMATION = S.bool("hoist_animation", true,
             "While a flag is hoisted, struck, raised or taken down, draw the cloth running along the pole; off: it appears and vanishes at once");
 
+    /** FLG2: how a banner's design lies on the flag cloth ({@link FlagBanner}). */
+    public static final ConfigValue<Boolean> BANNER_UPRIGHT = S.bool("banner_upright", false,
+            "Draw a banner flag's design upright (its top at the top of the cloth, stretched along the fly); off: the banner hangs sideways from the pole, its top at the pole");
+
     private FlagVisualsConfig() {
     }
 

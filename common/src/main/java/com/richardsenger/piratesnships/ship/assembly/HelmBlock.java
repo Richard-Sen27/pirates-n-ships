@@ -5,6 +5,10 @@ import com.richardsenger.piratesnships.ship.ShipData;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
+import com.richardsenger.piratesnships.station.StationBlock;
+import com.richardsenger.piratesnships.station.StationKind;
+import com.richardsenger.piratesnships.station.Stations;
+import com.richardsenger.piratesnships.station.helm.HelmStation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -42,8 +46,11 @@ import org.jetbrains.annotations.Nullable;
  * blocks. With the sailing module's wheel steering (HELM1, the default) the rudder follows the wheel's angle instead,
  * which lives in the block entity the sailing module installs ({@link #setBlockEntityFactory}); the property then
  * only matters for the old click steps.
+ *
+ * <p>WS3a: the helm is also a station ({@link HelmStation}): a crew member assigned to it stands beside the wheel and
+ * holds a course ({@code station.helm.CourseOrder}) on the ship's steering helm. Breaking it frees the station.
  */
-public class HelmBlock extends HorizontalDirectionalBlock implements EntityBlock {
+public class HelmBlock extends HorizontalDirectionalBlock implements EntityBlock, StationBlock {
 
     public static final MapCodec<HelmBlock> CODEC = simpleCodec(HelmBlock::new);
     public static final int MIDSHIPS = 5;
@@ -88,6 +95,20 @@ public class HelmBlock extends HorizontalDirectionalBlock implements EntityBlock
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING, RUDDER);
+    }
+
+    @Override
+    public StationKind<?> stationKind() {
+        return HelmStation.INSTANCE;
+    }
+
+    /** Breaking the helm frees its station and removes its seat (a rudder change is no removal). */
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel) {
+            Stations.onStationRemoved(serverLevel, pos);
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
     @Override
@@ -167,6 +188,9 @@ public class HelmBlock extends HorizontalDirectionalBlock implements EntityBlock
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                               InteractionHand hand, BlockHitResult hit) {
+        if (stack.getItem() instanceof StationBlock.Tool) {
+            return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION; // the captain's whistle assigns crew to the helm
+        }
         Component name = stack.get(DataComponents.CUSTOM_NAME);
         if (!stack.is(Items.NAME_TAG) || name == null) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;

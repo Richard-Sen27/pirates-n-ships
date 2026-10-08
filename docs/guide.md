@@ -214,11 +214,15 @@ ship goes astern.
 
 ### Capstan and anchor
 The anchor is a real object: it hangs outside the hull on the side nearer to the capstan, just below the deck, and
-moves with the ship. Using the capstan runs it out on a chain at 6 blocks per second to the first solid block within
-32 blocks below, with the chain rattling, a splash when it enters the water and a thud when it lands; from that moment
-the ship holds. Using the capstan again heaves it back in at 2.5 blocks per second until it hangs at the hull again.
-Using it mid-way reverses. If there is no ground in reach, the capstan tells you and the anchor stays stowed. A held
-ship stays within about two blocks of the anchor point and swings with the wind.
+moves with the ship. The anchor is heavy and falls on its own: let it go while the ship has way on and it keeps the
+ship's speed for a moment, sinks at about 4 blocks a second and lands a few blocks astern of where it left the hull,
+with the chain rattling, a splash when it enters the water and a thud when it lands. Once it bites, the chain pulls
+the ship back at the bow, softly, so there is no dead stop. Because the hawse is on the capstan's side, a ship under
+sail swings hard round toward that side and ends up head to its chain, bow toward the anchor. A ship pulling harder
+than the anchor holds drags it over the seabed. The ship counts as anchored once the anchor holds and the ship has
+stopped. Using the capstan again heaves the chain in at 2.5 blocks a second and pulls the anchor along the seabed and
+up to the hull; using it mid-way lets go again. If the chain runs out before the seabed, the anchor hangs at its end
+and does not hold. Server config `anchor`.
 
 ---
 

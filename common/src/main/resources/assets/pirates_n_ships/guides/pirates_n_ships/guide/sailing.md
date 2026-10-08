@@ -309,6 +309,17 @@ yours. Kill every fighter aboard and hold her deck for a few seconds, and she is
 merchant is piracy in the navy's eyes. Operators: `/pirates world voyages spawn near convoy|patrol|raid`. Server
 config `world_simulation.materialize`.
 
+## Navy patrols
+The navy sends patrols between its outposts, or out toward the nearest pirate island and back when an outpost stands
+alone; an aggressive navy sends more. A patrol keeps a lookout of about 256 blocks. It gives chase to any player's
+ship that flies the Jolly Roger, whose false colours it has seen through, or whose captain is wanted or carries a
+bounty of 50 doubloons or more, whatever flag that ship flies. You'll get word when a patrol sights you. Once it
+closes in, the patrol circles you at about 20 blocks while its gun crews fire. Strike your colours and its guns fall
+silent: it keeps you in sight for half a minute, then sails on. Raise the Jolly Roger again and the chase is back on.
+Outrun it (no contact within 64 blocks for two minutes, or more than 384 blocks between you) and it breaks off.
+Patrols that kill pirates, and patrols lost at sea, stir up the bad blood between the navy and the pirates.
+Operators: `/pirates world patrols`. Server config `world_simulation.navy`.
+
 ## Careers
 Two ladders, and you can only climb one. *Navy:* talk to a navy officer with an empty hand and enlist once the navy
 trusts you (navy reputation 10, no bounty, no friends among the pirates). Killing or turning in pirates, navy quests

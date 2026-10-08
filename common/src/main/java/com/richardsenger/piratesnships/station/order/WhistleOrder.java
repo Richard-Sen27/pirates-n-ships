@@ -2,6 +2,7 @@ package com.richardsenger.piratesnships.station.order;
 
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.cannon.CannonStation.CannonOrder;
+import com.richardsenger.piratesnships.station.capstan.AnchorOrder;
 import com.richardsenger.piratesnships.station.pump.PumpOrder;
 import com.richardsenger.piratesnships.station.winch.SailOrder;
 import java.util.List;
@@ -26,6 +27,10 @@ public enum WhistleOrder {
     LOAD(CannonOrder.LOAD, ResourceLocation.withDefaultNamespace("gunpowder")),
     /** WS4a: the gun crews aim and fire at hostile ships by themselves until released. */
     FIRE_AT_WILL(CannonOrder.FIRE_AT_WILL, ResourceLocation.withDefaultNamespace("fire_charge")),
+    /** CRW3: the crew at the capstans let the anchor go. */
+    DROP_ANCHOR(AnchorOrder.DROP_ANCHOR, Constants.id("capstan")),
+    /** CRW3: the crew at the capstans heave the anchor in. */
+    RAISE_ANCHOR(AnchorOrder.RAISE_ANCHOR, ResourceLocation.withDefaultNamespace("chain")),
     RELEASE(null, Constants.id("sail_winch"));
 
     private static final List<WhistleOrder> ENTRIES = List.of(values());

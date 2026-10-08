@@ -8,6 +8,8 @@ import com.richardsenger.piratesnships.combat.cannon.CannonStation;
 import com.richardsenger.piratesnships.combat.cannon.CannonStation.CannonOrder;
 import com.richardsenger.piratesnships.combat.cannon.SwivelStation;
 import com.richardsenger.piratesnships.station.StationKind;
+import com.richardsenger.piratesnships.station.capstan.AnchorOrder;
+import com.richardsenger.piratesnships.station.capstan.CapstanStation;
 import com.richardsenger.piratesnships.station.pump.PumpOrder;
 import com.richardsenger.piratesnships.station.pump.PumpStation;
 import com.richardsenger.piratesnships.station.winch.SailOrder;
@@ -21,11 +23,11 @@ import org.junit.jupiter.api.Test;
 class CrewOrderTest {
 
     @Test
-    void allHoldsTheSailOrdersThenPumpThenTheGunOrders() {
+    void allHoldsTheSailOrdersThenPumpThenTheGunOrdersThenTheAnchor() {
         assertEquals(List.of(SailOrder.HOIST, SailOrder.REEF, SailOrder.FURL, PumpOrder.PUMP, CannonOrder.FIRE, CannonOrder.LOAD,
-                        CannonOrder.FIRE_AT_WILL),
+                        CannonOrder.FIRE_AT_WILL, AnchorOrder.DROP_ANCHOR, AnchorOrder.RAISE_ANCHOR),
                 CrewOrder.all());
-        assertEquals(List.of("hoist", "reef", "furl", "pump", "fire", "load", "fire_at_will"), CrewOrder.ids());
+        assertEquals(List.of("hoist", "reef", "furl", "pump", "fire", "load", "fire_at_will", "drop_anchor", "raise_anchor"), CrewOrder.ids());
     }
 
     @Test
@@ -87,7 +89,7 @@ class CrewOrderTest {
         // and the cannon from both
         Set<String> nothing = new HashSet<>();
         Set<String> unable = new HashSet<>();
-        for (CrewOrder o : List.of(SailOrder.HOIST, PumpOrder.PUMP, CannonOrder.FIRE, CannonOrder.LOAD)) {
+        for (CrewOrder o : List.of(SailOrder.HOIST, PumpOrder.PUMP, CannonOrder.FIRE, CannonOrder.LOAD, AnchorOrder.DROP_ANCHOR, AnchorOrder.RAISE_ANCHOR)) {
             assertTrue(nothing.add(o.nothingToDoKey()), "shared nothing-to-do key " + o.nothingToDoKey());
             assertTrue(unable.add(o.unableKey()), "shared unable key " + o.unableKey());
         }
@@ -95,7 +97,7 @@ class CrewOrderTest {
 
     @Test
     void eachOrderBelongsToExactlyOneStationKind() {
-        List<StationKind<?>> kinds = List.of(WinchStation.INSTANCE, PumpStation.INSTANCE, CannonStation.INSTANCE);
+        List<StationKind<?>> kinds = List.of(WinchStation.INSTANCE, PumpStation.INSTANCE, CannonStation.INSTANCE, CapstanStation.INSTANCE);
         for (CrewOrder o : CrewOrder.all()) {
             long n = kinds.stream().filter(k -> k.accepts(o)).count();
             assertEquals(1, n, o + " is taken by " + n + " station kinds");
@@ -109,5 +111,8 @@ class CrewOrderTest {
         assertFalse(CannonStation.INSTANCE.accepts(PumpOrder.PUMP));
         assertFalse(WinchStation.INSTANCE.accepts(CannonOrder.FIRE));
         assertFalse(PumpStation.INSTANCE.accepts(CannonOrder.FIRE));
+        assertTrue(CapstanStation.INSTANCE.accepts(AnchorOrder.RAISE_ANCHOR));
+        assertFalse(CapstanStation.INSTANCE.accepts(PumpOrder.PUMP));
+        assertFalse(CannonStation.INSTANCE.accepts(AnchorOrder.DROP_ANCHOR));
     }
 }

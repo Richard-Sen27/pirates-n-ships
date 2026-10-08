@@ -90,16 +90,17 @@ in the fort's court. Switch to survival for the combat steps. For quicker checks
 `mobs.squad.post_pause_seconds = 5` in the server config.
 
 1. **Info.** `/pirates mob squad info` near the officer.
-   - **Expected:** `Squad of Navy Officer: at_post, waypoint 1 of N, 0 soldiers, next patrol in ... s` with N about 9
+   - **Expected:** `Squad of Navy Officer: at_post, waypoint 1 of N, 0 soldiers, next patrol in ... s` with N up to 15
      for a full fort (court, land gate, sea gate, quay, gate east walkway, the east walls, gate west walkway, the west
-     walls). In an outpost generated before MOB2 the same works: the squad is built from the outpost when its officer
+     walls, the head of the court's stairs; 15 with five walls each way). In an outpost generated before MOB2 the same works: the squad is built from the outpost when its officer
      first loads.
 2. **Patrol.** `/pirates mob squad patrol`.
    - **Expected:** the officer and three soldiers (the two land-gate guards and the east wall's guard, the nearest
      ones that can walk to him; never a tower roof guard, who only has a ladder) leave their posts at once. They walk in file, about 1.5 blocks apart, the
      officer first: the court, the land gate, the sea gate, out onto the quay, then up the court's stone stairs to the
-     walkway and to each wall of the east run, back along the sea-side walkway and to each wall of the west run (each wall's
-     waypoint is at its end toward the gate, short of its gun deck). At each waypoint the
+     walkway and out to each wall of the east run, back along the walls and the sea-side walkway and out to each wall of
+     the west run, then back to the head of the stairs (each wall's waypoint is at its far end, past its gun, so the file
+     walks every segment end to end; ST3b). At each waypoint the
      officer waits for the file to close up, then they stand for `post_pause_seconds`. A soldier who falls far behind
      runs. After the last wall they walk back to their posts, stand still again and face their post's way (wall
      guards to the sea, gate guards landward).
@@ -117,9 +118,8 @@ in the fort's court. Switch to survival for the combat steps. For quicker checks
      where it stands and walks on to the waypoint.
 5. **Refill.** Kill one soldier of the squad (`/kill` on him) during a patrol.
    - **Expected:** at the next waypoint another garrison soldier who can walk to the officer leaves his post and runs
-     to join the file at the end. With the default garrison (6) that may be nobody: the west wall's guard stands
-     beyond his wall's gun deck and vanilla pathfinding found no way out in the GameTests (see open problems); with
-     `world.structures.navy_outpost.garrison_soldiers = 9` a gate walkway guard joins. Kill the officer instead: the soldiers walk back to their posts on their own after
+     to join the file at the end: with the default garrison (6) the west wall's guard (since ST3b he can walk past his
+     gun); with `world.structures.navy_outpost.garrison_soldiers = 9` a gate walkway guard too. Kill the officer instead: the soldiers walk back to their posts on their own after
      about five seconds.
 6. **Night.** Let night fall during a patrol started by itself (`/time set 12000` and wait, or wait for the timer).
    - **Expected:** with `mobs.squad.night_at_posts = true` the squad turns back at nightfall and no patrol starts until
@@ -134,12 +134,30 @@ in the fort's court. Switch to survival for the combat steps. For quicker checks
    - **Expected:** the squad goes on (or walks home if it was fighting); nobody stays stuck away from his post.
 
 ### Open problems to watch (MOB2)
-- **Pathing on the walls.** The walkway is reached only by the court's stairs on the gate's east side. Each wall's
-  gun deck (cannon, barrels, shot locker, a closed trapdoor) leaves a one-block passage along the hoarding that
-  vanilla pathfinding handles badly: in the GameTests the west wall's guard (beyond his deck) could not plan a path
-  to the court, so he is never drawn; the route's wall waypoints stop short of the decks, and walls farther out need
-  the squad to cross a deck. A waypoint the officer gets no closer to for 10 seconds is skipped; please report where
-  that happens, and whether anyone gets stuck at a gun.
+- **Pathing on the walls (fixed in ST3b).** The walkway is reached only by the court's stairs on the gate's east
+  side. Each wall's gun deck used to leave a one-block passage along the hoarding that vanilla pathfinding handled
+  badly. ST3b moved the powder barrel and the shot locker against the parapet beside the muzzle and the lantern onto
+  the hoarding's rail, so the walkway is clear two blocks wide through every wall and the gate; the GameTests walk a
+  soldier along two walls and back, draw the west wall's guard into a squad of four and walk the fixture's whole
+  route without skipping a waypoint. Only outposts generated after ST3b have the new walls (and only officers whose
+  squad is built after ST3b get the new route); older ones keep the narrow decks. A waypoint the officer gets no
+  closer to for 10 seconds is still skipped; please report it if that happens on a new outpost.
+
+### ST3b check: walk a soldier along the walls
+1. In a **new** world, find a navy outpost generated after ST3b (`/locate structure pirates_n_ships:navy_outpost`)
+   that has at least two walls on a run (most do; size 5 grows up to five each way). Set `mobs.squad.post_pause_seconds
+   = 5` and `mobs.squad.size = 4`.
+   - **Expected:** on each wall the cannon stands in its embrasure with a barrel on each side of the muzzle against
+     the parapet; behind the gun the walkway is open two blocks wide; the lantern stands on the hoarding's rail beside
+     the ladder. The flags on the court's pole and the towers show the tall pole at once (no single-pole look in the
+     first moment); the pirate camp's pole likewise.
+2. `/pirates mob squad info`, then `/pirates mob squad patrol`, and follow the squad up the stairs.
+   - **Expected:** four soldiers follow (the two land-gate guards and the wall guards nearest the gate on both runs, not
+     a tower roof guard). The file walks out along the east run to the last wall before the tower, stopping at the far
+     end of each wall, turns back along the walls, crosses the gate's walkway, walks out along the west run the same
+     way and comes back to the head of the stairs, then everyone walks home. Nobody squeezes past a gun, gets stuck
+     behind a barrel, steps off the hoarding or falls down a ladder hole. `/pirates mob squad info` counts the
+     waypoints up without jumps (a jump means one was skipped as stuck).
 - **Ladders.** Vanilla mobs don't climb ladders on purpose: tower roof guards are never drafted, and a soldier who
   fell off a wall and can only get back by ladder keeps trying to reach his post.
 - **Terrain.** A waypoint that terrain filled is skipped; a post filled by terrain has no guard (WG3).

@@ -303,8 +303,8 @@ public final class CareerRewardsGameTests {
     // ------------------------------------------------------------------ promotion gifts
 
     /**
-     * A real promotion to Lieutenant puts the bicorne and the saber into the inventory, once: resigning and enlisting
-     * again gives nothing twice.
+     * A real promotion to Lieutenant puts the bicorne, the saber and the officer's coat into the inventory, once:
+     * resigning and enlisting again gives nothing twice.
      */
     @ModGameTest(batch = BATCH + "gifts")
     public static void bicorneArrivesOnPromotion(GameTestHelper h) {
@@ -314,16 +314,20 @@ public final class CareerRewardsGameTests {
         // the deeds before enlisting: pirates fought and quests done
         Careers.store(p, Careers.record(p).plus(CareerCounter.PIRATES_KILLED, lt.piratesDefeated()).plus(CareerCounter.NAVY_QUESTS, lt.quests()));
         h.assertValueEqual(countOf(p, ApparelContent.OFFICER_HAT.get()), 0, "a bicorne before enlisting");
+        h.assertValueEqual(countOf(p, ApparelContent.OFFICERS_COAT.get()), 0, "a coat before enlisting");
         h.assertValueEqual(Careers.enlist(p), CareerRules.EnlistVerdict.OK, "enlist");
         h.assertValueEqual(Careers.navyRank(p), NavyRank.LIEUTENANT, "promoted to lieutenant on enlisting");
         h.assertValueEqual(countOf(p, ApparelContent.OFFICER_HAT.get()), 1, "bicorne after the promotion");
         h.assertValueEqual(countOf(p, CombatContent.SABER.get()), 1, "saber after the promotion");
+        h.assertValueEqual(countOf(p, ApparelContent.OFFICERS_COAT.get()), 1, "coat after the promotion");
         h.assertTrue(CareerRewards.gifted(p).contains(CareerRewardRules.giftKey(NavyRank.LIEUTENANT)), "gift noted");
 
         h.assertTrue(Careers.resign(p), "resign");
         h.assertValueEqual(Careers.enlist(p), CareerRules.EnlistVerdict.OK, "enlist again");
         h.assertValueEqual(Careers.navyRank(p), NavyRank.LIEUTENANT, "lieutenant again");
         h.assertValueEqual(countOf(p, ApparelContent.OFFICER_HAT.get()), 1, "a second bicorne");
+        h.assertValueEqual(countOf(p, CombatContent.SABER.get()), 1, "a second saber");
+        h.assertValueEqual(countOf(p, ApparelContent.OFFICERS_COAT.get()), 1, "a second coat");
         h.succeed();
     }
 
@@ -337,6 +341,7 @@ public final class CareerRewardsGameTests {
         List<ItemEntity> dropped = h.getLevel().getEntitiesOfClass(ItemEntity.class, p.getBoundingBox().inflate(4));
         h.assertTrue(dropped.stream().anyMatch(e -> e.getItem().is(ApparelContent.OFFICER_HAT.get())), "no bicorne dropped: " + dropped);
         h.assertTrue(dropped.stream().anyMatch(e -> e.getItem().is(CombatContent.SABER.get())), "no saber dropped: " + dropped);
+        h.assertTrue(dropped.stream().anyMatch(e -> e.getItem().is(ApparelContent.OFFICERS_COAT.get())), "no coat dropped: " + dropped);
         dropped.forEach(ItemEntity::discard);
         h.succeed();
     }

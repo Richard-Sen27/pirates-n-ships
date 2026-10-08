@@ -19,9 +19,11 @@ import java.util.List;
  *     <li>the fort gate's parade court (a few steps from the officer's post, at the foot of the stairs), the land
  *     gate's passage, the sea gate's passage;</li>
  *     <li>out onto the quay's deck (every quay, nearest first);</li>
- *     <li>up the court's stairs to the gate's walkway on its east side, then along the walls of the east run (on each
- *     wall's walkway at its end toward the gate, nearest first);</li>
- *     <li>back along the gate's sea-side walkway to its west side, then the walls of the west run.</li>
+ *     <li>up the court's stairs to the gate's walkway on its east side, then out along the east run to the far end of
+ *     every wall (nearest first, so the file walks each segment end to end, past its gun);</li>
+ *     <li>back along the walls and the gate's sea-side walkway to its west side, then out along the west run the same
+ *     way;</li>
+ *     <li>back along the west run to the head of the court's stairs.</li>
  * </ol>
  * The squad then walks back to the garrison posts. Every spot stands on the pieces' own paving or walkway, reachable
  * by walking (stairs, no ladders): the walkway is reached by the stone stairs of the gate's court, and the wall
@@ -38,13 +40,15 @@ public final class SquadRoutes {
     static final BlockPos EAST_WALK = new BlockPos(11, 5, 3);
     static final BlockPos WEST_WALK = new BlockPos(3, 5, 3);
     /**
-     * On a wall's walkway at its end toward the gate, short of the gun deck (gun, barrels and shot locker on x 2..4):
-     * on the east run the wall's west end (beside the wall's post at (1, 5, 2)), on the west run its east end. Vanilla
-     * pathfinding gets through the deck's one-block passage badly (a guard beyond it couldn't plan a path to the
-     * court in the GameTests), so the route stops short of it.
+     * On a wall's walkway at its end away from the gate, past the gun deck: on the east run the wall's east end, on
+     * the west run its west end (beside the wall's post at (1, 5, 2)). Since ST3b the walkway behind the gun is clear
+     * two blocks wide (z 3..4, the powder barrel and shot locker stand against the parapet), so the file walks every
+     * segment end to end and on into the next.
      */
-    static final BlockPos WALL_WALK_EAST_RUN = new BlockPos(1, 5, 4);
-    static final BlockPos WALL_WALK_WEST_RUN = new BlockPos(5, 5, 4);
+    static final BlockPos WALL_WALK_EAST_RUN = new BlockPos(5, 5, 3);
+    static final BlockPos WALL_WALK_WEST_RUN = new BlockPos(1, 5, 3);
+    /** The gate's walkway at the head of the court's stairs: the route's last waypoint, back from the west run. */
+    static final BlockPos STAIR_HEAD = new BlockPos(12, 5, 4);
     /** On the quay's deck (y 5 continues the gate's paving), between the bollards. */
     static final BlockPos QUAY_DECK = new BlockPos(3, 6, 7);
 
@@ -85,6 +89,7 @@ public final class SquadRoutes {
         out.addAll(nearestFirst(eastWalls, centre));
         out.add(GarrisonPosts.toWorld(gate, WEST_WALK));
         out.addAll(nearestFirst(westWalls, centre));
+        out.add(GarrisonPosts.toWorld(gate, STAIR_HEAD));
         return List.copyOf(out);
     }
 

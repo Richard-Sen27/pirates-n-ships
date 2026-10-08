@@ -82,7 +82,8 @@ public class SquadMemberGoal extends Goal {
             return;
         }
         if (next != pace || --repath <= 0 || soldier.getNavigation().isDone()) {
-            soldier.getNavigation().moveTo(ahead, next == FileFollowing.Pace.RUN ? FileFollowing.RUN_SPEED : FileFollowing.WALK_SPEED);
+            double speed = next == FileFollowing.Pace.RUN ? FileFollowing.RUN_SPEED : FileFollowing.WALK_SPEED;
+            SquadReach.wide(soldier, () -> soldier.getNavigation().moveTo(ahead, speed));
             repath = 10;
         }
         pace = next;

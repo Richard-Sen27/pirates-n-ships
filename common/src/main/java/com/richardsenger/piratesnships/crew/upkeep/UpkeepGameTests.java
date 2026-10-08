@@ -40,6 +40,7 @@ import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
@@ -351,16 +352,98 @@ public final class UpkeepGameTests {
         });
     }
 
+    /**
+     * A real server player with a mock connection (the hiring and market tests' pattern), owner of the ship, carrying
+     * {@code coins} doubloons. It is not put into the level (Sable would send it packets the mock connection refuses),
+     * so the tests hand it to {@code ShipDayTick.run(level, ship, crew, payer)} as the
+     * payer instead of forcing a dawn; {@link ShipDayTick#payer} (the owner among the level's players) is for the
+     * playtest.
+     */
+    private static ServerPlayer owner(GameTestHelper h, Ship s, int coins) {
+        var profile = new com.mojang.authlib.GameProfile(UUID.randomUUID(), "test-owner");
+        var cookie = net.minecraft.server.network.CommonListenerCookie.createInitial(profile, false);
+        ServerPlayer p = new ServerPlayer(h.getLevel().getServer(), h.getLevel(), profile, cookie.clientInformation());
+        var connection = new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND);
+        new io.netty.channel.embedded.EmbeddedChannel(connection);
+        new net.minecraft.server.network.ServerGamePacketListenerImpl(h.getLevel().getServer(), connection, p, cookie);
+        p.setPos(Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(5, 5, 5))));
+        p.getInventory().clearContent();
+        Wallet.give(p, coins);
+        ShipRegistry registry = ShipRegistry.get(h.getLevel().getServer());
+        registry.put(registry.find(s.id()).orElseThrow(() -> new AssertionError("no ship record")).withOwner(Optional.of(p.getUUID())));
+        return p;
+    }
+
+    /** The day tick of the test ship now, with {@code payer} online. */
+    private static ShipDayTick.DayReport payday(GameTestHelper h, Ship s, ServerPlayer payer) {
+        return ShipDayTick.run(h.getLevel(), s.f().ship(), ShipBunks.crewOf(h.getLevel(), s.f().ship()), payer);
+    }
+
+    /**
+     * CRW2, {@code crew.wages.from_wallet} (default on): provisions off, 3 doubloons in the chest, the owner online with
+     * 10: the chest pays first (all 3), the owner's purse the last 1; both crew paid; the pay record says 4 coins, 1 of
+     * them from the wallet, and so do the owner line and {@code /pirates crew info}.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = CONFIG_BATCH + "wages_wallet")
+    public static void walletPaysWhatTheChestCannot(GameTestHelper h) {
+        ConfigOverrides.during(h, ProvisionsConfig.CONSUMPTION_ENABLED, false);
+        Ship s = ship(h, UpkeepGameTests::chest);
+        coins(h, s, 3);
+        ServerPlayer owner = owner(h, s, 10);
+        h.runAfterDelay(2, () -> {
+            try {
+                h.assertTrue(ShipBunks.crewOf(h.getLevel(), s.f().ship()).size() == 2, "crew aboard: " + ShipBunks.crewOf(h.getLevel(), s.f().ship()));
+                ShipDayTick.DayReport r = payday(h, s, owner);
+                h.assertTrue(r.day().paid() == 2 && r.day().unpaid() == 0, "paid / unpaid: " + r.day());
+                h.assertTrue(Wallet.count(chestOf(h, s)) == 0, "coins left in the chest: " + Wallet.count(chestOf(h, s)));
+                h.assertTrue(Wallet.count(owner) == 9, "coins left in the purse: " + Wallet.count(owner));
+                ShipUpkeep up = ShipUpkeepData.get(h.getLevel().getServer()).get(s.id());
+                h.assertTrue(up.lastPay().equals(new ShipUpkeep.PayRecord(true, 2, 0, 4, 1)), "pay record: " + up.lastPay());
+                h.assertTrue(told(r, UpkeepText.PAID_WALLET, 2, 4L, 1L), "owner lines: " + r.ownerLines());
+                List<Component> info = UpkeepInfo.lines(h.getLevel(), s.f().ship());
+                h.assertTrue(info.stream().anyMatch(c -> containsKey(c, UpkeepText.INFO_PAY_WALLET, 2, 0, 4L, 1L)), "info: " + info);
+                h.assertTrue(CrewMorale.get(s.a()) == 71 && CrewMorale.get(s.b()) == 71, "morale: " + CrewMorale.get(s.a()) + ", " + CrewMorale.get(s.b()));
+            } finally {
+                cleanup(h, s);
+            }
+            h.succeed();
+        });
+    }
+
+    /** {@code crew.wages.from_wallet = false}: an empty chest and an owner with 10 doubloons: nobody is paid, the purse stays full. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = CONFIG_BATCH + "wages_wallet_off")
+    public static void walletOffLeavesCrewUnpaid(GameTestHelper h) {
+        ConfigOverrides.during(h, ProvisionsConfig.CONSUMPTION_ENABLED, false);
+        ConfigOverrides.during(h, CrewConfig.WAGES_FROM_WALLET, false);
+        Ship s = ship(h, UpkeepGameTests::chest);
+        ServerPlayer owner = owner(h, s, 10);
+        h.runAfterDelay(2, () -> {
+            try {
+                ShipDayTick.DayReport r = payday(h, s, owner);
+                h.assertTrue(r.day().paid() == 0 && r.day().unpaid() == 2, "paid / unpaid: " + r.day());
+                h.assertTrue(Wallet.count(owner) == 10, "coins taken from the purse: " + Wallet.count(owner));
+                ShipUpkeep up = ShipUpkeepData.get(h.getLevel().getServer()).get(s.id());
+                h.assertTrue(up.lastPay().equals(new ShipUpkeep.PayRecord(true, 0, 2, 0, 0)), "pay record: " + up.lastPay());
+                h.assertTrue(s.a().isUnpaid() && s.b().isUnpaid(), "not marked unpaid");
+            } finally {
+                cleanup(h, s);
+            }
+            h.succeed();
+        });
+    }
+
     // ------------------------------------------------------------------ desertion and mutiny
 
     /**
-     * Provisions and wages off; one member at morale 10: after the first dawn it is still crew (one low day), after
+     * {@code crew.desertion.at_port_only = false} (the behaviour before CRW2; with it on see {@code DesertionGameTests}):
+     * provisions and wages off; one member at morale 10: after the first dawn it is still crew (one low day), after
      * the second it has deserted: a sailor stands in its place, it is no longer crew, the other member stays.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 120, batch = CONFIG_BATCH + "desertion")
     public static void lowMoraleDeserts(GameTestHelper h) {
         ConfigOverrides.during(h, ProvisionsConfig.CONSUMPTION_ENABLED, false);
         ConfigOverrides.during(h, CrewConfig.WAGES_ENABLED, false);
+        ConfigOverrides.during(h, CrewConfig.DESERT_AT_PORT_ONLY, false);
         Ship s = ship(h, x -> { });
         s.a().setStoredMorale(10);
         dawnAt(h, 0);

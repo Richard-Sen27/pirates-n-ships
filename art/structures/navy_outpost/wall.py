@@ -6,16 +6,18 @@ tower, see _style.curtain): solid body on z 1..4 up to the walkway (y 4, people 
 has a pilaster at each end (two walls meet pilaster to pilaster, a double buttress every seven blocks) and a recessed
 bay between them on a sloped, mossy plinth, with two arrow slits, under a corbel table that carries the parapet and the
 slab-capped merlons. In the middle the parapet is cut for an embrasure, and a cannon stands behind it on a dark oak gun
-deck, muzzle north (master at [3, 5, 1], rear at [3, 5, 2]), with a powder barrel beside it and shot stores.
+deck, muzzle north (master at [3, 5, 1], rear at [3, 5, 2]), with a powder barrel and a shot locker against the
+parapet either side of the muzzle. Behind the gun the walkway stays clear two blocks wide (z 3..4) from end to end, so
+mobs walk the whole wall run (ST3b).
 
 The landward face (z 4) has an arched store niche with powder and shot, and a weathered timber hoarding: spruce deck
 slabs on dark oak brackets widen the walkway over the path, with a fence rail; a ladder (z 5) climbs to it, and a
-lantern stands at its head. z 5..6 is a gravel path along the foot of the wall.
+lantern stands on the rail beside its head. z 5..6 is a gravel path along the foot of the wall.
 
 Connectors (foundation row): wall_east_in [0, 0, 2] (west face) and wall_east_out [6, 0, 2] (east face) for the run
 that grows east, wall_west_out [0, 0, 3] and wall_west_in [6, 0, 3] for the one that grows west (see _style)."""
-from _style import (dry, EAST_Z, PALETTE, WALK, WEST_Z, age, cannon, connector, curtain, fence_run, lantern_post,
-                    rafter_ends, stair_shape)
+from _style import (dry, EAST_Z, PALETTE, WALK, WEST_Z, age, cannon, connector, curtain, fence_run, rafter_ends,
+                    stair_shape)
 from buildspec import Piece
 
 W, H, D = 7, 8, 7
@@ -31,13 +33,13 @@ curtain(p, 0, W - 1, gaps=(GUN_X,), slits=(1, W - 2))
 p.fill(0, 0, 5, W - 1, 0, D - 1, "gravel")
 p.fill(0, 0, 5, W - 1, 0, 5, "cobble")
 
-# the gun-port platform: a dark oak deck under the cannon, the cannon facing the sea, powder and shot beside it
+# the gun-port platform: a dark oak deck under the cannon, the cannon facing the sea; the powder barrel and the shot
+# locker stand against the parapet either side of the muzzle (ST3b), so the walkway behind the gun stays clear: rows
+# z 3..4 are free along the whole segment and on into the next one (two blocks wide for the squads' pathfinding)
 p.fill(GUN_X - 1, WALK, 1, GUN_X + 1, WALK, 3, "dark_oak")
 cannon(p, GUN_X, WALK + 1, 1, "north")
-p.put(GUN_X - 1, WALK + 1, 2, "pirates_n_ships:cargo_barrel")
-p.put(GUN_X + 1, WALK + 1, 3, "minecraft:barrel[facing=up,open=false]")
-p.put(GUN_X + 1, WALK + 1, 2, "minecraft:spruce_trapdoor[facing=north,half=bottom,open=false,powered=false,"
-                              "waterlogged=false]")   # the shot locker's lid
+p.put(GUN_X - 1, WALK + 1, 1, "pirates_n_ships:cargo_barrel")
+p.put(GUN_X + 1, WALK + 1, 1, "minecraft:barrel[facing=up,open=false]")   # the shot locker
 
 # an arched store niche in the landward face under the hoarding: a keg of powder and two crates of shot
 for x in range(1, 4):
@@ -57,10 +59,11 @@ for x in range(W):
         p.put(x, WALK, HOARD_Z, "spruce_slab_top")
 fence_run(p, [(x, HOARD_Z) for x in range(W) if x != LADDER_X], WALK + 1)
 
-# the ladder up the landward face to the hoarding, a lantern post at the head of it
+# the ladder up the landward face to the hoarding, a lantern on the rail's post beside its head (on the hoarding, off
+# the walkway: ST3b)
 for y in range(1, WALK + 1):
     p.put(LADDER_X, y, 5, "ladder_s")
-lantern_post(p, 6, WALK + 1, 4, height=1)
+p.put(LADDER_X + 1, WALK + 2, HOARD_Z, "lantern")
 
 age(p)
 

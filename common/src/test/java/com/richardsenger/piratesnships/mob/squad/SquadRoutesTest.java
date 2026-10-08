@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -33,8 +34,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * The squad's patrol route (MOB2): built from the placed pieces in the decided order (court, land gate, sea gate,
- * quay, the east walls, the west walls), turned with the gate, and every spot is a place to stand in its committed
- * ST3 piece.
+ * quay, out along the east walls, out along the west walls, back to the stairs), turned with the gate, and every spot
+ * is a place to stand in its committed ST3 piece. Since ST3b the walkway runs clear two blocks wide through every wall
+ * and the gate, so the route reaches each wall's far end.
  */
 class SquadRoutesTest {
 
@@ -58,7 +60,7 @@ class SquadRoutesTest {
     private static final PlacedPiece BARRACKS = new PlacedPiece("barracks", new BlockPos(109, 64, 215), Rotation.NONE);
 
     @Test
-    void theRouteGoesCourtGatesQuayThenTheEastAndTheWestWalls() {
+    void theRouteGoesCourtGatesQuayThenOutAlongBothWallRunsAndBack() {
         // jigsaw order with the farther east wall before the nearer one: the route still walks outwards
         List<BlockPos> route = SquadRoutes.route(List.of(GATE, QUAY, EAST_WALL_2, WEST_WALL, EAST_WALL, BARRACKS, EAST_TOWER, WEST_TOWER));
         assertEquals(List.of(
@@ -67,10 +69,11 @@ class SquadRoutesTest {
                 new BlockPos(107, 65, 203),  // the sea gate
                 new BlockPos(107, 65, 189),  // the quay's deck: (3, 6, 7) of the quay, level with the court
                 new BlockPos(111, 69, 203),  // up the stairs onto the gate's east walkway
-                new BlockPos(116, 69, 204),  // the nearer east wall
-                new BlockPos(123, 69, 204),  // the farther east wall
-                new BlockPos(103, 69, 203),  // back along the sea-side walkway to the west
-                new BlockPos(98, 69, 204)    // the west wall, at its end toward the gate
+                new BlockPos(120, 69, 203),  // the nearer east wall, at its far end past the gun
+                new BlockPos(127, 69, 203),  // the farther east wall, at its far end
+                new BlockPos(103, 69, 203),  // back along the walls and the sea-side walkway to the west
+                new BlockPos(94, 69, 203),   // the west wall, at its far end past the gun (beside its guard)
+                new BlockPos(112, 69, 204)   // back along the walkway to the head of the court's stairs
         ), route);
         assertEquals(new BlockPos(107, 64, 207), SquadRoutes.anchor(List.of(GATE, QUAY)), "the outpost's anchor: the court centre");
         assertTrue(route.size() >= 3, "a route of at least three waypoints");
@@ -92,7 +95,8 @@ class SquadRoutesTest {
         assertEquals(GarrisonPosts.toWorld(south, SquadRoutes.WALL_WALK_EAST_RUN), route.get(4), "then the southern wall");
         assertEquals(new BlockPos(100 - 3, 69, 200 + 3), route.get(5), "the west walkway is north now");
         assertEquals(GarrisonPosts.toWorld(north, SquadRoutes.WALL_WALK_WEST_RUN), route.get(6), "then the northern wall");
-        assertEquals(7, route.size(), "no quay, no waypoint on it");
+        assertEquals(new BlockPos(100 - 4, 69, 200 + 12), route.get(7), "back to the head of the stairs");
+        assertEquals(8, route.size(), "no quay, no waypoint on it");
     }
 
     @Test
@@ -105,7 +109,7 @@ class SquadRoutesTest {
     void everySpotIsAPlaceToStandInItsPiece() throws IOException {
         Map<String, List<BlockPos>> spots = Map.of(
                 GarrisonPosts.FORT_GATE, List.of(SquadRoutes.COURT, SquadRoutes.LAND_GATE, SquadRoutes.SEA_GATE,
-                        SquadRoutes.EAST_WALK, SquadRoutes.WEST_WALK),
+                        SquadRoutes.EAST_WALK, SquadRoutes.WEST_WALK, SquadRoutes.STAIR_HEAD),
                 "wall", List.of(SquadRoutes.WALL_WALK_EAST_RUN, SquadRoutes.WALL_WALK_WEST_RUN),
                 "quay", List.of(SquadRoutes.QUAY_DECK));
         for (Map.Entry<String, List<BlockPos>> e : spots.entrySet()) {
@@ -121,6 +125,38 @@ class SquadRoutesTest {
                 assertTrue(below != null && below.isFaceSturdy(EmptyBlockGetter.INSTANCE, BlockPos.ZERO, Direction.UP),
                         where + " stands on a sturdy block, found " + names.get(p.below()));
             }
+        }
+    }
+
+    /**
+     * ST3b: the walkway (people stand on y 5) is free and floored two blocks wide along the whole wall segment (rows
+     * z 3..4, behind the gun) and the gate's (rows z 2..3, between the guard shelter's posts), and fully open (z 1..4)
+     * in the end columns where two pieces meet, so a mob walks from piece to piece without squeezing.
+     */
+    @Test
+    void theWalkwayIsTwoWideThroughEveryWallAndTheGate() throws IOException {
+        assertLane("wall", 7, List.of(3, 4), List.of(0, 6));
+        assertLane(GarrisonPosts.FORT_GATE, 15, List.of(2, 3), List.of(0, 14));
+    }
+
+    private static void assertLane(String piece, int length, List<Integer> laneZ, List<Integer> joints) throws IOException {
+        Map<BlockPos, String> names = new HashMap<>();
+        Map<BlockPos, BlockState> blocks = template(piece, names);
+        List<BlockPos> cells = new ArrayList<>();
+        for (int x = 0; x < length; x++) {
+            for (int z : laneZ) cells.add(new BlockPos(x, 5, z));
+        }
+        for (int x : joints) {
+            for (int z = 1; z <= 4; z++) cells.add(new BlockPos(x, 5, z));
+        }
+        for (BlockPos p : cells) {
+            String where = piece + " walkway " + p.toShortString();
+            for (BlockPos room : List.of(p, p.above())) {
+                assertEquals("minecraft:air", names.getOrDefault(room, "minecraft:air"), where + ": " + room.toShortString() + " is free");
+            }
+            BlockState below = blocks.get(p.below());
+            assertTrue(below != null && below.isFaceSturdy(EmptyBlockGetter.INSTANCE, BlockPos.ZERO, Direction.UP),
+                    where + " has a sturdy floor, found " + names.get(p.below()));
         }
     }
 

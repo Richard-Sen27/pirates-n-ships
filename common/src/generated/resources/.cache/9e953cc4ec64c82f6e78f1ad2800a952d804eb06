@@ -1,7 +1,7 @@
-// 1.21.1	2026-10-07T17:43:29.541253	Tags for minecraft:entity_type mod id vanilla
+// 1.21.1	2026-10-08T22:55:26.744384	Tags for minecraft:entity_type mod id vanilla
 95fce22b73631479b6f41cd0a28075f4924d0537 data/pirates_n_ships/tags/entity_type/law_enforcers.json
 533c36c4931aa6bcebd6fe3e115271832f2d10c0 data/pirates_n_ships/tags/entity_type/law_protected.json
 1e35b1ca37c20b709cfb79e0f4c07056623cfb25 data/pirates_n_ships/tags/entity_type/navy.json
 43f1c31b39e316877db31d29a834961831895609 data/pirates_n_ships/tags/entity_type/not_capturable.json
-6cfa5462d062c2deb725fb5a064f8e43373b45fc data/sable/tags/entity_type/destroy_with_sub_level.json
-6cfa5462d062c2deb725fb5a064f8e43373b45fc data/sable/tags/entity_type/retain_in_sub_level.json
+f1f33d9ef4e333606c8849f2361c6bc37549ec48 data/sable/tags/entity_type/destroy_with_sub_level.json
+f1f33d9ef4e333606c8849f2361c6bc37549ec48 data/sable/tags/entity_type/retain_in_sub_level.json

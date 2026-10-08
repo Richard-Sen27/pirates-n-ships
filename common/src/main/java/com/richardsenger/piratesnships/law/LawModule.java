@@ -204,7 +204,7 @@ public final class LawModule implements ModModule {
                     case ATTACK_STRUCK_COLORS -> "Attacking a ship that struck its colors";
                     case PRESS_GANG -> "Press-ganging a prisoner";
                     case DESERTION -> "Desertion";
-                    case FENCE_PLUNDER -> "Selling noticed plunder";
+                    case FENCE_PLUNDER -> "Selling noticed plunder (legacy)";
                     case SELLING_PLUNDER -> "Offering stolen goods";
                     case SUSPECTED_PIRACY -> "Suspected piracy";
                 });

@@ -180,7 +180,7 @@ public final class TradeCommands {
         }
         TransactionResult r = buy ? MarketTransactions.buy(player, id, good, qty, holder)
                 : MarketTransactions.sell(player, id, good, qty, plundered, holder);
-        // The same crime hook as desk and opened-market sales (the law module records fence_plunder)
+        // The same crime hook as desk and opened-market sales (the law module records selling_plunder on a refusal)
         MarketBackend.reportNoticed(player, id, r);
         report(c, r);
         return r.done() ? 1 : 0;
@@ -282,7 +282,6 @@ public final class TradeCommands {
         for (TransactionResult.Status s : TransactionResult.Status.values()) {
             lang.add(s.translationKey(), switch (s) {
                 case OK -> "Done";
-                case CONFISCATED -> "Confiscated";
                 case NO_MARKET -> "No market here";
                 case NOT_TRADED -> "Not traded here";
                 case STOCK_LIMIT -> "Over the port's stock or demand";

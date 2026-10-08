@@ -64,7 +64,7 @@ class TradeConfigAndCodecTest {
         TradeConfig.PORT_FEES.set(false);
         assertEquals(0, PortFees.dockingFee(PortKind.NAVY_OUTPOST, 0, TradeConfig.feeParams()));
         TradeConfig.PLUNDER_ENABLED.set(false);
-        assertEquals(PlunderRules.Outcome.NORMAL, PlunderRules.judge(PortKind.NAVY_OUTPOST, true, 64, 10, 0.0, TradeConfig.plunderParams()).outcome());
+        assertEquals(PlunderRules.Outcome.NORMAL, PlunderRules.judge(PortKind.NAVY_OUTPOST, true, 10, TradeConfig.plunderParams()).outcome());
         TradeConfig.CONTRACTS_ENABLED.set(false);
         PortProfile from = ProfileDeriver.derive(PortKind.SEAFARER_VILLAGE, Climate.TROPICAL, 1, GOODS);
         PortProfile to = ProfileDeriver.derive(PortKind.NAVY_OUTPOST, Climate.COLD, 2, GOODS);

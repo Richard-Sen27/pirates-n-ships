@@ -23,7 +23,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -65,7 +64,7 @@ public final class LawCommands {
                 .then(Commands.literal("crime").then(Commands.argument("target", EntityArgument.entity())
                         .then(Commands.argument("crime", StringArgumentType.word())
                                 .suggests((c, b) -> SharedSuggestionProvider.suggest(
-                                        Arrays.stream(CrimeType.values()).map(CrimeType::id), b))
+                                        CrimeType.committable().map(CrimeType::id), b))
                                 .executes(LawCommands::crime))))
                 .then(Commands.literal("last").then(Commands.argument("target", EntityArgument.entity())
                         .executes(LawCommands::lastCrime)))
@@ -122,7 +121,7 @@ public final class LawCommands {
     private static int crime(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
         LivingEntity target = living(c);
         String id = StringArgumentType.getString(c, "crime");
-        CrimeType type = Arrays.stream(CrimeType.values()).filter(t -> t.id().equals(id)).findFirst()
+        CrimeType type = CrimeType.committable().filter(t -> t.id().equals(id)).findFirst()
                 .orElseThrow(UNKNOWN_CRIME::create);
         // The command source acts as the victim, so repeating the command shows the repeat window
         Entity victim = c.getSource().getEntity();

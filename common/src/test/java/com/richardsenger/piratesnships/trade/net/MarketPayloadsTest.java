@@ -6,7 +6,6 @@ import com.richardsenger.piratesnships.trade.exchange.TransactionResult;
 import com.richardsenger.piratesnships.trade.market.GoodRole;
 import com.richardsenger.piratesnships.trade.market.Market;
 import com.richardsenger.piratesnships.trade.market.PortKind;
-import com.richardsenger.piratesnships.trade.plunder.PlunderRules;
 import io.netty.buffer.Unpooled;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
@@ -68,8 +67,7 @@ class MarketPayloadsTest {
         var line = new MarketView.GoodLine(Constants.id("sugar"), net.minecraft.resources.ResourceLocation.withDefaultNamespace("sugar"),
                 GoodRole.PRODUCES, new MarketView.Price(120, 900, Market.Outcome.OK), new MarketView.Price(0, 0, Market.Outcome.LIMIT));
         var view = new MarketView(port, PortKind.PIRATE_ISLAND, 64, 12345L, List.of(line), List.of(), List.of(c));
-        var result = new TransactionResult(TransactionResult.Status.CONFISCATED, Constants.id("sugar"), 64, 0,
-                PlunderRules.Outcome.CONFISCATED, true, Optional.empty());
+        var result = TransactionResult.plunderRefused(Constants.id("sugar"));
         var state = new MarketPayloads.State(Optional.of(view), Optional.of(result));
         assertEquals(state, roundTrip(MarketPayloads.State.CODEC, state));
         var empty = new MarketPayloads.State(Optional.empty(), Optional.of(TransactionResult.contract(TransactionResult.Status.CONTRACT_REFUSED,

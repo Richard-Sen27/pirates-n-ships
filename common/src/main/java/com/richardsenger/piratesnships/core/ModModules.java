@@ -54,6 +54,7 @@ public final class ModModules {
             new com.richardsenger.piratesnships.crew.hiring.HiringModule(),
             new com.richardsenger.piratesnships.worldsim.voyage.VoyageModule(),
             new com.richardsenger.piratesnships.worldsim.materialize.MaterializeModule(),
-            new com.richardsenger.piratesnships.worldsim.navy.NavyModule()
+            new com.richardsenger.piratesnships.worldsim.navy.NavyModule(),
+            new com.richardsenger.piratesnships.worldsim.raid.RaidModule()
     );
 }

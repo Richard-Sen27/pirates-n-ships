@@ -807,6 +807,64 @@ Cloth and flags (ART3):
 - **Blockbench global names:** besides `KR`, Blockbench defines a global `FC`; `window.FC = {...}` does not shadow it
   inside `risky_eval` (properties land on Blockbench's function). ART3 used `window.ART3`.
 
+Treasure map and receipt (ART4):
+- Two `java_block` item projects, `treasure_map.bbmodel` and `ship_receipt.bbmodel`, no block of the same name. No new
+  colours: `paper`, `biscuit_light`, `biscuit_dark` (`palette_3`), `map_land`, `map_ink`, `map_sea_dark`,
+  `flag_red`, `flag_red_dark` (`palette_5`), `red` (`palette`), `spice_dark` (`palette_4`); particle `palette_3`
+  for both. Datagen writes no model for either item any more (`TreasureMaps.gatherData` dropped its delegation to
+  `item/chart`, `ShipOrderData` its flat `minecraft:item/paper` model); they are plain items, so no `handMadeItem`
+  call is needed.
+- **Treasure map** (47 elements): a parchment folded once down the middle, built facing south like a sprite
+  (x 1..15, y 2..14, sheet z 7.75..8.25). The right half lies flat; the left half and everything drawn on it turn
+  `y 22.5` about `[8, 8, 8]` (the fold), so its outer edge comes 2.7 px towards the viewer and the map opens like a
+  shallow book. Its top-left corner is rolled over towards the front: the sheet stops at y 12.4 under a roll of two
+  crossed boxes along x (D 2, `biscuit_dark` ends with a `biscuit_light` core disc, `biscuit_dark` underside),
+  turned with the half. Aged edges are rim inlays of uneven width (`biscuit_light`, 0.05 px proud) with
+  `biscuit_dark` stains on the corners (0.1 px proud), a `biscuit_dark` crease beside the fold; the back is
+  `biscuit_light`. Drawing: left half a mainland coast along the bottom, two wave marks, an ink compass rose with a
+  red north tip and three route dots; right half an island of six `map_land` rows over `map_ink` rows 0.35 px wider
+  (the ink rows alternate between 0.05 and 0.1 px proud so neighbours never share a plane; land 0.15 px proud), a
+  palm as an ink T, a fourth route dot and the red X (two `flag_red` bars at +45 and -45, 0.2 and 0.26 px proud).
+  Inlays are zero-depth elements with only their south face. Lint: no fights; two same-look warnings where the
+  turned half's top and bottom faces meet the flat half's at the fold (0.012 px², same paper patch).
+- **Treasure map display:** held open on the fingers and tilted up towards the holder like a map being read:
+  third person `[40, 15, 0]` / `[0, 2.5, 1]` / 0.5; first person (the doubloon's) `[0, -70, 25]` /
+  `[1.13, 4.2, 1.13]` / 0.55; `gui` `[20, -15, 0]` / 1.1 (the fold and the roll show); `ground` lying flat, face up,
+  `[-90, 0, 0]` / `[0, -1.5, 0]` / 0.5; `fixed` and `head` vanilla (the drawing faces out of the frame). Left-hand
+  slots repeat the right hand.
+- **Ship receipt** (16 elements): a letter with its top third folded down over the front. Sheet x 2..14, y 3.5..12.5,
+  z 7.7..8.3 (`biscuit_light` edges); the flap y 8..12.5, z 8.3..8.5 with a `biscuit_light` crease band along its
+  top and a `biscuit_light` shadow band on the sheet just under its folded edge. Ink (`map_ink`, 0.05 px proud):
+  three address lines and a signature on the sheet, a heading of two lines and the shipwright's number on the flap.
+  The wax seal straddles the flap's edge at (8, 8): two crossed boxes (`red`, `flag_red_dark` sides, 0.05 px apart
+  in depth), a raised `spice_dark` stamp and a `flag_red_dark` drip below the seal.
+- **Receipt display:** held upright between the fingers like a letter, its face turned outwards: third person
+  `[70, -90, 0]` / `[0, 3, 1]` / 0.55; first person `[0, -70, 25]` / `[1.13, 4.2, 1.13]` / 0.6; `gui`
+  `[20, -15, 0]` / 1.25; `ground` flat face up as the map; `fixed`, `head` vanilla.
+- Built like ART1b-ART1d: a Python part list (patch names through the `SHEETS` cells) wrote the model JSON, and
+  `ART4.load(name)` in `risky_eval` opened it in a new `java_block` tab with `Codecs.java_block.parse(json, path)`
+  (given the JSON's path under `models/item/`, the parser resolves the palette textures itself, with folder and
+  namespace set). `Codecs.java_block.compile()` of the tab gives the same 47 / 16 elements (checked element by
+  element); the project is `Codecs.project.compile({raw: true})` with each texture's `path` emptied and
+  `relative_path` pointing at the sheet under `common/src/main/resources`. Script and helpers are not committed.
+- Renders: `renders/treasure_map.png`, `renders/ship_receipt.png`: front, three-quarter and back views (a separate
+  `THREE.WebGLRenderer` over a clone of `Project.model_3d`), then the GUI slot and third person in the right hand
+  (display mode, `scene` rendered from the display preview's camera with the gizmo hidden), composed on a 2D canvas.
+- **Audit: items whose item model is still not a Blockbench model** (the backlog for the next batch; checked against
+  every `item.` / `block.pirates_n_ships.*` lang key; the ART2/ART3 branches may change it when they land):
+
+  | Item | Model now | Declared in |
+  |---|---|---|
+  | `mooring_ring` | `minecraft:block/button_inventory` in iron (block: `minecraft:block/button`) | `combat/grapple/GrappleModule.ringModels` |
+  | `pirate_spawn_egg`, `sailor_spawn_egg`, `navy_soldier_spawn_egg`, `navy_officer_spawn_egg`, `shark_spawn_egg` | `minecraft:item/template_spawn_egg` | `mob/MobModule.gatherData` (`SPAWN_EGG`) |
+  | `kraken_spawn_egg` | `minecraft:item/template_spawn_egg` | `mob/kraken/KrakenContent` (`SPAWN_EGG_MODEL`) |
+
+  Spawn eggs keep vanilla's look by design (design.md §4.8), so the mooring ring (block and item) is the only real
+  backlog entry. Every other item has a hand-made model under `models/item/` or delegates to a hand-made block model.
+  Unused sprites that could go in a cleanup: `textures/item/carpenters_hammer.png`, `saw.png`, `nails.png`,
+  `shipwright_toolkit.png` (ART1c); `chart.png`, `map_tile.png`, `kraken_beak.png`, `kraken_ink.png` stay while tests
+  read them.
+
 ## Entities
 
 Animated mobs and NPCs (crew member, pirate, sailor, navy soldier and officer; design.md §9) are GeckoLib models

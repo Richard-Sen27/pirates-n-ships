@@ -22,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
  *   <li>Reputation (REP1, docs/design.md §15): pirates leave a player they like alone (pirate reputation above
  *       {@code reputation.pirate_friendly_threshold}) until it hits them; the navy's "wanted" input also covers a
  *       player whose navy reputation is below {@code reputation.navy_hostile_threshold}.</li>
+ *   <li>Truce (BOS1, docs/design.md §15): a mob that granted someone a truce (a pirate captain's duel:
+ *       {@code SeafarerMob#truce}) does not attack it on sight; it still fights back when hit.</li>
  *   <li>Retaliation: a fighter that is not peaceful keeps fighting an attacker outside its own faction for
  *       {@code mobs.grudge_ticks} after being hit, even one it would not attack on sight.</li>
  * </ul>
@@ -46,9 +48,15 @@ public final class HostilityRules {
      * @param ship         what the ship it is aboard tells NPCs (FL2); {@link ShipStance#NONE} if not aboard or not a person
      * @param likedByPirates a player the pirates like (REP1: pirate reputation above
      *                     {@code reputation.pirate_friendly_threshold}); only asked by pirate mobs
+     * @param truce        the deciding mob granted it a truce (BOS1: a duel with the pirate captain)
      */
     public record Target(@Nullable MobFaction faction, boolean player, boolean exempt, boolean wantedByNavy, boolean monster,
-                         ShipStance ship, boolean likedByPirates) {
+                         ShipStance ship, boolean likedByPirates, boolean truce) {
+        public Target(@Nullable MobFaction faction, boolean player, boolean exempt, boolean wantedByNavy, boolean monster,
+                      ShipStance ship, boolean likedByPirates) {
+            this(faction, player, exempt, wantedByNavy, monster, ship, likedByPirates, false);
+        }
+
         public Target(@Nullable MobFaction faction, boolean player, boolean exempt, boolean wantedByNavy, boolean monster,
                       ShipStance ship) {
             this(faction, player, exempt, wantedByNavy, monster, ship, false);
@@ -60,7 +68,12 @@ public final class HostilityRules {
 
         /** The same target, liked by the pirates or not (REP1). */
         public Target withLikedByPirates(boolean liked) {
-            return new Target(faction, player, exempt, wantedByNavy, monster, ship, liked);
+            return new Target(faction, player, exempt, wantedByNavy, monster, ship, liked, truce);
+        }
+
+        /** The same target, under a truce with the deciding mob or not (BOS1). */
+        public Target withTruce(boolean truce) {
+            return new Target(faction, player, exempt, wantedByNavy, monster, ship, likedByPirates, truce);
         }
 
         public static Target ofPlayer(boolean exempt, boolean wanted) {
@@ -72,7 +85,7 @@ public final class HostilityRules {
         }
 
         public Target withShip(ShipStance stance) {
-            return new Target(faction, player, exempt, wantedByNavy, monster, stance, likedByPirates);
+            return new Target(faction, player, exempt, wantedByNavy, monster, stance, likedByPirates, truce);
         }
 
         public static Target ofMob(MobFaction faction) {
@@ -86,7 +99,7 @@ public final class HostilityRules {
 
     /** Whether {@code self} attacks {@code t} on sight. */
     public static boolean attacksOnSight(MobFaction self, Target t, Params p) {
-        if (p.peaceful() || t.exempt()) return false;
+        if (p.peaceful() || t.exempt() || t.truce()) return false;
         if (t.ship() == ShipStance.SURRENDERED) return false; // struck colours: nobody attacks on sight
         return switch (self) {
             case CIVILIAN -> false;

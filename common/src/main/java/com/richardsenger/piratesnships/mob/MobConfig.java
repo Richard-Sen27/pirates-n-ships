@@ -77,12 +77,18 @@ public final class MobConfig {
             "Mobs drop their loot table (doubloons and cutlasses from pirates, shot and gunpowder from navy)");
 
     // --- per type -----------------------------------------------------------------------------------------------
+    /**
+     * The {@code mobs.captain} section (BOS1): the pirate captain's {@code enabled} and {@code peaceful} toggles are
+     * declared here with the other types', the rest by {@code mob.captain.CaptainConfig}.
+     */
+    public static final ConfigSection CAPTAIN = S.section("captain",
+            "The named pirate captain of each pirate island (captain's hut), his bounty and his duel");
     private static final Map<MobKind, ConfigValue<Boolean>> ENABLED = new EnumMap<>(MobKind.class);
     private static final Map<MobKind, ConfigValue<Boolean>> PEACEFUL = new EnumMap<>(MobKind.class);
 
     static {
         for (MobKind kind : MobKind.values()) {
-            ConfigSection t = S.section(kind.id(), "The " + kind.id().replace('_', ' '));
+            ConfigSection t = kind == MobKind.PIRATE_CAPTAIN ? CAPTAIN : S.section(kind.id(), "The " + kind.id().replace('_', ' '));
             ENABLED.put(kind, t.bool("enabled", true,
                     "This mob exists: off = it can't be spawned and existing ones disappear"));
             if (kind.faction() != MobFaction.CIVILIAN) {
@@ -140,6 +146,7 @@ public final class MobConfig {
     /** Loads the class so the values above are declared in time. Called from {@code registerConfig()}. */
     public static void init() {
         com.richardsenger.piratesnships.mob.kraken.KrakenConfig.init();
+        com.richardsenger.piratesnships.mob.captain.CaptainConfig.init();
     }
 
     public static ConfigValue<Boolean> enabled(MobKind kind) {
@@ -166,6 +173,7 @@ public final class MobConfig {
         return switch (kind) {
             case PIRATE -> PIRATE_SKILL.get();
             case NAVY_OFFICER -> OFFICER_SKILL.get();
+            case PIRATE_CAPTAIN -> com.richardsenger.piratesnships.mob.captain.CaptainConfig.SKILL.get();
             default -> kind.defaultSkill();
         };
     }

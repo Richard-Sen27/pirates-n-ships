@@ -226,6 +226,23 @@ public final class LawService {
     }
 
     /**
+     * The navy's standing bounty of {@code amount} doubloons on a named NPC (BOS1: a pirate captain), placed under a
+     * random id that {@link #syncNavyBounty} never withdraws. Notice boards list it like any bounty, and killing the
+     * target gives the proof. Returns the board's new total on the target (0: nothing placed, {@code amount} < 1).
+     */
+    public static long placeStandingBounty(MinecraftServer server, BountyTarget target, int amount) {
+        BountyBoardData data = BountyBoardData.get(server);
+        data.setBoard(data.board().placeStandingBounty(UUID.randomUUID(), target, amount, now(server)));
+        return bountyTotal(server, target.id());
+    }
+
+    /** Withdraws every bounty on {@code target} without payout (a captain who died with no one to claim him). */
+    public static void withdrawBounties(MinecraftServer server, UUID target) {
+        BountyBoardData data = BountyBoardData.get(server);
+        data.setBoard(data.board().clearTarget(target));
+    }
+
+    /**
      * Claims all bounties on a loaded {@code target}: dead (proof item) or alive (delivered). Give the claimant
      * {@code payout} doubloons on success. The target's score is reduced as configured.
      */

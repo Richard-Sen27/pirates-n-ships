@@ -14,7 +14,9 @@ package com.richardsenger.piratesnships.sailing.force;
  * @param keelLongitudinalDrag drag along the hull per kpg, at full immersion [1/s]
  * @param keelLateralDrag      drag across the hull per kpg, at full immersion [1/s]
  * @param keelYawDragFactor    multiplier on the yaw damping that the lateral drag implies for a hull of the given length
- * @param anchor               anchor tuning
+ *
+ * <p>The anchor is not part of this model since AN2a: its chain force has its own force group and tuning
+ * ({@code sailing.anchor.AnchorChain}, {@code AnchorConfig}).
  */
 public record SailingParams(
         double sailForceScale,
@@ -24,15 +26,13 @@ public record SailingParams(
         boolean keelEnabled,
         double keelLongitudinalDrag,
         double keelLateralDrag,
-        double keelYawDragFactor,
-        AnchorParams anchor) {
+        double keelYawDragFactor) {
 
     /** The defaults. The server config declares its defaults from this instance. */
     public static final SailingParams DEFAULTS = new SailingParams(
             1.0, 0.5,
             0.5, 35.0,
-            true, 0.1, 8.0, 1.0, // lateral 8.0 since spike 3 (2.0 drifted 0.7 m/s on a beam reach)
-            AnchorParams.DEFAULTS);
+            true, 0.1, 8.0, 1.0); // lateral 8.0 since spike 3 (2.0 drifted 0.7 m/s on a beam reach)
 
     public SailingParams {
         sailForceScale = Math.max(0.0, sailForceScale);
@@ -46,36 +46,11 @@ public record SailingParams(
 
     public SailingParams withKeelEnabled(boolean on) {
         return new SailingParams(sailForceScale, halfTrimFactor, rudderStrength, maxRudderAngleDeg, on,
-                keelLongitudinalDrag, keelLateralDrag, keelYawDragFactor, anchor);
+                keelLongitudinalDrag, keelLateralDrag, keelYawDragFactor);
     }
 
     public SailingParams withSailForceScale(double scale) {
         return new SailingParams(scale, halfTrimFactor, rudderStrength, maxRudderAngleDeg, keelEnabled,
-                keelLongitudinalDrag, keelLateralDrag, keelYawDragFactor, anchor);
-    }
-
-    /**
-     * Anchor tuning.
-     *
-     * @param stiffness       pull toward the anchor per kpg and per block beyond the slack [1/s²]
-     * @param damping         horizontal velocity damping per kpg while the anchor holds [1/s]
-     * @param maxAcceleration cap of the anchor force divided by mass [blocks/s²]
-     * @param slack           rope slack: distance from the anchor point the ship may drift freely [blocks]
-     * @param dropTicks       time from "drop" until the anchor holds fully [ticks]
-     * @param raiseTicks      time from "raise" until the anchor is stowed [ticks]
-     */
-    public record AnchorParams(double stiffness, double damping, double maxAcceleration, double slack,
-                               int dropTicks, int raiseTicks) {
-
-        public static final AnchorParams DEFAULTS = new AnchorParams(0.5, 1.5, 6.0, 2.0, 40, 100);
-
-        public AnchorParams {
-            stiffness = Math.max(0.0, stiffness);
-            damping = Math.max(0.0, damping);
-            maxAcceleration = Math.max(0.0, maxAcceleration);
-            slack = Math.max(0.0, slack);
-            dropTicks = Math.max(1, dropTicks);
-            raiseTicks = Math.max(1, raiseTicks);
-        }
+                keelLongitudinalDrag, keelLateralDrag, keelYawDragFactor);
     }
 }

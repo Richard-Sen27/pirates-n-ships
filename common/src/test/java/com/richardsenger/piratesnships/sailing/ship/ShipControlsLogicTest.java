@@ -130,9 +130,9 @@ class ShipControlsLogicTest {
 
     @Test
     void shipAnchorRoundTripsThroughNbtAndJson() {
-        for (AnchorState s : new AnchorState[] {AnchorState.RAISED.drop(), new AnchorState(AnchorState.Phase.HOLDING, 1.0),
-                new AnchorState(AnchorState.Phase.RAISING, 0.37)}) {
-            ShipAnchor a = new ShipAnchor(s, new Vec3(12.5, 2.0, -3000.25), new BlockPos(20_000_001, 70, -19_999_000));
+        for (AnchorState s : new AnchorState[] {AnchorState.RAISED.drop(), AnchorState.HOLDING, AnchorState.RAISING}) {
+            ShipAnchor a = new ShipAnchor(s, new Vec3(12.5, 2.0, -3000.25), new Vec3(0.25, -4.0, 1.5), 7.125,
+                    s == AnchorState.HOLDING, new BlockPos(20_000_001, 70, -19_999_000), new Vec3(20_000_003.9, 69.75, -19_998_999.5));
             var nbt = ShipAnchor.CODEC.encodeStart(NbtOps.INSTANCE, a).getOrThrow();
             assertEquals(a, ShipAnchor.CODEC.parse(NbtOps.INSTANCE, nbt).getOrThrow());
             var json = ShipAnchor.CODEC.encodeStart(JsonOps.INSTANCE, a).getOrThrow();

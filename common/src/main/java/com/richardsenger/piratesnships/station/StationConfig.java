@@ -32,6 +32,11 @@ public final class StationConfig {
     private StationConfig() {
     }
 
+    /** A subsection {@code crew_stations.<name>} for a station kind's own config class (e.g. {@code station.helm.CourseConfig}). */
+    public static ConfigSection section(String name, String comment) {
+        return S.section(name, comment);
+    }
+
     public static void init() {
     }
 }

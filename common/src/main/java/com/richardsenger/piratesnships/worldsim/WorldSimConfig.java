@@ -42,4 +42,9 @@ public final class WorldSimConfig {
     /** Loads the class so the values above are declared in time. Called from {@code registerConfig()}. */
     public static void init() {
     }
+
+    /** A sub-section {@code world_simulation.<name>} for a world-simulation package's own config class. */
+    public static ConfigSection sub(String name, String comment) {
+        return S.section(name, comment);
+    }
 }

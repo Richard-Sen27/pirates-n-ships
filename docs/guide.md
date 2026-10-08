@@ -212,13 +212,25 @@ to starboard, the left third to port, the middle back to midships. There are thr
 action bar shows the position. The rudder only works while the ship moves through the water, and it reverses when the
 ship goes astern.
 
+### A helmsman holds the course
+Assign a crew member to the ship's helm (whistle on the crew member, then on the helm) or simply give a course:
+`/pirates crew order course <x> <z>` (more pairs for waypoints, `loop` to sail them round and round); a free hand takes
+the helm by himself. He turns the wheel toward each point in turn and puts the rudder midships when the last one is
+reached ("We've arrived, captain!"). He does not touch the sails: order "Hoist sails" as well. Take the wheel
+yourself at any time and he lets go; release it and he steers on. Only the ship's steering helm holds a course, and
+if the ship stops making headway with its sails set he tells you it is stuck. Server config `crew_stations.course`.
+
 ### Capstan and anchor
 The anchor is a real object: it hangs outside the hull on the side nearer to the capstan, just below the deck, and
-moves with the ship. Using the capstan runs it out on a chain at 6 blocks per second to the first solid block within
-32 blocks below, with the chain rattling, a splash when it enters the water and a thud when it lands; from that moment
-the ship holds. Using the capstan again heaves it back in at 2.5 blocks per second until it hangs at the hull again.
-Using it mid-way reverses. If there is no ground in reach, the capstan tells you and the anchor stays stowed. A held
-ship stays within about two blocks of the anchor point and swings with the wind.
+moves with the ship. The anchor is heavy and falls on its own: let it go while the ship has way on and it keeps the
+ship's speed for a moment, sinks at about 4 blocks a second and lands a few blocks astern of where it left the hull,
+with the chain rattling, a splash when it enters the water and a thud when it lands. Once it bites, the chain pulls
+the ship back at the bow, softly, so there is no dead stop. Because the hawse is on the capstan's side, a ship under
+sail swings hard round toward that side and ends up head to its chain, bow toward the anchor. A ship pulling harder
+than the anchor holds drags it over the seabed. The ship counts as anchored once the anchor holds and the ship has
+stopped. Using the capstan again heaves the chain in at 2.5 blocks a second and pulls the anchor along the seabed and
+up to the hull; using it mid-way lets go again. If the chain runs out before the seabed, the anchor hangs at its end
+and does not hold. Server config `anchor`.
 
 ---
 
@@ -346,6 +358,31 @@ chest in the bow trims the ship by the bow. Spread heavy cargo and keep it low a
 line shows the load: Light, Laden, Heavily laden or Overloaded (`/pirates ship info` shows the numbers). A laden ship
 sits lower, so it floods sooner through a breach, and it is slower to accelerate and turn. Server config
 `cargo_trade.cargo_weight_affects_ships`, `weight_factor`, `weigh_interval_ticks`, `load_levels`.
+
+### The factions
+The sea has three powers: the Navy, the Pirates and the Merchants. Each has a temper (aggression) and a purse
+(wealth), and each pair shares a measure of bad blood (tension). Navy kills of pirates, plundered merchants, convoys
+that arrive or sink, raids and lost patrols all shift them, and so do your own deeds. Tempers cool a little every
+day. High tension between the Navy and the Pirates means more patrols, more hunting and more raids. Operators can see
+the state with `/pirates world factions`. Server config `world_simulation.factions`.
+
+### Reputation
+The navy, the pirates and the villagers each remember you on a scale from −100 to 100 (`/pirates rep`). Killing
+pirates and turning them in pleases the navy; killing navy sailors, plundering merchants and selling to fences wins
+the pirates over; trading at villages pleases the villagers and harming them does the opposite. Scores drift back
+toward 0 by about 2 points a day. Villagers and fences give up to 10 % better prices to people they like and worse to
+people they don't, and villagers stop trading below −60. Pirates leave you alone above 40 until you strike first, and
+below −60 the navy opens fire even without a bounty. A navy flag is only honest while your navy reputation is at
+least 0, you have no bounty and you are not a suspect; otherwise the navy may see through your false colours. Server
+config `reputation`.
+
+### Convoys
+Merchant ships sail between the ports along sea lanes that keep clear of the coasts. A convoy loads goods where they
+are made (cheap) and carries them to a port that wants them (expensive), so prices move: the port it leaves pays a
+little more for what it bought, the port it reaches pays a little less once it has sold. Convoys sail about 4 blocks
+a second, faster before the wind and slower into it. Harbor masters now reckon contract distances along these lanes,
+and routes that pass near a pirate island pay a risk bonus. Operators can watch the traffic with
+`/pirates world voyages`. Server config `world_simulation.lanes`, `world_simulation.voyages`.
 
 ### Pirate islands
 Pirate camps sit on beaches, rarer than villages, with a jetty (two berths), tents, a tavern hut, a captain's hut and

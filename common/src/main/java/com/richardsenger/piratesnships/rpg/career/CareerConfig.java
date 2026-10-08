@@ -39,6 +39,16 @@ public final class CareerConfig {
     public static final ConfigValue<List<String>> OFFICER_KINDS = S.stringList("officer_kinds", List.of("pirates_n_ships:navy_officer"),
             "Entity types that count as navy officers (a pirate's 'captures or captains')");
 
+    /** HON1: the title as a name prefix through one vanilla scoreboard team per title ({@link CareerTeams}). */
+    public static final ConfigValue<Boolean> NAME_PREFIX = S.bool("name_prefix", true,
+            "Show the career title (Lt., Capt., Privateer, Dread Pirate, ...) in front of the player's name in chat, the "
+                    + "tab list and over the head, through a scoreboard team per title. Players on another team keep it. "
+                    + "Off = players are taken off the title teams when they next log in");
+    /** HON1: the title in front of a ship's name when its owner names it ({@link CareerShipTitles}). */
+    public static final ConfigValue<Boolean> TITLE_ON_SHIP = S.bool("title_on_ship", true,
+            "Naming a ship you own with a name tag puts your career title in front of the name (\"Capt. Black Gull\"); "
+                    + "a title typed into the name tag is always replaced by your own");
+
     private static final ConfigSection NAVY = S.section("navy", "What each navy rank needs. Midshipman = what enlisting needs");
     private static final ConfigSection INFAMY = S.section("infamy", "What each pirate infamy rank needs");
 

@@ -53,10 +53,13 @@ public final class Careers {
         return record(player).infamy();
     }
 
-    /** Stores {@code record} and syncs it to the player's client when it changed. */
+    /** Stores {@code record}, syncs it to the player's client when it changed and moves the player's title team. */
     public static void store(Player player, CareerRecord record) {
         Services.ATTACHMENTS.set(player, CareerAttachments.CAREER, record);
-        if (player instanceof ServerPlayer sp) CareerSync.sendIfChanged(sp, record);
+        if (player instanceof ServerPlayer sp) {
+            CareerSync.sendIfChanged(sp, record);
+            CareerTeams.refresh(sp, record); // HON1: the title prefix follows promotion, demotion and resignation
+        }
     }
 
     static long now(Player player) {

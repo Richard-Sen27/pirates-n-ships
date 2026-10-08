@@ -79,6 +79,8 @@ public class FlagpoleBlockEntity extends BlockEntity implements Clearable {
      * level's player list is used.
      */
     private final Map<UUID, Player> actors = new HashMap<>();
+    /** Server: whether the first tick has put the part the neighbours call for (VIS1a). Not saved. */
+    private boolean partChecked;
 
     public FlagpoleBlockEntity(BlockPos pos, BlockState blockState) {
         super(Flags.FLAGPOLE_BLOCK_ENTITY.get(), pos, blockState);
@@ -124,9 +126,26 @@ public class FlagpoleBlockEntity extends BlockEntity implements Clearable {
         apply(FlagpoleMachine.use(state, input, player.getUUID(), level.getGameTime(), FlagConfig.HOIST_DELAY_TICKS.get()));
     }
 
-    /** Completes a pending action when its time has come, and turns a flying flag downwind now and then. */
+    /**
+     * Completes a pending action when its time has come, and turns a flying flag downwind now and then. VIS1a: on its
+     * first tick the block shows the part its neighbours call for (structure pieces, ship plots and poles saved before
+     * VIS1a may carry a stale one), and a shaft that holds anything (a pole stacked while {@code flags.stacked_poles}
+     * was off, or without a player) hands it up to its head.
+     */
     public void serverTick() {
         if (!(level instanceof ServerLevel)) return;
+        if (!partChecked) {
+            partChecked = true;
+            BlockState bs = getBlockState();
+            if (bs.getBlock() instanceof FlagpoleBlock && bs.hasProperty(FlagpoleBlock.PART)) {
+                FlagpolePart part = FlagpoleBlock.partAt(level, worldPosition);
+                if (bs.getValue(FlagpoleBlock.PART) != part) level.setBlock(worldPosition, bs.setValue(FlagpoleBlock.PART, part), Block.UPDATE_CLIENTS);
+            }
+        }
+        if ((state.hasFlag() || state.pending().isPresent()) && !FlagpoleRun.isHead(level, worldPosition)) {
+            handUp(null);
+            return;
+        }
         long now = level.getGameTime();
         if (state.pending().isPresent()) apply(FlagpoleMachine.tick(state, now));
         if (!FlagConfig.FOLLOW_WIND.get()) {
@@ -144,6 +163,51 @@ public class FlagpoleBlockEntity extends BlockEntity implements Clearable {
         boolean shipDue = shipInterval > 0 && Math.floorMod(phase, shipInterval) == 0;
         // On a ship the yaw is in plot coordinates and the ship turns under the flag, so it re-checks more often there.
         if (landDue || shipDue) updateWind(landDue, shipDue);
+    }
+
+    /**
+     * VIS1a: this block is no longer the head of its pole (a flagpole was stacked on it): hand everything it holds
+     * (flag, item, struck state, who hoisted it, a pending action with its actor, the wind angles) to the pole's head,
+     * without a drop, and report {@link FlagpoleMachine.Cause#MOVED} at the head. If the head holds something itself
+     * (two poles joined by the new block), this block's contents drop here instead, as if broken. A pending action keeps
+     * its finish tick and completes at the head. No-op while this block holds nothing or is the head.
+     *
+     * @param actor who stacked the pole, for the event; null when unknown
+     */
+    public void handUp(@Nullable UUID actor) {
+        if (!(level instanceof ServerLevel server)) return;
+        if (!state.hasFlag() && state.pending().isEmpty()) return;
+        BlockPos headPos = FlagpoleRun.head(level, worldPosition);
+        if (headPos.equals(worldPosition)) return;
+        if (!(level.getBlockEntity(headPos) instanceof FlagpoleBlockEntity head)) return;
+        if (head.state.hasFlag() || head.state.pending().isPresent()) {
+            apply(FlagpoleMachine.breakPole(state));
+            return;
+        }
+        FlagpoleState moving = state;
+        Map<UUID, Player> movingActors = new HashMap<>(actors);
+        state = FlagpoleState.EMPTY;
+        clothTint = FlagTint.NONE;
+        actors.clear();
+        setChanged();
+        updateBlockState(false);
+        head.receive(server, moving, movingActors, yaw, windBearing, actor);
+    }
+
+    /** The other half of {@link #handUp}: this (empty) head takes over a pole's state. */
+    private void receive(ServerLevel server, FlagpoleState moved, Map<UUID, Player> movedActors, float movedYaw,
+                         float movedWind, @Nullable UUID actor) {
+        state = moved;
+        clothTint = FlagTint.clothTint(state);
+        actors.putAll(movedActors);
+        yaw = movedYaw;
+        windBearing = movedWind;
+        setChanged();
+        updateBlockState(false);
+        if (state.hasFlag()) {
+            FlagReading r = state.reading();
+            FlagpoleEvents.fire(new FlagpoleEvents.FlagChange(server, worldPosition, r, r, FlagpoleMachine.Cause.MOVED, actor));
+        }
     }
 
     /** The pole was removed: drop the flag and a pending flag at its position. */

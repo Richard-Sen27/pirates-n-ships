@@ -50,6 +50,7 @@ public final class ShipDecorModule implements ModModule {
     @Override
     public void registerConfig() {
         FlagConfig.init();
+        com.richardsenger.piratesnships.ship.decor.flag.FlagVisualsConfig.init(); // VIS1a, client section
         ShipIdentityConfig.init();
         DecorConfig.init();
     }

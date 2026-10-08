@@ -7,7 +7,9 @@ import com.richardsenger.piratesnships.law.flag.FlagKind;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
 import com.richardsenger.piratesnships.ship.decor.ShipDecor;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
+import com.richardsenger.piratesnships.ship.decor.FlagpoleBlock;
 import net.minecraft.data.models.blockstates.MultiVariantGenerator;
+import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
 import net.minecraft.data.models.model.ModelLocationUtils;
@@ -62,6 +64,7 @@ public final class FlagData {
                 Map.entry(FlagpoleMachine.Feedback.RAISED, "The %s is flying again"),
                 Map.entry(FlagpoleMachine.Feedback.TAKEN_DOWN, "Took down the flag"));
         feedback.forEach((f, text) -> lang.add(FlagpoleBlockEntity.feedbackKey(f), text));
+        lang.add(FlagpoleBlock.TOO_TALL_KEY, "A flagpole can be at most %s blocks tall");
         String k = FlagCommands.KEY;
         lang.add(k + "not_a_flagpole", "That block is not a flagpole")
                 .add(k + "unknown_kind", "Unknown flag kind")
@@ -78,10 +81,17 @@ public final class FlagData {
     private static void models(ModelContext m) {
         // The flag items' models are hand-made folded bundles (art/models/<flag>.bbmodel, design.md §4.8, ART1b)
         Block pole = ShipDecor.FLAGPOLE.get();
-        // Hand-made Blockbench model (art/models/flagpole.bbmodel) in every state: the cloth is drawn by the
-        // FlagClothRenderer at the flag's exact downwind yaw (FL1), not by the block model.
-        ResourceLocation poleModel = ModelLocationUtils.getModelLocation(pole);
-        m.blockStates().accept(MultiVariantGenerator.multiVariant(pole, Variant.variant().with(VariantProperties.MODEL, poleModel)));
+        // Hand-made Blockbench models (art/models/flagpole*.bbmodel), one per part of a tall pole (VIS1a), never
+        // turned; the flag and facing do not show: the cloth is drawn by the FlagClothRenderer at the flag's exact
+        // downwind yaw (FL1), not by the block model. The item keeps the single pole (the default block item model).
+        m.blockStates().accept(MultiVariantGenerator.multiVariant(pole).with(PropertyDispatch.property(FlagpoleBlock.PART)
+                .generate(part -> Variant.variant().with(VariantProperties.MODEL, partModel(pole, part)))));
+    }
+
+    /** The hand-made model of a flagpole part: {@code block/flagpole} for a lone pole, {@code block/flagpole_<part>} otherwise. */
+    public static ResourceLocation partModel(Block pole, FlagpolePart part) {
+        return part == FlagpolePart.SINGLE ? ModelLocationUtils.getModelLocation(pole)
+                : ModelLocationUtils.getModelLocation(pole, "_" + part.getSerializedName());
     }
 
     private static void recipes(RecipeOutput out) {

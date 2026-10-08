@@ -66,10 +66,30 @@ public final class FlagModelGameTests {
         JsonObject root = JsonParser.parseString(read(helper, "assets/pirates_n_ships/blockstates/flagpole.json")).getAsJsonObject();
         helper.assertTrue(!root.has("multipart"), "the cloth is drawn by the block entity renderer, not the block model");
         JsonObject variants = root.getAsJsonObject("variants");
-        helper.assertTrue(variants != null && variants.size() == 1 && variants.has(""), "one variant for every state: " + variants);
-        String model = variants.getAsJsonObject("").get("model").getAsString();
-        helper.assertTrue(model.equals("pirates_n_ships:block/flagpole"), "every state shows the pole, not " + model);
-        read(helper, assetPath(model, "models", ".json"));
+        // VIS1a: one variant per part, whatever the flag shows
+        helper.assertTrue(variants != null && variants.size() == FlagpolePart.values().length, "one variant per part: " + variants);
+        for (FlagpolePart part : FlagpolePart.values()) {
+            JsonObject variant = variants.getAsJsonObject("part=" + part.getSerializedName());
+            helper.assertTrue(variant != null, "no variant for part " + part);
+            String model = variant.get("model").getAsString();
+            String expected = "pirates_n_ships:block/flagpole" + (part == FlagpolePart.SINGLE ? "" : "_" + part.getSerializedName());
+            helper.assertTrue(model.equals(expected), part + " shows " + model + ", expected " + expected);
+            helper.assertTrue(!variant.has("x") && !variant.has("y"), part + " is turned: " + variant);
+            JsonObject json = JsonParser.parseString(read(helper, assetPath(model, "models", ".json"))).getAsJsonObject();
+            String textures = json.getAsJsonObject("textures").toString();
+            // the crown (truck and finial, gold) only at the head, the cleat (anvil iron) only at the foot
+            boolean crown = part == FlagpolePart.SINGLE || part == FlagpolePart.TOP;
+            boolean cleat = part == FlagpolePart.SINGLE || part == FlagpolePart.BOTTOM;
+            helper.assertTrue(textures.contains("gold_block") == crown, part + ": finial expected " + crown + ", textures " + textures);
+            helper.assertTrue(textures.contains("anvil") == cleat, part + ": cleat expected " + cleat + ", textures " + textures);
+            helper.assertTrue(textures.contains("stripped_birch_log"), part + ": no halyard");
+            // a segment that has a pole above it runs the 3 px pole the full 16 px, so the segments meet seamlessly
+            JsonObject pole = json.getAsJsonArray("elements").get(0).getAsJsonObject();
+            float top = pole.getAsJsonArray("to").get(1).getAsFloat();
+            float width = pole.getAsJsonArray("to").get(0).getAsFloat() - pole.getAsJsonArray("from").get(0).getAsFloat();
+            helper.assertTrue(width == 3f && pole.getAsJsonArray("from").get(1).getAsFloat() == 0f, part + ": pole " + pole);
+            helper.assertTrue((top == 16f) == part.hasAbove(), part + ": pole ends at " + top);
+        }
         for (FlagKind kind : FlagKind.values()) {
             if (kind == FlagKind.NONE) continue;
             ResourceLocation file = FlagClothModel.textureFile(kind);

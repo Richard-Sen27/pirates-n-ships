@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-08T02:51:41.761172	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-08T22:21:26.484341	Block states and models: pirates_n_ships
 c189a7833975a61cf2c7c8fd326d27a32969cb9d assets/pirates_n_ships/blockstates/bilge_pump.json
 52e053a4f7334e9a78798b4b4b9a2ad80087f3d5 assets/pirates_n_ships/blockstates/brig_bars.json
 83716521a6f9785f7114fa5a9489defb1257975d assets/pirates_n_ships/blockstates/brig_door.json
@@ -12,7 +12,7 @@ d241f11bb103a4cdbc981e78e9b0b5005b4befcc assets/pirates_n_ships/blockstates/figu
 222afee5b6c4793885865664852f6055890652b6 assets/pirates_n_ships/blockstates/figurehead_lion.json
 0c84c5b83e1e180af8ddb93675fe66630e4cc789 assets/pirates_n_ships/blockstates/figurehead_mermaid.json
 9b62daf7aefbff7e9ad767a2bf6fe06ac1c815db assets/pirates_n_ships/blockstates/figurehead_skull.json
-afe0259da386ced5685cc135d6f4a5de99c787fd assets/pirates_n_ships/blockstates/flagpole.json
+6e83885c2e2cba6fa13a42e153c96028a8a59730 assets/pirates_n_ships/blockstates/flagpole.json
 02e36cd4399982f75c0629eb7527dd3b7ee03b2f assets/pirates_n_ships/blockstates/hammock.json
 5bd8105b9ceffa6e0e2024763582a30ec0b88b1f assets/pirates_n_ships/blockstates/harbor_desk.json
 694925a53d4c91f4cdba40ce99770a22223d0d59 assets/pirates_n_ships/blockstates/helm.json

@@ -131,3 +131,28 @@ Addendum (A2): slashing into the air plays one short blade whoosh that varies fr
 2. `melee_hud.position = LEFT_OF_HOTBAR`: an upright bar left of the offhand slot, bottom-aligned, filling upward, with tick marks.
 3. Fade: with full stamina and no fight the bar fades about 1 s after drawing the sword over half a second; it reappears instantly on a slash, guard, parry, a hit from a zombie or a stamina drop. Try `opacity`, `fade_when_full = false`, `scale`, `x_offset`, `y_offset`.
 4. Indicators: tick marks at 25, 50 and 75 %, the red flash on "Too exhausted", the riposte sparks, the lockout padlock, the stagger tint.
+
+
+## MEL1: fades between interrupted phases, sneaking while fighting
+Setup: a saber or cutlass, F5 (third person) and first person, a pirate or a second player; client config
+`melee_animations.fade_ticks` (default 4) and `keep_crouch` (default true).
+1. **Parried attack, attacker's side:** slash at a pirate that parries (or a second player's parry tap). The arm
+   blends from the swing into the stagger lean over about a fifth of a second, no one-frame jump. Same for a thrust.
+2. **Parry from rest:** tap right click with nothing coming. The sword rises into the guard and flicks instead of
+   jumping to the guard pose; with the window over it settles back to the rest arm smoothly.
+3. **Riposte flow:** parry a pirate's slash, then left-click at once. The parry is cut short (fades back towards rest),
+   the low riposte twirl blends in, and the riposte slash sweeps from it without the old one-frame jump. With a thrust
+   riposte nothing changes (it was already seamless).
+4. **Ordinary chains stay crisp:** a slash or thrust from rest starts its wind-up at once (no softened telegraph),
+   wind-up, hit and recovery flow as before; guard then release lowers the blade as before; releasing the guard
+   while it is still rising blends instead of jumping.
+5. **Hit timing unchanged:** with `fade_ticks = 20` everything looks mushy, but hits, parries and staggers land at the
+   same moments as with 0; `fade_ticks = 0` gives the old snapping.
+6. **Sneaking during a duel (F5 or a second client):** hold sneak and slash, thrust, guard and parry. The upper body
+   stays crouched and leaning while the arms swing (it used to pop up to standing height on bent legs); the blade
+   points a little lower, as vanilla's crouched arms do. Attacks, guard and parry work while sneaking, with the same
+   reach and damage. With `keep_crouch = false` the old standing upper body is back.
+7. **Sneaking in first person:** nothing changes compared to standing (vanilla's first-person hand never crouches).
+8. **Left-handed:** steps 1, 3 and 6 mirrored, on a second client too.
+9. **Remote players:** a second player fighting far away and then coming into view mid-fight shows no frozen or
+   jumping pose.

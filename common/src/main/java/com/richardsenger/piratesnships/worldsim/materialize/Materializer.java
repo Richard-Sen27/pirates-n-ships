@@ -209,13 +209,21 @@ public final class Materializer {
             retryLater(server, id);
             return Outcome.FAILED;
         }
-        Vec3 plotCentre = templateCentre(ship, structure, r);
-        turnOnto(ship, plotCentre, facing, pos);
+        // cargo first: its mass moves the centre of mass, which is the pose's rotation point, so turning and placing
+        // before it would shift the hull afterwards (a GameTest ship ended 4 blocks off its point)
+        Map<net.minecraft.resources.ResourceLocation, Integer> overflow = VoyageShips.load(level, ship, v.cargo(),
+                MaterializeConfig.CARGO_IS_PLUNDER.get());
         ShipAssembler.name(ship, name(v));
         raiseFlag(ship, v);
+        Vec3 plotCentre = templateCentre(ship, structure, r);
+        turnOnto(ship, plotCentre, facing, pos);
+        Vec3 placed = ship.toWorld(plotCentre);
+        if (Math.hypot(placed.x - pos.x(), placed.z - pos.z()) > 1.0) {
+            Constants.LOG.warn("Voyage {}: ship centre {} {} placed off its lane point {} {}", v.shortId(), placed.x, placed.z, pos.x(), pos.z());
+        }
         VoyageShips.Active link = new VoyageShips.Active(id, ship.id(), level.dimension(), level.getGameTime());
         link.plotCentre = plotCentre;
-        link.overflow = VoyageShips.load(level, ship, v.cargo(), MaterializeConfig.CARGO_IS_PLUNDER.get());
+        link.overflow = overflow;
         link.lastUnits = VoyageShips.units(VoyageShips.read(level, ship));
         VoyageShips.put(link);
         VoyageShips.writeLink(ship, link.link());

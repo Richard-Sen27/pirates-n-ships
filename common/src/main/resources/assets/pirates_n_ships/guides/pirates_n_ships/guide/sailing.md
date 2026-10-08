@@ -354,8 +354,16 @@ for a raised reward with no deposit. A treasure hunt hands you a treasure map; o
 quest pays doubloons and raises your reputation with the giver's side (navy, pirates or villagers). Villages and navy outposts may also send
 you after the nearest pirate island's named captain (within 3000 blocks): bring him down yourself or hand him to a
 navy officer in shackles for 400 doubloons on top of his bounty; if someone else gets him first, the quest fails,
-and his successor doesn't count. Drop a quest in the tab or with `/pirates quest abandon <id>`;
-`/pirates quest list` shows your quests. Server config `quests`.
+and his successor doesn't count. **Quests at sea:** villages and navy outposts ask you to escort a convoy to another
+port: on accepting, a merchant ship sets sail from the harbour, and you must keep within 96 blocks of her on at least
+half of her course and see her make port (120 doubloons, plus 60 per 1000 blocks of the way). If she is sunk or taken,
+or arrives without you, the escort fails. Pirate islands want merchant convoys plundered (take goods from a convoy's
+hold while you stand aboard) or navy patrols sunk or captured; navy outposts want pirate ships sunk or captured. A
+sinking counts for whoever fired the last cannonball that hit her within the last minute; a capture for whoever holds
+her deck. These hunts are offered only while such ships are at sea. Holding a letter of marque, you also earn 60
+doubloons of prize money on the spot for every pirate ship you sink or capture. Drop a quest in the tab or with
+`/pirates quest abandon <id>`; `/pirates quest list` shows your quests. Server config `quests` (`quests.sea_quests`
+for the sea quests), `careers.prize_money`.
 
 ## Pirate captains
 Every pirate island has a captain: a named pirate (for example "Black-Tooth Bartholomew Crowe") who keeps to the

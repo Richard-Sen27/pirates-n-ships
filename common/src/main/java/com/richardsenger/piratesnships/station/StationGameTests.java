@@ -456,7 +456,7 @@ public final class StationGameTests {
         Fixture f = ship(h, false);
         CrewMember c = seated(h, f, crew(h, 2, 2));
         net.minecraft.world.entity.player.Player p = captain(h, f, true);
-        WhistleOrders.Result r = WhistleOrders.handle(p, "fire_at_will");
+        WhistleOrders.Result r = WhistleOrders.handle(p, "board");
         h.assertTrue(r.outcome() == WhistleOrders.Outcome.UNKNOWN_ORDER, "unknown order: " + r);
         h.assertTrue(Stations.state(c.assignment()).order() == null, "an unknown order changed the crew's work");
         h.assertTrue(c.isAtStation(), "an unknown order released the crew member");

@@ -195,6 +195,19 @@ public final class CannonRules {
         return (int) Math.max(0, Math.round(configured * multiplier));
     }
 
+    /**
+     * Blocks a hit breaks out of {@code limit} with a block damage factor (WS4a, crews firing by themselves): the whole
+     * part of {@code limit × factor}, plus one more when {@code roll} (uniform in [0, 1)) is below the fraction left, so
+     * a factor of 0.5 on one block breaks it in half the hits. A factor of 1 keeps the limit; negative factors count as 0.
+     */
+    public static int scaledBlocks(int limit, double factor, double roll) {
+        if (limit <= 0) return 0;
+        if (factor == 1.0) return limit;
+        double x = limit * Math.max(0.0, factor);
+        int whole = (int) Math.floor(x);
+        return whole + (roll < x - whole ? 1 : 0);
+    }
+
     /** Damage of a hit on an entity: the configured damage times the multiplier. */
     public static float entityDamage(double configured, double multiplier) {
         return (float) Math.max(0, configured * multiplier);

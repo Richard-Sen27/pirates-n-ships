@@ -16,9 +16,7 @@ import java.util.List;
  * WindSample wind = WindService.sample(level, shipPos);                 // once per game tick is enough
  * ShipState state = new ShipState(comWorld, shipToWorld, linVel, angVel, mass, submerged, length, keelCenter);
  * ForceBreakdown f = ShipForceModel.compute(wind, state, sails,
- *         new ShipForceModel.Rudder(helmAngle, rudderPos),
- *         anchorState.isOut() ? new ShipForceModel.Anchor(anchorState, anchorPoint, hawse) : null,
- *         SailingConfig.sailingParams());
+ *         new ShipForceModel.Rudder(helmAngle, rudderPos), SailingConfig.sailingParams());
  * // ship frame -> plot frame, force -> impulse:
  * handle.applyLinearAndAngularImpulse(plotFromShip(f.force()).mul(dt), plotFromShip(f.torque()).mul(dt));
  * }</pre>
@@ -29,10 +27,6 @@ public final class ShipForceModel {
     public record Rudder(double angleDeg, Vector3dc position) {
     }
 
-    /** Anchor input: state, anchor point (world) and hawse position (ship frame, relative to COM). */
-    public record Anchor(AnchorState state, Vector3dc anchorPoint, Vector3dc hawse) {
-    }
-
     private ShipForceModel() {
     }
 
@@ -41,11 +35,11 @@ public final class ShipForceModel {
      * @param ship   ship state
      * @param sails  the ship's sails
      * @param rudder rudder input, or {@code null} for none
-     * @param anchor anchor input, or {@code null} for none
-     * @param params tuning
+     * @param params tuning (the anchor's chain force is not part of this sum since AN2a: it has its own force group,
+     *               {@code sailing.anchor.AnchorPhysics})
      */
     public static ForceBreakdown compute(WindSample wind, ShipState ship, List<SailInstance> sails,
-                                         @Nullable Rudder rudder, @Nullable Anchor anchor, SailingParams params) {
+                                         @Nullable Rudder rudder, SailingParams params) {
         List<ForceContribution> out = new ArrayList<>(sails.size() + 3);
         Vector3d trueWind = wind.velocity(new Vector3d());
         for (int i = 0; i < sails.size(); i++) {
@@ -55,9 +49,6 @@ public final class ShipForceModel {
         out.add(KeelModel.compute(ship, params));
         if (rudder != null) {
             out.add(RudderModel.compute(rudder.angleDeg(), rudder.position(), ship, params));
-        }
-        if (anchor != null) {
-            out.add(AnchorModel.compute(anchor.state(), anchor.anchorPoint(), anchor.hawse(), ship, params.anchor()));
         }
         return ForceBreakdown.of(out);
     }

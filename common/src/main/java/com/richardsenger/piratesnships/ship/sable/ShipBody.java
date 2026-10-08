@@ -325,6 +325,22 @@ public final class ShipBody {
         }
     }
 
+    // ---------------------------------------------------------------- anchor chain (AN2a)
+
+    /**
+     * Records a linear impulse and an angular impulse about the center of mass, both in the body (plot) frame, in our
+     * anchor chain force group, like {@link #applySailingImpulse} (the caller scales the heeling part of the moment).
+     * Physics substep only ({@code ServerSubLevel#getOrCreateQueuedForceGroup} l.395,
+     * {@code api/physics/force/QueuedForceGroup.java#getForceTotal} l.21,
+     * {@code api/physics/force/ForceTotal.java#applyLinearAndAngularImpulse} l.63).
+     */
+    public void applyAnchorImpulse(Vector3dc localImpulse, Vector3dc localAngularImpulse) {
+        dev.ryanhcode.sable.api.physics.force.ForceGroup group = ShipForces.anchor();
+        if (group != null) {
+            sub.getOrCreateQueuedForceGroup(group).getForceTotal().applyLinearAndAngularImpulse(localImpulse, localAngularImpulse);
+        }
+    }
+
     // ---------------------------------------------------------------- cargo weight (CW1)
 
     /**

@@ -204,6 +204,10 @@ disassembles** (spike-1 refusals unchanged). On land, plain use still assembles.
 - Expected: the ship does not turn (the rudder needs speed). It may creep by a fraction of a degree while it settles.
 
 ### 4. The anchor: stowed, dropped, raised (visible anchor, F4)
+> **Since AN2a the anchor's fall, chain and holding are physical** (no fixed drop speed, no instant hold): the drop,
+> landing, holding and raising steps below are replaced by `docs/playtests/anchor.md`. Step 1 (the stowed anchor) still
+> applies.
+
 The anchor is now an object of its own. Placeholder look: a dark iron anchor about two blocks tall (ring, stock,
 shank, two arms with flukes) and a chain drawn with the vanilla chain texture. Placeholder sounds: vanilla chain
 steps (running chain), the heavy splash (entering the water) and stone breaking (landing). Keep subtitles on

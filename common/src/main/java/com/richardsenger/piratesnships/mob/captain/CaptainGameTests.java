@@ -138,7 +138,7 @@ public final class CaptainGameTests {
     // ------------------------------------------------------------------ spawning, registry, bounty
 
     /**
-     * A spawned captain is named after his island, wears the pirate hat, has 40 health, keeps his post, is in the
+     * A spawned captain is named after his island, wears the captain's hat and his own art, has 40 health, keeps his post, is in the
      * registry with the standing navy bounty that the notice boards list, and a second spawn for the same island is
      * refused while he lives.
      */
@@ -150,7 +150,9 @@ public final class CaptainGameTests {
         PirateCaptain c = spawnCaptain(h, island, 4, 4);
         String name = CaptainNames.name(island.toString(), 0);
         h.assertValueEqual(c.getName().getString(), name, "the captain's name");
-        h.assertTrue(c.getItemBySlot(EquipmentSlot.HEAD).is(ApparelContent.PIRATE_HAT.get()), "he wears the pirate hat");
+        h.assertTrue(c.getItemBySlot(EquipmentSlot.HEAD).is(ApparelContent.CAPTAINS_HAT.get()), "he wears the captain's hat");
+        // ART6: his own model and texture, not the pirate's
+        h.assertValueEqual(c.kind().artId(), "pirate_captain", "art id");
         h.assertTrue(c.getMainHandItem().is(CombatContent.CUTLASS.get()), "he carries a cutlass");
         h.assertValueEqual((double) c.getMaxHealth(), CaptainConfig.HEALTH.get(), "max health");
         h.assertValueEqual(c.kind(), MobKind.PIRATE_CAPTAIN, "kind");
@@ -311,7 +313,7 @@ public final class CaptainGameTests {
             h.assertValueEqual(Reputation.get(killer, Faction.PIRATES), Math.max(-100, Math.min(100, expected)), "the kill_pirate deed");
         }
         BlockPos at = new BlockPos(4, 1, 4);
-        h.assertValueEqual(countDropped(h, ApparelContent.PIRATE_HAT.get(), at), 1, "his hat");
+        h.assertValueEqual(countDropped(h, ApparelContent.CAPTAINS_HAT.get(), at), 1, "his hat");
         int coins = countDropped(h, TradeContent.DOUBLOON.get(), at);
         h.assertTrue(coins >= com.richardsenger.piratesnships.mob.MobLoot.CAPTAIN_DOUBLOONS_MIN
                 && coins <= com.richardsenger.piratesnships.mob.MobLoot.CAPTAIN_DOUBLOONS_MAX, "a purse of doubloons, got " + coins);

@@ -28,8 +28,9 @@ import java.util.UUID;
 
 /**
  * A named pirate captain (BOS1, docs/design.md §9, §15): the pirate of the island's captain's hut, a dangerous duelist
- * (skill {@code mobs.captain.skill}, {@code PIRATE_CAPTAIN}), 40 health ({@code mobs.captain.health}), the pirate's
- * look with his pirate hat in the head slot. Placed by world generation ({@link IslandCaptains#place}), he keeps his
+ * (skill {@code mobs.captain.skill}, {@code PIRATE_CAPTAIN}), 40 health ({@code mobs.captain.health}), his own look
+ * (ART6: model and texture {@code pirate_captain}) with his captain's hat in the head slot. Placed by world
+ * generation ({@link IslandCaptains#place}), he keeps his
  * post ({@code stationary}, walks back to it after a fight), never despawns, carries a standing navy bounty, and can
  * be challenged to a duel ({@link DuelChallenge}). On death he drops his hat, a purse of doubloons (loot table
  * {@code entities/pirate_captain}) and a map of his island's treasure; the navy pays the captain's tier for him alive.
@@ -69,7 +70,7 @@ public class PirateCaptain extends Pirate {
     @Override
     protected void equip() {
         super.equip();
-        setItemSlot(EquipmentSlot.HEAD, new ItemStack(ApparelContent.PIRATE_HAT.get()));
+        setItemSlot(EquipmentSlot.HEAD, new ItemStack(ApparelContent.CAPTAINS_HAT.get()));
     }
 
     @Override

@@ -12,9 +12,10 @@ import net.minecraft.world.item.Items;
 import java.util.List;
 
 /**
- * The {@code apparel} module: wearable hats for players (design.md §9). Each hat is the hat of a seafarer mob as a
- * hand-made item model ({@code tools/gen_hat_items.py}), worn in the head slot with a small armour bonus
- * ({@code apparel.hat_armor}).
+ * The {@code apparel} module: wearable hats and the officer's coat for players (design.md §9, §15). Each hat is the hat
+ * of a seafarer mob as a hand-made item model ({@code tools/gen_hat_items.py}; the captain's hat from Blockbench, ART6),
+ * worn in the head slot with a small armour bonus ({@code apparel.hat_armor}). The officer's coat (ART6) is worn in the
+ * chest slot ({@code apparel.officers_coat_armor}) and drawn by vanilla's armour layer.
  */
 public final class ApparelModule implements ModModule {
 
@@ -40,8 +41,11 @@ public final class ApparelModule implements ModModule {
                 .item(ApparelContent.PIRATE_HAT, "Pirate Hat")
                 .item(ApparelContent.BANDANA, "Bandana")
                 .item(ApparelContent.NAVY_HAT, "Navy Tricorn")
-                .item(ApparelContent.OFFICER_HAT, "Officer's Bicorne"));
-        // The four hats have hand-made item models (tools/gen_hat_items.py), so datagen writes none
+                .item(ApparelContent.OFFICER_HAT, "Officer's Bicorne")
+                .item(ApparelContent.CAPTAINS_HAT, "Captain's Hat")
+                .item(ApparelContent.OFFICERS_COAT, "Officer's Coat"));
+        // Every apparel item has a hand-made item model (tools/gen_hat_items.py for the four crafted hats, Blockbench
+        // projects art/models/captains_hat.bbmodel and officers_coat.bbmodel), so datagen writes none
         data.recipes(out -> {
             // A tricorn: a row of black wool over leather with a bone (the skull) in the middle
             ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ApparelContent.PIRATE_HAT.get())
@@ -67,6 +71,13 @@ public final class ApparelModule implements ModModule {
                     .define('R', Items.RED_WOOL).define('S', Items.STRING)
                     .unlockedBy("has_red_wool", InventoryChangeTrigger.TriggerInstance.hasItems(Items.RED_WOOL))
                     .save(out, ApparelContent.BANDANA.id());
+            // The officer's coat: blue wool with white facings and a gold epaulette
+            ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ApparelContent.OFFICERS_COAT.get())
+                    .pattern("BGB").pattern("BWB").pattern("BBB")
+                    .define('B', Items.BLUE_WOOL).define('W', Items.WHITE_WOOL).define('G', Items.GOLD_INGOT)
+                    .unlockedBy("has_blue_wool", InventoryChangeTrigger.TriggerInstance.hasItems(Items.BLUE_WOOL))
+                    .save(out, ApparelContent.OFFICERS_COAT.id());
+            // The captain's hat has no recipe: the named pirate captain drops it
         });
     }
 

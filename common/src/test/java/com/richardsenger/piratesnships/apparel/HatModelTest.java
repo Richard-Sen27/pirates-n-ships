@@ -50,6 +50,9 @@ class HatModelTest {
             new Pair("navy_hat", "navy_soldier", 0),
             new Pair("pirate_hat", "navy_soldier", 0),
             new Pair("officer_hat", "navy_officer", 0),
+            // ART6: the captain's hat (Blockbench, art/models/captains_hat.bbmodel); its plume uses vanilla's 22.5 degree
+            // steps where the mob's uses free angles, and the cocked brim turns 45 instead of 60 degrees
+            new Pair("captains_hat", "pirate_captain", 0),
             // The bandana is painted on the top three rows of the hat layer (seafarer_skins.js) plus knot and tails
             new Pair("bandana", "pirate", 3));
 

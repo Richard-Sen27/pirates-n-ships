@@ -77,16 +77,20 @@ public final class VoyageEndings {
     }
 
     /**
-     * The default: the REP1 deed for an online player ({@code Deeds.record}) and the faction side through
-     * {@code Factions.reportDeed}. When a deed-to-faction adapter ({@code FactionDeeds}) lands, drop the second call.
+     * The default: the REP1 deed through {@code Deeds.record} for an online player; its faction side follows through
+     * WS1b's {@code FactionDeeds}. A deed of an offline player (a ship sinking after its shooter logged out) reaches
+     * only the factions, through {@code Factions.reportDeed}. {@code capture_merchant} has no REP1 deed of its own:
+     * the law's {@code piracy} crime is recorded as {@code plunder_merchant} by REP1's {@code LawDeeds}.
      */
     public static final DeedRecorder DEFAULT = (server, player, deed) -> {
         net.minecraft.server.level.ServerPlayer online = server.getPlayerList().getPlayer(player);
-        if (online != null) {
-            deed.reputationDeed().ifPresent(d -> com.richardsenger.piratesnships.rpg.deeds.Deeds.record(online, d,
-                    com.richardsenger.piratesnships.rpg.deeds.DeedContext.NONE));
+        java.util.Optional<com.richardsenger.piratesnships.rpg.deeds.Deed> rep = deed.reputationDeed();
+        if (online != null && rep.isPresent()) {
+            com.richardsenger.piratesnships.rpg.deeds.Deeds.record(online, rep.get(),
+                    com.richardsenger.piratesnships.rpg.deeds.DeedContext.NONE);
+        } else if (online == null) {
+            Factions.reportDeed(server, deed.factionEvent());
         }
-        Factions.reportDeed(server, deed.factionEvent());
     };
 
     private static volatile DeedRecorder recorder = DEFAULT;

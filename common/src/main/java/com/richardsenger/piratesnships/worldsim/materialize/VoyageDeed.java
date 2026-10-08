@@ -7,8 +7,8 @@ import java.util.Locale;
 
 /**
  * A player's deed against an NPC ship (WS3b). {@link VoyageEndings} records it as the REP1 reputation deed
- * {@link #reputationDeed()} (when the player is online) and reports its faction side through
- * {@code Factions.reportDeed} with {@link #factionEvent()} (there is no deed-to-faction adapter on main yet).
+ * {@link #reputationDeed()} when the player is online (WS1b's {@code FactionDeeds} carries it to the factions), else
+ * reports {@link #factionEvent()} through {@code Factions.reportDeed}.
  */
 public enum VoyageDeed {
     SINK_MERCHANT(Faction.MERCHANTS),

@@ -90,6 +90,9 @@ public final class RpgModule implements ModModule {
                     case TURN_IN_PIRATE -> "Turning in a pirate";
                     case PAY_FINE -> "Paying a fine";
                     case FLY_FALSE_COLOURS -> "Caught under false colours";
+                    case COMPLETE_NAVY_QUEST -> "Completing a navy quest";
+                    case COMPLETE_PIRATE_QUEST -> "Completing a pirate quest";
+                    case COMPLETE_VILLAGE_QUEST -> "Completing a village quest";
                     case SINK_MERCHANT -> "Sinking a merchant ship";
                     case SINK_NAVY -> "Sinking a navy ship";
                     case SINK_PIRATE -> "Sinking a pirate ship";

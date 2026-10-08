@@ -40,13 +40,17 @@ public final class AnchorConfig {
     public static final ConfigValue<Double> RAISE_SPEED = S.doubleRange("raise_speed", 2.5, 0.1, 64.0,
             "Speed at which the capstan winds the chain in, in blocks per second");
     public static final ConfigValue<Boolean> SOUNDS = S.bool("sounds", true,
-            "Chain, splash and landing sounds and the splash particles of the anchor");
+            "Chain, splash, landing, jolt and capstan sounds and the splash particles of the anchor");
     public static final ConfigValue<Double> CHAIN_VOLUME = S.doubleRange("chain_volume", 0.8, 0.0, 4.0,
             "Volume of the running chain");
     public static final ConfigValue<Double> SPLASH_VOLUME = S.doubleRange("splash_volume", 1.0, 0.0, 4.0,
             "Volume of the splash when the anchor enters the water");
     public static final ConfigValue<Double> THUD_VOLUME = S.doubleRange("thud_volume", 1.0, 0.0, 4.0,
             "Volume of the anchor landing on the ground");
+    public static final ConfigValue<Double> JOLT_VOLUME = S.doubleRange("jolt_volume", 0.7, 0.0, 4.0,
+            "Volume of the clank when the chain snaps taut");
+    public static final ConfigValue<Double> CAPSTAN_VOLUME = S.doubleRange("capstan_volume", 0.6, 0.0, 4.0,
+            "Volume of the capstan's clank while it winds the chain in");
 
     private AnchorConfig() {
     }

@@ -58,3 +58,61 @@ Config values (server, `anchor_chain`): `sink_speed` 4, `water_drag` 2, `chain_s
    nothing runs out. Drop the anchor in about 20 blocks of water and save and quit while it is still sinking. Rejoin.
    - **Expected:** the anchor is back where it was (or a little lower) and finishes its fall. With the anchor holding,
      a relog keeps it on the floor with the same chain length, and the ship still holds.
+
+# Playtest: the chain's look and sounds (work package AN2b)
+
+The chain is no longer a straight bar. While the anchor rests, it hangs as a catenary of the paid-out length between
+the hawse and the anchor's ring, and the part that would dip below the anchor lies on the seabed. When the chain is
+taut it runs straight, with a bow of at most 0.1 blocks. While the anchor falls (or hangs, or is heaved up) the chain
+runs straight from the hawse, because it pays out or is wound in as the anchor moves. The curve is computed every frame
+from the ship's render pose, so it follows the hull without lag. The chain is lit per link from the world, so its
+upper part is no longer as dark as the seabed.
+
+Sounds (all played by the server, so everyone nearby hears the same thing; all are vanilla placeholders):
+
+| Moment | Sound | Where |
+|---|---|---|
+| Chain running out (only while the paid-out length grows) and being wound in | `anchor.chain` (vanilla chain steps), every 0.2 s | hawse |
+| Anchor dragging over the seabed | `anchor.chain` at about half pitch | anchor |
+| The chain snapping taut: at the chain's end in a fall, or when the ship pulls a resting chain taut (once per landing; again only after the chain was more than a block slack) | `anchor.jolt` (vanilla anvil landing, pitch 0.55 to 0.65) | hawse |
+| Raising | `anchor.capstan` (vanilla iron trapdoor closing, pitch about 0.8), every 0.5 s, on top of the running chain | capstan |
+
+New config values (server, `anchor_chain`): `jolt_volume` 0.7, `capstan_volume` 0.6. `sounds = false` silences all.
+Subtitles on (Options, Accessibility) help to tell the sounds apart: "Anchor chain rattles", "Anchor chain jolts
+taut", "Capstan clanks".
+
+Setup as for AN2a. Look at the chain from a boat or from a second player beside the ship, ideally under water too.
+
+## Steps
+
+1. **Sag at rest.** Anchor in about 8 blocks of water with a still ship (furled sails). Then sail or push the ship a few
+   blocks toward the anchor, so the chain goes slack.
+   - **Expected:** right after the landing, with the ship above the anchor, the chain runs almost straight down. Once
+     the ship moves toward the anchor, the chain hangs in a smooth curve: down from the hawse, along the seabed for a
+     stretch, and up the last two blocks to the ring on top of the anchor. No kinks, no links sticking out of the
+     curve, nothing below the seabed (on flat ground; a slope can cut through the lying part, see the open problems).
+2. **Swinging.** With the anchor holding and a breeze, let the ship swing round its anchor (or turn it with the helm).
+   - **Expected:** the curve follows the hawse smoothly every frame, without lagging behind the hull or jumping.
+     When the ship lies back on its chain, the chain straightens.
+3. **Paying out during the fall.** Drop the anchor from a ship at speed (AN2a step 1), watch from the side.
+   - **Expected:** the chain runs straight from the hull side to the falling anchor and grows with it; nothing is drawn
+     below the anchor. The running chain rattles throughout the fall and stops when the anchor lands (the thud). Over
+     water deeper than the chain (with `sailing_runtime.anchor_chain_length` lowered to e.g. 6 and the ship over deep
+     water, if the drop is allowed there), the anchor stops at the chain's end with one clank and the rattle stops.
+4. **Going taut and the jolt.** Same drop at speed, sails set.
+   - **Expected:** shortly after the landing, when the ship pulls the chain taut, one heavy metallic clank at the hull
+     side (subtitle "Anchor chain jolts taut"), and the chain is a straight line from the hawse to the anchor (a barely
+     visible bow). A still ship dropping its anchor makes no jolt. Sail toward the anchor so the chain goes slack by
+     more than a block, then away again: a second jolt when it comes taut.
+5. **Dragging.** Set `anchor_chain.holding_force` to 1 and repeat 4.
+   - **Expected:** the chain stays straight (taut) while the ship drags the anchor; a lower, grinding chain sound comes
+     from the anchor about five times a second, with the puffs of seabed particles. Set `holding_force` back to 10.
+6. **Raising.** Use the capstan with the anchor several blocks astern.
+   - **Expected:** the chain rattles at the hull side and the capstan clanks twice a second while the chain winds in.
+     The chain straightens as the anchor is pulled toward the ship. Both sounds stop when the anchor is stowed.
+7. **Long chain.** Set `sailing_runtime.anchor_chain_length` to 128 and anchor in deep water (or over a deep trench).
+   - **Expected:** no stutter when looking at the chain; the curve still looks smooth (it is capped at 64 segments, so
+     each one is two blocks long here).
+
+Tell us: is the sag convincing (too deep, too shallow)? Are the jolt and capstan placeholders acceptable until real
+recordings exist, and are their volumes right?

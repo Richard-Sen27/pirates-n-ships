@@ -13,7 +13,8 @@ import net.minecraft.world.entity.EntityType;
  * it with the ship, the anchor's {@code sounds.json} entries (through {@code data.sounds}) and the lang entries.
  *
  * <p>The sounds are placeholders made of the vanilla sound files that {@code SoundEvents.CHAIN_STEP},
- * {@code PLAYER_SPLASH_HIGH_SPEED} and {@code STONE_BREAK} use. To replace one, add the recording through
+ * {@code PLAYER_SPLASH_HIGH_SPEED}, {@code STONE_BREAK}, {@code ANVIL_LAND} (the jolt) and {@code IRON_TRAPDOOR_CLOSE}
+ * (the capstan) use. To replace one, add the recording through
  * {@code tools/sounds/manifest.json} (target {@code anchor/<name>.ogg}) and change its entry in {@link #SOUNDS} to
  * {@code "pirates_n_ships:anchor/<name>"}, then run the data generator.
  */
@@ -24,12 +25,15 @@ public final class AnchorData {
     static final TagKey<EntityType<?>> SABLE_DESTROY_WITH_SUB_LEVEL = TagKey.create(Registries.ENTITY_TYPE,
             ResourceLocation.fromNamespaceAndPath("sable", "destroy_with_sub_level"));
 
-    /** Sound event name → sound files (vanilla placeholders: chain steps, heavy splash, stone digging). */
+    /** Sound event name → sound files (vanilla placeholders: chain steps, heavy splash, stone digging, anvil, iron trapdoor). */
     static final String[][] SOUNDS = {
             {"anchor.chain", "minecraft:block/chain/step1", "minecraft:block/chain/step2", "minecraft:block/chain/step3",
                     "minecraft:block/chain/step4", "minecraft:block/chain/step5", "minecraft:block/chain/step6"},
             {"anchor.splash", "minecraft:liquid/heavy_splash"},
             {"anchor.thud", "minecraft:dig/stone1", "minecraft:dig/stone2", "minecraft:dig/stone3", "minecraft:dig/stone4"},
+            {"anchor.jolt", "minecraft:random/anvil_land"},
+            {"anchor.capstan", "minecraft:block/iron_trapdoor/close1", "minecraft:block/iron_trapdoor/close2",
+                    "minecraft:block/iron_trapdoor/close3", "minecraft:block/iron_trapdoor/close4"},
     };
 
     private AnchorData() {
@@ -45,7 +49,9 @@ public final class AnchorData {
                 .add(AnchorContent.ANCHOR.get().getDescriptionId(), "Anchor")
                 .add(subtitle("anchor.chain"), "Anchor chain rattles")
                 .add(subtitle("anchor.splash"), "Anchor splashes")
-                .add(subtitle("anchor.thud"), "Anchor lands"));
+                .add(subtitle("anchor.thud"), "Anchor lands")
+                .add(subtitle("anchor.jolt"), "Anchor chain jolts taut")
+                .add(subtitle("anchor.capstan"), "Capstan clanks"));
     }
 
     static String subtitle(String event) {

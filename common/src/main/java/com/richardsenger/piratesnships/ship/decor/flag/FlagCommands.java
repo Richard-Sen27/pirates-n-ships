@@ -54,7 +54,8 @@ public final class FlagCommands {
 
     private static FlagpoleBlockEntity pole(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
         BlockPos pos = BlockPosArgument.getLoadedBlockPos(c, "pos");
-        if (c.getSource().getLevel().getBlockEntity(pos) instanceof FlagpoleBlockEntity be) return be;
+        // VIS1a: any block of a tall pole means the pole, whose flag is at its head
+        if (c.getSource().getLevel().getBlockEntity(pos) instanceof FlagpoleBlockEntity && FlagpoleRun.owner(c.getSource().getLevel(), pos) instanceof FlagpoleBlockEntity be) return be;
         throw NOT_A_FLAGPOLE.create();
     }
 

@@ -1,7 +1,16 @@
 {
   "variants": {
-    "": {
+    "part=bottom": {
+      "model": "pirates_n_ships:block/flagpole_bottom"
+    },
+    "part=middle": {
+      "model": "pirates_n_ships:block/flagpole_middle"
+    },
+    "part=single": {
       "model": "pirates_n_ships:block/flagpole"
+    },
+    "part=top": {
+      "model": "pirates_n_ships:block/flagpole_top"
     }
   }
 }

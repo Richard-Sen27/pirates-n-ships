@@ -24,11 +24,18 @@ public final class CannonModule implements ModModule {
     @Override
     public void registerConfig() {
         CannonConfig.init();
+        com.richardsenger.piratesnships.combat.cannon.npc.GunneryConfig.init();
     }
 
     @Override
     public void registerContent() {
         CannonContent.init();
+    }
+
+    /** WS4a: NPC gunnery's level tick and clean-ups (the cannon module's own sub-package, no module of its own). */
+    @Override
+    public void registerEvents() {
+        com.richardsenger.piratesnships.combat.cannon.npc.Gunnery.register();
     }
 
     @Override
@@ -50,6 +57,6 @@ public final class CannonModule implements ModModule {
     @Override
     public List<Class<?>> gameTestClasses() {
         return List.of(CannonGameTests.class, CannonOrderGameTests.class, SwivelGunGameTests.class, CannonFollowUpGameTests.class,
-                CannonCrewGameTests.class);
+                CannonCrewGameTests.class, com.richardsenger.piratesnships.combat.cannon.npc.GunneryGameTests.class);
     }
 }

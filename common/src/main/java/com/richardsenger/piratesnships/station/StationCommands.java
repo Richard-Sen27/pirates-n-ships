@@ -42,7 +42,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Operator commands for crew stations (permission 2), for tests and playtests:
  * {@code /pirates crew spawn}, {@code assign <crew> <station pos>}, {@code release <crew>},
- * {@code order <hoist|reef|furl|pump> [crew]}, {@code order course <x> <z> ...} (WS3a), {@code info [crew]} (morale, crew and bunks, HM1), and
+ * {@code order <hoist|reef|furl|pump|fire|load|fire_at_will> [crew]} (fire_at_will: WS4a, the crews then aim and fire at
+ * hostile ships by themselves, {@code combat.cannon.npc.Gunnery}), {@code order course <x> <z> ...} (WS3a),
+ * {@code info [crew]} (morale, crew and bunks, HM1), and
  * {@code /pirates ship rigging} (Q5: the ship's sails, why yards carry none, and its crew). A station position may be
  * the block's world position (as seen in game, F3) or its plot position.
  */

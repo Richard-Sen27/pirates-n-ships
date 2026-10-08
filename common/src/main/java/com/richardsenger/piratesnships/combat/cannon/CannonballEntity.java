@@ -57,6 +57,8 @@ public class CannonballEntity extends ThrowableItemProjectile {
     private @Nullable UUID firingShip;
     /** The ship this ball last reported a hit on, so a bounce and the following hit on one ship report once. Not saved. */
     private @Nullable UUID reportedShip;
+    /** Scales the blocks a hit breaks ({@link CannonRules#scaledBlocks}); WS4a crews firing by themselves. Saved. */
+    private double blockDamageFactor = 1.0;
 
     public CannonballEntity(EntityType<? extends CannonballEntity> type, Level level) {
         super(type, level);
@@ -97,6 +99,15 @@ public class CannonballEntity extends ThrowableItemProjectile {
     /** Set by the gun that fires the ball ({@link CannonService#fire}, {@link SwivelService#fire}). */
     public void setFiringShip(@Nullable UUID ship) {
         this.firingShip = ship;
+    }
+
+    public double blockDamageFactor() {
+        return blockDamageFactor;
+    }
+
+    /** Scales the blocks this ball breaks on a hit (1 = as configured). Set by {@link CannonService#fire}. */
+    public void setBlockDamageFactor(double factor) {
+        this.blockDamageFactor = Math.max(0.0, factor);
     }
 
     @Override
@@ -191,6 +202,7 @@ public class CannonballEntity extends ThrowableItemProjectile {
         }
 
         int limit = blocksPerHit >= 0 ? blocksPerHit : CannonConfig.blocksPerHit();
+        limit = CannonRules.scaledBlocks(limit, blockDamageFactor, random.nextDouble());
         if (glancing) {
             limit = CannonImpact.glancingBlocks(limit, square);
         }
@@ -268,6 +280,7 @@ public class CannonballEntity extends ThrowableItemProjectile {
         tag.putInt("blocks_per_hit", blocksPerHit);
         tag.putDouble("impact_impulse", impactImpulse);
         if (firingShip != null) tag.putUUID("firing_ship", firingShip);
+        tag.putDouble("block_damage_factor", blockDamageFactor);
     }
 
     @Override
@@ -279,5 +292,6 @@ public class CannonballEntity extends ThrowableItemProjectile {
         blocksPerHit = tag.contains("blocks_per_hit") ? tag.getInt("blocks_per_hit") : -1;
         impactImpulse = tag.contains("impact_impulse") ? tag.getDouble("impact_impulse") : -1;
         firingShip = tag.hasUUID("firing_ship") ? tag.getUUID("firing_ship") : null;
+        blockDamageFactor = tag.contains("block_damage_factor") ? tag.getDouble("block_damage_factor") : 1.0;
     }
 }

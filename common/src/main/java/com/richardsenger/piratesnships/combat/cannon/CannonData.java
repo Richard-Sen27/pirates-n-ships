@@ -72,6 +72,13 @@ public final class CannonData {
                     .add(load.unableKey(), "No powder and shot within reach, captain!")
                     .add(WhistleOrder.LOAD.nameKey(), "Load!")
                     .add(WhistleOrder.LOAD.descriptionKey(), "Crew at the guns load them from powder and shot nearby");
+            // NPC gunnery (WS4a): the order and its whistle entry
+            CannonStation.CannonOrder atWill = CannonStation.CannonOrder.FIRE_AT_WILL;
+            lang.add(atWill.nameKey(), "fire at will")
+                    .add(atWill.ackKey(), "Aye, firing at will!")
+                    .add(WhistleOrder.FIRE_AT_WILL.nameKey(), "Fire at will")
+                    .add(WhistleOrder.FIRE_AT_WILL.descriptionKey(),
+                            "Gun crews aim and fire at hostile ships in their arc until you release the crew");
         });
         data.models(CannonData::models);
         data.blockLoot(loot -> loot.add(CannonContent.CANNON.get(), masterOnly(CannonContent.CANNON.get())));

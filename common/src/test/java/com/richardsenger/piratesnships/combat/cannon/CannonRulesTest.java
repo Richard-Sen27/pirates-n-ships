@@ -225,4 +225,23 @@ class CannonRulesTest {
         assertFalse(CannonRules.spawnProtected(true, true, true, true, 16, 0, 0, 0, 0), "an operator's shot");
         assertFalse(CannonRules.spawnProtected(true, true, true, false, 0, 0, 0, 0, 0), "radius 0");
     }
+
+    // ---- block damage factor (WS4a) ----
+
+    @Test
+    void blockDamageFactorScalesTheBlocksWithAChanceForTheFraction() {
+        assertEquals(3, CannonRules.scaledBlocks(3, 1.0, 0.99), "factor 1 keeps the limit");
+        assertEquals(0, CannonRules.scaledBlocks(0, 2.0, 0.0), "no block damage stays none");
+        assertEquals(1, CannonRules.scaledBlocks(1, 0.5, 0.49), "half a block: broken below the roll");
+        assertEquals(0, CannonRules.scaledBlocks(1, 0.5, 0.5), "half a block: kept from the roll on");
+        assertEquals(2, CannonRules.scaledBlocks(4, 0.5, 0.99), "a whole result needs no luck");
+        assertEquals(2, CannonRules.scaledBlocks(4, 0.5, 0.0));
+        assertEquals(0, CannonRules.scaledBlocks(4, 0.0, 0.0), "factor 0 breaks nothing");
+        assertEquals(0, CannonRules.scaledBlocks(4, -1.0, 0.0), "negative counts as 0");
+        assertEquals(3, CannonRules.scaledBlocks(2, 1.5, 0.99));
+        // over many rolls the mean is limit × factor
+        int sum = 0;
+        for (int i = 0; i < 1000; i++) sum += CannonRules.scaledBlocks(1, 0.5, (i + 0.5) / 1000.0);
+        assertEquals(500, sum);
+    }
 }

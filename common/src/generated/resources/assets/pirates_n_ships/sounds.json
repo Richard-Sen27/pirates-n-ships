@@ -1,4 +1,13 @@
 {
+  "anchor.capstan": {
+    "sounds": [
+      "minecraft:block/iron_trapdoor/close1",
+      "minecraft:block/iron_trapdoor/close2",
+      "minecraft:block/iron_trapdoor/close3",
+      "minecraft:block/iron_trapdoor/close4"
+    ],
+    "subtitle": "pirates_n_ships.subtitle.anchor.capstan"
+  },
   "anchor.chain": {
     "sounds": [
       "minecraft:block/chain/step1",
@@ -9,6 +18,12 @@
       "minecraft:block/chain/step6"
     ],
     "subtitle": "pirates_n_ships.subtitle.anchor.chain"
+  },
+  "anchor.jolt": {
+    "sounds": [
+      "minecraft:random/anvil_land"
+    ],
+    "subtitle": "pirates_n_ships.subtitle.anchor.jolt"
   },
   "anchor.splash": {
     "sounds": [

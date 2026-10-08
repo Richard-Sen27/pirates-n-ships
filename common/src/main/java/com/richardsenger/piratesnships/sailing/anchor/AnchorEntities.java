@@ -25,7 +25,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Server side of the visible anchor (docs/design.md §5.2): keeps exactly one {@link AnchorEntity} per ship with a
  * capstan, placed where the ship's {@link ShipAnchor} body is every game tick (its motion is {@link AnchorPhysics}),
- * and plays the chain (running out, heaving in, dragging), splash and landing effects.
+ * and plays the chain (running out, heaving in, dragging, the taut jolt, the capstan; {@link AnchorSoundCues}), splash
+ * and landing effects. All of them are server-side sounds.
  *
  * <p>Life cycle: the entity is spawned by {@link #sync} (called for every ship with a sailing runtime each tick), so
  * a placed capstan, an assembled ship and a loaded ship all get their anchor on the next tick. It is discarded when
@@ -37,8 +38,6 @@ public final class AnchorEntities {
 
     /** How far across the ship the hull-side search looks. */
     static final int REACH = 32;
-    /** Ticks between two chain sounds while the anchor moves. */
-    static final int CHAIN_INTERVAL = 4;
     /** Ticks between two capstan scans of a ship without a known capstan. */
     static final int RESCAN_TICKS = 100;
 
@@ -51,7 +50,7 @@ public final class AnchorEntities {
         boolean wasInWater;
         AnchorState.Phase lastPhase = AnchorState.Phase.RAISED;
         boolean wasResting;
-        int chainCooldown;
+        final AnchorSoundCues cues = new AnchorSoundCues();
     }
 
     private AnchorEntities() {
@@ -108,6 +107,7 @@ public final class AnchorEntities {
             }
             t.lastPhase = AnchorState.Phase.RAISED;
             t.wasResting = false;
+            t.cues.stowed();
             return;
         }
         Vec3 hawseWorld = ship.toWorld(anchor.hawse());
@@ -120,6 +120,10 @@ public final class AnchorEntities {
             t.wasInWater = inWater(level, pos);
             t.lastPhase = anchor.state().phase();
             t.wasResting = anchor.resting();
+            if (t.lastPhase != AnchorState.Phase.DROPPING) {
+                // found out after a load: no drop, landing or jolt cue for what happened before
+                t.cues.prime(t.lastPhase, anchor.paidOut(), anchor.resting(), status != null && status.taut());
+            }
         } else {
             e.setPos(pos);
         }
@@ -127,7 +131,7 @@ public final class AnchorEntities {
             t.entity.markSynced();
             t.entity.setChain(status, pos);
         }
-        effects(level, t, anchor, status, hawseWorld, pos);
+        effects(level, ship, t, anchor, status, hawseWorld, pos);
         t.lastPhase = anchor.state().phase();
         t.wasResting = anchor.resting();
     }
@@ -194,19 +198,30 @@ public final class AnchorEntities {
         return level.getFluidState(BlockPos.containing(pos.x, pos.y + 0.2, pos.z)).is(FluidTags.WATER);
     }
 
-    private static void effects(ServerLevel level, Track t, ShipAnchor a, @Nullable AnchorStatus status, Vec3 hawseWorld, Vec3 pos) {
+    private static void effects(ServerLevel level, ShipBody ship, Track t, ShipAnchor a, @Nullable AnchorStatus status, Vec3 hawseWorld, Vec3 pos) {
         AnchorState.Phase phase = a.state().phase();
         boolean water = inWater(level, pos);
         boolean wasInWater = t.wasInWater;
         t.wasInWater = water;
+        boolean dragging = status != null && status.dragging();
+        int cues = status == null ? 0
+                : t.cues.tick(phase, status.paidOut(), status.distance(), status.resting(), status.taut(), dragging);
         if (!AnchorConfig.SOUNDS.get()) {
             return;
         }
-        boolean dragging = status != null && status.dragging();
-        boolean moving = phase == AnchorState.Phase.DROPPING || phase == AnchorState.Phase.RAISING || dragging;
-        if (moving && --t.chainCooldown <= 0) {
-            t.chainCooldown = CHAIN_INTERVAL;
-            play(level, hawseWorld, AnchorContent.chainSound(), AnchorConfig.CHAIN_VOLUME.get(), 0.75f + level.random.nextFloat() * 0.3f);
+        double chainVolume = AnchorConfig.CHAIN_VOLUME.get();
+        if ((cues & AnchorSoundCues.RUNNING) != 0) {
+            play(level, hawseWorld, AnchorContent.chainSound(), chainVolume, 0.75f + level.random.nextFloat() * 0.3f);
+        } else if ((cues & AnchorSoundCues.SCRAPE) != 0) {
+            // the anchor ploughs the seabed: the chain grinds lower, heard at the anchor
+            play(level, pos, AnchorContent.chainSound(), chainVolume, 0.45f + level.random.nextFloat() * 0.15f);
+        }
+        if ((cues & AnchorSoundCues.CAPSTAN) != 0) {
+            play(level, ship.toWorld(Vec3.atCenterOf(a.capstan())), AnchorContent.capstanSound(), AnchorConfig.CAPSTAN_VOLUME.get(),
+                    0.75f + level.random.nextFloat() * 0.1f);
+        }
+        if ((cues & AnchorSoundCues.JOLT) != 0) {
+            play(level, hawseWorld, AnchorContent.joltSound(), AnchorConfig.JOLT_VOLUME.get(), 0.55f + level.random.nextFloat() * 0.1f);
         }
         if ((phase == AnchorState.Phase.DROPPING || phase == AnchorState.Phase.RAISING) && water != wasInWater) {
             double surface = Math.floor(pos.y + 0.2) + (water ? 1.0 : 0.0);

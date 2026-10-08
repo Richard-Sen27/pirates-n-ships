@@ -106,6 +106,10 @@ public final class CareerConfig {
             "Prize money (doubloons) per pirate killed under a letter");
     public static final ConfigValue<Integer> PRIZE_CAPTAIN = LETTER.intRange("prize_captain", (int) D.letter().prizeCaptain(), 0, 100_000,
             "Prize money (doubloons) per pirate captain killed under a letter");
+    /** QST2: prize money for a pirate ship, paid at once through the wallet ({@link ShipPrizes}). */
+    public static final ConfigValue<Integer> PRIZE_MONEY = S.intRange("prize_money", (int) ShipPrizes.DEFAULT_PRIZE, 0, 100_000,
+            "Doubloons paid at once to a holder of a valid letter of marque who sinks (last cannon hit) or captures a pirate "
+                    + "ship at sea, once per ship. 0 = none");
 
     // ------------------------------------------------------------------ CAR2: rank rewards
 

@@ -20,6 +20,11 @@ import com.richardsenger.piratesnships.world.port.PortRegistry;
 import com.richardsenger.piratesnships.world.port.TreasureSite;
 import com.richardsenger.piratesnships.world.treasure.TreasureBinding;
 import com.richardsenger.piratesnships.world.treasure.TreasureMapService;
+import com.richardsenger.piratesnships.worldsim.materialize.MaterializeConfig;
+import com.richardsenger.piratesnships.worldsim.materialize.Materializer;
+import com.richardsenger.piratesnships.worldsim.voyage.Voyage;
+import com.richardsenger.piratesnships.worldsim.voyage.VoyageKind;
+import com.richardsenger.piratesnships.worldsim.voyage.Voyages;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -57,6 +62,7 @@ public final class Quests {
     public static final String TREASURE_GONE = "treasure_gone";
     public static final String NO_PORT = "no_port";
     public static final String CAPTAIN_GONE = "captain_gone";
+    public static final String NO_CONVOY = "no_convoy";
     public static final String UNKNOWN = "unknown";
 
     /** The answer to an accept or abandon: done or not, a result id ({@link QuestText#result}) and the quest. */
@@ -152,7 +158,32 @@ public final class Quests {
         }
         long seed = server.overworld().getSeed();
         return Optional.of(new QuestGenerator.Context(port, kind, climate, day, seed, deliveries(server, port, day, seed),
-                treasures(server, known), captains(server, known)));
+                treasures(server, known), captains(server, known), sea(server, known)));
+    }
+
+    /**
+     * What the sea quests can follow from this port (QST2): other registered villages and navy outposts with an open
+     * market in the port's dimension (escort destinations, with their straight distance), and whether merchant convoys,
+     * navy patrols and pirate ships are at sea now. Nothing while ships can't appear ({@code MaterializeConfig.active}).
+     */
+    private static QuestGenerator.SeaOptions sea(MinecraftServer server, Optional<Port> port) {
+        if (port.isEmpty() || !MaterializeConfig.active()) return QuestGenerator.SeaOptions.NONE;
+        Port p = port.get();
+        List<QuestGenerator.EscortOption> escorts = new ArrayList<>();
+        for (Port other : PortRegistry.get(server).index().all()) {
+            if (other.id().equals(p.id()) || other.kind() == PortKind.PIRATE_ISLAND || !other.dimension().equals(p.dimension())) continue;
+            if (TradeService.market(server, other.id()).isEmpty()) continue;
+            double dx = other.centre().getX() - p.centre().getX();
+            double dz = other.centre().getZ() - p.centre().getZ();
+            escorts.add(new QuestGenerator.EscortOption(other.id(), Math.sqrt(dx * dx + dz * dz)));
+        }
+        boolean convoys = false, patrols = false, pirates = false;
+        for (Voyage v : Voyages.active(server)) {
+            convoys |= v.kind() == VoyageKind.CONVOY && v.faction() == com.richardsenger.piratesnships.law.flag.Faction.MERCHANTS;
+            patrols |= v.kind() == VoyageKind.PATROL;
+            pirates |= v.faction() == com.richardsenger.piratesnships.law.flag.Faction.PIRATES;
+        }
+        return new QuestGenerator.SeaOptions(escorts, convoys, patrols, pirates);
     }
 
     /**
@@ -250,6 +281,18 @@ public final class Quests {
                     quest.deadlineDay(), reward, 0, DeliveryContract.State.ACCEPTED, Optional.of(player.getUUID())));
             quest = quest.withTarget(c.withContract(contract));
             player.displayClientMessage(Component.translatable(QuestText.DELIVER_HINT), false);
+        }
+        if (quest.target() instanceof QuestTarget.Escort e) {
+            // the convoy sets sail now, from this port to the destination (its lane computed at once if not cached)
+            Optional<Voyage> convoy = Voyages.spawnConvoy(server, port, e.destination(), player.getRandom());
+            if (convoy.isEmpty()) {
+                data.removeOffer(port, id);
+                return Result.fail(NO_CONVOY);
+            }
+            Voyage v = convoy.get();
+            quest = QuestRules.bindEscort(quest, v.id(), Materializer.name(v), v.waypoints().size() - 1, QuestConfig.ESCORT_FRACTION.get());
+            player.displayClientMessage(Component.translatable(QuestText.ESCORT_HINT, ((QuestTarget.Escort) quest.target()).name(),
+                    QuestConfig.ESCORT_RADIUS.get()), false);
         }
         data.removeOffer(port, id);
         store(player, log(player).with(quest));

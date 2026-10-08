@@ -39,6 +39,9 @@ public final class QuestText {
     public static final String FAILED = KEY + "failed";
     public static final String MAP_GIVEN = KEY + "map_given";
     public static final String TARGET_LOST = KEY + "target_lost";
+    public static final String ESCORT_HINT = KEY + "escort_hint";
+    public static final String ESCORT_LOST = KEY + "escort_lost";
+    public static final String ESCORT_ALONE = KEY + "escort_alone";
 
     // commands
     public static final String LIST_HEADER = COMMANDS + "list.header";
@@ -68,6 +71,9 @@ public final class QuestText {
 
     /** A captain hunt's title when the bearing to his island is known. */
     private static final String CAPTAIN_TITLE_BEARING = KEY + "title.hunt_captain.bearing";
+
+    /** An escort's title once its convoy sails (QST2). */
+    private static final String ESCORT_TITLE_NAMED = KEY + "title.escort.named";
 
     /** The eight compass points of {@code QuestGenerator.bearing}. */
     public static final List<String> BEARINGS = List.of("north", "north_east", "east", "south_east", "south", "south_west", "west", "north_west");
@@ -101,6 +107,8 @@ public final class QuestText {
             case QuestTarget.Victim v when q.type() == QuestType.HUNT_CAPTAIN && v.bearing().isPresent() ->
                     Component.translatable(CAPTAIN_TITLE_BEARING, v.name(), Component.translatable(bearingKey(v.bearing().get())));
             case QuestTarget.Victim v -> Component.translatable(titleKey(q.type()), v.name());
+            case QuestTarget.Escort e when !e.name().isEmpty() -> Component.translatable(ESCORT_TITLE_NAMED, e.name(), portName(e.destination()));
+            case QuestTarget.Escort e -> Component.translatable(titleKey(q.type()), portName(e.destination()));
             case QuestTarget.None n -> Component.translatable(titleKey(q.type()), q.needed());
         };
     }
@@ -132,7 +140,11 @@ public final class QuestText {
                 .add(FAILED, "Quest failed: %s")
                 .add(MAP_GIVEN, "You received a treasure map")
                 .add(TARGET_LOST, "%s is gone, and not by your hand")
-                .add(CAPTAIN_TITLE_BEARING, "Bring down %s of the island to the %s");
+                .add(CAPTAIN_TITLE_BEARING, "Bring down %s of the island to the %s")
+                .add(ESCORT_TITLE_NAMED, "Escort the %s to %s")
+                .add(ESCORT_HINT, "The %s sets sail now. Keep within %s blocks of her until she makes port")
+                .add(ESCORT_LOST, "The %s is lost")
+                .add(ESCORT_ALONE, "The %s made port, but you were not with her for long enough");
         for (String b : BEARINGS) lang.add(bearingKey(b), b.replace("_", ""));
         for (QuestType t : QuestType.values()) {
             lang.add(typeName(t), switch (t) {
@@ -156,11 +168,15 @@ public final class QuestText {
                 case FIND_TREASURE -> "Find the buried treasure of %s";
                 case HUNT_NAVY -> "Kill %s navy sailors";
                 case HUNT_CAPTAIN -> "Bring down %s";
-                case ESCORT, PLUNDER_CONVOY, HUNT_PATROL, HUNT_SHIP -> "%s";
+                case ESCORT -> "Escort a convoy to %s";
+                case PLUNDER_CONVOY -> "Plunder %s merchant convoys";
+                case HUNT_PATROL -> "Sink or capture %s navy patrols";
+                case HUNT_SHIP -> "Sink or capture %s pirate ships";
             });
         }
         for (String id : List.of(Quests.ACCEPTED, Quests.ABANDONED, QuestRules.TOO_MANY, QuestRules.EXPIRED, QuestRules.NOT_OFFERED,
-                Quests.DISABLED, Quests.NO_SESSION, Quests.TREASURE_GONE, Quests.NO_PORT, Quests.CAPTAIN_GONE, Quests.UNKNOWN)) {
+                Quests.DISABLED, Quests.NO_SESSION, Quests.TREASURE_GONE, Quests.NO_PORT, Quests.CAPTAIN_GONE, Quests.NO_CONVOY,
+                Quests.UNKNOWN)) {
             lang.add(result(id), switch (id) {
                 case Quests.ACCEPTED -> "Quest accepted: %s";
                 case Quests.ABANDONED -> "Quest dropped: %s";
@@ -172,6 +188,7 @@ public final class QuestText {
                 case Quests.TREASURE_GONE -> "Somebody already dug up that treasure";
                 case Quests.NO_PORT -> "That port is gone";
                 case Quests.CAPTAIN_GONE -> "That captain is already gone";
+                case Quests.NO_CONVOY -> "No convoy can sail there now (no sea lane, or a market is closed)";
                 default -> "No such quest";
             });
         }

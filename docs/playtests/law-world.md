@@ -109,3 +109,30 @@ Wood frame with brass corner studs, a header plaque with the title and the coin 
 
 
 Addendum (N1): the notice board block placed facing each way shows the notices toward you under a small roof between two posts; the outline hugs the posts and board; the item in the GUI, hand, ground and frame; the board's look matches the screen's parchment-and-pin style.
+
+## LAW3: noticed plunder (stolen goods at the desk and aboard)
+Setup: `/pirates law score set @s 0`, `/pirates law bounty clear @s`. Mark goods as plunder with `/pirates trade plunder`
+(held stack) or take them from a captured ship. Defaults: `law.plunder_notice = true`, `law.plunder_notice_units = 16`,
+`selling_plunder` +17 and `suspected_piracy` +15, each with a repeat window of one in-game day (1200 s).
+
+1. **Village desk refuses:** at a seafarer village harbor master's desk, try to sell 32 marked sugar from your
+   inventory.
+   - Expected: the market screen shows "The harbor master wants no stolen goods"; the sugar stays in your inventory, no
+     doubloons. Chat (red): "The harbor master reported you to the navy for offering stolen goods".
+     `/pirates law score get @s` shows 17; `/pirates law last @s` shows `Offering stolen goods ... counted, +17.0`
+     against the port.
+2. **Once per day:** try the same sale again (and from a marked cargo crate in reach).
+   - Expected: refused again, no new chat line, score still 17, `/pirates law last @s` shows `repeat_ignored`.
+3. **Outpost desk:** repeat step 1 at a navy outpost desk. Expected: refused, reported (+17, another port), red line.
+4. **Fence:** sell the same marked sugar at a pirate island fence. Expected: sold at the fence discount, no chat line,
+   score unchanged.
+5. **Bounty follows:** `/pirates law score set @s 40`, then offer plunder at a desk you have not tried today.
+   Expected: score 57, a navy bounty on the notice board.
+6. **Plunder aboard:** fill a chest (or crate) on your own assembled ship with 20 marked units, fly any flag or none and
+   sail (or anchor) within 48 blocks of a navy soldier or officer (an outpost).
+   - Expected: within a few seconds a red "Your cover is blown: the navy has spotted plunder in your hold";
+     `/pirates law last @s` shows `Suspected piracy ... counted, +15.0` against the ship. Staying in range records
+     nothing more that day. With only 10 marked units aboard nothing happens. Marked goods in a shulker box inside a
+     chest count too.
+7. **Toggle off:** `law.plunder_notice = false`: desks still refuse marked goods with the same status line, but there
+   is no chat line, no crime and no `suspected_piracy` aboard.

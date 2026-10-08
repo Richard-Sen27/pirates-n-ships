@@ -78,7 +78,7 @@ public final class FlagWorldGameTests {
 
     // ------------------------------------------------------------------ fixtures
 
-    private record Ship(Fixture f, BlockPos plotPole) {
+    record Ship(Fixture f, BlockPos plotPole) {
         ShipBody body() {
             return f.ship();
         }
@@ -94,7 +94,12 @@ public final class FlagWorldGameTests {
     }
 
     /** Basin over x 0..13, land over x 14..23; one hull at x 4..8, z 9..13 with a pole flying {@code flag} (NONE: empty). */
-    private static Ship shipBesideLand(GameTestHelper h, FlagKind flag, boolean struck) {
+    static Ship shipBesideLand(GameTestHelper h, FlagKind flag, boolean struck) {
+        return shipBesideLand(h, flag, struck, helm -> { });
+    }
+
+    /** As {@link #shipBesideLand(GameTestHelper, FlagKind, boolean)}; {@code beforeAssembly} gets the helm (relative) to fit the hull out. */
+    static Ship shipBesideLand(GameTestHelper h, FlagKind flag, boolean struck, java.util.function.Consumer<BlockPos> beforeAssembly) {
         DryHullGameTests.basin(h, 0, 13, true);
         for (int x = 14; x < 24; x++) {
             for (int z = 0; z < 24; z++) {
@@ -102,11 +107,15 @@ public final class FlagWorldGameTests {
             }
         }
         SailingGameTestsShips.openSky(h, 24);
-        return ship(h, 4, flag, struck);
+        return ship(h, 4, flag, struck, beforeAssembly);
     }
 
     /** A hull at x a..a+4 with a flagpole on its deck flying {@code flag}, assembled. */
     private static Ship ship(GameTestHelper h, int a, FlagKind flag, boolean struck) {
+        return ship(h, a, flag, struck, helm -> { });
+    }
+
+    private static Ship ship(GameTestHelper h, int a, FlagKind flag, boolean struck, java.util.function.Consumer<BlockPos> beforeAssembly) {
         BlockPos helm = DryHullGameTests.hull(h, a, false);
         BlockPos pole = helm.offset(POLE_FROM_HELM);
         h.setBlock(pole, ShipDecor.FLAGPOLE.get());
@@ -114,13 +123,14 @@ public final class FlagWorldGameTests {
             if (!(h.getBlockEntity(pole) instanceof FlagpoleBlockEntity be)) throw new GameTestAssertException("no flagpole at " + pole);
             be.commandSet(flag, struck, null);
         }
+        beforeAssembly.accept(helm);
         Fixture f = DryHullGameTests.assemble(h, helm);
         BlockPos plotPole = f.helmPlot().offset(POLE_FROM_HELM);
         h.assertTrue(h.getLevel().getBlockEntity(plotPole) instanceof FlagpoleBlockEntity, "the flagpole was not assembled at " + plotPole);
         return new Ship(f, plotPole);
     }
 
-    private static void setOwner(GameTestHelper h, Ship ship, UUID owner) {
+    static void setOwner(GameTestHelper h, Ship ship, UUID owner) {
         ShipRegistry registry = ShipRegistry.get(h.getLevel().getServer());
         ShipData d = registry.find(ship.id()).orElseThrow();
         registry.put(new ShipData(d.id(), d.name(), Optional.of(owner), d.crew(), d.flag(), d.dimension(), d.blownCoverUntil()));
@@ -151,7 +161,7 @@ public final class FlagWorldGameTests {
     }
 
     /** A player in the level standing on the ship's deck (one block east of the helm), put back there every tick. */
-    private static Player playerAboard(GameTestHelper h, Ship ship) {
+    static Player playerAboard(GameTestHelper h, Ship ship) {
         Player player = playerInLevel(h, new Vec3(1.5, 12, 1.5));
         Runnable put = () -> {
             if (!ship.body().isRemoved()) {
@@ -165,7 +175,7 @@ public final class FlagWorldGameTests {
     }
 
     /** A navy soldier or pirate on the land, about 12 blocks east of the deck, keeping to its post. */
-    private static <T extends SeafarerMob> T onLand(GameTestHelper h, EntityType<T> type) {
+    static <T extends SeafarerMob> T onLand(GameTestHelper h, EntityType<T> type) {
         T mob = h.spawn(type, new BlockPos(19, 9, 11));
         mob.setYRot(90f);
         mob.setYHeadRot(90f);
@@ -174,7 +184,7 @@ public final class FlagWorldGameTests {
         return mob;
     }
 
-    private static long count(Player player, CrimeType type) {
+    static long count(Player player, CrimeType type) {
         return LawService.record(player).recent().stream().filter(o -> o.type() == type).count();
     }
 

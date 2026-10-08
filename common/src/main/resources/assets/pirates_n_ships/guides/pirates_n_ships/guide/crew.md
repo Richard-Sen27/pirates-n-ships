@@ -8,7 +8,8 @@ navigation:
 
 # Crew
 
-A **crew member** is a simple NPC. There is no hiring yet: get one with `/pirates crew spawn`.
+A **crew member** is a simple NPC. Hire one at a harbor desk (see "Hiring crew" below) or spawn one with
+`/pirates crew spawn`.
 
 **Stations** are blocks a crew member can man. Only the sail winch is one so far. A crew member at a station stands on
 an invisible seat that travels with the ship, so it stays at its post while the ship moves.
@@ -26,6 +27,17 @@ A crew member is released when its station is broken, its ship is disassembled o
 
 The crew member is animated (idle, walking, working at a station, sitting in a boat) through GeckoLib, a required
 mod on both sides; it is a Blockbench-made sailor (striped shirt, red bandana, neckerchief, belt and knife, bare feet) with idle, walking, hauling and sitting animations.
+
+## Hiring crew
+Every harbor desk has a **Crew** tab. Each day a port has a few people looking for a berth: sailors at seafarer
+villages, pirates at pirate islands, navy ratings at navy outposts. Each asks a one-time fee (10, 20 or 15 doubloons)
+and then the daily wage. Villagers won't sign on with someone they refuse to trade with. Pirates sign on only with a
+friend of the pirates or a captain of some infamy (Buccaneer and up). Navy ratings sign on only with an enlisted
+officer. Before you hire, moor your own ship at the port: the recruit walks straight aboard and waits on the deck
+nearest the desk. Every crew member needs a free hammock, so hang more hammocks to take on more hands. To let someone
+go, sneak and use your captain's whistle on them: they leave your service as an ordinary sailor. Only you or whoever
+hired them can do that, or anyone at all if the ship has no owner. Operators: `/pirates crew hire <sailor|pirate|navy>`
+and `/pirates crew dismiss`. Server config `crew.hiring`.
 
 ## Pirates, sailors and the navy
 Pirates (dark coat, bandana, eyepatch, cutlass) attack players and the navy on sight. They fight with the same

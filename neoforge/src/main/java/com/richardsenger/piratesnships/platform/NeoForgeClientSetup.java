@@ -84,6 +84,13 @@ public final class NeoForgeClientSetup {
                 e -> e.setNewFovModifier(ClientEvents.COMPUTE_FOV.invoker().modify(e.getPlayer(), e.getNewFovModifier())));
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ViewportEvent.ComputeCameraAngles.class,
                 e -> e.setRoll(ClientEvents.COMPUTE_CAMERA_ROLL.invoker().modify((float) e.getPartialTick(), e.getRoll())));
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RenderLevelStageEvent.class, e -> {
+            if (e.getStage() == net.neoforged.neoforge.client.event.RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
+                // the partial tick the level renderer itself uses (LevelRenderer#renderLevel)
+                ClientEvents.RENDER_AFTER_TRANSLUCENT.invoker().onRender(e.getCamera(), e.getFrustum(),
+                        e.getPartialTick().getGameTimeDeltaPartialTick(false));
+            }
+        });
         NeoForge.EVENT_BUS.addListener(PlayStreamingSourceEvent.class, e -> ClientEvents.SOUND_STREAM_STARTED.invoker().onStarted(e.getSound(), e.getChannel()));
     }
 

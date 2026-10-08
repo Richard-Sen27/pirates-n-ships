@@ -45,34 +45,44 @@ public record FlagpoleState(FlagKind kind, ItemStack flagItem, boolean struck, O
     /**
      * An action in progress.
      *
+     * @param startTick  game time at which it started (VIS1a: the client's hoisting animation runs from here to
+     *                   {@code finishTick}); a pole saved before VIS1a loads with {@code startTick == finishTick},
+     *                   which draws no animation
      * @param finishTick game time at which it completes
      * @param kind       for {@link Action#HOIST}: the kind of the new flag, otherwise {@code NONE}
      * @param item       for {@link Action#HOIST}: the new flag item, held by the pole until the hoist completes or is
      *                   cancelled (then it goes back to {@code actor}); otherwise empty
      */
-    public record Pending(Action action, UUID actor, long finishTick, FlagKind kind, ItemStack item) {
+    public record Pending(Action action, UUID actor, long startTick, long finishTick, FlagKind kind, ItemStack item) {
 
         public static final Codec<Pending> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Action.CODEC.fieldOf("action").forGetter(Pending::action),
                 UUIDUtil.CODEC.fieldOf("actor").forGetter(Pending::actor),
+                Codec.LONG.optionalFieldOf("start_tick").forGetter(p -> Optional.of(p.startTick())),
                 Codec.LONG.fieldOf("finish_tick").forGetter(Pending::finishTick),
                 FlagKind.CODEC.optionalFieldOf("kind", FlagKind.NONE).forGetter(Pending::kind),
                 ItemStack.OPTIONAL_CODEC.optionalFieldOf("item", ItemStack.EMPTY).forGetter(Pending::item)
-        ).apply(i, Pending::new));
+        ).apply(i, (action, actor, start, finish, kind, item) -> new Pending(action, actor, start.orElse(finish), finish, kind, item)));
 
         public Pending {
             item = item.copy();
+            if (startTick > finishTick) startTick = finishTick;
+        }
+
+        /** An action without a known start (draws no animation): what a pole saved before VIS1a holds. */
+        public Pending(Action action, UUID actor, long finishTick, FlagKind kind, ItemStack item) {
+            this(action, actor, finishTick, finishTick, kind, item);
         }
 
         @Override
         public boolean equals(Object o) {
-            return o instanceof Pending p && action == p.action && actor.equals(p.actor) && finishTick == p.finishTick
-                    && kind == p.kind && ItemStack.matches(item, p.item);
+            return o instanceof Pending p && action == p.action && actor.equals(p.actor) && startTick == p.startTick
+                    && finishTick == p.finishTick && kind == p.kind && ItemStack.matches(item, p.item);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(action, actor, finishTick, kind, ItemStack.hashItemAndComponents(item));
+            return Objects.hash(action, actor, startTick, finishTick, kind, ItemStack.hashItemAndComponents(item));
         }
     }
 

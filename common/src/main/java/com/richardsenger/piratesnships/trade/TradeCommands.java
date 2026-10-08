@@ -294,6 +294,7 @@ public final class TradeCommands {
                 case NO_CONTRACT -> "No such contract";
                 case CONTRACT_REFUSED -> "Contract refused";
                 case REPUTATION_REFUSED -> "The villagers won't trade with you: your reputation with them is too low";
+                case PLUNDER_REFUSED -> "The harbor master wants no stolen goods";
             });
         }
     }

@@ -22,6 +22,10 @@ public final class FlagConfig {
             "How often a flying flag on a ship re-checks which way is downwind, in ticks (the ship turns under it)");
     public static final ConfigValue<Boolean> CUSTOM_BANNER_FLAGS = SECTION.bool("custom_banner_flags", true,
             "Vanilla banners can be hoisted as custom flags (treated as neutral)");
+    public static final ConfigValue<Boolean> STACKED_POLES = SECTION.bool("stacked_poles", true,
+            "Flagpoles stacked on each other form one tall pole: the top block flies the flag, the blocks below pass every use up to it. Off: every flagpole block is a pole of its own");
+    public static final ConfigValue<Integer> MAX_POLE_HEIGHT = SECTION.intRange("max_pole_height", 6, 1, 16,
+            "The most flagpole blocks one stacked pole may have; placing another on a pole this tall is refused");
 
     private FlagConfig() {
     }

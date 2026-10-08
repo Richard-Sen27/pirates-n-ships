@@ -23,6 +23,8 @@ import com.richardsenger.piratesnships.law.world.LawWorldGameTests;
 import com.richardsenger.piratesnships.law.world.PlacedBlocks;
 import com.richardsenger.piratesnships.law.world.PlunderCrimeGameTests;
 import com.richardsenger.piratesnships.law.world.PlunderCrimes;
+import com.richardsenger.piratesnships.law.world.PlunderNotice;
+import com.richardsenger.piratesnships.law.world.PlunderNoticeGameTests;
 import com.richardsenger.piratesnships.law.crime.CrimeType;
 import com.richardsenger.piratesnships.law.world.TheftDetector;
 import com.richardsenger.piratesnships.platform.Services;
@@ -113,6 +115,8 @@ public final class LawModule implements ModModule {
                     .add(BountyProofItem.TOOLTIP_BLANK, "Names no one")
                     .add(TheftDetector.THEFT_SEEN_KEY, "%s saw you stealing!")
                     .add(FlagCrimes.COVER_BLOWN_KEY, "The navy has seen through your colours")
+                    .add(PlunderCrimes.REPORTED_KEY, "The harbor master reported you to the navy for offering stolen goods")
+                    .add(PlunderNotice.SPOTTED_KEY, "Your cover is blown: the navy has spotted plunder in your hold")
                     .add(k + "last", "Last crime of %s: %s against %s, %s, +%s points (%s s ago)")
                     .add(k + "last.none", "No crime reported for %s since the server started")
                     .add(k + "hostile.yes", "The navy attacks %s on sight (%s)")
@@ -200,7 +204,9 @@ public final class LawModule implements ModModule {
                     case ATTACK_STRUCK_COLORS -> "Attacking a ship that struck its colors";
                     case PRESS_GANG -> "Press-ganging a prisoner";
                     case DESERTION -> "Desertion";
-                    case FENCE_PLUNDER -> "Selling plunder";
+                    case FENCE_PLUNDER -> "Selling noticed plunder";
+                    case SELLING_PLUNDER -> "Offering stolen goods";
+                    case SUSPECTED_PIRACY -> "Suspected piracy";
                 });
             }
         });
@@ -208,7 +214,7 @@ public final class LawModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(LawGameTests.class, LawWorldGameTests.class, PlunderCrimeGameTests.class,
+        return List.of(LawGameTests.class, LawWorldGameTests.class, PlunderCrimeGameTests.class, PlunderNoticeGameTests.class,
                 BountyTurnInGameTests.class, NoticeBoardGameTests.class, FlagWorldGameTests.class);
     }
 }

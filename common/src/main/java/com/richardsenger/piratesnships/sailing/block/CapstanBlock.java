@@ -3,12 +3,19 @@ package com.richardsenger.piratesnships.sailing.block;
 import com.richardsenger.piratesnships.sailing.anchor.AnchorEntities;
 import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import com.richardsenger.piratesnships.sailing.ship.ShipControls;
+import com.richardsenger.piratesnships.station.StationBlock;
+import com.richardsenger.piratesnships.station.StationKind;
+import com.richardsenger.piratesnships.station.Stations;
+import com.richardsenger.piratesnships.station.capstan.CapstanStation;
 import java.util.Locale;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -25,8 +32,11 @@ import net.minecraft.world.phys.BlockHitResult;
  * <p>Model: hand-made in Blockbench ({@code art/models/capstan.bbmodel}, design.md §4.8), a whelped drum on an iron
  * pawl ring and a base plate, with a drumhead and two crossed capstan bars that reach 3 px past the block. It has no
  * facing; every {@link #ANCHOR} phase shows the same model.
+ *
+ * <p>CRW3: the capstan is a crew station ({@code station.capstan.CapstanStation}): a crew member at it drops and raises
+ * the anchor on order, through {@link ShipControls#dropAnchor} and {@link ShipControls#raiseAnchor}.
  */
-public class CapstanBlock extends Block {
+public class CapstanBlock extends Block implements StationBlock {
 
     /** Block-state mirror of {@link AnchorState.Phase}. */
     public enum Phase implements StringRepresentable {
@@ -71,9 +81,25 @@ public class CapstanBlock extends Block {
     }
 
     @Override
+    public StationKind<?> stationKind() {
+        return CapstanStation.INSTANCE;
+    }
+
+    /** Station tools (the captain's whistle) act through their own {@code useOn} instead of dropping the anchor. */
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
+                                              InteractionHand hand, BlockHitResult hit) {
+        if (stack.getItem() instanceof StationBlock.Tool) {
+            return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
+        }
+        return super.useItemOn(stack, state, level, pos, player, hand, hit);
+    }
+
+    @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (level instanceof ServerLevel serverLevel && !newState.is(this)) {
             AnchorEntities.capstanRemoved(serverLevel, pos); // the anchor goes with its capstan
+            Stations.onStationRemoved(serverLevel, pos); // CRW3: frees the capstan station and removes its seat
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }

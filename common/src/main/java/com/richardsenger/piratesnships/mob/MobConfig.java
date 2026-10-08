@@ -83,12 +83,26 @@ public final class MobConfig {
      */
     public static final ConfigSection CAPTAIN = S.section("captain",
             "The named pirate captain of each pirate island (captain's hut), his bounty and his duel");
+    /**
+     * The {@code mobs.harbor_master} section (PRT1a): the harbor master's {@code enabled} toggle is declared here with
+     * the other types', the rest by {@code mob.harbor.HarborMasterConfig}.
+     */
+    public static final ConfigSection HARBOR_MASTER = S.section("harbor_master",
+            "The harbor master behind every port's harbor desk: talking to him opens the desk");
+
+    /** The {@code mobs.squad} section (MOB2), filled by {@code mob.squad.SquadConfig}. */
+    public static final ConfigSection SQUAD = S.section("squad",
+            "Navy officers leading squads of their outpost's garrison on patrol");
     private static final Map<MobKind, ConfigValue<Boolean>> ENABLED = new EnumMap<>(MobKind.class);
     private static final Map<MobKind, ConfigValue<Boolean>> PEACEFUL = new EnumMap<>(MobKind.class);
 
     static {
         for (MobKind kind : MobKind.values()) {
-            ConfigSection t = kind == MobKind.PIRATE_CAPTAIN ? CAPTAIN : S.section(kind.id(), "The " + kind.id().replace('_', ' '));
+            ConfigSection t = switch (kind) {
+                case PIRATE_CAPTAIN -> CAPTAIN;
+                case HARBOR_MASTER -> HARBOR_MASTER;
+                default -> S.section(kind.id(), "The " + kind.id().replace('_', ' '));
+            };
             ENABLED.put(kind, t.bool("enabled", true,
                     "This mob exists: off = it can't be spawned and existing ones disappear"));
             if (kind.faction() != MobFaction.CIVILIAN) {
@@ -147,6 +161,7 @@ public final class MobConfig {
     public static void init() {
         com.richardsenger.piratesnships.mob.kraken.KrakenConfig.init();
         com.richardsenger.piratesnships.mob.captain.CaptainConfig.init();
+        com.richardsenger.piratesnships.mob.harbor.HarborMasterConfig.init();
     }
 
     public static ConfigValue<Boolean> enabled(MobKind kind) {

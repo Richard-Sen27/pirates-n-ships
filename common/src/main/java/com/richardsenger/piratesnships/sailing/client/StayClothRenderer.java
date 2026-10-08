@@ -36,7 +36,9 @@ import org.joml.Vector3f;
  * tack - clew point, where the clew point is lowered from the head toward the clew cleat by the trim (furled: a bundle
  * along the stay; half: halfway down; full: down to the clew). Trim changes are hoisted and lowered over about a
  * second, the cloth bellies out to the downwind side (with hysteresis), and both faces are drawn
- * ({@code entityCutoutNoCull}). The textures repeat once per block. Every other rope of the cleat (RP1: lines to cleats
+ * ({@code entityCutoutNoCull}). The textures repeat once per block; the cloth's tiles are counted up from its foot (the
+ * tack-clew edge) and run parallel to it, and the bottom block shows the frayed foot tile once the cloth hangs at least
+ * two blocks ({@link SailFoot}, ART5). Every other rope of the cleat (RP1: lines to cleats
  * or mooring rings, and a stay without a sail) is drawn with sag by {@link RopeLineRenderer#drawLines}.
  *
  * <p>Like {@link YardClothRenderer} it works on land and on ships (Sable renders a sub-level's block entities with the
@@ -46,6 +48,7 @@ import org.joml.Vector3f;
 public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> {
 
     public static final ResourceLocation CLOTH_TEXTURE = YardClothRenderer.TEXTURE;
+    public static final ResourceLocation FOOT_TEXTURE = YardClothRenderer.FOOT_TEXTURE;
     public static final ResourceLocation ROPE_TEXTURE = Constants.id("textures/block/rope.png");
 
     /** Hoisting speed: fraction of the drop per second. */
@@ -85,15 +88,21 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
             if (normal.lengthSquared() > 1.0e-6f) {
                 normal.normalize();
                 updateSide(be, normal, level, now, partialTick);
-                VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(CLOTH_TEXTURE));
                 Vector3f gTack = new Vector3f(g.tackX(), g.tackY(), g.tackZ());
                 if (shown * g.drop() > 0.05f) {
-                    cloth(vc, last, gTack, shown * g.drop(), normal.mul(be.side, new Vector3f()), g, light, overlay);
+                    Vector3f out = normal.mul(be.side, new Vector3f());
+                    float bottom = shown * g.drop();
+                    // each buffer is taken right before it is written: asking for another render type ends the batch
+                    cloth(buffers.getBuffer(RenderType.entityCutoutNoCull(CLOTH_TEXTURE)), last, gTack, bottom, out, g, false, light, overlay);
+                    if (SailFoot.shown(bottom)) {
+                        cloth(buffers.getBuffer(RenderType.entityCutoutNoCull(FOOT_TEXTURE)), last, gTack, bottom, out, g, true, light, overlay);
+                    }
                 }
                 if (shown < 0.999f) {
                     float r = 0.04f + 0.1f * (1f - shown) * Math.min(1f, g.drop() / 4f);
                     Vector3f off = normal.mul(be.side * 0.05f, new Vector3f());
-                    beam(vc, last, new Vector3f(off), new Vector3f(gTack).add(off), r, light, overlay);
+                    beam(buffers.getBuffer(RenderType.entityCutoutNoCull(CLOTH_TEXTURE)), last, new Vector3f(off),
+                            new Vector3f(gTack).add(off), r, light, overlay);
                 }
             }
         }
@@ -154,10 +163,12 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
 
     /**
      * The drawn triangle head (origin) - tack - clew point {@code (0, -bottom, 0)}, as a grid of small triangles that
-     * bulges along {@code out} (the downwind normal), most in the middle.
+     * bulges along {@code out} (the downwind normal), most in the middle. Called twice: {@code foot} false draws the
+     * triangles on the plain tile, true those on the foot tile ({@link SailFoot#stayFootTriangle}: wholly within the
+     * bottom block above the tack-clew edge). The grid's rows {@code i + j = const} run parallel to that edge.
      */
     private static void cloth(VertexConsumer vc, PoseStack.Pose p, Vector3f tack, float bottom, Vector3f out, TriangleCloth g,
-                              int light, int overlay) {
+                              boolean foot, int light, int overlay) {
         Vector3f clew = new Vector3f(0f, -bottom, 0f);
         float size = Math.max(tack.length(), bottom);
         int n = Math.max(2, (int) Math.ceil(size * CELLS_PER_BLOCK));
@@ -176,23 +187,36 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
         }
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n - i; j++) {
-                tri(vc, p, pts[i][j], pts[i + 1][j], pts[i][j + 1], along, light, overlay);
+                // the first triangle's highest corner is (i, j), the second's lies one grid row lower
+                float hA = SailFoot.heightAboveFoot((float) i / n, (float) j / n, bottom);
+                float hB = SailFoot.heightAboveFoot((float) (i + 1) / n, (float) j / n, bottom);
+                float hC = SailFoot.heightAboveFoot((float) i / n, (float) (j + 1) / n, bottom);
+                if (SailFoot.stayFootTriangle(hA, bottom) == foot) {
+                    tri(vc, p, pts[i][j], pts[i + 1][j], pts[i][j + 1], hA, hB, hC, along, bottom, light, overlay);
+                }
                 if (j < n - i - 1) {
-                    tri(vc, p, pts[i + 1][j], pts[i + 1][j + 1], pts[i][j + 1], along, light, overlay);
+                    float hD = SailFoot.heightAboveFoot((float) (i + 1) / n, (float) (j + 1) / n, bottom);
+                    if (SailFoot.stayFootTriangle(hB, bottom) == foot) {
+                        tri(vc, p, pts[i + 1][j], pts[i + 1][j + 1], pts[i][j + 1], hB, hD, hC, along, bottom, light, overlay);
+                    }
                 }
             }
         }
     }
 
-    /** One triangle, as a quad with its last corner doubled; texture coordinates are the planar position in blocks. */
-    private static void tri(VertexConsumer vc, PoseStack.Pose p, Vector3f a, Vector3f b, Vector3f c, Vector3f along, int light, int overlay) {
+    /**
+     * One triangle, as a quad with its last corner doubled. Texture u is the horizontal position along the tack in
+     * blocks, v counts whole tiles up from the foot ({@link SailFoot#stayV}), so the bands run parallel to the foot.
+     */
+    private static void tri(VertexConsumer vc, PoseStack.Pose p, Vector3f a, Vector3f b, Vector3f c, float ha, float hb, float hc,
+                            Vector3f along, float bottom, int light, int overlay) {
         Vector3f n = new Vector3f(b).sub(a).cross(new Vector3f(c).sub(a));
         if (n.lengthSquared() < 1.0e-12f) return;
         n.normalize();
-        vertex(vc, p, a, a.dot(along), -a.y, n, light, overlay);
-        vertex(vc, p, b, b.dot(along), -b.y, n, light, overlay);
-        vertex(vc, p, c, c.dot(along), -c.y, n, light, overlay);
-        vertex(vc, p, c, c.dot(along), -c.y, n, light, overlay);
+        vertex(vc, p, a, a.dot(along), SailFoot.stayV(ha, bottom), n, light, overlay);
+        vertex(vc, p, b, b.dot(along), SailFoot.stayV(hb, bottom), n, light, overlay);
+        vertex(vc, p, c, c.dot(along), SailFoot.stayV(hc, bottom), n, light, overlay);
+        vertex(vc, p, c, c.dot(along), SailFoot.stayV(hc, bottom), n, light, overlay);
     }
 
     /** A square beam of half width {@code half} from {@code from} to {@code to} (four sides, open ends). */

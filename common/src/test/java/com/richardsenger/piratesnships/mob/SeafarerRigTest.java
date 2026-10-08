@@ -69,7 +69,7 @@ class SeafarerRigTest {
     }
 
     private static Path geo(MobKind kind) {
-        return ASSETS.resolve("geo/" + kind.id() + ".geo.json");
+        return ASSETS.resolve("geo/" + kind.artId() + ".geo.json");
     }
 
     private static JsonObject read(Path file) throws IOException {
@@ -109,7 +109,7 @@ class SeafarerRigTest {
         JsonObject json = read(geo(kind));
         assertEquals("1.12.0", json.get("format_version").getAsString(), "GeckoLib supports geometry 1.12.0 only");
         JsonObject desc = geometry(geo(kind)).getAsJsonObject("description");
-        assertEquals("geometry." + kind.id(), desc.get("identifier").getAsString());
+        assertEquals("geometry." + kind.artId(), desc.get("identifier").getAsString());
         assertEquals(64, desc.get("texture_width").getAsInt());
         assertEquals(64, desc.get("texture_height").getAsInt());
     }
@@ -173,7 +173,7 @@ class SeafarerRigTest {
     @ParameterizedTest
     @EnumSource(MobKind.class)
     void textureIsAPainted64x64SkinSheet(MobKind kind) throws IOException {
-        BufferedImage img = ImageIO.read(ASSETS.resolve("textures/entity/" + kind.id() + ".png").toFile());
+        BufferedImage img = ImageIO.read(ASSETS.resolve("textures/entity/" + kind.artId() + ".png").toFile());
         assertEquals(64, img.getWidth());
         assertEquals(64, img.getHeight());
         assertEquals(0xFF, img.getRGB(12, 12) >>> 24, "face");
@@ -183,8 +183,8 @@ class SeafarerRigTest {
     @ParameterizedTest
     @EnumSource(MobKind.class)
     void theModelResolvesTheTypesGeometryFromItsTexture(MobKind kind) {
-        ResourceLocation geo = HumanoidGeoModel.geoFor(HumanoidGeoModel.entityTexture(kind.id()));
-        assertEquals(Constants.id("geo/" + kind.id() + ".geo.json"), geo);
+        ResourceLocation geo = HumanoidGeoModel.geoFor(HumanoidGeoModel.entityTexture(kind.artId()));
+        assertEquals(Constants.id("geo/" + kind.artId() + ".geo.json"), geo);
         assertTrue(Files.isRegularFile(ASSETS.resolve(geo.getPath())), geo + " exists");
         assertEquals(HumanoidGeoModel.RIG_GEO, HumanoidGeoModel.geoFor(HumanoidGeoModel.entityTexture("crew_member")),
                 "the crew member keeps its geometry");

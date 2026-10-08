@@ -4,6 +4,7 @@ import com.richardsenger.piratesnships.combat.content.CombatContent;
 import com.richardsenger.piratesnships.law.bounty.PirateTier;
 import com.richardsenger.piratesnships.law.turnin.OfficerTurnIns;
 import com.richardsenger.piratesnships.mob.MobKind;
+import com.richardsenger.piratesnships.mob.captain.PirateCaptain;
 import com.richardsenger.piratesnships.mob.ai.DuelistAttackGoal;
 import com.richardsenger.piratesnships.mob.ai.VanillaSwordGoal;
 import net.minecraft.sounds.SoundEvent;
@@ -58,8 +59,12 @@ public class NavyOfficer extends SeafarerMob {
         return turnIn != InteractionResult.PASS ? turnIn : super.mobInteract(player, hand);
     }
 
-    /** The navy's reward rank of a captured NPC: every pirate counts as a deckhand until pirates have ranks. */
-    private static @Nullable PirateTier pirateTier(LivingEntity prisoner) {
+    /**
+     * The navy's reward rank of a captured NPC: a named pirate captain (BOS1) is a captain, every other pirate counts
+     * as a deckhand until pirates have ranks.
+     */
+    public static @Nullable PirateTier pirateTier(LivingEntity prisoner) {
+        if (prisoner instanceof PirateCaptain) return PirateTier.CAPTAIN;
         return prisoner instanceof Pirate ? PirateTier.DECKHAND : null;
     }
 

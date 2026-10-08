@@ -6,25 +6,38 @@ import com.richardsenger.piratesnships.core.config.ModConfigs;
 
 /**
  * Server config section {@code waves} and client section {@code wave_effects} (docs/design.md §17, group "Waves";
- * §5.4). The client section can't be called {@code waves} because config translation keys don't include the config
- * type, so it would clash with the server section. Declared ahead of the feature by {@code core.settings.SettingsModule};
- * nothing reads these values yet. The {@code hazards} section belongs to {@code hazards.HazardsConfig} (H1).
+ * §5.4; read by {@code hazards.waves} and {@code sailing.waves}, WV1). The client section can't be called {@code waves}
+ * because config translation keys don't include the config type, so it would clash with the server section. Loaded by
+ * {@code core.settings.SettingsModule}; it stays in this package so the settings module and its tests keep their
+ * imports. The {@code hazards} section belongs to {@code hazards.HazardsConfig} (H1).
  */
 public final class HazardConfig {
 
     private static final ConfigSection WAVES = ModConfigs.server("waves", "Simulated sea state: wave roll and pitch on ships");
 
     public static final ConfigValue<Boolean> WAVES_ENABLED = WAVES.bool("enabled", true,
-            "The sea state follows the weather and rocks ships with roll and pitch forces. Off = always a flat sea");
+            "The sea state follows the weather, rocks ships with roll and pitch and spills water into low open hulls. Off = always a flat sea");
     public static final ConfigValue<Double> WAVE_AMPLITUDE = WAVES.doubleRange("amplitude", 1.0, 0.0, 5.0,
-            "Multiplier on the roll and pitch forces of waves on ships (1 = normal, 0 = no wave forces)");
+            "Multiplier on the wave height of every sea state (calm 0.1, moderate 0.3, rough 0.7, storm 1.2 blocks); 0 = flat sea");
+    public static final ConfigValue<Double> SHIP_TORQUE = WAVES.doubleRange("ship_torque", 5.5, 0.0, 50.0,
+            "Roll and pitch torque per unit of wave slope and per kpg of ship mass, scaled by 1 / sqrt(blocks / 200)");
+    public static final ConfigValue<Double> MAX_TORQUE_PER_MASS = WAVES.doubleRange("max_torque_per_mass", 2.0, 0.0, 20.0,
+            "Upper limit of the wave torque per kpg of ship mass, so that small boats are not flipped");
+    public static final ConfigValue<Double> STATE_CHANGE_SECONDS = WAVES.doubleRange("state_change_seconds", 60.0, 1.0, 1200.0,
+            "Seconds the sea takes to go from calm to storm (or back) when the weather changes");
+    public static final ConfigValue<Boolean> SPILL = WAVES.bool("spill", true,
+            "Wave crests spill water over low rims and through low open hatches into compartments");
+    public static final ConfigValue<Integer> SYNC_INTERVAL_TICKS = WAVES.intRange("sync_interval_ticks", 60, 10, 1200,
+            "Ticks between sea state updates sent to players (clients blend between them)");
 
     private static final ConfigSection WAVE_EFFECTS = ModConfigs.client("wave_effects", "Client-side wave visuals");
 
-    public static final ConfigValue<Boolean> CAMERA_SWAY = WAVE_EFFECTS.bool("camera_sway", true,
-            "The camera sways with the waves while you are on a ship");
-    public static final ConfigValue<Double> CAMERA_SWAY_STRENGTH = WAVE_EFFECTS.doubleRange("camera_sway_strength", 1.0, 0.0, 2.0,
-            "Multiplier on how strongly the camera sways with the waves (1 = normal)");
+    public static final ConfigValue<Boolean> CAMERA_SWAY = WAVE_EFFECTS.bool("camera_sway", false,
+            "The camera rolls with the ship while you are aboard");
+    public static final ConfigValue<Double> CAMERA_SWAY_FRACTION = WAVE_EFFECTS.doubleRange("camera_sway_fraction", 0.5, 0.0, 1.0,
+            "Fraction of the ship's roll the camera follows (1 = the full roll)");
+    public static final ConfigValue<Boolean> SPRAY = WAVE_EFFECTS.bool("spray", true,
+            "Spray and a splash at the bow when it digs into a wave in rough or stormy seas");
 
     private HazardConfig() {
     }

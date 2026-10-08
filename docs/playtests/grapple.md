@@ -122,3 +122,47 @@ gunpowder, two hooks, flat land with a cliff or a tower, two assembled ships on 
     Into water: the same (a splash).
 11. **Toggles:** `grapple.latch_world_blocks = false`: land, cliffs and quays are misses again; `grapple.latch_own_ship
     = false`: your own ship is a miss again.
+
+## GR5 hauling
+
+Hauling a hooked ship by hand (sneak freezes the rope, walking away pulls). Defaults: `grapple.hauling` true,
+`haul_stiffness` 60 kpg/s² (pull per block beyond the frozen length), `haul_damping` 30 kpg/s, `haul_max_force` 200
+kpg·m/s², `haul_player_pull` 0.08 blocks/tick. Changed with GR5: a hand-held rope from land no longer drags the hooked
+ship by itself (it pays out); a rope tied to a cleat or ring on land still does (`shore_haul_force`).
+
+1. **Askew sloop:** moor or float a small sloop near a quay so it lies at an angle to it. Stand on the quay, throw the
+   hook at its bow or stern rail (not amidships). Without sneaking, walk back a few blocks: the rope pays out, the
+   sloop does not move, the rope sags.
+2. **Haul:** hold sneak (the rope freezes), walk back two or three blocks while sneaking: the rope goes straight and
+   the sloop starts moving toward you and swings round (a hook near the bow turns the bow toward you). `/sable` shows
+   the force as "Hauling by Hand". Release sneak: the pull stops at once and the rope sags again. Say whether the pull
+   feels too weak or too strong (`haul_stiffness`, `haul_max_force`).
+3. **Slip:** while sneaking, walk back fast and far (sprint-sneak is not possible, so just keep walking): you are never
+   stopped and the rope never snaps below its full length; the pull stays at the cap and the frozen length grows.
+4. **No reaction on the ground:** while hauling on the quay or a deck you are not pulled toward the ship.
+5. **Airborne / swimming:** hook a ship, sneak, then jump off the quay into the water (or jump in place after backing
+   off): the taut rope stops you moving away and pulls you toward the hook; you swing on it instead of falling free.
+6. **Cleat-tied rope:** tie the near end to a cleat (use the cleat with the hook out), then sneak and walk away: nothing
+   is hauled by hand (a cleat on land drags the ship as before; a cleat on your ship hauls the ships together as before).
+7. **Your own ship:** a hook on the ship you stand on is never hauled by sneaking (nothing moves).
+8. **Toggle:** `grapple.hauling = false`: sneaking does nothing, and a hand-held rope from land drags the hooked ship
+   gently toward you again (the old G11 behaviour).
+
+## GR5 no floating rope end
+
+The rope's near end is fixed only by a cleat or mooring ring; using a rope still in your hand pulls you along it.
+
+1. **The reported bug:** throw or fire the hook at a ship or a cliff, wait a second, then with an empty hand (or a hook
+   in hand) look along the rope and right-click: you are pulled hand over hand toward the hook (about 2 blocks/s,
+   `grapple.slide.slide_min_speed`) and land on top of the block the hook bit into. At no point is a rope end left
+   floating where you stood: the rope always runs from the hook to your hand. Sneak during the pull to let go.
+2. **Blocked:** pull toward a hook whose straight path runs into terrain (e.g. a hook lower than you behind a ledge):
+   you let go where the way is blocked. Ship blocks do not block the pull (Sable's ships are not in the world's
+   collision query), so check that you are not dragged visibly through a hull.
+3. **Someone else's hand-held rope:** a second player right-clicking your rope while you hold it gets nothing (the use
+   goes to whatever is behind it).
+4. **Cleat-tied line:** tie the rope to a cleat on your ship (or a cleat on a cliff for a zip line), then right-click
+   it: you hang and slide toward the lower end as in GR2; a second player can slide too.
+5. **Haul and pull together:** sneak (the rope freezes), right-click with an empty hand: the hook is released (sneak +
+   use lets go, unchanged), you are never pulled while sneaking. Without sneak, right-click: you are pulled; sneak
+   during the pull: you let go and, still holding sneak (press it again if needed), the rope freezes where you are.

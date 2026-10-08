@@ -82,7 +82,11 @@ public final class PortStructureData {
                 () -> structureSet(structure, salt, spacing, separation));
     }
 
-    /** A pool of single pool elements {@code pirates_n_ships:<group>/<piece>} with one projection. */
+    /**
+     * A pool of single pool elements {@code pirates_n_ships:<group>/<piece>} with one projection. Every element names
+     * the processor list {@link ConnectionsProcessor#LIST}, which connects the template's fences, panes, bars and walls
+     * (jigsaw placement skips vanilla's neighbour-shape pass; WG4).
+     */
     public static void pool(DataContributions data, ResourceKey<StructureTemplatePool> key, String group, String fallback,
                             String projection, Map<String, Integer> pieces) {
         data.json(PackOutput.Target.DATA_PACK, "worldgen/template_pool", key.location(), () -> {
@@ -91,7 +95,7 @@ public final class PortStructureData {
                 JsonObject element = new JsonObject();
                 element.addProperty("element_type", "minecraft:single_pool_element");
                 element.addProperty("location", Constants.id(group + "/" + piece).toString());
-                element.addProperty("processors", "minecraft:empty");
+                element.addProperty("processors", ConnectionsProcessor.LIST.location().toString());
                 element.addProperty("projection", projection);
                 JsonObject entry = new JsonObject();
                 entry.add("element", element);

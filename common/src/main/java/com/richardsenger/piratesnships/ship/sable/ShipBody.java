@@ -309,6 +309,20 @@ public final class ShipBody {
         }
     }
 
+    /**
+     * Records an impulse (force × time step, body frame) at a plot position in our rope hauling force group (GR5), like
+     * {@link #applyGrappleImpulse}: the point force becomes a force plus the torque {@code (pos − COM) × force}. Physics
+     * substep only ({@code ServerSubLevel#getOrCreateQueuedForceGroup} l.395;
+     * {@code api/physics/force/QueuedForceGroup.java#applyAndRecordPointForce} l.25;
+     * {@code api/physics/force/ForceTotal.java#applyImpulseAtPoint} l.101-105).
+     */
+    public void applyHaulImpulse(Vector3dc plotPoint, Vector3dc localImpulse) {
+        dev.ryanhcode.sable.api.physics.force.ForceGroup group = ShipForces.haul();
+        if (group != null) {
+            sub.getOrCreateQueuedForceGroup(group).applyAndRecordPointForce(plotPoint, localImpulse);
+        }
+    }
+
     // ---------------------------------------------------------------- sea hazards (H1)
 
     /**
@@ -338,6 +352,21 @@ public final class ShipBody {
         dev.ryanhcode.sable.api.physics.force.ForceGroup group = ShipForces.cargo();
         if (group != null) {
             sub.getOrCreateQueuedForceGroup(group).applyAndRecordPointForce(plotPoint, localImpulse);
+        }
+    }
+
+    // ---------------------------------------------------------------- waves (WV1)
+
+    /**
+     * Records an angular impulse (torque × time step) about the center of mass, in the body (plot) frame, in our waves
+     * force group. Physics substep only, like {@link #applySailingImpulse} ({@code ServerSubLevel#getOrCreateQueuedForceGroup}
+     * l.395, {@code api/physics/force/QueuedForceGroup.java#getForceTotal} l.21,
+     * {@code api/physics/force/ForceTotal.java#applyLinearAndAngularImpulse} l.63).
+     */
+    public void applyWaveImpulse(Vector3dc localAngularImpulse) {
+        dev.ryanhcode.sable.api.physics.force.ForceGroup group = ShipForces.waves();
+        if (group != null) {
+            sub.getOrCreateQueuedForceGroup(group).getForceTotal().applyLinearAndAngularImpulse(new Vector3d(), localAngularImpulse);
         }
     }
 

@@ -13,7 +13,8 @@ public final class DryHullConfig {
     public static final ConfigValue<Boolean> ENABLED = SECTION.bool("enabled", true,
             "Keep the inside of closed hulls free of water (no water rendered, no swimming below deck)");
     public static final ConfigValue<Boolean> PARTIAL_BLOCKS = SECTION.bool("partial_blocks", true,
-            "Also keep the empty part of slabs, stairs, trapdoors and doors free of water when it faces only the dry inside");
+            "Also keep the empty part of slabs, stairs, trapdoors, hatches and doors free of water when it faces the dry inside "
+                    + "and no sea (a deck hatch counts as inside the ship)");
     public static final ConfigValue<Boolean> DRY_BUOYANCY = SECTION.bool("dry_buoyancy", true,
             "The dry air inside a hull below the waterline lifts the ship");
     public static final ConfigValue<Double> DRY_BUOYANCY_SCALE = SECTION.doubleRange("dry_buoyancy_scale", 1.0, 0.0, 10.0,
@@ -32,6 +33,20 @@ public final class DryHullConfig {
             "How far up from the hull's bottom to follow the water that touches it when finding the sea surface");
     public static final ConfigValue<Boolean> ASYNC_ANALYSIS = SECTION.bool("async_analysis", true,
             "Run hull re-analysis on a background thread (the first analysis after assembly or loading is synchronous)");
+
+
+    /**
+     * Client section {@code dry_hull_view} (HV1): how dry hulls look on this client. Declared on both sides so datagen and
+     * the config screen see it; only the client reads it. A separate name because server and client sections share
+     * their lang keys.
+     */
+    private static final ConfigSection VIEW = ModConfigs.client("dry_hull_view", "How the inside of dry hulls looks on this client");
+
+    public static final ConfigValue<Boolean> HIDE_WATER_PLANTS = VIEW.bool("hide_water_plants", true,
+            "Do not draw seagrass, kelp, sea pickles and bubble columns of the world where they stand inside a dry hull "
+                    + "(block tag pirates_n_ships:hidden_in_dry_hull)");
+    public static final ConfigValue<Integer> HIDDEN_PLANTS_REFRESH_TICKS = VIEW.intRange("hidden_plants_refresh_ticks", 5, 1, 100,
+            "How often (ticks) the hidden water plants follow a moving ship; lower is quicker but redraws more chunk sections");
 
     private DryHullConfig() {
     }

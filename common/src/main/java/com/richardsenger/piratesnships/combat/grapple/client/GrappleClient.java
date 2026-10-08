@@ -76,7 +76,7 @@ public final class GrappleClient {
             return false; // the item in hand keeps its own use
         }
         Vec3 eye = player.getEyePosition(1.0f);
-        ClientRopes.RopeHit hit = ClientRopes.pick(mc.level, eye, player.getViewVector(1.0f));
+        ClientRopes.RopeHit hit = ClientRopes.pick(mc.level, eye, player.getViewVector(1.0f), player);
         if (hit == null || RopeSlide.grab(main, hit.hook().tickCount, cooldown) != RopeSlide.Grab.OK
                 || inFront(mc, eye, hit.pick().eyeDistance())) {
             return false;

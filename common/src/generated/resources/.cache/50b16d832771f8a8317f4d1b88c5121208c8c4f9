@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-08T02:03:45.426238	Tags for minecraft:block mod id vanilla
+// 1.21.1	2026-10-08T02:28:12.608785	Tags for minecraft:block mod id vanilla
 4574ad20b2942c15e4ade670401483c8652905aa data/c/tags/block/chests.json
 027425cd193e9e04ea5aed99085f092fa520d95e data/minecraft/tags/block/doors.json
 691d664080a3d239750bd8a2db2d9ab1a55a75c7 data/minecraft/tags/block/mineable/axe.json
@@ -7,6 +7,7 @@
 90b985302b5c05cc96c39f6cb2985a785fde74b2 data/pirates_n_ships/tags/block/cannon_proof.json
 bb626600c7889c11c6e9962b5e3a8493f255d778 data/pirates_n_ships/tags/block/grapple_slips.json
 5c74d862842eaf4e01fa20f29baa9b0978038023 data/pirates_n_ships/tags/block/hammock_supports.json
+887c34f0e030ffaf5d7773678f9a9fbb0fca851f data/pirates_n_ships/tags/block/hidden_in_dry_hull.json
 f7371fa73528b6e981b1f5dd5cf010306cb35cdf data/pirates_n_ships/tags/block/masts.json
 efa5c7038ab6e296491b919dff511cf035976fa2 data/pirates_n_ships/tags/block/never_assemble.json
 35133e95f1c8fdd7a1c21afcc231fc0bffefb9a8 data/pirates_n_ships/tags/block/not_watertight.json

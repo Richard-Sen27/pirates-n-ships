@@ -236,6 +236,15 @@ it first. Then use the toolkit on the broken-off piece: after a second of hammer
 chests and stations, and the ship keeps its name. Each repair uses 4 nails. Only pieces of the same ship can be
 joined, and only pieces up to 200 blocks; bigger halves need a shipwright. Server config `assembly.rejoin`.
 
+### Hauling with the rope
+With your hook set in a ship and the rope in your hand, hold sneak: the rope's length freezes. Walk back and the
+rope pulls the ship toward you; a hook near the bow or stern swings it round. Let go of sneak and the rope pays out
+again. Pull too hard and the rope slips through your hand rather than snapping. Standing on the ground or a deck
+you feel nothing; in the air or in the water the rope pulls you toward the hook. A rope tied to a cleat can't be
+hauled by hand. **Pulling yourself in:** right-click the rope you are holding to climb hand over hand to the hook;
+sneak to let go. Only a rope tied off on a cleat or mooring ring is a line others can slide along. Server config
+`grapple.hauling`, `haul_stiffness`, `haul_damping`, `haul_max_force`, `haul_player_pull`.
+
 ### Boarding along the rope
 Once a grappling rope is latched onto another ship, look at the rope and use it: you hang from it and slide down to the
 lower end, following both ships as they move. Sneak to let go. A level rope is crawled slowly toward the hook. From the
@@ -359,6 +368,14 @@ blocks); otherwise it stays blank. While you hold the map, it shows the island i
 tells you the way: "NW, 340 blocks". At the X, dig about two blocks into the sand and open the chest. The treasure
 is found: every map of it turns grey and keeps as a souvenir, and the next blank map leads to another treasure.
 Operators: `/pirates world treasure give [port]`. Server config `world.treasure_maps`, `cargo_trade.treasure_map_price`.
+
+### Waves
+The sea follows the weather: calm or a light chop in fair weather, rough in rain, a storm in thunder, changing over
+about a minute. Ships roll and pitch with the waves (big ships far less than small boats). In rough seas the bow
+throws spray, and any open hatch or low rim close to the waterline lets water in at the crests, so close your hatches
+and keep a pump ready before a storm. `/pirates waves` shows the sea; operators can hold a state with `/pirates waves
+set storm` and release it with `/pirates waves clear`. The camera can roll with the ship (client setting
+`wave_effects.camera_sway`, off by default). Server config `waves`.
 
 ### Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks

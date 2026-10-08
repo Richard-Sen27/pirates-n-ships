@@ -27,7 +27,8 @@ import org.joml.Vector3f;
  * Draws the cloth of a square sail (docs/design.md §5.2, rule F5a) from its head's {@link YardBlockEntity}: a
  * trapezoid between the two yards, lowered by the trim (furled: a bundle under the upper yard; half: down to half the
  * drop; full: down to the lower yard), hoisted and lowered smoothly over about a second, and bellied out to the
- * downwind side. Both faces are drawn ({@code entityCutoutNoCull}).
+ * downwind side. Both faces are drawn ({@code entityCutoutNoCull}). The bottom block of a cloth at least two blocks
+ * tall shows the frayed foot tile ({@link SailFoot}, ART5); the bundle keeps the plain tile.
  *
  * <p>Works the same on land and on ships: Sable renders the block entities of a sub-level through the vanilla
  * {@code BlockEntityRenderDispatcher} with the ship's pose on the pose stack
@@ -38,6 +39,8 @@ import org.joml.Vector3f;
 public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
 
     public static final ResourceLocation TEXTURE = Constants.id("textures/block/sail_cloth.png");
+    /** The bottom block of a hanging cloth (ART5): the plain tile with a frayed foot in its bottom rows. */
+    public static final ResourceLocation FOOT_TEXTURE = Constants.id("textures/block/sail_cloth_foot.png");
 
     /** Hoisting speed: fraction of the drop per second. */
     private static final float HOIST_PER_SECOND = 1.0f;
@@ -60,16 +63,15 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
         double now = level.getGameTime() + (double) partialTick;
         float shown = animate(be, (float) SquareSail.drawnFraction(state.getValue(YardBlock.TRIM)), now);
         updateSide(be, g, level, now, partialTick);
-        VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
         pose.pushPose();
         pose.translate(0.5f, 0.5f, 0.5f);
         PoseStack.Pose p = pose.last();
         float bottom = shown * g.drop();
         if (bottom > 0.05f) {
-            cloth(vc, p, g, be.side, bottom, light, overlay);
+            cloth(buffers, p, g, be.side, bottom, light, overlay);
         }
         if (shown < 0.999f) {
-            bundle(vc, p, g, be.side, 1f - shown, light, overlay);
+            bundle(buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), p, g, be.side, 1f - shown, light, overlay);
         }
         pose.popPose();
     }
@@ -100,8 +102,13 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
         be.side = ClothSide.side(be.side, ClothSide.squareSailOut(g.alongX()), q, w.dirX(), w.dirZ());
     }
 
-    /** The drawn cloth from the upper yard down to {@code bottom}, as a grid that follows the standoff profile. */
-    private static void cloth(VertexConsumer vc, PoseStack.Pose p, ClothGeometry g, int side, float bottom, int light, int overlay) {
+    /**
+     * The drawn cloth from the upper yard down to {@code bottom}, as a grid that follows the standoff profile. The
+     * texture's tiles are counted up from the bottom edge, and the last block of rows takes the foot tile
+     * ({@link SailFoot}). Each buffer is taken right before its rows are written: a buffer source ends the previous
+     * shared batch when another render type is asked for.
+     */
+    private static void cloth(MultiBufferSource buffers, PoseStack.Pose p, ClothGeometry g, int side, float bottom, int light, int overlay) {
         float width = Math.max(g.upperNeg() + g.upperPos(), g.lowerNeg() + g.lowerPos());
         int cols = Math.max(2, (int) Math.ceil(width * CELLS_PER_BLOCK));
         int rows = Math.max(1, (int) Math.ceil(bottom * CELLS_PER_BLOCK));
@@ -115,9 +122,22 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
                 pts[i][j] = local(g, neg + (pos - neg) * t, -v, side * g.standoff(v, t, bottom));
             }
         }
+        int footFrom = rows;
+        while (footFrom > 0 && SailFoot.yardFootRow(footFrom - 1, rows, CELLS_PER_BLOCK, bottom)) {
+            footFrom--;
+        }
+        rows(buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), p, pts, 0, footFrom, rows, cols, light, overlay);
+        if (footFrom < rows) {
+            rows(buffers.getBuffer(RenderType.entityCutoutNoCull(FOOT_TEXTURE)), p, pts, footFrom, rows, rows, cols, light, overlay);
+        }
+    }
+
+    /** Grid rows {@code from} (inclusive) to {@code to} (exclusive) of {@code rows}, one texture tile per block. */
+    private static void rows(VertexConsumer vc, PoseStack.Pose p, Vector3f[][] pts, int from, int to, int rows, int cols,
+                             int light, int overlay) {
         Vector3f n = new Vector3f();
-        for (int i = 0; i < rows; i++) {
-            float v0 = (i % CELLS_PER_BLOCK) / (float) CELLS_PER_BLOCK;
+        for (int i = from; i < to; i++) {
+            float v0 = SailFoot.yardV0(i, rows, CELLS_PER_BLOCK);
             float v1 = v0 + 1f / CELLS_PER_BLOCK;
             for (int j = 0; j < cols; j++) {
                 float u0 = (j % CELLS_PER_BLOCK) / (float) CELLS_PER_BLOCK;

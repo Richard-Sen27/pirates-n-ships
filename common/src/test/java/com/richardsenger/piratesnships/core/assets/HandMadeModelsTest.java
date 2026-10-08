@@ -58,7 +58,7 @@ class HandMadeModelsTest {
             "brig_door_bottom_left_open_locked", "brig_door_bottom_right", "brig_door_bottom_right_locked",
             "brig_door_bottom_right_open_locked", "brig_door_top_left", "brig_door_top_right", "cannon",
             "cannon_loaded", "cannon_powder", "capstan", "cargo_barrel", "cargo_crate", "chart_table", "cleat", "figurehead_eagle",
-            "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flagpole", "hammock_foot", "hammock_head", "harbor_desk", "helm", "helm_item", "helm_wheel", "hull_patch", "nameplate",
+            "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flagpole", "hammock_foot", "hammock_head", "harbor_desk", "helm", "helm_item", "helm_wheel", "hull_patch", "mooring_ring", "nameplate",
             "notice_board", "pantry", "rope_coil_layers1", "rope_coil_layers2", "rope_coil_layers3", "rope_coil_layers4",
             "sail_winch", "sea_chest", "sea_cot_foot", "sea_cot_head", "sea_cot_item", "ship_lantern", "ship_lantern_ceiling",
             "ship_lantern_wall", "ships_bell", "ships_bell_ringing", "ships_bell_wall", "ships_bell_wall_ringing", "stern_window",
@@ -70,7 +70,7 @@ class HandMadeModelsTest {
             "jolly_roger_flag", "kraken_beak", "kraken_ink", "lead_shot", "lime", "map_tile", "merchant_flag", "musket",
             "musket_hook", "musket_loaded", "nails", "navy_flag", "navy_hat", "officer_hat", "pirate_hat", "pistol",
             "pistol_loaded", "rapier", "rope", "rum", "saber", "salt_pork", "salted_fish", "saw", "shackles",
-            "shipwright_toolkit", "spices", "tobacco");
+            "ship_receipt", "shipwright_toolkit", "spices", "tobacco", "treasure_map");
 
     /** The display slots a hand-made item model copies from vanilla's {@code item/handheld} and {@code item/generated}. */
     private static final List<String> ITEM_DISPLAY_SLOTS = List.of("thirdperson_righthand", "thirdperson_lefthand",
@@ -123,6 +123,34 @@ class HandMadeModelsTest {
         both.addAll(pedestal);
         assertEquals(item, both, "helm_item is not helm_wheel + helm");
         assertTrue(wheel.size() > 0 && pedestal.size() > 0, "empty helm part");
+    }
+
+    /**
+     * ART5: the mooring ring's model stays inside the block's floor shape ({@code MooringRingBlock}: x and z 4..12, y
+     * 0..3, turned like a button by the block state), so the outline and the hit box fit it, and as the item's only
+     * model (datagen points the item at it) it brings the display transforms of a held item.
+     */
+    @Test
+    void mooringRingFitsItsShapeAndIsHeldUpright() throws IOException {
+        JsonObject ring = blockModel("mooring_ring");
+        for (JsonElement e : ring.getAsJsonArray("elements")) {
+            JsonObject el = e.getAsJsonObject();
+            JsonArray from = el.getAsJsonArray("from");
+            JsonArray to = el.getAsJsonArray("to");
+            String name = el.get("name").getAsString();
+            for (int axis = 0; axis < 3; axis++) {
+                float lo = axis == 1 ? 0f : 4f;
+                float hi = axis == 1 ? 3f : 12f;
+                assertTrue(from.get(axis).getAsFloat() >= lo && to.get(axis).getAsFloat() <= hi, name + " leaves the shape");
+            }
+        }
+        JsonObject display = ring.getAsJsonObject("display");
+        assertNotNull(display, "no display transforms");
+        for (String slot : List.of("gui", "thirdperson_righthand", "thirdperson_lefthand", "firstperson_righthand",
+                "firstperson_lefthand", "ground", "fixed")) {
+            assertTrue(display.has(slot), "missing display slot " + slot);
+        }
+        assertEquals("front", ring.get("gui_light").getAsString(), "the plate faces the viewer in the GUI");
     }
 
     private static JsonObject blockModel(String name) throws IOException {

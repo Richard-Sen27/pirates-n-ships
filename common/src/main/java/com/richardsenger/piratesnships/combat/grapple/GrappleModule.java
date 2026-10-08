@@ -16,9 +16,6 @@ import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
 import net.minecraft.data.models.model.ModelLocationUtils;
-import net.minecraft.data.models.model.ModelTemplates;
-import net.minecraft.data.models.model.TextureMapping;
-import net.minecraft.data.models.model.TextureSlot;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
@@ -37,7 +34,9 @@ import java.util.List;
  * they lie side by side. GR1 adds the mooring ring ({@link MooringRingBlock}); GR2 lets players slide down a latched
  * rope ({@link RopeSlideService}); GR3 loads the hook from the off hand into a musket and fires it from there
  * ({@link GrappleLaunch}, {@link MusketHookLoad}). GR4 drops the crossbow, guards the rope grab, lengthens the ropes
- * and lets the hook latch on any solid surface: another ship, the thrower's own ship, or a world block.
+ * and lets the hook latch on any solid surface: another ship, the thrower's own ship, or a world block. GR5 lets the
+ * thrower haul a hooked ship by hand ({@link GrappleHaul}: sneak freezes the rope, walking away pulls) and pull
+ * themselves along their own rope; only a rope tied to a cleat or ring is a line to slide along.
  * Config section {@code grapple}. The item is
  * {@code combat.content.CombatContent#GRAPPLING_HOOK}.
  */
@@ -59,6 +58,7 @@ public final class GrappleModule implements ModModule {
         // cleats tie off the grappling rope like mooring rings (RP1)
         com.richardsenger.piratesnships.sailing.rope.RopeAnchorUse.install(GrappleService::tieOffAtAnchor, GrappleService::willTieOffAtAnchor);
         ShipForces.registerGrapple();
+        ShipForces.registerHaul(); // GR5: hauling a hooked ship by hand
         FirearmLoads.register(MusketHookLoad.INSTANCE); // GR3: the hook as a musket load
     }
 
@@ -74,6 +74,7 @@ public final class GrappleModule implements ModModule {
         CommonEvents.PLAYER_LOGOUT.register(GrappleService::onLogout);
         CommonEvents.SERVER_STOPPED.register(server -> GrappleService.onServerStopped());
         SableShips.onPhysicsTick(GrappleService::onPhysicsTick);
+        SableShips.onPhysicsTick(GrappleHaul::onPhysicsTick); // GR5
         com.richardsenger.piratesnships.ship.assembly.ShipSplits.onSplit(GrappleService::onShipSplit); // RS1
         com.richardsenger.piratesnships.ship.assembly.ShipRejoin.onRejoin(GrappleService::onShipRejoined); // RS2
     }
@@ -88,6 +89,7 @@ public final class GrappleModule implements ModModule {
         data.lang(lang -> lang
                 .add(GrappleContent.HOOK.get().getDescriptionId(), "Grappling Hook")
                 .add(GrapplingHookItem.TOOLTIP_KEY, "Throw it at a ship to haul it alongside, or at a cliff or mast to string a rope. "
+                        + "Hold sneak to hold the rope and walk back to haul a hooked ship; use the rope to pull yourself to the hook. "
                         + "Sneak + use with an empty hand to let go")
                 .add(GrapplingHookItem.LAUNCH_TOOLTIP_KEY, "In the off hand with a musket in the main hand: "
                         + "hold use to load it into the musket, then use again to fire it twice as far")
@@ -95,6 +97,7 @@ public final class GrappleModule implements ModModule {
                 .add(MusketHookLoad.NO_POWDER_KEY, "Loading the hook into the musket takes one gunpowder")
                 .add(MusketHookLoad.DESCRIPTION_KEY, "With a grappling hook")
                 .add(ShipForces.GRAPPLE_KEY, "Grappling Rope")
+                .add(ShipForces.HAUL_KEY, "Hauling by Hand")
                 .block(GrappleContent.MOORING_RING, "Mooring Ring")
                 .add(MooringRingBlock.TOOLTIP_KEY, "Hooks passing close catch on it and hold fast. Use it with a hook out to tie off the rope")
                 .add(GrappleService.TIED_KEY, "Rope tied off here")
@@ -123,14 +126,15 @@ public final class GrappleModule implements ModModule {
     }
 
     /**
-     * Placeholder look of the mooring ring until its Blockbench model (design.md §4.8): vanilla's button shape in iron,
-     * turned like a button for floor, wall and ceiling; the item uses the button's inventory model.
+     * The mooring ring's look (ART5): a hand-made Blockbench model (art/models/mooring_ring.bbmodel, design.md §4.8),
+     * an iron ring held by a staple on a bolted plate, made for the floor with the staple to the south. Turned like a
+     * button for floor, wall (the ring hangs below its staple) and ceiling, so only the block state is generated. The
+     * model carries the item's display transforms (the plate upright, the ring hanging), and the item model datagen
+     * writes for a block item points at it.
      */
     private static void ringModels(ModelContext m) {
         Block ring = GrappleContent.MOORING_RING.get();
-        TextureMapping iron = new TextureMapping().put(TextureSlot.TEXTURE, ResourceLocation.withDefaultNamespace("block/iron_block"));
-        ResourceLocation model = ModelTemplates.BUTTON.create(ring, iron, m.models());
-        ModelTemplates.BUTTON_INVENTORY.create(ModelLocationUtils.getModelLocation(ring.asItem()), iron, m.models());
+        ResourceLocation model = ModelLocationUtils.getModelLocation(ring);
         m.blockStates().accept(MultiVariantGenerator.multiVariant(ring, Variant.variant().with(VariantProperties.MODEL, model))
                 .with(faceAndFacing()));
     }
@@ -146,10 +150,10 @@ public final class GrappleModule implements ModModule {
                 .select(AttachFace.FLOOR, Direction.EAST, rot(r0, r90))
                 .select(AttachFace.FLOOR, Direction.SOUTH, rot(r0, r180))
                 .select(AttachFace.FLOOR, Direction.WEST, rot(r0, r270))
-                .select(AttachFace.WALL, Direction.NORTH, rot(r90, r0).with(VariantProperties.UV_LOCK, true))
-                .select(AttachFace.WALL, Direction.EAST, rot(r90, r90).with(VariantProperties.UV_LOCK, true))
-                .select(AttachFace.WALL, Direction.SOUTH, rot(r90, r180).with(VariantProperties.UV_LOCK, true))
-                .select(AttachFace.WALL, Direction.WEST, rot(r90, r270).with(VariantProperties.UV_LOCK, true))
+                .select(AttachFace.WALL, Direction.NORTH, rot(r90, r0))
+                .select(AttachFace.WALL, Direction.EAST, rot(r90, r90))
+                .select(AttachFace.WALL, Direction.SOUTH, rot(r90, r180))
+                .select(AttachFace.WALL, Direction.WEST, rot(r90, r270))
                 .select(AttachFace.CEILING, Direction.NORTH, rot(r180, r180))
                 .select(AttachFace.CEILING, Direction.EAST, rot(r180, r270))
                 .select(AttachFace.CEILING, Direction.SOUTH, rot(r180, r0))
@@ -165,6 +169,6 @@ public final class GrappleModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(GrappleGameTests.class, GrappleLaunchGameTests.class, GrappleSlideGameTests.class);
+        return List.of(GrappleGameTests.class, GrappleLaunchGameTests.class, GrappleSlideGameTests.class, GrappleHaulGameTests.class);
     }
 }

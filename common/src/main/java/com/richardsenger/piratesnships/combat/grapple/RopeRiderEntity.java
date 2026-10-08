@@ -35,6 +35,8 @@ public class RopeRiderEntity extends Entity {
     private double t;
     private double speed;
     private int dir;
+    /** GR5: the thrower pulls themselves along their own hand-held rope toward the hook ({@code RopeSlideService#tickPull}). */
+    private boolean pull;
     /** Where the passenger is put when it gets off now; null = where it hangs. */
     private @Nullable Vec3 landing;
 
@@ -51,6 +53,21 @@ public class RopeRiderEntity extends Entity {
         rider.t = t;
         rider.moveTo(pos.x, pos.y, pos.z, 0, 0);
         return rider;
+    }
+
+    /**
+     * A rider carrying the thrower hand over hand along their own hand-held rope toward the hook (GR5), its passenger's
+     * feet at {@code feet} (not yet added to the level).
+     */
+    static RopeRiderEntity createPull(ServerLevel level, GrapplingHookEntity hook, Vec3 feet) {
+        RopeRiderEntity rider = create(level, hook, 0.0, feet);
+        rider.pull = true;
+        return rider;
+    }
+
+    /** Whether this rider pulls the thrower toward the hook (GR5) rather than sliding along a tied rope (server). */
+    public boolean pulling() {
+        return pull;
     }
 
     /** Network id of the hook whose rope this rider hangs on (both sides). */

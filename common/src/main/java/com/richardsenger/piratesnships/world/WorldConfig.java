@@ -183,5 +183,4 @@ public final class WorldConfig {
             case NAVY_OUTPOST -> Optional.of(NAVY_OUTPOST_PLACEMENT);
         };
     }
-
 }

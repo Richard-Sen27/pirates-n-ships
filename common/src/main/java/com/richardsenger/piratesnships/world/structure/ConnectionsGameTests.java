@@ -9,7 +9,6 @@ import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Holder;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestGenerator;
@@ -29,9 +28,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement;
-import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.minecraft.world.level.levelgen.structure.templatesystem.LiquidSettings;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorList;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -177,10 +174,7 @@ public final class ConnectionsGameTests {
         return value instanceof Boolean b ? b : !value.toString().equals("none");
     }
 
-    /**
-     * The element of our pools whose template is {@code location}. A template whose pool is not registered yet (the
-     * fort's pieces before WG3 lands) is wrapped in a rigid element with the connections list, as the pool will be.
-     */
+    /** The element of our pools whose template is {@code location}. */
     private static StructurePoolElement element(ServerLevel level, String location) {
         for (var entry : level.registryAccess().registryOrThrow(Registries.TEMPLATE_POOL).entrySet()) {
             if (!entry.getKey().location().getNamespace().equals(Constants.MOD_ID)) continue;
@@ -189,10 +183,7 @@ public final class ConnectionsGameTests {
                 if (json != null && json.has("location") && json.get("location").getAsString().equals(location)) return element;
             }
         }
-        Optional<Holder.Reference<StructureProcessorList>> list = level.registryAccess()
-                .registryOrThrow(Registries.PROCESSOR_LIST).getHolder(ConnectionsProcessor.LIST);
-        if (list.isEmpty()) throw new IllegalStateException("processor list " + ConnectionsProcessor.LIST.location() + " is not loaded");
-        return StructurePoolElement.single(location, list.get()).apply(StructureTemplatePool.Projection.RIGID);
+        throw new IllegalStateException("no pool element places " + location);
     }
 
     private static JsonObject encode(ServerLevel level, StructurePoolElement element) {

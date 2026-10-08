@@ -54,7 +54,8 @@ An assembled ship analyses its own hull:
 - Placing a block into the breach stops the inflow.
 - **Buoyancy:** the dry volume under water lifts the ship, and flood water weighs it down. A fully flooded ship sinks.
 - The flood state is saved with the ship.
-- Not there yet: a visible water surface inside a flooding room, pumps, patch items, and damage from cannons.
+- Flood water shows as a level water surface inside the room, rising and falling with the flood (client config
+  `dry_hull_view.flood_surface`); below it you get the underwater view.
 
 ## Fighting a leak
 A hull block destroyed below the waterline leaves a breach, and water runs into that room at a rate; deeper holes leak

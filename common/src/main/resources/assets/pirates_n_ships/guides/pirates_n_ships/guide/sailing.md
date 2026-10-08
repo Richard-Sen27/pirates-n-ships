@@ -82,10 +82,15 @@ music plays as usual. A running track is never cut off: the pool changes when it
 `music_enabled`, `music_volume`). The tracks and their authors are listed in `credits.md`.
 
 ## Helm and rudder
-On an assembled ship, using the helm turns the rudder one step: the right third of the wheel (as the helmsman sees it)
-to starboard, the left third to port, the middle back to midships. There are three steps per side, up to 35°. The
-action bar shows the position. The rudder only works while the ship moves through the water, and it reverses when the
-ship goes astern.
+Hold right-click on the helm of an assembled ship and turn the wheel (mouse or A/D); the rudder follows it up to 35°
+each way, and the line above the hotbar shows the angle. With `helm.wheel.drag_steering = false` you click the wheel
+instead: the right third (as the helmsman sees it) one step to starboard, the left third to port, the middle back to
+midships, three steps per side. The rudder only works while the ship moves through the water, and it reverses when the
+ship goes astern. Hard over, the starter sloop turns a circle about three to four ship lengths across (some 100
+blocks), at any speed: a slow ship turns on the same circle, it just takes longer to sail it (at full sail before a
+fresh wind about a minute for a quarter turn). It heels a little in the turn but never far. Server config: how sharp
+the ship turns is `sailing.rudder_force_factor` (3; 1 is the weaker rudder of earlier versions), the largest rudder
+angle `sailing.max_rudder_angle`.
 
 ## A helmsman holds the course
 Assign a crew member to the ship's helm (whistle on the crew member, then on the helm) or simply give a course:

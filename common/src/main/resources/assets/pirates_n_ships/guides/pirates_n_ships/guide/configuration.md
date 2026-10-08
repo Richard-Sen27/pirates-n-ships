@@ -17,7 +17,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `dry_hull` | Dry hull on/off, buoyancy of the dry volume, weight of flood water. |
 | `flooding` | Flooding on/off, inflow rate; bilge pump on/off, rate, reach, use time and exhaustion; hull patch on/off. |
 | `wind` | Wind strength range, how fast it changes, weather multipliers, gusts, regional variation. |
-| `sailing` | Sail force, rudder strength, keel drag, anchor strength, roll and pitch damping. |
+| `sailing` | Sail force, rudder strength and turning authority (`rudder_force_factor`), keel drag, anchor strength, roll and pitch damping. |
 | `anchor_chain` | Chain speeds, travel time limits, anchor sounds and volumes. |
 | `hull_creaking` | Creaking on/off, how often, volume and pitch ranges, the rolling rate that counts. |
 | `audio` (client) | Music on/off and volume, the gap between tracks, shanties aboard. |

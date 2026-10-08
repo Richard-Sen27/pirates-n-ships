@@ -58,7 +58,9 @@ public final class HarborDeskService {
     public enum Use {
         OPENED(null), DISABLED(null), UNBOUND(KEY + "unbound"), NO_MARKET(KEY + "no_market"),
         /** PRT1a: {@code harbor_desks.direct_use} is off and the desk was used directly, not through its harbor master. */
-        TALK_TO_MASTER(KEY + "talk_to_master");
+        TALK_TO_MASTER(KEY + "talk_to_master"),
+        /** Harbor dues are owed at the desk's port (PRT1b); {@code DockingFees.atDesk} already told the player. */
+        DUES_OWED(null);
 
         private final String message;
 
@@ -136,6 +138,7 @@ public final class HarborDeskService {
         if (port.isEmpty()) return Use.UNBOUND;
         MinecraftServer server = player.server;
         if (TradeService.market(server, port.get()).isEmpty()) return Use.NO_MARKET;
+        if (com.richardsenger.piratesnships.trade.fees.DockingFees.atDesk(player, port.get())) return Use.DUES_OWED;
         TradeService.offers(server, port.get(), destinations(server, port.get()));
         return MarketBackend.openDesk(player, port.get(), pos.immutable()) ? Use.OPENED : Use.NO_MARKET;
     }

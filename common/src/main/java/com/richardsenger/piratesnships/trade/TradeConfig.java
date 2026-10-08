@@ -5,6 +5,7 @@ import com.richardsenger.piratesnships.core.config.ConfigValue;
 import com.richardsenger.piratesnships.core.config.ModConfigs;
 import com.richardsenger.piratesnships.trade.cargo.CargoWeight;
 import com.richardsenger.piratesnships.trade.contract.ContractParams;
+import com.richardsenger.piratesnships.trade.fees.DockingRules;
 import com.richardsenger.piratesnships.trade.market.MarketParams;
 import com.richardsenger.piratesnships.trade.plunder.PlunderRules;
 import com.richardsenger.piratesnships.trade.plunder.PortFees;
@@ -120,6 +121,20 @@ public final class TradeConfig {
     public static final ConfigValue<Integer> NAVY_DOCKING_FEE = FEES.intRange("navy_docking_fee", F.navyDockingFee(), 0, 1_000_000, "Docking fee in doubloons");
     public static final ConfigValue<Integer> FEE_WAIVER_STANDING = FEES.intRange("waiver_navy_standing", F.waiverStanding(), -1_000_000, 1_000_000,
             "Navy standing at or above which the fee is waived");
+    // PRT1b: charging the fee to ships docked in a port
+    private static final DockingRules.Params D = DockingRules.Params.DEFAULTS;
+    public static final ConfigValue<Integer> FEE_CHECK_INTERVAL = FEES.intRange("check_interval_ticks", D.checkIntervalTicks(), 1, 12_000,
+            "Ticks between two looks for owned ships docked in a port's area");
+    public static final ConfigValue<Double> FEE_BERTH_RADIUS = FEES.doubleRange("berth_radius", D.berthRadius(), 0.0, 64.0,
+            "A ship whose hull lies within this many blocks of a berth, slower than berth_max_speed, is tied up (anchored ships always count)");
+    public static final ConfigValue<Double> FEE_BERTH_MAX_SPEED = FEES.doubleRange("berth_max_speed", D.berthMaxSpeed(), 0.0, 100.0,
+            "Speed (m/s) below which a ship at a berth counts as tied up");
+    public static final ConfigValue<Integer> FEE_PERIOD_DAYS = FEES.intRange("fee_period_days", D.periodDays(), 1, 1000,
+            "Days between two charges of the same ship at the same port while it stays docked");
+    public static final ConfigValue<Boolean> FEE_CHARGE_SHIP_CHEST = FEES.bool("charge_ship_chest", D.chargeShipChest(),
+            "The ship's own doubloons (chests and crates aboard) pay when the owner's wallet cannot");
+    public static final ConfigValue<Boolean> FEE_REFUSE_DESK_WHEN_OWED = FEES.bool("refuse_desk_when_owed", D.refuseDeskWhenOwed(),
+            "The port's harbor desk refuses a captain who owes harbor dues there until they pay");
 
     // --- Cargo containers and market backend ----------------------------------------------------------------
     /** What an empty cargo container accepts. */
@@ -182,6 +197,11 @@ public final class TradeConfig {
 
     public static PortFees.Params feeParams() {
         return new PortFees.Params(PORT_FEES.get(), NAVY_DOCKING_FEE.get(), FEE_WAIVER_STANDING.get());
+    }
+
+    public static DockingRules.Params dockingParams() {
+        return new DockingRules.Params(FEE_CHECK_INTERVAL.get(), FEE_BERTH_RADIUS.get(), FEE_BERTH_MAX_SPEED.get(),
+                FEE_PERIOD_DAYS.get(), FEE_CHARGE_SHIP_CHEST.get(), FEE_REFUSE_DESK_WHEN_OWED.get());
     }
 
     public static CargoWeight.Params cargoParams() {

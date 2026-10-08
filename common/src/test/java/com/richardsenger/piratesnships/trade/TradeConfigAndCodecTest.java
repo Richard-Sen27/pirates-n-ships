@@ -52,6 +52,7 @@ class TradeConfigAndCodecTest {
         assertEquals(ContractParams.DEFAULTS, TradeConfig.contractParams());
         assertEquals(PlunderRules.Params.DEFAULTS, TradeConfig.plunderParams());
         assertEquals(PortFees.Params.DEFAULTS, TradeConfig.feeParams());
+        assertEquals(com.richardsenger.piratesnships.trade.fees.DockingRules.Params.DEFAULTS, TradeConfig.dockingParams());
         assertEquals(CargoWeight.Params.DEFAULTS, TradeConfig.cargoParams());
         assertEquals(List.of("cargo_trade", "cargo_weight_affects_ships"), TradeConfig.CARGO_WEIGHT_AFFECTS_SHIPS.path());
     }

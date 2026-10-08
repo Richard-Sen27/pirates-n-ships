@@ -76,48 +76,61 @@ class AnchorRulesTest {
     }
 
     @Test
-    void travelTimeIsDepthOverSpeedClamped() {
-        assertEquals(40, AnchorTravel.ticks(12.0, 6.0, 20, 400));
-        assertEquals(20, AnchorTravel.ticks(1.0, 6.0, 20, 400));   // minimum
-        assertEquals(400, AnchorTravel.ticks(500.0, 6.0, 20, 400)); // maximum
-        assertEquals(20, AnchorTravel.ticks(-3.0, 6.0, 20, 400));  // ground above the stowed crown
-        assertEquals(34, AnchorTravel.ticks(10.0, 6.0, 1, 400));   // 33.3 rounds up
-        assertEquals(400, AnchorTravel.ticks(10.0, 0.0, 20, 400));
+    void depthIsFromTheStowedCrownToTheGround() {
         assertEquals(8.0, AnchorTravel.distance(12.0, 2.0), 1e-9);
         assertEquals(0.0, AnchorTravel.distance(3.0, 2.0), 1e-9);
-        assertEquals(5.0, AnchorTravel.lerp(0.0, 10.0, 0.5), 1e-9);
-        assertEquals(10.0, AnchorTravel.lerp(0.0, 10.0, 2.0), 1e-9);
     }
 
     @Test
-    void extendedAnchorRoundTripsAndLegacySavesLoad() {
-        ShipAnchor a = new ShipAnchor(new AnchorState(AnchorState.Phase.RAISING, 0.375), new Vec3(12.5, 2.0, -3000.25),
-                new BlockPos(20_000_001, 70, -19_999_000), new Vec3(20_000_003.9, 69.75, -19_998_999.5), 57, 133);
+    void anchorRoundTripsAndPreAn2aSavesLoad() {
+        ShipAnchor a = new ShipAnchor(AnchorState.RAISING, new Vec3(12.5, 2.0, -3000.25), new Vec3(1.5, -3.25, 0.0), 11.75, true,
+                new BlockPos(20_000_001, 70, -19_999_000), new Vec3(20_000_003.9, 69.75, -19_998_999.5));
         assertEquals(a, ShipAnchor.CODEC.parse(NbtOps.INSTANCE, ShipAnchor.CODEC.encodeStart(NbtOps.INSTANCE, a).getOrThrow()).getOrThrow());
         assertEquals(a, ShipAnchor.CODEC.parse(JsonOps.INSTANCE, ShipAnchor.CODEC.encodeStart(JsonOps.INSTANCE, a).getOrThrow()).getOrThrow());
-        assertEquals(a.withState(AnchorState.RAISED.drop()).dropTicks(), 57);
 
-        CompoundTag legacy = (CompoundTag) ShipAnchor.CODEC.encodeStart(NbtOps.INSTANCE, a).getOrThrow();
-        legacy.remove("hawse");
-        legacy.remove("drop_ticks");
-        legacy.remove("raise_ticks");
+        // the format before AN2a: a timed ramp to a fixed point, with and without a hawse
+        CompoundTag state = new CompoundTag();
+        state.putString("phase", "HOLDING");
+        state.putDouble("hold", 1.0);
+        CompoundTag legacy = new CompoundTag();
+        legacy.put("state", state);
+        legacy.put("point", Vec3.CODEC.encodeStart(NbtOps.INSTANCE, new Vec3(12.5, 2.0, -3000.25)).getOrThrow());
+        legacy.put("capstan", BlockPos.CODEC.encodeStart(NbtOps.INSTANCE, new BlockPos(20_000_001, 70, -19_999_000)).getOrThrow());
+        legacy.putInt("drop_ticks", 40);
         ShipAnchor old = ShipAnchor.CODEC.parse(NbtOps.INSTANCE, legacy).getOrThrow();
-        assertEquals(Vec3.atCenterOf(a.capstan()), old.hawse());
-        assertEquals(ShipAnchor.LEGACY_DROP_TICKS, old.dropTicks());
-        assertEquals(ShipAnchor.LEGACY_RAISE_TICKS, old.raiseTicks());
-        assertFalse(old.equals(a));
+        assertEquals(AnchorState.HOLDING, old.state());
+        assertEquals(new Vec3(12.5, 2.0, -3000.25), old.position());
+        assertTrue(old.resting());
+        assertEquals(ShipAnchor.UNKNOWN_CHAIN, old.paidOut());
+        assertEquals(Vec3.atCenterOf(old.capstan()), old.hawse());
+        legacy.put("hawse", Vec3.CODEC.encodeStart(NbtOps.INSTANCE, new Vec3(1, 2, 3)).getOrThrow());
+        state.putString("phase", "DROPPING");
+        ShipAnchor dropping = ShipAnchor.CODEC.parse(NbtOps.INSTANCE, legacy).getOrThrow();
+        assertEquals(new Vec3(1, 2, 3), dropping.hawse());
+        assertEquals(AnchorState.DROPPING, dropping.state());
+        assertFalse(dropping.resting());
     }
 
     @Test
-    void stateMovesInStepWithTheChain() {
-        // the state's ramp is the position along the chain: with this trip's times it lands on the last tick
-        ShipAnchor a = new ShipAnchor(AnchorState.RAISED.drop(), Vec3.ZERO, BlockPos.ZERO, Vec3.ZERO, 25, 60);
-        var p = a.travelParams(com.richardsenger.piratesnships.sailing.force.SailingParams.AnchorParams.DEFAULTS);
-        AnchorState s = a.state();
-        for (int i = 0; i < 24; i++) {
-            s = s.tick(p);
-            assertEquals(AnchorState.Phase.DROPPING, s.phase(), "landed early at tick " + (i + 1));
-        }
-        assertEquals(AnchorState.Phase.HOLDING, s.tick(p).phase());
+    void stateFollowsTheBody() {
+        assertEquals(AnchorState.DROPPING, AnchorState.RAISED.drop());
+        assertEquals(AnchorState.HOLDING, AnchorState.DROPPING.landed());
+        assertEquals(AnchorState.DROPPING, AnchorState.HOLDING.lifted());
+        assertEquals(AnchorState.RAISING, AnchorState.HOLDING.raise());
+        assertEquals(AnchorState.RAISING, AnchorState.DROPPING.raise());
+        assertEquals(AnchorState.DROPPING, AnchorState.RAISING.drop());
+        assertEquals(AnchorState.RAISING, AnchorState.RAISING.landed(), "a heaved anchor touching ground keeps winding");
+        assertEquals(AnchorState.HOLDING, AnchorState.HOLDING.drop());
+        assertFalse(AnchorState.RAISED.isOut());
+    }
+
+    @Test
+    void aDropLeavesTheHawseWithItsVelocity() {
+        ShipAnchor a = ShipAnchor.dropped(new BlockPos(5, 9, 5), new Vec3(2.6, 8.75, 5.5), new Vec3(100.0, 70.0, 200.0), new Vec3(0, 0, 4));
+        assertEquals(new Vec3(100.0, 70.0, 200.0), a.ring());
+        assertEquals(new Vec3(0, 0, 4), a.velocity());
+        assertEquals(0.0, a.paidOut());
+        assertFalse(a.resting());
+        assertEquals(AnchorState.DROPPING, a.state());
     }
 }

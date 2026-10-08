@@ -229,6 +229,7 @@ public final class SailingModule implements ModModule {
                 com.richardsenger.piratesnships.sailing.helm.HelmSteeringGameTests.class,
                 com.richardsenger.piratesnships.sailing.rope.RopeLineGameTests.class,
                 com.richardsenger.piratesnships.sailing.ship.HelmHandoverGameTests.class,
-                com.richardsenger.piratesnships.sailing.anchor.AnchorPhysicsGameTests.class);
+                com.richardsenger.piratesnships.sailing.anchor.AnchorPhysicsGameTests.class,
+                com.richardsenger.piratesnships.sailing.ship.SailingGameTestsTurning.class);
     }
 }

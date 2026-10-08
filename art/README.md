@@ -727,6 +727,27 @@ Hammock (ART1d):
   and the body within the two blocks. Render `renders/anim_crew_sleep.png` (the hammock cubes added to the rig tab for
   the shot only, frames 0 s and 2 s: three-quarter, side, top).
 
+Ratlines (RL1):
+- **Part list in `tools/gen_ratlines_models.py`** (committed). Two block models in one project, `ratlines.bbmodel`,
+  groups `ratlines` (the hung net, 14 elements) and `ratlines_slope` (14), plus `ratlines_item.bbmodel` (group
+  `ratlines_item`, 14, the item model `item/ratlines`, vanilla `item/generated` transforms, identity `gui`). All on
+  `pirates_n_ships:block/rope`, embedded. A net: two shrouds 2 x 2 px at x 2..4 and 12..14 (ends left out so stacked
+  nets meet), four ratlines 1.5 x 1.5 px across x 1..15 at heights 2, 6, 10, 14, a knot (2.5 x 2 px) at each crossing.
+- **Hung** (facing north like a ladder): shrouds at z 13.5..15.5, 0.5 px off the support; ratlines and knots in front.
+- **Sloped** (rising north): the same net built about the centre plane z 8 with every element turned `x -45` round
+  (8, 8, 8): shrouds 22.63 px long run corner to corner (bottom south edge to top north edge), so chained links meet
+  end to end; the ratlines sit at 8 + (t - 8) * sqrt(2) along the slope for heights t = 2, 6, 10, 14, on the upper
+  (pre-turn south) side, 0.5 px above the diagonal, level with the collision treads of `RatlinesRules.boxes`.
+  One model serves all four facings through the block state's y rotation; a 45 degree slope cannot come from a block
+  state rotation, hence two models.
+- Built with `RL1.build(name, [[group, file], ...])` in `risky_eval` (a new `java_block` project per file set, cubes
+  from the generated JSON, `autouv: 0`); exported per group with `Codecs.java_block.compile({raw: true})` and the other
+  groups' cubes `export = false`, zero rotations stripped, `parent` and `particle` added; the export matches the part
+  list. Lint clean (no fights, no warnings).
+- Render `renders/ratlines.png`: a scratch Generic project with a four-block hung run on a mast block and a three-link
+  sloped run from a deck (top: two views), and the two block models alone (bottom). The mast and deck are flat brown
+  stand-ins (no `art/vanilla` textures were extracted).
+
 Ship decor (ART2): ship's lantern, ship's bell, rope coil, stern window, chart table, sea cot:
 - **Part lists in `tools/gen_decor_models.py`** (committed, like the cannon's): run it to rewrite the 17 model JSON
   files, then `python3 tools/lint_models.py`, then rebuild the projects. Every model faces north; wall-mounted ones

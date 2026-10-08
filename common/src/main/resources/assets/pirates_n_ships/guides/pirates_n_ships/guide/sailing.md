@@ -10,6 +10,7 @@ item_ids:
   - pirates_n_ships:chart
   - pirates_n_ships:hammock
   - pirates_n_ships:map_tile
+  - pirates_n_ships:ratlines
   - pirates_n_ships:rope
   - pirates_n_ships:sail_winch
   - pirates_n_ships:treasure_map
@@ -190,6 +191,18 @@ right-click to ring it. **Rope Coils** (four rope) stack up to four on one spot.
 from outside; right-click to close or open the shutters. The **Chart Table** is a captain's table with a chart
 spread out on it. The **Sea Cot** is a wooden bed for the captain's cabin: on land you can sleep in it and set your
 spawn like a bed, but not while it is aboard a ship at sea. Server config `ship_decor`.
+
+## Ratlines
+Ratlines are rope nets for climbing a mast, up to a crow's nest or a yard. Craft four from three string between four
+sticks (a stick in each corner). Click the side of a mast (logs, fence posts, walls or any solid side) to hang a net on
+it like a ladder; it falls and drops when the mast block behind it goes. Click the top of the deck or the gunwale to
+lay a sloped net instead: it rises at 45 degrees the way you look, so stand at the gunwale facing the mast. Click a
+ratline you already placed to add the next one at the end of its run: straight up a hanging net, one up and one
+forward along a sloped one, so a run climbs from the gunwale to the masthead like real shrouds. Sneak to place against
+the clicked side instead. Climb a hanging net like a ladder; walk up a sloped one, stepping on its ratlines. A sloped
+net needs the deck, a ratline below it, the previous net of its run or the mast in front of it to rest on; break one
+and the nets above it that rest on nothing else fall too. Ratlines work in water and on a sailing ship. Server config
+`rigging.ratlines_enabled`.
 
 ## Hammocks
 Your crew sleeps in hammocks. Hang one between two supports at the same height (fence posts, walls, logs, or a solid

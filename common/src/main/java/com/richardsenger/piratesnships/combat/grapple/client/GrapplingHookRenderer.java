@@ -30,8 +30,8 @@ import java.util.List;
  * Draws a grappling hook (the hook item as a billboard) and its rope to the thrower's hand (docs/design.md §8.3). A
  * latched hook is drawn at its plot position through the ship's render pose ({@link ClientShipPoses}), so it sits on
  * the moving hull without lag; the rope is a thin square strip with the {@code rope.png} texture, like the stays of
- * {@code sailing.client.StayClothRenderer}, straight while taut and sagging otherwise. The near end is the thrower's
- * hand, the mooring ring it is tied to (GR1) or its pin (GR2, {@link ClientRopes#fixedNearEnd}); players sliding on it
+ * {@code sailing.client.StayClothRenderer}, straight while taut (also while a player hauls on it, GR5) and sagging otherwise. The near end is the thrower's
+ * hand or the mooring ring or cleat it is tied to (GR1, RP1, {@link ClientRopes#fixedNearEnd}); players sliding on it
  * pull it into straight pieces through their hands.
  */
 public class GrapplingHookRenderer extends EntityRenderer<GrapplingHookEntity> {

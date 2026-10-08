@@ -230,6 +230,11 @@ public final class GrappleService {
         return h != null && !h.isRemoved() ? h : null;
     }
 
+    /** The hooks out now (server thread only; a copy, safe to iterate while hooks are released). */
+    static List<GrapplingHookEntity> activeHooks() {
+        return ACTIVE.isEmpty() ? List.of() : List.copyOf(ACTIVE.values());
+    }
+
     /** Releases the player's hook (reeled in, returned). True when there was one. */
     public static boolean release(Player player) {
         GrapplingHookEntity h = hookOf(player);
@@ -419,7 +424,7 @@ public final class GrappleService {
                 }
                 push(thrower, anchorWorld, u.scale(t), dt);
             }
-        } else if (kind == GrappleRules.Haul.SHORE && target != null) {
+        } else if (kind == GrappleRules.Haul.SHORE && target != null && h.shoreDrags()) {
             Vec3 shore = h.throwerPos();
             if (shore == null) {
                 return;

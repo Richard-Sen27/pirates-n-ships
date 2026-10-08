@@ -28,15 +28,15 @@ public final class ClientRopes {
     }
 
     /**
-     * The rope's fixed near end at render time: the mooring ring or cleat it is tied to or the pin (GR2), through the ship's
+     * The rope's fixed near end at render time: the mooring ring or cleat it is tied to (GR1, RP1), through the ship's
      * render pose when it is on a ship; null when the thrower holds it.
      */
     public static @Nullable Vec3 fixedNearEnd(GrapplingHookEntity hook, float partialTick) {
         BlockPos ring = hook.syncedTiedRing().orElse(null);
-        Vec3 local = ring != null ? RopeAnchor.point(hook.level(), ring) : hook.syncedPin().orElse(null);
-        if (local == null) {
+        if (ring == null) {
             return null;
         }
+        Vec3 local = RopeAnchor.point(hook.level(), ring);
         Vec3 onShip = ClientShipPoses.toWorld(hook.level(), local, partialTick);
         return onShip != null ? onShip : local;
     }
@@ -71,7 +71,10 @@ public final class ClientRopes {
         double hang = GrappleConfig.HANG_OFFSET.get();
         AABB box = new AABB(from, to).inflate(1.0).expandTowards(0, -hang - 1.0, 0);
         List<Vec3> grips = new ArrayList<>();
-        for (RopeRiderEntity r : hook.level().getEntitiesOfClass(RopeRiderEntity.class, box, r -> r.hookId() == hook.getId())) {
+        // GR5: the thrower pulling themselves along their own hand-held rope holds its end, it is no grip in between
+        boolean handHeld = hook.syncedTiedRing().isEmpty();
+        for (RopeRiderEntity r : hook.level().getEntitiesOfClass(RopeRiderEntity.class, box,
+                r -> r.hookId() == hook.getId() && !(handHeld && r.getFirstPassenger() == hook.getOwner()))) {
             grips.add(new Vec3(Mth.lerp(partialTick, r.xOld, r.getX()), Mth.lerp(partialTick, r.yOld, r.getY()) + hang,
                     Mth.lerp(partialTick, r.zOld, r.getZ())));
         }
@@ -88,11 +91,23 @@ public final class ClientRopes {
      * and {@code board_pick_radius} ({@link RopeSlide#pick}), or null.
      */
     public static @Nullable RopeHit pick(ClientLevel level, Vec3 eye, Vec3 look) {
+        return pick(level, eye, look, null);
+    }
+
+    /**
+     * Like {@link #pick(ClientLevel, Vec3, Vec3)}, for {@code user}: GR5, a rope can be used only when its near end is
+     * tied off (to slide along it) or when {@code user} holds it (to pull themselves to the hook); other hand-held
+     * ropes are skipped, so the use goes to whatever lies behind them. A null {@code user} picks every rope.
+     */
+    public static @Nullable RopeHit pick(ClientLevel level, Vec3 eye, Vec3 look, @Nullable Entity user) {
         double reach = GrappleConfig.BOARD_REACH.get();
         double radius = GrappleConfig.BOARD_PICK_RADIUS.get();
         RopeHit best = null;
         for (Entity e : level.entitiesForRendering()) {
             if (!(e instanceof GrapplingHookEntity hook) || hook.isRemoved() || hook.state() != GrapplingHookEntity.State.LATCHED) {
+                continue;
+            }
+            if (user != null && hook.syncedTiedRing().isEmpty() && hook.getOwner() != user) {
                 continue;
             }
             Vec3 a = nearEnd(hook, 1.0f);

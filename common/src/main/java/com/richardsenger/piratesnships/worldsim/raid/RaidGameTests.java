@@ -242,7 +242,7 @@ public final class RaidGameTests {
                 List<LivingEntity> ashore = fighters(h.getLevel(), v);
                 h.assertTrue(ashore.size() == MaterializeConfig.FIGHTERS_PIRATE.get(), "fighters " + ashore.size());
                 for (LivingEntity f : ashore) {
-                    BlockPos rel = h.relativePos(f.blockPosition());
+                    BlockPos rel = f.blockPosition().subtract(h.absolutePos(BlockPos.ZERO)); // vanilla's relativePos turns by 180°
                     h.assertTrue(rel.getX() >= LAND_X && rel.getY() == SURFACE + 2 && h.getBlockState(rel.below()).is(Blocks.STONE),
                             "fighter at " + rel + " not on the shore");
                     h.assertTrue(f instanceof SeafarerMob m && !m.isStationary(), "fighter still stationary");

@@ -5,6 +5,10 @@ import com.richardsenger.piratesnships.core.client.gui.GuiKit;
 import com.richardsenger.piratesnships.core.client.gui.GuiSprites;
 import com.richardsenger.piratesnships.core.client.gui.ScrollBar;
 import com.richardsenger.piratesnships.core.client.gui.ScrollMath;
+import com.richardsenger.piratesnships.crew.hiring.Candidate;
+import com.richardsenger.piratesnships.crew.hiring.CandidateKind;
+import com.richardsenger.piratesnships.crew.hiring.CrewPayloads;
+import com.richardsenger.piratesnships.crew.hiring.HiringText;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.rpg.quest.Quest;
 import com.richardsenger.piratesnships.rpg.quest.QuestPayloads;
@@ -62,9 +66,9 @@ import java.util.Optional;
  */
 public final class MarketScreen extends Screen {
 
-    private enum Tab { GOODS, CONTRACTS, ORDERS, QUESTS }
+    private enum Tab { GOODS, CONTRACTS, ORDERS, QUESTS, CREW }
 
-    private enum Action { NONE, BUY, SELL, CONTRACT, ORDER, QUEST }
+    private enum Action { NONE, BUY, SELL, CONTRACT, ORDER, QUEST, HIRE }
 
     /** A button drawn in a list row; {@code tooltip} (may be null) explains a disabled button. */
     private record RowButton(int x, int y, int w, int h, Component label, boolean active, Component tooltip, Runnable action) {
@@ -85,6 +89,14 @@ public final class MarketScreen extends Screen {
     private record QuestRow(Component header, boolean heading, Quest quest, boolean mine) {
     }
 
+    /** A line of the crew tab (CRW1): a section header, a note (the ship, a refusal) in {@code color}, or a candidate. */
+    private record CrewRow(Component header, boolean heading, int color, Candidate candidate) {
+    }
+
+    /** Widest tab button; the row shrinks them when the tabs would not fit (CRW1). */
+    private static final int TAB_W = 70;
+    private static final int TAB_GAP = 2;
+
     private static final int ROW_H = 22;
     private static final int FOOTER_H = 16;
     private static final int PRICE_W = 46;
@@ -101,6 +113,8 @@ public final class MarketScreen extends Screen {
     private boolean ordersShown;
     private boolean questsShown;
     private long seenQuestResultVersion = ClientMarketState.questResultVersion();
+    private boolean crewShown;
+    private long seenCrewResultVersion = ClientMarketState.crewResultVersion();
     private Action pending = Action.NONE;
     private Component status = Component.empty();
     private int statusColor = GuiKit.INK;
@@ -153,24 +167,23 @@ public final class MarketScreen extends Screen {
         top = (height - panelH) / 2;
         int x0 = inner() + 2;
         int y = top + 28;
-        addRenderableWidget(new BrassButton(x0, y, 70, 14, Component.translatable(MarketText.TAB_GOODS), () -> switchTab(Tab.GOODS))
-                .selected(tab == Tab.GOODS)).active = tab != Tab.GOODS;
-        addRenderableWidget(new BrassButton(x0 + 72, y, 70, 14, Component.translatable(MarketText.TAB_CONTRACTS), () -> switchTab(Tab.CONTRACTS))
-                .selected(tab == Tab.CONTRACTS)).active = tab != Tab.CONTRACTS;
-        // SW1: a seafarer village's desk also takes ship orders
+        // SW1: a seafarer village's desk also takes ship orders; QST1: every desk has a Quests tab while quests are on;
+        // CRW1: every desk of a known port has a Crew tab while hiring is on
         ordersShown = ClientMarketState.orders().isPresent();
-        if (!ordersShown && tab == Tab.ORDERS) tab = Tab.GOODS;
-        if (ordersShown) {
-            addRenderableWidget(new BrassButton(x0 + 144, y, 70, 14, Component.translatable(MarketText.TAB_ORDERS), () -> switchTab(Tab.ORDERS))
-                    .selected(tab == Tab.ORDERS)).active = tab != Tab.ORDERS;
-        }
-        // QST1: every desk has a Quests tab while quests are on
         questsShown = ClientMarketState.quests().isPresent();
-        if (!questsShown && tab == Tab.QUESTS) tab = Tab.GOODS;
-        if (questsShown) {
-            int qx = x0 + (ordersShown ? 216 : 144);
-            addRenderableWidget(new BrassButton(qx, y, 70, 14, Component.translatable(MarketText.TAB_QUESTS), () -> switchTab(Tab.QUESTS))
-                    .selected(tab == Tab.QUESTS)).active = tab != Tab.QUESTS;
+        crewShown = ClientMarketState.crew().isPresent();
+        if ((!ordersShown && tab == Tab.ORDERS) || (!questsShown && tab == Tab.QUESTS) || (!crewShown && tab == Tab.CREW)) tab = Tab.GOODS;
+        List<Tab> tabs = new ArrayList<>(List.of(Tab.GOODS, Tab.CONTRACTS));
+        if (ordersShown) tabs.add(Tab.ORDERS);
+        if (questsShown) tabs.add(Tab.QUESTS);
+        if (crewShown) tabs.add(Tab.CREW);
+        // the tabs share one row: 70 px each while they fit (five need 358 px of the 364 inside a full-width frame),
+        // narrower on a small window
+        int tabW = Math.max(30, Math.min(TAB_W, (innerW() - 4 - TAB_GAP * (tabs.size() - 1)) / tabs.size()));
+        for (int i = 0; i < tabs.size(); i++) {
+            Tab t = tabs.get(i);
+            addRenderableWidget(new BrassButton(x0 + i * (tabW + TAB_GAP), y, tabW, 14, Component.translatable(tabLabel(t)), () -> switchTab(t))
+                    .selected(tab == t)).active = tab != t;
         }
         if (tab == Tab.GOODS) {
             int qy = top + 46;
@@ -207,6 +220,16 @@ public final class MarketScreen extends Screen {
         int barX = inner() + innerW() - 4 - GuiKit.SCROLLBAR_W;
         scrollBar.place(barX, tablePanelTop + 4, footerTop - 3 - 4 - (tablePanelTop + 4));
         tableRight = barX - 3;
+    }
+
+    private static String tabLabel(Tab t) {
+        return switch (t) {
+            case GOODS -> MarketText.TAB_GOODS;
+            case CONTRACTS -> MarketText.TAB_CONTRACTS;
+            case ORDERS -> MarketText.TAB_ORDERS;
+            case QUESTS -> MarketText.TAB_QUESTS;
+            case CREW -> MarketText.TAB_CREW;
+        };
     }
 
     private Component plunderLabel() {
@@ -258,7 +281,8 @@ public final class MarketScreen extends Screen {
         if (ClientMarketState.version() != seenVersion) {
             seenVersion = ClientMarketState.version();
             onState(mc);
-            if (ClientMarketState.orders().isPresent() != ordersShown || ClientMarketState.quests().isPresent() != questsShown) rebuildWidgets();
+            if (ClientMarketState.orders().isPresent() != ordersShown || ClientMarketState.quests().isPresent() != questsShown
+                    || ClientMarketState.crew().isPresent() != crewShown) rebuildWidgets();
         }
     }
 
@@ -296,6 +320,14 @@ public final class MarketScreen extends Screen {
             status = Component.translatable(QuestText.result(r.key()), name);
             statusColor = r.done() ? GuiKit.INK_GREEN : GuiKit.INK_RED;
             if (pending == Action.QUEST) pending = Action.NONE;
+        }
+        Optional<CrewPayloads.CrewResult> hire = ClientMarketState.lastCrewResult();
+        if (hire.isPresent() && ClientMarketState.crewResultVersion() != seenCrewResultVersion) {
+            seenCrewResultVersion = ClientMarketState.crewResultVersion();
+            CrewPayloads.CrewResult r = hire.get();
+            status = Component.translatable(HiringText.result(r.key()), r.name());
+            statusColor = r.done() ? GuiKit.INK_GREEN : GuiKit.INK_RED;
+            if (pending == Action.HIRE) pending = Action.NONE;
         }
     }
 
@@ -366,6 +398,7 @@ public final class MarketScreen extends Screen {
     private int rowCount() {
         if (tab == Tab.ORDERS) return ClientMarketState.orders().map(o -> orderRows(o).size()).orElse(0);
         if (tab == Tab.QUESTS) return ClientMarketState.quests().map(q -> questRows(q).size()).orElse(0);
+        if (tab == Tab.CREW) return ClientMarketState.crew().map(c -> crewRows(c).size()).orElse(0);
         return ClientMarketState.view().map(v -> tab == Tab.GOODS ? MarketLines.order(v.goods()).size() : contractRows(v).size()).orElse(0);
     }
 
@@ -418,6 +451,9 @@ public final class MarketScreen extends Screen {
             total = ClientMarketState.orders().map(o -> renderOrders(g, v, o, mouseX, mouseY)).orElse(0);
         } else if (tab == Tab.QUESTS) {
             total = ClientMarketState.quests().map(q -> renderQuests(g, q, mouseX, mouseY)).orElse(0);
+        } else if (tab == Tab.CREW) {
+            MarketView v = view.get();
+            total = ClientMarketState.crew().map(c -> renderCrew(g, v, c, mouseX, mouseY)).orElse(0);
         } else {
             total = renderContracts(g, view.get(), mouseX, mouseY);
         }
@@ -703,6 +739,73 @@ public final class MarketScreen extends Screen {
                         idle && !full, full ? Component.translatable(QuestText.FULL) : null,
                         () -> send(Action.QUEST, new QuestPayloads.QuestAction(port, true, id))));
             }
+        }
+        return rows.size();
+    }
+
+    private List<CrewRow> crewRows(CrewPayloads.CrewView c) {
+        List<CrewRow> rows = new ArrayList<>();
+        rows.add(new CrewRow(Component.translatable(HiringText.CANDIDATES), true, GuiKit.INK, null));
+        if (c.ship().isPresent()) {
+            CrewPayloads.ShipLine s = c.ship().get();
+            Component name = s.name().isEmpty() ? Component.translatable(HiringText.SHIP_UNNAMED) : Component.literal(s.name());
+            rows.add(new CrewRow(Component.translatable(HiringText.SHIP, name, s.crew(), s.cap()), false,
+                    s.crew() < s.cap() ? GuiKit.INK_DIM : GuiKit.INK_RED, null));
+        } else {
+            rows.add(new CrewRow(Component.translatable(HiringText.NO_SHIP_HERE), false, GuiKit.INK_RED, null));
+        }
+        if (c.refusal().isPresent()) {
+            rows.add(new CrewRow(Component.translatable(HiringText.result(c.refusal().get()), ""), false, GuiKit.INK_RED, null));
+        } else if (c.candidates().isEmpty()) {
+            rows.add(new CrewRow(Component.translatable(HiringText.NO_CANDIDATES), false, GuiKit.INK_DIM, null));
+        }
+        for (Candidate k : c.candidates()) rows.add(new CrewRow(null, false, GuiKit.INK, k));
+        return rows;
+    }
+
+    private static ItemStack crewIcon(CandidateKind kind) {
+        return switch (kind) {
+            case SAILOR -> new ItemStack(Items.FISHING_ROD);
+            case PIRATE -> new ItemStack(Items.IRON_SWORD);
+            case NAVY -> new ItemStack(Items.SHIELD);
+        };
+    }
+
+    private int renderCrew(GuiGraphics g, MarketView v, CrewPayloads.CrewView c, int mouseX, int mouseY) {
+        List<CrewRow> rows = crewRows(c);
+        scroll = ScrollMath.clamp(scroll, rows.size(), visibleRows());
+        int right = tableRight - 2;
+        int textX = inner() + 24;
+        boolean shipHere = c.ship().isPresent();
+        boolean room = shipHere && c.ship().get().crew() < c.ship().get().cap();
+        for (int i = scroll; i < rows.size() && i < scroll + visibleRows(); i++) {
+            CrewRow row = rows.get(i);
+            int y = listTop + (i - scroll) * ROW_H;
+            if (row.candidate() == null) {
+                if (row.heading()) {
+                    g.drawString(font, row.header(), inner() + 6, y + 8, row.color(), false);
+                    GuiKit.divider(g, inner() + 4, y + 18, tableRight - inner() - 4);
+                } else {
+                    GuiKit.ink(g, font, row.header(), textX, y + 8, right - textX, row.color());
+                }
+                continue;
+            }
+            Candidate k = row.candidate();
+            rowWash(g, i, y, mouseX, mouseY);
+            g.renderItem(crewIcon(k.kind()), inner() + 5, y + 3);
+            int textW = right - CONTRACT_BUTTON_W - 4 - textX;
+            GuiKit.ink(g, font, Component.literal(k.name()), textX, y + 2, textW, GuiKit.INK);
+            boolean enough = v.coins() >= k.fee();
+            Component detail = Component.translatable(HiringText.DETAIL, Component.translatable(HiringText.kind(k.kind())),
+                    MarketLines.formatCoins(k.fee()), MarketLines.formatCoins(c.wagePerDay()));
+            GuiKit.ink(g, font, detail, textX, y + 12, textW, enough ? GuiKit.INK_DIM : GuiKit.INK_RED);
+            Component tip = !shipHere ? Component.translatable(HiringText.NO_SHIP_HERE)
+                    : !room ? Component.translatable(HiringText.SHIP_FULL)
+                    : !enough ? Component.translatable(HiringText.TOO_POOR) : null;
+            ResourceLocation port = c.port();
+            java.util.UUID id = k.id();
+            rowButtons.add(new RowButton(right - CONTRACT_BUTTON_W, y + 4, CONTRACT_BUTTON_W, 14, Component.translatable(HiringText.HIRE),
+                    pending == Action.NONE && tip == null, tip, () -> send(Action.HIRE, new CrewPayloads.CrewAction(port, id))));
         }
         return rows.size();
     }

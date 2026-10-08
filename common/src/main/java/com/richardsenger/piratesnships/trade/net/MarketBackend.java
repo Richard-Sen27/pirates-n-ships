@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.trade.net;
 
+import com.richardsenger.piratesnships.crew.hiring.CrewPayloads;
+import com.richardsenger.piratesnships.crew.hiring.HiringBackend;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.rpg.market.MarketReputation;
 import com.richardsenger.piratesnships.rpg.quest.QuestBackend;
@@ -113,6 +115,11 @@ public final class MarketBackend {
                 (p, player) -> handleQuest((ServerPlayer) player, p));
         Services.NETWORK.registerToClient(QuestPayloads.QuestsPayload.TYPE, QuestPayloads.QuestsPayload.CODEC,
                 (p, player) -> com.richardsenger.piratesnships.trade.client.ClientMarketState.acceptQuests(p));
+        // CRW1: the Crew tab
+        Services.NETWORK.registerToServer(CrewPayloads.CrewAction.TYPE, CrewPayloads.CrewAction.CODEC,
+                (p, player) -> handleCrew((ServerPlayer) player, p));
+        Services.NETWORK.registerToClient(CrewPayloads.CrewPayload.TYPE, CrewPayloads.CrewPayload.CODEC,
+                (p, player) -> com.richardsenger.piratesnships.trade.client.ClientMarketState.acceptCrew(p));
     }
 
     // --- Sessions -----------------------------------------------------------------------------------------------
@@ -140,6 +147,8 @@ public final class MarketBackend {
         ShipOrders.view(player, port).ifPresent(v -> deliver(player, new OrderPayloads.Orders(Optional.of(v), Optional.empty())));
         // Every desk has the Quests tab while quests are on (QST1)
         QuestBackend.view(player, port).ifPresent(v -> deliver(player, new QuestPayloads.QuestsPayload(Optional.of(v), Optional.empty())));
+        // Every desk of a known port has the Crew tab while hiring is on (CRW1)
+        HiringBackend.view(player, port).ifPresent(v -> deliver(player, new CrewPayloads.CrewPayload(Optional.of(v), Optional.empty())));
         return true;
     }
 
@@ -363,6 +372,18 @@ public final class MarketBackend {
      */
     public static void handleQuest(ServerPlayer player, QuestPayloads.QuestAction p) {
         QuestPayloads.QuestsPayload answer = QuestBackend.handle(player, p);
+        deliver(player, answer);
+        if (answer.view().isEmpty()) return;
+        Session s = SESSIONS.get(player.getUUID());
+        send(player, p.port(), clampQuantity(s == null ? 1 : s.quantity()), Optional.empty());
+    }
+
+    /**
+     * A Crew tab action (CRW1): {@link HiringBackend#handle} checks the session and answers with the tab's content and
+     * the result; the market view follows (the fee left the wallet).
+     */
+    public static void handleCrew(ServerPlayer player, CrewPayloads.CrewAction p) {
+        CrewPayloads.CrewPayload answer = HiringBackend.handle(player, p);
         deliver(player, answer);
         if (answer.view().isEmpty()) return;
         Session s = SESSIONS.get(player.getUUID());

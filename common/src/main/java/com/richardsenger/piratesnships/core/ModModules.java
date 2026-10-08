@@ -47,6 +47,7 @@ public final class ModModules {
             new com.richardsenger.piratesnships.rpg.RpgModule(),
             new com.richardsenger.piratesnships.rpg.career.CareerModule(),
             new com.richardsenger.piratesnships.rpg.quest.QuestModule(),
+            new com.richardsenger.piratesnships.crew.hiring.HiringModule(),
             new com.richardsenger.piratesnships.worldsim.voyage.VoyageModule()
     );
 }

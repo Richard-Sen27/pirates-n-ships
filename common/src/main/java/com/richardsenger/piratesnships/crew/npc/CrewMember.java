@@ -15,6 +15,8 @@ import com.richardsenger.piratesnships.station.Stations;
 import com.richardsenger.piratesnships.station.seat.StationSeat;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -51,7 +53,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * Animated with GeckoLib (M1): one controller {@code body} loops the {@link CrewPose} animation of the rig contract
  * ({@code art/README.md}, "Entities"). The controller runs on the client only; the server's part is the synced
  * {@link #isWorking()} flag and, since ART7, the synced station pose ({@link #stationPose()}, {@link StationPoses}),
- * with which the crew member also turns to face its wheel or gun. CR2 adds its low-morale day counter and whether it went unpaid at the last dawn (saved).
+ * with which the crew member also turns to face its wheel or gun. CR2 adds its low-morale day counter and whether it went unpaid at the last dawn (saved); CRW1 the player who hired it ({@link #hiredBy()}, saved).
  * This class and {@code crew/npc/client/} are the only GeckoLib importers.
  */
 public class CrewMember extends PathfinderMob implements GeoEntity {
@@ -63,6 +65,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     static final String TAG_NIGHT = Constants.MOD_ID + ":night";
     static final String TAG_LOW_MORALE_DAYS = Constants.MOD_ID + ":low_morale_days";
     static final String TAG_UNPAID = Constants.MOD_ID + ":unpaid";
+    static final String TAG_HIRED_BY = Constants.MOD_ID + ":hired_by";
 
     /** Ticks GeckoLib blends from one pose animation into the next. */
     private static final int POSE_TRANSITION_TICKS = 5;
@@ -99,6 +102,8 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     private int lowMoraleDays;
     /** It was not paid at the last dawn (CR2). Server only, saved. */
     private boolean unpaid;
+    /** The player who hired it at a harbor desk (CRW1), who may dismiss it. Server only, saved. */
+    private Optional<UUID> hiredBy = Optional.empty();
     /** Its station pose faces it towards the wheel or gun (ART7): the look goals leave its head alone. Server only. */
     private boolean facingStation;
 
@@ -280,6 +285,15 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         this.unpaid = unpaid;
     }
 
+    /** The player who hired it at a harbor desk (CRW1, {@code crew.hiring.Hiring}); empty for crew from elsewhere. */
+    public Optional<UUID> hiredBy() {
+        return hiredBy;
+    }
+
+    public void setHiredBy(Optional<UUID> hiredBy) {
+        this.hiredBy = hiredBy;
+    }
+
     /** True when this crew member rides the seat of its assigned station. */
     public boolean isAtStation() {
         return assignment != null && getVehicle() instanceof StationSeat seat && seat.station().equals(assignment.pos());
@@ -371,6 +385,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         if (unpaid) {
             tag.putBoolean(TAG_UNPAID, true);
         }
+        hiredBy.ifPresent(id -> tag.putUUID(TAG_HIRED_BY, id));
     }
 
     @Override
@@ -386,5 +401,6 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         nightOutcome = tag.contains(TAG_NIGHT) ? NightOutcome.byId(tag.getString(TAG_NIGHT)) : NightOutcome.NONE;
         lowMoraleDays = Math.max(0, tag.getInt(TAG_LOW_MORALE_DAYS));
         unpaid = tag.getBoolean(TAG_UNPAID);
+        hiredBy = tag.hasUUID(TAG_HIRED_BY) ? Optional.of(tag.getUUID(TAG_HIRED_BY)) : Optional.empty();
     }
 }

@@ -107,3 +107,41 @@ reputation points on top of the pirates' reputation, capped at 100); pirates lea
 ## 11. Toggles
 1. `careers.rewards.flag_right = false`: section 8.1 now ends with blown cover. `navy_shipyard = false`: no Orders tab
    at outposts for a Captain. `promotion_gifts = false`: no items on promotion. `careers.enabled = false`: all rewards off.
+
+---
+
+# HON1: honor and status
+
+Setup: a world where you can use operator commands. A second player (or a LAN friend) helps with 12.2, but one is enough.
+
+## 12. The title before your name
+1. `/pirates career set @s navy lieutenant`. Expected: in chat (`/me waves` or a message), the tab list (hold Tab) and
+   over your head in third person (F5) your name reads "Lt. <name>" with "Lt." in aqua.
+2. `/pirates career set @s navy captain`, then `admiral`. Expected: the prefix changes at once to "Capt.", then "Adm.";
+   a second player sees the same over your head.
+3. Resign at a navy officer (or `/pirates career set @s navy none`). Expected: the prefix is gone.
+4. `/pirates career set @s infamy buccaneer`, `dread_captain`, `pirate_lord`. Expected: "Buccaneer", "Dread Pirate",
+   "Pirate Lord" in red. `/pirates career letter @s grant` (a letter also ends navy service). Expected: "Privateer" in green.
+5. `/team add mycrew` and `/team join mycrew @s`, then `/pirates career set @s navy captain`. Expected: no title (your
+   own team wins); `/team leave @s`, then `/pirates career set @s navy commodore`. Expected: "Cdre.".
+6. Set `careers.name_prefix = false` in the server config, log out and in. Expected: no prefix; promotions add none.
+   Set it back to true, log out and in: the title is back.
+
+## 13. The rank box
+1. Join a world. Expected: a small dark box at the top left with your rank (e.g. "Deckhand"), and below
+   "Navy +0  Pirates +0". The box does not cover the ship HUD (top right) or the chat.
+2. Enlist and get promoted (or use the commands from 7). Expected: the first line changes at once ("Lieutenant" in aqua,
+   "Buccaneer" in red, "Privateer" in green with a letter), the reputation line follows `/pirates rep set`.
+3. With a letter of marque: a line "Letter of marque: held"; after a pirate kill "Prize money: 5".
+4. F1 hides the box; F3 hides it too. In the client config set `career_hud.x = -4` and `y = -40`. Expected: the box
+   moves to the bottom right, 4 pixels from the right edge, above the hotbar line. `career_hud.enabled = false` hides it.
+5. Please report: is the top left a good default? Does it clash with other mods' overlays you use?
+
+## 14. The title on the ship
+1. Assemble a ship (you are its owner), `/pirates career set @s navy captain`, and use a name tag "Black Gull" on the
+   helm. Expected: the message names "Capt. Black Gull"; a nameplate on the hull and the ship HUD show "Capt. Black Gull".
+2. `/pirates career set @s navy commodore`, rename with any name tag reading "Black Gull" (or "Capt. Black Gull").
+   Expected: "Cdre. Black Gull". The title does not update by itself after a promotion: renaming is the way.
+3. A second player (or you after `/pirates career set @s navy none`) names your ship "Lt. Sea Wolf". Expected:
+   "Sea Wolf" (titles are only the owner's, and a typed title is removed).
+4. Set `careers.title_on_ship = false`, rename "Lt. Sea Wolf". Expected: stored as typed, "Lt. Sea Wolf".

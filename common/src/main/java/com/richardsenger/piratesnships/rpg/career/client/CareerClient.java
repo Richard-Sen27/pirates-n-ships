@@ -12,5 +12,6 @@ public final class CareerClient {
     public static void init() {
         ClientEvents.CLIENT_DISCONNECT.register(mc -> ClientCareer.reset());
         ClientCareer.setOpener(CareerScreen::open);
+        RankHud.init(); // HON1
     }
 }

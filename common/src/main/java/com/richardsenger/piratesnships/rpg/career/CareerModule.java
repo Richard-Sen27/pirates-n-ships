@@ -22,6 +22,7 @@ public final class CareerModule implements ModModule {
     @Override
     public void registerConfig() {
         CareerConfig.init();
+        com.richardsenger.piratesnships.rpg.career.client.RankHudConfig.init(); // HON1
     }
 
     @Override
@@ -41,6 +42,7 @@ public final class CareerModule implements ModModule {
         CommonEvents.PLAYER_LOGIN.register(player -> {
             Careers.promoteIfEligible(player);
             CareerSync.sendNow(player);
+            CareerTeams.refresh(player); // HON1: joins or leaves the title team (prefix toggles)
         });
         CommonEvents.PLAYER_LOGOUT.register(player -> {
             CareerSync.onLogout(player);
@@ -62,10 +64,12 @@ public final class CareerModule implements ModModule {
     public void gatherData(DataContributions data) {
         data.lang(CareerText::lang);
         data.lang(CareerRewards::lang);
+        data.lang(CareerTitles::lang);
+        data.lang(com.richardsenger.piratesnships.rpg.career.client.RankHudLayout::lang);
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(CareerGameTests.class, CareerRewardsGameTests.class);
+        return List.of(CareerGameTests.class, CareerRewardsGameTests.class, HonorGameTests.class);
     }
 }

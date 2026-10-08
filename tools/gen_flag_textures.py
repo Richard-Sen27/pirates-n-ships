@@ -13,6 +13,11 @@ pixels long and 16 high, mapped 1:1 (square pixels):
                     pole and are never seen; column 2 is the dark hoist edge against the pole; 3..23 the field.
     columns 24..31  an edge swatch in the cloth's base color, sampled by the thin top and bottom edges.
 The front face shows the texture as drawn (hoist on the left), the back face mirrors it.
+Cloth finish (ART3, `finish`, applied over every design): a plain weave over the field (alternate texels a little
+lighter and darker, plus a faint thread variation per row and column), a canvas heading tape on the hoist column
+(column 2) with two dark grommets, a stitch line along column 3 (every other row darker), and a frayed fly: a few
+texels of the tip column (23) are transparent, the column before them a shade darker. The renderer
+(FlagClothRenderer, FlagRipple) draws the cloth in eight 3-column strips that ripple.
 Deterministic, and honors tools/protected_textures.txt like the base script.
 """
 import argparse
@@ -119,6 +124,38 @@ def flag_custom():
     return cv
 
 
+TAPE = (206, 198, 178, 255)        # canvas heading tape on the hoist (bone, a little darker)
+TAPE_GREY = (204, 204, 204, 255)   # the banner cloth's tape stays colourless (it is tinted)
+GROMMET = (58, 58, 64, 255)
+FRAY_ROWS = (3, 7, 8, 12)          # tip texels that are frayed away
+
+
+def _shade(c, d):
+    return tuple(max(0, min(255, v + d)) for v in c[:3]) + (c[3],)
+
+
+def finish(cv, grey=False):
+    """The ART3 cloth finish over a finished design (see the module docstring)."""
+    img = cv.img
+    row = [((y * 7 + 3) % 5) - 2 for y in range(H)]       # thread variation, -2..2
+    col = [((x * 11 + 1) % 5) - 2 for x in range(W)]
+    for y in range(H):
+        for x in range(F0, F1 + 1):
+            c = img.getpixel((x, y))
+            d = (5 if (x + y) % 2 == 0 else -5) + row[y] + col[x]
+            img.putpixel((x, y), _shade(c, d))
+    for y in range(H):
+        img.putpixel((HOIST, y), _shade(TAPE_GREY if grey else TAPE, -10 if y % 2 else 0))
+        if y % 2 == 0:
+            img.putpixel((F0, y), _shade(img.getpixel((F0, y)), -40))
+    for y in (1, H - 2):
+        img.putpixel((HOIST, y), GROMMET)
+    for y in FRAY_ROWS:
+        img.putpixel((F1, y), CLEAR)
+        img.putpixel((F1 - 1, y), _shade(img.getpixel((F1 - 1, y)), -14))
+    return cv
+
+
 BLOCKS = {"flag_merchant": flag_merchant, "flag_navy": flag_navy, "flag_jolly_roger": flag_jolly_roger,
           "flag_custom": flag_custom}
 
@@ -139,7 +176,7 @@ def main():
             continue
         out = TEX / kind / f"{name}.png"
         out.parent.mkdir(parents=True, exist_ok=True)
-        fn().img.save(out, format="PNG", optimize=False)
+        finish(fn(), grey=(name == "flag_custom")).img.save(out, format="PNG", optimize=False)
         print(f"wrote  {kind}/{name}")
 
 

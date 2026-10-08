@@ -770,6 +770,43 @@ Ship decor (ART2): ship's lantern, ship's bell, rope coil, stern window, chart t
   ringing), `rope_coil.png` (one and three coils), `stern_window.png` (open, shutters), `chart_table.png`,
   `sea_cot.png`.
 
+Cloth and flags (ART3):
+- **Sail cloth** `textures/block/sail_cloth.png` (32x32, opaque, `tools/gen_sailing_textures.py`, deterministic): one
+  tile per block, seamless both ways (the yard renderer maps every block of cloth onto the whole tile, the stay
+  renderer repeats it by planar position in blocks). Plain weave (alternate texels +-3, a thread variation per row and
+  column), double-stitched vertical panel seams every 8 px (dark fold, light overlap ridge, stitches every 3 px on both
+  sides), **one reef band per block** (rows 12..14, doubled darker canvas, stitched along both edges, a tan reef point
+  knotted on the band in the middle of every panel and hanging 4 px), stains and faint rain streaks. The furled bundle
+  samples rows 0..7 only, so it shows seamed canvas without the band. The sails have no colour variants yet (design.md
+  §4.8 "dyeable" is not implemented), so there is one file. A frayed foot is not possible with this tiling: the
+  renderers give every block of cloth the same tile, so an edge drawn into the tile would repeat in mid-sail; it needs
+  a foot tile picked by the renderers (open point). Render `renders/sail_cloth.png` (full 3 x 3, half with the bundle
+  under the yard, furled; flat planes in a scratch Blockbench project, not saved).
+- **Flag cloth** `textures/block/flag_<kind>.png` (32x16, layout unchanged, `tools/gen_flag_textures.py`): every design
+  gets `finish()` on top: plain weave over the field (+-5 per texel plus row/column variation; greyscale on the banner
+  cloth, which is tinted), a canvas heading tape on hoist column 2 with grommets in rows 1 and 14, a stitch line in
+  column 3 (every other row 40 darker), and a frayed fly: rows 3, 7, 8 and 12 of the tip column 23 are transparent
+  (the renderer is `entityCutoutNoCull`), column 22 a shade darker there.
+- **Ripple** (`ship/decor/flag/FlagRipple`, pure, `FlagRippleTest`; drawn by `FlagClothRenderer`): the cloth of
+  `FlagClothModel` (1 x 1.5 blocks, unchanged) is drawn as 8 vertical strips of 3 texture columns. Strip boundary k
+  (s = k / 8) is pushed along the cloth normal by `A * s * sin(2 pi (1.25 s - t / 36) + phase)`: the hoist stays on
+  the pole, the swing grows to the tip, a crest takes 36 ticks to pass and travels from the pole to the tip. A is 0.6 px
+  in calm air and 1.6 px at 12 blocks/s of wind (sampled once per game tick for all flags), the phase is a hash of the
+  pole's block position. Normals follow the slope, so the folds shade. Front and back faces per strip, the swatch
+  edges per strip, one tip face. The renderer keeps three float arrays and refills them per flag: no allocation per
+  frame. Kept in code (the renderer draws quads); `models/flag_cloth.bbmodel` is a reference model only (Generic
+  format, the four flags at one moment, each strip a cube turned about y; nothing is exported from it). Render
+  `renders/flag_cloth.png` (front three-quarter, the navy flag from above, back). Rebuild: a `free` project, the
+  four textures from `textures/block/`, per strip a 1 x 16 px cube from boundary k to k + 1 with east uv
+  `[3k, 0, 3k + 3, 16]`, west reversed, up/down on the swatch column 24.
+- **Kraken re-render:** `renders/kraken.png` was re-rendered after GL1 with `KRK.render()` on the unchanged
+  `kraken.bbmodel` (see "Kraken (K1b)": open the project, `window.KRK = {REPO, UUID: Project.uuid}`, eval
+  `kraken_model.js`, `KRK.render()`). The rest pose of the model never pointed the suckers wrong; only the aim did, and
+  `KRK.aimQuat` already had the GL1 sucker normal, so the raised arms now hook their tips down and show their suckers
+  from below. Model, geo and rig tests unchanged.
+- **Blockbench global names:** besides `KR`, Blockbench defines a global `FC`; `window.FC = {...}` does not shadow it
+  inside `risky_eval` (properties land on Blockbench's function). ART3 used `window.ART3`.
+
 ## Entities
 
 Animated mobs and NPCs (crew member, pirate, sailor, navy soldier and officer; design.md §9) are GeckoLib models

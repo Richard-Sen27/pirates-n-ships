@@ -238,26 +238,51 @@ public final class RailingGateGameTests {
     // ------------------------------------------------------------------ the gangway
 
     /**
-     * On land: a gate facing east on a stone edge, a stone landing two blocks of air east of it. Open, a plank used on
-     * its sill facing east starts in the block beyond the gate at the gate's height and lands level; closed, the gate
-     * blocks that start like a railing.
+     * On land: three lanes on a stone edge, each with a stone landing two blocks of air east of it: a closed gate, a
+     * plain railing on its east edge and an open gate. Open, a plank used on the gate's sill facing east starts in the
+     * block beyond the gate at the gate's own height and lands level. Closed, the gate is a railing for the plank: the
+     * board starts on the gate's top (a block higher; BRD4 runs it down to the landing), exactly as from the railing
+     * beside it. BRD4 lists a board's cells by the blocks its underside passes through, so a board falling from the
+     * gate's top has its first cell beyond the gate at deck level; its start height is that cell's floor minus its
+     * {@code dy} ({@link #startFloor}).
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_9)
     public static void aPlankStartsFromAnOpenGatesSillOnly(GameTestHelper h) {
         for (int x = 0; x <= 3; x++) for (int z = 0; z <= 8; z++) h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
         for (int x = 6; x <= 8; x++) for (int z = 0; z <= 8; z++) h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
         BlockPos shut = new BlockPos(3, 2, 2);
+        BlockPos rail = new BlockPos(3, 2, 4);
         BlockPos opened = new BlockPos(3, 2, 6);
         h.setBlock(shut, gateState(Direction.EAST, false));
+        setRailing(h, rail, Direction.EAST);
         h.setBlock(opened, gateState(Direction.EAST, true));
         BoardingPlanks.Laid closedRun = BoardingPlanks.lay(h.getLevel(), h.absolutePos(shut), Direction.UP, Direction.EAST);
-        h.assertTrue(closedRun.outcome() != BoardingPlanks.Outcome.OK || !closedRun.cells().get(0).equals(h.absolutePos(new BlockPos(4, 2, 2))),
-                "a closed gate let the plank start beyond it at sill height");
+        BoardingPlanks.Laid railRun = BoardingPlanks.lay(h.getLevel(), h.absolutePos(rail), Direction.UP, Direction.EAST);
+        h.assertTrue(closedRun.outcome() == railRun.outcome(), "closed gate " + closedRun.outcome() + ", railing " + railRun.outcome());
+        if (closedRun.outcome() == BoardingPlanks.Outcome.OK) {
+            int gateTop = h.absolutePos(shut).getY() + 1;
+            h.assertTrue(startFloor(closedRun) == gateTop, "the board from the closed gate starts at y " + startFloor(closedRun)
+                    + ", not on the gate's top " + gateTop);
+            h.assertTrue(startFloor(railRun) == gateTop, "the board from the railing starts at y " + startFloor(railRun));
+            h.assertTrue(closedRun.columns() == railRun.columns() && closedRun.rise() == railRun.rise()
+                            && closedRun.landing() == railRun.landing() && closedRun.heights().equals(railRun.heights()),
+                    "the closed gate's board differs from the railing's: " + closedRun.heights() + " vs " + railRun.heights());
+            for (int i = 0; i < closedRun.cells().size(); i++) {
+                h.assertTrue(closedRun.cells().get(i).subtract(h.absolutePos(shut)).equals(railRun.cells().get(i).subtract(h.absolutePos(rail))),
+                        "cell " + i + " differs from the railing's run");
+            }
+        }
         BoardingPlanks.Laid laid = BoardingPlanks.lay(h.getLevel(), h.absolutePos(opened), Direction.UP, Direction.EAST);
         h.assertTrue(laid.outcome() == BoardingPlanks.Outcome.OK, "refused from the open gate: " + laid.outcome());
         h.assertTrue(laid.cells().get(0).equals(h.absolutePos(new BlockPos(4, 2, 6))), "the run starts at " + laid.cells().get(0));
+        h.assertTrue(startFloor(laid) == h.absolutePos(opened).getY(), "the board from the open gate starts at y " + startFloor(laid));
         h.assertTrue(laid.landing() == PlankRun.Landing.LEVEL, "landing " + laid.landing());
         h.succeed();
+    }
+
+    /** The height (block y) a laid run's board starts at: its first cell's floor minus that cell's {@code dy}. */
+    private static int startFloor(BoardingPlanks.Laid laid) {
+        return laid.cells().get(0).getY() - laid.heights().get(0).dy();
     }
 
     /** A plank in hand clicking an open gate does not swing it shut (the plank's own use runs). */

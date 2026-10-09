@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.combat.boarding.order;
 
+import com.richardsenger.piratesnships.ship.hull.client.ClientShipStatus;
+import com.richardsenger.piratesnships.ship.hull.net.ShipStatusPayload;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -23,6 +25,12 @@ public final class ClientBoarding {
     /** Whether the entry reads "Back aboard" on ship {@code ship} (null: not aboard a known ship). */
     public static boolean out(@Nullable UUID ship) {
         return ship != null && out.contains(ship);
+    }
+
+    /** Whether the entry reads "Back aboard" on the ship the player stands on (from the HUD's ship status). */
+    public static boolean outHere() {
+        ShipStatusPayload status = ClientShipStatus.shown();
+        return status != null && out(status.ship());
     }
 
     /** Forgets the state (leaving a server). */

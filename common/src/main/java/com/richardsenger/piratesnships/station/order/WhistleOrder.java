@@ -1,7 +1,10 @@
 package com.richardsenger.piratesnships.station.order;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.combat.boarding.order.ClientBoarding;
 import com.richardsenger.piratesnships.combat.cannon.CannonStation.CannonOrder;
+import com.richardsenger.piratesnships.sailing.oars.OarsSync;
+import com.richardsenger.piratesnships.sailing.oars.RowOrder;
 import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import com.richardsenger.piratesnships.station.capstan.AnchorOrder;
 import com.richardsenger.piratesnships.station.pump.PumpOrder;
@@ -37,6 +40,11 @@ public enum WhistleOrder {
      * the direction, the client only names it.
      */
     ANCHOR(null, Constants.id("capstan")),
+    /**
+     * OAR1: a toggle too. "Row" while the ship does not row: the free crew take oars at benches and the rail; "Ship oars"
+     * while it rows ({@code sailing.oars.Rowing#toggle}). The label follows the ship's rowing state ({@link #shownNameKey}).
+     */
+    ROW(RowOrder.ROW, Constants.id("oar")),
     /**
      * BRD3: "Board!" sends the crew (gunners and helmsman stay) across a gangway or a narrow gap onto the ship alongside
      * to fight; while they are out the same entry reads "Back aboard" and calls them home
@@ -145,12 +153,12 @@ public enum WhistleOrder {
      * {@link #nameKey(AnchorState.Phase)}. Pure.
      */
     public String nameKey(AnchorState.@Nullable Phase anchor, boolean boardingOut) {
-        return this == BOARD && boardingOut ? BACK_ABOARD_KEY : nameKey(anchor);
+        return this == BOARD && boardingOut ? toggledNameKey() : nameKey(anchor);
     }
 
     /** {@link #descriptionKey()} following the anchor and the boarding party like {@link #nameKey(AnchorState.Phase, boolean)}. */
     public String descriptionKey(AnchorState.@Nullable Phase anchor, boolean boardingOut) {
-        return this == BOARD && boardingOut ? BACK_ABOARD_KEY + ".desc" : descriptionKey(anchor);
+        return this == BOARD && boardingOut ? toggledDescriptionKey() : descriptionKey(anchor);
     }
 
     /** Label key of the boarding toggle while a party is out ("Back aboard", BRD3). */
@@ -159,5 +167,45 @@ public enum WhistleOrder {
     /** Label key of the anchor toggle in direction {@code direction} ("Drop anchor", "Raise anchor"). */
     public static String anchorKey(AnchorOrder direction) {
         return "whistle_order." + Constants.MOD_ID + "." + direction.id();
+    }
+
+    /**
+     * Whether this entry is a toggle whose label follows the ship's state: the oars (OAR1: {@link #ROW}, rowing or not)
+     * and boarding (BRD3: {@link #BOARD}, a party out or not).
+     */
+    public boolean isToggle() {
+        return this == ROW || this == BOARD;
+    }
+
+    /**
+     * The name key of the toggle's other direction ("Ship oars", "Back aboard"); {@link #nameKey()} for an entry that is
+     * no toggle.
+     */
+    public String toggledNameKey() {
+        if (this == BOARD) return BACK_ABOARD_KEY;
+        return isToggle() ? nameKey() + ".toggled" : nameKey();
+    }
+
+    /** The description key of the toggle's other direction. */
+    public String toggledDescriptionKey() {
+        return isToggle() ? toggledNameKey() + ".desc" : descriptionKey();
+    }
+
+    /**
+     * Client: the label to show on the ship the player stands on, whose anchor is in {@code anchor}: "Ship oars" while it
+     * rows (OAR1, {@link OarsSync#clientRowing}), "Back aboard" while the player's boarding party is out (BRD3,
+     * {@link ClientBoarding#outHere}), else {@link #nameKey(AnchorState.Phase)}.
+     */
+    public String shownNameKey(AnchorState.@Nullable Phase anchor) {
+        return toggledOnClient() ? toggledNameKey() : nameKey(anchor);
+    }
+
+    /** Client: the description to show, like {@link #shownNameKey}. */
+    public String shownDescriptionKey(AnchorState.@Nullable Phase anchor) {
+        return toggledOnClient() ? toggledDescriptionKey() : descriptionKey(anchor);
+    }
+
+    private boolean toggledOnClient() {
+        return this == ROW && OarsSync.clientRowing() || this == BOARD && ClientBoarding.outHere();
     }
 }

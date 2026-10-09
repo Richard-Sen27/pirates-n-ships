@@ -165,7 +165,7 @@ Defaults: `boarding.board_order` true, `board_gap` 2, `boarders_keep_stations` t
 
 ## 12. Board over a gangway
 1. Two ships three or four blocks apart, side by side. On yours: a helmsman at the helm, a gunner at a cannon, three free
-   hands, a chest with one cutlass. Lay a gangway from your rail onto hers. Open the whistle wheel. Expected: ten
+   hands, a chest with one cutlass. Lay a gangway from your rail onto hers. Open the whistle wheel. Expected: eleven
    entries; hover the cutlass: "Board!" with its line below.
 2. Pick "Board!". Expected: "3 hands, board her!" on the action bar; the helmsman and the gunner stay; the three walk
    to the gangway's end on your deck (no teleport), one after another along the board, and step onto her deck. One of

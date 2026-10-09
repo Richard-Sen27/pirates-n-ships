@@ -134,6 +134,17 @@ public final class StationCommands {
             return 0;
         }
         ServerLevel level = c.getSource().getLevel();
+        if (order == com.richardsenger.piratesnships.sailing.oars.RowOrder.ROW && targets == null) {
+            // OAR1: the ship's free crew take oars (benches and the rail), as the whistle's Row does
+            ShipBody rowShip = shipAt(c.getSource());
+            if (rowShip == null) {
+                c.getSource().sendFailure(Component.translatable(OrderHints.KEY_NO_SHIP));
+                return 0;
+            }
+            com.richardsenger.piratesnships.sailing.oars.Rowing.Outcome o = com.richardsenger.piratesnships.sailing.oars.Rowing.row(level, rowShip);
+            c.getSource().sendSuccess(() -> Component.translatable(KEY_ORDERED, Component.translatable(order.nameKey()), o.rowers(), o.rowers()), true);
+            return o.rowers();
+        }
         List<CrewMember> crew = new ArrayList<>();
         if (targets == null) {
             double r = StationConfig.ORDER_RADIUS.get();

@@ -2,7 +2,6 @@ package com.richardsenger.piratesnships.station.client;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.richardsenger.piratesnships.platform.Services;
-import com.richardsenger.piratesnships.combat.boarding.order.ClientBoarding;
 import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import com.richardsenger.piratesnships.ship.hull.client.ClientShipStatus;
 import com.richardsenger.piratesnships.ship.hull.net.ShipStatusPayload;
@@ -187,8 +186,7 @@ public final class WhistleMenuScreen extends Screen {
 
         // center: hovered order name (or the title), wrapped to the hole
         AnchorState.Phase anchor = anchorPhase();
-        boolean boarding = boardingOut(); // BRD3: Board! or Back aboard
-        Component center = hovered >= 0 ? Component.translatable(entries.get(hovered).nameKey(anchor, boarding)) : title;
+        Component center = hovered >= 0 ? Component.translatable(entries.get(hovered).shownNameKey(anchor)) : title;
         List<FormattedCharSequence> lines = font.split(center, Math.max(24, (int) (inner * 1.7)));
         int y = (int) cy - lines.size() * font.lineHeight / 2;
         for (FormattedCharSequence line : lines) {
@@ -197,7 +195,7 @@ public final class WhistleMenuScreen extends Screen {
         }
 
         // under the ring: the description of the hovered order, or how to use the menu
-        Component below = hovered >= 0 ? Component.translatable(entries.get(hovered).descriptionKey(anchor, boarding)) : Component.translatable(WhistleMenu.KEY_HINT);
+        Component below = hovered >= 0 ? Component.translatable(entries.get(hovered).shownDescriptionKey(anchor)) : Component.translatable(WhistleMenu.KEY_HINT);
         int wrap = Math.min(width - 16, Math.max(160, (int) (outer * 2.2)));
         y = (int) (cy + outer + 8);
         for (FormattedCharSequence line : font.split(below, wrap)) {
@@ -215,12 +213,6 @@ public final class WhistleMenuScreen extends Screen {
     private static AnchorState.@Nullable Phase anchorPhase() {
         ShipStatusPayload status = ClientShipStatus.shown();
         return status == null ? null : status.anchorPhase();
-    }
-
-    /** Whether a boarding party of the ship the player is aboard is out (BRD3, {@link ClientBoarding}). */
-    private static boolean boardingOut() {
-        ShipStatusPayload status = ClientShipStatus.shown();
-        return status != null && ClientBoarding.out(status.ship());
     }
 
     /** Index of the entry of the last sail order given with the held whistle, or -1. */

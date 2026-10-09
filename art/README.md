@@ -2397,6 +2397,15 @@ nine-slice edges and centres repeat cleanly because vanilla tiles them.
 Text: dark ink `#2C2018` (faded `#7A6852`) without shadow on parchment; light `#EEE0BC` or brass `#F4D27A` with
 shadow on wood.
 
+**Script-drawn GUI sprites outside the kit.** Every GUI sprite is drawn by a script, never by hand. A script other
+than `gen_gui_textures.py` owns its own folder under `textures/gui/sprites/` and is listed in that script's
+`OTHER_OWNERS` (and `GuiTexturesTest`'s), so the kit neither deletes nor checks it; its own test compares a fresh run
+with the committed bytes. So far: `order/` from `tools/gen_order_icons.py` (ART19), the whistle orders' 16×16 icons
+for orders without a fitting item (`WhistleOrder.Icon.sprite`, drawn with `blitSprite` on the wheel and the helm
+screen's Crew tab; `OrderIconsTest`). `order/anchor` is a stock anchor in dark iron (38,42,50 / 64,70,82 /
+104,112,128) with a kit-wood stock and a 1 px light parchment rim (238,224,188 at alpha 230) on every side, so it reads
+on the wheel's dark sectors and on brass buttons; `--preview FILE.png` shows it at 8× on both grounds.
+
 ## Ship templates (W0)
 Prebuilt ships (the starter sloop now, shipwright orders later) are built in a creative world and exported with
 WorldEdit as Sponge schematics. `art/schematics/<name>.schem` is the source; `tools/schem_to_structure.py` (standard

@@ -12,6 +12,7 @@ import com.richardsenger.piratesnships.station.order.RadialLayout;
 import com.richardsenger.piratesnships.station.order.WhistleOrder;
 import net.createmod.catnip.math.Pointing;
 import net.createmod.ponder.api.PonderPalette;
+import net.createmod.ponder.api.element.InputElementBuilder;
 import net.createmod.ponder.api.ParticleEmitter;
 import net.createmod.ponder.api.scene.SceneBuilder;
 import net.createmod.ponder.api.scene.SceneBuildingUtil;
@@ -104,8 +105,7 @@ final class CrewOrdersScene {
         scene.idle(15);
         List<WhistleOrder> entries = WhistleOrder.entries();
         for (int i = 0; i < entries.size(); i++) {
-            scene.overlay().showControls(wheelSlot(i), Pointing.DOWN, 70)
-                    .withItem(new ItemStack(BuiltInRegistries.ITEM.get(entries.get(i).icon())));
+            showIcon(scene.overlay().showControls(wheelSlot(i), Pointing.DOWN, 70), entries.get(i).icon());
         }
         say(scene.overlay().showText(70), Orders.WHEEL)
                 .pointAt(WHEEL.add(0, -WHEEL_RADIUS, 0))
@@ -203,9 +203,20 @@ final class CrewOrdersScene {
 
     /** A whistle order picked from the wheel: the whistle in the air, then the order's own icon. */
     private static void order(SceneBuilder scene, WhistleOrder order) {
-        scene.overlay().showControls(WHEEL.add(0, -WHEEL_RADIUS, 0), Pointing.DOWN, 25).rightClick()
-                .withItem(new ItemStack(BuiltInRegistries.ITEM.get(order.icon())));
+        showIcon(scene.overlay().showControls(WHEEL.add(0, -WHEEL_RADIUS, 0), Pointing.DOWN, 25).rightClick(), order.icon());
         scene.idle(10);
+    }
+
+    /**
+     * An order's wheel icon in an input window (ART19): an item as the window's item; a GUI sprite as its icon, which
+     * Ponder draws at 1.5x like an item (it replaces a click icon, so a sprite order shows no mouse button).
+     */
+    private static void showIcon(InputElementBuilder window, WhistleOrder.Icon icon) {
+        if (icon.isSprite()) {
+            window.showing((g, x, y) -> g.blitSprite(icon.id(), x, y, 16, 16));
+        } else {
+            window.withItem(new ItemStack(BuiltInRegistries.ITEM.get(icon.id())));
+        }
     }
 
     private static CrewMember crew(net.minecraft.world.level.Level level, Vec3 at, float yaw, AtomicReference<CrewMember> ref) {

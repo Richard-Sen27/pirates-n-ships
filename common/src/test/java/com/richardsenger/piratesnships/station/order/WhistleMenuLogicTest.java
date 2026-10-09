@@ -143,7 +143,7 @@ class WhistleMenuLogicTest {
         assertNull(WhistleOrder.LOAD.sail(), "the load order is no sail order and is not remembered");
         assertEquals("load", WhistleOrder.LOAD.id());
         assertNull(WhistleOrder.FIRE.sail(), "the fire order is no sail order and is not remembered");
-        assertEquals(Constants.id("cannon"), WhistleOrder.FIRE.icon());
+        assertEquals(WhistleOrder.Icon.item(Constants.id("cannon")), WhistleOrder.FIRE.icon());
         assertEquals("fire", WhistleOrder.FIRE.id());
         assertEquals(SailOrder.HOIST, WhistleOrder.HOIST.sail());
         assertEquals(SailOrder.REEF, WhistleOrder.REEF.sail());
@@ -162,7 +162,7 @@ class WhistleMenuLogicTest {
         for (WhistleOrder o : e) {
             if (!o.followsAnchor()) assertEquals(o.order() == null ? List.of() : List.of(o.order()), o.orders());
         }
-        assertEquals(Constants.id("bilge_pump"), WhistleOrder.PUMP.icon());
+        assertEquals(WhistleOrder.Icon.item(Constants.id("bilge_pump")), WhistleOrder.PUMP.icon());
     }
 
     // ------------------------------------------------------------------ anchor toggle (WHS1)

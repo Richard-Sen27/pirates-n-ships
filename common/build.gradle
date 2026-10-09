@@ -52,6 +52,11 @@ dependencies {
     // Ponder's API and catnip. Not transitive: the loader modules bring Flywheel and Ponder's runtime dependencies.
     compileOnly("net.createmod.ponder:ponder-common:${ponder_version}+mc${minecraft_version}") { transitive = false }
 
+    // JEI (optional compat, JEI1; imported only in compat/jei, which JEI itself finds by its @JeiPlugin annotation on
+    // NeoForge and through fabric.mod.json's "jei" entry point on Fabric).
+    compileOnly("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}")
+    testImplementation("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}")
+
     // Unit tests for pure logic and codecs (see docs/design.md §3.3)
     testImplementation platform('org.junit:junit-bom:5.11.3')
     testImplementation 'org.junit.jupiter:junit-jupiter'

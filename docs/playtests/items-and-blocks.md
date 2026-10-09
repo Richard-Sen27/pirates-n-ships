@@ -483,3 +483,37 @@ black checkerboard on the legs) and for an exception when a coat is first drawn.
    drop at the feet. A player who was already Lieutenant before this version gets nothing new (by design, LAW3b).
 7. **Recipes:** the recipe book shows the breeches (white wool in the leggings shape, blue wool top middle) and the
    boots (gold nuggets over black wool over leather, two columns); the captain's pieces still craft as before.
+
+## JEI (JEI1)
+
+JEI (Just Enough Items) 19.39.0.372 is in both dev clients' runs. Run each step on the **NeoForge** client
+(`./gradlew :neoforge:runClient`) and on the **Fabric** client (`./gradlew :fabric:runClient`), and say on which one
+anything differs. Watch both logs for an exception that names `compat.jei` or `PiratesJeiPlugin`.
+1. **The plugin loads:** after joining a world, the log has our line
+   `JEI plugin pirates_n_ships:jei_plugin: 12 market pages, 2 hidden items` (12 = the default trade goods), and JEI's
+   own plugin list in its startup log names `pirates_n_ships:jei_plugin` without an error.
+2. **Item list:** open the inventory, type `@pirates_n_ships` in JEI's search box: our blocks and items are listed,
+   but neither the **Ship Receipt** nor the **Ship Commission** (the two hidden items). The spawn eggs are listed.
+3. **Information pages:** press **R** (or U) over the helm in the JEI list: besides its crafting recipe there is an
+   "Information" tab: "Helm: Assembles, steers and disassembles a ship. ..." with no `**`, `{item:` or
+   `(recipe: ...)` in it, and below it "From the Captain's Almanac, chapter "All blocks"." Check the same for the
+   hull patch (its line from "All items": "Use on the edge of a hole ..."), the paddle (a paragraph from the
+   provisions chapter about the sea chest) and the cutlass ("Cutlass: Sword."). The swivel gun, boarding plank,
+   Captain's Almanac and spawn eggs have no information page (the Almanac does not describe them).
+4. **Harbor Market:** press **U** over the harbor master's desk: the "Harbor Market" category, its tab icon the desk,
+   the desk shown as its catalyst on the left. One page per trade good (sugar, cod, oak log, iron ingot, wheat,
+   leather, cocoa beans, gunpowder, tobacco, spices, cloth, rum): the good in a slot, an arrow, a doubloon, and six
+   lines: "Buy: 2.2 doubloons", "Sell: 1.8 doubloons", "Where it is made: buy for 1.3", "Where it is wanted: sell for
+   2.9", "Made in tropical ports", "Cargo weight: 0.25 per item" (sugar with the default config). No line runs over
+   the page edge (a cut line ends with "..."). R over sugar shows its market page too, R over a doubloon lists all
+   twelve.
+5. **Ship's Provisions:** press **U** over the pantry (or the water barrel): "Ship's Provisions", both as catalysts.
+   Hardtack: "Food: 4 nutrition per item", "Never spoils", "Cargo weight: 0.25 per item"; a lime adds "Keeps scurvy
+   away"; raw beef "Spoils after N days in the pantry"; the water barrel "Water: 16 rations per item"; rum "Rum: 1
+   rations per item"; the water bottle is listed. U over a cod shows its provisions page.
+6. **On a server whose trade goods differ** (a datapack that changes a `trade_good` price, or `/reload` after editing
+   one in a world's datapack): after joining (or the reload) the market pages show the server's prices, not the
+   defaults, and no good is listed twice.
+7. **Without JEI:** start a client with `-Ppirates_n_ships.no_jei` (`./gradlew :neoforge:runClient
+   -Ppirates_n_ships.no_jei`): the game loads with no error mentioning JEI, the mod plays as before, and the log has
+   no `JEI plugin` line.

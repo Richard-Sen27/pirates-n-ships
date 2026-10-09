@@ -2303,7 +2303,7 @@
  "lang": {
   "pirates_n_ships.almanac.welcome.title": "The guide book",
   "pirates_n_ships.almanac.welcome.p1.heading": "The guide book",
-  "pirates_n_ships.almanac.welcome.p1.text1": "With GuideME installed you start with the **Pirates 'n' Ships Guide** (also craftable from a book and a feather): this guide as an in-game book with item links, recipes and search. Hold G over one of the mod's items to open its page.",
+  "pirates_n_ships.almanac.welcome.p1.text1": "With GuideME installed you start with the **Pirates 'n' Ships Guide** (also craftable from a book and a feather): this guide as an in-game book with item links, recipes and search. Hold G over one of the mod's items to open its page. With JEI (Just Enough Items) installed, every block and item the Almanac describes has an information page in JEI with that text (R or U over it), and JEI gains two pages of the mod's own: the Harbor Market (each trade good with its buy and sell prices) and Ship's Provisions (what the crew counts as food, water or rum).",
   "pirates_n_ships.almanac.welcome.p2.heading": "Contents",
   "pirates_n_ships.almanac.welcome.p2.text1": "Every chapter has a bookmark on the edge of the book. Or turn to one here:",
   "pirates_n_ships.almanac.welcome.p2.list1_1": "[[pirates_n_ships:first_ship]]",

@@ -704,6 +704,28 @@ go, sneak and use your captain's whistle on them: they leave your service as an 
 hired them can do that, or anyone at all if the ship has no owner. Operators: `/pirates crew hire <sailor|pirate|navy>`
 and `/pirates crew dismiss`. Server config `crew.hiring`.
 
+### Crow's nest
+A barrel of spruce staves with iron hoops for the top of a mast. Place it on a log, a fence, a wall or any block with
+a solid top; it breaks and drops when the block under it goes. It is one block, but the barrel is a block and a half
+across and stands chest high, so whoever is in it is plainly up in the nest. Only its floor is solid: climb a ladder up
+the mast and step in over the rim (sneak to stay put).
+
+Whoever is in the nest keeps the lookout. Put a crew member up there with the Captain's Whistle (use it on the crew
+member, then on the nest): he takes his post inside the barrel and keeps watch until you release him. Or stand in it
+yourself. Every 3 seconds the lookout scans 160 blocks round the ship and calls out what is new, in chat, to the ship's
+owner and everyone aboard:
+- **ships**, by the flag they fly: "Sail ho! A merchant two points off the starboard bow, 140 blocks" (a navy ship, a
+  pirate ship, a wreck, or just a ship when no flag flies);
+- **land**: "Land ho! Land four points off the port bow, 120 blocks" (the nearest coast; one call per stretch of coast);
+- **sharks** and **the kraken**.
+
+Bearings are in points of the compass (32 round the horizon) from the bow: dead ahead, "n points off the starboard (or
+port) bow", on the beam, "n points abaft the beam", dead astern. Each ship, shark or coast is called once; the lookout
+remembers it for 5 minutes after he last saw it. Only loaded chunks are watched. Recipe: planks, rope, planks over two
+iron nuggets, over three planks. Server config `lookout`: `enabled`, `announce` (off: the watch is silent), `range`,
+`scan_interval_ticks`, `memory_ticks`, and the land rays (`land_directions`, `land_step`, `land_min_distance`,
+`land_region`).
+
 ### Pirates, sailors and the navy
 Pirates (dark coat, bandana, eyepatch, cutlass) attack players and the navy on sight. They fight with the same
 swordplay as you: watch for the raised arm before a slash or the drawn-back arm before a thrust, and parry just
@@ -1141,6 +1163,7 @@ on by default; vanilla weapons are untouched):
 | Harbor Master's Desk | book, gold nugget, 5 planks | Opens a port's market screen when bound to the port. See [Harbor master's desk](#harbor-masters-desk). |
 | Cannon | 2 iron ingots, 1 iron block, 2 logs, 1 planks | Loads powder and a cannonball, aims by elevation, fires. A crew station. See [Cannons](#cannons). |
 | Bilge Pump | stick, 3 planks, 1 bucket, 1 plank | Pumps water out of the hold below it. A crew station. See [Fighting a leak](#fighting-a-leak). |
+| Crow's Nest | 6 planks, 1 rope, 2 iron nuggets | A lookout barrel for the masthead; whoever stands in it calls out ships, land and sea monsters. A crew station. See [Crow's nest](#crows-nest). |
 | Hull Patch (block) | placed by the item | A tarred plank that closes a breach. Watertight hull block. |
 | Flagpole | 3 sticks (gives 2) | Flies a flag. A thin pole with a finial and a cleat (Blockbench model). See [Flags](#5-flags). |
 | Pantry | 8 planks, 1 wheat | Food store with spoilage. See [Provisions](#6-provisions). |
@@ -1258,6 +1281,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `hazards` / `hazard_visuals` (client) | Waterspouts and whirlpools on/off, spawn chances and interval, distance band, lifetimes, radii, pull, lift, spin, drag-down, drift, sail tearing, ship force scale and mass cap; particle density and sounds. |
 | `mobs.kraken` / `hazards.kraken` | Kraken on/off and chance per day; detection, grips, tentacle health and regrow, weak spots, strike and swipe intervals, damage, retreat. |
 | `chart` / `chart_visuals` (client) | Charts on/off, cell size, sampling radius and interval, shallow depth, the cell cap, opening without the item, other players visible, marker cap; doodles. |
+| `lookout` | Crow's nest lookout on/off, calls on/off, range, scan interval, how long a sighting is remembered, the land rays. |
 | `mobs.shark` | Shark on/off and peaceful, spawn weight and group (server restart), detection, circle and give-up times, bite cooldown, damage and knockback, frenzy threshold. |
 | `melee_hud` (client) | Stamina bar on/off, position (tight above the hotbar or left of it), scale, offsets, opacity, fade when full and its timing. |
 | `melee_animations` (client) | Sword animations on/off, first-person mode, layer priority. |

@@ -378,3 +378,35 @@ cabin; a second hammock on land. Default config (`crew.hammock.player_sleep = tr
     show while it is aboard a ship"; on land it still works.
 
 Report: screenshots of steps 1 and 8 in third person, step 4 from outside the ship, and where you stood up in step 2.
+
+## CN1: crow's nest and lookout
+
+Setup: an assembled ship at sea (a fence or log mast at least four blocks high with a ladder up one side), a crow's
+nest (creative tab), a crew member, a captain's whistle; a second ship, a pirate or navy voyage nearby (or
+`/pirates ship place` another ship and fly a flag on it), and shark spawn eggs. Compare the look with
+`art/renders/crows_nest.png`.
+
+1. **Placing.** Place the nest on top of the mast before assembling. Expected: a barrel of spruce staves with three iron
+   hoops, about a block and a half across, sitting on the mast top with four struts down onto the mast. It will not go
+   on air or on the side of a block. Break the block under a nest on land: the nest drops as an item.
+2. **Look.** Walk round it and look into it from above (F5): floor planks inside, no flickering where staves, hoops and
+   floor meet, no cracks at the barrel's corners. Hold the item: the barrel shows whole in the hotbar and in the hand.
+3. **Climbing in.** Climb the ladder and step over the rim into the barrel. Expected: you stand on the floor inside the
+   barrel, the rim at chest height (on a fence mast you stand half a block higher, on the fence post: the rim is then
+   at the waist). Report if you cannot get in from the ladder, or fall straight through.
+4. **Crew lookout.** Assemble the ship. Whistle the crew member, then use the whistle on the nest. Expected: "<name>
+   mans the station"; he appears standing inside the barrel (feet on its floor, head and shoulders above the rim) and
+   stays there while the ship sails and turns.
+5. **Sail ho.** Sail towards the other ship (within 160 blocks). Expected within 3 seconds, in chat: "<Name> Sail ho!
+   A merchant (navy ship, pirate ship, ship) n points off the starboard/port bow, 140 blocks". Check the bearing
+   against what you see: ahead of the bow is "dead ahead", 90 degrees to the right "on the starboard beam", behind
+   "dead astern". The same ship is not called again while it stays in sight.
+6. **Land ho.** Sail towards a coast. Expected: "Land ho! Land ... , N blocks" once for that stretch of coast.
+7. **Sharks.** Spawn a shark in the water within range. Expected: "Shark in the water ..., N blocks!" once.
+8. **Player lookout.** Release the crew member (whistle on him), climb into the nest yourself and spawn another shark.
+   Expected: the call comes from "<Crow's nest>". A second player aboard (or the owner anywhere) gets the same line.
+9. **Toggles.** `lookout.announce` off: no calls. `lookout.enabled` off: no calls; `lookout.range` 32: only close
+   sightings are called.
+
+Report: screenshots of steps 1, 2 and 4 (third person, from the deck and from below), the chat at steps 5 to 8, and
+whether the bearings in step 5 matched.

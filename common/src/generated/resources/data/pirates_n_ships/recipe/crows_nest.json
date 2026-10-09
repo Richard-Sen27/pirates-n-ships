@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "N": {
+      "item": "minecraft:iron_nugget"
+    },
+    "P": {
+      "tag": "minecraft:planks"
+    },
+    "R": {
+      "item": "pirates_n_ships:rope"
+    }
+  },
+  "pattern": [
+    "PRP",
+    "N N",
+    "PPP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:crows_nest"
+  }
+}

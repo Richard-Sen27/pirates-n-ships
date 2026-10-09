@@ -165,6 +165,8 @@ An assembled ship analyses its own hull:
   opening that is open below the waterline. Water comes in faster the bigger the hole and the deeper it lies.
   A 1×1 hole one block under water lets in about one block of water per second.
 - Rooms joined by an open door or hatch level out. A closed door holds the water back.
+- A ship's compartments come from its blocks alone: rolling and pitching on the waves never splits or joins them, and
+  the water stays in the room it is in (only the water levels follow the tilt).
 - Placing a block into the breach stops the inflow.
 - **Buoyancy:** the dry volume under water lifts the ship, and flood water weighs it down. A fully flooded ship sinks.
 - The flood state is saved with the ship.

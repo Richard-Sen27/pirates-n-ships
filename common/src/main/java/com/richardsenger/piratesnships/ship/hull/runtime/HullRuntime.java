@@ -100,6 +100,8 @@ public final class HullRuntime {
     private int[] pumpingNow = new int[0];
     private boolean saveDirty;
     private long ticks;
+    /** Tilt refreshes so far (CMP1; tests). */
+    private int tiltRefreshes;
 
     private HullRuntime(ServerLevel level, UUID id) {
         this.level = level;
@@ -206,6 +208,11 @@ public final class HullRuntime {
         return breathing.underCount();
     }
 
+    /** How often the heights were refreshed for a new tilt, keeping the compartments (CMP1; tests). */
+    public int tiltRefreshes() {
+        return tiltRefreshes;
+    }
+
     public boolean isAnalysing() {
         return pending != null || debouncer.isDirty();
     }
@@ -230,8 +237,12 @@ public final class HullRuntime {
         }
 
         HullVec up = localUp(ship);
-        if (pending == null && (debouncer.tick() || sim.analysis().tiltExceeds(up, FloodingConfig.REANALYSIS_TILT_DEGREES.get()))) {
-            startAnalysis(ship, up);
+        if (pending == null) {
+            if (debouncer.tick()) {
+                startAnalysis(ship, up);
+            } else if (sim.analysis().tiltExceeds(up, FloodingConfig.REANALYSIS_TILT_DEGREES.get())) {
+                startRetilt(up); // CMP1: heights only, the compartments stay
+            }
         }
         if (pending != null && pending.isDone()) {
             finishAnalysis();
@@ -269,6 +280,17 @@ public final class HullRuntime {
                 : CompletableFuture.completedFuture(HullAnalyzer.analyze(grid, up));
     }
 
+    /**
+     * Refreshes the tilt-dependent parts of the current analysis (heights, profiles, sills) along {@code up}, keeping its
+     * compartments, their ids and their water (CMP1). No new snapshot: block changes go through the debouncer.
+     */
+    private void startRetilt(HullVec up) {
+        HullAnalysis base = sim.analysis();
+        pending = DryHullConfig.ASYNC_ANALYSIS.get()
+                ? CompletableFuture.supplyAsync(() -> base.retilted(up), ANALYSIS)
+                : CompletableFuture.completedFuture(base.retilted(up));
+    }
+
     private void finishAnalysis() {
         CompletableFuture<HullAnalysis> done = pending;
         pending = null;
@@ -277,6 +299,14 @@ public final class HullRuntime {
             next = done.join();
         } catch (RuntimeException e) {
             Constants.LOG.error("Hull analysis of ship {} failed", id, e);
+            return;
+        }
+        if (next.samePartition(sim.analysis()) && next.grid() == sim.analysis().grid()) {
+            // a tilt refresh (or an analysis of the very same snapshot): same compartments, same water, same open states
+            sim.retilt(next);
+            partials = PartialCellRule.of(next);
+            regionsDirty = true;
+            tiltRefreshes++;
             return;
         }
         double lost = sim.rebind(next);

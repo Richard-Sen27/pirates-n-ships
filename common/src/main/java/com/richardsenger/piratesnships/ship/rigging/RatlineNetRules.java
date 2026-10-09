@@ -357,7 +357,25 @@ public final class RatlineNetRules {
      * and joins it from beside or below. When the move is faster sideways than vanilla lets a climber go
      * ({@link #CLIMB_HORIZONTAL_LIMIT} per axis), all of it slows down instead (a flat net climbs slower). Returns
      * {x, y, z}.
+     *
+     * <p>Over the top (RL3): a climber whose feet are above the higher ring and that climbs on ({@code vy > 0}) is no
+     * longer pulled; it rises straight up at {@code vy} and keeps its own horizontal velocity ({@code ownX},
+     * {@code ownZ}, what its input and vanilla's tick gave it), so forward carries it off the net onto whatever stands
+     * at the top. Holding or climbing down there it is pulled back onto the line as anywhere else.
      */
+    public static double[] assist(Point a, Point b, Point feet, double vy, double ownX, double ownZ) {
+        Point hi = a.y <= b.y ? b : a;
+        if (vy > 0 && feet.y >= hi.y) {
+            return new double[] {clampAcross(ownX), vy, clampAcross(ownZ)};
+        }
+        return assist(a, b, feet, vy);
+    }
+
+    private static double clampAcross(double v) {
+        return Math.max(-CLIMB_HORIZONTAL_LIMIT, Math.min(CLIMB_HORIZONTAL_LIMIT, v));
+    }
+
+    /** {@link #assist(Point, Point, Point, double, double, double)} without the release over the top. */
     public static double[] assist(Point a, Point b, Point feet, double vy) {
         Point lo = a.y <= b.y ? a : b;
         Point hi = a.y <= b.y ? b : a;

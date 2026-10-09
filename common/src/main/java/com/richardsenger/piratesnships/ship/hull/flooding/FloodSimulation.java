@@ -137,7 +137,26 @@ public final class FloodSimulation {
     // ---- layout changes ----
 
     /**
+     * Switches to an analysis with the same compartments at another tilt ({@link HullAnalysis#retilted}, CMP1): every
+     * compartment keeps its volume and every opening its live open state; only the surface levels follow the new
+     * heights. Nothing is remapped and nothing is lost.
+     *
+     * @throws IllegalArgumentException when {@code next} has other compartments (use {@link #rebind})
+     */
+    public void retilt(HullAnalysis next) {
+        if (!next.samePartition(analysis)) {
+            throw new IllegalArgumentException("retilt needs the same compartments, rebind instead");
+        }
+        this.analysis = next;
+        java.util.Arrays.fill(levelCache, Double.NaN);
+    }
+
+    /**
      * Switches to a new analysis of the same ship (after a debounced re-analysis), carrying the water over.
+     *
+     * <p>When the compartments are unchanged ({@link HullAnalysis#samePartition}, e.g. a block change that moved no
+     * compartment cell) every compartment keeps its volume as it is, like {@link #retilt}; the open states still come
+     * from the new snapshot.
      *
      * <p>Rule: if a new compartment has exactly the cells of an old one, it takes its volume unchanged. Otherwise each
      * old compartment's water is split per cell with the same fill fractions the height profile uses
@@ -150,6 +169,12 @@ public final class FloodSimulation {
      */
     public double rebind(HullAnalysis next) {
         HullGrid og = analysis.grid(), ng = next.grid();
+        if (next.samePartition(analysis)) {
+            this.analysis = next;
+            java.util.Arrays.fill(levelCache, Double.NaN);
+            this.open = openStates(ng);
+            return 0;
+        }
         double[] nv = new double[next.compartments().size()];
         double lost = 0;
         for (Compartment a : analysis.compartments()) {

@@ -2660,7 +2660,7 @@
   "pirates_n_ships.configuration.flooding.pump_use_ticks": "Pump Use Ticks",
   "pirates_n_ships.configuration.flooding.pump_use_ticks.tooltip": "Ticks one use keeps a pump working. Holding the use key repeats the use every 4 ticks, so keep this above 4",
   "pirates_n_ships.configuration.flooding.reanalysis_tilt_degrees": "Reanalysis Tilt Degrees",
-  "pirates_n_ships.configuration.flooding.reanalysis_tilt_degrees.tooltip": "Re-analyze a hull when the ship has tilted this many degrees since the last analysis",
+  "pirates_n_ships.configuration.flooding.reanalysis_tilt_degrees.tooltip": "Refresh a hull's water heights when the ship has tilted this many degrees since the last refresh (its compartments never change with the tilt)",
   "pirates_n_ships.configuration.grapple": "Grapple",
   "pirates_n_ships.configuration.grapple.cleats_enabled": "Cleats Enabled",
   "pirates_n_ships.configuration.grapple.cleats_enabled.tooltip": "Cleats act like mooring rings (with the ring values below): they catch hooks passing close by, hold them harder, and take the rope's near end when tied off. Needs rings_enabled. Off = only rings do",

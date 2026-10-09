@@ -32,7 +32,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The capstan in motion (CAP2, docs/design.md §6): while a crew member works the capstan its block entity says which way
  * the bars turn ({@link CapstanBlockEntity#turning()}, synced to clients), and the crew member's station seat walks round
- * the drum and comes back to its spot afterwards, the crew member pushing all the while. The ship and the capstan are
+ * the drum and comes back to its spot afterwards, the crew member pushing all the while. CAP3: the bars also turn while
+ * the anchor moves without a crew order (a player's use of the capstan), and nobody walks then. The ship and the capstan are
  * {@link CapstanGameTests}'s (the capstan on the test hull's deck at relative (19, 9, 6), the crew member's spot west of
  * it); crew members stand without AI.
  */
@@ -142,8 +143,11 @@ public final class CapstanMotionGameTests {
                     stage[0] = 1;
                 }
                 case 1 -> {
-                    h.assertTrue(capstan(h, r).turning() == CapstanTurning.NONE, "a drop by hand turned the bars");
-                    h.assertTrue(fromHome(seat(c)) < 1e-6, "the seat moved without work");
+                    // CAP3: the bars turn with the falling anchor, but the crew member does not walk without an order
+                    if (t - since[0] >= LAG && r.phase() == AnchorState.Phase.DROPPING) {
+                        h.assertTrue(capstan(h, r).turning() == CapstanTurning.DROPPING, "a drop by hand did not turn the bars: " + capstan(h, r).turning());
+                    }
+                    h.assertTrue(fromHome(seat(c)) < 1e-6, "the seat moved without a crew order");
                     if (!anchorDown(r)) {
                         h.assertTrue(t - since[0] < 100, "the anchor did not land: " + r.phase());
                         return;
@@ -198,8 +202,12 @@ public final class CapstanMotionGameTests {
         });
     }
 
-    /** Letting the anchor go: the bars turn {@code DROPPING} (the other way) for the work, the crew member walks the other way round. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = BATCH + "drop")
+    /**
+     * Letting the anchor go: the bars turn {@code DROPPING} (the other way) for the work, the crew member walks the other
+     * way round; then (CAP3) the bars keep turning while the anchor falls, the crew member no longer walking, and stop
+     * once it holds.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 400, batch = BATCH + "drop")
     public static void droppingTurnsTheOtherWay(GameTestHelper h) {
         Rig r = rig(h);
         ServerLevel level = h.getLevel();
@@ -236,11 +244,136 @@ public final class CapstanMotionGameTests {
                     stage[0] = 2;
                 }
                 case 2 -> {
-                    if (t - since[0] < LAG) return;
-                    h.assertTrue(capstan(h, r).turning() == CapstanTurning.NONE, "still turning after the drop");
+                    long dt = t - since[0];
+                    if (dt < LAG) return;
+                    CapstanBlockEntity be = capstan(h, r);
                     h.assertTrue(r.phase() != null, "the anchor did not go");
+                    h.assertTrue(be.walkHeading() == null, "the crew member walks on after the order");
+                    if (r.phase() == AnchorState.Phase.DROPPING) {
+                        h.assertTrue(be.turning() == CapstanTurning.DROPPING, "not DROPPING while the anchor falls: " + be.turning());
+                        h.assertTrue(dt < 150, "the anchor did not land");
+                        return;
+                    }
+                    since[0] = t;
                     stage[0] = 3;
+                }
+                case 3 -> {
+                    if (t - since[0] < LAG) return;
+                    h.assertTrue(anchorDown(r), "the anchor does not hold: " + r.phase());
+                    h.assertTrue(capstan(h, r).turning() == CapstanTurning.NONE, "still turning with the anchor down");
+                    stage[0] = 4;
                     c.discard();
+                    h.succeed();
+                }
+                default -> { }
+            }
+        });
+    }
+
+    /**
+     * CAP3: a player's use of the capstan ({@link ShipControls#useCapstan}, what {@code CapstanBlock} calls) to let the
+     * anchor go turns the bars {@code DROPPING} while it falls, and they stop ({@code NONE}) once it holds. Nobody mans
+     * the capstan.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = BATCH + "player_drop")
+    public static void aPlayersDropTurnsTheBarsWhileTheAnchorFalls(GameTestHelper h) {
+        Rig r = rig(h);
+        ServerLevel level = h.getLevel();
+        int[] stage = {0};
+        long[] since = {0};
+        int[] turned = {0};
+        h.onEachTick(() -> {
+            long t = h.getTick();
+            switch (stage[0]) {
+                case 0 -> {
+                    if (t < 3) return;
+                    h.assertTrue(capstan(h, r).turning() == CapstanTurning.NONE, "the bars turn before any work");
+                    ShipControls.useCapstan(level, r.capstan());
+                    h.assertTrue(r.phase() == AnchorState.Phase.DROPPING, "the use did not let the anchor go: " + r.phase());
+                    since[0] = t;
+                    stage[0] = 1;
+                }
+                case 1 -> {
+                    long dt = t - since[0];
+                    if (r.phase() == AnchorState.Phase.DROPPING) {
+                        if (dt >= LAG) {
+                            h.assertTrue(capstan(h, r).turning() == CapstanTurning.DROPPING, "not DROPPING at " + dt + ": " + capstan(h, r).turning());
+                            turned[0]++;
+                        }
+                        h.assertTrue(dt < 150, "the anchor did not land");
+                        return;
+                    }
+                    h.assertTrue(anchorDown(r), "the anchor does not hold: " + r.phase());
+                    h.assertTrue(turned[0] > 3, "the drop was too short to tell: " + turned[0]);
+                    since[0] = t;
+                    stage[0] = 2;
+                }
+                case 2 -> {
+                    if (t - since[0] < LAG) return;
+                    h.assertTrue(capstan(h, r).turning() == CapstanTurning.NONE, "still turning with the anchor down: " + capstan(h, r).turning());
+                    stage[0] = 3;
+                    h.succeed();
+                }
+                default -> { }
+            }
+        });
+    }
+
+    /**
+     * CAP3: a player's use of the capstan while the anchor holds heaves it in: the bars turn {@code RAISING} until the
+     * anchor is stowed, then stop.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 600, batch = BATCH + "player_raise")
+    public static void aPlayersRaiseTurnsTheBarsUntilStowed(GameTestHelper h) {
+        Rig r = rig(h);
+        ServerLevel level = h.getLevel();
+        int[] stage = {0};
+        long[] since = {0};
+        int[] turned = {0};
+        h.onEachTick(() -> {
+            long t = h.getTick();
+            switch (stage[0]) {
+                case 0 -> {
+                    if (t < 3) return;
+                    h.assertTrue(ShipControls.dropAnchor(level, r.capstan()).result() == ShipControls.AnchorResult.DROPPING, "drop");
+                    since[0] = t;
+                    stage[0] = 1;
+                }
+                case 1 -> {
+                    if (!anchorDown(r)) {
+                        h.assertTrue(t - since[0] < 150, "the anchor did not land: " + r.phase());
+                        return;
+                    }
+                    since[0] = t;
+                    stage[0] = 2;
+                }
+                case 2 -> {
+                    if (t - since[0] < LAG) return;
+                    h.assertTrue(capstan(h, r).turning() == CapstanTurning.NONE, "turning with the anchor down");
+                    ShipControls.useCapstan(level, r.capstan());
+                    h.assertTrue(r.phase() == AnchorState.Phase.RAISING, "the use did not heave in: " + r.phase());
+                    since[0] = t;
+                    stage[0] = 3;
+                }
+                case 3 -> {
+                    long dt = t - since[0];
+                    if (r.phase() == AnchorState.Phase.RAISING) {
+                        if (dt >= LAG) {
+                            h.assertTrue(capstan(h, r).turning() == CapstanTurning.RAISING, "not RAISING at " + dt + ": " + capstan(h, r).turning());
+                            turned[0]++;
+                        }
+                        h.assertTrue(dt < 500, "the raise does not end");
+                        return;
+                    }
+                    h.assertTrue(r.phase() == null, "the anchor is not stowed: " + r.phase());
+                    h.assertTrue(turned[0] > 3, "the raise was too short to tell: " + turned[0]);
+                    since[0] = t;
+                    stage[0] = 4;
+                }
+                case 4 -> {
+                    if (t - since[0] < LAG) return;
+                    h.assertTrue(capstan(h, r).turning() == CapstanTurning.NONE, "still turning with the anchor stowed: " + capstan(h, r).turning());
+                    stage[0] = 5;
                     h.succeed();
                 }
                 default -> { }

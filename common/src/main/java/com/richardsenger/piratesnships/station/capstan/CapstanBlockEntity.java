@@ -1,6 +1,13 @@
 package com.richardsenger.piratesnships.station.capstan;
 
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
+import com.richardsenger.piratesnships.sailing.anchor.AnchorStatus;
+import com.richardsenger.piratesnships.sailing.force.AnchorState;
+import com.richardsenger.piratesnships.sailing.ship.SailingRuntime;
+import com.richardsenger.piratesnships.sailing.ship.SailingRuntimes;
+import com.richardsenger.piratesnships.sailing.ship.ShipAnchor;
+import com.richardsenger.piratesnships.ship.sable.ShipBody;
+import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.station.StationRef;
 import com.richardsenger.piratesnships.station.StationState;
 import com.richardsenger.piratesnships.station.Stations;
@@ -24,15 +31,19 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The capstan's block entity (CAP2, docs/design.md §6 "Capstan in motion"; the block is {@code sailing.block.CapstanBlock}).
  *
- * <p>Server, every tick ({@link #serverTick}): while the capstan station carries out an anchor order with its occupant
- * at the station ({@link Stations#isWorking}), {@link #turning()} is {@link CapstanTurning#RAISING} or
- * {@link CapstanTurning#DROPPING} by the order ({@link CapstanTurning#of}), otherwise {@link CapstanTurning#NONE}: the
- * work ending, the crew member leaving and the station being released all clear it. Each change goes to clients at once
- * as a block update, with the turning rate ({@code crew_stations.capstan.turn_degrees_per_tick}), so the client draws
- * the bars at the server's rate. With {@code crew_stations.capstan.animation} off it stays {@code NONE}. When a crew
- * member (not a player) rides the station seat while the bars turn, the seat walks round the drum ({@link CapstanWalk})
- * and comes back to its spot ({@link StationSeat#home()}) afterwards. The seat is an entity without collision, so
- * blocks beside the capstan do not stop the walk. Nothing is saved: a reloaded capstan stands still until worked again.
+ * <p>Server, every tick ({@link #serverTick}): {@link #turning()} follows the capstan's anchor work, whoever does it
+ * (CAP3, {@link CapstanTurning#of(Object, AnchorState.Phase, boolean)}): while the capstan station carries out an anchor
+ * order with its occupant at the station ({@link Stations#isWorking}) it turns by the order as in CAP2 (a drop order's
+ * work turns it before the anchor goes); otherwise it follows the ship's anchor when it hangs from this capstan,
+ * {@link CapstanTurning#RAISING} while the chain comes in and {@link CapstanTurning#DROPPING} while it runs out, so a
+ * player's use and the automatic raise turn it too; {@link CapstanTurning#NONE} while the anchor holds, hangs at the
+ * chain's end or is stowed. Each change goes to clients at once as a block update, with the turning rate
+ * ({@code crew_stations.capstan.turn_degrees_per_tick}), so the client draws the bars at the server's rate. With
+ * {@code crew_stations.capstan.animation} off it stays {@code NONE}. When a crew member (not a player) rides the station
+ * seat while its order turns the bars, the seat walks round the drum ({@link CapstanWalk}) and comes back to its spot
+ * ({@link StationSeat#home()}) afterwards: the walk stays tied to the crew order (CAP2), a player or the anchor alone
+ * walks nobody. The seat is an entity without collision, so blocks beside the capstan do not stop the walk. Nothing is
+ * saved: a reloaded capstan picks the anchor's motion up again on its next tick.
  *
  * <p>Client: {@link #spin()} integrates the drawn angle from the synced turning; {@code client/CapstanBarsRenderer}
  * draws the bars with it.
@@ -68,19 +79,28 @@ public class CapstanBlockEntity extends BlockEntity {
         StationRef ref = Stations.at(level, pos);
         StationState<Object> st = ref == null ? null : Stations.state(ref);
         boolean animate = CapstanConfig.ANIMATION.get();
-        CapstanTurning now = animate && ref != null && st != null && Stations.isWorking(level, ref)
-                ? CapstanTurning.of(st.order()) : CapstanTurning.NONE;
+        Object order = ref != null && st != null && Stations.isWorking(level, ref) ? st.order() : null;
+        CapstanTurning crew = animate ? CapstanTurning.of(order) : CapstanTurning.NONE;
+        CapstanTurning now = CapstanTurning.NONE;
+        if (animate) {
+            ShipBody ship = SableShips.containing(this);
+            SailingRuntime rt = ship == null ? null : SailingRuntimes.get(level, ship.id());
+            ShipAnchor a = rt == null ? null : rt.anchor();
+            boolean ours = a != null && a.capstan().equals(pos);
+            AnchorStatus status = rt == null ? null : rt.anchorStatus();
+            now = CapstanTurning.of(order, ours ? a.state().phase() : null, status != null && status.taut());
+        }
         double r = CapstanConfig.TURN_DEGREES_PER_TICK.get();
         if (now != turning || (now != CapstanTurning.NONE && r != rate)) {
             turning = now;
             rate = r;
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
-        walkSeat(level, pos, st, r);
+        walkSeat(level, pos, st, crew, r);
     }
 
-    /** Moves the station seat one tick round the drum (while a crew member works it) or back to its spot. */
-    private void walkSeat(ServerLevel level, BlockPos pos, @Nullable StationState<Object> st, double r) {
+    /** Moves the station seat one tick round the drum (while a crew member's order turns it) or back to its spot. */
+    private void walkSeat(ServerLevel level, BlockPos pos, @Nullable StationState<Object> st, CapstanTurning crewTurning, double r) {
         List<StationSeat> seats = StationSeat.at(level, pos);
         StationSeat seat = seats.isEmpty() ? null : seats.get(0);
         if (seat == null || !seat.getUUID().equals(walkingSeat)) {
@@ -97,7 +117,7 @@ public class CapstanBlockEntity extends BlockEntity {
         double hz = home.z - centre.z;
         boolean crew = st != null && st.occupant() != null && !st.occupant().player()
                 && seat.getFirstPassenger() instanceof CrewMember;
-        int sign = crew && canWalk(hx, home.y - centre.y, hz) ? turning.sign() : 0;
+        int sign = crew && canWalk(hx, home.y - centre.y, hz) ? crewTurning.sign() : 0;
         if (sign == 0 && walk.home()) {
             return; // at its spot and staying there: leave the seat alone
         }

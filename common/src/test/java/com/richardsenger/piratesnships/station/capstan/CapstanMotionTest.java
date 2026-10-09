@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.mojang.math.Axis;
 import com.richardsenger.piratesnships.crew.npc.CrewPose;
 import com.richardsenger.piratesnships.crew.npc.StationPoses;
+import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import java.util.HashSet;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
@@ -14,7 +15,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
 
-/** CAP2's pure parts: the turning per order, the bars' angle on the client, the seat's walk round the drum. */
+/** CAP2's and CAP3's pure parts: the turning per order and per anchor phase, the bars' angle on the client, the seat's walk round the drum. */
 class CapstanMotionTest {
 
     private static final double EPS = 1e-9;
@@ -33,6 +34,31 @@ class CapstanMotionTest {
         }
         assertEquals(CapstanTurning.NONE, CapstanTurning.byId(-1));
         assertEquals(CapstanTurning.NONE, CapstanTurning.byId(99));
+    }
+
+    /** CAP3: the bars follow the anchor's motion, whoever moves it: the chain coming in, running out, or neither. */
+    @Test
+    void turningFollowsTheAnchorPhase() {
+        assertEquals(CapstanTurning.RAISING, CapstanTurning.of(AnchorState.Phase.RAISING, false));
+        assertEquals(CapstanTurning.RAISING, CapstanTurning.of(AnchorState.Phase.RAISING, true), "winding in a taut chain still turns");
+        assertEquals(CapstanTurning.DROPPING, CapstanTurning.of(AnchorState.Phase.DROPPING, false));
+        assertEquals(CapstanTurning.NONE, CapstanTurning.of(AnchorState.Phase.DROPPING, true), "hanging at the chain's end");
+        assertEquals(CapstanTurning.NONE, CapstanTurning.of(AnchorState.Phase.HOLDING, false));
+        assertEquals(CapstanTurning.NONE, CapstanTurning.of(AnchorState.Phase.HOLDING, true));
+        assertEquals(CapstanTurning.NONE, CapstanTurning.of(AnchorState.Phase.RAISED, false));
+        assertEquals(CapstanTurning.NONE, CapstanTurning.of((AnchorState.Phase) null, false), "no anchor on this capstan");
+    }
+
+    /** CAP3: a crew order in progress turns the bars by the order (a drop's work before the anchor goes), else the anchor does. */
+    @Test
+    void crewOrderComesBeforeTheAnchor() {
+        assertEquals(CapstanTurning.DROPPING, CapstanTurning.of(AnchorOrder.DROP_ANCHOR, AnchorState.Phase.RAISED, false));
+        assertEquals(CapstanTurning.DROPPING, CapstanTurning.of(AnchorOrder.DROP_ANCHOR, null, false));
+        assertEquals(CapstanTurning.RAISING, CapstanTurning.of(AnchorOrder.RAISE_ANCHOR, AnchorState.Phase.RAISING, false));
+        assertEquals(CapstanTurning.RAISING, CapstanTurning.of(null, AnchorState.Phase.RAISING, false), "a player's raise");
+        assertEquals(CapstanTurning.DROPPING, CapstanTurning.of(null, AnchorState.Phase.DROPPING, false), "a player's drop");
+        assertEquals(CapstanTurning.NONE, CapstanTurning.of(null, AnchorState.Phase.HOLDING, false));
+        assertEquals(CapstanTurning.NONE, CapstanTurning.of(null, null, false));
     }
 
     /** The seat walks with the bars: its turn is the renderer's {@code Axis.YP} turn of the same angle. */

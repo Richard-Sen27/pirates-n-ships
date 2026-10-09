@@ -472,7 +472,7 @@ the rail), `art/renders/railing_item.png`.
 - **Refusals:** a chainplate ten blocks from the mast and a hoop two blocks up (flatter than 30°): "Too flat: N°, at
   least 30°", the net stays in hand and still remembers the first fitting. A block in the line: "Blocked at x y z"
   naming that block's position. A chainplate on land and a hoop on a ship: "Both ends on one ship or on land". A
-  fitting that already holds a net: "That fitting already holds a net". 14 blocks: "Too long: 14.2 of 12 blocks".
+  fitting that already holds a net: "That fitting already holds a net". A net longer than 32 blocks (e.g. a hoop 34 blocks above the chainplate): "Too long: 33.2 of 32 blocks"; with `rigging.net_max_length = 12` a 14 block net: "Too long: 14.2 of 12 blocks". A tall mast: a chainplate at the rail and a hoop 20 blocks up and 8 in strings and climbs to the top.
 - **Break a cell:** aim into the middle of a net (a small box outline shows) and break it: the whole net vanishes and
   one ratline net drops at the chainplate (the first fitting you used); both fittings stay. Restring it, then place a
   plank into the net, and then break the hoop: each time the net comes down and drops once.

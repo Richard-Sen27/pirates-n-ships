@@ -15,7 +15,7 @@ public final class RiggingConfig {
     /** RL2: ratline nets strung between two fittings. */
     public static final ConfigValue<Boolean> NETS_ENABLED = S.bool("nets_enabled", true,
             "Ratline nets can be strung between a chainplate and a mast hoop. Off = the net item strings nothing; nets already strung stay and can be climbed");
-    public static final ConfigValue<Double> NET_MAX_LENGTH = S.doubleRange("net_max_length", 12.0, 2.0, 32.0,
+    public static final ConfigValue<Double> NET_MAX_LENGTH = S.doubleRange("net_max_length", 32.0, 1.0, 64.0,
             "Longest ratline net, ring to ring [blocks]");
     public static final ConfigValue<Double> NET_MIN_PITCH = S.doubleRange("net_min_pitch", 30.0, 10.0, 90.0,
             "Flattest ratline net, its pitch above the horizontal [degrees]; flatter nets are refused (90 = vertical nets only)");

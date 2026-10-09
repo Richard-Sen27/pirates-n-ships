@@ -40,8 +40,13 @@ public final class RatlineNetRules {
         TOO_FLAT
     }
 
-    /** Upper bound of the cells one walk may return (a guard against a broken input; the length rule is far below). */
+    /**
+     * Upper bound of the cells one walk may return (a guard against a broken input): a line of the longest allowed net
+     * ({@code rigging.net_max_length} at most 64) crosses at most 3 x 64 + 1 = 193 cells.
+     */
     private static final int MAX_CELLS = 256;
+    /** Upper bound of the cells of one fan triangle (legs of 64 blocks, a base of 16: about 1500 cells at most). */
+    private static final int MAX_TRIANGLE_CELLS = 16384;
 
     private RatlineNetRules() {
     }
@@ -238,7 +243,7 @@ public final class RatlineNetRules {
                 }
             }
         }
-        if (out.size() > MAX_CELLS * 4) {
+        if (out.size() > MAX_TRIANGLE_CELLS) {
             throw new IllegalArgumentException("a fan triangle of " + out.size() + " cells");
         }
         return out;

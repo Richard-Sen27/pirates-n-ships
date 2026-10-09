@@ -487,7 +487,7 @@ fence, wall or railing); a **mast hoop** (two from three iron ingots over a ring
 mast like a ladder. Craft a **ratline net** from five string and four sticks (string across the middle row and in the
 middle of the top and bottom rows, sticks in the corners). Use it on one fitting ("Net tied: now use the other
 fitting", the net glints), then on the other: the net is strung between their rings and used up. It is refused, with
-a short reason in the action bar, when the line is longer than 12 blocks (`rigging.net_max_length`), flatter than 30°
+a short reason in the action bar, when the line is longer than 32 blocks (`rigging.net_max_length`, up to 64), flatter than 30°
 (`rigging.net_min_pitch`), runs through a block ("Blocked at x y z"), joins the land to a ship or two ships, or a
 fitting already holds a net. The net is drawn as two side ropes with a rung every half block; every block it passes
 through holds an invisible, climbable net cell. Walk into the net (from the chainplate) and hold forward or jump: you
@@ -1592,7 +1592,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `ship_identity` | Nameplates showing the ship's name, their refresh. |
 | `ship_screen` | The ship screen at the helm on/off (off: sneak-use disassembles at once), its reach, how often it refreshes. |
 | `ship_decor` | The ship's bell ring time; sleeping in the sea cot, on land and aboard; railings on or off and their collision height (`railings_enabled`, `railing_collision_blocks`). |
-| `rigging` | Ratlines on/off; ratline nets on/off, their longest length and flattest pitch, the climbing assist; how many nets one mast hoop holds and how far apart two neighbouring chainplates may be to be netted together. |
+| `rigging` | Ratlines on/off; ratline nets on/off, their longest length (32 blocks, up to 64) and flattest pitch, the climbing assist; how many nets one mast hoop holds and how far apart two neighbouring chainplates may be to be netted together. |
 | `wind` | Wind strength range, how fast it changes, weather multipliers, gusts, regional variation, sync interval. |
 | `sailing` | Sail force, half-trim factor, rudder strength and turning authority (`rudder_force_factor`, `max_rudder_angle`), keel drag, roll and pitch damping; `sails` (yard gaps and lengths, stay length and drop, rope lines and sag, dyeing, banners and their minimum size). |
 | `sailing_runtime` | Sailing forces, steering and anchor on/off, sail heel factor, sails needing water, rudder steps, the anchor chain's length (`anchor_chain_length`), draft, scan interval. |

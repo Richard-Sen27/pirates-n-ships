@@ -252,9 +252,13 @@ public final class RatlineNetGameTests {
         h.succeed();
     }
 
-    /** A 20 degree line is too flat, a 13 block one too long; both refused and nothing placed. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_24)
+    /**
+     * A 20 degree line is too flat, a 15 block one too long (with {@code rigging.net_max_length} at 12, RL2's old
+     * default; the default is 32 since RL4); both refused and nothing placed.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, batch = BATCH + "length_12")
     public static void aFlatOrLongLineIsRefused(GameTestHelper h) {
+        ConfigOverrides.during(h, RiggingConfig.NET_MAX_LENGTH, 12.0);
         floor(h, 24);
         ServerLevel level = h.getLevel();
         for (int y = 1; y <= 16; y++) {

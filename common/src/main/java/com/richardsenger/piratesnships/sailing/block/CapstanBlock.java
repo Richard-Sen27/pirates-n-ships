@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.sailing.block;
 
+import com.richardsenger.piratesnships.core.text.ActionBar;
 import com.richardsenger.piratesnships.sailing.anchor.AnchorEntities;
 import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import com.richardsenger.piratesnships.sailing.ship.ShipControls;
@@ -79,7 +80,7 @@ public class CapstanBlock extends Block implements StationBlock, EntityBlock {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level instanceof ServerLevel serverLevel) {
-            player.displayClientMessage(ShipControls.useCapstan(serverLevel, pos), true);
+            ActionBar.show(player, ShipControls.useCapstan(serverLevel, pos).message());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

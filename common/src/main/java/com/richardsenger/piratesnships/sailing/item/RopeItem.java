@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.sailing.item;
 
+import com.richardsenger.piratesnships.core.text.ActionBar;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.sailing.SailingConfig;
 import com.richardsenger.piratesnships.sailing.block.CleatBlock;
@@ -45,7 +46,6 @@ public class RopeItem extends Item {
     public static final String KEY_TOO_LONG = P + "too_long";
     public static final String KEY_TOO_FLAT = P + "too_flat";
     public static final String KEY_ELSEWHERE = P + "elsewhere";
-    public static final String KEY_LINE = P + "line";
     public static final String KEY_OTHER_BODY = P + "other_body";
     public static final String KEY_NO_LINES = P + "no_lines";
     public static final String KEY_ALREADY = P + "already";
@@ -70,7 +70,7 @@ public class RopeItem extends Item {
         if (context.getLevel() instanceof ServerLevel level) {
             Component message = use(level, context.getItemInHand(), context.getClickedPos(), context.getPlayer());
             if (context.getPlayer() != null) {
-                context.getPlayer().displayClientMessage(message, true);
+                ActionBar.show(context.getPlayer(), message);
             }
         }
         return InteractionResult.sidedSuccess(context.getLevel().isClientSide);
@@ -131,7 +131,8 @@ public class RopeItem extends Item {
         if (player == null || !player.getAbilities().instabuild) {
             stack.shrink(1);
         }
-        return Component.translatable(rig == StayLinker.Rig.LINE ? KEY_LINE : KEY_RIGGED);
+        // MSG1: a rope line shows in place and says nothing; a stay still says where its sail's third cleat goes
+        return rig == StayLinker.Rig.LINE ? Component.empty() : Component.translatable(KEY_RIGGED);
     }
 
     private static @Nullable UUID shipOf(ServerLevel level, BlockPos pos) {

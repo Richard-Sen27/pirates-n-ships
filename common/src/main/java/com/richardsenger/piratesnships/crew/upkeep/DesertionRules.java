@@ -55,8 +55,16 @@ public final class DesertionRules {
      * deserts at this dawn; {@code lowDays}: its low-morale counter after this dawn (0 when its morale is fine).
      */
     public static Mark afterDawn(Mark before, boolean deserts, int lowDays) {
+        return afterDawn(before, deserts, lowDays, false);
+    }
+
+    /**
+     * The deserting mark after a dawn, {@code starving} when the crew's hunger or thirst is still at its desertion
+     * length (FIX1): a starving deserter keeps its mark even with its morale fine; fed and content again, it stays.
+     */
+    public static Mark afterDawn(Mark before, boolean deserts, int lowDays, boolean starving) {
         if (before.deserting()) {
-            return lowDays <= 0 ? Mark.NONE : new Mark(true, before.days() + 1);
+            return lowDays <= 0 && !starving ? Mark.NONE : new Mark(true, before.days() + 1);
         }
         return deserts ? new Mark(true, 0) : Mark.NONE;
     }

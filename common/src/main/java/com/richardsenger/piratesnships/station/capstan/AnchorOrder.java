@@ -24,11 +24,6 @@ public enum AnchorOrder implements CrewOrder {
         return "anchor_order." + Constants.MOD_ID + "." + id();
     }
 
-    /** "Aye, letting go the anchor!" */
-    @Override
-    public String ackKey() {
-        return "message." + Constants.MOD_ID + ".crew.ack." + id();
-    }
 
     /** Drop: "The anchor is out already, captain". (A raise with the anchor stowed is unable, not nothing to do.) */
     @Override

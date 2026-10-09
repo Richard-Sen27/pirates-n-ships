@@ -33,7 +33,7 @@ import net.minecraft.world.entity.player.ChatVisiblity;
  * stronger wind, amber in a gust); under it speed and rudder, nothing else (HUD4 dropped the name and the load). The
  * hull panel (bottom right by default, clear of the hotbar, the stamina bar and the chat): the hull strip, bow on the
  * left, one cell per compartment filling blue with water, a red tick on a cell with an open breach and a pump glyph
- * while a pump drains it. Layout: {@link ShipHudLayout}; texture: {@link ShipHudSheet}; config {@code ship_hud}.
+ * while a pump drains it. LKO2: marks on the rose's ring from {@link ShipHudMarks} (the lookout's sightings). Layout: {@link ShipHudLayout}; texture: {@link ShipHudSheet}; config {@code ship_hud}.
  */
 public final class ShipHud {
 
@@ -76,7 +76,7 @@ public final class ShipHud {
         RenderSystem.defaultBlendFunc();
         // HUD4: both panels always show; the chat (a later layer) passes over them
         begin(g, placed.compass().rect());
-        compass(g, mc, ClientShipStatus.heading(partial), partial);
+        compass(g, mc, s, ClientShipStatus.heading(partial), partial);
         text(g, mc.font, s);
         g.pose().popPose();
         begin(g, placed.hull().rect());
@@ -195,11 +195,12 @@ public final class ShipHud {
         g.blit(ShipHudSheet.TEXTURE, x, y, p.u(), p.v(), p.w(), p.h(), ShipHudSheet.WIDTH, ShipHudSheet.HEIGHT);
     }
 
-    private static void compass(GuiGraphics g, Minecraft mc, double heading, float partial) {
+    private static void compass(GuiGraphics g, Minecraft mc, ShipStatusPayload s, double heading, float partial) {
         PoseStack pose = g.pose();
         int cx = ShipHudLayout.ROSE_CX, cy = ShipHudLayout.ROSE_CY;
         ShipHudSheet.Part rose = ShipHudSheet.ROSE;
         blit(g, rose, cx - rose.w() / 2, cy - rose.h() / 2);
+        marks(g, s);
 
         if (ClientWind.hasData()) {
             WindSample w = ClientWind.sample(mc.level.getGameTime() + partial);
@@ -227,6 +228,20 @@ public final class ShipHud {
         pose.translate(-needle.w() / 2f, -needle.h() / 2f, 0);
         blit(g, needle, 0, 0);
         pose.popPose();
+    }
+
+    /** LKO2: the lookout's sightings (and any other {@link ShipHudMarks}) on the rose's ring, tinted and fading. */
+    private static void marks(GuiGraphics g, ShipStatusPayload s) {
+        List<ShipHudMarks.Mark> marks = ShipHudMarks.of(s.ship());
+        if (marks.isEmpty()) return;
+        for (ShipHudMarks.Mark m : marks) {
+            if (!(m.alpha() > 0.01f)) continue;
+            int t = m.tint();
+            g.setColor(((t >> 16) & 255) / 255f, ((t >> 8) & 255) / 255f, (t & 255) / 255f, Math.min(1f, m.alpha()));
+            ShipHudLayout.Point o = ShipHudLayout.markOrigin(m.bearing());
+            blit(g, ShipHudSheet.MARK, o.x(), o.y());
+        }
+        g.setColor(1f, 1f, 1f, 1f);
     }
 
     private static void text(GuiGraphics g, Font font, ShipStatusPayload s) {

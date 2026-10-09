@@ -278,8 +278,8 @@ public final class SailingGameTestsControls {
         Fixture f = SailingGameTestsShips.assemble(h, ship(h, SailTrim.FULL, 0, new BlockPos(18, 9, 4)));
         double[] heading = new double[2];
         BlockPos capstan = find(f.ship(), SailingBlocks.CAPSTAN.get());
-        Component dropped = ShipControls.useCapstan(h.getLevel(), capstan);
-        h.assertTrue(key(dropped).equals(ShipControls.KEY_DROPPING), "drop refused: " + dropped.getString());
+        ShipControls.CapstanResult dropped = ShipControls.useCapstan(h.getLevel(), capstan);
+        h.assertTrue(dropped.result() == ShipControls.AnchorResult.DROPPING, "drop refused: " + dropped.result());
         double[] maxStretch = {Double.NEGATIVE_INFINITY};
         Vec3[] released = new Vec3[1];
         boolean[] pulled = new boolean[1];
@@ -296,8 +296,8 @@ public final class SailingGameTestsControls {
             if (t == 60) heading[0] = f.runtime().headingDegrees(f.ship());
             if (t == 300) {
                 heading[1] = f.runtime().headingDegrees(f.ship());
-                Component raised = ShipControls.useCapstan(h.getLevel(), capstan);
-                h.assertTrue(key(raised).equals(ShipControls.KEY_RAISING), "raise refused: " + raised.getString());
+                ShipControls.CapstanResult raised = ShipControls.useCapstan(h.getLevel(), capstan);
+                h.assertTrue(raised.result() == ShipControls.AnchorResult.RAISING, "raise refused: " + raised.result());
             }
             if (t == 420) released[0] = hawse;
             if (t == 290) pulled[0] = hasAnchorForce(h, f);
@@ -348,8 +348,8 @@ public final class SailingGameTestsControls {
             switch (stage[0]) {
                 case 0 -> {
                     if (t < 3) return;
-                    Component c = ShipControls.useCapstan(h.getLevel(), capstan);
-                    h.assertTrue(key(c).equals(ShipControls.KEY_DROPPING), "drop refused: " + c.getString());
+                    ShipControls.CapstanResult c = ShipControls.useCapstan(h.getLevel(), capstan);
+                    h.assertTrue(c.result() == ShipControls.AnchorResult.DROPPING, "drop refused: " + c.result());
                     h.assertTrue(f.runtime().anchor() != null && f.runtime().anchor().state().phase() == AnchorState.Phase.DROPPING,
                             "not dropping");
                     stage[0] = 1;
@@ -358,8 +358,8 @@ public final class SailingGameTestsControls {
                 case 1 -> {
                     if (a != null && a.state().phase() == AnchorState.Phase.HOLDING) {
                         h.assertTrue(a.resting() && shown(h, capstan) == CapstanBlock.Phase.HOLDING, "holding but not resting: " + a);
-                        Component c = ShipControls.useCapstan(h.getLevel(), capstan);
-                        h.assertTrue(key(c).equals(ShipControls.KEY_RAISING), "raise refused: " + c.getString());
+                        ShipControls.CapstanResult c = ShipControls.useCapstan(h.getLevel(), capstan);
+                        h.assertTrue(c.result() == ShipControls.AnchorResult.RAISING, "raise refused: " + c.result());
                         stage[0] = 2;
                         since[0] = t;
                     } else {
@@ -372,8 +372,8 @@ public final class SailingGameTestsControls {
                     h.assertTrue(a != null && a.state().phase() == AnchorState.Phase.RAISING && shown(h, capstan) == CapstanBlock.Phase.RAISING,
                             "not raising: " + a);
                     if (t - since[0] == 20) {
-                        Component c = ShipControls.useCapstan(h.getLevel(), capstan); // reversed: lets it go again
-                        h.assertTrue(key(c).equals(ShipControls.KEY_DROPPING), "reversal refused: " + c.getString());
+                        ShipControls.CapstanResult c = ShipControls.useCapstan(h.getLevel(), capstan); // reversed: lets it go again
+                        h.assertTrue(c.result() == ShipControls.AnchorResult.DROPPING, "reversal refused: " + c.result());
                         stage[0] = 3;
                         since[0] = t;
                     }
@@ -417,8 +417,8 @@ public final class SailingGameTestsControls {
         Fixture f = SailingGameTestsShips.assemble(h, ship(h, SailTrim.FURLED, 0));
         BlockPos capstan = find(f.ship(), SailingBlocks.CAPSTAN.get());
         h.runAfterDelay(2, () -> {
-            Component c = ShipControls.useCapstan(h.getLevel(), capstan);
-            h.assertTrue(key(c).equals(ShipControls.KEY_NO_GROUND), "expected 'no ground', got " + c.getString());
+            ShipControls.CapstanResult c = ShipControls.useCapstan(h.getLevel(), capstan);
+            h.assertTrue(c.result() == ShipControls.AnchorResult.NO_GROUND && key(c.message()).equals(ShipControls.KEY_NO_GROUND), "expected 'no ground', got " + c.result());
             h.assertTrue(f.runtime().anchor() == null && shown(h, capstan) == CapstanBlock.Phase.RAISED, "anchor out without ground");
         });
         h.runAfterDelay(6, () -> {
@@ -512,8 +512,8 @@ public final class SailingGameTestsControls {
         h.onEachTick(() -> {
             long t = h.getTick();
             if (t == 3) {
-                Component c = ShipControls.useCapstan(h.getLevel(), capstan);
-                h.assertTrue(key(c).equals(ShipControls.KEY_DROPPING), "drop refused: " + c.getString());
+                ShipControls.CapstanResult c = ShipControls.useCapstan(h.getLevel(), capstan);
+                h.assertTrue(c.result() == ShipControls.AnchorResult.DROPPING, "drop refused: " + c.result());
                 drop[0] = t;
                 return;
             }
@@ -649,8 +649,8 @@ public final class SailingGameTestsControls {
         BlockHitResult middle = new BlockHitResult(Vec3.atCenterOf(helm).add(0.0, 0, -0.5), Direction.NORTH, helm, false);
         AnchorEntity[] out = new AnchorEntity[1];
         h.runAfterDelay(3, () -> {
-            Component c = ShipControls.useCapstan(h.getLevel(), capstan);
-            h.assertTrue(key(c).equals(ShipControls.KEY_DROPPING), "drop refused: " + c.getString());
+            ShipControls.CapstanResult c = ShipControls.useCapstan(h.getLevel(), capstan);
+            h.assertTrue(c.result() == ShipControls.AnchorResult.DROPPING, "drop refused: " + c.result());
         });
         h.runAfterDelay(6, () -> {
             out[0] = anchorEntity(h, f);

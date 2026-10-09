@@ -116,7 +116,7 @@ public final class SailingModule implements ModModule {
         HelmSetup.gatherData(data); // wheel steering (HELM1)
         data.lang(lang -> {
             lang.block(SailingBlocks.YARD, "Yard")
-                    .add(YardBlock.KEY_NO_SAIL, "This yard heads no sail: hang a second yard %s to %s blocks straight below its middle, on the same mast")
+                    .add(YardBlock.KEY_NO_SAIL, "No sail: hang a yard %s-%s below")
                     .block(SailingBlocks.SAIL_WINCH, "Sail Winch")
                     .add(ShipForces.SAILING_KEY, "Sails and Keel")
                     .add(ShipForces.ANCHOR_KEY, "Anchor Chain")
@@ -126,29 +126,21 @@ public final class SailingModule implements ModModule {
                     .add(SailWinchBlock.trimKey(SailTrim.FULL), "full sail")
                     .add(SailWinchBlock.KEY_NOT_ON_SHIP, "The winch must be on an assembled ship")
                     .add(SailWinchBlock.KEY_NO_SAILS, "This ship has no sails")
-                    .add(SailWinchBlock.KEY_SET, "Sails set: %s (%s sails)")
-                    .add(SailWinchBlock.KEY_SAIL_SET, "Sail set: %s")
                     .block(SailingBlocks.CAPSTAN, "Capstan")
                     .add(ShipControls.KEY_RUDDER_MIDSHIPS, "Rudder midships")
-                    .add(ShipControls.KEY_RUDDER, "Rudder %s of %s to %s (%s°)")
                     .add(ShipControls.KEY_PORT, "port")
                     .add(ShipControls.KEY_STARBOARD, "starboard")
-                    .add(ShipControls.KEY_STEERING_OFF, "Steering is disabled on this server. Sneak-use with an empty hand to disassemble")
+                    .add(ShipControls.KEY_STEERING_OFF, "Steering is off on this server")
                     .add(ShipControls.KEY_CAPSTAN_NOT_ON_SHIP, "The capstan must be on an assembled ship")
                     .add(ShipControls.KEY_CAPSTAN_OFF, "Anchors are disabled on this server")
-                    .add(ShipControls.KEY_NO_GROUND, "No ground within %s blocks below: the anchor would not hold")
-                    .add(ShipControls.KEY_DROPPING, "Anchor dropping to the ground %s blocks below, lands in about %s s")
-                    .add(ShipControls.KEY_RAISING, "Raising the anchor, stowed in %s s");
+                    .add(ShipControls.KEY_NO_GROUND, "Too deep: no ground within %s blocks");
             // SAIL2: dyeing sails and hanging banners on them
-            lang.add(SailDecorations.Outcome.DYED.key(), "Sail dyed %s")
-                    .add(SailDecorations.Outcome.SAME_DYE.key(), "This sail is already %s")
-                    .add(SailDecorations.Outcome.NO_SAIL.key(), "This heads no sail: dye or hang a banner on the upper yard of a square sail, or dye the head cleat of a triangular sail")
-                    .add(SailDecorations.Outcome.HAS_BANNER.key(), "A banner hangs on this sail and gives it its colour: sneak-use the yard with an empty hand to take it back first")
-                    .add(SailDecorations.Outcome.HUNG.key(), "Banner hung on the sail")
-                    .add(SailDecorations.Outcome.TOO_SMALL.key(), "Too small for a banner: both yards must be at least %s blocks long and %s blocks apart")
-                    .add(SailDecorations.Outcome.ALREADY_BANNER.key(), "A banner already hangs on this sail: sneak-use the yard with an empty hand to take it back")
-                    .add(SailDecorations.Outcome.TAKEN.key(), "Banner taken down")
-                    .add(SailDecorations.Outcome.STAY_DYE_ONLY.key(), "A triangular sail takes dye only; banners go on large square sails");
+            lang.add(SailDecorations.Outcome.SAME_DYE.key(), "This sail is already %s")
+                    .add(SailDecorations.Outcome.NO_SAIL.key(), "No sail here to dye or hang a banner on")
+                    .add(SailDecorations.Outcome.HAS_BANNER.key(), "Take the banner down first")
+                    .add(SailDecorations.Outcome.TOO_SMALL.key(), "Too small: yards %s+ long, %s+ apart")
+                    .add(SailDecorations.Outcome.ALREADY_BANNER.key(), "A banner hangs on this sail already")
+                    .add(SailDecorations.Outcome.STAY_DYE_ONLY.key(), "Triangular sails take dye only");
             String k = SailingCommands.KEY;
             lang.add(k + "wind.get", "Wind from %s° at %s blocks/s (%s)")
                     .add(k + "wind.fixed", "fixed by command")

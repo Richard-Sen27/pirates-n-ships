@@ -33,7 +33,7 @@ public final class HarborMasterModule implements ModModule {
     public void gatherData(DataContributions data) {
         data.lang(lang -> lang
                 .add(MobContent.HARBOR_MASTER.get().getDescriptionId(), "Harbor Master")
-                .add(HarborMasterInteractions.NOT_NOW, "The harbor master waves you off: not now!")
+                .add(HarborMasterInteractions.NOT_NOW, "The harbor master waves you off")
                 .add(HarborMasterInteractions.NO_DESK, "\"I've no desk to serve you at here.\"")
                 .add(HarborMasterInteractions.GREETING + PortKind.SEAFARER_VILLAGE.getSerializedName(),
                         "%s: \"Welcome ashore, captain. Goods, contracts or a new ship?\"")

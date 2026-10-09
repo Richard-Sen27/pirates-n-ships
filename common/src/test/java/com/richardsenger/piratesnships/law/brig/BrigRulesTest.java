@@ -90,6 +90,14 @@ class BrigRulesTest {
     }
 
     @Test
+    void crewMoraleIsLowBelowTheDesertionLine() {
+        assertTrue(EscapeRule.crewMoraleLow(java.util.List.of(10, 20), 20), "average 15 under 20");
+        assertFalse(EscapeRule.crewMoraleLow(java.util.List.of(10, 30), 20), "average 20 is not under 20");
+        assertFalse(EscapeRule.crewMoraleLow(java.util.List.of(70, 70), 20), "a content crew");
+        assertFalse(EscapeRule.crewMoraleLow(java.util.List.of(), 20), "no crew is not low");
+    }
+
+    @Test
     void ownFactionFreesEvenWhenDisabled() {
         assertEquals(Decision.FREED, EscapeRule.decide(new EscapeRule.Inputs(false, true, true, false, true), HALF, RandomSource.create(0)));
     }

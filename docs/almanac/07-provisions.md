@@ -41,13 +41,13 @@ A {item:pirates_n_ships:water_barrel}**water barrel** holds 16 rations of fresh 
 > Water and rum count wherever they are stowed, in a pantry or a barrel.
 
 ## Hunger, thirst and scurvy
-A crew short of food loses heart by the day and works at three quarters of its pace. A crew short of water loses heart far faster and works at half. Both together are a ship of the half-dead. Low spirits end in desertion; see [[pirates_n_ships:crew|Crew]].
+A crew short of food loses heart by the day and works at three quarters of its pace. A crew short of water loses heart far faster and works at half. Both together are a ship of the half-dead. Low spirits end in desertion; see [[pirates_n_ships:crew|Crew]]. Three days in a row without food, or a single day without water, and the whole crew deserts at the next dawn, however cheerful.
 
 After eight days without fresh food, scurvy sets in: the crew weakens and loses heart every day. Any fresh food cures it, and fruit best of all: apples, melon, berries.
 
 ## Rum
 illustration: rum
-{item:pirates_n_ships:rum}**Rum** is made from sugar cane, two sugar and a glass bottle. While there is rum aboard, every hand gets a ration a day and his spirits rise for it.
+{item:pirates_n_ships:rum}**Rum** is made from sugar cane, two sugar and a glass bottle. While there is rum aboard, every hand gets a ration a day and his spirits rise for it. Stow rum for ten days or more in the pantries and the crew drinks a double ration: drunk, it works at little more than half its pace until the binge is over.
 
 You may drink it yourself: it warms you through for two minutes and leaves the bottle.
 

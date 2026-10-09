@@ -281,6 +281,6 @@ public final class SwivelService {
         if (ship != null && recoil > 0) {
             ship.applyImpulseNow(Vec3.atCenterOf(pos), CannonRules.recoilImpulse(local.direction(), recoil));
         }
-        return new Use(Outcome.FIRED, Component.translatable(Outcome.FIRED.key()), ball);
+        return new Use(Outcome.FIRED, Component.empty(), ball); // MSG1: the shot is seen and heard
     }
 }

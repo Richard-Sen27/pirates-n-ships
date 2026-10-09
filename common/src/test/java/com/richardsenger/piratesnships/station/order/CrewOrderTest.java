@@ -34,7 +34,6 @@ class CrewOrderTest {
     void fireOrderHasTheCannonKeys() {
         assertEquals(CannonOrder.FIRE, CrewOrder.byId("fire").orElseThrow());
         assertEquals("cannon_order.pirates_n_ships.fire", CannonOrder.FIRE.nameKey());
-        assertEquals("message.pirates_n_ships.crew.ack.fire", CannonOrder.FIRE.ackKey());
         assertEquals("message.pirates_n_ships.crew.cannon_not_loaded", CannonOrder.FIRE.nothingToDoKey());
         assertEquals("message.pirates_n_ships.crew.cannon_unable", CannonOrder.FIRE.unableKey());
     }
@@ -43,18 +42,16 @@ class CrewOrderTest {
     void loadOrderHasItsOwnKeys() {
         assertEquals(CannonOrder.LOAD, CrewOrder.byId("load").orElseThrow());
         assertEquals("cannon_order.pirates_n_ships.load", CannonOrder.LOAD.nameKey());
-        assertEquals("message.pirates_n_ships.crew.ack.load", CannonOrder.LOAD.ackKey());
         assertEquals("message.pirates_n_ships.crew.cannon_already_loaded", CannonOrder.LOAD.nothingToDoKey());
         assertEquals("message.pirates_n_ships.crew.cannon_no_supply", CannonOrder.LOAD.unableKey());
         assertTrue(CannonStation.INSTANCE.accepts(CannonOrder.LOAD));
     }
 
-    /** WS4a: "Fire at will" has its own name and acknowledgement, shares the fire answers, and is a cannon order only. */
+    /** WS4a: "Fire at will" has its own name, shares the fire answers, and is a cannon order only (MSG1: no acknowledgement). */
     @Test
     void fireAtWillIsACannonOrderOnly() {
         assertEquals(CannonOrder.FIRE_AT_WILL, CrewOrder.byId("fire_at_will").orElseThrow());
         assertEquals("cannon_order.pirates_n_ships.fire_at_will", CannonOrder.FIRE_AT_WILL.nameKey());
-        assertEquals("message.pirates_n_ships.crew.ack.fire_at_will", CannonOrder.FIRE_AT_WILL.ackKey());
         assertEquals(CannonOrder.FIRE.unableKey(), CannonOrder.FIRE_AT_WILL.unableKey());
         assertEquals(CannonOrder.FIRE.nothingToDoKey(), CannonOrder.FIRE_AT_WILL.nothingToDoKey());
         assertTrue(CannonStation.INSTANCE.accepts(CannonOrder.FIRE_AT_WILL));
@@ -77,11 +74,9 @@ class CrewOrderTest {
     void idsAndKeysAreUnique() {
         Set<String> ids = new HashSet<>();
         Set<String> names = new HashSet<>();
-        Set<String> acks = new HashSet<>();
         for (CrewOrder o : CrewOrder.all()) {
             assertTrue(ids.add(o.id()), "duplicate id " + o.id());
             assertTrue(names.add(o.nameKey()), "duplicate name key " + o.nameKey());
-            assertTrue(acks.add(o.ackKey()), "duplicate ack key " + o.ackKey());
         }
         // the pump answers differently from the winch
         assertFalse(PumpOrder.PUMP.nothingToDoKey().equals(SailOrder.HOIST.nothingToDoKey()));

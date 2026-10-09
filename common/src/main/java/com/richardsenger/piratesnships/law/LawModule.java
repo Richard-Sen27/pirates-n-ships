@@ -145,7 +145,7 @@ public final class LawModule implements ModModule {
         });
         data.lang(lang -> {
             String o = OfficerTurnIns.MSG;
-            lang.add(o + "hostile", "The officer won't deal with a wanted criminal")
+            lang.add(o + "hostile", "The officer won't deal with a criminal")
                     .add(o + "proof.paid", "The officer takes the proof of %s's death and pays you %s doubloons")
                     .add(o + "proof.blank", "This proof names no one")
                     .add(o + "proof.no_bounty", "There is no bounty left to claim on %s")

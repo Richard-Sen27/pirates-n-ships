@@ -230,9 +230,6 @@ public final class CrewRest {
         if (delta != 0) {
             CrewMorale.adjust(crew, delta, "hammock rule: " + night.id());
         }
-        if (night == NightOutcome.NO_HAMMOCK && CrewMorale.enabled()) {
-            CrewStations.say(level, crew, Component.translatable(CrewInfo.KEY_NO_HAMMOCK));
-        }
     }
 
     /**

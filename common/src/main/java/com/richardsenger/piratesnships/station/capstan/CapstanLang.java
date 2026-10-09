@@ -13,11 +13,9 @@ public final class CapstanLang {
     public static void lang(LangBuilder lang) {
         lang.add(AnchorOrder.DROP_ANCHOR.nameKey(), "let go the anchor")
                 .add(AnchorOrder.RAISE_ANCHOR.nameKey(), "weigh anchor")
-                .add(AnchorOrder.DROP_ANCHOR.ackKey(), "Aye, letting go the anchor!")
-                .add(AnchorOrder.RAISE_ANCHOR.ackKey(), "Aye, heave away!")
                 .add(AnchorOrder.DROP_ANCHOR.nothingToDoKey(), "The anchor is out already, captain")
                 .add(AnchorOrder.RAISE_ANCHOR.nothingToDoKey(), "The anchor is stowed, captain")
-                .add(AnchorOrder.DROP_ANCHOR.unableKey(), "No ground for the anchor within the chain's reach, captain!")
+                .add(AnchorOrder.DROP_ANCHOR.unableKey(), "No ground in the chain's reach, captain!")
                 .add(AnchorOrder.RAISE_ANCHOR.unableKey(), "The anchor is stowed already, captain")
                 .add(WhistleOrder.DROP_ANCHOR.nameKey(), "Drop anchor")
                 .add(WhistleOrder.DROP_ANCHOR.descriptionKey(), "Crew at the capstan let the anchor go")

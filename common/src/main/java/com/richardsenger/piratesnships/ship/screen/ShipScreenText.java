@@ -123,14 +123,14 @@ public final class ShipScreenText {
     }
 
     public static void lang(LangBuilder lang) {
-        lang.add(NOT_YOURS, "This is not your ship: only her captain manages her at the helm")
-                .add(DISABLED, "The ship screen is turned off on this server")
+        lang.add(NOT_YOURS, "Not your ship")
+                .add(DISABLED, "The ship screen is off on this server")
                 .add(GONE, "The ship is gone")
                 .add(TOO_FAR, "You stepped away from the helm")
                 .add(STALE, "This screen shows another ship")
                 .add(NO_CREW, "That hand is no longer aboard")
                 .add(NOT_AT_STATION, "%s mans no station")
-                .add(NOT_YOUR_HAND, "Only the captain or whoever hired %s can order them about")
+                .add(NOT_YOUR_HAND, "%s takes no orders from you")
                 .add(BAD_NAME, "Type a name first")
                 .add(UNKNOWN_ORDER, "No such order")
                 .add(NOT_ON_THIS_SHIP, "That station is not on this ship")

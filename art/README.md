@@ -949,6 +949,52 @@ Railings (RAIL1):
   end posts, a one-block gap, the port with the cannon model behind it, a corner of a north and an east edge with its
   end post, and the swivel gun shifted 6 px onto the rail); `renders/railing_item.png`: the item model.
 
+Ratline nets (RL2):
+- **Part list in `tools/gen_ratline_net_models.py`** (committed). Three projects, one model each:
+  `chainplate.bbmodel` -> `block/chainplate.json` (13 elements), `mast_hoop.bbmodel` -> `block/mast_hoop.json` (14),
+  `ratline_net.bbmodel` -> `item/ratline_net.json` (12). Palette sheets only: `palette_2` (`#0`: `cast_iron`,
+  `cast_iron_dark`, `cast_iron_light` for straps, bands, bolts and rivets; `lead_light`, `lead`, `lead_dark` for the
+  rings; `rope`, `rope_dark`, `rope_coil` for the net) and, for the item's sticks, `palette` (`#1`: `wood`,
+  `wood_dark`); particle `palette_2`. No new colours.
+- **Rings** are the mooring ring's flat octagon (ART5) stood upright in the y-z plane: four axis-aligned bars and the
+  top and bottom bars turned +-45 about x round the ring centre (0.05 px shorter at both ends, 0.05 px thinner in x).
+  The ring centre is where `NetFitting#ring` ties the drawn net: 0.3 blocks (4.8 px) off the face the fitting is
+  mounted on (`NetFitting.RING_FROM_SUPPORT`).
+- **Chainplate**, made for the floor facing north and turned like a button by the block state (wall `x 90`, then `y`
+  by the facing): a strap x 6.5..9.5, z 3..13, 0.8 px thick with a 0.3 px bevel on top, two bolt heads, a lug
+  x 7.5..8.5 up to y 3.2 and the ring round (8, 4.8, 8), outer apothem 2.2, inner 1.4, 1.2 px thick. On a wall the
+  model's y becomes the distance from the wall, so the ring sits 4.8 px off it at half height
+  (`ChainplateBlock`'s outline turns the same way).
+- **Mast hoop**, facing north with the mast block to the south (z 16..32): a band 3 px high (y 6.5..9.5), 0.4 px proud
+  of the mast's north face and wrapping round both sides of the mast block to its back edge (x -0.4..0 and
+  16..16.4, z 16..32; the model may reach 32, so the back of the mast stays bare), two rivets on the front, a lug
+  z 12.6..15.6 and the ring round (8, 8, 11.2), outer apothem 2, inner 1.25. On a fence-post mast the band stands off
+  the post (it is drawn for a full log).
+- **Rolled net** (item): built upright round x = z = 8 and every element turned `z -45` about (8, 8, 8) like the flag
+  bundles, so the vanilla handheld slots hold it like a tool: two crossed boxes of `rope_coil` (the second 0.05 px
+  shorter), two lashings of crossed `rope_dark` boxes, the two sticks poking out of both ends (`wood`, `wood_dark`
+  ends) and a loose flap with two rungs and a dark edge on the lower right.
+- **Display:** the fittings carry the item's display entries and datagen's block-item models point at them.
+  Chainplate: `gui` `[30, 225, 0]` / `[0, 2, 0]` / 1.1, `ground` 0.5 raised 3, `fixed` `[-90, 0, 0]` / `[0, 0, -6]` / 1
+  (lying flat in the frame), third person `[75, 45, 0]` / `[0, 2.5, 0]` / 0.5, first person `[0, 45, 0]` (left
+  `[0, 225, 0]`) / `[0, 3, 0]` / 0.6. Hoop (its band reaches a block back): `gui` `[30, 225, 0]` / `[3.2, 0, 0]` /
+  0.55, `ground` 0.4 at `[0, 3, -3]`, `fixed` 0.55 at `[0, 0, -6]`, third person 0.4 and first person 0.4, both
+  moved 3 px back. Net item: vanilla `item/handheld` hand slots, `item/generated` `ground`, `head` and `fixed`,
+  identity `gui` (the roll lies on the sprite diagonal), `gui_light: front`. The GUI values were not tuned with the
+  offscreen GUI check; the playtest says whether the hoop sits in its slot.
+- **Built** like ART5: `Codecs.java_block.parse(json, path)` of the generated file in a new `java_block` tab (the
+  palette textures resolve from the path), `Codecs.java_block.compile({raw: true})` compared element by element with
+  the file (no difference), the project saved with `fs` (palette embedded, `path` `""`, `relative_path` into
+  `common/src/main/resources`). After a change: rerun the script, `tools/lint_models.py` (clean: no fights, no
+  warnings for these three), rebuild the projects the same way.
+- **The net itself** has no model: `RatlineNetRenderer` draws it from fitting A as square rope beams on
+  `textures/block/rope.png` (two side ropes, half width 0.4 blocks, narrowing into each ring over 0.6 blocks; a rung
+  every 0.5 blocks; v in blocks along each beam, so the texture tiles). The cells are invisible (a particle-only
+  generated model of the rope).
+- Renders: `renders/chainplate.png` (three-quarter from the north-west above), `renders/mast_hoop.png` (the band and
+  ring from the front, the mast block left out), `renders/ratline_net.png` (the item from the front, as in the GUI) and
+  `renders/ratline_net_side.png` (three-quarter). Offscreen views of the projects, copied from the tool output.
+
 Ship decor (ART2): ship's lantern, ship's bell, rope coil, stern window, chart table, sea cot:
 - **Part lists in `tools/gen_decor_models.py`** (committed, like the cannon's): run it to rewrite the 18 model JSON
   files, then `python3 tools/lint_models.py`, then rebuild the projects. Every model faces north; wall-mounted ones

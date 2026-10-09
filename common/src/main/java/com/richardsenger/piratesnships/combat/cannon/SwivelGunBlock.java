@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.combat.cannon;
 
+import com.richardsenger.piratesnships.core.text.ActionBar;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
@@ -191,7 +192,7 @@ public class SwivelGunBlock extends Block implements EntityBlock, StationBlock, 
             return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION; // the item's own use
         }
         if (level instanceof ServerLevel server) {
-            player.displayClientMessage(SwivelService.load(server, pos, player, stack).message(), true);
+            ActionBar.show(player, SwivelService.load(server, pos, player, stack).message());
         }
         return ItemInteractionResult.sidedSuccess(level.isClientSide);
     }
@@ -201,7 +202,7 @@ public class SwivelGunBlock extends Block implements EntityBlock, StationBlock, 
         if (level instanceof ServerLevel server) {
             SwivelService.Use use = player.isSecondaryUseActive()
                     ? SwivelService.status(server, pos) : SwivelService.startAim(server, pos, player);
-            player.displayClientMessage(use.message(), true);
+            ActionBar.show(player, use.message());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

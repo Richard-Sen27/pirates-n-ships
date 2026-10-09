@@ -449,6 +449,43 @@ the rail), `art/renders/railing_item.png`.
   and ports place nothing and the action bar says "Railings are disabled on this server".
 - Say whether the rails should be thicker, the posts taller, or the balusters closer.
 
+## Ratline nets (RL2)
+
+`/give @s pirates_n_ships:chainplate 8`, `/give @s pirates_n_ships:mast_hoop 8`, `/give @s pirates_n_ships:ratline_net 8`
+(or craft them, see `docs/guide.md` "Ratline nets"). Renders: `art/renders/chainplate.png`, `mast_hoop.png`,
+`ratline_net.png`.
+- **Look:** the chainplate is a dark iron strap with two bolts and a grey eye ring standing on it; on the side of a
+  block the strap lies on the side and the ring sticks out. The hoop is a dark band round the mast block with a grey
+  ring standing out of the face you clicked. The net item is a rolled net with two stick ends and a loose flap; check
+  it in the hotbar, in hand (first and third person), on the ground and in an item frame.
+- **String a net at the rail:** on a hull, put a chainplate on top of the gunwale and a mast of logs about four blocks
+  inboard; put a hoop on the mast's side facing the chainplate six blocks above the deck. Use the net on the chainplate:
+  "Net tied: now use the other fitting", the net glints. Use it on the hoop: "Net strung through N blocks", one net used.
+  Expected: a rope net with two side ropes and a rung every half block runs from ring to ring, narrowing into each ring;
+  the rope texture is not stretched.
+- **Climb it:** walk from the chainplate into the net and hold forward (no jump): you climb along the net's slope up to
+  the hoop at about ladder speed and do not fall out; release: you slide down slowly along it; back: you climb down;
+  sneak: you hold still. Jump instead of forward also climbs. Say how it feels at the slope you got (the action bar
+  does not show it; about 55° for this layout).
+- **Vertical:** a chainplate on the deck right below a hoop on the mast face five blocks up: the net is straight; climb
+  it with forward.
+- **Refusals:** a chainplate ten blocks from the mast and a hoop two blocks up (flatter than 30°): "Too flat: N°, at
+  least 30°", the net stays in hand and still remembers the first fitting. A block in the line: "Blocked at x y z"
+  naming that block's position. A chainplate on land and a hoop on a ship: "Both ends on one ship or on land". A
+  fitting that already holds a net: "That fitting already holds a net". 14 blocks: "Too long: 14.2 of 12 blocks".
+- **Break a cell:** aim into the middle of a net (a small box outline shows) and break it: the whole net vanishes and
+  one ratline net drops at the chainplate (the first fitting you used); both fittings stay. Restring it, then place a
+  plank into the net, and then break the hoop: each time the net comes down and drops once.
+- **Sail with it:** string a net on a hull, assemble at the helm and sail: the net moves with the ship, no gap or lag
+  between the drawn net and the fittings; climb it while the ship lies still and while it sails (the assist works in the
+  ship's frame, check it does not throw you off when the ship turns or rolls). Disassemble turned: the net is back in
+  the world in the right place and climbable.
+- **Water:** string a net with its lower part under water: the cells hold the water, no air pocket.
+- **Config:** `rigging.nets_enabled = false`: "Ratline nets are disabled", nothing tied. `rigging.net_assist = false`:
+  forward alone no longer climbs a diagonal net; jump and forward together still do (jerkily).
+- Say whether the net should be wider (it is 0.8 blocks), denser or thicker, and whether the small outline box of the
+  cells gets in the way when aiming at the mast through the net.
+
 ## Ship's bell swing (BELL1)
 
 The bell now swings about the pin of its yoke instead of flipping to a second model (replaces the swing check in step

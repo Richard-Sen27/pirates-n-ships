@@ -371,8 +371,9 @@ hold it, green sparkles show where the other pieces are close. Bring the broken-
 straight (no more than a few degrees off), touching face to face; if there is a one-block gap, place planks to bridge
 it first. Then use the toolkit on the broken-off piece: after a second of hammering it is nailed back on, keeps its
 chests and stations, and the ship keeps its name. Each repair uses 4 nails. Only pieces of the same ship can be
-joined, and only pieces up to 200 blocks (`assembly.rejoin.max_piece_blocks`); a bigger piece can't be nailed back
-on (the refusal still mentions a shipwright, but no shipwright joins pieces). Server config `assembly.rejoin`.
+joined, and the piece you nail on may have at most 200 blocks (`assembly.rejoin.max_piece_blocks`): when the far piece
+is bigger, the toolkit refuses and you rejoin a smaller piece, for instance by keeping the bigger half and nailing the
+smaller one to it. Server config `assembly.rejoin`.
 
 ### Hauling with the rope
 With your hook set in a ship and the rope in your hand, hold sneak: the rope's length freezes. Walk back and the
@@ -478,6 +479,23 @@ itself, at the edge (with a corner railing, on the edge nearest your click), and
 **ratlines** stand on a railing's top or hang on its side. Railings weigh like fences on a ship and hold water. Server
 config `ship_decor.railings_enabled` (off: railings and ports cannot be placed; placed ones stay).
 
+**Ratline nets (RL2).** For a longer or steeper climb, string a net between two iron fittings. A **chainplate** (two
+from an iron ingot under a ring of three iron nuggets) goes on top of the rail or on its side (any solid face, or a
+fence, wall or railing); a **mast hoop** (two from three iron ingots over a ring of three nuggets) goes on the side of a
+mast like a ladder. Craft a **ratline net** from five string and four sticks (string across the middle row and in the
+middle of the top and bottom rows, sticks in the corners). Use it on one fitting ("Net tied: now use the other
+fitting", the net glints), then on the other: the net is strung between their rings and used up. It is refused, with
+a short reason in the action bar, when the line is longer than 12 blocks (`rigging.net_max_length`), flatter than 30°
+(`rigging.net_min_pitch`), runs through a block ("Blocked at x y z"), joins the land to a ship or two ships, or a
+fitting already holds a net. The net is drawn as two side ropes with a rung every half block; every block it passes
+through holds an invisible, climbable net cell. Walk into the net (from the chainplate) and hold forward or jump: you
+climb along the net's line at any slope, as fast as up a ladder (slower on a net flatter than about 38°); back climbs
+down, sneaking holds on. The fittings are climbable too, so you get on at the chainplate and off at the hoop.
+Breaking a fitting, a net cell or putting a block into the net brings the whole net down: one net drops at the first
+fitting, the fittings stay. Nets work in water and sail with the ship. Server config `rigging.nets_enabled`,
+`rigging.net_assist` (off: plain ladder climbing, which takes a diagonal net only with jump and forward held
+together).
+
 ### Hammocks
 Your crew sleeps in hammocks. Hang one between two supports at the same height (fence posts, walls, logs, or a solid
 wall such as the hull side): click the block next to one support while looking toward the other. Recipe: 2 string
@@ -502,9 +520,11 @@ rigging` lists every yard and what it carries, the triangular sails and the crew
 ### Upkeep
 Every dawn your crew eats and drinks one day of provisions from the pantries and water barrels aboard and wants its
 pay: 2 doubloons each, taken from any chest, barrel or cargo crate on the ship (the ones nearest the helm first).
-Hungry or thirsty crew lose morale and work slower; rum cheers them up; weeks without citrus or fresh food bring
-scurvy. Unpaid crew lose 8 morale, paid crew gain 1. If the coins aboard run short, the rest of the wages comes out of your
-own purse while you are online in that dimension (chests and crates always pay first). A sailor whose morale stays
+Hungry or thirsty crew lose morale and work slower; rum cheers them up, but a crew that finds rum for 10 days or more
+in the pantries drinks a double ration and works at 60% speed; weeks without citrus or fresh food bring scurvy. A crew
+that goes 3 days in a row without food, or 1 day without water, deserts at the next dawn whatever its morale (all of it,
+the same way as below; the owner hears what they went without). Unpaid crew lose 8 morale, paid crew gain 1. If the
+coins aboard run short, the rest of the wages comes out of your own purse while you are online in that dimension (chests and crates always pay first). A sailor whose morale stays
 below 20 for two dawns means to desert: he tells you and walks off at the next port the ship comes within 48 blocks
 of, onto the quay by the berth, or wherever the ship is after three more dawns; feed and pay him back above 20 and he
 changes his mind. Twice a day, at noon and at sunset, the crew not at a station sit down by the pantry (or the water
@@ -849,19 +869,26 @@ flag above it (see [Flags](#5-flags)).
 
 Whoever is in the nest keeps the lookout. Put a crew member up there with the Captain's Whistle (use it on the crew
 member, then on the nest): he takes his post inside the barrel and keeps watch until you release him. Or stand in it
-yourself. Every 3 seconds the lookout scans 160 blocks round the ship and calls out what is new, in chat, to the ship's
-owner and everyone aboard:
-- **ships**, by the flag they fly: "Sail ho! A merchant two points off the starboard bow, 140 blocks" (a navy ship, a
-  pirate ship, a wreck, or just a ship when no flag flies);
-- **land**: "Land ho! Land four points off the port bow, 120 blocks" (the nearest coast; one call per stretch of coast);
+yourself. Every 3 seconds the lookout scans 160 blocks round the ship and calls what is new to everyone aboard and in
+the nest:
+- **ships**, by the flag they fly: a merchant, a navy ship, a pirate ship, a wreck, or a sail when no flag flies;
+- **land**: the nearest coast (one call per stretch of coast);
 - **sharks** and **the kraken**.
 
-Bearings are in points of the compass (32 round the horizon) from the bow: dead ahead, "n points off the starboard (or
-port) bow", on the beam, "n points abaft the beam", dead astern. Each ship, shark or coast is called once; the lookout
-remembers it for 5 minutes after he last saw it. Only loaded chunks are watched. Recipe: planks, rope, planks over two
-iron nuggets, over three planks. Server config `lookout`: `enabled`, `announce` (off: the watch is silent), `range`,
-`scan_interval_ticks`, `memory_ticks`, and the land rays (`land_directions`, `land_step`, `land_min_distance`,
-`land_region`).
+A call is one short line over the hotbar (at most 40 characters): "Sail two points to starboard, 140 blocks", "Land
+ahead, 300 blocks", "Pirate ship aft to port, 160 blocks". With it a small hand bell rings from the nest (higher and
+softer than the Ship's Bell), and the ship panel's compass rose shows a small diamond on its rim at the sighting's
+bearing, white for land, red for a pirate ship, blue for a navy ship and grey for anything else; it fades out after
+30 seconds. Several calls at once follow each other on the hotbar line. Nothing goes to chat.
+
+Bearings are named from the bow: ahead, "n points to starboard (or port)" (32 points round the horizon), abeam, "on the
+starboard (or port) quarter" abaft the beam, astern; when a line would be too long it names only the side ("to
+starboard", "aft to port"). A ship the lookout knows by sight is called by her name. Each ship, shark or coast is called
+once, then again once it has come 64 blocks closer than at its last call or 2 minutes after it; the lookout remembers it
+for 5 minutes after he last saw it. Only loaded chunks are watched. Recipe: planks, rope, planks over two iron nuggets,
+over three planks. Server config `lookout`: `enabled`, `announce` (off: the watch is silent), `range`,
+`scan_interval_ticks`, `memory_ticks`, `recall_blocks`, `recall_seconds`, `mark_seconds`, and the land rays
+(`land_directions`, `land_step`, `land_min_distance`, `land_region`).
 
 ### Pirates, sailors and the navy
 Pirates (dark coat, bandana, eyepatch, cutlass) attack players and the navy on sight. They fight with the same
@@ -982,10 +1009,12 @@ Every dawn each ship with crew aboard eats and drinks one day from its pantries 
 [Upkeep](#upkeep)). `/pirates provisions` runs the same rules on a pantry for testing:
 - A crew eats perishable food first, the food closest to spoiling before the rest.
 - Hungry crew lose morale and work at 75% speed. Thirsty crew lose morale faster and work at 50%. The work speed is set
-  at dawn and holds until the next one. Hunger and thirst lead to desertion only through that lost morale (the config's
-  `hunger_desertion_days` and `thirst_desertion_days` only feed the `/pirates provisions` report).
-- **Rum:** a ration raises morale. The crew drinks one ration a day at most, so the drunkenness settings
-  (`drunk_work_speed`, `drunk_duration_ticks`) never apply in play.
+  at dawn and holds until the next one. After 3 days of hunger or 1 day of thirst in a row the whole crew deserts at
+  the next dawn, whatever its morale (`provisions.hunger_desertion_days`, `thirst_desertion_days`; off with
+  `crew.desertion.enabled`).
+- **Rum:** a ration raises morale. With rum for 10 days of the ration or more in the pantries the crew drinks a double
+  ration and works at 60% speed until 6000 ticks after the binge ends (`provisions.rum_binge_days`,
+  `rum_binge_rations`, `drunk_work_speed`, `drunk_duration_ticks`).
 - **Scurvy** sets in after 8 days without fresh food or fruit (apple, melon, berries, lime) and is cured by eating some.
 
 ---
@@ -1196,9 +1225,10 @@ The owner of a door still opens it without a key; nobody else, no mob and no red
   key can); without a key, using it to lock only tells you that you need one. A locked door opens only for its owner
   and ignores mobs and redstone.
 - A prisoner is **in a cell** when it stands in a closed space of at most 64 blocks, bounded by solid blocks, brig bars
-  and a closed, locked brig door. There it stays. The config has a cell escape chance while the crew's morale is low
-  (`brig.low_morale_escape_chance_per_minute`, 2 % a minute), but the brig never passes a low morale to it yet
-  (`BrigService` checks escapes with morale fixed to "not low"), so a prisoner in a cell does not escape today.
+  and a closed, locked brig door. There it stays, and it doesn't try to escape, unless it is held on a ship whose
+  crew is unhappy: while the crew's average morale is below 20 (`crew.desertion.desert_below`), a prisoner breaks out
+  of a locked cell with a chance of about 2% a minute (`brig.low_morale_escape_chance_per_minute`). A ship without
+  crew keeps its prisoners like a cell ashore. Cells work aboard ships too.
 
 What you can do with a prisoner: deliver it at a navy officer for its bounty, ransom it there, press-gang it with the
 captain's whistle (a crime), or release it (see [Fines, ransom, press-gang and release](#fines-ransom-press-gang-and-release));
@@ -1548,7 +1578,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `ship_identity` | Nameplates showing the ship's name, their refresh. |
 | `ship_screen` | The ship screen at the helm on/off (off: sneak-use disassembles at once), its reach, how often it refreshes. |
 | `ship_decor` | The ship's bell ring time; sleeping in the sea cot, on land and aboard; railings on or off and their collision height (`railings_enabled`, `railing_collision_blocks`). |
-| `rigging` | Ratlines on/off. |
+| `rigging` | Ratlines on/off; ratline nets on/off, their longest length and flattest pitch, the climbing assist. |
 | `wind` | Wind strength range, how fast it changes, weather multipliers, gusts, regional variation, sync interval. |
 | `sailing` | Sail force, half-trim factor, rudder strength and turning authority (`rudder_force_factor`, `max_rudder_angle`), keel drag, roll and pitch damping; `sails` (yard gaps and lengths, stay length and drop, rope lines and sag, dyeing, banners and their minimum size). |
 | `sailing_runtime` | Sailing forces, steering and anchor on/off, sail heel factor, sails needing water, rudder steps, the anchor chain's length (`anchor_chain_length`), draft, scan interval. |
@@ -1559,7 +1589,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `waves` | Sea state on/off, amplitude and components, wave groups, how fast the state and the wave direction change, heave and torque on ships, spill over low rims, vanilla boats and floating items riding the waves, sync. |
 | `hazards` | Waterspouts and whirlpools (on/off, chances, durations, radii, pull, lift, spin, drag-down, drift, sail damage, per-player cap), spawn distances and interval, ship force scale and mass cap; `kraken` (on/off, chance per day). |
 | `crew_stations` | Crew stations on/off, time per trim step, order and acknowledgement radius; `capstan` (crew at the capstan), `course` (the helmsman's course keeping), `job_board` (free hands taking open jobs). |
-| `lookout` | Crow's nest lookout on/off, calls on/off, range, scan interval, how long a sighting is remembered, the land rays. |
+| `lookout` | Crow's nest lookout on/off, calls on/off, range, scan interval, how long a sighting is remembered, when it is called again, how long its compass mark stays, the land rays. |
 | `crew` | Crew size; `wages`, `morale`, `desertion`, `mutiny`, `meals`, `hammock` (players sleeping in hammocks), `hiring`, `walk`. |
 | `provisions` | Consumption on/off and rate, food and water per crew and day, rum ration and morale, drunkenness, hunger and thirst effects, scurvy, spoilage, water barrel capacity, rain refill, weights. |
 | `survival` | `cold_water` (on/off, freeze rate, warm effect length), `swim_hunger` and its multiplier. |

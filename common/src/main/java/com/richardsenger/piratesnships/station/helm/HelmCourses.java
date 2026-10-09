@@ -52,10 +52,9 @@ import org.joml.Vector3d;
  *       reported once ({@link CourseEvent.Type#STUCK}) per episode; the course goes on and listeners decide (WS3b).</li>
  * </ul>
  *
- * <p><b>Voice (WS4c):</b> {@link #set} has the helmsman acknowledge the course and call each waypoint
- * ({@link Voice#FULL}); a course set again and again on a timer (a patrol circling its quarry) is given with
- * {@link Voice#ACK_ONLY} the first time and {@link Voice#SILENT} afterwards, so a chase is not a stream of chat lines.
- * Arrival and a stuck ship are always said (once each). {@link #onSpoken} hears every line the helmsman says.
+ * <p><b>Voice (WS4c, MSG1):</b> the helmsman says only what the captain cannot see from the deck: arrival and a stuck
+ * ship (once each), on the action bar of the players near him. A course taken or a waypoint passed is not said, so a
+ * chase that renews its course on a timer is silent too. {@link #onSpoken} hears every line the helmsman says.
  *
  * Orders given to the helm by other paths (the job board, {@code CrewStations.order} with a {@code CourseOrder}) are
  * adopted on the next update. In memory only, like the station states: a course is lost on restart.
@@ -64,28 +63,9 @@ public final class HelmCourses {
 
     static final String KEY = CourseOrder.KEY;
     public static final String KEY_ARRIVED = KEY + "arrived";
-    public static final String KEY_WAYPOINT = KEY + "waypoint";
     public static final String KEY_STUCK = KEY + "stuck";
 
-    /** What the helmsman says about a course he is given (WS4c). */
-    public enum Voice {
-        /** "Aye, holding the course!" and each waypoint reached (a course given by a player or a voyage). */
-        FULL,
-        /** The acknowledgement, but no waypoint calls (the first course of a chase). */
-        ACK_ONLY,
-        /** Neither (a course given again on a timer): only arrival and getting stuck are said. */
-        SILENT;
-
-        boolean acknowledges() {
-            return this != SILENT;
-        }
-
-        boolean callsWaypoints() {
-            return this == FULL;
-        }
-    }
-
-    /** A chat line the helmsman of {@code ship} said ({@link #onSpoken}). */
+    /** A line the helmsman of {@code ship} said ({@link #onSpoken}). */
     public record Spoken(UUID ship, Component line) { }
 
     /** What became of {@link #set}. */
@@ -106,7 +86,6 @@ public final class HelmCourses {
 
     static final class Course {
         final ResourceKey<Level> dimension;
-        final Voice voice;
         CourseOrder order;
         int index;
         boolean manned;
@@ -120,10 +99,9 @@ public final class HelmCourses {
         long overrideUntil = Long.MIN_VALUE;
         double rudder;
 
-        Course(ResourceKey<Level> dimension, CourseOrder order, Voice voice) {
+        Course(ResourceKey<Level> dimension, CourseOrder order) {
             this.dimension = dimension;
             this.order = order;
-            this.voice = voice;
         }
     }
 
@@ -141,7 +119,7 @@ public final class HelmCourses {
         LISTENERS.add(listener);
     }
 
-    /** Hears every line a helmsman says about his course (acknowledgement, waypoints, arrival, stuck): logs, GameTests. */
+    /** Hears every line a helmsman says about his course (arrival, stuck): logs, GameTests. */
     public static void onSpoken(Consumer<Spoken> listener) {
         SPOKEN.add(listener);
     }
@@ -149,19 +127,9 @@ public final class HelmCourses {
     /**
      * Sets the course of {@code ship}: the crew member at its steering helm takes it at once; an unmanned helm becomes
      * an open job on the ship's {@link JobBoard} that a free hand claims. Replaces an earlier course. Sails are not the
-     * helmsman's job: post {@code SailOrder.HOIST} to set them. The helmsman acknowledges it and calls its waypoints
-     * ({@link Voice#FULL}).
+     * helmsman's job: post {@code SailOrder.HOIST} to set them. Nothing is said (MSG1): the ship turns.
      */
     public static SetResult set(ServerLevel level, ShipBody ship, CourseOrder order) {
-        return set(level, ship, order, Voice.FULL);
-    }
-
-    /**
-     * {@link #set} with what the helmsman says about it: {@link Voice#SILENT} for a course given again on a timer
-     * (WS4c), so neither the acknowledgement nor the waypoints are said. An unmanned helm's job-board claim is the
-     * crew member's own business and still acknowledged as usual.
-     */
-    public static SetResult set(ServerLevel level, ShipBody ship, CourseOrder order, Voice voice) {
         if (!CourseConfig.ENABLED.get() || !StationConfig.ENABLED.get()) {
             return SetResult.DISABLED;
         }
@@ -173,14 +141,13 @@ public final class HelmCourses {
             return SetResult.NO_HELM;
         }
         StationRef ref = new StationRef(ship.id(), helm);
-        Course course = new Course(level.dimension(), order, voice);
+        Course course = new Course(level.dimension(), order);
         COURSES.put(ship.id(), course);
         StationState<Object> state = Stations.state(ref);
         if (state != null && crewOccupant(state) != null) {
             course.manned = true;
             Stations.OrderResult r = Stations.order(level, ref, order);
             if (r == Stations.OrderResult.STARTED) {
-                if (voice.acknowledges()) say(level, ship.id(), state, Component.translatable(order.ackKey()));
                 return SetResult.STARTED;
             }
             COURSES.remove(ship.id(), course);
@@ -303,7 +270,7 @@ public final class HelmCourses {
             BlockPos helm = ShipHelm.steering(ship);
             StationState<Object> state = helm == null ? null : Stations.state(new StationRef(ship.id(), helm));
             if (state != null && state.order() instanceof CourseOrder order) {
-                Course c = new Course(level.dimension(), order, Voice.FULL);
+                Course c = new Course(level.dimension(), order);
                 c.manned = true;
                 COURSES.put(ship.id(), c);
             }
@@ -357,7 +324,6 @@ public final class HelmCourses {
             if (c.index < points.size() - 1 || c.order.loop()) {
                 c.index = (c.index + 1) % points.size();
                 fire(level, id, CourseEvent.Type.WAYPOINT, c.index);
-                if (c.voice.callsWaypoints()) say(level, id, state, Component.translatable(KEY_WAYPOINT, c.index + 1, points.size()));
                 target = points.get(c.index);
             } else {
                 COURSES.remove(id, c);

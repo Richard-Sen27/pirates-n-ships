@@ -40,11 +40,6 @@ public record CourseOrder(List<Vec3> waypoints, boolean loop) implements CrewOrd
         return "crew_order." + Constants.MOD_ID + "." + ID;
     }
 
-    /** "Aye, holding the course!". */
-    @Override
-    public String ackKey() {
-        return "message." + Constants.MOD_ID + ".crew.ack." + ID;
-    }
 
     /** A course without waypoints: "No course to hold, captain". */
     @Override
@@ -52,7 +47,7 @@ public record CourseOrder(List<Vec3> waypoints, boolean loop) implements CrewOrd
         return KEY + "empty";
     }
 
-    /** At a second helm, or with steering or courses switched off: "This helm doesn't steer the ship, captain!". */
+    /** At a second helm, or with steering or courses switched off: "This helm doesn't steer, captain!". */
     @Override
     public String unableKey() {
         return KEY + "unable";

@@ -50,7 +50,7 @@ public final class FeeText {
                 .add(PAID_SHIP, "Harbor dues at %s: %s doubloons, taken from the coins aboard %s")
                 .add(WAIVED, "Harbor dues at %s: waived")
                 .add(OWED, "Harbor dues at %s: %s doubloons owed for %s. Pay at the harbor desk with doubloons in hand")
-                .add(DESK_OWED, "Harbor dues owed: %s. Use the desk with doubloons in hand to pay")
+                .add(DESK_OWED, "Dues owed: %s, pay with coins in hand")
                 .add(DESK_SETTLED, "Harbor dues paid: %s doubloons")
                 .add(YOUR_SHIP, "your ship"));
     }

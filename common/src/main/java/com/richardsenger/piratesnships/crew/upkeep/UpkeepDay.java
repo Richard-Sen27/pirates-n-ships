@@ -21,6 +21,10 @@ import java.util.UUID;
  *       anything else resets it; at {@code desert_days} it deserts. While mutiny is enabled and the average is below
  *       {@code mutiny_below}, nobody deserts (they stay aboard and plot; the counters still run), and on a mutiny day
  *       nobody deserts either.</li>
+ *   <li><b>Starvation</b> (FIX1, when desertion is enabled): when the crew has gone without food for
+ *       {@code provisions.hunger_desertion_days} or without water for {@code thirst_desertion_days} in a row
+ *       ({@code starving}, {@link ProvisionEffects#desertionCritical}), every member deserts at this dawn whatever its
+ *       morale, even while the crew plots a mutiny; only a mutiny on this very dawn comes first.</li>
  * </ol>
  * The hammock rule of HM1 settles the night after all of this (in {@code crew.hammock.CrewRest}).
  */
@@ -41,9 +45,11 @@ public final class UpkeepDay {
 
     /**
      * A crew member after the day: the morale changes to apply in order (provisions, then wages), the morale after
-     * them, its pay, its new low-morale counter and whether it deserts.
+     * them, its pay, its new low-morale counter, whether it deserts and whether it deserts because the crew starved
+     * ({@code starved} implies {@code deserts}).
      */
-    public record MemberResult(UUID id, int provisionsDelta, int wageDelta, Pay pay, int moraleAfter, int lowDays, boolean deserts) {
+    public record MemberResult(UUID id, int provisionsDelta, int wageDelta, Pay pay, int moraleAfter, int lowDays, boolean deserts,
+                               boolean starved) {
     }
 
     /** The whole crew after the day. */
@@ -68,6 +74,15 @@ public final class UpkeepDay {
      */
     public static Result settle(MoraleRules.Settings morale, UpkeepSettings s, List<Member> crew, int provisionsDelta,
                                 int payable, int shipLowDays) {
+        return settle(morale, s, crew, provisionsDelta, payable, shipLowDays, false);
+    }
+
+    /**
+     * Settles one day; {@code starving}: the crew's hunger or thirst has lasted its desertion length (FIX1), so every
+     * member deserts at this dawn whatever its morale (with desertion enabled, and unless the crew mutinies now).
+     */
+    public static Result settle(MoraleRules.Settings morale, UpkeepSettings s, List<Member> crew, int provisionsDelta,
+                                int payable, int shipLowDays, boolean starving) {
         int n = crew.size();
         int[] after = new int[n];
         for (int i = 0; i < n; i++) {
@@ -111,8 +126,9 @@ public final class UpkeepDay {
         for (int i = 0; i < n; i++) {
             Member m = crew.get(i);
             int low = s.desertionEnabled() && after[i] < s.desertBelow() ? m.lowDays() + 1 : 0;
-            boolean deserts = s.desertionEnabled() && !shipLow && !mutiny && low >= s.desertDays();
-            out.add(new MemberResult(m.id(), provisionsDelta, wageDelta[i], pay[i], after[i], low, deserts));
+            boolean starved = s.desertionEnabled() && !mutiny && starving;
+            boolean deserts = starved || s.desertionEnabled() && !shipLow && !mutiny && low >= s.desertDays();
+            out.add(new MemberResult(m.id(), provisionsDelta, wageDelta[i], pay[i], after[i], low, deserts, starved));
         }
         return new Result(out, paid, unpaid, avg, mutiny ? 0 : newShipDays, mutiny);
     }

@@ -49,10 +49,14 @@ public final class SailDecorations {
     private SailDecorations() {
     }
 
-    /** The action bar message of {@code o}; {@code color} names the dye of {@link Outcome#DYED} and {@link Outcome#SAME_DYE}. */
+    /**
+     * The action bar message of {@code o}; {@code color} names the dye of {@link Outcome#SAME_DYE}. Empty for
+     * {@link Outcome#DYED}, {@link Outcome#HUNG} and {@link Outcome#TAKEN} (MSG1: the cloth shows it).
+     */
     public static Component message(Outcome o, @Nullable DyeColor color) {
         return switch (o) {
-            case DYED, SAME_DYE -> Component.translatable(o.key(),
+            case DYED, HUNG, TAKEN -> Component.empty();
+            case SAME_DYE -> Component.translatable(o.key(),
                     Component.translatable("color.minecraft." + (color == null ? DyeColor.WHITE : color).getName()));
             case TOO_SMALL -> Component.translatable(o.key(), SailingConfig.SAIL_BANNER_MIN_WIDTH.get(), SailingConfig.SAIL_BANNER_MIN_DROP.get());
             default -> Component.translatable(o.key());

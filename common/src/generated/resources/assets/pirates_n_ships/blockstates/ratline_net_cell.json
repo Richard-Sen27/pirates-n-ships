@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "pirates_n_ships:block/ratline_net_cell"
+    }
+  }
+}

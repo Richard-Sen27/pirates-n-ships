@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.ship.assembly;
 
+import com.richardsenger.piratesnships.core.text.ActionBar;
 import com.mojang.serialization.MapCodec;
 import com.richardsenger.piratesnships.rpg.career.CareerShipTitles;
 import com.richardsenger.piratesnships.ship.ShipData;
@@ -145,26 +146,26 @@ public class HelmBlock extends HorizontalDirectionalBlock implements EntityBlock
         if (level instanceof ServerLevel serverLevel) {
             ShipBody ship = SableShips.containing(serverLevel, pos);
             if (ship == null) {
-                player.displayClientMessage(ShipAssembler.assemble(serverLevel, pos, player).message(), false);
+                player.displayClientMessage(ShipAssembler.assemble(serverLevel, pos, player).message(), true);
                 return InteractionResult.sidedSuccess(level.isClientSide);
             }
             // HL1: only the ship's steering helm steers and disassembles; a helmless ship takes this one
             HelmRules.Role role = ShipHelm.claim(ship, pos);
             if (role == HelmRules.Role.NOT_A_SHIP) {
                 // a Sable body without our ship pointer (e.g. one orphaned by a split before HL1): this helm makes it a ship
-                player.displayClientMessage(ShipHelm.adopt(ship, pos, player).message(), false);
+                player.displayClientMessage(ShipHelm.adopt(ship, pos, player).message(), true);
             } else if (role == HelmRules.Role.SECOND) {
                 player.displayClientMessage(Component.translatable(ShipHelm.KEY_SECOND), true);
             } else if (player.isShiftKeyDown() && player.getMainHandItem().isEmpty()) {
                 // HGUI1: the ship screen, whose Ship tab disassembles; without it (switched off), disassembly at once
                 ManageHandler m = manage;
                 if (m == null || !m.manage(serverLevel, ship, pos, player)) {
-                    player.displayClientMessage(ShipAssembler.disassemble(ship, pos, player).message(), false);
+                    player.displayClientMessage(ShipAssembler.disassemble(ship, pos, player).message(), true);
                 }
             } else {
                 SteeringHandler h = steering;
-                player.displayClientMessage(h == null ? Component.translatable(KEY_DISASSEMBLE_HINT)
-                        : h.steer(serverLevel, pos, state, player, hit), true);
+                ActionBar.show(player, h == null ? Component.translatable(KEY_DISASSEMBLE_HINT)
+                        : h.steer(serverLevel, pos, state, player, hit)); // MSG1: taking the wheel says nothing
             }
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
@@ -227,7 +228,7 @@ public class HelmBlock extends HorizontalDirectionalBlock implements EntityBlock
                 stack.shrink(1);
             }
             player.displayClientMessage(result.success()
-                    ? Component.translatable(result.outcome().key(), shipName) : result.message(), false);
+                    ? Component.translatable(result.outcome().key(), shipName) : result.message(), true);
         }
         return ItemInteractionResult.sidedSuccess(level.isClientSide);
     }

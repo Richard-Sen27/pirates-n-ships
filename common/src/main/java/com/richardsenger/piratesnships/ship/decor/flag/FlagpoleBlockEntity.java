@@ -245,7 +245,7 @@ public class FlagpoleBlockEntity extends BlockEntity implements Clearable {
         clothTint = FlagTint.clothTint(state);
         if (changed) setChanged();
         for (FlagpoleMachine.Delivery d : outcome.deliveries()) deliver(server, d);
-        if (outcome.feedback() != FlagpoleMachine.Feedback.NONE && outcome.feedbackTo() != null) {
+        if (shown(outcome.feedback()) && outcome.feedbackTo() != null) {
             Player p = player(server, outcome.feedbackTo());
             if (p != null) p.displayClientMessage(feedback(outcome.feedback(), outcome), true);
         }
@@ -260,6 +260,14 @@ public class FlagpoleBlockEntity extends BlockEntity implements Clearable {
         FlagKind kind = outcome.state().pending().map(FlagpoleState.Pending::kind).filter(k -> k != FlagKind.NONE)
                 .orElse(outcome.state().hasFlag() ? outcome.state().kind() : FlagKind.NONE);
         return Component.translatable(feedbackKey(feedback), Component.translatable(kindKey(kind)));
+    }
+
+    /**
+     * Whether {@code feedback} goes on the actor's action bar (MSG1): the refusal ({@code NO_FLAG}) and a surrender
+     * ({@code STRUCK}, it has consequences); hoisting, raising, taking down and stopping show on the pole itself.
+     */
+    public static boolean shown(FlagpoleMachine.Feedback feedback) {
+        return feedback == FlagpoleMachine.Feedback.NO_FLAG || feedback == FlagpoleMachine.Feedback.STRUCK;
     }
 
     public static String feedbackKey(FlagpoleMachine.Feedback feedback) {

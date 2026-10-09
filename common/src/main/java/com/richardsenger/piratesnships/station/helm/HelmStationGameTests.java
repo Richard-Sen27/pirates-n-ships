@@ -478,10 +478,9 @@ public final class HelmStationGameTests {
     }
 
     /**
-     * The helmsman's voice (WS4c): a course set as usual is acknowledged and its waypoints called; set again
-     * {@code SILENT} (a patrol renewing its course on a timer) neither is said; {@code ACK_ONLY} (the first course of a
-     * chase) is acknowledged once without waypoint calls. Each course starts on a waypoint at the ship's centre, so one
-     * update reaches it (the WAYPOINT event fires every time, only the line differs).
+     * The helmsman's voice (WS4c, MSG1): a course taken and a waypoint passed are not said, also when the course is
+     * set again (a patrol renewing its course on a timer). Each course starts on a waypoint at the ship's centre, so
+     * one update reaches it (the WAYPOINT event fires every time, the helmsman stays silent).
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = BATCH + "voice")
     public static void silentCoursesSayNothing(GameTestHelper h) {
@@ -496,22 +495,15 @@ public final class HelmStationGameTests {
             java.util.function.IntSupplier waypoints = () -> (int) events(id).stream().filter(t -> t == CourseEvent.Type.WAYPOINT).count();
 
             h.assertTrue(HelmCourses.set(h.getLevel(), s.f().ship(), ring) == HelmCourses.SetResult.STARTED, "first set");
-            h.assertTrue(lines.get().size() == 1, "the first course is not acknowledged once: " + lines.get());
+            h.assertTrue(lines.get().isEmpty(), "the course was acknowledged: " + lines.get());
             HelmCourses.update(h.getLevel(), id);
-            h.assertTrue(waypoints.getAsInt() == 1 && lines.get().size() == 2, "the waypoint is not called: " + lines.get());
+            h.assertTrue(waypoints.getAsInt() == 1 && lines.get().isEmpty(), "the waypoint was called: " + lines.get());
 
-            h.assertTrue(HelmCourses.set(h.getLevel(), s.f().ship(), ring, HelmCourses.Voice.SILENT) == HelmCourses.SetResult.STARTED,
-                    "silent set");
+            h.assertTrue(HelmCourses.set(h.getLevel(), s.f().ship(), ring) == HelmCourses.SetResult.STARTED, "second set");
             HelmCourses.update(h.getLevel(), id);
-            h.assertTrue(waypoints.getAsInt() == 2, "the silent course did not reach its waypoint: " + events(id));
-            h.assertTrue(lines.get().size() == 2, "the silent course said something: " + lines.get());
-            h.assertTrue(HelmCourses.course(id) == ring && HelmCourses.waypointIndex(id) == 1, "the silent course is not held");
-
-            h.assertTrue(HelmCourses.set(h.getLevel(), s.f().ship(), ring, HelmCourses.Voice.ACK_ONLY) == HelmCourses.SetResult.STARTED,
-                    "acknowledged set");
-            HelmCourses.update(h.getLevel(), id);
-            h.assertTrue(waypoints.getAsInt() == 3, "the acknowledged course did not reach its waypoint: " + events(id));
-            h.assertTrue(lines.get().size() == 3, "ACK_ONLY is not one acknowledgement without waypoint calls: " + lines.get());
+            h.assertTrue(waypoints.getAsInt() == 2, "the renewed course did not reach its waypoint: " + events(id));
+            h.assertTrue(lines.get().isEmpty(), "the renewed course said something: " + lines.get());
+            h.assertTrue(HelmCourses.course(id) == ring && HelmCourses.waypointIndex(id) == 1, "the renewed course is not held");
             HelmCourses.clear(h.getLevel(), id);
             h.succeed();
         });

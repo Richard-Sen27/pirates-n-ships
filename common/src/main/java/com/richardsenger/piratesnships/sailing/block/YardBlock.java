@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.sailing.block;
 
+import com.richardsenger.piratesnships.core.text.ActionBar;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
@@ -139,7 +140,7 @@ public class YardBlock extends Block implements EntityBlock, SimpleWaterloggedBl
                     level.playSound(null, pos, color != null ? SoundEvents.DYE_USE : SoundEvents.WOOL_PLACE, SoundSource.BLOCKS, 1f, 1f);
                     stack.consume(1, player);
                 }
-                player.displayClientMessage(SailDecorations.message(o, color), true);
+                ActionBar.show(player, SailDecorations.message(o, color));
             }
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
@@ -154,7 +155,6 @@ public class YardBlock extends Block implements EntityBlock, SimpleWaterloggedBl
                 ItemStack taken = SailDecorations.takeBanner(level, pos);
                 if (!taken.isEmpty()) {
                     player.getInventory().placeItemBackInInventory(taken);
-                    player.displayClientMessage(SailDecorations.message(SailDecorations.Outcome.TAKEN, null), true);
                     return InteractionResult.SUCCESS;
                 }
             } else if (SailDecorations.hasBanner(level, pos)) {
@@ -167,8 +167,9 @@ public class YardBlock extends Block implements EntityBlock, SimpleWaterloggedBl
         if (level instanceof ServerLevel serverLevel) {
             SailTrim next = YardSails.cycle(serverLevel, pos);
             var rules = SailingConfig.yardRules();
-            player.displayClientMessage(next == null ? Component.translatable(KEY_NO_SAIL, rules.minGap(), rules.maxGap())
-                    : Component.translatable(SailWinchBlock.KEY_SAIL_SET, Component.translatable(SailWinchBlock.trimKey(next))), true);
+            if (next == null) { // MSG1: a new trim shows in the cloth
+                player.displayClientMessage(Component.translatable(KEY_NO_SAIL, rules.minGap(), rules.maxGap()), true);
+            }
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

@@ -79,21 +79,21 @@ public final class AssemblyModule implements ModModule {
         data.lang(lang -> {
             lang.block(AssemblyContent.HELM, "Helm");
             lang.add(Outcome.ASSEMBLED.key(), "Ship assembled: %s blocks");
-            lang.add(Outcome.DISASSEMBLED.key(), "Ship disassembled: %s blocks placed back");
+            lang.add(Outcome.DISASSEMBLED.key(), "Disassembled: %s blocks placed back");
             lang.add(Outcome.NAMED.key(), "Ship named \"%s\"");
             lang.add(Outcome.DISABLED.key(), "Ship assembly is disabled on this server");
-            lang.add(Outcome.TOO_MANY_BLOCKS.key(), "Too many connected blocks: a ship may have at most %s. Is the hull touching a dock or building?");
-            lang.add(Outcome.NOTHING_TO_ASSEMBLE.key(), "Nothing to assemble: no ship blocks are connected to the helm");
-            lang.add(Outcome.MOVING.key(), "The ship is still moving (%s m/s). Wait until it lies still");
-            lang.add(Outcome.NOT_LEVEL.key(), "The ship is tilted %s°. It must be within %s° of level");
+            lang.add(Outcome.TOO_MANY_BLOCKS.key(), "Over %s blocks: touching land?");
+            lang.add(Outcome.NOTHING_TO_ASSEMBLE.key(), "Nothing to assemble: no blocks attached");
+            lang.add(Outcome.MOVING.key(), "Still moving (%s m/s): wait until still");
+            lang.add(Outcome.NOT_LEVEL.key(), "Tilted %s°, must be under %s°");
             lang.add(Outcome.OBSTRUCTED.key(), "Something is in the way at %s %s %s");
-            lang.add(Outcome.OUT_OF_WORLD.key(), "The ship would end up outside the world at %s %s %s");
-            lang.add(Outcome.NO_SHIP.key(), "This helm is not part of an assembled ship");
-            lang.add(HelmBlock.KEY_DISASSEMBLE_HINT, "Sneak-use the helm with an empty hand to disassemble the ship");
-            lang.add(Outcome.ADOPTED.key(), "This helm now steers the body it stands on: a ship of %s blocks");
+            lang.add(Outcome.OUT_OF_WORLD.key(), "Would leave the world at %s %s %s");
+            lang.add(Outcome.NO_SHIP.key(), "This helm is on no assembled ship");
+            lang.add(HelmBlock.KEY_DISASSEMBLE_HINT, "Sneak-use empty-handed to disassemble");
+            lang.add(Outcome.ADOPTED.key(), "This helm now steers: %s blocks");
             lang.add(ShipHelm.KEY_ATTACHED, "This helm now steers %s");
             lang.add(ShipHelm.KEY_UNNAMED, "the ship");
-            lang.add(ShipHelm.KEY_SECOND, "This ship is steered from its other helm. Break that one to steer from here");
+            lang.add(ShipHelm.KEY_SECOND, "Steered from the ship's other helm");
             lang.add(Outcome.FAILED.key(), "Assembly failed, see the server log");
             lang.add(ShipInfoCommand.KEY_NONE, "No ship here");
             lang.add(ShipInfoCommand.KEY_SHIP, "Ship %s, name %s, origin %s");
@@ -155,23 +155,22 @@ public final class AssemblyModule implements ModModule {
                 .add(ShipwrightToolkitItem.KEY_TOOLTIP, "Sneak-use on the piece to keep, then use on a split-off piece lying against it to nail it back on")
                 .add(ShipwrightToolkitItem.KEY_MARKED, "Marked for repair: %s")
                 .add(ShipwrightToolkitItem.KEY_MARKED_UNNAMED, "Marked for repair: a piece without a name");
-        lang.add(ShipRejoin.Outcome.MARKED.key(), "Marked for repair: %s. Now use the toolkit on the piece to join to it")
+        lang.add(ShipRejoin.Outcome.MARKED.key(), "Marked %s: now use on the other piece")
                 .add(ShipRejoin.Outcome.STARTED.key(), "Hammering %s blocks into place…")
-                .add(ShipRejoin.Outcome.REJOINED.key(), "Rejoined %s blocks")
-                .add(ShipRejoin.Outcome.DISABLED.key(), "Rejoining ship pieces is disabled on this server")
+                .add(ShipRejoin.Outcome.DISABLED.key(), "Rejoining is off on this server")
                 .add(ShipRejoin.Outcome.NOT_A_SHIP.key(), "This is not part of a ship")
-                .add(ShipRejoin.Outcome.NO_MARK.key(), "First sneak-use the toolkit on the piece to keep")
-                .add(ShipRejoin.Outcome.SAME_PIECE.key(), "This is the marked piece. Use the toolkit on the piece to join to it")
-                .add(ShipRejoin.Outcome.MARK_GONE.key(), "The marked piece is gone. Mark the piece to keep again")
+                .add(ShipRejoin.Outcome.NO_MARK.key(), "Sneak-use the piece to keep first")
+                .add(ShipRejoin.Outcome.SAME_PIECE.key(), "This is the marked piece: use the other")
+                .add(ShipRejoin.Outcome.MARK_GONE.key(), "The marked piece is gone: mark again")
                 .add(ShipRejoin.Outcome.BUSY.key(), "Still hammering")
                 .add(ShipRejoin.Outcome.NO_TOOLKIT.key(), "You put the toolkit away")
                 .add(ShipRejoin.Outcome.DIFFERENT_SHIP.key(), "These pieces belong to a different ship")
-                .add(ShipRejoin.Outcome.TOO_BIG.key(), "This piece is too big to nail on: %s blocks, at most %s. A shipwright can join bigger halves")
-                .add(ShipRejoin.Outcome.NOT_ALIGNED.key(), "The pieces are not lined up: bring them within %s° and %s blocks of their places")
+                .add(ShipRejoin.Outcome.TOO_BIG.key(), "Too big to nail: %s blocks, at most %s")
+                .add(ShipRejoin.Outcome.NOT_ALIGNED.key(), "Not lined up: within %s° and %s blocks")
                 .add(ShipRejoin.Outcome.ADD_PLANKS.key(), "Add planks to bridge the gap")
                 .add(ShipRejoin.Outcome.TOO_FAR.key(), "Bring the pieces together")
-                .add(ShipRejoin.Outcome.OVERLAP.key(), "The pieces overlap: something is in the way")
-                .add(ShipRejoin.Outcome.OUT_OF_PLOT.key(), "This piece reaches too far from the ship to join it")
+                .add(ShipRejoin.Outcome.OVERLAP.key(), "The pieces overlap")
+                .add(ShipRejoin.Outcome.OUT_OF_PLOT.key(), "This piece reaches too far to join")
                 .add(ShipRejoin.Outcome.NO_NAILS.key(), "You need %s nails")
                 .add(ShipRejoin.Outcome.FAILED.key(), "Rejoining failed, see the server log");
     }

@@ -104,7 +104,6 @@ public final class GrappleService {
 
     // ------------------------------------------------------------------ mooring rings (GR1)
 
-    public static final String TIED_KEY = "message." + Constants.MOD_ID + ".grapple.tied";
     public static final String TIE_SAME_SHIP_KEY = "message." + Constants.MOD_ID + ".grapple.tie_same_ship";
     public static final String TIE_TOO_FAR_KEY = "message." + Constants.MOD_ID + ".grapple.tie_too_far";
     public static final String ALREADY_TIED_KEY = "message." + Constants.MOD_ID + ".grapple.already_tied";
@@ -168,8 +167,8 @@ public final class GrappleService {
             case TOO_FAR -> player.displayClientMessage(Component.translatable(TIE_TOO_FAR_KEY), true);
             case OK -> {
                 hook.tieTo(ringPos, ringShip == null ? null : ringShip.id());
+                // MSG1: the knot's sound and the rope say it, no line
                 level.playSound(null, ringWorld.x, ringWorld.y, ringWorld.z, SoundEvents.LEASH_KNOT_PLACE, SoundSource.PLAYERS, 1.0f, 1.0f);
-                player.displayClientMessage(Component.translatable(TIED_KEY), true);
             }
             default -> { }
         }

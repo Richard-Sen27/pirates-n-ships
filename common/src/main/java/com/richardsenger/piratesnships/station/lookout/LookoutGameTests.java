@@ -40,12 +40,15 @@ import com.richardsenger.piratesnships.worldsim.voyage.VoyageData;
 import com.richardsenger.piratesnships.worldsim.voyage.VoyageEnd;
 import com.richardsenger.piratesnships.worldsim.voyage.VoyageKind;
 import com.richardsenger.piratesnships.worldsim.voyage.Voyages;
+import com.mojang.authlib.GameProfile;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
@@ -370,7 +373,9 @@ public final class LookoutGameTests {
             Bearings.Relative b = rep.sighting().bearing();
             h.assertTrue(b.side() == Bearings.Side.PORT && Math.abs(b.points() - 8) <= 2, "bearing " + b);
             h.assertTrue(Math.abs(rep.sighting().distance() - 12) <= 1, "distance " + rep.sighting().distance());
-            h.assertTrue(rep.line().getString().contains(c.getDisplayName().getString()), "speaker: " + rep.line().getString());
+            SightingPayload call = rep.payload();
+            h.assertTrue(call.what() == SightingPayload.What.SHARK && call.relative() < -60 && call.relative() > -120
+                    && call.distance() == rep.sighting().distance() && call.ship().equals(r.ship().id()), "call " + call);
             h.assertTrue(about(scan(h, r, List.of(), now + 60), key(s)).isEmpty(), "the shark was called twice");
             s.discard();
             CrewStations.release(h.getLevel(), c);
@@ -397,8 +402,9 @@ public final class LookoutGameTests {
             h.assertTrue(reps.size() == 1, "calls " + reps);
             List<UUID> to = reps.get(0).recipients();
             h.assertTrue(to.contains(p.getUUID()) && !to.contains(ashore.getUUID()), "recipients " + to);
-            h.assertTrue(reps.get(0).line().getString().contains("Crow's nest") || reps.get(0).line().getString().contains(LookoutLang.KEY_NEST),
-                    "speaker: " + reps.get(0).line().getString());
+            Vec3 nest = r.ship().toWorld(Vec3.atCenterOf(r.nest()));
+            SightingPayload call = reps.get(0).payload();
+            h.assertTrue(new Vec3(call.nestX(), call.nestY(), call.nestZ()).distanceTo(nest) < 0.01, "hailed from " + call);
             s.discard();
             Lookouts.forget(r.ship().id());
             h.succeed();
@@ -475,7 +481,8 @@ public final class LookoutGameTests {
             List<Lookouts.Report> first = about(all, key);
             h.assertTrue(first.size() == 1, "merchant calls on the first scan: " + first + " of " + all);
             Lookouts.Sighting s = first.get(0).sighting();
-            h.assertTrue(s.whatKey().equals(LookoutLang.KEY_WHAT_MERCHANT), "what " + s.whatKey());
+            h.assertTrue(s.what() == SightingPayload.What.MERCHANT && first.get(0).payload().what() == SightingPayload.What.MERCHANT,
+                    "what " + s.what());
             Vec3 eye = r.ship().toWorld(Vec3.atCenterOf(r.nest()));
             Vec3 there = CrewStations.worldBox(npc[0], 0).getCenter();
             double dx = there.x - eye.x;
@@ -527,17 +534,18 @@ public final class LookoutGameTests {
             String key = "ship:" + npc[0].id();
             long now = firstScan(h, r);
             List<Lookouts.Report> plain = about(scan(h, r, List.of(), now), key);
-            h.assertTrue(plain.size() == 1 && plain.get(0).sighting().name().isEmpty(), "an unnamed call: " + plain);
-            h.assertTrue(plain.get(0).line().getSiblings().stream().anyMatch(s -> translatable(s, LookoutLang.KEY_SHIP)),
-                    "the plain call: " + plain.get(0).line());
+            h.assertTrue(plain.size() == 1 && plain.get(0).sighting().name().isEmpty() && plain.get(0).payload().name().isEmpty(),
+                    "an unnamed call: " + plain);
+            String plainCue = SightingCue.text(plain.get(0).payload(), english());
+            h.assertTrue(plainCue.startsWith("Merchant "), "the plain call: " + plainCue);
             RENOWNED.put(npc[0].id(), name);
             try {
                 Lookouts.forget(r.ship().id());
                 List<Lookouts.Report> named = about(scan(h, r, List.of(), now + 1), key);
                 h.assertTrue(named.size() == 1 && named.get(0).sighting().name().equals(name), "a named call: " + named);
-                h.assertTrue(named.get(0).line().getSiblings().stream().anyMatch(s -> translatable(s, LookoutLang.KEY_SHIP_NAMED)
-                        && java.util.Arrays.asList(((net.minecraft.network.chat.contents.TranslatableContents) s.getContents()).getArgs()).contains(name)),
-                        "the call does not name the ship: " + named.get(0).line());
+                h.assertTrue(named.get(0).payload().name().equals(name), "the call does not carry the name: " + named.get(0).payload());
+                String cue = SightingCue.text(named.get(0).payload(), english());
+                h.assertTrue(cue.startsWith(name + " ") && cue.length() <= SightingCue.MAX, "the cue does not name the ship: " + cue);
             } finally {
                 RENOWNED.remove(npc[0].id());
             }
@@ -550,8 +558,153 @@ public final class LookoutGameTests {
         });
     }
 
-    private static boolean translatable(net.minecraft.network.chat.Component c, String key) {
-        return c.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().equals(key);
+    private static java.util.function.UnaryOperator<String> english() {
+        return k -> LookoutLang.ENGLISH.getOrDefault(k, k);
+    }
+
+    // ------------------------------------------------------------------ LKO2: the call
+
+    /** A mock player that keeps every chat line and action-bar message it is shown. */
+    private static final class Listener extends Player {
+        final List<Component> chat = new ArrayList<>();
+        final List<SightingPayload> calls = new ArrayList<>();
+
+        Listener(GameTestHelper h, Vec3 at) {
+            super(h.getLevel(), BlockPos.ZERO, 0f, new GameProfile(UUID.randomUUID(), "test-sailor"));
+            moveTo(at.x, at.y, at.z);
+        }
+
+        @Override
+        public boolean isSpectator() {
+            return false;
+        }
+
+        @Override
+        public boolean isCreative() {
+            return false;
+        }
+
+        @Override
+        public void displayClientMessage(Component message, boolean overlay) {
+            chat.add(message);
+        }
+
+        @Override
+        public void sendSystemMessage(Component message) {
+            chat.add(message);
+        }
+    }
+
+    /** Scans and delivers like the level tick does, into the listeners' own lists. */
+    private static List<Lookouts.Report> scanAndDeliver(GameTestHelper h, Rig r, List<Player> players, long now) {
+        List<Lookouts.Report> reps = scan(h, r, players, now);
+        for (Lookouts.Report rep : reps) {
+            Lookouts.deliver(rep, players, (p, payload) -> {
+                if (p instanceof Listener l) l.calls.add(payload);
+            });
+        }
+        return reps;
+    }
+
+    /**
+     * LKO2: a shark east of a ship heading south is called to the player in the nest and to a player on the deck (not
+     * to one ashore) as a payload: a shark, about 90° to port, its distance, hailed from the nest, its mark kept
+     * {@code mark_seconds}; the cue reads "Shark abeam to port, 12 blocks" (at most 40 characters). Nobody gets a chat
+     * line.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = BATCH + "call")
+    public static void callReachesNestAndDeckWithoutChat(GameTestHelper h) {
+        Rig r = rig(h);
+        Shark s = shark(h, r, 12, 0);
+        h.runAtTickTime(5, () -> {
+            Listener nest = new Listener(h, r.floor());
+            Listener deck = new Listener(h, r.ship().toWorld(Vec3.atBottomCenterOf(r.nest().below(1).east())));
+            Listener ashore = new Listener(h, r.floor().add(30, -4, 30));
+            h.assertTrue(Lookouts.nestOf(h.getLevel(), nest) != null, "the nest listener is not in the nest");
+            List<Player> players = List.of(nest, deck, ashore);
+            List<Lookouts.Report> reps = about(scanAndDeliver(h, r, players, firstScan(h, r)), key(s));
+            h.assertTrue(reps.size() == 1, "calls " + reps);
+            SightingPayload sent = reps.get(0).payload();
+            for (Listener l : List.of(nest, deck)) {
+                List<SightingPayload> got = l.calls.stream().filter(c -> c.key() == sent.key()).toList();
+                h.assertTrue(got.size() == 1, (l == nest ? "nest" : "deck") + " calls " + l.calls);
+                SightingPayload c = got.get(0);
+                h.assertTrue(c.what() == SightingPayload.What.SHARK, "what " + c.what());
+                h.assertTrue(c.relative() < -70 && c.relative() > -110, "relative bearing " + c.relative());
+                h.assertTrue(Math.abs(Bearings.relative(c.compass(), 90)) < 20, "compass bearing " + c.compass());
+                h.assertTrue(Math.abs(c.distance() - 12) <= 1, "distance " + c.distance());
+                h.assertTrue(c.freshTicks() == LookoutConfig.MARK_SECONDS.get() * 20, "fresh " + c.freshTicks());
+                h.assertTrue(c.ship().equals(r.ship().id()), "ship " + c.ship());
+            }
+            h.assertTrue(ashore.calls.isEmpty(), "a player ashore was called: " + ashore.calls);
+            String cue = SightingCue.text(sent, english());
+            h.assertTrue(cue.startsWith("Shark ") && cue.contains("port") && cue.length() <= SightingCue.MAX, "cue " + cue);
+            for (Listener l : List.of(nest, deck, ashore)) {
+                h.assertTrue(l.chat.isEmpty(), "a chat line: " + l.chat);
+            }
+            s.discard();
+            Lookouts.forget(r.ship().id());
+            h.succeed();
+        });
+    }
+
+    /**
+     * LKO2: a crew lookout's call reaches the players aboard (no one in the nest), and a pirate ship is called as one,
+     * through the same payload.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = BATCH + "crew_call")
+    public static void crewLookoutCallsThePlayersAboard(GameTestHelper h) {
+        Rig r = rig(h);
+        CrewMember c = lookout(h, r);
+        Shark s = shark(h, r, 0, 14);
+        h.runAtTickTime(5, () -> {
+            h.assertTrue(c.isAtStation(), "the lookout is not seated");
+            Listener deck = new Listener(h, r.ship().toWorld(Vec3.atBottomCenterOf(r.nest().below(1).east())));
+            List<Lookouts.Report> reps = about(scanAndDeliver(h, r, List.of(deck), firstScan(h, r)), key(s));
+            h.assertTrue(reps.size() == 1, "calls " + reps);
+            List<SightingPayload> got = deck.calls.stream().filter(x -> x.key() == reps.get(0).payload().key()).toList();
+            h.assertTrue(got.size() == 1, "the deck's calls " + deck.calls);
+            // 14 blocks south of a ship heading south: about dead ahead
+            h.assertTrue(Math.abs(got.get(0).relative()) < 20, "relative " + got.get(0).relative());
+            String cue = SightingCue.text(got.get(0), english());
+            h.assertTrue(cue.startsWith("Shark ") && cue.endsWith(", " + got.get(0).distance() + " blocks") && cue.length() <= SightingCue.MAX,
+                    "cue " + cue);
+            h.assertTrue(deck.chat.isEmpty(), "a chat line: " + deck.chat);
+            s.discard();
+            CrewStations.release(h.getLevel(), c);
+            c.discard();
+            Lookouts.forget(r.ship().id());
+            h.succeed();
+        });
+    }
+
+    /**
+     * LKO2's repeat rule: a shark still in view is not called again on the next scans, is called again once it came
+     * {@code recall_blocks} closer, and again {@code recall_seconds} after the last call.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = CONFIG_BATCH + "recall")
+    public static void sightingIsCalledAgainCloserOrLater(GameTestHelper h) {
+        ConfigOverrides.during(h, LookoutConfig.RECALL_BLOCKS, 6);
+        ConfigOverrides.during(h, LookoutConfig.RECALL_SECONDS, 10);
+        Rig r = rig(h);
+        Shark s = shark(h, r, 16, 0);
+        h.runAtTickTime(5, () -> {
+            Player p = inTheNest(h, r);
+            long now = firstScan(h, r);
+            h.assertTrue(about(scan(h, r, List.of(p), now), key(s)).size() == 1, "first call");
+            h.assertTrue(about(scan(h, r, List.of(p), now + 60), key(s)).isEmpty(), "called again in view, not closer");
+            Vec3 n = r.floor();
+            s.moveTo(n.x + 12, s.getY(), n.z);
+            h.assertTrue(about(scan(h, r, List.of(p), now + 120), key(s)).isEmpty(), "called again 4 blocks closer");
+            s.moveTo(n.x + 8, s.getY(), n.z);
+            List<Lookouts.Report> closer = about(scan(h, r, List.of(p), now + 140), key(s));
+            h.assertTrue(closer.size() == 1, "not called again 8 blocks closer: " + closer);
+            h.assertTrue(about(scan(h, r, List.of(p), now + 200), key(s)).isEmpty(), "called again right after");
+            h.assertTrue(about(scan(h, r, List.of(p), now + 140 + 200), key(s)).size() == 1, "not called again 10 s later");
+            s.discard();
+            Lookouts.forget(r.ship().id());
+            h.succeed();
+        });
     }
 
     /**

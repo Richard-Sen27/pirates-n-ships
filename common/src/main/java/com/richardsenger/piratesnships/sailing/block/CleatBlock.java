@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.sailing.block;
 
+import com.richardsenger.piratesnships.core.text.ActionBar;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.material.FluidState;
@@ -153,7 +154,7 @@ public class CleatBlock extends FaceAttachedHorizontalDirectionalBlock implement
                     level.playSound(null, pos, SoundEvents.DYE_USE, SoundSource.BLOCKS, 1f, 1f);
                     stack.consume(1, player);
                 }
-                player.displayClientMessage(SailDecorations.message(o, dye.getDyeColor()), true);
+                ActionBar.show(player, SailDecorations.message(o, dye.getDyeColor()));
             }
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
@@ -185,8 +186,9 @@ public class CleatBlock extends FaceAttachedHorizontalDirectionalBlock implement
         }
         if (level instanceof ServerLevel serverLevel) {
             SailTrim next = TriangularSails.cycle(serverLevel, pos);
-            player.displayClientMessage(next == null ? Component.translatable(KEY_NO_SAIL)
-                    : Component.translatable(SailWinchBlock.KEY_SAIL_SET, Component.translatable(SailWinchBlock.trimKey(next))), true);
+            if (next == null) { // MSG1: a new trim shows in the cloth
+                player.displayClientMessage(Component.translatable(KEY_NO_SAIL), true);
+            }
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

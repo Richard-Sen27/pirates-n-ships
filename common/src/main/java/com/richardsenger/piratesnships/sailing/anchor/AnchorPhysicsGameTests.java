@@ -197,8 +197,8 @@ public final class AnchorPhysicsGameTests {
             if (t == SETTLE + 2) {
                 v0 = speed(f.ship());
                 heading0 = f.runtime().headingDegrees(f.ship());
-                Component c = ShipControls.useCapstan(h.getLevel(), capstan);
-                h.assertTrue(key(c).equals(ShipControls.KEY_DROPPING), "drop refused: " + c.getString());
+                ShipControls.CapstanResult c = ShipControls.useCapstan(h.getLevel(), capstan);
+                h.assertTrue(c.result() == ShipControls.AnchorResult.DROPPING, "drop refused: " + c.result());
                 ShipAnchor a = f.runtime().anchor();
                 dropHawse = f.ship().toWorld(a.hawse());
                 drop = t;
@@ -295,8 +295,8 @@ public final class AnchorPhysicsGameTests {
                 h.assertTrue(r.worstLoss <= 0.15, "one tick lost " + f2(100 * r.worstLoss) + " % of the speed");
                 h.assertTrue(yaw[0] >= 30.0, "yawed only " + f2(yaw[0]) + "° to starboard within 5 s of the chain coming taut");
                 h.assertTrue(r.everForce, "no chain force");
-                Component c = ShipControls.useCapstan(h.getLevel(), r.capstan);
-                h.assertTrue(key(c).equals(ShipControls.KEY_RAISING), "raise refused: " + c.getString());
+                ShipControls.CapstanResult c = ShipControls.useCapstan(h.getLevel(), r.capstan);
+                h.assertTrue(c.result() == ShipControls.AnchorResult.RAISING, "raise refused: " + c.result());
                 raised[0] = t;
             }
             if (raised[0] >= 0 && r.f.runtime().anchor() == null) {
@@ -396,8 +396,8 @@ public final class AnchorPhysicsGameTests {
                 return;
             }
             if (t == 10) {
-                Component c = ShipControls.useCapstan(h.getLevel(), capstan);
-                h.assertTrue(key(c).equals(ShipControls.KEY_DROPPING), "drop refused: " + c.getString());
+                ShipControls.CapstanResult c = ShipControls.useCapstan(h.getLevel(), capstan);
+                h.assertTrue(c.result() == ShipControls.AnchorResult.DROPPING, "drop refused: " + c.result());
                 return;
             }
             AnchorStatus st = f.runtime().anchorStatus();
@@ -408,8 +408,8 @@ public final class AnchorPhysicsGameTests {
                 maxStretch[0] = Math.max(maxStretch[0], st.distance() - st.paidOut());
                 if (t == holdFrom[0] + 400) {
                     anchoredAtEnd[0] = f.runtime().isAnchored();
-                    Component c = ShipControls.useCapstan(h.getLevel(), capstan);
-                    h.assertTrue(key(c).equals(ShipControls.KEY_RAISING), "raise refused: " + c.getString());
+                    ShipControls.CapstanResult c = ShipControls.useCapstan(h.getLevel(), capstan);
+                    h.assertTrue(c.result() == ShipControls.AnchorResult.RAISING, "raise refused: " + c.result());
                     raised[0] = t;
                 }
             }

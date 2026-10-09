@@ -22,11 +22,6 @@ public enum PumpOrder implements CrewOrder {
         return "pump_order." + Constants.MOD_ID + "." + id();
     }
 
-    /** Translation key of the crew's acknowledgement ("Aye, manning the pump!"). */
-    @Override
-    public String ackKey() {
-        return "message." + Constants.MOD_ID + ".crew.ack." + id();
-    }
 
     /** "The bilge is dry, captain." */
     @Override

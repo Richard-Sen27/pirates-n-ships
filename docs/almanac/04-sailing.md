@@ -128,6 +128,9 @@ illustration: ratlines
 
 Climb a hanging net like a ladder; walk up a sloped one. A net needs something to rest on: break one and the nets that hung from it fall too. A sloped run may end on a yard right beside the mast, and from there you climb straight on up the hanging net above.
 
+## Ratline nets
+{item:pirates_n_ships:ratline_net}A **ratline net** runs from a **chainplate** at the rail to a **mast hoop** up the mast, at any slope from 30° to straight up. Put the chainplate on top of the rail or on its side and the hoop on the mast, then use the net on one and then on the other. The line between their rings must be clear of blocks and at most 12 blocks long; you are told what is wrong otherwise. Walk into the net and hold forward or jump to climb it along its line; sneak to hold on. Break the net, either fitting or put a block into the net and the whole net comes down and drops at the first fitting; the fittings stay. The net sails with the ship.
+
 ## The ship's bell
 illustration: ships_bell
 show_me: ships_bell | Show me: the ship's bell
@@ -142,11 +145,13 @@ The {item:pirates_n_ships:crows_nest}**crow's nest** is a barrel for the masthea
 
 Whoever stands in the nest keeps the lookout, you or a hand you post there with the whistle. Every few seconds the lookout sweeps 160 blocks around the ship and calls what is new to everyone aboard:
 
-- **Sail ho!** A ship, by the flag she flies: merchant, navy, pirate, a wreck, or just a ship.
-- **Land ho!** The nearest coast, once per stretch of shore.
+- **Ships**, by the flag they fly: a merchant, a navy ship, a pirate ship, a wreck, or just a sail.
+- **Land**, the nearest coast, once per stretch of shore.
 - Sharks, and the kraken.
 
-Bearings are called in points of the compass from the bow: dead ahead, two points off the starboard bow, on the beam, abaft the beam, dead astern. A full circle is 32 points. The lookout calls each sighting once and remembers it a while after it drops from view.
+A call is short. One line appears over your hotbar, "Sail two points to starboard, 140 blocks" or "Land ahead, 300 blocks", a small bell rings up in the nest, and a diamond lights on the rim of your compass where the sighting lies: white for land, red for a pirate, blue for the navy, grey for the rest. The mark fades after half a minute. Nothing goes to chat.
+
+Bearings are called from the bow: ahead, so many points to starboard or port (a full circle is 32 points), abeam, on the quarter, astern. The lookout calls each sighting once, then again when it has closed in a good way or after two minutes, and remembers it a while after it drops from view.
 
 ## The ship's panels
 While you are aboard, two small panels watch over her.

@@ -1,6 +1,8 @@
 {
   "values": [
     "#minecraft:fences",
-    "#minecraft:walls"
+    "#minecraft:walls",
+    "pirates_n_ships:yard",
+    "pirates_n_ships:crows_nest"
   ]
 }

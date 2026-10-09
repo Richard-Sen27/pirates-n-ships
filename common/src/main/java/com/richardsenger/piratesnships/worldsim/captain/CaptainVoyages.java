@@ -12,6 +12,8 @@ import com.richardsenger.piratesnships.mob.captain.CaptainSeaHook;
 import com.richardsenger.piratesnships.mob.captain.IslandCaptains;
 import com.richardsenger.piratesnships.mob.captain.PirateCaptain;
 import com.richardsenger.piratesnships.mob.entity.Pirate;
+import com.richardsenger.piratesnships.ship.ShipData;
+import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.trade.market.PortKind;
@@ -26,6 +28,7 @@ import com.richardsenger.piratesnships.worldsim.materialize.MaterializeConfig;
 import com.richardsenger.piratesnships.worldsim.materialize.Materializer;
 import com.richardsenger.piratesnships.worldsim.materialize.VoyageCrew;
 import com.richardsenger.piratesnships.worldsim.materialize.VoyageEndings;
+import com.richardsenger.piratesnships.worldsim.materialize.VoyageShips;
 import com.richardsenger.piratesnships.worldsim.voyage.ConvoyPlanner;
 import com.richardsenger.piratesnships.worldsim.voyage.Voyage;
 import com.richardsenger.piratesnships.worldsim.voyage.VoyageConfig;
@@ -571,17 +574,44 @@ public final class CaptainVoyages implements CaptainSeaHook {
         SINKING.clear();
     }
 
-    /** The label of a captain's voyage in {@code /pirates world voyages}: his name, and whether he is still aboard. */
+    /**
+     * The label of a captain's voyage in {@code /pirates world voyages}: his name, whether he is still aboard, and the
+     * name of his ship (TPL2, {@link #shipName}).
+     */
     public static Optional<Component> label(MinecraftServer server, Voyage v) {
         if (!isCaptainVoyage(v)) return Optional.empty();
         Optional<CaptainEntry> entry = CaptainRegistry.get(server).get(v.from());
         if (entry.isEmpty()) return Optional.empty();
         boolean aboard = entry.get().atSea() && entry.get().voyage().equals(Optional.of(v.id()));
-        return Optional.of(Component.translatable(KEY + (aboard ? "label" : "label_without"), entry.get().name()));
+        String ship = shipName(server, v).orElse(Materializer.name(v));
+        return Optional.of(Component.translatable(KEY + (aboard ? "label" : "label_without"), entry.get().name(), ship));
+    }
+
+    /**
+     * TPL2: the ship of a captain's voyage is named after him ({@link CaptainShipNames}: "Black-Tooth Bartholomew
+     * Crowe's Sea Wolf", the pirate name {@link Materializer#name} would have given it made his), from the island's
+     * captain entry; empty for any other voyage or an island without one. The materialiser names the ship with it
+     * ({@link Materializer#namer}), so the ship's record, its nameplate and every list show it.
+     */
+    public static Optional<String> shipName(MinecraftServer server, Voyage v) {
+        if (!isCaptainVoyage(v)) return Optional.empty();
+        return CaptainRegistry.get(server).get(v.from()).map(e -> CaptainShipNames.of(e.name(), Materializer.name(v)));
+    }
+
+    /**
+     * TPL2: every lookout knows a captain's ship by sight ({@code Lookouts.renown}): the name of the materialised ship
+     * {@code ship} when it sails a captain's voyage (its recorded name, else {@link #shipName}), else empty.
+     */
+    public static Optional<String> renownedShip(ServerLevel level, UUID ship) {
+        MinecraftServer server = level.getServer();
+        Optional<Voyage> v = VoyageShips.voyageOf(ship).flatMap(id -> Voyages.get(server, id)).filter(CaptainVoyages::isCaptainVoyage);
+        if (v.isEmpty()) return Optional.empty();
+        Optional<String> recorded = ShipRegistry.get(server).find(ship).map(ShipData::name).filter(n -> !n.isBlank());
+        return recorded.isPresent() ? recorded : shipName(server, v.get());
     }
 
     public static void lang(LangBuilder lang) {
-        lang.add(KEY + "label", "captain %s aboard")
-                .add(KEY + "label_without", "without captain %s");
+        lang.add(KEY + "label", "captain %s aboard %s")
+                .add(KEY + "label_without", "%2$s without captain %1$s");
     }
 }

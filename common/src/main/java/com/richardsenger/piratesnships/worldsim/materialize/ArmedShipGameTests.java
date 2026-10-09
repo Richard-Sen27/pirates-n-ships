@@ -15,11 +15,14 @@ import com.richardsenger.piratesnships.law.flag.Faction;
 import com.richardsenger.piratesnships.ship.ShipTestCleanup;
 import com.richardsenger.piratesnships.ship.assembly.AssemblyResult;
 import com.richardsenger.piratesnships.ship.assembly.ShipHelm;
+import com.richardsenger.piratesnships.ship.rigging.RatlinesBlock;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.ship.template.ShipTemplatePlacer;
 import com.richardsenger.piratesnships.ship.template.ShipTemplates;
 import com.richardsenger.piratesnships.station.StationContent;
+import com.richardsenger.piratesnships.station.lookout.CrowsNestBlock;
+import com.richardsenger.piratesnships.station.lookout.Lookouts;
 import com.richardsenger.piratesnships.trade.good.TradeGoods;
 import com.richardsenger.piratesnships.worldsim.lane.Lane;
 import com.richardsenger.piratesnships.worldsim.voyage.Voyage;
@@ -30,17 +33,27 @@ import com.richardsenger.piratesnships.worldsim.voyage.VoyageKind;
 import com.richardsenger.piratesnships.worldsim.voyage.Voyages;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -56,6 +69,9 @@ import java.util.UUID;
  * removed for the mast): the armed navy sloop floats upright with its four guns, its gun crews are seated at all four
  * and load from its shot locker; a materialised navy or pirate voyage appears with {@code cannon_rounds} rounds per gun
  * in the locker and loaded guns, a merchant on the same hull with none, and dematerialising ignores the ammunition.
+ * TPL2: a navy patrol keeps a lookout in its crow's nest ({@code man_lookout}), and a player climbs the ratlines from
+ * the quarterdeck to the nest without a jump (RL1b; the sloop's structure placed on land), while on the assembled sloop
+ * every link stands.
  * Each test has its own batch (the stocking tests change or read config values).
  */
 public final class ArmedShipGameTests {
@@ -316,6 +332,189 @@ public final class ArmedShipGameTests {
             finish(h, v);
             h.succeed();
         });
+    }
+
+    // ------------------------------------------------------------------ the lookout (TPL2)
+
+    /** The crew members of {@code v} aboard, by whether they sit in the ship's crow's nest. */
+    private static List<CrewMember> crewInTheNest(GameTestHelper h, ShipBody ship, Voyage v, boolean inNest) {
+        BlockPos nest = VoyageCrew.nest(h.getLevel(), ship);
+        List<CrewMember> out = new ArrayList<>();
+        for (var e : VoyageCrew.alive(h.getLevel(), ship, v.id(), VoyageCrew.CREW_TAG)) {
+            if (!(e instanceof CrewMember c)) continue;
+            boolean there = nest != null && c.assignment() != null && c.assignment().pos().equals(nest);
+            if (there == inNest) out.add(c);
+        }
+        return out;
+    }
+
+    /**
+     * TPL2: a navy patrol on the armed sloop appears with one of its deckhands seated in the crow's nest, pinned there
+     * (the job board leaves him), so {@link Lookouts#isManned} sees the nest manned (LAW4's bonus applies); the crew is
+     * still {@code crew_per_ship} + the helmsman, who keeps the helm.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "lookout")
+    public static void aNavyPatrolKeepsALookoutInItsNest(GameTestHelper h) {
+        basin(h);
+        Voyage v = voyage(h, VoyageKind.PATROL, Faction.NAVY, ShipTemplates.NAVY_SLOOP_ARMED_ID, Map.of());
+        ShipBody[] ship = new ShipBody[1];
+        h.runAtTickTime(5, () -> ship[0] = materialize(h, v));
+        h.runAtTickTime(25, () -> {
+            BlockPos nest = VoyageCrew.nest(h.getLevel(), ship[0]);
+            h.assertTrue(nest != null && h.getLevel().getBlockState(nest).getBlock() instanceof CrowsNestBlock, "no crow's nest on the patrol");
+            List<CrewMember> up = crewInTheNest(h, ship[0], v, true);
+            List<CrewMember> down = crewInTheNest(h, ship[0], v, false);
+            h.assertTrue(up.size() == 1, "lookouts in the nest: " + up.size());
+            CrewMember lookout = up.get(0);
+            h.assertTrue(lookout.isAtStation() && lookout.isPinned(), "the lookout is not seated and pinned: seated "
+                    + lookout.isAtStation() + ", pinned " + lookout.isPinned());
+            Vec3 floor = ship[0].toWorld(Vec3.atBottomCenterOf(nest));
+            h.assertTrue(lookout.position().distanceTo(floor) < 0.6, "the lookout stands at " + lookout.position() + ", the nest at " + floor);
+            h.assertTrue(Lookouts.isManned(h.getLevel(), ship[0]), "Lookouts.isManned does not see the voyage's lookout");
+            h.assertValueEqual(up.size() + down.size(), MaterializeConfig.CREW_PER_SHIP.get() + 1, "crew aboard");
+            BlockPos helm = ShipHelm.steering(ship[0]);
+            h.assertTrue(down.stream().anyMatch(c -> c.assignment() != null && c.assignment().pos().equals(helm) && c.isAtStation()),
+                    "nobody at the helm");
+            finish(h, v);
+            h.succeed();
+        });
+    }
+
+    /** TPL2: with {@code materialize.man_lookout} off nobody goes up: the nest stays empty and unmanned, the crew is the same. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = CONFIG_BATCH + "lookout")
+    public static void withManLookoutOffTheNestStaysEmpty(GameTestHelper h) {
+        ConfigOverrides.during(h, MaterializeConfig.MAN_LOOKOUT, false);
+        basin(h);
+        Voyage v = voyage(h, VoyageKind.PATROL, Faction.NAVY, ShipTemplates.NAVY_SLOOP_ARMED_ID, Map.of());
+        ShipBody[] ship = new ShipBody[1];
+        h.runAtTickTime(5, () -> ship[0] = materialize(h, v));
+        h.runAtTickTime(25, () -> {
+            h.assertTrue(VoyageCrew.nest(h.getLevel(), ship[0]) != null, "no crow's nest on the patrol");
+            h.assertTrue(crewInTheNest(h, ship[0], v, true).isEmpty(), "somebody sits in the nest");
+            h.assertFalse(Lookouts.isManned(h.getLevel(), ship[0]), "the nest counts as manned");
+            h.assertValueEqual(crewInTheNest(h, ship[0], v, false).size(), MaterializeConfig.CREW_PER_SHIP.get() + 1, "crew aboard");
+            finish(h, v);
+            h.succeed();
+        });
+    }
+
+    /**
+     * TPL2, RL1b: a mock player climbs the port ratlines of the armed navy sloop from the quarterdeck to the crow's nest
+     * in one go, never jumping: up the sloped run walking toward the bow (it rises like a stair) into its top link on the
+     * upper yard's end, then facing the mast and pushing against it (the top sloped link and the hung net are both
+     * climbable, so he rises without a jump) and over into the nest. The sloop's structure is placed on land in the
+     * test area, not assembled: the walk then runs through vanilla collision in doubles at the test's own coordinates.
+     * (On a ship the scripted walk went through Sable's f32 plot collision, which is coarse at the high plot indices a
+     * full GameTest run hands out; that the links stand and climb on an assembled ship is
+     * {@link #theRatlinesStandOnTheAssembledSloop} and the RL1 ship climbs.) Each phase is chosen from the player's
+     * position in the structure's frame.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 400, batch = BATCH + "ratlines")
+    public static void aPlayerClimbsTheRatlinesToTheNest(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        StructureTemplate sloop = level.getStructureManager().get(Constants.id("ships/navy_sloop_armed")).orElse(null);
+        if (sloop == null) throw new GameTestAssertException("no navy_sloop_armed structure");
+        BlockPos origin = h.absolutePos(new BlockPos(19, 1, 9));
+        Vec3i size = sloop.getSize();
+        for (int x = -1; x <= size.getX(); x++) {
+            for (int z = -1; z <= size.getZ(); z++) {
+                for (int y = 0; y <= size.getY() + 4; y++) {
+                    BlockPos p = origin.offset(x, y, z);
+                    if (level.getBlockState(p).is(Blocks.BARRIER)) level.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                }
+            }
+        }
+        sloop.placeInWorld(level, origin, origin, new StructurePlaceSettings(), level.getRandom(), Block.UPDATE_CLIENTS);
+        BlockPos nest = origin.offset(4, 20, 13);
+        h.assertTrue(level.getBlockState(nest).getBlock() instanceof CrowsNestBlock, "no nest at " + nest);
+        Player[] player = {null};
+        double[] start = {0};
+        String[] phase = {"walk"};
+        double[] highest = {0};
+        int[] tick = {0};
+        h.onEachTick(() -> {
+            int t = tick[0]++;
+            if (t == 5) { // on the quarterdeck one block abaft the port run's foot [3, 8, 22]
+                Player p = h.makeMockPlayer(GameType.SURVIVAL);
+                p.moveTo(origin.getX() + 3.5, origin.getY() + 8.02, origin.getZ() + 23.5, 180f, 0f);
+                level.addFreshEntity(p);
+                player[0] = p;
+                start[0] = p.getY() - origin.getY();
+            }
+            Player p = player[0];
+            if (p == null || p.isRemoved()) return;
+            Vec3 local = p.position().subtract(Vec3.atLowerCornerOf(origin));
+            highest[0] = Math.max(highest[0], local.y);
+            p.setJumping(false); // never: the climb is continuous
+            switch (phase[0]) {
+                case "walk" -> { // up the slope toward the bow, into the top link over the yard's end
+                    face(p, 0, -1);
+                    p.zza = 1f;
+                    if (local.z < 13.95 && local.y > 16.9) phase[0] = "climb";
+                }
+                case "climb" -> { // face the mast (east of the port run), keep on its column, push and rise
+                    face(p, 1, Math.max(-1, Math.min(1, 2 * (13.5 - local.z))));
+                    p.zza = 1f;
+                    if (local.y >= 20) phase[0] = "step";
+                }
+                default -> { // over into the nest
+                    face(p, 1, 0);
+                    p.zza = 1f;
+                }
+            }
+        });
+        h.succeedWhen(() -> {
+            Player p = player[0];
+            if (p == null) throw new GameTestAssertException("not spawned yet");
+            if (!p.blockPosition().equals(nest)) {
+                throw new GameTestAssertException("not in the nest yet: phase " + phase[0] + ", at "
+                        + p.position().subtract(Vec3.atLowerCornerOf(origin)) + ", highest " + highest[0] + ", started at " + start[0]);
+            }
+            Constants.LOG.info("[RL1b] climbed from y {} to the nest without a jump", start[0]);
+            p.discard();
+        });
+    }
+
+    /**
+     * TPL2, RL1b: on the armed navy sloop assembled and afloat, every ratlines block of the template is in the ship's plot
+     * with its state, stands there ({@code canSurvive}: the top sloped links on the upper yard's ends, the hung ones on
+     * the mast) and is climbable. Plot cells are integers, so this holds at any plot index.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "ratlines")
+    public static void theRatlinesStandOnTheAssembledSloop(GameTestHelper h) {
+        basin(h);
+        ShipTemplatePlacer.Result r = ShipTemplatePlacer.place(h.getLevel(), ShipTemplates.NAVY_SLOOP_ARMED_ID,
+                h.absolutePos(new BlockPos(24, 8, 44)), Direction.NORTH, true, true, null);
+        AssemblyResult a = r.assembly();
+        if (a == null || a.shipId() == null) throw new GameTestAssertException("not placed and assembled: " + r.outcome() + " " + a);
+        ShipTestCleanup.track(h, a.shipId());
+        ShipBody ship = SableShips.byId(h.getLevel(), a.shipId());
+        h.assertTrue(ship != null, "no ship");
+        StructureTemplate sloop = h.getLevel().getStructureManager().get(Constants.id("ships/navy_sloop_armed")).orElseThrow();
+        List<ShipTemplatePlacer.LocalBlock> nets = ShipTemplatePlacer.blocks(sloop, h.getLevel().holderLookup(Registries.BLOCK))
+                .stream().filter(b -> b.state().getBlock() instanceof RatlinesBlock).toList();
+        h.assertValueEqual(nets.size(), 24, "ratlines in the template");
+        h.runAtTickTime(40, () -> { // settled afloat
+            // template cell -> plot: the template's helm is at [4, 8, 22]
+            BlockPos offset = ShipHelm.steering(ship).subtract(new BlockPos(4, 8, 22));
+            for (ShipTemplatePlacer.LocalBlock b : nets) {
+                BlockPos at = b.pos().offset(offset);
+                BlockState s = h.getLevel().getBlockState(at);
+                h.assertTrue(s.equals(b.state()), "ratlines at template " + b.pos() + " is " + s + " in the plot");
+                h.assertTrue(s.canSurvive(h.getLevel(), at), "the ratlines at template " + b.pos() + " cannot stand on the ship");
+                h.assertTrue(s.is(BlockTags.CLIMBABLE), "not climbable");
+            }
+            h.assertTrue(h.getLevel().getBlockState(new BlockPos(4, 20, 13).offset(offset)).getBlock() instanceof CrowsNestBlock,
+                    "no nest on the ship");
+            h.succeed();
+        });
+    }
+
+    /** Turns {@code p} to look along the horizontal direction ({@code dx}, {@code dz}). */
+    private static void face(Player p, double dx, double dz) {
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+        p.setYRot(yaw);
+        p.setYHeadRot(yaw);
     }
 
     private static String fmt(double d) {

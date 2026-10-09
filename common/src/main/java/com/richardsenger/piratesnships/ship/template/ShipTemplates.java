@@ -40,8 +40,9 @@ public final class ShipTemplates {
     /**
      * The navy patrols' sloop (WS4c, art/schematics/navy_sloop_armed.py): {@link #STARTER_SLOOP} with two cannons a side
      * in the waist, firing through gun ports cut in the bulwark, and a shot locker (barrel) in the hold beside the mast
-     * at [4, 3, 14], within the gun crews' supply range of all four guns. Same hull, helm and waterline. Not sold at
-     * the shipwright.
+     * at [4, 3, 14], within the gun crews' supply range of all four guns; TPL2: a crow's nest on the mast top at
+     * [4, 20, 13], ratlines on both sides of the mast from the quarterdeck up to it, and the flag on a taffrail staff.
+     * Same hull, helm and waterline. Not sold at the shipwright.
      */
     public static final ShipTemplate NAVY_SLOOP_ARMED = new ShipTemplate(Constants.id("ships/navy_sloop_armed"),
             nameKey(NAVY_SLOOP_ARMED_ID), Optional.of(new BlockPos(4, 8, 22)), Optional.of(2), Direction.NORTH, 0, false);

@@ -11,6 +11,7 @@ import com.richardsenger.piratesnships.combat.cannon.CannonService;
 import com.richardsenger.piratesnships.combat.cannon.CannonShipHits;
 import com.richardsenger.piratesnships.combat.cannon.CannonStation;
 import com.richardsenger.piratesnships.combat.cannon.CannonballEntity;
+import com.richardsenger.piratesnships.combat.cannon.ShotKind;
 import com.richardsenger.piratesnships.combat.content.CombatContent;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
@@ -458,5 +459,73 @@ public final class GunneryGameTests {
                 cleanup(h, s, crew);
             });
         });
+    }
+
+    // ------------------------------------------------------------------ which shot (CAN3)
+
+    /** A locker holding powder and every shot: two balls, two chain shot, two grapeshot. */
+    private static void mixedSupply(GameTestHelper h, Setup s) {
+        if (!(h.getLevel().getBlockEntity(s.chest()) instanceof Container c)) throw new GameTestAssertException("no chest");
+        c.setItem(0, new ItemStack(Items.GUNPOWDER, 6));
+        c.setItem(1, new ItemStack(CombatContent.CANNONBALL.get(), 2));
+        c.setItem(2, new ItemStack(CannonContent.CHAIN_SHOT.get(), 2));
+        c.setItem(3, new ItemStack(CannonContent.GRAPESHOT.get(), 2));
+    }
+
+    /** Waits until the crew has loaded the gun (by itself) and checks the shot it put in. */
+    private static void loadsShot(GameTestHelper h, Setup s, CrewMember crew, ShotKind kind, net.minecraft.world.entity.Mob... more) {
+        h.succeedWhen(() -> {
+            BlockState st = h.getLevel().getBlockState(s.cannon());
+            h.assertTrue(load(h, s) == CannonLoad.LOADED, "not loaded yet: " + explain(h, s));
+            h.assertTrue(st.getValue(CannonBlock.SHOT) == kind, "loaded " + st.getValue(CannonBlock.SHOT) + ", expected " + kind
+                    + ": " + explain(h, s));
+            cleanup(h, s, crew);
+            for (net.minecraft.world.entity.Mob m : more) m.discard();
+        });
+    }
+
+    /**
+     * Three vindicators stand on the Jolly Roger target's deck: a crew firing at will loads grapeshot from a locker that
+     * holds every shot (grapeshot range raised to 32, the ships' centres lie 24 apart).
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = CONFIG_BATCH + "grapeshot_choice")
+    public static void aCrowdedTargetDeckGetsGrapeshot(GameTestHelper h) {
+        ConfigOverrides.during(h, GunneryConfig.GRAPESHOT_RANGE, 32);
+        Setup s = setup(h, Direction.EAST, FlagKind.JOLLY_ROGER, false);
+        mixedSupply(h, s);
+        net.minecraft.world.entity.Mob[] fighters = new net.minecraft.world.entity.Mob[3];
+        for (int i = 0; i < 3; i++) {
+            Vec3 deck = s.target().ship().toWorld(Vec3.atBottomCenterOf(s.target().helmPlot().offset(i - 1, 0, 1)));
+            fighters[i] = h.spawnWithNoFreeWill(net.minecraft.world.entity.EntityType.VINDICATOR, h.relativeVec(deck));
+        }
+        CrewMember crew = gunner(h, s);
+        h.runAfterDelay(2, () -> h.assertTrue(Gunnery.fighters(h.getLevel(), s.gunner().ship(), s.target().ship()) == 3,
+                "fighters counted: " + Gunnery.fighters(h.getLevel(), s.gunner().ship(), s.target().ship())));
+        Gunnery.set(h.getLevel(), s.gunner().ship(), GunneryState.AT_WILL);
+        loadsShot(h, s, crew, ShotKind.GRAPE, fighters);
+    }
+
+    /** The same locker and an empty target deck: a crew firing at will loads a ball. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = BATCH + "ball_choice")
+    public static void atWillAnEmptyDeckGetsABall(GameTestHelper h) {
+        Setup s = setup(h, Direction.EAST, FlagKind.JOLLY_ROGER, false);
+        mixedSupply(h, s);
+        CrewMember crew = gunner(h, s);
+        Gunnery.set(h.getLevel(), s.gunner().ship(), GunneryState.AT_WILL);
+        loadsShot(h, s, crew, ShotKind.BALL);
+    }
+
+    /**
+     * A chosen quarry (a hunt's target) still under way gets chain shot; the hulls rest in the dock, so the quarry's
+     * least speed for chain shot is lowered to 0 here.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = CONFIG_BATCH + "chain_choice")
+    public static void aChasedQuarryGetsChainShot(GameTestHelper h) {
+        ConfigOverrides.during(h, GunneryConfig.CHAIN_SHOT_MIN_SPEED, 0.0);
+        Setup s = setup(h, Direction.EAST, FlagKind.MERCHANT, false);
+        mixedSupply(h, s);
+        CrewMember crew = gunner(h, s);
+        Gunnery.set(h.getLevel(), s.gunner().ship(), GunneryState.target(s.targetId()));
+        loadsShot(h, s, crew, ShotKind.CHAIN);
     }
 }

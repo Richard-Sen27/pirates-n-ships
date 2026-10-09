@@ -106,6 +106,45 @@ public final class CannonConfig {
             "Ticks a crew member needs to load a swivel gun; at least the reload time after a shot");
     public static final ConfigValue<Boolean> CREW_AUTO_RELOAD = CREW.bool("auto_reload", true,
             "After firing, a crew member loads the gun again by itself from the supply");
+    public static final ConfigValue<ShotKind> CREW_LOAD_PREFERENCE = CREW.enumValue("load_preference", ShotKind.BALL,
+            "The shot a crew loads into a cannon on \"Load!\" and after its own shot when the supply holds several kinds "
+                    + "(BALL, CHAIN or GRAPE); then the ball, chain shot and grapeshot. Crews firing at will choose by "
+                    + "cannons.npc instead");
+
+    // ---- chain shot and grapeshot (CAN3) ---------------------------------------------------------------------------
+
+    private static final ConfigSection CHAIN = S.section("chain_shot",
+            "Chain shot: two balls on a chain that tear sail cloth and cut rigging; no hull breach");
+    public static final ConfigValue<Boolean> CHAIN_ENABLED = CHAIN.bool("enabled", true,
+            "Chain shot can be loaded into cannons. Off = cannons refuse it");
+    public static final ConfigValue<Double> CHAIN_RANGE_FACTOR = CHAIN.doubleRange("range_factor", 0.6, 0.1, 1.0,
+            "Start speed of chain shot as a share of cannons.muzzle_velocity (a level shot's reach scales with it)");
+    public static final ConfigValue<Double> CHAIN_SPREAD_DEGREES = CHAIN.doubleRange("spread_degrees", 2.0, 0.0, 30.0,
+            "Chain shot leaves the barrel up to this many degrees off its line");
+    public static final ConfigValue<Double> CHAIN_DAMAGE = CHAIN.doubleRange("damage", 12.0, 0.0, 1000.0,
+            "Damage of chain shot hitting an entity (times combat.damage_multipliers.cannon_entity)");
+    public static final ConfigValue<Boolean> CHAIN_RIGGING_DAMAGE = CHAIN.bool("rigging_damage", true,
+            "Chain shot tears the cloth of square sails, cuts ropes (a cut stay drops its sail) and breaks ratlines within "
+                    + "cloth_radius of its path through the rigging and of where it strikes. Off = it only hurts entities");
+    public static final ConfigValue<Double> CHAIN_CLOTH_RADIUS = CHAIN.doubleRange("cloth_radius", 1.5, 0.0, 8.0,
+            "Radius in blocks around where chain shot passes through a sail or strikes, in which cloth, ropes and ratlines go");
+    public static final ConfigValue<Integer> CHAIN_MEND_TICKS = CHAIN.intRange("mend_ticks", 1200, 0, 1_728_000,
+            "A torn sail mends one block of cloth every this many ticks (0 = never; breaking and replacing the upper yard "
+                    + "always gives new cloth)");
+
+    private static final ConfigSection GRAPE = S.section("grapeshot",
+            "Grapeshot: a canvas bag of small balls that leaves the muzzle as a cone of pellets hitting the people on a deck");
+    public static final ConfigValue<Boolean> GRAPE_ENABLED = GRAPE.bool("enabled", true,
+            "Grapeshot can be loaded into cannons. Off = cannons refuse it");
+    public static final ConfigValue<Integer> GRAPE_PELLETS = GRAPE.intRange("pellets", 9, 1, 32,
+            "Pellets one grapeshot fires");
+    public static final ConfigValue<Double> GRAPE_RANGE_FACTOR = GRAPE.doubleRange("range_factor", 0.4, 0.1, 1.0,
+            "Start speed of the pellets as a share of cannons.muzzle_velocity (a level shot's reach scales with it)");
+    public static final ConfigValue<Double> GRAPE_SPREAD_DEGREES = GRAPE.doubleRange("spread_degrees", 6.0, 0.0, 45.0,
+            "Half angle of the cone the pellets fly in, in degrees");
+    public static final ConfigValue<Double> GRAPE_DAMAGE = GRAPE.doubleRange("damage", 3.0, 0.0, 1000.0,
+            "Damage of one pellet hitting an entity (times combat.damage_multipliers.cannon_entity). Pellets break no "
+                    + "blocks and never hit the people on the firing ship");
 
     // CAN2: how the cannon's barrel is drawn on this client
     private static final ConfigSection VISUALS = ModConfigs.client("cannon_visuals", "How the cannon looks on this client");
@@ -150,6 +189,25 @@ public final class CannonConfig {
 
     public static float swivelDamage() {
         return CannonRules.entityDamage(SWIVEL_DAMAGE.get(), CombatConfig.CANNON_ENTITY_DAMAGE.get());
+    }
+
+    /** Whether {@code kind} may be loaded now (the chain shot and grapeshot toggles, CAN3). */
+    public static boolean allowed(ShotKind kind) {
+        return ShotRules.allowed(kind, CHAIN_ENABLED.get(), GRAPE_ENABLED.get());
+    }
+
+    /** Start speed of {@code kind} in blocks per tick (CAN3). */
+    public static double muzzleVelocity(ShotKind kind) {
+        return MUZZLE_VELOCITY.get() * ShotRules.velocityFactor(kind, CHAIN_RANGE_FACTOR.get(), GRAPE_RANGE_FACTOR.get());
+    }
+
+    /** Damage of {@code kind} hitting an entity, per pellet for grapeshot (CAN3). */
+    public static float entityDamage(ShotKind kind) {
+        return switch (kind) {
+            case BALL -> entityDamage();
+            case CHAIN -> CannonRules.entityDamage(CHAIN_DAMAGE.get(), CombatConfig.CANNON_ENTITY_DAMAGE.get());
+            case GRAPE -> CannonRules.entityDamage(GRAPE_DAMAGE.get(), CombatConfig.CANNON_ENTITY_DAMAGE.get());
+        };
     }
 
     /** Blocks a swivel shot may destroy right now: 0 when {@code combat.cannon_block_damage} is off. */

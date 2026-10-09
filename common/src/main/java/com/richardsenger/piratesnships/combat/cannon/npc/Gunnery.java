@@ -7,6 +7,12 @@ import com.richardsenger.piratesnships.combat.cannon.CannonLoad;
 import com.richardsenger.piratesnships.combat.cannon.CannonRules;
 import com.richardsenger.piratesnships.combat.cannon.CannonService;
 import com.richardsenger.piratesnships.combat.cannon.CannonStation.CannonOrder;
+import com.richardsenger.piratesnships.combat.cannon.ShotKind;
+import com.richardsenger.piratesnships.station.winch.CaptainsWhistleItem;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.animal.WaterAnimal;
+import net.minecraft.world.entity.player.Player;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.law.LawConfig;
@@ -66,6 +72,10 @@ import java.util.function.Predicate;
  * hitting a neutral or surrendered ship as for any crew shot ({@code law.world.FlagCrimes}). A ball fired by this loop
  * breaks {@code npc_block_damage_multiplier} times the blocks ({@link #takeShot}).
  *
+ * <p>CAN3: each crew also decides which shot it wants for its target ({@link ShotChoice}: grapeshot at a crowded deck,
+ * chain shot at a quarry it chases, else the ball, {@link #wantedShot}); its load takes that shot when the locker holds
+ * it, and a gun loaded with chain shot or grapeshot aims with that shot's slower start.
+ *
  * <p>State is kept in memory only: after a restart a player gives "Fire at will" again, AI sets its targets again.
  */
 public final class Gunnery {
@@ -91,6 +101,8 @@ public final class Gunnery {
         long nextCheck;
         long nextFire;
         @Nullable UUID target;
+        /** CAN3: the shot the crew wants for its target ({@link ShotChoice}), read when it loads. */
+        volatile @Nullable ShotKind wanted;
     }
 
     /** A candidate target ship as the crews see it this tick. */
@@ -158,6 +170,17 @@ public final class Gunnery {
         Engagement e = SHIPS.get(station.ship());
         Gun gun = e == null ? null : e.guns.get(station.pos());
         return gun != null && gun.target != null;
+    }
+
+    /**
+     * The shot the crew at the cannon {@code station} wants for its target (CAN3, {@link ShotChoice}), or null while the
+     * ship's gunnery is off or the crew has no target yet: then it loads by {@code cannons.crew.load_preference}. Read by
+     * the crew's load.
+     */
+    public static @Nullable ShotKind wantedShot(StationRef station) {
+        Engagement e = SHIPS.get(station.ship());
+        Gun gun = e == null ? null : e.guns.get(station.pos());
+        return gun == null || gun.target == null ? null : gun.wanted;
     }
 
     /**
@@ -310,6 +333,14 @@ public final class Gunnery {
         gun.target = chosen == null ? null : chosen.id();
         if (chosen == null) return;
         e.lastTarget = chosen.id();
+        gun.wanted = wantedShot(level, self, e.state.mode(), chosen.id());
+        CannonLoad load = state.getValue(CannonBlock.LOAD);
+        ShotKind shot = CannonRules.canFire(load) ? state.getValue(CannonBlock.SHOT) : gun.wanted;
+        if (shot != ShotKind.BALL) {
+            // CAN3: chain shot and grapeshot fly slower; aim and judge the hit with their own start speed
+            GunCrewAim.Solution own = GunCrewAim.solve(steps, chosen.target(), ballistics(shot), rules);
+            if (own.engageable()) solution = own;
+        }
 
         int step = GunCrewAim.stepToward(be.elevationStep(), solution.bestStep());
         if (step != 0) {
@@ -318,7 +349,6 @@ public final class Gunnery {
         }
         StationState<Object> st = Stations.state(ref);
         if (st == null || st.occupant() == null || st.occupant().player() || st.order() != null) return; // busy
-        CannonLoad load = state.getValue(CannonBlock.LOAD);
         if (!CannonRules.canFire(load)) {
             if (CannonConfig.CREW_ENABLED.get()) Stations.order(level, ref, CannonOrder.LOAD);
             return;
@@ -357,8 +387,54 @@ public final class Gunnery {
     }
 
     static GunCrewAim.Ballistics ballistics() {
-        return new GunCrewAim.Ballistics(CannonConfig.MUZZLE_VELOCITY.get(), CannonConfig.GRAVITY.get(),
+        return ballistics(ShotKind.BALL);
+    }
+
+    /** The flight of {@code kind} (CAN3: chain shot and grapeshot start slower). */
+    static GunCrewAim.Ballistics ballistics(ShotKind kind) {
+        return new GunCrewAim.Ballistics(CannonConfig.muzzleVelocity(kind), CannonConfig.GRAVITY.get(),
                 CannonConfig.BALL_LIFETIME_TICKS.get());
+    }
+
+    // ---- which shot (CAN3) ----------------------------------------------------------------------------------------------
+
+    /** The shot the crews of {@code self} want against {@code targetId} ({@link ShotChoice} on what they see now). */
+    static ShotKind wantedShot(ServerLevel level, ShipBody self, GunneryState.Mode mode, UUID targetId) {
+        ShipBody target = SableShips.byId(level, targetId);
+        if (target == null) return ShotKind.BALL;
+        Vector3d v = target.linearVelocity();
+        double speed = Math.hypot(v.x, v.z);
+        Vec3 a = CrewStations.worldBox(self, 0).getCenter(), b = CrewStations.worldBox(target, 0).getCenter();
+        double distance = Math.hypot(a.x - b.x, a.z - b.z);
+        return ShotChoice.wanted(new ShotChoice.Situation(mode, speed, fighters(level, self, target), distance), shotRules());
+    }
+
+    static ShotChoice.Rules shotRules() {
+        return new ShotChoice.Rules(GunneryConfig.PREFERS_CHAIN_SHOT.get(), GunneryConfig.CHAIN_SHOT_MIN_SPEED.get(),
+                GunneryConfig.GRAPESHOT_MIN_FIGHTERS.get(), GunneryConfig.GRAPESHOT_RANGE.get(),
+                CannonConfig.CHAIN_ENABLED.get(), CannonConfig.GRAPE_ENABLED.get());
+    }
+
+    /**
+     * Fighters on {@code target}'s deck as {@code self}'s crews count them: living players (not spectators or creative)
+     * and mobs that fight (monsters, crew members, seafarers: any {@code Mob} that is no animal), standing on the target,
+     * not crew of {@code self} (its own boarders).
+     */
+    static int fighters(ServerLevel level, ShipBody self, ShipBody target) {
+        AABB box = CrewStations.worldBox(target, 2);
+        int n = 0;
+        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, box, Gunnery::fighter)) {
+            if (e instanceof CrewMember c && c.assignment() != null && c.assignment().ship().equals(self.id())) continue;
+            ShipBody on = CaptainsWhistleItem.shipOf(level, e);
+            if (on != null && on.id().equals(target.id())) n++;
+        }
+        return n;
+    }
+
+    private static boolean fighter(LivingEntity e) {
+        if (!e.isAlive()) return false;
+        if (e instanceof Player p) return !p.isSpectator() && !p.isCreative();
+        return e instanceof Mob && !(e instanceof Animal) && !(e instanceof WaterAnimal);
     }
 
     static GunCrewAim.Rules rules() {

@@ -51,7 +51,8 @@ import java.util.List;
  *
  * <p>Controls, all on the server through {@link CannonService}:
  * <ul>
- *   <li>use with gunpowder: powder in; use with a cannonball: ball in (each takes one item, none in creative);</li>
+ *   <li>use with gunpowder: powder in; use with a cannonball, chain shot or grapeshot: shot in (each takes one item, none
+ *       in creative; CAN3: the shot is {@link #SHOT});</li>
  *   <li>sneak-use with an empty hand: aim, one elevation step up when the upper half of the block is clicked, one
  *       step down for the lower half (like the helm's click position for the rudder);</li>
  *   <li>use with an empty hand: fire when loaded, otherwise say what is missing.</li>
@@ -64,6 +65,8 @@ public class CannonBlock extends Block implements EntityBlock, StationBlock {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final EnumProperty<CannonLoad> LOAD = EnumProperty.create("load", CannonLoad.class);
     public static final EnumProperty<CannonPart> PART = EnumProperty.create("part", CannonPart.class);
+    /** CAN3: the shot in a {@link CannonLoad#LOADED} barrel (on the master; {@link ShotKind#BALL} otherwise). */
+    public static final EnumProperty<ShotKind> SHOT = EnumProperty.create("shot", ShotKind.class);
 
     /** Collision and outline shapes by facing (2D value index), built in the north frame: carriage plus barrel. */
     private static final VoxelShape[] FRONT_SHAPES = new VoxelShape[4];
@@ -86,12 +89,12 @@ public class CannonBlock extends Block implements EntityBlock, StationBlock {
     public CannonBlock(Properties properties) {
         super(properties);
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(LOAD, CannonLoad.EMPTY)
-                .setValue(PART, CannonPart.FRONT));
+                .setValue(PART, CannonPart.FRONT).setValue(SHOT, ShotKind.BALL));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, LOAD, PART);
+        builder.add(FACING, LOAD, PART, SHOT);
     }
 
     /** The master block of the cannon half {@code state} at {@code pos}. */
@@ -220,7 +223,24 @@ public class CannonBlock extends Block implements EntityBlock, StationBlock {
     }
 
     static boolean isBall(ItemStack stack) {
-        return stack.is(CombatContent.CANNONBALL.get());
+        return shotOf(stack) != null;
+    }
+
+    /** The shot {@code stack} is (CAN3): a cannonball, chain shot or grapeshot; null for anything else. */
+    public static @Nullable ShotKind shotOf(ItemStack stack) {
+        if (stack.is(CombatContent.CANNONBALL.get())) return ShotKind.BALL;
+        if (stack.is(CannonContent.CHAIN_SHOT.get())) return ShotKind.CHAIN;
+        if (stack.is(CannonContent.GRAPESHOT.get())) return ShotKind.GRAPE;
+        return null;
+    }
+
+    /** The item of a shot (CAN3). */
+    public static ItemStack shotItem(ShotKind kind) {
+        return new ItemStack(switch (kind) {
+            case BALL -> CombatContent.CANNONBALL.get();
+            case CHAIN -> CannonContent.CHAIN_SHOT.get();
+            case GRAPE -> CannonContent.GRAPESHOT.get();
+        });
     }
 
     @Override
@@ -257,7 +277,7 @@ public class CannonBlock extends Block implements EntityBlock, StationBlock {
 
     /**
      * A cannon broken with drops (by a player in survival, a ball, an explosion, the other half going) gives back its
-     * powder and ball next to the cannon item (Q2). Only the master holds the load. A creative break drops nothing: the
+     * powder and ball (or chain shot or grapeshot, CAN3) next to the cannon item (Q2). Only the master holds the load. A creative break drops nothing: the
      * master then goes without drops ({@link #playerWillDestroy}, or the creative player's own break).
      */
     @Override
@@ -266,7 +286,7 @@ public class CannonBlock extends Block implements EntityBlock, StationBlock {
         if (!state.getValue(PART).isMaster()) return;
         CannonLoad load = state.getValue(LOAD);
         if (load != CannonLoad.EMPTY) popResource(level, pos, new ItemStack(Items.GUNPOWDER));
-        if (load == CannonLoad.LOADED) popResource(level, pos, new ItemStack(CombatContent.CANNONBALL.get()));
+        if (load == CannonLoad.LOADED) popResource(level, pos, shotItem(state.getValue(SHOT)));
     }
 
     /** Breaking the cannon frees the station and removes its seat (a station taken at the rear, if any, too). */

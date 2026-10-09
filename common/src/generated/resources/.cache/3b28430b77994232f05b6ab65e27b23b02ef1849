@@ -1,9 +1,9 @@
-// 1.21.1	2026-10-09T09:42:19.302988	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-09T10:42:35.146232	Block states and models: pirates_n_ships
 c189a7833975a61cf2c7c8fd326d27a32969cb9d assets/pirates_n_ships/blockstates/bilge_pump.json
 66226c130d39627104000bbfa87d4776c87b9ed0 assets/pirates_n_ships/blockstates/boarding_plank.json
 52e053a4f7334e9a78798b4b4b9a2ad80087f3d5 assets/pirates_n_ships/blockstates/brig_bars.json
 83716521a6f9785f7114fa5a9489defb1257975d assets/pirates_n_ships/blockstates/brig_door.json
-e7e8e4548fc5047cae07be49dbfd505ce3d97d96 assets/pirates_n_ships/blockstates/cannon.json
+f69f84f52e5387420b58017f56854344d4441cbc assets/pirates_n_ships/blockstates/cannon.json
 1ca2bd2df3602ba7b137ae7b56ec9fd3f195588c assets/pirates_n_ships/blockstates/capstan.json
 6b0277aae77bdb656ee4e3eee02204c69eb48c50 assets/pirates_n_ships/blockstates/cargo_barrel.json
 d8feff695031e5decd3607e4c40a9f86e1513034 assets/pirates_n_ships/blockstates/cargo_crate.json
@@ -43,6 +43,7 @@ f7fb3b356386931f9fe39ebac39ce5984c685200 assets/pirates_n_ships/models/item/cann
 6e2d9e4e9e945102afe0356dd536dd6bd2314eb5 assets/pirates_n_ships/models/item/capstan.json
 e762fd96625dae60f3cbfdcb33e82b84c2f742ab assets/pirates_n_ships/models/item/cargo_barrel.json
 724e2310f488c077c19808000615dc5c2378241c assets/pirates_n_ships/models/item/cargo_crate.json
+1cbb2c694333c101d0be3073a93dbdcaf8387875 assets/pirates_n_ships/models/item/chain_shot.json
 150e0042e6f54a263bb32c6c4d4baaf7ab127dae assets/pirates_n_ships/models/item/chart_table.json
 f1f1587eb52c46d53241c7cb9019de1506eee3b8 assets/pirates_n_ships/models/item/cleat.json
 4c8d5874ac039fc3cdddb876be53f4b1862766d2 assets/pirates_n_ships/models/item/crows_nest.json
@@ -51,6 +52,7 @@ c2828a89c739dcf7d31509c39dbef0032d04a8c0 assets/pirates_n_ships/models/item/figu
 9c494019b08c2cdab4ac80af298cd351a0f0e200 assets/pirates_n_ships/models/item/figurehead_mermaid.json
 cc79ca683cdbc9c26d9ace4c524deb0acab46534 assets/pirates_n_ships/models/item/figurehead_skull.json
 801c31e2cd8b59209585cb057659e90b8696f843 assets/pirates_n_ships/models/item/flagpole.json
+40b94603f86007da2fffbaf96b912597267f4368 assets/pirates_n_ships/models/item/grapeshot.json
 382c62816867d3ffd70a053024bd24755156b42f assets/pirates_n_ships/models/item/harbor_desk.json
 9a8098ea730c2d69b5574f6f13ade25c717e6af7 assets/pirates_n_ships/models/item/helm.json
 63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets/pirates_n_ships/models/item/kraken_spawn_egg.json

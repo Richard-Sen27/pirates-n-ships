@@ -4,6 +4,8 @@ import com.richardsenger.piratesnships.combat.cannon.CannonStation.CannonOrder;
 import com.richardsenger.piratesnships.station.StationRef;
 import com.richardsenger.piratesnships.station.StationState;
 import com.richardsenger.piratesnships.station.Stations;
+import com.richardsenger.piratesnships.combat.cannon.npc.Gunnery;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
@@ -19,7 +21,8 @@ import org.jetbrains.annotations.Nullable;
  * it and puts them in through the same service calls a player's load uses ({@link CannonService#load},
  * {@link SwivelService#load}), so block state, recorded shot and sounds are the same. {@link CannonOrder#LOAD} is the
  * order; with {@code cannons.crew.auto_reload} the crew loads again right after its own shot, and a "Fire!" given while
- * it loads waits for the load and then fires. Rules: {@link CrewSupplyRules}.
+ * it loads waits for the load and then fires. Rules: {@link CrewSupplyRules}. CAN3: a cannon takes the first shot of
+ * {@link #shotPreference} its supply holds.
  */
 final class CrewLoading {
 
@@ -47,6 +50,14 @@ final class CrewLoading {
 
         /** Puts {@code stack} in through the gun's service as a crew member (no player); true when it went in. */
         boolean put(ItemStack stack, boolean powder);
+
+        /**
+         * The ammo this load takes from {@code supply} ({@code n} items): by default any {@link #ammo()}; a cannon picks
+         * its shot by preference (CAN3).
+         */
+        default Predicate<ItemStack> ammoIn(CrewSupply supply, int n) {
+            return ammo();
+        }
     }
 
     static boolean enabled() {
@@ -65,8 +76,13 @@ final class CrewLoading {
             public CannonLoad load() { return load; }
             public long reloadLeft() { return left; }
             public int ammoCount() { return 1; }
-            public Predicate<ItemStack> ammo() { return CannonBlock::isBall; }
+            public Predicate<ItemStack> ammo() { return CrewLoading::allowedShot; }
             public int workTicks() { return CannonConfig.CREW_LOAD_TICKS.get(); }
+
+            public Predicate<ItemStack> ammoIn(CrewSupply supply, int n) {
+                ShotKind k = ShotRules.pick(shotPreference(station), kind -> supply.has(of(kind), n));
+                return k == null ? ammo() : of(k);
+            }
 
             public boolean put(ItemStack stack, boolean powder) {
                 CannonService.Outcome o = CannonService.load(level, pos, null, stack).outcome();
@@ -97,12 +113,33 @@ final class CrewLoading {
         };
     }
 
+    /** A shot whose server toggle is on (CAN3). */
+    private static boolean allowedShot(ItemStack stack) {
+        ShotKind k = CannonBlock.shotOf(stack);
+        return k != null && CannonConfig.allowed(k);
+    }
+
+    private static Predicate<ItemStack> of(ShotKind kind) {
+        return stack -> CannonBlock.shotOf(stack) == kind;
+    }
+
+    /**
+     * The order the crew at the cannon {@code station} reaches for shot in (CAN3): the shot its gunnery wants while the
+     * ship's crews fire by themselves ({@link Gunnery#wantedShot}, then ball and chain shot), else the
+     * {@code cannons.crew.load_preference} (then ball, chain shot, grapeshot).
+     */
+    static List<ShotKind> shotPreference(StationRef station) {
+        ShotKind wanted = Gunnery.wantedShot(station);
+        return wanted != null ? ShotRules.gunneryPreference(wanted, CannonConfig::allowed)
+                : ShotRules.crewPreference(CannonConfig.CREW_LOAD_PREFERENCE.get(), CannonConfig::allowed);
+    }
+
     private static CrewSupply supply(ServerLevel level, StationRef station, Gun gun) {
         return CrewSupply.around(level, station.ship(), gun.pos(), CannonConfig.CREW_SUPPLY_RANGE.get());
     }
 
     private static boolean supplied(CrewSupply supply, Gun gun, CrewSupplyRules.Need need) {
-        return supply.has(POWDER, need.powder()) && supply.has(gun.ammo(), need.ammo());
+        return supply.has(POWDER, need.powder()) && supply.has(gun.ammoIn(supply, need.ammo()), need.ammo());
     }
 
     private static @Nullable StationState<Object> state(StationRef station) {
@@ -158,9 +195,10 @@ final class CrewLoading {
             if (powder == null || !gun.put(powder, true)) return false;
             supply.take(POWDER, need.powder());
         }
-        ItemStack ammo = supply.peek(gun.ammo(), need.ammo());
+        Predicate<ItemStack> which = gun.ammoIn(supply, need.ammo());
+        ItemStack ammo = supply.peek(which, need.ammo());
         if (ammo == null || !gun.put(ammo, false)) return false;
-        supply.take(gun.ammo(), need.ammo());
+        supply.take(which, need.ammo());
         return true;
     }
 

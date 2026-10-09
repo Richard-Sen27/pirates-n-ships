@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-09T04:52:41.009228	Recipes
+// 1.21.1	2026-10-09T10:42:35.148416	Recipes
 e1289c0eb7525c60669f4203ccd8af0d9d7b0744 data/pirates_n_ships/advancement/recipes/building_blocks/hull_patch.json
 dc908cf23933449a8a82c8037e57e8f3143c20f2 data/pirates_n_ships/advancement/recipes/combat/bandana.json
 8f98eb055171c739101420a0b9bbe9f3a8bf2903 data/pirates_n_ships/advancement/recipes/combat/cannon.json
@@ -6,7 +6,9 @@ dc908cf23933449a8a82c8037e57e8f3143c20f2 data/pirates_n_ships/advancement/recipe
 62d52fbe65b3f26ccc01314bc655b95586b1d490 data/pirates_n_ships/advancement/recipes/combat/captains_boots.json
 6b2232d5d018c306d530301e08a71ffe4d75243a data/pirates_n_ships/advancement/recipes/combat/captains_breeches.json
 46202631dd28cf80ee3523c0a2d7816b7e930c1e data/pirates_n_ships/advancement/recipes/combat/captains_coat.json
+02506a9e2d211a83efc2bbf9d76c963fc6d2e45a data/pirates_n_ships/advancement/recipes/combat/chain_shot.json
 698d8285044f0e3429c2f6421d742fd348e5d011 data/pirates_n_ships/advancement/recipes/combat/cutlass.json
+7a37465796ea60e1fa7b11d09ee1ada891c54a2c data/pirates_n_ships/advancement/recipes/combat/grapeshot.json
 1cdb4544445c73aa3f110cf02a93148f6195c77b data/pirates_n_ships/advancement/recipes/combat/lead_shot.json
 4c30c582cb46fb9740066ef81d99388a82d21c59 data/pirates_n_ships/advancement/recipes/combat/musket.json
 d64b43221b5c7bdac004ebd31cdc158661063afd data/pirates_n_ships/advancement/recipes/combat/navy_hat.json
@@ -83,6 +85,7 @@ f1b0f6e430828bd90cee6c24fb2f43e83a69c394 data/pirates_n_ships/recipe/captains_bo
 8e5ee9ea39d831d5a3dc1ef34f880688f3b74458 data/pirates_n_ships/recipe/cargo_barrel.json
 e79d3d2ce55c93cd8e75ea48e8b4013497b627eb data/pirates_n_ships/recipe/cargo_crate.json
 e1cdffb3e5ce0d43d343fc4be7a16c934ae30678 data/pirates_n_ships/recipe/carpenters_hammer.json
+d2ceb13016c7584e75ffcb28cc503c2c61d34c4f data/pirates_n_ships/recipe/chain_shot.json
 aa98b09b5fe592a6a0b513413247f829c329b15d data/pirates_n_ships/recipe/chart.json
 17a9d8a97a03f65566b3ceb9fbd3745ebab217fa data/pirates_n_ships/recipe/chart_table.json
 8b65467d0ca8f4b2e5af950aef86056a3712db43 data/pirates_n_ships/recipe/cleat.json
@@ -94,6 +97,7 @@ ceccb5e0c6d3a0b2ea95cbe0c892b0a617f94c84 data/pirates_n_ships/recipe/cloth.json
 a45bf208e422724c8cd80b70e6c4d79e99380b02 data/pirates_n_ships/recipe/figurehead_mermaid.json
 83cdc3fb82141f16ab65856b33c20e123ca9deb0 data/pirates_n_ships/recipe/figurehead_skull.json
 32cc9920392d1de43336d4900d37318183df0334 data/pirates_n_ships/recipe/flagpole.json
+680bbcc9491f3fc87ae16314fdb43c59186d56be data/pirates_n_ships/recipe/grapeshot.json
 3d025d6dfbe0a002b63f0e49211600e94a8eb347 data/pirates_n_ships/recipe/grappling_hook.json
 0e52b1befd58a8721b6a730610b682fe958b89c1 data/pirates_n_ships/recipe/hammock.json
 b87d92743b1d37729d77095a541b9f79e346d388 data/pirates_n_ships/recipe/harbor_desk.json

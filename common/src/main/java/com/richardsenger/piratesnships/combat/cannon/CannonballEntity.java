@@ -3,6 +3,7 @@ package com.richardsenger.piratesnships.combat.cannon;
 import com.richardsenger.piratesnships.combat.content.CombatContent;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
+import com.richardsenger.piratesnships.station.winch.CaptainsWhistleItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -14,10 +15,13 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -39,6 +43,10 @@ import java.util.UUID;
  * less ({@link CannonImpact#glancingBlocks}); a grazing one bounces off and flies on. In water it splashes once, slows down hard and
  * sinks; it is removed when slower than {@code cannons.sink_speed} or after {@code cannons.ball_lifetime_ticks}.
  *
+ * <p>CAN3: the same entity flies chain shot ({@link ShotKind#CHAIN}: through sails and rigging, {@link RiggingDamage}, no
+ * block but ratlines broken) and grapeshot pellets ({@link ShotKind#GRAPE}: hurt the entity they hit, never the people on
+ * the firing ship, nothing else).
+ *
  * <p>Fired with an explicit velocity (not {@code shootFromRotation}), so neither vanilla nor Sable's
  * {@code ProjectileMixin} adds a shooter's motion: {@link CannonService#fire} adds the ship's velocity itself.
  */
@@ -59,6 +67,10 @@ public class CannonballEntity extends ThrowableItemProjectile {
     private @Nullable UUID reportedShip;
     /** Scales the blocks a hit breaks ({@link CannonRules#scaledBlocks}); WS4a crews firing by themselves. Saved. */
     private double blockDamageFactor = 1.0;
+    /** CAN3: what this is, a ball, chain shot or a grapeshot pellet. Saved. */
+    private ShotKind kind = ShotKind.BALL;
+    /** CAN3: where a chain shot struck this tick (world), which ends this tick's sweep through the rigging. Not saved. */
+    private @Nullable Vec3 struckAt;
 
     public CannonballEntity(EntityType<? extends CannonballEntity> type, Level level) {
         super(type, level);
@@ -110,9 +122,40 @@ public class CannonballEntity extends ThrowableItemProjectile {
         this.blockDamageFactor = Math.max(0.0, factor);
     }
 
+    public ShotKind kind() {
+        return kind;
+    }
+
+    /**
+     * What this shot is (CAN3), set by the gun before it is added: the drawn item follows (chain shot, or an iron nugget
+     * for a grapeshot pellet).
+     */
+    public void setKind(ShotKind kind) {
+        this.kind = kind;
+        setItem(switch (kind) {
+            case BALL -> new ItemStack(CombatContent.CANNONBALL.get());
+            case CHAIN -> new ItemStack(CannonContent.CHAIN_SHOT.get());
+            case GRAPE -> new ItemStack(Items.IRON_NUGGET);
+        });
+    }
+
     @Override
     protected Item getDefaultItem() {
         return CombatContent.CANNONBALL.get();
+    }
+
+    /**
+     * A grapeshot pellet never hits the people on the ship it was fired from, nor the player who fired it (CAN3): the gun
+     * crew and the boarders around the gun stand in the cone's way.
+     */
+    @Override
+    protected boolean canHitEntity(Entity target) {
+        if (!super.canHitEntity(target)) return false;
+        if (kind != ShotKind.GRAPE || !(level() instanceof ServerLevel level)) return true;
+        if (target == getOwner()) return false;
+        if (firingShip == null) return true;
+        ShipBody on = CaptainsWhistleItem.shipOf(level, target);
+        return on == null || !on.id().equals(firingShip);
     }
 
     @Override
@@ -123,7 +166,14 @@ public class CannonballEntity extends ThrowableItemProjectile {
 
     @Override
     public void tick() {
+        Vec3 from = position();
+        struckAt = null;
         super.tick();
+        if (kind == ShotKind.CHAIN && level() instanceof ServerLevel level && CannonConfig.CHAIN_RIGGING_DAMAGE.get()) {
+            // CAN3: the step through the rigging, up to where it struck
+            Vec3 to = struckAt != null ? struckAt : position();
+            RiggingDamage.sweep(level, firingShip, from, to, CannonConfig.CHAIN_CLOTH_RADIUS.get(), this::mayBreak);
+        }
         if (level().isClientSide || isRemoved()) return;
         if (isInWater()) {
             if (!splashed) {
@@ -142,6 +192,11 @@ public class CannonballEntity extends ThrowableItemProjectile {
     }
 
     private void splash(ServerLevel level) {
+        if (kind == ShotKind.GRAPE) { // CAN3: nine small pellets, nine small splashes
+            level.sendParticles(ParticleTypes.SPLASH, getX(), getY() + 0.3, getZ(), 6, 0.1, 0.1, 0.1, 0.1);
+            level.playSound(null, getX(), getY(), getZ(), SoundEvents.GENERIC_SPLASH, SoundSource.NEUTRAL, 0.3f, 1.6f);
+            return;
+        }
         level.sendParticles(ParticleTypes.SPLASH, getX(), getY() + 0.5, getZ(), 40, 0.4, 0.2, 0.4, 0.3);
         level.sendParticles(ParticleTypes.BUBBLE, getX(), getY(), getZ(), 20, 0.3, 0.3, 0.3, 0.1);
         level.sendParticles(ParticleTypes.CLOUD, getX(), getY() + 0.4, getZ(), 6, 0.3, 0.1, 0.3, 0.02);
@@ -161,6 +216,14 @@ public class CannonballEntity extends ThrowableItemProjectile {
     protected void onHitBlock(BlockHitResult result) {
         super.onHitBlock(result);
         if (!(level() instanceof ServerLevel level)) return;
+        if (kind == ShotKind.GRAPE) {
+            pelletHit(level, result);
+            return;
+        }
+        if (kind == ShotKind.CHAIN) {
+            chainHit(level, result);
+            return;
+        }
         BlockPos hitPos = result.getBlockPos();
         // A ship block is hit in plot space (Sable's clip returns the sub-level result as is, sable-notes §9.0e), so the
         // hit point, the block positions and the hit face are plot coordinates; the flight direction is turned into the
@@ -241,6 +304,59 @@ public class CannonballEntity extends ThrowableItemProjectile {
         level.sendParticles(ParticleTypes.POOF, worldHit.x, worldHit.y, worldHit.z, 8, 0.2, 0.2, 0.2, 0.05);
     }
 
+    /** A grapeshot pellet on a block (CAN3): a spark and a ping, nothing breaks, nothing is pushed. */
+    private void pelletHit(ServerLevel level, BlockHitResult result) {
+        ShipBody ship = SableShips.containing(level, result.getBlockPos());
+        Vec3 at = ship != null ? ship.toWorld(result.getLocation()) : result.getLocation();
+        level.sendParticles(ParticleTypes.CRIT, at.x, at.y, at.z, 3, 0.05, 0.05, 0.05, 0.05);
+        level.playSound(null, at.x, at.y, at.z, SoundEvents.CHAIN_HIT, SoundSource.BLOCKS, 0.4f, 1.8f);
+    }
+
+    /**
+     * Chain shot on a block (CAN3): the hit is announced and pushes the ship like a ball's, it tears the cloth, cuts the
+     * ropes and breaks the ratlines within {@code cannons.chain_shot.cloth_radius} ({@link RiggingDamage#strike}) and no
+     * other block, so no hull is breached. A shot that only broke ratlines flies on.
+     */
+    private void chainHit(ServerLevel level, BlockHitResult result) {
+        BlockPos hitPos = result.getBlockPos();
+        ShipBody ship = SableShips.containing(level, hitPos);
+        Vec3 flight = getDeltaMovement();
+        Vec3 dir = flight.lengthSqr() < 1.0e-9 ? Vec3.ZERO : flight.normalize();
+        Vec3 localDir = ship != null ? CannonService.rotateInverse(ship.orientation(), dir) : dir;
+        Vec3 hit = result.getLocation();
+        Vec3 worldHit = ship != null ? ship.toWorld(hit) : hit;
+        struckAt = worldHit;
+        if (ship != null && !ship.id().equals(firingShip) && !ship.id().equals(reportedShip)) {
+            reportedShip = ship.id();
+            CannonShipHits.fire(new CannonShipHits.ShipHit(level, ship.id(), getOwner(), firingShip, worldHit));
+        }
+        double push = impactImpulse >= 0 ? impactImpulse : CannonConfig.IMPACT_IMPULSE.get();
+        if (ship != null && push > 0 && localDir != Vec3.ZERO) {
+            ship.applyImpulseNow(hit, localDir.scale(push));
+        }
+        if (CannonConfig.CHAIN_RIGGING_DAMAGE.get()) {
+            RiggingDamage.strike(level, ship, hit, CannonConfig.CHAIN_CLOTH_RADIUS.get(), this::mayBreak);
+        }
+        level.playSound(null, worldHit.x, worldHit.y, worldHit.z, SoundEvents.CHAIN_BREAK, SoundSource.BLOCKS, 1.5f, 0.7f);
+        level.sendParticles(ParticleTypes.POOF, worldHit.x, worldHit.y, worldHit.z, 6, 0.2, 0.2, 0.2, 0.05);
+        if (level.getBlockState(hitPos).isAir()) {
+            bounced = true; // the block it struck (ratlines) is gone: it flies on
+            struckAt = null;
+        }
+    }
+
+    /**
+     * Whether a chain shot may break the rigging block at {@code pos} (frame position; {@code ship} its ship or null):
+     * the cannon block damage toggle, {@code mobGriefing} and the spawn protection, as for a ball's blocks.
+     */
+    boolean mayBreak(BlockPos pos, @Nullable ShipBody ship) {
+        if (!(level() instanceof ServerLevel level) || CannonConfig.blocksPerHit() <= 0) return false;
+        if (!CannonRules.worldAllowsBlockDamage(CannonConfig.RESPECT_MOB_GRIEFING.get(),
+                level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING))) return false;
+        BlockPos worldPos = ship != null ? BlockPos.containing(ship.toWorld(Vec3.atCenterOf(pos))) : pos;
+        return !spawnProtected(level, worldPos);
+    }
+
     /**
      * Whether the block at the world position {@code worldPos} is under the server's spawn protection
      * ({@code cannons.respect_spawn_protection}). A ball fired by a player asks the server as a block break by that
@@ -281,6 +397,7 @@ public class CannonballEntity extends ThrowableItemProjectile {
         tag.putDouble("impact_impulse", impactImpulse);
         if (firingShip != null) tag.putUUID("firing_ship", firingShip);
         tag.putDouble("block_damage_factor", blockDamageFactor);
+        tag.putString("shot", kind.getSerializedName());
     }
 
     @Override
@@ -293,5 +410,9 @@ public class CannonballEntity extends ThrowableItemProjectile {
         impactImpulse = tag.contains("impact_impulse") ? tag.getDouble("impact_impulse") : -1;
         firingShip = tag.hasUUID("firing_ship") ? tag.getUUID("firing_ship") : null;
         blockDamageFactor = tag.contains("block_damage_factor") ? tag.getDouble("block_damage_factor") : 1.0;
+        kind = ShotKind.BALL;
+        for (ShotKind k : ShotKind.values()) {
+            if (k.getSerializedName().equals(tag.getString("shot"))) kind = k;
+        }
     }
 }

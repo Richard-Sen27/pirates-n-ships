@@ -8,6 +8,7 @@ import com.richardsenger.piratesnships.sailing.block.YardBlockEntity;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
 import com.richardsenger.piratesnships.sailing.force.SailTypes;
 import com.richardsenger.piratesnships.sailing.sail.ClothGeometry;
+import com.richardsenger.piratesnships.sailing.sail.ClothTears;
 import com.richardsenger.piratesnships.sailing.sail.SailShape;
 import com.richardsenger.piratesnships.sailing.sail.SailVisualsConfig;
 import com.richardsenger.piratesnships.sailing.sail.SquareSail;
@@ -184,11 +185,49 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
             footFrom--;
         }
         int colsPerTile = CELLS_PER_BLOCK * kc;
+        ClothTears tears = be.tears();
+        if (!tears.isEmpty()) {
+            // CAN3: holes torn by chain shot stay open, and the whole cell above a hole hangs with the frayed foot
+            torn(buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), p, g, tears, bottom, footFrom, false, rows, cols,
+                    rowsPerBlock, colsPerTile, light, overlay);
+            torn(buffers.getBuffer(RenderType.entityCutoutNoCull(FOOT_TEXTURE)), p, g, tears, bottom, footFrom, true, rows, cols,
+                    rowsPerBlock, colsPerTile, light, overlay);
+            return;
+        }
         rows(buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), p, 0, footFrom, rows, cols, rowsPerBlock, colsPerTile,
                 light, overlay);
         if (footFrom < rows) {
             rows(buffers.getBuffer(RenderType.entityCutoutNoCull(FOOT_TEXTURE)), p, footFrom, rows, rows, cols, rowsPerBlock,
                     colsPerTile, light, overlay);
+        }
+    }
+
+    /**
+     * The grid of a torn cloth (CAN3): every grid cell whose middle lies in a torn {@link ClothTears} cell is left out;
+     * with {@code foot} the cells drawn with the foot tile (the foot rows, and the whole cloth cell above a hole), else the
+     * others.
+     */
+    private void torn(VertexConsumer vc, PoseStack.Pose p, ClothGeometry g, ClothTears tears, float bottom, int footFrom, boolean foot,
+                      int rows, int cols, int rowsPerBlock, int colsPerTile, int light, int overlay) {
+        int stride = cols + 1;
+        for (int i = 0; i < rows; i++) {
+            float v = bottom * (i + 0.5f) / rows;
+            float neg = g.negativeEdge(v);
+            float pos = g.positiveEdge(v);
+            int r = ClothTears.rowAt(v);
+            float v0 = SailFoot.yardV0(i, rows, rowsPerBlock);
+            float v1 = v0 + 1f / rowsPerBlock;
+            for (int j = 0; j < cols; j++) {
+                int c = ClothTears.columnAt(neg + (pos - neg) * (j + 0.5f) / cols);
+                if (tears.torn(c, r) || (i >= footFrom || tears.frayedAbove(c, r)) != foot) continue;
+                float u0 = (j % colsPerTile) / (float) colsPerTile;
+                float u1 = u0 + 1f / colsPerTile;
+                int a = i * stride + j, b = a + 1, d = a + stride, cc = d + 1;
+                vertex(vc, p, a, u0, v0, light, overlay);
+                vertex(vc, p, b, u1, v0, light, overlay);
+                vertex(vc, p, cc, u1, v1, light, overlay);
+                vertex(vc, p, d, u0, v1, light, overlay);
+            }
         }
     }
 

@@ -180,14 +180,25 @@ jobs:
         env:
           PREVIOUS: ${{ steps.version.outputs.previous }}
           REF: ${{ steps.version.outputs.ref }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
           python3 tools/release_notes.py --self-test
+          python3 tools/check_release_texts.py
           {
             echo "For Minecraft 1.21.1 on **NeoForge** and **Fabric**: download the jar for your loader. Both need Sable,"
             echo "GeckoLib and Player Animation Library; Fabric also needs Fabric API and Forge Config API Port."
             echo
-            python3 tools/release_notes.py "$PREVIOUS" "$REF"
+            # REL4: a hand-written docs/release/<version>-notes.md is published below its "PUBLISHED NOTES" marker;
+            # the generated list of commits follows it when a previous tag exists.
+            notes="docs/release/${VERSION}-notes.md"
+            if [[ -f "$notes" ]]; then
+              sed -n '/^PUBLISHED NOTES$/,$p' "$notes" | tail -n +2
+            fi
+            if [[ -n "$PREVIOUS" ]]; then
+              echo
+              python3 tools/release_notes.py "$PREVIOUS" "$REF"
+            fi
           } > build/release-notes.md
           cat build/release-notes.md >> "$GITHUB_STEP_SUMMARY"
 

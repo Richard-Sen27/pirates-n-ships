@@ -15,7 +15,7 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 WT=$ROOT/.claude/worktrees/merge
 LOG=${STAGE_LOG_DIR:-$ROOT/.claude/worktrees/stage-logs}/batch-$(date +%H%M); mkdir -p "$LOG"
 GEN_RE='^common/src/generated/resources/|^common/src/datagen/almanac/'
-DOCS_RE='^docs/|^CLAUDE\.md$|^tools/merge_(stage|batch)\.sh$|^\.claude/agents/'
+DOCS_RE='^docs/|^CLAUDE\.md$|^README\.md$|^tools/merge_(stage|batch)\.sh$|^tools/check_[a-z_]+\.py$|^\.github/|^\.claude/agents/'
 cd "$WT" || exit 1
 PKGS=""
 if [ -z "${CONTINUE:-}" ]; then

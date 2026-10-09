@@ -82,20 +82,26 @@ public final class MobGameTests {
 
     // ------------------------------------------------------------------ duelists
 
-    /** A pirate near a survival player picks it as target and swings at it through the melee engine: wind-up, then hit frames. */
+    /**
+     * A pirate near a survival player picks it as target and swings at it through the melee engine: wind-up, then hit
+     * frames; its synced melee pose (MEL3, {@link MeleePoseSync}, shared with the crew) shows both.
+     */
     @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 200, batch = "pirates_n_ships_mob_pirate_windup")
     public static void pirateDuelsAPlayerThroughTheMeleeEngine(GameTestHelper h) {
         floor(h, 9);
         Pirate pirate = spawn(h, MobContent.PIRATE.get(), 2, 4, -90);
         Player player = MobTestSupport.playerInLevel(h, new Vec3(5.5, 1, 4.5), 90);
         Set<Phase> seen = EnumSet.noneOf(Phase.class);
+        Set<Phase> synced = EnumSet.noneOf(Phase.class);
         h.onEachTick(() -> {
             if (MeleeService.isActive(pirate)) seen.add(MeleeService.state(pirate).phase());
+            synced.add(pirate.meleePose().phase());
         });
         h.succeedWhen(() -> {
             h.assertTrue(pirate.getTarget() == player, "pirate did not target the player");
             h.assertTrue(seen.contains(Phase.WINDUP), "no wind-up seen: " + seen);
             h.assertTrue(seen.contains(Phase.ACTIVE), "no hit frames seen: " + seen);
+            h.assertTrue(synced.contains(Phase.WINDUP) && synced.contains(Phase.ACTIVE), "the swing was not synced: " + synced);
         });
     }
 

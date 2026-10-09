@@ -105,6 +105,7 @@ Workflow notes (cleat, bilge pump, brig bars, brig door, F7e):
 - **Cleat** (14 elements) and **bilge pump** (27): one model each, turned by the block state as before (the cleat for
   floor, wall and ceiling like a button; the pump by `facing`, spout and handle towards it). A small model gets a
   `display.gui` entry (cleat: scale 0.9, raised 3 px; pump: scale 0.5, lowered 1.5 px, its handle reaches y 20.6).
+  The pump was split by PMP1 into body, rod and handle, see "Bilge pump handle (PMP1)" below.
 - **Connecting blocks** (brig bars): a post model plus one arm per side, plugged into the pane-style multipart state.
   `side` is the arm to the north (z 0..7), `side_alt` the same arm mirrored in z for the south; each is turned 90° for
   east and west. An unconnected side needs no model when the post stands on its own, so the `noside` parts went. The
@@ -209,6 +210,30 @@ Cannon barrel tilt (CAN2):
   drawn with a `THREE.WebGLRenderer` from clones of the cube meshes posed like the renderer (barrel turned, quoin
   squeezed and slid). `renders/cannon.png` and `cannon_loaded.png` still show the F7g carriage (thicker cheeks, tall
   quoin bed).
+
+Bilge pump handle (PMP1):
+- **Three groups in `bilge_pump.bbmodel`** (27 elements, geometry unchanged from F7e): `body` (origin (8, 0, 8):
+  foot, intake ring, casing, bands, cylinder, iron lip, the cheeks and pin of the fulcrum, spout and drips; 24
+  elements), `rod` (origin (8, 16.6, 8): the piston rod, 1) and `handle` (origin = the pin (8, 16, 11): the brake beam
+  and its grip, 2, both still rotated 22.5° about x through the pin, which is the top of the stroke and the rest pose).
+  Exports (`Codecs.java_block.compile()` with the other groups' cubes set to `export = false`, numbers rounded to
+  5 decimals so float noise from the compile does not reach the files): `bilge_pump` (body, the block model),
+  `bilge_pump_rod` and `bilge_pump_handle` (stand-alone, drawn by `PumpHandleRenderer`), and `bilge_pump_item` (all
+  three, the only one with the `gui` display entry; datagen points the item model at it). `HandMadeModelsTest` checks
+  that `bilge_pump_item` is exactly body + rod + handle and that the handle's rotation matches `PumpHandlePose`.
+- **Drawn by `PumpHandleRenderer`:** the handle turned about the pin by the swing (a positive swing lowers the grip:
+  `Axis.XP` by −swing), the rod slid down by `PumpHandlePose.rodLift` so its top stays under the beam's underside (it
+  touches it at rest, y 16.6). **Clearance:** the beam's underside passes the front edge of the iron lip (z 5.3,
+  top y 14.4) down to a handle angle of about −9.7°, so the swing is capped at `PumpHandlePose.MAX_SWING` (32.2°, 0.05 px
+  above the lip; the config allows at most 30); the client default `pump_visuals.stroke_degrees` is 28 (handle at −5.5°, 0.46 px above the lip), the
+  rod then sits 1.48 px lower and still shows above the lip. The pin sits between the cheeks, the beam between them, so
+  the short arm behind the pin rises freely.
+- **Rebuild:** open the committed project (`loadModelFile` with the file's content read by `fs`), keep `Project.uuid`
+  in a `window.PMP1` object and check it before every call; `PMP1.exportAll()` wrote the four files and the project
+  was saved with `fs` (textures without `source`, `relative_path` `../vanilla/<name>.png`).
+- **Render:** `renders/bilge_pump_stroke.png`: the pump at rest (top of the stroke, left) and at the bottom of the
+  default 28° stroke (right), front three-quarter above and west side below, drawn with a `THREE.WebGLRenderer` from
+  clones of the cube meshes posed like the renderer (handle turned about the pin, rod slid down).
 
 Workflow notes (sea chest, S1-art):
 - **Sea chest** (60 elements, `sea_chest`, one project): a seaman's chest facing north (the `FACING` side). Body

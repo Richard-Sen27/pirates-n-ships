@@ -100,6 +100,7 @@ final class HammocksAndRestScene {
                     SceneSync.resting(c, true);
                 }
             });
+            SceneKit.focus(scene, bunk(foot).add(0, 0.3, 0));
         }
         scene.idle(55);
 

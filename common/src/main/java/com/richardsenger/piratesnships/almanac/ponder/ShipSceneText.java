@@ -52,7 +52,7 @@ public final class ShipSceneText {
     /** {@link SailsAndWinchScene} (sailing/block yards and winch, the sail runtime, design.md §5.2). */
     public enum Sails implements SceneLine {
         MAST("A square sail hangs between two yards on a mast of logs or fences"),
-        YARDS("A yard is a straight row of yard blocks, and its middle block sits in the mast column"),
+        YARDS("A yard is a straight row of yard blocks across the ship. It hangs one block forward of the mast, its middle block in the column in front of it"),
         PAIR("A second yard of the same direction 2 to 8 blocks straight below the first makes the pair one sail"),
         AREA("The cloth is drawn between the yards, not built from blocks: its area is the mean yard length times the drop, 5 × 4 = 20 here"),
         WINCH("The sail winch sets the trim of every sail on its ship"),

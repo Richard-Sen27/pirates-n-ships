@@ -34,6 +34,8 @@ final class HullRepairScene {
         scene.idle(10);
         scene.world().showSection(util.select().layersFrom(1), Direction.DOWN);
         scene.idle(20);
+        // the walls on the watcher's side (north and west) cut away, so the hold can be seen from the default camera
+        SceneKit.cutAway(scene, util.select().fromTo(1, 2, 1, 5, 3, 1).add(util.select().fromTo(1, 2, 2, 1, 3, 5)));
 
         BlockPos breach = util.grid().at(5, 2, 3);
         Vec3 hole = util.vector().blockSurface(breach, Direction.WEST);

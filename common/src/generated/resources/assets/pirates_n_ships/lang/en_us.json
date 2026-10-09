@@ -4413,7 +4413,7 @@
   "pirates_n_ships.ponder.shared.sails_and_winch.winch": "The sail winch sets the trim of every sail on its ship",
   "pirates_n_ships.ponder.shared.sails_and_winch.wind": "The wind fills the cloth and it bellies out to leeward. Square sails like the wind from astern; within 30° of the wind no sail drives",
   "pirates_n_ships.ponder.shared.sails_and_winch.yard": "Using an upper yard with an empty hand trims that one sail only",
-  "pirates_n_ships.ponder.shared.sails_and_winch.yards": "A yard is a straight row of yard blocks, and its middle block sits in the mast column",
+  "pirates_n_ships.ponder.shared.sails_and_winch.yards": "A yard is a straight row of yard blocks across the ship. It hangs one block forward of the mast, its middle block in the column in front of it",
   "pirates_n_ships.ponder.shared.ship_assembly.aboard": "Blocks placed on her afterwards become part of her at once",
   "pirates_n_ships.ponder.shared.ship_assembly.afloat": "Now she is one ship: she floats, rolls with the sea and keeps her hold dry",
   "pirates_n_ships.ponder.shared.ship_assembly.build": "Build your ship from any blocks, right on the water: this hull keeps a dry hold below the waterline",

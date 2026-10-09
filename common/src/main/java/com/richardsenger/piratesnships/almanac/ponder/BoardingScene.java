@@ -155,6 +155,7 @@ final class BoardingScene {
         duel(scene, first, firstAt, AttackKind.SLASH);
         duel(scene, first, firstAt, AttackKind.THRUST);
         fall(scene, first, firstAt);
+        SceneKit.focus(scene, secondAt.add(0, 1.0, 0));
         duel(scene, second, secondAt, AttackKind.SLASH);
         fall(scene, second, secondAt);
         scene.idle(10);

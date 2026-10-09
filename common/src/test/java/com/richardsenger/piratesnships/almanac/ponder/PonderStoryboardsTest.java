@@ -141,9 +141,10 @@ class PonderStoryboardsTest {
 
     @Test
     void theAnchorHangsWhereTheHullSideRulePutsIt() {
-        // capstan on the centre line of a five-wide hull: a tie, so starboard (east), first cell outside x 5
+        // capstan one block to port of the centre line of a five-wide hull (PND3): the nearer side is port (west), the
+        // first cell outside x 1, where the default camera from the north-west sees it
         Vec3 h = AnchorAndCapstanScene.HAWSE;
-        assertEquals(6.4, h.x, 1e-9);
+        assertEquals(0.6, h.x, 1e-9);
         assertEquals(5.75, h.y, 1e-9);
         assertEquals(4.5, h.z, 1e-9);
         // 2.75 blocks from the stowed crown to the seabed: 14 ticks at 4 blocks/s, 22 at 2.5

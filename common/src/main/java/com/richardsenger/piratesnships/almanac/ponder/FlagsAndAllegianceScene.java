@@ -99,6 +99,7 @@ final class FlagsAndAllegianceScene {
             return n;
         });
         scene.idle(15);
+        SceneKit.focus(scene, soldierAt.add(0, 1.5, 0));
         SceneKit.once(scene, s -> SceneSync.aiming(soldier.get(), true));
         scene.overlay().showBigLine(PonderPalette.RED, soldierAt.add(-0.3, 1.5, 0), util.vector().of(3.5, 3.8, 6.0), 70);
         say(scene.overlay().showText(70), Flags.JOLLY)
@@ -141,7 +142,7 @@ final class FlagsAndAllegianceScene {
         scene.idle(65);
         say(scene.overlay().showText(60), Flags.STRUCK)
                 .colored(PonderPalette.RED)
-                .pointAt(util.vector().of(3.0, 3.0, 4.5))
+                .pointAt(util.vector().of(2.5, 3.0, 4.5))
                 .placeNearTarget();
         scene.idle(65);
 

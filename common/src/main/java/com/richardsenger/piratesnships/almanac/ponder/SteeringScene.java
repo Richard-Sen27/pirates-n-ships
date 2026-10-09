@@ -44,6 +44,8 @@ final class SteeringScene {
     static void program(SceneBuilder scene, SceneBuildingUtil util) {
         scene.title(ShipSceneText.STEERING, Steering.TITLE);
         scene.configureBasePlate(0, 0, 11);
+        // a little lower than the default, so the helmsman and the clicks on him stay on the screen (PND3)
+        scene.setSceneOffsetY(-0.5f);
         scene.showBasePlate();
         scene.idle(10);
 
@@ -70,8 +72,9 @@ final class SteeringScene {
                 .placeNearTarget();
         scene.idle(65);
 
-        // the rudder follows
-        Vec3 stern = util.vector().of(5.5, 2.4, 10.0);
+        // the rudder follows: drawn as seen from above at deck height, where the watcher (from the north-west, ahead of
+        // the bow) sees it over the boat, not at the waterline behind her stern
+        Vec3 stern = util.vector().of(5.5, 4.05, 10.0);
         scene.overlay().showLine(PonderPalette.WHITE, stern, rudderTip(stern, 0), 120);
         scene.overlay().showBigLine(PonderPalette.RED, stern, rudderTip(stern, WheelMath.rudderAngle(LOCK, LOCK, MAX_RUDDER)), 120);
         say(scene.overlay().showText(60), Steering.RUDDER)
@@ -99,7 +102,8 @@ final class SteeringScene {
             return c;
         });
         scene.idle(10);
-        scene.overlay().showControls(spot.add(0, 2.2, 0), Pointing.DOWN, 25).rightClick()
+        SceneKit.focus(scene, spot.add(0, 1.0, 0));
+        scene.overlay().showControls(spot.add(0.3, 1.5, 0), Pointing.LEFT, 25).rightClick()
                 .withItem(SceneKit.item("captains_whistle"));
         scene.idle(25);
         scene.overlay().showControls(wheelTop, Pointing.DOWN, 25).rightClick()
@@ -135,7 +139,7 @@ final class SteeringScene {
         scene.world().configureCenterOfRotation(boatLink, util.vector().of(8.5, 2.5, 7.0));
         scene.world().rotateSection(boatLink, 0, -60, 0, 100);
         say(scene.overlay().showText(100), Steering.CIRCLE)
-                .pointAt(util.vector().of(5.5, 2.05, 7.0))
+                .pointAt(SceneKit.arc(centre, 3.0, 250, 250, 1).get(0))
                 .placeNearTarget()
                 .attachKeyFrame();
         scene.idle(105);

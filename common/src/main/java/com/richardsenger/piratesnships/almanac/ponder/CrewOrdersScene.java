@@ -49,7 +49,7 @@ final class CrewOrdersScene {
     /** Default {@code cannons.npc.arc_degrees}. */
     static final double ARC = 15.0;
     /** The wheel's centre (in the air above the ship) and radius, in blocks. */
-    static final Vec3 WHEEL = new Vec3(6.5, 8.2, 5.5);
+    static final Vec3 WHEEL = new Vec3(6.5, 7.6, 5.5);
     static final double WHEEL_RADIUS = 2.3;
 
     private CrewOrdersScene() {
@@ -66,7 +66,9 @@ final class CrewOrdersScene {
     static void program(SceneBuilder scene, SceneBuildingUtil util) {
         scene.title(CrewSceneText.CREW_ORDERS, Orders.TITLE);
         scene.configureBasePlate(0, 0, 11);
-        scene.scaleSceneView(0.9f);
+        // the order wheel floats above the ship: a smaller, lower view keeps it and its icons on the screen (PND3)
+        scene.scaleSceneView(0.8f);
+        scene.setSceneOffsetY(-2.5f);
         scene.showBasePlate();
         scene.idle(10);
         scene.world().showSection(util.select().layersFrom(1), Direction.DOWN);
@@ -129,6 +131,7 @@ final class CrewOrdersScene {
         // an order to the stations: the hand at the winch works it
         order(scene, WhistleOrder.HOIST);
         SceneKit.once(scene, s -> SceneSync.working(recruit.get(), true));
+        SceneKit.focus(scene, winchSpot.add(0, 1.0, 0));
         say(scene.overlay().showText(55), Orders.ORDER)
                 .pointAt(winchSpot.add(0, 1.8, 0))
                 .placeNearTarget();
@@ -156,6 +159,7 @@ final class CrewOrdersScene {
             face(gunner.get(), gunSpot, util.vector().centerOf(7, 4, 4));
             SceneSync.stationPose(gunner.get(), CrewPose.CANNON_LOAD);
         });
+        SceneKit.focus(scene, gunSpot.add(0, 1.0, 0));
         scene.idle(40);
         scene.world().modifyBlock(CANNON, st -> st.hasProperty(CannonBlock.LOAD) ? st.setValue(CannonBlock.LOAD, CannonLoad.LOADED) : st, false);
         SceneKit.once(scene, s -> SceneSync.stationPose(gunner.get(), null));

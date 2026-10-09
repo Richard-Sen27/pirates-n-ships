@@ -13,7 +13,8 @@ import static com.richardsenger.piratesnships.almanac.ponder.SceneKit.say;
 /**
  * "The ship's bell" (PND2, docs/almanac.md "Scenes"; ship/decor {@code ShipsBellBlock} and BELL1's swing, the raid
  * alarm of worldsim/raid, design.md §4.8), on the schematic {@code assets/pirates_n_ships/ponder/ships_bell.nbt}
- * ({@code art/structures/ponder/ships_bell.py}: a bell on its wall bracket at [3, 2, 1] and one on a post at [1, 2, 3]).
+ * ({@code art/structures/ponder/ships_bell.py}: a bell on its wall bracket at [3, 2, 3] on the bulkhead along the south
+ * edge, the far side from the default camera (PND3), and one on a post at [1, 2, 1]).
  *
  * <p>Each ring is what {@code ShipsBellBlock#ring} syncs: the ring's start and the strike direction (from the striker
  * toward the bell) in the bell's block entity, from which the game's bell renderer swings the bell and its clapper.
@@ -22,8 +23,8 @@ import static com.richardsenger.piratesnships.almanac.ponder.SceneKit.say;
  */
 final class ShipsBellScene {
 
-    static final BlockPos WALL_BELL = new BlockPos(3, 2, 1);
-    static final BlockPos POST_BELL = new BlockPos(1, 2, 3);
+    static final BlockPos WALL_BELL = new BlockPos(3, 2, 3);
+    static final BlockPos POST_BELL = new BlockPos(1, 2, 1);
     /** Default {@code ship_decor.bell_ring_ticks}: the swing's length. */
     static final int RING_TICKS = 20;
 
@@ -39,7 +40,7 @@ final class ShipsBellScene {
         scene.idle(15);
 
         scene.overlay().showOutline(PonderPalette.WHITE, "wall", util.select().position(WALL_BELL), 60);
-        scene.overlay().showOutline(PonderPalette.WHITE, "post", util.select().fromTo(1, 1, 3, 1, 2, 3), 60);
+        scene.overlay().showOutline(PonderPalette.WHITE, "post", util.select().fromTo(1, 1, 1, 1, 2, 1), 60);
         say(scene.overlay().showText(60), Bell.MOUNT)
                 .pointAt(util.vector().centerOf(POST_BELL))
                 .placeNearTarget()
@@ -47,9 +48,9 @@ final class ShipsBellScene {
         scene.idle(65);
 
         // rung from the front: it swings away from the striker
-        scene.overlay().showControls(util.vector().blockSurface(WALL_BELL, Direction.SOUTH), Pointing.UP, 25).rightClick();
+        scene.overlay().showControls(util.vector().blockSurface(WALL_BELL, Direction.NORTH), Pointing.UP, 25).rightClick();
         scene.idle(6);
-        ring(scene, WALL_BELL, Direction.NORTH);
+        ring(scene, WALL_BELL, Direction.SOUTH);
         say(scene.overlay().showText(60), Bell.RING)
                 .pointAt(util.vector().centerOf(WALL_BELL))
                 .placeNearTarget()

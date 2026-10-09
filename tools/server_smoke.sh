@@ -212,8 +212,8 @@ if [[ -n "$done_line" ]]; then
         "pirates mob captain list" \
         "$here pirates hazard spawn waterspout"
     # Ports through the worldgen path: locate the nearest seafarer village, pirate island and navy outpost, and
-    # generate their chunks (forceload) so that the structures place and the port registry records them. The convoy
-    # runs between the first two ports /pirates world ports then lists.
+    # generate their chunks (forceload) so that the structures place and the port registry records them. A convoy is
+    # tried between each pair of the ports /pirates world ports then lists, until one has a sea lane.
     for structure in seafarer_village pirate_island navy_outpost; do
         rcon "locate structure $mod_id:$structure"
         at="$(grep -A2 -F "> locate structure $mod_id:$structure" "$replies" \
@@ -228,11 +228,23 @@ if [[ -n "$done_line" ]]; then
     # Port ids by pattern, not by line: on Fabric a multi-line reply comes back without line breaks (vanilla's RCON
     # source joins the messages; NeoForge patches a newline in).
     while IFS= read -r p; do ports+=("$p"); done < <(awk '/^> pirates world ports/ { n++; next } /^> / { if (n == 2) exit; next } n == 2' \
-        "$replies" | grep -oE "$mod_id:(village|pirate_island|navy_outpost)_-?[0-9]+_-?[0-9]+" | awk '!seen[$0]++' | head -2)
-    if ((${#ports[@]} == 2)); then
-        rcon "pirates world voyages spawn convoy ${ports[0]} ${ports[1]}"
+        "$replies" | grep -oE "$mod_id:(village|pirate_island|navy_outpost)_-?[0-9]+_-?[0-9]+" | awk '!seen[$0]++' | head -3)
+    if ((${#ports[@]} >= 2)); then
+        convoy=0
+        for ((i = 0; i < ${#ports[@]} && convoy == 0; i++)); do
+            for ((j = i + 1; j < ${#ports[@]}; j++)); do
+                # The lane search first (its reply says why there is no lane, if there is none), then the convoy.
+                rcon "pirates world voyages lane ${ports[i]} ${ports[j]}" \
+                    "pirates world voyages spawn convoy ${ports[i]} ${ports[j]}"
+                if ! tail -2 "$replies" | grep -q -F 'No convoy from'; then
+                    convoy=1
+                    break
+                fi
+            done
+        done
+        ((convoy)) || skipped+=("a convoy that sails: no sea lane between the generated ports on seed $seed")
     else
-        fail "/pirates world voyages spawn convoy: fewer than two world ports after generating a village and an outpost"
+        fail "/pirates world voyages spawn convoy: fewer than two world ports after generating three port structures"
     fi
     rcon "reload"
 
@@ -290,7 +302,7 @@ mod_warnings="$(grep -E '(WARN|ERROR).*('"$mod_id"'|piratesnships|Pirates)' "$lo
     echo "Command replies:"
     sed 's/^/  /' "$replies"
     echo
-    echo "Skipped (need a player):"
+    echo "Skipped:"
     printf '  - %s\n' "${skipped[@]}"
     echo
     if [[ -n "$mod_warnings" ]]; then

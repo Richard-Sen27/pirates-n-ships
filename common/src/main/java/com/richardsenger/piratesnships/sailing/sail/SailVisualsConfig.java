@@ -22,6 +22,8 @@ public final class SailVisualsConfig {
             "Swing of a luffing sail's cloth in a full wind, in blocks");
     public static final ConfigValue<Integer> SEGMENTS = S.intRange("segments", 8, 2, 32,
             "Cloth grid: at least this many columns across a sail and half as many rows per block down");
+    public static final ConfigValue<Boolean> BANNER_LAYERS = S.bool("banner_layers", true,
+            "Draw the pattern layers of a banner hung on a square sail over its cloth; off: only the banner's base colour");
 
     private SailVisualsConfig() {
     }

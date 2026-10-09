@@ -66,6 +66,18 @@ Server config `sailing.sails.rope_lines`, `rope_sag`.
 - Sails only work on a ship that is afloat.
 - Yards run across the ship, stays run along it. Directions are only visual: the crew is assumed to trim the sails optimally.
 
+**Dyeing sails and banners.** Use a **dye** on the upper yard of a square sail (any of its blocks) or on the head cleat
+of a triangular sail: the whole cloth takes the colour, hanging, reefed or furled, and one dye is used up. A white dye
+brings back the natural canvas; there is no washing out. A large square sail can also carry a **banner**: use a banner
+on its upper yard, and the cloth takes the banner's base colour with its patterns drawn upright over it, rippling and
+bellying with the cloth. Both yards must be at least 3 blocks long and 2 blocks apart. The design reads right from the
+side facing the ship's bow (on land: from the south for a yard running east-west, from the east for one running
+north-south) and mirrored from behind. Sneak-use the yard with an empty hand to take the banner back; breaking the yard
+block that holds it drops it. While a banner hangs, dyes are refused. Triangular sails take dye only. Colours and
+banners are only a look: they never change a sail's force, and they stay on through assembly, disassembly and trim
+changes. Server config `sailing.sails.dyeing`, `banners`, `banner_min_width`, `banner_min_drop`; client config
+`sail_visuals.banner_layers` (off: the base colour only).
+
 **Sails in the wind.** The cloth shows how a sail meets the wind you feel on board. A sail that draws bellies out to
 leeward, deeper the stronger the wind, and breathes slowly. On a ship the cloth knows where the bow is and follows the
 same rule as the force, with the crew bracing the yards: it draws whenever the sail drives the ship, a square sail on a

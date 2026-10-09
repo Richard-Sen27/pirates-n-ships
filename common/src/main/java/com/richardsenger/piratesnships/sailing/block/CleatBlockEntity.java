@@ -2,6 +2,7 @@ package com.richardsenger.piratesnships.sailing.block;
 
 import com.richardsenger.piratesnships.sailing.SailingConfig;
 import com.richardsenger.piratesnships.sailing.rope.RopeAnchorBlockEntity;
+import com.richardsenger.piratesnships.sailing.sail.SailTint;
 import com.richardsenger.piratesnships.sailing.sail.TriangleCloth;
 import com.richardsenger.piratesnships.sailing.sail.TriangularSailContent;
 import com.richardsenger.piratesnships.sailing.sail.TriangularSails;
@@ -9,6 +10,8 @@ import java.util.Objects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
@@ -25,12 +28,21 @@ import org.jetbrains.annotations.Nullable;
  * {@code sailing.sails.yard_refresh_ticks} (a block put into the gap below the head triggers no cleat update on land),
  * and once on its first server tick, so a cloth loaded from saved data that no longer fits (a ship disassembled with a
  * turn moves the block entities with their old cloth, stored in world axes) is corrected at once.
+ *
+ * <p><b>Dye (SAIL2).</b> The head cleat keeps the sail's dye ({@link #dye()}), saved and synced with the update tag,
+ * together with the tint the client draws ({@link SailTint#clothTint}, decided by the server with
+ * {@code sails.dyeing}). Stay sails take dye only, no banner.
  */
 public class CleatBlockEntity extends RopeAnchorBlockEntity {
 
     private static final String CLOTH = "cloth";
+    private static final String DYE = "dye";
+    private static final String TINT = "tint";
 
     private @Nullable TriangleCloth cloth;
+    private @Nullable DyeColor dye;
+    /** The tint the server last sent (read on the client). */
+    private int syncedTint = SailTint.NONE;
     /** Server: whether the first tick's re-check ran (not saved: every new or loaded block entity checks once). */
     private boolean checked;
 
@@ -65,6 +77,26 @@ public class CleatBlockEntity extends RopeAnchorBlockEntity {
         changed();
     }
 
+    /** The sail's dye, or null (never dyed). */
+    public @Nullable DyeColor dye() {
+        return dye;
+    }
+
+    /** Server: dyes the sail this cleat heads (null: undyed) and syncs it when it changed. */
+    public void setDye(@Nullable DyeColor d) {
+        if (d == dye) {
+            return;
+        }
+        dye = d;
+        changed();
+    }
+
+    /** The cloth's tint: on the server from the dye and the config, on a client as the server sent it. */
+    public int clothTint() {
+        return level != null && !level.isClientSide
+                ? SailTint.clothTint(dye, ItemStack.EMPTY, SailingConfig.SAIL_DYEING.get(), false) : syncedTint;
+    }
+
     @Override
     public void clearRopes() {
         super.clearRopes();
@@ -89,6 +121,12 @@ public class CleatBlockEntity extends RopeAnchorBlockEntity {
         if (cloth != null) {
             tag.putIntArray(CLOTH, new int[] {cloth.tackX(), cloth.tackY(), cloth.tackZ(), cloth.drop()});
         }
+        if (dye != null) {
+            tag.putString(DYE, dye.getSerializedName());
+        }
+        if (level != null && !level.isClientSide) {
+            tag.putInt(TINT, clothTint()); // what the client draws (SAIL2)
+        }
     }
 
     @Override
@@ -96,5 +134,7 @@ public class CleatBlockEntity extends RopeAnchorBlockEntity {
         super.loadAdditional(tag, registries);
         int[] c = tag.getIntArray(CLOTH);
         cloth = c.length == 4 ? new TriangleCloth(c[0], c[1], c[2], c[3]) : null;
+        dye = tag.contains(DYE, CompoundTag.TAG_STRING) ? DyeColor.byName(tag.getString(DYE), null) : null;
+        syncedTint = tag.contains(TINT, CompoundTag.TAG_INT) ? tag.getInt(TINT) : SailTint.NONE;
     }
 }

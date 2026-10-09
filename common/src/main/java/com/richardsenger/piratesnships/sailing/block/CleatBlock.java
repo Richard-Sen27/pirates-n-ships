@@ -8,6 +8,8 @@ import com.richardsenger.piratesnships.sailing.item.RopeItem;
 import com.richardsenger.piratesnships.sailing.rope.RopeAnchor;
 import com.richardsenger.piratesnships.sailing.rope.RopeAnchorUse;
 import com.richardsenger.piratesnships.sailing.rope.RopeLines;
+import com.richardsenger.piratesnships.sailing.sail.SailBanner;
+import com.richardsenger.piratesnships.sailing.sail.SailDecorations;
 import com.richardsenger.piratesnships.sailing.sail.TriangularSailContent;
 import com.richardsenger.piratesnships.sailing.sail.TriangularSails;
 import java.util.List;
@@ -15,6 +17,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
@@ -133,6 +138,25 @@ public class CleatBlock extends FaceAttachedHorizontalDirectionalBlock implement
                                               InteractionHand hand, BlockHitResult hit) {
         if (stack.getItem() instanceof RopeItem) {
             return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
+        }
+        // SAIL2: a dye on the head cleat of a triangular sail dyes its cloth; a banner is refused (stay sails take dye only)
+        boolean heads = level.getBlockEntity(pos) instanceof CleatBlockEntity be && be.cloth() != null;
+        if (heads && stack.getItem() instanceof DyeItem dye && SailingConfig.SAIL_DYEING.get()) {
+            if (level instanceof ServerLevel) {
+                SailDecorations.Outcome o = SailDecorations.dyeStay(level, pos, dye.getDyeColor());
+                if (o.consumes()) {
+                    level.playSound(null, pos, SoundEvents.DYE_USE, SoundSource.BLOCKS, 1f, 1f);
+                    stack.consume(1, player);
+                }
+                player.displayClientMessage(SailDecorations.message(o, dye.getDyeColor()), true);
+            }
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        }
+        if (heads && SailBanner.isBanner(stack) && SailingConfig.SAIL_BANNERS.get()) {
+            if (level instanceof ServerLevel) {
+                player.displayClientMessage(SailDecorations.message(SailDecorations.Outcome.STAY_DYE_ONLY, null), true);
+            }
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
         return super.useItemOn(stack, state, level, pos, player, hand, hit);
     }

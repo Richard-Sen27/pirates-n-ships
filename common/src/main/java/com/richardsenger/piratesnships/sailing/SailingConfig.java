@@ -100,6 +100,16 @@ public final class SailingConfig {
                     + "stays as a decorative rope line, up to stay_max_length long. Off = the rope only rigs stays, and existing lines are not drawn");
     public static final ConfigValue<Double> ROPE_SAG = SAILS.doubleRange("rope_sag", 0.08, 0.0, 0.5,
             "How far a rope line hangs down in the middle, as a fraction of its horizontal span (0 = taut)");
+    public static final ConfigValue<Boolean> SAIL_DYEING = SAILS.bool("dyeing", true,
+            "Using a dye on the upper yard of a square sail or the head cleat of a triangular sail dyes its cloth (one dye per use). "
+                    + "Off: dyes do nothing on sails and dyed sails show the natural canvas");
+    public static final ConfigValue<Boolean> SAIL_BANNERS = SAILS.bool("banners", true,
+            "Using a banner on the upper yard of a large square sail hangs its colour and patterns on the cloth; sneak-use with an "
+                    + "empty hand takes it back. Off: no new banners, and hung ones are not shown (they can still be taken back)");
+    public static final ConfigValue<Integer> SAIL_BANNER_MIN_WIDTH = SAILS.intRange("banner_min_width", 3, 1, 31,
+            "Narrowest square sail, in blocks (the shorter of its two yards), that can carry a banner");
+    public static final ConfigValue<Integer> SAIL_BANNER_MIN_DROP = SAILS.intRange("banner_min_drop", 2, 1, 32,
+            "Smallest distance, in blocks, between the two yards of a square sail that can carry a banner");
 
     private static final ConfigSection SHIPS = ModConfigs.server("sailing_runtime", "How sails and the keel act on assembled ships");
     public static final ConfigValue<Boolean> FORCES_ENABLED = SHIPS.bool("forces_enabled", true,

@@ -13,7 +13,7 @@ item_ids:
 A **crew member** is a simple NPC. Hire one at a harbor desk (see "Hiring crew" below) or spawn one with
 `/pirates crew spawn`.
 
-**Stations** are blocks a crew member can man. Only the sail winch is one so far. A crew member at a station stands on
+**Stations** are blocks a crew member can man. The sail winch, helm, cannons, pump, capstan and crow's nest are stations. A crew member at a station stands on
 an invisible seat that travels with the ship, so it stays at its post while the ship moves.
 
 The **captain's whistle** (creative tab) gives orders:

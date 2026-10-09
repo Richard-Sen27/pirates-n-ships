@@ -1,6 +1,6 @@
-// 1.21.1	2026-10-09T18:50:36.434716	Tags for minecraft:block mod id vanilla
+// 1.21.1	2026-10-09T18:55:18.493259	Tags for minecraft:block mod id vanilla
 4574ad20b2942c15e4ade670401483c8652905aa data/c/tags/block/chests.json
-4ced34c745a2afe37dbbddaa126315d1c3961b8d data/minecraft/tags/block/climbable.json
+da39b6df40b11fa9987da5007d54347277a84ca2 data/minecraft/tags/block/climbable.json
 027425cd193e9e04ea5aed99085f092fa520d95e data/minecraft/tags/block/doors.json
 fc739ab145de20fc17c9108dc8b841a6f8f90bad data/minecraft/tags/block/mineable/axe.json
 13ad1bcec5e42f643ce71e43388406f047890d96 data/minecraft/tags/block/mineable/pickaxe.json

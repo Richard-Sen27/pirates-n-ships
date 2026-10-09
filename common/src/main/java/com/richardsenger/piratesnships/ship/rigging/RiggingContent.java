@@ -48,10 +48,10 @@ public final class RiggingContent {
 
     public static final RegistryEntry<Block, ChainplateBlock> CHAINPLATE = ModRegistry.blockWithItem("chainplate",
             () -> new ChainplateBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(1.5f, 6.0f)
-                    .sound(SoundType.CHAIN).noOcclusion().pushReaction(PushReaction.DESTROY)));
+                    .sound(SoundType.CHAIN).noCollission().noOcclusion().pushReaction(PushReaction.DESTROY)));
     public static final RegistryEntry<Block, MastHoopBlock> MAST_HOOP = ModRegistry.blockWithItem("mast_hoop",
             () -> new MastHoopBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(1.5f, 6.0f)
-                    .sound(SoundType.CHAIN).noOcclusion().pushReaction(PushReaction.DESTROY)));
+                    .sound(SoundType.CHAIN).noCollission().noOcclusion().pushReaction(PushReaction.DESTROY)));
     public static final RegistryEntry<Block, RatlineNetCellBlock> NET_CELL = ModRegistry.block("ratline_net_cell",
             () -> new RatlineNetCellBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOL).strength(0.2f)
                     .sound(SoundType.WOOL).noCollission().noOcclusion().noLootTable().pushReaction(PushReaction.DESTROY)

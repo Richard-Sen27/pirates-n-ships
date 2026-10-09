@@ -105,7 +105,8 @@ public final class RiggingModule implements ModModule {
             // the net cell has no loot (noLootTable): breaking the net drops one net item at fitting A (RatlineNets)
         });
         data.blockTags(tags -> {
-            tags.tag(BlockTags.CLIMBABLE).add(RiggingContent.RATLINES.get()).add(RiggingContent.NET_CELL.get());
+            tags.tag(BlockTags.CLIMBABLE).add(RiggingContent.RATLINES.get()).add(RiggingContent.NET_CELL.get())
+                    .add(RiggingContent.CHAINPLATE.get()).add(RiggingContent.MAST_HOOP.get());
             // RL1b: a net hangs on a yard and a sloped run leans on a yard or the crow's nest (RatlinesRules)
             tags.tag(RiggingContent.RATLINES_ANCHORS).addTag(BlockTags.FENCES).addTag(BlockTags.WALLS)
                     .add(SailingBlocks.YARD.get()).add(LookoutContent.CROWS_NEST.get());

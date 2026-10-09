@@ -153,7 +153,7 @@ public final class RatlineNetGameTests {
      * Everything is scheduled up front (scheduling from a scheduled task changes the task map while it is iterated).
      */
     private static void climb(GameTestHelper h, int start, Supplier<Player> spawn, Supplier<Net> net,
-                              Function<Vec3, Vec3> frame, boolean jump, int forTicks, String what) {
+                              Function<Vec3, Vec3> frame, boolean jump, boolean forward, int forTicks, String what) {
         Player[] player = {null};
         double[] y0 = {0};
         double[] max = {Double.NEGATIVE_INFINITY};
@@ -172,7 +172,7 @@ public final class RatlineNetGameTests {
                 return;
             }
             p.setJumping(jump);
-            p.zza = jump ? 0f : 1f;
+            p.zza = forward ? 1f : 0f;
             Vec3 feet = frame.apply(p.position());
             if (feet.y > max[0]) {
                 max[0] = feet.y;
@@ -339,39 +339,50 @@ public final class RatlineNetGameTests {
         return () -> RatlineNets.netOf(h.getLevel(), h.absolutePos(rel));
     }
 
-    private static void landClimb(GameTestHelper h, int plateX, int hoopY, boolean jump, String what) {
+    private static void landClimb(GameTestHelper h, int plateX, int hoopY, boolean jump, boolean forward, String what) {
         landRig(h, plateX, hoopY);
         BlockPos plate = new BlockPos(plateX, 1, 4);
         String r = string(h.getLevel(), h.absolutePos(plate), h.absolutePos(new BlockPos(5, hoopY, 4)),
                 new ItemStack(RiggingContent.NET_ITEM.get()));
         h.assertTrue(r.equals(RatlineNetItem.KEY_STRUNG), what + ": not strung: " + r);
         climb(h, 0, () -> playerInLevel(h, h.absoluteVec(new Vec3(plateX + 0.5, 1.0, 4.5)), Direction.EAST.toYRot()),
-                netAt(h, plate), v -> v, jump, 100, what);
+                netAt(h, plate), v -> v, jump, forward, 100, what);
     }
 
-    /** A near-vertical net (88°) on land: a player holding forward climbs it to the top. */
+    /** A near-vertical net (87°) on land: a player holding forward climbs it to the top. */
     @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 140)
     public static void playerClimbsAVerticalNetOnLand(GameTestHelper h) {
-        landClimb(h, 5, 6, false, "vertical net on land");
+        landClimb(h, 5, 5, false, true, "vertical net on land");
     }
 
     /** A 62° net on land. */
     @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 140)
     public static void playerClimbsASixtyDegreeNetOnLand(GameTestHelper h) {
-        landClimb(h, 3, 5, false, "60 degree net on land");
+        landClimb(h, 3, 5, false, true, "60 degree net on land");
     }
 
-    /** A 45° net on land, climbed holding jump this time (vanilla's climb up, carried along the line). */
+    /** A 45° net on land, climbed holding only jump this time (vanilla's jump climb, carried along the line). */
     @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 140)
     public static void playerClimbsAFortyFiveDegreeNetOnLand(GameTestHelper h) {
-        landClimb(h, 1, 5, true, "45 degree net on land");
+        landClimb(h, 1, 5, true, false, "45 degree net on land");
     }
 
     /** With the assist off, vanilla ladder climbing alone (holding jump) still takes a player up a vertical net. */
     @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 140, batch = BATCH + "assist_off")
     public static void vanillaClimbsAVerticalNetWithoutTheAssist(GameTestHelper h) {
         ConfigOverrides.during(h, RiggingConfig.NET_ASSIST, false);
-        landClimb(h, 5, 6, true, "vertical net on land, no assist");
+        landClimb(h, 5, 5, true, false, "vertical net on land, no assist");
+    }
+
+    /**
+     * With the assist off, vanilla alone takes a player up a 45° net only while it holds jump and forward together (the
+     * cells have no collision, so forward alone never climbs): the jump climb lifts it out of each cell and forward
+     * carries it into the next one. The assist makes forward alone climb and keeps the climber on the line.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 140, batch = BATCH + "assist_off")
+    public static void vanillaClimbsAFortyFiveDegreeNetWithJumpAndForward(GameTestHelper h) {
+        ConfigOverrides.during(h, RiggingConfig.NET_ASSIST, false);
+        landClimb(h, 1, 5, true, true, "45 degree net on land, no assist, jump and forward");
     }
 
     // ------------------------------------------------------------------ on a ship
@@ -414,7 +425,7 @@ public final class RatlineNetGameTests {
         climb(h, SETTLE, () -> {
             Vec3 at = ship.toWorld(new Vec3(plate.getX() + 0.5, plate.getY() + 0.02, plate.getZ() + 0.5));
             return playerInLevel(h, at, Direction.EAST.toYRot());
-        }, () -> RatlineNets.netOf(level, plate), ship::toPlot, false, 110, what);
+        }, () -> RatlineNets.netOf(level, plate), ship::toPlot, false, true, 110, what);
     }
 
     /** A near-vertical (88°) net in a ship's plot, strung there and climbed. */

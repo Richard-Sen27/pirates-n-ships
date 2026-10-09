@@ -71,11 +71,10 @@ public final class RatlineNetAssist {
             return;
         }
         BlockPos cell = player.getLastClimbablePos().orElse(null);
-        if (cell == null || !level.getBlockState(cell).is(RiggingContent.NET_CELL.get())
-                || !(level.getBlockEntity(cell) instanceof RatlineNetCellBlockEntity be) || be.fittingA() == null) {
+        if (cell == null) {
             return;
         }
-        Net net = RatlineNets.netOf(level, be.fittingA());
+        Net net = netAt(level, cell);
         if (net == null) {
             return;
         }
@@ -104,6 +103,19 @@ public final class RatlineNetAssist {
             return 0;
         }
         return Math.max(vy, -SLIDE_SPEED);
+    }
+
+    /**
+     * The net a climber at the climbable block {@code pos} hangs on: the net of a net cell, or the net a fitting holds
+     * (the fittings are climbable too, so a climber gets onto the net from the chainplate's block and off it into the
+     * hoop's).
+     */
+    static @Nullable Net netAt(Level level, BlockPos pos) {
+        if (level.getBlockState(pos).is(RiggingContent.NET_CELL.get())) {
+            return level.getBlockEntity(pos) instanceof RatlineNetCellBlockEntity be && be.fittingA() != null
+                    ? RatlineNets.netOf(level, be.fittingA()) : null;
+        }
+        return level.getBlockState(pos).getBlock() instanceof NetFitting ? RatlineNets.netOf(level, pos) : null;
     }
 
     private static @Nullable Frame frame(Level level, BlockPos cell) {

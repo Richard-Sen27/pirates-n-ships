@@ -81,6 +81,7 @@ public final class AlmanacChapterProvider {
                     }
                     case PageElement.Spotlight ignored -> {
                     }
+                    case PageElement.Spotlight3d s -> s.caption().ifPresent(out::add);
                 }
             }
         }

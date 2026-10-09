@@ -23,6 +23,8 @@ The **Crew** tab of a harbour master's desk lists who seeks a berth. Each asks a
 
 Bring your ship within about 32 blocks of the port first: the new hand walks straight aboard.
 
+{spotlight3d:entity:crew_member|A hand of your crew}
+
 >! Every hand needs a free {item:pirates_n_ships:hammock}**hammock**. The desk refuses a hand you cannot bunk.
 
 ## Stations

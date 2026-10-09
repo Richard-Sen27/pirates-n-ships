@@ -66,6 +66,7 @@ Letting go of right click never fires. Sneak to lower an aimed gun.
 ## The cannon
 show_me: cannon_loading | Show me: loading a cannon
 Click the deck where the **front** of the carriage should stand, by the rail: the barrel overhangs one block ahead. Both halves need a block beneath them.
+{spotlight3d:block:cannon}
 {recipe:cannon}
 
 > A cannon cannot turn sideways. Lay your ship so her broadside bears.
@@ -90,6 +91,7 @@ Both load like a ball, after the powder. {item:pirates_n_ships:chain_shot}**Chai
 illustration: swivel_gun
 show_me: swivel_gun | Show me: the swivel gun
 The {item:pirates_n_ships:swivel_gun}**swivel gun** mounts on a fence, a wall, bars or any full block. Load it like a cannon, then hold right click with an empty hand: it follows your eye and fires when you let go.
+{spotlight3d:block:swivel_gun}
 {recipe:swivel_gun}
 
 ## Gun crews
@@ -148,6 +150,8 @@ illustration: mob_pirate
 
 Striking navy men is a crime; killing pirates is not.
 
+{spotlight3d:entity:pirate}
+
 ## Pirate captains
 illustration: pirate_captain
 Every pirate island has a captain with a bounty of 300 doubloons. Sneak and use him with a sword in hand to call a duel; his crew keeps out of it.
@@ -192,9 +196,13 @@ The **kraken** rises beside ships in the deep ocean, most often at night and in 
 
 It leaves a {item:pirates_n_ships:kraken_beak}**kraken beak** and {item:pirates_n_ships:kraken_ink}**kraken ink**.
 
+{spotlight3d:entity:kraken}
+
 ## Sharks
 illustration: shark
 Sharks hunt swimmers, and blood drives them into a frenzy. Stay on deck or in a boat and they leave you alone.
+
+{spotlight3d:entity:shark}
 
 ## Waterspouts and whirlpools
 In a storm at sea a **waterspout** pulls in and lifts what comes near, and tears set sails. Steer clear, or furl first.

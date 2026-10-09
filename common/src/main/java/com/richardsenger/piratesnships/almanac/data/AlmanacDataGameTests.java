@@ -104,6 +104,35 @@ public final class AlmanacDataGameTests {
         helper.succeed();
     }
 
+    /**
+     * ALM10: the loaded book holds the 3D spotlights written in docs/almanac/, each naming what its registry has (the
+     * chapter codec checked them against the registries with our content registered); every block has a default state
+     * other than air and every entity type makes an instance in a level, which is what the screen draws.
+     */
+    @ModGameTest
+    public static void spotlights3dNameRealContent(GameTestHelper helper) {
+        List<PageElement.Spotlight3d> spots = AlmanacBook.server().chapters().stream().flatMap(c -> c.pages().stream())
+                .flatMap(p -> p.elements().stream()).filter(e -> e instanceof PageElement.Spotlight3d)
+                .map(e -> (PageElement.Spotlight3d) e).toList();
+        helper.assertTrue(spots.size() >= 10, "at least ten 3D spotlights in the book, found " + spots.size());
+        for (PageElement.Spotlight3d s : spots) {
+            switch (s.subject()) {
+                case BLOCK -> helper.assertTrue(!net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(s.id()).defaultBlockState().isAir(),
+                        s.id() + " is a block");
+                case ITEM -> helper.assertTrue(net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(s.id()), s.id() + " is an item");
+                case ENTITY -> {
+                    var type = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getOptional(s.id());
+                    helper.assertTrue(type.isPresent(), s.id() + " is an entity type");
+                    var entity = type.get().create(helper.getLevel());
+                    helper.assertTrue(entity != null, s.id() + " makes an instance");
+                    entity.discard();
+                }
+            }
+        }
+        helper.assertTrue(spots.stream().anyMatch(s -> s.id().equals(com.richardsenger.piratesnships.Constants.id("kraken"))), "the kraken is shown");
+        helper.succeed();
+    }
+
     /** A login gets the whole book (surviving the wire codec) and the stored page; a reload sync gets only the book. */
     @ModGameTest
     public static void syncPayloadCarriesTheBook(GameTestHelper helper) {

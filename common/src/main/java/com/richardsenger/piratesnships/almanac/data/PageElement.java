@@ -16,8 +16,8 @@ import java.util.Optional;
 /**
  * One element of an Almanac page (docs/design.md §3.4, ALM2; JSON format in docs/almanac.md). Written in a page's
  * {@code elements} list with a {@code "type"} field. Text, headings, lists and "Show me" buttons flow from the top in
- * the order given (ALM3 lays them out), and so do recipe panels and item spotlights (ALM8, fixed-height blocks that
- * never split across pages); illustrations and item icons are placed freely in page units, where the page
+ * the order given (ALM3 lays them out), and so do recipe panels, item spotlights (ALM8) and 3D spotlights (ALM10),
+ * fixed-height blocks that never split across pages; illustrations and item icons are placed freely in page units, where the page
  * is the unit square (0,0 top left, 1,1 bottom right), so the screen can scale it. All text is lang keys.
  */
 public sealed interface PageElement {
@@ -38,7 +38,8 @@ public sealed interface PageElement {
         ITEM("item"),
         SHOW_ME("show_me"),
         RECIPE("recipe"),
-        SPOTLIGHT("spotlight");
+        SPOTLIGHT("spotlight"),
+        SPOTLIGHT_3D("spotlight3d");
 
         public static final Codec<Kind> CODEC = StringRepresentable.fromEnum(Kind::values);
         public static final StreamCodec<ByteBuf, Kind> STREAM_CODEC = ByteBufCodecs.idMapper(i -> values()[i], Kind::ordinal);
@@ -64,6 +65,7 @@ public sealed interface PageElement {
                 case SHOW_ME -> ShowMe.CODEC;
                 case RECIPE -> RecipePanel.CODEC;
                 case SPOTLIGHT -> Spotlight.CODEC;
+                case SPOTLIGHT_3D -> Spotlight3d.CODEC;
             };
         }
 
@@ -77,6 +79,7 @@ public sealed interface PageElement {
                 case SHOW_ME -> ShowMe.STREAM_CODEC;
                 case RECIPE -> RecipePanel.STREAM_CODEC;
                 case SPOTLIGHT -> Spotlight.STREAM_CODEC;
+                case SPOTLIGHT_3D -> Spotlight3d.STREAM_CODEC;
             };
         }
     }
@@ -286,6 +289,67 @@ public sealed interface PageElement {
         @Override
         public Kind kind() {
             return Kind.SPOTLIGHT;
+        }
+    }
+
+    /**
+     * A 3D spotlight (ALM10): a block, an item or a mob turning slowly in a framed card with its name under it, as a
+     * fixed-height block in the flow.
+     *
+     * @param subject what {@code id} names
+     * @param id      the block, item or entity type id; an unknown one fails the chapter
+     * @param caption lang key of the name under the card; empty for the registry's name
+     */
+    record Spotlight3d(Subject subject, ResourceLocation id, Optional<String> caption) implements PageElement {
+
+        public static final MapCodec<Spotlight3d> CODEC = RecordCodecBuilder.<Spotlight3d>mapCodec(i -> i.group(
+                Subject.CODEC.fieldOf("subject").forGetter(Spotlight3d::subject),
+                ResourceLocation.CODEC.fieldOf("id").forGetter(Spotlight3d::id),
+                AlmanacCodecs.LANG_KEY.optionalFieldOf("caption").forGetter(Spotlight3d::caption)
+        ).apply(i, Spotlight3d::new)).validate(Spotlight3d::check);
+
+        public static final StreamCodec<ByteBuf, Spotlight3d> STREAM_CODEC = StreamCodec.composite(
+                Subject.STREAM_CODEC, Spotlight3d::subject,
+                ResourceLocation.STREAM_CODEC, Spotlight3d::id,
+                ByteBufCodecs.optional(AlmanacCodecs.STRING), Spotlight3d::caption,
+                Spotlight3d::new);
+
+        private static DataResult<Spotlight3d> check(Spotlight3d s) {
+            DataResult<ResourceLocation> id = switch (s.subject) {
+                case BLOCK -> AlmanacCodecs.checkBlock(s.id);
+                case ITEM -> AlmanacCodecs.checkItem(s.id);
+                case ENTITY -> AlmanacCodecs.checkEntity(s.id);
+            };
+            return id.map(ignored -> s);
+        }
+
+        @Override
+        public Kind kind() {
+            return Kind.SPOTLIGHT_3D;
+        }
+
+        /** What a 3D spotlight shows, with its name in the JSON and the markup. */
+        public enum Subject implements StringRepresentable {
+            /** The block's default state as a block (its model and its block entity renderer), turning. */
+            BLOCK("block"),
+            /** The item's model, turning. */
+            ITEM("item"),
+            /** A mob of the type on a client-side instance, drawn as the inventory draws the player, turning. */
+            ENTITY("entity");
+
+            public static final Codec<Subject> CODEC = StringRepresentable.fromEnum(Subject::values);
+            public static final StreamCodec<ByteBuf, Subject> STREAM_CODEC = ByteBufCodecs.idMapper(i -> values()[i], Subject::ordinal);
+
+            private final String name;
+
+            Subject(String name) {
+                this.name = name;
+            }
+
+            @Override
+            public String getSerializedName() {
+                return name;
+            }
         }
     }
 }

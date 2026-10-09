@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
@@ -97,6 +98,10 @@ class AlmanacGuideTest {
         for (JsonElement e : json.getAsJsonArray("elements")) {
             JsonObject o = e.getAsJsonObject();
             if (o.get("type").getAsString().equals("spotlight")) elements.add(new PageElement.Spotlight(ResourceLocation.parse(o.get("item").getAsString())));
+            else if (o.get("type").getAsString().equals("spotlight3d")) elements.add(new PageElement.Spotlight3d(
+                    PageElement.Spotlight3d.Subject.CODEC.parse(JsonOps.INSTANCE, o.get("subject")).getOrThrow(),
+                    ResourceLocation.parse(o.get("id").getAsString()),
+                    o.has("caption") ? Optional.of(o.get("caption").getAsString()) : Optional.empty()));
             else elements.add(PageElement.CODEC.parse(JsonOps.INSTANCE, o).getOrThrow());
         }
         return new Page(elements);
@@ -326,6 +331,7 @@ class AlmanacGuideTest {
                         case com.richardsenger.piratesnships.almanac.client.PageLayout.TextRun r -> r.area();
                         case com.richardsenger.piratesnships.almanac.client.PageLayout.RecipeBox r -> r.area();
                         case com.richardsenger.piratesnships.almanac.client.PageLayout.SpotlightBox r -> r.area();
+                        case com.richardsenger.piratesnships.almanac.client.PageLayout.Spotlight3dBox r -> r.area();
                         case com.richardsenger.piratesnships.almanac.client.PageLayout.Button r -> r.area();
                         case com.richardsenger.piratesnships.almanac.client.PageLayout.Picture r -> r.box();
                         default -> null;
@@ -374,6 +380,45 @@ class AlmanacGuideTest {
     }
 
     /** Ours: an item model and a lang name; vanilla: registered. Null when fine. */
+    /**
+     * ALM10: every 3D spotlight names a block, item or entity type that exists (ours by their lang names and item
+     * models, vanilla's in the game's registries), at most one per data page, and its caption has its text.
+     */
+    @Test
+    void spotlights3dNameWhatExists() throws IOException {
+        JsonObject lang = lang();
+        Map<String, String> text = intermediate().lang();
+        List<String> problems = new ArrayList<>();
+        Set<String> shown = new TreeSet<>();
+        for (Chapter c : chapters()) {
+            for (int i = 0; i < c.pages().size(); i++) {
+                int onPage = 0;
+                for (PageElement el : c.pages().get(i).elements()) {
+                    if (!(el instanceof PageElement.Spotlight3d s)) continue;
+                    onPage++;
+                    shown.add(s.subject().getSerializedName() + " " + s.id());
+                    ResourceLocation id = s.id();
+                    boolean ours = id.getNamespace().equals(NS);
+                    String p = switch (s.subject()) {
+                        case ITEM -> checkItem(id, lang);
+                        case BLOCK -> (ours ? lang.has("block." + NS + "." + id.getPath()) : BuiltInRegistries.BLOCK.containsKey(id))
+                                ? null : id + " is no block";
+                        case ENTITY -> (ours ? lang.has("entity." + NS + "." + id.getPath()) : BuiltInRegistries.ENTITY_TYPE.containsKey(id))
+                                ? null : id + " is no entity type";
+                    };
+                    if (p != null) problems.add(c.id() + " 3D spotlight: " + p);
+                    s.caption().ifPresent(k -> {
+                        if (!text.containsKey(k)) problems.add(c.id() + " 3D spotlight caption " + k + " has no text");
+                    });
+                }
+                if (onPage > 1) problems.add(c.id() + " page " + (i + 1) + ": " + onPage + " 3D spotlights (one a page)");
+            }
+        }
+        System.out.println("Almanac: " + shown.size() + " 3D spotlights " + shown);
+        assertTrue(shown.size() >= 10, "only " + shown.size() + " 3D spotlights: " + shown);
+        assertTrue(problems.isEmpty(), String.join("\n", problems));
+    }
+
     private static String checkItem(ResourceLocation id, JsonObject lang) {
         if (id.getNamespace().equals(NS)) {
             String path = "models/item/" + id.getPath() + ".json";

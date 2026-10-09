@@ -69,6 +69,7 @@ She is ballasted as you built her. What you load later can make her list: trim t
 illustration: capstan
 show_me: anchor_and_capstan | Show me: dropping and weighing anchor
 The {item:pirates_n_ships:capstan}**capstan** works the anchor, which hangs outside the hull on its side. Use it to let go, and again to weigh.
+{spotlight3d:block:capstan}
 {recipe:capstan}
 
 Once the anchor bites, she swings to lie head to her chain. Over water too deep for the chain, the capstan refuses to let go.

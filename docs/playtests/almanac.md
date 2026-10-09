@@ -293,3 +293,53 @@ recipe of ours has one panel, every chapter opens with its picture and a spotlig
 9. **Nothing clipped:** at GUI scale 3 and at Auto, in a normal window and a small one: the index entries, the
    continue button, the recipe panels (the result's count included) and the spotlight names stay inside the pages;
    nothing overlaps the page arrows.
+
+# Playtest: 3D spotlights (work package ALM10)
+
+Ten places in the Almanac now show a **3D spotlight**: a block or mob turning slowly in a larger framed card, its name
+in bold under it. The card's place in the page flow (96 px, never split), the turn's speed and the fit are covered by
+JUnit (`PageLayoutTest`, `Spotlight3dViewTest`, `AlmanacGuideTest`); the drawing needs a client. Please check **both
+clients** (`./gradlew :neoforge:runClient`, `./gradlew :fabric:runClient`) and send screenshots. Where they are:
+
+| Chapter | Page | Shows |
+|---|---|---|
+| Your first ship | 2. Set the helm | the helm (block, with its wheel) |
+| Ships | Railings | the railing gate, shut ("The railing gate, shut") |
+| Sailing | Anchor and capstan | the capstan (block, with its bars) |
+| Crew | Hiring hands | a crew member ("A hand of your crew") |
+| Law | The brig | the brig door, shut, both halves ("The brig door, shut") |
+| Weapons and combat | The cannon | the cannon (carriage and barrel) |
+| Weapons and combat | The swivel gun | the swivel gun |
+| Weapons and combat | Foes ashore and afloat | a pirate |
+| Weapons and combat | Monsters of the deep | the kraken |
+| Weapons and combat | Sharks | a shark |
+
+## Steps
+1. **Each one turns smoothly:** open each page above. The model turns about its own upright axis, one full turn in 18
+   seconds, without stutter (the turn uses the partial tick, so it is smooth at any frame rate above 20), leaning
+   toward you a little so you see its top. Leave the book open a minute: the turn never jumps.
+2. **Inside its card:** at no angle does any part of the model reach over the card's leather rim or out of the card;
+   what would is clipped at the rim. The model is centred in the card and as large as fits.
+3. **The kraken fits:** the kraken is drawn small, whole (body and tentacles, as far as its model shows them at rest)
+   and inside the card at every angle. Same for the shark (nose to tail) and the cannon (the barrel overhangs the
+   carriage).
+4. **Blocks as built:** the helm shows its wheel, the capstan its bars, the cannon its barrel, the swivel gun its
+   barrel on the yoke; the brig door shows both halves, shut; the railing gate is shut. No block is drawn dark or
+   black on one side only because of the light (they are lit as the inventory lights a mob).
+5. **Mobs face you, head straight:** the crew member, the pirate, the shark and the kraken turn with the card; the head
+   follows nothing (moving the mouse over the book changes nothing). Say which of the GeckoLib mobs (crew member,
+   pirate, shark, kraken) **play their idle animation** and which **stand still**: the spotlight advances the mob's
+   tick count with the screen, so a mob whose idle animation plays while it stands should play it here; a mob that
+   stands still is acceptable, but tell us which. The pirate and the crew member wear their default look.
+6. **Names and tooltips:** the name under each card is bold and centred, the caption where the table gives one, else
+   the registry name ("Helm", "Capstan", "Kraken"). Hovering a card shows the registry name as a tooltip.
+7. **Page turns:** while a page turns, the cards show empty (no model) and come back once it settles; nothing of a
+   model is drawn over the turning page.
+8. **Nothing clipped at GUI scale 3 and Auto:** at GUI scale 3 and Auto, in a normal window and a small one (the book
+   shrinks), every card and its name stay inside the page, the model inside its card; nothing overlaps the page arrows
+   or the page number.
+9. **Closing and reopening:** close the book and reopen it on the crew page several times, and open a "Show me" scene
+   from a page with a spotlight and come back: no error in the log, the mobs come back (a new instance each time the
+   screen opens).
+10. **Log:** the client log has no "Almanac 3D spotlight ... could not be built" or "failed to draw" warnings. If one
+    appears, send it: that card stays empty.

@@ -44,7 +44,10 @@ class AlmanacModelTest {
                 new PageElement.ItemIcon(BOOK, 0f, 1f, Optional.empty()),
                 new PageElement.ShowMe("pirates_n_ships:cannon_loading", "a.show_me"),
                 new PageElement.RecipePanel(ResourceLocation.fromNamespaceAndPath("pirates_n_ships", "helm")),
-                new PageElement.Spotlight(GUNPOWDER));
+                new PageElement.Spotlight(GUNPOWDER),
+                new PageElement.Spotlight3d(PageElement.Spotlight3d.Subject.BLOCK, ResourceLocation.withDefaultNamespace("chest"), Optional.of("a.caption")),
+                new PageElement.Spotlight3d(PageElement.Spotlight3d.Subject.ITEM, GUNPOWDER, Optional.empty()),
+                new PageElement.Spotlight3d(PageElement.Spotlight3d.Subject.ENTITY, ResourceLocation.withDefaultNamespace("dolphin"), Optional.empty()));
     }
 
     private static <T> T wire(StreamCodec<ByteBuf, T> codec, T value) {
@@ -74,6 +77,10 @@ class AlmanacModelTest {
         assertEquals(new PageElement.RecipePanel(ResourceLocation.fromNamespaceAndPath("pirates_n_ships", "helm")),
                 parseElement("{\"type\":\"recipe\",\"recipe\":\"pirates_n_ships:helm\"}"));
         assertEquals(new PageElement.Spotlight(GUNPOWDER), parseElement("{\"type\":\"spotlight\",\"item\":\"minecraft:gunpowder\"}"));
+        assertEquals(new PageElement.Spotlight3d(PageElement.Spotlight3d.Subject.ENTITY, ResourceLocation.withDefaultNamespace("dolphin"), Optional.of("c")),
+                parseElement("{\"type\":\"spotlight3d\",\"subject\":\"entity\",\"id\":\"minecraft:dolphin\",\"caption\":\"c\"}"));
+        assertEquals(new PageElement.Spotlight3d(PageElement.Spotlight3d.Subject.BLOCK, ResourceLocation.withDefaultNamespace("oak_door"), Optional.empty()),
+                parseElement("{\"type\":\"spotlight3d\",\"subject\":\"block\",\"id\":\"minecraft:oak_door\"}"));
     }
 
     private static PageElement parseElement(String json) {
@@ -91,6 +98,13 @@ class AlmanacModelTest {
         assertTrue(rejects("{\"type\":\"sparkles\",\"key\":\"k\"}"), "unknown element type");
         assertTrue(rejects("{\"type\":\"spotlight\",\"item\":\"minecraft:no_such_item\"}"), "spotlight of an unknown item");
         assertTrue(rejects("{\"type\":\"recipe\",\"recipe\":\"Not An Id\"}"), "recipe panel without a valid id");
+        assertTrue(rejects("{\"type\":\"spotlight3d\",\"subject\":\"block\",\"id\":\"minecraft:no_such_block\"}"), "3D spotlight of an unknown block");
+        assertTrue(rejects("{\"type\":\"spotlight3d\",\"subject\":\"block\",\"id\":\"minecraft:air\"}"), "3D spotlight of air");
+        assertTrue(rejects("{\"type\":\"spotlight3d\",\"subject\":\"block\",\"id\":\"minecraft:dolphin\"}"), "an entity id as a block");
+        assertTrue(rejects("{\"type\":\"spotlight3d\",\"subject\":\"entity\",\"id\":\"minecraft:chest\"}"), "a block id as an entity");
+        assertTrue(rejects("{\"type\":\"spotlight3d\",\"subject\":\"item\",\"id\":\"minecraft:no_such_item\"}"), "3D spotlight of an unknown item");
+        assertTrue(rejects("{\"type\":\"spotlight3d\",\"subject\":\"mob\",\"id\":\"minecraft:dolphin\"}"), "unknown subject");
+        assertTrue(rejects("{\"type\":\"spotlight3d\",\"subject\":\"entity\",\"id\":\"minecraft:dolphin\",\"caption\":\"has space\"}"), "caption not a lang key");
         assertTrue(rejects("{\"type\":\"illustration\",\"texture\":\"a:b.png\",\"x\":0.6,\"y\":0,\"w\":0.5,\"h\":0.5}"), "past the right edge");
         assertTrue(rejects("{\"type\":\"illustration\",\"texture\":\"a:b.png\",\"x\":0,\"y\":0,\"w\":0,\"h\":0.5}"), "no width");
         assertTrue(rejects("{\"type\":\"illustration\",\"texture\":\"a:b.png\",\"x\":-0.1,\"y\":0,\"w\":0.5,\"h\":0.5}"), "negative x");

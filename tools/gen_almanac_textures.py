@@ -16,12 +16,13 @@ Plain textures outside the GUI sprite atlas (almanac/client/AlmanacScreen blits 
   matches AlmanacScreen's constants: left page x 9..146, right page x 146..283, both y 5..172; the stacks x 6..9 and
   283..286, y 172..175; text boxes x 19..135 and 157..273 from y 15, LINE_H 10 (the ruled lines lie one pixel under
   each text line: y 24, 34, ... 154).
-- panels.png (256x128, ALM8): the pieces of the recipe panels, item spotlights and the index spread, one atlas (UVs in
+- panels.png (256x256, ALM8, ALM10): the pieces of the recipe panels, item spotlights and the index spread, one atlas (UVs in
   almanac/client/AlmanacPanels): the recipe panel (116x62 at 0,0; a darker parchment card with a brown outline and
   clipped corners), an input slot (18x18 at 0,64; sunk: shade top left, light bottom right), the result slot (26x26 at
   18,64; the same with a brass rim), the arrow (22x15 at 44,64), the furnace flame (14x14 at 66,64), the shapeless mark
   (9x9 at 80,64; two opposed arrows), the spotlight frame (38x38 at 0,90; leather rim with brass corners around a light
-  card) and the index tiles in every size from 10 to 20 pixels (at y 90 from x 40, each one after the other).
+  card), the index tiles in every size from 10 to 20 pixels (at y 90 from x 40, each one after the other) and the 3D
+  spotlight card (96x84 at 0,128, ALM10; the spotlight frame's family, a wider rim and larger brass corners).
 - bookmark.png (24x16): one silk ribbon tab in light greys with stitched edges and a swallowtail end, tinted per
   chapter with its bookmark colour (white parts take the colour fully, the greys shade it). Its left 4 px lie under the
   cover.
@@ -238,6 +239,7 @@ SLOT, OUT_SLOT = 18, 26
 ARROW_W, ARROW_H = 22, 15
 FLAME, MARK, SPOT = 14, 9, 38
 TILE_MIN, TILE_MAX, TILE_X, TILE_Y = 10, 20, 40, 90
+SPOT3D_W, SPOT3D_H, SPOT3D_X, SPOT3D_Y = 96, 84, 0, 128
 
 
 def card(c, x0, y0, w, h, seed, outline=RIM, clip=2):
@@ -317,29 +319,29 @@ def shapeless_mark(c, x0, y0):
         c.set(x0 + i, y0 + 6 + i, INK_BROWN)
 
 
-def spotlight_frame(c, x0, y0):
-    """A leather rim, a light card inside it and brass corner plates."""
-    for y in range(SPOT):
-        for x in range(SPOT):
-            d = min(x, y, SPOT - 1 - x, SPOT - 1 - y)
+def spotlight_frame(c, x0, y0, w=SPOT, h=SPOT, rim=2, plate=6, cloud=9):
+    """A leather rim, a light card inside it and brass corner plates (the item spotlight; larger for the 3D one)."""
+    for y in range(h):
+        for x in range(w):
+            d = min(x, y, w - 1 - x, h - 1 - y)
             if d == 0:
                 col = LEATHER_OUT
-            elif d <= 2:
+            elif d <= rim:
                 col = mix(LEATHER_D, LEATHER_L, smooth(x, y, 5, 61))
-            elif d == 3:
+            elif d == rim + 1:
                 col = SHADE
             else:
-                col = mix(CARD, PAPER_L, 0.4 + 0.6 * smooth(x0 + x, y0 + y, 9, 63))
+                col = mix(CARD, PAPER_L, 0.4 + 0.6 * smooth(x0 + x, y0 + y, cloud, 63))
             c.set(x0 + x, y0 + y, col)
-    for cx, cy, dx, dy in ((0, 0, 1, 1), (SPOT - 1, 0, -1, 1), (0, SPOT - 1, 1, -1), (SPOT - 1, SPOT - 1, -1, -1)):
-        for i in range(6):
-            for j in range(6 - i):
-                col = BRASS_OUT if i == 0 or j == 0 or i + j == 5 else (BRASS_L if i == 1 or j == 1 else BRASS)
+    for cx, cy, dx, dy in ((0, 0, 1, 1), (w - 1, 0, -1, 1), (0, h - 1, 1, -1), (w - 1, h - 1, -1, -1)):
+        for i in range(plate):
+            for j in range(plate - i):
+                col = BRASS_OUT if i == 0 or j == 0 or i + j == plate - 1 else (BRASS_L if i == 1 or j == 1 else BRASS)
                 c.set(x0 + cx + dx * i, y0 + cy + dy * j, col)
 
 
 def panels():
-    c = Canvas(256, 128)
+    c = Canvas(256, 256)
     card(c, 0, 0, PANEL_W, PANEL_H, 51)
     slot(c, 0, 64, SLOT)
     slot(c, SLOT, 64, OUT_SLOT, rim=BRASS_D)
@@ -351,6 +353,7 @@ def panels():
     for size in range(TILE_MIN, TILE_MAX + 1):
         card(c, x, TILE_Y, size, size, 70 + size, outline=RIM, clip=2 if size >= 14 else 1)
         x += size
+    spotlight_frame(c, SPOT3D_X, SPOT3D_Y, SPOT3D_W, SPOT3D_H, rim=3, plate=9, cloud=17)
     return c
 
 

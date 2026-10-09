@@ -1,7 +1,21 @@
-// 1.21.1	2026-10-09T15:01:06.067477	Raw JSON (data): pirates_n_ships
+// 1.21.1	2026-10-09T15:34:08.864326	Raw JSON (data): pirates_n_ships
 48a3d1396f56a1821c2e6dd2a2ce6f5dc32fc15c data/pirates_n_ships/advancement/recipes/misc/guide_book.json
-76dad8a92cdf5f33d76dc6f3ed9e5a34f7912207 data/pirates_n_ships/almanac/chapters/cannons.json
-5327c83481caf2af8a52d07dbf4e0ab534618d64 data/pirates_n_ships/almanac/chapters/welcome.json
+fef761c52f99434b5e1f5969bd7b7cee10092312 data/pirates_n_ships/almanac/chapters/blocks.json
+871360fc71e9bb182cfd3769a5ab532705a44793 data/pirates_n_ships/almanac/chapters/combat.json
+863b3e564574b5ccbf8faa235dc0408485a0bc8a data/pirates_n_ships/almanac/chapters/commands.json
+a5a146d991383d954ff1122f34e698bdd80f63b3 data/pirates_n_ships/almanac/chapters/configuration.json
+a2887e7cf75116ce7f108b6e90bba1f5857c596e data/pirates_n_ships/almanac/chapters/crew.json
+d0fb79e77cc45c845dea90f5069873459908c7c4 data/pirates_n_ships/almanac/chapters/datapacks.json
+7f6e3ce3df3d583503caa5110185f424a824deb3 data/pirates_n_ships/almanac/chapters/first_ship.json
+5cfad46118e93fbe052586fa621f9e8ee5b81fc6 data/pirates_n_ships/almanac/chapters/flags.json
+ef81c2db8dfbee4e6c37a15b7895fbea6e1efe81 data/pirates_n_ships/almanac/chapters/items.json
+96cdeade4dd15b230ad85222bbf26a456c193aff data/pirates_n_ships/almanac/chapters/law.json
+637fefe00e0d851d48f7e829bc04da330c871242 data/pirates_n_ships/almanac/chapters/not_yet.json
+ae583512c224540ee96adefdd742685149960606 data/pirates_n_ships/almanac/chapters/provisions.json
+df396694c215af462c4e82f17a371632d040964f data/pirates_n_ships/almanac/chapters/sailing.json
+77e141a512d76f405c7afdbd78cf2b5c8f047908 data/pirates_n_ships/almanac/chapters/ships.json
+e413c60e8e1bec8272c5f33e8734e1381e33a956 data/pirates_n_ships/almanac/chapters/trade.json
+45d14b06cccdeb085871ab43248f0985dd5e20c8 data/pirates_n_ships/almanac/chapters/welcome.json
 81e4547184aef1c6ab27c144e370d0ff6cb85b3d data/pirates_n_ships/loot_table/chests/buried_treasure.json
 917a78912c9b82231026bd2ea966eb7535e5da69 data/pirates_n_ships/loot_table/chests/wreck.json
 a36329422f25984fa5698ac8ec14f9a580f2a13a data/pirates_n_ships/loot_table/entities/kraken.json

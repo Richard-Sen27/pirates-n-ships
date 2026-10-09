@@ -1,0 +1,60 @@
+{
+  "bookmark_color": "#7a4a1e",
+  "icon": "pirates_n_ships:helm",
+  "order": 10,
+  "pages": [
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.first_ship.p1.heading"
+        },
+        {
+          "type": "illustration",
+          "h": 0.35,
+          "texture": "pirates_n_ships:textures/almanac/helm.png",
+          "w": 0.9,
+          "x": 0.05,
+          "y": 0.09
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.first_ship.p1.text1"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.first_ship.p1.text2"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.first_ship.p1.text3"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.first_ship.p1.text4"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.first_ship.p1.text5"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.first_ship.p1.text6"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.first_ship.p1.text7"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.first_ship.p1.text8"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.first_ship.p1.text9"
+        }
+      ]
+    }
+  ],
+  "title": "pirates_n_ships.almanac.first_ship.title"
+}

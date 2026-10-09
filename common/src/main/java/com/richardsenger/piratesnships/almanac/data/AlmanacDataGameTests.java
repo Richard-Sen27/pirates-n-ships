@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.almanac.data;
 
 import com.mojang.authlib.GameProfile;
+import com.mojang.serialization.JsonOps;
 import com.richardsenger.piratesnships.almanac.sync.AlmanacPagePayload;
 import com.richardsenger.piratesnships.almanac.sync.AlmanacSync;
 import com.richardsenger.piratesnships.almanac.sync.AlmanacSyncPayload;
@@ -55,21 +56,32 @@ public final class AlmanacDataGameTests {
         return p;
     }
 
-    /** The datapack load put both built-in chapters into the server's book, in order and with their pages. */
+    /**
+     * The datapack load put every chapter generated from docs/guide.md into the server's book (ALM5): the chapters of
+     * the intermediate, in section order, each parsing with the chapter codec (items registered) to exactly what was
+     * loaded; the welcome chapter first and the combat chapter's cannon page with the cannon_loading "Show me".
+     */
     @ModGameTest
-    public static void serverBookHoldsTheExampleChapters(GameTestHelper helper) {
+    public static void serverBookHoldsTheGuideChapters(GameTestHelper helper) {
         AlmanacBook book = AlmanacBook.server();
-        Chapter welcome = book.chapter(AlmanacChapterProvider.WELCOME).orElse(null);
-        Chapter cannons = book.chapter(AlmanacChapterProvider.CANNONS).orElse(null);
-        helper.assertTrue(welcome != null, "welcome chapter loaded, book " + book);
-        helper.assertTrue(cannons != null, "cannons chapter loaded, book " + book);
-        helper.assertValueEqual(welcome.pageCount(), 2, "welcome pages");
-        helper.assertValueEqual(cannons.pageCount(), 3, "cannons pages");
-        helper.assertTrue(book.chapters().indexOf(welcome) < book.chapters().indexOf(cannons), "welcome comes before cannons");
+        AlmanacChapterProvider.Intermediate in = AlmanacChapterProvider.read(AlmanacChapterProvider.locate());
+        helper.assertValueEqual(in.bodies().size(), 16, "chapters in the intermediate (guide sections 0 to 15)");
+        List<ResourceLocation> ours = book.chapters().stream().map(Chapter::id)
+                .filter(id -> id.getNamespace().equals(AlmanacChapterProvider.WELCOME.getNamespace())).toList();
+        helper.assertValueEqual(ours, List.copyOf(in.bodies().keySet()), "our chapters in book order");
+        for (var e : in.bodies().entrySet()) {
+            Chapter.Body body = Chapter.Body.CODEC.parse(JsonOps.INSTANCE, e.getValue()).result().orElse(null);
+            helper.assertTrue(body != null, e.getKey() + " parses with the chapter codec");
+            helper.assertValueEqual(book.chapter(e.getKey()).orElse(null), body.withId(e.getKey()), "loaded " + e.getKey());
+        }
+        helper.assertValueEqual(book.chapters().get(0).id(), AlmanacChapterProvider.WELCOME, "the welcome chapter opens the book");
+        Chapter welcome = book.chapter(AlmanacChapterProvider.WELCOME).orElseThrow();
         helper.assertValueEqual(welcome.title(), AlmanacLang.title(AlmanacChapterProvider.WELCOME), "welcome title key");
-        boolean showMe = cannons.pages().get(2).elements().stream().anyMatch(e -> e instanceof PageElement.ShowMe s
+        helper.assertValueEqual(welcome.pageCount(), 2, "welcome pages (the guide book, contents)");
+        Chapter combat = book.chapter(AlmanacChapterProvider.COMBAT).orElseThrow();
+        boolean showMe = combat.pages().stream().flatMap(p -> p.elements().stream()).anyMatch(e -> e instanceof PageElement.ShowMe s
                 && s.scene().equals(AlmanacChapterProvider.CANNON_LOADING_SCENE));
-        helper.assertTrue(showMe, "the cannons chapter's third page has the cannon_loading Show me button");
+        helper.assertTrue(showMe, "the combat chapter has the cannon_loading Show me button");
         helper.succeed();
     }
 
@@ -91,8 +103,8 @@ public final class AlmanacDataGameTests {
         AlmanacSyncPayload.CODEC.encode(buf, sync);
         AlmanacSyncPayload decoded = AlmanacSyncPayload.CODEC.decode(buf);
         helper.assertValueEqual(decoded.book(), book, "book after the wire codec");
-        helper.assertValueEqual(decoded.book().chapter(AlmanacChapterProvider.CANNONS).map(Chapter::pageCount).orElse(-1), 3,
-                "cannons pages on the client");
+        helper.assertValueEqual(decoded.book().chapter(AlmanacChapterProvider.COMBAT).map(Chapter::pageCount),
+                book.chapter(AlmanacChapterProvider.COMBAT).map(Chapter::pageCount), "combat pages on the client");
 
         List<CustomPacketPayload> reload = AlmanacSync.payloads(player, false, book);
         helper.assertValueEqual(reload, List.<CustomPacketPayload>of(new AlmanacSyncPayload(book)), "reload payloads");
@@ -104,7 +116,7 @@ public final class AlmanacDataGameTests {
     public static void reportedPageSurvivesDeathAndRelog(GameTestHelper helper) {
         UUID id = UUID.randomUUID();
         ServerPlayer player = serverPlayer(helper, id);
-        AlmanacProgress page = AlmanacProgress.at(AlmanacChapterProvider.CANNONS, 2);
+        AlmanacProgress page = AlmanacProgress.at(AlmanacChapterProvider.COMBAT, 2);
         AlmanacSync.onReport(new AlmanacPagePayload.Report(page), player);
         helper.assertValueEqual(AlmanacSync.progress(player), page, "stored page");
 

@@ -9,20 +9,16 @@
           "key": "pirates_n_ships.almanac.welcome.p1.heading"
         },
         {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.welcome.p1.intro"
+          "type": "illustration",
+          "h": 0.35,
+          "texture": "pirates_n_ships:textures/almanac/pirate_captain.png",
+          "w": 0.9,
+          "x": 0.05,
+          "y": 0.09
         },
         {
           "type": "text",
-          "italic": true,
-          "key": "pirates_n_ships.almanac.welcome.p1.hint"
-        },
-        {
-          "type": "item",
-          "caption": "pirates_n_ships.almanac.welcome.p1.almanac_caption",
-          "item": "pirates_n_ships:captains_almanac",
-          "x": 0.45,
-          "y": 0.75
+          "key": "pirates_n_ships.almanac.welcome.p1.text1"
         }
       ]
     },
@@ -34,15 +30,27 @@
         },
         {
           "type": "text",
-          "key": "pirates_n_ships.almanac.welcome.p2.text"
+          "key": "pirates_n_ships.almanac.welcome.p2.text1"
         },
         {
-          "type": "illustration",
-          "h": 0.4,
-          "texture": "pirates_n_ships:textures/block/flag_jolly_roger.png",
-          "w": 0.6,
-          "x": 0.2,
-          "y": 0.45
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.welcome.p2.list1_1",
+            "pirates_n_ships.almanac.welcome.p2.list1_2",
+            "pirates_n_ships.almanac.welcome.p2.list1_3",
+            "pirates_n_ships.almanac.welcome.p2.list1_4",
+            "pirates_n_ships.almanac.welcome.p2.list1_5",
+            "pirates_n_ships.almanac.welcome.p2.list1_6",
+            "pirates_n_ships.almanac.welcome.p2.list1_7",
+            "pirates_n_ships.almanac.welcome.p2.list1_8",
+            "pirates_n_ships.almanac.welcome.p2.list1_9",
+            "pirates_n_ships.almanac.welcome.p2.list1_10",
+            "pirates_n_ships.almanac.welcome.p2.list1_11",
+            "pirates_n_ships.almanac.welcome.p2.list1_12",
+            "pirates_n_ships.almanac.welcome.p2.list1_13",
+            "pirates_n_ships.almanac.welcome.p2.list1_14",
+            "pirates_n_ships.almanac.welcome.p2.list1_15"
+          ]
         }
       ]
     }

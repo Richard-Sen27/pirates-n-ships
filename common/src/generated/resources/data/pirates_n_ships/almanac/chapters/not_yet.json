@@ -1,0 +1,33 @@
+{
+  "bookmark_color": "#8a7f6a",
+  "icon": "minecraft:barrier",
+  "order": 150,
+  "pages": [
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.not_yet.p1.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.not_yet.p1.text1"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.not_yet.p1.list1_1",
+            "pirates_n_ships.almanac.not_yet.p1.list1_2",
+            "pirates_n_ships.almanac.not_yet.p1.list1_3",
+            "pirates_n_ships.almanac.not_yet.p1.list1_4",
+            "pirates_n_ships.almanac.not_yet.p1.list1_5",
+            "pirates_n_ships.almanac.not_yet.p1.list1_6",
+            "pirates_n_ships.almanac.not_yet.p1.list1_7",
+            "pirates_n_ships.almanac.not_yet.p1.list1_8"
+          ]
+        }
+      ]
+    }
+  ],
+  "title": "pirates_n_ships.almanac.not_yet.title"
+}

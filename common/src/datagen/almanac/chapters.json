@@ -3646,7 +3646,7 @@
   "pirates_n_ships.almanac.crew.p4.list1_2": "Use it on a hand at a station: he is released.",
   "pirates_n_ships.almanac.crew.p4.list1_3": "Sneak and use it on a hand to dismiss him from your service. Only you, or whoever hired him, may do so.",
   "pirates_n_ships.almanac.crew.p4.list1_4": "Use it in the air to open the order wheel. Point at an order and click, or hold the use key, aim and let go. Escape closes the wheel.",
-  "pirates_n_ships.almanac.crew.p4.text2": "The orders on the wheel: **Hoist sails**, **Reef sails**, **Furl sails**, **Man the pumps**, **Fire!**, **Load!**, **Fire at will**, **Drop anchor**, **Weigh anchor** and **Release crew**.",
+  "pirates_n_ships.almanac.crew.p4.text2": "The orders on the wheel: **Hoist sails**, **Reef sails**, **Furl sails**, **Man the pumps**, **Fire!**, **Load!**, **Fire at will**, the anchor and **Release crew**. The anchor is one order that switches: **Drop anchor** while it is stowed or coming up, **Raise anchor** while it is out.",
   "pirates_n_ships.almanac.crew.p4.text3": "No whistle in your sea chest? The ship screen at the helm gives every one of these orders too, and assigns, releases and dismisses hands. See [[pirates_n_ships:ships|Ships]].",
   "pirates_n_ships.almanac.crew.p5.heading": "Orders, not assignments",
   "pirates_n_ships.almanac.crew.p5.text1": "You need not post every hand yourself. Blow an order and every unmanned station that can carry it out becomes an open job. Free hands on deck take the nearest one by themselves within a second, get to work and stay there afterwards. A hand you posted yourself stays put and is never moved.",

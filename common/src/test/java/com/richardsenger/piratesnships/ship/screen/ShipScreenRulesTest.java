@@ -89,6 +89,22 @@ class ShipScreenRulesTest {
         assertEquals(ShipScreenRules.Anchor.RAISING, ShipScreenRules.anchor(true, AnchorState.Phase.RAISING, false));
     }
 
+    /** WHS1: the screen's anchor state gives back the phase its anchor button is labelled by. */
+    @Test
+    void anchorStateGivesThePhaseBack() {
+        assertEquals(null, ShipScreenRules.phase(ShipScreenRules.Anchor.UNKNOWN));
+        assertEquals(AnchorState.Phase.RAISED, ShipScreenRules.phase(ShipScreenRules.Anchor.STOWED));
+        assertEquals(AnchorState.Phase.DROPPING, ShipScreenRules.phase(ShipScreenRules.Anchor.DROPPING));
+        assertEquals(AnchorState.Phase.HOLDING, ShipScreenRules.phase(ShipScreenRules.Anchor.DOWN));
+        assertEquals(AnchorState.Phase.HOLDING, ShipScreenRules.phase(ShipScreenRules.Anchor.ANCHORED));
+        assertEquals(AnchorState.Phase.RAISING, ShipScreenRules.phase(ShipScreenRules.Anchor.RAISING));
+        for (AnchorState.Phase ph : AnchorState.Phase.values()) {
+            for (boolean anchored : new boolean[] {false, true}) {
+                assertEquals(ph, ShipScreenRules.phase(ShipScreenRules.anchor(true, ph, anchored)), ph + " round trip");
+            }
+        }
+    }
+
     @Test
     void allegianceFollowsTheFlagShown() {
         assertEquals(ShipScreenRules.Allegiance.NONE, ShipScreenRules.allegiance(FlagReading.NO_FLAG));

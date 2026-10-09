@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.ship.hull.net;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import com.richardsenger.piratesnships.trade.cargo.CargoWeight;
 import io.netty.buffer.ByteBuf;
 import java.util.List;
@@ -27,9 +28,11 @@ import org.jetbrains.annotations.Nullable;
  * @param cells      the compartments, bow first, at most {@link CompartmentStrip#MAX_CELLS}
  * @param freshTicks how long the client may show this status without a newer one [ticks]
  *                   ({@link ShipStatusThrottle#freshTicks}, from the server's sync interval; HUD2)
+ * @param anchor     the phase of the ship's anchor ({@link AnchorState.Phase} ordinal, RAISED when stowed), -1 when the
+ *                   ship has no sailing runtime; the whistle's anchor toggle is labelled by it (WHS1)
  */
 public record ShipStatusPayload(UUID ship, String name, float heading, float speed, float rudder, int load, List<Cell> cells,
-                                int freshTicks)
+                                int freshTicks, int anchor)
         implements CustomPacketPayload {
 
     public static final Type<ShipStatusPayload> TYPE = new Type<>(Constants.id("ship_status"));
@@ -44,9 +47,26 @@ public record ShipStatusPayload(UUID ship, String name, float heading, float spe
         this(ship, name, heading, speed, rudder, load, cells, DEFAULT_FRESH_TICKS);
     }
 
+    /** A status without a known anchor. */
+    public ShipStatusPayload(UUID ship, String name, float heading, float speed, float rudder, int load, List<Cell> cells,
+                             int freshTicks) {
+        this(ship, name, heading, speed, rudder, load, cells, freshTicks, -1);
+    }
+
     /** This status with another freshness. */
     public ShipStatusPayload withFreshTicks(int ticks) {
-        return new ShipStatusPayload(ship, name, heading, speed, rudder, load, cells, ticks);
+        return new ShipStatusPayload(ship, name, heading, speed, rudder, load, cells, ticks, anchor);
+    }
+
+    /** This status with the anchor in {@code phase} (null: unknown). */
+    public ShipStatusPayload withAnchor(AnchorState.@Nullable Phase phase) {
+        return new ShipStatusPayload(ship, name, heading, speed, rudder, load, cells, freshTicks, phase == null ? -1 : phase.ordinal());
+    }
+
+    /** The phase of the ship's anchor, or null when unknown (WHS1). */
+    public AnchorState.@Nullable Phase anchorPhase() {
+        AnchorState.Phase[] all = AnchorState.Phase.values();
+        return anchor >= 0 && anchor < all.length ? all[anchor] : null;
     }
 
     /** Longest name sent (anvil names are shorter). */
@@ -79,7 +99,7 @@ public record ShipStatusPayload(UUID ship, String name, float heading, float spe
 
     private static final StreamCodec<ByteBuf, List<Cell>> CELLS = Cell.CODEC.apply(ByteBufCodecs.list(CompartmentStrip.MAX_CELLS));
 
-    /** Eight fields: more than {@code StreamCodec.composite} takes in 1.21.1, so written out. */
+    /** Nine fields: more than {@code StreamCodec.composite} takes in 1.21.1, so written out. */
     public static final StreamCodec<RegistryFriendlyByteBuf, ShipStatusPayload> CODEC = StreamCodec.of(
             (buf, p) -> {
                 UUIDUtil.STREAM_CODEC.encode(buf, p.ship());
@@ -90,14 +110,16 @@ public record ShipStatusPayload(UUID ship, String name, float heading, float spe
                 ByteBufCodecs.VAR_INT.encode(buf, p.load());
                 CELLS.encode(buf, p.cells());
                 ByteBufCodecs.VAR_INT.encode(buf, p.freshTicks());
+                buf.writeByte(p.anchor());
             },
             buf -> new ShipStatusPayload(UUIDUtil.STREAM_CODEC.decode(buf), ByteBufCodecs.stringUtf8(MAX_NAME).decode(buf),
                     buf.readFloat(), buf.readFloat(), buf.readFloat(), ByteBufCodecs.VAR_INT.decode(buf), CELLS.decode(buf),
-                    ByteBufCodecs.VAR_INT.decode(buf)));
+                    ByteBufCodecs.VAR_INT.decode(buf), buf.readByte()));
 
     public ShipStatusPayload {
         name = name.length() > MAX_NAME ? name.substring(0, MAX_NAME) : name;
         cells = List.copyOf(cells.size() > CompartmentStrip.MAX_CELLS ? cells.subList(0, CompartmentStrip.MAX_CELLS) : cells);
+        anchor = anchor >= 0 && anchor < AnchorState.Phase.values().length ? anchor : -1;
     }
 
     /** The cargo load level, or null when unknown. */
@@ -122,7 +144,7 @@ public record ShipStatusPayload(UUID ship, String name, float heading, float spe
                 .toList();
         int h = Math.floorMod(Math.round(heading), 360);
         return new ShipStatusPayload(ship, name, h, round(Math.max(0f, speed)),
-                Float.isNaN(rudder) ? Float.NaN : Math.round(rudder), load, q, freshTicks);
+                Float.isNaN(rudder) ? Float.NaN : Math.round(rudder), load, q, freshTicks, anchor);
     }
 
     /** Rounds to a multiple of 0.05 (never −0). */

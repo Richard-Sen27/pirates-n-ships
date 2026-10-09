@@ -39,7 +39,7 @@ The {item:pirates_n_ships:captains_whistle}**captain's whistle** is how a captai
 - Sneak and use it on a hand to dismiss him from your service. Only you, or whoever hired him, may do so.
 - Use it in the air to open the order wheel. Point at an order and click, or hold the use key, aim and let go. Escape closes the wheel.
 
-The orders on the wheel: **Hoist sails**, **Reef sails**, **Furl sails**, **Man the pumps**, **Fire!**, **Load!**, **Fire at will**, **Drop anchor**, **Weigh anchor** and **Release crew**.
+The orders on the wheel: **Hoist sails**, **Reef sails**, **Furl sails**, **Man the pumps**, **Fire!**, **Load!**, **Fire at will**, the anchor and **Release crew**. The anchor is one order that switches: **Drop anchor** while it is stowed or coming up, **Raise anchor** while it is out.
 
 > No whistle in your sea chest? The ship screen at the helm gives every one of these orders too, and assigns, releases and dismisses hands. See [[pirates_n_ships:ships|Ships]].
 

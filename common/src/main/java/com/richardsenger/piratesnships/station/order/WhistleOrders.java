@@ -4,6 +4,10 @@ import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.cannon.npc.Gunnery;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.platform.Services;
+import com.richardsenger.piratesnships.sailing.force.AnchorState;
+import com.richardsenger.piratesnships.sailing.ship.SailingRuntime;
+import com.richardsenger.piratesnships.sailing.ship.SailingRuntimes;
+import com.richardsenger.piratesnships.sailing.ship.ShipAnchor;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.station.OrderHints;
 import com.richardsenger.piratesnships.station.StationConfig;
@@ -26,7 +30,8 @@ import org.jetbrains.annotations.Nullable;
  * the crew at the stations whose kind takes it (sail orders to the winches, "pump" to the bilge pumps, "fire" and "load" to the cannons and swivel guns), and the
  * unmanned stations that take it become open jobs on the ship's {@link JobBoard} for free crew to claim (CR1). Only
  * sail orders are remembered on the whistle as its last order. "Release crew" frees everyone, clears the board and ends
- * "Fire at will" (WS4a, {@link Gunnery#clear}).
+ * "Fire at will" (WS4a, {@link Gunnery#clear}). The anchor toggle (WHS1) becomes "let go" or "weigh" here, from the
+ * phase of the ship's anchor at that moment ({@link #anchorPhase}, {@link WhistleOrder#order(AnchorState.Phase)}).
  */
 public final class WhistleOrders {
 
@@ -98,7 +103,8 @@ public final class WhistleOrders {
         if (ship == null) {
             return new Issued(Result.of(Outcome.NOT_ON_SHIP), Component.translatable(CaptainsWhistleItem.KEY_NOT_ON_SHIP));
         }
-        CrewOrder crewOrder = order.order();
+        // WHS1: the anchor toggle takes the direction the anchor's state needs now, as the capstan does for a player
+        CrewOrder crewOrder = order.followsAnchor() ? order.order(anchorPhase(ship)) : order.order();
         int n;
         int jobs = 0;
         Component message;
@@ -130,6 +136,17 @@ public final class WhistleOrders {
             message = Component.translatable(KEY_RELEASED_ALL, n);
         }
         return new Issued(new Result(Outcome.ISSUED, n, jobs), message);
+    }
+
+    /**
+     * The phase of {@code ship}'s anchor ({@link AnchorState.Phase#RAISED} when it is stowed), or null when the ship has
+     * no sailing runtime. A query.
+     */
+    public static AnchorState.@Nullable Phase anchorPhase(ShipBody ship) {
+        SailingRuntime rt = SailingRuntimes.getOrCreate(ship);
+        if (rt == null) return null;
+        ShipAnchor a = rt.anchor();
+        return a == null ? AnchorState.Phase.RAISED : a.state().phase();
     }
 
     /** The whistle in the main hand, else in the off hand, else null. */

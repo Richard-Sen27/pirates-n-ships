@@ -136,8 +136,9 @@ page, three tabs.
   speed, the anchor (stowed, running out, down while she still moves, anchored, weighing), the sails (full, reefed,
   furled), crew and bunks, the supplies left in days and the last payday. **Disassemble** (click twice) disassembles
   her at this helm.
-- **Crew:** the captain's whistle orders as buttons (hoist, reef, furl, man the pumps, fire, load, fire at will, drop
-  and weigh anchor, release crew; "Release crew" also ends "Fire at will"), then every hand aboard with morale, station
+- **Crew:** the captain's whistle orders as buttons (hoist, reef, furl, man the pumps, fire, load, fire at will, the
+  anchor, release crew; "Release crew" also ends "Fire at will"). The anchor is one button: it reads "Drop anchor"
+  while the anchor is stowed or coming up and "Raise anchor" while it runs out or holds, and gives that order. Then every hand aboard with morale, station
   or off duty, the order being carried out, who hired them, unpaid, and a warning when low morale has them close to
   deserting. **Release** takes a hand off their station, **Dismiss** lets them go as the whistle's sneak-use does.
 - **Stations:** every station aboard (winches, pumps, cannons, capstans, the helm), who mans it, the order worked
@@ -357,12 +358,16 @@ does not hold.) Server config `anchor_chain` (fall, chain, holding, sounds) and 
 `sailing_runtime.anchor_chain_length`.
 
 You can also put a crew member on the capstan: use the Captain's Whistle on the crew member, then on the
-capstan. In the whistle menu, "Drop anchor" makes the hand lean into the bars for two seconds before the anchor runs
-out, and "Weigh anchor" starts the winding at once; he keeps pushing until the anchor is stowed. While he works, the
+capstan. The whistle menu (and the ship screen) has one anchor entry that switches with the anchor: it reads "Drop
+anchor" while the anchor is stowed or coming up and "Raise anchor" while it runs out or holds, and the order follows
+the anchor's state when you give it (like using the capstan by hand). "Drop anchor" makes the hand lean into the bars
+for two seconds before the anchor runs out, and "Raise anchor" starts the winding at once; he keeps pushing until the
+anchor is stowed. While he works, the
 capstan's bars turn and he walks round the drum pushing them, then steps back to his spot. A free hand on deck
 takes an unmanned capstan by himself when you give the order. Over water deeper than the chain he refuses: "No
 ground for the anchor within the chain's reach, captain!" Commands: `/pirates crew order drop_anchor` and
-`raise_anchor`. Server config `crew_stations.capstan`.
+`raise_anchor` (the command keeps both directions; only the wheel and the screen have the one toggle). Server config
+`crew_stations.capstan`.
 
 ---
 
@@ -850,9 +855,11 @@ crew take their place at once).
 The **captain's whistle** (creative tab) gives orders:
 - Use it on a crew member, then on a station: the crew member takes that station.
 - Use it on an assigned crew member: it is released.
-- Use it in the air: opens the order wheel with ten orders: Hoist sails, Reef sails, Furl sails, Man the pumps,
-  Fire!, Load!, Fire at will, Drop anchor, Weigh anchor, Release crew. Point at one and click, or hold the use key,
-  aim and release. The order goes to the crew on the ship you stand on whose station takes it; unmanned stations
+- Use it in the air: opens the order wheel with nine orders: Hoist sails, Reef sails, Furl sails, Man the pumps,
+  Fire!, Load!, Fire at will, the anchor, Release crew. The anchor is one toggle: it reads "Drop anchor" while the
+  anchor is stowed or coming up and "Raise anchor" while it runs out or holds (the label follows the ship status your
+  HUD shows; the server decides from the anchor's state when the order arrives). Point at one and click, or hold the
+  use key, aim and release. The order goes to the crew on the ship you stand on whose station takes it; unmanned stations
   become open jobs (see [Orders, not assignments](#orders-not-assignments)). Esc closes the wheel.
 
 The [ship screen](#ship-screen) at the helm (sneak-use with an empty hand) gives the same orders, assigns and releases
@@ -1538,7 +1545,7 @@ other level in use.
 | `/pirates crew info [crew]` | Morale, crew and bunks, supplies left, the last payday. |
 | `/pirates crew assign <crew> <station>` | Puts a crew member at a station. |
 | `/pirates crew release <crew>` | Releases crew from their stations. |
-| `/pirates crew order <hoist\|reef\|furl\|pump\|fire\|load\|fire_at_will\|drop_anchor\|raise_anchor> [crew]` | Gives an order, ship-wide or to the named crew. |
+| `/pirates crew order <hoist\|reef\|furl\|pump\|fire\|load\|fire_at_will\|drop_anchor\|raise_anchor> [crew]` | Gives an order, ship-wide or to the named crew. The anchor keeps its two directions here; the whistle wheel and the ship screen have one anchor toggle. |
 | `/pirates crew order course <x> <z> [<x> <z> …] [loop]` | Gives the helmsman a course through waypoints. |
 | `/pirates crew hire <sailor\|pirate\|navy> [port]`, `/pirates crew dismiss <crew>` | Hires a candidate; dismisses a hired hand. |
 | `/pirates provisions show <crew> [pos]` | What the pantry you look at holds, and how many days it feeds that crew. |

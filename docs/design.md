@@ -454,6 +454,8 @@ Firearms get a reload animation, smoke and recoil. Rain reduces reliability (a m
 - A ship is **captured** when its captain is defeated or all hostile crew are gone. The player then becomes the owner.
 - Fights on deck use the melee combat system (§8.5). Boarding is where skill-based duels matter most.
 
+- **The gangway (BRD2, the human, 2026-10-09):** "the boarding plank should not be only placeable from ship to ship, but generally … for example when using it at a pier, where also a height difference might be". Decision: a run may start and end on a ship or on world blocks (ship to pier or shore, pier to ship, dock to dock); a run touching a ship lives in that ship's plot and follows it, a run between two world points is plain blocks; runs may rise or fall up to `boarding.max_rise` (2) over their length with ramp blocks (a 45° and a 1-in-2 pitch, walkable), `max_length` 4 → 6; the break rule tolerates the wave heave (a larger vertical allowance, horizontal drift as before); a ghost preview before placing, refusals that say why, pick-up from either end; crew cross planks by walking and the boarding order uses an existing plank.
+
 ### 8.5 Melee combat (skill-based swordplay)
 
 Goal: sword fights are about timing and reading the opponent, not click spam. The system only applies to the mod's swords. Vanilla weapons keep vanilla behavior.

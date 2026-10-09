@@ -24,17 +24,20 @@ import static com.richardsenger.piratesnships.almanac.ponder.SceneKit.say;
  * "Flags and allegiance" (PND2, docs/almanac.md "Scenes"; the flagpole of ship/decor/flag and the flag law of
  * law/flag, design.md §4.7), on the schematic {@code assets/pirates_n_ships/ponder/flags_and_allegiance.nbt}
  * ({@code art/structures/ponder/flags_and_allegiance.py}: open sea as the base plate, our ship x 1..4 with a bare
- * two-block pole whose head is [2, 4, 8], a navy patrol x 8..11 with her pole head at [10, 4, 8]).
+ * two-block pole in a flag pedestal at [2, 3, 8], its head at [2, 5, 8], a navy patrol x 8..11 with her pole head at
+ * [10, 4, 8]).
  *
  * <p>Every flag change is the real {@code FlagpoleMachine} at the pole head (hoist, swap, strike, a banner as a custom
  * flag), written into its block entity so the game's cloth renderer draws it and runs it up or down the pole over the
  * default 3 s ({@link SceneFlags}). What the navy does is shown, not simulated: a soldier aiming while we fly the Jolly
- * Roger, lowering his musket when we fly navy colours or strike. The flag pedestal and a pole on the crow's nest
- * (FLG3) are not in the game yet and not shown. About 35 seconds.
+ * Roger, lowering his musket when we fly navy colours or strike. Every click goes to the pedestal, which works the pole
+ * as the pole does. The pole on the crow's nest is in the crow's nest scene. About 39 seconds.
  */
 final class FlagsAndAllegianceScene {
 
-    static final BlockPos OUR_HEAD = new BlockPos(2, 4, 8);
+    /** Our pole's flag pedestal (FLG3, the pole's foot: clicks on it work the pole) and the pole's head. */
+    static final BlockPos PEDESTAL = new BlockPos(2, 3, 8);
+    static final BlockPos OUR_HEAD = new BlockPos(2, 5, 8);
     static final BlockPos NAVY_HEAD = new BlockPos(10, 4, 8);
     /** Default {@code flags.hoist_delay_ticks}. */
     static final int HOIST_TICKS = 60;
@@ -53,14 +56,20 @@ final class FlagsAndAllegianceScene {
         scene.world().showSection(util.select().layersFrom(1).substract(navy), Direction.DOWN);
         scene.idle(15);
 
-        Selection pole = util.select().fromTo(2, 3, 8, 2, 4, 8);
+        Selection pole = util.select().fromTo(2, 4, 8, 2, 5, 8);
         Vec3 poleTop = util.vector().topOf(OUR_HEAD);
-        scene.overlay().showOutline(PonderPalette.WHITE, "pole", pole, 60);
-        say(scene.overlay().showText(55), Flags.POLE)
+        scene.overlay().showOutline(PonderPalette.WHITE, "pole", pole, 55);
+        say(scene.overlay().showText(50), Flags.POLE)
                 .pointAt(poleTop)
                 .placeNearTarget()
                 .attachKeyFrame();
-        scene.idle(60);
+        scene.idle(55);
+        scene.overlay().showOutline(PonderPalette.GREEN, "pedestal", util.select().position(PEDESTAL), 50);
+        say(scene.overlay().showText(50), Flags.PEDESTAL)
+                .colored(PonderPalette.GREEN)
+                .pointAt(util.vector().centerOf(PEDESTAL))
+                .placeNearTarget();
+        scene.idle(55);
 
         // the Jolly Roger
         scene.overlay().showControls(util.vector().centerOf(2, 3, 8), Pointing.LEFT, 30).rightClick()

@@ -192,16 +192,22 @@ class PonderSchematicsTest {
         assertTrue(stateAt(boarding, BoardingScene.THEIR_POLE).startsWith(MOD + ":flagpole[facing=north,flag=jolly_roger"));
         assertTrue(stateAt(boarding, 0, 0, 0).startsWith("minecraft:water"), "open sea as the base plate");
 
-        size(CrewSceneText.FLAGS_AND_ALLEGIANCE, 13, 5, 13);
+        size(CrewSceneText.FLAGS_AND_ALLEGIANCE, 13, 6, 13);
         CompoundTag flags = schematic(CrewSceneText.FLAGS_AND_ALLEGIANCE);
         assertTrue(stateAt(flags, FlagsAndAllegianceScene.OUR_HEAD).startsWith(MOD + ":flagpole[facing=north,flag=none,part=top"));
-        assertTrue(stateAt(flags, FlagsAndAllegianceScene.OUR_HEAD.below()).startsWith(MOD + ":flagpole[facing=north,flag=none,part=bottom"));
+        // FLG3: on a pedestal the lowest pole block shows the middle part (the pedestal carries the cleat)
+        assertTrue(stateAt(flags, FlagsAndAllegianceScene.OUR_HEAD.below()).startsWith(MOD + ":flagpole[facing=north,flag=none,part=middle"));
+        assertEquals(MOD + ":flag_pedestal[pole=true,waterlogged=false]", stateAt(flags, FlagsAndAllegianceScene.PEDESTAL));
+        assertEquals(FlagsAndAllegianceScene.PEDESTAL, FlagsAndAllegianceScene.OUR_HEAD.below(2));
         assertTrue(stateAt(flags, FlagsAndAllegianceScene.NAVY_HEAD).startsWith(MOD + ":flagpole[facing=north,flag=navy,part=top"));
         assertEquals("minecraft:spruce_planks", stateAt(flags, 9, 2, 5), "the patrol's deck under her soldier");
 
-        size(CrewSceneText.CROWS_NEST, 7, 8, 7);
+        size(CrewSceneText.CROWS_NEST, 7, 9, 7);
         CompoundTag nest = schematic(CrewSceneText.CROWS_NEST);
-        assertEquals(MOD + ":crows_nest[waterlogged=false]", stateAt(nest, CrowsNestScene.NEST));
+        assertEquals(MOD + ":crows_nest[pole=false,waterlogged=false]", stateAt(nest, CrowsNestScene.NEST));
+        assertTrue(stateAt(nest, CrowsNestScene.POLE).startsWith(MOD + ":flagpole[facing=north,flag=none,part=top"),
+                "FLG3: a one-block pole on a footing shows the top part");
+        assertEquals(CrowsNestScene.NEST.above(), CrowsNestScene.POLE);
         for (int y = 1; y <= 6; y++) {
             assertEquals("minecraft:oak_log[axis=y]", stateAt(nest, 3, y, 3), "mast " + y);
         }

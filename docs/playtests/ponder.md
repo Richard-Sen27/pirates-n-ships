@@ -123,14 +123,16 @@ screenshot of anything odd; a log line "Ponder scene: cannot use …" means a po
    goes down in a puff, the second one. Her hull outlined green ("A ship of the seas is yours…"), the law line, then she
    drifts two blocks off and the plank breaks with particles and a dropped plank. Check: the plank's model looks laid
    (not floating), the pirates' swings are visible, nothing of her ship lags behind when she moves.
-3. **Flags and Allegiance** (Jolly Roger, about 36 s). Open sea, our ship with a two-block pole, nothing flying. A click
-   with the Jolly Roger: **the flag runs up the pole over 3 s** and flies at the top. The navy patrol appears with the
+3. **Flags and Allegiance** (Jolly Roger, about 39 s). Open sea, our ship with a two-block pole standing in a flag
+   pedestal (the pedestal shows the pole stub and the cleat, the pole above it no cleat), nothing flying; the pole and
+   then the pedestal outlined. Every click goes to the pedestal. A click with the Jolly Roger: **the flag runs up the pole over 3 s** and flies at the top. The navy patrol appears with the
    navy flag flying and a soldier who **aims his musket** at us (a red line); a navy flag hoisted on our pole (the
    Jolly Roger comes down first or is replaced: say which), the soldier lowers his musket; the red outline of being
    caught; an empty-hand click and **the navy flag runs down** (struck); a blue banner with a white skull and border
    runs up as a custom flag. Check: every hoist and strike animates (also in single player, where Ponder pauses the
    game), the banner shows its patterns, the cloths point the same way.
-4. **The Crow's Nest** (crow's nest, about 31 s). A mast with the nest on top, ratlines from the deck (three sloped,
+4. **The Crow's Nest** (crow's nest, about 35 s; at the end a flagpole appears in the nest, the nest's model gains its
+   socket, and a merchant flag flies above it). A mast with the nest on top, ratlines from the deck (three sloped,
    four hung up to the nest's side) with a white climbing path. A sailor on deck, two whistle clicks, he vanishes in a
    puff and **stands in the nest** up to his chest (his feet on the nest's floor, not sunk in or floating), facing the
    bow (north). A green circle round the nest, then a white line ahead and an orange arrow two points to starboard with

@@ -82,6 +82,7 @@ public final class CrewSceneText {
     /** {@link FlagsAndAllegianceScene} (ship/decor/flag, law flags, design.md §4.7). */
     public enum Flags implements SceneLine {
         POLE("A flagpole flies your colours. Stack up to 6 for a tall pole: the flag always flies at the top"),
+        PEDESTAL("A flag pedestal carved from a log seats the pole on any deck, and you can work the flag from it"),
         HOIST("Use the pole with a flag: in 3 seconds it runs up and flies, and the old one comes back to you"),
         COLOURS("The highest flag on her poles is the flag she flies: no flag or a merchant flag is neutral to all"),
         JOLLY("Under the Jolly Roger pirates leave you be, but the navy attacks on sight, and being seen is a crime"),
@@ -119,7 +120,8 @@ public final class CrewSceneText {
         SCAN("Every 3 seconds the lookout scans 160 blocks round the ship and calls what is new to everyone aboard"),
         CALL("'Sail ho! A merchant two points off the starboard bow, 140 blocks': bearings in points from the bow"),
         WHAT("He calls ships by their flags, land, sharks and the kraken, each once, and remembers it for 5 minutes"),
-        SELF("Stand in the nest yourself and you keep the lookout");
+        SELF("Stand in the nest yourself and you keep the lookout"),
+        POLE("A flagpole may stand in the nest: the flag flies above it, and the nest still keeps the lookout");
 
         static final String TITLE = "The Crow's Nest";
         private final String english;

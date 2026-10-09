@@ -2,6 +2,8 @@ package com.richardsenger.piratesnships.almanac.ponder;
 
 import com.richardsenger.piratesnships.almanac.ponder.CrewSceneText.Nest;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
+import com.richardsenger.piratesnships.law.flag.FlagKind;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagpoleFooting;
 import com.richardsenger.piratesnships.station.StationContent;
 import com.richardsenger.piratesnships.station.lookout.CrowsNestBlock;
 import net.createmod.catnip.math.Pointing;
@@ -27,12 +29,15 @@ import static com.richardsenger.piratesnships.almanac.ponder.SceneKit.say;
  * <p>The lookout stands where the station seats him ({@link CrowsNestBlock#seatSpot}: inside the nest's own block, on
  * its floor). He is put there at once: crew walk on decks but plan no climbs, so the nest is reached by the walk's
  * fallback. The call's bearing is {@link #CALL_POINTS} points off the starboard bow, drawn at that angle from the bow
- * (the bearing rule of {@code Bearings}); the scan circle stands for the 160-block range (not to scale). The flagpole on
- * the nest (FLG3) is not in the game yet and not shown. About 30 seconds.
+ * (the bearing rule of {@code Bearings}); the scan circle stands for the 160-block range (not to scale). Last, a
+ * flagpole stands in the nest (FLG3: the nest's {@code pole} state turns on, a merchant flag flies through the pole's
+ * real state, {@link SceneFlags}). About 35 seconds.
  */
 final class CrowsNestScene {
 
     static final BlockPos NEST = new BlockPos(3, 7, 3);
+    /** FLG3: the flagpole standing in the nest (one block: its head). */
+    static final BlockPos POLE = new BlockPos(3, 8, 3);
     /** The example call: a ship two points off the starboard bow, 140 blocks off, with the bow north. */
     static final int CALL_POINTS = 2;
     static final double CALL_DISTANCE = 140.0;
@@ -145,6 +150,17 @@ final class CrowsNestScene {
                 .pointAt(nestTop)
                 .placeNearTarget();
         scene.idle(60);
+
+        // FLG3: a flagpole in the nest, the nest its footing
+        scene.world().modifyBlock(NEST, s -> s.hasProperty(FlagpoleFooting.POLE) ? s.setValue(FlagpoleFooting.POLE, true) : s, false);
+        scene.world().showSection(util.select().position(POLE), Direction.DOWN);
+        SceneFlags.fly(scene, POLE, FlagKind.MERCHANT);
+        scene.idle(10);
+        say(scene.overlay().showText(60), Nest.POLE)
+                .pointAt(util.vector().topOf(POLE))
+                .placeNearTarget()
+                .attachKeyFrame();
+        scene.idle(65);
         scene.markAsFinished();
     }
 }

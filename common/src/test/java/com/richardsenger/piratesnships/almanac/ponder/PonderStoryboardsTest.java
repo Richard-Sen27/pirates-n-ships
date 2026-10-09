@@ -252,6 +252,17 @@ class PonderStoryboardsTest {
     }
 
     @Test
+    void thePolesOnTheirFootingsShowTheGamesParts() {
+        // the schematics' pole parts are what FlagpoleFoot gives on a pedestal and on a crow's nest (FLG3)
+        assertEquals(com.richardsenger.piratesnships.ship.decor.flag.FlagpolePart.MIDDLE,
+                com.richardsenger.piratesnships.ship.decor.flag.FlagpoleFoot.part(
+                        com.richardsenger.piratesnships.ship.decor.flag.FlagpoleFoot.Support.PEDESTAL, true));
+        assertEquals(com.richardsenger.piratesnships.ship.decor.flag.FlagpolePart.TOP,
+                com.richardsenger.piratesnships.ship.decor.flag.FlagpoleFoot.part(
+                        com.richardsenger.piratesnships.ship.decor.flag.FlagpoleFoot.Support.CROWS_NEST, false));
+    }
+
+    @Test
     void theSteeringTextNamesNoCommand() {
         for (SceneLine line : SceneText.allLines()) {
             assertTrue(!line.english().contains("/pirates"), line.key() + " names a command");

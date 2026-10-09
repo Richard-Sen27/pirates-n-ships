@@ -143,20 +143,30 @@ for zs in range(0, OFF):
     put(CX, 6, zs, "sprit")
 put(CX, 4, OFF - 1, "figure")
 
-# mast with the square sail (lower yard 9, upper yard 7, 6 apart)
+# mast with the square sail (lower yard 9, upper yard 7, 6 apart). Yard rule (PND3, TPL3): the yards stand one block
+# forward of the mast, in the column in front of it (z 12), never in the mast's own column.
 MZ = 13
+YZ = MZ - 1
+LOWER_YARD, UPPER_YARD = 10, 16
 for y in range(1, 20):
     put(CX, y, MZ, "mast")
 for x in range(0, 9):
-    put(x, 10, MZ, "yard")
+    put(x, LOWER_YARD, YZ, "yard")
 for x in range(1, 8):
-    put(x, 16, MZ, "yard")
+    put(x, UPPER_YARD, YZ, "yard")
 put(CX, 20, MZ, "flag")
 
-# jib: the head (A) and foot (C) cleats on the mast, the tack (B) on the bowsprit tip
-put(CX, 15, MZ - 1, "cleat_mast")
-put(CX, 8, MZ - 1, "cleat_mast")
-put(CX, 7, 0, "cleat_floor")
+# jib (TPL3): the head (A) cleat right above the upper yard's middle and the foot (C) cleat right below the lower
+# yard's middle, both in the yards' column on the mast's fore face; the clew search from the head down passes the
+# yard blocks (F5b), while the square sail keeps only air between its yards' middles (F5a). The tack (B) sits on the
+# bowsprit one block in from its tip, so the jib keeps its size: 0.5 x 8 (head to clew) x 11 (clew to tack) = 44
+# blocks², before TPL3 0.5 x 7 x 12 = 42.
+JIB_HEAD = (CX, UPPER_YARD + 1, YZ)
+JIB_CLEW = (CX, LOWER_YARD - 1, YZ)
+JIB_TACK = (CX, 7, 1)
+put(*JIB_HEAD, "cleat_mast")
+put(*JIB_CLEW, "cleat_mast")
+put(*JIB_TACK, "cleat_floor")
 
 # hatch with a ladder down the mast into the hold
 put(CX, 4, MZ - 1, "hatch")
@@ -259,10 +269,11 @@ def armed(base):
 # crow's nest and ratlines (TPL2, RL1b): the nest sits on the mast top (the mast runs to y 19) where the flag was, so
 # the flag moves to a two-block ensign staff on the taffrail rail. A run of ratlines on each side of the mast climbs
 # from the quarterdeck beside the helm to the masthead in one go: sloped (rising north, toward the bow) from x 3 / x 5
-# at z 22, y 8 up to z 13, y 17, the last link lying on the upper yard's end (y 16; RL1b: a yard is a ratlines anchor,
-# so the link stands on it as well as on the link before). Up to z 14 the slope stays aft of the square sail's cloth
-# (which stands off the yards' plane z 13 by at most 1.5 blocks, bellied aft) and outside the jib's plane x 4; the top
-# link is above the upper yard, clear of the cloth. Then hung on the mast's west / east face at z 13 at y 18 and 19.
+# at z 22, y 8 up to z 13, y 17, the last link beside the mast right above and abaft the upper yard's end (y 16, z 12;
+# TPL3: the yards moved one block forward, so the link stands on the link before, not on the yard). The slope stays aft
+# of the square sail's cloth (which stands off the yards' plane z 12 by at most 1.5 blocks, bellied aft) and outside
+# the jib's plane x 4; the top link is above the upper yard, clear of the cloth. Then hung on the mast's west / east
+# face at z 13 at y 18 and 19.
 # A climber walks up the slope into its top link, which touches the mast, faces the mast and climbs (the top sloped
 # link is climbable too, so pushing against the mast lifts him onto the hung net without a jump); at the top he steps
 # sideways into the nest. The yards, the sail (only air or mast between the yards' middle blocks) and the stay stay
@@ -270,7 +281,7 @@ def armed(base):
 NEST = (CX, 20, MZ)
 ENSIGN = [(CX, 9, STERN), (CX, 10, STERN)]   # on the taffrail rail (CX, 8, STERN)
 SLOPE_START = (22, 8)                        # (z, y) of each run's foot on the quarterdeck (deck at y 7)
-SLOPE_TOP = (13, 17)                         # (z, y) of the last sloped link, on the upper yard's end
+SLOPE_TOP = (13, 17)                         # (z, y) of the last sloped link, beside the mast over the yard
 HUNG_YS = range(18, 20)                      # hung links on the mast face, above the top sloped link
 RAT_SIDES = ((CX - 1, "w"), (CX + 1, "e"))   # x of each run and the face of the mast it hangs on (port, starboard)
 LOOKOUT_PALETTE = {
@@ -310,11 +321,12 @@ def lookout(base):
     for cell, key in ratline_cells().items():
         assert cell not in out, cell  # free: no yard, no rail, nothing in the way
         out[cell] = key
-    # the foot stands on the quarterdeck, the top sloped link lies on the upper yard's end beside the mast, the hung
-    # links hang on mast logs
+    # the foot stands on the quarterdeck, the top sloped link sits beside the mast right above and abaft the upper
+    # yard's end (it stands on the link before it), the hung links hang on mast logs
     for x, _ in RAT_SIDES:
         assert out.get((x, SLOPE_START[1] - 1, SLOPE_START[0])) == "deck"
-        assert SLOPE_TOP[0] == MZ and out.get((x, SLOPE_TOP[1] - 1, MZ)) == "yard"
+        assert SLOPE_TOP[0] == MZ and out.get((x, SLOPE_TOP[1] - 1, MZ - 1)) == "yard"
+        assert out.get((x, SLOPE_TOP[1] - 1, MZ)) is None and out.get((x, SLOPE_TOP[1] - 1, MZ + 1)) == "rat_slope"
         assert out.get((CX, SLOPE_TOP[1], MZ)) == "mast"
         for y in HUNG_YS:
             assert out.get((CX, y, MZ)) == "mast"
@@ -347,12 +359,13 @@ def spec(cells, pal, spec_id, name, style, notes):
 
 
 NOTES = ["Bow toward -Z. Helm faces south.",
-         "Square sail: yards at y=10 (9 long) and y=16 (7 long) on the mast at z=13.",
-         "Jib: use a rope on the mast-head cleat, then on the bowsprit cleat."]
+         "Square sail: yards at y=10 (9 long) and y=16 (7 long) at z=12, one block forward of the mast at z=13.",
+         "Jib: use a rope on the head cleat above the upper yard [4, 17, 12], then on the bowsprit cleat [4, 7, 1]; "
+         "the clew cleat sits below the lower yard [4, 9, 12]."]
 ARMED_NOTES = NOTES + ["Guns: two a side in the waist at z=13 and z=15, muzzles at x=1 (west) and x=7 (east) "
                        "through gun ports cut in the bulwark; shot locker (barrel) in the hold at [4, 3, 14].",
                        "Crow's nest on the mast top at [4, 20, 13]; ratlines on both sides of the mast, sloped from "
-                       "the quarterdeck at z=22 up to z=13, y=17 on the upper yard's end, then hung on the mast at "
+                       "the quarterdeck at z=22 up to z=13, y=17 beside the mast, then hung on the mast at "
                        "y=18 and 19; the flag on an ensign staff on the taffrail at [4, 9..10, 27]."]
 
 

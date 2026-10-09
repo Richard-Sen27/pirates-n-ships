@@ -9,8 +9,8 @@ import org.jetbrains.annotations.Nullable;
  *       least {@link StayRules#minDrop()} apart in height. The higher cleat is the <b>head</b> (A), the lower the
  *       <b>tack</b> (B).</li>
  *   <li>The <b>clew</b> (C) is the first cleat straight below the head, searched from the block under the head down
- *       to the tack's height, through air and mast blocks only: anything else in between ends the search without a
- *       clew. The sail is the triangle A-B-C; a triangle without area (the tack straight below the head) is no
+ *       to the tack's height, through air, mast and yard blocks only (yards since TPL3, so a jib's cleats may sit
+ *       above and below a square sail's yards): anything else in between ends the search without a clew. The sail is the triangle A-B-C; a triangle without area (the tack straight below the head) is no
  *       sail.</li>
  *   <li><b>Rope lines</b> (RP1, {@link #decide}): any other rope between two anchors on one body within the longest
  *       stay is a decorative line. A line between two cleats becomes a stay as soon as it passes the stay rule with a
@@ -111,7 +111,7 @@ public final class StayLinker {
 
     /**
      * The clew below {@code head}: the first cleat from the block under the head down to {@code tackY} (inclusive),
-     * through air and mast blocks only; null when there is none or anything else comes first.
+     * through air, mast and yard blocks only (yards since TPL3); null when there is none or anything else comes first.
      */
     public static @Nullable BlockPoint findClew(CleatLookup lookup, BlockPoint head, int tackY) {
         for (int y = head.y() - 1; y >= tackY; y--) {

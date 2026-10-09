@@ -288,7 +288,12 @@ below the head (the clew). Use a **rope** on the head cleat, then on the tack cl
 is used up and a stay runs between them. The cloth fills the triangle between the stay and the clew: furled is a bundle
 along the stay, half reaches half way down the mast, full fills the triangle. Its area is half of head-to-tack times
 head-to-clew. Click the head cleat with the empty hand to cycle its trim. Breaking the clew hides the cloth but keeps
-the stay; breaking the tack drops the rope (not in creative).
+the stay; breaking the tack drops the rope (not in creative). Between the head and the clew only air, mast blocks
+and **yard blocks** may stand, so a jib's cleats can share the yards' column in front of the mast: the head right above
+the upper yard and the clew right below the lower one, the yards in between. The square sail is not affected as long as
+no cleat sits between its two yards. The starter and armed sloops are rigged this way: yards at z 12, one block forward
+of the mast at z 13, the jib's head cleat at [4, 17, 12], its clew at [4, 9, 12] and the tack on the bowsprit at
+[4, 7, 1] (a jib of 44 blocks²).
 
 | Sail | Area | Good at |
 |---|---|---|

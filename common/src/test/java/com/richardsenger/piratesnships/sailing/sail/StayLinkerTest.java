@@ -83,13 +83,18 @@ class StayLinkerTest {
     }
 
     @Test
-    void clewIsFirstCleatBelowHeadThroughAirAndMast() {
+    void clewIsFirstCleatBelowHeadThroughAirMastAndYards() {
         // the nearest cleat counts
         World w = new World().cleat(A).cleat(B).cleat(C).cleat(A.below(2));
         assertEquals(A.below(2), StayLinker.findClew(w, A, B.y()));
         // mast blocks are passed
         w = new World().cleat(A).cleat(B).cleat(C).set(A.below(1), Cell.MAST).set(A.below(2), Cell.MAST);
         assertEquals(C, StayLinker.findClew(w, A, B.y()));
+        // yard blocks are passed (TPL3: the jib's cleats above the upper and below the lower yard)
+        w = new World().cleat(A).cleat(B).cleat(C).set(A.below(1), Cell.YARD).set(A.below(2), Cell.MAST)
+                .set(A.below(3), Cell.YARD);
+        assertEquals(C, StayLinker.findClew(w, A, B.y()));
+        assertEquals(new TriangularSail(A, B, C), StayLinker.sail(w, A, B, R));
         // anything else ends the search
         w = new World().cleat(A).cleat(B).cleat(C).set(A.below(2), Cell.OTHER);
         assertNull(StayLinker.findClew(w, A, B.y()));

@@ -4,6 +4,7 @@ import com.richardsenger.piratesnships.sailing.SailingConfig;
 import com.richardsenger.piratesnships.sailing.block.CleatBlock;
 import com.richardsenger.piratesnships.sailing.block.CleatBlockEntity;
 import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
+import com.richardsenger.piratesnships.sailing.block.YardBlock;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
 import com.richardsenger.piratesnships.sailing.rope.RopeLines;
 import net.minecraft.core.BlockPos;
@@ -24,7 +25,7 @@ public final class TriangularSails {
     private TriangularSails() {
     }
 
-    /** The rule's view of {@code level}: cleats, air, mast blocks ({@link SailingBlocks#MASTS}), anything else. */
+    /** The rule's view of {@code level}: cleats, air, mast blocks ({@link SailingBlocks#MASTS}), yards, anything else. */
     public static CleatLookup lookup(BlockGetter level) {
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         return (x, y, z) -> cell(level.getBlockState(m.set(x, y, z)));
@@ -36,6 +37,9 @@ public final class TriangularSails {
         }
         if (s.isAir()) {
             return CleatLookup.Cell.AIR;
+        }
+        if (s.getBlock() instanceof YardBlock) {
+            return CleatLookup.Cell.YARD;
         }
         return s.is(SailingBlocks.MASTS) ? CleatLookup.Cell.MAST : CleatLookup.Cell.OTHER;
     }

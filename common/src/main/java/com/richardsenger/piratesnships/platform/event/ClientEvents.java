@@ -3,6 +3,7 @@ package com.richardsenger.piratesnships.platform.event;
 import com.mojang.blaze3d.audio.Channel;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.color.block.BlockColor;
+import net.minecraft.client.color.item.ItemColor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.sounds.Music;
@@ -238,12 +239,16 @@ public final class ClientEvents {
     /** A block colour handler for some blocks (faces with a {@code tintindex} in their model). */
     public record BlockColorHandler(BlockColor color, List<Supplier<? extends Block>> blocks) { }
 
+    /** An item colour handler for some items (faces with a {@code tintindex} in their item model, ITC1). */
+    public record ItemColorHandler(ItemColor color, List<Supplier<? extends Item>> items) { }
+
     private static final List<KeyMapping> KEY_MAPPINGS = new ArrayList<>();
     private static final List<HudLayer> HUD_LAYERS = new ArrayList<>();
     private static final List<EntityRenderer<?>> ENTITY_RENDERERS = new ArrayList<>();
     private static final List<BlockEntityRenderer<?>> BLOCK_ENTITY_RENDERERS = new ArrayList<>();
     private static final List<ModelLayer> MODEL_LAYERS = new ArrayList<>();
     private static final List<BlockColorHandler> BLOCK_COLORS = new ArrayList<>();
+    private static final List<ItemColorHandler> ITEM_COLORS = new ArrayList<>();
     private static final List<ResourceLocation> ADDITIONAL_MODELS = new ArrayList<>();
     private static final List<ArmorModel> ARMOR_MODELS = new ArrayList<>();
     private static volatile @Nullable Function<ResourceLocation, ModelResourceLocation> additionalModelKey;
@@ -287,6 +292,20 @@ public final class ClientEvents {
     @SafeVarargs
     public static synchronized void registerBlockColor(BlockColor color, Supplier<? extends Block>... blocks) {
         BLOCK_COLORS.add(new BlockColorHandler(color, List.of(blocks)));
+    }
+
+    /**
+     * An item colour handler (vanilla {@link ItemColor}, ITC1): faces with a {@code tintindex} in the item's model (also
+     * those it inherits from a block model parent) are multiplied by {@code color.getColor(stack, tintIndex)} (ARGB;
+     * return {@code -1} to leave a face untinted). Called on the render thread for every drawn stack (inventory, hand,
+     * item frame, dropped item), so keep it cheap. Items have no position: a colour that depends on the biome uses a
+     * fixed default. Register in {@code initClient()}; the items are resolved when the loader's registration event fires.
+     * NeoForge: {@code RegisterColorHandlersEvent.Item}; Fabric: {@code ColorProviderRegistry.ITEM}. Example:
+     * {@code crew.content.client.CrewContentClient} (the water barrel's water).
+     */
+    @SafeVarargs
+    public static synchronized void registerItemColor(ItemColor color, Supplier<? extends Item>... items) {
+        ITEM_COLORS.add(new ItemColorHandler(color, List.of(items)));
     }
 
     public static synchronized void registerModelLayer(ModelLayerLocation location, Supplier<LayerDefinition> definition) {
@@ -344,6 +363,7 @@ public final class ClientEvents {
     public static synchronized List<BlockEntityRenderer<?>> blockEntityRenderers() { return List.copyOf(BLOCK_ENTITY_RENDERERS); }
     public static synchronized List<ModelLayer> modelLayers() { return List.copyOf(MODEL_LAYERS); }
     public static synchronized List<BlockColorHandler> blockColors() { return List.copyOf(BLOCK_COLORS); }
+    public static synchronized List<ItemColorHandler> itemColors() { return List.copyOf(ITEM_COLORS); }
     public static synchronized List<ResourceLocation> additionalModels() { return List.copyOf(ADDITIONAL_MODELS); }
     public static synchronized List<ArmorModel> armorModels() { return List.copyOf(ARMOR_MODELS); }
 }

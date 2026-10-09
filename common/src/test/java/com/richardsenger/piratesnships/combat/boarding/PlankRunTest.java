@@ -261,8 +261,20 @@ class PlankRunTest {
     }
 
     @Test
-    void theNearestSurfaceWinsOverAFartherLevelOne() {
-        // a block one up two columns out and a level deck four columns out: the board climbs onto the near block
+    void aGangwayBridgesADryGapRatherThanDivingToItsFloor() {
+        // from a pier over a dry gap whose floor lies four down, to a pier two up six columns out
+        Grid g = new Grid().fill(0, 9, -8, -5, Ground.HOME).fill(6, 9, -4, 1, Ground.HOME);
+        Result r = PlankRun.find(DEFAULTS, g);
+        assertTrue(r.found(), "refused: " + r.failure());
+        assertEquals(6, r.columns());
+        assertEquals(2, r.rise());
+        assertEquals(Landing.RAMP, r.landing());
+    }
+
+    @Test
+    void aBlockInTheLevelLineIsClimbedOnto() {
+        // a block one up two columns out and a level deck four columns out: the level board would run into the block,
+        // so the board climbs onto it
         Grid g = new Grid().deck(4, 7, 0).fill(2, 2, 0, 0, Ground.STURDY);
         Result r = PlankRun.find(DEFAULTS, g);
         assertEquals(2, r.columns());

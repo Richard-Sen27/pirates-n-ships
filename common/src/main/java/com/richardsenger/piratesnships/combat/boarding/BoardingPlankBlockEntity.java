@@ -45,9 +45,10 @@ import java.util.UUID;
  * world points does not move, so only its supports and cells are watched.
  *
  * <p><b>Old saves.</b> A BRD1 or BRD2 base (no {@code cells} in its data) recomputes its run on its first server tick
- * ({@link #relay}): a level run keeps its blocks and gets flat boards; a sloped BRD2 run is taken up without drops and
- * laid again as one straight board by the planner from the block its near end rests on (its top face, else its side
- * facing the run); when no straight board fits there any more, the run is gone and its one plank drops.
+ * ({@link #relay}): a level run (BRD1, or BRD2 landing level on one row) keeps its blocks and gets flat boards; any
+ * other BRD2 run (ramps, steps) is taken up without drops and laid again as one straight board by the planner from the
+ * block its near end rests on (its top face, else its side facing the run); when no straight board fits there any
+ * more, the run is gone and its one plank drops.
  */
 public class BoardingPlankBlockEntity extends BlockEntity {
 
@@ -328,7 +329,8 @@ public class BoardingPlankBlockEntity extends BlockEntity {
             if (at == null) break;
             old.add(at);
         }
-        boolean level0 = old.size() == length;
+        // BRD1 runs were level; a BRD2 run is level when it landed level and all its cells lie on one row
+        boolean level0 = old.size() == length && (kind == Legacy.BRD1 || landing == PlankRun.Landing.LEVEL);
         for (BlockPos p : old) level0 &= p.getY() == pos.getY();
         if (level0) {
             // a level run: the same cells, flat boards

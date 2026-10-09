@@ -31,10 +31,11 @@ import java.util.List;
  * surface above ({@code R > 0}) is climbed to: the board ends at its top edge ({@link Landing#RAMP}) over {@code c}
  * columns. The board's walking surface ends 2 px above the landing top, a step of a sixth of what vanilla steps.
  *
- * <p><b>Choice.</b> Surfaces are tried column by column from the start outward (the first sturdy top edge in the run's
- * direction), in a column the one nearest the start's height first (level, then one up, one down, two up, ...); the
- * first one whose board is no steeper than {@code max_pitch} and whose cells are free is laid. If none is, the first
- * surface's reason is given (too steep, or blocked at a cell).
+ * <p><b>Choice.</b> Surfaces are tried nearest the start's height first (level, then one up, one down, two up, ...), and
+ * at one height column by column from the start outward (the first sturdy top edge in the run's direction); the first
+ * one whose board is no steeper than {@code max_pitch} and whose cells are free is laid. So a gangway bridges to the far
+ * deck or pier rather than diving to the ground of a dry gap below it. If none is, the first surface's reason is given
+ * (too steep, or blocked at a cell); a run whose first cell rests on its own pier is "no start" (nothing to bridge).
  *
  * <p><b>Home ground.</b> When the run starts on the world it may land on the world too ({@link Ground#HOME}), but only
  * across a gap: at least two columns, and no column before the last one resting on anything (a plank laid along a pier
@@ -285,8 +286,8 @@ public final class PlankRun {
     public static Result find(Settings s, Probe probe) {
         Result firstFail = null;
         int max = s.maxLength();
-        for (int c = 0; c <= max; c++) {
-            for (int rise : HEIGHTS) {
+        for (int rise : HEIGHTS) {
+            for (int c = 0; c <= max; c++) {
                 int columns = rise > 0 ? c : c + 1;
                 if (columns < 1 || columns > max || !surface(probe, c, rise)) continue;
                 Result r = evaluate(s, probe, c, rise, columns);
@@ -295,7 +296,11 @@ public final class PlankRun {
                 if (firstFail == null) firstFail = r;
             }
         }
-        return firstFail != null ? firstFail : diagnose(s, probe);
+        if (firstFail == null || probe.ground(0, -1) == Ground.HOME) {
+            // nothing in reach, or a run along its own pier: say why without a surface to blame
+            return diagnose(s, probe);
+        }
+        return firstFail;
     }
 
     /**
@@ -338,7 +343,7 @@ public final class PlankRun {
     // ------------------------------------------------------------------ why not
 
     /**
-     * Why nothing was found when no surface lay in reach: no start (the first cell rests on the start's own ground:
+     * Why nothing was found when no surface lay in reach (or the run lies along its own pier): no start (the first cell rests on the start's own ground:
      * nothing to bridge), blocked (a taken cell in the level line), too far (a surface just past {@code max_length}), or
      * nothing to land on.
      */

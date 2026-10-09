@@ -714,7 +714,7 @@ public final class BoardingGameTests {
             h.assertTrue(laid.cells().get(i).equals(expected), "cell " + i + " is at " + laid.cells().get(i) + ", not " + expected);
         }
         // the collision follows the board: the cells' tops climb with it
-        double last = -1;
+        double last = Double.NEGATIVE_INFINITY;
         for (BlockPos c : laid.cells()) {
             double top = c.getY() + level.getBlockState(c).getCollisionShape(level, c).max(Direction.Axis.Y);
             h.assertTrue(top > last, "the collision does not climb at " + c + ": top " + top + " after " + last);
@@ -789,6 +789,83 @@ public final class BoardingGameTests {
             assertGone(h, cells);
             int items = plankItems(h, cells.get(0));
             h.assertTrue(items == 1, "expected one dropped plank, found " + items);
+            h.succeed();
+        });
+    }
+
+    // ------------------------------------------------------------------ old saves (BRD4)
+
+    /**
+     * Sets the cells of an old run (segment {@code k} at {@code cells[k]}, laid east, no board data) and loads segment
+     * 0's block entity from a BRD2 save of it: near support {@code support}, far block {@code farBlock}, the landing.
+     */
+    private static void oldRun(GameTestHelper h, List<BlockPos> cells, BlockPos support, BlockPos farBlock, PlankRun.Landing landing) {
+        ServerLevel level = h.getLevel();
+        BoardingPlankBlock block = BoardingContent.PLANK.get();
+        for (int k = 0; k < cells.size(); k++) {
+            level.setBlock(cells.get(k), block.segment(Direction.EAST, k), 3);
+        }
+        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+        tag.putBoolean("on_ship", false);
+        tag.put("base_support", net.minecraft.nbt.NbtUtils.writeBlockPos(support));
+        Vec3 tip = Vec3.atCenterOf(cells.get(cells.size() - 1));
+        tag.putDouble("far_x", tip.x);
+        tag.putDouble("far_y", tip.y);
+        tag.putDouble("far_z", tip.z);
+        tag.put("far_block", net.minecraft.nbt.NbtUtils.writeBlockPos(farBlock));
+        tag.put("tip", net.minecraft.nbt.NbtUtils.writeBlockPos(cells.get(cells.size() - 1)));
+        tag.putInt("length", cells.size());
+        tag.putString("landing", landing.name());
+        BoardingPlankBlockEntity be = (BoardingPlankBlockEntity) level.getBlockEntity(cells.get(0));
+        if (be == null) throw new AssertionError("no block entity on segment 0");
+        be.loadWithComponents(tag, level.registryAccess());
+    }
+
+    /**
+     * A BRD2 save of the dock-to-dock ramp (a level cell and the two halves of a 1-in-2 ramp, all on one row, landing on
+     * the high dock's edge) is laid again on its first tick as one straight board from the low dock: three cells rising
+     * a block, the same blocks, segment 0 holding the run, no plank dropped.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 100)
+    public static void aBrd2RampLoadsAsAStraightBoard(GameTestHelper h) {
+        docks(h);
+        List<BlockPos> cells = List.of(h.absolutePos(new BlockPos(6, 5, 11)), h.absolutePos(new BlockPos(7, 5, 11)),
+                h.absolutePos(new BlockPos(8, 5, 11)));
+        oldRun(h, cells, h.absolutePos(new BlockPos(5, 4, 11)), h.absolutePos(new BlockPos(9, 5, 11)), PlankRun.Landing.RAMP);
+        h.runAfterDelay(3, () -> {
+            BoardingPlankBlockEntity be = (BoardingPlankBlockEntity) h.getLevel().getBlockEntity(cells.get(0));
+            h.assertTrue(be != null && be.isBase(), "segment 0 holds no run after loading");
+            h.assertTrue(be.cells().equals(cells) && be.columns() == 3 && be.rise() == 1,
+                    "expected the straight board over three columns rising one, got " + be.cells() + ", " + be.columns()
+                            + " columns rising " + be.rise());
+            for (BlockPos c : cells) {
+                BoardingPlankBlockEntity cell = (BoardingPlankBlockEntity) h.getLevel().getBlockEntity(c);
+                h.assertTrue(cell != null && cells.get(0).equals(cell.base()), "cell " + c + " does not know its run");
+            }
+            h.assertTrue(plankItems(h, cells.get(0)) == 0, "a plank dropped while the run was laid again");
+            h.succeed();
+        });
+    }
+
+    /** A BRD2 save of a level run between two docks keeps its blocks in place and gets flat boards. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 100)
+    public static void aLevelBrd2RunLoadsInPlace(GameTestHelper h) {
+        for (int z = 9; z <= 13; z++) {
+            for (int x = 2; x <= 5; x++) for (int y = 1; y <= 4; y++) h.setBlock(new BlockPos(x, y, z), Blocks.STONE);
+            for (int x = 9; x <= 12; x++) for (int y = 1; y <= 4; y++) h.setBlock(new BlockPos(x, y, z), Blocks.STONE);
+        }
+        List<BlockPos> cells = new java.util.ArrayList<>();
+        for (int x = 6; x <= 9; x++) cells.add(h.absolutePos(new BlockPos(x, 5, 11)));
+        oldRun(h, cells, h.absolutePos(new BlockPos(5, 4, 11)), h.absolutePos(new BlockPos(9, 4, 11)), PlankRun.Landing.LEVEL);
+        h.runAfterDelay(3, () -> {
+            BoardingPlankBlockEntity be = (BoardingPlankBlockEntity) h.getLevel().getBlockEntity(cells.get(0));
+            h.assertTrue(be != null && be.isBase() && be.cells().equals(cells) && be.columns() == 4 && be.rise() == 0,
+                    "the level run was not kept: " + (be == null ? null : be.cells()));
+            for (BlockPos c : cells) {
+                BoardingPlankBlockEntity cell = (BoardingPlankBlockEntity) h.getLevel().getBlockEntity(c);
+                h.assertTrue(cell != null && cells.get(0).equals(cell.base()) && cell.near() == 0.0 && cell.far() == 0.0,
+                        "cell " + c + " is not a flat cell of the run");
+            }
             h.succeed();
         });
     }

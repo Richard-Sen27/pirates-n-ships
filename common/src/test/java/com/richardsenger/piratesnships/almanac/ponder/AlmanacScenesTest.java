@@ -63,7 +63,34 @@ class AlmanacScenesTest {
         });
         assertEquals(List.of(AlmanacScenes.SHIP_ASSEMBLY, AlmanacScenes.STEERING),
                 AlmanacScenes.forComponent(AlmanacScenes.HELM_ITEM).stream().map(AlmanacScenes.Scene::id).toList());
-        assertEquals(9, AlmanacScenes.ALL.size());
+    }
+
+    @Test
+    void theCrewScenesHaveTheIdsTheChaptersCarryOnTheirItems() {
+        // PND2 (design.md §3.4): crew, combat and life aboard
+        Map<String, String> expected = new LinkedHashMap<>();
+        expected.put("crew_orders", "captains_whistle");
+        expected.put("boarding", "boarding_plank");
+        expected.put("flags_and_allegiance", "jolly_roger_flag");
+        expected.put("crows_nest", "crows_nest");
+        expected.put("ships_bell", "ships_bell");
+        expected.put("galley_and_provisions", "pantry");
+        expected.put("hammocks_and_rest", "hammock");
+        expected.put("swivel_gun", "swivel_gun");
+        expected.forEach((scene, item) -> {
+            ResourceLocation id = ResourceLocation.parse("pirates_n_ships:" + scene);
+            AlmanacScenes.Target target = AlmanacScenes.resolve(id).orElseThrow(() -> new AssertionError(scene));
+            assertEquals(ResourceLocation.parse("pirates_n_ships:" + item), target.component(), scene);
+            assertEquals(id, target.scene().id());
+            assertEquals(id, target.scene().schematic());
+            assertEquals(1, AlmanacScenes.forComponent(target.component()).size(), item + " has one scene");
+        });
+    }
+
+    @Test
+    void thereAreSeventeenScenes() {
+        // ALM4's cannon, PND1's eight ship mechanics, PND2's eight for crew, combat and life aboard
+        assertEquals(17, AlmanacScenes.ALL.size());
     }
 
     @Test

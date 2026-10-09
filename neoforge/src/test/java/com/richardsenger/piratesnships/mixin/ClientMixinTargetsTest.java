@@ -213,6 +213,44 @@ class ClientMixinTargetsTest {
                 handler.desc);
     }
 
+    /**
+     * WAV6: the boat and item hooks. The renderer's tilt sits after the one translate of the typed
+     * {@code render(Boat, …)} (not the bridge); the item's {@code @ModifyArg} changes the one move of {@code tick};
+     * {@code Boat} keeps the private methods and fields {@code MixinBoat} uses.
+     */
+    @Test
+    void boatWaveMixinsHitTheirTargets() {
+        String[][] checks = {
+                {"net/minecraft/client/renderer/entity/BoatRenderer", "com/richardsenger/piratesnships/mixin/MixinBoatRenderer",
+                        "pirates_n_ships$tiltOnTheWaves", "Lorg/spongepowered/asm/mixin/injection/Inject;"},
+                {"net/minecraft/world/entity/item/ItemEntity", "com/richardsenger/piratesnships/mixin/MixinItemEntity",
+                        "pirates_n_ships$rideTheSea", "Lorg/spongepowered/asm/mixin/injection/ModifyArg;"}};
+        for (String[] c : checks) {
+            ClassNode target = readClass(c[0]);
+            ClassNode mixin = readClass(c[1]);
+            AnnotationNode injector = mixin.methods.stream().filter(m -> m.name.equals(c[2]))
+                    .flatMap(m -> annotations(m.visibleAnnotations, m.invisibleAnnotations).stream())
+                    .filter(a -> a.desc.equals(c[3])).findFirst().orElseThrow();
+            List<MethodNode> selected = new ArrayList<>();
+            for (String selector : ClientMixinTargetsTest.<List<String>>value(injector, "method")) {
+                selected.addAll(select(Selector.parse(selector), target));
+            }
+            assertEquals(1, selected.size(), c[1] + ": one target method");
+            String invoke = ClientMixinTargetsTest.<String>value(atAnnotations(injector).get(0), "target");
+            assertEquals(1, countCalls(selected.get(0), invoke), c[1] + ": exactly one " + invoke + " in " + selected.get(0).name
+                    + selected.get(0).desc);
+        }
+        ClassNode boat = readClass("net/minecraft/world/entity/vehicle/Boat");
+        for (String[] m : new String[][] {{"getStatus", "()Lnet/minecraft/world/entity/vehicle/Boat$Status;"},
+                {"getWaterLevelAbove", "()F"}, {"floatBoat", "()V"}, {"getGroundFriction", "()F"}}) {
+            assertTrue(boat.methods.stream().anyMatch(n -> n.name.equals(m[0]) && n.desc.equals(m[1])), "Boat#" + m[0] + m[1]);
+        }
+        for (String[] f : new String[][] {{"waterLevel", "D"}, {"landFriction", "F"},
+                {"status", "Lnet/minecraft/world/entity/vehicle/Boat$Status;"}, {"oldStatus", "Lnet/minecraft/world/entity/vehicle/Boat$Status;"}}) {
+            assertTrue(boat.fields.stream().anyMatch(n -> n.name.equals(f[0]) && n.desc.equals(f[1])), "Boat." + f[0]);
+        }
+    }
+
     // ---- injector check ----
 
     private static int checkInjector(AnnotationNode injector, ClassNode target, int defaultRequire, String where,

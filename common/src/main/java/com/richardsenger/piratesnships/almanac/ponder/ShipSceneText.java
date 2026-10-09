@@ -91,7 +91,7 @@ public final class ShipSceneText {
         WAY("The rudder only bites while she moves through the water, and it works the other way when she goes astern"),
         CIRCLE("Hard over she turns on a circle three to four ship lengths across, at any speed: slower only takes longer"),
         HELMSMAN("A crew member can hold a course: use the captain's whistle on him, then on the helm"),
-        COURSE("Give him a course (/pirates crew order course) and he steers for each point in turn, rudder midships at the last"),
+        COURSE("The whistle and the ship screen give no course yet, only a server operator can: he then steers for each mark in turn"),
         TAKE_OVER("Take the wheel yourself at any time and he lets go; release it and he steers on");
 
         static final String TITLE = "Steering at the Helm";

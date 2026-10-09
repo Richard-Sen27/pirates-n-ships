@@ -53,11 +53,13 @@ and Fabric and needs no other mod.
 - **Turning pages:** the arrows in the page corners, the arrow keys, Page Up and Page Down or the mouse wheel. The
   bookmarks on the right edge jump to a chapter; links in the text jump to other chapters. Escape closes the book. It
   opens again at the page you last read, also after death and relog (`almanac.remember_page`).
-- **Show me:** some pages have a "Show me" button that plays a Ponder scene of the mechanic (today: assembling a
+- **Show me:** some pages have a "Show me" button that plays a Ponder scene of the mechanic (17 scenes: assembling a
   ship, steering, sails and the winch, anchor and capstan, pumps and flooding, hull repair, mooring, cargo and weight,
-  and loading and firing a cannon). The back button returns to the same page. The same scene opens from the item:
-  hold the Ponder key (W by default) while hovering the helm, sail winch, capstan, bilge pump, hull patch, mooring
-  ring, cargo crate or cannon in your inventory.
+  loading and firing a cannon, crew orders, boarding, flags and allegiance, the crow's nest, the ship's bell, galley
+  and provisions, hammocks and rest, the swivel gun). The back button returns to the same page. The same scene opens
+  from the item: hold the Ponder key (W by default) while hovering the helm, sail winch, capstan, bilge pump, hull
+  patch, mooring ring, cargo crate, cannon, captain's whistle, boarding plank, Jolly Roger, crow's nest, ship's bell,
+  pantry, hammock or swivel gun in your inventory.
 - **JEI:** with JEI (Just Enough Items) installed, every block and item the Almanac describes has an information
   page in JEI with that text (R or U over it), and JEI gains two pages of the mod's own: the Harbor Market (each
   trade good with its buy and sell prices) and Ship's Provisions (what the crew counts as food, water or rum).
@@ -733,8 +735,11 @@ the faster the ship, the denser and brighter, nothing below 1 block per second o
 
 The sea itself moves: around you the water surface rises into crests and sinks into troughs with the same waves that
 rock the ships, smooth near you and coarser toward the horizon, flat at the beach where the water is shallow, and never
-inside a dry hull. The foam rides on it. It is only a picture: swimming, boats, collisions and the ships' buoyancy still
-use the flat sea level, so a crest can wash over your feet without lifting you. You can see it from under water too.
+inside a dry hull. The foam rides on it. Swimming, collisions and the ships' buoyancy still use the flat sea level, so a
+crest can wash over your feet without lifting you. Boats ride the swell too: on the open sea a boat climbs the crests,
+sinks into the troughs and leans with the slope, and items thrown into the sea bob with it, while in lakes, rivers,
+shallow water and inside a hull they float as before (server config `waves.boats`, `waves.floating_items`, client
+setting `wave_effects.boat_tilt_degrees`). You can see it from under water too.
 Client settings `wave_effects.surface` (on by default), `surface_near_radius`, `surface_mid_radius`, `surface_far_cell`,
 `surface_full_depth` and `surface_underside`. With a mod that replaces Minecraft's chunk renderer (Sodium, Embeddium,
 Iris, Oculus, VulkanMod) the surface turns itself off and the water stays flat as before; the waves still rock the
@@ -1520,7 +1525,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `helm` | `wheel`: steering by turning the wheel (`drag_steering`), mouse and key rates, turns lock to lock, view lock, reach. |
 | `anchor_chain` | The anchor's fall and sink speed, raising speed, chain stiffness and damping, holding force, drag and scraping, heel, the sounds and their volumes. |
 | `hull_creaking` | Creaking on/off, creaks per second, minimum gap, volume and pitch ranges, the rolling rate that counts. |
-| `waves` | Sea state on/off, amplitude and components, wave groups, how fast the state changes, heave and torque on ships, spill over low rims, sync. |
+| `waves` | Sea state on/off, amplitude and components, wave groups, how fast the state and the wave direction change, heave and torque on ships, spill over low rims, vanilla boats and floating items riding the waves, sync. |
 | `hazards` | Waterspouts and whirlpools (on/off, chances, durations, radii, pull, lift, spin, drag-down, drift, sail damage, per-player cap), spawn distances and interval, ship force scale and mass cap; `kraken` (on/off, chance per day). |
 | `crew_stations` | Crew stations on/off, time per trim step, order and acknowledgement radius; `capstan` (crew at the capstan), `course` (the helmsman's course keeping), `job_board` (free hands taking open jobs). |
 | `lookout` | Crow's nest lookout on/off, calls on/off, range, scan interval, how long a sighting is remembered, the land rays. |
@@ -1562,7 +1567,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `sail_visuals` | Cloth movement on/off, belly, flutter, segments, banner layers on sails. |
 | `flag_visuals` | The hoist animation, banners drawn upright. |
 | `wind_effects` | The wind streaks: on/off, density, minimum strength, radius, height, life, look (spread, jitter, wobble, puffs, opacity), gust boost. |
-| `wave_effects` | Camera sway (off by default), foam, spray, the moving water surface, the wake. |
+| `wave_effects` | Camera sway (off by default), foam, spray, the moving water surface, the wake, how far vanilla boats tilt. |
 | `hazard_visuals` | Particle density and sounds of waterspouts and whirlpools. |
 | `cannon_visuals` | The barrel's tilt animation. |
 | `sea_chest_visuals` | The floating chest's bob. |
@@ -1624,5 +1629,3 @@ Checked against the code on 2026-10-09. Everything else in this guide is built a
 - **Hull paint and trim** (dyeable planks), an optional item in the design.
 - **On Fabric:** no config screen without Mod Menu (edit the config files instead), and the Fabric client has not been
   played yet. The Almanac works on both loaders.
-- **Ponder scenes for crew, combat and life aboard** (PND2: orders, boarding, flags, crow's nest, bell, galley,
-  hammocks, swivel gun): the Almanac's "Show me" buttons for these name scenes that do not exist yet.

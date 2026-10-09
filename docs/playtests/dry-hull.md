@@ -154,3 +154,31 @@ whistle. Old worlds: a pump placed before PMP1 gets its block entity the first t
    screen). Expected: the handle stays up while pumping (the water still goes). Set it back to true. Try
    `pump_visuals.stroke_ticks = 40` (a slower stroke) and `stroke_degrees = 30` (the deepest the handle may go: it
    should still clear the lip), then set them back to 20 and 28.
+
+## CMP1: compartments do not change with the tilt
+
+Before CMP1 a rolling ship showed 3 and then 4 compartments within a few seconds without any block change: every 5° of
+roll re-analysed the hull along the tilted up vector, and a bulkhead, step or hole that was marginal at that tilt split
+or joined rooms (and moved their water). Now the compartments come from the blocks alone (computed upright, in the
+ship's own frame); a tilt only refreshes the water heights and the sills. The geometry the GameTests use: a hold with a
+bulkhead one block lower than the deck and a hole (a missing plank, a fence, an open gun port without a lid) in the side
+wall at the height of the gap over the bulkhead. Covered headlessly by `CompartmentTiltTest` (JUnit) and
+`CompartmentStabilityGameTests`; what has not been seen is the ship screen and the HUD on a real rolling ship.
+
+1. **Build.** A hull at least 7 wide and 15 long, two rooms in the hold separated by a bulkhead that stops one block
+   below the deck, and one plank of the side wall at the gap's height replaced by a fence. Assemble it in open water.
+   Open the ship screen at the helm and note the compartment count; note the HUD strip (its cells and their order).
+   Expected: the two rooms are two compartments (the gap layer under the deck is not one, it is open to the side hole).
+2. **Rough weather.** `/pirates waves set rough` (or `storm`), turned so the waves come abeam, and sail or drift for a minute while
+   the ship rolls. Expected: the ship screen's compartment count and the HUD strip's cells stay exactly as in step 1 the
+   whole time; no cell appears, vanishes or swaps places. Do the same with your own ship that showed 3/4 before.
+3. **A breached room while rolling.** Break one plank of one room below the waterline, let a few blocks of water in,
+   then patch it. Keep rolling in rough weather. Expected: the water stays in that room (its HUD cell keeps its
+   water, the other room stays dry), and the water level inside tilts with the ship but does not jump between rooms or
+   drop on its own.
+4. **Heeled far over.** Load one side or let a storm heel the ship well over (15° or more). Expected: still the same
+   compartments. A room whose rim goes under water at that heel still floods through the low side (the sills follow the
+   tilt), even though the room itself stays as it was built.
+5. **Block changes still count.** Remove the bulkhead's top block so the rooms join under the deck through the gap, or
+   seal the side hole. Expected: within a second the compartment count changes once (a block change re-analyses the
+   hull) and then stays put while rolling.

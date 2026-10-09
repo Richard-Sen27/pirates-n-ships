@@ -185,11 +185,19 @@ inside our jar (jar-in-jar on both loaders, docs/releasing.md); everything of ou
   | `hull_repair` (PND1) | `hull_patch` | 7×4×7 | 23 s | A breach, the recipe, aiming at the hole's edge from inside, the patch block closing it at once (no repair time), the water left inside, where a patch goes. |
   | `mooring` (PND1) | `mooring_ring` | 9×5×9 | 32 s | Coming alongside a quay, counting as moored within a port's 32 blocks, a grappling line thrown onto the quay and tied off at the ship's ring to hold her, the same from the quay's ring, casting off, cleats. There is no separate mooring-rope mechanic. |
   | `cargo_and_weight` (PND1) | `cargo_crate` | 9×6×11 | 32 s | The assembly ballast floating the empty ship level, crates placed aft and filling through their `load` states, the ship trimmed by the stern and lower, restowed amidships and level again (the ballast counts containers empty), a laden ship slower, the load levels. |
+  | `crew_orders` (PND2) | `captains_whistle` | 11×5×11 | 38 s | Hiring at the harbor master's desk (the master behind it, the recruit appearing on the moored ship's deck), the order wheel drawn from the real `WhistleOrder` entries and icons in `RadialLayout`'s order, a hand assigned with the whistle walking to the winch and working it, a free hand taking the unmanned cannon from the job board on "Load!" (the gun's real `load` state, the load pose), "Fire at will" with the 15° arc and the aim pose, "Release crew", the ship screen at the helm. There is no "all hands" order in the game; the scene shows "Release crew" instead. |
+  | `boarding` (PND2) | `boarding_plank` | 13×5×13 | 37 s | Open sea as the base plate, the grappling hook thrown onto a pirate ship under the Jolly Roger, the line hauling her alongside, the boarding plank laid from the top of our gunwale as the real two-cell run of `BoardingPlankBlock` states that `PlankRun` lays for this gap, crossing, a few exchanges with her pirates (their melee telegraph, your clicks, a hurt flash), the capture rule, piracy and prize money, the plank breaking when the hulls part. |
+  | `flags_and_allegiance` (PND2) | `jolly_roger_flag` | 13×5×13 | 36 s | A two-block pole, the Jolly Roger hoisted through the real `FlagpoleMachine` (the cloth runs up the pole), which flag counts, a navy patrol whose soldier aims at the Jolly Roger, a navy flag hoisted as false colours (the soldier lowers his musket), being caught, a manned crow's nest on the navy side, striking the colours, a banner with patterns as a custom flag. |
+  | `crows_nest` (PND2) | `crows_nest` | 7×8×7 | 31 s | The nest on a mast, sloped and hung ratlines up to its rim, stepping in, a hand posted with the whistle (put there at once: crew plan no climbs), the 3-second scan, the call "two points off the starboard bow, 140 blocks" drawn at that bearing (checked against `Bearings`), what he calls and remembers, a player keeping the watch. |
+  | `ships_bell` (PND2) | `ships_bell` | 5×4×5 | 24 s | The wall and post mounts, a ring from the front (swinging away from the striker) and from the side (half the swing) through the bell's synced ring start and strike, no other meaning (no watch, no order, the crew does not ring it), the raid alarm of navy outposts, the recipe. |
+  | `galley_and_provisions` (PND2) | `pantry` | 7×3×7 | 32 s | The pantry stocked, the water barrel filled by two buckets through its real fill levels, dawn's rations, two hands sitting down at the pantry's meal seats (`MealRules`) in the eating pose, hunger and thirst, rum, scurvy and the lime, spoilage. |
+  | `hammocks_and_rest` (PND2) | `hammock` | 7×3×7 | 26 s | Two hammocks between fence posts, a bunk per hammock, two hands turning in at nightfall and lying where the hammock seat puts them (`HammockSeat.spot`, `SleepAxis`) in the sleep pose, dawn and the morale rule, duty at night, a player sleeping in a hammock, the sea cot. |
+  | `swivel_gun` (PND2) | `swivel_gun` | 7×3×7 | 29 s | The gun on a fence post, powder and a cannonball through its real `load` states, the gun following the look through its block entity's yaw and elevation within 30° down and 45° up, firing from `SwivelRules.muzzle`, weaker than the cannon, chain shot and grapeshot refused, a hand firing it on the whistle. |
 - **Opening one.** `AlmanacPonder.show(ResourceLocation id)` (client thread) opens exactly that scene for one of our
   scene ids, every scene of the item for an item id (ours and other mods'), and logs and ignores anything else
   (returns false, no crash). This is the hook the Almanac screen's "Show me" button calls (ALM3).
 - **Text.** Every line is Ponder *shared text* with an explicit key (a `SceneLine`: `CannonLoadingText.Line`, the
-  per-scene enums of `ShipSceneText`; `SceneText.ALL` lists every scene's title and lines), not Ponder's
+  per-scene enums of `ShipSceneText` and `CrewSceneText`; `SceneText.ALL` lists every scene's title and lines), not Ponder's
   numbered `text_1, text_2…` (those follow call order, so a reordered scene would swap translations). Lang keys:
   `pirates_n_ships.ponder.shared.<scene>.<line>` and the title `pirates_n_ships.ponder.<scene>.header`; datagen writes
   the English (`AlmanacPonderModule.gatherData`). Ponder only uses the code's English defaults in its editing mode.
@@ -207,6 +215,21 @@ inside our jar (jar-in-jar on both loaders, docs/releasing.md); everything of ou
   client's real wind, so the scene's wind arrow takes that wind's side; on land a wind along the yards makes the cloth
   luff. Items in storyboards are looked up by id (`SceneKit.item`), so `PonderStoryboardsTest` can build every
   storyboard headless.
+- **Server-side state in a scene** (PND2). Ponder has a client-side world and no server, so a scene writes what the
+  server would sync: entity animation state (a crew member working, resting, eating, a station pose; a duelist's melee
+  phase; a musketeer aiming) through the entity's own synced data, and block entity state (a flag at its pole head, a
+  bell's last ring) through the tag the block entity's sync uses (`SceneKit.editBlockEntity`). The private accessors
+  and tag keys are read by name (`SceneSync`; `PonderStoryboardsTest` resolves every one). Flags change through the
+  real `FlagpoleMachine` (`SceneFlags`). Our blocks' states are set while the scene runs (`SceneKit.setLater`), never
+  while the storyboard is built (no registry headless). Ponder pauses the game in single player, so anything the game
+  times by the game clock (a flag's hoist, a bell's swing) is re-timed every scene tick to have started that many ticks
+  ago.
+- **What the PND2 scenes cannot show as the game does:** there is no "all hands" order, so the order scene shows
+  "Release crew"; crew have no boarding order, so the boarding scene shows only the player's part (the player is never
+  drawn, only the clicks); the pirates' blows are their melee telegraph without a server-side duel; a ship under way,
+  the haul alongside and a navy patrol's reaction are shown, not simulated; night and dawn are a clock icon (Ponder has
+  no time of day); the lookout's call is a fixed example; sounds are not played. The flag pedestal and the flagpole on
+  the crow's nest (FLG3) and the steering course from the whistle or the ship screen are not in the game yet.
 
 ### Adding a scene
 
@@ -218,7 +241,7 @@ inside our jar (jar-in-jar on both loaders, docs/releasing.md); everything of ou
    Ponder loads it from. Commit all four.
 2. **Storyboard.** A class like `CannonLoadingScene` with `static void program(SceneBuilder, SceneBuildingUtil)`;
    its first call is `scene.title("<scene>", "<English title>")`, so the scene id is `pirates_n_ships:<scene>`.
-3. **Text.** Its lines and title as plain data (an enum implementing `SceneLine`, like those of `ShipSceneText`),
+3. **Text.** Its lines and title as plain data (an enum implementing `SceneLine`, like those of `ShipSceneText` and `CrewSceneText`),
    added to `SceneText.ALL`; `AlmanacPonderPlugin.registerSharedText` registers and `AlmanacPonderModule.gatherData`
    writes them; run `./gradlew :neoforge:runData`.
 4. **Plugin entry.** Add the scene to `AlmanacScenes.ALL` (id, item, schematic) and its storyboard to

@@ -90,7 +90,6 @@ public final class Desertions {
                     }
                     case ANYWHERE -> {
                         tell(level, ship, Component.translatable(UpkeepText.DESERTED, c.getDisplayName()));
-                        CrewStations.say(level, c, Component.translatable(UpkeepText.SAY_DESERT));
                         CrewReplacement.replace(level, c, MobContent.SAILOR.get());
                         anywhere.add(c.getUUID());
                     }
@@ -119,7 +118,6 @@ public final class Desertions {
     /** {@code crew} walks off onto the quay of {@code port}: a sailor on the quay, the owner told. */
     private static void walkOff(ServerLevel level, ShipBody ship, CrewMember crew, Port port) {
         Component name = crew.getDisplayName();
-        CrewStations.say(level, crew, Component.translatable(UpkeepText.SAY_WALK_OFF));
         @Nullable Vec3 quay = quay(level, port, ship.worldBounds().getCenter());
         SeafarerMob sailor = CrewReplacement.replace(level, crew, MobContent.SAILOR.get());
         if (sailor != null && quay != null) {

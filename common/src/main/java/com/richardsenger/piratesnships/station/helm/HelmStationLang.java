@@ -15,12 +15,10 @@ public final class HelmStationLang {
 
     public static void lang(LangBuilder lang) {
         lang.add(SAMPLE.nameKey(), "hold the course")
-                .add(SAMPLE.ackKey(), "Aye, holding the course!")
                 .add(SAMPLE.nothingToDoKey(), "No course to hold, captain")
-                .add(SAMPLE.unableKey(), "This helm doesn't steer the ship, captain!")
-                .add(HelmCourses.KEY_WAYPOINT, "Waypoint reached, steering for the next (%s of %s)")
-                .add(HelmCourses.KEY_ARRIVED, "We've arrived, captain! Rudder midships")
-                .add(HelmCourses.KEY_STUCK, "We're not making headway, captain! We're stuck")
+                .add(SAMPLE.unableKey(), "This helm doesn't steer, captain!")
+                .add(HelmCourses.KEY_ARRIVED, "We've arrived, captain!")
+                .add(HelmCourses.KEY_STUCK, "We're stuck, captain!")
                 .add(StationCommands.KEY_COURSE_SYNTAX, "Give the course as pairs of x and z, e.g. 120 -40 200 -40, optionally followed by loop")
                 .add(key(HelmCourses.SetResult.STARTED), "Course set: %s waypoints; the helmsman holds it")
                 .add(key(HelmCourses.SetResult.POSTED), "Course set: %s waypoints; a free hand will take the helm")

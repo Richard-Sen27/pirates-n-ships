@@ -14,7 +14,6 @@ import com.richardsenger.piratesnships.sailing.helm.WheelMath;
 import com.richardsenger.piratesnships.ship.assembly.HelmBlock;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
-import java.util.Locale;
 import java.util.OptionalInt;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -50,15 +49,12 @@ public final class ShipControls {
 
     public static final String KEY = Constants.MOD_ID + ".sailing.";
     public static final String KEY_RUDDER_MIDSHIPS = KEY + "rudder.midships";
-    public static final String KEY_RUDDER = KEY + "rudder.step";
     public static final String KEY_PORT = KEY + "rudder.port";
     public static final String KEY_STARBOARD = KEY + "rudder.starboard";
     public static final String KEY_STEERING_OFF = KEY + "rudder.disabled";
     public static final String KEY_CAPSTAN_NOT_ON_SHIP = KEY + "capstan.not_on_ship";
     public static final String KEY_CAPSTAN_OFF = KEY + "capstan.disabled";
     public static final String KEY_NO_GROUND = KEY + "capstan.no_ground";
-    public static final String KEY_DROPPING = KEY + "capstan.dropping";
-    public static final String KEY_RAISING = KEY + "capstan.raising";
     /** CRW3: a drop while the anchor is out. */
     public static final String KEY_ALREADY_OUT = KEY + "capstan.already_out";
     /** CRW3: a raise while the anchor is stowed. */
@@ -94,7 +90,7 @@ public final class ShipControls {
         level.setBlock(pos, state.setValue(HelmBlock.RUDDER, RudderSteps.toProperty(step)), Block.UPDATE_ALL); // runtime follows the block change
         // HELM1: the wheel shows the step, so it agrees with the rudder (and stays there if wheel steering comes back)
         setWheel(level, pos, WheelMath.wheelForFraction(RudderSteps.angle(step, steps, 1.0), HelmConfig.lockAngle()));
-        return rudderMessage(step, steps, SailingConfig.MAX_RUDDER_ANGLE.get());
+        return Component.empty(); // MSG1: the wheel and the ship HUD show the rudder
     }
 
     /**
@@ -160,15 +156,6 @@ public final class ShipControls {
         return com.richardsenger.piratesnships.sailing.helm.HelmService.isHeld(level, helmPlotPos);
     }
 
-    public static Component rudderMessage(int step, int stepsPerSide, double maxAngle) {
-        if (step == 0) {
-            return Component.translatable(KEY_RUDDER_MIDSHIPS);
-        }
-        double angle = RudderSteps.angle(step, stepsPerSide, maxAngle);
-        return Component.translatable(KEY_RUDDER, Math.abs(step), stepsPerSide,
-                Component.translatable(step > 0 ? KEY_STARBOARD : KEY_PORT), String.format(Locale.ROOT, "%.0f", Math.abs(angle)));
-    }
-
     // ------------------------------------------------------------------ capstan
 
     /** What {@link #dropAnchor} or {@link #raiseAnchor} did, or what {@link #dropCheck} says a drop would do. */
@@ -196,7 +183,7 @@ public final class ShipControls {
         }
     }
 
-    /** The outcome of a capstan command (CRW3) and the line the player is shown. */
+    /** The outcome of a capstan command (CRW3) and the line the player is shown: empty when the anchor moves (MSG1). */
     public record CapstanResult(AnchorResult result, Component message) {
     }
 
@@ -276,8 +263,7 @@ public final class ShipControls {
             }
             setAnchor(ship, rt, dropped);
         }
-        double depth = plan.check().depth();
-        return new CapstanResult(r, Component.translatable(KEY_DROPPING, fmt(depth), seconds(depth / AnchorConfig.SINK_SPEED.get() * 20.0)));
+        return new CapstanResult(r, Component.empty()); // MSG1: the anchor falls in sight, no line
     }
 
     /**
@@ -299,12 +285,11 @@ public final class ShipControls {
         if (phase == AnchorState.Phase.RAISED) {
             return new CapstanResult(AnchorResult.STOWED, message(AnchorResult.STOWED));
         }
-        Component raising = Component.translatable(KEY_RAISING, seconds(raiseTicks(chainOut(ship, a))));
         if (phase == AnchorState.Phase.RAISING) {
-            return new CapstanResult(AnchorResult.ALREADY_RAISING, raising);
+            return new CapstanResult(AnchorResult.ALREADY_RAISING, Component.empty());
         }
         setAnchor(ship, rt, a.withState(a.state().raise()));
-        return new CapstanResult(AnchorResult.RAISING, raising);
+        return new CapstanResult(AnchorResult.RAISING, Component.empty()); // MSG1: the capstan turns in sight, no line
     }
 
     /**
@@ -312,10 +297,10 @@ public final class ShipControls {
      * using the capstan while it winds lets the anchor go again from where it is. The toggle over {@link #dropAnchor}
      * and {@link #raiseAnchor} (CRW3 split them for the crew's capstan station).
      */
-    public static Component useCapstan(ServerLevel level, BlockPos pos) {
+    public static CapstanResult useCapstan(ServerLevel level, BlockPos pos) {
         AnchorState.Phase phase = anchorPhase(level, pos);
         boolean out = phase == AnchorState.Phase.DROPPING || phase == AnchorState.Phase.HOLDING;
-        return (out ? raiseAnchor(level, pos) : dropAnchor(level, pos)).message();
+        return out ? raiseAnchor(level, pos) : dropAnchor(level, pos);
     }
 
     /**
@@ -420,13 +405,5 @@ public final class ShipControls {
         if (s.getBlock() instanceof CapstanBlock && s.getValue(CapstanBlock.ANCHOR) != shown) {
             level.setBlock(capstan, s.setValue(CapstanBlock.ANCHOR, shown), Block.UPDATE_ALL);
         }
-    }
-
-    private static String seconds(double ticks) {
-        return String.format(Locale.ROOT, "%.1f", ticks / 20.0);
-    }
-
-    private static String fmt(double d) {
-        return String.format(Locale.ROOT, "%.0f", d);
     }
 }

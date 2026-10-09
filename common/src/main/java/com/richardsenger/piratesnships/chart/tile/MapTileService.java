@@ -54,9 +54,6 @@ import java.util.UUID;
 public final class MapTileService {
 
     public static final String MSG = ChartBackend.MSG + "tile.";
-    public static final String DRAWN = MSG + "drawn";
-    public static final String UPDATED = MSG + "updated";
-    public static final String CLEARED = MSG + "cleared";
     /** NO_INK with the amounts: "You need N ink (you have M)". */
     public static final String NO_INK_AMOUNT = MSG + "no_ink_amount";
     /** Game ticks per day: drawings record the overworld's day time / 24000, the day number players see. */
@@ -122,8 +119,7 @@ public final class MapTileService {
     /** The {@link DrawTilePayload} handler: draws or updates, or tells the player why not. */
     public static Outcome handleDraw(ServerPlayer player, DrawTilePayload request) {
         Outcome outcome = draw(player, request);
-        if (outcome.ok()) {
-            player.displayClientMessage(Component.translatable(outcome.update() ? UPDATED : DRAWN), true);
+        if (outcome.ok()) { // MSG1: the board shows the drawing; the pen is heard
             player.serverLevel().playSound(null, request.tilePos(), SoundEvents.VILLAGER_WORK_CARTOGRAPHER, SoundSource.BLOCKS, 0.8f, 1.0f);
         } else if (outcome.refusal() == MapTileRules.Refusal.NO_INK) {
             player.displayClientMessage(Component.translatable(NO_INK_AMOUNT, outcome.inkDue(), inkHeld(player)), true);
@@ -234,8 +230,7 @@ public final class MapTileService {
     /** The {@link ClearBoardPayload} handler. */
     public static Outcome handleClear(ServerPlayer player, ClearBoardPayload request) {
         Outcome outcome = clear(player, request.tilePos());
-        if (outcome.ok()) {
-            player.displayClientMessage(Component.translatable(CLEARED), true);
+        if (outcome.ok()) { // MSG1: the blank board shows it
             player.serverLevel().playSound(null, request.tilePos(), SoundEvents.BOOK_PAGE_TURN, SoundSource.BLOCKS, 0.8f, 0.8f);
         } else {
             tell(player, outcome.refusal());

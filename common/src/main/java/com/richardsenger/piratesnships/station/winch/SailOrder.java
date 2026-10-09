@@ -59,11 +59,6 @@ public enum SailOrder implements StringRepresentable, CrewOrder {
         return "sail_order." + Constants.MOD_ID + "." + getSerializedName();
     }
 
-    /** Translation key of the crew's acknowledgement ("Aye, hoisting the sails!"). */
-    @Override
-    public String ackKey() {
-        return "message." + Constants.MOD_ID + ".crew.ack." + getSerializedName();
-    }
 
     /** "The sails are already set, captain (%s)": the same key for every sail order. */
     @Override

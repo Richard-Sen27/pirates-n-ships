@@ -30,19 +30,20 @@ public final class SwivelData {
         data.lang(lang -> {
             lang.block(CannonContent.SWIVEL_GUN, "Swivel Gun");
             for (SwivelService.Outcome o : SwivelService.Outcome.values()) {
+                if (o == SwivelService.Outcome.FIRED) continue; // MSG1: the shot says it all, no line
                 lang.add(o.key(), switch (o) {
-                    case POWDER_IN -> "Powder in. Now load the shot";
-                    case SHOT_IN -> "Loaded. Hold use with an empty hand to aim, let go to fire";
+                    case POWDER_IN -> "Powder in: now load the shot";
+                    case SHOT_IN -> "Loaded: hold use to aim, let go to fire";
                     case NEEDS_POWDER_FIRST -> "Powder first, then the shot";
-                    case ALREADY_POWDERED -> "The powder is in. Load the shot";
-                    case ALREADY_LOADED -> "Loaded. Hold use with an empty hand to aim, let go to fire";
+                    case ALREADY_POWDERED -> "Powder is in: now load the shot";
+                    case ALREADY_LOADED -> "Loaded: hold use to aim, let go to fire";
                     case RELOADING -> "The barrel is still hot: %s s";
                     case NOT_ENOUGH_AMMO -> "One load takes %s × %s";
                     case AIMING -> "Aiming: let go to fire";
-                    case AIMING_UNLOADED -> "Aiming, but not loaded: gunpowder first, then the shot";
+                    case AIMING_UNLOADED -> "Not loaded: powder first, then shot";
                     case OCCUPIED -> "Someone else is aiming this gun";
-                    case FIRED -> "Fire!";
-                    case NOT_LOADED -> "Not loaded: put in gunpowder, then the shot";
+                    case FIRED -> throw new IllegalStateException("no line for a shot");
+                    case NOT_LOADED -> "Not loaded: powder first, then shot";
                     case DISABLED -> "Swivel guns are disabled on this server";
                     case NOT_A_SWIVEL -> "That is not a swivel gun";
                 });

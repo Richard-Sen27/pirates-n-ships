@@ -24,7 +24,7 @@ public final class CargoText {
                 .add(BulkStore.Refusal.NOT_STACKABLE.translationKey(), "%s doesn't go into bulk cargo (%s)")
                 .add(BulkStore.Refusal.NOT_ACCEPTED.translationKey(), "%s is no trade good (%s)")
                 .add(BulkStore.Refusal.OTHER_KIND.translationKey(), "Holds one kind only, refused %s (%s)")
-                .add(BulkStore.Refusal.PLUNDER_MIX.translationKey(), "Plundered and clean goods don't mix, refused %s (%s)")
+                .add(BulkStore.Refusal.PLUNDER_MIX.translationKey(), "Plunder and clean goods don't mix")
                 .add(BulkStore.Refusal.FULL.translationKey(), "Full, refused %s (%s)");
     }
 }

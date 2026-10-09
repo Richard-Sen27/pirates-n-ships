@@ -56,7 +56,7 @@ public final class BoardingModule implements ModModule {
                 .add(BoardingPlankItem.KEY_NO_DECK, "No deck within reach")
                 .add(BoardingPlankItem.KEY_BLOCKED, "Something is in the way of the plank")
                 .add(BoardingPlankItem.KEY_NOT_ON_SHIP, "Lay the plank from a ship's gunwale")
-                .add(BoardingPlankItem.KEY_DISABLED, "Boarding planks are disabled on this server"));
+                .add(BoardingPlankItem.KEY_DISABLED, "Boarding planks are off on this server"));
         data.models(m -> {
             // hand-made Blockbench models (art/models/boarding_plank.bbmodel, design.md §4.8), running north: only the
             // block state is generated. The gunwale end, the middle and the far end with its hooks are separate models.

@@ -93,20 +93,19 @@ public final class GrappleModule implements ModModule {
                         + "Sneak + use with an empty hand to let go")
                 .add(GrapplingHookItem.LAUNCH_TOOLTIP_KEY, "In the off hand with a musket in the main hand: "
                         + "hold use to load it into the musket, then use again to fire it twice as far")
-                .add(MusketHookLoad.OCCUPIED_KEY, "The musket is loaded with shot: fire it before loading the hook")
-                .add(MusketHookLoad.NO_POWDER_KEY, "Loading the hook into the musket takes one gunpowder")
+                .add(MusketHookLoad.OCCUPIED_KEY, "Fire the shot before loading the hook")
+                .add(MusketHookLoad.NO_POWDER_KEY, "The hook needs one gunpowder")
                 .add(MusketHookLoad.DESCRIPTION_KEY, "With a grappling hook")
                 .add(ShipForces.GRAPPLE_KEY, "Grappling Rope")
                 .add(ShipForces.HAUL_KEY, "Hauling by Hand")
                 .block(GrappleContent.MOORING_RING, "Mooring Ring")
                 .add(MooringRingBlock.TOOLTIP_KEY, "Hooks passing close catch on it and hold fast. Use it with a hook out to tie off the rope")
-                .add(GrappleService.TIED_KEY, "Rope tied off here")
                 .add(GrappleService.ALREADY_TIED_KEY, "The rope is already tied off here")
-                .add(GrappleService.TIE_SAME_SHIP_KEY, "The hook hangs on this ship: tie the rope on your own ship")
+                .add(GrappleService.TIE_SAME_SHIP_KEY, "Tie the rope on your own ship")
                 .add(GrappleService.TIE_TOO_FAR_KEY, "The rope does not reach this far")
                 .add(GrappleContent.ROPE_RIDER.get().getDescriptionId(), "Rope Slide")
                 .add(RopeSlideService.DISABLED_KEY, "Sliding along ropes is disabled")
-                .add(RopeSlideService.TIE_OFF_HINT_KEY, "Tie the rope off on a cleat to use it as a line"));
+                .add(RopeSlideService.TIE_OFF_HINT_KEY, "Tie it off on a cleat to make a line"));
         data.models(GrappleModule::ringModels);
         // the hook-loaded musket's look is the hand-made item/musket_hook (ART1c), the override sits in musket.json
         data.blockLoot(loot -> loot.dropSelf(GrappleContent.MOORING_RING.get()));

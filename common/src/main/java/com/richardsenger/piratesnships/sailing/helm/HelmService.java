@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 public final class HelmService {
 
     public static final String KEY = Constants.MOD_ID + ".helm.";
-    public static final String KEY_HOLDING = KEY + "holding";
     public static final String KEY_RUDDER = KEY + "rudder";
     public static final String KEY_BUSY = KEY + "busy";
 
@@ -70,7 +69,10 @@ public final class HelmService {
         return start(level, pos, player);
     }
 
-    /** {@code player} takes the wheel of the helm at {@code pos} (plot). Refused while another player holds it. */
+    /**
+     * {@code player} takes the wheel of the helm at {@code pos} (plot). Refused while another player holds it. Taking
+     * the wheel says nothing (MSG1): the wheel overlay shows the rudder while the player holds it.
+     */
     public static Component start(ServerLevel level, BlockPos pos, Player player) {
         for (Session s : SESSIONS.values()) {
             if (s.player != player && s.level == level && s.pos.equals(pos) && present(s.player)) {
@@ -86,7 +88,7 @@ public final class HelmService {
         BlockState state = level.getBlockState(pos);
         level.sendBlockUpdated(pos, state, state, net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
         notify(player, pos, true, wheel);
-        return Component.translatable(KEY_HOLDING, rudderMessage(rudderAngle(wheel)));
+        return Component.empty();
     }
 
     /**

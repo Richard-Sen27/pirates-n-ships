@@ -139,10 +139,7 @@ public final class ChartText {
         m.put(TILE_BLANK_TOOLTIP, "Use with a chart to draw a part of it onto the tile");
         m.put(TILE_DRAWN_BY, "Drawn by %s on day %s");
         m.put(TILE_AREA, "x %s to %s, z %s to %s");
-        m.put(MapTileService.DRAWN, "You draw your chart onto the board");
-        m.put(MapTileService.UPDATED, "You add what you have charted to the board");
-        m.put(MapTileService.CLEARED, "You wipe the board clean");
-        m.put(MapTileService.NO_INK_AMOUNT, "You need %s ink for this (you have %s): ink sacs, or kraken ink");
+        m.put(MapTileService.NO_INK_AMOUNT, "You need %s ink (you have %s)");
         m.put(UPDATE, "Update");
         m.put(NEW_DRAWING, "New");
         m.put(CLEAR, "Clear");
@@ -162,17 +159,17 @@ public final class ChartText {
             if (r == MapTileRules.Refusal.NONE) continue;
             m.put(MapTileService.MSG + r.key(), switch (r) {
                 case CHARTS_DISABLED -> "Charts are disabled on this server";
-                case TILES_DISABLED -> "Drawing on map tiles is disabled on this server";
+                case TILES_DISABLED -> "Map tile drawing is off on this server";
                 case NO_TILE -> "That map tile is gone";
                 case TOO_FAR -> "You are too far from the map tile";
-                case NEEDS_CHART -> "You need a chart in hand to draw on the tile";
+                case NEEDS_CHART -> "Hold a chart to draw on the tile";
                 case PERMANENT -> "This tile's drawing is permanent";
-                case OUT_OF_WORLD -> "That area is beyond the edge of the world";
+                case OUT_OF_WORLD -> "That area is beyond the world's edge";
                 case UNCHARTED -> "You have charted nothing in that area";
                 case NOT_RECTANGLE -> "The tiles do not form a rectangle";
                 case TOO_BIG -> "The board is too big";
                 case NO_INK -> "You do not have enough ink";
-                case NOTHING_NEW -> "Your chart adds nothing new to this board";
+                case NOTHING_NEW -> "Your chart adds nothing new here";
                 case BLANK -> "The board is already blank";
                 case NONE -> "";
             });

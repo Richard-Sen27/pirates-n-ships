@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.sailing.rope;
 
+import com.richardsenger.piratesnships.core.text.ActionBar;
 import com.richardsenger.piratesnships.combat.grapple.GrappleContent;
 import com.richardsenger.piratesnships.combat.grapple.MooringRingBlock;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
@@ -130,7 +131,7 @@ public final class RopeLineGameTests {
 
         h.assertTrue(key(RopeItem.use(level, rope, a, null)).equals(RopeItem.KEY_TIED), "no tie at the first cleat");
         Component line = RopeItem.use(level, rope, b, null);
-        h.assertTrue(key(line).equals(RopeItem.KEY_LINE), "two cleats at the same height made no line: " + line.getString());
+        h.assertTrue(ActionBar.silent(line), "two cleats at the same height made no line: " + line.getString());
         h.assertTrue(rope.getCount() == 3, "the line did not use up a rope");
         h.assertTrue(RopeLines.joined(level, a, b) && RopeLines.partners(level, a).equals(List.of(b)), "the cleats do not agree on the line");
         h.assertTrue(cloth(level, a) == null && cloth(level, b) == null, "a line has cloth");
@@ -139,7 +140,7 @@ public final class RopeLineGameTests {
 
         h.assertTrue(key(RopeItem.use(level, rope, b, null)).equals(RopeItem.KEY_TIED), "no tie at the second cleat");
         Component toRing = RopeItem.use(level, rope, ring, null);
-        h.assertTrue(key(toRing).equals(RopeItem.KEY_LINE), "cleat to ring made no line: " + toRing.getString());
+        h.assertTrue(ActionBar.silent(toRing), "cleat to ring made no line: " + toRing.getString());
         h.assertTrue(RopeLines.joined(level, b, ring), "the cleat and the ring do not agree on the line");
         h.assertTrue(ropeCount(level, ring) == 1 && ropeCount(level, b) == 2, "rope counts: ring " + ropeCount(level, ring) + ", cleat " + ropeCount(level, b));
         h.assertTrue(key(RopeItem.use(level, rope, a, null)).equals(RopeItem.KEY_TIED)
@@ -227,7 +228,7 @@ public final class RopeLineGameTests {
         for (BlockPos[] pair : new BlockPos[][] {{a, b}, {b, ring}, {ring, c}}) {
             RopeItem.use(level, rope, pair[0], null);
             Component r = RopeItem.use(level, rope, pair[1], null);
-            h.assertTrue(key(r).equals(RopeItem.KEY_LINE), "no line " + pair[0] + " - " + pair[1] + ": " + r.getString());
+            h.assertTrue(ActionBar.silent(r), "no line " + pair[0] + " - " + pair[1] + ": " + r.getString());
         }
         h.assertTrue(rope.getCount() == 5, "three lines did not use three ropes");
 
@@ -243,7 +244,7 @@ public final class RopeLineGameTests {
         h.assertTrue(ropeCount(level, ring) == 0, "the ring kept the line to the broken cleat");
 
         RopeItem.use(level, rope, a, null);
-        h.assertTrue(key(RopeItem.use(level, rope, ring, null)).equals(RopeItem.KEY_LINE), "no line from the cleat to the ring");
+        h.assertTrue(ActionBar.silent(RopeItem.use(level, rope, ring, null)), "no line from the cleat to the ring");
         breakByHand(level, ring, survival);
         h.assertTrue(ropesDropped(h) == 3, "breaking the ring did not return its rope");
         h.assertTrue(ropeCount(level, a) == 0, "the cleat kept the line to the broken ring");
@@ -321,7 +322,7 @@ public final class RopeLineGameTests {
         ItemStack rope = new ItemStack(TriangularSailContent.ROPE.get(), 8);
         BlockPos oldA = h.absolutePos(oldARel), oldB = h.absolutePos(oldBRel);
         RopeItem.use(level, rope, oldA, null);
-        h.assertTrue(key(RopeItem.use(level, rope, oldB, null)).equals(RopeItem.KEY_LINE), "no line while lines are on");
+        h.assertTrue(ActionBar.silent(RopeItem.use(level, rope, oldB, null)), "no line while lines are on");
 
         ConfigOverrides.during(h, SailingConfig.ROPE_LINES, false);
         for (int y = 2; y <= 7; y++) h.setBlock(new BlockPos(10, y, 10), Blocks.OAK_LOG);

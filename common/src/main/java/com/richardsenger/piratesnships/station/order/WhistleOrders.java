@@ -118,7 +118,7 @@ public final class WhistleOrders {
                 message = Component.translatable(JobBoard.KEY_ORDER_POSTED, name, n, jobs);
             } else if (n == 0 && CrewStations.crewOf(level, ship.id()).stream().noneMatch(c -> CrewStations.takes(level, c, crewOrder))) {
                 // Q5: nobody heard it and no job opened: say what is missing instead of "0 crew carry it out"
-                message = OrderHints.why(level, ship, crewOrder);
+                message = OrderHints.brief(level, ship, crewOrder);
             } else {
                 message = Component.translatable(CaptainsWhistleItem.KEY_ORDER, name, n);
             }

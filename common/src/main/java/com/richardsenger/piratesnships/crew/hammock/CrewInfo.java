@@ -30,8 +30,6 @@ public final class CrewInfo {
     public static final String KEY_STATUS_STATION = KEY + "status.station";
     public static final String KEY_STATUS_HAMMOCK = KEY + "status.hammock";
     public static final String KEY_STATUS_FREE = KEY + "status.free";
-    /** Spoken at dawn by a crew member that had no hammock. */
-    public static final String KEY_NO_HAMMOCK = KEY + "no_hammock";
     /** "%s · %s": a crew line followed by its ship line. */
     public static final String KEY_WITH_SHIP = KEY + "with_ship";
 
@@ -52,10 +50,7 @@ public final class CrewInfo {
      * when its hirer is known, and the ship's supplies left (" · food 3.5 days, water 2.0 days").
      */
     public static Component crewLine(ServerLevel level, CrewMember crew) {
-        Component status = status(crew);
-        if (crew.isUnpaid()) status = Component.translatable(UpkeepText.STATUS_UNPAID, status);
-        if (crew.isDeserting()) status = Component.translatable(UpkeepText.STATUS_DESERTING, status);
-        Component line = Component.translatable(KEY_CREW_LINE, crew.getDisplayName(), CrewMorale.get(crew), status);
+        Component line = shortLine(crew);
         String hirer = hirerName(level, crew);
         if (hirer != null) line = Component.translatable(UpkeepText.STATUS_HIRED_BY, line, hirer);
         ShipBody ship = shipOf(level, crew);
@@ -64,6 +59,17 @@ public final class CrewInfo {
         Component shipLine = Component.translatable(UpkeepText.STATUS_SUPPLIES, shipLine(level, ship),
                 UpkeepInfo.days(left.foodDays()), UpkeepInfo.days(left.waterDays()));
         return Component.translatable(KEY_WITH_SHIP, line, shipLine);
+    }
+
+    /**
+     * The crew line without hirer and ship, short enough for the action bar (MSG1): "Jack: morale 65, off duty",
+     * ", unpaid" and ", deserting" when they apply. The captain's whistle shows it when it releases a crew member.
+     */
+    public static Component shortLine(CrewMember crew) {
+        Component status = status(crew);
+        if (crew.isUnpaid()) status = Component.translatable(UpkeepText.STATUS_UNPAID, status);
+        if (crew.isDeserting()) status = Component.translatable(UpkeepText.STATUS_DESERTING, status);
+        return Component.translatable(KEY_CREW_LINE, crew.getDisplayName(), CrewMorale.get(crew), status);
     }
 
     /** The name of the player who hired {@code crew} (CRW1): online, or from the server's profile cache; else null. */
@@ -101,13 +107,12 @@ public final class CrewInfo {
         m.put(KEY_STATUS_STATION, "at a station");
         m.put(KEY_STATUS_HAMMOCK, "in a hammock");
         m.put(KEY_STATUS_FREE, "off duty");
-        m.put(KEY_NO_HAMMOCK, "No hammock for me… another night on the bare planks.");
         m.put(KEY_COMMAND_SHIP, "This ship: %s (%s hammocks)");
         m.put(KEY_COMMAND_NO_SHIP, "Stand on a ship, or name the crew members");
-        m.put(HammockBlock.KEY_CREW_ONLY, "Hammocks are for the crew: they turn in here at night");
-        m.put(PlayerSleep.KEY_CREW_IN_IT, "A crew member is sleeping in this hammock");
+        m.put(HammockBlock.KEY_CREW_ONLY, "Hammocks are for the crew");
+        m.put(PlayerSleep.KEY_CREW_IN_IT, "A crew member sleeps in this hammock");
         m.put(PlayerSleep.KEY_NOT_HERE, "You can't sleep here");
-        m.put(HammockItem.KEY_NO_SUPPORT, "A hammock hangs between two supports at the same height: a fence, wall, log or solid block at each end");
+        m.put(HammockItem.KEY_NO_SUPPORT, "Needs a support at each end, same height");
         return Map.copyOf(m);
     }
 }

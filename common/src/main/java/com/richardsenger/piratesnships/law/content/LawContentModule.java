@@ -64,7 +64,7 @@ public final class LawContentModule implements ModModule {
                 .item(LawContent.SHACKLES, "Shackles")
                 .item(LawContent.BRIG_KEY, "Brig Key")
                 .add("item.pirates_n_ships.brig_key.tooltip", "Use on a brig door to lock or unlock it")
-                .add(BrigDoorBlock.NEEDS_KEY, "You need a brig key to lock or unlock this door")
+                .add(BrigDoorBlock.NEEDS_KEY, "You need a brig key")
                 .block(LawContent.BRIG_BARS, "Brig Bars")
                 .block(LawContent.BRIG_DOOR, "Brig Door"));
         data.models(m -> {

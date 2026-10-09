@@ -71,7 +71,7 @@ public final class HiringText {
                 .add(result(NO_COINS), "%s asks more doubloons than you carry")
                 .add(result(NO_ROOM), "No room on deck for %s")
                 .add(result(DISMISSED), "%s is dismissed")
-                .add(result(NOT_YOURS), "Only the captain or the one who hired %s can dismiss them")
+                .add(result(NOT_YOURS), "Not yours to dismiss: %s")
                 .add(result(NOT_CREW), "%s is no crew member")
                 .add(CANDIDATES, "Looking for a berth")
                 .add(NO_CANDIDATES, "Nobody is looking for a berth today")

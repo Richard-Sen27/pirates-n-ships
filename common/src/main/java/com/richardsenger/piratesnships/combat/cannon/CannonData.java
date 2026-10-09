@@ -47,16 +47,17 @@ public final class CannonData {
                     .item(CannonContent.CHAIN_SHOT, "Chain Shot")
                     .item(CannonContent.GRAPESHOT, "Grapeshot");
             for (CannonService.Outcome o : CannonService.Outcome.values()) {
+                if (o == CannonService.Outcome.FIRED) continue; // MSG1: the shot says it all, no line
                 lang.add(o.key(), switch (o) {
-                    case POWDER_IN -> "Powder in. Now load a cannonball, chain shot or grapeshot";
-                    case BALL_IN -> "Loaded. Use with an empty hand to fire";
+                    case POWDER_IN -> "Powder in: now load the shot";
+                    case BALL_IN -> "Loaded: empty hand to fire";
                     case NEEDS_POWDER_FIRST -> "Powder first, then the shot";
-                    case ALREADY_POWDERED -> "The powder is in. Load a cannonball, chain shot or grapeshot";
-                    case ALREADY_LOADED -> "Already loaded. Use with an empty hand to fire";
+                    case ALREADY_POWDERED -> "Powder is in: now load the shot";
+                    case ALREADY_LOADED -> "Already loaded: empty hand to fire";
                     case RELOADING -> "The barrel is still hot: %s s";
                     case AIMED -> "Elevation: %s°";
-                    case FIRED -> "Fire!";
-                    case NOT_LOADED -> "Not loaded: put in gunpowder, then a cannonball";
+                    case FIRED -> throw new IllegalStateException("no line for a shot");
+                    case NOT_LOADED -> "Not loaded: powder first, then shot";
                     case DISABLED -> "Cannons are disabled on this server";
                     case NOT_A_CANNON -> "That is not a cannon";
                     case SHOT_DISABLED -> "This shot is disabled on this server";
@@ -65,21 +66,18 @@ public final class CannonData {
             // the crew order (G13); the whistle entry's lang is the station module's
             CannonStation.CannonOrder fire = CannonStation.CannonOrder.FIRE;
             lang.add(fire.nameKey(), "fire the cannons")
-                    .add(fire.ackKey(), "Aye, firing!")
                     .add(fire.nothingToDoKey(), "The gun is not loaded, captain!")
                     .add(fire.unableKey(), "This gun won't fire, captain!");
             // crew loading (C9): the order, and its whistle entry (next to "Fire!", whose lang is the station module's)
             CannonStation.CannonOrder load = CannonStation.CannonOrder.LOAD;
             lang.add(load.nameKey(), "load the guns")
-                    .add(load.ackKey(), "Aye, loading!")
                     .add(load.nothingToDoKey(), "The gun is already loaded, captain!")
-                    .add(load.unableKey(), "No powder and shot within reach, captain!")
+                    .add(load.unableKey(), "No powder and shot nearby, captain!")
                     .add(WhistleOrder.LOAD.nameKey(), "Load!")
                     .add(WhistleOrder.LOAD.descriptionKey(), "Crew at the guns load them from powder and shot nearby");
             // NPC gunnery (WS4a): the order and its whistle entry
             CannonStation.CannonOrder atWill = CannonStation.CannonOrder.FIRE_AT_WILL;
             lang.add(atWill.nameKey(), "fire at will")
-                    .add(atWill.ackKey(), "Aye, firing at will!")
                     .add(WhistleOrder.FIRE_AT_WILL.nameKey(), "Fire at will")
                     .add(WhistleOrder.FIRE_AT_WILL.descriptionKey(),
                             "Gun crews aim and fire at hostile ships in their arc until you release the crew");

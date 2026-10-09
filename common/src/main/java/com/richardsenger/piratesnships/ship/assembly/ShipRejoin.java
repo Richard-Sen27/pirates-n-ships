@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.ship.assembly;
 
+import com.richardsenger.piratesnships.core.text.ActionBar;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.ship.ShipData;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
@@ -80,8 +81,9 @@ public final class ShipRejoin {
 
     /** A click's or a rejoin's outcome with the arguments of its message. */
     public record Result(Outcome outcome, Object... args) {
+        /** The action-bar line; empty for {@link Outcome#REJOINED} (MSG1: the piece snaps into place with a sound). */
         public Component message() {
-            return Component.translatable(outcome.key(), args);
+            return outcome == Outcome.REJOINED ? Component.empty() : Component.translatable(outcome.key(), args);
         }
 
         @Override
@@ -472,7 +474,7 @@ public final class ShipRejoin {
                     r = new Result(Outcome.FAILED);
                 }
                 LAST.put(j.player().getUUID(), r);
-                j.player().displayClientMessage(r.message(), true);
+                ActionBar.show(j.player(), r.message());
                 if (r.outcome() == Outcome.REJOINED) {
                     Vec3 at = j.soundAt();
                     level.playSound(null, at.x, at.y, at.z, SoundEvents.WOOD_PLACE, SoundSource.PLAYERS, 1.0f, 0.8f);

@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.combat.cannon;
 
+import com.richardsenger.piratesnships.core.text.ActionBar;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import com.richardsenger.piratesnships.core.block.Waterlogging;
@@ -258,7 +259,7 @@ public class CannonBlock extends Block implements EntityBlock, StationBlock, Sim
         }
         if (level instanceof ServerLevel server) {
             CannonService.Use use = CannonService.load(server, pos, player, stack);
-            player.displayClientMessage(use.message(), true);
+            ActionBar.show(player, use.message());
         }
         return ItemInteractionResult.sidedSuccess(level.isClientSide);
     }
@@ -274,7 +275,7 @@ public class CannonBlock extends Block implements EntityBlock, StationBlock, Sim
             } else {
                 use = CannonService.fire(server, pos, player);
             }
-            player.displayClientMessage(use.message(), true);
+            ActionBar.show(player, use.message());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

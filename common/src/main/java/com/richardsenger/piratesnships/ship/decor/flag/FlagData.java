@@ -53,19 +53,12 @@ public final class FlagData {
                 .add(FlagpoleBlockEntity.kindKey(FlagKind.NAVY), "navy flag")
                 .add(FlagpoleBlockEntity.kindKey(FlagKind.JOLLY_ROGER), "Jolly Roger")
                 .add(FlagpoleBlockEntity.kindKey(FlagKind.CUSTOM), "custom flag");
+        // MSG1: only the feedback FlagpoleBlockEntity#shown puts on the action bar has a line
         Map<FlagpoleMachine.Feedback, String> feedback = Map.ofEntries(
-                Map.entry(FlagpoleMachine.Feedback.NO_FLAG, "This flagpole flies no flag. Use a flag or a banner on it."),
-                Map.entry(FlagpoleMachine.Feedback.CANCELLED, "Stopped working the flagpole"),
-                Map.entry(FlagpoleMachine.Feedback.STARTED_HOIST, "Hoisting the %s..."),
-                Map.entry(FlagpoleMachine.Feedback.STARTED_STRIKE, "Striking the colors..."),
-                Map.entry(FlagpoleMachine.Feedback.STARTED_RAISE, "Raising the %s..."),
-                Map.entry(FlagpoleMachine.Feedback.STARTED_TAKE_DOWN, "Taking down the %s..."),
-                Map.entry(FlagpoleMachine.Feedback.HOISTED, "The %s is flying"),
-                Map.entry(FlagpoleMachine.Feedback.STRUCK, "Colors struck: you signal surrender"),
-                Map.entry(FlagpoleMachine.Feedback.RAISED, "The %s is flying again"),
-                Map.entry(FlagpoleMachine.Feedback.TAKEN_DOWN, "Took down the flag"));
+                Map.entry(FlagpoleMachine.Feedback.NO_FLAG, "No flag: use a flag or banner on it"),
+                Map.entry(FlagpoleMachine.Feedback.STRUCK, "Colors struck: you signal surrender"));
         feedback.forEach((f, text) -> lang.add(FlagpoleBlockEntity.feedbackKey(f), text));
-        lang.add(FlagpoleBlock.TOO_TALL_KEY, "A flagpole can be at most %s blocks tall");
+        lang.add(FlagpoleBlock.TOO_TALL_KEY, "A flagpole is at most %s blocks tall");
         String k = FlagCommands.KEY;
         lang.add(k + "not_a_flagpole", "That block is not a flagpole")
                 .add(k + "unknown_kind", "Unknown flag kind")

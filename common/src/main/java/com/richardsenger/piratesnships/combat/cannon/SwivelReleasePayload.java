@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.combat.cannon;
 
+import com.richardsenger.piratesnships.core.text.ActionBar;
 import com.richardsenger.piratesnships.Constants;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
@@ -29,7 +30,7 @@ public record SwivelReleasePayload(BlockPos pos) implements CustomPacketPayload 
         if (player != null && player.level() instanceof ServerLevel level && level.isLoaded(payload.pos())) {
             SwivelService.Use use = SwivelService.release(level, payload.pos(), player);
             if (use != null) {
-                player.displayClientMessage(use.message(), true);
+                ActionBar.show(player, use.message());
             }
         }
     }

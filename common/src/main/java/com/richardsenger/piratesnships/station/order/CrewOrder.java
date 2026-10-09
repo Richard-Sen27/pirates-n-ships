@@ -25,9 +25,6 @@ public interface CrewOrder {
     /** Translation key of the order as a phrase ("hoist the sails", "pump the bilge"). */
     String nameKey();
 
-    /** Translation key of the crew's acknowledgement ("Aye, hoisting the sails!"). */
-    String ackKey();
-
     /** Translation key of the crew's answer when there is nothing to do; gets the order name as argument. */
     String nothingToDoKey();
 

@@ -35,8 +35,8 @@ import org.jetbrains.annotations.Nullable;
  *   <li>use on an assigned crew member: release it;</li>
  *   <li>sneak-use on a crew member: dismiss it (CRW1, {@link Hiring#dismiss}: its hirer or its ship's owner, anyone
  *       on an ownerless ship; it becomes a neutral sailor), while {@code crew.hiring.enabled};</li>
- *   <li>either way the chat shows its crew line: morale, status, and its ship's crew and bunks (HM1,
- *       {@link CrewInfo});</li>
+ *   <li>the action bar shows its morale (HM1, {@link CrewInfo}): with the selection, or as its crew line on release
+ *       (MSG1: no chat);</li>
  *   <li>use anywhere else: opens the radial order menu on the client ({@link WhistleMenu}). Nothing happens on the
  *       server until the client sends the chosen order ({@code WhistleOrderPayload}, handled by
  *       {@link com.richardsenger.piratesnships.station.order.WhistleOrders}), which goes to all crew at stations of
@@ -77,13 +77,13 @@ public class CaptainsWhistleItem extends Item implements StationBlock.Tool {
             if (crew.assignment() != null) {
                 CrewStations.release(level, crew);
                 SELECTED.remove(player.getUUID());
-                player.displayClientMessage(Component.translatable(CrewStations.KEY_RELEASED, crew.getDisplayName()), true);
+                // MSG1: the crew member walks off in sight; the bar shows what it cannot: "Jack: morale 65, off duty"
+                player.displayClientMessage(CrewInfo.shortLine(crew), true);
             } else {
                 SELECTED.put(player.getUUID(), crew.getUUID());
-                player.displayClientMessage(Component.translatable(KEY_SELECTED, crew.getDisplayName()), true);
+                player.displayClientMessage(Component.translatable(KEY_SELECTED, crew.getDisplayName(),
+                        com.richardsenger.piratesnships.crew.morale.CrewMorale.get(crew)), true);
             }
-            // HM1: the crew line in chat, "Jack: morale 65, off duty · crew 3 / bunks 2"
-            player.displayClientMessage(CrewInfo.crewLine(level, crew), false);
         }
         return InteractionResult.sidedSuccess(player.level().isClientSide);
     }
@@ -100,7 +100,9 @@ public class CaptainsWhistleItem extends Item implements StationBlock.Tool {
                 player.displayClientMessage(Component.translatable(KEY_NO_SELECTION), true);
             } else {
                 CrewStations.AssignResult r = CrewStations.assign(level, crew, ctx.getClickedPos());
-                player.displayClientMessage(assignMessage(r, crew), true);
+                if (r != CrewStations.AssignResult.ASSIGNED) {
+                    player.displayClientMessage(assignMessage(r, crew), true); // MSG1: the walk to the station shows success
+                }
                 if (r == CrewStations.AssignResult.ASSIGNED) SELECTED.remove(player.getUUID());
             }
         }

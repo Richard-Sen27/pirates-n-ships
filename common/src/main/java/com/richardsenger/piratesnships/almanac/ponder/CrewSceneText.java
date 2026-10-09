@@ -295,7 +295,8 @@ public final class CrewSceneText {
         ALONG("It hangs along the rail as a boarding net"),
         HELD("A boarder coming over the rail is held a moment"),
         OVER("Then he may climb over: have your blades ready"),
-        PASS("Your own crew pass it freely"),
+        PASS("Your own crew pass it freely: Board! on the whistle sends them over"),
+        BACK("The same entry, now Back aboard, calls them home"),
         CUT("Three cutlass blows cut a boarding net down");
 
         static final String TITLE = "On Deck";

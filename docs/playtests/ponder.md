@@ -250,8 +250,9 @@ anything hidden, cut off, missing or wrong.
    cycle to the other side; a whistle click and the bow hand straightens up and walks to the deck; two chainplates on
    the rail's top and **a boarding net hangs along the rail** between them (an upright mesh with a sagging top rope);
    a pirate climbs from the longboat, **stops at the net** (red outline) while the text shows (in the game the hold is one second), then climbs over onto
-   the deck; a sailor walks from the deck over the rail through the net down into the longboat; three cutlass clicks
-   and the net is gone, a net item drops. BRD3's "back aboard" recall is not in it (BRD3 was not on main).
+   the deck; the whistle's Board! entry (cutlass icon) and a sailor walks from the deck over the rail through the net
+   down into the longboat, unhindered; the same entry again (now Back aboard, BRD3) and he climbs back over onto the
+   deck; three cutlass clicks and the net is gone, a net item drops.
 5. **Cargo and Weight** (cargo crate): after the two empty crates appear aft, a new green line "Placed empty, the
    crates leave her level: her ballast is worked out again for new blocks" points at the starboard crate; the ship stays
    level until the crates fill. The rest is unchanged.

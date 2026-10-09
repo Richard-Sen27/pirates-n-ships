@@ -34,8 +34,8 @@ import net.minecraft.world.phys.Vec3;
  * ({@link CrewMember#setLeaning}); their heads turn by {@link LeanRules#headYaw} and look {@link LeanRules#HEAD_PITCH}
  * up, as the server drives them. The boarding net is strung between the two chainplates the way {@code RatlineNetItem}
  * strings it (both fittings learn the link), so {@code RatlineNetRenderer} draws it as a boarding net along the rail;
- * the hold is shown by stopping the boarder for {@code rigging.boarding_net_hold} (20 ticks). Without BRD3 on main the
- * boarding crew's recall is left out. About 37 seconds.
+ * the hold is shown by stopping the boarder at the net. The hand who passes it is sent and called back by BRD3's
+ * whistle entry (Board!, then Back aboard). About 39 seconds.
  */
 final class OnDeckScene {
 
@@ -79,7 +79,7 @@ final class OnDeckScene {
         scene.world().createEntity(level -> leaner(level, leanPoint(LEAN_CELLS.get(0)), bow));
         scene.world().createEntity(level -> leaner(level, leanPoint(LEAN_CELLS.get(1)), aft));
         // the slow head turn, all scene long for the one who stays; the other's ends with the order
-        SceneKit.everyTick(scene, 720, (s, t, total) -> look(aft.get(), west, t));
+        SceneKit.everyTick(scene, 800, (s, t, total) -> look(aft.get(), west, t));
         SceneKit.everyTick(scene, 150, (s, t, total) -> look(bow.get(), west, t + 70));
         scene.idle(10);
         Vec3 aftHead = leanPoint(LEAN_CELLS.get(1)).add(0, 1.9, 0);
@@ -88,11 +88,11 @@ final class OnDeckScene {
                 .pointAt(aftHead)
                 .placeNearTarget()
                 .attachKeyFrame();
-        scene.idle(65);
+        scene.idle(55);
         say(scene.overlay().showText(60), OnDeck.LOOK)
                 .pointAt(aftHead)
                 .placeNearTarget();
-        scene.idle(65);
+        scene.idle(55);
 
         // any order calls him off
         Vec3 whistle = util.vector().of(6.5, 6.0, 2.5);
@@ -110,7 +110,7 @@ final class OnDeckScene {
                 .pointAt(bowOff.add(0, 1.9, 0))
                 .placeNearTarget()
                 .attachKeyFrame();
-        scene.idle(60);
+        scene.idle(52);
 
         // a boarding net along the rail
         Vec3 a = util.vector().of(X + 0.5, 5.3, 3.5);
@@ -127,12 +127,12 @@ final class OnDeckScene {
                 .pointAt(a)
                 .placeNearTarget()
                 .attachKeyFrame();
-        scene.idle(65);
+        scene.idle(55);
         Vec3 mid = SceneKit.lerp(a, b, 0.5).add(0, 0.4, 0);
         say(scene.overlay().showText(55), OnDeck.ALONG)
                 .pointAt(mid)
                 .placeNearTarget();
-        scene.idle(60);
+        scene.idle(52);
 
         // a pirate comes over the rail: held, then over
         AtomicReference<Pirate> boarder = new AtomicReference<>();
@@ -152,13 +152,13 @@ final class OnDeckScene {
                 .pointAt(AT_NET.add(0, 1.9, 0))
                 .placeNearTarget()
                 .attachKeyFrame();
-        scene.idle(62);
+        scene.idle(55);
         SceneKit.fly(scene, boarder, AT_NET, ABOARD, 0.6, 15);
         scene.idle(15);
         say(scene.overlay().showText(50), OnDeck.OVER)
                 .pointAt(ABOARD.add(0, 1.9, 0))
                 .placeNearTarget();
-        scene.idle(55);
+        scene.idle(50);
 
         // your own hand passes through
         AtomicReference<CrewMember> hand = new AtomicReference<>();
@@ -169,6 +169,8 @@ final class OnDeckScene {
             return c;
         });
         scene.idle(8);
+        // BRD3: the whistle's Board! entry (the cutlass icon) sends him across; the same entry reads Back aboard while he is out
+        boardOrder(scene, util);
         SceneKit.walk(scene, hand, DECK, OVER, 15);
         scene.idle(15);
         SceneKit.walk(scene, hand, OVER, DOWN, 12);
@@ -178,7 +180,16 @@ final class OnDeckScene {
                 .pointAt(DOWN.add(0, 1.9, 0))
                 .placeNearTarget()
                 .attachKeyFrame();
-        scene.idle(60);
+        scene.idle(58);
+        boardOrder(scene, util);
+        SceneKit.walk(scene, hand, DOWN, OVER, 12);
+        scene.idle(12);
+        SceneKit.walk(scene, hand, OVER, DECK, 15);
+        scene.idle(15);
+        say(scene.overlay().showText(50), OnDeck.BACK)
+                .pointAt(DECK.add(0, 1.9, 0))
+                .placeNearTarget();
+        scene.idle(52);
 
         // three cutlass blows
         for (int i = 0; i < 3; i++) {
@@ -191,8 +202,17 @@ final class OnDeckScene {
         say(scene.overlay().showText(55), OnDeck.CUT)
                 .pointAt(mid)
                 .placeNearTarget();
-        scene.idle(60);
+        scene.idle(52);
         scene.markAsFinished();
+    }
+
+    /** The whistle in the air, then its Board! / Back aboard entry (the cutlass icon of {@code WhistleOrder.BOARD}). */
+    private static void boardOrder(SceneBuilder scene, SceneBuildingUtil util) {
+        Vec3 whistle = util.vector().of(6.5, 6.0, 6.5);
+        scene.overlay().showControls(whistle, Pointing.DOWN, 15).rightClick().withItem(SceneKit.item("captains_whistle"));
+        scene.idle(8);
+        scene.overlay().showControls(whistle, Pointing.DOWN, 12).withItem(SceneKit.item("cutlass"));
+        scene.idle(6);
     }
 
     private static CrewMember leaner(Level level, Vec3 at, AtomicReference<CrewMember> ref) {

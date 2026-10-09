@@ -41,6 +41,8 @@ final class CargoAndWeightScene {
     static void program(SceneBuilder scene, SceneBuildingUtil util) {
         scene.title(ShipSceneText.CARGO_AND_WEIGHT, Cargo.TITLE);
         scene.configureBasePlate(0, 0, 9);
+        // the deck stands four blocks above the seabed: a lower view keeps the crates and their clicks on the screen (PND3)
+        scene.setSceneOffsetY(-1.5f);
         scene.showBasePlate();
         scene.idle(10);
 
@@ -71,7 +73,7 @@ final class CargoAndWeightScene {
         }
         scene.idle(15);
         say(scene.overlay().showText(60), Cargo.CRATES)
-                .pointAt(util.vector().topOf(aft[1]))
+                .pointAt(util.vector().topOf(aft[0]))
                 .placeNearTarget()
                 .attachKeyFrame();
         for (int load = 1; load <= CargoMass.MAX_LOAD; load++) {
@@ -90,7 +92,7 @@ final class CargoAndWeightScene {
         scene.idle(20);
         say(scene.overlay().showText(65), Cargo.AFT)
                 .colored(PonderPalette.RED)
-                .pointAt(util.vector().of(4.5, 3.6, 10.0))
+                .pointAt(util.vector().topOf(4, 4, 9))
                 .placeNearTarget()
                 .attachKeyFrame();
         scene.idle(70);

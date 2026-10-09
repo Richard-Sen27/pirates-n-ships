@@ -54,6 +54,9 @@ final class CrowsNestScene {
     static void program(SceneBuilder scene, SceneBuildingUtil util) {
         scene.title(CrewSceneText.CROWS_NEST, Nest.TITLE);
         scene.configureBasePlate(0, 0, 7);
+        // the mast is nine blocks tall: a smaller, lower view keeps the nest and its texts on the screen (PND3)
+        scene.scaleSceneView(0.8f);
+        scene.setSceneOffsetY(-3f);
         scene.showBasePlate();
         scene.idle(10);
 
@@ -68,14 +71,14 @@ final class CrowsNestScene {
                 .attachKeyFrame();
         scene.idle(65);
 
-        // ratlines from the deck to the rim
-        scene.world().showSection(util.select().fromTo(3, 1, 4, 3, 7, 6), Direction.SOUTH);
+        // ratlines from the deck to the rim, on the mast's port side (west), the side the watcher sees
+        scene.world().showSection(util.select().fromTo(0, 1, 3, 2, 7, 3), Direction.WEST);
         scene.idle(10);
-        SceneKit.path(scene, PonderPalette.WHITE, List.of(util.vector().of(3.5, 1.2, 6.9), util.vector().of(3.5, 4.0, 4.6),
-                util.vector().of(3.5, 7.9, 4.6)), 60);
-        SceneKit.arrow(scene, PonderPalette.WHITE, util.vector().of(3.5, 7.9, 4.6), util.vector().of(3.5, 8.4, 3.9), 60);
+        SceneKit.path(scene, PonderPalette.WHITE, List.of(util.vector().of(0.1, 1.2, 3.5), util.vector().of(2.4, 4.0, 3.5),
+                util.vector().of(2.4, 7.9, 3.5)), 60);
+        SceneKit.arrow(scene, PonderPalette.WHITE, util.vector().of(2.4, 7.9, 3.5), util.vector().of(3.1, 8.4, 3.5), 60);
         say(scene.overlay().showText(60), Nest.RATLINES)
-                .pointAt(util.vector().of(3.5, 4.0, 4.6))
+                .pointAt(util.vector().of(2.4, 4.0, 3.5))
                 .placeNearTarget()
                 .attachKeyFrame();
         scene.idle(65);

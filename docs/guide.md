@@ -235,7 +235,10 @@ each other's ends to extend one); its middle block marks the mast column. Put a 
 the pair is one sail. The cloth is drawn between the yards, not built from blocks: furled is a roll under the upper
 yard, half reaches half way down, full reaches the lower yard. Its area is the mean yard length times the distance
 between the yards, so two 5-wide yards 5 apart give 25. Three yards on one mast make two sails. A yard that heads no
-sail tells you so when you click it.
+sail tells you so when you click it. Rig both yards (the one at the head of the sail and the one at its foot) in the
+column in front of the mast, one block forward of it, not in the mast's own column: the rule accepts both, but only
+the first looks like a real rig, with the cloth hanging before the mast (the yard rule; the NPC ships and the Almanac's
+scenes are built that way).
 
 A **triangular (fore-and-aft) sail** is rigged with a rope and three **cleats**. Put one cleat high on the mast's side
 (the head), one on the deck or a bowsprit further forward and at least 2 blocks lower (the tack), and one straight

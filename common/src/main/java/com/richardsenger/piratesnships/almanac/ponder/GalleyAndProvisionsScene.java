@@ -26,7 +26,8 @@ import static com.richardsenger.piratesnships.almanac.ponder.SceneKit.say;
  * "The galley and provisions" (PND2, docs/almanac.md "Scenes"; crew/galley, the provision rules of crew/provisions
  * and the dawn upkeep of crew/upkeep, design.md §7.3, §7.4), on the schematic
  * {@code assets/pirates_n_ships/ponder/galley_and_provisions.nbt} ({@code art/structures/ponder/galley_and_provisions.py}:
- * the pantry at [1, 1, 3] facing east against a bulkhead, an empty water barrel at [1, 1, 5]).
+ * the pantry at [5, 1, 3] facing west against a bulkhead on the east edge, the far side from the default camera
+ * (PND3), an empty water barrel at [5, 1, 5]).
  *
  * <p>The barrel fills through its real fill levels ({@link WaterBarrelRules#fillLevel} for the rations two water
  * buckets give, of the default 16). The meal seats are {@link MealRules#spotsAround} the pantry in the rule's order
@@ -35,8 +36,8 @@ import static com.richardsenger.piratesnships.almanac.ponder.SceneKit.say;
  */
 final class GalleyAndProvisionsScene {
 
-    static final BlockPos PANTRY = new BlockPos(1, 1, 3);
-    static final BlockPos BARREL = new BlockPos(1, 1, 5);
+    static final BlockPos PANTRY = new BlockPos(5, 1, 3);
+    static final BlockPos BARREL = new BlockPos(5, 1, 5);
 
     private GalleyAndProvisionsScene() {
     }
@@ -44,7 +45,7 @@ final class GalleyAndProvisionsScene {
     /** The meal seats the crew takes: the free spots round the pantry, in {@link MealRules#spotsAround}'s order. */
     static List<BlockPos> mealSpots() {
         return MealRules.spotsAround(PANTRY).stream()
-                .filter(p -> p.getX() >= 1 && !p.equals(BARREL))
+                .filter(p -> p.getX() <= 5 && !p.equals(BARREL))
                 .limit(2)
                 .toList();
     }
@@ -65,7 +66,7 @@ final class GalleyAndProvisionsScene {
 
         // the pantry
         Vec3 pantryTop = util.vector().topOf(PANTRY);
-        scene.overlay().showControls(util.vector().blockSurface(PANTRY, Direction.EAST), Pointing.LEFT, 40).rightClick()
+        scene.overlay().showControls(util.vector().blockSurface(PANTRY, Direction.WEST), Pointing.RIGHT, 40).rightClick()
                 .withItem(new ItemStack(Items.BREAD));
         say(scene.overlay().showText(60), Galley.PANTRY)
                 .pointAt(pantryTop)
@@ -89,7 +90,7 @@ final class GalleyAndProvisionsScene {
         scene.idle(45);
 
         // dawn: a day's rations
-        scene.world().createItemEntity(pantryTop.add(0.3, 0.1, 0), util.vector().of(0.05, 0.2, 0), new ItemStack(Items.BREAD));
+        scene.world().createItemEntity(pantryTop.add(-0.3, 0.1, 0), util.vector().of(-0.05, 0.2, 0), new ItemStack(Items.BREAD));
         say(scene.overlay().showText(65), Galley.DAWN)
                 .pointAt(pantryTop)
                 .placeNearTarget()
@@ -98,14 +99,14 @@ final class GalleyAndProvisionsScene {
 
         // a meal: the free hands sit down round the pantry
         List<BlockPos> spots = mealSpots();
-        Vec3 from = util.vector().of(5.5, 1.0, 3.5);
+        Vec3 from = util.vector().of(1.5, 1.0, 3.5);
         List<AtomicReference<CrewMember>> diners = List.of(new AtomicReference<>(), new AtomicReference<>());
         for (int i = 0; i < spots.size(); i++) {
             AtomicReference<CrewMember> ref = diners.get(i);
             Vec3 start = from.add(0, 0, i * 1.5 - 0.75);
             scene.world().createEntity(level -> {
                 CrewMember c = new CrewMember(StationContent.CREW_MEMBER.get(), level);
-                SceneKit.place(c, start, SceneKit.yaw(-1, 0));
+                SceneKit.place(c, start, SceneKit.yaw(1, 0));
                 ref.set(c);
                 return c;
             });
@@ -123,6 +124,7 @@ final class GalleyAndProvisionsScene {
                 }
             });
         }
+        spots.forEach(spot -> SceneKit.focus(scene, Vec3.atBottomCenterOf(spot).add(0, 1.0, 0)));
         say(scene.overlay().showText(70), Galley.MEALS)
                 .pointAt(pantryTop)
                 .placeNearTarget()
@@ -144,13 +146,13 @@ final class GalleyAndProvisionsScene {
                 .attachKeyFrame();
         scene.idle(70);
         diners.forEach(ref -> SceneKit.discard(scene, ref));
-        scene.overlay().showControls(util.vector().blockSurface(PANTRY, Direction.EAST), Pointing.LEFT, 40).rightClick()
+        scene.overlay().showControls(util.vector().blockSurface(PANTRY, Direction.WEST), Pointing.RIGHT, 40).rightClick()
                 .withItem(SceneKit.item("rum"));
         say(scene.overlay().showText(55), Galley.RUM)
                 .pointAt(pantryTop)
                 .placeNearTarget();
         scene.idle(60);
-        scene.overlay().showControls(util.vector().blockSurface(PANTRY, Direction.EAST), Pointing.LEFT, 50).rightClick()
+        scene.overlay().showControls(util.vector().blockSurface(PANTRY, Direction.WEST), Pointing.RIGHT, 50).rightClick()
                 .withItem(SceneKit.item("lime"));
         say(scene.overlay().showText(70), Galley.SCURVY)
                 .colored(PonderPalette.GREEN)

@@ -27,9 +27,9 @@ You can read the wind without instruments. Out on the water, thin white streaks 
 ## Square sails
 illustration: yard
 show_me: sails_and_winch | Show me: rigging a sail and working the winch
-A square sail hangs between two {item:pirates_n_ships:yard}**yards**. A yard is a row of yard blocks laid end to end across the mast; its middle block marks the mast.
+A square sail hangs between two {item:pirates_n_ships:yard}**yards**. A yard is a row of yard blocks laid end to end across the ship; its middle block marks the mast. Both yards, the one at the head of the sail and the one at its foot, go in the column in front of the mast, one block forward of it, never in the mast's own column: so the cloth hangs before the mast, as on any ship at sea.
 
-1. Set the upper yard across the mast.
+1. Set the upper yard across the ship, its middle block just forward of the mast.
 2. Set a second yard of the same direction 2 to 8 blocks straight below it. Between the two middle blocks there may be only air or mast (logs, fences).
 3. The pair is now one sail. The cloth is drawn between them; you place no canvas blocks.
 

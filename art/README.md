@@ -978,6 +978,25 @@ Railings (RAIL1):
   end posts, a one-block gap, the port with the cannon model behind it, a corner of a north and an east edge with its
   end post, and the swivel gun shifted 6 px onto the rail); `renders/railing_item.png`: the item model.
 
+Railing gate (RAIL3):
+- **Part list in `tools/gen_railing_models.py`** (the RAIL1 script, extended; written without Blockbench, which another
+  agent held, so not yet checked there). Five more groups in `models/railing.bbmodel` and parent models in
+  `models/block/`: `railing_gate_left` 8 elements, `railing_gate_right` 8, `railing_gate_left_open` 8,
+  `railing_gate_right_open` 8, `railing_gate_item` 13; a third texture `anvil` with id `iron` (variable `#iron`, kept by
+  the wood family's children, which override only `#planks` and `#log`). Lint clean (no fights, no warnings).
+- **The gate is three parts in one multipart state:** the port's own model (`railing_port`: posts and sill) turned by
+  `facing`, and one leaf model chosen by `open` and `hinge`. **Leaf** (north frame, between the posts x 3..13): the
+  edge's top rail y 14..16 and lower rail y 7..9 (z 0.05..2, end faces against the posts left out), two balusters at x
+  centres 6 and 10 from the sill (y 4) to the top rail, two iron hinge straps x 2..6 (1 px onto the hinge post),
+  y 13.75..16.25 and 6.75..9.25, z -0.25..2.25 round the rails, a latch bar x 11..14.5, y 11..12, z 2..2.6 on the
+  inboard face (its tongue in the latch post) with a handle. `left` = hinged on the west post looking outboard
+  (north); `right` mirrored. **Open:** the same leaf turned 90 degrees outboard about the hinge post's inner outer
+  corner (x 3 or 13, z 0): x 3.05..5 (or 11..12.95), z -10..0, out of the block like a fence gate's leaf (all faces
+  drawn; the balusters' tops stay hidden under the rail). **Item:** posts, sill and the closed left leaf, centred like
+  the railing's item.
+- Not rendered yet; the orchestrator verifies the groups in Blockbench (`Codecs.java_block.compile()` per group against
+  the JSON, as for RAIL1).
+
 Ratline nets (RL2):
 - **Part list in `tools/gen_ratline_net_models.py`** (committed). Three projects, one model each:
   `chainplate.bbmodel` -> `block/chainplate.json` (13 elements), `mast_hoop.bbmodel` -> `block/mast_hoop.json` (14),

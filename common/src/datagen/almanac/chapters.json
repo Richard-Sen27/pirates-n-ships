@@ -3012,7 +3012,8 @@
          "pirates_n_ships.almanac.inventory.p2.list1_21",
          "pirates_n_ships.almanac.inventory.p2.list1_22",
          "pirates_n_ships.almanac.inventory.p2.list1_23",
-         "pirates_n_ships.almanac.inventory.p2.list1_24"
+         "pirates_n_ships.almanac.inventory.p2.list1_24",
+         "pirates_n_ships.almanac.inventory.p2.list1_25"
         ]
        }
       ]
@@ -3917,7 +3918,7 @@
   "pirates_n_ships.almanac.combat.p10.heading": "Boarding",
   "pirates_n_ships.almanac.combat.p10.show_me1": "Show me: boarding an enemy",
   "pirates_n_ships.almanac.combat.p10.text1": "Once your rope is made fast to a cleat or ring, look at it and use it: you hang from it and slide down to its lower end, riding along as both ships move. Sneak to let go. From your masthead down onto an enemy deck is the classic way across.",
-  "pirates_n_ships.almanac.combat.p10.text2": "Or lay a {item:pirates_n_ships:boarding_plank}**boarding plank** (three wooden slabs over two iron nuggets). With the ships alongside, use it on the top of your gunwale facing the other ship. Up to six blocks of plank run out and come down on her deck; if her deck stands higher or lower, the plank climbs or falls on stepped ramps, two blocks at most. Keep the ships together: if her end slips more than a block and a half aside, the plank breaks and drops back to you. Sneak and use it with an empty hand to take it up again, from either end.",
+  "pirates_n_ships.almanac.combat.p10.text2": "Or lay a {item:pirates_n_ships:boarding_plank}**boarding plank** (three wooden slabs over two iron nuggets). With the ships alongside, use it on the top of your gunwale facing the other ship. Up to six blocks of plank run out and come down on her deck; if her deck stands higher or lower, the plank climbs or falls on stepped ramps, two blocks at most. Keep the ships together: if her end slips more than a block and a half aside, the plank breaks and drops back to you. Sneak and use it with an empty hand to take it up again, from either end. An open railing gate is a gangway opening like a railing port (use the plank on its sill, facing out), and a grappling hook in an enemy's railing holds like one on a cleat until a hard haul tears the rail out.",
   "pirates_n_ships.almanac.combat.p10.text3": "Hold the plank and look at your rail: the run it would lay shows in green before you commit, and a red cell shows what stands in the way.",
   "pirates_n_ships.almanac.combat.p11.heading": "Taking a prize",
   "pirates_n_ships.almanac.combat.p11.text1": "Ships sail the sea lanes between the ports even when no one is watching, and when you come within sight of one she is there: a merchantman with goods in her hold and a few armed sailors, a navy patrol, or a pirate under the Jolly Roger. Navy and pirate sloops carry four guns, loaded, and a shot locker by the mast.",
@@ -4010,6 +4011,7 @@
   "pirates_n_ships.almanac.inventory.p2.list1_22": "{item:pirates_n_ships:hammock}**Hammock:** a bunk for one hand. [[pirates_n_ships:crew|Crew]]",
   "pirates_n_ships.almanac.inventory.p2.list1_23": "{item:pirates_n_ships:boarding_plank}**Boarding plank:** a bridge to an enemy deck.",
   "pirates_n_ships.almanac.inventory.p2.list1_24": "{item:pirates_n_ships:oak_railing}{item:pirates_n_ships:oak_railing_port}**Railing, railing port:** a rail along the edge of a block, with posts where the run ends or turns; click again to rail another edge. The port is the opening: a cannon fires through it, a boarding plank goes out over its sill, and a swivel gun or ratlines sit on a railing.",
+  "pirates_n_ships.almanac.inventory.p2.list1_25": "{item:pirates_n_ships:oak_railing_gate}**Railing gate:** a railing section that swings open like a fence gate (use it, or redstone), so crew and boarding planks pass when it is open; a lantern hangs below or stands on any railing post, and a chain runs on from it.",
   "pirates_n_ships.almanac.inventory.p3.heading": "Stores and cargo",
   "pirates_n_ships.almanac.inventory.p3.list1_1": "{item:pirates_n_ships:pantry}**Pantry:** the food store. [[pirates_n_ships:provisions|Provisions]]",
   "pirates_n_ships.almanac.inventory.p3.list1_2": "{item:pirates_n_ships:water_barrel}**Water barrel:** 16 rations of fresh water.",

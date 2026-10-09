@@ -449,6 +449,41 @@ the rail), `art/renders/railing_item.png`.
   and ports place nothing and the action bar says "Railings are disabled on this server".
 - Say whether the rails should be thicker, the posts taller, or the balusters closer.
 
+### Railing gate, hanging things, the hook on a rail (RAIL3)
+
+`/give @s pirates_n_ships:oak_railing_gate 4` (or craft: stick, iron nugget, stick over three oak planks gives 1),
+`/give @s lantern 4`, `/give @s chain 8`. No render yet (models from `tools/gen_railing_models.py`, not yet looked at
+in Blockbench).
+- **Gate in a run:** lay three railings along a deck edge with a one-block gap, and place the gate in the gap
+  (click the deck near the edge, in the half where the hinge should go). The railings either side lose their post
+  against the gate: no double posts. Closed it looks like a railing section; two dark iron straps sit on the hinge
+  post's end, a latch with a handle on the inboard side at the other end. Click the right half of the edge for the
+  other hinge: the straps change sides.
+- **Swing:** use the gate: it swings 90 degrees outboard (over the side) with the fence gate's creak, use again: it
+  shuts with the fence gate's clap. Put a lever or redstone block next to it: it opens, take the signal away: it shuts.
+  Say whether the leaf should swing inboard instead.
+- **Collision:** closed, you cannot walk or jump through (1.5 blocks like the railing); open, you walk through over
+  the low sill as through a port, on land and aboard a ship.
+- **Crew:** with the gate open, order a crew member to a spot on the far side: they walk through the gate. Close it
+  and order again: they go around (or stay).
+- **Plank:** with a ship alongside, open the gate, hold a boarding plank, face out and click the gate's sill: the
+  gangway starts in the block beyond the gate at deck height (the gate does not swing shut from the click). Close the
+  gate and try again: the plank goes from the gate's top like from a railing (a block higher) or is refused.
+- **Lantern under a post:** build a railing on the edge of an overhang (a balcony or a stern gallery with air below
+  the railing block) and look up at its end post's block from below with a lantern: it hangs below the block. A lantern
+  also stands on top of a post block, and a soul lantern hangs the same way. Under or on a plain stretch of rail (the
+  middle of a run, no post) the lantern does not go. The lantern hangs at the middle of the block, not right under the
+  post: say whether that looks wrong.
+- **Chain over a post:** place a chain on top of a post block and another under it, hang a lantern from the lower
+  chain: everything holds; break the railing: a lantern hanging straight from it drops.
+- **Hook on the rail:** from your ship throw or fire the grappling hook at the railing of another ship: it bites the
+  rail (the latch sound), and the ships haul together as with a hook on the hull. Walk away from it: the rope holds
+  twice as far as on a plain block (as on a cleat).
+- **Tearing it out:** set `grapple.railing_break_force = 50` and hook another ship's railing from your ship: the haul
+  tears that railing out at once (it breaks and drops), the hook comes back to you. With the default (180) a ship's haul
+  never tears it; hook a railing from the shore, sneak and walk away hard (a hand haul up to 200): the railing should
+  tear out. Say whether 180 feels right. `grapple.latches_hold = false`: the hook on a railing holds like on any block.
+
 ## Ratline nets (RL2)
 
 `/give @s pirates_n_ships:chainplate 8`, `/give @s pirates_n_ships:mast_hoop 8`, `/give @s pirates_n_ships:ratline_net 8`

@@ -484,7 +484,17 @@ elevation; use a boarding plank on the sill while facing out and the gangway sta
 deck height, so the port is also where boarders go across. A **swivel gun** placed on a railing sits on the rail
 itself, at the edge (with a corner railing, on the edge nearest your click), and its crew stands on the deck inside;
 **ratlines** stand on a railing's top or hang on its side. Railings weigh like fences on a ship and hold water. Server
-config `ship_decor.railings_enabled` (off: railings and ports cannot be placed; placed ones stay).
+config `ship_decor.railings_enabled` (off: railings, ports and gates cannot be placed; placed ones stay).
+
+A **Railing Gate** (a stick, an iron nugget and a stick over three planks) is a port with a swinging leaf: closed it is
+a railing section with two iron hinge straps on one post and a latch on the other (the post on the half you click is the
+hinge), open it swings outboard like a fence gate. Use it, or give it a redstone signal, to open and close it. A run of
+railing continues into it without a second post. Closed it blocks like a railing and crew go around it; open, crew walk
+through, and a boarding plank used on its sill while facing out lays the gangway from beyond it, as from a port (a
+plank in hand does not swing the gate). **Railing posts carry things:** wherever a railing (or a port's or gate's) post
+stands, a lantern or soul lantern hangs below the block or stands on it, and a chain runs on from it; a plain stretch
+of rail carries nothing. The **grappling hook** holds on a railing or gate like on a cleat (twice the rope's length),
+but a hard haul tears the railing out and the rope lets go (`grapple.railing_break_force`).
 
 **Ratline nets (RL2).** For a longer or steeper climb, string a net between two iron fittings. A **chainplate** (two
 from an iron ingot under a ring of three iron nuggets) goes on top of the rail or on its side (any solid face, or a
@@ -1628,7 +1638,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `firearms` | Firearms on/off, `fire_on_attack`, ball lifetime and gravity, cooldown, gunpowder use; `aim` (hold and steady times, aimed spread, sneak lowers the gun), `pistol` and `musket` (damage, muzzle velocity, spread, reload, recoil, sound). |
 | `combat` | Cannon block damage, rain misfires; `damage_multipliers` (cannon on blocks and entities, firearms). |
 | `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevations, blocks per hit, recoil and impact, ball lifetime and water, `mobGriefing` and spawn protection, drops, glancing hits; `swivel`, `chain_shot`, `grapeshot`, `crew` (loading by the crew, load preference), `npc` (fire at will). |
-| `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore haul, entity damage, lost hooks, latching on world blocks and on your own ship, cleats and rings, climbing; `launch` (from the musket), `slide` (sliding along a rope). |
+| `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore haul, entity damage, lost hooks, latching on world blocks and on your own ship, cleats and rings, railings holding the hook and tearing out (`latches_hold`, `railing_break_force`), climbing; `launch` (from the musket), `slide` (sliding along a rope). |
 | `boarding` | `plank`: the boarding plank on/off, length, break distance. |
 | `apparel` | Armour of the hats, coats, breeches and boots. |
 | `chart` | Charts on/off, cell size, sampling radius and interval, shallow depth, the cell cap, opening without the item (`open_without_item`, off by default), other players visible, marker cap; `tiles` (map tiles). |

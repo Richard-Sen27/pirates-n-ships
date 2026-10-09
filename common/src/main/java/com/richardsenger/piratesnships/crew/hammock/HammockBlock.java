@@ -1,5 +1,8 @@
 package com.richardsenger.piratesnships.crew.hammock;
 
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -45,7 +48,7 @@ import org.jetbrains.annotations.Nullable;
  * half, and the loader extension methods below say so ({@link #isBed}, {@link #setBedOccupied},
  * {@link #getRespawnPosition}).
  */
-public class HammockBlock extends HorizontalDirectionalBlock implements Bunk {
+public class HammockBlock extends HorizontalDirectionalBlock implements Bunk, SimpleWaterloggedBlock {
 
     public static final MapCodec<HammockBlock> CODEC = simpleCodec(HammockBlock::new);
     public static final EnumProperty<BedPart> PART = BlockStateProperties.BED_PART;
@@ -64,7 +67,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements Bunk {
 
     public HammockBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(PART, BedPart.FOOT));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(PART, BedPart.FOOT).setValue(Waterlogging.WATERLOGGED, false));
     }
 
     @Override
@@ -74,7 +77,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements Bunk {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, PART);
+        builder.add(FACING, PART, Waterlogging.WATERLOGGED);
     }
 
     // ------------------------------------------------------------------ supports
@@ -105,14 +108,15 @@ public class HammockBlock extends HorizontalDirectionalBlock implements Bunk {
                 || !canHang(level, foot, facing)) {
             return null;
         }
-        return defaultBlockState().setValue(FACING, facing).setValue(PART, BedPart.FOOT);
+        return Waterlogging.placed(defaultBlockState().setValue(FACING, facing).setValue(PART, BedPart.FOOT), ctx);
     }
 
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
         if (!level.isClientSide) {
-            level.setBlock(HammockRules.head(pos, state.getValue(FACING)), state.setValue(PART, BedPart.HEAD), Block.UPDATE_ALL);
+            BlockPos head = HammockRules.head(pos, state.getValue(FACING));
+            level.setBlock(head, Waterlogging.at(state.setValue(PART, BedPart.HEAD), level, head), Block.UPDATE_ALL);
             level.blockUpdated(pos, Blocks.AIR);
             state.updateNeighbourShapes(level, pos, Block.UPDATE_ALL);
         }
@@ -120,6 +124,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements Bunk {
 
     @Override
     protected BlockState updateShape(BlockState state, Direction dir, BlockState neighbor, LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
+        Waterlogging.tickFluid(state, level, pos);
         BedPart part = state.getValue(PART);
         Direction facing = state.getValue(FACING);
         if (dir == HammockRules.towardOther(part, facing)) {
@@ -139,7 +144,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements Bunk {
             BlockPos other = HammockRules.otherHalf(pos, state.getValue(PART), state.getValue(FACING));
             BlockState os = level.getBlockState(other);
             if (os.is(this) && os.getValue(PART) != state.getValue(PART)) {
-                level.setBlock(other, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL | Block.UPDATE_SUPPRESS_DROPS);
+                level.setBlock(other, Waterlogging.leftBehind(os), Block.UPDATE_ALL | Block.UPDATE_SUPPRESS_DROPS);
                 level.levelEvent(player, 2001, other, Block.getId(os));
             }
         }
@@ -221,5 +226,10 @@ public class HammockBlock extends HorizontalDirectionalBlock implements Bunk {
     @Override
     protected boolean isPathfindable(BlockState state, PathComputationType type) {
         return false;
+    }
+
+    @Override
+    protected FluidState getFluidState(BlockState state) {
+        return Waterlogging.fluid(state, super.getFluidState(state));
     }
 }

@@ -43,6 +43,9 @@ guide as an in-game book with item links, recipes and search. Hold G over one of
 1. **Build a hull** from any blocks, floating in water. Planks, slabs, stairs and glass are watertight. Leave a
    one-block gap to the shore or a dock: anything that touches the hull becomes part of the ship.
    Make the bottom layer from something heavy such as stone, or the boat will tip (see [Limits](#limits-to-know)).
+   The blocks of this mod that are not full cubes (cleats, cannons, yards, lanterns, pumps and the like; all but the
+   brig door) can be waterlogged like a vanilla slab: place one in water or fill it with a bucket. Its own water is
+   never flood water.
 2. **Place a helm** on deck. Stand behind it and look where the ship should go: the bow is the direction the
    helmsman looks.
 3. **Rig a square sail**: a mast of logs or fences with two rows of **yards** across it, one 2 to 8 blocks above the other, and a **sail winch** somewhere on deck. A **capstan** gives you an anchor.

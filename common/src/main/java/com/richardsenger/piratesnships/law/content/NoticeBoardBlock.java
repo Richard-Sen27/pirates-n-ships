@@ -1,5 +1,9 @@
 package com.richardsenger.piratesnships.law.content;
 
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.mojang.serialization.MapCodec;
 import com.richardsenger.piratesnships.law.LawConfig;
 import com.richardsenger.piratesnships.law.net.NoticeBoardBackend;
@@ -26,7 +30,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * with the notices (towards the player who placed it; north in the unrotated model). The model is hand-made
  * ({@code art/models/notice_board.bbmodel}).
  */
-public class NoticeBoardBlock extends HorizontalDirectionalBlock {
+public class NoticeBoardBlock extends HorizontalDirectionalBlock implements SimpleWaterloggedBlock {
 
     public static final MapCodec<NoticeBoardBlock> CODEC = simpleCodec(NoticeBoardBlock::new);
 
@@ -36,7 +40,7 @@ public class NoticeBoardBlock extends HorizontalDirectionalBlock {
 
     public NoticeBoardBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(Waterlogging.WATERLOGGED, false));
     }
 
     @Override
@@ -46,12 +50,12 @@ public class NoticeBoardBlock extends HorizontalDirectionalBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, Waterlogging.WATERLOGGED);
     }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        return Waterlogging.placed(defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite()), context);
     }
 
     @Override
@@ -66,5 +70,17 @@ public class NoticeBoardBlock extends HorizontalDirectionalBlock {
         if (!(player instanceof ServerPlayer sp)) return InteractionResult.PASS;
         NoticeBoardBackend.open(sp, pos);
         return InteractionResult.CONSUME;
+    }
+
+    @Override
+    protected BlockState updateShape(BlockState state, Direction direction, BlockState neighbor, LevelAccessor level,
+                                     BlockPos pos, BlockPos neighborPos) {
+        Waterlogging.tickFluid(state, level, pos);
+        return super.updateShape(state, direction, neighbor, level, pos, neighborPos);
+    }
+
+    @Override
+    protected FluidState getFluidState(BlockState state) {
+        return Waterlogging.fluid(state, super.getFluidState(state));
     }
 }

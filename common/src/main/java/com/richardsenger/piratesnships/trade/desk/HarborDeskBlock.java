@@ -1,5 +1,9 @@
 package com.richardsenger.piratesnships.trade.desk;
 
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.mojang.serialization.MapCodec;
 import com.richardsenger.piratesnships.trade.TradeConfig;
 import net.minecraft.core.BlockPos;
@@ -46,7 +50,7 @@ import org.jetbrains.annotations.Nullable;
  * unrotated model, with the bell); the open ledger, the quill in its inkwell and the coin stacks face the harbor
  * master on the opposite side.
  */
-public class HarborDeskBlock extends BaseEntityBlock {
+public class HarborDeskBlock extends BaseEntityBlock implements SimpleWaterloggedBlock {
 
     public static final MapCodec<HarborDeskBlock> CODEC = simpleCodec(HarborDeskBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
@@ -59,7 +63,7 @@ public class HarborDeskBlock extends BaseEntityBlock {
 
     public HarborDeskBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(Waterlogging.WATERLOGGED, false));
     }
 
     @Override
@@ -69,12 +73,12 @@ public class HarborDeskBlock extends BaseEntityBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, Waterlogging.WATERLOGGED);
     }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        return Waterlogging.placed(defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite()), context);
     }
 
     @Override
@@ -142,5 +146,17 @@ public class HarborDeskBlock extends BaseEntityBlock {
         HarborDeskService.Use use = HarborDeskService.use(sp, pos);
         if (use.message() != null) sp.displayClientMessage(net.minecraft.network.chat.Component.translatable(use.message()), true);
         return use == HarborDeskService.Use.DISABLED ? InteractionResult.PASS : InteractionResult.CONSUME;
+    }
+
+    @Override
+    protected BlockState updateShape(BlockState state, Direction direction, BlockState neighbor, LevelAccessor level,
+                                     BlockPos pos, BlockPos neighborPos) {
+        Waterlogging.tickFluid(state, level, pos);
+        return super.updateShape(state, direction, neighbor, level, pos, neighborPos);
+    }
+
+    @Override
+    protected FluidState getFluidState(BlockState state) {
+        return Waterlogging.fluid(state, super.getFluidState(state));
     }
 }

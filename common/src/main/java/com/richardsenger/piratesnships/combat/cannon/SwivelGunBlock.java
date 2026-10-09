@@ -1,5 +1,9 @@
 package com.richardsenger.piratesnships.combat.cannon;
 
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.richardsenger.piratesnships.station.StationBlock;
 import com.richardsenger.piratesnships.station.StationKind;
 import com.richardsenger.piratesnships.station.Stations;
@@ -47,7 +51,7 @@ import org.jetbrains.annotations.Nullable;
  * </ul>
  * A gun whose mount goes is dropped. It is also a crew station ({@link SwivelStation}): the whistle's "Fire!" fires it.
  */
-public class SwivelGunBlock extends Block implements EntityBlock, StationBlock {
+public class SwivelGunBlock extends Block implements EntityBlock, StationBlock, SimpleWaterloggedBlock {
 
     public static final EnumProperty<CannonLoad> LOAD = CannonBlock.LOAD;
     public static final EnumProperty<SwivelPiece> PIECE = EnumProperty.create("piece", SwivelPiece.class);
@@ -57,12 +61,12 @@ public class SwivelGunBlock extends Block implements EntityBlock, StationBlock {
 
     public SwivelGunBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(LOAD, CannonLoad.EMPTY).setValue(PIECE, SwivelPiece.YOKE));
+        registerDefaultState(stateDefinition.any().setValue(LOAD, CannonLoad.EMPTY).setValue(PIECE, SwivelPiece.YOKE).setValue(Waterlogging.WATERLOGGED, false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(LOAD, PIECE);
+        builder.add(LOAD, PIECE, Waterlogging.WATERLOGGED);
     }
 
     /** Whether the block below {@code pos} carries a swivel gun: a mount (fence, wall, bars) or a full top face. */
@@ -81,6 +85,7 @@ public class SwivelGunBlock extends Block implements EntityBlock, StationBlock {
     @Override
     protected BlockState updateShape(BlockState state, Direction direction, BlockState neighbor, LevelAccessor level,
                                      BlockPos pos, BlockPos neighborPos) {
+        Waterlogging.tickFluid(state, level, pos);
         if (direction == Direction.DOWN && !state.canSurvive(level, pos)) {
             return Blocks.AIR.defaultBlockState();
         }
@@ -170,5 +175,15 @@ public class SwivelGunBlock extends Block implements EntityBlock, StationBlock {
             Stations.onStationRemoved(serverLevel, pos);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
+    }
+
+    @Override
+    protected FluidState getFluidState(BlockState state) {
+        return Waterlogging.fluid(state, super.getFluidState(state));
+    }
+
+    @Override
+    public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
+        return Waterlogging.placed(super.getStateForPlacement(context), context);
     }
 }

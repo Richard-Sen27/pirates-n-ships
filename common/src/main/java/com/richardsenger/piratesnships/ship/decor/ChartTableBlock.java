@@ -1,5 +1,9 @@
 package com.richardsenger.piratesnships.ship.decor;
 
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -20,7 +24,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * side (towards the player who placed it). Decor only, no container. Hand-made model {@code block/chart_table}
  * ({@code art/models/chart_table.bbmodel}).
  */
-public class ChartTableBlock extends HorizontalDirectionalBlock {
+public class ChartTableBlock extends HorizontalDirectionalBlock implements SimpleWaterloggedBlock {
 
     public static final MapCodec<ChartTableBlock> CODEC = simpleCodec(ChartTableBlock::new);
 
@@ -31,7 +35,7 @@ public class ChartTableBlock extends HorizontalDirectionalBlock {
 
     public ChartTableBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(Waterlogging.WATERLOGGED, false));
     }
 
     @Override
@@ -41,12 +45,12 @@ public class ChartTableBlock extends HorizontalDirectionalBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, Waterlogging.WATERLOGGED);
     }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        return Waterlogging.placed(defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite()), context);
     }
 
     @Override
@@ -57,5 +61,17 @@ public class ChartTableBlock extends HorizontalDirectionalBlock {
     @Override
     protected boolean isPathfindable(BlockState state, PathComputationType type) {
         return false;
+    }
+
+    @Override
+    protected BlockState updateShape(BlockState state, Direction direction, BlockState neighbor, LevelAccessor level,
+                                     BlockPos pos, BlockPos neighborPos) {
+        Waterlogging.tickFluid(state, level, pos);
+        return super.updateShape(state, direction, neighbor, level, pos, neighborPos);
+    }
+
+    @Override
+    protected FluidState getFluidState(BlockState state) {
+        return Waterlogging.fluid(state, super.getFluidState(state));
     }
 }

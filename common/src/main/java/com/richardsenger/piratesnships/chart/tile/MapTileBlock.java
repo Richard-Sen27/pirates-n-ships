@@ -1,5 +1,9 @@
 package com.richardsenger.piratesnships.chart.tile;
 
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.mojang.serialization.MapCodec;
 import com.richardsenger.piratesnships.chart.ChartContent;
 import net.minecraft.core.BlockPos;
@@ -38,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
  * (vanilla skips the block when sneaking with an item, so {@link com.richardsenger.piratesnships.chart.ChartItem}
  * forwards it).
  */
-public class MapTileBlock extends FaceAttachedHorizontalDirectionalBlock implements EntityBlock {
+public class MapTileBlock extends FaceAttachedHorizontalDirectionalBlock implements EntityBlock, SimpleWaterloggedBlock {
 
     public static final MapCodec<MapTileBlock> CODEC = simpleCodec(MapTileBlock::new);
 
@@ -50,7 +54,7 @@ public class MapTileBlock extends FaceAttachedHorizontalDirectionalBlock impleme
 
     public MapTileBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(FACE, AttachFace.FLOOR));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(FACE, AttachFace.FLOOR).setValue(Waterlogging.WATERLOGGED, false));
     }
 
     @Override
@@ -60,7 +64,7 @@ public class MapTileBlock extends FaceAttachedHorizontalDirectionalBlock impleme
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, FACE);
+        builder.add(FACING, FACE, Waterlogging.WATERLOGGED);
     }
 
     @Override
@@ -90,7 +94,7 @@ public class MapTileBlock extends FaceAttachedHorizontalDirectionalBlock impleme
             BlockState state = direction == Direction.DOWN
                     ? defaultBlockState().setValue(FACE, AttachFace.FLOOR).setValue(FACING, context.getHorizontalDirection())
                     : defaultBlockState().setValue(FACE, AttachFace.WALL).setValue(FACING, direction.getOpposite());
-            if (state.canSurvive(context.getLevel(), context.getClickedPos())) return state;
+            if (state.canSurvive(context.getLevel(), context.getClickedPos())) return Waterlogging.placed(state, context);
         }
         return null;
     }
@@ -121,5 +125,17 @@ public class MapTileBlock extends FaceAttachedHorizontalDirectionalBlock impleme
             return InteractionResult.CONSUME;
         }
         return InteractionResult.PASS;
+    }
+
+    @Override
+    protected BlockState updateShape(BlockState state, Direction direction, BlockState neighbor, LevelAccessor level,
+                                     BlockPos pos, BlockPos neighborPos) {
+        Waterlogging.tickFluid(state, level, pos);
+        return super.updateShape(state, direction, neighbor, level, pos, neighborPos);
+    }
+
+    @Override
+    protected FluidState getFluidState(BlockState state) {
+        return Waterlogging.fluid(state, super.getFluidState(state));
     }
 }

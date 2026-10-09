@@ -14,6 +14,16 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.entity.LivingEntity;
+import com.richardsenger.piratesnships.core.block.Waterlogging;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -39,7 +49,7 @@ import java.util.Map;
  * position, which Sable keeps track of as the ship moves. On land the cot stays pure vanilla.
  * No block entity: vanilla's {@code BedBlockEntity} is valid only for vanilla beds and only carries the colour.
  */
-public class SeaCotBlock extends BedBlock implements Bunk {
+public class SeaCotBlock extends BedBlock implements Bunk, SimpleWaterloggedBlock {
 
     public static final MapCodec<SeaCotBlock> CODEC = simpleCodec(SeaCotBlock::new);
     public static final String KEY_ON_SHIP = "message.pirates_n_ships.sea_cot.on_ship";
@@ -53,12 +63,64 @@ public class SeaCotBlock extends BedBlock implements Bunk {
 
     public SeaCotBlock(Properties properties) {
         super(DyeColor.RED, properties);
+        // BedBlock's own default comes from stateDefinition.any(), which is waterlogged
+        registerDefaultState(defaultBlockState().setValue(Waterlogging.WATERLOGGED, false));
     }
 
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     public MapCodec<BedBlock> codec() {
         return (MapCodec) CODEC;
+    }
+
+    // ------------------------------------------------------------------ waterlogging (WLOG1)
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(Waterlogging.WATERLOGGED);
+    }
+
+    @Override
+    public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
+        return Waterlogging.placed(super.getStateForPlacement(context), context);
+    }
+
+    /** Vanilla's bed placement, except that the head is waterlogged by the water at its own cell, not the foot's. */
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        if (!level.isClientSide) {
+            BlockPos head = pos.relative(state.getValue(FACING));
+            level.setBlock(head, Waterlogging.at(state.setValue(PART, BedPart.HEAD), level, head), Block.UPDATE_ALL);
+            level.blockUpdated(pos, Blocks.AIR);
+            state.updateNeighbourShapes(level, pos, Block.UPDATE_ALL);
+        }
+    }
+
+    /** Vanilla's creative break takes the head along with air; this leaves its water instead. */
+    @Override
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide && player.isCreative() && state.getValue(PART) == BedPart.FOOT) {
+            BlockPos head = pos.relative(state.getValue(FACING));
+            BlockState hs = level.getBlockState(head);
+            if (hs.is(this) && hs.getValue(PART) == BedPart.HEAD && Waterlogging.isWaterlogged(hs)) {
+                level.setBlock(head, Waterlogging.leftBehind(hs), Block.UPDATE_ALL | Block.UPDATE_SUPPRESS_DROPS);
+                level.levelEvent(player, 2001, head, Block.getId(hs));
+            }
+        }
+        return super.playerWillDestroy(level, pos, state, player);
+    }
+
+    @Override
+    protected BlockState updateShape(BlockState state, Direction direction, BlockState neighbor, LevelAccessor level,
+                                     BlockPos pos, BlockPos neighborPos) {
+        Waterlogging.tickFluid(state, level, pos);
+        return super.updateShape(state, direction, neighbor, level, pos, neighborPos);
+    }
+
+    @Override
+    protected FluidState getFluidState(BlockState state) {
+        return Waterlogging.fluid(state, super.getFluidState(state));
     }
 
     @Override

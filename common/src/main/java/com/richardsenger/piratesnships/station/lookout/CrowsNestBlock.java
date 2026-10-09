@@ -1,5 +1,10 @@
 package com.richardsenger.piratesnships.station.lookout;
 
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.mojang.serialization.MapCodec;
 import com.richardsenger.piratesnships.station.StationBlock;
 import com.richardsenger.piratesnships.station.StationKind;
@@ -41,7 +46,7 @@ import org.jetbrains.annotations.Nullable;
  *       ({@link #seatSpot}); {@link Lookouts} scans for it and for players standing in the nest.</li>
  * </ul>
  */
-public class CrowsNestBlock extends Block implements StationBlock {
+public class CrowsNestBlock extends Block implements StationBlock, SimpleWaterloggedBlock {
 
     public static final MapCodec<CrowsNestBlock> CODEC = simpleCodec(CrowsNestBlock::new);
 
@@ -55,6 +60,12 @@ public class CrowsNestBlock extends Block implements StationBlock {
 
     public CrowsNestBlock(Properties properties) {
         super(properties);
+        registerDefaultState(stateDefinition.any().setValue(Waterlogging.WATERLOGGED, false));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(Waterlogging.WATERLOGGED);
     }
 
     @Override
@@ -86,6 +97,7 @@ public class CrowsNestBlock extends Block implements StationBlock {
     @Override
     protected BlockState updateShape(BlockState state, Direction direction, BlockState neighbor, LevelAccessor level,
                                      BlockPos pos, BlockPos neighborPos) {
+        Waterlogging.tickFluid(state, level, pos);
         if (direction == Direction.DOWN && !state.canSurvive(level, pos)) {
             return Blocks.AIR.defaultBlockState();
         }
@@ -124,5 +136,15 @@ public class CrowsNestBlock extends Block implements StationBlock {
             Stations.onStationRemoved(serverLevel, pos); // frees the lookout station and removes its seat
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
+    }
+
+    @Override
+    protected FluidState getFluidState(BlockState state) {
+        return Waterlogging.fluid(state, super.getFluidState(state));
+    }
+
+    @Override
+    public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
+        return Waterlogging.placed(super.getStateForPlacement(context), context);
     }
 }

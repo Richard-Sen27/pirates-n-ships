@@ -2,6 +2,7 @@ package com.richardsenger.piratesnships.crew.npc.client;
 
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.mob.client.HumanoidGeoModel;
+import com.richardsenger.piratesnships.mob.client.MeleeTelegraph;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import software.bernie.geckolib.animation.AnimationState;
@@ -15,6 +16,10 @@ import software.bernie.geckolib.cache.object.GeoBone;
  * Lying in a hammock (ART1d, the {@code sleep} animation) the head does not follow the look: animations may not key
  * the head's x/y rotation (rig contract), so this model holds it here, tilted chin to chest by {@link #SLEEP_HEAD_RAISE}
  * so it rests on the canvas rising towards the hammock's end instead of hanging into it.
+ * <p>
+ * MEL3: fighting (BRD3) it shows the M3 mobs' procedural sword telegraph from its synced melee pose, and a punch for
+ * vanilla's arm swing when it fights bare-handed ({@link MeleeTelegraph}); the body plays idle, walk or sit meanwhile
+ * ({@link com.richardsenger.piratesnships.crew.npc.CrewPose#choose}).
  */
 public class CrewMemberModel extends HumanoidGeoModel<CrewMember> {
 
@@ -39,6 +44,8 @@ public class CrewMemberModel extends HumanoidGeoModel<CrewMember> {
                 head.setRotX(-SLEEP_HEAD_RAISE * Mth.DEG_TO_RAD);
                 head.setRotY(0);
             }
+            return;
         }
+        MeleeTelegraph.apply(getAnimationProcessor(), animatable, animationState.getPartialTick(), true);
     }
 }

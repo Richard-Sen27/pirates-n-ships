@@ -1912,6 +1912,24 @@ the scene: outboard on the right, 12–13 px below the feet in the drive, moving
 (`sailing/oars/OarBenchStation`) while its row order works, the rail rower's seat (`sailing/oars/OarSeat`, a
 `crew/npc/PosedSeat`) while it rows; both face aft (the stern of the ship's bow).
 
+### Melee poses for the crew (MEL3)
+
+The rig has no melee clips: `crew_member.animation.json` holds no `attack`, `guard`, `parry` or `stagger`. The M3
+mobs and, since MEL3, the crew show their sword fights through the same procedural poses instead:
+`mob/client/DuelistArmPose` (angles per melee phase, in the animation-file convention) written by
+`mob/client/MeleeTelegraph` after GeckoLib ran the controllers, so they win over the body clip (the melee pose beats the
+station pose, which beats idle; `CrewPose.choose(..., fighting)` drops the crew's body to idle, walk or sit meanwhile).
+They pose the main arm, the waist and, for the thrust, the main hand (the wrist levels the blade: -35° drawn back,
++50° on the lunge), with x and y negated for GeckoLib and y and z mirrored for a left-handed duelist. A bare-handed
+vanilla swing (`swing(hand)`, BRD3's unarmed crew) gets `DuelistArmPose.punch` from `getAttackAnim` (the crew and the
+mobs run vanilla's swing timer for it; the navy soldier's shove keeps its own clip). The synced pose comes from
+`mob/MeleePoseSync`, shared by `SeafarerMob` and `CrewMember`. `CrewMeleePoseTest` composes the real transforms down to
+the cutlass's grip and tip: at rest the blade points forward; the slash wind-up holds it over the head, the strike
+brings it down, forward and across to the off side; the thrust draws back and lunges with the blade level ahead; the
+guard holds it up and across the chest, the parry higher; the stagger flings the arm out and back; the punch reaches
+forward at shoulder height; left-handed mirrors. Blockbench clips can replace the poses later (the telegraph would then
+choose the clip per phase), but none was needed for MEL3.
+
 ### Mob looks (M3-art)
 
 The pirate, sailor, navy soldier and officer are Blockbench models on the crew rig: `art/models/entity/<type>.bbmodel`,

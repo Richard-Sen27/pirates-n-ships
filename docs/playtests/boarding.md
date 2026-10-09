@@ -185,12 +185,25 @@ Defaults: `boarding.board_order` true, `board_gap` 2, `boarders_keep_stations` t
 ## 14. The fight
 1. An NPC pirate ship alongside (or `/summon pirates_n_ships:pirate` onto the other deck), then "Board!". Expected:
    the boarders attack the pirates on her deck; the one with the cutlass winds up, slashes and parries like a pirate;
-   the others punch. The pirates fight back. Tell me how the crew's swings look (the crew model may show no sword arm
-   pose; that is a known gap).
-2. Boarders with nobody left to fight on her deck stand still. After ten seconds without an enemy aboard: "Her deck is
+   the others punch. The pirates fight back.
+2. **The crew's swings (MEL3).** Stand on her deck within a few blocks of the armed boarder, ideally in third person
+   from the side, and watch one exchange. Expected, the same procedural poses as the pirates:
+   - **Telegraph (wind-up):** for a slash the sword arm rises over the shoulder with the blade up and back, over the
+     head; for a thrust the hand draws back low beside the hip with the blade kept level, pointing at the foe.
+   - **Strike (hit frames):** the slash comes down and forward across the body to the off side, the blade ending level
+     in front of the chest; the thrust punches the arm straight out at shoulder height with the blade level.
+   - **Guard / parry:** the blade held up and across the chest in front of him; a parry raises it higher, nearly
+     upright; a staggered crew member flings the arm out and leans back.
+   - **Bare-handed hands:** each punch swings the arm forward to shoulder height and back.
+   - The cutlass renders in the hand throughout. A left-handed rower who boards mirrors all of it.
+   - When the fight ends (the pirates dead) the arm drops back into the walk or idle at once, and back home at a
+     station the station pose (helm, gun crew, oars) shows again.
+   Please send a screenshot of a crew member mid wind-up and one of the guard, and tell me if anything looks inverted
+   (a blade pointing backwards on the strike, an arm swinging the wrong way).
+3. Boarders with nobody left to fight on her deck stand still. After ten seconds without an enemy aboard: "Her deck is
    yours" on your action bar (only for you, the captain) and the boarders walk home over the nearest way and back to
    their stations.
-3. Step aboard a cleared NPC ship yourself and stay a few seconds. Expected: the old capture ("You took the ..."), and
+4. Step aboard a cleared NPC ship yourself and stay a few seconds. Expected: the old capture ("You took the ..."), and
    for a merchant the law's piracy (nothing new here).
 
 ## 15. The recall and a lost way back

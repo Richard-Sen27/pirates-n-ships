@@ -48,9 +48,11 @@ for ENTRY in "$@"; do
   echo "merged $PKG at $(git rev-parse --short HEAD)"
   PKGS="$PKGS $PKG"
 done
-# the Almanac intermediate feeds runData, so it is regenerated first (ALM5)
-[ -f tools/gen_almanac.py ] && { python3 tools/gen_almanac.py > "$LOG/almanac.log" 2>&1 || { echo "ALMANAC GENERATOR FAILED"; tail -20 "$LOG/almanac.log"; exit 4; }; }
 ./gradlew -q :neoforge:runData > "$LOG/rundata.log" 2>&1 || { echo "RUNDATA FAILED"; tail -20 "$LOG/rundata.log"; exit 4; }
+# The Almanac generator validates item names against the lang runData writes, and runData writes the Almanac lang
+# from the generator's intermediate: runData, then the generator, then runData again when the intermediate changed.
+[ -f tools/gen_almanac.py ] && { python3 tools/gen_almanac.py > "$LOG/almanac.log" 2>&1 || { echo "ALMANAC GENERATOR FAILED"; tail -20 "$LOG/almanac.log"; exit 4; }; }
+[ -f tools/gen_almanac.py ] && ! git diff --quiet -- common/src/datagen/almanac && { ./gradlew -q :neoforge:runData > "$LOG/rundata2.log" 2>&1 || { echo "RUNDATA FAILED"; tail -20 "$LOG/rundata2.log"; exit 4; }; }
 python3 tools/gen_guideme.py > "$LOG/guide.log" 2>&1 || { echo "GUIDE FAILED"; tail -20 "$LOG/guide.log"; exit 4; }
 git add -A common/src/generated/resources common/src/main/resources/assets/pirates_n_ships/guides common/src/datagen/almanac common/src/main/resources/assets/pirates_n_ships/textures/almanac
 git diff --cached --quiet || git commit -q -m "chore(merge): regenerate data and guide after merging$PKGS"

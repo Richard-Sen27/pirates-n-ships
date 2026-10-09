@@ -494,14 +494,14 @@ Items (brig door and brig key, F8g):
   back), y 90 turns its face to the side, translation x moves it outside the arm (at 0 it cuts through the arm and
   leg), y/z lower it so the hand grips it about half-way up. First person `[0, -70, 0]` / `[1.5, 2.5, 1]` / 0.25. The
   left hand negates the y rotation and keeps the translation.
-- **Brig key** (39 elements): an iron skeleton key on the 45 degree diagonal, 14 px long (bow bottom-left, bit
+- **Brig key** (39 elements; replaced by ART10 below): an iron skeleton key on the 45 degree diagonal, 14 px long (bow bottom-left, bit
   top-right like a tool sprite; the two teeth on the upper-left side, so they point up when it is held). Parts are
   thirteen shapes in world coordinates, each a bar with a direction in 45 degree steps (an octagonal bow ring of
   eight bars, a collar, the shank, two teeth and the web between them; `F8G.bar`, `F8G.keyShapes`). **Darker edge:**
   each shape is three elements: a 1.2 px deep body with `iron_dark` front and back and `steel_dark` sides, and a
   0.15 px plate in front (`steel`) and behind (`steel_dark`), inset 0.3 px. The plates of neighbouring shapes overlap,
   so the dark rim follows only the outline of the whole key, also in the flat GUI view where side faces do not show.
-- **Key display entries:** `item/handheld`'s rotations with smaller scales, since a key at sword size (0.85) looks
+- **Key display entries** (F8g, replaced by ART10): `item/handheld`'s rotations with smaller scales, since a key at sword size (0.85) looks
   huge: third person `[0, -90, 55]` / `[0, 2.5, 0.5]` / 0.55 (bow in the fist, shank forward and slightly up),
   first person `[0, -90, 25]` / `[1.13, 3.2, 1.13]` / 0.55; `ground`, `head`, `fixed` from `item/generated` like the other items; no `gui`
   entry. Particle `palette`.
@@ -511,6 +511,51 @@ Items (brig door and brig key, F8g):
 - The old sprites (`textures/item/brig_door.png`, the wooden door from C8, and `brig_key.png` from
   `tools/gen_law_textures.py`) are gone; the law script had no other sprite and was deleted, and
   `gen_placeholder_textures.py` no longer writes the door sprite (it has no item sprites left).
+
+Brig key as a real 3D key (ART10, after the playtest note "the brig key just looks like a 2d thing extrapolated
+into 3d"; the F8g key was a 1.5 px slab with rim plates):
+- **Geometry** (52 elements, `palette.png` only, particle `palette`). The key is built along **x** (bow at low x, bit
+  at high x), its axis at y 7.52, z 8, bounding box x -0.6..16.6, y 4.08..11.92, z 6.4..9.6 (re-centred on
+  (8, 8, 8)). Building along an axis instead of the sprite diagonal frees the one element rotation for roundness:
+  - Every round part is a regular octagon prism along x from four D x D·tan 22.5° bars (two axis-aligned, two
+    turned ±45° about x, 0.05 px shorter at each end): finial D 1.5 and nib D 0.9 on the far side of the bow,
+    flange D 3.2 and collar D 2.8 where the bow meets the shank, shank D 2.2 (8.5 px from the bow, 9.6 px with the
+    collar), a bead ring D 2.6 in front of the bit, the rounded tip D 1.7 and its end D 1.0.
+  - Bow: an octagonal ring in the xy plane, outer radius 3.4, eight segments turned about z in 45° steps. Each
+    segment has a chamfered square section of two crossed boxes (radial 1.8 x depth 1.1 and radial 1.1 x depth
+    1.8), so the ring reads round from the front, the edge and the top; the hole is 3.2 px across. The diagonal
+    segments are 0.05 px thinner in z than the axis-aligned ones (no coplanar front faces).
+  - Bit on the +y side of the shank's far end: a web 3.7 x 2.1 px, 2 px deep (z ±1.0, inside the shank's z ±1.1),
+    and three wards as separate cubes 1.9 px deep (1.0, 0.7 and 0.65 px wide, 1.95 / 1.25 / 1.95 px long) with
+    gaps of 0.65 px between them.
+  - Colours: bodies `steel_dark` sides, `steel_light` up faces, `iron_dark` down faces; the ring's inner/outer faces
+    `steel`; the flange, collar bead and bead ring `steel` with `steel_light` tops, so the bands read as lighter
+    rings on the dark iron; bit `steel_dark` faces with `iron_dark` edges and `steel` ward ends. Lighter iron
+    (`steel` fronts) vanished against the grey inventory slot at 16 px.
+- **Display** (the left hand negates the y and z rotations and keeps the translation; MC applies the euler as
+  Rx·Ry·Rz, so z turns the model first):
+  - `gui` `[-28.2, -21.6, 34.5]` / `[-0.28, -0.75, 0]` / 1.05: the composition of "turn 35° about the key's own
+    axis (x), then 40° about z", which tilts the bow and bit towards the viewer without foreshortening the shank;
+    bow lower left, bit upper right, wards on the upper-left side. Projected size 14.5 x 14.7 units, inside the
+    16-unit slot (checked with the offscreen orthographic GUI view, about 32 px per unit at 1024 px).
+  - third person `[0, -90, 120]` / `[0, 2, 0.5]` / 0.55: `item/handheld`'s frame with the model turned +45° about z
+    to the sprite diagonal plus 20° more, so the bow sits in the fist and the shank points forward and 7.5° down
+    (world direction of the model's x axis read from `mesh.matrixWorld` in display mode); wards hang down.
+  - first person `[0, -72, -170]` / `[0, 3.8, 0]` / 0.42: the shank points into the screen and a little to the
+    left and down, the bow lower right with its face towards the player.
+  - `ground` `[0, 0, 45]` / `[0, 2, 0]` / 0.45; `fixed` `[0, 180, 45]` / `[0, 0, 0]` / 0.9 (bit upper right in the
+    frame); `head` vanilla `[0, 180, 0]` / `[0, 13, 7]` / 1.
+- **Re-export:** the elements came from a Python part list (octagon helper, ring loop, bit cubes, palette patch per
+  face, re-centring), loaded cube by cube into the project (`new Cube({from, to, origin, rotation, faces})` with
+  `autouv: 0` and the palette UVs `[u+0.5, v+0.5, u+3.5, v+3.5]`). A rotated element needs its own copy of the
+  rotation origin in such a script: a shared origin object was shifted twice by the re-centring. To change the model,
+  edit `art/models/brig_key.bbmodel` in Blockbench, then `Codecs.java_block.compile({raw: true})`, keep `credit`,
+  `gui_light: front`, `textures` `0` and `particle` = `pirates_n_ships:item/palette`, round numbers to 4 decimals and
+  write `models/item/brig_key.json` (tab-indented); save the project with the palette embedded and `path` `""`. Run
+  `python3 tools/lint_models.py` on the file (0 visible fights). Script not committed; rebuild it from these notes.
+- Renders: `renders/brig_key.png` (GUI slot view in display mode, the same at 16 px on the slot grey, third person
+  from the front right, first person through the display camera) and `renders/brig_key_turntable.png` (eight views
+  in 45° steps, camera 12 px above the key).
 
 Items (wearable hats, H2):
 - `pirate_hat`, `bandana`, `navy_hat`, `officer_hat` are written by `tools/gen_hat_items.py` (no Blockbench project):

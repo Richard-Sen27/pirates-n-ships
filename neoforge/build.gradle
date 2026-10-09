@@ -33,10 +33,15 @@ neoForge {
             server()
         }
         // ./gradlew :neoforge:runGameTestServer. Runs every GameTest in the mod namespace and exits
-        // with a non-zero code (failing the Gradle task) when a required test fails.
+        // with a non-zero code (failing the Gradle task) when a required test fails. Scoped run (GT2):
+        // ./gradlew :neoforge:runGameTestServer -Ppirates_n_ships.gametest.only=FooGameTests,BarGameTests forwards the
+        // project property as the system property ModGameTests.ONLY_PROPERTY reads; without it nothing is passed and
+        // the full suite runs. JAVA_TOOL_OPTIONS="-Dpirates_n_ships.gametest.only=..." keeps working as well.
         gameTestServer {
             type = 'gameTestServer'
             gameDirectory = project.file('build/gametest')
+            systemProperties.putAll(providers.gradleProperty('pirates_n_ships.gametest.only')
+                    .map { ['pirates_n_ships.gametest.only': it] }.orElse([:]))
         }
     }
     mods {

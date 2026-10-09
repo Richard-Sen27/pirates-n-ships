@@ -4,11 +4,10 @@ import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.mob.entity.Shark;
 import com.richardsenger.piratesnships.mob.kraken.Kraken;
+import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.sailing.ship.BowFrame;
 import com.richardsenger.piratesnships.sailing.ship.SailingRuntime;
 import com.richardsenger.piratesnships.sailing.ship.SailingRuntimes;
-import com.richardsenger.piratesnships.ship.ShipData;
-import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.assembly.ShipSplits;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagReading;
 import com.richardsenger.piratesnships.ship.decor.flag.ShipAllegiance;
@@ -27,9 +26,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
@@ -55,11 +54,13 @@ import org.joml.Vector3d;
  *       or ice; only in loaded chunks),</li>
  *   <li>sharks and the kraken,</li>
  * </ul>
- * and calls each new sighting once ({@link SightingMemory}, per ship, {@code lookout.memory_ticks}): a chat line from
- * the lookout to the ship's owner (wherever he is), the players aboard and the players in its nests, with the bearing
- * relative to the ship's heading in points ({@link Bearings}) and the distance. {@code lookout.announce} off keeps the
- * watch silent (sightings are still remembered). The memory is transient (lost on a restart, a sighting is then called
- * again once).
+ * and calls each new sighting ({@link SightingMemory}, per ship, {@code lookout.memory_ticks}) to the players aboard
+ * and the players in its nests (LKO2): a {@link SightingPayload} with the bearing relative to the ship's heading and
+ * the distance, which the client shows as a short action-bar line ({@link SightingCue}), a hail from the nest and a mark
+ * on the ship HUD's compass rose. No chat line. A sighting still in view is called again once it came
+ * {@code lookout.recall_blocks} closer or {@code lookout.recall_seconds} after its last call. {@code lookout.announce}
+ * off keeps the watch silent (sightings are still remembered). The memory is transient (lost on a restart, a sighting
+ * is then called again once).
  */
 public final class Lookouts {
 
@@ -73,16 +74,20 @@ public final class Lookouts {
     public enum Kind { SHIP, LAND, SHARK, KRAKEN }
 
     /**
-     * Something seen: its memory key, where, its bearing in points and the called distance; {@code name} is a ship's
-     * name when the lookout knows it by sight ({@link #renown}, TPL2), else empty.
+     * Something seen: its memory key, what it is, where, its bearing relative to the bow (degrees, positive to
+     * starboard) and from north (degrees), and the called distance; {@code name} is a ship's name when the lookout knows
+     * it by sight ({@link #renown}, TPL2), else empty.
      */
-    public record Sighting(Kind kind, String key, String whatKey, Vec3 at, Bearings.Relative bearing, int distance, String name) {
-        public Sighting(Kind kind, String key, String whatKey, Vec3 at, Bearings.Relative bearing, int distance) {
-            this(kind, key, whatKey, at, bearing, distance, "");
+    public record Sighting(Kind kind, String key, SightingPayload.What what, Vec3 at, double relative, double compass, int distance,
+                           String name) {
+
+        /** The bearing in points, as CN1 called it. */
+        public Bearings.Relative bearing() {
+            return Bearings.points(relative);
         }
 
         Sighting named(String name) {
-            return new Sighting(kind, key, whatKey, at, bearing, distance, name == null ? "" : name);
+            return new Sighting(kind, key, what, at, relative, compass, distance, name == null ? "" : name);
         }
     }
 
@@ -106,8 +111,8 @@ public final class Lookouts {
         return "";
     }
 
-    /** A new sighting of {@code ship}'s lookout, its chat line and who hears it (empty while announcing is off). */
-    public record Report(UUID ship, Sighting sighting, Component line, List<UUID> recipients) {
+    /** A new sighting of {@code ship}'s lookout, its call and who hears it (empty while announcing is off). */
+    public record Report(UUID ship, Sighting sighting, SightingPayload payload, List<UUID> recipients) {
     }
 
     private static final Map<UUID, SightingMemory> MEMORY = new ConcurrentHashMap<>();
@@ -124,8 +129,11 @@ public final class Lookouts {
         if (now % LookoutConfig.SCAN_INTERVAL_TICKS.get() != 0) {
             return;
         }
-        for (Report r : scanAll(level, level.players(), now)) {
-            send(level, r);
+        List<ServerPlayer> players = level.players();
+        for (Report r : scanAll(level, players, now)) {
+            deliver(r, players, (p, payload) -> {
+                if (p instanceof ServerPlayer sp) Services.NETWORK.sendToPlayer(sp, payload);
+            });
         }
     }
 
@@ -236,13 +244,15 @@ public final class Lookouts {
         List<Sighting> seen = look(level, ship, at, heading, LookoutConfig.RANGE.get());
         SightingMemory memory = MEMORY.computeIfAbsent(ship.id(), k -> new SightingMemory());
         long remember = LookoutConfig.MEMORY_TICKS.get();
+        int recallBlocks = LookoutConfig.RECALL_BLOCKS.get();
+        long recallTicks = LookoutConfig.RECALL_SECONDS.get() * 20L;
+        int fresh = LookoutConfig.MARK_SECONDS.get() * 20;
         List<Report> out = new ArrayList<>();
         List<UUID> recipients = LookoutConfig.ANNOUNCE.get() ? recipients(level, ship, observers, players) : List.of();
-        Component speaker = speaker(observers);
         synchronized (memory) {
             for (Sighting s : seen) {
-                if (memory.sight(s.key(), now, remember)) {
-                    out.add(new Report(ship.id(), s, line(speaker, s), recipients));
+                if (memory.sight(s.key(), now, remember, s.distance(), recallBlocks, recallTicks)) {
+                    out.add(new Report(ship.id(), s, payload(ship.id(), s, at, fresh), recipients));
                 }
             }
             memory.forget(now, remember);
@@ -258,20 +268,22 @@ public final class Lookouts {
                 continue;
             }
             Vec3 c = CrewStations.worldBox(other, 0).getCenter();
-            Sighting s = sighting(Kind.SHIP, "ship:" + other.id(), whatKey(other), at, c, heading, range);
+            Sighting s = sighting(Kind.SHIP, "ship:" + other.id(), what(other), at, c, heading, range);
             if (s != null) out.add(s.named(renownedName(level, other.id())));
         }
         AABB box = new AABB(at, at).inflate(range, MONSTER_HEIGHT, range);
         for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, box,
                 e -> e.isAlive() && (e instanceof Shark || e instanceof Kraken))) {
             Kind kind = e instanceof Kraken ? Kind.KRAKEN : Kind.SHARK;
-            Sighting s = sighting(kind, "entity:" + e.getUUID(), "", at, e.position(), heading, range);
+            SightingPayload.What what = kind == Kind.KRAKEN ? SightingPayload.What.KRAKEN : SightingPayload.What.SHARK;
+            Sighting s = sighting(kind, "entity:" + e.getUUID(), what, at, e.position(), heading, range);
             if (s != null) out.add(s);
         }
         LandSampler.Land land = LandSampler.nearest(at.x, at.z, range, LookoutConfig.LAND_DIRECTIONS.get(),
                 LookoutConfig.LAND_STEP.get(), LookoutConfig.LAND_MIN_DISTANCE.get(), (x, z) -> column(level, x, z));
         if (land != null) {
-            Sighting s = sighting(Kind.LAND, LandSampler.regionKey(land.x(), land.z(), LookoutConfig.LAND_REGION.get()), "",
+            Sighting s = sighting(Kind.LAND, LandSampler.regionKey(land.x(), land.z(), LookoutConfig.LAND_REGION.get()),
+                    SightingPayload.What.LAND,
                     at, new Vec3(land.x() + 0.5, at.y, land.z() + 0.5), heading, range);
             if (s != null) out.add(s);
         }
@@ -279,14 +291,22 @@ public final class Lookouts {
         return out;
     }
 
-    private static @Nullable Sighting sighting(Kind kind, String key, String what, Vec3 from, Vec3 to, double heading, double range) {
+    private static @Nullable Sighting sighting(Kind kind, String key, SightingPayload.What what, Vec3 from, Vec3 to, double heading,
+                                               double range) {
         double dx = to.x - from.x;
         double dz = to.z - from.z;
         double d = Math.sqrt(dx * dx + dz * dz);
         if (d > range) {
             return null;
         }
-        return new Sighting(kind, key, what, to, Bearings.of(heading, dx, dz), Bearings.calledDistance(d));
+        double compass = Bearings.compass(dx, dz);
+        return new Sighting(kind, key, what, to, Bearings.relative(heading, compass), compass, Bearings.calledDistance(d), "");
+    }
+
+    /** The call of {@code s} seen from the nest at {@code nest} (world), its mark kept {@code freshTicks}. */
+    static SightingPayload payload(UUID ship, Sighting s, Vec3 nest, int freshTicks) {
+        return new SightingPayload(ship, s.what(), s.name(), (float) s.relative(), (float) s.compass(), s.distance(), nest.x, nest.y,
+                nest.z, s.key().hashCode(), freshTicks);
     }
 
     /** What the column (x, z) shows at sea level: water (or ice), land, or unknown when its chunk is not loaded. */
@@ -303,9 +323,9 @@ public final class Lookouts {
     }
 
     /** What another ship looks like: a wreck, or by the flag it flies. */
-    static String whatKey(ShipBody ship) {
+    static SightingPayload.What what(ShipBody ship) {
         FlagReading flag = ShipAllegiance.of(ship);
-        return LookoutLang.whatKey(flag.kind(), flag.status() == FlagReading.Status.FLYING, ShipSplits.isWreck(ship));
+        return LookoutLang.what(flag.kind(), flag.status() == FlagReading.Status.FLYING, ShipSplits.isWreck(ship));
     }
 
     /**
@@ -328,10 +348,12 @@ public final class Lookouts {
         return Bearings.compass(f.x, f.z);
     }
 
-    /** The ship's owner, the players aboard and the players in its nests. */
+    /**
+     * The players in its nests and the players aboard (LKO2: the call is a cue on the ship's HUD, so an owner ashore no
+     * longer hears it).
+     */
     static List<UUID> recipients(ServerLevel level, ShipBody ship, List<Observer> observers, List<? extends Player> players) {
         Set<UUID> out = new LinkedHashSet<>();
-        ShipRegistry.get(level.getServer()).find(ship.id()).flatMap(ShipData::owner).ifPresent(out::add);
         for (Observer o : observers) {
             if (o.player() != null) out.add(o.player().getUUID());
         }
@@ -342,32 +364,14 @@ public final class Lookouts {
         return List.copyOf(out);
     }
 
-    /** The crew lookout's name, else "Crow's nest". */
-    private static Component speaker(List<Observer> observers) {
-        for (Observer o : observers) {
-            if (o.crew() != null) return o.crew().getDisplayName();
-        }
-        return Component.translatable(LookoutLang.KEY_NEST);
-    }
-
-    static Component line(Component speaker, Sighting s) {
-        Component bearing = LookoutLang.bearing(s.bearing());
-        Component body = switch (s.kind()) {
-            case SHIP -> s.name().isEmpty()
-                    ? Component.translatable(LookoutLang.KEY_SHIP, Component.translatable(s.whatKey()), bearing, s.distance())
-                    : Component.translatable(LookoutLang.KEY_SHIP_NAMED, Component.translatable(s.whatKey()), bearing,
-                    s.distance(), s.name());
-            case LAND -> Component.translatable(LookoutLang.KEY_LAND, bearing, s.distance());
-            case SHARK -> Component.translatable(LookoutLang.KEY_SHARK, bearing, s.distance());
-            case KRAKEN -> Component.translatable(LookoutLang.KEY_KRAKEN, bearing, s.distance());
-        };
-        return Component.literal("<").append(speaker).append("> ").append(body);
-    }
-
-    private static void send(ServerLevel level, Report r) {
-        for (UUID id : r.recipients()) {
-            ServerPlayer p = level.getServer().getPlayerList().getPlayer(id);
-            if (p != null) p.sendSystemMessage(r.line());
+    /**
+     * Hands {@code r}'s call to {@code sink} for every recipient among {@code players} (the level's players in the game,
+     * mock players in GameTests). Never a chat line.
+     */
+    public static void deliver(Report r, List<? extends Player> players, BiConsumer<Player, SightingPayload> sink) {
+        if (r.recipients().isEmpty()) return;
+        for (Player p : players) {
+            if (r.recipients().contains(p.getUUID())) sink.accept(p, r.payload());
         }
     }
 

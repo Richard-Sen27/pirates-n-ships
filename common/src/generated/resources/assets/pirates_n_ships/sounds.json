@@ -124,6 +124,21 @@
     ],
     "subtitle": "subtitles.pirates_n_ships.combat.pistol_shot"
   },
+  "lookout.hail": {
+    "sounds": [
+      {
+        "name": "minecraft:block/bell/bell_use01",
+        "pitch": 1.5,
+        "volume": 0.6
+      },
+      {
+        "name": "minecraft:block/bell/bell_use02",
+        "pitch": 1.5,
+        "volume": 0.6
+      }
+    ],
+    "subtitle": "subtitles.pirates_n_ships.lookout.hail"
+  },
   "music.sea": {
     "sounds": [
       {

@@ -185,7 +185,12 @@ class PonderStoryboardsTest {
         assertEquals(com.richardsenger.piratesnships.station.lookout.Bearings.Side.STARBOARD, r.side());
         assertEquals(com.richardsenger.piratesnships.station.lookout.Bearings.Sector.BOW, r.sector());
         assertEquals(140, com.richardsenger.piratesnships.station.lookout.Bearings.calledDistance(CrowsNestScene.CALL_DISTANCE));
-        assertTrue(CrewSceneText.Nest.CALL.english().contains("two points off the starboard bow, 140 blocks"));
+        // LKO2: the scene quotes the action-bar cue the lookout really shows for that sighting
+        String cue = com.richardsenger.piratesnships.station.lookout.SightingCue.text(
+                com.richardsenger.piratesnships.station.lookout.SightingPayload.What.SAIL, "", 2 * 11.25, 140,
+                k -> com.richardsenger.piratesnships.station.lookout.LookoutLang.ENGLISH.getOrDefault(k, k));
+        assertEquals("Sail two points to starboard, 140 blocks", cue);
+        assertTrue(CrewSceneText.Nest.CALL.english().contains(cue));
     }
 
     @Test

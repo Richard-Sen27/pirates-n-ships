@@ -459,6 +459,25 @@ on the end of a yard right beside the mast: walk up into it, face the mast and p
 hanging net above without a jump. Ratlines work in water and on a sailing ship. Server config
 `rigging.ratlines_enabled`.
 
+### Railings
+A **Railing** lies along the outward edge of a block, not across its middle like a fence: a top rail, a lower rail and
+balusters standing on the deck, 2 pixels in from the edge. Craft four from three sticks over three planks of one wood
+(oak for now; other woods follow). Click the top of the deck near the side the rail should go on (near the middle of
+the block it goes on the side you face); click the side of a block to rail the edge against it. Posts appear by
+themselves where a run ends or turns: a straight run has a post at each end, a gap of one block gets a post on both
+sides, and clicking a railing again (not sneaking) rails another edge of the same block, which makes a corner (one
+post) or, around a hatch, a surround. Each edge is one railing; breaking the block gives back one per edge. Like a
+fence, a railing is too high to jump (1.5 blocks; server config `ship_decor.railing_collision_blocks`, 1.0 lets players
+vault it) and crew do not walk through it.
+
+A **Railing Port** (two sticks over three planks, gives 2) is the opening in a railing: its two posts and a low sill,
+no rails. A railing beside it ends against its post. A cannon placed right behind it fires through it at every
+elevation; use a boarding plank on the sill while facing out and the gangway starts in the block beyond the port at
+deck height, so the port is also where boarders go across. A **swivel gun** placed on a railing sits on the rail
+itself, at the edge (with a corner railing, on the edge nearest your click), and its crew stands on the deck inside;
+**ratlines** stand on a railing's top or hang on its side. Railings weigh like fences on a ship and hold water. Server
+config `ship_decor.railings_enabled` (off: railings and ports cannot be placed; placed ones stay).
+
 ### Hammocks
 Your crew sleeps in hammocks. Hang one between two supports at the same height (fence posts, walls, logs, or a solid
 wall such as the hull side): click the block next to one support while looking toward the other. Recipe: 2 string
@@ -1359,6 +1378,8 @@ on by default; vanilla weapons are untouched):
 | Notice Board | 4 planks, 2 paper | Lists every bounty and places new ones for doubloons. |
 | Mermaid, Lion, Eagle and Skull Figurehead | 4 planks and a prismarine shard, gold ingot, feather or bone | Decoration for the bow. Click the hull block it should hang on: the plate lands there and the figure looks at you. |
 | Nameplate | any sign, 1 gold nugget | A board on two iron brackets that shows the ship's name once the ship is assembled and named (name tag on the helm); long names shrink to fit, renaming updates every plate within a second, disassembly clears them. Server option `ship_identity.nameplate_shows_name`. |
+| Oak Railing | 3 sticks over 3 oak planks (gives 4) | A rail along a block's edge with automatic end and corner posts; click again to rail another edge. Drops one per edge. See [Railings](#railings). |
+| Oak Railing Port | 2 sticks (the corners) over 3 oak planks (gives 2) | The opening in a railing: two posts and a sill. A cannon fires through it, a boarding plank goes out from its sill. See [Railings](#railings). |
 
 All blocks drop themselves. Wooden ones are mined with an axe, the bars and the door with a pickaxe.
 
@@ -1526,7 +1547,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `ships` | Sinking and wreck persistence, the ship HUD on/off and its sync, shipwright orders (on/off, build days and prices per ship, price and material factors, orders per port). |
 | `ship_identity` | Nameplates showing the ship's name, their refresh. |
 | `ship_screen` | The ship screen at the helm on/off (off: sneak-use disassembles at once), its reach, how often it refreshes. |
-| `ship_decor` | The ship's bell ring time; sleeping in the sea cot, on land and aboard. |
+| `ship_decor` | The ship's bell ring time; sleeping in the sea cot, on land and aboard; railings on or off and their collision height (`railings_enabled`, `railing_collision_blocks`). |
 | `rigging` | Ratlines on/off. |
 | `wind` | Wind strength range, how fast it changes, weather multipliers, gusts, regional variation, sync interval. |
 | `sailing` | Sail force, half-trim factor, rudder strength and turning authority (`rudder_force_factor`, `max_rudder_angle`), keel drag, roll and pitch damping; `sails` (yard gaps and lengths, stay length and drop, rope lines and sag, dyeing, banners and their minimum size). |

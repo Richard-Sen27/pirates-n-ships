@@ -509,14 +509,19 @@ public final class MobGameTests {
             mobs[0] = onDeck(h, ship, MobContent.SAILOR.get().create(h.getLevel()), deckA);
             mobs[1] = onDeck(h, ship, MobContent.NAVY_SOLDIER.get().create(h.getLevel()), deckB);
         });
-        h.runAfterDelay(SETTLE_TICKS + 10, () -> start[0] = ship.toWorld(Vec3.atCenterOf(helmPlot)));
-        // water drag stops a single kick within a second (0.9 blocks), so keep pushing like a sail would
-        for (int t = SETTLE_TICKS + 10; t < SETTLE_TICKS + 70; t += 10) {
+        h.runAfterDelay(SETTLE_TICKS + 10, () -> start[0] = centreOfMass(ship));
+        // water drag stops a single kick within a second (0.9 blocks), so keep pushing like a sail would. Ten pushes move
+        // the centre of mass well over a block (TRM1, measured; six moved it 0.80 to 0.82 blocks, ballast on or off: the
+        // old check at the helm passed only because the unballasted hull, trimmed 12 degrees stern down, swung its helm
+        // aft and down by another 0.6 blocks as it trimmed to 22 degrees under the pushes)
+        for (int t = SETTLE_TICKS + 10; t < SETTLE_TICKS + 110; t += 10) {
             h.runAfterDelay(t, () -> ship.addVelocity(new Vector3d(1.5, 0, 0), new Vector3d()));
         }
-        h.runAfterDelay(SETTLE_TICKS + 80, () -> {
+        h.runAfterDelay(SETTLE_TICKS + 120, () -> {
             SeafarerMob sailor = mobs[0], soldier = mobs[1];
-            double moved = ship.toWorld(Vec3.atCenterOf(helmPlot)).distanceTo(start[0]);
+            Vec3 now = centreOfMass(ship);
+            double moved = Math.hypot(now.x - start[0].x, now.z - start[0].z);
+            com.richardsenger.piratesnships.Constants.LOG.info("[mob test] ship on a deck moved {} blocks", String.format("%.3f", moved));
             h.assertTrue(moved > 1.0, "the ship did not move: " + moved);
             for (SeafarerMob mob : new SeafarerMob[]{sailor, soldier}) {
                 Vec3 plot = ship.toPlot(mob.position());
@@ -530,6 +535,16 @@ public final class MobGameTests {
             soldier.discard();
             h.succeed();
         });
+    }
+
+    /** World position of the ship's centre of mass (its travel, without the swing of a point on deck as it heels). */
+    private static Vec3 centreOfMass(ShipBody ship) {
+        Vector3d c = new Vector3d();
+        if (!ship.centerOfMass(c)) {
+            throw new AssertionError("the ship has no mass data");
+        }
+        Vector3d w = ship.toWorld(c, new Vector3d());
+        return new Vec3(w.x, w.y, w.z);
     }
 
     private static SeafarerMob onDeck(GameTestHelper h, ShipBody ship, SeafarerMob mob, Vec3 plotPos) {

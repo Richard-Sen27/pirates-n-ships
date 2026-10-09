@@ -105,4 +105,15 @@ class CrewPoseTest {
         assertTrue(CrewPose.CANNON_LOAD.loops());
         assertTrue(CrewPose.HELM.loops());
     }
+
+    /** MEL3: the melee telegraph beats the station pose, which beats idle; the body then stands, walks or sits. */
+    @Test
+    void aFightBeatsTheStationPoseAndTheLean() {
+        assertEquals(CrewPose.HELM, CrewPose.choose(false, true, false, false, CrewPose.HELM, false, false));
+        assertEquals(CrewPose.IDLE, CrewPose.choose(false, true, false, false, CrewPose.HELM, false, true));
+        assertEquals(CrewPose.WALK, CrewPose.choose(true, false, false, false, null, true, true));
+        assertEquals(CrewPose.IDLE, CrewPose.choose(false, false, false, false, null, true, true));
+        assertEquals(CrewPose.SIT, CrewPose.choose(false, false, true, false, CrewPose.ROW_SEATED, false, true));
+        assertEquals(CrewPose.LEAN, CrewPose.choose(false, false, false, false, null, true, false), "no fight, the lean stays");
+    }
 }

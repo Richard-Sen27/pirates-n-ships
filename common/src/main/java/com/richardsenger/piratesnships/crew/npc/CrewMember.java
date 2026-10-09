@@ -16,6 +16,10 @@ import com.richardsenger.piratesnships.crew.morale.MoraleRules;
 import com.richardsenger.piratesnships.crew.morale.NightOutcome;
 import com.richardsenger.piratesnships.crew.walk.CrewWalk;
 import com.richardsenger.piratesnships.crew.walk.WalkTarget;
+import com.richardsenger.piratesnships.combat.melee.rules.Phase;
+import com.richardsenger.piratesnships.mob.MeleePose;
+import com.richardsenger.piratesnships.mob.MeleePoseSync;
+import com.richardsenger.piratesnships.mob.MeleePosed;
 import com.richardsenger.piratesnships.mob.ai.Duelist;
 import com.richardsenger.piratesnships.mob.ai.DuelistAttackGoal;
 import com.richardsenger.piratesnships.mob.ai.VanillaSwordGoal;
@@ -74,10 +78,11 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * ({@link #isDeserting()}, saved) and whether it sits at a meal ({@link #isEating()}, synced); WALK1 where it walks
  * to take its place ({@link #walk()}, saved). BRD3: it fights while it boards another ship or defends its deck
  * against boarders ({@link #isBoarding()}, {@code combat.boarding.order}): the duelist goals with a sword, vanilla melee
- * with its fists, against the foes {@code BoardingFight} names; otherwise it never attacks anyone.
+ * with its fists, against the foes {@code BoardingFight} names; otherwise it never attacks anyone. MEL3: its melee phase
+ * is synced as the M3 mobs' is ({@link #meleePose()}, {@link MeleePoseSync}) and wins over every other pose.
  * This class and {@code crew/npc/client/} are the only GeckoLib importers.
  */
-public class CrewMember extends PathfinderMob implements GeoEntity, Duelist {
+public class CrewMember extends PathfinderMob implements GeoEntity, Duelist, MeleePosed {
 
     static final String TAG_ASSIGNMENT = Constants.MOD_ID + ":assignment";
     static final String TAG_PINNED = Constants.MOD_ID + ":pinned";
@@ -111,6 +116,9 @@ public class CrewMember extends PathfinderMob implements GeoEntity, Duelist {
 
     /** True while it leans on the rail (RAIL5, {@code crew.lean.RailLean}); set by the server, read by the animation. */
     private static final EntityDataAccessor<Boolean> DATA_LEANING = SynchedEntityData.defineId(CrewMember.class, EntityDataSerializers.BOOLEAN);
+
+    /** Its melee phase while it fights (MEL3, {@link MeleePose} packed); set by the server, read by the model's telegraph. */
+    private static final EntityDataAccessor<Integer> DATA_MELEE_POSE = SynchedEntityData.defineId(CrewMember.class, EntityDataSerializers.INT);
 
     private static final Map<CrewPose, RawAnimation> POSE_ANIMATIONS = new EnumMap<>(CrewPose.class);
 
@@ -155,6 +163,8 @@ public class CrewMember extends PathfinderMob implements GeoEntity, Duelist {
     private RailLean.@Nullable Lean lean;
     /** Game time before which it does not look for the rail again (RAIL5). Server only, not saved. */
     private long leanPauseUntil;
+    /** Client: {@link #tickCount} when the melee pose last changed (MEL3, for the pose's progress). */
+    private int meleePoseChangedAt;
 
     public CrewMember(EntityType<? extends CrewMember> type, Level level) {
         super(type, level);
@@ -226,6 +236,24 @@ public class CrewMember extends PathfinderMob implements GeoEntity, Duelist {
         builder.define(DATA_EATING, false);
         builder.define(DATA_HELD_BODY_YAW, Float.NaN);
         builder.define(DATA_LEANING, false);
+        MeleePoseSync.define(builder, DATA_MELEE_POSE);
+    }
+
+    /** Its synced melee pose (MEL3): the duelist goals' phase while it fights, {@link MeleePose#IDLE} otherwise. */
+    @Override
+    public MeleePose meleePose() {
+        return MeleePoseSync.pose(entityData, DATA_MELEE_POSE);
+    }
+
+    @Override
+    public float meleePoseProgress(float partialTick) {
+        return MeleePoseSync.progress(meleePose(), tickCount - meleePoseChangedAt, partialTick);
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (DATA_MELEE_POSE.equals(key)) meleePoseChangedAt = tickCount;
     }
 
     /** Whether it leans on the rail (RAIL5; synced to clients for the {@link CrewPose#LEAN} pose). */
@@ -289,7 +317,8 @@ public class CrewMember extends PathfinderMob implements GeoEntity, Duelist {
      * plays {@link CrewPose#SLEEP} (ART1d), lying along the hammock ({@code crew.hammock.CrewRest#orient}, HM2).
      */
     public CrewPose pose(boolean legsMoving) {
-        return CrewPose.choose(legsMoving, isWorking() || isEating(), isSeated(), isResting(), stationPose(), isLeaning());
+        return CrewPose.choose(legsMoving, isWorking() || isEating(), isSeated(), isResting(), stationPose(), isLeaning(),
+                meleePose().phase() != Phase.IDLE);
     }
 
     /**
@@ -455,6 +484,16 @@ public class CrewMember extends PathfinderMob implements GeoEntity, Duelist {
         return BoardingConfig.CREW_SKILL.get();
     }
 
+    /**
+     * MEL3: runs vanilla's swing timer, which only monsters and players run, so a {@code swing(hand)} from vanilla melee
+     * (the bare-handed {@code VanillaSwordGoal}) advances {@link #getAttackAnim} on both sides for the model's punch.
+     */
+    @Override
+    public void aiStep() {
+        updateSwingTime();
+        super.aiStep();
+    }
+
     @Override
     protected void customServerAiStep() {
         super.customServerAiStep();
@@ -462,6 +501,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity, Duelist {
         if (target != null && !keepsTarget(target)) {
             setTarget(null); // a target from anywhere (a hit, a test) stays only while boarding allows it
         }
+        MeleePoseSync.update(this, DATA_MELEE_POSE); // MEL3: the telegraph, as for the M3 mobs
     }
 
     /** True when this crew member rides the seat of its assigned station. */

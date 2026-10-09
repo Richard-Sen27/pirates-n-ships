@@ -70,6 +70,16 @@ Commits are listed oldest first, merge commits are skipped, and the output depen
 
 So write commit subjects for players: the subject of every `feat` and `fix` ends up in the changelog as written.
 
+## Release texts
+
+Hand-written texts for the platforms and the release, in `docs/release/` (REL4), checked by a script:
+
+- [`release/store-page.md`](release/store-page.md): the Modrinth and CurseForge description (one text for both, with what CurseForge's renderer does not take).
+- [`release/1.0.0-notes.md`](release/1.0.0-notes.md): the 1.0.0 release notes (hand-written, since there is no earlier tag to generate from) and the `release.yml` change that publishes them.
+- [`release/save-compatibility.md`](release/save-compatibility.md): what a pre-release world keeps and loses under 1.0.0 (SAV1); the notes link to it.
+- [`../README.md`](../README.md): the repository's front page, with the screenshot list for the galleries.
+- `tools/check_release_texts.py`: fails when the store page, the notes or the README name an item, block, mob or config key that the generated lang does not have, or a dependency version that differs from `gradle.properties` (`--self-test` checks its rules).
+
 ## Cutting a release
 
 Before tagging, check:
@@ -78,7 +88,9 @@ Before tagging, check:
 2. The playtests for everything new since the last release are done (`docs/playtests/`, and the playtest list at the end of `docs/progress.md`). Nothing the release notes advertise should be unplaytested.
 3. `docs/progress.md` has no open blocker for the features in this release.
 4. Preview the notes: `python3 tools/release_notes.py <previous-tag> HEAD`.
-5. Optionally a dry run: Actions → Release → Run workflow, `version` = the planned tag, `dry_run` checked. It builds, runs the tests on both loaders, shows the notes in the job summary and attaches both jars as a workflow artifact.
+5. Check the release texts: `python3 tools/check_release_texts.py` passes, and `docs/release/store-page.md` and the version's notes still describe what is on `main` (paste the store page into both platforms when it changed).
+6. The configuration table in `docs/guide.md` §13 matches the code: `python3 tools/check_config_docs.py` prints `ok` (it fails on a config section without a row, a row without a section, a nested group its row does not name, or a backticked name that is no longer a key; `--keys` lists the keys a row leaves out, `--self-test` checks the parser). Values whose defaults changed since the last release belong in the release notes.
+7. Optionally a dry run: Actions → Release → Run workflow, `version` = the planned tag, `dry_run` checked. It builds, runs the tests on both loaders, shows the notes in the job summary and attaches both jars as a workflow artifact.
 
 Then tag and push:
 

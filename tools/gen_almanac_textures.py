@@ -16,6 +16,12 @@ Plain textures outside the GUI sprite atlas (almanac/client/AlmanacScreen blits 
   matches AlmanacScreen's constants: left page x 9..146, right page x 146..283, both y 5..172; the stacks x 6..9 and
   283..286, y 172..175; text boxes x 19..135 and 157..273 from y 15, LINE_H 10 (the ruled lines lie one pixel under
   each text line: y 24, 34, ... 154).
+- panels.png (256x128, ALM8): the pieces of the recipe panels, item spotlights and the index spread, one atlas (UVs in
+  almanac/client/AlmanacPanels): the recipe panel (116x62 at 0,0; a darker parchment card with a brown outline and
+  clipped corners), an input slot (18x18 at 0,64; sunk: shade top left, light bottom right), the result slot (26x26 at
+  18,64; the same with a brass rim), the arrow (22x15 at 44,64), the furnace flame (14x14 at 66,64), the shapeless mark
+  (9x9 at 80,64; two opposed arrows), the spotlight frame (38x38 at 0,90; leather rim with brass corners around a light
+  card) and the index tiles in every size from 10 to 20 pixels (at y 90 from x 40, each one after the other).
 - bookmark.png (24x16): one silk ribbon tab in light greys with stitched edges and a swallowtail end, tinted per
   chapter with its bookmark colour (white parts take the colour fully, the greys shade it). Its left 4 px lie under the
   cover.
@@ -218,12 +224,142 @@ def bookmark():
     return c
 
 
+INK_BROWN = (90, 46, 18, 255)
+RIM = (118, 84, 50, 255)
+SLOT_FILL = (176, 150, 108, 255)
+SHADE = (122, 94, 60, 255)
+LIGHT = (240, 228, 196, 255)
+CARD_D = (208, 184, 140, 255)
+CARD = (220, 198, 154, 255)
+FLAME_COLS = ((122, 30, 10, 255), (196, 70, 18, 255), (236, 140, 40, 255), (252, 214, 110, 255))
+
+PANEL_W, PANEL_H = 116, 62
+SLOT, OUT_SLOT = 18, 26
+ARROW_W, ARROW_H = 22, 15
+FLAME, MARK, SPOT = 14, 9, 38
+TILE_MIN, TILE_MAX, TILE_X, TILE_Y = 10, 20, 40, 90
+
+
+def card(c, x0, y0, w, h, seed, outline=RIM, clip=2):
+    """A parchment card: a mottled fill, a one-pixel outline, its corners clipped by {clip} pixels."""
+    for y in range(h):
+        for x in range(w):
+            if min(x, w - 1 - x) + min(y, h - 1 - y) < clip - 1:
+                continue
+            edge = x == 0 or y == 0 or x == w - 1 or y == h - 1 or min(x, w - 1 - x) + min(y, h - 1 - y) == clip - 1
+            if edge:
+                col = outline
+            else:
+                col = mix(CARD_D, CARD, smooth(x0 + x, y0 + y, 7, seed))
+                if noise(x, y, seed) < 14:
+                    col = scale(col, 0.96)
+                if x == 1 or y == 1:
+                    col = scale(col, 1.06)
+            c.set(x0 + x, y0 + y, col)
+
+
+def slot(c, x0, y0, size, rim=None):
+    """A sunk slot: dark top and left edge, light bottom and right, a darker fill; an optional outer rim colour."""
+    for y in range(size):
+        for x in range(size):
+            if x == 0 or y == 0:
+                col = SHADE
+            elif x == size - 1 or y == size - 1:
+                col = LIGHT
+            else:
+                col = SLOT_FILL if noise(x, y, 41) > 20 else scale(SLOT_FILL, 0.97)
+            c.set(x0 + x, y0 + y, col)
+    if rim:
+        for i in range(size):
+            for x, y in ((i, 0), (i, size - 1), (0, i), (size - 1, i)):
+                c.set(x0 + x, y0 + y, rim)
+        for i in range(1, size - 1):
+            c.set(x0 + i, y0 + 1, SHADE)
+            c.set(x0 + 1, y0 + i, SHADE)
+            c.set(x0 + i, y0 + size - 2, LIGHT)
+            c.set(x0 + size - 2, y0 + i, LIGHT)
+
+
+def arrow(c, x0, y0):
+    """A thick ink arrow pointing right: a shaft and a triangular head."""
+    mid = ARROW_H // 2
+    for x in range(ARROW_W):
+        for y in range(ARROW_H):
+            head = x >= ARROW_W - 8 and abs(y - mid) <= (ARROW_W - 1 - x)
+            shaft = x < ARROW_W - 8 and abs(y - mid) <= 2
+            if head or shaft:
+                c.set(x0 + x, y0 + y, INK_BROWN if abs(y - mid) < 2 or x > ARROW_W - 4 else scale(INK_BROWN, 1.25))
+
+
+def flame(c, x0, y0):
+    """A small furnace flame: an outer tongue of dark red in to a pale yellow core."""
+    cx = (FLAME - 1) / 2.0
+    for y in range(FLAME):
+        t = y / (FLAME - 1)          # 0 top, 1 bottom
+        half = 1.0 + 5.0 * (t ** 0.8) * (1.0 - 0.35 * max(0.0, t - 0.75) / 0.25)
+        for x in range(FLAME):
+            d = abs(x - cx) / half
+            if d > 1.0:
+                continue
+            k = min(3, int((1.0 - d) * 3.2 + t * 1.2))
+            c.set(x0 + x, y0 + y, FLAME_COLS[k])
+
+
+def shapeless_mark(c, x0, y0):
+    """Two opposed arrows: the ingredients go in any order."""
+    for x in range(1, MARK - 1):
+        c.set(x0 + x, y0 + 2, INK_BROWN)
+        c.set(x0 + x, y0 + 6, INK_BROWN)
+    for i in (1, 2):
+        c.set(x0 + MARK - 1 - i, y0 + 2 - i, INK_BROWN)
+        c.set(x0 + MARK - 1 - i, y0 + 2 + i, INK_BROWN)
+        c.set(x0 + i, y0 + 6 - i, INK_BROWN)
+        c.set(x0 + i, y0 + 6 + i, INK_BROWN)
+
+
+def spotlight_frame(c, x0, y0):
+    """A leather rim, a light card inside it and brass corner plates."""
+    for y in range(SPOT):
+        for x in range(SPOT):
+            d = min(x, y, SPOT - 1 - x, SPOT - 1 - y)
+            if d == 0:
+                col = LEATHER_OUT
+            elif d <= 2:
+                col = mix(LEATHER_D, LEATHER_L, smooth(x, y, 5, 61))
+            elif d == 3:
+                col = SHADE
+            else:
+                col = mix(CARD, PAPER_L, 0.4 + 0.6 * smooth(x0 + x, y0 + y, 9, 63))
+            c.set(x0 + x, y0 + y, col)
+    for cx, cy, dx, dy in ((0, 0, 1, 1), (SPOT - 1, 0, -1, 1), (0, SPOT - 1, 1, -1), (SPOT - 1, SPOT - 1, -1, -1)):
+        for i in range(6):
+            for j in range(6 - i):
+                col = BRASS_OUT if i == 0 or j == 0 or i + j == 5 else (BRASS_L if i == 1 or j == 1 else BRASS)
+                c.set(x0 + cx + dx * i, y0 + cy + dy * j, col)
+
+
+def panels():
+    c = Canvas(256, 128)
+    card(c, 0, 0, PANEL_W, PANEL_H, 51)
+    slot(c, 0, 64, SLOT)
+    slot(c, SLOT, 64, OUT_SLOT, rim=BRASS_D)
+    arrow(c, 44, 64)
+    flame(c, 66, 64)
+    shapeless_mark(c, 80, 64)
+    spotlight_frame(c, 0, 90)
+    x = TILE_X
+    for size in range(TILE_MIN, TILE_MAX + 1):
+        card(c, x, TILE_Y, size, size, 70 + size, outline=RIM, clip=2 if size >= 14 else 1)
+        x += size
+    return c
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", type=Path, default=OUT)
     args = ap.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
-    for name, canvas in (("book.png", book()), ("bookmark.png", bookmark())):
+    for name, canvas in (("book.png", book()), ("bookmark.png", bookmark()), ("panels.png", panels())):
         (args.out / name).write_bytes(canvas.png())
         print(f"{name}: {canvas.w}x{canvas.h}")
 

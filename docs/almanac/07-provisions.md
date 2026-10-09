@@ -10,51 +10,44 @@ illustrations:
   - rum: 0.05 0.09 0.9 0.35
 ---
 illustration: pantry
-An empty pantry sinks more ships than cannon ever did. Every dawn your crew eats and drinks one day's provisions from the stores aboard. Keep the stores full and the crew stays willing; let them run dry and you will soon be sailing alone.
+{spotlight:pantry}
+An empty pantry sinks more ships than cannon ever did. Every dawn your crew takes a day's food and water from the stores aboard.
 
 ## The pantry
 show_me: galley_and_provisions | Show me: stocking the galley
-The {item:pirates_n_ships:pantry}**pantry** (eight planks around a sheaf of wheat) is the ship's food store: 27 slots that open like a chest. Its doors face you when you place it.
-
-- Anything edible counts, by how filling it is. One hand needs about a loaf of bread and a bit each day.
-- The crew eats what will spoil first, and turns up its nose at rotten flesh, spider eyes and other foul fare.
-- Sneak and use it with both hands empty to read what it holds and what spoils next.
-- A hopper can only put provisions in, and only takes out what is no provision: empty bottles, bowls, rotten flesh. A hopper below makes a fine waste chute.
+The {item:pirates_n_ships:pantry}**pantry** is the ship's food store, opening like a chest. Anything edible counts; a hand eats about a loaf of bread a day.
+{recipe:pantry}
+Sneak and use it empty-handed to read what it holds. A hopper below takes out only the waste.
 
 ## Food that keeps
->! Fresh food spoils after five days in the pantry and turns to rotten flesh.
+>! Fresh food spoils after five days in the pantry.
 
-Preserved food never spoils: bread, cookies, dried kelp, honey bottles, golden carrots and golden apples, and the sailor's own:
+Preserved food never spoils: bread, dried kelp, honey and the sailor's own {item:pirates_n_ships:hardtack}**hardtack**.
+{recipe:hardtack}
 
-- {item:pirates_n_ships:hardtack}**Hardtack:** three wheat and a water bucket make two.
-- {item:pirates_n_ships:salted_fish}**Salted fish:** a cod or salmon and dried kelp.
-- {item:pirates_n_ships:salt_pork}**Salt pork:** a porkchop and dried kelp.
+## Salted fare
+{item:pirates_n_ships:salted_fish}**Salted fish** and {item:pirates_n_ships:salt_pork}**salt pork** keep as long as you sail.
+{recipe:salted_fish}
+{recipe:salt_pork}
 
 ## Fresh water
 illustration: water_barrel
-A {item:pirates_n_ships:water_barrel}**water barrel** holds 16 rations of fresh water, and each hand drinks one a day. It is crafted full from planks, iron nuggets and a water bucket.
+A {item:pirates_n_ships:water_barrel}**water barrel** holds 16 rations, and each hand drinks one a day. It comes off the bench full.
+{recipe:water_barrel}
+Buckets and bottles fill or empty it, and rain tops it up.
 
-- A water bucket pours in 3 rations, a bottle 1. An empty bucket draws 3 out, a glass bottle 1.
-- Rain slowly fills a barrel that stands under the open sky.
-- The top shows how full it is, and a broken barrel keeps its water.
+## Hunger and scurvy
+Hungry hands work at three quarters pace, thirsty ones at half. Three days without food, or one without water, and the whole crew deserts.
 
-> Water and rum count wherever they are stowed, in a pantry or a barrel.
-
-## Hunger, thirst and scurvy
-A crew short of food loses heart by the day and works at three quarters of its pace. A crew short of water loses heart far faster and works at half. Both together are a ship of the half-dead. Low spirits end in desertion; see [[pirates_n_ships:crew|Crew]]. Three days in a row without food, or a single day without water, and the whole crew deserts at the next dawn, however cheerful.
-
-After eight days without fresh food, scurvy sets in: the crew weakens and loses heart every day. Any fresh food cures it, and fruit best of all: apples, melon, berries.
+After eight days without fresh food comes scurvy. Fresh food cures it, fruit best.
 
 ## Rum
 illustration: rum
-{item:pirates_n_ships:rum}**Rum** is made from sugar cane, two sugar and a glass bottle. While there is rum aboard, every hand gets a ration a day and his spirits rise for it. Stow rum for ten days or more in the pantries and the crew drinks a double ration: drunk, it works at little more than half its pace until the binge is over.
-
-You may drink it yourself: it warms you through for two minutes and leaves the bottle.
+While there is {item:pirates_n_ships:rum}**rum** aboard, each hand gets a daily ration and cheers up. Stow ten days' worth or more and they drink double and work slowly.
+{recipe:rum}
 
 ## Cold water
-Swimming or wading in frozen or cold seas and frozen rivers chills you like powder snow: after some seven seconds you are frozen and take hurt.
-
-You are safe in a boat, on deck or in a dry hold, in any piece of leather armour, or with a bottle of rum in you. Swimming anywhere makes you hungry half again as fast as it otherwise would.
+Swimming in cold or frozen seas soon freezes you. A boat, a deck, leather armour or a swig of rum keeps you warm.
 
 ## Prisoners
-Prisoners in your brig eat and drink too, half a hand's share, and get no rum. See [[pirates_n_ships:law|Law]].
+Prisoners in your brig eat and drink half a hand's share, and get no rum. See [[pirates_n_ships:law|Law]].

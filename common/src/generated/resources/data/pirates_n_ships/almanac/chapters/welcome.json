@@ -17,6 +17,10 @@
           "y": 0.09
         },
         {
+          "type": "spotlight",
+          "item": "pirates_n_ships:captains_almanac"
+        },
+        {
           "type": "text",
           "key": "pirates_n_ships.almanac.welcome.p1.text1"
         }
@@ -33,19 +37,16 @@
           "key": "pirates_n_ships.almanac.welcome.p2.text1"
         },
         {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:captains_almanac"
+        },
+        {
           "type": "list",
           "items": [
             "pirates_n_ships.almanac.welcome.p2.list1_1",
             "pirates_n_ships.almanac.welcome.p2.list1_2",
-            "pirates_n_ships.almanac.welcome.p2.list1_3",
-            "pirates_n_ships.almanac.welcome.p2.list1_4",
-            "pirates_n_ships.almanac.welcome.p2.list1_5",
-            "pirates_n_ships.almanac.welcome.p2.list1_6"
+            "pirates_n_ships.almanac.welcome.p2.list1_3"
           ]
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.welcome.p2.text2"
         }
       ]
     },

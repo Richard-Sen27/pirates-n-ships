@@ -22,6 +22,8 @@ Natural ground (dirt, sand, raw stone, leaves) stays behind; cut and crafted blo
 ## 2. Set the helm
 Place a {item:pirates_n_ships:helm}**helm** on deck. The bow is where the helmsman looks.
 
+{spotlight3d:block:helm}
+
 {recipe:helm}
 
 ## 3. Rig a sail

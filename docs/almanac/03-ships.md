@@ -126,6 +126,8 @@ A {item:pirates_n_ships:oak_railing_port}**railing port** is the gap in it: cann
 
 A {item:pirates_n_ships:oak_railing_gate}**railing gate** swings open like a fence gate, and a lantern hangs from any railing post.
 
+{spotlight3d:block:oak_railing_gate|The railing gate, shut}
+
 {recipe:oak_railing_gate}
 
 A {item:pirates_n_ships:oak_bulwark}**bulwark** is a solid wall instead: a gun behind it fires into it, so cut a {item:pirates_n_ships:oak_bulwark_port}**gun port**, whose lid opens for the gun.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shared inputs of tools/gen_almanac.py: our registered items (GUIDE2).
+"""Shared inputs of tools/gen_almanac.py: our registered items (GUIDE2), blocks and entity types (ALM10).
 
 Python 3 standard library only; imported, not run. Since GUIDE2 the Captain's Almanac is the only in-game guide, and
 this is what is left of the older page generator. Tested by tools/test_gen_almanac.py.
@@ -86,3 +86,16 @@ def load_items():
     if problems:
         raise SystemExit("almanac_lib: items the Almanac cannot name or show:\n  " + "\n  ".join(problems))
     return by_name, names, set(names)
+
+
+def load_registry():
+    """(our block ids, our entity type ids), "pirates_n_ships:<id>", from the lang's "block.pirates_n_ships.<id>" and
+    "entity.pirates_n_ships.<id>" keys: every registered block and entity type of ours has its name there (ALM10's 3D
+    spotlights name them)."""
+    lang = json.loads(LANG.read_text(encoding="utf-8"))
+    blocks, entities = set(), set()
+    for key in lang:
+        m = re.fullmatch(rf"(block|entity)\.{NS}\.([a-z0-9_]+)", key)
+        if m:
+            (blocks if m.group(1) == "block" else entities).add(f"{NS}:{m.group(2)}")
+    return blocks, entities

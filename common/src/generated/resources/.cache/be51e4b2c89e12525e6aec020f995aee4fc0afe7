@@ -1,16 +1,16 @@
-// 1.21.1	2026-10-09T23:49:28.419793	Raw JSON (data): pirates_n_ships
+// 1.21.1	2026-10-10T00:50:49.783548	Raw JSON (data): pirates_n_ships
 b92ae867aa5d6ada06f6c4d30dba5561f077ae88 data/pirates_n_ships/almanac/chapters/charts.json
-6109b54cb463c2b3fa46b900b24987cf54d832a0 data/pirates_n_ships/almanac/chapters/combat.json
-e556a080ee80deca7fd73793b11ca82e64cf2dfc data/pirates_n_ships/almanac/chapters/crew.json
-5378f8201f8effee1fbbc9a1a0bdf891348d7115 data/pirates_n_ships/almanac/chapters/first_ship.json
+c4ff12db94de4599cec90c32e217057f2aa65e87 data/pirates_n_ships/almanac/chapters/combat.json
+7a6099b398d4bb44287f4cbdcf4301edd5d9f245 data/pirates_n_ships/almanac/chapters/crew.json
+2f6a2abfa895a8f7e67120d289726e11194514c3 data/pirates_n_ships/almanac/chapters/first_ship.json
 3b99003148e87b6560c67db1f52594478721d4d8 data/pirates_n_ships/almanac/chapters/flags.json
 585afed986dfe3a4e2e0256001d0a803bc97c92f data/pirates_n_ships/almanac/chapters/inventory.json
-36f0cad45364c88beb694d032838eaacae40f67b data/pirates_n_ships/almanac/chapters/law.json
+08a3ac02f55b85d5d569d2506dc567ed62791a5d data/pirates_n_ships/almanac/chapters/law.json
 74c402753cf9a118add456cd259e8e7d7dd0c696 data/pirates_n_ships/almanac/chapters/ledger.json
 4177e70dbd491b9aec384ee27f5751e59b80c113 data/pirates_n_ships/almanac/chapters/not_yet.json
 0f67372046bdf64db07a6593ac34d994b02f100b data/pirates_n_ships/almanac/chapters/provisions.json
-cf06b641c16f1f1c0659fba7dc1db4eb53bb5e93 data/pirates_n_ships/almanac/chapters/sailing.json
-792c90a15b43a3b588f041cc2c3ea06596ed2fa4 data/pirates_n_ships/almanac/chapters/ships.json
+4f507b7403cdb7dc1ccf859a8c08a39da0867839 data/pirates_n_ships/almanac/chapters/sailing.json
+390869921343c452b635cc32296fc387850b9948 data/pirates_n_ships/almanac/chapters/ships.json
 e05406b093b3ac5b1e51c76b3da9015455212896 data/pirates_n_ships/almanac/chapters/trade.json
 c0a6111bebe674c9f043afd182b116d226e9ca4f data/pirates_n_ships/almanac/chapters/welcome.json
 81e4547184aef1c6ab27c144e370d0ff6cb85b3d data/pirates_n_ships/loot_table/chests/buried_treasure.json

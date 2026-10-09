@@ -4,14 +4,14 @@ import com.richardsenger.piratesnships.Constants;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Where the pieces of the recipe panels, spotlights and index tiles (ALM8) sit in {@code textures/gui/almanac/panels.png}
+ * Where the pieces of the recipe panels, spotlights and index tiles (ALM8) and the 3D spotlight card (ALM10) sit in {@code textures/gui/almanac/panels.png}
  * (drawn by tools/gen_almanac_textures.py; AlmanacTexturesTest checks the size). Plain constants, no client classes.
  */
 public final class AlmanacPanels {
 
     public static final ResourceLocation TEXTURE = Constants.id("textures/gui/almanac/panels.png");
     public static final int TEX_W = 256;
-    public static final int TEX_H = 128;
+    public static final int TEX_H = 256;
 
     public static final int PANEL_U = 0;
     public static final int PANEL_V = 0;
@@ -32,6 +32,12 @@ public final class AlmanacPanels {
     public static final int TILE_MAX = 20;
     public static final int TILE_U = 40;
     public static final int TILE_V = 90;
+
+    /** The 3D spotlight's card (ALM10), {@link PageLayout#SPOTLIGHT_3D_W} x {@link PageLayout#SPOTLIGHT_3D_FRAME}. */
+    public static final int SPOTLIGHT_3D_U = 0;
+    public static final int SPOTLIGHT_3D_V = 128;
+    /** The card's leather rim and the shade line inside it: the model is clipped inside this inset. */
+    public static final int SPOTLIGHT_3D_INSET = 4;
 
     private AlmanacPanels() {
     }

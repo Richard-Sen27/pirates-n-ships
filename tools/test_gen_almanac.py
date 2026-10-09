@@ -313,6 +313,59 @@ class RecipeAndSpotlightTest(unittest.TestCase):
         self.assertTrue(all(r.startswith(NS + ":") for r in recipes))
 
 
+REGISTRY = {"block": {f"{NS}:capstan", f"{NS}:helm"}, "item": ITEMS, "entity": {f"{NS}:shark", f"{NS}:kraken"}}
+
+
+class Spotlight3dTest(unittest.TestCase):
+    """ALM10: {spotlight3d:<kind>:<id>[|caption]} blocks."""
+
+    def chapter(self, body):
+        text = SAILING.replace("## The helm\nSee [[pirates_n_ships:combat|the guns]] and [[welcome]].\n", "## The helm\n" + body)
+        saved = ga.ILLUSTRATIONS
+        ga.ILLUSTRATIONS = {"yard": ("yard.png", ga.FULL), "cannon": ("cannon.png", ga.FULL)}
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                for name, t in {"01-welcome.md": WELCOME, "04-sailing.md": text, "10-combat.md": COMBAT}.items():
+                    (Path(tmp) / name).write_text(t, encoding="utf-8")
+                chapters, lang, _ = ga.build_chapters(ga.read_sources(tmp), ITEMS, RECIPES, REGISTRY)
+                return chapters[1]["body"]["pages"][1]["elements"], lang
+        finally:
+            ga.ILLUSTRATIONS = saved
+
+    def test_every_kind_becomes_an_element_in_flow_order(self):
+        elements, _ = self.chapter("Turn it.\n{spotlight3d:block:capstan}\n{spotlight3d:item:pirates_n_ships:helm}\n"
+                                   "{spotlight3d:entity:minecraft:dolphin}\nThen sail.\n")
+        self.assertEqual([e["type"] for e in elements], ["heading", "text", "spotlight3d", "spotlight3d", "spotlight3d", "text"])
+        self.assertEqual(elements[2], {"type": "spotlight3d", "subject": "block", "id": f"{NS}:capstan"})
+        self.assertEqual(elements[3], {"type": "spotlight3d", "subject": "item", "id": f"{NS}:helm"})
+        self.assertEqual(elements[4], {"type": "spotlight3d", "subject": "entity", "id": "minecraft:dolphin"})
+
+    def test_a_caption_after_a_bar_becomes_a_lang_key(self):
+        elements, lang = self.chapter("{spotlight3d:entity:pirates_n_ships:shark|The shark}\n")
+        spot = elements[1]
+        self.assertEqual((spot["subject"], spot["id"]), ("entity", f"{NS}:shark"))
+        self.assertEqual(spot["caption"], f"{NS}.almanac.sailing.p2.spotlight3d1")
+        self.assertEqual(lang[spot["caption"]], "The shark")
+        self.assertEqual([k for k, _, _ in ga.split_blocks([(1, "Look"), (2, "{spotlight3d:block:helm}"), (3, "here.")])],
+                         ["para", "spotlight3d", "para"])
+
+    def test_unknown_ids_kinds_and_bad_captions_stop(self):
+        for body in ("{spotlight3d:block:nothing}\n", "{spotlight3d:entity:helm}\n", "{spotlight3d:item:capstan}\n",
+                     "{spotlight3d:block:minecraft:no_such_block}\n", "{spotlight3d:mob:shark}\n",
+                     "{spotlight3d:block:}\n", "{spotlight3d:shark}\n", "{spotlight3d:entity:shark|}\n",
+                     "{spotlight3d:entity:shark|The **shark**}\n", "{spotlight3d:block:Bad Id}\n"):
+            with self.assertRaises(SystemExit, msg=body):
+                self.chapter(body)
+
+    def test_inline_use_stops_and_our_registry_comes_from_the_lang(self):
+        with self.assertRaises(SystemExit):
+            ga.check_markup("see {spotlight3d:block:helm} here", "x", CHAPTERS, ITEMS)
+        blocks, entities = lib.load_registry()
+        self.assertIn(f"{NS}:capstan", blocks)
+        self.assertIn(f"{NS}:kraken", entities)
+        self.assertNotIn(f"{NS}:capstan", entities)
+
+
 class SourceTest(unittest.TestCase):
 
     def test_the_real_almanac_builds(self):

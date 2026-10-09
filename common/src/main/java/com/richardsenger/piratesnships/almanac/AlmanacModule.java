@@ -69,11 +69,13 @@ public final class AlmanacModule implements ModModule {
                 .add(AlmanacItem.TOOLTIP, "Use to read; sneak-use on a block to set it down"));
         data.models(m -> {
             Block tome = AlmanacContent.ALMANAC.get();
-            // the renderer draws the whole book (ENTITYBLOCK_ANIMATED): the block model is only the breaking particle
+            // the renderer draws the whole book (ENTITYBLOCK_ANIMATED): the block model is only the breaking particle,
+            // taken from the item model's texture (ART14)
             ResourceLocation model = ModelTemplates.PARTICLE_ONLY.create(tome,
-                    TextureMapping.particle(Constants.id("item/captains_almanac")), m.models());
+                    TextureMapping.particle(Constants.id("item/captains_almanac_tome")), m.models());
             m.blockStates().accept(MultiVariantGenerator.multiVariant(tome, Variant.variant().with(VariantProperties.MODEL, model)));
-            m.flatItem(AlmanacContent.ALMANAC_ITEM.get());
+            // the item model is the Blockbench tome (art/models/captains_almanac.bbmodel, ART14)
+            m.handMadeItem(AlmanacContent.ALMANAC_ITEM.get());
         });
         data.blockLoot(loot -> loot.dropSelf(AlmanacContent.ALMANAC.get()));
         data.recipes(out -> ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, AlmanacContent.ALMANAC_ITEM.get())

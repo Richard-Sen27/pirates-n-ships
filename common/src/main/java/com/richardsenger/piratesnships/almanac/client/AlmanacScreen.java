@@ -87,7 +87,8 @@ public final class AlmanacScreen extends Screen {
     private static final int BUTTON_FACE = 0xFFEEE0BC;
     private static final int BUTTON_FACE_HOVER = 0xFFF8EED4;
     private static final int PLACEHOLDER = 0x40A08054;
-    private static final int SHADE_STRIPS = 16;
+    /** Alpha strips of the fold's shade; 32 keep the steps below a visible band on the mottled parchment (ART14). */
+    private static final int SHADE_STRIPS = 32;
 
     private final AlmanacBook book;
     private final List<Chapter> chapters;

@@ -1831,6 +1831,75 @@ lurking; nothing is keyed for that).
   | `surface` (2 s, once) | `mantle` rises 3 px with a 0.8 px overshoot at 1.2 s, scale from folded `[0.84, 0.9, 0.86]` to spread `[1.08, 1.04, 1.04]` at 1 s and back to 1; eyes open at 0.8–1.1 s; arms unfurl from curl 45° (`_2`) / 70° (`_3`) |
   | `grab` (1 s, once) | every `_2` curls 38°, `_3` 62° by 0.35 s (`easeOutQuad`), held to 0.55 s, relaxed by 1 s |
   | `submerge` (2 s, hold) | `mantle` sinks 3 px and contracts to `[0.82, 0.86, 0.88]` (fins folded), eyes close by 0.6 s, arms draw in (curl 20° / 32°) |
+## The Captain's Almanac (ART14)
+
+The tome, its item and the book screen replace the ALM1/ALM3 placeholders (design.md §3.4: "a thick leather-bound tome
+with brass corners"). One palette for all three: the GUI kit's leather and brass (below), parchment 196,170,124 /
+226,206,162 / 238,224,188 with edge 160,128,84, a red title label 138,30,26.
+
+- **Placed tome** (`textures/entity/captains_almanac_book.png`, 64x32): `AlmanacRenderer` keeps vanilla's
+  `BookModel` and its open, close and page-flip animation and only swaps the texture (`AlmanacRenderer.TEXTURE`, a plain
+  texture drawn with the model's `entitySolid` render type, not in the block atlas). The texture follows the model's
+  box UV layout (`BookModel.createBodyLayer` offsets and sizes, faces from `ModelPart.Cube`: a north face maps u with
+  +x, a south face with -x; v runs with +y). Which face is which: the covers have zero depth, and the face turned
+  towards the pages is the inside. `left_lid` north u 0..6 = inside of the top cover, south u 6..12 = its outside
+  (hinge at u 6); `right_lid` north u 16..22 = inside of the bottom cover, south u 22..28 = outside (hinge at u 28);
+  `seam` north u 12..14 = the spine's outside, south u 14..16 = its inside; reading faces `left_pages` south u 7..12
+  (spine column u 11) and `right_pages` north u 13..18 (spine column u 13), v 11..19; fore-edges u 6 and u 18, head
+  and tail at v 10; the flip page u 24..29 / 29..34, v 10..18. The tome lies closed on its right cover, so the left
+  lid's outside is the visible front cover: board edge, a blind-tooled frame, a lighter panel, brass caps on the two
+  free corners and the clasp strap with its rivet; the back cover carries the catch. Spine: head and tail caps, two
+  raised bands with their shadow, a red label with a gilt dot. Pages: mottled parchment, three faint ruled lines, a
+  gutter shade, a deckled fore-edge and page-stack head and tail. Script: `tools/gen_almanac_book_texture.py`.
+- **Item** (`models/item/captains_almanac.json`, 15 elements, source `art/models/captains_almanac.bbmodel`, texture
+  `textures/item/captains_almanac_tome.png` 32x32 from the same script, one texel per model pixel, so UV = texel / 2;
+  also the placed block's breaking particle). A closed tome lying flat, x 2..14 (spine side at low x), y 0..4,
+  z 1..15: two 0.75 px leather boards, a page block inset 0.5 px (x 2.6..13.5, y 0.75..3.25, z 1.5..14.5, fore-edge
+  and head/tail page stripes), a rounded spine 1.4 px deep (x 1.2..2.6, 0.05 px inside the boards' planes) with three
+  raised bands (z 4.5, 8, 11.5), four brass corner caps wrapping the free corners of both boards (1.8 x 0.95 x 1.8 px,
+  0.1 to 0.3 px proud), and a clasp: a strap over the fore-edge, a plate and knob on the front board, a catch under
+  the back board. The texture's regions are listed in the script's docstring: the cover art 12x14 (tooled double
+  frame, gilt lozenge; front and back), the spine 14x4 (label, gilt dots, blind lines), the page edges, and 4x4 colour
+  patches used inset like the palette (`[u+0.5, v+0.5, u+3.5, v+3.5]` in texels). Hidden faces are left out;
+  `lint_models.py`: 0 visible fights. `AlmanacModule` marks the item `handMadeItem` and points the block's particle at
+  the new texture; the placeholder sprite `textures/item/captains_almanac.png` and `tools/gen_almanac_sprite.py` are
+  gone.
+- **Item display** (the left hand mirrors y and z): `gui` `[30, 225, 0]` / `[0, 4.1, 0]` / 0.8 (fore-edge with the
+  clasp lower left, head lower right, the cover's lozenge and all four caps read; 15.5 of 16 units wide, centred with
+  the orthographic display check of F7g, which gives 32 px per unit at 1024 px); third person `[90, 0, 90]` /
+  `[0, 2, 1]` / 0.5 (upright in the fist, spine down, cover outwards); first person `[90, -25, 80]` / `[-2, 5, 0]` /
+  0.32 (cover towards the player, fore-edge right); `ground` 0.4 raised 2 px; `fixed` `[90, 180, 0]` /
+  `[-2.2, 0.3, 0]` / 0.95 (cover out, spine left, centred in the frame); `head` `[0, -2.2, 0]` / 0.9 (not checked).
+- **Re-export:** the cubes were placed from a spec list in `risky_eval` (`new Cube({from, to, autouv: 0, faces})`,
+  hidden faces `texture: null`), display slots set as `DisplaySlot`s. To change the model, edit the project, then
+  `Codecs.java_block.compile({raw: true})`, keep `credit`, `gui_light: front`, textures `0` and `particle` =
+  `pirates_n_ships:item/captains_almanac_tome`, round to 4 decimals, write tab-indented; save the project with the
+  texture embedded, `path` `""` and `relative_path` to the texture. After changing the texture script, reload the
+  texture in the project before saving it.
+- **Screen** (`textures/gui/almanac/book.png` 292x180, `bookmark.png` 24x16; `tools/gen_almanac_textures.py`, which
+  imports the palette, noise and PNG writer from the tome script): the spread at 1:1 with ALM3's geometry unchanged
+  (pages x 9..146 and 146..283, y 5..172; stacks x 6..9, 283..286, y 172..175; no screen constant changed). Leather
+  boards with value-noise grain, an outline, a blind-tooled line 2 px in, darker head and tail bands where the spine
+  runs, brass corner plates (18 px triangles with a rivet; the pages cover their inner part). Parchment: two layers of
+  value noise (26 and 9 px cells) between the three parchment shades, a fine grain, five faint foxing spots per page,
+  ruled lines at 16 % of a brown ink one pixel under each text line (`CONTENT_TOP + 10k + 9`, over the text box plus
+  2 px; they match plain paragraphs, other elements shift text off them), an 18 px quadratic gutter shade to 80 % at
+  the spine with a crease, a slight shade along the other edges; the page stacks in three edge shades. The bookmark is
+  a light grey silk ribbon (lightest a third down, so the tint keeps most of the chapter colour), stitched with
+  2-on-1-off dashes 2 px inside both long edges, outlined, with a 5 px swallowtail end. `RULE_STRENGTH`, the mottle
+  contrast and `GUTTER` are constants at the top of the script.
+- **Page-turn fold:** over the mottled parchment the fold's 16 alpha strips gave steps of about 4 grey levels on 8 px
+  bands at GUI scale 2 (simulated in Python over the new page); `AlmanacScreen.SHADE_STRIPS` is now 32.
+- **Regenerate:** `python3 tools/gen_almanac_book_texture.py` and `python3 tools/gen_almanac_textures.py`;
+  `AlmanacTexturesTest` fails while the committed PNGs differ from a fresh run of either script (stored deflate, so
+  byte-identical everywhere) and checks the sizes.
+- **Renders:** `renders/captains_almanac.png` (the placed tome on a spruce block from the block's three-quarter view:
+  closed, open, a page turning; then the item in the GUI slot view). The tome panels are drawn in `risky_eval` with a
+  `THREE.WebGLRenderer` from a JS copy of `BookModel`'s parts (the `ModelPart.Cube` face and UV rules above), its
+  `setupAnim` and `AlmanacBookPose.pose`, so they show the real texture on the real geometry.
+  `renders/captains_almanac_screen.png`: the spread at 3x with three bookmarks tinted dark red, grey and blue
+  (composited in Python, the open chapter's 3 px further out).
+
 ## GUI kit (U1)
 
 Screen and HUD sprites come from `tools/gen_gui_textures.py` (standard library only; run it with `python3`, commit

@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * The wave spectrum of the simulated sea (docs/design.md §5.4, WAV2): which sine trains make up a {@link WaveField}.
  * Pure and deterministic: the trains come from a fixed seed, never from game randomness, so the server and every client
- * build the same sea from the same three numbers (the train count, the peak wavelength and the field's direction).
+ * build the same sea from the same few numbers (the train count, the peak wavelength and the field's heading).
  *
  * <h2>Trains</h2>
  * {@code count} trains spread over the band {@link #MIN_WAVELENGTH}–{@link #MAX_WAVELENGTH} in equal steps of
@@ -159,7 +159,6 @@ public final class WaveSpectrum {
 
     /**
      * The weighted components of a sea of {@code count} trains peaking at {@code peakWavelength}; the weights sum to 1.
-     * Each component's anchor reference bearing is 90° (east) turned by its offset.
      */
     public static List<WaveField.Component> components(int count, double peakWavelength) {
         List<Train> trains = trains(count);
@@ -167,7 +166,7 @@ public final class WaveSpectrum {
         List<WaveField.Component> out = new ArrayList<>(trains.size());
         for (int i = 0; i < trains.size(); i++) {
             Train t = trains.get(i);
-            out.add(new WaveField.Component(t.wavelength(), t.periodTicks(), w[i], t.phase(), t.offsetDeg(), 90.0 + t.offsetDeg()));
+            out.add(new WaveField.Component(t.wavelength(), t.periodTicks(), w[i], t.phase(), t.offsetDeg()));
         }
         return out;
     }

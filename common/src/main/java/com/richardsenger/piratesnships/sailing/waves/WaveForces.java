@@ -128,11 +128,12 @@ public final class WaveForces {
             world[i] = ship.toWorld(pts[i], new Vector3d());
         }
         Vector3d c = ship.toWorld(WaveTorqueRule.center(bounds, com.y), new Vector3d());
+        // the one global sea (WAV7): the same height at the same point and time as the drawn surface and every boat
         double[] h = new double[pts.length + 1];
         for (int i = 0; i < pts.length; i++) {
-            h[i] = field.heightAround(c.x, c.z, world[i].x, world[i].z, now);
+            h[i] = field.heightAt(world[i].x, world[i].z, now);
         }
-        h[pts.length] = field.heightAround(c.x, c.z, c.x, c.z, now);
+        h[pts.length] = field.heightAt(c.x, c.z, now);
         double lengthSpan = Math.hypot(world[0].x - world[1].x, world[0].z - world[1].z);
         double beamSpan = Math.hypot(world[2].x - world[3].x, world[2].z - world[3].z);
         s.rollSlope = WaveTorqueRule.slope(h[2], h[3], beamSpan);

@@ -93,7 +93,7 @@ class WaveSpectrumTest {
         WaveField b = storm(123.0, WaveField.Origin.NONE);
         for (int i = 0; i < 100; i++) {
             double x = i * 13.7 - 400, z = 200 - i * 5.3, t = 1000 + i * 31.0;
-            assertEquals(a.heightAround(x, z, x + 3, z - 2, t), b.heightAround(x, z, x + 3, z - 2, t), 0.0);
+            assertEquals(a.heightAt(x + 3, z - 2, t), b.heightAt(x + 3, z - 2, t), 0.0);
         }
         assertNotEquals(WaveSpectrum.trains(6), WaveSpectrum.trains(7));
     }
@@ -105,7 +105,7 @@ class WaveSpectrumTest {
         double max = 0, minEnv = 9, maxEnv = 0;
         for (int i = 0; i < 200000; i++) {
             double x = (i * 7.31) % 900 - 450, z = (i * 3.17) % 400 - 200, t = i * 13.7;
-            double h = f.height(x, z, t);
+            double h = f.heightAt(x, z, t);
             assertTrue(Math.abs(h) <= f.maxHeight() + 1e-9, "height " + h);
             max = Math.max(max, Math.abs(h));
             double e = f.envelope(x, z, t);
@@ -133,24 +133,20 @@ class WaveSpectrumTest {
     }
 
     @Test
-    void movingTheAnchorIsContinuousForEveryTrainAndTheEnvelope() {
+    void theFieldIsContinuousInSpaceFarFromTheOrigin() {
+        // WAV7: one global field, no anchor; a hundredth of a block moves the surface by at most slope × 0.01
         WaveField f = storm(33.0, WaveField.Origin.NONE);
-        for (double ax : new double[] {500, 20000, -31000}) {
-            double h1 = f.heightAround(ax, 500, ax + 6, 503, 77);
-            double h2 = f.heightAround(ax + 0.01, 500.01, ax + 6.01, 503.01, 77);
-            assertTrue(Math.abs(h1 - h2) < 0.01, "jump " + (h1 - h2) + " at " + ax);
+        for (double x : new double[] {500, 20000, -31000, 2.9e7}) {
+            double h1 = f.heightAt(x + 6, 503, 77);
+            double h2 = f.heightAt(x + 6.01, 503.01, 77);
+            assertTrue(Math.abs(h1 - h2) <= f.maxSlope() * 0.015, "jump " + (h1 - h2) + " at " + x);
         }
-        // a slow drift of the direction far out barely moves the surface
-        WaveField turned = storm(33.02, WaveField.Origin.NONE);
-        double dh = Math.abs(f.heightAround(20000, -15000, 20008, -14997, 100) - turned.heightAround(20000, -15000, 20008, -14997, 100));
-        assertTrue(dh < 0.01, "height jumped by " + dh);
-        assertEquals(f.height(20000, -15000, 100), turned.height(20000, -15000, 100), 1e-12);
     }
 
     @Test
     void easingThePeakChangesTheSurfaceContinuously() {
-        double h0 = new WaveField(0.7, 90, WaveSpectrum.components(6, 29.0), WaveField.Origin.NONE, GROUPS).height(1234, 567, 8910);
-        double h1 = new WaveField(0.7, 90, WaveSpectrum.components(6, 29.001), WaveField.Origin.NONE, GROUPS).height(1234, 567, 8910);
+        double h0 = new WaveField(0.7, 90, WaveSpectrum.components(6, 29.0), WaveField.Origin.NONE, GROUPS).heightAt(1234, 567, 8910);
+        double h1 = new WaveField(0.7, 90, WaveSpectrum.components(6, 29.001), WaveField.Origin.NONE, GROUPS).heightAt(1234, 567, 8910);
         assertTrue(Math.abs(h0 - h1) < 1e-3);
         assertEquals(30.0, WaveSpectrum.peakWavelength(SeaState.MODERATE.amplitude()), 1e-12);
         // WAV4: calm 0.15 (56), moderate 0.6 (30), rough 1.2 (32), storm 2.0 (42)
@@ -177,7 +173,7 @@ class WaveSpectrumTest {
             java.util.Random r = new java.util.Random(1);
             double max = 0;
             for (int i = 0; i < 200_000; i++) {
-                max = Math.max(max, Math.abs(f.height(r.nextDouble() * 5000, r.nextDouble() * 5000, r.nextDouble() * 100_000)));
+                max = Math.max(max, Math.abs(f.heightAt(r.nextDouble() * 5000, r.nextDouble() * 5000, r.nextDouble() * 100_000)));
             }
             assertTrue(max <= peak / 15.0, s.id() + ": crest " + max + " on a " + peak + "-block peak");
             assertTrue(max >= 0.9 * a, s.id() + ": the sea never came near its amplitude: " + max);
@@ -203,9 +199,9 @@ class WaveSpectrumTest {
     void slopeIsTheGradientWithTheEnvelope() {
         WaveField f = storm(210.0, new WaveField.Origin(400.0, 1000.0, -300.0));
         double ax = 1234.5, az = -987.25, t = 4567, e = 1e-4;
-        double[] g = f.slopeAround(ax, az, ax + 3, az - 2, t);
-        double gx = (f.heightAround(ax, az, ax + 3 + e, az - 2, t) - f.heightAround(ax, az, ax + 3 - e, az - 2, t)) / (2 * e);
-        double gz = (f.heightAround(ax, az, ax + 3, az - 2 + e, t) - f.heightAround(ax, az, ax + 3, az - 2 - e, t)) / (2 * e);
+        double[] g = f.slopeAt(ax + 3, az - 2, t);
+        double gx = (f.heightAt(ax + 3 + e, az - 2, t) - f.heightAt(ax + 3 - e, az - 2, t)) / (2 * e);
+        double gz = (f.heightAt(ax + 3, az - 2 + e, t) - f.heightAt(ax + 3, az - 2 - e, t)) / (2 * e);
         assertEquals(gx, g[0], 1e-6);
         assertEquals(gz, g[1], 1e-6);
         assertTrue(Math.hypot(g[0], g[1]) <= f.maxSlope() + 1e-12);
@@ -215,10 +211,10 @@ class WaveSpectrumTest {
     void theRecordAtAPointIsNoSingleSine() {
         // successive crest heights at one point differ: the sea is irregular
         WaveField f = storm(90.0, WaveField.Origin.NONE);
-        double prev = f.height(0, 0, 0), crest = 0, lastCrest = Double.NaN, diff = 0;
+        double prev = f.heightAt(0, 0, 0), crest = 0, lastCrest = Double.NaN, diff = 0;
         int crests = 0;
         for (int t = 1; t < 20 * 300; t++) {
-            double h = f.height(0, 0, t);
+            double h = f.heightAt(0, 0, t);
             if (prev < 0 && h >= 0) {
                 if (!Double.isNaN(lastCrest)) {
                     diff += Math.abs(crest - lastCrest) / Math.max(crest, lastCrest);

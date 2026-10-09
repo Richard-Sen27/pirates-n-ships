@@ -13,7 +13,11 @@ import org.jetbrains.annotations.Nullable;
  *   <li><b>Easing</b>: the sea's amplitude moves linearly toward the target state's, at a rate that takes
  *       {@code state_change_seconds} from calm to storm ({@link #ease}).</li>
  *   <li><b>Direction</b>: the waves run with the wind, offset by a slow noise of up to ±{@link #DIRECTION_NOISE_DEG}
- *       ({@link #directionDegrees}).</li>
+ *       ({@link #directionDegrees}). The sea does not follow that direction continuously but in steps (WAV7,
+ *       {@link Tracker#tickDirection}): once it lies more than {@code waves.direction_step_degrees} from the sea's
+ *       direction, the sea crossfades to it over {@code waves.direction_fade_seconds}, starting
+ *       {@link #DIRECTION_LEAD_TICKS} later so the clients hear of it before it shows. Between steps the field is
+ *       stationary, so it can be one global field ({@link WaveField}).</li>
  * </ul>
  */
 public final class SeaStateModel {
@@ -28,6 +32,12 @@ public final class SeaStateModel {
     public static final double DIRECTION_NOISE_DEG = 25.0;
     /** Time scale of the direction offset [ticks]. */
     public static final double DIRECTION_PERIOD = 6000.0;
+
+    /**
+     * Ticks between the decision to turn the sea and the start of its crossfade (WAV7): the new heading is synced at once
+     * ({@code WaveSync}), so a client has it before the fade begins and draws the same sea as the server.
+     */
+    public static final long DIRECTION_LEAD_TICKS = 20;
 
     private static final long CH_CLEAR = 41;
     private static final long CH_DIRECTION = 43;
@@ -67,6 +77,31 @@ public final class SeaStateModel {
         return windTowardDeg + DIRECTION_NOISE_DEG * WindNoise.fbm1(seed, CH_DIRECTION, gameTime / DIRECTION_PERIOD);
     }
 
+    /** Signed shortest turn from {@code fromDeg} to {@code toDeg}, in [-180, 180) [degrees]. */
+    public static double turnDegrees(double fromDeg, double toDeg) {
+        return ((toDeg - fromDeg) % 360.0 + 540.0) % 360.0 - 180.0;
+    }
+
+    /**
+     * The next heading of a sea whose heading is {@code heading} (null before the first tick) when the direction it
+     * should run toward is {@code targetDeg} at game time {@code gameTime} (WAV7): unchanged while a fade is pending or
+     * running, or while the target lies within {@code stepDeg}; otherwise a fade from the current direction to the target
+     * starting {@link #DIRECTION_LEAD_TICKS} from now and lasting {@code fadeTicks}. The first heading is the target,
+     * steady.
+     */
+    public static WaveField.Heading stepHeading(@Nullable WaveField.Heading heading, double targetDeg, long gameTime,
+                                                double stepDeg, double fadeTicks) {
+        if (heading == null || !Double.isFinite(heading.current())) {
+            return WaveField.Heading.steady(targetDeg);
+        }
+        if (heading.fading(gameTime) || Math.abs(turnDegrees(heading.current(), targetDeg)) <= stepDeg) {
+            return heading;
+        }
+        // keep the new direction on the short arc from the current one, so the numbers stay near each other
+        double next = heading.current() + turnDegrees(heading.current(), targetDeg);
+        return new WaveField.Heading(next, heading.current(), gameTime + DIRECTION_LEAD_TICKS, Math.max(0.0, fadeTicks));
+    }
+
     /** Amplitude change per tick that takes {@code changeSeconds} from calm to storm. */
     public static double ratePerTick(double changeSeconds) {
         return (SeaState.STORM.amplitude() - SeaState.CALM.amplitude()) / Math.max(1.0, changeSeconds * 20.0);
@@ -95,6 +130,7 @@ public final class SeaStateModel {
         private @Nullable Double overrideDirection;
         private long overrideUntil = FOREVER;
         private WaveField.Origin origin = WaveField.Origin.NONE;
+        private WaveField.@Nullable Heading heading;
 
         /**
          * One tick at {@code gameTime}: eases toward the weather's {@code target}, or holds the override (dropped once
@@ -110,6 +146,22 @@ public final class SeaStateModel {
             } else {
                 amplitude = ease(amplitude, target.amplitude(), ratePerTick);
             }
+        }
+
+        /**
+         * One tick of the sea's direction at {@code gameTime} ({@link #stepHeading}): toward the override's direction
+         * if it holds one, else toward {@code windDirectionDeg} (the wind with the slow offset). Calling it twice in one
+         * tick changes nothing the second time.
+         */
+        public WaveField.Heading tickDirection(double windDirectionDeg, long gameTime, double stepDeg, double fadeTicks) {
+            double target = overrideDirection != null ? overrideDirection : windDirectionDeg;
+            heading = stepHeading(heading, target, gameTime, stepDeg, fadeTicks);
+            return heading;
+        }
+
+        /** The sea's direction and crossfade, or null before the first {@link #tickDirection}. */
+        public WaveField.@Nullable Heading heading() {
+            return heading;
         }
 
         /**
@@ -131,6 +183,9 @@ public final class SeaStateModel {
             overrideUntil = untilGameTime;
             target = state;
             amplitude = state.amplitude();
+            if (directionDegrees != null) {
+                heading = WaveField.Heading.steady(directionDegrees); // a held direction applies at once, no fade
+            }
         }
 
         /** Drops the override; the sea eases back to the weather's state from where it is. */

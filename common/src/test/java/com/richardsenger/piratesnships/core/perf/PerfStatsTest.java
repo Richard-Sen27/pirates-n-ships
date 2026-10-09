@@ -80,6 +80,7 @@ class PerfStatsTest {
         assertEquals(4, s.busy());
         assertEquals(0.5, s.modShare(), 1e-12);
         assertEquals(0.25, s.sableShare(), 1e-12);
+        assertEquals(List.of("dev.ryanhcode.sable.Foo.bar"), s.topSable(5).stream().map(PerfStats.Entry::name).toList());
         List<PerfStats.Entry> inc = s.topInclusive(10);
         assertEquals(5, inc.size()); // candidates, claim, canUse, fill (once), HullRuntime.tick
         assertTrue(inc.stream().allMatch(e -> e.samples() == 1));
@@ -89,6 +90,9 @@ class PerfStatsTest {
         assertEquals(List.of("crew.lean", "ship.hull"), areas.stream().map(PerfStats.Entry::name).toList());
         assertEquals(0.25, areas.get(0).share(), 1e-12);
         assertFalse(inc.stream().anyMatch(e -> e.name().contains("core.perf")));
+        // what the deepest mod frame calls: only the lean scan calls out (the hull sample's deepest frame is the top)
+        assertEquals(List.of(MOD + "crew.lean.RailLean.candidates > net.minecraft.world.level.Level.getBlockState"),
+                s.topCallees(10).stream().map(PerfStats.Entry::name).toList());
     }
 
     @Test

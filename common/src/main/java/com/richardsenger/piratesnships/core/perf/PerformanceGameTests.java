@@ -57,7 +57,6 @@ import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.profiling.ProfileResults;
 import net.minecraft.util.profiling.ResultField;
 import net.minecraft.world.entity.Entity;
@@ -94,7 +93,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * -Ppirates_n_ships.perf=true}.
  *
  * <p>The scene, in a 160 × 160 basin 10 blocks deep with a ROUGH sea held and a light wind: a player (the harness's
- * mock server player, so the mod's syncs reach a connection) stands on the quarterdeck of an assembled starter sloop
+ * mock player, added to the level) stands on the quarterdeck of an assembled starter sloop
  * with railings along its waist, three ratline nets and a boarding net; six crew aboard, two rowing, two at stations
  * (sail winch, bilge pump), two idle (they lean on the rail). Around it {@code N} materialised voyages on the armed
  * templates (alternately pirate raiders and navy patrols, with their crews, fighters, stocked and loaded guns), plus a
@@ -114,12 +113,17 @@ public final class PerformanceGameTests {
 
     private static final String BATCH = "pirates_n_ships_config_perf_n";
     private static final int SIZE = 160;
+    /** The template's height; the barrier ceiling lies at about this relative y. */
+    private static final int SIZE_Y = 40;
     /** Water from y=2 up to this row (10 deep: the starter sloop draws 4.3). */
     private static final int SEA_TOP = 11;
     /** Ticks between the end of the setup and the start of the measurement (crew reach the rail, oars, guns). */
     static final int SETTLE = 300;
     /** Measured ticks: 60 s. */
     static final int MEASURE = 1200;
+    /** Extra settling of the first perf test in a server: the JIT warms up on the scene before anything is measured. */
+    static final int WARM_UP = 1200;
+    private static final java.util.concurrent.atomic.AtomicBoolean WARMED = new java.util.concurrent.atomic.AtomicBoolean();
     /** The profiled window of the N = 8 run, from the start of the measurement [ticks]. */
     private static final int PROFILE_FROM = 300;
     private static final int PROFILE_TICKS = 400;
@@ -145,17 +149,17 @@ public final class PerformanceGameTests {
 
     // ------------------------------------------------------------------ tests
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_160_DEEP, timeoutTicks = SETUP_LIMIT + SETTLE + MEASURE + 400, batch = BATCH + "1")
+    @ModGameTest(template = GameTestTemplates.EMPTY_160_DEEP, timeoutTicks = SETUP_LIMIT + WARM_UP + SETTLE + MEASURE + 400, batch = BATCH + "1")
     public static void oneShipNearThePlayer(GameTestHelper h) {
         run(h, 1);
     }
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_160_DEEP, timeoutTicks = SETUP_LIMIT + SETTLE + MEASURE + 400, batch = BATCH + "4")
+    @ModGameTest(template = GameTestTemplates.EMPTY_160_DEEP, timeoutTicks = SETUP_LIMIT + WARM_UP + SETTLE + MEASURE + 400, batch = BATCH + "4")
     public static void fourShipsNearThePlayer(GameTestHelper h) {
         run(h, 4);
     }
 
-    @ModGameTest(template = GameTestTemplates.EMPTY_160_DEEP, timeoutTicks = SETUP_LIMIT + SETTLE + MEASURE + 400, batch = BATCH + "8")
+    @ModGameTest(template = GameTestTemplates.EMPTY_160_DEEP, timeoutTicks = SETUP_LIMIT + WARM_UP + SETTLE + MEASURE + 400, batch = BATCH + "8")
     public static void eightShipsNearThePlayer(GameTestHelper h) {
         run(h, 8);
     }
@@ -175,7 +179,6 @@ public final class PerformanceGameTests {
     private static final class Scene {
         final int n;
         Player player;
-        boolean serverPlayer;
         ShipBody sloop;
         final List<CrewMember> crew = new ArrayList<>();
         final List<Npc> npcs = new ArrayList<>();
@@ -193,7 +196,7 @@ public final class PerformanceGameTests {
         ServerLevel level = h.getLevel();
         MinecraftServer server = level.getServer();
         ConfigOverrides.during(h, MaterializeConfig.MAX_MATERIALIZED, 16);
-        long hold = SETUP_LIMIT + SETTLE + MEASURE + 600;
+        long hold = SETUP_LIMIT + WARM_UP + SETTLE + MEASURE + 600;
         Vec3 mid = h.absoluteVec(new Vec3(SIZE / 2.0, 0, SIZE / 2.0));
         SeaStates.set(level, SeaState.ROUGH, 90.0, level.getGameTime() + hold,
                 new WaveField.Origin(level.getGameTime() - h.getTick(), mid.x, mid.z));
@@ -211,7 +214,9 @@ public final class PerformanceGameTests {
             engage(h, s);
             crew(h, s);
         });
-        int start = 3 + count + SETTLE;
+        // the first perf test of a server also warms the JIT up, else it measures a cold JVM (seen: N=1 slower than N=8)
+        int warmUp = WARMED.getAndSet(true) ? 0 : WARM_UP;
+        int start = 3 + count + SETTLE + warmUp;
         measure(h, s, start);
         h.runAtTickTime(start + MEASURE + 5, () -> {
             try {
@@ -234,6 +239,11 @@ public final class PerformanceGameTests {
                 level.setBlock(h.absolutePos(new BlockPos(x, 1, z)), stone, Block.UPDATE_CLIENTS);
                 for (int y = 2; y <= SEA_TOP + 1; y++) {
                     level.setBlock(h.absolutePos(new BlockPos(x, y, z)), wall ? stone : y <= SEA_TOP ? water : air, Block.UPDATE_CLIENTS);
+                }
+                // the test's barrier ceiling: the masts reach into it, and the materialiser finds the sea by the heightmap
+                for (int y = SIZE_Y - 2; y <= SIZE_Y + 2; y++) {
+                    BlockPos p = h.absolutePos(new BlockPos(x, y, z));
+                    if (level.getBlockState(p).is(Blocks.BARRIER)) level.setBlock(p, air, Block.UPDATE_CLIENTS);
                 }
             }
         }
@@ -283,18 +293,12 @@ public final class PerformanceGameTests {
         if (s.sloop == null) throw new GameTestAssertException("no sloop");
         // the player on the quarterdeck, two blocks forward of the helm
         Vec3 deck = onDeck(s.sloop, new BlockPos(4, 8, 20));
-        try {
-            ServerPlayer p = h.makeMockServerPlayerInLevel();
-            p.teleportTo(level, deck.x, deck.y, deck.z, 0, 0);
-            s.player = p;
-            s.serverPlayer = true;
-        } catch (RuntimeException e) {
-            s.notes.add("mock server player failed (" + e + "), a plain mock player stands in");
-            Player p = h.makeMockPlayer(GameType.CREATIVE);
-            p.moveTo(deck.x, deck.y, deck.z, 0, 0);
-            level.addFreshEntity(p);
-            s.player = p;
-        }
+        // the harness's mock player in the level (a mock server player would be refused Sable's and our payloads by
+        // NeoForge, its embedded connection never negotiated them); the syncs to players are not measured
+        Player p = h.makeMockPlayer(GameType.CREATIVE);
+        p.moveTo(deck.x, deck.y, deck.z, 0, 0);
+        level.addFreshEntity(p);
+        s.player = p;
     }
 
     private static BlockState chainplate(Direction facing) {
@@ -359,7 +363,10 @@ public final class PerformanceGameTests {
         BlockPos m = h.absolutePos(new BlockPos(SLOTS[index][0], SEA_TOP, SLOTS[index][1]));
         List<Lane.Point> route = List.of(new Lane.Point(m.getX(), m.getZ() + 100), new Lane.Point(m.getX(), m.getZ() - 100));
         ResourceLocation from = Constants.id("gametest/perf1_" + UUID.randomUUID().toString().substring(0, 8));
-        Voyage v = Voyage.depart(UUID.randomUUID(), kind, faction, template, from, from, route, cargo, level.getGameTime())
+        // departed "in the future": the materialiser ends test voyages older than TEST_VOYAGE_TICKS (1200), which would
+        // take the ships away in the middle of the measurement
+        long departed = level.getGameTime() + SETUP_LIMIT + WARM_UP + SETTLE + MEASURE;
+        Voyage v = Voyage.depart(UUID.randomUUID(), kind, faction, template, from, from, route, cargo, departed)
                 .withProgress(100);
         VoyageData.get(server).put(v);
         Materializer.Outcome o = Materializer.materialize(server, v.id());
@@ -431,6 +438,7 @@ public final class PerformanceGameTests {
         int maxEntities;
         int maxModEntities;
         int maxShips;
+        int minShips = Integer.MAX_VALUE;
         final Map<String, Integer> byType = new LinkedHashMap<>();
         final List<List<PerfStats.Entry>> profilerWindows = new ArrayList<>();
         final List<String> profilerReports = new ArrayList<>();
@@ -543,7 +551,9 @@ public final class PerformanceGameTests {
             m.byType.putAll(types);
         }
         m.maxModEntities = Math.max(m.maxModEntities, mod);
-        m.maxShips = Math.max(m.maxShips, SableShips.all(level).size());
+        int shipsNow = SableShips.all(level).size();
+        m.maxShips = Math.max(m.maxShips, shipsNow);
+        m.minShips = Math.min(m.minShips, shipsNow);
         long leaners = s.crew.stream().filter(CrewMember::isLeaning).count();
         m.rowing = Rowing.rowers(s.sloop.id()).size() + " rowing";
         m.leaning = leaners + " leaning";
@@ -567,16 +577,18 @@ public final class PerformanceGameTests {
         StringBuilder r = new StringBuilder();
         r.append(String.format(Locale.ROOT, "PERF1 N=%d (%d NPC armed ships + convoy + patrol + the player's sloop)%n", s.n, s.n));
         r.append(String.format(Locale.ROOT, "player: %s; sea ROUGH, wind 3 from the east; %d s measured after %d ticks of settling%n",
-                s.serverPlayer ? "mock server player" : "mock player", MEASURE / 20, SETTLE));
+                "the harness's mock player (in the level, creative)", MEASURE / 20, SETTLE));
         r.append("per-tick MSPT:              ").append(perTick.row()).append('\n');
         r.append("per-second MSPT:            ").append(perSecond.row()).append('\n');
         r.append("per-second MSPT, unprofiled: ").append(cleanSeconds.row()).append('\n');
-        r.append(String.format(Locale.ROOT, "ships (Sable sub-levels): %d, entities: %d (mod: %d)%n", ships, m.maxEntities, m.maxModEntities));
+        r.append(String.format(Locale.ROOT, "ships (Sable sub-levels): %d (fewest during the measurement: %d), entities: %d (mod: %d)%n",
+                ships, m.minShips, m.maxEntities, m.maxModEntities));
         r.append("entities by type: ").append(m.byType).append('\n');
         r.append(String.format(Locale.ROOT, "player's crew: %s, %s; nets strung: %d of 4; boarders: %d; cannonballs fired: %d%n",
                 m.rowing, m.leaning, s.nets, s.boarders, s.balls.size()));
         for (Npc npc : s.npcs) {
-            Vec3 c = npc.ship().isRemoved() ? null : Materializer.centre(npc.ship());
+            ShipBody now = npc.voyage().shipId().map(id -> SableShips.byId(h.getLevel(), id)).orElse(null);
+            Vec3 c = now == null ? null : Materializer.centre(now);
             r.append("  ").append(npc.role()).append(c == null ? " removed" : String.format(Locale.ROOT, " at %.0f %.0f", c.x, c.z)).append('\n');
         }
         s.notes.forEach(note -> r.append("note: ").append(note).append('\n'));
@@ -591,6 +603,10 @@ public final class PerformanceGameTests {
             smp.topInclusive(40).forEach(e -> r.append("  ").append(e.row()).append('\n'));
             r.append("top mod methods, deepest mod frame (self + vanilla/JDK below):\n");
             smp.topSelf(25).forEach(e -> r.append("  ").append(e.row()).append('\n'));
+            r.append("calls out of the deepest mod frame (three frames down):\n");
+            smp.topCallees(25).forEach(e -> r.append("  ").append(e.row()).append('\n'));
+            r.append("Sable methods, inclusive:\n");
+            smp.topSable(30).forEach(e -> r.append("  ").append(e.row()).append('\n'));
             r.append("mod packages, inclusive:\n");
             smp.topAreas(25).forEach(e -> r.append("  ").append(e.row()).append('\n'));
         }
@@ -674,8 +690,7 @@ public final class PerformanceGameTests {
             if (c.getVehicle() != null) c.getVehicle().discard();
             c.discard();
         }
-        if (s.player instanceof ServerPlayer sp) server.getPlayerList().remove(sp);
-        else if (s.player != null) s.player.discard();
+        if (s.player != null) s.player.discard();
         level.getEntities(CannonContent.CANNONBALL.get(), e -> true).forEach(Entity::discard);
         SeaStates.clear(level);
         WindOverride.clear(level.dimension().location().toString());

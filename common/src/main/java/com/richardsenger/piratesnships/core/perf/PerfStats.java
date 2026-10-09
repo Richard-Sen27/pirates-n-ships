@@ -118,6 +118,8 @@ public final class PerfStats {
         private final Map<String, Integer> inclusive = new HashMap<>();
         private final Map<String, Integer> self = new HashMap<>();
         private final Map<String, Integer> areas = new HashMap<>();
+        private final Map<String, Integer> callees = new HashMap<>();
+        private final Map<String, Integer> sableInclusive = new HashMap<>();
         private int mod;
         private int sable;
 
@@ -131,11 +133,22 @@ public final class PerfStats {
             boolean anyMod = false;
             boolean anySable = false;
             Frame deepest = null;
-            for (Frame f : frames) {
-                if (f.sable()) anySable = true;
+            Set<String> seenSable = new HashSet<>();
+            for (int i = 0; i < frames.size(); i++) {
+                Frame f = frames.get(i);
+                if (f.sable()) {
+                    anySable = true;
+                    if (seenSable.add(f.id())) sableInclusive.merge(f.id(), 1, Integer::sum);
+                }
                 if (!f.mod()) continue;
                 anyMod = true;
-                if (deepest == null) deepest = f;
+                if (deepest == null) {
+                    deepest = f;
+                    // what the deepest mod frame calls out to, three frames deep (vanilla, Sable or the JDK)
+                    StringBuilder callee = new StringBuilder(f.id());
+                    for (int k = i - 1; k >= Math.max(0, i - 3); k--) callee.append(" > ").append(frames.get(k).id());
+                    if (i > 0) callees.merge(callee.toString(), 1, Integer::sum);
+                }
                 if (seen.add(f.id())) inclusive.merge(f.id(), 1, Integer::sum);
                 if (seenAreas.add(f.modArea())) areas.merge(f.modArea(), 1, Integer::sum);
             }
@@ -170,6 +183,16 @@ public final class PerfStats {
         /** The {@code n} mod methods that are most often the deepest mod frame (their own work plus vanilla/JDK calls). */
         public List<Entry> topSelf(int n) {
             return top(self, n);
+        }
+
+        /** The {@code n} Sable methods on the most busy stacks (inclusive), largest first. */
+        public List<Entry> topSable(int n) {
+            return top(sableInclusive, n);
+        }
+
+        /** The {@code n} most common calls out of the deepest mod frame (up to three frames below it), largest first. */
+        public List<Entry> topCallees(int n) {
+            return top(callees, n);
         }
 
         /** The {@code n} mod package areas ({@code ship.hull}, …) on the most busy stacks. */

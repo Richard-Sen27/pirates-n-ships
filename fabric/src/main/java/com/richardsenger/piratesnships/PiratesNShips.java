@@ -11,6 +11,11 @@ import net.fabricmc.api.ModInitializer;
  *   <li>TODO {@code ClientEvents.RENDER_FRAME_PRE}: no Fabric API event fires between the mouse turning the player and
  *       the frame being drawn ({@code WorldRenderEvents.START} is close but later); likely a small mixin at the head of
  *       {@code GameRenderer.render}.</li>
+ *   <li>TODO {@code ClientEvents.armorModels()} (ART9, the coats with tails): per registration
+ *       {@code ArmorRenderer.register((matrices, buffers, stack, entity, slot, light, contextModel) -> ..., items)};
+ *       get the provider's model, {@code contextModel.copyPropertiesTo(model)} plus the part visibility (as NeoForge's
+ *       {@code ClientHooks.copyModelProperties}), and draw it with {@code ArmorRenderer.renderPart} and the material's
+ *       layer texture ({@code textures/models/armor/<material>_layer_1.png}), glint included.</li>
  * </ul>
  */
 public class PiratesNShips implements ModInitializer {

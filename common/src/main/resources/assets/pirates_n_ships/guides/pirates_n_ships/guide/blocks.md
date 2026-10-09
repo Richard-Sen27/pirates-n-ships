@@ -109,3 +109,15 @@ Wear a pirate hat, bandana, navy tricorn or officer's bicorne by right-clicking 
 helmet slot. Each gives +1 armour (server config `apparel.hat_armor`; 0 turns it off). Crafted from three black wool
 over leather, bone, leather (pirate hat), leather, white wool, leather (navy tricorn) or leather, gold nugget, leather
 (officer's bicorne); red wool, string, red wool for the bandana.
+
+## Coats, breeches and boots
+The **Officer's Coat** and the **Captain's Coat** go on the chest, with knee-long tails that hang from the waist,
+split at the back, and swing back with your stride. The captain's coat is charcoal edged in gold over a brocade
+waistcoat, with a red sash on the left hip and a leather baldric over the right shoulder; the **Captain's Breeches**
+(legs) and **Captain's Boots** (feet, tall with turned-down tops) complete the pirate captain's look, with his hat.
+None of them wears out. Armour: coat +3, breeches +2, boots +1 (server config `apparel.officers_coat_armor`,
+`apparel.captains_coat_armor`, `apparel.captains_breeches_armor`, `apparel.captains_boots_armor`; 0 turns one off).
+Crafted: the captain's coat from six black wool with a gold ingot on top, red wool in the middle and leather below;
+the breeches from black wool in the leggings shape with leather at the waist; the boots from black wool over leather.
+A slain pirate captain drops each piece of his clothing with a 35 % chance (server config
+`mobs.captain.clothing_drop_chance`).

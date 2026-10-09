@@ -444,7 +444,7 @@ middle of his hut, or to the camp trail if the island has no captain's hut. He i
 health, and the navy keeps a standing bounty of 300 doubloons on him, posted on every notice board. To fight him
 one-on-one, sneak and use him with a sword in hand: if he accepts, his crew within 16 blocks keep out of the duel
 unless you strike them. The duel ends when one of you falls, when you run more than 32 blocks away, or after five
-minutes. If you hit him first he refuses: no honour, no duel. Slain, he drops his captain's hat (wear it yourself), a purse of doubloons
+minutes. If you hit him first he refuses: no honour, no duel. Slain, he drops his captain's hat (wear it yourself), maybe his coat, breeches and boots, a purse of doubloons
 and a treasure map of his island, and you get a bounty proof to hand to a navy officer. Taken alive in shackles, the
 navy pays the captain's reward of 150 plus his bounty alive. Five days after his fall a successor with a new name and
 a new bounty takes his post. Server config `mobs.captain`.

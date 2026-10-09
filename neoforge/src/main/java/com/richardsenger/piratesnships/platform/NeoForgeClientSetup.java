@@ -26,6 +26,7 @@ import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.ComputeFovModifierEvent;
 import net.neoforged.neoforge.client.event.SelectMusicEvent;
+import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.client.event.sound.PlayStreamingSourceEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
@@ -56,6 +57,7 @@ public final class NeoForgeClientSetup {
         ClientEvents.setAdditionalModelKey(ModelResourceLocation::standalone);
         modBus.addListener(ModelEvent.RegisterAdditional.class,
                 e -> ClientEvents.additionalModels().forEach(id -> e.register(ModelResourceLocation.standalone(id))));
+        modBus.addListener(RegisterClientExtensionsEvent.class, e -> NeoForgeArmorModels.register(ClientEvents.armorModels(), e::registerItem));
         modBus.addListener(RegisterColorHandlersEvent.Block.class, e -> ClientEvents.blockColors().forEach(c ->
                 e.register(c.color(), c.blocks().stream().map(Supplier::get).toArray(Block[]::new))));
 

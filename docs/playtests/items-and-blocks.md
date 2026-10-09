@@ -314,6 +314,47 @@ Addendum (F8h): pistol and musket in the hand: see `firearms.md`.
     - **Config:** `apparel.officers_coat_armor = 0` after a restart: no tooltip line, no armour; `= 8`: "+8 Armor".
       The coat never loses durability (no bar).
 
+## Coat tails and the captain's clothing (ART9)
+
+`/give @s pirates_n_ships:officers_coat`, `/give @s pirates_n_ships:captains_coat`,
+`/give @s pirates_n_ships:captains_breeches`, `/give @s pirates_n_ships:captains_boots`,
+`/give @s pirates_n_ships:captains_hat`. Renders (not the game): `art/renders/coat_tails.png`,
+`art/renders/captains_set_worn.png`, `art/renders/captains_clothing.png`. Watch the log for a missing model layer
+(`pirates_n_ships:coat_armor#main`) or a crash when a coat is first drawn: that would be the client hook failing.
+1. **Officer's coat tails, standing (F5):** the coat as in ART6 step 18, plus two knee-long navy tails hanging from the
+   waist at the back and both sides, split down the middle of the back with gold edges along the split, a gold hem,
+   white lining on their inside, gold buttons at the top of each. They follow the body: turn and look around, they stay
+   on the hips. Nothing pokes through the legs.
+2. **Walking and sprinting:** each tail swings back with the leg on its side and falls back as the leg comes forward.
+   Say if the swing looks too far (at a sprint they lift noticeably), too jerky, or whether you prefer rigid tails;
+   say if a leg pokes through a tail at a normal walk (a known limit only at extreme strides, e.g. when falling).
+3. **Sneaking:** the tails hang nearly straight down behind the legs instead of sticking out with the leaning body.
+4. **Swimming, riding a boat or horse, sleeping in a hammock:** the tails go with the body; say if anything looks broken.
+5. **On others:** an armour stand and a zombie wear the coat with tails (`/item replace entity
+   @e[type=zombie,limit=1] armor.chest with pirates_n_ships:officers_coat`); a baby zombie wears small tails at the
+   right place. An enchanted coat (`/give @s pirates_n_ships:officers_coat[enchantments={levels:{"minecraft:protection":1}}]`)
+   shows the glint on the tails too.
+6. **Captain's set on you beside a spawned captain** (`/summon pirates_n_ships:pirate_captain` or one at an island):
+   wear hat, coat, breeches and boots. Compare: charcoal coat edged in gold, brocade waistcoat with the white jabot in
+   the open front, brass buttons, a red sash round the waist with its knot on **your** left hip, a leather baldric from
+   your right shoulder across to the left hip (front and back), wide crimson cuffs ringed in gold at the wrists,
+   knee-long tails with crimson lining; dark breeches to the knee; tall dark boots with turned-down leather tops and a
+   strap with a brass buckle. Say where the colours differ from the captain's.
+7. **Slots and armour:** each piece goes into its own slot by right-click (the old piece comes back to the hand) and by
+   shift-click; tooltips "+3 Armor When on Body", "+2 Armor When on Legs", "+1 Armor When on Feet"; the armour bar
+   shows 6 with the three on (plus 1 with the hat). No durability bar. Config `apparel.captains_coat_armor`,
+   `captains_breeches_armor`, `captains_boots_armor` = 0 after a restart: no tooltip line.
+8. **Without boots:** the breeches end below the knee in white stockings. Boots without breeches: your own legs show
+   above the boot tops.
+9. **GUI and ground:** the three items flat facing you in the slot (coat like the officer's coat in charcoal; breeches
+   with the waist band and stockings; a pair of boots seen from the side, toes left), English names "Captain's Coat",
+   "Captain's Breeches", "Captain's Boots", no checkerboard; held like flat items; on the ground at half size; in an
+   item frame facing out.
+10. **Drops:** kill a few captains (`mobs.captain.clothing_drop_chance` 0.35 by default): he always drops his hat and
+   sometimes one or more pieces; with the value at 1 he drops all three, at 0 none. The recipes show in the recipe book
+   (coat: black wool with a gold ingot top middle, red wool centre, leather bottom middle; breeches: black wool
+   leggings shape with leather top middle; boots: black wool over leather).
+
 ## Paddle (ART8)
 
 Needs SC2's `pirates_n_ships:paddle` item merged; `/give @s pirates_n_ships:paddle`.

@@ -9,6 +9,9 @@ item_ids:
   - pirates_n_ships:bounty_proof
   - pirates_n_ships:brig_key
   - pirates_n_ships:cannonball
+  - pirates_n_ships:captains_boots
+  - pirates_n_ships:captains_breeches
+  - pirates_n_ships:captains_coat
   - pirates_n_ships:captains_hat
   - pirates_n_ships:captains_whistle
   - pirates_n_ships:carpenters_hammer

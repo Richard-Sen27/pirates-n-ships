@@ -1427,12 +1427,68 @@ computed live by `CoatArmor`; no durability. Recipe: blue wool round a white woo
   white lapels and waistcoat with gold buttons, gold waist band, darker back vent, gold epaulette on the arm tops and
   the shoulder band, red cuffs ringed in gold. The left sleeve mirrors the right one (vanilla). `CoatArmorTest` checks
   the size and that those faces are opaque.
-- Known limit: a vanilla armour layer has no skirt or tails, so the worn coat ends at the waist. Tails would need a
-  custom armour model through the loaders' armour-model hooks (NeoForge `IClientItemExtensions#getHumanoidArmorModel`,
-  Fabric `ArmorRenderer`) behind a platform service.
+- Known limit (ART6, lifted by ART9 below): a vanilla armour layer has no skirt or tails, so the worn coat ended at the
+  waist.
+- The worn texture now comes from `tools/paint_apparel_armor.js` (ART9), which repeats `OC.paintArmor` pixel for
+  pixel and adds the tails; `OC.paintArmor` is kept only as the ART6 source.
 - Renders: `renders/officers_coat.png` (front, three-quarter, side, back), `renders/officers_coat_worn.png` (on a
   stand-in figure in a throwaway GeckoLib tab; a Bedrock-style project draws every cube with its one texture, so the
   preview merged a base skin and the coat layer into one sheet).
+
+### Coat tails and the captain's clothing (ART9)
+
+**Coat tails** (both coats): `apparel/client/CoatArmorModel`, a `HumanoidModel` from a `LayerDefinition`: vanilla's
+outer armour mesh (`HumanoidArmorModel.createBodyLayer(1.0)`, the model the chest slot uses) plus `tail_right` and
+`tail_left` on the **body** (pivot y 12, z 3: the plain body's bottom back edge), each a back plate 5x7x1 (x 0.5..5.5
+from the centre, so the tails split 1 px at the back) and a side plate 1x7x6 (x 5.5..6.5, z -1.9..4.1 in body space),
+hanging to the knee (y 19). Blockbench source `art/models/entity/coat_armor.bbmodel` (Modded Entity, Mojang mappings,
+64x32 box UV, the officer's texture embedded); `createLayer()` is its exported `createBodyLayer()` on vanilla's mesh
+(Blockbench's modded-entity export maps x to -x and y to 24 - y and keeps z).
+- **How it is drawn:** `ClientEvents.registerArmorModel(provider, items...)` (common) -> NeoForge
+  `RegisterClientExtensionsEvent` with an `IClientItemExtensions#getHumanoidArmorModel` per item
+  (`platform/NeoForgeArmorModels`); NeoForge copies vanilla's pose and part visibility onto our model and
+  `HumanoidArmorLayer` draws it with the material's layer texture. Fabric: TODO (`ArmorRenderer.register`, see
+  `fabric/.../PiratesNShips`). `ApparelClient` bakes the model once and returns it for the chest slot only.
+- **Swing:** nothing calls `setupAnim` on an armour model, so `renderToBuffer` poses the tails from the copied legs and
+  body (`apparel/CoatTails`, pure): world pitch = 0.08 + b + 0.5 b^2 for the same-side leg's backward swing b, a small
+  flare (0.12 per rad) for a forward leg, at most 1.6; the body's pitch (crouch 0.5) is taken out up to 0.4 so the
+  tails hang nearly straight when sneaking. The quadratic term is needed because the leg turns about the hip, 3 px in
+  front of the tail's hinge. `CoatArmorModelTest` composes the real `ModelPart#translateAndRotate` chain against a
+  boot-clad leg: for leg pitch -0.8..0.8 (vanilla's walk and sprint) standing and sneaking, no leg point lies behind
+  the lower 5 px of a tail. At the extreme stride (pitch 1.4, only at full walk speed, e.g. falling) the upper leg still
+  cuts the top of a tail, as with vanilla capes.
+- **Texture layout** (64x32, both coats): body and arms where vanilla has them; the tails in the head area, which a
+  chest-only material never draws: right back plate box UV (0,0), left back plate (0,8), right side plate (12,0), left
+  side plate (26,0). The painter (`tools/paint_apparel_armor.js`, Node, deterministic, `--check`) paints cloth, a
+  lining on the faces towards the legs, a hem along the bottom, an edge down the split and the side plates' front edge,
+  and a button at the top of each back plate. `ModelPart.Cube` runs the west face's u from south to north and the
+  east face's from north to south (the front edge columns follow that).
+
+**The captain's clothing** (`captains_coat` chest, `captains_breeches` legs, `captains_boots` feet; `ClothingItem`
+`ArmorItem`s, no durability, armour `apparel.captains_*_armor` 3 / 2 / 1). Materials: `captains_coat` (layer 1 with
+the tails, drawn with the coat model) and `captains_clothing` (layer 1 the boots on vanilla's outer model, layer 2 the
+breeches on the inner model): the coat needs a material of its own because its tails sit in the head area of layer 1.
+Colours from the captain's skin palette (`SF.C` of `seafarer_skins.js`, as `SF.pirate_captain` paints his jacket):
+charcoal `cc`, gold edging, brass buttons, a brocade waistcoat with a white jabot in the open front, a red sash round
+the waist (rows 8..9) with the knot on the left side face, a leather baldric diagonal from the right shoulder to the
+left hip front and back, wide crimson cuffs ringed in gold, crimson lining in the tails; breeches `belt_d` over black
+to the knee with white stockings below and a leather waist band with a brass buckle on the body's lower rows; boots
+`boot` from row 4 with a turned-down leather bucket top (rows 4..6) and an instep strap. His own rig and skin are
+unchanged.
+- **Item models** (Blockbench, `java_block`, flat like the officer's coat in z 7..9, item/generated's display
+  entries): `art/models/captains_clothing.js` (`CC.PARTS`, `CC.build(repo, item)`, `CC.export(repo, item)`) ->
+  `art/models/captains_coat.bbmodel` (30 elements: the officer's cut in charcoal with a longer skirt, gold front edges
+  and hem, brocade waistcoat, jabot, brass buttons, sash with knot and ends, baldric and buckle turned -45 about z,
+  sleeves at 22.5 with crimson cuffs), `captains_breeches.bbmodel` (14: waist band and buckle, seat, two legs with
+  knee bands and buttons, stockings, shoes), `captains_boots.bbmodel` (16: a pair seen from the side, toes left, the
+  right one 1 px behind). Palette patches only (`palette`, `palette_4` brocade, `palette_5` flag black for the
+  charcoal). Lint: 0 visible fights.
+- **Renders** (`art/models/entity/apparel_render.js`, a three.js composer in `risky_eval` that builds vanilla's box-UV
+  cubes, armour inflation, mirrored left limbs and the `CustomHeadLayer` + `head` display chain for the hat on the
+  crew member's skin; not the game's lighting): `renders/coat_tails.png` (officer's coat standing, both strides,
+  sneaking; front, side, back, back three-quarter), `renders/captains_set_worn.png` (hat, coat, breeches and boots
+  standing from front, front three-quarter, side, back, back three-quarter, and walking),
+  `renders/captains_clothing.png` (the three items: front, three-quarter, side, back).
 
 ### Shark rig (M4)
 

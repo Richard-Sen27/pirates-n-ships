@@ -25,9 +25,10 @@ class CrewOrderTest {
     @Test
     void allHoldsTheSailOrdersThenPumpThenTheGunOrdersThenTheAnchor() {
         assertEquals(List.of(SailOrder.HOIST, SailOrder.REEF, SailOrder.FURL, PumpOrder.PUMP, CannonOrder.FIRE, CannonOrder.LOAD,
-                        CannonOrder.FIRE_AT_WILL, AnchorOrder.DROP_ANCHOR, AnchorOrder.RAISE_ANCHOR),
+                        CannonOrder.FIRE_AT_WILL, AnchorOrder.DROP_ANCHOR, AnchorOrder.RAISE_ANCHOR,
+                        com.richardsenger.piratesnships.sailing.oars.RowOrder.ROW), // OAR1
                 CrewOrder.all());
-        assertEquals(List.of("hoist", "reef", "furl", "pump", "fire", "load", "fire_at_will", "drop_anchor", "raise_anchor"), CrewOrder.ids());
+        assertEquals(List.of("hoist", "reef", "furl", "pump", "fire", "load", "fire_at_will", "drop_anchor", "raise_anchor", "row"), CrewOrder.ids());
     }
 
     @Test
@@ -92,7 +93,8 @@ class CrewOrderTest {
 
     @Test
     void eachOrderBelongsToExactlyOneStationKind() {
-        List<StationKind<?>> kinds = List.of(WinchStation.INSTANCE, PumpStation.INSTANCE, CannonStation.INSTANCE, CapstanStation.INSTANCE);
+        List<StationKind<?>> kinds = List.of(WinchStation.INSTANCE, PumpStation.INSTANCE, CannonStation.INSTANCE, CapstanStation.INSTANCE,
+                com.richardsenger.piratesnships.sailing.oars.OarBenchStation.INSTANCE); // OAR1
         for (CrewOrder o : CrewOrder.all()) {
             long n = kinds.stream().filter(k -> k.accepts(o)).count();
             assertEquals(1, n, o + " is taken by " + n + " station kinds");

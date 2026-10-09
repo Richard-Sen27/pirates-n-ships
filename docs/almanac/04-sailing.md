@@ -80,6 +80,7 @@ show_me: oars | Show me: rowing
 {spotlight:oak_oar_bench}
 In a calm or against the wind, whistle **Row**: every hand not at a station takes an {item:pirates_n_ships:oar}**oar** at the rail, the sides in turn, and pulls her along at up to 3 blocks a second. A hand seated on an **oar bench** pulls a quarter harder.
 {recipe:oak_oar_bench}
+{recipe:oar}
 
 The same entry then reads **Ship oars**. Any other order ends the rowing too, and the hands ship oars themselves once the sails are faster.
 

@@ -258,6 +258,10 @@
           "recipe": "pirates_n_ships:oak_oar_bench"
         },
         {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:oar"
+        },
+        {
           "type": "text",
           "key": "pirates_n_ships.almanac.sailing.p10.text2"
         }

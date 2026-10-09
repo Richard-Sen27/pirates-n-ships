@@ -62,7 +62,8 @@ class OarRigTest {
     }
 
     private static float keyedAt(List<Keyframe<MathValue>> frames, double tick, String what) {
-        if (frames.size() == 1) return (float) frames.get(0).endValue().get();
+        float first = (float) frames.get(0).endValue().get();
+        if (frames.stream().allMatch(k -> (float) k.endValue().get() == first)) return first; // a constant channel
         double t = 0;
         for (Keyframe<MathValue> k : frames) {
             t += k.length();
@@ -156,7 +157,7 @@ class OarRigTest {
                     Oar o = oar(animation, DRIVE[i], pos, yaw, left);
                     drive[i] = o;
                     assertTrue(along(o.tip(), o.hand(), outboard) > 1.8, where + " " + DRIVE[i] + " s: the blade lies outboard " + o);
-                    assertTrue(o.tip().y < pos.y - 0.6 + drop * 0, where + " " + DRIVE[i] + " s: the blade dips below the deck " + o);
+                    assertTrue(o.tip().y < pos.y - 0.6, where + " " + DRIVE[i] + " s: the blade dips below the deck " + o);
                     assertTrue(along(o.grip(), o.hand(), outboard) < 0, where + ": the grip end is inboard of the hand " + o);
                     assertTrue(o.hand().y > pos.y + 0.6 - drop, where + ": the hands at chest height " + o);
                 }

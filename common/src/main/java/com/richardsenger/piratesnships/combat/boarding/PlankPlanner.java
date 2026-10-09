@@ -79,8 +79,11 @@ public final class PlankPlanner {
         if (clickedState.is(BoardingContent.PLANK.get()) || clickedState.getCollisionShape(level, clicked).isEmpty()) {
             return Plan.fail(PlankRun.Failure.NO_START, -1);
         }
-        // RAIL1: the top of a railing port's sill, facing outboard, starts the run beyond the port at its height
-        Direction outboard = clickedState.is(BoardingContent.GANGWAY_OPENINGS)
+        // RAIL1: the top of a railing port's sill, facing outboard, starts the run beyond the port at its height;
+        // RAIL3: a railing gate only while it is open
+        boolean openable = clickedState.hasProperty(BlockStateProperties.OPEN);
+        Direction outboard = PlankRun.opening(clickedState.is(BoardingContent.GANGWAY_OPENINGS), openable,
+                openable && clickedState.getValue(BlockStateProperties.OPEN))
                 && clickedState.hasProperty(BlockStateProperties.HORIZONTAL_FACING)
                 ? clickedState.getValue(BlockStateProperties.HORIZONTAL_FACING) : null;
         PlankRun.Start start = PlankRun.start(clicked, PlankRun.throughOpening(face, playerFacing, outboard), playerFacing);

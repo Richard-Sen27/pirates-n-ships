@@ -53,6 +53,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * same raised to {@code ship_decor.railing_collision_blocks} (1.5 by default: like a fence, players cannot jump it;
  * 1.0 lets them vault it); a changed value is picked up the next time the collision is asked for. Mobs do not path
  * through it ({@link #isPathfindable}).
+ *
+ * <p><b>Posts carry things</b> (RAIL3): a block with a post has a sturdy centre on its top and bottom faces
+ * ({@link #getBlockSupportShape}), so a lantern hangs below it or stands on it and a chain runs on from it; a plain rail
+ * does not. The grappling hook holds on a railing like on a cleat ({@code #pirates_n_ships:grapple_latches}).
  */
 public class RailingBlock extends Block implements SimpleWaterloggedBlock {
 
@@ -130,10 +134,14 @@ public class RailingBlock extends Block implements SimpleWaterloggedBlock {
         return out;
     }
 
-    /** Whether the block at {@code pos} carries {@code edge}: a railing railed there, or a railing port facing it. */
+    /**
+     * Whether the block at {@code pos} carries {@code edge}: a railing railed there, or a railing port or railing gate
+     * (RAIL3, open or closed: its posts stand either way) facing it.
+     */
     public static boolean carries(BlockGetter level, BlockPos pos, Direction edge) {
         BlockState s = level.getBlockState(pos);
         if (s.getBlock() instanceof RailingBlock) return s.getValue(edge(edge));
+        if (s.getBlock() instanceof RailingGateBlock) return s.getValue(RailingGateBlock.FACING) == edge;
         return s.getBlock() instanceof RailingPortBlock && s.getValue(RailingPortBlock.FACING) == edge;
     }
 
@@ -223,6 +231,18 @@ public class RailingBlock extends Block implements SimpleWaterloggedBlock {
         VoxelShape shape = Shapes.empty();
         for (double[] b : boxes) shape = Shapes.or(shape, Block.box(b[0], b[1], b[2], b[3], b[4], b[5]));
         return shape.optimize();
+    }
+
+    /**
+     * RAIL3: what lanterns, chains and torches see ({@link RailingRules#supportBoxes}): a block with a post is a sturdy
+     * centre on its top and bottom faces (a lantern hangs below a post or stands on it), a plain rail is not. Fixed per
+     * state (vanilla caches face sturdiness when the game starts), so no config value changes it.
+     */
+    @Override
+    protected VoxelShape getBlockSupportShape(BlockState state, BlockGetter level, BlockPos pos) {
+        Set<Direction> posts = posts(state);
+        return shape(RailingRules.supportBoxes(RailingRules.boxes(edges(state), posts, RailingRules.RAIL_TOP, RailingRules.RAIL_TOP),
+                !posts.isEmpty()));
     }
 
     /** Crew and mobs do not path through a railing (like a fence). */

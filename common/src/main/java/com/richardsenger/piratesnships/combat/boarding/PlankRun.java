@@ -240,6 +240,15 @@ public final class PlankRun {
         return outboard != null && face == Direction.UP && playerFacing == outboard ? outboard : face;
     }
 
+    /**
+     * RAIL3: whether a block counts as a gangway opening for {@link #throughOpening}: it is in
+     * {@code #pirates_n_ships:gangway_openings} ({@code tagged}) and, when it can be opened and shut (a railing gate,
+     * {@code openable}), it is {@code open}; a closed gate blocks a plank like a railing.
+     */
+    public static boolean opening(boolean tagged, boolean openable, boolean open) {
+        return tagged && (!openable || open);
+    }
+
     // ------------------------------------------------------------------ profiles
 
     /**

@@ -60,7 +60,9 @@ import java.util.UUID;
  * <b>The rope's near end</b> (GR1) is the thrower, or the mooring ring or cleat (RP1) it was tied to ({@link #tieTo},
  * {@link GrappleRules.NearEnd}): a tied rope hauls with the ring's ship (or holds from a ring on land) whatever the
  * thrower does, and snaps when the hook is farther from the ring than {@link #breakLength()}. A hook latched on a ring
- * holds {@code ring_hold_multiplier} times the rope's length; breaking either ring releases the hook.
+ * holds {@code ring_hold_multiplier} times the rope's length; breaking either ring releases the hook. RAIL3: so does a
+ * hook on a railing or railing gate ({@code #pirates_n_ships:grapple_latches}, {@code grapple.latches_hold}), and a haul
+ * pulling harder than {@code grapple.railing_break_force} tears that block out and lets the hook go.
  *
  * <p>The thrown item travels with the hook ({@link #getItem()}) and goes back to the thrower when the hook is released,
  * unless a snapped rope loses it ({@code rope_breaks_lose_hook}). Hooks are not saved with the chunk: a logout
@@ -99,8 +101,12 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
     private @Nullable Vec3 pendingPos;
     /** Rope length of this launch [blocks] (longer from the musket); NaN = {@code max_rope_length}. */
     private double ropeLength = Double.NaN;
-    /** The hook is latched on a mooring ring: it holds {@code ring_hold_multiplier} times longer. */
+    /** The hook is latched on a mooring ring (or cleat, or RAIL3 strong point): it holds {@code ring_hold_multiplier} times longer. */
     private boolean onRing;
+    /** RAIL3: the hook holds a strong point ({@code #grapple_latches}, a railing): torn out above {@code railing_break_force}. */
+    private boolean onStrongPoint;
+    /** RAIL3: the highest rope tension since the last game tick [kpg·m/s²], from the physics substeps. */
+    private double load;
     /** Mooring ring the near end is tied to (plot position on a ship, world position on land), or null. */
     private @Nullable BlockPos tiedRing;
     /** Ship of {@link #tiedRing}, null for a ring on land. */
@@ -215,9 +221,19 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         this.ropeLength = length;
     }
 
-    /** The hook is latched on a mooring ring. */
+    /** The hook is latched on a mooring ring, a cleat, or (RAIL3) a strong point holding like one. */
     public boolean onRing() {
         return onRing;
+    }
+
+    /** RAIL3: the hook holds a strong point of {@code #pirates_n_ships:grapple_latches} (a railing or railing gate). */
+    public boolean onStrongPoint() {
+        return onStrongPoint;
+    }
+
+    /** RAIL3: records a rope tension of this physics substep (the haul's or a hand haul's) for the tear-out check. */
+    void recordLoad(double tension) {
+        if (tension > load) load = tension;
     }
 
     /** The mooring ring the rope's near end is tied to (plot position on a ship), or null. */
@@ -407,7 +423,7 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         boolean tied = tiedRing != null;
         ShipBody ringShip = tied && tiedShip != null ? SableShips.byId(level, tiedShip) : null;
         boolean ringsIntact = (!tied || (tiedShip == null || ringShip != null) && GrappleService.isGrappleAnchor(level, tiedRing))
-                && (s != State.LATCHED || !onRing || ship == null && !worldLatch || GrappleService.isGrappleAnchor(level, latchedBlock));
+                && (s != State.LATCHED || !onRing || ship == null && !worldLatch || holdStands(level));
         // a tied rope does not need its thrower nearby, only a thrower to give the hook back to
         boolean ownerPresent = owner != null && (nearEndFixed() || owner.isAlive() && owner.level() == level);
         Vec3 near = ownerPresent && ringsIntact ? nearEndPos(level, owner) : null;
@@ -416,6 +432,9 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
                 farEndPresent, ringsIntact, nearDistance, breakLength());
         if (release != GrappleRules.Release.NONE) {
             release(release);
+            return;
+        }
+        if (s == State.LATCHED && tearOut(level)) {
             return;
         }
         switch (s) {
@@ -548,6 +567,30 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
         entityData.set(TAUT, taut && !holding.holding() || hauled); // a holding rope does not pull
     }
 
+    /**
+     * The ring, cleat or strong point (RAIL3) a hook latched {@link #onRing} holds is still there: a strong point is
+     * still in {@code #grapple_latches}, a ring or cleat still a grapple anchor.
+     */
+    private boolean holdStands(ServerLevel level) {
+        return onStrongPoint ? latchedBlock != null && level.getBlockState(latchedBlock).is(GrappleContent.GRAPPLE_LATCHES)
+                : GrappleService.isGrappleAnchor(level, latchedBlock);
+    }
+
+    /**
+     * RAIL3: a haul harder than {@code grapple.railing_break_force} in the last game tick tears out the strong point
+     * the hook holds (it breaks and drops as if broken by hand) and the hook lets go. True when it did.
+     */
+    private boolean tearOut(ServerLevel level) {
+        double last = load;
+        load = 0.0;
+        if (!onStrongPoint || latchedBlock == null || !GrappleRules.tornOut(last, GrappleConfig.RAILING_BREAK_FORCE.get())) {
+            return false;
+        }
+        level.destroyBlock(latchedBlock, true);
+        release(GrappleRules.Release.TORN_OUT);
+        return true;
+    }
+
     /** The world block at {@code pos} still stands with a collision shape for a hook to hold on (GR4). */
     private static boolean blockStands(ServerLevel level, @Nullable BlockPos pos) {
         return pos != null && !level.getBlockState(pos).getCollisionShape(level, pos).isEmpty();
@@ -599,7 +642,11 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
                 !state.is(GrappleContent.HOOK_SLIPS), GrappleConfig.LATCH_OWN_SHIP.get(), GrappleConfig.LATCH_WORLD_BLOCKS.get());
         if (GrappleRules.latches(kind)) {
             boolean ring = state.getBlock() instanceof RopeAnchor anchor && GrappleService.anchorEnabled(anchor);
-            latch(level, ship, pos, ring ? ((RopeAnchor) state.getBlock()).anchorPoint(state, pos) : at, ring);
+            // RAIL3: a railing (#grapple_latches) holds like a ring where the hook bit, and can be torn out
+            boolean strong = !ring && GrappleRules.holdsLikeRing(false, state.is(GrappleContent.GRAPPLE_LATCHES),
+                    GrappleConfig.LATCHES_HOLD.get());
+            latch(level, ship, pos, ring ? ((RopeAnchor) state.getBlock()).anchorPoint(state, pos) : at, ring || strong);
+            onStrongPoint = strong;
         } else {
             miss(ship != null ? ship.toWorld(at) : at, false);
         }
@@ -618,6 +665,8 @@ public class GrapplingHookEntity extends ThrowableItemProjectile {
      */
     void latch(ServerLevel level, @Nullable ShipBody ship, BlockPos block, Vec3 at, boolean ring) {
         onRing = ring;
+        onStrongPoint = false;
+        load = 0.0;
         shipId = ship == null ? null : ship.id();
         plotPos = at;
         latchedBlock = block.immutable();

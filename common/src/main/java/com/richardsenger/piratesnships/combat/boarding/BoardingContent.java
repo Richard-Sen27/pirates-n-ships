@@ -30,7 +30,8 @@ public final class BoardingContent {
     /**
      * RAIL1: openings in a railing (the railing port) with a {@code facing} (their outboard side): a plank used on the
      * top of one, facing that way, lays the gangway from the block beyond it at the opening's own height, as a click on
-     * its outboard side would ({@link PlankRun#throughOpening}).
+     * its outboard side would ({@link PlankRun#throughOpening}). RAIL3: the railing gate too, but only while it is open
+     * (a block with an {@code open} property counts only when open, {@link PlankRun#opening}).
      */
     public static final TagKey<Block> GANGWAY_OPENINGS = TagKey.create(Registries.BLOCK, Constants.id("gangway_openings"));
 

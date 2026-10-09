@@ -18,7 +18,7 @@ public final class DecorConfig {
             "How long the ship's bell swings after it is rung, in ticks (20 ticks = 1 second)");
     /** RAIL1: the railing family (railings and railing ports of every shipped wood). */
     public static final ConfigValue<Boolean> RAILINGS_ENABLED = SECTION.bool("railings_enabled", true,
-            "Railings and railing ports can be placed. Off = the items place nothing; railings already placed stay");
+            "Railings, railing ports and railing gates can be placed. Off = the items place nothing; railings already placed stay");
     /** RAIL1: how high a railing's collision reaches (a fence: 1.5). */
     public static final ConfigValue<Double> RAILING_COLLISION_BLOCKS = SECTION.doubleRange("railing_collision_blocks", 1.5, 1.0, 2.0,
             "How high a railing's collision reaches, in blocks: 1.5 like a fence keeps players from jumping over it, 1.0 lets"

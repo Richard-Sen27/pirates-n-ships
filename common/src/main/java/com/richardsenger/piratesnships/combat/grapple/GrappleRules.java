@@ -94,7 +94,9 @@ public final class GrappleRules {
         /** The mooring ring the hook is latched on, or the rope is tied to, was broken (GR1). */
         RING_GONE,
         /** The rope's near end (the thrower, or the ring it is tied to) is farther from the hook than the rope holds: it snaps. */
-        TOO_FAR
+        TOO_FAR,
+        /** RAIL3: the haul tore out the railing the hook held ({@link #tornOut}); the hook comes back. */
+        TORN_OUT
     }
 
     /**
@@ -158,6 +160,23 @@ public final class GrappleRules {
         t = Math.max(0.0, Math.min(1.0, t));
         double cx = ax + t * dx - px, cy = ay + t * dy - py, cz = az + t * dz - pz;
         return Math.sqrt(cx * cx + cy * cy + cz * cz);
+    }
+
+    /**
+     * RAIL3: whether a hook latched on a block holds like on a mooring ring ({@link #breakLength}): a ring or cleat the
+     * grapple uses ({@code anchor}), or a strong point ({@code strongPoint}: {@code #pirates_n_ships:grapple_latches},
+     * railings and gates) while {@code latchesHold} ({@code grapple.latches_hold}).
+     */
+    public static boolean holdsLikeRing(boolean anchor, boolean strongPoint, boolean latchesHold) {
+        return anchor || strongPoint && latchesHold;
+    }
+
+    /**
+     * RAIL3: whether the rope's pull tears out the strong point the hook holds: the highest tension of the last game
+     * tick ({@code load}, kpg·m/s²) above {@code breakForce} ({@code grapple.railing_break_force}; 0 = never).
+     */
+    public static boolean tornOut(double load, double breakForce) {
+        return breakForce > 0 && load > breakForce;
     }
 
     /** A flying hook whose path this tick passes {@code distance} from a ring is caught by it. */

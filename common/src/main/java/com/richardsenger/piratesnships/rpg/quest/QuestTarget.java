@@ -131,29 +131,37 @@ public sealed interface QuestTarget permits QuestTarget.None, QuestTarget.Kill, 
      * A convoy to {@code destination} to sail with (QST2). While offered, {@code voyage} is empty and {@code name} blank:
      * accepting makes the convoy leave the giving port. {@code legs} is the number of legs of its route and
      * {@code lastLeg} the last leg on which the player was seen close by (−1: none yet); the quest's progress counts
-     * such legs and its {@code needed} is {@link QuestRules#escortLegsNeeded}.
+     * such legs and its {@code needed} is {@link QuestRules#escortLegsNeeded}. {@code chartingSince} is the game time
+     * the quest was accepted while its lane was still being charted (QST2b; empty once the convoy sails).
      */
-    record Escort(ResourceLocation destination, Optional<UUID> voyage, String name, int legs, int lastLeg) implements QuestTarget {
+    record Escort(ResourceLocation destination, Optional<UUID> voyage, String name, int legs, int lastLeg,
+                  Optional<Long> chartingSince) implements QuestTarget {
         static final MapCodec<Escort> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
                 ResourceLocation.CODEC.fieldOf("destination").forGetter(Escort::destination),
                 UUIDUtil.STRING_CODEC.optionalFieldOf("voyage").forGetter(Escort::voyage),
                 Codec.STRING.optionalFieldOf("name", "").forGetter(Escort::name),
                 Codec.INT.optionalFieldOf("legs", 0).forGetter(Escort::legs),
-                Codec.INT.optionalFieldOf("last_leg", -1).forGetter(Escort::lastLeg)
+                Codec.INT.optionalFieldOf("last_leg", -1).forGetter(Escort::lastLeg),
+                Codec.LONG.optionalFieldOf("charting_since").forGetter(Escort::chartingSince)
         ).apply(i, Escort::new));
 
         /** An offer: no convoy yet. */
         public Escort(ResourceLocation destination) {
-            this(destination, Optional.empty(), "", 0, -1);
+            this(destination, Optional.empty(), "", 0, -1, Optional.empty());
         }
 
         /** Accepted: the convoy {@code voyage} named {@code name} with {@code legs} legs (at least 1). */
         public Escort withConvoy(UUID voyage, String name, int legs) {
-            return new Escort(destination, Optional.of(voyage), name, Math.max(1, legs), -1);
+            return new Escort(destination, Optional.of(voyage), name, Math.max(1, legs), -1, Optional.empty());
+        }
+
+        /** Accepted at game time {@code tick} while the lane is still being charted (QST2b). */
+        public Escort charting(long tick) {
+            return new Escort(destination, Optional.empty(), "", 0, -1, Optional.of(tick));
         }
 
         public Escort withLastLeg(int leg) {
-            return new Escort(destination, voyage, name, legs, leg);
+            return new Escort(destination, voyage, name, legs, leg, chartingSince);
         }
 
         /** Whether this escort follows the voyage {@code id}. */

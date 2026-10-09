@@ -76,6 +76,19 @@ repositories {
         }
         filter { includeGroup('software.bernie.geckolib') }
     }
+    // Ponder and Flywheel (the Almanac's scenes, docs/design.md §3.4; bundled jar-in-jar by the loader modules)
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'CreateMod'
+                url = 'https://maven.createmod.net'
+            }
+        }
+        filter {
+            includeGroup('net.createmod.ponder')
+            includeGroup('dev.engine-room.flywheel')
+        }
+    }
     // Modrinth (dev-only mods such as WorldEdit, never a dependency of the mod)
     exclusiveContent {
         forRepository {
@@ -152,7 +165,9 @@ processResources {
             'pal_version_range'            : pal_version_range,
             'geckolib_version'             : geckolib_version,
             'geckolib_version_range'       : geckolib_version_range,
-            'guideme_version_range'        : guideme_version_range
+            'guideme_version_range'        : guideme_version_range,
+            'ponder_version'               : ponder_version,
+            'flywheel_version_range'       : flywheel_version_range
     ]
 
     filesMatching(['pack.mcmeta', 'fabric.mod.json', 'META-INF/neoforge.mods.toml', '*.mixins.json']) {

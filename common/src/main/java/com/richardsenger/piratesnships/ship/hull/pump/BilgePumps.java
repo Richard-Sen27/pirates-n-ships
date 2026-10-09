@@ -99,6 +99,17 @@ public final class BilgePumps {
         return PumpIntake.crewTicks(rt.simulation().volume(c), FloodingConfig.params().pumpPerTick(), CREW_BATCH_TICKS);
     }
 
+    /**
+     * The pump at plot position {@code pos} worked this tick (a player's use or a crew order drained its compartment):
+     * its block entity keeps the synced pumping flag on, which rocks the drawn handle (PMP1). Called by the hull runtime
+     * for every working pump each tick.
+     */
+    public static void markWorked(ServerLevel level, BlockPos pos) {
+        if (level.isLoaded(pos) && level.getBlockEntity(pos) instanceof BilgePumpBlockEntity be) {
+            be.activity().worked(level.getGameTime());
+        }
+    }
+
     private static @Nullable HullRuntime runtime(ServerLevel level, BlockPos plotPos) {
         ShipBody ship = SableShips.containing(level, plotPos);
         return ship == null ? null : HullRuntimes.get(level, ship.id());

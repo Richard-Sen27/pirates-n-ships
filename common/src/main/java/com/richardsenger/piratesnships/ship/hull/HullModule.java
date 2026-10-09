@@ -43,6 +43,7 @@ public final class HullModule implements ModModule {
         FloodingConfig.init();
         DryHullConfig.init();
         ShipHudConfig.init();
+        com.richardsenger.piratesnships.ship.hull.pump.PumpVisualsConfig.init(); // the rocking pump handle (PMP1)
     }
 
     @Override
@@ -83,6 +84,8 @@ public final class HullModule implements ModModule {
                 mc -> com.richardsenger.piratesnships.ship.hull.client.HiddenWaterPlants.reset());
         // the water surface inside flooded compartments (FLD1)
         com.richardsenger.piratesnships.ship.hull.client.FloodSurfaceRenderer.init();
+        // the bilge pump's handle rocks while it is worked (PMP1)
+        com.richardsenger.piratesnships.ship.hull.pump.client.PumpClient.init();
     }
 
     @Override

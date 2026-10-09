@@ -1,10 +1,12 @@
 package com.richardsenger.piratesnships.ship.hull.pump;
 
 import java.util.List;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -72,5 +74,26 @@ class PumpSetTest {
         assertFalse(s.usedAt(B, 100));
         s.clearUses();
         assertFalse(s.usedAt(A, 100));
+    }
+
+    /** PMP1: the pumps that drained in the last count, whose handles rock; a pump without an intake does not. */
+    @Test
+    void theWorkingPumpsAreTheOnesThatDrained() {
+        PumpSet s = new PumpSet();
+        s.replace(List.of(A, B, C));
+        s.use(A, 110);
+        s.use(C, 110);
+        s.activeCounts(100, 1, p -> p.equals(B), p -> p.equals(C) ? -1 : 0);
+        assertEquals(Set.of(A, B), s.working());
+        s.activeCounts(110, 1, p -> false, p -> 0);
+        assertEquals(Set.of(), s.working(), "uses expired");
+        s.use(A, 120);
+        s.activeCounts(111, 1, p -> false, p -> 0);
+        s.remove(A);
+        assertEquals(Set.of(), s.working(), "a removed pump");
+        s.use(B, 120);
+        s.activeCounts(112, 1, p -> false, p -> 0);
+        s.clearUses();
+        assertEquals(Set.of(), s.working(), "pumps switched off");
     }
 }

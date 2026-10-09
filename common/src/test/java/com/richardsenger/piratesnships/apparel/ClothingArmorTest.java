@@ -16,7 +16,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** ART9: the armour rule of the captain's coat, breeches and boots (and the coats, {@link CoatArmor}). */
+/** ART9, ART13: the armour rule of the captain's and the officer's coat, breeches and boots (the coats: {@link CoatArmor}). */
 class ClothingArmorTest {
 
     @BeforeAll
@@ -63,5 +63,7 @@ class ClothingArmorTest {
         assertEquals(2, ApparelConfig.CAPTAINS_BREECHES_ARMOR.get(), "breeches like leather pants");
         assertEquals(1, ApparelConfig.CAPTAINS_BOOTS_ARMOR.get(), "boots like leather boots");
         assertEquals(3, ApparelConfig.OFFICERS_COAT_ARMOR.get(), "the officer's coat is unchanged");
+        assertEquals(2, ApparelConfig.OFFICERS_BREECHES_ARMOR.get(), "officer's breeches like leather pants (ART13)");
+        assertEquals(1, ApparelConfig.OFFICERS_BOOTS_ARMOR.get(), "officer's boots like leather boots (ART13)");
     }
 }

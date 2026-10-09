@@ -22,10 +22,13 @@ import java.util.List;
  *     the underwater overlay;</li>
  *     <li>solid or opening (another block, possibly partial too): neutral, it neither allows nor blocks.</li>
  * </ul>
- * A partial cell without any compartment neighbour across an uncovered face never joins (no dry room behind it, so no
- * region to join). The analysis itself is not affected: partial cells stay watertight walls. {@link #of} runs once per
- * analysis (O(partial cells)), {@link #additions} once per region rebuild (O(candidates)) and {@link #submergedCount}
- * once per tick (O(log candidates)).
+ * A partial cell without any compartment neighbour across an uncovered face joins only <b>transitively</b> (HV2): through
+ * another partial cell that joined, where the two empty parts meet (each one's face towards the other is uncovered),
+ * for example a deck hatch over a top slab whose empty half opens to the hold. The sea veto applies to it the same way.
+ * A partial cell that reaches no dry compartment this way never joins (no dry room behind it, so no region to join).
+ * The analysis itself is not affected: partial cells stay watertight walls. {@link #of} runs once per analysis
+ * (O(partial cells)), {@link #additions} once per region rebuild (O(candidates)) and {@link #submergedCount} once per
+ * tick (O(log candidates)).
  */
 public final class PartialCellRule {
 
@@ -35,9 +38,12 @@ public final class PartialCellRule {
      */
     public static final double SUBMERGED_TOLERANCE = 0.25;
 
-    public static final PartialCellRule NONE = new PartialCellRule(new int[0], new int[0][], new int[0][], new double[0]);
+    public static final PartialCellRule NONE = new PartialCellRule(new int[0], new int[0][], new int[0][], new double[0], new int[0][]);
 
-    /** Candidate partial cells (grid index): at least one uncovered face meets a compartment. */
+    /**
+     * Candidate partial cells (grid index, ascending): at least one uncovered face meets a compartment, or meets the
+     * uncovered face of another partial cell (a transitive candidate).
+     */
     private final int[] cells;
     /** Per candidate: the compartment cells across its uncovered faces, and their compartment ids. */
     private final int[][] neighbours;
@@ -49,12 +55,15 @@ public final class PartialCellRule {
     private final double[] vetoAbove;
     /** {@link #vetoAbove} sorted, for {@link #submergedCount}. */
     private final double[] sortedVeto;
+    /** Per candidate: the candidates whose empty part meets its own (uncovered face against uncovered face). */
+    private final int[][] links;
 
-    private PartialCellRule(int[] cells, int[][] neighbours, int[][] compartments, double[] vetoAbove) {
+    private PartialCellRule(int[] cells, int[][] neighbours, int[][] compartments, double[] vetoAbove, int[][] links) {
         this.cells = cells;
         this.neighbours = neighbours;
         this.compartments = compartments;
         this.vetoAbove = vetoAbove;
+        this.links = links;
         this.sortedVeto = vetoAbove.clone();
         Arrays.sort(sortedVeto);
     }
@@ -72,13 +81,16 @@ public final class PartialCellRule {
         int[][] nb = new int[partial.length][];
         int[][] cp = new int[partial.length][];
         double[] veto = new double[partial.length];
+        int[][] partialNb = new int[partial.length][];
         int n = 0;
         int[] tmpN = new int[6];
         int[] tmpC = new int[6];
+        int[] tmpP = new int[6];
         for (int cell : partial) {
             int faces = g.uncoveredFaces(cell);
             int x = g.x(cell), y = g.y(cell), z = g.z(cell);
             int k = 0;
+            int kp = 0;
             double lowestOutside = Double.POSITIVE_INFINITY;
             for (int f = 0; f < 6; f++) {
                 if ((faces & (1 << f)) == 0) continue;
@@ -87,7 +99,14 @@ public final class PartialCellRule {
                 int c = -1;
                 if (g.inBounds(nx, ny, nz)) {
                     ni = g.index(nx, ny, nz);
-                    if (g.kind(ni) != CellKind.AIR) continue;
+                    if (g.kind(ni) != CellKind.AIR) {
+                        // the empty parts of two partial blocks meet only where both faces are uncovered (f ^ 1 is the
+                        // opposite face in CellFaces order: down/up, north/south, west/east)
+                        if ((g.uncoveredFaces(ni) & (1 << (f ^ 1))) != 0) {
+                            tmpP[kp++] = ni;
+                        }
+                        continue;
+                    }
                     c = analysis.compartmentOf(ni);
                 }
                 if (c < 0) {
@@ -100,17 +119,29 @@ public final class PartialCellRule {
                     k++;
                 }
             }
-            if (k == 0) continue;
+            if (k == 0 && kp == 0) continue;
             cells[n] = cell;
             nb[n] = Arrays.copyOf(tmpN, k);
             cp[n] = Arrays.copyOf(tmpC, k);
+            partialNb[n] = Arrays.copyOf(tmpP, kp);
             veto[n] = lowestOutside + SUBMERGED_TOLERANCE;
             n++;
         }
-        return new PartialCellRule(Arrays.copyOf(cells, n), Arrays.copyOf(nb, n), Arrays.copyOf(cp, n), Arrays.copyOf(veto, n));
+        // grid index -> candidate index (cells is ascending because partialCells() is)
+        int[][] links = new int[n][];
+        for (int i = 0; i < n; i++) {
+            int[] l = new int[partialNb[i].length];
+            int m = 0;
+            for (int ni : partialNb[i]) {
+                int j = Arrays.binarySearch(cells, 0, n, ni);
+                if (j >= 0) l[m++] = j;
+            }
+            links[i] = Arrays.copyOf(l, m);
+        }
+        return new PartialCellRule(Arrays.copyOf(cells, n), Arrays.copyOf(nb, n), Arrays.copyOf(cp, n), Arrays.copyOf(veto, n), links);
     }
 
-    /** Number of partial cells that may join a region (those touching a compartment). */
+    /** Number of partial cells that may join a region (touching a compartment or another partial cell's empty part). */
     public int candidateCount() {
         return cells.length;
     }
@@ -148,11 +179,15 @@ public final class PartialCellRule {
         for (int i = 0; i < out.length; i++) {
             out[i] = new BitSet();
         }
+        int[] target = new int[cells.length];
+        Arrays.fill(target, -1);
+        int[] queue = new int[cells.length];
+        int tail = 0;
         for (int i = 0; i < cells.length; i++) {
-            if (vetoAbove[i] < sea) {
+            if (vetoAbove[i] < sea || neighbours[i].length == 0) {
                 continue;
             }
-            int target = Integer.MAX_VALUE;
+            int t = Integer.MAX_VALUE;
             boolean allDry = true;
             for (int k = 0; k < neighbours[i].length; k++) {
                 int c = compartments[i][k];
@@ -160,11 +195,25 @@ public final class PartialCellRule {
                     allDry = false;
                     break;
                 }
-                target = Math.min(target, c);
+                t = Math.min(t, c);
             }
             if (allDry) {
-                out[target].set(cells[i]);
+                target[i] = t;
+                queue[tail++] = i;
             }
+        }
+        // HV2: a partial cell touching no compartment joins through a joined partial cell whose empty part meets its own
+        for (int head = 0; head < tail; head++) {
+            int i = queue[head];
+            for (int j : links[i]) {
+                if (target[j] < 0 && neighbours[j].length == 0 && !(vetoAbove[j] < sea)) {
+                    target[j] = target[i];
+                    queue[tail++] = j;
+                }
+            }
+        }
+        for (int q = 0; q < tail; q++) {
+            out[target[queue[q]]].set(cells[queue[q]]);
         }
         return out;
     }

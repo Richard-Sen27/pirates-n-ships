@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Paints the worn textures of the apparel clothing (ART6, ART9): vanilla's 64x32 armour layer layout, read by vanilla's
+// Paints the worn textures of the apparel clothing (ART6, ART9, ART13): vanilla's 64x32 armour layer layout, read by vanilla's
 // HumanoidArmorLayer, or by apparel/client/CoatArmorModel for the two coats (which adds the tails). Writes
 // common/src/main/resources/assets/pirates_n_ships/textures/models/armor/<name>.png. Deterministic: same script, same
 // bytes. The captain's pieces take their colours from the pirate captain's skin palette (SF.C in
@@ -221,8 +221,64 @@ function captainsBreeches() {
   return s;
 }
 
+// --- the navy officer's breeches and boots (ART13) ------------------------------------------------------------------
+// The legs of ART6's officer (SF.navy_officer, SF.navyCoat): white breeches shaded with belt_shade, tall black boots
+// from row 5 (boot over boot_d) with a lighter turned-down top (boot_l) and a highlight column on the shin; a navy
+// stripe down the outer seam, a navy waist band with a brass buckle, brass buckles on the boots' instep straps.
+
+/** Layer 1 of officers_clothing: the boots on vanilla's outer model (legs only, rows 5..11 as the officer's skin). */
+function officersBoots() {
+  const s = new Sheet(SF.C, captainRnd('officers_boots'));
+  const l = faces(0, 16, 4, 12, 4);
+  for (const k of ['right', 'front', 'left', 'back']) {
+    const f = l[k];
+    s.rect(f[0], f[1] + 5, f[2], 7, 'boot'); s.speckle(f[0], f[1] + 5, f[2], 7, 'boot_d', 0.2);
+    // the turned-down top: two rows of boot_l, the fold's lower edge in boot_d
+    s.rect(f[0], f[1] + 5, f[2], 2, 'boot_l'); s.speckle(f[0], f[1] + 5, f[2], 2, 'boot', 0.3); s.rect(f[0], f[1] + 7, f[2], 1, 'boot_d');
+    s.rect(f[0], f[1] + 11, f[2], 1, 'boot_d');
+  }
+  // the shin highlight of the officer's skin (column 1 of the front face)
+  for (let r = 8; r < 11; r++) s.px(l.front[0] + 1, l.front[1] + r, 'boot_l');
+  // the instep strap round the front and outer side, a brass buckle in front and on the outer face
+  s.rect(l.front[0], l.front[1] + 9, 4, 1, 'boot_d'); s.rect(l.right[0], l.right[1] + 9, 4, 1, 'boot_d');
+  s.px(l.front[0] + 2, l.front[1] + 9, 'brass'); s.px(l.front[0] + 2, l.front[1] + 10, 'brass_d');
+  s.px(l.right[0] + 1, l.right[1] + 9, 'brass');
+  s.rect(...l.bottom, 'boot_d');
+  return s;
+}
+
+/** Layer 2 of officers_clothing: the breeches on vanilla's inner model (body for the waist band, legs). */
+function officersBreeches() {
+  const s = new Sheet(SF.C, captainRnd('officers_breeches'));
+  const l = faces(0, 16, 4, 12, 4);
+  for (const k of ['right', 'front', 'left', 'back']) {
+    const f = l[k];
+    s.rect(f[0], f[1], f[2], 12, 'white'); s.speckle(f[0], f[1], f[2], 12, 'belt_shade', 0.1);
+  }
+  s.rect(...l.top, 'white');
+  // the navy stripe down the outer seam (the right leg's right face; vanilla mirrors it onto the left leg's outer side),
+  // ending at the knee band with two brass buttons
+  s.rect(l.right[0] + 1, l.right[1], 2, 8, 'navy'); s.speckle(l.right[0] + 1, l.right[1], 2, 8, 'navy_d', 0.2);
+  for (const k of ['right', 'front', 'left', 'back']) { const f = l[k]; s.rect(f[0], f[1] + 8, f[2], 1, 'belt_shade'); }
+  s.px(l.right[0] + 1, l.right[1] + 8, 'brass'); s.px(l.right[0] + 2, l.right[1] + 8, 'brass');
+  s.rect(...l.bottom, 'belt_shade');
+  // the waist band on the body's lower rows: white, its top row navy, a brass buckle in front, the fall-front's buttons
+  const b = faces(16, 16, 8, 12, 4);
+  for (const k of ['right', 'front', 'left', 'back']) {
+    const f = b[k];
+    s.rect(f[0], f[1] + 8, f[2], 4, 'white'); s.speckle(f[0], f[1] + 8, f[2], 4, 'belt_shade', 0.1);
+    s.rect(f[0], f[1] + 8, f[2], 1, 'navy');
+  }
+  s.rect(...b.bottom, 'belt_shade');
+  s.rect(b.front[0] + 3, b.front[1] + 8, 2, 1, 'brass');
+  s.px(b.front[0] + 2, b.front[1] + 10, 'gold'); s.px(b.front[0] + 5, b.front[1] + 10, 'gold');
+  return s;
+}
+
 const TEXTURES = {
   officers_coat_layer_1: officersCoat,
+  officers_clothing_layer_1: officersBoots,
+  officers_clothing_layer_2: officersBreeches,
   captains_coat_layer_1: captainsCoat,
   captains_clothing_layer_1: captainsBoots,
   captains_clothing_layer_2: captainsBreeches

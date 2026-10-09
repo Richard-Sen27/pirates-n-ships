@@ -205,6 +205,65 @@ class PartialCellRuleTest {
         assertTrue(joins(in, allDry(in), 0, 1, 3, 3), "empty half facing the room joins");
     }
 
+    /**
+     * HV2: a roof hatch (y 5) over a bottom slab (y 4) whose south side opens to a pocket of the room, the rest of
+     * layer 4 solid: the hatch touches no compartment, only the slab's empty upper half.
+     */
+    private static HullGrid.Builder hatchOverSlab() {
+        return room().fill(2, 4, 2, 4, 4, 4, CellKind.SOLID).set(3, 4, 4, CellKind.AIR)
+                .set(3, 5, 3, CellKind.OPENING).partial(3, 5, 3, ALL)
+                .partial(3, 4, 3, UP | SIDES);
+    }
+
+    @Test
+    void hatchJoinsThroughTheSlabUnderIt() {
+        HullAnalysis a = HullAnalyzer.analyze(hatchOverSlab().build());
+        assertEquals(1, a.compartments().size());
+        assertEquals(2, PartialCellRule.of(a).candidateCount());
+        assertTrue(joinsAt(a, 0, 3, 4, 3, 2.0), "the slab touches the pocket");
+        assertTrue(joinsAt(a, 0, 3, 5, 3, 2.0), "the hatch joins through the slab's empty half");
+        assertTrue(joinsAt(a, 0, 3, 5, 3, Double.NEGATIVE_INFINITY), "no sea at the hull");
+    }
+
+    @Test
+    void transitiveJoinKeepsTheSeaVeto() {
+        // the hatch's sky (y 6..7) under the sea: the hatch stays out, the slab (no outside face) stays in
+        HullAnalysis a = HullAnalyzer.analyze(hatchOverSlab().build());
+        assertFalse(joinsAt(a, 0, 3, 5, 3, 6.5));
+        assertTrue(joinsAt(a, 0, 3, 4, 3, 6.5));
+        assertEquals(1, PartialCellRule.of(a).submergedCount(6.5));
+    }
+
+    @Test
+    void transitiveJoinNeedsADryStart() {
+        HullAnalysis a = HullAnalyzer.analyze(hatchOverSlab().build());
+        List<BitSet> dry = allDry(a);
+        dry.get(0).clear(a.grid().index(3, 4, 4)); // the pocket beside the slab is flooded
+        BitSet add = PartialCellRule.of(a).additions(dry, 2.0)[0];
+        assertTrue(add.isEmpty(), "neither the slab nor the hatch over it may join: " + add);
+    }
+
+    @Test
+    void coveredFacesDoNotLinkPartialCells() {
+        // a top slab under the hatch: its full top meets the hatch, the empty parts do not meet
+        HullAnalysis a = HullAnalyzer.analyze(room().fill(2, 4, 2, 4, 4, 4, CellKind.SOLID).set(3, 4, 4, CellKind.AIR)
+                .set(3, 5, 3, CellKind.OPENING).partial(3, 5, 3, ALL).partial(3, 4, 3, DOWN | SIDES).build());
+        assertTrue(joinsAt(a, 0, 3, 4, 3, 2.0), "the top slab touches the pocket");
+        assertFalse(joinsAt(a, 0, 3, 5, 3, 2.0), "the hatch does not reach a dry room");
+    }
+
+    @Test
+    void chainOfPartialCellsJoins() {
+        // hatch (y 5) over two stacked partial cells (y 4: open up and down, y 3: bottom slab whose south side opens
+        // to the room); layers 3 and 4 solid otherwise, the room is layer 2 plus the pocket at (3, 3, 4)
+        HullAnalysis a = HullAnalyzer.analyze(room().fill(2, 3, 2, 4, 4, 4, CellKind.SOLID).set(3, 3, 4, CellKind.AIR)
+                .set(3, 5, 3, CellKind.OPENING).partial(3, 5, 3, ALL)
+                .partial(3, 4, 3, UP | DOWN).partial(3, 3, 3, UP | SIDES).build());
+        BitSet add = PartialCellRule.of(a).additions(allDry(a), 2.0)[0];
+        HullGrid g = a.grid();
+        assertTrue(add.get(g.index(3, 3, 3)) && add.get(g.index(3, 4, 3)) && add.get(g.index(3, 5, 3)), "chain: " + add);
+    }
+
     @Test
     void openHullRimSlabIsOutside() {
         // a bottom slab on top of an open hull's wall: its top and outer side are outside air

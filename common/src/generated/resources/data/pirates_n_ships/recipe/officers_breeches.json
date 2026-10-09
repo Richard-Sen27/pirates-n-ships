@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:blue_wool"
+    },
+    "W": {
+      "item": "minecraft:white_wool"
+    }
+  },
+  "pattern": [
+    "WBW",
+    "W W",
+    "W W"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:officers_breeches"
+  }
+}

@@ -18,7 +18,7 @@ import java.util.List;
 
 /**
  * The wearable apparel (design.md §9, §15): hats that copy the hat of a seafarer mob, the officer's coat, and the pirate
- * captain's coat, breeches and boots (ART9).
+ * captain's coat, breeches and boots (ART9), the officer's breeches and boots (ART13).
  */
 public final class ApparelContent {
 
@@ -52,6 +52,21 @@ public final class ApparelContent {
             () -> new CoatItem(OFFICERS_COAT_MATERIAL.holder(), ApparelConfig.OFFICERS_COAT_ARMOR, new Item.Properties().stacksTo(1)));
 
     /**
+     * The officer's breeches and boots (ART13): {@code officers_clothing_layer_2.png} (breeches, vanilla's inner armour
+     * model) and {@code officers_clothing_layer_1.png} (boots, vanilla's outer armour model). Not the coat's material:
+     * the coat's layer 1 carries the tails in its head area and the body and arms, the boots' layer 1 only the legs.
+     */
+    public static final RegistryEntry<ArmorMaterial, ArmorMaterial> OFFICERS_CLOTHING_MATERIAL = material("officers_clothing", Items.WHITE_WOOL);
+    /** The navy officer's white breeches with a navy stripe down the outer seam (ART13, ART6's officer); legs slot. */
+    public static final RegistryEntry<Item, ClothingItem> OFFICERS_BREECHES = ModRegistry.item("officers_breeches",
+            () -> new ClothingItem(OFFICERS_CLOTHING_MATERIAL.holder(), ArmorItem.Type.LEGGINGS, ApparelConfig.OFFICERS_BREECHES_ARMOR,
+                    new Item.Properties().stacksTo(1)));
+    /** The navy officer's black boots with turned-down tops and brass buckles (ART13, ART6's officer); feet slot. */
+    public static final RegistryEntry<Item, ClothingItem> OFFICERS_BOOTS = ModRegistry.item("officers_boots",
+            () -> new ClothingItem(OFFICERS_CLOTHING_MATERIAL.holder(), ArmorItem.Type.BOOTS, ApparelConfig.OFFICERS_BOOTS_ARMOR,
+                    new Item.Properties().stacksTo(1)));
+
+    /**
      * The captain's coat's material (ART9): {@code captains_coat_layer_1.png}, drawn with the tails model. A material of
      * its own because the coat's texture keeps the tails in the head area of layer 1, where the boots' layer 1 would
      * need nothing but the legs.
@@ -80,8 +95,11 @@ public final class ApparelContent {
 
     /** The captain's clothing that he drops ({@code mobs.captain.clothing_drop_chance} each), in drop order. */
     public static final List<RegistryEntry<Item, ? extends ClothingItem>> CAPTAINS_CLOTHING = List.of(CAPTAINS_COAT, CAPTAINS_BREECHES, CAPTAINS_BOOTS);
+    /** The navy officer's outfit (ART13): coat, breeches and boots, in slot order. */
+    public static final List<RegistryEntry<Item, ? extends ClothingItem>> OFFICERS_CLOTHING = List.of(OFFICERS_COAT, OFFICERS_BREECHES, OFFICERS_BOOTS);
     /** Every clothing item (not the hats). */
-    public static final List<RegistryEntry<Item, ? extends ClothingItem>> CLOTHING = List.of(OFFICERS_COAT, CAPTAINS_COAT, CAPTAINS_BREECHES, CAPTAINS_BOOTS);
+    public static final List<RegistryEntry<Item, ? extends ClothingItem>> CLOTHING = List.of(OFFICERS_COAT, OFFICERS_BREECHES, OFFICERS_BOOTS,
+            CAPTAINS_COAT, CAPTAINS_BREECHES, CAPTAINS_BOOTS);
 
     private ApparelContent() {
     }

@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "K": {
+      "item": "minecraft:black_wool"
+    },
+    "L": {
+      "item": "minecraft:leather"
+    },
+    "N": {
+      "item": "minecraft:gold_nugget"
+    }
+  },
+  "pattern": [
+    "N N",
+    "K K",
+    "L L"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:officers_boots"
+  }
+}

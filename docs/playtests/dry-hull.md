@@ -104,6 +104,21 @@ stand right under and beside the hold. Fancy graphics, no Sodium or Embeddium.
    plant flickers into the hold at the floor edges; outside the stern the plants come back behind the ship. With debug
    logging, note the "Hidden water plants" log line (µs per refresh, sections re-marked) and compare it with HV1.
 
+## HV2: the view down an open deck hatch
+
+Each ship now has one dry region instead of one per compartment (the starter sloop's deck well between the bulwarks,
+its cabin and its hold were three; looking from the deck well down the hatch, the boundary between two regions ended
+the dry view and the sea showed in the hold). A hatch over a slab or stair step now also joins through the step.
+
+1. **From above.** The starter sloop afloat in the sea (`/pirates ship place starter_sloop assemble`, standing at the water's edge),
+   open the deck hatch, stand on the deck and look down it from straight above, at an angle, crouched and standing,
+   also while the ship bobs and while it turns. Expected: the shaft under the open hatch is dry: the ladder on the mast
+   and the hold floor, no water surface about a block under the deck (the screenshot of 2026-10-09), no blue tint.
+2. **From inside.** Climb down the ladder and look up and around in the shaft and the hold, then climb back out.
+   Expected: dry the whole way, no underwater overlay at the hatch. Repeat with the hatch closed.
+3. **Elsewhere.** Look into the cabin and from the deck over the bulwark at the sea beside the hull. Expected: the
+   cabin is dry, the sea outside the hull looks normal (no dry hole in it).
+
 ## PMP1: the pump handle moves while someone pumps
 
 The bilge pump's brake handle now rocks about its pin while the pump is worked, and the piston rod under it slides up

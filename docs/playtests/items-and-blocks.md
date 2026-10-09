@@ -448,3 +448,38 @@ down, so its front faces you) and one on a wall (its front faces away from the w
   blue, the same in every biome (an item has no position), and it ripples like water. The placed barrel still takes the
   biome's water colour (compare in a swamp: the placed barrel is greener than the item). Say if anything else on the
   item turned blue or grey.
+
+## The officer's outfit (ART13)
+
+Run each step on the **NeoForge** client (`./gradlew :neoforge:runClient`) and on the **Fabric** client
+(`./gradlew :fabric:runClient`), and say on which one anything differs. `/give @s pirates_n_ships:officers_breeches`,
+`/give @s pirates_n_ships:officers_boots`, `/give @s pirates_n_ships:officers_coat`,
+`/give @s pirates_n_ships:officer_hat`. Renders (not the game): `art/renders/officers_set_worn.png`,
+`art/renders/officers_clothing.png`. Watch both logs for a missing texture (`officers_clothing_layer_1/2`, a purple and
+black checkerboard on the legs) and for an exception when a coat is first drawn.
+1. **Worn set, third person, beside a navy officer** (`/summon pirates_n_ships:navy_officer`, or one at an outpost):
+   bicorne, coat, breeches and boots on you. Compare with him: white breeches with a navy stripe down the outer seam of
+   each leg (the stripe runs from the hip to the knee on the outside of both legs), a navy waist band with a brass
+   buckle (mostly under the coat), tall black boots from just below the knee with turned-down dark leather tops, a
+   strap over the instep with a brass buckle in front and on the outer side. Say where the colours differ from his.
+2. **Tails on Fabric too:** on the Fabric client the officer's and the captain's coat show the same knee-long tails as
+   on NeoForge, swinging back with each stride, hanging nearly straight when sneaking (ART9 steps 1 to 3). An armour
+   stand wearing the coat shows the tails as well. An enchanted coat shimmers on the tails, and a coat with an armour
+   trim (if it accepts one) shows the trim like vanilla armour.
+3. **Breeches and boots apart:** breeches alone: white legs to the ankle with the stripe and a white knee band with
+   brass buttons; boots alone: your own legs show above the boot tops. Both on: the boots sit over the breeches, no
+   flicker where they overlap.
+4. **Slots and armour:** right-click and shift-click put each piece into its slot (the old one back to the hand);
+   tooltips "+2 Armor When on Legs" and "+1 Armor When on Feet"; with coat, breeches and boots the armour bar shows 6
+   (plus 1 with the bicorne). No durability bar. Server config `apparel.officers_breeches_armor` /
+   `officers_boots_armor` = 0 after a restart: no tooltip line.
+5. **Slot icons and the ground:** in the inventory and the creative tab the breeches lie flat facing you (navy waist
+   band with a brass buckle, two gold buttons at the front, white legs with the navy stripe on the outer sides, knee
+   bands with gold buttons, white stockings, black shoes) and the boots are a pair seen from the side, toes to the left
+   (black with dark leather tops and a brass buckle). English names "Officer's Breeches" and "Officer's Boots", no
+   checkerboard; held like flat items; on the ground at half size; in an item frame facing out.
+6. **Career gear:** a fresh player made Lieutenant (`/pirates career set @s navy lieutenant`, or enlisting with the
+   reputation and deeds) receives bicorne, saber, coat, breeches and boots together, once; with a full pack all five
+   drop at the feet. A player who was already Lieutenant before this version gets nothing new (by design, LAW3b).
+7. **Recipes:** the recipe book shows the breeches (white wool in the leggings shape, blue wool top middle) and the
+   boots (gold nuggets over black wool over leather, two columns); the captain's pieces still craft as before.

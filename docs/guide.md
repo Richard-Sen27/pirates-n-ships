@@ -12,11 +12,11 @@ the work see [`progress.md`](progress.md).
 > **Status: prototype.** Everything below is implemented and covered by automated tests on a headless server.
 > Nobody has played it in a client yet. How things look and feel (ships floating, water inside hulls, sailing speed,
 > crew on deck) is unverified until the playtests in [`playtests/`](playtests/) are done.
-> Several features have no in-world source yet (no ports, no navy, no hiring), so they are reached through
-> operator commands under `/pirates`.
+> The operator commands under `/pirates` reach every system directly, for testing; in a normal game the ports,
+> the navy, the hiring desks and the NPC ships drive them.
 
-Requirements: Minecraft 1.21.1, NeoForge, and the [Sable](https://github.com/ryanhcode/sable) mod, which provides the
-physics for moving ships.
+Requirements: Minecraft 1.21.1, NeoForge or Fabric, the [Sable](https://github.com/ryanhcode/sable) mod, which
+provides the physics for moving ships, GeckoLib (the animated mobs) and, on the client, the Player Animation Library.
 
 ## Contents
 1. [Your first ship](#1-your-first-ship)
@@ -53,9 +53,11 @@ and Fabric and needs no other mod.
 - **Turning pages:** the arrows in the page corners, the arrow keys, Page Up and Page Down or the mouse wheel. The
   bookmarks on the right edge jump to a chapter; links in the text jump to other chapters. Escape closes the book. It
   opens again at the page you last read, also after death and relog (`almanac.remember_page`).
-- **Show me:** some pages have a "Show me" button that plays a Ponder scene of the mechanic (today: loading and firing
-  a cannon). The back button returns to the same page. The same scene opens from the item: hold the Ponder key (W by
-  default) while hovering the Cannon in your inventory.
+- **Show me:** some pages have a "Show me" button that plays a Ponder scene of the mechanic (today: assembling a
+  ship, steering, sails and the winch, anchor and capstan, pumps and flooding, hull repair, mooring, cargo and weight,
+  and loading and firing a cannon). The back button returns to the same page. The same scene opens from the item:
+  hold the Ponder key (W by default) while hovering the helm, sail winch, capstan, bilge pump, hull patch, mooring
+  ring, cargo crate or cannon in your inventory.
 - **JEI:** with JEI (Just Enough Items) installed, every block and item the Almanac describes has an information
   page in JEI with that text (R or U over it), and JEI gains two pages of the mod's own: the Harbor Market (each
   trade good with its buy and sell prices) and Ship's Provisions (what the crew counts as food, water or rum).
@@ -68,7 +70,8 @@ book with `python3 tools/gen_almanac.py` and `./gradlew :neoforge:runData`).
 
 1. **Build a hull** from any blocks, floating in water. Planks, slabs, stairs and glass are watertight. Leave a
    one-block gap to the shore or a dock: anything that touches the hull becomes part of the ship.
-   Make the bottom layer from something heavy such as stone, or the boat will tip (see [Limits](#limits-to-know)).
+   The ship floats level as you built it (the auto-ballast, see [Heel](#heel)), so no heavy bottom is needed. Raw
+   stone, dirt, sand and the like are terrain and never become part of a ship (see [Assembly](#assembly-at-the-helm)).
    The blocks of this mod that are not full cubes (cleats, cannons, yards, lanterns, pumps and the like; all but the
    brig door) can be waterlogged like a vanilla slab: place one in water or fill it with a bucket. Its own water is
    never flood water.
@@ -96,7 +99,9 @@ For testing you can fix the wind with `/pirates wind set <fromDegrees> <strength
 Using a **helm** that stands in the world assembles a ship:
 - It collects every block connected to the helm, through faces and edges.
 - It never takes air, fluids, or **terrain** (dirt, sand, stone, ores, gravel, ice, snow, leaves, corals, kelp and
-  similar: the block tag `pirates_n_ships:terrain`). Logs are not terrain, so a wooden build counts. The tag
+  similar: the block tag `pirates_n_ships:terrain`, which includes `#minecraft:base_stone_overworld`, so raw stone,
+  granite, diorite, andesite, deepslate and tuff never assemble; cobblestone and stone bricks do). Logs are not
+  terrain, so a wooden build counts. The tag
   `pirates_n_ships:never_assemble` excludes more blocks (bedrock, barriers, portals, command blocks).
 - The limit is 2048 blocks. Above it the helm refuses and tells you. A dock that touches the hull counts towards it.
 - Chests and other block entities keep their contents.
@@ -190,11 +195,11 @@ faster.
 ### Limits to know
 - **Stay near the world origin.** Sable's physics uses 32-bit positions. Beyond about 100,000 blocks from the origin a
   slow ship reports a speed but stops moving. Beyond several million blocks ships can sink into solid blocks.
-- **Small hollow hulls tip easily.** They float but barely right themselves. In tests a 5×5 plank boat, 4 blocks high,
-  with a deck, helm and mast lay about 20° bow up at rest, ran 35 to 46° bow down under a small sail, and wandered
-  a few degrees off course without rudder input. **Give a small ship a heavy bottom:** with a bottom layer of stone
-  the same boat ran about 16° bow down and held its course. Longer and wider hulls are much steadier. The heeling
-  force of sails is also scaled down to 25% (config `sailing_runtime.sail_heel_factor`).
+- **Small hulls are livelier.** The auto-ballast (`stability.auto_ballast`, on by default) cancels the trim and heel
+  of the build itself, so a ship floats level as built; what you load later (cargo, flood water, crew) still trims
+  and heels her, and a narrow, short hull heels and pitches more than a long, wide one. The heeling force of sails is
+  scaled down to 25% (`sailing_runtime.sail_heel_factor`). With the auto-ballast off, a heavy stern castle sits the
+  ship stern down. No tipping figures have been measured since the ballast came in.
 - A ship only floats on water that is under its own hull. A ship in a dry dock next to the sea stays put.
 
 ---
@@ -204,7 +209,8 @@ faster.
 ### Wind
 Each dimension has one wind: a direction and a strength of 3 to 12 blocks per second that drift slowly over time.
 Rain makes it 1.5 times stronger and a thunderstorm 2.2 times, with gusts during thunderstorms. It is the same for
-every player and is sent to clients (nothing displays it yet, except the flags).
+every player and is sent to clients, which show it through the wind streaks below, the wind arrow of the
+[ship HUD](#ship-hud), the flags and the set of the sail cloth. `/pirates wind get` prints it.
 
 **Seeing the wind.** Over the sea, thin white streaks drift through the air around you, from deck height up into the
 rigging, flying with the wind at the wind's own speed: they come from where the wind comes from and show its strength
@@ -284,12 +290,10 @@ instead of pushing it downwind. No block is needed for this.
 
 ### Rolling and creaking
 A ship that heels or is shoved swings back and settles within a few seconds (roll and pitch damping, config `sailing`).
-While it rolls, its planks creak now and then, quietly, from somewhere in the hull; a ship at rest is silent. The
-creak uses vanilla wooden sounds as placeholders until real recordings exist.
-
-### Hull creaks
-A rolling ship creaks now and then from somewhere in the lower hull, louder and more often the harder it rolls,
-never as a loop; a ship lying still is silent. Server config `hull_creaking` sets the volume and the minimum gap.
+While it rolls, its planks creak now and then from somewhere in the lower hull, louder and more often the harder it
+rolls, never as a loop; a ship lying still is silent. The creak is the mod's own sound (`pirates_n_ships:ship.creak`).
+Server config `hull_creaking` (on/off, creaks per second, the minimum gap, volume and pitch ranges, the rolling rate
+that counts).
 
 ### Sea music
 The mod brings its own music. Aboard a ship (standing on deck or sitting at a station) the next track is a sea
@@ -337,8 +341,11 @@ the ship back at the bow, softly, so there is no dead stop. Because the hawse is
 sail swings hard round toward that side and ends up head to its chain, bow toward the anchor. A ship pulling harder
 than the anchor holds drags it over the seabed. The ship counts as anchored once the anchor holds and the ship has
 stopped. Using the capstan again heaves the chain in at 2.5 blocks a second and pulls the anchor along the seabed and
-up to the hull; using it mid-way lets go again. If the chain runs out before the seabed, the anchor hangs at its end
-and does not hold. Server config `anchor`.
+up to the hull; using it mid-way lets go again. A fresh drop is refused when there is no ground within the chain's
+length (32 blocks) straight below the hawse: "No ground within 32 blocks below: the anchor would not hold". (Letting
+go again while it is being weighed skips that check; an anchor that then falls past the chain's end hangs there and
+does not hold.) Server config `anchor_chain` (fall, chain, holding, sounds) and `sailing_runtime.anchor_enabled`,
+`sailing_runtime.anchor_chain_length`.
 
 You can also put a crew member on the capstan: use the Captain's Whistle on the crew member, then on the
 capstan. In the whistle menu, "Drop anchor" makes the hand lean into the bars for two seconds before the anchor runs
@@ -362,7 +369,8 @@ hold it, green sparkles show where the other pieces are close. Bring the broken-
 straight (no more than a few degrees off), touching face to face; if there is a one-block gap, place planks to bridge
 it first. Then use the toolkit on the broken-off piece: after a second of hammering it is nailed back on, keeps its
 chests and stations, and the ship keeps its name. Each repair uses 4 nails. Only pieces of the same ship can be
-joined, and only pieces up to 200 blocks; bigger halves need a shipwright. Server config `assembly.rejoin`.
+joined, and only pieces up to 200 blocks (`assembly.rejoin.max_piece_blocks`); a bigger piece can't be nailed back
+on (the refusal still mentions a shipwright, but no shipwright joins pieces). Server config `assembly.rejoin`.
 
 ### Hauling with the rope
 With your hook set in a ship and the rope in your hand, hold sneak: the rope's length freezes. Walk back and the
@@ -386,8 +394,10 @@ you strike yours. Shots your crew fires on its own break fewer planks than a cap
 it. Turn the ship to bring the guns to bear: a cannon cannot turn sideways. Server config `cannons.npc`.
 
 ### Boarding along the rope
-Once a grappling rope is latched onto another ship, look at the rope and use it: you hang from it and slide down to the
-lower end, following both ships as they move. Sneak to let go. A level rope is crawled slowly toward the hook. From the
+Once a grappling rope is latched onto another ship and tied off on a cleat or mooring ring of yours (use the cleat or
+ring while your hook is out), look at the rope and use it: you hang from it and slide down to the lower end, following
+both ships as they move. A rope still in the thrower's hand is no slide (he can only climb it, see
+[Hauling with the rope](#hauling-with-the-rope)). Sneak to let go. A level rope is crawled slowly toward the hook. From the
 crow's nest down to an enemy deck is the classic move. Server config `grapple.slide`.
 
 ### Boarding plank
@@ -532,8 +542,9 @@ under `ship_hud`: on/off, `compass_corner` and `hull_corner` (put both in one co
 ### Cargo weight
 What you carry weighs the ship down. Crates, cargo barrels, pantries and water barrels get heavier as they fill: a full
 crate weighs as much as forty planks. Chests and other vanilla containers press down where they stand, so a heavy
-chest in the bow trims the ship by the bow. Spread heavy cargo and keep it low and central. At the wheel the rudder
-line shows the load: Light, Laden, Heavily laden or Overloaded (`/pirates ship info` shows the numbers). A laden ship
+chest in the bow trims the ship by the bow. Spread heavy cargo and keep it low and central. The
+[ship screen](#ship-screen) shows the load: Light, Laden, Heavily laden or Overloaded (`/pirates ship info` shows the
+numbers); the rudder line at the wheel and the HUD do not. A laden ship
 sits lower, so it floods sooner through a breach, and it is slower to accelerate and turn. Server config
 `cargo_trade.cargo_weight_affects_ships`, `weight_factor`, `weigh_interval_ticks`, `load_levels`.
 
@@ -574,15 +585,6 @@ and hold her deck for a few seconds, and she is yours, crew and all. Capturing a
 eyes. Operators: `/pirates world voyages spawn near convoy|patrol|raid`. Server config
 `world_simulation.materialize` (`cannon_rounds`, `guns_start_loaded`), `world_simulation.voyages` (which ship
 templates each faction sails).
-
-### Navy patrols
-Navy patrols sail between navy outposts, or out toward a pirate island and back. A patrol hunts any player's ship
-flying the Jolly Roger, a captain whose cover is blown, and a captain with a bounty of 50 doubloons or more, from
-up to 256 blocks away, and tells you so in chat. Within range it circles you
-at about 20 blocks and its free hands man the guns that bear on you and open fire. Strike your colours and it holds
-its fire, shadows you for half a minute and returns to its route. Outrun it beyond 64 blocks for a while, or beyond
-384 blocks at once, and it breaks off the chase. Its helmsman acknowledges the chase once and keeps quiet while he
-circles. Operators: `/pirates world patrols`. Server config `world_simulation.navy`.
 
 ### Navy patrols
 The navy sends patrols between its outposts, or out toward the nearest pirate island and back when an outpost stands
@@ -643,8 +645,11 @@ config `careers`, `careers.rewards`, `careers.ship_grants`, `careers.name_prefix
 
 ### Quests
 Every harbor master's desk has a Quests tab with up to three offers, which the port renews when they run out after
-two days. Accept up to three at once; each must be done within five days. Pirate hunts and prisoner deliveries come
-from villages and navy outposts, navy raids only from pirate islands. Monster hunts ask for sharks or, rarely (always
+two days. Accept up to three at once; each must be done within five days. Pirate hunts come from villages and navy
+outposts, prisoner deliveries only from navy outposts, navy raids only from pirate islands (the defaults of
+`quests.types.*`: villages offer deliver, kill_monster, hunt_pirates, find_treasure, hunt_captain, escort; navy
+outposts hunt_pirates, turn_in, kill_monster, deliver, hunt_captain, escort, hunt_ship; pirate islands hunt_navy,
+find_treasure, deliver, kill_monster, plunder_convoy, hunt_patrol). Monster hunts ask for sharks or, rarely (always
 in cold waters), the kraken. A cargo run puts a contract in your Contracts tab: deliver it at the destination's desk
 for a raised reward with no deposit. A treasure hunt hands you a treasure map; open the chest to finish. Completing a
 quest pays doubloons and raises your reputation with the giver's side (navy, pirates or villagers). Villages and navy outposts may also send
@@ -750,15 +755,17 @@ Every captain keeps their own chart. As you sail, the coasts within about 96 blo
 ink coastlines, hatched shallows, sandy beaches, and the open sea, where the odd sea serpent lurks. Craft a
 Chart (paper, leather, a feather) and use it to open your map. Drag to pan, scroll to zoom, and right-click to
 place a marker (X, anchor, skull, port or danger) with a name; click a marker to rename or delete it. Your ship
-shows where you are and which way you are heading. If the server allows it, the M key opens the chart without
-one in hand, and other players can appear as ships. Only the overworld's seas are charted.
+shows where you are and which way you are heading. The M key opens the chart while you hold one in either hand; only
+if the server turns on `chart.open_without_item` (off by default) does it open without one. Other players can appear
+as ships (`chart.show_other_players`). Only the overworld's seas are charted.
 
 ## 4. Crew
 
 A **crew member** is a simple NPC. Hire one at a harbor desk (see "Hiring crew" below) or spawn one with
 `/pirates crew spawn`.
 
-**Stations** are blocks a crew member can man. The sail winch, helm, cannons, pump, capstan and crow's nest are stations. A crew member at a station stands on
+**Stations** are blocks a crew member can man. The sail winch, helm, cannon, swivel gun, bilge pump, capstan and
+crow's nest are stations. A crew member at a station stands on
 an invisible seat that travels with the ship, so it stays at its post while the ship moves.
 
 Crew **walk** to their place: a sailor on deck who is sent to a station, to a meal or to a hammock walks across the
@@ -770,8 +777,10 @@ crew take their place at once).
 The **captain's whistle** (creative tab) gives orders:
 - Use it on a crew member, then on a station: the crew member takes that station.
 - Use it on an assigned crew member: it is released.
-- Use it in the air: opens the order wheel. Point at an order (hoist, reef, furl, release crew) and click, or hold the
-  use key, aim and release. The order goes to all crew at stations on the ship you stand on. Esc closes the wheel.
+- Use it in the air: opens the order wheel with ten orders: Hoist sails, Reef sails, Furl sails, Man the pumps,
+  Fire!, Load!, Fire at will, Drop anchor, Weigh anchor, Release crew. Point at one and click, or hold the use key,
+  aim and release. The order goes to the crew on the ship you stand on whose station takes it; unmanned stations
+  become open jobs (see [Orders, not assignments](#orders-not-assignments)). Esc closes the wheel.
 
 The [ship screen](#ship-screen) at the helm (sneak-use with an empty hand) gives the same orders, assigns and releases
 hands and shows every hand's morale, station and order at a glance.
@@ -890,6 +899,8 @@ while you strike or take it down it runs down again, over the 3 seconds the work
 At the pole:
 - **Use it with a flag item:** hoists that flag after 3 seconds and gives back the old one.
 - **Use it with an empty hand:** strikes the colors (the flag is lowered but kept), or raises them again.
+- **Sneak-use with an empty hand:** takes the flag down.
+- Breaking the pole drops the flag.
 
 **What the flag does.** The flag your ship flies is the highest flag on its poles. Under the Jolly Roger the navy attacks
 everyone aboard on sight and charges you for being seen; pirates leave you alone. A navy flag lets you pass the navy,
@@ -897,11 +908,12 @@ unless you are a suspect or worse: then every navy soldier within range may see 
 are charged heavily and the navy hunts your ship for five minutes, whatever you fly. A navy ship with a manned
 crow's nest sees your flag half again as far off and sees through it half again as fast. Striking your colours surrenders:
 navy and pirates stop attacking. Firing on a ship that struck its colours, or on one flying a merchant flag or banner,
-is a crime; if your crew fires, the charge goes to you as the ship's owner. Server config `law.flags`.
-- **Sneak-use with an empty hand:** takes the flag down.
-- Breaking the pole drops the flag.
+is a crime; if your crew fires, the charge goes to you as the ship's owner. Server config `law.flags`, `flags_brig`
+(false-colours detection, crow's nest observers, surrender).
 
-The flag streams downwind at the exact wind angle. Nothing reacts to flags in the world yet: there are no navy or pirate ships.
+The flag streams downwind at the exact wind angle. The world reacts to it as described above: navy soldiers, outposts
+and patrols read it (see [Navy patrols](#navy-patrols)), your gun crews pick their targets by it (see
+[Fire at will](#fire-at-will)), and the NPC ships on the sea lanes fly their own.
 
 ---
 
@@ -932,11 +944,14 @@ Holds up to 16 rations of fresh water. One crew member drinks one ration per day
 - The top shows the fill level. A broken barrel keeps its water in the item.
 
 ### What the rules do
-The rules for a crew eating and drinking exist, but no crew eats yet. Try them with `/pirates provisions`:
+Every dawn each ship with crew aboard eats and drinks one day from its pantries and water barrels (see
+[Upkeep](#upkeep)). `/pirates provisions` runs the same rules on a pantry for testing:
 - A crew eats perishable food first, the food closest to spoiling before the rest.
-- Hungry crew lose morale and work at 75% speed. Thirsty crew lose morale faster and work at 50%. After 3 days of
-  hunger or 1 day of thirst the crew is ready to desert.
-- **Rum:** a ration raises morale. More than the ration makes the crew slow for a while.
+- Hungry crew lose morale and work at 75% speed. Thirsty crew lose morale faster and work at 50%. The work speed is set
+  at dawn and holds until the next one. Hunger and thirst lead to desertion only through that lost morale (the config's
+  `hunger_desertion_days` and `thirst_desertion_days` only feed the `/pirates provisions` report).
+- **Rum:** a ration raises morale. The crew drinks one ration a day at most, so the drunkenness settings
+  (`drunk_work_speed`, `drunk_duration_ticks`) never apply in play.
 - **Scurvy** sets in after 8 days without fresh food or fruit (apple, melon, berries, lime) and is cured by eating some.
 
 ---
@@ -982,8 +997,9 @@ Bulk containers that hold **one kind of item** in large amounts.
 - Hoppers work, and other mods' pipes can connect to it and to the pantry.
 
 ### Doubloons
-The gold doubloon is the currency. It has no recipe: it comes from trade (and later from loot and bounties).
-`/pirates trade coins` gives you some for testing.
+The gold doubloon is the currency. It has no recipe: it comes from trade, contracts and quests, bounties and
+turn-ins at navy officers, slain pirates and pirate captains, wreck chests and buried treasure. `/pirates trade coins`
+shows how many you carry (it gives none; in creative take them from the creative tab).
 
 ### Trade goods
 Twelve goods have a base price and a weight. They are data-driven (see [Datapacks](#14-datapacks)).
@@ -1004,8 +1020,10 @@ Twelve goods have a base price and a weight. They are data-driven (see [Datapack
 | Rum | rum | 4 | tropical ports |
 
 ### Markets
-There are no ports in the world yet. A market is created with `/pirates trade port <name> <kind> <climate>`
-(kinds: seafarer village, navy outpost, pirate island).
+Every port in the world has a market: each [seafarer village](#seafarer-villages), [navy outpost](#navy-outposts)
+and [pirate island](#pirate-islands) registers one when it generates, run from its harbor master's desk. For testing,
+`/pirates trade port <name> <kind> <climate>` creates a port anywhere (kinds `seafarer_village`, `navy_outpost`,
+`pirate_island`; climates `tropical`, `temperate`, `arid`, `cold`).
 - A port **produces** some goods (cheap there) and **demands** others (expensive there), depending on its kind and
   climate.
 - **Buying raises the price, selling lowers it.** Prices drift back by about 30% of the gap per day.
@@ -1083,14 +1101,23 @@ Every player and mob has a score. Crimes raise it:
 
 - The score makes you **suspect** from 10, **wanted** from 50 and **notorious** from 200.
 - It goes down by 10 points per in-game day, starting 5 minutes after your last crime.
-- Hitting the same victim again within 30 seconds doesn't count twice.
-- A fine costs 3 doubloons per point (only through `/pirates law fine` for now). Notorious criminals can't pay.
+- The same crime against the same victim doesn't count twice within its repeat window
+  (`law.repeat_cooldown_seconds.<crime>`): 30 seconds for attacking the navy or a villager, 60 for theft, 120 for
+  attacking a neutral ship or one that struck its colours, 300 for the Jolly Roger and false colours, 600 for piracy
+  and desertion, 1200 for selling plunder and suspected piracy; kills and press-ganging always count.
+- A fine costs 3 doubloons per point, paid at a navy officer (see below). Notorious criminals can't pay.
 
-What is detected in the world today:
-- **Hurting or killing villagers and wandering traders**, also with arrows or by your pets.
+Every crime in the table is detected in the world:
+- **Hurting or killing villagers, wandering traders and the navy**, also with arrows or by your pets (`law.world.combat_crimes`).
 - **Theft:** taking items out of a container that stands in a village and that no player placed, while a villager
   can see you. Putting items in is fine.
-- The other crimes need ships, flags or the navy to react, and are reached through `/pirates law crime`.
+- **Flags:** being seen by the navy under the Jolly Roger, caught under false colours, or with plunder aboard
+  (suspected piracy); see [Flags](#5-flags) and [Stolen goods](#harbor-masters-desk).
+- **Firing on ships:** a cannonball into a neutral ship or one that struck its colours.
+- **Selling plunder** at a village or navy desk, **piracy** (capturing a merchant), **press-ganging** a prisoner,
+  **desertion** from the navy.
+
+`/pirates law crime` records any of them by hand, for testing.
 
 ### Fines, ransom, press-gang and release
 Pay your fine at a navy officer: hold doubloons and right-click him. Each criminal-score point costs 3 doubloons by
@@ -1103,7 +1130,8 @@ go. Server config `law.officer_fines`, `law.ransom_needs_port`, `flags_brig.pris
 ### Bounties
 - At a score of 50 the navy puts a **bounty** on you of twice your score. It grows with the score and is withdrawn
   when the score falls below 25.
-- Players can add bounties on anyone (`/pirates law bounty place`, 10 doubloons or more).
+- Players add bounties on anyone at a **notice board** (below), 10 doubloons or more (`law.player_bounty_minimum`).
+  Operators can do the same with `/pirates law bounty place`.
 - **Claiming:** killing a target with a bounty puts a **Bounty Proof** into the killer's inventory. Handing it in pays
   the bounty. Delivering the target alive pays 1.5 times as much. A claim wipes the target's score.
 - **Turning in:** right-click a navy officer with a Bounty Proof to collect the bounty in doubloons. To deliver
@@ -1120,7 +1148,9 @@ go. Server config `law.officer_fines`, `law.ransom_needs_port`, `flags_brig.pris
 - **Use shackles on a mob** that is at 25% health or less: it becomes your prisoner. It stops fighting and can't
   despawn. Bosses can't be captured. Players can only be captured if the server allows it and they have a bounty.
 - **Use shackles on your prisoner** to lead it or let go. A led prisoner follows you like a mob on a lead.
-- A prisoner left alone outside a cell tries to escape (about once per 10 minutes on average).
+- A prisoner left alone outside a cell tries to escape (`brig.escape_chance_per_minute`, 10 % a minute). A prisoner
+  being led never escapes. Player prisoners don't escape; they go free when their sentence runs out. Master switch
+  `flags_brig.prisoner_escapes`.
 
 ### Brig bars and brig door
 Locking and unlocking a brig door needs a **Brig Key** (an iron ingot over an iron nugget). Use the key on the door:
@@ -1128,13 +1158,17 @@ Locking and unlocking a brig door needs a **Brig Key** (an iron ingot over an ir
 The owner of a door still opens it without a key; nobody else, no mob and no redstone can. Bars connect to the door.
 
 - **Brig bars** connect like iron bars.
-- The **brig door** belongs to the player who placed it. Sneak-use it with an empty hand to lock or unlock it. A locked
-  door opens only for its owner and ignores redstone.
+- The **brig door** belongs to the player who placed it. Only the brig key locks or unlocks it (any player holding a
+  key can); without a key, using it to lock only tells you that you need one. A locked door opens only for its owner
+  and ignores mobs and redstone.
 - A prisoner is **in a cell** when it stands in a closed space of at most 64 blocks, bounded by solid blocks, brig bars
-  and a closed, locked brig door. There it stays, and it doesn't try to escape.
+  and a closed, locked brig door. There it stays. The config has a cell escape chance while the crew's morale is low
+  (`brig.low_morale_escape_chance_per_minute`, 2 % a minute), but the brig never passes a low morale to it yet
+  (`BrigService` checks escapes with morale fixed to "not low"), so a prisoner in a cell does not escape today.
 
-What you can do with a prisoner (deliver at a navy officer; the rest through `/pirates brig`): deliver it for its bounty,
-ransom it, press-gang it (a crime), or release it.
+What you can do with a prisoner: deliver it at a navy officer for its bounty, ransom it there, press-gang it with the
+captain's whistle (a crime), or release it (see [Fines, ransom, press-gang and release](#fines-ransom-press-gang-and-release));
+`/pirates brig` does each of these without the officer, for testing.
 
 ---
 
@@ -1142,23 +1176,26 @@ ransom it, press-gang it (a crime), or release it.
 
 | Item | Today |
 |---|---|
-| Rapier | A sword: 5 damage, attack speed 2.0 |
-| Cutlass | A sword: 7 damage, attack speed 1.2 |
-| Saber | A sword: 6 damage, attack speed 1.6 |
-| Pistol, Musket | Hold right mouse to aim, left mouse fires (aimed or from the hip); see Firearms. |
+| Rapier | Sword: slash 4 (reach 2.8), thrust 9 (reach 3.6). The thruster. |
+| Cutlass | Sword: slash 7 (reach 2.6), thrust 6.5 (reach 2.8). The slasher. |
+| Saber | Sword: slash 6 (reach 2.7), thrust 7.5 (reach 3.2). In between. |
+| Pistol | 10 damage, 3 s to load, wide spread; see Firearms. |
+| Musket | 14 damage, 5 s to load, flatter and tighter; also fires the grappling hook; see Firearms. |
 | Lead Shot, Cannonball | Ammunition: lead shot for the pistol and musket, cannonballs for cannons; see Firearms and Cannons. |
-| Grappling Hook | Fired from a musket; hooks a ship or a block, hauls, climbs; see Grappling hook. |
+| Grappling Hook | Thrown by hand or fired from a musket; hooks a ship or a block, hauls, climbs; see Grappling hook. |
 
-The swords work like vanilla swords for now. The skill-based fighting system (slash, thrust, guard, parry, riposte,
-stamina) is implemented on the server with per-weapon values in `data/pirates_n_ships/pirates_n_ships/weapon/`, but
-nothing lets a player use it yet: the input and animation layers are missing.
+The swords fight with the skill system (slash, thrust, guard, parry, riposte, stamina; see [Swordplay](#swordplay)),
+on by default (`melee.skill_based_combat`). The slash and thrust figures above are the per-weapon values in
+`data/pirates_n_ships/pirates_n_ships/weapon/`, which a datapack can change. The tooltip shows the items' vanilla
+attributes (rapier 5 damage at speed 2.0, saber 6 at 1.6, cutlass 7 at 1.2), which is how they hit with
+`melee.skill_based_combat` off, as plain swords.
 
 ---
 
 ### Firearms
 The pistol and the musket are single-shot flintlocks. Hold right-click with one lead shot and one gunpowder in your
 inventory to load (3 seconds for the pistol, 5 for the musket, with the bow pose; letting go early cancels and costs
-nothing; creative mode needs no ammo). The tooltip shows "Loaded" or "Unloaded". **Left-click fires, right-click
+nothing; creative mode needs no ammo). The tooltip shows "Loaded" or "Not loaded". **Left-click fires, right-click
 aims.** With a loaded gun, hold right-click to aim: after a second of steady aiming the shot is tighter and the musket
 zooms in a little. Press left-click to fire, either while aiming or straight from the hip (no right-click: the full,
 wider spread of the gun). Letting go of right-click never fires, it only lowers the gun, which stays loaded. A gun in
@@ -1170,7 +1207,7 @@ left-click is an ordinary attack again. While you load, a white
 bar under the gun's slot fills up; a loaded gun shows a full gold bar in the hotbar and inventory, its hammer cocked back, and its tooltip
 says "Loaded" or "Not loaded". You see yourself aim and reload (the Player Animation Library drives it, client option
 `firearm_animations.enabled`). Firing: a lead ball flies out with smoke and a small kick, the gun is unloaded again and needs half a second before it
-can be used. The pistol hits hard but scatters; the musket flies flatter and tighter. Standing in the rain, a quarter of
+can be used. The pistol scatters; the musket hits harder (14 damage against the pistol's 10) and flies flatter and tighter. Standing in the rain, a quarter of
 the shots misfire with a click and the charge stays in. Without ammo the gun only clicks. Shooting someone counts as an
 attack for the law, and the death message names you. Everything is in the `firearms` server config (and the misfire
 chance in `combat`).
@@ -1233,8 +1270,8 @@ the hook into the musket (its full reload and one gunpowder), then aim with righ
 rope. Thrown by hand, the hook's rope is 32 blocks. The hook catches on any solid surface: another ship (the rope hauls
 both ships together), your own ship (a line to slide down, e.g. from the mast top), or land (from a ship it slowly
 hauls your ship toward that point like a kedge; from land it is a zip line). It slips off leaves and glass panes. To
-slide, look at the rope with an empty hand (or a hook in it) and use it; with a musket in hand, use always works the
-musket. Left-handed players can turn off `grapple.launch.offhand_required` to swap the hands.
+slide, tie the rope off on a cleat or mooring ring first, then look at the rope with an empty hand (or a hook in it)
+and use it; with a musket in hand, use always works the musket. Left-handed players can turn off `grapple.launch.offhand_required` to swap the hands.
 
 **Cleats** work like mooring rings: a hook flying close to a cleat catches on it, and using a cleat on your ship
 while your hook is out ties the rope off there.
@@ -1244,12 +1281,16 @@ on another ship catches on it and holds twice as far before tearing loose. With 
 your own ship to tie the rope there: the ships keep hauling together and you can walk away. Sneak and use with an
 empty hand, or breaking a ring, lets go.
 
-Right-click to throw the hook. If it hits the hull of another ship it bites in and hangs there, following the ship.
-If you stand on your own ship, the taut rope hauls both ships together until they lie side by side, ready for
-boarding; then it goes slack. From land the rope drags the hooked ship slowly toward you. A hook that hits your own
-ship, land, water or a creature does not hold (a creature takes a small hit) and comes back after two seconds. To let
-go, sneak and right-click with an empty hand. More than 24 blocks from the hook the rope snaps and the hook comes back
-(or is lost, if the server says so). Throwing a second hook releases the first. Server options: section `grapple`.
+**Throwing by hand.** Without a musket in the other hand, right-click throws the hook. If it hits the hull of another
+ship it bites in and hangs there, following the ship; from your own ship the taut rope hauls both ships together
+until they lie side by side, ready for boarding, then goes slack. It also holds on your own ship (a line, not a haul;
+`grapple.latch_own_ship`) and on land (`grapple.latch_world_blocks`). On land the rope does not drag a hooked ship by
+itself: hold sneak to freeze its length and walk back to haul (see [Hauling with the rope](#hauling-with-the-rope)).
+A hook that hits water or a creature does not hold (a creature takes a small hit) and comes back after two seconds.
+To let go, sneak and right-click with an empty hand. The rope snaps when you are farther from the hook than the rope
+is long (32 blocks thrown, 64 fired from a musket, twice that when the hook caught on a ring or cleat), and the hook
+comes back (or is lost, if the server says so). Throwing a second hook releases the first. Server options: section
+`grapple`.
 
 ### Swordplay
 Swords make themselves heard, one sound per attack: a miss whooshes (lower for a thrust), a hit slices flesh and a
@@ -1260,7 +1301,7 @@ their volume under `melee.sounds`.
 With a rapier, cutlass or saber in hand the mouse works differently (server config `melee.skill_based_combat`,
 on by default; vanilla weapons are untouched):
 - **Slash:** a quick left click. A wide, short arc after a brief wind-up.
-- **Thrust:** hold left click about half a second and release. Narrow, long reach, more damage, slow to recover if it
+- **Thrust:** hold left click about 0.3 seconds (`melee_input.hold_to_thrust_ticks`, 6) and release. Narrow, long reach, harder than a slash on the rapier and saber, slow to recover if it
   misses.
 - **Guard:** hold right click. It blocks every hit from the front completely, but each blocked blow costs stamina,
   and heavier blows cost more. When you can't pay for a blow, your guard breaks: the hit gets through, softened by
@@ -1284,20 +1325,20 @@ on by default; vanilla weapons are untouched):
 |---|---|---|
 | Helm | 4 sticks, 1 planks | Assembles, steers and disassembles a ship. A real ship's wheel on a pedestal (Blockbench model). See [Ships](#2-ships) and [Sailing](#3-sailing). |
 | Yard | 3 logs in a row (gives 3) | A spar. Two rows on one mast make a square sail; the cloth is drawn between them. See [Sails](#sails). |
-| Cleat | iron ingot, planks | Attaches to floors, walls and masts. Three cleats and a rope make a triangular sail. See [Sails](#sails). |
+| Cleat | 1 iron ingot between 2 planks (gives 2) | Attaches to floors, walls and masts. Three cleats and a rope make a triangular sail. See [Sails](#sails). |
 | Sail Winch | 2 string, 1 iron ingot, 3 planks | Sets the trim of all sails on its ship. A crew station. The crank faces you when placed. |
 | Capstan | 2 logs, 1 stick, 2 chains, 1 iron block, 3 planks | Drops and raises the anchor. |
 | Harbor Master's Desk | book, gold nugget, 5 planks | Opens a port's market screen when bound to the port. See [Harbor master's desk](#harbor-masters-desk). |
 | Cannon | 2 iron ingots, 1 iron block, 2 logs, 1 planks | Loads powder and a cannonball, aims by elevation, fires. A crew station. See [Cannons](#cannons). |
-| Bilge Pump | stick, 3 planks, 1 bucket, 1 plank | Pumps water out of the hold below it. A crew station. See [Fighting a leak](#fighting-a-leak). |
-| Crow's Nest | 6 planks, 1 rope, 2 iron nuggets | A lookout barrel for the masthead; whoever stands in it calls out ships, land and sea monsters. A crew station. See [Crow's nest](#crows-nest). |
+| Bilge Pump | 1 stick, 3 planks, 1 bucket | Pumps water out of the hold below it. A crew station. See [Fighting a leak](#fighting-a-leak). |
+| Crow's Nest | 5 planks, 1 rope, 2 iron nuggets | A lookout barrel for the masthead; whoever stands in it calls out ships, land and sea monsters. A crew station. See [Crow's nest](#crows-nest). |
 | Hull Patch (block) | placed by the item | A tarred plank that closes a breach. Watertight hull block. |
 | Flagpole | 3 sticks (gives 2) | Flies a flag. A thin pole with a finial and a cleat (Blockbench model). See [Flags](#5-flags). |
 | Flag Pedestal | 1 log over 1 wooden slab (gives 2) | A plinth carved from a log that a flagpole stands in; the pole's foot with its cleat. See [Flags](#5-flags). |
 | Pantry | 8 planks, 1 wheat | Food store with spoilage. See [Provisions](#6-provisions). |
-| Water Barrel | 6 planks, 2 iron nuggets, 1 water bucket | Holds 16 rations of water. Crafted full. |
+| Water Barrel | 6 planks, 4 iron nuggets, 1 water bucket | Holds 16 rations of water. Crafted full. |
 | Cargo Crate | 4 planks, 4 sticks | Bulk container for 32 stacks of one item. |
-| Cargo Barrel | 6 planks, 2 iron nuggets | Bulk container for 1536 items of one kind. |
+| Cargo Barrel | 6 planks, 4 iron nuggets | Bulk container for 1536 items of one kind. |
 | Brig Bars | 4 iron bars, 2 planks (gives 6) | Bars for cells. |
 | Brig Door | 4 iron ingots, 2 iron bars | Lockable door for cells. |
 | Notice Board | 4 planks, 2 paper | Lists every bounty and places new ones for doubloons. |
@@ -1346,7 +1387,7 @@ A slain pirate captain drops each piece of his clothing with a 35 % chance (serv
 | Chain Shot | 2 iron ingots, 1 chain (gives 2) | Cannon shot that tears sails and cuts rigging, no hull damage. See [Cannons](#cannons). |
 | Grapeshot | 8 iron nuggets, 1 string (gives 2) | Cannon shot: a cone of nine pellets that hurt the people on a deck. See [Cannons](#cannons). |
 | Grappling Hook | 3 iron ingots, 1 string | Throw it at another ship to hook it and haul the hulls together. See [Grappling hook](#grappling-hook). |
-| Rope | string | Use it on a cleat or mooring ring, then on a second one up to 16 blocks away on the same ship: a stay (2+ blocks lower, cleats only) or a decorative rope line. It glints while it remembers the first anchor. |
+| Rope | 3 string in a column | Use it on a cleat or mooring ring, then on a second one up to 16 blocks away on the same ship: a stay (2+ blocks lower, cleats only) or a decorative rope line. It glints while it remembers the first anchor. |
 | Hull Patch | 2 planks, 1 coal or charcoal (gives 2) | Use on the edge of a hole in an assembled hull to close the breach. See [Fighting a leak](#fighting-a-leak). |
 | Doubloon | none | Currency. |
 | Tobacco | none | Trade good. |
@@ -1365,95 +1406,174 @@ A slain pirate captain drops each piece of his clothing with a 35 % chance (serv
 | Bounty Proof | none | Given for killing a target with a bounty. Hand it in for the reward. |
 | Captain's Whistle | none | Assigns crew to stations and gives orders from a radial menu. See [Crew](#4-crew). |
 
-Everything is in the "Pirates 'n' Ships" creative tab. Items without a recipe are meant to come from loot, trade or
-NPCs later.
+Everything is in the "Pirates 'n' Ships" creative tab. Items without a recipe come from loot, trade and
+NPCs (the captain's whistle has none; it is in the creative tab).
 
 ---
 
 ## 12. Commands
 
-All commands need operator rights (permission level 2). They exist so that features can be tried before the NPCs,
-ports and screens that will normally drive them exist.
+Every command hangs under `/pirates`. Most need operator rights (permission level 2); they reach each system
+directly for testing. Every player may use `/pirates career`, `/pirates rep`, `/pirates quest list`,
+`/pirates quest abandon <id>` and `/pirates waves` (level 0); their other branches stay at level 2. Level 2 is the only
+other level in use.
+
+**Open to every player (level 0)**
 
 | Command | What it does |
 |---|---|
-| `/pirates wind get` | Shows the wind. |
+| `/pirates career` | Your navy rank, infamy and letter of marque. |
+| `/pirates rep` | Your reputation with the navy, the pirates and the villagers. |
+| `/pirates quest list` | Your accepted quests. |
+| `/pirates quest abandon <id>` | Drops one of your quests. |
+| `/pirates waves` | The current sea state and any override. |
+
+**Operators (level 2)**
+
+| Command | What it does |
+|---|---|
+| `/pirates career <player>` | Another player's career. |
+| `/pirates career set <player> navy <none\|midshipman\|lieutenant\|captain\|commodore\|admiral>`, `… infamy <deckhand\|buccaneer\|dread_captain\|pirate_lord>` | Sets a rank. |
+| `/pirates career letter <player> grant\|void` | Grants or voids a letter of marque. |
+| `/pirates career ship_grant <player> reset` | Forgets the player's ship grants; a rank held re-grants at once. |
+| `/pirates rep <player>`, `/pirates rep set <player> <navy\|pirates\|villagers> <value>` | Reads or sets a reputation. |
+| `/pirates quest offer <port> <type>` | Creates a quest offer at a port (hunt_pirates, kill_monster, turn_in, deliver, find_treasure, hunt_navy, hunt_captain, escort, plunder_convoy, hunt_patrol, hunt_ship). |
+| `/pirates quest complete <id>` | Completes one of your quests at once. |
+| `/pirates waves set <calm\|moderate\|rough\|storm> [fromDegrees]`, `/pirates waves clear` | Holds a sea state (optionally a wave direction), or releases it. |
+| `/pirates wind get` | Shows the wind at you and whether it is fixed. |
 | `/pirates wind set <fromDegrees> <strength>` | Fixes the wind: the compass bearing it blows from, and blocks per second. |
 | `/pirates wind clear` | Returns to the natural wind. |
 | `/pirates ship forces` | For the ship you stand on: speed, heading, wind angle, how deep it sits, rudder and anchor, and every force on it. |
+| `/pirates ship rigging` | Every yard and what it carries (or why not), the triangular sails, the crew aboard. |
+| `/pirates ship info` | The ship you stand on: id, name, origin, wreck flag, load. |
+| `/pirates ship templates` | Lists the prebuilt ships. |
+| `/pirates ship place <template> [assemble \| force [assemble]]` | Puts one on the water in front of you, bow away from you; `force` ignores obstructions, `assemble` makes it a ship. |
+| `/pirates ship orders [port]`, `/pirates ship orders finish <order>` | Shipyard orders at the nearest (or a named) port; finishes one at once. |
 | `/pirates crew spawn` | Spawns a crew member. |
+| `/pirates crew info [crew]` | Morale, crew and bunks, supplies left, the last payday. |
 | `/pirates crew assign <crew> <station>` | Puts a crew member at a station. |
 | `/pirates crew release <crew>` | Releases crew from their stations. |
-| `/pirates crew order <hoist\|reef\|furl> [crew]` | Gives a sail order. |
-| `/pirates flag get\|strike\|raise <pos>`, `/pirates flag set <pos> <kind>` | Reads or changes a flagpole without the delay. |
+| `/pirates crew order <hoist\|reef\|furl\|pump\|fire\|load\|fire_at_will\|drop_anchor\|raise_anchor> [crew]` | Gives an order, ship-wide or to the named crew. |
+| `/pirates crew order course <x> <z> [<x> <z> …] [loop]` | Gives the helmsman a course through waypoints. |
+| `/pirates crew hire <sailor\|pirate\|navy> [port]`, `/pirates crew dismiss <crew>` | Hires a candidate; dismisses a hired hand. |
 | `/pirates provisions show <crew> [pos]` | What the pantry you look at holds, and how many days it feeds that crew. |
 | `/pirates provisions advance <days> <crew> [prisoners] [rum] [pos]` | Lets that crew live off the pantry for some days and prints what happened. |
-| `/pirates ship templates` / `/pirates ship place <template> [force] [assemble]` | Lists the prebuilt ships; puts one on the water in front of you, bow away from you, optionally assembled (operators). |
-| `/pirates trade port <name> <kind> <climate>` | Creates a test port. |
-| `/pirates trade open\|goods\|buy\|sell …` | Opens a market, lists prices, buys and sells with real coins and items. |
-| `/pirates trade contracts <from> <to>`, `/pirates trade contract list\|accept\|deliver` | Delivery contracts between two test ports. |
+| `/pirates flag get\|strike\|raise <pos>`, `/pirates flag set <pos> <none\|merchant\|navy\|jolly_roger\|custom>` | Reads or changes a flagpole without the delay. |
+| `/pirates trade port <name> <seafarer_village\|navy_outpost\|pirate_island> <tropical\|temperate\|arid\|cold>` | Creates a test port. |
+| `/pirates trade open\|goods\|buy\|sell …` | Opens a market, lists prices, buys and sells with real coins and items (`sell … plundered` sells marked goods, `container` uses the crate you look at). |
+| `/pirates trade contracts <from> <to>`, `/pirates trade contract list\|accept\|deliver …` | Delivery contracts between two ports. |
 | `/pirates trade weight` | Cargo weight of the container you look at. |
 | `/pirates trade plunder` | Marks the stack in your hand as plundered. |
-| `/pirates trade coins` | Gives doubloons. |
+| `/pirates trade coins` | Shows the doubloons you carry (it gives none). |
+| `/pirates trade desk bind <port>`, `… unbind`, `… info` | Binds the harbor desk you look at to a port, unbinds it, or names its port. |
 | `/pirates law score get\|set\|add <target> …` | Reads or changes a criminal score. |
-| `/pirates law crime <target> <crime>` | Reports a crime. |
-| `/pirates law last <target>`, `/pirates law hostile <target>` | The last reported crime, and whether the navy would attack. |
-| `/pirates law fine <target> <doubloons>` | Pays a fine. |
-| `/pirates law bounty list\|place\|claim\|clear …` | Bounties. `claim proof` uses the Bounty Proof in your hand. |
-| `/pirates brig list\|capture\|deliver\|ransom\|pressgang\|release …` | Prisoners. |
+| `/pirates law crime <target> <crime>` | Records a crime (any crime in the [table](#criminal-score)). |
+| `/pirates law last <target>`, `/pirates law hostile <target>` | The last recorded crime, and whether the navy would attack. |
+| `/pirates law fine <target> <doubloons>` | Pays a fine without an officer. |
+| `/pirates law bounty list\|place\|claim\|clear …` | Bounties. `claim proof` uses the Bounty Proof in your hand, `claim <target> dead\|alive` claims directly. |
+| `/pirates brig list [radius]` | Prisoners nearby. |
+| `/pirates brig capture <target>` | Takes the target prisoner. |
+| `/pirates brig deliver <prisoner> [deckhand\|buccaneer\|officer\|captain]`, `… ransom <prisoner> <common\|merchant\|navy_officer> [captain]`, `… pressgang <prisoner>`, `… release <prisoner>` | What an officer or the whistle does with a prisoner, without them. |
+| `/pirates brig releases [target]` | The release record. |
+| `/pirates world ports`, `/pirates world port nearest` | The port registry; the nearest port with its berths and treasure sites. |
+| `/pirates world treasure give [port]` | A treasure map for that port or the nearest pirate island. |
+| `/pirates world factions`, `… factions report <event>`, `… factions reset` | The faction state; applies an event; resets it. |
+| `/pirates world raid chance`, `/pirates world raid <port>` | Raid chances per settlement; starts a raid at once. |
+| `/pirates world voyages [list]` | Active voyages. |
+| `/pirates world voyages spawn convoy <from> <to>`, `… spawn near <convoy\|patrol\|raid>` | Starts a convoy between two ports; spawns a test voyage 48 blocks ahead of you, materialized. |
+| `/pirates world voyages advance <id> <blocks>`, `… lane <from> <to>`, `… materialize <id>`, `… dematerialize <id>` | Moves a voyage on; prints a sea lane; turns a voyage into real ships and back. |
+| `/pirates world patrols` | The navy patrols. |
+| `/pirates hazard spawn <waterspout\|whirlpool> [pos]`, `/pirates hazard clear [radius]` | Spawns or removes sea hazards. |
+| `/pirates mob spawn <pirate\|sailor\|navy_soldier\|navy_officer\|pirate_captain\|harbor_master\|shark\|kraken> [count]` | Spawns the mod's mobs. |
+| `/pirates mob debug on\|off` | Traces what nearby duelists decide. |
+| `/pirates mob captain spawn\|list`, `/pirates mob captain voyage <island>` | Pirate captains; sends an island's captain to sea now. |
+| `/pirates mob squad info\|patrol\|return` | The navy outpost's watch. |
 
-The playtest checklists in [`playtests/`](playtests/) show each command in use.
+The playtest checklists in [`playtests/`](playtests/) show the commands in use.
 
 ---
 
 ## 13. Configuration
 
-Open it in game under Mods → Pirates 'n' Ships → Config. Gameplay settings are in the server config, which is synced to
-clients. Every feature has a switch and every strength or rate has a value.
+Open it in game under Mods → Pirates 'n' Ships → Config (on Fabric through Mod Menu). Gameplay settings are in the
+server config, which is synced to clients; how things look and sound is in the client config. Every feature has a
+switch and every strength or rate has a value. One row per top-level section, as declared in the code
+(`ModConfigs.server(...)` / `ModConfigs.client(...)`); nested groups are named after the dot.
+
+**Server config**
 
 | Section | What it controls |
 |---|---|
-| `assembly` | Assembly on/off, block limit, how still and level a ship must be to disassemble, water handling. |
-| `dry_hull` | Dry hull on/off, buoyancy of the dry volume, weight of flood water. |
-| `flooding` | Flooding on/off, inflow rate; bilge pump on/off, rate, reach, use time and exhaustion; hull patch on/off. |
-| `wind` | Wind strength range, how fast it changes, weather multipliers, gusts, regional variation. |
-| `sailing` | Sail force, rudder strength and turning authority (`rudder_force_factor`), keel drag, anchor strength, roll and pitch damping. |
-| `anchor_chain` | Chain speeds, travel time limits, anchor sounds and volumes. |
-| `hull_creaking` | Creaking on/off, how often, volume and pitch ranges, the rolling rate that counts. |
-| `audio` (client) | Music on/off and volume, the gap between tracks, shanties aboard. |
-| `grapple.launch` | Musket launch on/off, speed, gravity factor and rope length, `offhand_required`. |
-| `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore pull, entity damage, lost-hook rule, `latch_world_blocks`, `latch_own_ship`, `slide.grab_cooldown_ticks`. |
-| `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevation range and steps, blocks per hit, recoil and impact impulses, ball lifetime and water behaviour, `mobGriefing` and spawn protection, drops from destroyed blocks, glancing hits and the bounce angle. |
-| `cannons.swivel` | Swivel gun on/off, ammo item and count, damage, muzzle speed, reload, blocks per hit, recoil and impact impulses, ball lifetime, elevation limits, aim reach. |
-| `cannons.chain_shot` / `cannons.grapeshot` | Chain shot and grapeshot on/off, range factor, spread, damage; chain shot's cloth radius, rigging damage and mend time; the pellet count. |
-| `mobs` | Mob types on/off and peaceful, hostility toggles, detection and fight ranges, skill tiers, musket timings and ammo, shove, drops. |
-| `hazards` / `hazard_visuals` (client) | Waterspouts and whirlpools on/off, spawn chances and interval, distance band, lifetimes, radii, pull, lift, spin, drag-down, drift, sail tearing, ship force scale and mass cap; particle density and sounds. |
-| `mobs.kraken` / `hazards.kraken` | Kraken on/off and chance per day; detection, grips, tentacle health and regrow, weak spots, strike and swipe intervals, damage, retreat. |
-| `chart` / `chart_visuals` (client) | Charts on/off, cell size, sampling radius and interval, shallow depth, the cell cap, opening without the item, other players visible, marker cap; doodles. |
-| `lookout` | Crow's nest lookout on/off, calls on/off, range, scan interval, how long a sighting is remembered, the land rays. |
-| `mobs.shark` | Shark on/off and peaceful, spawn weight and group (server restart), detection, circle and give-up times, bite cooldown, damage and knockback, frenzy threshold. |
-| `melee_hud` (client) | Stamina bar on/off, position (tight above the hotbar or left of it), scale, offsets, opacity, fade when full and its timing. |
-| `melee_animations` (client) | Sword animations on/off, first-person mode, layer priority. |
-| `melee_input` / `melee_hud` (client) | Hold-to-thrust and parry-tap thresholds; stamina bar on/off, scale and offsets. |
-| `firearms.aim` / `firearm_view` (client) | Minimum hold, steady time and aimed spread factor, sneak lowers the gun; musket zoom. |
-| `firearms` | Firearms on/off, `fire_on_attack` (left-click fires; off = release to fire), per gun: damage, muzzle velocity, spread, reload time, recoil; ball lifetime and gravity, cooldown, gunpowder use. |
-| `sailing_runtime` | Sailing forces on/off, heel scaling, steering and anchor on/off, rudder steps, chain length. |
-| `crew_stations` | Crew stations on/off, time per trim step. |
-| `ship_screen` | The ship screen at the helm on/off (off: sneak-use disassembles at once), its reach, how often it refreshes. |
-| `flags` | Hoisting delay, flags following the wind at its exact angle (land and ship check intervals), banners as flags. |
-| `dry_hull` | Also: whether slabs, stairs and hatches are drawn dry in their empty half. |
-| `sea_chest` | Sea chest on/off, worn speed, sink pull, wind drift and its cap, draft; paddling on/off, speed, backing speed, turn rate, hunger. |
-| `survival` | Cold water on/off and freeze rate, warm effect length, swimming hunger multiplier. |
-| `provisions` | Consumption, rations, spoilage, scurvy, rum, water barrel capacity, rain refill. |
-| `cargo_trade.market_backend` | Desk reach, maximum trade quantity, refresh interval of open market screens. |
-| `cargo_trade` | Container sizes, prices, price recovery, contracts, plunder on/off and the fence's discount, port fees, cargo weight. |
-| `law` | Criminal score, severity of each crime, decay, fines, bounties, crime detection, theft; `law.bounty`: officer turn-ins on/off and delivery range, notice boards on/off and reach. |
-| `flags_brig` | False-colors detection, NPC surrender, capturing players, prisoner escapes. |
-| `brig` | Capture threshold, leading distances, cell size, escape chance, ransom. |
-| `melee` | Skill-based sword fighting: parry window, stamina, stagger, feint recovery, NPC feints on/off, sword sounds on/off and volume. |
-| `almanac` / `almanac_screen` (client) | The Captain's Almanac readable on/off (`enabled`), how long a placed tome stays open (`open_ticks`), the last page remembered per player (`remember_page`), the first-join gift (`give_on_first_join`); page-turn animation length and sound, book size. |
 | `core` | Debug logging. |
-| `ships`, `waves`, `hazards`, `crew`, `combat`, `survival`, `world`, `world_simulation`, and the client sections `audio` and `wave_effects` | Settings for features that are not built yet. They do nothing so far. |
+| `assembly` | Assembly and disassembly on/off, block limit, how still and level a ship must be to disassemble, restoring the sea, draining the hull and moving entities on disassembly; `split` (ships breaking apart, wreck size and lifetime), `rejoin` (the shipwright's toolkit: max piece size, gap, angle, nails, work time, toolkit durability). |
+| `dry_hull` | Dry hull on/off, buoyancy of the dry volume, weight of flood water, drowning under flood water (`flood_breath`), partial blocks drawn dry, analysis and sync timings. |
+| `flooding` | Flooding on/off, inflow rate, re-analysis on tilt; bilge pump on/off, rate, reach, use time and exhaustion; hull patch on/off. |
+| `ships` | Sinking and wreck persistence, the ship HUD on/off and its sync, shipwright orders (on/off, build days and prices per ship, price and material factors, orders per port). |
+| `ship_identity` | Nameplates showing the ship's name, their refresh. |
+| `ship_screen` | The ship screen at the helm on/off (off: sneak-use disassembles at once), its reach, how often it refreshes. |
+| `ship_decor` | The ship's bell ring time; sleeping in the sea cot, on land and aboard. |
+| `rigging` | Ratlines on/off. |
+| `wind` | Wind strength range, how fast it changes, weather multipliers, gusts, regional variation, sync interval. |
+| `sailing` | Sail force, half-trim factor, rudder strength and turning authority (`rudder_force_factor`, `max_rudder_angle`), keel drag, roll and pitch damping; `sails` (yard gaps and lengths, stay length and drop, rope lines and sag, dyeing, banners and their minimum size). |
+| `sailing_runtime` | Sailing forces, steering and anchor on/off, sail heel factor, sails needing water, rudder steps, the anchor chain's length (`anchor_chain_length`), draft, scan interval. |
+| `stability` | Righting and heel: on/off, righting factor and damping, the heel at which sails spill, pitch righting, the auto-ballast (`auto_ballast`, on by default) and its cap. |
+| `helm` | `wheel`: steering by turning the wheel (`drag_steering`), mouse and key rates, turns lock to lock, view lock, reach. |
+| `anchor_chain` | The anchor's fall and sink speed, raising speed, chain stiffness and damping, holding force, drag and scraping, heel, the sounds and their volumes. |
+| `hull_creaking` | Creaking on/off, creaks per second, minimum gap, volume and pitch ranges, the rolling rate that counts. |
+| `waves` | Sea state on/off, amplitude and components, wave groups, how fast the state changes, heave and torque on ships, spill over low rims, sync. |
+| `hazards` | Waterspouts and whirlpools (on/off, chances, durations, radii, pull, lift, spin, drag-down, drift, sail damage, per-player cap), spawn distances and interval, ship force scale and mass cap; `kraken` (on/off, chance per day). |
+| `crew_stations` | Crew stations on/off, time per trim step, order and acknowledgement radius; `capstan` (crew at the capstan), `course` (the helmsman's course keeping), `job_board` (free hands taking open jobs). |
+| `lookout` | Crow's nest lookout on/off, calls on/off, range, scan interval, how long a sighting is remembered, the land rays. |
+| `crew` | Crew size; `wages`, `morale`, `desertion`, `mutiny`, `meals`, `hammock` (players sleeping in hammocks), `hiring`, `walk`. |
+| `provisions` | Consumption on/off and rate, food and water per crew and day, rum ration and morale, drunkenness, hunger and thirst effects, scurvy, spoilage, water barrel capacity, rain refill, weights. |
+| `survival` | `cold_water` (on/off, freeze rate, warm effect length), `swim_hunger` and its multiplier. |
+| `sea_chest` | Sea chest on/off, worn speed, sink pull, wind drift and its cap, draft; paddling on/off, speed, backing speed, turn rate, hunger. |
+| `flags` | Hoisting delay, flags following the wind (land and ship update intervals), banners as flags, stacked poles and the pole height limit. |
+| `cargo_trade` | Cargo weight on ships, weight factor and interval, the treasure map price; `containers`, `load_levels`, `market`, `market_backend`, `contracts`, `plunder`, `harbor_desks`, `port_fees`. |
+| `law` | Criminal score on/off, thresholds, decay, fines (`officer_fines`, cost per point), bounties (navy and player), plunder notices, ransom at a port; `severity` and `repeat_cooldown_seconds` per crime, `world` (crime detection, theft witnesses, navy hostility), `flags` (seeing flags, blown cover), `bounty` (officer turn-ins, notice boards), `pirate_turn_in` (rewards per kind). |
+| `flags_brig` | False-colours detection (ranges, rates, crow's nest observers), the navy flag's minimum standing, NPC surrender, capturing players, prisoner escapes and interactions. |
+| `brig` | Capture threshold, leading distances and speed, cell size, escape chances (alone and in a cell under low crew morale), ransoms, player capture time. |
+| `reputation` | Reputation on/off, decay, thresholds (pirates friendly, navy hostile, villagers trading), price swing, the daily village trade cap; `deeds` (what each deed is worth to each side). |
+| `careers` | Careers on/off, enlistment, desertion, the officer's reach, name prefixes and titles on ships, prize money; `navy.*` and `infamy.*` (what each rank needs), `letter` (letter of marque), `rewards` (gifts, fee waiver, flag right, navy shipyard prices, infamy prices), `ship_grants`. |
+| `quests` | Quests on/off, offers per port, deadlines, active cap, counts, sea quests, escort rules, the captain hunt radius; `types` (which port kind offers which quest), `rewards`. |
+| `world` | `structures.*` (seafarer villages, navy outposts with their garrison, pirate islands with buried treasure, wrecks: on/off, frequency, spacing), `spawn_weights`, `treasure_maps`. |
+| `world_simulation` | The off-screen world on/off, convoys and patrols per day, voyage cap, materialize radius, retaliation; `factions`, `lanes`, `voyages`, `materialize` (crews, fighters, guns and shot lockers of NPC ships), `navy` (patrols), `raids`, `captain` (pirate captains at sea). |
+| `mobs` | Hostility, detection and fight ranges, duelist behaviour, skill tiers, musket timings and ammo, shove, drops; `pirate`, `sailor`, `navy_soldier`, `navy_officer` (on/off, peaceful), `captain` (pirate captains, duels, drops, respawn), `harbor_master`, `squad` (the outpost's watch), `kraken`, `shark`. |
+| `melee` | Skill-based sword fighting (`skill_based_combat`, on by default): parry and riposte windows, guard, stamina, stagger, feint recovery, NPC feints and skill; `sounds`. |
+| `firearms` | Firearms on/off, `fire_on_attack`, ball lifetime and gravity, cooldown, gunpowder use; `aim` (hold and steady times, aimed spread, sneak lowers the gun), `pistol` and `musket` (damage, muzzle velocity, spread, reload, recoil, sound). |
+| `combat` | Cannon block damage, rain misfires; `damage_multipliers` (cannon on blocks and entities, firearms). |
+| `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevations, blocks per hit, recoil and impact, ball lifetime and water, `mobGriefing` and spawn protection, drops, glancing hits; `swivel`, `chain_shot`, `grapeshot`, `crew` (loading by the crew, load preference), `npc` (fire at will). |
+| `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore haul, entity damage, lost hooks, latching on world blocks and on your own ship, cleats and rings, climbing; `launch` (from the musket), `slide` (sliding along a rope). |
+| `boarding` | `plank`: the boarding plank on/off, length, break distance. |
+| `apparel` | Armour of the hats, coats, breeches and boots. |
+| `chart` | Charts on/off, cell size, sampling radius and interval, shallow depth, the cell cap, opening without the item (`open_without_item`, off by default), other players visible, marker cap; `tiles` (map tiles). |
+| `almanac` | The Captain's Almanac readable on/off (`enabled`), how long a placed tome stays open (`open_ticks`), the last page remembered per player (`remember_page`), the first-join gift (`give_on_first_join`). |
+
+**Client config**
+
+| Section | What it controls |
+|---|---|
+| `audio` | Music on/off and volume, ambience volume, the gap between tracks, shanties aboard. |
+| `ship_hud` | The ship HUD on/off, corners of the compass and the hull strip, margin, scale, speed unit. |
+| `helm_view` | The rudder angle line at the wheel. |
+| `dry_hull_view` | The flood water surface, hiding water plants inside dry hulls. |
+| `pump_visuals` | The pump's stroke animation. |
+| `bell_visuals` | The bell's swing. |
+| `sail_visuals` | Cloth movement on/off, belly, flutter, segments, banner layers on sails. |
+| `flag_visuals` | The hoist animation, banners drawn upright. |
+| `wind_effects` | The wind streaks: on/off, density, minimum strength, radius, height, life, look (spread, jitter, wobble, puffs, opacity), gust boost. |
+| `wave_effects` | Camera sway (off by default), foam, spray, the moving water surface, the wake. |
+| `hazard_visuals` | Particle density and sounds of waterspouts and whirlpools. |
+| `cannon_visuals` | The barrel's tilt animation. |
+| `sea_chest_visuals` | The floating chest's bob. |
+| `chart_visuals` | Doodles on the chart. |
+| `melee_input` | Hold-to-thrust and parry-tap thresholds. |
+| `melee_hud` | Stamina bar on/off, position, scale, offsets, opacity, fading. |
+| `melee_animations` | Sword animations on/off, first-person mode, crouch, fade, layer priority. |
+| `firearm_animations` | Pistol and musket animations on/off. |
+| `firearm_view` | The musket's zoom while aiming. |
+| `career_hud` | The rank box: mode (fade, pinned, hidden), how long it shows, its corner. |
+| `almanac_screen` | Page-turn animation length and sound, book size. |
 
 Many defaults are first guesses that need playtesting. [`progress.md`](progress.md) lists the ones to review.
 
@@ -1466,7 +1586,7 @@ in its own namespace, or replace one of ours by shipping a file at the same path
 
 | Type | Folder | Contents |
 |---|---|---|
-| Ship templates | `ship_template` | Structure id, name key, helm position, waterline row, bow direction, price (for the shipwright later). The structures come from WorldEdit schematics in `art/schematics/` through `tools/schem_to_structure.py`. |
+| Ship templates | `ship_template` | Structure id, name key, helm position, waterline row, bow direction, price. The structures come from WorldEdit schematics in `art/schematics/` through `tools/schem_to_structure.py`. |
 | Trade goods | `trade_good` | Item, base price, weight, category, where it is produced. |
 | Weapons | `weapon` | Timings, damage, reach, arc, stamina costs and guard values for the fighting system. A weapon whose name matches an item id applies to that item. |
 
@@ -1483,7 +1603,7 @@ in its own namespace, or replace one of ours by shipping a file at the same path
 | item `pirates_n_ships:provisions/excluded` | Food the crew won't eat (rotten flesh and similar). |
 | item `pirates_n_ships:flags` | Items that can be hoisted. |
 | entity `pirates_n_ships:law_protected` | Hurting these is a crime (villagers, wandering traders). |
-| entity `pirates_n_ships:navy` | Navy members. Empty until navy mobs exist. |
+| entity `pirates_n_ships:navy` | Navy members (the navy soldier and navy officer). |
 | entity `pirates_n_ships:law_enforcers` | Never get a criminal record (iron golems, the navy). |
 | entity `pirates_n_ships:not_capturable` | Can't be shackled (bosses). |
 
@@ -1502,5 +1622,7 @@ Checked against the code on 2026-10-09. Everything else in this guide is built a
 - **The logbook** named in the design (a record of voyages and deeds) has no block or screen yet.
 - **A wanted display** beyond the chat lines and the rank box.
 - **Hull paint and trim** (dyeable planks), an optional item in the design.
-- **On Fabric:** no guide book (the guide framework has no Fabric build), no config screen without Mod Menu, and the Fabric client has not been played yet.
-- **Being built now:** chain shot and grapeshot; dyeable sails and banner patterns on large sails.
+- **On Fabric:** no config screen without Mod Menu (edit the config files instead), and the Fabric client has not been
+  played yet. The Almanac works on both loaders.
+- **Ponder scenes for crew, combat and life aboard** (PND2: orders, boarding, flags, crow's nest, bell, galley,
+  hammocks, swivel gun): the Almanac's "Show me" buttons for these name scenes that do not exist yet.

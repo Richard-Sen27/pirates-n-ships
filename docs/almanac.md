@@ -171,18 +171,42 @@ inside our jar (jar-in-jar on both loaders, docs/releasing.md); everything of ou
   registers every plugin's scenes once loading completes (NeoForge `FMLLoadCompleteEvent`, Fabric `CLIENT_STARTED`).
   No loader code of ours is involved.
 - **Ids.** `AlmanacScenes.ALL` lists every scene as plain data: its id (what a chapter's "Show me" element carries),
-  the item it is registered for (the Ponder key, "hold W" over the item, lists it), and its schematic. Today there is
-  one: `pirates_n_ships:cannon_loading`, for `pirates_n_ships:cannon`, schematic `pirates_n_ships:cannon_loading`.
+  the item it is registered for (the Ponder key, "hold W" over the item, lists it), and its schematic (always the
+  scene's own id). An item with two scenes lists them in this order. The scenes (all ids `pirates_n_ships:`):
+
+  | Scene id | Item (Ponder key) | Schematic size | Length | What it shows |
+  |---|---|---|---|---|
+  | `cannon_loading` (ALM4) | `cannon` | 7×3×7 | 30 s | The gun, loading powder and shot, aiming, firing, recoil. |
+  | `ship_assembly` (PND1) | `helm` | 9×5×9 | 40 s | A hull on the water, the helm placed, the connected blocks outlined as one ship that then rolls on the sea, terrain left out, a barrel placed aboard joining it, disassembly through the ship screen with the heading rounded to a quarter turn. |
+  | `steering` (PND1) | `helm` | 11×5×11 | 37 s | Taking the wheel, the wheel turning (the helm's block entity) and the rudder angle it gives (35° at three quarters of a turn), the rudder needing way, a helmsman assigned with the whistle steering for a course mark, then the boat sailing part of its turning circle to starboard (not to scale). |
+  | `sails_and_winch` (PND1) | `sail_winch` | 7×8×7 | 39 s | Mast, the two yards and the rule that pairs them, the cloth's area, the winch's cycle furled, half, full (the real cloth renderer hoisting), the wind arrow and the cloth drawing, reefing to half in a strong wind, trimming one sail at its yard, the crew at the winch. |
+  | `anchor_and_capstan` (PND1) | `capstan` | 9×7×9 | 39 s | The stowed anchor where the hull-side rule hangs it, letting go (falling at 4 blocks/s, the chain running out), holding in the wind, dragging, the too-deep refusal, weighing (2.5 blocks/s), then a crew member at the capstan on the whistle: the bars turning (the synced turning of CAP2) and the hand walking round the drum by the real `CapstanWalk`. |
+  | `pumps_and_flooding` (PND1) | `bilge_pump` | 9×5×9 | 34 s | A dry hold, a breach below the waterline, the flood rising row by row, the pump's handle working against the open breach, the hull patch closing it, the hold drained, the crew's "Man the pumps". |
+  | `hull_repair` (PND1) | `hull_patch` | 7×4×7 | 23 s | A breach, the recipe, aiming at the hole's edge from inside, the patch block closing it at once (no repair time), the water left inside, where a patch goes. |
+  | `mooring` (PND1) | `mooring_ring` | 9×5×9 | 32 s | Coming alongside a quay, counting as moored within a port's 32 blocks, a grappling line thrown onto the quay and tied off at the ship's ring to hold her, the same from the quay's ring, casting off, cleats. There is no separate mooring-rope mechanic. |
+  | `cargo_and_weight` (PND1) | `cargo_crate` | 9×6×11 | 32 s | The assembly ballast floating the empty ship level, crates placed aft and filling through their `load` states, the ship trimmed by the stern and lower, restowed amidships and level again (the ballast counts containers empty), a laden ship slower, the load levels. |
 - **Opening one.** `AlmanacPonder.show(ResourceLocation id)` (client thread) opens exactly that scene for one of our
   scene ids, every scene of the item for an item id (ours and other mods'), and logs and ignores anything else
   (returns false, no crash). This is the hook the Almanac screen's "Show me" button calls (ALM3).
-- **Text.** Every line is Ponder *shared text* with an explicit key (`CannonLoadingText.Line`), not Ponder's
+- **Text.** Every line is Ponder *shared text* with an explicit key (a `SceneLine`: `CannonLoadingText.Line`, the
+  per-scene enums of `ShipSceneText`; `SceneText.ALL` lists every scene's title and lines), not Ponder's
   numbered `text_1, text_2…` (those follow call order, so a reordered scene would swap translations). Lang keys:
   `pirates_n_ships.ponder.shared.<scene>.<line>` and the title `pirates_n_ships.ponder.<scene>.header`; datagen writes
   the English (`AlmanacPonderModule.gatherData`). Ponder only uses the code's English defaults in its editing mode.
 - **Truth to the code.** A scene drives the real blocks: the cannon scene steps `CannonBlock.LOAD` through
   `CannonLoad` (empty, powder, loaded, empty) and the elevation through `CannonBlockEntity`, and puts the muzzle flash
-  where `CannonRules.muzzle` puts the muzzle.
+  where `CannonRules.muzzle` puts the muzzle. The ship scenes do the same where the game has a state to show: yard
+  trims and the cloth geometry from the yard rule, the helm's wheel angle, the capstan's phases and synced bar turning,
+  the crew member's walk (`CapstanWalk`), the anchor's hawse (`HullSide`) and speeds, the pump's pumping flag, the
+  `hull_patch` block, the crates' `load` states.
+- **What Ponder cannot show as the game does** (PND1): a moving ship is a Ponder section moved by element transforms,
+  not Sable (assembly's roll, the turning circle, coming alongside, trim and draft under cargo, to be seen rather than
+  measured); flood water is water blocks a row at a time (the game draws a smooth flat surface); the anchor chain is a
+  column of chain blocks (the game draws a catenary from the hawse, which needs a ship); the grappling hook is an item
+  on a drawn arc and the line a Ponder line (the hook entity needs its thrower). The sail's cloth bellies with the
+  client's real wind, so the scene's wind arrow takes that wind's side; on land a wind along the yards makes the cloth
+  luff. Items in storyboards are looked up by id (`SceneKit.item`), so `PonderStoryboardsTest` can build every
+  storyboard headless.
 
 ### Adding a scene
 
@@ -194,14 +218,16 @@ inside our jar (jar-in-jar on both loaders, docs/releasing.md); everything of ou
    Ponder loads it from. Commit all four.
 2. **Storyboard.** A class like `CannonLoadingScene` with `static void program(SceneBuilder, SceneBuildingUtil)`;
    its first call is `scene.title("<scene>", "<English title>")`, so the scene id is `pirates_n_ships:<scene>`.
-3. **Text.** Its lines and title as plain data (like `CannonLoadingText`), registered by
-   `AlmanacPonderPlugin.registerSharedText` and written by `AlmanacPonderModule.gatherData`; run
-   `./gradlew :neoforge:runData`.
+3. **Text.** Its lines and title as plain data (an enum implementing `SceneLine`, like those of `ShipSceneText`),
+   added to `SceneText.ALL`; `AlmanacPonderPlugin.registerSharedText` registers and `AlmanacPonderModule.gatherData`
+   writes them; run `./gradlew :neoforge:runData`.
 4. **Plugin entry.** Add the scene to `AlmanacScenes.ALL` (id, item, schematic) and its storyboard to
    `AlmanacPonderPlugin.STORYBOARDS`.
 5. **"Show me".** A chapter's "Show me" element names the scene id `pirates_n_ships:<scene>`.
-6. **Tests.** `AlmanacScenesTest`, `AlmanacPonderPluginTest` and `PonderSchematicsTest` pick the new scene up from
-   `AlmanacScenes.ALL`; add the positions your storyboard relies on to `PonderSchematicsTest` as done for the cannon.
+6. **Tests.** `AlmanacScenesTest`, `AlmanacPonderPluginTest`, `PonderSchematicsTest` and `PonderStoryboardsTest`
+   pick the new scene up from `AlmanacScenes.ALL` (the last builds the storyboard headless: its id, 20 to 40 s of
+   idles, keyframes, every line said; name the class `<CamelCaseId>Scene`); add the positions your storyboard relies
+   on to `PonderSchematicsTest`.
    The scene itself plays only in a client: add its checks to the Ponder playtest.
 
 ## Generated from the guide (ALM5)

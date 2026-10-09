@@ -58,3 +58,47 @@ Defaults: `boarding.plank.max_length` 4, `break_distance` 1.5, `check_interval_t
    are disabled on this server"; planks already laid still break when the hulls part.
 2. `max_length = 2`: a plank laid from a gunwale top bridges at most one block of water (its last cell lies on the
    other deck); with the default 4 it bridges three.
+
+# BRD2: the gangway
+
+Covered headlessly (18 GameTests, NeoForge and Fabric; 28 JUnit): ship to a pier one and two blocks above the rail
+(1-in-2 ramps meeting the pier's edge; a mock player walks from the deck onto the pier without dropping), a pier four
+up refused as too steep, a fence post refused as blocked two blocks out, pier to ship (planned from the pier, laid in
+the ship's plot from the ship's end), pick-up from the pier end (one plank back, none dropped), a 1.3-block heave held
+and a two-block drift breaking it, dock to dock plain blocks with a crew member pathing up the ramp, along a dock
+refused, BRD1's ship-to-ship tests (the side-face case now ramps up instead of ending against the higher deck). This
+section checks what only a client shows: the ramp models, the preview, walking feel, the heave at a real pier.
+
+Defaults: `boarding.plank.max_length` 6, `max_rise` 2, `rise_run` 2, `steep_fallback` true, `pick_up` true,
+`break_distance` 1.5, `break_rise` 2.5; client `boarding_view.preview` true. Delete an old server config or set the new
+values (an existing file keeps `max_length` 4).
+
+## 6. Ship to pier, pier to ship
+1. Moor a ship (anchor dropped) beside a village quay with 2 to 3 blocks of water between. Hold the plank and look at
+   the top of your rail facing the quay. Expected: green outlines of the cells it would lay (steps visible on ramp
+   cells) appear before you click; looking at the bottom of a block or straight along the deck shows nothing.
+2. Click. Expected: the plank lies from your rail onto the quay; if the quay top is one or two blocks higher (or lower)
+   than the rail top, the plank climbs (or falls) on ramp cells whose boards overlap like clinker planks, with cleats.
+   Screenshot please, from the side.
+3. Walk up and down it, sprinting and sneaking. Expected: no jump needed, no snagging, no falling through at the joints.
+4. Stand on the quay and take it up: sneak, empty hand, use the quay end. Expected: the whole plank goes, one plank in
+   your inventory. Lay it again from the quay edge toward the ship (top face, facing the ship). Expected: the same run;
+   it moves with the ship (watch it while the ship bobs).
+5. Watch the planks while the ship bobs at the quay in rain or a thunderstorm (`/weather thunder`). Expected: the plank
+   stays (it allows 2.5 blocks of rise and fall); tell me whether the ship jitters or is held up where the plank rests
+   on the quay (send a video if so).
+6. Weigh anchor and sail off along the quay. Expected: after about a block and a half the plank breaks with a wood
+   sound and drops one plank.
+
+## 7. Refusals and short gaps
+1. A quay three or more blocks above your rail: "Too steep: a plank climbs or falls 2 blocks at most".
+2. A quay seven or more blocks away: "Too far: a plank reaches 6 blocks". Open water: "Nothing to land on within reach".
+3. A fence post or a lantern in the way: "Something is in the way N blocks out", the preview shows that cell in red.
+4. Facing along the quay from its edge: "No plank from here".
+5. Ship touching the quay, the quay one block above the rail: expected a single steep (45 degree) cell; walk it.
+
+## 8. Dock to dock and crew
+1. Two piers with a gap of 2 to 4 blocks, one a block higher: lay a plank between them. Expected: a ramp of plain blocks
+   (it does not move, breaking it drops one plank).
+2. With hired crew aboard a moored ship and a plank to the quay: tell me whether crew ever walk across it on their own
+   (they have no order to; there is no "prepare to board" order yet).

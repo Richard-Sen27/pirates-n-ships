@@ -206,13 +206,23 @@ lower end, following both ships as they move. Sneak to let go. A level rope is c
 crow's nest down to an enemy deck is the classic move. Server config `grapple.slide`.
 
 ## Boarding plank
-Craft one from three wooden slabs over two iron nuggets. When your ship lies alongside another (haul her in with the
-grappling hook first), stand at your gunwale and use the plank on the top of a gunwale or rail block, facing the other
-ship. A plank up to four blocks long runs straight out, level with the top of that block, and hooks onto the other
-deck. Used on the side of the block, it lies a block lower. The far deck may sit one block higher or lower than the
-plank. Walk across, but keep the ships together: when they drift apart by more than a block and a half, the whole
-plank breaks and drops back as one item. Breaking any part of it takes the whole plank down. Server config
-`boarding.plank`.
+Craft one from three wooden slabs over two iron nuggets. It is a gangway: lay it from a ship, a pier or the shore onto
+a ship, a pier or the shore. Use it on the top of a gunwale, rail or pier edge block, facing where it should go; it
+runs straight out from beside that block, level with its top (used on the side of the block, it lies a block lower).
+It takes the shortest run of up to six blocks that lands: resting on a deck or pier, or climbing onto the edge of one.
+When the far end is higher or lower, the plank climbs or falls up to two blocks on ramps, a gentle one (a block over
+two cells) where there is room, a steep one (a block per cell) over a short gap; the ramps have steps, so you and your
+crew walk up without jumping. While you hold the plank, the run it would lay where you look is outlined in green, or
+the cell in the way in red. A refusal says why on the action bar: something in the way (and how far out), too far,
+too steep, nothing to land on, or no plank from here (for example along a pier, where there is nothing to bridge).
+
+A plank that touches a ship lies on that ship and moves with her, even when you lay it from the pier. Keep the ends
+together: when the far end drifts more than a block and a half sideways, or more than two and a half blocks up or down
+(a moored ship rides out a storm's heave), or a ship or a block an end rests on is gone, the whole plank breaks and
+drops back as one item. A plank between two piers is plain blocks. Breaking any part takes the whole plank down; sneak
+and use it with an empty hand, from either end, to take it up again. Server config `boarding.plank` (`max_length`,
+`max_rise`, `rise_run`, `steep_fallback`, `pick_up`, `break_distance`, `break_rise`); client config
+`boarding_view.preview`.
 
 ## Map tiles
 Craft a Map Tile from 8 sticks around a paper and place it on a table or a wall. Put several side by side in a

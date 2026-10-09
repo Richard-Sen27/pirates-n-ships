@@ -1,7 +1,7 @@
-// 1.21.1	2026-10-09T16:28:38.111072	Raw JSON (data): pirates_n_ships
+// 1.21.1	2026-10-09T17:49:43.751209	Raw JSON (data): pirates_n_ships
 48a3d1396f56a1821c2e6dd2a2ce6f5dc32fc15c data/pirates_n_ships/advancement/recipes/misc/guide_book.json
 6fcaaca802eba3041f24d38afa04ea6da7afbfaf data/pirates_n_ships/almanac/chapters/charts.json
-3872eef89eaaa8333dfabea8afc380affac6fc72 data/pirates_n_ships/almanac/chapters/combat.json
+59e7fee95c72f355f00abced3f3f4c15888d4fb0 data/pirates_n_ships/almanac/chapters/combat.json
 54f8694935785cfae9d221d9dcff7c630d5a458d data/pirates_n_ships/almanac/chapters/crew.json
 1b38475f0988227c8cdb2a4e272648ae53210550 data/pirates_n_ships/almanac/chapters/first_ship.json
 e939b42d461808030e57b3fc501c6a37d5d1b036 data/pirates_n_ships/almanac/chapters/flags.json
@@ -10,7 +10,7 @@ e939b42d461808030e57b3fc501c6a37d5d1b036 data/pirates_n_ships/almanac/chapters/f
 d5d4e98695ca4a59deac88e975f7676e24ebbea8 data/pirates_n_ships/almanac/chapters/ledger.json
 fc338c3ef824f990440c83955e9b73e338db0be1 data/pirates_n_ships/almanac/chapters/not_yet.json
 7873f103b258ddaa7dff06ba29a52f0016ea5c24 data/pirates_n_ships/almanac/chapters/provisions.json
-3e17d3d52f699abdd88d71126cd0056808d82999 data/pirates_n_ships/almanac/chapters/sailing.json
+a5eefa26a09e8e928f5f44ae8bd4e1fb3886a4ed data/pirates_n_ships/almanac/chapters/sailing.json
 104eb8e68ddee0109be71f85c857a36a5f70ffa6 data/pirates_n_ships/almanac/chapters/ships.json
 54734b40dab0d7ec94d875db9cbb9c16584b0daa data/pirates_n_ships/almanac/chapters/trade.json
 6ec02912b0938ea67c53baf8d27a9f94decf32e4 data/pirates_n_ships/almanac/chapters/welcome.json

@@ -1179,6 +1179,25 @@ Boarding plank (BRD1):
   3 px below the board, biting into the deck the plank lies on. The hook tops end 0.05 px inside the board (no z-fight).
 - Render: `renders/boarding_plank.png` (base, middle and tip as a three-cell run, the far end on the left).
 
+Boarding plank ramps (BRD2):
+- Three more groups in **`boarding_plank.bbmodel`** at the same position, each exported alone (the other cubes
+  `export = false`): `boarding_plank_ramp_low` -> `block/boarding_plank_ramp_low.json`, `boarding_plank_ramp_high` ->
+  `_ramp_high.json` (5 elements each) and `boarding_plank_steep` -> `_steep.json` (6). They climb north (block state
+  `pitch` `up_low`, `up_high`, `up`); the falling pitches use the same models turned 180 degrees in the block state.
+- Each is the middle cell's three boards and cleats, every element rotated about x with `rescale: true` through one
+  origin on the board's top surface. Java models allow only 22.5 and 45 degrees, so the 1-in-2 halves (26.6 degrees)
+  are 22.5 degree boards centred on the ideal slope plus 1 px: the low half's top runs 1.69 -> 8.31 px, the high half's
+  9.69 -> 16.31 px, a 1.4 px lap at the joint that reads as overlapping planks. The steep cell is a 45 degree board,
+  1.5 px thick before rescale (about 2 px across), top 1 -> 17 px, with three cleats. Positive x rotation lifts the
+  north end.
+- Collision is not the model: `PlankRun.steps` gives stepped boxes 2 px above the ideal slope (two steps per half
+  ramp, four per 45 degree cell, never more than 0.375 blocks up between steps).
+- Textures as BRD1. The project now stores the vanilla textures by `relative_path` (`../vanilla/<name>.png`, run
+  `tools/extract_vanilla_textures.py spruce_planks stripped_spruce_log anvil`); BRD1 had embedded them.
+- Renders: `renders/boarding_plank_ramps.png` (a run base, ramp low, ramp high, steep, tip: two blocks of climb) and
+  `renders/boarding_plank_ramps_side.png` (the same from the east, the far end on the right). The renders show small gaps at the joints
+  (Blockbench's preview did not seem to apply `rescale`); check the joints in game.
+
 Crow's nest (CN1):
 - **`crows_nest.bbmodel`** -> `block/crows_nest.json` (56 elements; vanilla `spruce_planks` staves and floor,
   `stripped_spruce_log` rim and struts, `anvil` hoops, `dark_oak_planks` underside; particle `spruce_planks`). One

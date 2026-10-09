@@ -10,6 +10,7 @@ import com.richardsenger.piratesnships.station.pump.PumpOrder;
 import com.richardsenger.piratesnships.station.winch.SailOrder;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
@@ -20,36 +21,67 @@ import org.jetbrains.annotations.Nullable;
  * anchor, repair, boarding) is one more constant here with its {@link CrewOrder}; {@link WhistleOrders} gives it
  * to the crew at the stations that take it. An entry without a crew order is a whistle action of its own
  * ({@link #RELEASE}), except {@link #ANCHOR}, whose crew order follows the anchor's state (WHS1, {@link #order(AnchorState.Phase)}).
- * Pure data: the icon is an item id that the client resolves.
+ * Pure data: the icon is an {@link Icon}, an item id or a GUI sprite id that the client resolves (ART19).
  */
 public enum WhistleOrder {
-    HOIST(SailOrder.HOIST, Constants.id("yard")),
-    REEF(SailOrder.REEF, ResourceLocation.withDefaultNamespace("white_wool")),
-    FURL(SailOrder.FURL, ResourceLocation.withDefaultNamespace("lead")),
-    PUMP(PumpOrder.PUMP, Constants.id("bilge_pump")),
-    FIRE(CannonOrder.FIRE, Constants.id("cannon")),
-    LOAD(CannonOrder.LOAD, ResourceLocation.withDefaultNamespace("gunpowder")),
+    HOIST(SailOrder.HOIST, Icon.item(Constants.id("yard"))),
+    REEF(SailOrder.REEF, Icon.item(ResourceLocation.withDefaultNamespace("white_wool"))),
+    FURL(SailOrder.FURL, Icon.item(ResourceLocation.withDefaultNamespace("lead"))),
+    PUMP(PumpOrder.PUMP, Icon.item(Constants.id("bilge_pump"))),
+    FIRE(CannonOrder.FIRE, Icon.item(Constants.id("cannon"))),
+    LOAD(CannonOrder.LOAD, Icon.item(ResourceLocation.withDefaultNamespace("gunpowder"))),
     /** WS4a: the gun crews aim and fire at hostile ships by themselves until released. */
-    FIRE_AT_WILL(CannonOrder.FIRE_AT_WILL, ResourceLocation.withDefaultNamespace("fire_charge")),
+    FIRE_AT_WILL(CannonOrder.FIRE_AT_WILL, Icon.item(ResourceLocation.withDefaultNamespace("fire_charge"))),
     /**
      * WHS1: one toggle for the anchor (CRW3's "Drop anchor" and "Weigh anchor" before): the crew at the capstans let it go
      * or heave it in, whichever the anchor's state at that moment needs ({@link AnchorOrder#toggle}); the server resolves
-     * the direction, the client only names it.
+     * the direction, the client only names it. ART19: its icon is a script-drawn anchor sprite, the mod having no
+     * anchor item ({@code tools/gen_order_icons.py}).
      */
-    ANCHOR(null, Constants.id("capstan")),
+    ANCHOR(null, Icon.sprite(Constants.id("order/anchor"))),
     /**
      * OAR1: a toggle too. "Row" while the ship does not row: the free crew take oars at benches and the rail; "Ship oars"
      * while it rows ({@code sailing.oars.Rowing#toggle}). The label follows the ship's rowing state ({@link #shownNameKey}).
      */
-    ROW(RowOrder.ROW, Constants.id("oar")),
-    RELEASE(null, Constants.id("sail_winch"));
+    ROW(RowOrder.ROW, Icon.item(Constants.id("oar"))),
+    RELEASE(null, Icon.item(Constants.id("sail_winch")));
 
     private static final List<WhistleOrder> ENTRIES = List.of(values());
 
     private final @Nullable CrewOrder order;
-    private final ResourceLocation icon;
+    private final Icon icon;
 
-    WhistleOrder(@Nullable CrewOrder order, ResourceLocation icon) {
+    /**
+     * What an entry shows in its wheel sector and on its helm screen button (ART19): an item drawn like an inventory
+     * item ({@link Kind#ITEM}, the id is an item id), or a GUI sprite drawn at 16x16 with {@code GuiGraphics.blitSprite}
+     * ({@link Kind#SPRITE}, the id is a sprite id: {@code ns:path} is {@code assets/ns/textures/gui/sprites/path.png}).
+     * Pure data, resolved by the client.
+     */
+    public record Icon(Kind kind, ResourceLocation id) {
+
+        public enum Kind { ITEM, SPRITE }
+
+        public Icon {
+            Objects.requireNonNull(kind, "kind");
+            Objects.requireNonNull(id, "id");
+        }
+
+        /** The item with this id, drawn like an inventory item. */
+        public static Icon item(ResourceLocation item) {
+            return new Icon(Kind.ITEM, item);
+        }
+
+        /** The GUI sprite with this id, drawn at 16x16. */
+        public static Icon sprite(ResourceLocation sprite) {
+            return new Icon(Kind.SPRITE, sprite);
+        }
+
+        public boolean isSprite() {
+            return kind == Kind.SPRITE;
+        }
+    }
+
+    WhistleOrder(@Nullable CrewOrder order, Icon icon) {
         this.order = order;
         this.icon = icon;
     }
@@ -104,8 +136,8 @@ public enum WhistleOrder {
         return order instanceof SailOrder s ? s : null;
     }
 
-    /** Item shown in the entry's sector. */
-    public ResourceLocation icon() {
+    /** The icon shown in the entry's wheel sector and on its helm screen button. */
+    public Icon icon() {
         return icon;
     }
 

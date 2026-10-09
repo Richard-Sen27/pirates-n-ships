@@ -18,7 +18,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
@@ -50,16 +49,11 @@ public final class WhistleMenuScreen extends Screen {
     private static final double GAP_PX = 1.0;
 
     private final List<WhistleOrder> entries = WhistleOrder.entries();
-    private final ItemStack[] icons;
     private RadialLayout layout;
     private int hovered = -1;
 
     WhistleMenuScreen() {
         super(Component.translatable(WhistleMenu.KEY_TITLE));
-        icons = new ItemStack[entries.size()];
-        for (int i = 0; i < icons.length; i++) {
-            icons[i] = new ItemStack(BuiltInRegistries.ITEM.get(entries.get(i).icon()));
-        }
         layout = RadialLayout.forWindow(entries.size(), 320, 240, 1.0);
     }
 
@@ -180,7 +174,7 @@ public final class WhistleMenuScreen extends Screen {
             g.pose().pushPose();
             g.pose().translate(cx + RadialLayout.x(a, layout.iconRadius()), cy + RadialLayout.y(a, layout.iconRadius()), 0);
             g.pose().scale(s, s, 1);
-            g.renderItem(icons[i], -8, -8);
+            OrderIcons.draw(g, entries.get(i).icon(), -8, -8); // an item, or a sprite (ART19: the anchor)
             g.pose().popPose();
         }
 

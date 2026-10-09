@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.core.text.Num;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -66,7 +67,7 @@ public final class HazardCommands {
             return 0;
         }
         c.getSource().sendSuccess(() -> Component.translatable(KEY_SPAWNED, id,
-                String.format("%.1f", at.x), String.format("%.1f", at.y), String.format("%.1f", at.z)), true);
+                Num.one(at.x), Num.one(at.y), Num.one(at.z)), true);
         return 1;
     }
 

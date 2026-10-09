@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.ship.rigging;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.core.text.Num;
 import com.richardsenger.piratesnships.ship.rigging.RatlineNets.Check;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -96,11 +97,10 @@ public class RatlineNetItem extends Item {
             case TOO_LONG -> {
                 double length = Math.sqrt(sq(check.net().ringA().x() - check.net().ringB().x())
                         + sq(check.net().ringA().y() - check.net().ringB().y()) + sq(check.net().ringA().z() - check.net().ringB().z()));
-                return Component.translatable(KEY_TOO_LONG, String.format("%.1f", length), fmt(maxLength));
+                return tooLong(length, maxLength);
             }
             case TOO_FLAT -> {
-                return Component.translatable(KEY_TOO_FLAT,
-                        String.format("%.0f", RatlineNetRules.pitch(check.net().ringA(), check.net().ringB())), fmt(minPitch));
+                return tooFlat(RatlineNetRules.pitch(check.net().ringA(), check.net().ringB()), minPitch);
             }
             case BLOCKED -> {
                 BlockPos at = RatlineNets.worldPos(level, check.blocked());
@@ -121,8 +121,14 @@ public class RatlineNetItem extends Item {
         return v * v;
     }
 
-    private static String fmt(double v) {
-        return v == Math.rint(v) ? String.valueOf((long) v) : String.format("%.1f", v);
+    /** "Too long: 6.3 of 6 blocks", the numbers with a dot whatever the system locale (FIX2). */
+    public static Component tooLong(double length, double maxLength) {
+        return Component.translatable(KEY_TOO_LONG, Num.one(length), Num.trim(maxLength));
+    }
+
+    /** "Too flat: 12°, at least 15°". */
+    public static Component tooFlat(double pitch, double minPitch) {
+        return Component.translatable(KEY_TOO_FLAT, Num.whole(pitch), Num.trim(minPitch));
     }
 
     @Override

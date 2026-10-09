@@ -25,7 +25,6 @@ import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.GameTestRegistry;
 import net.minecraft.gametest.framework.TestFunction;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
@@ -224,8 +223,9 @@ public final class FabricGameTests {
     @ModGameTest(template = GameTestTemplates.EMPTY_9)
     public static void placedChestIsRecordedThroughTheBlockPlaceMixin(GameTestHelper helper) {
         for (int x = 0; x < 9; x++) for (int z = 0; z < 9; z++) helper.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
-        ServerPlayer player = helper.makeMockServerPlayerInLevel();
-        player.setGameMode(GameType.SURVIVAL);
+        // a mock player that is not added to the level: a mock server player would stay in the player list and keep
+        // other tests from skipping the night (PlayerSleepGameTests)
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.CHEST));
         BlockPos floor = helper.absolutePos(new BlockPos(4, 0, 4));
         BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(floor).add(0, 0.5, 0), Direction.UP, floor, false);

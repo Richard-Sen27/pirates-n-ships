@@ -42,6 +42,8 @@ public final class FabricEventForwarder {
         EntitySleepEvents.STOP_SLEEPING.register((e, pos) -> {
             if (e instanceof Player p) CommonEvents.PLAYER_WAKE_UP.invoker().onWake(p);
         });
+        // HammockBlock's NeoForge IBlockExtension overrides (isBed & co.), asked through Fabric's sleep events
+        FabricHammockBeds.attach();
         // CONTAINER_OPEN / CONTAINER_CLOSE: no Fabric API event, fired by fabric.mixin.MixinServerPlayer
 
         // Server side only, after the entity was added, not cancellable (the client side is FAB2)

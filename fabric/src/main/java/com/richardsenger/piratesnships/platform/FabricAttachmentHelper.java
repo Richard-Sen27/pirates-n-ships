@@ -6,12 +6,15 @@ import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentTarget;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
+import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkAccess;
 
+
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,6 +23,12 @@ import java.util.Map;
  * Fabric attaches data to entities, block entities, chunks and levels ({@code Level} through a mixin, client levels
  * included, which is why it is reached through a cast). {@code get} stores the default, as NeoForge's {@code getData}
  * does; setting a chunk value marks the chunk unsaved (Fabric does that itself).
+ *
+ * <p>Player copies: Fabric API transfers a player's attachments only after the respawn ({@code AFTER_RESPAWN}), while
+ * NeoForge copies them inside {@code ServerPlayer#restoreFrom}, before {@code CommonEvents.PLAYER_CLONE}. {@link #attach}
+ * copies our keys at {@code ServerPlayerEvents.COPY_FROM} (fired by {@code restoreFrom}), registered before the event
+ * forwarder so {@code PLAYER_CLONE} listeners see the copied values: on death the {@code copyOnDeath} keys, otherwise
+ * every key present. Fabric's own transfer later sets the same values again.
  */
 public final class FabricAttachmentHelper implements IAttachmentHelper {
 
@@ -34,6 +43,23 @@ public final class FabricAttachmentHelper implements IAttachmentHelper {
             if (key.streamCodec() != null) b.syncWith(key.streamCodec(), AttachmentSyncPredicate.all());
             if (key.copyOnDeath()) b.copyOnDeath();
         }));
+    }
+
+    /** Called once by the entry point, before {@code FabricEventForwarder.attach()}. */
+    public void attach() {
+        ServerPlayerEvents.COPY_FROM.register((oldPlayer, newPlayer, alive) -> {
+            List<AttachmentType<?>> all;
+            synchronized (this) {
+                all = List.copyOf(types.values());
+            }
+            for (AttachmentType<?> type : all) copy(oldPlayer, newPlayer, type, !alive);
+        });
+    }
+
+    private static <T> void copy(AttachmentTarget from, AttachmentTarget to, AttachmentType<T> type, boolean death) {
+        if (death && !type.copyOnDeath()) return;
+        T value = from.getAttached(type);
+        if (value != null) to.setAttached(type, value);
     }
 
     @SuppressWarnings("unchecked")

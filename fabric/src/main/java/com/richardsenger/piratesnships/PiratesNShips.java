@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships;
 
+import com.richardsenger.piratesnships.platform.FabricAttachmentHelper;
 import com.richardsenger.piratesnships.platform.FabricCapabilityHelper;
 import com.richardsenger.piratesnships.platform.FabricEventForwarder;
 import com.richardsenger.piratesnships.platform.FabricGameTests;
@@ -40,6 +41,7 @@ public class PiratesNShips implements ModInitializer {
         ((FabricRegistryHelper) Services.REGISTRY).finish();
         ((FabricCapabilityHelper) Services.CAPABILITIES).finish();
         ((FabricNetworkHelper) Services.NETWORK).attach();
+        ((FabricAttachmentHelper) Services.ATTACHMENTS).attach();
         FabricEventForwarder.attach();
         FabricGameTests.register();
     }

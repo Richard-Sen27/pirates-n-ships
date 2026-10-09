@@ -112,6 +112,13 @@ dependencies {
     // On the runtime classpath so the dev client, the GameTest server and runData see it. Maven Central, no
     // dependencies in its POM.
     runtimeOnly("org.appliedenergistics:guideme:${guideme_version}")
+    // JEI (optional, JEI1). The plugin lives in common (compat/jei); the full JEI jar is only in the dev runs (client,
+    // GameTest server, data), never in the POM or a required mods.toml entry. -Ppirates_n_ships.no_jei leaves it out of
+    // the runs (checks that the mod loads and plays without JEI).
+    compileOnly("mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}")
+    if (!providers.gradleProperty('pirates_n_ships.no_jei').isPresent()) {
+        localRuntime("mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}")
+    }
     // WorldEdit (dev only, for pasting test ships from art/schematics/). localRuntime puts it on the dev runs'
     // classpath without listing it in the published POM or mods.toml, so players never need it.
     localRuntime("maven.modrinth:worldedit:${worldedit_version}")

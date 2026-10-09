@@ -15,6 +15,9 @@
         ],
         "client": [
             "com.richardsenger.piratesnships.PiratesNShipsClient"
+        ],
+        "jei_mod_plugin": [
+            "com.richardsenger.piratesnships.compat.jei.PiratesJeiPlugin"
         ]
     },
     "mixins": [
@@ -37,6 +40,10 @@
         "modmenu": "*"
     },
     "suggests": {
-        "guideme": "*"
+        "guideme": "*",
+        "jei": "*"
+    },
+    "breaks": {
+        "jei": "${jei_fabric_version_range}"
     }
 }

@@ -1195,6 +1195,14 @@
         "key": "pirates_n_ships.almanac.flags.p1.text4"
        },
        {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.flags.p1.text5"
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.flags.p1.text6"
+       },
+       {
         "type": "list",
         "items": [
          "pirates_n_ships.almanac.flags.p1.list1_1",
@@ -1205,7 +1213,7 @@
        },
        {
         "type": "text",
-        "key": "pirates_n_ships.almanac.flags.p1.text5"
+        "key": "pirates_n_ships.almanac.flags.p1.text7"
        },
        {
         "type": "list",
@@ -1216,7 +1224,7 @@
        },
        {
         "type": "text",
-        "key": "pirates_n_ships.almanac.flags.p1.text6"
+        "key": "pirates_n_ships.almanac.flags.p1.text8"
        },
        {
         "type": "list",
@@ -1227,11 +1235,11 @@
        },
        {
         "type": "text",
-        "key": "pirates_n_ships.almanac.flags.p1.text7"
+        "key": "pirates_n_ships.almanac.flags.p1.text9"
        },
        {
         "type": "text",
-        "key": "pirates_n_ships.almanac.flags.p1.text8"
+        "key": "pirates_n_ships.almanac.flags.p1.text10"
        }
       ]
      }
@@ -1966,7 +1974,8 @@
          "pirates_n_ships.almanac.blocks.p1.list1_17",
          "pirates_n_ships.almanac.blocks.p1.list1_18",
          "pirates_n_ships.almanac.blocks.p1.list1_19",
-         "pirates_n_ships.almanac.blocks.p1.list1_20"
+         "pirates_n_ships.almanac.blocks.p1.list1_20",
+         "pirates_n_ships.almanac.blocks.p1.list1_21"
         ]
        },
        {
@@ -2505,7 +2514,7 @@
   "pirates_n_ships.almanac.crew.p2.heading": "Hiring crew",
   "pirates_n_ships.almanac.crew.p2.text1": "Every harbor desk has a **Crew** tab. Each day a port has a few people looking for a berth: sailors at seafarer villages, pirates at pirate islands, navy ratings at navy outposts. Each asks a one-time fee (10, 20 or 15 doubloons) and then the daily wage. Villagers won't sign on with someone they refuse to trade with. Pirates sign on only with a friend of the pirates or a captain of some infamy (Buccaneer and up). Navy ratings sign on only with an enlisted officer. Before you hire, moor your own ship at the port: the recruit walks straight aboard and waits on the deck nearest the desk. Every crew member needs a free hammock, so hang more hammocks to take on more hands. To let someone go, sneak and use your captain's whistle on them: they leave your service as an ordinary sailor. Only you or whoever hired them can do that, or anyone at all if the ship has no owner. Operators: /pirates crew hire <sailor|pirate|navy> and /pirates crew dismiss. Server config crew.hiring.",
   "pirates_n_ships.almanac.crew.p3.heading": "Crow's nest",
-  "pirates_n_ships.almanac.crew.p3.text1": "A barrel of spruce staves with iron hoops for the top of a mast. Place it on a log, a fence, a wall or any block with a solid top; it breaks and drops when the block under it goes. It is one block, but the barrel is a block and a half across and stands chest high, so whoever is in it is plainly up in the nest. Only its floor is solid: climb a ladder up the mast and step in over the rim (sneak to stay put).",
+  "pirates_n_ships.almanac.crew.p3.text1": "A barrel of spruce staves with iron hoops for the top of a mast. Place it on a log, a fence, a wall or any block with a solid top; it breaks and drops when the block under it goes. It is one block, but the barrel is a block and a half across and stands chest high, so whoever is in it is plainly up in the nest. Only its floor is solid: climb a ladder up the mast and step in over the rim (sneak to stay put). A flagpole placed on the nest rises from its middle and flies the flag above it (see [[pirates_n_ships:flags|Flags]]).",
   "pirates_n_ships.almanac.crew.p3.text2": "Whoever is in the nest keeps the lookout. Put a crew member up there with the Captain's Whistle (use it on the crew member, then on the nest): he takes his post inside the barrel and keeps watch until you release him. Or stand in it yourself. Every 3 seconds the lookout scans 160 blocks round the ship and calls out what is new, in chat, to the ship's owner and everyone aboard:",
   "pirates_n_ships.almanac.crew.p3.list1_1": "**ships**, by the flag they fly: \"Sail ho! A merchant two points off the starboard bow, 140 blocks\" (a navy ship, a pirate ship, a wreck, or just a ship when no flag flies);",
   "pirates_n_ships.almanac.crew.p3.list1_2": "**land**: \"Land ho! Land four points off the port bow, 120 blocks\" (the nearest coast; one call per stretch of coast);",
@@ -2522,19 +2531,21 @@
   "pirates_n_ships.almanac.flags.p1.text1": "The {item:pirates_n_ships:flagpole}**flagpole** flies a flag that shows a ship's allegiance.",
   "pirates_n_ships.almanac.flags.p1.text2": "The flag cloth is one block high and one and a half blocks long and hangs downwind from the top of the pole, so a pole needs free space downwind.",
   "pirates_n_ships.almanac.flags.p1.text3": "**Tall poles.** Stack flagpoles on each other to build one tall pole, up to 6 blocks (server config flags.max_pole_height; a taller pole is refused). The top block flies the flag: the pole shows its iron cleat at the foot and its gilded finial at the top. You can use any block of the pole, the flag is always worked at the top. Placing another flagpole on a pole that flies a flag takes the flag up with it, nothing drops; breaking the top block drops the flag, breaking a block in the middle splits the pole in two (the upper part keeps the flag). With flags.stacked_poles off every block is a pole of its own.",
-  "pirates_n_ships.almanac.flags.p1.text4": "**The flag runs along the pole.** While you hoist or raise a flag it climbs from the foot of the pole to the top, and while you strike or take it down it runs down again, over the 3 seconds the work takes. Client config flag_visuals.hoist_animation turns this off (the flag then appears and vanishes at once).",
+  "pirates_n_ships.almanac.flags.p1.text4": "**Flag pedestal.** A squat plinth carved from a log, banded with iron, with a socket on top. Place it on any block with a solid top (it pops off when that block goes) and put a flagpole on it: the pole stands in the socket and the pedestal becomes its foot, with the cleat and the halyard belayed on it, while the pole blocks above stay bare. Using the pedestal works the pole like using the pole itself. The pedestal does not count towards the pole's height. Breaking the pedestal brings the whole pole down with its flag. One log over a wooden slab makes two pedestals. It can stand under water like every small block.",
+  "pirates_n_ships.almanac.flags.p1.text5": "**A pole on the crow's nest.** Place a flagpole on top of a crow's nest and it rises from the middle of the barrel: the nest shows the pole's foot with its iron collar and the cleat inside the barrel, and the flag flies from the top of the pole above the nest. Give the pole at least two blocks so the cloth clears the barrel's rim. The lowest pole block lets you and the lookout stand in the nest as before (it does not push anyone out), the lookout keeps watch and calls as usual, and breaking the nest brings the pole down.",
+  "pirates_n_ships.almanac.flags.p1.text6": "**The flag runs along the pole.** While you hoist or raise a flag it climbs from the foot of the pole to the top, and while you strike or take it down it runs down again, over the 3 seconds the work takes. Client config flag_visuals.hoist_animation turns this off (the flag then appears and vanishes at once).",
   "pirates_n_ships.almanac.flags.p1.list1_1": "**none or Merchant Flag**: Neutral to everyone.",
   "pirates_n_ships.almanac.flags.p1.list1_2": "{item:pirates_n_ships:navy_flag}**Navy Flag**: Navy and merchants friendly, pirates hostile. A false flag if the captain has a bounty or too little navy standing.",
   "pirates_n_ships.almanac.flags.p1.list1_3": "{item:pirates_n_ships:jolly_roger_flag}**Jolly Roger**: Pirates friendly, navy hostile, merchants may surrender. Being seen under it is a crime.",
   "pirates_n_ships.almanac.flags.p1.list1_4": "**any vanilla banner**: A custom flag: neutral. The cloth shows the banner's colour and patterns.",
-  "pirates_n_ships.almanac.flags.p1.text5": "At the pole:",
+  "pirates_n_ships.almanac.flags.p1.text7": "At the pole:",
   "pirates_n_ships.almanac.flags.p1.list2_1": "**Use it with a flag item:** hoists that flag after 3 seconds and gives back the old one.",
   "pirates_n_ships.almanac.flags.p1.list2_2": "**Use it with an empty hand:** strikes the colors (the flag is lowered but kept), or raises them again.",
-  "pirates_n_ships.almanac.flags.p1.text6": "**What the flag does.** The flag your ship flies is the highest flag on its poles. Under the Jolly Roger the navy attacks everyone aboard on sight and charges you for being seen; pirates leave you alone. A navy flag lets you pass the navy, unless you are a suspect or worse: then every navy soldier within range may see through your colours. If one does, you are charged heavily and the navy hunts your ship for five minutes, whatever you fly. A navy ship with a manned crow's nest sees your flag half again as far off and sees through it half again as fast. Striking your colours surrenders: navy and pirates stop attacking. Firing on a ship that struck its colours, or on one flying a merchant flag or banner, is a crime; if your crew fires, the charge goes to you as the ship's owner. Server config law.flags.",
+  "pirates_n_ships.almanac.flags.p1.text8": "**What the flag does.** The flag your ship flies is the highest flag on its poles. Under the Jolly Roger the navy attacks everyone aboard on sight and charges you for being seen; pirates leave you alone. A navy flag lets you pass the navy, unless you are a suspect or worse: then every navy soldier within range may see through your colours. If one does, you are charged heavily and the navy hunts your ship for five minutes, whatever you fly. A navy ship with a manned crow's nest sees your flag half again as far off and sees through it half again as fast. Striking your colours surrenders: navy and pirates stop attacking. Firing on a ship that struck its colours, or on one flying a merchant flag or banner, is a crime; if your crew fires, the charge goes to you as the ship's owner. Server config law.flags.",
   "pirates_n_ships.almanac.flags.p1.list3_1": "**Sneak-use with an empty hand:** takes the flag down.",
   "pirates_n_ships.almanac.flags.p1.list3_2": "Breaking the pole drops the flag.",
-  "pirates_n_ships.almanac.flags.p1.text7": "The flag streams downwind at the exact wind angle. Nothing reacts to flags in the world yet: there are no navy or pirate ships.",
-  "pirates_n_ships.almanac.flags.p1.text8": "Hoist any banner on a flagpole to fly a custom flag: the cloth takes the banner's base colour and shows every pattern of the banner, as if the banner were hung sideways from the pole (its top edge at the pole, its length along the cloth); the back of the flag shows the design mirrored, like a real flag. Client config flag_visuals.banner_upright stands the design upright instead (its top at the top of the cloth, stretched to the cloth's length).",
+  "pirates_n_ships.almanac.flags.p1.text9": "The flag streams downwind at the exact wind angle. Nothing reacts to flags in the world yet: there are no navy or pirate ships.",
+  "pirates_n_ships.almanac.flags.p1.text10": "Hoist any banner on a flagpole to fly a custom flag: the cloth takes the banner's base colour and shows every pattern of the banner, as if the banner were hung sideways from the pole (its top edge at the pole, its length along the cloth); the back of the flag shows the design mirrored, like a real flag. Client config flag_visuals.banner_upright stands the design upright instead (its top at the top of the cloth, stretched to the cloth's length).",
   "pirates_n_ships.almanac.provisions.title": "Provisions",
   "pirates_n_ships.almanac.provisions.p1.heading": "Provisions",
   "pirates_n_ships.almanac.provisions.p1.heading2": "Pantry",
@@ -2697,15 +2708,16 @@
   "pirates_n_ships.almanac.blocks.p1.list1_9": "{item:pirates_n_ships:crows_nest}**Crow's Nest** (recipe: 6 planks, 1 rope, 2 iron nuggets): A lookout barrel for the masthead; whoever stands in it calls out ships, land and sea monsters. A crew station. See [[pirates_n_ships:crew|Crow's nest]].",
   "pirates_n_ships.almanac.blocks.p1.list1_10": "{item:pirates_n_ships:hull_patch}**Hull Patch (block)** (recipe: placed by the item): A tarred plank that closes a breach. Watertight hull block.",
   "pirates_n_ships.almanac.blocks.p1.list1_11": "{item:pirates_n_ships:flagpole}**Flagpole** (recipe: 3 sticks (gives 2)): Flies a flag. A thin pole with a finial and a cleat (Blockbench model). See [[pirates_n_ships:flags|Flags]].",
-  "pirates_n_ships.almanac.blocks.p1.list1_12": "{item:pirates_n_ships:pantry}**Pantry** (recipe: 8 planks, 1 wheat): Food store with spoilage. See [[pirates_n_ships:provisions|Provisions]].",
-  "pirates_n_ships.almanac.blocks.p1.list1_13": "{item:pirates_n_ships:water_barrel}**Water Barrel** (recipe: 6 planks, 2 iron nuggets, 1 water bucket): Holds 16 rations of water. Crafted full.",
-  "pirates_n_ships.almanac.blocks.p1.list1_14": "{item:pirates_n_ships:cargo_crate}**Cargo Crate** (recipe: 4 planks, 4 sticks): Bulk container for 32 stacks of one item.",
-  "pirates_n_ships.almanac.blocks.p1.list1_15": "{item:pirates_n_ships:cargo_barrel}**Cargo Barrel** (recipe: 6 planks, 2 iron nuggets): Bulk container for 1536 items of one kind.",
-  "pirates_n_ships.almanac.blocks.p1.list1_16": "{item:pirates_n_ships:brig_bars}**Brig Bars** (recipe: 4 iron bars, 2 planks (gives 6)): Bars for cells.",
-  "pirates_n_ships.almanac.blocks.p1.list1_17": "{item:pirates_n_ships:brig_door}**Brig Door** (recipe: 4 iron ingots, 2 iron bars): Lockable door for cells.",
-  "pirates_n_ships.almanac.blocks.p1.list1_18": "{item:pirates_n_ships:notice_board}**Notice Board** (recipe: 4 planks, 2 paper): Lists every bounty and places new ones for doubloons.",
-  "pirates_n_ships.almanac.blocks.p1.list1_19": "{item:pirates_n_ships:figurehead_mermaid}{item:pirates_n_ships:figurehead_lion}{item:pirates_n_ships:figurehead_eagle}{item:pirates_n_ships:figurehead_skull}**Mermaid, Lion, Eagle and Skull Figurehead** (recipe: 4 planks and a prismarine shard, gold ingot, feather or bone): Decoration for the bow. Click the hull block it should hang on: the plate lands there and the figure looks at you.",
-  "pirates_n_ships.almanac.blocks.p1.list1_20": "{item:pirates_n_ships:nameplate}**Nameplate** (recipe: any sign, 1 gold nugget): A board on two iron brackets that shows the ship's name once the ship is assembled and named (name tag on the helm); long names shrink to fit, renaming updates every plate within a second, disassembly clears them. Server option ship_identity.nameplate_shows_name.",
+  "pirates_n_ships.almanac.blocks.p1.list1_12": "{item:pirates_n_ships:flag_pedestal}**Flag Pedestal** (recipe: 1 log over 1 wooden slab (gives 2)): A plinth carved from a log that a flagpole stands in; the pole's foot with its cleat. See [[pirates_n_ships:flags|Flags]].",
+  "pirates_n_ships.almanac.blocks.p1.list1_13": "{item:pirates_n_ships:pantry}**Pantry** (recipe: 8 planks, 1 wheat): Food store with spoilage. See [[pirates_n_ships:provisions|Provisions]].",
+  "pirates_n_ships.almanac.blocks.p1.list1_14": "{item:pirates_n_ships:water_barrel}**Water Barrel** (recipe: 6 planks, 2 iron nuggets, 1 water bucket): Holds 16 rations of water. Crafted full.",
+  "pirates_n_ships.almanac.blocks.p1.list1_15": "{item:pirates_n_ships:cargo_crate}**Cargo Crate** (recipe: 4 planks, 4 sticks): Bulk container for 32 stacks of one item.",
+  "pirates_n_ships.almanac.blocks.p1.list1_16": "{item:pirates_n_ships:cargo_barrel}**Cargo Barrel** (recipe: 6 planks, 2 iron nuggets): Bulk container for 1536 items of one kind.",
+  "pirates_n_ships.almanac.blocks.p1.list1_17": "{item:pirates_n_ships:brig_bars}**Brig Bars** (recipe: 4 iron bars, 2 planks (gives 6)): Bars for cells.",
+  "pirates_n_ships.almanac.blocks.p1.list1_18": "{item:pirates_n_ships:brig_door}**Brig Door** (recipe: 4 iron ingots, 2 iron bars): Lockable door for cells.",
+  "pirates_n_ships.almanac.blocks.p1.list1_19": "{item:pirates_n_ships:notice_board}**Notice Board** (recipe: 4 planks, 2 paper): Lists every bounty and places new ones for doubloons.",
+  "pirates_n_ships.almanac.blocks.p1.list1_20": "{item:pirates_n_ships:figurehead_mermaid}{item:pirates_n_ships:figurehead_lion}{item:pirates_n_ships:figurehead_eagle}{item:pirates_n_ships:figurehead_skull}**Mermaid, Lion, Eagle and Skull Figurehead** (recipe: 4 planks and a prismarine shard, gold ingot, feather or bone): Decoration for the bow. Click the hull block it should hang on: the plate lands there and the figure looks at you.",
+  "pirates_n_ships.almanac.blocks.p1.list1_21": "{item:pirates_n_ships:nameplate}**Nameplate** (recipe: any sign, 1 gold nugget): A board on two iron brackets that shows the ship's name once the ship is assembled and named (name tag on the helm); long names shrink to fit, renaming updates every plate within a second, disassembly clears them. Server option ship_identity.nameplate_shows_name.",
   "pirates_n_ships.almanac.blocks.p1.text1": "All blocks drop themselves. Wooden ones are mined with an axe, the bars and the door with a pickaxe.",
   "pirates_n_ships.almanac.blocks.p2.heading": "Hats",
   "pirates_n_ships.almanac.blocks.p2.text1": "Wear a pirate hat, bandana, navy tricorn or officer's bicorne by right-clicking with it or putting it in the helmet slot. Each gives +1 armour (server config apparel.hat_armor; 0 turns it off). Crafted from three black wool over leather, bone, leather (pirate hat), leather, white wool, leather (navy tricorn) or leather, gold nugget, leather (officer's bicorne); red wool, string, red wool for the bandana.",

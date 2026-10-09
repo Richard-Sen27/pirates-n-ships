@@ -174,3 +174,32 @@ on, `flag_visuals.banner_upright` off). Please send screenshots of steps 1, 2 an
 9. **Other flags.** Merchant, navy and Jolly Roger look unchanged (no banner layers on them).
 10. **Performance.** Twenty patterned banners (six layers each) flying in view: no noticeable FPS drop compared with
     twenty plain ones.
+
+## FLG3: the flag pedestal and the pole on the crow's nest
+
+Renders: `art/renders/flag_pedestal.png`, `art/renders/crows_nest_pole.png`.
+
+1. **Recipe and item.** Craft a log (any wood) over a wooden slab. Expected: two Flag Pedestals; the item shows the
+   whole plinth in the slot, in hand and on the ground (not cut off, not floating far off centre).
+2. **Placement.** Place a pedestal on stone, on planks, on a bottom slab and on a fence. Expected: it stands on stone and
+   planks; on the slab and the fence it is refused. Break the stone under a pedestal: it pops off and drops.
+3. **Pole on the pedestal.** Put one flagpole on a pedestal. Expected: the pole stands in the iron socket with no gap,
+   the cleat and its wound rope sit on the short pole section inside the pedestal's block, the pole block above shows
+   the gilded finial and **no cleat**; the halyard runs unbroken from the cleat up to the truck. Add two more pole
+   blocks: still no cleat on the lowest pole block; the joints between the pedestal's stub and the pole show no seam.
+4. **Working it.** Use a flag on the pedestal, then use it with an empty hand, then sneak-use it. Expected: hoist,
+   strike/raise and take down at the top of the pole exactly as when using the pole; the cloth runs along the pole.
+5. **Breaking.** With a flag flying, break the pedestal. Expected: the whole pole comes down, the pedestal, the pole
+   blocks and the flag drop as items.
+6. **Pole on the nest.** Put a crow's nest on a log mast, then place two flagpoles on top of the nest (click the
+   barrel's top). Expected: the nest shows a pole rising from the middle of its floor with an iron collar at the floor
+   and the cleat inside the barrel; the pole continues above the rim without a gap; the flag flies from the top block,
+   above the nest. With a one-block pole the cloth may touch the rim (expected: use at least two blocks).
+7. **Standing in the nest.** Climb into the nest with the pole in it. Expected: you can step in and stand on the floor,
+   nothing pushes you out, you can walk round the pole inside the barrel; your view clips the pole when you look into
+   it (no collision). The lookout calls ("Sail ho!", sharks, land) still come.
+8. **Crew lookout.** Assign a crew member to the nest with the whistle. Expected: he sits in the nest as before (he and
+   the pole overlap, nothing else changes) and calls sightings.
+9. **On a ship.** Assemble a ship with a nest and a pole on it, sail and turn. Expected: the nest keeps the socketed
+   look, the pole and flag ride along, nothing drops during assembly or disassembly.
+10. **Breaking the nest.** Break the nest under the pole. Expected: the pole and its flag come down and drop.

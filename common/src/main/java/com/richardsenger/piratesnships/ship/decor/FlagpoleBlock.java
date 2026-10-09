@@ -8,6 +8,7 @@ import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.law.flag.FlagKind;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagConfig;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagpoleBlockEntity;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagpoleFoot;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagpoleMachine;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagpolePart;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagpoleRun;
@@ -37,6 +38,7 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +61,10 @@ import org.jetbrains.annotations.Nullable;
  *       the right part). {@link #FLAG} is the flag the block <em>shows</em> (none while struck, always none on a
  *       shaft); the real state is in {@link FlagpoleBlockEntity}. {@link #FACING} is unused since FL1 and kept so old
  *       poles load with their starting angle.</li>
+ *   <li><b>Footings (FLG3).</b> A pole may stand in a flag pedestal or on a crow's nest ({@link FlagpoleFoot},
+ *       {@link com.richardsenger.piratesnships.ship.decor.flag.FlagpoleFooting}): the footing shows the pole stub with
+ *       the halyard's cleat and the lowest pole block the bare pole; breaking the footing brings the pole down. Any
+ *       other placement is as before (no support rule).</li>
  *   <li>The flag is a full-size cloth ({@code FlagClothModel}: one block high, reaching 1.5 blocks from the pole's
  *       center) drawn by the block entity renderer into the space downwind of the pole. It is a visual overlap only:
  *       the block's shape stays the 4×4 post, so the cloth needs free space downwind to look right and clips through
@@ -76,7 +82,8 @@ public class FlagpoleBlock extends Block implements EntityBlock, SimpleWaterlogg
     private static final VoxelShape SHAPE = Block.box(6, 0, 6, 10, 16, 10);
 
     public FlagpoleBlock(Properties properties) {
-        super(properties);
+        // FLG3: the collision depends on the block below (none on a crow's nest), so it must not be cached per state
+        super(properties.dynamicShape());
         registerDefaultState(stateDefinition.any().setValue(FLAG, FlagKind.NONE).setValue(FACING, Direction.NORTH)
                 .setValue(PART, FlagpolePart.SINGLE).setValue(Waterlogging.WATERLOGGED, false));
     }
@@ -96,9 +103,22 @@ public class FlagpoleBlock extends Block implements EntityBlock, SimpleWaterlogg
         return SHAPE;
     }
 
-    /** The part a flagpole at {@code pos} shows, from the blocks above and below it. */
+    /**
+     * No collision for the lowest pole block on a crow's nest (FLG3): it stands where the lookout's head is, so neither
+     * a player in the nest nor a seated crew member is pushed out. The outline stays the post, so it can be used.
+     */
+    @Override
+    protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return FlagpoleFoot.clearsHeadroom(FlagpoleRun.support(level, pos.below())) ? Shapes.empty() : SHAPE;
+    }
+
+    /**
+     * The part a flagpole at {@code pos} shows, from the blocks above and below it; on a footing (pedestal, crow's
+     * nest) the block shows the part of a block standing on a pole, as the footing draws the cleat (FLG3,
+     * {@link FlagpoleFoot#part}).
+     */
     public static FlagpolePart partAt(BlockGetter level, BlockPos pos) {
-        return FlagpolePart.of(FlagpoleRun.isPole(level, pos.below()), FlagpoleRun.isPole(level, pos.above()));
+        return FlagpoleFoot.part(FlagpoleRun.support(level, pos.below()), FlagpoleRun.isPole(level, pos.above()));
     }
 
     /**

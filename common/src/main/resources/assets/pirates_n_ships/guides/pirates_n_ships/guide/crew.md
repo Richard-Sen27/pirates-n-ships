@@ -54,7 +54,8 @@ and `/pirates crew dismiss`. Server config `crew.hiring`.
 A barrel of spruce staves with iron hoops for the top of a mast. Place it on a log, a fence, a wall or any block with
 a solid top; it breaks and drops when the block under it goes. It is one block, but the barrel is a block and a half
 across and stands chest high, so whoever is in it is plainly up in the nest. Only its floor is solid: climb a ladder up
-the mast and step in over the rim (sneak to stay put).
+the mast and step in over the rim (sneak to stay put). A flagpole placed on the nest rises from its middle and flies the
+flag above it (see [Flags](flags.md)).
 
 Whoever is in the nest keeps the lookout. Put a crew member up there with the Captain's Whistle (use it on the crew
 member, then on the nest): he takes his post inside the barrel and keeps watch until you release him. Or stand in it

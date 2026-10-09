@@ -72,6 +72,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *       dematerialises and skips to the waypoint it was heading for (islands, headwinds), then waits
  *       {@code retry_ticks} before it may appear again.</li>
  *   <li><b>Endings</b>: {@link VoyageEndings}.</li>
+ *   <li><b>WS3c</b>: a ship that appears again is flooded back to its record's health ({@link VoyageHull}); its idle
+ *       deckhands stand still like the fighters ({@link VoyageCrew}).</li>
  * </ul>
  */
 public final class Materializer {
@@ -246,9 +248,19 @@ public final class Materializer {
             // something moved the hull after it was placed (seen in loaded GameTest runs); put it back on its point
             turnOnto(ship, plotCentre, facing, pos);
         }
+        restoreHealth(level, ship, link, m.health());
         RETRY_AFTER.remove(id);
         Constants.LOG.debug("Voyage {} materialised as ship {} at {} {}", v.shortId(), ship.id(), (int) pos.x(), (int) pos.z());
         return Outcome.SPAWNED;
+    }
+
+    /**
+     * WS3c: floods the fresh ship back to the voyage's {@code health} ({@link VoyageHull}, lowest compartments first)
+     * when {@code restore_health} is on; a ship without its hull runtime yet gets it in its next update.
+     */
+    private static void restoreHealth(ServerLevel level, ShipBody ship, VoyageShips.Active link, double health) {
+        if (!MaterializeConfig.RESTORE_HEALTH.get() || health >= HealthFlooding.FULL) return;
+        if (!VoyageHull.restore(level, ship, health)) link.pendingHealth = health;
     }
 
     /** Whether the ship's centre left its lane point by more than a block; logs the step after which it did. */
@@ -395,6 +407,7 @@ public final class Materializer {
             skipAhead(server, id);
             return true;
         }
+        if (a.pendingHealth >= 0 && VoyageHull.restore(level, ship, a.pendingHealth)) a.pendingHealth = -1;
         if (VoyageEndings.check(server, level, v, a, ship, dt)) return false;
         v = Voyages.get(server, id).orElse(v);
         if (HelmCourses.course(ship.id()) == null && !VoyageCrew.alive(level, ship, id, VoyageCrew.CREW_TAG).isEmpty()) {
@@ -505,6 +518,7 @@ public final class Materializer {
                     a.plundered = link.get().plundered();
                     a.overflow = link.get().overflow();
                     VoyageShips.put(a);
+                    VoyageCrew.settle(level, v.get().id()); // crew saved before WS3c strolled when idle
                     Constants.LOG.debug("Voyage {} adopted its ship {} again", v.get().shortId(), ship.id());
                 } else {
                     Constants.LOG.debug("Removing ship {}: its voyage {} is not at sea with it any more", ship.id(), link.get().voyage());

@@ -70,6 +70,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     static final String TAG_HIRED_BY = Constants.MOD_ID + ":hired_by";
     static final String TAG_DESERTING = Constants.MOD_ID + ":deserting";
     static final String TAG_DESERTING_DAYS = Constants.MOD_ID + ":deserting_days";
+    static final String TAG_STATIONARY = Constants.MOD_ID + ":stationary";
 
     /** Ticks GeckoLib blends from one pose animation into the next. */
     private static final int POSE_TRANSITION_TICKS = 5;
@@ -114,6 +115,8 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     private boolean deserting;
     /** Dawns it has been deserting (CRW2). Server only, saved. */
     private int desertingDays;
+    /** It never strolls when idle (WS3c: the deckhands of an NPC ship at sea). Off for every player's crew. Saved. */
+    private boolean stationary;
     /** Its station pose faces it towards the wheel or gun (ART7): the look goals leave its head alone. Server only. */
     private boolean facingStation;
 
@@ -134,7 +137,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.6) {
             @Override
             public boolean canUse() {
-                return assignment == null && rest == null && !isPassenger() && super.canUse();
+                return assignment == null && rest == null && !stationary && !isPassenger() && super.canUse();
             }
         });
         // HM2: a sleeper keeps its head and body along the hammock (CrewRest#orient); awake, it looks around again
@@ -333,6 +336,18 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         this.desertingDays = deserting ? Math.max(0, days) : 0;
     }
 
+    /**
+     * A stationary crew member doesn't stroll about when idle (WS3c: an NPC ship's deckhands, who would walk off the
+     * deck); stations, hammocks, meals and orders still move it. Saved with the entity; false for hired crew.
+     */
+    public void setStationary(boolean stationary) {
+        this.stationary = stationary;
+    }
+
+    public boolean isStationary() {
+        return stationary;
+    }
+
     /** True when this crew member rides the seat of its assigned station. */
     public boolean isAtStation() {
         return assignment != null && getVehicle() instanceof StationSeat seat && seat.station().equals(assignment.pos());
@@ -430,6 +445,9 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
             tag.putBoolean(TAG_DESERTING, true);
             tag.putInt(TAG_DESERTING_DAYS, desertingDays);
         }
+        if (stationary) {
+            tag.putBoolean(TAG_STATIONARY, true);
+        }
     }
 
     @Override
@@ -447,5 +465,6 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         unpaid = tag.getBoolean(TAG_UNPAID);
         hiredBy = tag.hasUUID(TAG_HIRED_BY) ? Optional.of(tag.getUUID(TAG_HIRED_BY)) : Optional.empty();
         setDeserting(tag.getBoolean(TAG_DESERTING), tag.getInt(TAG_DESERTING_DAYS));
+        stationary = tag.getBoolean(TAG_STATIONARY);
     }
 }

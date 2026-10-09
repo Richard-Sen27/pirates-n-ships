@@ -176,14 +176,21 @@ public final class SailingGameTestsHeel {
 
     /** What one run measured. Angles in degrees, times in ticks after the event (-1 = never). */
     record Result(String label, double rest, double restPitch, double steady, double max, int t90, boolean capsized,
-                  int rightedAfter, double finalHeel, double speed, double mass, int sails) {
+                  int rightedAfter, double finalHeel, double speed, double mass, int sails, double restClearance,
+                  double minClearance) {
 
         String row() {
             return String.format("%s | rest %.2f (pitch %.2f) | steady %.2f | max %.2f | t90 %s | capsized %s | <2deg after furl %s | "
-                            + "heel 5 s after furl %.2f | fwd %.2f m/s | mass %.0f | sails %d",
+                            + "heel 5 s after furl %.2f | fwd %.2f m/s | mass %.0f | sails %d | clearance at rest %.2f, least %.2f",
                     label, rest, restPitch, steady, max, t90 < 0 ? "-" : (t90 / 20.0) + " s", capsized,
-                    rightedAfter < 0 ? "never" : (rightedAfter / 20.0) + " s", finalHeel, speed, mass, sails);
+                    rightedAfter < 0 ? "never" : (rightedAfter / 20.0) + " s", finalHeel, speed, mass, sails, restClearance,
+                    minClearance);
         }
+    }
+
+    /** Height of the hull's lowest corner above the basin floor's top face (relative y=2 in every heel basin) [blocks]. */
+    static double clearance(GameTestHelper h, Rig r) {
+        return SailingGameTestsShips.hullBottomY(r.ship()) - (h.absolutePos(BlockPos.ZERO).getY() + 2.0);
     }
 
     /**
@@ -205,11 +212,19 @@ public final class SailingGameTestsHeel {
         int[] righted = {-1};
         boolean[] capsized = {false};
         double[] heel = new double[SAIL];
+        double[] clear = {Double.NaN, Double.POSITIVE_INFINITY}; // at the end of the settling, least from then on
         h.onEachTick(() -> {
             long t = h.getTick();
             if (r.ship().isRemoved()) {
                 capsized[0] = true;
                 return;
+            }
+            if (t >= SETTLE && t % 5 == 0) {
+                double c = clearance(h, r);
+                if (t == SETTLE) {
+                    clear[0] = c;
+                }
+                clear[1] = Math.min(clear[1], c);
             }
             double roll = rollDegrees(r);
             if (Math.abs(roll) > CAPSIZE_DEGREES) {
@@ -240,9 +255,10 @@ public final class SailingGameTestsHeel {
                 }
             }
             if (t % 20 == 0) {
-                Constants.LOG.info("[heel test] {} t={} roll {} pitch {} fwd {} com {} {}", label, t, String.format("%.2f", roll),
+                Constants.LOG.info("[heel test] {} t={} roll {} pitch {} fwd {} clearance {} com {} {}", label, t, String.format("%.2f", roll),
                         String.format("%.2f", pitchDegrees(r)),
                         String.format("%.2f", r.runtime().shipFrameVelocity(r.ship(), new Vector3d()).z),
+                        String.format("%.2f", clearance(h, r)),
                         SailingGameTestsShips.comWorld(new SailingGameTestsShips.Fixture(r.ship(), r.runtime())), diagnostics(h, r));
             }
         });
@@ -257,14 +273,22 @@ public final class SailingGameTestsHeel {
             }
             Result res = new Result(label, rest[0] / rest[2], rest[1] / rest[2], Math.abs(steady), acc[2], t90[0], capsized[0],
                     righted[0], r.ship().isRemoved() ? Double.NaN : Math.abs(rollDegrees(r)),
-                    acc[1] == 0 ? 0 : acc[3] / acc[1], r.ship().isRemoved() ? 0 : r.ship().mass(), r.runtime().sailCount());
+                    acc[1] == 0 ? 0 : acc[3] / acc[1], r.ship().isRemoved() ? 0 : r.ship().mass(), r.runtime().sailCount(),
+                    clear[0], clear[1]);
             Constants.LOG.info("[heel table] {}", res.row());
             check.accept(res);
         });
     }
 
-    /** Every run: no capsize, never past {@code stability.max_heel_degrees} under sail. */
+    /**
+     * Every run: the hull floats free of the basin floor, no capsize, never past {@code stability.max_heel_degrees} under
+     * sail. PHY1 measured the clearance because SH2 suspected the sloop's stern touched the floor of this 6-deep basin:
+     * its lowest block (the stern's keel log) sits 1.73 blocks above the floor at rest (draught 4.27 at 4.2 degrees bow
+     * up), and heel only lifts it (least 1.72 in every run, 33-36 degrees with stability off included). A ship that came
+     * within a block of the floor would measure the seabed, not the water.
+     */
     private static void sane(GameTestHelper h, Result r) {
+        h.assertTrue(r.minClearance() > 1.0, r.label() + ": the hull came within a block of the basin floor; " + r.row());
         double maxHeel = SailingConfig.MAX_HEEL_DEGREES.get();
         h.assertTrue(!r.capsized(), r.label() + ": capsized; " + r.row());
         h.assertTrue(r.max() <= maxHeel, r.label() + ": heeled " + r.max() + " deg, past max_heel_degrees " + maxHeel + "; " + r.row());
@@ -333,6 +357,7 @@ public final class SailingGameTestsHeel {
     public static void sloopWithoutStabilityHeelsFar(GameTestHelper h) {
         ConfigOverrides.during(h, SailingConfig.STABILITY_ENABLED, false);
         run(h, "sloop full 12 stability off", SailingGameTestsHeel::sloop, STRONG, SailTrim.FULL, -1, r -> {
+            h.assertTrue(r.minClearance() > 1.0, "the hull came within a block of the basin floor: " + r.row());
             h.assertTrue(r.steady() > 8.0, "without the righting torque the sloop should heel far: " + r.row());
             h.succeed();
         });

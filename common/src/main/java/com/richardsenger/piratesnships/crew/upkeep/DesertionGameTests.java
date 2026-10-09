@@ -73,6 +73,19 @@ public final class DesertionGameTests {
         ConfigOverrides.during(h, CrewConfig.HAMMOCK_REST_PER_NIGHT, 0);
     }
 
+    /**
+     * Runs {@code body} once Sable has filled the ship's world bounds (they read empty for a tick or more after assembly,
+     * longer under load), so the crew lookup by the ship's box finds the members placed on deck.
+     */
+    private static void whenReady(GameTestHelper h, Ship s, Runnable body) {
+        Runnable[] poll = new Runnable[1];
+        poll[0] = () -> {
+            net.minecraft.world.phys.AABB b = s.f().ship().worldBounds();
+            if (b.getXsize() > 1 && b.getZsize() > 1) body.run(); else h.runAfterDelay(1, poll[0]);
+        };
+        h.runAfterDelay(2, poll[0]);
+    }
+
     private static Ship ship(GameTestHelper h) {
         isolate(h);
         morning(h);
@@ -198,7 +211,7 @@ public final class DesertionGameTests {
         ConfigOverrides.during(h, CrewConfig.DESERT_PORT_RADIUS, 16);
         Ship s = ship(h);
         s.a().setDeserting(true, 0);
-        h.runAfterDelay(2, () -> {
+        whenReady(h, s, () -> {
             h.assertTrue(Desertions.portOf(h.getLevel(), s.f().ship(), 16).isEmpty(), "a port near the test ship before the test registered one");
             Desertions.Result r = Desertions.run(h.getLevel());
             h.assertTrue(r.atPort().isEmpty() && r.anywhere().isEmpty(), "left without a port: " + r);
@@ -232,7 +245,7 @@ public final class DesertionGameTests {
         Ship s = ship(h);
         s.a().setDeserting(true, 2);
         s.b().setDeserting(true, 3);
-        h.runAfterDelay(2, () -> {
+        whenReady(h, s, () -> {
             Desertions.Result r = Desertions.run(h.getLevel());
             h.assertTrue(r.anywhere().equals(List.of(s.b().getUUID())) && r.atPort().isEmpty(), "left: " + r);
             h.assertTrue(s.a().isAlive() && s.b().isRemoved(), "a alive " + s.a().isAlive() + ", b removed " + s.b().isRemoved());
@@ -249,7 +262,7 @@ public final class DesertionGameTests {
         ConfigOverrides.during(h, CrewConfig.DESERT_PORT_RADIUS, 16);
         Ship s = ship(h);
         s.a().setDeserting(true, 5);
-        h.runAfterDelay(2, () -> {
+        whenReady(h, s, () -> {
             Port port = port(h);
             try {
                 Desertions.Result r = Desertions.run(h.getLevel());

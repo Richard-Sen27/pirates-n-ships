@@ -66,8 +66,13 @@ public final class VoyageGameTests {
     /** End reasons by voyage id (listener registered once). */
     private static final Map<UUID, VoyageEnd> ENDS = new ConcurrentHashMap<>();
     private static final Map<UUID, Boolean> SPAWNS = new ConcurrentHashMap<>();
+    /** WS3c: CONVOY_DELIVERED reports by voyage id. */
+    private static final Map<UUID, Integer> DELIVERIES = new ConcurrentHashMap<>();
 
     static {
+        ConvoyPlanner.onDelivered((server, voyage) -> {
+            if (voyage.from().getPath().startsWith("gametest/ws2_")) DELIVERIES.merge(voyage.id(), 1, Integer::sum);
+        });
         Voyages.onEnd((server, voyage, reason) -> {
             if (voyage.from().getPath().startsWith("gametest/ws2_")) ENDS.put(voyage.id(), reason);
         });
@@ -169,6 +174,29 @@ public final class VoyageGameTests {
             h.assertValueEqual(ENDS.get(v.id()), VoyageEnd.ARRIVED, "end reason");
             double destAfter = price(server, hb.b().id(), TradeGoods.SUGAR);
             h.assertTrue(destAfter < destBefore, "destination price falls: " + destBefore + " -> " + destAfter);
+        });
+    }
+
+    /**
+     * WS3c: an abstract convoy arriving with cargo reports CONVOY_DELIVERED once; one whose
+     * cargo was taken arrives without a report.
+     */
+    @ModGameTest(batch = BATCH)
+    public static void arrivingConvoyWithCargoIsADelivery(GameTestHelper h) {
+        Harbors hb = harbors(h);
+        MinecraftServer server = hb.server();
+        run(h, hb, () -> {
+            Voyage laden = Voyages.spawnConvoy(server, hb.a().id(), hb.b().id(), RandomSource.create(3)).orElseThrow();
+            Voyage empty = Voyages.spawnConvoy(server, hb.a().id(), hb.b().id(), RandomSource.create(4)).orElseThrow();
+            Voyages.update(server, empty.withCargo(Map.of()));
+            Voyages.advance(server, laden.id(), DISTANCE + 1);
+            Voyages.advance(server, empty.id(), DISTANCE + 1);
+            h.assertValueEqual(ENDS.get(laden.id()), VoyageEnd.ARRIVED, "laden end reason");
+            h.assertValueEqual(ENDS.get(empty.id()), VoyageEnd.ARRIVED, "empty end reason");
+            h.assertValueEqual(DELIVERIES.getOrDefault(laden.id(), 0), 1, "laden deliveries");
+            h.assertValueEqual(DELIVERIES.getOrDefault(empty.id(), 0), 0, "empty deliveries");
+            Voyages.arrive(server, laden.withProgress(laden.length()));
+            h.assertValueEqual(DELIVERIES.getOrDefault(laden.id(), 0), 1, "laden deliveries after a second arrival");
         });
     }
 

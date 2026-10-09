@@ -8,6 +8,8 @@ import com.richardsenger.piratesnships.trade.market.PortProfile;
 import com.richardsenger.piratesnships.world.port.Port;
 import com.richardsenger.piratesnships.world.port.PortRegistry;
 import com.richardsenger.piratesnships.worldsim.WorldSimConfig;
+import com.richardsenger.piratesnships.worldsim.faction.FactionEvent;
+import com.richardsenger.piratesnships.worldsim.faction.Factions;
 import com.richardsenger.piratesnships.worldsim.lane.Lane;
 import com.richardsenger.piratesnships.worldsim.lane.Lanes;
 import net.minecraft.resources.ResourceLocation;
@@ -86,11 +88,34 @@ public final class ConvoyPlanner implements VoyagePlanner {
         return voyage.withCargo(VoyageEconomy.load(server, voyage.from(), voyage.cargo()));
     }
 
+    /**
+     * WS2 sells the cargo at the destination. WS3c: a convoy that still carries cargo reports the world event
+     * {@link FactionEvent#CONVOY_DELIVERED} (WS1: Merchants' wealth +100 and the Navy's +20, times {@code event_scale})
+     * once per voyage, whether it arrived as a record or as a real ship; one plundered empty reports nothing.
+     */
     @Override
     public Optional<Voyage> onArrive(MinecraftServer server, Voyage voyage) {
-        Map<ResourceLocation, Integer> sold = VoyageEconomy.unload(server, voyage.to(), voyage.cargo());
+        // once per voyage: a second arrival of the same record (it ends right after this) is not a second delivery
+        boolean active = Voyages.get(server, voyage.id()).isPresent();
+        Map<ResourceLocation, Integer> sold = active ? VoyageEconomy.unload(server, voyage.to(), voyage.cargo()) : Map.of();
         Constants.LOG.debug("Convoy {} arrived at {} and sold {}", voyage.shortId(), voyage.to(), sold);
+        if (active && VoyageRules.delivers(voyage)) {
+            Factions.report(server, FactionEvent.CONVOY_DELIVERED);
+            for (DeliveryListener l : DELIVERED) l.onDelivered(server, voyage);
+        }
         return Optional.empty();
+    }
+
+    /** Hears every convoy that delivered its cargo (WS3c; tests, later quests). */
+    @FunctionalInterface
+    public interface DeliveryListener {
+        void onDelivered(MinecraftServer server, Voyage voyage);
+    }
+
+    private static final List<DeliveryListener> DELIVERED = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    public static void onDelivered(DeliveryListener listener) {
+        DELIVERED.add(listener);
     }
 
     /** Drops a waiting plan (server stop). */

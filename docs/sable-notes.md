@@ -707,6 +707,19 @@ record the point forces in the `pirates_n_ships:sea_hazards` group every physics
   integrate `ShipBody.linearVelocity()` over the window (pattern: `HazardGameTests.Track`) or assert on velocity
   (`SailingGameTestsControls`, anchor release). Tests that depend on the slow motion feeding back into the forces still
   see a small spread from where the grid put them.
+- **Shared helper (PHY1):** `core/gametest/ShipTrack` integrates `ShipBody.linearVelocity()` per game tick (`follow(h,
+  ship, centre, fromTick)`, `travel()`, `radialMove()`, the pose alongside for the log). Converted: the whirlpool tests
+  (`smallShipIsPulledTowardTheCentre`, `heavyShipMovesLessThanALightOne`), the grapple rest checks
+  (`withoutSneakTheRopePaysOutAndTheShipStays`, `hookOnTheThrowersOwnShipLatchesWithoutHauling`) and the one-block
+  shore haul (`sneakingFreezesTheRopeAndBackingAwayHaulsTheShip`, about 0.2 m/s: at x of about -2,000 to -2,900 its pose
+  read 6 % long, 1.003-1.007 blocks against 0.944-0.964 integrated). Heading, heel, trim and height measurements are not
+  affected (orientation and y are not large coordinates), nor are hauls of five blocks and more at 0.3 m/s and faster.
+  Not for bodies pressed together by a steady force (§9.0h).
+- **Basin depth rule (PHY1):** a test ship's lowest block must stay more than a block above its basin's floor, or the
+  test measures the seabed. Measure it with `SailingGameTestsShips.hullBottomY` against the floor's top face. The
+  starter sloop's stern keel draws 4.27 blocks at 4.2 degrees bow up and clears the heel tests' 6-deep basin by 1.73
+  (heel only lifts it; `SailingGameTestsHeel` asserts the margin); the AN2a test hull clears its basin by 3.66, the 7x17
+  test hull its 40x40 basin by 4.13. [V]
 - **For gameplay** the same holds in a real world: at 10,000 blocks from the origin a ship drifting slower than about
   0.35 m/s on an axis does not move along it (whirlpool pull at the rim, a hull settling, a kedge creeping), at 100,000
   blocks below about 2.8 m/s. Not ours to fix (it is Sable's native precision); worth a report upstream.

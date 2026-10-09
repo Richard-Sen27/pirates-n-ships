@@ -87,10 +87,11 @@ Before tagging, check:
 1. `main` is green on CI (build, JUnit, GameTests).
 2. The playtests for everything new since the last release are done (`docs/playtests/`, and the playtest list at the end of `docs/progress.md`). Nothing the release notes advertise should be unplaytested.
 3. `docs/progress.md` has no open blocker for the features in this release.
-4. Preview the notes: `python3 tools/release_notes.py <previous-tag> HEAD`.
-5. Check the release texts: `python3 tools/check_release_texts.py` passes, and `docs/release/store-page.md` and the version's notes still describe what is on `main` (paste the store page into both platforms when it changed).
-6. The configuration table in `docs/guide.md` §13 matches the code: `python3 tools/check_config_docs.py` prints `ok` (it fails on a config section without a row, a row without a section, a nested group its row does not name, or a backticked name that is no longer a key; `--keys` lists the keys a row leaves out, `--self-test` checks the parser). Values whose defaults changed since the last release belong in the release notes.
-7. Optionally a dry run: Actions → Release → Run workflow, `version` = the planned tag, `dry_run` checked. It builds, runs the tests on both loaders, shows the notes in the job summary and attaches both jars as a workflow artifact.
+4. `docs/release/save-compatibility.md` is current: every stored format, block state, registry id or config key changed since the last release is in it (what converts, what is lost, what a player does by hand), and `KeptIdsTest` passes.
+5. Preview the notes: `python3 tools/release_notes.py <previous-tag> HEAD`.
+6. Check the release texts: `python3 tools/check_release_texts.py` passes, and `docs/release/store-page.md` and the version's notes still describe what is on `main` (paste the store page into both platforms when it changed).
+7. The configuration table in `docs/guide.md` §13 matches the code: `python3 tools/check_config_docs.py` prints `ok` (it fails on a config section without a row, a row without a section, a nested group its row does not name, or a backticked name that is no longer a key; `--keys` lists the keys a row leaves out, `--self-test` checks the parser). Values whose defaults changed since the last release belong in the release notes.
+8. Optionally a dry run: Actions → Release → Run workflow, `version` = the planned tag, `dry_run` checked. It builds, runs the tests on both loaders, shows the notes in the job summary and attaches both jars as a workflow artifact.
 
 Then tag and push:
 

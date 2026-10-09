@@ -14,7 +14,11 @@ import com.richardsenger.piratesnships.mob.captain.CaptainRegistry;
 import com.richardsenger.piratesnships.mob.captain.IslandCaptains;
 import com.richardsenger.piratesnships.mob.captain.PirateCaptain;
 import com.richardsenger.piratesnships.mob.entity.Pirate;
+import com.richardsenger.piratesnships.ship.ShipData;
+import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.ShipTestCleanup;
+import com.richardsenger.piratesnships.ship.decor.NameplateBlockEntity;
+import com.richardsenger.piratesnships.station.lookout.Lookouts;
 import com.richardsenger.piratesnships.ship.hull.Compartment;
 import com.richardsenger.piratesnships.ship.hull.runtime.HullRuntime;
 import com.richardsenger.piratesnships.ship.hull.runtime.HullRuntimes;
@@ -262,6 +266,45 @@ public final class CaptainVoyageGameTests {
             h.assertTrue(CaptainVoyages.loaded(h.getLevel(), id) != null && atPost(h).isEmpty(), "the captain is aboard, not at his post");
             h.assertTrue(CaptainVoyages.label(h.getLevel().getServer(), v).map(l -> labelled(l, "label", name)).orElse(false),
                     "the voyage list names him");
+            finish(h, island, id, Optional.of(v));
+            h.succeed();
+        });
+    }
+
+    /**
+     * TPL2: his ship carries his name ({@link CaptainShipNames}: his name in the possessive and the pirate name the
+     * ship would have had): in the ship's record, on its nameplate, in the voyage list's label, and every lookout calls
+     * it by that name ({@link Lookouts#renownedName}).
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "name")
+    public static void hisShipCarriesHisName(GameTestHelper h) {
+        basin(h);
+        ResourceLocation island = island();
+        PirateCaptain ashore = captainAtPost(h, island);
+        UUID id = ashore.getUUID();
+        String captain = ashore.getName().getString();
+        Voyage v = sail(h, island);
+        String expected = CaptainShipNames.of(captain, Materializer.name(v));
+        ShipBody[] ship = new ShipBody[1];
+        h.runAtTickTime(5, () -> {
+            ship[0] = materialize(h, v);
+            board(h, v);
+        });
+        h.runAtTickTime(15, () -> {
+            MinecraftServer server = h.getLevel().getServer();
+            h.assertTrue(expected.startsWith(CaptainShipNames.possessive(captain)), "the name " + expected + " is not his");
+            String recorded = ShipRegistry.get(server).find(ship[0].id()).map(ShipData::name).orElse("");
+            h.assertValueEqual(recorded, expected, "the ship's name");
+            NameplateBlockEntity plate = null;
+            for (BlockPos p : ship[0].plotBlocks()) {
+                if (h.getLevel().getBlockEntity(p) instanceof NameplateBlockEntity be) plate = be;
+            }
+            h.assertTrue(plate != null, "the captain's ship has no nameplate");
+            plate.refresh();
+            h.assertValueEqual(plate.text(), expected, "the nameplate");
+            h.assertTrue(CaptainVoyages.label(server, Voyages.get(server, v.id()).orElseThrow())
+                    .map(l -> labelled(l, "label", expected) && labelled(l, "label", captain)).orElse(false), "the voyage list's label");
+            h.assertValueEqual(Lookouts.renownedName(h.getLevel(), ship[0].id()), expected, "the lookout's name for his ship");
             finish(h, island, id, Optional.of(v));
             h.succeed();
         });

@@ -14,6 +14,8 @@ public final class LookoutLang {
     static final String KEY = "message." + Constants.MOD_ID + ".lookout.";
     /** "Sail ho! %1$s %2$s, %3$s blocks": what, bearing, distance. */
     public static final String KEY_SHIP = KEY + "ship";
+    /** TPL2, a ship the lookout knows by sight: "Sail ho! %1$s %2$s, %3$s blocks: it's %4$s!" (what, bearing, distance, name). */
+    public static final String KEY_SHIP_NAMED = KEY + "ship_named";
     /** "Land ho! Land %1$s, %2$s blocks". */
     public static final String KEY_LAND = KEY + "land";
     /** "Shark in the water %1$s, %2$s blocks!". */
@@ -87,6 +89,7 @@ public final class LookoutLang {
 
     public static void lang(LangBuilder lang) {
         lang.add(KEY_SHIP, "Sail ho! %s %s, %s blocks")
+                .add(KEY_SHIP_NAMED, "Sail ho! %s %s, %s blocks: it's %s!")
                 .add(KEY_LAND, "Land ho! Land %s, %s blocks")
                 .add(KEY_SHARK, "Shark in the water %s, %s blocks!")
                 .add(KEY_KRAKEN, "Kraken! Something vast stirs %s, %s blocks off!")

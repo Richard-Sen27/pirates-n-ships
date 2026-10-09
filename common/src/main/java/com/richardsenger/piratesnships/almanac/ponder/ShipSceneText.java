@@ -15,6 +15,10 @@ public final class ShipSceneText {
     public static final String HULL_REPAIR = "hull_repair";
     public static final String MOORING = "mooring";
     public static final String CARGO_AND_WEIGHT = "cargo_and_weight";
+    /** PND4: what landed after PND2 (ratline nets, railings, the ship's name). */
+    public static final String RATLINE_NETS = "ratline_nets";
+    public static final String RAILINGS = "railings";
+    public static final String SHIP_IDENTITY = "ship_identity";
 
     private ShipSceneText() {
     }
@@ -236,6 +240,7 @@ public final class ShipSceneText {
     public enum Cargo implements SceneLine {
         BALLAST("Every ship is ballasted when she is assembled, so that she floats level with her holds empty"),
         CRATES("Cargo crates, cargo barrels, pantries and water barrels grow heavier as they fill"),
+        TRIM("Placed empty, the crates leave her level: her ballast is worked out again for new blocks"),
         FULL("A full crate weighs as much as some forty planks"),
         AFT("Stowed aft, the load trims her by the stern, and she sits lower in the water"),
         NOT_BALLAST("Her ballast does not count the cargo: trim her yourself, with heavy loads low and amidships"),
@@ -253,6 +258,94 @@ public final class ShipSceneText {
         @Override
         public String scene() {
             return CARGO_AND_WEIGHT;
+        }
+
+        @Override
+        public String english() {
+            return english;
+        }
+    }
+
+    /** {@link RatlineNetsScene} (ship/rigging nets and fans, RL2, RL3, RL4; design.md §4.8). */
+    public enum Nets implements SceneLine {
+        FITTINGS("A chainplate on the rail, a mast hoop on the mast"),
+        STRING("Use a ratline net on one fitting, then on the other"),
+        LINE("The line must be clear, 30° steep or more and at most 32 blocks"),
+        CLIMB("Walk into the net and hold forward to climb; sneak to hold on"),
+        FAN("Up to five chainplates can share one hoop"),
+        FILL("Neighbouring strands fan into one net: climb anywhere on it"),
+        TOP("Climb on past the hoop and walk forward to step off"),
+        BREAK("Break a chainplate and its strand falls; break the hoop and all do");
+
+        static final String TITLE = "Ratline Nets";
+        private final String english;
+
+        Nets(String english) {
+            this.english = english;
+        }
+
+        @Override
+        public String scene() {
+            return RATLINE_NETS;
+        }
+
+        @Override
+        public String english() {
+            return english;
+        }
+    }
+
+    /** {@link RailingsScene} (ship/decor/railing, RAIL1, RAIL3, RAIL4; design.md §4.8). */
+    public enum Railings implements SceneLine {
+        RUN("A railing sits on the edge of its block. Posts stand where a run ends"),
+        CORNER("Click a railing again to rail a second edge: a corner"),
+        PORT("A railing port leaves a one-block opening"),
+        FIRE("A cannon behind the port fires through it at any elevation"),
+        GATE("A railing gate swings open like a fence gate"),
+        PLANK("Open, it takes a gangway: lay a boarding plank from its sill"),
+        LANTERN("A lantern stands on a railing post or hangs under it"),
+        SWIVEL("A swivel gun mounts on the rail, out on its edge"),
+        BULWARK("A bulwark is a solid wall: a gun behind it fires into it"),
+        LID("Cut a gun port: its lid opens when a cannon stands behind it");
+
+        static final String TITLE = "Railings and Bulwarks";
+        private final String english;
+
+        Railings(String english) {
+            this.english = english;
+        }
+
+        @Override
+        public String scene() {
+            return RAILINGS;
+        }
+
+        @Override
+        public String english() {
+            return english;
+        }
+    }
+
+    /** {@link ShipIdentityScene} (naming at the helm, ship/decor name boards and figureheads, rpg/career titles; §4.8, §15). */
+    public enum Identity implements SceneLine {
+        NAME("Name her at the helm: use a named name tag on it once she is launched"),
+        BOARD("A name board fixed on her side shows her name"),
+        ROW("Boards side by side join: the name grows across the row"),
+        READ("The longer the row, the larger the letters and the farther they read"),
+        FIGUREHEAD("A figurehead hangs on the bow block you click and looks toward you"),
+        RANK("A captain with a rank puts his title in front when he names her"),
+        RECIPE("Any sign and a gold nugget make three name boards");
+
+        static final String TITLE = "Her Name and Figurehead";
+        private final String english;
+
+        Identity(String english) {
+            this.english = english;
+        }
+
+        @Override
+        public String scene() {
+            return SHIP_IDENTITY;
         }
 
         @Override

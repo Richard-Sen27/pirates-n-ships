@@ -26,8 +26,9 @@ import static com.richardsenger.piratesnships.almanac.ponder.SceneKit.say;
  *
  * <p>The crates fill through their real {@link CargoLoad#LOAD} states (0 to {@link CargoMass#MAX_LOAD}); the ship's trim
  * and draft are Ponder element transforms of its section (a few degrees and a fraction of a block, to be seen, not
- * measured). The game's ballast counts containers empty, so the scene levels the ship by restowing the cargo amidships,
- * not by ballast. About 33 seconds.
+ * measured). The game's ballast counts containers empty and is worked out again when blocks are added (PND4: the
+ * empty crates placed aft leave her level), so the cargo in them trims her and the scene levels the ship by restowing
+ * the cargo amidships, not by ballast. About 36 seconds.
  */
 final class CargoAndWeightScene {
 
@@ -72,6 +73,13 @@ final class CargoAndWeightScene {
             scene.world().glueBlockOnto(crate, Direction.DOWN, shipLink);
         }
         scene.idle(15);
+        // TRM1: new blocks have the ballast worked out again, containers counted empty, so the empty crates leave her level
+        SceneKit.focus(scene, util.vector().of(4.5, 5.5, 8.5));
+        say(scene.overlay().showText(60), Cargo.TRIM)
+                .colored(PonderPalette.GREEN)
+                .pointAt(util.vector().topOf(aft[1]))
+                .placeNearTarget();
+        scene.idle(65);
         say(scene.overlay().showText(60), Cargo.CRATES)
                 .pointAt(util.vector().topOf(aft[0]))
                 .placeNearTarget()

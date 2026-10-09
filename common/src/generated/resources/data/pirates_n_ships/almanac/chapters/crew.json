@@ -67,6 +67,11 @@
           "key": "pirates_n_ships.almanac.crew.p3.heading"
         },
         {
+          "type": "show_me",
+          "label": "pirates_n_ships.almanac.crew.p3.show_me1",
+          "scene": "pirates_n_ships:on_deck"
+        },
+        {
           "type": "text",
           "key": "pirates_n_ships.almanac.crew.p3.text1"
         },

@@ -181,9 +181,13 @@ every player and is sent to clients (nothing displays it yet, except the flags).
 rigging, flying with the wind at the wind's own speed: they come from where the wind comes from and show its strength
 by how many there are and how fast they go. In a light breeze there are none, in a gale many, and a gust brings a
 flurry. They hang in the world, not on your ship, so on a sailing ship you see the true wind and your ship moving
-through it, as the HUD's wind arrow shows it. They are only a picture: nothing in the game depends on them. Client
-settings `wind_effects` (`streaks` turns them off; `density`, `min_strength`, `radius`, `height`, `life_ticks`); the
-video setting "Particles: Decreased" halves them and "Minimal" hides them.
+through it, as the HUD's wind arrow shows it. Like real air they are never quite uniform: each flies a little faster
+or slower and a few degrees off the wind with a gentle bob, most come in loose puffs of a few, they gather around deck
+height, and they are faint brush strokes in a light wind and bright whooshes in a strong one. They are only a picture:
+nothing in the game depends on them. Client settings `wind_effects` (`streaks` turns them off; `density`,
+`min_strength`, `radius`, `height`, `life_ticks`, and for their look `speed_spread`, `heading_jitter_degrees`,
+`wobble`, `height_peak`, `puff_share`, `puff_size`, `puff_spread`, `puff_ticks`, `opacity`); the video setting
+"Particles: Decreased" halves them and "Minimal" hides them.
 
 ### Sails
 A **square sail** is built from two **yards**. A yard is a straight row of yard blocks (a thin spar; place them against

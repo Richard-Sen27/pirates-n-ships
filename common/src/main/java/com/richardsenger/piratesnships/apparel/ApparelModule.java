@@ -15,7 +15,7 @@ import java.util.List;
  * The {@code apparel} module: wearable hats and the officer's coat for players (design.md §9, §15). Each hat is the hat
  * of a seafarer mob as a hand-made item model ({@code tools/gen_hat_items.py}; the captain's hat from Blockbench, ART6),
  * worn in the head slot with a small armour bonus ({@code apparel.hat_armor}). The officer's coat (ART6) is worn in the
- * chest slot ({@code apparel.officers_coat_armor}); the pirate captain's coat, breeches and boots (ART9) in the chest,
+ * chest slot ({@code apparel.officers_coat_armor}), its breeches and boots (ART13) in the legs and feet slots; the pirate captain's coat, breeches and boots (ART9) in the chest,
  * legs and feet slots. Vanilla's armour layer draws them; the two coats with a model of their own that adds the tails
  * ({@code apparel.client.CoatArmorModel}, through {@code ClientEvents.registerArmorModel}).
  */
@@ -46,12 +46,14 @@ public final class ApparelModule implements ModModule {
                 .item(ApparelContent.OFFICER_HAT, "Officer's Bicorne")
                 .item(ApparelContent.CAPTAINS_HAT, "Captain's Hat")
                 .item(ApparelContent.OFFICERS_COAT, "Officer's Coat")
+                .item(ApparelContent.OFFICERS_BREECHES, "Officer's Breeches")
+                .item(ApparelContent.OFFICERS_BOOTS, "Officer's Boots")
                 .item(ApparelContent.CAPTAINS_COAT, "Captain's Coat")
                 .item(ApparelContent.CAPTAINS_BREECHES, "Captain's Breeches")
                 .item(ApparelContent.CAPTAINS_BOOTS, "Captain's Boots"));
         // Every apparel item has a hand-made item model (tools/gen_hat_items.py for the four crafted hats, Blockbench
         // projects art/models/captains_hat.bbmodel, officers_coat.bbmodel and, ART9, captains_coat, captains_breeches and
-        // captains_boots.bbmodel), so datagen writes none
+        // captains_boots.bbmodel; ART13 officers_breeches and officers_boots.bbmodel), so datagen writes none
         data.recipes(out -> {
             // A tricorn: a row of black wool over leather with a bone (the skull) in the middle
             ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ApparelContent.PIRATE_HAT.get())
@@ -83,6 +85,18 @@ public final class ApparelModule implements ModModule {
                     .define('B', Items.BLUE_WOOL).define('W', Items.WHITE_WOOL).define('G', Items.GOLD_INGOT)
                     .unlockedBy("has_blue_wool", InventoryChangeTrigger.TriggerInstance.hasItems(Items.BLUE_WOOL))
                     .save(out, ApparelContent.OFFICERS_COAT.id());
+            // The officer's breeches (ART13): white wool in the leggings shape, blue wool for the navy stripe and waist
+            ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ApparelContent.OFFICERS_BREECHES.get())
+                    .pattern("WBW").pattern("W W").pattern("W W")
+                    .define('W', Items.WHITE_WOOL).define('B', Items.BLUE_WOOL)
+                    .unlockedBy("has_blue_wool", InventoryChangeTrigger.TriggerInstance.hasItems(Items.BLUE_WOOL))
+                    .save(out, ApparelContent.OFFICERS_BREECHES.id());
+            // The officer's boots (ART13): gold nuggets for the buckles over black wool tops on leather feet
+            ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ApparelContent.OFFICERS_BOOTS.get())
+                    .pattern("N N").pattern("K K").pattern("L L")
+                    .define('N', Items.GOLD_NUGGET).define('K', Items.BLACK_WOOL).define('L', Items.LEATHER)
+                    .unlockedBy("has_leather", InventoryChangeTrigger.TriggerInstance.hasItems(Items.LEATHER))
+                    .save(out, ApparelContent.OFFICERS_BOOTS.id());
             // The captain's coat (ART9): black wool, a gold ingot for the edging and buttons, red wool for the sash and
             // leather for the baldric
             ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ApparelContent.CAPTAINS_COAT.get())

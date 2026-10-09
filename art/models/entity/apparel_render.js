@@ -277,3 +277,23 @@ AR.renderAll = async function (repo) {
   AR.write(AR.stack(items), R + 'captains_clothing.png');
   return ['coat_tails.png', 'captains_set_worn.png', 'captains_clothing.png'];
 };
+
+// ART13: the navy officer's outfit. AR.renderOfficers('<repo>') writes art/renders/officers_set_worn.png (bicorne, coat
+// with tails, breeches on the inner layer 2, boots on the outer layer 1; standing and walking) and
+// art/renders/officers_clothing.png (the coat, breeches and boots items), leaving the ART9 renders alone.
+AR.renderOfficers = async function (repo) {
+  const R = repo + '/art/renders/';
+  const set = [{texture: 'officers_clothing_layer_2', model: () => AR.armor(0.5, 'legs')}, {texture: 'officers_clothing_layer_1', model: () => AR.armor(1.0, 'feet')},
+    {texture: 'officers_coat_layer_1', model: AR.coat}];
+  const worn = [AR.shoot(await AR.figure(repo, set, 'stand', 'officer_hat'), AR.VIEWS, {}),
+    AR.shoot(await AR.figure(repo, set, 'walk', 'officer_hat'), [[0, 5, 'walking: front'], [90, 5, 'side (left)'], [180, 5, 'back']], {})];
+  AR.write(AR.stack(worn), R + 'officers_set_worn.png');
+  const items = [];
+  for (const name of ['officers_coat', 'officers_breeches', 'officers_boots']) {
+    const it = await AR.loadItem(repo, name);
+    const g = AR.itemMeshes(it.json, it.sheets); g.applyMatrix4(new THREE.Matrix4().makeTranslation(-0.5, -0.5, -0.5).multiply(new THREE.Matrix4().makeScale(1 / 16, 1 / 16, 1 / 16)));
+    items.push(AR.shoot(g, [[0, 0, name + ': front'], [35, 20, 'three-quarter'], [90, 0, 'side'], [180, 0, 'back']], {w: 260, h: 260, half: 0.62, cy: 0}));
+  }
+  AR.write(AR.stack(items), R + 'officers_clothing.png');
+  return ['officers_set_worn.png', 'officers_clothing.png'];
+};

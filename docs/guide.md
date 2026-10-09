@@ -592,8 +592,8 @@ pirate captain 50) that any navy officer pays out. Attacking the navy or a merch
 `/pirates career` shows where you stand. **What a rank is worth:** from Lieutenant the navy flag is yours by right: an
 officer flying it is never charged with false colours for low navy reputation (a bounty still is), and navy outposts
 let you dock for free. Each new rank comes with a gift: a Lieutenant receives the officer's bicorne, a saber and the
-Officer's Coat (once; a full pack drops them at your feet). The coat is chest armour that marks you as navy; you can
-also craft it from blue wool, white wool and a gold ingot. From Captain the harbor master's desk at a navy outpost has an Orders tab: the
+officer's outfit: the Officer's Coat, Officer's Breeches and Officer's Boots (once; a full pack drops them at your
+feet). The outfit is armour that marks you as navy; you can also craft each piece (see "Coats, breeches and boots"). From Captain the harbor master's desk at a navy outpost has an Orders tab: the
 navy shipyard builds you any ship the village shipwrights do, at 70 % of the price (Commodore 50 %, Admiral 40 %),
 delivered to the outpost's quay. On the other side, infamy talks at the fences: a Buccaneer, Dread Captain or Pirate
 Lord trades as if the pirates liked him 7, 13 or 20 points more, and from Dread Captain up pirates leave you alone
@@ -1271,10 +1271,16 @@ The **Officer's Coat** and the **Captain's Coat** go on the chest, with knee-lon
 split at the back, and swing back with your stride. The captain's coat is charcoal edged in gold over a brocade
 waistcoat, with a red sash on the left hip and a leather baldric over the right shoulder; the **Captain's Breeches**
 (legs) and **Captain's Boots** (feet, tall with turned-down tops) complete the pirate captain's look, with his hat.
+The navy officer's coat is completed the same way: the **Officer's Breeches** are white with a navy stripe down the
+outer seam and the **Officer's Boots** black with turned-down tops and brass buckles, as the navy's officers wear them.
 None of them wears out. Armour: coat +3, breeches +2, boots +1 (server config `apparel.officers_coat_armor`,
-`apparel.captains_coat_armor`, `apparel.captains_breeches_armor`, `apparel.captains_boots_armor`; 0 turns one off).
+`apparel.officers_breeches_armor`, `apparel.officers_boots_armor`, `apparel.captains_coat_armor`,
+`apparel.captains_breeches_armor`, `apparel.captains_boots_armor`; 0 turns one off).
 Crafted: the captain's coat from six black wool with a gold ingot on top, red wool in the middle and leather below;
 the breeches from black wool in the leggings shape with leather at the waist; the boots from black wool over leather.
+The officer's coat from blue wool round white wool with a gold ingot on top; the officer's breeches from white wool in
+the leggings shape with blue wool at the waist; the officer's boots from two gold nuggets over black wool over leather.
+A new Lieutenant receives the officer's coat, breeches and boots together (see Careers); navy officers do not drop them.
 A slain pirate captain drops each piece of his clothing with a 35 % chance (server config
 `mobs.captain.clothing_drop_chance`).
 

@@ -177,7 +177,9 @@ Start a new creative world (Fabric dev client, Mod Menu loaded). Check `fabric/r
 10. **Ship screen and other screens**: open the ship screen, the chart, the market; they open and close normally.
 11. **Guide book**: none on Fabric (gap); nothing crashes when GuideME is absent.
 12. **Coat tails**: wear the officer's and the captain's coat, third person: the coat with tails draws on the body and
-    moves with it; dyed/trimmed/enchanted variants colour, trim and shimmer like vanilla armour.
+    moves with it; dyed/trimmed/enchanted variants colour, trim and shimmer like vanilla armour. The officer's and the
+    captain's breeches and boots (vanilla's armour layer, no Fabric code) draw under the coats (ART13,
+    `items-and-blocks.md` "The officer's outfit").
 13. **Flood surface and overlay**: hole a hull below the waterline; the water surface inside the hull draws and the
     underwater overlay/fog appears when the eyes are below it (common `MixinCamera`, `MixinScreenEffectRenderer`).
     Also with Fabulous graphics.

@@ -118,10 +118,14 @@ class CareerRewardRulesTest {
         assertEquals(InfamyRank.DREAD_CAPTAIN, P.piratesFriendlyRank());
     }
 
-    /** LAW3b (ART6 follow-up): a fresh Lieutenant's gift is the bicorne, the saber and the officer's coat. */
+    /**
+     * LAW3b (ART6 follow-up): a fresh Lieutenant's gift is the bicorne, the saber and the officer's coat; ART13 adds the
+     * outfit's breeches and boots to the same grant.
+     */
     @Test
-    void lieutenantGiftIncludesTheOfficersCoat() {
-        assertEquals(List.of("pirates_n_ships:officer_hat", "pirates_n_ships:saber", "pirates_n_ships:officers_coat"),
+    void lieutenantGiftIncludesTheOfficersOutfit() {
+        assertEquals(List.of("pirates_n_ships:officer_hat", "pirates_n_ships:saber", "pirates_n_ships:officers_coat",
+                        "pirates_n_ships:officers_breeches", "pirates_n_ships:officers_boots"),
                 CareerConfig.RANK_ITEMS.get(CareerRewardRules.giftKey(NavyRank.LIEUTENANT)).get());
         assertEquals(List.of(), CareerConfig.RANK_ITEMS.get(CareerRewardRules.giftKey(NavyRank.CAPTAIN)).get());
     }

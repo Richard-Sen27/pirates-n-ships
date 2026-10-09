@@ -120,5 +120,15 @@ tasks.matching { it.name == 'runGameTest' }.configureEach {
     doFirst {
         project.delete(project.file('build/gametest/world'))
         project.delete(project.fileTree('build/gametest/config') { include 'pirates_n_ships-*.toml' })
+        // No config file watcher in test runs: the run creates the server config fresh, and the watcher reloads it
+        // from disk a few seconds later on its own thread, which silently undid every ConfigOverrides value active
+        // at that moment (UPK1: walletPaysWhatTheChestCannot paid its crew with provisions back on, morale 36 not 71).
+        // Forge Config API Port reads disableConfigWatcher from config/forgeconfigapiport.toml.
+        def watcher = project.file('build/gametest/config/forgeconfigapiport.toml')
+        watcher.parentFile.mkdirs()
+        String toml = watcher.exists() ? watcher.text : ''
+        watcher.text = toml =~ /(?m)^disableConfigWatcher\s*=/
+                ? toml.replaceAll(/(?m)^disableConfigWatcher\s*=.*$/, 'disableConfigWatcher = true')
+                : 'disableConfigWatcher = true\n' + toml
     }
 }

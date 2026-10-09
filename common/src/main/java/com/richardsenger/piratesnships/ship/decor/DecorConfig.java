@@ -17,6 +17,14 @@ public final class DecorConfig {
     public static final ConfigValue<Integer> BELL_RING_TICKS = SECTION.intRange("bell_ring_ticks", 20, 2, 200,
             "How long the ship's bell swings after it is rung, in ticks (20 ticks = 1 second)");
 
+    // BELL1: how the ship's bell is drawn on this client
+    private static final ConfigSection BELL_VISUALS = ModConfigs.client("bell_visuals", "How the ship's bell looks on this client");
+
+    public static final ConfigValue<Boolean> BELL_SWING_ENABLED = BELL_VISUALS.bool("enabled", true,
+            "Swing the ship's bell about its yoke when it is rung (off = it hangs still)");
+    public static final ConfigValue<Double> BELL_SWING_DEGREES = BELL_VISUALS.doubleRange("swing_degrees", 20.0, 0.0, 25.0,
+            "How far the ship's bell swings out on its first swing after a strike from the front or back, in degrees");
+
     private DecorConfig() {
     }
 

@@ -282,24 +282,48 @@ def lanterns():
 
 
 # ---------------------------------------------------------------- ship's bell
+# BELL1: the bell swings about the pin of its yoke, drawn by ShipsBellRenderer. The mounts (post frame, wall bracket)
+# are the block models; the bell (yoke and body) and the clapper (with the lanyard) are stand-alone models built for
+# the post, hanging from the pin at (y PIN_Y, z 8) and turned about the x axis there. On the wall bracket the renderer
+# draws them WALL_DROP px lower (the pin sits under the arm). The item model is post + bell + clapper at rest.
 
-def bell(h, ringing):
-    """The bell hanging from y = h on the vertical centre line; ringing swings it 22.5 degrees about x (the lip
-    swings north, away from a wall), the clapper and the lanyard stay plumb."""
-    parts = [box("crown", (7.25, h - 1, 7.25), (8.75, h, 8.75), "brass_dark", hide=("up",))]
+PIN_Y = 13.0
+PIN_Z = 8.0
+WALL_DROP = 1.2
+
+
+def bell_body():
+    """The yoke round the pin and the bell hanging from it: crossed-box sections (crown, top, shoulder, waist with a
+    band, lip with a black mouth) on the vertical centre line, the crown 0.8 px under the pin."""
+    h = PIN_Y - 0.8
+    parts = [box("yoke", (6.6, PIN_Y - 0.7, PIN_Z - 0.7), (9.4, PIN_Y + 0.7, PIN_Z + 0.7), "brass_dark", cull=False),
+             box("crown", (7.25, h - 1, 7.25), (8.75, h, 8.75), "brass_dark", hide=("up",))]
     parts += crossed("top", 8, 8, 4, h - 2, h - 1, "gold_block")
     parts += crossed("shoulder", 8, 8, 5, h - 3, h - 2, "gold_block")
     parts += crossed("waist", 8, 8, 5.4, h - 6, h - 3, "gold_block")
     parts += crossed("band", 8, 8, 5.6, h - 4.6, h - 4.1, "brass_dark")
     parts += crossed("lip", 8, 8, 6.6, h - 7, h - 6, "brass_dark", ftex={"down": "black_concrete"})
-    if ringing:
-        parts = rotate_all(parts, "x", 22.5, (8, h, 8))
-    clapper = [
+    return parts
+
+
+def bell_clapper():
+    """The iron clapper just below the mouth and the rope lanyard hanging from it, turned about the pin like the bell
+    (the renderer lets it trail the bell a little)."""
+    h = PIN_Y - 0.8
+    return [
         box("clapper", (7.3, h - 7.6, 7.3), (8.7, h - 6.4, 8.7), "iron_dark", hide=("up",)),
         box("lanyard", (7.7, 3, 7.7), (8.3, h - 7.6, 8.3), "rope", hide=("up",)),
         box("lanyard_knot", (7.45, 2.2, 7.45), (8.55, 3, 8.55), "rope"),
     ]
-    return parts + clapper
+
+
+def yoke_hangers(pin_y, top):
+    """Two iron straps from `top` down past the pin, either side of the yoke, and the brass pin through them along x."""
+    return [
+        box("hanger_left", (5.6, pin_y - 0.6, 7.4), (6.4, top, 8.6), "iron_dark"),
+        box("hanger_right", (9.6, pin_y - 0.6, 7.4), (10.4, top, 8.6), "iron_dark"),
+        box("pin", (5.3, pin_y - 0.4, PIN_Z - 0.4), (10.7, pin_y + 0.4, PIN_Z + 0.4), "brass"),
+    ]
 
 
 BELL_DISPLAY = {"gui": {"rotation": [30, 225, 0], "translation": [0, 0, 0], "scale": [0.7, 0.7, 0.7]}}
@@ -313,30 +337,33 @@ def post_frame():
         box("beam", (2, 14, 6.5), (14, 15.5, 9.5), "dark_oak_log", grain="x",
             ftex={"east": "dark_oak_log_top", "west": "dark_oak_log_top"}),
         box("beam_cap", (7, 15.5, 7), (9, 16, 9), "brass_dark", hide=("down",)),
-        box("pin", (7.5, 14.25, 6.2), (8.5, 15.25, 6.5), "brass", hide=("south",)),
-        box("pin_back", (7.5, 14.25, 9.5), (8.5, 15.25, 9.8), "brass", hide=("north",)),
-    ]
+    ] + yoke_hangers(PIN_Y, 14.05)
 
 
 def wall_bracket():
+    pin_y = PIN_Y - WALL_DROP
     return [
         box("backboard", (5, 5, 15), (11, 15, 16), "dark_oak_planks"),
         box("backboard_trim", (5.5, 5.5, 14.7), (10.5, 6.25, 15), "stripped_dark_oak_log", grain="x", hide=("south",)),
         box("arm", (7, 13, 7), (9, 15, 14.7), "stripped_dark_oak_log", grain="z", hide=("south",)),
         box("arm_end", (6.75, 12.75, 6.6), (9.25, 15.25, 7), "brass_dark", hide=("south",)),
-        bar_between("brace", (8.75, 14.7), (13, 10.45), 1.2, 1.2, "stripped_dark_oak_log", "x"),
-    ]
+        box("crosshead", (5.2, 12.75, 7.2), (10.8, 13.45, 8.8), "brass_dark"),
+        bar_between("brace", (11, 14.7), (13, 12.7), 1.2, 1.2, "stripped_dark_oak_log", "x"),
+    ] + yoke_hangers(pin_y, 12.8)
 
 
 def bells():
-    out = []
-    for ringing in (False, True):
-        sfx = "_ringing" if ringing else ""
-        floor = Model("ships_bell" + sfx, "gold_block", None if ringing else BELL_DISPLAY).add(post_frame()).add(bell(14, ringing))
-        wall = Model("ships_bell_wall" + sfx, "gold_block").add(wall_bracket()).add(bell(13, ringing))
-        for m in (floor, wall):
-            m.project = "ships_bell"
-        out += [floor, wall]
+    post = Model("ships_bell_post", "gold_block").add(post_frame())
+    wall = Model("ships_bell_wall", "gold_block").add(wall_bracket())
+    body = Model("ships_bell_bell", "gold_block").add(bell_body())
+    clapper = Model("ships_bell_clapper", "gold_block").add(bell_clapper())
+    item = Model("ships_bell", "gold_block", BELL_DISPLAY).add(bell_body()).add(bell_clapper()).add(post_frame())
+    out = [post, wall, body, clapper, item]
+    for m in out:
+        m.project = "ships_bell"
+    for m in (body, clapper):
+        for e in m.elements:
+            e["cull"] = False
     return out
 
 

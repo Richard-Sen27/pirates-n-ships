@@ -16,7 +16,9 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.AttachFace;
@@ -35,10 +37,14 @@ import java.util.Map;
  * The ship's bell (ART2, design.md §4.8): a brass bell on a wooden bracket, either on a wall ({@link #FACE} wall,
  * {@link #FACING} away from the wall) or in a small frame standing on top of a post or any block with a centre support
  * ({@link #FACE} floor, {@link #FACING} towards the player who placed it). Using it rings it: vanilla's bell sound and
- * {@link #RINGING} for {@code ship_decor.bell_ring_ticks}, which shows the swung model ({@code block/ships_bell_ringing},
- * {@code block/ships_bell_wall_ringing}). No other gameplay.
+ * {@link #RINGING} for {@code ship_decor.bell_ring_ticks}. No other gameplay.
+ *
+ * <p>BELL1: the block model is only the mount ({@code block/ships_bell_post}, {@code block/ships_bell_wall}); the bell
+ * and its clapper are drawn by {@code ShipsBellRenderer}, swinging about the yoke's pin from the ring time and strike
+ * direction in {@link ShipsBellBlockEntity}. {@link #RINGING} no longer changes the look; it stays as the server's
+ * "rung lately" flag (the decor GameTests read it).
  */
-public class ShipsBellBlock extends HorizontalDirectionalBlock {
+public class ShipsBellBlock extends HorizontalDirectionalBlock implements EntityBlock {
 
     public static final MapCodec<ShipsBellBlock> CODEC = simpleCodec(ShipsBellBlock::new);
     /** Floor (in its frame, on a post) or wall (on its bracket); the bell never hangs from a ceiling. */
@@ -104,24 +110,58 @@ public class ShipsBellBlock extends HorizontalDirectionalBlock {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!level.isClientSide) {
-            ring(level, pos, state, player);
+            // the struck face points at the striker, so the strike pushes the other way; a hit on the top or the
+            // bottom pushes the way the player looks
+            Direction face = hit.getDirection();
+            ring(level, pos, state, player, face.getAxis().isHorizontal() ? face.getOpposite() : player.getDirection());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
-    /** Rings the bell at {@code pos}: the sound, and the swing for {@code ship_decor.bell_ring_ticks}. Server side. */
+    /**
+     * Rings the bell at {@code pos} as struck by {@code player}, pushed the way the player looks; with no player (WS5's
+     * raid alarm) as if struck from the front. See {@link #ring(Level, BlockPos, BlockState, Player, Direction)}.
+     */
     public void ring(Level level, BlockPos pos, BlockState state, @Nullable Player player) {
+        ring(level, pos, state, player, player == null ? null : player.getDirection());
+    }
+
+    /**
+     * Rings the bell at {@code pos}: the sound, {@link #RINGING} for {@code ship_decor.bell_ring_ticks}, and the ring
+     * start and strike direction ({@code push}: from the striker towards the bell, horizontal, null for none) in the
+     * block entity, synced with a block update so the client swings the bell ({@link ShipsBellSwing}). Ringing again
+     * restarts the swing. Server side; use and the raid alarm both come here.
+     */
+    public void ring(Level level, BlockPos pos, BlockState state, @Nullable Player player, @Nullable Direction push) {
         level.playSound(null, pos, SoundEvents.BELL_BLOCK, SoundSource.BLOCKS, 2.0f, 1.0f);
         level.gameEvent(player, GameEvent.BLOCK_CHANGE, pos);
-        level.setBlock(pos, state.setValue(RINGING, true), Block.UPDATE_ALL);
+        if (level.getBlockEntity(pos) instanceof ShipsBellBlockEntity bell) {
+            bell.ring(level.getGameTime(), push);
+        }
+        BlockState rung = state.setValue(RINGING, true);
+        level.setBlock(pos, rung, Block.UPDATE_ALL);
+        // the state does not change when rung again while ringing: send the block entity's new ring all the same
+        level.sendBlockUpdated(pos, state, rung, Block.UPDATE_CLIENTS);
         level.scheduleTick(pos, this, DecorConfig.BELL_RING_TICKS.get());
     }
 
     @Override
     protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-        if (state.getValue(RINGING)) {
+        if (!state.getValue(RINGING)) return;
+        int ticks = DecorConfig.BELL_RING_TICKS.get();
+        // a ring while ringing restarted the time, but only the first ring's tick is scheduled: wait for the rest
+        long left = level.getBlockEntity(pos) instanceof ShipsBellBlockEntity bell && bell.ringStart() != ShipsBellBlockEntity.NEVER
+                ? bell.ringStart() + ticks - level.getGameTime() : 0;
+        if (left > 0) {
+            level.scheduleTick(pos, this, (int) Math.min(left, ticks));
+        } else {
             level.setBlock(pos, state.setValue(RINGING, false), Block.UPDATE_ALL);
         }
+    }
+
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new ShipsBellBlockEntity(pos, state);
     }
 
     @Override

@@ -100,6 +100,8 @@ public final class HullRuntime {
     private int[] pumpingNow = new int[0];
     private boolean saveDirty;
     private long ticks;
+    /** Tilt refreshes so far (CMP1; tests). */
+    private int tiltRefreshes;
 
     private HullRuntime(ServerLevel level, UUID id) {
         this.level = level;
@@ -206,6 +208,11 @@ public final class HullRuntime {
         return breathing.underCount();
     }
 
+    /** How often the heights were refreshed for a new tilt, keeping the compartments (CMP1; tests). */
+    public int tiltRefreshes() {
+        return tiltRefreshes;
+    }
+
     public boolean isAnalysing() {
         return pending != null || debouncer.isDirty();
     }
@@ -299,6 +306,7 @@ public final class HullRuntime {
             sim.retilt(next);
             partials = PartialCellRule.of(next);
             regionsDirty = true;
+            tiltRefreshes++;
             return;
         }
         double lost = sim.rebind(next);

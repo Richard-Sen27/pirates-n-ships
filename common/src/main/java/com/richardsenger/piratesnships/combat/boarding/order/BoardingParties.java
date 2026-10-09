@@ -370,6 +370,19 @@ public final class BoardingParties {
         return new Outcome(Result.BOARDING, n, target.id());
     }
 
+    /**
+     * Puts {@code mob} into the party of ship {@code home} boarding ship {@code target} (made when there is none), as a
+     * boarder standing on the other deck ({@code ABOARD}), without a crossing. For tests that need a boarder in a given
+     * place (the boarding nets, RAIL5); the party then follows its usual rules.
+     */
+    public static Party enlist(ServerLevel level, UUID home, UUID target, Mob mob, boolean npc) {
+        Party party = PARTIES.computeIfAbsent(home, h -> new Party(h, target, level.dimension(), npc, null, level.getGameTime()));
+        join(level, party, mob, null, false);
+        party.boarders.get(mob.getUUID()).phase = Phase.ABOARD;
+        if (mob instanceof CrewMember c) c.setBoarding(true);
+        return party;
+    }
+
     private static void join(ServerLevel level, Party party, Mob mob, @Nullable StationRef station, boolean pinned) {
         Boarder b = new Boarder(mob.getUUID(), station, pinned, party.home, party.target, level.getGameTime());
         party.boarders.put(mob.getUUID(), b);

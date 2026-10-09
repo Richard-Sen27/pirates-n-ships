@@ -23,7 +23,8 @@ import java.util.List;
  * The ratline net (RL2): a rolled net of string and sticks. Used on a fitting (a chainplate or a mast hoop) it ties
  * that end as A ({@code net_start}, with the dimension; the item glints); used on a second fitting it strings the net
  * from A to B ({@link RatlineNets#check}, then {@link RatlineNets#string}) and is used up, unless the player is in
- * creative mode. A mast hoop takes several nets from different chainplates (RL4, its fan). Every answer goes to the action bar, short: a refusal keeps A. With {@code rigging.nets_enabled} off
+ * creative mode. A mast hoop takes several nets from different chainplates (RL4, its fan); two chainplates on top of
+ * railings along one rail edge take a boarding net (RAIL5, {@link BoardingNets}). Every answer goes to the action bar, short: a refusal keeps A. With {@code rigging.nets_enabled} off
  * it strings nothing. All on the server.
  */
 public class RatlineNetItem extends Item {
@@ -42,6 +43,10 @@ public class RatlineNetItem extends Item {
     /** RL4: strung, but too far from its neighbours on the hoop to be netted in between. */
     public static final String KEY_APART = P + "apart";
     public static final String KEY_DISABLED = P + "disabled";
+    /** RAIL5: a boarding net strung along the rail, and its refusals. */
+    public static final String KEY_BOARDING_STRUNG = P + "boarding_strung";
+    public static final String KEY_NOT_ALONG = P + "not_along";
+    public static final String KEY_TOO_SHORT = P + "too_short";
     public static final String KEY_TOOLTIP = "item." + Constants.MOD_ID + ".ratline_net.tooltip";
 
     public RatlineNetItem(Properties properties) {
@@ -108,7 +113,18 @@ public class RatlineNetItem extends Item {
             case FULL -> {
                 return Component.translatable(KEY_FULL, RiggingConfig.NET_MAX_STRANDS.get());
             }
+            case NOT_ALONG -> {
+                return Component.translatable(KEY_NOT_ALONG);
+            }
+            case TOO_SHORT -> {
+                return Component.translatable(KEY_TOO_SHORT);
+            }
             case TOO_LONG -> {
+                if (check.boarding()) {
+                    double run = Math.abs(check.net().a().getX() - check.net().b().getX())
+                            + Math.abs(check.net().a().getZ() - check.net().b().getZ());
+                    return tooLong(run, RiggingConfig.BOARDING_NET_LENGTH.get());
+                }
                 double length = Math.sqrt(sq(check.net().ringA().x() - check.net().ringB().x())
                         + sq(check.net().ringA().y() - check.net().ringB().y()) + sq(check.net().ringA().z() - check.net().ringB().z()));
                 return tooLong(length, maxLength);
@@ -127,6 +143,9 @@ public class RatlineNetItem extends Item {
         stack.remove(RiggingContent.NET_START.get());
         if (player == null || !player.getAbilities().instabuild) {
             stack.shrink(1);
+        }
+        if (check.boarding()) {
+            return Component.translatable(KEY_BOARDING_STRUNG);
         }
         if (!Double.isNaN(check.apart())) {
             return Component.translatable(KEY_APART, String.format(java.util.Locale.ROOT, "%.1f", check.apart()));

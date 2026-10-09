@@ -488,6 +488,36 @@ hold), three or more crew spawned on the deck with `/pirates crew spawn`, the ca
     may look round a little, its body does not. A diner faces the pantry the same way; the capstan crew still faces
     along the circle while walking the bars round (CAP2).
 
+## RAIL5: idle crew lean on the rail
+Covered by JUnit (`RailSpotsTest`: the spot choice, the timing and the cap; `CrewLeanPoseTest`: the `lean` animation
+composed with GeckoLib's real transforms, forearms on the top rail, hands just outboard, upper body over the rail) and 4
+GameTests (`crew/lean/RailLeanGameTests`: an idle crew member walks to the rail and leans facing the sea, at most three
+of five lean a cell apart and none beside the helm, an order ends the lean at once, `rail_lean.enabled` off). What the
+tests cannot show: how the pose looks (the `lean` animation was written by script and **never opened in Blockbench**),
+whether the head turn reads as looking out to sea, and how it looks on a ship under way.
+
+Setup: an assembled ship afloat with oak railings along its deck edges (and a helm, a winch), four or five crew spawned
+on the deck with `/pirates crew spawn` (not assigned anywhere), daytime. Default config (`crew.rail_lean.enabled =
+true`, `radius = 6`, `min_seconds = 30`, `max_seconds = 90`, `leaners = 3`, `pause_seconds = 30`).
+
+1. **They go to the rail.** Wait a few seconds. Expected: up to three crew walk to the rail (a walking animation, no
+   teleport), step into the railing's block, turn smoothly to face the sea and lean: bent over the rail, forearms
+   resting on the top rail with the hands hanging just outboard, weight on the right leg, the left leg relaxed. Look
+   from the side and from outboard: the arms rest on the rail, not in it or floating above it; the feet stand on the
+   deck. Report a pose that reads wrong (with a screenshot): it has not been seen in Blockbench.
+2. **The head.** Watch a leaner for 15 seconds. Expected: it looks out to sea a little downward, and every 7 seconds
+   turns its head slowly to one side and back (the other side the next time). It does not look at you while leaning.
+3. **Spread out.** Expected: never more than three at the rail of one ship, never two in neighbouring blocks, none in
+   the rail blocks right beside the helm or another station (winch, gun, capstan). Put a plank on top of a rail block:
+   nobody leans there (no headroom).
+4. **Time up.** Expected: each leans for 30 to 90 seconds, then strolls about the deck; after about 30 seconds it may
+   go to the rail again, maybe somewhere else.
+5. **An order ends it.** Whistle an order (e.g. "Hoist sails") or assign a leaner to a station. Expected: it stops
+   leaning at once and walks to its station; the meal call and nightfall end it the same way.
+6. **Under way.** Sail and turn while crew lean. Expected: they stay at the rail facing outboard as the ship turns, no
+   sliding along the deck; one pushed off its spot steps back onto it.
+7. **Off.** `crew.rail_lean.enabled = false`: nobody goes to the rail, idle crew only stroll; leaners stop at once.
+
 ## OAR1: rowing (Row / Ship oars, the rail, the oar bench)
 Covered by 8 + 8 JUnit tests (`OarSpotsTest`: spots along both rails, a railing counts and the rower stands inboard of
 it, a one-block bulwark counts, alternating sides, benches counted, taken spots skipped; `OarRulesTest`: count, bench

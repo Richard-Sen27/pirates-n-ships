@@ -3,6 +3,8 @@ package com.richardsenger.piratesnships.ship.rigging.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.richardsenger.piratesnships.sailing.client.StayClothRenderer;
+import com.richardsenger.piratesnships.ship.rigging.BoardingNetRules;
+import com.richardsenger.piratesnships.ship.rigging.BoardingNets;
 import com.richardsenger.piratesnships.ship.rigging.NetFittingBlockEntity;
 import com.richardsenger.piratesnships.ship.rigging.RatlineNetRules;
 import com.richardsenger.piratesnships.ship.rigging.RatlineNetRules.Point;
@@ -34,6 +36,10 @@ import java.util.List;
  * ({@link RatlineNetGeometry}), and a rung across every {@link #RUNG_SPACING} blocks, all square rope beams with the
  * stay's {@code block/rope} texture tiled along their length (v runs in blocks, so the texture never stretches).
  *
+ * <p>A boarding net (RAIL5, {@link BoardingNets}) is drawn upright along the rail instead ({@link BoardingNetRules#mesh}):
+ * a foot rope on the rail, a top rope a block up sagging in the middle, two ropes between and uprights every
+ * {@link #BOARDING_SPACING} blocks.
+ *
  * <p>Drawn in the hub's block entity space with every ring relative to it; on a ship Sable renders a sub-level's block
  * entities with the ship's pose on the pose stack, so the net moves with the plot. NeoForge culls block entity
  * renderers by {@link #getRenderBoundingBox}; like the stay and the flag it does not set {@code shouldRenderOffScreen}
@@ -48,6 +54,8 @@ public class RatlineNetRenderer implements BlockEntityRenderer<NetFittingBlockEn
     /** Half the thickness of a side rope and of a rung [blocks]. */
     private static final float SIDE_HALF = 0.035f;
     private static final float RUNG_HALF = 0.025f;
+    /** RAIL5: distance between the uprights of a boarding net [blocks]. */
+    public static final double BOARDING_SPACING = 1.0 / 3.0;
 
     public RatlineNetRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -95,6 +103,13 @@ public class RatlineNetRenderer implements BlockEntityRenderer<NetFittingBlockEn
 
     /** A lone strand (RL2's look): two side ropes and rungs, the side taken from fitting A's facing for a vertical net. */
     private static void single(Level level, Net n, BlockPos p, VertexConsumer vc, PoseStack.Pose last, int light, int overlay) {
+        if (BoardingNets.isBoarding(level, n)) {
+            // RAIL5: a boarding net hangs upright from the rail to a block above it, its top rope sagging
+            for (Point[] rope : BoardingNetRules.mesh(local(n.ringA(), p), local(n.ringB(), p), BOARDING_SPACING)) {
+                beam(vc, last, rope[0], rope[1], RUNG_HALF, light, overlay);
+            }
+            return;
+        }
         Direction facing = facing(level.getBlockState(n.a()));
         Point side = RatlineNetRules.side(n.ringA(), n.ringB(), facing.getClockWise().getStepX(), facing.getClockWise().getStepZ());
         RatlineNetGeometry net = RatlineNetGeometry.of(local(n.ringA(), p), local(n.ringB(), p), side, HALF_WIDTH, RUNG_SPACING);

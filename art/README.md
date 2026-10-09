@@ -1695,8 +1695,9 @@ GeckoLib project). Every keyframe uses GeckoLib's `easeInOutSine` easing. Source
 | `sit` | riding something that seats it (boat, minecart; **not** the station seat, where it stands) | 4 s: legs −81° x, ±18° y, ±4° z (vanilla riding pose), hands resting on the thighs (−38° to −40°, 10° inwards), leaning back 3–4°, breathing |
 | `sleep` | lying in a hammock (ART1d; `CrewMember#isResting`) | 4 s: on the back in the hammock, see "Hammock (ART1d)" above |
 | `helm_hold`, `helm_turn_left/right`, `cannon_aim`, `cannon_load`, `cannon_fire`, `capstan_push` | at a station (ART7) | see "Crew station animations (ART7)" below |
+| `lean` | idle, leaning on the rail (RAIL5; `CrewMember#isLeaning`) | see "Leaning on the rail (RAIL5)" below |
 
-Priority: station pose (ART7) > `work` > `sleep` > `sit` > `walk` > `idle` (`crew/npc/CrewPose`). One controller (`body`) plays them with a 5-tick
+Priority: station pose (ART7) > `work` > `sleep` > `sit` > `lean` > `walk` > `idle` (`crew/npc/CrewPose`). One controller (`body`) plays them with a 5-tick
 blend. A mob with more states adds animations with new names and its own controller logic; triggered one-shots
 (attack swings, a cannon fuse) go through GeckoLib triggerable animations on a second controller.
 
@@ -1812,6 +1813,49 @@ for the gun; not saved).
 - **Export.** As in the recipe above: `Animator.buildFile(null, names)` with `autoStringify` plus a newline; the
   project files were saved by appending the new animation entries to the committed JSON (the committed animations are
   kept byte for byte, uuids included).
+
+### Leaning on the rail (RAIL5)
+
+One more animation on the crew rig, `lean` (6 s, loop), played while an idle crew member leans on a railing
+(`crew/lean/RailLean`, `CrewPose.LEAN`, synced as `CrewMember#isLeaning`). **Written by script, not built or viewed in
+Blockbench** (Blockbench was taken by another package): `tools/gen_lean_animation.py` writes the entry into
+`crew_member.animation.json` and keeps every other byte of the file (it refuses to run if the file is not in
+autoStringify form); the four seafarer projects and `crew_member.bbmodel` do not carry it, and there is no render yet.
+
+| Bone | Channel | 0 s and 6 s | 3 s (the breath) |
+|---|---|---|---|
+| `root` | position | `[-0.5, 0, 0]` (half a pixel to the model's right: the weight on the right leg) | the same |
+| `waist` | rotation | `[24, 0, 2]` | `[25.5, 0, 2.5]` |
+| `right_arm` | rotation | `[-80, -10, 0]` | `[-81.5, -10, 0]` |
+| `left_arm` | rotation | `[-80, 10, 0]` | `[-81.5, 10, 0]` |
+| `right_leg` | rotation | `[-2, 0, 1]` (the standing leg) | the same |
+| `left_leg` | rotation | `[8, -6, -4]` (relaxed, back and out) | `[9, -6, -4.5]` |
+
+Every key `easeInOutSine`; the head is never keyed (contract above).
+- **Signs.** The values are in the file convention of every animation in the file (the vanilla player's signs, which
+  GeckoLib's loader flips, x and y negated, on load; GL1 rule 1 is about angles written from code, which this is not):
+  `waist` +24 leans the upper body forward over the rail; the arms' −80 swings them forward (the arm hangs from the
+  waist, so its angle in the world is the waist's 24 minus 80: 56° forward of straight down); `right_arm` −10 and
+  `left_arm` +10 turn both arms inwards (as `capstan_push`'s ±14) so the hands come together; the breath adds 1.5° to
+  the waist and takes 1.5° from the arms so the forearms stay on the rail; `left_leg` +8 swings it back and −4 spreads it
+  out; root x −0.5 moves the body to the model's right (position x is negated on load too).
+- **Where it stands.** In the railing's own block, its front 0.02 blocks short of the rail's inner face
+  (`LeanRules.LEAN_OFFSET` = 0.5 − 2/16 − 0.3 − 0.02 outboard of the block centre), facing outboard
+  (`StationPoses.yaw` of the railed edge, turned with the ship, the ST5 body turn).
+- **What the rig test proves** (`CrewLeanPoseTest`, GeckoLib's baked rig and loaded keys, `RenderUtil.prepMatrixForBone`
+  down `root → waist → arm`, the renderer's `180 − bodyYaw` turn, the leaner at its lean point for all four outboard
+  sides, at 0, 3 and 6 s): both hands forward of the shoulders, outboard of the rail's inner face (about 0.85 blocks
+  ahead of the body), 16–20 px up, the right hand on the leaner's right; the arm cubes' underside over the rail's
+  2 px depth lies 0–1.5 px above the rail top (the forearms rest on it: measured 0.5–0.9 px); the neck is more than
+  0.15 blocks outboard of the feet. A wrong sign on the waist or an arm puts the hands behind the body or into the rail
+  and fails it.
+- **The head** is turned from code (`LeanRules.headYaw`, applied to the entity's head yaw, so `EntityModelData` brings
+  it to the head bone already flipped, GL1 rule 2): 3 s looking straight out, then a 4 s turn to 35° one side and back,
+  the other side the next cycle, within ST5's ±45° of the body; the head pitch is −10° (Minecraft pitch, up), which on
+  the 24° waist leaves the face looking about 14° down at the water.
+- Open: see it in Blockbench and in game (the arm's single segment has no elbow, so "forearms on the rail" is the whole
+  arm lying across the top rail with the hands hanging just outboard); copy it into the seafarer projects when
+  Blockbench is free; a render.
 
 ### Rowing (OAR1)
 

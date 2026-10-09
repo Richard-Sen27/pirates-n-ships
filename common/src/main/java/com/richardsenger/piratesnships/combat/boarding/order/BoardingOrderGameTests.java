@@ -22,6 +22,15 @@ import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests.Fixture;
+import com.richardsenger.piratesnships.ship.decor.railing.RailingBlock;
+import com.richardsenger.piratesnships.ship.decor.railing.RailingContent;
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.rigging.BoardingNets;
+import com.richardsenger.piratesnships.ship.rigging.ChainplateBlock;
+import com.richardsenger.piratesnships.ship.rigging.RatlineNetAssist;
+import com.richardsenger.piratesnships.ship.rigging.RatlineNetItem;
+import com.richardsenger.piratesnships.ship.rigging.RiggingConfig;
+import com.richardsenger.piratesnships.ship.rigging.RiggingContent;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.station.StationContent;
 import com.richardsenger.piratesnships.station.order.WhistleOrder;
@@ -39,12 +48,15 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Husk;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -516,6 +528,96 @@ public final class BoardingOrderGameTests {
             h.assertTrue(!BoardingParties.out(s.a().ship().id()), "the party is still out: " + where(h, s.a().ship().id()));
             for (CrewMember c : hands) assertAboard(h, c, s.a().ship(), "a returned hand");
             cleanup(h, s, hands);
+        });
+    }
+
+    // ------------------------------------------------------------------ boarding nets (RAIL5)
+
+    /** Push towards inboard each tick [blocks/tick], as in RAIL5's net tests. */
+    private static final double NET_PUSH = 0.12;
+
+    private static void railing(GameTestHelper h, BlockPos rel, Direction edge) {
+        BlockPos abs = h.absolutePos(rel);
+        h.getLevel().setBlock(abs, RailingContent.RAILINGS.get(ShipWood.OAK).defaultBlockState().setValue(RailingBlock.edge(edge), true), 3);
+    }
+
+    private static void still(Mob mob) {
+        for (Goal.Flag f : Goal.Flag.values()) {
+            mob.goalSelector.disableControlFlag(f);
+            mob.targetSelector.disableControlFlag(f);
+        }
+    }
+
+    /**
+     * Ship B carries a boarding net along her north rail (RAIL5). A boarder of A's party standing on her rail outboard and
+     * pushed inboard is held like any attacker, then climbs over; a boarder of B's own party coming home over the same
+     * rail is not held.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 260, batch = BATCH + "net")
+    public static void aBoardingNetHoldsBoardersButNotItsOwnShipsCrew(GameTestHelper h) {
+        noDesertion(h);
+        ConfigOverrides.during(h, BoardingConfig.ORDER_CHECK_TICKS, 200); // the parties stay as placed for the test
+        ServerLevel level = h.getLevel();
+        DryHullGameTests.basin(h, 0, 23, true);
+        SailingGameTestsShips.openSky(h, 24);
+        BlockPos helmA = DryHullGameTests.hull(h, 2, false);
+        BlockPos helmB = DryHullGameTests.hull(h, 10, false);
+        for (int x = 10; x <= 14; x++) railing(h, new BlockPos(x, 9, 9), Direction.NORTH);
+        for (int x = 10; x <= 14; x++) {
+            BlockPos abs = h.absolutePos(new BlockPos(x, 9, 9));
+            level.setBlock(abs, RailingBlock.withPosts(level.getBlockState(abs), level, abs), 3);
+        }
+        BlockState plate = RiggingContent.CHAINPLATE.get().defaultBlockState().setValue(ChainplateBlock.FACE, AttachFace.FLOOR)
+                .setValue(ChainplateBlock.FACING, Direction.EAST);
+        h.setBlock(new BlockPos(10, 10, 9), plate);
+        h.setBlock(new BlockPos(14, 10, 9), plate);
+        ItemStack net = new ItemStack(RiggingContent.NET_ITEM.get());
+        RatlineNetItem.use(level, net, h.absolutePos(new BlockPos(10, 10, 9)), null);
+        Component strung = RatlineNetItem.use(level, net, h.absolutePos(new BlockPos(14, 10, 9)), null);
+        h.assertTrue(strung.getContents() instanceof TranslatableContents t && t.getKey().equals(RatlineNetItem.KEY_BOARDING_STRUNG),
+                "no boarding net strung: " + strung);
+        Fixture a = DryHullGameTests.assemble(h, helmA);
+        Fixture b = DryHullGameTests.assemble(h, helmB);
+        java.util.function.Function<BlockPos, BlockPos> plotB = rel -> b.helmPlot().offset(rel.subtract(helmB));
+        double face = plotB.apply(new BlockPos(11, 10, 9)).getZ();
+        CrewMember[] who = new CrewMember[2]; // 0: A's boarder (an attacker), 1: B's boarder coming home
+        h.runAtTickTime(SETTLE, () -> {
+            for (int i = 0; i < 2; i++) {
+                Vec3 at = b.ship().toWorld(Vec3.atLowerCornerOf(plotB.apply(new BlockPos(i == 0 ? 11 : 13, 9, 9))).add(0.5, 1.6, -0.2));
+                CrewMember c = StationContent.CREW_MEMBER.get().create(level);
+                if (c == null) throw new AssertionError("no crew member");
+                c.moveTo(at.x, at.y, at.z, 180f, 0f);
+                still(c);
+                level.addFreshEntity(c);
+                who[i] = c;
+            }
+            BoardingParties.enlist(level, a.ship().id(), b.ship().id(), who[0], false);
+            BoardingParties.enlist(level, b.ship().id(), a.ship().id(), who[1], false);
+        });
+        int hold = RiggingConfig.BOARDING_NET_HOLD.get();
+        int push = SETTLE + 10;
+        boolean[] held = {false, false};
+        h.onEachTick(() -> {
+            if (who[0] == null || h.getTick() < push) return;
+            Vec3 in = RatlineNetAssist.rotate(b.ship().orientation(), new Vec3(0, 0, NET_PUSH));
+            for (int i = 0; i < 2; i++) {
+                who[i].setDeltaMovement(in.x, who[i].getDeltaMovement().y, in.z);
+                if (BoardingNets.holds(level, who[i])) held[i] = true;
+            }
+        });
+        h.runAtTickTime(push + 30, () -> {
+            h.assertTrue(!held[1], "the net held a boarder of its own ship coming home");
+            double z = b.ship().toPlot(who[1].position()).z;
+            h.assertTrue(z > face + 1.0, "B's own boarder did not cross its net: plot z " + (z - face));
+        });
+        h.runAtTickTime(SETTLE + hold + 70, () -> {
+            h.assertTrue(held[0], "the net never held A's boarder");
+            double z = b.ship().toPlot(who[0].position()).z;
+            h.assertTrue(z > face + 1.0, "A's boarder did not climb over after the hold: plot z " + (z - face));
+            BoardingParties.forget(level, a.ship().id());
+            BoardingParties.forget(level, b.ship().id());
+            for (CrewMember c : who) c.discard();
+            h.succeed();
         });
     }
 

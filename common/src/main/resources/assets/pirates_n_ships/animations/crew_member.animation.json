@@ -2265,6 +2265,108 @@
 					}
 				}
 			}
+		},
+		"lean": {
+			"loop": true,
+			"animation_length": 6,
+			"bones": {
+				"root": {
+					"position": {
+						"0.0": {
+							"vector": [-0.5, 0, 0],
+							"easing": "easeInOutSine"
+						},
+						"3.0": {
+							"vector": [-0.5, 0, 0],
+							"easing": "easeInOutSine"
+						},
+						"6.0": {
+							"vector": [-0.5, 0, 0],
+							"easing": "easeInOutSine"
+						}
+					}
+				},
+				"waist": {
+					"rotation": {
+						"0.0": {
+							"vector": [24, 0, 2],
+							"easing": "easeInOutSine"
+						},
+						"3.0": {
+							"vector": [25.5, 0, 2.5],
+							"easing": "easeInOutSine"
+						},
+						"6.0": {
+							"vector": [24, 0, 2],
+							"easing": "easeInOutSine"
+						}
+					}
+				},
+				"right_arm": {
+					"rotation": {
+						"0.0": {
+							"vector": [-80, -10, 0],
+							"easing": "easeInOutSine"
+						},
+						"3.0": {
+							"vector": [-81.5, -10, 0],
+							"easing": "easeInOutSine"
+						},
+						"6.0": {
+							"vector": [-80, -10, 0],
+							"easing": "easeInOutSine"
+						}
+					}
+				},
+				"left_arm": {
+					"rotation": {
+						"0.0": {
+							"vector": [-80, 10, 0],
+							"easing": "easeInOutSine"
+						},
+						"3.0": {
+							"vector": [-81.5, 10, 0],
+							"easing": "easeInOutSine"
+						},
+						"6.0": {
+							"vector": [-80, 10, 0],
+							"easing": "easeInOutSine"
+						}
+					}
+				},
+				"right_leg": {
+					"rotation": {
+						"0.0": {
+							"vector": [-2, 0, 1],
+							"easing": "easeInOutSine"
+						},
+						"3.0": {
+							"vector": [-2, 0, 1],
+							"easing": "easeInOutSine"
+						},
+						"6.0": {
+							"vector": [-2, 0, 1],
+							"easing": "easeInOutSine"
+						}
+					}
+				},
+				"left_leg": {
+					"rotation": {
+						"0.0": {
+							"vector": [8, -6, -4],
+							"easing": "easeInOutSine"
+						},
+						"3.0": {
+							"vector": [9, -6, -4.5],
+							"easing": "easeInOutSine"
+						},
+						"6.0": {
+							"vector": [8, -6, -4],
+							"easing": "easeInOutSine"
+						}
+					}
+				}
+			}
 		}
 	}
 }

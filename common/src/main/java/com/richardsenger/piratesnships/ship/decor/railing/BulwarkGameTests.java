@@ -441,24 +441,39 @@ public final class BulwarkGameTests {
     // ------------------------------------------------------------------ the gangway and the swivel gun
 
     /**
-     * On land: a gun port on a stone pier edge facing east, a landing two blocks of air east of it; with the lid open a
-     * plank used on the sill starts its run in the block beyond the port and lands level; with the lid shut the port is
-     * no opening and the run does not start beyond it.
+     * On land: lanes on a stone edge, each with a stone landing two blocks of air east of it: a shut gun port, a plain
+     * bulwark on its east edge and a propped-open gun port. Open, a plank used on the port's sill facing east starts in
+     * the block beyond the port at the port's own height and lands level. Shut, the port is a bulwark for the plank: its
+     * run is the plain bulwark's beside it (BRD4 starts it on the wall's top), never one through the port.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_9)
     public static void aPlankFromAGunPortsSill(GameTestHelper h) {
-        for (int x = 0; x <= 3; x++) for (int z = 3; z <= 5; z++) h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
-        for (int x = 6; x <= 8; x++) for (int z = 3; z <= 5; z++) h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
-        BlockPos port = new BlockPos(3, 2, 4);
-        h.setBlock(port, portFacing(Direction.EAST));
-        BoardingPlanks.Laid shut = BoardingPlanks.lay(h.getLevel(), h.absolutePos(port), Direction.UP, Direction.EAST);
-        h.assertFalse(shut.outcome() == BoardingPlanks.Outcome.OK && shut.cells().get(0).equals(h.absolutePos(new BlockPos(4, 2, 4))),
-                "a plank went out through a shut lid");
-        for (BlockPos c : shut.outcome() == BoardingPlanks.Outcome.OK ? shut.cells() : List.<BlockPos>of()) h.getLevel().removeBlock(c, false);
-        h.setBlock(port, portFacing(Direction.EAST).setValue(BulwarkPortBlock.PROPPED, true).setValue(BulwarkPortBlock.OPEN, true));
-        BoardingPlanks.Laid laid = BoardingPlanks.lay(h.getLevel(), h.absolutePos(port), Direction.UP, Direction.EAST);
+        for (int x = 0; x <= 3; x++) for (int z = 0; z <= 8; z++) h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
+        for (int x = 6; x <= 8; x++) for (int z = 0; z <= 8; z++) h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
+        BlockPos shut = new BlockPos(3, 2, 2);
+        BlockPos wall = new BlockPos(3, 2, 4);
+        BlockPos opened = new BlockPos(3, 2, 6);
+        h.setBlock(shut, portFacing(Direction.EAST));
+        setEdges(h, bulwark(), wall, Direction.EAST);
+        h.setBlock(opened, portFacing(Direction.EAST).setValue(BulwarkPortBlock.PROPPED, true).setValue(BulwarkPortBlock.OPEN, true));
+        BoardingPlanks.Laid shutRun = BoardingPlanks.lay(h.getLevel(), h.absolutePos(shut), Direction.UP, Direction.EAST);
+        BoardingPlanks.Laid wallRun = BoardingPlanks.lay(h.getLevel(), h.absolutePos(wall), Direction.UP, Direction.EAST);
+        h.assertTrue(shutRun.outcome() == wallRun.outcome(), "shut port " + shutRun.outcome() + ", bulwark " + wallRun.outcome());
+        if (shutRun.outcome() == BoardingPlanks.Outcome.OK) {
+            h.assertTrue(shutRun.cells().size() == wallRun.cells().size() && shutRun.heights().equals(wallRun.heights()),
+                    "the shut port's board differs from the bulwark's: " + shutRun.heights() + " vs " + wallRun.heights());
+            for (int i = 0; i < shutRun.cells().size(); i++) {
+                h.assertTrue(shutRun.cells().get(i).subtract(h.absolutePos(shut)).equals(wallRun.cells().get(i).subtract(h.absolutePos(wall))),
+                        "cell " + i + " differs from the bulwark's run");
+            }
+            int startY = shutRun.cells().get(0).getY() - shutRun.heights().get(0).dy();
+            h.assertTrue(startY == h.absolutePos(shut).getY() + 1, "the board from the shut port starts at y " + startY + ", not on its top");
+        }
+        BoardingPlanks.Laid laid = BoardingPlanks.lay(h.getLevel(), h.absolutePos(opened), Direction.UP, Direction.EAST);
         h.assertTrue(laid.outcome() == BoardingPlanks.Outcome.OK, "refused: " + laid.outcome());
-        h.assertTrue(laid.cells().get(0).equals(h.absolutePos(new BlockPos(4, 2, 4))), "the run starts at " + laid.cells().get(0));
+        h.assertTrue(laid.cells().get(0).equals(h.absolutePos(new BlockPos(4, 2, 6))), "the run starts at " + laid.cells().get(0));
+        int openStart = laid.cells().get(0).getY() - laid.heights().get(0).dy();
+        h.assertTrue(openStart == h.absolutePos(opened).getY(), "the board from the open port starts at y " + openStart);
         h.assertTrue(laid.landing() == PlankRun.Landing.LEVEL, "landing " + laid.landing());
         h.succeed();
     }

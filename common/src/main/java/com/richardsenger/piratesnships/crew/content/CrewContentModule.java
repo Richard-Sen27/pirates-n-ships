@@ -21,6 +21,9 @@ import com.richardsenger.piratesnships.crew.hammock.HammockBlock;
 import com.richardsenger.piratesnships.crew.hammock.HammockGameTests;
 import com.richardsenger.piratesnships.crew.hammock.PlayerSleepGameTests;
 import com.richardsenger.piratesnships.crew.hammock.HammockTags;
+import com.richardsenger.piratesnships.crew.lean.RailLean;
+import com.richardsenger.piratesnships.crew.lean.RailLeanConfig;
+import com.richardsenger.piratesnships.crew.lean.RailLeanGameTests;
 import com.richardsenger.piratesnships.crew.walk.CrewWalk;
 import com.richardsenger.piratesnships.crew.walk.CrewWalkGameTests;
 import com.richardsenger.piratesnships.crew.walk.StationFacingGameTests;
@@ -84,6 +87,7 @@ public final class CrewContentModule implements ModModule {
     public void registerConfig() {
         HammockConfig.init(); // crew.hammock (SLP1)
         WalkConfig.init(); // crew.walk (WALK1)
+        RailLeanConfig.init(); // crew.rail_lean (RAIL5)
     }
 
     @Override
@@ -206,6 +210,7 @@ public final class CrewContentModule implements ModModule {
         CommonEvents.PLAYER_TICK_END.register(PlayerSleep::onPlayerTick); // SLP1: players sleeping aboard
         CommonEvents.PLAYER_WAKE_UP.register(PlayerSleep::onWakeUp);
         CommonEvents.SERVER_STOPPED.register(server -> CrewRest.onServerStopped());
+        CommonEvents.SERVER_STOPPED.register(server -> RailLean.clear()); // RAIL5: the spots taken at the rail
     }
 
     /**
@@ -267,7 +272,7 @@ public final class CrewContentModule implements ModModule {
     @Override
     public List<Class<?>> gameTestClasses() {
         return List.of(CrewContentGameTests.class, GalleyGameTests.class, HammockGameTests.class,
-                PlayerSleepGameTests.class, CrewWalkGameTests.class, StationFacingGameTests.class);
+                PlayerSleepGameTests.class, CrewWalkGameTests.class, StationFacingGameTests.class, RailLeanGameTests.class);
     }
 
     private static TagKey<Item> cTag(String path) {

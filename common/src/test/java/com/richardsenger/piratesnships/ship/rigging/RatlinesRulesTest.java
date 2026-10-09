@@ -3,6 +3,8 @@ package com.richardsenger.piratesnships.ship.rigging;
 import com.richardsenger.piratesnships.ship.rigging.RatlinesRules.Kind;
 import com.richardsenger.piratesnships.ship.rigging.RatlinesRules.Placement;
 import com.richardsenger.piratesnships.ship.rigging.RatlinesRules.Supports;
+import com.richardsenger.piratesnships.sailing.sail.SquareSail;
+import com.richardsenger.piratesnships.sailing.sail.YardRow;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import org.junit.jupiter.api.Test;
@@ -115,6 +117,74 @@ class RatlinesRulesTest {
         assertEquals(treads.get(0)[4] + 16, treads.get(3)[4] + RatlinesRules.RATLINE_SPACING, 1e-9);
         // a player's auto step (0.6 blocks = 9.6 px) climbs each tread
         assertTrue(RatlinesRules.RATLINE_SPACING < 9.6);
+    }
+
+    // ------------------------------------------------------------------ RL1b: the square sail's cloth
+
+    /** The starter sloop's sail: yards along x at z 13, the upper at y 16 (x 1..7), the lower at y 10 (x 0..8). */
+    private static final SquareSail SLOOP = new SquareSail(new YardRow(true, 16, 13, 1, 7), new YardRow(true, 10, 13, 0, 8));
+
+    @Test
+    void theYardsEndFacesAreOutsideTheCloth() {
+        // upper yard x 1..7: its end faces are x 0 and x 8 at y 16
+        assertFalse(RatlinesRules.inCloth(SLOOP, 0, 16, 13));
+        assertFalse(RatlinesRules.inCloth(SLOOP, 8, 16, 13));
+        // lower yard x 0..8: x -1 and x 9 at y 10
+        assertFalse(RatlinesRules.inCloth(SLOOP, -1, 10, 13));
+        assertFalse(RatlinesRules.inCloth(SLOOP, 9, 10, 13));
+    }
+
+    @Test
+    void theForeAndAftFacesOfASailsYardsAreInTheCloth() {
+        for (int x = 1; x <= 7; x++) {
+            assertTrue(RatlinesRules.inCloth(SLOOP, x, 16, 12), "fore of the upper yard at x " + x);
+            assertTrue(RatlinesRules.inCloth(SLOOP, x, 16, 14), "aft of the upper yard at x " + x);
+        }
+        for (int x = 0; x <= 8; x++) {
+            assertTrue(RatlinesRules.inCloth(SLOOP, x, 10, 14), "aft of the lower yard at x " + x);
+        }
+        // between the yards, in the plane and a block to either side
+        assertTrue(RatlinesRules.inCloth(SLOOP, 4, 13, 13));
+        assertTrue(RatlinesRules.inCloth(SLOOP, 4, 13, 12));
+        assertTrue(RatlinesRules.inCloth(SLOOP, 4, 13, 14));
+    }
+
+    @Test
+    void aboveBelowBesideAndFarOffTheClothIsFree() {
+        assertFalse(RatlinesRules.inCloth(SLOOP, 3, 17, 13), "above the upper yard");
+        assertFalse(RatlinesRules.inCloth(SLOOP, 3, 17, 14), "above the upper yard, aft");
+        assertFalse(RatlinesRules.inCloth(SLOOP, 4, 9, 14), "below the lower yard");
+        assertFalse(RatlinesRules.inCloth(SLOOP, 4, 13, 15), "two blocks aft of the yards' plane");
+        assertFalse(RatlinesRules.inCloth(SLOOP, 4, 13, 11), "two blocks fore");
+        // the trapezoid widens from 7 to 9 downward: at y 13 (half way) its edge is 4 blocks out, x 0 and 8 just touch
+        assertTrue(RatlinesRules.inCloth(SLOOP, 0, 13, 13), "the widening cloth at x 0, y 13");
+        assertTrue(RatlinesRules.inCloth(SLOOP, 0, 15, 13), "the widening cloth reaches into x 0 one block down");
+        assertFalse(RatlinesRules.inCloth(SLOOP, 0, 16, 12), "fore of the cell beyond the upper yard's end");
+        assertFalse(RatlinesRules.inCloth(SLOOP, -1, 13, 13), "beyond the lower yard's end");
+    }
+
+    @Test
+    void aYardAlongZUsesXAsItsPlane() {
+        SquareSail s = new SquareSail(new YardRow(false, 8, 5, 10, 12), new YardRow(false, 5, 5, 10, 12));
+        assertTrue(RatlinesRules.inCloth(s, 6, 8, 11), "east of the upper yard's middle");
+        assertFalse(RatlinesRules.inCloth(s, 5, 8, 13), "the upper yard's south end face");
+        assertFalse(RatlinesRules.inCloth(s, 7, 8, 11), "two blocks east");
+    }
+
+    @Test
+    void onlyANetThatNeedsTheYardIsRefusedInTheCloth() {
+        Supports yardOnly = supports(true, false, false, false, false);
+        Supports none = supports(false, false, false, false, false);
+        assertTrue(RatlinesRules.refusedByCloth(Kind.WALL, yardOnly, none, true), "hung on the yard in the cloth");
+        assertFalse(RatlinesRules.refusedByCloth(Kind.WALL, yardOnly, none, false), "hung on the yard outside the cloth");
+        // a sloped link of a run leaning on the yard also stands on the link below: kept
+        Supports runAndYard = supports(false, false, false, true, true);
+        Supports run = supports(false, false, false, true, false);
+        assertFalse(RatlinesRules.refusedByCloth(Kind.SLOPE, runAndYard, run, true));
+        // a lone sloped net leaning only on the yard in the cloth: refused
+        assertTrue(RatlinesRules.refusedByCloth(Kind.SLOPE, supports(false, false, false, false, true), none, true));
+        // nothing holds it at all: not a cloth refusal (it simply cannot stand)
+        assertFalse(RatlinesRules.refusedByCloth(Kind.WALL, none, none, true));
     }
 
     private static List<Double> toList(double[] a) {

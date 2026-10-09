@@ -1,5 +1,8 @@
 package com.richardsenger.piratesnships.ship.rigging;
 
+import com.richardsenger.piratesnships.sailing.sail.ClothGeometry;
+import com.richardsenger.piratesnships.sailing.sail.SquareSail;
+import com.richardsenger.piratesnships.sailing.sail.YardRow;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.util.StringRepresentable;
@@ -28,6 +31,14 @@ import java.util.List;
  * falls like a ladder when that goes). A sloped block stands on a block below with a sturdy centre (the deck, the
  * gunwale), on another ratlines block straight below, on the previous sloped block of its run (one down and one back),
  * or leans with its top edge on a support in front of it (the mast).
+ *
+ * <p><b>Yards and the nest</b> (RL1b): a yard block and the crow's nest are anchors too
+ * ({@code #pirates_n_ships:ratlines_anchors}), so a net hangs on a yard's face, a sloped net stands on a yard or leans
+ * its top edge on a yard or the nest, and a run passes the yard rows on its way to the masthead. A square sail's cloth
+ * hangs below its upper yard down to the lower one and bellies up to a block to either side of the yards' plane
+ * ({@link #inCloth}); a net that only a yard holds up is refused there ({@link #refusedByCloth}): on a yard's end face
+ * (beyond the cloth's width) or on any face of a yard that carries no cloth it hangs, on the fore or aft face of a
+ * sail's yard it does not.
  */
 public final class RatlinesRules {
 
@@ -134,6 +145,43 @@ public final class RatlinesRules {
     /** The offset to the block a sloped net rests on as the previous link of its run: one down, one back. */
     public static Vec3i previous(Direction facing) {
         return new Vec3i(-facing.getStepX(), -1, -facing.getStepZ());
+    }
+
+    // ------------------------------------------------------------------ the square sail's cloth (RL1b)
+
+    /** Slack for the cloth's edges, so a cell that only touches an edge is outside. */
+    private static final float EDGE_EPS = 1.0e-3f;
+
+    /**
+     * Whether the cell {@code (x, y, z)} lies in the span of {@code sail}'s cloth: from the upper yard's row down to the
+     * lower yard's row, within the cloth's width at the cell's height (the trapezoid between the two yards, judged at
+     * the cell's centre, so at a yard's row exactly the yard's own length), and at most one block off the yards' plane
+     * to either side (the cloth leaves the yard at {@link ClothGeometry#AT_YARD}, stands
+     * {@link ClothGeometry#STANDOFF} off it half a block lower and bellies on the side the wind blows to, so it reaches
+     * into the cells fore and aft of the yards). Independent of the trim: a furled sail is set again later.
+     */
+    public static boolean inCloth(SquareSail sail, int x, int y, int z) {
+        YardRow upper = sail.upper();
+        int v = upper.y() - y;
+        if (v < 0 || v > sail.drop()) {
+            return false;
+        }
+        int across = upper.alongX() ? z : x;
+        if (Math.abs(across - upper.fixed()) > 1) {
+            return false;
+        }
+        int u = (upper.alongX() ? x : z) - upper.middle();
+        ClothGeometry g = sail.geometry();
+        return u + 0.5f > g.negativeEdge(v) + EDGE_EPS && u - 0.5f < g.positiveEdge(v) - EDGE_EPS;
+    }
+
+    /**
+     * Whether a net of {@code kind} is refused at a cell because only a yard holds it there and the cell lies in a
+     * sail's cloth ({@link #inCloth}). {@code withYards} counts yards as supports, {@code withoutYards} does not; a net
+     * that also stands without the yard (on a run, a deck, the mast) is not refused.
+     */
+    public static boolean refusedByCloth(Kind kind, Supports withYards, Supports withoutYards, boolean inCloth) {
+        return inCloth && survives(kind, withYards) && !survives(kind, withoutYards);
     }
 
     // ------------------------------------------------------------------ shapes (north frame, pixels)

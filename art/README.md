@@ -1797,19 +1797,22 @@ Rebuild all three with the steps above (lab, then `schem_to_structure.py`).
 (`pirates_n_ships:crows_nest`) sits on the mast top at [4, 20, 13] where the flag was, so the flag moves to a two-block
 **ensign staff** (flagpole `part=bottom` / `part=top`) on the taffrail rail at [4, 9..10, 27], with open air round its
 head for the cloth. A run of **ratlines** on each side of the mast (x 3, port, and x 5, starboard) climbs from the
-quarterdeck beside the helm to the masthead: nine **sloped** links (`kind=slope, facing=north`, one up and one toward
-the bow each) from [x, 8, 22] on the quarterdeck to [x, 16, 14] just abaft the upper yard's end, then three links
-**hung** on the mast's west / east face (`kind=wall, facing=west|east`) at [x, 17..19, 13], above the upper yard; at
-the top a climber steps sideways into the nest. Why this way: the yards' 6 px beams fill the mast's sides at y 10 and
-16, so a hung run on the mast cannot pass them (and a net cannot hang on a yard), and the jib's stay and cleats occupy
-the plane x 4 forward of the mast, so the runs stay at x 3 and 5 and aft. The sloped links lie outside the square
+quarterdeck beside the helm to the masthead: ten **sloped** links (`kind=slope, facing=north`, one up and one toward
+the bow each) from [x, 8, 22] on the quarterdeck to [x, 17, 13], the last one lying on the upper yard's end right beside
+the mast (RL1b: the yard is a ratlines anchor), then two links **hung** on the mast's west / east face
+(`kind=wall, facing=west|east`) at [x, 18..19, 13] straight above it; at the top a climber steps sideways into the
+nest. Why this way: the yards' 6 px beams fill the mast's sides at y 10 and 16, so a hung run on the mast cannot pass
+them (a net on a sail's yard is only allowed on the yard's end, outside the cloth), and the jib's stay and cleats
+occupy the plane x 4 forward of the mast, so the runs stay at x 3 and 5 and aft. The top sloped link touches the mast
+and is climbable, so the climb is continuous: no jump from the slope onto the hung net. The sloped links lie outside the square
 sail's cloth envelope (the cloth stands off the yards' plane z 13 by `ClothGeometry.clearance` plus the deepest VIS1b
 belly and flutter at the default `sail_visuals`, bellied either way), the hung ones above the upper yard; the yards,
 the sail (F5a: only air or mast between the yards' middle blocks) and the jib are untouched. Climbing: walk up the
-slope toward the bow onto the upper yard's end, face the mast and climb the hung net (jump, or push against it), step
-over into the nest. `ArmedSloopLayoutTest` pins the nest, the staff and every link (continuity, supports, the cloth
-and jib clearance); `ArmedShipGameTests.aPlayerClimbsTheRatlinesToTheNest` climbs it with a mock player on the
-assembled sloop afloat. The starter sloop gets no nest: it is the player's ship to rig.
+slope toward the bow into its top link on the upper yard's end, face the mast and push against it (no jump) up the
+hung net, step over into the nest. `ArmedSloopLayoutTest` pins the nest, the staff and every link (continuity,
+supports, the cloth and jib clearance); `ArmedShipGameTests.aPlayerClimbsTheRatlinesToTheNest` climbs it with a mock
+player without jumping on the structure placed on land, and `theRatlinesStandOnTheAssembledSloop` checks every link
+stands on the assembled sloop afloat. The starter sloop gets no nest: it is the player's ship to rig.
 
 Keep templates under the ship block limit (2048 by default), keep every block connected to the helm (the assembler
 gathers only connected blocks), and leave no loose terrain blocks (dirt, sand, stone) in the selection: they never

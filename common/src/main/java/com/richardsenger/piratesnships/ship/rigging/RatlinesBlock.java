@@ -1,11 +1,21 @@
 package com.richardsenger.piratesnships.ship.rigging;
 
 import com.mojang.serialization.MapCodec;
+import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.sailing.SailingConfig;
+import com.richardsenger.piratesnships.sailing.block.YardBlock;
+import com.richardsenger.piratesnships.sailing.sail.SquareSail;
+import com.richardsenger.piratesnships.sailing.sail.YardLinker;
+import com.richardsenger.piratesnships.sailing.sail.YardLookup;
+import com.richardsenger.piratesnships.sailing.sail.YardRow;
+import com.richardsenger.piratesnships.sailing.sail.YardRules;
+import com.richardsenger.piratesnships.sailing.sail.YardSails;
 import com.richardsenger.piratesnships.ship.decor.DecorShapes;
 import com.richardsenger.piratesnships.ship.rigging.RatlinesRules.Kind;
 import com.richardsenger.piratesnships.ship.rigging.RatlinesRules.Placement;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -32,7 +42,9 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -60,6 +72,11 @@ import java.util.Map;
  * a block to hang it like a ladder. Clicking a ratlines block without sneaking extends its run at the free end
  * ({@link RatlinesItem}); sneaking places against the clicked face as usual.
  *
+ * <p><b>Yards and the nest</b> (RL1b): yards and the crow's nest are anchors, so a net hangs on a yard's end face,
+ * a sloped run stands on a yard or leans its top on a yard or the nest; a net that only a yard holds is refused in a
+ * square sail's cloth ({@link #refusedByCloth}, action bar {@link #KEY_IN_CLOTH}). The check runs at placement only:
+ * a sail rigged later next to existing nets leaves them hanging.
+ *
  * <p>Collision: a hung net has a ladder's 3 px plate; a sloped net has four 1.5 px treads under its ratlines, 4 px
  * apart, so a player walks up a run like a stair (and climbs it while touching a tread). Hand-made models
  * {@code block/ratlines} and {@code block/ratlines_slope} ({@code art/models/ratlines.bbmodel}).
@@ -70,6 +87,8 @@ public class RatlinesBlock extends HorizontalDirectionalBlock implements SimpleW
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
     public static final EnumProperty<Kind> KIND = EnumProperty.create("kind", Kind.class);
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
+    /** Action bar text when a net would hang on a yard inside a sail's cloth (RL1b). */
+    public static final String KEY_IN_CLOTH = "message." + Constants.MOD_ID + ".ratlines.in_cloth";
 
     private static final Map<Kind, Map<Direction, VoxelShape>> SHAPES = new EnumMap<>(Kind.class);
 
@@ -104,24 +123,96 @@ public class RatlinesBlock extends HorizontalDirectionalBlock implements SimpleW
 
     /** The supports of a ratlines block at {@code pos} with the given facing, read from the world. */
     public static RatlinesRules.Supports supports(LevelReader level, BlockPos pos, Direction facing) {
+        return supports(level, pos, facing, true);
+    }
+
+    /**
+     * The supports of a ratlines block at {@code pos} with the given facing; with {@code yards} false a yard block holds
+     * nothing (RL1b: the cloth check asks whether the net needs a yard).
+     */
+    public static RatlinesRules.Supports supports(LevelReader level, BlockPos pos, Direction facing, boolean yards) {
         BlockPos behind = pos.relative(facing.getOpposite());
         BlockPos below = pos.below();
         BlockPos front = pos.relative(facing);
         BlockState belowState = level.getBlockState(below);
         BlockState previous = level.getBlockState(below.relative(facing.getOpposite()));
         return new RatlinesRules.Supports(
-                holds(level, behind, facing),
-                belowState.isFaceSturdy(level, below, Direction.UP, SupportType.CENTER) || belowState.is(RiggingContent.RATLINES_ANCHORS),
+                holds(level, behind, facing, yards),
+                belowState.isFaceSturdy(level, below, Direction.UP, SupportType.CENTER)
+                        || belowState.is(RiggingContent.RATLINES_ANCHORS) && (yards || !isYard(belowState)),
                 belowState.getBlock() instanceof RatlinesBlock,
                 previous.getBlock() instanceof RatlinesBlock && previous.getValue(KIND) == Kind.SLOPE
                         && previous.getValue(FACING) == facing,
-                holds(level, front, facing.getOpposite()));
+                holds(level, front, facing.getOpposite(), yards));
     }
 
-    /** Whether the block at {@code pos} carries a net on its {@code face}: a sturdy face, a fence or a wall. */
-    private static boolean holds(LevelReader level, BlockPos pos, Direction face) {
+    /**
+     * Whether the block at {@code pos} carries a net on its {@code face}: a sturdy face or an anchor (a fence, a wall, a
+     * yard, the crow's nest); a yard only when {@code yards}.
+     */
+    private static boolean holds(LevelReader level, BlockPos pos, Direction face, boolean yards) {
         BlockState state = level.getBlockState(pos);
+        if (!yards && isYard(state)) {
+            return false;
+        }
         return state.is(RiggingContent.RATLINES_ANCHORS) || state.isFaceSturdy(level, pos, face);
+    }
+
+    private static boolean isYard(BlockState state) {
+        return state.getBlock() instanceof YardBlock;
+    }
+
+    /**
+     * RL1b: whether {@code placement} at {@code pos} is refused because only a yard holds it and the cell lies in the
+     * cloth of a square sail of that yard ({@link RatlinesRules#refusedByCloth}). The sails looked at are those of the
+     * yards next to the cell (behind, in front, below): the sail each heads and the sail whose lower yard it is.
+     */
+    public static boolean refusedByCloth(LevelReader level, BlockPos pos, Placement placement) {
+        Direction facing = placement.facing();
+        RatlinesRules.Supports with = supports(level, pos, facing, true);
+        RatlinesRules.Supports without = supports(level, pos, facing, false);
+        if (!RatlinesRules.refusedByCloth(placement.kind(), with, without, true)) {
+            return false;
+        }
+        YardRules rules = SailingConfig.yardRules();
+        YardLookup lookup = YardSails.lookup(level);
+        for (BlockPos yard : new BlockPos[] {pos.relative(facing.getOpposite()), pos.relative(facing), pos.below()}) {
+            if (!isYard(level.getBlockState(yard))) {
+                continue;
+            }
+            YardRow row = YardLinker.row(lookup, yard.getX(), yard.getY(), yard.getZ(), rules);
+            if (row == null) {
+                continue;
+            }
+            for (SquareSail sail : sailsOf(lookup, row, rules)) {
+                if (RatlinesRules.inCloth(sail, pos.getX(), pos.getY(), pos.getZ())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** The sails {@code row} belongs to: the one it heads, and the one whose lower yard it is. */
+    private static List<SquareSail> sailsOf(YardLookup lookup, YardRow row, YardRules rules) {
+        List<SquareSail> out = new ArrayList<>(2);
+        SquareSail headed = YardLinker.sailHeadedBy(lookup, row, rules);
+        if (headed != null) {
+            out.add(headed);
+        }
+        for (int d = 1; d <= rules.maxGap(); d++) {
+            int y = row.y() + d;
+            if (!lookup.at(row.middleX(), y, row.middleZ()).isYard()) {
+                continue;
+            }
+            YardRow upper = YardLinker.row(lookup, row.middleX(), y, row.middleZ(), rules);
+            SquareSail above = upper == null ? null : YardLinker.sailHeadedBy(lookup, upper, rules);
+            if (above != null && above.lower().equals(row)) {
+                out.add(above);
+            }
+            break; // the nearest yard over the column is the only one that can pair with this row
+        }
+        return out;
     }
 
     @Override
@@ -172,13 +263,23 @@ public class RatlinesBlock extends HorizontalDirectionalBlock implements SimpleW
                 ? java.util.List.of(run.placement())
                 : RatlinesRules.candidates(context.getClickedFace(), context.getHorizontalDirection(),
                 context.getNearestLookingDirections());
-        boolean water = context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER;
+        Level level = context.getLevel();
+        BlockPos pos = context.getClickedPos();
+        boolean water = level.getFluidState(pos).getType() == Fluids.WATER;
+        boolean cloth = false;
         for (Placement p : order) {
             BlockState state = defaultBlockState().setValue(KIND, p.kind()).setValue(FACING, p.facing())
                     .setValue(WATERLOGGED, water);
-            if (state.canSurvive(context.getLevel(), context.getClickedPos())) {
+            if (state.canSurvive(level, pos)) {
+                if (refusedByCloth(level, pos, p)) {
+                    cloth = true;
+                    continue;
+                }
                 return state;
             }
+        }
+        if (cloth && context.getPlayer() != null && !level.isClientSide) {
+            context.getPlayer().displayClientMessage(Component.translatable(KEY_IN_CLOTH), true);
         }
         return null;
     }

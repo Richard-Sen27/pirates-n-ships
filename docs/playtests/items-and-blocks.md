@@ -386,6 +386,13 @@ Render: `art/renders/ratlines.png`.
   the mast.
 - **Climbing:** walk into a hung net and hold forward (or jump): you climb like a ladder; sneak to hold on. Walk up a
   sloped run: you step up its ratlines like a stair; no fall damage when you drop off a net. Mobs can climb too.
+- **On a yard (RL1b):** build a square sail on land (a mast, a yard of five at the bottom, one of five four blocks
+  higher, the mast through both). Click the end of each yard: a net hangs on it. Click the fore or aft side of either
+  yard: nothing is placed, the item stays in your hand and the action bar says "The sail's cloth hangs here: hang the
+  ratlines on the yard's end". Take the lower yard away and click the upper yard's side again: now the net hangs
+  there. With nets on all four yard ends, click the upper yard: the sail still sets (half, full, furled). Lay a sloped
+  run toward a yard end beside the mast so its last net sits on the yard: break the net below it, the top net stays.
+  Lay one rising into the side of a crow's nest: its top net leans on the nest.
 - **On a ship:** build both kinds on a hull with a mast, assemble at the helm, sail a little. Both stay on the ship,
   turn with it, and both still climb as above while the ship moves (GameTests prove it on a ship lying still; check
   under way). Disassemble: both are back in the world in the right orientation.

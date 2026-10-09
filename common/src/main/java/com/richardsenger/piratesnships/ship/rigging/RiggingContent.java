@@ -17,7 +17,9 @@ public final class RiggingContent {
 
     /**
      * Blocks that carry a ratlines net on any side although their side faces are not sturdy: fences and walls (a mast of
-     * fence posts). Every block with a sturdy face carries one on that face anyway.
+     * fence posts), and (RL1b) the yard and the crow's nest, so a run passes the yard rows and leans on the nest; a net
+     * that only a yard holds is still refused in a sail's cloth ({@link RatlinesBlock#refusedByCloth}). Every block with
+     * a sturdy face carries one on that face anyway.
      */
     public static final TagKey<Block> RATLINES_ANCHORS = TagKey.create(Registries.BLOCK, Constants.id("ratlines_anchors"));
 

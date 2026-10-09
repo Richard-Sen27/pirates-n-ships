@@ -134,6 +134,20 @@ public final class ShipScreenRules {
         };
     }
 
+    /**
+     * The anchor's phase behind the screen's {@link Anchor} state, for the label of the anchor toggle (WHS1): stowed is
+     * RAISED, down and anchored are HOLDING, unknown is null. Pure.
+     */
+    public static AnchorState.@Nullable Phase phase(Anchor a) {
+        return switch (a) {
+            case UNKNOWN -> null;
+            case STOWED -> AnchorState.Phase.RAISED;
+            case DROPPING -> AnchorState.Phase.DROPPING;
+            case DOWN, ANCHORED -> AnchorState.Phase.HOLDING;
+            case RAISING -> AnchorState.Phase.RAISING;
+        };
+    }
+
     /** What the flag tells others: the kind while it flies, {@link Allegiance#STRUCK} while struck. */
     public static Allegiance allegiance(FlagReading flag) {
         if (flag.isStruck()) return Allegiance.STRUCK;

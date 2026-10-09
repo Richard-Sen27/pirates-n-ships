@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import io.netty.buffer.Unpooled;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +49,24 @@ class ShipStatusPayloadTest {
         assertFalse(back.hasRudder());
         assertEquals(null, back.loadLevel());
         assertEquals(com.richardsenger.piratesnships.trade.cargo.CargoWeight.LoadLevel.HEAVILY_LADEN, roundTrip(p).loadLevel());
+    }
+
+    /** WHS1: the anchor's phase travels, survives rounding and freshness changes, and counts as a change. */
+    @Test
+    void theAnchorPhaseTravels() {
+        ShipStatusPayload p = new ShipStatusPayload(UUID.randomUUID(), "A", 10, 1, 0, -1, List.of());
+        assertEquals(null, p.anchorPhase(), "unknown by default");
+        assertEquals(-1, roundTrip(p).anchor());
+        for (AnchorState.Phase ph : AnchorState.Phase.values()) {
+            ShipStatusPayload w = p.withAnchor(ph);
+            assertEquals(ph, roundTrip(w).anchorPhase());
+            assertEquals(ph, w.quantize().anchorPhase());
+            assertEquals(ph, w.withFreshTicks(400).anchorPhase());
+        }
+        assertNotEquals(p.withAnchor(AnchorState.Phase.RAISED).quantize(), p.withAnchor(AnchorState.Phase.DROPPING).quantize(),
+                "a new phase is a change for the throttle");
+        assertEquals(null, p.withAnchor(null).anchorPhase());
+        assertEquals(-1, new ShipStatusPayload(p.ship(), "A", 10, 1, 0, -1, List.of(), 40, 99).anchor(), "out of range: unknown");
     }
 
     @Test

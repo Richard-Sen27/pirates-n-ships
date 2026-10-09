@@ -6,12 +6,22 @@ import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
+import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
+import com.richardsenger.piratesnships.sailing.force.AnchorState;
+import com.richardsenger.piratesnships.sailing.force.SailTrim;
+import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips;
+import com.richardsenger.piratesnships.sailing.ship.ShipAnchor;
 import com.richardsenger.piratesnships.ship.ShipData;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
+import com.richardsenger.piratesnships.ship.assembly.AssemblyContent;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.station.StationContent;
 import com.richardsenger.piratesnships.station.StationGameTests;
+import com.richardsenger.piratesnships.station.StationRef;
+import com.richardsenger.piratesnships.station.StationState;
+import com.richardsenger.piratesnships.station.Stations;
+import com.richardsenger.piratesnships.station.capstan.AnchorOrder;
 import com.richardsenger.piratesnships.station.jobs.JobBoard;
 import com.richardsenger.piratesnships.station.order.WhistleOrder;
 import com.richardsenger.piratesnships.station.winch.SailOrder;
@@ -29,8 +39,10 @@ import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The ship screen at the helm (HGUI1) on the server: sneak-use by the owner opens it with every hand aboard, release,
@@ -267,6 +279,94 @@ public final class ShipScreenGameTests {
             h.assertTrue(JobBoard.jobs(ship).isEmpty(), "release crew clears the board");
             done(h, p, s.atWinch(), s.free());
         });
+    }
+
+    /**
+     * WHS1: the Crew tab's one anchor button. On a ship afloat in the sailing tests' basin with a capstan (the capstan
+     * tests' rig) and a hand at it, the owner's screen shows the anchor stowed, so the button reads "Drop anchor"; its
+     * order ("anchor", through the screen's payload handler) sets the hand to let the anchor go. Once the anchor holds,
+     * the refreshed view labels the button "Raise anchor", and the same order weighs it: the winding starts at once.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 300, batch = BATCH + "_anchor")
+    public static void theAnchorButtonTogglesTheAnchor(GameTestHelper h) {
+        ServerPlayer p = player(h, "screen_anchor");
+        SailingGameTestsShips.basin(h, true);
+        BlockPos helmAt = SailingGameTestsShips.squareHull(h, 17, 3, SailTrim.FURLED);
+        h.setBlock(new BlockPos(19, 9, 6), SailingBlocks.CAPSTAN.get());
+        SailingGameTestsShips.Fixture f = SailingGameTestsShips.assemble(h, helmAt);
+        ShipBody ship = f.ship();
+        BlockPos helm = find(ship, AssemblyContent.HELM.get());
+        BlockPos capstan = find(ship, SailingBlocks.CAPSTAN.get());
+        StationRef ref = new StationRef(ship.id(), capstan);
+        ShipRegistry registry = ShipRegistry.get(h.getLevel().getServer());
+        registry.put(registry.find(ship.id()).orElseThrow().withOwner(Optional.of(p.getUUID())));
+        Vec3 deck = ship.toWorld(Vec3.atBottomCenterOf(helm.east()));
+        p.setPos(deck.x, deck.y, deck.z);
+        CrewMember[] hand = new CrewMember[1];
+        int[] stage = {0};
+        long[] since = {0};
+        h.onEachTick(() -> {
+            long t = h.getTick();
+            switch (stage[0]) {
+                case 0 -> {
+                    if (t < SETTLE) return;
+                    CrewMember c = StationContent.CREW_MEMBER.get().create(h.getLevel());
+                    if (c == null) throw new AssertionError("no crew member");
+                    Vec3 spot = ship.toWorld(Vec3.atBottomCenterOf(capstan.west()));
+                    c.moveTo(spot.x, spot.y, spot.z, 0, 0);
+                    c.setNoAi(true);
+                    h.getLevel().addFreshEntity(c);
+                    hand[0] = c;
+                    h.assertTrue(CrewStations.assign(h.getLevel(), c, capstan) == CrewStations.AssignResult.ASSIGNED, "assign");
+                    h.assertValueEqual(ShipScreens.open(p, h.getLevel(), ship, helm), ShipScreens.OpenResult.OPENED, "open");
+                    assertAnchorLabel(h, lastView(h, p), AnchorOrder.DROP_ANCHOR);
+                    ShipScreens.handle(p, ShipScreenPayloads.Action.text(ship.id(), ShipScreenPayloads.Kind.ORDER, WhistleOrder.ANCHOR.id()));
+                    h.assertTrue(last(h, p).ok(), "the anchor order was refused: " + last(h, p).message());
+                    assertOrder(h, ref, AnchorOrder.DROP_ANCHOR);
+                    since[0] = t;
+                    stage[0] = 1;
+                }
+                case 1 -> {
+                    if (phase(f) != AnchorState.Phase.HOLDING) {
+                        h.assertTrue(t - since[0] < 200, "the anchor did not go and land: " + phase(f));
+                        return;
+                    }
+                    if (Stations.isWorking(h.getLevel(), ref)) return; // the drop's order ends just after the anchor goes
+                    ShipScreens.tick(p, true);
+                    assertAnchorLabel(h, lastView(h, p), AnchorOrder.RAISE_ANCHOR);
+                    ShipScreens.handle(p, ShipScreenPayloads.Action.text(ship.id(), ShipScreenPayloads.Kind.ORDER, WhistleOrder.ANCHOR.id()));
+                    h.assertTrue(last(h, p).ok(), "the second anchor order was refused: " + last(h, p).message());
+                    assertOrder(h, ref, AnchorOrder.RAISE_ANCHOR);
+                    h.assertTrue(phase(f) == AnchorState.Phase.RAISING, "the winding did not start with the order: " + phase(f));
+                    stage[0] = 2;
+                    done(h, p, hand[0]);
+                }
+                default -> { }
+            }
+        });
+    }
+
+    private static BlockPos find(ShipBody ship, Block block) {
+        for (BlockPos pos : ship.plotBlocks()) {
+            if (ship.level().getBlockState(pos).is(block)) return pos;
+        }
+        throw new AssertionError("no " + block + " on the ship");
+    }
+
+    private static AnchorState.@Nullable Phase phase(SailingGameTestsShips.Fixture f) {
+        ShipAnchor a = f.runtime().anchor();
+        return a == null ? null : a.state().phase();
+    }
+
+    /** The screen's anchor button (labelled as the client does) reads {@code direction}'s label. */
+    private static void assertAnchorLabel(GameTestHelper h, ShipScreenView v, AnchorOrder direction) {
+        String label = WhistleOrder.ANCHOR.nameKey(ShipScreenRules.phase(v.status().anchor()));
+        h.assertValueEqual(label, WhistleOrder.anchorKey(direction), "anchor button label for " + v.status().anchor());
+    }
+
+    private static void assertOrder(GameTestHelper h, StationRef ref, AnchorOrder direction) {
+        StationState<Object> st = Stations.state(ref);
+        h.assertTrue(st != null && st.order() == direction, "the capstan hand did not take " + direction + ": " + (st == null ? null : st.order()));
     }
 
     /**

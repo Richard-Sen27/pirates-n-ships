@@ -186,6 +186,6 @@ public final class ShipDecorModule implements ModModule {
     @Override
     public List<Class<?>> gameTestClasses() {
         return List.of(ShipDecorGameTests.class, FlagGameTests.class, FlagModelGameTests.class, com.richardsenger.piratesnships.ship.decor.flag.FlagStackGameTests.class, NameplateGameTests.class,
-                DecorGameTests.class);
+                DecorGameTests.class, ShipsBellGameTests.class);
     }
 }

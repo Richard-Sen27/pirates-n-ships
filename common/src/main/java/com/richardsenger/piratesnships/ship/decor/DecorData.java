@@ -128,11 +128,14 @@ final class DecorData {
                         })
                         .with(VariantProperties.Y_ROT, yRot(facing)))));
 
+        // BELL1: the block model is only the mount (post frame or wall bracket); ShipsBellRenderer draws the bell and
+        // its clapper swinging. RINGING does not change the look. The item keeps the whole bell on its post
+        // (block/ships_bell, which the default item model delegates to).
         ShipsBellBlock bell = ShipDecor.SHIPS_BELL.get();
         m.blockStates().accept(MultiVariantGenerator.multiVariant(bell).with(PropertyDispatch
-                .properties(ShipsBellBlock.FACE, ShipsBellBlock.FACING, ShipsBellBlock.RINGING).generate((face, facing, ringing) ->
+                .properties(ShipsBellBlock.FACE, ShipsBellBlock.FACING).generate((face, facing) ->
                         Variant.variant()
-                                .with(VariantProperties.MODEL, model(bell, (face == AttachFace.WALL ? "_wall" : "") + (ringing ? "_ringing" : "")))
+                                .with(VariantProperties.MODEL, model(bell, face == AttachFace.WALL ? "_wall" : "_post"))
                                 .with(VariantProperties.Y_ROT, yRot(facing)))));
 
         RopeCoilBlock coil = ShipDecor.ROPE_COIL.get();

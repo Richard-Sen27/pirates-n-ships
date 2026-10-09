@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-09T02:12:54.969239	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-09T03:58:45.440326	Block states and models: pirates_n_ships
 c189a7833975a61cf2c7c8fd326d27a32969cb9d assets/pirates_n_ships/blockstates/bilge_pump.json
 66226c130d39627104000bbfa87d4776c87b9ed0 assets/pirates_n_ships/blockstates/boarding_plank.json
 52e053a4f7334e9a78798b4b4b9a2ad80087f3d5 assets/pirates_n_ships/blockstates/brig_bars.json
@@ -29,7 +29,7 @@ f168c03dd5836ab63cd7fc09f2f78f141e839e5f assets/pirates_n_ships/blockstates/sail
 931fa588d08aeb959b9f3e139acab8b4d1a93985 assets/pirates_n_ships/blockstates/sea_chest.json
 88638f2d63cd494601278170095c2a6522e32a8d assets/pirates_n_ships/blockstates/sea_cot.json
 f36aba0a8712979188c4c332db10f121449f861c assets/pirates_n_ships/blockstates/ship_lantern.json
-a2ee279f446c9c5a6ec56005ca914075dc6cca2d assets/pirates_n_ships/blockstates/ships_bell.json
+57eb6ba86f453e9b572744d892bfb56e01033fb3 assets/pirates_n_ships/blockstates/ships_bell.json
 e3b6b6b3ac308bd32a099c56ba4f175122d99934 assets/pirates_n_ships/blockstates/stern_window.json
 e6693690b1a2de5def4d4ee1b77abcdb3ac5acb1 assets/pirates_n_ships/blockstates/swivel_gun.json
 6c80c8b0903433be2a48dfec98c3f4337c95808c assets/pirates_n_ships/blockstates/water_barrel.json

@@ -1741,7 +1741,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `assembly` | Assembly and disassembly on/off, block limit, how still and level a ship must be to disassemble, restoring the sea, draining the hull and moving entities on disassembly; `split` (ships breaking apart, wreck size and lifetime), `rejoin` (the shipwright's toolkit: max piece size, gap, angle, nails, work time, toolkit durability). |
 | `dry_hull` | Dry hull on/off, buoyancy of the dry volume, weight of flood water, drowning under flood water (`flood_breath`), partial blocks drawn dry, analysis and sync timings. |
 | `flooding` | Flooding on/off, inflow rate, re-analysis on tilt; bilge pump on/off, rate, reach, use time and exhaustion; hull patch on/off. |
-| `ships` | Sinking and wreck persistence, the ship HUD on/off and its sync, shipwright orders (on/off, build days and prices per ship, price and material factors, orders per port). |
+| `ships` | The ship HUD on/off and its sync, shipwright orders (on/off, build days per template in `build_time_days` (only `default` matches a template today), price and material factors, orders per port); `sinking_enabled`, `wreck_persistence_days` and the `order_price_doubloons` group are declared but read by nothing yet (the price is the template's times `order_price_factor`; see `docs/audit/config-defaults.md`). |
 | `ship_identity` | Name boards showing the ship's name, their refresh, how far the name is drawn (`name_board_distance`, 64 blocks). |
 | `ship_screen` | The ship screen at the helm on/off (off: sneak-use disassembles at once), its reach, how often it refreshes. |
 | `ship_decor` | The ship's bell ring time; sleeping in the sea cot, on land and aboard; railings on or off and their collision height (`railings_enabled`, `railing_collision_blocks`). |
@@ -1755,7 +1755,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `anchor_chain` | The anchor's fall and sink speed, raising speed, chain stiffness and damping, holding force, drag and scraping, heel, the sounds and their volumes. |
 | `hull_creaking` | Creaking on/off, creaks per second, minimum gap, volume and pitch ranges, the rolling rate that counts. |
 | `waves` | Sea state on/off, amplitude and components, wave groups, how fast the state and the wave direction change, heave and torque on ships, spill over low rims, vanilla boats and floating items riding the waves, sync. |
-| `hazards` | Waterspouts and whirlpools (on/off, chances, durations, radii, pull, lift, spin, drag-down, drift, sail damage, per-player cap), spawn distances and interval, ship force scale and mass cap; `kraken` (on/off, chance per day). |
+| `hazards` | Waterspouts and whirlpools (`waterspouts`, `whirlpools`: on/off, chances, durations, radii, pull, lift, spin, drag-down, drift, sail damage, per-player cap), spawn distances and interval, ship force scale and mass cap; `kraken` (on/off, chance per day). |
 | `crew_stations` | Crew stations on/off, time per trim step, order and acknowledgement radius; `capstan` (crew at the capstan), `course` (the helmsman's course keeping), `job_board` (free hands taking open jobs). |
 | `lookout` | Crow's nest lookout on/off, calls on/off, range, scan interval, how long a sighting is remembered, when it is called again, how long its compass mark stays, the land rays. |
 | `crew` | Crew size; `wages`, `morale`, `desertion`, `mutiny`, `meals`, `hammock` (players sleeping in hammocks), `hiring`, `walk`, `rail_lean` (idle crew leaning on the rail: on/off, radius, how long, how many per ship, the pause between). |
@@ -1768,12 +1768,12 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `flags_brig` | False-colours detection (ranges, rates, crow's nest observers), the navy flag's minimum standing, NPC surrender, capturing players, prisoner escapes and interactions. |
 | `brig` | Capture threshold, leading distances and speed, cell size, escape chances (alone and in a cell under low crew morale), ransoms, player capture time. |
 | `reputation` | Reputation on/off, decay, thresholds (pirates friendly, navy hostile, villagers trading), price swing, the daily village trade cap; `deeds` (what each deed is worth to each side). |
-| `careers` | Careers on/off, enlistment, desertion, the officer's reach, name prefixes and titles on ships, prize money; `navy.*` and `infamy.*` (what each rank needs), `letter` (letter of marque), `rewards` (gifts, fee waiver, flag right, navy shipyard prices, infamy prices), `ship_grants`. |
+| `careers` | Careers on/off, enlistment, desertion, the officer's reach, name prefixes and titles on ships, prize money; `navy.*` and `infamy.*` (what each rank needs), `letter` (letter of marque), `rewards` (gifts, fee waiver, flag right, navy shipyard prices in `navy_ship_price`, infamy prices), `ship_grants`. |
 | `quests` | Quests on/off, offers per port, deadlines, active cap, counts, sea quests, escort rules, the captain hunt radius; `types` (which port kind offers which quest), `rewards`. |
-| `world` | `structures.*` (seafarer villages, navy outposts with their garrison, pirate islands with buried treasure, wrecks: on/off, frequency, spacing), `spawn_weights`, `treasure_maps`. |
+| `world` | `structures.*` (seafarer villages, navy outposts with their garrison, pirate islands with buried treasure, wrecks: on/off, frequency; `spacing` and `separation` only feed datagen, a datapack changes them), `spawn_weights` (only `pirate` is read; the shark's weight lives in `mobs`), `treasure_maps`. |
 | `world_simulation` | The off-screen world on/off, convoys and patrols per day, voyage cap, materialize radius, retaliation; `factions`, `lanes`, `voyages`, `materialize` (crews, fighters, guns and shot lockers of NPC ships), `navy` (patrols), `raids`, `captain` (pirate captains at sea). |
 | `mobs` | Hostility, detection and fight ranges, duelist behaviour, skill tiers, musket timings and ammo, shove, drops; `pirate`, `sailor`, `navy_soldier`, `navy_officer` (on/off, peaceful), `captain` (pirate captains, duels, drops, respawn), `harbor_master`, `squad` (the outpost's watch), `kraken`, `shark`. |
-| `melee` | Skill-based sword fighting (`skill_based_combat`, on by default): parry and riposte windows, guard, stamina, stagger, feint recovery, NPC feints and skill; `sounds`. |
+| `melee` | Skill-based sword fighting (`skill_based_combat`, on by default): parry and riposte windows, guard, stamina, stagger, feint recovery, NPC feints and skill, `directional_mode` (declared, no effect yet); `sounds`. |
 | `firearms` | Firearms on/off, `fire_on_attack`, ball lifetime and gravity, cooldown, gunpowder use; `aim` (hold and steady times, aimed spread, sneak lowers the gun), `pistol` and `musket` (damage, muzzle velocity, spread, reload, recoil, sound). |
 | `combat` | Cannon block damage, rain misfires; `damage_multipliers` (cannon on blocks and entities, firearms). |
 | `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevations, blocks per hit, recoil and impact, ball lifetime and water, `mobGriefing` and spawn protection, drops, a barrel run into a bulwark (`walls_block_barrel`), glancing hits; `swivel`, `chain_shot`, `grapeshot`, `crew` (loading by the crew, load preference), `npc` (fire at will). |
@@ -1787,7 +1787,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 
 | Section | What it controls |
 |---|---|
-| `audio` | Music on/off and volume, ambience volume, the gap between tracks, shanties aboard. |
+| `audio` | Music on/off and volume, the gap between tracks, shanties aboard; `ambience_volume` is declared but read by nothing yet. |
 | `ship_hud` | The ship HUD on/off, corners of the compass and the hull strip, margin, scale, speed unit. |
 | `helm_view` | The rudder angle line at the wheel. |
 | `dry_hull_view` | The flood water surface, hiding water plants inside dry hulls. |
@@ -1799,6 +1799,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `wave_effects` | Camera sway (off by default), foam, spray, the moving water surface, the wake, how far vanilla boats tilt. |
 | `hazard_visuals` | Particle density and sounds of waterspouts and whirlpools. |
 | `cannon_visuals` | The barrel's tilt animation. |
+| `boarding_view` | The boarding plank's placement preview (`preview`: the run outlined green, the cell in the way red). |
 | `sea_chest_visuals` | The floating chest's bob. |
 | `chart_visuals` | Doodles on the chart. |
 | `melee_input` | Hold-to-thrust and parry-tap thresholds. |
@@ -1809,7 +1810,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `career_hud` | The rank box: mode (fade, pinned, hidden), how long it shows, its corner. |
 | `almanac_screen` | Page-turn animation length and sound, book size. |
 
-Many defaults are first guesses that need playtesting. [`progress.md`](progress.md) lists the ones to review.
+Many defaults are first guesses that need playtesting. [`progress.md`](progress.md) lists the ones to review, and [`audit/config-defaults.md`](audit/config-defaults.md) reviews every value against the design (CFG1). `python3 tools/check_config_docs.py` checks this table against the code.
 
 ---
 

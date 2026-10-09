@@ -1569,8 +1569,10 @@ hanging to the knee (y 19). Blockbench source `art/models/entity/coat_armor.bbmo
 - **How it is drawn:** `ClientEvents.registerArmorModel(provider, items...)` (common) -> NeoForge
   `RegisterClientExtensionsEvent` with an `IClientItemExtensions#getHumanoidArmorModel` per item
   (`platform/NeoForgeArmorModels`); NeoForge copies vanilla's pose and part visibility onto our model and
-  `HumanoidArmorLayer` draws it with the material's layer texture. Fabric: TODO (`ArmorRenderer.register`, see
-  `fabric/.../PiratesNShips`). `ApparelClient` bakes the model once and returns it for the chest slot only.
+  `HumanoidArmorLayer` draws it with the material's layer texture. Fabric (FAB2): `ArmorRenderer.register` in
+  `platform/FabricArmorModels`, which redoes vanilla's layer around the provider (pose and slot visibility onto the
+  player armour model, the provider, pose and visibility onto its model, the material layers, trim and glint); ART13
+  added `FabricArmorModelsTest`. `ApparelClient` bakes the model once and returns it for the chest slot only.
 - **Swing:** nothing calls `setupAnim` on an armour model, so `renderToBuffer` poses the tails from the copied legs and
   body (`apparel/CoatTails`, pure): world pitch = 0.08 + b + 0.5 b^2 for the same-side leg's backward swing b, a small
   flare (0.12 per rad) for a forward leg, at most 1.6; the body's pitch (crouch 0.5) is taken out up to 0.4 so the
@@ -1611,6 +1613,32 @@ unchanged.
   sneaking; front, side, back, back three-quarter), `renders/captains_set_worn.png` (hat, coat, breeches and boots
   standing from front, front three-quarter, side, back, back three-quarter, and walking),
   `renders/captains_clothing.png` (the three items: front, three-quarter, side, back).
+
+### The officer's outfit (ART13)
+
+**The officer's breeches and boots** (`officers_breeches` legs, `officers_boots` feet; `ClothingItem`s like the
+captain's, no durability, armour `apparel.officers_breeches_armor` 2 and `officers_boots_armor` 1) complete the
+officer's coat. Material `officers_clothing` (layer 1 the boots on vanilla's outer model, layer 2 the breeches on the
+inner model), not the coat's: the coat's layer 1 carries the tails in the head area. No custom armour model: vanilla's
+layer draws both on both loaders. Obtained with the coat as the Lieutenant's career gift
+(`careers.rewards.lieutenant_items`) and crafted beside it; navy officers drop no clothing (they never dropped the coat
+either).
+- **Worn textures** (`tools/paint_apparel_armor.js`, `officersBoots`, `officersBreeches`): the legs of ART6's officer
+  (`SF.navy_officer`, `SF.navyCoat`, colours of `SF.C`): white breeches shaded with `belt_shade`, a 2 px navy stripe
+  down the outer seam (the right leg's right face; vanilla mirrors it onto the left leg's outer side) to a `belt_shade`
+  knee band with two brass buttons, a navy-topped white waist band on the body's lower rows with a brass buckle and two
+  gold fall-front buttons; boots from row 5 (as the officer's skin) in `boot` over `boot_d`, a two-row turned-down top
+  in `boot_l`, the shin highlight column, an instep strap with brass buckles on the front and outer faces. The ART6 and
+  ART9 textures are unchanged (`--check` identical).
+- **Item models** (`art/models/officers_clothing.js`: `OF.init(repo)` loads `captains_clothing.js` and adds
+  `CC.PARTS.officers_breeches` / `officers_boots` plus the navy patches of `palette_5`; `OF.build`, `OF.export` are
+  `CC.build`, `CC.export`): `officers_breeches.bbmodel` (17 elements: the captain's breeches' cut in white, navy waist
+  band with a brass buckle, gold fall-front buttons, a navy stripe on each leg's outer front edge, knee bands with gold
+  buttons, white stockings, black shoes), `officers_boots.bbmodel` (16: the captain's pair recoloured, flag-black
+  shafts and feet, `horn` turned-down tops, a black strap with a larger brass buckle). Lint: 0 visible fights.
+- **Renders** (`AR.renderOfficers(repo)` in `art/models/entity/apparel_render.js`, the ART9 composer):
+  `renders/officers_set_worn.png` (bicorne, coat with tails, breeches, boots; standing from five sides and walking),
+  `renders/officers_clothing.png` (coat, breeches and boots items: front, three-quarter, side, back).
 
 ### Shark rig (M4)
 

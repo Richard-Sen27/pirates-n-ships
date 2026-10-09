@@ -34,6 +34,8 @@ item_ids:
   - pirates_n_ships:navy_officer_spawn_egg
   - pirates_n_ships:navy_soldier_spawn_egg
   - pirates_n_ships:officer_hat
+  - pirates_n_ships:officers_boots
+  - pirates_n_ships:officers_breeches
   - pirates_n_ships:officers_coat
   - pirates_n_ships:paddle
   - pirates_n_ships:pirate_hat

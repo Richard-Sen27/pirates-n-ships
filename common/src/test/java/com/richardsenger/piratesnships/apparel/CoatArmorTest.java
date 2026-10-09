@@ -77,6 +77,21 @@ class CoatArmorTest {
         assertEquals(0, l.getRGB(20, 21) >>> 24, "the breeches leave the upper body free");
     }
 
+    /** ART13: the officer's boots on layer 1 (legs from row 5 down, as ART6's officer), breeches on layer 2. */
+    @Test
+    void theOfficersBootsAndBreechesPaintTheirParts() throws IOException {
+        Path boots = ARMOR_DIR.resolve("officers_clothing_layer_1.png"), breeches = ARMOR_DIR.resolve("officers_clothing_layer_2.png");
+        BufferedImage b = layer(boots);
+        assertOpaque(b, boots, new int[][]{{0, 25, 16, 7}});
+        assertEquals(0, b.getRGB(4, 21) >>> 24, "nothing above the boot top");
+        assertEquals(0, b.getRGB(20, 24) >>> 24, "nothing on the body");
+        BufferedImage l = layer(breeches);
+        assertOpaque(l, breeches, new int[][]{{0, 20, 16, 12}, {16, 28, 24, 4}});
+        assertEquals(0, l.getRGB(20, 21) >>> 24, "the breeches leave the upper body free");
+        int white = l.getRGB(5, 22);
+        assertTrue(((white >> 16) & 0xFF) > 180 && (white & 0xFF) > 170, "white breeches, got " + Integer.toHexString(white));
+    }
+
     private static final Path ARMOR_DIR = ARMOR_TEXTURE.getParent();
 
     private static BufferedImage layer(Path file) throws IOException {

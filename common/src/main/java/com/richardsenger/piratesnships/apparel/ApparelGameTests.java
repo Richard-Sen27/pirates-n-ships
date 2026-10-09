@@ -29,13 +29,13 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * The hats, the officer's coat and the captain's clothing (ART9) of the {@code apparel} module: registration, wearing,
- * the armour bonus and the recipes.
+ * The hats, the officer's outfit (coat ART6, breeches and boots ART13) and the captain's clothing (ART9) of the
+ * {@code apparel} module: registration, wearing, the armour bonus and the recipes.
  */
 public final class ApparelGameTests {
 
     public static final List<String> ITEM_IDS = List.of("pirate_hat", "bandana", "navy_hat", "officer_hat", "captains_hat",
-            "officers_coat", "captains_coat", "captains_breeches", "captains_boots");
+            "officers_coat", "officers_breeches", "officers_boots", "captains_coat", "captains_breeches", "captains_boots");
 
     private ApparelGameTests() {
     }
@@ -131,7 +131,9 @@ public final class ApparelGameTests {
         for (RegistryEntry<Item, HatItem> hat : ApparelContent.CRAFTED_HATS) {
             ContentTestSupport.assertRecipe(helper, hat.id().getPath(), hat.get(), 1);
         }
-        ContentTestSupport.assertRecipe(helper, "officers_coat", ApparelContent.OFFICERS_COAT.get(), 1);
+        for (var piece : ApparelContent.OFFICERS_CLOTHING) {
+            ContentTestSupport.assertRecipe(helper, piece.id().getPath(), piece.get(), 1);
+        }
         for (var piece : ApparelContent.CAPTAINS_CLOTHING) {
             ContentTestSupport.assertRecipe(helper, piece.id().getPath(), piece.get(), 1);
         }
@@ -202,6 +204,73 @@ public final class ApparelGameTests {
             coat.forEachModifier(slot, (attribute, modifier) -> count[0]++);
         }
         helper.assertValueEqual(count[0], 0, "coat modifiers with officers_coat_armor 0");
+        helper.succeed();
+    }
+
+    // --- the officer's breeches and boots (ART13) ---------------------------------------------------------------
+
+    /** The breeches go on the legs and the boots on the feet by right-click; the full outfit with bicorne and coat. */
+    @ModGameTest
+    public static void officersClothingGoesIntoItsSlots(GameTestHelper helper) {
+        assertWorn(helper, ApparelContent.OFFICERS_BREECHES.get(), EquipmentSlot.LEGS, Items.LEATHER_LEGGINGS);
+        assertWorn(helper, ApparelContent.OFFICERS_BOOTS.get(), EquipmentSlot.FEET, Items.LEATHER_BOOTS);
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        for (Item item : List.of(ApparelContent.OFFICER_HAT.get(), ApparelContent.OFFICERS_COAT.get(),
+                ApparelContent.OFFICERS_BREECHES.get(), ApparelContent.OFFICERS_BOOTS.get())) {
+            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(item));
+            use(helper, player);
+        }
+        helper.assertTrue(player.getItemBySlot(EquipmentSlot.HEAD).is(ApparelContent.OFFICER_HAT.get()), "bicorne on");
+        helper.assertTrue(player.getItemBySlot(EquipmentSlot.CHEST).is(ApparelContent.OFFICERS_COAT.get()), "coat on");
+        helper.assertTrue(player.getItemBySlot(EquipmentSlot.LEGS).is(ApparelContent.OFFICERS_BREECHES.get()), "breeches on");
+        helper.assertTrue(player.getItemBySlot(EquipmentSlot.FEET).is(ApparelContent.OFFICERS_BOOTS.get()), "boots on");
+        helper.succeed();
+    }
+
+    @ModGameTest
+    public static void officersClothingGivesTheConfiguredArmour(GameTestHelper helper) {
+        assertArmor(helper, new ItemStack(ApparelContent.OFFICERS_BREECHES.get()), EquipmentSlot.LEGS, ApparelConfig.OFFICERS_BREECHES_ARMOR.get());
+        assertArmor(helper, new ItemStack(ApparelContent.OFFICERS_BOOTS.get()), EquipmentSlot.FEET, ApparelConfig.OFFICERS_BOOTS_ARMOR.get());
+        for (var piece : ApparelContent.OFFICERS_CLOTHING) {
+            assertArmor(helper, new ItemStack(piece.get()), EquipmentSlot.MAINHAND, 0);
+            assertArmor(helper, new ItemStack(piece.get()), EquipmentSlot.HEAD, 0);
+        }
+        helper.succeed();
+    }
+
+    /** Own batch: changes config. The officer's full outfit adds up on the wearer: coat, breeches and boots. */
+    @ModGameTest(batch = "pirates_n_ships_config_apparel_officers_clothing_armor")
+    public static void officersClothingArmourFollowsTheConfigAndStacks(GameTestHelper helper) {
+        ConfigOverrides.during(helper, ApparelConfig.OFFICERS_COAT_ARMOR, 4);
+        ConfigOverrides.during(helper, ApparelConfig.OFFICERS_BREECHES_ARMOR, 3);
+        ConfigOverrides.during(helper, ApparelConfig.OFFICERS_BOOTS_ARMOR, 2);
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        for (var piece : ApparelContent.OFFICERS_CLOTHING) {
+            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(piece.get()));
+            use(helper, player);
+        }
+        Multimap<Holder<Attribute>, AttributeModifier> map = HashMultimap.create();
+        for (EquipmentSlot slot : List.of(EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET)) {
+            player.getItemBySlot(slot).forEachModifier(slot, map::put);
+        }
+        player.getAttributes().addTransientAttributeModifiers(map);
+        helper.assertValueEqual(player.getAttributeValue(Attributes.ARMOR), 9.0, "armour with coat 4, breeches 3 and boots 2");
+        helper.succeed();
+    }
+
+    /** Own batch: changes config. */
+    @ModGameTest(batch = "pirates_n_ships_config_apparel_officers_clothing_armor_off")
+    public static void officersClothingArmourZeroGivesNoModifier(GameTestHelper helper) {
+        ConfigOverrides.during(helper, ApparelConfig.OFFICERS_BREECHES_ARMOR, 0);
+        ConfigOverrides.during(helper, ApparelConfig.OFFICERS_BOOTS_ARMOR, 0);
+        for (var piece : List.of(ApparelContent.OFFICERS_BREECHES, ApparelContent.OFFICERS_BOOTS)) {
+            ItemStack stack = new ItemStack(piece.get());
+            int[] count = {0};
+            for (EquipmentSlot slot : EquipmentSlot.values()) {
+                stack.forEachModifier(slot, (attribute, modifier) -> count[0]++);
+            }
+            helper.assertValueEqual(count[0], 0, piece.id() + " modifiers with armour 0");
+        }
         helper.succeed();
     }
 
@@ -297,6 +366,8 @@ public final class ApparelGameTests {
         helper.assertTrue(ApparelContent.CAPTAINS_BREECHES.get().getMaterial().is(ApparelContent.CAPTAINS_CLOTHING_MATERIAL.id()), "breeches material");
         helper.assertTrue(ApparelContent.CAPTAINS_BOOTS.get().getMaterial().is(ApparelContent.CAPTAINS_CLOTHING_MATERIAL.id()), "boots material");
         helper.assertTrue(ApparelContent.OFFICERS_COAT.get().getMaterial().is(ApparelContent.OFFICERS_COAT_MATERIAL.id()), "officer's coat material");
+        helper.assertTrue(ApparelContent.OFFICERS_BREECHES.get().getMaterial().is(ApparelContent.OFFICERS_CLOTHING_MATERIAL.id()), "officer's breeches material");
+        helper.assertTrue(ApparelContent.OFFICERS_BOOTS.get().getMaterial().is(ApparelContent.OFFICERS_CLOTHING_MATERIAL.id()), "officer's boots material");
         helper.succeed();
     }
 

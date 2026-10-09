@@ -115,9 +115,15 @@ The **Officer's Coat** and the **Captain's Coat** go on the chest, with knee-lon
 split at the back, and swing back with your stride. The captain's coat is charcoal edged in gold over a brocade
 waistcoat, with a red sash on the left hip and a leather baldric over the right shoulder; the **Captain's Breeches**
 (legs) and **Captain's Boots** (feet, tall with turned-down tops) complete the pirate captain's look, with his hat.
+The navy officer's coat is completed the same way: the **Officer's Breeches** are white with a navy stripe down the
+outer seam and the **Officer's Boots** black with turned-down tops and brass buckles, as the navy's officers wear them.
 None of them wears out. Armour: coat +3, breeches +2, boots +1 (server config `apparel.officers_coat_armor`,
-`apparel.captains_coat_armor`, `apparel.captains_breeches_armor`, `apparel.captains_boots_armor`; 0 turns one off).
+`apparel.officers_breeches_armor`, `apparel.officers_boots_armor`, `apparel.captains_coat_armor`,
+`apparel.captains_breeches_armor`, `apparel.captains_boots_armor`; 0 turns one off).
 Crafted: the captain's coat from six black wool with a gold ingot on top, red wool in the middle and leather below;
 the breeches from black wool in the leggings shape with leather at the waist; the boots from black wool over leather.
+The officer's coat from blue wool round white wool with a gold ingot on top; the officer's breeches from white wool in
+the leggings shape with blue wool at the waist; the officer's boots from two gold nuggets over black wool over leather.
+A new Lieutenant receives the officer's coat, breeches and boots together (see Careers); navy officers do not drop them.
 A slain pirate captain drops each piece of his clothing with a 35 % chance (server config
 `mobs.captain.clothing_drop_chance`).

@@ -30,14 +30,13 @@ message.
 
 ## Counts
 
-- Action bar, kept as they were: 125
+- Action bar, kept as they were: 126
 - Action bar, kept and shortened: 92
 - Moved from the chat to the action bar: 30
-- Dropped (call and key removed): 46
+- Dropped (call and key removed): 55
 - Kept in the chat (people, quests, notices, reports from afar): 120
 - Status lines inside a screen (not the action bar, listed for completeness): 48
-- The lookout's sightings, left to LKO2: 25
-- Fragments of other lines (names, bearings, report parts): 28
+- Fragments of other lines (names, bearings, report parts): 53
 
 Longest kept action-bar line: `pirates_n_ships.sailing.capstan.not_on_ship`, "The capstan must be on an assembled ship" (40 characters with
 its numbers).
@@ -53,7 +52,8 @@ and bring them aboard)" (about 130) and the winch's "This ship has no sails: " f
 
 KEEP: kept unchanged. SHORT: kept, shortened. MOVE: from the chat (or a crew member's chat line) to the action bar.
 DROP: the call and its lang key are removed. CHAT: stays in the chat. SCREEN: a status line inside a screen.
-LKO2: the lookout's lines, changed by the LKO2 package. PART: a fragment used inside another line or a command reply.
+PART: a fragment used inside another line or a command reply. The lookout's old chat sighting was replaced by LKO2's
+action-bar cue (`lookout.cue`, cut to 40 characters by `SightingCue`); its old keys are listed as DROP.
 Length: characters of the English text, each `%s` counted as 3.
 
 ### Sailing: helm, capstan, winch, yards, cleats, rope
@@ -291,35 +291,45 @@ Length: characters of the English text, each `%s` counted as 3.
 | `melee.refused.no_stamina` | KEEP | bar | Too exhausted | 13 | no stamina (client) |
 | `melee.refused.staggered` | KEEP | bar | Staggered | 9 | staggered (client) |
 
-### Lookout (LKO2)
+### Lookout (since LKO2: an action-bar cue)
 
 | Key | Verdict | Where | Text now (was) | Length | When |
 |---|---|---|---|---|---|
-| `lookout.kraken` | LKO2 | chat | Kraken! Something vast stirs %s, %s blocks off! | 49 | the lookout's sighting; LKO2 makes it an action-bar cue |
-| `lookout.land` | LKO2 | chat | Land ho! Land %s, %s blocks | 29 | the lookout's sighting; LKO2 makes it an action-bar cue |
-| `lookout.shark` | LKO2 | chat | Shark in the water %s, %s blocks! | 35 | the lookout's sighting; LKO2 makes it an action-bar cue |
-| `lookout.ship` | LKO2 | chat | Sail ho! %s %s, %s blocks | 28 | the lookout's sighting; LKO2 makes it an action-bar cue |
-| `lookout.ship_named` | LKO2 | chat | Sail ho! %s %s, %s blocks: it's %s! | 39 | the lookout's sighting; LKO2 makes it an action-bar cue |
-| `lookout.bearing.abaft` | LKO2 | - | %s abaft the %s beam | 22 | part of a sighting (LKO2) |
-| `lookout.bearing.ahead` | LKO2 | - | dead ahead | 10 | part of a sighting (LKO2) |
-| `lookout.bearing.astern` | LKO2 | - | dead astern | 11 | part of a sighting (LKO2) |
-| `lookout.bearing.beam` | LKO2 | - | on the %s beam | 15 | part of a sighting (LKO2) |
-| `lookout.bearing.bow` | LKO2 | - | %s off the %s bow | 19 | part of a sighting (LKO2) |
-| `lookout.bearing.points.1` | LKO2 | - | one point | 9 | part of a sighting (LKO2) |
-| `lookout.bearing.points.2` | LKO2 | - | two points | 10 | part of a sighting (LKO2) |
-| `lookout.bearing.points.3` | LKO2 | - | three points | 12 | part of a sighting (LKO2) |
-| `lookout.bearing.points.4` | LKO2 | - | four points | 11 | part of a sighting (LKO2) |
-| `lookout.bearing.points.5` | LKO2 | - | five points | 11 | part of a sighting (LKO2) |
-| `lookout.bearing.points.6` | LKO2 | - | six points | 10 | part of a sighting (LKO2) |
-| `lookout.bearing.points.7` | LKO2 | - | seven points | 12 | part of a sighting (LKO2) |
-| `lookout.bearing.port` | LKO2 | - | port | 4 | part of a sighting (LKO2) |
-| `lookout.bearing.starboard` | LKO2 | - | starboard | 9 | part of a sighting (LKO2) |
-| `lookout.nest` | LKO2 | - | Crow's nest | 11 | part of a sighting (LKO2) |
-| `lookout.what.merchant` | LKO2 | - | A merchant | 10 | part of a sighting (LKO2) |
-| `lookout.what.navy` | LKO2 | - | A navy ship | 11 | part of a sighting (LKO2) |
-| `lookout.what.pirate` | LKO2 | - | A pirate ship | 13 | part of a sighting (LKO2) |
-| `lookout.what.ship` | LKO2 | - | A ship | 6 | part of a sighting (LKO2) |
-| `lookout.what.wreck` | LKO2 | - | A wreck | 7 | part of a sighting (LKO2) |
+| `lookout.kraken` | DROP | chat | ~~Kraken! Something vast stirs %s, %s blocks off!~~ | 49 | the lookout's chat sighting; LKO2 replaced it with the action-bar cue |
+| `lookout.land` | DROP | chat | ~~Land ho! Land %s, %s blocks~~ | 29 | the lookout's chat sighting; LKO2 replaced it with the action-bar cue |
+| `lookout.shark` | DROP | chat | ~~Shark in the water %s, %s blocks!~~ | 35 | the lookout's chat sighting; LKO2 replaced it with the action-bar cue |
+| `lookout.ship` | DROP | chat | ~~Sail ho! %s %s, %s blocks~~ | 28 | the lookout's chat sighting; LKO2 replaced it with the action-bar cue |
+| `lookout.ship_named` | DROP | chat | ~~Sail ho! %s %s, %s blocks: it's %s!~~ | 39 | the lookout's chat sighting; LKO2 replaced it with the action-bar cue |
+| `lookout.bearing.abaft` | DROP | - | ~~%s abaft the %s beam~~ | 22 | part of the old chat sighting, removed by LKO2 |
+| `lookout.bearing.bow` | DROP | - | ~~%s off the %s bow~~ | 19 | part of the old chat sighting, removed by LKO2 |
+| `lookout.nest` | DROP | - | ~~Crow's nest~~ | 11 | part of the old chat sighting, removed by LKO2 |
+| `lookout.what.ship` | DROP | - | ~~A ship~~ | 6 | part of the old chat sighting, removed by LKO2 |
+| `lookout.bearing.aft` | PART | - | aft to %s | 10 | part of the lookout's cue (LKO2) |
+| `lookout.bearing.ahead` | PART | - | ahead (was: dead ahead) | 5 (was 10) | part of the lookout's cue (LKO2) |
+| `lookout.bearing.astern` | PART | - | astern (was: dead astern) | 6 (was 11) | part of the lookout's cue (LKO2) |
+| `lookout.bearing.beam` | PART | - | abeam to %s (was: on the %s beam) | 12 (was 15) | part of the lookout's cue (LKO2) |
+| `lookout.bearing.points` | PART | - | %s to %s | 10 | part of the lookout's cue (LKO2) |
+| `lookout.bearing.points.1` | PART | - | one point | 9 | part of the lookout's cue (LKO2) |
+| `lookout.bearing.points.2` | PART | - | two points | 10 | part of the lookout's cue (LKO2) |
+| `lookout.bearing.points.3` | PART | - | three points | 12 | part of the lookout's cue (LKO2) |
+| `lookout.bearing.points.4` | PART | - | four points | 11 | part of the lookout's cue (LKO2) |
+| `lookout.bearing.points.5` | PART | - | five points | 11 | part of the lookout's cue (LKO2) |
+| `lookout.bearing.points.6` | PART | - | six points | 10 | part of the lookout's cue (LKO2) |
+| `lookout.bearing.points.7` | PART | - | seven points | 12 | part of the lookout's cue (LKO2) |
+| `lookout.bearing.port` | PART | - | port | 4 | part of the lookout's cue (LKO2) |
+| `lookout.bearing.quarter` | PART | - | on the %s quarter | 18 | part of the lookout's cue (LKO2) |
+| `lookout.bearing.side` | PART | - | to %s | 6 | part of the lookout's cue (LKO2) |
+| `lookout.bearing.starboard` | PART | - | starboard | 9 | part of the lookout's cue (LKO2) |
+| `lookout.cue` | KEEP | bar | %s %s, %s | 12 | a sighting from the crow's nest (LKO2): what, bearing, distance; SightingCue cuts the rendered line to 40 |
+| `lookout.cue.blocks` | PART | - | %s blocks | 10 | part of the lookout's cue (LKO2) |
+| `lookout.what.kraken` | PART | - | Kraken | 6 | part of the lookout's cue (LKO2) |
+| `lookout.what.land` | PART | - | Land | 4 | part of the lookout's cue (LKO2) |
+| `lookout.what.merchant` | PART | - | Merchant (was: A merchant) | 8 (was 10) | part of the lookout's cue (LKO2) |
+| `lookout.what.navy` | PART | - | Navy ship (was: A navy ship) | 9 (was 11) | part of the lookout's cue (LKO2) |
+| `lookout.what.pirate` | PART | - | Pirate ship (was: A pirate ship) | 11 (was 13) | part of the lookout's cue (LKO2) |
+| `lookout.what.sail` | PART | - | Sail | 4 | part of the lookout's cue (LKO2) |
+| `lookout.what.shark` | PART | - | Shark | 5 | part of the lookout's cue (LKO2) |
+| `lookout.what.wreck` | PART | - | Wreck (was: A wreck) | 5 (was 7) | part of the lookout's cue (LKO2) |
 
 ### Crew upkeep, galley, hiring
 

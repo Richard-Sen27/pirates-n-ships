@@ -142,11 +142,13 @@ The {item:pirates_n_ships:crows_nest}**crow's nest** is a barrel for the masthea
 
 Whoever stands in the nest keeps the lookout, you or a hand you post there with the whistle. Every few seconds the lookout sweeps 160 blocks around the ship and calls what is new to everyone aboard:
 
-- **Sail ho!** A ship, by the flag she flies: merchant, navy, pirate, a wreck, or just a ship.
-- **Land ho!** The nearest coast, once per stretch of shore.
+- **Ships**, by the flag they fly: a merchant, a navy ship, a pirate ship, a wreck, or just a sail.
+- **Land**, the nearest coast, once per stretch of shore.
 - Sharks, and the kraken.
 
-Bearings are called in points of the compass from the bow: dead ahead, two points off the starboard bow, on the beam, abaft the beam, dead astern. A full circle is 32 points. The lookout calls each sighting once and remembers it a while after it drops from view.
+A call is short. One line appears over your hotbar, "Sail two points to starboard, 140 blocks" or "Land ahead, 300 blocks", a small bell rings up in the nest, and a diamond lights on the rim of your compass where the sighting lies: white for land, red for a pirate, blue for the navy, grey for the rest. The mark fades after half a minute. Nothing goes to chat.
+
+Bearings are called from the bow: ahead, so many points to starboard or port (a full circle is 32 points), abeam, on the quarter, astern. The lookout calls each sighting once, then again when it has closed in a good way or after two minutes, and remembers it a while after it drops from view.
 
 ## The ship's panels
 While you are aboard, two small panels watch over her.

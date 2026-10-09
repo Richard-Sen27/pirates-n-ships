@@ -2,6 +2,10 @@ package com.richardsenger.piratesnships.station.lookout;
 
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
+import com.richardsenger.piratesnships.core.datagen.SoundEntries;
+import com.richardsenger.piratesnships.platform.Services;
+import com.richardsenger.piratesnships.station.lookout.client.LookoutClient;
+import com.richardsenger.piratesnships.station.lookout.client.SightingMarks;
 import com.richardsenger.piratesnships.crew.npc.StationPoses;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.sailing.sail.TriangularSailContent;
@@ -24,7 +28,8 @@ import net.minecraft.world.item.Items;
 /**
  * The crow's nest and its lookout (CN1, docs/design.md §4.8 "Visual backlog 2" item 2, §6, §7): the block
  * ({@link CrowsNestBlock}, hand-made model {@code block/crows_nest}), the lookout station ({@link LookoutStation}) and
- * the watch ({@link Lookouts}), config {@code lookout.*}.
+ * the watch ({@link Lookouts}), config {@code lookout.*}; LKO2: the call as a {@link SightingPayload} (action-bar line,
+ * hail, mark on the ship HUD's rose).
  */
 public final class LookoutModule implements ModModule {
 
@@ -44,6 +49,17 @@ public final class LookoutModule implements ModModule {
     }
 
     @Override
+    public void registerPayloads() {
+        // LKO2: the lookout's call; the handler only stores it (SightingMarks has no client classes)
+        Services.NETWORK.registerToClient(SightingPayload.TYPE, SightingPayload.CODEC, (p, player) -> SightingMarks.accept(p));
+    }
+
+    @Override
+    public void initClient() {
+        LookoutClient.init();
+    }
+
+    @Override
     public void registerEvents() {
         CommonEvents.LEVEL_TICK_END.register(Lookouts::onLevelTick);
         CommonEvents.SERVER_STOPPED.register(server -> Lookouts.onServerStopped());
@@ -56,6 +72,10 @@ public final class LookoutModule implements ModModule {
         CrowsNestBlock nest = LookoutContent.CROWS_NEST.get();
         data.lang(lang -> lang.block(LookoutContent.CROWS_NEST, "Crow's Nest"));
         data.lang(LookoutLang::lang);
+        // LKO2: the hail, the bell lookouts rang from the masthead (vanilla's bell strikes, high and soft)
+        data.sounds(sounds -> sounds.event(LookoutContent.HAIL).subtitle(LookoutLang.KEY_HAIL_SUBTITLE)
+                .sound(SoundEntries.file("minecraft:block/bell/bell_use01").pitch(1.5f).volume(0.6f))
+                .sound(SoundEntries.file("minecraft:block/bell/bell_use02").pitch(1.5f).volume(0.6f)));
         // the model is hand-made (art/models/crows_nest.bbmodel) and carries the item's display entries; the block item
         // gets datagen's delegating item model. FLG3: with a flagpole on it the nest shows crows_nest_pole (the same
         // project's pole group: stub, collar, cleat and halyard)

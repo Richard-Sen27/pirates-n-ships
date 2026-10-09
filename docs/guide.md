@@ -830,19 +830,26 @@ flag above it (see [Flags](#5-flags)).
 
 Whoever is in the nest keeps the lookout. Put a crew member up there with the Captain's Whistle (use it on the crew
 member, then on the nest): he takes his post inside the barrel and keeps watch until you release him. Or stand in it
-yourself. Every 3 seconds the lookout scans 160 blocks round the ship and calls out what is new, in chat, to the ship's
-owner and everyone aboard:
-- **ships**, by the flag they fly: "Sail ho! A merchant two points off the starboard bow, 140 blocks" (a navy ship, a
-  pirate ship, a wreck, or just a ship when no flag flies);
-- **land**: "Land ho! Land four points off the port bow, 120 blocks" (the nearest coast; one call per stretch of coast);
+yourself. Every 3 seconds the lookout scans 160 blocks round the ship and calls what is new to everyone aboard and in
+the nest:
+- **ships**, by the flag they fly: a merchant, a navy ship, a pirate ship, a wreck, or a sail when no flag flies;
+- **land**: the nearest coast (one call per stretch of coast);
 - **sharks** and **the kraken**.
 
-Bearings are in points of the compass (32 round the horizon) from the bow: dead ahead, "n points off the starboard (or
-port) bow", on the beam, "n points abaft the beam", dead astern. Each ship, shark or coast is called once; the lookout
-remembers it for 5 minutes after he last saw it. Only loaded chunks are watched. Recipe: planks, rope, planks over two
-iron nuggets, over three planks. Server config `lookout`: `enabled`, `announce` (off: the watch is silent), `range`,
-`scan_interval_ticks`, `memory_ticks`, and the land rays (`land_directions`, `land_step`, `land_min_distance`,
-`land_region`).
+A call is one short line over the hotbar (at most 40 characters): "Sail two points to starboard, 140 blocks", "Land
+ahead, 300 blocks", "Pirate ship aft to port, 160 blocks". With it a small hand bell rings from the nest (higher and
+softer than the Ship's Bell), and the ship panel's compass rose shows a small diamond on its rim at the sighting's
+bearing, white for land, red for a pirate ship, blue for a navy ship and grey for anything else; it fades out after
+30 seconds. Several calls at once follow each other on the hotbar line. Nothing goes to chat.
+
+Bearings are named from the bow: ahead, "n points to starboard (or port)" (32 points round the horizon), abeam, "on the
+starboard (or port) quarter" abaft the beam, astern; when a line would be too long it names only the side ("to
+starboard", "aft to port"). A ship the lookout knows by sight is called by her name. Each ship, shark or coast is called
+once, then again once it has come 64 blocks closer than at its last call or 2 minutes after it; the lookout remembers it
+for 5 minutes after he last saw it. Only loaded chunks are watched. Recipe: planks, rope, planks over two iron nuggets,
+over three planks. Server config `lookout`: `enabled`, `announce` (off: the watch is silent), `range`,
+`scan_interval_ticks`, `memory_ticks`, `recall_blocks`, `recall_seconds`, `mark_seconds`, and the land rays
+(`land_directions`, `land_step`, `land_min_distance`, `land_region`).
 
 ### Pirates, sailors and the navy
 Pirates (dark coat, bandana, eyepatch, cutlass) attack players and the navy on sight. They fight with the same
@@ -1538,7 +1545,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `waves` | Sea state on/off, amplitude and components, wave groups, how fast the state and the wave direction change, heave and torque on ships, spill over low rims, vanilla boats and floating items riding the waves, sync. |
 | `hazards` | Waterspouts and whirlpools (on/off, chances, durations, radii, pull, lift, spin, drag-down, drift, sail damage, per-player cap), spawn distances and interval, ship force scale and mass cap; `kraken` (on/off, chance per day). |
 | `crew_stations` | Crew stations on/off, time per trim step, order and acknowledgement radius; `capstan` (crew at the capstan), `course` (the helmsman's course keeping), `job_board` (free hands taking open jobs). |
-| `lookout` | Crow's nest lookout on/off, calls on/off, range, scan interval, how long a sighting is remembered, the land rays. |
+| `lookout` | Crow's nest lookout on/off, calls on/off, range, scan interval, how long a sighting is remembered, when it is called again, how long its compass mark stays, the land rays. |
 | `crew` | Crew size; `wages`, `morale`, `desertion`, `mutiny`, `meals`, `hammock` (players sleeping in hammocks), `hiring`, `walk`. |
 | `provisions` | Consumption on/off and rate, food and water per crew and day, rum ration and morale, drunkenness, hunger and thirst effects, scurvy, spoilage, water barrel capacity, rain refill, weights. |
 | `survival` | `cold_water` (on/off, freeze rate, warm effect length), `swim_hunger` and its multiplier. |

@@ -36,11 +36,8 @@ class MessageAuditTest {
     /** The ship-handling packages: their messages go to the action bar only. */
     static final List<String> SHIP_HANDLING = List.of("sailing", "station", "ship", "combat/cannon", "combat/grapple",
             "combat/boarding", "crew/npc");
-    /**
-     * Files allowed a chat line for now. The lookout's sighting is LKO2's (it becomes an action-bar cue there); remove the
-     * entry when LKO2 lands.
-     */
-    static final Set<String> ALLOWED = Set.of("station/lookout/Lookouts.java");
+    /** Files allowed a chat line (none: the lookout's sighting became an action-bar cue in LKO2). */
+    static final Set<String> ALLOWED = Set.of();
     /** A chat send: {@code displayClientMessage(..., false)}, {@code sendSystemMessage(} or {@code sendMessage(}. */
     private static final Pattern CHAT = Pattern.compile(
             "displayClientMessage\\((?:[^;]|\\n)*?,\\s*false\\s*\\)|\\.sendSystemMessage\\(|\\.sendMessage\\(");

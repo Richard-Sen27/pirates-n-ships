@@ -122,6 +122,7 @@ message.pirates_n_ships.hull_patch.not_a_breach
 message.pirates_n_ships.hull_patch.not_on_ship
 message.pirates_n_ships.jobs.no_free_hands
 message.pirates_n_ships.jobs.order_posted
+message.pirates_n_ships.lookout.cue
 message.pirates_n_ships.melee.refused.locked_out
 message.pirates_n_ships.melee.refused.no_stamina
 message.pirates_n_ships.melee.refused.staggered

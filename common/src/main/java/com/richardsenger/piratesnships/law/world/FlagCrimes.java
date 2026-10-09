@@ -18,6 +18,7 @@ import com.richardsenger.piratesnships.ship.decor.flag.FlagReading;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.ship.sable.ShipEntities;
+import com.richardsenger.piratesnships.station.lookout.Lookouts;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -28,7 +29,9 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -43,8 +46,9 @@ import java.util.UUID;
  *       Jolly Roger or a navy flag is looked at by the navy mobs within {@code observe_range} of its hull. Under the
  *       Jolly Roger its owner commits {@link CrimeType#SEEN_UNDER_JOLLY_ROGER} (the crime's repeat window keeps it to
  *       once per window and ship). Under a navy flag that is false colours ({@link LawService#fliesFalseColours},
- *       interim rule: the owner is wanted) each observer rolls {@link FalseColorsDetection} with its distance, no
- *       crow's nest (that station does not exist yet) and the owner's score; a detection records
+ *       interim rule: the owner is wanted) each observer rolls {@link FalseColorsDetection} with its distance,
+ *       whether its own ship has a manned crow's nest (LAW4, {@link #hasMannedNest}: such an observer also notices
+ *       the flag from {@code crows_nest_range_factor} times {@code observe_range}) and the owner's score; a detection records
  *       {@link CrimeType#CAUGHT_FALSE_COLORS}, blows the ship's cover for {@code blown_cover_ticks} and tells the
  *       owner. Observers need no line of sight: a ship is big and the range is the limit.</li>
  *   <li><b>Plunder aboard</b> (LAW3, {@code law.plunder_notice}, independent of {@code law.flags.enabled}): the same
@@ -120,29 +124,61 @@ public final class FlagCrimes {
     private static void observe(ServerLevel level, ShipBody ship, ShipData data, FlagKind shown, long now, int interval,
                                 boolean watchFlag, PlunderNotice.Params plunder) {
         double range = LawConfig.OBSERVE_RANGE.get();
+        FalseColorsDetection.Params params = LawConfig.detectionParams();
         AABB hull = ship.worldBounds();
-        List<LivingEntity> observers = level.getEntitiesOfClass(LivingEntity.class, hull.inflate(range),
-                e -> e.isAlive() && LawService.isNavy(e) && distance(e.getEyePosition(), hull) <= range);
-        if (observers.isEmpty()) return;
+        // LAW4: observers aboard a ship with a manned crow's nest notice flags from farther off
+        double gather = watchFlag ? FalseColorsDetection.observeRange(params, range, nestsCount()) : range;
+        Map<UUID, Boolean> nests = new HashMap<>();
+        List<LivingEntity> navy = level.getEntitiesOfClass(LivingEntity.class, hull.inflate(gather),
+                e -> e.isAlive() && LawService.isNavy(e) && distance(e.getEyePosition(), hull) <= gather);
+        if (navy.isEmpty()) return;
+        List<LivingEntity> inRange = navy.stream().filter(e -> distance(e.getEyePosition(), hull) <= range).toList();
+        List<LivingEntity> flagObservers = navy.stream().filter(e -> distance(e.getEyePosition(), hull)
+                <= FalseColorsDetection.observeRange(params, range, hasMannedNest(level, e, nests))).toList();
+        if (inRange.isEmpty() && (!watchFlag || flagObservers.isEmpty())) return;
         LivingEntity owner = LawService.findLoaded(level.getServer(), data.owner().orElseThrow());
         if (owner == null) return;
         String name = victimName(data);
-        if (plunder.enabled()) observePlunder(ship, data, owner, name, now, plunder);
-        if (!watchFlag) return;
+        // looking into the containers is no matter of eyesight: the plain observe range
+        if (plunder.enabled() && !inRange.isEmpty()) observePlunder(ship, data, owner, name, now, plunder);
+        if (!watchFlag || flagObservers.isEmpty()) return;
         if (shown == FlagKind.JOLLY_ROGER) {
             LawService.reportCrime(owner, CrimeType.SEEN_UNDER_JOLLY_ROGER, data.id(), name);
             return;
         }
         if (!LawService.fliesFalseColours(owner, shown)) return;
-        FalseColorsDetection.Params params = LawConfig.detectionParams();
         double score = LawService.score(owner);
-        for (LivingEntity observer : observers) {
-            double chance = FalseColorsDetection.chance(params, true, distance(observer.getEyePosition(), hull), false, score, interval);
+        for (LivingEntity observer : flagObservers) {
+            double chance = detectionChance(level, observer, hull, params, score, interval, nests);
             if (FalseColorsDetection.roll(chance, level.getRandom())) {
                 caught(level.getServer(), data, owner, name, now);
                 return;
             }
         }
+    }
+
+    /** Whether a crow's nest can help any observer at all (the toggle on and a factor above 1). */
+    private static boolean nestsCount() {
+        return LawConfig.CROWS_NEST_OBSERVERS.get();
+    }
+
+    /**
+     * LAW4: whether {@code observer} stands on or rides a ship with a manned crow's nest ({@link Lookouts#isManned}).
+     * Off a ship (outposts, land, water) never; {@code law.flags_brig.crows_nest_observers} off never. {@code cache}
+     * holds the answer per ship for one observation.
+     */
+    public static boolean hasMannedNest(ServerLevel level, LivingEntity observer, Map<UUID, Boolean> cache) {
+        if (!nestsCount()) return false;
+        ShipBody aboard = ShipEntities.standingOrRiding(observer);
+        if (aboard == null) return false;
+        return cache.computeIfAbsent(aboard.id(), id -> Lookouts.isManned(level, aboard));
+    }
+
+    /** The chance that {@code observer} sees through false colours on the ship with world bounds {@code hull} in one check. */
+    public static double detectionChance(ServerLevel level, LivingEntity observer, AABB hull, FalseColorsDetection.Params params,
+                                         double score, long interval, Map<UUID, Boolean> nests) {
+        return FalseColorsDetection.chance(params, true, distance(observer.getEyePosition(), hull),
+                hasMannedNest(level, observer, nests), score, interval);
     }
 
     private static void caught(MinecraftServer server, ShipData data, LivingEntity owner, String name, long now) {

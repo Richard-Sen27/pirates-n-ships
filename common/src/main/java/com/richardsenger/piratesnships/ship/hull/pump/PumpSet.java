@@ -21,11 +21,14 @@ public final class PumpSet {
     private final Set<BlockPos> pumps = new HashSet<>();
     /** Plot position → game time until which a player's use keeps the pump working (exclusive). */
     private final Map<BlockPos, Long> usedUntil = new HashMap<>();
+    /** The pumps that worked in the last {@link #activeCounts} (PMP1: their handles rock). */
+    private final Set<BlockPos> working = new HashSet<>();
 
     public void replace(Collection<BlockPos> positions) {
         pumps.clear();
         positions.forEach(p -> pumps.add(p.immutable()));
         usedUntil.keySet().retainAll(pumps);
+        working.retainAll(pumps);
     }
 
     public void add(BlockPos pos) {
@@ -35,6 +38,7 @@ public final class PumpSet {
     public void remove(BlockPos pos) {
         pumps.remove(pos);
         usedUntil.remove(pos);
+        working.remove(pos);
     }
 
     public boolean contains(BlockPos pos) {
@@ -65,6 +69,15 @@ public final class PumpSet {
     /** Forgets every player's use (pumps switched off by config). */
     public void clearUses() {
         usedUntil.clear();
+        working.clear();
+    }
+
+    /**
+     * The pumps that worked (drained a compartment) in the last {@link #activeCounts}, empty after {@link #clearUses}.
+     * Read by the hull runtime to rock their handles (PMP1).
+     */
+    public Set<BlockPos> working() {
+        return Set.copyOf(working);
     }
 
     /**
@@ -81,6 +94,7 @@ public final class PumpSet {
                 it.remove();
             }
         }
+        working.clear();
         int[] counts = null;
         for (BlockPos p : pumps) {
             if (!usedAt(p, now) && !crew.test(p)) {
@@ -94,6 +108,7 @@ public final class PumpSet {
                 counts = new int[compartments];
             }
             counts[c]++;
+            working.add(p);
         }
         return counts;
     }

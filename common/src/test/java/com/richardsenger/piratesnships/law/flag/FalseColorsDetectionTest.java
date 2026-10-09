@@ -129,4 +129,48 @@ class FalseColorsDetectionTest {
         assertThrows(IllegalArgumentException.class, () -> new Params(1, 0.05, 16, 96, 0.5, 1.5, 100));
         assertThrows(IllegalArgumentException.class, () -> new Params(1, 0.05, 16, 96, 1.5, 1.5, 0));
     }
+
+    // --- LAW4: the crow's nest factors, exactly as the config comments describe them -------------------------------
+
+    /** crows_nest_range_factor widens the observe range and the detection range by exactly that factor. */
+    @Test
+    void crowsNestRangeFactorMultipliesBothRanges() {
+        Params p = new Params(1, 0.05, 16, 96, 2.5, 1.0, 100);
+        assertEquals(48.0, FalseColorsDetection.observeRange(p, 48, false), 1e-12);
+        assertEquals(120.0, FalseColorsDetection.observeRange(p, 48, true), 1e-12);
+        // without the nest nothing at or beyond 96 blocks, with it the edge moves to 240
+        assertEquals(0.0, FalseColorsDetection.proximity(p, 96, false));
+        assertTrue(FalseColorsDetection.proximity(p, 96, true) > 0);
+        assertTrue(FalseColorsDetection.proximity(p, 239, true) > 0);
+        assertEquals(0.0, FalseColorsDetection.proximity(p, 240, true));
+        // the close range is not widened
+        assertEquals(1.0, FalseColorsDetection.proximity(p, 16, true));
+        assertTrue(FalseColorsDetection.proximity(p, 17, true) < 1.0);
+    }
+
+    /** Inside the close range (proximity 1 either way) crows_nest_rate_factor multiplies the rate exactly. */
+    @Test
+    void crowsNestRateFactorMultipliesTheRate() {
+        Params p = new Params(1, 0.05, 16, 96, 1.0, 3.0, 100);
+        for (double score : new double[] {0, 20, 250}) {
+            double without = FalseColorsDetection.ratePerSecond(p, 10, false, score);
+            assertEquals(3.0 * without, FalseColorsDetection.ratePerSecond(p, 10, true, score), 1e-12, "score " + score);
+        }
+        // both factors 1: the nest changes nothing
+        Params none = new Params(1, 0.05, 16, 96, 1.0, 1.0, 100);
+        assertEquals(48.0, FalseColorsDetection.observeRange(none, 48, true), 1e-12);
+        for (double d : new double[] {0, 30, 95, 150}) {
+            assertEquals(FalseColorsDetection.chance(none, true, d, false, 20, 40),
+                    FalseColorsDetection.chance(none, true, d, true, 20, 40), 1e-15, "at " + d);
+        }
+    }
+
+    /** Defaults (x1.5 / x1.5): within the detection range the nest is faster; beyond it only the nest sees. */
+    @Test
+    void crowsNestDefaultsSeeFartherAndFaster() {
+        assertEquals(72.0, FalseColorsDetection.observeRange(P, 48, true), 1e-12);
+        assertTrue(chance(40, true, 20, 40) > chance(40, false, 20, 40));
+        assertEquals(0.0, chance(100, false, 20, 40));
+        assertTrue(chance(100, true, 20, 40) > 0);
+    }
 }

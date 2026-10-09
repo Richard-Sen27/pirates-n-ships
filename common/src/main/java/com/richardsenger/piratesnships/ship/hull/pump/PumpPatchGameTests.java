@@ -23,6 +23,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -161,6 +162,86 @@ public final class PumpPatchGameTests {
             h.assertTrue(s.water() <= PumpIntake.DRY, "water left: " + s.water());
             Stations.OrderResult again = Stations.order(level, ref, PumpOrder.PUMP);
             h.assertTrue(again == Stations.OrderResult.NOTHING_TO_DO, "a dry bilge still gave work: " + again);
+            Stations.release(ref, crew);
+        }));
+    }
+
+    // ------------------------------------------------------------------ handle sync (PMP1)
+
+    private static BilgePumpBlockEntity pumpEntity(GameTestHelper h, BlockPos plot) {
+        if (h.getLevel().getBlockEntity(plot) instanceof BilgePumpBlockEntity be) {
+            return be;
+        }
+        throw new net.minecraft.gametest.framework.GameTestAssertException("no pump block entity at " + plot);
+    }
+
+    /** A client's copy of the pump as a chunk load creates it: a new block entity loaded from the update tag. */
+    private static boolean freshClientCopyPumping(ServerLevel level, BilgePumpBlockEntity be) {
+        BilgePumpBlockEntity copy = new BilgePumpBlockEntity(be.getBlockPos(), be.getBlockState());
+        copy.loadWithComponents(be.getUpdateTag(level.registryAccess()), level.registryAccess());
+        return copy.pumping();
+    }
+
+    /** A client's existing copy updated by the block entity data packet a block update sends. */
+    private static boolean packetCopyPumping(ServerLevel level, BilgePumpBlockEntity be) {
+        BilgePumpBlockEntity copy = new BilgePumpBlockEntity(be.getBlockPos(), be.getBlockState());
+        ClientboundBlockEntityDataPacket packet = (ClientboundBlockEntityDataPacket) be.getUpdatePacket();
+        copy.loadWithComponents(packet.getTag(), level.registryAccess());
+        return copy.pumping();
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200)
+    public static void pumpingFlagReachesTheClientWhilePlayerPumps(GameTestHelper h) {
+        Ship s = ship(h);
+        ServerLevel level = h.getLevel();
+        Player player = h.makeMockPlayer(GameType.SURVIVAL);
+        s.f().runtime().simulation().setVolume(0, 10);
+        BilgePumpBlockEntity be = pumpEntity(h, s.holdPump());
+        BilgePumpBlockEntity deck = pumpEntity(h, s.deckPump());
+        h.runAfterDelay(5, () -> h.assertFalse(freshClientCopyPumping(level, be), "an idle pump reads as pumping"));
+        // one use every 4 ticks, as holding the use key does, from tick 10 to tick 50
+        for (int t = 10; t <= 50; t += 4) {
+            h.runAfterDelay(t, () -> h.assertTrue(BilgePumps.operate(level, s.holdPump(), player).outcome()
+                    == BilgePumps.Outcome.PUMPING, "the pump did not pump"));
+        }
+        h.runAfterDelay(13, () -> {
+            h.assertTrue(be.pumping(), "the flag is not on right after the first strokes");
+            h.assertTrue(freshClientCopyPumping(level, be), "a freshly loaded client copy does not see the pumping");
+            h.assertTrue(packetCopyPumping(level, be), "the block update does not carry the pumping");
+            h.assertFalse(deck.pumping(), "the idle deck pump reads as pumping");
+        });
+        h.runAfterDelay(52, () -> {
+            h.assertTrue(freshClientCopyPumping(level, be), "the flag dropped while the player kept pumping");
+            h.assertTrue(be.activity().syncs() == 1, "more than one update while pumping went on: " + be.activity().syncs());
+        });
+        h.runAfterDelay(90, () -> {
+            h.assertFalse(be.pumping(), "the flag stayed on after the player stopped");
+            h.assertFalse(freshClientCopyPumping(level, be), "a fresh client copy still sees pumping after it stopped");
+            h.assertFalse(packetCopyPumping(level, be), "the block update still says pumping after it stopped");
+            h.assertTrue(be.activity().syncs() == 2, "expected one update to start and one to stop: " + be.activity().syncs());
+            h.assertTrue(deck.activity().syncs() == 0, "the idle deck pump sent updates");
+            h.succeed();
+        });
+    }
+
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 260)
+    public static void pumpingFlagFollowsACrewMemberAtThePump(GameTestHelper h) {
+        Ship s = ship(h);
+        ServerLevel level = h.getLevel();
+        StationRef ref = new StationRef(s.f().ship().id(), s.holdPump());
+        UUID crew = UUID.randomUUID();
+        s.f().runtime().simulation().setVolume(0, 4);
+        BilgePumpBlockEntity be = pumpEntity(h, s.holdPump());
+        h.runAfterDelay(5, () -> {
+            h.assertTrue(Stations.occupy(level, ref, new StationState.Occupant(crew, false)) == StationState.OccupyResult.OCCUPIED,
+                    "the pump is not a station");
+            h.assertTrue(Stations.order(level, ref, PumpOrder.PUMP) == Stations.OrderResult.STARTED, "no pumping order");
+        });
+        h.runAfterDelay(25, () -> h.assertTrue(freshClientCopyPumping(level, be), "the crew's pumping does not reach the client"));
+        h.runAfterDelay(26, () -> h.succeedWhen(() -> {
+            h.assertTrue(s.water() <= PumpIntake.DRY, "water left: " + s.water());
+            h.assertFalse(freshClientCopyPumping(level, be), "the flag stayed on after the bilge ran dry");
+            h.assertTrue(be.activity().syncs() == 2, "expected one update to start and one to stop: " + be.activity().syncs());
             Stations.release(ref, crew);
         }));
     }

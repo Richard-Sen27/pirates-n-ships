@@ -53,6 +53,15 @@ public final class FalseColorsDetection {
         }
     }
 
+    /**
+     * LAW4: the range within which an observer notices a ship's flag at all ({@code law.flags.observe_range}), widened
+     * by the crow's nest range factor for an observer whose ship has a manned crow's nest, so the nest's longer
+     * {@link #proximity} range is not cut off by who gets to look.
+     */
+    public static double observeRange(Params p, double baseRange, boolean crowsNest) {
+        return Math.max(0.0, baseRange) * (crowsNest ? p.crowsNestRangeFactor() : 1.0);
+    }
+
     /** 0..1: how well the observer can make out the ship at {@code distance} blocks. */
     public static double proximity(Params p, double distance, boolean crowsNest) {
         double max = p.maxRange() * (crowsNest ? p.crowsNestRangeFactor() : 1.0);

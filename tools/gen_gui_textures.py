@@ -1000,6 +1000,10 @@ def write_extras(out_dir):
 
 
 # ---------------------------------------------------------------- output
+# Sprite folders written by other scripts, left alone here: order/ (tools/gen_order_icons.py, the whistle order icons)
+OTHER_OWNERS = ("order",)
+
+
 def mcmeta(scaling):
     return json.dumps({"gui": {"scaling": scaling}}, indent=2, sort_keys=False) + "\n"
 
@@ -1018,9 +1022,9 @@ def write_all(out_dir):
         meta.write_bytes(mcmeta(scaling).encode("utf-8"))
         written.add(png)
         written.add(meta)
-    # Remove sprites that no longer exist (this directory belongs to this script alone)
+    # Remove sprites that no longer exist (this directory belongs to this script, except the folders of OTHER_OWNERS)
     for f in sorted(out_dir.rglob("*")):
-        if f.is_file() and f not in written:
+        if f.is_file() and f not in written and f.relative_to(out_dir).parts[0] not in OTHER_OWNERS:
             f.unlink()
     return written
 

@@ -26,12 +26,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * The GUI texture kit (U1, run from {@code common/}): every sprite id in {@link GuiSprites} has a PNG and a
  * {@code .png.mcmeta} with a valid GUI scaling (nine-slice size equal to the PNG, borders that fit), no sprite in the
- * folder is left unused, and {@code tools/gen_gui_textures.py} writes exactly the committed bytes.
+ * folder is left unused, and {@code tools/gen_gui_textures.py} writes exactly the committed bytes. The folders in
+ * {@link #OTHER_OWNERS} belong to other scripts and have their own tests ({@code order/}: {@code OrderIconsTest}).
  */
 class GuiTexturesTest {
 
     private static final Path REPO = Path.of("..").toAbsolutePath().normalize();
     private static final Path SPRITES = Path.of("src/main/resources/assets/pirates_n_ships/textures/gui/sprites");
+    /** Sprite folders another script writes (gen_gui_textures.py's {@code OTHER_OWNERS}). */
+    private static final Set<String> OTHER_OWNERS = Set.of("order");
+
+    private static boolean ours(Path root, Path file) {
+        return !OTHER_OWNERS.contains(root.relativize(file).getName(0).toString());
+    }
 
     private static Path png(ResourceLocation id) {
         return SPRITES.resolve(id.getPath() + ".png");
@@ -95,7 +102,7 @@ class GuiTexturesTest {
         Set<String> expected = new HashSet<>();
         for (ResourceLocation id : GuiSprites.ALL) expected.add(id.getPath() + ".png");
         try (Stream<Path> walk = Files.walk(SPRITES)) {
-            walk.filter(p -> p.toString().endsWith(".png")).forEach(p ->
+            walk.filter(p -> p.toString().endsWith(".png") && ours(SPRITES, p)).forEach(p ->
                     assertTrue(expected.contains(SPRITES.relativize(p).toString().replace('\\', '/')), p + " is not in GuiSprites.ALL"));
         }
     }
@@ -118,7 +125,7 @@ class GuiTexturesTest {
     private static Set<String> files(Path root) throws IOException {
         Set<String> out = new TreeSet<>();
         try (Stream<Path> walk = Files.walk(root)) {
-            walk.filter(Files::isRegularFile).forEach(f -> out.add(root.relativize(f).toString().replace('\\', '/')));
+            walk.filter(f -> Files.isRegularFile(f) && ours(root, f)).forEach(f -> out.add(root.relativize(f).toString().replace('\\', '/')));
         }
         return out;
     }

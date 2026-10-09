@@ -162,8 +162,12 @@ public final class ShipScreen extends Screen {
             updateRename();
             listPanelTop = top + 64;
         } else if (tab == Tab.CREW) {
+            // ART19: each button shows the order's 16x16 icon left of its label, so the buttons are taller and sit in
+            // three rows to keep the label room of the old two rows of text-only buttons
             List<WhistleOrder> orders = WhistleOrder.entries();
-            int perRow = (orders.size() + 1) / 2;
+            int perRow = (orders.size() + 2) / 3;
+            int rows = (orders.size() + perRow - 1) / perRow;
+            int pitch = OrderButton.HEIGHT + 2;
             int bw = (innerW() - 4 - TAB_GAP * (perRow - 1)) / perRow;
             boolean active = v.isPresent() && ShipScreenRules.canOrder(v.get());
             // WHS1: one anchor button, labelled by the anchor's state in the view (the server picks the direction)
@@ -171,12 +175,12 @@ public final class ShipScreen extends Screen {
             for (int i = 0; i < orders.size(); i++) {
                 WhistleOrder o = orders.get(i);
                 int bx = x0 + (i % perRow) * (bw + TAB_GAP);
-                int by = top + 46 + (i / perRow) * 16;
-                BrassButton b = addRenderableWidget(new BrassButton(bx, by, bw, 14, Component.translatable(o.shownNameKey(anchor)), () -> order(o)));
+                int by = top + 46 + (i / perRow) * pitch;
+                BrassButton b = addRenderableWidget(new OrderButton(bx, by, bw, o.icon(), Component.translatable(o.shownNameKey(anchor)), () -> order(o)));
                 b.active = active && !pending;
                 b.setTooltip(Tooltip.create(Component.translatable(o.shownDescriptionKey(anchor))));
             }
-            listPanelTop = top + 80;
+            listPanelTop = top + 46 + rows * pitch + 2;
         } else {
             listPanelTop = top + 46;
         }

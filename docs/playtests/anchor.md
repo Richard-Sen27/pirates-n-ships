@@ -208,7 +208,7 @@ capstan), standing on the deck, the ship HUD on (`ships.ship_status_hud = true`)
 
 ## Steps
 1. **The wheel.** With the anchor stowed, open the whistle wheel (use in the air).
-   - **Expected:** nine entries; one anchor entry (capstan icon) between "Fire at will" and "Release crew". Hovering it
+   - **Expected:** nine entries; one anchor entry (anchor icon, ART19) between "Fire at will" and "Release crew". Hovering it
      reads "Drop anchor", with "Crew at the capstan let the anchor go" under the ring.
 2. **Drop.** Choose it.
    - **Expected:** the crew member pushes the bars for 2 s, then the anchor runs out (as CRW3/CAP2: bars and crew turn
@@ -221,7 +221,7 @@ capstan), standing on the deck, the ship HUD on (`ships.ship_status_hud = true`)
    while it is coming up ("Drop anchor").
    - **Expected:** each time the anchor reverses, as when using the capstan by hand.
 5. **The helm screen.** Sneak-use the helm with an empty hand, Crew tab.
-   - **Expected:** one anchor button (nine order buttons, two rows) reading "Drop anchor" or "Raise anchor" by the
+   - **Expected:** one anchor button (the order buttons with their icons, three rows) reading "Drop anchor" or "Raise anchor" by the
      same rule; pressing it drops or raises the anchor as in steps 2 and 3, and within about a second the label
      flips. The Ship tab's anchor line (stowed, running out, down, anchored, weighing) is unchanged.
 6. **Refusals.** Remove the capstan (or set `crew_stations.capstan.enabled = false`) and choose the entry with the
@@ -229,6 +229,10 @@ capstan), standing on the deck, the ship HUD on (`ships.ship_status_hud = true`)
    - **Expected:** "No station aboard can let go the anchor" / "No station can let go the anchor right now" for the
      first, "... weigh anchor ..." for the second: the line names the direction it refused.
 7. **The command.** `/pirates crew order drop_anchor` and `raise_anchor` still work as in CRW3 step 7.
+8. **The anchor icon (ART19).** Look at the anchor entry on the wheel (plain and hovered) and its button on the helm
+   screen's Crew tab (active, and greyed while you are not the captain).
+   - **Expected:** the entry and the button show an anchor icon (a dark iron stock anchor with a light rim), as sharp
+     as the item icons beside it, readable on the dark wheel and on the brass button; every other order keeps its item.
 
 Tell us: does the label ever lag behind the anchor long enough to mislead you (it can trail by up to a second, and
 during the drop's 2 s of work it still reads "Drop anchor" because the anchor has not gone yet)?

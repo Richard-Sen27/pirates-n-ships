@@ -370,7 +370,7 @@ The crew operates a station by being attached to it, much like being seated. Thi
 ---
 
 ## 8. Combat
-- **Input (FA1, the human, 2026-10-08):** "firing a firearm needs to be done via left click, and right click is only aiming, releasing may not fire". Decision: right mouse held aims (as now), left mouse fires, aimed or from the hip with the unaimed spread, releasing the aim only lowers the gun; server-validated through a fire payload; `firearms.fire_on_attack` (off restores release-to-fire); NPC gunnery unchanged. **Implemented (FA1):** the attack click is taken on the client tick before vanilla's key handling (which drops attack clicks while an item is in use) and sent as a fire payload; the server picks the gun and validates; hip shots take the gun's full spread. Open for the human: whether a sneak-lowered gun may hip-fire.
+- **Input (FA1, the human, 2026-10-08):** "firing a firearm needs to be done via left click, and right click is only aiming, releasing may not fire". Decision: right mouse held aims (as now), left mouse fires, aimed or from the hip with the unaimed spread, releasing the aim only lowers the gun; server-validated through a fire payload; `firearms.fire_on_attack` (off restores release-to-fire); NPC gunnery unchanged. **Implemented (FA1):** the attack click is taken on the client tick before vanilla's key handling (which drops attack clicks while an item is in use) and sent as a fire payload; the server picks the gun and validates; hip shots take the gun's full spread. Decided by the human (2026-10-09): sneaking is no longer needed to lower a gun (releasing right mouse lowers it without firing) and firing from the hip while sneaking is allowed; nothing to change.
 
 ### 8.1 Weapons (Waffen)
 | Item | Notes |

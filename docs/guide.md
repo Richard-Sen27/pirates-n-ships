@@ -362,7 +362,9 @@ hold it, green sparkles show where the other pieces are close. Bring the broken-
 straight (no more than a few degrees off), touching face to face; if there is a one-block gap, place planks to bridge
 it first. Then use the toolkit on the broken-off piece: after a second of hammering it is nailed back on, keeps its
 chests and stations, and the ship keeps its name. Each repair uses 4 nails. Only pieces of the same ship can be
-joined, and only pieces up to 200 blocks; bigger halves need a shipwright. Server config `assembly.rejoin`.
+joined, and the piece you nail on may have at most 200 blocks (`assembly.rejoin.max_piece_blocks`): when the far piece
+is bigger, the toolkit refuses and you rejoin a smaller piece, for instance by keeping the bigger half and nailing the
+smaller one to it. Server config `assembly.rejoin`.
 
 ### Hauling with the rope
 With your hook set in a ship and the rope in your hand, hold sneak: the rope's length freezes. Walk back and the
@@ -461,8 +463,10 @@ rigging` lists every yard and what it carries, the triangular sails and the crew
 ### Upkeep
 Every dawn your crew eats and drinks one day of provisions from the pantries and water barrels aboard and wants its
 pay: 2 doubloons each, taken from any chest, barrel or cargo crate on the ship (the ones nearest the helm first).
-Hungry or thirsty crew lose morale and work slower; rum cheers them up; weeks without citrus or fresh food bring
-scurvy. Unpaid crew lose 8 morale, paid crew gain 1. If the coins aboard run short, the rest of the wages comes out of your
+Hungry or thirsty crew lose morale and work slower; rum cheers them up, but a crew that finds rum for 10 days or more
+in the pantries drinks a double ration and works at 60% speed; weeks without citrus or fresh food bring scurvy. A crew
+that goes 3 days in a row without food, or 1 day without water, deserts at the next dawn whatever its morale (all of it,
+the same way as below; the owner hears what they went without). Unpaid crew lose 8 morale, paid crew gain 1. If the coins aboard run short, the rest of the wages comes out of your
 own purse while you are online in that dimension (chests and crates always pay first). A sailor whose morale stays
 below 20 for two dawns means to desert: he tells you and walks off at the next port the ship comes within 48 blocks
 of, onto the quay by the berth, or wherever the ship is after three more dawns; feed and pay him back above 20 and he
@@ -532,8 +536,8 @@ under `ship_hud`: on/off, `compass_corner` and `hull_corner` (put both in one co
 ### Cargo weight
 What you carry weighs the ship down. Crates, cargo barrels, pantries and water barrels get heavier as they fill: a full
 crate weighs as much as forty planks. Chests and other vanilla containers press down where they stand, so a heavy
-chest in the bow trims the ship by the bow. Spread heavy cargo and keep it low and central. At the wheel the rudder
-line shows the load: Light, Laden, Heavily laden or Overloaded (`/pirates ship info` shows the numbers). A laden ship
+chest in the bow trims the ship by the bow. Spread heavy cargo and keep it low and central. The ship screen at the helm
+shows the load: Light, Laden, Heavily laden or Overloaded (`/pirates ship info` shows the numbers). A laden ship
 sits lower, so it floods sooner through a breach, and it is slower to accelerate and turn. Server config
 `cargo_trade.cargo_weight_affects_ships`, `weight_factor`, `weigh_interval_ticks`, `load_levels`.
 
@@ -938,8 +942,11 @@ Holds up to 16 rations of fresh water. One crew member drinks one ration per day
 The rules for a crew eating and drinking exist, but no crew eats yet. Try them with `/pirates provisions`:
 - A crew eats perishable food first, the food closest to spoiling before the rest.
 - Hungry crew lose morale and work at 75% speed. Thirsty crew lose morale faster and work at 50%. After 3 days of
-  hunger or 1 day of thirst the crew is ready to desert.
-- **Rum:** a ration raises morale. More than the ration makes the crew slow for a while.
+  hunger or 1 day of thirst in a row the whole crew deserts at the next dawn, whatever its morale
+  (`provisions.hunger_desertion_days`, `thirst_desertion_days`; off with `crew.desertion.enabled`).
+- **Rum:** a ration raises morale. With rum for 10 days of the ration or more in the pantries the crew drinks a double
+  ration and works at 60% speed until 6000 ticks after the binge ends (`provisions.rum_binge_days`,
+  `rum_binge_rations`, `drunk_work_speed`, `drunk_duration_ticks`).
 - **Scurvy** sets in after 8 days without fresh food or fruit (apple, melon, berries, lime) and is cured by eating some.
 
 ---
@@ -1134,7 +1141,10 @@ The owner of a door still opens it without a key; nobody else, no mob and no red
 - The **brig door** belongs to the player who placed it. Sneak-use it with an empty hand to lock or unlock it. A locked
   door opens only for its owner and ignores redstone.
 - A prisoner is **in a cell** when it stands in a closed space of at most 64 blocks, bounded by solid blocks, brig bars
-  and a closed, locked brig door. There it stays, and it doesn't try to escape.
+  and a closed, locked brig door. There it stays, and it doesn't try to escape, unless it is held on a ship whose
+  crew is unhappy: while the crew's average morale is below 20 (`crew.desertion.desert_below`), a prisoner breaks out
+  of a locked cell with a chance of about 2% a minute (`brig.low_morale_escape_chance_per_minute`). A ship without crew keeps its
+  prisoners like a cell ashore. Cells work aboard ships too.
 
 What you can do with a prisoner (deliver at a navy officer; the rest through `/pirates brig`): deliver it for its bounty,
 ransom it, press-gang it (a crime), or release it.

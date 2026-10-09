@@ -211,3 +211,47 @@ Setup as above, both clients, a creative world. Screenshots of anything hidden o
    the cloth still appears, hoists to half and full, and bellies; the wind arrow stands east of the sail.
 4. **Nothing else changed.** Cannon loading, assembly, mooring, boarding, hammocks and the swivel gun look as before
    (the check passed them as they were); open each once to be sure nothing hides the action there either.
+
+# PND4: ratline nets, railings, her name, crew on deck
+
+Four new scenes (22 in all) and one new line in **Cargo and Weight**. All pass the headless view check (`SceneViewTest`
+22/22) at the default camera from the north-west and GUI scale 3; what it cannot check is our own models, the nets
+drawn by their renderer and the entities, so watch each at the default view (do not drag the camera), GUI scale 3,
+on both clients (`./gradlew :neoforge:runClient`, `./gradlew :fabric:runClient`), creative world. Screenshots of
+anything hidden, cut off, missing or wrong.
+
+1. **Ratline Nets** (ratline net; Almanac: Sailing, "Ratline nets", "Show me: stringing ratline nets"; about 36 s).
+   A deck with a railing to port, a mast, a hoop six up and a crow's nest on top. Check: the chainplate on the rail and
+   the hoop on the mast's west face appear; after the two net clicks **the net is drawn** from the chainplate's ring up
+   to the hoop (two side ropes and rungs; this is the game's own `RatlineNetRenderer` fed by the block entities, never
+   seen in a Ponder world before: if no net shows, that is the bug to report); a sailor climbs it facing the mast, rises
+   past the hoop and steps onto the nest's floor (not into the mast, not through the rim); two more chainplates appear
+   at either side and **the three strands draw as one fan** with rungs narrowing to the hoop; the green triangle
+   outline lies over the fan; a click breaks the south chainplate: it vanishes, a net item pops out, **two strands
+   stay**, still joined.
+2. **Railings and Bulwarks** (oak railing, first scene; Almanac: Ships, "Railings", "Show me: railings and bulwarks";
+   about 37 s). Check: the run of four railings laid stern-ward, **the end post moving with the run's end** (no post
+   where a block meets the next, none next to the port); the second click on the last one adds the south edge with a
+   corner post and an end post; the railing port appears and the posts beside it go; the cannon behind it fires
+   **through the port to the west** (flash and smoke outside the hull, the ball flying west); the gate opens (the leaf
+   swings) and a one-cell plank lies from its sill onto the pier, level; a lantern stands on the post at the bow end of
+   the railing; the swivel gun sits on the rail **shifted to its outer (west) edge**; the bow bulwark appears with its
+   shut gun port, then a cannon behind it and **the lid opens**.
+3. **Her Name and Figurehead** (name board; Almanac: Ships, "Fittings", "Show me: her name and figurehead"; about 29 s).
+   Check: a named name tag ("Black Gull") on the helm; one board on the port side shows **Black Gull** small; two more
+   boards join on its right (as seen from outside: toward the stern) and the name **grows across all three**, drawn
+   once, centred, no frame lines between the boards; the mermaid hangs on the bow facing north; after the second name
+   tag the boards read **Capt. Black Gull**. If the text never shows or shows on every board separately, the scene's
+   block entity data did not reach the renderer: report it.
+4. **On Deck** (oak railing, second scene; Almanac: Crew, "Stations", "Show me: hands at the rail"; about 37 s). Check:
+   two hands **lean on the port rail facing the sea** (this is the first time the `lean` pose is seen in game: the
+   arms should lie across the top rail with the hands just outboard, the body bent over it, no arm through the rail;
+   send a screenshot), the aft one's head stays still about 3 s, then turns slowly to one side and back, the next
+   cycle to the other side; a whistle click and the bow hand straightens up and walks to the deck; two chainplates on
+   the rail's top and **a boarding net hangs along the rail** between them (an upright mesh with a sagging top rope);
+   a pirate climbs from the longboat, **stops at the net** (red outline) while the text shows (in the game the hold is one second), then climbs over onto
+   the deck; a sailor walks from the deck over the rail through the net down into the longboat; three cutlass clicks
+   and the net is gone, a net item drops. BRD3's "back aboard" recall is not in it (BRD3 was not on main).
+5. **Cargo and Weight** (cargo crate): after the two empty crates appear aft, a new green line "Placed empty, the
+   crates leave her level: her ballast is worked out again for new blocks" points at the starboard crate; the ship stays
+   level until the crates fill. The rest is unchanged.

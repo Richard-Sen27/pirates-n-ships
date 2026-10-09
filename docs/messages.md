@@ -30,8 +30,8 @@ message.
 
 ## Counts
 
-- Action bar, kept as they were: 124
-- Action bar, kept and shortened: 91
+- Action bar, kept as they were: 125
+- Action bar, kept and shortened: 92
 - Moved from the chat to the action bar: 30
 - Dropped (call and key removed): 46
 - Kept in the chat (people, quests, notices, reports from afar): 120
@@ -281,10 +281,12 @@ Length: characters of the English text, each `%s` counted as 3.
 | `grapple.slide_disabled` | KEEP | bar | Sliding along ropes is disabled | 31 | sliding off |
 | `grapple.musket_loaded` | SHORT | bar | Fire the shot before loading the hook (was: The musket is loaded with shot: fire it before loading the hook) | 37 (was 63) | a hook into a loaded musket |
 | `grapple.no_powder` | SHORT | bar | The hook needs one gunpowder (was: Loading the hook into the musket takes one gunpowder) | 28 (was 52) | a hook without powder |
-| `boarding_plank.blocked` | KEEP | bar | Something is in the way of the plank | 36 | a plank into blocks |
+| `boarding_plank.blocked` | KEEP | bar | Something is in the way %s blocks out | 38 | a plank into blocks (BRD2) |
 | `boarding_plank.disabled` | SHORT | bar | Boarding planks are off on this server (was: Boarding planks are disabled on this server) | 38 (was 43) | planks off |
-| `boarding_plank.no_deck` | KEEP | bar | No deck within reach | 20 | no deck in reach |
-| `boarding_plank.not_on_ship` | KEEP | bar | Lay the plank from a ship's gunwale | 35 | a plank from land |
+| `boarding_plank.no_start` | KEEP | bar | No plank from here | 18 | a plank from no edge (BRD2) |
+| `boarding_plank.too_far` | KEEP | bar | Too far: a plank reaches %s blocks | 35 | nothing within the plank's reach (BRD2) |
+| `boarding_plank.too_steep` | SHORT | bar | Too steep: at most %s blocks up or down (was: Too steep: a plank climbs or falls %s blocks at most) | 40 (was 53) | a landing too high or low (BRD2) |
+| `boarding_plank.nothing_to_land` | KEEP | bar | Nothing to land on within reach | 31 | no landing in reach (BRD2) |
 | `melee.refused.locked_out` | KEEP | bar | Can't parry again so soon | 25 | a parry too soon (client) |
 | `melee.refused.no_stamina` | KEEP | bar | Too exhausted | 13 | no stamina (client) |
 | `melee.refused.staggered` | KEEP | bar | Staggered | 9 | staggered (client) |

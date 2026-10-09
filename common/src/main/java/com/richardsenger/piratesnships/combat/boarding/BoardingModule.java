@@ -6,6 +6,7 @@ import com.richardsenger.piratesnships.ship.decor.SableWeightTags;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.advancements.critereon.ItemPredicate;
 import net.minecraft.advancements.critereon.StatePropertiesPredicate;
+import net.minecraft.core.Direction;
 import net.minecraft.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
@@ -27,9 +28,10 @@ import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import java.util.List;
 
 /**
- * The {@code combat.boarding} module (docs/design.md §8.3 "Boarding"): BRD1's boarding plank, a walkway of plank blocks
- * laid from one ship's gunwale onto a ship lying alongside, breaking when the hulls part. The boarding AI that uses
- * {@link BoardingPlanks#between} comes later (BRD2).
+ * The {@code combat.boarding} module (docs/design.md §8.3, §8.4 "Boarding"): the boarding plank, a gangway of plank
+ * blocks laid from a ship, a pier or the shore onto a ship, a pier or the shore (BRD1, BRD2), climbing or falling on
+ * ramps, breaking when its ends part, taken up again by hand; and the client's placement preview. A boarding order that
+ * sends crew across the planks {@link BoardingPlanks#between} two ships does not exist yet.
  */
 public final class BoardingModule implements ModModule {
 
@@ -41,6 +43,7 @@ public final class BoardingModule implements ModModule {
     @Override
     public void registerConfig() {
         BoardingConfig.init();
+        BoardingClientConfig.init();
     }
 
     @Override
@@ -49,31 +52,48 @@ public final class BoardingModule implements ModModule {
     }
 
     @Override
+    public void initClient() {
+        com.richardsenger.piratesnships.combat.boarding.client.PlankPreview.init();
+    }
+
+    @Override
     public void gatherData(DataContributions data) {
         data.lang(lang -> lang
                 .block(BoardingContent.PLANK, "Boarding Plank")
-                .add(BoardingPlankItem.KEY_TOOLTIP, "Use on a gunwale beside a ship lying alongside")
-                .add(BoardingPlankItem.KEY_NO_DECK, "No deck within reach")
-                .add(BoardingPlankItem.KEY_BLOCKED, "Something is in the way of the plank")
-                .add(BoardingPlankItem.KEY_NOT_ON_SHIP, "Lay the plank from a ship's gunwale")
+                .add(BoardingPlankItem.KEY_TOOLTIP, "Use on the edge of a deck, rail or pier toward a ship, a pier or the shore")
+                .add(BoardingPlankItem.KEY_TOOLTIP_PICK_UP, "Sneak and use a laid plank with an empty hand to take it up")
+                .add(BoardingPlankItem.KEY_NO_START, "No plank from here")
+                .add(BoardingPlankItem.KEY_BLOCKED, "Something is in the way %s blocks out")
+                .add(BoardingPlankItem.KEY_TOO_FAR, "Too far: a plank reaches %s blocks")
+                .add(BoardingPlankItem.KEY_TOO_STEEP, "Too steep: at most %s blocks up or down")
+                .add(BoardingPlankItem.KEY_NOTHING_TO_LAND, "Nothing to land on within reach")
                 .add(BoardingPlankItem.KEY_DISABLED, "Boarding planks are off on this server"));
         data.models(m -> {
-            // hand-made Blockbench models (art/models/boarding_plank.bbmodel, design.md §4.8), running north: only the
-            // block state is generated. The gunwale end, the middle and the far end with its hooks are separate models.
+            // hand-made Blockbench models (art/models/boarding_plank.bbmodel, design.md §4.8), laid north: only the block
+            // state is generated. Flat cells: the end at segment 0, the middle and the far end with its hooks. Ramp cells
+            // climb north (the 1-in-2 ramp's lower and upper cell, the 45 degree cell); a falling cell is the climbing
+            // model turned round.
             BoardingPlankBlock plank = BoardingContent.PLANK.get();
             ResourceLocation base = ModelLocationUtils.getModelLocation(plank, "_base");
             ResourceLocation middle = ModelLocationUtils.getModelLocation(plank);
             ResourceLocation tip = ModelLocationUtils.getModelLocation(plank, "_tip");
+            ResourceLocation rampLow = ModelLocationUtils.getModelLocation(plank, "_ramp_low");
+            ResourceLocation rampHigh = ModelLocationUtils.getModelLocation(plank, "_ramp_high");
+            ResourceLocation steep = ModelLocationUtils.getModelLocation(plank, "_steep");
             m.blockStates().accept(MultiVariantGenerator.multiVariant(plank)
-                    .with(PropertyDispatch.properties(BoardingPlankBlock.FACING, BoardingPlankBlock.SEGMENT, BoardingPlankBlock.TIP)
-                            .generate((facing, segment, isTip) -> Variant.variant()
-                                    .with(VariantProperties.MODEL, isTip ? tip : segment == 0 ? base : middle)
-                                    .with(VariantProperties.Y_ROT, switch (facing) {
-                                        case EAST -> VariantProperties.Rotation.R90;
-                                        case SOUTH -> VariantProperties.Rotation.R180;
-                                        case WEST -> VariantProperties.Rotation.R270;
-                                        default -> VariantProperties.Rotation.R0;
-                                    }))));
+                    .with(PropertyDispatch.properties(BoardingPlankBlock.FACING, BoardingPlankBlock.SEGMENT, BoardingPlankBlock.TIP,
+                                    BoardingPlankBlock.PITCH)
+                            .generate((facing, segment, isTip, pitch) -> {
+                                ResourceLocation model = switch (pitch) {
+                                    case FLAT -> isTip ? tip : segment == 0 ? base : middle;
+                                    case UP_LOW, DOWN_LOW -> rampLow;
+                                    case UP_HIGH, DOWN_HIGH -> rampHigh;
+                                    case UP, DOWN -> steep;
+                                };
+                                return Variant.variant()
+                                        .with(VariantProperties.MODEL, model)
+                                        .with(VariantProperties.Y_ROT, rotation(falling(pitch) ? facing.getOpposite() : facing));
+                            })));
             m.handMadeItem(BoardingContent.PLANK_ITEM.get());
         });
         data.blockLoot(loot -> {
@@ -97,6 +117,20 @@ public final class BoardingModule implements ModModule {
                 .define('S', ItemTags.WOODEN_SLABS).define('N', Items.IRON_NUGGET)
                 .unlockedBy("has_wooden_slab", InventoryChangeTrigger.TriggerInstance.hasItems(ItemPredicate.Builder.item().of(ItemTags.WOODEN_SLABS)))
                 .save(out, BoardingContent.PLANK_ITEM.id()));
+    }
+
+    private static boolean falling(PlankRun.Pitch pitch) {
+        return pitch == PlankRun.Pitch.DOWN || pitch == PlankRun.Pitch.DOWN_LOW || pitch == PlankRun.Pitch.DOWN_HIGH;
+    }
+
+    /** The block state rotation of a model laid north for a run going {@code facing}. */
+    private static VariantProperties.Rotation rotation(Direction facing) {
+        return switch (facing) {
+            case EAST -> VariantProperties.Rotation.R90;
+            case SOUTH -> VariantProperties.Rotation.R180;
+            case WEST -> VariantProperties.Rotation.R270;
+            default -> VariantProperties.Rotation.R0;
+        };
     }
 
     @Override

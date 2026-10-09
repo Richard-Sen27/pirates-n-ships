@@ -41,7 +41,7 @@ import static com.richardsenger.piratesnships.almanac.ponder.SceneKit.say;
  *
  * <p>The hook is the item on a drawn arc (the game's hook entity needs its thrower), the haul moves the pirate ship's
  * section three blocks west (an element transform, not Sable: in the game both hulls move toward each other). The
- * plank is the real run of {@link BoardingPlankBlock} states from {@link PlankRun}'s rule for this gap: two cells from
+ * plank is the real run of {@link BoardingPlankBlock} states from {@link PlankRun}'s rule (BRD2) for this gap: two flat cells from
  * the top of our gunwale, the tip on hers. The pirates telegraph their blows through the melee pose the server would
  * sync ({@link SceneSync#melee}); the player is not drawn, only the clicks. About 38 seconds.
  */

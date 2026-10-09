@@ -160,16 +160,23 @@ on land facing east, stand beside it.
 
 ## CAN3: chain shot and grapeshot
 New items: Chain Shot (2 iron ingots + 1 chain in a row, gives 2) and Grapeshot (8 iron nuggets around a string, gives 2),
-flat sprites from `tools/gen_shot_sprites.py`. Both load like a cannonball after the powder (the loaded barrel still
+3D item models since ART15 (`art/models/chain_shot.bbmodel`, `grapeshot.bbmodel`). Both load like a cannonball after the powder (the loaded barrel still
 shows a round ball). Build a target: a ship (or yards on land) with a full square sail of two 7-wide yards a few
 blocks apart, ratlines on the mast, a rope line or a stay between two cleats, and a cannon 10 to 20 blocks off.
-1. **Items and recipes:** both show in the creative tab and the recipe book with their sprites (two iron balls on a
-   chain; a tied canvas bag of small balls); hover names "Chain Shot", "Grapeshot". In hand and on the ground they look
-   like the other flat items.
+1. **Items and recipes (ART15 looks):** both show in the creative tab and the recipe book as 3D models; hover names
+   "Chain Shot", "Grapeshot". Chain shot: two dark iron balls joined by three chain links, lying on the slot's
+   diagonal (lower left to upper right), the links readable as open loops at 16 px. Grapeshot: a three-quarter view
+   like a block: a round wooden sabot, a canvas wrap with a cord tie round the lower tier of balls, four balls on
+   top and a cord knot on the rod. In third person the chain shot is held out in the fist with a ball either side of
+   the chain, the grapeshot like a small block; in first person both sit low right, wholly in view. On the ground
+   and in an item frame both are 3D (the chain shot on the frame's diagonal). Check against `art/renders/chain_shot.png`
+   and `grapeshot.png`, and that neither shimmers where the links or the tie meet the balls.
 2. **Chain shot through a sail:** load powder and chain shot, aim the barrel through the middle of the full sail and
    fire. Expected: white cloth bits and a wool tearing sound where it passes, a hole about three blocks across in the
    cloth (whole blocks of cloth gone), the cloth block just above each hole showing the frayed foot edge, the shot
-   flying on behind the sail. Nothing of the hull breaks, ever. On a ship: `/pirates ship forces` (or the speed on
+   flying on behind the sail. Nothing of the hull breaks, ever. In flight (ART15) the chain shot is its 3D model,
+   about a block from ball to ball, tumbling end over end (two turns a second) about the axis across its flight,
+   smoothly and without jumps between frames. On a ship: `/pirates ship forces` (or the speed on
    the HUD) shows the sail pushing less than before.
 3. **Chain shot at rigging:** fire so the shot passes within a block or so of the rope line or the stay: the rope
    snaps (leash-break sound) and is gone from both cleats; a cut stay takes its triangular sail with it. Shoot at the
@@ -181,7 +188,8 @@ blocks apart, ratlines on the mast, a rope line or a stay between two cleats, an
 6. **Furled and reefed:** furl the sail and fire chain shot through where the cloth would hang: nothing tears. Half
    sail: only the drawn upper half can be torn.
 7. **Grapeshot:** stand a few mobs (or a second player) on an enemy deck or a platform 6 to 15 blocks in front of a
-   cannon loaded with grapeshot and fire: nine small grey pellets fly out in a narrow cone, the mobs in the cone take
+   cannon loaded with grapeshot and fire: nine small iron balls (ART15: each about a sixth of a block across, much
+   smaller than a cannonball; not flat nugget sprites) fly out in a narrow cone, the mobs in the cone take
    3 damage each (one hit per volley per mob), no block breaks and no ship is pushed. A friend standing on your own
    deck right in front of the muzzle is never hit. Beyond about 15 blocks the pellets fall into the sea.
 8. **Breaking a loaded gun:** load chain shot (or grapeshot) and break the cannon in survival: you get the cannon,

@@ -1,131 +1,1347 @@
 {
   "variants": {
-    "facing=east,segment=0,tip=false": {
+    "facing=east,pitch=down,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=east,pitch=down,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=east,pitch=down,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=east,pitch=down,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=east,pitch=down,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=east,pitch=down,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=east,pitch=down,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=east,pitch=down,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=east,pitch=down,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=east,pitch=down,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=east,pitch=down,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=east,pitch=down,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=east,pitch=down_high,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=east,pitch=down_high,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=east,pitch=down_high,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=east,pitch=down_high,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=east,pitch=down_high,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=east,pitch=down_high,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=east,pitch=down_high,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=east,pitch=down_high,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=east,pitch=down_high,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=east,pitch=down_high,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=east,pitch=down_high,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=east,pitch=down_high,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=east,pitch=down_low,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=east,pitch=down_low,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=east,pitch=down_low,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=east,pitch=down_low,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=east,pitch=down_low,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=east,pitch=down_low,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=east,pitch=down_low,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=east,pitch=down_low,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=east,pitch=down_low,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=east,pitch=down_low,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=east,pitch=down_low,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=east,pitch=down_low,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=east,pitch=flat,segment=0,tip=false": {
       "model": "pirates_n_ships:block/boarding_plank_base",
       "y": 90
     },
-    "facing=east,segment=0,tip=true": {
+    "facing=east,pitch=flat,segment=0,tip=true": {
       "model": "pirates_n_ships:block/boarding_plank_tip",
       "y": 90
     },
-    "facing=east,segment=1,tip=false": {
+    "facing=east,pitch=flat,segment=1,tip=false": {
       "model": "pirates_n_ships:block/boarding_plank",
       "y": 90
     },
-    "facing=east,segment=1,tip=true": {
+    "facing=east,pitch=flat,segment=1,tip=true": {
       "model": "pirates_n_ships:block/boarding_plank_tip",
       "y": 90
     },
-    "facing=east,segment=2,tip=false": {
+    "facing=east,pitch=flat,segment=2,tip=false": {
       "model": "pirates_n_ships:block/boarding_plank",
       "y": 90
     },
-    "facing=east,segment=2,tip=true": {
+    "facing=east,pitch=flat,segment=2,tip=true": {
       "model": "pirates_n_ships:block/boarding_plank_tip",
       "y": 90
     },
-    "facing=east,segment=3,tip=false": {
+    "facing=east,pitch=flat,segment=3,tip=false": {
       "model": "pirates_n_ships:block/boarding_plank",
       "y": 90
     },
-    "facing=east,segment=3,tip=true": {
+    "facing=east,pitch=flat,segment=3,tip=true": {
       "model": "pirates_n_ships:block/boarding_plank_tip",
       "y": 90
     },
-    "facing=north,segment=0,tip=false": {
+    "facing=east,pitch=flat,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank",
+      "y": 90
+    },
+    "facing=east,pitch=flat,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_tip",
+      "y": 90
+    },
+    "facing=east,pitch=flat,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank",
+      "y": 90
+    },
+    "facing=east,pitch=flat,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_tip",
+      "y": 90
+    },
+    "facing=east,pitch=up,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=east,pitch=up,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=east,pitch=up,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=east,pitch=up,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=east,pitch=up,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=east,pitch=up,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=east,pitch=up,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=east,pitch=up,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=east,pitch=up,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=east,pitch=up,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=east,pitch=up,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=east,pitch=up,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=east,pitch=up_high,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=east,pitch=up_high,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=east,pitch=up_high,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=east,pitch=up_high,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=east,pitch=up_high,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=east,pitch=up_high,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=east,pitch=up_high,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=east,pitch=up_high,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=east,pitch=up_high,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=east,pitch=up_high,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=east,pitch=up_high,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=east,pitch=up_high,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=east,pitch=up_low,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=east,pitch=up_low,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=east,pitch=up_low,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=east,pitch=up_low,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=east,pitch=up_low,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=east,pitch=up_low,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=east,pitch=up_low,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=east,pitch=up_low,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=east,pitch=up_low,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=east,pitch=up_low,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=east,pitch=up_low,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=east,pitch=up_low,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=north,pitch=down,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=north,pitch=down,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=north,pitch=down,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=north,pitch=down,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=north,pitch=down,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=north,pitch=down,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=north,pitch=down,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=north,pitch=down,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=north,pitch=down,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=north,pitch=down,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=north,pitch=down,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=north,pitch=down,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=north,pitch=down_high,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=north,pitch=down_high,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=north,pitch=down_high,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=north,pitch=down_high,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=north,pitch=down_high,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=north,pitch=down_high,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=north,pitch=down_high,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=north,pitch=down_high,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=north,pitch=down_high,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=north,pitch=down_high,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=north,pitch=down_high,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=north,pitch=down_high,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=north,pitch=down_low,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=north,pitch=down_low,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=north,pitch=down_low,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=north,pitch=down_low,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=north,pitch=down_low,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=north,pitch=down_low,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=north,pitch=down_low,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=north,pitch=down_low,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=north,pitch=down_low,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=north,pitch=down_low,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=north,pitch=down_low,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=north,pitch=down_low,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=north,pitch=flat,segment=0,tip=false": {
       "model": "pirates_n_ships:block/boarding_plank_base",
       "y": 0
     },
-    "facing=north,segment=0,tip=true": {
+    "facing=north,pitch=flat,segment=0,tip=true": {
       "model": "pirates_n_ships:block/boarding_plank_tip",
       "y": 0
     },
-    "facing=north,segment=1,tip=false": {
+    "facing=north,pitch=flat,segment=1,tip=false": {
       "model": "pirates_n_ships:block/boarding_plank",
       "y": 0
     },
-    "facing=north,segment=1,tip=true": {
+    "facing=north,pitch=flat,segment=1,tip=true": {
       "model": "pirates_n_ships:block/boarding_plank_tip",
       "y": 0
     },
-    "facing=north,segment=2,tip=false": {
+    "facing=north,pitch=flat,segment=2,tip=false": {
       "model": "pirates_n_ships:block/boarding_plank",
       "y": 0
     },
-    "facing=north,segment=2,tip=true": {
+    "facing=north,pitch=flat,segment=2,tip=true": {
       "model": "pirates_n_ships:block/boarding_plank_tip",
       "y": 0
     },
-    "facing=north,segment=3,tip=false": {
+    "facing=north,pitch=flat,segment=3,tip=false": {
       "model": "pirates_n_ships:block/boarding_plank",
       "y": 0
     },
-    "facing=north,segment=3,tip=true": {
+    "facing=north,pitch=flat,segment=3,tip=true": {
       "model": "pirates_n_ships:block/boarding_plank_tip",
       "y": 0
     },
-    "facing=south,segment=0,tip=false": {
+    "facing=north,pitch=flat,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank",
+      "y": 0
+    },
+    "facing=north,pitch=flat,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_tip",
+      "y": 0
+    },
+    "facing=north,pitch=flat,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank",
+      "y": 0
+    },
+    "facing=north,pitch=flat,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_tip",
+      "y": 0
+    },
+    "facing=north,pitch=up,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=north,pitch=up,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=north,pitch=up,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=north,pitch=up,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=north,pitch=up,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=north,pitch=up,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=north,pitch=up,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=north,pitch=up,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=north,pitch=up,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=north,pitch=up,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=north,pitch=up,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=north,pitch=up,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=north,pitch=up_high,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=north,pitch=up_high,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=north,pitch=up_high,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=north,pitch=up_high,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=north,pitch=up_high,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=north,pitch=up_high,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=north,pitch=up_high,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=north,pitch=up_high,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=north,pitch=up_high,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=north,pitch=up_high,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=north,pitch=up_high,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=north,pitch=up_high,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=north,pitch=up_low,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=north,pitch=up_low,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=north,pitch=up_low,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=north,pitch=up_low,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=north,pitch=up_low,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=north,pitch=up_low,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=north,pitch=up_low,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=north,pitch=up_low,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=north,pitch=up_low,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=north,pitch=up_low,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=north,pitch=up_low,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=north,pitch=up_low,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=south,pitch=down,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=south,pitch=down,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=south,pitch=down,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=south,pitch=down,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=south,pitch=down,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=south,pitch=down,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=south,pitch=down,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=south,pitch=down,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=south,pitch=down,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=south,pitch=down,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=south,pitch=down,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=south,pitch=down,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 0
+    },
+    "facing=south,pitch=down_high,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=south,pitch=down_high,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=south,pitch=down_high,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=south,pitch=down_high,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=south,pitch=down_high,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=south,pitch=down_high,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=south,pitch=down_high,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=south,pitch=down_high,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=south,pitch=down_high,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=south,pitch=down_high,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=south,pitch=down_high,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=south,pitch=down_high,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 0
+    },
+    "facing=south,pitch=down_low,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=south,pitch=down_low,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=south,pitch=down_low,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=south,pitch=down_low,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=south,pitch=down_low,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=south,pitch=down_low,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=south,pitch=down_low,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=south,pitch=down_low,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=south,pitch=down_low,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=south,pitch=down_low,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=south,pitch=down_low,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=south,pitch=down_low,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 0
+    },
+    "facing=south,pitch=flat,segment=0,tip=false": {
       "model": "pirates_n_ships:block/boarding_plank_base",
       "y": 180
     },
-    "facing=south,segment=0,tip=true": {
+    "facing=south,pitch=flat,segment=0,tip=true": {
       "model": "pirates_n_ships:block/boarding_plank_tip",
       "y": 180
     },
-    "facing=south,segment=1,tip=false": {
+    "facing=south,pitch=flat,segment=1,tip=false": {
       "model": "pirates_n_ships:block/boarding_plank",
       "y": 180
     },
-    "facing=south,segment=1,tip=true": {
+    "facing=south,pitch=flat,segment=1,tip=true": {
       "model": "pirates_n_ships:block/boarding_plank_tip",
       "y": 180
     },
-    "facing=south,segment=2,tip=false": {
+    "facing=south,pitch=flat,segment=2,tip=false": {
       "model": "pirates_n_ships:block/boarding_plank",
       "y": 180
     },
-    "facing=south,segment=2,tip=true": {
+    "facing=south,pitch=flat,segment=2,tip=true": {
       "model": "pirates_n_ships:block/boarding_plank_tip",
       "y": 180
     },
-    "facing=south,segment=3,tip=false": {
+    "facing=south,pitch=flat,segment=3,tip=false": {
       "model": "pirates_n_ships:block/boarding_plank",
       "y": 180
     },
-    "facing=south,segment=3,tip=true": {
+    "facing=south,pitch=flat,segment=3,tip=true": {
       "model": "pirates_n_ships:block/boarding_plank_tip",
       "y": 180
     },
-    "facing=west,segment=0,tip=false": {
+    "facing=south,pitch=flat,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank",
+      "y": 180
+    },
+    "facing=south,pitch=flat,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_tip",
+      "y": 180
+    },
+    "facing=south,pitch=flat,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank",
+      "y": 180
+    },
+    "facing=south,pitch=flat,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_tip",
+      "y": 180
+    },
+    "facing=south,pitch=up,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=south,pitch=up,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=south,pitch=up,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=south,pitch=up,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=south,pitch=up,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=south,pitch=up,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=south,pitch=up,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=south,pitch=up,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=south,pitch=up,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=south,pitch=up,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=south,pitch=up,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=south,pitch=up,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 180
+    },
+    "facing=south,pitch=up_high,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=south,pitch=up_high,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=south,pitch=up_high,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=south,pitch=up_high,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=south,pitch=up_high,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=south,pitch=up_high,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=south,pitch=up_high,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=south,pitch=up_high,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=south,pitch=up_high,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=south,pitch=up_high,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=south,pitch=up_high,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=south,pitch=up_high,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 180
+    },
+    "facing=south,pitch=up_low,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=south,pitch=up_low,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=south,pitch=up_low,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=south,pitch=up_low,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=south,pitch=up_low,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=south,pitch=up_low,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=south,pitch=up_low,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=south,pitch=up_low,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=south,pitch=up_low,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=south,pitch=up_low,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=south,pitch=up_low,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=south,pitch=up_low,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 180
+    },
+    "facing=west,pitch=down,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=west,pitch=down,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=west,pitch=down,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=west,pitch=down,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=west,pitch=down,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=west,pitch=down,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=west,pitch=down,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=west,pitch=down,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=west,pitch=down,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=west,pitch=down,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=west,pitch=down,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=west,pitch=down,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 90
+    },
+    "facing=west,pitch=down_high,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=west,pitch=down_high,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=west,pitch=down_high,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=west,pitch=down_high,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=west,pitch=down_high,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=west,pitch=down_high,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=west,pitch=down_high,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=west,pitch=down_high,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=west,pitch=down_high,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=west,pitch=down_high,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=west,pitch=down_high,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=west,pitch=down_high,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 90
+    },
+    "facing=west,pitch=down_low,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=west,pitch=down_low,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=west,pitch=down_low,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=west,pitch=down_low,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=west,pitch=down_low,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=west,pitch=down_low,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=west,pitch=down_low,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=west,pitch=down_low,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=west,pitch=down_low,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=west,pitch=down_low,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=west,pitch=down_low,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=west,pitch=down_low,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 90
+    },
+    "facing=west,pitch=flat,segment=0,tip=false": {
       "model": "pirates_n_ships:block/boarding_plank_base",
       "y": 270
     },
-    "facing=west,segment=0,tip=true": {
+    "facing=west,pitch=flat,segment=0,tip=true": {
       "model": "pirates_n_ships:block/boarding_plank_tip",
       "y": 270
     },
-    "facing=west,segment=1,tip=false": {
+    "facing=west,pitch=flat,segment=1,tip=false": {
       "model": "pirates_n_ships:block/boarding_plank",
       "y": 270
     },
-    "facing=west,segment=1,tip=true": {
+    "facing=west,pitch=flat,segment=1,tip=true": {
       "model": "pirates_n_ships:block/boarding_plank_tip",
       "y": 270
     },
-    "facing=west,segment=2,tip=false": {
+    "facing=west,pitch=flat,segment=2,tip=false": {
       "model": "pirates_n_ships:block/boarding_plank",
       "y": 270
     },
-    "facing=west,segment=2,tip=true": {
+    "facing=west,pitch=flat,segment=2,tip=true": {
       "model": "pirates_n_ships:block/boarding_plank_tip",
       "y": 270
     },
-    "facing=west,segment=3,tip=false": {
+    "facing=west,pitch=flat,segment=3,tip=false": {
       "model": "pirates_n_ships:block/boarding_plank",
       "y": 270
     },
-    "facing=west,segment=3,tip=true": {
+    "facing=west,pitch=flat,segment=3,tip=true": {
       "model": "pirates_n_ships:block/boarding_plank_tip",
+      "y": 270
+    },
+    "facing=west,pitch=flat,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank",
+      "y": 270
+    },
+    "facing=west,pitch=flat,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_tip",
+      "y": 270
+    },
+    "facing=west,pitch=flat,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank",
+      "y": 270
+    },
+    "facing=west,pitch=flat,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_tip",
+      "y": 270
+    },
+    "facing=west,pitch=up,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=west,pitch=up,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=west,pitch=up,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=west,pitch=up,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=west,pitch=up,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=west,pitch=up,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=west,pitch=up,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=west,pitch=up,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=west,pitch=up,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=west,pitch=up,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=west,pitch=up,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=west,pitch=up,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_steep",
+      "y": 270
+    },
+    "facing=west,pitch=up_high,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=west,pitch=up_high,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=west,pitch=up_high,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=west,pitch=up_high,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=west,pitch=up_high,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=west,pitch=up_high,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=west,pitch=up_high,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=west,pitch=up_high,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=west,pitch=up_high,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=west,pitch=up_high,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=west,pitch=up_high,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=west,pitch=up_high,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_high",
+      "y": 270
+    },
+    "facing=west,pitch=up_low,segment=0,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=west,pitch=up_low,segment=0,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=west,pitch=up_low,segment=1,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=west,pitch=up_low,segment=1,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=west,pitch=up_low,segment=2,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=west,pitch=up_low,segment=2,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=west,pitch=up_low,segment=3,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=west,pitch=up_low,segment=3,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=west,pitch=up_low,segment=4,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=west,pitch=up_low,segment=4,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=west,pitch=up_low,segment=5,tip=false": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
+      "y": 270
+    },
+    "facing=west,pitch=up_low,segment=5,tip=true": {
+      "model": "pirates_n_ships:block/boarding_plank_ramp_low",
       "y": 270
     }
   }

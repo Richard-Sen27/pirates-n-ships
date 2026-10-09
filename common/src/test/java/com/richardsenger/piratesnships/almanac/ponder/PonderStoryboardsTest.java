@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.almanac.ponder;
 
+import com.richardsenger.piratesnships.combat.boarding.PlankRun;
 import net.createmod.ponder.api.registration.StoryBoardEntry;
 import net.createmod.ponder.foundation.PonderScene;
 import net.createmod.ponder.foundation.instruction.DelayInstruction;
@@ -200,32 +201,37 @@ class PonderStoryboardsTest {
 
     @Test
     void thePlankIsTheRunTheRuleLaysForThisGap() {
-        // clicked on the top of our gunwale, facing east (her side); her gunwale hauled alongside stands at x 6
-        com.richardsenger.piratesnships.combat.boarding.PlankRun.Start start =
-                com.richardsenger.piratesnships.combat.boarding.PlankRun.start(BoardingScene.GUNWALE,
-                        net.minecraft.core.Direction.UP, net.minecraft.core.Direction.EAST);
+        // clicked on the top of our gunwale, facing east (her side); her hull hauled alongside stands at x 6..9, its
+        // gunwale on y 3; the rest is open water. BRD2's rule with the default settings lays a level two-cell run
+        // resting on her rail (no ramp: both rails are on y 3).
+        PlankRun.Start start = PlankRun.start(BoardingScene.GUNWALE, net.minecraft.core.Direction.UP, net.minecraft.core.Direction.EAST);
         int herRailX = 9 - BoardingScene.HAUL;
-        com.richardsenger.piratesnships.combat.boarding.PlankRun.Result run =
-                com.richardsenger.piratesnships.combat.boarding.PlankRun.compute(4, new com.richardsenger.piratesnships.combat.boarding.PlankRun.Probe() {
-                    @Override
-                    public boolean free(int i) {
-                        return true;
-                    }
+        PlankRun.Probe probe = new PlankRun.Probe() {
+            @Override
+            public boolean free(int i, int dy) {
+                return ground(i, dy) == PlankRun.Ground.NONE;
+            }
 
-                    @Override
-                    public com.richardsenger.piratesnships.combat.boarding.PlankRun.Landing landing(int i) {
-                        net.minecraft.core.BlockPos cell = start.cell(i);
-                        boolean underIsHerRail = cell.getX() >= herRailX && cell.below().getY() == 3;
-                        return com.richardsenger.piratesnships.combat.boarding.PlankRun.classify(underIsHerRail, underIsHerRail,
-                                false, false, false);
-                    }
-                });
+            @Override
+            public boolean open(int i, int dy) {
+                return ground(i, dy) == PlankRun.Ground.NONE;
+            }
+
+            @Override
+            public PlankRun.Ground ground(int i, int dy) {
+                net.minecraft.core.BlockPos cell = start.cell(i, dy);
+                boolean hers = cell.getX() >= herRailX && cell.getX() <= herRailX + 3 && cell.getY() >= 1 && cell.getY() <= 3;
+                return hers ? PlankRun.Ground.STURDY : PlankRun.Ground.NONE;
+            }
+        };
+        PlankRun.Result run = PlankRun.find(new PlankRun.Settings(6, 2, 2, true), probe);
         assertTrue(run.found());
         assertEquals(BoardingScene.RUN.size(), run.length());
         for (int i = 0; i < run.length(); i++) {
-            assertEquals(BoardingScene.RUN.get(i), start.cell(i));
+            assertEquals(BoardingScene.RUN.get(i), start.cell(i, run.cells().get(i).dy()));
+            assertEquals(PlankRun.Pitch.FLAT, run.cells().get(i).pitch());
         }
-        assertEquals(com.richardsenger.piratesnships.combat.boarding.PlankRun.Landing.LEVEL, run.landing());
+        assertEquals(PlankRun.Landing.LEVEL, run.landing());
     }
 
     @Test

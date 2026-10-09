@@ -8,8 +8,10 @@ message.pirates_n_ships.bilge_pump.not_on_ship
 message.pirates_n_ships.bilge_pump.pumping
 message.pirates_n_ships.boarding_plank.blocked
 message.pirates_n_ships.boarding_plank.disabled
-message.pirates_n_ships.boarding_plank.no_deck
-message.pirates_n_ships.boarding_plank.not_on_ship
+message.pirates_n_ships.boarding_plank.no_start
+message.pirates_n_ships.boarding_plank.nothing_to_land
+message.pirates_n_ships.boarding_plank.too_far
+message.pirates_n_ships.boarding_plank.too_steep
 message.pirates_n_ships.brig.capture.already_prisoner
 message.pirates_n_ships.brig.capture.dead
 message.pirates_n_ships.brig.capture.no_bounty

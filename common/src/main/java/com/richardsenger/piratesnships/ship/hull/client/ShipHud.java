@@ -26,20 +26,19 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.ChatVisiblity;
 
 /**
- * The ship HUD (docs/design.md §4.6, HUD1, HUD2), a HUD layer drawn while the player is aboard and a fresh
- * {@link ShipStatusPayload} is in {@link ClientShipStatus}, in two panels. The compass panel (bottom left by default,
- * above the chat): a north-up compass rose with a ship-shaped needle for the heading and the wind as an arrow outside
- * the rose (on the side it blows from, pointing where it blows, longer for stronger wind, amber in a gust); under it
- * speed and rudder; then the ship's name, followed by the cargo load level (CW1) when known. The hull panel (bottom
- * right by default, clear of the hotbar and the stamina bar): the hull strip, bow on the left, one cell per compartment
- * filling blue with water, a red tick on a cell with an open breach and a pump glyph while a pump drains it. Layout:
- * {@link ShipHudLayout}; texture: {@link ShipHudSheet}; config {@code ship_hud}.
+ * The ship HUD (docs/design.md §4.6, HUD1, HUD2, HUD4), a HUD layer below the chat drawn while the player is aboard and
+ * a fresh {@link ShipStatusPayload} is in {@link ClientShipStatus}, in two panels. The compass panel (bottom left by
+ * default, at a fixed spot that chat lines pass over): a north-up compass rose with a ship-shaped needle for the
+ * heading and the wind as an arrow outside the rose (on the side it blows from, pointing where it blows, longer for
+ * stronger wind, amber in a gust); under it speed and rudder, nothing else (HUD4 dropped the name and the load). The
+ * hull panel (bottom right by default, clear of the hotbar, the stamina bar and the chat): the hull strip, bow on the
+ * left, one cell per compartment filling blue with water, a red tick on a cell with an open breach and a pump glyph
+ * while a pump drains it. Layout: {@link ShipHudLayout}; texture: {@link ShipHudSheet}; config {@code ship_hud}.
  */
 public final class ShipHud {
 
     private static final int BACKING = 0x70101418;
     private static final int TEXT = 0xFFEEE0BC;
-    private static final int TEXT_DIM = 0xFFB8A27C;
     private static final int CELL_FRAME = 0xFF8A6A2E;
     private static final int CELL_EMPTY = 0xC0202830;
     private static final int WATER = 0xFF2F64B4;
@@ -74,22 +73,19 @@ public final class ShipHud {
         ChatComponent chat = mc.gui.getChat();
         boolean chatOpen = chat.isChatFocused();
         ShipHudLayout.Placement placed = ShipHudLayout.place(ShipHudConfig.COMPASS_CORNER.get(),
-                ShipHudConfig.HULL_CORNER.get(), screen(mc, g, chat, chatOpen), ShipHudConfig.SCALE.get());
+                ShipHudConfig.HULL_CORNER.get(), screen(mc, g, chat, chatOpen), ShipHudConfig.SCALE.get(),
+                ShipHudConfig.MARGIN.get());
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        // a panel that cannot get clear of the open chat on this screen waits until the chat closes
-        if (placed.compass().clear() || !chatOpen) {
-            begin(g, placed.compass().rect());
-            compass(g, mc, ClientShipStatus.heading(partial), partial);
-            text(g, mc.font, s);
-            g.pose().popPose();
-        }
-        if (placed.hull().clear() || !chatOpen) {
-            begin(g, placed.hull().rect());
-            strip(g, s.cells());
-            g.pose().popPose();
-        }
+        // HUD4: both panels always show; the chat (a later layer) passes over them
+        begin(g, placed.compass().rect());
+        compass(g, mc, ClientShipStatus.heading(partial), partial);
+        text(g, mc.font, s);
+        g.pose().popPose();
+        begin(g, placed.hull().rect());
+        strip(g, s.cells());
+        g.pose().popPose();
         RenderSystem.disableBlend();
     }
 
@@ -101,7 +97,7 @@ public final class ShipHud {
         pose.scale(f, f, 1f);
     }
 
-    /** What vanilla and the stamina bar draw where the panels might go (HUD2). */
+    /** What vanilla and the stamina bar draw where the panels might go (HUD2); the chat only for the hull panel (HUD4). */
     private static ShipHudLayout.Screen screen(Minecraft mc, GuiGraphics g, ChatComponent chat, boolean chatOpen) {
         int gw = g.guiWidth(), gh = g.guiHeight();
         LocalPlayer player = mc.player;
@@ -111,7 +107,7 @@ public final class ShipHud {
         double cs = chat.getScale();
         int chatW = hidden ? 0 : (int) Math.ceil(chat.getWidth() + 12 * cs);
         int chatH = hidden ? 0 : chatLinesHeight(mc, chat, chatOpen, cs);
-        obstacles.addAll(ShipHudLayout.chat(gw, gh, chatW, chatH, chatOpen));
+        List<ShipHudLayout.Rect> chatRects = ShipHudLayout.chat(gw, gh, chatW, chatH, chatOpen);
 
         boolean statusBars = mc.gameMode != null && mc.gameMode.canHurtPlayer();
         int right = rightRowsAbove(player);
@@ -123,7 +119,7 @@ public final class ShipHud {
                     MeleeClientConfig.HUD_X_OFFSET.get(), MeleeClientConfig.HUD_Y_OFFSET.get());
             obstacles.add(new ShipHudLayout.Rect(bar.x(), bar.y(), bar.w(), bar.h()));
         }
-        return new ShipHudLayout.Screen(gw, gh, obstacles);
+        return new ShipHudLayout.Screen(gw, gh, obstacles, chatRects);
     }
 
     /**
@@ -220,17 +216,6 @@ public final class ShipHud {
         int lw = font.width(line);
         g.fill(w / 2 - lw / 2 - 2, ShipHudLayout.SPEED_Y - 1, w / 2 - lw / 2 + lw + 2, ShipHudLayout.SPEED_Y + 9, BACKING);
         g.drawString(font, line, w / 2 - lw / 2, ShipHudLayout.SPEED_Y, TEXT, true);
-
-        boolean unnamed = s.name().isEmpty();
-        String name = unnamed ? Component.translatable(ShipHudText.KEY_UNNAMED).getString() : s.name();
-        // CW1's load level after the name ("Black Pearl · Laden"); the name gives way when space is short
-        String load = s.loadLevel() == null ? "" : " · " + Component.translatable(s.loadLevel().translationKey()).getString();
-        int max = ShipHudLayout.W - 4 - font.width(load);
-        if (font.width(name) > max) name = font.plainSubstrByWidth(name, Math.max(0, max - font.width("…"))) + "…";
-        int nw = font.width(name), tw = nw + font.width(load);
-        int x = w / 2 - tw / 2;
-        g.drawString(font, name, x, ShipHudLayout.NAME_Y, unnamed ? TEXT_DIM : TEXT, true);
-        if (!load.isEmpty()) g.drawString(font, load, x + nw, ShipHudLayout.NAME_Y, TEXT_DIM, true);
     }
 
     private static void strip(GuiGraphics g, List<ShipStatusPayload.Cell> cells) {

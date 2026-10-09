@@ -13,6 +13,7 @@
   "client": [
     "client.MixinAbstractClientPlayer",
     "client.MixinCamera",
+    "client.MixinGui",
     "client.MixinMinecraft",
     "client.MixinMusicManager",
     "client.MixinSoundEngine"

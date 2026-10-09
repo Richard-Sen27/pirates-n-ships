@@ -4,9 +4,7 @@ import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.datagen.LangBuilder;
 import com.richardsenger.piratesnships.crew.galley.WaterBarrelBlockEntity;
 import com.richardsenger.piratesnships.crew.provisions.ProvisionsConfig;
-import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
-import com.richardsenger.piratesnships.sailing.helm.HelmService;
 import com.richardsenger.piratesnships.ship.assembly.ShipAssembler;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
@@ -21,7 +19,6 @@ import com.richardsenger.piratesnships.trade.good.TradeGoodIndex;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +44,7 @@ import java.util.function.Consumer;
  *       boxes, hoppers, the sea chest) becomes a downward force at its position ({@link CargoForceRule}), recorded every
  *       physics substep in the {@code pirates_n_ships:cargo} force group;</li>
  *   <li>the total gives the ship's {@link CargoWeight.LoadLevel} (weight over {@code blocks × capacity_per_block}),
- *       shown by {@code /pirates ship info} and sent to the helmsman for the helm overlay ({@link ShipLoadPayload}).</li>
+ *       shown by {@code /pirates ship info} and the ship screen (HUD4 took it off the helm overlay).</li>
  * </ul>
  * A sleeping body is not woken by a steady queued force (docs/sable-notes.md §9.0i), so a changed force wakes the ship
  * once through {@link ShipBody#addVelocity} with zero velocity.
@@ -89,8 +86,6 @@ public final class ShipCargo {
     }
 
     private static final Map<ServerLevel, Map<UUID, Snapshot>> SHIPS = new IdentityHashMap<>();
-    /** Load level ordinal last sent to each helmsman. */
-    private static final Map<UUID, Integer> SENT = new HashMap<>();
 
     private ShipCargo() {
     }
@@ -101,14 +96,8 @@ public final class ShipCargo {
         ShipForces.registerCargo();
     }
 
-    public static void registerPayloads() {
-        Services.NETWORK.registerToClient(ShipLoadPayload.TYPE, ShipLoadPayload.CODEC,
-                (payload, player) -> com.richardsenger.piratesnships.ship.cargo.client.ClientShipLoad.onPayload(payload));
-    }
-
     public static void registerEvents() {
         CommonEvents.LEVEL_TICK_END.register(ShipCargo::onLevelTick);
-        CommonEvents.PLAYER_LOGOUT.register(p -> SENT.remove(p.getUUID()));
         CommonEvents.SERVER_STOPPED.register(s -> clear());
         SableShips.onPhysicsTick(ShipCargo::onPhysicsTick);
         SableShips.onShipRemoved((level, id, destroyed) -> {
@@ -117,10 +106,6 @@ public final class ShipCargo {
                 m.remove(id);
             }
         });
-    }
-
-    public static void initClient() {
-        com.richardsenger.piratesnships.ship.cargo.client.ClientShipLoad.init();
     }
 
     public static void lang(LangBuilder lang) {
@@ -220,34 +205,6 @@ public final class ShipCargo {
                 ship.addVelocity(new Vector3d(), new Vector3d());
             }
         }
-        syncHelmsmen(level, m);
-    }
-
-    /** Sends the load level to every player holding a helm in {@code level} when it differs from what they have. */
-    private static void syncHelmsmen(ServerLevel level, Map<UUID, Snapshot> m) {
-        for (ServerPlayer player : level.players()) {
-            BlockPos helm = HelmService.session(player);
-            if (helm == null) {
-                SENT.remove(player.getUUID());
-                continue;
-            }
-            ShipBody ship = SableShips.containing(level, helm);
-            CargoWeight.LoadLevel load = null;
-            if (ship != null) {
-                Snapshot s = m.get(ship.id());
-                if (s == null) {
-                    s = weigh(ship);
-                    m.put(ship.id(), s);
-                }
-                load = s.level();
-            }
-            int ordinal = load == null ? -1 : load.ordinal();
-            Integer sent = SENT.get(player.getUUID());
-            if (sent == null || sent != ordinal) {
-                SENT.put(player.getUUID(), ordinal);
-                Services.NETWORK.sendToPlayer(player, ShipLoadPayload.of(load));
-            }
-        }
     }
 
     /** Physics substep: records the vanilla containers' weight as impulses in the cargo group. */
@@ -280,7 +237,6 @@ public final class ShipCargo {
 
     static void clear() {
         SHIPS.clear();
-        SENT.clear();
     }
 
     /** Mass [kpg] that the vanilla containers of {@code s} amount to (for tests and the playtest notes). */

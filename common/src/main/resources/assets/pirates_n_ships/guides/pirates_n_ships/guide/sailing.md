@@ -327,16 +327,17 @@ watch returns to the posts, and the guards stand fast again until morning. Opera
 info|patrol|return`. Server config `mobs.squad`.
 
 ## Ship HUD
-While you are aboard a ship, two small panels show its state. At the bottom left, above the chat, the compass rose
+While you are aboard a ship, two small panels show its state. At the bottom left, a little in from the edge, the compass rose
 turns a little ship-shaped needle to the bow's heading; the light arrow outside the rose sits on the side the wind comes
 from and points the way it blows: the longer it is, the stronger the wind, and it turns amber in a gust. Below it you
-read the speed (in knots, or blocks per second) and the rudder angle, then the ship's name and how heavily it is laden.
+read the speed (in knots, or blocks per second) and the rudder angle; nothing more (the ship's name and load are in the ship screen).
 At the bottom right, clear of the hotbar, the hull strip shows your hull from bow (left) to stern: one cell per
 compartment, filling blue as water comes in, with a red mark where a breach lets the sea in and a pump sign while a
 pump drains it. The panels stay while you walk the deck, jump, climb the rigging or sit at the helm, and go a moment
-after you leave the ship. When you open the chat the compass moves up above it, or waits until the chat closes if
-there is no room. Client options under `ship_hud`: on/off, `compass_corner` and `hull_corner` (put both in one
-corner to stack them as one panel), size and speed unit; servers can switch it off with `ships.ship_status_hud`.
+after you leave the ship. The compass stays put when chat messages come in: they are drawn over it. Client options
+under `ship_hud`: on/off, `compass_corner` and `hull_corner` (put both in one corner to stack them as one panel),
+`margin` (the distance from the screen edges), size and speed unit; servers can switch it off with
+`ships.ship_status_hud`.
 
 ## Cargo weight
 What you carry weighs the ship down. Crates, cargo barrels, pantries and water barrels get heavier as they fill: a full

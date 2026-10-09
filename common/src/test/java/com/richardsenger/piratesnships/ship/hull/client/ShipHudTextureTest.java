@@ -56,5 +56,9 @@ class ShipHudTextureTest {
             }
         }
         assertEquals(ShipHudLayout.STRIP_H, ShipHudSheet.BOW.h(), "the bow cap is as tall as the strip");
+        // HUD4's shrunk compass panel: the rose sprite still sits inside it, above the speed line
+        assertTrue(ShipHudLayout.ROSE_CY - ShipHudSheet.ROSE.h() / 2 >= 0, "the rose inside the panel's top");
+        assertTrue(ShipHudLayout.ROSE_CY + ShipHudSheet.ROSE.h() / 2 < ShipHudLayout.SPEED_Y - 1, "the rose above the speed line");
+        assertTrue(ShipHudSheet.ROSE.w() <= ShipHudLayout.W, "the rose fits the panel's width");
     }
 }

@@ -491,7 +491,7 @@ Follow-ups for later packages (small, not blocking):
 | 15 | Crew command system + provisions | done | Stations, the whistle, hammocks, hiring (CRW1), wages and meals (CRW2), the capstan (CRW3), the lookout (CN1), the ship screen (HGUI1). |
 | 16 | Sea chest + survival | done | Sea chest and paddle, cold water, swimming hunger, sleeping aboard (SLP1). |
 | 17 | Weather and hazards | done | Waterspouts and whirlpools (H1); the kraken (K1a, K1b); waves with sea state, roll and pitch, spray and spilling (WV1, 2026-10-08). Tuning after the playtests. |
-| 18 | Audio | todo | |
+| 18 | Audio | done in substance | G1 (the sounds builder, `tools/convert_sounds.py`, music pools `music.sea` and `music.shanty` with the client music selector), creaks (F1), bells, anchor, cannons, sails, the lookout's hail (LKO2, a bell placeholder for a recorded "Sail ho!"). Open: the sound coverage audit before 1.0.0 (which actions still have no sound), more music tracks. |
 | 19 | RPG + careers + kraken + duel bosses | done | Reputation, careers, rewards, titles, quests on land and at sea (QST1, QST1b, QST2, QST2b), the captain ashore and at sea (BOS1, BOS2), ships by rank (SHP1). |
 | 20 | World simulation | done | Factions, lanes, convoys, materialisation and its polish (WS3c), patrols that fight (WS4b, WS4c), raids (WS5), rigged NPC sloops (TPL2). |
 | 21 | Melee extras (optional) | todo | |

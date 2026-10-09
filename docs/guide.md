@@ -500,11 +500,24 @@ and routes that pass near a pirate island pay a risk bonus. Operators can watch 
 ### Ships on the horizon
 NPC ships sail the sea lanes between ports even when nobody watches. When you come within sight of one, it becomes a
 real ship: a merchantman under the merchant flag with goods in her hold and a few armed sailors, a navy patrol, or a
-pirate under the Jolly Roger. She sails on to her destination and fades back into the distance when you leave. Take
-goods from a merchant's hold while aboard and you have plundered her. Sink her with your cannons and the deed is
-yours. Kill every fighter aboard and hold her deck for a few seconds, and she is yours, crew and all. Capturing a
-merchant is piracy in the navy's eyes. Operators: `/pirates world voyages spawn near convoy|patrol|raid`. Server
-config `world_simulation.materialize`.
+pirate under the Jolly Roger. Navy and pirate sloops carry four cannons, two a side, firing through ports in the
+bulwark; they put to sea with their guns loaded and twelve rounds of powder and shot per gun in the shot locker, a
+barrel in the hold beside the mast. Merchants carry no powder. She sails on to her destination and fades back into
+the distance when you leave. Take goods from a merchant's hold while aboard and you have plundered her (powder and
+shot from a shot locker are not cargo). Sink her with your cannons and the deed is yours. Kill every fighter aboard
+and hold her deck for a few seconds, and she is yours, crew and all. Capturing a merchant is piracy in the navy's
+eyes. Operators: `/pirates world voyages spawn near convoy|patrol|raid`. Server config
+`world_simulation.materialize` (`cannon_rounds`, `guns_start_loaded`), `world_simulation.voyages` (which ship
+templates each faction sails).
+
+### Navy patrols
+Navy patrols sail between navy outposts, or out toward a pirate island and back. A patrol hunts any player's ship
+flying the Jolly Roger, a captain whose cover is blown, and a captain with a bounty of 50 doubloons or more, from
+up to 256 blocks away, and tells you so in chat. Within range it circles you
+at about 20 blocks and its free hands man the guns that bear on you and open fire. Strike your colours and it holds
+its fire, shadows you for half a minute and returns to its route. Outrun it beyond 64 blocks for a while, or beyond
+384 blocks at once, and it breaks off the chase. Its helmsman acknowledges the chase once and keeps quiet while he
+circles. Operators: `/pirates world patrols`. Server config `world_simulation.navy`.
 
 ### Navy patrols
 The navy sends patrols between its outposts, or out toward the nearest pirate island and back when an outpost stands

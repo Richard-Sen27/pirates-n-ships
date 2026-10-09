@@ -59,7 +59,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li><b>Placement</b>: {@code ShipTemplatePlacer.place} toward the cardinal direction nearest the leg's heading
  *       (no force, assembled, no owner), centred on the lane point, then turned and moved by {@code ShipBody.placeAt}
  *       to the exact heading with its centre on the point; named, flag by faction, cargo into the containers, crew and
- *       fighters ({@link VoyageCrew}), the course over the remaining waypoints.</li>
+ *       fighters ({@link VoyageCrew}), the course over the remaining waypoints; a navy or pirate ship's shot lockers
+ *       stocked and its guns loaded ({@link VoyageGuns}, WS4c).</li>
  *   <li><b>Link</b>: the record (MATERIALISED, {@code shipId}), {@link VoyageShips} in memory, {@link VoyageLink} in the
  *       sub-level's user data. After a reload a loaded ship is adopted again by its user data and gets its course back;
  *       a ship whose voyage moved on or ended is removed with its people.</li>
@@ -213,6 +214,12 @@ public final class Materializer {
         // before it would shift the hull afterwards (a GameTest ship ended 4 blocks off its point)
         Map<net.minecraft.resources.ResourceLocation, Integer> overflow = VoyageShips.load(level, ship, v.cargo(),
                 MaterializeConfig.CARGO_IS_PLUNDER.get());
+        // powder and shot for a navy or pirate ship's guns (WS4c), before the turn like the cargo
+        VoyageGuns.Stocked guns = VoyageGuns.stock(level, ship, v.faction());
+        if (guns.guns() > 0) {
+            Constants.LOG.debug("Voyage {}: {} guns, {} rounds in {} shot lockers, {} loaded, {} out of reach of a locker",
+                    v.shortId(), guns.guns(), guns.rounds(), guns.lockers(), guns.loaded(), guns.unsupplied());
+        }
         ShipAssembler.name(ship, name(v));
         raiseFlag(ship, v);
         Vec3 plotCentre = templateCentre(ship, structure, r);

@@ -81,7 +81,9 @@ public final class ShipTemplateCommands {
                 .add(KEY_HULL_ONLY, "none (hull only)")
                 .add(KEY_OCCUPIED, "Another ship lies there")
                 .add(ShipTemplates.STARTER_SLOOP.name(), "Starter Sloop")
-                .add(ShipTemplates.STARTER_SLOOP_BASIC.name(), "Starter Sloop (basic)");
+                .add(ShipTemplates.STARTER_SLOOP_BASIC.name(), "Starter Sloop (basic)")
+                .add(ShipTemplates.NAVY_SLOOP_ARMED.name(), "Navy Sloop (armed)")
+                .add(ShipTemplates.PIRATE_SLOOP_ARMED.name(), "Pirate Sloop (armed)");
     }
 
     /** The template id as typed: a bare path that is not a known {@code minecraft:} id means ours. */

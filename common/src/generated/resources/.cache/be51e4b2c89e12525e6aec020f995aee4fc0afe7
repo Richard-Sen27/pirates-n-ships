@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-08T10:39:59.393879	Raw JSON (data): pirates_n_ships
+// 1.21.1	2026-10-09T01:31:33.438362	Raw JSON (data): pirates_n_ships
 48a3d1396f56a1821c2e6dd2a2ce6f5dc32fc15c data/pirates_n_ships/advancement/recipes/misc/guide_book.json
 81e4547184aef1c6ab27c144e370d0ff6cb85b3d data/pirates_n_ships/loot_table/chests/buried_treasure.json
 917a78912c9b82231026bd2ea966eb7535e5da69 data/pirates_n_ships/loot_table/chests/wreck.json
@@ -18,6 +18,8 @@ cd08151b023c163d4b77818278fe630fe5188021 data/pirates_n_ships/physics_block_prop
 f51d35b4fe313cf899a1835d0076c39c73bec5f8 data/pirates_n_ships/physics_block_properties/swivel_gun.json
 8831dc87829a5e049c6f7449835f87bac13dd637 data/pirates_n_ships/physics_block_properties/water_barrel.json
 607cc5f271dd005d9c97359d52918668395791bd data/pirates_n_ships/physics_block_properties/yard.json
+e88a726bcb9ae5e41c8b40d578527c7c097309c2 data/pirates_n_ships/pirates_n_ships/ship_template/navy_sloop_armed.json
+48018af916ae19a0d8725211363e0ab8c62b8caa data/pirates_n_ships/pirates_n_ships/ship_template/pirate_sloop_armed.json
 24ed5d6a0f5c3d20d6845282d68164dcd5dd7410 data/pirates_n_ships/pirates_n_ships/ship_template/starter_sloop.json
 f2898cc1a94f7dedb4d5316534d8c6762025fcdb data/pirates_n_ships/pirates_n_ships/ship_template/starter_sloop_basic.json
 6605efa70f733dc8e58d9f3e77fbb953ca58419a data/pirates_n_ships/pirates_n_ships/test_marker/example.json

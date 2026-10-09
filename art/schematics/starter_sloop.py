@@ -1,4 +1,8 @@
-"""Generates the starter sloop BuildSpec (bow toward -Z) and prints it as JSON."""
+"""Generates the starter sloop BuildSpec (bow toward -Z) and prints it as JSON.
+
+Also the base of the armed sloops (WS4c): ``navy_sloop_armed.py`` and ``pirate_sloop_armed.py`` import
+:func:`armed_spec`, which adds four guns and a shot locker and changes nothing else.
+"""
 import json
 
 CX = 4          # centre line
@@ -211,29 +215,82 @@ palette = {
     "plate": "pirates_n_ships:nameplate[facing=south]",
 }
 
-# merge runs along x into box operations
-ops = []
-for (y, zs) in sorted({(y, z) for (_, y, z) in blocks}):
-    xs = sorted(x for (x, yy, z) in blocks if yy == y and z == zs)
-    start = prev = xs[0]
-    for x in xs[1:] + [None]:
-        if x is not None and x == prev + 1 and blocks[(x, y, zs)] == blocks[(start, y, zs)]:
-            prev = x
-            continue
-        ops.append({"type": "box", "from": [start, y, zs], "to": [prev, y, zs], "block": blocks[(start, y, zs)]})
-        if x is not None:
-            start = prev = x
-
-spec = {
-    "id": "pns_starter_sloop",
-    "name": "Starter Sloop",
-    "minecraftVersion": "1.21.1",
-    "size": {"x": 9, "y": 21, "z": STERN + 2},
-    "palette": palette,
-    "operations": ops,
-    "metadata": {"style": "single-mast sloop with forecastle and stern cabin",
-                 "notes": ["Bow toward -Z. Helm faces south.",
-                           "Square sail: yards at y=10 (9 long) and y=16 (7 long) on the mast at z=13.",
-                           "Jib: use a rope on the mast-head cleat, then on the bowsprit cleat."]},
+# armed variant (WS4c): two cannons a side in the waist, a shot locker in the hold
+GUN_ZS = (13, 15)            # shifted z of the gun pairs, either side of the winch (z 14), abaft the mast (z 13)
+LOCKER = (CX, 3, 14)         # beside the mast step in the hold, under the winch: within reach of all four guns
+ARMED_PALETTE = {
+    "gun_w": "pirates_n_ships:cannon[facing=west,load=empty,part=front]",
+    "gun_rear_w": "pirates_n_ships:cannon[facing=west,load=empty,part=rear]",
+    "gun_e": "pirates_n_ships:cannon[facing=east,load=empty,part=front]",
+    "gun_rear_e": "pirates_n_ships:cannon[facing=east,load=empty,part=rear]",
+    "locker": "minecraft:barrel[facing=up,open=false]",
+    "locker_stand": "minecraft:spruce_planks",
 }
-print(json.dumps(spec))
+
+
+def armed(base):
+    """The hull of ``base`` with four guns and the shot locker; nothing else changes.
+
+    Each gun stands on the waist deck (y 5) facing outboard, its muzzle (master, part=front) next to the bulwark and
+    its carriage's rear one block inboard; the bulwark block in front of the muzzle is cut out as the gun port (the
+    waist bulwark is one block high, the barrel sits at 12..20 px and would run into it). The locker is a vanilla
+    barrel (any container within cannons.crew.supply_range = 4 of a gun feeds its crew; a barrel opens under the
+    deck where a chest would not) on a plank stand on the hold floor.
+    """
+    out = dict(base)
+    for zs in GUN_ZS:
+        for x, side in ((0, "w"), (8, "e")):
+            step = 1 if x == 0 else -1
+            assert out.get((x, 5, zs)) == "top", (x, zs)  # the waist bulwark
+            for cell in ((x + step, 5, zs), (x + 2 * step, 5, zs)):
+                assert cell not in out, cell  # free deck
+            out.pop((x, 5, zs))
+            out[(x + step, 5, zs)] = "gun_" + side
+            out[(x + 2 * step, 5, zs)] = "gun_rear_" + side
+    lx, ly, lz = LOCKER
+    assert (lx, ly, lz) not in out and (lx, ly - 1, lz) not in out
+    out[(lx, ly, lz)] = "locker"
+    out[(lx, ly - 1, lz)] = "locker_stand"
+    return out
+
+
+def spec(cells, pal, spec_id, name, style, notes):
+    """The BuildSpec of ``cells``: runs along x merged into box operations, the palette keys in use only."""
+    ops = []
+    for (y, zs) in sorted({(y, z) for (_, y, z) in cells}):
+        xs = sorted(x for (x, yy, z) in cells if yy == y and z == zs)
+        start = prev = xs[0]
+        for x in xs[1:] + [None]:
+            if x is not None and x == prev + 1 and cells[(x, y, zs)] == cells[(start, y, zs)]:
+                prev = x
+                continue
+            ops.append({"type": "box", "from": [start, y, zs], "to": [prev, y, zs], "block": cells[(start, y, zs)]})
+            if x is not None:
+                start = prev = x
+    used = set(cells.values())
+    return {
+        "id": spec_id,
+        "name": name,
+        "minecraftVersion": "1.21.1",
+        "size": {"x": 9, "y": 21, "z": STERN + 2},
+        "palette": {k: v for k, v in pal.items() if k in used},
+        "operations": ops,
+        "metadata": {"style": style, "notes": notes},
+    }
+
+
+NOTES = ["Bow toward -Z. Helm faces south.",
+         "Square sail: yards at y=10 (9 long) and y=16 (7 long) on the mast at z=13.",
+         "Jib: use a rope on the mast-head cleat, then on the bowsprit cleat."]
+ARMED_NOTES = NOTES + ["Guns: two a side in the waist at z=13 and z=15, muzzles at x=1 (west) and x=7 (east) "
+                       "through gun ports cut in the bulwark; shot locker (barrel) in the hold at [4, 3, 14]."]
+
+
+def armed_spec(spec_id, name):
+    return spec(armed(blocks), {**palette, **ARMED_PALETTE}, spec_id, name,
+                "single-mast sloop with forecastle and stern cabin, four guns in the waist", ARMED_NOTES)
+
+
+if __name__ == "__main__":
+    print(json.dumps(spec(blocks, palette, "pns_starter_sloop", "Starter Sloop",
+                          "single-mast sloop with forecastle and stern cabin", NOTES)))

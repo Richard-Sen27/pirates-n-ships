@@ -9,6 +9,8 @@ import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.station.helm.HelmCourses;
 import com.richardsenger.piratesnships.worldsim.voyage.Voyages;
 
+import net.minecraft.world.level.block.Blocks;
+
 import java.util.List;
 
 /**
@@ -47,10 +49,11 @@ public final class MaterializeModule implements ModModule {
     public void gatherData(DataContributions data) {
         data.lang(MaterializeCommands::lang);
         data.lang(VoyageEndings::lang);
+        data.blockTags(tags -> tags.tag(VoyageGuns.SHOT_LOCKERS).add(Blocks.BARREL, Blocks.CHEST, Blocks.TRAPPED_CHEST));
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(MaterializeGameTests.class);
+        return List.of(MaterializeGameTests.class, ArmedShipGameTests.class);
     }
 }

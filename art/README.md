@@ -1605,6 +1605,27 @@ must agree. SH1b closed a three-block hole in the sloop's bottom at the stern th
 z 25, so the hold was open to the sea); the generator now puts a bottom plank under every hollow hold cell.
 `starter_sloop_basic.schem` has no generator.
 
+**The templates:**
+
+| template | source | what it is | for |
+|---|---|---|---|
+| `starter_sloop` | `starter_sloop.py` | single-mast sloop, forecastle and stern cabin, 683 blocks | shipwright (400), merchant convoys |
+| `starter_sloop_basic` | hand-built `.schem` | the same hull, fewer fittings | shipwright (300), merchant convoys |
+| `navy_sloop_armed` | `navy_sloop_armed.py` | the starter sloop with four guns and a shot locker, 689 blocks | navy patrols (not sold) |
+| `pirate_sloop_armed` | `pirate_sloop_armed.py` | the same blocks as `navy_sloop_armed` | pirate raiders (not sold) |
+
+**Armed sloops (WS4c):** `navy_sloop_armed.py` and `pirate_sloop_armed.py` import `armed_spec` from
+`starter_sloop.py`, which adds to the starter sloop's cells and changes nothing else: two cannons a side in the waist
+at z 13 and 15 (masters at x 1 facing west and x 7 facing east, rears inboard at x 2 and 6), a **gun port** in front
+of each muzzle (the waist bulwark block at x 0 or 8 is cut out: the bulwark is one block high and the barrel, at
+12..20 px, would run into it), and the **shot locker**, a vanilla barrel on a plank stand in the hold beside the mast
+step at [4, 3, 14], under the winch. It is within the gun crews' `cannons.crew.supply_range` (4) of all four guns; a
+barrel, not a chest, because a chest does not open under the deck. Materialised navy and pirate voyages stock it
+(`world_simulation.materialize.cannon_rounds`); any barrel or chest (block tag `pirates_n_ships:shot_lockers`) within
+reach of a gun counts as its locker. `ArmedSloopLayoutTest` diffs the armed structures against `starter_sloop.nbt`
+and checks the guns, ports and reach. `starter_sloop.py` run on its own still prints the starter sloop byte for byte.
+Rebuild all three with the steps above (lab, then `schem_to_structure.py`).
+
 Keep templates under the ship block limit (2048 by default), keep every block connected to the helm (the assembler
 gathers only connected blocks), and leave no loose terrain blocks (dirt, sand, stone) in the selection: they never
 become part of a ship.

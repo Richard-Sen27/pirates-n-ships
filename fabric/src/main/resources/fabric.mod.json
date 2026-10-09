@@ -12,6 +12,9 @@
     "entrypoints": {
         "main": [
             "com.richardsenger.piratesnships.PiratesNShips"
+        ],
+        "client": [
+            "com.richardsenger.piratesnships.PiratesNShipsClient"
         ]
     },
     "mixins": [
@@ -28,6 +31,9 @@
         "geckolib": ">=${geckolib_version}",
         "forgeconfigapiport": "*",
         "player_animation_library": ">=${pal_version}"
+    },
+    "recommends": {
+        "modmenu": "*"
     },
     "suggests": {
         "guideme": "*"

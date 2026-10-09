@@ -160,7 +160,9 @@ public final class ClientEvents {
      * rotation, so vertex positions are world positions minus {@code camera.getPosition()}. Use a {@code RenderType} and
      * draw it before returning (e.g. {@code bufferSource.endBatch(type)}). With Fabulous graphics the translucent target
      * is bound; a render type with its own output target (such as {@code RenderType.translucentMovingBlock()}) switches
-     * to it and back. Fired from NeoForge's {@code RenderLevelStageEvent} at {@code AFTER_TRANSLUCENT_BLOCKS}. Used by
+     * to it and back. Fired from NeoForge's {@code RenderLevelStageEvent} at {@code AFTER_TRANSLUCENT_BLOCKS}; on Fabric
+     * from {@code WorldRenderEvents.AFTER_TRANSLUCENT}, a little later (after the particles, with the main target
+     * bound), so pick a render type that sets its own target when it matters (docs/fabric.md). Used by
      * {@code ship.hull.client.FloodSurfaceRenderer} (FLD1).
      */
     public static final Event<RenderLevelStage> RENDER_AFTER_TRANSLUCENT = Event.create(ls -> (camera, frustum, partialTick) ->
@@ -275,9 +277,9 @@ public final class ClientEvents {
      * Draws the worn {@code items} (armour items) with {@code provider}'s model instead of vanilla's armour model, e.g. a
      * coat with tails (ART9, {@code apparel.client.ApparelClient}). Register in {@code initClient()}; the items are
      * resolved when the loader's registration event fires. NeoForge: an {@code IClientItemExtensions} with
-     * {@code getHumanoidArmorModel} per item through {@code RegisterClientExtensionsEvent}. Fabric (TODO, milestone 22):
-     * {@code ArmorRenderer.register}, copying the context model's pose and visibility onto the provider's model and
-     * rendering it with the material's layer texture, as {@code HumanoidArmorLayer} does.
+     * {@code getHumanoidArmorModel} per item through {@code RegisterClientExtensionsEvent}. Fabric (FAB2,
+     * {@code FabricArmorModels}): {@code ArmorRenderer.register}, copying the pose and visibility onto the provider's
+     * model and rendering it with the material's layer textures, trim and glint, as {@code HumanoidArmorLayer} does.
      */
     @SafeVarargs
     public static synchronized void registerArmorModel(ArmorModelProvider provider, Supplier<? extends Item>... items) {

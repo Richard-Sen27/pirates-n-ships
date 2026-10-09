@@ -10,7 +10,13 @@
     "MixinPlayer",
     "MixinServerPlayer"
   ],
-  "client": [],
+  "client": [
+    "client.MixinAbstractClientPlayer",
+    "client.MixinCamera",
+    "client.MixinMinecraft",
+    "client.MixinMusicManager",
+    "client.MixinSoundEngine"
+  ],
   "server": [],
   "injectors": {
     "defaultRequire": 1

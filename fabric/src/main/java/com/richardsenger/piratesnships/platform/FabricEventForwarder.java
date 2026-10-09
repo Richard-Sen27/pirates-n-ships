@@ -46,7 +46,7 @@ public final class FabricEventForwarder {
         FabricHammockBeds.attach();
         // CONTAINER_OPEN / CONTAINER_CLOSE: no Fabric API event, fired by fabric.mixin.MixinServerPlayer
 
-        // Server side only, after the entity was added, not cancellable (the client side is FAB2)
+        // Server side; the client side is FabricClientSetup's. After the entity was added, so not cancellable
         ServerEntityEvents.ENTITY_LOAD.register((e, l) -> CommonEvents.ENTITY_JOIN_LEVEL.invoker().onJoin(e, l));
         UseEntityCallback.EVENT.register((player, level, hand, target, hit) -> {
             // hit != null is the "interact at" variant (NeoForge's EntityInteractSpecific); ours is the plain interaction

@@ -3,7 +3,7 @@ plugins {
     id 'net.fabricmc.fabric-loom-remap'
 }
 
-// Fabric module (FAB1: server side and GameTests; the client port is FAB2). docs/fabric.md describes what is wired.
+// Fabric module (FAB1: server side and GameTests; FAB2: the client). docs/fabric.md describes what is wired.
 
 repositories {
     // Forge Config API Port (the NeoForge config API on Fabric; Sable for Fabric also depends on it)
@@ -15,6 +15,16 @@ repositories {
             }
         }
         filter { includeGroup('fuzs.forgeconfigapiport') }
+    }
+    // Mod Menu (dev client only: opens our config screen, which Forge Config API Port hands to Mod Menu)
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'TerraformersMC'
+                url = 'https://maven.terraformersmc.com/releases/'
+            }
+        }
+        filter { includeGroup('com.terraformersmc') }
     }
 }
 
@@ -47,6 +57,26 @@ dependencies {
     // POM still lists Core (and through it newer gson, slf4j, fastutil, netty), so Core is excluded as on NeoForge.
     modImplementation("com.zigythebird.playeranim:PlayerAnimationLibFabric:${pal_version}") {
         exclude group: 'com.zigythebird.playeranim', module: 'PlayerAnimationLibCore'
+    }
+
+    // Mod Menu, dev runs only (never published; fabric.mod.json only "recommends" it): the in-game mod list with our
+    // config screen (FAB2). 11.0.x is the Minecraft 1.21.1 line.
+    modLocalRuntime("com.terraformersmc:modmenu:11.0.3") {
+        transitive = false
+    }
+
+    // ClientMixinTargetsTest (HV1b on Fabric) and the other JUnit tests of this module: JUnit, plus ASM's tree API to
+    // read the mixin and target classes (the Mojang-named, access-widened Minecraft jar Loom puts on the classpath).
+    testImplementation platform('org.junit:junit-bom:5.11.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.ow2.asm:asm-tree:9.8'
+}
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
+    testLogging {
+        showStandardStreams = true
     }
 }
 

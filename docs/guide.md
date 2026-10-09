@@ -686,7 +686,12 @@ and keep a pump ready before a storm. `/pirates waves` shows the sea; operators 
 set storm` and release it with `/pirates waves clear`. The camera can roll with the ship (client setting
 `wave_effects.camera_sway`, off by default). Faint foam streaks lie on the water around you, stretched along the
 direction the waves run and gathered on the crests: none in a calm sea, a few in a moderate one, many in a storm, and
-none inside a dry hull (client setting `wave_effects.foam`). Server config `waves`.
+none inside a dry hull (client setting `wave_effects.foam`). A moving ship leaves a wake: a bow wave of foam
+spreading out from the stem in a narrow V, a foam trail behind the stern that widens and fades over about 8 seconds and
+stays where the water is (a turning ship leaves a curved wake), and at speed a thin line of foam along the waterline;
+the faster the ship, the denser and brighter, nothing below 1 block per second or at anchor (client settings
+`wave_effects.wake`, `wake_density`, `wake_life_ticks`, `wake_min_speed`, `wake_full_speed`, `wake_spread_degrees`,
+`wake_radius`). Server config `waves`.
 
 ### Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks

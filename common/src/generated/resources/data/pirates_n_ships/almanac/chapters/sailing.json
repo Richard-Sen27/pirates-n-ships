@@ -310,12 +310,16 @@
         },
         {
           "type": "text",
-          "color": "#9a1c14",
           "key": "pirates_n_ships.almanac.sailing.p10.text3"
         },
         {
           "type": "text",
+          "color": "#9a1c14",
           "key": "pirates_n_ships.almanac.sailing.p10.text4"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.sailing.p10.text5"
         }
       ]
     },

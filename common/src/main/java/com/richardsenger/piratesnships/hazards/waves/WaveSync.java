@@ -12,24 +12,50 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * Sends the sea of each player's level to the player (WV1): on login and every {@code waves.sync_interval_ticks}.
- * Tests observe what is sent through {@link #record} (a mock player has no connection).
+ * Sends the sea of each player's level to the player (WV1): on login, every {@code waves.sync_interval_ticks}, and at
+ * once to every player of a level whose sea changed its heading or origin (WAV7: a direction step starts its crossfade
+ * {@link SeaStateModel#DIRECTION_LEAD_TICKS} later, so the clients draw it from its first tick). Tests observe what is
+ * sent through {@link #record} (a mock player has no connection).
  */
 public final class WaveSync {
 
     private static final Map<UUID, List<WaveSyncPayload>> RECORDINGS = new HashMap<>();
+    /** Heading and origin last sent per level, to send a change at once. */
+    private static final Map<ServerLevel, Object> SENT = new java.util.IdentityHashMap<>();
 
     private WaveSync() {
     }
 
     public static void onServerTick(MinecraftServer server) {
         int interval = HazardConfig.SYNC_INTERVAL_TICKS.get();
-        if (server.getTickCount() % interval != 0) {
+        boolean due = server.getTickCount() % interval == 0;
+        java.util.Set<ServerLevel> changed = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+        for (ServerLevel level : server.getAllLevels()) {
+            if (changed(level)) {
+                changed.add(level);
+            }
+        }
+        if (!due && changed.isEmpty()) {
             return;
         }
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            send(player, interval);
+            if (due || changed.contains(player.serverLevel())) {
+                send(player, interval);
+            }
         }
+    }
+
+    /** Whether the heading or origin of {@code level}'s sea differs from what was last sent (and remembers it). */
+    private static synchronized boolean changed(ServerLevel level) {
+        WaveField f = SeaStates.field(level);
+        Object key = java.util.List.of(f.heading(), f.origin());
+        Object last = SENT.put(level, key);
+        return last != null && !last.equals(key);
+    }
+
+    /** Forgets the levels of a stopped server. */
+    public static synchronized void clear() {
+        SENT.clear();
     }
 
     public static void onLogin(ServerPlayer player) {

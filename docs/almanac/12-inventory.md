@@ -24,6 +24,7 @@ Every block and item a sea-going hand may need, with a line on each and the chap
 - {item:pirates_n_ships:bilge_pump}**Bilge pump:** pumps a flooded hold. A station.
 - {item:pirates_n_ships:hull_patch}**Hull patch:** closes a breach.
 - {item:pirates_n_ships:flagpole}**Flagpole:** flies your colours. [[pirates_n_ships:flags|Flags]]
+- {item:pirates_n_ships:flag_pedestal}**Flag pedestal:** a carved plinth a flagpole stands in.
 - {item:pirates_n_ships:nameplate}**Nameplate:** shows her name.
 - {item:pirates_n_ships:figurehead_mermaid}{item:pirates_n_ships:figurehead_lion}{item:pirates_n_ships:figurehead_eagle}{item:pirates_n_ships:figurehead_skull}**Figureheads:** a mermaid, lion, eagle or skull for the bow.
 - {item:pirates_n_ships:ship_lantern}**Ship's lantern:** a lantern that burns under water.

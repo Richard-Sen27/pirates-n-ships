@@ -13,7 +13,7 @@ BRANCH=$1; PKG=$2; SUBJECT=$3; RUNS=${4:-2}
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 WT=$ROOT/.claude/worktrees/merge
 LOG=${STAGE_LOG_DIR:-$ROOT/.claude/worktrees/stage-logs}/$PKG; mkdir -p "$LOG"
-GEN_RE='^common/src/generated/resources/'
+GEN_RE='^common/src/generated/resources/|^common/src/datagen/almanac/'
 DOCS_RE='^docs/|^CLAUDE\.md$|^tools/merge_(stage|batch)\.sh$'
 cd "$WT" || exit 1
 if [ -z "${CONTINUE:-}" ]; then

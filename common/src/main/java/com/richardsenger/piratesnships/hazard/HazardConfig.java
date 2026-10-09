@@ -43,12 +43,22 @@ public final class HazardConfig {
             "How much the wave height swells and fades in sets (wave groups): 0.35 = between 65 % and 135 % of the sea state's height");
     public static final ConfigValue<Double> GROUP_PERIOD_SECONDS = WAVES.doubleRange("group_period_seconds", 60.0, 10.0, 600.0,
             "Time scale of the wave groups in seconds: sets of bigger waves come and go over about this long");
+    // WAV7: one global sea whose direction changes in steps
+    public static final ConfigValue<Double> DIRECTION_STEP_DEGREES = WAVES.doubleRange("direction_step_degrees", 10.0, 1.0, 90.0,
+            "The waves turn to a new direction once the wind (with a slow offset) has moved this many degrees away from theirs");
+    public static final ConfigValue<Double> DIRECTION_FADE_SECONDS = WAVES.doubleRange("direction_fade_seconds", 15.0, 0.0, 120.0,
+            "Seconds over which the waves crossfade from the old direction to the new one (0 = switch at once)");
     public static final ConfigValue<Boolean> HEAVE = WAVES.bool("heave", true,
             "Ships rise on wave crests and sink into troughs (a vertical force from the mean wave height under the hull)");
     public static final ConfigValue<Double> HEAVE_STRENGTH = WAVES.doubleRange("heave_strength", 0.95, 0.0, 5.0,
             "Heave force per block of mean wave height under the hull, as a share of the ship's weight");
     public static final ConfigValue<Double> HEAVE_PER_MASS = WAVES.doubleRange("heave_per_mass", 25.0, 0.0, 50.0,
             "Upper limit of the heave force per kpg of ship mass");
+    // WAV6: vanilla boats and floating items ride the waves (hazards.waves.boats)
+    public static final ConfigValue<Boolean> BOATS = WAVES.bool("boats", true,
+            "Vanilla boats on the open sea rise and fall with the waves (not in lakes, rivers, shallow water or inside a hull)");
+    public static final ConfigValue<Boolean> FLOATING_ITEMS = WAVES.bool("floating_items", true,
+            "Items floating on the open sea bob with the waves");
 
     private static final ConfigSection WAVE_EFFECTS = ModConfigs.client("wave_effects", "Client-side wave visuals");
 
@@ -99,6 +109,8 @@ public final class HazardConfig {
             "Water depth in blocks from which the surface moves with the full wave height; shallower water moves less, one block deep not at all, so waves never cut into a beach");
     public static final ConfigValue<Boolean> SURFACE_UNDERSIDE = WAVE_EFFECTS.bool("surface_underside", true,
             "Also draw the moving surface from below, so it shows when you look up from under water");
+    public static final ConfigValue<Double> BOAT_TILT_DEGREES = WAVE_EFFECTS.doubleRange("boat_tilt_degrees", 8.0, 0.0, 20.0,
+            "Vanilla boats on the waves tilt along the slope of the sea by up to this many degrees (0 = no tilt; the rider stays upright)");
 
     private HazardConfig() {
     }

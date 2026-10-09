@@ -71,6 +71,7 @@ public final class HazardsModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(HazardGameTests.class, com.richardsenger.piratesnships.hazards.waves.WaveGameTests.class); // WV1
+        return List.of(HazardGameTests.class, com.richardsenger.piratesnships.hazards.waves.WaveGameTests.class, // WV1
+                com.richardsenger.piratesnships.hazards.waves.boats.BoatWaveGameTests.class); // WAV6
     }
 }

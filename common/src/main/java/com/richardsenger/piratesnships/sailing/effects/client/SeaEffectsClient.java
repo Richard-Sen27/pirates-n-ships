@@ -177,9 +177,9 @@ public final class SeaEffectsClient {
         double alpha = FoamRules.opacity(amplitude);
         for (int i = 0; i < n; i++) {
             double[] p = SpawnRules.ringPoint(cam.x, cam.z, FoamRules.INNER_RADIUS, rules.radius(), r.nextDouble(), r.nextDouble());
-            // the crests near the camera: the field anchored at the camera (as the server anchors it at a ship)
+            // the crests near the camera: the one global sea (WAV7), the same the ships feel and the surface draws
             boolean riding = SeaSurface.isActive();
-            double crest = riding ? SeaSurface.waveHeight(p[0], p[1], time) : field.heightAround(cam.x, cam.z, p[0], p[1], time);
+            double crest = field.heightAt(p[0], p[1], time);
             if (r.nextDouble() >= FoamRules.crestKeep(crest, amplitude)) {
                 continue;
             }

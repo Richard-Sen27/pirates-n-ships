@@ -244,6 +244,27 @@ and once from the water about 15 blocks off the beam. "Leeward" = the side the f
 13. **Cost.** F3 frame time with the ship in view, `sail_visuals.enabled` on and off: report any visible difference.
 Report screenshots of 1, 2, 4, 5 and 7 from the deck and of 1 from the water, with the flag in the frame.
 
+## 6d. VIS1c: the sails know the bow
+Render only. The server now sends each ship's bow to every client that sees the ship, and on a ship the cloth draws
+by the force model's rule (yards braced to the optimum): it draws wherever the sail drives the ship and luffs in the
+no-go zone and head to wind. This replaces the two notes of 6c: steps 2 and 3 for the square sail, and the note in
+step 4. Same ship and config as 6c.
+1. **Head to wind at once.** Build the ship with its bow pointing into the wind (`/pirates wind set <from ahead> 8`)
+   and assemble it, full sail, without moving it. Expected: both sails luff and shake from the first second (before
+   VIS1c the square sail drew until the ship had moved).
+2. **Pushed astern.** Still head to wind, let the ship be driven astern (the square sail is taken aback; or shove it
+   astern with a boat or by ramming it). Expected: the sails keep luffing the whole time; they never switch to drawing
+   while the ship moves stern first.
+3. **Beam reach.** Turn so the wind comes from the beam. Expected: both sails draw and belly to leeward (the square
+   sail too; its cloth stays square to the yards, only the belly shows it drawing). In 6c the square sail shook here.
+4. **Close-hauled** (wind about 50° off the bow). Expected: the triangular sail draws; the square sail hangs nearly
+   slack and shakes (square sails stop driving at about 45° off the wind); at 40° it luffs fully.
+5. **Running.** Wind from astern. Expected: as 6c step 1.
+6. **Second player / relog.** A second player who sails up to the ship from out of view, or the same player after a
+   relog next to it, sees the same: a head-to-wind ship's sails luff at once.
+7. **On land.** As 6c step 10, unchanged: with the wind along the cloth the sails shake, across it they belly.
+Report screenshots of 1, 3 and 4 from the deck, with the flag in the frame.
+
 ## Tuning questions (server config, section in brackets)
 | Question | Config value |
 |---|---|

@@ -1,8 +1,17 @@
 #!/usr/bin/env python3
-"""F7g part lists: the two-block cannon and the swivel gun as Java block model JSON (elements with names).
+"""F7g/CAN2 part lists: the two-block cannon and the swivel gun as Java block model JSON (elements with names).
 
-Writes <out>/<name>.json for cannon, cannon_powder, cannon_loaded, swivel_gun_yoke, swivel_gun_barrel,
-swivel_gun_barrel_loaded and swivel_gun. Blockbench builds the projects and renders from these.
+Writes <out>/<name>.json for the cannon's parts (CAN2: the barrel tilts, so the cannon is split): cannon_carriage
+(the block model of an empty gun), cannon_carriage_rammer (powder and loaded: the rammer leans on the carriage),
+cannon_quoin (the elevation wedge, slid and squeezed by the renderer), cannon_barrel, cannon_barrel_powder (the priming
+quill in the vent), cannon_barrel_loaded (quill and ball), the item model cannon (barrel + quoin + carriage), and
+swivel_gun_yoke, swivel_gun_barrel, swivel_gun_barrel_loaded and swivel_gun. Blockbench builds the projects and
+renders from these.
+
+Workflow: run it into a scratch folder, run tools/lint_models.py --fix on the parts there (with --mirror cannon_barrel
+cannon_barrel_powder, cannon_barrel_powder cannon_barrel_loaded and cannon_carriage cannon_carriage_rammer), then
+`gen_cannon_models.py --compose <folder>` rewrites the item model cannon.json from the fixed parts, so the item is
+exactly barrel + quoin + carriage (HandMadeModelsTest.cannonSplitsIntoBarrelQuoinAndCarriage).
 """
 import json
 import math
@@ -10,7 +19,7 @@ import sys
 from pathlib import Path
 
 T = math.tan(math.radians(22.5))
-OUT = Path(sys.argv[1])
+OUT = Path(sys.argv[-1])
 
 # texture variables (key -> vanilla id), the same set as the one-block cannon of F7f
 TEX = {
@@ -151,8 +160,12 @@ class Model:
 
 # ---------------------------------------------------------------- cannon (master frame, muzzle north)
 AX = (8, 14)  # barrel axis x, y
-CHEEK_L = (2.5, 4.3)
-CHEEK_R = (11.7, 13.5)
+# CAN2: the cheeks are 1.3 px thick (were 1.8), so the base ring (D 8.3) clears them when the breech drops
+CHEEK_L = (2.5, 3.8)
+CHEEK_R = (12.2, 13.5)
+# the stool bed under the breech (the quoin rests on it) and the quoin's rest box; CannonBarrelPose has the same numbers
+STOOL_TOP = 5.0
+QUOIN = ([6.4, STOOL_TOP, 18.8], [9.6, 9.6, 25.6])
 
 
 def cannon_barrel(m):
@@ -216,10 +229,8 @@ def cannon_carriage(m):
     m.box("bed_rear", [CHEEK_L[1], 3.5, 16], [CHEEK_R[0], 4.3, 30.5], "plank")
     m.box("transom", [CHEEK_L[1], 4.3, 1.5], [CHEEK_R[0], 8.5, 3.2], "cheek")
     m.box("rear_transom", [CHEEK_L[1], 4.3, 28.8], [CHEEK_R[0], 6.5, 30.5], "cheek")
-    # the quoin under the breech: a block on the bed and a wedge on top, handle to the rear
-    m.box("quoin_bed", [6.0, 4.3, 18.5], [10.0, 7.6, 26.5], "plank")
-    m.box("quoin", [6.4, 7.6, 18.8], [9.6, 9.6, 25.6], "plank")
-    m.box("quoin_handle", [7.5, 8.1, 25.6], [8.5, 9.1, 27.0], "axle")
+    # the stool bed under the breech, low enough for the breech at the top elevation (CAN2); the quoin is its own part
+    m.box("stool_bed", [6.0, 4.3, 18.5], [10.0, STOOL_TOP, 26.5], "plank")
     # axletrees (grain along x) and the four trucks: front larger (D 7) than rear (D 6)
     grain = {"north": 90, "south": 90, "up": 90, "down": 90}
     axle_tex = {"north": "axle", "south": "axle", "up": "axle", "down": "axle", "east": "axle_end", "west": "axle_end"}
@@ -229,6 +240,23 @@ def cannon_carriage(m):
     wheel(m, "fr", 14.4, 15.6, 3.6, 4.0, 7.2, +1)
     wheel(m, "bl", 0.4, 1.6, 3.0, 27.0, 6.0, -1)
     wheel(m, "br", 14.4, 15.6, 3.0, 27.0, 6.0, +1)
+    return m
+
+
+def quoin(m):
+    """The wedge under the breech, handle to the rear; its bottom face sits on the stool bed and is left out."""
+    tex = {d: "plank" for d in DIRS}
+    tex["down"] = None
+    m.box("quoin", QUOIN[0], QUOIN[1], tex)
+    m.box("quoin_handle", [7.5, 8.1, 25.6], [8.5, 9.1, 27.0], "axle")
+    return m
+
+
+def quill(m):
+    """The priming quill in the vent (powder and loaded): a thin light stick standing in the touch hole."""
+    tex = {d: "pole" for d in DIRS}
+    tex["up"] = tex["down"] = "wheel"
+    m.box("quill", [7.75, 17.75, 12.65], [8.25, 19.4, 12.95], tex)
     return m
 
 
@@ -255,15 +283,37 @@ def ball(m, axis_xy, z_face, D):
     return m
 
 
-def cannon(variant):
-    m = Model()
-    cannon_barrel(m)
-    cannon_carriage(m)
+def barrel(variant):
+    """The barrel part of a load state: the tube, plus the priming quill once powdered and the ball once loaded."""
+    m = cannon_barrel(Model())
     if variant in ("powder", "loaded"):
-        rammer(m)
+        quill(m)
     if variant == "loaded":
         ball(m, AX, -15.02, 2.9)
     return m
+
+
+def carriage(rammer_on):
+    m = cannon_carriage(Model())
+    if rammer_on:
+        rammer(m)
+    return m
+
+
+def compose(folder):
+    """Rewrites <folder>/cannon.json (the item) as barrel + quoin + carriage from the (lint-fixed) part files."""
+    key = {v: k for k, v in TEX.items()}
+    m = Model()
+    for n in ("cannon_barrel", "cannon_quoin", "cannon_carriage"):
+        part = json.loads((folder / (n + ".json")).read_text())
+        for e in part["elements"]:
+            for face in e["faces"].values():
+                face["texture"] = "#" + key[part["textures"][face["texture"][1:]]]
+            m.elements.append(e)
+    item = json.loads((folder / "cannon.json").read_text())
+    data = m.json(item.get("display"), item.get("credit"))
+    (folder / "cannon.json").write_text(json.dumps(data, indent=2) + "\n")
+    print("cannon", len(m.elements), "composed from the parts")
 
 
 # ---------------------------------------------------------------- swivel gun (pivot (8, 6, 8), muzzle north)
@@ -323,8 +373,14 @@ def gui_translation(rot, scale, centre):
     return [r(-v[0]), r(-v[1]), r(-v[2])]
 
 
+# CAN2: the cannon's parts are exported from the three cannon projects (groups barrel, quoin, carriage)
+PROJECT = {"cannon_barrel": "cannon", "cannon_quoin": "cannon", "cannon_carriage": "cannon",
+           "cannon_barrel_powder": "cannon_powder", "cannon_carriage_rammer": "cannon_powder",
+           "cannon_barrel_loaded": "cannon_loaded"}
+
+
 def write(name, model, display=None):
-    data = model.json(display, "Made with Blockbench, source art/models/%s.bbmodel" % name)
+    data = model.json(display, "Made with Blockbench, source art/models/%s.bbmodel" % PROJECT.get(name, name))
     (OUT / (name + ".json")).write_text(json.dumps(data, indent=2) + "\n")
     xs = [v for e in model.elements for v in (e["from"][0], e["to"][0])]
     ys = [v for e in model.elements for v in (e["from"][1], e["to"][1])]
@@ -337,6 +393,9 @@ def disp(rot, trans, s):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 2 and sys.argv[1] == "--compose":
+        compose(OUT)
+        sys.exit(0)
     OUT.mkdir(parents=True, exist_ok=True)
     # cannon item: bounding box x 0..16, y 0..18.2, z -16..32 (centre (8, 9.1, 8))
     cc = (8, 9.1, 8)
@@ -350,9 +409,16 @@ if __name__ == "__main__":
         "firstperson_righthand": disp([0, 45, 0], [0, 1, 0], 0.2),
         "firstperson_lefthand": disp([0, 225, 0], [0, 1, 0], 0.2),
     }
-    write("cannon", cannon("empty"), cannon_display)
-    write("cannon_powder", cannon("powder"))
-    write("cannon_loaded", cannon("loaded"))
+    write("cannon_barrel", barrel("empty"))
+    write("cannon_barrel_powder", barrel("powder"))
+    write("cannon_barrel_loaded", barrel("loaded"))
+    write("cannon_quoin", quoin(Model()))
+    write("cannon_carriage", carriage(False))
+    write("cannon_carriage_rammer", carriage(True))
+    whole = barrel("empty")
+    quoin(whole)
+    cannon_carriage(whole)
+    write("cannon", whole, cannon_display)
     write("swivel_gun_yoke", swivel_yoke(Model()))
     write("swivel_gun_barrel", swivel_barrel(Model()))
     write("swivel_gun_barrel_loaded", swivel_barrel(Model(), loaded=True))

@@ -1,7 +1,7 @@
 {
   "variants": {
     "facing=east,load=empty,part=front": {
-      "model": "pirates_n_ships:block/cannon",
+      "model": "pirates_n_ships:block/cannon_carriage",
       "y": 90
     },
     "facing=east,load=empty,part=rear": {
@@ -9,7 +9,7 @@
       "y": 90
     },
     "facing=east,load=loaded,part=front": {
-      "model": "pirates_n_ships:block/cannon_loaded",
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
       "y": 90
     },
     "facing=east,load=loaded,part=rear": {
@@ -17,7 +17,7 @@
       "y": 90
     },
     "facing=east,load=powder,part=front": {
-      "model": "pirates_n_ships:block/cannon_powder",
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
       "y": 90
     },
     "facing=east,load=powder,part=rear": {
@@ -25,7 +25,7 @@
       "y": 90
     },
     "facing=north,load=empty,part=front": {
-      "model": "pirates_n_ships:block/cannon",
+      "model": "pirates_n_ships:block/cannon_carriage",
       "y": 0
     },
     "facing=north,load=empty,part=rear": {
@@ -33,7 +33,7 @@
       "y": 0
     },
     "facing=north,load=loaded,part=front": {
-      "model": "pirates_n_ships:block/cannon_loaded",
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
       "y": 0
     },
     "facing=north,load=loaded,part=rear": {
@@ -41,7 +41,7 @@
       "y": 0
     },
     "facing=north,load=powder,part=front": {
-      "model": "pirates_n_ships:block/cannon_powder",
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
       "y": 0
     },
     "facing=north,load=powder,part=rear": {
@@ -49,7 +49,7 @@
       "y": 0
     },
     "facing=south,load=empty,part=front": {
-      "model": "pirates_n_ships:block/cannon",
+      "model": "pirates_n_ships:block/cannon_carriage",
       "y": 180
     },
     "facing=south,load=empty,part=rear": {
@@ -57,7 +57,7 @@
       "y": 180
     },
     "facing=south,load=loaded,part=front": {
-      "model": "pirates_n_ships:block/cannon_loaded",
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
       "y": 180
     },
     "facing=south,load=loaded,part=rear": {
@@ -65,7 +65,7 @@
       "y": 180
     },
     "facing=south,load=powder,part=front": {
-      "model": "pirates_n_ships:block/cannon_powder",
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
       "y": 180
     },
     "facing=south,load=powder,part=rear": {
@@ -73,7 +73,7 @@
       "y": 180
     },
     "facing=west,load=empty,part=front": {
-      "model": "pirates_n_ships:block/cannon",
+      "model": "pirates_n_ships:block/cannon_carriage",
       "y": 270
     },
     "facing=west,load=empty,part=rear": {
@@ -81,7 +81,7 @@
       "y": 270
     },
     "facing=west,load=loaded,part=front": {
-      "model": "pirates_n_ships:block/cannon_loaded",
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
       "y": 270
     },
     "facing=west,load=loaded,part=rear": {
@@ -89,7 +89,7 @@
       "y": 270
     },
     "facing=west,load=powder,part=front": {
-      "model": "pirates_n_ships:block/cannon_powder",
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
       "y": 270
     },
     "facing=west,load=powder,part=rear": {

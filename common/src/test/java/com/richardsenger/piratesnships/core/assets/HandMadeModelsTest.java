@@ -57,7 +57,8 @@ class HandMadeModelsTest {
             "brig_bars_side_alt", "brig_door_bottom_left", "brig_door_bottom_left_locked",
             "brig_door_bottom_left_open_locked", "brig_door_bottom_right", "brig_door_bottom_right_locked",
             "brig_door_bottom_right_open_locked", "brig_door_top_left", "brig_door_top_right", "cannon",
-            "cannon_loaded", "cannon_powder", "capstan", "cargo_barrel", "cargo_crate", "chart_table", "cleat", "figurehead_eagle",
+            "cannon_barrel", "cannon_barrel_loaded", "cannon_barrel_powder", "cannon_carriage", "cannon_carriage_rammer",
+            "cannon_quoin", "capstan", "cargo_barrel", "cargo_crate", "chart_table", "cleat", "figurehead_eagle",
             "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flagpole", "flagpole_bottom", "flagpole_middle", "flagpole_top", "hammock_foot", "hammock_head", "harbor_desk", "helm", "helm_item", "helm_wheel", "hull_patch", "mooring_ring", "nameplate",
             "notice_board", "pantry", "ratlines", "ratlines_slope", "rope_coil_layers1", "rope_coil_layers2", "rope_coil_layers3", "rope_coil_layers4",
             "sail_winch", "sea_chest", "sea_cot_foot", "sea_cot_head", "sea_cot_item", "ship_lantern", "ship_lantern_ceiling",
@@ -151,6 +152,63 @@ class HandMadeModelsTest {
             assertTrue(display.has(slot), "missing display slot " + slot);
         }
         assertEquals("front", ring.get("gui_light").getAsString(), "the plate faces the viewer in the GUI");
+    }
+
+    /**
+     * CAN2: the cannon is split into the carriage (the block model; {@code cannon_carriage_rammer} adds the rammer for
+     * powder and loaded), the quoin and the barrel (stand-alone models {@code CannonBarrelRenderer} turns and slides;
+     * {@code cannon_barrel_powder} adds the priming quill, {@code cannon_barrel_loaded} the quill and the ball). The item
+     * model {@code cannon} is exactly barrel + quoin + carriage, and each variant starts with its base's elements, so
+     * the files stay in step with each other and with the groups of {@code art/models/cannon*.bbmodel}. Faces are
+     * compared by the texture they resolve to (each file numbers its textures itself).
+     */
+    @Test
+    void cannonSplitsIntoBarrelQuoinAndCarriage() throws IOException {
+        JsonArray barrel = resolvedElements("cannon_barrel");
+        JsonArray quoin = resolvedElements("cannon_quoin");
+        JsonArray carriage = resolvedElements("cannon_carriage");
+        JsonArray all = new JsonArray();
+        all.addAll(barrel);
+        all.addAll(quoin);
+        all.addAll(carriage);
+        assertEquals(all, resolvedElements("cannon"), "cannon (the item) is not cannon_barrel + cannon_quoin + cannon_carriage");
+        assertTrue(barrel.size() > 0 && quoin.size() > 0 && carriage.size() > 0, "empty cannon part");
+        assertStartsWith(barrel, resolvedElements("cannon_barrel_powder"), "cannon_barrel_powder", "quill");
+        assertStartsWith(resolvedElements("cannon_barrel_powder"), resolvedElements("cannon_barrel_loaded"),
+                "cannon_barrel_loaded", "ball");
+        assertStartsWith(carriage, resolvedElements("cannon_carriage_rammer"), "cannon_carriage_rammer", "rammer");
+        for (String name : List.of("cannon_barrel", "cannon_barrel_powder", "cannon_barrel_loaded", "cannon_quoin",
+                "cannon_carriage", "cannon_carriage_rammer")) {
+            assertFalse(blockModel(name).has("display"), name + ": only the item model carries display entries");
+        }
+    }
+
+    private static void assertStartsWith(JsonArray base, JsonArray variant, String name, String addedPrefix) {
+        assertTrue(variant.size() > base.size(), name + " adds nothing");
+        for (int i = 0; i < variant.size(); i++) {
+            JsonObject e = variant.get(i).getAsJsonObject();
+            if (i < base.size()) {
+                assertEquals(base.get(i), e, name + " element " + i + " differs from its base");
+            } else {
+                assertTrue(e.get("name").getAsString().startsWith(addedPrefix), name + " adds " + e.get("name"));
+            }
+        }
+    }
+
+    /** The model's elements with every face texture written as the texture id it resolves to. */
+    private static JsonArray resolvedElements(String name) throws IOException {
+        JsonObject model = blockModel(name);
+        JsonObject textures = model.getAsJsonObject("textures");
+        JsonArray out = new JsonArray();
+        for (JsonElement el : model.getAsJsonArray("elements")) {
+            JsonObject e = el.getAsJsonObject().deepCopy();
+            for (Map.Entry<String, JsonElement> face : e.getAsJsonObject("faces").entrySet()) {
+                JsonObject f = face.getValue().getAsJsonObject();
+                f.addProperty("texture", textures.get(f.get("texture").getAsString().substring(1)).getAsString());
+            }
+            out.add(e);
+        }
+        return out;
     }
 
     private static JsonObject blockModel(String name) throws IOException {

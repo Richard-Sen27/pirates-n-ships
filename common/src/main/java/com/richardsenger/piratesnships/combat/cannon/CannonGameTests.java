@@ -180,6 +180,38 @@ public final class CannonGameTests {
         h.succeed();
     }
 
+    /**
+     * CAN2: the elevation step reaches clients, which draw the barrel at it: the update tag (chunk load) carries it, a
+     * freshly loaded client copy shows the same step, an aim sends a block entity data packet, and an unset step stays
+     * unset (the client falls back to the level step like the server).
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void elevationReachesAFreshClientCopyThroughTheUpdateTag(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        var registries = level.registryAccess();
+        BlockPos pos = cannon(h, new BlockPos(4, 1, 4), Direction.EAST);
+        CannonBlockEntity be = (CannonBlockEntity) level.getBlockEntity(pos);
+        h.assertTrue(be != null, "no block entity");
+
+        CannonBlockEntity unset = new CannonBlockEntity(pos, be.getBlockState());
+        unset.loadWithComponents(be.getUpdateTag(registries), registries);
+        h.assertTrue(unset.elevationStep() == be.elevationStep() && unset.elevationStep() == CannonConfig.levelStep(),
+                "an unaimed cannon syncs as level, got step " + unset.elevationStep());
+
+        CannonService.aim(level, pos, true);
+        CannonService.aim(level, pos, true);
+        int step = be.elevationStep();
+        h.assertTrue(step == CannonConfig.levelStep() + 2, "two steps up, got " + step);
+        h.assertTrue(be.getUpdatePacket() != null, "the cannon sends a block entity data packet");
+        var tag = be.getUpdateTag(registries);
+        h.assertTrue(tag.contains("elevation") && !tag.contains("reload_until"), "the update tag carries only the elevation: " + tag);
+        CannonBlockEntity client = new CannonBlockEntity(pos, be.getBlockState());
+        client.loadWithComponents(tag, registries);
+        h.assertTrue(client.elevationStep() == step, "the client copy shows step " + client.elevationStep() + ", not " + step);
+        h.assertTrue(CannonConfig.elevationDegrees(client.elevationStep()) == 10.0, "the client draws 10°");
+        h.succeed();
+    }
+
     // ------------------------------------------------------------------ the two blocks (P2)
 
     /**

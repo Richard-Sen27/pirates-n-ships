@@ -277,6 +277,14 @@ public final class BoardingParties {
         return home == null ? null : PARTIES.get(home);
     }
 
+    /**
+     * The ship {@code e} boards from, while it is one of a boarding party (crew or an NPC captain's fighters), else null:
+     * its own ship, whose boarding nets let it back in (RAIL5).
+     */
+    public static @Nullable UUID homeOf(Entity e) {
+        return INDEX.get(e.getUUID());
+    }
+
     /** {@code e} as a boarder, or null. */
     public static @Nullable Boarder boarder(Entity e) {
         Party p = partyOf(e);

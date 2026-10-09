@@ -168,8 +168,9 @@ public final class ShipHudLayout {
     /**
      * A {@code w} × {@code h} block {@code margin} from {@code corner}'s edges, moved away from the corner's top or
      * bottom edge past every obstacle it overlaps. When it runs off the screen it stays at the corner, not clear.
+     * Public for other corner-placed HUD parts (HUD5: the rank box).
      */
-    static Placed placeBlock(Corner corner, int w, int h, int guiWidth, int guiHeight, List<Rect> obstacles, int margin) {
+    public static Placed placeBlock(Corner corner, int w, int h, int guiWidth, int guiHeight, List<Rect> obstacles, int margin) {
         int x = corner.right() ? guiWidth - margin - w : margin;
         x = Math.max(0, Math.min(x, guiWidth - w));
         int y0 = corner.top() ? margin : guiHeight - margin - h;

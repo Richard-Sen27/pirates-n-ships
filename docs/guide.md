@@ -606,8 +606,9 @@ Lord trades as if the pirates liked him 7, 13 or 20 points more, and from Dread 
 until you attack them. **Titles:** navy officers carry their rank before their name (Mid., Lt., Capt., Cdre. or
 Adm.), a letter of marque makes you a Privateer, and growing infamy calls you Buccaneer, Dread Pirate and finally
 Pirate Lord, in chat, in the player list and over your head unless you already belong to another team. A small box at
-the top left shows your rank, your navy and pirate reputation and your letter; move or hide it in the client config
-(`career_hud`). When you name your own ship with a name tag at the helm, your title goes in front of its name
+the top left shows your rank, your navy and pirate reputation and your letter for a few seconds when you join, when
+your rank changes ("Promoted to Lieutenant", "Now Buccaneer") and after you close the career screen, then fades; pin
+it, hide it or move it to another corner in the client config (`career_hud.mode`, `show_seconds`, `corner`). When you name your own ship with a name tag at the helm, your title goes in front of its name
 ("Capt. Black Gull"); after a promotion, rename it to show the new title. **Fighting ships:** no shipwright sells
 the armed sloops of the navy and the pirates. You earn one by rank or you take one. The first time you reach Captain
 in the navy, a Ship Commission comes with the rank (a full pack drops it at your feet). Hand it to a navy officer or

@@ -406,3 +406,72 @@ frame time. Please send screenshots or short clips of steps 1, 2, 4, 5 and 6, an
 - The waves the surface shows are anchored at the ship you are on (or near you), as the server anchors them at each
   ship; a ship far from yours rides waves that are a little out of phase with the ones drawn under it.
 - Off with Sodium, Embeddium, Iris, Oculus and VulkanMod (flat water).
+
+## WAV4: bigger waves
+
+**What changed for the player.** Every sea state is higher, for the drawn sea and the ships alike: calm 0.15 blocks
+(was 0.1), moderate 0.6 (0.3), rough 1.2 (0.7), storm 2.0 (1.2), times `waves.amplitude` (still 1.0). With the wave
+groups the biggest crests of a set reach about 1.35 times that (a storm's about 2.5 blocks above the still sea, 5 from
+crest to trough); most of the time the sea stands at about a third of it. A storm's waves are also longer now (peak 42
+blocks, about 10 s, was 34) so they stay below the steepness at which real seas break. The ships were retuned so they
+ride this sea instead of rolling harder: `waves.ship_torque` 18 (was 26), `heave_strength` 0.95 (0.5) and
+`heave_per_mass` 25 (6), so the hull rises with about two thirds of each crest (0.4 before). The bow throws spray once
+per crest that digs in (it sprayed every 0.8 s while a big crest stood over the bow). The foam streaks are fewer and
+keep to the crests: `wave_effects.foam_density` 1.25 (2.5), the rate grows with the square root of the wave height, and
+the troughs keep only a tenth of their foam. The shore fade runs out over 6 blocks (`surface_full_depth`, was 4), so the
+last blocks before a beach rise no higher than before.
+
+Measured (GameTests, pinned phase, one minute each, half ranges; before → after):
+
+| Hull, sea | Roll | Pitch | Heave (× amplitude) | Roll crests change | Settles (10 s after calm) |
+| --- | --- | --- | --- | --- | --- |
+| 7×17, calm | 0.25° → 0.26° | 0.03° → 0.06° | 0.04 (0.39) → 0.11 (0.75) | 0.20 → 0.20 | |
+| 7×17, moderate | 1.27° → 1.76° | 0.11° → 0.28° | 0.13 (0.44) → 0.50 (0.83) | 0.27 → 0.27 | |
+| 7×17, storm | 4.45° → 4.73° | 0.41° → 0.60° | 0.48 (0.40) → 1.34 (0.67) | 0.36 → 0.57 | 0.08° → 0.09° |
+| 32×12, calm | 0.04° → 0.04° | 0.003° → 0.005° | 0.03 → 0.08 | | |
+| 32×12, moderate | 0.19° → 0.27° | 0.007° → 0.018° | 0.08 → 0.36 | 0.20 → 0.20 | |
+| 32×12, storm | 0.66° → 0.62° | 0.03° → 0.04° | 0.32 (0.26) → 0.87 (0.43) | 0.24 → 0.31 | 0.014° → 0.015° |
+
+The 7×17 hull's keel stays at least 0.85 blocks under the surface it rides in a storm (1.68 at rest). Bow spray of the
+7×17 hull in a storm: 8 in a minute (29 without the once-per-crest rule). The starter sloop at rest with its deck hatch
+open took no water in a minute of moderate, rough or storm sea (the moderate run in the strongest set of the wave
+groups): the crests at the hull reach 0.6, 1.1 and 1.2 blocks and the sloop rides up with them, while water must reach
+the deck to run down the hatch. A low side hatch 0.2 blocks above the waterline still fills in a storm.
+
+Setup as for WAV3: `./gradlew :neoforge:runClient`, a creative world, default config (delete the old
+`pirates_n_ships-server.toml` and `-client.toml` in the world's `serverconfig` and in `config`, or set the values above,
+since an existing file keeps the old defaults), a starter sloop on open sea with `/pirates ship place starter_sloop
+assemble`, a beach in view. Please send short clips of steps 1 to 3 and say for each whether it is too little, right or
+too much.
+
+1. **Clear weather.** `/weather clear`, `/pirates waves set calm`, then `/pirates waves set moderate`.
+   - **Expected:** calm: a visible but gentle, long swell (you see the water rise and fall against the hull and the
+     beach, a hand's breadth); the sloop lies nearly still. Moderate: clear low waves running across the sea, in sets,
+     the sloop rocking gently (about 1–2°) and rising and sinking with them; a few foam streaks on the crests. No water
+     comes into the open hatch.
+2. **Rain.** `/weather rain`, `/pirates waves set rough`.
+   - **Expected:** clear crests about a block high that the sloop rides: the hull rises on each crest and sinks into
+     the trough, rolling a few degrees, unevenly. Some spray at the bow when it meets a crest head on. Foam streaks mark
+     the crests, the troughs nearly clear.
+3. **Thunder.** `/weather thunder`, `/pirates waves set storm`. Beam on for a minute, then turn into the waves.
+   - **Expected:** big seas: long crests two blocks and more high in the sets, troughs as deep, the horizon broken up.
+     Beam on the sloop rolls about 4–5° and rises and falls a block or more; head on the bow climbs each crest and drops
+     into the trough, with spray once per crest it digs into (not a constant fountain). Foam about twice the moderate
+     sea's, on the crests. It never capsizes from the waves alone. Is it extreme enough now? `waves.amplitude` scales
+     everything (try 1.5).
+4. **The shore in a storm.** Stand at the waterline and look along a beach, then at a steep coast from far away.
+   - **Expected:** the waves die out over the last six blocks before the sand and never rise over the beach blocks.
+     Far away (beyond 32 and 128 blocks, where the cells get coarse) a coast may show a short vertical step in the water
+     where a coarse cell over the coast lies flat next to a moving fine cell; it is taller now with the higher waves.
+     Tell us if you see one and where.
+5. **Foam density.** In the storm and in the moderate sea, look around from the deck.
+   - **Expected:** fewer white streaks than before WAV4 (the storm used to cover the water): lines of foam along the
+     crests, little in the troughs, about twice as many in the storm as in the moderate sea.
+
+### Known limits
+
+- The drawn surface and the hull's response follow the same field, but the hull rides about two thirds of each crest:
+  on the biggest crests the water still rises up the hull's side by a block or so.
+- An open deck hatch on the sloop stays dry at rest even in a storm; only hatches near the waterline take water.
+- An existing config file keeps the old defaults (`ship_torque` 26, `heave_strength` 0.5, `heave_per_mass` 6,
+  `foam_density` 2.5, `surface_full_depth` 4).

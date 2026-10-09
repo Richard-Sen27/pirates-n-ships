@@ -41,7 +41,9 @@ import org.joml.Vector3d;
  *       ({@link #spillHeight});</li>
  *   <li>bow spray: in rough or storm seas, when the crest at the bow rises more than {@link #SPRAY_MIN} blocks above the
  *       bow's waterline point, a {@link WaveSprayPayload} goes to the players tracking that chunk, at most once per
- *       {@link #SPRAY_COOLDOWN} ticks per ship.</li>
+ *       {@link #SPRAY_COOLDOWN} ticks per ship and once per crest: the bow must come clear (the crest under
+ *       {@link #SPRAY_REARM}) before it throws spray again (WAV4: with the higher seas a crest stays over the bow for
+ *       seconds, and the cooldown alone sprayed every 0.8 s).</li>
  * </ul>
  * Ships that are not afloat, and every ship while waves are off or the sea is flat, get nothing. The hull damping
  * ({@code sailing.force.HullDampingModel}) is untouched and takes the energy out of the rolling.
@@ -52,6 +54,8 @@ public final class WaveForces {
     public static final double SPRAY_MIN = 0.35;
     /** Minimum ticks between two sprays of one ship. */
     public static final int SPRAY_COOLDOWN = 16;
+    /** The crest at the bow must fall under this before the next spray (WAV4) [blocks]. */
+    public static final double SPRAY_REARM = 0.1;
 
     /** What the sea does to one ship this tick. */
     private static final class ShipWaves {
@@ -66,6 +70,8 @@ public final class WaveForces {
         double heave;
         long lastSpray = Long.MIN_VALUE / 2;
         int sprays;
+        /** The bow came clear of the last crest that threw spray (WAV4). */
+        boolean sprayArmed = true;
         @Nullable HullAnalysis countedFor;
         int blocks;
     }
@@ -137,12 +143,17 @@ public final class WaveForces {
         s.heave = WaveHeaveRule.force(s.meanHeight, mass, ship.gravity().length(), heave);
         s.bow = bow;
         s.gameTime = now;
-        if (state.spray() && now - s.lastSpray >= SPRAY_COOLDOWN) {
+        if (state.spray()) {
             spray(level, ship, hull, com, pts[0], world[0], world[1], h[0], now, s);
+        } else {
+            s.sprayArmed = true;
         }
     }
 
-    /** Sends spray when the crest at the bow rises more than {@link #SPRAY_MIN} above the bow's waterline point. */
+    /**
+     * Sends spray when the crest at the bow rises more than {@link #SPRAY_MIN} above the bow's waterline point, once per
+     * crest ({@link #SPRAY_REARM}) and at most once per {@link #SPRAY_COOLDOWN}.
+     */
     private static void spray(ServerLevel level, ShipBody ship, HullRuntime hull, Vector3d com, Vector3d bowPlot,
                               Vector3d bowWorld, Vector3d sternWorld, double hBow, long now, ShipWaves s) {
         double sea = hull.seaWorldY();
@@ -150,9 +161,13 @@ public final class WaveForces {
         double waterlinePlotY = com.y + (sea - comWorld.y);
         Vector3d bowWaterline = ship.toWorld(new Vector3d(bowPlot.x, waterlinePlotY, bowPlot.z), new Vector3d());
         double excess = sea + hBow - bowWaterline.y;
-        if (excess <= SPRAY_MIN) {
+        if (excess < SPRAY_REARM) {
+            s.sprayArmed = true;
+        }
+        if (excess <= SPRAY_MIN || !s.sprayArmed || now - s.lastSpray < SPRAY_COOLDOWN) {
             return;
         }
+        s.sprayArmed = false;
         s.lastSpray = now;
         s.sprays++;
         double dx = bowWorld.x - sternWorld.x, dz = bowWorld.z - sternWorld.z;

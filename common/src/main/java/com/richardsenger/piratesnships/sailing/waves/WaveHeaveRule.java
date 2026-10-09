@@ -24,7 +24,11 @@ public final class WaveHeaveRule {
      */
     public record Params(boolean enabled, double strength, double maxPerMass) {
 
-        public static final Params DEFAULTS = new Params(true, 0.5, 6.0);
+        /**
+         * WAV4: strength 0.95 (WAV2: 0.5) so the hull follows the surface more closely, and a cap of 25 per kpg (WAV2: 6),
+         * which the 2-block storm's crests would otherwise reach on every set.
+         */
+        public static final Params DEFAULTS = new Params(true, 0.95, 25.0);
     }
 
     private WaveHeaveRule() {

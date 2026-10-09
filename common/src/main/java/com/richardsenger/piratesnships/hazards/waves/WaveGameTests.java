@@ -102,6 +102,13 @@ public final class WaveGameTests {
         return Math.toDegrees(Math.asin(Math.max(-1.0, Math.min(1.0, port.y))));
     }
 
+    /** Signed pitch angle [degrees] (+ = bow up). */
+    private static double pitchDegrees(SailingGameTestsShips.Fixture f) {
+        Quaterniond q = f.runtime().bow().shipToWorld(f.ship().orientation(new Quaterniond()), new Quaterniond());
+        Vector3d fwd = q.transform(new Vector3d(ShipFrame.FORWARD));
+        return Math.toDegrees(Math.asin(Math.max(-1.0, Math.min(1.0, fwd.y))));
+    }
+
     /** Roll statistics over ticks [from, to): {min, max}. */
     private static double[] watchRoll(GameTestHelper h, SailingGameTestsShips.Fixture f, long from, long to) {
         double[] mm = {Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY};
@@ -168,11 +175,17 @@ public final class WaveGameTests {
      */
     private static final class Track {
         final List<Double> roll = new ArrayList<>();
+        final List<Double> pitch = new ArrayList<>();
         final List<Double> y = new ArrayList<>();
 
         /** Half range of the roll [degrees], NaN for an empty record. */
         double rollHalf() {
             return halfRange(roll);
+        }
+
+        /** Half range of the pitch [degrees]. */
+        double pitchHalf() {
+            return halfRange(pitch);
         }
 
         /** Half range of the height [blocks]: the heave amplitude. */
@@ -243,10 +256,23 @@ public final class WaveGameTests {
             long t = h.getTick();
             if (t >= from && t < to && !f.ship().isRemoved() && f.ship().centerOfMass(com)) {
                 tr.roll.add(rollDegrees(f));
+                tr.pitch.add(pitchDegrees(f));
                 tr.y.add(f.ship().toWorld(com, new Vector3d()).y);
             }
         });
         return tr;
+    }
+
+    /**
+     * Logs one row of the measured table (WAV4): roll and pitch half range [degrees], heave half range [blocks] and as a
+     * share of the state's amplitude, the roll crests and how much successive crests differ.
+     */
+    private static void table(String hull, SeaState state, Track t) {
+        List<Double> crests = t.crests(0.1);
+        Constants.LOG.info("[wave table] {} {}: roll {} deg, pitch {} deg, heave {} blocks ({} x A {}), {} roll crests changing {}",
+                hull, state.id(), String.format("%.3f", t.rollHalf()), String.format("%.3f", t.pitchHalf()),
+                String.format("%.3f", t.heave()), f2(t.heave() / amplitude(state)), f2(amplitude(state)), crests.size(),
+                f2(Track.meanCrestChange(crests)));
     }
 
     /** The field's amplitude of {@code state} [blocks] (× {@code waves.amplitude}). */
@@ -261,7 +287,8 @@ public final class WaveGameTests {
     /**
      * The 7×17 hull at storm amplitude rolls 3 to 8 degrees (half range over one minute, one wave-group period, at
      * steady state; the target is about ±4–6°), and once the sea goes calm it settles within 10 s. Measured 4.35
-     * degrees with WV1's two trains before SH1's righting torque, 1.85 after; WAV2 measured 4.46 (docs/playtests/waves.md).
+     * degrees with WV1's two trains before SH1's righting torque, 1.85 after; WAV2 measured 4.46 (docs/playtests/waves.md);
+     * WAV4 (storm 2.0 on a 42-block peak, {@code ship_torque} 18) 4.73, pitch 0.60, settled to 0.09 after 10 s.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 1800, batch = "pirates_n_ships_waves_storm_roll")
     public static void stormRollsTheTestHullAndCalmSettlesIt(GameTestHelper h) {
@@ -275,6 +302,9 @@ public final class WaveGameTests {
         double[] settled = watchRoll(h, f, calmAt + 200, calmAt + 220);
         h.runAfterDelay(calmAt + 221, () -> {
             double s = storm.rollHalf(), c = half(settled);
+            table("7x17", SeaState.STORM, storm);
+            int sprays = WaveForces.sprays(h.getLevel(), f.ship().id());
+            Constants.LOG.info("[wave table] 7x17 storm: {} sprays at the bow in {} ticks", sprays, calmAt - stormAt);
             List<Double> crests = storm.crests(0.1);
             Constants.LOG.info("[wave test] 7x17 storm roll {} deg, {} crests changing {} on average, heave {} blocks; 10 s after calm {} deg; "
                             + "mass {}", f2(s), crests.size(), f2(Track.meanCrestChange(crests)), f2(storm.heave()), f2(c),
@@ -282,14 +312,17 @@ public final class WaveGameTests {
             release(h);
             h.assertTrue(s >= 3.0 && s <= 8.0, "storm roll of the 7x17 hull outside 3..8 deg: " + s);
             h.assertTrue(c < 0.5, "the 7x17 hull still rolls " + c + " deg 10 s after the sea went calm");
+            // WAV4: once per crest that digs in, not every cooldown: 8 in 68 s measured (29 with the cooldown alone)
+            h.assertTrue(sprays >= 2 && sprays <= 20, "the bow threw " + sprays + " sprays in a minute of storm");
             SableShips.remove(f.ship());
             h.succeed();
         });
     }
 
     /**
-     * A calm sea leaves the 7×17 hull nearly still: under half a degree of roll over a minute. Measured 0.25° on
-     * 2026-10-09 (WAV2: the calm sea is a long 56-block swell without wave groups), so the limit has a 2× margin.
+     * A calm sea leaves the 7×17 hull nearly still: under 0.4 degrees of roll over a minute. Measured 0.25° on
+     * 2026-10-09 (WAV2: the calm sea is a long 56-block swell without wave groups); WAV4 (calm 0.15, {@code ship_torque}
+     * 18) 0.26°, the target being 0.3 at most.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 1500, batch = "pirates_n_ships_waves_calm_roll")
     public static void calmSeaLeavesTheTestHullStill(GameTestHelper h) {
@@ -300,15 +333,19 @@ public final class WaveGameTests {
         Track calm = track(h, f, SETTLE + RAMP, end);
         h.runAfterDelay(end + 1, () -> {
             double c = calm.rollHalf();
+            table("7x17", SeaState.CALM, calm);
             Constants.LOG.info("[wave test] 7x17 calm roll {} deg, heave {} blocks", String.format("%.3f", c), String.format("%.3f", calm.heave()));
             release(h);
-            h.assertTrue(c < 0.5, "a calm sea rolls the 7x17 hull " + c + " deg");
+            h.assertTrue(c < 0.4, "a calm sea rolls the 7x17 hull " + c + " deg");
             SableShips.remove(f.ship());
             h.succeed();
         });
     }
 
-    /** A moderate sea rocks the 7×17 hull gently: between a tenth of a degree and 3 degrees over a minute. */
+    /**
+     * A moderate sea rocks the 7×17 hull gently: between a tenth of a degree and 3 degrees over a minute. Measured: WAV2
+     * 1.27 (0.3 blocks), WAV4 1.76 (0.6 blocks).
+     */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 1500, batch = "pirates_n_ships_waves_moderate_roll")
     public static void moderateSeaRocksTheTestHullGently(GameTestHelper h) {
         hold(h, SeaState.MODERATE, 1600);
@@ -317,6 +354,7 @@ public final class WaveGameTests {
         Track moderate = track(h, f, SETTLE + RAMP, end);
         h.runAfterDelay(end + 1, () -> {
             double m = moderate.rollHalf();
+            table("7x17", SeaState.MODERATE, moderate);
             Constants.LOG.info("[wave test] 7x17 moderate roll {} deg, heave {} blocks", f2(m), f2(moderate.heave()));
             release(h);
             h.assertTrue(m > 0.1 && m < 3.0, "a moderate sea rolls the 7x17 hull " + m + " deg");
@@ -325,28 +363,38 @@ public final class WaveGameTests {
         });
     }
 
-    /** A big hull (32×12) lies steady in a storm: under 1 degree of roll over a minute, but it moves. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 1500, batch = "pirates_n_ships_waves_big_hull")
+    /**
+     * A big hull (32×12) lies steady in a storm: under 1 degree of roll over a minute, but it moves; 10 s after the sea
+     * goes calm it lies still again. Measured: WAV2 0.65, WAV4 0.62 (settled to 0.015).
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 1800, batch = "pirates_n_ships_waves_big_hull")
     public static void stormBarelyRollsABigHull(GameTestHelper h) {
-        hold(h, SeaState.CALM, 1600);
+        hold(h, SeaState.CALM, 1900);
         SailingGameTestsShips.Fixture f = bigHull(h);
         long end = SETTLE + RAMP + WINDOW;
-        h.runAfterDelay(SETTLE, () -> hold(h, SeaState.STORM, 1600));
+        h.runAfterDelay(SETTLE, () -> hold(h, SeaState.STORM, 1900));
+        h.runAfterDelay(end, () -> hold(h, SeaState.CALM, 1900));
         trace(h, "storm 32x12", f, SETTLE, end);
         Track storm = track(h, f, SETTLE + RAMP, end);
-        h.runAfterDelay(end + 1, () -> {
+        double[] settled = watchRoll(h, f, end + 200, end + 220);
+        h.runAfterDelay(end + 221, () -> {
             double s = storm.rollHalf();
-            Constants.LOG.info("[wave test] 32x12 storm roll {} deg, heave {} blocks; mass {}", f2(s), f2(storm.heave()),
-                    String.format("%.1f", f.ship().mass()));
+            table("32x12", SeaState.STORM, storm);
+            Constants.LOG.info("[wave test] 32x12 storm roll {} deg, heave {} blocks; 10 s after calm {} deg; mass {}", f2(s),
+                    f2(storm.heave()), String.format("%.3f", half(settled)), String.format("%.1f", f.ship().mass()));
             release(h);
             h.assertTrue(s < 1.0, "a storm rolls the 32x12 hull " + s + " deg");
             h.assertTrue(s > 0.05, "the storm did not move the 32x12 hull at all: " + s + " deg");
+            h.assertTrue(half(settled) < 0.5, "the 32x12 hull still rolls " + half(settled) + " deg 10 s after the sea went calm");
             SableShips.remove(f.ship());
             h.succeed();
         });
     }
 
-    /** In a calm and then a moderate sea the big hull hardly moves: under 0.2 and under 0.5 degrees. */
+    /**
+     * In a calm and then a moderate sea the big hull hardly moves: under 0.2 and under 0.5 degrees. Measured: WAV2 0.04
+     * and 0.19, WAV4 0.04 and 0.27.
+     */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 2900, batch = "pirates_n_ships_waves_big_hull_calm")
     public static void calmAndModerateSeasBarelyMoveABigHull(GameTestHelper h) {
         hold(h, SeaState.CALM, 3000);
@@ -357,6 +405,8 @@ public final class WaveGameTests {
         Track moderate = track(h, f, moderateAt + RAMP, end);
         h.runAfterDelay(end + 1, () -> {
             double c = calm.rollHalf(), m = moderate.rollHalf();
+            table("32x12", SeaState.CALM, calm);
+            table("32x12", SeaState.MODERATE, moderate);
             Constants.LOG.info("[wave test] 32x12 calm roll {} deg, heave {}; moderate roll {} deg, heave {}", String.format("%.3f", c),
                     String.format("%.3f", calm.heave()), String.format("%.3f", m), String.format("%.3f", moderate.heave()));
             release(h);
@@ -369,7 +419,8 @@ public final class WaveGameTests {
 
     /**
      * WAV2: the storm roll has no single clean rhythm. Over one minute of storm (pinned half a group period later than
-     * the other storm tests), successive roll crests of the 7×17 hull differ by 15 % or more on average.
+     * the other storm tests), successive roll crests of the 7×17 hull differ by 15 % or more on average. Measured: WAV2
+     * 0.42, WAV4 0.52.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 1500, batch = "pirates_n_ships_waves_irregular")
     public static void stormRollHasAnIrregularRhythm(GameTestHelper h) {
@@ -381,6 +432,7 @@ public final class WaveGameTests {
         h.runAfterDelay(end + 1, () -> {
             List<Double> crests = storm.crests(0.1);
             double change = Track.meanCrestChange(crests);
+            table("7x17 irregular", SeaState.STORM, storm);
             StringBuilder sb = new StringBuilder();
             for (double c : crests) sb.append(' ').append(f2(c));
             Constants.LOG.info("[wave test] 7x17 storm roll crests [deg]:{}; mean change {}, roll {} deg", sb, f2(change), f2(storm.rollHalf()));
@@ -393,8 +445,10 @@ public final class WaveGameTests {
     }
 
     /**
-     * WAV2: the heave. In a storm the 7×17 hull's centre of mass rises and falls with the waves by 0.3 to 1.0 times the
-     * wave amplitude (half range over one minute).
+     * WAV2: the heave. In a storm the 7×17 hull's centre of mass rises and falls with the waves by 0.5 to 0.9 times the
+     * wave amplitude (half range over one minute; WAV2 asked 0.3 to 1.0 and measured 0.40 with {@code heave_strength}
+     * 0.5; WAV4's target is 0.6–0.7, measured 0.67 with 0.95), and its keel stays under the surface it rides (WAV4:
+     * at least 0.85 blocks deep, 1.68 at rest).
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 1500, batch = "pirates_n_ships_waves_heave")
     public static void stormLiftsTheHullOnTheCrests(GameTestHelper h) {
@@ -402,8 +456,19 @@ public final class WaveGameTests {
         SailingGameTestsShips.Fixture f = longHull(h);
         long end = SETTLE + RAMP + WINDOW;
         Track storm = track(h, f, SETTLE + RAMP, end);
+        // WAV4: the hull must stay in the water it rides: the depth of the middle of its keel under the drawn surface
+        // there (the still sea + the mean wave height under the hull), its least over the window and its value at rest
+        double[] draft = {Double.POSITIVE_INFINITY, Double.NaN};
         h.onEachTick(() -> {
             long t = h.getTick();
+            var hull = com.richardsenger.piratesnships.ship.hull.runtime.HullRuntimes.get(h.getLevel(), f.ship().id());
+            if (hull != null && Double.isFinite(hull.seaWorldY()) && !f.ship().isRemoved() && (t == SETTLE || t >= SETTLE + RAMP && t < end)) {
+                int[] b = f.runtime().bounds();
+                Vector3d keel = f.ship().toWorld(WaveTorqueRule.center(b, b[1]), new Vector3d());
+                double d = hull.seaWorldY() + WaveForces.meanHeight(h.getLevel(), f.ship().id()) - keel.y;
+                if (t == SETTLE) draft[1] = d;
+                else draft[0] = Math.min(draft[0], d);
+            }
             if (t >= SETTLE + RAMP && t < end && t % 20 == 0 && !f.ship().isRemoved()) {
                 Constants.LOG.info("[wave test] heave 7x17 t={} mean wave {} force {} y {}", t,
                         f2(WaveForces.meanHeight(h.getLevel(), f.ship().id())),
@@ -413,10 +478,12 @@ public final class WaveGameTests {
         });
         h.runAfterDelay(end + 1, () -> {
             double ratio = storm.heave() / amplitude(SeaState.STORM);
-            Constants.LOG.info("[wave test] 7x17 storm heave {} blocks = {} x the amplitude; roll {} deg", f2(storm.heave()), f2(ratio),
-                    f2(storm.rollHalf()));
+            table("7x17 heave", SeaState.STORM, storm);
+            Constants.LOG.info("[wave test] 7x17 storm heave {} blocks = {} x the amplitude; roll {} deg; keel under the drawn surface "
+                    + "at least {} blocks (at tick {}: {})", f2(storm.heave()), f2(ratio), f2(storm.rollHalf()), f2(draft[0]), SETTLE, f2(draft[1]));
             release(h);
-            h.assertTrue(ratio >= 0.3 && ratio <= 1.0, "storm heave of the 7x17 hull " + ratio + " x the wave amplitude, outside 0.3..1.0");
+            h.assertTrue(ratio >= 0.5 && ratio <= 0.9, "storm heave of the 7x17 hull " + ratio + " x the wave amplitude, outside 0.5..0.9");
+            h.assertTrue(draft[0] > 0.0, "the 7x17 hull's keel left the water it rides: " + draft[0] + " blocks under the surface");
             SableShips.remove(f.ship());
             h.succeed();
         });
@@ -505,7 +572,7 @@ public final class WaveGameTests {
      * moves the hatch in the stern wall, so the sill at the opening no longer stands for the whole window), and {@code c = BASE_FLOW · inflow_rate} (area 1). The hull rides
      * the swell, so the test asks for half: a storm must put at least {@code min(E, HOLD_VOLUME) / 2} through the hatch,
      * and {@code E} must be at least 1 block (the window holds a crest over the sill; with a storm's 1.2 and a sill near
-     * 0.3 it is about 15). A calm sea (crest 0.1, under the sill) must put in nothing.
+     * 0.3 it is about 15; WAV4's 2.0 gives over 200). A calm sea (crest 0.1, under the sill) must put in nothing.
      */
     private static void spill(GameTestHelper h, SeaState state, boolean floods) {
         double inflowRate = 10.0;
@@ -529,8 +596,20 @@ public final class WaveGameTests {
         });
         double[] before = {Double.NaN};
         double[] sill = {Double.NaN};
+        // WAV4: the sill's mean height over the two seconds before the hatch opens, {sum, count}: the 2-block storm
+        // pitches this 5-long boat by more than WV1's (at the opening tick the sill stood 0.04 below the still sea), and
+        // once the hold takes water the boat settles deeper, so neither the opening tick nor the window stands for it
+        double[] sillMean = {0, 0};
         double[] expected = {0};
         double[] maxFeed = {0};
+        h.onEachTick(() -> {
+            long t = h.getTick();
+            if (!f.ship().isRemoved() && t >= OPEN_AT - 40 && t < OPEN_AT && Double.isFinite(f.runtime().seaWorldY())) {
+                sillMean[0] += f.ship().toWorld(new net.minecraft.world.phys.Vec3(hatch.getX() + 0.5, hatch.getY(), hatch.getZ() + 0.5)).y
+                        - f.runtime().seaWorldY();
+                sillMean[1]++;
+            }
+        });
         h.onEachTick(() -> {
             long t = h.getTick();
             if (f.ship().isRemoved() || t < OPEN_AT || t >= OPEN_AT + SPILL_WINDOW) {
@@ -565,23 +644,24 @@ public final class WaveGameTests {
         h.runAfterDelay(OPEN_AT + SPILL_WINDOW, () -> {
             double water = f.runtime().simulation().totalVolume() - before[0];
             double threshold = Math.min(expected[0], HOLD_VOLUME) / 2.0;
+            double meanSill = sillMean[1] > 0 ? sillMean[0] / sillMean[1] : Double.NaN;
             Constants.LOG.info("[wave test] spill {}: water {} in {} ticks with the hatch open, estimate {}, threshold {}, "
-                            + "highest crest feed {}, sill above sea at opening {}", state.id(), String.format("%.2f", water), SPILL_WINDOW,
-                    String.format("%.2f", expected[0]), String.format("%.2f", threshold), String.format("%.2f", maxFeed[0]),
-                    String.format("%.2f", sill[0]));
+                            + "highest crest feed {}, sill above sea at opening {}, before it {}", state.id(), String.format("%.2f", water),
+                    SPILL_WINDOW, String.format("%.2f", expected[0]), String.format("%.2f", threshold), String.format("%.2f", maxFeed[0]),
+                    String.format("%.2f", sill[0]), String.format("%.2f", meanSill));
             release(h);
             var grid = f.runtime().simulation().analysis().grid();
             h.assertTrue(f.runtime().simulation().isOpen(grid.index(hatch.getX() - grid.originX(), hatch.getY() - grid.originY(),
                     hatch.getZ() - grid.originZ())), "the open hatch did not reach the simulation");
             h.assertTrue(Double.isFinite(sill[0]), "never found the sea at the hull");
             if (floods) {
-                h.assertTrue(sill[0] > 0.0 && sill[0] < SeaState.STORM.amplitude(),
-                        "the hatch's sill is not between the still sea and a storm crest: " + sill[0]);
+                h.assertTrue(meanSill > 0.0 && meanSill < SeaState.STORM.amplitude(),
+                        "the hatch's sill is not between the still sea and a storm crest before opening: " + meanSill);
                 h.assertTrue(expected[0] >= 1.0, "no storm crest rose over the sill in the window: estimate " + expected[0]);
                 h.assertTrue(water >= threshold, "a storm put only " + water + " blocks of water through the low hatch (threshold "
                         + threshold + " from a still-hull estimate of " + expected[0] + ")");
             } else {
-                h.assertTrue(sill[0] > SeaState.CALM.amplitude(), "the hatch's sill is under a calm crest: " + sill[0]);
+                h.assertTrue(meanSill > maxFeed[0], "the hatch's sill " + meanSill + " is under the calm crests " + maxFeed[0]);
                 h.assertTrue(water < 0.01, "a calm sea put " + water + " blocks of water through the low hatch");
             }
             SableShips.remove(f.ship());
@@ -595,10 +675,156 @@ public final class WaveGameTests {
         spill(h, SeaState.STORM, true);
     }
 
-    /** In a calm sea the same hatch stays dry. */
+    /**
+     * Crests that stay under the sill put nothing in: the same hatch stays dry in a calm sea of WV1's height (0.1 blocks).
+     * WAV4 raised the calm sea to 0.15, which stands at this hatch's sill (0.16 above the still sea, measured; one run
+     * then took 1.0 block in 24 s, the next none), so the test scales the calm sea back to 0.1 with {@code waves.amplitude};
+     * the starter sloop's open hatch in a default moderate sea ({@link #moderateSeaKeepsTheSloopsOpenHatchDry}) covers
+     * the gameplay case.
+     */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 640, batch = "pirates_n_ships_config_waves_spill_calm")
     public static void calmSeaKeepsALowHatchDry(GameTestHelper h) {
+        ConfigOverrides.during(h, HazardConfig.WAVE_AMPLITUDE, 0.1 / SeaState.CALM.amplitude());
         spill(h, SeaState.CALM, false);
+    }
+
+    // ------------------------------------------------------------------ the starter sloop's open hatch (WAV4)
+
+    /** Ticks the sloop's hatch stands open in {@link #sloopHatch}: one minute. */
+    private static final int SLOOP_WINDOW = 1200;
+    /** The sloop's hatch opens once it floats. */
+    private static final int SLOOP_OPEN_AT = 80;
+    /**
+     * Phase of the sloop tests' field [ticks]: the window's middle (tick 680) falls on the strongest set of the wave
+     * groups, where both envelope terms peak together (field time 16,216: 1.35 × the amplitude; the default phase's
+     * window reaches only 1.27), so the moderate test meets the highest crests a moderate sea brings.
+     */
+    private static final int SLOOP_PHASE = 16216 - 680;
+
+    /**
+     * A 48×48 stone basin, water y 2..7 (floor y 1), the barrier ceiling of the 48×16×48 template removed, with the
+     * starter sloop placed and assembled from its template, bow north, in the middle.
+     */
+    private static java.util.UUID sloop(GameTestHelper h) {
+        for (int x = 0; x < 48; x++) {
+            for (int z = 0; z < 48; z++) {
+                h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
+                boolean wall = x == 0 || x == 47 || z == 0 || z == 47;
+                for (int y = 2; y <= 8; y++) {
+                    h.setBlock(new BlockPos(x, y, z), wall ? Blocks.STONE : y <= 7 ? Blocks.WATER : Blocks.AIR);
+                }
+            }
+        }
+        SailingGameTestsShips.openSky(h, 48);
+        BlockPos feet = h.absolutePos(new BlockPos(24, 8, 38));
+        var r = com.richardsenger.piratesnships.ship.template.ShipTemplatePlacer.place(h.getLevel(),
+                com.richardsenger.piratesnships.ship.template.ShipTemplates.STARTER_SLOOP_ID, feet, Direction.NORTH, true, true, null);
+        var a = r.assembly();
+        if (a == null || a.shipId() == null) {
+            throw new AssertionError("sloop not placed and assembled: " + r.outcome() + " " + a);
+        }
+        com.richardsenger.piratesnships.ship.ShipTestCleanup.track(h, a.shipId());
+        return a.shipId();
+    }
+
+    /**
+     * The starter sloop at rest, its deck hatch (the trapdoor over the ladder into the hold) opened once it floats, in a
+     * sea held at {@code state} with the default wave forces (heave on): logs the water that comes in over one minute
+     * and hands it [blocks] to {@code check} (NaN when the hull was not found).
+     */
+    private static void sloopHatch(GameTestHelper h, SeaState state, java.util.function.BiConsumer<Double, Double> check) {
+        ServerLevel level = h.getLevel();
+        SeaStates.set(level, state, FROM_WEST + 180.0, level.getGameTime() + SLOOP_OPEN_AT + SLOOP_WINDOW + 100, origin(h, SLOOP_PHASE));
+        java.util.UUID id = sloop(h);
+        double[] before = {Double.NaN};
+        int[] opened = {0};
+        double[] maxFeed = {0};
+        List<BlockPos> hatches = new ArrayList<>();
+        // the hatch's sill above the still sea: {least, sum, count}, and the highest crest over it (feed − sill)
+        double[] sill = {Double.POSITIVE_INFINITY, 0, 0};
+        double[] over = {Double.NEGATIVE_INFINITY};
+        h.runAfterDelay(SLOOP_OPEN_AT, () -> {
+            var hull = com.richardsenger.piratesnships.ship.hull.runtime.HullRuntimes.get(level, id);
+            h.assertTrue(hull != null, "the sloop has no hull runtime");
+            var grid = hull.simulation().analysis().grid();
+            for (int i = 0, n = grid.cellCount(); i < n; i++) {
+                if (grid.kind(i) != com.richardsenger.piratesnships.ship.hull.CellKind.OPENING) continue;
+                BlockPos p = new BlockPos(grid.originX() + grid.x(i), grid.originY() + grid.y(i), grid.originZ() + grid.z(i));
+                BlockState s = level.getBlockState(p);
+                if (s.getBlock() instanceof TrapDoorBlock) {
+                    level.setBlock(p, s.setValue(TrapDoorBlock.OPEN, true), net.minecraft.world.level.block.Block.UPDATE_ALL);
+                    opened[0]++;
+                    hatches.add(p);
+                }
+            }
+            before[0] = hull.simulation().totalVolume();
+        });
+        h.onEachTick(() -> {
+            long t = h.getTick();
+            if (t > SLOOP_OPEN_AT && t < SLOOP_OPEN_AT + SLOOP_WINDOW) {
+                double feed = WaveForces.spillHeight(level, id);
+                maxFeed[0] = Math.max(maxFeed[0], feed);
+                var hull = com.richardsenger.piratesnships.ship.hull.runtime.HullRuntimes.get(level, id);
+                ShipBody ship = SableShips.byId(level, id);
+                if (hull != null && ship != null && !hatches.isEmpty() && Double.isFinite(hull.seaWorldY())) {
+                    BlockPos p = hatches.get(0);
+                    double y = ship.toWorld(new net.minecraft.world.phys.Vec3(p.getX() + 0.5, p.getY(), p.getZ() + 0.5)).y - hull.seaWorldY();
+                    sill[0] = Math.min(sill[0], y);
+                    sill[1] += y;
+                    sill[2]++;
+                    over[0] = Math.max(over[0], feed - y);
+                }
+            }
+        });
+        h.runAfterDelay(SLOOP_OPEN_AT + SLOOP_WINDOW, () -> {
+            var hull = com.richardsenger.piratesnships.ship.hull.runtime.HullRuntimes.get(level, id);
+            double water = hull == null ? Double.NaN : hull.simulation().totalVolume() - before[0];
+            Constants.LOG.info("[wave table] sloop {} sea: {} blocks of water through {} open hatches in {} ticks, highest crest feed {}, "
+                    + "hatch sill above the still sea {} on average, {} at the least, highest crest over the sill {}; sprays {}", state.id(),
+                    String.format("%.3f", water), opened[0], SLOOP_WINDOW, f2(maxFeed[0]), f2(sill[2] > 0 ? sill[1] / sill[2] : Double.NaN),
+                    f2(sill[0]), f2(over[0]), WaveForces.sprays(level, id));
+            release(h);
+            h.assertTrue(opened[0] >= 1, "the sloop has no trapdoor hatch to open");
+            check.accept(water, maxFeed[0]);
+            ShipBody ship = SableShips.byId(level, id);
+            if (ship != null) SableShips.remove(ship);
+            h.succeed();
+        });
+    }
+
+    /**
+     * WAV4: a moderate sea (0.6 blocks, crests up to 0.81 in a set) puts no water through the starter sloop's open deck
+     * hatch in a minute at rest, in the strongest set of the wave groups ({@link #SLOOP_PHASE}): the sloop rides the
+     * swell and its deck stands above the crests. Measured: no water; crests at the hull up to 0.57, the hatch cell's floor
+     * 0.47 to 0.83 above the still sea (a crest never rose over it; the water would have to reach the deck a block higher).
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = SLOOP_OPEN_AT + SLOOP_WINDOW + 60,
+            batch = "pirates_n_ships_waves_sloop_moderate")
+    public static void moderateSeaKeepsTheSloopsOpenHatchDry(GameTestHelper h) {
+        sloopHatch(h, SeaState.MODERATE, (water, feed) -> h.assertTrue(water < 0.01,
+                "a moderate sea put " + water + " blocks of water through the sloop's open hatch"));
+    }
+
+    /**
+     * WAV4: the same sloop in a held storm, measured for the table (the water logged): the hull meets crests of at least
+     * half the storm's height. Measured: no water in a minute; the hatch cell's floor stands 0.5 blocks above the still
+     * sea on average, the crests at the hull reach 1.2 (the hull rides up 0.67 of them), at most 0.6 over that floor, and
+     * water must rise a block higher, to the deck, to run down the hatch. So an open deck hatch is safe at rest; a low
+     * side hatch is not ({@link #stormSpillsThroughALowHatch}).
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = SLOOP_OPEN_AT + SLOOP_WINDOW + 60,
+            batch = "pirates_n_ships_waves_sloop_storm")
+    public static void stormAtTheSloopsOpenHatchIsMeasured(GameTestHelper h) {
+        sloopHatch(h, SeaState.STORM, (water, feed) -> h.assertTrue(Double.isFinite(water) && feed >= 0.5 * amplitude(SeaState.STORM),
+                "the sloop met no storm crests: water " + water + ", highest crest " + feed));
+    }
+
+    /** WAV4: the same sloop in a held rough sea, measured for the table (no water in a minute, crests 1.1 at the hull). */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = SLOOP_OPEN_AT + SLOOP_WINDOW + 60,
+            batch = "pirates_n_ships_waves_sloop_rough")
+    public static void roughSeaAtTheSloopsOpenHatchIsMeasured(GameTestHelper h) {
+        sloopHatch(h, SeaState.ROUGH, (water, feed) -> h.assertTrue(Double.isFinite(water) && feed >= 0.5 * amplitude(SeaState.ROUGH),
+                "the sloop met no rough crests: water " + water + ", highest crest " + feed));
     }
 
     // ------------------------------------------------------------------ sync

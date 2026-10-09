@@ -433,8 +433,8 @@ pirate captain 50) that any navy officer pays out. Attacking the navy or a merch
 `/pirates career` shows where you stand. **What a rank is worth:** from Lieutenant the navy flag is yours by right: an
 officer flying it is never charged with false colours for low navy reputation (a bounty still is), and navy outposts
 let you dock for free. Each new rank comes with a gift: a Lieutenant receives the officer's bicorne, a saber and the
-officer's outfit: the Officer's Coat, Officer's Breeches and Officer's Boots (once; a full pack drops them at your
-feet). The outfit is armour that marks you as navy; you can also craft each piece (see "Coats, breeches and boots"). From Captain the harbor master's desk at a navy outpost has an Orders tab: the
+Officer's Coat (once; a full pack drops them at your feet). The coat is chest armour that marks you as navy; you can
+also craft it from blue wool, white wool and a gold ingot. From Captain the harbor master's desk at a navy outpost has an Orders tab: the
 navy shipyard builds you any ship the village shipwrights do, at 70 % of the price (Commodore 50 %, Admiral 40 %),
 delivered to the outpost's quay. On the other side, infamy talks at the fences: a Buccaneer, Dread Captain or Pirate
 Lord trades as if the pirates liked him 7, 13 or 20 points more, and from Dread Captain up pirates leave you alone
@@ -522,8 +522,9 @@ is found: every map of it turns grey and keeps as a souvenir, and the next blank
 Operators: `/pirates world treasure give [port]`. Server config `world.treasure_maps`, `cargo_trade.treasure_map_price`.
 
 ## Waves
-The sea follows the weather: calm or a light chop in fair weather, rough in rain, a storm in thunder, changing over
-about a minute. Ships roll, pitch and rise with the waves (big ships far less than small boats). The sea is not one
+The sea follows the weather: a low swell or a light chop in fair weather, rough in rain, a storm in thunder, changing
+over about a minute. A fair-weather chop lifts the water about half a block, rain about a block, and in a thunderstorm
+the biggest crests stand two blocks and more above the still sea. Ships roll, pitch and rise with the waves (big ships far less than small boats). The sea is not one
 even swell: waves of different lengths run a little across each other, so the rhythm is irregular, and they come in
 sets, a run of bigger waves for half a minute and then a calmer spell. On a crest the bow lifts and the whole hull rides
 up, in a trough it sinks back. In rough seas the bow
@@ -531,13 +532,8 @@ throws spray, and any open hatch or low rim close to the waterline lets water in
 and keep a pump ready before a storm. `/pirates waves` shows the sea; operators can hold a state with `/pirates waves
 set storm` and release it with `/pirates waves clear`. The camera can roll with the ship (client setting
 `wave_effects.camera_sway`, off by default). Faint foam streaks lie on the water around you, stretched along the
-direction the waves run and gathered on the crests: none in a calm sea, a few in a moderate one, many in a storm, and
-none inside a dry hull (client setting `wave_effects.foam`). A moving ship leaves a wake: a bow wave of foam
-spreading out from the stem in a narrow V, a foam trail behind the stern that widens and fades over about 8 seconds and
-stays where the water is (a turning ship leaves a curved wake), and at speed a thin line of foam along the waterline;
-the faster the ship, the denser and brighter, nothing below 1 block per second or at anchor (client settings
-`wave_effects.wake`, `wake_density`, `wake_life_ticks`, `wake_min_speed`, `wake_full_speed`, `wake_spread_degrees`,
-`wake_radius`). Server config `waves`.
+direction the waves run and gathered on the crests: none in a calm sea, a few in a moderate one, about twice as many in
+a storm, and none inside a dry hull (client setting `wave_effects.foam`). Server config `waves`.
 
 The sea itself moves: around you the water surface rises into crests and sinks into troughs with the same waves that
 rock the ships, smooth near you and coarser toward the horizon, flat at the beach where the water is shallow, and never

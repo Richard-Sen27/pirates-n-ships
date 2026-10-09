@@ -39,7 +39,8 @@ public final class WaveTorqueRule {
      */
     public record Params(boolean enabled, double shipTorque, double maxTorquePerMass, double sizeExponent) {
 
-        public static final Params DEFAULTS = new Params(true, 26.0, 2.5, 1.0);
+        /** WAV4: {@code ship_torque} 18 (WAV2: 26) against the higher seas, so the 7x17 hull's storm roll stays near 4-6°. */
+        public static final Params DEFAULTS = new Params(true, 18.0, 2.5, 1.0);
 
         /** WV1's square-root size scale. */
         public Params(boolean enabled, double shipTorque, double maxTorquePerMass) {

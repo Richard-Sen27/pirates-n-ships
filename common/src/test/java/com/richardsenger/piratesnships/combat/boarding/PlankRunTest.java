@@ -349,4 +349,18 @@ class PlankRunTest {
         assertTrue(PlankRun.breaks(true, true, 1.6, 1.3, 1.5, 2.5), "the same drift sideways breaks");
         assertTrue(PlankRun.breaks(true, true, 0.0, Double.NaN, 1.5, 2.5));
     }
+
+    /** RAIL1: a click on a railing port's top facing outboard counts as a click on its outboard side. */
+    @Test
+    void aClickOnAPortsSillFacingOutboardStartsBeyondThePortAtItsHeight() {
+        BlockPos port = new BlockPos(4, 9, 2);
+        Direction face = PlankRun.throughOpening(Direction.UP, Direction.EAST, Direction.EAST);
+        assertEquals(Direction.EAST, face);
+        PlankRun.Start start = PlankRun.start(port, face, Direction.EAST);
+        assertEquals(new BlockPos(5, 9, 2), start.first(), "the block beyond the port, at its height");
+        assertEquals(Direction.EAST, start.direction());
+        assertEquals(Direction.UP, PlankRun.throughOpening(Direction.UP, Direction.NORTH, Direction.EAST), "facing along the rail");
+        assertEquals(Direction.UP, PlankRun.throughOpening(Direction.UP, Direction.EAST, null), "no opening");
+        assertEquals(Direction.WEST, PlankRun.throughOpening(Direction.WEST, Direction.WEST, Direction.EAST), "a side click keeps its face");
+    }
 }

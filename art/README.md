@@ -930,6 +930,25 @@ Ratlines (RL1):
   sloped run from a deck (top: two views), and the two block models alone (bottom). The mast and deck are flat brown
   stand-ins (no `art/vanilla` textures were extracted).
 
+Railings (RAIL1):
+- **Part list in `tools/gen_railing_models.py`** (committed). It writes the four parent models of the wood family to
+  `models/block/` and their project `models/railing.bbmodel` itself (groups `railing_edge` 6 elements, `railing_post`
+  2, `railing_port` 5, `railing_item` 10; all at the same place, the first visible; textures `oak_planks` with id
+  `planks` and `stripped_oak_log` with id `log`, from `../vanilla/`). Every model uses the texture variables `#planks`
+  and `#log`; datagen (`ship/decor/wood/WoodFamily`) writes one child per wood (`block/oak_railing_edge`, ...) that sets
+  them to that wood's planks and stripped log. Lint clean (no fights, no warnings).
+- **Edge** (north edge, turned by the multipart state's y rotation with uvlock): top rail y 14..16 and lower rail
+  y 7..9, z 0.05..2 (0.05 px off the side so a post's outer face never fights them; the end faces are left out, a
+  neighbour's rail or a post always covers them), four 1 px balusters at x centres 2, 6, 10, 14 from the deck to the
+  top rail (z 0.5..1.5), so the spacing runs on across blocks and the end ones hide in the posts. **Post**
+  (north-west corner): a 3 x 3 px stripped-log post y 0..16 and a 1 px plank cap to y 17. **Port**: the two posts at
+  the ends of the north edge and a sill x 3..13, y 0..4, z 0.05..2. **Item**: an edge with both posts, centred.
+- Checked in Blockbench (RAIL1): the project loads with both textures, and `Codecs.java_block.compile()` of each group
+  (the other groups' cubes not exported) matches the part list's JSON element for element (from, to, UVs, texture keys).
+- Render `renders/railing.png`: a scratch free-format scene built from the model JSON (a three-block edge run with its
+  end posts, a one-block gap, the port with the cannon model behind it, a corner of a north and an east edge with its
+  end post, and the swivel gun shifted 6 px onto the rail); `renders/railing_item.png`: the item model.
+
 Ratline nets (RL2):
 - **Part list in `tools/gen_ratline_net_models.py`** (committed). Three projects, one model each:
   `chainplate.bbmodel` -> `block/chainplate.json` (13 elements), `mast_hoop.bbmodel` -> `block/mast_hoop.json` (14),

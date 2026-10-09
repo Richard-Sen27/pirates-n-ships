@@ -39,7 +39,8 @@ import java.util.List;
  * under the bow), the nameplate and the flagpole use hand-made Blockbench models ({@code art/models/}, design.md §4.8;
  * datagen writes only their block states). Flags (items, the flagpole's block entity, block state and look, config,
  * commands) are in the {@code flag} sub-package. The ART2 decor blocks (lantern, bell, rope coil, stern window, chart
- * table, sea cot) have their datagen in {@link DecorData}.
+ * table, sea cot) have their datagen in {@link DecorData}; the railing family (RAIL1, {@code railing}, registered per
+ * wood through {@code wood.WoodFamily}) in {@code railing.RailingData}.
  */
 public final class ShipDecorModule implements ModModule {
 
@@ -65,6 +66,7 @@ public final class ShipDecorModule implements ModModule {
     public void registerContent() {
         ShipDecor.init();
         Flags.init();
+        com.richardsenger.piratesnships.ship.decor.railing.RailingContent.init(); // RAIL1
     }
 
     @Override
@@ -100,6 +102,7 @@ public final class ShipDecorModule implements ModModule {
         });
         FlagData.gather(data);
         DecorData.gather(data);
+        com.richardsenger.piratesnships.ship.decor.railing.RailingData.gather(data); // RAIL1
         data.blockLoot(loot -> {
             for (RegistryEntry<Block, FigureheadBlock> f : ShipDecor.figureheads()) loot.dropSelf(f.get());
             loot.dropSelf(ShipDecor.NAMEPLATE.get());
@@ -208,6 +211,6 @@ public final class ShipDecorModule implements ModModule {
     @Override
     public List<Class<?>> gameTestClasses() {
         return List.of(ShipDecorGameTests.class, FlagPedestalGameTests.class, FlagGameTests.class, FlagModelGameTests.class, com.richardsenger.piratesnships.ship.decor.flag.FlagStackGameTests.class, NameplateGameTests.class,
-                DecorGameTests.class, ShipsBellGameTests.class);
+                DecorGameTests.class, ShipsBellGameTests.class, com.richardsenger.piratesnships.ship.decor.railing.RailingGameTests.class);
     }
 }

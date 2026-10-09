@@ -48,9 +48,11 @@ for ENTRY in "$@"; do
   echo "merged $PKG at $(git rev-parse --short HEAD)"
   PKGS="$PKGS $PKG"
 done
+# the Almanac intermediate feeds runData, so it is regenerated first (ALM5)
+[ -f tools/gen_almanac.py ] && { python3 tools/gen_almanac.py > "$LOG/almanac.log" 2>&1 || { echo "ALMANAC GENERATOR FAILED"; tail -20 "$LOG/almanac.log"; exit 4; }; }
 ./gradlew -q :neoforge:runData > "$LOG/rundata.log" 2>&1 || { echo "RUNDATA FAILED"; tail -20 "$LOG/rundata.log"; exit 4; }
 python3 tools/gen_guideme.py > "$LOG/guide.log" 2>&1 || { echo "GUIDE FAILED"; tail -20 "$LOG/guide.log"; exit 4; }
-git add -A common/src/generated/resources common/src/main/resources/assets/pirates_n_ships/guides
+git add -A common/src/generated/resources common/src/main/resources/assets/pirates_n_ships/guides common/src/datagen/almanac common/src/main/resources/assets/pirates_n_ships/textures/almanac
 git diff --cached --quiet || git commit -q -m "chore(merge): regenerate data and guide after merging$PKGS"
 ./gradlew build > "$LOG/build.log" 2>&1 || { echo "BUILD FAILED"; grep -E 'error:|FAILED|Exception' "$LOG/build.log" | head -20; exit 5; }
 echo "build ok"
@@ -74,7 +76,7 @@ if git merge --ff-only -q "$H" 2> "$LOG/ff.log"; then echo "MERGED$PKGS -> main 
 MOVED=$(git diff --name-only "$BASE" main | grep -vE "$DOCS_RE" || true)
 if [ -z "$MOVED" ]; then
   git merge --no-ff -q "$H" -m "chore(merge): land the verified batch$PKGS on main" > "$LOG/land.log" 2>&1 || { echo "DOCS-ONLY MERGE FAILED"; cat "$LOG/land.log"; exit 8; }
-  python3 tools/gen_guideme.py > /dev/null 2>&1 && { git diff --quiet || git commit -q -am "chore(guide): regenerate after landing$PKGS"; }
+  { python3 tools/gen_guideme.py > /dev/null 2>&1; [ -f tools/gen_almanac.py ] && python3 tools/gen_almanac.py > /dev/null 2>&1; git diff --quiet || git commit -q -am "chore(guide): regenerate after landing$PKGS"; }
   echo "MERGED$PKGS -> main with a merge commit (main had moved by docs only) at $(git rev-parse --short HEAD)"; exit 0
 fi
 echo "MAIN MOVED by code since $BASE; restage:"; echo "$MOVED" | head; exit 9

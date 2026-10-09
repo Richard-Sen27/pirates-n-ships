@@ -59,6 +59,15 @@ dependencies {
         exclude group: 'com.zigythebird.playeranim', module: 'PlayerAnimationLibCore'
     }
 
+    // Ponder (required, the Almanac's "Show me" scenes) and Flywheel (Ponder's renderer, client only), bundled
+    // jar-in-jar like on NeoForge (neither is on Modrinth or CurseForge for 1.21.1). Ponder's Fabric jar nests Forge
+    // Config API Port, javax.annotation and jsr305 itself; its POM asks for Flywheel 1.0.4 (the mod and its separate
+    // API jar), ours resolves to gradle.properties' flywheel_version. The Flywheel jar holds its API classes too, so
+    // the API jar is not bundled; the dev runs get it at the same version (else a 1.0.4 API would shadow the 1.0.6 one).
+    include(modImplementation("net.createmod.ponder:ponder-fabric:${ponder_version}+mc${minecraft_version}"))
+    include(modImplementation("dev.engine-room.flywheel:flywheel-fabric-${minecraft_version}:${flywheel_version}"))
+    modLocalRuntime("dev.engine-room.flywheel:flywheel-fabric-api-${minecraft_version}:${flywheel_version}")
+
     // Mod Menu, dev runs only (never published; fabric.mod.json only "recommends" it): the in-game mod list with our
     // config screen (FAB2). 11.0.x is the Minecraft 1.21.1 line.
     modLocalRuntime("com.terraformersmc:modmenu:11.0.3") {

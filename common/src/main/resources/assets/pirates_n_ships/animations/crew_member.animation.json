@@ -2233,12 +2233,20 @@
 						"0.0": {
 							"vector": [0, -4, 0],
 							"easing": "easeInOutSine"
+						},
+						"2.0": {
+							"vector": [0, -4, 0],
+							"easing": "easeInOutSine"
 						}
 					}
 				},
 				"right_leg": {
 					"rotation": {
 						"0.0": {
+							"vector": [-84, 10, 3],
+							"easing": "easeInOutSine"
+						},
+						"2.0": {
 							"vector": [-84, 10, 3],
 							"easing": "easeInOutSine"
 						}
@@ -2249,11 +2257,14 @@
 						"0.0": {
 							"vector": [-84, -10, -3],
 							"easing": "easeInOutSine"
+						},
+						"2.0": {
+							"vector": [-84, -10, -3],
+							"easing": "easeInOutSine"
 						}
 					}
 				}
 			}
 		}
-	},
-	"geckolib_format_version": 2
+	}
 }

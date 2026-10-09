@@ -48,9 +48,10 @@ def vec(v):
 
 
 def channel(keys, indent):
-    """keys: [(time, vector)]; the first key again at LENGTH closes the loop."""
+    """keys: [(time, vector)]; the first key again at LENGTH closes the loop (a constant channel too: Blockbench's
+    exporter writes a one-key channel as a bare vector, so two keys keep the file equal to its export)."""
     t = "\t" * indent
-    rows = list(keys) + [(LENGTH, keys[0][1])] if len(keys) > 1 else list(keys)
+    rows = list(keys) + [(LENGTH, keys[0][1])]
     lines = []
     for i, (time, v) in enumerate(rows):
         key = f"{time:.2f}".rstrip("0")
@@ -92,7 +93,9 @@ def main():
     anims = data["animations"]
     for name in ("row_standing", "row_seated"):
         if name in anims:
-            raise SystemExit(f"{name} is already in the file: remove it first (git checkout the file) and run again")
+            # rewrite: drop the old entries (always the last two of the file) and write them again
+            text = text[:text.index(f'\t\t"{name}": {{')].rstrip().rstrip(",") + "\n\t}\n}\n"
+            anims = json.loads(text)["animations"]
     end = text.rstrip().rfind("}")  # the file's closing brace
     end = text.rstrip()[:end].rstrip().rfind("}")  # the closing brace of "animations"
     body = text[:end].rstrip()

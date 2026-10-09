@@ -4814,9 +4814,9 @@
 		},
 		"firstperson_lefthand": {
 			"rotation": [
-				0,
+				180,
 				72,
-				170
+				-10
 			],
 			"translation": [
 				0,

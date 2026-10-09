@@ -285,7 +285,7 @@ Length: characters of the English text, each `%s` counted as 3.
 | `boarding_plank.disabled` | SHORT | bar | Boarding planks are off on this server (was: Boarding planks are disabled on this server) | 38 (was 43) | planks off |
 | `boarding_plank.no_start` | KEEP | bar | No plank from here | 18 | a plank from no edge (BRD2) |
 | `boarding_plank.too_far` | KEEP | bar | Too far: a plank reaches %s blocks | 35 | nothing within the plank's reach (BRD2) |
-| `boarding_plank.too_steep` | SHORT | bar | Too steep: at most %s blocks up or down (was: Too steep: a plank climbs or falls %s blocks at most) | 40 (was 53) | a landing too high or low (BRD2) |
+| `boarding_plank.too_steep` | KEEP | bar | Too steep: at most %s degrees (BRD4; BRD2: Too steep: at most %s blocks up or down) | 29 | a landing too high or low for the steepest pitch (BRD2, BRD4) |
 | `boarding_plank.nothing_to_land` | KEEP | bar | Nothing to land on within reach | 31 | no landing in reach (BRD2) |
 | `melee.refused.locked_out` | KEEP | bar | Can't parry again so soon | 25 | a parry too soon (client) |
 | `melee.refused.no_stamina` | KEEP | bar | Too exhausted | 13 | no stamina (client) |

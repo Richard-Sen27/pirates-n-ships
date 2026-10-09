@@ -53,7 +53,7 @@ public final class CrewSceneText {
     public enum Boarding implements SceneLine {
         HOOK("Throw your grappling hook, or shoot it from a musket, onto the other ship: it bites into her hull"),
         HAUL("While you stand on your deck holding the line, it hauls both hulls together until they lie alongside"),
-        PLANK("Use a boarding plank on the top of your gunwale: it runs straight out, up to 4 blocks, onto her deck"),
+        PLANK("Use a boarding plank on the top of your gunwale: one straight board, up to 6 blocks, onto her deck"),
         LAID("It lies rail top to rail top. Three wooden slabs over two iron nuggets make one"),
         CROSS("Cross over: the plank is a thin board you walk on like a deck"),
         FIGHT("Her crew fights with the same swordplay as you: watch the raised arm, parry just before the blow, riposte"),

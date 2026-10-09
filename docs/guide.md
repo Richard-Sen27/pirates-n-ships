@@ -1738,6 +1738,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | Section | What it controls |
 |---|---|
 | `core` | Debug logging. |
+| `perf` | The manual performance test's budget (`budget_ms`, 50: the p95 tick time allowed with four NPC ships); nothing in a game reads it. |
 | `assembly` | Assembly and disassembly on/off, block limit, how still and level a ship must be to disassemble, restoring the sea, draining the hull and moving entities on disassembly; `split` (ships breaking apart, wreck size and lifetime), `rejoin` (the shipwright's toolkit: max piece size, gap, angle, nails, work time, toolkit durability). |
 | `dry_hull` | Dry hull on/off, buoyancy of the dry volume, weight of flood water, drowning under flood water (`flood_breath`), partial blocks drawn dry, analysis and sync timings. |
 | `flooding` | Flooding on/off, inflow rate, re-analysis on tilt; bilge pump on/off, rate, reach, use time and exhaustion; hull patch on/off. |
@@ -1810,6 +1811,23 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `almanac_screen` | Page-turn animation length and sound, book size. |
 
 Many defaults are first guesses that need playtesting. [`progress.md`](progress.md) lists the ones to review.
+
+### Testing note: the performance test (PERF1)
+
+A headless load test measures the server's tick time with ships around a player on a rough sea: the player on a
+starter sloop with railings, three ratline nets and a boarding net, six crew (two rowing, two at stations, two leaning
+on the rail), and N = 1, 4 and 8 materialised armed NPC ships plus a merchant convoy and a navy patrol, two of them
+firing at each other and three pirates boarding the convoy. It is registered only with the switch on, so the normal
+suite, CI and releases never run it: `./gradlew :neoforge:runGameTestServer -Ppirates_n_ships.gametest.only=PerformanceGameTests
+-Ppirates_n_ships.perf=true` (on Fabric `:fabric:runGameTest` with the same flags; add
+`-Ppirates_n_ships.perf.dir=<dir>` for the report directory, default `perf` in the run directory). Each N measures
+1200 ticks after settling (the first test of a run also warms the JVM up for 1200 ticks) and writes `perf-N.txt`
+(min/median/p95/max tick time per tick and per second, ships, entities by type), `perf-summary.txt` (the cost of one
+more ship) and, for N = 8, a stack-sample profile of the mod's and Sable's methods plus vanilla's profiler report
+(`profile-n8-1.txt`; the `/perf` recorder's zip goes to `debug/profiling`). The N = 4 test fails when its p95 tick
+time is over `perf.budget_ms`. The GameTest server ticks as fast as it can, so 1200 ticks take less than a minute
+and the numbers carry the noise of whatever else runs on the machine: run it twice and keep the better run. Findings
+and the numbers so far: [`audit/performance.md`](audit/performance.md).
 
 ---
 

@@ -110,6 +110,11 @@ The two loaders publish in two separate steps, NeoForge first. A failed NeoForge
 11. Unless dry run: checks the secrets exist, then [`Kira-NT/mc-publish@v3.3.1`](https://github.com/Kira-NT/mc-publish) (formerly `Kir-Antipov/mc-publish`; NeoForge support since v3.3.0) publishes the NeoForge jar to Modrinth and CurseForge and creates the GitHub release for the tag with the notes and the jar (skipped when `publish` is `fabric`).
 12. Unless dry run: a second mc-publish call publishes the Fabric jar to Modrinth and CurseForge (loader `fabric`, the Fabric dependencies) and adds it to the GitHub release of the tag (mc-publish finds the release by its tag; it creates it if the NeoForge step did not). It runs when every check passed, also after a failed NeoForge publish (skipped when `publish` is `neoforge`).
 
+The manual performance test (PERF1, `PerformanceGameTests`) is not part of the pipeline: it registers only with
+`-Ppirates_n_ships.perf=true`, which neither the release workflow nor CI passes, and its timings depend on the
+machine. Run it by hand before a release that touches ship, crew or physics code (see [`guide.md`](guide.md),
+"Testing note: the performance test", and [`audit/performance.md`](audit/performance.md)).
+
 Releases run one at a time (`concurrency: release`). A second tag pushed meanwhile waits; GitHub keeps only one waiting run per group, so a third would cancel the waiting second one. Push release tags one by one. A tag push also triggers the normal `Build` workflow; that is harmless duplicate work.
 
 ## One-time setup (the maintainer)

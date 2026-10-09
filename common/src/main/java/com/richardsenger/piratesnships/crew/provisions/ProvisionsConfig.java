@@ -43,10 +43,14 @@ public final class ProvisionsConfig {
             "Work speed multiplier while the crew is drunk from more than the rum ration");
     public static final ConfigValue<Integer> DRUNK_DURATION_TICKS = S.intRange("drunk_duration_ticks", (int) D.drunkDurationTicks(), 0, 240000,
             "How long the drunk penalty lasts after the last over-ration, in ticks");
+    public static final ConfigValue<Double> RUM_BINGE_DAYS = S.doubleRange("rum_binge_days", 10.0, 0.0, 1000.0,
+            "A crew with rum for at least this many days of its standard ration in the pantries drinks too much and works at drunk_work_speed (0: never)");
+    public static final ConfigValue<Double> RUM_BINGE_RATIONS = S.doubleRange("rum_binge_rations", 2.0, 1.0, 10.0,
+            "Rum rations a crew drinks per day while it has rum_binge_days of rum (1: no more than the ration, never drunk)");
     public static final ConfigValue<Double> HUNGER_DESERTION_DAYS = S.doubleRange("hunger_desertion_days", D.hungerDesertionDays(), 0.0, 100.0,
-            "In-game days without food until crew start to desert (or mutiny, if enabled)");
+            "In-game days in a row without food until the whole crew deserts at the next dawn, whatever its morale (with crew.desertion.enabled)");
     public static final ConfigValue<Double> THIRST_DESERTION_DAYS = S.doubleRange("thirst_desertion_days", D.thirstDesertionDays(), 0.0, 100.0,
-            "In-game days without water until crew start to desert (or mutiny, if enabled)");
+            "In-game days in a row without water until the whole crew deserts at the next dawn, whatever its morale (with crew.desertion.enabled)");
 
     public static final ConfigValue<Boolean> SCURVY_ENABLED = S.bool("scurvy_enabled", D.scurvyEnabled(),
             "Crew get scurvy (weakness, slower healing) after a long time without citrus or fresh food");

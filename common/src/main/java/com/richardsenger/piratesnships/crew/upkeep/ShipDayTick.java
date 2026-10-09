@@ -11,8 +11,11 @@ import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.crew.provisions.CrewHeadcount;
 import com.richardsenger.piratesnships.crew.provisions.ProvisionEffects;
+import com.richardsenger.piratesnships.crew.provisions.ProvisionKind;
 import com.richardsenger.piratesnships.crew.provisions.ProvisionOutcome;
+import com.richardsenger.piratesnships.crew.provisions.ProvisioningState;
 import com.richardsenger.piratesnships.crew.provisions.ProvisionsConfig;
+import com.richardsenger.piratesnships.crew.provisions.RumIssue;
 import com.richardsenger.piratesnships.law.brig.BrigService;
 import com.richardsenger.piratesnships.mob.MobContent;
 import com.richardsenger.piratesnships.ship.ShipData;
@@ -44,13 +47,15 @@ import org.jetbrains.annotations.Nullable;
  * <ol>
  *   <li><b>Provisions</b>: one day ({@link RestRules#DAY} ticks) of {@link ShipProvisions#advance} over the pantries and
  *       water barrels in the ship's plot, for the crew plus the prisoners aboard (they eat {@code prisoner_share}). The
- *       morale change goes to every member through {@link CrewMorale#adjust} ("provisions"); the work-speed factor is
+ *       morale change goes to every member through {@link CrewMorale#adjust} ("provisions"); a crew with
+ *       {@code rum_binge_days} of rum drinks too much ({@link RumIssue}, FIX1); the work-speed factor is
  *       kept for {@code station.Stations} until the next dawn; scurvy gives weakness for a day to the crew and, with
  *       {@code provisions.scurvy_affects_players}, to the owner aboard.</li>
  *   <li><b>Wages</b> ({@link WageRules}): from doubloons in the ship's cargo crates and barrels and any other container
  *       aboard except provisions, nearest the helm first; then (CRW2, {@code crew.wages.from_wallet}) from the doubloons
  *       the owner carries while online in this level ({@link PayKey}).</li>
- *   <li><b>Mutiny, then desertion</b> ({@link UpkeepDay}). Since CRW2 a deserter is only marked
+ *   <li><b>Mutiny, then desertion</b> ({@link UpkeepDay}); a crew without food for {@code hunger_desertion_days} or
+ *       without water for {@code thirst_desertion_days} deserts whatever its morale (FIX1). Since CRW2 a deserter is only marked
  *       ({@link CrewMember#isDeserting()}, {@link DesertionRules}) and walks off at a port ({@link Desertions}); with
  *       {@code crew.desertion.at_port_only} off it leaves at once as before.</li>
  * </ol>
@@ -162,7 +167,8 @@ public final class ShipDayTick {
         Scan scan = scan(level, ship);
 
         // 1. provisions
-        CrewHeadcount head = CrewHeadcount.crew(crew.size()).withPrisoners(prisoners(level, ship));
+        CrewHeadcount head = CrewHeadcount.crew(crew.size()).withRum(rumRations(level, scan, before, crew.size()))
+                .withPrisoners(prisoners(level, ship));
         ShipProvisions.Result pr = ShipProvisions.advance(level, scan.provisions(), before.provisioning(), head, DAY);
         ProvisionOutcome outcome = pr.update().outcome();
         ProvisionEffects fx = outcome.effects();
@@ -186,8 +192,9 @@ public final class ShipDayTick {
         for (CrewMember c : crew) {
             members.add(new UpkeepDay.Member(c.getUUID(), c.storedMorale(), c.lowMoraleDays()));
         }
+        boolean starving = fx.desertionCritical();
         UpkeepDay.Result day = UpkeepDay.settle(CrewMorale.settings(), s, members, provisionsDelta, payment.paid(),
-                before.lowMoraleDays());
+                before.lowMoraleDays(), starving);
 
         // apply to the crew
         for (int i = 0; i < crew.size(); i++) {
@@ -249,16 +256,20 @@ public final class ShipDayTick {
                     CrewStations.say(level, c, Component.translatable(UpkeepText.SAY_DESERT));
                     deserters.add(c.getUUID());
                     CrewReplacement.replace(level, c, MobContent.SAILOR.get());
-                    chat.add(Component.translatable(UpkeepText.DESERTED, name));
+                    chat.add(r.starved()
+                            ? Component.translatable(UpkeepText.DESERTED_STARVED, name, without(pr.state()))
+                            : Component.translatable(UpkeepText.DESERTED, name));
                     continue;
                 }
                 DesertionRules.Mark was = new DesertionRules.Mark(c.isDeserting(), c.desertingDays());
-                DesertionRules.Mark now = DesertionRules.afterDawn(was, r.deserts(), r.lowDays());
+                DesertionRules.Mark now = DesertionRules.afterDawn(was, r.deserts(), r.lowDays(), r.starved());
                 c.setDeserting(now.deserting(), now.days());
                 if (now.deserting() && !was.deserting()) {
                     CrewStations.say(level, c, Component.translatable(UpkeepText.SAY_DESERTING));
                     marked.add(c.getUUID());
-                    chat.add(Component.translatable(UpkeepText.DESERTING, name));
+                    chat.add(r.starved()
+                            ? Component.translatable(UpkeepText.DESERTING_STARVED, name, without(pr.state()))
+                            : Component.translatable(UpkeepText.DESERTING, name));
                 } else if (was.deserting() && !now.deserting()) {
                     chat.add(Component.translatable(UpkeepText.STAYS, name));
                 }
@@ -277,6 +288,16 @@ public final class ShipDayTick {
         List<Component> lines = new ArrayList<>(bar);
         lines.addAll(chat);
         return new DayReport(outcome, provisionsDelta, day, deserters, marked, lines);
+    }
+
+    /**
+     * What a starving crew went without (FIX1): water when its thirst has reached {@code thirst_desertion_days}
+     * (thirst comes first: it bites harder), else food.
+     */
+    private static Component without(ProvisioningState state) {
+        double thirstDays = ProvisionsConfig.THIRST_DESERTION_DAYS.get();
+        boolean thirst = state.thirstyTicks() > 0 && state.thirstyTicks() >= thirstDays * DAY - 1e-3;
+        return Component.translatable(thirst ? UpkeepText.WITHOUT_WATER : UpkeepText.WITHOUT_FOOD);
     }
 
     /** Joins the action-bar lines into one. */
@@ -302,6 +323,16 @@ public final class ShipDayTick {
     private static boolean isAboard(ServerLevel level, ShipBody ship, ServerPlayer player) {
         ShipBody on = CaptainsWhistleItem.shipOf(level, player);
         return on != null && on.id().equals(ship.id());
+    }
+
+    /**
+     * The rum rations of the coming day ({@link RumIssue}, FIX1): more than the ration while the pantries hold
+     * {@code provisions.rum_binge_days} of it.
+     */
+    private static double rumRations(ServerLevel level, Scan scan, ShipUpkeep before, int crew) {
+        double rum = ShipProvisions.store(level, scan.provisions()).totalValue(ProvisionKind.RUM) + before.provisioning().rumCredit();
+        return RumIssue.rations(rum, crew, ProvisionsConfig.settings(), ProvisionsConfig.RUM_BINGE_DAYS.get(),
+                ProvisionsConfig.RUM_BINGE_RATIONS.get());
     }
 
     /** Prisoners held on {@code ship}: they eat {@code prisoner_share}. */

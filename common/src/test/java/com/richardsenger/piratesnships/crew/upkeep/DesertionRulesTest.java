@@ -81,4 +81,13 @@ class DesertionRulesTest {
         assertEquals(b, DesertionRules.nearestBerth(List.of(a, b), new Vec3(12, 62, 0)).orElseThrow());
         assertTrue(DesertionRules.nearestBerth(List.of(), Vec3.ZERO).isEmpty());
     }
+
+    @Test
+    void aStarvingDeserterKeepsItsMarkUntilFed() {
+        Mark m = DesertionRules.afterDawn(Mark.NONE, true, 0, true);
+        assertEquals(new Mark(true, 0), m, "a content but starving member is marked");
+        m = DesertionRules.afterDawn(m, true, 0, true);
+        assertEquals(new Mark(true, 1), m, "still starving: it keeps the mark");
+        assertEquals(Mark.NONE, DesertionRules.afterDawn(m, false, 0, false), "fed and content again: it stays aboard");
+    }
 }

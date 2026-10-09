@@ -59,6 +59,7 @@
   "commands.pirates_n_ships.career.letter.set": "Letter of marque of %s: %s",
   "commands.pirates_n_ships.career.set.infamy": "Set the infamy of %s to %s",
   "commands.pirates_n_ships.career.set.navy": "Set the navy rank of %s to %s",
+  "commands.pirates_n_ships.career.ship_grant.reset": "Ship grants of %s reset; %s new commission(s) handed out",
   "commands.pirates_n_ships.career.show": "Career of %s: navy %s, infamy %s, letter of marque %s, prize money %s",
   "commands.pirates_n_ships.career.show.off": "Career of %s: navy %s, infamy %s, letter of marque %s, prize money %s (careers are off on this server)",
   "commands.pirates_n_ships.career.unknown_rank": "Unknown rank",

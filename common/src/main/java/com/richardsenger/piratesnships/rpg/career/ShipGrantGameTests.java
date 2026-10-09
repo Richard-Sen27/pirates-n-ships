@@ -170,7 +170,9 @@ public final class ShipGrantGameTests {
         for (BlockPos pos : lockers) {
             h.assertTrue(h.getLevel().getBlockEntity(pos) instanceof Container c && c.isEmpty(), "shot locker " + pos + " is empty");
         }
-        h.assertFalse(VoyageGuns.guns(h.getLevel(), ship).isEmpty(), "the sloop carries guns");
+        List<BlockPos> guns = VoyageGuns.guns(h.getLevel(), ship);
+        h.assertFalse(guns.isEmpty(), "the sloop carries guns");
+        for (BlockPos gun : guns) h.assertFalse(VoyageGuns.isLoaded(h.getLevel(), gun), "gun " + gun + " is loaded");
         return ship;
     }
 
@@ -204,8 +206,11 @@ public final class ShipGrantGameTests {
         Careers.setNavy(p, NavyRank.ADMIRAL);
         h.assertTrue(Careers.resign(p), "resign");
         h.assertValueEqual(Careers.enlist(p), CareerRules.EnlistVerdict.OK, "enlist again");
-        h.assertValueEqual(commissions(p) + (p.getMainHandItem().is(ShipGrantContent.SHIP_COMMISSION.get()) ? 1 : 0), 1,
-                "no second commission");
+        h.assertValueEqual(commissions(p), 1, "no second commission (the first is in the main hand, an inventory slot)");
+
+        // the operators' reset forgets the grant: the held rank grants again at once
+        h.assertValueEqual(ShipGrants.reset(p), 1, "commissions after the reset");
+        h.assertValueEqual(commissions(p), 2, "a fresh commission after the reset");
         h.succeed();
     }
 

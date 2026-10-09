@@ -66,6 +66,7 @@ public final class ShipGrants {
     public static final String KEY_NO_PORT = KEY + "no_port";
     public static final String KEY_NO_BERTH = KEY + "no_berth";
     public static final String KEY_LOST = KEY + "lost";
+    public static final String KEY_CMD_RESET = CareerText.CMD + "ship_grant.reset";
 
     /** What a redemption did. */
     public enum Outcome { DELIVERED, REFUSED, NO_PORT, NO_BERTH, LOST }
@@ -112,6 +113,23 @@ public final class ShipGrants {
             player.sendSystemMessage(Component.translatable(ladder == ShipGrantRules.Ladder.NAVY ? KEY_GRANTED_NAVY : KEY_GRANTED_PIRATES)
                     .withStyle(ChatFormatting.GOLD));
         }
+    }
+
+    /**
+     * Operators ({@code /pirates career ship_grant <player> reset}): forgets the player's grants and redemptions on both
+     * ladders, then grants again what the held ranks earn (careers and grants on). Returns the commissions handed out.
+     */
+    public static int reset(ServerPlayer player) {
+        Set<String> ledger = ledger(player);
+        for (ShipGrantRules.Ladder l : ShipGrantRules.Ladder.values()) {
+            ledger.remove(ShipGrantRules.grantKey(l));
+            ledger.remove(ShipGrantRules.redeemedKey(l));
+        }
+        Services.ATTACHMENTS.set(player, CareerAttachments.GIFTS, List.copyOf(ledger));
+        if (!Careers.enabled()) return 0;
+        int due = ShipGrantRules.grantsDue(Careers.record(player), ledger, params()).size();
+        afterStore(player, Careers.record(player));
+        return due;
     }
 
     /** A new commission of {@code ladder} naming {@code player}, for the configured template. */
@@ -265,6 +283,7 @@ public final class ShipGrants {
                 .add(KEY_RANK_LOST, "You no longer hold the rank this commission was granted for")
                 .add(KEY_NO_PORT, "There is no port here to deliver a ship from")
                 .add(KEY_NO_BERTH, "No berth is free; come back later")
-                .add(KEY_LOST, "The ship of this commission cannot be built any more");
+                .add(KEY_LOST, "The ship of this commission cannot be built any more")
+                .add(KEY_CMD_RESET, "Ship grants of %s reset; %s new commission(s) handed out");
     }
 }

@@ -4,6 +4,8 @@ navigation:
   parent: index.md
   position: 40
   icon: pirates_n_ships:captains_whistle
+item_ids:
+  - pirates_n_ships:crows_nest
 ---
 
 # Crew
@@ -38,6 +40,28 @@ nearest the desk. Every crew member needs a free hammock, so hang more hammocks 
 go, sneak and use your captain's whistle on them: they leave your service as an ordinary sailor. Only you or whoever
 hired them can do that, or anyone at all if the ship has no owner. Operators: `/pirates crew hire <sailor|pirate|navy>`
 and `/pirates crew dismiss`. Server config `crew.hiring`.
+
+## Crow's nest
+A barrel of spruce staves with iron hoops for the top of a mast. Place it on a log, a fence, a wall or any block with
+a solid top; it breaks and drops when the block under it goes. It is one block, but the barrel is a block and a half
+across and stands chest high, so whoever is in it is plainly up in the nest. Only its floor is solid: climb a ladder up
+the mast and step in over the rim (sneak to stay put).
+
+Whoever is in the nest keeps the lookout. Put a crew member up there with the Captain's Whistle (use it on the crew
+member, then on the nest): he takes his post inside the barrel and keeps watch until you release him. Or stand in it
+yourself. Every 3 seconds the lookout scans 160 blocks round the ship and calls out what is new, in chat, to the ship's
+owner and everyone aboard:
+- **ships**, by the flag they fly: "Sail ho! A merchant two points off the starboard bow, 140 blocks" (a navy ship, a
+  pirate ship, a wreck, or just a ship when no flag flies);
+- **land**: "Land ho! Land four points off the port bow, 120 blocks" (the nearest coast; one call per stretch of coast);
+- **sharks** and **the kraken**.
+
+Bearings are in points of the compass (32 round the horizon) from the bow: dead ahead, "n points off the starboard (or
+port) bow", on the beam, "n points abaft the beam", dead astern. Each ship, shark or coast is called once; the lookout
+remembers it for 5 minutes after he last saw it. Only loaded chunks are watched. Recipe: planks, rope, planks over two
+iron nuggets, over three planks. Server config `lookout`: `enabled`, `announce` (off: the watch is silent), `range`,
+`scan_interval_ticks`, `memory_ticks`, and the land rays (`land_directions`, `land_step`, `land_min_distance`,
+`land_region`).
 
 ## Pirates, sailors and the navy
 Pirates (dark coat, bandana, eyepatch, cutlass) attack players and the navy on sight. They fight with the same

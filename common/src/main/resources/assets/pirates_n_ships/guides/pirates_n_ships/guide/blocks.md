@@ -36,6 +36,7 @@ item_ids:
   <ItemIcon id="pirates_n_ships:harbor_desk" />
   <ItemIcon id="pirates_n_ships:cannon" />
   <ItemIcon id="pirates_n_ships:bilge_pump" />
+  <ItemIcon id="pirates_n_ships:crows_nest" />
   <ItemIcon id="pirates_n_ships:hull_patch" />
   <ItemIcon id="pirates_n_ships:flagpole" />
   <ItemIcon id="pirates_n_ships:pantry" />
@@ -62,6 +63,7 @@ item_ids:
 | <ItemLink id="pirates_n_ships:harbor_desk" /> | book, gold nugget, 5 planks | Opens a port's market screen when bound to the port. See [Harbor master's desk](trade.md#harbor-master's-desk). |
 | <ItemLink id="pirates_n_ships:cannon" /> | 2 iron ingots, 1 iron block, 2 logs, 1 planks | Loads powder and a cannonball, aims by elevation, fires. A crew station. See [Cannons](combat.md#cannons). |
 | <ItemLink id="pirates_n_ships:bilge_pump" /> | stick, 3 planks, 1 bucket, 1 plank | Pumps water out of the hold below it. A crew station. See [Fighting a leak](ships.md#fighting-a-leak). |
+| <ItemLink id="pirates_n_ships:crows_nest" /> | 6 planks, 1 rope, 2 iron nuggets | A lookout barrel for the masthead; whoever stands in it calls out ships, land and sea monsters. A crew station. See [Crow's nest](crew.md#crow's-nest). |
 | <ItemLink id="pirates_n_ships:hull_patch" /> (block) | placed by the item | A tarred plank that closes a breach. Watertight hull block. |
 | <ItemLink id="pirates_n_ships:flagpole" /> | 3 sticks (gives 2) | Flies a flag. A thin pole with a finial and a cleat (Blockbench model). See [Flags](flags.md). |
 | <ItemLink id="pirates_n_ships:pantry" /> | 8 planks, 1 wheat | Food store with spoilage. See [Provisions](provisions.md). |
@@ -83,6 +85,7 @@ item_ids:
   <RecipeFor id="pirates_n_ships:harbor_desk" />
   <RecipeFor id="pirates_n_ships:cannon" />
   <RecipeFor id="pirates_n_ships:bilge_pump" />
+  <RecipeFor id="pirates_n_ships:crows_nest" />
   <RecipeFor id="pirates_n_ships:hull_patch" />
   <RecipeFor id="pirates_n_ships:flagpole" />
   <RecipeFor id="pirates_n_ships:pantry" />

@@ -1,8 +1,7 @@
-// 1.21.1	2026-10-09T02:12:54.970339	Tags for minecraft:block mod id vanilla
+// 1.21.1	2026-10-09T02:30:59.907366	Tags for minecraft:block mod id vanilla
 4574ad20b2942c15e4ade670401483c8652905aa data/c/tags/block/chests.json
-8300a7877450b85aad23a1a49424b1eeacc93887 data/minecraft/tags/block/climbable.json
 027425cd193e9e04ea5aed99085f092fa520d95e data/minecraft/tags/block/doors.json
-ed6f3bf3b2981b5599cb32d4247da1e8011dc0f9 data/minecraft/tags/block/mineable/axe.json
+09475e7392c19463f5dab38336c3b08bffa149e7 data/minecraft/tags/block/mineable/axe.json
 5779a8c7c5771759eb92a88f625ab2c0176e8fec data/minecraft/tags/block/mineable/pickaxe.json
 195aa9da2a3443597914841c2ff10ec2cd1aef74 data/pirates_n_ships/tags/block/cannon_breakable.json
 90b985302b5c05cc96c39f6cb2985a785fde74b2 data/pirates_n_ships/tags/block/cannon_proof.json
@@ -12,13 +11,11 @@ bb626600c7889c11c6e9962b5e3a8493f255d778 data/pirates_n_ships/tags/block/grapple
 f7371fa73528b6e981b1f5dd5cf010306cb35cdf data/pirates_n_ships/tags/block/masts.json
 efa5c7038ab6e296491b919dff511cf035976fa2 data/pirates_n_ships/tags/block/never_assemble.json
 35133e95f1c8fdd7a1c21afcc231fc0bffefb9a8 data/pirates_n_ships/tags/block/not_watertight.json
-f87633000a8f91601b025c9005787b231d07f1f8 data/pirates_n_ships/tags/block/ratlines_anchors.json
-8e345550119e9f281cee9c9e331994be011266ca data/pirates_n_ships/tags/block/shot_lockers.json
 91d5870fb94edef2bff504f5736897f894f87c12 data/pirates_n_ships/tags/block/swivel_mounts.json
 d0b4325bb417203ea7f0a861071937293d2a1ac8 data/pirates_n_ships/tags/block/terrain.json
 bb169b9e5997d40072757d8e612623b7c9775438 data/pirates_n_ships/tags/block/test_ground.json
 1a6606b59646e30901e8ced8c7447d19dcc5fedf data/pirates_n_ships/tags/block/watertight.json
 5073dbb2b10dec21ec2e422f93008dc243a5b4e7 data/sable/tags/block/heavy.json
-08ad7746c9b2be75603157e0e6bc93ae8c537d52 data/sable/tags/block/light.json
-23eb7eb649b8bb2b46cf8623fbbbc2ede116dc1d data/sable/tags/block/quarter_volume.json
-23eb7eb649b8bb2b46cf8623fbbbc2ede116dc1d data/sable/tags/block/super_light.json
+2aa7eb384e3141db2538aa90c848431276b18bb2 data/sable/tags/block/light.json
+322891f3124fdb17b4c2b33deab02d46083891bd data/sable/tags/block/quarter_volume.json
+322891f3124fdb17b4c2b33deab02d46083891bd data/sable/tags/block/super_light.json

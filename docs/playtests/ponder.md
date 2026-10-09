@@ -160,3 +160,54 @@ screenshot of anything odd; a log line "Ponder scene: cannot use …" means a po
 10. **Ponder's index** lists the captain's whistle, boarding plank, Jolly Roger, crow's nest, ship's bell, pantry,
     hammock and swivel gun too.
 11. **Both clients.** Steps 1 to 8 on Fabric too (at least open each scene once).
+
+# PND3: the scenes after the first look
+
+The human's first look found walls between the watcher and the action, text boxes partly off the screen, and a sail
+whose yards stood in the mast's own column. A new JUnit check (`SceneViewTest`, through `SceneView`) now replays every
+scene headless at Ponder's **default camera** (Ponder's own `SceneTransform`: from the **north-west**, 35° above the
+horizon) in a **1920×1080 window at GUI scale 3** (640×360 GUI pixels): every text target, click and changed block
+must be visible (no solid block between it and the camera) and on the screen, and every text box and click box must lie
+inside the window. All 17 scenes pass it; what it cannot see is the cloth, entities and models (only vanilla full
+blocks count as walls), so please re-watch these at the default view (do not drag the camera) and at GUI scale 3. If
+your GUI scale is "Auto" (4 on a 1080p screen), say so: the window is then 480×270 and the scenes look bigger.
+
+Setup as above, both clients, a creative world. Screenshots of anything hidden or cut off.
+
+1. **The opened walls.** For each, check that what the text talks about is seen while it happens:
+   - **Pumps and Flooding** (bilge pump): after the hull fades in, its north and west walls fade away (a cut-away
+     section); the pump on the hold floor, the breach in the far (east) wall, both flood rows, the pump handle and the
+     patch going in are all in view. The water at the cut shows as a flat face (expected: a cross-section).
+   - **Patching a Breach** (hull patch): the same cut-away of the north and west walls; the hole in the east wall, the
+     click on its edge and the patch appearing are seen from inside.
+   - **The Ship's Bell** (ship's bell): the bulkhead now stands on the far (south) side, the wall bell hangs on its
+     north face toward you, the post bell in front at the left. Wall bell clicked from the front (north): it swings
+     away from you, toward the wall; post bell clicked from the west: it rocks east.
+   - **The Galley and Provisions** (pantry): the bulkhead now stands on the far (east) side; pantry and water barrel in
+     front of it with their doors and water toward you; the clicks land on the pantry's west face; the two diners walk
+     in from the west and sit at its free sides facing it.
+   - **The Anchor and the Capstan** (capstan): the capstan stands one block to port of the centre line, so the anchor
+     now hangs on the **port (west)** side, the side you look at: the drop, the chain links, the anchor on the seabed
+     and its way back up are in view (before, the hull hid all of it). Check the anchor model hangs outside the hull's
+     west side just below the deck, and the sailor walks round the capstan at its new place.
+   - **Steering** (helm): the white midships line and the red rudder line are now drawn at deck height just aft of the
+     stern (a top-down diagram), no longer at the waterline behind the hull; the circle text points at the water east
+     of the boat. The whistle click on the helmsman is a box beside him (not above his head, which was off the screen).
+   - **The Crow's Nest** (crow's nest): the ratlines now run up the mast's **port (west)** side toward you (three sloped
+     links from the deck, then nets on the mast and the nest's side), the white climbing path along them. The view is
+     smaller and lower, so the nest, the lookout, the scan circle and the call arrow are on the screen.
+   - **Cargo and Weight** (cargo crate): the stern text points at the stern deck (not under it); the scene sits a
+     little lower.
+   - **Flags and Allegiance**: the "struck" text points at our deck.
+2. **The boxes.** At GUI scale 3, no text box and no click box may be cut by the window's edge, in particular:
+   **Crew and Orders** (the order wheel of ten icons was above the screen: the view is now smaller and lower and the
+   wheel sits lower; check the icons are readable and not overlapping), **The Crow's Nest** (four texts were above the
+   screen), **Cargo and Weight** (the crates' text and the placing click), **The Anchor and the Capstan** and
+   **Steering** (the whistle clicks on the sailor, now boxes beside him).
+3. **The yard column (Sails and the Sail Winch, sail winch).** The yards stand **one block forward (north) of the mast**,
+   in the column in front of it, not in the mast's own column; the cloth hangs in front of the mast and the mast shows
+   behind it. The winch now stands aft and to port of the mast at [1, 1, 4], where it is seen past the sail. The
+   "yard" text reads "…It hangs one block forward of the mast, its middle block in the column in front of it". Check
+   the cloth still appears, hoists to half and full, and bellies; the wind arrow stands east of the sail.
+4. **Nothing else changed.** Cannon loading, assembly, mooring, boarding, hammocks and the swivel gun look as before
+   (the check passed them as they were); open each once to be sure nothing hides the action there either.

@@ -15,7 +15,7 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 WT=$ROOT/.claude/worktrees/merge
 LOG=${STAGE_LOG_DIR:-$ROOT/.claude/worktrees/stage-logs}/batch-$(date +%H%M); mkdir -p "$LOG"
 GEN_RE='^common/src/generated/resources/|/assets/pirates_n_ships/guides/'
-DOCS_RE='^docs/|^CLAUDE\.md$|^common/src/main/resources/assets/pirates_n_ships/guides/|^tools/merge_(stage|batch)\.sh$'
+DOCS_RE='^docs/|^CLAUDE\.md$|^common/src/main/resources/assets/pirates_n_ships/guides/|^tools/merge_(stage|batch)\.sh$|^\.claude/agents/'
 cd "$WT" || exit 1
 PKGS=""
 if [ -z "${CONTINUE:-}" ]; then

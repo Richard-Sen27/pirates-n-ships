@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Shared inputs of tools/gen_almanac.py: our items, the sections of docs/guide.md and its table cells (GUIDE2).
+"""Shared inputs of tools/gen_almanac.py: our registered items (GUIDE2).
 
 Python 3 standard library only; imported, not run. Since GUIDE2 the Captain's Almanac is the only in-game guide, and
-these helpers are what is left of the older page generator. Tested by tools/test_gen_almanac.py.
+this is what is left of the older page generator. Tested by tools/test_gen_almanac.py.
 
 Inputs (relative to the repository root, see set_root):
-    docs/guide.md                                                         the player guide (single source of truth)
     common/src/generated/resources/assets/pirates_n_ships/lang/en_us.json display names -> registry ids
     common/src/{generated,main}/resources/assets/pirates_n_ships/models/item/*.json   item models (checked, below)
 
@@ -27,9 +26,8 @@ NS = "pirates_n_ships"
 
 def set_root(root):
     """Points the input paths at a repository root (the real one by default; the tests pass a temp copy)."""
-    global ROOT, GUIDE_MD, ASSETS_MAIN, ASSETS_GEN, LANG
+    global ROOT, ASSETS_MAIN, ASSETS_GEN, LANG
     ROOT = Path(root).resolve()
-    GUIDE_MD = ROOT / "docs" / "guide.md"
     common = ROOT / "common" / "src"
     ASSETS_MAIN = common / "main" / "resources" / "assets" / NS
     ASSETS_GEN = common / "generated" / "resources" / "assets" / NS
@@ -38,37 +36,6 @@ def set_root(root):
 
 set_root(Path(__file__).resolve().parent.parent)
 
-# Vanilla items that guide.md tables name in lower case (trade goods).
-VANILLA_ITEMS = {
-    "sugar": "minecraft:sugar",
-    "cod": "minecraft:cod",
-    "oak log": "minecraft:oak_log",
-    "iron ingot": "minecraft:iron_ingot",
-    "wheat": "minecraft:wheat",
-    "leather": "minecraft:leather",
-    "cocoa beans": "minecraft:cocoa_beans",
-    "gunpowder": "minecraft:gunpowder",
-}
-
-# Table columns whose cells name items.
-ITEM_COLUMNS = {"block", "item", "flag", ""}
-
-SECTION_RE = re.compile(r"^## (\d+)\. (.+?)\s*$")
-SUBHEADING_RE = re.compile(r"^### (.+?)\s*$")
-
-
-def github_slug(heading):
-    """The anchor GitHub gives a heading (what guide.md's own links use)."""
-    s = heading.strip().lower()
-    s = re.sub(r"[^\w\- ]", "", s)
-    return s.replace(" ", "-")
-
-
-def full_id(item):
-    return item if ":" in item else f"{NS}:{item}"
-
-
-# ---------------------------------------------------------------------------------------------------- inputs
 
 def override_target(model):
     """The item model id ("pirates_n_ships:x") an "overrides" entry's model reference names, else None."""
@@ -117,71 +84,5 @@ def load_items():
         problems.append(f"{rid}: item model but no lang name (item.{NS}.{rid.split(':')[1]} or block.{NS}.…) "
                         f"and no item model lists it under \"overrides\"")
     if problems:
-        raise SystemExit("almanac_lib: items the guide cannot name or show:\n  " + "\n  ".join(problems))
+        raise SystemExit("almanac_lib: items the Almanac cannot name or show:\n  " + "\n  ".join(problems))
     return by_name, names, set(names)
-
-
-def parse_sections(text):
-    """[(number, title, [body lines])] of the "## N. Title" sections, in order."""
-    sections, current = [], None
-    for line in text.splitlines():
-        m = SECTION_RE.match(line)
-        if m:
-            current = (int(m.group(1)), m.group(2), [])
-            sections.append(current)
-        elif line.startswith("## "):
-            current = None  # "## Contents" and other unnumbered sections are no chapters
-        elif current is not None:
-            current[2].append(line)
-    return sections
-
-
-# ---------------------------------------------------------------------------------------------------- table cells
-
-class Resolver:
-    def __init__(self, by_name):
-        self.by_name = by_name
-
-    def one(self, name):
-        n = name.strip().lower()
-        return self.by_name.get(n) or VANILLA_ITEMS.get(n)
-
-    def cell(self, text):
-        """Item ids for a cell that consists only of item names, else None. Keeps a trailing "(...)" note."""
-        m = re.fullmatch(r"(.*?)\s*(\([^)]*\))?", text.strip())
-        names, note = m.group(1), m.group(2)
-        if not names:
-            return None
-        single = self.one(names)
-        if single:
-            return [single], note
-        parts = [p for p in re.split(r",\s*|\s+and\s+", names) if p]
-        if len(parts) < 2:
-            return None
-        suffix = " ".join(parts[-1].split()[1:])  # "Skull Figurehead" -> "Figurehead"
-        ids = []
-        for p in parts:
-            rid = self.one(p) or (self.one(f"{p} {suffix}") if suffix else None)
-            if not rid:
-                return None
-            ids.append(rid)
-        return ids, note
-
-
-def split_row(line):
-    """Cells of a GFM table row; "\\|" inside a cell is not a separator."""
-    inner = line.strip()[1:-1] if line.strip().endswith("|") else line.strip()[1:]
-    cells, cur, i = [], "", 0
-    while i < len(inner):
-        if inner[i] == "\\" and i + 1 < len(inner) and inner[i + 1] == "|":
-            cur += "\\|"
-            i += 2
-            continue
-        if inner[i] == "|":
-            cells.append(cur)
-            cur = ""
-        else:
-            cur += inner[i]
-        i += 1
-    cells.append(cur)
-    return [c.strip() for c in cells]

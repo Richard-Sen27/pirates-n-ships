@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Unit tests of tools/gen_almanac.py's conversions and tools/almanac_lib.py's item inventory (standard library
-unittest; AlmanacGuideTest runs this file).
+"""Unit tests of tools/gen_almanac.py and tools/almanac_lib.py's item inventory (standard library unittest;
+AlmanacGuideTest runs this file).
 
     python3 tools/test_gen_almanac.py
 """
+import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -14,112 +16,197 @@ import almanac_lib as lib  # noqa: E402
 import gen_almanac as ga  # noqa: E402
 
 NS = ga.NS
-ITEMS = {"helm": f"{NS}:helm", "yard": f"{NS}:yard", "pistol": f"{NS}:pistol", "musket": f"{NS}:musket"}
+ITEMS = {f"{NS}:helm", f"{NS}:yard", f"{NS}:cannon", f"{NS}:captains_almanac"}
+CHAPTERS = {f"{NS}:welcome", f"{NS}:sailing", f"{NS}:combat"}
+
+WELCOME = """---
+id: welcome
+title: Welcome aboard
+order: 10
+icon: captains_almanac
+color: "#8B1A1A"
+---
+Read this first, hand.
+
+## Contents
+contents:
+"""
+
+SAILING = """---
+id: sailing
+title: Sailing
+order: 40
+icon: yard
+color: #2f5d7c
+illustrations:
+  - yard: 0.05 0.09 0.9 0.35
+---
+
+## Sails
+illustration: yard
+Hang a {item:pirates_n_ships:yard}**yard** high on the mast,
+then another below it.
+show_me: sails_and_winch | Show me: rigging a sail
+
+- one
+  continued
+- two
+
+1. **Hoist** it
+2. Sail
+
+> Tip: furl before a storm.
+
+>! Never sail into a waterspout.
+
+## The helm
+See [[pirates_n_ships:combat|the guns]] and [[welcome]].
+"""
+
+COMBAT = """---
+id: combat
+title: Weapons and combat
+order: 100
+icon: cannon
+color: #4a4a4a
+illustrations:
+  - cannon: 0.1 0.1 0.8 0.3
+---
+Steel and powder.
+
+## Cannons
+illustration: cannon
+Powder first, then the ball.
+show_me: pirates_n_ships:cannon_loading
+"""
 
 
-def ctx(chapter="ships", anchors=None):
-    return ga.Context(ITEMS, anchors if anchors is not None else {"limits-to-know": "ships", "sails": "sailing"},
-                      chapter)
+def build(files, illustrations=None):
+    """Chapters and lang of these source files (name -> text), with the illustrations they use."""
+    saved = ga.ILLUSTRATIONS
+    ga.ILLUSTRATIONS = illustrations or {"yard": ("yard.png", ga.FULL), "cannon": ("cannon.png", ga.FULL)}
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            for name, text in files.items():
+                (Path(tmp) / name).write_text(text, encoding="utf-8")
+            chapters, lang, _ = ga.build_chapters(ga.read_sources(tmp), ITEMS)
+            return chapters, lang
+    finally:
+        ga.ILLUSTRATIONS = saved
 
 
-class EscapeTest(unittest.TestCase):
-
-    def test_markup_characters_are_escaped(self):
-        self.assertEqual(ga.escape("a*b"), "a\\*b")
-        self.assertEqual(ga.escape("x\\y"), "x\\\\y")
-        self.assertEqual(ga.escape("{#ff0000}"), "\\{#ff0000}")
-        self.assertEqual(ga.escape("[[x]] [y]"), "\\[[x]] [y]")
-
-    def test_underscores_inside_words_stay(self):
-        self.assertEqual(ga.escape("ship_screen.enabled"), "ship_screen.enabled")
-        self.assertEqual(ga.escape("_x and y_"), "\\_x and y\\_")
+BOOK = {"01-welcome.md": WELCOME, "04-sailing.md": SAILING, "10-combat.md": COMBAT}
 
 
-class InlineTest(unittest.TestCase):
+def page_texts(chapter, lang, page):
+    out = []
+    for e in chapter["body"]["pages"][page]["elements"]:
+        if "key" in e:
+            out.append((e["type"], lang[e["key"]]))
+        elif "items" in e:
+            out.append(("list", [lang[k] for k in e["items"]]))
+        elif "label" in e:
+            out.append(("show_me", e["scene"], lang[e["label"]]))
+        else:
+            out.append((e["type"], e["texture"]))
+    return out
 
-    def test_bold_italic_code(self):
-        c = ctx()
-        self.assertEqual(ga.convert_inline("a **bold** and *Navy:* here", c), "a **bold** and _Navy:_ here")
-        self.assertEqual(ga.convert_inline("config `mobs.shark.*` on", c), "config mobs.shark.\\* on")
-        self.assertEqual(ga.convert_inline("`pirates_n_ships:terrain`", c), "pirates_n_ships:terrain")
 
-    def test_links_to_other_chapters_become_almanac_links(self):
-        c = ctx(chapter="first_ship")
-        self.assertEqual(ga.convert_inline("see [Limits](#limits-to-know)", c),
-                         f"see [[{NS}:ships|Limits]]")
-        self.assertEqual(ga.convert_inline("[`design.md`](design.md)", c), "design.md")
-        self.assertEqual(ga.convert_inline("[Sable](https://example.org)", c), "Sable")
+class FrontMatterTest(unittest.TestCase):
 
-    def test_links_inside_the_own_chapter_are_plain_text(self):
-        self.assertEqual(ga.convert_inline("see [Limits](#limits-to-know)", ctx(chapter="ships")), "see Limits")
+    def test_keys_lists_and_quotes(self):
+        meta, start = ga.parse_front_matter(SAILING.split("\n"), "x")
+        self.assertEqual(meta["id"], "sailing")
+        self.assertEqual(meta["color"], "#2f5d7c")
+        self.assertEqual(meta["illustrations"], ["yard: 0.05 0.09 0.9 0.35"])
+        self.assertEqual(SAILING.split("\n")[start - 1], "---")
+        meta, _ = ga.parse_front_matter(WELCOME.split("\n"), "x")
+        self.assertEqual(meta["color"], "#8B1A1A", "quotes are removed")
 
-    def test_unknown_anchor_stops(self):
+    def test_illustration_boxes(self):
+        saved = ga.ILLUSTRATIONS
+        ga.ILLUSTRATIONS = {"yard": ("yard.png", ga.FULL)}
+        try:
+            self.assertEqual(ga.parse_illustrations(["yard: 0.1 0.2 0.5 0.25"], "x"), {"yard": (0.1, 0.2, 0.5, 0.25)})
+            for bad in (["yard: 0.5 0.1 0.6 0.2"], ["yard: 1 2"], ["unknown: 0 0 0.5 0.5"], ["yard 0 0 1 1"]):
+                with self.assertRaises(SystemExit, msg=bad):
+                    ga.parse_illustrations(bad, "x")
+        finally:
+            ga.ILLUSTRATIONS = saved
+
+    def test_missing_front_matter_or_key_stops(self):
         with self.assertRaises(SystemExit):
-            ga.convert_inline("[x](#nowhere)", ctx())
+            ga.Source("01-welcome.md", "Just text")
+        with self.assertRaises(SystemExit):
+            ga.Source("01-welcome.md", WELCOME.replace("order: 10\n", ""))
+        with self.assertRaises(SystemExit):
+            ga.Source("01-welcome.md", WELCOME.replace("order: 10\n", "order: 10\nsecret: 1\n"))
 
-    def test_bold_item_names_get_one_icon_per_page(self):
-        c = ctx()
-        first = ga.convert_inline("Place a **helm**, then **yards**; the **helm** steers.", c)
-        self.assertEqual(first, f"Place a {{item:{NS}:helm}}**helm**, then {{item:{NS}:yard}}**yards**; the **helm** steers.")
-        c.new_page()
-        self.assertTrue(ga.convert_inline("**Helm**", c).startswith(f"{{item:{NS}:helm}}"))
+    def test_file_name_must_match_the_id(self):
+        with self.assertRaises(SystemExit):
+            ga.Source("01-hello.md", WELCOME)
+        with self.assertRaises(SystemExit):
+            ga.Source("welcome.md", WELCOME)
+        self.assertEqual(ga.Source("01-welcome.md", WELCOME).id, "welcome")
 
-    def test_plain_words_never_get_icons(self):
-        self.assertEqual(ga.convert_inline("the helm and a yard", ctx()), "the helm and a yard")
+
+class MarkupTest(unittest.TestCase):
+
+    def check(self, text):
+        return ga.check_markup(text, "x", CHAPTERS, ITEMS)
+
+    def test_clean_markup_passes_unchanged(self):
+        for text in ("a **bold** and _italic_ word", "{#8b1a1a}**Beware:**{/} the kraken",
+                     "{item:pirates_n_ships:helm}**Helm** and {item:minecraft:gunpowder}",
+                     "see [[pirates_n_ships:combat|the guns]] or [[welcome]]", "snake_case stays",
+                     "a literal \\* star, \\{ brace and \\[[ bracket", "the Captain's whistle"):
+            self.assertEqual(self.check(text), text)
+
+    def test_broken_markup_stops(self):
+        for text in ("an **unclosed bold", "a *markdown* italic", "a `code` span", "{#8b1a1a}never closed",
+                     "{/} too many", "[[nowhere|a link]]", "[[combat|unclosed", "{item:helm}",
+                     "{item:pirates_n_ships:nothing}", "[a link](#somewhere)", "a {brace}", "trailing \\"):
+            with self.assertRaises(SystemExit, msg=text):
+                self.check(text)
 
 
 class BlockTest(unittest.TestCase):
 
-    def test_paragraphs_lists_and_tables(self):
-        lines = [
-            "First line", "second line.", "",
-            "- one", "  continued", "- two", "",
-            "1. **Build** it", "2. Sail", "",
-            "| Item | Recipe | What it does |", "|---|---|---|",
-            "| Pistol, Musket | iron | Shoots. |",
-            "---",
-        ]
-        blocks = ga.split_blocks(lines)
-        self.assertEqual(blocks[0], ("para", "First line second line."))
-        self.assertEqual(blocks[1], ("bullets", ["one continued", "two"]))
-        self.assertEqual(blocks[2], ("ordered", [(1, "**Build** it"), (2, "Sail")]))
-        self.assertEqual(blocks[3][0], "table")
-        self.assertEqual(len(blocks), 4)
-        entries = ga.table_entries(blocks[3][1], ctx())
-        self.assertEqual(entries, [f"{{item:{NS}:pistol}}{{item:{NS}:musket}}**Pistol, Musket** (recipe: iron): Shoots."])
+    def test_blocks_directives_and_callouts(self):
+        lines = list(enumerate(SAILING.split("\n")[11:], 12))
+        blocks = [(k, d) for k, d, _ in ga.split_blocks(lines)]
+        self.assertEqual(blocks[0], ("illustration", "yard"))
+        self.assertEqual(blocks[1][0], "para")
+        self.assertTrue(blocks[1][1].endswith("high on the mast, then another below it."))
+        self.assertEqual(blocks[2], ("show_me", (f"{NS}:sails_and_winch", "Show me: rigging a sail")))
+        self.assertEqual(blocks[3], ("bullets", ["one continued", "two"]))
+        self.assertEqual(blocks[4], ("ordered", [(1, "**Hoist** it"), (2, "Sail")]))
+        self.assertEqual(blocks[5], ("tip", "Tip: furl before a storm."))
+        self.assertEqual(blocks[6], ("warning", "Never sail into a waterspout."))
 
-    def test_pages_split_at_subsections(self):
-        pages = ga.split_pages(["intro", "### A", "a text", "### B", "b text"])
-        self.assertEqual(pages, [(None, ["intro"]), ("A", ["a text"]), ("B", ["b text"])])
+    def test_tables_and_deep_headings_stop(self):
+        with self.assertRaises(SystemExit):
+            ga.split_blocks([(1, "| a | b |")])
+        with self.assertRaises(SystemExit):
+            ga.split_pages(["### Too deep"], 1)
+
+    def test_pages_split_at_headings(self):
+        pages = ga.split_pages(["intro", "## A", "a text", "## B", "b text"], 1)
+        self.assertEqual([(h, [t for _, t in ls]) for h, ls in pages],
+                         [(None, ["intro"]), ("A", ["a text"]), ("B", ["b text"])])
 
 
 class ChapterTest(unittest.TestCase):
 
-    GUIDE = "\n".join(
-        ["# Title", "## Contents", "1. [x](#1-your-first-ship)"]
-        + [f"## {n}. {t}\nText of {n}." for n, t in [
-            (0, "The guide book"), (1, "Your first ship"), (2, "Ships"), (3, "Sailing"), (4, "Crew"), (5, "Flags"),
-            (6, "Provisions"), (7, "Cargo and trade"), (8, "Law, bounties and the brig"), (10, "All blocks"),
-            (11, "All items"), (12, "Commands"), (13, "Configuration"), (14, "Datapacks"),
-            (15, "What does not exist yet")]]
-        + ["## 9. Weapons and combat", "Intro.", "### Cannons", "Load it. **Aim** it.", "", "Fire it."])
-
-    def build(self):
-        saved_ill = ga.ILLUSTRATIONS
-        ga.ILLUSTRATIONS = {("combat", "Cannons"): ("cannon.png", ga.FULL)}
-        try:
-            return ga.build_chapters(self.GUIDE, ITEMS)
-        finally:
-            ga.ILLUSTRATIONS = saved_ill
-
-    def test_one_chapter_per_section_in_order_with_keys_in_lang(self):
-        chapters, lang = self.build()
-        self.assertEqual([c["section"] for c in chapters], sorted(c["section"] for c in chapters))
-        self.assertEqual(len(chapters), 16)
-        self.assertEqual(chapters[0]["id"], f"{NS}:welcome")
+    def test_one_chapter_per_file_in_order_with_keys_in_lang(self):
+        chapters, lang = build(BOOK)
+        self.assertEqual([c["id"] for c in chapters], [f"{NS}:welcome", f"{NS}:sailing", f"{NS}:combat"])
+        self.assertEqual([c["body"]["order"] for c in chapters], [10, 40, 100])
+        self.assertEqual(chapters[1]["body"]["bookmark_color"], "#2f5d7c")
+        self.assertEqual(chapters[0]["body"]["bookmark_color"], "#8b1a1a")
+        self.assertEqual(chapters[1]["body"]["icon"], f"{NS}:yard")
         for c in chapters:
             body = c["body"]
-            self.assertEqual(body["order"], c["section"] * 10)
             self.assertIn(body["title"], lang)
             for page in body["pages"]:
                 for e in page["elements"]:
@@ -127,32 +214,74 @@ class ChapterTest(unittest.TestCase):
                         self.assertIn(k, lang)
                         self.assertTrue(k.startswith(f"{NS}.almanac.{c['id'].split(':')[1]}."), k)
 
-    def test_cannons_page_has_its_heading_illustration_and_show_me_after_the_first_paragraph(self):
-        chapters, lang = self.build()
-        combat = next(c for c in chapters if c["id"] == f"{NS}:combat")
-        page = combat["body"]["pages"][1]
-        types = [e["type"] for e in page["elements"]]
-        self.assertEqual(types, ["heading", "illustration", "text", "show_me", "text"])
-        self.assertEqual(lang[page["elements"][0]["key"]], "Cannons")
-        self.assertEqual(page["elements"][3]["scene"], f"{NS}:cannon_loading")
-        self.assertEqual(page["elements"][1]["texture"], f"{NS}:textures/almanac/cannon.png")
+    def test_sailing_page_holds_its_blocks_in_source_order(self):
+        chapters, lang = build(BOOK)
+        sailing = chapters[1]
+        self.assertEqual(len(sailing["body"]["pages"]), 2, "no intro: the first subsection shares the title page")
+        self.assertEqual(page_texts(sailing, lang, 0), [
+            ("heading", "Sailing"),
+            ("heading", "Sails"),
+            ("illustration", f"{NS}:textures/almanac/yard.png"),
+            ("text", "Hang a {item:pirates_n_ships:yard}**yard** high on the mast, then another below it."),
+            ("show_me", f"{NS}:sails_and_winch", "Show me: rigging a sail"),
+            ("list", ["one continued", "two"]),
+            ("text", "**1.** **Hoist** it"),
+            ("text", "**2.** Sail"),
+            ("text", "Tip: furl before a storm."),
+            ("text", "Never sail into a waterspout."),
+        ])
+        elements = sailing["body"]["pages"][0]["elements"]
+        self.assertEqual(elements[2]["x"], 0.05)
+        self.assertEqual(elements[2]["h"], 0.35)
+        self.assertEqual(elements[8]["color"], ga.TIP_COLOR)
+        self.assertEqual(elements[9]["color"], ga.WARNING_COLOR)
+        self.assertNotIn("color", elements[3])
 
-    def test_welcome_links_every_other_chapter(self):
-        chapters, lang = self.build()
+    def test_show_me_gets_the_default_label_and_namespace(self):
+        chapters, lang = build(BOOK)
+        cannons = chapters[2]["body"]["pages"][1]["elements"]
+        self.assertEqual([e["type"] for e in cannons], ["heading", "illustration", "text", "show_me"])
+        self.assertEqual(cannons[3]["scene"], f"{NS}:cannon_loading")
+        self.assertEqual(lang[cannons[3]["label"]], "Show me")
+
+    def test_contents_links_every_other_chapter(self):
+        chapters, lang = build(BOOK)
         contents = chapters[0]["body"]["pages"][-1]["elements"][-1]
-        links = [lang[k] for k in contents["items"]]
-        self.assertEqual(links, [f"[[{c['id']}]]" for c in chapters[1:]])
+        self.assertEqual([lang[k] for k in contents["items"]], [f"[[{NS}:sailing]]", f"[[{NS}:combat]]"])
 
-    def test_a_missing_section_stops(self):
+    def test_welcome_must_come_first_and_orders_must_rise(self):
         with self.assertRaises(SystemExit):
-            ga.build_chapters(self.GUIDE.replace("## 15. What does not exist yet", "## Notes"), ITEMS)
+            build({"01-sailing.md": SAILING, "02-welcome.md": WELCOME.replace("order: 10", "order: 50")})
+        with self.assertRaises(SystemExit):
+            build({"01-welcome.md": WELCOME.replace("order: 10", "order: 60"), "04-sailing.md": SAILING})
+
+    def test_illustrations_must_be_declared_and_placed(self):
+        with self.assertRaises(SystemExit):
+            build({"01-welcome.md": WELCOME, "04-sailing.md": SAILING.replace("illustration: yard\n", "")})
+        with self.assertRaises(SystemExit):
+            build({"01-welcome.md": WELCOME + "illustration: yard\n"})
+
+    def test_links_to_missing_chapters_stop(self):
+        with self.assertRaises(SystemExit):
+            build({"01-welcome.md": WELCOME, "04-sailing.md": SAILING})  # sailing links to combat
+
+
+class SourceTest(unittest.TestCase):
+
+    def test_the_real_almanac_builds(self):
+        _, _, items = lib.load_items()
+        chapters, lang, shown = ga.build_chapters(ga.read_sources(), items)
+        self.assertEqual(chapters[0]["id"], f"{NS}:welcome")
+        self.assertEqual(chapters[-1]["id"], f"{NS}:not_yet")
+        self.assertEqual(shown, set(ga.ILLUSTRATIONS), "every illustration is shown")
+        scenes = {e["scene"] for c in chapters for p in c["body"]["pages"] for e in p["elements"] if e["type"] == "show_me"}
+        self.assertIn(f"{NS}:cannon_loading", scenes)
 
 
 class ItemsTest(unittest.TestCase):
     """almanac_lib.load_items: the registered items; override variants are ignored, orphan models stop it."""
 
     def setUp(self):
-        import tempfile
         self._tmp = tempfile.TemporaryDirectory()
         self.root = Path(self._tmp.name)
         self.gen = self.root / "common/src/generated/resources/assets" / NS
@@ -172,12 +301,10 @@ class ItemsTest(unittest.TestCase):
         self._tmp.cleanup()
 
     def model(self, where, name, body):
-        import json
         base = self.main if where == "main" else self.gen
         (base / "models/item" / f"{name}.json").write_text(json.dumps(body), encoding="utf-8")
 
     def load(self):
-        import json
         (self.gen / "lang/en_us.json").write_text(json.dumps(self.lang), encoding="utf-8")
         lib.set_root(self.root)
         return lib.load_items()
@@ -206,7 +333,6 @@ class ItemsTest(unittest.TestCase):
 class PngTest(unittest.TestCase):
 
     def test_round_trip_and_downscale(self):
-        import tempfile
         with tempfile.TemporaryDirectory() as tmp:
             src = Path(tmp) / "src.png"
             w, h = 600, 300

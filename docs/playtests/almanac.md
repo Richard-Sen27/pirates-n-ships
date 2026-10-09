@@ -165,6 +165,49 @@ screenshots.
 8. **Page turn:** turn pages slowly (`almanac_screen.page_turn_ticks` 20): the fold darkens smoothly towards the turning
    page's free edge, no visible vertical bands (32 shade strips now).
 
+# Playtest: the player's Almanac in its own voice (work package ALM6)
+
+The Almanac's text now comes from `docs/almanac/` (14 chapters, one file per bookmark) instead of `docs/guide.md`.
+JUnit checks the structure (`AlmanacGuideTest`: one chapter per file, every key, icon, link and illustration exists, no
+config keys, commands or mod ids outside the ledger, about 36 KB on the wire) and `AlmanacDataGameTests` the loading.
+What a client must show: the voice, the layout of the longer pages, and that nothing reads like a project readme.
+
+Chapters in order: Welcome aboard, Your first ship, Ships, Sailing, Crew, Flags, Provisions, Cargo and trade, Law,
+Weapons and combat, Charts and navigation, The ship's inventory, The Quartermaster's ledger, Not yet charted.
+
+## Steps
+1. **Contents:** open the Almanac (`/give @s pirates_n_ships:captains_almanac`). The first chapter is "Welcome aboard"
+   with the closed tome pictured; its last page "Contents" lists the 13 other chapters as navy links in book order.
+   Click each one: it turns to that chapter's first page. The bookmarks show 14 ribbons with their icons.
+2. **Read every chapter**, every page. Report:
+   - any raw lang key (`pirates_n_ships.almanac...`), any literal markup (`**`, `{item:`, `[[`, a backslash) or
+     a stray `_`;
+   - any config key, command, mod id or package name outside "The Quartermaster's ledger";
+   - sentences that read like a readme instead of a ship's master speaking to a new hand, or that pastiche too hard;
+   - pages so long that the continuation pages lose their heading context, or a heading left alone at a page end.
+3. **Tips and warnings:** the paragraphs in green ink (tips) and red ink (warnings) read clearly on the parchment, e.g.
+   Sailing "The wind" (tip) and Ships "Flooding" (warning). The welcome page's sample words in green, red and navy
+   match the real tips, warnings and links.
+4. **Item icons:** inline icons sit in the line before the item's first mention (e.g. Sailing "Square sails" yard,
+   The ship's inventory, every entry). No icon is a purple-black missing texture.
+5. **Links:** cross-links in the text (e.g. Crew "The captain's whistle" to Ships, Ships "Ordering a ship" to Law and
+   Weapons and combat, every entry of The ship's inventory) jump to the right chapter.
+6. **Illustrations:** every chapter has a picture under its title; the new ones are the closed tome (Welcome aboard),
+   the shipwright's toolkit (Ships, "Patching a breach"), the hammock (Crew), the navy officer (Law), the map tile and
+   the treasure map (Charts and navigation), the cargo barrel (The ship's inventory), the ship commission (ledger) and
+   the anchor (Not yet charted). Text flows around each without overlapping it.
+7. **Show me:** pages with a "Show me" button and their scenes: Your first ship and Ships (`ship_assembly`), Sailing
+   (`sails_and_winch`, `steering`, `anchor_and_capstan`, `mooring`, `ships_bell`, `crows_nest`), Ships
+   (`pumps_and_flooding`, `hull_repair`), Crew (`crew_orders`, `hammocks_and_rest`), Flags (`flags_and_allegiance`),
+   Provisions (`galley_and_provisions`), Cargo and trade (`cargo_and_weight`), Weapons and combat (`cannon_loading`,
+   `swivel_gun`, `boarding`). `cannon_loading` plays the cannon scene. Until PND1/PND2 land, the others log a warning
+   and the book stays on its page (no crash, no blank screen); after they land, each plays its scene.
+8. **The ledger:** "The Quartermaster's ledger" lists the main settings as `section.name: default` and the player and
+   operator commands; underscores in the keys show as underscores, not as italics.
+9. **Facts:** spot-check a few numbers in game against the text: a sail winch cycles furled, half, full; the capstan
+   refuses to drop over water deeper than 32 blocks; a hull patch from 2 planks and a coal makes 2; a water barrel holds
+   16 rations; the crow's nest calls "Sail ho!" with a bearing in points.
+
 # Playtest: GuideME retired, the Almanac as first-join gift (work package GUIDE2)
 
 GuideME is gone: no dependency, no `guide` module, no generated pages. The first-join gift is now one Captain's
@@ -181,6 +224,4 @@ gives none, a lost book is not replaced, the switch off gives none and stores no
    saved with the old GuideME book in a chest loads without errors (the stack becomes air).
 4. **Switch off:** set `almanac.give_on_first_join` to false in the server config, join with a new player: no book.
    Turn it back on and relog: the book arrives then.
-5. **Section 0 in the book:** the welcome chapter (The guide book) describes the Almanac: the gift, the recipe, reading
-   in hand and placed, turning pages, "Show me". Hover the Cannon and hold the Ponder key (W by default): the cannon
-   scene opens.
+5. **Ledger:** the Quartermaster's ledger lists `almanac.give_on_first_join: true` with the other Almanac settings.

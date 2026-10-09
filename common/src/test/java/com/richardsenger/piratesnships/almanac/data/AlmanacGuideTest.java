@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The Almanac's chapters generated from docs/guide.md (ALM5, tools/gen_almanac.py; run from {@code common/}): the
+ * The Almanac's chapters generated from docs/almanac/ (ALM5, ALM6, tools/gen_almanac.py; run from {@code common/}): the
  * committed intermediate is what the generator writes now, the generated chapter files and lang are what datagen makes
  * of it, every page parses with the chapter codecs, every lang key exists, every item, link and illustration in the
  * text exists, and the whole book fits one sync payload. The item check of the full chapter codec needs our items
@@ -56,7 +56,14 @@ class AlmanacGuideTest {
     static final int MAX_WIRE_BYTES = 512 * 1024;
     static final long MAX_ILLUSTRATION_BYTES = 2L * 1024 * 1024;
 
-    private static final Pattern SECTION = Pattern.compile("(?m)^## (\\d+)\\. (.+?)\\s*$");
+    private static final Pattern SOURCE_FILE = Pattern.compile("\\d+-([a-z0-9-]+)\\.md");
+    private static final ResourceLocation LEDGER = ResourceLocation.fromNamespaceAndPath(NS, "ledger");
+    /** Item icons and chapter links: their ids are markup, not words on the page. */
+    private static final Pattern MARKUP_TOKEN = Pattern.compile("\\{item:[^}]*}|\\[\\[[^\\]|]*\\|?");
+    /** A command, a dotted config key, a snake_case word, a mod id or a Java/loader name. */
+    private static final Pattern TECHNICAL = Pattern.compile(
+            "/pirates|/locate|[a-z]+\\.[a-z_]+_[a-z_]+|\\b[a-z]+_[a-z_]+\\b|pirates_n_ships|\\bconfig\\b|gradle|neoforge|fabric|\\.java|GameTest",
+            Pattern.CASE_INSENSITIVE);
     private static final Pattern ITEM_TOKEN = Pattern.compile("(?<!\\\\)\\{item:([a-z0-9_.-]+:[a-z0-9_/.-]+)}");
     private static final Pattern LINK_TOKEN = Pattern.compile("(?<!\\\\)\\[\\[([^\\]|]+)(?:\\|[^\\]]*)?]]");
 
@@ -111,7 +118,7 @@ class AlmanacGuideTest {
 
     @Test
     void committedIntermediateIsWhatTheGeneratorWrites(@TempDir Path tmp) throws Exception {
-        Path out = tmp.resolve("guide_chapters.json");
+        Path out = tmp.resolve("chapters.json");
         Run run = python(REPO.resolve("tools/gen_almanac.py").toString(), "--out", out.toString());
         assertEquals(0, run.exit(), "generator failed:\n" + run.output());
         assertEquals(Files.readString(out), Files.readString(INTERMEDIATE),
@@ -119,21 +126,43 @@ class AlmanacGuideTest {
     }
 
     @Test
-    void oneChapterPerGuideSectionInSectionOrder() throws IOException {
-        Matcher m = SECTION.matcher(Files.readString(REPO.resolve("docs/guide.md")));
-        List<Integer> sections = new ArrayList<>();
-        while (m.find()) sections.add(Integer.parseInt(m.group(1)));
-        sections.sort(null);
+    void oneChapterPerSourceFileInFileOrder() throws IOException {
+        List<String> files;
+        try (Stream<Path> list = Files.list(REPO.resolve(AlmanacChapterProvider.SOURCE))) {
+            files = list.map(f -> f.getFileName().toString()).filter(n -> n.endsWith(".md")).sorted().toList();
+        }
         List<Chapter> chapters = chapters();
-        assertEquals(sections.size(), chapters.size(), "one chapter per guide section");
+        assertEquals(files.size(), chapters.size(), "one chapter per file of " + AlmanacChapterProvider.SOURCE);
         for (int i = 0; i < chapters.size(); i++) {
-            assertEquals(sections.get(i) * 10, chapters.get(i).order(), chapters.get(i).id() + " order");
+            Matcher m = SOURCE_FILE.matcher(files.get(i));
+            assertTrue(m.matches(), files.get(i) + " is named <nn>-<chapter>.md");
+            assertEquals(ResourceLocation.fromNamespaceAndPath(NS, m.group(1).replace('-', '_')), chapters.get(i).id(), files.get(i));
+            if (i > 0) assertTrue(chapters.get(i).order() > chapters.get(i - 1).order(), chapters.get(i).id() + " order");
         }
         assertEquals(AlmanacChapterProvider.WELCOME, chapters.getFirst().id());
-        assertEquals(ResourceLocation.fromNamespaceAndPath(NS, "not_yet"), chapters.getLast().id(), "'What does not exist yet' comes last");
+        assertEquals(ResourceLocation.fromNamespaceAndPath(NS, "not_yet"), chapters.getLast().id(), "'Not yet charted' comes last");
         Chapter combat = chapters.stream().filter(c -> c.id().equals(AlmanacChapterProvider.COMBAT)).findFirst().orElseThrow();
         assertTrue(combat.pages().stream().flatMap(p -> p.elements().stream()).anyMatch(e -> e instanceof PageElement.ShowMe s
                 && s.scene().equals(AlmanacChapterProvider.CANNON_LOADING_SCENE)), "the cannon page's Show me");
+    }
+
+    /**
+     * The player's chapters speak to a player (ALM6): no commands, config keys, mod ids or package names outside the
+     * Quartermaster's ledger, the one chapter for server owners. Markup tokens (item icons, links) are left out.
+     */
+    @Test
+    void onlyTheLedgerNamesCommandsAndSettings() {
+        Map<String, String> text = intermediate().lang();
+        List<String> problems = new ArrayList<>();
+        for (Chapter c : chapters()) {
+            if (c.id().equals(LEDGER)) continue;
+            for (String key : AlmanacChapterProvider.keys(c)) {
+                String plain = MARKUP_TOKEN.matcher(text.get(key)).replaceAll("");
+                Matcher m = TECHNICAL.matcher(plain);
+                if (m.find()) problems.add(key + ": '" + m.group() + "' in \"" + plain + "\"");
+            }
+        }
+        assertTrue(problems.isEmpty(), "technical words in the player's chapters:\n" + String.join("\n", problems));
     }
 
     @Test

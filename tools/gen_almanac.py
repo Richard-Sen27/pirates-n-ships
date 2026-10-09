@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generates the Captain's Almanac's chapters from docs/guide.md (work package ALM5, design.md §3.4).
+"""Generates the Captain's Almanac's chapters from docs/almanac/ (ALM5, ALM6; design.md §3.4, docs/almanac.md).
 
 Run (from the repository root, Python 3 standard library only):
 
@@ -8,36 +8,44 @@ Run (from the repository root, Python 3 standard library only):
     python3 tools/gen_almanac.py --out FILE   # writes the intermediate to FILE instead, no illustrations
     ./gradlew :neoforge:runData               # then: the chapter files and the lang entries
 
-Run it after every change to docs/guide.md (inputs: tools/almanac_lib.py) and commit the output. AlmanacGuideTest
-fails while the committed intermediate differs from a fresh run, or the generated chapters and lang differ from it.
+Run it after every change to docs/almanac/ and commit the output. AlmanacGuideTest fails while the committed
+intermediate differs from a fresh run, or the generated chapters and lang differ from it.
+
+Source: docs/almanac/<nn>-<chapter>.md, one file per chapter (bookmark), written for the player in the Almanac's own
+voice. docs/guide.md is the testing and reference guide and is not read here. Each file:
+
+    ---
+    id: sailing                         chapter id (pirates_n_ships:<id>); the file name is <nn>-<id with - for _>.md
+    title: Sailing                      the chapter title (a heading on its first page and the bookmark's tooltip)
+    order: 40                           position in the book; strictly increasing in file name order
+    icon: yard                          the bookmark's item (no namespace = pirates_n_ships)
+    color: #2f5d7c                      the bookmark's colour
+    illustrations:                      every illustration the chapter uses, with its box on the page (unit square)
+      - yard: 0.05 0.09 0.9 0.35
+    ---
+    Text before the first "##" goes on the first page, under the chapter title.
+
+    ## A subsection                     every "##" starts a new page with that heading
+    illustration: yard                  places a declared illustration on this page (at its box)
+    show_me: sails_and_winch | Show me: rigging a sail     a "Show me" button here (scene id, optional label)
+    contents:                           a list linking every other chapter, in book order (the welcome chapter)
+
+Body blocks: a paragraph (lines joined) -> text; "- " lines -> one list (indented lines continue an entry; at most
+64 entries); "1. " lines -> one text per entry with its number in bold; "> " paragraphs -> a tip (TIP_COLOR ink);
+">! " paragraphs -> a warning (WARNING_COLOR ink). The text is the Almanac's markup as the screen reads it (**bold**,
+_italic_, {#rrggbb}...{/}, {item:ns:id}, [[ns:chapter|text]], backslash escapes), checked here: balanced bold and
+colours, closed links to chapters that exist, our item ids that exist; no tables, no markdown italics (*x*), no code
+spans, no raw markdown links.
 
 Output:
-    common/src/datagen/almanac/guide_chapters.json
+    common/src/datagen/almanac/chapters.json
         The intermediate: every chapter in the chapter file format of docs/almanac.md ("body"), plus a "lang" map of
-        every lang key the chapters use to its English text (with the Almanac's markup). It is no resource and not
-        shipped; datagen (almanac/data/AlmanacGuideProvider, ./gradlew :neoforge:runData) reads it, checks it with
-        the chapter codecs and writes data/pirates_n_ships/almanac/chapters/<id>.json and the lang entries. So the
-        final chapter files and the lang come from datagen, as all our JSON does.
-    common/src/main/resources/assets/pirates_n_ships/textures/almanac/<render>.png
+        every lang key the chapters use to its English text. It is no resource and not shipped; datagen
+        (almanac/data/AlmanacChapterProvider, ./gradlew :neoforge:runData) checks it with the chapter codecs and
+        writes data/pirates_n_ships/almanac/chapters/<id>.json and the lang entries.
+    common/src/main/resources/assets/pirates_n_ships/textures/almanac/<name>.png
         Illustrations: a panel of a render from art/renders (ILLUSTRATIONS), its flat background made transparent,
         trimmed to the model and scaled down to at most MAX_W x MAX_H pixels. Only written without --no-images/--out.
-
-Chapters: one per "## N. Title" section of docs/guide.md, id from CHAPTERS, "order" 10 x N, a bookmark colour and an
-icon item per chapter. Section 0 ("The guide book") is the welcome chapter and gets a contents page that links every
-other chapter. Pages: the first page opens with the chapter title as a heading and the text before the first "###";
-every "### Heading" starts a new page with that heading. One illustration per page at most, near the top
-(ILLUSTRATIONS: per chapter, or per chapter and subsection heading).
-
-What converts to what (inline, in every text):
-    **bold** -> **bold**          *italic* -> _italic_          `code` -> the plain text
-    [text](#anchor)  -> [[pirates_n_ships:<chapter holding the anchor>|text]] (plain text inside its own chapter)
-    [text](file.md), [text](http...) -> text
-    **Name** of one of our items (or its plural) -> {item:pirates_n_ships:<id>}**Name**, the first time per page
-    literal *, \\, {, [[ and word-edge _ are escaped with a backslash (Markup reads them as markup otherwise)
-Blocks: a paragraph (lines joined) -> text; "- " lists -> list (at most 64 entries each); "1. " lists -> one text per
-entry with its number in bold; a table -> a list, one entry per row: the first cell in bold (with item icons when the
-column names items, almanac_lib.ITEM_COLUMNS), then the other cells ("What it does" columns plain, others as "header: value");
-"---" separators are dropped.
 """
 import argparse
 import json
@@ -50,274 +58,295 @@ from pathlib import Path
 sys.dont_write_bytecode = True  # no __pycache__ next to the tools
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import almanac_lib as lib  # noqa: E402  (items, sections, slugs and table cells)
+import almanac_lib as lib  # noqa: E402  (our item ids from the lang and item models)
 
 NS = lib.NS
 ROOT = Path(__file__).resolve().parent.parent
-OUT_JSON = ROOT / "common" / "src" / "datagen" / "almanac" / "guide_chapters.json"
+SOURCE = ROOT / "docs" / "almanac"
+OUT_JSON = ROOT / "common" / "src" / "datagen" / "almanac" / "chapters.json"
 RENDERS = ROOT / "art" / "renders"
 TEXTURES = ROOT / "common" / "src" / "main" / "resources" / "assets" / NS / "textures" / "almanac"
 
-# Chapter id, icon item and bookmark colour per section number. Colours: muted inks that read on parchment.
-CHAPTERS = {
-    0: ("welcome", "captains_almanac", "#8b1a1a"),
-    1: ("first_ship", "helm", "#7a4a1e"),
-    2: ("ships", "hull_patch", "#5b3a29"),
-    3: ("sailing", "yard", "#2f5d7c"),
-    4: ("crew", "captains_whistle", "#4f6b3a"),
-    5: ("flags", "jolly_roger_flag", "#262626"),
-    6: ("provisions", "pantry", "#8a5a1f"),
-    7: ("trade", "cargo_crate", "#a07a24"),
-    8: ("law", "shackles", "#3b4a6b"),
-    9: ("combat", "cannon", "#4a4a4a"),
-    10: ("blocks", "capstan", "#6e5a3c"),
-    11: ("items", "rope", "#7c6a4a"),
-    12: ("commands", "minecraft:command_block", "#5a4f6e"),
-    13: ("configuration", "minecraft:comparator", "#4f5f5f"),
-    14: ("datapacks", "minecraft:knowledge_book", "#6a4f5f"),
-    15: ("not_yet", "minecraft:barrier", "#8a7f6a"),
-}
-WELCOME = 0
-CONTENTS_HEADING = "Contents"
-CONTENTS_TEXT = "Every chapter has a bookmark on the edge of the book. Or turn to one here:"
+TIP_COLOR = "#2e6a24"       # a tip: the green ink of the screens (GuiKit.INK_GREEN)
+WARNING_COLOR = "#9a1c14"   # a warning: the red ink of the screens (GuiKit.INK_RED)
+DEFAULT_SHOW_ME_LABEL = "Show me"
 
-# "Show me" buttons: (chapter, subsection heading) -> (Ponder scene id, label). Placed after the first paragraph.
-SHOW_ME = {
-    ("combat", "Cannons"): (f"{NS}:cannon_loading", "Show me: loading and firing a cannon"),
-}
-
-# Illustrations: (chapter, subsection heading or None for the chapter's first page) -> (render under art/renders,
-# panel of it as fractions x0, y0, x1, y1). The panel is trimmed to the model, so it only has to exclude the other
-# views and the labels of a sheet.
+# Illustrations: texture name (textures/almanac/<name>.png) -> (render under art/renders, panel of it as fractions
+# x0, y0, x1, y1). The panel is trimmed to the model, so it only has to exclude the other views and labels of a sheet.
+# A chapter declares the ones it shows in its front matter; every entry here must be shown somewhere.
 FULL = (0.0, 0.0, 1.0, 1.0)
 ILLUSTRATIONS = {
-    ("welcome", None): ("pirate_captain.png", (0.0, 0.0, 0.3, 1.0)),
-    ("first_ship", None): ("helm.png", FULL),
-    ("ships", None): ("nameplate.png", FULL),
-    ("ships", "Fighting a leak"): ("bilge_pump.png", FULL),
-    ("sailing", None): ("yard.png", FULL),
-    ("sailing", "Sail winch"): ("sail_winch.png", FULL),
-    ("sailing", "Capstan and anchor"): ("capstan.png", FULL),
-    ("sailing", "Ratlines"): ("ratlines.png", FULL),
-    ("sailing", "Decor"): ("ships_bell.png", (0.0, 0.0, 0.25, 1.0)),
-    ("sailing", "Chart"): ("chart.png", (0.0, 0.0, 0.34, 1.0)),
-    ("crew", None): ("crew_member.png", (0.0, 0.0, 0.36, 1.0)),
-    ("crew", "Crow's nest"): ("crows_nest.png", (0.0, 0.0, 0.25, 1.0)),
-    ("crew", "Pirates, sailors and the navy"): ("mob_pirate.png", (0.0, 0.0, 0.36, 1.0)),
-    ("crew", "The kraken"): ("kraken.png", (0.335, 0.1, 0.5, 1.0)),
-    ("crew", "Sharks"): ("shark.png", FULL),
-    ("flags", None): ("jolly_roger_flag.png", (0.5, 0.0, 1.0, 1.0)),
-    ("provisions", None): ("pantry.png", FULL),
-    ("provisions", "Water barrel"): ("water_barrel.png", FULL),
-    ("provisions", "Sea chest"): ("sea_chest.png", (0.0, 0.0, 0.5, 1.0)),
-    ("trade", None): ("cargo_crate.png", FULL),
-    ("trade", "Doubloons"): ("doubloon.png", (0.0, 0.0, 0.25, 1.0)),
-    ("trade", "Harbor master's desk"): ("harbor_desk.png", FULL),
-    ("law", None): ("notice_board.png", (0.0, 0.0, 0.34, 1.0)),
-    ("law", "Shackles and prisoners"): ("shackles.png", FULL),
-    ("law", "Brig bars and brig door"): ("brig_door.png", FULL),
-    ("combat", None): ("cutlass.png", FULL),
-    ("combat", "Firearms"): ("pistol.png", FULL),
-    ("combat", "Cannons"): ("cannon.png", (0.4, 0.0, 0.67, 1.0)),
-    ("combat", "Swivel gun"): ("swivel_gun.png", (0.0, 0.0, 0.34, 1.0)),
-    ("combat", "Grappling hook"): ("grappling_hook.png", FULL),
-    ("blocks", None): ("figurehead_mermaid.png", FULL),
-    ("blocks", "Hats"): ("captains_hat.png", (0.0, 0.0, 0.25, 1.0)),
-    ("items", None): ("rum.png", FULL),
+    "anchor": ("anchor.png", FULL),
+    "bilge_pump": ("bilge_pump.png", FULL),
+    "captains_almanac": ("captains_almanac.png", (0.79, 0.0, 1.0, 1.0)),
+    "cargo_barrel": ("cargo_barrel.png", FULL),
+    "hammock": ("hammock.png", (0.0, 0.0, 0.31, 1.0)),
+    "map_tile": ("map_tile.png", (0.37, 0.0, 0.7, 1.0)),
+    "mob_navy_officer": ("mob_navy_officer.png", (0.0, 0.0, 0.3, 1.0)),
+    "ship_commission": ("ship_commission.png", (0.0, 0.0, 0.22, 1.0)),
+    "shipwright_toolkit": ("shipwright_toolkit.png", (0.0, 0.0, 0.24, 1.0)),
+    "treasure_map": ("treasure_map.png", (0.0, 0.0, 0.18, 1.0)),
+    "brig_door": ("brig_door.png", FULL),
+    "cannon": ("cannon.png", (0.4, 0.0, 0.67, 1.0)),
+    "capstan": ("capstan.png", FULL),
+    "captains_hat": ("captains_hat.png", (0.0, 0.0, 0.25, 1.0)),
+    "cargo_crate": ("cargo_crate.png", FULL),
+    "chart": ("chart.png", (0.0, 0.0, 0.34, 1.0)),
+    "crew_member": ("crew_member.png", (0.0, 0.0, 0.36, 1.0)),
+    "crows_nest": ("crows_nest.png", (0.0, 0.0, 0.25, 1.0)),
+    "cutlass": ("cutlass.png", FULL),
+    "doubloon": ("doubloon.png", (0.0, 0.0, 0.25, 1.0)),
+    "figurehead_mermaid": ("figurehead_mermaid.png", FULL),
+    "grappling_hook": ("grappling_hook.png", FULL),
+    "harbor_desk": ("harbor_desk.png", FULL),
+    "helm": ("helm.png", FULL),
+    "jolly_roger_flag": ("jolly_roger_flag.png", (0.5, 0.0, 1.0, 1.0)),
+    "kraken": ("kraken.png", (0.335, 0.1, 0.5, 1.0)),
+    "mob_pirate": ("mob_pirate.png", (0.0, 0.0, 0.36, 1.0)),
+    "nameplate": ("nameplate.png", FULL),
+    "notice_board": ("notice_board.png", (0.0, 0.0, 0.34, 1.0)),
+    "pantry": ("pantry.png", FULL),
+    "pirate_captain": ("pirate_captain.png", (0.0, 0.0, 0.3, 1.0)),
+    "pistol": ("pistol.png", FULL),
+    "ratlines": ("ratlines.png", FULL),
+    "rum": ("rum.png", FULL),
+    "sail_winch": ("sail_winch.png", FULL),
+    "sea_chest": ("sea_chest.png", (0.0, 0.0, 0.5, 1.0)),
+    "shackles": ("shackles.png", FULL),
+    "shark": ("shark.png", FULL),
+    "ships_bell": ("ships_bell.png", (0.0, 0.0, 0.25, 1.0)),
+    "swivel_gun": ("swivel_gun.png", (0.0, 0.0, 0.34, 1.0)),
+    "water_barrel": ("water_barrel.png", FULL),
+    "yard": ("yard.png", FULL),
 }
-# Where an illustration sits on its page (unit square): below the heading line, across the page.
-ILLUSTRATION_BOX = (0.05, 0.09, 0.9, 0.35)
 MAX_W, MAX_H = 256, 160
 
 MAX_LIST = 64          # Page element limits of the chapter format (ListItems, Page)
 MAX_ELEMENTS = 64
-# Table columns whose cell follows the first one without its header ("Helm: Assembles ...").
-PLAIN_COLUMNS = {"what it does", "meaning for the law rules", "today", "effect", "contents", "what it controls",
-                 "holds", "good at", "points"}
+MAX_PAGES = 256
 
-LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)\s]+)\)")
-# Inline tokens in order of precedence: code span, link, bold run without nested markup, lone **, *italic*
-INLINE_RE = re.compile(
-    r"(?P<code>`[^`]*`)"
-    r"|(?P<link>\[(?P<ltext>[^\]]+)\]\((?P<href>[^)\s]+)\))"
-    r"|\*\*(?P<bold>[^*`\[\]]+?)\*\*"
-    r"|(?P<star2>\*\*)"
-    r"|(?<![*\w])\*(?P<ital>[^*\s][^*]*?)\*(?![*\w])")
+FILE_RE = re.compile(r"^(\d+)-([a-z0-9-]+)\.md$")
+ID_RE = re.compile(r"^[a-z0-9_]+$")
+COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 ORDERED_RE = re.compile(r"^(\d+)\.\s+(.*)$")
+DIRECTIVE_RE = re.compile(r"^(illustration|show_me|contents):\s*(.*)$")
+HEADING_RE = re.compile(r"^##\s+(.+?)\s*$")
+ITEM_RE = re.compile(r"\{item:([^}]*)}")
+LINK_RE = re.compile(r"\[\[([^\]|]*)(?:\|([^\]]*))?]]")
+COLOR_TOKEN_RE = re.compile(r"\{(#[0-9a-fA-F]{6}|/)}")
+RESOURCE_RE = re.compile(r"^[a-z0-9_.-]+:[a-z0-9_/.-]+$")
 
 
-# ---------------------------------------------------------------------------------------------------- inline
+class SourceError(SystemExit):
+    """A problem in docs/almanac/, naming the file and line."""
 
-def escape(text):
-    """Literal text for the Almanac's markup (almanac/client/Markup): nothing in it may read as markup."""
-    out = []
-    n = len(text)
-    for i, c in enumerate(text):
-        prev = text[i - 1] if i > 0 else " "
-        nxt = text[i + 1] if i + 1 < n else " "
-        if c in "\\*{":
-            out.append("\\" + c)
-        elif c == "[" and nxt == "[":
-            out.append("\\[")
-        elif c == "_" and not (prev.isalnum() and nxt.isalnum()):
-            out.append("\\_")
+    def __init__(self, where, message):
+        super().__init__(f"{where}: {message}")
+
+
+# ---------------------------------------------------------------------------------------------------- front matter
+
+def parse_front_matter(lines, where):
+    """The "---" block at the start of a file -> (dict, index of the first body line).
+
+    Values are strings; a key with no value followed by "  - entry" lines is a list of strings. Quotes around a value
+    are removed. Standard library only, so this is a small subset of YAML, not YAML.
+    """
+    if not lines or lines[0].strip() != "---":
+        raise SourceError(where, "no front matter (the file must start with a '---' line)")
+    data, current = {}, None
+    for i in range(1, len(lines)):
+        raw = lines[i]
+        s = raw.strip()
+        if s == "---":
+            return data, i + 1
+        if not s or s.startswith("#"):
+            continue
+        if s.startswith("- "):
+            if current is None or not isinstance(data[current], list):
+                raise SourceError(f"{where}:{i + 1}", "a list entry without a list key above it")
+            data[current].append(unquote(s[2:].strip()))
+            continue
+        key, sep, value = s.partition(":")
+        key = key.strip()
+        if not sep or not ID_RE.match(key):
+            raise SourceError(f"{where}:{i + 1}", f"expected 'key: value', got {s!r}")
+        if key in data:
+            raise SourceError(f"{where}:{i + 1}", f"duplicate key {key!r}")
+        value = value.strip()
+        data[key] = unquote(value) if value else []
+        current = key
+    raise SourceError(where, "the front matter has no closing '---' line")
+
+
+def unquote(value):
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+        return value[1:-1]
+    return value
+
+
+def parse_illustrations(entries, where):
+    """["name: x y w h", ...] -> {name: (x, y, w, h)} (unit square of the page)."""
+    out = {}
+    for entry in entries:
+        name, sep, box = entry.partition(":")
+        name = name.strip()
+        try:
+            x, y, w, h = (float(v) for v in box.split())
+        except ValueError:
+            raise SourceError(where, f"illustration {entry!r}: expected 'name: x y w h'") from None
+        if not sep or not ID_RE.match(name):
+            raise SourceError(where, f"illustration {entry!r}: expected 'name: x y w h'")
+        if name not in ILLUSTRATIONS:
+            raise SourceError(where, f"illustration {name!r} is not in ILLUSTRATIONS (tools/gen_almanac.py)")
+        if w <= 0 or h <= 0 or x < 0 or y < 0 or x + w > 1 or y + h > 1:
+            raise SourceError(where, f"illustration {name!r}: the box {x} {y} {w} {h} leaves the page")
+        if name in out:
+            raise SourceError(where, f"illustration {name!r} declared twice")
+        out[name] = (x, y, w, h)
+    return out
+
+
+def full_id(item):
+    return item if ":" in item else f"{NS}:{item}"
+
+
+# ---------------------------------------------------------------------------------------------------- markup
+
+def check_markup(text, where, chapter_ids, items):
+    """Raises SourceError when the text is not clean Almanac markup (see the module doc). Returns the text."""
+    # Strip escapes first: an escaped character is never markup.
+    bare = re.sub(r"\\.", "", text)
+    if "\\" in bare:
+        raise SourceError(where, "a lone backslash at the end of the text")
+    if "`" in bare:
+        raise SourceError(where, "a code span (`...`) has no place in the Almanac; write the plain words")
+    if re.search(r"(?<!\])\]\([^)]*\)", bare):
+        raise SourceError(where, "a markdown link [text](...); link chapters with [[pirates_n_ships:<id>|text]]")
+    for m in LINK_RE.finditer(bare):
+        target = m.group(1).strip()
+        rid = target if ":" in target else f"{NS}:{target}"
+        if rid not in chapter_ids:
+            raise SourceError(where, f"link to {target!r}, which is no chapter of the Almanac")
+        if m.group(2) is not None and not m.group(2).strip():
+            raise SourceError(where, f"link to {target!r} with an empty text")
+    rest = LINK_RE.sub("", bare)
+    if "[[" in rest or "]]" in rest:
+        raise SourceError(where, "an unclosed or broken [[link]]")
+    for m in ITEM_RE.finditer(bare):
+        rid = m.group(1)
+        if ":" not in rid or not RESOURCE_RE.match(rid):
+            raise SourceError(where, f"{{item:{rid}}}: write the full id (pirates_n_ships:helm, minecraft:gunpowder)")
+        if rid.startswith(NS + ":") and rid not in items:
+            raise SourceError(where, f"{{item:{rid}}} is no item of ours")
+    depth = 0
+    for m in COLOR_TOKEN_RE.finditer(bare):
+        depth += -1 if m.group(1) == "/" else 1
+        if depth < 0:
+            raise SourceError(where, "a {/} without a colour to close")
+    if depth:
+        raise SourceError(where, "a {#rrggbb} colour that is never closed with {/}")
+    other = re.sub(r"\{(#[0-9a-fA-F]{6}|/|item:[^}]*)}", "", bare)
+    if "{" in other or "}" in other:
+        raise SourceError(where, "a brace that is no markup; escape a literal one as \\{")
+    if bare.count("**") % 2:
+        raise SourceError(where, "an unclosed **bold**")
+    if "*" in bare.replace("**", ""):
+        raise SourceError(where, "a single * (italics are _like this_; a literal star is \\*)")
+    return text
+
+
+# ---------------------------------------------------------------------------------------------------- body
+
+def split_pages(lines, first_line):
+    """Body lines -> [(heading or None, [(line number, text)])]: the text before the first "##", then one per "##"."""
+    pages = [(None, [])]
+    for n, line in enumerate(lines, first_line):
+        m = HEADING_RE.match(line)
+        if m:
+            pages.append((m.group(1), []))
+        elif line.startswith("#"):
+            raise SourceError(f"line {n}", f"only '##' headings start a page: {line.strip()!r}")
         else:
-            out.append(c)
-    return "".join(out)
+            pages[-1][1].append((n, line))
+    return pages
 
 
-def plain(text):
-    """The text with the guide's inline markdown removed (link labels, headings)."""
-    text = LINK_RE.sub(lambda m: m.group(1), text)
-    return text.replace("`", "").replace("**", "")
+def split_blocks(numbered):
+    """[(line number, text)] of one page -> [(kind, data, line number)].
 
-
-class Context:
-    """What inline conversion needs: the item names, the anchors, the chapter being written, the icons on its page."""
-
-    def __init__(self, by_name, anchors, chapter):
-        self.by_name = by_name
-        self.anchors = anchors
-        self.chapter = chapter
-        self.icons_on_page = set()
-
-    def new_page(self):
-        self.icons_on_page = set()
-
-    def item(self, name):
-        n = name.strip().lower()
-        rid = self.by_name.get(n)
-        if rid is None and n.endswith("s"):
-            rid = self.by_name.get(n[:-1])
-        return rid
-
-
-def convert_inline(text, ctx):
-    """One line or paragraph of guide markdown -> Almanac markup."""
-    out, pos = [], 0
-    for m in INLINE_RE.finditer(text):
-        out.append(escape(text[pos:m.start()]))
-        pos = m.end()
-        if m.group("code") is not None:
-            out.append(escape(m.group("code")[1:-1]))
-        elif m.group("link") is not None:
-            out.append(convert_link(m.group("ltext"), m.group("href"), ctx))
-        elif m.group("bold") is not None:
-            inner = m.group("bold")
-            rid = ctx.item(inner) if ctx is not None else None
-            icon = ""
-            if rid is not None and rid not in ctx.icons_on_page:
-                ctx.icons_on_page.add(rid)
-                icon = "{item:" + rid + "}"
-            out.append(icon + "**" + escape(inner) + "**")
-        elif m.group("star2") is not None:
-            out.append("**")
-        else:
-            out.append("_" + convert_inline(m.group("ital"), ctx) + "_")
-    out.append(escape(text[pos:]))
-    return "".join(out)
-
-
-def convert_link(label, href, ctx):
-    label_text = plain(label)
-    if href.startswith("#") and ctx is not None:
-        target = ctx.anchors.get(href[1:])
-        if target is None:
-            raise SystemExit(f"docs/guide.md links to #{href[1:]}, which is no heading")
-        if target != ctx.chapter:
-            safe = label_text.replace("|", "/").replace("]", ")").replace("[", "(")
-            return f"[[{NS}:{target}|{safe}]]"
-    return escape(label_text)
-
-
-# ---------------------------------------------------------------------------------------------------- blocks
-
-def split_blocks(lines):
-    """Body lines of one page -> [("para", text) | ("bullets", [text]) | ("ordered", [(n, text)]) | ("table", rows)]."""
+    Kinds: "para" (text), "tip" (text), "warning" (text), "bullets" ([text]), "ordered" ([(n, text)]),
+    "illustration" (name), "show_me" ((scene, label)), "contents" (None).
+    """
     blocks, i = [], 0
-    while i < len(lines):
-        line = lines[i]
+    while i < len(numbered):
+        n, line = numbered[i]
         s = line.strip()
-        if not s or s == "---":
+        if not s:
             i += 1
             continue
         if s.startswith("|"):
-            j = i
-            while j < len(lines) and lines[j].strip().startswith("|"):
-                j += 1
-            blocks.append(("table", [l.strip() for l in lines[i:j]]))
-            i = j
+            raise SourceError(f"line {n}", "tables do not fit the Almanac's pages; write a list")
+        d = DIRECTIVE_RE.match(s)
+        if d:
+            kind, value = d.group(1), d.group(2).strip()
+            if kind == "illustration":
+                blocks.append(("illustration", value, n))
+            elif kind == "show_me":
+                scene, _, label = value.partition("|")
+                scene, label = scene.strip(), label.strip() or DEFAULT_SHOW_ME_LABEL
+                if not scene:
+                    raise SourceError(f"line {n}", "show_me without a scene id")
+                blocks.append(("show_me", (full_id(scene), label), n))
+            else:
+                if value:
+                    raise SourceError(f"line {n}", "contents: takes no value")
+                blocks.append(("contents", None, n))
+            i += 1
             continue
         if s.startswith("- ") or ORDERED_RE.match(s):
             ordered = not s.startswith("- ")
             items = []
-            while i < len(lines):
-                s = lines[i].strip()
-                if not s or s == "---":
+            while i < len(numbered):
+                _, raw = numbered[i]
+                t = raw.strip()
+                if not t:
                     break
-                m = ORDERED_RE.match(s) if ordered else None
-                if (not ordered and s.startswith("- ")) or m:
-                    items.append([int(m.group(1)), m.group(2)] if ordered else [0, s[2:]])
-                elif lines[i].startswith((" ", "\t")) and items:
-                    items[-1][1] += " " + s
+                m = ORDERED_RE.match(t) if ordered else None
+                if (not ordered and t.startswith("- ")) or m:
+                    items.append([int(m.group(1)), m.group(2)] if ordered else [0, t[2:]])
+                elif raw.startswith((" ", "\t")) and items:
+                    items[-1][1] += " " + t
                 else:
                     break
                 i += 1
             if ordered:
-                blocks.append(("ordered", [(n, t) for n, t in items]))
+                blocks.append(("ordered", [(k, t) for k, t in items], n))
             else:
-                blocks.append(("bullets", [t for _, t in items]))
+                blocks.append(("bullets", [t for _, t in items], n))
             continue
+        kind = "para"
+        if s.startswith(">!"):
+            kind = "warning"
+        elif s.startswith(">"):
+            kind = "tip"
         para = []
-        while i < len(lines):
-            s = lines[i].strip()
-            if not s or s == "---" or s.startswith(("|", "- ")) or ORDERED_RE.match(s) or s.startswith("### "):
+        while i < len(numbered):
+            _, raw = numbered[i]
+            t = raw.strip()
+            if not t or t.startswith(("|", "- ")) or ORDERED_RE.match(t) or DIRECTIVE_RE.match(t):
                 break
-            para.append(s)
+            if kind != "para":
+                if not t.startswith(">"):
+                    break
+                t = t[2:].strip() if t.startswith(">!") else t[1:].strip()
+            elif t.startswith(">"):
+                break
+            para.append(t)
             i += 1
-        blocks.append(("para", " ".join(para)))
+        blocks.append((kind, " ".join(para), n))
     return blocks
 
-
-def table_entries(rows, ctx):
-    """A GFM table -> one list entry per row (Almanac markup)."""
-    header = [h for h in lib.split_row(rows[0])]
-    keys = [plain(h).lower() for h in header]
-    resolver = lib.Resolver(ctx.by_name)
-    entries = []
-    for row in rows[2:]:
-        cells = [c.replace("\\|", "|") for c in lib.split_row(row)]
-        first = cells[0] if cells else ""
-        icons = ""
-        res = resolver.cell(first) if keys and keys[0] in lib.ITEM_COLUMNS else None
-        if res:
-            ids, _ = res
-            icons = "".join("{item:" + r + "}" for r in ids)
-            for r in ids:
-                ctx.icons_on_page.add(r)
-        head = icons + "**" + convert_inline(first.replace("**", ""), ctx) + "**"
-        rest, notes = [], []
-        for k, cell in zip(keys[1:], cells[1:]):
-            if not cell.strip():
-                continue
-            value = convert_inline(cell, ctx)
-            res = resolver.cell(cell) if k in lib.ITEM_COLUMNS else None
-            if res:
-                value = "".join("{item:" + r + "}" for r in res[0]) + value
-            if k in PLAIN_COLUMNS or not k:
-                rest.append(value)
-            else:
-                notes.append(f"{escape(k)}: {value}")
-        text = head
-        if notes:
-            text += " (" + "; ".join(notes) + ")"
-        if rest:
-            text += ": " + " ".join(rest)
-        entries.append(text)
-    return entries
-
-
-# ---------------------------------------------------------------------------------------------------- chapters
 
 class PageBuilder:
     def __init__(self, chapter_id, number, lang):
@@ -340,24 +369,26 @@ class PageBuilder:
     def heading(self, text):
         self.elements.append({"type": "heading", "key": self.key("heading", text)})
 
-    def text(self, text):
-        self.elements.append({"type": "text", "key": self.key("text", text)})
+    def text(self, text, color=None):
+        element = {"type": "text", "key": self.key("text", text)}
+        if color is not None:
+            element["color"] = color
+        self.elements.append(element)
 
     def bullets(self, items):
-        for start in range(0, len(items), MAX_LIST):
-            self.counts["list"] = self.counts.get("list", 0) + 1
-            n = self.counts["list"]
-            keys = []
-            for j, t in enumerate(items[start:start + MAX_LIST], 1):
-                k = f"{NS}.almanac.{self.chapter}.p{self.number}.list{n}_{j}"
-                self.lang[k] = t
-                keys.append(k)
-            self.elements.append({"type": "list", "items": keys})
+        if len(items) > MAX_LIST:
+            raise SystemExit(f"{self.chapter} page {self.number}: a list of {len(items)} entries (max {MAX_LIST})")
+        self.counts["list"] = self.counts.get("list", 0) + 1
+        n = self.counts["list"]
+        keys = []
+        for j, t in enumerate(items, 1):
+            k = f"{NS}.almanac.{self.chapter}.p{self.number}.list{n}_{j}"
+            self.lang[k] = t
+            keys.append(k)
+        self.elements.append({"type": "list", "items": keys})
 
-    def illustration(self, name):
-        if any(e["type"] == "illustration" for e in self.elements):
-            return
-        x, y, w, h = ILLUSTRATION_BOX
+    def illustration(self, name, box):
+        x, y, w, h = box
         self.elements.append({"type": "illustration", "texture": f"{NS}:textures/almanac/{name}.png",
                               "x": x, "y": y, "w": w, "h": h})
 
@@ -370,137 +401,150 @@ class PageBuilder:
         return {"elements": self.elements}
 
 
-def illustration_name(render):
-    return Path(render).stem
+# ---------------------------------------------------------------------------------------------------- chapters
+
+class Source:
+    """One parsed file of docs/almanac/."""
+
+    def __init__(self, name, text):
+        self.name = name
+        m = FILE_RE.match(name)
+        if not m:
+            raise SourceError(name, "chapter files are named <nn>-<chapter>.md")
+        lines = text.split("\n")
+        meta, body_start = parse_front_matter(lines, name)
+        for key in ("id", "title", "order", "icon", "color"):
+            if key not in meta or meta[key] == []:
+                raise SourceError(name, f"the front matter has no {key!r}")
+        unknown = set(meta) - {"id", "title", "order", "icon", "color", "illustrations"}
+        if unknown:
+            raise SourceError(name, f"unknown front matter keys {sorted(unknown)}")
+        self.id = meta["id"]
+        if not ID_RE.match(self.id):
+            raise SourceError(name, f"bad chapter id {self.id!r}")
+        if m.group(2).replace("-", "_") != self.id:
+            raise SourceError(name, f"the file name does not match the id {self.id!r}")
+        self.title = meta["title"]
+        try:
+            self.order = int(meta["order"])
+        except ValueError:
+            raise SourceError(name, f"order {meta['order']!r} is no number") from None
+        self.icon = full_id(meta["icon"])
+        if not COLOR_RE.match(meta["color"]):
+            raise SourceError(name, f"color {meta['color']!r} is no #rrggbb")
+        self.color = meta["color"].lower()
+        ill = meta.get("illustrations", [])
+        self.illustrations = parse_illustrations(ill if isinstance(ill, list) else [ill], name)
+        try:
+            self.pages = split_pages(lines[body_start:], body_start + 1)
+        except SourceError as e:
+            raise SourceError(name, str(e)) from None
 
 
-def write_blocks(page, blocks, ctx, show_me=None):
-    """Adds the blocks of one page; a show_me (scene, label) goes after the first paragraph."""
-    for block in blocks:
-        kind, data = block
-        if kind == "para":
-            page.text(convert_inline(data, ctx))
-        elif kind == "bullets":
-            page.bullets([convert_inline(t, ctx) for t in data])
-        elif kind == "ordered":
-            for n, t in data:
-                page.text(f"**{n}.** " + convert_inline(t, ctx))
-        elif kind == "table":
-            page.bullets(table_entries(data, ctx))
-        if show_me is not None and kind == "para":
-            page.show_me(*show_me)
-            show_me = None
-    if show_me is not None:
-        page.show_me(*show_me)
+def read_sources(directory=None):
+    directory = Path(directory) if directory is not None else SOURCE
+    files = sorted(p for p in directory.glob("*.md"))
+    if not files:
+        raise SystemExit(f"no chapters in {directory}")
+    return [Source(p.name, p.read_text(encoding="utf-8")) for p in files]
 
 
-def split_pages(body):
-    """Section body -> [(heading or None, lines)]: the text before the first "###", then one entry per "###"."""
-    pages = [(None, [])]
-    for line in body:
-        m = lib.SUBHEADING_RE.match(line)
-        if m:
-            pages.append((m.group(1), []))
-        else:
-            pages[-1][1].append(line)
-    return pages
+def build_chapters(sources, items):
+    """Parsed sources (file order) and our item ids -> (chapters for the intermediate, lang map)."""
+    ids = [f"{NS}:{s.id}" for s in sources]
+    if len(set(ids)) != len(ids):
+        raise SystemExit(f"duplicate chapter ids in docs/almanac: {ids}")
+    for a, b in zip(sources, sources[1:]):
+        if b.order <= a.order:
+            raise SourceError(b.name, f"order {b.order} does not come after {a.name}'s {a.order}")
+    chapter_ids = set(ids)
+    if not any(s.id == "welcome" for s in sources) or sources[0].id != "welcome":
+        raise SystemExit("docs/almanac must start with the welcome chapter (id: welcome)")
 
-
-def build_chapters(guide_text, by_name):
-    sections = sorted(lib.parse_sections(guide_text), key=lambda s: s[0])
-    if not sections:
-        raise SystemExit("no '## N. Title' sections in docs/guide.md")
-    numbers = [n for n, _, _ in sections]
-    if sorted(numbers) != list(CHAPTERS):
-        raise SystemExit(f"docs/guide.md sections {numbers} do not match the chapters {sorted(CHAPTERS)} "
-                         f"(add the new section to CHAPTERS in tools/gen_almanac.py)")
-
-    anchors = {}
-    titles = {}
-    for number, title, body in sections:
-        cid = CHAPTERS[number][0]
-        titles[cid] = title
-        anchors[lib.github_slug(f"{number}. {title}")] = cid
-        for line in body:
-            m = lib.SUBHEADING_RE.match(line)
-            if m:
-                anchors.setdefault(lib.github_slug(m.group(1)), cid)
-
-    lang, chapters = {}, []
-    used_illustrations = set()
-    for number, title, body in sections:
-        cid, icon, color = CHAPTERS[number]
-        ctx = Context(by_name, anchors, cid)
-        title_key = f"{NS}.almanac.{cid}.title"
-        lang[title_key] = escape(title)
+    lang, chapters, shown = {}, [], set()
+    for src in sources:
+        if src.icon.startswith(NS + ":") and src.icon not in items:
+            raise SourceError(src.name, f"icon {src.icon} is no item of ours")
+        title_key = f"{NS}.almanac.{src.id}.title"
+        lang[title_key] = check_markup(src.title, src.name, chapter_ids, items)
+        placed = set()
         pages = []
-        raw_pages = split_pages(body)
-        intro_heading, intro_lines = raw_pages[0]
-        intro_blocks = split_blocks(intro_lines)
-        rest = raw_pages[1:]
-
-        page = PageBuilder(cid, 1, lang)
-        ctx.new_page()
-        page.heading(escape(title))
-        if (cid, None) in ILLUSTRATIONS:
-            page.illustration(illustration_name(ILLUSTRATIONS[(cid, None)][0]))
-            used_illustrations.add((cid, None))
-        write_blocks(page, intro_blocks, ctx)
-        if not intro_blocks and rest:
+        raw = list(src.pages)
+        intro = raw[0][1]
+        rest = raw[1:]
+        page = PageBuilder(src.id, 1, lang)
+        page.heading(lang[title_key])
+        has_intro = any(line.strip() for _, line in intro)
+        write_page(page, intro, src, chapter_ids, items, ids, placed)
+        if not has_intro and rest:
             # Nothing before the first subsection: it shares the first page with the chapter title
             heading, lines = rest[0]
             rest = rest[1:]
-            add_subsection(page, heading, lines, ctx, used_illustrations)
+            page.heading(check_markup(heading, src.name, chapter_ids, items))
+            write_page(page, lines, src, chapter_ids, items, ids, placed)
         pages.append(page.build())
-
         for heading, lines in rest:
-            page = PageBuilder(cid, len(pages) + 1, lang)
-            ctx.new_page()
-            add_subsection(page, heading, lines, ctx, used_illustrations)
+            page = PageBuilder(src.id, len(pages) + 1, lang)
+            page.heading(check_markup(heading, src.name, chapter_ids, items))
+            write_page(page, lines, src, chapter_ids, items, ids, placed)
             pages.append(page.build())
-
-        if number == WELCOME:
-            page = PageBuilder(cid, len(pages) + 1, lang)
-            page.heading(CONTENTS_HEADING)
-            page.text(CONTENTS_TEXT)
-            page.bullets([f"[[{NS}:{CHAPTERS[n][0]}]]" for n, _, _ in sections if n != WELCOME])
-            pages.append(page.build())
-
+        if len(pages) > MAX_PAGES:
+            raise SourceError(src.name, f"{len(pages)} pages (max {MAX_PAGES})")
+        unplaced = set(src.illustrations) - placed
+        if unplaced:
+            raise SourceError(src.name, f"illustrations declared but never placed: {sorted(unplaced)}")
+        shown |= placed
         chapters.append({
-            "id": f"{NS}:{cid}",
-            "section": number,
+            "id": f"{NS}:{src.id}",
+            "source": f"docs/almanac/{src.name}",
             "body": {
                 "title": title_key,
-                "order": number * 10,
-                "bookmark_color": color,
-                "icon": lib.full_id(icon),
+                "order": src.order,
+                "bookmark_color": src.color,
+                "icon": src.icon,
                 "pages": pages,
             },
         })
-
-    missing = set(ILLUSTRATIONS) - used_illustrations
-    if missing:
-        raise SystemExit(f"illustrations for headings that docs/guide.md does not have: {sorted(missing, key=str)}")
-    missing_show = set(SHOW_ME) - {k for k in SHOW_ME if any(
-        e.get("type") == "show_me" and e.get("scene") == SHOW_ME[k][0]
-        for c in chapters if c["id"] == f"{NS}:{k[0]}" for p in c["body"]["pages"] for e in p["elements"])}
-    if missing_show:
-        raise SystemExit(f"'Show me' for headings that docs/guide.md does not have: {sorted(missing_show)}")
-    return chapters, lang
+    return chapters, lang, shown
 
 
-def add_subsection(page, heading, lines, ctx, used_illustrations):
-    page.heading(convert_inline(heading, None))
-    key = (ctx.chapter, heading)
-    if key in ILLUSTRATIONS:
-        page.illustration(illustration_name(ILLUSTRATIONS[key][0]))
-        used_illustrations.add(key)
-    write_blocks(page, split_blocks(lines), ctx, SHOW_ME.get(key))
+def write_page(page, numbered, src, chapter_ids, items, ids, placed):
+    try:
+        blocks = split_blocks(numbered)
+    except SourceError as e:
+        raise SourceError(src.name, str(e)) from None
+    for kind, data, n in blocks:
+        where = f"{src.name}:{n}"
+        if kind == "para":
+            page.text(check_markup(data, where, chapter_ids, items))
+        elif kind == "tip":
+            page.text(check_markup(data, where, chapter_ids, items), TIP_COLOR)
+        elif kind == "warning":
+            page.text(check_markup(data, where, chapter_ids, items), WARNING_COLOR)
+        elif kind == "bullets":
+            page.bullets([check_markup(t, where, chapter_ids, items) for t in data])
+        elif kind == "ordered":
+            for k, t in data:
+                page.text(f"**{k}.** " + check_markup(t, where, chapter_ids, items))
+        elif kind == "illustration":
+            if data not in src.illustrations:
+                raise SourceError(where, f"illustration {data!r} is not declared in the front matter")
+            if any(e["type"] == "illustration" for e in page.elements):
+                raise SourceError(where, "one illustration per page")
+            page.illustration(data, src.illustrations[data])
+            placed.add(data)
+        elif kind == "show_me":
+            scene, label = data
+            if not RESOURCE_RE.match(scene):
+                raise SourceError(where, f"show_me {scene!r} is no scene id")
+            page.show_me(scene, check_markup(label, where, chapter_ids, items))
+        elif kind == "contents":
+            page.bullets([f"[[{rid}]]" for rid in ids if rid != f"{NS}:{src.id}"])
 
 
 def render_json(chapters, lang):
     doc = {
-        "_comment": "Generated by tools/gen_almanac.py from docs/guide.md; do not edit. "
+        "_comment": "Generated by tools/gen_almanac.py from docs/almanac/; do not edit. "
                     "./gradlew :neoforge:runData turns it into the Almanac's chapter files and lang.",
         "chapters": chapters,
         "lang": lang,
@@ -640,28 +684,29 @@ def make_illustration(src, panel):
 
 def write_illustrations():
     TEXTURES.mkdir(parents=True, exist_ok=True)
-    wanted = {}
-    for render, panel in ILLUSTRATIONS.values():
-        wanted[illustration_name(render)] = (render, panel)
     for stale in TEXTURES.glob("*.png"):
-        if stale.stem not in wanted:
+        if stale.stem not in ILLUSTRATIONS:
             stale.unlink()
     total = 0
-    for name in sorted(wanted):
-        render, panel = wanted[name]
+    for name in sorted(ILLUSTRATIONS):
+        render, panel = ILLUSTRATIONS[name]
         w, h, rows = make_illustration(RENDERS / render, panel)
         target = TEXTURES / f"{name}.png"
         write_png(target, w, h, rows)
         total += target.stat().st_size
         print(f"  {name}.png {w}x{h} {target.stat().st_size} bytes")
-    print(f"{len(wanted)} illustrations, {total} bytes")
+    print(f"{len(ILLUSTRATIONS)} illustrations, {total} bytes")
 
 
 # ---------------------------------------------------------------------------------------------------- main
 
-def generate():
-    by_name, _, _ = lib.load_items()
-    return build_chapters(lib.GUIDE_MD.read_text(encoding="utf-8"), by_name)
+def generate(directory=None):
+    _, _, items = lib.load_items()
+    chapters, lang, shown = build_chapters(read_sources(directory), items)
+    unused = set(ILLUSTRATIONS) - shown
+    if unused:
+        raise SystemExit(f"ILLUSTRATIONS that no chapter shows (drop them or place them): {sorted(unused)}")
+    return chapters, lang
 
 
 def main():

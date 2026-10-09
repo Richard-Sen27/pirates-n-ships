@@ -164,6 +164,7 @@ screenshots.
    lists and pictures shift text off them; `RULE_STRENGTH` in `tools/gen_almanac_textures.py` makes them fainter).
 8. **Page turn:** turn pages slowly (`almanac_screen.page_turn_ticks` 20): the fold darkens smoothly towards the turning
    page's free edge, no visible vertical bands (32 shade strips now).
+9. **In hand (ART16, replaces the hand poses of step 5):** in each hand, first person and third person (F5), the book is about the size of a vanilla book held the same way (first person: low at the side, the cover towards you at a slight angle, fully in view; third person: gripped at the spine, fore-edge forward, cover outwards) and its fore-edge is clean while you walk and look up and down (no see-through gaps at the brass clasp above or below the page edges); see `art/renders/captains_almanac_in_hand.png`.
 
 # Playtest: the player's Almanac in its own voice (work package ALM6)
 

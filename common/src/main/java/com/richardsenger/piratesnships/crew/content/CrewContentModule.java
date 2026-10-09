@@ -21,7 +21,11 @@ import com.richardsenger.piratesnships.crew.hammock.HammockBlock;
 import com.richardsenger.piratesnships.crew.hammock.HammockGameTests;
 import com.richardsenger.piratesnships.crew.hammock.PlayerSleepGameTests;
 import com.richardsenger.piratesnships.crew.hammock.HammockTags;
+import com.richardsenger.piratesnships.crew.walk.CrewWalk;
+import com.richardsenger.piratesnships.crew.walk.CrewWalkGameTests;
+import com.richardsenger.piratesnships.crew.walk.WalkConfig;
 import com.richardsenger.piratesnships.station.StationModule;
+import com.richardsenger.piratesnships.station.Stations;
 import net.minecraft.advancements.critereon.StatePropertiesPredicate;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
@@ -78,11 +82,14 @@ public final class CrewContentModule implements ModModule {
     @Override
     public void registerConfig() {
         HammockConfig.init(); // crew.hammock (SLP1)
+        WalkConfig.init(); // crew.walk (WALK1)
     }
 
     @Override
     public void registerContent() {
         CrewContent.init();
+        Stations.setAttendance(CrewWalk::present); // WALK1: station work waits for a crew member on its way
+
         // Pipes of other mods: same face rules as hoppers (insert provisions, extract the rest)
         Services.CAPABILITIES.registerBlockContainer(CrewContent.PANTRY_BLOCK_ENTITY);
     }
@@ -256,7 +263,7 @@ public final class CrewContentModule implements ModModule {
     @Override
     public List<Class<?>> gameTestClasses() {
         return List.of(CrewContentGameTests.class, GalleyGameTests.class, HammockGameTests.class,
-                PlayerSleepGameTests.class);
+                PlayerSleepGameTests.class, CrewWalkGameTests.class);
     }
 
     private static TagKey<Item> cTag(String path) {

@@ -145,8 +145,8 @@ class SeaEffectRulesTest {
     void streaksFlyBetweenDeckHeightAndTheRigging() {
         WindStreakRules w = WindStreakRules.DEFAULTS;
         double sea = 63;
-        assertEquals(sea + WindStreakRules.BOTTOM, w.y(sea, 0.0), EPS);
-        assertEquals(sea + w.height(), w.y(sea, 1.0), EPS);
+        assertEquals(sea + WindStreakRules.BOTTOM, w.y(sea, 3.0, 0.0), EPS);
+        assertEquals(sea + w.height(), w.y(sea, 3.0, 1.0), EPS);
         assertTrue(w.inRange(sea + 2, sea), "on deck");
         assertTrue(w.inRange(sea + 20, sea), "in the crow's nest");
         assertFalse(w.inRange(sea + w.height() + w.radius() + 1, sea), "far above the sea");

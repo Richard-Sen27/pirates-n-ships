@@ -11,7 +11,8 @@ package com.richardsenger.piratesnships.sailing.effects;
  * @param gustBoost   extra share of streaks at the peak of a gust ({@code wind_effects.gust_boost}; 1 = twice as many)
  * @param radius      horizontal distance from the camera [blocks] ({@code wind_effects.radius})
  * @param height      top of the band above the sea surface [blocks] ({@code wind_effects.height})
- * @param lifeTicks   life of one streak [ticks] ({@code wind_effects.life_ticks})
+ * @param lifeTicks   mean life of one streak [ticks] ({@code wind_effects.life_ticks}); each streak lives
+ *                    {@link WindStreakStyle#LIFE_MIN_FACTOR} to {@link WindStreakStyle#LIFE_MAX_FACTOR} of it (WD2)
  */
 public record WindStreakRules(double density, double minStrength, double gustBoost, double radius, double height,
                               int lifeTicks) {
@@ -74,16 +75,17 @@ public record WindStreakRules(double density, double minStrength, double gustBoo
     }
 
     /**
-     * Height of a streak: evenly between {@link #BOTTOM} and {@link #height} above the sea surface {@code seaY} (deck
-     * height up into the rigging).
+     * Height of a streak (WD2): a triangular distribution from {@link #BOTTOM} to {@link #height} above the sea surface
+     * {@code seaY}, most likely at {@code peak} blocks (deck height, {@code wind_effects.height_peak}) with a thinning
+     * tail up into the rigging. The peak is clamped into the band.
      *
      * @param u uniform in [0, 1)
      */
-    public double y(double seaY, double u) {
-        return seaY + BOTTOM + u * (height - BOTTOM);
+    public double y(double seaY, double peak, double u) {
+        return seaY + SpawnRules.triangular(BOTTOM, height, peak, u);
     }
 
-    /** Velocity along the wind [blocks/tick]: the streak flies at the wind's own speed. */
+    /** Velocity along the wind [blocks/tick] at the wind's own speed; each streak scales it by its speed factor (WD2). */
     public static double speedPerTick(double strength) {
         return Math.max(0.0, strength) / 20.0;
     }
@@ -115,5 +117,22 @@ public record WindStreakRules(double density, double minStrength, double gustBoo
             return new double[] {0.0, 1.0, 0.0};
         }
         return new double[] {cx / n, cy / n, cz / n};
+    }
+
+    /**
+     * {@link #facingSide} turned so it never points down (WD2): the sprite's top edge stays the upper one from either
+     * side of the streak, so a curved stroke and the whoosh's curl roll up whichever side the camera sees them from.
+     * Still across the axis and the line of sight.
+     *
+     * @return {@code {x, y, z}}
+     */
+    public static double[] uprightSide(double axisX, double axisZ, double px, double py, double pz) {
+        double[] s = facingSide(axisX, axisZ, px, py, pz);
+        if (s[1] < 0.0) {
+            s[0] = -s[0];
+            s[1] = -s[1];
+            s[2] = -s[2];
+        }
+        return s;
     }
 }

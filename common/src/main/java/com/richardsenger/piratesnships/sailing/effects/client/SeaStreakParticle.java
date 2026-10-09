@@ -21,14 +21,16 @@ import net.minecraft.world.phys.Vec3;
  * camera (a beam billboard), so a streak seen from the side is a line and one seen end-on shrinks to a dot, like a real
  * wisp. {@link Shape#FLAT}: it lies in the horizontal plane. Both faces are emitted, so neither depends on culling. The
  * streak flies in a straight line at its spawn velocity (no gravity, no friction, no collision) and fades in and out
- * over its life ({@link SpawnRules#fade}). It is a world particle: a ship sails through it.
+ * over its life ({@link SpawnRules#fade}). It is a world particle: a ship sails through it. The wind streaks are the
+ * subclass {@link WindStreakParticle} (WD2: wobble and their own fade).
  */
-public final class SeaStreakParticle extends TextureSheetParticle {
+public class SeaStreakParticle extends TextureSheetParticle {
 
     public enum Shape { AIR, FLAT }
 
     private final Shape shape;
-    private final float axisX, axisZ, halfLength, halfWidth, peakAlpha;
+    protected final float axisX, axisZ;
+    private final float halfLength, halfWidth, peakAlpha;
 
     /**
      * @param axisX     x of the unit horizontal direction of the streak's long side
@@ -66,7 +68,7 @@ public final class SeaStreakParticle extends TextureSheetParticle {
 
     @Override
     public void render(VertexConsumer buffer, Camera camera, float partialTicks) {
-        float a = (float) (peakAlpha * SpawnRules.fade(age + partialTicks, lifetime));
+        float a = (float) (peakAlpha * fade(age + partialTicks));
         if (a <= 0.004f) {
             return;
         }
@@ -81,7 +83,7 @@ public final class SeaStreakParticle extends TextureSheetParticle {
             sy = 0.0f;
             sz = axisX * halfWidth;
         } else {
-            double[] side = WindStreakRules.facingSide(axisX, axisZ, px, py, pz);
+            double[] side = WindStreakRules.uprightSide(axisX, axisZ, px, py, pz);
             sx = (float) side[0] * halfWidth;
             sy = (float) side[1] * halfWidth;
             sz = (float) side[2] * halfWidth;
@@ -98,6 +100,11 @@ public final class SeaStreakParticle extends TextureSheetParticle {
         vertex(buffer, px + lx + sx, py + sy, pz + lz + sz, u1, v0, a, light);
         vertex(buffer, px - lx + sx, py + sy, pz - lz + sz, u0, v0, a, light);
         vertex(buffer, px - lx - sx, py - sy, pz - lz - sz, u0, v1, a, light);
+    }
+
+    /** Opacity factor in [0, 1] at {@code age} ticks: {@link SpawnRules#fade} (the foam's and WD1's look). */
+    protected double fade(double age) {
+        return SpawnRules.fade(age, lifetime);
     }
 
     private void vertex(VertexConsumer buffer, float x, float y, float z, float u, float v, float a, int light) {

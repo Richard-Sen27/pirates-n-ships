@@ -127,6 +127,11 @@ message.pirates_n_ships.melee.refused.locked_out
 message.pirates_n_ships.melee.refused.no_stamina
 message.pirates_n_ships.melee.refused.staggered
 message.pirates_n_ships.notice_board.refused.closed
+message.pirates_n_ships.oars.disabled
+message.pirates_n_ships.oars.no_hands
+message.pirates_n_ships.oars.nothing
+message.pirates_n_ships.oars.rowing
+message.pirates_n_ships.oars.shipped
 message.pirates_n_ships.officer.fine.nothing_owed
 message.pirates_n_ships.officer.fine.notorious
 message.pirates_n_ships.officer.fine.too_poor

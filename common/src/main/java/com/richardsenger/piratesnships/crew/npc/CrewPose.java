@@ -114,6 +114,17 @@ public enum CrewPose {
      */
     public static CrewPose choose(boolean moving, boolean working, boolean seated, boolean resting, @Nullable CrewPose station,
                                   boolean leaning) {
+        return choose(moving, working, seated, resting, station, leaning, false);
+    }
+
+    /**
+     * @param fighting its synced melee pose is not idle ({@link CrewMember#meleePose()}, MEL3): the melee telegraph wins
+     *                 over the station pose, which wins over idle. The body then only stands, walks or sits, and the
+     *                 client model poses the sword arm over it ({@code mob.client.MeleeTelegraph}), as for the M3 mobs.
+     */
+    public static CrewPose choose(boolean moving, boolean working, boolean seated, boolean resting, @Nullable CrewPose station,
+                                  boolean leaning, boolean fighting) {
+        if (fighting) return seated ? SIT : moving ? WALK : IDLE;
         if (station != null && station.isStationPose()) return station;
         if (working) return WORK;
         if (resting) return SLEEP;

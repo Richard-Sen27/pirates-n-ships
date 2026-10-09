@@ -1,5 +1,9 @@
 package com.richardsenger.piratesnships.crew.npc;
 
+import com.richardsenger.piratesnships.combat.content.CombatContent;
+import com.richardsenger.piratesnships.combat.melee.MeleeService;
+import com.richardsenger.piratesnships.combat.melee.rules.Phase;
+import com.richardsenger.piratesnships.combat.melee.weapon.DefaultWeapons;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
@@ -17,11 +21,15 @@ import com.richardsenger.piratesnships.station.StationContent;
 import com.richardsenger.piratesnships.station.Stations;
 import com.richardsenger.piratesnships.station.winch.SailOrder;
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 
@@ -135,6 +143,50 @@ public final class CrewPoseGameTests {
             h.assertTrue(c.pose(false) == CrewPose.IDLE, "pose after the release: " + c.pose(false));
             c.discard();
             h.succeed();
+        });
+    }
+
+    /**
+     * MEL3: the melee pose wins over the station pose. A helmsman with a cutlass (the duelist goals drive the same
+     * engine) raises his guard: the synced melee pose shows the guard within two ticks and the body leaves
+     * {@code helm_hold} for the plain stance under the telegraph; he lowers it and slashes: wind-up and hit frames are
+     * synced; once the engine is idle again the pose is idle and {@code helm_hold} returns.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = BATCH + "melee")
+    public static void aFightBeatsTheStationPoseUntilItEnds(GameTestHelper h) {
+        ConfigOverrides.during(h, StationConfig.ENABLED, true);
+        ConfigOverrides.during(h, StationConfig.SEAT_CHECK_INTERVAL, 5);
+        BlockPos winch = shipWithWinch(h);
+        BlockPos helm = SableShips.containing(h.getLevel(), winch).plotBlocks().stream()
+                .filter(p -> h.getLevel().getBlockState(p).is(AssemblyContent.HELM.get())).findFirst()
+                .orElseThrow(() -> new AssertionError("no helm on the ship"));
+        CrewMember c = h.spawn(StationContent.CREW_MEMBER.get(), new BlockPos(2, 9, 2));
+        c.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(CombatContent.CUTLASS.get()));
+        h.assertTrue(CrewStations.assign(h.getLevel(), c, helm) == CrewStations.AssignResult.ASSIGNED, "not assigned to the helm");
+        Set<Phase> synced = EnumSet.noneOf(Phase.class);
+        int[] stage = {0};
+        h.onEachTick(() -> synced.add(c.meleePose().phase()));
+        h.runAfterDelay(3, () -> {
+            h.assertTrue(c.stationPose() == CrewPose.HELM, "no helm pose before the fight: " + c.stationPose());
+            h.assertTrue(c.meleePose().phase() == Phase.IDLE, "a melee pose before the fight: " + c.meleePose());
+            h.assertTrue(MeleeService.guardDown(c, DefaultWeapons.CUTLASS).accepted(), "the guard was refused");
+        });
+        h.runAfterDelay(5, () -> {
+            h.assertTrue(c.meleePose().phase() == Phase.GUARDING, "the guard is not synced: " + c.meleePose());
+            h.assertTrue(c.pose(false) == CrewPose.IDLE, "the station pose beats the guard: " + c.pose(false));
+            h.assertTrue(c.stationPose() == CrewPose.HELM, "the station itself still shows the helm: " + c.stationPose());
+            MeleeService.guardUp(c);
+        });
+        h.runAfterDelay(8, () -> {
+            h.assertTrue(MeleeService.startSlash(c, DefaultWeapons.CUTLASS).accepted(), "the slash was refused");
+            stage[0] = 1;
+        });
+        h.succeedWhen(() -> {
+            h.assertTrue(stage[0] == 1, "not yet slashed");
+            h.assertTrue(synced.contains(Phase.WINDUP) && synced.contains(Phase.ACTIVE), "the slash was not synced: " + synced);
+            h.assertTrue(c.meleePose().phase() == Phase.IDLE, "the fight pose stays: " + c.meleePose());
+            h.assertTrue(c.pose(false) == CrewPose.HELM, "the helm pose did not return: " + c.pose(false));
+            c.discard();
         });
     }
 }

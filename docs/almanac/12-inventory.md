@@ -36,6 +36,7 @@ Every block and item a hand may need, a line on each, and the chapter that tells
 - {item:pirates_n_ships:hammock}**Hammock:** a bunk for one hand. [[pirates_n_ships:crew|Crew]]
 - {item:pirates_n_ships:boarding_plank}**Boarding plank:** a bridge to an enemy deck.
 - {item:pirates_n_ships:oak_railing}{item:pirates_n_ships:oak_railing_port}**Railing, railing port:** a rail along a block's edge; click again to rail another. A cannon fires and a boarding plank goes out through the port.
+- {item:pirates_n_ships:oak_railing_gate}**Railing gate:** a railing section that swings open like a fence gate (use it, or redstone), so crew and boarding planks pass when it is open; a lantern hangs below or stands on any railing post, and a chain runs on from it.
 
 ## Stores and cargo
 - {item:pirates_n_ships:pantry}**Pantry:** the food store. [[pirates_n_ships:provisions|Provisions]]

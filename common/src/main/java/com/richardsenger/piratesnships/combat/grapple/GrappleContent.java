@@ -60,6 +60,14 @@ public final class GrappleContent {
      */
     public static final TagKey<Block> HOOK_SLIPS = TagKey.create(Registries.BLOCK, Constants.id("grapple_slips"));
 
+    /**
+     * Strong points a hook holds on like a mooring ring or cleat (RAIL3: railings and railing gates): a hook latched on
+     * one snaps only at {@code ring_hold_multiplier} times its rope length ({@code grapple.latches_hold}), and a haul
+     * harder than {@code grapple.railing_break_force} tears the block out. Every solid block still catches a hook (GR4);
+     * this tag only makes the hold stronger. Filled by datagen, extendable by data packs.
+     */
+    public static final TagKey<Block> GRAPPLE_LATCHES = TagKey.create(Registries.BLOCK, Constants.id("grapple_latches"));
+
     private GrappleContent() {
     }
 

@@ -365,6 +365,14 @@
         {
           "type": "recipe",
           "recipe": "pirates_n_ships:oak_railing_port"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p16.text3"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:oak_railing_gate"
         }
       ]
     },

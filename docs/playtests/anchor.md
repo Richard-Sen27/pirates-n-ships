@@ -196,3 +196,39 @@ in 3 s), `walk_radius = 1.1`.
 Tell us: does the crew member keep in step with the bars (the bar he pushes stays in front of him), or does he drift
 ahead or behind? Do his hands reach a bar, or does he push air beyond the bar ends (the bars reach 0.69 blocks from the
 axis, he walks at 1.1)? Is 3 s a turn the right pace?
+
+# Playtest: the anchor as one toggle (work package WHS1)
+
+The captain's whistle wheel and the helm's ship screen have one anchor entry instead of "Drop anchor" and "Weigh
+anchor" (design.md §7.2). Its label follows the anchor's state: "Drop anchor" while the anchor is stowed or coming up,
+"Raise anchor" while it runs out or holds. The whistle's label comes from the ship status the HUD receives (about once
+a second); the server picks the direction from the anchor's real state when the order arrives. Setup: as for CRW3 (an
+assembled ship afloat over ground within the chain's reach, a capstan, a captain's whistle, one crew member at the
+capstan), standing on the deck, the ship HUD on (`ships.ship_status_hud = true`).
+
+## Steps
+1. **The wheel.** With the anchor stowed, open the whistle wheel (use in the air).
+   - **Expected:** nine entries; one anchor entry (capstan icon) between "Fire at will" and "Release crew". Hovering it
+     reads "Drop anchor", with "Crew at the capstan let the anchor go" under the ring.
+2. **Drop.** Choose it.
+   - **Expected:** the crew member pushes the bars for 2 s, then the anchor runs out (as CRW3/CAP2: bars and crew turn
+     anticlockwise from above). Open the wheel again once the anchor is running out or holds: the entry now reads
+     "Raise anchor" ("Crew at the capstan heave the anchor in until it is stowed").
+3. **Raise.** Choose "Raise anchor" while the anchor holds.
+   - **Expected:** the winding starts at once, the crew member walks round the drum clockwise, the anchor comes up and
+     is stowed. While it comes up the entry reads "Drop anchor" again; once stowed it stays "Drop anchor".
+4. **Reverse midway.** Drop the anchor, then choose the entry while it is still falling ("Raise anchor"), and again
+   while it is coming up ("Drop anchor").
+   - **Expected:** each time the anchor reverses, as when using the capstan by hand.
+5. **The helm screen.** Sneak-use the helm with an empty hand, Crew tab.
+   - **Expected:** one anchor button (nine order buttons, two rows) reading "Drop anchor" or "Raise anchor" by the
+     same rule; pressing it drops or raises the anchor as in steps 2 and 3, and within about a second the label
+     flips. The Ship tab's anchor line (stowed, running out, down, anchored, weighing) is unchanged.
+6. **Refusals.** Remove the capstan (or set `crew_stations.capstan.enabled = false`) and choose the entry with the
+   anchor stowed, then let the anchor go by hand and choose it again once it holds.
+   - **Expected:** "No station aboard can let go the anchor" / "No station can let go the anchor right now" for the
+     first, "... weigh anchor ..." for the second: the line names the direction it refused.
+7. **The command.** `/pirates crew order drop_anchor` and `raise_anchor` still work as in CRW3 step 7.
+
+Tell us: does the label ever lag behind the anchor long enough to mislead you (it can trail by up to a second, and
+during the drop's 2 s of work it still reads "Drop anchor" because the anchor has not gone yet)?

@@ -201,7 +201,8 @@ class PonderStoryboardsTest {
         assertEquals(CrewOrdersScene.WHEEL.x, first.x, 1e-9);
         assertEquals(CrewOrdersScene.WHEEL.y + CrewOrdersScene.WHEEL_RADIUS, first.y, 1e-9);
         assertTrue(CrewOrdersScene.wheelSlot(1).x > CrewOrdersScene.WHEEL.x, "clockwise from the top");
-        assertEquals(11, com.richardsenger.piratesnships.station.order.WhistleOrder.entries().size(), // OAR1: + the oars toggle
+        // WHS1: one anchor toggle instead of "Drop anchor" and "Weigh anchor"
+        assertEquals(10, com.richardsenger.piratesnships.station.order.WhistleOrder.entries().size(), // OAR1: + the oars toggle
                 "the scene names fire at will and release crew; update its text if the wheel changes");
     }
 

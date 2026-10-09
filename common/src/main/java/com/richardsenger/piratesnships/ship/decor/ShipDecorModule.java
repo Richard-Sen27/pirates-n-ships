@@ -135,7 +135,8 @@ public final class ShipDecorModule implements ModModule {
             figureheadRecipe(out, ShipDecor.FIGUREHEAD_LION, Items.GOLD_INGOT);
             figureheadRecipe(out, ShipDecor.FIGUREHEAD_EAGLE, Items.FEATHER);
             figureheadRecipe(out, ShipDecor.FIGUREHEAD_SKULL, Items.BONE);
-            ShapelessRecipeBuilder.shapeless(RecipeCategory.DECORATIONS, ShipDecor.NAMEPLATE.get())
+            // NAME2: a row needs several boards
+            ShapelessRecipeBuilder.shapeless(RecipeCategory.DECORATIONS, ShipDecor.NAMEPLATE.get(), 3)
                     .requires(ItemTags.SIGNS).requires(Items.GOLD_NUGGET)
                     .unlockedBy("has_gold_nugget", InventoryChangeTrigger.TriggerInstance.hasItems(Items.GOLD_NUGGET))
                     .save(out, ShipDecor.NAMEPLATE.id());

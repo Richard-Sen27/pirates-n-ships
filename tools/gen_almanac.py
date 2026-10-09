@@ -103,7 +103,7 @@ ILLUSTRATIONS = {
     "jolly_roger_flag": ("jolly_roger_flag.png", (0.5, 0.0, 1.0, 1.0)),
     "kraken": ("kraken.png", (0.335, 0.1, 0.5, 1.0)),
     "mob_pirate": ("mob_pirate.png", (0.0, 0.0, 0.36, 1.0)),
-    "nameplate": ("nameplate.png", FULL),
+    "nameplate": ("name_board_row.png", (0.15, 0.2, 0.8, 0.85)),
     "notice_board": ("notice_board.png", (0.0, 0.0, 0.34, 1.0)),
     "pantry": ("pantry.png", FULL),
     "pirate_captain": ("pirate_captain.png", (0.0, 0.0, 0.3, 1.0)),

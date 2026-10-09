@@ -70,18 +70,20 @@ class InfoPagesTest {
         Map<String, String> lang = lang(
                 "pirates_n_ships.almanac.ships.title", "Ships",
                 "pirates_n_ships.almanac.ships.p1.text1", "Take the {item:pirates_n_ships:helm}**Helm** and sail.",
-                "pirates_n_ships.almanac.blocks.title", "All blocks",
-                "pirates_n_ships.almanac.blocks.p1.list1_1", "{item:pirates_n_ships:helm}**Helm** (recipe: 4 sticks (gives 2)): Steers. See [[pirates_n_ships:ships|Ships]].");
+                "pirates_n_ships.almanac.inventory.title", "The ship's inventory",
+                "pirates_n_ships.almanac.inventory.p2.list1_1", "{item:pirates_n_ships:helm}**Helm** (recipe: 4 sticks (gives 2)): Steers. [[pirates_n_ships:ships|Ships]]");
         InfoPages.Page page = InfoPages.build(lang, Map.of(id("helm"), "Helm")).get(id("helm"));
-        assertEquals(new InfoPages.Page("Helm: Steers. See Ships.", "All blocks"), page);
+        assertEquals(new InfoPages.Page("Helm: Steers. (see Ships)", "The ship's inventory"), page);
     }
 
     @Test
-    void theItemsChapterComesBeforeTheBlocksChapter() {
+    void linksInsideTheTextKeepTheirLabelOrTheChapterTitle() {
         Map<String, String> lang = lang(
-                "pirates_n_ships.almanac.blocks.p1.list1_1", "{item:pirates_n_ships:hull_patch}The placed patch.",
-                "pirates_n_ships.almanac.items.p1.list1_1", "{item:pirates_n_ships:hull_patch}The patch you hold.");
-        assertEquals("The patch you hold.", InfoPages.build(lang, Map.of(id("hull_patch"), "Hull Patch")).get(id("hull_patch")).text());
+                "pirates_n_ships.almanac.ships.title", "Ships",
+                "pirates_n_ships.almanac.inventory.p1.list1_1", "{item:pirates_n_ships:rope}Read [[ships]] first, then rig. [[pirates_n_ships:sailing]]",
+                "pirates_n_ships.almanac.sailing.title", "Sailing");
+        assertEquals("Read Ships first, then rig. (see Sailing)",
+                InfoPages.build(lang, Map.of(id("rope"), "Rope")).get(id("rope")).text());
     }
 
     @Test
@@ -100,7 +102,8 @@ class InfoPagesTest {
     @Test
     void pagesComeInNaturalOrderAndSkipServerChapters() {
         Map<String, String> lang = lang(
-                "pirates_n_ships.almanac.commands.p1.text1", "{item:pirates_n_ships:rope}/give rope",
+                "pirates_n_ships.almanac.ledger.p1.text1", "{item:pirates_n_ships:rope}/give rope",
+                "pirates_n_ships.almanac.not_yet.p1.text1", "{item:pirates_n_ships:rope}Rope ladders, later.",
                 "pirates_n_ships.almanac.sailing.p10.text1", "{item:pirates_n_ships:rope}Page ten.",
                 "pirates_n_ships.almanac.sailing.p2.text10", "{item:pirates_n_ships:rope}Page two, tenth.",
                 "pirates_n_ships.almanac.sailing.p2.text2", "{item:pirates_n_ships:rope}Page two, second.",
@@ -147,13 +150,15 @@ class InfoPagesTest {
         });
         Map<ResourceLocation, InfoPages.Page> pages = InfoPages.build(shipped, items, bookOrder());
 
+        String inventory = shipped.get("pirates_n_ships.almanac.inventory.title");
+        assertNotNull(inventory, "the inventory chapter exists");
         InfoPages.Page helm = pages.get(id("helm"));
         assertNotNull(helm, "the helm has a page");
-        assertTrue(helm.text().startsWith("Helm: Assembles, steers and disassembles a ship."), helm.text());
-        assertEquals("All blocks", helm.chapterTitle());
+        assertTrue(helm.text().startsWith("Helm: "), helm.text());
+        assertEquals(inventory, helm.chapterTitle());
         InfoPages.Page patch = pages.get(id("hull_patch"));
-        assertTrue(patch.text().contains("close the breach"), patch.text());
-        assertEquals("All items", patch.chapterTitle());
+        assertTrue(patch.text().startsWith("Hull patch: "), patch.text());
+        assertEquals(inventory, patch.chapterTitle());
 
         Pattern icon = Pattern.compile("\\{item:pirates_n_ships:([a-z0-9_]+)}");
         for (String text : shipped.values()) {

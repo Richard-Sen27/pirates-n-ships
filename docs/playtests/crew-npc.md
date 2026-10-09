@@ -445,3 +445,8 @@ hold), three or more crew spawned on the deck with `/pirates crew spawn`, the ca
    and walks to the new one; the first station is free again.
 9. **Walking off.** Set `crew.walk.enabled = false` in the server config. Expected: crew are put at their station,
    meal spot and hammock at once, as before.
+10. **Facing the station (ST5).** Order crew to the winch, the bilge pump, a cannon or swivel gun and the helm from the
+    far side, so they arrive facing away, then turn the ship. Expected: the sailor turns to face the winch, pump, gun
+    and helm within a second of arriving (a smooth turn, no snap) and keeps facing them while the ship turns; its head
+    may look round a little, its body does not. A diner faces the pantry the same way; the capstan crew still faces
+    along the circle while walking the bars round (CAP2).

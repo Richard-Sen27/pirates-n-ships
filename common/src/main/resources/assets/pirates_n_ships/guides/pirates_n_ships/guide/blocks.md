@@ -13,6 +13,7 @@ item_ids:
   - pirates_n_ships:figurehead_lion
   - pirates_n_ships:figurehead_mermaid
   - pirates_n_ships:figurehead_skull
+  - pirates_n_ships:flag_pedestal
   - pirates_n_ships:flagpole
   - pirates_n_ships:hull_patch
   - pirates_n_ships:mooring_ring
@@ -40,6 +41,7 @@ item_ids:
   <ItemIcon id="pirates_n_ships:crows_nest" />
   <ItemIcon id="pirates_n_ships:hull_patch" />
   <ItemIcon id="pirates_n_ships:flagpole" />
+  <ItemIcon id="pirates_n_ships:flag_pedestal" />
   <ItemIcon id="pirates_n_ships:pantry" />
   <ItemIcon id="pirates_n_ships:water_barrel" />
   <ItemIcon id="pirates_n_ships:cargo_crate" />
@@ -67,6 +69,7 @@ item_ids:
 | <ItemLink id="pirates_n_ships:crows_nest" /> | 6 planks, 1 rope, 2 iron nuggets | A lookout barrel for the masthead; whoever stands in it calls out ships, land and sea monsters. A crew station. See [Crow's nest](crew.md#crow's-nest). |
 | <ItemLink id="pirates_n_ships:hull_patch" /> (block) | placed by the item | A tarred plank that closes a breach. Watertight hull block. |
 | <ItemLink id="pirates_n_ships:flagpole" /> | 3 sticks (gives 2) | Flies a flag. A thin pole with a finial and a cleat (Blockbench model). See [Flags](flags.md). |
+| <ItemLink id="pirates_n_ships:flag_pedestal" /> | 1 log over 1 wooden slab (gives 2) | A plinth carved from a log that a flagpole stands in; the pole's foot with its cleat. See [Flags](flags.md). |
 | <ItemLink id="pirates_n_ships:pantry" /> | 8 planks, 1 wheat | Food store with spoilage. See [Provisions](provisions.md). |
 | <ItemLink id="pirates_n_ships:water_barrel" /> | 6 planks, 2 iron nuggets, 1 water bucket | Holds 16 rations of water. Crafted full. |
 | <ItemLink id="pirates_n_ships:cargo_crate" /> | 4 planks, 4 sticks | Bulk container for 32 stacks of one item. |
@@ -89,6 +92,7 @@ item_ids:
   <RecipeFor id="pirates_n_ships:crows_nest" />
   <RecipeFor id="pirates_n_ships:hull_patch" />
   <RecipeFor id="pirates_n_ships:flagpole" />
+  <RecipeFor id="pirates_n_ships:flag_pedestal" />
   <RecipeFor id="pirates_n_ships:pantry" />
   <RecipeFor id="pirates_n_ships:water_barrel" />
   <RecipeFor id="pirates_n_ships:cargo_crate" />

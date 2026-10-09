@@ -13,6 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,22 +24,22 @@ import java.util.regex.Pattern;
  *
  * <p>For each item, the first Almanac paragraph or list entry that
  * <ol>
- *   <li>draws the item's icon ({@code {item:ns:id}}), searching the inventory chapters ({@link #INVENTORY_CHAPTERS}:
- *       one line per block and item) first, then the others in book order; else</li>
+ *   <li>draws the item's icon ({@code {item:ns:id}}), searching the inventory chapter ({@link #INVENTORY_CHAPTERS}:
+ *       "The ship's inventory", one line per block and item, ALM6) first, then the others in book order; else</li>
  *   <li>names the item by its display name, with the same capitals as the name; else</li>
  *   <li>names it by a display name of two or more words, ignoring case; else</li>
  *   <li>names it by a one-word display name, ignoring case ("a paddle", "bandana").</li>
  * </ol>
- * The chapters for server owners ({@link #SKIPPED_CHAPTERS}) are never used. The text loses its markup (links become
- * their label, icons disappear) and its "(recipe: ...)" note, which the viewer shows as real recipes. An item no
- * paragraph names gets no page.
+ * The chapters for server owners and plans ({@link #SKIPPED_CHAPTERS}) are never used. The text loses its markup
+ * (icons disappear, a link becomes its label, a link that ends the text becomes "(see label)") and any "(recipe: ...)"
+ * note, which the viewer shows as real recipes. An item no paragraph names gets no page.
  */
 public final class InfoPages {
 
-    /** The chapters that list every block and item, searched first. */
-    public static final List<String> INVENTORY_CHAPTERS = List.of("items", "blocks");
-    /** The Quartermaster's chapters (commands, settings, datapacks, plans): not player text. */
-    public static final Set<String> SKIPPED_CHAPTERS = Set.of("commands", "configuration", "datapacks", "not_yet");
+    /** The chapter that lists every block and item once ("The ship's inventory"), searched first. */
+    public static final List<String> INVENTORY_CHAPTERS = List.of("inventory");
+    /** The Quartermaster's ledger (commands and settings) and the plans: not text for a player's item page. */
+    public static final Set<String> SKIPPED_CHAPTERS = Set.of("ledger", "not_yet");
 
     /** The Almanac text of one item and the title of the chapter it comes from. */
     public record Page(String text, String chapterTitle) {
@@ -49,6 +50,7 @@ public final class InfoPages {
     }
 
     private static final String PREFIX = Constants.MOD_ID + ".almanac.";
+    private static final Pattern TRAILING_LINK = Pattern.compile("\\s*\\[\\[([^\\]|]+)(?:\\|([^\\]]+))?]]\\s*$");
     private static final Pattern PAGE_KEY = Pattern.compile("^(.+)\\.p(\\d+)\\.([a-z0-9_]+)$");
 
     private InfoPages() {
@@ -121,8 +123,16 @@ public final class InfoPages {
 
     /** The text as a player reads it, without markup and without its "(recipe: ...)" note. */
     static String clean(String raw, Map<String, String> lang) {
-        String text = Markup.plain(Markup.parse(raw, Markup.Style.PLAIN,
-                id -> lang.getOrDefault(AlmanacLang.title(id), id.getPath())));
+        Function<ResourceLocation, String> title = id -> lang.getOrDefault(AlmanacLang.title(id), id.getPath());
+        Matcher end = TRAILING_LINK.matcher(raw);
+        if (end.find()) {
+            // "... a ship. [[ns:ships|Ships]]" reads "... a ship. (see Ships)"
+            ResourceLocation target = ResourceLocation.tryParse(end.group(1).contains(":") ? end.group(1)
+                    : Markup.DEFAULT_LINK_NAMESPACE + ":" + end.group(1));
+            String label = end.group(2) != null ? end.group(2) : target != null ? title.apply(target) : end.group(1);
+            raw = raw.substring(0, end.start()) + " (see " + label + ")";
+        }
+        String text = Markup.plain(Markup.parse(raw, Markup.Style.PLAIN, title));
         return dropRecipeNote(text).replaceAll("\\s+", " ").trim();
     }
 

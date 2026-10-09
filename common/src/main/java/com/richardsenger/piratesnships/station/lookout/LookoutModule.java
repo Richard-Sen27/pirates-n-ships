@@ -2,13 +2,16 @@ package com.richardsenger.piratesnships.station.lookout;
 
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
+import com.richardsenger.piratesnships.crew.npc.StationPoses;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.sailing.sail.TriangularSailContent;
 import com.richardsenger.piratesnships.ship.decor.SableWeightTags;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import java.util.List;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagpoleFooting;
 import net.minecraft.data.models.blockstates.MultiVariantGenerator;
+import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
 import net.minecraft.data.models.model.ModelLocationUtils;
@@ -45,6 +48,7 @@ public final class LookoutModule implements ModModule {
         CommonEvents.LEVEL_TICK_END.register(Lookouts::onLevelTick);
         CommonEvents.SERVER_STOPPED.register(server -> Lookouts.onServerStopped());
         SableShips.onShipRemoved(Lookouts::onShipRemoved);
+        StationPoses.registerFacing(LookoutStation.INSTANCE.id(), Lookouts::facing); // ST5: the lookout faces the bow
     }
 
     @Override
@@ -53,9 +57,11 @@ public final class LookoutModule implements ModModule {
         data.lang(lang -> lang.block(LookoutContent.CROWS_NEST, "Crow's Nest"));
         data.lang(LookoutLang::lang);
         // the model is hand-made (art/models/crows_nest.bbmodel) and carries the item's display entries; the block item
-        // gets datagen's delegating item model
-        data.models(m -> m.blockStates().accept(MultiVariantGenerator.multiVariant(nest,
-                Variant.variant().with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(nest)))));
+        // gets datagen's delegating item model. FLG3: with a flagpole on it the nest shows crows_nest_pole (the same
+        // project's pole group: stub, collar, cleat and halyard)
+        data.models(m -> m.blockStates().accept(MultiVariantGenerator.multiVariant(nest).with(PropertyDispatch.property(FlagpoleFooting.POLE)
+                .select(false, Variant.variant().with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(nest)))
+                .select(true, Variant.variant().with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(nest, "_pole"))))));
         data.blockLoot(loot -> loot.dropSelf(nest));
         data.blockTags(tags -> {
             tags.tag(BlockTags.MINEABLE_WITH_AXE).add(nest);

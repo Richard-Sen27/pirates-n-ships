@@ -495,11 +495,11 @@ anything differs. Watch both logs for an exception that names `compat.jei` or `P
 2. **Item list:** open the inventory, type `@pirates_n_ships` in JEI's search box: our blocks and items are listed,
    but neither the **Ship Receipt** nor the **Ship Commission** (the two hidden items). The spawn eggs are listed.
 3. **Information pages:** press **R** (or U) over the helm in the JEI list: besides its crafting recipe there is an
-   "Information" tab: "Helm: Assembles, steers and disassembles a ship. ..." with no `**`, `{item:` or
-   `(recipe: ...)` in it, and below it "From the Captain's Almanac, chapter "All blocks"." Check the same for the
-   hull patch (its line from "All items": "Use on the edge of a hole ..."), the paddle (a paragraph from the
-   provisions chapter about the sea chest) and the cutlass ("Cutlass: Sword."). The swivel gun, boarding plank,
-   Captain's Almanac and spawn eggs have no information page (the Almanac does not describe them).
+   "Information" tab: "Helm: launches, steers and takes apart a ship. (see Ships)" with no `**`, `{item:` or
+   `[[` in it, and below it "From the Captain's Almanac, chapter "The ship's inventory"." Check the same for the
+   hull patch ("Hull patch: closes a breach."), the paddle ("Paddle: rows a floating sea chest.") and the cutlass
+   ("Rapier, cutlass, saber: swords. (see Weapons and combat)"). The flag pedestal and the spawn eggs have no
+   information page (the Almanac does not describe them).
 4. **Harbor Market:** press **U** over the harbor master's desk: the "Harbor Market" category, its tab icon the desk,
    the desk shown as its catalyst on the left. One page per trade good (sugar, cod, oak log, iron ingot, wheat,
    leather, cocoa beans, gunpowder, tobacco, spices, cloth, rum): the good in a slot, an arrow, a doubloon, and six

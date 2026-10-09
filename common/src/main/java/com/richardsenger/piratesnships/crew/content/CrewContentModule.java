@@ -23,6 +23,7 @@ import com.richardsenger.piratesnships.crew.hammock.PlayerSleepGameTests;
 import com.richardsenger.piratesnships.crew.hammock.HammockTags;
 import com.richardsenger.piratesnships.crew.walk.CrewWalk;
 import com.richardsenger.piratesnships.crew.walk.CrewWalkGameTests;
+import com.richardsenger.piratesnships.crew.walk.StationFacingGameTests;
 import com.richardsenger.piratesnships.crew.walk.WalkConfig;
 import com.richardsenger.piratesnships.station.StationModule;
 import com.richardsenger.piratesnships.station.Stations;
@@ -266,7 +267,7 @@ public final class CrewContentModule implements ModModule {
     @Override
     public List<Class<?>> gameTestClasses() {
         return List.of(CrewContentGameTests.class, GalleyGameTests.class, HammockGameTests.class,
-                PlayerSleepGameTests.class, CrewWalkGameTests.class);
+                PlayerSleepGameTests.class, CrewWalkGameTests.class, StationFacingGameTests.class);
     }
 
     private static TagKey<Item> cTag(String path) {

@@ -9,7 +9,7 @@ the server sends only keys and every client shows its own language. The code liv
 - Path: `data/<namespace>/almanac/chapters/<path>.json` (subfolders allowed). The chapter id is `<namespace>:<path>`.
 - Any datapack can add chapters in its own namespace, or replace one of ours by shipping the same path (the whole file
   is replaced, the top pack wins).
-- The mod's own chapters are generated from `docs/guide.md` (see "Generated from the guide" below); never hand-edit the
+- The mod's own chapters are generated from `docs/almanac/` (see "The chapter source" below); never hand-edit the
   generated files.
 - A broken file (bad JSON, unknown element type, unknown item, coordinates outside the page, no pages) is logged with
   its id and reason and skipped. It never fails the reload and never affects other chapters.
@@ -204,49 +204,76 @@ inside our jar (jar-in-jar on both loaders, docs/releasing.md); everything of ou
    `AlmanacScenes.ALL`; add the positions your storyboard relies on to `PonderSchematicsTest` as done for the cannon.
    The scene itself plays only in a client: add its checks to the Ponder playtest.
 
-## Generated from the guide (ALM5)
+## The chapter source (ALM6)
 
-The mod's own chapters are `docs/guide.md`, so the guide has one source. Two steps, both after every change to
-`docs/guide.md` (next to `python3 tools/gen_guideme.py` while GuideME lives):
+The mod's own chapters are written for the player in `docs/almanac/<nn>-<chapter>.md`, one file per bookmark, in the
+Almanac's voice (a ship's master addressing a new hand). `docs/guide.md` is the human's testing and reference guide and
+is not read by the Almanac (GuideME and the playtests keep using it). Two steps after every change to `docs/almanac/`:
 
 ```
-python3 tools/gen_almanac.py        # docs/guide.md -> common/src/datagen/almanac/guide_chapters.json (+ illustrations)
+python3 tools/gen_almanac.py        # docs/almanac/ -> common/src/datagen/almanac/chapters.json (+ illustrations)
 ./gradlew :neoforge:runData         # intermediate -> data/pirates_n_ships/almanac/chapters/*.json and en_us.json
 ```
 
-- **The intermediate** `common/src/datagen/almanac/guide_chapters.json` holds every chapter in the file format above
+A chapter file:
+
+```
+---
+id: sailing                          # chapter id pirates_n_ships:<id>; the file is <nn>-<id with - for _>.md
+title: Sailing                       # heading on the first page and the bookmark's tooltip
+order: 40                            # book position; must rise in file name order
+icon: yard                           # bookmark item (no namespace = pirates_n_ships)
+color: #2f5d7c                       # bookmark colour
+illustrations:                       # every illustration the chapter shows, with its box (unit square)
+  - yard: 0.05 0.09 0.9 0.35
+---
+Text before the first "##" goes on the first page, under the title.
+
+## Square sails                      # every "##" starts a page with that heading
+illustration: yard                   # places a declared illustration on this page
+show_me: sails_and_winch | Show me: rigging a sail     # a "Show me" button here; label optional ("Show me")
+contents:                            # a list linking every other chapter in book order (the welcome chapter)
+```
+
+- **Front matter:** `key: value` lines between `---` lines (a small subset of YAML, read with the standard library),
+  quotes optional; `illustrations` is a list of `- name: x y w h`. Required: `id`, `title`, `order`, `icon`, `color`.
+  Unknown keys stop the script. The chapters are written in file order; the welcome chapter must come first.
+- **Pages:** the first page opens with the title as a heading and the text before the first `##`; every `## Heading`
+  starts a new page (a chapter with no text before its first `##` puts that subsection on its first page). The screen
+  continues pages that overflow. `###` and deeper headings stop the script.
+- **Blocks:** a paragraph (lines joined) becomes `text`; `- ` lines one `list` (indented lines continue an entry, at most
+  64 entries); `1. ` lines one `text` per step with the number in bold; a `> ` paragraph is a tip in green ink
+  (`#2e6a24`), a `>! ` paragraph a warning in red ink (`#9a1c14`), both as the text element's `color`. Tables stop the
+  script (the screen has none).
+- **Directives** (a line of their own, in flow order): `illustration: <name>` places one of the chapter's declared
+  illustrations (one per page; every declared one must be placed); `show_me: <scene id> [| label]` adds a "Show me"
+  button where it stands (no namespace = `pirates_n_ships`; a scene that does not exist yet logs a warning in the
+  client and the reader stays on the page); `contents:` adds the Contents list.
+- **Markup:** the text is the screen's markup as written (see "Markup" above), checked by the script: balanced `**`,
+  closed `{#rrggbb}…{/}`, `{item:ns:id}` with a full id (ours must exist), `[[ns:chapter|text]]` links only to chapters
+  of the book; markdown italics (`*x*`), code spans, markdown links and stray braces stop it. Escape a literal `*`, `{`,
+  `[[` or a word-edge `_` with a backslash. Name an item with its icon where it is first named:
+  `{item:pirates_n_ships:helm}**helm**`.
+- **Voice:** no config keys, commands, mod or package ids in the main chapters; `AlmanacGuideTest` fails on them.
+  The appendix "The Quartermaster's ledger" (`ledger`) is the one chapter for server owners, with the main settings
+  and the commands. Every fact must be true in the code; check numbers against the config defaults.
+- **The intermediate** `common/src/datagen/almanac/chapters.json` holds every chapter in the file format above
   (`body`) and a `lang` map from each key to its English text. It is no resource and not shipped. Datagen
   (`almanac/data/AlmanacChapterProvider`, found by walking up from the data run's working directory) parses every
   chapter with the chapter codec (so a bad item id fails the data run), checks that every key has a text and writes the
   chapter files and the lang. `python3 tools/gen_almanac.py --no-images` skips the illustrations (fast);
   `--out FILE` writes the intermediate elsewhere (the staleness test).
-- **Chapters:** one per `## N. Title` section, id and icon and bookmark colour from `CHAPTERS` in the script, `order`
-  10 × N. Section 0 (The guide book) is the welcome chapter, with a generated Contents page that links every other
-  chapter; 15 (What does not exist yet) is the last. A new section in the guide stops the script until it is added to
-  `CHAPTERS`.
-- **Pages:** the first page opens with the chapter title as a heading and the text before the first `###`; every
-  `### Heading` starts a new page with that heading (a chapter with no text before its first `###` puts that
-  subsection on its first page). The screen continues pages that overflow.
-- **Markup:** `**bold**` stays, `*italic*` becomes `_italic_`, inline code becomes plain text; links to a heading of
-  the guide become `[[pirates_n_ships:<chapter>|text]]` (plain text inside the chapter itself), links to repository
-  files and the web become their text; the first bold name of one of our items on a page (`**Helm**`, `**yards**`)
-  gets its `{item:...}` icon in front. Literal `*`, `\`, `{`, `[[` and underscores at a word edge are escaped.
-- **Blocks:** paragraphs become `text`, `- ` lists a `list` (at most 64 entries each), numbered lists one `text` per
-  step with the bold number, and tables (the screen has none) a `list` with one entry per row: the first cell bold
-  (with item icons when the column holds item names, as in gen_guideme), descriptive columns ("What it does",
-  "Meaning", "Today", ...) after a colon, the others as `header: value` in brackets. `---` is dropped.
-- **Lang keys** follow the convention: `pirates_n_ships.almanac.<chapter>.p<page>.heading`, `.text<n>`,
-  `.list<n>_<entry>`, `.show_me<n>`.
-- **"Show me":** `SHOW_ME` in the script maps a (chapter, subsection heading) to a Ponder scene and a label; the button
-  follows the first paragraph of that page (today the cannon page of Weapons and combat).
-- **Illustrations:** `ILLUSTRATIONS` maps a chapter (its first page) or a (chapter, subsection heading) to a render in
-  `art/renders` and the panel of it to use (fractions; a render sheet often holds several views and labels). The script
-  keys out the panel's flat background (its corner colour), trims it to the model, scales it to at most 256 × 160 pixels
-  (box filter, standard library PNG reader and writer) and writes
-  `common/src/main/resources/assets/pirates_n_ships/textures/almanac/<render>.png`; the page gets an `illustration`
-  at x 0.05, y 0.09, 0.9 × 0.35 (under the heading line). One per page. An entry for a heading the guide no longer has
-  stops the script.
-- **Tests:** `tools/test_gen_almanac.py` (the conversions; run by JUnit), `AlmanacGuideTest` (the committed
-  intermediate is a fresh run; the generated files and lang match it; pages parse with the codecs; every key, item
-  icon, link target and illustration exists; illustrations under 2 MB; the whole book under 512 KB on the wire, it is
-  about 27 KB) and `AlmanacDataGameTests` (every chapter loads in a server, parsed with our items registered).
+- **Lang keys** follow the convention: `pirates_n_ships.almanac.<chapter>.title`, `.p<page>.heading` (`heading2` for
+  a second heading on a page), `.text<n>`, `.list<n>_<entry>`, `.show_me<n>`.
+- **Illustrations:** `ILLUSTRATIONS` in the script maps a texture name to a render in `art/renders` and the panel of it
+  to use (fractions; a render sheet often holds several views and labels). The script keys out the panel's flat
+  background (its corner colour), trims it to the model, scales it to at most 256 × 160 pixels (box filter, standard
+  library PNG reader and writer) and writes `common/src/main/resources/assets/pirates_n_ships/textures/almanac/<name>.png`;
+  a chapter declares the ones it shows with their boxes. An entry no chapter shows stops the script, and textures not
+  in `ILLUSTRATIONS` are deleted.
+- **Tests:** `tools/test_gen_almanac.py` (front matter, blocks, directives, markup checks, the real source builds; run
+  by JUnit), `AlmanacGuideTest` (the committed intermediate is a fresh run; one chapter per source file in file order,
+  welcome first and "Not yet charted" last; the generated files and lang match it; pages parse with the codecs; every
+  key, item icon, link target and illustration exists; no technical words outside the ledger; illustrations under 2 MB;
+  the whole book under 512 KB on the wire, it is about 36 KB) and `AlmanacDataGameTests` (every chapter loads in a
+  server, parsed with our items registered; the Contents link every chapter).

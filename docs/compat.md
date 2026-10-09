@@ -17,11 +17,13 @@ the 19.57 Fabric jars are built with Loom 1.18, which our Loom 1.17 refuses to r
 
 **What JEI shows.**
 - **Information pages** (the "Information" tab under R/U) for every item of ours the Captain's Almanac describes:
-  the first Almanac paragraph or list line that draws the item's icon (`{item:ns:id}`), searching the "All items" and
-  "All blocks" chapters first, else the first one that names the item by its display name; then the chapter it came
-  from. Markup and "(recipe: ...)" notes are removed. Read from the client's lang files (resource packs and the
-  selected language apply). An item no paragraph describes gets no page (today: the swivel gun, boarding plank,
-  Captain's Almanac and the spawn eggs). Rules and tests: `compat/InfoPages`, `InfoPagesTest`.
+  the first Almanac paragraph or list line that draws the item's icon (`{item:ns:id}`), searching the `inventory`
+  chapter ("The ship's inventory", one line per block and item) first, then the other chapters in book order, else
+  the first one that names the item by its display name; then the chapter it came from. The `ledger` (commands and
+  settings) and `not_yet` chapters are never used. Markup is removed (a link that ends the line reads "(see
+  Chapter)"), and so is any "(recipe: ...)" note. Read from the client's lang files (resource packs and the selected
+  language apply). An item no paragraph describes gets no page (today 86 of 93 items have one; without: the flag
+  pedestal and the six spawn eggs). Rules and tests: `compat/InfoPages`, `InfoPagesTest`.
 - **Harbor Market** (`pirates_n_ships:harbor_market`, catalyst: harbor master's desk): one page per trade good
   (`trade_good` definitions, synced from the server; the shipped defaults until the sync arrives, then swapped):
   buy and sell price at a port that neither makes nor wants the good, the buy price where it is made and the sell

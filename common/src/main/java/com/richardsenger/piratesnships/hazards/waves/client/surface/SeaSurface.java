@@ -1,6 +1,8 @@
 package com.richardsenger.piratesnships.hazards.waves.client.surface;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
@@ -21,12 +23,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
@@ -49,19 +48,20 @@ import org.jetbrains.annotations.Nullable;
  *       cell cache {@link SeaSurfaceCells} and the waves of {@link SurfaceWaves} at the anchor of {@link SurfaceAnchor},
  *       into one reused buffer, and drawn in one call right after the world's translucent layer
  *       ({@link ClientEvents#RENDER_AFTER_TRANSLUCENT}, the flood surface's stage).</li>
- *   <li><b>Look</b>: render type {@code translucent} (block atlas with mipmaps, translucency, lightmap, vanilla's fog,
- *       the translucent target under Fabulous), the animated {@code block/water_still} sprite once per block like
- *       vanilla's still water (stretched over a coarse cell), the biome water colour and vanilla's light per cell, the
- *       shade of an up face. The shader is {@code rendertype_translucent}, the one Sable patches to discard fragments
- *       inside a dry hull's region, so a crest never shows inside a hull; cells wholly inside a hull are not even
- *       emitted.</li>
+ *   <li><b>Look</b>: render type {@code translucent} (translucency, lightmap, vanilla's fog, the translucent target
+ *       under Fabulous), with its texture swapped for {@link SeaFrameTexture}: the current frame of the animated
+ *       {@code block/water_still} in a small repeating texture with the atlas's mipmaps, tiled once per block in every
+ *       ring like vanilla's still water (WAV5; the atlas sprite cannot repeat, so WAV3 stretched it over a coarse cell
+ *       and the far water looked different). The biome water colour and vanilla's light per cell, the shade of an up
+ *       face. The shader is {@code rendertype_translucent} (it samples only {@code Sampler0} and the lightmap, no atlas
+ *       uniform), the one Sable patches to discard fragments inside a dry hull's region, so a crest never shows inside a
+ *       hull; cells wholly inside a hull are not even emitted.</li>
  *   <li><b>Off</b> with {@code wave_effects.surface = false}, with a renderer that replaces vanilla's chunk mesher
  *       ({@link SurfaceSupport}, logged once), and in a dimension with a ceiling or without a sky.</li>
  * </ul>
  */
 public final class SeaSurface {
 
-    private static final ResourceLocation WATER_STILL = ResourceLocation.withDefaultNamespace("block/water_still");
     /** Sections farther than this many chunks beyond the render distance keep their flat top (Sable's plots). */
     static final int WINDOW_MARGIN_CHUNKS = 8;
     private static final int OFF = Integer.MIN_VALUE;
@@ -78,6 +78,7 @@ public final class SeaSurface {
     private static final SurfaceWaves WAVES = new SurfaceWaves();
     private static final SurfaceWaves POINT_WAVES = new SurfaceWaves();
     private static final SurfaceAnchor ANCHOR = new SurfaceAnchor();
+    private static final SeaFrameTexture FRAME = new SeaFrameTexture();
     private static double lastFrameTime = Double.NaN;
     private static double pointTime = Double.NaN;
     private static int fullDepth = 4;
@@ -115,6 +116,9 @@ public final class SeaSurface {
 
     static void tick(Minecraft mc) {
         ClientLevel level = mc.level;
+        if (level != null && !mc.isPaused()) {
+            FRAME.tick(); // vanilla's texture animation ticks under the same condition (Minecraft#tick)
+        }
         int want = OFF;
         Vec3 centre = null;
         if (level != null) {
@@ -199,13 +203,8 @@ public final class SeaSurface {
         double reach = field.maxHeight() + 0.5;
         CELLS.setDryTest(dryTest(level, baseY, layout.near().outer()));
 
-        TextureAtlasSprite sprite = mc.getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(WATER_STILL);
-        float shrink = sprite.uvShrinkRatio();
-        float uc = (sprite.getU0() + sprite.getU1()) * 0.5f, vc = (sprite.getV0() + sprite.getV1()) * 0.5f;
         SurfaceMesher.Params params = new SurfaceMesher.Params(baseY, fullDepth,
-                HazardConfig.SURFACE_UNDERSIDE.get() && cam.y < baseY + reach,
-                Mth.lerp(shrink, sprite.getU0(), uc), Mth.lerp(shrink, sprite.getV0(), vc),
-                Mth.lerp(shrink, sprite.getU1(), uc), Mth.lerp(shrink, sprite.getV1(), vc));
+                HazardConfig.SURFACE_UNDERSIDE.get() && cam.y < baseY + reach, Mth.floor(cam.x), Mth.floor(cam.z));
         float shade = level.getShade(Direction.UP, true);
         SurfaceMesher.Visibility vis = (x0, z0, x1, z1) -> frustum.isVisible(new AABB(x0, baseY - reach, z0, x1, baseY + reach, z1));
 
@@ -222,7 +221,12 @@ public final class SeaSurface {
                         .setNormal(0.0f, up ? 1.0f : -1.0f, 0.0f));
         MeshData mesh = out.build();
         if (mesh != null) {
-            RenderType.translucent().draw(mesh);
+            int frame = FRAME.bindable(mc);
+            RenderType type = RenderType.translucent();
+            type.setupRenderState();
+            RenderSystem.setShaderTexture(0, frame); // the repeating water frame instead of the block atlas
+            BufferUploader.drawWithShader(mesh);
+            type.clearRenderState();
         }
         stats(stats, System.nanoTime() - t0);
     }

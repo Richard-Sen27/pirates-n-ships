@@ -8,6 +8,7 @@ import com.richardsenger.piratesnships.mob.entity.SeafarerMob;
 import com.richardsenger.piratesnships.ship.assembly.ShipHelm;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.station.StationContent;
+import com.richardsenger.piratesnships.station.lookout.CrowsNestBlock;
 import com.richardsenger.piratesnships.station.jobs.JobBoard;
 import com.richardsenger.piratesnships.station.winch.SailOrder;
 import net.minecraft.core.BlockPos;
@@ -27,7 +28,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * The people of a materialised voyage (WS3b, design.md §7, §9): crew members (one pinned at the steering helm, the
+ * The people of a materialised voyage (WS3b, design.md §7, §9): crew members (one pinned at the steering helm, one
+ * pinned in the crow's nest as the lookout when the ship has one (TPL2, {@code materialize.man_lookout}), the other
  * deckhands seated by the job board's {@code SailOrder.HOIST}) and the faction's fighters ({@code Sailor},
  * {@code NavyOfficer} + {@code NavySoldier}, {@code Pirate}) standing on {@link DeckSpots}, stationary and persistent.
  * The crew members are stationary too while the ship is a voyage's (WS3c): idle deckhands stand instead of strolling
@@ -43,7 +45,7 @@ public final class VoyageCrew {
     /** How far around the ship's box people still count as aboard (fighters knocked off the deck, crew in the water). */
     static final double REACH = 16;
 
-    public record Manned(int crew, int fighters, @Nullable UUID helmsman) { }
+    public record Manned(int crew, int fighters, @Nullable UUID helmsman, @Nullable UUID lookout) { }
 
     private VoyageCrew() {
     }
@@ -54,7 +56,9 @@ public final class VoyageCrew {
 
     /**
      * Spawns {@code crew} crew members and {@code fighters} fighters of {@code faction} on the deck of {@code ship},
-     * seats the first crew member at the steering helm and posts {@code HOIST} on the job board for the others.
+     * seats the first crew member at the steering helm, the next one in the ship's crow's nest (TPL2: the lookout, one
+     * of the {@code crew}, while {@code man_lookout} is on and the ship has a nest) and posts {@code HOIST} on the job
+     * board for the others.
      * {@code waterlinePlotY} is the plot y of the waterline row (decks are searched from there up).
      */
     public static Manned man(ServerLevel level, ShipBody ship, UUID voyage, Faction faction, int crew, int fighters, int waterlinePlotY) {
@@ -63,12 +67,14 @@ public final class VoyageCrew {
                 waterlinePlotY, waterlinePlotY + DeckSpots.MAX_DECK_HEIGHT);
         List<BlockPos> spots = DeckSpots.pick(candidates, crew + fighters);
         if (spots.isEmpty() && crew + fighters > 0) {
-            return new Manned(0, 0, null);
+            return new Manned(0, 0, null, null);
         }
         int crewMade = 0;
         int fightersMade = 0;
         UUID helmsman = null;
+        UUID lookout = null;
         BlockPos helm = ShipHelm.steering(ship);
+        BlockPos nest = MaterializeConfig.MAN_LOOKOUT.get() ? nest(level, ship) : null;
         for (int i = 0; i < crew; i++) {
             CrewMember c = StationContent.CREW_MEMBER.get().create(level);
             if (c == null) continue;
@@ -79,9 +85,12 @@ public final class VoyageCrew {
             if (helmsman == null && helm != null
                     && CrewStations.assign(level, c, helm, true) == CrewStations.AssignResult.ASSIGNED) {
                 helmsman = c.getUUID();
+            } else if (lookout == null && nest != null
+                    && CrewStations.assign(level, c, nest, true) == CrewStations.AssignResult.ASSIGNED) {
+                lookout = c.getUUID(); // pinned: the job board never takes the lookout down to the sails
             }
         }
-        if (crewMade > (helmsman == null ? 0 : 1)) {
+        if (crewMade > (helmsman == null ? 0 : 1) + (lookout == null ? 0 : 1)) {
             JobBoard.post(level, ship, SailOrder.HOIST);
             JobBoard.pass(level, ship.id());
         }
@@ -93,7 +102,17 @@ public final class VoyageCrew {
             m.setPersistenceRequired();
             if (place(level, ship, m, spots.get(crew + i), voyage, FIGHTER_TAG)) fightersMade++;
         }
-        return new Manned(crewMade, fightersMade, helmsman);
+        return new Manned(crewMade, fightersMade, helmsman, lookout);
+    }
+
+    /** The plot position of {@code ship}'s crow's nest (the lowest, then the first by position), or null. */
+    static @Nullable BlockPos nest(ServerLevel level, ShipBody ship) {
+        BlockPos best = null;
+        for (BlockPos p : ship.plotBlocks()) {
+            if (!(level.getBlockState(p).getBlock() instanceof CrowsNestBlock)) continue;
+            if (best == null || p.getY() < best.getY() || p.getY() == best.getY() && p.compareTo(best) < 0) best = p.immutable();
+        }
+        return best;
     }
 
     /** The fighter type of {@code faction}; a navy ship's first fighter is its officer. */

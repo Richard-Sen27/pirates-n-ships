@@ -45,6 +45,8 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiFunction;
 
 /**
  * Materialisation of abstract voyages (WS3b, design.md §10.4 "Abstract voyages"): a SAILING voyage near a player
@@ -91,6 +93,7 @@ public final class Materializer {
     static final long TEST_VOYAGE_TICKS = 1200;
     private static final Map<UUID, Long> RETRY_AFTER = new ConcurrentHashMap<>();
     private static final Map<UUID, CourseEvent.Type> PENDING = new ConcurrentHashMap<>();
+    private static final List<BiFunction<MinecraftServer, Voyage, Optional<String>>> NAMERS = new CopyOnWriteArrayList<>();
     private static final List<String> MERCHANT_NAMES = List.of("Fair Wind", "Silver Gull", "Morning Star", "Good Hope",
             "Sea Swallow", "Patient Grace", "Bountiful", "Lucky Penny", "Spice Maiden", "Laden Lady");
     private static final List<String> NAVY_NAMES = List.of("Resolute", "Vigilant", "Steadfast", "Dauntless", "Guardian",
@@ -222,7 +225,7 @@ public final class Materializer {
             Constants.LOG.debug("Voyage {}: {} guns, {} rounds in {} shot lockers, {} loaded, {} out of reach of a locker",
                     v.shortId(), guns.guns(), guns.rounds(), guns.lockers(), guns.loaded(), guns.unsupplied());
         }
-        ShipAssembler.name(ship, name(v));
+        ShipAssembler.name(ship, shipName(server, v));
         raiseFlag(ship, v);
         Vec3 plotCentre = templateCentre(ship, structure, r);
         turnOnto(ship, plotCentre, facing, pos);
@@ -319,6 +322,23 @@ public final class Materializer {
             poles.get(0).commandSet(kind, false, null);
             ShipAllegiance.refresh(ship);
         }
+    }
+
+    /**
+     * Adds a namer for the ships of the voyages it answers for (TPL2: a captain's voyage names its ship after him);
+     * the first namer with an answer wins, else {@link #name}.
+     */
+    public static void namer(BiFunction<MinecraftServer, Voyage, Optional<String>> namer) {
+        NAMERS.add(namer);
+    }
+
+    /** The name the ship of {@code v} gets when it materialises: a namer's ({@link #namer}), else {@link #name}. */
+    public static String shipName(MinecraftServer server, Voyage v) {
+        for (BiFunction<MinecraftServer, Voyage, Optional<String>> n : NAMERS) {
+            Optional<String> name = n.apply(server, v);
+            if (name.isPresent() && !name.get().isBlank()) return name.get();
+        }
+        return name(v);
     }
 
     /** A name for the ship, picked by the voyage id from its faction's list (also the escort quest's convoy name, QST2). */

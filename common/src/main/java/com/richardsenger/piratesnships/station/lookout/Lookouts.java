@@ -22,9 +22,12 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiFunction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -69,8 +72,38 @@ public final class Lookouts {
 
     public enum Kind { SHIP, LAND, SHARK, KRAKEN }
 
-    /** Something seen: its memory key, where, its bearing in points and the called distance. */
-    public record Sighting(Kind kind, String key, String whatKey, Vec3 at, Bearings.Relative bearing, int distance) {
+    /**
+     * Something seen: its memory key, where, its bearing in points and the called distance; {@code name} is a ship's
+     * name when the lookout knows it by sight ({@link #renown}, TPL2), else empty.
+     */
+    public record Sighting(Kind kind, String key, String whatKey, Vec3 at, Bearings.Relative bearing, int distance, String name) {
+        public Sighting(Kind kind, String key, String whatKey, Vec3 at, Bearings.Relative bearing, int distance) {
+            this(kind, key, whatKey, at, bearing, distance, "");
+        }
+
+        Sighting named(String name) {
+            return new Sighting(kind, key, whatKey, at, bearing, distance, name == null ? "" : name);
+        }
+    }
+
+    private static final List<BiFunction<ServerLevel, UUID, Optional<String>>> RENOWNED = new CopyOnWriteArrayList<>();
+
+    /**
+     * TPL2: adds a source of ships every lookout knows by sight (a pirate captain's ship: his name is on every tongue);
+     * a sighted ship one of them names is called by that name ({@link LookoutLang#KEY_SHIP_NAMED}). The first answer
+     * wins.
+     */
+    public static void renown(BiFunction<ServerLevel, UUID, Optional<String>> source) {
+        RENOWNED.add(source);
+    }
+
+    /** The name a lookout calls the ship {@code ship} by, or empty when it is not a renowned ship. */
+    public static String renownedName(ServerLevel level, UUID ship) {
+        for (BiFunction<ServerLevel, UUID, Optional<String>> s : RENOWNED) {
+            Optional<String> name = s.apply(level, ship);
+            if (name.isPresent() && !name.get().isBlank()) return name.get();
+        }
+        return "";
     }
 
     /** A new sighting of {@code ship}'s lookout, its chat line and who hears it (empty while announcing is off). */
@@ -226,7 +259,7 @@ public final class Lookouts {
             }
             Vec3 c = CrewStations.worldBox(other, 0).getCenter();
             Sighting s = sighting(Kind.SHIP, "ship:" + other.id(), whatKey(other), at, c, heading, range);
-            if (s != null) out.add(s);
+            if (s != null) out.add(s.named(renownedName(level, other.id())));
         }
         AABB box = new AABB(at, at).inflate(range, MONSTER_HEIGHT, range);
         for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, box,
@@ -309,7 +342,10 @@ public final class Lookouts {
     static Component line(Component speaker, Sighting s) {
         Component bearing = LookoutLang.bearing(s.bearing());
         Component body = switch (s.kind()) {
-            case SHIP -> Component.translatable(LookoutLang.KEY_SHIP, Component.translatable(s.whatKey()), bearing, s.distance());
+            case SHIP -> s.name().isEmpty()
+                    ? Component.translatable(LookoutLang.KEY_SHIP, Component.translatable(s.whatKey()), bearing, s.distance())
+                    : Component.translatable(LookoutLang.KEY_SHIP_NAMED, Component.translatable(s.whatKey()), bearing,
+                    s.distance(), s.name());
             case LAND -> Component.translatable(LookoutLang.KEY_LAND, bearing, s.distance());
             case SHARK -> Component.translatable(LookoutLang.KEY_SHARK, bearing, s.distance());
             case KRAKEN -> Component.translatable(LookoutLang.KEY_KRAKEN, bearing, s.distance());

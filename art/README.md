@@ -1778,8 +1778,8 @@ z 25, so the hold was open to the sea); the generator now puts a bottom plank un
 |---|---|---|---|
 | `starter_sloop` | `starter_sloop.py` | single-mast sloop, forecastle and stern cabin, 683 blocks | shipwright (400), merchant convoys |
 | `starter_sloop_basic` | hand-built `.schem` | the same hull, fewer fittings | shipwright (300), merchant convoys |
-| `navy_sloop_armed` | `navy_sloop_armed.py` | the starter sloop with four guns and a shot locker, 689 blocks | navy patrols (not sold) |
-| `pirate_sloop_armed` | `pirate_sloop_armed.py` | the same blocks as `navy_sloop_armed` | pirate raiders (not sold) |
+| `navy_sloop_armed` | `navy_sloop_armed.py` | the starter sloop with four guns, a shot locker, a crow's nest with ratlines on both sides up to it and the flag on a taffrail ensign staff, 715 blocks | navy patrols (not sold) |
+| `pirate_sloop_armed` | `pirate_sloop_armed.py` | the same blocks as `navy_sloop_armed` | pirate raiders, pirate captains' voyages (not sold) |
 
 **Armed sloops (WS4c):** `navy_sloop_armed.py` and `pirate_sloop_armed.py` import `armed_spec` from
 `starter_sloop.py`, which adds to the starter sloop's cells and changes nothing else: two cannons a side in the waist
@@ -1792,6 +1792,24 @@ barrel, not a chest, because a chest does not open under the deck. Materialised 
 reach of a gun counts as its locker. `ArmedSloopLayoutTest` diffs the armed structures against `starter_sloop.nbt`
 and checks the guns, ports and reach. `starter_sloop.py` run on its own still prints the starter sloop byte for byte.
 Rebuild all three with the steps above (lab, then `schem_to_structure.py`).
+
+**Crow's nest and ratlines (TPL2):** `armed_spec` also applies `lookout()` (after `armed()`): the **crow's nest**
+(`pirates_n_ships:crows_nest`) sits on the mast top at [4, 20, 13] where the flag was, so the flag moves to a two-block
+**ensign staff** (flagpole `part=bottom` / `part=top`) on the taffrail rail at [4, 9..10, 27], with open air round its
+head for the cloth. A run of **ratlines** on each side of the mast (x 3, port, and x 5, starboard) climbs from the
+quarterdeck beside the helm to the masthead: nine **sloped** links (`kind=slope, facing=north`, one up and one toward
+the bow each) from [x, 8, 22] on the quarterdeck to [x, 16, 14] just abaft the upper yard's end, then three links
+**hung** on the mast's west / east face (`kind=wall, facing=west|east`) at [x, 17..19, 13], above the upper yard; at
+the top a climber steps sideways into the nest. Why this way: the yards' 6 px beams fill the mast's sides at y 10 and
+16, so a hung run on the mast cannot pass them (and a net cannot hang on a yard), and the jib's stay and cleats occupy
+the plane x 4 forward of the mast, so the runs stay at x 3 and 5 and aft. The sloped links lie outside the square
+sail's cloth envelope (the cloth stands off the yards' plane z 13 by `ClothGeometry.clearance` plus the deepest VIS1b
+belly and flutter at the default `sail_visuals`, bellied either way), the hung ones above the upper yard; the yards,
+the sail (F5a: only air or mast between the yards' middle blocks) and the jib are untouched. Climbing: walk up the
+slope toward the bow onto the upper yard's end, face the mast and climb the hung net (jump, or push against it), step
+over into the nest. `ArmedSloopLayoutTest` pins the nest, the staff and every link (continuity, supports, the cloth
+and jib clearance); `ArmedShipGameTests.aPlayerClimbsTheRatlinesToTheNest` climbs it with a mock player on the
+assembled sloop afloat. The starter sloop gets no nest: it is the player's ship to rig.
 
 Keep templates under the ship block limit (2048 by default), keep every block connected to the helm (the assembler
 gathers only connected blocks), and leave no loose terrain blocks (dirt, sand, stone) in the selection: they never

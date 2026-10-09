@@ -181,6 +181,37 @@ Tuning values (server config, section `[stability]`):
 | Very wide or shallow ships too rigid | `max_metacentric_height` (1.5 blocks), `max_righting_degrees` (30) |
 | Everything off | `enabled` |
 
+## 5e. TRM1: ships float level by design (added for TRM1)
+The human's report: "at least with my test ship the rear is deeper in the water than at the front, probably because of
+weight, but in real life that doesn't happen". TRM1 adds the shipwright's ballast (server section `[stability]`,
+`auto_ballast`): a constant torque worked out from the blocks (containers counted empty) that cancels the trim and heel
+of the build itself, recomputed when blocks are added or removed. Headless numbers from `BallastGameTests` (the 7x17
+test hull in a basin).
+
+Setup: a creative world, default config. `/pirates ship forces` lists a `Ballast` force group.
+
+1. **Your stern-castle ship.** Assemble the test ship that sat stern down and let it settle 10 s.
+   - **Measured headlessly:** the 7x17 hull with a three-storey castle over its last three rows rests 0.6° bow down
+     with the ballast, 14.2° stern down without it. A heavy row along one side rests 0.35° out in roll. The starter
+     sloop now rests at -0.17° pitch instead of 4.2°.
+   - **Expected:** level to the eye, bow and stern at the same depth.
+   - Report: still trimmed (which way, roughly how much), or level.
+2. **Cargo still trims.** Fill a cargo crate (or a chest) with iron at the stern, wait 10 s.
+   - **Measured headlessly:** a full crate (20.5 kpg) in the after hold trims the 7x17 hull 1.3° stern down; the ballast
+     does not change (the crate's `load` state is not a build change).
+   - **Expected:** a visible stern-down trim that goes away when you empty the crate.
+3. **Building on the ship.** Place a few heavy blocks (iron, stone) on the after deck of the floating ship, wait 2 s,
+   then break them.
+   - **Expected:** the stern dips for a moment, then the ship is level again within a second or two (the blocks count
+     as built); after breaking them it is level again. A door or trapdoor opened changes nothing.
+4. **Absurd build.** A one-block-wide tower of twenty iron blocks on a boom six blocks aft of the stern.
+   - **Measured headlessly:** capped (`auto_ballast_max_per_mass` = 3 blocks; this build needs 4.3), rests 7.7° stern
+     down.
+   - Report: does the cap feel right on your bigger ships? A long ship with a big castle may need more than 3 blocks
+     (the cap is a distance, see risks in the TRM1 hand-back).
+5. **Toggle.** `auto_ballast = false` in `[stability]`: the castle ship sits stern down again (takes effect within a
+   tick, no reassembly needed).
+
 ## 6. A second, bigger ship
 Build a longer hull (e.g. 13 x 7) with two masts: a square sail from two 5-wide yards 5 blocks apart (area 25) on one,
 a triangular sail (stay and three cleats) on the other, one winch. Expected: the winch sets both sails; the ship is slower to accelerate

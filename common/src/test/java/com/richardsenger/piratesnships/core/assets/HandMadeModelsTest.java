@@ -58,7 +58,7 @@ class HandMadeModelsTest {
             "brig_door_bottom_left_open_locked", "brig_door_bottom_right", "brig_door_bottom_right_locked",
             "brig_door_bottom_right_open_locked", "brig_door_top_left", "brig_door_top_right", "cannon",
             "cannon_barrel", "cannon_barrel_loaded", "cannon_barrel_powder", "cannon_carriage", "cannon_carriage_rammer",
-            "cannon_quoin", "capstan", "cargo_barrel", "cargo_crate", "chart_table", "cleat", "crows_nest", "figurehead_eagle",
+            "cannon_quoin", "capstan", "capstan_bars", "capstan_item", "cargo_barrel", "cargo_crate", "chart_table", "cleat", "crows_nest", "figurehead_eagle",
             "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flagpole", "flagpole_bottom", "flagpole_middle", "flagpole_top", "hammock_foot", "hammock_head", "harbor_desk", "helm", "helm_item", "helm_wheel", "hull_patch", "mooring_ring", "nameplate",
             "notice_board", "pantry", "ratlines", "ratlines_slope", "rope_coil_layers1", "rope_coil_layers2", "rope_coil_layers3", "rope_coil_layers4",
             "sail_winch", "sea_chest", "sea_cot_foot", "sea_cot_head", "sea_cot_item", "ship_lantern", "ship_lantern_ceiling",
@@ -217,6 +217,53 @@ class HandMadeModelsTest {
                 "cannon_carriage", "cannon_carriage_rammer")) {
             assertFalse(blockModel(name).has("display"), name + ": only the item model carries display entries");
         }
+    }
+
+    /**
+     * CAP2: the capstan is split into the base and drum ({@code capstan}, the block model) and the bars with the
+     * drumhead they are socketed in ({@code capstan_bars}, turned about the drum's vertical axis through the block centre
+     * by {@code CapstanBarsRenderer}); {@code capstan_item} is both for the item and alone carries the display entry. The
+     * item holds exactly the bars' elements followed by the drum's, in step with the {@code bars} and {@code drum} groups
+     * of {@code art/models/capstan.bbmodel}. The bars look the same after a quarter turn about (8, 8), so they may come
+     * to rest at any multiple of 90 degrees.
+     */
+    @Test
+    void capstanSplitsIntoDrumAndBars() throws IOException {
+        JsonArray drum = resolvedElements("capstan");
+        JsonArray bars = resolvedElements("capstan_bars");
+        JsonArray all = new JsonArray();
+        all.addAll(bars);
+        all.addAll(drum);
+        assertEquals(all, resolvedElements("capstan_item"), "capstan_item is not capstan_bars + capstan");
+        assertEquals(19, drum.size(), "drum");
+        assertEquals(12, bars.size(), "bars and drumhead");
+        java.util.Set<String> boxes = new java.util.HashSet<>();
+        for (JsonElement e : bars) {
+            JsonArray from = e.getAsJsonObject().getAsJsonArray("from");
+            JsonArray to = e.getAsJsonObject().getAsJsonArray("to");
+            boxes.add(box(from.get(0).getAsDouble(), from.get(1).getAsDouble(), from.get(2).getAsDouble(),
+                    to.get(0).getAsDouble(), to.get(1).getAsDouble(), to.get(2).getAsDouble()));
+        }
+        for (JsonElement e : bars) {
+            JsonObject el = e.getAsJsonObject();
+            JsonArray from = el.getAsJsonArray("from");
+            JsonArray to = el.getAsJsonArray("to");
+            assertEquals(0.0, el.getAsJsonObject("rotation").get("angle").getAsDouble(), 1e-9, "turned bar part");
+            // a quarter turn about the vertical axis through (8, 8): (x, z) -> (z, 16 - x)
+            double x0 = from.get(0).getAsDouble(), z0 = from.get(2).getAsDouble();
+            double x1 = to.get(0).getAsDouble(), z1 = to.get(2).getAsDouble();
+            String turned = box(Math.min(z0, z1), from.get(1).getAsDouble(), Math.min(16 - x0, 16 - x1),
+                    Math.max(z0, z1), to.get(1).getAsDouble(), Math.max(16 - x0, 16 - x1));
+            assertTrue(boxes.contains(turned), el.get("name").getAsString() + " has no quarter-turned partner");
+        }
+        for (String name : List.of("capstan", "capstan_bars")) {
+            assertFalse(blockModel(name).has("display"), name + ": only the item model carries display entries");
+        }
+        assertTrue(blockModel("capstan_item").getAsJsonObject("display").has("gui"), "the item's gui entry");
+    }
+
+    private static String box(double x0, double y0, double z0, double x1, double y1, double z1) {
+        return String.format(java.util.Locale.ROOT, "%.3f %.3f %.3f %.3f %.3f %.3f", x0, y0, z0, x1, y1, z1);
     }
 
     /**

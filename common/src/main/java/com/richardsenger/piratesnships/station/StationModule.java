@@ -58,6 +58,7 @@ public final class StationModule implements ModModule {
     @Override
     public void registerContent() {
         StationContent.init();
+        com.richardsenger.piratesnships.station.capstan.CapstanContent.init(); // CAP2: the capstan's block entity
     }
 
     @Override
@@ -89,6 +90,7 @@ public final class StationModule implements ModModule {
     @Override
     public void initClient() {
         com.richardsenger.piratesnships.station.client.StationClient.init();
+        com.richardsenger.piratesnships.station.capstan.client.CapstanClient.init(); // CAP2: the turning bars
     }
 
     @Override
@@ -156,6 +158,6 @@ public final class StationModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(StationGameTests.class, PumpOrderGameTests.class, JobBoardGameTests.class, com.richardsenger.piratesnships.station.winch.WinchOrderGameTests.class, com.richardsenger.piratesnships.crew.npc.CrewPoseGameTests.class, HelmStationGameTests.class, CapstanGameTests.class);
+        return List.of(StationGameTests.class, PumpOrderGameTests.class, JobBoardGameTests.class, com.richardsenger.piratesnships.station.winch.WinchOrderGameTests.class, com.richardsenger.piratesnships.crew.npc.CrewPoseGameTests.class, HelmStationGameTests.class, CapstanGameTests.class, com.richardsenger.piratesnships.station.capstan.CapstanMotionGameTests.class);
     }
 }

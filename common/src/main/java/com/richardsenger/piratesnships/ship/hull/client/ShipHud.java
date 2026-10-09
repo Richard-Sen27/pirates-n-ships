@@ -8,7 +8,7 @@ import com.richardsenger.piratesnships.combat.melee.client.StaminaHudLayout;
 import com.richardsenger.piratesnships.sailing.wind.ClientWind;
 import com.richardsenger.piratesnships.sailing.wind.WindSample;
 import com.richardsenger.piratesnships.ship.hull.net.ShipStatusPayload;
-import com.richardsenger.piratesnships.ship.sable.ClientShipPoses;
+import com.richardsenger.piratesnships.ship.sable.ClientAboard;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.DeltaTracker;
@@ -52,14 +52,10 @@ public final class ShipHud {
 
     /** Client tick end. */
     static void tick(Minecraft mc) {
-        LocalPlayer p = mc.player;
-        if (p == null || mc.level == null) {
-            ClientShipStatus.tick(false, false);
-            return;
-        }
-        // Sable drops the client's tracking whenever the player does not touch the ship from above (jump, ladder)
-        boolean holding = p.onClimbable() || (!p.onGround() && !p.isInWater() && !p.getAbilities().flying);
-        ClientShipStatus.tick(ClientShipPoses.onShip(p), holding);
+        // CAM1: one rule for the ship the player is on, shared with the camera sway (it keeps the ship through jumps
+        // and climbs, when Sable's client stops tracking the player)
+        ClientAboard.tick(mc);
+        ClientShipStatus.tick();
     }
 
     /** HUD layer. */

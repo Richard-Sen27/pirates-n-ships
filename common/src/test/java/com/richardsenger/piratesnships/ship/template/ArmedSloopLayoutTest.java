@@ -1,7 +1,16 @@
 package com.richardsenger.piratesnships.ship.template;
 
+import com.richardsenger.piratesnships.sailing.sail.BlockPoint;
+import com.richardsenger.piratesnships.sailing.sail.CleatLookup;
 import com.richardsenger.piratesnships.sailing.sail.ClothGeometry;
 import com.richardsenger.piratesnships.sailing.sail.SailShape;
+import com.richardsenger.piratesnships.sailing.sail.SquareSail;
+import com.richardsenger.piratesnships.sailing.sail.StayLinker;
+import com.richardsenger.piratesnships.sailing.sail.StayRules;
+import com.richardsenger.piratesnships.sailing.sail.TriangularSail;
+import com.richardsenger.piratesnships.sailing.sail.YardLinker;
+import com.richardsenger.piratesnships.sailing.sail.YardLookup;
+import com.richardsenger.piratesnships.sailing.sail.YardRules;
 import com.richardsenger.piratesnships.worldsim.materialize.GunStocking;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,6 +36,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -34,10 +44,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * in the waist (master outboard facing out, rear inboard), the bulwark cut out in front of each muzzle (the gun port),
  * the shot locker in the hold on its stand, within the gun crews' supply range (4) of every gun, and (TPL2) the crow's
  * nest on the mast top where the flag was, the flag on an ensign staff on the taffrail, and a run of ratlines on each
- * side of the mast from the quarterdeck to the masthead that is climbable link by link without a jump (RL1b: the
- * last sloped link lies on the upper yard's end) and keeps clear of the yards,
- * the square sail's cloth and the jib. Reads the committed {@code .nbt} files ({@code SchemToStructureTest} pins them
- * to their schematics).
+ * side of the mast from the quarterdeck to the masthead that is climbable link by link without a jump (the last
+ * sloped link beside the mast, right above and abaft the upper yard's end) and keeps clear of the yards,
+ * the square sail's cloth and the jib. TPL3: all three sloops follow the yard rule (the yards one block forward of the
+ * mast) and keep a working jib whose head and clew cleats sit above the upper and below the lower yard. Reads the
+ * committed {@code .nbt} files ({@code SchemToStructureTest} pins them to their schematics).
  */
 class ArmedSloopLayoutTest {
 
@@ -52,12 +63,20 @@ class ArmedSloopLayoutTest {
     /** The ensign staff on the taffrail rail (4, 8, 27). */
     private static final BlockPos ENSIGN = new BlockPos(4, 9, 27);
     /**
-     * Each run's foot on the quarterdeck, its last sloped link (RL1b: on the upper yard's end, beside the mast) and the
-     * hung links' first height (right above the last sloped link).
+     * Each run's foot on the quarterdeck, its last sloped link (beside the mast, right above and abaft the upper yard's
+     * end) and the hung links' first height (right above the last sloped link).
      */
     private static final int FOOT_Z = 22, FOOT_Y = 8, TOP_Z = 13, TOP_Y = 17, HUNG_FROM = 18;
-    /** The square sail: yards along x at z 13, the lower at y 10 (x 0..8), the upper at y 16 (x 1..7). */
-    private static final int LOWER_YARD = 10, UPPER_YARD = 16;
+    /**
+     * The square sail: yards along x at z 12, one block forward of the mast (the yard rule, TPL3), the lower at y 10
+     * (x 0..8), the upper at y 16 (x 1..7).
+     */
+    private static final int YARD_Z = MAST_Z - 1, LOWER_YARD = 10, UPPER_YARD = 16;
+    /** The jib (TPL3): head above the upper yard, clew below the lower yard, both in the yards' column; tack on the bowsprit. */
+    private static final BlockPoint JIB_HEAD = new BlockPoint(MAST_X, UPPER_YARD + 1, YARD_Z),
+            JIB_CLEW = new BlockPoint(MAST_X, LOWER_YARD - 1, YARD_Z), JIB_TACK = new BlockPoint(MAST_X, 7, 1);
+    /** The jib's area: 0.5 x 8 (head to clew) x 11 (clew to tack); 42 before TPL3 (0.5 x 7 x 12). */
+    private static final double JIB_AREA = 44.0;
     /** sail_visuals.max_belly and flutter_amplitude at their defaults (SailVisualsConfig). */
     private static final float MAX_BELLY = 0.6f, FLUTTER = 0.15f;
 
@@ -236,8 +255,13 @@ class ArmedSloopLayoutTest {
             BlockPos p = foot;
             while (SLOPE.equals(armed.get(p.above().north()))) p = p.above().north();
             assertEquals(new BlockPos(x, TOP_Y, TOP_Z), p, "the sloped run at x " + x + " breaks off");
-            assertTrue(armed.get(p.below()).startsWith("pirates_n_ships:yard"), "the top sloped link does not lie on the upper yard");
-            assertEquals(UPPER_YARD, p.getY() - 1, "the top sloped link is not on the upper yard");
+            // TPL3: the upper yard moved one block forward; the top link stands on the link before it, right above and
+            // abaft the yard's end
+            assertEquals(SLOPE, armed.get(p.below().south()), "the top sloped link has no link under it");
+            assertEquals(null, armed.get(p.below()), "something under the top sloped link at x " + x);
+            assertTrue(String.valueOf(armed.get(p.below().north())).startsWith("pirates_n_ships:yard"),
+                    "the upper yard's end is not right in front of and below the top sloped link at x " + x);
+            assertEquals(UPPER_YARD, p.getY() - 1, "the top sloped link is not right above the upper yard");
             assertEquals("minecraft:spruce_log[axis=y]", armed.get(new BlockPos(MAST_X, p.getY(), MAST_Z)),
                     "no mast beside the top sloped link to push against");
             assertEquals(null, armed.get(p.above().north()), "a block over the top of the slope at x " + x);
@@ -257,11 +281,12 @@ class ArmedSloopLayoutTest {
 
     /**
      * TPL2: no ratlines block stands in the jib's plane (x 4: the stay and its cleats) or in the square sail's cloth.
-     * The cloth hangs from the upper yard to the lower one in the yards' plane and stands off it to either side by
+     * The cloth hangs from the upper yard to the lower one in the yards' plane (z 12, TPL3) and stands off it to either
+     * side by
      * {@link ClothGeometry#clearance} plus the deepest belly and flutter VIS1b draws at the default
      * {@code sail_visuals} values (breathing included); the sloped nets' rope plane (the diagonal of their cell) must
-     * stay outside that envelope wherever the wind pushes the cloth, and the nets in the yards' plane (the top sloped
-     * link and the hung ones) lie above the upper yard.
+     * stay outside that envelope wherever the wind pushes the cloth, no net stands in the yards' plane, and the hung
+     * nets on the mast lie above the upper yard.
      */
     @Test
     void ratlinesKeepClearOfTheClothAndTheJib() throws IOException {
@@ -269,7 +294,7 @@ class ArmedSloopLayoutTest {
         int drop = UPPER_YARD - LOWER_YARD;
         ClothGeometry cloth = new ClothGeometry(true, 3.5f, 3.5f, 4.5f, 4.5f, drop);
         float reach = SailShape.cap(drop, MAX_BELLY) * (1f + SailShape.BREATH) + FLUTTER * 1.5f;
-        double axisZ = MAST_Z + 0.5;
+        double axisZ = YARD_Z + 0.5;
         List<BlockPos> nets = new ArrayList<>();
         armed.forEach((p, s) -> {
             if (s.startsWith(RATLINES)) nets.add(p);
@@ -277,12 +302,13 @@ class ArmedSloopLayoutTest {
         assertEquals(24, nets.size(), "two runs of twelve");
         for (BlockPos p : nets) {
             assertNotEquals(MAST_X, p.getX(), "a net in the jib's plane at " + p);
-            if (p.getZ() == MAST_Z) {
-                // the top sloped link on the yard's end and the hung links: all above the upper yard
-                assertTrue(p.getY() > UPPER_YARD, "a net in the sail's plane below the upper yard at " + p);
+            assertNotEquals(YARD_Z, p.getZ(), "a net in the yards' plane at " + p);
+            if (armed.get(p).contains("kind=wall")) {
+                // the hung links on the mast: all above the upper yard
+                assertEquals(MAST_Z, p.getZ(), "a hung net off the mast at " + p);
+                assertTrue(p.getY() > UPPER_YARD, "a hung net below the upper yard at " + p);
                 continue;
             }
-            assertTrue(armed.get(p).contains("kind=slope"), "a hung net off the mast at " + p);
             // the slope rises north: at height t (0..1) in its cell the net is at z = p.z + 1 - t
             for (int k = 0; k <= 20; k++) {
                 double t = k / 20.0;
@@ -295,5 +321,60 @@ class ArmedSloopLayoutTest {
                         + ", the cloth reaches " + (axisZ + standoff) + ")");
             }
         }
+    }
+
+    /**
+     * TPL3, the yard rule: on all three sloops both yards stand in the column one block forward of the mast and make
+     * one square sail (F5a: only air between their middles, the jib's cleats outside), and the jib's head and clew
+     * cleats sit in that column right above the upper and below the lower yard, so the clew search from the head
+     * passes both yards (F5b) and a rope from the head to the bowsprit cleat makes a jib of {@link #JIB_AREA}.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"starter_sloop", "navy_sloop_armed", "pirate_sloop_armed"})
+    void theYardsStandForwardOfTheMastAndTheJibStillSets(String name) throws IOException {
+        Map<BlockPos, String> ship = blocks(name);
+        for (int y = 1; y <= MAST_TOP; y++) {
+            assertEquals("minecraft:spruce_log[axis=y]", ship.get(new BlockPos(MAST_X, y, MAST_Z)), "the mast is broken at y " + y);
+        }
+        List<int[]> yards = new ArrayList<>();
+        ship.forEach((p, s) -> {
+            if (s.startsWith("pirates_n_ships:yard")) {
+                assertEquals(YARD_Z, p.getZ(), "a yard off the column forward of the mast at " + p);
+                yards.add(new int[] {p.getX(), p.getY(), p.getZ()});
+            }
+        });
+        assertEquals(9 + 7, yards.size(), "yard blocks");
+        YardLookup yardCells = (x, y, z) -> {
+            String s = ship.get(new BlockPos(x, y, z));
+            if (s == null) return YardLookup.Cell.AIR;
+            if (s.startsWith("pirates_n_ships:yard")) return s.contains("axis=x") ? YardLookup.Cell.YARD_X : YardLookup.Cell.YARD_Z;
+            return s.equals("minecraft:spruce_log[axis=y]") ? YardLookup.Cell.MAST : YardLookup.Cell.OTHER;
+        };
+        List<SquareSail> sails = YardLinker.link(yardCells, yards, YardRules.DEFAULTS).sails();
+        assertEquals(1, sails.size(), "square sails " + sails);
+        SquareSail sail = sails.get(0);
+        assertEquals(List.of(UPPER_YARD, LOWER_YARD, MAST_X, YARD_Z),
+                List.of(sail.upper().y(), sail.lower().y(), sail.upper().middleX(), sail.upper().middleZ()));
+
+        CleatLookup cleatCells = (x, y, z) -> {
+            String s = ship.get(new BlockPos(x, y, z));
+            if (s == null) return CleatLookup.Cell.AIR;
+            if (s.startsWith("pirates_n_ships:cleat")) return CleatLookup.Cell.CLEAT;
+            if (s.startsWith("pirates_n_ships:yard")) return CleatLookup.Cell.YARD;
+            return s.equals("minecraft:spruce_log[axis=y]") ? CleatLookup.Cell.MAST : CleatLookup.Cell.OTHER;
+        };
+        assertEquals(3, ship.values().stream().filter(s -> s.startsWith("pirates_n_ships:cleat")).count(), "three cleats");
+        for (BlockPoint c : List.of(JIB_HEAD, JIB_CLEW)) {
+            BlockPos at = new BlockPos(c.x(), c.y(), c.z());
+            assertEquals("pirates_n_ships:cleat[face=wall,facing=north]", ship.get(at), "no wall cleat at " + at);
+            assertEquals("minecraft:spruce_log[axis=y]", ship.get(at.south()), "the cleat at " + at + " is not on the mast");
+        }
+        BlockPos tack = new BlockPos(JIB_TACK.x(), JIB_TACK.y(), JIB_TACK.z());
+        assertEquals("pirates_n_ships:cleat[face=floor,facing=north]", ship.get(tack), "no tack cleat at " + tack);
+        assertEquals("minecraft:spruce_log[axis=z]", ship.get(tack.below()), "the tack is not on the bowsprit");
+        assertEquals(JIB_CLEW, StayLinker.findClew(cleatCells, JIB_HEAD, JIB_TACK.y()), "the clew search does not pass the yards");
+        TriangularSail jib = StayLinker.sail(cleatCells, JIB_HEAD, JIB_TACK, StayRules.DEFAULTS);
+        assertNotNull(jib, "no jib between the head and the bowsprit cleat");
+        assertEquals(JIB_AREA, jib.area(), 1e-9);
     }
 }

@@ -13,13 +13,18 @@ public interface CleatLookup {
         AIR,
         /** A mast block ({@code #pirates_n_ships:masts}): allowed between the head cleat and the clew cleat. */
         MAST,
+        /**
+         * A yard block (any axis): allowed between the head cleat and the clew cleat (TPL3), so a jib's cleats may sit
+         * in a square sail's column above its upper and below its lower yard.
+         */
+        YARD,
         /** A cleat. */
         CLEAT,
         /** Anything else: it ends the search for a clew cleat. */
         OTHER;
 
         public boolean isOpen() {
-            return this == AIR || this == MAST;
+            return this == AIR || this == MAST || this == YARD;
         }
     }
 

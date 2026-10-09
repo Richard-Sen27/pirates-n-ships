@@ -149,6 +149,17 @@ class YardLinkerTest {
     }
 
     @Test
+    void jibCleatsAboveAndBelowTheYardsKeepTheSailButNotBetweenThem() {
+        // TPL3: the jib's head cleat above the upper yard and its clew cleat below the lower yard, in the yards' column
+        // (a cleat is "anything else" to the yard rule): the square sail stands
+        World outside = new World().set(0, 16, 0, Cell.OTHER).yardX(-1, 15, 3).yardX(-1, 10, 3).set(0, 9, 0, Cell.OTHER);
+        assertEquals(1, outside.link().sails().size());
+        // the rule between the yard middles is unchanged: a cleat there blocks the sail
+        World between = new World().yardX(-1, 15, 3).set(0, 12, 0, Cell.OTHER).yardX(-1, 10, 3);
+        assertEquals(0, between.link().sails().size());
+    }
+
+    @Test
     void aThirdYardInBetweenSplitsThePair() {
         World w = new World().yardX(-1, 16, 3).yardX(-2, 13, 5).yardX(-3, 10, 7);
         YardLinker.Linked l = w.link();

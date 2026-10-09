@@ -69,6 +69,17 @@ public final class ClientShipPoses {
     }
 
     /**
+     * Id of the client ship containing plot position {@code plotPos} (the server's {@code ShipBody#id}), or null. Same
+     * lookup as {@link #toWorld} ({@code ActiveSableCompanion#getContaining(Level, Position)} l.97), then
+     * {@code sublevel/SubLevel.java#getUniqueId} (l.210): the client allocates its sub-level under the server's id
+     * ({@code network/packets/tcp/ClientboundStartTrackingSubLevelPacket#handle}, l.69).
+     */
+    public static @Nullable java.util.UUID shipId(Level level, Vec3 plotPos) {
+        SubLevel sub = Sable.HELPER.getContaining(level, plotPos);
+        return sub instanceof ClientSubLevel c && !c.isRemoved() ? c.getUniqueId() : null;
+    }
+
+    /**
      * Packed light at plot block {@code plotPos} the way Sable lights block entities on ships
      * ({@code mixin/sublevel_render/BlockEntityRenderDispatcherMixin} l.24-30): vanilla's
      * {@code LevelRenderer#getLightColor} in the plot, its sky part scaled by {@code ClientSubLevel#scaleLightColor}

@@ -5,6 +5,8 @@ import com.richardsenger.piratesnships.sailing.force.SailTrim;
 import com.richardsenger.piratesnships.sailing.sail.SailAir;
 import com.richardsenger.piratesnships.sailing.sail.SailShape;
 import com.richardsenger.piratesnships.sailing.sail.SailVisualsConfig;
+import com.richardsenger.piratesnships.sailing.ship.BowFrame;
+import com.richardsenger.piratesnships.sailing.ship.ClientShipBows;
 import com.richardsenger.piratesnships.sailing.wind.ClientWind;
 import com.richardsenger.piratesnships.sailing.wind.WindSample;
 import com.richardsenger.piratesnships.ship.sable.ClientShipPoses;
@@ -28,6 +30,11 @@ import org.joml.Vector3d;
  * {@code transformPosition(Vector3dc, Vector3d)} and {@code orientation()} are {@code companion.math.Pose3dc}
  * defaults, sable-companion 1.6.0 l.25 and l.47). It is turned into the plot frame with the pose's orientation, where
  * {@link SailAir} reads how the sail draws.
+ *
+ * <p>On a ship the bow is the server's ({@link ClientShipBows}, VIS1c, looked up by the ship's id from
+ * {@link ClientShipPoses#shipId}), and the sail draws by the force model's braced-yard rule
+ * ({@link SailAir#fillBraced}); without it (on land, or before the bow arrived) the VIS1b guess from the motion stands
+ * in ({@link SailAir.Bow#read}).
  */
 final class SailAirTracker {
 
@@ -37,6 +44,7 @@ final class SailAirTracker {
     private final Vector3d wind = new Vector3d();
     private final Vector3d velocity = new Vector3d();
     private final Vector3d outAxis = new Vector3d();
+    private final SailAir.Bow bow = new SailAir.Bow();
 
     /** The look of a sail, created on its first frame (a stay's bow defaults to its tack). */
     SailShape.Look look(BlockEntity be, int side, int defaultBow) {
@@ -52,7 +60,8 @@ final class SailAirTracker {
      * Updates the sail's look for this frame and returns the side its cloth should belly to ({@link ClothSide}, with
      * the apparent wind).
      *
-     * @param bowX       x of the sail's bow axis in the plot frame (unit, horizontal; sign from the look's bow)
+     * @param bowX       x of the sail's own bow axis in the plot frame (unit, horizontal), for the guess when the ship's
+     *                   bow is unknown (sign from the look's bow)
      * @param bowZ       z of it
      * @param normalX    x of the cloth's normal in the plot frame (unit, horizontal)
      * @param normalZ    z of it
@@ -84,10 +93,13 @@ final class SailAirTracker {
             q.transformInverse(wind);
             q.transformInverse(velocity);
         }
-        look.bowSign = SailAir.bowSign(look.bowSign, velocity.x * bowX + velocity.z * bowZ);
-        double beta = SailAir.beta(wind.x, wind.z, bowX, bowZ, look.bowSign);
-        double square = SailAir.squareness(wind.x, wind.z, normalX, normalZ);
-        float fill = SailAir.fill(curve, beta, square);
+        BowFrame shipBow = pose == null ? null : ClientShipBows.INSTANCE.bow(ClientShipPoses.shipId(level, center));
+        bow.read(shipBow == null ? 0 : shipBow.dx(), shipBow == null ? 0 : shipBow.dz(), bowX, bowZ, look.bowSign,
+                velocity.x * bowX + velocity.z * bowZ);
+        look.bowSign = bow.guess;
+        double beta = SailAir.beta(wind.x, wind.z, bow.x, bow.z, bow.sign);
+        float fill = bow.known ? SailAir.fillBraced(curve, beta)
+                : SailAir.fill(curve, beta, SailAir.squareness(wind.x, wind.z, normalX, normalZ));
         float maxBelly = SailVisualsConfig.MAX_BELLY.get().floatValue();
         float flutter = SailVisualsConfig.FLUTTER_AMPLITUDE.get().floatValue();
         look.approach(SailShape.bellyTarget(trim, drop, speed, fill, maxBelly),

@@ -12,11 +12,21 @@ import com.richardsenger.piratesnships.sailing.force.EfficiencyCurve;
  * <p>All vectors are horizontal {@code (x, z)} in the frame the cloth is built in (the ship's plot frame on a ship, the
  * world on land). The apparent wind is a flow vector: the direction it blows <em>toward</em>, as {@code WindSample}.
  *
- * <p><b>The bow.</b> The client does not know where a ship's bow is (the helm decides it on the server). A square
- * sail's yards run across the ship, so its bow lies along the cloth's out axis, a stay runs along the ship with its tack
- * forward ({@code docs/guide.md}, Sails), so a stay's bow lies toward the tack. The sign comes from the ship's motion
- * ({@link #bowSign}): a ship that has moved clearly along that axis has its bow that way. Until then a square sail has
- * no known bow ({@code 0}) and reads the wind as coming from astern ({@link #beta}), a stay assumes its tack forward.
+ * <p><b>The bow (VIS1c).</b> The server sends each ship's bow (the helm decides it) to every client that renders the
+ * ship ({@code sailing.ship.ShipBowSync}), so a sail on a ship reads the apparent wind off the real bow
+ * ({@link Bow#read}): head to wind luffs from the first frame, and a push astern changes nothing. Only while the bow is
+ * unknown (a sail on land, a ship that is not ours, the frames before the payload arrives) does the guess of VIS1b
+ * stand in: a square sail's yards run across the ship, so its bow lies along the cloth's out axis, a stay runs along
+ * the ship with its tack forward ({@code docs/guide.md}, Sails), so a stay's bow lies toward the tack, and the sign comes
+ * from the ship's motion ({@link #bowSign}): a ship that has moved clearly along that axis has its bow that way. Until
+ * then a square sail has no known bow ({@code 0}) and reads the wind as coming from astern ({@link #beta}), a stay
+ * assumes its tack forward.
+ *
+ * <p><b>Braced yards (VIS1c).</b> With the bow known, whether the cloth draws follows the force model's own rule: the
+ * yards and booms count as trimmed to the optimum, so the cloth draws by its {@link EfficiencyCurve} drive at the
+ * apparent angle alone ({@link #fillBraced}), and a beam reach draws though the wind runs along the drawn cloth. The
+ * cloth itself is still drawn square to its yards (render only). Without a bow the guess keeps the VIS1b test
+ * ({@link #fill}): the drive times how squarely the wind meets the cloth.
  */
 public final class SailAir {
 
@@ -59,6 +69,57 @@ public final class SailAir {
             return -1;
         }
         return current;
+    }
+
+    /**
+     * How much a sail draws with its yards or boom braced to the optimum, as the force model assumes (VIS1c): its drive
+     * coefficient at {@code betaDeg} filled smoothly up to {@link #FULL_DRIVE}. None in the no-go zone and head to wind,
+     * where the drive is zero or negative; full on a beam reach and downwind.
+     */
+    public static float fillBraced(EfficiencyCurve curve, double betaDeg) {
+        return (float) smoothstep(curve.drive(betaDeg) / FULL_DRIVE);
+    }
+
+    /**
+     * Where a sail's bow lies, for {@link #beta}: the ship's synced bow when known, else the VIS1b guess along the sail's
+     * own bow axis. One per renderer, refilled per sail and frame (no allocation).
+     */
+    public static final class Bow {
+        /** The bow direction (plot frame, horizontal, unit) to pass to {@link #beta} with {@link #sign}. */
+        public double x;
+        public double z;
+        /** +1, -1, or 0 for an unknown sign (only without a known bow). */
+        public int sign;
+        /** Whether this is the ship's real bow (draw by {@link #fillBraced}) rather than a guess (by {@link #fill}). */
+        public boolean known;
+        /** The motion guess to keep for the next frame (the sail's {@code Look.bowSign}). */
+        public int guess;
+
+        /**
+         * @param shipDx            plot x of the ship's synced bow ({@code BowFrame.dx}), 0 with {@code shipDz} when unknown
+         * @param shipDz            plot z of it
+         * @param axisX             x of the sail's own bow axis (unit; a square sail's out axis, a stay's tack direction)
+         * @param axisZ             z of it
+         * @param guessed           the guessed sign so far
+         * @param velocityAlongAxis the sail's speed along that axis [blocks/s], for the guess
+         */
+        public Bow read(int shipDx, int shipDz, double axisX, double axisZ, int guessed, double velocityAlongAxis) {
+            if (shipDx != 0 || shipDz != 0) {
+                known = true;
+                x = shipDx;
+                z = shipDz;
+                sign = 1;
+                double along = shipDx * axisX + shipDz * axisZ;
+                guess = along > 0.5 ? 1 : along < -0.5 ? -1 : guessed; // what the guess should have found
+            } else {
+                known = false;
+                x = axisX;
+                z = axisZ;
+                guess = bowSign(guessed, velocityAlongAxis);
+                sign = guess;
+            }
+            return this;
+        }
     }
 
     /**

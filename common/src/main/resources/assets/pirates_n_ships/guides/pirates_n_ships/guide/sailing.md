@@ -67,9 +67,12 @@ Server config `sailing.sails.rope_lines`, `rope_sag`.
 - Yards run across the ship, stays run along it. Directions are only visual: the crew is assumed to trim the sails optimally.
 
 **Sails in the wind.** The cloth shows how a sail meets the wind you feel on board. A sail that draws bellies out to
-leeward, deeper the stronger the wind, and breathes slowly. A sail that luffs, with the wind running along its cloth
-or coming from too close ahead, hangs slack and shakes. Half sail bellies less, a furled sail stays a bundle, and in a
-calm the cloth just sags a little. It is only a look: the force comes from the rules above. Client config
+leeward, deeper the stronger the wind, and breathes slowly. On a ship the cloth knows where the bow is and follows the
+same rule as the force, with the crew bracing the yards: it draws whenever the sail drives the ship, a square sail on a
+beam reach too, and luffs (hangs slack and shakes) in the no-go zone and head to wind, from the moment the ship is
+assembled. On land, where nobody trims it, a sail luffs when the wind runs along its cloth. Half sail bellies less, a
+furled sail stays a bundle, and in a calm the cloth just sags a little. It is only a look: the force comes from the
+rules above. Client config
 `sail_visuals.enabled`, `max_belly`, `flutter_amplitude`, `segments`.
 
 ## Sail winch

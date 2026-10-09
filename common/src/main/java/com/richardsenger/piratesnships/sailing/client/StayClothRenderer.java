@@ -79,6 +79,9 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
     private float[] ny = new float[0];
     private float[] nz = new float[0];
 
+    /** The cloth's tint for this frame's sail (SAIL2: the head cleat's dye), as 0..255 channels. */
+    private int tintR = 255, tintG = 255, tintB = 255;
+
     public StayClothRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -99,6 +102,10 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
             beam(buffers.getBuffer(RenderType.entityCutoutNoCull(ROPE_TEXTURE)), last, new Vector3f(), tack, ROPE_HALF, light, overlay);
         }
         TriangleCloth g = be.cloth();
+        int tint = be.clothTint(); // SAIL2: the head's synced dye
+        tintR = (tint >> 16) & 0xFF;
+        tintG = (tint >> 8) & 0xFF;
+        tintB = tint & 0xFF;
         if (g != null && g.drop() > 0) {
             double now = level.getGameTime() + (double) partialTick;
             SailTrim trim = state.getValue(CleatBlock.TRIM);
@@ -130,7 +137,7 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
                     float r = 0.04f + 0.1f * (1f - shown) * Math.min(1f, g.drop() / 4f);
                     Vector3f off = normal.mul(be.side * 0.05f, new Vector3f());
                     beam(buffers.getBuffer(RenderType.entityCutoutNoCull(CLOTH_TEXTURE)), last, new Vector3f(off),
-                            new Vector3f(gTack).add(off), r, light, overlay);
+                            new Vector3f(gTack).add(off), r, tint, light, overlay);
                 }
             }
         }
@@ -320,12 +327,17 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
     }
 
     private void gridVertex(VertexConsumer vc, PoseStack.Pose p, int k, float u, float v, int light, int overlay) {
-        vc.addVertex(p, px[k], py[k], pz[k]).setColor(255, 255, 255, 255).setUv(u, v).setOverlay(overlay).setLight(light)
+        vc.addVertex(p, px[k], py[k], pz[k]).setColor(tintR, tintG, tintB, 255).setUv(u, v).setOverlay(overlay).setLight(light)
                 .setNormal(p, nx[k], ny[k], nz[k]);
     }
 
     /** A square beam of half width {@code half} from {@code from} to {@code to} (four sides, open ends). */
     static void beam(VertexConsumer vc, PoseStack.Pose p, Vector3f from, Vector3f to, float half, int light, int overlay) {
+        beam(vc, p, from, to, half, 0xFFFFFF, light, overlay);
+    }
+
+    /** {@link #beam} with a vertex colour {@code tint} (RGB; the furled cloth's dye, SAIL2). */
+    static void beam(VertexConsumer vc, PoseStack.Pose p, Vector3f from, Vector3f to, float half, int tint, int light, int overlay) {
         Vector3f d = new Vector3f(to).sub(from);
         float len = d.length();
         if (len < 1.0e-4f) return;
@@ -339,16 +351,17 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
             Vector3f c0 = corner[k], c1 = corner[(k + 1) % 4];
             Vector3f n = new Vector3f(c0).add(c1).normalize();
             float u0 = k * 0.25f, u1 = u0 + 0.25f;
-            vertex(vc, p, new Vector3f(from).add(c0), u0, 0f, n, light, overlay);
-            vertex(vc, p, new Vector3f(from).add(c1), u1, 0f, n, light, overlay);
-            vertex(vc, p, new Vector3f(to).add(c1), u1, len, n, light, overlay);
-            vertex(vc, p, new Vector3f(to).add(c0), u0, len, n, light, overlay);
+            vertex(vc, p, new Vector3f(from).add(c0), u0, 0f, n, tint, light, overlay);
+            vertex(vc, p, new Vector3f(from).add(c1), u1, 0f, n, tint, light, overlay);
+            vertex(vc, p, new Vector3f(to).add(c1), u1, len, n, tint, light, overlay);
+            vertex(vc, p, new Vector3f(to).add(c0), u0, len, n, tint, light, overlay);
         }
     }
 
-    private static void vertex(VertexConsumer vc, PoseStack.Pose p, Vector3f at, float u, float v, Vector3f n, int light, int overlay) {
-        vc.addVertex(p, at.x, at.y, at.z).setColor(255, 255, 255, 255).setUv(u, v).setOverlay(overlay).setLight(light)
-                .setNormal(p, n.x, n.y, n.z);
+    private static void vertex(VertexConsumer vc, PoseStack.Pose p, Vector3f at, float u, float v, Vector3f n, int tint, int light,
+                               int overlay) {
+        vc.addVertex(p, at.x, at.y, at.z).setColor((tint >> 16) & 0xFF, (tint >> 8) & 0xFF, tint & 0xFF, 255).setUv(u, v)
+                .setOverlay(overlay).setLight(light).setNormal(p, n.x, n.y, n.z);
     }
 
     /** Sails are big: draw them from further away than the default 64 blocks. */

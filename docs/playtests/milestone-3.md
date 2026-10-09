@@ -265,6 +265,42 @@ step 4. Same ship and config as 6c.
 7. **On land.** As 6c step 10, unchanged: with the wind along the cloth the sails shake, across it they belly.
 Report screenshots of 1, 3 and 4 from the deck, with the flag in the frame.
 
+## 6e. SAIL2: dyed sails and banners
+Render and interaction. Setup: on land, a square sail of two 5-wide yards 4 apart (a fence mast between the middle
+blocks), and a triangular sail (head cleat, tack, clew) next to it; later the same rig on a ship. Survival mode, so
+items are spent. Default config.
+1. **Every dye, square sail.** Set full sail. Use each of the 16 dyes in turn on a block of the upper yard (not the
+   middle one too). Expected: one dye spent each time, the whole cloth takes the colour at once over the canvas weave
+   (seams and reef bands still visible), action bar "Sail dyed <colour>"; the same dye twice says "already" and is not
+   spent; white gives the plain natural canvas; a dye on the lower yard says it heads no sail.
+2. **Every dye, stay sail.** The same on the head cleat. Expected: the triangle takes the colour, the frayed foot too;
+   the stay rope keeps its rope colour; the furled bundle along the stay shows the dye.
+3. **Furled and reefed looks.** With a dyed square sail, cycle furled, half, full. Expected: the bundle under the yard,
+   the half sail and the full sail all show the dye.
+4. **Banner.** Make a blue banner with a red saltire ("cross", diagonal) and a yellow border. Use it on the 5×4 sail's
+   upper yard. Expected: banner spent, "Banner hung on the sail"; the cloth turns blue and the saltire and border stand
+   upright on the cloth, filling it from the upper yard to just above the frayed foot, edge to edge across; nothing
+   floats off the cloth, no flicker (z-fighting) from a few blocks away or from 64 blocks away.
+5. **Both faces.** Walk round the sail. Expected: on land the design reads right from the south for a yard running
+   east-west (from the east for one running north-south) and mirrored from the other side; both faces show it.
+6. **Rippling.** `/pirates wind set 270 8`, then a calm (`/pirates wind set 270 0`) and wind along the cloth. Expected:
+   the design follows the belly, breathing and flutter of the cloth exactly, never cutting through it.
+7. **Reefed and furled with a banner.** Half sail: the upper half of the design (the saltire's crossing near the lower
+   edge), the frayed foot bare. Furled: a blue bundle, no pattern.
+8. **Refusals and taking back.** A dye on the bannered sail is refused; a second banner is refused; sneak-use the yard
+   with an empty hand: the same banner (same patterns) comes back. A banner on a sail of 3-wide upper and 1-wide lower
+   yard is refused as too small; a banner on the stay sail's head cleat says triangular sails take dye only.
+9. **Yard changes.** With a banner up, add a block to one end of both yards (6 wide). Expected: the banner stays shown;
+   breaking the middle upper yard block drops the banner as an item.
+10. **On a ship.** Rig the same 5×4 dyed-and-bannered sail on a ship, assemble, sail in a moderate wind, reef and furl,
+    disassemble. Expected: colours and banner never drop or change; on the ship the design reads right seen from
+    ahead of the bow; the force and the crew's sail orders are unchanged (compare speed with an undyed sail).
+11. **Toggles.** `sailing.sails.dyeing = false`: dyes do nothing on sails (clicking cycles the trim) and dyed sails show
+    the canvas after the next sail update (re-place a yard block or relog). `sailing.sails.banners = false`: banners are
+    not taken, hung ones are hidden after the next update but sneak-use still returns them. Client
+    `sail_visuals.banner_layers = false`: only the blue base colour, no pattern.
+Report screenshots of 1 (a few colours), 4, 5 (both faces), 7 and 10.
+
 ## Tuning questions (server config, section in brackets)
 | Question | Config value |
 |---|---|

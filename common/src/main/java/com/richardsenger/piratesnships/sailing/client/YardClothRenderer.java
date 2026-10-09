@@ -8,25 +8,33 @@ import com.richardsenger.piratesnships.sailing.block.YardBlockEntity;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
 import com.richardsenger.piratesnships.sailing.force.SailTypes;
 import com.richardsenger.piratesnships.sailing.sail.ClothGeometry;
+import com.richardsenger.piratesnships.sailing.sail.SailBanner;
 import com.richardsenger.piratesnships.sailing.sail.SailShape;
 import com.richardsenger.piratesnships.sailing.sail.SailVisualsConfig;
 import com.richardsenger.piratesnships.sailing.sail.SquareSail;
+import com.richardsenger.piratesnships.sailing.ship.BowFrame;
+import com.richardsenger.piratesnships.sailing.ship.ClientShipBows;
 import com.richardsenger.piratesnships.sailing.wind.ClientWind;
 import com.richardsenger.piratesnships.sailing.wind.WindSample;
 import com.richardsenger.piratesnships.ship.sable.ClientShipPoses;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.Sheets;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BannerPatternLayers;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
+
+import java.util.List;
 
 /**
  * Draws the cloth of a square sail (docs/design.md §5.2, rule F5a) from its head's {@link YardBlockEntity}: a
@@ -44,6 +52,15 @@ import org.joml.Vector3f;
  * ({@code sublevel/render/dispatcher/VanillaSubLevelRenderDispatcher#renderBlockEntities} l.219-252,
  * {@code mixinhelpers/sublevel_render/vanilla/VanillaSubLevelBlockEntityRenderer#renderSingleBE}). The cloth is built
  * in the head's local block space; only the downwind side needs the ship's orientation ({@link ClientShipPoses}).
+ *
+ * <p><b>Dye and banner (SAIL2).</b> The cloth, hanging or furled, is drawn with the head's synced tint
+ * ({@link YardBlockEntity#clothTint}) as vertex colour over the canvas weave. A banner shown on the sail
+ * ({@link YardBlockEntity#shownLayers}) has its pattern layers drawn over the cloth's own grid, as FLG2 draws them on
+ * the flag ({@code FlagClothRenderer}): each layer's sprite from vanilla's banner atlas ({@link Sheets#getBannerMaterial})
+ * tinted with its dye, in vanilla's banner pattern render type ({@link Sheets#bannerSheet()}: translucent, no culling,
+ * no depth write), mapped upright and scaled to the cloth by {@link SailBanner}, lifted a hair off both faces along the
+ * cloth's normals ({@link #LAYER_LIFT}, a little more per layer), so it ripples and bellies with the cloth and the back
+ * shows it mirrored. Client {@code sail_visuals.banner_layers} off: the base colour only.
  */
 public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
 
@@ -57,6 +74,9 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
     private static final float BEAM_HALF = 3f / 16f;
     /** Cells per block of cloth (texture: one copy per block) without VIS1b; the moving cloth refines each cell. */
     private static final int CELLS_PER_BLOCK = 2;
+    /** How far the first pattern layer floats off each face of the cloth, and how much more each further layer [blocks]. */
+    static final float LAYER_LIFT = 0.01f;
+    static final float LAYER_STEP = 0.002f;
 
     /** Per-sail looks and the apparent wind (VIS1b). */
     private final SailAirTracker air = new SailAirTracker();
@@ -67,6 +87,10 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
     private float[] nx = new float[0];
     private float[] ny = new float[0];
     private float[] nz = new float[0];
+    /** The cloth's tint for this frame's sail (SAIL2), as 0..255 channels. */
+    private int tintR = 255, tintG = 255, tintB = 255;
+    /** The size of the grid {@link #cloth} filled last. */
+    private int gridRows, gridCols;
 
     public YardClothRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -96,11 +120,18 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
         pose.translate(0.5f, 0.5f, 0.5f);
         PoseStack.Pose p = pose.last();
         float bottom = shown * g.drop();
+        int tint = be.clothTint();
+        tintR = (tint >> 16) & 0xFF;
+        tintG = (tint >> 8) & 0xFF;
+        tintB = tint & 0xFF;
         if (bottom > 0.05f) {
             cloth(buffers, p, g, be, look, bottom, now, light, overlay);
+            if (SailVisualsConfig.BANNER_LAYERS.get()) {
+                design(buffers, p, g, be, bottom, light, overlay);
+            }
         }
         if (shown < 0.999f) {
-            bundle(buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), p, g, be.side, 1f - shown, light, overlay);
+            bundle(buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), p, g, be.side, 1f - shown, tint, light, overlay);
         }
         pose.popPose();
     }
@@ -179,6 +210,8 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
             }
         }
         normals(rows, cols);
+        gridRows = rows;
+        gridCols = cols;
         int footFrom = rows;
         while (footFrom > 0 && SailFoot.yardFootRow(footFrom - 1, rows, rowsPerBlock, bottom)) {
             footFrom--;
@@ -264,12 +297,82 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
     }
 
     private void vertex(VertexConsumer vc, PoseStack.Pose p, int k, float u, float v, int light, int overlay) {
-        vc.addVertex(p, px[k], py[k], pz[k]).setColor(255, 255, 255, 255).setUv(u, v).setOverlay(overlay).setLight(light)
+        vc.addVertex(p, px[k], py[k], pz[k]).setColor(tintR, tintG, tintB, 255).setUv(u, v).setOverlay(overlay).setLight(light)
                 .setNormal(p, nx[k], ny[k], nz[k]);
     }
 
+    /**
+     * The shown banner's pattern layers over the grid {@link #cloth} just filled (SAIL2, see the class comment): every
+     * cell of the cloth down to {@link SailBanner#clipDepth} (the last row cut there), on both faces, the same texels at
+     * the same places. The design reads right from the face toward the ship's bow ({@link SailBanner#flipAcross}).
+     */
+    private void design(MultiBufferSource buffers, PoseStack.Pose p, ClothGeometry g, YardBlockEntity be, float bottom,
+                        int light, int overlay) {
+        List<BannerPatternLayers.Layer> layers = be.shownLayers();
+        float clip = SailBanner.clipDepth(bottom, SailFoot.shown(bottom));
+        if (layers.isEmpty() || clip <= 0.01f) {
+            return;
+        }
+        float designDepth = SailBanner.designDepth(g.drop(), SailFoot.shown(g.drop()));
+        BowFrame bow = be.getLevel() == null ? null
+                : ClientShipBows.INSTANCE.bow(ClientShipPoses.shipId(be.getLevel(), Vec3.atCenterOf(be.getBlockPos())));
+        boolean flip = SailBanner.flipAcross(g.alongX(), bow == null ? 0 : bow.dx(), bow == null ? 0 : bow.dz());
+        int rows = gridRows, cols = gridCols, stride = cols + 1;
+        VertexConsumer vc = buffers.getBuffer(Sheets.bannerSheet());
+        for (int l = 0; l < layers.size(); l++) {
+            BannerPatternLayers.Layer layer = layers.get(l);
+            TextureAtlasSprite sprite = Sheets.getBannerMaterial(layer.pattern()).sprite();
+            int c = layer.color().getTextureDiffuseColor();
+            int r = (c >> 16) & 0xFF, gr = (c >> 8) & 0xFF, b = c & 0xFF;
+            float lift = LAYER_LIFT + LAYER_STEP * l;
+            for (int i = 0; i < rows; i++) {
+                float d0 = bottom * i / rows, d1 = bottom * (i + 1) / rows;
+                if (d0 >= clip) {
+                    break;
+                }
+                float w = d1 > clip ? (clip - d0) / (d1 - d0) : 1f;
+                float v0 = sprite.getV(SailBanner.patternV(d0, designDepth));
+                float v1 = sprite.getV(SailBanner.patternV(d0 + (d1 - d0) * w, designDepth));
+                for (int j = 0; j < cols; j++) {
+                    float u0 = sprite.getU(SailBanner.patternU((float) j / cols, flip));
+                    float u1 = sprite.getU(SailBanner.patternU((float) (j + 1) / cols, flip));
+                    int a = i * stride + j, bb = a + 1, d = a + stride, cc = d + 1;
+                    // front: the grid's own winding; back: the same corners the other way round
+                    designVertex(vc, p, a, a, 0f, lift, u0, v0, r, gr, b, light, overlay);
+                    designVertex(vc, p, bb, bb, 0f, lift, u1, v0, r, gr, b, light, overlay);
+                    designVertex(vc, p, bb, cc, w, lift, u1, v1, r, gr, b, light, overlay);
+                    designVertex(vc, p, a, d, w, lift, u0, v1, r, gr, b, light, overlay);
+                    designVertex(vc, p, a, d, w, -lift, u0, v1, r, gr, b, light, overlay);
+                    designVertex(vc, p, bb, cc, w, -lift, u1, v1, r, gr, b, light, overlay);
+                    designVertex(vc, p, bb, bb, 0f, -lift, u1, v0, r, gr, b, light, overlay);
+                    designVertex(vc, p, a, a, 0f, -lift, u0, v0, r, gr, b, light, overlay);
+                }
+            }
+        }
+    }
+
+    /**
+     * A design vertex between grid points {@code k0} and {@code k1} at weight {@code w}, moved {@code off} along the
+     * cloth's normal there (the normal turned to that face).
+     */
+    private void designVertex(VertexConsumer vc, PoseStack.Pose p, int k0, int k1, float w, float off, float u, float v,
+                              int r, int g, int b, int light, int overlay) {
+        float x = px[k0] + (px[k1] - px[k0]) * w, y = py[k0] + (py[k1] - py[k0]) * w, z = pz[k0] + (pz[k1] - pz[k0]) * w;
+        float mx = nx[k0] + (nx[k1] - nx[k0]) * w, my = ny[k0] + (ny[k1] - ny[k0]) * w, mz = nz[k0] + (nz[k1] - nz[k0]) * w;
+        float len = (float) Math.sqrt(mx * mx + my * my + mz * mz);
+        if (len > 1.0e-6f) {
+            mx /= len;
+            my /= len;
+            mz /= len;
+        }
+        float s = Math.signum(off);
+        vc.addVertex(p, x + mx * off, y + my * off, z + mz * off).setColor(r, g, b, 255).setUv(u, v).setOverlay(overlay)
+                .setLight(light).setNormal(p, mx * s, my * s, mz * s);
+    }
+
     /** The furled part of the cloth: a flattened roll under the upper yard, thicker the more cloth is gathered. */
-    private static void bundle(VertexConsumer vc, PoseStack.Pose p, ClothGeometry g, int side, float gathered, int light, int overlay) {
+    private static void bundle(VertexConsumer vc, PoseStack.Pose p, ClothGeometry g, int side, float gathered, int tint, int light,
+                               int overlay) {
         float r = (0.05f + 0.1f * gathered * Math.min(1f, g.drop() / 4f)) * Math.min(1f, (g.upperNeg() + g.upperPos()) / 3f + 0.4f);
         float a0 = -g.upperNeg() + 0.15f;
         float a1 = g.upperPos() - 0.15f;
@@ -278,22 +381,23 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
         float y0 = y1 - 1.6f * r;
         float n0 = side * 0.04f - r;
         float n1 = side * 0.04f + r;
-        box(vc, p, g, a0, a1, y0, y1, n0, n1, light, overlay);
+        box(vc, p, g, a0, a1, y0, y1, n0, n1, tint, light, overlay);
     }
 
     private static void box(VertexConsumer vc, PoseStack.Pose p, ClothGeometry g, float a0, float a1, float y0, float y1,
-                            float n0, float n1, int light, int overlay) {
+                            float n0, float n1, int tint, int light, int overlay) {
         float len = a1 - a0;
         // bottom, two long sides, top (hidden by the yard mostly), two ends
-        quad(vc, p, g, new float[][] {{a0, y0, n0}, {a1, y0, n0}, {a1, y0, n1}, {a0, y0, n1}}, len, light, overlay);
-        quad(vc, p, g, new float[][] {{a0, y1, n0}, {a1, y1, n0}, {a1, y0, n0}, {a0, y0, n0}}, len, light, overlay);
-        quad(vc, p, g, new float[][] {{a0, y0, n1}, {a1, y0, n1}, {a1, y1, n1}, {a0, y1, n1}}, len, light, overlay);
-        quad(vc, p, g, new float[][] {{a0, y1, n1}, {a1, y1, n1}, {a1, y1, n0}, {a0, y1, n0}}, len, light, overlay);
-        quad(vc, p, g, new float[][] {{a0, y0, n0}, {a0, y0, n1}, {a0, y1, n1}, {a0, y1, n0}}, 0.25f, light, overlay);
-        quad(vc, p, g, new float[][] {{a1, y0, n1}, {a1, y0, n0}, {a1, y1, n0}, {a1, y1, n1}}, 0.25f, light, overlay);
+        quad(vc, p, g, new float[][] {{a0, y0, n0}, {a1, y0, n0}, {a1, y0, n1}, {a0, y0, n1}}, len, tint, light, overlay);
+        quad(vc, p, g, new float[][] {{a0, y1, n0}, {a1, y1, n0}, {a1, y0, n0}, {a0, y0, n0}}, len, tint, light, overlay);
+        quad(vc, p, g, new float[][] {{a0, y0, n1}, {a1, y0, n1}, {a1, y1, n1}, {a0, y1, n1}}, len, tint, light, overlay);
+        quad(vc, p, g, new float[][] {{a0, y1, n1}, {a1, y1, n1}, {a1, y1, n0}, {a0, y1, n0}}, len, tint, light, overlay);
+        quad(vc, p, g, new float[][] {{a0, y0, n0}, {a0, y0, n1}, {a0, y1, n1}, {a0, y1, n0}}, 0.25f, tint, light, overlay);
+        quad(vc, p, g, new float[][] {{a1, y0, n1}, {a1, y0, n0}, {a1, y1, n0}, {a1, y1, n1}}, 0.25f, tint, light, overlay);
     }
 
-    private static void quad(VertexConsumer vc, PoseStack.Pose p, ClothGeometry g, float[][] c, float uLength, int light, int overlay) {
+    private static void quad(VertexConsumer vc, PoseStack.Pose p, ClothGeometry g, float[][] c, float uLength, int tint, int light,
+                             int overlay) {
         Vector3f a = local(g, c[0][0], c[0][1], c[0][2]);
         Vector3f b = local(g, c[1][0], c[1][1], c[1][2]);
         Vector3f cc = local(g, c[2][0], c[2][1], c[2][2]);
@@ -302,10 +406,10 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
         if (n.lengthSquared() < 1.0e-12f) return;
         n.normalize();
         float u1 = Math.min(1f, Math.max(0.1f, uLength));
-        vertex(vc, p, a, 0f, 0f, n, light, overlay);
-        vertex(vc, p, b, u1, 0f, n, light, overlay);
-        vertex(vc, p, cc, u1, 0.25f, n, light, overlay);
-        vertex(vc, p, d, 0f, 0.25f, n, light, overlay);
+        vertex(vc, p, a, 0f, 0f, n, tint, light, overlay);
+        vertex(vc, p, b, u1, 0f, n, tint, light, overlay);
+        vertex(vc, p, cc, u1, 0.25f, n, tint, light, overlay);
+        vertex(vc, p, d, 0f, 0.25f, n, tint, light, overlay);
     }
 
     /** Cloth coordinates (along the yard, up, across the yard) to block-local coordinates around the head's center. */
@@ -313,8 +417,9 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
         return g.alongX() ? new Vector3f(along, up, across) : new Vector3f(across, up, along);
     }
 
-    private static void vertex(VertexConsumer vc, PoseStack.Pose p, Vector3f at, float u, float v, Vector3f n, int light, int overlay) {
-        vc.addVertex(p, at.x, at.y, at.z).setColor(255, 255, 255, 255).setUv(u, v).setOverlay(overlay).setLight(light)
+    private static void vertex(VertexConsumer vc, PoseStack.Pose p, Vector3f at, float u, float v, Vector3f n, int tint, int light,
+                               int overlay) {
+        vc.addVertex(p, at.x, at.y, at.z).setColor((tint >> 16) & 0xFF, (tint >> 8) & 0xFF, tint & 0xFF, 255).setUv(u, v).setOverlay(overlay).setLight(light)
                 .setNormal(p, n.x, n.y, n.z);
     }
 

@@ -10,6 +10,7 @@
   ],
   "client": [
     "MixinCamera",
+    "MixinLiquidBlockRenderer",
     "MixinScreenEffectRenderer",
     "MixinSectionCompiler"
   ],

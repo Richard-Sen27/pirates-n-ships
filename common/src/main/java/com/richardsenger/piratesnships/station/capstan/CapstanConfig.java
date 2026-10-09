@@ -17,6 +17,13 @@ public final class CapstanConfig {
     public static final ConfigValue<Integer> MIN_RAISE_TICKS = S.intRange("min_raise_ticks", 20, 1, 1200,
             "Shortest work time of a raise order in ticks; otherwise it lasts as long as the capstan needs to wind the chain in "
                     + "(anchor_chain.raise_speed), and the crew member carries on while the anchor is still coming up");
+    public static final ConfigValue<Boolean> ANIMATION = S.bool("animation", true,
+            "The capstan's bars turn while a crew member works it, and the crew member walks round the drum pushing "
+                    + "them (off = the bars stand still and the crew member pushes on the spot)");
+    public static final ConfigValue<Double> TURN_DEGREES_PER_TICK = S.doubleRange("turn_degrees_per_tick", 6.0, 0.5, 45.0,
+            "How fast the capstan's bars, and the crew member walking them, go round the drum while it works, in degrees per tick");
+    public static final ConfigValue<Double> WALK_RADIUS = S.doubleRange("walk_radius", 1.1, 0.6, 2.0,
+            "Distance from the capstan's axis, in blocks, at which the crew member walks round it");
 
     private CapstanConfig() {
     }

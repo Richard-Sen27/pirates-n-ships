@@ -3,6 +3,7 @@ package com.richardsenger.piratesnships.sailing;
 import com.richardsenger.piratesnships.core.config.ConfigSection;
 import com.richardsenger.piratesnships.core.config.ConfigValue;
 import com.richardsenger.piratesnships.core.config.ModConfigs;
+import com.richardsenger.piratesnships.sailing.ballast.BallastRule;
 import com.richardsenger.piratesnships.sailing.force.HullDampingModel;
 import com.richardsenger.piratesnships.sailing.force.RightingModel;
 import com.richardsenger.piratesnships.sailing.force.SailingParams;
@@ -134,7 +135,7 @@ public final class SailingConfig {
             "Length of the anchor chain in blocks: how far the falling anchor can run out from the hawse. No ground this far below the hawse: the anchor can't be dropped");
 
     private static final ConfigSection STABILITY = ModConfigs.server("stability",
-            "How floating ships stay upright: the hull's righting moment and the limit on how far sails heel a ship (SH1)");
+            "How floating ships stay upright: the hull's righting moment, the limit on how far sails heel a ship (SH1) and the shipwright's ballast (TRM1)");
     public static final ConfigValue<Boolean> STABILITY_ENABLED = STABILITY.bool("enabled", R.enabled(),
             "Floating ships right themselves like a real hull and sails can't heel them past max_heel_degrees. "
                     + "Off: only the blocks' own buoyancy keeps ships upright (tender, they heel far and may capsize)");
@@ -154,6 +155,14 @@ public final class SailingConfig {
             "Cap of the heeling moment of sails and keel per unit of ship mass, after sailing_runtime.sail_heel_factor (strong winds heel no further)");
     public static final ConfigValue<Double> MAX_HEEL_DEGREES = STABILITY.doubleRange("max_heel_degrees", R.maxHeelDegrees(), 1.0, 90.0,
             "Heel in degrees at which the sails stop heeling a ship further (they spill their wind over the last 10 degrees)");
+    public static final ConfigValue<Boolean> AUTO_BALLAST = STABILITY.bool("auto_ballast", BallastRule.Params.DEFAULTS.enabled(),
+            "Ships float level as built: a virtual ballast, worked out from the blocks when the ship is assembled or loaded and "
+                    + "again when blocks are added or removed, cancels the trim and heel of the build itself. Cargo, flood water, "
+                    + "damage and crew still trim a ship. Off: a heavy stern castle sits the ship stern down");
+    public static final ConfigValue<Double> AUTO_BALLAST_MAX_PER_MASS = STABILITY.doubleRange("auto_ballast_max_per_mass",
+            BallastRule.Params.DEFAULTS.maxPerMass(), 0.0, 64.0,
+            "Most the ballast can make good, as the distance in blocks between the build's centre of mass and its centre of "
+                    + "buoyancy (the torque is capped at this x mass x gravity), so an absurd build still lists");
 
     private SailingConfig() {
     }
@@ -190,6 +199,11 @@ public final class SailingConfig {
     public static RightingModel.Params stabilityParams() {
         return new RightingModel.Params(STABILITY_ENABLED.get(), RIGHTING_FACTOR.get(), PITCH_RIGHTING_FACTOR.get(), MAX_RIGHTING_DEGREES.get(),
                 MAX_METACENTRIC_HEIGHT.get(), RIGHTING_DAMPING.get(), MAX_HEEL_TORQUE_PER_MASS.get(), MAX_HEEL_DEGREES.get());
+    }
+
+    /** Current ballast tuning from the server config (TRM1). */
+    public static BallastRule.Params ballastParams() {
+        return new BallastRule.Params(AUTO_BALLAST.get(), AUTO_BALLAST_MAX_PER_MASS.get());
     }
 
     /** Current sailing tuning from the server config. */

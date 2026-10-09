@@ -154,3 +154,42 @@ at least one side, a captain's whistle, and one crew member (`/pirates crew spaw
 
 Tell us: does the push read as working the capstan from beside it, or does it need the crew member to walk round the
 drum? Which side does he stand on, and do his hands reach the bars?
+
+# Playtest: the capstan in motion (work package CAP2)
+
+The capstan's bars and drumhead are now drawn by a block entity renderer and turn while a crew member works the
+capstan; the crew member walks round the drum pushing them (design.md §6 "Capstan in motion"). Reference:
+`art/renders/capstan.png` (the assembled block, unchanged look). Setup as for CRW3 above: an assembled ship afloat over
+ground within the chain's reach, a capstan on deck with free deck on at least one side, a whistle, one crew member
+manning the capstan. Config defaults: `crew_stations.capstan.animation = true`, `turn_degrees_per_tick = 6` (one turn
+in 3 s), `walk_radius = 1.1`.
+
+## Steps
+1. **Look at rest.** Look at the capstan from all sides, and at the capstan item in the inventory and in the hand.
+   - **Expected:** the block and the item look as before (base, iron ring, whelped drum, drumhead, four bars with iron
+     tips); the bars sit square to the block; no flicker between drum and drumhead; the bars do not vanish at the
+     screen edge.
+2. **Weigh anchor.** Drop the anchor by hand, wait for it to hold, then order "Weigh anchor".
+   - **Expected:** the bars and drumhead turn smoothly clockwise seen from above (no stutter between ticks) while the
+     anchor comes up; the crew member steps out from his spot and walks round the drum the same way at the bars' pace,
+     leaning into them (`capstan_push`), facing the way he walks. He passes through rails or blocks beside the capstan
+     (the seat is an entity without collision: neighbouring blocks never stop the walk). When the anchor is stowed
+     the bars run on to the next quarter turn and stop square to the block; the crew member walks back along the
+     shorter arc to his spot (at most 1.5 s) and stands idle.
+3. **Drop anchor.** Order "Drop anchor".
+   - **Expected:** for the 2 s of work the bars turn the other way (anticlockwise from above) and the crew member walks
+     round anticlockwise; then the anchor runs out, the bars settle square and he walks back to his spot.
+4. **A player at the capstan.** Release the crew, use the capstan by hand to drop and raise the anchor.
+   - **Expected:** as before CAP2: the anchor drops and comes up, the bars stand still, the player stays where he is.
+5. **Leaving mid-raise.** Weigh anchor with the crew member, then "Release crew" half-way.
+   - **Expected:** he gets off where he stands; the bars stop (settle square) although the anchor still comes up.
+6. **On a moving, heeling ship.** Weigh anchor while the ship swings on its chain.
+   - **Expected:** the walking crew member stays on the deck and moves with the ship; no jitter or lag behind it.
+7. **Off switch.** Set `crew_stations.capstan.animation = false`, repeat step 2.
+   - **Expected:** the bars stand still and the crew member pushes on the spot facing the capstan, as in CRW3.
+8. **Rate.** Set `turn_degrees_per_tick = 12`, repeat step 2.
+   - **Expected:** bars and crew member go round twice as fast and stay together.
+
+Tell us: does the crew member keep in step with the bars (the bar he pushes stays in front of him), or does he drift
+ahead or behind? Do his hands reach a bar, or does he push air beyond the bar ends (the bars reach 0.69 blocks from the
+axis, he walks at 1.1)? Is 3 s a turn the right pace?

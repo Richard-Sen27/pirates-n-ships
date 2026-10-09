@@ -35,6 +35,8 @@ public class StationSeat extends Entity {
     private static final int MAX_IDLE_TICKS = 20;
 
     private BlockPos station = BlockPos.ZERO;
+    /** CAP2: where the seat was put (plot position), so a seat that walks round its station can come back to it. */
+    private @Nullable Vec3 home;
     private int idleTicks;
 
     public StationSeat(EntityType<? extends StationSeat> type, Level level) {
@@ -48,6 +50,7 @@ public class StationSeat extends Entity {
         StationSeat seat = new StationSeat(StationContent.STATION_SEAT.get(), level);
         seat.station = station.immutable();
         seat.moveTo(spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, 0, 0);
+        seat.home = seat.position();
         level.addFreshEntity(seat);
         return seat;
     }
@@ -75,6 +78,14 @@ public class StationSeat extends Entity {
 
     public BlockPos station() {
         return station;
+    }
+
+    /**
+     * Where the seat stands when nothing moves it (plot position, the spot it was spawned at). The capstan (CAP2) walks
+     * its seat round the drum while it works and brings it back here.
+     */
+    public Vec3 home() {
+        return home != null ? home : position();
     }
 
     @Override
@@ -148,10 +159,17 @@ public class StationSeat extends Entity {
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         NbtUtils.readBlockPos(tag, "station").ifPresent(p -> station = p);
+        if (tag.contains("home_x")) {
+            home = new Vec3(tag.getDouble("home_x"), tag.getDouble("home_y"), tag.getDouble("home_z"));
+        }
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
         tag.put("station", NbtUtils.writeBlockPos(station));
+        Vec3 h = home();
+        tag.putDouble("home_x", h.x);
+        tag.putDouble("home_y", h.y);
+        tag.putDouble("home_z", h.z);
     }
 }

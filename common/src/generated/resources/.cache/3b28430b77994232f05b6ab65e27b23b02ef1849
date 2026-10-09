@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-09T13:59:02.547484	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-09T14:27:40.631081	Block states and models: pirates_n_ships
 c189a7833975a61cf2c7c8fd326d27a32969cb9d assets/pirates_n_ships/blockstates/bilge_pump.json
 66226c130d39627104000bbfa87d4776c87b9ed0 assets/pirates_n_ships/blockstates/boarding_plank.json
 52e053a4f7334e9a78798b4b4b9a2ad80087f3d5 assets/pirates_n_ships/blockstates/brig_bars.json
@@ -40,7 +40,7 @@ c5ac1bd7624a36a4b6b4ab37906b56c61e277091 assets/pirates_n_ships/models/block/map
 673050e46ea3809409391b40574b18f1f9fff734 assets/pirates_n_ships/models/item/bilge_pump.json
 7b937a3b6f02e6abfce5d9e23f88171f665e804f assets/pirates_n_ships/models/item/brig_bars.json
 f7fb3b356386931f9fe39ebac39ce5984c685200 assets/pirates_n_ships/models/item/cannon.json
-6e2d9e4e9e945102afe0356dd536dd6bd2314eb5 assets/pirates_n_ships/models/item/capstan.json
+7ae19ac9ad3984829840f147038c72f98925e175 assets/pirates_n_ships/models/item/capstan.json
 e762fd96625dae60f3cbfdcb33e82b84c2f742ab assets/pirates_n_ships/models/item/cargo_barrel.json
 724e2310f488c077c19808000615dc5c2378241c assets/pirates_n_ships/models/item/cargo_crate.json
 1cbb2c694333c101d0be3073a93dbdcaf8387875 assets/pirates_n_ships/models/item/chain_shot.json

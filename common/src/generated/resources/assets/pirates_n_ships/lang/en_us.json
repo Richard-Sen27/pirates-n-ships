@@ -3033,6 +3033,8 @@
   "pirates_n_ships.configuration.wave_effects": "Wave Effects",
   "pirates_n_ships.configuration.wave_effects.camera_sway": "Camera Sway",
   "pirates_n_ships.configuration.wave_effects.camera_sway.tooltip": "The camera rolls with the ship while you are aboard",
+  "pirates_n_ships.configuration.wave_effects.camera_sway_ease_ticks": "Camera Sway Ease Ticks",
+  "pirates_n_ships.configuration.wave_effects.camera_sway_ease_ticks.tooltip": "Ticks the camera sway takes to fade in when you board or land and out when you leave the ship (0 = instant)",
   "pirates_n_ships.configuration.wave_effects.camera_sway_fraction": "Camera Sway Fraction",
   "pirates_n_ships.configuration.wave_effects.camera_sway_fraction.tooltip": "Fraction of the ship's roll the camera follows (1 = the full roll)",
   "pirates_n_ships.configuration.wave_effects.foam": "Foam",

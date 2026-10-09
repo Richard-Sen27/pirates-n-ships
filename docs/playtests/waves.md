@@ -241,6 +241,10 @@ where they come from; turn the sloop beam on). Please send a short clip of steps
 4. **Camera sway.** Client config `wave_effects.camera_sway = true`, in the storm.
    - **Expected:** the view tilts only as the deck tilts, in the same uneven rhythm; with the ship lying still the view
      is still too.
+   - **CAM1 (jumps and fades):** same settings, `wave_effects.camera_sway_ease_ticks` 5. Jump on the heeled deck: the
+     view keeps the deck's tilt through the jump and does not snap on landing. Walk off the gangway onto land: the tilt
+     eases out over about a quarter second. Jump over the rail into the sea: it fades out as you hit the water. Climb
+     the ratlines: it stays. Board again: it eases in. With `camera_sway_ease_ticks = 0` it switches at once.
 5. **A low hatch in a storm with heave.** Step 6 of WV1 again, with the default `waves.heave = true`.
    - **Expected:** water still comes in at the bigger crests, but less than with `waves.heave = false`, since the hull
      now rises with the crest (the GameTest with the hull held still took 5 blocks in 24 s; with heave on an earlier

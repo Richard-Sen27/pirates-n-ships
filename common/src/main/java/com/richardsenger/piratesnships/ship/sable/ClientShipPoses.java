@@ -40,21 +40,12 @@ public final class ClientShipPoses {
      * (l.449): the sub-level the entity stands on, else the one containing its vehicle. Sable sets the tracked
      * sub-level in its {@code Entity.move} redirect ({@code mixin/entity/entity_sublevel_collision/EntityMixin} l.109
      * to 180; it runs for the local player on the client) and clears it when the entity leaves the deck, e.g. while
-     * jumping; the vehicle part is updated every tick ({@code EntityMixin#sable$tickInject}, l.219).
+     * jumping; the vehicle part is updated every tick ({@code EntityMixin#sable$tickInject}, l.219). For the local
+     * player's ship kept through jumps and climbs use {@link ClientAboard} (CAM1).
      */
     public static boolean onShip(Entity entity) {
         SubLevel sub = Sable.HELPER.getTrackingOrVehicleSubLevel(entity);
         return sub instanceof ClientSubLevel c && !c.isRemoved();
-    }
-
-    /**
-     * Plot-to-world rotation (copy) at render time of the client ship the entity stands on or rides in, or null
-     * (WV1 camera sway). Same lookup as {@link #onShip}: {@code ActiveSableCompanion#getTrackingOrVehicleSubLevel}
-     * (l.449) and {@code ClientSubLevel#renderPose(float)} (l.313).
-     */
-    public static @Nullable Quaterniond shipOrientation(Entity entity, float partialTick) {
-        SubLevel sub = Sable.HELPER.getTrackingOrVehicleSubLevel(entity);
-        return sub instanceof ClientSubLevel c && !c.isRemoved() ? new Quaterniond(c.renderPose(partialTick).orientation()) : null;
     }
 
     /**

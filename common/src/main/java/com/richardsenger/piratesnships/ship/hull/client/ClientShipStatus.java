@@ -1,6 +1,8 @@
 package com.richardsenger.piratesnships.ship.hull.client;
 
 import com.richardsenger.piratesnships.ship.hull.net.ShipStatusPayload;
+import com.richardsenger.piratesnships.ship.sable.AboardRule;
+import com.richardsenger.piratesnships.ship.sable.ClientAboard;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -15,24 +17,23 @@ import org.jetbrains.annotations.Nullable;
  *   on it), and for {@link #ABOARD_GRACE_TICKS} after. On the client Sable drops that tracking on every tick the
  *   player does not touch the ship from above: mid-jump, on a ladder, falling. So while the player is
  *   <i>holding</i> (climbing, or in the air and not in water) the aboard time is carried on, up to
- *   {@link #MAX_HOLD_TICKS}; in water or on other ground the grace runs out and the HUD hides.</li>
+ *   {@link #MAX_HOLD_TICKS}; in water or on other ground the grace runs out and the HUD hides. The rule is
+ *   {@link AboardRule}, shared with the camera sway through {@link ClientAboard} (CAM1).</li>
  * </ul>
  * The heading shown eases toward the received one, so the needle turns smoothly between the updates.
  */
 public final class ClientShipStatus {
 
     /** After Sable last saw the player on a ship (1.5 s): the HUD stays this long, then hides. */
-    public static final int ABOARD_GRACE_TICKS = 30;
+    public static final int ABOARD_GRACE_TICKS = AboardRule.ABOARD_GRACE_TICKS;
     /** Longest climb or flight (20 s) that carries the aboard time on without touching the ship. */
-    public static final int MAX_HOLD_TICKS = 400;
+    public static final int MAX_HOLD_TICKS = AboardRule.MAX_HOLD_TICKS;
     /** Share of the remaining heading difference the needle turns per tick. */
     static final double EASE = 0.25;
 
     private static @Nullable ShipStatusPayload status;
     private static long ticks;
     private static long receivedAt = Long.MIN_VALUE / 2;
-    private static long aboardAt = Long.MIN_VALUE / 2;
-    private static long touchedAt = Long.MIN_VALUE / 2;
     private static double heading, previousHeading;
 
     private ClientShipStatus() {
@@ -54,18 +55,20 @@ public final class ClientShipStatus {
     }
 
     /**
-     * Client tick end: advances time, notes whether the player is aboard and eases the needle.
+     * Feeds the shared {@link ClientAboard} rule (no ship identity, never leaving) and ends the tick; for tests. The
+     * client goes through {@link ClientAboard#tick} and {@link #tick()}.
      *
      * @param onShip  Sable reports the player standing on or riding in a ship this tick
      * @param holding the player is climbing, or in the air and not in water (Sable cannot see them on the ship then)
      */
     public static void tick(boolean onShip, boolean holding) {
+        ClientAboard.update(onShip ? Boolean.TRUE : null, holding, false);
+        tick();
+    }
+
+    /** Client tick end, after {@link ClientAboard} was ticked: advances time and eases the needle. */
+    public static void tick() {
         ticks++;
-        if (onShip) {
-            aboardAt = touchedAt = ticks;
-        } else if (holding && ticks - aboardAt <= ABOARD_GRACE_TICKS && ticks - touchedAt <= MAX_HOLD_TICKS) {
-            aboardAt = ticks;
-        }
         previousHeading = heading;
         if (status != null) {
             heading = ease(heading, status.heading(), EASE);
@@ -74,7 +77,7 @@ public final class ClientShipStatus {
 
     /** The status to draw, or null when there is none, it is stale or the player is not aboard. */
     public static @Nullable ShipStatusPayload shown() {
-        if (status == null || !fresh() || ticks - aboardAt > ABOARD_GRACE_TICKS) {
+        if (status == null || !fresh() || !ClientAboard.aboard()) {
             return null;
         }
         return status;
@@ -92,7 +95,8 @@ public final class ClientShipStatus {
     public static void reset() {
         status = null;
         ticks = 0;
-        receivedAt = aboardAt = touchedAt = Long.MIN_VALUE / 2;
+        receivedAt = Long.MIN_VALUE / 2;
+        ClientAboard.reset();
         heading = previousHeading = 0;
     }
 

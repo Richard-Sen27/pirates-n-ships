@@ -55,6 +55,8 @@ public final class HazardConfig {
             "The camera rolls with the ship while you are aboard");
     public static final ConfigValue<Double> CAMERA_SWAY_FRACTION = WAVE_EFFECTS.doubleRange("camera_sway_fraction", 0.5, 0.0, 1.0,
             "Fraction of the ship's roll the camera follows (1 = the full roll)");
+    public static final ConfigValue<Integer> CAMERA_SWAY_EASE_TICKS = WAVE_EFFECTS.intRange("camera_sway_ease_ticks", 5, 0, 100,
+            "Ticks the camera sway takes to fade in when you board or land and out when you leave the ship (0 = instant)");
     public static final ConfigValue<Boolean> SPRAY = WAVE_EFFECTS.bool("spray", true,
             "Spray and a splash at the bow when it digs into a wave in rough or stormy seas");
     // Foam streaks on the water (WD1, read through sailing.effects.SeaEffectsConfig#foam)

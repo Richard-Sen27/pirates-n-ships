@@ -55,7 +55,9 @@ public class HostileTargetGoal extends TargetGoal {
             if (d > max * max || d >= bestSq) continue;
             // canAttack: the check canContinueToUse makes (no players on peaceful); without it the target would be
             // picked here and dropped again on the next tick, every scan
-            if (!mob.canAttack(e) || !mob.getSensing().hasLineOfSight(e) || !seafarer.attacksOnSight(e)) continue;
+            // the line of sight (a ray through the level) last: PERF1 measured it as most of the scan's cost, and a
+            // ship's own crew and its mates are never attacked anyway
+            if (!mob.canAttack(e) || !seafarer.attacksOnSight(e) || !mob.getSensing().hasLineOfSight(e)) continue;
             best = e;
             bestSq = d;
         }

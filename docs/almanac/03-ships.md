@@ -94,6 +94,7 @@ Add leather, and {item:pirates_n_ships:nails}**nails**: each repair takes 4.
 Only pieces of the same ship join, of up to 200 blocks each.
 
 ## Fittings
+show_me: ship_identity | Show me: her name and figurehead
 illustration: figurehead_mermaid
 A {item:pirates_n_ships:nameplate}**name board** (any sign and a gold nugget make three) fixed on her side shows her name once she is launched and named; boards side by side join, and the name grows across the row.
 
@@ -114,6 +115,7 @@ The {item:pirates_n_ships:figurehead_eagle}**eagle** and the {item:pirates_n_shi
 {recipe:figurehead_skull}
 
 ## Railings
+show_me: railings | Show me: railings and bulwarks
 An {item:pirates_n_ships:oak_railing}**oak railing** runs along a block's edge; click again to rail another edge.
 
 {recipe:oak_railing}

@@ -284,6 +284,91 @@ class PonderStoryboardsTest {
         }
     }
 
+    /** PND4: the nets the scene strings are nets the item would string, and the fan is the game's fan. */
+    @Test
+    void theRatlineNetsAreTheOnesTheRulesString() {
+        com.richardsenger.piratesnships.ship.rigging.RatlineNetRules.Point hub = RatlineNetsScene.hoopRing();
+        // MastHoopBlock#ring facing west: 0.3 off the mast's west face (x 4), half way up the hoop's block
+        assertEquals(3.7, hub.x(), 1e-9);
+        assertEquals(6.5, hub.y(), 1e-9);
+        double maxLength = com.richardsenger.piratesnships.ship.rigging.RiggingConfig.NET_MAX_LENGTH.get();
+        double minPitch = com.richardsenger.piratesnships.ship.rigging.RiggingConfig.NET_MIN_PITCH.get();
+        for (net.minecraft.core.BlockPos plate : RatlineNetsScene.FAN) {
+            assertEquals(com.richardsenger.piratesnships.ship.rigging.RatlineNetRules.Verdict.OK,
+                    com.richardsenger.piratesnships.ship.rigging.RatlineNetRules.check(RatlineNetsScene.plateRing(plate), hub,
+                            maxLength, minPitch), "the net from " + plate);
+        }
+        assertTrue(RatlineNetsScene.FAN.size()
+                <= com.richardsenger.piratesnships.ship.rigging.RiggingConfig.NET_MAX_STRANDS.get());
+        assertEquals(com.richardsenger.piratesnships.ship.rigging.RiggingConfig.NET_MAX_SPREAD.get(), RatlineNetsScene.MAX_SPREAD, 1e-9);
+        RatlineNetsScene.Fan fan = RatlineNetsScene.fan(RatlineNetsScene.FAN);
+        assertEquals(3, fan.order().size());
+        assertEquals(RatlineNetsScene.PLATE, fan.order().get(1), "the middle chainplate is the fan's middle strand");
+        assertTrue(fan.joinNext()[0] && fan.joinNext()[1] && !fan.joinNext()[2], "the three strands form one net");
+        // the text quotes the defaults
+        assertTrue(ShipSceneText.Nets.LINE.english().contains(Math.round(minPitch) + "°"));
+        assertTrue(ShipSceneText.Nets.LINE.english().contains(Math.round(maxLength) + " blocks"));
+        assertEquals(5, com.richardsenger.piratesnships.ship.rigging.RiggingConfig.NET_MAX_STRANDS.get());
+        assertTrue(ShipSceneText.Nets.FAN.english().contains("five"));
+    }
+
+    /** PND4: the railing states the scene ends with are what the railing's post rule gives that gunwale. */
+    @Test
+    void theRailingsPostsAreTheRulesPosts() {
+        java.util.Set<net.minecraft.core.Direction> west = java.util.EnumSet.of(net.minecraft.core.Direction.WEST);
+        // the run's first block: the port continues it to the north, its neighbour to the south
+        assertEquals(java.util.Set.of(), com.richardsenger.piratesnships.ship.decor.railing.RailingRules.posts(west,
+                (towards, edge) -> edge == net.minecraft.core.Direction.WEST));
+        // alone, before the port: end posts at both ends (north-west keyed NORTH, south-west keyed WEST)
+        assertEquals(java.util.EnumSet.of(net.minecraft.core.Direction.NORTH, net.minecraft.core.Direction.WEST),
+                com.richardsenger.piratesnships.ship.decor.railing.RailingRules.posts(west, (towards, edge) -> false));
+        // the last block after the second click: west and south edges, the corner post and the south edge's end post
+        java.util.Set<net.minecraft.core.Direction> corner = java.util.EnumSet.of(net.minecraft.core.Direction.WEST,
+                net.minecraft.core.Direction.SOUTH);
+        assertEquals(java.util.EnumSet.of(net.minecraft.core.Direction.WEST, net.minecraft.core.Direction.SOUTH),
+                com.richardsenger.piratesnships.ship.decor.railing.RailingRules.posts(corner,
+                        (towards, edge) -> towards == net.minecraft.core.Direction.NORTH && edge == net.minecraft.core.Direction.WEST));
+        // the gun port's lid and the railing port: the guns stand inboard and face out
+        assertEquals(RailingsScene.GUN_PORT.south(), RailingsScene.BOW_GUN);
+        assertEquals(RailingsScene.PORT.east(), RailingsScene.PORT_GUN);
+    }
+
+    /** PND4: the board shows the name a ranked captain stores (HON1), and the leaners stand where RAIL5 puts them. */
+    @Test
+    void theIdentityAndTheLeanAreTheGames() {
+        assertEquals("Capt. Black Gull", ShipIdentityScene.TITLED);
+        assertEquals(ShipIdentityScene.TITLED, com.richardsenger.piratesnships.ship.decor.NameplateText.clean(ShipIdentityScene.TITLED),
+                "a name the board keeps as it is");
+        // a leaner in a west-railed cell stands LEAN_OFFSET west of its centre, on its floor
+        net.minecraft.core.BlockPos cell = OnDeckScene.LEAN_CELLS.get(1);
+        Vec3 at = OnDeckScene.leanPoint(cell);
+        assertEquals(cell.getX() + 0.5 - com.richardsenger.piratesnships.crew.lean.LeanRules.LEAN_OFFSET, at.x, 1e-9);
+        assertEquals(cell.getY(), at.y, 1e-9);
+        assertTrue(com.richardsenger.piratesnships.crew.lean.RailSpots.apart(OnDeckScene.LEAN_CELLS.get(0), OnDeckScene.LEAN_CELLS.get(1)));
+        // the boarding net's chainplates: on one railed edge, a block or more apart, within the default length
+        var layout = com.richardsenger.piratesnships.ship.rigging.BoardingNetRules.layout(OnDeckScene.NET_A.below(),
+                java.util.EnumSet.of(net.minecraft.core.Direction.WEST), OnDeckScene.NET_B.below(),
+                java.util.EnumSet.of(net.minecraft.core.Direction.WEST),
+                com.richardsenger.piratesnships.ship.rigging.RiggingConfig.BOARDING_NET_LENGTH.get());
+        assertEquals(com.richardsenger.piratesnships.ship.rigging.BoardingNetRules.Verdict.OK, layout.verdict());
+        assertEquals(net.minecraft.core.Direction.WEST, layout.outboard());
+        assertEquals(com.richardsenger.piratesnships.ship.rigging.RiggingConfig.BOARDING_NET_HOLD.get(), OnDeckScene.HOLD_TICKS);
+        assertEquals(3, com.richardsenger.piratesnships.ship.rigging.RiggingConfig.BOARDING_NET_CUT_HITS.get());
+        assertTrue(CrewSceneText.OnDeck.CUT.english().startsWith("Three"));
+    }
+
+    /** PND4: every line of the new scenes stays short (one or two lines of a text box). */
+    @Test
+    void thePnd4LinesAreShort() {
+        for (SceneText text : SceneText.ALL) {
+            if (!java.util.Set.of("ratline_nets", "railings", "ship_identity", "on_deck").contains(text.scene())) continue;
+            for (SceneLine line : text.lines()) {
+                assertTrue(line.english().length() <= 72, line.key() + " is " + line.english().length() + " characters");
+            }
+        }
+        assertTrue(ShipSceneText.Cargo.TRIM.english().length() <= 90);
+    }
+
     @Test
     void aFullCrateWeighsSomeFortyPlanks() {
         // Sable's plank weighs 0.5 kpg (CargoMass); ShipSceneText.Cargo.FULL says "some forty planks"

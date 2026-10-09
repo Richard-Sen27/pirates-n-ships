@@ -267,6 +267,95 @@ class PonderSchematicsTest {
         assertTrue(stateAt(oars, BlockPos.containing(OarsScene.PORT_SPOT).below()).startsWith("minecraft:spruce_planks"), "the deck");
     }
 
+    /** PND4: the blocks each new scene's storyboard works on stand where it expects them. */
+    @Test
+    void pnd4ScenesHaveTheirBlocksWhereTheScenesExpectThem() throws IOException {
+        size(ShipSceneText.RATLINE_NETS, 9, 9, 9);
+        CompoundTag nets = schematic(ShipSceneText.RATLINE_NETS);
+        for (BlockPos plate : RatlineNetsScene.FAN) {
+            assertEquals(MOD + ":chainplate[face=floor,facing=east,waterlogged=false]", stateAt(nets, plate));
+            assertTrue(stateAt(nets, plate.below()).startsWith(MOD + ":oak_railing["), "the rail under " + plate);
+        }
+        assertEquals(MOD + ":mast_hoop[facing=west,waterlogged=false]", stateAt(nets, RatlineNetsScene.HOOP));
+        assertEquals("minecraft:oak_log[axis=y]", stateAt(nets, RatlineNetsScene.HOOP.east()), "the hoop's mast");
+        assertEquals(MOD + ":crows_nest[pole=false,waterlogged=false]", stateAt(nets, RatlineNetsScene.NEST));
+        assertEquals(RatlineNetsScene.HOOP.east().above(), RatlineNetsScene.NEST, "the nest one block over the hoop (RL3)");
+        for (int y = 1; y <= RatlineNetsScene.HOOP.getY(); y++) {
+            assertEquals("minecraft:oak_log[axis=y]", stateAt(nets, 4, y, 4), "mast " + y);
+        }
+        // the yard rule: a mast in a scene carries its yards one block forward, never in its own column; this rig has none
+        assertNoYardInTheMastColumn(nets, 4, 4);
+        // every strand's line runs through free cells (RatlineNetItem refuses a blocked line)
+        for (BlockPos plate : RatlineNetsScene.FAN) {
+            for (var cell : com.richardsenger.piratesnships.ship.rigging.RatlineNetRules.netCells(
+                    RatlineNetsScene.plateRing(plate), RatlineNetsScene.hoopRing())) {
+                BlockPos c = new BlockPos(cell.x(), cell.y(), cell.z());
+                if (!c.equals(plate) && !c.equals(RatlineNetsScene.HOOP)) {
+                    assertEquals(null, stateAt(nets, c), "the net's cell " + c + " from " + plate + " is free");
+                }
+            }
+        }
+
+        size(ShipSceneText.RAILINGS, 11, 7, 11);
+        CompoundTag rails = schematic(ShipSceneText.RAILINGS);
+        assertTrue(stateAt(rails, RailingsScene.GATE).startsWith(MOD + ":oak_railing_gate[facing=west,hinge=left,open=false"));
+        assertEquals(MOD + ":oak_railing_port[facing=west,waterlogged=false]", stateAt(rails, RailingsScene.PORT));
+        assertTrue(stateAt(rails, RailingsScene.PORT_GUN).startsWith(MOD + ":cannon[facing=west,load=empty,part=front"));
+        assertTrue(stateAt(rails, RailingsScene.PORT_GUN.east()).startsWith(MOD + ":cannon[facing=west,load=empty,part=rear"));
+        assertTrue(stateAt(rails, RailingsScene.BOW_GUN).startsWith(MOD + ":cannon[facing=north,load=empty,part=front"));
+        assertTrue(stateAt(rails, RailingsScene.BOW_GUN.south()).startsWith(MOD + ":cannon[facing=north,load=empty,part=rear"));
+        assertEquals(RailingsScene.GUN_PORT, RailingsScene.BOW_GUN.north(), "the bow gun stands inboard of its gun port");
+        assertEquals(RailingsScene.PORT, RailingsScene.PORT_GUN.west(), "the port gun stands inboard of the railing port");
+        assertEquals(MOD + ":oak_bulwark_port[facing=north,open=false,propped=false,waterlogged=false]",
+                stateAt(rails, RailingsScene.GUN_PORT));
+        assertEquals("minecraft:lantern[hanging=false,waterlogged=false]", stateAt(rails, RailingsScene.LANTERN));
+        assertTrue(stateAt(rails, RailingsScene.LANTERN.below()).contains("post_nw=true"), "the lantern stands on a post");
+        assertEquals(MOD + ":swivel_gun[load=empty,mount=west,piece=yoke,waterlogged=false]", stateAt(rails, RailingsScene.SWIVEL));
+        assertTrue(stateAt(rails, RailingsScene.SWIVEL.below()).startsWith(MOD + ":oak_railing["), "the swivel's railing");
+        for (BlockPos p : RailingsScene.RUN) {
+            assertTrue(stateAt(rails, p).startsWith(MOD + ":oak_railing[") && stateAt(rails, p).contains("west=true"), "run " + p);
+        }
+        assertEquals(null, stateAt(rails, RailingsScene.GANGWAY), "the gangway's cell is free");
+        assertEquals("minecraft:stone_bricks", stateAt(rails, RailingsScene.GANGWAY.west().below()), "the pier under its tip");
+
+        size(ShipSceneText.SHIP_IDENTITY, 11, 6, 11);
+        CompoundTag identity = schematic(ShipSceneText.SHIP_IDENTITY);
+        assertTrue(stateAt(identity, ShipIdentityScene.HELM).startsWith(MOD + ":helm[facing=south"));
+        for (BlockPos b : ShipIdentityScene.BOARDS) {
+            assertEquals(MOD + ":nameplate[facing=west,left=false,right=false,waterlogged=false]", stateAt(identity, b));
+            assertEquals("minecraft:spruce_planks", stateAt(identity, b.east()), "the hull behind the board at " + b);
+        }
+        // the master is the board on the viewer's left (NameBoardRow: facing west, the left is north)
+        assertEquals(net.minecraft.core.Direction.NORTH,
+                com.richardsenger.piratesnships.ship.decor.NameBoardRow.left(net.minecraft.core.Direction.WEST));
+        assertEquals(ShipIdentityScene.BOARDS.get(1).north(), ShipIdentityScene.BOARDS.get(0));
+        assertEquals(MOD + ":figurehead_mermaid[facing=north]", stateAt(identity, ShipIdentityScene.FIGUREHEAD));
+        assertEquals("minecraft:spruce_planks", stateAt(identity, ShipIdentityScene.FIGUREHEAD.south()), "the bow block");
+
+        size(CrewSceneText.ON_DECK, 11, 7, 11);
+        CompoundTag deck = schematic(CrewSceneText.ON_DECK);
+        for (BlockPos plate : new BlockPos[]{OnDeckScene.NET_A, OnDeckScene.NET_B}) {
+            assertEquals(MOD + ":chainplate[face=floor,facing=north,waterlogged=false]", stateAt(deck, plate));
+            assertTrue(stateAt(deck, plate.below()).startsWith(MOD + ":oak_railing["), "the rail under " + plate);
+        }
+        for (BlockPos cell : OnDeckScene.LEAN_CELLS) {
+            assertTrue(stateAt(deck, cell).contains("west=true"), "the leaner's railing at " + cell);
+            assertEquals("minecraft:spruce_planks", stateAt(deck, cell.below()), "the deck under " + cell);
+            assertEquals(null, stateAt(deck, cell.above()), "headroom over " + cell);
+        }
+        assertEquals("minecraft:spruce_planks", stateAt(deck, BlockPos.containing(OnDeckScene.BOAT).below()), "the longboat");
+        assertEquals(null, stateAt(deck, BlockPos.containing(OnDeckScene.DECK)), "room on deck for the hand");
+    }
+
+    /** No yard stands in the mast's own column (the yard rule, design.md §3.4). */
+    private static void assertNoYardInTheMastColumn(CompoundTag structure, int mastX, int mastZ) {
+        ListTag size = structure.getList("size", Tag.TAG_INT);
+        for (int y = 0; y < size.getInt(1); y++) {
+            String s = stateAt(structure, mastX, y, mastZ);
+            assertTrue(s == null || !s.startsWith(MOD + ":yard["), "a yard in the mast's column at y " + y);
+        }
+    }
+
     private static String stateAt(CompoundTag structure, BlockPos pos) {
         return stateAt(structure, pos.getX(), pos.getY(), pos.getZ());
     }

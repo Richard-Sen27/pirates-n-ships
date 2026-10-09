@@ -572,6 +572,11 @@
         "key": "pirates_n_ships.almanac.ships.p13.heading"
        },
        {
+        "type": "show_me",
+        "scene": "pirates_n_ships:ship_identity",
+        "label": "pirates_n_ships.almanac.ships.p13.show_me1"
+       },
+       {
         "type": "illustration",
         "texture": "pirates_n_ships:textures/almanac/figurehead_mermaid.png",
         "x": 0.05,
@@ -634,6 +639,11 @@
        {
         "type": "heading",
         "key": "pirates_n_ships.almanac.ships.p16.heading"
+       },
+       {
+        "type": "show_me",
+        "scene": "pirates_n_ships:railings",
+        "label": "pirates_n_ships.almanac.ships.p16.show_me1"
        },
        {
         "type": "text",
@@ -1158,6 +1168,11 @@
         "key": "pirates_n_ships.almanac.sailing.p15.heading"
        },
        {
+        "type": "show_me",
+        "scene": "pirates_n_ships:ratline_nets",
+        "label": "pirates_n_ships.almanac.sailing.p15.show_me1"
+       },
+       {
         "type": "spotlight",
         "item": "pirates_n_ships:ratline_net"
        },
@@ -1374,6 +1389,11 @@
        {
         "type": "heading",
         "key": "pirates_n_ships.almanac.crew.p3.heading"
+       },
+       {
+        "type": "show_me",
+        "scene": "pirates_n_ships:on_deck",
+        "label": "pirates_n_ships.almanac.crew.p3.show_me1"
        },
        {
         "type": "text",
@@ -3852,12 +3872,14 @@
   "pirates_n_ships.almanac.ships.p12.text3": "**3.** Use the toolkit on the broken piece, and she is whole.",
   "pirates_n_ships.almanac.ships.p12.text4": "Only pieces of the same ship join, of up to 200 blocks each.",
   "pirates_n_ships.almanac.ships.p13.heading": "Fittings",
+  "pirates_n_ships.almanac.ships.p13.show_me1": "Show me: her name and figurehead",
   "pirates_n_ships.almanac.ships.p13.text1": "A {item:pirates_n_ships:nameplate}**name board** (any sign and a gold nugget make three) fixed on her side shows her name once she is launched and named; boards side by side join, and the name grows across the row.",
   "pirates_n_ships.almanac.ships.p14.heading": "Figureheads",
   "pirates_n_ships.almanac.ships.p14.text1": "A figurehead hangs on the bow block you click and looks toward you. The {item:pirates_n_ships:figurehead_mermaid}**mermaid** and the {item:pirates_n_ships:figurehead_lion}**lion**:",
   "pirates_n_ships.almanac.ships.p15.heading": "More figureheads",
   "pirates_n_ships.almanac.ships.p15.text1": "The {item:pirates_n_ships:figurehead_eagle}**eagle** and the {item:pirates_n_ships:figurehead_skull}**skull**:",
   "pirates_n_ships.almanac.ships.p16.heading": "Railings",
+  "pirates_n_ships.almanac.ships.p16.show_me1": "Show me: railings and bulwarks",
   "pirates_n_ships.almanac.ships.p16.text1": "An {item:pirates_n_ships:oak_railing}**oak railing** runs along a block's edge; click again to rail another edge.",
   "pirates_n_ships.almanac.ships.p16.text2": "A {item:pirates_n_ships:oak_railing_port}**railing port** is the gap in it: cannons fire through it, boarders cross there.",
   "pirates_n_ships.almanac.ships.p16.text3": "A {item:pirates_n_ships:oak_railing_gate}**railing gate** swings open like a fence gate, and a lantern hangs from any railing post.",
@@ -3939,6 +3961,7 @@
   "pirates_n_ships.almanac.sailing.p14.list1_3": "Click a ratline to add the next one to its run. Sneak to place against the clicked side.",
   "pirates_n_ships.almanac.sailing.p14.text2": "A net needs something to rest on: break one and those hanging from it fall too.",
   "pirates_n_ships.almanac.sailing.p15.heading": "Ratline nets",
+  "pirates_n_ships.almanac.sailing.p15.show_me1": "Show me: stringing ratline nets",
   "pirates_n_ships.almanac.sailing.p15.text1": "A {item:pirates_n_ships:ratline_net}**ratline net** runs from a {item:pirates_n_ships:chainplate}**chainplate** on the rail to a {item:pirates_n_ships:mast_hoop}**mast hoop** up the mast. Use the net on one, then on the other; the line between them must be clear.",
   "pirates_n_ships.almanac.sailing.p15.text2": "Walk into the net and hold forward or jump to climb; sneak to hold on. String several chainplates to one hoop and the space between them is netted too.",
   "pirates_n_ships.almanac.sailing.p16.heading": "Chainplate and hoop",
@@ -3972,6 +3995,7 @@
   "pirates_n_ships.almanac.crew.p2.text2": "Bring your ship within about 32 blocks of the port first: the new hand walks straight aboard.",
   "pirates_n_ships.almanac.crew.p2.text3": "Every hand needs a free {item:pirates_n_ships:hammock}**hammock**. The desk refuses a hand you cannot bunk.",
   "pirates_n_ships.almanac.crew.p3.heading": "Stations",
+  "pirates_n_ships.almanac.crew.p3.show_me1": "Show me: hands at the rail",
   "pirates_n_ships.almanac.crew.p3.text1": "A station is a block a hand can work: the {item:pirates_n_ships:sail_winch}**sail winch**, the **helm**, the {item:pirates_n_ships:capstan}**capstan**, the {item:pirates_n_ships:bilge_pump}**bilge pump**, the {item:pirates_n_ships:cannon}**cannon**, the {item:pirates_n_ships:swivel_gun}**swivel gun** and the {item:pirates_n_ships:crows_nest}**crow's nest**.",
   "pirates_n_ships.almanac.crew.p3.text2": "A posted hand walks to his station, even under way, and stays there while she sails.",
   "pirates_n_ships.almanac.crew.p3.text3": "A hand with nothing to do strolls the deck, or leans on the {item:pirates_n_ships:oak_railing}**railing** a while and watches the sea. Any order calls him off.",

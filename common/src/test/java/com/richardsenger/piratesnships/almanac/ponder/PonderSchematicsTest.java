@@ -102,6 +102,78 @@ class PonderSchematicsTest {
         }
     }
 
+    /** PND1: the blocks each ship scene's storyboard works on stand where it expects them (sizes, then positions). */
+    @Test
+    void shipScenesHaveTheirBlocksWhereTheScenesExpectThem() throws IOException {
+        size(ShipSceneText.SHIP_ASSEMBLY, 9, 5, 9);
+        assertTrue(stateAt(schematic(ShipSceneText.SHIP_ASSEMBLY), 4, 4, 6).startsWith(MOD + ":helm[facing=south"));
+        assertEquals(MOD + ":cargo_barrel", stateAt(schematic(ShipSceneText.SHIP_ASSEMBLY), 4, 4, 3));
+        assertEquals(null, stateAt(schematic(ShipSceneText.SHIP_ASSEMBLY), 4, 2, 4), "the hold is dry");
+        assertTrue(stateAt(schematic(ShipSceneText.SHIP_ASSEMBLY), 1, 2, 4).startsWith("minecraft:water"), "the sea");
+
+        size(ShipSceneText.SAILS_AND_WINCH, 7, 8, 7);
+        CompoundTag sails = schematic(ShipSceneText.SAILS_AND_WINCH);
+        for (int x = 1; x <= 5; x++) {
+            assertTrue(stateAt(sails, x, 6, 3).startsWith(MOD + ":yard[axis=x,trim=furled"), "upper yard " + x);
+            assertTrue(stateAt(sails, x, 2, 3).startsWith(MOD + ":yard[axis=x"), "lower yard " + x);
+        }
+        for (int y : new int[] {1, 3, 4, 5, 7}) {
+            assertEquals("minecraft:oak_log[axis=y]", stateAt(sails, 3, y, 3), "mast " + y);
+        }
+        assertEquals(MOD + ":sail_winch[facing=south]", stateAt(sails, 5, 1, 5));
+
+        size(ShipSceneText.STEERING, 11, 5, 11);
+        assertTrue(stateAt(schematic(ShipSceneText.STEERING), 5, 4, 8).startsWith(MOD + ":helm[facing=south"));
+        assertEquals("minecraft:spruce_planks", stateAt(schematic(ShipSceneText.STEERING), 5, 2, 9), "the stern");
+
+        size(ShipSceneText.ANCHOR_AND_CAPSTAN, 9, 7, 9);
+        CompoundTag anchor = schematic(ShipSceneText.ANCHOR_AND_CAPSTAN);
+        assertTrue(stateAt(anchor, 3, 6, 4).startsWith(MOD + ":capstan"));
+        // the hull AnchorAndCapstanScene.HAWSE assumes: x 1..5 on the deck row, nothing beyond it to starboard
+        assertEquals("minecraft:spruce_planks", stateAt(anchor, 5, 5, 4));
+        assertEquals(null, stateAt(anchor, 6, 5, 4), "the chain's top cell is free");
+        for (int y = 1; y <= 4; y++) {
+            assertTrue(stateAt(anchor, 6, y, 4).startsWith("minecraft:water"), "the chain's column is sea at " + y);
+        }
+
+        size(ShipSceneText.PUMPS_AND_FLOODING, 9, 5, 9);
+        CompoundTag pumps = schematic(ShipSceneText.PUMPS_AND_FLOODING);
+        assertTrue(stateAt(pumps, 3, 2, 3).startsWith(MOD + ":bilge_pump[facing=south"));
+        assertEquals("minecraft:spruce_planks", stateAt(pumps, 6, 2, 4), "the wall block the breach removes");
+        assertEquals(null, stateAt(pumps, 4, 3, 4), "the hold is dry");
+
+        size(ShipSceneText.HULL_REPAIR, 7, 4, 7);
+        assertTrue(stateAt(schematic(ShipSceneText.HULL_REPAIR), 5, 2, 3).startsWith("minecraft:water"), "the breach");
+        assertEquals("minecraft:spruce_planks", stateAt(schematic(ShipSceneText.HULL_REPAIR), 5, 2, 2), "its edge");
+
+        size(ShipSceneText.MOORING, 9, 5, 9);
+        CompoundTag mooring = schematic(ShipSceneText.MOORING);
+        assertTrue(stateAt(mooring, 2, 4, 4).startsWith(MOD + ":mooring_ring[face=floor"), "the quay's ring");
+        assertTrue(stateAt(mooring, 6, 4, 4).startsWith(MOD + ":mooring_ring[face=floor"), "the ship's ring");
+        assertEquals("minecraft:spruce_planks", stateAt(mooring, 8, 1, 4), "the ship lies at the east edge");
+
+        size(ShipSceneText.CARGO_AND_WEIGHT, 9, 6, 11);
+        CompoundTag cargo = schematic(ShipSceneText.CARGO_AND_WEIGHT);
+        for (int[] c : new int[][] {{3, 5, 8}, {5, 5, 8}, {3, 5, 5}, {5, 5, 5}}) {
+            assertEquals(MOD + ":cargo_crate[load=0]", stateAt(cargo, c[0], c[1], c[2]));
+        }
+    }
+
+    private static void size(String scene, int x, int y, int z) throws IOException {
+        StructureTemplate template = new StructureTemplate();
+        template.load(BuiltInRegistries.BLOCK.asLookup(), schematic(scene));
+        assertEquals(x, template.getSize().getX(), scene);
+        assertEquals(y, template.getSize().getY(), scene);
+        assertEquals(z, template.getSize().getZ(), scene);
+        // the base plate (y 0) is whole: Ponder fades it in first
+        CompoundTag nbt = schematic(scene);
+        for (int i = 0; i < x; i++) {
+            for (int k = 0; k < z; k++) {
+                assertNotNull(stateAt(nbt, i, 0, k), scene + " base plate at " + i + "," + k);
+            }
+        }
+    }
+
     /** The block state at a template position as {@code name[key=value,...]}, or null for nothing (air). */
     private static String stateAt(CompoundTag structure, int x, int y, int z) {
         ListTag palette = structure.getList("palette", Tag.TAG_COMPOUND);

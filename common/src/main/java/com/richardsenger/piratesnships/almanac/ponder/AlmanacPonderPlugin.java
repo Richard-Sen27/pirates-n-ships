@@ -20,8 +20,16 @@ import java.util.Map;
 public final class AlmanacPonderPlugin implements PonderPlugin {
 
     /** The storyboard of each of our scene ids (a scene of {@link AlmanacScenes#ALL} without one fails here). */
-    static final Map<ResourceLocation, PonderStoryBoard> STORYBOARDS = Map.of(
-            AlmanacScenes.CANNON_LOADING, CannonLoadingScene::program);
+    static final Map<ResourceLocation, PonderStoryBoard> STORYBOARDS = Map.ofEntries(
+            Map.entry(AlmanacScenes.CANNON_LOADING, CannonLoadingScene::program),
+            Map.entry(AlmanacScenes.SHIP_ASSEMBLY, ShipAssemblyScene::program),
+            Map.entry(AlmanacScenes.STEERING, SteeringScene::program),
+            Map.entry(AlmanacScenes.SAILS_AND_WINCH, SailsAndWinchScene::program),
+            Map.entry(AlmanacScenes.ANCHOR_AND_CAPSTAN, AnchorAndCapstanScene::program),
+            Map.entry(AlmanacScenes.PUMPS_AND_FLOODING, PumpsAndFloodingScene::program),
+            Map.entry(AlmanacScenes.HULL_REPAIR, HullRepairScene::program),
+            Map.entry(AlmanacScenes.MOORING, MooringScene::program),
+            Map.entry(AlmanacScenes.CARGO_AND_WEIGHT, CargoAndWeightScene::program));
 
     @Override
     public String getModId() {
@@ -41,7 +49,7 @@ public final class AlmanacPonderPlugin implements PonderPlugin {
 
     @Override
     public void registerSharedText(SharedTextRegistrationHelper helper) {
-        for (CannonLoadingText.Line line : CannonLoadingText.Line.values()) {
+        for (SceneLine line : SceneText.allLines()) {
             helper.registerSharedText(line.key().getPath(), line.english());
         }
     }

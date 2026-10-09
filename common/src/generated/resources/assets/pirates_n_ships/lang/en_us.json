@@ -4273,6 +4273,8 @@
   "pirates_n_ships.ponder.shared.anchor_and_capstan.raise": "Use the capstan again to weigh anchor: the chain comes in at 2.5 blocks a second",
   "pirates_n_ships.ponder.shared.anchor_and_capstan.stowed": "Anchor up and stowed: she is free to sail",
   "pirates_n_ships.ponder.shared.anchor_and_capstan.walk": "While he works, the bars turn and he walks round the drum pushing them",
+  "pirates_n_ships.ponder.shared.boarding.board": "Or blow Board! on the whistle: your hands cross the plank or a two-block gap and fight; Back aboard calls them home",
+  "pirates_n_ships.ponder.shared.boarding.crew_fight": "Your boarders fence by the same rules; a hand with an empty fist takes a sword from your chests",
   "pirates_n_ships.ponder.shared.boarding.cross": "Cross over: the plank is a thin board you walk on like a deck",
   "pirates_n_ships.ponder.shared.boarding.fight": "Her crew fights with the same swordplay as you: watch the raised arm, parry just before the blow, riposte",
   "pirates_n_ships.ponder.shared.boarding.haul": "While you stand on your deck holding the line, it hauls both hulls together until they lie alongside",

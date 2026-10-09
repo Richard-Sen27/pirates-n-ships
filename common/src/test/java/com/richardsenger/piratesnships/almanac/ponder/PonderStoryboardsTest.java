@@ -244,6 +244,22 @@ class PonderStoryboardsTest {
     }
 
     @Test
+    void theBoardersWalkThePlankTheSceneLays() {
+        // BRD3: from our deck onto our gunwale's top, over every cell of the run on its board, down onto her deck
+        java.util.List<Vec3> path = BoardingScene.BOARDER_PATH;
+        assertEquals(BoardingScene.GUNWALE.getX() + 0.5, path.get(1).x, 1e-9, "onto our gunwale");
+        assertEquals(BoardingScene.GUNWALE.getY() + 1.0, path.get(1).y, 1e-9, "standing on its top");
+        for (net.minecraft.core.BlockPos cell : BoardingScene.RUN) {
+            assertTrue(path.stream().anyMatch(p -> Math.abs(p.x - (cell.getX() + 0.5)) < 1e-9 && Math.abs(p.z - (cell.getZ() + 0.5)) < 1e-9
+                    && p.y > cell.getY() && p.y < cell.getY() + 0.5), "the path misses the board on " + cell);
+        }
+        Vec3 last = path.get(path.size() - 1);
+        assertTrue(last.x > BoardingScene.RUN.get(BoardingScene.RUN.size() - 1).getX() + 1, "it ends past the tip, on her deck");
+        assertEquals(com.richardsenger.piratesnships.station.order.WhistleOrder.BOARD.icon().getPath(), "cutlass",
+                "the wheel's boarding entry shows the cutlass");
+    }
+
+    @Test
     void theSwivelScenesAimStaysInTheGunsLimits() {
         for (double[] a : SwivelGunScene.SWEEP) {
             assertTrue(a[1] >= SwivelGunScene.MIN_ELEVATION && a[1] <= SwivelGunScene.MAX_ELEVATION, "elevation " + a[1]);

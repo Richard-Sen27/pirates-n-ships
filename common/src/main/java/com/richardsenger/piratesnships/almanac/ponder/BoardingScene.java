@@ -156,7 +156,7 @@ final class BoardingScene {
         AtomicReference<CrewMember> mate = new AtomicReference<>();
         scene.world().createEntity(level -> crew(level, BOARDER_PATH.get(0), mate));
         scene.overlay().showControls(util.vector().of(2.5, 5.4, 6.5), Pointing.DOWN, 20)
-                .withItem(new ItemStack(BuiltInRegistries.ITEM.get(WhistleOrder.BOARD.icon())));
+                .withItem(new ItemStack(BuiltInRegistries.ITEM.get(WhistleOrder.BOARD.icon().id()))); // ART19: the Board entry's icon is an item
         say(scene.overlay().showText(70), Boarding.BOARD)
                 .pointAt(util.vector().of(5.5, 4.3, 6.5))
                 .placeNearTarget()

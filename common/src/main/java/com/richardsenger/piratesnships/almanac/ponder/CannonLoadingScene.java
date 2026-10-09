@@ -7,7 +7,6 @@ import com.richardsenger.piratesnships.combat.cannon.CannonConfig;
 import com.richardsenger.piratesnships.combat.cannon.CannonLoad;
 import com.richardsenger.piratesnships.combat.cannon.CannonRules;
 import com.richardsenger.piratesnships.combat.cannon.ShotKind;
-import com.richardsenger.piratesnships.combat.content.CombatContent;
 import net.createmod.catnip.math.Pointing;
 import net.createmod.ponder.api.PonderPalette;
 import net.createmod.ponder.api.ParticleEmitter;
@@ -77,7 +76,7 @@ final class CannonLoadingScene {
 
         // shot
         scene.overlay().showControls(gunTop, Pointing.DOWN, 40).rightClick()
-                .withItem(new ItemStack(CombatContent.CANNONBALL.get()));
+                .withItem(SceneKit.item("cannonball"));
         scene.idle(10);
         scene.world().modifyBlock(master, s -> s.setValue(CannonBlock.LOAD, CannonLoad.LOADED)
                 .setValue(CannonBlock.SHOT, ShotKind.BALL), false);
@@ -154,6 +153,6 @@ final class CannonLoadingScene {
         scene.effects().emitParticles(muzzle, puff, 16, 1);
         scene.effects().emitParticles(muzzle, smoke, 6, 6);
         scene.world().createItemEntity(muzzle, util.vector().of(0, 0.08, -0.6),
-                new ItemStack(CombatContent.CANNONBALL.get()));
+                SceneKit.item("cannonball"));
     }
 }

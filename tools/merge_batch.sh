@@ -5,7 +5,7 @@
 #   FABRIC=1 adds one run of the Fabric GameTest suite after the NeoForge rounds.
 #   CONTINUE=1 tools/merge_batch.sh <runs> "<remaining entries>"...   after resolving a conflict by hand: commits the
 #   in-progress merge (conflicts resolved and added), merges the remaining entries, verifies, lands.
-# Conflicts under common/src/generated/resources and the generated guides are taken from the branch and regenerated;
+# Conflicts under common/src/generated/resources  are taken from the branch and regenerated;
 # any other conflict stops with exit 3 and the merge left in progress. Each branch gets its own merge commit, so the
 # per-package docs steps can cite it. Landing: fast-forward, or a merge commit when main moved only by docs,
 # CLAUDE.md, the generated guide or the stage scripts (exit 9 otherwise). Never runs Gradle in the main checkout.
@@ -14,8 +14,8 @@ RUNS=$1; shift
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 WT=$ROOT/.claude/worktrees/merge
 LOG=${STAGE_LOG_DIR:-$ROOT/.claude/worktrees/stage-logs}/batch-$(date +%H%M); mkdir -p "$LOG"
-GEN_RE='^common/src/generated/resources/|/assets/pirates_n_ships/guides/'
-DOCS_RE='^docs/|^CLAUDE\.md$|^common/src/main/resources/assets/pirates_n_ships/guides/|^tools/merge_(stage|batch)\.sh$|^\.claude/agents/'
+GEN_RE='^common/src/generated/resources/'
+DOCS_RE='^docs/|^CLAUDE\.md$|^tools/merge_(stage|batch)\.sh$|^\.claude/agents/'
 cd "$WT" || exit 1
 PKGS=""
 if [ -z "${CONTINUE:-}" ]; then
@@ -53,8 +53,7 @@ done
 # from the generator's intermediate: runData, then the generator, then runData again when the intermediate changed.
 [ -f tools/gen_almanac.py ] && { python3 tools/gen_almanac.py > "$LOG/almanac.log" 2>&1 || { echo "ALMANAC GENERATOR FAILED"; tail -20 "$LOG/almanac.log"; exit 4; }; }
 [ -f tools/gen_almanac.py ] && ! git diff --quiet -- common/src/datagen/almanac && { ./gradlew -q :neoforge:runData > "$LOG/rundata2.log" 2>&1 || { echo "RUNDATA FAILED"; tail -20 "$LOG/rundata2.log"; exit 4; }; }
-python3 tools/gen_guideme.py > "$LOG/guide.log" 2>&1 || { echo "GUIDE FAILED"; tail -20 "$LOG/guide.log"; exit 4; }
-git add -A common/src/generated/resources common/src/main/resources/assets/pirates_n_ships/guides common/src/datagen/almanac common/src/main/resources/assets/pirates_n_ships/textures/almanac
+git add -A common/src/generated/resources common/src/datagen/almanac common/src/main/resources/assets/pirates_n_ships/textures/almanac
 git diff --cached --quiet || git commit -q -m "chore(merge): regenerate data and guide after merging$PKGS"
 ./gradlew build > "$LOG/build.log" 2>&1 || { echo "BUILD FAILED"; grep -E 'error:|FAILED|Exception' "$LOG/build.log" | head -20; exit 5; }
 echo "build ok"
@@ -76,9 +75,10 @@ H=$(git rev-parse --short HEAD)
 cd "$ROOT" || exit 1
 if git merge --ff-only -q "$H" 2> "$LOG/ff.log"; then echo "MERGED$PKGS -> main at $H (fast-forward)"; exit 0; fi
 MOVED=$(git diff --name-only "$BASE" main | grep -vE "$DOCS_RE" || true)
+MOVED="$MOVED$(git diff --name-only "$BASE" main | grep -E '^docs/almanac/' || true)"  # chapter sources feed datagen (ALM6)
 if [ -z "$MOVED" ]; then
   git merge --no-ff -q "$H" -m "chore(merge): land the verified batch$PKGS on main" > "$LOG/land.log" 2>&1 || { echo "DOCS-ONLY MERGE FAILED"; cat "$LOG/land.log"; exit 8; }
-  { python3 tools/gen_guideme.py > /dev/null 2>&1; [ -f tools/gen_almanac.py ] && python3 tools/gen_almanac.py > /dev/null 2>&1; git diff --quiet || git commit -q -am "chore(guide): regenerate after landing$PKGS"; }
+  { [ -f tools/gen_almanac.py ] && python3 tools/gen_almanac.py > /dev/null 2>&1; git diff --quiet || git commit -q -am "chore(guide): regenerate after landing$PKGS"; }
   echo "MERGED$PKGS -> main with a merge commit (main had moved by docs only) at $(git rev-parse --short HEAD)"; exit 0
 fi
 echo "MAIN MOVED by code since $BASE; restage:"; echo "$MOVED" | head; exit 9

@@ -4,6 +4,9 @@ import net.minecraft.resources.ResourceLocation;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -37,6 +40,30 @@ class AlmanacScenesTest {
         assertEquals(AlmanacScenes.CANNON_ITEM, target.component());
         assertNull(target.scene());
         assertEquals(1, AlmanacScenes.forComponent(AlmanacScenes.CANNON_ITEM).size());
+    }
+
+    @Test
+    void theShipScenesHaveTheIdsTheChaptersCarryOnTheirItems() {
+        // ALM6's chapters carry "show_me" lines with exactly these ids (design.md §3.4, PND1)
+        Map<String, String> expected = new LinkedHashMap<>();
+        expected.put("ship_assembly", "helm");
+        expected.put("steering", "helm");
+        expected.put("sails_and_winch", "sail_winch");
+        expected.put("anchor_and_capstan", "capstan");
+        expected.put("pumps_and_flooding", "bilge_pump");
+        expected.put("hull_repair", "hull_patch");
+        expected.put("mooring", "mooring_ring");
+        expected.put("cargo_and_weight", "cargo_crate");
+        expected.forEach((scene, item) -> {
+            ResourceLocation id = ResourceLocation.parse("pirates_n_ships:" + scene);
+            AlmanacScenes.Target target = AlmanacScenes.resolve(id).orElseThrow(() -> new AssertionError(scene));
+            assertEquals(ResourceLocation.parse("pirates_n_ships:" + item), target.component(), scene);
+            assertEquals(id, target.scene().id());
+            assertEquals(id, target.scene().schematic());
+        });
+        assertEquals(List.of(AlmanacScenes.SHIP_ASSEMBLY, AlmanacScenes.STEERING),
+                AlmanacScenes.forComponent(AlmanacScenes.HELM_ITEM).stream().map(AlmanacScenes.Scene::id).toList());
+        assertEquals(9, AlmanacScenes.ALL.size());
     }
 
     @Test

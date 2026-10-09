@@ -14,12 +14,22 @@ import java.util.TreeMap;
  * run off the server thread.
  *
  * <h2>Spill-height model</h2>
- * The height of a cell is {@code h(c) = up · center(c)}. The outside is unbounded, so every non-solid cell on the
+ * The height of a cell for the partition is {@code h(c) = center(c).y} (the plot frame, see below). The outside is unbounded, so every non-solid cell on the
  * border of the grid is directly reachable. The spill height {@code s(c)} of an air cell is the minimum, over all
  * 6-connected air paths from the border to {@code c}, of the highest cell on the path ({@code +∞} without a path). It is
  * computed with a priority flood from the border. Air cells with {@code s(c) > h(c)} lie below their own pour point:
  * these are <b>basin cells</b> (enclosed rooms, the inside of an open hull below its rim, the part of a room below a
  * hole). All other air is outside air. Compartments are the 6-connected components of basin cells.
+ *
+ * <h2>Partition and tilt (CMP1)</h2>
+ * Which cells are basin cells, and how they group into compartments, is computed once per grid in the plot frame
+ * (up = +Y, {@link #partition}); the up vector passed to {@link #analyze} only sets the heights: the height profiles,
+ * the sills of the pour points, openings and links. A tilt re-analysis ({@link #retilt}) recomputes those and keeps the
+ * partition, so a ship rolling on the waves keeps its compartments, their cells and their ids. Before CMP1 the flood
+ * itself ran along the real up vector, and a bulkhead or step that was marginal at the current tilt split or joined
+ * compartments every few seconds. Consequence: a ship heeled far over keeps its upright rooms. A cell that would really
+ * lie above a heeled rim stays in its compartment; the water cannot reach it because it pours out first through the
+ * pour point, whose sill does follow the tilt (a low rim going under water still floods).
  *
  * <h2>Openings</h2>
  * Openings (doors, hatches, trapdoors, breaches) are treated as <b>walls</b> for the flood regardless of their state,
@@ -43,8 +53,30 @@ public final class HullAnalyzer {
         return analyze(grid, HullVec.UP);
     }
 
+    /**
+     * Analyses {@code grid} with the heights along {@code upVector}. The partition into compartments is always computed
+     * with the plot's up (+Y), whatever {@code upVector} is (CMP1): only heights, profiles and sills follow the tilt.
+     */
     public static HullAnalysis analyze(HullGrid grid, HullVec upVector) {
-        HullVec up = upVector.normalized();
+        return build(partition(grid), upVector.normalized());
+    }
+
+    /**
+     * The same compartments as {@code base} (same grid, cells and ids) with the tilt-dependent parts recomputed along
+     * {@code upVector}: cell heights, height profiles, the sills of the outside ports and of the links (CMP1). Much
+     * cheaper than {@link #analyze}: no flood. {@code base.samePartition(result)} always holds.
+     */
+    public static HullAnalysis retilt(HullAnalysis base, HullVec upVector) {
+        return build(base.partition(), upVector.normalized());
+    }
+
+    /**
+     * The tilt-independent part of the analysis: the spill-height flood, basin cells and compartments, all in the plot
+     * frame (up = +Y). Compartment ids number the components in grid index order of their first cell (lowest y, then z,
+     * then x), so they do not depend on the grid's origin.
+     */
+    static HullPartition partition(HullGrid grid) {
+        HullVec up = HullVec.UP;
         int sx = grid.sizeX(), sy = grid.sizeY(), sz = grid.sizeZ();
         int n = grid.cellCount();
         double[] h = new double[n];
@@ -111,6 +143,22 @@ public final class HullAnalyzer {
             }
             members.add(Arrays.copyOf(queue, tail));
         }
+        return new HullPartition(grid, spill, air, basin, compOf, List.copyOf(members));
+    }
+
+    /** The tilt-dependent part: heights along {@code up} (normalized), profiles, ports and links of a partition. */
+    private static HullAnalysis build(HullPartition part, HullVec up) {
+        HullGrid grid = part.grid();
+        int n = grid.cellCount();
+        boolean[] air = part.air();
+        boolean[] basin = part.basin();
+        int[] compOf = part.compartmentOf();
+        List<int[]> members = part.members();
+        double[] h = new double[n];
+        for (int i = 0; i < n; i++) {
+            h[i] = grid.height(i, up);
+        }
+        int[] nb = new int[6];
 
         int compCount = members.size();
         List<Map<Double, Integer>> pour = new ArrayList<>();
@@ -196,7 +244,7 @@ public final class HullAnalyzer {
             compartments.add(new Compartment(c, bits, sorted, minX, minY, minZ, maxX, maxY, maxZ,
                     new HeightProfile(hs, centers), List.copyOf(ports), List.copyOf(compLinks.get(c))));
         }
-        return new HullAnalysis(grid, up, spill, compOf, compartments, links);
+        return new HullAnalysis(part, up, compartments, links);
     }
 
     /** Cells sorted by (height, index): a stable primitive merge sort of the index-ordered input. */

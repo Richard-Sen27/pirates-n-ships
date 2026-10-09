@@ -6,10 +6,12 @@ import java.util.List;
 
 /**
  * Immutable result of {@link HullAnalyzer#analyze}: compartments, their outside ports and the links between them.
- * Does not depend on the open state of openings (the flooding simulation reads that live).
+ * Does not depend on the open state of openings (the flooding simulation reads that live). The compartments (cells and
+ * ids) depend on the grid only; {@link #up()} sets the heights, profiles and sills (CMP1, {@link HullAnalyzer#retilt}).
  */
 public final class HullAnalysis {
 
+    private final HullPartition partition;
     private final HullGrid grid;
     private final HullVec up;
     private final double[] spill;
@@ -17,12 +19,12 @@ public final class HullAnalysis {
     private final List<Compartment> compartments;
     private final List<CompartmentLink> links;
 
-    HullAnalysis(HullGrid grid, HullVec up, double[] spill, int[] compartmentOf, List<Compartment> compartments,
-                 List<CompartmentLink> links) {
-        this.grid = grid;
+    HullAnalysis(HullPartition partition, HullVec up, List<Compartment> compartments, List<CompartmentLink> links) {
+        this.partition = partition;
+        this.grid = partition.grid();
         this.up = up;
-        this.spill = spill;
-        this.compartmentOf = compartmentOf;
+        this.spill = partition.spill();
+        this.compartmentOf = partition.compartmentOf();
         this.compartments = List.copyOf(compartments);
         this.links = List.copyOf(links);
     }
@@ -59,7 +61,10 @@ public final class HullAnalysis {
         return c < 0 ? null : compartments.get(c);
     }
 
-    /** Spill height of an air cell ({@code +∞} when no air path to the outside exists; {@code NaN} for non-air). */
+    /**
+     * Spill height of an air cell in the plot frame (along +Y, the frame the partition uses, CMP1): {@code +∞} when no air
+     * path to the outside exists, {@code NaN} for non-air.
+     */
     public double spillHeight(int index) {
         return spill[index];
     }
@@ -69,9 +74,30 @@ public final class HullAnalysis {
         return grid.height(index, up);
     }
 
-    /** Whether the analysis should be redone because the ship's up vector moved more than {@code maxDegrees}. */
+    /**
+     * Whether the heights should be refreshed ({@link HullAnalyzer#retilt}) because the ship's up vector moved more than
+     * {@code maxDegrees}. A tilt never changes the partition (CMP1).
+     */
     public boolean tiltExceeds(HullVec currentUp, double maxDegrees) {
         return up.angleDegrees(currentUp) > maxDegrees;
+    }
+
+    HullPartition partition() {
+        return partition;
+    }
+
+    /**
+     * Whether {@code o} has the same compartments: the same grid and the same compartment id for every cell. Always true
+     * for {@link HullAnalyzer#retilt}, and for two analyses of an equal grid at any tilts (CMP1).
+     */
+    public boolean samePartition(HullAnalysis o) {
+        return partition == o.partition
+                || (grid.equals(o.grid) && java.util.Arrays.equals(compartmentOf, o.compartmentOf));
+    }
+
+    /** This analysis with the heights along {@code currentUp} and the same compartments ({@link HullAnalyzer#retilt}). */
+    public HullAnalysis retilted(HullVec currentUp) {
+        return HullAnalyzer.retilt(this, currentUp);
     }
 
     /** Structural equality (same grid, up vector, compartments, ports and links), for tests. */

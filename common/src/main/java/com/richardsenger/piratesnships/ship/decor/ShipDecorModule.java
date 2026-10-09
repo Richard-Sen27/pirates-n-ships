@@ -11,6 +11,7 @@ import com.richardsenger.piratesnships.ship.decor.flag.FlagConfig;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagData;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagGameTests;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagModelGameTests;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagpoleFooting;
 import com.richardsenger.piratesnships.ship.decor.flag.Flags;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.core.Direction;
@@ -82,12 +83,14 @@ public final class ShipDecorModule implements ModModule {
                 .block(ShipDecor.NAMEPLATE, "Nameplate")
                 .add(NameplateText.KEY_WRECK_OF, "Wreck of %s")
                 .block(ShipDecor.FLAGPOLE, "Flagpole")
+                .block(ShipDecor.FLAG_PEDESTAL, "Flag Pedestal")
                 .block(ShipDecor.CARGO_CRATE, "Cargo Crate")
                 .block(ShipDecor.CARGO_BARREL, "Cargo Barrel"));
         data.models(m -> {
             for (RegistryEntry<Block, FigureheadBlock> f : ShipDecor.figureheads()) figurehead(m, f.get());
             nameplate(m, ShipDecor.NAMEPLATE.get());
             // flagpole: model and block state in FlagData
+            flagPedestal(m, ShipDecor.FLAG_PEDESTAL.get());
             // hand-made Blockbench models (art/models/cargo_{crate,barrel}.bbmodel, design.md §4.8): only the block
             // states are generated; the load does not show (the load property is physics only, CW1: every value uses the model)
             for (Block cargo : List.of(ShipDecor.CARGO_CRATE.get(), ShipDecor.CARGO_BARREL.get())) {
@@ -101,6 +104,7 @@ public final class ShipDecorModule implements ModModule {
             for (RegistryEntry<Block, FigureheadBlock> f : ShipDecor.figureheads()) loot.dropSelf(f.get());
             loot.dropSelf(ShipDecor.NAMEPLATE.get());
             loot.dropSelf(ShipDecor.FLAGPOLE.get());
+            loot.dropSelf(ShipDecor.FLAG_PEDESTAL.get());
             loot.add(ShipDecor.CARGO_CRATE.get(), com.richardsenger.piratesnships.trade.cargo.CargoContainers.lootTable(ShipDecor.CARGO_CRATE.get()));
             loot.add(ShipDecor.CARGO_BARREL.get(), com.richardsenger.piratesnships.trade.cargo.CargoContainers.lootTable(ShipDecor.CARGO_BARREL.get()));
         });
@@ -109,11 +113,11 @@ public final class ShipDecorModule implements ModModule {
                 tags.tag(BlockTags.MINEABLE_WITH_AXE).add(f.get());
                 tags.tag(SableWeightTags.LIGHT).add(f.get());
             }
-            tags.tag(BlockTags.MINEABLE_WITH_AXE).add(ShipDecor.NAMEPLATE.get(), ShipDecor.FLAGPOLE.get(),
+            tags.tag(BlockTags.MINEABLE_WITH_AXE).add(ShipDecor.NAMEPLATE.get(), ShipDecor.FLAGPOLE.get(), ShipDecor.FLAG_PEDESTAL.get(),
                     ShipDecor.CARGO_CRATE.get(), ShipDecor.CARGO_BARREL.get());
             // Thin blocks: like ladders and fences in Sable's own tags
-            tags.tag(SableWeightTags.SUPER_LIGHT).add(ShipDecor.NAMEPLATE.get(), ShipDecor.FLAGPOLE.get());
-            tags.tag(SableWeightTags.QUARTER_VOLUME).add(ShipDecor.NAMEPLATE.get(), ShipDecor.FLAGPOLE.get());
+            tags.tag(SableWeightTags.SUPER_LIGHT).add(ShipDecor.NAMEPLATE.get(), ShipDecor.FLAGPOLE.get(), ShipDecor.FLAG_PEDESTAL.get());
+            tags.tag(SableWeightTags.QUARTER_VOLUME).add(ShipDecor.NAMEPLATE.get(), ShipDecor.FLAGPOLE.get(), ShipDecor.FLAG_PEDESTAL.get());
             // Wooden containers: like vanilla barrels and chests
             tags.tag(SableWeightTags.LIGHT).add(ShipDecor.CARGO_CRATE.get(), ShipDecor.CARGO_BARREL.get());
         });
@@ -131,6 +135,12 @@ public final class ShipDecorModule implements ModModule {
                     .define('S', Items.STICK)
                     .unlockedBy("has_stick", InventoryChangeTrigger.TriggerInstance.hasItems(Items.STICK))
                     .save(out, ShipDecor.FLAGPOLE.id());
+            // FLG3: a log carved down over a slab of planks as its foot gives two pedestals
+            ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, ShipDecor.FLAG_PEDESTAL.get(), 2)
+                    .pattern("L").pattern("S")
+                    .define('L', ItemTags.LOGS).define('S', ItemTags.WOODEN_SLABS)
+                    .unlockedBy("has_flagpole", InventoryChangeTrigger.TriggerInstance.hasItems(ShipDecor.FLAGPOLE.get()))
+                    .save(out, ShipDecor.FLAG_PEDESTAL.id());
             ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, ShipDecor.CARGO_CRATE.get())
                     .pattern("SPS").pattern("P P").pattern("SPS")
                     .define('S', Items.STICK).define('P', ItemTags.PLANKS)
@@ -165,6 +175,18 @@ public final class ShipDecorModule implements ModModule {
                 Variant.variant().with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(block))).with(horizontalFacing()));
     }
 
+    /**
+     * FLG3: hand-made Blockbench models ({@code art/models/flag_pedestal.bbmodel}): {@code block/flag_pedestal} (the
+     * plinth with its empty socket; it carries the item's display entries and datagen's block-item model delegates to
+     * it) and, while a flagpole stands on it, {@code block/flag_pedestal_pole} (plus the pole stub, the halyard's cleat
+     * and the halyard). Round, never turned.
+     */
+    private static void flagPedestal(ModelContext m, Block block) {
+        m.blockStates().accept(MultiVariantGenerator.multiVariant(block).with(PropertyDispatch.property(FlagpoleFooting.POLE)
+                .select(false, Variant.variant().with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(block)))
+                .select(true, Variant.variant().with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(block, "_pole")))));
+    }
+
     /** Model faces north; rotate for the other directions. */
     private static PropertyDispatch horizontalFacing() {
         return PropertyDispatch.property(BlockStateProperties.HORIZONTAL_FACING)
@@ -185,7 +207,7 @@ public final class ShipDecorModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(ShipDecorGameTests.class, FlagGameTests.class, FlagModelGameTests.class, com.richardsenger.piratesnships.ship.decor.flag.FlagStackGameTests.class, NameplateGameTests.class,
+        return List.of(ShipDecorGameTests.class, FlagPedestalGameTests.class, FlagGameTests.class, FlagModelGameTests.class, com.richardsenger.piratesnships.ship.decor.flag.FlagStackGameTests.class, NameplateGameTests.class,
                 DecorGameTests.class, ShipsBellGameTests.class);
     }
 }

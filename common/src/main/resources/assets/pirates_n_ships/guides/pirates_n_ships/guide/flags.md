@@ -20,6 +20,19 @@ Placing another flagpole on a pole that flies a flag takes the flag up with it, 
 drops the flag, breaking a block in the middle splits the pole in two (the upper part keeps the flag). With
 `flags.stacked_poles` off every block is a pole of its own.
 
+**Flag pedestal.** A squat plinth carved from a log, banded with iron, with a socket on top. Place it on any block with
+a solid top (it pops off when that block goes) and put a flagpole on it: the pole stands in the socket and the pedestal
+becomes its foot, with the cleat and the halyard belayed on it, while the pole blocks above stay bare. Using the
+pedestal works the pole like using the pole itself. The pedestal does not count towards the pole's height. Breaking the
+pedestal brings the whole pole down with its flag. One log over a wooden slab makes two pedestals. It can stand under
+water like every small block.
+
+**A pole on the crow's nest.** Place a flagpole on top of a crow's nest and it rises from the middle of the barrel: the
+nest shows the pole's foot with its iron collar and the cleat inside the barrel, and the flag flies from the top of the
+pole above the nest. Give the pole at least two blocks so the cloth clears the barrel's rim. The lowest pole block lets
+you and the lookout stand in the nest as before (it does not push anyone out), the lookout keeps watch and calls as
+usual, and breaking the nest brings the pole down.
+
 **The flag runs along the pole.** While you hoist or raise a flag it climbs from the foot of the pole to the top, and
 while you strike or take it down it runs down again, over the 3 seconds the work takes. Client config
 `flag_visuals.hoist_animation` turns this off (the flag then appears and vanishes at once).

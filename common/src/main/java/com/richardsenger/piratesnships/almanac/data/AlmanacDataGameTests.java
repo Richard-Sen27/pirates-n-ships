@@ -25,9 +25,14 @@ import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.phys.Vec3;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
  * The Almanac's data side in a running server (ALM2): the built-in chapters after the datapack load, the sync payloads
@@ -57,15 +62,22 @@ public final class AlmanacDataGameTests {
     }
 
     /**
-     * The datapack load put every chapter generated from docs/guide.md into the server's book (ALM5): the chapters of
-     * the intermediate, in section order, each parsing with the chapter codec (items registered) to exactly what was
-     * loaded; the welcome chapter first and the combat chapter's cannon page with the cannon_loading "Show me".
+     * The datapack load put every chapter written in docs/almanac/ into the server's book (ALM5, ALM6): one chapter per
+     * source file, in book order, each parsing with the chapter codec (items registered) to exactly what was loaded;
+     * the welcome chapter first with its Contents linking every other chapter, and the combat chapter's cannon page
+     * with the cannon_loading "Show me".
      */
     @ModGameTest
-    public static void serverBookHoldsTheGuideChapters(GameTestHelper helper) {
+    public static void serverBookHoldsTheAlmanacChapters(GameTestHelper helper) {
         AlmanacBook book = AlmanacBook.server();
         AlmanacChapterProvider.Intermediate in = AlmanacChapterProvider.read(AlmanacChapterProvider.locate());
-        helper.assertValueEqual(in.bodies().size(), 16, "chapters in the intermediate (guide sections 0 to 15)");
+        long sources;
+        try (Stream<Path> files = Files.list(AlmanacChapterProvider.repository().resolve(AlmanacChapterProvider.SOURCE))) {
+            sources = files.filter(f -> f.getFileName().toString().endsWith(".md")).count();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        helper.assertValueEqual((long) in.bodies().size(), sources, "one chapter per file of " + AlmanacChapterProvider.SOURCE);
         List<ResourceLocation> ours = book.chapters().stream().map(Chapter::id)
                 .filter(id -> id.getNamespace().equals(AlmanacChapterProvider.WELCOME.getNamespace())).toList();
         helper.assertValueEqual(ours, List.copyOf(in.bodies().keySet()), "our chapters in book order");
@@ -77,7 +89,14 @@ public final class AlmanacDataGameTests {
         helper.assertValueEqual(book.chapters().get(0).id(), AlmanacChapterProvider.WELCOME, "the welcome chapter opens the book");
         Chapter welcome = book.chapter(AlmanacChapterProvider.WELCOME).orElseThrow();
         helper.assertValueEqual(welcome.title(), AlmanacLang.title(AlmanacChapterProvider.WELCOME), "welcome title key");
-        helper.assertValueEqual(welcome.pageCount(), 2, "welcome pages (the guide book, contents)");
+        List<String> contents = welcome.pages().stream().flatMap(p -> p.elements().stream())
+                .filter(e -> e instanceof PageElement.ListItems).flatMap(e -> ((PageElement.ListItems) e).keys().stream())
+                .map(k -> in.lang().get(k)).toList();
+        for (ResourceLocation id : ours) {
+            if (!id.equals(AlmanacChapterProvider.WELCOME)) {
+                helper.assertTrue(contents.contains("[[" + id + "]]"), "the welcome chapter's Contents link " + id);
+            }
+        }
         Chapter combat = book.chapter(AlmanacChapterProvider.COMBAT).orElseThrow();
         boolean showMe = combat.pages().stream().flatMap(p -> p.elements().stream()).anyMatch(e -> e instanceof PageElement.ShowMe s
                 && s.scene().equals(AlmanacChapterProvider.CANNON_LOADING_SCENE));

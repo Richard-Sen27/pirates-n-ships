@@ -135,19 +135,40 @@ public class RailingBlock extends Block implements SimpleWaterloggedBlock {
     }
 
     /**
-     * Whether the block at {@code pos} carries {@code edge}: a railing railed there, or a railing port or railing gate
-     * (RAIL3, open or closed: its posts stand either way) facing it.
+     * Whether the block at {@code pos} carries {@code edge}: a railing or bulwark railed there, or a railing port,
+     * railing gate (RAIL3, open or closed: its posts stand either way) or bulwark gun port (RAIL4) facing it.
      */
     public static boolean carries(BlockGetter level, BlockPos pos, Direction edge) {
-        BlockState s = level.getBlockState(pos);
+        return carries(level.getBlockState(pos), edge);
+    }
+
+    /** {@link #carries(BlockGetter, BlockPos, Direction)} for a block state. */
+    public static boolean carries(BlockState s, Direction edge) {
         if (s.getBlock() instanceof RailingBlock) return s.getValue(edge(edge));
         if (s.getBlock() instanceof RailingGateBlock) return s.getValue(RailingGateBlock.FACING) == edge;
+        if (s.getBlock() instanceof BulwarkPortBlock) return s.getValue(BulwarkPortBlock.FACING) == edge;
         return s.getBlock() instanceof RailingPortBlock && s.getValue(RailingPortBlock.FACING) == edge;
     }
 
-    /** {@code state} with its posts worked out from its edges and the neighbours at {@code pos}. */
+    /** RAIL4: whether {@code s} belongs to the railings (railing, port, gate), the bulwarks (bulwark, gun port) or neither. */
+    public static BulwarkRules.Kind kindOf(BlockState s) {
+        Block b = s.getBlock();
+        if (b instanceof BulwarkBlock || b instanceof BulwarkPortBlock) return BulwarkRules.Kind.BULWARK;
+        if (b instanceof RailingBlock || b instanceof RailingPortBlock || b instanceof RailingGateBlock) return BulwarkRules.Kind.RAILING;
+        return BulwarkRules.Kind.NONE;
+    }
+
+    /**
+     * {@code state} with its posts worked out from its edges and the neighbours at {@code pos}: a run goes on only into
+     * a neighbour of its own kind ({@link BulwarkRules#continues}), so a railing meeting a bulwark ends in a post and the
+     * bulwark in a stanchion.
+     */
     public static BlockState withPosts(BlockState state, BlockGetter level, BlockPos pos) {
-        Set<Direction> posts = RailingRules.posts(edges(state), (towards, edge) -> carries(level, pos.relative(towards), edge));
+        BulwarkRules.Kind self = kindOf(state);
+        Set<Direction> posts = RailingRules.posts(edges(state), (towards, edge) -> {
+            BlockState n = level.getBlockState(pos.relative(towards));
+            return BulwarkRules.continues(self, kindOf(n), carries(n, edge));
+        });
         for (Map.Entry<Direction, BooleanProperty> e : POSTS.entrySet()) {
             state = state.setValue(e.getValue(), posts.contains(e.getKey()));
         }
@@ -209,7 +230,17 @@ public class RailingBlock extends Block implements SimpleWaterloggedBlock {
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return outlines.computeIfAbsent(state, s -> shape(RailingRules.boxes(edges(s), posts(s), RailingRules.RAIL_TOP, RailingRules.POST_TOP)));
+        return outlines.computeIfAbsent(state, s -> shape(outlineBoxes(s)));
+    }
+
+    /** The outline's boxes in pixels (RAIL4: the bulwark draws walls and stanchions instead of rails and posts). */
+    protected List<double[]> outlineBoxes(BlockState s) {
+        return RailingRules.boxes(edges(s), posts(s), RailingRules.RAIL_TOP, RailingRules.POST_TOP);
+    }
+
+    /** The collision's boxes in pixels, raised to {@code height}. */
+    protected List<double[]> collisionBoxes(BlockState s, double height) {
+        return RailingRules.boxes(edges(s), posts(s), height, height);
     }
 
     @Override
@@ -219,7 +250,7 @@ public class RailingBlock extends Block implements SimpleWaterloggedBlock {
             collisions = new ConcurrentHashMap<>();
             collisionHeight = height;
         }
-        return collisions.computeIfAbsent(state, s -> shape(RailingRules.boxes(edges(s), posts(s), height, height)));
+        return collisions.computeIfAbsent(state, s -> shape(collisionBoxes(s, height)));
     }
 
     /** {@code ship_decor.railing_collision_blocks} in pixels. */
@@ -241,8 +272,7 @@ public class RailingBlock extends Block implements SimpleWaterloggedBlock {
     @Override
     protected VoxelShape getBlockSupportShape(BlockState state, BlockGetter level, BlockPos pos) {
         Set<Direction> posts = posts(state);
-        return shape(RailingRules.supportBoxes(RailingRules.boxes(edges(state), posts, RailingRules.RAIL_TOP, RailingRules.RAIL_TOP),
-                !posts.isEmpty()));
+        return shape(RailingRules.supportBoxes(collisionBoxes(state, RailingRules.RAIL_TOP), !posts.isEmpty()));
     }
 
     /** Crew and mobs do not path through a railing (like a fence). */

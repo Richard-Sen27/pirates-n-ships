@@ -253,6 +253,7 @@ public final class ShipDecorModule implements ModModule {
         return List.of(ShipDecorGameTests.class, FlagPedestalGameTests.class, FlagGameTests.class, FlagModelGameTests.class, com.richardsenger.piratesnships.ship.decor.flag.FlagStackGameTests.class, NameplateGameTests.class,
                 DecorGameTests.class, ShipsBellGameTests.class, com.richardsenger.piratesnships.ship.decor.railing.RailingGameTests.class,
                 com.richardsenger.piratesnships.ship.decor.railing.RailingGateGameTests.class, // RAIL3
+                com.richardsenger.piratesnships.ship.decor.railing.BulwarkGameTests.class, // RAIL4
                 com.richardsenger.piratesnships.ship.decor.railing.RailingGrappleGameTests.class); // RAIL3
     }
 }

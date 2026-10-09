@@ -452,8 +452,8 @@ the rail), `art/renders/railing_item.png`.
 ### Railing gate, hanging things, the hook on a rail (RAIL3)
 
 `/give @s pirates_n_ships:oak_railing_gate 4` (or craft: stick, iron nugget, stick over three oak planks gives 1),
-`/give @s lantern 4`, `/give @s chain 8`. No render yet (models from `tools/gen_railing_models.py`, not yet looked at
-in Blockbench).
+`/give @s lantern 4`, `/give @s chain 8`. Render `art/renders/railing_gate.png` (RAIL4 checked the gate models in
+Blockbench: closed and open, both hinges, the item).
 - **Gate in a run:** lay three railings along a deck edge with a one-block gap, and place the gate in the gap
   (click the deck near the edge, in the half where the hinge should go). The railings either side lose their post
   against the gate: no double posts. Closed it looks like a railing section; two dark iron straps sit on the hinge
@@ -483,6 +483,38 @@ in Blockbench).
   tears that railing out at once (it breaks and drops), the hook comes back to you. With the default (180) a ship's haul
   never tears it; hook a railing from the shore, sneak and walk away hard (a hand haul up to 200): the railing should
   tear out. Say whether 180 feels right. `grapple.latches_hold = false`: the hook on a railing holds like on any block.
+
+### Bulwark and bulwark gun port (RAIL4)
+
+`/give @s pirates_n_ships:oak_bulwark 16`, `/give @s pirates_n_ships:oak_bulwark_port 4`, `/give @s pirates_n_ships:cannon 2`
+(or craft: stick, plank, stick over three oak planks gives 4 bulwarks; a bulwark and an iron nugget give a gun port).
+Render `art/renders/bulwark.png` (inboard: a run with stanchions, a shut and an open gun port, a corner, the items;
+outboard: the lid's straps, the open lid lying flat over the water side).
+- **Look and placement:** lay a bulwark run of four along a deck edge as with railings: a solid plank wall 2 px thick
+  with a log cap rail 2 px proud on the inboard side, square stanchions only at the run's ends; click a block again to
+  turn a corner (one stanchion). Next to a railing on the same edge both end in a post: say whether that looks right
+  or the two should run on into each other.
+- **Gun port:** put a gun port in the middle of the run: no stanchions against it; a square notch from a low sill up
+  through the cap rail, shut by a plank lid with two dark iron straps on the outside. Use it with an empty hand: the lid
+  swings up and out and lies flat outboard (trapdoor sound); use again: it shuts.
+- **The lid and the gun:** place a carriage cannon right behind the gun port facing out: the lid opens by itself. Try
+  to shut it by hand: "The gun behind holds the lid open". Break the cannon: the lid shuts. Check the barrel's look at
+  every elevation (aim up and down): the barrel should pass through the notch, over the sill, without the lid or the
+  jambs cutting into it; at the top elevations it pokes above the cap level. Say whether the open lid (flat, at the top
+  of the notch) gets in the barrel's way.
+- **Firing through:** load and fire at every elevation: every shot leaves through the port, the port stands.
+- **Firing into a plain bulwark:** put a cannon right behind a plain bulwark and fire at any elevation: smoke and bang,
+  the ball hits the wall at once and breaks it (the bulwark drops). With `cannons.walls_block_barrel = false` a level
+  shot leaves beyond the wall instead. On a ship the same (the ship gets a small push from her own wall).
+- **Collision and crew:** a bulwark and a shut port cannot be jumped (1.5 blocks); through an open port you step out
+  over the sill. Crew go around a bulwark and a shut port.
+- **Gangway:** with a ship alongside, open the lid by hand, hold a boarding plank, face out and click the sill: the
+  gangway starts in the block beyond the port at deck height (the lid does not shut from the click). With the lid shut
+  the plank does not go out through the port.
+- **Hull:** build a bulwark all round a small hull's deck and launch her: she floats as high and stays as dry as the
+  same hull with railings (F3 or the flooding report); breaking a bulwark lets no water in.
+- **Fittings:** a swivel gun on a bulwark sits on the wall at the edge; ratlines and a chainplate stand on its top; a
+  lantern hangs under or stands on a stanchion block; the grappling hook holds on it like on a railing.
 
 ## Ratline nets (RL2)
 

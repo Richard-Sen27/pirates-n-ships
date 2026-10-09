@@ -13,8 +13,7 @@ import java.util.List;
 
 /**
  * The single entry point of the Almanac's data side (ALM2: chapters, loader, sync, last page). The almanac module calls
- * each hook from the {@code ModModule} method of the same name ({@link AlmanacDataModule} does that until ALM1's
- * {@code AlmanacModule} takes it over).
+ * each hook from the {@code ModModule} method of the same name ({@code almanac.AlmanacModule}).
  */
 public final class AlmanacData {
 

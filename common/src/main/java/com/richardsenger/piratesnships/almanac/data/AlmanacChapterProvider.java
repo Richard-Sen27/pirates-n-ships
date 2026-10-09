@@ -26,7 +26,7 @@ public final class AlmanacChapterProvider {
     /** The Ponder scene the cannon chapter's "Show me" button plays (ALM4). */
     public static final String CANNON_LOADING_SCENE = Constants.id("cannon_loading").toString();
     /** The Almanac's own item (ALM1); the book stands in while it is not registered. */
-    public static final ResourceLocation ALMANAC_ITEM = Constants.id("almanac");
+    public static final ResourceLocation ALMANAC_ITEM = Constants.id("captains_almanac");
 
     private AlmanacChapterProvider() {
     }

@@ -1,5 +1,5 @@
 {
-  "icon": "minecraft:book",
+  "icon": "pirates_n_ships:captains_almanac",
   "order": 0,
   "pages": [
     {
@@ -20,7 +20,7 @@
         {
           "type": "item",
           "caption": "pirates_n_ships.almanac.welcome.p1.almanac_caption",
-          "item": "minecraft:book",
+          "item": "pirates_n_ships:captains_almanac",
           "x": 0.45,
           "y": 0.75
         }

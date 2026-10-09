@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.almanac.AlmanacPayloads;
 import com.richardsenger.piratesnships.almanac.data.AlmanacBook;
 import com.richardsenger.piratesnships.almanac.data.AlmanacProgress;
 import com.richardsenger.piratesnships.almanac.data.Chapter;
@@ -16,7 +17,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
@@ -92,8 +92,8 @@ public final class AlmanacScreen extends Screen {
     private final AlmanacBook book;
     private final List<Chapter> chapters;
     private final boolean empty;
-    @Nullable
-    private final BlockPos tome;
+    /** The server's open request; handed back to {@link AlmanacClient#closed} so a placed tome closes. */
+    private final AlmanacPayloads.Open request;
     private final AlmanacProgress startAt;
     private final Map<Integer, List<PageLayout.ScreenPage>> pages = new HashMap<>();
     private final Map<ResourceLocation, int[]> imageSizes = new HashMap<>();
@@ -108,16 +108,26 @@ public final class AlmanacScreen extends Screen {
     private float top;
     private boolean started;
 
-    AlmanacScreen(AlmanacBook book, AlmanacProgress progress, @Nullable BlockPos tome) {
+    AlmanacScreen(AlmanacBook book, AlmanacProgress progress, AlmanacPayloads.Open request) {
         super(Component.translatable(AlmanacScreenText.TITLE));
         this.book = book;
         this.empty = book.isEmpty();
         this.chapters = empty ? List.of(emptyChapter()) : book.chapters();
-        this.tome = tome;
+        this.request = request;
         this.startAt = progress;
         this.nav = new BookNavigator(chapters.size(), c -> pages(c).size());
         this.spread = nav.first();
         this.target = spread;
+    }
+
+    /** Opens the book for {@code request} at the page the player last read ({@link ClientAlmanac#progress()}). */
+    static void show(AlmanacPayloads.Open request) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) {
+            AlmanacClient.closed(request);
+            return;
+        }
+        mc.setScreen(new AlmanacScreen(ClientAlmanac.book(), ClientAlmanac.progress(), request));
     }
 
     /** The single page shown when no chapter reached the client. */
@@ -238,7 +248,7 @@ public final class AlmanacScreen extends Screen {
     @Override
     public void removed() {
         if (turn.finishNow()) settle(target);
-        AlmanacClient.closed(tome);
+        AlmanacClient.closed(request);
         super.removed();
     }
 

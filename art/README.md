@@ -1005,6 +1005,29 @@ Treasure map and receipt (ART4):
   `shipwright_toolkit.png` (ART1c); `chart.png`, `map_tile.png`, `kraken_beak.png`, `kraken_ink.png` stay while tests
   read them.
 
+Ship commission (ART11):
+- `ship_commission.bbmodel` (`java_block` item project, no block) → `models/item/ship_commission.json`, 14 elements,
+  textures `palette`, `palette_3`, `palette_4`, `palette_5`, particle `palette_3`; no new colours. Before ART11 the
+  item borrowed `item/ship_receipt` through a model written by `CareerModule.gatherData`; that contribution is gone.
+- **Look:** a rolled charter on the 45 degree diagonal like the bounty proof (built upright along y, every element
+  `z -45` about `[8, 8, 8]`), but longer and fatter (D 5, y 1..15) and with a **pendant** seal, so the two read apart in
+  a slot. Roll: two crossed boxes (D x 0.7 D), `paper` sides, `biscuit_light` front and back, `biscuit_dark` ends; the
+  inner turns (D 3) stick out 0.45 px at both ends with `biscuit_light` ends; a `biscuit_light` strip 0.05 px proud
+  marks the loose edge of the outer sheet. A `gold` ribbon band (`brass` edges) 0.07 to 0.12 px proud round the middle,
+  a `brass` knot on the front, two `gold` tails from the knot to a hanging wax seal below the roll (the lower right in
+  the slot): two crossed boxes in `red` with `flag_red_dark` sides (0.05 px apart in depth), a raised `flag_red_dark`
+  impression and a `spice_dark` mark.
+- **Neutral by design.** One model serves both ladders: navy blue or pirate black per stack would need either a
+  `tintindex` with an item colour handler (no `ClientEvents` hook for item colours exists yet; it would be a shared
+  platform change) or an item property plus an override to a second model. The gold ribbon and red seal suit both.
+- **Display:** the bounty proof's slots (held like a baton in third person, along the fingers in first person,
+  `ground` 0.5, `fixed`/`head` vanilla); no `gui` entry, so the slot shows the front view of the diagonal scroll.
+- Built like ART4: a Python part list wrote the model JSON, the project was opened in a new tab with
+  `Codecs.java_block.parse(json, path)`, the compiled export matches the JSON element by element, and the project was
+  saved with `Codecs.project.compile({raw: true})` (texture `path` emptied, `relative_path` to the sheets). The script
+  is not committed. Lint: no fights; same-look warnings only (the crossed boxes' shared end planes).
+- Render: `renders/ship_commission.png`: front (the GUI view), three-quarter, back, third person in the right hand.
+
 Mooring ring and sail foot (ART5):
 - **Mooring ring** (`mooring_ring.bbmodel`, `block/mooring_ring.json`, 21 elements, textures vanilla `anvil` and
   `palette_2`; particle `anvil`): one model made for the floor, facing north, turned by the block state like a button

@@ -71,7 +71,7 @@ class HandMadeModelsTest {
             "jolly_roger_flag", "kraken_beak", "kraken_ink", "lead_shot", "lime", "map_tile", "merchant_flag", "musket",
             "musket_hook", "musket_loaded", "nails", "navy_flag", "navy_hat", "officer_hat", "officers_coat", "paddle", "pirate_hat", "pistol",
             "pistol_loaded", "rapier", "ratlines", "rope", "rum", "saber", "salt_pork", "salted_fish", "saw", "shackles",
-            "ship_receipt", "shipwright_toolkit", "spices", "tobacco", "treasure_map");
+            "ship_commission", "ship_receipt", "shipwright_toolkit", "spices", "tobacco", "treasure_map");
 
     /** The display slots a hand-made item model copies from vanilla's {@code item/handheld} and {@code item/generated}. */
     private static final List<String> ITEM_DISPLAY_SLOTS = List.of("thirdperson_righthand", "thirdperson_lefthand",

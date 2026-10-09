@@ -69,13 +69,7 @@ public final class CareerModule implements ModModule {
         data.lang(CareerTitles::lang);
         data.lang(com.richardsenger.piratesnships.rpg.career.client.RankHudLayout::lang);
         data.lang(ShipGrants::lang);
-        // SHP1: the commission looks like the shipwright's receipt until it has its own Blockbench model
-        data.models(models -> models.models().accept(
-                net.minecraft.data.models.model.ModelLocationUtils.getModelLocation(ShipGrantContent.SHIP_COMMISSION.get()), () -> {
-                    com.google.gson.JsonObject json = new com.google.gson.JsonObject();
-                    json.addProperty("parent", com.richardsenger.piratesnships.Constants.MOD_ID + ":item/ship_receipt");
-                    return json;
-                }));
+        // the commission's item model is hand-made (art/models/ship_commission.bbmodel, ART11); datagen writes none
     }
 
     @Override

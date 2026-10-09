@@ -688,6 +688,15 @@ set storm` and release it with `/pirates waves clear`. The camera can roll with 
 direction the waves run and gathered on the crests: none in a calm sea, a few in a moderate one, many in a storm, and
 none inside a dry hull (client setting `wave_effects.foam`). Server config `waves`.
 
+The sea itself moves: around you the water surface rises into crests and sinks into troughs with the same waves that
+rock the ships, smooth near you and coarser toward the horizon, flat at the beach where the water is shallow, and never
+inside a dry hull. The foam rides on it. It is only a picture: swimming, boats, collisions and the ships' buoyancy still
+use the flat sea level, so a crest can wash over your feet without lifting you. You can see it from under water too.
+Client settings `wave_effects.surface` (on by default), `surface_near_radius`, `surface_mid_radius`, `surface_far_cell`,
+`surface_full_depth` and `surface_underside`. With a mod that replaces Minecraft's chunk renderer (Sodium, Embeddium,
+Iris, Oculus, VulkanMod) the surface turns itself off and the water stays flat as before; the waves still rock the
+ships.
+
 ### Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks
 high with a low roar. Within 8 blocks of it you, your boat, loose items and light ships are pulled toward it and

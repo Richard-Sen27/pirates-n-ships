@@ -1,5 +1,6 @@
 {
   "values": [
-    "pirates_n_ships:ratlines"
+    "pirates_n_ships:ratlines",
+    "pirates_n_ships:ratline_net_cell"
   ]
 }

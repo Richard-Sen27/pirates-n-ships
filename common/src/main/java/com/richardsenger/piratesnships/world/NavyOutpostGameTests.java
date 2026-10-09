@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.world;
 
+import com.richardsenger.piratesnships.combat.cannon.CannonBlock;
+import com.richardsenger.piratesnships.combat.cannon.CannonContent;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
@@ -26,6 +28,7 @@ import com.richardsenger.piratesnships.world.village.ShoreFacing;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
@@ -36,6 +39,9 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece;
 import net.minecraft.world.level.levelgen.structure.Structure;
@@ -46,6 +52,7 @@ import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.minecraft.world.phys.AABB;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -74,6 +81,55 @@ public final class NavyOutpostGameTests {
     @ModGameTest(template = GameTestTemplates.EMPTY_48)
     public static void outpostTurnsToTheSeaToTheEastWithItsGarrison(GameTestHelper helper) {
         outpostOnShore(helper, Direction.EAST);
+    }
+
+    /**
+     * FIX3: the outpost as worldgen leaves it. On a proto chunk every entity block's position holds a {@code DUMMY}
+     * block entity tag ({@code WorldGenRegion#setBlock}), which the level chunk promotes through {@code newBlockEntity}
+     * and logs "Tried to load a block entity for block ... but failed" when that is null (both cannon halves and both
+     * brig door halves stood behind the warning). Here the placed outpost's block entities are replaced by such tags and
+     * promoted by {@code LevelChunk#getBlockEntity} as on a real load: every one must come back, the cannon rears too.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48)
+    public static void outpostBlockEntitiesSurviveTheWorldgenPromotion(GameTestHelper helper) {
+        WorldGameTests.buildShore(helper, Direction.NORTH);
+        openSky(helper);
+        ServerLevel level = helper.getLevel();
+        BlockPos site = WorldGameTests.site(helper, Direction.NORTH);
+        PortStructure structure = structure(level);
+        Structure.GenerationContext context = WorldGameTests.context(level, site);
+        Optional<Structure.GenerationStub> stub = structure.plan(context, site, WorldGameTests.seaSurface(helper),
+                WorldGameTests.terrain(helper), 1);
+        helper.assertTrue(stub.isPresent(), "the shore gives a generation point");
+        StructureStart start = new StructureStart(structure, context.chunkPos(), 0, stub.get().getPiecesBuilder().build());
+        BoundingBox box = new PiecesContainer(start.getPieces()).calculateBoundingBox();
+        WorldGameTests.place(level, start);
+
+        int promoted = 0;
+        int cannonRears = 0;
+        List<String> failed = new ArrayList<>();
+        for (BlockPos p : BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ())) {
+            BlockState state = level.getBlockState(p);
+            if (!state.hasBlockEntity()) continue;
+            BlockPos pos = p.immutable();
+            LevelChunk chunk = level.getChunkAt(pos);
+            chunk.removeBlockEntity(pos);
+            CompoundTag dummy = new CompoundTag();
+            dummy.putInt("x", pos.getX());
+            dummy.putInt("y", pos.getY());
+            dummy.putInt("z", pos.getZ());
+            dummy.putString("id", "DUMMY");
+            chunk.setBlockEntityNbt(dummy);
+            BlockEntity be = chunk.getBlockEntity(pos);
+            if (be == null) failed.add(state + " at " + pos.toShortString());
+            promoted++;
+            if (state.is(CannonContent.CANNON.get()) && !CannonBlock.isMaster(state)) cannonRears++;
+        }
+        helper.assertTrue(cannonRears >= 2, "the two walls' cannons stand in the outpost (" + cannonRears + " rears)");
+        helper.assertTrue(failed.isEmpty(), "block entities worldgen fails to load (" + failed.size() + " of " + promoted
+                + "): " + failed);
+        navy(level, box).forEach(SeafarerMob::discard);
+        helper.succeed();
     }
 
     /** With the outpost toggled off, a perfect shore gives no generation point. */

@@ -14,6 +14,8 @@ the work see [`progress.md`](progress.md).
 > crew on deck) is unverified until the playtests in [`playtests/`](playtests/) are done.
 > The operator commands under `/pirates` reach every system directly, for testing; in a normal game the ports,
 > the navy, the hiring desks and the NPC ships drive them.
+> Numbers in texts (action bar, tooltips, screens, command replies) always use a dot, independent of the system
+> locale: a German system reads "Too long: 6.3 of 8 blocks", never "6,3".
 
 Requirements: Minecraft 1.21.1, NeoForge or Fabric, the [Sable](https://github.com/ryanhcode/sable) mod, which
 provides the physics for moving ships, GeckoLib (the animated mobs) and, on the client, the Player Animation Library.

@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.crew.walk;
 
+import com.richardsenger.piratesnships.core.text.Num;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.crew.galley.MealSeat;
 import com.richardsenger.piratesnships.crew.galley.MealVisits;
@@ -138,7 +139,7 @@ public final class CrewWalk {
             case ARRIVED -> finish(level, crew, t);
             case TIMED_OUT -> {
                 Constants.LOG.debug("Crew {} did not reach {} {} in {} ticks ({} blocks short): seated there",
-                        crew.getUUID(), t.purpose(), t.anchor(), elapsed, String.format("%.1f", d));
+                        crew.getUUID(), t.purpose(), t.anchor(), elapsed, Num.format("%.1f", d));
                 finish(level, crew, t);
             }
             case WALK -> {

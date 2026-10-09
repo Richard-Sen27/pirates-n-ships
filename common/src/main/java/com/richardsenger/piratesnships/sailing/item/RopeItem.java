@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.sailing.item;
 
 import com.richardsenger.piratesnships.core.text.ActionBar;
+import com.richardsenger.piratesnships.core.text.Num;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.sailing.SailingConfig;
 import com.richardsenger.piratesnships.sailing.block.CleatBlock;
@@ -110,7 +111,7 @@ public class RopeItem extends Item {
             }
             case TOO_LONG -> {
                 return Component.translatable(KEY_TOO_LONG,
-                        String.format("%.1f", StayLinker.length(TriangularSails.point(a), TriangularSails.point(pos))), rules.maxLength());
+                        Num.one(StayLinker.length(TriangularSails.point(a), TriangularSails.point(pos))), rules.maxLength());
             }
             case TOO_FLAT -> {
                 return Component.translatable(KEY_TOO_FLAT, rules.minDrop());

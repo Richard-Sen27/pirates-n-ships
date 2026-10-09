@@ -55,6 +55,78 @@ Each release is two versions per platform, one per loader, in the same Modrinth 
 
 The workflow passes the numeric ids (more robust than slugs). When a dependency is added or dropped in `neoforge.mods.toml` or `fabric.mod.json`, update that loader's `dependencies` list in `release.yml` and this table.
 
+## Dedicated-server smoke test
+
+"The usual release-day crash": the mod works in the dev client and the GameTests but a dedicated server crashes at
+start or on first use, typically on a client class reached from server code (`NoClassDefFoundError:
+net/minecraft/client/...`), a registration done only in a client entrypoint, a mixin that only fails outside dev, or a
+dependency the server lacks. `tools/server_smoke.sh` (REL3) checks for it headlessly; no performance is measured
+(that is PERF1).
+
+```sh
+tools/server_smoke.sh neoforge          # the dev server run, ./gradlew :neoforge:runServer
+tools/server_smoke.sh fabric --jar      # the built jar on a real Fabric server (what the release workflow runs)
+```
+
+**Two modes.**
+
+- Default (`--dev`): starts the loader's dev run (`:neoforge:runServer`, `:fabric:runServer`; both take
+  `-Ppirates_n_ships.server.dir=<dir>`, which the script sets to `<loader>/build/server-smoke` so the normal run
+  directory and its world are never touched). Fast to iterate, but on NeoForge it does **not** catch a client class
+  on a server path: the dev Minecraft jar keeps the client classes loadable (FML strips only `@OnlyIn` classes, and
+  Minecraft has none since 1.20.5). Fabric's dev server does refuse client classes (Loom marks them `@Environment`).
+- `--jar`: what a player's server runs. `./gradlew :<loader>:serverSmokeKit` collects the release jar (with its
+  jar-in-jar Ponder and Flywheel), the required mods as published (NeoForge: Sable, GeckoLib; Player Animation Library
+  is client only there and deliberately left out. Fabric: Fabric API, Sable, Forge Config API Port, GeckoLib, Player
+  Animation Library), the loader's installer and the Java 21 toolchain's path. The script installs the real server once
+  per loader version into `<loader>/build/server-smoke-install/` (network: the installers download Minecraft and the
+  libraries) and runs it with only those mods. This catches client classes on server paths on both loaders, wrong
+  `side`/`environment` metadata, a jar-in-jar that does not load, and a mod missing from the dependency list.
+
+**What it does**, on a fresh world (fixed seed `2718281828`, `SMOKE_SEED` overrides; offline mode, `max-tick-time=-1`,
+view distance 4, free ports), talking to the server console through RCON (`tools/rcon.py`, standard library only;
+Gradle does not forward stdin):
+
+1. Waits for `Done (` (`SMOKE_TIMEOUT`, default 600 s).
+2. Lists the ship templates, finds the nearest ocean (`/locate biome #minecraft:is_ocean`), force-loads it, and there
+   `/pirates ship place starter_sloop assemble` (a Sable sub-level on a dedicated server), spawns pirates and a shark;
+   at spawn a sailor, a navy soldier and a harbor master; `/pirates waves set rough`, `/pirates waves`,
+   `/pirates wind get`, `/pirates world ports|port nearest|factions|raid chance|patrols`, `/pirates mob captain list`,
+   `/pirates trade port …` (creates the markets; its reply then says it needs a player) and `/pirates trade contracts`,
+   `/pirates hazard spawn waterspout`.
+3. Ports through worldgen: locates the nearest seafarer village, pirate island and navy outpost and generates their
+   chunks, so the structures place and the port registry records them (fails the test if fewer than two ports
+   appear); then `/pirates world voyages lane` and `… spawn convoy` for each pair until one sails. On the default seed
+   none does (the village's lane search ends after 6 cells, the island to outpost one hits the 20000-cell budget), so
+   the convoy runs up to the lane search and the summary lists the sailing convoy as skipped. Then `/reload`.
+4. Lets the server tick for 30 s (`SMOKE_TICK_SECONDS`), then `/pirates world voyages`, `/pirates hazard clear`,
+   `/pirates waves clear`, `/save-all flush` and `/stop`, and waits up to 120 s for the process to exit.
+5. Fails on: no `Done (`, a process that does not exit (it is then stopped by its own pid, nothing else is touched),
+   a non-zero exit, no `Stopping server` or no save in the log, a file in `crash-reports/`, and any line of the log or
+   of the command replies matching `Exception`, `NoClassDefFoundError`, `ClassNotFoundException`, `Mixin apply
+   failed`, `crash`/`Crash` or `An unexpected error occurred` (the one exemption: Fabric's mod list entry
+   `fabric-crash-report-info-v1`).
+
+A command's own failure (a reply such as "Failed to place" or "No convoy …") does not fail the test; only crash signs
+do. The output goes to `build/server-smoke/<loader>/` (`SMOKE_OUT` overrides `build/server-smoke`): `server.log`,
+`commands.txt` (every command with its reply), `summary.txt` (pass or fail, startup time, the replies, the skipped
+commands, every log warning or error that mentions the mod). On Fabric a multi-line reply comes back without line
+breaks (vanilla's RCON source joins the lines; NeoForge adds them), which only affects how the summary reads.
+
+**Not covered** (needs a player, and no bot can join headlessly: a vanilla protocol bot such as Mineflayer is refused
+by NeoForge's registry and channel negotiation and could not handle our registries on Fabric either, and neither
+loader's test framework connects a client to a dedicated server; vanilla's fake players are server-side only and none
+of our commands creates one): joining, the HUD and every payload to a client, the Almanac and Ponder on a client
+connected to a dedicated server, `/pirates trade open|goods|buy|sell|weight|plunder|coins`, `/pirates world voyages
+spawn near`, crew hiring and orders, quests, careers and reputation of a player, law and brig on a player, `/pirates
+ship forces|rigging|info`. Those are the [dedicated-server playtest](playtests/dedicated-server.md). The build-time
+guard for client classes is `common`'s JUnit test `ServerSideClassesTest`: no class outside the client side (client
+packages, client mixins, `compat/jei`, the Ponder scenes, `Client…` classes) may resolve a `net.minecraft.client` or
+`com.mojang.blaze3d` class.
+
+Typical times on a laptop: startup to `Done` about 20 s in either mode once built (the server itself reports 5 to
+10 s); a whole `--jar` run about 2.5 minutes including the first install.
+
 ## Release notes
 
 `tools/release_notes.py <previous-tag> <tag>` prints Markdown notes for the commits between two tags, grouped by their Angular type (`.claude/skills/commit/SKILL.md`):
@@ -84,7 +156,7 @@ Hand-written texts for the platforms and the release, in `docs/release/` (REL4),
 
 Before tagging, check:
 
-1. `main` is green on CI (build, JUnit, GameTests).
+1. `main` is green on CI (build, JUnit, GameTests). The release workflow also runs the dedicated-server smoke test; run it locally first when server-side code changed (below).
 2. The playtests for everything new since the last release are done (`docs/playtests/`, and the playtest list at the end of `docs/progress.md`). Nothing the release notes advertise should be unplaytested.
 3. `docs/progress.md` has no open blocker for the features in this release.
 4. `docs/release/save-compatibility.md` is current: every stored format, block state, registry id or config key changed since the last release is in it (what converts, what is lost, what a player does by hand), and `KeptIdsTest` passes.
@@ -115,7 +187,7 @@ The two loaders publish in two separate steps, NeoForge first. A failed NeoForge
 3. JDK 21 (Temurin), Gradle with caching.
 4. `./gradlew build -Pversion=<version>` (includes JUnit).
 5. `./gradlew :neoforge:runGameTestServer -Pversion=<version>` (headless; the normal CI runs it on ubuntu too).
-6. `./gradlew :fabric:runGameTest -Pversion=<version>` (headless, like the CI's Fabric GameTests).
+6. `./gradlew :fabric:runGameTest -Pversion=<version>` (headless, like the CI's Fabric GameTests). Then the [dedicated-server smoke test](#dedicated-server-smoke-test) on both release jars, NeoForge first (`tools/server_smoke.sh <loader> --jar` with `SMOKE_GRADLE_ARGS=-Pversion=<version>`; about 3 minutes per loader), then uploads its logs (`server-smoke-<version>`, also when it failed).
 7. Checks there is exactly one release jar `neoforge/build/libs/*-neoforge-*-<version>.jar` (sources and javadoc jars do not match) and that its `neoforge.mods.toml` has that version.
 8. Checks there is exactly one release jar `fabric/build/libs/*-fabric-*-<version>.jar` and that its `fabric.mod.json` has `"version": "<version>"`.
 9. Writes the notes (`tools/release_notes.py --self-test`, then the loader line and the notes into `build/release-notes.md` and the job summary).

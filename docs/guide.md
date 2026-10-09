@@ -177,8 +177,9 @@ page, three tabs.
   furled), crew and bunks, the supplies left in days and the last payday. **Disassemble** (click twice) disassembles
   her at this helm.
 - **Crew:** the captain's whistle orders as buttons (hoist, reef, furl, man the pumps, fire, load, fire at will, the
-  anchor, release crew; "Release crew" also ends "Fire at will"). The anchor is one button: it reads "Drop anchor"
-  while the anchor is stowed or coming up and "Raise anchor" while it runs out or holds, and gives that order. Then every hand aboard with morale, station
+  anchor, board, release crew; "Release crew" also ends "Fire at will"). The anchor is one button: it reads "Drop anchor"
+  while the anchor is stowed or coming up and "Raise anchor" while it runs out or holds, and gives that order; the
+  boarding button reads "Board!" or, while your boarders are across, "Back aboard". Then every hand aboard with morale, station
   or off duty, the order being carried out, who hired them, unpaid, and a warning when low morale has them close to
   deserting. **Release** takes a hand off their station, **Dismiss** lets them go as the whistle's sneak-use does.
 - **Stations:** every station aboard (winches, pumps, cannons, capstans, the helm), who mans it, the order worked
@@ -481,6 +482,33 @@ and use it with an empty hand, from either end, to take it up again. Server conf
 of earlier versions are gone and ignored in an old config file); client config `boarding_view.preview`. Planks laid
 with an earlier version are turned into straight boards the first time their world loads (a level one stays as it
 is; a sloped one is laid again from its near end, or drops back as one plank if no straight board fits there).
+
+### Boarding: the crew go across
+Lie alongside another ship (haul her in with the grappling hook, or lay a gangway across) and give **Board!** on the
+captain's whistle (or the ship screen's button). Every hand of your ship goes except the gunners and the helmsman:
+each leaves his station, walks to the nearest way across and crosses it: along a gangway between the two ships
+(whichever ship it was laid from), over touching hulls, or with a jump over a gap of up to two blocks of water to a deck
+at most a block higher or lower. A railing stops them; a railing gate or port is an opening. On her deck they fight her
+crew and any monster aboard: a hand with an empty hand first takes a cutlass, saber or rapier from a chest or barrel of
+your ship and fences with it like the pirates do, otherwise he fights with his fists. Her people fight back, and your
+own free hands defend your deck the same way when someone boards you. No way across: "No way across to board", and
+nobody moves.
+
+When her deck has been clear of enemies for ten seconds you are told "Her deck is yours" and the boarders come home. To
+take the ship herself, step aboard as before: an NPC ship is yours once her fighters are dead and you stand on her deck
+for a while (the capture of the world simulation, with its deeds; a merchant taken is piracy, and the goods taken from
+her are plunder that a harbor master will not buy). While they are across the same entry reads **Back aboard**: they
+come home over the nearest way back, also when you give it from her deck, and walk to the stations they left. A
+boarder whose way back is gone (the gangway broken, the ships drifted apart) stays and fights on, and comes home as soon
+as a way opens again. A hand who has not got across after ten seconds is set down on the far side.
+
+NPC ships board you too: a pirate ship (the navy, when you fly the Jolly Roger or are wanted) that lies alongside your
+ship, with a gangway or a gap of up to two blocks, sends her fighters across after eight seconds when her guns have
+fired on you or she is the faster or the heavier ship, and they are not outnumbered. Her captain calls them back when
+his ship floods or when your people outnumber them two to one. Server config `boarding`: `board_order`, `board_gap`
+(2), `boarders_keep_stations`, `capture_seconds` (10), `npc_boarding`, `npc_board_delay` (8 seconds),
+`npc_recall_outnumbered`, `npc_recall_flooded`, `take_arms`, `unarmed_damage`, `crew_skill`, `cross_timeout_ticks`,
+`order_check_ticks`.
 
 ### Map tiles
 Craft a Map Tile from 8 sticks around a paper and place it on a table or a wall. Put several side by side in a
@@ -913,10 +941,12 @@ crew take their place at once).
 The **captain's whistle** (creative tab) gives orders:
 - Use it on a crew member, then on a station: the crew member takes that station.
 - Use it on an assigned crew member: it is released.
-- Use it in the air: opens the order wheel with nine orders: Hoist sails, Reef sails, Furl sails, Man the pumps,
-  Fire!, Load!, Fire at will, the anchor, Release crew. The anchor is one toggle: it reads "Drop anchor" while the
+- Use it in the air: opens the order wheel with ten orders: Hoist sails, Reef sails, Furl sails, Man the pumps,
+  Fire!, Load!, Fire at will, the anchor, Board!, Release crew. The anchor is one toggle: it reads "Drop anchor" while the
   anchor is stowed or coming up and "Raise anchor" while it runs out or holds (the label follows the ship status your
-  HUD shows; the server decides from the anchor's state when the order arrives). Point at one and click, or hold the
+  HUD shows; the server decides from the anchor's state when the order arrives). "Board!" is a toggle too: it reads
+  "Back aboard" while your boarders are across (see [Boarding: the crew go across](#boarding-the-crew-go-across)).
+  Point at one and click, or hold the
   use key, aim and release. The order goes to the crew on the ship you stand on whose station takes it; unmanned stations
   become open jobs (see [Orders, not assignments](#orders-not-assignments)). Esc closes the wheel.
 
@@ -1603,7 +1633,7 @@ other level in use.
 | `/pirates crew info [crew]` | Morale, crew and bunks, supplies left, the last payday. |
 | `/pirates crew assign <crew> <station>` | Puts a crew member at a station. |
 | `/pirates crew release <crew>` | Releases crew from their stations. |
-| `/pirates crew order <hoist\|reef\|furl\|pump\|fire\|load\|fire_at_will\|drop_anchor\|raise_anchor> [crew]` | Gives an order, ship-wide or to the named crew. The anchor keeps its two directions here; the whistle wheel and the ship screen have one anchor toggle. |
+| `/pirates crew order <hoist\|reef\|furl\|pump\|fire\|load\|fire_at_will\|drop_anchor\|raise_anchor> [crew]` | Gives an order, ship-wide or to the named crew. The anchor keeps its two directions here; the whistle wheel and the ship screen have one anchor toggle. Boarding is given on the whistle or the ship screen only. |
 | `/pirates crew order course <x> <z> [<x> <z> …] [loop]` | Gives the helmsman a course through waypoints. |
 | `/pirates crew hire <sailor\|pirate\|navy> [port]`, `/pirates crew dismiss <crew>` | Hires a candidate; dismisses a hired hand. |
 | `/pirates provisions show <crew> [pos]` | What the pantry you look at holds, and how many days it feeds that crew. |
@@ -1694,7 +1724,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `combat` | Cannon block damage, rain misfires; `damage_multipliers` (cannon on blocks and entities, firearms). |
 | `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevations, blocks per hit, recoil and impact, ball lifetime and water, `mobGriefing` and spawn protection, drops, glancing hits; `swivel`, `chain_shot`, `grapeshot`, `crew` (loading by the crew, load preference), `npc` (fire at will). |
 | `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore haul, entity damage, lost hooks, latching on world blocks and on your own ship, cleats and rings, railings holding the hook and tearing out (`latches_hold`, `railing_break_force`), climbing; `launch` (from the musket), `slide` (sliding along a rope). |
-| `boarding` | `plank`: the boarding plank on/off, length, steepest pitch (`max_pitch`, 45 degrees), pick-up, break distance and rise. |
+| `boarding` | The "Board!" order on/off (`board_order`), the widest gap jumped (`board_gap`, 2), gunners and helmsman staying (`boarders_keep_stations`), the clear deck's hold before "Her deck is yours" (`capture_seconds`), NPC boarding on/off and its delay (`npc_boarding`, `npc_board_delay`), the NPC recall (`npc_recall_outnumbered`, `npc_recall_flooded`), swords from the chests (`take_arms`), the punch (`unarmed_damage`), the crew's sword skill (`crew_skill`), the crossing's fallback (`cross_timeout_ticks`), how often boarders look around (`order_check_ticks`); `plank`: the boarding plank on/off, length, steepest pitch (`max_pitch`, 45 degrees), pick-up, break distance and rise. |
 | `apparel` | Armour of the hats, coats, breeches and boots. |
 | `chart` | Charts on/off, cell size, sampling radius and interval, shallow depth, the cell cap, opening without the item (`open_without_item`, off by default), other players visible, marker cap; `tiles` (map tiles). |
 | `almanac` | The Captain's Almanac readable on/off (`enabled`), how long a placed tome stays open (`open_ticks`), the last page remembered per player (`remember_page`), the first-join gift (`give_on_first_join`). |

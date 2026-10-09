@@ -147,3 +147,60 @@ ignored).
 3. A world with gangways laid before this version: load it. Expected: level gangways look the same (now one board);
    sloped ones are straight boards from their near end (or, rarely, gone with one plank lying there); tell me if any
    went missing without a plank.
+
+# BRD3: the "Board!" order
+
+Covered headlessly (`BoardingOrderGameTests` 9 on NeoForge and Fabric; `BoardingWaysTest`, `BoardingRulesTest`,
+`BoardingHopTest` JUnit): three free hands cross a gangway onto a ship three blocks off and stand on her deck while the
+gunner keeps his swivel gun; three hands jump two blocks of water; three blocks without a plank is refused; a husk on
+her deck is fought and killed (the one hand without a sword takes the cutlass from the chest); "Her deck is yours"
+reaches the captain once the deck is clear; "Back aboard" from her deck brings the boarders home and the gunner back to
+his gun; a broken gangway strands them, a new one brings them home; a pirate ship two blocks off a player's ship sends
+her pirates across after the delay and not with `npc_boarding` off. This section checks what only a client shows: the
+walk, the jump, the fight, the labels.
+
+Defaults: `boarding.board_order` true, `board_gap` 2, `boarders_keep_stations` true, `capture_seconds` 10,
+`npc_boarding` true, `npc_board_delay` 8, `npc_recall_outnumbered` 2.0, `npc_recall_flooded` 0.3, `take_arms` true,
+`unarmed_damage` 2.0, `crew_skill` SAILOR, `cross_timeout_ticks` 200.
+
+## 12. Board over a gangway
+1. Two ships three or four blocks apart, side by side. On yours: a helmsman at the helm, a gunner at a cannon, three free
+   hands, a chest with one cutlass. Lay a gangway from your rail onto hers. Open the whistle wheel. Expected: ten
+   entries; hover the cutlass: "Board!" with its line below.
+2. Pick "Board!". Expected: "3 hands, board her!" on the action bar; the helmsman and the gunner stay; the three walk
+   to the gangway's end on your deck (no teleport), one after another along the board, and step onto her deck. One of
+   them now holds the cutlass (the chest is empty). Screenshot while they are on the board, please.
+3. Open the wheel again. Expected: the entry now reads "Back aboard" (also on the helm's ship screen, Crew tab).
+
+## 13. Board over a gap
+1. Haul the other ship alongside with the grappling hook until two blocks of water or less are between the rails (no
+   gangway). Give "Board!". Expected: each hand walks to your rail opposite her deck and jumps across in a short arc,
+   landing on her deck (a deck a block higher or lower works too). Tell me if anyone falls into the water.
+2. Three blocks of water or more and no gangway. Expected: "No way across to board", nobody moves.
+3. A railing along your whole side. Expected: refused; a railing gate or port in it: they go through the opening.
+
+## 14. The fight
+1. An NPC pirate ship alongside (or `/summon pirates_n_ships:pirate` onto the other deck), then "Board!". Expected:
+   the boarders attack the pirates on her deck; the one with the cutlass winds up, slashes and parries like a pirate;
+   the others punch. The pirates fight back. Tell me how the crew's swings look (the crew model may show no sword arm
+   pose; that is a known gap).
+2. Boarders with nobody left to fight on her deck stand still. After ten seconds without an enemy aboard: "Her deck is
+   yours" on your action bar (only for you, the captain) and the boarders walk home over the nearest way and back to
+   their stations.
+3. Step aboard a cleared NPC ship yourself and stay a few seconds. Expected: the old capture ("You took the ..."), and
+   for a merchant the law's piracy (nothing new here).
+
+## 15. The recall and a lost way back
+1. While they are across, give "Back aboard" (from your deck, or from hers if you boarded with them). Expected: "All
+   hands back aboard"; they come back over the gangway or jump the gap back, then walk to the stations they left (the
+   gunner and helmsman never left).
+2. While they are across, break the gangway (or let the ships drift apart). Give "Back aboard". Expected: they stay on
+   her deck and keep fighting; lay a new gangway: they come home over it.
+
+## 16. NPC pirates board you
+1. Sail into a pirate ship's range and let her come alongside (or lay a gangway between your ship and hers), with
+   your free hands on deck. Expected: about eight seconds after she lies alongside, her pirates cross onto your deck
+   and attack you and your free hands (crew at stations keep working); your free hands fight back.
+2. Kill most of them, or let her flood. Expected: her captain calls the rest back; they cross back to her deck.
+3. `boarding.npc_boarding` false: expected nobody comes across.
+4. Fly the Jolly Roger near a navy ship that lies alongside: expected her soldiers and officer board you the same way.

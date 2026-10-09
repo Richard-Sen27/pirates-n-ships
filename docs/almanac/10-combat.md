@@ -118,6 +118,16 @@ Use a rope made fast to a cleat or ring to slide down it, from your masthead ont
 With the ships alongside, use a {item:pirates_n_ships:boarding_plank}**boarding plank** on top of your gunwale. Keep the ships together or it breaks. Hold the plank and look at your rail: the board it would lay shows in green, and a red cell marks what stands in the way.
 {recipe:boarding_plank}
 
+## Board her!
+{spotlight:captains_whistle}
+With a gangway across or her rail two blocks off at most, blow **Board!**. Your hands cross and fight her crew; gunners and helmsman stay.
+
+- An empty hand takes a sword from your chests.
+- Her deck clear: "Her deck is yours", and they come home.
+- **Back aboard** calls them home early.
+
+>! Pirates alongside board you the same way.
+
 ## Taking a prize
 Merchantmen, navy patrols and pirates sail the sea lanes.
 

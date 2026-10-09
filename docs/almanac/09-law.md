@@ -54,6 +54,8 @@ Sneak-use your own prisoner with an empty hand to set him free.
 illustration: brig_door
 A {item:pirates_n_ships:brig_door}**brig door** locks and unlocks with a {item:pirates_n_ships:brig_key}**brig key**. Locked, it opens only for whoever placed it.
 
+{spotlight3d:block:brig_door|The brig door, shut}
+
 {recipe:brig_door}
 
 ## Bars and keys

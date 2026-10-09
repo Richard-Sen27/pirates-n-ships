@@ -8,12 +8,13 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
 
 import java.util.Locale;
 
 /**
  * Field codecs shared by the Almanac's chapter model (docs/design.md §3.4, ALM2; format in docs/almanac.md). Pure:
- * the item check reads the static item registry only, so JUnit can use it after {@code Bootstrap.bootStrap()}.
+ * the item, block and entity type checks read the static registries only, so JUnit can use it after {@code Bootstrap.bootStrap()}.
  */
 public final class AlmanacCodecs {
 
@@ -49,6 +50,20 @@ public final class AlmanacCodecs {
         if (!BuiltInRegistries.ITEM.containsKey(id) || BuiltInRegistries.ITEM.get(id) == Items.AIR) {
             return DataResult.error(() -> "unknown item " + id);
         }
+        return DataResult.success(id);
+    }
+
+    /** A registered block other than air (ALM10's 3D spotlights). */
+    static DataResult<ResourceLocation> checkBlock(ResourceLocation id) {
+        if (!BuiltInRegistries.BLOCK.containsKey(id) || BuiltInRegistries.BLOCK.get(id) == Blocks.AIR) {
+            return DataResult.error(() -> "unknown block " + id);
+        }
+        return DataResult.success(id);
+    }
+
+    /** A registered entity type (ALM10's 3D spotlights). */
+    static DataResult<ResourceLocation> checkEntity(ResourceLocation id) {
+        if (!BuiltInRegistries.ENTITY_TYPE.containsKey(id)) return DataResult.error(() -> "unknown entity type " + id);
         return DataResult.success(id);
     }
 

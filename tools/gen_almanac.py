@@ -32,6 +32,10 @@ voice. docs/guide.md is the testing and reference guide and is not read here. Ea
     {spotlight:helm}                    a framed item at twice the size with its name under it (ALM8; a line of its own)
     {recipe:helm}                       the crafting panel of one of our recipes (ALM8; a line of its own; the id must
                                         exist in the generated recipes, common/src/generated/resources/data/<ns>/recipe)
+    {spotlight3d:block:capstan}         a block, item or mob turning in a framed card with its name under it (ALM10; a
+    {spotlight3d:entity:shark|The shark}  line of its own): <kind>:<id>[|caption], kind block, item or entity, the id
+                                        one of ours (lang block./entity. keys, our items) or a vanilla id in VANILLA;
+                                        the caption is plain text and replaces the registry name under the card
 
 Body blocks: a paragraph (lines joined) -> text; "- " lines -> one list (indented lines continue an entry; at most
 64 entries); "1. " lines -> one text per entry with its number in bold; "> " paragraphs -> a tip (TIP_COLOR ink);
@@ -124,6 +128,20 @@ ILLUSTRATIONS = {
 }
 MAX_W, MAX_H = 256, 160
 
+# ALM10: the vanilla ids a 3D spotlight may show (the generator has no vanilla registry; AlmanacGuideTest checks these
+# against the game's). Add one here before using it.
+VANILLA = {
+    "block": {"minecraft:barrel", "minecraft:bell", "minecraft:chest", "minecraft:crafting_table", "minecraft:lantern",
+              "minecraft:lectern", "minecraft:oak_door", "minecraft:oak_fence_gate", "minecraft:oak_planks"},
+    "item": {"minecraft:bow", "minecraft:clock", "minecraft:compass", "minecraft:crossbow", "minecraft:filled_map",
+             "minecraft:gunpowder", "minecraft:iron_sword", "minecraft:shield", "minecraft:spyglass",
+             "minecraft:trident"},
+    "entity": {"minecraft:axolotl", "minecraft:cod", "minecraft:dolphin", "minecraft:drowned", "minecraft:guardian",
+               "minecraft:parrot", "minecraft:pillager", "minecraft:pufferfish", "minecraft:salmon", "minecraft:squid",
+               "minecraft:tropical_fish", "minecraft:turtle", "minecraft:villager", "minecraft:wandering_trader"},
+}
+SPOTLIGHT_3D_KINDS = ("block", "item", "entity")
+
 MAX_LIST = 64          # Page element limits of the chapter format (ListItems, Page)
 MAX_ELEMENTS = 64
 MAX_PAGES = 256
@@ -134,7 +152,8 @@ COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 ORDERED_RE = re.compile(r"^(\d+)\.\s+(.*)$")
 DIRECTIVE_RE = re.compile(r"^(illustration|show_me|contents):\s*(.*)$")
 BLOCK_TOKEN_RE = re.compile(r"^\{(recipe|spotlight):([^}]*)}$")   # ALM8: a recipe panel or an item spotlight
-INLINE_BLOCK_RE = re.compile(r"\{(recipe|spotlight):")
+INLINE_BLOCK_RE = re.compile(r"\{(recipe|spotlight|spotlight3d):")
+SPOTLIGHT_3D_RE = re.compile(r"^\{spotlight3d:([^}]*)}$")     # ALM10: a block, item or mob turning in a card
 HEADING_RE = re.compile(r"^##\s+(.+?)\s*$")
 ITEM_RE = re.compile(r"\{item:([^}]*)}")
 LINK_RE = re.compile(r"\[\[([^\]|]*)(?:\|([^\]]*))?]]")
@@ -252,7 +271,8 @@ def check_markup(text, where, chapter_ids, items):
     if depth:
         raise SourceError(where, "a {#rrggbb} colour that is never closed with {/}")
     if INLINE_BLOCK_RE.search(bare):
-        raise SourceError(where, "{recipe:...} and {spotlight:...} are blocks: put them on a line of their own")
+        raise SourceError(where, "{recipe:...}, {spotlight:...} and {spotlight3d:...} are blocks: put them on a line "
+                                 "of their own")
     other = re.sub(r"\{(#[0-9a-fA-F]{6}|/|item:[^}]*)}", "", bare)
     if "{" in other or "}" in other:
         raise SourceError(where, "a brace that is no markup; escape a literal one as \\{")
@@ -283,7 +303,8 @@ def split_blocks(numbered):
     """[(line number, text)] of one page -> [(kind, data, line number)].
 
     Kinds: "para" (text), "tip" (text), "warning" (text), "bullets" ([text]), "ordered" ([(n, text)]),
-    "illustration" (name), "show_me" ((scene, label)), "contents" (None), "recipe" (full id), "spotlight" (full id).
+    "illustration" (name), "show_me" ((scene, label)), "contents" (None), "recipe" (full id), "spotlight" (full id),
+    "spotlight3d" ((kind, full id, caption or None)).
     """
     blocks, i = [], 0
     while i < len(numbered):
@@ -294,6 +315,11 @@ def split_blocks(numbered):
             continue
         if s.startswith("|"):
             raise SourceError(f"line {n}", "tables do not fit the Almanac's pages; write a list")
+        b3 = SPOTLIGHT_3D_RE.match(s)
+        if b3:
+            blocks.append(("spotlight3d", parse_spotlight_3d(b3.group(1), f"line {n}"), n))
+            i += 1
+            continue
         b = BLOCK_TOKEN_RE.match(s)
         if b:
             value = b.group(2).strip()
@@ -350,7 +376,7 @@ def split_blocks(numbered):
             _, raw = numbered[i]
             t = raw.strip()
             if (not t or t.startswith(("|", "- ")) or ORDERED_RE.match(t) or DIRECTIVE_RE.match(t)
-                    or BLOCK_TOKEN_RE.match(t)):
+                    or BLOCK_TOKEN_RE.match(t) or SPOTLIGHT_3D_RE.match(t)):
                 break
             if kind != "para":
                 if not t.startswith(">"):
@@ -362,6 +388,24 @@ def split_blocks(numbered):
             i += 1
         blocks.append((kind, " ".join(para), n))
     return blocks
+
+
+def parse_spotlight_3d(value, where):
+    """"<kind>:<id>[|caption]" of a {spotlight3d:...} line -> (kind, full id, caption or None). The id is checked
+    against the registries later (write_page)."""
+    body, bar, caption = value.partition("|")
+    kind, _, rid = body.strip().partition(":")
+    kind, rid = kind.strip(), rid.strip()
+    if kind not in SPOTLIGHT_3D_KINDS:
+        raise SourceError(where, f"{{spotlight3d:{value}}}: the kind is block, item or entity, not {kind!r}")
+    if not rid or not RESOURCE_RE.match(full_id(rid)):
+        raise SourceError(where, f"{{spotlight3d:{value}}}: no valid id")
+    caption = caption.strip()
+    if bar and not caption:
+        raise SourceError(where, f"{{spotlight3d:{value}}}: an empty caption after '|'")
+    if bar and re.search(r"[{}\[\]*_\\`]", caption):
+        raise SourceError(where, f"{{spotlight3d:{value}}}: the caption is plain text (no markup)")
+    return kind, full_id(rid), caption if bar else None
 
 
 class PageBuilder:
@@ -416,6 +460,12 @@ class PageBuilder:
 
     def spotlight(self, item):
         self.elements.append({"type": "spotlight", "item": item})
+
+    def spotlight_3d(self, kind, rid, caption):
+        element = {"type": "spotlight3d", "subject": kind, "id": rid}
+        if caption is not None:
+            element["caption"] = self.key("spotlight3d", caption)
+        self.elements.append(element)
 
     def build(self):
         if len(self.elements) > MAX_ELEMENTS:
@@ -477,11 +527,20 @@ def load_recipes():
     return {f"{NS}:{p.relative_to(directory).with_suffix('').as_posix()}" for p in directory.rglob("*.json")}
 
 
-def build_chapters(sources, items, recipes=None):
-    """Parsed sources (file order), our item ids and recipe ids -> (chapters for the intermediate, lang map, shown
-    illustrations). Recipes default to the generated ones (load_recipes)."""
+def load_registry(items):
+    """{kind: our ids of that kind} for the 3D spotlights: blocks and entity types from the lang, the items given."""
+    blocks, entities = lib.load_registry()
+    return {"block": blocks, "item": set(items), "entity": entities}
+
+
+def build_chapters(sources, items, recipes=None, registry=None):
+    """Parsed sources (file order), our item ids, recipe ids and {kind: ids} of our blocks, items and entity types ->
+    (chapters for the intermediate, lang map, shown illustrations). Recipes default to the generated ones
+    (load_recipes), the registry to load_registry."""
     if recipes is None:
         recipes = load_recipes()
+    if registry is None:
+        registry = load_registry(items)
     ids = [f"{NS}:{s.id}" for s in sources]
     if len(set(ids)) != len(ids):
         raise SystemExit(f"duplicate chapter ids in docs/almanac: {ids}")
@@ -506,18 +565,18 @@ def build_chapters(sources, items, recipes=None):
         page = PageBuilder(src.id, 1, lang)
         page.heading(lang[title_key])
         has_intro = any(line.strip() for _, line in intro)
-        write_page(page, intro, src, chapter_ids, items, ids, placed, recipes)
+        write_page(page, intro, src, chapter_ids, items, ids, placed, recipes, registry)
         if not has_intro and rest:
             # Nothing before the first subsection: it shares the first page with the chapter title
             heading, lines = rest[0]
             rest = rest[1:]
             page.heading(check_markup(heading, src.name, chapter_ids, items))
-            write_page(page, lines, src, chapter_ids, items, ids, placed, recipes)
+            write_page(page, lines, src, chapter_ids, items, ids, placed, recipes, registry)
         pages.append(page.build())
         for heading, lines in rest:
             page = PageBuilder(src.id, len(pages) + 1, lang)
             page.heading(check_markup(heading, src.name, chapter_ids, items))
-            write_page(page, lines, src, chapter_ids, items, ids, placed, recipes)
+            write_page(page, lines, src, chapter_ids, items, ids, placed, recipes, registry)
             pages.append(page.build())
         if len(pages) > MAX_PAGES:
             raise SourceError(src.name, f"{len(pages)} pages (max {MAX_PAGES})")
@@ -539,7 +598,7 @@ def build_chapters(sources, items, recipes=None):
     return chapters, lang, shown
 
 
-def write_page(page, numbered, src, chapter_ids, items, ids, placed, recipes):
+def write_page(page, numbered, src, chapter_ids, items, ids, placed, recipes, registry):
     try:
         blocks = split_blocks(numbered)
     except SourceError as e:
@@ -578,6 +637,13 @@ def write_page(page, numbered, src, chapter_ids, items, ids, placed, recipes):
             if data.startswith(NS + ":") and data not in items:
                 raise SourceError(where, f"{{spotlight:{data}}} is no item of ours")
             page.spotlight(data)
+        elif kind == "spotlight3d":
+            what, rid, caption = data
+            known = registry[what] if rid.startswith(NS + ":") else VANILLA[what]
+            if rid not in known:
+                where_known = "of ours" if rid.startswith(NS + ":") else "in VANILLA (tools/gen_almanac.py)"
+                raise SourceError(where, f"{{spotlight3d:{what}:{rid}}}: no {what} {where_known}")
+            page.spotlight_3d(what, rid, caption)
         elif kind == "contents":
             page.bullets([f"[[{rid}]]" for rid in ids if rid != f"{NS}:{src.id}"])
 

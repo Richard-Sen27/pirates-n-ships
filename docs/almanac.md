@@ -44,6 +44,7 @@ in list order; illustrations and item icons sit at their coordinates.
 | `show_me` | `scene` (Ponder scene id), `label` (lang key) | A button that plays the scene (ALM4) |
 | `recipe` | `recipe` (recipe id) | A recipe panel (ALM8): a block of 116 x 62 in the flow, looked up in the client's recipe manager |
 | `spotlight` | `item` (item id) | An item spotlight (ALM8): the item framed at 2x with its name, a block of 50 px in the flow; an unknown item fails the chapter |
+| `spotlight3d` | `subject` (`block`, `item` or `entity`), `id` (block, item or entity type id); `caption` (lang key, optional) | A 3D spotlight (ALM10): the block, item or mob turning in a framed card, its name (the caption, else the registry name) under it; a block of 96 px in the flow; an id the subject's registry does not have fails the chapter |
 
 Lang keys: non-empty, at most 256 characters, no whitespace. An unknown lang key is not an error (lang lives on the
 client; the screen shows the raw key).
@@ -184,6 +185,31 @@ item's tooltip, the result shows its count. The mod has no recipe types of its o
 Provisions are JEI pages, not recipes). A spotlight draws the item at 2x in a framed card and its name in bold under it.
 The pieces come from `textures/gui/almanac/panels.png` (`tools/gen_almanac_textures.py`, UVs in `AlmanacPanels`).
 
+### 3D spotlights (ALM10)
+
+A fixed-height block like the ones above: a card of 96 x 84 (narrower on a page narrower than that) centred at the
+top of a 96 px block, the name in bold on the line under it; never split. The card is the item spotlight's frame
+family, larger (`panels.png` at 0,128, `AlmanacPanels.SPOTLIGHT_3D_*`). `Spotlight3dRenderer` (client, one per open
+screen; the models are built on first sight and dropped when the screen closes) draws the model inside the card's rim
+(4 px), clipped there with a scissor:
+
+- `block`: the block's default state, its block model (when its render shape is a model) and its block entity's
+  renderer on a block entity made for the card and never placed (the capstan's bars, the helm's wheel, the cannon's
+  barrel, the swivel gun); a two-high block (a door) shows both halves. So a block shows as it stands in the world,
+  closed when its default state is closed.
+- `item`: the item's model as an item frame shows it (`ItemDisplayContext.FIXED`).
+- `entity`: a client-side instance of the type, made once per screen and never added to the level, facing the reader
+  with its head straight (it follows nothing), drawn through the entity render dispatcher as the inventory draws the
+  player (a GeckoLib mob through its own `GeoEntityRenderer`). Its tick count runs with the screen, so a mob whose
+  idle animation plays when it stands still plays it here.
+
+Every model is measured once (its vertices, untransformed) and drawn turning about its vertical axis through its
+centre at 20 degrees a second (smooth with the partial tick), leaning 20 degrees toward the reader, scaled so the
+circle it sweeps and its height stay inside the card (`Spotlight3dView`, so the kraken comes out small and a sword
+large), lit as the inventory lights entities, full bright, at z 150 above the page (no polygon offset needed: the model
+never shares a plane with the page). While a page turns the card shows without its model. Hovering the card shows the
+registry name as a tooltip. A model that fails to build or draw is logged once and the card stays empty.
+
 Placeholder textures come from `tools/gen_almanac_textures.py` (standard library; `textures/gui/almanac/book.png` and
 `bookmark.png`, `AlmanacTexturesTest` fails while the committed files differ from a fresh run); ART14 replaces them.
 
@@ -318,6 +344,7 @@ illustration: yard                   # places a declared illustration on this pa
 show_me: sails_and_winch | Show me: rigging a sail     # a "Show me" button here; label optional ("Show me")
 contents:                            # a list linking every other chapter in book order (the welcome chapter)
 {spotlight:helm}                     # an item spotlight (ALM8; a line of its own; no namespace = pirates_n_ships)
+{spotlight3d:entity:shark|The shark} # a 3D spotlight (ALM10; a line of its own; kind block, item or entity)
 {recipe:helm}                        # the recipe panel of one of our recipes (ALM8; a line of its own)
 ```
 
@@ -341,6 +368,13 @@ contents:                            # a list linking every other chapter in boo
   the script. Content rules, checked by `AlmanacGuideTest`: every recipe of ours has exactly one panel, where its
   block or item is introduced; every chapter's first page has its plate (an illustration) and a spotlight. Write
   short paragraphs (at most about 60 words, one idea each); exact numbers and edge cases belong in `docs/guide.md`.
+- **3D spotlights (ALM10),** a line of their own: `{spotlight3d:<kind>:<id>}` or `{spotlight3d:<kind>:<id>|<caption>}`,
+  kind `block`, `item` or `entity` (no namespace = `pirates_n_ships`). Our ids must exist: blocks and entity types by
+  their `block.`/`entity.` lang names (`tools/almanac_lib.py`, `load_registry`), items as above; a vanilla id must be
+  in `VANILLA` in `tools/gen_almanac.py` (add it there; `AlmanacGuideTest` checks it against the game's registries).
+  The caption is plain text (no markup) and replaces the registry name under the card. An unknown kind or id, an
+  empty caption or an inline use stops the script. Use one where a turning model says more than the plate, at most
+  one per page; `AlmanacGuideTest` checks the ids, the captions and one a page.
 - **Markup:** the text is the screen's markup as written (see "Markup" above), checked by the script: balanced `**`,
   closed `{#rrggbb}…{/}`, `{item:ns:id}` with a full id (ours must exist: `tools/almanac_lib.py` lists our registered
   items from the lang and the item models, GUIDE2), `[[ns:chapter|text]]` links only to chapters

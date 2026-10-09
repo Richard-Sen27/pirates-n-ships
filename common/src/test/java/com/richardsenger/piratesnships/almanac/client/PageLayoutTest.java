@@ -319,4 +319,46 @@ class PageLayoutTest {
         assertEquals(2, pages.size());
         assertEquals(0, of(pages.get(1), PageLayout.RecipeBox.class).getFirst().area().y());
     }
+
+    private static final PageElement.Spotlight3d SHARK_3D = new PageElement.Spotlight3d(PageElement.Spotlight3d.Subject.ENTITY,
+            ResourceLocation.fromNamespaceAndPath("pirates_n_ships", "shark"), java.util.Optional.empty());
+
+    @Test
+    void a3dSpotlightIsANinetySixPixelCardWithItsNameUnderIt() {
+        assertEquals(96, PageLayout.SPOTLIGHT_3D_H, "the card and its name: 96 px");
+        List<PageLayout.ScreenPage> pages = lay(116, 140, new PageElement.Text("Look.", false, false, java.util.Optional.empty()), SHARK_3D);
+        assertEquals(1, pages.size());
+        PageLayout.Spotlight3dBox spot = of(pages.getFirst(), PageLayout.Spotlight3dBox.class).getFirst();
+        assertEquals(SHARK_3D, spot.spotlight());
+        assertEquals(new PageLayout.Area(0, PageLayout.LINE_H + PageLayout.PARAGRAPH_GAP, 116, PageLayout.SPOTLIGHT_3D_H), spot.area());
+        PageLayout.Area frame = spot.frame();
+        assertEquals(new PageLayout.Area((116 - PageLayout.SPOTLIGHT_3D_W) / 2, spot.area().y(), PageLayout.SPOTLIGHT_3D_W,
+                PageLayout.SPOTLIGHT_3D_FRAME), frame);
+        assertEquals(frame.bottom() + PageLayout.SPOTLIGHT_NAME_GAP, spot.nameY());
+        assertEquals(spot.area().bottom(), spot.nameY() + PageLayout.LINE_H, "the name line closes the block");
+        // on a page narrower than the card the card narrows with it and stays inside
+        PageLayout.Spotlight3dBox narrow = of(lay(80, 140, SHARK_3D).getFirst(), PageLayout.Spotlight3dBox.class).getFirst();
+        assertEquals(new PageLayout.Area(0, 0, 80, PageLayout.SPOTLIGHT_3D_FRAME), narrow.frame());
+    }
+
+    @Test
+    void a3dSpotlightNeverSplitsAndMovesWholeToTheNextPage() {
+        // 5 lines = 50 px: the 96 px card does not fit the 90 px left, so it opens the next page whole
+        List<PageLayout.ScreenPage> pages = lay(116, 140, lines(5), SHARK_3D, new PageElement.Text("After.", false, false, java.util.Optional.empty()));
+        assertEquals(2, pages.size());
+        assertTrue(of(pages.get(0), PageLayout.Spotlight3dBox.class).isEmpty(), "nothing of the card on the first page");
+        PageLayout.Spotlight3dBox spot = of(pages.get(1), PageLayout.Spotlight3dBox.class).getFirst();
+        assertEquals(0, spot.area().y());
+        assertEquals(PageLayout.SPOTLIGHT_3D_H, spot.area().h(), "never split");
+        assertTrue(runs(pages.get(1)).stream().anyMatch(r -> r.text().equals("After.") && r.y() >= spot.area().bottom()), "the text follows it");
+        // a heading keeps the card with it
+        List<PageLayout.ScreenPage> headed = lay(116, 140, lines(4), new PageElement.Heading("Head"), SHARK_3D);
+        assertEquals(2, headed.size());
+        assertEquals("Head", runs(headed.get(1)).getFirst().text());
+        // taller than a page is an error
+        IllegalArgumentException e = org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> lay(116, PageLayout.SPOTLIGHT_3D_H - 1, SHARK_3D));
+        assertTrue(e.getMessage().contains("3D spotlight"), e.getMessage());
+        assertEquals(1, lay(116, PageLayout.SPOTLIGHT_3D_H, SHARK_3D).size(), "exactly a page fits");
+    }
 }

@@ -49,6 +49,10 @@ import java.util.Optional;
  * navigator counts it as chapter 0, so a navigator chapter {@code c > 0} is the book's chapter {@code c - 1}. Recipe
  * panels ({@link RecipeGrid}, {@link RecipeView}) look their recipe up in the client's recipe manager each frame; item
  * spotlights draw the item at twice its size.
+ *
+ * <p>ALM10: 3D spotlights draw a block, an item or a mob turning in a larger card ({@link Spotlight3dRenderer}); the
+ * models live as long as the screen. While a page turns the cards show without their models (the turning page is
+ * squeezed flat, a model on it would not be).
  */
 public final class AlmanacScreen extends Screen {
 
@@ -117,6 +121,13 @@ public final class AlmanacScreen extends Screen {
     private final Map<ResourceLocation, int[]> imageSizes = new HashMap<>();
     private final Map<ResourceLocation, ItemStack> stacks = new HashMap<>();
     private final PageTurn turn = new PageTurn();
+    private final Spotlight3dRenderer models = new Spotlight3dRenderer();
+    /** Screen ticks since opening: the 3D spotlights' clock. */
+    private long ticks;
+    /** This frame's partial tick, for the 3D spotlights. */
+    private float partialTick;
+    /** Whether this frame draws the 3D spotlights' models (not while a page turns). */
+    private boolean drawModels;
     private final BookNavigator nav;
     private BookNavigator.Spread spread;
     private BookNavigator.Spread target;
@@ -281,12 +292,15 @@ public final class AlmanacScreen extends Screen {
     @Override
     public void tick() {
         super.tick();
+        ticks++;
+        models.tick();
         if (turn.tick()) settle(target);
     }
 
     @Override
     public void removed() {
         if (turn.finishNow()) settle(target);
+        models.close();
         AlmanacClient.closed(request);
         super.removed();
     }
@@ -397,6 +411,8 @@ public final class AlmanacScreen extends Screen {
         super.render(g, mouseX, mouseY, partialTick);
         double bx = bookX(mouseX), by = bookY(mouseY);
         boolean still = !turn.turning();
+        this.partialTick = partialTick;
+        this.drawModels = still;
         g.pose().pushPose();
         g.pose().translate(left, top, 0f);
         g.pose().scale(scale, scale, 1f);
@@ -508,6 +524,7 @@ public final class AlmanacScreen extends Screen {
                 case PageLayout.TextRun run -> drawRun(g, run, hover != null && run.style().link() != null && run.area().contains(px, py));
                 case PageLayout.RecipeBox box -> drawRecipe(g, box, px, py, hover);
                 case PageLayout.SpotlightBox spot -> drawSpotlight(g, spot, px, py, hover);
+                case PageLayout.Spotlight3dBox spot -> drawSpotlight3d(g, spot, contentX, px, py, hover);
             }
         }
         if (isIndex(s)) {
@@ -706,6 +723,39 @@ public final class AlmanacScreen extends Screen {
         g.drawString(font, label, spot.area().x() + (room - font.width(label)) / 2, spot.nameY(),
                 0xFF000000 | PageLayout.HEADING_COLOR, false);
         if (hover != null && f.contains(px, py)) hover.item = spot.item();
+    }
+
+    /**
+     * A 3D spotlight (ALM10): the card, the model turning inside its rim (clipped there), the name under it; the
+     * tooltip over the card names it.
+     */
+    private void drawSpotlight3d(GuiGraphics g, PageLayout.Spotlight3dBox box, int contentX, double px, double py, @Nullable Hover hover) {
+        PageLayout.Area f = box.frame();
+        RenderSystem.enableBlend();
+        g.blit(AlmanacPanels.TEXTURE, f.x(), f.y(), AlmanacPanels.SPOTLIGHT_3D_U, AlmanacPanels.SPOTLIGHT_3D_V, f.w(), f.h(),
+                AlmanacPanels.TEX_W, AlmanacPanels.TEX_H);
+        PageLayout.Area in = new PageLayout.Area(f.x() + AlmanacPanels.SPOTLIGHT_3D_INSET, f.y() + AlmanacPanels.SPOTLIGHT_3D_INSET,
+                f.w() - 2 * AlmanacPanels.SPOTLIGHT_3D_INSET, f.h() - 2 * AlmanacPanels.SPOTLIGHT_3D_INSET);
+        if (drawModels) {
+            // the scissor is in GUI pixels: the inner card through the book's offset and scale, rounded inward
+            int[] clip = {
+                    (int) Math.ceil(left + (contentX + in.x()) * scale),
+                    (int) Math.ceil(top + (CONTENT_TOP + in.y()) * scale),
+                    (int) Math.floor(left + (contentX + in.right()) * scale),
+                    (int) Math.floor(top + (CONTENT_TOP + in.bottom()) * scale)};
+            models.draw(g, box.spotlight(), in.x(), in.y(), in.w(), in.h(), clip, ticks, partialTick);
+        }
+        Component name = box.spotlight().caption().<Component>map(Component::translatable)
+                .orElseGet(() -> Spotlight3dRenderer.name(box.spotlight()));
+        Style bold = Style.EMPTY.withBold(true);
+        String shown = name.getString();
+        int room = box.area().w();
+        if (font.width(Component.literal(shown).withStyle(bold)) > room) {
+            shown = font.plainSubstrByWidth(shown, room - font.width("...") - 8) + "...";
+        }
+        Component label = Component.literal(shown).withStyle(bold);
+        g.drawString(font, label, box.area().x() + (room - font.width(label)) / 2, box.nameY(), 0xFF000000 | PageLayout.HEADING_COLOR, false);
+        if (hover != null && f.contains(px, py)) hover.text = Spotlight3dRenderer.name(box.spotlight());
     }
 
     private void drawRun(GuiGraphics g, PageLayout.TextRun run, boolean hovered) {

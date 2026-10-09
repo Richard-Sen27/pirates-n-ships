@@ -21,7 +21,7 @@ import java.util.function.Function;
  *       part of its row if that is at least a third of the page wide, else it moves below the obstacle;</li>
  *   <li>headings (bold, centred), paragraphs and bulleted lists wrap word by word with their {@link Markup} runs;
  *       "Show me" buttons are centred in the flow;</li>
- *   <li>recipe panels and item spotlights (ALM8) are fixed-height blocks in the flow: centred, never split; one that
+ *   <li>recipe panels, item spotlights (ALM8) and 3D spotlights (ALM10) are fixed-height blocks in the flow: centred, never split; one that
  *       does not fit the rest of the page moves whole to the next page, and one taller than a page is an error
  *       ({@link IllegalArgumentException});</li>
  *   <li>what does not fit spills onto a continuation page (no free elements there), so one data page can become
@@ -50,6 +50,10 @@ public final class PageLayout {
     public static final int SPOTLIGHT_FRAME = 38;
     public static final int SPOTLIGHT_NAME_GAP = 2;
     public static final int SPOTLIGHT_H = SPOTLIGHT_FRAME + SPOTLIGHT_NAME_GAP + LINE_H;
+    /** A 3D spotlight (ALM10): a card of {@link #SPOTLIGHT_3D_W} x {@link #SPOTLIGHT_3D_FRAME}, a gap, the name. */
+    public static final int SPOTLIGHT_3D_W = 96;
+    public static final int SPOTLIGHT_3D_FRAME = 84;
+    public static final int SPOTLIGHT_3D_H = SPOTLIGHT_3D_FRAME + SPOTLIGHT_NAME_GAP + LINE_H;
     public static final int HEADING_COLOR = 0x5A2E12;
     public static final int CAPTION_COLOR = 0x7A6852;
 
@@ -143,6 +147,24 @@ public final class PageLayout {
     }
 
     /**
+     * A 3D spotlight (ALM10): {@code area} spans the page's width and {@link #SPOTLIGHT_3D_H}; the card of
+     * {@link #SPOTLIGHT_3D_W} x {@link #SPOTLIGHT_3D_FRAME} is centred at its top (narrower on a page narrower than
+     * the card), the name centred under it.
+     */
+    public record Spotlight3dBox(PageElement.Spotlight3d spotlight, Area area) implements Placed {
+
+        public Area frame() {
+            int fw = Math.min(SPOTLIGHT_3D_W, area.w());
+            return new Area(area.x() + (area.w() - fw) / 2, area.y(), fw, SPOTLIGHT_3D_FRAME);
+        }
+
+        /** The y of the name's line. */
+        public int nameY() {
+            return area.y() + SPOTLIGHT_3D_FRAME + SPOTLIGHT_NAME_GAP;
+        }
+    }
+
+    /**
      * One screen page.
      *
      * @param dataPage     index of the chapter's data page it comes from
@@ -183,6 +205,7 @@ public final class PageLayout {
                 case PageElement.ShowMe sm -> e.button(sm);
                 case PageElement.RecipePanel rp -> e.block(RecipeGrid.W, RecipeGrid.H, a -> new RecipeBox(rp.recipe(), a), "recipe panel");
                 case PageElement.Spotlight sp -> e.block(width, SPOTLIGHT_H, a -> new SpotlightBox(sp.item(), a), "spotlight");
+                case PageElement.Spotlight3d sp -> e.block(width, SPOTLIGHT_3D_H, a -> new Spotlight3dBox(sp, a), "3D spotlight");
                 default -> {
                 }
             }
@@ -381,6 +404,7 @@ public final class PageLayout {
         private int blockHeight(@Nullable PageElement el) {
             if (el instanceof PageElement.RecipePanel) return RecipeGrid.H;
             if (el instanceof PageElement.Spotlight) return SPOTLIGHT_H;
+            if (el instanceof PageElement.Spotlight3d) return SPOTLIGHT_3D_H;
             return 0;
         }
 

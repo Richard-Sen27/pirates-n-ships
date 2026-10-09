@@ -4,6 +4,7 @@ import com.richardsenger.piratesnships.core.config.ConfigSection;
 import com.richardsenger.piratesnships.core.config.ConfigValue;
 import com.richardsenger.piratesnships.core.config.ModConfigs;
 import com.richardsenger.piratesnships.sailing.effects.FoamRules;
+import com.richardsenger.piratesnships.sailing.effects.WakeRules;
 
 /**
  * Server config section {@code waves} and client section {@code wave_effects} (docs/design.md §17, group "Waves";
@@ -68,6 +69,21 @@ public final class HazardConfig {
             "Horizontal distance from the camera in blocks within which foam appears");
     public static final ConfigValue<Integer> FOAM_LIFE_TICKS = WAVE_EFFECTS.intRange("foam_life_ticks", FoamRules.DEFAULTS.lifeTicks(), 10, 400,
             "Life of one foam streak in ticks, including fading in and out");
+    // Wake behind ships (WAKE1, read through sailing.effects.SeaEffectsConfig#wake)
+    public static final ConfigValue<Boolean> WAKE = WAVE_EFFECTS.bool("wake", true,
+            "Moving ships leave a wake: a bow wave of foam at the stem, a foam trail behind the stern and foam along the waterline when fast");
+    public static final ConfigValue<Integer> WAKE_RADIUS = WAVE_EFFECTS.intRange("wake_radius", (int) WakeRules.DEFAULTS.radius(), 8, 128,
+            "Ships within this horizontal distance of the camera in blocks leave a wake");
+    public static final ConfigValue<Double> WAKE_MIN_SPEED = WAVE_EFFECTS.doubleRange("wake_min_speed", WakeRules.DEFAULTS.minSpeed(), 0.0, 20.0,
+            "No wake below this speed through the water in blocks per second");
+    public static final ConfigValue<Double> WAKE_FULL_SPEED = WAVE_EFFECTS.doubleRange("wake_full_speed", WakeRules.DEFAULTS.fullSpeed(), 0.5, 40.0,
+            "The wake is at its densest and most opaque from this speed in blocks per second on");
+    public static final ConfigValue<Double> WAKE_DENSITY = WAVE_EFFECTS.doubleRange("wake_density", WakeRules.DEFAULTS.density(), 0.0, 5.0,
+            "Foam quads per tick for every block of stern width at full speed; the bow wave and the waterline foam scale with it");
+    public static final ConfigValue<Integer> WAKE_LIFE_TICKS = WAVE_EFFECTS.intRange("wake_life_ticks", WakeRules.DEFAULTS.lifeTicks(), 20, 600,
+            "Life of the stern trail's foam in ticks (the bow wave lives three quarters of it): the longer, the longer the trail");
+    public static final ConfigValue<Double> WAKE_SPREAD_DEGREES = WAVE_EFFECTS.doubleRange("wake_spread_degrees", WakeRules.DEFAULTS.spreadDegrees(), 0.0, 45.0,
+            "Angle in degrees between the course and each arm of the bow wave's V (19.5 is the Kelvin angle of real ships)");
 
     private HazardConfig() {
     }

@@ -70,6 +70,7 @@ public final class SeaEffectsClient {
 
     public static void init() {
         ClientEvents.CLIENT_TICK_END.register(SeaEffectsClient::tick);
+        WakeClient.init(); // ships' wakes (WAKE1)
     }
 
     static void tick(Minecraft mc) {
@@ -208,7 +209,7 @@ public final class SeaEffectsClient {
         return sprites;
     }
 
-    private static @Nullable TextureAtlasSprite sprite(Minecraft mc, ResourceLocation id) {
+    static @Nullable TextureAtlasSprite sprite(Minecraft mc, ResourceLocation id) {
         AbstractTexture texture = mc.getTextureManager().getTexture(TextureAtlas.LOCATION_PARTICLES);
         return texture instanceof TextureAtlas atlas ? atlas.getSprite(id) : null;
     }

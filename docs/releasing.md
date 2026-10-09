@@ -70,6 +70,16 @@ Commits are listed oldest first, merge commits are skipped, and the output depen
 
 So write commit subjects for players: the subject of every `feat` and `fix` ends up in the changelog as written.
 
+## Release texts
+
+Hand-written texts for the platforms and the release, in `docs/release/` (REL4), checked by a script:
+
+- [`release/store-page.md`](release/store-page.md): the Modrinth and CurseForge description (one text for both, with what CurseForge's renderer does not take).
+- [`release/1.0.0-notes.md`](release/1.0.0-notes.md): the 1.0.0 release notes (hand-written, since there is no earlier tag to generate from) and the `release.yml` change that publishes them.
+- [`release/save-compatibility.md`](release/save-compatibility.md): what a pre-release world keeps and loses under 1.0.0 (SAV1); the notes link to it.
+- [`../README.md`](../README.md): the repository's front page, with the screenshot list for the galleries.
+- `tools/check_release_texts.py`: fails when the store page, the notes or the README name an item, block, mob or config key that the generated lang does not have, or a dependency version that differs from `gradle.properties` (`--self-test` checks its rules).
+
 ## Cutting a release
 
 Before tagging, check:
@@ -79,7 +89,8 @@ Before tagging, check:
 3. `docs/progress.md` has no open blocker for the features in this release.
 4. `docs/release/save-compatibility.md` is current: every stored format, block state, registry id or config key changed since the last release is in it (what converts, what is lost, what a player does by hand), and `KeptIdsTest` passes.
 5. Preview the notes: `python3 tools/release_notes.py <previous-tag> HEAD`.
-6. Optionally a dry run: Actions → Release → Run workflow, `version` = the planned tag, `dry_run` checked. It builds, runs the tests on both loaders, shows the notes in the job summary and attaches both jars as a workflow artifact.
+6. Check the release texts: `python3 tools/check_release_texts.py` passes, and `docs/release/store-page.md` and the version's notes still describe what is on `main` (paste the store page into both platforms when it changed).
+7. Optionally a dry run: Actions → Release → Run workflow, `version` = the planned tag, `dry_run` checked. It builds, runs the tests on both loaders, shows the notes in the job summary and attaches both jars as a workflow artifact.
 
 Then tag and push:
 

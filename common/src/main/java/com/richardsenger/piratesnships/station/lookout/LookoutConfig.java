@@ -13,13 +13,19 @@ public final class LookoutConfig {
     public static final ConfigValue<Boolean> ENABLED = S.bool("enabled", true,
             "A crow's nest with a lookout (a crew member at the station or a player standing in it) scans the sea. Off: no scans, no calls");
     public static final ConfigValue<Boolean> ANNOUNCE = S.bool("announce", true,
-            "The lookout's calls go to the ship's owner and the players aboard as chat lines. Off: the lookout keeps watch silently");
+            "The lookout's calls reach the players aboard and in the nest as a short action-bar line, a hail from the nest and a mark on the ship HUD's compass. Off: the lookout keeps watch silently");
     public static final ConfigValue<Integer> RANGE = S.intRange("range", 160, 8, 1024,
             "Blocks (horizontal) at which the lookout in a crow's nest sees ships, land and sea monsters");
     public static final ConfigValue<Integer> SCAN_INTERVAL_TICKS = S.intRange("scan_interval_ticks", 60, 1, 12000,
             "Ticks between two scans of every manned crow's nest");
     public static final ConfigValue<Integer> MEMORY_TICKS = S.intRange("memory_ticks", 6000, 0, 1728000,
             "Ticks the lookout remembers a sighting after it was last seen; within them the same ship, monster or coast is not called again");
+    public static final ConfigValue<Integer> RECALL_BLOCKS = S.intRange("recall_blocks", 64, 0, 1024,
+            "A sighting still in view is called again once it came this many blocks closer than at its last call. 0: never for coming closer");
+    public static final ConfigValue<Integer> RECALL_SECONDS = S.intRange("recall_seconds", 120, 0, 86400,
+            "A sighting still in view is called again this many seconds after its last call. 0: never for the time");
+    public static final ConfigValue<Integer> MARK_SECONDS = S.intRange("mark_seconds", 30, 1, 600,
+            "Seconds a sighting's mark stays on the ship HUD's compass rose (it fades out over the last third)");
     public static final ConfigValue<Integer> LAND_DIRECTIONS = S.intRange("land_directions", 16, 4, 64,
             "Directions (rays round the compass) the lookout samples for land");
     public static final ConfigValue<Integer> LAND_STEP = S.intRange("land_step", 16, 4, 128,

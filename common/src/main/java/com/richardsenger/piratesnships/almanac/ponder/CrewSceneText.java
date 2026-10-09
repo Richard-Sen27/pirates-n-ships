@@ -118,8 +118,8 @@ public final class CrewSceneText {
         RIM("Only its floor is solid: climb up and step in over the rim, sneaking to stay put"),
         POST("Use the whistle on a hand, then on the nest: he takes his post up there and keeps watch"),
         SCAN("Every 3 seconds the lookout scans 160 blocks round the ship and calls what is new to everyone aboard"),
-        CALL("'Sail ho! A merchant two points off the starboard bow, 140 blocks': bearings in points from the bow"),
-        WHAT("He calls ships by their flags, land, sharks and the kraken, each once, and remembers it for 5 minutes"),
+        CALL("'Sail two points to starboard, 140 blocks' over the hotbar, a bell from the nest, a mark on the compass"),
+        WHAT("He calls ships by their flags, land, sharks and the kraken; again when they close in, or after 2 minutes"),
         SELF("Stand in the nest yourself and you keep the lookout"),
         POLE("A flagpole may stand in the nest: the flag flies above it, and the nest still keeps the lookout");
 

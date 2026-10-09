@@ -411,6 +411,43 @@ nest (creative tab), a crew member, a captain's whistle; a second ship, a pirate
 Report: screenshots of steps 1, 2 and 4 (third person, from the deck and from below), the chat at steps 5 to 8, and
 whether the bearings in step 5 matched.
 
+Since LKO2 the calls of steps 5 to 8 no longer go to chat; check them with the LKO2 steps below.
+
+## LKO2: the lookout's call as a cue, a hail and a compass mark
+
+Covered by JUnit (`SightingCueTest`: every kind and bearing at most 40 characters, the wording; `SightingMarksTest`: the
+mark's fade, replacement, the cue queue, where the hail sounds; `ShipHudMarkPlacementTest`: the mark on the rose's ring
+at its bearing; `SightingMemoryTest`: the repeat rule) and GameTests in `station/lookout/LookoutGameTests`
+(`callReachesNestAndDeckWithoutChat`, `crewLookoutCallsThePlayersAboard`, `sightingIsCalledAgainCloserOrLater`). What
+they cannot show: the action bar, the sound and the mark in a real client.
+
+Setup: as CN1 (an assembled ship with a crow's nest and a crew member, another ship nearby flying a flag, shark spawn
+eggs, a coast within 300 blocks), ship HUD on (`ship_hud.enabled`), subtitles on for step 3.
+
+1. **The line.** Post the crew member in the nest and sail within 160 blocks of the other ship. Expected within
+   3 seconds: one line over the hotbar such as "Merchant to starboard, 140 blocks" or "Sail two points to port,
+   120 blocks" (never longer than about a third of the screen), gone after about 3 seconds. Check the side against
+   what you see. Nothing in chat (open the chat to make sure).
+2. **The mark.** At the same moment, a small diamond appears on the rim of the compass rose (bottom left) where the
+   other ship lies: blue for a navy ship, red for a pirate ship, grey for a merchant or an unflagged ship. Land: sail
+   towards the coast, a white diamond. A shark: grey. The rose stays north up, so the mark sits at the compass bearing
+   (east of you: on the E side), not relative to the bow.
+3. **The hail.** With each line a soft, high bell rings from up in the nest (subtitle "Lookout rings the bell").
+   Standing on deck, it comes from above you; climb into the nest yourself (step 6): it is right beside you.
+4. **The fade.** Keep the other ship in sight and watch the mark: it stays bright for about 20 seconds, then fades out
+   by 30 seconds (`lookout.mark_seconds` 30).
+5. **Repeat rule.** Keep the ship in view without closing in: no new line for 2 minutes, then the call comes again
+   (`lookout.recall_seconds` 120). Sail straight at it: a new line once it is about 64 blocks closer than at the last
+   call (`lookout.recall_blocks`). Several sightings at once (spawn two sharks): their lines follow each other, a few
+   seconds apart.
+6. **Player lookout.** Release the crew member and stand in the nest yourself; spawn a shark. Expected: the same line,
+   bell and mark. A second player on the deck gets them too; a player ashore (or the owner off the ship) gets nothing.
+7. **Toggles.** `lookout.announce` off: no line, no bell, no mark. `ship_hud.enabled` off: the line and the bell still
+   come, no mark.
+
+Report: a screenshot of the hotbar line with the compass and its mark (step 1 and 2), whether the bell is audible from
+the deck and not too loud or shrill, the fade (step 4), and any line that got cut off.
+
 ## WALK1: crew walk to their place
 Covered by 7 JUnit tests (`WalkRulesTest`) and 6 GameTests (`crew/walk/CrewWalkGameTests`: a walk on a resting ship,
 one on a ship under way at 2 blocks/s, a walled-off station seated after the timeout, walking off, a meal walk and a

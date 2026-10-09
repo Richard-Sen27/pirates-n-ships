@@ -47,4 +47,34 @@ class SightingMemoryTest {
         assertFalse(m.sight("a", 0, 0));
         assertTrue(m.sight("a", 60, 0));
     }
+
+    @Test
+    void sightingInViewIsCalledAgainWhenMuchCloser() {
+        SightingMemory m = new SightingMemory();
+        assertTrue(m.sight("ship:a", 0, 6000, 150, 64, 2400));
+        assertFalse(m.sight("ship:a", 60, 6000, 120, 64, 2400), "30 blocks closer");
+        assertFalse(m.sight("ship:a", 120, 6000, 90, 64, 2400), "60 blocks closer");
+        assertTrue(m.sight("ship:a", 180, 6000, 80, 64, 2400), "70 blocks closer than at the last call");
+        assertFalse(m.sight("ship:a", 240, 6000, 40, 64, 2400), "40 closer than the second call");
+        assertFalse(m.sight("ship:a", 300, 6000, 140, 64, 2400), "moving away is never called");
+        assertTrue(m.sight("ship:a", 360, 6000, 16, 64, 2400), "64 closer than the second call");
+    }
+
+    @Test
+    void sightingInViewIsCalledAgainAfterTheRecallTime() {
+        SightingMemory m = new SightingMemory();
+        assertTrue(m.sight("land:1", 0, 6000, 200, 64, 2400));
+        for (long t = 60; t < 2400; t += 60) {
+            assertFalse(m.sight("land:1", t, 6000, 200, 64, 2400), "called again at " + t);
+        }
+        assertTrue(m.sight("land:1", 2400, 6000, 200, 64, 2400), "not called again after the recall time");
+        assertFalse(m.sight("land:1", 2460, 6000, 200, 64, 2400), "the recall restarts from the new call");
+    }
+
+    @Test
+    void zeroRecallSwitchesTheRepeatsOff() {
+        SightingMemory m = new SightingMemory();
+        assertTrue(m.sight("a", 0, 100000, 500, 0, 0));
+        assertFalse(m.sight("a", 50000, 100000, 1, 0, 0));
+    }
 }

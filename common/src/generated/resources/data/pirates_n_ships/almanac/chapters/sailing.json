@@ -435,6 +435,10 @@
         {
           "type": "text",
           "key": "pirates_n_ships.almanac.sailing.p14.text3"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.sailing.p14.text4"
         }
       ]
     },

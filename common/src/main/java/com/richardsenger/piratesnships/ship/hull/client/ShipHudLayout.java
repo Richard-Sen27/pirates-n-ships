@@ -55,6 +55,8 @@ public final class ShipHudLayout {
     public static final int ROSE_R = ShipHudSheet.ROSE.w() / 2;
     /** The wind arrow's tip rests this far from the centre; its tail reaches out up to {@link #ARROW_MAX} more. */
     public static final int ARROW_TIP_R = ROSE_R + 2;
+    /** LKO2: a sighting's mark sits centred on the rose's brass ring, this far from the rose's centre. */
+    public static final int MARK_R = ROSE_R - 1;
     public static final int ARROW_MIN = 4;
     public static final int ARROW_MAX = 10;
     /** Wind speed [blocks/s] that draws the longest arrow (default storm winds reach about 26). */
@@ -356,5 +358,21 @@ public final class ShipHudLayout {
         }
         double f = Math.min(1.0, strength / ARROW_FULL_WIND);
         return (int) Math.round(ARROW_MIN + (ARROW_MAX - ARROW_MIN) * f);
+    }
+
+    /** A pixel position in the compass panel. */
+    public record Point(int x, int y) {
+    }
+
+    /**
+     * LKO2: where the {@link ShipHudSheet#MARK} sprite's top-left corner goes for a sighting at compass bearing
+     * {@code bearing} (degrees, 0 = north, clockwise): its centre on the rose's ring ({@link #MARK_R} from the rose
+     * sprite's centre, which lies half a pixel up and left of {@link #ROSE_CX}, {@link #ROSE_CY}), north up.
+     */
+    public static Point markOrigin(double bearing) {
+        double rad = Math.toRadians(bearing);
+        double cx = ROSE_CX - 0.5 + Math.sin(rad) * MARK_R;
+        double cy = ROSE_CY - 0.5 - Math.cos(rad) * MARK_R;
+        return new Point((int) Math.round(cx - ShipHudSheet.MARK.w() / 2.0), (int) Math.round(cy - ShipHudSheet.MARK.h() / 2.0));
     }
 }

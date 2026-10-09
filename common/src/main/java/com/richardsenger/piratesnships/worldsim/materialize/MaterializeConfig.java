@@ -48,6 +48,10 @@ public final class MaterializeConfig {
             "Pirates on a pirate ship");
     public static final ConfigValue<Integer> CANNON_ROUNDS = S.intRange("cannon_rounds", 12, 0, 256,
             "Rounds (one gunpowder and one cannonball each) per cannon put in the shot locker of a navy or pirate ship when it appears (0 = none; merchants carry none)");
+    public static final ConfigValue<Integer> CHAIN_SHOT_ROUNDS = S.intRange("chain_shot_rounds", 2, 0, 64,
+            "Chain shot (with one gunpowder each) put in every stocked shot locker of a navy or pirate ship when it appears (0 = none)");
+    public static final ConfigValue<Integer> GRAPESHOT_ROUNDS = S.intRange("grapeshot_rounds", 2, 0, 64,
+            "Grapeshot (with one gunpowder each) put in every stocked shot locker of a navy or pirate ship when it appears (0 = none)");
     public static final ConfigValue<Boolean> GUNS_START_LOADED = S.bool("guns_start_loaded", true,
             "The cannons of a navy or pirate ship appear loaded, so its first shot needs no reload");
     public static final ConfigValue<Boolean> RESTORE_HEALTH = S.bool("restore_health", true,

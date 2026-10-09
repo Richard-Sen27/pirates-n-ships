@@ -4,6 +4,7 @@ import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.cannon.CannonBlock;
 import com.richardsenger.piratesnships.combat.cannon.CannonLoad;
 import com.richardsenger.piratesnships.combat.cannon.CannonStation.CannonOrder;
+import com.richardsenger.piratesnships.combat.cannon.CannonContent;
 import com.richardsenger.piratesnships.combat.content.CombatContent;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
@@ -278,7 +279,8 @@ public final class ArmedShipGameTests {
         h.runAtTickTime(5, () -> ship[0] = materialize(h, v));
         h.runAtTickTime(15, () -> {
             Container box = locker(h, ship[0]);
-            h.assertTrue(count(box, Items.GUNPOWDER) == 20 && count(box, CombatContent.CANNONBALL.get()) == 20,
+            int extra = MaterializeConfig.CHAIN_SHOT_ROUNDS.get() + MaterializeConfig.GRAPESHOT_ROUNDS.get(); // CAN3, own powder
+            h.assertTrue(count(box, Items.GUNPOWDER) == 20 + extra && count(box, CombatContent.CANNONBALL.get()) == 20,
                     "locker: " + count(box, Items.GUNPOWDER) + " powder, " + count(box, CombatContent.CANNONBALL.get()) + " shot");
             h.assertTrue(loads(h, ship[0]).equals(List.of("loaded", "loaded", "loaded", "loaded")), "guns " + loads(h, ship[0]));
             h.assertTrue(VoyageShips.read(h.getLevel(), ship[0]).isEmpty(), "ammunition read as cargo: " + VoyageShips.read(h.getLevel(), ship[0]));
@@ -306,10 +308,49 @@ public final class ArmedShipGameTests {
         h.runAtTickTime(5, () -> ship[0] = materialize(h, v));
         h.runAtTickTime(15, () -> {
             int rounds = 4 * MaterializeConfig.CANNON_ROUNDS.defaultValue();
+            int extra = MaterializeConfig.CHAIN_SHOT_ROUNDS.get() + MaterializeConfig.GRAPESHOT_ROUNDS.get(); // CAN3, own powder
             Container box = locker(h, ship[0]);
-            h.assertTrue(count(box, Items.GUNPOWDER) == rounds && count(box, CombatContent.CANNONBALL.get()) == rounds,
+            h.assertTrue(count(box, Items.GUNPOWDER) == rounds + extra && count(box, CombatContent.CANNONBALL.get()) == rounds,
                     "locker: " + count(box, Items.GUNPOWDER) + " powder, " + count(box, CombatContent.CANNONBALL.get()) + " shot, expected " + rounds);
             h.assertTrue(loads(h, ship[0]).stream().allMatch("loaded"::equals), "guns " + loads(h, ship[0]));
+            finish(h, v);
+            h.succeed();
+        });
+    }
+
+    /**
+     * CAN3: a navy patrol's locker holds the configured chain shot and grapeshot (3 and 1 here) beside the 4 × 5 balls,
+     * each round with its own gunpowder.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = CONFIG_BATCH + "special_rounds")
+    public static void aNavyPatrolCarriesChainShotAndGrapeshot(GameTestHelper h) {
+        ConfigOverrides.during(h, MaterializeConfig.CANNON_ROUNDS, 5);
+        ConfigOverrides.during(h, MaterializeConfig.CHAIN_SHOT_ROUNDS, 3);
+        ConfigOverrides.during(h, MaterializeConfig.GRAPESHOT_ROUNDS, 1);
+        specialRounds(h, 3, 1, 24);
+    }
+
+    /** CAN3: with {@code chain_shot_rounds} and {@code grapeshot_rounds} at 0 the locker holds only balls and their powder. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = CONFIG_BATCH + "no_special_rounds")
+    public static void withZeroRoundsANavyPatrolCarriesNoChainShotOrGrapeshot(GameTestHelper h) {
+        ConfigOverrides.during(h, MaterializeConfig.CANNON_ROUNDS, 5);
+        ConfigOverrides.during(h, MaterializeConfig.CHAIN_SHOT_ROUNDS, 0);
+        ConfigOverrides.during(h, MaterializeConfig.GRAPESHOT_ROUNDS, 0);
+        specialRounds(h, 0, 0, 20);
+    }
+
+    private static void specialRounds(GameTestHelper h, int chain, int grape, int powder) {
+        basin(h);
+        Voyage v = voyage(h, VoyageKind.PATROL, Faction.NAVY, ShipTemplates.NAVY_SLOOP_ARMED_ID, Map.of());
+        ShipBody[] ship = new ShipBody[1];
+        h.runAtTickTime(5, () -> ship[0] = materialize(h, v));
+        h.runAtTickTime(15, () -> {
+            Container box = locker(h, ship[0]);
+            int c = count(box, CannonContent.CHAIN_SHOT.get()), g = count(box, CannonContent.GRAPESHOT.get());
+            int b = count(box, CombatContent.CANNONBALL.get()), p = count(box, Items.GUNPOWDER);
+            h.assertTrue(c == chain && g == grape && b == 20 && p == powder, "locker: " + c + " chain shot, " + g + " grapeshot, "
+                    + b + " balls, " + p + " powder; expected " + chain + ", " + grape + ", 20, " + powder);
+            h.assertTrue(VoyageShips.read(h.getLevel(), ship[0]).isEmpty(), "ammunition read as cargo");
             finish(h, v);
             h.succeed();
         });

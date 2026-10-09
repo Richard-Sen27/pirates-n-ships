@@ -3,6 +3,7 @@ package com.richardsenger.piratesnships.worldsim.materialize;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.cannon.CannonBlock;
 import com.richardsenger.piratesnships.combat.cannon.CannonConfig;
+import com.richardsenger.piratesnships.combat.cannon.CannonContent;
 import com.richardsenger.piratesnships.combat.cannon.CannonRules;
 import com.richardsenger.piratesnships.combat.cannon.CannonService;
 import com.richardsenger.piratesnships.combat.content.CombatContent;
@@ -34,7 +35,8 @@ import java.util.UUID;
 
 /**
  * The guns of a materialised voyage (WS4c, design.md §8.2, §10.4). A navy or pirate ship appears with
- * {@code world_simulation.materialize.cannon_rounds} rounds of powder and shot per cannon in its shot lockers and, with
+ * {@code world_simulation.materialize.cannon_rounds} rounds of powder and shot per cannon in its shot lockers (CAN3: plus
+ * {@code chain_shot_rounds} chain shot and {@code grapeshot_rounds} grapeshot with their powder per locker) and, with
  * {@code guns_start_loaded}, its cannons loaded; a merchant gets nothing ({@link GunStocking#stocks}). A <b>shot
  * locker</b> is a block of {@link #SHOT_LOCKERS} (vanilla barrels and chests) with a container, within the gun crews'
  * {@code cannons.crew.supply_range} of a cannon: each cannon's rounds go into its nearest locker
@@ -98,8 +100,12 @@ public final class VoyageGuns {
         for (int l = 0; l < lockers.size(); l++) {
             if (rounds[l] <= 0 || !(level.getBlockEntity(lockers.get(l)) instanceof Container c)) continue;
             used++;
-            int powder = insert(c, Items.GUNPOWDER, rounds[l]);
+            // CAN3: a few rounds of chain shot and grapeshot beside the balls, each with its own powder
+            int chain = MaterializeConfig.CHAIN_SHOT_ROUNDS.get(), grape = MaterializeConfig.GRAPESHOT_ROUNDS.get();
+            int powder = insert(c, Items.GUNPOWDER, rounds[l] + chain + grape) - chain - grape;
             int shot = insert(c, CombatContent.CANNONBALL.get(), rounds[l]);
+            if (chain > 0) insert(c, CannonContent.CHAIN_SHOT.get(), chain);
+            if (grape > 0) insert(c, CannonContent.GRAPESHOT.get(), grape);
             if (powder < rounds[l] || shot < rounds[l]) {
                 Constants.LOG.warn("Shot locker at {} took {} powder and {} shot of {} rounds", lockers.get(l), powder, shot, rounds[l]);
             }

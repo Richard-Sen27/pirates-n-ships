@@ -1112,7 +1112,7 @@ the line, breaks no hull, and rips through rigging. Where it passes through a sq
 1.5 blocks: the holes show, the cloth above a hole hangs with a frayed edge, and the sail draws only with what is
 left of it, so the ship loses way. It also cuts every rope it passes within 1.5 blocks of (a cut stay drops its
 triangular sail) and breaks the ratlines around where it tears or strikes. Torn cloth mends by itself, one block of
-it a minute, from the yard down; a new upper yard brings new cloth at once. **Grapeshot** (8 iron nuggets in a
+it a minute, from the yard down; a new upper yard brings new cloth at once. Navy and pirate ships carry a few rounds of chain shot and grapeshot in their shot lockers beside the balls (`world_simulation.materialize.chain_shot_rounds`, `grapeshot_rounds`). **Grapeshot** (8 iron nuggets in a
 string-tied bag, gives 2) bursts from the muzzle as nine pellets in a narrow cone at four tenths of a ball's speed:
 each pellet hurts whoever it hits for 3 and breaks nothing, and none hit the people on your own deck, so fire it
 across a crowded enemy deck before boarding. Breaking a loaded gun gives back the shot that was in it.

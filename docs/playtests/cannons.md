@@ -191,8 +191,8 @@ blocks apart, ratlines on the mast, a rope line or a stay between two cleats, an
    instead; with only grapeshot in the chest it loads grapeshot.
 10. **NPC choice:** with "Fire at will" and a mixed locker, a hostile ship with three or more armed mobs or players on
     deck within 24 blocks gets grapeshot; an empty deck gets balls. A navy patrol hunting you (WS4b) with chain shot
-    in its locker shoots chain shot while you are under way (NPC lockers are stocked with balls only for now, so this
-    needs a locker filled by hand or the stocking change noted in the CAN3 report).
+    in its locker shoots chain shot while you are under way. A freshly appeared navy or pirate ship's shot locker holds
+    2 chain shot and 2 grapeshot beside its balls (`world_simulation.materialize.chain_shot_rounds`, `grapeshot_rounds`).
 11. **Toggles:** `cannons.chain_shot.enabled = false` (or `grapeshot.enabled`): the gun answers "This shot is
     disabled on this server" and keeps the powder; `chain_shot.rigging_damage = false`: chain shot tears and cuts
     nothing; `cannon_block_damage = false` or `mobGriefing` off: ratlines survive, cloth and ropes still tear.

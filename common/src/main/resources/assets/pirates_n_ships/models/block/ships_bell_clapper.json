@@ -1,0 +1,201 @@
+{
+  "credit": "Made with Blockbench, source art/models/ships_bell.bbmodel",
+  "parent": "minecraft:block/block",
+  "textures": {
+    "0": "pirates_n_ships:item/palette",
+    "1": "pirates_n_ships:block/rope",
+    "2": "minecraft:block/gold_block",
+    "particle": "minecraft:block/gold_block"
+  },
+  "elements": [
+    {
+      "name": "clapper",
+      "from": [
+        7.3,
+        4.6,
+        7.3
+      ],
+      "to": [
+        8.7,
+        5.8,
+        8.7
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            12.5,
+            0.5,
+            15.5,
+            3.5
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            12.5,
+            0.5,
+            15.5,
+            3.5
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            12.5,
+            0.5,
+            15.5,
+            3.5
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            12.5,
+            0.5,
+            15.5,
+            3.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            12.5,
+            0.5,
+            15.5,
+            3.5
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "lanyard",
+      "from": [
+        7.7,
+        3,
+        7.7
+      ],
+      "to": [
+        8.3,
+        4.6,
+        8.3
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            7.7,
+            11.4,
+            8.3,
+            13
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            7.7,
+            11.4,
+            8.3,
+            13
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            7.7,
+            11.4,
+            8.3,
+            13
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            7.7,
+            11.4,
+            8.3,
+            13
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            7.7,
+            7.7,
+            8.3,
+            8.3
+          ],
+          "texture": "#1"
+        }
+      }
+    },
+    {
+      "name": "lanyard_knot",
+      "from": [
+        7.45,
+        2.2,
+        7.45
+      ],
+      "to": [
+        8.55,
+        3,
+        8.55
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            7.45,
+            13,
+            8.55,
+            13.8
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            7.45,
+            13,
+            8.55,
+            13.8
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            7.45,
+            13,
+            8.55,
+            13.8
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            7.45,
+            13,
+            8.55,
+            13.8
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            7.45,
+            7.45,
+            8.55,
+            8.55
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            7.45,
+            7.45,
+            8.55,
+            8.55
+          ],
+          "texture": "#1"
+        }
+      }
+    }
+  ]
+}

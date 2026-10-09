@@ -726,6 +726,30 @@ record the point forces in the `pirates_n_ships:sea_hazards` group every physics
 - The async hull re-analysis (`dry_hull.async_analysis`) is not a source of spread here: delaying every analysis by
   up to 0.4 s (results landing 9 to 53 ticks late instead of 1) left the measurements within the normal range. [V]
 
+### 9.0m A Sable bug: a removed ship's blocks haunt the next ship in its plot (CW1b, verified by a deterministic test)
+- `SubLevelContainer#removeSubLevel` (l.481-497) frees the plot at once and the next new sub-level gets it, but
+  `RapierPhysicsPipeline#remove` (l.216) removes only the body: the plot's native chunk sections (`main_level_chunks`)
+  and their physics tickets stay. Plot tickets expire only at a ticket update that finds the plot empty and the ticket
+  older than 20 ticks (`PhysicsChunkTicketManager#expirePhysicsChunkTickets` l.258-276; plot chunks always count as
+  loaded, `isChunkLoadedEnough` l.428-433). [V]
+- A sub-level assembled into the plot before that sees the old tickets: `addSectionIfNotTracked` (l.346-353, from
+  `SubLevelPhysicsSystem#handleBlockChange` l.459-475) skips the fresh upload and `Rapier3D.changeBlock` writes only the
+  new blocks into the old sections. The removed ship's blocks stay wherever the new ship has air, as phantom voxels that
+  float, drag and collide. [V]
+- Effect: the first ship a GameTest assembled in its first tick often got a plot that another test of the batch freed
+  in that tick. CW1's empty 5x4x5 hull trimmed 0.21 to 0.43 blocks instead of 0.05 and once stopped rising mid-bob,
+  so `chestOfIronSinksAndTrimsTheShip` measured a sink anywhere from 0.05 to 0.99 instead of 0.66 (bound 0.4) in runs of the
+  ship-heavy classes together; scoped runs of one class never showed it. Same-tick reuse after a removal in the previous
+  tick is clean once the ship lived 20 ticks. Rule of thumb for flakes: if a ship misbehaves only in big batches,
+  suspect what the batch did in the same tick, not load (physics is a fixed step per tick, §9.0k). [V]
+- Workaround (`ship/sable/SableShips`): a leaving sub-level's plot sections are dropped from the pipeline in our removal
+  observer (`PhysicsPipeline#handleChunkSectionRemoval`, observers run before `SubLevel#onRemove`, l.487-488), and every
+  sub-level we assemble gets all its plot sections uploaded again with `handleChunkSectionAddition` plus
+  `PhysicsChunkTicketManager#addTicketForSection` (l.355); sub-levels Sable creates by itself (splits, loads) within 40
+  ticks of a removal get the same refresh at the container tick. Regression test:
+  `AssemblyGameTests.plotFreedThisTickHasNoPhantomBlocks` (without the fix the hull's ends differ by 0.24 blocks, with
+  it 0.0000). Worth reporting to the Sable project together with §9.0c. [V]
+
 ### 9.1 How Sable tests sub-levels
 - Tests live in **`sable/neoforge/src/main/java/dev/ryanhcode/sable/neoforge/gametest/`** (`AssemblyTest`, `PhysicsTest`,
   `SableTestHelper`), registered with NeoForge's `@GameTestHolder(Sable.MOD_ID)` and vanilla `@GameTest(template = …)`. [V]

@@ -62,7 +62,7 @@ class HandMadeModelsTest {
             "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flagpole", "flagpole_bottom", "flagpole_middle", "flagpole_top", "hammock_foot", "hammock_head", "harbor_desk", "helm", "helm_item", "helm_wheel", "hull_patch", "mooring_ring", "nameplate",
             "notice_board", "pantry", "ratlines", "ratlines_slope", "rope_coil_layers1", "rope_coil_layers2", "rope_coil_layers3", "rope_coil_layers4",
             "sail_winch", "sea_chest", "sea_cot_foot", "sea_cot_head", "sea_cot_item", "ship_lantern", "ship_lantern_ceiling",
-            "ship_lantern_wall", "ships_bell", "ships_bell_ringing", "ships_bell_wall", "ships_bell_wall_ringing", "stern_window",
+            "ship_lantern_wall", "ships_bell", "ships_bell_bell", "ships_bell_clapper", "ships_bell_post", "ships_bell_wall", "stern_window",
             "stern_window_shutters", "swivel_gun", "swivel_gun_barrel", "swivel_gun_barrel_loaded", "swivel_gun_yoke",
             "water_barrel", "water_barrel_fill0", "water_barrel_fill1", "water_barrel_fill2",
             "water_barrel_fill3", "yard");
@@ -217,6 +217,31 @@ class HandMadeModelsTest {
                 "cannon_carriage", "cannon_carriage_rammer")) {
             assertFalse(blockModel(name).has("display"), name + ": only the item model carries display entries");
         }
+    }
+
+    /**
+     * BELL1: the ship's bell is split into the mounts (the block models {@code ships_bell_post} and
+     * {@code ships_bell_wall}), the bell with its yoke ({@code ships_bell_bell}) and the clapper with the lanyard
+     * ({@code ships_bell_clapper}), the last two drawn swinging by {@code ShipsBellRenderer}. The item model
+     * {@code ships_bell} is exactly bell + clapper + post, in step with the {@code bell}, {@code clapper} and
+     * {@code post} groups of {@code art/models/ships_bell.bbmodel}; only it carries display entries.
+     */
+    @Test
+    void shipsBellSplitsIntoMountBellAndClapper() throws IOException {
+        JsonArray bell = resolvedElements("ships_bell_bell");
+        JsonArray clapper = resolvedElements("ships_bell_clapper");
+        JsonArray post = resolvedElements("ships_bell_post");
+        JsonArray all = new JsonArray();
+        all.addAll(bell);
+        all.addAll(clapper);
+        all.addAll(post);
+        assertEquals(all, resolvedElements("ships_bell"), "ships_bell (the item) is not ships_bell_bell + ships_bell_clapper + ships_bell_post");
+        assertTrue(bell.size() > 0 && clapper.size() > 0 && post.size() > 0 && resolvedElements("ships_bell_wall").size() > 0,
+                "empty bell part");
+        for (String name : List.of("ships_bell_bell", "ships_bell_clapper", "ships_bell_post", "ships_bell_wall")) {
+            assertFalse(blockModel(name).has("display"), name + ": only the item model carries display entries");
+        }
+        assertTrue(blockModel("ships_bell").has("display"), "ships_bell: the item's display entries");
     }
 
     private static void assertStartsWith(JsonArray base, JsonArray variant, String name, String addedPrefix) {

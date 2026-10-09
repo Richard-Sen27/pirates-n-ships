@@ -76,11 +76,16 @@ public final class SableShips {
      * @return the new ship, or null if Sable is not ready for this level
      */
     public static @Nullable ShipBody assemble(ServerLevel level, BlockPos anchor, Collection<BlockPos> blocks, BlockPos min, BlockPos max) {
-        if (SubLevelContainer.getContainer(level) == null) {
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        if (container == null) {
             return null;
         }
         ServerSubLevel sub = SubLevelAssemblyHelper.assembleBlocks(level, anchor, blocks, new BoundingBox3i(min, max));
-        return sub == null ? null : new ShipBody(sub);
+        if (sub == null) {
+            return null;
+        }
+        refreshPhysicsSections(level, container, sub);
+        return new ShipBody(sub);
     }
 
     /**
@@ -238,6 +243,11 @@ public final class SableShips {
     private static final List<RemovalListener> REMOVAL_LISTENERS = new ArrayList<>();
     private static final List<ClientRemovalListener> CLIENT_REMOVAL_LISTENERS = new ArrayList<>();
     private static boolean hooked;
+    /**
+     * After a removal, sub-levels Sable creates by itself (splits, loads) within this many ticks get their plot sections
+     * refreshed: a removed plot's tickets live at most 21 ticks past the removal ({@link #dropPhysicsSections}).
+     */
+    private static final long STALE_TICKET_TICKS = 40;
 
     /**
      * Registers a listener for server ship removal. Call during mod construction. Installs one Sable observer per server
@@ -270,6 +280,69 @@ public final class SableShips {
         SableEventPlatform.INSTANCE.onPhysicsTick((system, timeStep) -> listener.onPhysicsTick(system.getLevel(), timeStep));
     }
 
+    /**
+     * CW1b workaround for a Sable bug (docs/sable-notes.md §9.0m): a removed ship's blocks haunt the next ship in its plot.
+     * {@code api/sublevel/SubLevelContainer.java#removeSubLevel} (l.481-497) frees the plot at once and the next new
+     * sub-level gets it ({@code getFirstEmptyPlot}), but {@code RapierPhysicsPipeline#remove} (l.216) removes only the
+     * body: the plot's native chunk sections ({@code main_level_chunks}) and their physics tickets stay. Plot tickets
+     * expire only at a ticket update that finds the plot empty and the ticket more than 20 ticks old
+     * ({@code sublevel/system/ticket/PhysicsChunkTicketManager.java#expirePhysicsChunkTickets} l.258-276; plot chunks
+     * always count as loaded, {@code isChunkLoadedEnough} l.428-433). A ship assembled into the plot before that finds
+     * the old tickets, so {@code PhysicsChunkTicketManager#addSectionIfNotTracked} (l.346-353, called from
+     * {@code SubLevelPhysicsSystem#handleBlockChange} l.459-475) skips the fresh upload and {@code Rapier3D.changeBlock}
+     * writes only the new ship's blocks into the old sections: the removed ship's blocks stay wherever the new one has
+     * air, as phantom voxels that float and collide. Measured: a 5×4×5 test hull with a removed ship's plank column in
+     * its hold trimmed 0.65 blocks; in GameTest batches the first ship a test assembles in its first tick often got a
+     * plot freed that tick by another test.
+     *
+     * <p>Fix: when a sub-level leaves, its plot sections are dropped from the pipeline here
+     * ({@code PhysicsPipeline#handleChunkSectionRemoval} l.123; observers run before {@code SubLevel#onRemove},
+     * l.487-488, so the plot's chunks are still readable through {@code LevelPlot#getLoadedChunks} l.298 and
+     * {@code PlotChunkHolder#getChunk} l.146; global chunk coordinates as in {@code SubLevelPhysicsSystem} l.385-396;
+     * dropping a section that the ticket manager drops again later is a no-op, rapier {@code lib.rs} l.941-943). A new
+     * sub-level that may sit on old tickets then has every section of its plot uploaded with what it holds
+     * ({@link #refreshPhysicsSections}).
+     */
+    private static void dropPhysicsSections(ServerSubLevelContainer container, ServerSubLevel sub) {
+        var pipeline = container.physicsSystem().getPipeline();
+        for (dev.ryanhcode.sable.sublevel.plot.PlotChunkHolder holder : sub.getPlot().getLoadedChunks()) {
+            net.minecraft.world.level.chunk.LevelChunk chunk = holder.getChunk();
+            if (chunk == null) {
+                continue;
+            }
+            net.minecraft.world.level.ChunkPos pos = chunk.getPos();
+            for (int i = 0; i < chunk.getSectionsCount(); i++) {
+                pipeline.handleChunkSectionRemoval(pos.x, chunk.getSectionYFromSectionIndex(i), pos.z);
+            }
+        }
+    }
+
+    /**
+     * Uploads every chunk section of {@code sub}'s plot with its current content ({@link #dropPhysicsSections}):
+     * {@code PhysicsPipeline#handleChunkSectionAddition} (l.114, {@code RapierPhysicsPipeline} l.332-366: replaces the
+     * native section and writes the body's solids) and {@code PhysicsChunkTicketManager#addTicketForSection} (l.355), so
+     * that the ticket manager drops the section again when the plot goes ({@code ServerSubLevelContainer#physicsSystem}
+     * l.113, {@code SubLevelPhysicsSystem#getPipeline} l.434, {@code #getTicketManager} l.603). Harmless for a fresh plot:
+     * the same data is uploaded again.
+     */
+    private static void refreshPhysicsSections(ServerLevel level, ServerSubLevelContainer container, ServerSubLevel sub) {
+        var physics = container.physicsSystem();
+        var pipeline = physics.getPipeline();
+        for (dev.ryanhcode.sable.sublevel.plot.PlotChunkHolder holder : sub.getPlot().getLoadedChunks()) {
+            net.minecraft.world.level.chunk.LevelChunk chunk = holder.getChunk();
+            if (chunk == null) {
+                continue;
+            }
+            net.minecraft.world.level.ChunkPos pos = chunk.getPos();
+            net.minecraft.world.level.chunk.LevelChunkSection[] sections = chunk.getSections();
+            for (int i = 0; i < sections.length; i++) {
+                int sectionY = chunk.getSectionYFromSectionIndex(i);
+                pipeline.handleChunkSectionAddition(sections[i], pos.x, sectionY, pos.z, true);
+                physics.getTicketManager().addTicketForSection(level, net.minecraft.core.SectionPos.of(pos.x, sectionY, pos.z));
+            }
+        }
+    }
+
     private static void hook() {
         if (hooked) {
             return;
@@ -278,8 +351,38 @@ public final class SableShips {
         SableEventPlatform.INSTANCE.onSubLevelContainerReady((level, container) -> {
             if (container instanceof ServerSubLevelContainer server && level instanceof ServerLevel serverLevel) {
                 server.addObserver(new SubLevelObserver() {
+                    /** Game time of the last removal in this container (CW1b: plots freed then may carry stale tickets). */
+                    private long lastRemoval = Long.MIN_VALUE / 2;
+                    /** Sub-levels Sable created (splits, loads) soon after a removal, refreshed at the container tick. */
+                    private final List<ServerSubLevel> toRefresh = new ArrayList<>();
+
+                    @Override
+                    public void onSubLevelAdded(SubLevel subLevel) {
+                        if (subLevel instanceof ServerSubLevel s && serverLevel.getGameTime() - lastRemoval <= STALE_TICKET_TICKS) {
+                            toRefresh.add(s);
+                        }
+                    }
+
+                    @Override
+                    public void tick(SubLevelContainer subLevels) {
+                        if (toRefresh.isEmpty()) {
+                            return;
+                        }
+                        for (ServerSubLevel s : List.copyOf(toRefresh)) {
+                            if (!s.isRemoved()) {
+                                refreshPhysicsSections(serverLevel, server, s);
+                            }
+                        }
+                        toRefresh.clear();
+                    }
+
                     @Override
                     public void onSubLevelRemoved(SubLevel subLevel, SubLevelRemovalReason reason) {
+                        if (subLevel instanceof ServerSubLevel s) {
+                            toRefresh.remove(s);
+                            dropPhysicsSections(server, s);
+                            lastRemoval = serverLevel.getGameTime();
+                        }
                         boolean destroyed = reason == SubLevelRemovalReason.REMOVED;
                         for (RemovalListener l : List.copyOf(REMOVAL_LISTENERS)) {
                             l.onShipRemoved(serverLevel, subLevel.getUniqueId(), destroyed);

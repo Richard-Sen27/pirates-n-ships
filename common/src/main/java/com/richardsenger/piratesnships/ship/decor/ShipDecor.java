@@ -48,6 +48,9 @@ public final class ShipDecor {
     public static final RegistryEntry<Block, ShipsBellBlock> SHIPS_BELL = ModRegistry.blockWithItem("ships_bell",
             () -> new ShipsBellBlock(BlockBehaviour.Properties.of().mapColor(MapColor.GOLD).forceSolidOn().strength(3.0f)
                     .sound(SoundType.ANVIL).noOcclusion().pushReaction(PushReaction.DESTROY)));
+    /** BELL1: the bell's last ring and strike direction, which the client swings it by (see {@link ShipsBellBlockEntity}). */
+    public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<ShipsBellBlockEntity>> SHIPS_BELL_BLOCK_ENTITY =
+            ModRegistry.blockEntity("ships_bell", ShipsBellBlockEntity::new, SHIPS_BELL);
     public static final RegistryEntry<Block, RopeCoilBlock> ROPE_COIL = ModRegistry.blockWithItem("rope_coil",
             () -> new RopeCoilBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(0.8f).sound(SoundType.WOOL)
                     .noOcclusion().pushReaction(PushReaction.DESTROY).ignitedByLava()));

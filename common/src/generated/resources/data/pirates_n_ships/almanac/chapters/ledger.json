@@ -18,6 +18,10 @@
           "y": 0.09
         },
         {
+          "type": "spotlight",
+          "item": "minecraft:writable_book"
+        },
+        {
           "type": "text",
           "key": "pirates_n_ships.almanac.ledger.p1.text1"
         }
@@ -55,10 +59,7 @@
             "pirates_n_ships.almanac.ledger.p3.list1_5",
             "pirates_n_ships.almanac.ledger.p3.list1_6",
             "pirates_n_ships.almanac.ledger.p3.list1_7",
-            "pirates_n_ships.almanac.ledger.p3.list1_8",
-            "pirates_n_ships.almanac.ledger.p3.list1_9",
-            "pirates_n_ships.almanac.ledger.p3.list1_10",
-            "pirates_n_ships.almanac.ledger.p3.list1_11"
+            "pirates_n_ships.almanac.ledger.p3.list1_8"
           ]
         }
       ]
@@ -76,7 +77,8 @@
             "pirates_n_ships.almanac.ledger.p4.list1_2",
             "pirates_n_ships.almanac.ledger.p4.list1_3",
             "pirates_n_ships.almanac.ledger.p4.list1_4",
-            "pirates_n_ships.almanac.ledger.p4.list1_5"
+            "pirates_n_ships.almanac.ledger.p4.list1_5",
+            "pirates_n_ships.almanac.ledger.p4.list1_6"
           ]
         }
       ]
@@ -93,11 +95,7 @@
             "pirates_n_ships.almanac.ledger.p5.list1_1",
             "pirates_n_ships.almanac.ledger.p5.list1_2",
             "pirates_n_ships.almanac.ledger.p5.list1_3",
-            "pirates_n_ships.almanac.ledger.p5.list1_4",
-            "pirates_n_ships.almanac.ledger.p5.list1_5",
-            "pirates_n_ships.almanac.ledger.p5.list1_6",
-            "pirates_n_ships.almanac.ledger.p5.list1_7",
-            "pirates_n_ships.almanac.ledger.p5.list1_8"
+            "pirates_n_ships.almanac.ledger.p5.list1_4"
           ]
         }
       ]
@@ -117,7 +115,8 @@
             "pirates_n_ships.almanac.ledger.p6.list1_4",
             "pirates_n_ships.almanac.ledger.p6.list1_5",
             "pirates_n_ships.almanac.ledger.p6.list1_6",
-            "pirates_n_ships.almanac.ledger.p6.list1_7"
+            "pirates_n_ships.almanac.ledger.p6.list1_7",
+            "pirates_n_ships.almanac.ledger.p6.list1_8"
           ]
         }
       ]
@@ -129,82 +128,8 @@
           "key": "pirates_n_ships.almanac.ledger.p7.heading"
         },
         {
-          "type": "list",
-          "items": [
-            "pirates_n_ships.almanac.ledger.p7.list1_1",
-            "pirates_n_ships.almanac.ledger.p7.list1_2",
-            "pirates_n_ships.almanac.ledger.p7.list1_3",
-            "pirates_n_ships.almanac.ledger.p7.list1_4",
-            "pirates_n_ships.almanac.ledger.p7.list1_5",
-            "pirates_n_ships.almanac.ledger.p7.list1_6",
-            "pirates_n_ships.almanac.ledger.p7.list1_7",
-            "pirates_n_ships.almanac.ledger.p7.list1_8",
-            "pirates_n_ships.almanac.ledger.p7.list1_9"
-          ]
-        }
-      ]
-    },
-    {
-      "elements": [
-        {
-          "type": "heading",
-          "key": "pirates_n_ships.almanac.ledger.p8.heading"
-        },
-        {
           "type": "text",
-          "key": "pirates_n_ships.almanac.ledger.p8.text1"
-        },
-        {
-          "type": "list",
-          "items": [
-            "pirates_n_ships.almanac.ledger.p8.list1_1",
-            "pirates_n_ships.almanac.ledger.p8.list1_2",
-            "pirates_n_ships.almanac.ledger.p8.list1_3",
-            "pirates_n_ships.almanac.ledger.p8.list1_4"
-          ]
-        }
-      ]
-    },
-    {
-      "elements": [
-        {
-          "type": "heading",
-          "key": "pirates_n_ships.almanac.ledger.p9.heading"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.ledger.p9.text1"
-        },
-        {
-          "type": "list",
-          "items": [
-            "pirates_n_ships.almanac.ledger.p9.list1_1",
-            "pirates_n_ships.almanac.ledger.p9.list1_2",
-            "pirates_n_ships.almanac.ledger.p9.list1_3",
-            "pirates_n_ships.almanac.ledger.p9.list1_4",
-            "pirates_n_ships.almanac.ledger.p9.list1_5",
-            "pirates_n_ships.almanac.ledger.p9.list1_6",
-            "pirates_n_ships.almanac.ledger.p9.list1_7",
-            "pirates_n_ships.almanac.ledger.p9.list1_8",
-            "pirates_n_ships.almanac.ledger.p9.list1_9",
-            "pirates_n_ships.almanac.ledger.p9.list1_10",
-            "pirates_n_ships.almanac.ledger.p9.list1_11",
-            "pirates_n_ships.almanac.ledger.p9.list1_12",
-            "pirates_n_ships.almanac.ledger.p9.list1_13",
-            "pirates_n_ships.almanac.ledger.p9.list1_14"
-          ]
-        }
-      ]
-    },
-    {
-      "elements": [
-        {
-          "type": "heading",
-          "key": "pirates_n_ships.almanac.ledger.p10.heading"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.ledger.p10.text1"
+          "key": "pirates_n_ships.almanac.ledger.p7.text1"
         }
       ]
     }

@@ -14,6 +14,8 @@ public final class ClientAlmanac {
 
     private static volatile AlmanacBook book = AlmanacBook.EMPTY;
     private static volatile AlmanacProgress progress = AlmanacProgress.NONE;
+    /** Whether the book has been opened since joining (ALM8: the first opening shows the index spread). */
+    private static volatile boolean opened;
 
     private ClientAlmanac() {
     }
@@ -39,6 +41,13 @@ public final class ClientAlmanac {
         Services.NETWORK.sendToServer(new AlmanacPagePayload.Report(now));
     }
 
+    /** True on the first call since joining (the book then opens on its index spread), false after. */
+    public static boolean takeFirstOpening() {
+        boolean first = !opened;
+        opened = true;
+        return first;
+    }
+
     static void onSync(AlmanacSyncPayload payload) {
         book = payload.book();
     }
@@ -51,5 +60,6 @@ public final class ClientAlmanac {
     public static void reset() {
         book = AlmanacBook.EMPTY;
         progress = AlmanacProgress.NONE;
+        opened = false;
     }
 }

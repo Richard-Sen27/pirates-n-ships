@@ -18,6 +18,10 @@
           "y": 0.09
         },
         {
+          "type": "spotlight",
+          "item": "pirates_n_ships:rope"
+        },
+        {
           "type": "text",
           "key": "pirates_n_ships.almanac.inventory.p1.text1"
         }

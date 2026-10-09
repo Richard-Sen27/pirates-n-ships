@@ -243,4 +243,80 @@ class PageLayoutTest {
         assertEquals(new PageLayout.Area(0, 25, 100, 50), PageLayout.fit(200, 100, new PageLayout.Area(0, 0, 100, 100)));
         assertEquals(new PageLayout.Area(35, 10, 30, 60), PageLayout.fit(16, 32, new PageLayout.Area(10, 10, 80, 60)));
     }
+
+    // ---------------------------------------------------------------- ALM8: fixed-height blocks
+
+    private static final ResourceLocation HELM_RECIPE = ResourceLocation.fromNamespaceAndPath("pirates_n_ships", "helm");
+
+    private static PageElement.Text lines(int n) {
+        return PageElement.Text.of(String.join("\n", java.util.Collections.nCopies(n, "x")));
+    }
+
+    @Test
+    void aRecipePanelIsOneCentredBlockInTheFlow() {
+        List<PageLayout.ScreenPage> pages = lay(140, 140, PageElement.Text.of("above"),
+                new PageElement.RecipePanel(HELM_RECIPE), PageElement.Text.of("below"));
+        assertEquals(1, pages.size());
+        PageLayout.RecipeBox box = of(pages.getFirst(), PageLayout.RecipeBox.class).getFirst();
+        assertEquals(new PageLayout.Area((140 - RecipeGrid.W) / 2, PageLayout.LINE_H + PageLayout.PARAGRAPH_GAP, RecipeGrid.W, RecipeGrid.H), box.area());
+        PageLayout.TextRun below = runs(pages.getFirst()).get(1);
+        assertEquals(box.area().bottom() + PageLayout.PARAGRAPH_GAP, below.y(), "the text goes on under the panel");
+    }
+
+    @Test
+    void aBlockThatDoesNotFitMovesWholeToTheNextPage() {
+        // 10 lines = 100 px; a 62 px panel no longer fits a 140 px page
+        List<PageLayout.ScreenPage> pages = lay(116, 140, lines(10), new PageElement.RecipePanel(HELM_RECIPE));
+        assertEquals(2, pages.size());
+        assertTrue(of(pages.get(0), PageLayout.RecipeBox.class).isEmpty(), "nothing of the panel on the first page");
+        PageLayout.RecipeBox box = of(pages.get(1), PageLayout.RecipeBox.class).getFirst();
+        assertEquals(0, box.area().y(), "the whole panel at the top of the next page");
+        assertEquals(RecipeGrid.H, box.area().h(), "never split");
+        assertTrue(pages.get(1).continuation());
+    }
+
+    @Test
+    void aSpotlightSpansThePageAndKeepsItsFrameAndName() {
+        List<PageLayout.ScreenPage> pages = lay(116, 140, new PageElement.Spotlight(STICK));
+        PageLayout.SpotlightBox spot = of(pages.getFirst(), PageLayout.SpotlightBox.class).getFirst();
+        assertEquals(new PageLayout.Area(0, 0, 116, PageLayout.SPOTLIGHT_H), spot.area());
+        assertEquals(new PageLayout.Area((116 - PageLayout.SPOTLIGHT_FRAME) / 2, 0, PageLayout.SPOTLIGHT_FRAME, PageLayout.SPOTLIGHT_FRAME), spot.frame());
+        assertEquals(PageLayout.SPOTLIGHT_FRAME + PageLayout.SPOTLIGHT_NAME_GAP, spot.nameY());
+        assertTrue(spot.nameY() + PageLayout.LINE_H <= spot.area().bottom());
+    }
+
+    @Test
+    void aBlockTallerThanAPageIsAnError() {
+        IllegalArgumentException e = org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> lay(116, RecipeGrid.H - 1, new PageElement.RecipePanel(HELM_RECIPE)));
+        assertTrue(e.getMessage().contains("recipe panel"), e.getMessage());
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> lay(116, PageLayout.SPOTLIGHT_H - 1, new PageElement.Spotlight(STICK)));
+        assertEquals(1, lay(116, RecipeGrid.H, new PageElement.RecipePanel(HELM_RECIPE)).size(), "exactly a page fits");
+    }
+
+    @Test
+    void aHeadingStaysWithTheBlockAfterIt() {
+        // 9 lines = 90 px: a heading would fit, the heading and the panel do not
+        List<PageLayout.ScreenPage> pages = lay(116, 140, lines(9), new PageElement.Heading("Head"),
+                new PageElement.RecipePanel(HELM_RECIPE));
+        assertEquals(2, pages.size());
+        assertTrue(runs(pages.get(0)).stream().noneMatch(r -> r.text().equals("Head")), "the heading left its page");
+        PageLayout.TextRun head = runs(pages.get(1)).getFirst();
+        assertEquals("Head", head.text());
+        PageLayout.RecipeBox box = of(pages.get(1), PageLayout.RecipeBox.class).getFirst();
+        assertEquals(PageLayout.LINE_H + PageLayout.HEADING_GAP, box.area().y());
+    }
+
+    @Test
+    void aBlockGoesBelowAnIllustrationThatLeavesNoRoomBesideIt() {
+        PageElement.Illustration plate = new PageElement.Illustration(PICTURE, 0.05f, 0f, 0.9f, 0.35f);
+        List<PageLayout.ScreenPage> pages = lay(116, 140, plate, new PageElement.Spotlight(STICK), new PageElement.RecipePanel(HELM_RECIPE));
+        PageLayout.Picture pic = of(pages.getFirst(), PageLayout.Picture.class).getFirst();
+        PageLayout.SpotlightBox spot = of(pages.getFirst(), PageLayout.SpotlightBox.class).getFirst();
+        assertTrue(spot.area().y() >= pic.box().bottom(), "under the plate");
+        // plate 49 + pad + spotlight 50 leaves no room for the panel: it moves whole to the next page
+        assertEquals(2, pages.size());
+        assertEquals(0, of(pages.get(1), PageLayout.RecipeBox.class).getFirst().area().y());
+    }
 }

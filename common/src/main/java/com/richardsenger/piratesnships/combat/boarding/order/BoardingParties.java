@@ -68,6 +68,14 @@ import java.util.UUID;
  * A boarder that does not get across within {@code boarding.cross_timeout_ticks} is set down on the far side (like
  * WALK1's seat at once, nobody stalls). Back home it walks to its station again (its pin kept).
  *
+ * <p><b>Sable</b>: a boarder stays a world entity the whole way. Sable makes it track the body whose collision it lands
+ * on from above ({@code refs/sable/common/src/main/java/dev/ryanhcode/sable/mixin/entity/entity_sublevel_collision/EntityMixin.java},
+ * {@code sable$collideRedirect}: {@code trackingSubLevel} is taken on {@code verticalCollisionBelow}), so stepping off
+ * the board onto the other deck switches it to that ship, and from then on its pathfinding runs in that ship's plot
+ * (sable-notes §6). Read through the mod's wrappers only: {@code ShipEntities.standingOrRiding} for the ship it stands
+ * on, {@code ShipBody.toWorld}/{@code toPlot} for the crossing's points. A gangway lies in the plot of the ship it was
+ * laid from, so a boarder on the board's far end still stands on its own ship ({@link #onPlank}).
+ *
  * <p><b>Every {@code boarding.order_check_ticks}</b>: the dead leave the party; a boarder aboard without a live foe takes
  * the nearest ({@link BoardingFight}); the defenders aboard without a target take the nearest boarder; the boarded
  * deck held with no foe left for {@code boarding.capture_seconds} is taken ("Her deck is yours" to the captain; for an
@@ -138,6 +146,13 @@ public final class BoardingParties {
 
         public @Nullable StationRef station() {
             return station;
+        }
+
+        /** Its way for a failure message: crossing kind, gap, the board point it walks to, ticks in the phase. */
+        public String describe() {
+            BoardingWays.Crossing c = crossing;
+            return (c == null ? "no crossing" : c.kind() + " gap " + c.gap() + " rise " + c.rise() + " via " + via + "/" + c.via().size())
+                    + (hopped ? " hopped" : "") + (setDown ? " set down" : "") + " since " + since;
         }
 
         /** Whether it was ever set down across by the fallback instead of crossing by itself. */

@@ -12,6 +12,7 @@ import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
+import com.richardsenger.piratesnships.crew.CrewConfig;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.law.flag.Faction;
@@ -58,7 +59,8 @@ import java.util.UUID;
  * decks at relative y 8. A carries a swivel gun at x 3, z 12 (a gun station: its crew stays). After {@link #SETTLE}
  * ticks the gangway is laid (where the test wants one) and the crew stand on A's deck; the order follows
  * {@link #ORDER} ticks later. A boarder that the fallback set down across (it took longer than
- * {@code boarding.cross_timeout_ticks}) fails a test that wants it to cross by itself.
+ * {@code boarding.cross_timeout_ticks}) fails a test that wants it to cross by itself. Every test with crew runs in a
+ * batch of its own with desertion off ({@link #noDesertion}).
  */
 public final class BoardingOrderGameTests {
 
@@ -88,6 +90,15 @@ public final class BoardingOrderGameTests {
         BlockPos chest() {
             return a.helmPlot().offset(1, 0, -1);
         }
+    }
+
+    /**
+     * The crew stay ashore-proof: another test of the run may have set the clock to the night, and a dawn during this
+     * test would run the upkeep day over the crew, who have no provisions here and would desert at once (replaced by
+     * sailors). So every test with crew has its own batch and switches desertion off.
+     */
+    private static void noDesertion(GameTestHelper h) {
+        ConfigOverrides.during(h, CrewConfig.DESERTION_ENABLED, false);
     }
 
     /** Ship A (with a swivel gun and a chest on deck) at x 2..6 and ship B with {@code gap} blocks of water between. */
@@ -155,15 +166,42 @@ public final class BoardingOrderGameTests {
         h.assertTrue(BoardingFight.aboard(m, ship.id()), who + " does not stand on " + ship.id() + " but at " + m.position());
     }
 
-    /** {@code m} is a boarder of {@code home}'s party standing on its target, fighting, and crossed by itself. */
-    private static void assertBoarded(GameTestHelper h, Ships s, Mob m, String who) {
-        BoardingParties.Party p = BoardingParties.party(s.a().ship().id());
-        h.assertTrue(p != null, "no party out");
-        BoardingParties.Boarder b = p.boarder(m.getUUID());
-        h.assertTrue(b != null, who + " is not a boarder");
-        h.assertTrue(b.phase() == BoardingParties.Phase.ABOARD, who + " is " + b.phase() + " at " + m.position());
-        h.assertTrue(!b.wasSetDown(), who + " was set down by the fallback instead of crossing");
-        assertAboard(h, m, s.b().ship(), who);
+    /** Where the boarders of the party of {@code home} are, for a failure message. */
+    private static String where(GameTestHelper h, UUID home) {
+        BoardingParties.Party p = BoardingParties.party(home);
+        if (p == null) return "no party";
+        StringBuilder out = new StringBuilder();
+        for (UUID id : p.boarders()) {
+            BoardingParties.Boarder b = p.boarder(id);
+            net.minecraft.world.entity.Entity e = h.getLevel().getEntity(id);
+            out.append(id.toString(), 0, 4).append(' ').append(b == null ? "?" : b.phase())
+                    .append(" at ").append(e == null ? "unloaded" : h.relativeVec(e.position()))
+                    .append(" on ").append(e == null ? "-" : BoardingFight.shipOf(e))
+                    .append(" plank ").append(e instanceof Mob m && BoardingParties.onPlank(h.getLevel(), m))
+                    .append(b == null ? "" : " " + b.describe()).append("; ");
+        }
+        return out.toString();
+    }
+
+    /**
+     * Watches {@code mobs} every tick (registered in the test body) and remembers each that stood on B as a boarder of
+     * A's party, fighting and across by itself: a deck held clear long enough sends them home, so the first across may
+     * have left when the last arrives.
+     */
+    private static java.util.Set<UUID> crossed(GameTestHelper h, Ships s, List<? extends Mob> mobs) {
+        java.util.Set<UUID> seen = new java.util.HashSet<>();
+        h.onEachTick(() -> {
+            BoardingParties.Party p = BoardingParties.party(s.a().ship().id());
+            if (p == null) return;
+            for (Mob m : mobs) {
+                BoardingParties.Boarder b = p.boarder(m.getUUID());
+                if (b != null && b.phase() == BoardingParties.Phase.ABOARD && !b.wasSetDown()
+                        && BoardingFight.aboard(m, s.b().ship().id())) {
+                    seen.add(m.getUUID());
+                }
+            }
+        });
+        return seen;
     }
 
     private static void cleanup(GameTestHelper h, Ships s, Collection<? extends Mob> mobs) {
@@ -209,8 +247,9 @@ public final class BoardingOrderGameTests {
      * Over a gangway: three free hands answer "Board!" and stand on B within {@link #CROSS_WITHIN} ticks, having walked
      * the board; the gunner keeps his swivel gun.
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = SETTLE + ORDER + CROSS_WITHIN + 20)
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = SETTLE + ORDER + CROSS_WITHIN + 20, batch = BATCH + "gangway")
     public static void boardersCrossTheGangwayAndTheGunnerStays(GameTestHelper h) {
+        noDesertion(h);
         Ships s = twoShips(h, 3);
         List<Mob> people = new ArrayList<>();
         List<CrewMember> hands = new ArrayList<>();
@@ -228,9 +267,11 @@ public final class BoardingOrderGameTests {
             h.assertTrue(s.b().ship().id().equals(o.target()), "boarding the wrong ship: " + o.target());
             h.assertTrue(BoardingParties.boarder(gunner[0]) == null, "the gunner left his gun");
         });
+        java.util.Set<UUID> across = crossed(h, s, hands);
         h.succeedWhen(() -> {
             h.assertTrue(h.getTick() > SETTLE + ORDER, "not yet ordered");
-            for (int i = 0; i < hands.size(); i++) assertBoarded(h, s, hands.get(i), "hand " + i);
+            h.assertTrue(across.size() == hands.size(), across.size() + " of " + hands.size() + " hands crossed: "
+                    + where(h, s.a().ship().id()));
             h.assertTrue(gunner[0].assignment() != null && gunner[0].assignment().pos().equals(s.swivel()), "the gunner lost his gun");
             assertAboard(h, gunner[0], s.a().ship(), "the gunner");
             cleanup(h, s, people);
@@ -238,8 +279,9 @@ public final class BoardingOrderGameTests {
     }
 
     /** Without a plank, over two blocks of water: the hands jump across. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = SETTLE + ORDER + CROSS_WITHIN + 20)
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = SETTLE + ORDER + CROSS_WITHIN + 20, batch = BATCH + "gap")
     public static void boardersJumpATwoBlockGap(GameTestHelper h) {
+        noDesertion(h);
         Ships s = twoShips(h, 2);
         List<CrewMember> hands = new ArrayList<>();
         h.runAtTickTime(SETTLE, () -> hands.addAll(hands(h, s, 3)));
@@ -250,16 +292,19 @@ public final class BoardingOrderGameTests {
             h.assertTrue(!ways.isEmpty() && ways.stream().allMatch(w -> w.kind() == BoardingWays.Kind.GAP && w.gap() == 2),
                     "expected two-block gap crossings: " + ways);
         });
+        java.util.Set<UUID> across = crossed(h, s, hands);
         h.succeedWhen(() -> {
             h.assertTrue(h.getTick() > SETTLE + ORDER, "not yet ordered");
-            for (int i = 0; i < hands.size(); i++) assertBoarded(h, s, hands.get(i), "hand " + i);
+            h.assertTrue(across.size() == hands.size(), across.size() + " of " + hands.size() + " hands jumped across: "
+                    + where(h, s.a().ship().id()));
             cleanup(h, s, hands);
         });
     }
 
     /** Three blocks of water and no plank: no way across, the order is refused and nobody moves. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = SETTLE + ORDER + 20)
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = SETTLE + ORDER + 20, batch = BATCH + "refused")
     public static void boardIsRefusedWithoutAWayAcross(GameTestHelper h) {
+        noDesertion(h);
         Ships s = twoShips(h, 3);
         List<CrewMember> hands = new ArrayList<>();
         h.runAtTickTime(SETTLE, () -> hands.addAll(hands(h, s, 2)));
@@ -280,8 +325,9 @@ public final class BoardingOrderGameTests {
      * A husk on B is fought and killed by the boarders; the one hand with an empty hand and a cutlass in A's chest takes
      * it from the chest first.
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = SETTLE + ORDER + 400)
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = SETTLE + ORDER + 400, batch = BATCH + "fight")
     public static void aHostileMobAboardIsFoughtAndKilled(GameTestHelper h) {
+        noDesertion(h);
         Ships s = twoShips(h, 3);
         List<Mob> people = new ArrayList<>();
         List<CrewMember> hands = new ArrayList<>();
@@ -316,6 +362,7 @@ public final class BoardingOrderGameTests {
     /** Once the deck is clear for capture_seconds, the captain who gave the order is told: "Her deck is yours". */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = SETTLE + ORDER + 400, batch = BATCH + "capture")
     public static void captureTellsTheCaptain(GameTestHelper h) {
+        noDesertion(h);
         ConfigOverrides.during(h, BoardingConfig.CAPTURE_SECONDS, 1);
         Ships s = twoShips(h, 3);
         List<Mob> people = new ArrayList<>();
@@ -354,7 +401,9 @@ public final class BoardingOrderGameTests {
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = SETTLE + ORDER + 2 * CROSS_WITHIN + 100, batch = BATCH + "recall")
     public static void backAboardReturnsThemToTheirStations(GameTestHelper h) {
+        noDesertion(h);
         ConfigOverrides.during(h, BoardingConfig.BOARDERS_KEEP_STATIONS, false);
+        ConfigOverrides.during(h, BoardingConfig.CAPTURE_SECONDS, 600); // they hold the empty deck until called back
         Ships s = twoShips(h, 3);
         List<Mob> people = new ArrayList<>();
         CrewMember[] gunner = new CrewMember[1];
@@ -397,8 +446,11 @@ public final class BoardingOrderGameTests {
             }
         });
         h.succeedWhen(() -> {
-            h.assertTrue(stage[0] == 2, "the boarders never stood on B together (stage " + stage[0] + ")");
-            h.assertTrue(!BoardingParties.out(s.a().ship().id()), "the party is still out");
+            h.assertTrue(stage[0] == 2, "the boarders never stood on B together (stage " + stage[0] + "): " + where(h, s.a().ship().id())
+                    + (gunner[0] == null ? "" : " gunner " + h.relativeVec(gunner[0].position()) + " removed " + gunner[0].getRemovalReason()
+                    + " found " + (h.getLevel().getEntity(gunner[0].getUUID()) != null) + " alive " + gunner[0].isAlive()
+                    + ", hand " + h.relativeVec(hand[0].position()) + " removed " + hand[0].getRemovalReason()));
+            h.assertTrue(!BoardingParties.out(s.a().ship().id()), "the party is still out: " + where(h, s.a().ship().id()));
             h.assertTrue(gunner[0].isAtStation() && gunner[0].assignment().pos().equals(s.swivel()),
                     "the gunner is not back at his gun: " + gunner[0].assignment() + " at " + gunner[0].position());
             assertAboard(h, hand[0], s.a().ship(), "the hand");
@@ -411,8 +463,10 @@ public final class BoardingOrderGameTests {
      * The gangway breaks while the boarders are across: called back, they stay on B and fight on; a new gangway brings
      * them home.
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = SETTLE + ORDER + 3 * CROSS_WITHIN + 100)
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = SETTLE + ORDER + 3 * CROSS_WITHIN + 100, batch = BATCH + "stranded")
     public static void aBrokenGangwayStrandsThemAndANewOneBringsThemBack(GameTestHelper h) {
+        noDesertion(h);
+        ConfigOverrides.during(h, BoardingConfig.CAPTURE_SECONDS, 600); // they hold the empty deck until called back
         Ships s = twoShips(h, 3);
         List<CrewMember> hands = new ArrayList<>();
         int[] stage = {0};
@@ -458,8 +512,8 @@ public final class BoardingOrderGameTests {
             }
         });
         h.succeedWhen(() -> {
-            h.assertTrue(stage[0] == 3, "stage " + stage[0]);
-            h.assertTrue(!BoardingParties.out(s.a().ship().id()), "the party is still out");
+            h.assertTrue(stage[0] == 3, "stage " + stage[0] + ": " + where(h, s.a().ship().id()));
+            h.assertTrue(!BoardingParties.out(s.a().ship().id()), "the party is still out: " + where(h, s.a().ship().id()));
             for (CrewMember c : hands) assertAboard(h, c, s.a().ship(), "a returned hand");
             cleanup(h, s, hands);
         });

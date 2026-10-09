@@ -440,6 +440,10 @@ Render: `art/renders/ratlines.png`.
   between the drawn net and the fittings; climb it while the ship lies still and while it sails (the assist works in the
   ship's frame, check it does not throw you off when the ship turns or rolls). Disassemble turned: the net is back in
   the world in the right place and climbable.
+- **Climb under way (RL3):** sail fast (all sail, running before the wind) and walk from the deck into the net, hold
+  forward: you climb to the hoop and stay on the net, you do not drift aft or off it; do it again while the ship turns
+  hard at the helm, again after jumping onto the net from the deck, and once climbing on from the water at the side.
+  Hold still (sneak) halfway up for a few seconds while it sails and turns: you stay on the same spot of the net.
 - **Water:** string a net with its lower part under water: the cells hold the water, no air pocket.
 - **Config:** `rigging.nets_enabled = false`: "Ratline nets are disabled", nothing tied. `rigging.net_assist = false`:
   forward alone no longer climbs a diagonal net; jump and forward together still do (jerkily).

@@ -46,6 +46,17 @@ public final class SeaStateModel {
         return clearNoise > MODERATE_ABOVE ? SeaState.MODERATE : SeaState.CALM;
     }
 
+    /**
+     * The state the sea eases toward when nothing holds one (GR6): {@link #target} from the weather, except on a
+     * GameTest server, where it is always {@link SeaState#CALM}. A GameTest world has clear weather, so the sea would
+     * otherwise be calm or moderate depending on {@link #clearNoise} of the game time the runner happens to be at, i.e.
+     * on the test order. An override (a wave test's hold, {@code /pirates waves set}) still wins
+     * ({@link Tracker#tick}).
+     */
+    public static SeaState weatherTarget(boolean gameTestServer, double rainLevel, double thunderLevel, double clearNoise) {
+        return gameTestServer ? SeaState.CALM : target(rainLevel, thunderLevel, clearNoise);
+    }
+
     /** The slow clear-weather noise in [-1, 1] at {@code gameTime}. */
     public static double clearNoise(long seed, double gameTime) {
         return WindNoise.fbm1(seed, CH_CLEAR, gameTime / CLEAR_PERIOD);

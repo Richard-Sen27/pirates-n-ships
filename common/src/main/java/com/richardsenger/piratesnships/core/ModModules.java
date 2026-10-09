@@ -59,6 +59,8 @@ public final class ModModules {
             new com.richardsenger.piratesnships.worldsim.navy.NavyModule(),
             new com.richardsenger.piratesnships.worldsim.raid.RaidModule(),
             new com.richardsenger.piratesnships.worldsim.captain.CaptainVoyageModule(),
-            new com.richardsenger.piratesnships.station.lookout.LookoutModule()
+            new com.richardsenger.piratesnships.station.lookout.LookoutModule(),
+            new com.richardsenger.piratesnships.almanac.AlmanacModule(),
+            new com.richardsenger.piratesnships.almanac.ponder.AlmanacPonderModule()
     );
 }

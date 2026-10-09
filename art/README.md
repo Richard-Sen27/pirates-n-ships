@@ -822,14 +822,15 @@ Item models (ART1a, ART1b):
   panel alone, with a `gui` entry `[20, -30, 0]` / 0.85.
 - **Rope** (28 elements, `palette_2` rope colours and `palette_4` twine whipping) and **chart** (14 elements,
   `palette`, `palette_3` paper and biscuit, `palette_4` cord; particle `palette_3`): no new colours.
-- **Flag bundles** (`navy_flag` 26 elements, `merchant_flag` 24, `jolly_roger_flag` 25; one project each, one shared
+- **Flag bundles** (`navy_flag` 28 elements, `merchant_flag` 26, `jolly_roger_flag` 32 since ART18; one project each, one shared
   part list): the cloth rolled on a halyard toggle, built upright along y around x = z = 8 and turned `z -45` about
   `[8, 8, 8]` like the cloth bolt, so the vanilla handheld slots hold it like a tool (lower knob in the fist). Parts:
   the toggle with two crossed-box knobs and a rope eye on top (`wood`, `wood_dark` of `palette`, `rope` of
   `palette_2`), the roll and the outer fold as two crossed boxes each (the second box 0.05 px shorter at its ends),
   two `rope_dark` lashings, the fold's loose end in two steps to the lower right, and the design on the fold: navy a
   white band all round plus a vertical arm on the front and back, merchant a red band, Jolly Roger a skull (eye holes
-  0.08 px proud of it) and a bone, 0.15 px proud of the front. The colours follow the flown cloth
+  0.08 px proud of it) and a bone, 0.15 px proud of the front, and since ART18 the same on the back (see "Flag bundle
+  devices on the back face (ART18)"). The colours follow the flown cloth
   (`tools/gen_flag_textures.py`), so the navy bundle is blue with a white cross. On crossed boxes the **front is the
   deep box's face** (z = 8 + w/2), not the wide box's: inlays go there. A `gui` entry `[0, 20, 45]` /
   `[-1.4, 0, 0]` / 0.9 stands the bundle upright in the slot (z +45 undoes the element turn; y 20 shows its side);
@@ -1466,8 +1467,8 @@ Left-hand display audit (ART17, after ART16 found the book's left hand unmirrore
   | `grapeshot`, hats, `bandana` first person | `[0, 225, 0]` / `[0, -135, 0]` for `[0, 45, 0]` | turn about y | correct, unchanged |
   | the remaining 28 (`item/generated` copies, `doubloon`, `map_tile`, `treasure_map`, `ship_receipt`, third-person `[0, 0, 0]` / `[75, 45, 0]`) | same as right | `R` unchanged | correct, unchanged |
 - Inherent limit: a sprite-aligned item shows its other face in the left hand (the geometry is not mirrored), so the
-  Jolly Roger bundle's skull, which is on the front only, faces the body in the off hand; the pistol's lock likewise.
-  Vanilla sprites behave the same.
+  Jolly Roger bundle's skull, which was on the front only, faced the body in the off hand (fixed by ART18, below); the
+  pistol's lock likewise. Vanilla sprites behave the same.
 - Edits: only the changed `rotation` numbers in the display block of each model JSON and its project
   (`brig_key`, `brig_door` / `brig_door_item.bbmodel`, `hull_patch` / `hull_patch_item.bbmodel`, `chain_shot`), set in
   Blockbench's display mode and written into both files with every other byte kept (the diff shows only those
@@ -1475,6 +1476,29 @@ Left-hand display audit (ART17, after ART16 found the book's left hand unmirrore
 - Renders (left hand on the left, right on the right; first person on top, third person from the front three-quarter
   of each side): `renders/brig_key_hands.png`, `brig_door_hands.png`, `hull_patch_hands.png`,
   `chain_shot_hands.png`, and `pistol_hands.png` for the unchanged handheld form.
+
+Flag bundle devices on the back face (ART18, after ART17's finding that the off hand shows the bundle's back):
+- **Rule: a device on the front of the fold gets a copy on the back, turned 180° about the bundle's own axis** (the
+  element-space y axis through x = z = 8, before the element's `z -45`): `x → 16 − x`, `z → 16 − z`, faces south ↔
+  north and east ↔ west, up and down kept, same palette cell per face. A z-only reflection would read mirrored from
+  behind; the half-turn reads like the front (the navy's `cross_back`, there since ART1b, is exactly this turn of
+  `cross_front`, so its arm sits towards the hoist seen from either side).
+- **Jolly Roger** (skull and crossbone, symmetric, so the turn equals a mirror): `skull_back`, `jaw_back`,
+  `eye_l_back`, `eye_r_back`, `bone_back`, `bone_l_back`, `bone_r_back` added at z 4.22..4.45, on the deep fold box's
+  back face (z 4.45) with the same 0.15 px and eye 0.08 px proud steps as the front. 25 → 32 elements.
+- **Navy** (white Nordic cross: the band round the roll plus `cross_front` / `cross_back`) and **merchant** (red band
+  round the roll): the roll already carried them all round; only the loose flap showed the band on its front, so the
+  back of the flap was plain. `flap_stripe_back` (z 10.59..10.65, behind the flap's north face at 10.65) and
+  `flap_tip_stripe_back` (z 10.09..10.15, behind the tip at 10.15, with a west face, since the tip's west end is
+  open) carry the band there, same y span and cell as the front stripes. Navy 26 → 28, merchant 24 → 26.
+- Edits: the new elements are appended at the end of each model JSON's `elements` and of each project's `elements`
+  and `outliner` (uuids are `uuid5` of `pirates_n_ships/<model>/<name>`); every other byte of both files is
+  unchanged. The projects, loaded in Blockbench, compile (`Codecs.java_block.compile()`) to exactly the committed
+  elements. Lint: no fight or warning involves a new element.
+- Render `renders/flag_bundles_hands.png`: each bundle in the off hand (left columns) and the main hand (right
+  columns), first person (the display mode's eye, fov 70, the half of the screen with the item) and third person
+  (the player model from the outside three-quarter of that hand). In the off hand the skull, cross and band now face
+  out; the main hand is unchanged.
 
 ## Entities
 

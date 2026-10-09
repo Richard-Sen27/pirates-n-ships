@@ -319,10 +319,18 @@ public final class GrappleGameTests {
     }
 
     /**
-     * A kedge line (GR4). Only one ship pulls (against the water alone, about 0.34 blocks per second for this hull with
-     * the default haul_force, measured), so it takes about twice as long as two ships hauling each other.
+     * A kedge line (GR4). Only one ship pulls (against the water alone), so it takes about twice as long as two ships
+     * hauling each other.
+     *
+     * <p><b>Timeout (GR6, measured in still water).</b> Whether the hull yaws on the way is chaotic: one that yaws to
+     * about 65° speeds up to 0.7 m/s and is done by tick 680 to 910; one that runs straight hauls at a steady 0.273 m/s,
+     * reaches the hold length at about tick 1040 and then closes the last 0.4 blocks on the rope's one-block ramp at a
+     * falling speed. Where the runner places the test decides when that creep ends: far from the origin f32 rounding
+     * freezes it and the rope holds (tick 1170 at x = 1,198, docs/sable-notes.md §9.0l); near it the hull keeps closing
+     * at 0.04 m/s, which is progress, so the rope still hauls at tick 1200 (x = 873: moved 14.37, rope 2.13; the merge
+     * stage's x = 440: 14.44, 2.05). 1800 ticks leave the straight haul half its time again.
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 1200)
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 1800)
     public static void hookOnAWorldBlockFromAShipHaulsTheShipTowardIt(GameTestHelper h) {
         // only ship A in the basin; the hook bites into the basin's east wall (a world block), 16 blocks away
         DryHullGameTests.basin(h, 0, 23, true);

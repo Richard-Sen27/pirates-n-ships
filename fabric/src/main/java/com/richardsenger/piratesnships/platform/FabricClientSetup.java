@@ -28,6 +28,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -67,6 +68,12 @@ public final class FabricClientSetup {
     private FabricClientSetup() {
     }
 
+    /** ITC1: our item colour handlers, each for its items (resolved now, after registration). */
+    static void registerItemColors() {
+        ClientEvents.itemColors().forEach(c ->
+                ColorProviderRegistry.ITEM.register(c.color(), c.items().stream().map(Supplier::get).toArray(ItemLike[]::new)));
+    }
+
     public static void attach() {
         // Config screen: Forge Config API Port's NeoForge screen, shown by Mod Menu (FCAP ships the Mod Menu entry point)
         ConfigScreenFactoryRegistry.INSTANCE.register(Constants.MOD_ID, ConfigurationScreen::new);
@@ -81,6 +88,7 @@ public final class FabricClientSetup {
         FabricArmorModels.register(ClientEvents.armorModels());
         ClientEvents.blockColors().forEach(c ->
                 ColorProviderRegistry.BLOCK.register(c.color(), c.blocks().stream().map(Supplier::get).toArray(Block[]::new)));
+        registerItemColors();
         registerRenderLayers();
         HudRenderCallback.EVENT.register(FabricClientSetup::renderHudLayers);
 

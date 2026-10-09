@@ -26,3 +26,5 @@ Your final message (it goes to the orchestrator, not the human) must contain:
 - Changes needed in shared files (exact snippets)
 - Anything that needs an in-game playtest, as a checklist with steps and expected results
 - Open problems or risks
+
+- **Run Gradle as one plain command.** `./gradlew <task> [args]` from your worktree's own working directory, optionally with `> log 2>&1`, and nothing else on the line: no `cd … &&`, no `; echo …; tail …; git status`, no environment-variable prefix where a Gradle flag exists. The project's permission rules allow a command that starts with `./gradlew`; anything chained to it falls through to the auto-mode classifier, which has refused data generation and builds as "Modify Shared Resources" (ITC1, ART11, QST2b, VIS1b). Read the log with a second command. If a Gradle run is refused anyway, say so in the hand-back and commit: the merge stage builds and tests every branch.

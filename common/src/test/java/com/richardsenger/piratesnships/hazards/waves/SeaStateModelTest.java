@@ -18,6 +18,40 @@ class SeaStateModelTest {
     }
 
     @Test
+    void aGameTestServerHeadsForCalmWhateverTheWeather() {
+        for (double noise = -1.0; noise <= 1.0; noise += 0.05) {
+            assertEquals(SeaState.CALM, SeaStateModel.weatherTarget(true, 0.0, 0.0, noise));
+            assertEquals(SeaStateModel.target(0.0, 0.0, noise), SeaStateModel.weatherTarget(false, 0.0, 0.0, noise));
+        }
+        assertEquals(SeaState.CALM, SeaStateModel.weatherTarget(true, 1.0, 1.0, 1.0));
+        assertEquals(SeaState.STORM, SeaStateModel.weatherTarget(false, 1.0, 1.0, 1.0));
+        assertEquals(SeaState.ROUGH, SeaStateModel.weatherTarget(false, 1.0, 0.0, -1.0));
+        // over a long run of game time a GameTest level never leaves calm; a plain server does
+        boolean moderateSeen = false;
+        for (long t = 0; t < 24000L * 20; t += 200) {
+            double n = SeaStateModel.clearNoise(42L, t);
+            assertEquals(SeaState.CALM, SeaStateModel.weatherTarget(true, 0.0, 0.0, n));
+            moderateSeen |= SeaStateModel.weatherTarget(false, 0.0, 0.0, n) == SeaState.MODERATE;
+        }
+        assertTrue(moderateSeen);
+    }
+
+    @Test
+    void aHoldBeatsTheGameTestCalm() {
+        SeaStateModel.Tracker t = new SeaStateModel.Tracker();
+        SeaState calm = SeaStateModel.weatherTarget(true, 0.0, 0.0, 1.0);
+        t.tick(calm, 0.01, 0);
+        assertEquals(SeaState.CALM, t.current());
+        t.setOverride(SeaState.MODERATE, 90.0, 100, new WaveField.Origin(0, 0.0, 0.0));
+        t.tick(calm, 0.01, 1);
+        assertEquals(SeaState.MODERATE, t.current());
+        assertEquals(SeaState.MODERATE, t.target());
+        t.tick(calm, 0.01, 100); // expired: back toward calm
+        assertEquals(SeaState.CALM, t.target());
+        assertNull(t.override());
+    }
+
+    @Test
     void clearWeatherHasCalmAndModerateStretches() {
         int moderate = 0, changes = 0;
         SeaState last = null;

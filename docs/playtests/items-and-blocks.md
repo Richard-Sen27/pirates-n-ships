@@ -440,3 +440,11 @@ down, so its front faces you) and one on a wall (its front faces away from the w
   `bell_visuals.swing_degrees = 5` and `25`: a small and a large swing (25 is the maximum; check nothing clips at 25).
   Server config `ship_decor.bell_ring_ticks = 60`: the bell swings longer (about three swings) and still eases to rest.
 - Say whether the swing is too fast, too slow or too big, and whether the clapper's lag reads well.
+
+## Water barrel item (ITC1)
+
+- **NeoForge and Fabric client:** the water barrel item shows blue water (not pale blue ice) in the inventory, the
+  creative tab, in hand (first and third person), dropped and in an item frame. The water is vanilla's default water
+  blue, the same in every biome (an item has no position), and it ripples like water. The placed barrel still takes the
+  biome's water colour (compare in a swamp: the placed barrel is greener than the item). Say if anything else on the
+  item turned blue or grey.

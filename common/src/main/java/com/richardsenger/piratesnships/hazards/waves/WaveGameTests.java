@@ -657,4 +657,33 @@ public final class WaveGameTests {
             h.succeed();
         });
     }
+
+    /**
+     * GR6: on the GameTest server a level nobody holds a sea for is calm and flat, whatever the game time (the clear
+     * weather's calm / moderate noise does not apply); a hold wins, and clearing it returns the level to calm and flat at
+     * once.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 60, batch = "pirates_n_ships_waves_plain_level")
+    public static void aPlainTestLevelHasACalmFlatSea(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        h.assertTrue(SeaStates.stillByDefault(level), "the GameTest server is not recognised: " + level.getServer().getClass().getName());
+        h.onEachTick(() -> {
+            long t = h.getTick();
+            if (t >= 1 && t < 10 || t >= 22) {
+                h.assertTrue(SeaStates.override(level) == null, "something holds the sea: " + SeaStates.override(level));
+                h.assertTrue(SeaStates.current(level) == SeaState.CALM && SeaStates.target(level) == SeaState.CALM,
+                        "a plain test level's sea is " + SeaStates.current(level).id() + " heading for " + SeaStates.target(level).id()
+                                + " at game time " + level.getGameTime() + " (clear noise "
+                                + String.format("%.2f", SeaStateModel.clearNoise(level.getSeed(), level.getGameTime())) + ")");
+                h.assertTrue(SeaStates.field(level).isFlat(), "a plain test level's sea is not flat");
+            }
+        });
+        h.runAfterDelay(10, () -> hold(h, SeaState.MODERATE, 100));
+        h.runAfterDelay(15, () -> {
+            h.assertTrue(SeaStates.current(level) == SeaState.MODERATE, "the hold did not win: " + SeaStates.current(level).id());
+            h.assertFalse(SeaStates.field(level).isFlat(), "a held moderate sea is flat");
+        });
+        h.runAfterDelay(20, () -> release(h));
+        h.runAfterDelay(40, h::succeed);
+    }
 }

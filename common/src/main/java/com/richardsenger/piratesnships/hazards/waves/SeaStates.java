@@ -32,7 +32,7 @@ public final class SeaStates {
     public static synchronized void onLevelTick(ServerLevel level) {
         Entry e = LEVELS.computeIfAbsent(level, l -> new Entry());
         long now = level.getGameTime();
-        SeaState target = SeaStateModel.target(level.getRainLevel(1.0f), level.getThunderLevel(1.0f),
+        SeaState target = SeaStateModel.weatherTarget(stillByDefault(level), level.getRainLevel(1.0f), level.getThunderLevel(1.0f),
                 SeaStateModel.clearNoise(level.getSeed(), now));
         e.tracker.tick(target, SeaStateModel.ratePerTick(HazardConfig.STATE_CHANGE_SECONDS.get()), now);
         e.field = build(level, e.tracker, now);
@@ -62,10 +62,12 @@ public final class SeaStates {
 
     /**
      * Whether the sea of {@code level} is flat unless something holds a state: on the vanilla GameTest server
-     * ({@link net.minecraft.gametest.framework.GameTestServer}). Every older ship GameTest measures behaviour in still
-     * water (a 5x4x5 hull must not heel past 5°, a ship at rest must not roll), and the GameTest world's clear weather
-     * would otherwise give a calm or moderate sea that varies with the game time, i.e. with the test order. Wave tests
-     * hold their state with {@link #set}.
+     * ({@link net.minecraft.gametest.framework.GameTestServer}, which both loaders' runners start). Every older ship
+     * GameTest measures behaviour in still water (a 5x4x5 hull must not heel past 5°, a ship at rest must not roll), and
+     * the GameTest world's clear weather would otherwise give a calm or moderate sea that varies with the game time, i.e.
+     * with the test order. The tracker of such a level also heads for {@link SeaState#CALM} whatever the weather
+     * ({@link SeaStateModel#weatherTarget}, GR6), so it reports the same state in every run. Wave tests hold their state
+     * with {@link #set}; the hold wins, and {@link #clear} returns the level to a calm, flat sea.
      */
     public static boolean stillByDefault(ServerLevel level) {
         return level.getServer() instanceof net.minecraft.gametest.framework.GameTestServer;
@@ -121,8 +123,16 @@ public final class SeaStates {
         e.field = build(level, e.tracker, level.getGameTime());
     }
 
-    /** Drops the override of {@code level}; the sea eases back to the weather's state. */
+    /**
+     * Drops the override of {@code level}; the sea eases back to the weather's state. On the GameTest server
+     * ({@link #stillByDefault}) it starts over at once instead, calm and flat, so the next test does not find a storm
+     * still easing out.
+     */
     public static synchronized void clear(ServerLevel level) {
+        if (stillByDefault(level)) {
+            LEVELS.remove(level);
+            return;
+        }
         Entry e = LEVELS.get(level);
         if (e != null) {
             e.tracker.clearOverride();

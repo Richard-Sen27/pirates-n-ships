@@ -2,6 +2,8 @@ package com.richardsenger.piratesnships.station.order;
 
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.cannon.CannonStation.CannonOrder;
+import com.richardsenger.piratesnships.sailing.oars.OarsSync;
+import com.richardsenger.piratesnships.sailing.oars.RowOrder;
 import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import com.richardsenger.piratesnships.station.capstan.AnchorOrder;
 import com.richardsenger.piratesnships.station.pump.PumpOrder;
@@ -35,6 +37,11 @@ public enum WhistleOrder {
      * the direction, the client only names it.
      */
     ANCHOR(null, Constants.id("capstan")),
+    /**
+     * OAR1: a toggle too. "Row" while the ship does not row: the free crew take oars at benches and the rail; "Ship oars"
+     * while it rows ({@code sailing.oars.Rowing#toggle}). The label follows the ship's rowing state ({@link #shownNameKey}).
+     */
+    ROW(RowOrder.ROW, Constants.id("oar")),
     RELEASE(null, Constants.id("sail_winch"));
 
     private static final List<WhistleOrder> ENTRIES = List.of(values());
@@ -129,5 +136,37 @@ public enum WhistleOrder {
     /** Label key of the anchor toggle in direction {@code direction} ("Drop anchor", "Raise anchor"). */
     public static String anchorKey(AnchorOrder direction) {
         return "whistle_order." + Constants.MOD_ID + "." + direction.id();
+    }
+
+    /** Whether this entry is the oars toggle, whose label follows the ship's rowing state (OAR1: {@link #ROW}). */
+    public boolean isToggle() {
+        return this == ROW;
+    }
+
+    /** The name key of the toggle's other direction ("Ship oars"); {@link #nameKey()} for an entry that is no toggle. */
+    public String toggledNameKey() {
+        return isToggle() ? nameKey() + ".toggled" : nameKey();
+    }
+
+    /** The description key of the toggle's other direction. */
+    public String toggledDescriptionKey() {
+        return isToggle() ? toggledNameKey() + ".desc" : descriptionKey();
+    }
+
+    /**
+     * Client: the label to show on the ship the player stands on, whose anchor is in {@code anchor}: "Ship oars" while it
+     * rows (OAR1, {@link OarsSync#clientRowing}), else {@link #nameKey(AnchorState.Phase)}.
+     */
+    public String shownNameKey(AnchorState.@Nullable Phase anchor) {
+        return toggledOnClient() ? toggledNameKey() : nameKey(anchor);
+    }
+
+    /** Client: the description to show, like {@link #shownNameKey}. */
+    public String shownDescriptionKey(AnchorState.@Nullable Phase anchor) {
+        return toggledOnClient() ? toggledDescriptionKey() : descriptionKey(anchor);
+    }
+
+    private boolean toggledOnClient() {
+        return this == ROW && OarsSync.clientRowing();
     }
 }

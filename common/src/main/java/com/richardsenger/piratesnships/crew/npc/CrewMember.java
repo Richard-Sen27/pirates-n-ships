@@ -452,11 +452,16 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
      */
     private void showStationPose(ServerLevel level) {
         StationSeat seat = assignment != null && isAtStation() && getVehicle() instanceof StationSeat s ? s : null;
-        StationPoses.Shown shown = seat != null ? StationPoses.resolve(level, assignment, seat.blockPosition()) : null;
+        PosedSeat posed = seat == null && getVehicle() instanceof PosedSeat p ? p : null;
+        StationPoses.Shown shown = seat != null ? StationPoses.resolve(level, assignment, seat.blockPosition())
+                : posed != null ? posed.shown(level) : null; // OAR1: the rail rower's place
         entityData.set(DATA_STATION_POSE, (byte) (shown == null ? -1 : shown.pose().stationId()));
         facingStation = shown != null && shown.faces();
         Float target = null;
-        if (seat != null) {
+        if (posed != null && facingStation) {
+            ShipBody ship = SableShips.containing(level, ((net.minecraft.world.entity.Entity) posed).blockPosition());
+            target = StationPoses.yaw(shown, ship == null ? null : ship.orientation());
+        } else if (seat != null) {
             ShipBody ship = SableShips.byId(level, assignment.ship());
             Quaterniond orientation = ship == null ? null : ship.orientation();
             if (facingStation) {

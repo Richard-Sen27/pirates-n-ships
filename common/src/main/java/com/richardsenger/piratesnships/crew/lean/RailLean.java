@@ -150,7 +150,9 @@ public final class RailLean {
                     BlockPos cell = p.immutable();
                     boolean floor = sturdyFloor(level, cell);
                     boolean headroom = clear(level, cell.above());
-                    boolean nearStation = nearStation(level, cell);
+                    // a station nearby, or a seat in the cell (OAR1's rail rower sits on one in the plot)
+                    boolean nearStation = nearStation(level, cell)
+                            || !level.getEntities((net.minecraft.world.entity.Entity) null, new net.minecraft.world.phys.AABB(cell)).isEmpty();
                     for (Direction edge : RailingBlock.edges(s)) {
                         BlockPos in = cell.relative(edge.getOpposite());
                         boolean approach = clear(level, in) && clear(level, in.above()) && sturdyFloor(level, in);

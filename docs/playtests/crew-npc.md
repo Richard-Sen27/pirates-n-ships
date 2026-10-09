@@ -517,3 +517,51 @@ true`, `radius = 6`, `min_seconds = 30`, `max_seconds = 90`, `leaners = 3`, `pau
 6. **Under way.** Sail and turn while crew lean. Expected: they stay at the rail facing outboard as the ship turns, no
    sliding along the deck; one pushed off its spot steps back onto it.
 7. **Off.** `crew.rail_lean.enabled = false`: nobody goes to the rail, idle crew only stroll; leaners stop at once.
+
+## OAR1: rowing (Row / Ship oars, the rail, the oar bench)
+Covered by 8 + 8 JUnit tests (`OarSpotsTest`: spots along both rails, a railing counts and the rower stands inboard of
+it, a one-block bulwark counts, alternating sides, benches counted, taken spots skipped; `OarRulesTest`: count, bench
+bonus, work speed, the fade to `oars.max_speed`, side torque, the shipping watch), 4 rig tests (`OarRigTest`: the
+blade outboard on the side `Rowing` picks, below the deck in the drive, sweeping toward the stern the rower faces,
+lifted in the recovery, for all four facings, seated and standing, left- and right-handed) and 7 GameTests
+(`sailing/oars/OarGameTests`: three crew row the ballasted 5×5 test hull at 0.71 blocks/s in a calm; with two benches
+0.79 (ratio 1.12); Ship oars stops it and the crew walk back to where they stood; a sail order ends the rowing and a
+free hand takes the winch; sails faster than `max_speed` ship the oars; assembly keeps the benches; the toggle). What
+the tests cannot show: how the stroke looks, whether the oar is held in both hands and dips outboard, and real hulls.
+**The rowing animation was not viewed in Blockbench before this playtest** unless the OAR1 hand-back says so.
+
+Setup: an assembled ship afloat in a calm (`/pirates wind set 0 0`), with railings along part of one side, three or
+more crew spawned on the deck with `/pirates crew spawn`, the captain's whistle, a few Oak Oar Benches and an Oar
+(creative tab). Default config (`oars.enabled = true`, `thrust_per_rower = 40`, `bench_bonus = 1.25`,
+`max_speed = 3`). Send `latest.log` and a screenshot of anything that looks wrong.
+
+1. **Row with no benches.** Open the whistle wheel: the entry next to Release crew shows an oar and reads **Row**.
+   Pick it. Expected: the action bar says "3 hands to the oars"; every free hand walks to the rail, the first to its
+   nearer side and then the sides in turn; at the railing they stand on the cell inboard of it, at an open deck edge on
+   the edge cell. Each turns to face the stern and plays the stroke (two seconds: lean in, pull back, lift, reach) with
+   an oar in its hands, the oar out over the side. The ship gathers way in the calm: the HUD speed rises within a few
+   seconds and settles (the small test hull settles at about 0.7 blocks/s; a bigger ship is slower).
+2. **The stroke's direction.** Watch one rower from the side. Expected: the blade is in the water (or at least below
+   the deck) while the rower pulls back, and moves toward the stern; it comes up and travels back toward the bow while
+   the rower reaches forward again. The handle and the blade move in opposite directions. A rower on the starboard side
+   holds the oar in the other hand, the mirror image. Report a blade that pulls toward the bow, an oar pointing inboard
+   or through the rower, or hands far off the handle.
+3. **The label.** Open the wheel again while the ship rows. Expected: the same entry now reads **Ship oars**; the
+   helm's ship screen (sneak-use the helm, Crew tab) shows the same label on its button.
+4. **Ship oars.** Pick it. Expected: "Oars shipped"; the oars disappear from the hands, the rowers stand up and walk
+   back to where they stood when you called Row; the ship slows down and stops within some seconds.
+5. **Benches.** Place two Oak Oar Benches at the rail, one per side, each placed while looking outboard (the thole pins
+   on the rail side). Pick Row. Expected: two hands walk to the benches and sit on the thwarts facing the stern (legs
+   forward, lower than the standing rowers), the others go to the rail. The ship is a little faster than with the same
+   hands at the rail only (about an eighth on the test hull). The Stations tab of the ship screen lists the benches
+   with the hand and "row".
+6. **Another order.** While rowing, pick Hoist sails. Expected: the rowing ends first (oars away), then a free hand
+   walks to the winch.
+7. **Sails faster.** Set a strong wind astern (`/pirates wind set <from astern> 12`), Row, then hoist the sails. Expected: once
+   the ship runs faster than about 3.3 blocks/s for two seconds, the crew ship their oars by themselves. With a light
+   wind the oars and the sails add up (faster than either alone).
+8. **Night.** Row at dusk (`/time set 12400`). Expected: the rowers keep rowing through nightfall; the other free hands
+   turn in.
+9. **Reload.** Leave the world while rowing and come back. Expected: within a second or two the crew take their oars
+   again.
+10. **Oars off.** `oars.enabled = false`. Expected: rowing ends, Row answers "Oars are off on this server".

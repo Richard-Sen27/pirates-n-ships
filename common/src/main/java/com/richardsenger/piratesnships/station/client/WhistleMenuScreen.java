@@ -186,7 +186,7 @@ public final class WhistleMenuScreen extends Screen {
 
         // center: hovered order name (or the title), wrapped to the hole
         AnchorState.Phase anchor = anchorPhase();
-        Component center = hovered >= 0 ? Component.translatable(entries.get(hovered).nameKey(anchor)) : title;
+        Component center = hovered >= 0 ? Component.translatable(entries.get(hovered).shownNameKey(anchor)) : title;
         List<FormattedCharSequence> lines = font.split(center, Math.max(24, (int) (inner * 1.7)));
         int y = (int) cy - lines.size() * font.lineHeight / 2;
         for (FormattedCharSequence line : lines) {
@@ -195,7 +195,7 @@ public final class WhistleMenuScreen extends Screen {
         }
 
         // under the ring: the description of the hovered order, or how to use the menu
-        Component below = hovered >= 0 ? Component.translatable(entries.get(hovered).descriptionKey(anchor)) : Component.translatable(WhistleMenu.KEY_HINT);
+        Component below = hovered >= 0 ? Component.translatable(entries.get(hovered).shownDescriptionKey(anchor)) : Component.translatable(WhistleMenu.KEY_HINT);
         int wrap = Math.min(width - 16, Math.max(160, (int) (outer * 2.2)));
         y = (int) (cy + outer + 8);
         for (FormattedCharSequence line : font.split(below, wrap)) {

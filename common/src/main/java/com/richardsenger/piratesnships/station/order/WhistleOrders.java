@@ -5,6 +5,7 @@ import com.richardsenger.piratesnships.combat.cannon.npc.Gunnery;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.sailing.force.AnchorState;
+import com.richardsenger.piratesnships.sailing.oars.Rowing;
 import com.richardsenger.piratesnships.sailing.ship.SailingRuntime;
 import com.richardsenger.piratesnships.sailing.ship.SailingRuntimes;
 import com.richardsenger.piratesnships.sailing.ship.ShipAnchor;
@@ -103,6 +104,12 @@ public final class WhistleOrders {
         if (ship == null) {
             return new Issued(Result.of(Outcome.NOT_ON_SHIP), Component.translatable(CaptainsWhistleItem.KEY_NOT_ON_SHIP));
         }
+        if (order == WhistleOrder.ROW) {
+            // OAR1: one toggle, Row or Ship oars by the ship's state; no job board, the rowing service seats the crew
+            Rowing.Outcome o = Rowing.toggle(level, ship);
+            return new Issued(new Result(Outcome.ISSUED, o.rowers(), 0), o.message());
+        }
+        Rowing.stop(level, ship.id()); // OAR1: any other order ends the rowing, so the rowers are free for it
         // WHS1: the anchor toggle takes the direction the anchor's state needs now, as the capstan does for a player
         CrewOrder crewOrder = order.followsAnchor() ? order.order(anchorPhase(ship)) : order.order();
         int n;

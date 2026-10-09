@@ -121,7 +121,7 @@ class WhistleMenuLogicTest {
     void entriesAreTheSailOrdersThenPumpThenTheGunOrdersThenTheAnchorThenRelease() {
         List<WhistleOrder> e = WhistleOrder.entries();
         assertEquals(List.of(WhistleOrder.HOIST, WhistleOrder.REEF, WhistleOrder.FURL, WhistleOrder.PUMP, WhistleOrder.FIRE,
-                WhistleOrder.LOAD, WhistleOrder.FIRE_AT_WILL, WhistleOrder.ANCHOR, WhistleOrder.RELEASE), e);
+                WhistleOrder.LOAD, WhistleOrder.FIRE_AT_WILL, WhistleOrder.ANCHOR, WhistleOrder.ROW, WhistleOrder.RELEASE), e);
         // WHS1: one anchor entry; its crew order follows the anchor's state
         assertNull(WhistleOrder.ANCHOR.order(), "the toggle has no fixed order");
         assertTrue(WhistleOrder.ANCHOR.followsAnchor());
@@ -129,6 +129,12 @@ class WhistleMenuLogicTest {
         assertNull(WhistleOrder.ANCHOR.sail());
         assertTrue(WhistleOrder.byId("drop_anchor").isEmpty() && WhistleOrder.byId("raise_anchor").isEmpty(),
                 "the two old entries are gone from the wheel (the command keeps them)");
+        // OAR1: one oars entry, a toggle ("Row" / "Ship oars")
+        assertEquals(com.richardsenger.piratesnships.sailing.oars.RowOrder.ROW, WhistleOrder.ROW.order());
+        assertEquals("row", WhistleOrder.ROW.id());
+        assertTrue(WhistleOrder.ROW.isToggle() && !WhistleOrder.ROW.followsAnchor());
+        assertTrue(!WhistleOrder.ROW.toggledNameKey().equals(WhistleOrder.ROW.nameKey()));
+        assertNull(WhistleOrder.ROW.sail());
         assertEquals(CannonOrder.FIRE_AT_WILL, WhistleOrder.FIRE_AT_WILL.order());
         assertEquals("fire_at_will", WhistleOrder.FIRE_AT_WILL.id());
         assertNull(WhistleOrder.FIRE_AT_WILL.sail());
@@ -204,9 +210,9 @@ class WhistleMenuLogicTest {
     }
 
     @Test
-    void nineEntriesSplitTheWheelEvenly() {
+    void tenEntriesSplitTheWheelEvenly() {
         RadialLayout l = RadialLayout.forWindow(WhistleOrder.entries().size(), 480, 270, 1.0);
-        assertEquals(9, l.count());
+        assertEquals(10, l.count()); // WHS1's nine + OAR1's oars toggle
         for (int i = 0; i < l.count(); i++) {
             double a = l.centerAngle(i);
             assertEquals(i, l.sectorAt(RadialLayout.x(a, l.iconRadius()), RadialLayout.y(a, l.iconRadius())), "sector " + i);
@@ -220,6 +226,7 @@ class WhistleMenuLogicTest {
         for (WhistleOrder o : WhistleOrder.entries()) {
             assertTrue(ids.add(o.id()), "duplicate id " + o.id());
             assertTrue(keys.add(o.nameKey()) && keys.add(o.descriptionKey()), "duplicate key of " + o);
+            if (o.isToggle()) assertTrue(keys.add(o.toggledNameKey()) && keys.add(o.toggledDescriptionKey()), "duplicate toggle key of " + o);
             assertTrue(o.id().length() <= WhistleOrderPayload.MAX_LENGTH);
             assertTrue(o.icon() != null);
             assertEquals(o, WhistleOrder.byId(o.id()).orElseThrow());

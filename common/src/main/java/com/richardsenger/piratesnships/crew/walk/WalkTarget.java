@@ -22,7 +22,9 @@ public record WalkTarget(Purpose purpose, UUID ship, BlockPos spot, BlockPos anc
         /** Sits down at a meal beside the provisions block ({@code crew.galley.MealVisits}). */
         MEAL,
         /** Lies down in its hammock for the night ({@code crew.hammock.CrewRest}). */
-        HAMMOCK;
+        HAMMOCK,
+        /** Takes its oar at a spot by the rail (OAR1, {@code sailing.oars.Rowing}). */
+        OARS;
 
         public static final Codec<Purpose> CODEC = StringRepresentable.fromEnum(Purpose::values);
 

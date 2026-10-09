@@ -141,7 +141,8 @@ class CrewMemberRigTest {
         // animations (ART7; capstan_push is played at the capstan since CRW3); lean at the rail (RAIL5)
         assertEquals(Set.of("idle", "walk", "work", "sit", "sleep", "musket_aim", "musket_reload", "musket_shove",
                 "helm_hold", "helm_turn_left", "helm_turn_right", "cannon_aim", "cannon_load", "cannon_fire", "capstan_push",
-                "lean"),
+                "row_seated", "row_standing", // OAR1
+                "lean"), // RAIL5
                 baked.animations().keySet());
         assertEquals(Animation.LoopType.LOOP, baked.getAnimation("capstan_push").loopType(), "capstan_push loops");
     }

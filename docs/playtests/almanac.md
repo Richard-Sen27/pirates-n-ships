@@ -164,3 +164,23 @@ screenshots.
    lists and pictures shift text off them; `RULE_STRENGTH` in `tools/gen_almanac_textures.py` makes them fainter).
 8. **Page turn:** turn pages slowly (`almanac_screen.page_turn_ticks` 20): the fold darkens smoothly towards the turning
    page's free edge, no visible vertical bands (32 shade strips now).
+
+# Playtest: GuideME retired, the Almanac as first-join gift (work package GUIDE2)
+
+GuideME is gone: no dependency, no `guide` module, no generated pages. The first-join gift is now one Captain's
+Almanac (`almanac.give_on_first_join`, default true), pinned by `AlmanacGiftGameTests` (first join gives one, a second
+gives none, a lost book is not replaced, the switch off gives none and stores nothing). Please check both loaders.
+
+## Steps
+1. **First join:** create a new world (or join with a new player). The inventory holds exactly one Captain's Almanac.
+   Relog: still one, no second book. Throw it away, relog: none comes back.
+2. **Old world:** open a world where you got the old GuideME guide book before. You get one Almanac at the first login
+   (the flag is new), then never again.
+3. **No GuideME:** the mod list (Mods screen, Mod Menu on Fabric) shows no GuideME, the log has no `guideme` lines, the
+   creative inventory and recipe book have no "Pirates 'n' Ships Guide" book, and `/guideme` is no command. A world
+   saved with the old GuideME book in a chest loads without errors (the stack becomes air).
+4. **Switch off:** set `almanac.give_on_first_join` to false in the server config, join with a new player: no book.
+   Turn it back on and relog: the book arrives then.
+5. **Section 0 in the book:** the welcome chapter (The guide book) describes the Almanac: the gift, the recipe, reading
+   in hand and placed, turning pages, "Show me". Hover the Cannon and hold the Ponder key (W by default): the cannon
+   scene opens.

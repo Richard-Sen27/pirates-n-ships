@@ -1,5 +1,8 @@
 # Playtest: the in-game guide book (work package D1)
 
+> **Retired (GUIDE2, 2026-10-09):** GuideME and its book are gone; the in-game guide is the Captain's Almanac. Its
+> playtests, including the first-join gift, are in [`almanac.md`](almanac.md). Kept for history only.
+
 Page generation, ids, recipes, anchors, the recipe and the first-join gift are covered by 6 JUnit tests and 3
 GameTests. What only a client shows: GuideME's rendering of the pages.
 

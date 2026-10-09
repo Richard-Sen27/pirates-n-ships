@@ -1,7 +1,8 @@
 # Pirates 'n' Ships: how it works
 
-> In-game guides: after changing this file, regenerate GuideME with `python3 tools/gen_guideme.py` and the Captain's
-> Almanac with `python3 tools/gen_almanac.py` and `./gradlew :neoforge:runData`, and commit the output.
+> This is the testing and reference guide, for whoever tests and runs the mod. The in-game guide is the Captain's
+> Almanac (section 0). While its chapters are generated from this file, regenerate them after every change with
+> `python3 tools/gen_almanac.py` and `./gradlew :neoforge:runData`, and commit the output.
 
 A guide to everything that exists in the mod today: what each block, item and system does and how to use it.
 It describes the code on `main`, not the plans. For the plans see [`design.md`](design.md), and for the state of
@@ -36,8 +37,27 @@ physics for moving ships.
 ---
 
 ## 0. The guide book
-With GuideME installed you start with the **Pirates 'n' Ships Guide** (also craftable from a book and a feather): this
-guide as an in-game book with item links, recipes and search. Hold G over one of the mod's items to open its page.
+The in-game guide is the **Captain's Almanac**, a leather-bound tome with brass corners. It works the same on NeoForge
+and Fabric and needs no other mod.
+
+- **Getting one:** every player gets one Almanac the first time they join a world (server config
+  `almanac.give_on_first_join`, on by default; once per player, so a lost book is not replaced, and while the switch
+  is off nothing is given and the book comes at the first login after it is turned on). More are crafted shapeless
+  from a book, two leather and two copper ingots; the recipe unlocks once you hold a book.
+- **Reading in hand:** use the Almanac (right-click) to open it.
+- **Placing it:** sneak-use it on top of a block to set the tome down, on any surface and also underwater. It lies
+  closed until someone right-clicks it to read; then it opens with a page flip and stays open while they read and a
+  few seconds after (`almanac.open_ticks`). Breaking it drops the book. With `almanac.enabled` off the Almanac is
+  decoration and never opens.
+- **Turning pages:** the arrows in the page corners, the arrow keys, Page Up and Page Down or the mouse wheel. The
+  bookmarks on the right edge jump to a chapter; links in the text jump to other chapters. Escape closes the book. It
+  opens again at the page you last read, also after death and relog (`almanac.remember_page`).
+- **Show me:** some pages have a "Show me" button that plays a Ponder scene of the mechanic (today: loading and firing
+  a cannon). The back button returns to the same page. The same scene opens from the item: hold the Ponder key (W by
+  default) while hovering the Cannon in your inventory.
+
+This written guide (docs/guide.md) is the testing and reference guide: it lists every block, item, command and config
+value for testers and server owners, while the Almanac is written for players.
 
 ## 1. Your first ship
 
@@ -1410,6 +1430,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `flags_brig` | False-colors detection, NPC surrender, capturing players, prisoner escapes. |
 | `brig` | Capture threshold, leading distances, cell size, escape chance, ransom. |
 | `melee` | Skill-based sword fighting: parry window, stamina, stagger, feint recovery, NPC feints on/off, sword sounds on/off and volume. |
+| `almanac` / `almanac_screen` (client) | The Captain's Almanac readable on/off (`enabled`), how long a placed tome stays open (`open_ticks`), the last page remembered per player (`remember_page`), the first-join gift (`give_on_first_join`); page-turn animation length and sound, book size. |
 | `core` | Debug logging. |
 | `ships`, `waves`, `hazards`, `crew`, `combat`, `survival`, `world`, `world_simulation`, and the client sections `audio` and `wave_effects` | Settings for features that are not built yet. They do nothing so far. |
 

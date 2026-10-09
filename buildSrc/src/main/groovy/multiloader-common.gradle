@@ -165,7 +165,6 @@ processResources {
             'pal_version_range'            : pal_version_range,
             'geckolib_version'             : geckolib_version,
             'geckolib_version_range'       : geckolib_version_range,
-            'guideme_version_range'        : guideme_version_range,
             'ponder_version'               : ponder_version,
             'flywheel_version_range'       : flywheel_version_range
     ]

@@ -207,13 +207,17 @@ inside our jar (jar-in-jar on both loaders, docs/releasing.md); everything of ou
 ## Generated from the guide (ALM5)
 
 The mod's own chapters are `docs/guide.md`, so the guide has one source. Two steps, both after every change to
-`docs/guide.md` (next to `python3 tools/gen_guideme.py` while GuideME lives):
+`docs/guide.md`:
 
 ```
 python3 tools/gen_almanac.py        # docs/guide.md -> common/src/datagen/almanac/guide_chapters.json (+ illustrations)
 ./gradlew :neoforge:runData         # intermediate -> data/pirates_n_ships/almanac/chapters/*.json and en_us.json
 ```
 
+- **Inputs:** `tools/almanac_lib.py` (GUIDE2: what is left of the retired GuideME page generator) reads
+  `docs/guide.md`'s sections, our items (the registered ones: `item.` lang keys and `block.` keys with an item model;
+  an item model nobody names stops it, an `overrides` variant such as `pistol_loaded` is ignored) and resolves table
+  cells to item ids. `python3 tools/test_gen_almanac.py` tests both scripts (`AlmanacGuideTest` runs it).
 - **The intermediate** `common/src/datagen/almanac/guide_chapters.json` holds every chapter in the file format above
   (`body`) and a `lang` map from each key to its English text. It is no resource and not shipped. Datagen
   (`almanac/data/AlmanacChapterProvider`, found by walking up from the data run's working directory) parses every
@@ -233,7 +237,7 @@ python3 tools/gen_almanac.py        # docs/guide.md -> common/src/datagen/almana
   gets its `{item:...}` icon in front. Literal `*`, `\`, `{`, `[[` and underscores at a word edge are escaped.
 - **Blocks:** paragraphs become `text`, `- ` lists a `list` (at most 64 entries each), numbered lists one `text` per
   step with the bold number, and tables (the screen has none) a `list` with one entry per row: the first cell bold
-  (with item icons when the column holds item names, as in gen_guideme), descriptive columns ("What it does",
+  (with item icons when the column holds item names, `almanac_lib.ITEM_COLUMNS`), descriptive columns ("What it does",
   "Meaning", "Today", ...) after a colon, the others as `header: value` in brackets. `---` is dropped.
 - **Lang keys** follow the convention: `pirates_n_ships.almanac.<chapter>.p<page>.heading`, `.text<n>`,
   `.list<n>_<entry>`, `.show_me<n>`.

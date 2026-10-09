@@ -24,6 +24,7 @@ import java.util.List;
  * The {@code almanac} module: the Captain's Almanac, the in-game guide (docs/design.md §3.4). ALM1: the book item, the
  * placed tome with its opening animation, and the open/close payloads; ALM2: the chapters, their sync and the last
  * page per player ({@link AlmanacData}, hooked in here); the screen (ALM3) and the Ponder scenes (ALM4) build on them.
+ * GUIDE2: a new player gets one Almanac on first join ({@link AlmanacGift}).
  */
 public final class AlmanacModule implements ModModule {
 
@@ -41,6 +42,7 @@ public final class AlmanacModule implements ModModule {
     @Override
     public void registerContent() {
         AlmanacContent.init();
+        AlmanacGift.init();
         AlmanacData.registerContent();
     }
 
@@ -53,6 +55,7 @@ public final class AlmanacModule implements ModModule {
     @Override
     public void registerEvents() {
         CommonEvents.SERVER_STOPPED.register(AlmanacReading::onServerStopped);
+        CommonEvents.PLAYER_LOGIN.register(AlmanacGift::onLogin);
         AlmanacData.registerEvents();
     }
 
@@ -87,7 +90,7 @@ public final class AlmanacModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        List<Class<?>> tests = new ArrayList<>(List.of(AlmanacGameTests.class));
+        List<Class<?>> tests = new ArrayList<>(List.of(AlmanacGameTests.class, AlmanacGiftGameTests.class));
         tests.addAll(AlmanacData.gameTestClasses());
         return List.copyOf(tests);
     }

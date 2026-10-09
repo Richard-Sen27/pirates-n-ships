@@ -27,6 +27,20 @@
        {
         "type": "text",
         "key": "pirates_n_ships.almanac.welcome.p1.text1"
+       },
+       {
+        "type": "list",
+        "items": [
+         "pirates_n_ships.almanac.welcome.p1.list1_1",
+         "pirates_n_ships.almanac.welcome.p1.list1_2",
+         "pirates_n_ships.almanac.welcome.p1.list1_3",
+         "pirates_n_ships.almanac.welcome.p1.list1_4",
+         "pirates_n_ships.almanac.welcome.p1.list1_5"
+        ]
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.welcome.p1.text2"
        }
       ]
      },
@@ -2193,7 +2207,8 @@
          "pirates_n_ships.almanac.configuration.p1.list1_37",
          "pirates_n_ships.almanac.configuration.p1.list1_38",
          "pirates_n_ships.almanac.configuration.p1.list1_39",
-         "pirates_n_ships.almanac.configuration.p1.list1_40"
+         "pirates_n_ships.almanac.configuration.p1.list1_40",
+         "pirates_n_ships.almanac.configuration.p1.list1_41"
         ]
        },
        {
@@ -2303,7 +2318,13 @@
  "lang": {
   "pirates_n_ships.almanac.welcome.title": "The guide book",
   "pirates_n_ships.almanac.welcome.p1.heading": "The guide book",
-  "pirates_n_ships.almanac.welcome.p1.text1": "With GuideME installed you start with the **Pirates 'n' Ships Guide** (also craftable from a book and a feather): this guide as an in-game book with item links, recipes and search. Hold G over one of the mod's items to open its page.",
+  "pirates_n_ships.almanac.welcome.p1.text1": "The in-game guide is the {item:pirates_n_ships:captains_almanac}**Captain's Almanac**, a leather-bound tome with brass corners. It works the same on NeoForge and Fabric and needs no other mod.",
+  "pirates_n_ships.almanac.welcome.p1.list1_1": "**Getting one:** every player gets one Almanac the first time they join a world (server config almanac.give_on_first_join, on by default; once per player, so a lost book is not replaced, and while the switch is off nothing is given and the book comes at the first login after it is turned on). More are crafted shapeless from a book, two leather and two copper ingots; the recipe unlocks once you hold a book.",
+  "pirates_n_ships.almanac.welcome.p1.list1_2": "**Reading in hand:** use the Almanac (right-click) to open it.",
+  "pirates_n_ships.almanac.welcome.p1.list1_3": "**Placing it:** sneak-use it on top of a block to set the tome down, on any surface and also underwater. It lies closed until someone right-clicks it to read; then it opens with a page flip and stays open while they read and a few seconds after (almanac.open_ticks). Breaking it drops the book. With almanac.enabled off the Almanac is decoration and never opens.",
+  "pirates_n_ships.almanac.welcome.p1.list1_4": "**Turning pages:** the arrows in the page corners, the arrow keys, Page Up and Page Down or the mouse wheel. The bookmarks on the right edge jump to a chapter; links in the text jump to other chapters. Escape closes the book. It opens again at the page you last read, also after death and relog (almanac.remember_page).",
+  "pirates_n_ships.almanac.welcome.p1.list1_5": "**Show me:** some pages have a \"Show me\" button that plays a Ponder scene of the mechanic (today: loading and firing a cannon). The back button returns to the same page. The same scene opens from the item: hold the Ponder key (W by default) while hovering the Cannon in your inventory.",
+  "pirates_n_ships.almanac.welcome.p1.text2": "This written guide (docs/guide.md) is the testing and reference guide: it lists every block, item, command and config value for testers and server owners, while the Almanac is written for players.",
   "pirates_n_ships.almanac.welcome.p2.heading": "Contents",
   "pirates_n_ships.almanac.welcome.p2.text1": "Every chapter has a bookmark on the edge of the book. Or turn to one here:",
   "pirates_n_ships.almanac.welcome.p2.list1_1": "[[pirates_n_ships:first_ship]]",
@@ -2811,8 +2832,9 @@
   "pirates_n_ships.almanac.configuration.p1.list1_36": "**flags_brig**: False-colors detection, NPC surrender, capturing players, prisoner escapes.",
   "pirates_n_ships.almanac.configuration.p1.list1_37": "**brig**: Capture threshold, leading distances, cell size, escape chance, ransom.",
   "pirates_n_ships.almanac.configuration.p1.list1_38": "**melee**: Skill-based sword fighting: parry window, stamina, stagger, feint recovery, NPC feints on/off, sword sounds on/off and volume.",
-  "pirates_n_ships.almanac.configuration.p1.list1_39": "**core**: Debug logging.",
-  "pirates_n_ships.almanac.configuration.p1.list1_40": "**ships, waves, hazards, crew, combat, survival, world, world_simulation, and the client sections audio and wave_effects**: Settings for features that are not built yet. They do nothing so far.",
+  "pirates_n_ships.almanac.configuration.p1.list1_39": "**almanac / almanac_screen (client)**: The Captain's Almanac readable on/off (enabled), how long a placed tome stays open (open_ticks), the last page remembered per player (remember_page), the first-join gift (give_on_first_join); page-turn animation length and sound, book size.",
+  "pirates_n_ships.almanac.configuration.p1.list1_40": "**core**: Debug logging.",
+  "pirates_n_ships.almanac.configuration.p1.list1_41": "**ships, waves, hazards, crew, combat, survival, world, world_simulation, and the client sections audio and wave_effects**: Settings for features that are not built yet. They do nothing so far.",
   "pirates_n_ships.almanac.configuration.p1.text2": "Many defaults are first guesses that need playtesting. progress.md lists the ones to review.",
   "pirates_n_ships.almanac.datapacks.title": "Datapacks",
   "pirates_n_ships.almanac.datapacks.p1.heading": "Datapacks",

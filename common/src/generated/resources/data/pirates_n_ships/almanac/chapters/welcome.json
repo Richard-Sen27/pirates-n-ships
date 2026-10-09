@@ -19,6 +19,20 @@
         {
           "type": "text",
           "key": "pirates_n_ships.almanac.welcome.p1.text1"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.welcome.p1.list1_1",
+            "pirates_n_ships.almanac.welcome.p1.list1_2",
+            "pirates_n_ships.almanac.welcome.p1.list1_3",
+            "pirates_n_ships.almanac.welcome.p1.list1_4",
+            "pirates_n_ships.almanac.welcome.p1.list1_5"
+          ]
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.welcome.p1.text2"
         }
       ]
     },

@@ -8,7 +8,7 @@ Run (from the repository root, Python 3 standard library only):
     python3 tools/gen_almanac.py --out FILE   # writes the intermediate to FILE instead, no illustrations
     ./gradlew :neoforge:runData               # then: the chapter files and the lang entries
 
-Run it after every change to docs/guide.md (next to tools/gen_guideme.py) and commit the output. AlmanacGuideTest
+Run it after every change to docs/guide.md (inputs: tools/almanac_lib.py) and commit the output. AlmanacGuideTest
 fails while the committed intermediate differs from a fresh run, or the generated chapters and lang differ from it.
 
 Output:
@@ -36,7 +36,7 @@ What converts to what (inline, in every text):
     literal *, \\, {, [[ and word-edge _ are escaped with a backslash (Markup reads them as markup otherwise)
 Blocks: a paragraph (lines joined) -> text; "- " lists -> list (at most 64 entries each); "1. " lists -> one text per
 entry with its number in bold; a table -> a list, one entry per row: the first cell in bold (with item icons when the
-column names items, as in gen_guideme), then the other cells ("What it does" columns plain, others as "header: value");
+column names items, almanac_lib.ITEM_COLUMNS), then the other cells ("What it does" columns plain, others as "header: value");
 "---" separators are dropped.
 """
 import argparse
@@ -50,9 +50,9 @@ from pathlib import Path
 sys.dont_write_bytecode = True  # no __pycache__ next to the tools
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import gen_guideme as guideme  # noqa: E402  (items, sections, slugs and table cells, shared with the GuideME pages)
+import almanac_lib as lib  # noqa: E402  (items, sections, slugs and table cells)
 
-NS = guideme.NS
+NS = lib.NS
 ROOT = Path(__file__).resolve().parent.parent
 OUT_JSON = ROOT / "common" / "src" / "datagen" / "almanac" / "guide_chapters.json"
 RENDERS = ROOT / "art" / "renders"
@@ -281,15 +281,15 @@ def split_blocks(lines):
 
 def table_entries(rows, ctx):
     """A GFM table -> one list entry per row (Almanac markup)."""
-    header = [h for h in guideme.split_row(rows[0])]
+    header = [h for h in lib.split_row(rows[0])]
     keys = [plain(h).lower() for h in header]
-    resolver = guideme.Resolver(ctx.by_name)
+    resolver = lib.Resolver(ctx.by_name)
     entries = []
     for row in rows[2:]:
-        cells = [c.replace("\\|", "|") for c in guideme.split_row(row)]
+        cells = [c.replace("\\|", "|") for c in lib.split_row(row)]
         first = cells[0] if cells else ""
         icons = ""
-        res = resolver.cell(first) if keys and keys[0] in guideme.ITEM_COLUMNS else None
+        res = resolver.cell(first) if keys and keys[0] in lib.ITEM_COLUMNS else None
         if res:
             ids, _ = res
             icons = "".join("{item:" + r + "}" for r in ids)
@@ -301,7 +301,7 @@ def table_entries(rows, ctx):
             if not cell.strip():
                 continue
             value = convert_inline(cell, ctx)
-            res = resolver.cell(cell) if k in guideme.ITEM_COLUMNS else None
+            res = resolver.cell(cell) if k in lib.ITEM_COLUMNS else None
             if res:
                 value = "".join("{item:" + r + "}" for r in res[0]) + value
             if k in PLAIN_COLUMNS or not k:
@@ -398,7 +398,7 @@ def split_pages(body):
     """Section body -> [(heading or None, lines)]: the text before the first "###", then one entry per "###"."""
     pages = [(None, [])]
     for line in body:
-        m = guideme.SUBHEADING_RE.match(line)
+        m = lib.SUBHEADING_RE.match(line)
         if m:
             pages.append((m.group(1), []))
         else:
@@ -407,7 +407,7 @@ def split_pages(body):
 
 
 def build_chapters(guide_text, by_name):
-    sections = sorted(guideme.parse_sections(guide_text), key=lambda s: s[0])
+    sections = sorted(lib.parse_sections(guide_text), key=lambda s: s[0])
     if not sections:
         raise SystemExit("no '## N. Title' sections in docs/guide.md")
     numbers = [n for n, _, _ in sections]
@@ -420,11 +420,11 @@ def build_chapters(guide_text, by_name):
     for number, title, body in sections:
         cid = CHAPTERS[number][0]
         titles[cid] = title
-        anchors[guideme.github_slug(f"{number}. {title}")] = cid
+        anchors[lib.github_slug(f"{number}. {title}")] = cid
         for line in body:
-            m = guideme.SUBHEADING_RE.match(line)
+            m = lib.SUBHEADING_RE.match(line)
             if m:
-                anchors.setdefault(guideme.github_slug(m.group(1)), cid)
+                anchors.setdefault(lib.github_slug(m.group(1)), cid)
 
     lang, chapters = {}, []
     used_illustrations = set()
@@ -473,7 +473,7 @@ def build_chapters(guide_text, by_name):
                 "title": title_key,
                 "order": number * 10,
                 "bookmark_color": color,
-                "icon": guideme.full_id(icon),
+                "icon": lib.full_id(icon),
                 "pages": pages,
             },
         })
@@ -660,8 +660,8 @@ def write_illustrations():
 # ---------------------------------------------------------------------------------------------------- main
 
 def generate():
-    by_name, _, _ = guideme.load_items()
-    return build_chapters(guideme.GUIDE_MD.read_text(encoding="utf-8"), by_name)
+    by_name, _, _ = lib.load_items()
+    return build_chapters(lib.GUIDE_MD.read_text(encoding="utf-8"), by_name)
 
 
 def main():

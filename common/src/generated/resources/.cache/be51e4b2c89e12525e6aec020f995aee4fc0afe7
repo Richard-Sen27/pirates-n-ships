@@ -1,9 +1,8 @@
-// 1.21.1	2026-10-09T15:34:08.864326	Raw JSON (data): pirates_n_ships
-48a3d1396f56a1821c2e6dd2a2ce6f5dc32fc15c data/pirates_n_ships/advancement/recipes/misc/guide_book.json
+// 1.21.1	2026-10-09T16:57:34.261828	Raw JSON (data): pirates_n_ships
 fef761c52f99434b5e1f5969bd7b7cee10092312 data/pirates_n_ships/almanac/chapters/blocks.json
 871360fc71e9bb182cfd3769a5ab532705a44793 data/pirates_n_ships/almanac/chapters/combat.json
 863b3e564574b5ccbf8faa235dc0408485a0bc8a data/pirates_n_ships/almanac/chapters/commands.json
-a5a146d991383d954ff1122f34e698bdd80f63b3 data/pirates_n_ships/almanac/chapters/configuration.json
+ab9264219318206dbd3fa25c09053d5d44c8fa87 data/pirates_n_ships/almanac/chapters/configuration.json
 a2887e7cf75116ce7f108b6e90bba1f5857c596e data/pirates_n_ships/almanac/chapters/crew.json
 d0fb79e77cc45c845dea90f5069873459908c7c4 data/pirates_n_ships/almanac/chapters/datapacks.json
 7f6e3ce3df3d583503caa5110185f424a824deb3 data/pirates_n_ships/almanac/chapters/first_ship.json
@@ -15,7 +14,7 @@ ae583512c224540ee96adefdd742685149960606 data/pirates_n_ships/almanac/chapters/p
 df396694c215af462c4e82f17a371632d040964f data/pirates_n_ships/almanac/chapters/sailing.json
 77e141a512d76f405c7afdbd78cf2b5c8f047908 data/pirates_n_ships/almanac/chapters/ships.json
 e413c60e8e1bec8272c5f33e8734e1381e33a956 data/pirates_n_ships/almanac/chapters/trade.json
-45d14b06cccdeb085871ab43248f0985dd5e20c8 data/pirates_n_ships/almanac/chapters/welcome.json
+48ab0be21d61df6fa17f5bfa23b2cbb01399fbd8 data/pirates_n_ships/almanac/chapters/welcome.json
 81e4547184aef1c6ab27c144e370d0ff6cb85b3d data/pirates_n_ships/loot_table/chests/buried_treasure.json
 917a78912c9b82231026bd2ea966eb7535e5da69 data/pirates_n_ships/loot_table/chests/wreck.json
 a36329422f25984fa5698ac8ec14f9a580f2a13a data/pirates_n_ships/loot_table/entities/kraken.json
@@ -54,7 +53,6 @@ d39936e9dff273c682fc443d65e5365483c0f9e4 data/pirates_n_ships/pirates_n_ships/tr
 5e7e4d27e408ce33f664bb3604814d4ab5a9e157 data/pirates_n_ships/pirates_n_ships/weapon/cutlass.json
 01cb828897cc72914941cc3951ef786f6f94985f data/pirates_n_ships/pirates_n_ships/weapon/rapier.json
 624725f319eeecaf26fa9a60b9220f4b7e214b0e data/pirates_n_ships/pirates_n_ships/weapon/saber.json
-ee4ab89c271de3f30b57621e15919ed9188d1957 data/pirates_n_ships/recipe/guide_book.json
 b035207a5bd361f8f0c83f4d75192bdc83591bf0 data/pirates_n_ships/tags/worldgen/biome/cold_water.json
 ff13fafcc6c847d2ce8a4262842bf1316dc580ea data/pirates_n_ships/tags/worldgen/biome/has_structure/navy_outpost.json
 ff13fafcc6c847d2ce8a4262842bf1316dc580ea data/pirates_n_ships/tags/worldgen/biome/has_structure/pirate_island.json

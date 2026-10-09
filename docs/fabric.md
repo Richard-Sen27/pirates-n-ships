@@ -18,9 +18,9 @@ ports the client. This file records what the Fabric module does, where it differ
   NeoForge). Loom remaps PAL's intermediary jar to Mojang names, which common's melee animation package compiles against.
 - `fabric.mod.json`: the `main` and `client` (FAB2) entry points, both mixin configs, the access widener, and `depends` on Fabric API,
   Sable (`>=2.0.6 <3.0.0`), GeckoLib, Forge Config API Port and PAL. Fabric has no client-only dependencies, so PAL is
-  required on a dedicated server too (it loads there harmlessly). GuideME is `suggests`: the fabric module does not
-  put it on the dev classpath (GuideME 21.1 is NeoForge only), so there is no in-game guide on Fabric. `modmenu` is
-  `recommends` (the config screen); Mod Menu 11.0.3 is on the dev runs' classpath only (`modLocalRuntime`).
+  required on a dedicated server too (it loads there harmlessly). The in-game guide is the Captain's Almanac, part of
+  the mod on both loaders (GUIDE2). `modmenu` is `recommends` (the config screen); Mod Menu 11.0.3 is on the dev runs'
+  classpath only (`modLocalRuntime`).
 - JUnit tests (`fabric/src/test`, run by `./gradlew build`): the mixin target check, the render layer resolver and the
   client assumptions, see "Client (FAB2)".
 - Mixins are remapped statically by Loom 1.17 (`Fabric-Loom-Mixin-Remap-Type: static`), so no refmap is written; the
@@ -149,8 +149,6 @@ fails if vanilla or Fabric API ever adds per-block-entity culling. (The pump and
 
 ### Known gaps on Fabric (client side)
 
-- **Guide book**: GuideME 21.1 exists for NeoForge only, so there is no in-game guide on Fabric (`suggests` stays for a
-  future Fabric build of GuideME).
 - **Config screen without Mod Menu**: none in game, see the table.
 - **Armour on non-player wearers**: the coats on armour stands and mobs use the player armour model as `original`;
   only visible if a provider returned `original` for a slot it is worn in.
@@ -175,7 +173,7 @@ Start a new creative world (Fabric dev client, Mod Menu loaded). Check `fabric/r
 8. **Stern window**: placed, its glass panes are see-through (cutout layer from `render_type`), not black.
 9. **HUD**: the mod's HUD elements draw above the vanilla HUD and hide with F1 where they do on NeoForge.
 10. **Ship screen and other screens**: open the ship screen, the chart, the market; they open and close normally.
-11. **Guide book**: none on Fabric (gap); nothing crashes when GuideME is absent.
+11. **Guide book**: a new player gets the Captain's Almanac on first join, as on NeoForge; it opens in hand and placed (GUIDE2).
 12. **Coat tails**: wear the officer's and the captain's coat, third person: the coat with tails draws on the body and
     moves with it; dyed/trimmed/enchanted variants colour, trim and shimmer like vanilla armour. The officer's and the
     captain's breeches and boots (vanilla's armour layer, no Fabric code) draw under the coats (ART13,

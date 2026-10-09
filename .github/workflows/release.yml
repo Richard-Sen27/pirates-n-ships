@@ -1,9 +1,10 @@
-# Release: build, test and publish the NeoForge jar to Modrinth, CurseForge and GitHub Releases.
+# Release: build, test and publish the NeoForge and the Fabric jar to Modrinth, CurseForge and GitHub Releases.
 # Scheme, secrets and the maintainer's checklist: docs/releasing.md.
 #
 # - Pushing a tag vX.Y.Z, vX.Y.Z-alpha.N or vX.Y.Z-beta.N publishes that version.
 # - "Run workflow" (workflow_dispatch) simulates a tag. With dry_run (the default) it builds, tests, writes the notes
-#   and uploads the jar as a workflow artifact, and publishes nothing. Without dry_run the tag must already exist.
+#   and uploads the jars as a workflow artifact, and publishes nothing. Without dry_run the tag must already exist.
+#   Its "publish" input picks the loaders to publish (both by default), to retry one loader whose publish failed.
 name: Release
 
 on:
@@ -21,6 +22,15 @@ on:
         required: false
         type: boolean
         default: true
+      publish:
+        description: 'Loaders to publish (without dry_run): both, or one of them to retry a failed publish'
+        required: false
+        type: choice
+        options:
+          - both
+          - neoforge
+          - fabric
+        default: both
 
 permissions:
   contents: write
@@ -36,6 +46,7 @@ jobs:
     env:
       TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.version }}
       DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && 'true' || 'false' }}
+      PUBLISH: ${{ github.event_name == 'workflow_dispatch' && inputs.publish || 'both' }}
     steps:
       - name: Check out (full history and tags, for the release notes)
         uses: actions/checkout@v4
@@ -104,7 +115,10 @@ jobs:
       - name: GameTests (NeoForge, Sable loaded)
         run: ./gradlew :neoforge:runGameTestServer -Pversion=${{ steps.version.outputs.version }} --console=plain
 
-      - name: Check the jar
+      - name: GameTests on Fabric
+        run: ./gradlew :fabric:runGameTest -Pversion=${{ steps.version.outputs.version }} --console=plain
+
+      - name: Check the NeoForge jar
         id: jar
         env:
           VERSION: ${{ steps.version.outputs.version }}
@@ -121,6 +135,23 @@ jobs:
             || { echo "::error::neoforge.mods.toml in $jar does not carry version $VERSION"; exit 1; }
           echo "path=$jar" >> "$GITHUB_OUTPUT"
 
+      - name: Check the Fabric jar
+        id: fabric_jar
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          jars=(fabric/build/libs/*-fabric-*-"$VERSION".jar)
+          if [[ ${#jars[@]} -ne 1 ]]; then
+            echo "::error::expected one release jar for $VERSION in fabric/build/libs, found: ${jars[*]:-none}"
+            ls -l fabric/build/libs; exit 1
+          fi
+          jar="${jars[0]}"
+          unzip -p "$jar" fabric.mod.json | grep -F "\"version\": \"$VERSION\"" \
+            || { echo "::error::fabric.mod.json in $jar does not carry version $VERSION"; exit 1; }
+          echo "path=$jar" >> "$GITHUB_OUTPUT"
+
       - name: Release notes
         env:
           PREVIOUS: ${{ steps.version.outputs.previous }}
@@ -128,7 +159,12 @@ jobs:
         run: |
           set -euo pipefail
           python3 tools/release_notes.py --self-test
-          python3 tools/release_notes.py "$PREVIOUS" "$REF" > build/release-notes.md
+          {
+            echo "For Minecraft 1.21.1 on **NeoForge** and **Fabric**: download the jar for your loader. Both need Sable,"
+            echo "GeckoLib and Player Animation Library; Fabric also needs Fabric API and Forge Config API Port."
+            echo
+            python3 tools/release_notes.py "$PREVIOUS" "$REF"
+          } > build/release-notes.md
           cat build/release-notes.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload the jar and notes as a workflow artifact
@@ -137,10 +173,12 @@ jobs:
           name: pirates_n_ships-${{ steps.version.outputs.version }}
           path: |
             ${{ steps.jar.outputs.path }}
+            ${{ steps.fabric_jar.outputs.path }}
             build/release-notes.md
           if-no-files-found: error
 
       - name: Check publishing secrets
+        id: secrets
         if: env.DRY_RUN != 'true'
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
@@ -162,7 +200,7 @@ jobs:
       #   Player Animation Library modrinth.com/mod/player-animation-library curseforge.com/minecraft/mc-mods/player-animation-library
       #   GuideME (optional)       modrinth.com/mod/guideme                  curseforge.com/minecraft/mc-mods/guideme
       - name: Publish to Modrinth, CurseForge and GitHub Releases
-        if: env.DRY_RUN != 'true'
+        if: env.DRY_RUN != 'true' && env.PUBLISH != 'fabric'
         uses: Kira-NT/mc-publish@v3.3.1
         with:
           modrinth-id: ${{ vars.MODRINTH_ID || secrets.MODRINTH_ID }}
@@ -185,3 +223,38 @@ jobs:
             geckolib(required){modrinth:8BmcQJ2H}{curseforge:388172}
             player_animation_library(required){modrinth:ha1mEyJS}{curseforge:1283899}
             guideme(optional){modrinth:Ck4E7v7R}{curseforge:1173950}
+
+      # The Fabric jar: its own Modrinth and CurseForge version (same version number, loader fabric) and a second asset
+      # on the GitHub release the NeoForge step created (mc-publish finds the release by its tag and adds the file).
+      # It runs even when the NeoForge publish failed (the two are independent; a published NeoForge version is never
+      # rolled back), but only after every check above passed (the secrets step runs only then). A failed loader is
+      # retried with Run workflow, dry_run unchecked, publish = that loader (docs/releasing.md).
+      # Fabric-only dependencies, slugs in the comments:
+      #   Fabric API               modrinth.com/mod/fabric-api               curseforge.com/minecraft/mc-mods/fabric-api
+      #   Forge Config API Port    modrinth.com/mod/forge-config-api-port    curseforge.com/minecraft/mc-mods/forge-config-api-port-fabric
+      # GuideME has no Fabric build, so it is not listed here.
+      - name: Publish the Fabric jar to Modrinth, CurseForge and GitHub Releases
+        if: ${{ !cancelled() && steps.secrets.outcome == 'success' && env.PUBLISH != 'neoforge' }}
+        uses: Kira-NT/mc-publish@v3.3.1
+        with:
+          modrinth-id: ${{ vars.MODRINTH_ID || secrets.MODRINTH_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          curseforge-id: ${{ vars.CURSEFORGE_ID || secrets.CURSEFORGE_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-tag: ${{ env.TAG }}
+          github-prerelease: ${{ steps.version.outputs.prerelease }}
+          files: ${{ steps.fabric_jar.outputs.path }}
+          name: Pirates 'n' Ships ${{ steps.version.outputs.version }} for Fabric 1.21.1
+          version: ${{ steps.version.outputs.version }}
+          version-type: ${{ steps.version.outputs.channel }}
+          changelog-file: build/release-notes.md
+          loaders: fabric
+          game-versions: 1.21.1
+          java: 21
+          dependencies: |
+            fabric-api(required){modrinth:P7dR8mSH}{curseforge:306612}
+            sable(required){modrinth:T9PomCSv}{curseforge:1312371}
+            geckolib(required){modrinth:8BmcQJ2H}{curseforge:388172}
+            player_animation_library(required){modrinth:ha1mEyJS}{curseforge:1283899}
+            forgeconfigapiport(required){modrinth:ohNO6lps}{curseforge:547434}

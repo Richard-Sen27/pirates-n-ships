@@ -168,6 +168,37 @@ public final class CareerConfig {
         RANK_ITEMS = Collections.unmodifiableMap(items);
     }
 
+    // ------------------------------------------------------------------ SHP1: ship grants
+
+    private static final ShipGrantRules.Params G = ShipGrantRules.Params.defaults();
+    private static final ConfigSection SHIP_GRANTS = S.section("ship_grants",
+            "Fighting ships by rank (SHP1): the navy grants a ship to a new Captain, the brethren one to a new Dread Captain, "
+                    + "as a commission redeemed at a navy outpost's officer or desk (a pirate island's desk). Never sold by shipwrights");
+
+    public static final ConfigValue<Boolean> SHIP_GRANTS_ENABLED = SHIP_GRANTS.bool("enabled", G.enabled(),
+            "Reaching navy_rank or infamy_rank hands out a ship commission (once per player and ladder), and commissions are "
+                    + "redeemed. Off = no commissions are handed out and held ones are refused (and kept)");
+    public static final ConfigValue<NavyRank> SHIP_GRANTS_NAVY_RANK = SHIP_GRANTS.enumValue("navy_rank", G.navyRank(),
+            "The navy rank whose first reaching grants a navy ship");
+    public static final ConfigValue<InfamyRank> SHIP_GRANTS_INFAMY_RANK = SHIP_GRANTS.enumValue("infamy_rank", G.infamyRank(),
+            "The infamy rank whose first reaching grants a pirate ship");
+    public static final ConfigValue<String> SHIP_GRANTS_NAVY_TEMPLATE = SHIP_GRANTS.string("navy_template", G.navyTemplate().toString(),
+            "Ship template (pirates_n_ships/ship_template id) of the navy grant");
+    public static final ConfigValue<String> SHIP_GRANTS_PIRATE_TEMPLATE = SHIP_GRANTS.string("pirate_template", G.pirateTemplate().toString(),
+            "Ship template (pirates_n_ships/ship_template id) of the pirate grant");
+
+    /** The ship grants' view of the current config (a bad template id falls back to the default). */
+    public static ShipGrantRules.Params shipGrants() {
+        return new ShipGrantRules.Params(SHIP_GRANTS_ENABLED.get() && ENABLED.get(), SHIP_GRANTS_NAVY_RANK.get(),
+                SHIP_GRANTS_INFAMY_RANK.get(), template(SHIP_GRANTS_NAVY_TEMPLATE.get(), G.navyTemplate()),
+                template(SHIP_GRANTS_PIRATE_TEMPLATE.get(), G.pirateTemplate()));
+    }
+
+    private static net.minecraft.resources.ResourceLocation template(String id, net.minecraft.resources.ResourceLocation fallback) {
+        net.minecraft.resources.ResourceLocation parsed = net.minecraft.resources.ResourceLocation.tryParse(id.trim());
+        return parsed == null ? fallback : parsed;
+    }
+
     /** Default gifts: a Lieutenant receives the officer's bicorne, a saber and the officer's coat; every other rank nothing. */
     static List<String> defaultItems(NavyRank rank) {
         return rank == NavyRank.LIEUTENANT

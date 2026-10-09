@@ -47,8 +47,19 @@ public final class CareerCommands {
                         .then(Commands.argument("player", EntityArgument.player())
                                 .then(Commands.literal("grant").executes(c -> letter(c, true)))
                                 .then(Commands.literal("void").executes(c -> letter(c, false)))))
+                .then(Commands.literal("ship_grant").requires(s -> s.hasPermission(2))
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .then(Commands.literal("reset").executes(CareerCommands::resetShipGrants))))
                 .then(Commands.argument("player", EntityArgument.player()).requires(s -> s.hasPermission(2))
                         .executes(c -> show(c, EntityArgument.getPlayer(c, "player"), true)))));
+    }
+
+    /** SHP1, operators and playtests: forgets the player's ship grants and redemptions; a held rank grants again at once. */
+    private static int resetShipGrants(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer player = EntityArgument.getPlayer(c, "player");
+        int granted = ShipGrants.reset(player);
+        c.getSource().sendSuccess(() -> Component.translatable(ShipGrants.KEY_CMD_RESET, player.getDisplayName(), granted), true);
+        return granted;
     }
 
     private static int show(CommandContext<CommandSourceStack> c, ServerPlayer player, boolean counters) {

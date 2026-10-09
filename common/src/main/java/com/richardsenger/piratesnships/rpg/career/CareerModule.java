@@ -28,6 +28,7 @@ public final class CareerModule implements ModModule {
     @Override
     public void registerContent() {
         CareerAttachments.init();
+        ShipGrantContent.init(); // SHP1: the ship commission
     }
 
     @Override
@@ -39,6 +40,7 @@ public final class CareerModule implements ModModule {
     public void registerEvents() {
         Deeds.listen(CareerDeeds::onDeed);
         CommonEvents.ENTITY_INTERACT.register(CareerInteractions::onEntityInteract);
+        CommonEvents.ENTITY_INTERACT.register(ShipGrants::onEntityInteract); // SHP1: a commission handed to an officer
         CommonEvents.PLAYER_LOGIN.register(player -> {
             Careers.promoteIfEligible(player);
             CareerSync.sendNow(player);
@@ -66,10 +68,18 @@ public final class CareerModule implements ModModule {
         data.lang(CareerRewards::lang);
         data.lang(CareerTitles::lang);
         data.lang(com.richardsenger.piratesnships.rpg.career.client.RankHudLayout::lang);
+        data.lang(ShipGrants::lang);
+        // SHP1: the commission looks like the shipwright's receipt until it has its own Blockbench model
+        data.models(models -> models.models().accept(
+                net.minecraft.data.models.model.ModelLocationUtils.getModelLocation(ShipGrantContent.SHIP_COMMISSION.get()), () -> {
+                    com.google.gson.JsonObject json = new com.google.gson.JsonObject();
+                    json.addProperty("parent", com.richardsenger.piratesnships.Constants.MOD_ID + ":item/ship_receipt");
+                    return json;
+                }));
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(CareerGameTests.class, CareerRewardsGameTests.class, HonorGameTests.class);
+        return List.of(CareerGameTests.class, CareerRewardsGameTests.class, HonorGameTests.class, ShipGrantGameTests.class);
     }
 }

@@ -375,6 +375,14 @@ public class CannonballEntity extends ThrowableItemProjectile {
                 spawn.getX(), spawn.getZ(), worldPos.getX(), worldPos.getZ());
     }
 
+    /**
+     * RAIL4: the ball strikes {@code hit} before it leaves the barrel ({@link CannonService#barrelBlocked}): the block is
+     * hit at once, as if the ball had flown into it (it breaks a breakable wall, and the ball is spent).
+     */
+    void strikeInBarrel(BlockHitResult hit) {
+        onHit(hit);
+    }
+
     @Override
     protected void onHit(HitResult result) {
         super.onHit(result);

@@ -24,6 +24,19 @@ common/src/main/resources/assets/pirates_n_ships/models/block/ and their Blockbe
   outer corner (x 3 or 13, z 0), like a fence gate's leaf turn. block/railing_gate_item: the port's posts and sill with
   the closed left leaf, centred like the railing's item.
 
+- RAIL4, the bulwark (the railing's solid variant, the same edges and posts): block/bulwark_edge: a plank wall along
+  the north edge (x 0..16, y 0..14, z 0.05..2, its end faces left out: a neighbour's wall or a stanchion covers them)
+  and a stripped-log cap rail on it (y 14..16, z 0.05..3.95, 2 px proud of the wall's inboard face; 3.95 so its inboard
+  face hides in a stanchion's instead of fighting it). block/bulwark_stanchion: the 4 x 4 px north-west stanchion, a
+  log post y 0..17 and a plank head to y 18. block/bulwark_port: the gun port's frame facing north: the two jambs
+  (x 0..3 and 13..16, y 0..14) with their cap rail ends, and the 4 px sill between them (x 3..13); the notch is open
+  from the sill up through the cap (a carriage cannon's barrel crosses the wall 12 to 22 px above the deck).
+  block/bulwark_port_lid: the shut lid filling the notch (x 3..13, y 4..16, z 0.05..1.05) with two iron straps on its
+  outer face and their hinge knuckles at its top; block/bulwark_port_lid_open: the same lid swung up and out 90 degrees
+  about its hinge (the notch's top outer edge, y 16, z 0), lying flat outboard. block/bulwark_item and
+  block/bulwark_port_item: a wall with a stanchion at either end, and the gun port with its shut lid, centred like the
+  railing's item.
+
 Every model uses two texture variables, #planks and #log (vanilla oak planks and stripped oak log here); the wood
 family's datagen (ship/decor/wood/WoodFamily) writes one child per wood that overrides them. The block state turns the
 north-frame parts by y rotation (multipart): an edge model per railed edge, a post model per post corner.
@@ -195,6 +208,96 @@ def gate_item():
     return out + leaf(True, False, dz)
 
 
+# ---------------------------------------------------------------------- the bulwark (RAIL4)
+
+WALL_TOP = 14  # the plank wall; the cap rail runs on from here
+RIM_TOP = 16  # the cap rail's top
+CAP_DEPTH = 3.95  # 2 px proud of the wall (4), short of the stanchion's inboard face
+STANCHION = 4
+STANCHION_TOP = 17
+STANCHION_HEAD = 18
+OPENING = (3, 13)  # the gun port's notch, x
+LID_DEPTH = 1.0
+STRAP_X = (4.5, 10.5)  # the lid's two iron straps, 1 px wide
+STRAP_PROUD = 0.5  # how far the straps stand off the lid's outer face
+HINGE_AXIS = (16, 0)  # (y, z) of the lid's hinge: the notch's top outer edge
+
+
+def wall_parts(z0, x=(0, 16), prefix="", ends=()):
+    """The plank wall and its log cap rail with their outer face at z0 (+ the inset), from x[0] to x[1]."""
+    wall_faces = {f: "planks" for f in ("north", "south") + ends}
+    cap_faces = {f: "log" for f in ("north", "south", "up", "down") + ends}
+    return [
+        cube(prefix + "wall", (x[0], 0, z0 + INSET), (x[1], WALL_TOP, z0 + RAIL_DEPTH), wall_faces),
+        cube(prefix + "cap_rail", (x[0], WALL_TOP, z0 + INSET), (x[1], RIM_TOP, z0 + CAP_DEPTH), cap_faces),
+    ]
+
+
+def stanchion_parts(x0, z0, name):
+    """A 4 x 4 px stanchion with its corner at (x0, z0): a log post and a plank head 1 px above the cap's top + 1."""
+    return [
+        cube(name, (x0, 0, z0), (x0 + STANCHION, STANCHION_TOP, z0 + STANCHION), {f: "log" for f in ("north", "east", "south", "west")}),
+        cube(name + "_head", (x0, STANCHION_TOP, z0), (x0 + STANCHION, STANCHION_HEAD, z0 + STANCHION),
+             {f: "planks" for f in ("north", "east", "south", "west", "up")}),
+    ]
+
+
+def bulwark_edge():
+    return wall_parts(0)
+
+
+def bulwark_stanchion():
+    return stanchion_parts(0, 0, "stanchion")
+
+
+def bulwark_port(dz=0.0):
+    """The gun port's frame: the two jambs with their cap rail ends (end faces drawn, so a lone port is closed at its
+    ends; against a neighbour's wall they hide inside it) and the sill."""
+    out = wall_parts(dz, (0, OPENING[0]), "west_", ("west", "east"))
+    out += wall_parts(dz, (OPENING[1], 16), "east_", ("west", "east"))
+    out.append(cube("sill", (OPENING[0], 0, dz + INSET), (OPENING[1], SILL_TOP, dz + RAIL_DEPTH),
+                    {f: "planks" for f in ("north", "south", "up")}))
+    return out
+
+
+def lid_parts():
+    """The shut lid in the north frame: (name, from, to, texture, faces drawn shut)."""
+    out = [("lid", (OPENING[0], SILL_TOP, INSET), (OPENING[1], RIM_TOP, INSET + LID_DEPTH), "planks", ("north", "south", "up"))]
+    for i, x in enumerate(STRAP_X):
+        out.append((f"strap_{i}", (x, SILL_TOP + 2, INSET - STRAP_PROUD), (x + 1, RIM_TOP + 0.45, INSET), "iron",
+                    ("north", "east", "west", "up", "down")))
+        out.append((f"knuckle_{i}", (x - 0.25, RIM_TOP - 0.5, -0.7), (x + 1.25, RIM_TOP + 0.5, 0.3), "iron", ALL))
+    return out
+
+
+def swing(f, t):
+    """A box turned 90 degrees about the hinge axis (along x at y 16, z 0), its bottom swung up and out (to -z)."""
+    hy, hz = HINGE_AXIS
+    y = (hy - (t[2] - hz), hy - (f[2] - hz))
+    z = (hz + (f[1] - hy), hz + (t[1] - hy))
+    return (f[0], y[0], z[0]), (t[0], y[1], z[1])
+
+
+def lid(open_, dz=0.0):
+    out = []
+    for name, f, t, tex, faces in lid_parts():
+        if open_:
+            f, t = swing(f, t)
+            faces = ALL
+        out.append(cube(name, (f[0], f[1], f[2] + dz), (t[0], t[1], t[2] + dz), {k: tex for k in faces}))
+    return out
+
+
+def bulwark_item():
+    z0 = 8 - 2  # the wall and cap centred (4 px deep together)
+    return wall_parts(z0) + stanchion_parts(0, z0, "stanchion_west") + stanchion_parts(16 - STANCHION, z0, "stanchion_east")
+
+
+def bulwark_port_item():
+    dz = 8 - 2
+    return bulwark_port(dz) + lid(False, dz)
+
+
 def used_textures(elements):
     keys = []
     for e in elements:
@@ -301,7 +404,10 @@ def main():
     models = [("railing_edge", edge()), ("railing_post", post()), ("railing_port", port()), ("railing_item", item()),
               ("railing_gate_left", leaf(True, False)), ("railing_gate_right", leaf(False, False)),
               ("railing_gate_left_open", leaf(True, True)), ("railing_gate_right_open", leaf(False, True)),
-              ("railing_gate_item", gate_item())]
+              ("railing_gate_item", gate_item()),
+              ("bulwark_edge", bulwark_edge()), ("bulwark_stanchion", bulwark_stanchion()), ("bulwark_port", bulwark_port()),
+              ("bulwark_port_lid", lid(False)), ("bulwark_port_lid_open", lid(True)), ("bulwark_item", bulwark_item()),
+              ("bulwark_port_item", bulwark_port_item())]
     for name, els in models:
         write(MODELS / f"block/{name}.json", block_model(els))
     write(ART / "railing.bbmodel", project(models))

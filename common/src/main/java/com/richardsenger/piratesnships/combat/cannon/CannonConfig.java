@@ -44,6 +44,10 @@ public final class CannonConfig {
             "Share of its speed a cannonball keeps per tick in water, on top of vanilla's water drag");
     public static final ConfigValue<Double> SINK_SPEED = S.doubleRange("sink_speed", 0.3, 0.0, 10.0,
             "A cannonball in water slower than this (blocks per tick) has sunk and is removed");
+    /** RAIL4: a carriage cannon behind a bulwark fires into it ({@link CannonService#barrelBlocked}). */
+    public static final ConfigValue<Boolean> WALLS_BLOCK_BARREL = S.bool("walls_block_barrel", true,
+            "A carriage cannon whose barrel runs into a bulwark (#pirates_n_ships:barrel_blocking) fires into it: the ball "
+                    + "hits the wall at once. Off = the ball leaves the muzzle beyond the wall as before");
 
     // ---- world rules, drops and glancing hits (Q2) -----------------------------------------------------------------
 

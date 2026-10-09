@@ -20,6 +20,7 @@ import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.Items;
@@ -49,6 +50,12 @@ import java.util.List;
  * {@code open} and {@code hinge}, turned from the north frame by {@code facing}. Railings and gates are in
  * {@code #pirates_n_ships:grapple_latches} (the hook holds on them like on a cleat); the gate also in
  * {@code gangway_openings} (read for the open gate only).
+ *
+ * <p>RAIL4: the bulwark ({@code block/bulwark_edge} per edge, {@code block/bulwark_stanchion} per post, like the railing)
+ * and the bulwark gun port ({@code block/bulwark_port} turned by {@code facing}, with {@code block/bulwark_port_lid} or
+ * {@code _lid_open} by {@code open}); the bulwark in the railing's tags and {@code barrel_blocking}, the gun port in the
+ * port's. Recipes: bulwark {@code SPS / PPP} gives 4 (vanilla's trapdoor is {@code PPP / PPP}); gun port, a bulwark and an
+ * iron nugget, shapeless.
  */
 public final class RailingData {
 
@@ -62,6 +69,15 @@ public final class RailingData {
     static final ResourceLocation GATE_LEFT_OPEN = Constants.id("block/railing_gate_left_open");
     static final ResourceLocation GATE_RIGHT_OPEN = Constants.id("block/railing_gate_right_open");
     static final ResourceLocation GATE_ITEM = Constants.id("block/railing_gate_item");
+    /** RAIL4: the bulwark's wall per edge, its stanchion per post, its item. */
+    static final ResourceLocation BULWARK_EDGE = Constants.id("block/bulwark_edge");
+    static final ResourceLocation BULWARK_STANCHION = Constants.id("block/bulwark_stanchion");
+    static final ResourceLocation BULWARK_ITEM = Constants.id("block/bulwark_item");
+    /** RAIL4: the gun port's frame (jambs, cap ends, sill), its lid shut and open, its item. */
+    static final ResourceLocation BULWARK_PORT = Constants.id("block/bulwark_port");
+    static final ResourceLocation BULWARK_PORT_LID = Constants.id("block/bulwark_port_lid");
+    static final ResourceLocation BULWARK_PORT_LID_OPEN = Constants.id("block/bulwark_port_lid_open");
+    static final ResourceLocation BULWARK_PORT_ITEM = Constants.id("block/bulwark_port_item");
 
     private RailingData() {
     }
@@ -70,28 +86,25 @@ public final class RailingData {
         WoodFamily<RailingBlock> railings = RailingContent.RAILINGS;
         WoodFamily<RailingPortBlock> ports = RailingContent.PORTS;
         WoodFamily<RailingGateBlock> gates = RailingContent.GATES;
+        WoodFamily<BulwarkBlock> bulwarks = RailingContent.BULWARKS;
+        WoodFamily<BulwarkPortBlock> gunPorts = RailingContent.BULWARK_PORTS;
         data.lang(lang -> {
             railings.lang(lang, "Railing");
             ports.lang(lang, "Railing Port");
             gates.lang(lang, "Railing Gate");
             lang.add(RailingBlock.KEY_DISABLED, "Railings are disabled on this server");
+            bulwarks.lang(lang, "Bulwark");
+            gunPorts.lang(lang, "Bulwark Gun Port");
+            lang.add(BulwarkPortBlock.KEY_HELD_OPEN, "The gun behind holds the lid open");
         });
         data.models(RailingData::models);
         data.blockLoot(loot -> {
-            railings.forEach((wood, block) -> {
-                // one item per railed edge: each edge was placed with one
-                LootTable.Builder table = LootTable.lootTable();
-                for (Direction d : Direction.Plane.HORIZONTAL) {
-                    table.withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1))
-                            .add(LootItem.lootTableItem(block))
-                            .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(block)
-                                    .setProperties(StatePropertiesPredicate.Builder.properties().hasProperty(RailingBlock.edge(d), true)))
-                            .when(ExplosionCondition.survivesExplosion()));
-                }
-                loot.add(block, table);
-            });
+            // one item per railed edge: each edge was placed with one (railings and, RAIL4, bulwarks)
+            railings.forEach((wood, block) -> loot.add(block, perEdge(block)));
+            bulwarks.forEach((wood, block) -> loot.add(block, perEdge(block)));
             ports.forEach((wood, block) -> loot.dropSelf(block));
             gates.forEach((wood, block) -> loot.dropSelf(block));
+            gunPorts.forEach((wood, block) -> loot.dropSelf(block));
         });
         data.blockTags(tags -> {
             railings.tag(tags, BlockTags.MINEABLE_WITH_AXE, SableWeightTags.SUPER_LIGHT, SableWeightTags.QUARTER_VOLUME,
@@ -100,6 +113,13 @@ public final class RailingData {
                     CannonContent.BREAKABLE, BoardingContent.GANGWAY_OPENINGS);
             gates.tag(tags, BlockTags.MINEABLE_WITH_AXE, SableWeightTags.SUPER_LIGHT, SableWeightTags.QUARTER_VOLUME,
                     CannonContent.BREAKABLE, BoardingContent.GANGWAY_OPENINGS, GrappleContent.GRAPPLE_LATCHES);
+            // RAIL4: a bulwark weighs and mounts like a railing, and stops a carriage cannon's barrel; its gun port
+            // lets the barrel through and opens for the gangway like the railing port
+            bulwarks.tag(tags, BlockTags.MINEABLE_WITH_AXE, SableWeightTags.SUPER_LIGHT, SableWeightTags.QUARTER_VOLUME,
+                    CannonContent.BREAKABLE, CannonContent.SWIVEL_MOUNTS, RiggingContent.RATLINES_ANCHORS, GrappleContent.GRAPPLE_LATCHES,
+                    CannonContent.BARREL_BLOCKING);
+            gunPorts.tag(tags, BlockTags.MINEABLE_WITH_AXE, SableWeightTags.SUPER_LIGHT, SableWeightTags.QUARTER_VOLUME,
+                    CannonContent.BREAKABLE, BoardingContent.GANGWAY_OPENINGS);
         });
         data.recipes(out -> {
             railings.forEach((wood, block) -> ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, block, 4)
@@ -120,7 +140,33 @@ public final class RailingData {
                     .group(Constants.MOD_ID + ":railing_gate")
                     .unlockedBy("has_planks", InventoryChangeTrigger.TriggerInstance.hasItems(wood.planks()))
                     .save(out, gates.entry(wood).id()));
+            // RAIL4: SPS / PPP (vanilla's trapdoor is PPP / PPP); the gun port is a bulwark and an iron nugget (the
+            // lid's hinges)
+            bulwarks.forEach((wood, block) -> ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, block, 4)
+                    .pattern("SPS").pattern("PPP")
+                    .define('S', Items.STICK).define('P', wood.planks())
+                    .group(Constants.MOD_ID + ":bulwark")
+                    .unlockedBy("has_planks", InventoryChangeTrigger.TriggerInstance.hasItems(wood.planks()))
+                    .save(out, bulwarks.entry(wood).id()));
+            gunPorts.forEach((wood, block) -> ShapelessRecipeBuilder.shapeless(RecipeCategory.DECORATIONS, block, 1)
+                    .requires(bulwarks.get(wood)).requires(Items.IRON_NUGGET)
+                    .group(Constants.MOD_ID + ":bulwark_port")
+                    .unlockedBy("has_bulwark", InventoryChangeTrigger.TriggerInstance.hasItems(bulwarks.get(wood)))
+                    .save(out, gunPorts.entry(wood).id()));
         });
+    }
+
+    /** A loot table that drops one {@code block} per railed edge (railings and bulwarks). */
+    private static LootTable.Builder perEdge(RailingBlock block) {
+        LootTable.Builder table = LootTable.lootTable();
+        for (Direction d : Direction.Plane.HORIZONTAL) {
+            table.withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1))
+                    .add(LootItem.lootTableItem(block))
+                    .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(block)
+                            .setProperties(StatePropertiesPredicate.Builder.properties().hasProperty(RailingBlock.edge(d), true)))
+                    .when(ExplosionCondition.survivesExplosion()));
+        }
+        return table;
     }
 
     private static void models(ModelContext m) {
@@ -147,15 +193,26 @@ public final class RailingData {
             }
             m.blockStates().accept(gen);
         });
-        railings.forEach((wood, block) -> {
-            ResourceLocation edge = WoodFamily.child(wood, EDGE);
-            ResourceLocation post = WoodFamily.child(wood, POST);
+        railings.forEach((wood, block) -> m.blockStates().accept(edgesAndPosts(block, WoodFamily.child(wood, EDGE), WoodFamily.child(wood, POST))));
+        // RAIL4: the bulwark like the railing (a wall per edge, a stanchion per post); the gun port's frame by facing
+        // and its lid shut or open
+        WoodFamily<BulwarkBlock> bulwarks = RailingContent.BULWARKS;
+        WoodFamily<BulwarkPortBlock> gunPorts = RailingContent.BULWARK_PORTS;
+        bulwarks.childModels(m, BULWARK_EDGE);
+        bulwarks.childModels(m, BULWARK_STANCHION);
+        bulwarks.itemModels(m, BULWARK_ITEM);
+        bulwarks.forEach((wood, block) -> m.blockStates().accept(edgesAndPosts(block, WoodFamily.child(wood, BULWARK_EDGE),
+                WoodFamily.child(wood, BULWARK_STANCHION))));
+        for (ResourceLocation part : List.of(BULWARK_PORT, BULWARK_PORT_LID, BULWARK_PORT_LID_OPEN)) gunPorts.childModels(m, part);
+        gunPorts.itemModels(m, BULWARK_PORT_ITEM);
+        gunPorts.forEach((wood, block) -> {
             MultiPartGenerator gen = MultiPartGenerator.multiPart(block);
             for (Direction d : Direction.Plane.HORIZONTAL) {
-                gen.with(Condition.condition().term(RailingBlock.edge(d), true), turned(edge, d));
-            }
-            for (Direction corner : Direction.Plane.HORIZONTAL) {
-                gen.with(Condition.condition().term(RailingBlock.post(corner), true), turned(post, corner));
+                gen.with(Condition.condition().term(BulwarkPortBlock.FACING, d), turned(WoodFamily.child(wood, BULWARK_PORT), d));
+                for (boolean open : new boolean[]{false, true}) {
+                    gen.with(Condition.condition().term(BulwarkPortBlock.FACING, d).term(BulwarkPortBlock.OPEN, open),
+                            turned(WoodFamily.child(wood, open ? BULWARK_PORT_LID_OPEN : BULWARK_PORT_LID), d));
+                }
             }
             m.blockStates().accept(gen);
         });
@@ -164,6 +221,18 @@ public final class RailingData {
             m.blockStates().accept(MultiVariantGenerator.multiVariant(block).with(PropertyDispatch.property(RailingPortBlock.FACING)
                     .generate(facing -> turned(model, facing))));
         });
+    }
+
+    /** The multipart state of a railing or bulwark: {@code edge} turned to each railed edge, {@code post} to each post. */
+    private static MultiPartGenerator edgesAndPosts(RailingBlock block, ResourceLocation edge, ResourceLocation post) {
+        MultiPartGenerator gen = MultiPartGenerator.multiPart(block);
+        for (Direction d : Direction.Plane.HORIZONTAL) {
+            gen.with(Condition.condition().term(RailingBlock.edge(d), true), turned(edge, d));
+        }
+        for (Direction corner : Direction.Plane.HORIZONTAL) {
+            gen.with(Condition.condition().term(RailingBlock.post(corner), true), turned(post, corner));
+        }
+        return gen;
     }
 
     /** {@code model} (north frame) turned to {@code d} by the block state, textures kept on the world grid. */

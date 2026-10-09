@@ -58,6 +58,11 @@ public final class CannonContent {
     public static final TagKey<Block> BREAKABLE = TagKey.create(Registries.BLOCK, Constants.id("cannon_breakable"));
     /** Blocks a ball never destroys, on a ship or not (obsidian, wither-immune blocks). */
     public static final TagKey<Block> PROOF = TagKey.create(Registries.BLOCK, Constants.id("cannon_proof"));
+    /**
+     * RAIL4: walls a carriage cannon's barrel cannot poke through (the bulwark): a gun whose barrel line, from its
+     * pivot to the muzzle, runs through the collision of such a block fires into it ({@link CannonService#fire}).
+     */
+    public static final TagKey<Block> BARREL_BLOCKING = TagKey.create(Registries.BLOCK, Constants.id("barrel_blocking"));
 
     private CannonContent() {
     }

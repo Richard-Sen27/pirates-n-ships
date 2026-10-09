@@ -395,6 +395,21 @@ public final class ShipBody {
         }
     }
 
+    // ---------------------------------------------------------------- ballast (TRM1)
+
+    /**
+     * Records an angular impulse (torque × time step) about the center of mass, in the body (plot) frame, in our ballast
+     * force group. Physics substep only, like {@link #applyWaveImpulse} ({@code ServerSubLevel#getOrCreateQueuedForceGroup}
+     * l.395, {@code api/physics/force/QueuedForceGroup.java#getForceTotal} l.21,
+     * {@code api/physics/force/ForceTotal.java#applyLinearAndAngularImpulse} l.63: both are local).
+     */
+    public void applyBallastImpulse(Vector3dc localAngularImpulse) {
+        dev.ryanhcode.sable.api.physics.force.ForceGroup group = ShipForces.ballast();
+        if (group != null) {
+            sub.getOrCreateQueuedForceGroup(group).getForceTotal().applyLinearAndAngularImpulse(new Vector3d(), localAngularImpulse);
+        }
+    }
+
     /**
      * The level's gravity vector in the world frame [m/s²], {@code (0, -11, 0)} by default
      * ({@code physics/config/dimension_physics/DimensionPhysicsData.java#getGravity(Level)}, l.49-60; the same call

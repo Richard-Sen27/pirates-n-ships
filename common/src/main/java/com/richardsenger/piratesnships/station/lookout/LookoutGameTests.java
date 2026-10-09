@@ -381,6 +381,65 @@ public final class LookoutGameTests {
         });
     }
 
+    /** TPL2: ships the tests make renowned (the source is registered once, it answers only for these ids). */
+    private static final Map<UUID, String> RENOWNED = new java.util.concurrent.ConcurrentHashMap<>();
+
+    static {
+        Lookouts.renown((level, ship) -> java.util.Optional.ofNullable(RENOWNED.get(ship)));
+    }
+
+    /**
+     * TPL2: a ship the lookout knows by sight ({@link Lookouts#renown}, a pirate captain's) is called by its name
+     * ("Sail ho! ... it's &lt;name&gt;!"); the same merchant unnamed is called as before.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "renowned")
+    public static void renownedShipIsCalledByName(GameTestHelper h) {
+        basin48(h);
+        Rig r = rig(h, 3, 3);
+        CrewMember c = lookout(h, r);
+        Voyage v = convoy(h);
+        ShipBody[] npc = new ShipBody[1];
+        String name = "Mad Silas' Night Shark";
+        h.runAtTickTime(5, () -> {
+            MinecraftServer server = h.getLevel().getServer();
+            Materializer.Outcome o = Materializer.materialize(server, v.id());
+            Voyage m = Voyages.get(server, v.id()).orElseThrow();
+            m.shipId().ifPresent(id -> ShipTestCleanup.track(h, id));
+            h.assertTrue(o == Materializer.Outcome.SPAWNED, "materialize: " + o);
+            npc[0] = SableShips.byId(h.getLevel(), m.shipId().orElseThrow());
+            h.assertTrue(npc[0] != null, "no NPC ship");
+        });
+        h.runAtTickTime(15, () -> {
+            String key = "ship:" + npc[0].id();
+            long now = firstScan(h, r);
+            List<Lookouts.Report> plain = about(scan(h, r, List.of(), now), key);
+            h.assertTrue(plain.size() == 1 && plain.get(0).sighting().name().isEmpty(), "an unnamed call: " + plain);
+            h.assertTrue(plain.get(0).line().getSiblings().stream().anyMatch(s -> translatable(s, LookoutLang.KEY_SHIP)),
+                    "the plain call: " + plain.get(0).line());
+            RENOWNED.put(npc[0].id(), name);
+            try {
+                Lookouts.forget(r.ship().id());
+                List<Lookouts.Report> named = about(scan(h, r, List.of(), now + 1), key);
+                h.assertTrue(named.size() == 1 && named.get(0).sighting().name().equals(name), "a named call: " + named);
+                h.assertTrue(named.get(0).line().getSiblings().stream().anyMatch(s -> translatable(s, LookoutLang.KEY_SHIP_NAMED)
+                        && java.util.Arrays.asList(((net.minecraft.network.chat.contents.TranslatableContents) s.getContents()).getArgs()).contains(name)),
+                        "the call does not name the ship: " + named.get(0).line());
+            } finally {
+                RENOWNED.remove(npc[0].id());
+            }
+            Voyages.end(h.getLevel().getServer(), v.id(), VoyageEnd.CANCELLED);
+            VoyageCrew.discard(h.getLevel(), v.id());
+            CrewStations.release(h.getLevel(), c);
+            c.discard();
+            Lookouts.forget(r.ship().id());
+            h.succeed();
+        });
+    }
+
+    private static boolean translatable(net.minecraft.network.chat.Component c, String key) {
+        return c.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().equals(key);
+    }
+
     /**
      * LAW4: {@link Lookouts#isManned} is false for an empty nest, true while a crew lookout is seated in it, false
      * again once he is released, true for a player (in the level) standing in it and false for one on the deck.

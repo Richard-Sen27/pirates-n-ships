@@ -38,6 +38,8 @@ public final class MaterializeConfig {
             "Ticks a player's cannon hit still counts as the cause when the ship sinks");
     public static final ConfigValue<Integer> CREW_PER_SHIP = S.intRange("crew_per_ship", 3, 0, 16,
             "Deckhands on an NPC ship besides its helmsman (they work the sails through the job board)");
+    public static final ConfigValue<Boolean> MAN_LOOKOUT = S.bool("man_lookout", true,
+            "One of an NPC ship's deckhands keeps watch in its crow's nest (if it has one), so the nest counts as manned (a navy observer's wider false-colours watch). Off = nobody goes up; the deckhand works the sails");
     public static final ConfigValue<Integer> FIGHTERS_MERCHANT = S.intRange("fighters_merchant", 2, 0, 16,
             "Armed sailors guarding a merchant ship");
     public static final ConfigValue<Integer> FIGHTERS_NAVY = S.intRange("fighters_navy", 4, 0, 16,

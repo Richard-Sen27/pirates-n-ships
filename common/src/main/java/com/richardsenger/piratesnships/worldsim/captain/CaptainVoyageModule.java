@@ -4,6 +4,8 @@ import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.mob.captain.PirateCaptain;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
+import com.richardsenger.piratesnships.station.lookout.Lookouts;
+import com.richardsenger.piratesnships.worldsim.materialize.Materializer;
 import com.richardsenger.piratesnships.worldsim.materialize.VoyageEndings;
 import com.richardsenger.piratesnships.worldsim.navy.Hunting;
 import com.richardsenger.piratesnships.worldsim.voyage.Voyage;
@@ -50,6 +52,9 @@ public final class CaptainVoyageModule implements ModModule {
         Voyages.onEnd(CaptainVoyages::onVoyageEnded);
         VoyageEndings.onEnding(CaptainVoyages::onEnding);
         VoyageCommands.label(CaptainVoyages::label);
+        // TPL2: his ship carries his name, and every lookout knows it by sight
+        Materializer.namer(CaptainVoyages::shipName);
+        Lookouts.renown(CaptainVoyages::renownedShip);
     }
 
     /** With every voyage check, after the materialiser: each materialised captain's voyage gets him aboard and hunts. */

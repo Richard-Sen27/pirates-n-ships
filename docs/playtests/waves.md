@@ -198,3 +198,58 @@ world, default config, open sea, `/pirates ship place starter_sloop assemble`, s
 - The quad keeps the stroke's 4:1 aspect, so a long streak is also a wider quad; the stroke inside stays thin.
 - Seen from straight above, a curved stroke can flip sideways as the camera passes over it.
 - Puffs that are being born when the camera leaves the band over the sea are dropped.
+
+## WAV2: the wave feel
+
+The rules (six trains of 16 to 64 blocks with dispersion periods, one of them WV1's 34-block, 9-s swell; JONSWAP
+weights around the sea state's peak: a calm sea is a long, low 56-block swell without wave groups, a moderate sea
+peaks at 30 blocks, a storm at 34; directions within ±30° of the field's; fixed
+phases from a seed; the wave groups; the heave force and its cap) are covered by JUnit (`WaveSpectrumTest`,
+`WaveHeaveRuleTest`) and GameTests (`WaveGameTests`, pinned phase, one minute per window). Measured on both loaders:
+the 7×17 test hull rolls ±4.5° in a storm, ±1.3° in a moderate sea and ±0.25° in a calm one, settles within 10 s, and
+its successive roll crests differ by 36–43 % on average (no single clean sine); in a storm it heaves ±0.48 blocks
+(0.4 × the 1.2-block wave height), and with `waves.heave = false` it keeps its height to 0.002 blocks (Sable's water is
+flat, so nothing else lifts it). The 32×12 hull rolls 0.65° in a storm, 0.19° moderate, 0.04° calm, and heaves ±0.32.
+
+**What changed for the player.** The sea is no longer one even swell: waves of different lengths run a little across
+each other, so the roll comes in an uneven rhythm (a big roll, a smaller one, two medium ones), and in sets: for about
+half a minute the waves build, then a calmer spell follows (from a moderate sea on; a calm sea is a long, even swell;
+`waves.group_depth` 0.35, `waves.group_period_seconds` 60).
+The hull now also rises on a crest and sinks into the trough (`waves.heave`, `heave_strength` 0.5, `heave_per_mass` 6).
+The roll is stronger than WV1's after SH1 (`waves.ship_torque` 26, `max_torque_per_mass` 2.5, new `size_exponent` 1.0
+so big ships lie steadier and small boats move more). The camera sway (when on) follows the real deck and adds no motion
+of its own.
+
+Setup as above: a starter sloop on open sea, standing on deck amidships, waves from the side (`/pirates waves` shows
+where they come from; turn the sloop beam on). Please send a short clip of steps 1 and 2 and tell us how it feels.
+
+1. **Rain.** `/weather rain`, `/pirates waves set rough`. Watch for two minutes.
+   - **Expected:** the sloop rolls a few degrees, smoothly, but not like a metronome: some rolls are clearly bigger
+     than the ones before and after, and every minute or so a run of three or four bigger rolls comes and goes. The
+     whole ship lifts and sinks gently (look at the waterline against the hull, or at the horizon from the deck). No
+     jitter, no jerks.
+2. **Thunderstorm.** `/weather thunder`, `/pirates waves set storm`. Watch for two minutes beam on, then turn into the
+   waves.
+   - **Expected:** beam on, the sloop rolls more (the 7×17 test hull, smaller than the sloop, rolls about ±4.5°; the
+     sloop should be somewhat less), unevenly, in sets; it rides up on the big crests by up to about half a block and
+     drops into the troughs. Head on, the bow rises on the crests and falls, with spray when it digs in. It never
+     capsizes from the waves alone. Is the roll too weak, about right, or too strong? `waves.ship_torque` scales it;
+     `waves.heave_strength` the rise and fall; `waves.group_depth` how strongly the sets stand out; `waves.components`
+     (2 to 12) how irregular the sea is.
+3. **Calm.** `/weather clear`, `/pirates waves set calm`.
+   - **Expected:** within about 10 s the sloop lies nearly still: at most a slight, slow, even rocking from a long swell.
+4. **Camera sway.** Client config `wave_effects.camera_sway = true`, in the storm.
+   - **Expected:** the view tilts only as the deck tilts, in the same uneven rhythm; with the ship lying still the view
+     is still too.
+5. **A low hatch in a storm with heave.** Step 6 of WV1 again, with the default `waves.heave = true`.
+   - **Expected:** water still comes in at the bigger crests, but less than with `waves.heave = false`, since the hull
+     now rises with the crest (the GameTest with the hull held still took 5 blocks in 24 s; with heave on an earlier
+     run took 0.25). Tell us whether low hatches still feel dangerous enough in a storm.
+
+### Known limits
+
+- The wave groups run east at the swell's group speed whatever the wave direction (the envelope uses a fixed
+  reference direction, like the anchor's phase, so a drifting wind cannot sweep it far from the origin).
+- The heave is a force from the mean wave height under the hull, not a moving water surface: Sable's buoyancy still
+  sees flat water and pulls the hull back to the still waterline.
+- Ships in waves still never fall asleep in the physics engine.

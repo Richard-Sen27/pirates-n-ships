@@ -3,24 +3,29 @@ package com.richardsenger.piratesnships.hazards.waves;
 import java.util.List;
 
 /**
- * The simulated wave surface of one dimension at one moment (docs/design.md §5.4, WV1): the height of the sea above
- * the still water level as a sum of two sine trains. Pure and immutable: the same inputs give the same heights on the
- * server, on every client and in tests. Nothing deforms the rendered water (§1 non-goals); the field drives ship roll
- * and pitch, spray and spilling.
+ * The simulated wave surface of one dimension at one moment (docs/design.md §5.4, WV1, WAV2): the height of the sea
+ * above the still water level as a sum of sine trains under a slow group envelope. Pure and immutable: the same inputs
+ * give the same heights on the server, on every client and in tests. Nothing deforms the rendered water (§1 non-goals);
+ * the field drives ship roll, pitch and heave, spray and spilling.
  *
  * <h2>Model</h2>
- * {@code h(p, t) = A · Σ wᵢ · sin(kᵢ · dᵢ·(p − a) + kᵢ · rᵢ·a − ωᵢ · t + φᵢ)} with
+ * {@code h(p, t) = A · E(a, t) · Σ wᵢ · sin(kᵢ · dᵢ·(p − a) + kᵢ · rᵢ·a − ωᵢ · t + φᵢ)} with
  * <ul>
- *   <li>{@code A} the amplitude (state amplitude × {@code waves.amplitude}); the weights sum to 1, so |h| ≤ A;</li>
- *   <li>{@code kᵢ = 2π / λᵢ}, {@code ωᵢ = 2π / Tᵢ} with the wavelengths and periods of {@link #COMPONENTS}
- *       (34 and 23 blocks, 9 and 6.5 s, inside the 20–40 blocks and 6–10 s of the design); time in ticks;</li>
+ *   <li>{@code A} the amplitude (state amplitude × {@code waves.amplitude}); the weights sum to 1;</li>
+ *   <li>{@code kᵢ = 2π / λᵢ}, {@code ωᵢ = 2π / Tᵢ} with the trains of {@link WaveSpectrum} (by default
+ *       {@code waves.components} trains of 16–64 blocks with dispersion periods, one of them WV1's 34-block, 9-s
+ *       swell); time in ticks;</li>
  *   <li>{@code dᵢ} the running direction of train {@code i}: the field's direction (the wind's, with a slow offset,
- *       {@link SeaStateModel#directionDegrees}) turned by the train's offset (0° and 35°, a crossed sea);</li>
+ *       {@link SeaStateModel#directionDegrees}) turned by the train's offset (within ±30°, a short-crested sea);</li>
  *   <li>{@code a} the <b>anchor</b>, a point near {@code p} (a ship's center): the direction drifts with the wind, and
  *       {@code dᵢ·p} at a position thousands of blocks from the origin would turn the slightest drift into a fast phase
  *       sweep. So the drifting direction acts only on the offset from the anchor, and the anchor's own phase uses a
  *       fixed reference direction {@code rᵢ}. The field is exactly continuous in time for a fixed anchor, and
- *       continuous in the anchor, so a sailing ship meets the waves at a smoothly changing phase.</li>
+ *       continuous in the anchor, so a sailing ship meets the waves at a smoothly changing phase. Every train and the
+ *       envelope use this construction;</li>
+ *   <li>{@code E} the group envelope ({@link Groups}): {@code 1 + g · ½ (sin ψ₁ + sin ψ₂)}, two slow terms of
+ *       0.85 and 1.3 × the group period running east at the swell's group speed (half its phase speed), evaluated at
+ *       the anchor; sets of bigger waves come and go, and {@code |h| ≤ A · (1 + g)}.</li>
  * </ul>
  * {@link #height(double, double, double)} and {@link #slope(double, double, double)} use the point itself as the
  * anchor.
@@ -66,10 +71,31 @@ public final class WaveField {
         public static final Origin NONE = new Origin(0.0, 0.0, 0.0);
     }
 
-    /** The two trains of every sea: a long swell and a shorter crossing sea. */
-    public static final List<Component> COMPONENTS = List.of(
-            new Component(34.0, 180.0, 0.6, 0.0, 0.0, 90.0),
-            new Component(23.0, 130.0, 0.4, 1.7, 35.0, 135.0));
+    /**
+     * The wave groups: a slow envelope on the amplitude.
+     *
+     * @param depth       {@code waves.group_depth}: the envelope swings the amplitude by up to ± this share (0 = none)
+     * @param periodTicks {@code waves.group_period_seconds} × 20: the envelope's two terms run at 0.85 and 1.3 × this
+     */
+    public record Groups(double depth, double periodTicks) {
+        /** No envelope. */
+        public static final Groups NONE = new Groups(0.0, 1200.0);
+        /** Period factors of the two envelope terms (51 and 78 s for the default 60 s). */
+        public static final double FIRST = 0.85;
+        public static final double SECOND = 1.3;
+        /** Speed the groups run at: half the phase speed of the 34-block swell [blocks per tick]. */
+        public static final double SPEED = WaveSpectrum.REFERENCE_WAVELENGTH
+                / (2.0 * WaveSpectrum.periodTicks(WaveSpectrum.REFERENCE_WAVELENGTH));
+
+        public Groups {
+            depth = Math.max(0.0, Math.min(0.9, depth));
+            periodTicks = Math.max(20.0, periodTicks);
+        }
+    }
+
+    /** The default sea: {@link WaveSpectrum#DEFAULT_COMPONENTS} trains peaking at the 34-block swell. */
+    public static final List<Component> COMPONENTS = WaveSpectrum.components(WaveSpectrum.DEFAULT_COMPONENTS,
+            WaveSpectrum.REFERENCE_WAVELENGTH);
 
     /** A flat sea. */
     public static final WaveField FLAT = new WaveField(0.0, 0.0);
@@ -78,6 +104,9 @@ public final class WaveField {
     private final double directionDeg;
     private final List<Component> components;
     private final Origin origin;
+    private final Groups groups;
+    // envelope terms: k, omega, phase (running east)
+    private final double[][] g;
     // per component: k, omega, weight, phase, dir x/z, ref x/z
     private final double[][] c;
 
@@ -95,7 +124,20 @@ public final class WaveField {
 
     /** A field whose time and anchor are measured from {@code origin} (tests; gameplay uses {@link Origin#NONE}). */
     public WaveField(double amplitude, double directionDeg, List<Component> components, Origin origin) {
+        this(amplitude, directionDeg, components, origin, Groups.NONE);
+    }
+
+    /** A field with wave groups ({@link Groups}); the full constructor. */
+    public WaveField(double amplitude, double directionDeg, List<Component> components, Origin origin, Groups groups) {
         this.origin = origin;
+        this.groups = groups;
+        double[] factors = {Groups.FIRST, Groups.SECOND};
+        double[] phases = {0.9, 4.1};
+        this.g = new double[groups.depth() > 0.0 ? 2 : 0][];
+        for (int i = 0; i < g.length; i++) {
+            double omega = 2.0 * Math.PI / (groups.periodTicks() * factors[i]);
+            g[i] = new double[] {omega / Groups.SPEED, omega, phases[i]};
+        }
         this.amplitude = Math.max(0.0, amplitude);
         this.directionDeg = directionDeg;
         this.components = List.copyOf(components);
@@ -125,6 +167,34 @@ public final class WaveField {
         return origin;
     }
 
+    public Groups groups() {
+        return groups;
+    }
+
+    /** The largest height this field can reach [blocks]: {@code A · (1 + group depth)}. */
+    public double maxHeight() {
+        return amplitude * (1.0 + (g.length > 0 ? groups.depth() : 0.0));
+    }
+
+    /**
+     * The group envelope at anchor {@code (ax, az)} and time {@code t} (1 without groups): between {@code 1 − depth}
+     * and {@code 1 + depth}. The groups run east, so only the anchor's x enters.
+     */
+    public double envelope(double ax, double az, double t) {
+        return envelopeAt(ax - origin.x(), t - origin.ticks());
+    }
+
+    private double envelopeAt(double oax, double ot) {
+        if (g.length == 0) {
+            return 1.0;
+        }
+        double s = 0.0;
+        for (double[] e : g) {
+            s += Math.sin(e[0] * oax - e[1] * ot + e[2]);
+        }
+        return 1.0 + groups.depth() * 0.5 * s;
+    }
+
     public boolean isFlat() {
         return amplitude <= 0.0;
     }
@@ -145,7 +215,7 @@ public final class WaveField {
         for (double[] w : c) {
             h += w[2] * Math.sin(phase(w, oax, oaz, dx, dz, ot));
         }
-        return amplitude * h;
+        return amplitude * envelopeAt(oax, ot) * h;
     }
 
     /** Gradient {@code {∂h/∂x, ∂h/∂z}} of the surface at {@code (x, z)}, time {@code t} [blocks per block]. */
@@ -161,21 +231,25 @@ public final class WaveField {
         }
         double dx = x - ax, dz = z - az;
         double oax = ax - origin.x(), oaz = az - origin.z(), ot = t - origin.ticks();
+        double a = amplitude * envelopeAt(oax, ot);
         for (double[] w : c) {
-            double s = amplitude * w[2] * w[0] * Math.cos(phase(w, oax, oaz, dx, dz, ot));
+            double s = a * w[2] * w[0] * Math.cos(phase(w, oax, oaz, dx, dz, ot));
             g[0] += s * w[4];
             g[1] += s * w[5];
         }
         return g;
     }
 
-    /** The largest surface slope this field can reach [blocks per block]: {@code A · Σ wᵢ kᵢ}. */
+    /**
+     * The largest surface slope this field can reach [blocks per block]: {@code A · (1 + depth) · Σ wᵢ kᵢ} (the
+     * envelope is taken at the anchor, so it scales the slope but adds none of its own).
+     */
     public double maxSlope() {
         double s = 0.0;
         for (double[] w : c) {
             s += w[2] * w[0];
         }
-        return amplitude * s;
+        return maxHeight() * s;
     }
 
     private static double phase(double[] w, double ax, double az, double dx, double dz, double t) {
@@ -184,6 +258,7 @@ public final class WaveField {
 
     @Override
     public String toString() {
-        return String.format("WaveField[amplitude %.2f, toward %.0f°]", amplitude, directionDeg);
+        return String.format("WaveField[amplitude %.2f, toward %.0f°, %d trains, groups ±%.2f]", amplitude, directionDeg,
+                components.size(), g.length > 0 ? groups.depth() : 0.0);
     }
 }

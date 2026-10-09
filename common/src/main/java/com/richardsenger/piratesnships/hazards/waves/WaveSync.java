@@ -44,7 +44,7 @@ public final class WaveSync {
 
     /** The payload for players in {@code level}. */
     public static WaveSyncPayload payload(ServerLevel level, int interval) {
-        return WaveSyncPayload.of(SeaStates.current(level), SeaStates.field(level), interval);
+        return WaveSyncPayload.of(SeaStates.current(level), SeaStates.field(level), SeaStates.peakWavelength(level), interval);
     }
 
     /**

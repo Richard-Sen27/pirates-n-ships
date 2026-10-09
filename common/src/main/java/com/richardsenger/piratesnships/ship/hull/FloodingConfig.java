@@ -32,7 +32,7 @@ public final class FloodingConfig {
     public static final ConfigValue<Integer> MAX_DEBOUNCE_TICKS = SECTION.intRange("max_debounce_ticks", 60, 0, 1200,
             "Latest re-analysis after the first unprocessed hull change, even while the hull keeps changing");
     public static final ConfigValue<Double> REANALYSIS_TILT_DEGREES = SECTION.doubleRange("reanalysis_tilt_degrees", 5.0, 0.5, 45.0,
-            "Re-analyze a hull when the ship has tilted this many degrees since the last analysis");
+            "Refresh a hull's water heights when the ship has tilted this many degrees since the last refresh (its compartments never change with the tilt)");
 
     private FloodingConfig() {
     }

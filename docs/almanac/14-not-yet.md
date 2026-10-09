@@ -12,7 +12,6 @@ illustration: anchor
 An honest chart leaves blank what nobody has sailed. These waters the Almanac cannot describe yet, because nobody has built them.
 
 ## Still over the horizon
-- **Oars** to move a big ship in a flat calm.
 - **A ship's logbook** to record your voyages and deeds.
 - **Paint for the hull,** to dye her planks your own colours.
 - **A wanted poster** of your own, beyond the chat, the notice board and the rank box.

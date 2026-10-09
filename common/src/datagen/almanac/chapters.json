@@ -3705,8 +3705,7 @@
          "pirates_n_ships.almanac.not_yet.p2.list1_2",
          "pirates_n_ships.almanac.not_yet.p2.list1_3",
          "pirates_n_ships.almanac.not_yet.p2.list1_4",
-         "pirates_n_ships.almanac.not_yet.p2.list1_5",
-         "pirates_n_ships.almanac.not_yet.p2.list1_6"
+         "pirates_n_ships.almanac.not_yet.p2.list1_5"
         ]
        },
        {
@@ -4357,12 +4356,11 @@
   "pirates_n_ships.almanac.not_yet.p1.heading": "Not yet charted",
   "pirates_n_ships.almanac.not_yet.p1.text1": "An honest chart leaves blank what nobody has sailed. These waters the Almanac cannot describe yet, because nobody has built them.",
   "pirates_n_ships.almanac.not_yet.p2.heading": "Still over the horizon",
-  "pirates_n_ships.almanac.not_yet.p2.list1_1": "**Oars** to move a big ship in a flat calm.",
-  "pirates_n_ships.almanac.not_yet.p2.list1_2": "**A ship's logbook** to record your voyages and deeds.",
-  "pirates_n_ships.almanac.not_yet.p2.list1_3": "**Paint for the hull,** to dye her planks your own colours.",
-  "pirates_n_ships.almanac.not_yet.p2.list1_4": "**A wanted poster** of your own, beyond the chat, the notice board and the rank box.",
-  "pirates_n_ships.almanac.not_yet.p2.list1_5": "**Feints of your own** with the sword, and a choice of side for your cut and parry.",
-  "pirates_n_ships.almanac.not_yet.p2.list1_6": "**Sounds of their own** for most of the work aboard.",
+  "pirates_n_ships.almanac.not_yet.p2.list1_1": "**A ship's logbook** to record your voyages and deeds.",
+  "pirates_n_ships.almanac.not_yet.p2.list1_2": "**Paint for the hull,** to dye her planks your own colours.",
+  "pirates_n_ships.almanac.not_yet.p2.list1_3": "**A wanted poster** of your own, beyond the chat, the notice board and the rank box.",
+  "pirates_n_ships.almanac.not_yet.p2.list1_4": "**Feints of your own** with the sword, and a choice of side for your cut and parry.",
+  "pirates_n_ships.almanac.not_yet.p2.list1_5": "**Sounds of their own** for most of the work aboard.",
   "pirates_n_ships.almanac.not_yet.p2.text1": "If these pages and the sea disagree, the mistake is the Almanac's. Tell whoever keeps your server."
  }
 }

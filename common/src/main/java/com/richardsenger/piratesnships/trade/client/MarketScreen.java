@@ -699,6 +699,9 @@ public final class MarketScreen extends Screen {
             case KILL_MONSTER -> new ItemStack(Items.TRIDENT);
             case TURN_IN -> new ItemStack(Items.CHAIN);
             case HUNT_NAVY -> new ItemStack(Items.GOLDEN_SWORD);
+            case ESCORT -> new ItemStack(Items.SHIELD);
+            case PLUNDER_CONVOY -> new ItemStack(Items.CHEST);
+            case HUNT_PATROL, HUNT_SHIP -> new ItemStack(Items.FIRE_CHARGE);
             default -> new ItemStack(Items.IRON_SWORD);
         };
     }

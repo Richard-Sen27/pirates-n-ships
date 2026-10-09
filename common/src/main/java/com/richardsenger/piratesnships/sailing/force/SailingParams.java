@@ -9,6 +9,7 @@ package com.richardsenger.piratesnships.sailing.force;
  * @param sailForceScale       sail force per (blocks/s of apparent wind × blocks² of sail × efficiency) [N·s/block³]
  * @param halfTrimFactor       area fraction of a half-trimmed sail
  * @param rudderStrength       rudder side force per (kpg of mass × blocks/s of forward speed × sin(rudder angle)) [1/s]
+ * @param rudderForceFactor    SH2 turning authority: multiplier on the rudder force (1 = the force of milestone 3)
  * @param maxRudderAngleDeg    rudder angles are clamped to ±this [degrees]
  * @param keelEnabled          whether the keel drag is applied at all
  * @param keelLongitudinalDrag drag along the hull per kpg, at full immersion [1/s]
@@ -22,19 +23,28 @@ public record SailingParams(
         double sailForceScale,
         double halfTrimFactor,
         double rudderStrength,
+        double rudderForceFactor,
         double maxRudderAngleDeg,
         boolean keelEnabled,
         double keelLongitudinalDrag,
         double keelLateralDrag,
         double keelYawDragFactor) {
 
+    /**
+     * SH2 default of {@link #rudderForceFactor}: tuned so the starter sloop turns a circle of about three to four ship
+     * lengths with the helm hard over at full speed ({@code SailingGameTestsTurning}): 3 gives 3.4 lengths, 1 (the
+     * rudder of milestone 3) 10.2.
+     */
+    public static final double RUDDER_FORCE_FACTOR = 3.0;
+
     /** The defaults. The server config declares its defaults from this instance. */
     public static final SailingParams DEFAULTS = new SailingParams(
             1.0, 0.5,
-            0.5, 35.0,
+            0.5, RUDDER_FORCE_FACTOR, 35.0,
             true, 0.1, 8.0, 1.0); // lateral 8.0 since spike 3 (2.0 drifted 0.7 m/s on a beam reach)
 
     public SailingParams {
+        rudderForceFactor = Math.max(0.0, rudderForceFactor);
         sailForceScale = Math.max(0.0, sailForceScale);
         halfTrimFactor = Math.min(Math.max(0.0, halfTrimFactor), 1.0);
         rudderStrength = Math.max(0.0, rudderStrength);
@@ -45,12 +55,12 @@ public record SailingParams(
     }
 
     public SailingParams withKeelEnabled(boolean on) {
-        return new SailingParams(sailForceScale, halfTrimFactor, rudderStrength, maxRudderAngleDeg, on,
+        return new SailingParams(sailForceScale, halfTrimFactor, rudderStrength, rudderForceFactor, maxRudderAngleDeg, on,
                 keelLongitudinalDrag, keelLateralDrag, keelYawDragFactor);
     }
 
     public SailingParams withSailForceScale(double scale) {
-        return new SailingParams(scale, halfTrimFactor, rudderStrength, maxRudderAngleDeg, keelEnabled,
+        return new SailingParams(scale, halfTrimFactor, rudderStrength, rudderForceFactor, maxRudderAngleDeg, keelEnabled,
                 keelLongitudinalDrag, keelLateralDrag, keelYawDragFactor);
     }
 }

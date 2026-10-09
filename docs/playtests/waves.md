@@ -75,3 +75,72 @@ and `latest.log` if anything goes wrong.
 - The spill uses the highest crest around the whole hull at every opening, not the crest at that opening.
 - Wave torque changes every tick, so a floating ship in waves never falls asleep in the physics engine (a cost for many
   anchored ships; see the performance check in milestone playtests).
+
+## WD1: seeing the wind and the waves
+
+The rules (spawn rate = `wind_effects.density` × wind speed, none below `wind_effects.min_strength`, more in gusts;
+foam rate = `wave_effects.foam_density` × wave height, none below `foam_min_amplitude`, kept mostly on the crests;
+positions spread evenly over the ring around the camera, streaks started upwind by half their drift so they are centred
+on you mid-life; the streak quad turning about its axis to face you; fade in and out) are covered by JUnit
+(`SeaEffectRulesTest`). Nothing here touches the server or gameplay. Only the look needs the game.
+
+**How it works, in short.** Every client tick, white streaks are spawned within `wind_effects.radius` (24) blocks of
+the camera, 1 to `wind_effects.height` (12) blocks above sea level, only in air (not in terrain, not inside a dry hull).
+Each flies in a straight line along the synced wind at the wind's speed for `life_ticks` (40, 2 s), fading in and out;
+its length grows with the wind (1.2 to 4.5 blocks). Foam streaks are flat, lie on top of the water within
+`wave_effects.foam_radius` (24), point along the direction the waves run (±10°), drift slowly with them and last
+`foam_life_ticks` (80). Both are world particles: a sailing ship moves through them. Video setting "Particles":
+Decreased halves them, Minimal hides them.
+
+Setup: `./gradlew :neoforge:runClient`, a creative world with cheats on, default config, open sea. Place a starter
+sloop with `/pirates ship place starter_sloop assemble` and stand on its deck. `/pirates wind get` shows the wind,
+`/pirates wind set <fromDegrees> <strength>` holds one and `/pirates wind clear` releases it; `/pirates waves set
+<state>` holds a sea. Please send
+screenshots or short clips of steps 2, 3, 5 and 7, and `latest.log` if anything goes wrong.
+
+1. **Calm.** `/weather clear`, `/pirates waves set calm`, `/pirates wind set 0 2` (a 2 blocks/s wind from the north,
+   below `wind_effects.min_strength` 4).
+   - **Expected:** no wind streaks in the air, no foam on the water. Spray (WV1) also none.
+2. **Breeze.** `/pirates wind set 0 10` (10 blocks/s from the north), `/pirates waves set moderate`. Look around from
+   the deck.
+   - **Expected:** a few thin white streaks at a time drift through the air from deck height up to the masthead, all
+     flying the same way, from where `/pirates wind get` says the wind comes from, about twice as fast as a sprinting
+     player. They fade in and out softly (no popping), are thin from the side and short when you look along the wind.
+     A few faint, ragged foam patches lie flat on the water, stretched along the waves, in loose bands.
+   - Compare with the **HUD wind arrow** (bottom left while aboard): the streaks fly the way the arrow points
+     (downwind). Tell us if they ever disagree.
+3. **Gale and storm.** `/pirates wind clear`, `/weather thunder`, `/pirates waves set storm`. Wait 30 s (the weather
+   now drives the wind, with gusts).
+   - **Expected:** many more streaks, longer and faster (the wind is 2.2 times stronger); during gusts (the HUD shows
+     them) a flurry of extra streaks for a few seconds. The foam is denser, longer, brighter and gathers in bands that
+     move slowly with the waves. Is it too much, too little, too opaque? Tell us; `wind_effects.density`,
+     `wave_effects.foam_density` tune the numbers.
+4. **Direction of the foam.** Still in the storm, run `/pirates waves`: it says which way the waves come from.
+   - **Expected:** the long side of the foam patches points along that direction (within about 10°), and the bands
+     of foam run across it.
+5. **On a sailing ship.** Set sail on a beam reach (wind from the side) in the gale, then run downwind.
+   - **Expected:** the streaks keep flying with the true wind, not with the ship: on a beam reach they cross the deck
+     sideways while the ship moves through them; running downwind at nearly the wind's speed they seem to hang almost
+     still around you. The foam stays where it lies on the water and slides past the hull.
+6. **Inside the hull.** Go below deck into a dry hold (below the waterline) in the storm.
+   - **Expected:** no foam on the water inside the hold (the dry region hides the water there, and no foam spawns in
+     it); no streaks born inside the hold. Looking out through a hatch, streaks and foam outside are still there.
+7. **Toggles and settings.** Client config `wind_effects.streaks = false`: no streaks; `wave_effects.foam = false`:
+   no foam; video setting Particles: Decreased about half, Minimal none. Turn both back on.
+8. **Away from the sea.** Fly 40 blocks up, then walk inland over hills, then dive under water.
+   - **Expected:** high above the sea the streaks thin out and stop (they are only spawned near the sea's band); over
+     land they appear only in open air near sea level (not inside hills); under water none.
+9. **Performance.** In the storm with `wind_effects.density = 0.5`, `wave_effects.foam_density = 10` (both higher than
+   default), watch the F3 particle count ("P:") and the frame rate for a minute, then reset to defaults.
+   - **Expected:** at defaults the count rises by a few hundred at most in a storm; the frame rate does not drop
+     noticeably. At the raised values it stays playable (each kind is capped at 48 new particles per tick).
+
+### Known limits
+
+- The streaks use the one wind the client knows (the wind at the player); with `wind.regional_variation` on, far
+  streaks still fly with the player's wind.
+- The water surface stays flat, so the foam lies flat on the still water level; its bands follow the invisible crests.
+- A streak keeps the wind of the moment it was born for its 2 s of life, so after a sudden shift the old streaks fly
+  on briefly before the new ones take over.
+- Streaks do not collide: one born over the sea may drift into a hill or through a ship's hull and sails.
+- Shader packs (Iris) were not checked.

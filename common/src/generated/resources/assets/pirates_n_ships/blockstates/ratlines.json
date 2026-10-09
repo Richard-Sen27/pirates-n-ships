@@ -1,0 +1,36 @@
+{
+  "variants": {
+    "facing=east,kind=slope": {
+      "model": "pirates_n_ships:block/ratlines_slope",
+      "y": 90
+    },
+    "facing=east,kind=wall": {
+      "model": "pirates_n_ships:block/ratlines",
+      "y": 90
+    },
+    "facing=north,kind=slope": {
+      "model": "pirates_n_ships:block/ratlines_slope",
+      "y": 0
+    },
+    "facing=north,kind=wall": {
+      "model": "pirates_n_ships:block/ratlines",
+      "y": 0
+    },
+    "facing=south,kind=slope": {
+      "model": "pirates_n_ships:block/ratlines_slope",
+      "y": 180
+    },
+    "facing=south,kind=wall": {
+      "model": "pirates_n_ships:block/ratlines",
+      "y": 180
+    },
+    "facing=west,kind=slope": {
+      "model": "pirates_n_ships:block/ratlines_slope",
+      "y": 270
+    },
+    "facing=west,kind=wall": {
+      "model": "pirates_n_ships:block/ratlines",
+      "y": 270
+    }
+  }
+}

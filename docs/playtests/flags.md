@@ -128,3 +128,49 @@ Setup: survival, a few flagpoles and the three flags, a banner; open ground with
 8. **On a ship.** A ship with a four-block pole flying the Jolly Roger: assemble, sail and turn; the flag flies at the top and streams downwind. Strike while sailing: the cloth runs down along the pole and stays with the moving ship (no lag, no offset from the pole). Disassemble: the pole stands with the flag at the top. `/pirates law hostile @s` near the navy behaves as with a lone pole.
 9. **Toggles.** Client `flag_visuals.hoist_animation = false`: flags appear and vanish at the top at the end of the delay, as before. Server `flags.stacked_poles = false`: every block of a stack is its own pole again (use the bottom block: the flag flies at the bottom block), the parts still look stacked.
 10. **Old worlds and structures.** A world with flagpoles from before this version: lone poles look the same; old stacks (pirate camp, navy fort) show the stacked parts within a tick of loading and their flag at the top.
+
+
+## FLG2: banner flags with colour and patterns
+Setup: survival with cheats, a loom, banners and dyes; a lone flagpole and a four-block pole in the open with room
+downwind (`/pirates wind set 270 8`: the cloth points east); default config (client `flag_visuals.hoist_animation`
+on, `flag_visuals.banner_upright` off). Please send screenshots of steps 1, 2 and 6.
+1. **White banner with a red cross.** On a loom put a red **Cross** (the straight `+` cross; the `x` is the
+   "Saltire") on a white banner, then hoist it on the lone pole. Expected: the cloth is white (a very light grey weave) with
+   a red cross whose arms run along the cloth and up and down it. Compare with the banner itself (place a copy):
+   the flag shows the banner **hung sideways from the pole**: the banner's top edge is at the pole, its bottom edge
+   at the far end. To see that, add a black **Chief** (top band) to a second white banner: on the flag the black band
+   is the strip next to the pole, from the bottom to the top of the cloth.
+2. **Both faces.** Walk around the pole. Expected: the design is on both faces, mirrored on the back like a real flag
+   (an asymmetric pattern shows it, such as a **Chief Dexter Canton**, the square in the banner's top-left corner: on
+   the front it sits at the pole, at the bottom of the cloth; on the back it is also at the pole and at the bottom,
+   and since the pole is then on your right, the design reads mirrored). Seen from the front (the pole on
+   your left) the design reads as the banner turned a quarter turn anticlockwise, not mirrored. The heading tape at
+   the pole and the frayed far end stay bare cloth in the banner's base colour, the notches of the fray still show
+   the sky through them. The thin top, bottom and tip edges are the base colour. No flicker or stripes where the
+   pattern meets the cloth, up close and from 16 to 32 blocks (a faint shimmer of the patterns beyond about 60
+   blocks is a known risk, please note the distance if you see it).
+3. **Ripple and light.** Watch the cloth for ten seconds in calm (`/pirates wind set 270 1`) and in a strong wind
+   (`/pirates wind set 270 12`). Expected: the patterns ripple exactly with the cloth (no pattern sliding over the
+   cloth, no gap between them), the folds darken and lighten the patterns as they do the cloth. Build a roof over
+   the pole (or test at night with a torch nearby): the patterns get as dark as the cloth, they do not glow.
+4. **Many layers.** A banner with six patterns from the loom (for example base colour blue, then a white Cross, a red
+   Saltire, a yellow Border, a black Flower, a white Gradient, a gray Bricks). Expected: all six show on the flag,
+   later layers over earlier ones in the same order as on the banner block.
+5. **Plain dyed banner.** Hoist a plain red banner (no patterns), then a plain black and a plain blue one. Expected:
+   the cloth is red, black and blue (with the weave visible), on both faces and the edges. **Please check this one
+   first** and tell me whether the colour shows: the code path from the banner to the client's cloth is covered by a
+   new GameTest and gave the right colour, so if this step shows a white cloth, send `latest.log` and the banner's
+   `/data get entity @s SelectedItem` output.
+6. **Hoisting on a tall pole.** On the four-block pole hoist the cross banner (step 1), strike it, raise it and take it
+   down. Expected: the whole design (colour and patterns) climbs and runs down the pole with the cloth, rippling,
+   never left behind at the top or drawn without its patterns; the light changes as it passes a roofed or shaded
+   part of the pole. Hoisting a banner over a flying one: the old design vanishes at once and the new one climbs.
+7. **On a ship.** Assemble a small ship with a pole flying the cross banner, sail and turn. Expected: the design stays
+   on the cloth, downwind, with the ship.
+8. **Upright option.** Client config `flag_visuals.banner_upright = true` (config screen or the client toml; no
+   restart needed, it applies on the next frame). Expected: the design stands upright: the Chief band of step 1 now
+   runs along the top of the cloth from the pole to the fly, the banner's left edge is at the pole, the design looks
+   stretched along the fly and squashed in height. Back to `false`: sideways again.
+9. **Other flags.** Merchant, navy and Jolly Roger look unchanged (no banner layers on them).
+10. **Performance.** Twenty patterned banners (six layers each) flying in view: no noticeable FPS drop compared with
+    twenty plain ones.

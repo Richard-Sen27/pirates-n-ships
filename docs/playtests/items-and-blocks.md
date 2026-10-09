@@ -327,3 +327,30 @@ Needs SC2's `pirates_n_ships:paddle` item merged; `/give @s pirates_n_ships:padd
 - **Dropped and in an item frame:** it lies at half size on the ground; in a frame it fills the frame diagonally.
 - **On the sea chest:** sit on a floating sea chest with the paddle in hand and paddle: the paddle stays in the hand
   pose above (no rowing animation is part of ART8).
+
+## Ratlines (RL1)
+
+`/give @s pirates_n_ships:ratlines 64` (or craft: string across the middle row, a stick in each corner, gives 4).
+Render: `art/renders/ratlines.png`.
+- **Look:** two vertical shrouds with four horizontal ratlines 4 px apart, a knot at each crossing, all rope-coloured.
+  A hung net sits against the mast side; stacked nets meet without a seam. A sloped net is the same net at 45 degrees,
+  ratlines on the upper side; a run of sloped nets is one straight diagonal. In hand and in the inventory: the net flat.
+- **Hung on a mast:** build a mast of oak logs and one of spruce fence posts on land. Click the side of each mast: the
+  net hangs on that side facing you. Click the net again (not sneaking): the next net goes straight above it, up to the
+  top of the mast; above the top nothing is placed. Break the mast block behind a net: the net drops as an item.
+- **Sloped from the deck:** stand on a floor facing a mast four blocks away, click the top of the floor block in front
+  of you: a sloped net rising toward the mast. Click it three more times: the run grows one up and one forward each
+  time and its top touches the mast. Check that the slope rises **away from you** and the low edge sits on the floor.
+  Break the floor block under the first net: the run falls net by net within a moment, except the top one leaning on
+  the mast.
+- **Climbing:** walk into a hung net and hold forward (or jump): you climb like a ladder; sneak to hold on. Walk up a
+  sloped run: you step up its ratlines like a stair; no fall damage when you drop off a net. Mobs can climb too.
+- **On a ship:** build both kinds on a hull with a mast, assemble at the helm, sail a little. Both stay on the ship,
+  turn with it, and both still climb as above while the ship moves (GameTests prove it on a ship lying still; check
+  under way). Disassemble: both are back in the world in the right orientation.
+- **Water:** place a net in water (against a log under water): it holds the water, no air pocket; breaking it leaves
+  the water.
+- **Config:** `rigging.ratlines_enabled = false`: the item places nothing and says "Ratlines are disabled on this
+  server"; nets already placed stay and climb.
+- Say whether the net should be denser (more ratlines), thinner or a different colour, and whether walking up the
+  sloped run feels right.

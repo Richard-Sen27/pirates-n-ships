@@ -1,7 +1,10 @@
 package com.richardsenger.piratesnships.rpg.quest;
 
+import com.richardsenger.piratesnships.law.flag.Faction;
 import com.richardsenger.piratesnships.rpg.deeds.Deed;
 import com.richardsenger.piratesnships.trade.contract.DeliveryContract;
+import com.richardsenger.piratesnships.worldsim.voyage.VoyageEnd;
+import com.richardsenger.piratesnships.worldsim.voyage.VoyageKind;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +39,24 @@ public sealed interface QuestEvent {
 
     /** The treasure at {@code site} of {@code port} is looted. */
     record TreasureLooted(ResourceLocation port, BlockPos site) implements QuestEvent {
+    }
+
+    /** How a player got the better of an NPC ship (QST2, from the WS3b endings). */
+    enum How { SUNK, CAPTURED, PLUNDERED }
+
+    /**
+     * The player sank (the last shooter), captured or plundered the NPC ship of the voyage {@code voyage}, a voyage of
+     * {@code kind} under {@code faction}'s colours (QST2).
+     */
+    record ShipDefeated(UUID voyage, VoyageKind kind, Faction faction, How how) implements QuestEvent {
+    }
+
+    /** The player was within the escort radius of the voyage {@code voyage} while it sailed its leg {@code leg} (QST2). */
+    record EscortSeen(UUID voyage, int leg) implements QuestEvent {
+    }
+
+    /** The voyage {@code voyage} ended for {@code reason} (QST2: an escorted convoy arrived or was lost). */
+    record VoyageEnded(UUID voyage, VoyageEnd reason) implements QuestEvent {
     }
 
     /** It is day {@code day} now (deadlines). */

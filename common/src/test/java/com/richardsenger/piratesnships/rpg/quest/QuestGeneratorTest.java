@@ -94,7 +94,9 @@ class QuestGeneratorTest {
             for (long day = 0; day < 60; day++) {
                 for (Quest q : QuestGenerator.offers(ctx(kind, day), 3, QuestParams.DEFAULTS)) seen.add(q.type());
             }
-            assertEquals(Set.copyOf(QuestParams.DEFAULT_TYPES.get(kind)), seen, "types at " + kind);
+            // the sea quests need sea options this context has none of (QuestSeaTest covers them)
+            assertEquals(QuestParams.DEFAULT_TYPES.get(kind).stream().filter(t -> !t.seaQuest()).collect(Collectors.toSet()), seen,
+                    "types at " + kind);
             for (QuestType t : seen) {
                 assertTrue(t.available());
                 assertTrue(t.allowedAt(kind));
@@ -104,14 +106,14 @@ class QuestGeneratorTest {
         assertFalse(QuestType.HUNT_PIRATES.allowedAt(PortKind.PIRATE_ISLAND));
         assertFalse(QuestType.HUNT_CAPTAIN.allowedAt(PortKind.PIRATE_ISLAND));
         assertTrue(QuestType.HUNT_CAPTAIN.available());
-        for (QuestType later : List.of(QuestType.ESCORT, QuestType.PLUNDER_CONVOY, QuestType.HUNT_PATROL, QuestType.HUNT_SHIP)) {
-            assertFalse(later.available(), later + " is not offered yet");
+        for (QuestType sea : List.of(QuestType.ESCORT, QuestType.PLUNDER_CONVOY, QuestType.HUNT_PATROL, QuestType.HUNT_SHIP)) {
+            assertTrue(sea.available() && sea.seaQuest(), sea + " is offered since QST2 (QuestSeaTest)");
         }
     }
 
     @Test
     void notListedOrNotBackedTypesAreNotOffered() {
-        // a config listing hunt_navy at a village and an unavailable type: both filtered
+        // a config listing hunt_navy at a village and an escort the sea can't back (no sea options): both filtered
         QuestParams d = QuestParams.DEFAULTS;
         QuestParams odd = new QuestParams(d.offersPerPort(), d.offerDays(), d.deadlineDays(), d.maxActive(), d.rewardScale(), d.huntMin(),
                 d.huntMax(), d.monsterMin(), d.monsterMax(), d.turnInMax(), d.krakenChance(), d.perPirate(), d.perNavy(), d.perPrisoner(),

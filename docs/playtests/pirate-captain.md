@@ -88,3 +88,54 @@ and `art/renders/pirate_captain_walk.png` (walk at both strides).
    the cuff must not hide the hand or the hilt.
 6. **Drop on the ground:** his Captain's Hat is the same hat as on his head (gold edge, red band, cocked left brim,
    white plume); put it on: see items-and-blocks.md, step 18.
+
+## BOS2: the captain's hunted voyage
+
+The server side (a forced voyage with the captain aboard as lead fighter, his identity and health through a
+dematerialise/materialise cycle, his death aboard paying the bounty and marking the registry, drowning with his sunk
+ship crediting the last shooter, his capture in shackles at sea, the empty post while at sea, the homecoming after an
+arrival and after a voyage ended with its ship, `world_simulation.captain.enabled`, the schedule) is covered by 9
+GameTests (`CaptainVoyageGameTests`), and the schedule, the routes and the quarry rule by JUnit
+(`CaptainVoyageRulesTest`). This section checks what only a real world shows: a real island, a real cruise, the hunt
+with guns, the client. Please send screenshots and `latest.log` if anything differs.
+
+Setup: the BOS1 world (creative with cheats is fine for steps 1-3), a pirate island with a living captain
+(`/pirates mob captain list`). Defaults: a chance every 2 days at 50 %, cruise 600 blocks out and back, hunt radius 192.
+
+1. **Forced departure.** Stand in the captain's hut and run `/pirates mob captain voyage <island id>` (Tab completes
+   it). Expected: "Captain `<Name>` of `<island>` puts to sea (voyage `<id>` toward `<port>`, N blocks out and back)";
+   the captain disappears from the hut at once (no death message, no drops); `/pirates mob captain list` says
+   "`<Name>` of `<island>` at sea (voyage `<id>`), bounty 300 doubloons"; the notice board still lists his bounty.
+2. **The voyage list.** `/pirates world voyages`: a line of kind `captain` from the island, ending in
+   "captain `<Name>` aboard".
+3. **Aboard.** Fly to the voyage's position (the list's x z) in survival or spectator within the materialise radius,
+   or run `/pirates world voyages materialize <id>`. Expected: a pirate ship under the Jolly Roger appears; on its deck
+   the captain (his own look and hat, his name above him) stands among the pirates; there is one pirate fewer than on
+   a plain pirate ship (he took one's place). He does not try to walk off toward his hut.
+4. **Away and back.** Fly more than (materialise radius + 64) blocks away for 10 seconds, then come back (or use
+   `dematerialize <id>` and `materialize <id>`). Expected: the ship vanishes and reappears with him aboard, with the
+   health he had (hit him once before you leave; the second time he has the same wound). No second captain anywhere
+   (look in the hut too).
+5. **The hunt.** In survival on your own armed ship: `/pirates career letter @s grant` (or carry a bounty proof:
+   `/give @s pirates_n_ships:bounty_proof`), and sail within 192 blocks of his materialised ship. Expected: chat
+   "Pirate captain `<Name>` has sighted the `<your ship>` and gives chase!"; his ship turns toward you and circles you
+   at about 16 blocks; his crew man the guns and fire at your ship. Without letter and proof (`/pirates career letter
+   @s void`, drop the proofs) he leaves you alone after a check or two and sails back to his course; outrun him past
+   320 blocks: "…has lost the `<your ship>` and breaks off the chase". Strike your colours: his guns fall silent and
+   after 30 s he sails on.
+6. **A navy or merchant ship near him** (`/pirates world voyages spawn near patrol` next to his ship): his guns fire
+   at it at will (no chase).
+7. **Duel aboard.** Board his ship, sneak-use him with a sword: the duel works as on land (step 3 above); kill him.
+   Expected: bounty proof, his drops on the deck, `/pirates mob captain list` "lost on day N", the list line of his
+   voyage now ends in "without captain `<Name>`". Kill the remaining pirates and stay aboard 5 s: "You took the …!"
+   (a capture as for any pirate ship).
+8. **Sink him.** Force another voyage on another island (or after the successor), cannon his ship until it sinks.
+   Expected: he drowns with it (no swim to shore), the bounty proof lands in your inventory, "lost on day N".
+9. **Homecoming.** Force a voyage and then `/pirates world voyages advance <id> 100000` (while it is a record, far from
+   you). Expected: the voyage ends; `/pirates mob captain list` shows him alive at his post again; go to the hut: he
+   stands at his post facing the door, the same name, his bounty unchanged.
+10. **Departure while you are far away.** Leave a world running near nothing for two in-game days (`/time add 48000`
+    twice, staying away from the island): `/pirates world voyages` sometimes shows a captain's voyage. Then visit the
+    island while he is at sea: the hut is empty (no copy left there, check for a second captain when he comes back).
+11. **Toggles.** `world_simulation.captain.enabled = false`: `/pirates mob captain voyage` is refused ("…voyages are
+    off…"), no captain leaves on his own; a captain already at sea comes home when his voyage ends.

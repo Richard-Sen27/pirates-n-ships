@@ -35,8 +35,9 @@ import org.joml.Vector3d;
 /**
  * Server side of the ship HUD (docs/design.md §4.6, HUD1): every {@code ships.ship_status_sync_interval_ticks} each
  * player standing on or riding in a ship ({@link ShipEntities#standingOrRiding}, Sable's tracking) gets a
- * {@link ShipStatusPayload} of that ship, when {@link ShipStatusThrottle} says so. A player who is not aboard gets
- * nothing; the client's HUD goes stale after 3 s and hides.
+ * {@link ShipStatusPayload} of that ship, when {@link ShipStatusThrottle} says so (on a change, else about every
+ * 2 s), carrying how long the client may show it. A player who is not aboard gets nothing; the client hides the HUD
+ * once it notices the player left, or when the status goes stale.
  *
  * <p>An instance owns its throttle, so GameTests run their own sender with mock players and a recording sink; the
  * game uses {@link #INSTANCE}.
@@ -84,6 +85,7 @@ public final class ShipStatusSync {
      */
     public void sync(ServerLevel level, Collection<? extends Player> players, BiConsumer<Player, ShipStatusPayload> sink) {
         Map<UUID, ShipStatusPayload> built = new HashMap<>();
+        int keepalive = ShipStatusThrottle.keepaliveIntervals(ShipConfig.SHIP_STATUS_SYNC_INTERVAL_TICKS.get());
         for (Player player : players) {
             ShipBody ship = ShipEntities.standingOrRiding(player);
             if (ship == null || ship.isRemoved()) {
@@ -91,7 +93,7 @@ public final class ShipStatusSync {
                 continue;
             }
             ShipStatusPayload payload = built.computeIfAbsent(ship.id(), id -> build(level, ship));
-            if (throttle.offer(player.getUUID(), payload)) {
+            if (throttle.offer(player.getUUID(), payload, keepalive)) {
                 sink.accept(player, payload);
             }
         }
@@ -111,7 +113,8 @@ public final class ShipStatusSync {
         List<ShipStatusPayload.Cell> cells = hull == null ? List.of() : CompartmentStrip.cells(entries(hull, bow));
         ShipCargo.Snapshot weighed = ShipCargo.last(level, ship.id()); // CW1's last weighing, cheap
         int load = weighed == null || weighed.level() == null ? -1 : weighed.level().ordinal();
-        return new ShipStatusPayload(ship.id(), name, (float) heading, (float) speed, rudder, load, cells).quantize();
+        int fresh = ShipStatusThrottle.freshTicks(ShipConfig.SHIP_STATUS_SYNC_INTERVAL_TICKS.get());
+        return new ShipStatusPayload(ship.id(), name, (float) heading, (float) speed, rudder, load, cells, fresh).quantize();
     }
 
     /** Compass bearing of the bow (0 = north) for a ship without a sailing runtime. */

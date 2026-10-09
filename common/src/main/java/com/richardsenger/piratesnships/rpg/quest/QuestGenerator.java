@@ -27,6 +27,10 @@ import java.util.UUID;
  *   <li>treasure: {@code treasure};</li>
  *   <li>captain hunts (QST1b): the nearest living captain ({@link CaptainOption}) within {@code captainRadius},
  *       {@code captain}; at most one captain hunt among one port's offers;</li>
+ *   <li>sea quests (QST2, only while {@code sea.enabled}): an escort to a destination within
+ *       {@code escortMaxDistance} for {@code escort + escortPer1000 × distance / 1000}; convoy raids, patrol hunts and
+ *       ship hunts of {@code countMin..countMax} ships × {@code perConvoy}/{@code perPatrol}/{@code perShip}, each only
+ *       while its prey is at sea ({@link SeaOptions});</li>
  * </ul>
  * every reward × {@code rewardScale}, at least 1. An offer is open from its day through {@code day + offerDays − 1}.
  */
@@ -50,17 +54,40 @@ public final class QuestGenerator {
     public record CaptainOption(UUID id, String name, double distance, String bearing) {
     }
 
+    /** A port an escorted convoy could sail to (QST2), {@code distance} blocks away in a straight line. */
+    public record EscortOption(ResourceLocation destination, double distance) {
+    }
+
+    /**
+     * What the sea can back (QST2): ports a convoy from here could sail to, and whether merchant convoys, navy patrols
+     * and ships under the pirates' colours are at sea at all (a hunt is only offered while its prey sails).
+     */
+    public record SeaOptions(List<EscortOption> escorts, boolean convoys, boolean patrols, boolean pirates) {
+        public static final SeaOptions NONE = new SeaOptions(List.of(), false, false, false);
+
+        public SeaOptions {
+            escorts = List.copyOf(escorts);
+        }
+    }
+
     /**
      * Where and when the offers are made, and what the world can back.
      *
      * @param captains the living captains in the port's dimension (any distance; the generator applies the radius)
+     * @param sea      what the sea quests can follow (QST2)
      */
     public record Context(ResourceLocation port, PortKind kind, Climate climate, long day, long seed,
-                          List<DeliveryOption> deliveries, List<TreasureOption> treasures, List<CaptainOption> captains) {
+                          List<DeliveryOption> deliveries, List<TreasureOption> treasures, List<CaptainOption> captains, SeaOptions sea) {
         public Context {
             deliveries = List.copyOf(deliveries);
             treasures = List.copyOf(treasures);
             captains = List.copyOf(captains);
+            if (sea == null) sea = SeaOptions.NONE;
+        }
+
+        public Context(ResourceLocation port, PortKind kind, Climate climate, long day, long seed,
+                       List<DeliveryOption> deliveries, List<TreasureOption> treasures, List<CaptainOption> captains) {
+            this(port, kind, climate, day, seed, deliveries, treasures, captains, SeaOptions.NONE);
         }
 
         public Context(ResourceLocation port, PortKind kind, Climate climate, long day, long seed,
@@ -70,7 +97,12 @@ public final class QuestGenerator {
 
         /** The same context without captains (the port already offers a captain hunt). */
         public Context withoutCaptains() {
-            return new Context(port, kind, climate, day, seed, deliveries, treasures, List.of());
+            return new Context(port, kind, climate, day, seed, deliveries, treasures, List.of(), sea);
+        }
+
+        /** The same context with {@code options} for the sea quests. */
+        public Context withSea(SeaOptions options) {
+            return new Context(port, kind, climate, day, seed, deliveries, treasures, captains, options);
         }
     }
 
@@ -86,6 +118,7 @@ public final class QuestGenerator {
             if (t == QuestType.DELIVER && ctx.deliveries().isEmpty()) continue;
             if (t == QuestType.FIND_TREASURE && (!p.treasureEnabled() || ctx.treasures().isEmpty())) continue;
             if (t == QuestType.HUNT_CAPTAIN && quarry(ctx, p).isEmpty()) continue;
+            if (t.seaQuest() && !seaBacked(t, ctx, p)) continue;
             out.add(t);
         }
         return out;
@@ -111,6 +144,32 @@ public final class QuestGenerator {
             out.add(make(t, ctx, rng, p));
         }
         return List.copyOf(out);
+    }
+
+    /**
+     * Whether the sea quest {@code type} can be offered (QST2): {@code quests.sea_quests} is on, and an escort has a
+     * destination within {@code escortMaxDistance}, a convoy raid convoys, a patrol hunt patrols and a ship hunt
+     * pirate ships at sea.
+     */
+    static boolean seaBacked(QuestType type, Context ctx, QuestParams p) {
+        if (!p.sea().enabled()) return false;
+        return switch (type) {
+            case ESCORT -> !escortDestinations(ctx, p).isEmpty();
+            case PLUNDER_CONVOY -> ctx.sea().convoys();
+            case HUNT_PATROL -> ctx.sea().patrols();
+            case HUNT_SHIP -> ctx.sea().pirates();
+            default -> false;
+        };
+    }
+
+    /** The destinations an escort from {@code ctx}'s port may go to: within {@code escortMaxDistance}, never the port itself. */
+    public static List<EscortOption> escortDestinations(Context ctx, QuestParams p) {
+        List<EscortOption> out = new ArrayList<>();
+        for (EscortOption o : ctx.sea().escorts()) {
+            if (o.destination().equals(ctx.port()) || o.distance() > p.sea().escortMaxDistance()) continue;
+            out.add(o);
+        }
+        return out;
     }
 
     /** The captain a hunt from {@code ctx}'s port goes after: the nearest within {@code captainRadius}, if any. */
@@ -198,7 +257,26 @@ public final class QuestGenerator {
                 needed = 1;
                 reward = p.captain();
             }
-            default -> throw new IllegalArgumentException("Quest type " + type.id() + " is not offered yet");
+            case ESCORT -> {
+                List<EscortOption> dests = escortDestinations(ctx, p);
+                EscortOption o = dests.get(rng.nextInt(dests.size()));
+                target = new QuestTarget.Escort(o.destination());
+                needed = 1; // the legs to escort are known once the convoy sails (QuestRules.bindEscort)
+                reward = p.sea().escort() + p.sea().escortPer1000() * o.distance() / 1000.0;
+            }
+            case PLUNDER_CONVOY -> {
+                needed = range(rng, p.sea().countMin(), p.sea().countMax());
+                reward = needed * (double) p.sea().perConvoy();
+            }
+            case HUNT_PATROL -> {
+                needed = range(rng, p.sea().countMin(), p.sea().countMax());
+                reward = needed * (double) p.sea().perPatrol();
+            }
+            case HUNT_SHIP -> {
+                needed = range(rng, p.sea().countMin(), p.sea().countMax());
+                reward = needed * (double) p.sea().perShip();
+            }
+            default -> throw new IllegalArgumentException("Quest type " + type.id() + " is not offered");
         }
         long coins = Math.max(1L, Math.round(reward * Math.max(0.0, p.rewardScale())));
         UUID id = new UUID(rng.nextLong(), rng.nextLong());

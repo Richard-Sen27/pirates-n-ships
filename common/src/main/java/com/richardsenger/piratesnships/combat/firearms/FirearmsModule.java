@@ -31,6 +31,7 @@ public final class FirearmsModule implements ModModule {
     @Override
     public void registerPayloads() {
         Services.NETWORK.registerToClient(RecoilPayload.TYPE, RecoilPayload.CODEC, RecoilPayload::apply);
+        Services.NETWORK.registerToServer(FirearmFirePayload.TYPE, FirearmFirePayload.CODEC, FirearmTrigger::onFirePayload);
     }
 
     @Override
@@ -45,12 +46,13 @@ public final class FirearmsModule implements ModModule {
                 .add(FirearmItem.LOADED_KEY, "Loaded")
                 .add(FirearmItem.UNLOADED_KEY, "Not loaded")
                 .add(FirearmItem.AIM_HINT_KEY, "Hold to aim, release to fire")
+                .add(FirearmItem.AIM_ATTACK_HINT_KEY, "Hold use to aim, attack to fire")
                 .add(FirearmItem.LOWER_HINT_KEY, "Sneak to lower without firing")
                 .add(FirearmItem.LOAD_HINT_KEY, "Hold with lead shot and gunpowder to load"));
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(FirearmGameTests.class);
+        return List.of(FirearmGameTests.class, FirearmTriggerGameTests.class);
     }
 }

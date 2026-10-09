@@ -5,7 +5,11 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.sailing.block.YardBlock;
 import com.richardsenger.piratesnships.sailing.block.YardBlockEntity;
+import com.richardsenger.piratesnships.sailing.force.SailTrim;
+import com.richardsenger.piratesnships.sailing.force.SailTypes;
 import com.richardsenger.piratesnships.sailing.sail.ClothGeometry;
+import com.richardsenger.piratesnships.sailing.sail.SailShape;
+import com.richardsenger.piratesnships.sailing.sail.SailVisualsConfig;
 import com.richardsenger.piratesnships.sailing.sail.SquareSail;
 import com.richardsenger.piratesnships.sailing.wind.ClientWind;
 import com.richardsenger.piratesnships.sailing.wind.WindSample;
@@ -21,6 +25,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaterniond;
+import org.joml.Vector3d;
 import org.joml.Vector3f;
 
 /**
@@ -29,6 +34,10 @@ import org.joml.Vector3f;
  * drop; full: down to the lower yard), hoisted and lowered smoothly over about a second, and bellied out to the
  * downwind side. Both faces are drawn ({@code entityCutoutNoCull}). The bottom block of a cloth at least two blocks
  * tall shows the frayed foot tile ({@link SailFoot}, ART5); the bundle keeps the plain tile.
+ *
+ * <p><b>In the wind (VIS1b).</b> With client {@code sail_visuals.enabled} the cloth moves: it bellies to leeward while
+ * it draws, flutters while it luffs, sags in a calm ({@link SailShape}), from the apparent wind on the sail
+ * ({@link SailAirTracker}); the grid is finer and its normals follow the surface. Off: the fixed belly of before.
  *
  * <p>Works the same on land and on ships: Sable renders the block entities of a sub-level through the vanilla
  * {@code BlockEntityRenderDispatcher} with the ship's pose on the pose stack
@@ -46,8 +55,18 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
     private static final float HOIST_PER_SECOND = 1.0f;
     /** Half the yard beam's thickness (6 px). */
     private static final float BEAM_HALF = 3f / 16f;
-    /** Cells per block of cloth (texture: one copy per block). */
+    /** Cells per block of cloth (texture: one copy per block) without VIS1b; the moving cloth refines each cell. */
     private static final int CELLS_PER_BLOCK = 2;
+
+    /** Per-sail looks and the apparent wind (VIS1b). */
+    private final SailAirTracker air = new SailAirTracker();
+    /** The cloth grid, refilled per sail and frame (no allocation while drawing; grown for a bigger sail). */
+    private float[] px = new float[0];
+    private float[] py = new float[0];
+    private float[] pz = new float[0];
+    private float[] nx = new float[0];
+    private float[] ny = new float[0];
+    private float[] nz = new float[0];
 
     public YardClothRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -61,14 +80,24 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
             return;
         }
         double now = level.getGameTime() + (double) partialTick;
-        float shown = animate(be, (float) SquareSail.drawnFraction(state.getValue(YardBlock.TRIM)), now);
-        updateSide(be, g, level, now, partialTick);
+        SailTrim trim = state.getValue(YardBlock.TRIM);
+        float shown = animate(be, (float) SquareSail.drawnFraction(trim), now);
+        SailShape.Look look = null;
+        if (SailVisualsConfig.ENABLED.get()) {
+            look = air.look(be, be.side, 0);
+            Vector3d out = ClothSide.squareSailOut(g.alongX());
+            // the yards run across the ship, so the bow lies along the cloth's out axis (its sign from the ship's motion)
+            be.side = air.update(look, level, Vec3.atCenterOf(be.getBlockPos()), partialTick, now, SailTypes.SQUARE_CURVE, trim,
+                    out.x, out.z, out.x, out.z, g.drop(), be.side);
+        } else {
+            updateSide(be, g, level, now, partialTick);
+        }
         pose.pushPose();
         pose.translate(0.5f, 0.5f, 0.5f);
         PoseStack.Pose p = pose.last();
         float bottom = shown * g.drop();
         if (bottom > 0.05f) {
-            cloth(buffers, p, g, be.side, bottom, light, overlay);
+            cloth(buffers, p, g, be, look, bottom, now, light, overlay);
         }
         if (shown < 0.999f) {
             bundle(buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), p, g, be.side, 1f - shown, light, overlay);
@@ -89,7 +118,10 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
         return be.shownFraction;
     }
 
-    /** The cloth bellies toward the side the wind blows to (in the ship's frame when on a ship), see {@link ClothSide}. */
+    /**
+     * The cloth bellies toward the side the wind blows to (in the ship's frame when on a ship), see {@link ClothSide};
+     * used with {@code sail_visuals.enabled} off (on, {@link SailAirTracker} does it with the apparent wind).
+     */
     private static void updateSide(YardBlockEntity be, ClothGeometry g, Level level, double now, float partialTick) {
         if (!ClientWind.hasData()) {
             return;
@@ -107,51 +139,133 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
      * texture's tiles are counted up from the bottom edge, and the last block of rows takes the foot tile
      * ({@link SailFoot}). Each buffer is taken right before its rows are written: a buffer source ends the previous
      * shared batch when another render type is asked for.
+     *
+     * <p>With a {@code look} (VIS1b) every cell of the plain grid is split further (at least
+     * {@code sail_visuals.segments} columns across, half as many rows per block down) and every point stands off by
+     * the clearance from the yards ({@link ClothGeometry#clearance}) plus {@link SailShape#square}; without one, the
+     * fixed profile of {@link ClothGeometry#standoff} on the plain grid. Texture tiles stay one per block both ways.
+     * Normals are per vertex, summed over the cells around it, so the belly shades smoothly.
      */
-    private static void cloth(MultiBufferSource buffers, PoseStack.Pose p, ClothGeometry g, int side, float bottom, int light, int overlay) {
+    private void cloth(MultiBufferSource buffers, PoseStack.Pose p, ClothGeometry g, YardBlockEntity be, SailShape.Look look,
+                       float bottom, double now, int light, int overlay) {
         float width = Math.max(g.upperNeg() + g.upperPos(), g.lowerNeg() + g.lowerPos());
-        int cols = Math.max(2, (int) Math.ceil(width * CELLS_PER_BLOCK));
-        int rows = Math.max(1, (int) Math.ceil(bottom * CELLS_PER_BLOCK));
-        Vector3f[][] pts = new Vector3f[rows + 1][cols + 1];
+        int cols0 = Math.max(2, (int) Math.ceil(width * CELLS_PER_BLOCK));
+        int rows0 = Math.max(1, (int) Math.ceil(bottom * CELLS_PER_BLOCK));
+        int segments = look == null ? 0 : SailVisualsConfig.SEGMENTS.get();
+        int kc = Math.max(1, (segments + cols0 - 1) / cols0);
+        int kr = Math.max(1, segments / (2 * CELLS_PER_BLOCK));
+        int cols = cols0 * kc;
+        int rows = rows0 * kr;
+        int rowsPerBlock = CELLS_PER_BLOCK * kr;
+        int stride = cols + 1;
+        ensure((rows + 1) * stride);
+        boolean footFree = !g.hangsToLowerYard(bottom);
+        float phase = SailShape.phase(be.getBlockPos().asLong());
         for (int i = 0; i <= rows; i++) {
-            float v = bottom * i / rows;
+            float s = (float) i / rows;
+            float v = bottom * s;
             float neg = g.negativeEdge(v);
             float pos = g.positiveEdge(v);
+            float clearance = g.clearance(v, bottom);
             for (int j = 0; j <= cols; j++) {
                 float t = (float) j / cols;
-                pts[i][j] = local(g, neg + (pos - neg) * t, -v, side * g.standoff(v, t, bottom));
+                float off = look == null ? be.side * g.standoff(v, t, bottom)
+                        : look.side * clearance + SailShape.square(look, t, s, footFree, bottom, now, phase);
+                float along = neg + (pos - neg) * t;
+                int k = i * stride + j;
+                px[k] = g.alongX() ? along : off;
+                py[k] = -v;
+                pz[k] = g.alongX() ? off : along;
             }
         }
+        normals(rows, cols);
         int footFrom = rows;
-        while (footFrom > 0 && SailFoot.yardFootRow(footFrom - 1, rows, CELLS_PER_BLOCK, bottom)) {
+        while (footFrom > 0 && SailFoot.yardFootRow(footFrom - 1, rows, rowsPerBlock, bottom)) {
             footFrom--;
         }
-        rows(buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), p, pts, 0, footFrom, rows, cols, light, overlay);
+        int colsPerTile = CELLS_PER_BLOCK * kc;
+        rows(buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), p, 0, footFrom, rows, cols, rowsPerBlock, colsPerTile,
+                light, overlay);
         if (footFrom < rows) {
-            rows(buffers.getBuffer(RenderType.entityCutoutNoCull(FOOT_TEXTURE)), p, pts, footFrom, rows, rows, cols, light, overlay);
+            rows(buffers.getBuffer(RenderType.entityCutoutNoCull(FOOT_TEXTURE)), p, footFrom, rows, rows, cols, rowsPerBlock,
+                    colsPerTile, light, overlay);
         }
     }
 
-    /** Grid rows {@code from} (inclusive) to {@code to} (exclusive) of {@code rows}, one texture tile per block. */
-    private static void rows(VertexConsumer vc, PoseStack.Pose p, Vector3f[][] pts, int from, int to, int rows, int cols,
-                             int light, int overlay) {
-        Vector3f n = new Vector3f();
-        for (int i = from; i < to; i++) {
-            float v0 = SailFoot.yardV0(i, rows, CELLS_PER_BLOCK);
-            float v1 = v0 + 1f / CELLS_PER_BLOCK;
+    private void ensure(int n) {
+        if (px.length < n) {
+            px = new float[n];
+            py = new float[n];
+            pz = new float[n];
+            nx = new float[n];
+            ny = new float[n];
+            nz = new float[n];
+        }
+    }
+
+    /** Per-vertex normals of the grid: the sum of the normals of the cells around each vertex, normalised. */
+    private void normals(int rows, int cols) {
+        int stride = cols + 1;
+        int n = (rows + 1) * stride;
+        java.util.Arrays.fill(nx, 0, n, 0f);
+        java.util.Arrays.fill(ny, 0, n, 0f);
+        java.util.Arrays.fill(nz, 0, n, 0f);
+        for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                float u0 = (j % CELLS_PER_BLOCK) / (float) CELLS_PER_BLOCK;
-                float u1 = u0 + 1f / CELLS_PER_BLOCK;
-                Vector3f a = pts[i][j], b = pts[i][j + 1], c = pts[i + 1][j + 1], d = pts[i + 1][j];
-                new Vector3f(b).sub(a).cross(new Vector3f(d).sub(a), n);
-                if (n.lengthSquared() < 1.0e-12f) continue;
-                n.normalize();
-                vertex(vc, p, a, u0, v0, n, light, overlay);
-                vertex(vc, p, b, u1, v0, n, light, overlay);
-                vertex(vc, p, c, u1, v1, n, light, overlay);
-                vertex(vc, p, d, u0, v1, n, light, overlay);
+                int a = i * stride + j, b = a + 1, d = a + stride, c = d + 1;
+                // (c - a) x (d - b): the cell's normal, the same way round as the flat (b - a) x (d - a) of before
+                float ex = px[c] - px[a], ey = py[c] - py[a], ez = pz[c] - pz[a];
+                float fx = px[d] - px[b], fy = py[d] - py[b], fz = pz[d] - pz[b];
+                float cx = ey * fz - ez * fy, cy = ez * fx - ex * fz, cz = ex * fy - ey * fx;
+                add(a, cx, cy, cz);
+                add(b, cx, cy, cz);
+                add(c, cx, cy, cz);
+                add(d, cx, cy, cz);
             }
         }
+        for (int k = 0; k < n; k++) {
+            float l = (float) Math.sqrt(nx[k] * nx[k] + ny[k] * ny[k] + nz[k] * nz[k]);
+            if (l > 1.0e-12f) {
+                nx[k] /= l;
+                ny[k] /= l;
+                nz[k] /= l;
+            } else {
+                ny[k] = 1f;
+            }
+        }
+    }
+
+    private void add(int k, float x, float y, float z) {
+        nx[k] += x;
+        ny[k] += y;
+        nz[k] += z;
+    }
+
+    /**
+     * Grid rows {@code from} (inclusive) to {@code to} (exclusive) of {@code rows}: one texture tile per block, i.e.
+     * per {@code rowsPerBlock} rows down and {@code colsPerTile} columns across.
+     */
+    private void rows(VertexConsumer vc, PoseStack.Pose p, int from, int to, int rows, int cols, int rowsPerBlock, int colsPerTile,
+                      int light, int overlay) {
+        int stride = cols + 1;
+        for (int i = from; i < to; i++) {
+            float v0 = SailFoot.yardV0(i, rows, rowsPerBlock);
+            float v1 = v0 + 1f / rowsPerBlock;
+            for (int j = 0; j < cols; j++) {
+                float u0 = (j % colsPerTile) / (float) colsPerTile;
+                float u1 = u0 + 1f / colsPerTile;
+                int a = i * stride + j, b = a + 1, d = a + stride, c = d + 1;
+                vertex(vc, p, a, u0, v0, light, overlay);
+                vertex(vc, p, b, u1, v0, light, overlay);
+                vertex(vc, p, c, u1, v1, light, overlay);
+                vertex(vc, p, d, u0, v1, light, overlay);
+            }
+        }
+    }
+
+    private void vertex(VertexConsumer vc, PoseStack.Pose p, int k, float u, float v, int light, int overlay) {
+        vc.addVertex(p, px[k], py[k], pz[k]).setColor(255, 255, 255, 255).setUv(u, v).setOverlay(overlay).setLight(light)
+                .setNormal(p, nx[k], ny[k], nz[k]);
     }
 
     /** The furled part of the cloth: a flattened roll under the upper yard, thicker the more cloth is gathered. */
@@ -223,10 +337,18 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
             return new AABB(p);
         }
         double along = g.maxExtent() + 0.5;
-        double across = ClothGeometry.STANDOFF + ClothGeometry.MAX_BELLY + 0.5;
+        double across = ClothGeometry.STANDOFF + bellyReach() + 0.5;
         double ax = g.alongX() ? along : across;
         double az = g.alongX() ? across : along;
         return new AABB(p.getX() + 0.5 - ax, p.getY() - g.drop(), p.getZ() + 0.5 - az,
                 p.getX() + 0.5 + ax, p.getY() + 1.0, p.getZ() + 0.5 + az);
+    }
+
+    /** How far the belly can reach off the cloth's rest line [blocks], for the culling boxes of both sail renderers. */
+    static double bellyReach() {
+        return SailVisualsConfig.ENABLED.get()
+                ? Math.max(ClothGeometry.MAX_BELLY, SailShape.maxReach(SailVisualsConfig.MAX_BELLY.get().floatValue(),
+                        SailVisualsConfig.FLUTTER_AMPLITUDE.get().floatValue()))
+                : ClothGeometry.MAX_BELLY;
     }
 }

@@ -49,6 +49,8 @@ final class PumpsAndFloodingScene {
         scene.idle(15);
         scene.world().showSection(util.select().position(pump), Direction.DOWN);
         scene.idle(10);
+        // the walls on the watcher's side (north and west) cut away, so the hold can be seen from the default camera
+        SceneKit.cutAway(scene, util.select().fromTo(2, 2, 2, 6, 4, 2).add(util.select().fromTo(2, 2, 3, 2, 4, 6)));
         scene.overlay().showOutline(PonderPalette.WHITE, "hold", hold, 60);
         say(scene.overlay().showText(60), Pumps.DRY)
                 .pointAt(util.vector().centerOf(4, 2, 5))

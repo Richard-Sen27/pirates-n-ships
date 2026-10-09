@@ -33,7 +33,8 @@ import static com.richardsenger.piratesnships.almanac.ponder.SceneKit.say;
  * "The anchor and the capstan" (PND1, docs/almanac.md "Scenes"; station/capstan and sailing/anchor, design.md §5.3
  * and §6 CAP2), on the schematic {@code assets/pirates_n_ships/ponder/anchor_and_capstan.nbt}
  * ({@code art/structures/ponder/anchor_and_capstan.py}: a ship's waist x 1..5, z 1..7 floating in a sea four blocks
- * deep, its deck on y 5, the capstan at [3, 6, 4]).
+ * deep, its deck on y 5, the capstan at [2, 6, 4], to port of the centre line, so the anchor hangs to port, on the
+ * side the default camera looks at from the north-west, PND3).
  *
  * <p>The anchor is the game's {@link AnchorEntity}, drawn stowed by its own renderer, hanging where {@link HullSide}
  * puts the hawse for this hull ({@link #HAWSE}); it falls at the default sink speed (4 blocks/s) and comes up at the
@@ -44,7 +45,7 @@ import static com.richardsenger.piratesnships.almanac.ponder.SceneKit.say;
  */
 final class AnchorAndCapstanScene {
 
-    static final BlockPos CAPSTAN = new BlockPos(3, 6, 4);
+    static final BlockPos CAPSTAN = new BlockPos(2, 6, 4);
     /** The hull's blocks, as the anchor rule sees the ship (x 1..5, y 3..5, z 1..7 of the schematic). */
     static final int X0 = 1, X1 = 5, Y0 = 3, Y1 = 5, Z0 = 1, Z1 = 7;
     /** Default {@code crew_stations.capstan.turn_degrees_per_tick} and {@code walk_radius}. */
@@ -159,7 +160,8 @@ final class AnchorAndCapstanScene {
             return c;
         });
         scene.idle(10);
-        scene.overlay().showControls(spot.add(0, 2.2, 0), Pointing.DOWN, 20).rightClick()
+        SceneKit.focus(scene, spot.add(0, 1.0, 0));
+        scene.overlay().showControls(spot.add(0.3, 1.5, 0), Pointing.LEFT, 20).rightClick()
                 .withItem(SceneKit.item("captains_whistle"));
         scene.idle(20);
         scene.overlay().showControls(util.vector().topOf(capstan), Pointing.DOWN, 20).rightClick()

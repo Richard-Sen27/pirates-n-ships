@@ -6,6 +6,7 @@ import net.createmod.ponder.api.element.TextElementBuilder;
 import net.createmod.ponder.api.scene.SceneBuilder;
 import net.createmod.ponder.foundation.PonderScene;
 import net.createmod.ponder.api.scene.Selection;
+import net.createmod.ponder.foundation.instruction.PonderInstruction;
 import net.createmod.ponder.foundation.instruction.ReplaceBlocksInstruction;
 import net.createmod.ponder.foundation.instruction.TickingInstruction;
 import net.minecraft.core.BlockPos;
@@ -206,6 +207,81 @@ final class SceneKit {
                 e.discard();
             }
         });
+    }
+
+    /**
+     * Declares a point the watcher must see at this moment of the scene (PND3): where something happens that no text
+     * points at and no click shows (an entity at work, a block changing in a model's state). It does nothing in the
+     * game; {@code SceneViewTest} reads it from the schedule and fails when a solid block hides the point from the
+     * default camera.
+     */
+    static void focus(SceneBuilder scene, Vec3 point) {
+        scene.addInstruction(new Focus(point, null));
+    }
+
+    /** {@link #focus(SceneBuilder, Vec3)} for a whole block: seen when its centre or a face toward the camera is. */
+    static void focus(SceneBuilder scene, BlockPos block) {
+        scene.addInstruction(new Focus(null, block));
+    }
+
+    /**
+     * Hides {@code selection} (Ponder's {@code hideSection}, the wall on the watcher's side cut away) and tells the
+     * headless view check that those blocks are gone from the picture (Ponder's own instruction erases them through a
+     * callback the check cannot read).
+     */
+    static void hide(SceneBuilder scene, Selection selection, net.minecraft.core.Direction fadeOutTo) {
+        scene.addInstruction(new Hidden(selection));
+        scene.world().hideSection(selection, fadeOutTo);
+    }
+
+    /**
+     * Cuts a hull wall on the watcher's side away (PND3: Ponder's default camera looks from the north-west, so a wall on
+     * the north or west side of a hold stands between the watcher and what happens inside): the wall fades out
+     * ({@link #hide}), then its cells become air, so the water behind them draws its face toward the watcher like a
+     * cross-section instead of hiding it. Blocks for 15 ticks.
+     */
+    static void cutAway(SceneBuilder scene, Selection wall) {
+        hide(scene, wall, net.minecraft.core.Direction.UP);
+        scene.idle(15);
+        scene.world().setBlocks(wall, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), false);
+    }
+
+    /** A point of interest of the scene ({@link #focus}): a marker only, complete at once. */
+    static final class Focus extends PonderInstruction {
+        final Vec3 point;
+        final BlockPos block;
+
+        Focus(Vec3 point, BlockPos block) {
+            this.point = point;
+            this.block = block;
+        }
+
+        @Override
+        public boolean isComplete() {
+            return true;
+        }
+
+        @Override
+        public void tick(PonderScene scene) {
+        }
+    }
+
+    /** The blocks {@link #hide} takes out of the picture: a marker only, complete at once. */
+    static final class Hidden extends PonderInstruction {
+        final Selection selection;
+
+        Hidden(Selection selection) {
+            this.selection = selection;
+        }
+
+        @Override
+        public boolean isComplete() {
+            return true;
+        }
+
+        @Override
+        public void tick(PonderScene scene) {
+        }
     }
 
     /** Non-blocking: calls its action once per tick for its duration. */

@@ -114,14 +114,20 @@ class PonderSchematicsTest {
 
         size(ShipSceneText.SAILS_AND_WINCH, 7, 8, 7);
         CompoundTag sails = schematic(ShipSceneText.SAILS_AND_WINCH);
+        // PND3, the yard rule: both yards one block forward of the mast (z 2, bow north), the mast's column whole
         for (int x = 1; x <= 5; x++) {
-            assertTrue(stateAt(sails, x, 6, 3).startsWith(MOD + ":yard[axis=x,trim=furled"), "upper yard " + x);
-            assertTrue(stateAt(sails, x, 2, 3).startsWith(MOD + ":yard[axis=x"), "lower yard " + x);
+            assertTrue(stateAt(sails, x, 6, SailsAndWinchScene.YARD_Z).startsWith(MOD + ":yard[axis=x,trim=furled"),
+                    "upper yard " + x);
+            assertTrue(stateAt(sails, x, 2, SailsAndWinchScene.YARD_Z).startsWith(MOD + ":yard[axis=x"), "lower yard " + x);
         }
-        for (int y : new int[] {1, 3, 4, 5, 7}) {
+        assertEquals(3 - 1, SailsAndWinchScene.YARD_Z, "the column in front of the mast");
+        for (int y = 1; y <= 7; y++) {
             assertEquals("minecraft:oak_log[axis=y]", stateAt(sails, 3, y, 3), "mast " + y);
         }
-        assertEquals(MOD + ":sail_winch[facing=south]", stateAt(sails, 5, 1, 5));
+        for (int y = 3; y <= 5; y++) {
+            assertEquals(null, stateAt(sails, 3, y, SailsAndWinchScene.YARD_Z), "only air between the yards' middles");
+        }
+        assertEquals(MOD + ":sail_winch[facing=south]", stateAt(sails, 1, 1, 4));
 
         size(ShipSceneText.STEERING, 11, 5, 11);
         assertTrue(stateAt(schematic(ShipSceneText.STEERING), 5, 4, 8).startsWith(MOD + ":helm[facing=south"));
@@ -129,12 +135,12 @@ class PonderSchematicsTest {
 
         size(ShipSceneText.ANCHOR_AND_CAPSTAN, 9, 7, 9);
         CompoundTag anchor = schematic(ShipSceneText.ANCHOR_AND_CAPSTAN);
-        assertTrue(stateAt(anchor, 3, 6, 4).startsWith(MOD + ":capstan"));
-        // the hull AnchorAndCapstanScene.HAWSE assumes: x 1..5 on the deck row, nothing beyond it to starboard
-        assertEquals("minecraft:spruce_planks", stateAt(anchor, 5, 5, 4));
-        assertEquals(null, stateAt(anchor, 6, 5, 4), "the chain's top cell is free");
+        assertTrue(stateAt(anchor, AnchorAndCapstanScene.CAPSTAN).startsWith(MOD + ":capstan"));
+        // the hull AnchorAndCapstanScene.HAWSE assumes: x 1..5 on the deck row, nothing beyond it to port (PND3)
+        assertEquals("minecraft:spruce_planks", stateAt(anchor, 1, 5, 4));
+        assertEquals(null, stateAt(anchor, 0, 5, 4), "the chain's top cell is free");
         for (int y = 1; y <= 4; y++) {
-            assertTrue(stateAt(anchor, 6, y, 4).startsWith("minecraft:water"), "the chain's column is sea at " + y);
+            assertTrue(stateAt(anchor, 0, y, 4).startsWith("minecraft:water"), "the chain's column is sea at " + y);
         }
 
         size(ShipSceneText.PUMPS_AND_FLOODING, 9, 5, 9);
@@ -211,19 +217,20 @@ class PonderSchematicsTest {
         for (int y = 1; y <= 6; y++) {
             assertEquals("minecraft:oak_log[axis=y]", stateAt(nest, 3, y, 3), "mast " + y);
         }
-        assertEquals(MOD + ":ratlines[facing=north,kind=slope,waterlogged=false]", stateAt(nest, 3, 1, 6));
-        assertEquals(MOD + ":ratlines[facing=south,kind=wall,waterlogged=false]", stateAt(nest, 3, 7, 4), "the net on the nest");
+        // PND3: the ratlines on the mast's port side (west), the side the default camera sees
+        assertEquals(MOD + ":ratlines[facing=east,kind=slope,waterlogged=false]", stateAt(nest, 0, 1, 3));
+        assertEquals(MOD + ":ratlines[facing=west,kind=wall,waterlogged=false]", stateAt(nest, 2, 7, 3), "the net on the nest");
 
         size(CrewSceneText.SHIPS_BELL, 5, 4, 5);
         CompoundTag bell = schematic(CrewSceneText.SHIPS_BELL);
-        assertEquals(MOD + ":ships_bell[face=wall,facing=south,ringing=false,waterlogged=false]", stateAt(bell, ShipsBellScene.WALL_BELL));
-        assertEquals(MOD + ":ships_bell[face=floor,facing=south,ringing=false,waterlogged=false]", stateAt(bell, ShipsBellScene.POST_BELL));
+        assertEquals(MOD + ":ships_bell[face=wall,facing=north,ringing=false,waterlogged=false]", stateAt(bell, ShipsBellScene.WALL_BELL));
+        assertEquals(MOD + ":ships_bell[face=floor,facing=north,ringing=false,waterlogged=false]", stateAt(bell, ShipsBellScene.POST_BELL));
         assertTrue(stateAt(bell, ShipsBellScene.POST_BELL.below()).startsWith("minecraft:spruce_fence"), "the post");
-        assertEquals("minecraft:spruce_planks", stateAt(bell, ShipsBellScene.WALL_BELL.north()), "the wall behind the bracket");
+        assertEquals("minecraft:spruce_planks", stateAt(bell, ShipsBellScene.WALL_BELL.south()), "the wall behind the bracket");
 
         size(CrewSceneText.GALLEY_AND_PROVISIONS, 7, 3, 7);
         CompoundTag galley = schematic(CrewSceneText.GALLEY_AND_PROVISIONS);
-        assertEquals(MOD + ":pantry[facing=east,load=0]", stateAt(galley, GalleyAndProvisionsScene.PANTRY));
+        assertEquals(MOD + ":pantry[facing=west,load=0]", stateAt(galley, GalleyAndProvisionsScene.PANTRY));
         assertEquals(MOD + ":water_barrel[fill=0,load=0]", stateAt(galley, GalleyAndProvisionsScene.BARREL));
         for (BlockPos spot : GalleyAndProvisionsScene.mealSpots()) {
             assertEquals(null, stateAt(galley, spot), "the meal seat " + spot + " is free");

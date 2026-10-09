@@ -37,7 +37,7 @@ import java.util.Optional;
 
 /**
  * The Captain's Almanac's book screen (client only, docs/design.md §3.4, ALM3): a two-page parchment spread with the
- * chapter bookmarks on its right edge. Everything is drawn in book pixels ({@link #BOOK_W} x {@link #BOOK_H}) under one
+ * chapter bookmarks down its left edge and, when that is full, its right edge ({@link Bookmarks}). Everything is drawn in book pixels ({@link #BOOK_W} x {@link #BOOK_H}) under one
  * pose scale, so the layout ({@link PageLayout}) never depends on the window; the scale is the client config
  * {@code almanac_screen.scale}, shrunk to fit small windows. Pages turn with the page corners, the arrow and page
  * keys, the mouse wheel, a bookmark or a link, animated by {@link PageTurn} with vanilla's page-turn sound; input waits
@@ -75,7 +75,7 @@ public final class AlmanacScreen extends Screen {
     static final int ARROW_Y = PAGE_BOTTOM - ARROW_H - 3;
     static final int RIGHT_ARROW_X = RIGHT_PAGE_END - ARROW_W - 4;
     static final int LEFT_ARROW_X = LEFT_PAGE_X + 4;
-    /** Bookmarks run along the right edge between these. */
+    /** Bookmarks run down the left edge, then the right edge, between these. */
     static final int TABS_TOP = 8;
     static final int TABS_BOTTOM = 172;
     /** Room kept on both sides for the bookmarks, so the book stays centred. */
@@ -165,7 +165,8 @@ public final class AlmanacScreen extends Screen {
     }
 
     private void layoutTabs() {
-        tabs = empty ? List.of() : Bookmarks.layout(chapters.size(), shownChapter(), BOOK_W, TABS_TOP, TABS_BOTTOM - TABS_TOP);
+        tabs = empty ? List.of() : Bookmarks.layout(chapters.size(), shownChapter(), 0, BOOK_W, TABS_TOP,
+                TABS_BOTTOM - TABS_TOP);
     }
 
     /** The chapter whose bookmark is drawn as open: the one being turned to while a page turns. */
@@ -387,14 +388,21 @@ public final class AlmanacScreen extends Screen {
             float lift = t.chapter() == hover ? 1.15f : 1f;
             RenderSystem.setShaderColor(Math.min(1f, ((rgb >> 16) & 0xFF) / 255f * lift),
                     Math.min(1f, ((rgb >> 8) & 0xFF) / 255f * lift), Math.min(1f, (rgb & 0xFF) / 255f * lift), 1f);
+            // a hovered tab reaches one pixel further out on its own side
             int extra = t.chapter() == hover ? 1 : 0;
-            g.blit(BOOKMARK, t.x(), t.y(), t.w() + extra, t.h(), 0, 0, Bookmarks.TAB_W, Bookmarks.MAX_H, Bookmarks.TAB_W, Bookmarks.MAX_H);
+            boolean right = t.side() == Bookmarks.Side.RIGHT;
+            int x = right ? t.x() : t.x() - extra;
+            // the texture's swallowtail points right; a left tab draws it mirrored through the UV (u runs backwards)
+            g.blit(BOOKMARK, x, t.y(), t.w() + extra, t.h(), right ? 0 : Bookmarks.TAB_W, 0,
+                    right ? Bookmarks.TAB_W : -Bookmarks.TAB_W, Bookmarks.MAX_H, Bookmarks.TAB_W, Bookmarks.MAX_H);
             RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
             int size = Math.min(12, t.h() - 4);
             if (size < 6) continue;
             float s = size / 16f;
+            // the icon sits 4 pixels in from the outer end, mirrored on the left
+            float iconX = right ? t.tipX() + extra - size - 4 : t.tipX() - extra + 4;
             g.pose().pushPose();
-            g.pose().translate(t.x() + t.w() + extra - size - 4, t.y() + (t.h() - size) / 2f, 0f);
+            g.pose().translate(iconX, t.y() + (t.h() - size) / 2f, 0f);
             g.pose().scale(s, s, 1f);
             g.renderItem(stack(c.icon()), 0, 0);
             g.pose().popPose();

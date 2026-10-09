@@ -93,17 +93,40 @@ public final class ShipHud {
         pose.scale(f, f, 1f);
     }
 
+    /**
+     * HUD5: where another corner-placed HUD part (the rank box) must not go: the static parts every panel keeps clear
+     * of and, while the ship HUD is drawn, its two panels as {@link #render} places them this frame.
+     */
+    public static List<ShipHudLayout.Rect> occupied(Minecraft mc, GuiGraphics g) {
+        if (mc.player == null) return List.of();
+        List<ShipHudLayout.Rect> out = new ArrayList<>(staticObstacles(mc, g));
+        if (ShipHudConfig.ENABLED.get() && ClientShipStatus.shown() != null) {
+            ChatComponent chat = mc.gui.getChat();
+            ShipHudLayout.Placement placed = ShipHudLayout.place(ShipHudConfig.COMPASS_CORNER.get(),
+                    ShipHudConfig.HULL_CORNER.get(), screen(mc, g, chat, chat.isChatFocused()), ShipHudConfig.SCALE.get(),
+                    ShipHudConfig.MARGIN.get());
+            out.add(placed.compass().rect());
+            out.add(placed.hull().rect());
+        }
+        return out;
+    }
+
     /** What vanilla and the stamina bar draw where the panels might go (HUD2); the chat only for the hull panel (HUD4). */
     private static ShipHudLayout.Screen screen(Minecraft mc, GuiGraphics g, ChatComponent chat, boolean chatOpen) {
         int gw = g.guiWidth(), gh = g.guiHeight();
-        LocalPlayer player = mc.player;
-        List<ShipHudLayout.Rect> obstacles = new ArrayList<>(ShipHudLayout.effects(gw, effectsInset(player)));
-
         boolean hidden = mc.options.chatVisibility().get() == ChatVisiblity.HIDDEN;
         double cs = chat.getScale();
         int chatW = hidden ? 0 : (int) Math.ceil(chat.getWidth() + 12 * cs);
         int chatH = hidden ? 0 : chatLinesHeight(mc, chat, chatOpen, cs);
         List<ShipHudLayout.Rect> chatRects = ShipHudLayout.chat(gw, gh, chatW, chatH, chatOpen);
+        return new ShipHudLayout.Screen(gw, gh, staticObstacles(mc, g), chatRects);
+    }
+
+    /** The static parts: the effect icons, the hotbar with the status rows and the stamina bar (HUD4). */
+    private static List<ShipHudLayout.Rect> staticObstacles(Minecraft mc, GuiGraphics g) {
+        int gw = g.guiWidth(), gh = g.guiHeight();
+        LocalPlayer player = mc.player;
+        List<ShipHudLayout.Rect> obstacles = new ArrayList<>(ShipHudLayout.effects(gw, effectsInset(player)));
 
         boolean statusBars = mc.gameMode != null && mc.gameMode.canHurtPlayer();
         int right = rightRowsAbove(player);
@@ -115,7 +138,7 @@ public final class ShipHud {
                     MeleeClientConfig.HUD_X_OFFSET.get(), MeleeClientConfig.HUD_Y_OFFSET.get());
             obstacles.add(new ShipHudLayout.Rect(bar.x(), bar.y(), bar.w(), bar.h()));
         }
-        return new ShipHudLayout.Screen(gw, gh, obstacles, chatRects);
+        return obstacles;
     }
 
     /**

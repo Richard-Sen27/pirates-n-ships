@@ -63,6 +63,13 @@ public final class CareerScreen extends Screen {
         return false;
     }
 
+    /** HUD5: the rank box shows for a moment after the screen closes. */
+    @Override
+    public void removed() {
+        super.removed();
+        RankHud.onCareerScreenClosed();
+    }
+
     private int inner() {
         return left + GuiKit.FRAME_BORDER;
     }

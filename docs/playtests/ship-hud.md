@@ -137,3 +137,28 @@ fabric ASM test) are covered by JUnit. Only the real clients show the drawing or
    scale 2).
    - **Expected:** F1 hides the panels; at the narrow window the compass rises just above the hotbar's offhand slot instead
      of covering it; the rank box and the stamina bar still draw over or beside it as before.
+
+# HUD5: the rank box shows for a moment, then fades
+
+When the box shows, how long, the fade and the change it names (`RankHudVisibility`), and its corner placement clear of
+the static HUD parts and the ship panels (`RankHudLayout.place` on `ShipHudLayout.placeBlock`) are covered by JUnit.
+Only the real clients show the fade. Please run both `./gradlew :neoforge:runClient` and
+`./gradlew :fabric:runClient`, and send screenshots or a short clip of each step and `latest.log`.
+
+1. **Join.** Join a world with the default client config.
+   - **Expected:** the rank box ("Deckhand", "Navy +0  Pirates +0") fades in at the top left, 8 px from the edges
+     (`ship_hud.margin`), stays about 5 s and fades out over half a second. It does not come back by itself.
+2. **Promotion.** `/pirates career set @s navy lieutenant` (enlist first, or set midshipman before).
+   - **Expected:** the box fades in with "Promoted to Lieutenant" in aqua as its first line, after about 2.5 s the line
+     settles on "Lieutenant" (the box keeps its width), then the box fades out. `/pirates career set @s infamy
+     buccaneer` out of service shows "Now Buccaneer" in red the same way.
+3. **Career screen.** Open and close the officer's career screen (empty hand on a friendly officer).
+   - **Expected:** the rank is readable in the screen as before; after closing, the box shows again for 5 s.
+4. **ALWAYS, bottom right.** Client config `career_hud.mode = ALWAYS`, `career_hud.corner = BOTTOM_RIGHT`, aboard a
+   ship.
+   - **Expected:** the box stays on screen at the bottom right, right edge 8 px in, sitting just above the hull strip
+     (4 px gap), never over the hotbar, the stamina bar or the strip; off the ship it drops to the corner. With
+     `corner = TOP_RIGHT` and an effect active it sits below the effect icons.
+5. **OFF.** `career_hud.mode = OFF`, then promote or rejoin.
+   - **Expected:** the box never shows; the career screen still names the rank.
+6. **show_seconds.** `career_hud.show_seconds = 15`, rejoin. **Expected:** the box stays about 15 s.

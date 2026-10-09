@@ -6,6 +6,7 @@ import com.richardsenger.piratesnships.rpg.career.CareerTitles;
 import com.richardsenger.piratesnships.rpg.career.InfamyRank;
 import com.richardsenger.piratesnships.rpg.career.LetterState;
 import com.richardsenger.piratesnships.rpg.career.NavyRank;
+import com.richardsenger.piratesnships.ship.hull.client.ShipHudLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +15,8 @@ import java.util.Optional;
 /**
  * What the rank box shows and where (HON1, pure, tested with JUnit). Rows top to bottom: the rank (the navy rank in
  * service, else "Privateer" with a letter, else the infamy rank), the navy and pirate reputation once the server sent
- * them, the letter of marque unless the player never held one, and prize money waiting when there is any.
+ * them, the letter of marque unless the player never held one, and prize money waiting when there is any. HUD5: placed
+ * in a corner like the ship HUD's panels ({@link #place}); when it shows ({@link RankHudVisibility}) lives elsewhere.
  */
 public final class RankHudLayout {
 
@@ -22,6 +24,9 @@ public final class RankHudLayout {
     public static final String KEY_REPUTATION = HUD + "reputation";
     public static final String KEY_LETTER = HUD + "letter";
     public static final String KEY_PRIZE = HUD + "prize";
+    /** HUD5: the title row naming a change for a moment ("Promoted to %s", "Now %s"). */
+    public static final String KEY_PROMOTED = HUD + "promoted";
+    public static final String KEY_NOW = HUD + "now";
 
     /** Inner padding and line height (font line 9 + 1). */
     public static final int PAD = 3;
@@ -37,10 +42,6 @@ public final class RankHudLayout {
     /** The client's career as the box needs it. */
     public record View(NavyRank navy, boolean enlisted, InfamyRank infamy, LetterState letter, long prizeMoney,
                        boolean reputationKnown) {
-    }
-
-    /** A screen rectangle. */
-    public record Rect(int x, int y, int w, int h) {
     }
 
     private RankHudLayout() {
@@ -83,16 +84,14 @@ public final class RankHudLayout {
     }
 
     /**
-     * The box's rectangle: {@code x}/{@code y} from the left/top edge, or from the right/bottom edge when negative
-     * (client config {@code career_hud.x/y}); always kept on screen (a box larger than the screen keeps its top left
-     * corner visible).
+     * The box's rectangle in {@code corner} (client config {@code career_hud.corner}, HUD5): {@code margin}
+     * ({@code ship_hud.margin}) from the corner's edges and moved away from its top or bottom edge past every
+     * {@code obstacle} it overlaps (the static HUD parts and the ship HUD panels), by the ship HUD's own rule
+     * ({@link ShipHudLayout#placeBlock}). Without a clear spot it keeps its corner, on screen.
      */
-    public static Rect place(int x, int y, int w, int h, int guiWidth, int guiHeight) {
-        int px = x >= 0 ? x : guiWidth + x - w;
-        int py = y >= 0 ? y : guiHeight + y - h;
-        px = Math.max(0, Math.min(px, guiWidth - w));
-        py = Math.max(0, Math.min(py, guiHeight - h));
-        return new Rect(px, py, w, h);
+    public static ShipHudLayout.Rect place(ShipHudLayout.Corner corner, int w, int h, int guiWidth, int guiHeight,
+                                           List<ShipHudLayout.Rect> obstacles, int margin) {
+        return ShipHudLayout.placeBlock(corner, w, h, guiWidth, guiHeight, obstacles, margin).rect();
     }
 
     /** Signed reputation as shown ("+25", "-10", "0"). */
@@ -103,6 +102,8 @@ public final class RankHudLayout {
     public static void lang(LangBuilder lang) {
         lang.add(KEY_REPUTATION, "Navy %s  Pirates %s")
                 .add(KEY_LETTER, "Letter of marque: %s")
-                .add(KEY_PRIZE, "Prize money: %s");
+                .add(KEY_PRIZE, "Prize money: %s")
+                .add(KEY_PROMOTED, "Promoted to %s")
+                .add(KEY_NOW, "Now %s");
     }
 }

@@ -4,16 +4,19 @@ import com.richardsenger.piratesnships.rpg.career.CareerTitles;
 import com.richardsenger.piratesnships.rpg.career.InfamyRank;
 import com.richardsenger.piratesnships.rpg.career.LetterState;
 import com.richardsenger.piratesnships.rpg.career.NavyRank;
-import com.richardsenger.piratesnships.rpg.career.client.RankHudLayout.Rect;
 import com.richardsenger.piratesnships.rpg.career.client.RankHudLayout.Row;
 import com.richardsenger.piratesnships.rpg.career.client.RankHudLayout.View;
+import com.richardsenger.piratesnships.ship.hull.client.ShipHudLayout;
+import com.richardsenger.piratesnships.ship.hull.client.ShipHudLayout.Corner;
+import com.richardsenger.piratesnships.ship.hull.client.ShipHudLayout.Rect;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** HON1: the rank box's rows, title, colours and placement. */
+/** HON1: the rank box's rows, title and colours; HUD5: its corner placement. */
 class RankHudLayoutTest {
 
     private static final View DECKHAND = new View(NavyRank.NONE, false, InfamyRank.DECKHAND, LetterState.NONE, 0, true);
@@ -58,18 +61,52 @@ class RankHudLayoutTest {
         assertEquals(RankHudLayout.height(1), RankHudLayout.height(0), "never smaller than one row");
     }
 
+    private static final int GW = 640, GH = 360, M = ShipHudLayout.DEFAULT_MARGIN;
+
     @Test
-    void placeFromEachEdge() {
-        assertEquals(new Rect(4, 4, 60, 30), RankHudLayout.place(4, 4, 60, 30, 400, 300));
-        assertEquals(new Rect(400 - 4 - 60, 4, 60, 30), RankHudLayout.place(-4, 4, 60, 30, 400, 300), "negative x from the right");
-        assertEquals(new Rect(4, 300 - 10 - 30, 60, 30), RankHudLayout.place(4, -10, 60, 30, 400, 300), "negative y from the bottom");
+    void placeInEachCornerByTheMargin() {
+        assertEquals(new Rect(M, M, 60, 30), RankHudLayout.place(Corner.TOP_LEFT, 60, 30, GW, GH, List.of(), M));
+        assertEquals(new Rect(GW - M - 60, M, 60, 30), RankHudLayout.place(Corner.TOP_RIGHT, 60, 30, GW, GH, List.of(), M));
+        assertEquals(new Rect(M, GH - M - 30, 60, 30), RankHudLayout.place(Corner.BOTTOM_LEFT, 60, 30, GW, GH, List.of(), M));
+        assertEquals(new Rect(GW - M - 60, GH - M - 30, 60, 30),
+                RankHudLayout.place(Corner.BOTTOM_RIGHT, 60, 30, GW, GH, List.of(), M));
+        assertEquals(new Rect(2, 2, 60, 30), RankHudLayout.place(Corner.TOP_LEFT, 60, 30, GW, GH, List.of(), 2), "the margin is the ship HUD's");
     }
 
     @Test
-    void placeKeepsTheBoxOnScreen() {
-        assertEquals(new Rect(340, 270, 60, 30), RankHudLayout.place(1000, 1000, 60, 30, 400, 300));
-        assertEquals(new Rect(0, 0, 60, 30), RankHudLayout.place(-1000, -1000, 60, 30, 400, 300));
-        assertEquals(new Rect(0, 4, 500, 30), RankHudLayout.place(-4, 4, 500, 30, 400, 300), "too wide: the left edge stays visible");
+    void placeKeepsClearOfTheEffectIcons() {
+        assertEquals(new Rect(GW - M - 60, 26 + ShipHudLayout.GAP, 60, 30),
+                RankHudLayout.place(Corner.TOP_RIGHT, 60, 30, GW, GH, ShipHudLayout.effects(GW, 26), M));
+    }
+
+    @Test
+    void placeKeepsClearOfTheShipHudPanelsInItsCorner() {
+        List<Rect> statics = ShipHudLayout.hotbar(GW, GH, true, 0);
+        ShipHudLayout.Placement ship = ShipHudLayout.place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT,
+                new ShipHudLayout.Screen(GW, GH, statics), 1.0, M);
+        List<Rect> occupied = new ArrayList<>(statics);
+        occupied.add(ship.compass().rect());
+        occupied.add(ship.hull().rect());
+
+        Rect right = RankHudLayout.place(Corner.BOTTOM_RIGHT, 60, 30, GW, GH, occupied, M);
+        assertEquals(new Rect(GW - M - 60, ship.hull().rect().y() - ShipHudLayout.GAP - 30, 60, 30), right,
+                "above the hull strip, right-aligned with the margin");
+        Rect left = RankHudLayout.place(Corner.BOTTOM_LEFT, 60, 30, GW, GH, occupied, M);
+        assertEquals(ship.compass().rect().y() - ShipHudLayout.GAP - 30, left.y(), "above the compass panel");
+        for (Rect o : occupied) {
+            assertFalse(right.intersects(o), "bottom right overlaps " + o);
+            assertFalse(left.intersects(o), "bottom left overlaps " + o);
+        }
+        assertEquals(new Rect(M, M, 60, 30), RankHudLayout.place(Corner.TOP_LEFT, 60, 30, GW, GH, occupied, M),
+                "panels in other corners leave the top left alone");
+    }
+
+    @Test
+    void placeWithoutRoomKeepsTheCornerOnScreen() {
+        List<Rect> wall = List.of(new Rect(0, 0, GW, GH));
+        assertEquals(new Rect(M, M, 60, 30), RankHudLayout.place(Corner.TOP_LEFT, 60, 30, GW, GH, wall, M));
+        assertEquals(new Rect(0, M, 700, 30), RankHudLayout.place(Corner.TOP_RIGHT, 700, 30, GW, GH, List.of(), M),
+                "too wide: the left edge stays visible");
     }
 
     @Test

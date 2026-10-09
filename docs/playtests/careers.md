@@ -133,8 +133,8 @@ Setup: a world where you can use operator commands. A second player (or a LAN fr
 2. Enlist and get promoted (or use the commands from 7). Expected: the first line changes at once ("Lieutenant" in aqua,
    "Buccaneer" in red, "Privateer" in green with a letter), the reputation line follows `/pirates rep set`.
 3. With a letter of marque: a line "Letter of marque: held"; after a pirate kill "Prize money: 5".
-4. F1 hides the box; F3 hides it too. In the client config set `career_hud.x = -4` and `y = -40`. Expected: the box
-   moves to the bottom right, 4 pixels from the right edge, above the hotbar line. `career_hud.enabled = false` hides it.
+4. F1 hides the box; F3 hides it too. (HUD5 replaced `career_hud.x/y/enabled` with `mode`, `show_seconds` and
+   `corner`; the box now shows only for a few seconds by default: see `ship-hud.md`, HUD5.)
 5. Please report: is the top left a good default? Does it clash with other mods' overlays you use?
 
 ## 14. The title on the ship

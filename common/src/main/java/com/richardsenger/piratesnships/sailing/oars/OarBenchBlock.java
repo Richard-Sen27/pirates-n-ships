@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.sailing.oars;
 
+import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.richardsenger.piratesnships.station.StationBlock;
 import com.richardsenger.piratesnships.station.StationKind;
 import com.richardsenger.piratesnships.station.Stations;
@@ -16,6 +17,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -38,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
  * family; built by {@code tools/gen_oar_models.py}. The shape is the thwart on its legs (8 px) and the gunwale board (9 px), so the crew step
  * over it like a slab.
  */
-public class OarBenchBlock extends Block implements StationBlock {
+public class OarBenchBlock extends Block implements StationBlock, SimpleWaterloggedBlock {
 
     /** The outboard side: the thole pin's end of the thwart. */
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
@@ -56,7 +60,7 @@ public class OarBenchBlock extends Block implements StationBlock {
 
     public OarBenchBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(Waterlogging.WATERLOGGED, false));
     }
 
     /** {@code shape} of the north frame turned so its north side faces {@code d}. */
@@ -76,18 +80,31 @@ public class OarBenchBlock extends Block implements StationBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, Waterlogging.WATERLOGGED);
     }
 
     /** The thole pin goes to the side the placing player looks at: over the rail, outboard. */
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getHorizontalDirection());
+        return Waterlogging.placed(defaultBlockState().setValue(FACING, context.getHorizontalDirection()), context);
     }
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPES[state.getValue(FACING).get2DDataValue()];
+    }
+
+    /** WLOG1: a partial block takes water; a waterlogged bench lets its water flow on. */
+    @Override
+    protected BlockState updateShape(BlockState state, Direction direction, BlockState neighbor, LevelAccessor level,
+                                     BlockPos pos, BlockPos neighborPos) {
+        Waterlogging.tickFluid(state, level, pos);
+        return super.updateShape(state, direction, neighbor, level, pos, neighborPos);
+    }
+
+    @Override
+    protected FluidState getFluidState(BlockState state) {
+        return Waterlogging.fluid(state, super.getFluidState(state));
     }
 
     @Override

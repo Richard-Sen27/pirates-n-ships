@@ -3108,6 +3108,8 @@
   "pirates_n_ships.configuration.world_simulation.materialize.linger_ticks.tooltip": "Ticks an NPC ship stays real after the last player left its surroundings (materialize_radius + linger_margin)",
   "pirates_n_ships.configuration.world_simulation.materialize.max_materialized": "Max Materialized",
   "pirates_n_ships.configuration.world_simulation.materialize.max_materialized.tooltip": "Most NPC voyages that are real ships at the same time in the whole world",
+  "pirates_n_ships.configuration.world_simulation.materialize.restore_health": "Restore Health",
+  "pirates_n_ships.configuration.world_simulation.materialize.restore_health.tooltip": "A ship that appears again is flooded back to the health its voyage kept (1 - flooded part when it last turned into a record), lowest compartments first. Off = it always appears dry",
   "pirates_n_ships.configuration.world_simulation.materialize.retry_ticks": "Retry Ticks",
   "pirates_n_ships.configuration.world_simulation.materialize.retry_ticks.tooltip": "Ticks before a voyage that could not appear (land, no water, obstructed) or got stuck is tried again",
   "pirates_n_ships.configuration.world_simulation.materialize.shooter_memory_ticks": "Shooter Memory Ticks",

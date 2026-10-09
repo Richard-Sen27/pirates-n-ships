@@ -63,6 +63,14 @@ public final class VoyageRules {
         return Math.max(0.0, s.blocksPerSecond() * ticks / 20.0 * windFactor);
     }
 
+    /**
+     * WS3c: whether an arriving voyage delivers goods and counts as the world event {@code CONVOY_DELIVERED}: a convoy
+     * with cargo aboard (an abstract or a materialised one). A convoy plundered empty delivers nothing.
+     */
+    public static boolean delivers(Voyage voyage) {
+        return voyage.kind() == VoyageKind.CONVOY && voyage.cargoUnits() > 0;
+    }
+
     /** {@code voyage} moved {@code blocks} further along its route (clamped at the end). */
     public static Voyage advance(Voyage voyage, double blocks) {
         return voyage.withProgress(voyage.progress() + Math.max(0.0, blocks));

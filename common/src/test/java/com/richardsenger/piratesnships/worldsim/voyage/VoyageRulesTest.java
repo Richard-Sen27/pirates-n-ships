@@ -165,4 +165,17 @@ class VoyageRulesTest {
         assertEquals(Voyage.UNMANNED, fresh.crew());
         assertEquals(Faction.MERCHANTS, fresh.faction());
     }
+
+    @Test
+    void onlyAConvoyWithCargoDelivers() {
+        List<Lane.Point> route = List.of(new Lane.Point(0, 0), new Lane.Point(100, 0));
+        Voyage laden = voyage(route);
+        assertTrue(VoyageRules.delivers(laden), "a convoy with cargo");
+        assertFalse(VoyageRules.delivers(laden.withCargo(Map.of())), "plundered empty");
+        assertFalse(VoyageRules.delivers(laden.withCargo(Map.of(SUGAR, 0))), "zero units left");
+        assertTrue(VoyageRules.delivers(laden.withCargo(Map.of(SUGAR, 1))), "one unit left");
+        Voyage patrol = Voyage.depart(UUID.randomUUID(), VoyageKind.PATROL, Faction.NAVY, id("navy_sloop"), id("a"), id("b"),
+                route, Map.of(SUGAR, 64), 100L);
+        assertFalse(VoyageRules.delivers(patrol), "a patrol is no delivery");
+    }
 }

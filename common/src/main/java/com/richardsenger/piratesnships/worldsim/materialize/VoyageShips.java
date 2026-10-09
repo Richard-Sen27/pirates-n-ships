@@ -44,6 +44,8 @@ public final class VoyageShips {
         int capture = EndingRules.NOT_HELD;
         int lastUnits = -1;
         boolean plundered;
+        /** WS3c: the voyage health still to flood back into the hull (its runtime was not there yet); negative = none. */
+        double pendingHealth = -1;
         Map<ResourceLocation, Integer> overflow = Map.of();
         /** The ship's centre in plot coordinates, from the template (null after a reload or a split: read the blocks). */
         @org.jetbrains.annotations.Nullable net.minecraft.world.phys.Vec3 plotCentre;

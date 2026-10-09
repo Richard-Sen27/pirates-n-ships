@@ -48,6 +48,8 @@ public final class MaterializeConfig {
             "Rounds (one gunpowder and one cannonball each) per cannon put in the shot locker of a navy or pirate ship when it appears (0 = none; merchants carry none)");
     public static final ConfigValue<Boolean> GUNS_START_LOADED = S.bool("guns_start_loaded", true,
             "The cannons of a navy or pirate ship appear loaded, so its first shot needs no reload");
+    public static final ConfigValue<Boolean> RESTORE_HEALTH = S.bool("restore_health", true,
+            "A ship that appears again is flooded back to the health its voyage kept (1 - flooded part when it last turned into a record), lowest compartments first. Off = it always appears dry");
     public static final ConfigValue<Boolean> CARGO_IS_PLUNDER = S.bool("cargo_is_plunder", true,
             "Goods aboard an NPC ship carry the plunder mark, so whatever a player takes from it sells as plunder");
 

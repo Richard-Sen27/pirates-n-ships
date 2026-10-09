@@ -27,14 +27,29 @@ class WaveSpillAndSyncTest {
 
     @Test
     void clientBlendGoesTheShortWayAndReachesTheSample() {
-        ClientWaves.Blend b = new ClientWaves.Blend(0.1, 350.0, 0.1, 350.0, SeaState.CALM, 0, 1)
-                .next(new WaveSyncPayload(SeaState.STORM.ordinal(), 1.2f, 10.0f, 60), 100);
+        ClientWaves.Blend b = ClientWaves.Blend.of(new WaveSyncPayload(SeaState.CALM.ordinal(), 0.1f, 350.0f, 60, 6, 20.0f, 0.35f, 1200f), 0)
+                .next(new WaveSyncPayload(SeaState.STORM.ordinal(), 1.2f, 10.0f, 60, 6, 34.0f, 0.35f, 1200f), 100);
         assertEquals(0.1, b.amplitude(100), 1e-6);
         assertEquals(0.65, b.amplitude(130), 1e-6);
         assertEquals(1.2, b.amplitude(500), 1e-6);
         assertEquals(360.0, b.direction(130), 1e-4);
         assertEquals(370.0, b.direction(160), 1e-4);
         assertEquals(SeaState.STORM, b.state());
+        assertEquals(27.0, b.peakWavelength(130), 1e-4);
+        assertEquals(34.0, b.peakWavelength(500), 1e-4);
+    }
+
+    @Test
+    void theClientRebuildsTheServersSea() {
+        // the server's field (SeaStates.build) and the client's (from the payload) give the same heights
+        WaveField server = new WaveField(1.2, 77.0, WaveSpectrum.components(6, WaveSpectrum.peakWavelength(1.2)),
+                WaveField.Origin.NONE, new WaveField.Groups(0.35, 1200.0));
+        WaveSyncPayload p = WaveSyncPayload.of(SeaState.STORM, server, WaveSpectrum.peakWavelength(1.2), 60);
+        WaveField client = ClientWaves.Blend.of(p, 500).field(510);
+        for (int i = 0; i < 40; i++) {
+            double x = 3000 + i * 3.1, z = -700 + i * 1.3, t = 12345 + i * 17;
+            assertEquals(server.heightAround(x, z, x + 2, z - 4, t), client.heightAround(x, z, x + 2, z - 4, t), 1e-4);
+        }
     }
 
     @Test

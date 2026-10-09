@@ -11,7 +11,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The sea state of every server level (docs/design.md §5.4, WV1): one {@link SeaStateModel.Tracker} per level, ticked
  * at the end of the level tick from the vanilla rain and thunder levels, and the {@link WaveField} built from it once
- * per tick (amplitude × {@code waves.amplitude}, direction from the wind at the world origin with the slow offset).
+ * per tick (amplitude × {@code waves.amplitude}, direction from the wind at the world origin with the slow offset,
+ * {@code waves.components} trains weighted around the state's peak wavelength, wave groups; WAV2).
  * Server memory only: after a restart the sea starts at the weather's state. An override ({@code /pirates waves set},
  * tests) holds a state and optionally a direction.
  */
@@ -45,7 +46,14 @@ public final class SeaStates {
         Double fixed = t.overrideDirection();
         double direction = fixed != null ? fixed
                 : SeaStateModel.directionDegrees(WindService.sample(level, Vec3.ZERO).towardDegrees(), level.getSeed(), now);
-        return new WaveField(amplitude, direction, WaveField.COMPONENTS, t.origin());
+        return new WaveField(amplitude, direction,
+                WaveSpectrum.components(HazardConfig.COMPONENTS.get(), WaveSpectrum.peakWavelength(t.amplitude())), t.origin(),
+                groups());
+    }
+
+    /** The wave groups of the server config ({@code waves.group_depth}, {@code waves.group_period_seconds}). */
+    public static WaveField.Groups groups() {
+        return new WaveField.Groups(HazardConfig.GROUP_DEPTH.get(), HazardConfig.GROUP_PERIOD_SECONDS.get() * 20.0);
     }
 
     /**
@@ -69,6 +77,12 @@ public final class SeaStates {
     public static synchronized SeaState current(ServerLevel level) {
         Entry e = LEVELS.get(level);
         return e == null ? SeaState.CALM : e.tracker.current();
+    }
+
+    /** The peak wavelength of the sea of {@code level} now [blocks] ({@link WaveSpectrum#peakWavelength}). */
+    public static synchronized double peakWavelength(ServerLevel level) {
+        Entry e = LEVELS.get(level);
+        return WaveSpectrum.peakWavelength(e == null ? SeaState.CALM.amplitude() : e.tracker.amplitude());
     }
 
     /** The state the sea of {@code level} is heading for. */

@@ -29,7 +29,7 @@ class WaveFieldTest {
             assertTrue(Math.abs(h) <= 1.2 + 1e-9, "height " + h);
             max = Math.max(max, Math.abs(h));
         }
-        assertTrue(max > 1.0, "the two trains should nearly line up somewhere: " + max);
+        assertTrue(max > 0.7, "the trains should nearly line up somewhere: " + max);
     }
 
     @Test
@@ -94,10 +94,13 @@ class WaveFieldTest {
     void componentsLieInTheDesignRanges() {
         double weights = 0;
         for (WaveField.Component c : WaveField.COMPONENTS) {
-            assertTrue(c.wavelength() >= 20 && c.wavelength() <= 40, "wavelength " + c.wavelength());
-            assertTrue(c.periodTicks() >= 6 * 20 && c.periodTicks() <= 10 * 20, "period " + c.periodTicks());
+            assertTrue(c.wavelength() >= WaveSpectrum.MIN_WAVELENGTH && c.wavelength() <= WaveSpectrum.MAX_WAVELENGTH,
+                    "wavelength " + c.wavelength());
+            assertTrue(c.periodTicks() >= 5 * 20 && c.periodTicks() <= 14 * 20, "period " + c.periodTicks());
+            assertTrue(Math.abs(c.offsetDeg()) <= WaveSpectrum.DIRECTION_SPREAD_DEG, "offset " + c.offsetDeg());
             weights += c.weight();
         }
+        assertEquals(WaveSpectrum.DEFAULT_COMPONENTS, WaveField.COMPONENTS.size());
         assertEquals(1.0, weights, 1e-12);
     }
 

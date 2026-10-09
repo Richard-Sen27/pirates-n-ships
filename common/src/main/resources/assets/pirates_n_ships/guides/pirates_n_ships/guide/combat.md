@@ -18,8 +18,8 @@ item_ids:
 | <ItemLink id="pirates_n_ships:cutlass" /> | A sword: 7 damage, attack speed 1.2 |
 | <ItemLink id="pirates_n_ships:saber" /> | A sword: 6 damage, attack speed 1.6 |
 | <ItemLink id="pirates_n_ships:pistol" />, <ItemLink id="pirates_n_ships:musket" /> | Hold right mouse to aim, left mouse fires (aimed or from the hip); see Firearms. |
-| <ItemLink id="pirates_n_ships:lead_shot" />, <ItemLink id="pirates_n_ships:cannonball" /> | No function yet |
-| <ItemLink id="pirates_n_ships:grappling_hook" /> | No function yet |
+| <ItemLink id="pirates_n_ships:lead_shot" />, <ItemLink id="pirates_n_ships:cannonball" /> | Ammunition: lead shot for the pistol and musket, cannonballs for cannons; see Firearms and Cannons. |
+| <ItemLink id="pirates_n_ships:grappling_hook" /> | Fired from a musket; hooks a ship or a block, hauls, climbs; see Grappling hook. |
 
 The swords work like vanilla swords for now. The skill-based fighting system (slash, thrust, guard, parry, riposte,
 stamina) is implemented on the server with per-weapon values in `data/pirates_n_ships/pirates_n_ships/weapon/`, but

@@ -1016,8 +1016,8 @@ ransom it, press-gang it (a crime), or release it.
 | Cutlass | A sword: 7 damage, attack speed 1.2 |
 | Saber | A sword: 6 damage, attack speed 1.6 |
 | Pistol, Musket | Hold right mouse to aim, left mouse fires (aimed or from the hip); see Firearms. |
-| Lead Shot, Cannonball | No function yet |
-| Grappling Hook | No function yet |
+| Lead Shot, Cannonball | Ammunition: lead shot for the pistol and musket, cannonballs for cannons; see Firearms and Cannons. |
+| Grappling Hook | Fired from a musket; hooks a ship or a block, hauls, climbs; see Grappling hook. |
 
 The swords work like vanilla swords for now. The skill-based fighting system (slash, thrust, guard, parry, riposte,
 stamina) is implemented on the server with per-weapon values in `data/pirates_n_ships/pirates_n_ships/weapon/`, but

@@ -37,6 +37,7 @@ class WaveSpillAndSyncTest {
         assertEquals(SeaState.STORM, b.state());
         assertEquals(27.0, b.peakWavelength(130), 1e-4);
         assertEquals(34.0, b.peakWavelength(500), 1e-4);
+        assertEquals(0.35, b.groupDepth(500), 1e-6);
     }
 
     @Test

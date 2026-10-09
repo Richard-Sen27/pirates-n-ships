@@ -8,21 +8,21 @@ package com.richardsenger.piratesnships.hazards.waves;
 public final class ClientWaves {
 
     /**
-     * A blend between two seas from {@code start} over {@code duration} ticks; the peak wavelength blends with the
-     * amplitude, the train count and the groups are the latest sample's (WAV2). Pure.
+     * A blend between two seas from {@code start} over {@code duration} ticks; the peak wavelength and the group depth
+     * blend with the amplitude, the train count and the group period are the latest sample's (WAV2). Pure.
      */
     public record Blend(double fromAmplitude, double fromDirection, double toAmplitude, double toDirection,
                        SeaState state, double start, double duration, double fromPeak, double toPeak, int components,
-                       WaveField.Groups groups) {
+                       double fromGroupDepth, WaveField.Groups groups) {
 
         public static final Blend FLAT = new Blend(0.0, 0.0, 0.0, 0.0, SeaState.CALM, 0.0, 1.0,
                 WaveSpectrum.REFERENCE_WAVELENGTH, WaveSpectrum.REFERENCE_WAVELENGTH, WaveSpectrum.DEFAULT_COMPONENTS,
-                WaveField.Groups.NONE);
+                0.0, WaveField.Groups.NONE);
 
         /** A steady sea from one sample. */
         public static Blend of(WaveSyncPayload p, double time) {
             return new Blend(p.amplitude(), p.directionDeg(), p.amplitude(), p.directionDeg(), p.seaState(), time, 1.0,
-                    p.peakWavelength(), p.peakWavelength(), p.components(), p.groups());
+                    p.peakWavelength(), p.peakWavelength(), p.components(), p.groupDepth(), p.groups());
         }
 
         public double fraction(double time) {
@@ -43,16 +43,21 @@ public final class ClientWaves {
             return fromPeak + (toPeak - fromPeak) * fraction(time);
         }
 
+        public double groupDepth(double time) {
+            return fromGroupDepth + (groups.depth() - fromGroupDepth) * fraction(time);
+        }
+
         /** The sea at {@code time}: the same field the server builds, unpinned. */
         public WaveField field(double time) {
             return new WaveField(amplitude(time), direction(time), WaveSpectrum.components(components, peakWavelength(time)),
-                    WaveField.Origin.NONE, groups);
+                    WaveField.Origin.NONE, new WaveField.Groups(groupDepth(time), groups.periodTicks()));
         }
 
         /** The next blend: from where this one is at {@code time} toward {@code p}. */
         public Blend next(WaveSyncPayload p, double time) {
             return new Blend(amplitude(time), direction(time), p.amplitude(), p.directionDeg(), p.seaState(), time,
-                    Math.max(1, p.intervalTicks()), peakWavelength(time), p.peakWavelength(), p.components(), p.groups());
+                    Math.max(1, p.intervalTicks()), peakWavelength(time), p.peakWavelength(), p.components(), groupDepth(time),
+                    p.groups());
         }
     }
 

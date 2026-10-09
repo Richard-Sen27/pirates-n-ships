@@ -48,12 +48,16 @@ public final class SeaStates {
                 : SeaStateModel.directionDegrees(WindService.sample(level, Vec3.ZERO).towardDegrees(), level.getSeed(), now);
         return new WaveField(amplitude, direction,
                 WaveSpectrum.components(HazardConfig.COMPONENTS.get(), WaveSpectrum.peakWavelength(t.amplitude())), t.origin(),
-                groups());
+                groups(t.amplitude()));
     }
 
-    /** The wave groups of the server config ({@code waves.group_depth}, {@code waves.group_period_seconds}). */
-    public static WaveField.Groups groups() {
-        return new WaveField.Groups(HazardConfig.GROUP_DEPTH.get(), HazardConfig.GROUP_PERIOD_SECONDS.get() * 20.0);
+    /**
+     * The wave groups of a sea of state amplitude {@code stateAmplitude}: {@code waves.group_depth} × its
+     * {@link WaveSpectrum#groupShare} (none in a calm swell), {@code waves.group_period_seconds}.
+     */
+    public static WaveField.Groups groups(double stateAmplitude) {
+        return new WaveField.Groups(HazardConfig.GROUP_DEPTH.get() * WaveSpectrum.groupShare(stateAmplitude),
+                HazardConfig.GROUP_PERIOD_SECONDS.get() * 20.0);
     }
 
     /**

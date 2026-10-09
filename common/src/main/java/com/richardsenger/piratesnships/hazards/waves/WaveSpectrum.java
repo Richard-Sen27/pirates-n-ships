@@ -19,9 +19,12 @@ import java.util.List;
  * The amplitude of train {@code i} is {@code sqrt(S(ωᵢ) · Δωᵢ)} under a JONSWAP spectrum (Pierson–Moskowitz with the
  * peak enhancement {@link #PEAK_ENHANCEMENT} of a sea still building under the wind),
  * {@code S(ω) = ω⁻⁵ · exp(−5/4 · (ωp/ω)⁴) · γ^exp(−(ω − ωp)² / (2σ²ωp²))}, normalised so the weights sum to 1 (so
- * {@code |Σ wᵢ sin| ≤ 1}). The peak wavelength depends on the sea state ({@link #peakWavelength}): a calm sea's energy
- * sits in the shorter trains, a storm's in the 34-block swell. Only the weights change with the state, never a train's
- * wavelength, period or phase, so easing from one state to another changes the surface continuously.
+ * {@code |Σ wᵢ sin| ≤ 1}). The peak wavelength depends on the sea state ({@link #peakWavelength}): a calm sea is a
+ * long, low swell left over from older weather (peak 56 blocks, little slope, so a hull lies nearly still); from a
+ * moderate sea on the wind sea builds, its energy shifting from 30-block waves to the 34-block swell of a storm. Only the
+ * weights change with the state, never a train's wavelength, period or phase, so easing from one state to another
+ * changes the surface continuously. The wave groups grow in the same way ({@link #groupShare}): none in a calm swell,
+ * full depth from a moderate sea on.
  */
 public final class WaveSpectrum {
 
@@ -50,9 +53,11 @@ public final class WaveSpectrum {
     private static final double JITTER = 0.35;
 
     /** Peak wavelength per sea state amplitude (calm, moderate, rough, storm) [blocks]. */
+    /** Peak wavelength of a calm sea: a long, low swell [blocks]. */
+    public static final double CALM_PEAK_WAVELENGTH = 56.0;
     private static final double[] PEAK_AMPLITUDES = {
             SeaState.CALM.amplitude(), SeaState.MODERATE.amplitude(), SeaState.ROUGH.amplitude(), SeaState.STORM.amplitude()};
-    private static final double[] PEAK_WAVELENGTHS = {28.0, 30.0, 32.0, REFERENCE_WAVELENGTH};
+    private static final double[] PEAK_WAVELENGTHS = {CALM_PEAK_WAVELENGTH, 30.0, 32.0, REFERENCE_WAVELENGTH};
 
     /**
      * One train without its weight.
@@ -83,7 +88,7 @@ public final class WaveSpectrum {
 
     /**
      * Peak wavelength of a sea whose state amplitude (before {@code waves.amplitude}) is {@code stateAmplitude}:
-     * piecewise linear through calm 28, moderate 30, rough 32 and storm 34 blocks, held outside.
+     * piecewise linear through calm 56 (a long swell), moderate 30, rough 32 and storm 34 blocks, held outside.
      */
     public static double peakWavelength(double stateAmplitude) {
         if (!(stateAmplitude > PEAK_AMPLITUDES[0])) {
@@ -96,6 +101,15 @@ public final class WaveSpectrum {
             }
         }
         return PEAK_WAVELENGTHS[PEAK_WAVELENGTHS.length - 1];
+    }
+
+    /**
+     * Share of {@code waves.group_depth} a sea of state amplitude {@code stateAmplitude} (before {@code waves.amplitude})
+     * gets: 0 for a calm swell, rising linearly to 1 at a moderate sea and held above.
+     */
+    public static double groupShare(double stateAmplitude) {
+        double calm = SeaState.CALM.amplitude(), moderate = SeaState.MODERATE.amplitude();
+        return Math.max(0.0, Math.min(1.0, (stateAmplitude - calm) / (moderate - calm)));
     }
 
     /** The {@code count} trains (clamped), shortest first. The same list for the same count, on every machine. */

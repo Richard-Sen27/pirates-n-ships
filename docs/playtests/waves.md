@@ -148,17 +148,19 @@ screenshots or short clips of steps 2, 3, 5 and 7, and `latest.log` if anything 
 ## WAV2: the wave feel
 
 The rules (six trains of 16 to 64 blocks with dispersion periods, one of them WV1's 34-block, 9-s swell; JONSWAP
-weights around the sea state's peak, 28 blocks calm to 34 in a storm; directions within ±30° of the field's; fixed
+weights around the sea state's peak: a calm sea is a long, low 56-block swell without wave groups, a moderate sea
+peaks at 30 blocks, a storm at 34; directions within ±30° of the field's; fixed
 phases from a seed; the wave groups; the heave force and its cap) are covered by JUnit (`WaveSpectrumTest`,
 `WaveHeaveRuleTest`) and GameTests (`WaveGameTests`, pinned phase, one minute per window). Measured on both loaders:
-the 7×17 test hull rolls ±4.5° in a storm, ±1.3° in a moderate sea and ±0.46° in a calm one, settles within 10 s, and
+the 7×17 test hull rolls ±4.5° in a storm, ±1.3° in a moderate sea and ±0.25° in a calm one, settles within 10 s, and
 its successive roll crests differ by 36–43 % on average (no single clean sine); in a storm it heaves ±0.48 blocks
 (0.4 × the 1.2-block wave height), and with `waves.heave = false` it keeps its height to 0.002 blocks (Sable's water is
-flat, so nothing else lifts it). The 32×12 hull rolls 0.65° in a storm, 0.19° moderate, 0.07° calm, and heaves ±0.32.
+flat, so nothing else lifts it). The 32×12 hull rolls 0.65° in a storm, 0.19° moderate, 0.04° calm, and heaves ±0.32.
 
 **What changed for the player.** The sea is no longer one even swell: waves of different lengths run a little across
 each other, so the roll comes in an uneven rhythm (a big roll, a smaller one, two medium ones), and in sets: for about
-half a minute the waves build, then a calmer spell follows (`waves.group_depth` 0.35, `waves.group_period_seconds` 60).
+half a minute the waves build, then a calmer spell follows (from a moderate sea on; a calm sea is a long, even swell;
+`waves.group_depth` 0.35, `waves.group_period_seconds` 60).
 The hull now also rises on a crest and sinks into the trough (`waves.heave`, `heave_strength` 0.5, `heave_per_mass` 6).
 The roll is stronger than WV1's after SH1 (`waves.ship_torque` 26, `max_torque_per_mass` 2.5, new `size_exponent` 1.0
 so big ships lie steadier and small boats move more). The camera sway (when on) follows the real deck and adds no motion
@@ -181,7 +183,7 @@ where they come from; turn the sloop beam on). Please send a short clip of steps
      `waves.heave_strength` the rise and fall; `waves.group_depth` how strongly the sets stand out; `waves.components`
      (2 to 12) how irregular the sea is.
 3. **Calm.** `/weather clear`, `/pirates waves set calm`.
-   - **Expected:** within about 10 s the sloop lies nearly still (a slight, slow motion at most).
+   - **Expected:** within about 10 s the sloop lies nearly still: at most a slight, slow, even rocking from a long swell.
 4. **Camera sway.** Client config `wave_effects.camera_sway = true`, in the storm.
    - **Expected:** the view tilts only as the deck tilts, in the same uneven rhythm; with the ship lying still the view
      is still too.

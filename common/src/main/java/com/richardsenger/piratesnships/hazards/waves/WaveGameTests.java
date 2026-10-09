@@ -287,7 +287,10 @@ public final class WaveGameTests {
         });
     }
 
-    /** A calm sea leaves the 7×17 hull nearly still: under half a degree of roll over a minute. */
+    /**
+     * A calm sea leaves the 7×17 hull nearly still: under half a degree of roll over a minute. Measured 0.25° on
+     * 2026-10-09 (WAV2: the calm sea is a long 56-block swell without wave groups), so the limit has a 2× margin.
+     */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 1500, batch = "pirates_n_ships_waves_calm_roll")
     public static void calmSeaLeavesTheTestHullStill(GameTestHelper h) {
         hold(h, SeaState.CALM, 1600);

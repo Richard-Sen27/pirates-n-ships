@@ -72,14 +72,17 @@ class WaveSpectrumTest {
             assertTrue(w[i] <= w[i - 1], "not falling past the peak at " + i);
         }
         assertTrue(w[w.length - 1] < 0.5 * w[top] && w[0] < 0.5 * w[top], "the tails are too heavy");
-        // a calm sea's energy sits in shorter trains than a storm's
-        double calmMean = 0, stormMean = 0;
+        // a calm sea is a long, low swell; from a moderate sea on, the wind sea's energy grows toward the storm's swell
+        double calmMean = 0, moderateMean = 0, stormMean = 0;
         double[] calm = WaveSpectrum.weights(trains, WaveSpectrum.peakWavelength(SeaState.CALM.amplitude()));
+        double[] moderate = WaveSpectrum.weights(trains, WaveSpectrum.peakWavelength(SeaState.MODERATE.amplitude()));
         for (int i = 0; i < w.length; i++) {
             calmMean += calm[i] * trains.get(i).wavelength();
+            moderateMean += moderate[i] * trains.get(i).wavelength();
             stormMean += w[i] * trains.get(i).wavelength();
         }
-        assertTrue(calmMean < stormMean - 2, "calm " + calmMean + " storm " + stormMean);
+        assertTrue(calmMean > stormMean + 1, "calm " + calmMean + " storm " + stormMean);
+        assertTrue(moderateMean < stormMean, "moderate " + moderateMean + " storm " + stormMean);
     }
 
     @Test
@@ -151,8 +154,23 @@ class WaveSpectrumTest {
         assertTrue(Math.abs(h0 - h1) < 1e-3);
         assertEquals(30.0, WaveSpectrum.peakWavelength(SeaState.MODERATE.amplitude()), 1e-12);
         assertEquals(31.0, WaveSpectrum.peakWavelength(0.5), 1e-12);
-        assertEquals(28.0, WaveSpectrum.peakWavelength(0.0), 1e-12);
+        assertEquals(56.0, WaveSpectrum.peakWavelength(0.0), 1e-12);
+        assertEquals(43.0, WaveSpectrum.peakWavelength(0.2), 1e-12);
         assertEquals(34.0, WaveSpectrum.peakWavelength(3.0), 1e-12);
+    }
+
+    @Test
+    void groupsGrowFromACalmSwellToAModerateSea() {
+        assertEquals(0.0, WaveSpectrum.groupShare(SeaState.CALM.amplitude()), 1e-12);
+        assertEquals(0.0, WaveSpectrum.groupShare(0.0), 1e-12);
+        assertEquals(0.5, WaveSpectrum.groupShare(0.2), 1e-12);
+        assertEquals(1.0, WaveSpectrum.groupShare(SeaState.MODERATE.amplitude()), 1e-12);
+        assertEquals(1.0, WaveSpectrum.groupShare(SeaState.STORM.amplitude()), 1e-12);
+        // a calm swell is regular: no envelope
+        WaveField calm = new WaveField(0.1, 90, WaveSpectrum.components(6, WaveSpectrum.peakWavelength(0.1)), WaveField.Origin.NONE,
+                new WaveField.Groups(0.35 * WaveSpectrum.groupShare(0.1), 1200.0));
+        assertEquals(1.0, calm.envelope(123, 456, 789), 0.0);
+        assertEquals(0.1, calm.maxHeight(), 1e-12);
     }
 
     @Test

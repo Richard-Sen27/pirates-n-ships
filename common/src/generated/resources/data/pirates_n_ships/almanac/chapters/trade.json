@@ -1,0 +1,193 @@
+{
+  "bookmark_color": "#a07a24",
+  "icon": "pirates_n_ships:cargo_crate",
+  "order": 70,
+  "pages": [
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.trade.p1.heading"
+        },
+        {
+          "type": "illustration",
+          "h": 0.35,
+          "texture": "pirates_n_ships:textures/almanac/cargo_crate.png",
+          "w": 0.9,
+          "x": 0.05,
+          "y": 0.09
+        },
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.trade.p1.heading2"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.trade.p1.text1"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.trade.p1.list1_1",
+            "pirates_n_ships.almanac.trade.p1.list1_2"
+          ]
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.trade.p1.list2_1",
+            "pirates_n_ships.almanac.trade.p1.list2_2",
+            "pirates_n_ships.almanac.trade.p1.list2_3",
+            "pirates_n_ships.almanac.trade.p1.list2_4",
+            "pirates_n_ships.almanac.trade.p1.list2_5",
+            "pirates_n_ships.almanac.trade.p1.list2_6",
+            "pirates_n_ships.almanac.trade.p1.list2_7"
+          ]
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.trade.p2.heading"
+        },
+        {
+          "type": "illustration",
+          "h": 0.35,
+          "texture": "pirates_n_ships:textures/almanac/doubloon.png",
+          "w": 0.9,
+          "x": 0.05,
+          "y": 0.09
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.trade.p2.text1"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.trade.p3.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.trade.p3.text1"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.trade.p3.list1_1",
+            "pirates_n_ships.almanac.trade.p3.list1_2",
+            "pirates_n_ships.almanac.trade.p3.list1_3",
+            "pirates_n_ships.almanac.trade.p3.list1_4",
+            "pirates_n_ships.almanac.trade.p3.list1_5",
+            "pirates_n_ships.almanac.trade.p3.list1_6",
+            "pirates_n_ships.almanac.trade.p3.list1_7",
+            "pirates_n_ships.almanac.trade.p3.list1_8",
+            "pirates_n_ships.almanac.trade.p3.list1_9",
+            "pirates_n_ships.almanac.trade.p3.list1_10",
+            "pirates_n_ships.almanac.trade.p3.list1_11",
+            "pirates_n_ships.almanac.trade.p3.list1_12"
+          ]
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.trade.p4.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.trade.p4.text1"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.trade.p4.list1_1",
+            "pirates_n_ships.almanac.trade.p4.list1_2",
+            "pirates_n_ships.almanac.trade.p4.list1_3",
+            "pirates_n_ships.almanac.trade.p4.list1_4"
+          ]
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.trade.p5.heading"
+        },
+        {
+          "type": "illustration",
+          "h": 0.35,
+          "texture": "pirates_n_ships:textures/almanac/harbor_desk.png",
+          "w": 0.9,
+          "x": 0.05,
+          "y": 0.09
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.trade.p5.text1"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.trade.p5.text2"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.trade.p6.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.trade.p6.text1"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.trade.p7.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.trade.p7.text1"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.trade.p8.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.trade.p8.text1"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.trade.p9.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.trade.p9.text1"
+        }
+      ]
+    }
+  ],
+  "title": "pirates_n_ships.almanac.trade.title"
+}

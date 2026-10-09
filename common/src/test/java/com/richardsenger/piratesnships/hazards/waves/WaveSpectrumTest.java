@@ -153,24 +153,50 @@ class WaveSpectrumTest {
         double h1 = new WaveField(0.7, 90, WaveSpectrum.components(6, 29.001), WaveField.Origin.NONE, GROUPS).height(1234, 567, 8910);
         assertTrue(Math.abs(h0 - h1) < 1e-3);
         assertEquals(30.0, WaveSpectrum.peakWavelength(SeaState.MODERATE.amplitude()), 1e-12);
-        assertEquals(31.0, WaveSpectrum.peakWavelength(0.5), 1e-12);
+        // WAV4: calm 0.15 (56), moderate 0.6 (30), rough 1.2 (32), storm 2.0 (42)
+        assertEquals(56.0, WaveSpectrum.peakWavelength(SeaState.CALM.amplitude()), 1e-12);
+        assertEquals(32.0, WaveSpectrum.peakWavelength(SeaState.ROUGH.amplitude()), 1e-12);
+        assertEquals(42.0, WaveSpectrum.peakWavelength(SeaState.STORM.amplitude()), 1e-12);
+        assertEquals(37.0, WaveSpectrum.peakWavelength(1.6), 1e-12, "half way from rough to storm");
+        assertEquals(43.0, WaveSpectrum.peakWavelength(0.375), 1e-12, "half way from calm to moderate");
         assertEquals(56.0, WaveSpectrum.peakWavelength(0.0), 1e-12);
-        assertEquals(43.0, WaveSpectrum.peakWavelength(0.2), 1e-12);
-        assertEquals(34.0, WaveSpectrum.peakWavelength(3.0), 1e-12);
+        assertEquals(42.0, WaveSpectrum.peakWavelength(3.0), 1e-12);
+    }
+
+    /**
+     * WAV4: no sea state is steeper than a sea keeps before breaking: the highest crest found (with the default wave
+     * groups) stands at most 1/15 of the state's peak wavelength above the still level. Measured: storm 2.51 blocks on a
+     * 42-block peak (1/16.7; on WAV2's 34 it was 1/13.6), rough 1.51 on 32 (1/21), moderate 0.76 on 30 (1/40).
+     */
+    @Test
+    void noSeaStateIsSteeperThanAFifteenth() {
+        for (SeaState s : SeaState.values()) {
+            double a = s.amplitude(), peak = WaveSpectrum.peakWavelength(a);
+            WaveField f = new WaveField(a, 90, WaveSpectrum.components(WaveSpectrum.DEFAULT_COMPONENTS, peak), WaveField.Origin.NONE,
+                    new WaveField.Groups(0.35 * WaveSpectrum.groupShare(a), 1200.0));
+            java.util.Random r = new java.util.Random(1);
+            double max = 0;
+            for (int i = 0; i < 200_000; i++) {
+                max = Math.max(max, Math.abs(f.height(r.nextDouble() * 5000, r.nextDouble() * 5000, r.nextDouble() * 100_000)));
+            }
+            assertTrue(max <= peak / 15.0, s.id() + ": crest " + max + " on a " + peak + "-block peak");
+            assertTrue(max >= 0.9 * a, s.id() + ": the sea never came near its amplitude: " + max);
+        }
     }
 
     @Test
     void groupsGrowFromACalmSwellToAModerateSea() {
         assertEquals(0.0, WaveSpectrum.groupShare(SeaState.CALM.amplitude()), 1e-12);
         assertEquals(0.0, WaveSpectrum.groupShare(0.0), 1e-12);
-        assertEquals(0.5, WaveSpectrum.groupShare(0.2), 1e-12);
+        assertEquals(0.5, WaveSpectrum.groupShare(0.375), 1e-12);
         assertEquals(1.0, WaveSpectrum.groupShare(SeaState.MODERATE.amplitude()), 1e-12);
         assertEquals(1.0, WaveSpectrum.groupShare(SeaState.STORM.amplitude()), 1e-12);
         // a calm swell is regular: no envelope
-        WaveField calm = new WaveField(0.1, 90, WaveSpectrum.components(6, WaveSpectrum.peakWavelength(0.1)), WaveField.Origin.NONE,
-                new WaveField.Groups(0.35 * WaveSpectrum.groupShare(0.1), 1200.0));
+        double a = SeaState.CALM.amplitude();
+        WaveField calm = new WaveField(a, 90, WaveSpectrum.components(6, WaveSpectrum.peakWavelength(a)), WaveField.Origin.NONE,
+                new WaveField.Groups(0.35 * WaveSpectrum.groupShare(a), 1200.0));
         assertEquals(1.0, calm.envelope(123, 456, 789), 0.0);
-        assertEquals(0.1, calm.maxHeight(), 1e-12);
+        assertEquals(a, calm.maxHeight(), 1e-12);
     }
 
     @Test

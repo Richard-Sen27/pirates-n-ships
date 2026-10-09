@@ -21,7 +21,7 @@ import java.util.List;
  * {@code S(ω) = ω⁻⁵ · exp(−5/4 · (ωp/ω)⁴) · γ^exp(−(ω − ωp)² / (2σ²ωp²))}, normalised so the weights sum to 1 (so
  * {@code |Σ wᵢ sin| ≤ 1}). The peak wavelength depends on the sea state ({@link #peakWavelength}): a calm sea is a
  * long, low swell left over from older weather (peak 56 blocks, little slope, so a hull lies nearly still); from a
- * moderate sea on the wind sea builds, its energy shifting from 30-block waves to the 34-block swell of a storm. Only the
+ * moderate sea on the wind sea builds, its energy shifting from 30-block waves to the 42-block waves of a storm (WAV4). Only the
  * weights change with the state, never a train's wavelength, period or phase, so easing from one state to another
  * changes the surface continuously. The wave groups grow in the same way ({@link #groupShare}): none in a calm swell,
  * full depth from a moderate sea on.
@@ -52,12 +52,19 @@ public final class WaveSpectrum {
     /** Share of a step of {@code ln λ} a train may move off its step's middle. */
     private static final double JITTER = 0.35;
 
-    /** Peak wavelength per sea state amplitude (calm, moderate, rough, storm) [blocks]. */
     /** Peak wavelength of a calm sea: a long, low swell [blocks]. */
     public static final double CALM_PEAK_WAVELENGTH = 56.0;
     private static final double[] PEAK_AMPLITUDES = {
             SeaState.CALM.amplitude(), SeaState.MODERATE.amplitude(), SeaState.ROUGH.amplitude(), SeaState.STORM.amplitude()};
-    private static final double[] PEAK_WAVELENGTHS = {CALM_PEAK_WAVELENGTH, 30.0, 32.0, REFERENCE_WAVELENGTH};
+    /**
+     * Peak wavelength of a storm [blocks]. WAV2 used the 34-block swell; WAV4 raised the storm to 2.0 blocks, whose
+     * highest crests (2.5 blocks with the wave groups, measured over 200,000 points) would stand at 1/13.6 of a 34-block
+     * wave, steeper than the about 1/15 a sea keeps before it breaks. A storm's waves are longer anyway, so its peak
+     * moved to 42 blocks (10 s): the highest crests stand at 1/16.7 of it.
+     */
+    public static final double STORM_PEAK_WAVELENGTH = 42.0;
+    /** Peak wavelength per sea state amplitude (calm, moderate, rough, storm) [blocks]. */
+    private static final double[] PEAK_WAVELENGTHS = {CALM_PEAK_WAVELENGTH, 30.0, 32.0, STORM_PEAK_WAVELENGTH};
 
     /**
      * One train without its weight.
@@ -88,7 +95,8 @@ public final class WaveSpectrum {
 
     /**
      * Peak wavelength of a sea whose state amplitude (before {@code waves.amplitude}) is {@code stateAmplitude}:
-     * piecewise linear through calm 56 (a long swell), moderate 30, rough 32 and storm 34 blocks, held outside.
+     * piecewise linear through calm 56 (a long swell), moderate 30, rough 32 and storm 42 blocks (WAV4; 34 before),
+     * held outside.
      */
     public static double peakWavelength(double stateAmplitude) {
         if (!(stateAmplitude > PEAK_AMPLITUDES[0])) {

@@ -1,6 +1,7 @@
 # Pirates 'n' Ships: how it works
 
-> In-game guide (GuideME): after changing this file, regenerate it with `python3 tools/gen_guideme.py` and commit the output.
+> In-game guides: after changing this file, regenerate GuideME with `python3 tools/gen_guideme.py` and the Captain's
+> Almanac with `python3 tools/gen_almanac.py` and `./gradlew :neoforge:runData`, and commit the output.
 
 A guide to everything that exists in the mod today: what each block, item and system does and how to use it.
 It describes the code on `main`, not the plans. For the plans see [`design.md`](design.md), and for the state of
@@ -681,8 +682,9 @@ is found: every map of it turns grey and keeps as a souvenir, and the next blank
 Operators: `/pirates world treasure give [port]`. Server config `world.treasure_maps`, `cargo_trade.treasure_map_price`.
 
 ### Waves
-The sea follows the weather: calm or a light chop in fair weather, rough in rain, a storm in thunder, changing over
-about a minute. Ships roll, pitch and rise with the waves (big ships far less than small boats). The sea is not one
+The sea follows the weather: a low swell or a light chop in fair weather, rough in rain, a storm in thunder, changing
+over about a minute. A fair-weather chop lifts the water about half a block, rain about a block, and in a thunderstorm
+the biggest crests stand two blocks and more above the still sea. Ships roll, pitch and rise with the waves (big ships far less than small boats). The sea is not one
 even swell: waves of different lengths run a little across each other, so the rhythm is irregular, and they come in
 sets, a run of bigger waves for half a minute and then a calmer spell. On a crest the bow lifts and the whole hull rides
 up, in a trough it sinks back. In rough seas the bow
@@ -690,8 +692,8 @@ throws spray, and any open hatch or low rim close to the waterline lets water in
 and keep a pump ready before a storm. `/pirates waves` shows the sea; operators can hold a state with `/pirates waves
 set storm` and release it with `/pirates waves clear`. The camera can roll with the ship (client setting
 `wave_effects.camera_sway`, off by default). Faint foam streaks lie on the water around you, stretched along the
-direction the waves run and gathered on the crests: none in a calm sea, a few in a moderate one, many in a storm, and
-none inside a dry hull (client setting `wave_effects.foam`). A moving ship leaves a wake: a bow wave of foam
+direction the waves run and gathered on the crests: none in a calm sea, a few in a moderate one, about twice as many in
+a storm, and none inside a dry hull (client setting `wave_effects.foam`). A moving ship leaves a wake: a bow wave of foam
 spreading out from the stem in a narrow V, a foam trail behind the stern that widens and fades over about 8 seconds and
 stays where the water is (a turning ship leaves a curved wake), and at speed a thin line of foam along the waterline;
 the faster the ship, the denser and brighter, nothing below 1 block per second or at anchor (client settings

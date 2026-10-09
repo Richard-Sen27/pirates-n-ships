@@ -1,0 +1,53 @@
+{
+  "bookmark_color": "#5a4f6e",
+  "icon": "minecraft:command_block",
+  "order": 120,
+  "pages": [
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.commands.p1.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.commands.p1.text1"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.commands.p1.list1_1",
+            "pirates_n_ships.almanac.commands.p1.list1_2",
+            "pirates_n_ships.almanac.commands.p1.list1_3",
+            "pirates_n_ships.almanac.commands.p1.list1_4",
+            "pirates_n_ships.almanac.commands.p1.list1_5",
+            "pirates_n_ships.almanac.commands.p1.list1_6",
+            "pirates_n_ships.almanac.commands.p1.list1_7",
+            "pirates_n_ships.almanac.commands.p1.list1_8",
+            "pirates_n_ships.almanac.commands.p1.list1_9",
+            "pirates_n_ships.almanac.commands.p1.list1_10",
+            "pirates_n_ships.almanac.commands.p1.list1_11",
+            "pirates_n_ships.almanac.commands.p1.list1_12",
+            "pirates_n_ships.almanac.commands.p1.list1_13",
+            "pirates_n_ships.almanac.commands.p1.list1_14",
+            "pirates_n_ships.almanac.commands.p1.list1_15",
+            "pirates_n_ships.almanac.commands.p1.list1_16",
+            "pirates_n_ships.almanac.commands.p1.list1_17",
+            "pirates_n_ships.almanac.commands.p1.list1_18",
+            "pirates_n_ships.almanac.commands.p1.list1_19",
+            "pirates_n_ships.almanac.commands.p1.list1_20",
+            "pirates_n_ships.almanac.commands.p1.list1_21",
+            "pirates_n_ships.almanac.commands.p1.list1_22",
+            "pirates_n_ships.almanac.commands.p1.list1_23",
+            "pirates_n_ships.almanac.commands.p1.list1_24"
+          ]
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.commands.p1.text2"
+        }
+      ]
+    }
+  ],
+  "title": "pirates_n_ships.almanac.commands.title"
+}

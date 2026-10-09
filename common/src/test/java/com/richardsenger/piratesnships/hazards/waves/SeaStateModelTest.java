@@ -125,8 +125,9 @@ class SeaStateModelTest {
 
     @Test
     void nearestStateAndIds() {
-        assertEquals(SeaState.MODERATE, SeaState.nearest(0.35));
-        assertEquals(SeaState.ROUGH, SeaState.nearest(0.9));
+        assertEquals(SeaState.MODERATE, SeaState.nearest(0.7)); // WAV4: moderate 0.6, rough 1.2
+        assertEquals(SeaState.ROUGH, SeaState.nearest(1.5));
+        assertEquals(SeaState.CALM, SeaState.nearest(0.3));
         assertEquals(SeaState.STORM, SeaState.byId("storm").orElseThrow());
         assertTrue(SeaState.byId("hurricane").isEmpty());
         assertTrue(SeaState.ROUGH.spray() && SeaState.STORM.spray() && !SeaState.MODERATE.spray());

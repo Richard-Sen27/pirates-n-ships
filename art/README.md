@@ -18,6 +18,31 @@ Block model workflow:
    `./gradlew :neoforge:runData`.
 5. The JUnit tests in `core/assets` (`HandMadeModelsTest`, `AssetReferencesTest`) guard the result.
 
+Left-hand display entries (ART17; applies to every hand-made item and block-item model):
+- **What the game does.** `ItemTransform.apply(leftHand, poseStack)` (1.21.1, `net.minecraft.client.renderer.block.model`)
+  negates the y and z rotation and the x translation of the `thirdperson_lefthand` / `firstperson_lefthand` entry:
+  the game mirrors the pose across the body. It cannot mirror the geometry. A missing left entry falls back to the
+  right one (`ItemTransforms.Deserializer`). Blockbench's display mode does the same (`DisplayMode.updateDisplayBase`),
+  so its left-hand preview is what the game shows.
+- **The rule: a left-hand entry is written for the right hand; the game mirrors it.** Same translation and scale; the
+  rotation is the right hand's rotation `R`, followed (in model space, before `R`) by at most one half-turn about one
+  of the model's own axes. With unmirrored geometry one model axis always ends up reversed against a true mirror
+  image, and the half-turn chooses which:
+  - `R` unchanged: the model's x axis is reversed. Right for models symmetric along x or that read well that way:
+    the chain shot, the hull patch, the paper items (the drawing stays towards the holder, unmirrored), every item
+    that copies `item/generated` (vanilla's own fallback), hats and `block/block`-style `[75, 45, 0]` entries.
+  - `R` turned 180° about the model's y axis (front and back faces swap): sprite-aligned items on the 45° diagonal
+    (swords, tools, guns, flag bundles, rope, the key, the brig door). At y = ±90 this equals the right entry with y
+    and z negated, which is exactly vanilla `item/handheld`'s `[0, 90, -25]` for `[0, -90, 25]`: every
+    handheld-style left entry here has that form and is correct. For other angles compose the matrices
+    (`Rx·Ry·Rz·Ry(180)`, then back to XYZ euler), never just negate: the brig key's `[0, -72, -170]` gives
+    `[180, 72, -10]`, the door's `[0, -70, 0]` gives `[0, 110, 0]`, `[0, 45, 0]` gives `[0, 225, 0]`.
+  - `R` turned 180° about the model's z axis (top and bottom swap): ART16's book in third person.
+- **Never write a plain negation of `R` when its y is not ±90.** The game negates it back and the left hand shows the
+  right hand's pose unmirrored (the F8g door, the ART10 key, the ART15 chain shot and the ART14 book until
+  ART16/ART17).
+- Check both hands in display mode and render them side by side (`renders/<item>_hands.png`, ART17).
+
 Z-fighting lint (V1, after the playtest note "blocks and items shiver where two coloured layers overlap"):
 - `python3 tools/lint_models.py` checks every hand-made model (`--summary`, `--warnings`, `--json`, `--exclude`,
   `--tolerance`, default 0.03 px). A **fight** is two faces of different elements in the same plane (within the
@@ -361,8 +386,9 @@ Items (firearms, ammunition and grappling hook batch, F8b):
   upper-left and the grip, trigger guard and ramrod on the lower-right, so they look natural in the GUI. That is the
   opposite side from the swords, so the hand transforms turn the model over: `thirdperson_righthand`
   `[0, 90, 40]` / `[0, 4, 2.5]` / 0.85 (pistol) and `[0, 90, 43]` / `[0, 5.5, 1.5]` / 0.85 (musket);
-  `firstperson_righthand` `[0, 90, -25]` / `[-1, 5, 1]` / 0.68 for both. The left hand negates the y and z rotations
-  and keeps the translation. Third-person translation is in arm space: y moves the item forward/back, z up/down along
+  `firstperson_righthand` `[0, 90, -25]` / `[-1, 5, 1]` / 0.68 for both. The left-hand entries
+  (`[0, -90, -40]`, `[0, -90, -43]`, `[0, -90, 25]`, same translation) are the right-hand rotation turned 180° about
+  the model's y axis, which at y = ±90 reads as the negation, like vanilla `item/handheld` (ART17 rule). Third-person translation is in arm space: y moves the item forward/back, z up/down along
   the arm. The Blockbench player reference already raises the arm like the in-game item pose, so the east side view
   shows the real pitch (barrel about 12° up).
 - **Small items** (lead shot, cannonball, grappling hook) copy `item/generated`'s entries. `item/generated` has no
@@ -515,8 +541,9 @@ Items (brig door and brig key, F8g):
   `fixed` `[0, 180, 0]` / `[-0.1, -4, 0]` / 0.5; `ground` 0.25 raised 1 px; `head` 0.5. Third person
   `[70, 90, 0]` / `[2.2, -1, -2]` / 0.3: x 70 stands the door upright against the arm's forward tilt (90 would lean it
   back), y 90 turns its face to the side, translation x moves it outside the arm (at 0 it cuts through the arm and
-  leg), y/z lower it so the hand grips it about half-way up. First person `[0, -70, 0]` / `[1.5, 2.5, 1]` / 0.25. The
-  left hand negates the y rotation and keeps the translation.
+  leg), y/z lower it so the hand grips it about half-way up. First person `[0, -70, 0]` / `[1.5, 2.5, 1]` / 0.25. Left
+  hand (ART17 rule, the right-hand rotation turned 180° about the model's y axis): third person `[70, -90, 0]`,
+  first person `[0, 110, 0]`, same translations.
 - **Brig key** (39 elements; replaced by ART10 below): an iron skeleton key on the 45 degree diagonal, 14 px long (bow bottom-left, bit
   top-right like a tool sprite; the two teeth on the upper-left side, so they point up when it is held). Parts are
   thirteen shapes in world coordinates, each a bar with a direction in 45 degree steps (an octagonal bow ring of
@@ -555,8 +582,8 @@ into 3d"; the F8g key was a 1.5 px slab with rim plates):
     `steel`; the flange, collar bead and bead ring `steel` with `steel_light` tops, so the bands read as lighter
     rings on the dark iron; bit `steel_dark` faces with `iron_dark` edges and `steel` ward ends. Lighter iron
     (`steel` fronts) vanished against the grey inventory slot at 16 px.
-- **Display** (the left hand negates the y and z rotations and keeps the translation; MC applies the euler as
-  Rx·Ry·Rz, so z turns the model first):
+- **Display** (left hands follow the ART17 rule: the right-hand rotation turned 180° about the model's y axis, same
+  translation; MC applies the euler as Rx·Ry·Rz, so z turns the model first):
   - `gui` `[-28.2, -21.6, 34.5]` / `[-0.28, -0.75, 0]` / 1.05: the composition of "turn 35° about the key's own
     axis (x), then 40° about z", which tilts the bow and bit towards the viewer without foreshortening the shank;
     bow lower left, bit upper right, wards on the upper-left side. Projected size 14.5 x 14.7 units, inside the
@@ -565,7 +592,8 @@ into 3d"; the F8g key was a 1.5 px slab with rim plates):
     to the sprite diagonal plus 20° more, so the bow sits in the fist and the shank points forward and 7.5° down
     (world direction of the model's x axis read from `mesh.matrixWorld` in display mode); wards hang down.
   - first person `[0, -72, -170]` / `[0, 3.8, 0]` / 0.42: the shank points into the screen and a little to the
-    left and down, the bow lower right with its face towards the player.
+    left and down, the bow lower right with its face towards the player. Left hand `[180, 72, -10]` (ART17; the
+    F8g/ART10 negation `[0, 72, 170]` showed the bow end on).
   - `ground` `[0, 0, 45]` / `[0, 2, 0]` / 0.45; `fixed` `[0, 180, 45]` / `[0, 0, 0]` / 0.9 (bit upper right in the
     frame); `head` vanilla `[0, 180, 0]` / `[0, 13, 7]` / 1.
 - **Re-export:** the elements came from a Python part list (octagon helper, ring loop, bit cubes, palette patch per
@@ -607,7 +635,8 @@ CAN3 drew flat sprites with `tools/gen_shot_sprites.py`, both gone):
   of crossed boxes centred on (8, 8, 8), the grapeshot's colours). Not an item model (the Almanac generator refuses
   an item model without an item), so it sits under `block/` like the cannon's stand-alone parts and is listed in
   `HandMadeModelsTest.BLOCK_MODELS`; `CannonballRenderer` draws it as a registered stand-alone model.
-- **Display** (left hands negate the y and z rotations and keep the translation, as ART10):
+- **Display** (left hands follow the ART17 rule; the chain shot is symmetric, so both its left slots repeat the
+  right hand, and the grapeshot's first-person left `[0, 225, 0]` is the right-hand rotation turned 180° about y):
   - chain shot: `gui` `[-17.2, -13.9, 37.9]` / `[0, 0, 0]` / 1 (22° about its own axis, then 38° about z: chain on the
     slot diagonal, the flat links still open; about 14.6 x 13.1 units in the slot); third person `[0, 0, 0]` /
     `[0, 3, 1]` / 0.55 (held out in the fist, a ball either side); first person `[0, -35, 25]` / `[-1, 3.5, 0]` / 0.5
@@ -1377,6 +1406,36 @@ Flag pedestal and the pole on the crow's nest (FLG3):
   the barrel, the collar and cleat on the floor), a `THREE.WebGLRenderer` over clones of `Project.model_3d` (the pole
   above drawn as copies of the stub and halyard), written with `fs`.
 
+Left-hand display audit (ART17, after ART16 found the book's left hand unmirrored):
+- Every model under `models/item/` with explicit left-hand entries (60 files; `models/block/` has only
+  `block/block`-style and same-as-right entries, all fine) was classed by the ART17 rule: the effective left pose
+  (y, z negated) compared with the mirror image of the right pose, axis by axis, then checked in Blockbench's display
+  mode for both hands in first and third person.
+
+  | Model(s) | Left entry before | Class | Result |
+  |---|---|---|---|
+  | `cutlass`, `rapier`, `saber`, `carpenters_hammer`, `saw`, `paddle`, `rope`, `kraken_beak`, `shipwright_toolkit`, `hammock`, `boarding_plank`, `ratline_net`, `navy_flag`, `merchant_flag`, `jolly_roger_flag` (both slots), `ratlines` (first person) | vanilla `item/handheld` (`[0, 90, -55]`, `[0, 90, -25]`) | turn about y at y = ±90 | correct, unchanged (the right-hand values instead made the blade lie edge on, pointing back) |
+  | `pistol`, `pistol_loaded`, `musket`, `musket_loaded`, `musket_hook` (both slots) | `[0, -90, -40/-43]`, `[0, -90, 25]` | turn about y at y = ±90 | correct, unchanged (`renders/pistol_hands.png`) |
+  | `brig_key` third person, `brig_door` third person | `[0, 90, -120]`, `[70, -90, 0]` | turn about y at y = ±90 | correct, unchanged |
+  | `brig_key` first person | `[0, 72, 170]` (negation, y = -72) | wrong: unmirrored, bow end on | **`[180, 72, -10]`** (turn about y) |
+  | `brig_door` first person | `[0, 70, 0]` (negation) | wrong: unmirrored, door edge on | **`[0, 110, 0]`** (turn about y; hinge towards the middle, lock plate outside) |
+  | `hull_patch` first person | `[0, 70, 0]` (negation) | wrong: unmirrored, edge on | **`[0, -70, 0]`** (= right; the braced face stays towards the holder) |
+  | `hull_patch` third person | `[70, -90, 0]` (negation, y = ±90) | mirrored, but the plain back faced out | **`[70, 90, 0]`** (= right, braced face out as in the right hand) |
+  | `chain_shot` first person | `[0, 35, -25]` (negation) | wrong: unmirrored, balls end on | **`[0, -35, 25]`** (= right; the shot is symmetric) |
+  | `captains_almanac` | negation | wrong | fixed by ART16: first person `[70, -10, -8]` = right, third person `[0, 0, -90]` for `[0, 0, 90]` (turn about z, which here also reads as a negation) |
+  | `grapeshot`, hats, `bandana` first person | `[0, 225, 0]` / `[0, -135, 0]` for `[0, 45, 0]` | turn about y | correct, unchanged |
+  | the remaining 28 (`item/generated` copies, `doubloon`, `map_tile`, `treasure_map`, `ship_receipt`, third-person `[0, 0, 0]` / `[75, 45, 0]`) | same as right | `R` unchanged | correct, unchanged |
+- Inherent limit: a sprite-aligned item shows its other face in the left hand (the geometry is not mirrored), so the
+  Jolly Roger bundle's skull, which is on the front only, faces the body in the off hand; the pistol's lock likewise.
+  Vanilla sprites behave the same.
+- Edits: only the changed `rotation` numbers in the display block of each model JSON and its project
+  (`brig_key`, `brig_door` / `brig_door_item.bbmodel`, `hull_patch` / `hull_patch_item.bbmodel`, `chain_shot`), set in
+  Blockbench's display mode and written into both files with every other byte kept (the diff shows only those
+  lines); `Codecs.java_block.compile()` of the edited tabs gives the same elements.
+- Renders (left hand on the left, right on the right; first person on top, third person from the front three-quarter
+  of each side): `renders/brig_key_hands.png`, `brig_door_hands.png`, `hull_patch_hands.png`,
+  `chain_shot_hands.png`, and `pistol_hands.png` for the unchanged handheld form.
+
 ## Entities
 
 Animated mobs and NPCs (crew member, pirate, sailor, navy soldier and officer; design.md §9) are GeckoLib models
@@ -2038,7 +2097,7 @@ with brass corners"). One palette for all three: the GUI kit's leather and brass
   `lint_models.py`: 0 visible fights. `AlmanacModule` marks the item `handMadeItem` and points the block's particle at
   the new texture; the placeholder sprite `textures/item/captains_almanac.png` and `tools/gen_almanac_sprite.py` are
   gone.
-- **Item display** (hands replaced by ART16 below; the left hand mirrors y and z): `gui` `[30, 225, 0]` / `[0, 4.1, 0]` / 0.8 (fore-edge with the
+- **Item display** (hands replaced by ART16 below): `gui` `[30, 225, 0]` / `[0, 4.1, 0]` / 0.8 (fore-edge with the
   clasp lower left, head lower right, the cover's lozenge and all four caps read; 15.5 of 16 units wide, centred with
   the orthographic display check of F7g, which gives 32 px per unit at 1024 px); third person `[90, 0, 90]` /
   `[0, 2, 1]` / 0.5 (upright in the fist, spine down, cover outwards); first person `[90, -25, 80]` / `[-2, 5, 0]` /
@@ -2090,8 +2149,8 @@ cover side it also glitches a bit when closed"):
   same rule, so `loadFirstLeft()` / `loadThirdLeft()` previews are trustworthy. For a book (a chiral object: cover,
   head and fore-edge fix its handedness) the game's mirror also swaps the spine and the fore-edge; a left entry of
   `R · Rz(180)` in model space keeps the fore-edge forward instead (the third-person left entry below, re-centred
-  with its own translation). The ART10 / ART15 / F8b notes that say "the left hand negates the y and z rotations"
-  describe exactly the double negation; their models are not changed here.
+  with its own translation). ART17 audited the other models against this: a negation is a real mirror only when y
+  is ±90 (vanilla `item/handheld`, the guns), and the rule now sits with the conventions at the top of this file.
 - **Display** (measured in display mode with the slot's camera copied into an offscreen view; first-person screen
   extents as NDC, x right, y up, -1..1):
   - first person, both hands, `[70, -10, -8]` / `[4.5, 6.5, -2]` / 0.85 (was right `[90, -25, 80]` / `[-2, 5, 0]` /

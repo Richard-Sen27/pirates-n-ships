@@ -80,7 +80,7 @@ gets `compass_corner = BOTTOM_LEFT` and `hull_corner = BOTTOM_RIGHT`. Please sen
 1. **Default corners, GUI scale 2 and 3.** Survival, a sword in your hotbar but another slot selected, stand aboard.
    Check at GUI scale 2, then 3 (Options, Video Settings).
    - **Expected:** the compass panel (rose, wind arrow, speed and rudder, name and load) at the bottom left, its
-     bottom edge just above where the chat's lines sit (about 134 GUI px from the bottom); the hull strip at the
+     bottom edge just above where the chat's lines sit (in the corner, 4 px from the edges, when no recent chat line shows (HUD3); above the shown lines otherwise); the hull strip at the
      bottom right corner, 4 px from the edges. With a narrow window (e.g. 854×480 at scale 2) the hull strip rises
      above the hotbar, the food row and the stamina bar instead of covering them.
 2. **Chat.** Receive a few messages (`/say hi` several times), then open the chat (T) and scroll.

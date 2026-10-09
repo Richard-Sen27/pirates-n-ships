@@ -491,10 +491,22 @@ fitting already holds a net. The net is drawn as two side ropes with a rung ever
 through holds an invisible, climbable net cell. Walk into the net (from the chainplate) and hold forward or jump: you
 climb along the net's line at any slope, as fast as up a ladder (slower on a net flatter than about 38°); back climbs
 down, sneaking holds on. The fittings are climbable too, so you get on at the chainplate and off at the hoop.
-Breaking a fitting, a net cell or putting a block into the net brings the whole net down: one net drops at the first
-fitting, the fittings stay. Nets work in water and sail with the ship. Server config `rigging.nets_enabled`,
+Breaking a fitting, a net cell or putting a block into the net brings the whole net down: one net drops at its
+chainplate, the fittings stay. Nets work in water and sail with the ship. Server config `rigging.nets_enabled`,
 `rigging.net_assist` (off: plain ladder climbing, which takes a diagonal net only with jump and forward held
 together).
+
+**Triangular nets (RL4).** A mast hoop takes up to five nets (`rigging.net_max_strands`), each from its own chainplate
+(a chainplate still takes one); a full hoop says "Hoop full: at most 5 nets". The nets on one hoop form a **fan**: put
+three chainplates along the rail and string each to the same hoop, and the space between neighbouring nets is netted
+too, so you get the wide-at-the-bottom, pointed-at-the-top shrouds of a real ship. The whole triangle is climbable:
+step in anywhere along the rail between the chainplates and climb straight up to the hoop. It is drawn as one net: every
+strand's rope from its chainplate to the hoop and rungs every half block across all of them, narrowing towards the
+hoop. Two neighbouring chainplates more than 6 blocks apart (`rigging.net_max_spread`) stay separate nets with nothing
+in between ("Too far apart for one net: 7.2"). The space between must be clear like the net's own line (another
+chainplate in it is fine). Each strand is still one net item: breaking a chainplate, a net cell or putting a block
+into the net drops that strand's net at its chainplate and the rest of the fan closes up again; breaking the hoop drops
+every strand. All nets of a fan must be on one ship (or all on land).
 
 ### Hammocks
 Your crew sleeps in hammocks. Hang one between two supports at the same height (fence posts, walls, logs, or a solid
@@ -1578,7 +1590,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `ship_identity` | Nameplates showing the ship's name, their refresh. |
 | `ship_screen` | The ship screen at the helm on/off (off: sneak-use disassembles at once), its reach, how often it refreshes. |
 | `ship_decor` | The ship's bell ring time; sleeping in the sea cot, on land and aboard; railings on or off and their collision height (`railings_enabled`, `railing_collision_blocks`). |
-| `rigging` | Ratlines on/off; ratline nets on/off, their longest length and flattest pitch, the climbing assist. |
+| `rigging` | Ratlines on/off; ratline nets on/off, their longest length and flattest pitch, the climbing assist; how many nets one mast hoop holds and how far apart two neighbouring chainplates may be to be netted together. |
 | `wind` | Wind strength range, how fast it changes, weather multipliers, gusts, regional variation, sync interval. |
 | `sailing` | Sail force, half-trim factor, rudder strength and turning authority (`rudder_force_factor`, `max_rudder_angle`), keel drag, roll and pitch damping; `sails` (yard gaps and lengths, stay length and drop, rope lines and sag, dyeing, banners and their minimum size). |
 | `sailing_runtime` | Sailing forces, steering and anchor on/off, sail heel factor, sails needing water, rudder steps, the anchor chain's length (`anchor_chain_length`), draft, scan interval. |

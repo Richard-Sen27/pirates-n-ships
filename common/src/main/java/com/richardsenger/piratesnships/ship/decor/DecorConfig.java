@@ -22,7 +22,7 @@ public final class DecorConfig {
 
     public static final ConfigValue<Boolean> BELL_SWING_ENABLED = BELL_VISUALS.bool("enabled", true,
             "Swing the ship's bell about its yoke when it is rung (off = it hangs still)");
-    public static final ConfigValue<Double> BELL_SWING_DEGREES = BELL_VISUALS.doubleRange("swing_degrees", 20.0, 0.0, 30.0,
+    public static final ConfigValue<Double> BELL_SWING_DEGREES = BELL_VISUALS.doubleRange("swing_degrees", 20.0, 0.0, 25.0,
             "How far the ship's bell swings out on its first swing after a strike from the front or back, in degrees");
 
     private DecorConfig() {

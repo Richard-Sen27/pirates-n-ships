@@ -782,14 +782,13 @@ Ratlines (RL1):
   stand-ins (no `art/vanilla` textures were extracted).
 
 Ship decor (ART2): ship's lantern, ship's bell, rope coil, stern window, chart table, sea cot:
-- **Part lists in `tools/gen_decor_models.py`** (committed, like the cannon's): run it to rewrite the 17 model JSON
+- **Part lists in `tools/gen_decor_models.py`** (committed, like the cannon's): run it to rewrite the 18 model JSON
   files, then `python3 tools/lint_models.py`, then rebuild the projects. Every model faces north; wall-mounted ones
   hang on the south side (z 16). UVs are vanilla's position UVs wrapped into 0..16; log faces along x or z are turned
   90 degrees with the UV rect transposed; palette faces (`brass`, `brass_dark`, `iron_dark` of `textures/item/palette`)
   take the inner 3 x 3 px of the patch. No new textures.
 - **One project per block, one group per exported model**, all groups at the same position, the first visible
-  (`ship_lantern`: `ship_lantern`, `_wall`, `_ceiling`; `ships_bell`: `ships_bell`, `_ringing`, `_wall`,
-  `_wall_ringing`; `rope_coil`: `rope_coil_layers1..4`; `stern_window`: `stern_window`, `_shutters`; `chart_table`;
+  (`ship_lantern`: `ship_lantern`, `_wall`, `_ceiling`; `ships_bell`: see "Ship's bell swing (BELL1)" below; `rope_coil`: `rope_coil_layers1..4`; `stern_window`: `stern_window`, `_shutters`; `chart_table`;
   `sea_cot`: `sea_cot_item`, `sea_cot_head`, `sea_cot_foot`). Export a group with the other groups' cubes set to
   `export = false`; compiling the whole project merges the variants. The projects were rebuilt from the JSON cube by
   cube (`ART2.load` in `risky_eval`: textures from `art/vanilla/` with namespace `minecraft`, folder `block`, our own
@@ -799,11 +798,10 @@ Ship decor (ART2): ship's lantern, ship's bell, rope coil, stern window, chart t
   glow animates), brass corner posts, top plate, two caps and a hanging ring. The ceiling variant is raised 2 px onto a
   hook and a rose, the wall variant raised 1 px under a brass arm with a 45 degree brace into a stripped dark oak wall
   block.
-- **Bell** (19 / 17 elements, the same with `_ringing`): crossed-box sections (crown, top, shoulder, waist with a band,
-  lip with a `black_concrete` mouth) of `gold_block`; a `palette` iron clapper and a rope lanyard that stay plumb
-  while the bell elements turn 22.5 degrees about x at the hanging point (lip north, away from a wall), which is why
-  the bell has no 45 degree octagon bars (one rotation per element). Floor: a dark oak belfry frame (base, two
-  uprights, log beam with brass pin and cap) meant to sit on a post; wall: backboard, arm and brace.
+- **Bell** (ART2's two-model swing replaced by BELL1, see below): crossed-box sections (crown, top, shoulder, waist
+  with a band, lip with a `black_concrete` mouth) of `gold_block`, no 45 degree octagon bars; a `palette` iron clapper
+  and a rope lanyard. Floor: a dark oak belfry frame (base, two uprights, log beam with a brass cap) meant to sit on a
+  post; wall: backboard, arm and brace.
 - **Rope coil** (28 / 55 / 81 / 107 elements): per coil two octagonal rope rings (eight bars each, the four diagonal
   bars 0.05 px shorter at both ends), a crossed-box heart and one upper ring in the groove, 3.9 px high, 4 px per
   layer; the top coil has the loose end (on a stack it drops down the side) with a wool whipping. `block/rope` at its
@@ -820,9 +818,40 @@ Ship decor (ART2): ship's lantern, ship's bell, rope coil, stern window, chart t
   seam (seam faces left out); posts, panelled head- and footboard, side boards and rails, a red blanket with a white
   sheet fold, pillow; the mattress shows only at the head. The item model (`block/sea_cot_item`, both halves shifted
   8 px south) carries the display entries (GUI scale 0.42).
-- Renders: `renders/ship_lantern.png` (floor, wall, ceiling), `ships_bell.png` (floor, floor ringing, wall, wall
-  ringing), `rope_coil.png` (one and three coils), `stern_window.png` (open, shutters), `chart_table.png`,
+- Renders: `renders/ship_lantern.png` (floor, wall, ceiling), `ships_bell.png` (ART2: floor, floor ringing, wall,
+  wall ringing; the ringing models are gone since BELL1, see `ships_bell_swing.png`), `rope_coil.png` (one and three coils), `stern_window.png` (open, shutters), `chart_table.png`,
   `sea_cot.png`.
+
+Ship's bell swing (BELL1):
+- **Four groups in `ships_bell.bbmodel`** (32 elements): `bell` (origin = the pin (8, 13, 8): the brass `yoke` round the
+  pin, 2.8 x 1.4 x 1.4 px, and the bell hanging 0.8 px under it, crown top at y 12.2, lip down to 5.2; 12 elements),
+  `clapper` (same origin: the clapper just below the mouth, the lanyard and its knot down to y 2.2; 3), `post` (the
+  belfry frame with two iron `hanger` straps from the beam down past the pin either side of the yoke and the brass
+  `pin` along x through them; 8) and `wall` (hidden; the bracket with a brass `crosshead` under the arm end holding
+  the hangers and the pin at y 11.8, i.e. `ShipsBellSwing.WALL_DROP` = 1.2 px lower, and a short 45 degree knee brace
+  from y 11 on the backboard to the arm, kept clear of the swinging bell; 9). One bell and one clapper model serve
+  both mounts: the renderer draws them 1.2 px lower on the wall.
+- **Exports** (`Codecs.java_block.compile()` with the other groups' cubes set to `export = false`, all from the part
+  list in `tools/gen_decor_models.py`): the block models `ships_bell_post` and `ships_bell_wall` (the mounts; the block
+  state picks them by `face`, `ringing` no longer changes the model), the stand-alone `ships_bell_bell` and
+  `ships_bell_clapper` (drawn by `ShipsBellRenderer`, registered as additional models), and the item model
+  `ships_bell` = bell + clapper + post at rest with the GUI display (`HandMadeModelsTest.shipsBellSplitsIntoMountBellAndClapper`).
+  The `_ringing` models were removed.
+- **Drawn by `ShipsBellRenderer`:** both parts turned about the x axis through the pin (`ShipsBellSwing.partPose`;
+  rotating the hanging mouth towards +z, the back of the north-facing model, is a negative `Axis.XP` angle) by
+  `ShipsBellSwing.bellDegrees`: vanilla `BellRenderer`'s damped sine `sin(t / pi) / (4 + t / 3)`, scaled so the first
+  swing is `bell_visuals.swing_degrees` (20) and faded out over the second half of `ship_decor.bell_ring_ticks`; the
+  clapper trails 1.5 ticks behind, never more than 12 degrees off the bell. Struck from the front the mouth swings to
+  the back first, from the back to the front, from a side half as far; a raid alarm rings it as from the front.
+- **Clearances** (checked up to the config maximum of 25 degrees; at 30 the yoke would graze the crosshead): the
+  yoke's corners stay under the beam (13.93 < 14) and the crosshead (12.73 < 12.75), the lip passes the wall trim
+  (z 14.29 < 14.7) and the brace, the bell keeps 0.2 px from the uprights in x (it never moves in x). Everything stays inside the block, so the default culling box fits.
+- **Rebuilt** from the generated JSON in `risky_eval` (`BELL1` global: new `java_block` project, one group per part
+  file, cubes from the JSON elements, unrotated cubes at origin (8, 8, 8) so the export carries no zero rotation,
+  textures from `art/vanilla/` with namespace `minecraft` and folder `block`, ours from the resources and embedded);
+  every export was compared element by element with its file before saving with `fs`.
+- **Render:** `renders/ships_bell_swing.png`: post and wall at rest and at full swing (front three-quarter and side
+  views), drawn with a `THREE.WebGLRenderer` from clones of the cube meshes posed like the renderer.
 
 Cloth and flags (ART3):
 - **Sail cloth** `textures/block/sail_cloth.png` (32x32, opaque, `tools/gen_sailing_textures.py`, deterministic): one

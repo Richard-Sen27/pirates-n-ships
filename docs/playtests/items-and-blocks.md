@@ -354,3 +354,35 @@ Render: `art/renders/ratlines.png`.
   server"; nets already placed stay and climb.
 - Say whether the net should be denser (more ratlines), thinner or a different colour, and whether walking up the
   sloped run feels right.
+
+## Ship's bell swing (BELL1)
+
+The bell now swings about the pin of its yoke instead of flipping to a second model (replaces the swing check in step
+23's ship's bell line). Render: `art/renders/ships_bell_swing.png`. Set up a bell on a fence post (placed while looking
+down, so its front faces you) and one on a wall (its front faces away from the wall).
+- **Look at rest:** post: the belfry frame with two iron straps hanging from the beam and a brass pin through them; the
+  bell hangs from a small brass yoke on the pin, the clapper and rope lanyard below the mouth. Wall: the same bell under
+  a brass crosshead at the end of the arm, a short brace from the backboard up to the arm. The item in the inventory
+  still shows the whole bell on its frame. No purple-black cube, no missing-model warning in the log.
+- **Ring from the front (post):** right-click the side facing you: the bell sound, and the bell swings **away from you**
+  first (about 20 degrees), comes back smaller and settles in about a second; the clapper trails the bell a moment and
+  stays inside the mouth. Nothing pokes through the uprights or the beam.
+- **Ring from the back (post):** walk round and click the far side: it swings away from you again (towards the front
+  of the frame first).
+- **Ring from a side (post):** click the left or the right side of the bell (along the pin): a half-size swing; the
+  bell never swings sideways (it only rocks on its pin), the two sides start opposite ways.
+- **Wall bell:** click the front: the mouth swings towards the wall first and does not touch the backboard, its trim or
+  the brace; click it from below or from a side: a swing out from the wall or a half swing.
+- **Ring again while it swings:** click several times quickly: each click restarts the swing from the start (no jump
+  back to rest in between beyond the restart), and the bell is at rest a second after the last click.
+- **Other players:** a second player watching sees the same swing in the same direction.
+- **Raid alarm:** in a navy outpost or port with a ship's bell in its box, `/pirates world raid <port>` (tab-complete the port; or wait for a raid to be
+  sighted): every ship's bell there rings every 5 seconds, each swing as if struck from the front (the mouth to the
+  back of the mount first), together with the vanilla bells.
+- **On a ship:** put both kinds on a hull, assemble and sail, also while turning: ring them; the swing follows the
+  ship's pose (it swings in the ship's frame, front and back as on land), no flicker, no bell left behind in the world.
+  Disassemble: both bells are back and still ring.
+- **Toggles:** client config `bell_visuals.enabled = false`: the bell rings (sound) but hangs still;
+  `bell_visuals.swing_degrees = 5` and `25`: a small and a large swing (25 is the maximum; check nothing clips at 25).
+  Server config `ship_decor.bell_ring_ticks = 60`: the bell swings longer (about three swings) and still eases to rest.
+- Say whether the swing is too fast, too slow or too big, and whether the clapper's lag reads well.

@@ -84,13 +84,19 @@ configurations {
 
 dependencies {
     // Sable (hard dependency). Its published runtime variant also lists Create, Ponder, Flywheel and
-    // Registrate, which Sable only uses for optional compat. We have no Create dependency, so exclude them.
+    // Registrate, which Sable only uses for optional compat. We have no Create dependency, so Create and Registrate
+    // are excluded. Ponder and Flywheel are our own dependencies since ALM4 (below), so Sable's Flywheel compat is
+    // active in every run.
     implementation("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${sable_version}") {
         exclude group: 'com.simibubi.create'
-        exclude group: 'net.createmod.ponder'
-        exclude group: 'dev.engine-room.flywheel'
         exclude group: 'com.tterrag.registrate'
     }
+    // Ponder (required, the Almanac's "Show me" scenes) and Flywheel (Ponder's renderer, required on the client).
+    // Neither is on Modrinth or CurseForge for 1.21.1, so both ship inside our jar (jar-in-jar, like Create);
+    // NeoForge loads the newest copy when another mod bundles them too. Ponder's POM asks for Flywheel 1.0.4; ours
+    // (and Sable's runtime POM: Ponder 1.0.82, Flywheel 1.0.6) resolve to the versions in gradle.properties.
+    jarJar(implementation("net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}"))
+    jarJar(implementation("dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}"))
     // Player Animation Library (required on the client, docs/animation-libraries.md). The jar already contains
     // PlayerAnimationLibCore and jar-in-jars mochafloats and javassist; its POM still lists Core (and through it newer
     // gson, slf4j, fastutil, netty: PAL issue #163) at runtime. A second copy of Core's packages on the module path

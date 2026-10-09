@@ -30,7 +30,8 @@
         "sable": ">=${sable_version} <3.0.0",
         "geckolib": ">=${geckolib_version}",
         "forgeconfigapiport": "*",
-        "player_animation_library": ">=${pal_version}"
+        "player_animation_library": ">=${pal_version}",
+        "ponder": ">=${ponder_version}"
     },
     "recommends": {
         "modmenu": "*"

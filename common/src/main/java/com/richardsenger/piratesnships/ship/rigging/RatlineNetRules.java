@@ -154,9 +154,6 @@ public final class RatlineNetRules {
 
     // ------------------------------------------------------------------ fans (RL4)
 
-    /** Largest step along a fan triangle's edges between two walked cross lines [blocks]. */
-    public static final double FAN_STEP = 0.5;
-
     /** A cell of a fan: the strand that owns it (its index in fan order) and whether it fills a triangle. */
     public record FanCell(Cell cell, int owner, boolean fill) {
     }
@@ -218,26 +215,80 @@ public final class RatlineNetRules {
         return b.minus(a).length();
     }
 
+    /** How far into a cell a triangle must reach to take it [blocks]: a triangle only touching a face takes nothing. */
+    private static final double TOUCH = 1.0e-6;
+
     /**
-     * Every cell the triangle ({@code hub}, {@code a}, {@code b}) passes through: the triangle is walked in cross lines
-     * from edge hub-a to edge hub-b, one every at most {@link #FAN_STEP} blocks along both edges (each cross line a
-     * {@link #walk}), plus both edges; deduplicated and sorted by y, then x, then z.
+     * Every cell the triangle ({@code hub}, {@code a}, {@code b}) passes through, sorted by y, then x, then z: each cell
+     * of the triangle's bounding box tested exactly against it (the separating-axis test of a triangle and a box, the
+     * box shrunk by {@link #TOUCH}). A walk of cross lines every half block misses the slivers where the
+     * triangle only clips a cell's corner, and a climber would fall through those.
      */
     public static List<Cell> triangleCells(Point hub, Point a, Point b) {
-        double la = a.minus(hub).length(), lb = b.minus(hub).length();
-        int n = Math.max(1, (int) Math.ceil(Math.max(la, lb) / FAN_STEP - 1.0e-9));
-        java.util.Set<Cell> cells = new java.util.HashSet<>();
-        cells.addAll(walk(hub, a));
-        cells.addAll(walk(hub, b));
-        for (int i = 0; i <= n; i++) {
-            double t = (double) i / n;
-            Point p = new Point(hub.x + (a.x - hub.x) * t, hub.y + (a.y - hub.y) * t, hub.z + (a.z - hub.z) * t);
-            Point q = new Point(hub.x + (b.x - hub.x) * t, hub.y + (b.y - hub.y) * t, hub.z + (b.z - hub.z) * t);
-            cells.addAll(walk(p, q));
+        int x0 = (int) Math.floor(Math.min(hub.x, Math.min(a.x, b.x))), x1 = (int) Math.floor(Math.max(hub.x, Math.max(a.x, b.x)));
+        int y0 = (int) Math.floor(Math.min(hub.y, Math.min(a.y, b.y))), y1 = (int) Math.floor(Math.max(hub.y, Math.max(a.y, b.y)));
+        int z0 = (int) Math.floor(Math.min(hub.z, Math.min(a.z, b.z))), z1 = (int) Math.floor(Math.max(hub.z, Math.max(a.z, b.z)));
+        List<Cell> out = new ArrayList<>();
+        for (int y = y0; y <= y1; y++) {
+            for (int x = x0; x <= x1; x++) {
+                for (int z = z0; z <= z1; z++) {
+                    if (overlaps(hub, a, b, x + 0.5, y + 0.5, z + 0.5, 0.5 - TOUCH)) {
+                        out.add(new Cell(x, y, z));
+                    }
+                }
+            }
         }
-        List<Cell> out = new ArrayList<>(cells);
-        out.sort(java.util.Comparator.comparingInt(Cell::y).thenComparingInt(Cell::x).thenComparingInt(Cell::z));
+        if (out.size() > MAX_CELLS * 4) {
+            throw new IllegalArgumentException("a fan triangle of " + out.size() + " cells");
+        }
         return out;
+    }
+
+    /** Whether the triangle (p, q, r) and the cube round (cx, cy, cz) with half size h overlap (Akenine-Möller's axes). */
+    static boolean overlaps(Point p, Point q, Point r, double cx, double cy, double cz, double h) {
+        double[] v0 = {p.x - cx, p.y - cy, p.z - cz};
+        double[] v1 = {q.x - cx, q.y - cy, q.z - cz};
+        double[] v2 = {r.x - cx, r.y - cy, r.z - cz};
+        double[][] v = {v0, v1, v2};
+        double[][] f = {sub(v1, v0), sub(v2, v1), sub(v0, v2)};
+        // the box's face normals
+        for (int i = 0; i < 3; i++) {
+            double lo = Math.min(v0[i], Math.min(v1[i], v2[i])), hi = Math.max(v0[i], Math.max(v1[i], v2[i]));
+            if (lo > h || hi < -h) {
+                return false;
+            }
+        }
+        // the nine cross products of the box's axes and the triangle's edges
+        for (int i = 0; i < 3; i++) {
+            double[] e = new double[3];
+            e[i] = 1;
+            for (double[] edge : f) {
+                double[] axis = cross(e, edge);
+                if (separates(axis, v, h)) {
+                    return false;
+                }
+            }
+        }
+        // the triangle's plane
+        return !separates(cross(f[0], f[1]), v, h);
+    }
+
+    private static boolean separates(double[] axis, double[][] v, double h) {
+        double p0 = dot(axis, v[0]), p1 = dot(axis, v[1]), p2 = dot(axis, v[2]);
+        double r = h * (Math.abs(axis[0]) + Math.abs(axis[1]) + Math.abs(axis[2]));
+        return Math.min(p0, Math.min(p1, p2)) > r || Math.max(p0, Math.max(p1, p2)) < -r;
+    }
+
+    private static double[] sub(double[] a, double[] b) {
+        return new double[] {a[0] - b[0], a[1] - b[1], a[2] - b[2]};
+    }
+
+    private static double[] cross(double[] a, double[] b) {
+        return new double[] {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]};
+    }
+
+    private static double dot(double[] a, double[] b) {
+        return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
     }
 
     /**

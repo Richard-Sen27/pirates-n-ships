@@ -332,8 +332,9 @@ public final class RatlineNets {
                 return new Check(Refusal.BLOCKED, p, net, Double.NaN);
             }
         }
-        for (BlockPos p : fan.cells().keySet()) {
-            if (!acceptable(level, p, hub)) {
+        for (Map.Entry<BlockPos, Placement> e : fan.cells().entrySet()) {
+            BlockPos p = e.getKey();
+            if (!acceptable(level, p, hub) && !(e.getValue().fill() && skipsFill(level.getBlockState(p)))) {
                 return new Check(Refusal.BLOCKED, p, net, Double.NaN);
             }
         }
@@ -378,6 +379,14 @@ public final class RatlineNets {
             return Refusal.BUSY;
         }
         return be.netCount() >= RiggingConfig.NET_MAX_STRANDS.get() ? Refusal.FULL : Refusal.NONE;
+    }
+
+    /**
+     * A block a fan's fill leaves out instead of being blocked by it: another net fitting (a chainplate waiting on the
+     * rail between two strands, so the outer strands may be strung first).
+     */
+    public static boolean skipsFill(BlockState state) {
+        return state.getBlock() instanceof NetFitting;
     }
 
     /** A cell a net may take: air, or water (a source or flowing). */

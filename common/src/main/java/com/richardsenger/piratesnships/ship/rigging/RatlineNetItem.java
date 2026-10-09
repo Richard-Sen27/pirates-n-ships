@@ -129,7 +129,7 @@ public class RatlineNetItem extends Item {
             stack.shrink(1);
         }
         if (!Double.isNaN(check.apart())) {
-            return Component.translatable(KEY_APART, String.format("%.1f", check.apart()));
+            return Component.translatable(KEY_APART, String.format(java.util.Locale.ROOT, "%.1f", check.apart()));
         }
         return Component.translatable(KEY_STRUNG, check.net().cells().size());
     }

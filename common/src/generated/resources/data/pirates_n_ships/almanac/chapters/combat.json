@@ -1,7 +1,7 @@
 {
   "bookmark_color": "#4a4a4a",
   "icon": "pirates_n_ships:cannon",
-  "order": 90,
+  "order": 100,
   "pages": [
     {
       "elements": [
@@ -18,17 +18,6 @@
           "y": 0.09
         },
         {
-          "type": "list",
-          "items": [
-            "pirates_n_ships.almanac.combat.p1.list1_1",
-            "pirates_n_ships.almanac.combat.p1.list1_2",
-            "pirates_n_ships.almanac.combat.p1.list1_3",
-            "pirates_n_ships.almanac.combat.p1.list1_4",
-            "pirates_n_ships.almanac.combat.p1.list1_5",
-            "pirates_n_ships.almanac.combat.p1.list1_6"
-          ]
-        },
-        {
           "type": "text",
           "key": "pirates_n_ships.almanac.combat.p1.text1"
         }
@@ -41,16 +30,38 @@
           "key": "pirates_n_ships.almanac.combat.p2.heading"
         },
         {
-          "type": "illustration",
-          "h": 0.35,
-          "texture": "pirates_n_ships:textures/almanac/pistol.png",
-          "w": 0.9,
-          "x": 0.05,
-          "y": 0.09
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p2.text1"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.combat.p2.list1_1",
+            "pirates_n_ships.almanac.combat.p2.list1_2",
+            "pirates_n_ships.almanac.combat.p2.list1_3"
+          ]
         },
         {
           "type": "text",
-          "key": "pirates_n_ships.almanac.combat.p2.text1"
+          "key": "pirates_n_ships.almanac.combat.p2.text2"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.combat.p2.list2_1",
+            "pirates_n_ships.almanac.combat.p2.list2_2",
+            "pirates_n_ships.almanac.combat.p2.list2_3",
+            "pirates_n_ships.almanac.combat.p2.list2_4"
+          ]
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p2.text3"
+        },
+        {
+          "type": "text",
+          "color": "#9a1c14",
+          "key": "pirates_n_ships.almanac.combat.p2.text4"
         }
       ]
     },
@@ -61,37 +72,8 @@
           "key": "pirates_n_ships.almanac.combat.p3.heading"
         },
         {
-          "type": "illustration",
-          "h": 0.35,
-          "texture": "pirates_n_ships:textures/almanac/cannon.png",
-          "w": 0.9,
-          "x": 0.05,
-          "y": 0.09
-        },
-        {
           "type": "text",
           "key": "pirates_n_ships.almanac.combat.p3.text1"
-        },
-        {
-          "type": "show_me",
-          "label": "pirates_n_ships.almanac.combat.p3.show_me1",
-          "scene": "pirates_n_ships:cannon_loading"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.combat.p3.text2"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.combat.p3.text3"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.combat.p3.text4"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.combat.p3.text5"
         }
       ]
     },
@@ -104,7 +86,7 @@
         {
           "type": "illustration",
           "h": 0.35,
-          "texture": "pirates_n_ships:textures/almanac/swivel_gun.png",
+          "texture": "pirates_n_ships:textures/almanac/pistol.png",
           "w": 0.9,
           "x": 0.05,
           "y": 0.09
@@ -116,6 +98,23 @@
         {
           "type": "text",
           "key": "pirates_n_ships.almanac.combat.p4.text2"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p4.text3"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p4.text4"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p4.text5"
+        },
+        {
+          "type": "text",
+          "color": "#9a1c14",
+          "key": "pirates_n_ships.almanac.combat.p4.text6"
         }
       ]
     },
@@ -128,10 +127,15 @@
         {
           "type": "illustration",
           "h": 0.35,
-          "texture": "pirates_n_ships:textures/almanac/grappling_hook.png",
+          "texture": "pirates_n_ships:textures/almanac/cannon.png",
           "w": 0.9,
           "x": 0.05,
           "y": 0.09
+        },
+        {
+          "type": "show_me",
+          "label": "pirates_n_ships.almanac.combat.p5.show_me1",
+          "scene": "pirates_n_ships:cannon_loading"
         },
         {
           "type": "text",
@@ -148,6 +152,15 @@
         {
           "type": "text",
           "key": "pirates_n_ships.almanac.combat.p5.text4"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p5.text5"
+        },
+        {
+          "type": "text",
+          "color": "#2e6a24",
+          "key": "pirates_n_ships.almanac.combat.p5.text6"
         }
       ]
     },
@@ -162,21 +175,311 @@
           "key": "pirates_n_ships.almanac.combat.p6.text1"
         },
         {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.combat.p6.list1_1",
+            "pirates_n_ships.almanac.combat.p6.list1_2"
+          ]
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.combat.p7.heading"
+        },
+        {
+          "type": "illustration",
+          "h": 0.35,
+          "texture": "pirates_n_ships:textures/almanac/swivel_gun.png",
+          "w": 0.9,
+          "x": 0.05,
+          "y": 0.09
+        },
+        {
+          "type": "show_me",
+          "label": "pirates_n_ships.almanac.combat.p7.show_me1",
+          "scene": "pirates_n_ships:swivel_gun"
+        },
+        {
           "type": "text",
-          "key": "pirates_n_ships.almanac.combat.p6.text2"
+          "key": "pirates_n_ships.almanac.combat.p7.text1"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p7.text2"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.combat.p8.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p8.text1"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p8.text2"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.combat.p9.heading"
+        },
+        {
+          "type": "illustration",
+          "h": 0.35,
+          "texture": "pirates_n_ships:textures/almanac/grappling_hook.png",
+          "w": 0.9,
+          "x": 0.05,
+          "y": 0.09
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p9.text1"
         },
         {
           "type": "list",
           "items": [
-            "pirates_n_ships.almanac.combat.p6.list1_1",
-            "pirates_n_ships.almanac.combat.p6.list1_2",
-            "pirates_n_ships.almanac.combat.p6.list1_3",
-            "pirates_n_ships.almanac.combat.p6.list1_4",
-            "pirates_n_ships.almanac.combat.p6.list1_5",
-            "pirates_n_ships.almanac.combat.p6.list1_6",
-            "pirates_n_ships.almanac.combat.p6.list1_7",
-            "pirates_n_ships.almanac.combat.p6.list1_8"
+            "pirates_n_ships.almanac.combat.p9.list1_1",
+            "pirates_n_ships.almanac.combat.p9.list1_2"
           ]
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p9.text2"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.combat.p9.list2_1",
+            "pirates_n_ships.almanac.combat.p9.list2_2",
+            "pirates_n_ships.almanac.combat.p9.list2_3",
+            "pirates_n_ships.almanac.combat.p9.list2_4"
+          ]
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.combat.p10.heading"
+        },
+        {
+          "type": "show_me",
+          "label": "pirates_n_ships.almanac.combat.p10.show_me1",
+          "scene": "pirates_n_ships:boarding"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p10.text1"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p10.text2"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.combat.p11.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p11.text1"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.combat.p11.list1_1",
+            "pirates_n_ships.almanac.combat.p11.list1_2",
+            "pirates_n_ships.almanac.combat.p11.list1_3"
+          ]
+        },
+        {
+          "type": "text",
+          "color": "#9a1c14",
+          "key": "pirates_n_ships.almanac.combat.p11.text2"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.combat.p12.heading"
+        },
+        {
+          "type": "illustration",
+          "h": 0.35,
+          "texture": "pirates_n_ships:textures/almanac/mob_pirate.png",
+          "w": 0.9,
+          "x": 0.05,
+          "y": 0.09
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.combat.p12.list1_1",
+            "pirates_n_ships.almanac.combat.p12.list1_2",
+            "pirates_n_ships.almanac.combat.p12.list1_3",
+            "pirates_n_ships.almanac.combat.p12.list1_4"
+          ]
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p12.text1"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.combat.p13.heading"
+        },
+        {
+          "type": "illustration",
+          "h": 0.35,
+          "texture": "pirates_n_ships:textures/almanac/pirate_captain.png",
+          "w": 0.9,
+          "x": 0.05,
+          "y": 0.09
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p13.text1"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p13.text2"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p13.text3"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.combat.p14.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p14.text1"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.combat.p15.heading"
+        },
+        {
+          "type": "illustration",
+          "h": 0.35,
+          "texture": "pirates_n_ships:textures/almanac/captains_hat.png",
+          "w": 0.9,
+          "x": 0.05,
+          "y": 0.09
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p15.text1"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.combat.p15.list1_1",
+            "pirates_n_ships.almanac.combat.p15.list1_2"
+          ]
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.combat.p16.heading"
+        },
+        {
+          "type": "illustration",
+          "h": 0.35,
+          "texture": "pirates_n_ships:textures/almanac/kraken.png",
+          "w": 0.9,
+          "x": 0.05,
+          "y": 0.09
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p16.text1"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.combat.p16.list1_1",
+            "pirates_n_ships.almanac.combat.p16.list1_2",
+            "pirates_n_ships.almanac.combat.p16.list1_3"
+          ]
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p16.text2"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.combat.p17.heading"
+        },
+        {
+          "type": "illustration",
+          "h": 0.35,
+          "texture": "pirates_n_ships:textures/almanac/shark.png",
+          "w": 0.9,
+          "x": 0.05,
+          "y": 0.09
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p17.text1"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.combat.p18.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p18.text1"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p18.text2"
+        },
+        {
+          "type": "text",
+          "color": "#2e6a24",
+          "key": "pirates_n_ships.almanac.combat.p18.text3"
         }
       ]
     }

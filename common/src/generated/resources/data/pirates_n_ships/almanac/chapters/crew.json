@@ -1,7 +1,7 @@
 {
   "bookmark_color": "#4f6b3a",
   "icon": "pirates_n_ships:captains_whistle",
-  "order": 40,
+  "order": 50,
   "pages": [
     {
       "elements": [
@@ -20,42 +20,6 @@
         {
           "type": "text",
           "key": "pirates_n_ships.almanac.crew.p1.text1"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.crew.p1.text2"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.crew.p1.text3"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.crew.p1.text4"
-        },
-        {
-          "type": "list",
-          "items": [
-            "pirates_n_ships.almanac.crew.p1.list1_1",
-            "pirates_n_ships.almanac.crew.p1.list1_2",
-            "pirates_n_ships.almanac.crew.p1.list1_3"
-          ]
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.crew.p1.text5"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.crew.p1.text6"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.crew.p1.text7"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.crew.p1.text8"
         }
       ]
     },
@@ -68,6 +32,24 @@
         {
           "type": "text",
           "key": "pirates_n_ships.almanac.crew.p2.text1"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.crew.p2.list1_1",
+            "pirates_n_ships.almanac.crew.p2.list1_2",
+            "pirates_n_ships.almanac.crew.p2.list1_3",
+            "pirates_n_ships.almanac.crew.p2.list1_4"
+          ]
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p2.text2"
+        },
+        {
+          "type": "text",
+          "color": "#9a1c14",
+          "key": "pirates_n_ships.almanac.crew.p2.text3"
         }
       ]
     },
@@ -78,28 +60,12 @@
           "key": "pirates_n_ships.almanac.crew.p3.heading"
         },
         {
-          "type": "illustration",
-          "h": 0.35,
-          "texture": "pirates_n_ships:textures/almanac/crows_nest.png",
-          "w": 0.9,
-          "x": 0.05,
-          "y": 0.09
-        },
-        {
           "type": "text",
           "key": "pirates_n_ships.almanac.crew.p3.text1"
         },
         {
           "type": "text",
           "key": "pirates_n_ships.almanac.crew.p3.text2"
-        },
-        {
-          "type": "list",
-          "items": [
-            "pirates_n_ships.almanac.crew.p3.list1_1",
-            "pirates_n_ships.almanac.crew.p3.list1_2",
-            "pirates_n_ships.almanac.crew.p3.list1_3"
-          ]
         },
         {
           "type": "text",
@@ -114,16 +80,31 @@
           "key": "pirates_n_ships.almanac.crew.p4.heading"
         },
         {
-          "type": "illustration",
-          "h": 0.35,
-          "texture": "pirates_n_ships:textures/almanac/mob_pirate.png",
-          "w": 0.9,
-          "x": 0.05,
-          "y": 0.09
+          "type": "show_me",
+          "label": "pirates_n_ships.almanac.crew.p4.show_me1",
+          "scene": "pirates_n_ships:crew_orders"
         },
         {
           "type": "text",
           "key": "pirates_n_ships.almanac.crew.p4.text1"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.crew.p4.list1_1",
+            "pirates_n_ships.almanac.crew.p4.list1_2",
+            "pirates_n_ships.almanac.crew.p4.list1_3",
+            "pirates_n_ships.almanac.crew.p4.list1_4"
+          ]
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p4.text2"
+        },
+        {
+          "type": "text",
+          "color": "#2e6a24",
+          "key": "pirates_n_ships.almanac.crew.p4.text3"
         }
       ]
     },
@@ -134,16 +115,20 @@
           "key": "pirates_n_ships.almanac.crew.p5.heading"
         },
         {
-          "type": "illustration",
-          "h": 0.35,
-          "texture": "pirates_n_ships:textures/almanac/kraken.png",
-          "w": 0.9,
-          "x": 0.05,
-          "y": 0.09
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p5.text1"
         },
         {
           "type": "text",
-          "key": "pirates_n_ships.almanac.crew.p5.text1"
+          "key": "pirates_n_ships.almanac.crew.p5.text2"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p5.text3"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p5.text4"
         }
       ]
     },
@@ -154,16 +139,141 @@
           "key": "pirates_n_ships.almanac.crew.p6.heading"
         },
         {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p6.text1"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p6.text2"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.crew.p7.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p7.text1"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p7.text2"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.crew.p8.heading"
+        },
+        {
           "type": "illustration",
           "h": 0.35,
-          "texture": "pirates_n_ships:textures/almanac/shark.png",
+          "texture": "pirates_n_ships:textures/almanac/hammock.png",
           "w": 0.9,
           "x": 0.05,
           "y": 0.09
         },
         {
+          "type": "show_me",
+          "label": "pirates_n_ships.almanac.crew.p8.show_me1",
+          "scene": "pirates_n_ships:hammocks_and_rest"
+        },
+        {
           "type": "text",
-          "key": "pirates_n_ships.almanac.crew.p6.text1"
+          "key": "pirates_n_ships.almanac.crew.p8.text1"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p8.text2"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p8.text3"
+        },
+        {
+          "type": "text",
+          "color": "#2e6a24",
+          "key": "pirates_n_ships.almanac.crew.p8.text4"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.crew.p9.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p9.text1"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.crew.p9.list1_1",
+            "pirates_n_ships.almanac.crew.p9.list1_2",
+            "pirates_n_ships.almanac.crew.p9.list1_3",
+            "pirates_n_ships.almanac.crew.p9.list1_4",
+            "pirates_n_ships.almanac.crew.p9.list1_5"
+          ]
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p9.text2"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.crew.p10.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p10.text1"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p10.text2"
+        },
+        {
+          "type": "text",
+          "color": "#9a1c14",
+          "key": "pirates_n_ships.almanac.crew.p10.text3"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.crew.p11.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p11.text1"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p11.text2"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.crew.p11.list1_1",
+            "pirates_n_ships.almanac.crew.p11.list1_2",
+            "pirates_n_ships.almanac.crew.p11.list1_3"
+          ]
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p11.text3"
         }
       ]
     }

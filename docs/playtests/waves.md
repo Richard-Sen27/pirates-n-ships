@@ -400,9 +400,11 @@ frame time. Please send screenshots or short clips of steps 1, 2, 4, 5 and 6, an
 - Rendering only: swimming, collisions, boats, buoyancy and the ships' physics stay on the flat sea level; the camera's
   underwater fog follows the old flat level too.
 - A coarse cell over a coast lies flat at the still level (its land part inside the beach's blocks), so far away a
-  shoreline shows no waves in the last few blocks.
+  shoreline shows no waves in the last few blocks. **WAV5:** gone; every vertex of every ring takes the depth fade of
+  its own corner, so the coarse rings follow the shore like the near ring and the ring borders show no step at a beach.
 - The sprite is stretched over the coarse cells (4 and 16 blocks), like a lower mipmap; at 32 blocks a change of
-  texture scale may show.
+  texture scale may show. **WAV5:** gone; the surface is drawn with its own repeating copy of the water frame, one tile
+  per block in every ring.
 - The waves the surface shows are anchored at the ship you are on (or near you), as the server anchors them at each
   ship; a ship far from yours rides waves that are a little out of phase with the ones drawn under it.
 - Off with Sodium, Embeddium, Iris, Oculus and VulkanMod (flat water).
@@ -475,3 +477,46 @@ too much.
 - An open deck hatch on the sloop stays dry at rest even in a storm; only hatches near the waterline take water.
 - An existing config file keeps the old defaults (`ship_torque` 26, `heave_strength` 0.5, `heave_per_mass` 6,
   `foam_density` 2.5, `surface_full_depth` 4).
+
+## WAV5: the same water texture near and far
+
+**What changed for the player.** The human (night screenshot): "the water looks different two chunks away, it has for
+some reason a different texture". The far rings of the drawn sea (4-block cells from 32 blocks, 16-block cells from 128)
+stretched the water sprite over a whole cell, since a sprite in the block atlas cannot repeat inside one quad, so the
+texture grew 4 and 16 times coarser at the ring borders. Now the sea surface is drawn with its own small texture: the
+current frame of `block/water_still` (a resource pack's too), with the atlas's mipmaps and repeat wrapping, refreshed
+whenever vanilla's animation moves to the next frame (every 2 ticks), and the texture coordinates are world blocks, so
+every ring shows one tile per block like vanilla's water. Same shader, colour, light, transparency and fog as before.
+Also, a coarse cell over a coast no longer lies flat: each of its corners takes the depth fade of the water around that
+corner (the near ring's rule), so the step at the ring borders by a beach (WAV4: up to ~2.7 blocks in a storm) is gone.
+No config change.
+
+Setup as for WAV3 (`./gradlew :neoforge:runClient`, then step 6 on Fabric), a creative world, a beach and open sea in
+view, render distance 12 or more. Please send a screenshot of steps 1 and 3 and the frame times of step 5.
+
+1. **Near and far, day and night.** `/time set noon`, stand on the beach or a hill and look out to sea; then
+   `/time set midnight` and look again.
+   - **Expected:** the water at 10, 40 and 200 blocks has the same texture: the fine ripple pattern of vanilla's water,
+     smaller with distance and fading into the mipmaps far away, but with no band where it suddenly turns coarser or
+     smoother at about 32 and 128 blocks. At night the same. Next to a lake or a river (vanilla's water) the sea looks
+     the same.
+2. **Animation.** Watch the water near and far for a few seconds.
+   - **Expected:** the ripples flow everywhere at vanilla's speed, near and far alike; nothing frozen, no flicker.
+3. **Ring borders.** `/pirates waves set storm`, `/weather thunder`. Look across open sea at 32 and 128 blocks out, then
+   along a beach where it crosses those distances.
+   - **Expected:** no visible seam, crack or step at the ring borders over open sea; at the beach the waves die out
+     toward the sand the same way near and far, no wall of water at 32 or 128 blocks. Known limit: a small island or
+     sandbar far out (smaller than a 16-block cell, its corners in deep water) may have crests drawn over it.
+4. **Resource pack.** If you have one with a different water texture, turn it on (F3+T reloads).
+   - **Expected:** the sea shows the pack's water, animated, near and far.
+5. **Frame time.** F3 at render distance 12 and 32, in the storm, looking out to sea.
+   - **Expected:** about the same as after WAV3/WAV4 (within noise).
+6. **Fabric.** Repeat steps 1, 3 and 5 with `./gradlew :fabric:runClient`.
+   - **Expected:** the same.
+
+### Known limits
+
+- The surface's copy of the water animation counts its own ticks from the last resource reload; vanilla's atlas does the
+  same, so they run in step, but they may be a tick apart (invisible except right next to vanilla still water).
+- Land wholly inside a far cell, away from its corners (a small island, a thin sandbar), can have crests drawn over it,
+  since the cell's corners lie in deep water (before WAV5 such a cell lay flat).

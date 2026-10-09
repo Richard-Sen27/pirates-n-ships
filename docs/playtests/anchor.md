@@ -178,11 +178,14 @@ in 3 s), `walk_radius = 1.1`.
      shorter arc to his spot (at most 1.5 s) and stands idle.
 3. **Drop anchor.** Order "Drop anchor".
    - **Expected:** for the 2 s of work the bars turn the other way (anticlockwise from above) and the crew member walks
-     round anticlockwise; then the anchor runs out, the bars settle square and he walks back to his spot.
+     round anticlockwise; then the anchor runs out, the bars keep turning anticlockwise while it falls (CAP3) and settle
+     square once it holds, while he walks back to his spot as soon as the work ends.
 4. **A player at the capstan.** Release the crew, use the capstan by hand to drop and raise the anchor.
-   - **Expected:** as before CAP2: the anchor drops and comes up, the bars stand still, the player stays where he is.
+   - **Expected (CAP3):** the bars turn anticlockwise from above while the anchor falls and clockwise while it comes up,
+     at the crew's rate, and settle square once it holds or is stowed; the player stays where he is.
 5. **Leaving mid-raise.** Weigh anchor with the crew member, then "Release crew" half-way.
-   - **Expected:** he gets off where he stands; the bars stop (settle square) although the anchor still comes up.
+   - **Expected:** he gets off where he stands; the bars keep turning while the anchor still comes up (CAP3) and
+     settle square once it is stowed.
 6. **On a moving, heeling ship.** Weigh anchor while the ship swings on its chain.
    - **Expected:** the walking crew member stays on the deck and moves with the ship; no jitter or lag behind it.
 7. **Off switch.** Set `crew_stations.capstan.animation = false`, repeat step 2.

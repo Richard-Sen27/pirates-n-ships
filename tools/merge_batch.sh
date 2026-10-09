@@ -14,7 +14,7 @@ RUNS=$1; shift
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 WT=$ROOT/.claude/worktrees/merge
 LOG=${STAGE_LOG_DIR:-$ROOT/.claude/worktrees/stage-logs}/batch-$(date +%H%M); mkdir -p "$LOG"
-GEN_RE='^common/src/generated/resources/'
+GEN_RE='^common/src/generated/resources/|^common/src/datagen/almanac/'
 DOCS_RE='^docs/|^CLAUDE\.md$|^tools/merge_(stage|batch)\.sh$|^\.claude/agents/'
 cd "$WT" || exit 1
 PKGS=""

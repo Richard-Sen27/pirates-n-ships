@@ -144,9 +144,9 @@ public final class CannonData {
 
     private static void models(ModelContext m) {
         cannon(m, CannonContent.CANNON.get());
-        // CAN3: flat sprites from tools/gen_shot_sprites.py (palette colours)
-        m.flatItem(CannonContent.CHAIN_SHOT.get());
-        m.flatItem(CannonContent.GRAPESHOT.get());
+        // ART15: hand-made 3D item models (art/models/chain_shot.bbmodel, grapeshot.bbmodel), so datagen writes none
+        m.handMadeItem(CannonContent.CHAIN_SHOT.get());
+        m.handMadeItem(CannonContent.GRAPESHOT.get());
     }
 
     static VariantProperties.Rotation yRotation(Direction d) {

@@ -1,0 +1,680 @@
+{
+	"credit": "Made with Blockbench, source art/models/oar.bbmodel",
+	"textures": {
+		"planks": "minecraft:block/oak_planks",
+		"log": "minecraft:block/stripped_oak_log",
+		"particle": "#planks"
+	},
+	"gui_light": "front",
+	"elements": [
+		{
+			"name": "grip",
+			"from": [
+				7.25,
+				-15,
+				7.25
+			],
+			"to": [
+				8.75,
+				-11,
+				8.75
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						7.25,
+						11,
+						8.75,
+						15
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						7.25,
+						11,
+						8.75,
+						15
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						7.25,
+						11,
+						8.75,
+						15
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						7.25,
+						11,
+						8.75,
+						15
+					],
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						7.25,
+						7.25,
+						8.75,
+						8.75
+					],
+					"texture": "#log"
+				}
+			}
+		},
+		{
+			"name": "grip_knob",
+			"from": [
+				7,
+				-16,
+				7
+			],
+			"to": [
+				9,
+				-15,
+				9
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						7,
+						15,
+						9,
+						16
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						7,
+						15,
+						9,
+						16
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						7,
+						15,
+						9,
+						16
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						7,
+						15,
+						9,
+						16
+					],
+					"texture": "#log"
+				},
+				"down": {
+					"uv": [
+						7,
+						7,
+						9,
+						9
+					],
+					"texture": "#log"
+				}
+			}
+		},
+		{
+			"name": "loom",
+			"from": [
+				7,
+				-11,
+				7
+			],
+			"to": [
+				9,
+				8,
+				9
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						7,
+						0,
+						9,
+						16
+					],
+					"texture": "#planks"
+				},
+				"east": {
+					"uv": [
+						7,
+						0,
+						9,
+						16
+					],
+					"texture": "#planks"
+				},
+				"south": {
+					"uv": [
+						7,
+						0,
+						9,
+						16
+					],
+					"texture": "#planks"
+				},
+				"west": {
+					"uv": [
+						7,
+						0,
+						9,
+						16
+					],
+					"texture": "#planks"
+				}
+			}
+		},
+		{
+			"name": "button",
+			"from": [
+				6.75,
+				-6,
+				6.75
+			],
+			"to": [
+				9.25,
+				-4,
+				9.25
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						6.75,
+						4,
+						9.25,
+						6
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						6.75,
+						4,
+						9.25,
+						6
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						6.75,
+						4,
+						9.25,
+						6
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						6.75,
+						4,
+						9.25,
+						6
+					],
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						6.75,
+						6.75,
+						9.25,
+						9.25
+					],
+					"texture": "#log"
+				},
+				"down": {
+					"uv": [
+						6.75,
+						6.75,
+						9.25,
+						9.25
+					],
+					"texture": "#log"
+				}
+			}
+		},
+		{
+			"name": "shaft",
+			"from": [
+				7.25,
+				8,
+				7.25
+			],
+			"to": [
+				8.75,
+				22,
+				8.75
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						7.25,
+						0,
+						8.75,
+						14
+					],
+					"texture": "#planks"
+				},
+				"east": {
+					"uv": [
+						7.25,
+						0,
+						8.75,
+						14
+					],
+					"texture": "#planks"
+				},
+				"south": {
+					"uv": [
+						7.25,
+						0,
+						8.75,
+						14
+					],
+					"texture": "#planks"
+				},
+				"west": {
+					"uv": [
+						7.25,
+						0,
+						8.75,
+						14
+					],
+					"texture": "#planks"
+				}
+			}
+		},
+		{
+			"name": "throat",
+			"from": [
+				7,
+				22,
+				7.5
+			],
+			"to": [
+				9,
+				23.5,
+				8.5
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						7,
+						8.5,
+						9,
+						10
+					],
+					"texture": "#planks"
+				},
+				"east": {
+					"uv": [
+						7.5,
+						8.5,
+						8.5,
+						10
+					],
+					"texture": "#planks"
+				},
+				"south": {
+					"uv": [
+						7,
+						8.5,
+						9,
+						10
+					],
+					"texture": "#planks"
+				},
+				"west": {
+					"uv": [
+						7.5,
+						8.5,
+						8.5,
+						10
+					],
+					"texture": "#planks"
+				}
+			}
+		},
+		{
+			"name": "shoulder",
+			"from": [
+				6,
+				23.5,
+				7.5
+			],
+			"to": [
+				10,
+				24.5,
+				8.5
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						6,
+						7.5,
+						10,
+						8.5
+					],
+					"texture": "#planks"
+				},
+				"east": {
+					"uv": [
+						7.5,
+						7.5,
+						8.5,
+						8.5
+					],
+					"texture": "#planks"
+				},
+				"south": {
+					"uv": [
+						6,
+						7.5,
+						10,
+						8.5
+					],
+					"texture": "#planks"
+				},
+				"west": {
+					"uv": [
+						7.5,
+						7.5,
+						8.5,
+						8.5
+					],
+					"texture": "#planks"
+				},
+				"down": {
+					"uv": [
+						6,
+						7.5,
+						10,
+						8.5
+					],
+					"texture": "#planks"
+				}
+			}
+		},
+		{
+			"name": "blade",
+			"from": [
+				5,
+				24.5,
+				7.6
+			],
+			"to": [
+				11,
+				32,
+				8.4
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						5,
+						0,
+						11,
+						7.5
+					],
+					"texture": "#planks"
+				},
+				"east": {
+					"uv": [
+						7.6,
+						0,
+						8.4,
+						7.5
+					],
+					"texture": "#planks"
+				},
+				"south": {
+					"uv": [
+						5,
+						0,
+						11,
+						7.5
+					],
+					"texture": "#planks"
+				},
+				"west": {
+					"uv": [
+						7.6,
+						0,
+						8.4,
+						7.5
+					],
+					"texture": "#planks"
+				},
+				"up": {
+					"uv": [
+						5,
+						7.6,
+						11,
+						8.4
+					],
+					"texture": "#planks"
+				},
+				"down": {
+					"uv": [
+						5,
+						7.6,
+						11,
+						8.4
+					],
+					"texture": "#planks"
+				}
+			}
+		},
+		{
+			"name": "rib",
+			"from": [
+				7.5,
+				23.5,
+				7.3
+			],
+			"to": [
+				8.5,
+				30,
+				8.7
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						7.5,
+						2,
+						8.5,
+						8.5
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						7.3,
+						2,
+						8.7,
+						8.5
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						7.5,
+						2,
+						8.5,
+						8.5
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						7.3,
+						2,
+						8.7,
+						8.5
+					],
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						7.5,
+						7.3,
+						8.5,
+						8.7
+					],
+					"texture": "#log"
+				}
+			}
+		}
+	],
+	"display": {
+		"thirdperson_righthand": {
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"translation": [
+				0,
+				22.4,
+				0
+			],
+			"scale": [
+				1.4,
+				1.4,
+				1.4
+			]
+		},
+		"thirdperson_lefthand": {
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"translation": [
+				0,
+				22.4,
+				0
+			],
+			"scale": [
+				1.4,
+				1.4,
+				1.4
+			]
+		},
+		"firstperson_righthand": {
+			"rotation": [
+				0,
+				-90,
+				25
+			],
+			"translation": [
+				1.13,
+				3.2,
+				1.13
+			],
+			"scale": [
+				0.5,
+				0.5,
+				0.5
+			]
+		},
+		"firstperson_lefthand": {
+			"rotation": [
+				0,
+				-90,
+				25
+			],
+			"translation": [
+				1.13,
+				3.2,
+				1.13
+			],
+			"scale": [
+				0.5,
+				0.5,
+				0.5
+			]
+		},
+		"ground": {
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"translation": [
+				0,
+				2,
+				0
+			],
+			"scale": [
+				0.4,
+				0.4,
+				0.4
+			]
+		},
+		"gui": {
+			"rotation": [
+				0,
+				0,
+				-45
+			],
+			"translation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				0.42,
+				0.42,
+				0.42
+			]
+		},
+		"head": {
+			"rotation": [
+				0,
+				-180,
+				0
+			],
+			"translation": [
+				0,
+				13,
+				7
+			],
+			"scale": [
+				1,
+				1,
+				1
+			]
+		},
+		"fixed": {
+			"rotation": [
+				0,
+				0,
+				-45
+			],
+			"translation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				0.42,
+				0.42,
+				0.42
+			]
+		}
+	}
+}

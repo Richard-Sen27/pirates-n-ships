@@ -4,6 +4,7 @@ import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.cannon.npc.Gunnery;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.platform.Services;
+import com.richardsenger.piratesnships.sailing.oars.Rowing;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.station.OrderHints;
 import com.richardsenger.piratesnships.station.StationConfig;
@@ -98,6 +99,12 @@ public final class WhistleOrders {
         if (ship == null) {
             return new Issued(Result.of(Outcome.NOT_ON_SHIP), Component.translatable(CaptainsWhistleItem.KEY_NOT_ON_SHIP));
         }
+        if (order == WhistleOrder.ROW) {
+            // OAR1: one toggle, Row or Ship oars by the ship's state; no job board, the rowing service seats the crew
+            Rowing.Outcome o = Rowing.toggle(level, ship);
+            return new Issued(new Result(Outcome.ISSUED, o.rowers(), 0), o.message());
+        }
+        Rowing.stop(level, ship.id()); // OAR1: any other order ends the rowing, so the rowers are free for it
         CrewOrder crewOrder = order.order();
         int n;
         int jobs = 0;

@@ -2,6 +2,8 @@ package com.richardsenger.piratesnships.station.order;
 
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.cannon.CannonStation.CannonOrder;
+import com.richardsenger.piratesnships.sailing.oars.OarsSync;
+import com.richardsenger.piratesnships.sailing.oars.RowOrder;
 import com.richardsenger.piratesnships.station.capstan.AnchorOrder;
 import com.richardsenger.piratesnships.station.pump.PumpOrder;
 import com.richardsenger.piratesnships.station.winch.SailOrder;
@@ -31,6 +33,11 @@ public enum WhistleOrder {
     DROP_ANCHOR(AnchorOrder.DROP_ANCHOR, Constants.id("capstan")),
     /** CRW3: the crew at the capstans heave the anchor in. */
     RAISE_ANCHOR(AnchorOrder.RAISE_ANCHOR, ResourceLocation.withDefaultNamespace("chain")),
+    /**
+     * OAR1: a toggle. "Row" while the ship does not row: the free crew take oars at benches and the rail; "Ship oars"
+     * while it rows ({@code sailing.oars.Rowing#toggle}). The label follows the ship's state ({@link #shownNameKey}).
+     */
+    ROW(RowOrder.ROW, Constants.id("oar")),
     RELEASE(null, Constants.id("sail_winch"));
 
     private static final List<WhistleOrder> ENTRIES = List.of(values());
@@ -84,5 +91,34 @@ public enum WhistleOrder {
     /** Translation key of the one-line description under the wheel. */
     public String descriptionKey() {
         return nameKey() + ".desc";
+    }
+
+    /** Whether this entry is a toggle whose label follows a state of the ship (OAR1: {@link #ROW}). */
+    public boolean isToggle() {
+        return this == ROW;
+    }
+
+    /** The name key of the toggle's other direction ("Ship oars"); {@link #nameKey()} for an entry that is no toggle. */
+    public String toggledNameKey() {
+        return isToggle() ? nameKey() + ".toggled" : nameKey();
+    }
+
+    /** The description key of the toggle's other direction. */
+    public String toggledDescriptionKey() {
+        return isToggle() ? toggledNameKey() + ".desc" : descriptionKey();
+    }
+
+    /** Client: the name key to show for the ship the player stands on ("Ship oars" while it rows). */
+    public String shownNameKey() {
+        return toggledOnClient() ? toggledNameKey() : nameKey();
+    }
+
+    /** Client: the description key to show for the ship the player stands on. */
+    public String shownDescriptionKey() {
+        return toggledOnClient() ? toggledDescriptionKey() : descriptionKey();
+    }
+
+    private boolean toggledOnClient() {
+        return this == ROW && OarsSync.clientRowing();
     }
 }

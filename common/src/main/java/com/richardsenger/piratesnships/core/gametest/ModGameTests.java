@@ -31,6 +31,21 @@ public final class ModGameTests {
      */
     public static final String ONLY_PROPERTY = "pirates_n_ships.gametest.only";
 
+    /**
+     * The manual performance test (PERF1, {@code core.perf.PerformanceGameTests}) registers only when this system
+     * property is {@code true}: {@code ./gradlew :neoforge:runGameTestServer -Ppirates_n_ships.perf=true
+     * -Ppirates_n_ships.gametest.only=PerformanceGameTests} (on Fabric {@code :fabric:runGameTest}; both builds forward
+     * the project property, and {@code pirates_n_ships.perf.dir} for the report directory). Without it the class
+     * registers nothing, so the merge stage, CI and the release pipeline never run it (it takes minutes and its timing
+     * depends on the machine).
+     */
+    public static final String PERF_PROPERTY = "pirates_n_ships.perf";
+
+    /** Whether {@link #PERF_PROPERTY} is set to {@code true}. */
+    public static boolean perfEnabled() {
+        return Boolean.getBoolean(PERF_PROPERTY);
+    }
+
     static boolean selected(String simpleClassName, String only) {
         if (only == null || only.isBlank()) return true;
         for (String part : only.split(",")) {

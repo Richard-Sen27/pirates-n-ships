@@ -14,8 +14,11 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaterniond;
@@ -159,6 +162,38 @@ public final class CannonService {
         return new Barrel(CannonRules.muzzle(pos.getX(), pos.getY(), pos.getZ(), dir), dir);
     }
 
+    /**
+     * RAIL4: where the barrel of the cannon with its master at {@code pos}, aimed along {@code barrel}, runs into a wall
+     * it cannot poke through, or null. The line from the barrel's pivot to its muzzle (both in the block or plot frame,
+     * so a ship's own bulwark is found in its plot) is clipped against the collision of every
+     * {@code #pirates_n_ships:barrel_blocking} block near it, including the part a 1.5-block collision raises into the
+     * cell above; the nearest hit wins. A bulwark's collision reaches {@code ship_decor.railing_collision_blocks} (1.5),
+     * which the barrel crosses below at every default elevation (12 px at -5 degrees, 22 px at 20, on the bulwark's
+     * inboard face), so a gun behind a plain bulwark always fires into it; a railing is not in the tag and keeps RAIL1's
+     * rule.
+     */
+    public static @Nullable BlockHitResult barrelBlocked(BlockGetter level, BlockPos pos, Barrel barrel) {
+        Vec3 from = CannonRules.pivot(pos.getX(), pos.getY(), pos.getZ());
+        Vec3 to = barrel.muzzle();
+        int x0 = Mth.floor(Math.min(from.x, to.x)), x1 = Mth.floor(Math.max(from.x, to.x));
+        int y0 = Mth.floor(Math.min(from.y, to.y)) - 1, y1 = Mth.floor(Math.max(from.y, to.y));
+        int z0 = Mth.floor(Math.min(from.z, to.z)), z1 = Mth.floor(Math.max(from.z, to.z));
+        BlockHitResult best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (BlockPos p : BlockPos.betweenClosed(x0, y0, z0, x1, y1, z1)) {
+            BlockState s = level.getBlockState(p);
+            if (!s.is(CannonContent.BARREL_BLOCKING)) continue;
+            BlockHitResult hit = s.getCollisionShape(level, p).clip(from, to, p);
+            if (hit == null) continue;
+            double d = hit.getLocation().distanceToSqr(from);
+            if (d < bestDistance) {
+                bestDistance = d;
+                best = new BlockHitResult(hit.getLocation(), hit.getDirection(), p.immutable(), false);
+            }
+        }
+        return best;
+    }
+
     /** The barrel of the cannon at {@code pos} as it is aimed now, in the block (plot) frame. */
     public static @Nullable Barrel barrel(ServerLevel level, BlockPos pos) {
         pos = master(level, pos);
@@ -203,6 +238,7 @@ public final class CannonService {
             carrier = ship.velocityAt(local.muzzle());
         }
         ShotKind kind = state.getValue(CannonBlock.SHOT);
+        BlockHitResult blocked = CannonConfig.WALLS_BLOCK_BARREL.get() ? barrelBlocked(level, pos, local) : null;
         CannonballEntity ball = null;
         for (Vec3 dir : shotDirections(level, kind, direction)) {
             Vec3 velocity = CannonRules.ballVelocity(dir, CannonConfig.muzzleVelocity(kind), carrier);
@@ -213,6 +249,7 @@ public final class CannonService {
             b.setFiringShip(ship == null ? null : ship.id()); // FL2: who fired at whom
             b.setBlockDamageFactor(blockDamageFactor);
             level.addFreshEntity(b);
+            if (blocked != null) b.strikeInBarrel(blocked); // RAIL4: fired into a bulwark
             if (ball == null) ball = b;
         }
 

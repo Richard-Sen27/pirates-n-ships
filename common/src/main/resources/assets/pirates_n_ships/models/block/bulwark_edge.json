@@ -1,0 +1,95 @@
+{
+	"credit": "Made with Blockbench, source art/models/railing.bbmodel",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"planks": "minecraft:block/oak_planks",
+		"log": "minecraft:block/stripped_oak_log",
+		"particle": "#planks"
+	},
+	"elements": [
+		{
+			"name": "wall",
+			"from": [
+				0,
+				0,
+				0.05
+			],
+			"to": [
+				16,
+				14,
+				2
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						2,
+						16,
+						16
+					],
+					"texture": "#planks"
+				},
+				"south": {
+					"uv": [
+						0,
+						2,
+						16,
+						16
+					],
+					"texture": "#planks"
+				}
+			}
+		},
+		{
+			"name": "cap_rail",
+			"from": [
+				0,
+				14,
+				0.05
+			],
+			"to": [
+				16,
+				16,
+				3.95
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0,
+						16,
+						2
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						0,
+						0,
+						16,
+						2
+					],
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						0,
+						0.05,
+						16,
+						3.95
+					],
+					"texture": "#log"
+				},
+				"down": {
+					"uv": [
+						0,
+						0.05,
+						16,
+						3.95
+					],
+					"texture": "#log"
+				}
+			}
+		}
+	]
+}

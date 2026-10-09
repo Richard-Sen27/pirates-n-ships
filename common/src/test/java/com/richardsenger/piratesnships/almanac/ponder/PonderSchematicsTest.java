@@ -11,6 +11,7 @@ import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import net.minecraft.SharedConstants;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -157,6 +158,90 @@ class PonderSchematicsTest {
         for (int[] c : new int[][] {{3, 5, 8}, {5, 5, 8}, {3, 5, 5}, {5, 5, 5}}) {
             assertEquals(MOD + ":cargo_crate[load=0]", stateAt(cargo, c[0], c[1], c[2]));
         }
+    }
+
+    /** PND2: the blocks each crew scene's storyboard works on stand where it expects them. */
+    @Test
+    void crewScenesHaveTheirBlocksWhereTheScenesExpectThem() throws IOException {
+        size(CrewSceneText.CREW_ORDERS, 11, 5, 11);
+        CompoundTag orders = schematic(CrewSceneText.CREW_ORDERS);
+        assertEquals(MOD + ":harbor_desk[facing=east,waterlogged=false]", stateAt(orders, CrewOrdersScene.DESK));
+        assertEquals(MOD + ":sail_winch[facing=south]", stateAt(orders, CrewOrdersScene.WINCH));
+        assertTrue(stateAt(orders, CrewOrdersScene.CANNON).startsWith(MOD + ":cannon[facing=east,load=empty,part=front"));
+        assertTrue(stateAt(orders, CrewOrdersScene.CANNON.west()).startsWith(MOD + ":cannon[facing=east,load=empty,part=rear"));
+        assertEquals(MOD + ":cargo_barrel", stateAt(orders, CrewOrdersScene.SUPPLY), "the gun's supply");
+        assertTrue(stateAt(orders, CrewOrdersScene.HELM).startsWith(MOD + ":helm[facing=south"));
+        assertEquals("minecraft:stone_bricks", stateAt(orders, 0, 3, 5), "the quay, level with the deck");
+        assertEquals(null, stateAt(orders, 0, 4, 5), "the harbor master's spot behind the desk");
+        for (int[] c : new int[][] {{4, 4, 5}, {4, 4, 4}, {5, 4, 6}, {7, 4, 5}, {6, 4, 5}}) {
+            assertEquals(null, stateAt(orders, c[0], c[1], c[2]), "deck spot " + c[0] + "," + c[2] + " is free to stand on");
+            assertEquals("minecraft:spruce_planks", stateAt(orders, c[0], c[1] - 1, c[2]), "deck under " + c[0] + "," + c[2]);
+        }
+
+        size(CrewSceneText.BOARDING, 13, 5, 13);
+        CompoundTag boarding = schematic(CrewSceneText.BOARDING);
+        assertEquals("minecraft:spruce_planks", stateAt(boarding, BoardingScene.GUNWALE), "our gunwale");
+        for (BlockPos cell : BoardingScene.RUN) {
+            assertEquals(null, stateAt(boarding, cell), "the plank's cell " + cell + " is free");
+            assertEquals(null, stateAt(boarding, cell.below()), "nothing under " + cell + " until she comes alongside");
+        }
+        // her west gunwale, hauled three blocks west, ends under the run's tip
+        BlockPos tipRail = BoardingScene.RUN.get(1).below().east(BoardingScene.HAUL);
+        assertEquals("minecraft:spruce_planks", stateAt(boarding, tipRail), "her gunwale before the haul");
+        assertEquals(null, stateAt(boarding, tipRail.west()), "the sea west of her");
+        assertTrue(stateAt(boarding, BoardingScene.THEIR_POLE).startsWith(MOD + ":flagpole[facing=north,flag=jolly_roger"));
+        assertTrue(stateAt(boarding, 0, 0, 0).startsWith("minecraft:water"), "open sea as the base plate");
+
+        size(CrewSceneText.FLAGS_AND_ALLEGIANCE, 13, 5, 13);
+        CompoundTag flags = schematic(CrewSceneText.FLAGS_AND_ALLEGIANCE);
+        assertTrue(stateAt(flags, FlagsAndAllegianceScene.OUR_HEAD).startsWith(MOD + ":flagpole[facing=north,flag=none,part=top"));
+        assertTrue(stateAt(flags, FlagsAndAllegianceScene.OUR_HEAD.below()).startsWith(MOD + ":flagpole[facing=north,flag=none,part=bottom"));
+        assertTrue(stateAt(flags, FlagsAndAllegianceScene.NAVY_HEAD).startsWith(MOD + ":flagpole[facing=north,flag=navy,part=top"));
+        assertEquals("minecraft:spruce_planks", stateAt(flags, 9, 2, 5), "the patrol's deck under her soldier");
+
+        size(CrewSceneText.CROWS_NEST, 7, 8, 7);
+        CompoundTag nest = schematic(CrewSceneText.CROWS_NEST);
+        assertEquals(MOD + ":crows_nest[waterlogged=false]", stateAt(nest, CrowsNestScene.NEST));
+        for (int y = 1; y <= 6; y++) {
+            assertEquals("minecraft:oak_log[axis=y]", stateAt(nest, 3, y, 3), "mast " + y);
+        }
+        assertEquals(MOD + ":ratlines[facing=north,kind=slope,waterlogged=false]", stateAt(nest, 3, 1, 6));
+        assertEquals(MOD + ":ratlines[facing=south,kind=wall,waterlogged=false]", stateAt(nest, 3, 7, 4), "the net on the nest");
+
+        size(CrewSceneText.SHIPS_BELL, 5, 4, 5);
+        CompoundTag bell = schematic(CrewSceneText.SHIPS_BELL);
+        assertEquals(MOD + ":ships_bell[face=wall,facing=south,ringing=false,waterlogged=false]", stateAt(bell, ShipsBellScene.WALL_BELL));
+        assertEquals(MOD + ":ships_bell[face=floor,facing=south,ringing=false,waterlogged=false]", stateAt(bell, ShipsBellScene.POST_BELL));
+        assertTrue(stateAt(bell, ShipsBellScene.POST_BELL.below()).startsWith("minecraft:spruce_fence"), "the post");
+        assertEquals("minecraft:spruce_planks", stateAt(bell, ShipsBellScene.WALL_BELL.north()), "the wall behind the bracket");
+
+        size(CrewSceneText.GALLEY_AND_PROVISIONS, 7, 3, 7);
+        CompoundTag galley = schematic(CrewSceneText.GALLEY_AND_PROVISIONS);
+        assertEquals(MOD + ":pantry[facing=east,load=0]", stateAt(galley, GalleyAndProvisionsScene.PANTRY));
+        assertEquals(MOD + ":water_barrel[fill=0,load=0]", stateAt(galley, GalleyAndProvisionsScene.BARREL));
+        for (BlockPos spot : GalleyAndProvisionsScene.mealSpots()) {
+            assertEquals(null, stateAt(galley, spot), "the meal seat " + spot + " is free");
+        }
+
+        size(CrewSceneText.HAMMOCKS_AND_REST, 7, 3, 7);
+        CompoundTag rest = schematic(CrewSceneText.HAMMOCKS_AND_REST);
+        for (BlockPos foot : HammocksAndRestScene.FEET) {
+            assertEquals(MOD + ":hammock[facing=east,part=foot,waterlogged=false]", stateAt(rest, foot));
+            assertEquals(MOD + ":hammock[facing=east,part=head,waterlogged=false]", stateAt(rest, foot.east()));
+            assertTrue(stateAt(rest, foot.west()).startsWith("minecraft:spruce_fence"), "the support west of " + foot);
+            assertTrue(stateAt(rest, foot.east(2)).startsWith("minecraft:spruce_fence"), "the support east of " + foot);
+        }
+        assertTrue(stateAt(rest, HammocksAndRestScene.COT).startsWith(MOD + ":sea_cot[facing=east,occupied=false,part=foot"));
+        assertTrue(stateAt(rest, HammocksAndRestScene.COT.east()).startsWith(MOD + ":sea_cot[facing=east,occupied=false,part=head"));
+
+        size(CrewSceneText.SWIVEL_GUN, 7, 3, 7);
+        CompoundTag swivel = schematic(CrewSceneText.SWIVEL_GUN);
+        assertEquals(MOD + ":swivel_gun[load=empty,piece=yoke,waterlogged=false]", stateAt(swivel, SwivelGunScene.GUN));
+        assertTrue(stateAt(swivel, SwivelGunScene.GUN.below()).startsWith("minecraft:spruce_fence"), "the mount");
+    }
+
+    private static String stateAt(CompoundTag structure, BlockPos pos) {
+        return stateAt(structure, pos.getX(), pos.getY(), pos.getZ());
     }
 
     private static void size(String scene, int x, int y, int z) throws IOException {

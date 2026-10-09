@@ -160,6 +160,104 @@ class PonderStoryboardsTest {
         assertTrue(tip.x > 0 && tip.z > 0, "a starboard turn swings the rudder's trailing edge to starboard (east), aft");
     }
 
+    /** PND2: the private fields the scenes write through ({@link SceneSync}) exist with the kind the scenes expect. */
+    @Test
+    void everySyncedFieldTheScenesUseResolves() throws ReflectiveOperationException {
+        for (SceneSync.Ref ref : SceneSync.FIELDS) {
+            Field f = ref.owner().getDeclaredField(ref.name()); // no class initialisation
+            assertTrue(java.lang.reflect.Modifier.isStatic(f.getModifiers()), ref + " is static");
+            boolean accessor = net.minecraft.network.syncher.EntityDataAccessor.class.isAssignableFrom(f.getType());
+            assertTrue(accessor || f.getType() == String.class, ref + " is a data accessor or a tag key");
+        }
+        assertEquals(String.class, SceneSync.FLAGPOLE_STATE.owner().getDeclaredField(SceneSync.FLAGPOLE_STATE.name()).getType());
+        assertEquals(String.class, SceneSync.BELL_RING_START.owner().getDeclaredField(SceneSync.BELL_RING_START.name()).getType());
+        assertEquals(String.class, SceneSync.BELL_STRIKE.owner().getDeclaredField(SceneSync.BELL_STRIKE.name()).getType());
+    }
+
+    @Test
+    void theLookoutsCallIsTwoPointsOffTheStarboardBow() {
+        // bow north (compass 0); the drawn direction is what Bearings calls "two points off the starboard bow"
+        Vec3 d = CrowsNestScene.callDirection();
+        com.richardsenger.piratesnships.station.lookout.Bearings.Relative r =
+                com.richardsenger.piratesnships.station.lookout.Bearings.of(0.0, d.x, d.z);
+        assertEquals(2, r.points());
+        assertEquals(com.richardsenger.piratesnships.station.lookout.Bearings.Side.STARBOARD, r.side());
+        assertEquals(com.richardsenger.piratesnships.station.lookout.Bearings.Sector.BOW, r.sector());
+        assertEquals(140, com.richardsenger.piratesnships.station.lookout.Bearings.calledDistance(CrowsNestScene.CALL_DISTANCE));
+        assertTrue(CrewSceneText.Nest.CALL.english().contains("two points off the starboard bow, 140 blocks"));
+    }
+
+    @Test
+    void theOrderWheelIsTheWhistlesMenu() {
+        // entry 0 (hoist) straight above the centre, the next one clockwise (to the right, as seen from the south)
+        Vec3 first = CrewOrdersScene.wheelSlot(0);
+        assertEquals(CrewOrdersScene.WHEEL.x, first.x, 1e-9);
+        assertEquals(CrewOrdersScene.WHEEL.y + CrewOrdersScene.WHEEL_RADIUS, first.y, 1e-9);
+        assertTrue(CrewOrdersScene.wheelSlot(1).x > CrewOrdersScene.WHEEL.x, "clockwise from the top");
+        assertEquals(10, com.richardsenger.piratesnships.station.order.WhistleOrder.entries().size(),
+                "the scene names fire at will and release crew; update its text if the wheel changes");
+    }
+
+    @Test
+    void thePlankIsTheRunTheRuleLaysForThisGap() {
+        // clicked on the top of our gunwale, facing east (her side); her gunwale hauled alongside stands at x 6
+        com.richardsenger.piratesnships.combat.boarding.PlankRun.Start start =
+                com.richardsenger.piratesnships.combat.boarding.PlankRun.start(BoardingScene.GUNWALE,
+                        net.minecraft.core.Direction.UP, net.minecraft.core.Direction.EAST);
+        int herRailX = 9 - BoardingScene.HAUL;
+        com.richardsenger.piratesnships.combat.boarding.PlankRun.Result run =
+                com.richardsenger.piratesnships.combat.boarding.PlankRun.compute(4, new com.richardsenger.piratesnships.combat.boarding.PlankRun.Probe() {
+                    @Override
+                    public boolean free(int i) {
+                        return true;
+                    }
+
+                    @Override
+                    public com.richardsenger.piratesnships.combat.boarding.PlankRun.Landing landing(int i) {
+                        net.minecraft.core.BlockPos cell = start.cell(i);
+                        boolean underIsHerRail = cell.getX() >= herRailX && cell.below().getY() == 3;
+                        return com.richardsenger.piratesnships.combat.boarding.PlankRun.classify(underIsHerRail, underIsHerRail,
+                                false, false, false);
+                    }
+                });
+        assertTrue(run.found());
+        assertEquals(BoardingScene.RUN.size(), run.length());
+        for (int i = 0; i < run.length(); i++) {
+            assertEquals(BoardingScene.RUN.get(i), start.cell(i));
+        }
+        assertEquals(com.richardsenger.piratesnships.combat.boarding.PlankRun.Landing.LEVEL, run.landing());
+    }
+
+    @Test
+    void theSwivelScenesAimStaysInTheGunsLimits() {
+        for (double[] a : SwivelGunScene.SWEEP) {
+            assertTrue(a[1] >= SwivelGunScene.MIN_ELEVATION && a[1] <= SwivelGunScene.MAX_ELEVATION, "elevation " + a[1]);
+        }
+        assertEquals(180.0, SwivelGunScene.SWEEP[0][0], "it starts on the bow (north)");
+        Vec3 m = SwivelGunScene.muzzle();
+        assertTrue(m.z < SwivelGunScene.GUN.getZ() + 0.5, "the muzzle points over the bow, out of the scene's deck");
+    }
+
+    @Test
+    void theGalleyAndHammockScenesUseTheGamesNumbers() {
+        // two water buckets of 3 rations in a 16-ration barrel: fill level 2 of 4 (1 after the first)
+        assertEquals(1, GalleyAndProvisionsScene.fillAfterBuckets(1));
+        assertEquals(2, GalleyAndProvisionsScene.fillAfterBuckets(2));
+        assertEquals(2, GalleyAndProvisionsScene.mealSpots().size());
+        // the sleeper lies on the canvas where foot and head meet, along the hammock
+        Vec3 bunk = HammocksAndRestScene.bunk(HammocksAndRestScene.FEET.get(0));
+        assertEquals(3.0, bunk.x, 1e-9);
+        assertEquals(2.5, bunk.z, 1e-9);
+        assertTrue(bunk.y > 1.0 && bunk.y < 1.5, "on the canvas");
+    }
+
+    @Test
+    void theSteeringTextNamesNoCommand() {
+        for (SceneLine line : SceneText.allLines()) {
+            assertTrue(!line.english().contains("/pirates"), line.key() + " names a command");
+        }
+    }
+
     @Test
     void aFullCrateWeighsSomeFortyPlanks() {
         // Sable's plank weighs 0.5 kpg (CargoMass); ShipSceneText.Cargo.FULL says "some forty planks"

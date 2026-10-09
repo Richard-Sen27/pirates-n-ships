@@ -1422,7 +1422,7 @@ Left-hand display audit (ART17, after ART16 found the book's left hand unmirrore
   | `hull_patch` first person | `[0, 70, 0]` (negation) | wrong: unmirrored, edge on | **`[0, -70, 0]`** (= right; the braced face stays towards the holder) |
   | `hull_patch` third person | `[70, -90, 0]` (negation, y = ±90) | mirrored, but the plain back faced out | **`[70, 90, 0]`** (= right, braced face out as in the right hand) |
   | `chain_shot` first person | `[0, 35, -25]` (negation) | wrong: unmirrored, balls end on | **`[0, -35, 25]`** (= right; the shot is symmetric) |
-  | `captains_almanac` (both) | negation | wrong | fixed by ART16 (right values, third person turned about z) |
+  | `captains_almanac` | negation | wrong | fixed by ART16: first person `[70, -10, -8]` = right, third person `[0, 0, -90]` for `[0, 0, 90]` (turn about z, which here also reads as a negation) |
   | `grapeshot`, hats, `bandana` first person | `[0, 225, 0]` / `[0, -135, 0]` for `[0, 45, 0]` | turn about y | correct, unchanged |
   | the remaining 28 (`item/generated` copies, `doubloon`, `map_tile`, `treasure_map`, `ship_receipt`, third-person `[0, 0, 0]` / `[75, 45, 0]`) | same as right | `R` unchanged | correct, unchanged |
 - Inherent limit: a sprite-aligned item shows its other face in the left hand (the geometry is not mirrored), so the
@@ -2097,7 +2097,7 @@ with brass corners"). One palette for all three: the GUI kit's leather and brass
   `lint_models.py`: 0 visible fights. `AlmanacModule` marks the item `handMadeItem` and points the block's particle at
   the new texture; the placeholder sprite `textures/item/captains_almanac.png` and `tools/gen_almanac_sprite.py` are
   gone.
-- **Item display** (hands replaced by ART16 below; the left hand mirrors y and z): `gui` `[30, 225, 0]` / `[0, 4.1, 0]` / 0.8 (fore-edge with the
+- **Item display** (hands replaced by ART16 below): `gui` `[30, 225, 0]` / `[0, 4.1, 0]` / 0.8 (fore-edge with the
   clasp lower left, head lower right, the cover's lozenge and all four caps read; 15.5 of 16 units wide, centred with
   the orthographic display check of F7g, which gives 32 px per unit at 1024 px); third person `[90, 0, 90]` /
   `[0, 2, 1]` / 0.5 (upright in the fist, spine down, cover outwards); first person `[90, -25, 80]` / `[-2, 5, 0]` /
@@ -2149,8 +2149,8 @@ cover side it also glitches a bit when closed"):
   same rule, so `loadFirstLeft()` / `loadThirdLeft()` previews are trustworthy. For a book (a chiral object: cover,
   head and fore-edge fix its handedness) the game's mirror also swaps the spine and the fore-edge; a left entry of
   `R · Rz(180)` in model space keeps the fore-edge forward instead (the third-person left entry below, re-centred
-  with its own translation). The ART10 / ART15 / F8b notes that say "the left hand negates the y and z rotations"
-  describe exactly the double negation; their models are not changed here.
+  with its own translation). ART17 audited the other models against this: a negation is a real mirror only when y
+  is ±90 (vanilla `item/handheld`, the guns), and the rule now sits with the conventions at the top of this file.
 - **Display** (measured in display mode with the slot's camera copied into an offscreen view; first-person screen
   extents as NDC, x right, y up, -1..1):
   - first person, both hands, `[70, -10, -8]` / `[4.5, 6.5, -2]` / 0.85 (was right `[90, -25, 80]` / `[-2, 5, 0]` /

@@ -142,9 +142,9 @@ public final class BoardingOrderGameTests {
         return c;
     }
 
-    /** Three free hands on A's deck. */
+    /** {@code n} (at most five) free hands on A's deck. */
     private static List<CrewMember> hands(GameTestHelper h, Ships s, int n) {
-        int[][] at = {{-2, -2}, {0, -2}, {1, 1}, {-2, 0}};
+        int[][] at = {{-2, -2}, {0, -2}, {1, 1}, {-2, 0}, {2, -2}};
         List<CrewMember> out = new ArrayList<>();
         for (int i = 0; i < n; i++) out.add(crew(h, s.a(), at[i][0], at[i][1]));
         return out;
@@ -287,6 +287,33 @@ public final class BoardingOrderGameTests {
             h.assertTrue(gunner[0].assignment() != null && gunner[0].assignment().pos().equals(s.swivel()), "the gunner lost his gun");
             assertAboard(h, gunner[0], s.a().ship(), "the gunner");
             cleanup(h, s, people);
+        });
+    }
+
+    /**
+     * Five hands on one gangway (BRD5): they cross in file, a block apart, and every one steps off the board onto B's
+     * deck by itself; the first across clear the landing for the next (one used to stay on the board's lip behind a hand
+     * standing on the landing, tracked by A, and never arrived).
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = SETTLE + ORDER + CROSS_WITHIN + 120, batch = BATCH + "file")
+    public static void fiveBoardersCrossOneGangwayInFile(GameTestHelper h) {
+        noDesertion(h);
+        Ships s = twoShips(h, 3);
+        List<CrewMember> hands = new ArrayList<>();
+        h.runAtTickTime(SETTLE, () -> {
+            plank(h, s);
+            hands.addAll(hands(h, s, 5));
+        });
+        h.runAtTickTime(SETTLE + ORDER, () -> {
+            BoardingParties.Outcome o = BoardingParties.boardWithCrew(h.getLevel(), s.a().ship(), null);
+            h.assertTrue(o.result() == BoardingParties.Result.BOARDING && o.boarders() == 5, "the order: " + o);
+        });
+        java.util.Set<UUID> across = crossed(h, s, hands);
+        h.succeedWhen(() -> {
+            h.assertTrue(h.getTick() > SETTLE + ORDER, "not yet ordered");
+            h.assertTrue(across.size() == hands.size(), across.size() + " of " + hands.size() + " hands crossed: "
+                    + where(h, s.a().ship().id()));
+            cleanup(h, s, hands);
         });
     }
 

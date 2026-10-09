@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 /**
@@ -131,6 +132,87 @@ public final class BoardingWays {
         Point far = new Point(frame, Vec3.atBottomCenterOf(tip).add(0, tipBoardY, 0));
         List<Point> via = laidFromLeaving ? List.of(near, far) : List.of(far, near);
         return new Crossing(Kind.PLANK, start, landing, via, 0, landing.getY() - start.getY());
+    }
+
+    /** Half the width of the corridor a boarder walks straight to its cell aside in (a crew member is 0.6 wide). */
+    private static final double HALF_WIDTH = 0.3;
+    /** How far behind the landing (along the heading, in blocks) a cell may lie and still count as beside it. */
+    private static final double BESIDE = 0.3;
+
+    /**
+     * The cells a boarder that has just got across steps aside to, best first (BRD5): {@code free} stand cells of the
+     * deck it arrived on (nobody there, not taken by a shipmate), at the landing's height, at most {@code radius} blocks
+     * from {@code landing} and not behind it ({@code heading} points from the crossing onto the deck; a cell behind the
+     * landing lies under or beside the board's end), reached in a straight corridor a body wide over stand cells only (it
+     * walks there straight: a helm or a mast corner between would hold it on the landing). Cells whose way passes no
+     * shipmate first, then nearest, then straight ahead first among equals. Without that step the first hand across
+     * stands on the landing and the next one is held on the board's lip, still on the ship the board was laid from
+     * (Sable tracks the body an entity last landed on), and never gets across.
+     */
+    public static List<BlockPos> roomCells(BlockPos landing, Vec3 heading, Predicate<BlockPos> stand, Predicate<BlockPos> free,
+                                           int radius) {
+        double hl = Math.hypot(heading.x, heading.z);
+        double ux = hl < 1e-6 ? 0 : heading.x / hl;
+        double uz = hl < 1e-6 ? 0 : heading.z / hl;
+        record Option(BlockPos cell, boolean clear, double dist, double ahead) {
+        }
+        List<Option> options = new ArrayList<>();
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dz = -radius; dz <= radius; dz++) {
+                if (dx == 0 && dz == 0) continue;
+                double ahead = dx * ux + dz * uz;
+                if (ahead < -BESIDE) continue; // behind (a cell beside it stays one on a ship turned a little)
+                BlockPos c = landing.offset(dx, 0, dz);
+                if (!free.test(c) || !corridor(landing, c, HALF_WIDTH, stand)) continue;
+                options.add(new Option(c, corridor(landing, c, 0, free), Math.hypot(dx, dz), ahead));
+            }
+        }
+        options.sort(Comparator.comparing((Option o) -> !o.clear()).thenComparingDouble(Option::dist)
+                .thenComparing(Comparator.comparingDouble(Option::ahead).reversed()).thenComparing(Option::cell));
+        List<BlockPos> out = new ArrayList<>(options.size());
+        for (Option o : options) out.add(o.cell());
+        return out;
+    }
+
+    /**
+     * Every cell but the landing touched by the corridor of half width {@code half} from the landing's centre to
+     * {@code cell}'s centre passes {@code ok}.
+     */
+    private static boolean corridor(BlockPos landing, BlockPos cell, double half, Predicate<BlockPos> ok) {
+        double x0 = landing.getX() + 0.5;
+        double z0 = landing.getZ() + 0.5;
+        double dx = cell.getX() - landing.getX();
+        double dz = cell.getZ() - landing.getZ();
+        double len = Math.hypot(dx, dz);
+        double px = -dz / len * half;
+        double pz = dx / len * half;
+        int n = (int) Math.ceil(len * 10);
+        for (int i = 1; i <= n; i++) {
+            double t = (double) i / n;
+            for (int side = -1; side <= 1; side++) {
+                if (half == 0 && side != 0) continue;
+                BlockPos at = BlockPos.containing(x0 + dx * t + side * px, landing.getY(), z0 + dz * t + side * pz);
+                if (!at.equals(landing) && !ok.test(at)) return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Whether a boarder at {@code self} heading for {@code aim} waits for a shipmate at {@code other} (BRD5): the mate
+     * is less than {@code spacing} blocks away (horizontally) and ahead of it, so the boarders cross a plank in file a
+     * block apart instead of pushing the one in front off the board or holding it on its lip.
+     */
+    public static boolean waitsFor(Vec3 self, Vec3 aim, Vec3 other, double spacing) {
+        double ox = other.x - self.x;
+        double oz = other.z - self.z;
+        double d = Math.hypot(ox, oz);
+        if (d >= spacing || d < 1e-6) return false;
+        double ax = aim.x - self.x;
+        double az = aim.z - self.z;
+        double al = Math.hypot(ax, az);
+        if (al < 1e-6) return false;
+        return (ox * ax + oz * az) / (d * al) > 0.7; // within 45 degrees of its way
     }
 
     /**

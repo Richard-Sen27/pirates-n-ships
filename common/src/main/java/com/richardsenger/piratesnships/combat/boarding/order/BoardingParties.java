@@ -44,10 +44,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -67,6 +69,12 @@ import java.util.UUID;
  * touching hulls; {@code ABOARD}, fighting; {@code BACK} and {@code CROSS_BACK}, the same home over the nearest way back.
  * A boarder that does not get across within {@code boarding.cross_timeout_ticks} is set down on the far side (like
  * WALK1's seat at once, nobody stalls). Back home it walks to its station again (its pin kept).
+ *
+ * <p><b>Several on one plank</b> (BRD5): they cross in file, each holding its step while a shipmate is less than a block
+ * ahead of it; one that got across steps aside off the landing to a free cell beside or ahead of it
+ * ({@link BoardingWays#roomCells}), so the next one can step off the board's lip. A boarder counts as across when Sable
+ * tracks it on the other ship or, by position, when its feet stand in a stand cell of that ship's deck with no part of
+ * its footprint on the board ({@link #across}).
  *
  * <p><b>Sable</b>: a boarder stays a world entity the whole way. Sable makes it track the body whose collision it lands
  * on from above ({@code refs/sable/common/src/main/java/dev/ryanhcode/sable/mixin/entity/entity_sublevel_collision/EntityMixin.java},
@@ -103,6 +111,14 @@ public final class BoardingParties {
     private static final int MISSING_TICKS = 1200;
     /** Blocks from the crossing's start within which a boarder whose path ended walks straight on. */
     private static final double STEER_DISTANCE = 1.6;
+    /** Blocks a boarder on a plank keeps behind the shipmate in front of it (they cross in file). */
+    private static final double SPACING = 1.0;
+    /** Blocks around a crossing's landing searched for a cell to step aside to. */
+    private static final int ROOM_RADIUS = 3;
+    /** Ticks a boarder that got across walks toward its cell aside before it stands where it is. */
+    private static final int ROOM_TICKS = 60;
+    /** Blocks from a boarder's aim within which a shipmate already across still takes that spot. */
+    private static final double LANDING_TAKEN = 0.6;
 
     /** Where a boarder is on its way. */
     public enum Phase { OUT, CROSS_OUT, ABOARD, BACK, CROSS_BACK }
@@ -125,6 +141,11 @@ public final class BoardingParties {
         long missingSince = -1;
         /** It did not get across in time once and was set down (the fallback). */
         boolean setDown;
+        /** The cell beside the landing it steps aside to after a crossing (in {@link #roomShip}'s plot), or null. */
+        @Nullable BlockPos room;
+        @Nullable UUID roomShip;
+        /** It stands in its cell aside (or gave up walking there). */
+        boolean roomDone;
 
         Boarder(UUID id, @Nullable StationRef station, boolean pinned, UUID from, UUID to, long now) {
             this.id = id;
@@ -607,6 +628,7 @@ public final class BoardingParties {
             case CROSS_OUT, CROSS_BACK -> cross(level, party, b, mob, now);
             case ABOARD -> {
                 if (check) aboard(level, party, b, mob, now);
+                if (b.phase == Phase.ABOARD) walkAside(level, b, mob, now);
             }
         }
     }
@@ -706,11 +728,124 @@ public final class BoardingParties {
             aim = frame.toWorld(p.at());
             if (Math.hypot(aim.x - mob.getX(), aim.z - mob.getZ()) < 0.4) b.via++;
         }
-        steer(mob, aim);
-        if (b.via >= via.size() && Math.hypot(landing.x - mob.getX(), landing.z - mob.getZ()) < 0.8
-                && BoardingFight.aboard(mob, b.to)) {
+        if (!waits(level, party, b, mob, aim)) steer(mob, aim);
+        if (b.via >= via.size() && Math.hypot(landing.x - mob.getX(), landing.z - mob.getZ()) < 0.8 && across(level, mob, to)) {
             arrive(level, party, b, mob, now);
         }
+    }
+
+    /**
+     * Whether a boarder on a plank holds its step this tick: a shipmate crossing the same way, or one across that still
+     * stands on the spot it walks to and is stepping aside, is less than {@link #SPACING} ahead of it
+     * ({@link BoardingWays#waitsFor}).
+     */
+    private static boolean waits(ServerLevel level, Party party, Boarder b, Mob mob, Vec3 aim) {
+        for (Boarder o : party.boarders.values()) {
+            if (o == b || o.phase != b.phase && o.phase != Phase.ABOARD) continue;
+            if (!(level.getEntity(o.id) instanceof Mob m) || !m.isAlive()) continue;
+            // one already across holds it up only while it stands on the spot it walks to and is still stepping aside
+            // (one with no cell aside, or that gave up, is pushed past)
+            if (o.phase == Phase.ABOARD && (o.roomDone || Math.hypot(m.getX() - aim.x, m.getZ() - aim.z) > LANDING_TAKEN)) continue;
+            if (BoardingWays.waitsFor(mob.position(), aim, m.position(), SPACING)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Whether {@code mob} has got onto ship {@code to}: Sable tracks it on that ship, or (Sable only switches after a
+     * landing on the ship's blocks) it stands over a stand cell of that ship's deck and off the board (BRD5).
+     */
+    static boolean across(ServerLevel level, Mob mob, ShipBody to) {
+        if (BoardingFight.aboard(mob, to.id())) return true;
+        return overDeck(level, to, mob) && !onBoard(level, mob);
+    }
+
+    /** Whether {@code mob}'s feet are in a stand cell of {@code ship}'s deck, read through that ship's pose. */
+    static boolean overDeck(ServerLevel level, ShipBody ship, Mob mob) {
+        return BoardingWorld.stand(level, ship, BlockPos.containing(ship.toPlot(mob.position().add(0, 0.1, 0))));
+    }
+
+    /**
+     * Whether any part of {@code mob}'s footprint rests on a plank cell (in the frame of the ship it stands on): unlike
+     * {@link #onPlank}, which reads the cell under its centre, a boarder whose centre is past the board's tip but whose
+     * heels are still on it counts.
+     */
+    static boolean onBoard(ServerLevel level, Mob mob) {
+        ShipBody on = com.richardsenger.piratesnships.ship.sable.ShipEntities.standingOrRiding(mob);
+        AABB box = mob.getBoundingBox();
+        double y = box.minY + 0.1;
+        for (double x : new double[] {box.minX, box.maxX}) {
+            for (double z : new double[] {box.minZ, box.maxZ}) {
+                Vec3 w = new Vec3(x, y, z);
+                BlockPos feet = BlockPos.containing(on == null ? w : on.toPlot(w));
+                if (level.getBlockState(feet).is(BoardingContent.PLANK.get())
+                        || level.getBlockState(feet.below()).is(BoardingContent.PLANK.get())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * The cell beside crossing {@code c}'s landing on {@code ship} that boarder {@code b} steps aside to: the first of
+     * {@link BoardingWays#roomCells} that no shipmate has taken and nobody stands in, or null. {@code other} is the ship
+     * the crossing starts on.
+     */
+    private static @Nullable BlockPos roomFor(ServerLevel level, Party party, Boarder b, Mob mob, ShipBody ship, ShipBody other,
+                                              BoardingWays.Crossing c) {
+        Vec3 start = ship.toPlot(other.toWorld(Vec3.atBottomCenterOf(c.start())));
+        Vec3 heading = Vec3.atBottomCenterOf(c.landing()).subtract(start);
+        Set<BlockPos> taken = new HashSet<>();
+        for (Boarder o : party.boarders.values()) {
+            if (o != b && o.room != null && ship.id().equals(o.roomShip)) taken.add(o.room);
+        }
+        List<BlockPos> cells = BoardingWays.roomCells(c.landing(), heading, cell -> BoardingWorld.stand(level, ship, cell),
+                cell -> !taken.contains(cell) && !occupied(level, ship, cell, mob), ROOM_RADIUS);
+        return cells.isEmpty() ? null : cells.get(0);
+    }
+
+    /** Whether a living entity other than {@code self} stands in {@code cell} of {@code ship}'s plot. */
+    private static boolean occupied(ServerLevel level, ShipBody ship, BlockPos cell, Mob self) {
+        Vec3 w = ship.toWorld(Vec3.atBottomCenterOf(cell));
+        AABB box = new AABB(w.x - 0.45, w.y, w.z - 0.45, w.x + 0.45, w.y + 1.5, w.z + 0.45);
+        return !level.getEntitiesOfClass(LivingEntity.class, box, e -> e != self && e.isAlive()).isEmpty();
+    }
+
+    /** Sends a boarder back home off the landing to {@code cell} of {@code ship}: by the plot's pathfinder, else straight. */
+    private static void walkTo(Mob mob, ShipBody ship, BlockPos cell) {
+        PathNavigation nav = mob.getNavigation();
+        nav.stop();
+        if (BoardingFight.aboard(mob, ship.id())) {
+            Path p = nav.createPath(cell, 0);
+            if (p != null) {
+                nav.moveTo(p, SPEED);
+                return;
+            }
+        }
+        steer(mob, ship.toWorld(Vec3.atBottomCenterOf(cell)));
+    }
+
+    /**
+     * A boarder that got across walks straight to its cell aside ({@link BoardingWays#roomCells} keeps that corridor
+     * clear of the deck's blocks),
+     * clearing the landing for the next one (BRD5); it stops there, after {@link #ROOM_TICKS}, or when it has a foe.
+     */
+    private static void walkAside(ServerLevel level, Boarder b, Mob mob, long now) {
+        if (b.room == null || b.roomDone || b.roomShip == null) return;
+        ShipBody ship = SableShips.byId(level, b.roomShip);
+        LivingEntity foe = mob.getTarget();
+        if (ship == null || foe != null && foe.isAlive() || now - b.since > ROOM_TICKS) {
+            b.roomDone = true;
+            return;
+        }
+        Vec3 w = ship.toWorld(Vec3.atBottomCenterOf(b.room));
+        if (Math.hypot(w.x - mob.getX(), w.z - mob.getZ()) < 0.25) {
+            b.roomDone = true;
+            mob.getNavigation().stop();
+            return;
+        }
+        steer(mob, w);
     }
 
     /**
@@ -732,7 +867,13 @@ public final class BoardingParties {
 
     /** The fallback: a boarder that took too long is set down on the far side of its crossing. */
     private static void setDown(ServerLevel level, Party party, Boarder b, Mob mob, ShipBody to, BoardingWays.Crossing c, long now) {
-        Vec3 w = to.toWorld(Vec3.atBottomCenterOf(c.landing()).add(0, 0.05, 0));
+        ShipBody from = SableShips.byId(level, b.from);
+        BlockPos cell = c.landing();
+        if (from != null && occupied(level, to, cell, mob)) {
+            BlockPos aside = roomFor(level, party, b, mob, to, from, c);
+            if (aside != null) cell = aside; // the landing is taken: beside it, not on top of a shipmate
+        }
+        Vec3 w = to.toWorld(Vec3.atBottomCenterOf(cell).add(0, 0.05, 0));
         Constants.LOG.debug("Boarder {} did not get across in time: set down on ship {}", b.id, to.id());
         b.setDown = true;
         mob.getNavigation().stop();
@@ -744,19 +885,30 @@ public final class BoardingParties {
     /** Across: aboard the boarded ship, or home. */
     private static void arrive(ServerLevel level, Party party, Boarder b, Mob mob, long now) {
         mob.getNavigation().stop();
+        ShipBody to = SableShips.byId(level, b.to);
+        ShipBody from = SableShips.byId(level, b.from);
+        BoardingWays.Crossing c = b.crossing;
+        BlockPos room = to == null || from == null || c == null ? null : roomFor(level, party, b, mob, to, from, c);
         b.crossing = null;
         b.since = now;
         b.hopped = false;
+        b.room = room;
+        b.roomShip = room == null ? null : b.to;
+        b.roomDone = room == null;
         if (b.phase == Phase.CROSS_BACK || b.phase == Phase.BACK) {
             home(level, party, b, mob);
+            // back home: off the landing for the next one (a crew member with a station walks there instead)
+            if (room != null && !(mob instanceof CrewMember cm && cm.assignment() != null)) walkTo(mob, to, room);
         } else {
             b.phase = Phase.ABOARD;
+            walkAside(level, b, mob, now); // off the landing (every tick from now): the next one steps off the board
         }
     }
 
     /** A boarder on the other deck: fight, or head home. */
     private static void aboard(ServerLevel level, Party party, Boarder b, Mob mob, long now) {
-        if (BoardingFight.aboard(mob, party.home) && !onPlank(level, mob)) {
+        ShipBody boarded = SableShips.byId(level, party.target);
+        if (BoardingFight.aboard(mob, party.home) && !onPlank(level, mob) && !(boarded != null && overDeck(level, boarded, mob))) {
             if (BoardingRules.headsHome(party.recalled, party.captured)) {
                 home(level, party, b, mob); // knocked back onto its own deck after the call: done
             } else {
@@ -765,6 +917,8 @@ public final class BoardingParties {
                 b.to = party.target;
                 b.crossing = null;
                 b.since = now;
+                b.room = null;
+                b.roomShip = null;
             }
             return;
         }
@@ -780,6 +934,8 @@ public final class BoardingParties {
                 b.crossing = back;
                 b.since = now;
                 b.lastSearch = Long.MIN_VALUE / 2;
+                b.room = null;
+                b.roomShip = null;
                 mob.setTarget(null);
                 return;
             }
@@ -791,7 +947,7 @@ public final class BoardingParties {
         if (target == null) return;
         LivingEntity foe = nearest(mob, foesAboard(level, party, target), 24.0);
         mob.setTarget(foe);
-        if (foe == null) mob.getNavigation().stop();
+        if (foe == null && (b.room == null || b.roomDone)) mob.getNavigation().stop(); // else it is stepping aside
     }
 
     /** Home: off the party, and a crew member walks back to the station it left. */

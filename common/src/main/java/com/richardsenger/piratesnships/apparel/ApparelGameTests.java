@@ -28,11 +28,14 @@ import net.minecraft.world.level.GameType;
 import java.util.Collection;
 import java.util.List;
 
-/** The hats and the officer's coat of the {@code apparel} module: registration, wearing, the armour bonus and the recipes. */
+/**
+ * The hats, the officer's coat and the captain's clothing (ART9) of the {@code apparel} module: registration, wearing,
+ * the armour bonus and the recipes.
+ */
 public final class ApparelGameTests {
 
     public static final List<String> ITEM_IDS = List.of("pirate_hat", "bandana", "navy_hat", "officer_hat", "captains_hat",
-            "officers_coat");
+            "officers_coat", "captains_coat", "captains_breeches", "captains_boots");
 
     private ApparelGameTests() {
     }
@@ -129,6 +132,9 @@ public final class ApparelGameTests {
             ContentTestSupport.assertRecipe(helper, hat.id().getPath(), hat.get(), 1);
         }
         ContentTestSupport.assertRecipe(helper, "officers_coat", ApparelContent.OFFICERS_COAT.get(), 1);
+        for (var piece : ApparelContent.CAPTAINS_CLOTHING) {
+            ContentTestSupport.assertRecipe(helper, piece.id().getPath(), piece.get(), 1);
+        }
         helper.succeed();
     }
 
@@ -196,6 +202,101 @@ public final class ApparelGameTests {
             coat.forEachModifier(slot, (attribute, modifier) -> count[0]++);
         }
         helper.assertValueEqual(count[0], 0, "coat modifiers with officers_coat_armor 0");
+        helper.succeed();
+    }
+
+    // --- the captain's clothing (ART9) ---------------------------------------------------------------------------
+
+    /** Each piece goes into its own slot by right-click, swapping with what was worn there; stacks to 1, no durability. */
+    @ModGameTest
+    public static void captainsClothingGoesIntoItsSlots(GameTestHelper helper) {
+        assertWorn(helper, ApparelContent.CAPTAINS_COAT.get(), EquipmentSlot.CHEST, Items.LEATHER_CHESTPLATE);
+        assertWorn(helper, ApparelContent.CAPTAINS_BREECHES.get(), EquipmentSlot.LEGS, Items.LEATHER_LEGGINGS);
+        assertWorn(helper, ApparelContent.CAPTAINS_BOOTS.get(), EquipmentSlot.FEET, Items.LEATHER_BOOTS);
+        // the full set at once: hat, coat, breeches and boots side by side
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        for (Item item : List.of(ApparelContent.CAPTAINS_HAT.get(), ApparelContent.CAPTAINS_COAT.get(),
+                ApparelContent.CAPTAINS_BREECHES.get(), ApparelContent.CAPTAINS_BOOTS.get())) {
+            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(item));
+            use(helper, player);
+        }
+        helper.assertTrue(player.getItemBySlot(EquipmentSlot.HEAD).is(ApparelContent.CAPTAINS_HAT.get()), "hat on");
+        helper.assertTrue(player.getItemBySlot(EquipmentSlot.CHEST).is(ApparelContent.CAPTAINS_COAT.get()), "coat on");
+        helper.assertTrue(player.getItemBySlot(EquipmentSlot.LEGS).is(ApparelContent.CAPTAINS_BREECHES.get()), "breeches on");
+        helper.assertTrue(player.getItemBySlot(EquipmentSlot.FEET).is(ApparelContent.CAPTAINS_BOOTS.get()), "boots on");
+        helper.succeed();
+    }
+
+    private static void assertWorn(GameTestHelper helper, Item item, EquipmentSlot slot, Item old) {
+        ItemStack stack = new ItemStack(item);
+        Equipable equipable = Equipable.get(stack);
+        helper.assertTrue(equipable != null && equipable.getEquipmentSlot() == slot, item + " should be worn in " + slot);
+        helper.assertValueEqual(stack.getMaxStackSize(), 1, item + " stack size");
+        helper.assertFalse(stack.isDamageableItem(), item + " has no durability");
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemSlot(slot, new ItemStack(old));
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+        use(helper, player);
+        helper.assertTrue(player.getItemBySlot(slot).is(item), item + " should be in " + slot + ", got " + player.getItemBySlot(slot));
+        helper.assertTrue(player.getMainHandItem().is(old), "the old piece should be in the hand, got " + player.getMainHandItem());
+    }
+
+    @ModGameTest
+    public static void captainsClothingGivesTheConfiguredArmour(GameTestHelper helper) {
+        assertArmor(helper, new ItemStack(ApparelContent.CAPTAINS_COAT.get()), EquipmentSlot.CHEST, ApparelConfig.CAPTAINS_COAT_ARMOR.get());
+        assertArmor(helper, new ItemStack(ApparelContent.CAPTAINS_BREECHES.get()), EquipmentSlot.LEGS, ApparelConfig.CAPTAINS_BREECHES_ARMOR.get());
+        assertArmor(helper, new ItemStack(ApparelContent.CAPTAINS_BOOTS.get()), EquipmentSlot.FEET, ApparelConfig.CAPTAINS_BOOTS_ARMOR.get());
+        for (var piece : ApparelContent.CAPTAINS_CLOTHING) {
+            assertArmor(helper, new ItemStack(piece.get()), EquipmentSlot.MAINHAND, 0);
+            assertArmor(helper, new ItemStack(piece.get()), EquipmentSlot.HEAD, 0);
+        }
+        helper.succeed();
+    }
+
+    /** Own batch: changes config. The full set adds up on the wearer: coat, breeches and boots. */
+    @ModGameTest(batch = "pirates_n_ships_config_apparel_captains_clothing_armor")
+    public static void captainsClothingArmourFollowsTheConfigAndStacks(GameTestHelper helper) {
+        ConfigOverrides.during(helper, ApparelConfig.CAPTAINS_COAT_ARMOR, 5);
+        ConfigOverrides.during(helper, ApparelConfig.CAPTAINS_BREECHES_ARMOR, 4);
+        ConfigOverrides.during(helper, ApparelConfig.CAPTAINS_BOOTS_ARMOR, 2);
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        for (var piece : ApparelContent.CAPTAINS_CLOTHING) {
+            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(piece.get()));
+            use(helper, player);
+        }
+        Multimap<Holder<Attribute>, AttributeModifier> map = HashMultimap.create();
+        for (EquipmentSlot slot : List.of(EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET)) {
+            player.getItemBySlot(slot).forEachModifier(slot, map::put);
+        }
+        player.getAttributes().addTransientAttributeModifiers(map);
+        helper.assertValueEqual(player.getAttributeValue(Attributes.ARMOR), 11.0, "armour with coat 5, breeches 4 and boots 2");
+        helper.succeed();
+    }
+
+    /** Own batch: changes config. */
+    @ModGameTest(batch = "pirates_n_ships_config_apparel_captains_clothing_armor_off")
+    public static void captainsClothingArmourZeroGivesNoModifier(GameTestHelper helper) {
+        ConfigOverrides.during(helper, ApparelConfig.CAPTAINS_COAT_ARMOR, 0);
+        ConfigOverrides.during(helper, ApparelConfig.CAPTAINS_BREECHES_ARMOR, 0);
+        ConfigOverrides.during(helper, ApparelConfig.CAPTAINS_BOOTS_ARMOR, 0);
+        for (var piece : ApparelContent.CAPTAINS_CLOTHING) {
+            ItemStack stack = new ItemStack(piece.get());
+            int[] count = {0};
+            for (EquipmentSlot slot : EquipmentSlot.values()) {
+                stack.forEachModifier(slot, (attribute, modifier) -> count[0]++);
+            }
+            helper.assertValueEqual(count[0], 0, piece.id() + " modifiers with armour 0");
+        }
+        helper.succeed();
+    }
+
+    /** The armour layer reads {@code <material>_layer_1/2}: each coat has its own material, breeches and boots share one. */
+    @ModGameTest
+    public static void clothingUsesItsOwnMaterials(GameTestHelper helper) {
+        helper.assertTrue(ApparelContent.CAPTAINS_COAT.get().getMaterial().is(ApparelContent.CAPTAINS_COAT_MATERIAL.id()), "coat material");
+        helper.assertTrue(ApparelContent.CAPTAINS_BREECHES.get().getMaterial().is(ApparelContent.CAPTAINS_CLOTHING_MATERIAL.id()), "breeches material");
+        helper.assertTrue(ApparelContent.CAPTAINS_BOOTS.get().getMaterial().is(ApparelContent.CAPTAINS_CLOTHING_MATERIAL.id()), "boots material");
+        helper.assertTrue(ApparelContent.OFFICERS_COAT.get().getMaterial().is(ApparelContent.OFFICERS_COAT_MATERIAL.id()), "officer's coat material");
         helper.succeed();
     }
 

@@ -31,7 +31,8 @@ import java.util.UUID;
  * (ART6: model and texture {@code pirate_captain}) with his captain's hat in the head slot. Placed by world
  * generation ({@link IslandCaptains#place}), he keeps his
  * post ({@code stationary}, walks back to it after a fight), never despawns, carries a standing navy bounty, and can
- * be challenged to a duel ({@link DuelChallenge}). On death he drops his hat, a purse of doubloons (loot table
+ * be challenged to a duel ({@link DuelChallenge}). On death he drops his hat, maybe pieces of his clothing (ART9), a
+ * purse of doubloons (loot table
  * {@code entities/pirate_captain}) and a map of his island's treasure; the navy pays the captain's tier for him alive.
  * A successor takes his post after {@code mobs.captain.respawn_days}.
  */
@@ -217,11 +218,17 @@ public class PirateCaptain extends Pirate {
         super.remove(reason);
     }
 
-    /** His hat (equipment, drop chance above 1) and the map of his island; nothing while {@code mobs.drops} is off. */
+    /**
+     * His hat (equipment, drop chance above 1), each piece of his clothing at {@code mobs.captain.clothing_drop_chance}
+     * (ART9, {@link ClothingDrops}) and the map of his island; nothing while {@code mobs.drops} is off.
+     */
     @Override
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource source, boolean recentlyHit) {
         if (!MobConfig.DROPS.get()) return;
         super.dropCustomDeathLoot(level, source, recentlyHit);
+        for (var piece : ClothingDrops.roll(ApparelContent.CAPTAINS_CLOTHING, CaptainConfig.CLOTHING_DROP_CHANCE.get(), getRandom()::nextDouble)) {
+            spawnAtLocation(new ItemStack(piece.get()));
+        }
         ItemStack map = IslandCaptains.islandMap(level, this);
         if (!map.isEmpty()) spawnAtLocation(map);
     }

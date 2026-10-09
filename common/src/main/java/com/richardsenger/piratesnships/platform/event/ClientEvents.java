@@ -8,6 +8,7 @@ import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.sounds.Music;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.LayeredDraw;
+import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -19,6 +20,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -203,6 +206,24 @@ public final class ClientEvents {
 
     public record ModelLayer(ModelLayerLocation location, Supplier<LayerDefinition> definition) { }
 
+    /**
+     * Gives the model that draws a worn armour item (an {@code ArmorItem}) in place of vanilla's armour model. Called
+     * on the render thread for every frame the item is drawn by vanilla's {@code HumanoidArmorLayer} (players, armour
+     * stands, zombies, ...), so return a cached model, never a new one. {@code original} is vanilla's model for the
+     * slot, already posed like the wearer and with the slot's parts visible; return it to keep vanilla's look. The
+     * loader copies the pose and part visibility of {@code original} onto the returned model before drawing it (NeoForge:
+     * {@code IClientItemExtensions#getGenericArmorModel}), then draws it with the material's layer texture, so the
+     * model's texture size must match that texture. Pose extra parts from the copied parts inside the model's
+     * {@code renderToBuffer}: vanilla never calls {@code setupAnim} on an armour model.
+     */
+    @FunctionalInterface
+    public interface ArmorModelProvider {
+        HumanoidModel<?> model(LivingEntity wearer, ItemStack stack, EquipmentSlot slot, HumanoidModel<?> original);
+    }
+
+    /** A custom armour model for some items, see {@link #registerArmorModel}. */
+    public record ArmorModel(ArmorModelProvider provider, List<Supplier<? extends Item>> items) { }
+
     /** A block colour handler for some blocks (faces with a {@code tintindex} in their model). */
     public record BlockColorHandler(BlockColor color, List<Supplier<? extends Block>> blocks) { }
 
@@ -213,6 +234,7 @@ public final class ClientEvents {
     private static final List<ModelLayer> MODEL_LAYERS = new ArrayList<>();
     private static final List<BlockColorHandler> BLOCK_COLORS = new ArrayList<>();
     private static final List<ResourceLocation> ADDITIONAL_MODELS = new ArrayList<>();
+    private static final List<ArmorModel> ARMOR_MODELS = new ArrayList<>();
     private static volatile @Nullable Function<ResourceLocation, ModelResourceLocation> additionalModelKey;
 
     public static synchronized void registerKeyMapping(KeyMapping mapping) {
@@ -247,6 +269,19 @@ public final class ClientEvents {
 
     public static synchronized void registerModelLayer(ModelLayerLocation location, Supplier<LayerDefinition> definition) {
         MODEL_LAYERS.add(new ModelLayer(location, definition));
+    }
+
+    /**
+     * Draws the worn {@code items} (armour items) with {@code provider}'s model instead of vanilla's armour model, e.g. a
+     * coat with tails (ART9, {@code apparel.client.ApparelClient}). Register in {@code initClient()}; the items are
+     * resolved when the loader's registration event fires. NeoForge: an {@code IClientItemExtensions} with
+     * {@code getHumanoidArmorModel} per item through {@code RegisterClientExtensionsEvent}. Fabric (TODO, milestone 22):
+     * {@code ArmorRenderer.register}, copying the context model's pose and visibility onto the provider's model and
+     * rendering it with the material's layer texture, as {@code HumanoidArmorLayer} does.
+     */
+    @SafeVarargs
+    public static synchronized void registerArmorModel(ArmorModelProvider provider, Supplier<? extends Item>... items) {
+        ARMOR_MODELS.add(new ArmorModel(provider, List.of(items)));
     }
 
     /**
@@ -287,4 +322,5 @@ public final class ClientEvents {
     public static synchronized List<ModelLayer> modelLayers() { return List.copyOf(MODEL_LAYERS); }
     public static synchronized List<BlockColorHandler> blockColors() { return List.copyOf(BLOCK_COLORS); }
     public static synchronized List<ResourceLocation> additionalModels() { return List.copyOf(ADDITIONAL_MODELS); }
+    public static synchronized List<ArmorModel> armorModels() { return List.copyOf(ARMOR_MODELS); }
 }

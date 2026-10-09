@@ -1,8 +1,11 @@
-// 1.21.1	2026-10-09T02:54:13.610965	Recipes
+// 1.21.1	2026-10-09T04:52:41.009228	Recipes
 e1289c0eb7525c60669f4203ccd8af0d9d7b0744 data/pirates_n_ships/advancement/recipes/building_blocks/hull_patch.json
 dc908cf23933449a8a82c8037e57e8f3143c20f2 data/pirates_n_ships/advancement/recipes/combat/bandana.json
 8f98eb055171c739101420a0b9bbe9f3a8bf2903 data/pirates_n_ships/advancement/recipes/combat/cannon.json
 015749d8a9eaabd51b4c4c379ce38acafd30720e data/pirates_n_ships/advancement/recipes/combat/cannonball.json
+62d52fbe65b3f26ccc01314bc655b95586b1d490 data/pirates_n_ships/advancement/recipes/combat/captains_boots.json
+6b2232d5d018c306d530301e08a71ffe4d75243a data/pirates_n_ships/advancement/recipes/combat/captains_breeches.json
+46202631dd28cf80ee3523c0a2d7816b7e930c1e data/pirates_n_ships/advancement/recipes/combat/captains_coat.json
 698d8285044f0e3429c2f6421d742fd348e5d011 data/pirates_n_ships/advancement/recipes/combat/cutlass.json
 1cdb4544445c73aa3f110cf02a93148f6195c77b data/pirates_n_ships/advancement/recipes/combat/lead_shot.json
 4c30c582cb46fb9740066ef81d99388a82d21c59 data/pirates_n_ships/advancement/recipes/combat/musket.json
@@ -74,6 +77,9 @@ ee31fa683c68b7dd3fbe347a19c643971a50d895 data/pirates_n_ships/recipe/brig_door.j
 8429061c3871e7940b3a01d2d9e70ba537aedf3b data/pirates_n_ships/recipe/cannon.json
 20bf4633140f6573784d9d9688ef7e59e3363558 data/pirates_n_ships/recipe/cannonball.json
 a8c074ca4609fbfdb0315cadfd6264ace56daa7c data/pirates_n_ships/recipe/capstan.json
+f1b0f6e430828bd90cee6c24fb2f43e83a69c394 data/pirates_n_ships/recipe/captains_boots.json
+3c975030d79f162ead40f05589d7920082642888 data/pirates_n_ships/recipe/captains_breeches.json
+9d00854b695e359cda4e4cf64b63b11915fe1cb4 data/pirates_n_ships/recipe/captains_coat.json
 8e5ee9ea39d831d5a3dc1ef34f880688f3b74458 data/pirates_n_ships/recipe/cargo_barrel.json
 e79d3d2ce55c93cd8e75ea48e8b4013497b627eb data/pirates_n_ships/recipe/cargo_crate.json
 e1cdffb3e5ce0d43d343fc4be7a16c934ae30678 data/pirates_n_ships/recipe/carpenters_hammer.json

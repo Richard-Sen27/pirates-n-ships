@@ -33,6 +33,8 @@ public final class CaptainConfig {
             "Longest duel; after it the truce ends and the crew fight again");
     public static final ConfigValue<Boolean> DROP_MAP = S.bool("drop_map", true,
             "A slain captain drops a treasure map of his island (while it has unlooted treasure)");
+    public static final ConfigValue<Double> CLOTHING_DROP_CHANCE = S.doubleRange("clothing_drop_chance", 0.35, 0.0, 1.0,
+            "Chance that a slain captain drops each piece of his clothing (coat, breeches, boots), rolled per piece; his hat always drops");
 
     private CaptainConfig() {
     }

@@ -603,7 +603,7 @@ middle of his hut, or to the camp trail if the island has no captain's hut. He i
 health, and the navy keeps a standing bounty of 300 doubloons on him, posted on every notice board. To fight him
 one-on-one, sneak and use him with a sword in hand: if he accepts, his crew within 16 blocks keep out of the duel
 unless you strike them. The duel ends when one of you falls, when you run more than 32 blocks away, or after five
-minutes. If you hit him first he refuses: no honour, no duel. Slain, he drops his captain's hat (wear it yourself), a purse of doubloons
+minutes. If you hit him first he refuses: no honour, no duel. Slain, he drops his captain's hat (wear it yourself), maybe his coat, breeches and boots, a purse of doubloons
 and a treasure map of his island, and you get a bounty proof to hand to a navy officer. Taken alive in shackles, the
 navy pays the captain's reward of 150 plus his bounty alive. Five days after his fall a successor with a new name and
 a new bounty takes his post. Server config `mobs.captain`.
@@ -1189,6 +1189,18 @@ Wear a pirate hat, bandana, navy tricorn or officer's bicorne by right-clicking 
 helmet slot. Each gives +1 armour (server config `apparel.hat_armor`; 0 turns it off). Crafted from three black wool
 over leather, bone, leather (pirate hat), leather, white wool, leather (navy tricorn) or leather, gold nugget, leather
 (officer's bicorne); red wool, string, red wool for the bandana.
+
+### Coats, breeches and boots
+The **Officer's Coat** and the **Captain's Coat** go on the chest, with knee-long tails that hang from the waist,
+split at the back, and swing back with your stride. The captain's coat is charcoal edged in gold over a brocade
+waistcoat, with a red sash on the left hip and a leather baldric over the right shoulder; the **Captain's Breeches**
+(legs) and **Captain's Boots** (feet, tall with turned-down tops) complete the pirate captain's look, with his hat.
+None of them wears out. Armour: coat +3, breeches +2, boots +1 (server config `apparel.officers_coat_armor`,
+`apparel.captains_coat_armor`, `apparel.captains_breeches_armor`, `apparel.captains_boots_armor`; 0 turns one off).
+Crafted: the captain's coat from six black wool with a gold ingot on top, red wool in the middle and leather below;
+the breeches from black wool in the leggings shape with leather at the waist; the boots from black wool over leather.
+A slain pirate captain drops each piece of his clothing with a 35 % chance (server config
+`mobs.captain.clothing_drop_chance`).
 
 ## 11. All items
 

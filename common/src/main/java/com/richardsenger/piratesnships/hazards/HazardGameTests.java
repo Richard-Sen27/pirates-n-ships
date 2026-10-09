@@ -214,6 +214,16 @@ public final class HazardGameTests {
     /**
      * Two hulls six blocks either side of a whirlpool's centre, one ballasted (heavier): with the mass cap below both
      * masses both feel the same force, so the heavier one moves less.
+     *
+     * <p>The motion is the hull's own velocity, integrated over the window ({@link Track}), not the change of its pose
+     * (HZ1). Sable's physics is 32-bit in world coordinates (docs/sable-notes.md §9.0l): Rapier integrates the position
+     * 18 times per substep, 720 times a second, and a step below half an f32 unit is rounded away. The heavy hull's
+     * inward drift of 0.07 m/s is 1e-4 block per step; at x=2,737 half a unit is 1.2e-4 and the hull's x stayed at
+     * exactly 2737.5 for 110 ticks while it reported -0.069 m/s; at x=1,616 the step rounded up to one unit and it drifted
+     * 27 % too far (0.47 against 0.37 blocks at x=202). The grid puts this test anywhere within ±4,096 blocks and further
+     * out in the full suite, so the pose decided the result: radial moves of the heavy hull from +0.32 to -0.13 between
+     * runs, and "light ship was not pulled in: -0.36" when the light hull's slow axis froze while the orbit carried it on.
+     * The velocity is what the solver computes from the forces and the water, before that rounding.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = MASS_BATCH)
     public static void heavyShipMovesLessThanALightOne(GameTestHelper h) {
@@ -224,36 +234,96 @@ public final class HazardGameTests {
         SailingGameTestsShips.ballast(h, 24, 18);
         Fixture heavy = SailingGameTestsShips.assemble(h, heavyHelm);
         HazardEntity pool = HazardTestSupport.hazard(h, HazardKind.WHIRLPOOL, POOL_CENTRE);
-        double[] start = new double[2];
-        Vector3d[] from = new Vector3d[2];
-        h.runAfterDelay(10, () -> {
-            from[0] = com(light);
-            from[1] = com(heavy);
-            start[0] = horizontal(from[0], pool.position());
-            start[1] = horizontal(from[1], pool.position());
-        });
-        h.runAfterDelay(110, () -> {
-            Vector3d endLight = com(light), endHeavy = com(heavy);
-            double moveLight = start[0] - horizontal(endLight, pool.position());
-            double moveHeavy = start[1] - horizontal(endHeavy, pool.position());
-            double travelLight = Math.hypot(endLight.x - from[0].x, endLight.z - from[0].z);
-            double travelHeavy = Math.hypot(endHeavy.x - from[1].x, endHeavy.z - from[1].z);
-            Constants.LOG.info("[hazard test] mass cap 20: light {} kpg moved {} in ({} travelled), heavy {} kpg moved {} in ({} travelled)",
-                    light.ship().mass(), moveLight, travelLight, heavy.ship().mass(), moveHeavy, travelHeavy);
+        Track lightTrack = new Track(light, pool.position());
+        Track heavyTrack = new Track(heavy, pool.position());
+        StringBuilder trace = new StringBuilder();
+        boolean[] done = {false};
+        h.onEachTick(() -> {
+            long t = h.getTick();
+            if (done[0] || t < MASS_FROM) return;
+            lightTrack.tick(t == MASS_FROM);
+            heavyTrack.tick(t == MASS_FROM);
+            if ((t - MASS_FROM) % 25 == 0) {
+                trace.append(String.format(" | t=%d light %s heavy %s", t, lightTrack, heavyTrack));
+            }
+            if (t < MASS_TO) return;
+            done[0] = true;
+            Constants.LOG.info("[hazard test] mass cap 20: light {} kpg moved {} in ({} travelled; pose {} in, {} travelled), "
+                            + "heavy {} kpg moved {} in ({} travelled; pose {} in, {} travelled), tilt light {} heavy {}{}",
+                    light.ship().mass(), lightTrack.radialMove(), lightTrack.travel(), lightTrack.poseRadialMove(), lightTrack.poseTravel(),
+                    heavy.ship().mass(), heavyTrack.radialMove(), heavyTrack.travel(), heavyTrack.poseRadialMove(), heavyTrack.poseTravel(),
+                    lightTrack.tilt(), heavyTrack.tilt(), trace);
             h.assertTrue(heavy.ship().mass() > light.ship().mass() * 1.5, "the ballast did not make the ship heavier");
-            // Before SH1 (four runs): light 0.66-0.83 blocks in, heavy between 0.25 out and 0.29 in (its slower inward
-            // drift partly loses to the outward drift of the orbit the spin puts it on), and the rule compared the radial
-            // moves. Since SH1's righting torque the light hull stays upright and drifts about half as far, like
-            // smallShipIsPulledTowardTheCentre: light 0.20-0.35 in, heavy between 0.14 out and 0.32 in (seven runs), so
-            // the orbit's radial share decides the radial comparison (it failed 3 of 7 runs). "Moves less" is therefore
-            // measured as the horizontal distance travelled, pull and orbit together: light 2.33-2.50 blocks, heavy
-            // 1.03-1.74, ratio 0.41-0.75 (three runs). The light bound is about two thirds of the lowest radial
-            // measurement (0.20); the heavy ship has to travel clearly less than the light one.
-            h.assertTrue(moveLight > 0.13, "the light ship was not pulled in: " + moveLight);
-            h.assertTrue(travelHeavy < travelLight * 0.8,
-                    "the heavy ship travelled as far as the light one: " + travelHeavy + " vs " + travelLight);
+            // Integrated velocities over ticks 10-160 (HZ1, twelve runs at x/z from -3,517 to 4,258): light 0.17-0.32 blocks
+            // in and 3.08-3.13 travelled, heavy 0.21-0.26 in and 1.74-1.83 travelled, ratio 0.56-0.59. The pose gave the
+            // light hull -0.72 to +0.45 and the heavy one -0.25 to +0.42 in the same runs. The lowest light value (0.17)
+            // came from the run whose light hull sat at x=4,258.5 with its x frozen, so the field it felt was off; the
+            // orbit alone (3.1 blocks along the circle at r=6) would put it 0.75 out, so half that lowest value still
+            // proves the pull. The travel ratio keeps its 0.8 bound from SH1b, now with a wide margin.
+            h.assertTrue(lightTrack.radialMove() > 0.08, "the light ship was not pulled in: " + lightTrack.radialMove() + trace);
+            h.assertTrue(heavyTrack.travel() < lightTrack.travel() * 0.8,
+                    "the heavy ship travelled as far as the light one: " + heavyTrack.travel() + " vs " + lightTrack.travel() + trace);
             h.succeed();
         });
+    }
+
+    /** The window of {@link #heavyShipMovesLessThanALightOne}: from tick 10 (the hulls have risen to their float) to 160. */
+    private static final int MASS_FROM = 10, MASS_TO = 160;
+
+    /**
+     * A hull's horizontal motion in a whirlpool test as the integral of its reported velocity (one game tick, 0.05 s, per
+     * sample), which does not depend on where the test grid put it; the pose is kept for the log only.
+     */
+    private static final class Track {
+        private final Fixture f;
+        private final Vec3 centre;
+        private double startX, startZ, poseX, poseZ, dx, dz;
+
+        Track(Fixture f, Vec3 centre) {
+            this.f = f;
+            this.centre = centre;
+        }
+
+        void tick(boolean first) {
+            Vector3d c = com(f);
+            if (first) {
+                startX = poseX = c.x;
+                startZ = poseZ = c.z;
+                return;
+            }
+            Vector3d v = f.ship().linearVelocity();
+            dx += v.x * 0.05;
+            dz += v.z * 0.05;
+            poseX = c.x;
+            poseZ = c.z;
+        }
+
+        double radialMove() {
+            return Math.hypot(startX - centre.x, startZ - centre.z) - Math.hypot(startX + dx - centre.x, startZ + dz - centre.z);
+        }
+
+        double travel() {
+            return Math.hypot(dx, dz);
+        }
+
+        double poseRadialMove() {
+            return Math.hypot(startX - centre.x, startZ - centre.z) - Math.hypot(poseX - centre.x, poseZ - centre.z);
+        }
+
+        double poseTravel() {
+            return Math.hypot(poseX - startX, poseZ - startZ);
+        }
+
+        double tilt() {
+            Vector3d up = f.ship().orientation(new org.joml.Quaterniond()).transform(new Vector3d(0, 1, 0));
+            return Math.toDegrees(Math.acos(Math.min(1.0, up.y)));
+        }
+
+        @Override
+        public String toString() {
+            return String.format("x=%.4f z=%.4f d=(%.3f,%.3f) r-move %.3f pose r-move %.3f tilt %.1f",
+                    poseX, poseZ, dx, dz, radialMove(), poseRadialMove(), tilt());
+        }
     }
 
     private static Vector3d com(Fixture f) {

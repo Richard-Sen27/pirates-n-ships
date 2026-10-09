@@ -166,7 +166,7 @@ public final class AssemblyModule implements ModModule {
                 .add(ShipRejoin.Outcome.BUSY.key(), "Still hammering")
                 .add(ShipRejoin.Outcome.NO_TOOLKIT.key(), "You put the toolkit away")
                 .add(ShipRejoin.Outcome.DIFFERENT_SHIP.key(), "These pieces belong to a different ship")
-                .add(ShipRejoin.Outcome.TOO_BIG.key(), "This piece is too big to nail on: %s blocks, at most %s. A shipwright can join bigger halves")
+                .add(ShipRejoin.Outcome.TOO_BIG.key(), "The far piece has %s blocks, more than %s: rejoin a smaller piece")
                 .add(ShipRejoin.Outcome.NOT_ALIGNED.key(), "The pieces are not lined up: bring them within %s° and %s blocks of their places")
                 .add(ShipRejoin.Outcome.ADD_PLANKS.key(), "Add planks to bridge the gap")
                 .add(ShipRejoin.Outcome.TOO_FAR.key(), "Bring the pieces together")

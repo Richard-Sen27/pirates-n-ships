@@ -226,3 +226,29 @@ gives none, a lost book is not replaced, the switch off gives none and stores no
 4. **Switch off:** set `almanac.give_on_first_join` to false in the server config, join with a new player: no book.
    Turn it back on and relog: the book arrives then.
 5. **Ledger:** the Quartermaster's ledger lists `almanac.give_on_first_join: true` with the other Almanac settings.
+
+# Playtest: chapter markers left first (work package ALM7)
+
+The chapter markers (bookmarks) now run down the **left** edge of the open book first and continue down the **right**
+edge when the left is full. One edge holds 9 markers at the normal 2-pixel gap, both together 18; with more chapters
+they split evenly (the left takes the odd one), the gap shrinks (up to 10 a side, 20 in all, nothing overlaps) and then
+the markers overlap a little, never leaving the edges. The layout, the sides, the pull-out and the hit areas are
+covered by JUnit (`BookmarksTest`); the drawing needs a client. Today's book has 14 chapters: 9 on the left, 5 on the
+right. Please check **both clients** and send screenshots.
+
+## Steps
+1. **Order:** open the Almanac. Markers 1 to 9 ("The guide book" … the ninth chapter) run top to bottom down the left
+   edge of the book, chapters 10 to 14 top to bottom down the right edge, the first right marker level with the first
+   left one. Each marker has its chapter's colour and icon.
+2. **Mirror:** a left marker is the mirror of a right one: the swallowtail end points left (away from the book), the
+   icon sits near that outer end, the inner end disappears under the left cover. No marker shows a straight cut end
+   outside the book or a swallowtail under the cover.
+3. **Open chapter:** the open chapter's marker sticks out 3 pixels further than its neighbours, outward on its own
+   side: open a left chapter (it sticks out to the left), then click a right marker (that one sticks out to the right,
+   the left one goes back in line). Turning pages across a chapter boundary moves the pull-out to the new chapter's
+   marker, whichever side it is on.
+4. **Hover and click, both sides:** hovering a marker on either side lifts its colour, makes it one pixel longer
+   outward and shows the chapter's title as a tooltip; clicking it turns to that chapter's first spread. The gaps
+   between markers, the cover and the pages next to them show no tooltip and turn nothing.
+5. **Nothing clipped:** at GUI scale 3 and at Auto, in a normal window and a small one, the book stays centred and both
+   edges' markers, including a pulled-out and hovered one, are fully on screen.

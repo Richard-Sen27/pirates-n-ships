@@ -19,6 +19,8 @@ public final class StationConfig {
             "Range of /pirates crew order without targets: assigned crew members within this many blocks");
     public static final ConfigValue<Integer> SEAT_CHECK_INTERVAL = S.intRange("seat_check_interval", 10, 1, 200,
             "Ticks between checks of an assigned crew member that is not at its station (take the seat, or release it)");
+    public static final ConfigValue<Double> TURN_DEGREES_PER_TICK = S.doubleRange("turn_degrees_per_tick", 15.0, 1.0, 180.0,
+            "Degrees per tick a crew member turns to face its station (or meal) after it took its place, then it stays facing it (180 = at once)");
 
     private static final ConfigSection JOB_BOARD = S.section("job_board",
             "Orders instead of assignments (CR1): unmanned stations that take a ship-wide order become open jobs, and free crew on board claim them");

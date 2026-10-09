@@ -87,15 +87,7 @@ public class MealSeat extends Entity {
             discard();
             return;
         }
-        // HM2's pattern: keep the rider facing the provisions, turned with the ship
-        ShipBody ship = SableShips.containing(level, blockPosition());
-        float yaw = MealRules.facingYaw(blockPosition(), provisions, ship == null ? null : ship.orientation());
-        for (Entity rider : getPassengers()) {
-            float y = rider.getYRot() + net.minecraft.util.Mth.wrapDegrees(yaw - rider.getYRot());
-            rider.setYRot(y);
-            rider.setYHeadRot(y);
-            if (rider instanceof LivingEntity living) living.setYBodyRot(y);
-        }
+        // the rider turns to face the provisions and is held there by CrewMember#showStationPose (ST5)
     }
 
     /** World position of the seat: the plot position transformed by the ship's pose. */

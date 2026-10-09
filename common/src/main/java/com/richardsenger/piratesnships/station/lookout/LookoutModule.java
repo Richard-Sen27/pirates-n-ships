@@ -2,6 +2,7 @@ package com.richardsenger.piratesnships.station.lookout;
 
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
+import com.richardsenger.piratesnships.crew.npc.StationPoses;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.sailing.sail.TriangularSailContent;
 import com.richardsenger.piratesnships.ship.decor.SableWeightTags;
@@ -45,6 +46,7 @@ public final class LookoutModule implements ModModule {
         CommonEvents.LEVEL_TICK_END.register(Lookouts::onLevelTick);
         CommonEvents.SERVER_STOPPED.register(server -> Lookouts.onServerStopped());
         SableShips.onShipRemoved(Lookouts::onShipRemoved);
+        StationPoses.registerFacing(LookoutStation.INSTANCE.id(), Lookouts::facing); // ST5: the lookout faces the bow
     }
 
     @Override

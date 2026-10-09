@@ -2305,6 +2305,8 @@
   "pirates_n_ships.configuration.crew_stations.seat_check_interval.tooltip": "Ticks between checks of an assigned crew member that is not at its station (take the seat, or release it)",
   "pirates_n_ships.configuration.crew_stations.ticks_per_trim_step": "Ticks Per Trim Step",
   "pirates_n_ships.configuration.crew_stations.ticks_per_trim_step.tooltip": "Ticks a crew member at the sail winch needs per trim step (furled to half, half to full)",
+  "pirates_n_ships.configuration.crew_stations.turn_degrees_per_tick": "Turn Degrees Per Tick",
+  "pirates_n_ships.configuration.crew_stations.turn_degrees_per_tick.tooltip": "Degrees per tick a crew member turns to face its station (or meal) after it took its place, then it stays facing it (180 = at once)",
   "pirates_n_ships.configuration.dry_hull": "Dry Hull",
   "pirates_n_ships.configuration.dry_hull.async_analysis": "Async Analysis",
   "pirates_n_ships.configuration.dry_hull.async_analysis.tooltip": "Run hull re-analysis on a background thread (the first analysis after assembly or loading is synchronous)",

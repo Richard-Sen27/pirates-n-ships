@@ -1,10 +1,10 @@
 package com.richardsenger.piratesnships.crew.npc;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.crew.galley.MealRules;
 import com.richardsenger.piratesnships.crew.galley.MealSeat;
 import com.richardsenger.piratesnships.crew.hammock.CrewRest;
 import com.richardsenger.piratesnships.crew.hammock.HammockRef;
-import com.richardsenger.piratesnships.crew.hammock.SleepAxis;
 import com.richardsenger.piratesnships.crew.morale.MoraleRules;
 import com.richardsenger.piratesnships.crew.morale.NightOutcome;
 import com.richardsenger.piratesnships.crew.walk.CrewWalk;
@@ -26,6 +26,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -36,7 +37,9 @@ import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaterniond;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
@@ -87,6 +90,11 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     private static final EntityDataAccessor<Byte> DATA_STATION_POSE = SynchedEntityData.defineId(CrewMember.class, EntityDataSerializers.BYTE);
     /** True while it sits at a meal beside the pantry or water barrel (CRW2); set by the server, read by the animation. */
     private static final EntityDataAccessor<Boolean> DATA_EATING = SynchedEntityData.defineId(CrewMember.class, EntityDataSerializers.BOOLEAN);
+    /**
+     * The body yaw its station (or meal) holds it to (ST5, {@link StationFacing}), NaN while it is free; set by the
+     * server every tick, read by both sides' {@link #tickHeadTurn} so vanilla's body turning never drags it away.
+     */
+    private static final EntityDataAccessor<Float> DATA_HELD_BODY_YAW = SynchedEntityData.defineId(CrewMember.class, EntityDataSerializers.FLOAT);
 
     private static final Map<CrewPose, RawAnimation> POSE_ANIMATIONS = new EnumMap<>(CrewPose.class);
 
@@ -187,6 +195,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         builder.define(DATA_RESTING, false);
         builder.define(DATA_STATION_POSE, (byte) -1);
         builder.define(DATA_EATING, false);
+        builder.define(DATA_HELD_BODY_YAW, Float.NaN);
     }
 
     /** Whether this crew member is at its station while the station carries out an order (synced to clients). */
@@ -391,20 +400,62 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         }
     }
 
-    /** Server, every tick: the station pose ({@link StationPoses}) into the synced data, and the turn to face it. */
+    /**
+     * Server, every tick: the station pose ({@link StationPoses}) into the synced data, and the turn to face the station
+     * (ST5, {@link StationFacing}): at its station seat towards the pose's facing or heading, else the station's
+     * {@linkplain StationPoses#heading default facing}; at a meal towards the provisions. The body turns smoothly at
+     * {@code crew_stations.turn_degrees_per_tick} and is then held; the target follows the ship's orientation.
+     */
     private void showStationPose(ServerLevel level) {
-        StationPoses.Shown shown = assignment != null && isAtStation() && getVehicle() instanceof StationSeat seat
-                ? StationPoses.resolve(level, assignment, seat.blockPosition()) : null;
+        StationSeat seat = assignment != null && isAtStation() && getVehicle() instanceof StationSeat s ? s : null;
+        StationPoses.Shown shown = seat != null ? StationPoses.resolve(level, assignment, seat.blockPosition()) : null;
         entityData.set(DATA_STATION_POSE, (byte) (shown == null ? -1 : shown.pose().stationId()));
         facingStation = shown != null && shown.faces();
-        if (facingStation) {
+        Float target = null;
+        if (seat != null) {
             ShipBody ship = SableShips.byId(level, assignment.ship());
-            float yaw = SleepAxis.continuous(getYRot(), StationPoses.yaw(shown, ship == null ? null : ship.orientation()));
-            setYRot(yaw);
-            setYHeadRot(yaw);
-            setYBodyRot(yaw);
+            Quaterniond orientation = ship == null ? null : ship.orientation();
+            if (facingStation) {
+                target = StationPoses.yaw(shown, orientation);
+            } else {
+                Vec3 heading = StationPoses.heading(level, assignment, seat.position());
+                target = heading == null ? null : StationPoses.yaw(heading, orientation);
+            }
+        } else if (getVehicle() instanceof MealSeat meal) {
+            ShipBody ship = SableShips.containing(level, meal.blockPosition());
+            target = MealRules.facingYaw(meal.blockPosition(), meal.provisions(), ship == null ? null : ship.orientation());
+        }
+        if (target == null) {
+            entityData.set(DATA_HELD_BODY_YAW, Float.NaN);
+            return;
+        }
+        boolean headHeld = facingStation || isEating();
+        StationFacing.Turn turn = StationFacing.step(yBodyRot, yHeadRot, target,
+                StationConfig.TURN_DEGREES_PER_TICK.get().floatValue(), StationFacing.MAX_HEAD_DEGREES, headHeld);
+        setYBodyRot(turn.body());
+        setYHeadRot(turn.head());
+        setYRot(StationFacing.continuous(getYRot(), turn.body()));
+        if (headHeld) {
             setXRot(0);
         }
+        entityData.set(DATA_HELD_BODY_YAW, Mth.wrapDegrees(turn.body()));
+    }
+
+    /**
+     * Both sides: while its station holds its body (ST5) the body stays where the server turned it, and vanilla's body
+     * control ({@code BodyRotationControl}, which turns the body after the head and along the movement of a ship under
+     * way) is skipped; the head stays within {@link StationFacing#MAX_HEAD_DEGREES} of it. The client has no body yaw
+     * of its own for a crew member (vanilla syncs only yaw and head yaw), so it takes the synced one.
+     */
+    @Override
+    protected float tickHeadTurn(float yRot, float animStep) {
+        float held = entityData.get(DATA_HELD_BODY_YAW);
+        if (Float.isNaN(held)) {
+            return super.tickHeadTurn(yRot, animStep);
+        }
+        yBodyRot = StationFacing.continuous(yBodyRot, held);
+        yHeadRot = StationFacing.clampHead(yHeadRot, yBodyRot, StationFacing.MAX_HEAD_DEGREES);
+        return animStep;
     }
 
     /** Server: seated at its station, which is carrying out an order for this crew member. */

@@ -454,13 +454,16 @@ public final class HelmStationGameTests {
         h.runAfterDelay(3, () -> {
             h.assertTrue(c.stationPose() == CrewPose.HELM, "pose at the helm: " + c.stationPose());
             h.assertTrue(!c.mayLookAround(), "the helmsman still looks around");
+            ShipControls.setRudderAngle(h.getLevel(), s.helm(), 20.0);
+        });
+        // ST5: he turns to the helm at crew_stations.turn_degrees_per_tick (half a turn in 12 ticks at the default)
+        h.runAfterDelay(15, () -> {
             if (!(c.getVehicle() instanceof StationSeat seat)) throw new GameTestAssertException("not on the station seat");
             Direction toward = StationPoses.toward(seat.blockPosition(), s.helm());
             h.assertTrue(toward != null, "the spot " + seat.blockPosition() + " is not beside the helm " + s.helm());
             float want = StationPoses.yaw(toward, s.f().ship().orientation());
             h.assertTrue(Math.abs(Mth.wrapDegrees(c.getYRot() - want)) < 1f && Math.abs(Mth.wrapDegrees(c.yBodyRot - want)) < 1f,
                     "faces " + c.getYRot() + "/" + c.yBodyRot + " instead of the helm at " + want);
-            ShipControls.setRudderAngle(h.getLevel(), s.helm(), 20.0);
         });
         h.runAfterDelay(5, () -> h.assertTrue(c.stationPose() == CrewPose.HELM_TURN_RIGHT, "turning to starboard: " + c.stationPose()));
         h.runAfterDelay(6 + HelmTurn.HOLD_TICKS, () -> {

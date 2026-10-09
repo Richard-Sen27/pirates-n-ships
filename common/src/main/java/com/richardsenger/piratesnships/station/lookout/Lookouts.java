@@ -308,6 +308,17 @@ public final class Lookouts {
         return LookoutLang.whatKey(flag.kind(), flag.status() == FlagReading.Status.FLYING, ShipSplits.isWreck(ship));
     }
 
+    /**
+     * ST5: a lookout in the nest faces the bow (a plot direction), the way its sightings are called; south before the
+     * ship has a sailing state. Registered with {@code StationPoses.registerFacing} by {@link LookoutModule}.
+     */
+    static Vec3 facing(ServerLevel level, StationRef station, BlockPos spot) {
+        SailingRuntime rt = SailingRuntimes.get(level, station.ship());
+        BowFrame bow = rt == null ? BowFrame.SOUTH : rt.bow();
+        Vector3d f = bow.toPlot(new Vector3d(0, 0, 1), new Vector3d());
+        return new Vec3(f.x, 0, f.z);
+    }
+
     /** Compass heading of the ship's bow (0 = north). */
     static double heading(ShipBody ship) {
         SailingRuntime rt = SailingRuntimes.get(ship.level(), ship.id());

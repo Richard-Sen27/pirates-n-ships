@@ -115,11 +115,15 @@ public final class MealGameTests {
                     && Math.abs(spot.getX() - s.pantry().getX()) <= 1 && Math.abs(spot.getZ() - s.pantry().getZ()) <= 1,
                     "the seat is not beside the pantry: " + spot + " vs " + s.pantry());
             h.assertTrue(s.a().isEating(), "the eating flag is not set");
-            float want = MealRules.facingYaw(spot, s.pantry(), s.f().ship().orientation());
-            float diff = Math.abs(net.minecraft.util.Mth.wrapDegrees(s.a().getYRot() - want));
-            h.assertTrue(diff < 1, "the diner does not face the pantry: yaw " + s.a().getYRot() + ", want " + want);
             h.assertTrue(s.b().isAtStation() && !s.b().isEating(), "the member at the winch left it for the meal");
             h.assertTrue(seats(h, s).size() == 1, "meal seats: " + seats(h, s));
+        });
+        // ST5: the diner turns to the pantry at crew_stations.turn_degrees_per_tick (half a turn in 12 ticks at the default)
+        h.runAfterDelay(SERVED + 12, () -> {
+            if (!(s.a().getVehicle() instanceof MealSeat seat)) throw new net.minecraft.gametest.framework.GameTestAssertException("left the meal early");
+            float want = MealRules.facingYaw(seat.blockPosition(), s.pantry(), s.f().ship().orientation());
+            float diff = Math.abs(net.minecraft.util.Mth.wrapDegrees(s.a().getYRot() - want));
+            h.assertTrue(diff < 1, "the diner does not face the pantry: yaw " + s.a().getYRot() + ", want " + want);
         });
         h.runAfterDelay(SERVED + MEAL_TICKS + 5, () -> {
             h.assertTrue(s.a().getVehicle() == null, "still seated after the meal: " + s.a().getVehicle());

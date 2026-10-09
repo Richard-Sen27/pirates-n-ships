@@ -186,6 +186,31 @@ class RatlineNetAssistTest {
     }
 
     @Test
+    void overTheTopRingTheClimbGoesStraightUpWithTheClimbersOwnMotion() {
+        // feet 0.2 over ring B, climbing on, drifting towards the mast: no pull back to B, own sideways motion kept
+        double[] up = RatlineNetRules.assist(A, B, new Point(2.6, 4.7, 0.5), 0.1176, 0.05, -0.3);
+        assertEquals(0.05, up[0], EPS);
+        assertEquals(0.1176, up[1], EPS);
+        assertEquals(-RatlineNetRules.CLIMB_HORIZONTAL_LIMIT, up[2], EPS);
+        // just under ring B the pull still holds the climber on the line
+        double[] below = RatlineNetRules.assist(A, B, new Point(2.4, 4.4, 0.9), 0.1176, 0.05, 0);
+        assertTrue(below[2] < 0, "not pulled back towards the line: " + below[2]);
+        // holding or climbing down over the top: pulled back down onto ring B
+        double[] hold = RatlineNetRules.assist(A, B, new Point(2.6, 4.9, 0.5), 0, 0.1, 0);
+        assertTrue(hold[1] < 0 && hold[0] > 0, "not pulled back onto ring B: " + java.util.Arrays.toString(hold));
+    }
+
+    @Test
+    void theLiftOffTheTopEndsAStepOverTheTopFitting() {
+        net.minecraft.core.BlockPos top = new net.minecraft.core.BlockPos(2, 4, 0);
+        assertTrue(RatlineNetAssist.liftingOff(top, new Vec3(2.7, 5.0, 0.5)));
+        assertTrue(RatlineNetAssist.liftingOff(top, new Vec3(2.7, 5.0 + RatlineNetAssist.EXIT_LIFT - 0.01, 0.5)));
+        assertTrue(!RatlineNetAssist.liftingOff(top, new Vec3(2.7, 5.0 + RatlineNetAssist.EXIT_LIFT, 0.5)), "lifted on");
+        assertTrue(!RatlineNetAssist.liftingOff(top, new Vec3(2.7, 4.9, 0.5)), "still in the fitting");
+        assertTrue(!RatlineNetAssist.liftingOff(top, new Vec3(3.1, 5.2, 0.5)), "beside the column");
+    }
+
+    @Test
     void onAStillShipTheMoveIsTheClimbAlone() {
         Ship ship = new Ship(Vec3.ZERO, new Vec3(0, 64, 0), 1.0, Vec3.ZERO, 0);
         Move move = RatlineNetAssist.move(ship, new Vec3(0.05, 0.1176, 0.02), new Vec3(1, 2, 3), false);

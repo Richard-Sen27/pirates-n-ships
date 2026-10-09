@@ -7,11 +7,23 @@ package com.richardsenger.piratesnships.hazards.waves;
  */
 public final class ClientWaves {
 
-    /** A blend between two seas from {@code start} over {@code duration} ticks. Pure. */
+    /**
+     * A blend between two seas from {@code start} over {@code duration} ticks; the peak wavelength and the group depth
+     * blend with the amplitude, the train count and the group period are the latest sample's (WAV2). Pure.
+     */
     public record Blend(double fromAmplitude, double fromDirection, double toAmplitude, double toDirection,
-                       SeaState state, double start, double duration) {
+                       SeaState state, double start, double duration, double fromPeak, double toPeak, int components,
+                       double fromGroupDepth, WaveField.Groups groups) {
 
-        public static final Blend FLAT = new Blend(0.0, 0.0, 0.0, 0.0, SeaState.CALM, 0.0, 1.0);
+        public static final Blend FLAT = new Blend(0.0, 0.0, 0.0, 0.0, SeaState.CALM, 0.0, 1.0,
+                WaveSpectrum.REFERENCE_WAVELENGTH, WaveSpectrum.REFERENCE_WAVELENGTH, WaveSpectrum.DEFAULT_COMPONENTS,
+                0.0, WaveField.Groups.NONE);
+
+        /** A steady sea from one sample. */
+        public static Blend of(WaveSyncPayload p, double time) {
+            return new Blend(p.amplitude(), p.directionDeg(), p.amplitude(), p.directionDeg(), p.seaState(), time, 1.0,
+                    p.peakWavelength(), p.peakWavelength(), p.components(), p.groupDepth(), p.groups());
+        }
 
         public double fraction(double time) {
             return duration <= 0.0 ? 1.0 : Math.max(0.0, Math.min(1.0, (time - start) / duration));
@@ -27,14 +39,25 @@ public final class ClientWaves {
             return fromDirection + d * fraction(time);
         }
 
+        public double peakWavelength(double time) {
+            return fromPeak + (toPeak - fromPeak) * fraction(time);
+        }
+
+        public double groupDepth(double time) {
+            return fromGroupDepth + (groups.depth() - fromGroupDepth) * fraction(time);
+        }
+
+        /** The sea at {@code time}: the same field the server builds, unpinned. */
         public WaveField field(double time) {
-            return new WaveField(amplitude(time), direction(time));
+            return new WaveField(amplitude(time), direction(time), WaveSpectrum.components(components, peakWavelength(time)),
+                    WaveField.Origin.NONE, new WaveField.Groups(groupDepth(time), groups.periodTicks()));
         }
 
         /** The next blend: from where this one is at {@code time} toward {@code p}. */
         public Blend next(WaveSyncPayload p, double time) {
             return new Blend(amplitude(time), direction(time), p.amplitude(), p.directionDeg(), p.seaState(), time,
-                    Math.max(1, p.intervalTicks()));
+                    Math.max(1, p.intervalTicks()), peakWavelength(time), p.peakWavelength(), p.components(), groupDepth(time),
+                    p.groups());
         }
     }
 
@@ -60,9 +83,7 @@ public final class ClientWaves {
 
     /** Called by the payload handler. The first sample after a reset is taken at once. */
     public static void accept(WaveSyncPayload payload, double clientTime) {
-        blend = received ? blend.next(payload, clientTime)
-                : new Blend(payload.amplitude(), payload.directionDeg(), payload.amplitude(), payload.directionDeg(),
-                        payload.seaState(), clientTime, 1.0);
+        blend = received ? blend.next(payload, clientTime) : Blend.of(payload, clientTime);
         received = true;
     }
 

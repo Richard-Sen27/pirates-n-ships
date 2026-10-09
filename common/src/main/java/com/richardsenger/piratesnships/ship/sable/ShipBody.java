@@ -380,9 +380,18 @@ public final class ShipBody {
      * {@code api/physics/force/ForceTotal.java#applyLinearAndAngularImpulse} l.63).
      */
     public void applyWaveImpulse(Vector3dc localAngularImpulse) {
+        applyWaveImpulse(new Vector3d(), localAngularImpulse);
+    }
+
+    /**
+     * Records a linear impulse (the heave, WAV2) and an angular impulse about the center of mass, both in the body (plot)
+     * frame, in our waves force group. Physics substep only, like {@link #applySailingImpulse}
+     * ({@code api/physics/force/ForceTotal.java#applyLinearAndAngularImpulse} l.63: both are local).
+     */
+    public void applyWaveImpulse(Vector3dc localImpulse, Vector3dc localAngularImpulse) {
         dev.ryanhcode.sable.api.physics.force.ForceGroup group = ShipForces.waves();
         if (group != null) {
-            sub.getOrCreateQueuedForceGroup(group).getForceTotal().applyLinearAndAngularImpulse(new Vector3d(), localAngularImpulse);
+            sub.getOrCreateQueuedForceGroup(group).getForceTotal().applyLinearAndAngularImpulse(localImpulse, localAngularImpulse);
         }
     }
 

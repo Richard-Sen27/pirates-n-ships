@@ -24,6 +24,7 @@ import java.util.UUID;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaterniond;
 import org.joml.Vector3d;
 
 /**
@@ -34,6 +35,8 @@ import org.joml.Vector3d;
  *   <li>the roll and pitch torque of {@link WaveTorqueRule}, recorded in the {@code pirates_n_ships:waves} force group
  *       every physics substep ({@link ShipBody#applyWaveImpulse}); it changes every tick, so it wakes a resting body
  *       (docs/sable-notes.md §9.0i);</li>
+ *   <li>the heave of {@link WaveHeaveRule}: an upward world force from the mean wave height under the hull (WAV2), in
+ *       the same force group;</li>
  *   <li>the spill height ({@link WaveSpill}) that the hull runtime adds to the sea at the ship's outside ports
  *       ({@link #spillHeight});</li>
  *   <li>bow spray: in rough or storm seas, when the crest at the bow rises more than {@link #SPRAY_MIN} blocks above the
@@ -58,6 +61,9 @@ public final class WaveForces {
         double rollSlope;
         double pitchSlope;
         double spill;
+        /** Mean wave height under the hull [blocks] and the heave force [kpg·m/s², world up] (WAV2). */
+        double meanHeight;
+        double heave;
         long lastSpray = Long.MIN_VALUE / 2;
         int sprays;
         @Nullable HullAnalysis countedFor;
@@ -80,6 +86,7 @@ public final class WaveForces {
             return;
         }
         WaveTorqueRule.Params params = params();
+        WaveHeaveRule.Params heave = heaveParams();
         SeaState state = SeaStates.current(level);
         boolean spill = HazardConfig.SPILL.get();
         long now = level.getGameTime();
@@ -93,13 +100,14 @@ public final class WaveForces {
                 m.remove(ship.id());
                 continue;
             }
-            sample(level, ship, rt, hull, field, params, state, spill, now, m.computeIfAbsent(ship.id(), id -> new ShipWaves()));
+            sample(level, ship, rt, hull, field, params, heave, state, spill, now, m.computeIfAbsent(ship.id(), id -> new ShipWaves()));
         }
         m.values().removeIf(s -> s.gameTime < now);
     }
 
     private static void sample(ServerLevel level, ShipBody ship, SailingRuntime rt, HullRuntime hull, WaveField field,
-                               WaveTorqueRule.Params params, SeaState state, boolean spillOn, long now, ShipWaves s) {
+                               WaveTorqueRule.Params params, WaveHeaveRule.Params heave, SeaState state, boolean spillOn, long now,
+                               ShipWaves s) {
         Vector3d com = new Vector3d();
         double mass = ship.mass();
         if (!(mass > 0.0) || !ship.centerOfMass(com)) {
@@ -125,6 +133,8 @@ public final class WaveForces {
         s.pitchSlope = WaveTorqueRule.slope(h[0], h[1], lengthSpan);
         s.torque = WaveTorqueRule.torque(s.rollSlope, s.pitchSlope, mass, blocks(hull, s), params);
         s.spill = WaveSpill.height(h, spillOn);
+        s.meanHeight = WaveHeaveRule.meanHeight(h);
+        s.heave = WaveHeaveRule.force(s.meanHeight, mass, ship.gravity().length(), heave);
         s.bow = bow;
         s.gameTime = now;
         if (state.spray() && now - s.lastSpray >= SPRAY_COOLDOWN) {
@@ -174,7 +184,7 @@ public final class WaveForces {
 
     // ------------------------------------------------------------------ physics substep
 
-    /** Physics substep: records this tick's wave torque of every afloat ship. */
+    /** Physics substep: records this tick's wave torque and heave force of every afloat ship. */
     public static synchronized void onPhysicsTick(ServerLevel level, double timeStep) {
         Map<UUID, ShipWaves> m = LEVELS.get(level);
         if (m == null || m.isEmpty()) {
@@ -182,9 +192,11 @@ public final class WaveForces {
         }
         long now = level.getGameTime();
         Vector3d torque = new Vector3d();
+        Vector3d lift = new Vector3d();
+        Quaterniond q = new Quaterniond();
         for (Map.Entry<UUID, ShipWaves> e : m.entrySet()) {
             ShipWaves s = e.getValue();
-            if (s.gameTime < now - 1 || s.torque.magnitude() <= 0.0) {
+            if (s.gameTime < now - 1 || s.torque.magnitude() <= 0.0 && s.heave == 0.0) {
                 continue;
             }
             ShipBody ship = SableShips.byId(level, e.getKey());
@@ -193,7 +205,9 @@ public final class WaveForces {
             }
             s.torque.toShipVector(torque);
             s.bow.toPlot(torque, torque).mul(timeStep);
-            ship.applyWaveImpulse(torque);
+            // the heave acts straight up in the world: into the body frame at this substep's orientation
+            ship.orientation(q).transformInverse(lift.set(0.0, s.heave * timeStep, 0.0));
+            ship.applyWaveImpulse(lift, torque);
         }
     }
 
@@ -212,6 +226,18 @@ public final class WaveForces {
     public static synchronized WaveTorqueRule.Torque torque(ServerLevel level, UUID ship) {
         ShipWaves s = find(level, ship);
         return s == null ? WaveTorqueRule.Torque.ZERO : s.torque;
+    }
+
+    /** This tick's heave force on {@code ship} [kpg·m/s², world up; negative pulls down], or 0. */
+    public static synchronized double heave(ServerLevel level, UUID ship) {
+        ShipWaves s = find(level, ship);
+        return s == null ? 0.0 : s.heave;
+    }
+
+    /** This tick's mean wave height under {@code ship} [blocks], or 0. */
+    public static synchronized double meanHeight(ServerLevel level, UUID ship) {
+        ShipWaves s = find(level, ship);
+        return s == null ? 0.0 : s.meanHeight;
     }
 
     /** This tick's {@code {roll slope, pitch slope}} under {@code ship}, or zeros. */
@@ -247,6 +273,12 @@ public final class WaveForces {
     /** The torque rule's tuning from the server config. */
     public static WaveTorqueRule.Params params() {
         return new WaveTorqueRule.Params(HazardConfig.WAVES_ENABLED.get(), HazardConfig.SHIP_TORQUE.get(),
-                HazardConfig.MAX_TORQUE_PER_MASS.get());
+                HazardConfig.MAX_TORQUE_PER_MASS.get(), HazardConfig.SIZE_EXPONENT.get());
+    }
+
+    /** The heave rule's tuning from the server config. */
+    public static WaveHeaveRule.Params heaveParams() {
+        return new WaveHeaveRule.Params(HazardConfig.WAVES_ENABLED.get() && HazardConfig.HEAVE.get(), HazardConfig.HEAVE_STRENGTH.get(),
+                HazardConfig.HEAVE_PER_MASS.get());
     }
 }

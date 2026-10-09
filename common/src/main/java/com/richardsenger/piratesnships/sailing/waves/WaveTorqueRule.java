@@ -12,7 +12,7 @@ import org.joml.Vector3d;
  * <pre>
  *   roll slope  = (h_port − h_starboard) / beam span
  *   pitch slope = (h_bow  − h_stern)     / length span
- *   k           = ship_torque · mass · 1 / sqrt(blocks / 200)
+ *   k           = ship_torque · mass · (blocks / 200)^-size_exponent
  *   τ_roll      =  k · roll slope     (about the bow axis; + lifts the port side)
  *   τ_pitch     = −k · pitch slope    (about the port axis; − lifts the bow)
  * </pre>
@@ -22,7 +22,7 @@ import org.joml.Vector3d;
  *
  * <p><b>Why these factors:</b> the mass makes the response independent of the hull's weight (inertia and buoyant
  * righting moment both grow with it). Taking the slope across the sample points filters waves shorter than the hull:
- * a long ship spans most of a wave and barely pitches. {@code 1 / sqrt(blocks / 200)} lets big ships lie steadier
+ * a long ship spans most of a wave and barely pitches. {@code (blocks / 200)^-size_exponent} lets big ships lie steadier
  * still and small boats bob more, and the cap keeps a dinghy from being flipped in a storm.
  */
 public final class WaveTorqueRule {
@@ -34,10 +34,17 @@ public final class WaveTorqueRule {
      * @param enabled          {@code waves.enabled}
      * @param shipTorque       {@code waves.ship_torque}: torque per unit slope per kpg
      * @param maxTorquePerMass {@code waves.max_torque_per_mass}
+     * @param sizeExponent     {@code waves.size_exponent}: the torque per kpg falls as {@code (blocks / 200)^-exponent}
+     *                         (WV1 used 0.5; WAV2 1.0, so big ships lie steadier against the stronger forcing)
      */
-    public record Params(boolean enabled, double shipTorque, double maxTorquePerMass) {
+    public record Params(boolean enabled, double shipTorque, double maxTorquePerMass, double sizeExponent) {
 
-        public static final Params DEFAULTS = new Params(true, 5.5, 2.0);
+        public static final Params DEFAULTS = new Params(true, 26.0, 2.5, 1.0);
+
+        /** WV1's square-root size scale. */
+        public Params(boolean enabled, double shipTorque, double maxTorquePerMass) {
+            this(enabled, shipTorque, maxTorquePerMass, 0.5);
+        }
     }
 
     /**
@@ -65,7 +72,12 @@ public final class WaveTorqueRule {
 
     /** {@code 1 / sqrt(blocks / 200)}; a ship of under one block counts as one. */
     public static double sizeScale(int blocks) {
-        return 1.0 / Math.sqrt(Math.max(1, blocks) / REFERENCE_BLOCKS);
+        return sizeScale(blocks, 0.5);
+    }
+
+    /** {@code (blocks / 200)^-exponent}; a ship of under one block counts as one. */
+    public static double sizeScale(int blocks, double exponent) {
+        return Math.pow(Math.max(1, blocks) / REFERENCE_BLOCKS, -exponent);
     }
 
     /** Surface slope across a span: {@code (high side − low side) / span}, 0 for a span of zero. */
@@ -78,7 +90,7 @@ public final class WaveTorqueRule {
         if (!p.enabled() || !(mass > 0.0) || !Double.isFinite(rollSlope) || !Double.isFinite(pitchSlope)) {
             return Torque.ZERO;
         }
-        double k = p.shipTorque() * mass * sizeScale(blocks);
+        double k = p.shipTorque() * mass * sizeScale(blocks, p.sizeExponent());
         double roll = k * rollSlope;
         double pitch = -k * pitchSlope;
         double max = Math.max(0.0, p.maxTorquePerMass()) * mass;

@@ -673,7 +673,10 @@ Operators: `/pirates world treasure give [port]`. Server config `world.treasure_
 
 ### Waves
 The sea follows the weather: calm or a light chop in fair weather, rough in rain, a storm in thunder, changing over
-about a minute. Ships roll and pitch with the waves (big ships far less than small boats). In rough seas the bow
+about a minute. Ships roll, pitch and rise with the waves (big ships far less than small boats). The sea is not one
+even swell: waves of different lengths run a little across each other, so the rhythm is irregular, and they come in
+sets, a run of bigger waves for half a minute and then a calmer spell. On a crest the bow lifts and the whole hull rides
+up, in a trough it sinks back. In rough seas the bow
 throws spray, and any open hatch or low rim close to the waterline lets water in at the crests, so close your hatches
 and keep a pump ready before a storm. `/pirates waves` shows the sea; operators can hold a state with `/pirates waves
 set storm` and release it with `/pirates waves clear`. The camera can roll with the ship (client setting

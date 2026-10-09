@@ -18,6 +18,10 @@
           "y": 0.09
         },
         {
+          "type": "spotlight",
+          "item": "pirates_n_ships:hull_patch"
+        },
+        {
           "type": "text",
           "key": "pirates_n_ships.almanac.ships.p1.text1"
         }
@@ -42,10 +46,7 @@
           "type": "list",
           "items": [
             "pirates_n_ships.almanac.ships.p2.list1_1",
-            "pirates_n_ships.almanac.ships.p2.list1_2",
-            "pirates_n_ships.almanac.ships.p2.list1_3",
-            "pirates_n_ships.almanac.ships.p2.list1_4",
-            "pirates_n_ships.almanac.ships.p2.list1_5"
+            "pirates_n_ships.almanac.ships.p2.list1_2"
           ]
         },
         {
@@ -71,10 +72,6 @@
             "pirates_n_ships.almanac.ships.p3.list1_2",
             "pirates_n_ships.almanac.ships.p3.list1_3"
           ]
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.ships.p3.text2"
         }
       ]
     },
@@ -89,21 +86,9 @@
           "key": "pirates_n_ships.almanac.ships.p4.text1"
         },
         {
-          "type": "list",
-          "items": [
-            "pirates_n_ships.almanac.ships.p4.list1_1",
-            "pirates_n_ships.almanac.ships.p4.list1_2",
-            "pirates_n_ships.almanac.ships.p4.list1_3"
-          ]
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.ships.p4.text2"
-        },
-        {
           "type": "text",
           "color": "#2e6a24",
-          "key": "pirates_n_ships.almanac.ships.p4.text3"
+          "key": "pirates_n_ships.almanac.ships.p4.text2"
         }
       ]
     },
@@ -142,17 +127,13 @@
           "key": "pirates_n_ships.almanac.ships.p6.text1"
         },
         {
-          "type": "list",
-          "items": [
-            "pirates_n_ships.almanac.ships.p6.list1_1",
-            "pirates_n_ships.almanac.ships.p6.list1_2",
-            "pirates_n_ships.almanac.ships.p6.list1_3"
-          ]
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p6.text2"
         },
         {
           "type": "text",
           "color": "#9a1c14",
-          "key": "pirates_n_ships.almanac.ships.p6.text2"
+          "key": "pirates_n_ships.almanac.ships.p6.text3"
         }
       ]
     },
@@ -180,13 +161,13 @@
           "key": "pirates_n_ships.almanac.ships.p7.text1"
         },
         {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.ships.p7.text2"
+          "type": "recipe",
+          "recipe": "pirates_n_ships:bilge_pump"
         },
         {
           "type": "text",
           "color": "#2e6a24",
-          "key": "pirates_n_ships.almanac.ships.p7.text3"
+          "key": "pirates_n_ships.almanac.ships.p7.text2"
         }
       ]
     },
@@ -195,14 +176,6 @@
         {
           "type": "heading",
           "key": "pirates_n_ships.almanac.ships.p8.heading"
-        },
-        {
-          "type": "illustration",
-          "h": 0.35,
-          "texture": "pirates_n_ships:textures/almanac/shipwright_toolkit.png",
-          "w": 0.9,
-          "x": 0.05,
-          "y": 0.09
         },
         {
           "type": "show_me",
@@ -214,8 +187,8 @@
           "key": "pirates_n_ships.almanac.ships.p8.text1"
         },
         {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.ships.p8.text2"
+          "type": "recipe",
+          "recipe": "pirates_n_ships:hull_patch"
         }
       ]
     },
@@ -226,28 +199,20 @@
           "key": "pirates_n_ships.almanac.ships.p9.heading"
         },
         {
+          "type": "illustration",
+          "h": 0.35,
+          "texture": "pirates_n_ships:textures/almanac/shipwright_toolkit.png",
+          "w": 0.9,
+          "x": 0.05,
+          "y": 0.09
+        },
+        {
           "type": "text",
           "key": "pirates_n_ships.almanac.ships.p9.text1"
         },
         {
           "type": "text",
           "key": "pirates_n_ships.almanac.ships.p9.text2"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.ships.p9.text3"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.ships.p9.text4"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.ships.p9.text5"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.ships.p9.text6"
         }
       ]
     },
@@ -258,28 +223,16 @@
           "key": "pirates_n_ships.almanac.ships.p10.heading"
         },
         {
-          "type": "illustration",
-          "h": 0.35,
-          "texture": "pirates_n_ships:textures/almanac/figurehead_mermaid.png",
-          "w": 0.9,
-          "x": 0.05,
-          "y": 0.09
-        },
-        {
           "type": "text",
           "key": "pirates_n_ships.almanac.ships.p10.text1"
         },
         {
-          "type": "list",
-          "items": [
-            "pirates_n_ships.almanac.ships.p10.list1_1",
-            "pirates_n_ships.almanac.ships.p10.list1_2",
-            "pirates_n_ships.almanac.ships.p10.list1_3",
-            "pirates_n_ships.almanac.ships.p10.list1_4",
-            "pirates_n_ships.almanac.ships.p10.list1_5",
-            "pirates_n_ships.almanac.ships.p10.list1_6",
-            "pirates_n_ships.almanac.ships.p10.list1_7"
-          ]
+          "type": "recipe",
+          "recipe": "pirates_n_ships:carpenters_hammer"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:saw"
         }
       ]
     },
@@ -294,20 +247,12 @@
           "key": "pirates_n_ships.almanac.ships.p11.text1"
         },
         {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.ships.p11.text2"
+          "type": "recipe",
+          "recipe": "pirates_n_ships:nails"
         },
         {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.ships.p11.text3"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.ships.p11.text4"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.ships.p11.text5"
+          "type": "recipe",
+          "recipe": "pirates_n_ships:shipwright_toolkit"
         }
       ]
     },
@@ -318,11 +263,215 @@
           "key": "pirates_n_ships.almanac.ships.p12.heading"
         },
         {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p12.text1"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p12.text2"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p12.text3"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p12.text4"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.ships.p13.heading"
+        },
+        {
+          "type": "illustration",
+          "h": 0.35,
+          "texture": "pirates_n_ships:textures/almanac/figurehead_mermaid.png",
+          "w": 0.9,
+          "x": 0.05,
+          "y": 0.09
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p13.text1"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:nameplate"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.ships.p14.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p14.text1"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:figurehead_mermaid"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:figurehead_lion"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.ships.p15.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p15.text1"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:figurehead_eagle"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:figurehead_skull"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.ships.p16.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p16.text1"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:oak_railing"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p16.text2"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:oak_railing_port"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.ships.p17.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p17.text1"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:ship_lantern"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p17.text2"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:rope_coil"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.ships.p18.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p18.text1"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:stern_window"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p18.text2"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:chart_table"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.ships.p19.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p19.text1"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:sea_cot"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.ships.p20.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p20.text1"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p20.text2"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p20.text3"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p20.text4"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p20.text5"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.ships.p21.heading"
+        },
+        {
           "type": "list",
           "items": [
-            "pirates_n_ships.almanac.ships.p12.list1_1",
-            "pirates_n_ships.almanac.ships.p12.list1_2",
-            "pirates_n_ships.almanac.ships.p12.list1_3"
+            "pirates_n_ships.almanac.ships.p21.list1_1",
+            "pirates_n_ships.almanac.ships.p21.list1_2",
+            "pirates_n_ships.almanac.ships.p21.list1_3"
           ]
         }
       ]

@@ -52,9 +52,21 @@ and Fabric and needs no other mod.
   closed until someone right-clicks it to read; then it opens with a page flip and stays open while they read and a
   few seconds after (`almanac.open_ticks`). Breaking it drops the book. With `almanac.enabled` off the Almanac is
   decoration and never opens.
+- **The index (ALM8):** the first opening after joining a world shows the index spread: on the left page every
+  chapter's icon and title in book order, in its bookmark colour (click one to open the chapter, hover for the full
+  title), on the right the book's foreword and "Continue where you left off:" with a button to the chapter and page
+  last read (a player who has read nothing gets "New aboard? Begin here:" and the first chapter). Later openings in
+  the same session go straight to the page last read; Home turns back to the index, and so does turning back past the
+  first chapter. The index has no bookmark and no page numbers.
 - **Turning pages:** the arrows in the page corners, the arrow keys, Page Up and Page Down or the mouse wheel. The
-  bookmarks on the right edge jump to a chapter; links in the text jump to other chapters. Escape closes the book. It
-  opens again at the page you last read, also after death and relog (`almanac.remember_page`).
+  bookmarks down the left edge (continuing down the right edge when the left is full) jump to a chapter; links in the
+  text jump to other chapters. Escape closes the book. The page you last read is remembered, also after death and
+  relog (`almanac.remember_page`).
+- **Recipe panels and spotlights (ALM8):** where a chapter introduces a craftable block or item it shows its crafting
+  grid: the 3x3 inputs, an arrow and the result with its count, a two-arrow mark on shapeless recipes, the inputs of a
+  tag cycling once a second, a tooltip on every slot. The panel reads the recipe the server sent, so a datapack that
+  changes a recipe changes the panel; a recipe that does not exist shows "This recipe is not in the world". Every
+  chapter opens with its picture and an item spotlight: the item framed at twice its size with its name under it.
 - **Show me:** some pages have a "Show me" button that plays a Ponder scene of the mechanic (17 scenes: assembling a
   ship, steering, sails and the winch, anchor and capstan, pumps and flooding, hull repair, mooring, cargo and weight,
   loading and firing a cannon, crew orders, boarding, flags and allegiance, the crow's nest, the ship's bell, galley
@@ -68,7 +80,35 @@ and Fabric and needs no other mod.
 
 This file is the testing and reference guide: it lists every block, item, command and config value for testers and
 server owners. The Almanac's chapters are a separate text written for players (`docs/almanac/`, generated into the
-book with `python3 tools/gen_almanac.py` and `./gradlew :neoforge:runData`).
+book with `python3 tools/gen_almanac.py` and `./gradlew :neoforge:runData`). Since ALM8 the chapters are short (half
+their former length): exact numbers and edge cases live here. The chapter source's block markup for the new pieces is
+a line of its own: `{recipe:<id>}` (one of our recipes; the generator stops on an id that is not in the generated
+recipes, and every recipe of ours has exactly one panel in the book) and `{spotlight:<item id>}` (format in
+`docs/almanac.md`).
+
+### What the Almanac no longer spells out (ALM8)
+
+The content pass moved these details out of the player's chapters; everything else it cut is stated in the sections
+below.
+
+- **Ships:** very far from the world's centre (tens of thousands of blocks out) ships stop moving true (floating-point
+  precision). A hull patch used anywhere but a real hole of an assembled ship says so and is not spent.
+- **Steering:** the line above the hotbar shows the rudder angle; let go of the wheel and the rudder stays where you
+  left it.
+- **Sails:** a yard is at most 15 blocks long (`sailing.sails.yard_max_length`); a longer row of yard blocks is no
+  yard and carries no sail.
+- **Mooring:** a harbour counts a ship as moored at its port once she lies still (anchored) within about 32 blocks of
+  it.
+- **Crew:** morale runs from 0 to 100, a new hand comes aboard at 70 (`crew.morale.start`). Hunger costs a hand 10
+  morale a day, thirst 25 (`provisions.hunger_morale_per_day`, `thirst_morale_per_day`); scurvy lowers it every day
+  until cured; a rum ration raises it a little each day. To hire, your own ship must lie within 32 blocks of the port
+  (`crew.hiring.ship_radius`). A hand speaks up only when he cannot carry out an order ("This ship has no sails,
+  captain!").
+- **Provisions:** the crew refuses foul fare as rations (rotten flesh, spider eyes and the like). Water and rum count
+  wherever they are stowed aboard, in a pantry or a water barrel. Prisoners in the brig eat and drink half a hand's
+  share and get no rum.
+- **Settings:** `flooding.pump_reach` 4, `crew_stations.ticks_per_trim_step` 40 (the 2-second trim step). A datapack
+  can add chapters to the Almanac or replace ours (`data/<ns>/almanac/chapters/`, format in `docs/almanac.md`).
 
 ## 1. Your first ship
 

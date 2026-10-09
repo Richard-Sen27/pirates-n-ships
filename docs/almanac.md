@@ -42,6 +42,8 @@ in list order; illustrations and item icons sit at their coordinates.
 | `illustration` | `texture` (full texture path, e.g. `pirates_n_ships:textures/gui/almanac/ship.png`), `x`, `y`, `w`, `h` | `w`, `h` > 0, `x + w` ≤ 1, `y + h` ≤ 1 |
 | `item` | `item` (item id), `x`, `y`; `caption` (lang key, optional) | An unknown item fails the chapter |
 | `show_me` | `scene` (Ponder scene id), `label` (lang key) | A button that plays the scene (ALM4) |
+| `recipe` | `recipe` (recipe id) | A recipe panel (ALM8): a block of 116 x 62 in the flow, looked up in the client's recipe manager |
+| `spotlight` | `item` (item id) | An item spotlight (ALM8): the item framed at 2x with its name, a block of 50 px in the flow; an unknown item fails the chapter |
 
 Lang keys: non-empty, at most 256 characters, no whitespace. An unknown lang key is not an error (lang lives on the
 client; the screen shows the raw key).
@@ -148,6 +150,39 @@ the player last read. A two-page parchment spread of 292 × 180 GUI pixels; each
   Leaving the book for Ponder counts as closing it (the placed tome shuts; it does not reopen on the way back). An
   unknown or malformed id logs a warning and the reader stays on the page.
 - An empty book (no sync yet) shows a single page saying so, without bookmarks.
+
+### The index spread (ALM8)
+
+A book with chapters starts with an index spread before chapter one (no bookmark, no page numbers; the navigator
+counts it as its chapter 0). The left page is `IndexLayout`: one entry per chapter in book order, its icon on a tile
+and its title in its bookmark colour (very light colours darkened to stay readable), filling the text box column by
+column: one column while every row gets 10 px (14 chapters: rows of 10, the icon at inline size), else more columns
+(20 chapters: two columns of 14 px rows with framed tiles); rows grow up to 20 px with two-line titles. A title that
+does not fit its room is drawn smaller (down to 0.75), then cut with "..."; the tooltip shows the whole title. The right
+page holds the book's title, the foreword (`gui.pirates_n_ships.almanac.foreword`) and "Continue where you left off:"
+over a button to the spread last read (`ClientAlmanac.progress()`), or "New aboard? Begin here:" and the first chapter.
+The first opening after joining (`ClientAlmanac.takeFirstOpening()`, reset on disconnect) and any opening with nothing
+read yet start on the index; later openings in the session start at the page last read. Home turns to the index.
+The index is never reported as the last page.
+
+### Recipe panels and spotlights (ALM8)
+
+Both are fixed-height blocks in the page flow (`PageLayout`): centred, never split; one that does not fit the rest of
+the page moves whole to the next page, a heading right before one moves with it, and one taller than a page is an
+error (`IllegalArgumentException`; the real sizes always fit). A recipe panel (`RecipeGrid`, `RecipeView`) reads the
+recipe from the client's recipe manager when it is drawn, so a datapack's change shows:
+
+- `minecraft:crafting_shaped`: the pattern in the 3x3 grid, a one-wide or one-high pattern centred;
+- `minecraft:crafting_shapeless`: the ingredients in reading order and a shapeless mark (two opposed arrows) above the
+  result;
+- `minecraft:smelting`, `blasting`, `smoking`, `campfire_cooking`: the input over a flame;
+- `minecraft:stonecutting`: the input alone;
+- any other type: "Made another way" and the result; a missing recipe: "This recipe is not in the world".
+
+An ingredient with several items (a tag) cycles through them once a second; every slot and the result have the
+item's tooltip, the result shows its count. The mod has no recipe types of its own (the Harbor Market and Ship's
+Provisions are JEI pages, not recipes). A spotlight draws the item at 2x in a framed card and its name in bold under it.
+The pieces come from `textures/gui/almanac/panels.png` (`tools/gen_almanac_textures.py`, UVs in `AlmanacPanels`).
 
 Placeholder textures come from `tools/gen_almanac_textures.py` (standard library; `textures/gui/almanac/book.png` and
 `bookmark.png`, `AlmanacTexturesTest` fails while the committed files differ from a fresh run); ART14 replaces them.
@@ -282,6 +317,8 @@ Text before the first "##" goes on the first page, under the title.
 illustration: yard                   # places a declared illustration on this page
 show_me: sails_and_winch | Show me: rigging a sail     # a "Show me" button here; label optional ("Show me")
 contents:                            # a list linking every other chapter in book order (the welcome chapter)
+{spotlight:helm}                     # an item spotlight (ALM8; a line of its own; no namespace = pirates_n_ships)
+{recipe:helm}                        # the recipe panel of one of our recipes (ALM8; a line of its own)
 ```
 
 - **Front matter:** `key: value` lines between `---` lines (a small subset of YAML, read with the standard library),
@@ -298,6 +335,12 @@ contents:                            # a list linking every other chapter in boo
   illustrations (one per page; every declared one must be placed); `show_me: <scene id> [| label]` adds a "Show me"
   button where it stands (no namespace = `pirates_n_ships`; a scene that does not exist yet logs a warning in the
   client and the reader stays on the page); `contents:` adds the Contents list.
+- **Blocks (ALM8),** a line of their own in flow order: `{spotlight:<item id>}` (ours must exist) and
+  `{recipe:<recipe id>}`, which must be one of our recipes in `common/src/generated/resources/data/pirates_n_ships/recipe/`
+  (the script stops otherwise; run `./gradlew :neoforge:runData` after adding a recipe). Inside a paragraph they stop
+  the script. Content rules, checked by `AlmanacGuideTest`: every recipe of ours has exactly one panel, where its
+  block or item is introduced; every chapter's first page has its plate (an illustration) and a spotlight. Write
+  short paragraphs (at most about 60 words, one idea each); exact numbers and edge cases belong in `docs/guide.md`.
 - **Markup:** the text is the screen's markup as written (see "Markup" above), checked by the script: balanced `**`,
   closed `{#rrggbb}…{/}`, `{item:ns:id}` with a full id (ours must exist: `tools/almanac_lib.py` lists our registered
   items from the lang and the item models, GUIDE2), `[[ns:chapter|text]]` links only to chapters

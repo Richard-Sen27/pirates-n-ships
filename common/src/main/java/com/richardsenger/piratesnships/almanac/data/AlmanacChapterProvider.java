@@ -77,6 +77,10 @@ public final class AlmanacChapterProvider {
                     case PageElement.ShowMe s -> out.add(s.label());
                     case PageElement.Illustration ignored -> {
                     }
+                    case PageElement.RecipePanel ignored -> {
+                    }
+                    case PageElement.Spotlight ignored -> {
+                    }
                 }
             }
         }

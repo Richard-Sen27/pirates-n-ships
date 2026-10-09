@@ -18,6 +18,8 @@ import org.jetbrains.annotations.Nullable;
  * anchor, repair, boarding) is one more constant here with its {@link CrewOrder}; {@link WhistleOrders} gives it
  * to the crew at the stations that take it. An entry without a crew order is a whistle action of its own
  * ({@link #RELEASE}), except {@link #ANCHOR}, whose crew order follows the anchor's state (WHS1, {@link #order(AnchorState.Phase)}).
+ * {@link #BOARD} (BRD3) is a toggle too: "Board!" while no boarding party of the ship is out, "Back aboard" while one
+ * is ({@link #nameKey(AnchorState.Phase, boolean)}); it is no station order, the server sends the crew across or back.
  * Pure data: the icon is an item id that the client resolves.
  */
 public enum WhistleOrder {
@@ -35,6 +37,12 @@ public enum WhistleOrder {
      * the direction, the client only names it.
      */
     ANCHOR(null, Constants.id("capstan")),
+    /**
+     * BRD3: "Board!" sends the crew (gunners and helmsman stay) across a gangway or a narrow gap onto the ship alongside
+     * to fight; while they are out the same entry reads "Back aboard" and calls them home
+     * ({@code combat.boarding.order.BoardingParties}). The server decides by the party's state, the client only names it.
+     */
+    BOARD(null, Constants.id("cutlass")),
     RELEASE(null, Constants.id("sail_winch"));
 
     private static final List<WhistleOrder> ENTRIES = List.of(values());
@@ -86,6 +94,11 @@ public enum WhistleOrder {
         return this == ANCHOR;
     }
 
+    /** Whether the order (and its label) follows the ship's boarding party: out or not (BRD3). */
+    public boolean followsBoarding() {
+        return this == BOARD;
+    }
+
     /** Every crew order this entry can give: its fixed one, both anchor directions for {@link #ANCHOR}, none for release. */
     public List<CrewOrder> orders() {
         if (this == ANCHOR) return List.of(AnchorOrder.DROP_ANCHOR, AnchorOrder.RAISE_ANCHOR);
@@ -125,6 +138,23 @@ public enum WhistleOrder {
     public String descriptionKey(AnchorState.@Nullable Phase anchor) {
         return this == ANCHOR ? anchorKey(AnchorOrder.toggle(anchor)) + ".desc" : descriptionKey();
     }
+
+    /**
+     * The label of this entry on a ship whose anchor is in {@code anchor} and whose boarding party is out or not
+     * ({@code boardingOut}, BRD3): {@link #BOARD} reads "Board!" or "Back aboard"; the anchor follows
+     * {@link #nameKey(AnchorState.Phase)}. Pure.
+     */
+    public String nameKey(AnchorState.@Nullable Phase anchor, boolean boardingOut) {
+        return this == BOARD && boardingOut ? BACK_ABOARD_KEY : nameKey(anchor);
+    }
+
+    /** {@link #descriptionKey()} following the anchor and the boarding party like {@link #nameKey(AnchorState.Phase, boolean)}. */
+    public String descriptionKey(AnchorState.@Nullable Phase anchor, boolean boardingOut) {
+        return this == BOARD && boardingOut ? BACK_ABOARD_KEY + ".desc" : descriptionKey(anchor);
+    }
+
+    /** Label key of the boarding toggle while a party is out ("Back aboard", BRD3). */
+    public static final String BACK_ABOARD_KEY = "whistle_order." + Constants.MOD_ID + ".back_aboard";
 
     /** Label key of the anchor toggle in direction {@code direction} ("Drop anchor", "Raise anchor"). */
     public static String anchorKey(AnchorOrder direction) {

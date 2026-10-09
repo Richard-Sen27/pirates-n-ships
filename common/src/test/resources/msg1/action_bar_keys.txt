@@ -6,6 +6,12 @@ message.pirates_n_ships.bilge_pump.dry
 message.pirates_n_ships.bilge_pump.no_compartment
 message.pirates_n_ships.bilge_pump.not_on_ship
 message.pirates_n_ships.bilge_pump.pumping
+message.pirates_n_ships.boarding.back
+message.pirates_n_ships.boarding.board
+message.pirates_n_ships.boarding.captured
+message.pirates_n_ships.boarding.disabled
+message.pirates_n_ships.boarding.no_hands
+message.pirates_n_ships.boarding.no_way
 message.pirates_n_ships.boarding_plank.blocked
 message.pirates_n_ships.boarding_plank.disabled
 message.pirates_n_ships.boarding_plank.no_start

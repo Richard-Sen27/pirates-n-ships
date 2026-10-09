@@ -2,10 +2,15 @@ package com.richardsenger.piratesnships.combat.boarding;
 
 import com.richardsenger.piratesnships.combat.boarding.order.BoardingOrderGameTests;
 import com.richardsenger.piratesnships.combat.boarding.order.BoardingParties;
+import com.richardsenger.piratesnships.combat.boarding.order.BoardingStatePayload;
+import com.richardsenger.piratesnships.combat.boarding.order.BoardingSync;
+import com.richardsenger.piratesnships.combat.boarding.order.ClientBoarding;
 import com.richardsenger.piratesnships.combat.boarding.order.NpcBoarding;
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
+import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
+import com.richardsenger.piratesnships.station.order.WhistleOrder;
 import com.richardsenger.piratesnships.ship.decor.SableWeightTags;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.advancements.critereon.ItemPredicate;
@@ -56,12 +61,21 @@ public final class BoardingModule implements ModModule {
     }
 
     @Override
+    public void registerPayloads() {
+        Services.NETWORK.registerToClient(BoardingStatePayload.TYPE, BoardingStatePayload.CODEC, (p, player) -> ClientBoarding.accept(p));
+    }
+
+    @Override
     public void registerEvents() {
         CommonEvents.LEVEL_TICK_END.register(BoardingParties::onLevelTick);
         CommonEvents.LEVEL_TICK_END.register(NpcBoarding::onLevelTick);
+        CommonEvents.SERVER_TICK_END.register(BoardingSync::onServerTick);
+        // a player joining has no "Back aboard" left over from another world or server
+        CommonEvents.PLAYER_LOGIN.register(player -> Services.NETWORK.sendToPlayer(player, new BoardingStatePayload(java.util.List.of())));
         CommonEvents.SERVER_STOPPED.register(server -> {
             BoardingParties.clear();
             NpcBoarding.clear();
+            BoardingSync.clear();
         });
     }
 
@@ -88,7 +102,11 @@ public final class BoardingModule implements ModModule {
                 .add(BoardingParties.KEY_NO_WAY, "No way across to board")
                 .add(BoardingParties.KEY_NO_HANDS, "No hands free to board")
                 .add(BoardingParties.KEY_DISABLED, "Boarding is off on this server")
-                .add(BoardingParties.KEY_CAPTURED, "Her deck is yours"));
+                .add(BoardingParties.KEY_CAPTURED, "Her deck is yours")
+                .add(WhistleOrder.BOARD.nameKey(), "Board!")
+                .add(WhistleOrder.BOARD.descriptionKey(), "The crew cross the gangway or a narrow gap and fight her crew; gunners and helmsman stay")
+                .add(WhistleOrder.BACK_ABOARD_KEY, "Back aboard")
+                .add(WhistleOrder.BACK_ABOARD_KEY + ".desc", "The boarders come home over the nearest way and take their stations again"));
         data.models(m -> {
             // BRD4: the straight board is drawn by BoardingPlankRenderer from segment 0; a cell's own model shows nothing
             // but the breaking particles (like the ratline net's cell). The item keeps its hand-made Blockbench model

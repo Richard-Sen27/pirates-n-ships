@@ -8,6 +8,7 @@ import com.richardsenger.piratesnships.core.client.gui.ScrollMath;
 import com.richardsenger.piratesnships.crew.galley.GalleyText;
 import com.richardsenger.piratesnships.crew.hammock.CrewInfo;
 import com.richardsenger.piratesnships.platform.Services;
+import com.richardsenger.piratesnships.combat.boarding.order.ClientBoarding;
 import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import com.richardsenger.piratesnships.ship.hull.client.ShipHudConfig;
 import com.richardsenger.piratesnships.ship.hull.client.ShipHudText;
@@ -168,13 +169,14 @@ public final class ShipScreen extends Screen {
             boolean active = v.isPresent() && ShipScreenRules.canOrder(v.get());
             // WHS1: one anchor button, labelled by the anchor's state in the view (the server picks the direction)
             AnchorState.Phase anchor = v.map(x -> ShipScreenRules.phase(x.status().anchor())).orElse(null);
+            boolean boarding = v.map(x -> ClientBoarding.out(x.ship())).orElse(false); // BRD3: Board! or Back aboard
             for (int i = 0; i < orders.size(); i++) {
                 WhistleOrder o = orders.get(i);
                 int bx = x0 + (i % perRow) * (bw + TAB_GAP);
                 int by = top + 46 + (i / perRow) * 16;
-                BrassButton b = addRenderableWidget(new BrassButton(bx, by, bw, 14, Component.translatable(o.nameKey(anchor)), () -> order(o)));
+                BrassButton b = addRenderableWidget(new BrassButton(bx, by, bw, 14, Component.translatable(o.nameKey(anchor, boarding)), () -> order(o)));
                 b.active = active && !pending;
-                b.setTooltip(Tooltip.create(Component.translatable(o.descriptionKey(anchor))));
+                b.setTooltip(Tooltip.create(Component.translatable(o.descriptionKey(anchor, boarding))));
             }
             listPanelTop = top + 80;
         } else {

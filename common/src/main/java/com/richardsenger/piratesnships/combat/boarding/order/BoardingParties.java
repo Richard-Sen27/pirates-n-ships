@@ -91,6 +91,8 @@ public final class BoardingParties {
     private static final double FOE_REACH = 2.0;
     /** Ticks between two path searches while walking to the crossing. */
     private static final int REPATH_TICKS = 20;
+    /** Ticks a boarder's entity may go unfound (an unloaded chunk) before it leaves the party. */
+    private static final int MISSING_TICKS = 1200;
     /** Blocks from the crossing's start within which a boarder whose path ended walks straight on. */
     private static final double STEER_DISTANCE = 1.6;
 
@@ -111,6 +113,8 @@ public final class BoardingParties {
         boolean hopped;
         long hopAt;
         long lastSearch = Long.MIN_VALUE / 2;
+        /** Game time the boarder's entity was first not found (-1: found). */
+        long missingSince = -1;
         /** It did not get across in time once and was set down (the fallback). */
         boolean setDown;
 
@@ -180,6 +184,11 @@ public final class BoardingParties {
             return npc;
         }
 
+        /** The player who gave the order, or null (an NPC captain, the ship screen of an absent owner). */
+        public @Nullable UUID captain() {
+            return captain;
+        }
+
         public boolean recalled() {
             return recalled;
         }
@@ -237,6 +246,11 @@ public final class BoardingParties {
         return PARTIES.containsKey(home);
     }
 
+    /** Every party out. */
+    public static List<Party> parties() {
+        return List.copyOf(PARTIES.values());
+    }
+
     /** The party of ship {@code home}, or null. */
     public static @Nullable Party party(UUID home) {
         return PARTIES.get(home);
@@ -255,6 +269,34 @@ public final class BoardingParties {
     }
 
     // ------------------------------------------------------------------ the order
+
+    /**
+     * The whistle's boarding toggle given on {@code ship} by {@code captain} (may be null): "Back aboard" for the party
+     * {@link #partyFor} finds, else "Board!" from {@code ship}.
+     */
+    public static Outcome toggle(ServerLevel level, ShipBody ship, @Nullable Player captain) {
+        Party p = partyFor(level, ship.id(), captain == null ? null : captain.getUUID());
+        return p != null ? recall(level, p.home) : boardWithCrew(level, ship, captain);
+    }
+
+    /**
+     * The party a "Back aboard" given on {@code ship} by player {@code player} calls: the party of {@code ship}, else a
+     * player's party boarding {@code ship} that this player sent or whose ship he owns (he boarded along and calls
+     * from her deck). Null for none.
+     */
+    public static @Nullable Party partyFor(ServerLevel level, UUID ship, @Nullable UUID player) {
+        Party own = PARTIES.get(ship);
+        if (own != null) return own;
+        if (player == null) return null;
+        for (Party p : PARTIES.values()) {
+            if (p.npc || !p.target.equals(ship)) continue;
+            if (player.equals(p.captain) || ShipRegistry.get(level.getServer()).find(p.home).flatMap(ShipData::owner)
+                    .map(player::equals).orElse(false)) {
+                return p;
+            }
+        }
+        return null;
+    }
 
     /**
      * "Board!" from ship {@code home} given by {@code captain} (may be null): the crew go across to the ship lying
@@ -433,9 +475,18 @@ public final class BoardingParties {
 
     /** The party's look around (see the class comment). */
     private static void look(ServerLevel level, Party party, ShipBody home, ShipBody target, int dt) {
+        long now = level.getGameTime();
         for (Boarder b : new ArrayList<>(party.boarders.values())) {
             Entity e = level.getEntity(b.id);
-            if (!(e instanceof Mob m) || !m.isAlive()) leave(party, b);
+            if (e == null) {
+                // not found: unloaded for now, or gone for good; it leaves the party only after a while
+                if (b.missingSince < 0) b.missingSince = now;
+                else if (now - b.missingSince > MISSING_TICKS) leave(party, b);
+            } else if (!(e instanceof Mob m) || !m.isAlive() || e.isRemoved()) {
+                leave(party, b);
+            } else {
+                b.missingSince = -1;
+            }
         }
         if (!BoardingConfig.BOARD_ORDER.get()) party.recalled = true;
         List<LivingEntity> foes = foesAboard(level, party, target);

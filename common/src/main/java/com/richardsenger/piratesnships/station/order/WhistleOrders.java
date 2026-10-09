@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.station.order;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.combat.boarding.order.BoardingParties;
 import com.richardsenger.piratesnships.combat.cannon.npc.Gunnery;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.platform.Services;
@@ -46,7 +47,9 @@ public final class WhistleOrders {
         /** No such order: ignored (logged). */
         UNKNOWN_ORDER,
         NOT_ON_SHIP,
-        DISABLED
+        DISABLED,
+        /** BRD3: "Board!" refused (no way across, no free hands, boarding off); the message says why. */
+        REFUSED
     }
 
     /**
@@ -82,7 +85,7 @@ public final class WhistleOrders {
             return Result.of(Outcome.UNKNOWN_ORDER);
         }
         ShipBody ship = StationConfig.ENABLED.get() ? CaptainsWhistleItem.shipOf(level, player) : null;
-        Issued issued = issue(level, ship, order.get(), whistle);
+        Issued issued = issue(level, ship, order.get(), whistle, player);
         player.displayClientMessage(issued.message(), true);
         return issued.result();
     }
@@ -97,11 +100,27 @@ public final class WhistleOrders {
      * caller checks who may give the order and tells the player {@link Issued#message()}.
      */
     public static Issued issue(ServerLevel level, @Nullable ShipBody ship, WhistleOrder order, @Nullable ItemStack whistle) {
+        return issue(level, ship, order, whistle, null);
+    }
+
+    /**
+     * {@link #issue(ServerLevel, ShipBody, WhistleOrder, ItemStack)} by {@code captain} (may be null): the boarding toggle
+     * (BRD3) remembers who gave "Board!" to tell him when her deck is taken, and finds his party from the deck he
+     * boarded with it.
+     */
+    public static Issued issue(ServerLevel level, @Nullable ShipBody ship, WhistleOrder order, @Nullable ItemStack whistle,
+                               @Nullable Player captain) {
         if (!StationConfig.ENABLED.get()) {
             return new Issued(Result.of(Outcome.DISABLED), Component.translatable(CrewStations.KEY_DISABLED));
         }
         if (ship == null) {
             return new Issued(Result.of(Outcome.NOT_ON_SHIP), Component.translatable(CaptainsWhistleItem.KEY_NOT_ON_SHIP));
+        }
+        if (order.followsBoarding()) {
+            // BRD3: "Board!" while no party of this ship (or of the captain, from the deck he boarded) is out, else "Back aboard"
+            BoardingParties.Outcome o = BoardingParties.toggle(level, ship, captain);
+            boolean done = o.result() == BoardingParties.Result.BOARDING || o.result() == BoardingParties.Result.RECALLED;
+            return new Issued(new Result(done ? Outcome.ISSUED : Outcome.REFUSED, o.boarders(), 0), o.message());
         }
         // WHS1: the anchor toggle takes the direction the anchor's state needs now, as the capstan does for a player
         CrewOrder crewOrder = order.followsAnchor() ? order.order(anchorPhase(ship)) : order.order();

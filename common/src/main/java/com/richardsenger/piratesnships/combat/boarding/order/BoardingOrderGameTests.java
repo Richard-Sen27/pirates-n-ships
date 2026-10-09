@@ -23,6 +23,8 @@ import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests.Fixture;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.station.StationContent;
+import com.richardsenger.piratesnships.station.order.WhistleOrder;
+import com.richardsenger.piratesnships.station.order.WhistleOrders;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestGenerator;
@@ -346,8 +348,9 @@ public final class BoardingOrderGameTests {
     // ------------------------------------------------------------------ the recall
 
     /**
-     * Every hand goes ({@code boarders_keep_stations} off), the gunner too; "Back aboard" brings them home over the
-     * gangway and the gunner sits at his swivel gun again.
+     * Every hand goes ({@code boarders_keep_stations} off), the gunner too, on the whistle's entry; the same entry, now
+     * "Back aboard", given from her deck by the captain who boarded along, brings them home over the gangway and the
+     * gunner sits at his swivel gun again.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = SETTLE + ORDER + 2 * CROSS_WITHIN + 100, batch = BATCH + "recall")
     public static void backAboardReturnsThemToTheirStations(GameTestHelper h) {
@@ -356,6 +359,7 @@ public final class BoardingOrderGameTests {
         List<Mob> people = new ArrayList<>();
         CrewMember[] gunner = new CrewMember[1];
         CrewMember[] hand = new CrewMember[1];
+        Captain captain = new Captain(h.getLevel());
         int[] stage = {0};
         long[] recalledAt = {0};
         h.runAtTickTime(SETTLE, () -> {
@@ -367,8 +371,11 @@ public final class BoardingOrderGameTests {
         });
         h.runAtTickTime(SETTLE + ORDER, () -> {
             h.assertTrue(gunner[0].isAtStation(), "the gunner did not reach his gun");
-            BoardingParties.Outcome o = BoardingParties.boardWithCrew(h.getLevel(), s.a().ship(), null);
-            h.assertTrue(o.result() == BoardingParties.Result.BOARDING && o.boarders() == 2, "the order: " + o);
+            // the whistle's toggle: "Board!" while no party is out
+            WhistleOrders.Issued o = WhistleOrders.issue(h.getLevel(), s.a().ship(), WhistleOrder.BOARD, null, captain);
+            h.assertTrue(o.result().outcome() == WhistleOrders.Outcome.ISSUED && o.result().crew() == 2, "the order: " + o.result());
+            h.assertTrue(o.message().getContents() instanceof TranslatableContents t && t.getKey().equals(BoardingParties.KEY_BOARD),
+                    "the line: " + o.message());
             h.assertTrue(gunner[0].assignment() == null, "the gunner kept his station");
             stage[0] = 1;
         });
@@ -379,8 +386,12 @@ public final class BoardingOrderGameTests {
             BoardingParties.Boarder g = p.boarder(gunner[0].getUUID());
             BoardingParties.Boarder c = p.boarder(hand[0].getUUID());
             if (g != null && c != null && g.phase() == BoardingParties.Phase.ABOARD && c.phase() == BoardingParties.Phase.ABOARD) {
-                BoardingParties.Outcome o = BoardingParties.recall(h.getLevel(), s.a().ship().id());
-                h.assertTrue(o.result() == BoardingParties.Result.RECALLED, "the recall: " + o);
+                // the same entry again, given from B's deck by the captain who boarded along: "Back aboard"
+                WhistleOrders.Issued o = WhistleOrders.issue(h.getLevel(), s.b().ship(), WhistleOrder.BOARD, null, captain);
+                h.assertTrue(o.result().outcome() == WhistleOrders.Outcome.ISSUED, "the recall: " + o.result());
+                h.assertTrue(o.message().getContents() instanceof TranslatableContents t && t.getKey().equals(BoardingParties.KEY_BACK),
+                        "the line: " + o.message());
+                h.assertTrue(p.recalled(), "the party was not called back");
                 recalledAt[0] = h.getTick();
                 stage[0] = 2;
             }

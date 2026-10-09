@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Placement of the ship HUD's two panels per corner, GUI size and scale, clear of vanilla's HUD; the strip's cells and
- * the units (HUD1, HUD2).
+ * the units (HUD1, HUD2); only the chat lines vanilla draws count (HUD3).
  */
 class ShipHudLayoutTest {
 
@@ -115,6 +115,79 @@ class ShipHudLayoutTest {
         // chat hidden (no lines): the compass goes down to the corner
         Screen noChat = new Screen(GW, GH, ShipHudLayout.chat(GW, GH, 0, 0, false));
         assertEquals(GH - M - CH, ShipHudLayout.place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, noChat, 1.0).compass().rect().y());
+    }
+
+    // ------------------------------------------------------------------ HUD3: only the chat lines vanilla draws
+
+    /** 1080p at GUI scale 3, where the human saw the compass at the top. */
+    private static final int SGW = 640, SGH = 360;
+    /** Vanilla's line height at the default line spacing 0, and the default page (180 / 9). */
+    private static final int LINE = 9, PAGE = 20;
+
+    /** The compass panel's rectangle at BOTTOM_LEFT with the given chat lines' height, chat scale 1. */
+    private static Rect compassWithChat(int linesHeight, boolean open) {
+        List<Rect> o = new ArrayList<>(ShipHudLayout.chat(SGW, SGH, CHAT_W, linesHeight, open));
+        o.addAll(ShipHudLayout.hotbar(SGW, SGH, true, 0));
+        return ShipHudLayout.place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, new Screen(SGW, SGH, o), 1.0).compass().rect();
+    }
+
+    @Test
+    void noRecentChatLinesLeaveTheCompassInTheCorner() {
+        int[] old = {200, 450, 9000, 12000};
+        int rows = ShipHudLayout.chatRows(old, PAGE, false);
+        assertEquals(0, rows, "faded lines are not drawn");
+        int h = ShipHudLayout.chatHeight(rows, LINE, 1.0);
+        assertEquals(0, h);
+        assertEquals(new Rect(M, SGH - M - CH, W, CH), compassWithChat(h, false), "bottom left at MARGIN");
+        // nothing received at all
+        assertEquals(0, ShipHudLayout.chatRows(new int[0], PAGE, false));
+    }
+
+    @Test
+    void threeRecentLinesLiftTheCompassJustAboveThem() {
+        int[] ages = {5, 40, 120, 300, 900};
+        int rows = ShipHudLayout.chatRows(ages, PAGE, false);
+        assertEquals(3, rows);
+        int h = ShipHudLayout.chatHeight(rows, LINE, 1.0);
+        assertEquals(27, h);
+        Rect compass = compassWithChat(h, false);
+        assertEquals(SGH - ShipHudLayout.CHAT_BOTTOM - 27 - M - CH, compass.y(), "just above the third line");
+        assertEquals(M, compass.x());
+        assertTrue(compass.y() > SGH / 2, "the compass stays in the bottom half: " + compass);
+        // at chat scale 0.5 the lines take half the height (rounded up)
+        assertEquals(14, ShipHudLayout.chatHeight(rows, LINE, 0.5));
+        // line spacing 1 (vanilla's getLineHeight = 9 × 2)
+        assertEquals(54, ShipHudLayout.chatHeight(rows, 18, 1.0));
+    }
+
+    @Test
+    void openChatCountsOnlyTheExistingLines() {
+        int[] twoOld = {5000, 9000};
+        int rows = ShipHudLayout.chatRows(twoOld, PAGE, true);
+        assertEquals(2, rows, "the open chat draws its two lines, however old, not a whole page");
+        Rect compass = compassWithChat(ShipHudLayout.chatHeight(rows, LINE, 1.0), true);
+        assertEquals(SGH - ShipHudLayout.CHAT_BOTTOM - 2 * LINE - M - CH, compass.y());
+        // a full history is capped at the page
+        int[] many = new int[100];
+        assertEquals(PAGE, ShipHudLayout.chatRows(many, PAGE, true));
+        assertEquals(PAGE, ShipHudLayout.chatRows(many, PAGE, false), "and so is a closed chat full of new lines");
+    }
+
+    @Test
+    void chatLinesFadeAfterTwoHundredTicks() {
+        assertEquals(1, ShipHudLayout.chatRows(new int[] {199}, PAGE, false), "age 199 is still drawn");
+        assertEquals(0, ShipHudLayout.chatRows(new int[] {200}, PAGE, false), "age 200 is not");
+        assertEquals(1, ShipHudLayout.chatRows(new int[] {199, 200}, PAGE, false));
+        assertEquals(0, ShipHudLayout.chatRows(new int[] {5}, 0, false), "no page, no lines");
+    }
+
+    @Test
+    void hiddenChatStaysOutOfTheWay() {
+        // ShipHud passes width and height 0 when chat visibility is HIDDEN: no line obstacle, open or closed
+        assertEquals(List.of(), ShipHudLayout.chat(SGW, SGH, 0, 0, false));
+        assertEquals(new Rect(M, SGH - M - CH, W, CH), compassWithChat(0, false));
+        assertEquals(List.of(new Rect(0, SGH - ShipHudLayout.CHAT_INPUT_H, SGW, ShipHudLayout.CHAT_INPUT_H)),
+                ShipHudLayout.chat(SGW, SGH, 0, 0, true), "only the open chat's input box");
     }
 
     @Test

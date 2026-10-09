@@ -9,7 +9,9 @@ Each ``art/schematics/<name>.schem`` becomes ``common/src/main/resources/data/pi
 which the game loads as the structure ``pirates_n_ships:ships/<name>`` (see ``ship/template`` and art/README.md, "Ship
 templates"). A structure piece ``art/schematics/structures/<group>/<piece>.schem`` (built by tools/build_structures.py)
 becomes ``.../structure/<group>/<piece>.nbt``, the structure ``pirates_n_ships:<group>/<piece>`` (art/README.md,
-"Structures (ST1)"). ``--out`` puts every output into that one directory instead.
+"Structures (ST1)"). The ``ponder`` group is the exception: a Ponder scene's schematic
+``art/schematics/structures/ponder/<scene>.schem`` becomes ``assets/pirates_n_ships/ponder/<scene>.nbt``, where Ponder
+loads it from (ALM4, docs/almanac.md "Scenes"). ``--out`` puts every output into that one directory instead.
 
 Rules:
 - Sponge schematic version 2 (``Palette`` + ``BlockData`` at the root) and version 3 (everything inside a
@@ -47,6 +49,9 @@ DEFAULT_IN = ROOT / "art" / "schematics"
 STRUCTURE_DIR = ROOT / "common" / "src" / "main" / "resources" / "data" / "pirates_n_ships" / "structure"
 DEFAULT_OUT = STRUCTURE_DIR / "ships"
 STRUCTURES_IN = DEFAULT_IN / "structures"
+# Ponder scene schematics (ALM4): the "ponder" group goes to the client assets, not to the structure data
+PONDER_GROUP = "ponder"
+PONDER_DIR = ROOT / "common" / "src" / "main" / "resources" / "assets" / "pirates_n_ships" / "ponder"
 DATA_VERSION_1_21_1 = 3955
 DROPPED = {"minecraft:air", "minecraft:cave_air", "minecraft:void_air", "minecraft:structure_void"}
 HELM = "pirates_n_ships:helm"
@@ -326,6 +331,8 @@ def structure_group(source: Path) -> str | None:
 
 def default_out(source: Path) -> Path:
     group = structure_group(source)
+    if group == PONDER_GROUP:
+        return PONDER_DIR
     return DEFAULT_OUT if group is None else STRUCTURE_DIR / group
 
 

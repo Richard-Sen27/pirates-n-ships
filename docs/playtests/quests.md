@@ -157,3 +157,25 @@ on half the legs; 1 to 3 ships per hunt at 90 (convoy), 150 (patrol), 120 (pirat
 ### 11.4 Toggle
 1. `quests.sea_quests = false`. Expected: no escort, convoy raid, patrol or ship hunt among new offers; quests already
    accepted still count and finish. The prize money stays (it follows `careers.prize_money`; 0 turns it off).
+
+## 12. QST2b: escorts chart their lane off the tick
+Accepting an escort no longer searches a sea lane on the server tick. A cached lane sails the convoy at once (as in
+§11.1); otherwise the quest waits in a "charting" state while the voyage scheduler searches the lane a few
+milliseconds per check (`world_simulation.lanes.millis_per_check`), and the next quest poll after it is ready sails the convoy.
+1. In a fresh world, find a village and another village or navy outpost across the sea that no convoy has sailed between
+   yet. `/pirates quest offer <village id> escort` (repeat until it names that destination) and accept it at the desk.
+   Expected: no lag spike on accepting; "The harbor master is charting the route; the convoy sails as soon as it is
+   ready"; the Quests tab shows the escort with "charting the route, reward N (from …)"; no ship leaves yet.
+2. Wait (usually seconds; long routes over unexplored sea longer). Expected: "The <name> sets sail now. Keep within 96
+   blocks of her until she makes port", the quest shows "Escort the <name> to …" and a convoy leaves the harbour; the
+   escort then plays as in §11.1.
+3. Accept another escort to the same destination. Expected: the lane is cached now, the convoy sails at once with no
+   charting message.
+4. Set `quests.escort_chart_timeout_ticks = 20` and `world_simulation.enabled = false` (no lane search runs), accept an escort
+   to an uncharted destination. Expected: about a second later "The harbor master could not chart the route to … in
+   time; the escort is called off"; the quest is gone from the tab and `/pirates quest list` shows no new failure.
+5. An escort to a port with no sea route (an inland village, if one has a desk): Expected: "The harbor master found no
+   sea route to …; the escort is called off" once the search fails (or "No convoy can sail there now" on accepting if
+   the failure was already known).
+6. Operators: `/pirates world voyages spawn convoy <from> <to>` between two uncharted ports still sails a ship at once
+   (the command charts synchronously).

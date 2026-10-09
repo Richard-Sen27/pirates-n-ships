@@ -47,7 +47,8 @@ public record SceneText(String scene, String title, List<SceneLine> lines) {
             of(CrewSceneText.SHIPS_BELL, CrewSceneText.Bell.TITLE, CrewSceneText.Bell.values()),
             of(CrewSceneText.GALLEY_AND_PROVISIONS, CrewSceneText.Galley.TITLE, CrewSceneText.Galley.values()),
             of(CrewSceneText.HAMMOCKS_AND_REST, CrewSceneText.Rest.TITLE, CrewSceneText.Rest.values()),
-            of(CrewSceneText.SWIVEL_GUN, CrewSceneText.Swivel.TITLE, CrewSceneText.Swivel.values()));
+            of(CrewSceneText.SWIVEL_GUN, CrewSceneText.Swivel.TITLE, CrewSceneText.Swivel.values()),
+            of(CrewSceneText.OARS, CrewSceneText.Oars.TITLE, CrewSceneText.Oars.values()));
 
     /** The scene's id, {@code pirates_n_ships:<scene>}. */
     public ResourceLocation id() {

@@ -15,6 +15,7 @@ public final class CrewSceneText {
     public static final String GALLEY_AND_PROVISIONS = "galley_and_provisions";
     public static final String HAMMOCKS_AND_REST = "hammocks_and_rest";
     public static final String SWIVEL_GUN = "swivel_gun";
+    public static final String OARS = "oars";
 
     private CrewSceneText() {
     }
@@ -246,6 +247,33 @@ public final class CrewSceneText {
         @Override
         public String scene() {
             return SWIVEL_GUN;
+        }
+
+        @Override
+        public String english() {
+            return english;
+        }
+    }
+
+    /** {@link OarsScene} (sailing/oars, design.md §5.3b). */
+    public enum Oars implements SceneLine {
+        ROW("Row on the whistle: every hand who is not at a station takes an oar. No block is needed"),
+        RAIL("Without a bench a hand rows standing at the rail, the sides taken in turn so the ship runs straight"),
+        PUSH("Each oar pushes along the bow, in a calm or against the wind, up to 3 blocks a second; sails add to it"),
+        BENCH("An oar bench at the rail is a station: a hand seated on it pulls a quarter harder than one standing"),
+        SHIP("Use the same entry again, now Ship oars, or give any other order: the oars come in and the hands go back"),
+        FASTER("The hands ship the oars by themselves once the sails drive the ship faster than the oars can");
+
+        static final String TITLE = "Oars";
+        private final String english;
+
+        Oars(String english) {
+            this.english = english;
+        }
+
+        @Override
+        public String scene() {
+            return OARS;
         }
 
         @Override

@@ -1,17 +1,17 @@
 package com.richardsenger.piratesnships.combat.grapple;
 
+import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.content.CombatContent;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
+import com.richardsenger.piratesnships.core.gametest.ShipTrack;
 import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests.Fixture;
-import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
@@ -22,7 +22,6 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3d;
 
 import java.util.Collection;
 
@@ -94,19 +93,6 @@ public final class GrappleHaulGameTests {
                 new ItemStack(CombatContent.GRAPPLING_HOOK.get()), true);
     }
 
-    private static Vec3 comWorld(ShipBody ship) {
-        Vector3d c = new Vector3d();
-        if (!ship.centerOfMass(c)) {
-            throw new GameTestAssertException("no center of mass");
-        }
-        Vector3d w = ship.toWorld(c, new Vector3d());
-        return new Vec3(w.x, w.y, w.z);
-    }
-
-    private static double horizontal(Vec3 a, Vec3 b) {
-        return Math.hypot(a.x - b.x, a.z - b.z);
-    }
-
     private static Vec3 hand(Player p) {
         return p.getEyePosition().subtract(0, GrapplingHookEntity.HAND_BELOW_EYES, 0);
     }
@@ -126,24 +112,30 @@ public final class GrappleHaulGameTests {
     // ------------------------------------------------------------------ hauling
 
     /**
-     * The human's case: the player sneaks (the rope freezes at about 6.7 blocks) and backs two blocks away; within 5 s
-     * the hull has come at least one block toward the player, the rope looks taut while it pulls, and no substep pulled
-     * harder than the cap.
+     * The human's case: the player sneaks (the rope freezes at about 6.7 blocks) and backs two blocks away; within about
+     * 5 s the hull has come at least one block toward the player, the rope looks taut while it pulls, and no substep
+     * pulled harder than the cap.
+     *
+     * <p>The hull comes in at about 0.2 m/s on average and slows toward the end, so its motion is the integrated
+     * velocity ({@link ShipTrack}, docs/sable-notes.md §9.0l). PHY1 measured both over five runs: at x=969 the pose
+     * and the integral agreed (1.005 blocks after 102 ticks), at x from -2,000 to -2,872 the pose read 1.003-1.007
+     * where the integral gave 0.944-0.964, rounded up by whole f32 steps (1.06 against 1.00 at x=3,139). By the integral
+     * the hull needs 102 ticks for the block (five more runs), and the old timeout left the check 103: the timeout is 160
+     * now, the bound stays one block.
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 130, batch = BATCH + "pull")
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 160, batch = BATCH + "pull")
     public static void sneakingFreezesTheRopeAndBackingAwayHaulsTheShip(GameTestHelper h) {
         Fixture f = quay(h, MAX_FORCE);
         ServerLevel level = h.getLevel();
         Player player = onQuay(h, 3.5);
         GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
-        double[] startX = {0};
         double[] frozenAt = {0};
+        ShipTrack track = ShipTrack.follow(h, f.ship(), null, 25);
         h.runAfterDelay(20, () -> hook[0] = hookShip(level, player, f));
         h.runAfterDelay(25, () -> {
             GrapplingHookEntity g = hook[0];
             assertLatched(h, g, f);
             h.assertTrue(!g.haul().frozen() && !g.taut(), "the rope is frozen or taut before sneaking");
-            startX[0] = comWorld(f.ship()).x;
             player.setShiftKeyDown(true);
         });
         h.runAfterDelay(26, () -> {
@@ -165,32 +157,39 @@ public final class GrappleHaulGameTests {
             h.assertTrue(!g.isRemoved() && g.haul().frozen(), "the rope let go or unfroze");
             h.assertTrue(g.haul().peakTension() <= MAX_FORCE + 1.0e-9, "a substep pulled with " + g.haul().peakTension());
             h.assertTrue(g.haul().frozenLength() <= frozenAt[0] + 1.0e-9, "the rope slipped below the cap: " + g.haul().frozenLength());
-            double moved = startX[0] - comWorld(f.ship()).x;
-            h.assertTrue(moved >= 1.0, "the hull came only " + moved + " blocks toward the player");
+            double moved = -track.dx(); // the player stands west (-x) of the hull
+            h.assertTrue(moved >= 1.0, "the hull came only " + moved + " blocks toward the player: " + track);
+            Constants.LOG.info("[grapple test] haul: {} blocks after {} ticks, {}", moved, h.getTick() - 25, track);
             finish(g, f);
         }));
     }
 
-    /** Without sneak the rope pays out: the player backs off and the hull stays (no passive drag from a hand on land). */
+    /**
+     * Without sneak the rope pays out: the player backs off and the hull stays (no passive drag from a hand on land).
+     * "Stays" is a drift below 0.2 blocks in 5 s, so it is measured by the integrated velocity ({@link ShipTrack},
+     * docs/sable-notes.md §9.0l): by the pose a drift of 0.1 blocks can read as 0 or as twice that, depending on where
+     * the grid put the test.
+     */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 160, batch = BATCH + "pay_out")
     public static void withoutSneakTheRopePaysOutAndTheShipStays(GameTestHelper h) {
         Fixture f = quay(h, MAX_FORCE);
         ServerLevel level = h.getLevel();
         Player player = onQuay(h, 3.5);
         GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
-        Vec3[] start = new Vec3[1];
+        ShipTrack track = ShipTrack.follow(h, f.ship(), null, 25);
         h.runAfterDelay(20, () -> hook[0] = hookShip(level, player, f));
         h.runAfterDelay(25, () -> {
             assertLatched(h, hook[0], f);
-            start[0] = comWorld(f.ship());
             stand(h, player, 1.5);
         });
         h.runAfterDelay(125, () -> {
+            track.stop();
             GrapplingHookEntity g = hook[0];
             h.assertTrue(!g.isRemoved(), "the rope let go");
             h.assertTrue(!g.haul().frozen() && g.haul().pullingSubsteps() == 0 && !g.taut(), "the rope pulled without sneak");
-            double moved = horizontal(start[0], comWorld(f.ship()));
-            h.assertTrue(moved < 0.2, "the hull moved " + moved + " blocks on a rope paying out");
+            Constants.LOG.info("[grapple test] pay out: {}", track);
+            double moved = track.travel();
+            h.assertTrue(moved < 0.2, "the hull moved " + moved + " blocks on a rope paying out: " + track);
             finish(g, f);
             h.succeed();
         });

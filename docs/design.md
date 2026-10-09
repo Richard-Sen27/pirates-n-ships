@@ -77,7 +77,7 @@ common/      ~80–90% of the code. Vanilla Minecraft + sable-common only.
 neoforge/    Thin layer: @Mod entrypoint, platform service implementations,
              registration timing, event wiring, NeoForge-only datagen extras.
 fabric/      Same thin layer for Fabric (ModInitializer / ClientModInitializer).
-             Enabled since FAB1 (2026-10-09): Gradle 9.5, Loom 1.17, the server side ported and all GameTests green on Fabric; the client side is FAB2 (`docs/fabric.md`).
+             Enabled since FAB1 (2026-10-09): Gradle 9.5, Loom 1.17, the server side ported and all GameTests green on Fabric (FAB1), the client ported (FAB2) and released beside NeoForge (REL2); GuideME has no Fabric build, so Fabric ships without the guide book (`docs/fabric.md`).
 ```
 
 **Hard rules:**

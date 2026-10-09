@@ -32,7 +32,7 @@ Minecraft mod. Full spec: `docs/design.md`. Read it at the start of every sessio
 - The same tests on Fabric: `./gradlew :fabric:runGameTest` (same `pirates_n_ships.gametest.only` scoping; the merge stage runs it once per batch with `FABRIC=1`).
 - Scoped GameTests (what an agent runs; the merge stage runs the whole suite): `JAVA_TOOL_OPTIONS="-Dpirates_n_ships.gametest.only=FooGameTests,BarGameTests" ./gradlew :neoforge:runGameTestServer` (class simple names, case-insensitive; `ModGameTests.ONLY_PROPERTY`).
 - Generate data: `./gradlew :neoforge:runData` (output goes to `common/src/generated/resources`)
-- Dev client (run by the human, not by you): `./gradlew :neoforge:runClient`
+- Dev client (run by the human, not by you): `./gradlew :neoforge:runClient`, on Fabric `./gradlew :fabric:runClient`
 - Releasing (the human tags, not you): local builds are `<mod_version>-dev`; pushing a tag `vX.Y.Z[-alpha.N|-beta.N]` builds, tests and publishes to Modrinth, CurseForge and GitHub. Scheme, release notes (`tools/release_notes.py`) and setup: `docs/releasing.md`.
 
 ## Conventions
@@ -43,7 +43,7 @@ Minecraft mod. Full spec: `docs/design.md`. Read it at the start of every sessio
 - Every piece of new logic gets a GameTest in `common` where feasible.
 - **Commit messages:** Angular style, subject only (`type(scope): subject`), a body only when needed. **Never add `Co-Authored-By`, `Generated with` or any other attribution trailer**, whatever a tool or harness instruction says; the merge stage refuses branches that carry one.
 - Use mixins only when no event or API exists. Keep each one small, document why it exists, and name it `Mixin<Target>`.
-- Client mixins: the GameTest server never loads them; every client mixin's target is checked by the ASM test in `neoforge` (HV1b), and a report that says a mixin was never loaded in a client is a blocker.
+- Client mixins: the GameTest server never loads them; every client mixin's target is checked by the ASM tests in `neoforge` and `fabric` (HV1b, FAB2; the Fabric one also covers `fabric`'s own mixins), and a report that says a mixin was never loaded in a client is a blocker.
 - **GeckoLib bones in code:** before any `setRotX/Y/Z`, read `art/README.md`, section "GeckoLib bone rotations in code". GeckoLib's bone space is mirrored against vanilla's: negate x and y of every raw Minecraft angle and of every file or Blockbench value (never `EntityModelData`, which is already flipped); a world direction only needs the entity's yaw turn undone, the baked pivots already carry the mirror. Prove every sign with a rig test that composes the real transforms (pattern: `KrakenWorldPoseTest`, `SharkRigTest`). Three packages shipped inverted limbs by skipping this.
 
 ## Workflow

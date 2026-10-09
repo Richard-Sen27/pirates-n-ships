@@ -13,7 +13,7 @@ and 5 GameTests. What only a client shows: how the sloop floats, how the turned 
 3. **Rig:** figurehead, nameplate, helm, winch, capstan and pump face sensibly after rotation; try all four facings
    without `assemble` and note any block that faces wrong (the cleat and the capstan are unchecked).
 4. **Sailing:** board, use the sail winch (furled, half, full), set a wind with `/pirates wind set <from> 8`: the ship
-   moves and the helm steers; optional jib with a rope from the mast-head cleat to the bowsprit cleat.
+   moves and the helm steers; optional jib with a rope from the head cleat above the upper yard to the bowsprit cleat.
 5. **Refusal:** `/pirates ship place starter_sloop` facing land: "Something is in the way at x y z (add force …)"; on
    open water without `assemble` the hull stands in the water with a dry hold and helm-use assembles it.
 
@@ -67,3 +67,40 @@ survival with 1000 doubloons, 128 logs (any kind) and 64 wool (any colour) in th
     orders" and lists nothing; an open order can still be picked up. Turn it back on.
 11. **Lost order:** not needed in game (covered by a GameTest): a receipt whose port record is gone says "This order
     was lost" and stays.
+
+## TPL3: the sloops follow the yard rule, the jib kept
+
+`starter_sloop`, `navy_sloop_armed` and `pirate_sloop_armed` now carry both yards one block **forward** of the mast
+(z 12, the mast at z 13), the mast one unbroken column of logs, and the jib's cleats in the yards' column: the head
+cleat right above the upper yard [4, 17, 12], the clew cleat right below the lower yard [4, 9, 12], the tack on the
+bowsprit one block in from its tip [4, 7, 1]. The rule change behind it: a triangular sail's clew search (from the head
+down to the clew) passes yard blocks as well as air and mast; a square sail still needs only air or mast between its
+yards' middles.
+
+Prepare: creative, a flat stretch of open sea, `/pirates wind set 180 8` (wind from the south, dead astern of a ship
+heading north).
+1. **Starter sloop:** stand at the shore facing the sea, `/pirates ship place starter_sloop assemble`.
+   - **Expected:** both yards stand in front of the mast (seen from the side, the mast runs straight from the deck to
+     the masthead behind them, no yard cuts through it); the head cleat sits on the mast's fore face just above the
+     upper yard, the clew cleat just below the lower yard; one cleat on the bowsprit.
+2. **Square sail:** use the sail winch to half, then full.
+   - **Expected:** the square cloth hangs from the upper yard to the lower one in front of the mast, bellies downwind,
+     and does not flicker through the mast more than a real sail would; the ship gathers way as before.
+3. **Jib:** take a rope, use it on the head cleat above the upper yard, then on the bowsprit cleat.
+   - **Expected:** the rope is used up, a stay runs from the head to the bowsprit, and with the winch at half or full
+     the jib's cloth fills the triangle head, bowsprit, clew: its after edge runs straight down past both yards to the
+     clew cleat below the lower yard. Both sails draw at once; the square sail does not vanish when the jib is rigged.
+     Report how the jib's edge looks where it passes the yards (cloth through the yard beam, a gap, z-fighting).
+4. **Navy armed sloop:** `/pirates ship place navy_sloop_armed assemble` beside it, repeat steps 2 and 3.
+   - **Expected:** as on the starter sloop; the crow's nest on the mast top, the ratlines untouched by the cloth.
+5. **Lookout's climb:** on the navy sloop walk up the port ratlines from the quarterdeck toward the bow without
+   jumping, into the top sloped net beside the mast (right above and behind the upper yard's end), face the mast, push
+   forward up the hung net and step sideways into the crow's nest.
+   - **Expected:** a continuous climb without a jump; the top sloped net stays put (it stands on the net below it, the
+     yard is now in front of it); nothing blocks the way into the nest.
+6. **Pirate armed sloop:** `/pirates ship place pirate_sloop_armed assemble`: the same rig as the navy sloop.
+7. **NPC ships:** `/pirates world voyages` and spawn or meet a navy patrol (`/pirates world materialize` near one):
+   its yards stand forward of the mast, its lookout climbs to the nest.
+
+Report: a screenshot of each sloop from the side with both sails set, one of the jib's edge passing the yards, and
+`latest.log`.

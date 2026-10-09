@@ -2236,9 +2236,9 @@ z 25, so the hold was open to the sea); the generator now puts a bottom plank un
 
 | template | source | what it is | for |
 |---|---|---|---|
-| `starter_sloop` | `starter_sloop.py` | single-mast sloop, forecastle and stern cabin, 683 blocks | shipwright (400), merchant convoys |
+| `starter_sloop` | `starter_sloop.py` | single-mast sloop, forecastle and stern cabin, 685 blocks | shipwright (400), merchant convoys |
 | `starter_sloop_basic` | hand-built `.schem` | the same hull, fewer fittings | shipwright (300), merchant convoys |
-| `navy_sloop_armed` | `navy_sloop_armed.py` | the starter sloop with four guns, a shot locker, a crow's nest with ratlines on both sides up to it and the flag on a taffrail ensign staff, 715 blocks | navy patrols (not sold) |
+| `navy_sloop_armed` | `navy_sloop_armed.py` | the starter sloop with four guns, a shot locker, a crow's nest with ratlines on both sides up to it and the flag on a taffrail ensign staff, 717 blocks | navy patrols (not sold) |
 | `pirate_sloop_armed` | `pirate_sloop_armed.py` | the same blocks as `navy_sloop_armed` | pirate raiders, pirate captains' voyages (not sold) |
 
 **Armed sloops (WS4c):** `navy_sloop_armed.py` and `pirate_sloop_armed.py` import `armed_spec` from
@@ -2253,22 +2253,29 @@ reach of a gun counts as its locker. `ArmedSloopLayoutTest` diffs the armed stru
 and checks the guns, ports and reach. `starter_sloop.py` run on its own still prints the starter sloop byte for byte.
 Rebuild all three with the steps above (lab, then `schem_to_structure.py`).
 
+**The yard rule on the sloops (TPL3):** both yards stand at z 12, one block forward of the mast (z 13), which runs
+unbroken from the keelson to the masthead; the jib's head cleat sits right above the upper yard [4, 17, 12], its clew
+cleat right below the lower yard [4, 9, 12] (F5b's clew search passes yard blocks since TPL3), the tack on the bowsprit
+one block in from its tip [4, 7, 1], so the jib is 0.5 x 8 x 11 = 44 blocks² (42 before). `starter_sloop.py` places
+them; `ArmedSloopLayoutTest.theYardsStandForwardOfTheMastAndTheJibStillSets` checks all three sloops with the pure
+sail rules. The lab's previews are in `art/renders/ships/`.
+
 **Crow's nest and ratlines (TPL2):** `armed_spec` also applies `lookout()` (after `armed()`): the **crow's nest**
 (`pirates_n_ships:crows_nest`) sits on the mast top at [4, 20, 13] where the flag was, so the flag moves to a two-block
 **ensign staff** (flagpole `part=bottom` / `part=top`) on the taffrail rail at [4, 9..10, 27], with open air round its
 head for the cloth. A run of **ratlines** on each side of the mast (x 3, port, and x 5, starboard) climbs from the
 quarterdeck beside the helm to the masthead: ten **sloped** links (`kind=slope, facing=north`, one up and one toward
-the bow each) from [x, 8, 22] on the quarterdeck to [x, 17, 13], the last one lying on the upper yard's end right beside
-the mast (RL1b: the yard is a ratlines anchor), then two links **hung** on the mast's west / east face
+the bow each) from [x, 8, 22] on the quarterdeck to [x, 17, 13], the last one right beside the mast, above and abaft
+the upper yard's end (TPL3: the yards moved one block forward, so it stands on the link below it), then two links **hung** on the mast's west / east face
 (`kind=wall, facing=west|east`) at [x, 18..19, 13] straight above it; at the top a climber steps sideways into the
-nest. Why this way: the yards' 6 px beams fill the mast's sides at y 10 and 16, so a hung run on the mast cannot pass
-them (a net on a sail's yard is only allowed on the yard's end, outside the cloth), and the jib's stay and cleats
-occupy the plane x 4 forward of the mast, so the runs stay at x 3 and 5 and aft. The top sloped link touches the mast
+nest. Why this way (TPL2, before the yards moved forward): a hung run on the mast had to pass the yards and the
+cloth in front of it, and the jib's stay and cleats occupy the plane x 4 forward of the mast, so the runs stay at x 3
+and 5 and aft. The top sloped link touches the mast
 and is climbable, so the climb is continuous: no jump from the slope onto the hung net. The sloped links lie outside the square
-sail's cloth envelope (the cloth stands off the yards' plane z 13 by `ClothGeometry.clearance` plus the deepest VIS1b
+sail's cloth envelope (the cloth stands off the yards' plane z 12 by `ClothGeometry.clearance` plus the deepest VIS1b
 belly and flutter at the default `sail_visuals`, bellied either way), the hung ones above the upper yard; the yards,
 the sail (F5a: only air or mast between the yards' middle blocks) and the jib are untouched. Climbing: walk up the
-slope toward the bow into its top link on the upper yard's end, face the mast and push against it (no jump) up the
+slope toward the bow into its top link beside the mast, face the mast and push against it (no jump) up the
 hung net, step over into the nest. `ArmedSloopLayoutTest` pins the nest, the staff and every link (continuity,
 supports, the cloth and jib clearance); `ArmedShipGameTests.aPlayerClimbsTheRatlinesToTheNest` climbs it with a mock
 player without jumping on the structure placed on land, and `theRatlinesStandOnTheAssembledSloop` checks every link

@@ -387,7 +387,8 @@ and after it came back, `latest.log`, and anything a deckhand did that looked wr
 
 The armed navy and pirate sloops now carry a **crow's nest** on the mast top (the flag moved to a staff on the
 taffrail) and **ratlines** on both sides of the mast: sloped from the quarterdeck beside the helm up toward the bow,
-the last sloped net lying on the upper yard's end beside the mast (RL1b), then hung on the mast above it up to the
+the last sloped net beside the mast right above and abaft the upper yard's end (TPL3: the yards stand one block
+forward of the mast, so the net stands on the one below it), then hung on the mast above it up to the
 nest, one climb without a jump. A materialised NPC ship sends
 one of its deckhands up as the **lookout** (`world_simulation.materialize.man_lookout`, default on; he is one of the
 `crew_per_ship`, so one deckhand fewer works the sails), so its nest counts as manned (LAW4: a navy patrol watching
@@ -398,7 +399,7 @@ alone if that is longer than a nameplate's 50 characters), shown in the ship's r
 
 Covered headless: (JUnit `ArmedSloopLayoutTest`) the armed sloops differ from the starter sloop only by the guns,
 ports, locker, the nest where the flag was, the two-block staff and the 24 ratlines; each run climbs link by link from
-the quarterdeck to beside the nest, its top sloped link lies on the upper yard's end beside the mast with the hung
+the quarterdeck to beside the nest, its top sloped link sits beside the mast above and abaft the upper yard's end with the hung
 links straight above it on mast logs, and no link enters the
 square sail's cloth envelope (bellied either way at the default `sail_visuals`) or the jib's plane; the starter sloop
 is unchanged (`SchemToStructureTest`). (`CaptainShipNamesTest`) the naming rule. (`ArmedShipGameTests`) the armed

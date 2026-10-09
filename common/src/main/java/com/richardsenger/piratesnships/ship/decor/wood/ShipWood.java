@@ -4,6 +4,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.properties.WoodType;
 
 import java.util.List;
 
@@ -103,6 +104,23 @@ public enum ShipWood {
             case BAMBOO -> SoundType.BAMBOO_WOOD;
             case CRIMSON, WARPED -> SoundType.NETHER_WOOD;
             default -> SoundType.WOOD;
+        };
+    }
+
+    /** The vanilla wood type (RAIL3: the railing gate swings with that wood's fence-gate sounds). */
+    public WoodType woodType() {
+        return switch (this) {
+            case OAK -> WoodType.OAK;
+            case SPRUCE -> WoodType.SPRUCE;
+            case BIRCH -> WoodType.BIRCH;
+            case JUNGLE -> WoodType.JUNGLE;
+            case ACACIA -> WoodType.ACACIA;
+            case DARK_OAK -> WoodType.DARK_OAK;
+            case MANGROVE -> WoodType.MANGROVE;
+            case CHERRY -> WoodType.CHERRY;
+            case BAMBOO -> WoodType.BAMBOO;
+            case CRIMSON -> WoodType.CRIMSON;
+            case WARPED -> WoodType.WARPED;
         };
     }
 }

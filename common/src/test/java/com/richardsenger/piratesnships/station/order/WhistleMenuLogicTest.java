@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.cannon.CannonStation.CannonOrder;
+import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import com.richardsenger.piratesnships.station.capstan.AnchorOrder;
 import com.richardsenger.piratesnships.station.pump.PumpOrder;
 import com.richardsenger.piratesnships.station.winch.SailOrder;
@@ -120,12 +121,14 @@ class WhistleMenuLogicTest {
     void entriesAreTheSailOrdersThenPumpThenTheGunOrdersThenTheAnchorThenRelease() {
         List<WhistleOrder> e = WhistleOrder.entries();
         assertEquals(List.of(WhistleOrder.HOIST, WhistleOrder.REEF, WhistleOrder.FURL, WhistleOrder.PUMP, WhistleOrder.FIRE,
-                WhistleOrder.LOAD, WhistleOrder.FIRE_AT_WILL, WhistleOrder.DROP_ANCHOR, WhistleOrder.RAISE_ANCHOR, WhistleOrder.RELEASE), e);
-        assertEquals(AnchorOrder.DROP_ANCHOR, WhistleOrder.DROP_ANCHOR.order());
-        assertEquals(AnchorOrder.RAISE_ANCHOR, WhistleOrder.RAISE_ANCHOR.order());
-        assertEquals("drop_anchor", WhistleOrder.DROP_ANCHOR.id());
-        assertEquals("raise_anchor", WhistleOrder.RAISE_ANCHOR.id());
-        assertNull(WhistleOrder.DROP_ANCHOR.sail());
+                WhistleOrder.LOAD, WhistleOrder.FIRE_AT_WILL, WhistleOrder.ANCHOR, WhistleOrder.RELEASE), e);
+        // WHS1: one anchor entry; its crew order follows the anchor's state
+        assertNull(WhistleOrder.ANCHOR.order(), "the toggle has no fixed order");
+        assertTrue(WhistleOrder.ANCHOR.followsAnchor());
+        assertEquals("anchor", WhistleOrder.ANCHOR.id());
+        assertNull(WhistleOrder.ANCHOR.sail());
+        assertTrue(WhistleOrder.byId("drop_anchor").isEmpty() && WhistleOrder.byId("raise_anchor").isEmpty(),
+                "the two old entries are gone from the wheel (the command keeps them)");
         assertEquals(CannonOrder.FIRE_AT_WILL, WhistleOrder.FIRE_AT_WILL.order());
         assertEquals("fire_at_will", WhistleOrder.FIRE_AT_WILL.id());
         assertNull(WhistleOrder.FIRE_AT_WILL.sail());
@@ -146,17 +149,64 @@ class WhistleMenuLogicTest {
         for (WhistleOrder o : e) {
             if (o.sail() != null) assertEquals(o.sail(), o.order());
         }
-        // every crew order has an entry
+        // every crew order has an entry (the anchor's two through the toggle)
         for (CrewOrder c : CrewOrder.all()) {
-            assertTrue(e.stream().anyMatch(o -> o.order() == c), "no entry for " + c);
+            assertTrue(e.stream().anyMatch(o -> o.orders().contains(c)), "no entry for " + c);
+        }
+        for (WhistleOrder o : e) {
+            if (!o.followsAnchor()) assertEquals(o.order() == null ? List.of() : List.of(o.order()), o.orders());
         }
         assertEquals(Constants.id("bilge_pump"), WhistleOrder.PUMP.icon());
     }
 
+    // ------------------------------------------------------------------ anchor toggle (WHS1)
+
+    /** The toggle's direction: drop while stowed, coming up or unknown; weigh while running out or holding. */
     @Test
-    void tenEntriesSplitTheWheelEvenly() {
+    void theAnchorToggleTakesTheDirectionTheStateNeeds() {
+        assertEquals(AnchorOrder.DROP_ANCHOR, AnchorOrder.toggle(null));
+        assertEquals(AnchorOrder.DROP_ANCHOR, AnchorOrder.toggle(AnchorState.Phase.RAISED));
+        assertEquals(AnchorOrder.DROP_ANCHOR, AnchorOrder.toggle(AnchorState.Phase.RAISING), "coming up: let go again");
+        assertEquals(AnchorOrder.RAISE_ANCHOR, AnchorOrder.toggle(AnchorState.Phase.DROPPING), "running out: weigh again");
+        assertEquals(AnchorOrder.RAISE_ANCHOR, AnchorOrder.toggle(AnchorState.Phase.HOLDING));
+        for (AnchorState.Phase ph : AnchorState.Phase.values()) {
+            assertEquals(AnchorOrder.toggle(ph), WhistleOrder.ANCHOR.order(ph), "the entry gives the toggle's order");
+            assertEquals(WhistleOrder.HOIST.order(), WhistleOrder.HOIST.order(ph), "other entries ignore the anchor");
+            assertNull(WhistleOrder.RELEASE.order(ph));
+        }
+        // the same rule as a player's use of the capstan (ShipControls#useCapstan): it raises an anchor that is out
+        for (AnchorState.Phase ph : AnchorState.Phase.values()) {
+            boolean out = ph == AnchorState.Phase.DROPPING || ph == AnchorState.Phase.HOLDING;
+            assertEquals(out ? AnchorOrder.RAISE_ANCHOR : AnchorOrder.DROP_ANCHOR, AnchorOrder.toggle(ph), ph.name());
+        }
+    }
+
+    /** The label: "Drop anchor" while stowed or raising (or unknown), "Raise anchor" while dropping or holding. */
+    @Test
+    void theAnchorLabelFollowsTheState() {
+        String drop = "whistle_order.pirates_n_ships.drop_anchor";
+        String raise = "whistle_order.pirates_n_ships.raise_anchor";
+        assertEquals(drop, WhistleOrder.anchorKey(AnchorOrder.DROP_ANCHOR));
+        assertEquals(raise, WhistleOrder.anchorKey(AnchorOrder.RAISE_ANCHOR));
+        assertEquals(drop, WhistleOrder.ANCHOR.nameKey(null));
+        assertEquals(drop, WhistleOrder.ANCHOR.nameKey(AnchorState.Phase.RAISED));
+        assertEquals(drop, WhistleOrder.ANCHOR.nameKey(AnchorState.Phase.RAISING));
+        assertEquals(raise, WhistleOrder.ANCHOR.nameKey(AnchorState.Phase.DROPPING));
+        assertEquals(raise, WhistleOrder.ANCHOR.nameKey(AnchorState.Phase.HOLDING));
+        assertEquals(drop + ".desc", WhistleOrder.ANCHOR.descriptionKey(AnchorState.Phase.RAISED));
+        assertEquals(raise + ".desc", WhistleOrder.ANCHOR.descriptionKey(AnchorState.Phase.HOLDING));
+        for (AnchorState.Phase ph : AnchorState.Phase.values()) {
+            // the label names the order the server gives for the same state
+            assertEquals(WhistleOrder.anchorKey((AnchorOrder) WhistleOrder.ANCHOR.order(ph)), WhistleOrder.ANCHOR.nameKey(ph));
+            assertEquals(WhistleOrder.FURL.nameKey(), WhistleOrder.FURL.nameKey(ph));
+            assertEquals(WhistleOrder.FURL.descriptionKey(), WhistleOrder.FURL.descriptionKey(ph));
+        }
+    }
+
+    @Test
+    void nineEntriesSplitTheWheelEvenly() {
         RadialLayout l = RadialLayout.forWindow(WhistleOrder.entries().size(), 480, 270, 1.0);
-        assertEquals(10, l.count());
+        assertEquals(9, l.count());
         for (int i = 0; i < l.count(); i++) {
             double a = l.centerAngle(i);
             assertEquals(i, l.sectorAt(RadialLayout.x(a, l.iconRadius()), RadialLayout.y(a, l.iconRadius())), "sector " + i);

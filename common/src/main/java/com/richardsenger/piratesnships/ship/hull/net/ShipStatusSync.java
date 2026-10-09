@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.ship.hull.net;
 
 import com.richardsenger.piratesnships.platform.Services;
+import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import com.richardsenger.piratesnships.sailing.ship.BowFrame;
 import com.richardsenger.piratesnships.sailing.ship.SailingRuntime;
 import com.richardsenger.piratesnships.sailing.ship.SailingRuntimes;
@@ -114,7 +115,10 @@ public final class ShipStatusSync {
         ShipCargo.Snapshot weighed = ShipCargo.last(level, ship.id()); // CW1's last weighing, cheap
         int load = weighed == null || weighed.level() == null ? -1 : weighed.level().ordinal();
         int fresh = ShipStatusThrottle.freshTicks(ShipConfig.SHIP_STATUS_SYNC_INTERVAL_TICKS.get());
-        return new ShipStatusPayload(ship.id(), name, (float) heading, (float) speed, rudder, load, cells, fresh).quantize();
+        // WHS1: the anchor's phase, for the label of the whistle's anchor toggle (RAISED when stowed, -1 without a runtime)
+        int anchor = sailing == null ? -1
+                : (sailing.anchor() == null ? AnchorState.Phase.RAISED : sailing.anchor().state().phase()).ordinal();
+        return new ShipStatusPayload(ship.id(), name, (float) heading, (float) speed, rudder, load, cells, fresh, anchor).quantize();
     }
 
     /** Compass bearing of the bow (0 = north) for a ship without a sailing runtime. */

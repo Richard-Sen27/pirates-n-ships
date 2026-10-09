@@ -23,7 +23,9 @@ import com.richardsenger.piratesnships.station.StationRef;
 import com.richardsenger.piratesnships.station.StationState;
 import com.richardsenger.piratesnships.station.Stations;
 import com.richardsenger.piratesnships.station.jobs.JobBoard;
+import com.richardsenger.piratesnships.station.OrderHints;
 import com.richardsenger.piratesnships.station.order.WhistleOrder;
+import com.richardsenger.piratesnships.station.order.WhistleOrderPayload;
 import com.richardsenger.piratesnships.station.order.WhistleOrders;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -150,7 +152,8 @@ public final class CapstanGameTests {
      * The whole cycle at a manned capstan: "weigh anchor" with the anchor stowed is unable; "let go the anchor" works
      * for {@code drop_ticks} with the anchor still stowed and the crew member pushing the bars, then the anchor falls
      * and lands; a second drop has nothing to do; the whistle's "Weigh anchor" starts the winding at once, the crew
-     * member pushes while it lasts, and the anchor is stowed within twice the work time the station estimated.
+     * member pushes while it lasts, and the anchor is stowed within twice the work time the station estimated. The
+     * whistle's order is the anchor toggle (WHS1): it weighs, for the anchor holds.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 500, batch = BATCH + "cycle")
     public static void crewDropsAndRaisesTheAnchor(GameTestHelper h) {
@@ -204,8 +207,10 @@ public final class CapstanGameTests {
                     h.assertTrue(t - since[0] < 2 || c.stationPose() == null, "still pushing after the drop: " + c.stationPose());
                     h.assertTrue(CrewStations.order(level, c, AnchorOrder.DROP_ANCHOR) == Stations.OrderResult.NOTHING_TO_DO,
                             "a second drop was not 'nothing to do'");
-                    WhistleOrders.Result w = WhistleOrders.handle(p, WhistleOrder.RAISE_ANCHOR.id());
-                    h.assertTrue(w.outcome() == WhistleOrders.Outcome.ISSUED && w.crew() == 1, "whistle weigh anchor: " + w);
+                    // WHS1: the whistle's one anchor toggle weighs a holding anchor
+                    WhistleOrders.Result w = WhistleOrders.handle(p, WhistleOrder.ANCHOR.id());
+                    h.assertTrue(w.outcome() == WhistleOrders.Outcome.ISSUED && w.crew() == 1, "whistle anchor toggle: " + w);
+                    h.assertTrue(Stations.state(ref).order() == AnchorOrder.RAISE_ANCHOR, "the toggle did not weigh: " + Stations.state(ref).order());
                     h.assertTrue(r.phase() == AnchorState.Phase.RAISING, "the winding did not start with the order: " + r.anchor());
                     h.assertTrue(shown(h, r.capstan()) == CapstanBlock.Phase.RAISING, "the capstan does not show the winding");
                     work[0] = remaining(ref);
@@ -263,8 +268,9 @@ public final class CapstanGameTests {
     }
 
     /**
-     * Nobody mans the capstan: the whistle's "Drop anchor" (the payload's server handler) posts it as an open job, the
-     * free hand on deck claims it in the board's pass, and the anchor goes after the work.
+     * Nobody mans the capstan: the whistle's anchor toggle (the payload's server handler) on a stowed anchor posts "let
+     * go the anchor" as an open job (WHS1), the free hand on deck claims it in the board's pass, and the anchor goes
+     * after the work.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = BATCH + "job_board")
     public static void whistleDropAnchorIsAJobForAFreeHand(GameTestHelper h) {
@@ -273,9 +279,11 @@ public final class CapstanGameTests {
         h.runAfterDelay(3, () -> {
             CrewMember c = onDeck(h, r, r.capstan().west());
             Player p = captain(h, r);
-            WhistleOrders.Result w = WhistleOrders.handle(p, "drop_anchor");
-            h.assertTrue(w.outcome() == WhistleOrders.Outcome.ISSUED && w.crew() == 0 && w.jobs() == 1, "whistle drop anchor: " + w);
-            h.assertTrue(JobBoard.jobs(r.f().ship().id()).containsKey(r.capstan()), "the unmanned capstan is no open job");
+            WhistleOrders.Result w = WhistleOrders.handle(p, new WhistleOrderPayload(WhistleOrder.ANCHOR).order());
+            h.assertTrue(w.outcome() == WhistleOrders.Outcome.ISSUED && w.crew() == 0 && w.jobs() == 1, "whistle anchor toggle: " + w);
+            JobBoard.Job job = JobBoard.jobs(r.f().ship().id()).get(r.capstan());
+            h.assertTrue(job != null, "the unmanned capstan is no open job");
+            h.assertTrue(job.order() == AnchorOrder.DROP_ANCHOR, "the toggle on a stowed anchor is no drop: " + job.order());
             h.assertTrue(r.anchor() == null, "posting the job moved the anchor");
             JobBoard.pass(level, r.f().ship().id());
             h.assertTrue(c.assignment() != null && c.assignment().pos().equals(r.capstan()), "nobody claimed the capstan: " + c.assignment());
@@ -383,7 +391,7 @@ public final class CapstanGameTests {
             h.assertTrue(CrewStations.order(level, c, AnchorOrder.DROP_ANCHOR) == Stations.OrderResult.NOT_APPLICABLE, "drop not refused");
             h.assertTrue(Stations.workTicks(level, r.ref(), AnchorOrder.DROP_ANCHOR) < 0, "a disabled capstan has work");
             CrewStations.release(level, c);
-            WhistleOrders.Result w = WhistleOrders.handle(captain(h, r), WhistleOrder.DROP_ANCHOR.id());
+            WhistleOrders.Result w = WhistleOrders.handle(captain(h, r), WhistleOrder.ANCHOR.id());
             h.assertTrue(w.jobs() == 0 && JobBoard.jobs(r.f().ship().id()).isEmpty(), "a disabled capstan became a job: " + w);
             h.assertTrue(r.anchor() == null, "the anchor went");
             h.assertTrue(ShipControls.dropAnchor(level, r.capstan()).result() == ShipControls.AnchorResult.DROPPING,
@@ -391,6 +399,57 @@ public final class CapstanGameTests {
             c.discard();
             h.succeed();
         });
+    }
+
+    /**
+     * WHS1: the anchor toggle's refusals name the direction they refused. With {@code crew_stations.capstan.enabled} off
+     * no capstan can carry an anchor order: on a stowed anchor the whistle's toggle answers "No station can let go the
+     * anchor right now"; once the anchor is let go by hand and holds, the same toggle answers "... weigh anchor ...", and
+     * the anchor stays where it is.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = CONFIG_BATCH + "toggle_refusals")
+    public static void anchorToggleRefusalsNameTheirDirection(GameTestHelper h) {
+        ConfigOverrides.during(h, CapstanConfig.ENABLED, false);
+        Rig r = rig(h);
+        ServerLevel level = h.getLevel();
+        int[] stage = {0};
+        long[] since = {0};
+        h.onEachTick(() -> {
+            long t = h.getTick();
+            switch (stage[0]) {
+                case 0 -> {
+                    if (t < 3) return;
+                    WhistleOrders.Issued d = WhistleOrders.issue(level, r.f().ship(), WhistleOrder.ANCHOR, null);
+                    assertRefused(h, d, AnchorOrder.DROP_ANCHOR);
+                    h.assertTrue(r.anchor() == null, "the refused drop moved the anchor: " + r.anchor());
+                    h.assertTrue(ShipControls.dropAnchor(level, r.capstan()).result() == ShipControls.AnchorResult.DROPPING, "drop by hand");
+                    since[0] = t;
+                    stage[0] = 1;
+                }
+                case 1 -> {
+                    if (r.phase() != AnchorState.Phase.HOLDING) {
+                        h.assertTrue(t - since[0] < LAND_TICKS, "the anchor did not land: " + r.anchor());
+                        return;
+                    }
+                    WhistleOrders.Issued w = WhistleOrders.issue(level, r.f().ship(), WhistleOrder.ANCHOR, null);
+                    assertRefused(h, w, AnchorOrder.RAISE_ANCHOR);
+                    h.assertTrue(r.phase() == AnchorState.Phase.HOLDING, "the refused weighing moved the anchor: " + r.anchor());
+                    stage[0] = 2;
+                    h.succeed();
+                }
+                default -> { }
+            }
+        });
+    }
+
+    /** {@code issued} is the "no station can ..." hint naming {@code direction}, with nobody set to work. */
+    private static void assertRefused(GameTestHelper h, WhistleOrders.Issued issued, AnchorOrder direction) {
+        h.assertTrue(issued.result().crew() == 0 && issued.result().jobs() == 0, "the refused toggle set someone to work: " + issued.result());
+        h.assertTrue(issued.message().getContents() instanceof TranslatableContents t && t.getKey().equals(OrderHints.KEY_CANNOT),
+                "not the 'no station can' hint: " + issued.message());
+        Object arg = ((TranslatableContents) issued.message().getContents()).getArgs()[0];
+        h.assertTrue(arg instanceof Component c && c.getContents() instanceof TranslatableContents n && n.getKey().equals(direction.nameKey()),
+                "the hint does not name " + direction + ": " + arg);
     }
 
     /** Runs a command as an operator at {@code pos} and returns its feedback. */

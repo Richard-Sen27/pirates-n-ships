@@ -37,7 +37,7 @@ show_me: crew_orders | Show me: giving orders
 - Sneak and use it on a hand: he is dismissed. Only you, or whoever hired him, may do so.
 - Use it in the air: the order wheel opens. Click an order, or hold the use key, aim and let go.
 
-The wheel: **Hoist**, **Reef** and **Furl sails**, **Man the pumps**, **Fire!**, **Load!**, **Fire at will**, **Drop** and **Weigh anchor**, **Release crew**.
+The wheel: **Hoist**, **Reef** and **Furl sails**, **Man the pumps**, **Fire!**, **Load!**, **Fire at will**, the anchor, **Release crew**. The anchor is one order that switches: **Drop anchor** while it is stowed or coming up, **Raise anchor** while it is out.
 
 > The ship screen at the helm gives the same orders. See [[pirates_n_ships:ships|Ships]].
 

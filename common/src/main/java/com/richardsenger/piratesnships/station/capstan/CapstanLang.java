@@ -17,10 +17,13 @@ public final class CapstanLang {
                 .add(AnchorOrder.RAISE_ANCHOR.nothingToDoKey(), "The anchor is stowed, captain")
                 .add(AnchorOrder.DROP_ANCHOR.unableKey(), "No ground in the chain's reach, captain!")
                 .add(AnchorOrder.RAISE_ANCHOR.unableKey(), "The anchor is stowed already, captain")
-                .add(WhistleOrder.DROP_ANCHOR.nameKey(), "Drop anchor")
-                .add(WhistleOrder.DROP_ANCHOR.descriptionKey(), "Crew at the capstan let the anchor go")
-                .add(WhistleOrder.RAISE_ANCHOR.nameKey(), "Weigh anchor")
-                .add(WhistleOrder.RAISE_ANCHOR.descriptionKey(), "Crew at the capstan heave the anchor in until it is stowed")
+                // WHS1: the one anchor toggle, labelled by the anchor's state, and its name where no state is known
+                .add(WhistleOrder.ANCHOR.nameKey(), "Drop or raise anchor")
+                .add(WhistleOrder.ANCHOR.descriptionKey(), "Crew at the capstan let the anchor go, or heave it in when it is out")
+                .add(WhistleOrder.anchorKey(AnchorOrder.DROP_ANCHOR), "Drop anchor")
+                .add(WhistleOrder.anchorKey(AnchorOrder.DROP_ANCHOR) + ".desc", "Crew at the capstan let the anchor go")
+                .add(WhistleOrder.anchorKey(AnchorOrder.RAISE_ANCHOR), "Raise anchor")
+                .add(WhistleOrder.anchorKey(AnchorOrder.RAISE_ANCHOR) + ".desc", "Crew at the capstan heave the anchor in until it is stowed")
                 .add(ShipControls.KEY_ALREADY_OUT, "The anchor is out already")
                 .add(ShipControls.KEY_STOWED, "The anchor is stowed");
     }

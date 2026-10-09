@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.law.brig;
 
+import java.util.Collection;
 import net.minecraft.util.RandomSource;
 
 /**
@@ -11,7 +12,8 @@ import net.minecraft.util.RandomSource;
  *   <li>If its own faction captures the ship it is freed, whether escapes are enabled or not (being rescued is not
  *       an escape attempt).</li>
  * </ul>
- * The morale and ship-capture inputs have no source yet (crews and ship capture come later).
+ * The morale input comes from the crew of the ship the prisoner is held on ({@link #crewMoraleLow}, FIX1); the
+ * ship-capture input has no source yet (ship capture comes later).
  */
 public final class EscapeRule {
 
@@ -40,6 +42,19 @@ public final class EscapeRule {
         }
         if (p <= 0.0) return Decision.STAY;
         return p >= 1.0 || random.nextDouble() < p ? Decision.ESCAPE : Decision.STAY;
+    }
+
+    /**
+     * Whether the crew guarding a prisoner has low morale: the average morale of the crew aboard the prisoner's ship
+     * is below {@code threshold} ({@code crew.desertion.desert_below}, the line under which a hand counts toward
+     * desertion). No crew (no ship, or a ship without hands) is not low: there is no crew whose morale could sink,
+     * and a cell holds as it did before crews existed.
+     */
+    public static boolean crewMoraleLow(Collection<Integer> crewMorale, int threshold) {
+        if (crewMorale.isEmpty()) return false;
+        double sum = 0;
+        for (int m : crewMorale) sum += m;
+        return sum / crewMorale.size() < threshold;
     }
 
     /** Converts a chance per minute (1200 ticks) into a chance per check every {@code intervalTicks}. */

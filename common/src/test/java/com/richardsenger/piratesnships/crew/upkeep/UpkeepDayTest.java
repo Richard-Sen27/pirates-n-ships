@@ -177,6 +177,43 @@ class UpkeepDayTest {
         assertEquals(0, m.lowDays());
     }
 
+    // ------------------------------------------------------------------ starvation (FIX1)
+
+    @Test
+    void aStarvingCrewDesertsWhateverItsMorale() {
+        UpkeepSettings noWages = S.withWages(false);
+        UpkeepDay.Result r = UpkeepDay.settle(MORALE, noWages, List.of(member(90), member(70)), 0, 0, 0, true);
+        assertEquals(2, r.deserters());
+        assertTrue(r.members().stream().allMatch(UpkeepDay.MemberResult::starved));
+        assertEquals(0, r.members().get(0).lowDays(), "content members count no low days");
+        UpkeepDay.Result fed = UpkeepDay.settle(MORALE, noWages, List.of(member(90)), 0, 0, 0, false);
+        assertEquals(0, fed.deserters());
+        assertFalse(fed.members().get(0).starved());
+    }
+
+    @Test
+    void starvationNeedsDesertionAndYieldsToAMutinyDawn() {
+        UpkeepDay.Result off = UpkeepDay.settle(MORALE, S.withWages(false).withDesertion(false), List.of(member(90)), 0, 0, 0, true);
+        assertEquals(0, off.deserters());
+        UpkeepSettings mutiny = S.withWages(false).withMutiny(true);
+        UpkeepDay.Result plotting = UpkeepDay.settle(MORALE, mutiny, List.of(member(10), member(10)), 0, 0, 0, true);
+        assertFalse(plotting.mutiny());
+        assertEquals(2, plotting.deserters(), "starving crew desert even while they plot");
+        UpkeepDay.Result mutinyDawn = UpkeepDay.settle(MORALE, mutiny, List.of(member(10), member(10)), 0, 0, 2, true);
+        assertTrue(mutinyDawn.mutiny());
+        assertEquals(0, mutinyDawn.deserters());
+    }
+
+    @Test
+    void hungerDesertionDaysMakeTheDayCritical() {
+        ProvisionSettings s = ProvisionSettings.builder().hungerDesertionDays(2).thirstDesertionDays(100).build();
+        ProvisionStore water = ProvisionStore.of(List.of(new ProvisionLot(WATER, 100, 0)));
+        var day1 = ProvisionRules.advance(water, ProvisioningState.INITIAL, CrewHeadcount.crew(2), s, DAY);
+        assertFalse(day1.outcome().effects().desertionCritical(), "one hungry day of two");
+        var day2 = ProvisionRules.advance(day1.store(), day1.state(), CrewHeadcount.crew(2), s, DAY);
+        assertTrue(day2.outcome().effects().desertionCritical(), "two hungry days of two");
+    }
+
     // ------------------------------------------------------------------ mutiny
 
     @Test

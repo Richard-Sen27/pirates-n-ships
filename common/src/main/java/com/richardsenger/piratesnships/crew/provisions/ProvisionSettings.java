@@ -21,8 +21,8 @@ package com.richardsenger.piratesnships.crew.provisions;
  * @param thirstyWorkSpeed        work speed multiplier while thirsty
  * @param drunkWorkSpeed          work speed multiplier while drunk (after more than the ration)
  * @param drunkDurationTicks      how long the drunk penalty lasts after the last over-ration
- * @param hungerDesertionDays     continuous hunger until the desertion/mutiny risk is critical
- * @param thirstDesertionDays     continuous thirst until the desertion/mutiny risk is critical
+ * @param hungerDesertionDays     continuous hunger until the crew deserts (critical risk)
+ * @param thirstDesertionDays     continuous thirst until the crew deserts (critical risk)
  * @param scurvyEnabled           scurvy toggle
  * @param scurvyOnsetDays         days without anti-scurvy food until scurvy sets in
  * @param freshFoodPreventsScurvy whether any fresh (non-preserved) food counts as anti-scurvy, not only citrus

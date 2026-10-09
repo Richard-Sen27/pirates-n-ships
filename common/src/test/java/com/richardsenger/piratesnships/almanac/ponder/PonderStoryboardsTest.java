@@ -255,7 +255,7 @@ class PonderStoryboardsTest {
         }
         Vec3 last = path.get(path.size() - 1);
         assertTrue(last.x > BoardingScene.RUN.get(BoardingScene.RUN.size() - 1).getX() + 1, "it ends past the tip, on her deck");
-        assertEquals(com.richardsenger.piratesnships.station.order.WhistleOrder.BOARD.icon().getPath(), "cutlass",
+        assertEquals(com.richardsenger.piratesnships.station.order.WhistleOrder.BOARD.icon().id().getPath(), "cutlass",
                 "the wheel's boarding entry shows the cutlass");
     }
 

@@ -19,7 +19,8 @@ import org.joml.Vector3d;
 
 /**
  * The client side of the waves (WV1, physical client only): the synced sea ({@link ClientWaves}), bow spray with a
- * splash ({@code wave_effects.spray}) and the optional camera sway ({@code wave_effects.camera_sway}).
+ * splash ({@code wave_effects.spray}), the optional camera sway ({@code wave_effects.camera_sway}) and the visible sea
+ * surface ({@code wave_effects.surface}, WAV3, {@code surface.SeaSurface}).
  */
 public final class WaveClient {
 
@@ -35,6 +36,7 @@ public final class WaveClient {
     public static void init() {
         ClientEvents.CLIENT_DISCONNECT.register(mc -> ClientWaves.reset());
         ClientEvents.COMPUTE_CAMERA_ROLL.register(WaveClient::cameraRoll);
+        com.richardsenger.piratesnships.hazards.waves.client.surface.SeaSurface.init();
     }
 
     public static void onSync(WaveSyncPayload payload) {

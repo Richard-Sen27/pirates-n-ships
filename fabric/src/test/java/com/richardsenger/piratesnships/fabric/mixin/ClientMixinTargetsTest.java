@@ -222,6 +222,48 @@ class ClientMixinTargetsTest {
                 "the chat lines are drawn in renderChat, after our layers");
     }
 
+    /**
+     * WAV3: the sea-top wrap ({@code MixinLiquidBlockRenderer}) lands in {@code tesselate}, which calls the face check
+     * three times (down face, up face, the sides' loop); exactly one of them gets {@code Direction.UP} as its argument
+     * (the last {@code Direction} constant loaded since the previous call), the one the wrap acts on. The handler is an
+     * instance method (like {@code tesselate}) with the wrapped call's arguments plus the {@code Operation}.
+     */
+    @Test
+    void seaTopWrapHitsTheUpFaceCheckOfTesselate() {
+        ClassNode renderer = readClass("net/minecraft/client/renderer/block/LiquidBlockRenderer");
+        ClassNode mixin = readClass("com/richardsenger/piratesnships/mixin/MixinLiquidBlockRenderer");
+        MethodNode handler = mixin.methods.stream().filter(m -> m.name.equals("pirates_n_ships$hideSeaTop")).findFirst().orElseThrow();
+        AnnotationNode wrap = annotations(handler.visibleAnnotations, handler.invisibleAnnotations).stream()
+                .filter(a -> a.desc.equals("Lcom/llamalad7/mixinextras/injector/wrapoperation/WrapOperation;"))
+                .findFirst().orElseThrow();
+        List<MethodNode> selected = new ArrayList<>();
+        for (String selector : ClientMixinTargetsTest.<List<String>>value(wrap, "method")) {
+            selected.addAll(select(Selector.parse(selector), renderer));
+        }
+        assertEquals(1, selected.size(), "one tesselate");
+        MethodNode tesselate = selected.get(0);
+        String invoke = ClientMixinTargetsTest.<String>value(atAnnotations(wrap).get(0), "target");
+        assertEquals(3, countCalls(tesselate, invoke), "down face, up face and the sides' loop");
+        List<String> directions = new ArrayList<>();
+        String last = "(local)";
+        for (AbstractInsnNode insn : tesselate.instructions) {
+            if (insn instanceof org.objectweb.asm.tree.FieldInsnNode f && f.getOpcode() == org.objectweb.asm.Opcodes.GETSTATIC
+                    && f.owner.equals("net/minecraft/core/Direction")) {
+                last = f.name;
+            } else if (insn instanceof MethodInsnNode call && invoke.equals("L" + call.owner + ";" + call.name + call.desc)) {
+                directions.add(last);
+                last = "(local)";
+            }
+        }
+        System.out.println("[ClientMixinTargetsTest] tesselate face checks: " + directions);
+        assertEquals(List.of("DOWN", "UP", "(local)"), directions, "the up face is the second check");
+        assertEquals(0, tesselate.access & org.objectweb.asm.Opcodes.ACC_STATIC, "tesselate is an instance method");
+        assertEquals(0, handler.access & org.objectweb.asm.Opcodes.ACC_STATIC, "so the handler is one too");
+        assertEquals("(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;F"
+                + "Lnet/minecraft/world/level/block/state/BlockState;Lcom/llamalad7/mixinextras/injector/wrapoperation/Operation;)Z",
+                handler.desc);
+    }
+
     // ---- injector check ----
 
     private static int checkInjector(AnnotationNode injector, ClassNode target, int defaultRequire, String where,

@@ -286,6 +286,11 @@
         {
           "type": "text",
           "key": "pirates_n_ships.almanac.combat.p10.text2"
+        },
+        {
+          "type": "text",
+          "color": "#2e6a24",
+          "key": "pirates_n_ships.almanac.combat.p10.text3"
         }
       ]
     },

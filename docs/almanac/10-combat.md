@@ -101,7 +101,9 @@ It slips off water, leaves and glass panes, and from creatures, and comes back a
 show_me: boarding | Show me: boarding an enemy
 Once your rope is made fast to a cleat or ring, look at it and use it: you hang from it and slide down to its lower end, riding along as both ships move. Sneak to let go. From your masthead down onto an enemy deck is the classic way across.
 
-Or lay a {item:pirates_n_ships:boarding_plank}**boarding plank** (three wooden slabs over two iron nuggets). With the ships alongside, use it on the top of your gunwale facing the other ship. A plank up to four blocks long runs out level and hooks onto her deck, which may sit a block higher or lower. Keep the ships together: if they drift more than a block and a half apart, the plank breaks and drops back to you.
+Or lay a {item:pirates_n_ships:boarding_plank}**boarding plank** (three wooden slabs over two iron nuggets). With the ships alongside, use it on the top of your gunwale facing the other ship. Up to six blocks of plank run out and come down on her deck; if her deck stands higher or lower, the plank climbs or falls on stepped ramps, two blocks at most. Keep the ships together: if her end slips more than a block and a half aside, the plank breaks and drops back to you. Sneak and use it with an empty hand to take it up again, from either end.
+
+> Hold the plank and look at your rail: the run it would lay shows in green before you commit, and a red cell shows what stands in the way.
 
 ## Taking a prize
 Ships sail the sea lanes between the ports even when no one is watching, and when you come within sight of one she is there: a merchantman with goods in her hold and a few armed sailors, a navy patrol, or a pirate under the Jolly Roger. Navy and pirate sloops carry four guns, loaded, and a shot locker by the mast.

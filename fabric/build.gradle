@@ -134,6 +134,15 @@ loom {
             if (only) {
                 vmArg("-Dpirates_n_ships.gametest.only=${only}")
             }
+            // PERF1: the manual performance test (ModGameTests.PERF_PROPERTY) and its report directory
+            def perf = providers.gradleProperty('pirates_n_ships.perf').getOrNull()
+            if (perf) {
+                vmArg("-Dpirates_n_ships.perf=${perf}")
+            }
+            def perfDir = providers.gradleProperty('pirates_n_ships.perf.dir').getOrNull()
+            if (perfDir) {
+                vmArg("-Dpirates_n_ships.perf.dir=${perfDir}")
+            }
             runDir('build/gametest')
         }
     }

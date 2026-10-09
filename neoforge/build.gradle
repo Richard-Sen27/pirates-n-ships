@@ -42,6 +42,12 @@ neoForge {
             gameDirectory = project.file('build/gametest')
             systemProperties.putAll(providers.gradleProperty('pirates_n_ships.gametest.only')
                     .map { ['pirates_n_ships.gametest.only': it] }.orElse([:]))
+            // PERF1: -Ppirates_n_ships.perf=true registers the manual performance test (ModGameTests.PERF_PROPERTY),
+            // -Ppirates_n_ships.perf.dir=<dir> chooses where its reports go
+            systemProperties.putAll(providers.gradleProperty('pirates_n_ships.perf')
+                    .map { ['pirates_n_ships.perf': it] }.orElse([:]))
+            systemProperties.putAll(providers.gradleProperty('pirates_n_ships.perf.dir')
+                    .map { ['pirates_n_ships.perf.dir': it] }.orElse([:]))
         }
     }
     mods {

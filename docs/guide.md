@@ -775,7 +775,8 @@ and `/pirates crew dismiss`. Server config `crew.hiring`.
 A barrel of spruce staves with iron hoops for the top of a mast. Place it on a log, a fence, a wall or any block with
 a solid top; it breaks and drops when the block under it goes. It is one block, but the barrel is a block and a half
 across and stands chest high, so whoever is in it is plainly up in the nest. Only its floor is solid: climb a ladder up
-the mast and step in over the rim (sneak to stay put).
+the mast and step in over the rim (sneak to stay put). A flagpole placed on the nest rises from its middle and flies the
+flag above it (see [Flags](#5-flags)).
 
 Whoever is in the nest keeps the lookout. Put a crew member up there with the Captain's Whistle (use it on the crew
 member, then on the nest): he takes his post inside the barrel and keeps watch until you release him. Or stand in it
@@ -835,6 +836,19 @@ foot and its gilded finial at the top. You can use any block of the pole, the fl
 Placing another flagpole on a pole that flies a flag takes the flag up with it, nothing drops; breaking the top block
 drops the flag, breaking a block in the middle splits the pole in two (the upper part keeps the flag). With
 `flags.stacked_poles` off every block is a pole of its own.
+
+**Flag pedestal.** A squat plinth carved from a log, banded with iron, with a socket on top. Place it on any block with
+a solid top (it pops off when that block goes) and put a flagpole on it: the pole stands in the socket and the pedestal
+becomes its foot, with the cleat and the halyard belayed on it, while the pole blocks above stay bare. Using the
+pedestal works the pole like using the pole itself. The pedestal does not count towards the pole's height. Breaking the
+pedestal brings the whole pole down with its flag. One log over a wooden slab makes two pedestals. It can stand under
+water like every small block.
+
+**A pole on the crow's nest.** Place a flagpole on top of a crow's nest and it rises from the middle of the barrel: the
+nest shows the pole's foot with its iron collar and the cleat inside the barrel, and the flag flies from the top of the
+pole above the nest. Give the pole at least two blocks so the cloth clears the barrel's rim. The lowest pole block lets
+you and the lookout stand in the nest as before (it does not push anyone out), the lookout keeps watch and calls as
+usual, and breaking the nest brings the pole down.
 
 **The flag runs along the pole.** While you hoist or raise a flag it climbs from the foot of the pole to the top, and
 while you strike or take it down it runs down again, over the 3 seconds the work takes. Client config
@@ -1253,6 +1267,7 @@ on by default; vanilla weapons are untouched):
 | Crow's Nest | 6 planks, 1 rope, 2 iron nuggets | A lookout barrel for the masthead; whoever stands in it calls out ships, land and sea monsters. A crew station. See [Crow's nest](#crows-nest). |
 | Hull Patch (block) | placed by the item | A tarred plank that closes a breach. Watertight hull block. |
 | Flagpole | 3 sticks (gives 2) | Flies a flag. A thin pole with a finial and a cleat (Blockbench model). See [Flags](#5-flags). |
+| Flag Pedestal | 1 log over 1 wooden slab (gives 2) | A plinth carved from a log that a flagpole stands in; the pole's foot with its cleat. See [Flags](#5-flags). |
 | Pantry | 8 planks, 1 wheat | Food store with spoilage. See [Provisions](#6-provisions). |
 | Water Barrel | 6 planks, 2 iron nuggets, 1 water bucket | Holds 16 rations of water. Crafted full. |
 | Cargo Crate | 4 planks, 4 sticks | Bulk container for 32 stacks of one item. |

@@ -37,6 +37,11 @@ public final class ShipDecor {
             () -> new FlagpoleBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0f, 3.0f).sound(SoundType.WOOD)
                     .noOcclusion().ignitedByLava()));
 
+    /** FLG3: a plinth carved from a log that a flagpole stands in (see {@link FlagPedestalBlock}). */
+    public static final RegistryEntry<Block, FlagPedestalBlock> FLAG_PEDESTAL = ModRegistry.blockWithItem("flag_pedestal",
+            () -> new FlagPedestalBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).instrument(NoteBlockInstrument.BASS)
+                    .strength(2.0f, 3.0f).sound(SoundType.WOOD).noOcclusion().pushReaction(PushReaction.DESTROY).ignitedByLava()));
+
     public static final RegistryEntry<Block, Block> CARGO_CRATE = ModRegistry.blockWithItem("cargo_crate", () -> new com.richardsenger.piratesnships.trade.cargo.CargoContainerBlock(woodProps().noOcclusion(), com.richardsenger.piratesnships.trade.cargo.CargoContainers.Kind.CRATE));
     public static final RegistryEntry<Block, Block> CARGO_BARREL = ModRegistry.blockWithItem("cargo_barrel", () -> new com.richardsenger.piratesnships.trade.cargo.CargoContainerBlock(woodProps().noOcclusion(), com.richardsenger.piratesnships.trade.cargo.CargoContainers.Kind.BARREL));
 

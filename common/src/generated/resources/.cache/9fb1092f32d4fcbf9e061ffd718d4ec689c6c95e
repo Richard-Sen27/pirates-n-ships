@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-09T15:40:53.082941	Recipes
+// 1.21.1	2026-10-09T16:23:09.827045	Recipes
 e1289c0eb7525c60669f4203ccd8af0d9d7b0744 data/pirates_n_ships/advancement/recipes/building_blocks/hull_patch.json
 dc908cf23933449a8a82c8037e57e8f3143c20f2 data/pirates_n_ships/advancement/recipes/combat/bandana.json
 8f98eb055171c739101420a0b9bbe9f3a8bf2903 data/pirates_n_ships/advancement/recipes/combat/cannon.json
@@ -30,6 +30,7 @@ d4da74f050c7231d4b7086c6caffb194c8b9bb37 data/pirates_n_ships/advancement/recipe
 7623ef27072d731baa65126b263198256db8bb5c data/pirates_n_ships/advancement/recipes/decorations/figurehead_lion.json
 d8d6742e7b00b938d6ba7583aa63200b14e03603 data/pirates_n_ships/advancement/recipes/decorations/figurehead_mermaid.json
 44163657308b2090616427baa602779a9ebe3956 data/pirates_n_ships/advancement/recipes/decorations/figurehead_skull.json
+993786aadf7f66e96e0e5d8636095ee4242672a5 data/pirates_n_ships/advancement/recipes/decorations/flag_pedestal.json
 99fc6b8a7ecf562a07f779a4fac1d22de19d5b56 data/pirates_n_ships/advancement/recipes/decorations/flagpole.json
 18d27255b4b483824885d76bf8744e19ba0c9880 data/pirates_n_ships/advancement/recipes/decorations/hammock.json
 a94ed632b83b59df26266ca7f466c77fc832a37a data/pirates_n_ships/advancement/recipes/decorations/harbor_desk.json
@@ -100,6 +101,7 @@ ceccb5e0c6d3a0b2ea95cbe0c892b0a617f94c84 data/pirates_n_ships/recipe/cloth.json
 912a8693b1f153c44081373a9b492ccfbcadffbe data/pirates_n_ships/recipe/figurehead_lion.json
 a45bf208e422724c8cd80b70e6c4d79e99380b02 data/pirates_n_ships/recipe/figurehead_mermaid.json
 83cdc3fb82141f16ab65856b33c20e123ca9deb0 data/pirates_n_ships/recipe/figurehead_skull.json
+aec150e8d462166ca09a619831331f9862c3e1e8 data/pirates_n_ships/recipe/flag_pedestal.json
 32cc9920392d1de43336d4900d37318183df0334 data/pirates_n_ships/recipe/flagpole.json
 680bbcc9491f3fc87ae16314fdb43c59186d56be data/pirates_n_ships/recipe/grapeshot.json
 3d025d6dfbe0a002b63f0e49211600e94a8eb347 data/pirates_n_ships/recipe/grappling_hook.json

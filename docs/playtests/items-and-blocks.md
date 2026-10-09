@@ -409,6 +409,46 @@ Render: `art/renders/ratlines.png`.
 - Say whether the net should be denser (more ratlines), thinner or a different colour, and whether walking up the
   sloped run feels right.
 
+## Railings (RAIL1)
+
+`/give @s pirates_n_ships:oak_railing 64`, `/give @s pirates_n_ships:oak_railing_port 16` (or craft: three sticks over
+three oak planks gives 4 railings; two sticks in the top corners over three oak planks gives 2 ports). Render:
+`art/renders/railing.png` (an edge run with its end posts, a corner, the port with a cannon behind it, a swivel gun on
+the rail), `art/renders/railing_item.png`.
+- **Item:** in the hotbar and the inventory a short rail between two posts; in hand it reads as a railing.
+- **Along the gunwale:** on a hull, stand on deck and click the top of the deck block next to the side, close to the
+  side: the rail sits on the outer edge of the block (2 px in from the side), not in the middle. Lay five in a row:
+  one straight rail, a post only at each end, the balusters evenly spaced across the joints.
+- **Centre click:** click the middle of a deck block: the rail goes on the side you face.
+- **Corner:** at the end of the run click the last railing again near its other side: it gets a second edge and one
+  corner post; the item count drops by one. Rail the next block along the new side: the run continues with no post at
+  the joint.
+- **One-block gap:** leave one block out of a run: a post on both sides of the gap. Put a port in the gap: the railings
+  on both sides end against the port's posts (no double posts).
+- **Hatch surround:** around a 1 x 1 hatch rail the side of each of the four blocks that faces the hatch: four short
+  rails with posts at their ends (two posts meet diagonally at each corner of the hatch). Also try a block railed on
+  three or four edges.
+- **Port and cannon:** put a cannon on the deck right behind a port, facing out. Aim it through every elevation
+  (sneak-use) and fire each time: the shot leaves cleanly, the port stays. Compare with a plain railing in front of a
+  cannon: only at the lowest elevation (-5 degrees) does the ball hit (and break) the railing; level and raised it flies
+  out over or past it (the muzzle is already beyond the rail). Say whether that is fine or the railing should block more.
+- **Gangway from the port:** moor next to a pier level with the gunwale, stand on deck behind the port facing out and
+  use a boarding plank on the port's sill: the plank starts in the block beyond the port, at deck height (not a block
+  up), and reaches the pier. Walk out through the port over the sill and along the plank.
+- **Swivel gun on the rail:** place a swivel gun on a railing: it sits on the rail at the edge, not floating in the
+  middle of the block; aim and fire it, the shot leaves from the muzzle you see. On a corner railing click near either
+  side: it takes that edge. Break the railing: the gun drops. A swivel gun on a fence still sits in the middle. Order a
+  crew member to it: they stand on the deck inside the railing.
+- **Ratlines:** click the top of a railing facing the mast: a sloped ratline rises from the rail; click the railing's
+  side: a net hangs on it.
+- **Collision:** try to jump over a railing: you cannot (1.5 blocks). Set `ship_decor.railing_collision_blocks = 1.0`
+  and place or change a railing: now you can vault it. Crew and mobs walk around railings, never through.
+- **On a ship:** assemble a railed hull and sail: the railings stay, ride level, the ship floats like with fences.
+  Disassemble: they come back with their edges and posts.
+- **Water:** place a railing in water: it holds the water. **Config:** `ship_decor.railings_enabled = false`: railings
+  and ports place nothing and the action bar says "Railings are disabled on this server".
+- Say whether the rails should be thicker, the posts taller, or the balusters closer.
+
 ## Ratline nets (RL2)
 
 `/give @s pirates_n_ships:chainplate 8`, `/give @s pirates_n_ships:mast_hoop 8`, `/give @s pirates_n_ships:ratline_net 8`

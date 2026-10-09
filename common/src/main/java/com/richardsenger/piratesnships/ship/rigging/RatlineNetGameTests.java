@@ -17,6 +17,7 @@ import com.richardsenger.piratesnships.ship.rigging.RatlineNets.Net;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.ship.sable.ShipEntities;
+import com.richardsenger.piratesnships.station.lookout.LookoutContent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestGenerator;
@@ -54,7 +55,8 @@ import java.util.function.Supplier;
  * a turned disassembly; and a mock player climbing a near-vertical, a 60° and a 45° net from bottom to top on land and
  * on an assembled hull afloat (the climbing assist, {@code rigging.net_assist}), plus the vanilla-only climb of a
  * vertical net with the assist off; and (RL3) a 62° net climbed on a hull sailing at 4 m/s, straight and turning at
- * 0.3 rad/s, boarded from the deck (Sable carries the climber) and from the ring (the assist carries it).
+ * 0.3 rad/s, boarded from the deck (Sable carries the climber) and from the ring (the assist carries it); and climbing
+ * off the top of a 62° and a vertical net onto a crow's nest one block over the hoop, and back down from it.
  */
 public final class RatlineNetGameTests {
 
@@ -600,6 +602,119 @@ public final class RatlineNetGameTests {
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 240)
     public static void untrackedClimberKeepsUpWithATurningShip(GameTestHelper h) {
         underWayClimb(h, new Vec3(4, 0, 0), 0.3, false, "62 degree net from the ring, ship at 4 m/s turning at 0.3 rad/s");
+    }
+
+    // ------------------------------------------------------------------ off the top (RL3)
+
+    /** Height of the hoop on the masthead rigs: the mast ends here, the crow's nest stands on it one block up. */
+    private static final int MASTHEAD = 13;
+
+    /**
+     * The ship rig with the mast ending at the hoop's height ({@link #MASTHEAD}) and a crow's nest on it, so the hoop
+     * sits one block below the nest's floor; assembled, the net strung in the plot. Returns {chainplate, nest} in the plot.
+     */
+    private static BlockPos[] mastheadRig(GameTestHelper h, int plateX, String what) {
+        BlockPos helmRel = shipRig(h, plateX, MASTHEAD);
+        h.setBlock(new BlockPos(13, MASTHEAD + 1, 10), LookoutContent.CROWS_NEST.get());
+        Fixture f = DryHullGameTests.assemble(h, helmRel);
+        ServerLevel level = h.getLevel();
+        BlockPos plate = plot(f, helmRel, new BlockPos(plateX, 9, 10));
+        BlockPos nest = plot(f, helmRel, new BlockPos(13, MASTHEAD + 1, 10));
+        h.assertTrue(level.getBlockState(nest).is(LookoutContent.CROWS_NEST.get()), what + ": the crow's nest did not come along");
+        String r = string(level, plate, plot(f, helmRel, new BlockPos(12, MASTHEAD, 10)), new ItemStack(RiggingContent.NET_ITEM.get()));
+        h.assertTrue(r.equals(RatlineNetItem.KEY_STRUNG), what + ": not strung in the plot: " + r);
+        return new BlockPos[] {plate, nest};
+    }
+
+    /**
+     * A mock player on the deck at the chainplate holds forward, facing the mast, until it stands on the crow's nest's
+     * floor: its feet in the nest's block, on the ground, within 0.3 of the floor.
+     */
+    private static void climbOntoTheNest(GameTestHelper h, int plateX, String what) {
+        BlockPos[] rig = mastheadRig(h, plateX, what);
+        BlockPos plate = rig[0], nest = rig[1];
+        ServerLevel level = h.getLevel();
+        ShipBody body = SableShips.containing(level, plate);
+        Player[] player = {null};
+        double[] highest = {Double.NEGATIVE_INFINITY};
+        int[] tick = {0};
+        h.onEachTick(() -> {
+            int t = tick[0]++;
+            if (t == SETTLE) {
+                Vec3 at = body.toWorld(new Vec3(plate.getX() + 0.5, plate.getY() + 0.02, plate.getZ() + 0.5));
+                player[0] = playerInLevel(h, at, Direction.EAST.toYRot());
+            }
+            Player p = player[0];
+            if (p == null || p.isRemoved()) {
+                return;
+            }
+            p.zza = 1f;
+            Vec3 feet = body.toPlot(p.position());
+            highest[0] = Math.max(highest[0], feet.y);
+            if (BlockPos.containing(feet).equals(nest) && p.onGround() && feet.y - nest.getY() < 0.3) {
+                Constants.LOG.info("[RL3] {}: standing on the crow's nest after {} ticks", what, t - SETTLE);
+                h.succeed();
+            }
+        });
+        h.runAfterDelay(SETTLE + 140, () -> h.fail(what + ": never stood on the crow's nest (feet rose to plot y "
+                + highest[0] + ", the nest floor is at " + nest.getY() + ")"));
+    }
+
+    /** A 62° net up to a hoop one block below a crow's nest: the climber climbs off the top onto the nest's floor. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 240)
+    public static void playerClimbsOffASixtyDegreeNetOntoTheCrowsNest(GameTestHelper h) {
+        climbOntoTheNest(h, 10, "62 degree net to the crow's nest");
+    }
+
+    /** The same up a vertical net. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 240)
+    public static void playerClimbsOffAVerticalNetOntoTheCrowsNest(GameTestHelper h) {
+        climbOntoTheNest(h, 12, "vertical net to the crow's nest");
+    }
+
+    /**
+     * Down from the top: a mock player standing in the crow's nest walks out over the hoop, is caught on the net and,
+     * letting go of forward, slides down it to the deck at the chainplate (not straight down beside the mast).
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 240)
+    public static void playerClimbsDownFromTheCrowsNest(GameTestHelper h) {
+        String what = "down a 62 degree net from the crow's nest";
+        BlockPos[] rig = mastheadRig(h, 10, what);
+        BlockPos plate = rig[0], nest = rig[1];
+        ServerLevel level = h.getLevel();
+        ShipBody body = SableShips.containing(level, plate);
+        Player[] player = {null};
+        boolean[] caught = {false};
+        int[] climbing = {0};
+        int[] tick = {0};
+        h.onEachTick(() -> {
+            int t = tick[0]++;
+            if (t == SETTLE) {
+                Vec3 at = body.toWorld(new Vec3(nest.getX() + 0.5, nest.getY() + 0.1, nest.getZ() + 0.5));
+                player[0] = playerInLevel(h, at, Direction.WEST.toYRot());
+            }
+            Player p = player[0];
+            if (p == null || p.isRemoved()) {
+                return;
+            }
+            boolean onNet = p.onClimbable();
+            caught[0] |= onNet;
+            if (onNet) {
+                climbing[0]++;
+            }
+            // walk west out of the nest until the net catches the player, then let go
+            p.zza = caught[0] ? 0f : 1f;
+            Vec3 feet = body.toPlot(p.position());
+            if (caught[0] && p.onGround() && feet.y < plate.getY() + 0.5) {
+                double off = Math.abs(feet.x - (plate.getX() + 0.5));
+                Constants.LOG.info("[RL3] {}: on the deck after {} ticks, {} ticks on the net, {} blocks from the chainplate",
+                        what, t - SETTLE, climbing[0], String.format("%.2f", off));
+                h.assertTrue(off <= 0.8, what + ": came down " + off + " blocks from the chainplate, not along the net");
+                h.assertTrue(climbing[0] >= 15, what + ": only " + climbing[0] + " ticks on the net, it fell");
+                h.succeed();
+            }
+        });
+        h.runAfterDelay(SETTLE + 160, () -> h.fail(what + ": never came down to the deck (caught " + caught[0] + ")"));
     }
 
     /**

@@ -56,8 +56,10 @@ public final class CrewSceneText {
         HAUL("While you stand on your deck holding the line, it hauls both hulls together until they lie alongside"),
         PLANK("Use a boarding plank on the top of your gunwale: one straight board, up to 6 blocks, onto her deck"),
         LAID("It lies rail top to rail top. Three wooden slabs over two iron nuggets make one"),
+        BOARD("Or blow Board! on the whistle: your hands cross the plank or a two-block gap and fight; Back aboard calls them home"),
         CROSS("Cross over: the plank is a thin board you walk on like a deck"),
         FIGHT("Her crew fights with the same swordplay as you: watch the raised arm, parry just before the blow, riposte"),
+        CREW_FIGHT("Your boarders fence by the same rules; a hand with an empty fist takes a sword from your chests"),
         PRIZE("A ship of the seas is yours once none of her fighters is left and you have stood aboard for 5 seconds"),
         LAW("Taking a merchant is piracy; a pirate ship taken under a letter of marque pays prize money"),
         PART("When the hulls drift more than 1.5 blocks apart, the plank breaks and drops");

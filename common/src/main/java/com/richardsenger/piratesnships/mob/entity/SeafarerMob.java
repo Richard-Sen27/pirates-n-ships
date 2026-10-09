@@ -1,6 +1,8 @@
 package com.richardsenger.piratesnships.mob.entity;
 
+import com.richardsenger.piratesnships.combat.boarding.order.BoardingFight;
 import com.richardsenger.piratesnships.combat.melee.MeleeService;
+import com.richardsenger.piratesnships.combat.melee.npc.DuelistSkill;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.crew.npc.CrewPose;
 import com.richardsenger.piratesnships.law.LawAttachments;
@@ -10,6 +12,7 @@ import com.richardsenger.piratesnships.mob.MeleePose;
 import com.richardsenger.piratesnships.mob.MobConfig;
 import com.richardsenger.piratesnships.mob.MobFaction;
 import com.richardsenger.piratesnships.mob.MobKind;
+import com.richardsenger.piratesnships.mob.ai.Duelist;
 import com.richardsenger.piratesnships.mob.ai.DuelistDebug;
 import com.richardsenger.piratesnships.mob.ai.HostileTargetGoal;
 import com.richardsenger.piratesnships.platform.Services;
@@ -62,7 +65,7 @@ import java.util.UUID;
  * through Sable's entity tracking (sable-notes §6), like any entity on a deck. This package and {@code mob/client} are
  * the only GeckoLib importers of the module.
  */
-public abstract class SeafarerMob extends PathfinderMob implements GeoEntity {
+public abstract class SeafarerMob extends PathfinderMob implements GeoEntity, Duelist {
 
     private static final String TAG_GRUDGE = "pirates_n_ships:grudge";
     private static final String TAG_GRUDGE_UNTIL = "pirates_n_ships:grudge_until";
@@ -149,6 +152,11 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity {
      * aboard a ship also carry what its flag tells NPCs ({@link LawService#shipStance}, FL2).
      */
     public HostilityRules.Target describe(LivingEntity e) {
+        // BRD3: a boarder and the people of the deck it boards are each other's foes, whatever their factions
+        return describePeacetime(e).withBoardingFoe(BoardingFight.foes(this, e));
+    }
+
+    private HostilityRules.Target describePeacetime(LivingEntity e) {
         boolean navy = faction() == MobFaction.NAVY;
         if (e instanceof SeafarerMob m) return HostilityRules.Target.ofMob(m.faction());
         if (e instanceof Player p) {
@@ -171,7 +179,8 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity {
 
     /** Whether this mob attacks {@code e} on sight. */
     public boolean attacksOnSight(LivingEntity e) {
-        return e != this && e.isAlive() && HostilityRules.attacksOnSight(faction(), describe(e), MobConfig.hostility(kind()));
+        return e != this && e.isAlive() && !BoardingFight.holdsFire(this)
+                && HostilityRules.attacksOnSight(faction(), describe(e), MobConfig.hostility(kind()));
     }
 
     /**
@@ -205,9 +214,18 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity {
     }
 
     /** Whether this mob keeps fighting {@code e} (see {@link HostilityRules#keepsTarget}). */
+    @Override
     public boolean keepsTarget(LivingEntity e) {
-        return e != this && e.isAlive() && !e.isRemoved()
+        // BRD3: a boarder on its way across or back does not stop to fight
+        return e != this && e.isAlive() && !e.isRemoved() && !BoardingFight.holdsFire(this)
                 && HostilityRules.keepsTarget(faction(), describe(e), MobConfig.hostility(kind()), hasGrudge(e));
+    }
+
+    /** The configured sword skill of its kind ({@code mobs.*_skill}); a sailor's for a kind that is no duelist. */
+    @Override
+    public DuelistSkill duelistSkill() {
+        DuelistSkill skill = MobConfig.skill(kind());
+        return skill != null ? skill : DuelistSkill.SAILOR;
     }
 
     @Override

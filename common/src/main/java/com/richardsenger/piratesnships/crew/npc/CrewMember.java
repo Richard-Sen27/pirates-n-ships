@@ -1,6 +1,9 @@
 package com.richardsenger.piratesnships.crew.npc;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.combat.boarding.BoardingConfig;
+import com.richardsenger.piratesnships.combat.boarding.order.BoardingFight;
+import com.richardsenger.piratesnships.combat.melee.npc.DuelistSkill;
 import com.richardsenger.piratesnships.crew.galley.MealRules;
 import com.richardsenger.piratesnships.crew.galley.MealSeat;
 import com.richardsenger.piratesnships.crew.hammock.CrewRest;
@@ -13,6 +16,9 @@ import com.richardsenger.piratesnships.crew.morale.MoraleRules;
 import com.richardsenger.piratesnships.crew.morale.NightOutcome;
 import com.richardsenger.piratesnships.crew.walk.CrewWalk;
 import com.richardsenger.piratesnships.crew.walk.WalkTarget;
+import com.richardsenger.piratesnships.mob.ai.Duelist;
+import com.richardsenger.piratesnships.mob.ai.DuelistAttackGoal;
+import com.richardsenger.piratesnships.mob.ai.VanillaSwordGoal;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.station.StationConfig;
@@ -32,6 +38,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -65,10 +72,12 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * {@link #isWorking()} flag and, since ART7, the synced station pose ({@link #stationPose()}, {@link StationPoses}),
  * with which the crew member also turns to face its wheel or gun. CR2 adds its low-morale day counter and whether it went unpaid at the last dawn (saved); CRW1 the player who hired it ({@link #hiredBy()}, saved); CRW2 its deserting mark
  * ({@link #isDeserting()}, saved) and whether it sits at a meal ({@link #isEating()}, synced); WALK1 where it walks
- * to take its place ({@link #walk()}, saved).
+ * to take its place ({@link #walk()}, saved). BRD3: it fights while it boards another ship or defends its deck
+ * against boarders ({@link #isBoarding()}, {@code combat.boarding.order}): the duelist goals with a sword, vanilla melee
+ * with its fists, against the foes {@code BoardingFight} names; otherwise it never attacks anyone.
  * This class and {@code crew/npc/client/} are the only GeckoLib importers.
  */
-public class CrewMember extends PathfinderMob implements GeoEntity {
+public class CrewMember extends PathfinderMob implements GeoEntity, Duelist {
 
     static final String TAG_ASSIGNMENT = Constants.MOD_ID + ":assignment";
     static final String TAG_PINNED = Constants.MOD_ID + ":pinned";
@@ -140,6 +149,8 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     private @Nullable WalkTarget walk;
     /** Its station pose faces it towards the wheel or gun (ART7): the look goals leave its head alone. Server only. */
     private boolean facingStation;
+    /** It is one of a boarding party (BRD3, {@code combat.boarding.order.BoardingParties}). Server only, not saved. */
+    private boolean boarding;
     /** Its lean on the rail while it walks there or leans (RAIL5, {@code crew.lean.RailLean}), else null. Server only, not saved. */
     private RailLean.@Nullable Lean lean;
     /** Game time before which it does not look for the rail again (RAIL5). Server only, not saved. */
@@ -154,18 +165,23 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         return PathfinderMob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.25)
-                .add(Attributes.FOLLOW_RANGE, 32.0); // WALK1: the pathfinder's range, for paths along a long deck
+                .add(Attributes.FOLLOW_RANGE, 32.0) // WALK1: the pathfinder's range, for paths along a long deck
+                .add(Attributes.ATTACK_DAMAGE, 1.0); // BRD3: a punch; boarding.unarmed_damage is set when it boards
     }
 
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
+        // BRD3: boarding or defending its deck it fights the foes BoardingFight names (a target only boarding sets)
+        goalSelector.addGoal(2, new DuelistAttackGoal(this, 1.0));
+        goalSelector.addGoal(3, new VanillaSwordGoal(this, 1.0));
         // RAIL5: an idle crew member walks to the rail and leans on it for a while, ahead of strolling about
         goalSelector.addGoal(4, new RailLeanGoal(this));
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.6) {
             @Override
             public boolean canUse() {
-                return assignment == null && rest == null && walk == null && !stationary && !isPassenger() && super.canUse();
+                return assignment == null && rest == null && walk == null && !stationary && !boarding && !isPassenger()
+                        && super.canUse();
             }
         });
         // HM2: a sleeper keeps its head and body along the hammock (CrewRest#orient); awake, it looks around again
@@ -415,6 +431,37 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     /** Sets the walk only; {@code crew.walk.CrewWalk} starts, ends and steers it. */
     public void setWalk(@Nullable WalkTarget walk) {
         this.walk = walk;
+    }
+
+    /** Whether it is one of a boarding party (BRD3): it does not stroll, and the job board leaves it alone. */
+    public boolean isBoarding() {
+        return boarding;
+    }
+
+    /** Sets the boarding mark only; {@code combat.boarding.order.BoardingParties} sends it across and back. */
+    public void setBoarding(boolean boarding) {
+        this.boarding = boarding;
+    }
+
+    /** BRD3: it keeps fighting a boarding foe ({@code BoardingFight}) and nobody else. */
+    @Override
+    public boolean keepsTarget(LivingEntity target) {
+        return target != this && target.isAlive() && !target.isRemoved() && BoardingFight.keepsTarget(this, target);
+    }
+
+    /** The crew's sword skill ({@code boarding.crew_skill}). */
+    @Override
+    public DuelistSkill duelistSkill() {
+        return BoardingConfig.CREW_SKILL.get();
+    }
+
+    @Override
+    protected void customServerAiStep() {
+        super.customServerAiStep();
+        LivingEntity target = getTarget();
+        if (target != null && !keepsTarget(target)) {
+            setTarget(null); // a target from anywhere (a hit, a test) stays only while boarding allows it
+        }
     }
 
     /** True when this crew member rides the seat of its assigned station. */

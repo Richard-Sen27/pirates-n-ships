@@ -2929,6 +2929,10 @@
         "key": "pirates_n_ships.almanac.combat.p18.heading"
        },
        {
+        "type": "spotlight",
+        "item": "pirates_n_ships:captains_whistle"
+       },
+       {
         "type": "text",
         "key": "pirates_n_ships.almanac.combat.p18.text1"
        },
@@ -2954,25 +2958,21 @@
         "key": "pirates_n_ships.almanac.combat.p19.heading"
        },
        {
-        "type": "illustration",
-        "texture": "pirates_n_ships:textures/almanac/mob_pirate.png",
-        "x": 0.05,
-        "y": 0.09,
-        "w": 0.9,
-        "h": 0.35
+        "type": "text",
+        "key": "pirates_n_ships.almanac.combat.p19.text1"
        },
        {
         "type": "list",
         "items": [
          "pirates_n_ships.almanac.combat.p19.list1_1",
          "pirates_n_ships.almanac.combat.p19.list1_2",
-         "pirates_n_ships.almanac.combat.p19.list1_3",
-         "pirates_n_ships.almanac.combat.p19.list1_4"
+         "pirates_n_ships.almanac.combat.p19.list1_3"
         ]
        },
        {
         "type": "text",
-        "key": "pirates_n_ships.almanac.combat.p19.text1"
+        "key": "pirates_n_ships.almanac.combat.p19.text2",
+        "color": "#9a1c14"
        }
       ]
      },
@@ -2984,19 +2984,24 @@
        },
        {
         "type": "illustration",
-        "texture": "pirates_n_ships:textures/almanac/pirate_captain.png",
+        "texture": "pirates_n_ships:textures/almanac/mob_pirate.png",
         "x": 0.05,
         "y": 0.09,
         "w": 0.9,
         "h": 0.35
        },
        {
-        "type": "text",
-        "key": "pirates_n_ships.almanac.combat.p20.text1"
+        "type": "list",
+        "items": [
+         "pirates_n_ships.almanac.combat.p20.list1_1",
+         "pirates_n_ships.almanac.combat.p20.list1_2",
+         "pirates_n_ships.almanac.combat.p20.list1_3",
+         "pirates_n_ships.almanac.combat.p20.list1_4"
+        ]
        },
        {
         "type": "text",
-        "key": "pirates_n_ships.almanac.combat.p20.text2"
+        "key": "pirates_n_ships.almanac.combat.p20.text1"
        }
       ]
      },
@@ -3007,8 +3012,20 @@
         "key": "pirates_n_ships.almanac.combat.p21.heading"
        },
        {
+        "type": "illustration",
+        "texture": "pirates_n_ships:textures/almanac/pirate_captain.png",
+        "x": 0.05,
+        "y": 0.09,
+        "w": 0.9,
+        "h": 0.35
+       },
+       {
         "type": "text",
         "key": "pirates_n_ships.almanac.combat.p21.text1"
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.combat.p21.text2"
        }
       ]
      },
@@ -3017,6 +3034,18 @@
        {
         "type": "heading",
         "key": "pirates_n_ships.almanac.combat.p22.heading"
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.combat.p22.text1"
+       }
+      ]
+     },
+     {
+      "elements": [
+       {
+        "type": "heading",
+        "key": "pirates_n_ships.almanac.combat.p23.heading"
        },
        {
         "type": "illustration",
@@ -3028,31 +3057,11 @@
        },
        {
         "type": "text",
-        "key": "pirates_n_ships.almanac.combat.p22.text1"
-       },
-       {
-        "type": "recipe",
-        "recipe": "pirates_n_ships:pirate_hat"
-       }
-      ]
-     },
-     {
-      "elements": [
-       {
-        "type": "heading",
-        "key": "pirates_n_ships.almanac.combat.p23.heading"
-       },
-       {
-        "type": "text",
         "key": "pirates_n_ships.almanac.combat.p23.text1"
        },
        {
         "type": "recipe",
-        "recipe": "pirates_n_ships:bandana"
-       },
-       {
-        "type": "recipe",
-        "recipe": "pirates_n_ships:navy_hat"
+        "recipe": "pirates_n_ships:pirate_hat"
        }
       ]
      },
@@ -3068,11 +3077,11 @@
        },
        {
         "type": "recipe",
-        "recipe": "pirates_n_ships:officer_hat"
+        "recipe": "pirates_n_ships:bandana"
        },
        {
         "type": "recipe",
-        "recipe": "pirates_n_ships:officers_coat"
+        "recipe": "pirates_n_ships:navy_hat"
        }
       ]
      },
@@ -3088,11 +3097,11 @@
        },
        {
         "type": "recipe",
-        "recipe": "pirates_n_ships:officers_breeches"
+        "recipe": "pirates_n_ships:officer_hat"
        },
        {
         "type": "recipe",
-        "recipe": "pirates_n_ships:officers_boots"
+        "recipe": "pirates_n_ships:officers_coat"
        }
       ]
      },
@@ -3108,11 +3117,11 @@
        },
        {
         "type": "recipe",
-        "recipe": "pirates_n_ships:captains_coat"
+        "recipe": "pirates_n_ships:officers_breeches"
        },
        {
         "type": "recipe",
-        "recipe": "pirates_n_ships:captains_breeches"
+        "recipe": "pirates_n_ships:officers_boots"
        }
       ]
      },
@@ -3128,7 +3137,11 @@
        },
        {
         "type": "recipe",
-        "recipe": "pirates_n_ships:captains_boots"
+        "recipe": "pirates_n_ships:captains_coat"
+       },
+       {
+        "type": "recipe",
+        "recipe": "pirates_n_ships:captains_breeches"
        }
       ]
      },
@@ -3139,20 +3152,12 @@
         "key": "pirates_n_ships.almanac.combat.p28.heading"
        },
        {
-        "type": "illustration",
-        "texture": "pirates_n_ships:textures/almanac/kraken.png",
-        "x": 0.05,
-        "y": 0.09,
-        "w": 0.9,
-        "h": 0.35
-       },
-       {
         "type": "text",
         "key": "pirates_n_ships.almanac.combat.p28.text1"
        },
        {
-        "type": "text",
-        "key": "pirates_n_ships.almanac.combat.p28.text2"
+        "type": "recipe",
+        "recipe": "pirates_n_ships:captains_boots"
        }
       ]
      },
@@ -3164,7 +3169,7 @@
        },
        {
         "type": "illustration",
-        "texture": "pirates_n_ships:textures/almanac/shark.png",
+        "texture": "pirates_n_ships:textures/almanac/kraken.png",
         "x": 0.05,
         "y": 0.09,
         "w": 0.9,
@@ -3173,6 +3178,10 @@
        {
         "type": "text",
         "key": "pirates_n_ships.almanac.combat.p29.text1"
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.combat.p29.text2"
        }
       ]
      },
@@ -3183,16 +3192,36 @@
         "key": "pirates_n_ships.almanac.combat.p30.heading"
        },
        {
+        "type": "illustration",
+        "texture": "pirates_n_ships:textures/almanac/shark.png",
+        "x": 0.05,
+        "y": 0.09,
+        "w": 0.9,
+        "h": 0.35
+       },
+       {
         "type": "text",
         "key": "pirates_n_ships.almanac.combat.p30.text1"
+       }
+      ]
+     },
+     {
+      "elements": [
+       {
+        "type": "heading",
+        "key": "pirates_n_ships.almanac.combat.p31.heading"
        },
        {
         "type": "text",
-        "key": "pirates_n_ships.almanac.combat.p30.text2"
+        "key": "pirates_n_ships.almanac.combat.p31.text1"
        },
        {
         "type": "text",
-        "key": "pirates_n_ships.almanac.combat.p30.text3",
+        "key": "pirates_n_ships.almanac.combat.p31.text2"
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.combat.p31.text3",
         "color": "#2e6a24"
        }
       ]
@@ -4217,44 +4246,50 @@
   "pirates_n_ships.almanac.combat.p17.text1": "Use a rope made fast to a cleat or ring to slide down it, from your masthead onto her deck.",
   "pirates_n_ships.almanac.combat.p17.text2": "With the ships alongside, use a {item:pirates_n_ships:boarding_plank}**boarding plank** on top of your gunwale. Keep the ships together or it breaks. Hold the plank and look at your rail: the board it would lay shows in green, and a red cell marks what stands in the way.",
   "pirates_n_ships.almanac.combat.p17.text3": "String a {item:pirates_n_ships:ratline_net}**ratline net** between two {item:pirates_n_ships:chainplate}**chainplates** on top of one run of railing and it hangs along the rail as a boarding net. Boarders coming over the rail are held a moment; your own crew pass. Three cutlass blows cut one down.",
-  "pirates_n_ships.almanac.combat.p18.heading": "Taking a prize",
-  "pirates_n_ships.almanac.combat.p18.text1": "Merchantmen, navy patrols and pirates sail the sea lanes.",
-  "pirates_n_ships.almanac.combat.p18.list1_1": "Take goods from her hold while aboard: plundered.",
-  "pirates_n_ships.almanac.combat.p18.list1_2": "Sink her with the last shot: the deed is yours.",
-  "pirates_n_ships.almanac.combat.p18.list1_3": "Kill every fighter and hold her deck: she is yours, crew and all.",
-  "pirates_n_ships.almanac.combat.p18.text2": "Taking a merchant is piracy. See [[pirates_n_ships:law|Law]].",
-  "pirates_n_ships.almanac.combat.p19.heading": "Foes ashore and afloat",
-  "pirates_n_ships.almanac.combat.p19.list1_1": "**Pirates** attack you and the navy on sight.",
-  "pirates_n_ships.almanac.combat.p19.list1_2": "**Navy soldiers** shoot at you only when you are wanted.",
-  "pirates_n_ships.almanac.combat.p19.list1_3": "**Navy officers** are deadly with the saber.",
-  "pirates_n_ships.almanac.combat.p19.list1_4": "**Sailors** never fight.",
-  "pirates_n_ships.almanac.combat.p19.text1": "Striking navy men is a crime; killing pirates is not.",
-  "pirates_n_ships.almanac.combat.p20.heading": "Pirate captains",
-  "pirates_n_ships.almanac.combat.p20.text1": "Every pirate island has a captain with a bounty of 300 doubloons. Sneak and use him with a sword in hand to call a duel; his crew keeps out of it.",
-  "pirates_n_ships.almanac.combat.p20.text2": "Slain, he drops his hat, a treasure map and your bounty proof.",
-  "pirates_n_ships.almanac.combat.p21.heading": "Raids",
-  "pirates_n_ships.almanac.combat.p21.text1": "Linger at a navy outpost or seafarer village and pirates may raid it. Kill every raider to beat them off.",
-  "pirates_n_ships.almanac.combat.p22.heading": "Dress for the part",
-  "pirates_n_ships.almanac.combat.p22.text1": "Hats and coats are armour too; a hat gives one point. The {item:pirates_n_ships:captains_hat}**captain's hat** you only win from a pirate captain. The {item:pirates_n_ships:pirate_hat}**pirate hat**:",
-  "pirates_n_ships.almanac.combat.p23.heading": "Bandana and tricorn",
-  "pirates_n_ships.almanac.combat.p23.text1": "The {item:pirates_n_ships:bandana}**bandana** and the {item:pirates_n_ships:navy_hat}**navy tricorn**:",
-  "pirates_n_ships.almanac.combat.p24.heading": "The officer's dress",
-  "pirates_n_ships.almanac.combat.p24.text1": "In navy blue and white: the {item:pirates_n_ships:officer_hat}**officer's bicorne** and the {item:pirates_n_ships:officers_coat}**officer's coat**, three points.",
-  "pirates_n_ships.almanac.combat.p25.heading": "Breeches and boots",
-  "pirates_n_ships.almanac.combat.p25.text1": "The {item:pirates_n_ships:officers_breeches}**officer's breeches**, two points, and {item:pirates_n_ships:officers_boots}**boots**, one.",
-  "pirates_n_ships.almanac.combat.p26.heading": "The captain's suit",
-  "pirates_n_ships.almanac.combat.p26.text1": "In charcoal and gold: the {item:pirates_n_ships:captains_coat}**captain's coat** and {item:pirates_n_ships:captains_breeches}**breeches**.",
-  "pirates_n_ships.almanac.combat.p27.heading": "The captain's boots",
-  "pirates_n_ships.almanac.combat.p27.text1": "The {item:pirates_n_ships:captains_boots}**captain's boots** finish the suit.",
-  "pirates_n_ships.almanac.combat.p28.heading": "Monsters of the deep",
-  "pirates_n_ships.almanac.combat.p28.text1": "The **kraken** rises beside ships in the deep ocean, most often at night and in storms. It drags hulls down and smashes masts. Strike its eyes.",
-  "pirates_n_ships.almanac.combat.p28.text2": "It leaves a {item:pirates_n_ships:kraken_beak}**kraken beak** and {item:pirates_n_ships:kraken_ink}**kraken ink**.",
-  "pirates_n_ships.almanac.combat.p29.heading": "Sharks",
-  "pirates_n_ships.almanac.combat.p29.text1": "Sharks hunt swimmers, and blood drives them into a frenzy. Stay on deck or in a boat and they leave you alone.",
-  "pirates_n_ships.almanac.combat.p30.heading": "Waterspouts and whirlpools",
-  "pirates_n_ships.almanac.combat.p30.text1": "In a storm at sea a **waterspout** pulls in and lifts what comes near, and tears set sails. Steer clear, or furl first.",
-  "pirates_n_ships.almanac.combat.p30.text2": "In the deep ocean a **whirlpool** drags boats and swimmers under and turns ships about.",
-  "pirates_n_ships.almanac.combat.p30.text3": "Big ships barely notice either.",
+  "pirates_n_ships.almanac.combat.p18.heading": "Board her!",
+  "pirates_n_ships.almanac.combat.p18.text1": "With a gangway across or her rail two blocks off at most, blow **Board!**. Your hands cross and fight her crew; gunners and helmsman stay.",
+  "pirates_n_ships.almanac.combat.p18.list1_1": "An empty hand takes a sword from your chests.",
+  "pirates_n_ships.almanac.combat.p18.list1_2": "Her deck clear: \"Her deck is yours\", and they come home.",
+  "pirates_n_ships.almanac.combat.p18.list1_3": "**Back aboard** calls them home early.",
+  "pirates_n_ships.almanac.combat.p18.text2": "Pirates alongside board you the same way.",
+  "pirates_n_ships.almanac.combat.p19.heading": "Taking a prize",
+  "pirates_n_ships.almanac.combat.p19.text1": "Merchantmen, navy patrols and pirates sail the sea lanes.",
+  "pirates_n_ships.almanac.combat.p19.list1_1": "Take goods from her hold while aboard: plundered.",
+  "pirates_n_ships.almanac.combat.p19.list1_2": "Sink her with the last shot: the deed is yours.",
+  "pirates_n_ships.almanac.combat.p19.list1_3": "Kill every fighter and hold her deck: she is yours, crew and all.",
+  "pirates_n_ships.almanac.combat.p19.text2": "Taking a merchant is piracy. See [[pirates_n_ships:law|Law]].",
+  "pirates_n_ships.almanac.combat.p20.heading": "Foes ashore and afloat",
+  "pirates_n_ships.almanac.combat.p20.list1_1": "**Pirates** attack you and the navy on sight.",
+  "pirates_n_ships.almanac.combat.p20.list1_2": "**Navy soldiers** shoot at you only when you are wanted.",
+  "pirates_n_ships.almanac.combat.p20.list1_3": "**Navy officers** are deadly with the saber.",
+  "pirates_n_ships.almanac.combat.p20.list1_4": "**Sailors** never fight.",
+  "pirates_n_ships.almanac.combat.p20.text1": "Striking navy men is a crime; killing pirates is not.",
+  "pirates_n_ships.almanac.combat.p21.heading": "Pirate captains",
+  "pirates_n_ships.almanac.combat.p21.text1": "Every pirate island has a captain with a bounty of 300 doubloons. Sneak and use him with a sword in hand to call a duel; his crew keeps out of it.",
+  "pirates_n_ships.almanac.combat.p21.text2": "Slain, he drops his hat, a treasure map and your bounty proof.",
+  "pirates_n_ships.almanac.combat.p22.heading": "Raids",
+  "pirates_n_ships.almanac.combat.p22.text1": "Linger at a navy outpost or seafarer village and pirates may raid it. Kill every raider to beat them off.",
+  "pirates_n_ships.almanac.combat.p23.heading": "Dress for the part",
+  "pirates_n_ships.almanac.combat.p23.text1": "Hats and coats are armour too; a hat gives one point. The {item:pirates_n_ships:captains_hat}**captain's hat** you only win from a pirate captain. The {item:pirates_n_ships:pirate_hat}**pirate hat**:",
+  "pirates_n_ships.almanac.combat.p24.heading": "Bandana and tricorn",
+  "pirates_n_ships.almanac.combat.p24.text1": "The {item:pirates_n_ships:bandana}**bandana** and the {item:pirates_n_ships:navy_hat}**navy tricorn**:",
+  "pirates_n_ships.almanac.combat.p25.heading": "The officer's dress",
+  "pirates_n_ships.almanac.combat.p25.text1": "In navy blue and white: the {item:pirates_n_ships:officer_hat}**officer's bicorne** and the {item:pirates_n_ships:officers_coat}**officer's coat**, three points.",
+  "pirates_n_ships.almanac.combat.p26.heading": "Breeches and boots",
+  "pirates_n_ships.almanac.combat.p26.text1": "The {item:pirates_n_ships:officers_breeches}**officer's breeches**, two points, and {item:pirates_n_ships:officers_boots}**boots**, one.",
+  "pirates_n_ships.almanac.combat.p27.heading": "The captain's suit",
+  "pirates_n_ships.almanac.combat.p27.text1": "In charcoal and gold: the {item:pirates_n_ships:captains_coat}**captain's coat** and {item:pirates_n_ships:captains_breeches}**breeches**.",
+  "pirates_n_ships.almanac.combat.p28.heading": "The captain's boots",
+  "pirates_n_ships.almanac.combat.p28.text1": "The {item:pirates_n_ships:captains_boots}**captain's boots** finish the suit.",
+  "pirates_n_ships.almanac.combat.p29.heading": "Monsters of the deep",
+  "pirates_n_ships.almanac.combat.p29.text1": "The **kraken** rises beside ships in the deep ocean, most often at night and in storms. It drags hulls down and smashes masts. Strike its eyes.",
+  "pirates_n_ships.almanac.combat.p29.text2": "It leaves a {item:pirates_n_ships:kraken_beak}**kraken beak** and {item:pirates_n_ships:kraken_ink}**kraken ink**.",
+  "pirates_n_ships.almanac.combat.p30.heading": "Sharks",
+  "pirates_n_ships.almanac.combat.p30.text1": "Sharks hunt swimmers, and blood drives them into a frenzy. Stay on deck or in a boat and they leave you alone.",
+  "pirates_n_ships.almanac.combat.p31.heading": "Waterspouts and whirlpools",
+  "pirates_n_ships.almanac.combat.p31.text1": "In a storm at sea a **waterspout** pulls in and lifts what comes near, and tears set sails. Steer clear, or furl first.",
+  "pirates_n_ships.almanac.combat.p31.text2": "In the deep ocean a **whirlpool** drags boats and swimmers under and turns ships about.",
+  "pirates_n_ships.almanac.combat.p31.text3": "Big ships barely notice either.",
   "pirates_n_ships.almanac.charts.title": "Charts and navigation",
   "pirates_n_ships.almanac.charts.p1.heading": "Charts and navigation",
   "pirates_n_ships.almanac.charts.p1.text1": "A captain who does not know where he is soon knows where the rocks are. Keep your chart and mark it well.",

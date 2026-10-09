@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.ship.rigging;
 
+import com.richardsenger.piratesnships.combat.boarding.order.BoardingParties;
 import com.richardsenger.piratesnships.combat.content.CombatContent;
 import com.richardsenger.piratesnships.crew.hammock.ShipBunks;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
@@ -158,14 +159,21 @@ public final class BoardingNets {
 
     /**
      * Whether {@code entity} crosses the boarding net at {@code pos} freely: a crew member of the net's ship (now on
-     * it, at its station or hammock) or hired by its owner ({@link BoardingNetRules#passes}).
+     * it, at its station or hammock) or hired by its owner ({@link BoardingNetRules#passes}); a boarder of a party from the
+     * net's ship (BRD3, {@code BoardingParties#homeOf}, also an NPC captain's fighter) and no other boarder.
      */
     static boolean member(ServerLevel level, BlockPos pos, Entity entity) {
-        if (!(entity instanceof CrewMember crew)) {
-            return false;
-        }
         ShipBody ship = SableShips.containing(level, pos);
         if (ship == null) {
+            return false;
+        }
+        // BRD3: a boarder (crew, or an NPC captain's fighter) belongs to the ship it boards from: its own net lets it
+        // back in, any other ship's net holds it like any attacker
+        UUID home = BoardingParties.homeOf(entity);
+        if (home != null) {
+            return home.equals(ship.id());
+        }
+        if (!(entity instanceof CrewMember crew)) {
             return false;
         }
         Optional<UUID> owner = ShipRegistry.get(level.getServer()).find(ship.id()).flatMap(ShipData::owner);

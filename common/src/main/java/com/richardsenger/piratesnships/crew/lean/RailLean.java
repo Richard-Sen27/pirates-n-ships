@@ -90,7 +90,8 @@ public final class RailLean {
     /** Whether {@code crew} is idle enough to lean on the rail (see the class comment). */
     public static boolean idle(CrewMember crew) {
         return crew.isAlive() && crew.assignment() == null && crew.rest() == null && crew.walk() == null && !crew.isEating()
-                && !crew.isResting() && !crew.isPassenger() && !crew.isStationary() && !BrigService.isPrisoner(crew);
+                && !crew.isResting() && !crew.isPassenger() && !crew.isStationary() && !BrigService.isPrisoner(crew)
+                && !crew.isBoarding(); // BRD3: a boarder on its way or on her deck does not go leaning
     }
 
     /** The spots taken on {@code ship} now, after dropping every entry whose crew member no longer holds it. */

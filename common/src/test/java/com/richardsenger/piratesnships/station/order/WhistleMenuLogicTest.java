@@ -118,10 +118,11 @@ class WhistleMenuLogicTest {
     // ------------------------------------------------------------------ entries
 
     @Test
-    void entriesAreTheSailOrdersThenPumpThenTheGunOrdersThenTheAnchorThenRelease() {
+    void entriesAreTheSailOrdersThenPumpThenTheGunOrdersThenTheAnchorThenBoardThenRelease() {
         List<WhistleOrder> e = WhistleOrder.entries();
         assertEquals(List.of(WhistleOrder.HOIST, WhistleOrder.REEF, WhistleOrder.FURL, WhistleOrder.PUMP, WhistleOrder.FIRE,
-                WhistleOrder.LOAD, WhistleOrder.FIRE_AT_WILL, WhistleOrder.ANCHOR, WhistleOrder.ROW, WhistleOrder.RELEASE), e);
+                WhistleOrder.LOAD, WhistleOrder.FIRE_AT_WILL, WhistleOrder.ANCHOR, WhistleOrder.ROW, WhistleOrder.BOARD,
+                WhistleOrder.RELEASE), e);
         // WHS1: one anchor entry; its crew order follows the anchor's state
         assertNull(WhistleOrder.ANCHOR.order(), "the toggle has no fixed order");
         assertTrue(WhistleOrder.ANCHOR.followsAnchor());
@@ -210,9 +211,28 @@ class WhistleMenuLogicTest {
     }
 
     @Test
-    void tenEntriesSplitTheWheelEvenly() {
+    void theBoardingLabelFollowsTheParty() {
+        String board = "whistle_order.pirates_n_ships.board";
+        String back = "whistle_order.pirates_n_ships.back_aboard";
+        assertEquals(board, WhistleOrder.BOARD.nameKey(null, false));
+        assertEquals(back, WhistleOrder.BOARD.nameKey(null, true));
+        assertEquals(back, WhistleOrder.BOARD.nameKey(AnchorState.Phase.HOLDING, true));
+        assertEquals(board + ".desc", WhistleOrder.BOARD.descriptionKey(null, false));
+        assertEquals(back + ".desc", WhistleOrder.BOARD.descriptionKey(null, true));
+        assertTrue(WhistleOrder.BOARD.followsBoarding() && !WhistleOrder.BOARD.followsAnchor());
+        assertTrue(WhistleOrder.BOARD.order() == null && WhistleOrder.BOARD.orders().isEmpty(), "no station order");
+        for (WhistleOrder o : WhistleOrder.entries()) {
+            // a party out changes no other entry's label; the anchor still follows its state
+            if (o == WhistleOrder.BOARD) continue;
+            assertEquals(o.nameKey(AnchorState.Phase.HOLDING), o.nameKey(AnchorState.Phase.HOLDING, true));
+            assertEquals(o.descriptionKey(AnchorState.Phase.RAISED), o.descriptionKey(AnchorState.Phase.RAISED, true));
+        }
+    }
+
+    @Test
+    void elevenEntriesSplitTheWheelEvenly() {
         RadialLayout l = RadialLayout.forWindow(WhistleOrder.entries().size(), 480, 270, 1.0);
-        assertEquals(10, l.count()); // WHS1's nine + OAR1's oars toggle
+        assertEquals(11, l.count()); // WHS1's nine + OAR1's oars toggle + BRD3's boarding toggle
         for (int i = 0; i < l.count(); i++) {
             double a = l.centerAngle(i);
             assertEquals(i, l.sectorAt(RadialLayout.x(a, l.iconRadius()), RadialLayout.y(a, l.iconRadius())), "sector " + i);
@@ -231,7 +251,7 @@ class WhistleMenuLogicTest {
             assertTrue(o.icon() != null);
             assertEquals(o, WhistleOrder.byId(o.id()).orElseThrow());
         }
-        assertTrue(WhistleOrder.byId("board").isEmpty());
+        assertTrue(WhistleOrder.byId("parley").isEmpty());
         assertTrue(WhistleOrder.byId("HOIST").isEmpty());
     }
 
@@ -243,7 +263,7 @@ class WhistleMenuLogicTest {
             assertEquals(new WhistleOrderPayload(o.id()), roundTrip(new WhistleOrderPayload(o)));
         }
         // an unknown id survives the wire, so the server can see and ignore it
-        assertEquals(new WhistleOrderPayload("board"), roundTrip(new WhistleOrderPayload("board")));
+        assertEquals(new WhistleOrderPayload("parley"), roundTrip(new WhistleOrderPayload("parley")));
     }
 
     @Test

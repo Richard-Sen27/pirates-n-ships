@@ -72,6 +72,40 @@ public final class ClientWaves {
         return blend.field(time);
     }
 
+    private static Blend cachedBlend;
+    private static double cachedTime = Double.NaN;
+    private static WaveField cachedField = WaveField.FLAT;
+
+    /**
+     * The sea at {@code time}, built once per distinct time (client thread: entity ticks and rendering ask for the same
+     * moment many times); flat until the first sync.
+     */
+    public static WaveField fieldCached(double time) {
+        if (!received) {
+            return WaveField.FLAT;
+        }
+        Blend b = blend;
+        if (b != cachedBlend || time != cachedTime) {
+            cachedBlend = b;
+            cachedTime = time;
+            cachedField = b.field(time);
+        }
+        return cachedField;
+    }
+
+    /**
+     * The height of the synced sea at one point at client game time {@code time} (with the partial tick where it
+     * renders; {@link WaveField#heightAt}; WAV6), 0 before the first sync.
+     */
+    public static double heightAt(double x, double z, double time) {
+        return fieldCached(time).heightAt(x, z, time);
+    }
+
+    /** The slope {@code {∂h/∂x, ∂h/∂z}} that goes with {@link #heightAt}. */
+    public static double[] slopeAt(double x, double z, double time) {
+        return fieldCached(time).slopeAt(x, z, time);
+    }
+
     /** The last synced sea state. */
     public static SeaState state() {
         return blend.state();

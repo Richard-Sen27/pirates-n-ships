@@ -204,6 +204,21 @@ public final class WaveField {
         return heightAround(x, z, x, z, t);
     }
 
+    /**
+     * The sea's height at one point for a consumer that samples single points, such as a vanilla boat or a floating
+     * item (WAV6): the one place that decides which anchor such a lookup uses. For now the ship rule, the point anchored
+     * at itself (what a ship uses for its own centre, WV1); {@link SeaStates#heightAt} and {@link ClientWaves#heightAt}
+     * delegate here.
+     */
+    public double heightAt(double x, double z, double t) {
+        return heightAround(x, z, x, z, t);
+    }
+
+    /** The gradient {@code {∂h/∂x, ∂h/∂z}} that goes with {@link #heightAt}. */
+    public double[] slopeAt(double x, double z, double t) {
+        return slopeAround(x, z, x, z, t);
+    }
+
     /** Height at {@code (x, z)} with the anchor {@code (ax, az)} (see the class comment). */
     public double heightAround(double ax, double az, double x, double z, double t) {
         if (isFlat()) {

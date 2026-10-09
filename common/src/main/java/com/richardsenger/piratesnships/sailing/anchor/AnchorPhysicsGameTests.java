@@ -167,6 +167,8 @@ public final class AnchorPhysicsGameTests {
         double maxStretch = Double.NEGATIVE_INFINITY;
         /** Largest stretch beyond the holding stretch ({@link AnchorChain#dragExcess}) while resting. */
         double maxExcess = Double.NEGATIVE_INFINITY;
+        /** Least height of the hull's lowest corner above the seabed from the push on [blocks] (PHY1: it floats free). */
+        double minClearance = Double.POSITIVE_INFINITY;
         final double drive;
 
         Run(GameTestHelper h, double drive) {
@@ -180,6 +182,10 @@ public final class AnchorPhysicsGameTests {
         void tick(GameTestHelper h, long t) {
             if (f.ship().isRemoved()) {
                 return;
+            }
+            if (t >= SETTLE && t % 5 == 0) {
+                minClearance = Math.min(minClearance,
+                        SailingGameTestsShips.hullBottomY(f.ship()) - (h.absolutePos(BlockPos.ZERO).getY() + 2.0));
             }
             if (t >= SETTLE && drive > 0.0) {
                 f.ship().addVelocity(new Vector3d(0.0, 0.0, drive * 0.05), new Vector3d()); // the sails, wind from astern
@@ -277,9 +283,11 @@ public final class AnchorPhysicsGameTests {
                 double ahead = r.landing == null ? Double.NaN : r.landing.subtract(r.dropHawse).dot(heading);
                 Constants.LOG.info("[anchor test] turn: v0 {} b/s, after 5 s {}, after 10 s {} ({} %; way along the heading {}, {} %), "
                                 + "worst tick loss {} %, landed after {} ticks {} blocks astern of the hawse ({} blocks ahead of the drop "
-                                + "point in the world), taut after {} ticks, yaw {}° to starboard 5 s later, {}° after 10 s, max stretch {}",
+                                + "point in the world), taut after {} ticks, yaw {}° to starboard 5 s later, {}° after 10 s, max stretch {}, "
+                                + "least clearance over the seabed {}",
                         f2(r.v0), f2(at5[0]), f2(v10), f2(100 * v10 / r.v0), f2(way), f2(100 * way / r.v0), f2(100 * r.worstLoss),
-                        r.landed - r.drop, f2(astern), f2(ahead), r.taut - r.drop, f2(yaw[0]), f2(r.yawSinceTaut()), f2(r.maxStretch));
+                        r.landed - r.drop, f2(astern), f2(ahead), r.taut - r.drop, f2(yaw[0]), f2(r.yawSinceTaut()), f2(r.maxStretch),
+                        f2(r.minClearance));
                 h.assertTrue(r.v0 >= 4.0, "the hull was not pushed to 4 blocks/s: " + r.v0);
                 h.assertTrue(r.landed > 0 && astern >= 2.0, "the anchor did not land astern of the hawse: " + astern);
                 h.assertTrue(r.taut > 0, "the chain never came taut");

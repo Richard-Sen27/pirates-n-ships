@@ -6,6 +6,7 @@ import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
+import com.richardsenger.piratesnships.core.gametest.ShipTrack;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
 import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips;
 import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips.Fixture;
@@ -25,7 +26,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3d;
 
 import java.util.Collection;
 import java.util.List;
@@ -71,11 +71,6 @@ public final class HazardGameTests {
     }
 
     private static double horizontal(Vec3 a, Vec3 b) {
-        double dx = a.x - b.x, dz = a.z - b.z;
-        return Math.sqrt(dx * dx + dz * dz);
-    }
-
-    private static double horizontal(Vector3d a, Vec3 b) {
         double dx = a.x - b.x, dz = a.z - b.z;
         return Math.sqrt(dx * dx + dz * dz);
     }
@@ -191,22 +186,27 @@ public final class HazardGameTests {
         });
     }
 
-    /** The 5×4×5 test hull six blocks from a whirlpool's centre is pulled toward it within 100 ticks. */
+    /**
+     * The 5×4×5 test hull six blocks from a whirlpool's centre is pulled toward it within 100 ticks. The pull is a slow
+     * drift (about 0.1 m/s), so it is measured by the integrated velocity ({@link ShipTrack}, docs/sable-notes.md §9.0l).
+     */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 200, batch = SHIP_BATCH)
     public static void smallShipIsPulledTowardTheCentre(GameTestHelper h) {
         SailingGameTestsShips.basin(h, true);
         Fixture ship = SailingGameTestsShips.assemble(h, SailingGameTestsShips.squareHull(h, 12, 18, SailTrim.FURLED));
         HazardEntity pool = HazardTestSupport.hazard(h, HazardKind.WHIRLPOOL, POOL_CENTRE);
-        double[] start = new double[1];
-        h.runAfterDelay(10, () -> start[0] = horizontal(com(ship), pool.position()));
+        ShipTrack track = ShipTrack.follow(h, ship.ship(), pool.position(), 10);
         h.runAfterDelay(110, () -> {
-            double end = horizontal(com(ship), pool.position());
-            Constants.LOG.info("[hazard test] small ship: mass {}, distance {} -> {}", ship.ship().mass(), start[0], end);
-            h.assertTrue(start[0] > 4.5 && start[0] < 7.5, "the ship did not start about 6 blocks out: " + start[0]);
+            track.stop();
+            Constants.LOG.info("[hazard test] small ship: mass {}, start {} from the centre, {}", ship.ship().mass(),
+                    track.startDistance(), track);
+            h.assertTrue(track.startDistance() > 4.5 && track.startDistance() < 7.5,
+                    "the ship did not start about 6 blocks out: " + track.startDistance());
             // Before SH1 the unballasted hull rolled over to 57 degrees while it slid in and moved 1.5-1.7 blocks (5.90 ->
-            // 4.25..4.38 over four runs). Since SH1's righting torque it stays upright, presents its full draft to Sable's
-            // water drag and moves 0.44-0.45 blocks (three runs); a third of that
-            h.assertTrue(end < start[0] - 0.15, "the ship was not pulled toward the centre: " + start[0] + " -> " + end);
+            // 4.25..4.38 over four runs). Since SH1's righting torque it moved 0.44-0.45 blocks in by the pose (three runs).
+            // PHY1, ten runs at x from -2,810 to 3,086 by the integrated velocity: 0.415-0.454 in (pose 0.423-0.449), 3.76-3.78
+            // blocks travelled along the orbit, tilted 35 degrees at the end; a third of the pull still proves it
+            h.assertTrue(track.radialMove() > 0.15, "the ship was not pulled toward the centre: " + track);
             h.succeed();
         });
     }
@@ -215,7 +215,7 @@ public final class HazardGameTests {
      * Two hulls six blocks either side of a whirlpool's centre, one ballasted (heavier): with the mass cap below both
      * masses both feel the same force, so the heavier one moves less.
      *
-     * <p>The motion is the hull's own velocity, integrated over the window ({@link Track}), not the change of its pose
+     * <p>The motion is the hull's own velocity, integrated over the window ({@link ShipTrack}), not the change of its pose
      * (HZ1). Sable's physics is 32-bit in world coordinates (docs/sable-notes.md §9.0l): Rapier integrates the position
      * 18 times per substep, 720 times a second, and a step below half an f32 unit is rounded away. The heavy hull's
      * inward drift of 0.07 m/s is 1e-4 block per step; at x=2,737 half a unit is 1.2e-4 and the hull's x stayed at
@@ -234,15 +234,15 @@ public final class HazardGameTests {
         SailingGameTestsShips.ballast(h, 24, 18);
         Fixture heavy = SailingGameTestsShips.assemble(h, heavyHelm);
         HazardEntity pool = HazardTestSupport.hazard(h, HazardKind.WHIRLPOOL, POOL_CENTRE);
-        Track lightTrack = new Track(light, pool.position());
-        Track heavyTrack = new Track(heavy, pool.position());
+        ShipTrack lightTrack = new ShipTrack(light.ship(), pool.position());
+        ShipTrack heavyTrack = new ShipTrack(heavy.ship(), pool.position());
         StringBuilder trace = new StringBuilder();
         boolean[] done = {false};
         h.onEachTick(() -> {
             long t = h.getTick();
             if (done[0] || t < MASS_FROM) return;
-            lightTrack.tick(t == MASS_FROM);
-            heavyTrack.tick(t == MASS_FROM);
+            lightTrack.tick();
+            heavyTrack.tick();
             if ((t - MASS_FROM) % 25 == 0) {
                 trace.append(String.format(" | t=%d light %s heavy %s", t, lightTrack, heavyTrack));
             }
@@ -269,68 +269,6 @@ public final class HazardGameTests {
 
     /** The window of {@link #heavyShipMovesLessThanALightOne}: from tick 10 (the hulls have risen to their float) to 160. */
     private static final int MASS_FROM = 10, MASS_TO = 160;
-
-    /**
-     * A hull's horizontal motion in a whirlpool test as the integral of its reported velocity (one game tick, 0.05 s, per
-     * sample), which does not depend on where the test grid put it; the pose is kept for the log only.
-     */
-    private static final class Track {
-        private final Fixture f;
-        private final Vec3 centre;
-        private double startX, startZ, poseX, poseZ, dx, dz;
-
-        Track(Fixture f, Vec3 centre) {
-            this.f = f;
-            this.centre = centre;
-        }
-
-        void tick(boolean first) {
-            Vector3d c = com(f);
-            if (first) {
-                startX = poseX = c.x;
-                startZ = poseZ = c.z;
-                return;
-            }
-            Vector3d v = f.ship().linearVelocity();
-            dx += v.x * 0.05;
-            dz += v.z * 0.05;
-            poseX = c.x;
-            poseZ = c.z;
-        }
-
-        double radialMove() {
-            return Math.hypot(startX - centre.x, startZ - centre.z) - Math.hypot(startX + dx - centre.x, startZ + dz - centre.z);
-        }
-
-        double travel() {
-            return Math.hypot(dx, dz);
-        }
-
-        double poseRadialMove() {
-            return Math.hypot(startX - centre.x, startZ - centre.z) - Math.hypot(poseX - centre.x, poseZ - centre.z);
-        }
-
-        double poseTravel() {
-            return Math.hypot(poseX - startX, poseZ - startZ);
-        }
-
-        double tilt() {
-            Vector3d up = f.ship().orientation(new org.joml.Quaterniond()).transform(new Vector3d(0, 1, 0));
-            return Math.toDegrees(Math.acos(Math.min(1.0, up.y)));
-        }
-
-        @Override
-        public String toString() {
-            return String.format("x=%.4f z=%.4f d=(%.3f,%.3f) r-move %.3f pose r-move %.3f tilt %.1f",
-                    poseX, poseZ, dx, dz, radialMove(), poseRadialMove(), tilt());
-        }
-    }
-
-    private static Vector3d com(Fixture f) {
-        Vector3d c = new Vector3d();
-        f.ship().centerOfMass(c);
-        return f.ship().toWorld(c, new Vector3d());
-    }
 
     // ------------------------------------------------------------------ sails
 

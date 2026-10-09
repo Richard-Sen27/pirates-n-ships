@@ -1,10 +1,12 @@
 package com.richardsenger.piratesnships.combat.grapple;
 
+import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.content.CombatContent;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
+import com.richardsenger.piratesnships.core.gametest.ShipTrack;
 import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips;
 import com.richardsenger.piratesnships.sailing.block.CleatBlock;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
@@ -288,7 +290,9 @@ public final class GrappleGameTests {
         keepAboard(h, player, s.a());
         BlockPos own = eastDeckEdge(s.a());
         GrapplingHookEntity[] hook = new GrapplingHookEntity[1];
-        Vec3[] start = new Vec3[2];
+        // "the ships stay" is a slow drift, measured by the integrated velocity (ShipTrack, docs/sable-notes.md §9.0l)
+        ShipTrack trackA = ShipTrack.follow(h, s.a().ship(), null, 25);
+        ShipTrack trackB = ShipTrack.follow(h, s.b().ship(), null, 25);
         h.runAfterDelay(20, () -> hook[0] = throwAt(level, player, s.a().ship(), own, 2.0));
         h.runAfterDelay(25, () -> {
             GrapplingHookEntity g = hook[0];
@@ -297,15 +301,16 @@ public final class GrappleGameTests {
             h.assertTrue(own.equals(g.latchedBlock()), "latched block " + g.latchedBlock() + ", expected " + own);
             h.assertTrue(g.haulKind() == GrappleRules.Haul.NONE, "a rope within one ship pulls: " + g.haulKind());
             h.assertTrue(!g.taut(), "a rope within one ship is taut");
-            start[0] = comWorld(s.a().ship());
-            start[1] = comWorld(s.b().ship());
         });
         h.runAfterDelay(65, () -> {
             GrapplingHookEntity g = hook[0];
             h.assertTrue(!g.isRemoved() && g.state() == GrapplingHookEntity.State.LATCHED, "the hook let go");
-            double movedA = horizontal(start[0], comWorld(s.a().ship()));
-            double movedB = horizontal(start[1], comWorld(s.b().ship()));
-            h.assertTrue(movedA < 0.5 && movedB < 0.5, "the ships moved: A " + movedA + ", B " + movedB);
+            trackA.stop();
+            trackB.stop();
+            Constants.LOG.info("[grapple test] own ship: A {}, B {}", trackA, trackB);
+            double movedA = trackA.travel();
+            double movedB = trackB.travel();
+            h.assertTrue(movedA < 0.5 && movedB < 0.5, "the ships moved: A " + trackA + ", B " + trackB);
             h.assertTrue(g.ropeFarEnd(level).distanceTo(s.a().ship().toWorld(g.plotPos())) < 1.0e-6, "the far end does not follow ship A");
             g.release(GrappleRules.Release.NONE);
             h.assertTrue(hooksInInventory(player) == 1, "the released hook did not come back");

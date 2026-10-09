@@ -266,6 +266,23 @@ public final class SailingGameTestsShips {
         return f.ship().toWorld(c, new Vector3d());
     }
 
+    /**
+     * The lowest world y of any corner of any block of the ship: the hull's bottom with its heel and trim (PHY1). Compare
+     * it with a basin's floor to see whether a test ship floats free or touches the seabed.
+     */
+    public static double hullBottomY(ShipBody ship) {
+        double min = Double.POSITIVE_INFINITY;
+        Vector3d corner = new Vector3d();
+        Vector3d world = new Vector3d();
+        for (BlockPos p : ship.plotBlocks()) {
+            for (int i = 0; i < 8; i++) {
+                corner.set(p.getX() + (i & 1), p.getY() + ((i >> 1) & 1), p.getZ() + ((i >> 2) & 1));
+                min = Math.min(min, ship.toWorld(corner, world).y);
+            }
+        }
+        return min;
+    }
+
     private static double fwd(double[] a) {
         return a[2] == 0 ? 0 : a[0] / a[2];
     }

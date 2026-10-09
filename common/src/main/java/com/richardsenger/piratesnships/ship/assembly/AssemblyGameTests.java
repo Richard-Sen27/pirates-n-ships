@@ -154,6 +154,70 @@ public final class AssemblyGameTests {
         helper.succeed();
     }
 
+    /**
+     * Regression (CW1b, docs/sable-notes.md §9.0m): a ship removed and another assembled in the same tick share the plot,
+     * and Sable kept the removed ship's physics sections and tickets, so the new ship carried the old one's blocks as
+     * phantom voxels wherever it has air. The old ship here is a helm with a plank column and two long plank beams (the
+     * shape that showed it in the CW1b experiments); the new one is the 5×4×5 test hull, which floats level in a fresh
+     * plot. Without the fix its -z end sat 0.24 blocks above its +z end (corner heights at the bottom, mean of 60
+     * ticks); with it both differences are 0.0000.
+     */
+    // Own batch: Sable hands out the lowest free plot, so a plot freed by another test of the batch between the ghost's
+    // assembly and its removal would be taken instead of the ghost's.
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 160, batch = "pirates_n_ships_assembly_plot_reuse")
+    public static void plotFreedThisTickHasNoPhantomBlocks(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos ghostHelm = new BlockPos(5, 10, 11);
+        helper.setBlock(ghostHelm, AssemblyContent.HELM.get());
+        for (int y = 6; y <= 9; y++) {
+            helper.setBlock(new BlockPos(4, y, 11), Blocks.OAK_PLANKS);
+        }
+        for (int z = 0; z <= 23; z++) {
+            helper.setBlock(new BlockPos(4, 6, z), Blocks.OAK_PLANKS);
+        }
+        for (int x = 0; x <= 11; x++) {
+            helper.setBlock(new BlockPos(x, 6, 2), Blocks.OAK_PLANKS);
+        }
+        AssemblyResult ghost = ShipTestCleanup.assemble(helper, ghostHelm);
+        helper.assertTrue(ghost.success(), "ghost assembly failed: " + ghost);
+        ShipBody ghostShip = SableShips.byId(level, ghost.shipId());
+        BlockPos ghostPlotHelm = find(ghostShip, AssemblyContent.HELM.get());
+        AtomicReference<ShipBody> fresh = new AtomicReference<>();
+        AtomicReference<BlockPos> helmPlot = new AtomicReference<>();
+        double[] tilt = new double[3];
+        helper.onEachTick(() -> {
+            long t = helper.getTick();
+            if (t == 20) {
+                // the ghost has lived 20 ticks (falling in the empty template); remove it and assemble the new hull
+                SableShips.remove(ghostShip);
+                com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests.basin(helper, 0, 23, true);
+                BlockPos helm = com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests.hull(helper, 9, false);
+                AssemblyResult r = ShipTestCleanup.assemble(helper, helm);
+                helper.assertTrue(r.success(), "assembly failed: " + r);
+                ShipBody ship = SableShips.byId(level, r.shipId());
+                BlockPos plotHelm = find(ship, AssemblyContent.HELM.get());
+                helper.assertTrue(plotHelm.equals(ghostPlotHelm), "the new ship did not get the freed plot: " + plotHelm + " vs " + ghostPlotHelm);
+                fresh.set(ship);
+                helmPlot.set(plotHelm);
+            } else if (t > 60 && t <= 120 && fresh.get() != null) {
+                ShipBody ship = fresh.get();
+                BlockPos h = helmPlot.get();
+                tilt[0] += ship.toWorld(Vec3.atCenterOf(h.offset(-2, -4, 0))).y - ship.toWorld(Vec3.atCenterOf(h.offset(2, -4, 0))).y;
+                tilt[1] += ship.toWorld(Vec3.atCenterOf(h.offset(0, -4, -2))).y - ship.toWorld(Vec3.atCenterOf(h.offset(0, -4, 2))).y;
+                tilt[2]++;
+            } else if (t == 121) {
+                double roll = tilt[0] / tilt[2];
+                double pitch = tilt[1] / tilt[2];
+                String info = String.format(java.util.Locale.ROOT, "-x side %.4f above +x, -z side %.4f above +z (mean of 60 ticks)", roll, pitch);
+                com.richardsenger.piratesnships.Constants.LOG.info("CW1b plotFreedThisTickHasNoPhantomBlocks: {}", info);
+                SableShips.remove(fresh.get());
+                helper.assertTrue(Math.abs(roll) < 0.05 && Math.abs(pitch) < 0.05,
+                        "the hull in a plot freed this tick is not level (phantom blocks of the removed ship): " + info);
+                helper.succeed();
+            }
+        });
+    }
+
     @ModGameTest(template = GameTestTemplates.EMPTY_9)
     public static void assemblyInWaterRestoresTheSea(GameTestHelper helper) {
         // Stone basin (x/z 0..8, floor y=1, walls y=2..3) full of water around a 5×5 open boat at x/z 2..6.

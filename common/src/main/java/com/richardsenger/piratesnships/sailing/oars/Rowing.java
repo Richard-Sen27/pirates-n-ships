@@ -366,9 +366,46 @@ public final class Rowing {
                 seat.discard();
             }
         }
-        if (home != null && ship != null && !c.isNoAi() && c.assignment() == null) {
-            Path path = c.getNavigation().createPath(home, 1); // Sable paths in the plot (sable-notes §6, WALK1)
+        if (home != null && ship != null && !c.isNoAi()) {
+            RETURNING.put(c.getUUID(), new Return(ship.id(), home, level.getGameTime() + RETURN_TICKS));
+        }
+    }
+
+    /** A rower on its way back to where it stood: the ship, the plot cell, the game time it gives up. */
+    private record Return(UUID ship, BlockPos home, long until) {
+    }
+
+    /** Ticks a rower gets to set off home after Ship oars (it stands up first, then needs the deck under its feet). */
+    static final int RETURN_TICKS = 100;
+    private static final Map<UUID, Return> RETURNING = new ConcurrentHashMap<>();
+
+    /**
+     * Each tick: rowers that shipped their oars set off back to their place once they stand on their ship's deck (Sable
+     * paths in the plot for a mob that tracks the ship, sable-notes §6, WALK1); one that got an order meanwhile, or did not
+     * find its feet in {@link #RETURN_TICKS}, stays where it is.
+     */
+    private static void walkHome(ServerLevel level) {
+        if (RETURNING.isEmpty()) return;
+        for (Iterator<Map.Entry<UUID, Return>> it = RETURNING.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<UUID, Return> e = it.next();
+            Return r = e.getValue();
+            Entity entity = level.getEntity(e.getKey());
+            if (entity == null) {
+                if (level.getGameTime() > r.until()) it.remove();
+                continue;
+            }
+            if (!(entity instanceof CrewMember c) || !c.isAlive() || c.assignment() != null || c.walk() != null
+                    || c.isPassenger() || level.getGameTime() > r.until() || SHIPS.containsKey(r.ship())) {
+                it.remove();
+                continue;
+            }
+            ShipBody on = com.richardsenger.piratesnships.ship.sable.ShipEntities.standingOrRiding(c);
+            if (!c.onGround() || on == null || !on.id().equals(r.ship())) {
+                continue;
+            }
+            Path path = c.getNavigation().createPath(r.home(), 0);
             if (path != null) c.getNavigation().moveTo(path, WalkConfig.SPEED.get());
+            it.remove();
         }
     }
 
@@ -423,6 +460,7 @@ public final class Rowing {
         if (level.getGameTime() % RESUME_INTERVAL == 0) {
             resume(level);
         }
+        walkHome(level);
         if (SHIPS.isEmpty()) {
             return;
         }
@@ -514,6 +552,7 @@ public final class Rowing {
     public static void onServerStopped() {
         SHIPS.clear();
         HANDEDNESS.clear();
+        RETURNING.clear();
         CHECKED.clear();
     }
 

@@ -36,7 +36,7 @@ public final class OarThrust {
 
     static void onPhysicsTick(ServerLevel level, double timeStep) {
         Map<UUID, Rowing.Snapshot> rowing = Rowing.snapshots(level);
-        LAST.keySet().removeIf(id -> !rowing.containsKey(id));
+        LAST.keySet().removeIf(id -> !Rowing.isRowing(id)); // one map for every level: drop only ships that stopped
         if (rowing.isEmpty() || !OarsConfig.ENABLED.get()) {
             return;
         }

@@ -180,6 +180,8 @@ public final class OarGameTests {
                 h.assertValueEqual(c.stationPose(), CrewPose.ROW_STANDING, "pose");
             }
             h.assertValueEqual(Rowing.snapshot(s.body().id()).rowers().size(), 3, "rowers pulling");
+            OarRules.Thrust t = OarThrust.last(s.body().id());
+            h.assertTrue(t != null && t.force() > 0 && t.fade() < 1, "the oars push, fading with the way: " + t);
         });
         h.runAfterDelay(TO + 1, () -> {
             clearWind(h);

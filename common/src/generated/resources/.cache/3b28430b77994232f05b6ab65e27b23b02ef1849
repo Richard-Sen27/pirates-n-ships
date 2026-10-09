@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-09T19:26:35.01922	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-09T22:03:16.033962	Block states and models: pirates_n_ships
 c189a7833975a61cf2c7c8fd326d27a32969cb9d assets/pirates_n_ships/blockstates/bilge_pump.json
 7453c0a824db5974dd54fbe032ebd935075611c4 assets/pirates_n_ships/blockstates/boarding_plank.json
 52e053a4f7334e9a78798b4b4b9a2ad80087f3d5 assets/pirates_n_ships/blockstates/brig_bars.json
@@ -27,6 +27,7 @@ cab61d72a023901b36dd641138d8ec8c065bf7d2 assets/pirates_n_ships/blockstates/mast
 27c863b7d71d038ad0cd597ab135990f72e54960 assets/pirates_n_ships/blockstates/mooring_ring.json
 fb1ffe031da0edb59999141711742474aea52104 assets/pirates_n_ships/blockstates/nameplate.json
 9dae728c7a78c81433bd81a50aabcac966de7554 assets/pirates_n_ships/blockstates/notice_board.json
+4a25e0048593b898d1ec298d84e66bad04fe8855 assets/pirates_n_ships/blockstates/oak_oar_bench.json
 902a8efb8ae4f1f87e57954c4e790743199a5615 assets/pirates_n_ships/blockstates/oak_railing.json
 f827d860969fe6d2a55d884cfaedabef04555536 assets/pirates_n_ships/blockstates/oak_railing_port.json
 f5acf181dc85f733885deee927030149d7342fc1 assets/pirates_n_ships/blockstates/pantry.json
@@ -45,6 +46,7 @@ e6693690b1a2de5def4d4ee1b77abcdb3ac5acb1 assets/pirates_n_ships/blockstates/swiv
 e2b8a59635f01479e9fe04f09cad8c517664bff3 assets/pirates_n_ships/models/block/cannon_rear.json
 2f06a8f525c9f6b7cd662c20aef29c2d26f4b8ba assets/pirates_n_ships/models/block/captains_almanac.json
 c5ac1bd7624a36a4b6b4ab37906b56c61e277091 assets/pirates_n_ships/models/block/map_tile.json
+14046c0ae37eb4b65524048e06c1d46cd3e85f5e assets/pirates_n_ships/models/block/oak_oar_bench.json
 5447c9a4b28f6339875006f4d6993e03ec44a452 assets/pirates_n_ships/models/block/oak_railing_edge.json
 578c0d931191bb80885ec505206065e6e69453b8 assets/pirates_n_ships/models/block/oak_railing_port.json
 307360485a46243bab61f6ea848ffa750e125a33 assets/pirates_n_ships/models/block/oak_railing_post.json
@@ -74,6 +76,7 @@ acf3dd91749d681fbb5bf92599c94be9f249ede1 assets/pirates_n_ships/models/item/moor
 63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets/pirates_n_ships/models/item/navy_officer_spawn_egg.json
 63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets/pirates_n_ships/models/item/navy_soldier_spawn_egg.json
 532eea74ce4b7400fefec30377506f6736202323 assets/pirates_n_ships/models/item/notice_board.json
+14046c0ae37eb4b65524048e06c1d46cd3e85f5e assets/pirates_n_ships/models/item/oak_oar_bench.json
 bae6ea000e2f23c5d68500fc1349e38b22c2b34a assets/pirates_n_ships/models/item/oak_railing.json
 de2f966735664f2dc7a8e9aace4bb274a36f22f6 assets/pirates_n_ships/models/item/oak_railing_port.json
 d830a7abbc232e7d496bb338343be03b894083fa assets/pirates_n_ships/models/item/pantry.json

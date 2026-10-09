@@ -26,6 +26,7 @@ Bring your ship within about 32 blocks of the port first: the new hand walks str
 >! Every hand needs a free {item:pirates_n_ships:hammock}**hammock**. The desk refuses a hand you cannot bunk.
 
 ## Stations
+show_me: on_deck | Show me: hands at the rail
 A station is a block a hand can work: the {item:pirates_n_ships:sail_winch}**sail winch**, the **helm**, the {item:pirates_n_ships:capstan}**capstan**, the {item:pirates_n_ships:bilge_pump}**bilge pump**, the {item:pirates_n_ships:cannon}**cannon**, the {item:pirates_n_ships:swivel_gun}**swivel gun** and the {item:pirates_n_ships:crows_nest}**crow's nest**.
 
 A posted hand walks to his station, even under way, and stays there while she sails.

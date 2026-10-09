@@ -368,6 +368,11 @@
           "key": "pirates_n_ships.almanac.sailing.p15.heading"
         },
         {
+          "type": "show_me",
+          "label": "pirates_n_ships.almanac.sailing.p15.show_me1",
+          "scene": "pirates_n_ships:ratline_nets"
+        },
+        {
           "type": "spotlight",
           "item": "pirates_n_ships:ratline_net"
         },

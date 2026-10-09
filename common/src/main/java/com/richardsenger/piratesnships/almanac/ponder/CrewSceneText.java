@@ -16,6 +16,8 @@ public final class CrewSceneText {
     public static final String HAMMOCKS_AND_REST = "hammocks_and_rest";
     public static final String SWIVEL_GUN = "swivel_gun";
     public static final String OARS = "oars";
+    /** PND4: crew at the rail and boarding nets. */
+    public static final String ON_DECK = "on_deck";
 
     private CrewSceneText() {
     }
@@ -276,6 +278,37 @@ public final class CrewSceneText {
         @Override
         public String scene() {
             return OARS;
+        }
+
+        @Override
+        public String english() {
+            return english;
+        }
+    }
+
+    /** {@link OnDeckScene} (crew/lean and the boarding nets of ship/rigging, RAIL5; design.md §4.8). */
+    public enum OnDeck implements SceneLine {
+        IDLE("A hand with nothing to do may lean on the railing a while"),
+        LOOK("He watches the sea, turning his head now and then"),
+        CALLED("Any order calls him off at once"),
+        NET("String a ratline net between two chainplates on top of one railing"),
+        ALONG("It hangs along the rail as a boarding net"),
+        HELD("A boarder coming over the rail is held a moment"),
+        OVER("Then he may climb over: have your blades ready"),
+        PASS("Your own crew pass it freely: Board! on the whistle sends them over"),
+        BACK("The same entry, now Back aboard, calls them home"),
+        CUT("Three cutlass blows cut a boarding net down");
+
+        static final String TITLE = "On Deck";
+        private final String english;
+
+        OnDeck(String english) {
+            this.english = english;
+        }
+
+        @Override
+        public String scene() {
+            return ON_DECK;
         }
 
         @Override

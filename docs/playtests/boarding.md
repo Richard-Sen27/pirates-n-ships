@@ -204,3 +204,8 @@ Defaults: `boarding.board_order` true, `board_gap` 2, `boarders_keep_stations` t
 2. Kill most of them, or let her flood. Expected: her captain calls the rest back; they cross back to her deck.
 3. `boarding.npc_boarding` false: expected nobody comes across.
 4. Fly the Jolly Roger near a navy ship that lies alongside: expected her soldiers and officer board you the same way.
+
+## 17. Boarding nets (with RAIL5)
+1. String a boarding net along her rail and give "Board!" over a gangway landing at that rail. Expected: your boarders
+   are held at her net a moment like any attacker, then climb over.
+2. A net along your own rail: boarders coming home over it pass at once (also an NPC captain's pirates at their own net).

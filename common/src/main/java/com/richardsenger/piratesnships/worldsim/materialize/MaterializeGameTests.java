@@ -70,8 +70,13 @@ public final class MaterializeGameTests {
     private static final double HEADING = 30.0;
     private static final int SURFACE = 7;
     private static final Map<UUID, List<VoyageEndings.Ending>> ENDINGS = new ConcurrentHashMap<>();
+    /** WS3c: CONVOY_DELIVERED reports per test voyage. */
+    private static final Map<UUID, Integer> DELIVERIES = new ConcurrentHashMap<>();
 
     static {
+        com.richardsenger.piratesnships.worldsim.voyage.ConvoyPlanner.onDelivered((server, voyage) -> {
+            if (Materializer.isTest(voyage)) DELIVERIES.merge(voyage.id(), 1, Integer::sum);
+        });
         VoyageEndings.onEnding(e -> {
             if (Materializer.isTest(e.voyage())) ENDINGS.computeIfAbsent(e.voyage().id(), k -> new CopyOnWriteArrayList<>()).add(e);
         });
@@ -464,6 +469,8 @@ public final class MaterializeGameTests {
             h.assertTrue(VoyageShips.readLink(ship[0]).isEmpty() && VoyageShips.voyageOf(ship[0].id()).isEmpty(), "still linked");
             h.assertTrue(crew.stream().allMatch(c -> c.isAlive() && !c.getTags().contains(VoyageCrew.CREW_TAG)
                     && (!(c instanceof CrewMember m) || m.assignment() == null)), "crew not released");
+            h.assertTrue(crew.stream().noneMatch(c -> c instanceof CrewMember m && m.isStationary()),
+                    "a captured ship's crew still stands still like a voyage's (WS3c)");
             p[0].discard();
             crew.forEach(Entity::discard);
             finish(h, v);
@@ -489,5 +496,230 @@ public final class MaterializeGameTests {
             finish(h, b);
             h.succeed();
         });
+    }
+
+    // ------------------------------------------------------------------ WS3c
+
+    /** Fires the helm's ARRIVED for {@code ship} and updates the voyage, as at the last waypoint. */
+    private static void arriveNow(GameTestHelper h, Voyage v, ShipBody ship) {
+        Materializer.onCourseEvent(new CourseEvent(h.getLevel(), ship.id(), CourseEvent.Type.ARRIVED, v.waypoints().size() - 1));
+        Materializer.update(h.getLevel().getServer(), v.id());
+    }
+
+    /**
+     * WS3c: a materialised convoy with cargo arriving at its last waypoint reports CONVOY_DELIVERED once; arriving the
+     * same record again (it has ended) reports nothing more.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "deliver")
+    public static void arrivingConvoyReportsItsDeliveryOnce(GameTestHelper h) {
+        basin(h);
+        Voyage v = voyage(h, VoyageKind.CONVOY, Faction.MERCHANTS, convoyCargo());
+        MinecraftServer server = h.getLevel().getServer();
+        ShipBody[] ship = new ShipBody[1];
+        h.runAtTickTime(5, () -> ship[0] = materialize(h, v));
+        h.runAtTickTime(15, () -> {
+            arriveNow(h, v, ship[0]);
+            h.assertTrue(Voyages.get(server, v.id()).isEmpty(), "the convoy did not arrive");
+            h.assertTrue(SableShips.byId(h.getLevel(), ship[0].id()) == null, "its ship is still there");
+            h.assertValueEqual(DELIVERIES.getOrDefault(v.id(), 0), 1, "deliveries reported");
+            Voyages.arrive(server, v.withProgress(v.length()));
+            h.assertValueEqual(DELIVERIES.getOrDefault(v.id(), 0), 1, "deliveries after a second arrival of the record");
+            DELIVERIES.remove(v.id());
+            finish(h, v);
+            h.succeed();
+        });
+    }
+
+    /** WS3c: a convoy plundered empty arrives without a delivery (the plunder was its world-side outcome). */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "deliver")
+    public static void convoyPlunderedEmptyDeliversNothing(GameTestHelper h) {
+        basin(h);
+        Voyage v = voyage(h, VoyageKind.CONVOY, Faction.MERCHANTS, convoyCargo());
+        MinecraftServer server = h.getLevel().getServer();
+        ShipBody[] ship = new ShipBody[1];
+        Player[] p = new Player[1];
+        h.runAtTickTime(5, () -> {
+            ship[0] = materialize(h, v);
+            p[0] = boarder(h, ship[0]);
+        });
+        h.onEachTick(() -> {
+            if (p[0] != null && !p[0].isRemoved()) keepAboard(p[0], ship[0]);
+        });
+        h.runAtTickTime(15, () -> {
+            Materializer.update(server, v.id());
+            VoyageShips.containers(ship[0]).forEach(c -> c.extract(c.count()));
+            Materializer.update(server, v.id());
+            h.assertTrue(ENDINGS.getOrDefault(v.id(), List.of()).stream().anyMatch(e -> e.outcome() == VoyageEndings.Outcome.PLUNDERED),
+                    "not plundered: " + ENDINGS.get(v.id()));
+            h.assertValueEqual(Voyages.get(server, v.id()).orElseThrow().cargoUnits(), 0, "cargo left in the record");
+            arriveNow(h, v, ship[0]);
+            h.assertTrue(Voyages.get(server, v.id()).isEmpty(), "the convoy did not arrive");
+            h.assertValueEqual(DELIVERIES.getOrDefault(v.id(), 0), 0, "deliveries reported");
+            p[0].discard();
+            finish(h, v);
+            h.succeed();
+        });
+    }
+
+    /**
+     * WS3c: a fresh record (health 1) appears dry; flooded to 40 % and dematerialised, the record keeps health 0.6 and
+     * the ship appears again flooded 40 %, its water in the lowest compartments.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "health")
+    public static void batteredShipReappearsBattered(GameTestHelper h) {
+        basin(h);
+        Voyage v = voyage(h, VoyageKind.CONVOY, Faction.MERCHANTS, convoyCargo());
+        MinecraftServer server = h.getLevel().getServer();
+        ShipBody[] ship = new ShipBody[1];
+        h.runAtTickTime(5, () -> ship[0] = materialize(h, v));
+        h.runAtTickTime(10, () -> {
+            double dry = VoyageEndings.floodFraction(h.getLevel(), ship[0]);
+            h.assertTrue(dry < 0.01, "a record at full health appeared flooded " + dry);
+            h.assertTrue(VoyageHull.restore(h.getLevel(), ship[0], 0.6), "no hull runtime");
+        });
+        h.runAtTickTime(13, () -> {
+            double before = VoyageEndings.floodFraction(h.getLevel(), ship[0]);
+            h.assertTrue(Math.abs(before - 0.4) < 0.03, "flooded " + before + " before dematerialising");
+            h.assertTrue(Materializer.dematerialize(server, v.id()), "dematerialize refused");
+            Voyage r = Voyages.get(server, v.id()).orElseThrow();
+            h.assertTrue(Math.abs(r.health() - 0.6) < 0.03, "record health " + r.health());
+        });
+        h.runAtTickTime(15, () -> ship[0] = materialize(h, v));
+        h.runAtTickTime(20, () -> {
+            double again = VoyageEndings.floodFraction(h.getLevel(), ship[0]);
+            h.assertTrue(Math.abs(again - 0.4) < 0.05, "reappeared flooded " + again + ", record health "
+                    + Voyages.get(server, v.id()).orElseThrow().health());
+            HullRuntime rt = HullRuntimes.get(h.getLevel(), ship[0].id());
+            List<Compartment> cs = new ArrayList<>(rt.simulation().analysis().compartments());
+            cs.sort(java.util.Comparator.comparingInt(Compartment::minY).thenComparingInt(Compartment::id));
+            boolean dryBelow = false;
+            for (Compartment c : cs) {
+                double water = rt.simulation().volume(c.id());
+                h.assertFalse(dryBelow && water > c.volume() * 0.5, "compartment " + c.id() + " holds " + water
+                        + " above a dry one");
+                if (water < 0.5) dryBelow = true;
+            }
+            finish(h, v);
+            h.succeed();
+        });
+    }
+
+    /** {@code restore_health = false}: a battered record appears dry. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = "pirates_n_ships_config_worldsim_materialize_health")
+    public static void restoreHealthOffAppearsDry(GameTestHelper h) {
+        ConfigOverrides.during(h, MaterializeConfig.RESTORE_HEALTH, false);
+        basin(h);
+        Voyage v = voyage(h, VoyageKind.CONVOY, Faction.MERCHANTS, convoyCargo());
+        Voyages.update(h.getLevel().getServer(), v.withHealth(0.5));
+        ShipBody[] ship = new ShipBody[1];
+        h.runAtTickTime(5, () -> ship[0] = materialize(h, v));
+        h.runAtTickTime(10, () -> {
+            double f = VoyageEndings.floodFraction(h.getLevel(), ship[0]);
+            h.assertTrue(f < 0.01, "flooded " + f + " with restore_health off");
+            finish(h, v);
+            h.succeed();
+        });
+    }
+
+    /**
+     * WS3c: the deckhands of a voyage ship are stationary when idle, and every crew member is still on the deck (within
+     * the ship's blocks, above its keel) after 400 ticks; the ship lies still (course cleared, sails furled).
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 500, batch = BATCH + "deckhands")
+    public static void deckhandsStayOnTheDeck(GameTestHelper h) {
+        basin(h);
+        Voyage v = voyage(h, VoyageKind.CONVOY, Faction.MERCHANTS, convoyCargo());
+        ShipBody[] ship = new ShipBody[1];
+        List<LivingEntity> crew = new ArrayList<>();
+        h.runAtTickTime(5, () -> {
+            ship[0] = materialize(h, v);
+            HelmCourses.clear(h.getLevel(), ship[0].id());
+            com.richardsenger.piratesnships.station.jobs.JobBoard.post(h.getLevel(), ship[0],
+                    com.richardsenger.piratesnships.station.winch.SailOrder.FURL);
+            crew.addAll(people(h, ship[0], v, VoyageCrew.CREW_TAG));
+            h.assertValueEqual(crew.size(), MaterializeConfig.CREW_PER_SHIP.get() + 1, "crew aboard");
+            h.assertTrue(crew.stream().allMatch(c -> c instanceof CrewMember m && m.isStationary()), "deckhands not stationary");
+            CrewMember hired = com.richardsenger.piratesnships.station.StationContent.CREW_MEMBER.get().create(h.getLevel());
+            h.assertTrue(hired != null && !hired.isStationary(), "an ordinary crew member is stationary");
+            if (hired != null) hired.discard();
+        });
+        h.runAtTickTime(405, () -> {
+            List<BlockPos> blocks = ship[0].plotBlocks();
+            int minX = blocks.stream().mapToInt(BlockPos::getX).min().orElseThrow();
+            int maxX = blocks.stream().mapToInt(BlockPos::getX).max().orElseThrow();
+            int minY = blocks.stream().mapToInt(BlockPos::getY).min().orElseThrow();
+            int minZ = blocks.stream().mapToInt(BlockPos::getZ).min().orElseThrow();
+            int maxZ = blocks.stream().mapToInt(BlockPos::getZ).max().orElseThrow();
+            for (LivingEntity c : crew) {
+                h.assertTrue(c.isAlive(), "a crew member died");
+                Vec3 local = ship[0].toPlot(c.position());
+                boolean onDeck = local.x >= minX - 0.5 && local.x <= maxX + 1.5 && local.z >= minZ - 0.5 && local.z <= maxZ + 1.5
+                        && local.y >= minY;
+                h.assertTrue(onDeck, "crew member " + c.getUUID() + " left the deck: plot " + local + ", ship blocks x "
+                        + minX + ".." + maxX + " z " + minZ + ".." + maxZ + " y from " + minY);
+            }
+            finish(h, v);
+            h.succeed();
+        });
+    }
+
+    /**
+     * WS3c check of the WS3b open item "CrewStations.worldBox can be stale on a reused plot": one convoy is removed and
+     * another appears in the same tick (Sable hands the freed plot to the new ship at once, docs/sable-notes.md §9.0c).
+     * The new ship's plot bounds hold all its blocks, the search box ({@code CrewStations.worldBox}) holds every block
+     * corner in the world, and the people-aboard searches find all its crew, fighters and a boarder.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "plotreuse")
+    public static void reusedPlotStillFindsThePeopleAboard(GameTestHelper h) {
+        basin(h);
+        Voyage first = voyage(h, VoyageKind.CONVOY, Faction.MERCHANTS, convoyCargo());
+        Voyage second = voyage(h, VoyageKind.CONVOY, Faction.MERCHANTS, convoyCargo());
+        MinecraftServer server = h.getLevel().getServer();
+        ShipBody[] ship = new ShipBody[2];
+        Player[] p = new Player[1];
+        h.runAtTickTime(5, () -> ship[0] = materialize(h, first));
+        h.runAtTickTime(15, () -> {
+            BlockPos firstPlot = ship[0].plotBounds()[0];
+            h.assertTrue(Materializer.dematerialize(server, first.id()), "dematerialize refused");
+            ship[1] = materialize(h, second);
+            BlockPos secondPlot = ship[1].plotBounds()[0];
+            h.assertTrue(firstPlot.getX() >> 4 == secondPlot.getX() >> 4 && firstPlot.getZ() >> 4 == secondPlot.getZ() >> 4,
+                    "the second ship did not get the freed plot (" + firstPlot + " / " + secondPlot + "): the test proves nothing");
+            checkSearchBox(h, ship[1], second, "same tick");
+            p[0] = boarder(h, ship[1]);
+        });
+        h.onEachTick(() -> {
+            if (p[0] != null && !p[0].isRemoved()) keepAboard(p[0], ship[1]);
+        });
+        h.runAtTickTime(17, () -> {
+            checkSearchBox(h, ship[1], second, "two ticks later");
+            List<Player> aboard = VoyageEndings.aboard(h.getLevel(), ship[1]);
+            h.assertTrue(aboard.contains(p[0]), "the boarder is not found aboard: " + aboard);
+            p[0].discard();
+            finish(h, first);
+            finish(h, second);
+            h.succeed();
+        });
+    }
+
+    private static void checkSearchBox(GameTestHelper h, ShipBody ship, Voyage v, String when) {
+        BlockPos[] b = ship.plotBounds();
+        net.minecraft.world.phys.AABB box = com.richardsenger.piratesnships.crew.npc.CrewStations.worldBox(ship, 0);
+        for (BlockPos q : ship.plotBlocks()) {
+            h.assertTrue(q.getX() >= b[0].getX() && q.getX() <= b[1].getX() && q.getY() >= b[0].getY() && q.getY() <= b[1].getY()
+                    && q.getZ() >= b[0].getZ() && q.getZ() <= b[1].getZ(), when + ": block " + q + " outside the plot bounds " + b[0] + " " + b[1]);
+            for (int dx = 0; dx <= 1; dx++) {
+                for (int dy = 0; dy <= 1; dy++) {
+                    for (int dz = 0; dz <= 1; dz++) {
+                        Vec3 w = ship.toWorld(new Vec3(q.getX() + dx, q.getY() + dy, q.getZ() + dz));
+                        h.assertTrue(box.inflate(1e-6).contains(w), when + ": block corner " + w + " outside the search box " + box);
+                    }
+                }
+            }
+        }
+        int crew = people(h, ship, v, VoyageCrew.CREW_TAG).size();
+        int fighters = people(h, ship, v, VoyageCrew.FIGHTER_TAG).size();
+        h.assertValueEqual(crew, MaterializeConfig.CREW_PER_SHIP.get() + 1, when + ": crew found");
+        h.assertValueEqual(fighters, MaterializeConfig.FIGHTERS_MERCHANT.get(), when + ": fighters found");
     }
 }

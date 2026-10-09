@@ -336,3 +336,49 @@ As for WS4b: a creative world with cheats and open ocean, your own ship with a f
 Report: screenshots of steps 1 (the waist from above and the hold), 2 (the locker's contents) and 4, the chat during
 step 4, `latest.log`, and anything that looked wrong (a gun facing inboard, a crew member standing in a gun port or
 falling overboard, the ship heeling to one side, balls hitting the patrol's own bulwark).
+
+## WS3c: voyage polish (deliveries, battered ships, deckhands)
+
+Covered headless: the delivery rule (a convoy with cargo; JUnit `VoyageRulesTest`) and the flooding of a hull back to
+a health, lowest compartments first (JUnit `HealthFloodingTest`); in basins (`MaterializeGameTests`): a materialised
+convoy arriving reports `convoy_delivered` once, a second arrival of the same record reports nothing, one plundered
+empty reports nothing; a ship flooded to 40 % and dematerialised keeps health 0.6 and appears again 40 % flooded with
+the water in its lowest compartments, a fresh record appears dry, `restore_health = false` appears dry; the deckhands
+are stationary and all crew are still on the deck after 400 ticks, a captured ship's crew is not stationary any more;
+a ship that appears on a plot freed in the same tick still finds its crew, fighters and a boarder (the WS3b open item
+about stale `CrewStations.worldBox` bounds: the bounds hold every block, nothing to fix). (`VoyageGameTests`) an
+abstract convoy arriving with cargo reports once, an emptied one does not. Not covered: a convoy reaching a real
+port, a real hull battered by cannonballs (breaches) coming back, the deckhands over a long voyage at sea.
+
+What the faction state does with `convoy_delivered` (WS1): Merchants' wealth +100 and the Navy's +20, times
+`world_simulation.factions.event_scale`; no tension or aggression changes.
+
+### Setup
+As for WS3b: a creative world with cheats and open ocean in front of you. For step 1 two ports with a lane between
+them and `world_simulation.convoys_per_day` raised (WS2 step 7); `/pirates world factions` to read the state.
+
+### Steps
+1. **A delivery.** Note Merchants' wealth in `/pirates world factions`, then let a convoy reach its destination port
+   (abstract: wait, or follow it as a real ship until it reaches the last waypoint).
+   - **Expected:** when the convoy disappears from `/pirates world voyages` at its port, Merchants' wealth is 100
+     higher and the Navy's 20 (at `event_scale` 1, before any other change). Only once per convoy.
+2. **A plundered convoy delivers nothing.** Spawn a convoy (`/pirates world voyages spawn near convoy`), board it and
+   empty every cargo crate and barrel, then follow it until it arrives (or let it arrive abstractly after you leave).
+   - **Expected:** "You plundered a merchant ship"; on arrival Merchants' wealth does not rise (only the plunder moved
+     it, down).
+3. **A battered ship comes back battered.** Spawn a convoy, shoot a few holes into its hull below the waterline until
+   it is clearly flooding but well short of sinking (the hull HUD or the water inside), then fly away beyond the linger
+   distance (WS3b step 6) and come back.
+   - **Expected:** the record's health in `/pirates world voyages` is below 1 after it turned into a record. When the
+     ship appears again it lies lower, with water in its hold (the lowest compartment fills first), about as flooded as
+     when you left; it has no holes (breaches do not carry back, only the water). A convoy you never shot appears dry.
+4. **Deckhands stay aboard.** Spawn a convoy and watch its crew for a few minutes while it sails, and while you stand
+   on its deck.
+   - **Expected:** the deckhands who are not at the sail winch stand where they are (they turn and look around, like
+     the sailors); nobody walks over the side. Capture a convoy (WS3b step 4): its crew strolls about again like your
+     own crew.
+5. **Toggle.** `world_simulation.materialize.restore_health = false`, then repeat step 3.
+   - **Expected:** the battered ship comes back dry; the record still shows its health.
+
+Report: `/pirates world factions` before and after steps 1 and 2, a screenshot of the ship in step 3 before you left
+and after it came back, `latest.log`, and anything a deckhand did that looked wrong.

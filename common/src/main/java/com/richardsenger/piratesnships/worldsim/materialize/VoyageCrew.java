@@ -30,6 +30,8 @@ import java.util.UUID;
  * The people of a materialised voyage (WS3b, design.md §7, §9): crew members (one pinned at the steering helm, the
  * deckhands seated by the job board's {@code SailOrder.HOIST}) and the faction's fighters ({@code Sailor},
  * {@code NavyOfficer} + {@code NavySoldier}, {@code Pirate}) standing on {@link DeckSpots}, stationary and persistent.
+ * The crew members are stationary too while the ship is a voyage's (WS3c): idle deckhands stand instead of strolling
+ * off the deck; {@link #letGo} makes them ordinary crew again.
  * Everyone carries the entity tags {@link #voyageTag} and {@link #CREW_TAG} or {@link #FIGHTER_TAG} (saved with the
  * entity), so a dematerialised ship takes them along and a reload finds them again.
  */
@@ -69,7 +71,10 @@ public final class VoyageCrew {
         BlockPos helm = ShipHelm.steering(ship);
         for (int i = 0; i < crew; i++) {
             CrewMember c = StationContent.CREW_MEMBER.get().create(level);
-            if (c == null || !place(level, ship, c, spots.get(i), voyage, CREW_TAG)) continue;
+            if (c == null) continue;
+            // WS3c: idle deckhands stand where they are like the fighters instead of strolling off the deck
+            c.setStationary(true);
+            if (!place(level, ship, c, spots.get(i), voyage, CREW_TAG)) continue;
             crewMade++;
             if (helmsman == null && helm != null
                     && CrewStations.assign(level, c, helm, true) == CrewStations.AssignResult.ASSIGNED) {
@@ -116,6 +121,14 @@ public final class VoyageCrew {
         return level.getEntitiesOfClass(LivingEntity.class, box, e -> e.isAlive() && e.getTags().contains(tag) && e.getTags().contains(role));
     }
 
+    /** Makes every crew member of {@code voyage} in the level stationary (an adopted ship's crew saved before WS3c). */
+    public static void settle(ServerLevel level, UUID voyage) {
+        String tag = voyageTag(voyage);
+        for (Entity e : level.getAllEntities()) {
+            if (e instanceof CrewMember c && c.getTags().contains(tag) && c.getTags().contains(CREW_TAG)) c.setStationary(true);
+        }
+    }
+
     /** Removes everyone of {@code voyage} in the level (dematerialisation, an orphaned ship). */
     public static int discard(ServerLevel level, UUID voyage) {
         String tag = voyageTag(voyage);
@@ -140,6 +153,7 @@ public final class VoyageCrew {
         for (Entity e : level.getAllEntities()) {
             if (e == null || !e.getTags().contains(tag)) continue;
             e.removeTag(tag);
+            if (e instanceof CrewMember c && e.getTags().contains(CREW_TAG)) c.setStationary(false); // ordinary crew now
             e.removeTag(CREW_TAG);
             e.removeTag(FIGHTER_TAG);
         }

@@ -484,6 +484,10 @@ the rail), `art/renders/railing_item.png`.
   forward: you climb to the hoop and stay on the net, you do not drift aft or off it; do it again while the ship turns
   hard at the helm, again after jumping onto the net from the deck, and once climbing on from the water at the side.
   Hold still (sneak) halfway up for a few seconds while it sails and turns: you stay on the same spot of the net.
+- **Off the top (RL3):** end a mast at the hoop's height and put a crow's nest on it (the hoop one block below the
+  nest's floor); climb with forward: at the hoop you rise a little over it and forward walks you into the nest, you do
+  not hang stuck at the hoop. Walk back out of the nest over the hoop: the net catches you; let go and you slide down
+  it to the chainplate, or hold back to climb down. Try it on a vertical net and on a sloped one.
 - **Water:** string a net with its lower part under water: the cells hold the water, no air pocket.
 - **Config:** `rigging.nets_enabled = false`: "Ratline nets are disabled", nothing tied. `rigging.net_assist = false`:
   forward alone no longer climbs a diagonal net; jump and forward together still do (jerkily).

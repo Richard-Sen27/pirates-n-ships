@@ -85,6 +85,16 @@ public final class SeaStates {
         return e == null || !HazardConfig.WAVES_ENABLED.get() ? WaveField.FLAT : e.field;
     }
 
+    /** The height of the sea of {@code level} at one point at game time {@code t} ({@link WaveField#heightAt}; WAV6). */
+    public static double heightAt(ServerLevel level, double x, double z, double t) {
+        return field(level).heightAt(x, z, t);
+    }
+
+    /** The slope {@code {∂h/∂x, ∂h/∂z}} that goes with {@link #heightAt}. */
+    public static double[] slopeAt(ServerLevel level, double x, double z, double t) {
+        return field(level).slopeAt(x, z, t);
+    }
+
     /** The state the sea of {@code level} is in now (calm before its first tick). */
     public static synchronized SeaState current(ServerLevel level) {
         Entry e = LEVELS.get(level);

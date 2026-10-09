@@ -39,7 +39,6 @@ public final class TradeModule implements ModModule {
     @Override
     public void registerPayloads() {
         com.richardsenger.piratesnships.trade.net.MarketBackend.registerPayloads();
-        com.richardsenger.piratesnships.ship.cargo.ShipCargo.registerPayloads();
     }
 
     @Override
@@ -59,7 +58,6 @@ public final class TradeModule implements ModModule {
     @Override
     public void initClient() {
         com.richardsenger.piratesnships.trade.client.TradeClient.init();
-        com.richardsenger.piratesnships.ship.cargo.ShipCargo.initClient();
     }
 
     @Override

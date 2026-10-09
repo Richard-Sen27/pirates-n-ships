@@ -106,14 +106,14 @@ public final class FabricClientSetup {
     }
 
     /**
-     * Our HUD layers above the whole vanilla HUD (NeoForge: {@code RegisterGuiLayersEvent#registerAboveAll}), in
+     * Our above-all HUD layers over the whole vanilla HUD (NeoForge: {@code RegisterGuiLayersEvent#registerAboveAll}), in
      * registration order, each {@link LayeredDraw#Z_SEPARATION} above the last as in NeoForge's layer manager. Fabric's
      * callback fires after vanilla's layers, whose depth values reach far above ours, so the depth buffer is cleared
      * first (vanilla clears it right after the HUD anyway). Drawn while the HUD is hidden too, as on NeoForge: layers
      * check {@code hideGui} themselves.
      */
     private static void renderHudLayers(net.minecraft.client.gui.GuiGraphics graphics, net.minecraft.client.DeltaTracker delta) {
-        List<ClientEvents.HudLayer> layers = ClientEvents.hudLayers();
+        List<ClientEvents.HudLayer> layers = ClientEvents.hudLayers(ClientEvents.HudOrder.ABOVE_ALL);
         if (layers.isEmpty()) return;
         RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
         graphics.pose().pushPose();
@@ -122,6 +122,17 @@ public final class FabricClientSetup {
             graphics.pose().translate(0.0F, 0.0F, LayeredDraw.Z_SEPARATION);
         }
         graphics.pose().popPose();
+    }
+
+    /**
+     * Our below-chat HUD layers (HUD4, {@code ClientEvents.registerHudLayerBelowChat}), drawn by {@code MixinGui} at the
+     * head of {@code Gui#renderChat}, in registration order. No depth step between them: they stay at the chat's
+     * depth and the chat, drawn right after, passes over them (vanilla's GUI depth test is less-or-equal).
+     */
+    public static void renderHudLayersBelowChat(net.minecraft.client.gui.GuiGraphics graphics, net.minecraft.client.DeltaTracker delta) {
+        for (ClientEvents.HudLayer layer : ClientEvents.hudLayers(ClientEvents.HudOrder.BELOW_CHAT)) {
+            layer.layer().render(graphics, delta);
+        }
     }
 
     /** Puts every block of ours whose model names a {@code render_type} into that layer ({@link FabricRenderLayers}). */

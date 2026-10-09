@@ -16,13 +16,14 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Placement of the ship HUD's two panels per corner, GUI size and scale, clear of vanilla's HUD; the strip's cells and
- * the units (HUD1, HUD2); only the chat lines vanilla draws count (HUD3).
+ * the units (HUD1, HUD2); only the chat lines vanilla draws count (HUD3), and only for the hull panel: the compass panel
+ * stays at the margin whatever the chat shows (HUD4).
  */
 class ShipHudLayoutTest {
 
     private static final int GW = 480, GH = 270;
     private static final int W = ShipHudLayout.W, CH = ShipHudLayout.COMPASS_H, HH = ShipHudLayout.HULL_H,
-            M = ShipHudLayout.MARGIN;
+            M = ShipHudLayout.DEFAULT_MARGIN, GAP = ShipHudLayout.GAP;
     /** Vanilla's default chat: 320 wide (+ backing), 90 high closed, 180 open, chat scale 1. */
     private static final int CHAT_W = 332, CHAT_H = 90, CHAT_OPEN_H = 180;
     /** GUI sizes of 1920×1080, 1280×720 and 854×480 windows at GUI scale 1 to 4 (as far as each allows). */
@@ -35,21 +36,45 @@ class ShipHudLayoutTest {
         return new Screen(gw, gh, List.of());
     }
 
-    /** The HUD of a survival player: chat (closed or open), hotbar with status rows, stamina bar on the right. */
-    private static Screen survival(int gw, int gh, boolean chatOpen, int rowsAbove) {
-        List<Rect> o = new ArrayList<>(ShipHudLayout.chat(gw, gh, CHAT_W, chatOpen ? CHAT_OPEN_H : CHAT_H, chatOpen));
-        o.addAll(ShipHudLayout.hotbar(gw, gh, true, rowsAbove));
-        // StaminaHudLayout.ABOVE_HOTBAR_TIGHT in survival: right-aligned with the hotbar, 2 px above the food row
-        o.add(new Rect(gw / 2 + 91 - 82, gh - 39 - 10 * rowsAbove - 2 - 7, 82, 7));
-        return new Screen(gw, gh, o);
+    private static Placement place(Corner compass, Corner hull, Screen screen, double scale) {
+        return ShipHudLayout.place(compass, hull, screen, scale, M);
     }
 
-    private static void assertClear(Rect panel, Screen screen, String what) {
-        for (Rect o : screen.obstacles()) {
+    /** The HUD of a survival player: chat (closed or open), hotbar with status rows, stamina bar on the right. */
+    private static Screen survival(int gw, int gh, boolean chatOpen, int rowsAbove) {
+        return survival(gw, gh, chatOpen ? CHAT_OPEN_H : CHAT_H, chatOpen, rowsAbove);
+    }
+
+    private static Screen survival(int gw, int gh, int chatLinesHeight, boolean chatOpen, int rowsAbove) {
+        List<Rect> o = new ArrayList<>(ShipHudLayout.hotbar(gw, gh, true, rowsAbove));
+        // StaminaHudLayout.ABOVE_HOTBAR_TIGHT in survival: right-aligned with the hotbar, 2 px above the food row
+        o.add(new Rect(gw / 2 + 91 - 82, gh - 39 - 10 * rowsAbove - 2 - 7, 82, 7));
+        return new Screen(gw, gh, o, ShipHudLayout.chat(gw, gh, CHAT_W, chatLinesHeight, chatOpen));
+    }
+
+    /** What the hull panel keeps clear of: the static obstacles and the chat. */
+    private static List<Rect> withChat(Screen s) {
+        List<Rect> all = new ArrayList<>(s.obstacles());
+        all.addAll(s.chat());
+        return all;
+    }
+
+    private static void assertClear(Rect panel, List<Rect> obstacles, Screen screen, String what) {
+        for (Rect o : obstacles) {
             assertFalse(panel.intersects(o), what + " " + panel + " overlaps " + o);
         }
         assertTrue(panel.x() >= 0 && panel.y() >= 0 && panel.right() <= screen.guiWidth()
                 && panel.bottom() <= screen.guiHeight(), what + " " + panel + " is off screen");
+    }
+
+    /**
+     * Where the compass panel belongs at the bottom left of a survival HUD: above the status rows when it reaches into
+     * their column, above the hotbar (with its offhand slot) when it reaches that far, the corner otherwise.
+     */
+    private static int compassY(int gw, int gh, int rowsAbove) {
+        if (M + W > gw / 2 - 91) return gh - 39 - 10 * rowsAbove - GAP - CH;
+        if (M + W > gw / 2 - 91 - 29) return gh - 23 - GAP - CH;
+        return gh - M - CH;
     }
 
     @Test
@@ -57,8 +82,8 @@ class ShipHudLayoutTest {
         Screen e = empty(GW, GH);
         for (Corner c : Corner.values()) {
             Corner other = c == Corner.TOP_LEFT ? Corner.BOTTOM_RIGHT : Corner.TOP_LEFT;
-            Rect compass = ShipHudLayout.place(c, other, e, 1.0).compass().rect();
-            Rect hull = ShipHudLayout.place(other, c, e, 1.0).hull().rect();
+            Rect compass = place(c, other, e, 1.0).compass().rect();
+            Rect hull = place(other, c, e, 1.0).hull().rect();
             int x = c.right() ? GW - M - W : M;
             assertEquals(new Rect(x, c.top() ? M : GH - M - CH, W, CH), compass, "compass at " + c);
             assertEquals(new Rect(x, c.top() ? M : GH - M - HH, W, HH), hull, "hull at " + c);
@@ -66,23 +91,43 @@ class ShipHudLayoutTest {
     }
 
     @Test
+    void configMarginMovesBothPanels() {
+        assertEquals(8, ShipHudLayout.DEFAULT_MARGIN, "HUD4: a little spacing from the edges by default");
+        for (int margin : new int[] {0, 4, ShipHudLayout.MAX_MARGIN}) {
+            Placement p = ShipHudLayout.place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, empty(GW, GH), 1.0, margin);
+            assertEquals(new Rect(margin, GH - margin - CH, W, CH), p.compass().rect(), "compass at margin " + margin);
+            assertEquals(new Rect(GW - margin - W, GH - margin - HH, W, HH), p.hull().rect(), "hull at margin " + margin);
+            Placement top = ShipHudLayout.place(Corner.TOP_RIGHT, Corner.TOP_LEFT, empty(GW, GH), 1.0, margin);
+            assertEquals(new Rect(GW - margin - W, margin, W, CH), top.compass().rect());
+            assertEquals(new Rect(margin, margin, W, HH), top.hull().rect());
+        }
+        // the margin is from the edges only; past an obstacle it is the fixed gap
+        Screen icons = new Screen(GW, GH, ShipHudLayout.effects(GW, 26));
+        assertEquals(26 + GAP, ShipHudLayout.place(Corner.TOP_RIGHT, Corner.BOTTOM_RIGHT, icons, 1.0, 20).compass().rect().y());
+    }
+
+    @Test
     void sameCornerStacksCompassOverHull() {
         Screen e = empty(GW, GH);
         for (Corner c : Corner.values()) {
-            Placement p = ShipHudLayout.place(c, c, e, 1.0);
+            Placement p = place(c, c, e, 1.0);
             Rect compass = p.compass().rect(), hull = p.hull().rect();
             assertEquals(compass.x(), hull.x(), "one column at " + c);
             assertEquals(compass.bottom(), hull.y(), "the strip right under the compass at " + c);
             assertEquals(c.top() ? M : GH - M, c.top() ? compass.y() : hull.bottom(), "the block sits at " + c);
-            assertEquals(CH + HH, hull.bottom() - compass.y(), "the HUD1 look, 105 px high");
+            assertEquals(CH + HH, hull.bottom() - compass.y(), "the HUD1 look, compass over strip");
         }
+        // HUD4: stacked at the bottom left the block stays in the corner under the chat lines, like the compass
+        Placement p = place(Corner.BOTTOM_LEFT, Corner.BOTTOM_LEFT, survival(GW, GH, true, 0), 1.0);
+        assertEquals(GH - M, p.hull().rect().bottom());
+        assertEquals(M, p.compass().rect().x());
     }
 
     @Test
     void scaleGrowsAwayFromTheCorner() {
         for (double scale : new double[] {0.5, 1.5, 2.0}) {
             int w = (int) Math.round(W * scale), ch = (int) Math.round(CH * scale), hh = (int) Math.round(HH * scale);
-            Placement p = ShipHudLayout.place(Corner.TOP_LEFT, Corner.BOTTOM_RIGHT, empty(GW, GH), scale);
+            Placement p = place(Corner.TOP_LEFT, Corner.BOTTOM_RIGHT, empty(GW, GH), scale);
             Rect tl = p.compass().rect(), br = p.hull().rect();
             assertEquals(new Rect(M, M, w, ch), tl, "top left stays at the corner");
             assertEquals(new Rect(GW - M - w, GH - M - hh, w, hh), br, "bottom right keeps its edges");
@@ -94,66 +139,81 @@ class ShipHudLayoutTest {
     @Test
     void topRightMovesBelowTheEffectIcons() {
         Screen icons = new Screen(GW, GH, ShipHudLayout.effects(GW, 26));
-        assertEquals(26 + M, ShipHudLayout.place(Corner.TOP_RIGHT, Corner.BOTTOM_RIGHT, icons, 1.0).compass().rect().y());
+        assertEquals(26 + GAP, place(Corner.TOP_RIGHT, Corner.BOTTOM_RIGHT, icons, 1.0).compass().rect().y());
         Screen two = new Screen(GW, GH, ShipHudLayout.effects(GW, 52));
-        assertEquals(M, ShipHudLayout.place(Corner.TOP_LEFT, Corner.BOTTOM_RIGHT, two, 1.0).compass().rect().y(),
+        assertEquals(M, place(Corner.TOP_LEFT, Corner.BOTTOM_RIGHT, two, 1.0).compass().rect().y(),
                 "only the top right");
     }
 
+    // ------------------------------------------------------------------ HUD4: the compass ignores the chat
+
     @Test
-    void compassSitsAboveTheChat() {
+    void compassStaysAtTheMarginWhateverTheChatShows() {
         for (int[] gui : GUIS) {
             int gw = gui[0], gh = gui[1];
-            Screen s = survival(gw, gh, false, 0);
-            Placed compass = ShipHudLayout.place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, s, 1.0).compass();
-            assertTrue(compass.clear(), "compass not clear at " + gw + "x" + gh);
-            assertClear(compass.rect(), s, "compass at " + gw + "x" + gh);
-            assertEquals(gh - ShipHudLayout.CHAT_BOTTOM - CHAT_H - M - CH, compass.rect().y(),
-                    "right above the chat's top line at " + gw + "x" + gh);
-            assertEquals(M, compass.rect().x());
+            for (int lines : new int[] {0, 27, CHAT_H}) {
+                Screen s = survival(gw, gh, lines, false, 0);
+                Placed compass = place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, s, 1.0).compass();
+                assertEquals(new Rect(M, compassY(gw, gh, 0), W, CH), compass.rect(),
+                        "static at " + gw + "x" + gh + " with " + lines + " px of chat lines");
+                assertTrue(compass.clear(), "the chat is no obstacle at " + gw + "x" + gh);
+                assertClear(compass.rect(), s.obstacles(), s, "compass at " + gw + "x" + gh);
+            }
         }
-        // chat hidden (no lines): the compass goes down to the corner
-        Screen noChat = new Screen(GW, GH, ShipHudLayout.chat(GW, GH, 0, 0, false));
-        assertEquals(GH - M - CH, ShipHudLayout.place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, noChat, 1.0).compass().rect().y());
+        // 1080p at GUI scale 3 (where HUD3's compass went to the top) and 1080p at scale 4: the corner, under the chat
+        assertEquals(new Rect(M, 360 - M - CH, W, CH),
+                place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, survival(640, 360, CHAT_H, false, 0), 1.0).compass().rect());
+        assertEquals(new Rect(M, 270 - M - CH, W, CH),
+                place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, survival(480, 270, CHAT_H, false, 0), 1.0).compass().rect());
+        // the hotbar still counts: 427x240 (854x480 at scale 2) lifts it above the hotbar's offhand slot
+        assertEquals(240 - 23 - GAP - CH,
+                place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, survival(427, 240, 0, false, 0), 1.0).compass().rect().y());
+    }
+
+    @Test
+    void openChatLeavesTheCompassInPlaceAndShown() {
+        for (int[] gui : GUIS) {
+            int gw = gui[0], gh = gui[1];
+            Placement closed = place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, survival(gw, gh, false, 0), 1.0);
+            Screen s = survival(gw, gh, true, 0);
+            Placement open = place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, s, 1.0);
+            assertEquals(closed.compass(), open.compass(), "the compass does not move when the chat opens at " + gw + "x" + gh);
+            assertTrue(open.compass().clear(), "and is never hidden");
+            if (open.hull().clear()) assertClear(open.hull().rect(), withChat(s), s, "hull with the chat open at " + gw + "x" + gh);
+            // where the open chat leaves no room it still keeps clear of the hotbar and the stamina bar (drawn under the chat)
+            assertClear(open.hull().rect(), s.obstacles(), s, "hull with the chat open at " + gw + "x" + gh);
+        }
+    }
+
+    @Test
+    void hullPanelInTheChatCornerStillKeepsClearOfTheChat() {
+        // the hull panel's HUD2/HUD3 behaviour at the bottom left: under the closed chat's lines (40 px up) it fits the
+        // corner; the open chat's input line lifts it, still under the open chat's lines
+        Placed closed = place(Corner.TOP_RIGHT, Corner.BOTTOM_LEFT, survival(640, 360, 27, false, 0), 1.0).hull();
+        assertEquals(new Rect(M, 360 - M - HH, W, HH), closed.rect(), "in the corner under the chat lines");
+        Screen open = survival(640, 360, true, 0);
+        Placed hull = place(Corner.TOP_RIGHT, Corner.BOTTOM_LEFT, open, 1.0).hull();
+        assertTrue(hull.clear());
+        assertEquals(360 - ShipHudLayout.CHAT_INPUT_H - GAP - HH, hull.rect().y(), "just above the input line");
+        assertClear(hull.rect(), withChat(open), open, "hull with the chat open");
+        // a block of 60 px of chat lines down to the bottom lifts it over them
+        Screen tall = new Screen(640, 360, List.of(), List.of(new Rect(0, 300, 332, 60)));
+        assertEquals(300 - GAP - HH, place(Corner.TOP_RIGHT, Corner.BOTTOM_LEFT, tall, 1.0).hull().rect().y());
     }
 
     // ------------------------------------------------------------------ HUD3: only the chat lines vanilla draws
 
-    /** 1080p at GUI scale 3, where the human saw the compass at the top. */
-    private static final int SGW = 640, SGH = 360;
     /** Vanilla's line height at the default line spacing 0, and the default page (180 / 9). */
     private static final int LINE = 9, PAGE = 20;
 
-    /** The compass panel's rectangle at BOTTOM_LEFT with the given chat lines' height, chat scale 1. */
-    private static Rect compassWithChat(int linesHeight, boolean open) {
-        List<Rect> o = new ArrayList<>(ShipHudLayout.chat(SGW, SGH, CHAT_W, linesHeight, open));
-        o.addAll(ShipHudLayout.hotbar(SGW, SGH, true, 0));
-        return ShipHudLayout.place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, new Screen(SGW, SGH, o), 1.0).compass().rect();
-    }
-
     @Test
-    void noRecentChatLinesLeaveTheCompassInTheCorner() {
-        int[] old = {200, 450, 9000, 12000};
-        int rows = ShipHudLayout.chatRows(old, PAGE, false);
-        assertEquals(0, rows, "faded lines are not drawn");
-        int h = ShipHudLayout.chatHeight(rows, LINE, 1.0);
-        assertEquals(0, h);
-        assertEquals(new Rect(M, SGH - M - CH, W, CH), compassWithChat(h, false), "bottom left at MARGIN");
-        // nothing received at all
-        assertEquals(0, ShipHudLayout.chatRows(new int[0], PAGE, false));
-    }
-
-    @Test
-    void threeRecentLinesLiftTheCompassJustAboveThem() {
-        int[] ages = {5, 40, 120, 300, 900};
-        int rows = ShipHudLayout.chatRows(ages, PAGE, false);
+    void chatRowsCountWhatVanillaDraws() {
+        assertEquals(0, ShipHudLayout.chatRows(new int[] {200, 450, 9000, 12000}, PAGE, false), "faded lines are not drawn");
+        assertEquals(0, ShipHudLayout.chatHeight(0, LINE, 1.0));
+        assertEquals(0, ShipHudLayout.chatRows(new int[0], PAGE, false), "nothing received at all");
+        int rows = ShipHudLayout.chatRows(new int[] {5, 40, 120, 300, 900}, PAGE, false);
         assertEquals(3, rows);
-        int h = ShipHudLayout.chatHeight(rows, LINE, 1.0);
-        assertEquals(27, h);
-        Rect compass = compassWithChat(h, false);
-        assertEquals(SGH - ShipHudLayout.CHAT_BOTTOM - 27 - M - CH, compass.y(), "just above the third line");
-        assertEquals(M, compass.x());
-        assertTrue(compass.y() > SGH / 2, "the compass stays in the bottom half: " + compass);
+        assertEquals(27, ShipHudLayout.chatHeight(rows, LINE, 1.0));
         // at chat scale 0.5 the lines take half the height (rounded up)
         assertEquals(14, ShipHudLayout.chatHeight(rows, LINE, 0.5));
         // line spacing 1 (vanilla's getLineHeight = 9 × 2)
@@ -162,12 +222,8 @@ class ShipHudLayoutTest {
 
     @Test
     void openChatCountsOnlyTheExistingLines() {
-        int[] twoOld = {5000, 9000};
-        int rows = ShipHudLayout.chatRows(twoOld, PAGE, true);
-        assertEquals(2, rows, "the open chat draws its two lines, however old, not a whole page");
-        Rect compass = compassWithChat(ShipHudLayout.chatHeight(rows, LINE, 1.0), true);
-        assertEquals(SGH - ShipHudLayout.CHAT_BOTTOM - 2 * LINE - M - CH, compass.y());
-        // a full history is capped at the page
+        assertEquals(2, ShipHudLayout.chatRows(new int[] {5000, 9000}, PAGE, true),
+                "the open chat draws its two lines, however old, not a whole page");
         int[] many = new int[100];
         assertEquals(PAGE, ShipHudLayout.chatRows(many, PAGE, true));
         assertEquals(PAGE, ShipHudLayout.chatRows(many, PAGE, false), "and so is a closed chat full of new lines");
@@ -184,28 +240,9 @@ class ShipHudLayoutTest {
     @Test
     void hiddenChatStaysOutOfTheWay() {
         // ShipHud passes width and height 0 when chat visibility is HIDDEN: no line obstacle, open or closed
-        assertEquals(List.of(), ShipHudLayout.chat(SGW, SGH, 0, 0, false));
-        assertEquals(new Rect(M, SGH - M - CH, W, CH), compassWithChat(0, false));
-        assertEquals(List.of(new Rect(0, SGH - ShipHudLayout.CHAT_INPUT_H, SGW, ShipHudLayout.CHAT_INPUT_H)),
-                ShipHudLayout.chat(SGW, SGH, 0, 0, true), "only the open chat's input box");
-    }
-
-    @Test
-    void openChatLiftsTheCompassOrHidesIt() {
-        for (int[] gui : GUIS) {
-            int gw = gui[0], gh = gui[1];
-            Screen s = survival(gw, gh, true, 0);
-            Placement p = ShipHudLayout.place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, s, 1.0);
-            boolean fits = gh - ShipHudLayout.CHAT_BOTTOM - CHAT_OPEN_H - M - CH >= 0;
-            assertEquals(fits, p.compass().clear(), "compass above the open chat at " + gw + "x" + gh);
-            if (fits) assertClear(p.compass().rect(), s, "compass with the chat open at " + gw + "x" + gh);
-            if (p.hull().clear()) assertClear(p.hull().rect(), s, "hull with the chat open at " + gw + "x" + gh);
-        }
-        // 640x360 (1080p at GUI scale 3) fits the compass above the open chat, 480x270 (scale 4) does not
-        assertTrue(ShipHudLayout.place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, survival(640, 360, true, 0), 1.0)
-                .compass().clear());
-        assertFalse(ShipHudLayout.place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, survival(480, 270, true, 0), 1.0)
-                .compass().clear());
+        assertEquals(List.of(), ShipHudLayout.chat(640, 360, 0, 0, false));
+        assertEquals(List.of(new Rect(0, 360 - ShipHudLayout.CHAT_INPUT_H, 640, ShipHudLayout.CHAT_INPUT_H)),
+                ShipHudLayout.chat(640, 360, 0, 0, true), "only the open chat's input box");
     }
 
     @Test
@@ -214,9 +251,9 @@ class ShipHudLayoutTest {
             int gw = gui[0], gh = gui[1];
             for (int rows = 0; rows <= 2; rows++) {
                 Screen s = survival(gw, gh, false, rows);
-                Placed hull = ShipHudLayout.place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, s, 1.0).hull();
+                Placed hull = place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, s, 1.0).hull();
                 assertTrue(hull.clear(), "hull not clear at " + gw + "x" + gh);
-                assertClear(hull.rect(), s, "hull at " + gw + "x" + gh + " with " + rows + " rows");
+                assertClear(hull.rect(), withChat(s), s, "hull at " + gw + "x" + gh + " with " + rows + " rows");
                 assertEquals(gw - M, hull.rect().right(), "the hull panel keeps to the right edge");
                 if (hull.rect().x() >= gw / 2 + 91 + 29) {
                     assertEquals(gh - M, hull.rect().bottom(), "in the corner when the screen is wide enough at " + gw);
@@ -224,15 +261,13 @@ class ShipHudLayoutTest {
             }
         }
         // 854x480 at GUI scale 2 (427x240): the panel overlaps the hotbar's column and rises above the stamina bar
-        Rect hull = ShipHudLayout.place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, survival(427, 240, false, 0), 1.0)
-                .hull().rect();
-        assertTrue(hull.bottom() <= 240 - 48 - M, "above the stamina bar: " + hull);
+        Rect hull = place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, survival(427, 240, false, 0), 1.0).hull().rect();
+        assertTrue(hull.bottom() <= 240 - 48 - GAP, "above the stamina bar: " + hull);
         // creative (no status rows): above the hotbar alone, and the stamina bar 2 px above it
         List<Rect> creative = new ArrayList<>(ShipHudLayout.hotbar(300, 200, false, 0));
         creative.add(new Rect(150 - 41, 200 - 22 - 2 - 7, 82, 7));
-        Rect c = ShipHudLayout.place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, new Screen(300, 200, creative), 1.0)
-                .hull().rect();
-        assertEquals(200 - 31 - M, c.bottom(), "clear of the creative stamina bar: " + c);
+        Rect c = place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, new Screen(300, 200, creative), 1.0).hull().rect();
+        assertEquals(200 - 31 - GAP, c.bottom(), "clear of the creative stamina bar: " + c);
     }
 
     @Test
@@ -240,13 +275,14 @@ class ShipHudLayoutTest {
         for (int[] gui : GUIS) {
             for (double scale : new double[] {0.5, 1.0, 1.5}) {
                 Screen s = survival(gui[0], gui[1], false, 0);
-                Placement p = ShipHudLayout.place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, s, scale);
+                Placement p = place(Corner.BOTTOM_LEFT, Corner.BOTTOM_RIGHT, s, scale);
                 for (Placed panel : List.of(p.compass(), p.hull())) {
                     Rect r = panel.rect();
                     assertTrue(r.x() >= 0 && r.y() >= 0 && r.right() <= gui[0] && r.bottom() <= gui[1],
                             r + " off screen at " + gui[0] + "x" + gui[1] + " scale " + scale);
-                    if (panel.clear()) assertClear(r, s, "panel at scale " + scale);
                 }
+                if (p.compass().clear()) assertClear(p.compass().rect(), s.obstacles(), s, "compass at scale " + scale);
+                if (p.hull().clear()) assertClear(p.hull().rect(), withChat(s), s, "hull at scale " + scale);
                 assertFalse(p.compass().rect().intersects(p.hull().rect()), "the panels overlap");
             }
         }
@@ -255,13 +291,13 @@ class ShipHudLayoutTest {
     @Test
     void panelsOnOneSideKeepApart() {
         // a small screen: the hull panel at the top left keeps clear of the compass panel at the bottom left
-        Placement p = ShipHudLayout.place(Corner.BOTTOM_LEFT, Corner.TOP_LEFT, empty(200, 120), 1.0);
+        Placement p = place(Corner.BOTTOM_LEFT, Corner.TOP_LEFT, empty(200, 120), 1.0);
         assertFalse(p.compass().rect().intersects(p.hull().rect()));
     }
 
     @Test
     void blockLargerThanTheScreenStaysOnIt() {
-        Placement p = ShipHudLayout.place(Corner.BOTTOM_RIGHT, Corner.BOTTOM_RIGHT, empty(200, 150), 3.0);
+        Placement p = place(Corner.BOTTOM_RIGHT, Corner.BOTTOM_RIGHT, empty(200, 150), 3.0);
         assertEquals(0, p.compass().rect().x());
         assertEquals(0, p.compass().rect().y());
         assertFalse(p.compass().clear());
@@ -303,7 +339,8 @@ class ShipHudLayoutTest {
         assertTrue(ShipHudLayout.ROSE_CY + ShipHudLayout.ARROW_TIP_R + ShipHudLayout.ARROW_MAX <= ShipHudLayout.SPEED_Y + 2,
                 "the wind arrow stays clear of the speed line");
         assertTrue(ShipHudLayout.ROSE_CY - ShipHudLayout.ARROW_TIP_R - ShipHudLayout.ARROW_MAX >= -2, "and of the top");
-        assertTrue(ShipHudLayout.NAME_Y + 9 <= ShipHudLayout.COMPASS_H, "the name fits the compass panel");
+        assertEquals(ShipHudLayout.SPEED_Y + 10, ShipHudLayout.COMPASS_H,
+                "HUD4: the speed line (with its backing) is the panel's last row, no empty band under it");
         assertTrue(ShipHudLayout.STRIP_Y >= 2, "the breach tick (2 px above the strip) fits the hull panel");
         assertTrue(ShipHudLayout.STRIP_Y + ShipHudLayout.STRIP_H <= ShipHudLayout.HULL_H, "the strip fits the hull panel");
     }

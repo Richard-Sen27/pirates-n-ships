@@ -45,6 +45,7 @@ import java.util.function.Supplier;
  * ClientEvents.CLIENT_DISCONNECT.register(mc -> ClientWind.reset());
  * ClientEvents.ITEM_TOOLTIP.register((stack, context, flag, player, lines) -> lines.addAll(MyTooltips.lines(stack)));
  * ClientEvents.registerHudLayer(Constants.id("wind"), WindHud::render);
+ * ClientEvents.registerHudLayerBelowChat(Constants.id("ship_status"), ShipHud::render);
  * ClientEvents.registerEntityRenderer(ShipEntities.SHARK, SharkRenderer::new);
  * ClientEvents.RENDER_FRAME_PRE.register(mc -> MyView.frame(mc));
  * ClientEvents.registerAdditionalModel(Constants.id("block/helm_wheel")); // later: ClientEvents.additionalModel(id)
@@ -199,8 +200,16 @@ public final class ClientEvents {
 
     @FunctionalInterface public interface ItemTooltip { void onTooltip(ItemStack stack, Item.TooltipContext context, TooltipFlag flag, @Nullable Player player, List<Component> lines); }
 
-    /** A HUD layer, drawn above the vanilla HUD in registration order. */
-    public record HudLayer(ResourceLocation id, LayeredDraw.Layer layer) { }
+    /** Where a HUD layer goes among vanilla's (HUD4). */
+    public enum HudOrder {
+        /** Above the whole vanilla HUD, in registration order ({@link #registerHudLayer}). */
+        ABOVE_ALL,
+        /** Right below vanilla's chat, so chat lines and their backing pass over it ({@link #registerHudLayerBelowChat}). */
+        BELOW_CHAT
+    }
+
+    /** A HUD layer, drawn at its {@link HudOrder}; layers of one order keep their registration order. */
+    public record HudLayer(ResourceLocation id, LayeredDraw.Layer layer, HudOrder order) { }
 
     public record EntityRenderer<E extends Entity>(Supplier<? extends EntityType<? extends E>> type, EntityRendererProvider<E> provider) { }
 
@@ -243,8 +252,19 @@ public final class ClientEvents {
         KEY_MAPPINGS.add(mapping);
     }
 
+    /** A HUD layer above the whole vanilla HUD, in registration order. */
     public static synchronized void registerHudLayer(ResourceLocation id, LayeredDraw.Layer layer) {
-        HUD_LAYERS.add(new HudLayer(id, layer));
+        HUD_LAYERS.add(new HudLayer(id, layer, HudOrder.ABOVE_ALL));
+    }
+
+    /**
+     * A HUD layer right below vanilla's chat (HUD4, the ship HUD): the chat lines and their backing, and the open
+     * chat screen, draw over it; check {@code options.hideGui} in the layer as above-all layers do. NeoForge:
+     * {@code RegisterGuiLayersEvent#registerBelow(VanillaGuiLayers.CHAT, ...)}; Fabric: at the head of
+     * {@code Gui#renderChat} ({@code MixinGui}; Fabric API 0.116 for 1.21.1 has no HUD layer ordering).
+     */
+    public static synchronized void registerHudLayerBelowChat(ResourceLocation id, LayeredDraw.Layer layer) {
+        HUD_LAYERS.add(new HudLayer(id, layer, HudOrder.BELOW_CHAT));
     }
 
     public static synchronized <E extends Entity> void registerEntityRenderer(Supplier<? extends EntityType<? extends E>> type, EntityRendererProvider<E> provider) {
@@ -319,6 +339,7 @@ public final class ClientEvents {
 
     public static synchronized List<KeyMapping> keyMappings() { return List.copyOf(KEY_MAPPINGS); }
     public static synchronized List<HudLayer> hudLayers() { return List.copyOf(HUD_LAYERS); }
+    public static synchronized List<HudLayer> hudLayers(HudOrder order) { return HUD_LAYERS.stream().filter(l -> l.order() == order).toList(); }
     public static synchronized List<EntityRenderer<?>> entityRenderers() { return List.copyOf(ENTITY_RENDERERS); }
     public static synchronized List<BlockEntityRenderer<?>> blockEntityRenderers() { return List.copyOf(BLOCK_ENTITY_RENDERERS); }
     public static synchronized List<ModelLayer> modelLayers() { return List.copyOf(MODEL_LAYERS); }

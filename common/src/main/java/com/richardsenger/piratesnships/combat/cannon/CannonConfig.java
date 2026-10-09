@@ -107,6 +107,14 @@ public final class CannonConfig {
     public static final ConfigValue<Boolean> CREW_AUTO_RELOAD = CREW.bool("auto_reload", true,
             "After firing, a crew member loads the gun again by itself from the supply");
 
+    // CAN2: how the cannon's barrel is drawn on this client
+    private static final ConfigSection VISUALS = ModConfigs.client("cannon_visuals", "How the cannon looks on this client");
+
+    public static final ConfigValue<Boolean> TILT_ENABLED = VISUALS.bool("enabled", true,
+            "Draw the cannon's barrel raised or lowered to its elevation (off = always level)");
+    public static final ConfigValue<Integer> TILT_TICKS = VISUALS.intRange("tilt_ticks", 6, 0, 100,
+            "Ticks the barrel takes to swing to a new elevation step (0 = at once)");
+
     private CannonConfig() {
     }
 

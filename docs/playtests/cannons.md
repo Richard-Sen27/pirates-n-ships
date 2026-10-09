@@ -129,3 +129,31 @@ Your own ship flies nothing or a merchant flag.
 8. **Toggles:** `cannons.npc.enabled = false`: "Fire at will" is refused ("This gun won't fire, captain!") and nothing
    fires by itself; `arc_degrees`, `engage_range` (the dummy beyond it is ignored), `aim_interval_ticks` (slower
    barrel steps) and `fire_interval_ticks` change what their names say.
+
+## CAN2: the barrel tilts with the elevation
+The block model is now only the carriage; the barrel and the quoin (the wedge under the breech) are drawn by a block
+entity renderer at the gun's elevation step. Reference: `art/renders/cannon_tilt.png` (0°, 10°, 20°). Place a cannon
+on land facing east, stand beside it.
+1. **Each step:** sneak-use the upper half six times, then the lower half six times. With the default 6 steps the
+   barrel shows −5°, 0°, 5°, 10°, 15°, 20°, matching the action-bar message: the muzzle rises, the breech sinks between
+   the cheeks, and the quoin under the breech thins and slides back toward the rear until at 20° the breech lies on
+   the low stool bed. At −5° the muzzle dips and the quoin grows under the raised breech. Look closely for the barrel
+   or the quoin cutting into the cheeks, the bed or the cap squares at any step; say which step and where.
+2. **Smooth tilt:** each step swings over about 6 ticks (0.3 s) instead of jumping; stepping twice quickly carries on
+   from where the barrel is, without a jerk.
+3. **Facing and light:** place guns facing north, south and west too: the barrel turns with the carriage and always
+   points out the muzzle side; under a roof and at night the barrel is as dark as the carriage (no glowing barrel).
+4. **Loaded looks:** gunpowder in: the rammer leans on the carriage and a thin light priming quill stands in the vent;
+   a cannonball in: the ball sits in the muzzle (and tilts with it); fire: back to the bare barrel. All three looks at
+   0° and at 20°.
+5. **Item:** the cannon item in the hotbar, in hand and in an item frame still shows the whole gun (barrel level).
+6. **Relog and distance:** aim a gun to 15°, leave the world and come back (or walk 10 chunks away and back): the
+   barrel shows 15° at once, without swinging up. The raised muzzle does not vanish when only its tip is on screen
+   (look past the gun so the carriage is just off screen).
+7. **NPC aiming at sea:** on a sailing ship with a crewed cannon and "Fire at will" (WS4a steps above), the barrel
+   steps visibly and smoothly while the crew aims, rocks with the ship, and the ball leaves along the drawn barrel.
+   A second player watching from another ship sees the same steps.
+8. **Toggles (client config):** `cannon_visuals.enabled = false`: every barrel is drawn level (aiming still works,
+   only the look stays level); `cannon_visuals.tilt_ticks = 0`: steps jump at once; 20: slow swings. Server
+   `cannons.max_elevation_degrees = 30`: the barrel stops tilting at 20° (the model's limit) while the shots still
+   go to 30°.

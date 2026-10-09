@@ -137,11 +137,13 @@ public final class CannonData {
     }
 
     /**
-     * The two-block cannon (P2, models F7g): the master (front) shows the whole gun, drawn across both blocks with the
-     * barrel reaching one block ahead (the hand-made {@code cannon}, {@code cannon_powder}, {@code cannon_loaded} from
-     * art/models/cannon*.bbmodel, muzzle to the north, model z −16..32); the rear half shows nothing ({@code cannon_rear},
-     * generated: only a particle texture). Turned by {@link CannonBlock#FACING} (north is unrotated). {@code cannon} is
-     * also the item's model (its display entries fit the whole gun into the slot).
+     * The two-block cannon (P2, models F7g, split by CAN2): the master (front) shows the carriage across both blocks
+     * (the hand-made {@code cannon_carriage}, with the rammer leaning on it once powder is in {@code cannon_carriage_rammer},
+     * from the carriage groups of art/models/cannon*.bbmodel, muzzle to the north, model z 0..32); the barrel and the quoin
+     * are drawn by {@code client/CannonBarrelRenderer} at the elevation. The rear half shows nothing ({@code cannon_rear},
+     * generated: only a particle texture). Turned by {@link CannonBlock#FACING} (north is unrotated). The whole gun
+     * ({@code cannon}: barrel, quoin and carriage, with display entries that fit it into the slot) is the item's model,
+     * reached by the block item's default model {@code block/cannon}.
      */
     private static void cannon(ModelContext m, Block block) {
         ResourceLocation base = ModelLocationUtils.getModelLocation(block);
@@ -158,7 +160,7 @@ public final class CannonData {
                 PropertyDispatch.properties(CannonBlock.FACING, CannonBlock.LOAD, CannonBlock.PART);
         for (Direction d : Direction.Plane.HORIZONTAL) {
             for (CannonLoad load : CannonLoad.values()) {
-                ResourceLocation front = load == CannonLoad.EMPTY ? base : base.withSuffix("_" + load.getSerializedName());
+                ResourceLocation front = base.withSuffix(load == CannonLoad.EMPTY ? "_carriage" : "_carriage_rammer");
                 dispatch.select(d, load, CannonPart.FRONT, Variant.variant().with(VariantProperties.MODEL, front)
                         .with(VariantProperties.Y_ROT, yRotation(d)));
                 dispatch.select(d, load, CannonPart.REAR, Variant.variant().with(VariantProperties.MODEL, rear)

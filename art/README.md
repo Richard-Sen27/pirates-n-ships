@@ -145,8 +145,8 @@ Workflow notes (two-block cannon and swivel gun, F7g):
   slots copied into `Project.display_settings`). `Codecs.java_block.compile()` of the rebuilt project gives the same
   elements, so the committed model files and the projects agree. Like the earlier helpers, script and loader are not
   committed; rebuild them from these notes.
-- **Cannon** (`cannon` 140, `cannon_powder` 144, `cannon_loaded` 152 elements; one project each; `cannon_rear` stays
-  a generated particle-only model). Everything is drawn from the master block, muzzle north. Barrel axis at x 8, y 14
+- **Cannon** (F7g; split by CAN2, see "Cannon barrel tilt (CAN2)" below; `cannon_rear` stays a generated
+  particle-only model). Everything is drawn from the master block, muzzle north. Barrel axis at x 8, y 14
   (`CannonRules.PIVOT_HEIGHT`), muzzle lip at z −15 (bore a black octagon 0.02 px in front), chase D 5.8 to 6.2,
   rings, reinforces D 6.9 and 7.5, base ring D 8.3 at z 21.4..22.6, breech to z 24, neck and cascabel to z 26; a
   vent on the vent ring. Trunnions through (8, 14, 8) under iron cap squares. Carriage z 1..31: dark oak cheeks in
@@ -176,6 +176,39 @@ Workflow notes (two-block cannon and swivel gun, F7g):
 - Renders: `renders/cannon.png` (placed three-quarter view, east side, GUI), `cannon_loaded.png` (ball in the muzzle,
   rammer side) and `swivel_gun.png` (three-quarter view, east side, GUI); composed side by side on a 2D canvas in
   the app and written with `fs`. The part list that generated the geometry is `tools/gen_cannon_models.py` (run it to regenerate the JSON; the projects were rebuilt from its output).
+
+Cannon barrel tilt (CAN2):
+- **Three groups per project.** `cannon.bbmodel` (140 elements), `cannon_powder.bbmodel` (145) and
+  `cannon_loaded.bbmodel` (153) each hold `barrel` (origin = the trunnion axis (8, 14, 8): tube, rings, cascabel,
+  vent, bore, trunnions; powder adds the priming `quill` in the vent, loaded the quill and the `ball`), `quoin`
+  (origin (8, 5, 22.9): the wedge and its handle) and `carriage` (origin (8, 0, 8): cheeks, cap squares, straps,
+  bed, stool bed, transoms, axletrees, trucks, rings; powder and loaded add the rammer). Exports
+  (`Codecs.java_block.compile()` with the other groups' cubes set to `export = false`): from `cannon` the block
+  models `cannon_carriage`, the stand-alone `cannon_barrel` and `cannon_quoin`, and the item model `cannon` (all three
+  groups, with the display entries); from `cannon_powder` `cannon_carriage_rammer` (the block model for powder and
+  loaded) and `cannon_barrel_powder`; from `cannon_loaded` `cannon_barrel_loaded`. `HandMadeModelsTest` checks that
+  `cannon` is exactly barrel + quoin + carriage and that each variant starts with its base's elements.
+- **Drawn by `CannonBarrelRenderer`:** the barrel of the load state turned about the trunnion axis by the elevation
+  (a positive angle lifts the muzzle; `Axis.XP`), the quoin squeezed about the stool top (y 5) and slid up to 1.7 px
+  back as the breech drops (`CannonBarrelPose.quoin`: its top keeps the 0.25 px rest gap under the barrel's
+  underside); the model shows −20° to 20°.
+- **Carriage changes for the tilt:** cheeks 1.3 px thick (x 2.5..3.8 and 12.2..13.5, were 1.8), so the base ring
+  (D 8.3) passes between them; the old quoin bed (y 4.3..7.6) is a low `stool_bed` (y 4.3..5), so at 20° the breech
+  comes down to 0.1 px above it; the quoin (y 5..9.6, its hidden bottom face left out) became its own group.
+- **Regenerating:** `python3 tools/gen_cannon_models.py <scratch>`; in `<scratch>` run `tools/lint_models.py --fix`
+  with `--mirror cannon_barrel.json cannon_barrel_powder.json`, `--mirror cannon_carriage.json
+  cannon_carriage_rammer.json` and `cannon_quoin.json` in one call, and `--mirror cannon_barrel.json
+  cannon_barrel_loaded.json` on a second fresh output (the lint's mirror chain cannot take two variants of one base in
+  one call); copy the loaded barrel over, then `gen_cannon_models.py --compose <scratch>` writes the item model from the
+  fixed parts. Copy the seven cannon files to `models/block/` (scratch names have no project, so the lint never
+  touches `art/models/`). The projects were rebuilt from the copied files (`CAN2.load(name, counts)` in `risky_eval`:
+  new `java_block` project, `Codecs.java_block.parse` of a full variant JSON composed from the part files, textures
+  from `art/vanilla/` with namespace `minecraft` and folder `block`, three groups filled by element count), and every
+  group's export was compared element by element with the files before saving with `fs`.
+- **Render:** `renders/cannon_tilt.png`: the loaded gun at 0°, 10° and 20° (three-quarter front, side, rear),
+  drawn with a `THREE.WebGLRenderer` from clones of the cube meshes posed like the renderer (barrel turned, quoin
+  squeezed and slid). `renders/cannon.png` and `cannon_loaded.png` still show the F7g carriage (thicker cheeks, tall
+  quoin bed).
 
 Workflow notes (sea chest, S1-art):
 - **Sea chest** (60 elements, `sea_chest`, one project): a seaman's chest facing north (the `FACING` side). Body

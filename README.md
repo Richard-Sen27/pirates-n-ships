@@ -18,6 +18,7 @@ ships, and meet sharks, waterspouts, whirlpools and the kraken on the deep ocean
 - **Wind and sails.** A global, weather-driven wind; square sails on yards and triangular sails on stays, hoisted,
   reefed and furled; helm, rudder, keel and anchor; flags that stream downwind.
 - **Crew.** Hire crew members and give orders with the captain's whistle: sails, pump, cannons, grapple release.
+  A lookout in the crow's nest calls out ships, land and sharks with their bearing in points.
 - **Provisions and survival.** Pantry, water barrel, rations, scurvy and rum; cold water that freezes swimmers;
   the sea chest you carry on your back or float on the water.
 - **Trade and law.** Goods, markets and contracts at harbour desks; a criminal score, navy and player bounties with

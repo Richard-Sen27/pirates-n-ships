@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-08T16:56:55.717595	Loot Tables
+// 1.21.1	2026-10-09T02:30:59.907738	Loot Tables
 33f1e05aa0902148ab52be6fa554ddd1f5962f4b data/pirates_n_ships/loot_table/blocks/bilge_pump.json
 a27cee63396c816c1912efc773da619168313212 data/pirates_n_ships/loot_table/blocks/boarding_plank.json
 8e9ddd746834d4dadbbd184d940b2f7faf794ccd data/pirates_n_ships/loot_table/blocks/brig_bars.json
@@ -9,6 +9,7 @@ fa46de5702c601e54e4c45cf49f73cb62cc9fc9c data/pirates_n_ships/loot_table/blocks/
 c6ef7028b0de381fde2af376cca7e0c671d46ac1 data/pirates_n_ships/loot_table/blocks/cargo_crate.json
 3cf9d831d54781b165e4763457824f9acd55017c data/pirates_n_ships/loot_table/blocks/chart_table.json
 0339f023731e0bacda27316521640b0d6cae08a8 data/pirates_n_ships/loot_table/blocks/cleat.json
+10b90aa6891dffa5410d222137622dd28169b796 data/pirates_n_ships/loot_table/blocks/crows_nest.json
 d5a51e96542e5c6d2fadb0fde7f18af44529daa1 data/pirates_n_ships/loot_table/blocks/figurehead_eagle.json
 f39dbe603ced061414ef4ced929beeeae17df330 data/pirates_n_ships/loot_table/blocks/figurehead_lion.json
 b1fa8f030a84a7c43cec2850cdb9adcb87dab4e4 data/pirates_n_ships/loot_table/blocks/figurehead_mermaid.json

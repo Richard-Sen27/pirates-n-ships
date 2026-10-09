@@ -57,7 +57,7 @@ class HandMadeModelsTest {
             "brig_bars_side_alt", "brig_door_bottom_left", "brig_door_bottom_left_locked",
             "brig_door_bottom_left_open_locked", "brig_door_bottom_right", "brig_door_bottom_right_locked",
             "brig_door_bottom_right_open_locked", "brig_door_top_left", "brig_door_top_right", "cannon",
-            "cannon_loaded", "cannon_powder", "capstan", "cargo_barrel", "cargo_crate", "chart_table", "cleat", "figurehead_eagle",
+            "cannon_loaded", "cannon_powder", "capstan", "cargo_barrel", "cargo_crate", "chart_table", "cleat", "crows_nest", "figurehead_eagle",
             "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flagpole", "flagpole_bottom", "flagpole_middle", "flagpole_top", "hammock_foot", "hammock_head", "harbor_desk", "helm", "helm_item", "helm_wheel", "hull_patch", "mooring_ring", "nameplate",
             "notice_board", "pantry", "rope_coil_layers1", "rope_coil_layers2", "rope_coil_layers3", "rope_coil_layers4",
             "sail_winch", "sea_chest", "sea_cot_foot", "sea_cot_head", "sea_cot_item", "ship_lantern", "ship_lantern_ceiling",
@@ -151,6 +151,25 @@ class HandMadeModelsTest {
             assertTrue(display.has(slot), "missing display slot " + slot);
         }
         assertEquals("front", ring.get("gui_light").getAsString(), "the plate faces the viewer in the GUI");
+    }
+
+    /**
+     * CN1: the crow's nest's floor top is the block's collision floor (1.5 px, {@code CrowsNestBlock.FLOOR_HEIGHT}),
+     * where the lookout stands, and its rim is 20 px up (chest high on a crew member standing on the floor).
+     */
+    @Test
+    void crowsNestFloorAndRimMatchTheBlock() throws IOException {
+        double floorTop = 0;
+        double rim = 0;
+        for (JsonElement e : blockModel("crows_nest").getAsJsonArray("elements")) {
+            JsonObject o = e.getAsJsonObject();
+            String name = o.has("name") ? o.get("name").getAsString() : "";
+            double top = o.getAsJsonArray("to").get(1).getAsDouble();
+            if (name.startsWith("floor")) floorTop = Math.max(floorTop, top);
+            if (name.startsWith("stave")) rim = Math.max(rim, top);
+        }
+        assertEquals(1.5, floorTop, 1e-6, "floor top");
+        assertEquals(20.0, rim, 1e-6, "rim");
     }
 
     private static JsonObject blockModel(String name) throws IOException {

@@ -980,6 +980,30 @@ Boarding plank (BRD1):
   3 px below the board, biting into the deck the plank lies on. The hook tops end 0.05 px inside the board (no z-fight).
 - Render: `renders/boarding_plank.png` (base, middle and tip as a three-cell run, the far end on the left).
 
+Crow's nest (CN1):
+- **`crows_nest.bbmodel`** -> `block/crows_nest.json` (56 elements; vanilla `spruce_planks` staves and floor,
+  `stripped_spruce_log` rim and struts, `anvil` hoops, `dark_oak_planks` underside; particle `spruce_planks`). One
+  block, never turned (round). A hollow octagonal barrel round the block's column, 24 px across the flats (x/z
+  -4..20): staves are eight 1.2 px wall boards per course (the F7d hollow-body recipe), two courses y 0..10 and 10..20
+  so the planks keep their texel density, faces turned 90 degrees so the plank seams run upright as staves; each board
+  is 0.2 px longer than the octagon side (the outer corners overlap, no crack); the diagonal boards are 0.05 px short
+  only at the barrel's foot and rim, not at the course joint (a gap there showed as a white line). Three iron hoops
+  (0.3 px proud, 1.6 px high) at y 0.6, 9.2, 17.6; the floor (y 0..1.5, `CrowsNestBlock.FLOOR_HEIGHT`) and the
+  underside (y -2..0 across 22 px, y -4..-2 across 14 px) are solid four-bar octagons whose bars step 0.05 px shorter
+  at both ends one after the other (x, z, +45, -45), so no two caps share a plane. Four struts (1.5 px square, 10.5 px)
+  lean 22.5 degrees out from the faces of a fence post (x/z 6..10) at y -13 up under the bottom. Lint: clean (no
+  fights, no warnings). `HandMadeModelsTest.crowsNestFloorAndRimMatchTheBlock` ties floor (1.5) and rim (20) to the
+  block.
+- **Item:** no `_item` model; the block model carries the display entries (`gui` `[30, 225, 0]` / `[0, 1.75, 0]` /
+  0.5, centred with the F7g offscreen GUI check; hands 0.25; ground 0.2; fixed 0.4) and datagen's block-item model
+  delegates to it.
+- Built from a Python part list (scratch, not committed: `ring` = eight wall boards round the centre at an apothem,
+  `octagon` = four solid bars, `box` with vanilla position UVs wrapped into 0..16) that wrote the JSON, then
+  `Codecs.java_block.parse(json, path)` in a new `java_block` tab, the four textures reloaded from `art/vanilla/`
+  (namespace `minecraft`, folder `block`); `Codecs.java_block.compile()` gives the same 56 elements and faces.
+- Render `renders/crows_nest.png`: on a stand-in mast (three-quarter from above), looking into the barrel, and from
+  below (struts); a separate `THREE.WebGLRenderer` over clones of `Project.model_3d`, written with `fs`.
+
 ## Entities
 
 Animated mobs and NPCs (crew member, pirate, sailor, navy soldier and officer; design.md §9) are GeckoLib models

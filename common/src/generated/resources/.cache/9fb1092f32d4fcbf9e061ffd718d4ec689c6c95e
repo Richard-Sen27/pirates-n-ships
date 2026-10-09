@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-08T22:34:25.867226	Recipes
+// 1.21.1	2026-10-09T02:30:59.908041	Recipes
 e1289c0eb7525c60669f4203ccd8af0d9d7b0744 data/pirates_n_ships/advancement/recipes/building_blocks/hull_patch.json
 dc908cf23933449a8a82c8037e57e8f3143c20f2 data/pirates_n_ships/advancement/recipes/combat/bandana.json
 8f98eb055171c739101420a0b9bbe9f3a8bf2903 data/pirates_n_ships/advancement/recipes/combat/cannon.json
@@ -18,6 +18,7 @@ adb6d91a9663c00346aa68a29e2aec0855eaeb59 data/pirates_n_ships/advancement/recipe
 75451ecfaa2375ba707aa7611983641f5a2c4765 data/pirates_n_ships/advancement/recipes/decorations/cargo_barrel.json
 46c36721418f57230f073cbfc9376b412acb0def data/pirates_n_ships/advancement/recipes/decorations/cargo_crate.json
 d4da74f050c7231d4b7086c6caffb194c8b9bb37 data/pirates_n_ships/advancement/recipes/decorations/chart_table.json
+9a2c73e2d74a8bed79a76c6330c7731c97926fd4 data/pirates_n_ships/advancement/recipes/decorations/crows_nest.json
 5f465d21cdd74b08e22866c9f2f69962349a6439 data/pirates_n_ships/advancement/recipes/decorations/figurehead_eagle.json
 7623ef27072d731baa65126b263198256db8bb5c data/pirates_n_ships/advancement/recipes/decorations/figurehead_lion.json
 d8d6742e7b00b938d6ba7583aa63200b14e03603 data/pirates_n_ships/advancement/recipes/decorations/figurehead_mermaid.json
@@ -79,6 +80,7 @@ aa98b09b5fe592a6a0b513413247f829c329b15d data/pirates_n_ships/recipe/chart.json
 17a9d8a97a03f65566b3ceb9fbd3745ebab217fa data/pirates_n_ships/recipe/chart_table.json
 8b65467d0ca8f4b2e5af950aef86056a3712db43 data/pirates_n_ships/recipe/cleat.json
 ceccb5e0c6d3a0b2ea95cbe0c892b0a617f94c84 data/pirates_n_ships/recipe/cloth.json
+1abb8ddf2e6da8f8080d5a57b37555ecde3c1275 data/pirates_n_ships/recipe/crows_nest.json
 1353c50bbe239fe6bd3a26cf7eff7b76dca0e66d data/pirates_n_ships/recipe/cutlass.json
 406226151565700a161382891d143c9d8963103f data/pirates_n_ships/recipe/figurehead_eagle.json
 912a8693b1f153c44081373a9b492ccfbcadffbe data/pirates_n_ships/recipe/figurehead_lion.json

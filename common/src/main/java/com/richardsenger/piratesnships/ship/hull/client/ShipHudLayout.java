@@ -78,6 +78,8 @@ public final class ShipHudLayout {
     public static final int CHAT_BOTTOM = 40;
     /** The open chat's input box: full width, from 14 above the bottom ({@code ChatScreen#render}). */
     public static final int CHAT_INPUT_H = 14;
+    /** A closed chat draws a line only while it is younger than this many GUI ticks ({@code ChatComponent#render}). */
+    public static final int CHAT_FADE_TICKS = 200;
 
     /** A screen rectangle. */
     public record Rect(int x, int y, int w, int h) {
@@ -184,7 +186,8 @@ public final class ShipHudLayout {
      * input box takes the full width at the bottom as well. No lines when the chat is hidden ({@code height} 0).
      *
      * @param width  the chat's width with its backing, GUI pixels (chat width × chat scale + 8)
-     * @param height the chat's height, GUI pixels (focused or unfocused chat height × chat scale)
+     * @param height the height of the lines vanilla draws right now, GUI pixels ({@link #chatHeight}; HUD3: not the
+     *               configured chat height, which pushed the compass to the top of a short GUI)
      */
     public static List<Rect> chat(int guiWidth, int guiHeight, int width, int height, boolean focused) {
         List<Rect> out = new ArrayList<>(2);
@@ -195,6 +198,37 @@ public final class ShipHudLayout {
             out.add(new Rect(0, guiHeight - CHAT_INPUT_H, guiWidth, CHAT_INPUT_H));
         }
         return out;
+    }
+
+    /**
+     * How many line rows the chat draws ({@code ChatComponent#render}, HUD3): of the first {@code linesPerPage} lines
+     * (newest first), the open chat ({@code focused}) draws every one; the closed chat only those younger than
+     * {@link #CHAT_FADE_TICKS}. The rows run up from the chat's bottom by index, so the count is the highest drawn
+     * index plus one.
+     *
+     * @param ages each line's age in GUI ticks ({@code Gui#getGuiTicks} minus {@code GuiMessage.Line#addedTime}),
+     *             newest first
+     */
+    public static int chatRows(int[] ages, int linesPerPage, boolean focused) {
+        int n = Math.min(ages.length, Math.max(0, linesPerPage));
+        int rows = 0;
+        for (int i = 0; i < n; i++) {
+            if (focused || ages[i] < CHAT_FADE_TICKS) {
+                rows = i + 1;
+            }
+        }
+        return rows;
+    }
+
+    /**
+     * The chat lines' height in GUI pixels: {@code rows} lines of {@code lineHeight} chat pixels
+     * ({@code ChatComponent#getLineHeight}, 9 × (line spacing + 1)) at the chat's {@code scale}.
+     */
+    public static int chatHeight(int rows, int lineHeight, double scale) {
+        if (rows <= 0 || lineHeight <= 0 || !(scale > 0)) {
+            return 0;
+        }
+        return (int) Math.ceil(rows * lineHeight * scale);
     }
 
     /**

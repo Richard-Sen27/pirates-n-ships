@@ -12,6 +12,7 @@ import com.richardsenger.piratesnships.ship.sable.ClientShipPoses;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.GuiMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -109,7 +110,7 @@ public final class ShipHud {
         boolean hidden = mc.options.chatVisibility().get() == ChatVisiblity.HIDDEN;
         double cs = chat.getScale();
         int chatW = hidden ? 0 : (int) Math.ceil(chat.getWidth() + 12 * cs);
-        int chatH = hidden ? 0 : (int) Math.ceil(chat.getHeight() * cs);
+        int chatH = hidden ? 0 : chatLinesHeight(mc, chat, chatOpen, cs);
         obstacles.addAll(ShipHudLayout.chat(gw, gh, chatW, chatH, chatOpen));
 
         boolean statusBars = mc.gameMode != null && mc.gameMode.canHurtPlayer();
@@ -123,6 +124,27 @@ public final class ShipHud {
             obstacles.add(new ShipHudLayout.Rect(bar.x(), bar.y(), bar.w(), bar.h()));
         }
         return new ShipHudLayout.Screen(gw, gh, obstacles);
+    }
+
+    /**
+     * Height of the chat lines vanilla draws right now (HUD3): the recent ones while the chat is closed, the page while
+     * it is open. Reads {@code ChatComponent#trimmedMessages} (access transformer); a closed chat is always scrolled to
+     * the newest line ({@code ChatScreen#removed} resets the scroll).
+     */
+    private static int chatLinesHeight(Minecraft mc, ChatComponent chat, boolean chatOpen, double scale) {
+        List<GuiMessage.Line> lines = chat.trimmedMessages;
+        int page = chat.getLinesPerPage();
+        int n = Math.min(lines.size(), page);
+        int now = mc.gui.getGuiTicks();
+        int[] ages = new int[n];
+        for (int i = 0; i < n; i++) {
+            GuiMessage.Line line = lines.get(i);
+            // vanilla skips a null line; treat it as long faded
+            ages[i] = line == null ? Integer.MAX_VALUE : now - line.addedTime();
+        }
+        // ChatComponent#getLineHeight is private: 9 × (line spacing + 1), the same arithmetic
+        int lineHeight = (int) (9.0 * (mc.options.chatLineSpacing().get() + 1.0));
+        return ShipHudLayout.chatHeight(ShipHudLayout.chatRows(ages, page, chatOpen), lineHeight, scale);
     }
 
     /** Rows above the hearts: armour and further heart rows (max health and absorption). */

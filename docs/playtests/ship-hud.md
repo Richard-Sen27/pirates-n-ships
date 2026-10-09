@@ -105,6 +105,9 @@ gets `compass_corner = BOTTOM_LEFT` and `hull_corner = BOTTOM_RIGHT`. Please sen
 7. **Server switch.** `ships.ship_status_hud = false`.
    - **Expected:** the panels disappear within about 7 s (the last status's freshness); back on, they return within a
      second.
+8. **HUD3: compass at the bottom left.** A 1920×1080 window at GUI scale 3, `compass_corner = BOTTOM_LEFT`, no chat
+   for 10 s, then `/say hi` three times and wait. - **Expected:** the compass panel sits at the bottom left, 4 px from
+   the edges (not at the top); with the three lines it sits just above them, and about 10 s later it drops back down.
 
 ## Open questions for the HUD2 playtest
 

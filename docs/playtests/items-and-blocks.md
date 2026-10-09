@@ -160,13 +160,19 @@ Compare each sword with a vanilla iron sword in the other hand or the next hotba
 - The brig bars' transparency relies on a model field that only NeoForge reads. The Fabric port has to register a
   render layer for them.
 
-17. **Brig door and brig key items (F8g):** in the inventory the door is an upright iron cell door filling the slot
-    height, seen slightly from the front-left (hinge knuckles left, lock plate right); the key is a diagonal iron key
-    with a dark outline, bow lower-left, teeth upper-right. Door in the right hand (F5): upright outside the arm,
-    face sideways, not cutting through the leg while walking; left hand mirrored. First person: a small upright door
-    at the lower right. Key held: bow in the fist, shank forward and slightly up. Both on the ground (door about half
-    a block tall) and in item frames (door centred and upright, key diagonal). Hold the door item next to a placed
-    door: same textures. Breaking a door still gives anvil particles.
+17. **Brig door and brig key items (F8g, key rebuilt in ART10):** in the inventory the door is an upright iron cell
+    door filling the slot height, seen slightly from the front-left (hinge knuckles left, lock plate right). Door in
+    the right hand (F5): upright outside the arm, face sideways, not cutting through the leg while walking; left hand
+    mirrored. First person: a small upright door at the lower right. Door on the ground about half a block tall, in an
+    item frame centred and upright. Hold the door item next to a placed door: same textures. Breaking a door still
+    gives anvil particles.
+    **Key (ART10):** the key reads as round and deep, not as a flat cut-out, in the slot and in the hand. In the
+    inventory: a dark iron key on the diagonal (bow lower-left, bit upper-right) seen three-quarter, so the edge of the
+    ring bow and the side of the bit show; the bow is a ring with a clear hole, the three wards are separate, the
+    lighter collar and bead rings show on the shank, and nothing pokes out of the slot. Third person: bow in the
+    fist, shank forward and a little down, wards hanging down; left hand mirrored. First person: the key at the
+    lower right, shank pointing into the screen and slightly left, the bow's ring face towards you. Turn the camera
+    around a dropped key and a key in an item frame (bit upper-right): every part has volume, no face flickers.
 
 Addendum (F8h): pistol and musket in the hand: see `firearms.md`.
 

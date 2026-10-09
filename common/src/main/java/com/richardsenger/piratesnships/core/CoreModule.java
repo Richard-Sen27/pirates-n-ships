@@ -63,6 +63,6 @@ public final class CoreModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(CoreGameTests.class);
+        return List.of(CoreGameTests.class, com.richardsenger.piratesnships.core.block.WaterloggingGameTests.class);
     }
 }

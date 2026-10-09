@@ -1,5 +1,8 @@
 package com.richardsenger.piratesnships.ship.decor;
 
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -44,7 +47,7 @@ import java.util.Map;
  * direction in {@link ShipsBellBlockEntity}. {@link #RINGING} no longer changes the look; it stays as the server's
  * "rung lately" flag (the decor GameTests read it).
  */
-public class ShipsBellBlock extends HorizontalDirectionalBlock implements EntityBlock {
+public class ShipsBellBlock extends HorizontalDirectionalBlock implements EntityBlock, SimpleWaterloggedBlock {
 
     public static final MapCodec<ShipsBellBlock> CODEC = simpleCodec(ShipsBellBlock::new);
     /** Floor (in its frame, on a post) or wall (on its bracket); the bell never hangs from a ceiling. */
@@ -57,7 +60,7 @@ public class ShipsBellBlock extends HorizontalDirectionalBlock implements Entity
     public ShipsBellBlock(Properties properties) {
         super(properties);
         registerDefaultState(stateDefinition.any().setValue(FACE, AttachFace.FLOOR).setValue(FACING, Direction.NORTH)
-                .setValue(RINGING, false));
+                .setValue(RINGING, false).setValue(Waterlogging.WATERLOGGED, false));
     }
 
     @Override
@@ -67,7 +70,7 @@ public class ShipsBellBlock extends HorizontalDirectionalBlock implements Entity
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACE, FACING, RINGING);
+        builder.add(FACE, FACING, RINGING, Waterlogging.WATERLOGGED);
     }
 
     @Override
@@ -82,7 +85,7 @@ public class ShipsBellBlock extends HorizontalDirectionalBlock implements Entity
                 state = defaultBlockState().setValue(FACE, AttachFace.WALL).setValue(FACING, looking.getOpposite());
             }
             if (state.canSurvive(context.getLevel(), context.getClickedPos())) {
-                return state;
+                return Waterlogging.placed(state, context);
             }
         }
         return null;
@@ -100,6 +103,7 @@ public class ShipsBellBlock extends HorizontalDirectionalBlock implements Entity
 
     @Override
     protected BlockState updateShape(BlockState state, Direction dir, BlockState neighbor, LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
+        Waterlogging.tickFluid(state, level, pos);
         Direction support = state.getValue(FACE) == AttachFace.FLOOR ? Direction.DOWN : state.getValue(FACING).getOpposite();
         if (dir == support && !state.canSurvive(level, pos)) {
             return Blocks.AIR.defaultBlockState();
@@ -172,5 +176,10 @@ public class ShipsBellBlock extends HorizontalDirectionalBlock implements Entity
     @Override
     protected boolean isPathfindable(BlockState state, PathComputationType type) {
         return false;
+    }
+
+    @Override
+    protected FluidState getFluidState(BlockState state) {
+        return Waterlogging.fluid(state, super.getFluidState(state));
     }
 }

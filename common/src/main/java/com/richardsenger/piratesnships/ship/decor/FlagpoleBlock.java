@@ -1,5 +1,8 @@
 package com.richardsenger.piratesnships.ship.decor;
 
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.mojang.serialization.MapCodec;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.law.flag.FlagKind;
@@ -62,7 +65,7 @@ import org.jetbrains.annotations.Nullable;
  *       any blocks there.</li>
  * </ul>
  */
-public class FlagpoleBlock extends Block implements EntityBlock {
+public class FlagpoleBlock extends Block implements EntityBlock, SimpleWaterloggedBlock {
 
     public static final MapCodec<FlagpoleBlock> CODEC = simpleCodec(FlagpoleBlock::new);
     public static final EnumProperty<FlagKind> FLAG = EnumProperty.create("flag", FlagKind.class);
@@ -75,7 +78,7 @@ public class FlagpoleBlock extends Block implements EntityBlock {
     public FlagpoleBlock(Properties properties) {
         super(properties);
         registerDefaultState(stateDefinition.any().setValue(FLAG, FlagKind.NONE).setValue(FACING, Direction.NORTH)
-                .setValue(PART, FlagpolePart.SINGLE));
+                .setValue(PART, FlagpolePart.SINGLE).setValue(Waterlogging.WATERLOGGED, false));
     }
 
     @Override
@@ -85,7 +88,7 @@ public class FlagpoleBlock extends Block implements EntityBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FLAG, FACING, PART);
+        builder.add(FLAG, FACING, PART, Waterlogging.WATERLOGGED);
     }
 
     @Override
@@ -116,13 +119,14 @@ public class FlagpoleBlock extends Block implements EntityBlock {
                 return null;
             }
         }
-        return defaultBlockState().setValue(PART, partAt(level, pos));
+        return Waterlogging.placed(defaultBlockState().setValue(PART, partAt(level, pos)), context);
     }
 
     /** A flagpole above or below came or went: show the matching part. */
     @Override
     protected BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor level,
                                      BlockPos pos, BlockPos neighborPos) {
+        Waterlogging.tickFluid(state, level, pos);
         if (direction.getAxis() != Direction.Axis.Y) return state;
         return state.setValue(PART, partAt(level, pos));
     }
@@ -179,5 +183,10 @@ public class FlagpoleBlock extends Block implements EntityBlock {
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof FlagpoleBlockEntity be) be.dropContents();
         super.onRemove(state, level, pos, newState, movedByPiston);
+    }
+
+    @Override
+    protected FluidState getFluidState(BlockState state) {
+        return Waterlogging.fluid(state, super.getFluidState(state));
     }
 }

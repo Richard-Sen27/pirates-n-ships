@@ -1,5 +1,9 @@
 package com.richardsenger.piratesnships.sailing.block;
 
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.mojang.serialization.MapCodec;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.sailing.SailingConfig;
@@ -57,7 +61,7 @@ import org.jetbrains.annotations.Nullable;
  * above the beam); {@code axis=z} turns it by 90°. The model never shows {@link #TRIM}: the cloth is drawn by
  * {@code YardClothRenderer}.
  */
-public class YardBlock extends Block implements EntityBlock {
+public class YardBlock extends Block implements EntityBlock, SimpleWaterloggedBlock {
 
     public static final EnumProperty<Direction.Axis> AXIS = BlockStateProperties.HORIZONTAL_AXIS;
     public static final EnumProperty<SailTrim> TRIM = EnumProperty.create("trim", SailTrim.class);
@@ -71,7 +75,7 @@ public class YardBlock extends Block implements EntityBlock {
 
     public YardBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(AXIS, Direction.Axis.X).setValue(TRIM, SailTrim.FURLED));
+        registerDefaultState(stateDefinition.any().setValue(AXIS, Direction.Axis.X).setValue(TRIM, SailTrim.FURLED).setValue(Waterlogging.WATERLOGGED, false));
     }
 
     @Override
@@ -81,7 +85,7 @@ public class YardBlock extends Block implements EntityBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(AXIS, TRIM);
+        builder.add(AXIS, TRIM, Waterlogging.WATERLOGGED);
     }
 
     @Override
@@ -94,7 +98,7 @@ public class YardBlock extends Block implements EntityBlock {
                 axis = face.getAxis(); // continue the yard we were placed against
             }
         }
-        BlockState state = defaultBlockState().setValue(AXIS, axis);
+        BlockState state = Waterlogging.placed(defaultBlockState().setValue(AXIS, axis), context);
         for (Direction d : new Direction[] {Direction.get(Direction.AxisDirection.NEGATIVE, axis), Direction.get(Direction.AxisDirection.POSITIVE, axis)}) {
             BlockState n = context.getLevel().getBlockState(context.getClickedPos().relative(d));
             if (n.getBlock() instanceof YardBlock && n.getValue(AXIS) == axis) {
@@ -208,5 +212,17 @@ public class YardBlock extends Block implements EntityBlock {
             return null;
         }
         return (BlockEntityTicker<T>) (BlockEntityTicker<YardBlockEntity>) YardBlockEntity::serverTick;
+    }
+
+    @Override
+    protected BlockState updateShape(BlockState state, Direction direction, BlockState neighbor, LevelAccessor level,
+                                     BlockPos pos, BlockPos neighborPos) {
+        Waterlogging.tickFluid(state, level, pos);
+        return super.updateShape(state, direction, neighbor, level, pos, neighborPos);
+    }
+
+    @Override
+    protected FluidState getFluidState(BlockState state) {
+        return Waterlogging.fluid(state, super.getFluidState(state));
     }
 }

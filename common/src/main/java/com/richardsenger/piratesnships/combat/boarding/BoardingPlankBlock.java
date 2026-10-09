@@ -1,5 +1,8 @@
 package com.richardsenger.piratesnships.combat.boarding;
 
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -36,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
  * otherwise, which vanilla destroys with drops, so the break runs along the plank. Only segment 0 has loot (one
  * plank), so the run always yields exactly one item.
  */
-public class BoardingPlankBlock extends HorizontalDirectionalBlock implements EntityBlock {
+public class BoardingPlankBlock extends HorizontalDirectionalBlock implements EntityBlock, SimpleWaterloggedBlock {
 
     public static final MapCodec<BoardingPlankBlock> CODEC = simpleCodec(BoardingPlankBlock::new);
     public static final IntegerProperty SEGMENT = IntegerProperty.create("segment", 0, PlankRun.MAX_SEGMENTS - 1);
@@ -52,7 +55,7 @@ public class BoardingPlankBlock extends HorizontalDirectionalBlock implements En
 
     public BoardingPlankBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(SEGMENT, 0).setValue(TIP, true));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(SEGMENT, 0).setValue(TIP, true).setValue(Waterlogging.WATERLOGGED, false));
     }
 
     @Override
@@ -62,7 +65,7 @@ public class BoardingPlankBlock extends HorizontalDirectionalBlock implements En
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, SEGMENT, TIP);
+        builder.add(FACING, SEGMENT, TIP, Waterlogging.WATERLOGGED);
     }
 
     /** The state of segment {@code segment} of a run of {@code length} cells going {@code facing}. */
@@ -81,6 +84,7 @@ public class BoardingPlankBlock extends HorizontalDirectionalBlock implements En
 
     @Override
     protected BlockState updateShape(BlockState state, Direction dir, BlockState neighbor, LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
+        Waterlogging.tickFluid(state, level, pos);
         Direction facing = state.getValue(FACING);
         int segment = state.getValue(SEGMENT);
         if (dir == facing.getOpposite() && segment > 0) {
@@ -108,7 +112,7 @@ public class BoardingPlankBlock extends HorizontalDirectionalBlock implements En
             BlockPos base = base(pos, state);
             BlockState bs = level.getBlockState(base);
             if (bs.is(this) && bs.getValue(SEGMENT) == 0) {
-                level.setBlock(base, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL | Block.UPDATE_SUPPRESS_DROPS);
+                level.setBlock(base, Waterlogging.leftBehind(bs), Block.UPDATE_ALL | Block.UPDATE_SUPPRESS_DROPS);
                 level.levelEvent(player, 2001, base, Block.getId(bs));
             }
         }
@@ -141,5 +145,10 @@ public class BoardingPlankBlock extends HorizontalDirectionalBlock implements En
             return null;
         }
         return (BlockEntityTicker<T>) (BlockEntityTicker<BoardingPlankBlockEntity>) BoardingPlankBlockEntity::serverTick;
+    }
+
+    @Override
+    protected FluidState getFluidState(BlockState state) {
+        return Waterlogging.fluid(state, super.getFluidState(state));
     }
 }

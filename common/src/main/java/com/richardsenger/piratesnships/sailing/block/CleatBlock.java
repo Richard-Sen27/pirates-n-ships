@@ -1,5 +1,10 @@
 package com.richardsenger.piratesnships.sailing.block;
 
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.mojang.serialization.MapCodec;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.sailing.SailingConfig;
@@ -61,7 +66,7 @@ import org.jetbrains.annotations.Nullable;
  * dark wooden pad, modelled on the floor with its horns along {@link #FACING} and turned for the wall and the ceiling
  * by the block state. {@link #TRIM} does not change the model (the cloth is drawn by the stay renderer).
  */
-public class CleatBlock extends FaceAttachedHorizontalDirectionalBlock implements EntityBlock, RopeAnchor {
+public class CleatBlock extends FaceAttachedHorizontalDirectionalBlock implements EntityBlock, RopeAnchor, SimpleWaterloggedBlock {
 
     public static final EnumProperty<SailTrim> TRIM = EnumProperty.create("trim", SailTrim.class);
     public static final MapCodec<CleatBlock> CODEC = simpleCodec(CleatBlock::new);
@@ -84,7 +89,7 @@ public class CleatBlock extends FaceAttachedHorizontalDirectionalBlock implement
     public CleatBlock(Properties properties) {
         super(properties);
         registerDefaultState(stateDefinition.any().setValue(FACE, AttachFace.WALL).setValue(FACING, Direction.NORTH)
-                .setValue(TRIM, SailTrim.FURLED));
+                .setValue(TRIM, SailTrim.FURLED).setValue(Waterlogging.WATERLOGGED, false));
     }
 
     @Override
@@ -94,7 +99,7 @@ public class CleatBlock extends FaceAttachedHorizontalDirectionalBlock implement
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACE, FACING, TRIM);
+        builder.add(FACE, FACING, TRIM, Waterlogging.WATERLOGGED);
     }
 
     /** Sturdy faces as vanilla's face-attached blocks, and mast blocks (a fence mast has no sturdy side). */
@@ -233,5 +238,22 @@ public class CleatBlock extends FaceAttachedHorizontalDirectionalBlock implement
             return null;
         }
         return (BlockEntityTicker<T>) (BlockEntityTicker<CleatBlockEntity>) CleatBlockEntity::serverTick;
+    }
+
+    @Override
+    protected BlockState updateShape(BlockState state, Direction direction, BlockState neighbor, LevelAccessor level,
+                                     BlockPos pos, BlockPos neighborPos) {
+        Waterlogging.tickFluid(state, level, pos);
+        return super.updateShape(state, direction, neighbor, level, pos, neighborPos);
+    }
+
+    @Override
+    protected FluidState getFluidState(BlockState state) {
+        return Waterlogging.fluid(state, super.getFluidState(state));
+    }
+
+    @Override
+    public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
+        return Waterlogging.placed(super.getStateForPlacement(context), context);
     }
 }

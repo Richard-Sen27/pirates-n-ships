@@ -1,5 +1,8 @@
 package com.richardsenger.piratesnships.combat.cannon;
 
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.richardsenger.piratesnships.combat.content.CombatContent;
 import com.richardsenger.piratesnships.station.StationBlock;
 import com.richardsenger.piratesnships.station.StationKind;
@@ -60,7 +63,7 @@ import java.util.List;
  * Any other item in hand does its own thing. Each use works on either half and acts on the master. It is also a crew
  * station ({@link CannonStation}).
  */
-public class CannonBlock extends Block implements EntityBlock, StationBlock {
+public class CannonBlock extends Block implements EntityBlock, StationBlock, SimpleWaterloggedBlock {
 
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final EnumProperty<CannonLoad> LOAD = EnumProperty.create("load", CannonLoad.class);
@@ -89,12 +92,12 @@ public class CannonBlock extends Block implements EntityBlock, StationBlock {
     public CannonBlock(Properties properties) {
         super(properties);
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(LOAD, CannonLoad.EMPTY)
-                .setValue(PART, CannonPart.FRONT).setValue(SHOT, ShotKind.BALL));
+                .setValue(PART, CannonPart.FRONT).setValue(SHOT, ShotKind.BALL).setValue(Waterlogging.WATERLOGGED, false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, LOAD, PART, SHOT);
+        builder.add(FACING, LOAD, PART, SHOT, Waterlogging.WATERLOGGED);
     }
 
     /** The master block of the cannon half {@code state} at {@code pos}. */
@@ -129,7 +132,7 @@ public class CannonBlock extends Block implements EntityBlock, StationBlock {
                 || !standsOn(level, pos) || !standsOn(level, rear)) {
             return null;
         }
-        return defaultBlockState().setValue(FACING, facing).setValue(PART, CannonPart.FRONT);
+        return Waterlogging.placed(defaultBlockState().setValue(FACING, facing).setValue(PART, CannonPart.FRONT), context);
     }
 
     /** Places the rear half behind the master (as a bed places its head). */
@@ -138,7 +141,7 @@ public class CannonBlock extends Block implements EntityBlock, StationBlock {
         super.setPlacedBy(level, pos, state, placer, stack);
         if (!level.isClientSide && state.getValue(PART).isMaster()) {
             BlockPos rear = CannonRules.rearOf(pos, state.getValue(FACING));
-            level.setBlock(rear, rearState(state), Block.UPDATE_ALL);
+            level.setBlock(rear, Waterlogging.at(rearState(state), level, rear), Block.UPDATE_ALL);
             level.blockUpdated(pos, Blocks.AIR);
             state.updateNeighbourShapes(level, pos, Block.UPDATE_ALL);
         }
@@ -153,6 +156,7 @@ public class CannonBlock extends Block implements EntityBlock, StationBlock {
     @Override
     protected BlockState updateShape(BlockState state, Direction direction, BlockState neighbor, LevelAccessor level,
                                      BlockPos pos, BlockPos neighborPos) {
+        Waterlogging.tickFluid(state, level, pos);
         CannonPart part = state.getValue(PART);
         if (direction == CannonRules.towardsOtherHalf(state.getValue(FACING), part)) {
             boolean partner = neighbor.is(this) && neighbor.getValue(PART) != part
@@ -172,7 +176,7 @@ public class CannonBlock extends Block implements EntityBlock, StationBlock {
             BlockPos master = masterPos(state, pos);
             BlockState other = level.getBlockState(master);
             if (other.is(this) && other.getValue(PART).isMaster()) {
-                level.setBlock(master, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL | Block.UPDATE_SUPPRESS_DROPS);
+                level.setBlock(master, Waterlogging.leftBehind(other), Block.UPDATE_ALL | Block.UPDATE_SUPPRESS_DROPS);
                 level.levelEvent(player, 2001, master, Block.getId(other));
             }
         }
@@ -296,5 +300,10 @@ public class CannonBlock extends Block implements EntityBlock, StationBlock {
             Stations.onStationRemoved(serverLevel, pos);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
+    }
+
+    @Override
+    protected FluidState getFluidState(BlockState state) {
+        return Waterlogging.fluid(state, super.getFluidState(state));
     }
 }

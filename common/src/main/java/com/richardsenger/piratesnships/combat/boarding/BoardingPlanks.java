@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.combat.boarding;
 
+import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import net.minecraft.core.BlockPos;
@@ -86,11 +87,11 @@ public final class BoardingPlanks {
         BoardingPlankBlock block = BoardingContent.PLANK.get();
         for (int i = 0; i < run.length(); i++) {
             BlockPos cell = start.cell(i);
-            level.setBlock(cell, block.segment(start.direction(), i, run.length()), Block.UPDATE_ALL);
+            level.setBlock(cell, Waterlogging.at(block.segment(start.direction(), i, run.length()), level, cell), Block.UPDATE_ALL);
             if (!level.getBlockState(cell).is(block)) {
                 // the plot did not take the block (no chunk there): take back what was placed, without drops
                 for (int j = i - 1; j >= 0; j--) {
-                    level.setBlock(start.cell(j), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_SUPPRESS_DROPS);
+                    level.setBlock(start.cell(j), Waterlogging.leftBehind(level.getBlockState(start.cell(j))), Block.UPDATE_CLIENTS | Block.UPDATE_SUPPRESS_DROPS);
                 }
                 return Laid.fail(Outcome.BLOCKED);
             }

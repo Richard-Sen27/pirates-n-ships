@@ -30,8 +30,8 @@ Minecraft mod. Full spec: `docs/design.md`. Read it at the start of every sessio
 ## Commands
 - Build all enabled modules: `./gradlew build`
 - Logic tests (NeoForge runner): `./gradlew :neoforge:runGameTestServer`
-- The same tests on Fabric: `./gradlew :fabric:runGameTest` (same `pirates_n_ships.gametest.only` scoping; the merge stage runs it once per batch with `FABRIC=1`).
-- Scoped GameTests (what an agent runs; the merge stage runs the whole suite): `JAVA_TOOL_OPTIONS="-Dpirates_n_ships.gametest.only=FooGameTests,BarGameTests" ./gradlew :neoforge:runGameTestServer` (class simple names, case-insensitive; `ModGameTests.ONLY_PROPERTY`).
+- The same tests on Fabric: `./gradlew :fabric:runGameTest` (same `-Ppirates_n_ships.gametest.only=…` scoping; the merge stage runs it once per batch with `FABRIC=1`).
+- Scoped GameTests (what an agent runs; the merge stage runs the whole suite): `./gradlew :neoforge:runGameTestServer -Ppirates_n_ships.gametest.only=FooGameTests,BarGameTests`, on Fabric `./gradlew :fabric:runGameTest -Ppirates_n_ships.gametest.only=FooGameTests,BarGameTests` (class simple names, case-insensitive; both runs forward the Gradle property as the system property `ModGameTests.ONLY_PROPERTY`, without it the full suite runs).
 - Generate data: `./gradlew :neoforge:runData` (output goes to `common/src/generated/resources`)
 - Dev client (run by the human, not by you): `./gradlew :neoforge:runClient`, on Fabric `./gradlew :fabric:runClient`
 - Releasing (the human tags, not you): local builds are `<mod_version>-dev`; pushing a tag `vX.Y.Z[-alpha.N|-beta.N]` builds, tests and publishes to Modrinth, CurseForge and GitHub. Scheme, release notes (`tools/release_notes.py`) and setup: `docs/releasing.md`.

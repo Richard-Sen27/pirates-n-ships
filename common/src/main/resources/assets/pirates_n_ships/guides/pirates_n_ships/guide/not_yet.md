@@ -8,17 +8,13 @@ navigation:
 
 # What does not exist yet
 
-So that nobody looks for it:
-- **World:** pirate islands, seafarer villages, navy outposts, wrecks, treasure maps, ports with positions and harbor
-  master NPCs (desks are bound by command until then).
-- **Mobs:** pirates, sailors, navy soldiers and officers, sharks, the kraken. The only NPC is the test crew member.
-- **Crew life:** hiring, wages, morale, skills, crew eating from the pantry, crew loading cannons.
-- **Combat:** sword animations (the input, rules and stamina HUD exist), boarding planks, chain and grapeshot, crimes
-  for shooting another ship's crew.
-- **Ship extras:** a water surface inside flooding rooms, waves, oars, cargo weight slowing a ship, shipwright orders,
-  dyeable sails, a ship's allegiance from its flags.
-- **Screens and HUD:** a wind indicator, ship status, a wanted display. The data for them is already sent to the
-  client.
-- **The Fabric version.**
+Checked against the code on 2026-10-09. Everything else in this guide is built and on main.
 
-The roadmap is in `design.md` §20.
+- **Oars** for large ships in calm air (planned, deferred by the human).
+- **Audio:** the sea music and the creaks exist, but most actions have no sounds of their own yet; that waits for sound files.
+- **Melee extras:** feints by players and a directional attack and parry mode (optional milestone); the stagger tuning is an open decision.
+- **The logbook** named in the design (a record of voyages and deeds) has no block or screen yet.
+- **A wanted display** beyond the chat lines and the rank box.
+- **Hull paint and trim** (dyeable planks), an optional item in the design.
+- **On Fabric:** no guide book (the guide framework has no Fabric build), no config screen without Mod Menu, and the Fabric client has not been played yet.
+- **Being built now:** chain shot and grapeshot; dyeable sails and banner patterns on large sails.

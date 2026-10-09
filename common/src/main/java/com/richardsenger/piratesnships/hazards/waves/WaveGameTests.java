@@ -82,7 +82,7 @@ public final class WaveGameTests {
     /**
      * The wave field's origin for test {@code h} (WV1b): phase zero at the game time the test started, minus
      * {@code phaseTicks}, and at the middle of its structure. Without it the phase the waves meet a hull at depends on
-     * the game time the test happens to start at and on where the runner placed the structure (the anchor term of
+     * the game time the test happens to start at and on where the runner placed the structure (the phase k·p of the global
      * {@link WaveField}), and the spill test measured anything from 0.17 to 18 blocks of water. Every call within one
      * test gives the same origin.
      */
@@ -628,7 +628,7 @@ public final class WaveGameTests {
                     sill[0] = sillNow;
                 }
             }
-            double crest = SeaStates.field(level).heightAround(centre.x, centre.z, centre.x, centre.z, level.getGameTime());
+            double crest = SeaStates.field(level).heightAt(centre.x, centre.z, level.getGameTime());
             double feed = WaveForces.spillHeight(level, f.ship().id());
             maxFeed[0] = Math.max(maxFeed[0], feed);
             if (Double.isFinite(sillNow)) {

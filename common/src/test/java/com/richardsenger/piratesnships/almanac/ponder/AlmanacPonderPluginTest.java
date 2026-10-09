@@ -52,7 +52,9 @@ class AlmanacPonderPluginTest {
         }
         assertTrue(registry.doScenesExistForId(ResourceLocation.parse("pirates_n_ships:cannon")),
                 "the cannon item's Ponder key plays the scene");
-        for (String item : List.of("helm", "sail_winch", "capstan", "bilge_pump", "hull_patch", "mooring_ring", "cargo_crate")) {
+        for (String item : List.of("helm", "sail_winch", "capstan", "bilge_pump", "hull_patch", "mooring_ring", "cargo_crate",
+                "captains_whistle", "boarding_plank", "jolly_roger_flag", "crows_nest", "ships_bell", "pantry", "hammock",
+                "swivel_gun")) {
             assertTrue(registry.doScenesExistForId(ResourceLocation.parse("pirates_n_ships:" + item)),
                     "the Ponder key of " + item + " plays its scene");
         }

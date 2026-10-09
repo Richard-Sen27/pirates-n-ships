@@ -934,12 +934,16 @@
        },
        {
         "type": "text",
-        "key": "pirates_n_ships.almanac.sailing.p10.text3",
+        "key": "pirates_n_ships.almanac.sailing.p10.text3"
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.sailing.p10.text4",
         "color": "#9a1c14"
        },
        {
         "type": "text",
-        "key": "pirates_n_ships.almanac.sailing.p10.text4"
+        "key": "pirates_n_ships.almanac.sailing.p10.text5"
        }
       ]
      },
@@ -3551,8 +3555,9 @@
   "pirates_n_ships.almanac.sailing.p10.heading": "Waves and weather",
   "pirates_n_ships.almanac.sailing.p10.text1": "The sea follows the weather. In fair weather there is a low swell or a light chop; in rain the sea runs rough; in a thunderstorm the crests stand two blocks and more above the still water. The change comes over about a minute.",
   "pirates_n_ships.almanac.sailing.p10.text2": "Waves come in sets: a run of bigger seas, then a calmer spell. Your ship rises on the crests and sinks in the troughs, a small boat far more than a big one, and in heavy weather the bow throws spray.",
-  "pirates_n_ships.almanac.sailing.p10.text3": "In rough seas every open hatch or low rim near the waterline takes water at the crests. Close your hatches and keep a pump manned before a storm.",
-  "pirates_n_ships.almanac.sailing.p10.text4": "A moving ship leaves a wake: a bow wave spreading from the stem and a trail of foam astern that fades over some seconds.",
+  "pirates_n_ships.almanac.sailing.p10.text3": "A rowing boat rides the swell too, climbing the same crests out on open water, and anything you throw overboard bobs along with it; on lakes, rivers and in the shallows by the shore the water lies still as ever.",
+  "pirates_n_ships.almanac.sailing.p10.text4": "In rough seas every open hatch or low rim near the waterline takes water at the crests. Close your hatches and keep a pump manned before a storm.",
+  "pirates_n_ships.almanac.sailing.p10.text5": "A moving ship leaves a wake: a bow wave spreading from the stem and a trail of foam astern that fades over some seconds.",
   "pirates_n_ships.almanac.sailing.p11.heading": "Ratlines",
   "pirates_n_ships.almanac.sailing.p11.text1": "{item:pirates_n_ships:ratlines}**Ratlines** are rope nets for climbing aloft, to a crow's nest or a yard.",
   "pirates_n_ships.almanac.sailing.p11.list1_1": "Click the side of a mast to hang a net on it like a ladder.",

@@ -5,16 +5,27 @@ import net.createmod.ponder.api.PonderPalette;
 import net.createmod.ponder.api.element.TextElementBuilder;
 import net.createmod.ponder.api.scene.SceneBuilder;
 import net.createmod.ponder.foundation.PonderScene;
+import net.createmod.ponder.api.scene.Selection;
+import net.createmod.ponder.foundation.instruction.ReplaceBlocksInstruction;
 import net.createmod.ponder.foundation.instruction.TickingInstruction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Small storyboard helpers shared by our Ponder scenes (PND1, docs/almanac.md "Scenes"): shared-text lines, arrows and
@@ -113,6 +124,88 @@ final class SceneKit {
     /** Linear interpolation of two points, {@code t} in 0..1. */
     static Vec3 lerp(Vec3 a, Vec3 b, double t) {
         return a.add(b.subtract(a).scale(t));
+    }
+
+    /**
+     * Walks the entity in {@code ref} from {@code from} to {@code to} over {@code ticks}, facing the way it goes (its legs
+     * move, so a crew member plays its walk). Non-blocking.
+     */
+    static void walk(SceneBuilder scene, AtomicReference<? extends Entity> ref, Vec3 from, Vec3 to, int ticks) {
+        float yaw = yaw(to.x - from.x, to.z - from.z);
+        everyTick(scene, ticks, (s, t, total) -> {
+            Entity e = ref.get();
+            if (e != null) {
+                Vec3 p = lerp(from, to, (t + 1) / (double) total);
+                e.setPos(p.x, p.y, p.z);
+                e.setYRot(yaw);
+                if (e instanceof LivingEntity living) {
+                    living.yBodyRot = yaw;
+                    living.yHeadRot = yaw;
+                }
+            }
+        });
+    }
+
+    /** Moves the entity in {@code ref} along a parabola {@code height} above the line from {@code from} to {@code to}. */
+    static void fly(SceneBuilder scene, AtomicReference<? extends Entity> ref, Vec3 from, Vec3 to, double height, int ticks) {
+        everyTick(scene, ticks, (s, t, total) -> {
+            Entity e = ref.get();
+            if (e != null) {
+                double f = (t + 1) / (double) total;
+                Vec3 p = lerp(from, to, f).add(0, height * 4 * f * (1 - f), 0);
+                e.setPos(p.x, p.y, p.z);
+                e.setDeltaMovement(Vec3.ZERO);
+            }
+        });
+    }
+
+    /** Runs {@code action} once, on the next scene tick (an instruction for code without a Ponder instruction). */
+    static void once(SceneBuilder scene, Consumer<PonderScene> action) {
+        scene.addInstruction(action);
+    }
+
+    /**
+     * Rewrites the saved data of the block entity at {@code pos} the way a sync from the server does: its full tag is
+     * saved, changed by {@code edit} and loaded back (for state the server decides and a client only receives, such
+     * as a flag being hoisted or a bell's last ring).
+     */
+    static void editBlockEntity(PonderScene scene, BlockPos pos, Consumer<CompoundTag> edit) {
+        BlockEntity be = scene.getWorld().getBlockEntity(pos);
+        if (be == null) {
+            return;
+        }
+        HolderLookup.Provider registries = scene.getWorld().registryAccess();
+        CompoundTag tag = be.saveWithoutMetadata(registries);
+        edit.accept(tag);
+        be.loadWithComponents(tag, registries);
+    }
+
+    /** A dropped item that stays where it is put (the flying hook, a shot); spawned by {@code createEntity}. */
+    static ItemEntity floatingItem(Level level, Vec3 at, ItemStack stack, AtomicReference<ItemEntity> ref) {
+        ItemEntity item = new ItemEntity(level, at.x, at.y, at.z, stack);
+        item.setNoGravity(true);
+        item.setDeltaMovement(Vec3.ZERO);
+        item.setPickUpDelay(Short.MAX_VALUE);
+        ref.set(item);
+        return item;
+    }
+
+    /**
+     * Sets the blocks of {@code selection} to the state {@code state} gives when the instruction runs, not when the
+     * storyboard is built: our blocks' states are only looked up in the client (a headless build has no registry).
+     */
+    static void setLater(SceneBuilder scene, Selection selection, Supplier<BlockState> state, boolean particles) {
+        scene.addInstruction(new ReplaceBlocksInstruction(selection, prev -> state.get(), true, particles));
+    }
+
+    /** Removes the entity in {@code ref} from the scene (once). */
+    static void discard(SceneBuilder scene, AtomicReference<? extends Entity> ref) {
+        once(scene, s -> {
+            Entity e = ref.get();
+            if (e != null) {
+                e.discard();
+            }
+        });
     }
 
     /** Non-blocking: calls its action once per tick for its duration. */

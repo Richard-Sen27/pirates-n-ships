@@ -11,8 +11,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The sea state of every server level (docs/design.md §5.4, WV1): one {@link SeaStateModel.Tracker} per level, ticked
  * at the end of the level tick from the vanilla rain and thunder levels, and the {@link WaveField} built from it once
- * per tick (amplitude × {@code waves.amplitude}, direction from the wind at the world origin with the slow offset,
- * {@code waves.components} trains weighted around the state's peak wavelength, wave groups; WAV2).
+ * per tick (amplitude × {@code waves.amplitude}, direction from the wind at the world origin with the slow offset in
+ * steps with a crossfade (WAV7), {@code waves.components} trains weighted around the state's peak wavelength, wave
+ * groups; WAV2). The field is global: every consumer samples it at its own world point with no anchor.
  * Server memory only: after a restart the sea starts at the weather's state. An override ({@code /pirates waves set},
  * tests) holds a state and optionally a direction.
  */
@@ -39,16 +40,21 @@ public final class SeaStates {
     }
 
     private static WaveField build(ServerLevel level, SeaStateModel.Tracker t, long now) {
+        // the heading steps even while the sea is flat, so it is current when the waves come back
+        WaveField.Heading heading = t.tickDirection(windDirection(level, now), now, HazardConfig.DIRECTION_STEP_DEGREES.get(),
+                HazardConfig.DIRECTION_FADE_SECONDS.get() * 20.0);
         if (!HazardConfig.WAVES_ENABLED.get() || t.override() == null && stillByDefault(level)) {
             return WaveField.FLAT;
         }
         double amplitude = t.amplitude() * HazardConfig.WAVE_AMPLITUDE.get();
-        Double fixed = t.overrideDirection();
-        double direction = fixed != null ? fixed
-                : SeaStateModel.directionDegrees(WindService.sample(level, Vec3.ZERO).towardDegrees(), level.getSeed(), now);
-        return new WaveField(amplitude, direction,
+        return new WaveField(amplitude, heading,
                 WaveSpectrum.components(HazardConfig.COMPONENTS.get(), WaveSpectrum.peakWavelength(t.amplitude())), t.origin(),
                 groups(t.amplitude()));
+    }
+
+    /** The direction the wind asks the waves to run toward: the wind at the world origin with the slow offset. */
+    private static double windDirection(ServerLevel level, long now) {
+        return SeaStateModel.directionDegrees(WindService.sample(level, Vec3.ZERO).towardDegrees(), level.getSeed(), now);
     }
 
     /**
@@ -77,6 +83,16 @@ public final class SeaStates {
     public static synchronized WaveField field(ServerLevel level) {
         Entry e = LEVELS.get(level);
         return e == null || !HazardConfig.WAVES_ENABLED.get() ? WaveField.FLAT : e.field;
+    }
+
+    /** The height of the sea of {@code level} at one point at game time {@code t} ({@link WaveField#heightAt}; WAV6). */
+    public static double heightAt(ServerLevel level, double x, double z, double t) {
+        return field(level).heightAt(x, z, t);
+    }
+
+    /** The slope {@code {∂h/∂x, ∂h/∂z}} that goes with {@link #heightAt}. */
+    public static double[] slopeAt(ServerLevel level, double x, double z, double t) {
+        return field(level).slopeAt(x, z, t);
     }
 
     /** The state the sea of {@code level} is in now (calm before its first tick). */
@@ -113,8 +129,7 @@ public final class SeaStates {
 
     /**
      * {@link #set(ServerLevel, SeaState, Double, long)} with the field's phases pinned to {@code origin} while the
-     * override holds (GameTests only; see {@link WaveField.Origin}). Clients keep the unpinned phase, which only their
-     * cosmetic wave sampling uses.
+     * override holds (GameTests only; see {@link WaveField.Origin}). The origin is synced with the rest of the sea.
      */
     public static synchronized void set(ServerLevel level, SeaState state, @Nullable Double directionDegrees, long untilGameTime,
                                         WaveField.Origin origin) {

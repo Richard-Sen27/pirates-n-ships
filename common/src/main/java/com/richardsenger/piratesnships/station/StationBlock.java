@@ -3,6 +3,7 @@ package com.richardsenger.piratesnships.station;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A block that is a station (docs/design.md §6). Crew can be assigned to it; on a ship it is found through its plot
@@ -28,6 +29,15 @@ public interface StationBlock {
      */
     default List<BlockPos> footprint(BlockState state, BlockPos stationPos) {
         return List.of(stationPos);
+    }
+
+    /**
+     * Where the seat of the station at {@code stationPos} stands (plot position, the occupant's feet at its bottom), or
+     * null to choose a spot beside the {@link #footprint} ({@link StationSpot}). The crow's nest (CN1) seats its lookout
+     * inside its own block.
+     */
+    default @Nullable BlockPos seatSpot(BlockState state, BlockPos stationPos) {
+        return null;
     }
 
     /** Items implementing this skip the block's own use action so that their {@code useOn} runs (the captain's whistle). */

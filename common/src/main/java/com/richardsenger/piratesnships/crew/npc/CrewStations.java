@@ -189,7 +189,8 @@ public final class CrewStations {
             // beside any block of the station (a two-block cannon: beside its front or rear), never on one of them
             var state = level.getBlockState(ref.pos());
             List<BlockPos> footprint = state.getBlock() instanceof StationBlock b ? b.footprint(state, ref.pos()) : List.of(ref.pos());
-            BlockPos spot = StationSpot.choose(footprint,
+            BlockPos fixed = state.getBlock() instanceof StationBlock b ? b.seatSpot(state, ref.pos()) : null; // CN1: the crow's nest
+            BlockPos spot = fixed != null ? fixed : StationSpot.choose(footprint,
                     p -> level.getBlockState(p).getCollisionShape(level, p).isEmpty(),
                     p -> level.getBlockState(p).isFaceSturdy(level, p, net.minecraft.core.Direction.UP));
             seat = StationSeat.spawn(level, ref.pos(), spot);

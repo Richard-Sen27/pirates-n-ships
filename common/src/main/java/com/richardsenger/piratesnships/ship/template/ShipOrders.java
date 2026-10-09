@@ -272,32 +272,48 @@ public final class ShipOrders {
             return Optional.of(result(Pickup.NOT_READY, Component.translatable(KEY_NOT_READY,
                     ShipOrderMath.formatDays(ShipOrderMath.remaining(order.get().finishDay(), today)))));
         }
+        Optional<Berthed> berthed = placeAtFreeBerth(level, port.get(), order.get().template(), player, "Ship order " + order.get().shortId());
+        if (berthed.isEmpty()) return Optional.of(result(Pickup.NO_BERTH, Component.translatable(KEY_NO_BERTH)));
+        Result placed = berthed.get().placed();
+        int berth = berthed.get().berth();
+        removeOrder(server, port.get().id(), order.get().id());
+        stack.shrink(1);
+        player.containerMenu.broadcastChanges();
+        AssemblyResult a = placed.assembly();
+        Component name = Component.translatable(placed.template().name());
+        Component message = Component.translatable(KEY_PICKED_UP, name, berth);
+        if (a == null || !a.success()) {
+            message = Component.translatable(KEY_NOT_ASSEMBLED, name, berth);
+            Constants.LOG.warn("Ship order {}: placed at berth {} of {} but not assembled: {}", order.get().shortId(), berth,
+                    port.get().id(), a == null ? null : a.outcome());
+        }
+        return Optional.of(new PickupResult(Pickup.PICKED_UP, message, a == null ? null : a.shipId(), berth, placed));
+    }
+
+    /** A template placed at a berth: the placement (outcome {@link Outcome#PLACED}) and the berth, 1-based. */
+    public record Berthed(Result placed, int berth) {
+    }
+
+    /**
+     * Places template {@code template}, assembled with {@code owner} as owner, at the first free berth of {@code port}
+     * (no ship's bounds over the berth or the ship's footprint there, nothing solid in the way): the shipwright's
+     * pickup, also the delivery of a granted ship (SHP1). Empty when no berth is free; {@code what} names the
+     * delivery in the log.
+     */
+    public static Optional<Berthed> placeAtFreeBerth(ServerLevel level, Port port, ResourceLocation template, ServerPlayer owner,
+                                                     String what) {
         List<AABB> ships = SableShips.all(level).stream().filter(b -> !b.isRemoved()).map(ShipOrders::bounds).toList();
-        List<Berth> berths = port.get().berths();
+        List<Berth> berths = port.berths();
         for (int i = 0; i < berths.size(); i++) {
             Berth berth = berths.get(i);
-            Result placed = ShipTemplatePlacer.placeAtBerth(level, order.get().template(), berth.pos(), berth.bow(),
-                    box -> ShipOrderMath.occupied(berth.pos(), box, ships), true, player);
-            if (placed.outcome() == Outcome.PLACED) {
-                removeOrder(server, port.get().id(), order.get().id());
-                stack.shrink(1);
-                player.containerMenu.broadcastChanges();
-                AssemblyResult a = placed.assembly();
-                Component name = Component.translatable(placed.template().name());
-                Component message = Component.translatable(KEY_PICKED_UP, name, i + 1);
-                if (a == null || !a.success()) {
-                    message = Component.translatable(KEY_NOT_ASSEMBLED, name, i + 1);
-                    Constants.LOG.warn("Ship order {}: placed at berth {} of {} but not assembled: {}", order.get().shortId(), i + 1,
-                            port.get().id(), a == null ? null : a.outcome());
-                }
-                return Optional.of(new PickupResult(Pickup.PICKED_UP, message, a == null ? null : a.shipId(), i + 1, placed));
-            }
+            Result placed = ShipTemplatePlacer.placeAtBerth(level, template, berth.pos(), berth.bow(),
+                    box -> ShipOrderMath.occupied(berth.pos(), box, ships), true, owner);
+            if (placed.outcome() == Outcome.PLACED) return Optional.of(new Berthed(placed, i + 1));
             if (placed.outcome() != Outcome.OCCUPIED && placed.outcome() != Outcome.OBSTRUCTED) {
-                Constants.LOG.warn("Ship order {}: berth {} of {} refused: {} at {}", order.get().shortId(), i + 1, port.get().id(),
-                        placed.outcome(), placed.where());
+                Constants.LOG.warn("{}: berth {} of {} refused: {} at {}", what, i + 1, port.id(), placed.outcome(), placed.where());
             }
         }
-        return Optional.of(result(Pickup.NO_BERTH, Component.translatable(KEY_NO_BERTH)));
+        return Optional.empty();
     }
 
     /**

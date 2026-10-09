@@ -6,6 +6,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import com.richardsenger.piratesnships.rpg.career.ShipGrantContent;
+import com.richardsenger.piratesnships.rpg.career.ShipGrants;
 import com.richardsenger.piratesnships.ship.template.ShipOrderContent;
 import com.richardsenger.piratesnships.ship.template.ShipOrders;
 import net.minecraft.world.InteractionHand;
@@ -107,17 +109,25 @@ public class HarborDeskBlock extends BaseEntityBlock {
     }
 
     /**
-     * Using the desk with a ship receipt (SW1) picks up the ordered ship ({@code ShipOrders.pickup}) instead of opening
-     * the market; any other item opens the market as an empty hand does.
+     * Using the desk with a ship receipt (SW1) picks up the ordered ship ({@code ShipOrders.pickup}), and with a ship
+     * commission (SHP1) redeems the granted ship ({@code ShipGrants.redeemAtDesk}), instead of opening the market; any
+     * other item opens the market as an empty hand does.
      */
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                               InteractionHand hand, BlockHitResult hit) {
-        if (!TradeConfig.DESKS_ENABLED.get() || !stack.is(ShipOrderContent.SHIP_RECEIPT.get())) {
+        boolean commission = stack.is(ShipGrantContent.SHIP_COMMISSION.get());
+        if (!TradeConfig.DESKS_ENABLED.get() || !commission && !stack.is(ShipOrderContent.SHIP_RECEIPT.get())) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         if (level.isClientSide) return ItemInteractionResult.SUCCESS;
         if (!(player instanceof ServerPlayer sp)) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        if (commission) { // SHP1: a granted ship is delivered like a shipwright pickup
+            return ShipGrants.redeemAtDesk(sp, pos, stack).map(r -> {
+                ShipGrants.tell(sp, r);
+                return ItemInteractionResult.CONSUME;
+            }).orElse(ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION);
+        }
         return ShipOrders.pickup(sp, pos, stack).map(r -> {
             sp.displayClientMessage(r.message(), false);
             return ItemInteractionResult.CONSUME;

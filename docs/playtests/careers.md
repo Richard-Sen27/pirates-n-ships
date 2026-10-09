@@ -145,3 +145,51 @@ Setup: a world where you can use operator commands. A second player (or a LAN fr
 3. A second player (or you after `/pirates career set @s navy none`) names your ship "Lt. Sea Wolf". Expected:
    "Sea Wolf" (titles are only the owner's, and a typed title is removed).
 4. Set `careers.title_on_ship = false`, rename "Lt. Sea Wolf". Expected: stored as typed, "Lt. Sea Wolf".
+
+# SHP1: fighting ships by rank
+
+The rules (once per ladder, the template per ladder, the toggle, the redemption checks) are covered by JUnit
+(`ShipGrantRulesTest`, and `ArmedTemplatesNotOrderableTest` keeps the armed sloops off the shipwright's list) and 7
+GameTests (`ShipGrantGameTests`: the grant on a real promotion, the full pack, the outpost desk, the officer, the pirate
+island, no free berth, the toggle). This part checks it in a real world. Defaults (`careers.ship_grants.*`): a navy
+Captain is granted the armed navy sloop, a Dread Captain the armed pirate sloop, once per player and side.
+`/pirates career ship_grant @s reset` forgets your grants and redemptions so a section can be repeated (a held rank
+grants again at once).
+
+## 15. The navy commission
+1. Reset, `/pirates career set @s navy lieutenant`, then `captain`. Expected: after the promotion lines a gold line
+   "With your new rank you receive: Ship Commission" and "The navy commissions you a ship: ...". Hover the commission:
+   "Grants: Navy Sloop (armed)", "Made out to <you>", and where to hand it in.
+2. `/pirates career set @s navy commodore`. Expected: no second commission.
+3. Go to a navy outpost (its quay has berths) and use its harbor master's desk with the commission. Expected: "Your
+   ship, the Capt. <name>, lies at berth N. Powder and shot are yours to buy"; an armed navy sloop (two guns a side,
+   crow's nest) lies at that berth, assembled, in the water, with the navy flag on the taffrail staff; the nameplate
+   and the ship HUD read "Capt. <name>"; you can take the helm and sail it away. The commission is gone.
+4. Open the shot locker (the barrel in the hold beside the mast). Expected: empty. The guns are not loaded.
+5. `/pirates career ship_grant @s reset` (a fresh commission arrives) and hand the commission to the outpost's navy
+   officer instead (main hand, right click). Expected: a second sloop at another free berth, same checks as 3.
+   Please report: is the berth placement sensible on the generated outpost quay (not on land, not inside the pier)?
+6. `/pirates career ship_grant @s reset` twice: two fresh commissions. Redeem one at the desk, then use the other.
+   Expected: "Your ship was already delivered", the second commission stays.
+
+## 16. Refusals
+1. With a navy commission, use the desk of a seafarer village or a pirate island. Expected: "A navy commission is
+   redeemed at a navy outpost", the commission stays.
+2. Fill all berths of an outpost (deliver or park ships there until none is free), then redeem. Expected: "No berth is
+   free; come back later", the commission stays.
+3. Hold the commission, `/pirates career set @s navy none` (out of the service), redeem at an outpost. Expected: "You no
+   longer hold the rank this commission was granted for", kept. Re-enlist as Captain: it works again.
+4. A second player uses your commission. Expected: "This commission is made out to another captain".
+
+## 17. The pirate sloop
+1. Reset, `/pirates career set @s infamy dread_captain`. Expected: a Ship Commission and "The brethren grant you a
+   ship: ...".
+2. Use it at a navy outpost's desk. Expected: "The brethren deliver their ships at a pirate island", kept.
+3. Use it at the fence's desk of a pirate island. Expected: a pirate sloop at a free berth under the Jolly Roger,
+   named "Dread Pirate <name>", the shot locker empty.
+
+## 18. Toggle and the shipwright
+1. Open the Orders tab at a seafarer village desk (and, as a Captain, at a navy outpost). Expected: the armed navy and
+   pirate sloops are never listed.
+2. Set `careers.ship_grants.enabled = false`. `/pirates career ship_grant @s reset`: no commission arrives; a held
+   commission is refused with "No ships are granted on this server" and kept.

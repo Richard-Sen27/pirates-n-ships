@@ -3374,7 +3374,8 @@
          "pirates_n_ships.almanac.inventory.p2.list1_21",
          "pirates_n_ships.almanac.inventory.p2.list1_22",
          "pirates_n_ships.almanac.inventory.p2.list1_23",
-         "pirates_n_ships.almanac.inventory.p2.list1_24"
+         "pirates_n_ships.almanac.inventory.p2.list1_24",
+         "pirates_n_ships.almanac.inventory.p2.list1_25"
         ]
        }
       ]
@@ -3790,7 +3791,7 @@
   "pirates_n_ships.almanac.ships.p12.text3": "**3.** Use the toolkit on the broken piece, and she is whole.",
   "pirates_n_ships.almanac.ships.p12.text4": "Only pieces of the same ship join, of up to 200 blocks each.",
   "pirates_n_ships.almanac.ships.p13.heading": "Fittings",
-  "pirates_n_ships.almanac.ships.p13.text1": "A {item:pirates_n_ships:nameplate}**nameplate** shows her name once she is launched and named.",
+  "pirates_n_ships.almanac.ships.p13.text1": "A {item:pirates_n_ships:nameplate}**name board** (any sign and a gold nugget make three) fixed on her side shows her name once she is launched and named; boards side by side join, and the name grows across the row.",
   "pirates_n_ships.almanac.ships.p14.heading": "Figureheads",
   "pirates_n_ships.almanac.ships.p14.text1": "A figurehead hangs on the bow block you click and looks toward you. The {item:pirates_n_ships:figurehead_mermaid}**mermaid** and the {item:pirates_n_ships:figurehead_lion}**lion**:",
   "pirates_n_ships.almanac.ships.p15.heading": "More figureheads",
@@ -3859,7 +3860,7 @@
   "pirates_n_ships.almanac.sailing.p10.text1": "A moored ship is simply a ship lying still at her berth: bring her in slowly and drop the anchor.",
   "pirates_n_ships.almanac.sailing.p10.text2": "{item:pirates_n_ships:mooring_ring}**Mooring rings** and cleats serve the grappling hook. A hook catches on a ring and holds longer there; use a ring or cleat on your own ship to make a hooked ship fast. See [[pirates_n_ships:combat|Weapons and combat]].",
   "pirates_n_ships.almanac.sailing.p11.heading": "The gangway",
-  "pirates_n_ships.almanac.sailing.p11.text1": "The {item:pirates_n_ships:boarding_plank}**boarding plank** bridges your deck and the quay. Use it on the edge of either, toward the other; it steps up or down to a high pier on its own.",
+  "pirates_n_ships.almanac.sailing.p11.text1": "The {item:pirates_n_ships:boarding_plank}**boarding plank** bridges your deck and the quay. Use it on the edge of either, toward the other: it lies as one straight board, up or down to a high pier, up to six blocks.",
   "pirates_n_ships.almanac.sailing.p11.text2": "It goes where the ship goes, but let her drift along the quay and it breaks. Sneak and use it with an empty hand to stow it.",
   "pirates_n_ships.almanac.sailing.p12.heading": "Waves and weather",
   "pirates_n_ships.almanac.sailing.p12.text1": "Fair weather brings a low swell, rain rough seas, a thunderstorm high crests. A small boat rides them far more than a big one.",
@@ -4146,7 +4147,7 @@
   "pirates_n_ships.almanac.combat.p17.heading": "Boarding",
   "pirates_n_ships.almanac.combat.p17.show_me1": "Show me: boarding an enemy",
   "pirates_n_ships.almanac.combat.p17.text1": "Use a rope made fast to a cleat or ring to slide down it, from your masthead onto her deck.",
-  "pirates_n_ships.almanac.combat.p17.text2": "With the ships alongside, use a {item:pirates_n_ships:boarding_plank}**boarding plank** on top of your gunwale. Keep the ships together or it breaks.",
+  "pirates_n_ships.almanac.combat.p17.text2": "With the ships alongside, use a {item:pirates_n_ships:boarding_plank}**boarding plank** on top of your gunwale. Keep the ships together or it breaks. Hold the plank and look at your rail: the board it would lay shows in green, and a red cell marks what stands in the way.",
   "pirates_n_ships.almanac.combat.p18.heading": "Taking a prize",
   "pirates_n_ships.almanac.combat.p18.text1": "Merchantmen, navy patrols and pirates sail the sea lanes.",
   "pirates_n_ships.almanac.combat.p18.list1_1": "Take goods from her hold while aboard: plundered.",
@@ -4230,7 +4231,7 @@
   "pirates_n_ships.almanac.inventory.p2.list1_12": "{item:pirates_n_ships:hull_patch}**Hull patch:** closes a breach.",
   "pirates_n_ships.almanac.inventory.p2.list1_13": "{item:pirates_n_ships:flagpole}**Flagpole:** flies your colours. [[pirates_n_ships:flags|Flags]]",
   "pirates_n_ships.almanac.inventory.p2.list1_14": "{item:pirates_n_ships:flag_pedestal}**Flag pedestal:** a carved plinth a flagpole stands in.",
-  "pirates_n_ships.almanac.inventory.p2.list1_15": "{item:pirates_n_ships:nameplate}**Nameplate:** shows her name.",
+  "pirates_n_ships.almanac.inventory.p2.list1_15": "{item:pirates_n_ships:nameplate}**Name Board:** shows her name across the boards it joins.",
   "pirates_n_ships.almanac.inventory.p2.list1_16": "{item:pirates_n_ships:figurehead_mermaid}{item:pirates_n_ships:figurehead_lion}{item:pirates_n_ships:figurehead_eagle}{item:pirates_n_ships:figurehead_skull}**Figureheads:** a mermaid, lion, eagle or skull for the bow.",
   "pirates_n_ships.almanac.inventory.p2.list1_17": "{item:pirates_n_ships:ship_lantern}**Ship's lantern:** a lantern that burns under water.",
   "pirates_n_ships.almanac.inventory.p2.list1_18": "{item:pirates_n_ships:stern_window}**Stern window:** shuttered windows for the great cabin.",
@@ -4240,6 +4241,7 @@
   "pirates_n_ships.almanac.inventory.p2.list1_22": "{item:pirates_n_ships:hammock}**Hammock:** a bunk for one hand. [[pirates_n_ships:crew|Crew]]",
   "pirates_n_ships.almanac.inventory.p2.list1_23": "{item:pirates_n_ships:boarding_plank}**Boarding plank:** a bridge to an enemy deck.",
   "pirates_n_ships.almanac.inventory.p2.list1_24": "{item:pirates_n_ships:oak_railing}{item:pirates_n_ships:oak_railing_port}**Railing, railing port:** a rail along a block's edge; click again to rail another. A cannon fires and a boarding plank goes out through the port.",
+  "pirates_n_ships.almanac.inventory.p2.list1_25": "{item:pirates_n_ships:oak_railing_gate}**Railing gate:** a railing section that swings open like a fence gate (use it, or redstone), so crew and boarding planks pass when it is open; a lantern hangs below or stands on any railing post, and a chain runs on from it.",
   "pirates_n_ships.almanac.inventory.p3.heading": "Stores and cargo",
   "pirates_n_ships.almanac.inventory.p3.list1_1": "{item:pirates_n_ships:pantry}**Pantry:** the food store. [[pirates_n_ships:provisions|Provisions]]",
   "pirates_n_ships.almanac.inventory.p3.list1_2": "{item:pirates_n_ships:water_barrel}**Water barrel:** 16 rations of fresh water.",

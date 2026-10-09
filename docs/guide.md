@@ -1466,7 +1466,7 @@ on by default; vanilla weapons are untouched):
 | Brig Door | 4 iron ingots, 2 iron bars | Lockable door for cells. |
 | Notice Board | 4 planks, 2 paper | Lists every bounty and places new ones for doubloons. |
 | Mermaid, Lion, Eagle and Skull Figurehead | 4 planks and a prismarine shard, gold ingot, feather or bone | Decoration for the bow. Click the hull block it should hang on: the plate lands there and the figure looks at you. |
-| Nameplate | any sign, 1 gold nugget | A board on two iron brackets that shows the ship's name once the ship is assembled and named (name tag on the helm); long names shrink to fit, renaming updates every plate within a second, disassembly clears them. Server option `ship_identity.nameplate_shows_name`. |
+| Name Board (was Nameplate) | any sign, 1 gold nugget (gives 3) | A framed oak plate fixed flat on the hull's side (no chains). Boards side by side on one face join into one board, and the ship's name is drawn once across the whole row, as large as the board's height allows: one board shows it small, three or more read from 30 to 60 blocks. Shows the name once the ship is assembled and named (name tag on the helm); renaming updates it within a second, disassembly clears it. Old nameplates load as boards. Server options `ship_identity.nameplate_shows_name`, `name_board_distance` (64, how far the name is drawn). |
 | Oak Railing | 3 sticks over 3 oak planks (gives 4) | A rail along a block's edge with automatic end and corner posts; click again to rail another edge. Drops one per edge. See [Railings](#railings). |
 | Oak Railing Port | 2 sticks (the corners) over 3 oak planks (gives 2) | The opening in a railing: two posts and a sill. A cannon fires through it, a boarding plank goes out from its sill. See [Railings](#railings). |
 
@@ -1634,7 +1634,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `dry_hull` | Dry hull on/off, buoyancy of the dry volume, weight of flood water, drowning under flood water (`flood_breath`), partial blocks drawn dry, analysis and sync timings. |
 | `flooding` | Flooding on/off, inflow rate, re-analysis on tilt; bilge pump on/off, rate, reach, use time and exhaustion; hull patch on/off. |
 | `ships` | Sinking and wreck persistence, the ship HUD on/off and its sync, shipwright orders (on/off, build days and prices per ship, price and material factors, orders per port). |
-| `ship_identity` | Nameplates showing the ship's name, their refresh. |
+| `ship_identity` | Name boards showing the ship's name, their refresh, how far the name is drawn (`name_board_distance`, 64 blocks). |
 | `ship_screen` | The ship screen at the helm on/off (off: sneak-use disassembles at once), its reach, how often it refreshes. |
 | `ship_decor` | The ship's bell ring time; sleeping in the sea cot, on land and aboard; railings on or off and their collision height (`railings_enabled`, `railing_collision_blocks`). |
 | `rigging` | Ratlines on/off; ratline nets on/off, their longest length (32 blocks, up to 64) and flattest pitch, the climbing assist; how many nets one mast hoop holds and how far apart two neighbouring chainplates may be to be netted together. |

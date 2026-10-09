@@ -26,7 +26,7 @@ Every block and item a hand may need, a line on each, and the chapter that tells
 - {item:pirates_n_ships:hull_patch}**Hull patch:** closes a breach.
 - {item:pirates_n_ships:flagpole}**Flagpole:** flies your colours. [[pirates_n_ships:flags|Flags]]
 - {item:pirates_n_ships:flag_pedestal}**Flag pedestal:** a carved plinth a flagpole stands in.
-- {item:pirates_n_ships:nameplate}**Nameplate:** shows her name.
+- {item:pirates_n_ships:nameplate}**Name Board:** shows her name across the boards it joins.
 - {item:pirates_n_ships:figurehead_mermaid}{item:pirates_n_ships:figurehead_lion}{item:pirates_n_ships:figurehead_eagle}{item:pirates_n_ships:figurehead_skull}**Figureheads:** a mermaid, lion, eagle or skull for the bow.
 - {item:pirates_n_ships:ship_lantern}**Ship's lantern:** a lantern that burns under water.
 - {item:pirates_n_ships:stern_window}**Stern window:** shuttered windows for the great cabin.

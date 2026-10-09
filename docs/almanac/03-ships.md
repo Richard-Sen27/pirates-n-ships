@@ -95,7 +95,7 @@ Only pieces of the same ship join, of up to 200 blocks each.
 
 ## Fittings
 illustration: figurehead_mermaid
-A {item:pirates_n_ships:nameplate}**nameplate** shows her name once she is launched and named.
+A {item:pirates_n_ships:nameplate}**name board** (any sign and a gold nugget make three) fixed on her side shows her name once she is launched and named; boards side by side join, and the name grows across the row.
 
 {recipe:nameplate}
 

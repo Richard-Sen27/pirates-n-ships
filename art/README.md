@@ -978,6 +978,33 @@ Railings (RAIL1):
   end posts, a one-block gap, the port with the cannon model behind it, a corner of a north and an east edge with its
   end post, and the swivel gun shifted 6 px onto the rail); `renders/railing_item.png`: the item model.
 
+Name boards (NAME2):
+- **Part list in `tools/gen_name_board_models.py`** (committed). It writes the four parent models to `models/block/`
+  and their project `models/name_board.bbmodel` (groups `name_board` 3 elements, `name_board_cap_left` 1,
+  `name_board_cap_right` 1, `name_board_item` 5; the first three visible, all at the same place; textures `oak_planks`
+  with id `planks` and `stripped_oak_log` with id `log`, from `../vanilla/`). Every model uses the texture variables
+  `#planks` and `#log` (RAIL1); datagen (`ShipDecorModule#nameBoard`, `WoodFamily.childJson`) writes the oak children
+  `block/oak_name_board*` and `item/nameplate` (the block keeps the G8 nameplate's registry id). Lint clean (no fights,
+  no warnings).
+- **Board** (north-facing, against the south side of its block, 2 px thick, 14 px tall): plank panel x 0..16, y 2..14,
+  z 14.5..16 (front and back only: its ends and edges are always covered); stripped-log frame strips x 0..16 at
+  y 14..15 and 1..2, z 14..16, the log turned 90 degrees on the long faces so the grain runs along the strip. **Caps**:
+  the frame's ends, x 15..16 (viewer's left = east) and x 0..1 (right = west), y 2..14, z 14..15.95 (0.05 px short of
+  the back so they never fight the panel's back face); the multipart block state draws `name_board` always and a cap
+  only where the row ends (`left=false`, `right=false`), so a joined row has one frame round it. **Item**: a small
+  board standing in the block's middle (panel x 2..14, y 4..12, planks on both faces; frame x 1..15, y 3..13, z 7..9);
+  display `gui` `[15, -30, 0]` / 0.9, `fixed` `[0, 180, 0]`, `ground` 0.5 raised 3 px; the hands keep `block/block`'s
+  entries (the board is symmetric along x: ART17's "R unchanged" case).
+- **The name** is not part of the model: `NameplateRenderer` draws it from the row's master on the panel front
+  (z 14.45, behind the frame's front), centred on the row, dark brown `#2A1A0E`; the scale rule is `NameplateText`.
+- Checked in Blockbench (NAME2): the project loads with both textures, and `Codecs.java_block.compile()` of each group
+  (the other groups' cubes not exported) matches the part list's JSON element for element. Renders
+  `renders/name_board.png` (one board, caps on both ends), `renders/name_board_row.png` (a row of three: the middle
+  and right boards are clones of the board model, the right cap moved to the row's end; the name is a canvas overlay at
+  the size the scale rule gives "Black Gull" on three boards, not the game's font), `renders/name_board_item.png`
+  (the item at about its gui angle), drawn with a `THREE.WebGLRenderer` in `risky_eval` (offscreen views were all
+  taken) and written with `fs`.
+
 Ratline nets (RL2):
 - **Part list in `tools/gen_ratline_net_models.py`** (committed). Three projects, one model each:
   `chainplate.bbmodel` -> `block/chainplate.json` (13 elements), `mast_hoop.bbmodel` -> `block/mast_hoop.json` (14),

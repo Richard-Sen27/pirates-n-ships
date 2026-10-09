@@ -5,49 +5,89 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Fitting the ship's name to the nameplate's board, and what a plate shows (pure). */
+/** Fitting the ship's name to a row of name boards (NAME2), and what a board shows (pure). */
 class NameplateTextTest {
 
+    /** "Black Gull" in the vanilla font, font units. */
+    private static final int BLACK_GULL = 50;
+
     @Test
-    void shortNamesUseTheLargestScale() {
-        assertEquals(NameplateText.MAX_SCALE, NameplateText.fitScale(0));
-        assertEquals(NameplateText.MAX_SCALE, NameplateText.fitScale(12));
-        // exactly the board width at the largest scale
-        assertEquals(NameplateText.MAX_SCALE, NameplateText.fitScale((int) (NameplateText.AREA_WIDTH / NameplateText.MAX_SCALE)));
+    void theTextAreaIsTheRowLessFrameAndMargin() {
+        assertEquals(12f, NameplateText.areaWidth(1));
+        assertEquals(44f, NameplateText.areaWidth(3));
+        assertEquals(92f, NameplateText.areaWidth(6));
+        assertEquals(12f, NameplateText.areaWidth(0), "a row has at least one board");
+        assertEquals(10f, NameplateText.AREA_HEIGHT, "14 px board, 1 px frame and 1 px margin at top and bottom");
     }
 
     @Test
-    void longerNamesShrinkToTheBoardWidth() {
-        for (int width : new int[]{21, 30, 45, 60, 80}) {
-            float scale = NameplateText.fitScale(width);
-            assertTrue(scale < NameplateText.MAX_SCALE, width + " units should shrink");
-            assertEquals(NameplateText.AREA_WIDTH, width * scale, 1e-4, width + " units should fill the board exactly");
+    void theNameFillsTheRowsLength() {
+        for (int boards = 1; boards <= 4; boards++) {
+            for (int width : new int[]{40, 60, 80}) {
+                float scale = NameplateText.fitScale(boards, width);
+                if (scale < NameplateText.MAX_SCALE) {
+                    assertEquals(NameplateText.areaWidth(boards), width * scale, 1e-3, boards + " boards, " + width + " units");
+                }
+            }
         }
+        // a longer row draws the same name larger
+        float one = NameplateText.fitScale(1, BLACK_GULL);
+        float three = NameplateText.fitScale(3, BLACK_GULL);
+        assertTrue(three > 3 * one, "3 boards: " + three + " against " + one);
+    }
+
+    @Test
+    void theHeightCapsTheScale() {
+        // a short name on a long row stops at the board's height
+        assertEquals(NameplateText.MAX_SCALE, NameplateText.fitScale(6, BLACK_GULL));
+        assertEquals(NameplateText.MAX_SCALE, NameplateText.fitScale(1, 0));
+        assertEquals(1.25f, NameplateText.MAX_SCALE);
+        float glyph = NameplateText.GLYPH_HEIGHT * NameplateText.fitScale(20, 5);
+        assertTrue(glyph <= NameplateText.AREA_HEIGHT + 1e-4, "a glyph cell of " + glyph + " px is taller than the text area");
+        assertTrue(NameplateText.CENTER_Y - glyph / 2 >= NameplateText.BOARD_BOTTOM + NameplateText.FRAME
+                && NameplateText.CENTER_Y + glyph / 2 <= NameplateText.BOARD_TOP - NameplateText.FRAME, "the text runs into the frame");
+    }
+
+    @Test
+    void aOneBoardRowShowsAUsualNameSmall() {
+        float scale = NameplateText.fitScale(1, BLACK_GULL);
+        assertEquals(0.24f, scale, 1e-4);
+        // about as large as the G8 nameplate's 0.2 for the same name, and still a sign's size at 16 blocks
+        assertTrue(NameplateText.readableDistance(scale) >= 16f, "readable from " + NameplateText.readableDistance(scale));
     }
 
     @Test
     void veryLongNamesStopAtTheSmallestScaleAndAreCut() {
         int width = 300;
-        float scale = NameplateText.fitScale(width);
+        float scale = NameplateText.fitScale(1, width);
         assertEquals(NameplateText.MIN_SCALE, scale);
-        int max = NameplateText.maxWidthAt(scale);
+        int max = NameplateText.maxWidthAt(1, scale);
         assertTrue(max < width);
-        assertTrue(max * scale <= NameplateText.AREA_WIDTH + 1e-4, "the cut text fits the board");
-        assertEquals(80, max);
+        assertTrue(max * scale <= NameplateText.areaWidth(1) + 1e-4, "the cut text fits the board");
+        assertEquals(96, max);
+        // on three boards the same name fits without a cut
+        assertTrue(NameplateText.maxWidthAt(3, NameplateText.fitScale(3, width)) >= width);
     }
 
     @Test
-    void theBoardAreaStaysOnThePanelBetweenTheRivets() {
-        float left = NameplateText.CENTER_X - NameplateText.AREA_WIDTH / 2;
-        float right = NameplateText.CENTER_X + NameplateText.AREA_WIDTH / 2;
-        assertTrue(left >= 2.75f && right <= 13.25f, "text runs into the rivets: " + left + ".." + right);
-        float half = NameplateText.GLYPH_HEIGHT * NameplateText.MAX_SCALE / 2;
-        assertTrue(NameplateText.CENTER_Y - half >= 5f && NameplateText.CENTER_Y + half <= 11f, "text taller than the panel");
-        assertTrue(NameplateText.TEXT_Z < NameplateText.FRONT_Z, "text must sit in front of the panel (toward -z)");
+    void rowsAreReadableFromFarther() {
+        // the G8 plate drew "Black Gull" at 0.2 px per unit: a sign's size at about 19 blocks
+        assertEquals(19.2f, NameplateText.readableDistance(0.2f), 1e-3);
+        // three boards: past the default name_board_distance (64)
+        assertTrue(NameplateText.readableDistance(NameplateText.fitScale(3, BLACK_GULL)) > 64f);
+        assertTrue(NameplateText.readableDistance(NameplateText.fitScale(6, BLACK_GULL)) > 100f);
     }
 
     @Test
-    void plateShowsTheCleanedNameOnlyOnAShipWithTheToggleOn() {
+    void theTextSitsOnThePanelBehindTheFrame() {
+        assertTrue(NameplateText.TEXT_Z < NameplateText.PANEL_FRONT, "text must sit in front of the panel (toward -z)");
+        assertTrue(NameplateText.TEXT_Z > NameplateText.FRAME_FRONT, "text must stay behind the frame's front");
+        assertEquals(14f, NameplateText.BOARD_TOP - NameplateText.BOARD_BOTTOM, "the board is 14 px tall");
+        assertEquals(2f, 16f - NameplateText.FRAME_FRONT, "the board is 2 px thick");
+    }
+
+    @Test
+    void boardShowsTheCleanedNameOnlyOnAShipWithTheToggleOn() {
         assertEquals("Black Gull", NameplateText.shown(true, true, "  Black Gull "));
         assertEquals("", NameplateText.shown(true, false, "Black Gull"));
         assertEquals("", NameplateText.shown(false, true, "Black Gull"));

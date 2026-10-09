@@ -257,3 +257,81 @@ where they come from; turn the sloop beam on). Please send a short clip of steps
 - The heave is a force from the mean wave height under the hull, not a moving water surface: Sable's buoyancy still
   sees flat water and pulls the hull back to the still waterline.
 - Ships in waves still never fall asleep in the physics engine.
+
+## WAV3: the visible sea
+
+The rules (which water columns carry the surface: still water at sea level − 1 with air above; the depth fade, 0 at
+one block of water and full from `surface_full_depth` 4; the three LOD rings and their alignment, so they tile the area
+exactly once; the seam skirts that close every slit between a fine and a coarse ring; the vertex heights against the
+wave field; the anchor; the fallback from the mod list) are covered by JUnit (`hazards/waves/client/surface/*Test`), and
+the hidden top face's mixin target by both loaders' `ClientMixinTargetsTest`. Headless budget at the defaults (near 32,
+mid 128, far cells 16), an all-sea world in a storm: 8,256 cells and 512 seam skirts at render distance 12 (70,144
+vertices with the underside, about 2 MB), 11,776 cells at 32 chunks (98,304 vertices, 2.8 MB); building the mesh took
+0.3–0.4 ms per frame on the CPU in the test (without the cell cache, the vertex upload and the frustum, which drops what
+is out of view). The underside is emitted only while the camera is below the highest possible crest. What only the
+game shows is the look, the cost and the seams.
+
+**What changed for the player.** The water at sea level is no longer a flat sheet: a mesh follows the synced waves
+around the camera (1-block cells within 32 blocks, 4-block cells to 128, 16-block cells to the render distance), and
+vanilla's flat top face of that water is hidden (a client mixin on the fluid renderer). Shallow water near a beach moves
+less and the last block before the sand lies still. Foam streaks ride on the surface. Nothing in gameplay changed:
+swimming, collisions, boats, buoyancy and the ships' physics stay on the flat sea level. Client config
+`wave_effects.surface` (default on) and its five settings; toggling it re-renders the chunks once.
+
+Setup: `./gradlew :neoforge:runClient` (then step 9 on Fabric), a creative world, default config, a starter sloop on open
+sea with `/pirates ship place starter_sloop assemble`, a sandy beach within view. Turn on the F3 screen to read the
+frame time. Please send screenshots or short clips of steps 1, 2, 4, 5 and 6, and `latest.log`.
+
+1. **Calm.** `/pirates waves set calm`, stand on the beach, look over the sea.
+   - **Expected:** the sea lies almost still: a long, low swell you only notice against the beach or a block at the
+     waterline. The water looks like vanilla water (same texture, colour, transparency, fog), no flat second surface
+     flickers through it (z-fighting would show as stripes), no holes.
+2. **Moderate and storm.** `/pirates waves set moderate`, then `/pirates waves set storm`. Watch a minute each from the
+   beach, from a hill, and from the sloop's deck.
+   - **Expected:** crests and troughs run across the sea in the waves' direction (`/pirates waves` says where they come
+     from; the foam lines up with them), uneven, in sets; up to about 1.6 blocks from crest to the still level in a
+     storm. Smooth near you, coarser far away, with no gaps or cracks at about 32 and 128 blocks out (the ring
+     borders), and no visible step where the texture scale changes at 32 blocks (if there is one, try
+     `surface_near_radius` 64 and tell us). The surface moves smoothly, no jitter.
+3. **The shore.** In the storm, stand at the waterline and look along the beach.
+   - **Expected:** the waves die out in the last blocks before the sand; the water never rises over the beach blocks
+     and never pulls away to show a gap at the sand's edge. Kelp and seagrass stay under the surface (except where a
+     crest dips below a kelp top).
+4. **Next to the ship.** On the sloop's deck in the storm, look over the side at the water against the hull, then
+   from a little boat or swimming next to it.
+   - **Expected:** the hull rides the same waves you see: when the bow lifts, a crest is under it. No water surface
+     inside the hull (the hold is dry, no wave pokes through the floor); outside, crests may lap up the hull's side.
+     Spray at the bow comes off the crest. Then step off: the waves keep their rhythm (they may speed up or slow down
+     for a few seconds while the surface's anchor moves from the ship to you; tell us if that is noticeable).
+5. **From under water.** Dive in open sea in the storm and look up.
+   - **Expected:** the surface's underside moves overhead like the top side, with vanilla's underwater fog. Known
+     limit: in a trough you can be under the old flat level (underwater fog) while above the drawn surface, or the
+     other way round on a crest, for a moment. Tell us how often that is noticeable.
+6. **Frame time.** F3, look out to sea at render distance 12 and 32, with `wave_effects.surface = true` and then
+   `false` (the chunks re-render once on each switch).
+   - **Expected:** a cost of about a millisecond or two per frame at the most; please send the two frame-time numbers
+     (or FPS) for each distance. `surface_mid_radius` 64 and `surface_far_cell` 32 make it cheaper. A `latest.log`
+     with the debug level shows "Sea surface, last 600 frames: … quads … µs per frame".
+7. **Toggle and fallback.** Set `wave_effects.surface = false` in the config screen.
+   - **Expected:** the chunks re-render once and the sea is flat vanilla water again; the foam lies flat. True again:
+     the moving surface returns. With Sodium (or Embeddium, Iris) installed, the log says once "Visible sea surface
+     (wave_effects.surface) is off: 'sodium' replaces the chunk renderer, the water stays flat" and the water is flat.
+8. **Other water.** A lake above sea level, a river, a pool you pour on land at sea level − 1, water with a lily pad,
+   the Nether and the End.
+   - **Expected:** flowing water, water under a lily pad, lakes above or below sea level, and the other dimensions keep
+     vanilla's water. A still pool at exactly sea level − 1 with air above moves like the sea (flat if it is shallow).
+9. **Fabric.** Repeat steps 2, 4 and 6 with `./gradlew :fabric:runClient`.
+   - **Expected:** the same. On Fabric the surface is drawn after the particles: look for foam streaks or splash
+     particles that cut see-through holes into the water behind them, and tell us.
+
+### Known limits
+
+- Rendering only: swimming, collisions, boats, buoyancy and the ships' physics stay on the flat sea level; the camera's
+  underwater fog follows the old flat level too.
+- A coarse cell over a coast lies flat at the still level (its land part inside the beach's blocks), so far away a
+  shoreline shows no waves in the last few blocks.
+- The sprite is stretched over the coarse cells (4 and 16 blocks), like a lower mipmap; at 32 blocks a change of
+  texture scale may show.
+- The waves the surface shows are anchored at the ship you are on (or near you), as the server anchors them at each
+  ship; a ship far from yours rides waves that are a little out of phase with the ones drawn under it.
+- Off with Sodium, Embeddium, Iris, Oculus and VulkanMod (flat water).

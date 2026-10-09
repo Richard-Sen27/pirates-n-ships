@@ -5,8 +5,8 @@ import java.util.List;
 /**
  * The simulated wave surface of one dimension at one moment (docs/design.md §5.4, WV1, WAV2): the height of the sea
  * above the still water level as a sum of sine trains under a slow group envelope. Pure and immutable: the same inputs
- * give the same heights on the server, on every client and in tests. Nothing deforms the rendered water (§1 non-goals);
- * the field drives ship roll, pitch and heave, spray and spilling.
+ * give the same heights on the server, on every client and in tests. The field drives ship roll, pitch and heave, spray
+ * and spilling, and on the client the visible sea surface (WAV3, {@code hazards.waves.client.surface}).
  *
  * <h2>Model</h2>
  * {@code h(p, t) = A · E(a, t) · Σ wᵢ · sin(kᵢ · dᵢ·(p − a) + kᵢ · rᵢ·a − ωᵢ · t + φᵢ)} with

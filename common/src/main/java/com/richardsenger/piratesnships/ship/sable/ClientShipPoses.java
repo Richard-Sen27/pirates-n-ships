@@ -49,6 +49,22 @@ public final class ClientShipPoses {
     }
 
     /**
+     * World position (copy) at render time of the client ship the entity stands on or rides in, or null (WAV3, the
+     * visible sea's anchor). Same lookup as {@link #onShip}: {@code ActiveSableCompanion#getTrackingOrVehicleSubLevel}
+     * (l.449) and {@code ClientSubLevel#renderPose(float)} (l.313); the pose's {@code position()} is where its rotation
+     * point (the plot centre of mass) lies in the world ({@code companion.math.Pose3dc} l.19 and
+     * {@code transformPosition} l.47-48, sable-companion 1.6.0).
+     */
+    public static @Nullable Vec3 shipPosition(Entity entity, float partialTick) {
+        SubLevel sub = Sable.HELPER.getTrackingOrVehicleSubLevel(entity);
+        if (sub instanceof ClientSubLevel c && !c.isRemoved()) {
+            var p = c.renderPose(partialTick).position();
+            return new Vec3(p.x(), p.y(), p.z());
+        }
+        return null;
+    }
+
+    /**
      * Render pose (plot to world, interpolated for the partial tick) of the client ship containing plot position
      * {@code plotPos}, or null. The returned pose is Sable's own: read it right away, do not keep it. Same lookup as
      * {@link #toWorld} ({@code ActiveSableCompanion#getContaining(Level, Position)} l.97,

@@ -70,6 +70,19 @@ public final class HazardConfig {
             "Horizontal distance from the camera in blocks within which foam appears");
     public static final ConfigValue<Integer> FOAM_LIFE_TICKS = WAVE_EFFECTS.intRange("foam_life_ticks", FoamRules.DEFAULTS.lifeTicks(), 10, 400,
             "Life of one foam streak in ticks, including fading in and out");
+    // The visible sea surface (WAV3, read by hazards.waves.client.surface.SeaSurface)
+    public static final ConfigValue<Boolean> SURFACE = WAVE_EFFECTS.bool("surface", true,
+            "The sea surface rises and falls with the waves (a moving water surface around you; ships, swimming and collisions still use the flat sea level). Off, and always with Sodium, Embeddium, Iris, Oculus or VulkanMod: flat water");
+    public static final ConfigValue<Integer> SURFACE_NEAR_RADIUS = WAVE_EFFECTS.intRange("surface_near_radius", 32, 8, 96,
+            "Distance from the camera in blocks within which the moving surface has one point per block (rounded up to 4)");
+    public static final ConfigValue<Integer> SURFACE_MID_RADIUS = WAVE_EFFECTS.intRange("surface_mid_radius", 128, 32, 512,
+            "Distance from the camera in blocks within which the moving surface has one point every 4 blocks; beyond it the far cells reach to the render distance");
+    public static final ConfigValue<Integer> SURFACE_FAR_CELL = WAVE_EFFECTS.intRange("surface_far_cell", 16, 4, 64,
+            "Size in blocks of the moving surface's cells beyond surface_mid_radius (4, 8, 16, 32 or 64; other values round down)");
+    public static final ConfigValue<Integer> SURFACE_FULL_DEPTH = WAVE_EFFECTS.intRange("surface_full_depth", 4, 2, 16,
+            "Water depth in blocks from which the surface moves with the full wave height; shallower water moves less, one block deep not at all, so waves never cut into a beach");
+    public static final ConfigValue<Boolean> SURFACE_UNDERSIDE = WAVE_EFFECTS.bool("surface_underside", true,
+            "Also draw the moving surface from below, so it shows when you look up from under water");
 
     private HazardConfig() {
     }

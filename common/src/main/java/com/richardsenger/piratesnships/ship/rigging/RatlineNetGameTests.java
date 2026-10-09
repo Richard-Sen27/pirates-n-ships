@@ -16,6 +16,7 @@ import com.richardsenger.piratesnships.ship.rigging.RatlineNetRules.Point;
 import com.richardsenger.piratesnships.ship.rigging.RatlineNets.Net;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
+import com.richardsenger.piratesnships.ship.sable.ShipEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestGenerator;
@@ -28,6 +29,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -37,6 +39,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaterniond;
+import org.joml.Vector3d;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
@@ -50,7 +53,8 @@ import java.util.function.Supplier;
  * fittings on different bodies); breaking a cell, a fitting or placing a block into the net; a net through assembly and
  * a turned disassembly; and a mock player climbing a near-vertical, a 60° and a 45° net from bottom to top on land and
  * on an assembled hull afloat (the climbing assist, {@code rigging.net_assist}), plus the vanilla-only climb of a
- * vertical net with the assist off.
+ * vertical net with the assist off; and (RL3) a 62° net climbed on a hull sailing at 4 m/s, straight and turning at
+ * 0.3 rad/s, boarded from the deck (Sable carries the climber) and from the ring (the assist carries it).
  */
 public final class RatlineNetGameTests {
 
@@ -392,8 +396,13 @@ public final class RatlineNetGameTests {
      * {@code hoopY} and a chainplate on the deck at x {@code plateX}, z 10. Returns the helm.
      */
     private static BlockPos shipRig(GameTestHelper h, int plateX, int hoopY) {
-        DryHullGameTests.basin(h, 0, 23, true);
-        SailingGameTestsShips.openSky(h, 24);
+        return shipRig(h, plateX, hoopY, 24);
+    }
+
+    /** {@link #shipRig(GameTestHelper, int, int)} in a basin {@code size} blocks long in x (24 wide in z). */
+    private static BlockPos shipRig(GameTestHelper h, int plateX, int hoopY, int size) {
+        DryHullGameTests.basin(h, 0, size - 1, true);
+        SailingGameTestsShips.openSky(h, size);
         BlockPos helm = DryHullGameTests.hull(h, 9, false);
         for (int y = 9; y <= 14; y++) {
             h.setBlock(new BlockPos(13, y, 10), Blocks.OAK_LOG);
@@ -444,6 +453,153 @@ public final class RatlineNetGameTests {
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 240)
     public static void playerClimbsAFortyFiveDegreeNetOnAShip(GameTestHelper h) {
         shipClimb(h, 9, 12, "45 degree net on a ship");
+    }
+
+    // ------------------------------------------------------------------ on a ship under way (RL3)
+
+    /** Ticks before the climber boards during which the ship is brought up to its steady motion. */
+    private static final int DRIVE_LEAD = 15;
+    /** A climber this close to the net's line [blocks] is on it. */
+    private static final double ON_LINE = 0.3;
+
+    /** Distance from {@code p} to the segment from {@code a} to {@code b} (one frame). */
+    static double lineDistance(Point a, Point b, Vec3 p) {
+        double dx = b.x() - a.x(), dy = b.y() - a.y(), dz = b.z() - a.z();
+        double len2 = dx * dx + dy * dy + dz * dz;
+        double t = len2 < 1e-12 ? 0 : ((p.x - a.x()) * dx + (p.y - a.y()) * dy + (p.z - a.z()) * dz) / len2;
+        t = Math.max(0, Math.min(1, t));
+        return p.distanceTo(new Vec3(a.x() + dx * t, a.y() + dy * t, a.z() + dz * t));
+    }
+
+    /** World heading [rad] of the ship's plot +x axis. */
+    private static double heading(ShipBody ship) {
+        Vec3 x = RatlineNetAssist.rotate(ship.orientation(), new Vec3(1, 0, 0));
+        return Math.atan2(x.z, x.x);
+    }
+
+    /**
+     * A 62° net on a hull afloat that is held at a steady motion from {@link #DRIVE_LEAD} ticks before the climber
+     * boards: each tick its horizontal velocity is set to {@code linear} [m/s] and its yaw rate to {@code yawRate}
+     * [rad/s] (heave, pitch and roll are left to the water). A mock player holding forward boards at the chainplate:
+     * walking onto it from the deck block behind it ({@code fromDeck}; Sable tracks a player on the deck and keeps
+     * tracking it among the net's cells, so Sable carries it) or put straight into the chainplate's ring, never touching
+     * the deck (Sable does not track it; the assist carries it). Its feet are followed in the ship's plot, the net's own
+     * frame, so a lagging climber shows as distance from the line: its closest approach to ring B must be within 0.7
+     * blocks, and from the moment it is on the net (within {@link #ON_LINE} of the line) up to that approach its feet
+     * must stay within 0.5 blocks of the line.
+     */
+    private static void underWayClimb(GameTestHelper h, Vec3 linear, double yawRate, boolean fromDeck, String what) {
+        int plateX = 10, hoopY = 13;
+        BlockPos helmRel = shipRig(h, plateX, hoopY, 40);
+        Fixture f = DryHullGameTests.assemble(h, helmRel);
+        ServerLevel level = h.getLevel();
+        BlockPos plate = plot(f, helmRel, new BlockPos(plateX, 9, 10));
+        BlockPos hoopPos = plot(f, helmRel, new BlockPos(12, hoopY, 10));
+        String r = string(level, plate, hoopPos, new ItemStack(RiggingContent.NET_ITEM.get()));
+        h.assertTrue(r.equals(RatlineNetItem.KEY_STRUNG), what + ": not strung in the plot: " + r);
+        ShipBody ship = f.ship();
+        Net net = RatlineNets.netOf(level, plate);
+        h.assertTrue(net != null, what + ": no net");
+        Point a = net.ringA(), b = net.ringB();
+        Vec3 ringB = new Vec3(b.x(), b.y(), b.z());
+        Vec3 board = fromDeck ? new Vec3(plate.getX() - 0.5, plate.getY() + 0.02, plate.getZ() + 0.5)
+                : new Vec3(a.x(), a.y() + 0.1, a.z());
+        int forTicks = 90;
+        Player[] player = {null};
+        double[] best = {Double.POSITIVE_INFINITY};
+        double[] worstLine = {0};
+        double[] worstSoFar = {0};
+        int[] tracked = {0};
+        int[] tick = {0};
+        int[] bestTick = {0};
+        boolean[] onNet = {false};
+        Vec3[] shipStart = {null};
+        double[] headingStart = {0};
+        double[] shipSpeed = {0};
+        double[] turnRate = {0};
+        Vector3d lin = new Vector3d(), ang = new Vector3d();
+        h.onEachTick(() -> {
+            int t = tick[0]++;
+            if (t >= SETTLE - DRIVE_LEAD && t < SETTLE + forTicks) {
+                ship.velocities(lin, ang);
+                ship.addVelocity(new Vector3d(linear.x - lin.x, 0, linear.z - lin.z), new Vector3d(0, yawRate - ang.y, 0));
+            }
+            if (t == SETTLE) {
+                // facing the plot's +x (towards the mast), however far the ship has turned
+                Vec3 ahead = RatlineNetAssist.rotate(ship.orientation(), new Vec3(1, 0, 0));
+                player[0] = playerInLevel(h, ship.toWorld(board), (float) Math.toDegrees(Math.atan2(-ahead.x, ahead.z)));
+                shipStart[0] = ship.toWorld(ringB);
+                headingStart[0] = heading(ship);
+            }
+            Player p = player[0];
+            if (p == null || p.isRemoved() || t > SETTLE + forTicks) {
+                return;
+            }
+            p.zza = 1f;
+            Vec3 feet = ship.toPlot(p.position());
+            double toB = feet.distanceTo(ringB);
+            double line = lineDistance(a, b, feet);
+            // on the net: climbing and pulled onto the line (stepping in from the deck starts half a block off it)
+            onNet[0] |= p.onClimbable() && line < ON_LINE;
+            if (onNet[0]) {
+                worstSoFar[0] = Math.max(worstSoFar[0], line);
+            }
+            if (toB < best[0]) {
+                best[0] = toB;
+                worstLine[0] = worstSoFar[0];
+                bestTick[0] = t - SETTLE;
+            }
+            ShipBody on = ShipEntities.standingOrRiding(p);
+            if (on != null && on.id().equals(ship.id())) {
+                tracked[0]++;
+            }
+            if (t == SETTLE + forTicks) {
+                // the ship's actual mean speed at ring B and turn rate over the climb
+                shipSpeed[0] = ship.toWorld(ringB).subtract(shipStart[0]).horizontalDistance() * 20 / forTicks;
+                turnRate[0] = Math.toRadians(Mth.wrapDegrees(Math.toDegrees(heading(ship) - headingStart[0]))) * 20 / forTicks;
+            }
+        });
+        h.runAfterDelay(SETTLE + forTicks + 1, () -> {
+            h.assertTrue(player[0] != null, what + ": no player was spawned");
+            Constants.LOG.info("[RL3] {}: closest to ring B {} (tick {}), farthest from the line before that {}, tracked by "
+                            + "Sable {}/{} ticks; ring B moved at {} m/s, the ship turned at {} rad/s", what,
+                    String.format("%.3f", best[0]), bestTick[0], String.format("%.3f", worstLine[0]), tracked[0],
+                    forTicks + 1, String.format("%.2f", shipSpeed[0]), String.format("%.3f", turnRate[0]));
+            h.assertTrue(fromDeck ? tracked[0] > forTicks / 2 : tracked[0] < forTicks / 2,
+                    what + ": Sable tracked the climber " + tracked[0] + " ticks, not the case under test");
+            h.assertTrue(onNet[0], what + ": never got onto the net");
+            h.assertTrue(best[0] <= 0.7, what + ": came only within " + best[0] + " blocks of ring B");
+            h.assertTrue(worstLine[0] <= 0.5, what + ": fell " + worstLine[0] + " blocks off the line on the way up");
+            h.succeed();
+        });
+    }
+
+    /** A 62° net on a ship sailing at a steady 4 m/s, boarded from the deck: Sable carries the climber. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 240)
+    public static void playerClimbsANetOnAShipUnderWay(GameTestHelper h) {
+        underWayClimb(h, new Vec3(4, 0, 0), 0, true, "62 degree net from the deck, ship at 4 m/s");
+    }
+
+    /**
+     * A 62° net on a ship sailing at 4 m/s and turning at a steady 0.3 rad/s (17°/s), boarded from the deck. (Turning
+     * alone moves the net too slowly to tell: ring B is 2 blocks from the turning axis, and the assist's pull kept even
+     * an uncarried RL2 climber on it.)
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 240)
+    public static void playerClimbsANetOnATurningShip(GameTestHelper h) {
+        underWayClimb(h, new Vec3(4, 0, 0), 0.3, true, "62 degree net from the deck, ship at 4 m/s turning at 0.3 rad/s");
+    }
+
+    /** A 62° net on a ship at 4 m/s, boarded in the chainplate's ring: the assist carries the climber itself. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 240)
+    public static void untrackedClimberKeepsUpWithAShipUnderWay(GameTestHelper h) {
+        underWayClimb(h, new Vec3(4, 0, 0), 0, false, "62 degree net from the ring, ship at 4 m/s");
+    }
+
+    /** A 62° net on a ship sailing at 4 m/s and turning at 0.3 rad/s, boarded in the chainplate's ring. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 240)
+    public static void untrackedClimberKeepsUpWithATurningShip(GameTestHelper h) {
+        underWayClimb(h, new Vec3(4, 0, 0), 0.3, false, "62 degree net from the ring, ship at 4 m/s turning at 0.3 rad/s");
     }
 
     /**

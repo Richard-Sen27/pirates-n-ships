@@ -520,3 +520,50 @@ view, render distance 12 or more. Please send a screenshot of steps 1 and 3 and 
   same, so they run in step, but they may be a tick apart (invisible except right next to vanilla still water).
 - Land wholly inside a far cell, away from its corners (a small island, a thin sandbar), can have crests drawn over it,
   since the cell's corners lie in deep water (before WAV5 such a cell lay flat).
+
+## WAV6: vanilla boats ride the waves
+
+**What changed for the player.** The human: "the regular minecraft boats are not reacting to the waves". On the open
+sea (still water at sea level with air above, deeper than one block, outside any dry hull) a vanilla boat now floats on
+the moving surface: its water level is the still level plus the wave height at the boat, faded toward the beach like
+the drawn sea, the same on the server and on the client of the player who rows it. The hull model leans along the slope
+of the sea (at most `wave_effects.boat_tilt_degrees`, default 8, eased); the rider sits upright as in vanilla. Items
+floating on the open sea bob with the surface. In lakes, rivers, one-block-deep water, on a deck or pier and inside a
+hull nothing changes. New server config `waves.boats` and `waves.floating_items` (both on), client
+`wave_effects.boat_tilt_degrees`.
+
+Setup: `./gradlew :neoforge:runClient` (then step 7 on Fabric), a creative world by an ocean with a beach, the starter
+sloop or any ship in the water, `/pirates waves set storm`, `/weather thunder`. Please send a short clip or screenshots
+of steps 1 to 3.
+
+1. **Row into the storm beside a ship.** Place an oak boat next to the ship, get in and row out a little, then stop.
+   - **Expected:** the boat climbs the crests and sinks into the troughs (about ±1 block in a storm, more in the bigger
+     sets), in step with the drawn sea around it: the water line stays at the hull's side, the sea never covers the
+     boat or leaves it hanging above a trough. The bow and the sides lean with the slope, a few degrees, smoothly.
+2. **No snapping for the rider.** Row about, turn, stop, and get in and out a few times.
+   - **Expected:** no jerks or teleports of the boat or the camera, none when mounting or dismounting (the server takes
+     over the empty boat at the same height).
+3. **A watching player.** Open to LAN with a second client (or watch an empty boat drift), look at the boat from the
+   ship's deck.
+   - **Expected:** the boat moves smoothly up and down; it may not sit exactly on the crests the watcher's drawn sea
+     shows near the ship (see the known limits), but it never jumps.
+4. **The beach.** Park a boat in the shallows (one block of water) and one on the sand.
+   - **Expected:** both stay put; boats in water two to five blocks deep rise and fall less than out at sea.
+5. **Lakes and rivers.** Place a boat on a lake above or below sea level and on a river.
+   - **Expected:** vanilla: flat, still.
+6. **Items.** Throw a few items into the open sea from the ship and from the beach.
+   - **Expected:** out at sea they bob with the swell at the surface; in the shallows they lie as in vanilla.
+   `/config` or the server config with `waves.boats = false`: boats float flat again; `waves.floating_items = false`:
+   items float flat; client `wave_effects.boat_tilt_degrees = 0`: boats rise and fall but do not lean.
+7. **Fabric.** Repeat steps 1, 2 and 6 with `./gradlew :fabric:runClient`.
+   - **Expected:** the same.
+
+### Known limits
+
+- A boat follows the field's point lookup at itself (`SeaStates#heightAt` / `ClientWaves#heightAt`, the ship rule),
+  while the drawn sea is anchored at the player's ship or the camera; until the field is global (WAV7) a watcher may see
+  a boat's crests a little out of step with the drawn sea far from that anchor, as with other ships.
+- The client's blended sea and the server's eased sea differ slightly while the weather changes, so a boat changing
+  hands (mounting, dismounting) may settle by a few hundredths of a block.
+- A boat that comes down a crest onto a beach collects fall distance like a boat dropping from a ledge; a very steep
+  storm crest at a beach could in theory break it.

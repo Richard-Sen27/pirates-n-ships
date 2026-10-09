@@ -1,14 +1,16 @@
 package com.richardsenger.piratesnships.station.capstan;
 
+import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Which way the capstan's bars turn (CAP2, docs/design.md §6 "Capstan in motion"): synced from the server's
+ * Which way the capstan's bars turn (CAP2, CAP3, docs/design.md §6 "Capstan in motion", "Capstan turns for players
+ * too"): synced from the server's
  * {@link CapstanBlockEntity} to clients, which draw the bars turning ({@code client/CapstanBarsRenderer}); the crew
  * member working the capstan walks round the drum the same way ({@link CapstanWalk}). Pure.
  */
 public enum CapstanTurning {
-    /** Nobody works the capstan (or {@code crew_stations.capstan.animation} is off). */
+    /** The capstan stands still: no work, no anchor moving on it (or {@code crew_stations.capstan.animation} is off). */
     NONE(0),
     /** Heaving the anchor in: clockwise seen from above. */
     RAISING(-1),
@@ -33,6 +35,31 @@ public enum CapstanTurning {
     public static CapstanTurning of(@Nullable Object order) {
         if (order == AnchorOrder.RAISE_ANCHOR) return RAISING;
         if (order == AnchorOrder.DROP_ANCHOR) return DROPPING;
+        return NONE;
+    }
+
+    /**
+     * CAP3: the turn of a capstan, whoever works it. A crew member's order in progress at the capstan
+     * ({@code workingOrder}, null when no crew order runs with its occupant present) turns it as CAP2 did, so the bars
+     * turn during a drop order's work before the anchor goes; otherwise the anchor hanging from this capstan does
+     * ({@link #of(AnchorState.Phase, boolean)}), whether a player's use, a crew order or the automatic raise moves it.
+     *
+     * @param anchorPhase the phase of the ship's anchor when it hangs from this capstan, else null
+     * @param hanging     the dropping anchor hangs at the end of its chain (the chain no longer runs out)
+     */
+    public static CapstanTurning of(@Nullable Object workingOrder, AnchorState.@Nullable Phase anchorPhase, boolean hanging) {
+        CapstanTurning crew = of(workingOrder);
+        return crew != NONE ? crew : of(anchorPhase, hanging);
+    }
+
+    /**
+     * CAP3: the turn that follows the anchor's motion: {@link #RAISING} while the chain comes in, {@link #DROPPING} while
+     * it runs out (the anchor falling, not {@code hanging} at the chain's end), {@link #NONE} while it holds, hangs or is
+     * stowed (null: no anchor on this capstan).
+     */
+    public static CapstanTurning of(AnchorState.@Nullable Phase anchorPhase, boolean hanging) {
+        if (anchorPhase == AnchorState.Phase.RAISING) return RAISING;
+        if (anchorPhase == AnchorState.Phase.DROPPING && !hanging) return DROPPING;
         return NONE;
     }
 

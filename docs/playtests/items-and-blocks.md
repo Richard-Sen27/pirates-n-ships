@@ -550,6 +550,41 @@ in Blockbench).
   one net: 7.0" (the distance); it is drawn as its own two-rope net with nothing between it and the fan.
 - **Break the hoop:** every strand drops (three nets, each at its own chainplate), nothing climbable stays.
 
+### Boarding nets along the rail (RAIL5)
+
+Covered by JUnit (`BoardingNetRulesTest`) and 6 GameTests (`ship/rigging/BoardingNetGameTests`: stringing and the
+refusals, `rigging.boarding_nets` off, a husk pushed over the rail held for the hold then over, on an assembled hull the
+ship's own crew member crossing at once while a husk beside it is held, the net surviving assembly, a cutlass cutting
+it). What the tests cannot show: how the net looks, how the hold feels for a player, and a real boarding (BRD3).
+
+Setup: a hull with a straight run of oak railings along one deck edge, two chainplates on top of two railings five
+blocks apart (`/give @s pirates_n_ships:chainplate 4`, `/give @s pirates_n_ships:ratline_net 4`), a cutlass.
+- **String it:** use the net on one chainplate, then the other: "Boarding net strung along the rail", one net used.
+  Expected: an upright net hangs from the rail top to a block above it between the chainplates: a foot rope on the
+  rail, a top rope one block up at the chainplates sagging a little in the middle, two ropes between and an upright
+  every third of a block; the rope texture is not stretched. Look at it from inboard, outboard and along the rail.
+- **Refusals:** chainplates on railings of two different edges (a corner, or north and south rails): "Boarding nets
+  run along one rail edge"; on two neighbouring railings: "Leave a block between the chainplates"; ten blocks apart:
+  "Too long: 9.0 of 8 blocks"; two chainplates on plain planks at one height: "Too flat: 0°, at least 30°" as before.
+- **Held (as a player):** stand outside the ship on a block or another hull level with the rail top, survival mode,
+  and walk or jump over the rail into the net. Expected: you are stopped just inside the net's outer edge and slowed
+  like in half a cobweb for about a second, then you can climb or walk over the rail inboard (the net is climbable:
+  hold forward or jump). Report rubber-banding or jitter (the client and the server each time the hold) and whether a
+  second feels right.
+- **Held (a mob):** lure a zombie over the rail from a hull lying alongside, or push one with a stick: it is held a
+  second at the net, then comes over.
+- **The ship's own crew:** spawn a crew member on the deck and have it go over the rail (e.g. stand it on the rail top
+  outboard and push it in): it is never held. Crew leaning at the rail (RAIL5) lean through the net. With BRD3 merged:
+  the ship's boarders go out over their own net and come back freely.
+- **Cut it:** hit a net cell with a cutlass three times (left click, aiming at the small outline box in the net): the
+  net comes down and one ratline net drops at the first chainplate you used; the chainplates stay. Bare hands, an axe or
+  a pickaxe do nothing to it (it cannot be mined); placing a block into it is refused. In creative mode it breaks at
+  once as before.
+- **Sail with it:** string it on land, assemble, sail and turn: the net stays on the rail and keeps holding boarders
+  from the outboard side; disassemble turned: it is still a boarding net on the same edge.
+- **Config:** `rigging.boarding_nets = false`: the second chainplate answers "Too flat" and nets already strung hold
+  nobody; `rigging.boarding_net_hold = 0`: nobody is held; `rigging.boarding_net_cut_hits = 1`: one hit cuts it.
+
 ## Ship's bell swing (BELL1)
 
 The bell now swings about the pin of its yoke instead of flipping to a second model (replaces the swing check in step

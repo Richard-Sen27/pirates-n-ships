@@ -22,8 +22,11 @@ public final class LeanRules {
     public static final double ARRIVE = 0.15;
     /** A leaner pushed further than this off its spot steps back onto it. */
     public static final double DRIFT = 0.35;
-    /** The head's look down at the water while leaning (Minecraft pitch, positive = down) [degrees]. */
-    public static final float HEAD_PITCH = 12f;
+    /**
+     * The head's pitch while leaning (Minecraft pitch, positive = down) [degrees]: lifted against the waist's 24° lean
+     * of the {@code lean} animation, so the face looks out about 14° down at the water.
+     */
+    public static final float HEAD_PITCH = -10f;
     /** The head turn's reach either side of the body [degrees]; within the ±45° the body allows (ST5). */
     public static final float HEAD_TURN = 35f;
     /** One head cycle: looking ahead, then a slow turn to one side and back [ticks]. */

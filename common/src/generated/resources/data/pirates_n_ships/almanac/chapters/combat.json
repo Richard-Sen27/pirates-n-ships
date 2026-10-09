@@ -385,6 +385,10 @@
         {
           "type": "recipe",
           "recipe": "pirates_n_ships:boarding_plank"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.combat.p17.text3"
         }
       ]
     },

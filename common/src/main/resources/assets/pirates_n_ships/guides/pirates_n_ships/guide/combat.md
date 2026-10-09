@@ -17,7 +17,7 @@ item_ids:
 | <ItemLink id="pirates_n_ships:rapier" /> | A sword: 5 damage, attack speed 2.0 |
 | <ItemLink id="pirates_n_ships:cutlass" /> | A sword: 7 damage, attack speed 1.2 |
 | <ItemLink id="pirates_n_ships:saber" /> | A sword: 6 damage, attack speed 1.6 |
-| <ItemLink id="pirates_n_ships:pistol" />, <ItemLink id="pirates_n_ships:musket" /> | No function yet |
+| <ItemLink id="pirates_n_ships:pistol" />, <ItemLink id="pirates_n_ships:musket" /> | Hold right mouse to aim, left mouse fires (aimed or from the hip); see Firearms. |
 | <ItemLink id="pirates_n_ships:lead_shot" />, <ItemLink id="pirates_n_ships:cannonball" /> | No function yet |
 | <ItemLink id="pirates_n_ships:grappling_hook" /> | No function yet |
 

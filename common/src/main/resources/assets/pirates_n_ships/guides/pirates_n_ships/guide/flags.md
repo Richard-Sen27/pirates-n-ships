@@ -44,7 +44,7 @@ is a crime; if your crew fires, the charge goes to you as the ship's owner. Serv
 - **Sneak-use with an empty hand:** takes the flag down.
 - Breaking the pole drops the flag.
 
-The flag points downwind, in 90° steps. Nothing reacts to flags in the world yet: there are no navy or pirate ships.
+The flag streams downwind at the exact wind angle. Nothing reacts to flags in the world yet: there are no navy or pirate ships.
 
 Hoist any banner on a flagpole to fly a custom flag: the cloth takes the banner's base colour and shows every pattern
 of the banner, as if the banner were hung sideways from the pole (its top edge at the pole, its length along the

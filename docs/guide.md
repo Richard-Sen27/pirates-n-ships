@@ -750,7 +750,7 @@ is a crime; if your crew fires, the charge goes to you as the ship's owner. Serv
 - **Sneak-use with an empty hand:** takes the flag down.
 - Breaking the pole drops the flag.
 
-The flag points downwind, in 90° steps. Nothing reacts to flags in the world yet: there are no navy or pirate ships.
+The flag streams downwind at the exact wind angle. Nothing reacts to flags in the world yet: there are no navy or pirate ships.
 
 ---
 
@@ -994,7 +994,7 @@ ransom it, press-gang it (a crime), or release it.
 | Rapier | A sword: 5 damage, attack speed 2.0 |
 | Cutlass | A sword: 7 damage, attack speed 1.2 |
 | Saber | A sword: 6 damage, attack speed 1.6 |
-| Pistol, Musket | No function yet |
+| Pistol, Musket | Hold right mouse to aim, left mouse fires (aimed or from the hip); see Firearms. |
 | Lead Shot, Cannonball | No function yet |
 | Grappling Hook | No function yet |
 

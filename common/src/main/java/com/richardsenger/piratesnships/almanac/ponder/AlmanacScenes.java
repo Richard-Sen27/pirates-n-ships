@@ -27,9 +27,36 @@ public final class AlmanacScenes {
     /** The cannon's item id ({@code CannonContent.CANNON}, a block item). */
     public static final ResourceLocation CANNON_ITEM = Constants.id("cannon");
 
-    /** Every scene, in the order the plugin registers them. */
+    /** PND1, the ship mechanics (docs/almanac.md "Scenes"): each scene's id is also its schematic. */
+    public static final ResourceLocation SHIP_ASSEMBLY = Constants.id(ShipSceneText.SHIP_ASSEMBLY);
+    public static final ResourceLocation SAILS_AND_WINCH = Constants.id(ShipSceneText.SAILS_AND_WINCH);
+    public static final ResourceLocation STEERING = Constants.id(ShipSceneText.STEERING);
+    public static final ResourceLocation ANCHOR_AND_CAPSTAN = Constants.id(ShipSceneText.ANCHOR_AND_CAPSTAN);
+    public static final ResourceLocation PUMPS_AND_FLOODING = Constants.id(ShipSceneText.PUMPS_AND_FLOODING);
+    public static final ResourceLocation HULL_REPAIR = Constants.id(ShipSceneText.HULL_REPAIR);
+    public static final ResourceLocation MOORING = Constants.id(ShipSceneText.MOORING);
+    public static final ResourceLocation CARGO_AND_WEIGHT = Constants.id(ShipSceneText.CARGO_AND_WEIGHT);
+
+    /** The items whose Ponder key plays those scenes (block items share their block's id). */
+    public static final ResourceLocation HELM_ITEM = Constants.id("helm");
+    public static final ResourceLocation SAIL_WINCH_ITEM = Constants.id("sail_winch");
+    public static final ResourceLocation CAPSTAN_ITEM = Constants.id("capstan");
+    public static final ResourceLocation BILGE_PUMP_ITEM = Constants.id("bilge_pump");
+    public static final ResourceLocation HULL_PATCH_ITEM = Constants.id("hull_patch");
+    public static final ResourceLocation MOORING_RING_ITEM = Constants.id("mooring_ring");
+    public static final ResourceLocation CARGO_CRATE_ITEM = Constants.id("cargo_crate");
+
+    /** Every scene, in the order the plugin registers them (an item's scenes play in this order). */
     public static final List<Scene> ALL = List.of(
-            new Scene(CANNON_LOADING, CANNON_ITEM, CANNON_LOADING));
+            new Scene(CANNON_LOADING, CANNON_ITEM, CANNON_LOADING),
+            new Scene(SHIP_ASSEMBLY, HELM_ITEM, SHIP_ASSEMBLY),
+            new Scene(STEERING, HELM_ITEM, STEERING),
+            new Scene(SAILS_AND_WINCH, SAIL_WINCH_ITEM, SAILS_AND_WINCH),
+            new Scene(ANCHOR_AND_CAPSTAN, CAPSTAN_ITEM, ANCHOR_AND_CAPSTAN),
+            new Scene(PUMPS_AND_FLOODING, BILGE_PUMP_ITEM, PUMPS_AND_FLOODING),
+            new Scene(HULL_REPAIR, HULL_PATCH_ITEM, HULL_REPAIR),
+            new Scene(MOORING, MOORING_RING_ITEM, MOORING),
+            new Scene(CARGO_AND_WEIGHT, CARGO_CRATE_ITEM, CARGO_AND_WEIGHT));
 
     private AlmanacScenes() {
     }

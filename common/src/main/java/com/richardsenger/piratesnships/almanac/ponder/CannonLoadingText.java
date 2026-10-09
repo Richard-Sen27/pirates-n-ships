@@ -24,7 +24,7 @@ public final class CannonLoadingText {
     public static final String TITLE = "Loading and Firing the Cannon";
 
     /** The scene's lines, in the order they appear. */
-    public enum Line {
+    public enum Line implements SceneLine {
         GUN("The cannon is two blocks long: the muzzle points out through the gun port, the carriage sits behind it"),
         ORDER("Load it in order: powder first, then the shot, rammed home, then fire"),
         POWDER("Use gunpowder on the cannon to put the powder in"),
@@ -40,11 +40,18 @@ public final class CannonLoadingText {
             this.english = english;
         }
 
+        @Override
+        public String scene() {
+            return SCENE;
+        }
+
+        @Override
         public String english() {
             return english;
         }
 
         /** Ponder's shared-text key: {@code pirates_n_ships:cannon_loading.<line>}. */
+        @Override
         public ResourceLocation key() {
             return Constants.id(SCENE + "." + name().toLowerCase(Locale.ROOT));
         }

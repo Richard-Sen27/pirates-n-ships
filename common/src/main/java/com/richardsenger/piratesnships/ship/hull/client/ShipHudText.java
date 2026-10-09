@@ -6,7 +6,7 @@ import java.util.Locale;
 import net.minecraft.network.chat.Component;
 
 /**
- * Text of the ship HUD (HUD1): the speed and rudder line and the name fallback, plus the unit conversion. No client
+ * Text of the ship HUD (HUD1): the speed and rudder line, plus the unit conversion. No client
  * classes, so JUnit tests the numbers and datagen writes the lang keys.
  */
 public final class ShipHudText {
@@ -18,7 +18,6 @@ public final class ShipHudText {
     public static final String KEY_RUDDER_STARBOARD = KEY + "rudder_starboard";
     public static final String KEY_RUDDER_PORT = KEY + "rudder_port";
     public static final String KEY_RUDDER_MIDSHIPS = KEY + "rudder_midships";
-    public static final String KEY_UNNAMED = KEY + "unnamed";
 
     /** One knot in metres (= blocks) per second. */
     public static final double KNOT = 1852.0 / 3600.0;
@@ -68,7 +67,6 @@ public final class ShipHudText {
             lang.add(KEY_RUDDER_STARBOARD, "rudder %s° stb");
             lang.add(KEY_RUDDER_PORT, "rudder %s° port");
             lang.add(KEY_RUDDER_MIDSHIPS, "rudder midships");
-            lang.add(KEY_UNNAMED, "Unnamed ship");
         });
     }
 }

@@ -30,6 +30,7 @@ import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsE
 import net.neoforged.neoforge.client.event.sound.PlayStreamingSourceEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
@@ -41,13 +42,26 @@ public final class NeoForgeClientSetup {
     private NeoForgeClientSetup() {
     }
 
+    /**
+     * Our HUD layers by their {@link ClientEvents.HudOrder}: above all in registration order, or right below the chat
+     * (HUD4; each one goes directly under {@code CHAT}, so they also keep their registration order).
+     */
+    static void registerHudLayers(RegisterGuiLayersEvent e) {
+        for (ClientEvents.HudLayer l : ClientEvents.hudLayers()) {
+            switch (l.order()) {
+                case ABOVE_ALL -> e.registerAboveAll(l.id(), l.layer());
+                case BELOW_CHAT -> e.registerBelow(VanillaGuiLayers.CHAT, l.id(), l.layer());
+            }
+        }
+    }
+
     public static void attach(IEventBus modBus, ModContainer container) {
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
 
         // enqueueWork: on the main thread after parallel setup (PAL requires its layer factories to be registered here)
         modBus.addListener(FMLClientSetupEvent.class, e -> e.enqueueWork(() -> ClientEvents.CLIENT_SETUP.invoker().onSetup()));
         modBus.addListener(RegisterKeyMappingsEvent.class, e -> ClientEvents.keyMappings().forEach(e::register));
-        modBus.addListener(RegisterGuiLayersEvent.class, e -> ClientEvents.hudLayers().forEach(l -> e.registerAboveAll(l.id(), l.layer())));
+        modBus.addListener(RegisterGuiLayersEvent.class, NeoForgeClientSetup::registerHudLayers);
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class, e -> {
             ClientEvents.entityRenderers().forEach(r -> registerEntity(e, r));
             ClientEvents.blockEntityRenderers().forEach(r -> registerBlockEntity(e, r));

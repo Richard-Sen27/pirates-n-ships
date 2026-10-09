@@ -198,6 +198,30 @@ class ClientMixinTargetsTest {
                 "Lnet/minecraft/client/sounds/ChannelAccess$ChannelHandle;execute(Ljava/util/function/Consumer;)V"));
     }
 
+    /**
+     * HUD4's below-chat layers ({@code MixinGui}): vanilla's {@code Gui#renderChat} exists once with the selector's
+     * descriptor, and its chat-focused check comes after the head, so the layers draw while the chat screen is open too;
+     * the chat itself is drawn there, after the head.
+     */
+    @Test
+    void belowChatHookSitsAtTheHeadOfRenderChat() {
+        ClassNode gui = readClass("net/minecraft/client/gui/Gui");
+        ClassNode mixin = readClass("com/richardsenger/piratesnships/fabric/mixin/client/MixinGui");
+        AnnotationNode inject = injector(mixin, "pirates_n_ships$renderBelowChat", "Lorg/spongepowered/asm/mixin/injection/Inject;");
+        assertEquals("HEAD", ClientMixinTargetsTest.<String>value(atAnnotations(inject).get(0), "value"));
+        List<MethodNode> selected = new ArrayList<>();
+        for (String selector : ClientMixinTargetsTest.<List<String>>value(inject, "method")) {
+            selected.addAll(select(Selector.parse(selector), gui));
+        }
+        assertEquals(1, selected.size(), "one renderChat");
+        assertEquals("(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V", selected.get(0).desc);
+        assertEquals(1, calls(gui, "renderChat", "Lnet/minecraft/client/gui/components/ChatComponent;isChatFocused()Z"),
+                "the focus check is inside renderChat, after its head");
+        assertEquals(1, calls(gui, "renderChat",
+                "Lnet/minecraft/client/gui/components/ChatComponent;render(Lnet/minecraft/client/gui/GuiGraphics;IIIZ)V"),
+                "the chat lines are drawn in renderChat, after our layers");
+    }
+
     // ---- injector check ----
 
     private static int checkInjector(AnnotationNode injector, ClassNode target, int defaultRequire, String where,

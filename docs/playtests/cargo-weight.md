@@ -40,11 +40,10 @@ block on the shore or a pillar as a mark for the waterline), and `latest.log` if
    - **Expected:** within about 2 seconds the bow goes **down** a little compared with step 3 (the stern up). In Sable's
      force display a "Cargo" arrow points straight down at the chest. Moving the chest to the stern trims it the other
      way.
-5. **The load word at the helm.** Grab the wheel (hold right-click on it) and turn a little.
-   - **Expected:** the overlay above the action bar reads e.g. **"Rudder 12° starboard · Overloaded"** (or "· Laden",
-     "· Heavily laden", "· Light"). Take cargo out until the level changes and grab the wheel again (or keep steering):
-     the word follows within about 2 seconds. With `helm_view.show_rudder_angle = false` (client config) the whole
-     line is hidden.
+5. **The helm overlay stays plain (HUD4).** Grab the wheel (hold right-click on it) and turn a little.
+   - **Expected:** the overlay above the action bar reads only the rudder, e.g. **"Rudder 12° starboard"**, with no
+     load word after it, however laden the ship is (the load level is in `/pirates ship info` and the ship screen).
+     With `helm_view.show_rudder_angle = false` (client config) the whole line is hidden.
 6. **Overloaded behaviour.** With everything full, set sail downwind and then turn.
    - **Expected:** the ship accelerates and turns more sluggishly than empty (more mass, more submerged hull), and it
      must not sink by itself just from the load. Tell us how it feels: too little effect, about right, or too much.

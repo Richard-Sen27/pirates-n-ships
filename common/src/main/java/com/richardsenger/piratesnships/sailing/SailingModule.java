@@ -153,9 +153,13 @@ public final class SailingModule implements ModModule {
         data.models(m -> {
             yard(m, SailingBlocks.YARD.get());
             sailWinch(m, SailingBlocks.SAIL_WINCH.get());
-            // hand-made Blockbench model (art/models/capstan.bbmodel, design.md §4.8): only the block state is generated
+            // hand-made Blockbench models (art/models/capstan.bbmodel, design.md §4.8): only the block state and the item
+            // model are generated. CAP2: block/capstan is the base and drum, block/capstan_bars the bars drawn turning by
+            // station.capstan.client.CapstanBarsRenderer (a stand-alone model), block/capstan_item both for the item
             m.blockStates().accept(MultiVariantGenerator.multiVariant(SailingBlocks.CAPSTAN.get(), Variant.variant()
                     .with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(SailingBlocks.CAPSTAN.get()))));
+            m.models().accept(ModelLocationUtils.getModelLocation(SailingBlocks.CAPSTAN.get().asItem()),
+                    new net.minecraft.data.models.model.DelegatedModel(com.richardsenger.piratesnships.Constants.id("block/capstan_item")));
         });
         data.blockLoot(loot -> {
             loot.dropSelf(SailingBlocks.YARD.get());

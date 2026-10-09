@@ -52,9 +52,14 @@ public final class CapstanStation implements StationKind<AnchorOrder> {
         };
     }
 
-    /** The raise starts with the order: the crew's push is the winding. */
+    /**
+     * The raise starts with the order: the crew's push is the winding. CAP2: the capstan's block entity, which turns the
+     * bars and walks the crew member round while the order lasts, is made here for a capstan placed before it existed
+     * ({@code Level#getBlockEntity} creates a missing one).
+     */
     @Override
     public void begin(ServerLevel level, StationRef station, AnchorOrder order) {
+        level.getBlockEntity(station.pos());
         if (order == AnchorOrder.RAISE_ANCHOR) {
             ShipControls.raiseAnchor(level, station.pos());
         }

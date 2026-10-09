@@ -10,11 +10,12 @@ import org.jetbrains.annotations.Nullable;
  * <h2>Per ring ({@link SurfaceLod})</h2>
  * <ol>
  *   <li>the wave height at every grid vertex of the ring's outer square ({@link SurfaceWaves#fillGrid});</li>
- *   <li>every cell's fade: a 1-block cell is drawn when its column is a sea cell and fades with its depth; a coarse
- *       cell is drawn when any of its columns is a sea cell and fades with its shallowest column, or not at all
- *       (lies flat) when any column is not sea ({@link SurfaceRules#cellFade}): over a coast it lies at the still level,
- *       inside the land's blocks, so its waves never rise over a beach;</li>
- *   <li>every vertex: still top + wave × the smallest fade of the cells around it;</li>
+ *   <li>which cells are drawn: a 1-block cell when its column is a sea cell, a coarse cell when any of its columns
+ *       is;</li>
+ *   <li>every vertex: still top + wave × the fade of its own corner, the smallest fade of the four 1-block columns
+ *       around it ({@link SurfaceRules#cornerFade}), in every ring (WAV5). So a vertex lies at the same height whichever
+ *       ring draws it: a coarse cell over a coast follows the depth fade of its corners instead of lying flat, and the
+ *       vertices on a ring border match the finer ring's (no step at a beach); a corner touching land stays still.</li>
  *   <li>one quad per drawn cell (far ring first, near last, a rough back-to-front order for the translucency), its
  *       underside too with {@code surface_underside}.</li>
  * </ol>
@@ -25,9 +26,11 @@ import org.jetbrains.annotations.Nullable;
  * strip from the fine edge to the coarse line (both faces), which closes the slit exactly.
  *
  * <h2>Vertices</h2>
- * Top quads run (x0,z0) (x0,z1) (x1,z1) (x1,z0) like vanilla's water top, the sprite's u along x and v along z over
- * each cell (vanilla's scale on 1-block cells; a coarse cell stretches the sprite over itself). The underside runs
- * the other way round.
+ * Top quads run (x0,z0) (x0,z1) (x1,z1) (x1,z0) like vanilla's water top, u along x and v along z. The texture
+ * coordinates are world-space blocks ({@link #textureU}): the mesh is drawn with a repeating copy of the water frame
+ * ({@link SeaFrameTexture}), so every ring shows one texture tile per block like vanilla's water, whatever its cell size
+ * (WAV5; WAV3 stretched the atlas sprite over a coarse cell). The skirts use the same top-down mapping. The underside
+ * runs the other way round.
  */
 public final class SurfaceMesher {
 
@@ -35,9 +38,6 @@ public final class SurfaceMesher {
     public interface Cells {
         /** Water depth of the column at (x, z) if it is a sea cell ({@link SurfaceRules}), else 0. */
         int depth(int x, int z);
-
-        /** Smallest {@link #depth} of the {@code size × size} cell at (x, z) (0 when any column is not sea). */
-        int minDepth(int x, int z, int size);
 
         /** Whether any column of the {@code size × size} cell at (x, z) is a sea cell. */
         boolean anySea(int x, int z, int size);
@@ -72,8 +72,18 @@ public final class SurfaceMesher {
      * @param baseY     still top of the sea ({@link SurfaceRules#stillTop})
      * @param fullDepth {@code surface_full_depth}
      * @param underside also emit every top quad's underside
+     * @param originX   block x whose west edge has u = 0 (any whole block near the camera, keeping the floats small)
+     * @param originZ   block z whose north edge has v = 0
      */
-    public record Params(double baseY, int fullDepth, boolean underside, float u0, float v0, float u1, float v1) {
+    public record Params(double baseY, int fullDepth, boolean underside, int originX, int originZ) {
+    }
+
+    /**
+     * The texture coordinate of world block coordinate {@code coord} (x for u, z for v): one repeat of the texture per
+     * block, the same in every ring. The origin only shifts by whole repeats, so it does not move the pattern.
+     */
+    public static float textureU(int coord, int origin) {
+        return coord - origin;
     }
 
     /** What one build emitted. */
@@ -171,22 +181,28 @@ public final class SurfaceMesher {
                     s.any[i] = d > 0;
                     s.fade[i] = SurfaceRules.cellFade(d, p.fullDepth());
                 } else {
-                    boolean any = cells.anySea(x, z, cell);
-                    s.any[i] = any;
-                    s.fade[i] = any ? SurfaceRules.cellFade(cells.minDepth(x, z, cell), p.fullDepth()) : 0.0;
+                    s.any[i] = cells.anySea(x, z, cell);
                 }
             }
         }
         for (int vz = 0; vz < s.nv; vz++) {
             for (int vx = 0; vx < s.nv; vx++) {
-                double f = 1.0;
-                for (int dz = -1; dz <= 0; dz++) {
-                    for (int dx = -1; dx <= 0; dx++) {
-                        int cx = vx + dx, cz = vz + dz;
-                        if (cx >= 0 && cz >= 0 && cx < s.cps && cz < s.cps) {
-                            f = Math.min(f, s.fade[cz * s.cps + cx]);
+                double f;
+                boolean edge = vx == 0 || vz == 0 || vx == s.nv - 1 || vz == s.nv - 1;
+                if (cell == 1 && !edge) { // the four 1-block cells around the vertex are its corner's columns
+                    f = 1.0;
+                    for (int dz = -1; dz <= 0; dz++) {
+                        for (int dx = -1; dx <= 0; dx++) {
+                            int cx = vx + dx, cz = vz + dz;
+                            if (cx >= 0 && cz >= 0 && cx < s.cps && cz < s.cps) {
+                                f = Math.min(f, s.fade[cz * s.cps + cx]);
+                            }
                         }
                     }
+                } else { // a coarse vertex, or one on the ring's edge whose outer columns are not the ring's cells
+                    int x = minX + vx * cell, z = minZ + vz * cell;
+                    f = SurfaceRules.cornerFade(cells.depth(x - 1, z - 1), cells.depth(x, z - 1), cells.depth(x - 1, z),
+                            cells.depth(x, z), p.fullDepth());
                 }
                 int v = vz * s.nv + vx;
                 s.height[v] = p.baseY() + s.wave[v] * f;
@@ -221,7 +237,8 @@ public final class SurfaceMesher {
                 double h01 = s.height[(cz + 1) * s.nv + cx], h11 = s.height[(cz + 1) * s.nv + cx + 1];
                 int half = cell / 2;
                 int rgb = cells.color(x0 + half, z0 + half), light = cells.light(x0 + half, z0 + half);
-                float u0 = p.u0(), u1 = p.u1(), v0 = p.v0(), v1 = p.v1();
+                float u0 = textureU(x0, p.originX()), u1 = textureU(x1, p.originX());
+                float v0 = textureU(z0, p.originZ()), v1 = textureU(z1, p.originZ());
                 sink.vertex(x0, h00, z0, rgb, u0, v0, light, true);
                 sink.vertex(x0, h01, z1, rgb, u0, v1, light, true);
                 sink.vertex(x1, h11, z1, rgb, u1, v1, light, true);
@@ -284,23 +301,37 @@ public final class SurfaceMesher {
             return;
         }
         int rgb = cells.color(fx + s / 2, fz + s / 2), light = cells.light(fx + s / 2, fz + s / 2);
-        float u0 = p.u0(), u1 = p.u1(), v0 = p.v0(), v1 = p.v1();
-        sink.vertex(ax0, hf0, az0, rgb, u0, v0, light, true);
-        sink.vertex(ax1, hf1, az1, rgb, u1, v0, light, true);
-        sink.vertex(ax1, hl1, az1, rgb, u1, v1, light, true);
-        sink.vertex(ax0, hl0, az0, rgb, u0, v1, light, true);
-        sink.vertex(ax0, hl0, az0, rgb, u0, v1, light, false);
-        sink.vertex(ax1, hl1, az1, rgb, u1, v1, light, false);
-        sink.vertex(ax1, hf1, az1, rgb, u1, v0, light, false);
-        sink.vertex(ax0, hf0, az0, rgb, u0, v0, light, false);
+        // the top-down mapping of the surface next to it: the skirt continues the cells' tiles
+        float ua = textureU(ax0, p.originX()), ub = textureU(ax1, p.originX());
+        float va = textureU(az0, p.originZ()), vb = textureU(az1, p.originZ());
+        sink.vertex(ax0, hf0, az0, rgb, ua, va, light, true);
+        sink.vertex(ax1, hf1, az1, rgb, ub, vb, light, true);
+        sink.vertex(ax1, hl1, az1, rgb, ub, vb, light, true);
+        sink.vertex(ax0, hl0, az0, rgb, ua, va, light, true);
+        sink.vertex(ax0, hl0, az0, rgb, ua, va, light, false);
+        sink.vertex(ax1, hl1, az1, rgb, ub, vb, light, false);
+        sink.vertex(ax1, hf1, az1, rgb, ub, vb, light, false);
+        sink.vertex(ax0, hf0, az0, rgb, ua, va, light, false);
         verticesOut += 8;
         seamsOut++;
     }
 
     /** Height of the mesh at block corner (x, z) of the last build's near ring, or NaN outside it (tests, foam). */
     public double nearCornerHeight(int x, int z) {
-        Scratch s = scratch[0];
+        return ringCornerHeight(0, x, z);
+    }
+
+    /**
+     * Height of the last build's vertex at (x, z) of ring {@code ring} (0 near, 1 mid, 2 far), or NaN when (x, z) is not
+     * one of that ring's grid vertices (tests).
+     */
+    double ringCornerHeight(int ring, int x, int z) {
+        Scratch s = scratch[ring];
         if (s.ring == null || !inside(s.ring.outer(), x, z)) {
+            return Double.NaN;
+        }
+        int cell = s.ring.cell();
+        if (Math.floorMod(x - s.ring.outer().minX(), cell) != 0 || Math.floorMod(z - s.ring.outer().minZ(), cell) != 0) {
             return Double.NaN;
         }
         return s.heightAt(x, z);

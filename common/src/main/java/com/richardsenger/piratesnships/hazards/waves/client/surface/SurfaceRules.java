@@ -15,7 +15,8 @@ package com.richardsenger.piratesnships.hazards.waves.client.surface;
  * <h2>Depth fade</h2>
  * The wave height is scaled by {@link #depthFade}: 0 where the sea is one block deep, rising linearly to 1 at
  * {@code surface_full_depth} blocks, so the surface lies flat at the beach and never cuts into the sand. A mesh vertex
- * takes the smallest fade of the cells around it ({@link #vertexFade}), so a vertex touching land does not move.
+ * takes the smallest fade of the four columns around its corner ({@link #cornerFade}) in every ring, so a vertex
+ * touching land does not move.
  */
 public final class SurfaceRules {
 
@@ -72,8 +73,7 @@ public final class SurfaceRules {
     }
 
     /**
-     * Fade of a mesh cell: the fade of its shallowest column, or 0 when any of its columns is not a sea cell
-     * ({@code minDepth} 0), so a coarse cell over a coast lies flat.
+     * Fade of one column of {@code minDepth} water blocks, 0 when it is not a sea cell ({@code minDepth} 0).
      */
     public static double cellFade(int minDepth, int fullDepth) {
         return minDepth <= 0 ? 0.0 : depthFade(minDepth, fullDepth);
@@ -82,5 +82,14 @@ public final class SurfaceRules {
     /** Fade of a mesh vertex: the smallest fade of the (up to four) cells around it. */
     public static double vertexFade(double a, double b, double c, double d) {
         return Math.min(Math.min(a, b), Math.min(c, d));
+    }
+
+    /**
+     * Fade of the block corner between four columns of the given depths (0: not a sea cell): the smallest of their
+     * fades. Every ring's vertex takes it (WAV5), so a coarse vertex lies exactly where a 1-block vertex at the same
+     * point lies, and a corner touching land does not move.
+     */
+    public static double cornerFade(int d00, int d10, int d01, int d11, int fullDepth) {
+        return vertexFade(cellFade(d00, fullDepth), cellFade(d10, fullDepth), cellFade(d01, fullDepth), cellFade(d11, fullDepth));
     }
 }

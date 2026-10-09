@@ -19,8 +19,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Client cache of the sea cells around the camera (WAV3, physical client only, client thread): per loaded chunk the
- * depth of every sea cell ({@link SurfaceRules}), its water colour and light, and the shallowest depth per 4×4 block and
- * per chunk for the coarse rings. Reading 256 columns is cheap, but not every frame for every chunk in view, so:
+ * depth of every sea cell ({@link SurfaceRules}), its water colour and light, and whether a 4×4 block or the chunk holds
+ * any sea cell, for the coarse rings (whose vertices read the depth of their corner's columns, WAV5). Reading 256 columns is cheap, but not every frame for every chunk in view, so:
  * <ul>
  *   <li>a chunk is read once when it comes into the mesh's area (at most {@link #FILL_BUDGET} per frame, nearest
  *       first);</li>
@@ -57,10 +57,8 @@ final class SeaSurfaceCells implements SurfaceMesher.Cells {
         final byte[] depth = new byte[256];
         final int[] color = new int[256];
         final int[] light = new int[256];
-        /** Shallowest depth per 4×4 block ({@code ((z & 15) >> 2) * 4 + ((x & 15) >> 2)}), 0 if any column is not sea. */
-        final byte[] min4 = new byte[16];
+        /** Bit {@code ((z & 15) >> 2) * 4 + ((x & 15) >> 2)}: the 4×4 block holds a sea cell. */
         int any4;
-        int min16;
         boolean any16;
         int repColor, repLight;
         long tick;
@@ -216,25 +214,18 @@ final class SeaSurfaceCells implements SurfaceMesher.Cells {
             out.repColor = BiomeColors.getAverageWaterColor(lv, pos.set(baseX + 8, y, baseZ + 8));
             out.repLight = waterLight(lv, pos.set(baseX + 8, y + 1, baseZ + 8));
         }
-        int min16 = Integer.MAX_VALUE;
         for (int b = 0; b < 16; b++) {
             int bx = (b & 3) * 4, bz = (b >> 2) * 4;
-            int min = Integer.MAX_VALUE;
             boolean any = false;
             for (int dz = 0; dz < 4; dz++) {
                 for (int dx = 0; dx < 4; dx++) {
-                    int d = out.depth[(bz + dz) * 16 + bx + dx];
-                    min = Math.min(min, d);
-                    any |= d > 0;
+                    any |= out.depth[(bz + dz) * 16 + bx + dx] > 0;
                 }
             }
-            out.min4[b] = (byte) min;
             if (any) {
                 out.any4 |= 1 << b;
             }
-            min16 = Math.min(min16, min);
         }
-        out.min16 = min16;
         out.any16 = out.any4 != 0;
         for (int i = 0; i < 256; i++) {
             if (out.depth[i] == 0) {
@@ -268,37 +259,6 @@ final class SeaSurfaceCells implements SurfaceMesher.Cells {
     public int depth(int x, int z) {
         Chunk c = chunk(x, z);
         return c == null ? 0 : c.depth[(z & 15) * 16 + (x & 15)];
-    }
-
-    @Override
-    public int minDepth(int x, int z, int size) {
-        if (size <= 1) {
-            return depth(x, z);
-        }
-        if (size < 16) {
-            int min = Integer.MAX_VALUE;
-            for (int bz = z; bz < z + size; bz += 4) {
-                for (int bx = x; bx < x + size; bx += 4) {
-                    Chunk c = chunk(bx, bz);
-                    if (c == null) {
-                        return 0;
-                    }
-                    min = Math.min(min, c.min4[((bz & 15) >> 2) * 4 + ((bx & 15) >> 2)]);
-                }
-            }
-            return min;
-        }
-        int min = Integer.MAX_VALUE;
-        for (int cz = z; cz < z + size; cz += 16) {
-            for (int cx = x; cx < x + size; cx += 16) {
-                Chunk c = chunk(cx, cz);
-                if (c == null) {
-                    return 0;
-                }
-                min = Math.min(min, c.min16);
-            }
-        }
-        return min;
     }
 
     @Override

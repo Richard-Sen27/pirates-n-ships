@@ -602,3 +602,7 @@ anything differs. Watch both logs for an exception that names `compat.jei` or `P
 7. **Without JEI:** start a client with `-Ppirates_n_ships.no_jei` (`./gradlew :neoforge:runClient
    -Ppirates_n_ships.no_jei`): the game loads with no error mentioning JEI, the mod plays as before, and the log has
    no `JEI plugin` line.
+
+## Off-hand poses (ART17)
+
+1. Hold the brig key, the brig door, the hull patch and the chain shot in the off hand (F to swap), in first person and in third person (F5, front and back), next to the same item in the main hand: each off-hand pose is the mirror image of the main-hand one (key bow lower left, shank into the screen to the right; door hinge towards the middle; hull patch braced face towards you; chain shot both balls low left), never the main-hand pose turned edge on. Spot check a sword and the pistol the same way (unchanged, already mirrored).

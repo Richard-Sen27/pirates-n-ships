@@ -37,7 +37,8 @@ public final class AlmanacPonderPlugin implements PonderPlugin {
             Map.entry(AlmanacScenes.SHIPS_BELL, ShipsBellScene::program),
             Map.entry(AlmanacScenes.GALLEY_AND_PROVISIONS, GalleyAndProvisionsScene::program),
             Map.entry(AlmanacScenes.HAMMOCKS_AND_REST, HammocksAndRestScene::program),
-            Map.entry(AlmanacScenes.SWIVEL_GUN, SwivelGunScene::program));
+            Map.entry(AlmanacScenes.SWIVEL_GUN, SwivelGunScene::program),
+            Map.entry(AlmanacScenes.OARS, OarsScene::program));
 
     @Override
     public String getModId() {

@@ -37,6 +37,7 @@ public interface CrewOrder {
         out.addAll(List.of(PumpOrder.values()));
         out.addAll(List.of(CannonOrder.values()));
         out.addAll(List.of(AnchorOrder.values()));
+        out.addAll(List.of(com.richardsenger.piratesnships.sailing.oars.RowOrder.values())); // OAR1
         return Collections.unmodifiableList(out);
     }
 

@@ -177,7 +177,7 @@ page, three tabs.
   furled), crew and bunks, the supplies left in days and the last payday. **Disassemble** (click twice) disassembles
   her at this helm.
 - **Crew:** the captain's whistle orders as buttons (hoist, reef, furl, man the pumps, fire, load, fire at will, the
-  anchor, release crew; "Release crew" also ends "Fire at will"). The anchor is one button: it reads "Drop anchor"
+  anchor, row or ship oars, release crew; "Release crew" also ends "Fire at will"). The anchor is one button: it reads "Drop anchor"
   while the anchor is stowed or coming up and "Raise anchor" while it runs out or holds, and gives that order. Then every hand aboard with morale, station
   or off duty, the order being carried out, who hired them, unpaid, and a warning when low morale has them close to
   deserting. **Release** takes a hand off their station, **Dismiss** lets them go as the whistle's sneak-use does.
@@ -413,6 +413,24 @@ takes an unmanned capstan by himself when you give the order. Over water deeper 
 ground for the anchor within the chain's reach, captain!" Commands: `/pirates crew order drop_anchor` and
 `raise_anchor` (the command keeps both directions; only the wheel and the screen have the one toggle). Server config
 `crew_stations.capstan`.
+
+### Oars
+In a calm, against the wind or to creep into a harbour, pick **Row** on the captain's whistle (or the ship screen):
+every hand who is not at another station takes an oar. No block is needed: a hand walks to the rail, on one side and
+then the other in turn so the ship runs straight, and rows standing there, facing aft, the oar out over the side. A
+spot at the rail is a deck cell beside the hull's edge, a railing or a one-block bulwark, on the port or starboard side
+(never at the bow or stern). An **Oak Oar Bench** placed at the rail (it faces the way you look when you place it, so
+look outboard) is a station: a free hand walks to it, sits on the thwart facing aft and rows a quarter harder than one
+standing (`oars.bench_bonus`, 1.25). Each rower adds `oars.thrust_per_rower` along the bow; the push fades as the ship
+nears `oars.max_speed` (3 blocks a second), so three hands move the small test hull at about 0.7 blocks a second and
+oars alone never pass the limit. Oars add to the sails. A tired crew (hungry, thirsty or drunk, see
+[Upkeep](#upkeep)) rows slower, as it hauls slower. More hands on one side turn the ship a little.
+
+While the ship rows, the same whistle entry reads **Ship oars**: the oars come in and every rower walks back to where it
+stood. Any other order (a sail order, the pumps, Release crew) ends the rowing first, and the hands ship oars by
+themselves when the sails drive the ship faster than `oars.max_speed` × `ship_oars_speed_factor` for two seconds. Rowers
+stay at their oars through the night. Command: `/pirates crew order row`. Server config `oars` (`enabled`,
+`thrust_per_rower`, `bench_bonus`, `max_speed`, `side_torque`, `ship_oars_speed_factor`, `ship_oars_ticks`).
 
 ---
 
@@ -913,10 +931,11 @@ crew take their place at once).
 The **captain's whistle** (creative tab) gives orders:
 - Use it on a crew member, then on a station: the crew member takes that station.
 - Use it on an assigned crew member: it is released.
-- Use it in the air: opens the order wheel with nine orders: Hoist sails, Reef sails, Furl sails, Man the pumps,
-  Fire!, Load!, Fire at will, the anchor, Release crew. The anchor is one toggle: it reads "Drop anchor" while the
+- Use it in the air: opens the order wheel with ten orders: Hoist sails, Reef sails, Furl sails, Man the pumps,
+  Fire!, Load!, Fire at will, the anchor, Row, Release crew. The anchor is one toggle: it reads "Drop anchor" while the
   anchor is stowed or coming up and "Raise anchor" while it runs out or holds (the label follows the ship status your
-  HUD shows; the server decides from the anchor's state when the order arrives). Point at one and click, or hold the
+  HUD shows; the server decides from the anchor's state when the order arrives). Row is a toggle too: it reads Ship oars
+  while the ship rows (see [Oars](#oars)). Point at one and click, or hold the
   use key, aim and release. The order goes to the crew on the ship you stand on whose station takes it; unmanned stations
   become open jobs (see [Orders, not assignments](#orders-not-assignments)). Esc closes the wheel.
 
@@ -1493,6 +1512,7 @@ on by default; vanilla weapons are untouched):
 | Mermaid, Lion, Eagle and Skull Figurehead | 4 planks and a prismarine shard, gold ingot, feather or bone | Decoration for the bow. Click the hull block it should hang on: the plate lands there and the figure looks at you. |
 | Name Board (was Nameplate) | any sign, 1 gold nugget (gives 3) | A framed oak plate fixed flat on the hull's side (no chains). Boards side by side on one face join into one board, and the ship's name is drawn once across the whole row, as large as the board's height allows: one board shows it small, three or more read from 30 to 60 blocks. Shows the name once the ship is assembled and named (name tag on the helm); renaming updates it within a second, disassembly clears it. Old nameplates load as boards. Server options `ship_identity.nameplate_shows_name`, `name_board_distance` (64, how far the name is drawn). |
 | Oak Railing | 3 sticks over 3 oak planks (gives 4) | A rail along a block's edge with automatic end and corner posts; click again to rail another edge. Drops one per edge. See [Railings](#railings). |
+| Oak Oar Bench | 3 oak planks over 2 sticks | A thwart with thole pins: a crew station where a hand rows seated, a quarter harder than at the rail. Faces the way you look when placed (look outboard). See [Oars](#oars). |
 | Oak Railing Port | 2 sticks (the corners) over 3 oak planks (gives 2) | The opening in a railing: two posts and a sill. A cannon fires through it, a boarding plank goes out from its sill. See [Railings](#railings). |
 
 All blocks drop themselves. Wooden ones are mined with an axe, the bars and the door with a pickaxe.
@@ -1533,6 +1553,7 @@ A slain pirate captain drops each piece of his clothing with a 35 % chance (serv
 | Pistol | 2 iron ingots, 1 flint, 1 planks | Single-shot flintlock: load with lead shot and gunpowder, fire. See [Firearms](#firearms). |
 | Musket | 2 iron ingots, 1 flint, 1 planks | Longer reload, flatter and tighter shot. See [Firearms](#firearms). |
 | Lead Shot | 2 iron nuggets (gives 4) | Ammunition for pistol and musket, one per load, with one gunpowder. |
+| Oar | 1 planks over 2 sticks, on a diagonal | What a rowing hand holds. In your own hand it is only for the look. See [Oars](#oars). |
 | Cannonball | 4 iron ingots (gives 2) | Ammunition for the cannon, loaded after the gunpowder. |
 | Chain Shot | 2 iron ingots, 1 chain (gives 2) | Cannon shot that tears sails and cuts rigging, no hull damage. See [Cannons](#cannons). |
 | Grapeshot | 8 iron nuggets, 1 string (gives 2) | Cannon shot: a cone of nine pellets that hurt the people on a deck. See [Cannons](#cannons). |
@@ -1668,6 +1689,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `sailing_runtime` | Sailing forces, steering and anchor on/off, sail heel factor, sails needing water, rudder steps, the anchor chain's length (`anchor_chain_length`), draft, scan interval. |
 | `stability` | Righting and heel: on/off, righting factor and damping, the heel at which sails spill, pitch righting, the auto-ballast (`auto_ballast`, on by default) and its cap. |
 | `helm` | `wheel`: steering by turning the wheel (`drag_steering`), mouse and key rates, turns lock to lock, view lock, reach. |
+| `oars` | Rowing on/off (`enabled`), each rower's thrust, the bench bonus (1.25), the rowing speed limit (3 blocks a second), the yaw of unequal sides, when the crew ship oars under sail. |
 | `anchor_chain` | The anchor's fall and sink speed, raising speed, chain stiffness and damping, holding force, drag and scraping, heel, the sounds and their volumes. |
 | `hull_creaking` | Creaking on/off, creaks per second, minimum gap, volume and pitch ranges, the rolling rate that counts. |
 | `waves` | Sea state on/off, amplitude and components, wave groups, how fast the state and the wave direction change, heave and torque on ships, spill over low rims, vanilla boats and floating items riding the waves, sync. |
@@ -1766,7 +1788,6 @@ the like.
 
 Checked against the code on 2026-10-09. Everything else in this guide is built and on main.
 
-- **Oars** for large ships in calm air (planned, deferred by the human).
 - **Audio:** the sea music and the creaks exist, but most actions have no sounds of their own yet; that waits for sound files. Every action, its sound today and the recording that would fit are listed in [`audit/sounds.md`](audit/sounds.md), silent ones first.
 - **Melee extras:** feints by players and a directional attack and parry mode (optional milestone); the stagger tuning is an open decision.
 - **The logbook** named in the design (a record of voyages and deeds) has no block or screen yet.

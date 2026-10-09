@@ -60,7 +60,7 @@ class CrewPoseTest {
     @Test
     void aStationPoseWinsOverEverythingElse() {
         for (CrewPose station : new CrewPose[]{CrewPose.HELM, CrewPose.HELM_TURN_LEFT, CrewPose.HELM_TURN_RIGHT,
-                CrewPose.CANNON_AIM, CrewPose.CANNON_LOAD, CrewPose.CANNON_FIRE, CrewPose.CAPSTAN_PUSH}) {
+                CrewPose.CANNON_AIM, CrewPose.CANNON_LOAD, CrewPose.CANNON_FIRE, CrewPose.CAPSTAN_PUSH, CrewPose.ROW_SEATED, CrewPose.ROW_STANDING}) {
             assertEquals(station, CrewPose.choose(false, false, false, false, station));
             assertEquals(station, CrewPose.choose(true, true, false, false, station), "working at the station");
         }
@@ -79,7 +79,7 @@ class CrewPoseTest {
             n++;
             assertEquals(p, CrewPose.byStationId(p.stationId()));
         }
-        assertEquals(7, n);
+        assertEquals(9, n);
         assertNull(CrewPose.byStationId(-1));
         assertNull(CrewPose.byStationId(99));
         assertTrue(CrewPose.values().length < Byte.MAX_VALUE, "the id is synced as a byte");
@@ -96,6 +96,11 @@ class CrewPoseTest {
         assertEquals("capstan_push", CrewPose.CAPSTAN_PUSH.animation());
         assertTrue(CrewPose.CAPSTAN_PUSH.loops());
         assertEquals(6, CrewPose.CAPSTAN_PUSH.stationId(), "appended after the cannon poses: synced ids never move");
+        assertEquals("row_seated", CrewPose.ROW_SEATED.animation());
+        assertEquals("row_standing", CrewPose.ROW_STANDING.animation());
+        assertEquals(7, CrewPose.ROW_SEATED.stationId(), "OAR1: appended after the capstan");
+        assertEquals(8, CrewPose.ROW_STANDING.stationId());
+        assertTrue(CrewPose.ROW_SEATED.loops() && CrewPose.ROW_STANDING.loops(), "the stroke loops");
         assertFalse(CrewPose.CANNON_FIRE.loops(), "the lunge plays once");
         assertTrue(CrewPose.CANNON_LOAD.loops());
         assertTrue(CrewPose.HELM.loops());

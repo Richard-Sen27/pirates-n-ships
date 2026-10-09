@@ -77,7 +77,8 @@ public final class CrewWalk {
         }
         Entity vehicle = crew.getVehicle();
         if (vehicle != null) {
-            if (!(vehicle instanceof StationSeat || vehicle instanceof MealSeat || vehicle instanceof HammockSeat)) {
+            if (!(vehicle instanceof StationSeat || vehicle instanceof MealSeat || vehicle instanceof HammockSeat
+                    || vehicle instanceof com.richardsenger.piratesnships.crew.npc.PosedSeat)) {
                 return false; // riding something else of the ship: leave it there
             }
             crew.stopRiding(); // the seat removes itself; Sable keeps it tracking the ship until it lands on the deck
@@ -167,6 +168,7 @@ public final class CrewWalk {
             case STATION -> CrewStations.arrive(level, crew, t.ship(), t.anchor());
             case MEAL -> MealVisits.arrive(level, crew, t.anchor(), t.spot());
             case HAMMOCK -> CrewRest.arrive(level, crew, t.ship(), t.anchor());
+            case OARS -> com.richardsenger.piratesnships.sailing.oars.Rowing.arrive(level, crew, t.ship(), t.anchor());
         }
     }
 

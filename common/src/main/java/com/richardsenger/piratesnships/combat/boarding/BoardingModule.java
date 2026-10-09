@@ -65,9 +65,9 @@ public final class BoardingModule implements ModModule {
                 .add(BoardingPlankItem.KEY_NO_START, "No plank from here")
                 .add(BoardingPlankItem.KEY_BLOCKED, "Something is in the way %s blocks out")
                 .add(BoardingPlankItem.KEY_TOO_FAR, "Too far: a plank reaches %s blocks")
-                .add(BoardingPlankItem.KEY_TOO_STEEP, "Too steep: a plank climbs or falls %s blocks at most")
+                .add(BoardingPlankItem.KEY_TOO_STEEP, "Too steep: at most %s blocks up or down")
                 .add(BoardingPlankItem.KEY_NOTHING_TO_LAND, "Nothing to land on within reach")
-                .add(BoardingPlankItem.KEY_DISABLED, "Boarding planks are disabled on this server"));
+                .add(BoardingPlankItem.KEY_DISABLED, "Boarding planks are off on this server"));
         data.models(m -> {
             // hand-made Blockbench models (art/models/boarding_plank.bbmodel, design.md §4.8), laid north: only the block
             // state is generated. Flat cells: the end at segment 0, the middle and the far end with its hooks. Ramp cells

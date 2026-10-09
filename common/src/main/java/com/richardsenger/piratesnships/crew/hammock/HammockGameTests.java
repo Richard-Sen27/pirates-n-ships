@@ -296,7 +296,10 @@ public final class HammockGameTests {
 
     // ------------------------------------------------------------------ bunks and info
 
-    /** Two crew members and one hammock: the whistle's crew line reads "morale 70 … crew 2 / bunks 1". */
+    /**
+     * Two crew members and one hammock: the whistle selects one and shows its morale on the action bar, nothing in chat
+     * (MSG1); the ship line reads "crew 2 / bunks 1" ({@code /pirates crew info}).
+     */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100)
     public static void whistleShowsCrewAndBunks(GameTestHelper h) {
         Fixture f = ship(h, x -> { });
@@ -305,8 +308,13 @@ public final class HammockGameTests {
         Captain p = captain(h, f, 0f);
         ItemStack whistle = p.getMainHandItem();
         whistle.getItem().interactLivingEntity(whistle, p, a, InteractionHand.MAIN_HAND);
-        h.assertTrue(hasKey(p.chat, CrewInfo.KEY_SHIP_LINE, 2, 1), "no 'crew 2 / bunks 1' in " + p.chat);
-        h.assertTrue(hasKey(p.chat, CrewInfo.KEY_CREW_LINE), "no crew line in " + p.chat);
+        h.assertTrue(p.chat.isEmpty(), "the whistle wrote to the chat: " + p.chat);
+        h.assertTrue(p.actionBar.stream().anyMatch(c -> c.getContents() instanceof TranslatableContents t
+                        && t.getKey().equals(com.richardsenger.piratesnships.station.winch.CaptainsWhistleItem.KEY_SELECTED)
+                        && t.getArgs().length == 2 && CrewConfig.MORALE_START.get().equals(t.getArgs()[1])),
+                "no selection with morale in " + p.actionBar);
+        h.assertTrue(containsKey(CrewInfo.shipLine(h.getLevel(), f.ship()), CrewInfo.KEY_SHIP_LINE, 2, 1),
+                "no 'crew 2 / bunks 1' in " + CrewInfo.shipLine(h.getLevel(), f.ship()));
         h.assertTrue(CrewMorale.get(a) == CrewConfig.MORALE_START.get(), "morale of a new crew member: " + CrewMorale.get(a));
         ShipBunks.Count n = ShipBunks.count(h.getLevel(), f.ship());
         h.assertTrue(n.equals(new ShipBunks.Count(2, 1, 1)), "count: " + n);

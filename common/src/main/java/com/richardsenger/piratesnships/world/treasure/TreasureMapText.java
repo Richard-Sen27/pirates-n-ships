@@ -38,7 +38,7 @@ public final class TreasureMapText {
                 .add(TOOLTIP_BOUND, "Leads to a buried treasure")
                 .add(TOOLTIP_FOUND, "The treasure has been found")
                 .add(NONE, "No treasure within reach of this map")
-                .add(DISABLED, "Treasure maps are disabled on this server")
+                .add(DISABLED, "Treasure maps are off on this server")
                 .add(FOUND, "The treasure has been found")
                 .add(BEARING, "%s, %s blocks")
                 .add(HERE, "X marks the spot: dig here!")

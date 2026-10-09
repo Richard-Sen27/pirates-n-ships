@@ -162,3 +162,13 @@ Only the real clients show the fade. Please run both `./gradlew :neoforge:runCli
 5. **OFF.** `career_hud.mode = OFF`, then promote or rejoin.
    - **Expected:** the box never shows; the career screen still names the rank.
 6. **show_seconds.** `career_hud.show_seconds = 15`, rejoin. **Expected:** the box stays about 15 s.
+
+# MSG1: few, short messages
+
+The audit is `docs/messages.md`; lengths and the no-chat rule are covered by `MessageAuditTest`. Only a client shows
+whether a line fits. At GUI scale 3 on a 1920×1080 window, on an assembled ship with crew: take the wheel, use the
+capstan (let go and heave in), cycle the winch, dye a sail, fire a loaded cannon, give **Hoist sails** and **Drop
+anchor** with the whistle, and use the capstan where the water is too deep.
+- **Expected:** no message during normal sailing beyond refusals: the anchor, sails, helm and cannon give no text on
+  success and the crew say no "Aye!" in chat; the whistle shows one line ("2 crew to hoist the sails"); "Too deep: no
+  ground within 40 blocks" and every other line fit on screen; nothing from the ship appears in the chat.

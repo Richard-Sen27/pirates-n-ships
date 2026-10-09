@@ -157,8 +157,8 @@ public final class ShipScreens {
         ShipBody ship = SableShips.byId(s.level(), s.ship());
         Answer a = act(s, ship, action);
         if (action.kind() == ShipScreenPayloads.Kind.DISASSEMBLE && a.ok()) {
-            // the ship is blocks again: the screen closes with the helm's own message (also in chat, as before)
-            player.displayClientMessage(a.message(), false);
+            // the ship is blocks again: the screen closes with the helm's own message on the action bar (MSG1: no chat)
+            player.displayClientMessage(a.message(), true);
             SESSIONS.remove(player.getUUID());
             deliver(player, new ShipScreenPayloads.State(false, Optional.empty(), Optional.of(a.message()), true));
             return;

@@ -48,7 +48,6 @@ public final class HelmSetup {
 
     public static void gatherData(DataContributions data) {
         data.lang(lang -> lang
-                .add(HelmService.KEY_HOLDING, "At the wheel (%s): move the mouse or hold strafe left/right to turn it, let go of use to release")
                 .add(HelmService.KEY_RUDDER, "Rudder %s° %s")
                 .add(HelmService.KEY_BUSY, "Someone else is at the wheel"));
         data.models(m -> {

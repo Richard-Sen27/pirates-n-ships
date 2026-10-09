@@ -15,8 +15,6 @@ import com.richardsenger.piratesnships.station.StationState;
 import com.richardsenger.piratesnships.station.Stations;
 import com.richardsenger.piratesnships.station.seat.StationSeat;
 import com.richardsenger.piratesnships.station.order.CrewOrder;
-import com.richardsenger.piratesnships.station.winch.RiggingReport;
-import com.richardsenger.piratesnships.station.winch.SailOrder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -48,8 +46,6 @@ public final class CrewStations {
     public static final String KEY_NOT_A_STATION = KEY + "not_a_station";
     public static final String KEY_NOTHING_TO_DO = KEY + "nothing_to_do";
     public static final String KEY_NO_SAILS = KEY + "no_sails";
-    /** "This ship has no sails, captain: %s", with the rigging's first problem (Q5). */
-    public static final String KEY_NO_SAILS_WHY = KEY + "no_sails_why";
     public static final String KEY_DISABLED = KEY + "disabled";
     public static final String KEY_WRONG_STATION = KEY + "wrong_station";
 
@@ -245,17 +241,17 @@ public final class CrewStations {
     }
 
     /**
-     * Gives an order to one crew member; it answers near itself. A crew member at a station of another kind (a pump
-     * order at the winch, a sail order at the pump) refuses with {@link #KEY_WRONG_STATION} and keeps its work.
+     * Gives an order to one crew member; it answers near itself only when it does not carry the order out (MSG1: no
+     * "Aye!", the work shows). A crew member at a station of another kind (a pump order at the winch, a sail order at
+     * the pump) refuses with {@link #KEY_WRONG_STATION} and keeps its work.
      */
     public static Stations.OrderResult order(ServerLevel level, CrewMember crew, CrewOrder order) {
         StationRef ref = crew.assignment();
         Stations.OrderResult r = ref == null ? Stations.OrderResult.NOT_OCCUPIED : Stations.order(level, ref, order);
         Component name = Component.translatable(order.nameKey());
         switch (r) {
-            case STARTED -> say(level, crew, Component.translatable(order.ackKey()));
             case NOTHING_TO_DO -> say(level, crew, Component.translatable(order.nothingToDoKey(), name));
-            case NOT_APPLICABLE -> say(level, crew, unable(level, ref, order));
+            case NOT_APPLICABLE -> say(level, crew, unable(order));
             case WRONG_STATION -> say(level, crew, Component.translatable(KEY_WRONG_STATION, name));
             default -> { }
         }
@@ -263,13 +259,12 @@ public final class CrewStations {
     }
 
     /**
-     * The crew member's answer to an order its station cannot carry out: for a sail order the first thing the rigging
-     * lacks ({@link RiggingReport#problem}, Q5), so the captain learns why "this ship has no sails".
+     * The crew member's answer to an order its station cannot carry out ("This ship has no sails, captain!"). MSG1:
+     * the rigging's first problem (Q5) is too long for the action bar; {@code /pirates crew order} and
+     * {@code /pirates ship rigging} still name it.
      */
-    private static Component unable(ServerLevel level, StationRef ref, CrewOrder order) {
-        var ship = order instanceof SailOrder ? SableShips.byId(level, ref.ship()) : null;
-        Component problem = ship == null ? null : RiggingReport.of(level, ship).problem();
-        return problem == null ? Component.translatable(order.unableKey()) : Component.translatable(KEY_NO_SAILS_WHY, problem);
+    private static Component unable(CrewOrder order) {
+        return Component.translatable(order.unableKey());
     }
 
     /** Whether {@code crew} mans a station that takes {@code order} (whatever it is doing now). */
@@ -324,13 +319,15 @@ public final class CrewStations {
         return new AABB(center, center).inflate(r);
     }
 
-    /** A translatable chat line from the crew member to the players near it. */
+    /**
+     * A line from the crew member to the players near it: a refusal or a report ("We're stuck, captain!"), on their
+     * action bar (MSG1: ship handling never uses the chat; the line says "captain", so it needs no name).
+     */
     public static void say(ServerLevel level, CrewMember crew, Component line) {
         int r = StationConfig.ACK_RADIUS.get();
-        Component msg = Component.literal("<").append(crew.getDisplayName()).append("> ").append(line);
         for (ServerPlayer p : level.players()) {
             if (p.distanceToSqr(crew) <= (double) r * r) {
-                p.sendSystemMessage(msg);
+                p.displayClientMessage(line, true);
             }
         }
     }

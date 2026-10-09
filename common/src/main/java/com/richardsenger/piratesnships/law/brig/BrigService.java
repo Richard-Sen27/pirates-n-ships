@@ -154,8 +154,7 @@ public final class BrigService {
         PrisonerState st = state(target);
         if (st.active()) {
             if (st.heldBy(player.getUUID())) {
-                setLed(target, !st.led());
-                player.displayClientMessage(Component.translatable(MSG + (st.led() ? "lead.stop" : "lead.start"), target.getName()), true);
+                setLed(target, !st.led()); // MSG1: the chain shows who is led, no line
             } else if (!st.led()) {
                 Services.ATTACHMENTS.set(target, PRISONER, st.withCaptor(player.getUUID(), player.getName().getString()).withLed(true));
                 player.displayClientMessage(Component.translatable(MSG + "lead.take_over", target.getName()), true);

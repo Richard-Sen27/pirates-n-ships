@@ -431,8 +431,9 @@ public final class WinchOrderGameTests {
         Component why = (Component) arg(hint, 0);
         h.assertTrue(arg(why, 2).equals(UPPER_Y - PLANK_Y), "wrong distance to the plank: " + keys(out));
         Component winch = com.richardsenger.piratesnships.sailing.block.SailWinchBlock.use(h.getLevel(), s.winch());
-        h.assertTrue(key(winch).equals(com.richardsenger.piratesnships.sailing.block.SailWinchBlock.KEY_NO_SAILS_WHY)
-                && key(arg(winch, 0)).equals("message.pirates_n_ships.rigging.why.blocked"), "the winch's answer: " + describe(winch));
+        // MSG1: the winch's action-bar answer is short; the command above names the reason
+        h.assertTrue(key(winch).equals(com.richardsenger.piratesnships.sailing.block.SailWinchBlock.KEY_NO_SAILS),
+                "the winch's answer: " + describe(winch));
         RiggingReport report = RiggingReport.of(h.getLevel(), s.body());
         h.assertTrue(report.sails() == 0 && report.yards().size() == 2, "report: " + report.sails() + " sails, " + report.yards().size() + " yards");
         CrewMember c = spawn(h, p);

@@ -38,11 +38,11 @@ public final class HullRepairData {
                 .block(HullRepairContent.HULL_PATCH_BLOCK, "Hull Patch")
                 .add(BilgePumps.KEY_PUMPING, "Pumping: %s blocks of water left")
                 .add(BilgePumps.KEY_DRY, "The bilge is dry")
-                .add(BilgePumps.KEY_NO_COMPARTMENT, "The pump draws air: no hold within %s blocks below it")
-                .add(BilgePumps.KEY_NOT_ON_SHIP, "A bilge pump only works on an assembled ship")
+                .add(BilgePumps.KEY_NO_COMPARTMENT, "No hold within %s blocks below the pump")
+                .add(BilgePumps.KEY_NOT_ON_SHIP, "Pumps only work on an assembled ship")
                 .add(BilgePumps.KEY_DISABLED, "Bilge pumps are disabled on this server")
                 .add(HullPatchItem.KEY_NOT_A_BREACH, "Use the patch on a hole in the hull")
-                .add(HullPatchItem.KEY_NOT_ON_SHIP, "Hull patches only close holes in an assembled ship")
+                .add(HullPatchItem.KEY_NOT_ON_SHIP, "Patches only work on an assembled ship")
                 .add(HullPatchItem.KEY_BLOCKED, "Something is stuck in this hole")
                 .add(HullPatchItem.KEY_DISABLED, "Hull patches are disabled on this server"));
         data.models(HullRepairData::models);

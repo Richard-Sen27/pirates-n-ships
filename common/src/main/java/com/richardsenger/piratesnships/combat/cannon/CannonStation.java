@@ -53,11 +53,6 @@ public final class CannonStation implements StationKind<CannonStation.CannonOrde
             return "cannon_order." + Constants.MOD_ID + "." + id();
         }
 
-        /** "Aye, firing!", "Aye, loading!", "Aye, firing at will!" */
-        @Override
-        public String ackKey() {
-            return "message." + Constants.MOD_ID + ".crew.ack." + id();
-        }
 
         /**
          * FIRE: "The gun is not loaded, captain!"; LOAD: "The gun is already loaded, captain!"; FIRE_AT_WILL always has

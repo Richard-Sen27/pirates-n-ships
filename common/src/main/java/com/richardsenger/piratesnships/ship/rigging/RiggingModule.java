@@ -46,7 +46,7 @@ public final class RiggingModule implements ModModule {
                 .block(RiggingContent.RATLINES, "Ratlines")
                 .add(RatlinesItem.KEY_TOOLTIP, "Hang on a mast, or lay from the deck to climb up sloped")
                 .add(RatlinesItem.KEY_DISABLED, "Ratlines are disabled on this server")
-                .add(RatlinesBlock.KEY_IN_CLOTH, "The sail's cloth hangs here: hang the ratlines on the yard's end"));
+                .add(RatlinesBlock.KEY_IN_CLOTH, "Sail cloth here: use the yard's end"));
         data.models(m -> {
             // hand-made Blockbench models (art/models/ratlines.bbmodel, design.md §4.8), drawn facing north: the hung net
             // against the south side, the sloped net rising to the north. Only the block state is generated; the item

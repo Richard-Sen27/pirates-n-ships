@@ -208,8 +208,8 @@ public final class Hunting {
         }
         CourseOrder order = new CourseOrder(PatrolRoutes.ring(target.x(), target.z(), NavyConfig.STANDOFF_DISTANCE.get(), at.x, at.z,
                 RING_POINTS, level.getSeaLevel()), true);
-        // the first ring of a chase is acknowledged once; every renewal is given silently (WS4c)
-        HelmCourses.set(level, ship, order, e.order == null ? HelmCourses.Voice.ACK_ONLY : HelmCourses.Voice.SILENT);
+        // the helmsman says nothing about a course (WS4c, MSG1), so the renewals of a chase are silent
+        HelmCourses.set(level, ship, order);
         e.order = order;
         e.courseAt = t;
         e.lastCourse = now;

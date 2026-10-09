@@ -205,9 +205,6 @@ public final class ShipDayTick {
             c.setUnpaid(r.pay() == UpkeepDay.Pay.UNPAID);
             c.setLowMoraleDays(r.lowDays());
             if (fx.scurvy()) scurvy(c);
-            if (r.pay() == UpkeepDay.Pay.UNPAID && !r.deserts() && !day.mutiny()) {
-                CrewStations.say(level, c, Component.translatable(UpkeepText.SAY_UNPAID));
-            }
         }
         ShipCoins.take(level, PayKey.containers(payment));
         long fromWallet = PayKey.walletCoins(payment);
@@ -242,7 +239,6 @@ public final class ShipDayTick {
         if (day.mutiny()) {
             Component name = shipName(record);
             for (CrewMember c : crew) {
-                CrewStations.say(level, c, Component.translatable(UpkeepText.SAY_MUTINY));
                 CrewReplacement.replace(level, c, MobContent.PIRATE.get());
             }
             record.ifPresent(d -> ShipRegistry.get(level.getServer()).put(d.withOwner(Optional.empty())));
@@ -253,7 +249,6 @@ public final class ShipDayTick {
                 CrewMember c = crew.get(i);
                 Component name = c.getDisplayName();
                 if (r.deserts() && !c.isDeserting() && DesertionRules.leavesAtOnce(ds)) {
-                    CrewStations.say(level, c, Component.translatable(UpkeepText.SAY_DESERT));
                     deserters.add(c.getUUID());
                     CrewReplacement.replace(level, c, MobContent.SAILOR.get());
                     chat.add(r.starved()
@@ -265,7 +260,6 @@ public final class ShipDayTick {
                 DesertionRules.Mark now = DesertionRules.afterDawn(was, r.deserts(), r.lowDays(), r.starved());
                 c.setDeserting(now.deserting(), now.days());
                 if (now.deserting() && !was.deserting()) {
-                    CrewStations.say(level, c, Component.translatable(UpkeepText.SAY_DESERTING));
                     marked.add(c.getUUID());
                     chat.add(r.starved()
                             ? Component.translatable(UpkeepText.DESERTING_STARVED, name, without(pr.state()))

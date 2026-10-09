@@ -143,7 +143,7 @@ public final class CareerText {
                 .add(DESERTED_CRIME, "Desertion! You have lost your navy rank, and the navy wants you for it.")
                 .add(LETTER_GRANTED, "You now hold a letter of marque (paid %s doubloons). Every pirate you kill earns prize money.")
                 .add(LETTER_VOIDED, "Your letter of marque is void.")
-                .add(PRIZE_EARNED, "Prize money: +%s doubloons (%s waiting at any navy officer)")
+                .add(PRIZE_EARNED, "Prize money: +%s (%s waiting)")
                 .add(PRIZE_COLLECTED, "Prize money paid: %s doubloons.")
                 .add(PRIZE_NONE, "No prize money is owed to you.")
                 .add(HOSTILE, "The officer will not speak with you.")

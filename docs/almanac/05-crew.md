@@ -46,14 +46,14 @@ The orders on the wheel: **Hoist sails**, **Reef sails**, **Furl sails**, **Man 
 ## Orders, not assignments
 You need not post every hand yourself. Blow an order and every unmanned station that can carry it out becomes an open job. Free hands on deck take the nearest one by themselves within a second, get to work and stay there afterwards. A hand you posted yourself stays put and is never moved.
 
-A hand answers in chat ("Aye, hoisting the sails!") and then works. Each step of trim takes him two seconds; the sails change when the work is done.
+A hand gets to work without a word; he only speaks up when he cannot do it ("This ship has no sails, captain!"). Each step of trim takes him two seconds; the sails change when the work is done.
 
 If nobody can carry an order out, you are told why: no ship under you, no station aboard that takes it, nothing to do, or what is wrong with the rig. If every hand is busy you hear "No free hands", and the job waits for the next hand who comes aboard.
 
 **Release crew** sends every hand off his station, ends **Fire at will** and cancels the open jobs.
 
 ## A helmsman
-Post a hand at the helm and he keeps her steady. He turns the wheel toward the course he is given and puts the rudder midships when he arrives ("We've arrived, captain! Rudder midships"). He does not touch the sails: order **Hoist sails** as well.
+Post a hand at the helm and he keeps her steady. He turns the wheel toward the course he is given and puts the rudder midships when he arrives ("We've arrived, captain!"). He does not touch the sails: order **Hoist sails** as well.
 
 Take the wheel yourself at any time and he lets go; release it and he steers on. If the ship stops making headway with her sails set, he tells you she is stuck.
 

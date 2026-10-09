@@ -79,7 +79,7 @@ The {item:pirates_n_ships:swivel_gun}**swivel gun** (three iron ingots over a st
 Load it with gunpowder, then a cannonball. Hold right click with an empty hand: the gun follows your eye while you hold, and fires when you let go. It hits less hard and less far than a cannon, breaks no planks and is ready again in three seconds. Sneak and use it to hear what it needs.
 
 ## Gun crews
-Post a hand at a gun with the whistle. Put gunpowder and shot in a chest, barrel or cargo crate within 4 blocks of the gun on the same ship, then blow **Load!**. On **Fire!** every manned, loaded gun goes off ("Aye, firing!"), and the crew reloads by itself from the supply, so a manned gun keeps firing as fast as it cools.
+Post a hand at a gun with the whistle. Put gunpowder and shot in a chest, barrel or cargo crate within 4 blocks of the gun on the same ship, then blow **Load!**. On **Fire!** every manned, loaded gun goes off, and the crew reloads by itself from the supply, so a manned gun keeps firing as fast as it cools.
 
 **Fire at will** lets the crews choose their own targets; see [[pirates_n_ships:crew|Crew]].
 

@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.core.block;
 
+import com.richardsenger.piratesnships.core.text.ActionBar;
 import com.richardsenger.piratesnships.combat.cannon.CannonContent;
 import com.richardsenger.piratesnships.combat.cannon.CannonRules;
 import com.richardsenger.piratesnships.core.block.WaterloggingRules.Verdict;
@@ -337,7 +338,7 @@ public final class WaterloggingGameTests {
         Component tied = RopeItem.use(level, rope, a, null);
         h.assertTrue(key(tied).equals(RopeItem.KEY_TIED), "no tie at the wet cleat: " + tied.getString());
         Component line = RopeItem.use(level, rope, b, null);
-        h.assertTrue(key(line).equals(RopeItem.KEY_LINE), "two wet cleats made no line: " + line.getString());
+        h.assertTrue(ActionBar.silent(line), "two wet cleats made no line: " + line.getString());
         h.assertTrue(RopeLines.joined(level, a, b), "the wet cleats do not agree on the line");
         h.assertTrue(Waterlogging.isWaterlogged(level.getBlockState(a)) && Waterlogging.isWaterlogged(level.getBlockState(b)),
                 "tying the rope dried a cleat");

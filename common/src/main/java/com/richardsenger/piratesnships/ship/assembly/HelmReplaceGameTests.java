@@ -199,7 +199,7 @@ public final class HelmReplaceGameTests {
         h.assertTrue(winchShip != null && d.ship().id().equals(winchShip.id()), when + ": the winch left the ship");
         String winch = key(SailWinchBlock.use(level, d.winch()));
         h.assertTrue(!winch.equals(SailWinchBlock.KEY_NOT_ON_SHIP), when + ": the winch says it is not on a ship");
-        String capstan = key(ShipControls.useCapstan(level, d.capstan()));
+        String capstan = key(ShipControls.useCapstan(level, d.capstan()).message());
         h.assertTrue(!capstan.equals(ShipControls.KEY_CAPSTAN_NOT_ON_SHIP), when + ": the capstan says it is not on a ship");
     }
 
@@ -208,8 +208,9 @@ public final class HelmReplaceGameTests {
         ServerLevel level = h.getLevel();
         h.assertTrue(level.getBlockEntity(helm) instanceof HelmBlockEntity be && be.wheel() == 0f,
                 "the helm's wheel is not at midships");
+        int said = player.messages.size();
         use(h, player, helm);
-        h.assertTrue(player.last().equals(HelmService.KEY_HOLDING), "using the helm did not take the wheel: " + player.last());
+        h.assertTrue(player.messages.size() == said, "taking the wheel said something (MSG1): " + player.last());
         h.assertTrue(helm.equals(HelmService.session(player)), "no steering session at the helm");
         h.assertTrue(HelmService.turn(player, helm, 5.0), "the wheel did not turn");
         SailingRuntime rt = SailingRuntimes.get(level, ship);
@@ -321,7 +322,7 @@ public final class HelmReplaceGameTests {
             assertStillTheShip(h, d, "after the first helm broke");
             h.assertTrue(ShipHelm.steering(d.ship()) == null, "the ship should be helmless until the second helm is used");
             use(h, captain, d.other());
-            h.assertTrue(captain.last().equals(HelmService.KEY_HOLDING), "the second helm did not take over: " + captain.last());
+            h.assertTrue(d.other().equals(HelmService.session(captain)), "the second helm did not take over: " + captain.last());
             h.assertTrue(d.other().equals(ShipHelm.steering(d.ship())), "the second helm is not the steering helm");
             HelmService.release(captain, d.other());
             h.succeed();
@@ -472,7 +473,7 @@ public final class HelmReplaceGameTests {
                 h.assertTrue(!key(SailWinchBlock.use(level, winch)).equals(SailWinchBlock.KEY_NOT_ON_SHIP), "the winch is not on a ship");
             }
             if (capstan != null) {
-                h.assertTrue(!key(ShipControls.useCapstan(level, capstan)).equals(ShipControls.KEY_CAPSTAN_NOT_ON_SHIP),
+                h.assertTrue(!key(ShipControls.useCapstan(level, capstan).message()).equals(ShipControls.KEY_CAPSTAN_NOT_ON_SHIP),
                         "the capstan is not on a ship");
             }
             // a helm on the moved ship steers it

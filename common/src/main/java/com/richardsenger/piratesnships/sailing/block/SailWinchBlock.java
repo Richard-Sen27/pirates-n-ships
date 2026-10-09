@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.sailing.block;
 
+import com.richardsenger.piratesnships.core.text.ActionBar;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
 import com.richardsenger.piratesnships.sailing.ship.SailingRuntimes;
@@ -45,10 +46,6 @@ public class SailWinchBlock extends Block implements StationBlock {
     static final String KEY = "message." + Constants.MOD_ID + ".sail_winch.";
     public static final String KEY_NOT_ON_SHIP = KEY + "not_on_ship";
     public static final String KEY_NO_SAILS = KEY + "no_sails";
-    /** "This ship has no sails: %s", with the rigging's first problem (Q5). */
-    public static final String KEY_NO_SAILS_WHY = KEY + "no_sails_why";
-    public static final String KEY_SET = KEY + "set";
-    public static final String KEY_SAIL_SET = KEY + "sail_set";
 
     /** The side the crank is on (the model's unrotated crank is east). */
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
@@ -111,22 +108,23 @@ public class SailWinchBlock extends Block implements StationBlock {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level instanceof ServerLevel serverLevel) {
-            player.displayClientMessage(use(serverLevel, pos), true);
+            ActionBar.show(player, use(serverLevel, pos));
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
-    /** The winch action at {@code pos} (plot position of the winch); returns the feedback. Public for GameTests. */
+    /**
+     * The winch action at {@code pos} (plot position of the winch); returns the refusal, or nothing when the sails
+     * change (MSG1: the cloth shows it). Public for GameTests.
+     */
     public static Component use(ServerLevel level, BlockPos pos) {
         SailingRuntimes.CycleResult r = SailingRuntimes.cycleTrim(level, pos);
         if (r == null) {
             return Component.translatable(KEY_NOT_ON_SHIP);
         }
         if (r.sails() == 0) {
-            var ship = com.richardsenger.piratesnships.ship.sable.SableShips.containing(level, pos);
-            Component problem = ship == null ? null : com.richardsenger.piratesnships.station.winch.RiggingReport.of(level, ship).problem();
-            return problem == null ? Component.translatable(KEY_NO_SAILS) : Component.translatable(KEY_NO_SAILS_WHY, problem);
+            return Component.translatable(KEY_NO_SAILS); // the rigging's first problem: /pirates ship rigging (MSG1)
         }
-        return Component.translatable(KEY_SET, Component.translatable(trimKey(r.trim())), r.sails());
+        return Component.empty();
     }
 }

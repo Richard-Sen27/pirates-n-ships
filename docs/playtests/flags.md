@@ -197,7 +197,7 @@ Renders: `art/renders/flag_pedestal.png`, `art/renders/crows_nest_pole.png`.
    above the nest. With a one-block pole the cloth may touch the rim (expected: use at least two blocks).
 7. **Standing in the nest.** Climb into the nest with the pole in it. Expected: you can step in and stand on the floor,
    nothing pushes you out, you can walk round the pole inside the barrel; your view clips the pole when you look into
-   it (no collision). The lookout calls ("Sail ho!", sharks, land) still come.
+   it (no collision). The lookout's calls (ships, sharks, land) still come.
 8. **Crew lookout.** Assign a crew member to the nest with the whistle. Expected: he sits in the nest as before (he and
    the pole overlap, nothing else changes) and calls sightings.
 9. **On a ship.** Assemble a ship with a nest and a pole on it, sail and turn. Expected: the nest keeps the socketed

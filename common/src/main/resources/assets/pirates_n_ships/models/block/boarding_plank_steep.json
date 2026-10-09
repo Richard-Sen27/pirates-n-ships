@@ -1,0 +1,490 @@
+{
+  "credit": "Made with Blockbench, source art/models/boarding_plank.bbmodel",
+  "textures": {
+    "0": "minecraft:block/spruce_planks",
+    "1": "minecraft:block/stripped_spruce_log",
+    "particle": "minecraft:block/spruce_planks"
+  },
+  "elements": [
+    {
+      "name": "board0",
+      "from": [
+        1,
+        7.5,
+        0
+      ],
+      "to": [
+        5.6,
+        9,
+        16
+      ],
+      "rotation": {
+        "angle": 45,
+        "axis": "x",
+        "origin": [
+          8,
+          9,
+          8
+        ],
+        "rescale": true
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            10.4,
+            14.5,
+            15,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            14.5,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            1,
+            14.5,
+            5.6,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            14.5,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            10.4,
+            16,
+            15
+          ],
+          "rotation": 90,
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            10.4,
+            16,
+            15
+          ],
+          "rotation": 90,
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "board1",
+      "from": [
+        5.7,
+        7.5,
+        0
+      ],
+      "to": [
+        10.3,
+        9,
+        16
+      ],
+      "rotation": {
+        "angle": 45,
+        "axis": "x",
+        "origin": [
+          8,
+          9,
+          8
+        ],
+        "rescale": true
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            5.7,
+            14.5,
+            10.3,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            14.5,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            5.7,
+            14.5,
+            10.3,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            14.5,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            5.7,
+            16,
+            10.3
+          ],
+          "rotation": 90,
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            5.7,
+            16,
+            10.3
+          ],
+          "rotation": 90,
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "board2",
+      "from": [
+        10.4,
+        7.5,
+        0
+      ],
+      "to": [
+        15,
+        9,
+        16
+      ],
+      "rotation": {
+        "angle": 45,
+        "axis": "x",
+        "origin": [
+          8,
+          9,
+          8
+        ],
+        "rescale": true
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            1,
+            14.5,
+            5.6,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            14.5,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            10.4,
+            14.5,
+            15,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            14.5,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            1,
+            16,
+            5.6
+          ],
+          "rotation": 90,
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            1,
+            16,
+            5.6
+          ],
+          "rotation": 90,
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "cleat_2",
+      "from": [
+        1,
+        9,
+        2
+      ],
+      "to": [
+        15,
+        9.6,
+        3.2
+      ],
+      "rotation": {
+        "angle": 45,
+        "axis": "x",
+        "origin": [
+          8,
+          9,
+          8
+        ],
+        "rescale": true
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            1,
+            13.4,
+            15,
+            14
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            12.8,
+            13.4,
+            14,
+            14
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            1,
+            13.4,
+            15,
+            14
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            2,
+            13.4,
+            3.2,
+            14
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            1,
+            2,
+            15,
+            3.2
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            1,
+            12.8,
+            15,
+            14
+          ],
+          "texture": "#1"
+        }
+      }
+    },
+    {
+      "name": "cleat_7.4",
+      "from": [
+        1,
+        9,
+        7.4
+      ],
+      "to": [
+        15,
+        9.6,
+        8.6
+      ],
+      "rotation": {
+        "angle": 45,
+        "axis": "x",
+        "origin": [
+          8,
+          9,
+          8
+        ],
+        "rescale": true
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            1,
+            13.4,
+            15,
+            14
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            7.4,
+            13.4,
+            8.6,
+            14
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            1,
+            13.4,
+            15,
+            14
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            7.4,
+            13.4,
+            8.6,
+            14
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            1,
+            7.4,
+            15,
+            8.6
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            1,
+            7.4,
+            15,
+            8.6
+          ],
+          "texture": "#1"
+        }
+      }
+    },
+    {
+      "name": "cleat_12.8",
+      "from": [
+        1,
+        9,
+        12.8
+      ],
+      "to": [
+        15,
+        9.6,
+        14
+      ],
+      "rotation": {
+        "angle": 45,
+        "axis": "x",
+        "origin": [
+          8,
+          9,
+          8
+        ],
+        "rescale": true
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            1,
+            13.4,
+            15,
+            14
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            2,
+            13.4,
+            3.2,
+            14
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            1,
+            13.4,
+            15,
+            14
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            12.8,
+            13.4,
+            14,
+            14
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            1,
+            12.8,
+            15,
+            14
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            1,
+            2,
+            15,
+            3.2
+          ],
+          "texture": "#1"
+        }
+      }
+    }
+  ]
+}

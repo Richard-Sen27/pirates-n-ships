@@ -9,11 +9,14 @@ import java.util.Locale;
  * <pre>
  *   OFFERED --accept--> ACTIVE --progress reaches needed / target done--> DONE
  *      |                   `--deadline passed / target failed / abandoned--> FAILED
+ *      |--accept an escort whose lane is not charted yet--> CHARTING --lane ready--> ACTIVE
+ *      |                                                        `--lane failed / chart timeout--> cancelled (dropped)
  *      `--offer days over: dropped from the port
  * </pre>
+ * A {@link #CHARTING} quest (QST2b) waits for the harbor master's lane; no event moves it on.
  */
 public enum QuestState implements StringRepresentable {
-    OFFERED, ACTIVE, DONE, FAILED;
+    OFFERED, CHARTING, ACTIVE, DONE, FAILED;
 
     public static final Codec<QuestState> CODEC = StringRepresentable.fromEnum(QuestState::values);
 

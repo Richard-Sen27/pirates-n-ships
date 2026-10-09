@@ -66,6 +66,10 @@ public final class QuestConfig {
             "Share of the convoy's legs you must sail within escort_radius of it for the escort to count when it arrives");
     public static final ConfigValue<Integer> ESCORT_MAX_DISTANCE = S.intRange("escort_max_distance", SEA.escortMaxDistance(), 100, 100_000,
             "Farthest destination (blocks, straight line) a port sends an escorted convoy to");
+    public static final ConfigValue<Integer> ESCORT_CHART_TIMEOUT_TICKS = S.intRange("escort_chart_timeout_ticks",
+            QuestRules.DEFAULT_CHART_TIMEOUT_TICKS, 20, 72_000,
+            "Ticks an accepted escort waits for the harbor master to chart its sea lane (searched off the tick, a few"
+                    + " milliseconds per voyage check) before it is called off");
 
     private static final ConfigSection REWARDS = S.section("rewards", "Doubloons per quest, before reward_scale");
     public static final ConfigValue<Integer> PER_PIRATE = REWARDS.intRange("per_pirate", 30, 0, 100_000, "Per pirate of a hunt");

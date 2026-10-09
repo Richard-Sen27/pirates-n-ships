@@ -22,6 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * <pre>{@code
  * List<Voyage> sailing = Voyages.active(server);
  * Optional<Voyage> v = Voyages.spawnConvoy(server, fromPort, toPort, rng); // computes the lane now if needed
+ * Optional<Voyage> w = Voyages.spawnConvoy(server, fromPort, toPort, rng, false); // cached lane only (queued on a miss)
  * Voyages.onEnd((server, voyage, reason) -> { if (reason == VoyageEnd.ARRIVED) ... });
  * Voyages.end(server, v.get().id(), VoyageEnd.SUNK);
  * }</pre>
@@ -86,6 +87,16 @@ public final class Voyages {
      * there is no lane. Ignores the cap and the spawn chance.
      */
     public static Optional<Voyage> spawnConvoy(MinecraftServer server, ResourceLocation from, ResourceLocation to, RandomSource rng) {
+        return spawnConvoy(server, from, to, rng, true);
+    }
+
+    /**
+     * {@link #spawnConvoy(MinecraftServer, ResourceLocation, ResourceLocation, RandomSource)}, but with
+     * {@code computeNow} false a lane missing from the cache is only queued ({@link Lanes#between}) and nothing sails:
+     * gameplay on the server tick (an accepted escort, QST2b) never runs a lane search.
+     */
+    public static Optional<Voyage> spawnConvoy(MinecraftServer server, ResourceLocation from, ResourceLocation to, RandomSource rng,
+                                               boolean computeNow) {
         PortRegistry ports = PortRegistry.get(server);
         Optional<Port> pf = ports.index().byId(from);
         Optional<Port> pt = ports.index().byId(to);
@@ -94,7 +105,7 @@ public final class Voyages {
         Optional<VoyageRules.PortView> vt = ConvoyPlanner.view(server, pt.get());
         if (vf.isEmpty() || vt.isEmpty()) return Optional.empty();
         Optional<Lane> lane = Lanes.between(server, from, to);
-        if (lane.isEmpty()) lane = Lanes.compute(server, from, to).lane();
+        if (lane.isEmpty() && computeNow) lane = Lanes.compute(server, from, to).lane();
         if (lane.isEmpty()) return Optional.empty();
         VoyageRules.ConvoyPlan plan = new VoyageRules.ConvoyPlan(from, to,
                 VoyageRules.cargo(vf.get(), vt.get(), VoyageConfig.CONVOY_CARGO_UNITS.get(), rng));

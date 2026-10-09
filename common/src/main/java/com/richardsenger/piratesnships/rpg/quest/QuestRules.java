@@ -19,6 +19,8 @@ public final class QuestRules {
     public static final String TOO_MANY = "too_many";
     public static final String EXPIRED = "expired";
     public static final String NOT_OFFERED = "not_offered";
+    /** Default of {@code quests.escort_chart_timeout_ticks} (two minutes). */
+    public static final int DEFAULT_CHART_TIMEOUT_TICKS = 2400;
 
     private QuestRules() {
     }
@@ -136,12 +138,43 @@ public final class QuestRules {
 
     /**
      * An accepted escort bound to its convoy: the voyage {@code voyage} named {@code name} sailing {@code legs} legs;
-     * {@code needed} becomes {@link #escortLegsNeeded}. Other quests are returned unchanged.
+     * {@code needed} becomes {@link #escortLegsNeeded}; a charting escort becomes active. Other quests are returned
+     * unchanged.
      */
     public static Quest bindEscort(Quest quest, java.util.UUID voyage, String name, int legs, double fraction) {
         if (!(quest.target() instanceof QuestTarget.Escort t)) return quest;
         QuestTarget.Escort bound = t.withConvoy(voyage, name, legs);
-        return quest.withTarget(bound).withNeeded(escortLegsNeeded(bound.legs(), fraction)).withProgress(0);
+        Quest q = quest.withTarget(bound).withNeeded(escortLegsNeeded(bound.legs(), fraction)).withProgress(0);
+        return q.state() == QuestState.CHARTING ? q.withState(QuestState.ACTIVE) : q;
+    }
+
+    /** What a {@link QuestState#CHARTING} escort does at a poll (QST2b). */
+    public enum ChartStep { WAIT, SAIL, CANCEL }
+
+    /**
+     * An accepted escort whose lane is not charted yet: {@link QuestState#CHARTING}, charting since game time
+     * {@code tick}. Other quests are returned unchanged.
+     */
+    public static Quest chart(Quest accepted, long tick) {
+        if (!(accepted.target() instanceof QuestTarget.Escort t)) return accepted;
+        return accepted.withTarget(t.charting(tick)).withState(QuestState.CHARTING).withProgress(0);
+    }
+
+    /**
+     * The step of a charting escort at game time {@code now}: a ready lane sails (also after the timeout, e.g. for a
+     * player who was offline), a failed lane cancels, {@code timeoutTicks} after {@code since} without a lane cancels,
+     * else it waits.
+     */
+    public static ChartStep chartStep(boolean laneReady, boolean laneFailed, long since, long now, long timeoutTicks) {
+        if (laneReady) return ChartStep.SAIL;
+        if (laneFailed) return ChartStep.CANCEL;
+        if (now - since >= Math.max(0, timeoutTicks)) return ChartStep.CANCEL;
+        return ChartStep.WAIT;
+    }
+
+    /** Whether {@code quest} is an escort waiting for its lane. */
+    public static boolean charting(Quest quest) {
+        return quest.state() == QuestState.CHARTING && quest.target() instanceof QuestTarget.Escort;
     }
 
     /** Whether the offer can no longer be accepted on {@code day}. */

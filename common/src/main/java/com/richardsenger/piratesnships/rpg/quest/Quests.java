@@ -25,6 +25,7 @@ import com.richardsenger.piratesnships.worldsim.materialize.Materializer;
 import com.richardsenger.piratesnships.worldsim.voyage.Voyage;
 import com.richardsenger.piratesnships.worldsim.voyage.VoyageKind;
 import com.richardsenger.piratesnships.worldsim.voyage.Voyages;
+import com.richardsenger.piratesnships.worldsim.lane.Lanes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -283,16 +284,26 @@ public final class Quests {
             player.displayClientMessage(Component.translatable(QuestText.DELIVER_HINT), false);
         }
         if (quest.target() instanceof QuestTarget.Escort e) {
-            // the convoy sets sail now, from this port to the destination (its lane computed at once if not cached)
-            Optional<Voyage> convoy = Voyages.spawnConvoy(server, port, e.destination(), player.getRandom());
-            if (convoy.isEmpty()) {
+            // QST2b: the convoy sets sail now if the lane is charted; else the harbor master charts it off the tick
+            // (Lanes queues it for the voyage scheduler) and the next poll after it is ready sails the convoy
+            if (TradeService.market(server, port).isEmpty() || TradeService.market(server, e.destination()).isEmpty()) {
                 data.removeOffer(port, id);
                 return Result.fail(NO_CONVOY);
             }
-            Voyage v = convoy.get();
-            quest = QuestRules.bindEscort(quest, v.id(), Materializer.name(v), v.waypoints().size() - 1, QuestConfig.ESCORT_FRACTION.get());
-            player.displayClientMessage(Component.translatable(QuestText.ESCORT_HINT, ((QuestTarget.Escort) quest.target()).name(),
-                    QuestConfig.ESCORT_RADIUS.get()), false);
+            if (Lanes.between(server, port, e.destination()).isPresent()) {
+                Optional<Quest> sailed = sail(player, quest);
+                if (sailed.isEmpty()) {
+                    data.removeOffer(port, id);
+                    return Result.fail(NO_CONVOY);
+                }
+                quest = sailed.get();
+            } else if (Lanes.status(server, port, e.destination()) == Lanes.Status.QUEUED) {
+                quest = QuestRules.chart(quest, server.overworld().getGameTime());
+                player.displayClientMessage(Component.translatable(QuestText.ESCORT_CHARTING), false);
+            } else {
+                data.removeOffer(port, id);
+                return Result.fail(NO_CONVOY);
+            }
         }
         data.removeOffer(port, id);
         store(player, log(player).with(quest));
@@ -302,6 +313,22 @@ public final class Quests {
             player.displayClientMessage(Component.translatable(QuestText.MAP_GIVEN), false);
         }
         return new Result(true, ACCEPTED, Optional.of(quest));
+    }
+
+    /**
+     * Sails the convoy of the escort {@code quest} from its port to its destination on the cached lane (never computes
+     * one) and binds the quest to it, active; tells the player. Empty if no convoy can sail (no cached lane, a market
+     * closed).
+     */
+    static Optional<Quest> sail(ServerPlayer player, Quest quest) {
+        if (!(quest.target() instanceof QuestTarget.Escort e)) return Optional.empty();
+        Optional<Voyage> convoy = Voyages.spawnConvoy(player.server, quest.port(), e.destination(), player.getRandom(), false);
+        if (convoy.isEmpty()) return Optional.empty();
+        Voyage v = convoy.get();
+        Quest bound = QuestRules.bindEscort(quest, v.id(), Materializer.name(v), v.waypoints().size() - 1, QuestConfig.ESCORT_FRACTION.get());
+        player.displayClientMessage(Component.translatable(QuestText.ESCORT_HINT, ((QuestTarget.Escort) bound.target()).name(),
+                QuestConfig.ESCORT_RADIUS.get()), false);
+        return Optional.of(bound);
     }
 
     /** The player gives up the active quest {@code id}: it counts as failed; a delivery's contract is abandoned. */

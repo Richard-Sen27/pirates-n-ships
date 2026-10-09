@@ -4,6 +4,7 @@ import com.richardsenger.piratesnships.rpg.career.ShipPrizes;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.worldsim.lane.Lane;
+import com.richardsenger.piratesnships.worldsim.lane.Lanes;
 import com.richardsenger.piratesnships.worldsim.materialize.Materializer;
 import com.richardsenger.piratesnships.worldsim.materialize.RouteMath;
 import com.richardsenger.piratesnships.worldsim.materialize.VoyageEndings;
@@ -39,6 +40,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li>{@link #pollEscort} (from {@link QuestTracker#pollAt}, every {@code quests.poll_ticks}): the player within
  *       {@code quests.escort_radius} of the convoy (the real ship's centre, else the record's position) counts the leg
  *       it sails ({@link QuestEvent.EscortSeen}).</li>
+ *   <li>{@link #pollCharting} (same poll, QST2b): an escort accepted before its lane was charted sails once the lane
+ *       is ready, or is called off when the lane fails or {@code escort_chart_timeout_ticks} pass.</li>
  * </ul>
  * The endings carry players by id; {@link #player} finds them online (or, in GameTests, among the stand-ins).
  */
@@ -133,6 +136,44 @@ public final class SeaQuests {
                     t.name()), false);
         }
         return changed;
+    }
+
+    /**
+     * Checks the player's charting escort {@code q} now (QST2b): its lane ready sails the convoy
+     * ({@link Quests#sail}, the quest becomes active); the lane failed, or not ready {@code escort_chart_timeout_ticks}
+     * after accepting, calls the escort off: it leaves the log without counting as failed (escorts take no deposit, so
+     * nothing is owed) and the player is told. A pair lost from the queue (a restart) is queued again. Returns the
+     * quests that changed, as they are now (a cancelled one as FAILED).
+     */
+    public static List<Quest> pollCharting(ServerPlayer player, Quest q) {
+        if (!QuestRules.charting(q)) return List.of();
+        QuestTarget.Escort t = (QuestTarget.Escort) q.target();
+        MinecraftServer s = player.server;
+        long now = s.overworld().getGameTime();
+        boolean ready = Lanes.between(s, q.port(), t.destination()).isPresent();
+        Lanes.Status status = ready ? Lanes.Status.READY : Lanes.status(s, q.port(), t.destination());
+        boolean failed = status == Lanes.Status.FAILED || status == Lanes.Status.UNKNOWN_PORT;
+        QuestRules.ChartStep step = QuestRules.chartStep(ready, failed, t.chartingSince().orElse(now), now,
+                QuestConfig.ESCORT_CHART_TIMEOUT_TICKS.get());
+        switch (step) {
+            case WAIT -> {
+                return List.of();
+            }
+            case SAIL -> {
+                Optional<Quest> sailed = Quests.sail(player, q);
+                if (sailed.isPresent()) {
+                    Quests.store(player, Quests.log(player).with(sailed.get()));
+                    return List.of(sailed.get());
+                }
+                failed = true;
+            }
+            case CANCEL -> {
+            }
+        }
+        Quests.store(player, Quests.log(player).without(q.id()));
+        player.displayClientMessage(Component.translatable(failed ? QuestText.ESCORT_NO_ROUTE : QuestText.ESCORT_CHART_TIMEOUT,
+                QuestText.portName(t.destination())), false);
+        return List.of(q.withState(QuestState.FAILED));
     }
 
     /**

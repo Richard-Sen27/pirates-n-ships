@@ -42,6 +42,10 @@ public final class QuestText {
     public static final String ESCORT_HINT = KEY + "escort_hint";
     public static final String ESCORT_LOST = KEY + "escort_lost";
     public static final String ESCORT_ALONE = KEY + "escort_alone";
+    public static final String ESCORT_CHARTING = KEY + "escort_charting";
+    public static final String ESCORT_NO_ROUTE = KEY + "escort_no_route";
+    public static final String ESCORT_CHART_TIMEOUT = KEY + "escort_chart_timeout";
+    public static final String CHARTING_DETAIL = KEY + "charting_detail";
 
     // commands
     public static final String LIST_HEADER = COMMANDS + "list.header";
@@ -120,6 +124,7 @@ public final class QuestText {
 
     /** The second line of an active quest: progress, deadline, reward, the giver. */
     public static Component activeDetail(Quest q) {
+        if (q.state() == QuestState.CHARTING) return Component.translatable(CHARTING_DETAIL, q.rewardCoins(), portName(q.port()));
         return Component.translatable(ACTIVE_DETAIL, q.progress(), q.needed(), q.deadlineDay(), q.rewardCoins(), portName(q.port()));
     }
 
@@ -144,7 +149,11 @@ public final class QuestText {
                 .add(ESCORT_TITLE_NAMED, "Escort the %s to %s")
                 .add(ESCORT_HINT, "The %s sets sail now. Keep within %s blocks of her until she makes port")
                 .add(ESCORT_LOST, "The %s is lost")
-                .add(ESCORT_ALONE, "The %s made port, but you were not with her for long enough");
+                .add(ESCORT_ALONE, "The %s made port, but you were not with her for long enough")
+                .add(ESCORT_CHARTING, "The harbor master is charting the route; the convoy sails as soon as it is ready")
+                .add(ESCORT_NO_ROUTE, "The harbor master found no sea route to %s; the escort is called off")
+                .add(ESCORT_CHART_TIMEOUT, "The harbor master could not chart the route to %s in time; the escort is called off")
+                .add(CHARTING_DETAIL, "charting the route, reward %s (from %s)");
         for (String b : BEARINGS) lang.add(bearingKey(b), b.replace("_", ""));
         for (QuestType t : QuestType.values()) {
             lang.add(typeName(t), switch (t) {

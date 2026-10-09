@@ -589,7 +589,9 @@ navy officer in shackles for 400 doubloons on top of his bounty; if someone else
 and his successor doesn't count. **Quests at sea:** villages and navy outposts ask you to escort a convoy to another
 port: on accepting, a merchant ship sets sail from the harbour, and you must keep within 96 blocks of her on at least
 half of her course and see her make port (120 doubloons, plus 60 per 1000 blocks of the way). If she is sunk or taken,
-or arrives without you, the escort fails. Pirate islands want merchant convoys plundered (take goods from a convoy's
+or arrives without you, the escort fails. If no sea route to that port is known yet, the harbor master first charts
+one (the quest shows "charting the route") and the convoy sails as soon as it is ready; if no route turns up within two
+minutes, the escort is called off without counting against you. Pirate islands want merchant convoys plundered (take goods from a convoy's
 hold while you stand aboard) or navy patrols sunk or captured; navy outposts want pirate ships sunk or captured. A
 sinking counts for whoever fired the last cannonball that hit her within the last minute; a capture for whoever holds
 her deck. These hunts are offered only while such ships are at sea. Holding a letter of marque, you also earn 60

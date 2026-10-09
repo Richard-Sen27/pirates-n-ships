@@ -53,6 +53,6 @@ public final class QuestModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(QuestGameTests.class, CaptainHuntGameTests.class, QuestSeaGameTests.class);
+        return List.of(QuestGameTests.class, CaptainHuntGameTests.class, QuestSeaGameTests.class, QuestChartingGameTests.class);
     }
 }

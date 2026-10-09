@@ -78,7 +78,7 @@ class SurfaceMesherTest {
     void deepFlatSeaIsOneLevelQuadPerCell() {
         SurfaceLod.Layout l = SurfaceLod.layout(0.5, 0.5, 32, 128, 16, 192);
         Quads out = new Quads();
-        SurfaceMesher.Stats s = new SurfaceMesher().build(l, new Sea((x, z) -> 10), new SurfaceWaves().prepare(WaveField.FLAT, 0, 0, 0),
+        SurfaceMesher.Stats s = new SurfaceMesher().build(l, new Sea((x, z) -> 10), new SurfaceWaves().prepare(WaveField.FLAT, 0),
                 params(false), SurfaceMesher.Visibility.ALL, out);
         assertEquals(l.cellCount(), s.cells());
         assertEquals(0, s.seams(), "a flat sea has no slits to close");
@@ -96,7 +96,7 @@ class SurfaceMesherTest {
     void undersideFacesDown() {
         SurfaceLod.Layout l = SurfaceLod.layout(0, 0, 8, 32, 16, 32);
         Quads out = new Quads();
-        SurfaceMesher.Stats s = new SurfaceMesher().build(l, new Sea((x, z) -> 10), new SurfaceWaves().prepare(WaveField.FLAT, 0, 0, 0),
+        SurfaceMesher.Stats s = new SurfaceMesher().build(l, new Sea((x, z) -> 10), new SurfaceWaves().prepare(WaveField.FLAT, 0),
                 params(true), SurfaceMesher.Visibility.ALL, out);
         assertEquals(8 * l.cellCount(), s.vertices());
         int up = 0, down = 0;
@@ -115,7 +115,7 @@ class SurfaceMesherTest {
     @Test
     void deepVerticesFollowTheField() {
         SurfaceLod.Layout l = SurfaceLod.layout(100.3, -40.2, 32, 128, 16, 192);
-        SurfaceWaves w = new SurfaceWaves().prepare(STORM, 90, -30, 4321.5);
+        SurfaceWaves w = new SurfaceWaves().prepare(STORM, 4321.5);
         SurfaceMesher m = new SurfaceMesher();
         m.build(l, new Sea((x, z) -> 12), w, params(false), SurfaceMesher.Visibility.ALL, new Quads());
         SurfaceLod.Square near = l.near().outer();
@@ -130,7 +130,7 @@ class SurfaceMesherTest {
     @Test
     void wavesFadeOutTowardTheBeachAndNeverCoverLand() {
         SurfaceLod.Layout l = SurfaceLod.layout(0, 0, 32, 64, 16, 64);
-        SurfaceWaves w = new SurfaceWaves().prepare(STORM, 0, 0, 777);
+        SurfaceWaves w = new SurfaceWaves().prepare(STORM, 777);
         Sea beach = new Sea((x, z) -> x < 0 ? 0 : Math.min(16, x + 1));
         SurfaceMesher m = new SurfaceMesher();
         Quads out = new Quads();
@@ -165,7 +165,7 @@ class SurfaceMesherTest {
     void seamSkirtsCloseEverySlit() {
         for (double[] cam : new double[][] {{0.5, 0.5}, {13.7, -29.2}, {-1000.4, 777.9}}) {
             SurfaceLod.Layout l = SurfaceLod.layout(cam[0], cam[1], 16, 64, 16, 160);
-            SurfaceWaves w = new SurfaceWaves().prepare(STORM, cam[0], cam[1], 1000);
+            SurfaceWaves w = new SurfaceWaves().prepare(STORM, 1000);
             Sea sea = new Sea((x, z) -> 9);
             Quads out = new Quads();
             SurfaceMesher.Stats s = new SurfaceMesher().build(l, sea, w, params(false), SurfaceMesher.Visibility.ALL, out);
@@ -213,7 +213,7 @@ class SurfaceMesherTest {
         SurfaceLod.Layout l = SurfaceLod.layout(0, 0, 16, 32, 16, 32);
         Sea sea = new Sea((x, z) -> 9);
         // only x >= 0 visible
-        SurfaceMesher.Stats s = new SurfaceMesher().build(l, sea, new SurfaceWaves().prepare(WaveField.FLAT, 0, 0, 0), params(false),
+        SurfaceMesher.Stats s = new SurfaceMesher().build(l, sea, new SurfaceWaves().prepare(WaveField.FLAT, 0), params(false),
                 (x0, z0, x1, z1) -> x0 >= 0, new Quads());
         assertEquals(l.cellCount() / 2, s.cells());
         SurfaceMesher.Cells dry = new SurfaceMesher.Cells() {
@@ -223,7 +223,7 @@ class SurfaceMesherTest {
             @Override public int light(int x, int z) { return 0; }
             @Override public boolean dry(int x, int z) { return x >= 0 && x < 4 && z >= 0 && z < 10; }
         };
-        SurfaceMesher.Stats d = new SurfaceMesher().build(l, dry, new SurfaceWaves().prepare(WaveField.FLAT, 0, 0, 0), params(false),
+        SurfaceMesher.Stats d = new SurfaceMesher().build(l, dry, new SurfaceWaves().prepare(WaveField.FLAT, 0), params(false),
                 SurfaceMesher.Visibility.ALL, new Quads());
         assertEquals(l.cellCount() - 40, d.cells(), "the 4×10 cells inside the hull are not drawn");
     }
@@ -248,12 +248,12 @@ class SurfaceMesherTest {
             SurfaceMesher.Sink sink = (x, y, z, rgb, u, v, light, up) -> count[0]++;
             SurfaceMesher.Stats s = null;
             for (int i = 0; i < 400; i++) { // warm-up
-                s = m.build(l, sea, w.prepare(STORM, 5000, -3000, i), params(true), SurfaceMesher.Visibility.ALL, sink);
+                s = m.build(l, sea, w.prepare(STORM, i), params(true), SurfaceMesher.Visibility.ALL, sink);
             }
             int runs = 200;
             long t0 = System.nanoTime();
             for (int i = 0; i < runs; i++) {
-                s = m.build(l, sea, w.prepare(STORM, 5000, -3000, 100 + i), params(true), SurfaceMesher.Visibility.ALL, sink);
+                s = m.build(l, sea, w.prepare(STORM, 100 + i), params(true), SurfaceMesher.Visibility.ALL, sink);
             }
             double ms = (System.nanoTime() - t0) / 1e6 / runs;
             System.out.printf("[SurfaceMesher] render distance %d: %d cells, %d skirts, %d vertices (%.2f MB), %.3f ms per frame "
@@ -271,7 +271,7 @@ class SurfaceMesherTest {
         double camX = -36.4, camZ = 1201.7;
         int ox = (int) Math.floor(camX), oz = (int) Math.floor(camZ);
         SurfaceLod.Layout l = SurfaceLod.layout(camX, camZ, 16, 64, 16, 160);
-        SurfaceWaves w = new SurfaceWaves().prepare(STORM, camX, camZ, 1000);
+        SurfaceWaves w = new SurfaceWaves().prepare(STORM, 1000);
         List<float[]> verts = new ArrayList<>();
         java.util.Set<Integer> spans = new java.util.TreeSet<>();
         float[][] quad = new float[4][];
@@ -309,7 +309,7 @@ class SurfaceMesherTest {
     @Test
     void coarseCoastVerticesFollowTheirCornersDepth() {
         SurfaceLod.Layout l = SurfaceLod.layout(-200.5, 0.5, 16, 64, 16, 320);
-        SurfaceWaves w = new SurfaceWaves().prepare(STORM, 0, 0, 555);
+        SurfaceWaves w = new SurfaceWaves().prepare(STORM, 555);
         Sea beach = new Sea((x, z) -> x < 0 ? 0 : Math.min(16, x + 1));
         SurfaceMesher m = new SurfaceMesher();
         m.build(l, beach, w, params(false), SurfaceMesher.Visibility.ALL, new Quads());
@@ -337,7 +337,7 @@ class SurfaceMesherTest {
         });
         for (double[] cam : new double[][] {{0.5, 0.5}, {-20.3, 31.9}, {40.2, -60.7}}) {
             SurfaceLod.Layout l = SurfaceLod.layout(cam[0], cam[1], 16, 64, 16, 160);
-            SurfaceWaves w = new SurfaceWaves().prepare(STORM, cam[0], cam[1], 4242);
+            SurfaceWaves w = new SurfaceWaves().prepare(STORM, 4242);
             SurfaceMesher m = new SurfaceMesher();
             m.build(l, coast, w, new SurfaceMesher.Params(BASE, 6, false, 0, 0), SurfaceMesher.Visibility.ALL, new Quads());
             int matched = border(m, l.near(), l.mid(), 0, 1) + border(m, l.mid(), l.far(), 1, 2);

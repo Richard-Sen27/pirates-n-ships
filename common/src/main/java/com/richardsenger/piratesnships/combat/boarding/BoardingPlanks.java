@@ -21,10 +21,10 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Laying gangways, taking them up and finding them again (BRD1, BRD2, docs/design.md §8.3, §8.4). The rules are in
- * {@link PlankRun}, the reading of the world and the ships in {@link PlankPlanner}; this class places the cells (from
- * segment 0 outward, so Sable grows a ship's plot from its edge, docs/sable-notes.md §1.2) and records the ends on
- * segment 0's {@link BoardingPlankBlockEntity}.
+ * Laying gangways, taking them up and finding them again (BRD1, BRD2, BRD4, docs/design.md §8.3, §8.4). The rules are
+ * in {@link PlankRun}, the reading of the world and the ships in {@link PlankPlanner}; this class places the cells (from
+ * segment 0 outward, so Sable grows a ship's plot from its edge, docs/sable-notes.md §1.2), gives every cell its board
+ * heights and records the run and its ends on segment 0's {@link BoardingPlankBlockEntity}.
  */
 public final class BoardingPlanks {
 
@@ -33,13 +33,14 @@ public final class BoardingPlanks {
 
     /**
      * The result of {@link #lay}. On {@link Outcome#OK}: the ship the run lies in ({@code ship}, null for the world), the
-     * cells (frame positions, segment 0 first) and their pitches, the landing and the far end's ship (null for the
-     * world). On {@link Outcome#BLOCKED}: {@code blockedAt}, the index of the taken cell.
+     * cells (frame positions, segment 0 first) with the board's heights in each, its length in columns and rise in whole
+     * blocks (in the laying direction), the landing and the far end's ship (null for the world). On
+     * {@link Outcome#BLOCKED}: {@code blockedAt}, the column of the taken cell.
      */
-    public record Laid(Outcome outcome, @Nullable UUID ship, List<BlockPos> cells, List<PlankRun.Pitch> pitches,
-                       @Nullable UUID farShip, @Nullable PlankRun.Landing landing, int blockedAt) {
+    public record Laid(Outcome outcome, @Nullable UUID ship, List<BlockPos> cells, List<PlankRun.Cell> heights,
+                       int columns, int rise, @Nullable UUID farShip, @Nullable PlankRun.Landing landing, int blockedAt) {
         static Laid fail(Outcome outcome, int blockedAt) {
-            return new Laid(outcome, null, List.of(), List.of(), null, null, blockedAt);
+            return new Laid(outcome, null, List.of(), List.of(), 0, 0, null, null, blockedAt);
         }
 
         /** Frame position of segment 0, or null. */
@@ -47,8 +48,14 @@ public final class BoardingPlanks {
             return cells.isEmpty() ? null : cells.get(0);
         }
 
+        /** Cells of the run. */
         public int length() {
             return cells.size();
+        }
+
+        /** The board's pitch in the laying direction, degrees (negative when it falls). */
+        public double pitchDegrees() {
+            return columns == 0 ? 0.0 : Math.toDegrees(Math.atan2(rise, columns));
         }
     }
 
@@ -77,32 +84,53 @@ public final class BoardingPlanks {
         if (!plan.found()) {
             return Laid.fail(outcome(plan.failure()), plan.blockedAt());
         }
+        return place(level, plan);
+    }
+
+    /**
+     * Places a found plan's cells from segment 0 outward, gives each its board heights and segment 0 the run and its
+     * ends. Places nothing (and reports the cell as blocked) when a ship's plot does not take a cell.
+     */
+    static Laid place(ServerLevel level, PlankPlanner.Plan plan) {
         BoardingPlankBlock block = BoardingContent.PLANK.get();
         int n = plan.length();
         for (int i = 0; i < n; i++) {
             BlockPos cell = plan.cells().get(i);
-            BlockState state = block.segment(plan.facing(), i, n, plan.pitches().get(i));
+            BlockState state = block.segment(plan.facing(), i);
             level.setBlock(cell, Waterlogging.at(state, level, cell), Block.UPDATE_ALL);
             if (!level.getBlockState(cell).is(block)) {
                 // the plot did not take the block (no chunk there): take back what was placed, without drops
-                for (int j = i - 1; j >= 0; j--) {
-                    BlockPos back = plan.cells().get(j);
-                    level.setBlock(back, Waterlogging.leftBehind(level.getBlockState(back)), Block.UPDATE_CLIENTS | Block.UPDATE_SUPPRESS_DROPS);
-                }
-                return Laid.fail(Outcome.BLOCKED, i);
+                BoardingPlankBlock.quietly(() -> {
+                    for (int j = 0; j < n; j++) {
+                        BlockPos back = plan.cells().get(j);
+                        if (level.getBlockState(back).is(block)) {
+                            level.setBlock(back, Waterlogging.leftBehind(level.getBlockState(back)), Block.UPDATE_CLIENTS | Block.UPDATE_SUPPRESS_DROPS);
+                        }
+                    }
+                });
+                return Laid.fail(Outcome.BLOCKED, plan.heights().get(i).i());
             }
         }
         BlockPos base = plan.cells().get(0);
+        for (int i = 0; i < n; i++) {
+            if (level.getBlockEntity(plan.cells().get(i)) instanceof BoardingPlankBlockEntity be) {
+                PlankRun.Cell h = plan.heights().get(i);
+                be.cell(base, h.near(), h.far());
+            }
+        }
         PlankBodies.Body frame = plan.frame();
         PlankBodies.Body far = plan.far();
         if (level.getBlockEntity(base) instanceof BoardingPlankBlockEntity be) {
-            be.link(frame != null && !frame.isWorld(), plan.baseSupport(), far == null ? null : far.id(), plan.farPoint(),
-                    plan.farBlock(), plan.cells().get(n - 1), n, plan.landing());
+            be.link(plan.cells(), plan.columns(), plan.rise(), plan.lipNear(), plan.lipFar(), frame != null && !frame.isWorld(),
+                    plan.baseSupport(), far == null ? null : far.id(), plan.farPoint(), plan.farBlock(), plan.landing());
+        }
+        for (BlockPos cell : plan.cells()) {
+            if (level.getBlockEntity(cell) instanceof BoardingPlankBlockEntity be) be.sync();
         }
         SoundType sound = block.defaultBlockState().getSoundType();
         play(level, frame, base, sound.getPlaceSound(), sound);
         return new Laid(Outcome.OK, frame == null ? null : frame.id(), List.copyOf(plan.cells()),
-                List.copyOf(plan.pitches()), far == null ? null : far.id(), plan.landing(), -1);
+                List.copyOf(plan.heights()), plan.columns(), plan.rise(), far == null ? null : far.id(), plan.landing(), -1);
     }
 
     static Outcome outcome(PlankRun.Failure failure) {
@@ -136,13 +164,15 @@ public final class BoardingPlanks {
             return false;
         }
         BoardingPlankBlock block = BoardingContent.PLANK.get();
-        // segment 0 (the only one with loot) first and without drops, then the rest
-        for (BlockPos p : run) {
-            BlockState st = level.getBlockState(p);
-            if (st.is(block)) {
-                level.setBlock(p, Waterlogging.leftBehind(st), Block.UPDATE_ALL | Block.UPDATE_SUPPRESS_DROPS);
+        // every cell without drops (segment 0 holds the only loot), and no cascade of the run breaking
+        BoardingPlankBlock.quietly(() -> {
+            for (BlockPos p : run) {
+                BlockState st = level.getBlockState(p);
+                if (st.is(block)) {
+                    level.setBlock(p, Waterlogging.leftBehind(st), Block.UPDATE_ALL | Block.UPDATE_SUPPRESS_DROPS);
+                }
             }
-        }
+        });
         if (!player.getAbilities().instabuild) {
             ItemStack stack = new ItemStack(BoardingContent.PLANK_ITEM.get());
             if (!player.getInventory().add(stack)) {
@@ -161,7 +191,7 @@ public final class BoardingPlanks {
         List<Plank> out = new ArrayList<>();
         for (BlockEntity be : ship.plotBlockEntities()) {
             if (be instanceof BoardingPlankBlockEntity p && !p.isRemoved() && p.farShip() != null
-                    && p.getBlockState().is(BoardingContent.PLANK.get())) {
+                    && p.getBlockState().is(BoardingContent.PLANK.get()) && p.isBase()) {
                 out.add(new Plank(ship.id(), p.getBlockPos(), p.facing(), p.length(), p.farShip(), p.farPoint(),
                         p.farBlock(), p.landing()));
             }

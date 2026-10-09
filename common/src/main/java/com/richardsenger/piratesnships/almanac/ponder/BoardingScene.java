@@ -41,7 +41,7 @@ import static com.richardsenger.piratesnships.almanac.ponder.SceneKit.say;
  *
  * <p>The hook is the item on a drawn arc (the game's hook entity needs its thrower), the haul moves the pirate ship's
  * section three blocks west (an element transform, not Sable: in the game both hulls move toward each other). The
- * plank is the real run of {@link BoardingPlankBlock} states from {@link PlankRun}'s rule (BRD2) for this gap: two flat cells from
+ * plank is the real run of {@link BoardingPlankBlock} states from {@link PlankRun}'s rule (BRD4) for this gap: two level cells from
  * the top of our gunwale, the tip on hers. The pirates telegraph their blows through the melee pose the server would
  * sync ({@link SceneSync#melee}); the player is not drawn, only the clicks. About 38 seconds.
  */
@@ -188,9 +188,9 @@ final class BoardingScene {
         scene.markAsFinished();
     }
 
-    /** Segment {@code segment} of a run of {@code length} going east (the block's own rule for the tip). */
+    /** Segment {@code segment} of a run of {@code length} going east (a bare cell draws its own flat board, BRD4). */
     static BlockState plank(int segment, int length) {
-        return BoardingContent.PLANK.get().segment(Direction.EAST, segment, length);
+        return BoardingContent.PLANK.get().segment(Direction.EAST, segment);
     }
 
     /** Where her hull lies once hauled alongside. */

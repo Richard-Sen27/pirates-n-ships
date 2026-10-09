@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.combat.boarding;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.core.text.Num;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -17,9 +18,9 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import java.util.List;
 
 /**
- * The boarding plank item (BRD1, BRD2). Used on the edge of a deck, a rail, a pier or the shore, it lays a gangway
+ * The boarding plank item (BRD1, BRD2, BRD4). Used on the edge of a deck, a rail, a pier or the shore, it lays a gangway
  * through {@link BoardingPlanks#lay}: on the clicked side face it runs straight out at that block's height, on the top
- * face one block up and out in the player's facing; it lands on a ship or on the world, climbing or falling on ramps.
+ * face one block up and out in the player's facing; it lands on a ship or on the world as one straight board (BRD4).
  * A refusal says why on the action bar. A {@link BlockItem} only so the block, its loot and pick-block know their item;
  * it never places a single block itself.
  */
@@ -71,13 +72,13 @@ public class BoardingPlankItem extends BlockItem {
         };
     }
 
-    /** The action bar message for a refused plank, with its number (cell in the way, reach, rise). */
+    /** The action bar message for a refused plank, with its number (cell in the way, reach, steepest pitch). */
     public static Component message(BoardingPlanks.Laid laid) {
         String key = messageKey(laid.outcome());
         return switch (laid.outcome()) {
             case BLOCKED -> Component.translatable(key, laid.blockedAt() + 1);
             case TOO_FAR -> Component.translatable(key, BoardingConfig.MAX_LENGTH.get());
-            case TOO_STEEP -> Component.translatable(key, BoardingConfig.MAX_RISE.get());
+            case TOO_STEEP -> Component.translatable(key, Num.trim(BoardingConfig.MAX_PITCH.get()));
             default -> Component.translatable(key);
         };
     }

@@ -9,6 +9,8 @@ import com.richardsenger.piratesnships.law.LawAttachments;
 import com.richardsenger.piratesnships.law.LawService;
 import com.richardsenger.piratesnships.mob.HostilityRules;
 import com.richardsenger.piratesnships.mob.MeleePose;
+import com.richardsenger.piratesnships.mob.MeleePoseSync;
+import com.richardsenger.piratesnships.mob.MeleePosed;
 import com.richardsenger.piratesnships.mob.MobConfig;
 import com.richardsenger.piratesnships.mob.MobFaction;
 import com.richardsenger.piratesnships.mob.MobKind;
@@ -58,14 +60,15 @@ import java.util.UUID;
  *       dropped as soon as the rules no longer allow it (a pardoned player, {@code mobs.pirates_hostile} switched off);
  *       being hit gives a grudge ({@code mobs.grudge_ticks}) that allows retaliation;</li>
  *   <li>the telegraph: the melee phase (the same attachment players use, {@link MeleeService#state}) is mirrored into
- *       a synced int ({@link MeleePose}) that the client model turns into sword-arm poses;</li>
+ *       a synced int ({@link MeleePose}, through the {@link MeleePoseSync} the crew shares since MEL3) that the
+ *       client model turns into sword-arm poses;</li>
  *   <li>the config toggles: a disabled type disappears ({@link #checkDespawn}), drops follow {@code mobs.drops}.</li>
  * </ul>
  * Body animations are the crew member's idle/walk/sit ({@link CrewPose}). Mobs standing on a Sable ship move with it
  * through Sable's entity tracking (sable-notes §6), like any entity on a deck. This package and {@code mob/client} are
  * the only GeckoLib importers of the module.
  */
-public abstract class SeafarerMob extends PathfinderMob implements GeoEntity, Duelist {
+public abstract class SeafarerMob extends PathfinderMob implements GeoEntity, Duelist, MeleePosed {
 
     private static final String TAG_GRUDGE = "pirates_n_ships:grudge";
     private static final String TAG_GRUDGE_UNTIL = "pirates_n_ships:grudge_until";
@@ -85,10 +88,10 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity, Du
 
     private final AnimatableInstanceCache geoCache = GeckoLibUtil.createInstanceCache(this);
 
-    private @Nullable UUID grudgeTarget;
-    private long grudgeUntil;
     /** Client: {@link #tickCount} when the melee pose last changed (for the pose's progress). */
     private int poseChangedAt;
+    private @Nullable UUID grudgeTarget;
+    private long grudgeUntil;
     private boolean stationary;
     /** BOS1: who this mob holds a truce with, until which game time (a pirate captain's duel). Not saved. */
     private final Map<UUID, Long> truces = new HashMap<>();
@@ -141,7 +144,7 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity, Du
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
-        builder.define(DATA_MELEE_POSE, MeleePose.IDLE.pack());
+        MeleePoseSync.define(builder, DATA_MELEE_POSE);
         builder.define(DATA_AIMING, false);
     }
 
@@ -252,6 +255,16 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity, Du
         return true;
     }
 
+    /**
+     * MEL3: runs vanilla's swing timer, which only monsters and players run, so a {@code swing(hand)} from vanilla melee
+     * (the bare-handed {@code VanillaSwordGoal}) advances {@link #getAttackAnim} on both sides for the model's punch.
+     */
+    @Override
+    public void aiStep() {
+        updateSwingTime();
+        super.aiStep();
+    }
+
     @Override
     protected void customServerAiStep() {
         super.customServerAiStep();
@@ -261,21 +274,19 @@ public abstract class SeafarerMob extends PathfinderMob implements GeoEntity, Du
             DuelistDebug.stats(this).targetsLost++;
             DuelistDebug.report(this, "target", "dropped (hostility rules: creative, pardoned or not hostile)", target, "");
         }
-        MeleePose pose = MeleeService.isActive(this) ? MeleePose.of(MeleeService.state(this)) : MeleePose.IDLE;
-        entityData.set(DATA_MELEE_POSE, pose.pack()); // only sends when it changes
+        MeleePoseSync.update(this, DATA_MELEE_POSE);
     }
 
     // --- telegraph (client) -------------------------------------------------------------------------------------
 
+    @Override
     public MeleePose meleePose() {
-        return MeleePose.unpack(entityData.get(DATA_MELEE_POSE));
+        return MeleePoseSync.pose(entityData, DATA_MELEE_POSE);
     }
 
-    /** 0..1 through the current melee phase (client; open-ended phases report 1). */
+    @Override
     public float meleePoseProgress(float partialTick) {
-        MeleePose pose = meleePose();
-        if (pose.duration() <= 0) return 1f;
-        return Math.min(1f, (tickCount - poseChangedAt + partialTick) / pose.duration());
+        return MeleePoseSync.progress(meleePose(), tickCount - poseChangedAt, partialTick);
     }
 
     public boolean isAiming() {

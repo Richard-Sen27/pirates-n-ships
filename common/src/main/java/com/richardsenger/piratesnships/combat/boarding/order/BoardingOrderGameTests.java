@@ -8,6 +8,7 @@ import com.richardsenger.piratesnships.combat.cannon.CannonContent;
 import com.richardsenger.piratesnships.combat.cannon.npc.Gunnery;
 import com.richardsenger.piratesnships.combat.cannon.npc.GunneryState;
 import com.richardsenger.piratesnships.combat.content.CombatContent;
+import com.richardsenger.piratesnships.combat.melee.rules.Phase;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
@@ -362,7 +363,8 @@ public final class BoardingOrderGameTests {
 
     /**
      * A husk on B is fought and killed by the boarders; the one hand with an empty hand and a cutlass in A's chest takes
-     * it from the chest first.
+     * it from the chest first. MEL3: the armed boarder's synced melee pose shows its wind-up and hit frames in the fight
+     * and is idle again once the husk is dead.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = SETTLE + ORDER + 400, batch = BATCH + "fight")
     public static void aHostileMobAboardIsFoughtAndKilled(GameTestHelper h) {
@@ -391,14 +393,26 @@ public final class BoardingOrderGameTests {
             Container box = (Container) h.getLevel().getBlockEntity(s.chest());
             h.assertTrue(box != null && box.getItem(0).isEmpty(), "the cutlass is still in the chest");
         });
+        java.util.Set<Phase> armedPoses = java.util.EnumSet.noneOf(Phase.class);
+        h.onEachTick(() -> {
+            for (CrewMember c : hands) {
+                if (c.getMainHandItem().is(CombatContent.CUTLASS.get())) armedPoses.add(c.meleePose().phase());
+            }
+        });
         h.succeedWhen(() -> {
             h.assertTrue(h.getTick() > SETTLE + ORDER, "not yet ordered");
             h.assertTrue(!husk[0].isAlive(), "the husk aboard B lives (" + husk[0].getHealth() + " health) at " + husk[0].position());
+            h.assertTrue(armedPoses.contains(Phase.WINDUP) && armedPoses.contains(Phase.ACTIVE),
+                    "the armed boarder's swing was not synced: " + armedPoses);
+            for (CrewMember c : hands) h.assertTrue(c.meleePose().phase() == Phase.IDLE, "a fight pose after the fight: " + c.meleePose());
             cleanup(h, s, people);
         });
     }
 
-    /** Once the deck is clear for capture_seconds, the captain who gave the order is told: "Her deck is yours". */
+    /**
+     * Once the deck is clear for capture_seconds, the captain who gave the order is told: "Her deck is yours". MEL3: the
+     * hands fight bare-handed (vanilla melee) and swing their arms doing it.
+     */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = SETTLE + ORDER + 400, batch = BATCH + "capture")
     public static void captureTellsTheCaptain(GameTestHelper h) {
         noDesertion(h);
@@ -419,8 +433,15 @@ public final class BoardingOrderGameTests {
         });
         h.runAtTickTime(SETTLE + ORDER + 5, () -> h.assertTrue(captain.count(BoardingParties.KEY_CAPTURED) == 0,
                 "told of a capture while the husk lives"));
+        boolean[] swung = {false};
+        h.onEachTick(() -> {
+            for (Mob m : people) {
+                if (m instanceof CrewMember c && c.getAttackAnim(0f) > 0f) swung[0] = true;
+            }
+        });
         h.succeedWhen(() -> {
             h.assertTrue(h.getTick() > SETTLE + ORDER + 5, "not yet ordered");
+            h.assertTrue(swung[0], "no bare-handed boarder swung its arm");
             h.assertTrue(!husk[0].isAlive(), "the husk lives at " + husk[0].position() + ", aboard B "
                     + BoardingFight.aboard(husk[0], s.b().ship().id()));
             BoardingParties.Party p = BoardingParties.party(s.a().ship().id());

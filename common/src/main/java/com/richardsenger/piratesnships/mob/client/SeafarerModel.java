@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.mob.client;
 
+import com.richardsenger.piratesnships.mob.entity.NavySoldier;
 import com.richardsenger.piratesnships.mob.entity.SeafarerMob;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.HumanoidArm;
@@ -37,7 +38,6 @@ public class SeafarerModel<T extends SeafarerMob> extends HumanoidGeoModel<T> {
         boolean rightMain = animatable.getMainArm() == HumanoidArm.RIGHT;
         GeoBone main = getAnimationProcessor().getBone(rightMain ? RIGHT_ARM : LEFT_ARM);
         GeoBone off = getAnimationProcessor().getBone(rightMain ? LEFT_ARM : RIGHT_ARM);
-        float mirror = rightMain ? 1f : -1f;
         if (animatable.isAiming()) {
             EntityModelData data = animationState.getData(DataTickets.ENTITY_MODEL_DATA);
             if (data != null) {
@@ -52,17 +52,7 @@ public class SeafarerModel<T extends SeafarerMob> extends HumanoidGeoModel<T> {
             }
             return;
         }
-        DuelistArmPose.Angles a = DuelistArmPose.of(animatable.meleePose(), animatable.meleePoseProgress(animationState.getPartialTick()));
-        if (a == null) return;
-        set(main, a.armX(), a.armY() * mirror, a.armZ() * mirror);
-        GeoBone waist = getAnimationProcessor().getBone(WAIST);
-        if (waist != null) waist.setRotX(-a.waistX() * Mth.DEG_TO_RAD);
-    }
-
-    private static void set(GeoBone bone, float x, float y, float z) {
-        if (bone == null) return;
-        bone.setRotX(-x * Mth.DEG_TO_RAD);
-        bone.setRotY(-y * Mth.DEG_TO_RAD);
-        bone.setRotZ(z * Mth.DEG_TO_RAD);
+        // MEL3: shared with the crew; a soldier's shove swings the arm through its own clip, so no punch for him
+        MeleeTelegraph.apply(getAnimationProcessor(), animatable, animationState.getPartialTick(), !(animatable instanceof NavySoldier));
     }
 }

@@ -80,7 +80,7 @@ public final class DesertionGameTests {
     private static void whenReady(GameTestHelper h, Ship s, Runnable body) {
         Runnable[] poll = new Runnable[1];
         poll[0] = () -> {
-            net.minecraft.world.phys.AABB b = s.ship().worldBounds();
+            net.minecraft.world.phys.AABB b = s.f().ship().worldBounds();
             if (b.getXsize() > 1 && b.getZsize() > 1) body.run(); else h.runAfterDelay(1, poll[0]);
         };
         h.runAfterDelay(2, poll[0]);

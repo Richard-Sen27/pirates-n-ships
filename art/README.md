@@ -1203,6 +1203,40 @@ Crow's nest (CN1):
 - Render `renders/crows_nest.png`: on a stand-in mast (three-quarter from above), looking into the barrel, and from
   below (struts); a separate `THREE.WebGLRenderer` over clones of `Project.model_3d`, written with `fs`.
 
+Flag pedestal and the pole on the crow's nest (FLG3):
+- **`flag_pedestal.bbmodel`** -> `block/flag_pedestal.json` (9 elements, group `pedestal`) and
+  `block/flag_pedestal_pole.json` (17, groups `pedestal` + `pole`), exported from the one project with the `pole`
+  group's cubes set to `export = false` for the plain model (the HELM1 pattern). A plinth carved from a log in the
+  flagpole's `stripped_spruce_log` (sides) with `stripped_spruce_log_top` rings on the up faces: `plinth` x/z 3..13,
+  y 0..1.5 (down face culled), `bevel_low` 3.5..12.5 to 2.25, `body` 4..12 to 4.75, `bevel_top` 4.5..11.5 to 5.25
+  (stepped 0.5 px bevels), an `anvil` `hoop` 0.3 px proud at y 3.1..3.9 and a `socket_*` collar of four anvil bars
+  (outer 5.5..10.5, the 3 px hole 6.5..9.5) at y 5.25..6. Only the plain model carries display entries (`gui`
+  `[30, 225, 0]` / `[0, 3.5, 0]` / 1, hands 0.5 and 0.6, ground 0.5, fixed 1); datagen's block-item model delegates
+  to it. `FlagPedestalBlock`'s outline is x/z 3..13 below 2.25 px and 4..12 up to 6 px, plus the pole's 4×4 post up
+  to 16 px while a pole stands in it.
+- **The `pole` group** (both projects, every element named `pole_*`): `pole_stub` is the flagpole's 3 px pole at x/z
+  6.5..9.5 from the socket floor (5.25) or the nest's floor (1.5) up to 16 with no up and no down face, so the pole
+  block above (part `top` or `middle`, which leave out their down face) joins it without a seam; then the cleat, its
+  wound rope and the two halyard lines copied unchanged from `flagpole_bottom` (horn y 6.6..11.6, halyard from 10.7,
+  VIS1a-b), on the same diagonal. On the nest an anvil `pole_collar_*` (same four-bar ring, y 1.5..2.5) seats the
+  stub on the floor. The nest's halyard texture is a new `rope` key (`stripped_birch_log`); the plain `crows_nest.json`
+  was not re-exported and is byte-identical (the plain export of the edited project matches its elements).
+- **`crows_nest.bbmodel`** now holds the 56 nest cubes in a `nest` group and the 12 new ones in `pole`;
+  `block/crows_nest_pole.json` is the committed nest elements followed by the pole group's. The block state picks the
+  `_pole` model from the footing's `pole` property (`FlagpoleFooting.POLE`, true while a flagpole stands on it).
+  `HandMadeModelsTest.pedestalAndNestShowThePoleStubWithTheCleat` checks that each `_pole` model is its plain model
+  followed by `pole_*` parts only, with the stub ending at 16 px and the cleat and halyard present.
+- Built from a Python part list (scratch, not committed) that took the cleat and halyard from `flagpole_bottom.json`:
+  `Codecs.java_block.parse` into a new `java_block` tab for the pedestal, and for the nest `loadModelFile` of the
+  committed project plus cubes created from the part list (`autouv: 0`, UVs, face rotations and textures by id);
+  textures from `art/vanilla/` (namespace `minecraft`, folder `block`); exports compared with the part list.
+  `tools/lint_models.py`: no visible fights; the same-look cleat pair of `flagpole_bottom` and hidden faces of the
+  collar bars and the stub inside the collar are warnings.
+- Renders `renders/flag_pedestal.png` (the empty pedestal, the pedestal with the stub and two stand-in pole sections
+  above it, the cleat close up) and `renders/crows_nest_pole.png` (the nest with a pole rising through it, looking into
+  the barrel, the collar and cleat on the floor), a `THREE.WebGLRenderer` over clones of `Project.model_3d` (the pole
+  above drawn as copies of the stub and halyard), written with `fs`.
+
 ## Entities
 
 Animated mobs and NPCs (crew member, pirate, sailor, navy soldier and officer; design.md §9) are GeckoLib models

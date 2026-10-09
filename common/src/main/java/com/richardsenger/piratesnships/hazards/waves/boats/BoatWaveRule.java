@@ -16,7 +16,7 @@ import com.richardsenger.piratesnships.hazards.waves.client.surface.SurfaceRules
  * <h2>Offset</h2>
  * The still-water level rises by {@code fade · h}, with {@code h} the wave height at the entity from the level's point
  * lookup ({@code SeaStates#heightAt} on the server, {@code ClientWaves#heightAt} on the client, both
- * {@link WaveField#heightAt}: whatever anchor rule the field uses, so a boat follows it) and {@code fade} the drawn sea's
+ * {@link WaveField#heightAt}: the one global sea of WAV7 that ships and the drawn sea share) and {@code fade} the drawn sea's
  * depth fade ({@link SurfaceRules#depthFade} at the default {@code surface_full_depth}, {@link #FULL_DEPTH}: a fixed
  * value rather than the client option, so the server and the driving client compute the same level). A beach does not
  * lift a boat: one block of water fades the waves out completely.

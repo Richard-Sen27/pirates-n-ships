@@ -43,6 +43,11 @@ public final class HazardConfig {
             "How much the wave height swells and fades in sets (wave groups): 0.35 = between 65 % and 135 % of the sea state's height");
     public static final ConfigValue<Double> GROUP_PERIOD_SECONDS = WAVES.doubleRange("group_period_seconds", 60.0, 10.0, 600.0,
             "Time scale of the wave groups in seconds: sets of bigger waves come and go over about this long");
+    // WAV7: one global sea whose direction changes in steps
+    public static final ConfigValue<Double> DIRECTION_STEP_DEGREES = WAVES.doubleRange("direction_step_degrees", 10.0, 1.0, 90.0,
+            "The waves turn to a new direction once the wind (with a slow offset) has moved this many degrees away from theirs");
+    public static final ConfigValue<Double> DIRECTION_FADE_SECONDS = WAVES.doubleRange("direction_fade_seconds", 15.0, 0.0, 120.0,
+            "Seconds over which the waves crossfade from the old direction to the new one (0 = switch at once)");
     public static final ConfigValue<Boolean> HEAVE = WAVES.bool("heave", true,
             "Ships rise on wave crests and sink into troughs (a vertical force from the mean wave height under the hull)");
     public static final ConfigValue<Double> HEAVE_STRENGTH = WAVES.doubleRange("heave_strength", 0.95, 0.0, 5.0,

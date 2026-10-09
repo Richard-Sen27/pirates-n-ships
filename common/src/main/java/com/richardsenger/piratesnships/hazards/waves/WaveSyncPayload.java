@@ -7,21 +7,25 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Server → client: the sea of the player's level (WV1, WAV2), like the wind sync. The trains come from a fixed seed
- * ({@link WaveSpectrum}), so the amplitude, the direction, the train count, the peak wavelength and the groups are
- * enough for the client to rebuild the same field; it blends toward each sample over {@code intervalTicks}.
+ * Server → client: the sea of the player's level (WV1, WAV2, WAV7), like the wind sync. The trains come from a fixed
+ * seed ({@link WaveSpectrum}), so the amplitude, the heading (direction, previous direction and crossfade), the train
+ * count, the peak wavelength, the groups and the origin are enough for the client to rebuild exactly the server's
+ * field. Every number is a double: the phase at a far coordinate multiplies the direction by up to {@code 10⁷}, so a
+ * float direction would put the client's sea a visible fraction of a wave off the server's. The client blends the
+ * amplitude, the peak wavelength and the group depth toward each sample over {@code intervalTicks}; the heading and the
+ * origin it takes as they are.
  *
- * @param state            ordinal of the current {@link SeaState}
- * @param amplitude        crest height [blocks] including {@code waves.amplitude}; 0 when waves are off
- * @param directionDeg     compass bearing the waves run toward
- * @param intervalTicks    ticks until the next sync
- * @param components       number of wave trains ({@code waves.components})
- * @param peakWavelength   the sea state's peak wavelength [blocks]
- * @param groupDepth       {@code waves.group_depth}
- * @param groupPeriodTicks {@code waves.group_period_seconds} × 20
+ * @param state          ordinal of the current {@link SeaState}
+ * @param amplitude      crest height [blocks] including {@code waves.amplitude}; 0 when waves are off
+ * @param heading        the direction the waves run toward and the crossfade from the previous one
+ * @param intervalTicks  ticks until the next sync
+ * @param components     number of wave trains ({@code waves.components})
+ * @param peakWavelength the sea state's peak wavelength [blocks]
+ * @param groups         {@code waves.group_depth} (scaled by the state) and {@code waves.group_period_seconds} × 20
+ * @param origin         the field's origin ({@link WaveField.Origin#NONE} in gameplay)
  */
-public record WaveSyncPayload(int state, float amplitude, float directionDeg, int intervalTicks, int components,
-                              float peakWavelength, float groupDepth, float groupPeriodTicks) implements CustomPacketPayload {
+public record WaveSyncPayload(int state, double amplitude, WaveField.Heading heading, int intervalTicks, int components,
+                              double peakWavelength, WaveField.Groups groups, WaveField.Origin origin) implements CustomPacketPayload {
 
     public static final Type<WaveSyncPayload> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(Constants.MOD_ID, "wave_sync"));
@@ -29,36 +33,44 @@ public record WaveSyncPayload(int state, float amplitude, float directionDeg, in
     public static final StreamCodec<RegistryFriendlyByteBuf, WaveSyncPayload> CODEC = StreamCodec.of(
             (buf, p) -> {
                 buf.writeVarInt(p.state);
-                buf.writeFloat(p.amplitude);
-                buf.writeFloat(p.directionDeg);
+                buf.writeDouble(p.amplitude);
+                buf.writeDouble(p.heading.current());
+                buf.writeDouble(p.heading.previous());
+                buf.writeDouble(p.heading.fadeStart());
+                buf.writeDouble(p.heading.fadeTicks());
                 buf.writeVarInt(p.intervalTicks);
                 buf.writeVarInt(p.components);
-                buf.writeFloat(p.peakWavelength);
-                buf.writeFloat(p.groupDepth);
-                buf.writeFloat(p.groupPeriodTicks);
+                buf.writeDouble(p.peakWavelength);
+                buf.writeDouble(p.groups.depth());
+                buf.writeDouble(p.groups.periodTicks());
+                buf.writeDouble(p.origin.ticks());
+                buf.writeDouble(p.origin.x());
+                buf.writeDouble(p.origin.z());
             },
-            buf -> new WaveSyncPayload(buf.readVarInt(), buf.readFloat(), buf.readFloat(), buf.readVarInt(), buf.readVarInt(),
-                    buf.readFloat(), buf.readFloat(), buf.readFloat()));
+            buf -> new WaveSyncPayload(buf.readVarInt(), buf.readDouble(),
+                    new WaveField.Heading(buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readDouble()),
+                    buf.readVarInt(), buf.readVarInt(), buf.readDouble(),
+                    new WaveField.Groups(buf.readDouble(), buf.readDouble()),
+                    new WaveField.Origin(buf.readDouble(), buf.readDouble(), buf.readDouble())));
 
     /** The payload for {@code field}, a sea of {@code peakWavelength} built by {@link SeaStates}. */
     public static WaveSyncPayload of(SeaState state, WaveField field, double peakWavelength, int intervalTicks) {
-        return new WaveSyncPayload(state.ordinal(), (float) field.amplitude(), (float) field.directionDegrees(), intervalTicks,
-                Math.max(WaveSpectrum.MIN_COMPONENTS, field.components().size()), (float) peakWavelength,
-                (float) field.groups().depth(), (float) field.groups().periodTicks());
+        return new WaveSyncPayload(state.ordinal(), field.amplitude(), field.heading(), intervalTicks,
+                Math.max(WaveSpectrum.MIN_COMPONENTS, field.components().size()), peakWavelength, field.groups(), field.origin());
     }
 
     public SeaState seaState() {
         return SeaState.byOrdinal(state);
     }
 
-    public WaveField.Groups groups() {
-        return new WaveField.Groups(groupDepth, groupPeriodTicks);
+    /** Compass bearing the waves run toward once any fade is over [degrees]. */
+    public double directionDeg() {
+        return heading.current();
     }
 
-    /** The field this payload describes, unpinned ({@link WaveField.Origin#NONE}). */
+    /** The field this payload describes: the server's field, number for number. */
     public WaveField field() {
-        return new WaveField(amplitude, directionDeg, WaveSpectrum.components(components, peakWavelength), WaveField.Origin.NONE,
-                groups());
+        return new WaveField(amplitude, heading, WaveSpectrum.components(components, peakWavelength), origin, groups);
     }
 
     @Override

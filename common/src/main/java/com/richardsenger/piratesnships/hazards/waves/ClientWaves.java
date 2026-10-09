@@ -1,28 +1,36 @@
 package com.richardsenger.piratesnships.hazards.waves;
 
 /**
- * Client-side holder of the last synced sea (WV1), like {@code sailing.wind.ClientWind}: the amplitude and direction
- * blend linearly from the previous sample to the new one over the sync interval. Contains no client-only classes, so it
- * is safe to load on a dedicated server. Updated on the client main thread by the {@link WaveSyncPayload} handler.
+ * Client-side holder of the last synced sea (WV1, WAV7), like {@code sailing.wind.ClientWind}. Contains no client-only
+ * classes, so it is safe to load on a dedicated server. Updated on the client main thread by the
+ * {@link WaveSyncPayload} handler.
+ *
+ * <p>The field the client draws is the server's field (WAV7): the heading (direction, previous direction, crossfade),
+ * the origin, the train count and the group period are the latest sample's exactly, so the crests stand where the
+ * server's ships feel them. Only the size of the sea blends: the amplitude, the peak wavelength (which only reweights
+ * the trains) and the group depth move linearly from where they were to the new sample over the sync interval, as the
+ * server's sea eases between states. In a steady sea the client's field equals the server's.
  */
 public final class ClientWaves {
 
     /**
-     * A blend between two seas from {@code start} over {@code duration} ticks; the peak wavelength and the group depth
-     * blend with the amplitude, the train count and the group period are the latest sample's (WAV2). Pure.
+     * A blend of the sea's size from {@code from…} at {@code start} over {@code duration} ticks toward the sample
+     * {@code to}, whose heading, origin and trains apply at once. Pure.
      */
-    public record Blend(double fromAmplitude, double fromDirection, double toAmplitude, double toDirection,
-                       SeaState state, double start, double duration, double fromPeak, double toPeak, int components,
-                       double fromGroupDepth, WaveField.Groups groups) {
+    public record Blend(double fromAmplitude, double fromPeak, double fromGroupDepth, double start, double duration,
+                        WaveSyncPayload to) {
 
-        public static final Blend FLAT = new Blend(0.0, 0.0, 0.0, 0.0, SeaState.CALM, 0.0, 1.0,
-                WaveSpectrum.REFERENCE_WAVELENGTH, WaveSpectrum.REFERENCE_WAVELENGTH, WaveSpectrum.DEFAULT_COMPONENTS,
-                0.0, WaveField.Groups.NONE);
+        private static final WaveSyncPayload FLAT_SAMPLE = WaveSyncPayload.of(SeaState.CALM, WaveField.FLAT,
+                WaveSpectrum.REFERENCE_WAVELENGTH, 1);
+        public static final Blend FLAT = of(FLAT_SAMPLE, 0.0);
 
         /** A steady sea from one sample. */
         public static Blend of(WaveSyncPayload p, double time) {
-            return new Blend(p.amplitude(), p.directionDeg(), p.amplitude(), p.directionDeg(), p.seaState(), time, 1.0,
-                    p.peakWavelength(), p.peakWavelength(), p.components(), p.groupDepth(), p.groups());
+            return new Blend(p.amplitude(), p.peakWavelength(), p.groups().depth(), time, 1.0, p);
+        }
+
+        public SeaState state() {
+            return to.seaState();
         }
 
         public double fraction(double time) {
@@ -30,46 +38,55 @@ public final class ClientWaves {
         }
 
         public double amplitude(double time) {
-            return fromAmplitude + (toAmplitude - fromAmplitude) * fraction(time);
-        }
-
-        /** Direction along the shorter arc. */
-        public double direction(double time) {
-            double d = ((toDirection - fromDirection) % 360.0 + 540.0) % 360.0 - 180.0;
-            return fromDirection + d * fraction(time);
+            return fromAmplitude + (to.amplitude() - fromAmplitude) * fraction(time);
         }
 
         public double peakWavelength(double time) {
-            return fromPeak + (toPeak - fromPeak) * fraction(time);
+            return fromPeak + (to.peakWavelength() - fromPeak) * fraction(time);
         }
 
         public double groupDepth(double time) {
-            return fromGroupDepth + (groups.depth() - fromGroupDepth) * fraction(time);
+            return fromGroupDepth + (to.groups().depth() - fromGroupDepth) * fraction(time);
         }
 
-        /** The sea at {@code time}: the same field the server builds, unpinned. */
+        /** The sea at {@code time}: once the blend is done, exactly the field the server built. */
         public WaveField field(double time) {
-            return new WaveField(amplitude(time), direction(time), WaveSpectrum.components(components, peakWavelength(time)),
-                    WaveField.Origin.NONE, new WaveField.Groups(groupDepth(time), groups.periodTicks()));
+            if (fraction(time) >= 1.0) {
+                return to.field();
+            }
+            return new WaveField(amplitude(time), to.heading(), WaveSpectrum.components(to.components(), peakWavelength(time)),
+                    to.origin(), new WaveField.Groups(groupDepth(time), to.groups().periodTicks()));
         }
 
         /** The next blend: from where this one is at {@code time} toward {@code p}. */
         public Blend next(WaveSyncPayload p, double time) {
-            return new Blend(amplitude(time), direction(time), p.amplitude(), p.directionDeg(), p.seaState(), time,
-                    Math.max(1, p.intervalTicks()), peakWavelength(time), p.peakWavelength(), p.components(), groupDepth(time),
-                    p.groups());
+            return new Blend(amplitude(time), peakWavelength(time), groupDepth(time), time, Math.max(1, p.intervalTicks()), p);
         }
     }
 
     private static volatile Blend blend = Blend.FLAT;
     private static volatile boolean received;
+    /** The finished blend's field (rebuilding it costs a list and arrays), with the blend it belongs to. */
+    private record Cached(Blend blend, WaveField field) {
+    }
+
+    private static volatile Cached cached = new Cached(Blend.FLAT, WaveField.FLAT);
 
     private ClientWaves() {
     }
 
     /** The sea at client game time {@code time}. */
     public static WaveField field(double time) {
-        return blend.field(time);
+        Blend b = blend;
+        if (b.fraction(time) < 1.0) {
+            return b.field(time);
+        }
+        Cached c = cached;
+        if (c.blend() != b) {
+            c = new Cached(b, b.field(time));
+            cached = c;
+        }
+        return c.field();
     }
 
     private static Blend cachedBlend;

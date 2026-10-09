@@ -64,13 +64,12 @@ class BoatWaveRuleTest {
     void offsetIsTheFieldsPointLookupTimesTheFade() {
         WaveField storm = storm();
         double x = 1234.5, z = -876.25, t = 98765;
-        double h = storm.heightAround(x, z, x, z, t);
+        double h = storm.heightAt(x, z, t);
         assertNotEquals(0.0, h);
         assertEquals(h, BoatWaveRule.offset(storm::heightAt, x, z, t, 1.0), 1e-12);
         assertEquals(0.4 * h, BoatWaveRule.offset(storm::heightAt, x, z, t, 0.4), 1e-12);
         assertEquals(0.0, BoatWaveRule.offset(storm::heightAt, x, z, t, 0.0));
         assertEquals(0.0, BoatWaveRule.offset(WaveField.FLAT::heightAt, x, z, t, 1.0));
-        assertEquals(h, storm.heightAt(x, z, t), 1e-12, "the point lookup is the ship rule for now");
         assertEquals(BoatWaveRule.offset(storm::heightAt, x, z, t + 1, 1.0) - h, BoatWaveRule.speed(storm::heightAt, x, z, t, 1.0), 1e-12);
     }
 
@@ -79,8 +78,8 @@ class BoatWaveRuleTest {
         WaveField storm = storm();
         double x = -300.5, z = 77.0, t = 4321, e = 1e-4;
         double[] s = BoatWaveRule.slope(storm::slopeAt, x, z, t, 0.5);
-        double dx = (storm.heightAround(x, z, x + e, z, t) - storm.heightAround(x, z, x - e, z, t)) / (2 * e);
-        double dz = (storm.heightAround(x, z, x, z + e, t) - storm.heightAround(x, z, x, z - e, t)) / (2 * e);
+        double dx = (storm.heightAt(x + e, z, t) - storm.heightAt(x - e, z, t)) / (2 * e);
+        double dz = (storm.heightAt(x, z + e, t) - storm.heightAt(x, z - e, t)) / (2 * e);
         assertEquals(0.5 * dx, s[0], 1e-6);
         assertEquals(0.5 * dz, s[1], 1e-6);
     }
@@ -167,9 +166,9 @@ class BoatWaveRuleTest {
     }
 
     /**
-     * Without the carry vanilla's damping makes the boat lag the surface: at the default storm it already rides between
-     * 0.23 and 0.51 below the level (awash at 0.5625), and at {@code waves.amplitude} 2 it goes under on the crests;
-     * with the carry it keeps about vanilla's resting depth in both.
+     * Without the carry vanilla's damping makes the boat lag the surface: at the default storm its depth below the
+     * level already swings by about a quarter block around vanilla's 0.37 (awash at 0.5625), and at
+     * {@code waves.amplitude} 2 it goes under on the crests; with the carry it keeps about vanilla's resting depth.
      */
     @Test
     void theCarryKeepsTheBoatAtItsRestingDepth() {

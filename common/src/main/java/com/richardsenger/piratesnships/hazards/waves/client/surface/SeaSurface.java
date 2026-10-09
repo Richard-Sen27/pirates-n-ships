@@ -13,7 +13,6 @@ import com.richardsenger.piratesnships.hazards.waves.ClientWaves;
 import com.richardsenger.piratesnships.hazards.waves.WaveField;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.platform.event.ClientEvents;
-import com.richardsenger.piratesnships.ship.sable.ClientShipPoses;
 import com.richardsenger.piratesnships.ship.sable.WaterRegions;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,8 +44,8 @@ import org.jetbrains.annotations.Nullable;
  *       answers yes for sea cells ({@link SurfaceRules}) while the surface is on. Turning it on or off re-renders the
  *       chunks ({@code LevelRenderer#allChanged}).</li>
  *   <li><b>The mesh</b> is built every frame by {@link SurfaceMesher} over the rings of {@link SurfaceLod}, from the
- *       cell cache {@link SeaSurfaceCells} and the waves of {@link SurfaceWaves} at the anchor of {@link SurfaceAnchor},
- *       into one reused buffer, and drawn in one call right after the world's translucent layer
+ *       cell cache {@link SeaSurfaceCells} and the waves of {@link SurfaceWaves} (the one global field the ships feel,
+ *       WAV7), into one reused buffer, and drawn in one call right after the world's translucent layer
  *       ({@link ClientEvents#RENDER_AFTER_TRANSLUCENT}, the flood surface's stage).</li>
  *   <li><b>Look</b>: render type {@code translucent} (translucency, lightmap, vanilla's fog, the translucent target
  *       under Fabulous), with its texture swapped for {@link SeaFrameTexture}: the current frame of the animated
@@ -77,9 +76,7 @@ public final class SeaSurface {
     private static final SurfaceMesher MESHER = new SurfaceMesher();
     private static final SurfaceWaves WAVES = new SurfaceWaves();
     private static final SurfaceWaves POINT_WAVES = new SurfaceWaves();
-    private static final SurfaceAnchor ANCHOR = new SurfaceAnchor();
     private static final SeaFrameTexture FRAME = new SeaFrameTexture();
-    private static double lastFrameTime = Double.NaN;
     private static double pointTime = Double.NaN;
     private static int fullDepth = 4;
     private static @Nullable ByteBufferBuilder bytes;
@@ -93,8 +90,7 @@ public final class SeaSurface {
         ClientEvents.RENDER_AFTER_TRANSLUCENT.register(SeaSurface::render);
         ClientEvents.CLIENT_DISCONNECT.register(mc -> {
             CELLS.clear();
-            ANCHOR.reset();
-            lastFrameTime = Double.NaN;
+            pointTime = Double.NaN;
         });
     }
 
@@ -142,7 +138,6 @@ public final class SeaSurface {
             hiddenTopY = want;
             if (want == OFF) {
                 CELLS.clear();
-                ANCHOR.reset();
             }
             if (level != null) {
                 mc.levelRenderer.allChanged();
@@ -185,16 +180,8 @@ public final class SeaSurface {
         double time = level.getGameTime() + partialTick;
         Vec3 cam = camera.getPosition();
 
-        Vec3 ship = mc.player == null ? null : ClientShipPoses.shipPosition(mc.player, partialTick);
-        double dt = Double.isNaN(lastFrameTime) ? 0.0 : time - lastFrameTime;
-        lastFrameTime = time;
-        if (ship != null) {
-            ANCHOR.update(ship.x, ship.z, true, dt);
-        } else {
-            ANCHOR.update(cam.x, cam.z, false, dt);
-        }
         WaveField field = ClientWaves.hasData() ? ClientWaves.field(time) : WaveField.FLAT;
-        WAVES.prepare(field, ANCHOR.x(), ANCHOR.z(), time);
+        WAVES.prepare(field, time);
 
         SurfaceLod.Layout layout = SurfaceLod.layout(cam.x, cam.z, HazardConfig.SURFACE_NEAR_RADIUS.get(),
                 HazardConfig.SURFACE_MID_RADIUS.get(), HazardConfig.SURFACE_FAR_CELL.get(), mc.options.getEffectiveRenderDistance() * 16);
@@ -296,7 +283,7 @@ public final class SeaSurface {
      */
     public static double surfaceY(double x, double z, double time) {
         int y = hiddenTopY;
-        if (y == OFF || !ANCHOR.isSet()) {
+        if (y == OFF) {
             return Double.NaN;
         }
         double base = SurfaceRules.stillTop(y + 1);
@@ -311,18 +298,10 @@ public final class SeaSurface {
         return base + Mth.lerp(fz, Mth.lerp(fx, h00, h10), Mth.lerp(fx, h01, h11));
     }
 
-    /** Wave height (no depth fade) of the visible surface's field at {@code (x, z)}, for picking crests; 0 when off. */
-    public static double waveHeight(double x, double z, double time) {
-        if (hiddenTopY == OFF || !ANCHOR.isSet()) {
-            return 0.0;
-        }
-        return pointWaves(time).height(x, z);
-    }
-
     private static SurfaceWaves pointWaves(double time) {
         if (time != pointTime) {
             pointTime = time;
-            POINT_WAVES.prepare(ClientWaves.hasData() ? ClientWaves.field(time) : WaveField.FLAT, ANCHOR.x(), ANCHOR.z(), time);
+            POINT_WAVES.prepare(ClientWaves.hasData() ? ClientWaves.field(time) : WaveField.FLAT, time);
         }
         return POINT_WAVES;
     }

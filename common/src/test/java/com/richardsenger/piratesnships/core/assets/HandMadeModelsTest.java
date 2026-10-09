@@ -58,8 +58,8 @@ class HandMadeModelsTest {
             "brig_door_bottom_left_open_locked", "brig_door_bottom_right", "brig_door_bottom_right_locked",
             "brig_door_bottom_right_open_locked", "brig_door_top_left", "brig_door_top_right", "cannon",
             "cannon_barrel", "cannon_barrel_loaded", "cannon_barrel_powder", "cannon_carriage", "cannon_carriage_rammer",
-            "cannon_quoin", "capstan", "capstan_bars", "capstan_item", "cargo_barrel", "cargo_crate", "chart_table", "cleat", "crows_nest", "figurehead_eagle",
-            "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flagpole", "flagpole_bottom", "flagpole_middle", "flagpole_top", "hammock_foot", "hammock_head", "harbor_desk", "helm", "helm_item", "helm_wheel", "hull_patch", "mooring_ring", "nameplate",
+            "cannon_quoin", "capstan", "capstan_bars", "capstan_item", "cargo_barrel", "cargo_crate", "chart_table", "cleat", "crows_nest", "crows_nest_pole", "figurehead_eagle",
+            "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flag_pedestal", "flag_pedestal_pole", "flagpole", "flagpole_bottom", "flagpole_middle", "flagpole_top", "hammock_foot", "hammock_head", "harbor_desk", "helm", "helm_item", "helm_wheel", "hull_patch", "mooring_ring", "nameplate",
             "notice_board", "pantry", "ratlines", "ratlines_slope", "rope_coil_layers1", "rope_coil_layers2", "rope_coil_layers3", "rope_coil_layers4",
             "sail_winch", "sea_chest", "sea_cot_foot", "sea_cot_head", "sea_cot_item", "ship_lantern", "ship_lantern_ceiling",
             "ship_lantern_wall", "ships_bell", "ships_bell_bell", "ships_bell_clapper", "ships_bell_post", "ships_bell_wall", "stern_window",
@@ -336,6 +336,54 @@ class HandMadeModelsTest {
         }
         assertEquals(1.5, floorTop, 1e-6, "floor top");
         assertEquals(20.0, rim, 1e-6, "rim");
+    }
+
+    /**
+     * FLG3: the flag pedestal and the crow's nest with a flagpole on them ({@code _pole}, from the {@code pole} group of
+     * their Blockbench projects) are the plain model followed by {@code pole_*} parts only: the stub from the socket or
+     * the nest's floor up to the block's top (no up face, so the pole block above joins it), the cleat and the halyard
+     * (anvil and birch parts). Only the plain pedestal carries display entries; it stays inside its shape (x/z 3..13,
+     * y 0..6) like the block's outline.
+     */
+    @Test
+    void pedestalAndNestShowThePoleStubWithTheCleat() throws IOException {
+        for (String base : List.of("flag_pedestal", "crows_nest")) {
+            JsonArray plain = resolvedElements(base);
+            JsonArray pole = resolvedElements(base + "_pole");
+            assertStartsWith(plain, pole, base + "_pole", "pole_");
+            boolean anvil = false;
+            boolean rope = false;
+            JsonObject stub = null;
+            for (int i = plain.size(); i < pole.size(); i++) {
+                JsonObject e = pole.get(i).getAsJsonObject();
+                if (e.get("name").getAsString().equals("pole_stub")) stub = e;
+                for (Map.Entry<String, JsonElement> f : e.getAsJsonObject("faces").entrySet()) {
+                    String t = f.getValue().getAsJsonObject().get("texture").getAsString();
+                    anvil |= t.equals("minecraft:block/anvil");
+                    rope |= t.equals("minecraft:block/stripped_birch_log");
+                }
+            }
+            assertNotNull(stub, base + "_pole: no stub");
+            assertEquals(16.0, stub.getAsJsonArray("to").get(1).getAsDouble(), 1e-9, base + "_pole: the stub ends at the block top");
+            assertEquals(6.5, stub.getAsJsonArray("from").get(0).getAsDouble(), 1e-9, base + "_pole: the stub is the flagpole's");
+            assertFalse(stub.getAsJsonObject("faces").has("up"), base + "_pole: the stub's top would show under the pole");
+            assertTrue(anvil && rope, base + "_pole: no cleat or no halyard");
+            assertFalse(blockModel(base + "_pole").has("display"), base + "_pole: only the plain model carries display entries");
+        }
+        assertEquals(blockModel("flag_pedestal").getAsJsonObject("textures").get("0").getAsString(),
+                blockModel("flagpole").getAsJsonObject("textures").get("0").getAsString(), "the pedestal is in the pole's wood");
+        JsonObject pedestal = blockModel("flag_pedestal");
+        assertTrue(pedestal.getAsJsonObject("display").has("gui"), "flag_pedestal: the item's gui entry");
+        for (JsonElement e : pedestal.getAsJsonArray("elements")) {
+            JsonArray from = e.getAsJsonObject().getAsJsonArray("from");
+            JsonArray to = e.getAsJsonObject().getAsJsonArray("to");
+            for (int axis = 0; axis < 3; axis++) {
+                double lo = axis == 1 ? 0 : 3;
+                double hi = axis == 1 ? 6 : 13;
+                assertTrue(from.get(axis).getAsDouble() >= lo && to.get(axis).getAsDouble() <= hi,
+                        e.getAsJsonObject().get("name") + " leaves the pedestal's shape");
+            }
+        }
     }
 
     private static JsonObject blockModel(String name) throws IOException {

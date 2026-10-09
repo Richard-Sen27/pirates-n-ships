@@ -6,6 +6,8 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.mojang.serialization.MapCodec;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagpoleFoot;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagpoleFooting;
 import com.richardsenger.piratesnships.station.StationBlock;
 import com.richardsenger.piratesnships.station.StationKind;
 import com.richardsenger.piratesnships.station.Stations;
@@ -44,9 +46,14 @@ import org.jetbrains.annotations.Nullable;
  *       and stands inside; the outline is the block's column up to the rim.</li>
  *   <li>Station: {@link LookoutStation}. A crew member assigned with the whistle is seated inside the block
  *       ({@link #seatSpot}); {@link Lookouts} scans for it and for players standing in the nest.</li>
+ *   <li>Flagpole (FLG3): a flagpole placed on the nest rises through its centre ({@link FlagpoleFooting}): the
+ *       {@link FlagpoleFooting#POLE} state shows {@code block/crows_nest_pole}, the nest with the pole stub from its
+ *       floor, an iron collar and the halyard's cleat; the pole block above has no collision (the lookout's head room,
+ *       {@link FlagpoleFoot#clearsHeadroom}), so the seat and the watch are unchanged. Breaking the nest brings the pole
+ *       down. The plain nest's model is unchanged.</li>
  * </ul>
  */
-public class CrowsNestBlock extends Block implements StationBlock, SimpleWaterloggedBlock {
+public class CrowsNestBlock extends Block implements StationBlock, FlagpoleFooting, SimpleWaterloggedBlock {
 
     public static final MapCodec<CrowsNestBlock> CODEC = simpleCodec(CrowsNestBlock::new);
 
@@ -60,12 +67,17 @@ public class CrowsNestBlock extends Block implements StationBlock, SimpleWaterlo
 
     public CrowsNestBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(Waterlogging.WATERLOGGED, false));
+        registerDefaultState(stateDefinition.any().setValue(POLE, false).setValue(Waterlogging.WATERLOGGED, false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(Waterlogging.WATERLOGGED);
+        builder.add(POLE, Waterlogging.WATERLOGGED);
+    }
+
+    @Override
+    public FlagpoleFoot.Support footing() {
+        return FlagpoleFoot.Support.CROWS_NEST;
     }
 
     @Override
@@ -101,6 +113,7 @@ public class CrowsNestBlock extends Block implements StationBlock, SimpleWaterlo
         if (direction == Direction.DOWN && !state.canSurvive(level, pos)) {
             return Blocks.AIR.defaultBlockState();
         }
+        if (direction == Direction.UP) return FlagpoleFooting.withPole(state, level, pos);
         return super.updateShape(state, direction, neighbor, level, pos, neighborPos);
     }
 
@@ -135,6 +148,7 @@ public class CrowsNestBlock extends Block implements StationBlock, SimpleWaterlo
         if (level instanceof ServerLevel serverLevel && !newState.is(this)) {
             Stations.onStationRemoved(serverLevel, pos); // frees the lookout station and removes its seat
         }
+        if (!state.is(newState.getBlock())) FlagpoleFooting.dropPole(level, pos, movedByPiston); // FLG3
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
@@ -145,6 +159,7 @@ public class CrowsNestBlock extends Block implements StationBlock, SimpleWaterlo
 
     @Override
     public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
-        return Waterlogging.placed(super.getStateForPlacement(context), context);
+        BlockState state = Waterlogging.placed(super.getStateForPlacement(context), context);
+        return state == null ? null : FlagpoleFooting.withPole(state, context.getLevel(), context.getClickedPos());
     }
 }

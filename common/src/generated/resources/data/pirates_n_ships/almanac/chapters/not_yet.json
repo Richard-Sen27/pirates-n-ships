@@ -1,7 +1,7 @@
 {
   "bookmark_color": "#8a7f6a",
-  "icon": "minecraft:barrier",
-  "order": 150,
+  "icon": "minecraft:compass",
+  "order": 140,
   "pages": [
     {
       "elements": [
@@ -10,21 +10,40 @@
           "key": "pirates_n_ships.almanac.not_yet.p1.heading"
         },
         {
+          "type": "illustration",
+          "h": 0.35,
+          "texture": "pirates_n_ships:textures/almanac/anchor.png",
+          "w": 0.9,
+          "x": 0.05,
+          "y": 0.09
+        },
+        {
           "type": "text",
           "key": "pirates_n_ships.almanac.not_yet.p1.text1"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.not_yet.p2.heading"
         },
         {
           "type": "list",
           "items": [
-            "pirates_n_ships.almanac.not_yet.p1.list1_1",
-            "pirates_n_ships.almanac.not_yet.p1.list1_2",
-            "pirates_n_ships.almanac.not_yet.p1.list1_3",
-            "pirates_n_ships.almanac.not_yet.p1.list1_4",
-            "pirates_n_ships.almanac.not_yet.p1.list1_5",
-            "pirates_n_ships.almanac.not_yet.p1.list1_6",
-            "pirates_n_ships.almanac.not_yet.p1.list1_7",
-            "pirates_n_ships.almanac.not_yet.p1.list1_8"
+            "pirates_n_ships.almanac.not_yet.p2.list1_1",
+            "pirates_n_ships.almanac.not_yet.p2.list1_2",
+            "pirates_n_ships.almanac.not_yet.p2.list1_3",
+            "pirates_n_ships.almanac.not_yet.p2.list1_4",
+            "pirates_n_ships.almanac.not_yet.p2.list1_5",
+            "pirates_n_ships.almanac.not_yet.p2.list1_6"
           ]
+        },
+        {
+          "type": "text",
+          "color": "#2e6a24",
+          "key": "pirates_n_ships.almanac.not_yet.p2.text1"
         }
       ]
     }

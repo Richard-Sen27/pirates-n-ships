@@ -17,6 +17,16 @@ import com.richardsenger.piratesnships.ship.assembly.AssemblyContent;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.ship.template.ShipTemplates;
+import com.richardsenger.piratesnships.law.flag.FlagKind;
+import com.richardsenger.piratesnships.ship.decor.FlagpoleBlock;
+import com.richardsenger.piratesnships.ship.decor.ShipDecor;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagConfig;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagpoleBlockEntity;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagpoleFoot;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagpoleFooting;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagpolePart;
+import com.richardsenger.piratesnships.ship.decor.flag.FlagpoleRun;
+import com.richardsenger.piratesnships.ship.decor.flag.Flags;
 import com.richardsenger.piratesnships.station.StationContent;
 import com.richardsenger.piratesnships.station.StationRef;
 import com.richardsenger.piratesnships.station.Stations;
@@ -41,7 +51,11 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
@@ -88,6 +102,11 @@ public final class LookoutGameTests {
 
     /** The hull at x in [x0, x0+4], z in [z0, z0+4] with a fence mast and the nest on it, assembled. */
     private static Rig rig(GameTestHelper h, int x0, int z0) {
+        return rig(h, x0, z0, 0);
+    }
+
+    /** The rig with {@code poleBlocks} flagpole blocks standing on the nest (FLG3). */
+    private static Rig rig(GameTestHelper h, int x0, int z0, int poleBlocks) {
         for (int x = x0; x <= x0 + 4; x++) {
             for (int z = z0; z <= z0 + 4; z++) {
                 for (int y = 5; y <= 8; y++) {
@@ -101,6 +120,7 @@ public final class LookoutGameTests {
         h.setBlock(helm, AssemblyContent.HELM.get().defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
         h.setBlock(new BlockPos(x0 + 2, 9, z0 + 3), Blocks.OAK_FENCE);
         h.setBlock(new BlockPos(x0 + 2, 10, z0 + 3), LookoutContent.CROWS_NEST.get());
+        for (int i = 1; i <= poleBlocks; i++) h.setBlock(new BlockPos(x0 + 2, 10 + i, z0 + 3), ShipDecor.FLAGPOLE.get());
         Fixture f = SailingGameTestsShips.assemble(h, helm);
         for (BlockPos p : f.ship().plotBlocks()) {
             if (h.getLevel().getBlockState(p).is(LookoutContent.CROWS_NEST.get())) {
@@ -204,6 +224,100 @@ public final class LookoutGameTests {
             h.assertBlockNotPresent(LookoutContent.CROWS_NEST.get(), new BlockPos(2, 2, 2));
             Item item = LookoutContent.CROWS_NEST.get().asItem();
             h.assertItemEntityPresent(item, new BlockPos(2, 2, 2), 1.5);
+            h.succeed();
+        });
+    }
+
+    // ------------------------------------------------------------------ FLG3: a flagpole on the nest
+
+    /** A player places a flagpole on the top face of the block at {@code onto}, as vanilla does. */
+    private static boolean placePole(GameTestHelper h, Player player, BlockPos onto) {
+        ItemStack held = new ItemStack(ShipDecor.FLAGPOLE.get());
+        player.setItemInHand(InteractionHand.MAIN_HAND, held);
+        BlockPos abs = h.absolutePos(onto);
+        BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(abs).add(0, 0.5, 0), Direction.UP, abs, false);
+        return held.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND, hit)).consumesAction();
+    }
+
+    /**
+     * A flagpole placed on the nest rises from its centre: the nest shows the socketed model (pole stub and cleat), the
+     * pole block above it is a bare top (no cleat) with no collision, so a player standing on the nest's floor is not
+     * pushed; a second block makes it a two-block pole whose head flies the flag above the
+     * nest. Breaking the nest brings the pole and its flag down; the nest's own support rule is unchanged.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = BATCH + "pole")
+    public static void poleOnTheNestFliesAboveIt(GameTestHelper h) {
+        ConfigOverrides.during(h, FlagConfig.STACKED_POLES, true);
+        ConfigOverrides.during(h, FlagConfig.MAX_POLE_HEIGHT, 4);
+        Player builder = h.makeMockPlayer(GameType.CREATIVE);
+        BlockPos nest = new BlockPos(2, 2, 2), low = nest.above(), head = low.above();
+        h.setBlock(nest.below(), Blocks.SPRUCE_LOG); // a log mast: a fence's tall collision would reach into the nest
+        h.setBlock(nest, LookoutContent.CROWS_NEST.get());
+        h.assertBlockProperty(nest, FlagpoleFooting.POLE, false);
+        h.assertTrue(placePole(h, builder, nest), "no pole placed on the nest");
+        h.assertBlockProperty(nest, FlagpoleFooting.POLE, true);
+        h.assertBlockProperty(low, FlagpoleBlock.PART, FlagpolePart.TOP);
+        BlockPos lowAbs = h.absolutePos(low);
+        h.assertTrue(h.getLevel().getBlockState(lowAbs).getCollisionShape(h.getLevel(), lowAbs).isEmpty(),
+                "the pole above the nest blocks the lookout");
+        h.assertFalse(h.getLevel().getBlockState(lowAbs).getShape(h.getLevel(), lowAbs).isEmpty(), "the pole has no outline");
+        h.assertTrue(placePole(h, builder, low), "no second pole block");
+        BlockPos headAbs = h.absolutePos(head);
+        h.assertBlockProperty(low, FlagpoleBlock.PART, FlagpolePart.MIDDLE);
+        h.assertFalse(h.getLevel().getBlockState(headAbs).getCollisionShape(h.getLevel(), headAbs).isEmpty(),
+                "the upper pole block lost its collision");
+        FlagpoleFoot.Pole pole = FlagpoleRun.pole(h.getLevel(), headAbs);
+        h.assertTrue(pole.height() == 2 && pole.cleat() == -2 && pole.base() == FlagpoleFoot.Support.CROWS_NEST, "pole " + pole);
+        h.assertTrue(FlagpoleRun.owner(h.getLevel(), lowAbs) == h.getBlockEntity(head), "the head does not own the flag");
+        if (!(h.getBlockEntity(head) instanceof FlagpoleBlockEntity be)) throw new AssertionError("no head");
+        be.commandSet(FlagKind.NAVY, false, null);
+        h.assertBlockProperty(head, FlagpoleBlock.FLAG, FlagKind.NAVY);
+        // a player on the nest's floor stands free of the pole and is in the nest
+        Player lookout = h.makeMockPlayer(GameType.SURVIVAL);
+        Vec3 floor = Vec3.atBottomCenterOf(h.absolutePos(nest)).add(0, CrowsNestBlock.FLOOR_HEIGHT / 16.0, 0);
+        lookout.moveTo(floor.x, floor.y, floor.z);
+        h.assertTrue(lookout.getBoundingBox().maxY > headAbs.getY() - 1 + 0.5, "the test player does not reach into the pole block");
+        h.assertTrue(h.getLevel().noCollision(lookout, lookout.getBoundingBox()), "the lookout collides with the pole");
+        h.getLevel().destroyBlock(h.absolutePos(nest), true);
+        h.runAtTickTime(2, () -> {
+            h.assertBlockNotPresent(ShipDecor.FLAGPOLE.get(), low);
+            h.assertBlockNotPresent(ShipDecor.FLAGPOLE.get(), head);
+            h.assertItemEntityCountIs(ShipDecor.FLAGPOLE.get().asItem(), low, 3.0, 2);
+            h.assertItemEntityPresent(Flags.NAVY_FLAG.get(), head, 2.0);
+            h.assertItemEntityPresent(LookoutContent.CROWS_NEST.get().asItem(), nest, 2.0);
+            h.succeed();
+        });
+    }
+
+    /**
+     * With a two-block flagpole on the nest, through assembly: the nest still shows the pole, a crew member assigned
+     * with the whistle sits in the nest, the watch finds it and it calls a shark; a player standing in the nest is a
+     * lookout too.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = BATCH + "pole_watch")
+    public static void lookoutKeepsWatchUnderAPole(GameTestHelper h) {
+        SailingGameTestsShips.basin(h, true);
+        Rig r = rig(h, 3, 3, 2);
+        h.assertTrue(h.getLevel().getBlockState(r.nest()).getValue(FlagpoleFooting.POLE), "the nest lost its pole in assembly");
+        h.assertTrue(FlagpoleRun.isPole(h.getLevel(), r.nest().above()) && FlagpoleRun.isPole(h.getLevel(), r.nest().above(2)),
+                "the pole did not come along");
+        CrewMember c = lookout(h, r);
+        Shark s = shark(h, r, 12, 0);
+        h.runAtTickTime(5, () -> {
+            h.assertTrue(c.isAtStation() && c.getVehicle() instanceof StationSeat seat && seat.blockPosition().equals(r.nest()),
+                    "the lookout is not seated in the nest: " + c.getVehicle());
+            List<Lookouts.Observer> obs = Lookouts.observers(h.getLevel(), List.of()).get(r.ship().id());
+            h.assertTrue(obs != null && obs.size() == 1 && obs.get(0).crew() == c, "observers " + obs);
+            List<Lookouts.Report> calls = about(scan(h, r, List.of(), firstScan(h, r)), key(s));
+            h.assertTrue(calls.size() == 1 && calls.get(0).sighting().kind() == Lookouts.Kind.SHARK, "calls " + calls);
+            Player p = inTheNest(h, r);
+            Lookouts.Nest n = Lookouts.nestOf(h.getLevel(), p);
+            h.assertTrue(n != null && n.pos().equals(r.nest()), "nest of the player " + n);
+            h.assertTrue(Lookouts.isManned(h.getLevel(), r.ship()), "the nest with a pole is not manned");
+            s.discard();
+            CrewStations.release(h.getLevel(), c);
+            c.discard();
+            Lookouts.forget(r.ship().id());
             h.succeed();
         });
     }

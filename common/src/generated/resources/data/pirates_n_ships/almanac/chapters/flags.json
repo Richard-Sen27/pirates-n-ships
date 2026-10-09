@@ -1,7 +1,7 @@
 {
   "bookmark_color": "#262626",
   "icon": "pirates_n_ships:jolly_roger_flag",
-  "order": 50,
+  "order": 60,
   "pages": [
     {
       "elements": [
@@ -20,65 +20,118 @@
         {
           "type": "text",
           "key": "pirates_n_ships.almanac.flags.p1.text1"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.flags.p2.heading"
         },
         {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.flags.p1.text2"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.flags.p1.text3"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.flags.p1.text4"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.flags.p1.text5"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.flags.p1.text6"
+          "type": "show_me",
+          "label": "pirates_n_ships.almanac.flags.p2.show_me1",
+          "scene": "pirates_n_ships:flags_and_allegiance"
         },
         {
           "type": "list",
           "items": [
-            "pirates_n_ships.almanac.flags.p1.list1_1",
-            "pirates_n_ships.almanac.flags.p1.list1_2",
-            "pirates_n_ships.almanac.flags.p1.list1_3",
-            "pirates_n_ships.almanac.flags.p1.list1_4"
+            "pirates_n_ships.almanac.flags.p2.list1_1",
+            "pirates_n_ships.almanac.flags.p2.list1_2",
+            "pirates_n_ships.almanac.flags.p2.list1_3",
+            "pirates_n_ships.almanac.flags.p2.list1_4"
           ]
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.flags.p3.heading"
         },
         {
           "type": "text",
-          "key": "pirates_n_ships.almanac.flags.p1.text7"
+          "key": "pirates_n_ships.almanac.flags.p3.text1"
         },
         {
           "type": "list",
           "items": [
-            "pirates_n_ships.almanac.flags.p1.list2_1",
-            "pirates_n_ships.almanac.flags.p1.list2_2"
+            "pirates_n_ships.almanac.flags.p3.list1_1",
+            "pirates_n_ships.almanac.flags.p3.list1_2",
+            "pirates_n_ships.almanac.flags.p3.list1_3",
+            "pirates_n_ships.almanac.flags.p3.list1_4"
           ]
         },
         {
           "type": "text",
-          "key": "pirates_n_ships.almanac.flags.p1.text8"
+          "key": "pirates_n_ships.almanac.flags.p3.text2"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.flags.p4.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.flags.p4.text1"
         },
         {
           "type": "list",
           "items": [
-            "pirates_n_ships.almanac.flags.p1.list3_1",
-            "pirates_n_ships.almanac.flags.p1.list3_2"
+            "pirates_n_ships.almanac.flags.p4.list1_1",
+            "pirates_n_ships.almanac.flags.p4.list1_2",
+            "pirates_n_ships.almanac.flags.p4.list1_3"
           ]
         },
         {
           "type": "text",
-          "key": "pirates_n_ships.almanac.flags.p1.text9"
+          "color": "#9a1c14",
+          "key": "pirates_n_ships.almanac.flags.p4.text2"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.flags.p5.heading"
         },
         {
           "type": "text",
-          "key": "pirates_n_ships.almanac.flags.p1.text10"
+          "key": "pirates_n_ships.almanac.flags.p5.text1"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.flags.p6.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.flags.p6.text1"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.flags.p6.text2"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.flags.p6.list1_1",
+            "pirates_n_ships.almanac.flags.p6.list1_2",
+            "pirates_n_ships.almanac.flags.p6.list1_3"
+          ]
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.flags.p6.text3"
         }
       ]
     }

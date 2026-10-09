@@ -1,7 +1,9 @@
 # Pirates 'n' Ships: how it works
 
-> In-game guides: after changing this file, regenerate GuideME with `python3 tools/gen_guideme.py` and the Captain's
-> Almanac with `python3 tools/gen_almanac.py` and `./gradlew :neoforge:runData`, and commit the output.
+> **This is the testing and reference guide**, for the people who build and test the mod: it names config keys,
+> commands and test notes. The player's in-game guide, the Captain's Almanac, is its own text in the mod's voice and
+> lives in [`almanac/`](almanac/) (format: [`almanac.md`](almanac.md)); a mechanic that changes here must be changed
+> there too. After changing this file, regenerate GuideME with `python3 tools/gen_guideme.py` and commit the output.
 
 A guide to everything that exists in the mod today: what each block, item and system does and how to use it.
 It describes the code on `main`, not the plans. For the plans see [`design.md`](design.md), and for the state of

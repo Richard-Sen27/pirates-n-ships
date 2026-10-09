@@ -20,20 +20,22 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Datagen of the Almanac's built-in chapters (ALM5): the chapters made from docs/guide.md. {@code tools/gen_almanac.py}
- * writes them into the intermediate {@value #INTERMEDIATE} (chapter bodies in the file format of docs/almanac.md plus
- * the English text of every lang key they use); this provider reads it, checks every chapter with the chapter codec and
+ * Datagen of the Almanac's built-in chapters (ALM5, ALM6): the chapters written in {@value #SOURCE}, one file per
+ * chapter. {@code tools/gen_almanac.py} turns them into the intermediate {@value #INTERMEDIATE} (chapter bodies in the
+ * file format of docs/almanac.md plus the English text of every lang key they use); this provider reads it, checks every chapter with the chapter codec and
  * every key against the lang map, and writes {@code data/pirates_n_ships/almanac/chapters/<id>.json} and the lang
  * entries. The intermediate is no resource: it is found from the working directory of the data run (the repository).
  */
 public final class AlmanacChapterProvider {
 
     /** The intermediate, relative to the repository root. */
-    public static final String INTERMEDIATE = "common/src/datagen/almanac/guide_chapters.json";
+    public static final String INTERMEDIATE = "common/src/datagen/almanac/chapters.json";
+    /** The chapter source, relative to the repository root: {@code <nn>-<chapter>.md}, one file per chapter. */
+    public static final String SOURCE = "docs/almanac";
 
-    /** Section 0 of the guide, the book's first chapter. */
+    /** "Welcome aboard", the book's first chapter (with the Contents). */
     public static final ResourceLocation WELCOME = Constants.id("welcome");
-    /** Section 9 of the guide, "Weapons and combat", which holds the cannon's "Show me". */
+    /** "Weapons and combat", which holds the cannon's "Show me". */
     public static final ResourceLocation COMBAT = Constants.id("combat");
     /** The Ponder scene the combat chapter's "Show me" button plays (ALM4). */
     public static final String CANNON_LOADING_SCENE = Constants.id("cannon_loading").toString();
@@ -79,6 +81,13 @@ public final class AlmanacChapterProvider {
             }
         }
         return out;
+    }
+
+    /** The repository root holding the intermediate ({@link #locate()}). */
+    public static Path repository() {
+        Path p = locate();
+        for (int i = 0; i < Path.of(INTERMEDIATE).getNameCount(); i++) p = p.getParent();
+        return p;
     }
 
     /** The intermediate, searched upward from the working directory (the data run's game directory or {@code common/}). */

@@ -16,10 +16,13 @@ ports the client. This file records what the Fabric module does, where it differ
   Rapier natives), Forge Config API Port `forgeconfigapiport_version` (Fuzs' Maven), `geckolib-fabric-1.21.1`,
   `PlayerAnimationLibFabric` (its Core classes are inside the jar, so the separate Core artifact is excluded as on
   NeoForge). Loom remaps PAL's intermediary jar to Mojang names, which common's melee animation package compiles against.
-- `fabric.mod.json`: the `main` entry point, both mixin configs, the access widener, and `depends` on Fabric API,
+- `fabric.mod.json`: the `main` and `client` (FAB2) entry points, both mixin configs, the access widener, and `depends` on Fabric API,
   Sable (`>=2.0.6 <3.0.0`), GeckoLib, Forge Config API Port and PAL. Fabric has no client-only dependencies, so PAL is
   required on a dedicated server too (it loads there harmlessly). GuideME is `suggests`: the fabric module does not
-  put it on the dev classpath yet, so the in-game guide is untested on Fabric.
+  put it on the dev classpath (GuideME 21.1 is NeoForge only), so there is no in-game guide on Fabric. `modmenu` is
+  `recommends` (the config screen); Mod Menu 11.0.3 is on the dev runs' classpath only (`modLocalRuntime`).
+- JUnit tests (`fabric/src/test`, run by `./gradlew build`): the mixin target check, the render layer resolver and the
+  client assumptions, see "Client (FAB2)".
 - Mixins are remapped statically by Loom 1.17 (`Fabric-Loom-Mixin-Remap-Type: static`), so no refmap is written; the
   `refmap` key in the mixin configs is unused on Fabric.
 
@@ -61,7 +64,7 @@ made `ModBlockLoot#generate` and the recipe provider's `buildRecipes` in `ModDat
 | `PLAYER_WAKE_UP` | `EntitySleepEvents.STOP_SLEEPING` (players only) | fires at the head of `LivingEntity#stopSleeping`, so also when hurt in bed (NeoForge: `Player#stopSleepInBed` only) |
 | `PLAYER_CLONE` | `ServerPlayerEvents.COPY_FROM` (`wasDeath = !alive`) | none |
 | `CONTAINER_OPEN/CLOSE` | **mixin** `MixinServerPlayer` (`openMenu`, `openHorseInventory`, `doCloseContainer`) | Fabric API has no container events |
-| `ENTITY_JOIN_LEVEL` | `ServerEntityEvents.ENTITY_LOAD` | server side only (client: FAB2); after the entity was added, so **not cancellable** (no listener cancels) |
+| `ENTITY_JOIN_LEVEL` | `ServerEntityEvents.ENTITY_LOAD` | server side (client side: see "Client (FAB2)"); after the entity was added, so **not cancellable** (no listener cancels) |
 | `ENTITY_INTERACT` | `UseEntityCallback` (plain interaction only, `hitResult == null`; spectators skipped) | fired from the interaction packet handler and the client's game mode, **not from `Player#interactOn`**: code calling `interactOn` directly (mock players in tests) bypasses it |
 | `LIVING_INCOMING_DAMAGE` | **mixin** `MixinLivingEntity` (`hurt`, at the `isSleeping()` call, the spot of NeoForge's event and Fabric's `ALLOW_DAMAGE`) | `ALLOW_DAMAGE` cannot change the amount |
 | `LIVING_DEATH` | `ServerLivingEntityEvents.AFTER_DEATH` | fires after the death (end of `die`), so **the cancel result is ignored** (no listener cancels); `ALLOW_DEATH` can cancel but fires before a totem of undying saves the entity |
@@ -91,22 +94,102 @@ made `ModBlockLoot#generate` and the recipe provider's `buildRecipes` in `ModDat
   `build.yml` runs only the NeoForge GameTests. Add `./gradlew :fabric:runGameTest` to CI and the Fabric jar
   (`fabric/build/libs/pirates_n_ships-fabric-1.21.1-<version>.jar`) to the release (docs/releasing.md).
 
-## FAB2: the client
+## Client (FAB2)
 
-- A `ClientModInitializer` (`fabric.mod.json` `client` entry point) that calls `PiratesNShipsCommon.initClient()` and
-  forwards every `ClientEvents` hook like `NeoForgeClientSetup`: renderers, block entity renderers, model layers, key
-  mappings, HUD layers, block colours, client ticks, `CLIENT_DISCONNECT`, `ITEM_TOOLTIP`, `SELECT_MUSIC`,
-  `SOUND_STREAM_STARTED`, `INTERACTION_KEY`, FOV and camera angle events, the render stage hook, the client config.
-- The TODOs in `fabric/.../PiratesNShips.java`: additional models (`ModelLoadingPlugin`), `RENDER_FRAME_PRE` (no
-  Fabric event between the mouse turn and the frame; a mixin at the head of `GameRenderer#render`), armour models
-  (`ArmorRenderer`).
-- `ENTITY_JOIN_LEVEL` on the client (`ClientEntityEvents.ENTITY_LOAD`).
-- The client mixins in common (`MixinCamera`, `MixinScreenEffectRenderer`, `MixinSectionCompiler`) on Fabric's vanilla
-  classes, with a headless target check like neoforge's `ClientMixinTargetsTest`.
-- Block entity renderers' culling boxes (`getRenderBoundingBox`, a NeoForge `IBlockEntityRendererExtension` method in
-  common renderers) have no Fabric twin: check large renderers (sails, flags, ropes, cannons, helm) for culling.
-- The config screen (design.md §17): Mod Menu through Forge Config API Port, or a fallback screen.
-- A playtest of the Fabric client: join a world, sail, melee (PAL), crew (GeckoLib).
+`PiratesNShipsClient` (the `client` entry point of `fabric.mod.json`) runs after every mod's `main` entry point:
+`PiratesNShipsCommon.initClient()`, then `FabricClientSetup.attach()`, the twin of `NeoForgeClientSetup`. Fabric
+registers immediately, so every registration happens there, before the first resource load. `CLIENT_SETUP` fires at the
+end of `attach()` (NeoForge: `FMLClientSetupEvent.enqueueWork`; Fabric has no later setup stage, and Forge Config API
+Port loads the client config the moment it is registered, so it is loaded by then). Dev client: `./gradlew :fabric:runClient`
+(run dir `fabric/runs/client`, Mod Menu on the dev classpath).
+
+### Hook table
+
+| `ClientEvents` hook | Fabric source | Difference to NeoForge |
+|---|---|---|
+| `CLIENT_SETUP` | end of `FabricClientSetup.attach()` (client init) | runs during client init, before the first resource load, not after parallel setup |
+| `CLIENT_TICK_START/END` | `ClientTickEvents.START/END_CLIENT_TICK` | none |
+| `RENDER_FRAME_PRE` | **mixin** `client.MixinMinecraft` (`runTick`, before `GameRenderer#render`) | none (NeoForge fires `RenderFrameEvent.Pre` at the same call) |
+| `CLIENT_DISCONNECT` | `ClientPlayConnectionEvents.DISCONNECT` | fires when the play connection closes (NeoForge: `LoggingOut` in `Minecraft#disconnect`); both may fire more than once |
+| `ITEM_TOOLTIP` | `ItemTooltipCallback` | Fabric passes no player: the client player is passed (null without a world) |
+| `SELECT_MUSIC` | **mixin** `client.MixinMusicManager` (around `getSituationalMusic()` in `tick`) | none |
+| `SOUND_STREAM_STARTED` | **mixin** `client.MixinSoundEngine` (wraps the channel setup task of `play`, streamed sounds only) | fires right after vanilla's pitch/volume setup task, a moment before the stream is attached and started (NeoForge: right after `play()` on the channel); same sound thread |
+| `INTERACTION_KEY` | **mixin** `client.MixinMinecraft` (`startAttack`, `continueAttack`, `startUseItem` per hand, `pickBlock`) | none: the four points of NeoForge's `ClientHooks.onClickInput`; a cancel returns there with no swing |
+| `COMPUTE_FOV` | **mixin** `client.MixinAbstractClientPlayer` (around the final `Mth.lerp` of `getFieldOfViewModifier`) | none (same scaled start value, the spyglass return bypasses it on both) |
+| `COMPUTE_CAMERA_ROLL` | **mixin** `client.MixinCamera` (wraps the first two `setRotation` calls of `setup`, rolls `setRotation`'s quaternion) | none: same roll, mirrored for the reversed third-person view, none while sleeping |
+| `RENDER_AFTER_TRANSLUCENT` | `WorldRenderEvents.AFTER_TRANSLUCENT` | fires after the particles (NeoForge: right after the translucent block layer, inside `renderSectionLayer`), with the main target bound under Fabulous (NeoForge: the translucent target). The flood surface uses `translucentMovingBlock()`, which binds its own target, so it draws into the same target on both. Chosen over a mixin into `renderSectionLayer` because Sodium replaces that method but keeps Fabric's event. |
+| `registerKeyMapping` | `KeyBindingHelper.registerKeyBinding` | none |
+| `registerHudLayer` | `HudRenderCallback` (after vanilla's HUD) | above all vanilla layers like `registerAboveAll`, one `Z_SEPARATION` apart in registration order; the depth buffer is cleared first (vanilla clears it right after the HUD anyway); drawn with F1 too, as on NeoForge |
+| `registerEntityRenderer` | `EntityRendererRegistry.register` | none |
+| `registerBlockEntityRenderer` | `BlockEntityRenderers.register` (widened by Fabric's transitive access wideners) | none |
+| `registerModelLayer` | `EntityModelLayerRegistry.registerModelLayer` | none |
+| `registerAdditionalModel` / `additionalModel` | `ModelLoadingPlugin` `addModels`; key `ModelResourceLocation(id, "fabric_resource")` | none (the variant is Fabric API's impl constant, checked by `FabricClientAssumptionsTest`) |
+| `registerArmorModel` | `ArmorRenderer.register` (`FabricArmorModels`) | Fabric replaces the whole armour piece, so `FabricArmorModels` redoes NeoForge's layer: pose and slot visibility onto vanilla's model, the provider, pose and visibility onto the provider's model, then the material layers (dye colour), trim and glint. `original` is always the player armour model (Fabric does not pass the wearer renderer's own) |
+| `registerBlockColor` | `ColorProviderRegistry.BLOCK` | none |
+| block render layers (model `render_type`) | `BlockRenderLayerMap` (`FabricRenderLayers`) | NeoForge reads `render_type` per model, vanilla/Fabric ignore it; `FabricRenderLayers` reads it from our blockstates and models at client init and puts the block in that layer (per block: if models disagree, the most transparent wins and a warning is logged). Today: the stern window (cutout) |
+| `CommonEvents.ENTITY_JOIN_LEVEL` (client side) | `ClientEntityEvents.ENTITY_LOAD` | after the entity was added, so not cancellable (no listener cancels) |
+| config screen | Forge Config API Port's `ConfigScreenFactoryRegistry` with its port of NeoForge's `ConfigurationScreen` | shown by Mod Menu (FCAP ships Mod Menu's entry point; `fabric.mod.json` recommends `modmenu`); without Mod Menu there is no way to open it in game (edit `config/pirates_n_ships-client.toml` and `serverconfig/`) |
+| GeckoLib, PAL | nothing to wire: GeckoLib renderers go through `registerEntityRenderer`, PAL layers are registered in `CLIENT_SETUP` | none |
+
+The six mixins are client mixins of `pirates_n_ships.fabric.mixins.json` (package `fabric.mixin.client`); each says
+why no Fabric API event fits. The mixins of both configs (common's `MixinCamera`, `MixinScreenEffectRenderer`,
+`MixinSectionCompiler`, the server ones and Fabric's own) are checked headlessly against the vanilla classes by
+`fabric/src/test/.../fabric/mixin/ClientMixinTargetsTest` (HV1b on Fabric: selectors, `INVOKE` call sites, ordinals,
+plus exact counts for every FAB2 injection point); `./gradlew build` runs it.
+
+### Render bounding boxes
+
+NeoForge culls every block entity by its renderer's `getRenderBoundingBox` (default: the block), which is why the
+flag cloth, the yard and stay sails, the rope lines, the cannon barrel and the helm wheel override it in common. Vanilla
+1.21.1 has no such method on `BlockEntityRenderer` and no per-block-entity frustum test: `LevelRenderer` draws every
+block entity of every visible chunk section (and the global ones). So on Fabric those methods are unused and a large
+renderer is culled only with its whole 16-block section, never earlier than on NeoForge; on ships Sable draws the block
+entities of all sub-level sections without a frustum test on both loaders. Nothing to forward; `FabricClientAssumptionsTest`
+fails if vanilla or Fabric API ever adds per-block-entity culling. (The pump and the bell keep the default box on both loaders.)
+
+### Known gaps on Fabric (client side)
+
+- **Guide book**: GuideME 21.1 exists for NeoForge only, so there is no in-game guide on Fabric (`suggests` stays for a
+  future Fabric build of GuideME).
+- **Config screen without Mod Menu**: none in game, see the table.
+- **Armour on non-player wearers**: the coats on armour stands and mobs use the player armour model as `original`;
+  only visible if a provider returned `original` for a slot it is worn in.
+- **Unverified in a client**: everything above compiles, the mixin targets are checked headlessly and the GameTest server
+  starts with the client entry point present, but no Fabric client has been opened by an agent. The checklist below is
+  the acceptance test.
+
+### Fabric client playtest (`./gradlew :fabric:runClient`)
+
+Start a new creative world (Fabric dev client, Mod Menu loaded). Check `fabric/runs/client/logs/latest.log` for
+`Mixin apply failed`, `InvalidInjectionException`, `Render layer of` warnings and exceptions after each step.
+
+1. **World load**: the world loads without a crash; the title screen and the world list work.
+2. **Ship**: build a small hull with a helm, sails and a flag, assemble it, sail it. Expected: the ship moves, the helm
+   wheel turns, steering from the helm holds the view (`RENDER_FRAME_PRE`), the HUD shows the wind/ship HUD.
+3. **Flag cloth**: a flag on a pole, on land and on the ship: the cloth waves and stays drawn while the pole block is at
+   the screen edge (only vanishes when its whole chunk section leaves the view).
+4. **Sails**: yard sails and stay sails set and furled; the cloth stays visible when the head block leaves the view.
+5. **Cannon barrel**: place a cannon, aim and fire it; the barrel model shows and turns (additional models).
+6. **Pump**: use the bilge pump; the handle and rod models show and move.
+7. **Bell**: ring the ship's bell; bell and clapper show and swing.
+8. **Stern window**: placed, its glass panes are see-through (cutout layer from `render_type`), not black.
+9. **HUD**: the mod's HUD elements draw above the vanilla HUD and hide with F1 where they do on NeoForge.
+10. **Ship screen and other screens**: open the ship screen, the chart, the market; they open and close normally.
+11. **Guide book**: none on Fabric (gap); nothing crashes when GuideME is absent.
+12. **Coat tails**: wear the officer's and the captain's coat, third person: the coat with tails draws on the body and
+    moves with it; dyed/trimmed/enchanted variants colour, trim and shimmer like vanilla armour.
+13. **Flood surface and overlay**: hole a hull below the waterline; the water surface inside the hull draws and the
+    underwater overlay/fog appears when the eyes are below it (common `MixinCamera`, `MixinScreenEffectRenderer`).
+    Also with Fabulous graphics.
+14. **Firearm input**: with a loaded musket, attack fires without swinging or mining; aiming zooms the view
+    (`COMPUTE_FOV`). Melee: with skill-based combat on, a sword's attack/use do the melee actions (PAL animations play)
+    instead of vanilla's swing. Grapple and swivel gun inputs work.
+15. **Camera sway**: on a heeling ship with camera sway on, the view rolls with the ship (`COMPUTE_CAMERA_ROLL`), also in
+    third person front view (mirrored).
+16. **Music**: at sea the sea music plays at the configured volume (`SELECT_MUSIC`, `SOUND_STREAM_STARTED`).
+17. **Config screen**: Mod Menu, Pirates 'n' Ships, Config: the client and server config pages open and save.
+18. **Crew and colours**: a crew member and a shark (GeckoLib) render and animate; a water barrel's water surface is
+    tinted like the biome's water (block colour); banner flags show their colours.
 
 ## GameTests
 

@@ -128,6 +128,9 @@ illustration: ratlines
 
 Climb a hanging net like a ladder; walk up a sloped one. A net needs something to rest on: break one and the nets that hung from it fall too. A sloped run may end on a yard right beside the mast, and from there you climb straight on up the hanging net above.
 
+## Ratline nets
+{item:pirates_n_ships:ratline_net}A **ratline net** runs from a **chainplate** at the rail to a **mast hoop** up the mast, at any slope from 30° to straight up. Put the chainplate on top of the rail or on its side and the hoop on the mast, then use the net on one and then on the other. The line between their rings must be clear of blocks and at most 12 blocks long; you are told what is wrong otherwise. Walk into the net and hold forward or jump to climb it along its line; sneak to hold on. Break the net, either fitting or put a block into the net and the whole net comes down and drops at the first fitting; the fittings stay. The net sails with the ship.
+
 ## The ship's bell
 illustration: ships_bell
 show_me: ships_bell | Show me: the ship's bell

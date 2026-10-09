@@ -999,6 +999,18 @@
         "key": "pirates_n_ships.almanac.sailing.p13.heading"
        },
        {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.sailing.p13.text1"
+       }
+      ]
+     },
+     {
+      "elements": [
+       {
+        "type": "heading",
+        "key": "pirates_n_ships.almanac.sailing.p14.heading"
+       },
+       {
         "type": "illustration",
         "texture": "pirates_n_ships:textures/almanac/ships_bell.png",
         "x": 0.05,
@@ -1009,15 +1021,15 @@
        {
         "type": "show_me",
         "scene": "pirates_n_ships:ships_bell",
-        "label": "pirates_n_ships.almanac.sailing.p13.show_me1"
+        "label": "pirates_n_ships.almanac.sailing.p14.show_me1"
        },
        {
         "type": "text",
-        "key": "pirates_n_ships.almanac.sailing.p13.text1"
+        "key": "pirates_n_ships.almanac.sailing.p14.text1"
        },
        {
         "type": "text",
-        "key": "pirates_n_ships.almanac.sailing.p13.text2"
+        "key": "pirates_n_ships.almanac.sailing.p14.text2"
        }
       ]
      },
@@ -1025,7 +1037,7 @@
       "elements": [
        {
         "type": "heading",
-        "key": "pirates_n_ships.almanac.sailing.p14.heading"
+        "key": "pirates_n_ships.almanac.sailing.p15.heading"
        },
        {
         "type": "illustration",
@@ -1038,54 +1050,31 @@
        {
         "type": "show_me",
         "scene": "pirates_n_ships:crows_nest",
-        "label": "pirates_n_ships.almanac.sailing.p14.show_me1"
-       },
-       {
-        "type": "text",
-        "key": "pirates_n_ships.almanac.sailing.p14.text1"
-       },
-       {
-        "type": "text",
-        "key": "pirates_n_ships.almanac.sailing.p14.text2"
-       },
-       {
-        "type": "list",
-        "items": [
-         "pirates_n_ships.almanac.sailing.p14.list1_1",
-         "pirates_n_ships.almanac.sailing.p14.list1_2",
-         "pirates_n_ships.almanac.sailing.p14.list1_3"
-        ]
-       },
-       {
-        "type": "text",
-        "key": "pirates_n_ships.almanac.sailing.p14.text3"
-       },
-       {
-        "type": "text",
-        "key": "pirates_n_ships.almanac.sailing.p14.text4"
-       }
-      ]
-     },
-     {
-      "elements": [
-       {
-        "type": "heading",
-        "key": "pirates_n_ships.almanac.sailing.p15.heading"
+        "label": "pirates_n_ships.almanac.sailing.p15.show_me1"
        },
        {
         "type": "text",
         "key": "pirates_n_ships.almanac.sailing.p15.text1"
        },
        {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.sailing.p15.text2"
+       },
+       {
         "type": "list",
         "items": [
          "pirates_n_ships.almanac.sailing.p15.list1_1",
-         "pirates_n_ships.almanac.sailing.p15.list1_2"
+         "pirates_n_ships.almanac.sailing.p15.list1_2",
+         "pirates_n_ships.almanac.sailing.p15.list1_3"
         ]
        },
        {
         "type": "text",
-        "key": "pirates_n_ships.almanac.sailing.p15.text2"
+        "key": "pirates_n_ships.almanac.sailing.p15.text3"
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.sailing.p15.text4"
        }
       ]
      },
@@ -1098,6 +1087,29 @@
        {
         "type": "text",
         "key": "pirates_n_ships.almanac.sailing.p16.text1"
+       },
+       {
+        "type": "list",
+        "items": [
+         "pirates_n_ships.almanac.sailing.p16.list1_1",
+         "pirates_n_ships.almanac.sailing.p16.list1_2"
+        ]
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.sailing.p16.text2"
+       }
+      ]
+     },
+     {
+      "elements": [
+       {
+        "type": "heading",
+        "key": "pirates_n_ships.almanac.sailing.p17.heading"
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.sailing.p17.text1"
        }
       ]
      }
@@ -3589,26 +3601,28 @@
   "pirates_n_ships.almanac.sailing.p12.list1_3": "Click a ratline you placed to add the next one at the end of its run, straight up a hanging net or up and forward along a sloped one.",
   "pirates_n_ships.almanac.sailing.p12.list1_4": "Sneak to place against the clicked side instead.",
   "pirates_n_ships.almanac.sailing.p12.text2": "Climb a hanging net like a ladder; walk up a sloped one. A net needs something to rest on: break one and the nets that hung from it fall too. A sloped run may end on a yard right beside the mast, and from there you climb straight on up the hanging net above.",
-  "pirates_n_ships.almanac.sailing.p13.heading": "The ship's bell",
-  "pirates_n_ships.almanac.sailing.p13.show_me1": "Show me: the ship's bell",
-  "pirates_n_ships.almanac.sailing.p13.text1": "The {item:pirates_n_ships:ships_bell}**ship's bell** sits on a post or a wall. Right-click it and it swings and rings.",
-  "pirates_n_ships.almanac.sailing.p13.text2": "It is a bell and nothing more: it does not call your crew. But mark it when you lie in a harbour: when raiders come, every bell in the settlement rings the alarm.",
-  "pirates_n_ships.almanac.sailing.p14.heading": "The crow's nest",
-  "pirates_n_ships.almanac.sailing.p14.show_me1": "Show me: keeping the lookout",
-  "pirates_n_ships.almanac.sailing.p14.text1": "The {item:pirates_n_ships:crows_nest}**crow's nest** is a barrel for the masthead. Place it on a log, a fence, a wall or any block with a solid top; if that block goes, the nest falls. Climb up the mast and step in over the rim, and sneak to stay put.",
-  "pirates_n_ships.almanac.sailing.p14.text2": "Whoever stands in the nest keeps the lookout, you or a hand you post there with the whistle. Every few seconds the lookout sweeps 160 blocks around the ship and calls what is new to everyone aboard:",
-  "pirates_n_ships.almanac.sailing.p14.list1_1": "**Ships**, by the flag they fly: a merchant, a navy ship, a pirate ship, a wreck, or just a sail.",
-  "pirates_n_ships.almanac.sailing.p14.list1_2": "**Land**, the nearest coast, once per stretch of shore.",
-  "pirates_n_ships.almanac.sailing.p14.list1_3": "Sharks, and the kraken.",
-  "pirates_n_ships.almanac.sailing.p14.text3": "A call is short. One line appears over your hotbar, \"Sail two points to starboard, 140 blocks\" or \"Land ahead, 300 blocks\", a small bell rings up in the nest, and a diamond lights on the rim of your compass where the sighting lies: white for land, red for a pirate, blue for the navy, grey for the rest. The mark fades after half a minute. Nothing goes to chat.",
-  "pirates_n_ships.almanac.sailing.p14.text4": "Bearings are called from the bow: ahead, so many points to starboard or port (a full circle is 32 points), abeam, on the quarter, astern. The lookout calls each sighting once, then again when it has closed in a good way or after two minutes, and remembers it a while after it drops from view.",
-  "pirates_n_ships.almanac.sailing.p15.heading": "The ship's panels",
-  "pirates_n_ships.almanac.sailing.p15.text1": "While you are aboard, two small panels watch over her.",
-  "pirates_n_ships.almanac.sailing.p15.list1_1": "**The compass,** bottom left: a ship-shaped needle points along your heading, the wind arrow sits outside the rose, and below it you read the speed in knots and the rudder angle.",
-  "pirates_n_ships.almanac.sailing.p15.list1_2": "**The hull strip,** bottom right: one cell per compartment from bow to stern, filling blue as water comes in, with a red mark at a breach and a pump sign where a pump works.",
-  "pirates_n_ships.almanac.sailing.p15.text2": "They stay while you walk the deck, climb the rigging or stand at the helm, and go a moment after you leave her. Her name, load and crew are on the ship screen at the helm; see [[pirates_n_ships:ships|Ships]].",
-  "pirates_n_ships.almanac.sailing.p16.heading": "Music at sea",
-  "pirates_n_ships.almanac.sailing.p16.text1": "Aboard, the next tune is a sea shanty; at sea but not aboard, an air of wind and water. A tune is never cut off, and a few minutes of quiet pass between them.",
+  "pirates_n_ships.almanac.sailing.p13.heading": "Ratline nets",
+  "pirates_n_ships.almanac.sailing.p13.text1": "{item:pirates_n_ships:ratline_net}A **ratline net** runs from a **chainplate** at the rail to a **mast hoop** up the mast, at any slope from 30° to straight up. Put the chainplate on top of the rail or on its side and the hoop on the mast, then use the net on one and then on the other. The line between their rings must be clear of blocks and at most 12 blocks long; you are told what is wrong otherwise. Walk into the net and hold forward or jump to climb it along its line; sneak to hold on. Break the net, either fitting or put a block into the net and the whole net comes down and drops at the first fitting; the fittings stay. The net sails with the ship.",
+  "pirates_n_ships.almanac.sailing.p14.heading": "The ship's bell",
+  "pirates_n_ships.almanac.sailing.p14.show_me1": "Show me: the ship's bell",
+  "pirates_n_ships.almanac.sailing.p14.text1": "The {item:pirates_n_ships:ships_bell}**ship's bell** sits on a post or a wall. Right-click it and it swings and rings.",
+  "pirates_n_ships.almanac.sailing.p14.text2": "It is a bell and nothing more: it does not call your crew. But mark it when you lie in a harbour: when raiders come, every bell in the settlement rings the alarm.",
+  "pirates_n_ships.almanac.sailing.p15.heading": "The crow's nest",
+  "pirates_n_ships.almanac.sailing.p15.show_me1": "Show me: keeping the lookout",
+  "pirates_n_ships.almanac.sailing.p15.text1": "The {item:pirates_n_ships:crows_nest}**crow's nest** is a barrel for the masthead. Place it on a log, a fence, a wall or any block with a solid top; if that block goes, the nest falls. Climb up the mast and step in over the rim, and sneak to stay put.",
+  "pirates_n_ships.almanac.sailing.p15.text2": "Whoever stands in the nest keeps the lookout, you or a hand you post there with the whistle. Every few seconds the lookout sweeps 160 blocks around the ship and calls what is new to everyone aboard:",
+  "pirates_n_ships.almanac.sailing.p15.list1_1": "**Ships**, by the flag they fly: a merchant, a navy ship, a pirate ship, a wreck, or just a sail.",
+  "pirates_n_ships.almanac.sailing.p15.list1_2": "**Land**, the nearest coast, once per stretch of shore.",
+  "pirates_n_ships.almanac.sailing.p15.list1_3": "Sharks, and the kraken.",
+  "pirates_n_ships.almanac.sailing.p15.text3": "A call is short. One line appears over your hotbar, \"Sail two points to starboard, 140 blocks\" or \"Land ahead, 300 blocks\", a small bell rings up in the nest, and a diamond lights on the rim of your compass where the sighting lies: white for land, red for a pirate, blue for the navy, grey for the rest. The mark fades after half a minute. Nothing goes to chat.",
+  "pirates_n_ships.almanac.sailing.p15.text4": "Bearings are called from the bow: ahead, so many points to starboard or port (a full circle is 32 points), abeam, on the quarter, astern. The lookout calls each sighting once, then again when it has closed in a good way or after two minutes, and remembers it a while after it drops from view.",
+  "pirates_n_ships.almanac.sailing.p16.heading": "The ship's panels",
+  "pirates_n_ships.almanac.sailing.p16.text1": "While you are aboard, two small panels watch over her.",
+  "pirates_n_ships.almanac.sailing.p16.list1_1": "**The compass,** bottom left: a ship-shaped needle points along your heading, the wind arrow sits outside the rose, and below it you read the speed in knots and the rudder angle.",
+  "pirates_n_ships.almanac.sailing.p16.list1_2": "**The hull strip,** bottom right: one cell per compartment from bow to stern, filling blue as water comes in, with a red mark at a breach and a pump sign where a pump works.",
+  "pirates_n_ships.almanac.sailing.p16.text2": "They stay while you walk the deck, climb the rigging or stand at the helm, and go a moment after you leave her. Her name, load and crew are on the ship screen at the helm; see [[pirates_n_ships:ships|Ships]].",
+  "pirates_n_ships.almanac.sailing.p17.heading": "Music at sea",
+  "pirates_n_ships.almanac.sailing.p17.text1": "Aboard, the next tune is a sea shanty; at sea but not aboard, an air of wind and water. A tune is never cut off, and a few minutes of quiet pass between them.",
   "pirates_n_ships.almanac.crew.title": "Crew",
   "pirates_n_ships.almanac.crew.p1.heading": "Crew",
   "pirates_n_ships.almanac.crew.p1.text1": "One captain cannot work the winch, the helm, the pumps and the guns at once. A crew can. Hire good hands, feed them, pay them and give them a dry place to sleep, and they will sail your ship for you.",

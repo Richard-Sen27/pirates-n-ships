@@ -460,6 +460,23 @@ on the end of a yard right beside the mast: walk up into it, face the mast and p
 hanging net above without a jump. Ratlines work in water and on a sailing ship. Server config
 `rigging.ratlines_enabled`.
 
+**Ratline nets (RL2).** For a longer or steeper climb, string a net between two iron fittings. A **chainplate** (two
+from an iron ingot under a ring of three iron nuggets) goes on top of the rail or on its side (any solid face, or a
+fence, wall or railing); a **mast hoop** (two from three iron ingots over a ring of three nuggets) goes on the side of a
+mast like a ladder. Craft a **ratline net** from five string and four sticks (string across the middle row and in the
+middle of the top and bottom rows, sticks in the corners). Use it on one fitting ("Net tied: now use the other
+fitting", the net glints), then on the other: the net is strung between their rings and used up. It is refused, with
+a short reason in the action bar, when the line is longer than 12 blocks (`rigging.net_max_length`), flatter than 30°
+(`rigging.net_min_pitch`), runs through a block ("Blocked at x y z"), joins the land to a ship or two ships, or a
+fitting already holds a net. The net is drawn as two side ropes with a rung every half block; every block it passes
+through holds an invisible, climbable net cell. Walk into the net (from the chainplate) and hold forward or jump: you
+climb along the net's line at any slope, as fast as up a ladder (slower on a net flatter than about 38°); back climbs
+down, sneaking holds on. The fittings are climbable too, so you get on at the chainplate and off at the hoop.
+Breaking a fitting, a net cell or putting a block into the net brings the whole net down: one net drops at the first
+fitting, the fittings stay. Nets work in water and sail with the ship. Server config `rigging.nets_enabled`,
+`rigging.net_assist` (off: plain ladder climbing, which takes a diagonal net only with jump and forward held
+together).
+
 ### Hammocks
 Your crew sleeps in hammocks. Hang one between two supports at the same height (fence posts, walls, logs, or a solid
 wall such as the hull side): click the block next to one support while looking toward the other. Recipe: 2 string
@@ -1540,7 +1557,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `ship_identity` | Nameplates showing the ship's name, their refresh. |
 | `ship_screen` | The ship screen at the helm on/off (off: sneak-use disassembles at once), its reach, how often it refreshes. |
 | `ship_decor` | The ship's bell ring time; sleeping in the sea cot, on land and aboard. |
-| `rigging` | Ratlines on/off. |
+| `rigging` | Ratlines on/off; ratline nets on/off, their longest length and flattest pitch, the climbing assist. |
 | `wind` | Wind strength range, how fast it changes, weather multipliers, gusts, regional variation, sync interval. |
 | `sailing` | Sail force, half-trim factor, rudder strength and turning authority (`rudder_force_factor`, `max_rudder_angle`), keel drag, roll and pitch damping; `sails` (yard gaps and lengths, stay length and drop, rope lines and sag, dyeing, banners and their minimum size). |
 | `sailing_runtime` | Sailing forces, steering and anchor on/off, sail heel factor, sails needing water, rudder steps, the anchor chain's length (`anchor_chain_length`), draft, scan interval. |

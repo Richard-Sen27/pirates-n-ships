@@ -14,7 +14,7 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 WT=$ROOT/.claude/worktrees/merge
 LOG=${STAGE_LOG_DIR:-$ROOT/.claude/worktrees/stage-logs}/$PKG; mkdir -p "$LOG"
 GEN_RE='^common/src/generated/resources/|^common/src/datagen/almanac/'
-DOCS_RE='^docs/|^CLAUDE\.md$|^tools/merge_(stage|batch)\.sh$'
+DOCS_RE='^docs/|^CLAUDE\.md$|^README\.md$|^tools/merge_(stage|batch)\.sh$|^tools/check_[a-z_]+\.py$|^\.github/|^\.claude/agents/'
 cd "$WT" || exit 1
 if [ -z "${CONTINUE:-}" ]; then
   if [ -n "$(git status --short | grep -v '^??')" ]; then echo "merge worktree dirty"; git status --short | head; exit 2; fi

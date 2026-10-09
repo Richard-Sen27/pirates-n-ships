@@ -7,6 +7,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -42,6 +43,11 @@ public final class NeoForgeClientSetup {
     private NeoForgeClientSetup() {
     }
 
+    /** ITC1: our item colour handlers, each for its items (resolved now, after registration). */
+    static void registerItemColors(RegisterColorHandlersEvent.Item e) {
+        ClientEvents.itemColors().forEach(c -> e.register(c.color(), c.items().stream().map(Supplier::get).toArray(ItemLike[]::new)));
+    }
+
     /**
      * Our HUD layers by their {@link ClientEvents.HudOrder}: above all in registration order, or right below the chat
      * (HUD4; each one goes directly under {@code CHAT}, so they also keep their registration order).
@@ -74,6 +80,7 @@ public final class NeoForgeClientSetup {
         modBus.addListener(RegisterClientExtensionsEvent.class, e -> NeoForgeArmorModels.register(ClientEvents.armorModels(), e::registerItem));
         modBus.addListener(RegisterColorHandlersEvent.Block.class, e -> ClientEvents.blockColors().forEach(c ->
                 e.register(c.color(), c.blocks().stream().map(Supplier::get).toArray(Block[]::new))));
+        modBus.addListener(RegisterColorHandlersEvent.Item.class, NeoForgeClientSetup::registerItemColors);
 
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Pre.class, e -> ClientEvents.CLIENT_TICK_START.invoker().onTick(Minecraft.getInstance()));
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> ClientEvents.CLIENT_TICK_END.invoker().onTick(Minecraft.getInstance()));

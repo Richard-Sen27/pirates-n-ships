@@ -15,7 +15,7 @@ While working:
 - Only touch the files and packages your task says you own. If you need a change to a shared file (central registries, `Services`, mixin config, root build files), don't make it. Describe the exact change needed in your final message instead.
 - Put pure logic in plain Java classes without world access and test it with JUnit 5. Use GameTests for the parts that need a world.
 - Every Sable call needs a backing file reference in `refs/sable`. If the API you need doesn't exist, stop and report it rather than working around it.
-- Run `./gradlew build` (JUnit) and the GameTests scoped to the classes you created or changed: `JAVA_TOOL_OPTIONS="-Dpirates_n_ships.gametest.only=YourGameTests,OtherGameTests" ./gradlew :neoforge:runGameTestServer`. Never run the full suite (the merge stage does), and run at most one GameTest server at a time. Fix failures. Don't disable or weaken tests to make them pass.
+- Run `./gradlew build` (JUnit) and the GameTests scoped to the classes you created or changed: `./gradlew :neoforge:runGameTestServer -Ppirates_n_ships.gametest.only=YourGameTests,OtherGameTests`. Never run the full suite (the merge stage does), and run at most one GameTest server at a time. Fix failures. Don't disable or weaken tests to make them pass.
 - Never kill processes you did not start (no `pkill`, `killall`, `gradle --stop`); other agents and the merge stage share the machine. Stop only your own run by its pid.
 - Commit on your branch with clear messages.
 
@@ -26,3 +26,5 @@ Your final message (it goes to the orchestrator, not the human) must contain:
 - Changes needed in shared files (exact snippets)
 - Anything that needs an in-game playtest, as a checklist with steps and expected results
 - Open problems or risks
+
+- **Run Gradle as one plain command.** `./gradlew <task> [args]` from your worktree's own working directory, optionally with `> log 2>&1`, and nothing else on the line: no `cd … &&`, no `; echo …; tail …; git status`, no environment-variable prefix where a Gradle flag exists. The project's permission rules allow a command that starts with `./gradlew`; anything chained to it falls through to the auto-mode classifier, which has refused data generation and builds as "Modify Shared Resources" (ITC1, ART11, QST2b, VIS1b). Read the log with a second command. If a Gradle run is refused anyway, say so in the hand-back and commit: the merge stage builds and tests every branch.

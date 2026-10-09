@@ -141,6 +141,10 @@ upright a second or two after you furl. Sails spill their wind as the heel nears
 ship on its side under sail alone. Cargo stowed to one side and water in the hold still make a ship list; pump it out
 and trim the load. Server config `stability`.
 
+A ship floats level as you built it: the shipwright ballasts it, so a tall stern castle or a heavy gun deck on one side
+does not tip it. What you load later does: cargo, flood water and damage still trim and heel it. Only an absurd build
+(a tower of iron far aft) is more than the ballast can make good. Server config `stability.auto_ballast`.
+
 ## Capstan and anchor
 The anchor is a real object: it hangs outside the hull on the side nearer to the capstan, just below the deck, and
 moves with the ship. The anchor is heavy and falls on its own: let it go while the ship has way on and it keeps the
@@ -155,7 +159,8 @@ and does not hold. Server config `anchor`.
 
 You can also put a crew member on the capstan: use the Captain's Whistle on the crew member, then on the
 capstan. In the whistle menu, "Drop anchor" makes the hand lean into the bars for two seconds before the anchor runs
-out, and "Weigh anchor" starts the winding at once; he keeps pushing until the anchor is stowed. A free hand on deck
+out, and "Weigh anchor" starts the winding at once; he keeps pushing until the anchor is stowed. While he works, the
+capstan's bars turn and he walks round the drum pushing them, then steps back to his spot. A free hand on deck
 takes an unmanned capstan by himself when you give the order. Over water deeper than the chain he refuses: "No
 ground for the anchor within the chain's reach, captain!" Commands: `/pirates crew order drop_anchor` and
 `raise_anchor`. Server config `crew_stations.capstan`.
@@ -533,6 +538,15 @@ stays where the water is (a turning ship leaves a curved wake), and at speed a t
 the faster the ship, the denser and brighter, nothing below 1 block per second or at anchor (client settings
 `wave_effects.wake`, `wake_density`, `wake_life_ticks`, `wake_min_speed`, `wake_full_speed`, `wake_spread_degrees`,
 `wake_radius`). Server config `waves`.
+
+The sea itself moves: around you the water surface rises into crests and sinks into troughs with the same waves that
+rock the ships, smooth near you and coarser toward the horizon, flat at the beach where the water is shallow, and never
+inside a dry hull. The foam rides on it. It is only a picture: swimming, boats, collisions and the ships' buoyancy still
+use the flat sea level, so a crest can wash over your feet without lifting you. You can see it from under water too.
+Client settings `wave_effects.surface` (on by default), `surface_near_radius`, `surface_mid_radius`, `surface_far_cell`,
+`surface_full_depth` and `surface_underside`. With a mod that replaces Minecraft's chunk renderer (Sodium, Embeddium,
+Iris, Oculus, VulkanMod) the surface turns itself off and the water stays flat as before; the waves still rock the
+ships.
 
 ## Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks

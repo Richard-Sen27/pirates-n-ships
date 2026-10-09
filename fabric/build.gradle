@@ -103,13 +103,21 @@ loom {
         }
         // ./gradlew :fabric:runGameTest. Fabric API's GameTest module starts the headless GameTest server, runs every
         // test of the "fabric-gametest" entry point (FabricGameTests: all modules' GameTest classes) and exits with a
-        // non-zero code when a required test fails. Honours -Dpirates_n_ships.gametest.only like the NeoForge run.
+        // non-zero code when a required test fails. Scoped like the NeoForge run (GT2):
+        // ./gradlew :fabric:runGameTest -Ppirates_n_ships.gametest.only=FooGameTests,BarGameTests forwards the project
+        // property as the system property ModGameTests.ONLY_PROPERTY reads; without it nothing is passed and the full
+        // suite runs. JAVA_TOOL_OPTIONS="-Dpirates_n_ships.gametest.only=..." keeps working as well.
         gameTest {
             server()
             setConfigName('Fabric GameTest')
             ideConfigGenerated(false)
             vmArg('-Dfabric-api.gametest')
             vmArg("-Dfabric-api.gametest.report-file=${project.layout.buildDirectory.file('gametest/junit.xml').get().asFile}")
+            // Loom's vmArg takes plain strings, so the property is read here; a -P flag is known at configuration time.
+            def only = providers.gradleProperty('pirates_n_ships.gametest.only').getOrNull()
+            if (only) {
+                vmArg("-Dpirates_n_ships.gametest.only=${only}")
+            }
             runDir('build/gametest')
         }
     }

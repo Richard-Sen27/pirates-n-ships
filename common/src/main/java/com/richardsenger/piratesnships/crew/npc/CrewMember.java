@@ -396,10 +396,10 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         StationPoses.Shown shown = assignment != null && isAtStation() && getVehicle() instanceof StationSeat seat
                 ? StationPoses.resolve(level, assignment, seat.blockPosition()) : null;
         entityData.set(DATA_STATION_POSE, (byte) (shown == null ? -1 : shown.pose().stationId()));
-        facingStation = shown != null && shown.facing() != null;
+        facingStation = shown != null && shown.faces();
         if (facingStation) {
             ShipBody ship = SableShips.byId(level, assignment.ship());
-            float yaw = SleepAxis.continuous(getYRot(), StationPoses.yaw(shown.facing(), ship == null ? null : ship.orientation()));
+            float yaw = SleepAxis.continuous(getYRot(), StationPoses.yaw(shown, ship == null ? null : ship.orientation()));
             setYRot(yaw);
             setYHeadRot(yaw);
             setYBodyRot(yaw);

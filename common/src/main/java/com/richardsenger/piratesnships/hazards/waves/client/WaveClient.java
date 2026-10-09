@@ -6,7 +6,7 @@ import com.richardsenger.piratesnships.hazards.waves.SeaState;
 import com.richardsenger.piratesnships.hazards.waves.WaveSprayPayload;
 import com.richardsenger.piratesnships.hazards.waves.WaveSyncPayload;
 import com.richardsenger.piratesnships.platform.event.ClientEvents;
-import com.richardsenger.piratesnships.ship.sable.ClientShipPoses;
+import com.richardsenger.piratesnships.ship.sable.ClientAboard;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
@@ -19,7 +19,8 @@ import org.joml.Vector3d;
 
 /**
  * The client side of the waves (WV1, physical client only): the synced sea ({@link ClientWaves}), bow spray with a
- * splash ({@code wave_effects.spray}) and the optional camera sway ({@code wave_effects.camera_sway}).
+ * splash ({@code wave_effects.spray}), the optional camera sway ({@code wave_effects.camera_sway}) and the visible sea
+ * surface ({@code wave_effects.surface}, WAV3, {@code surface.SeaSurface}).
  */
 public final class WaveClient {
 
@@ -29,12 +30,24 @@ public final class WaveClient {
      */
     static final float ROLL_SIGN = 1.0f;
 
+    /** CAM1: fades the sway in and out over {@code camera_sway_ease_ticks}. */
+    private static final SwayEase EASE = new SwayEase();
+    /** The kept ship's up vector (world) from the last frame that had one, for the fade out after the ship is gone. */
+    private static final Vector3d lastUp = new Vector3d(0, 1, 0);
+
     private WaveClient() {
     }
 
     public static void init() {
-        ClientEvents.CLIENT_DISCONNECT.register(mc -> ClientWaves.reset());
+        ClientEvents.CLIENT_DISCONNECT.register(mc -> {
+            ClientWaves.reset();
+            EASE.reset();
+            lastUp.set(0, 1, 0);
+        });
+        ClientEvents.CLIENT_TICK_END.register(mc -> EASE.tick(HazardConfig.CAMERA_SWAY.get() && ClientAboard.ship() != null,
+                HazardConfig.CAMERA_SWAY_EASE_TICKS.get()));
         ClientEvents.COMPUTE_CAMERA_ROLL.register(WaveClient::cameraRoll);
+        com.richardsenger.piratesnships.hazards.waves.client.surface.SeaSurface.init();
     }
 
     public static void onSync(WaveSyncPayload payload) {
@@ -69,21 +82,24 @@ public final class WaveClient {
                 (float) (0.35 + 0.3 * Math.min(1.0, strength)), 0.8f + r.nextFloat() * 0.3f, false);
     }
 
-    /** {@link ClientEvents#COMPUTE_CAMERA_ROLL}: adds {@code camera_sway_fraction} of the ship's heel across the view. */
+    /**
+     * {@link ClientEvents#COMPUTE_CAMERA_ROLL}: adds {@code camera_sway_fraction} of the heel across the view of the ship
+     * the player is on ({@link ClientAboard}, kept through a jump or a climb, CAM1), weighted by {@link SwayEase} so
+     * the sway fades in and out over {@code camera_sway_ease_ticks}. The fade out after the ship is gone uses its last
+     * up vector.
+     */
     static float cameraRoll(float partialTick, float roll) {
-        if (!HazardConfig.CAMERA_SWAY.get()) {
-            return roll;
-        }
         LocalPlayer player = Minecraft.getInstance().player;
-        if (player == null) {
+        if (player == null || EASE.idle()) {
             return roll;
         }
-        Quaterniond q = ClientShipPoses.shipOrientation(player, partialTick);
-        if (q == null) {
-            return roll;
+        // CAM1: the ship the player is on, kept through a jump or a climb (Sable's tracking stops mid-jump)
+        Quaterniond q = ClientAboard.orientation(partialTick);
+        if (q != null) {
+            q.transform(lastUp.set(0, 1, 0));
         }
-        Vector3d up = q.transform(new Vector3d(0, 1, 0));
         double yaw = Math.toRadians(player.getViewYRot(partialTick));
-        return roll + ROLL_SIGN * (float) (HazardConfig.CAMERA_SWAY_FRACTION.get() * CameraSway.heelAcrossViewDegrees(up, yaw));
+        double heel = CameraSway.heelAcrossViewDegrees(lastUp, yaw);
+        return roll + ROLL_SIGN * (float) (EASE.weight(partialTick) * HazardConfig.CAMERA_SWAY_FRACTION.get() * heel);
     }
 }

@@ -56,6 +56,8 @@ public final class HazardConfig {
             "The camera rolls with the ship while you are aboard");
     public static final ConfigValue<Double> CAMERA_SWAY_FRACTION = WAVE_EFFECTS.doubleRange("camera_sway_fraction", 0.5, 0.0, 1.0,
             "Fraction of the ship's roll the camera follows (1 = the full roll)");
+    public static final ConfigValue<Integer> CAMERA_SWAY_EASE_TICKS = WAVE_EFFECTS.intRange("camera_sway_ease_ticks", 5, 0, 100,
+            "Ticks the camera sway takes to fade in when you board or land and out when you leave the ship (0 = instant)");
     public static final ConfigValue<Boolean> SPRAY = WAVE_EFFECTS.bool("spray", true,
             "Spray and a splash at the bow when it digs into a wave in rough or stormy seas");
     // Foam streaks on the water (WD1, read through sailing.effects.SeaEffectsConfig#foam)
@@ -84,6 +86,19 @@ public final class HazardConfig {
             "Life of the stern trail's foam in ticks (the bow wave lives three quarters of it): the longer, the longer the trail");
     public static final ConfigValue<Double> WAKE_SPREAD_DEGREES = WAVE_EFFECTS.doubleRange("wake_spread_degrees", WakeRules.DEFAULTS.spreadDegrees(), 0.0, 45.0,
             "Angle in degrees between the course and each arm of the bow wave's V (19.5 is the Kelvin angle of real ships)");
+    // The visible sea surface (WAV3, read by hazards.waves.client.surface.SeaSurface)
+    public static final ConfigValue<Boolean> SURFACE = WAVE_EFFECTS.bool("surface", true,
+            "The sea surface rises and falls with the waves (a moving water surface around you; ships, swimming and collisions still use the flat sea level). Off, and always with Sodium, Embeddium, Iris, Oculus or VulkanMod: flat water");
+    public static final ConfigValue<Integer> SURFACE_NEAR_RADIUS = WAVE_EFFECTS.intRange("surface_near_radius", 32, 8, 96,
+            "Distance from the camera in blocks within which the moving surface has one point per block (rounded up to 4)");
+    public static final ConfigValue<Integer> SURFACE_MID_RADIUS = WAVE_EFFECTS.intRange("surface_mid_radius", 128, 32, 512,
+            "Distance from the camera in blocks within which the moving surface has one point every 4 blocks; beyond it the far cells reach to the render distance");
+    public static final ConfigValue<Integer> SURFACE_FAR_CELL = WAVE_EFFECTS.intRange("surface_far_cell", 16, 4, 64,
+            "Size in blocks of the moving surface's cells beyond surface_mid_radius (4, 8, 16, 32 or 64; other values round down)");
+    public static final ConfigValue<Integer> SURFACE_FULL_DEPTH = WAVE_EFFECTS.intRange("surface_full_depth", 4, 2, 16,
+            "Water depth in blocks from which the surface moves with the full wave height; shallower water moves less, one block deep not at all, so waves never cut into a beach");
+    public static final ConfigValue<Boolean> SURFACE_UNDERSIDE = WAVE_EFFECTS.bool("surface_underside", true,
+            "Also draw the moving surface from below, so it shows when you look up from under water");
 
     private HazardConfig() {
     }

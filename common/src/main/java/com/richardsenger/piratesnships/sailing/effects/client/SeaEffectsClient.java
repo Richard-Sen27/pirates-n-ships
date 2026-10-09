@@ -4,6 +4,7 @@ import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.hazard.HazardConfig;
 import com.richardsenger.piratesnships.hazards.waves.ClientWaves;
 import com.richardsenger.piratesnships.hazards.waves.WaveField;
+import com.richardsenger.piratesnships.hazards.waves.client.surface.SeaSurface;
 import com.richardsenger.piratesnships.platform.event.ClientEvents;
 import com.richardsenger.piratesnships.sailing.effects.FoamRules;
 import com.richardsenger.piratesnships.sailing.effects.SeaEffectsConfig;
@@ -35,7 +36,8 @@ import org.jetbrains.annotations.Nullable;
  * the camera, and faint foam streaks ({@code wave_effects.foam*}) lie on the water along the direction of the synced
  * waves ({@link ClientWaves}), most on the crests. The rates and positions come from the pure {@link WindStreakRules}
  * and {@link FoamRules}; WD2 gives each wind streak its own speed, heading, wobble, life and stroke sprite
- * ({@link WindStreakStyle}) and births most of them in loose puffs ({@link WindPuffs}). Both respect the video setting "Particles" and stop in calm air and a calm sea. Only renders:
+ * ({@link WindStreakStyle}) and births most of them in loose puffs ({@link WindPuffs}). While the visible sea surface
+ * is on (WAV3), the foam is picked on its crests and rides on it ({@link SurfaceFoamParticle}). Both respect the video setting "Particles" and stop in calm air and a calm sea. Only renders:
  * nothing here reaches the server or changes gameplay.
  */
 public final class SeaEffectsClient {
@@ -176,7 +178,9 @@ public final class SeaEffectsClient {
         for (int i = 0; i < n; i++) {
             double[] p = SpawnRules.ringPoint(cam.x, cam.z, FoamRules.INNER_RADIUS, rules.radius(), r.nextDouble(), r.nextDouble());
             // the crests near the camera: the field anchored at the camera (as the server anchors it at a ship)
-            if (r.nextDouble() >= FoamRules.crestKeep(field.heightAround(cam.x, cam.z, p[0], p[1], time), amplitude)) {
+            boolean riding = SeaSurface.isActive();
+            double crest = riding ? SeaSurface.waveHeight(p[0], p[1], time) : field.heightAround(cam.x, cam.z, p[0], p[1], time);
+            if (r.nextDouble() >= FoamRules.crestKeep(crest, amplitude)) {
                 continue;
             }
             BlockPos water = BlockPos.containing(p[0], seaY - 1.0, p[1]);
@@ -187,14 +191,21 @@ public final class SeaEffectsClient {
             if (!fluid.is(FluidTags.WATER) || !level.getBlockState(water.above()).isAir()) {
                 continue;
             }
-            double y = water.getY() + fluid.getHeight(level, water) + FoamRules.LIFT;
-            if (WaterRegions.isOccluded(level, new Vec3(p[0], y - 0.3, p[1]))) {
+            double still = water.getY() + fluid.getHeight(level, water);
+            if (WaterRegions.isOccluded(level, new Vec3(p[0], still + FoamRules.LIFT - 0.3, p[1]))) {
                 continue; // inside a dry hull
             }
             double[] dir = SpawnRules.bearing(field.directionDegrees() + (r.nextDouble() - 0.5) * 20.0);
-            mc.particleEngine.add(new SeaStreakParticle(level, p[0], y, p[1], SeaStreakParticle.Shape.FLAT,
-                    dir[0], dir[1], drift, 0.0, length * (0.7 + 0.6 * r.nextDouble()), FOAM_WIDTH * (0.7 + 0.6 * r.nextDouble()),
-                    alpha, rules.lifeTicks(), sprite));
+            double streakLength = length * (0.7 + 0.6 * r.nextDouble()), width = FOAM_WIDTH * (0.7 + 0.6 * r.nextDouble());
+            double surface = riding ? SeaSurface.surfaceY(p[0], p[1], time) : Double.NaN;
+            if (!Double.isNaN(surface)) {
+                // WAV3: the streak rides on the moving surface
+                mc.particleEngine.add(new SurfaceFoamParticle(level, p[0], surface + SurfaceFoamParticle.LIFT, p[1],
+                        dir[0], dir[1], drift, streakLength, width, alpha, rules.lifeTicks(), sprite));
+            } else {
+                mc.particleEngine.add(new SeaStreakParticle(level, p[0], still + FoamRules.LIFT, p[1], SeaStreakParticle.Shape.FLAT,
+                        dir[0], dir[1], drift, 0.0, streakLength, width, alpha, rules.lifeTicks(), sprite));
+            }
         }
     }
 

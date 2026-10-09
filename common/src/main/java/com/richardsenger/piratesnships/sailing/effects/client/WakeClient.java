@@ -38,7 +38,7 @@ import java.util.UUID;
 /**
  * Ships' wakes (WAKE1, docs/design.md §5.4 "Wake"; physical client only): every client tick, each Sable sub-level
  * within {@code wave_effects.wake_radius} of the camera that moves through the water faster than
- * {@code wake_min_speed} sheds flat foam quads ({@link WakeParticle}, the WD1 foam sprite): a bow wave at the stem
+ * {@code wake_min_speed} sheds flat foam quads ({@link WakeParticle}, the WD1 foam sprite, riding WAV3's surface through {@link WakeSurface}): a bow wave at the stem
  * moving out along the Kelvin angle, a trail across the stern drifting slowly apart, a thin line along the waterline
  * when fast, and at speed a few splash streaks rising at the stem. Rates, opacity and motion come from the pure
  * {@link WakeRules}; where on the hull from {@link WaterlineOutline} and {@link WakeFrame}. Only renders: nothing here
@@ -361,17 +361,19 @@ public final class WakeClient {
             if (budget <= 0) {
                 return;
             }
-            double y = SeaSurface.y(level, x, z, time);
+            double y = WakeSurface.y(level, x, z, time);
             if (Double.isNaN(y)) {
                 return; // not open sea here
             }
-            y += WakeRules.LIFT;
-            if (WaterRegions.isOccluded(level, new Vec3(x, y - 0.3, z))) {
+            // WAV3: flat quads ride the drawn surface while it is on, else lie on the still water
+            boolean riding = shape == SeaStreakParticle.Shape.FLAT && WakeSurface.riding();
+            y += riding ? WakeSurface.RIDING_LIFT : WakeRules.LIFT;
+            if (WaterRegions.isOccluded(level, WakeParticle.hullProbe(level, x, z))) {
                 return; // inside a dry hull
             }
             budget--;
             mc.particleEngine.add(new WakeParticle(level, x, y, z, shape, axisX, axisZ, vx, vy, vz, length, width,
-                    alpha, Math.max(1, life), friction, occlusionTicks, sprite));
+                    alpha, Math.max(1, life), friction, occlusionTicks, riding, sprite));
         }
     }
 }

@@ -89,8 +89,8 @@ Workflow notes (containers batch: cargo crate, cargo barrel, pantry, water barre
 - **Liquid surfaces** are zero-height elements (`from.y == to.y`) with only an up face: an octagon of four bars as wide
   as the wall's centre line, the two rotated bars 0.02 px lower. the surface uses
   `minecraft:block/water_still` with `tintindex 0` on the water faces (the exported models were edited by hand in Q1;
-  `CrewContentClient` registers the biome water colour; the projects still carry `blue_ice`, and the item model keeps
-  `blue_ice` because items have no colour hook yet). One model per fill level (`water_barrel_fill0..3`, `water_barrel` = full), each with its
+  `CrewContentClient` registers the biome water colour, and for the item the default water colour through the item
+  colour hook, ITC1; the projects still carry `blue_ice`, the generated item model names `water_still`). One model per fill level (`water_barrel_fill0..3`, `water_barrel` = full), each with its
   own project file, built from one helper with the level as a parameter.
 - **Slatted boxes** (cargo crate, 41 elements): an inner dark box (`dark_oak_planks`) behind recessed slats shows
   through the gaps. Keep the inner faces of parts whose inside can be seen from above (the top rails), or the step
@@ -234,6 +234,29 @@ Bilge pump handle (PMP1):
 - **Render:** `renders/bilge_pump_stroke.png`: the pump at rest (top of the stroke, left) and at the bottom of the
   default 28° stroke (right), front three-quarter above and west side below, drawn with a `THREE.WebGLRenderer` from
   clones of the cube meshes posed like the renderer (handle turned about the pin, rod slid down).
+
+Capstan bars (CAP2):
+- **Two groups in `capstan.bbmodel`** (31 elements, geometry unchanged): `bars` (origin (8, 12.75, 8), on the drum's
+  vertical axis through the block centre: the crossed drumhead `head_x`/`head_z`, the four bars, their iron tips, the
+  cap and the boss; 12 elements) and `drum` (origin (8, 0, 8): base plate, pawl ring, pawls, drum, whelps; 19).
+  Exports (`Codecs.java_block.compile()` with the other group's cubes set to `export = false`, numbers rounded to
+  5 decimals, unused textures dropped, `particle` dark oak planks): `capstan` (drum, the block model, no display),
+  `capstan_bars` (stand-alone, drawn by `station/capstan/client/CapstanBarsRenderer`) and `capstan_item` (bars then
+  drum, the only one with the `gui` display `[30, -135, 0]`, scale 0.5; datagen points the item model at it).
+  `HandMadeModelsTest.capstanSplitsIntoDrumAndBars` checks that `capstan_item` is exactly bars + drum and that the bars
+  look the same after a quarter turn (every bar part has a partner turned 90° about (8, 8)), so they may rest at any
+  multiple of 90°.
+- **Drawn turning:** the bars turn about (8, y, 8) by `Axis.YP` (positive = anticlockwise seen from above); raising
+  turns them clockwise, dropping anticlockwise, at `crew_stations.capstan.turn_degrees_per_tick` (6), and when the work
+  stops they run on to the next quarter turn (`CapstanSpin`). The crew member walks round at `walk_radius` (1.1 blocks)
+  at the same rate; the bar tips reach only 11 px (0.69 blocks) from the axis, so his hands meet the bars' line beyond
+  their ends (a playtest question: longer bars or a smaller radius).
+- **Rebuild:** load the committed project with `loadModelFile` (content read by `fs`), reload the textures from
+  `art/vanilla/` (namespace `minecraft`, folder `block`), keep `Project.uuid` in `window.CAP2` and check it before each
+  call; the project was saved with `fs` (textures without `source`, `path` `""`, `relative_path`
+  `../vanilla/<name>.png`).
+- **Render:** `renders/capstan.png`: the assembled block, three-quarter view from the south-east above, offscreen view
+  (perspective, fov 35, camera (40, 34, 40) looking at (0, 6, 0)).
 
 Workflow notes (sea chest, S1-art):
 - **Sea chest** (60 elements, `sea_chest`, one project): a seaman's chest facing north (the `FACING` side). Body
@@ -1409,7 +1432,7 @@ for the gun; not saved).
 | `cannon_aim` | 2 s | loop | leaning in 25–28° over the gun, root 1 px forward, right hand on the breech (12.5 px up, 10 px ahead), left hand on the thigh |
 | `cannon_load` | 1.5 s | loop | ramming: both hands forward on an (invisible) level rammer, right hand ahead; drawn back at 0 s, driven home at 0.6–0.85 s with the waist 8° → 22° and the body 1.5 px forward; right foot forward |
 | `cannon_fire` | 0.75 s | once | linstock hand raised high (arm −150°), lunge to the touch hole at 0.25 s (waist 30°, root 2 px forward, right leg −30°), held to 0.4 s, standing clear at 0.6 s (leaning back 8°, arm up and out), rest at 0.75 s |
-| `capstan_push` | 1.2 s | loop | chest to the bars (waist 30–33°), arms forward on them (−75° to −78°, 14° inwards), walking strides ±25° with a 0.6 px dip; played at the capstan station (CRW3, `station/capstan/CapstanPoses`) while it drops or raises the anchor, facing the capstan from the station spot |
+| `capstan_push` | 1.2 s | loop | chest to the bars (waist 30–33°), arms forward on them (−75° to −78°, 14° inwards), walking strides ±25° with a 0.6 px dip; played at the capstan station (CRW3, `station/capstan/CapstanPoses`) while it drops or raises the anchor; since CAP2 the crew member walks round the drum facing along the circle (the strides now carry him), facing the capstan from the station spot only with `crew_stations.capstan.animation` off |
 
 - **Wheel geometry (helm poses).** The helmsman stands at the station spot on the helm's `FACING` side, facing the
   wheel. In the model frame (feet at the origin, facing −z) the axle is 11.75 px ahead (8 px to the block edge plus the

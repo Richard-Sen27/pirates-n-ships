@@ -103,6 +103,9 @@ There are no mooring lines to belay at a quay: a ship tied up is simply a ship l
 
 {item:pirates_n_ships:mooring_ring}**Mooring rings** and **cleats** serve the grappling hook. A hook flying close to a ring catches on it, and a hook held by a ring holds twice as far before it tears loose. With your hook set in another ship, use a ring or a cleat on your own ship to make the rope fast there; the ships keep hauling together and you can walk away. A ring on land holds a hooked ship the same way. The [[pirates_n_ships:combat|Weapons and combat]] chapter tells the rest of the hook.
 
+## The gangway
+The {item:pirates_n_ships:boarding_plank}**boarding plank** is your gangway in port as much as in a fight. Use it on the edge of your deck or rail toward the quay, or on the quay's edge toward your ship: it bridges up to six blocks and climbs or falls up to two on stepped ramps, so a deck that rides low under a high pier is no trouble. Laid from the pier or from the ship, it lies on the ship and goes where she goes; between two piers it is plain planking. A moored ship may heave in a storm without snapping it, but let her drift a block and a half along the quay and it breaks. Sneak and use it with an empty hand, from either end, to stow it.
+
 ## Waves and weather
 The sea follows the weather. In fair weather there is a low swell or a light chop; in rain the sea runs rough; in a thunderstorm the crests stand two blocks and more above the still water. The change comes over about a minute.
 
@@ -142,11 +145,13 @@ The {item:pirates_n_ships:crows_nest}**crow's nest** is a barrel for the masthea
 
 Whoever stands in the nest keeps the lookout, you or a hand you post there with the whistle. Every few seconds the lookout sweeps 160 blocks around the ship and calls what is new to everyone aboard:
 
-- **Sail ho!** A ship, by the flag she flies: merchant, navy, pirate, a wreck, or just a ship.
-- **Land ho!** The nearest coast, once per stretch of shore.
+- **Ships**, by the flag they fly: a merchant, a navy ship, a pirate ship, a wreck, or just a sail.
+- **Land**, the nearest coast, once per stretch of shore.
 - Sharks, and the kraken.
 
-Bearings are called in points of the compass from the bow: dead ahead, two points off the starboard bow, on the beam, abaft the beam, dead astern. A full circle is 32 points. The lookout calls each sighting once and remembers it a while after it drops from view.
+A call is short. One line appears over your hotbar, "Sail two points to starboard, 140 blocks" or "Land ahead, 300 blocks", a small bell rings up in the nest, and a diamond lights on the rim of your compass where the sighting lies: white for land, red for a pirate, blue for the navy, grey for the rest. The mark fades after half a minute. Nothing goes to chat.
+
+Bearings are called from the bow: ahead, so many points to starboard or port (a full circle is 32 points), abeam, on the quarter, astern. The lookout calls each sighting once, then again when it has closed in a good way or after two minutes, and remembers it a while after it drops from view.
 
 ## The ship's panels
 While you are aboard, two small panels watch over her.

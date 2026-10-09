@@ -86,6 +86,6 @@ public final class BrigModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(BrigGameTests.class, PrisonerInteractionGameTests.class);
+        return List.of(BrigGameTests.class, PrisonerInteractionGameTests.class, ShipBrigGameTests.class);
     }
 }

@@ -241,7 +241,7 @@ public final class ShipSceneText {
         NOT_BALLAST("Her ballast does not count the cargo: trim her yourself, with heavy loads low and amidships"),
         LEVEL("Restowed amidships she floats level again, only deeper"),
         SPEED("Laden, she gathers way and turns more slowly, and with less freeboard a breach floods her sooner"),
-        LEVELS("At the wheel the rudder line shows the load: Light, Laden, Heavily laden or Overloaded");
+        LEVELS("The ship screen at the helm reads her load: Light, Laden, Heavily laden or Overloaded");
 
         static final String TITLE = "Cargo and Weight";
         private final String english;

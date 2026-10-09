@@ -16,10 +16,10 @@ public record ProvisionEffects(double moraleChange, double workSpeedMultiplier, 
     public static final ProvisionEffects NONE = new ProvisionEffects(0, 1, 0, false);
 
     /**
-     * The shortage has lasted long enough that the crew system should roll for desertion, or mutiny when that
-     * toggle is on (design.md §7.3).
+     * The shortage has lasted long enough that the crew deserts at this dawn whatever its morale (design.md §7.3,
+     * §7.4; {@code crew.upkeep.UpkeepDay}, FIX1).
      */
     public boolean desertionCritical() {
-        return desertionRisk >= 1.0;
+        return desertionRisk >= 1.0 - 1e-9; // a streak of exactly N days, summed in doubles
     }
 }

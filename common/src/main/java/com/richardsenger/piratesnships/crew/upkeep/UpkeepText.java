@@ -28,6 +28,14 @@ public final class UpkeepText {
     public static final String DESERTED = KEY + "deserted";
     /** Owner, chat: "%s means to desert: off at the next port" (CRW2). */
     public static final String DESERTING = KEY + "deserting";
+    /** Owner, chat: "%s has deserted: too long without %s" (FIX1: name, {@link #WITHOUT_FOOD} or {@link #WITHOUT_WATER}). */
+    public static final String DESERTED_STARVED = KEY + "deserted_starved";
+    /** Owner, chat: "%s means to desert after too long without %s: off at the next port" (FIX1). */
+    public static final String DESERTING_STARVED = KEY + "deserting_starved";
+    /** "food", in {@link #DESERTED_STARVED} and {@link #DESERTING_STARVED}. */
+    public static final String WITHOUT_FOOD = KEY + "without.food";
+    /** "water", in {@link #DESERTED_STARVED} and {@link #DESERTING_STARVED}. */
+    public static final String WITHOUT_WATER = KEY + "without.water";
     /** Owner, chat: "%s walked off at %s" (CRW2: name, port). */
     public static final String WALKED_OFF = KEY + "walked_off";
     /** Owner, chat: "%s changed their mind and stays aboard" (CRW2). */
@@ -85,6 +93,10 @@ public final class UpkeepText {
         m.put(JOIN, "%s · %s");
         m.put(DESERTED, "%s has deserted");
         m.put(DESERTING, "%s means to desert and will walk off at the next port");
+        m.put(DESERTED_STARVED, "%s has deserted: too long without %s");
+        m.put(DESERTING_STARVED, "%s means to desert after too long without %s and will walk off at the next port");
+        m.put(WITHOUT_FOOD, "food");
+        m.put(WITHOUT_WATER, "water");
         m.put(WALKED_OFF, "%s walked off at %s");
         m.put(STAYS, "%s has changed their mind and stays aboard");
         m.put(MUTINY, "Mutiny aboard %s!");

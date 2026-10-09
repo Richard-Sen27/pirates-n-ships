@@ -290,6 +290,33 @@ public final class UpkeepGameTests {
         });
     }
 
+    /**
+     * FIX1, rum: hardtack, water and 16 rum (32 days of the ration for two crew, above {@code rum_binge_days} 10): the
+     * crew drinks two rations, is drunk after the dawn and works at {@code drunk_work_speed}.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = CONFIG_BATCH + "upkeep_rum_binge")
+    public static void plentyOfRumMakesTheCrewDrunk(GameTestHelper h) {
+        ConfigOverrides.during(h, CrewConfig.WAGES_ENABLED, false);
+        Ship s = ship(h, x -> {
+            pantry(x);
+            barrel(x);
+        });
+        pantryOf(h, s).setItem(0, new ItemStack(CrewContent.HARDTACK.get(), 10));
+        pantryOf(h, s).setItem(1, new ItemStack(TradeContent.RUM.get(), 16));
+        barrelOf(h, s).setRations(16, ProvisionsConfig.settings());
+        dawnAt(h, 0);
+        h.runAfterDelay(DAWN + 1, () -> {
+            ShipDayTick.DayReport r = report(h, s);
+            h.assertTrue(r.provisions().rumIssued() && r.provisions().drunk(), "not drunk on plenty of rum: " + r.provisions());
+            double speed = ShipUpkeepData.get(h.getLevel().getServer()).get(s.id()).workSpeed();
+            h.assertTrue(Math.abs(speed - ProvisionsConfig.DRUNK_WORK_SPEED.get()) < 1e-9, "work speed of a drunk crew: " + speed);
+            int rum = pantryOf(h, s).getItem(1).getCount();
+            h.assertTrue(rum == 15, "two crew on a double ration drink one rum a day; left: " + rum);
+            cleanup(h, s);
+            h.succeed();
+        });
+    }
+
     // ------------------------------------------------------------------ wages
 
     /**
@@ -466,6 +493,43 @@ public final class UpkeepGameTests {
             h.assertTrue(crew.equals(List.of(s.b())), "crew after the desertion: " + crew);
             h.assertTrue(mobs(h, s, Sailor.class).size() == 1, "sailors: " + mobs(h, s, Sailor.class));
             h.assertTrue(told(r, UpkeepText.DESERTED), "owner lines: " + r.ownerLines());
+            cleanup(h, s);
+            h.succeed();
+        });
+    }
+
+    /**
+     * FIX1, {@code provisions.hunger_desertion_days = 2}: an empty pantry, a full water barrel, wages off, deserters
+     * leave at once. After the first hungry dawn (N − 1) nobody deserts; after the second (N) both members desert
+     * although their morale (50) is far above {@code desert_below}, and the owner hears they went without food.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 120, batch = CONFIG_BATCH + "hunger_desertion")
+    public static void hungryCrewDesertsAfterTheConfiguredDays(GameTestHelper h) {
+        ConfigOverrides.during(h, ProvisionsConfig.HUNGER_DESERTION_DAYS, 2.0);
+        ConfigOverrides.during(h, ProvisionsConfig.THIRST_DESERTION_DAYS, 100.0);
+        ConfigOverrides.during(h, CrewConfig.WAGES_ENABLED, false);
+        ConfigOverrides.during(h, CrewConfig.DESERT_AT_PORT_ONLY, false);
+        Ship s = ship(h, x -> {
+            pantry(x);
+            barrel(x);
+        });
+        barrelOf(h, s).setRations(16, ProvisionsConfig.settings());
+        dawnAt(h, 0);
+        h.runAfterDelay(DAWN + 1, () -> {
+            ShipDayTick.DayReport r = report(h, s);
+            h.assertTrue(r.provisions().hungry() && !r.provisions().thirsty(), "hungry, not thirsty: " + r.provisions());
+            h.assertTrue(r.deserters().isEmpty() && r.deserting().isEmpty(), "deserted after one hungry day: " + r.deserters());
+            h.assertTrue(s.a().isAlive() && s.b().isAlive(), "a member left after one hungry day");
+        });
+        dawnAt(h, DAWN + 2);
+        h.runAfterDelay(2 * DAWN + 3, () -> {
+            ShipDayTick.DayReport r = report(h, s);
+            h.assertTrue(r.day().members().stream().allMatch(m -> m.moraleAfter() >= CrewConfig.DESERT_BELOW.get()),
+                    "morale fell below the desertion line: " + r.day());
+            h.assertTrue(r.deserters().size() == 2, "deserters after two hungry days: " + r.deserters());
+            h.assertTrue(s.a().isRemoved() && s.b().isRemoved(), "the hungry crew is still aboard");
+            h.assertTrue(ShipBunks.crewOf(h.getLevel(), s.f().ship()).isEmpty(), "crew left aboard");
+            h.assertTrue(told(r, UpkeepText.DESERTED_STARVED), "owner lines: " + r.ownerLines());
             cleanup(h, s);
             h.succeed();
         });

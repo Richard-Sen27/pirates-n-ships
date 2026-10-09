@@ -580,6 +580,62 @@ into 3d"; the F8g key was a 1.5 px slab with rim plates):
   from the front right, first person through the display camera) and `renders/brig_key_turntable.png` (eight views
   in 45° steps, camera 12 px above the key).
 
+Chain shot and grapeshot as 3D items (ART15, after the playtest note "chainshot and grapeshot need a 3d redesign";
+CAN3 drew flat sprites with `tools/gen_shot_sprites.py`, both gone):
+- **Chain shot** (`chain_shot.bbmodel` -> `models/item/chain_shot.json`, 36 elements, `palette.png` only, particle
+  `palette`). Built along **x** like the ART10 key, centred on (8, 8, 8), x -0.3..16.3: two iron balls D 4.6 at x 2 and
+  14 and a chain of three links between them. Each ball is three octagon slabs, one about each axis (four bars
+  D x D·tan 22.5°, 0.56 D thick, the diagonal pair turned ±45° about the slab's axis and 0.05 px thinner along it):
+  12 elements, round from every side, which the tumble in flight needs (the cannonball's belt/shoulder/pole recipe
+  reads as a dumbbell plate from the side). Links are open rectangles of four bars (3.6 x 2.4 px outside, bars
+  0.7 px; the end bars 0.05 px thinner in depth), alternately in the xy plane (facing the slot) and the xz plane
+  (edge on), 2.15 px apart so each link's end bar passes through the next one's hole without touching it; the outer
+  links end 0.25 px inside the balls. Colours: balls `iron_dark` with `steel_dark` up and south faces (the lit
+  side), links `steel_dark` sides, `steel` fronts and tops (`steel_light` on the facing links' tops), `iron_dark`
+  bottoms.
+- **Grapeshot** (`grapeshot.bbmodel` -> `models/item/grapeshot.json`, 58 elements, `palette` `#0` and `palette_4`
+  `#3`, particle `palette`). Upright about the block's centre line: a wooden sabot (octagon D 9, y 3.5..5, `wood`,
+  `wood_dark` below), an iron rod (0.8 px, `steel_dark`) up the middle, two tiers of four 3 px balls (8 in all): the
+  lower tier on the axes at radius 2.2 as three crossed boxes (D, 0.6 D, 0.6 D) each, the upper tier on the
+  diagonals nestled 2.48 px higher, each a rounder six-element ball (an octagon belt about y 0.47 D high plus two
+  crossed caps); balls `steel_dark` sides, `steel` tops, `iron_dark` bottoms (the darker iron of the chain shot made
+  a black lump at 16 px). The lower tier stands in a canvas wrap (an octagon of eight 0.35 px boards from the sabot
+  to just above the ball centres, `cloth_dark` with a `cloth_light` rim) tied with a cord band (`cord`, 0.2 px
+  proud), and a cord knot (`twine` top) closes the rod. Two loose octagon cord rings round the bare tiers read as
+  a cage, and a full canvas cup hid the balls.
+- **Grapeshot pellet** (`grapeshot_pellet.bbmodel` -> `models/block/grapeshot_pellet.json`, 3 elements: one 3 px ball
+  of crossed boxes centred on (8, 8, 8), the grapeshot's colours). Not an item model (the Almanac generator refuses
+  an item model without an item), so it sits under `block/` like the cannon's stand-alone parts and is listed in
+  `HandMadeModelsTest.BLOCK_MODELS`; `CannonballRenderer` draws it as a registered stand-alone model.
+- **Display** (left hands negate the y and z rotations and keep the translation, as ART10):
+  - chain shot: `gui` `[-17.2, -13.9, 37.9]` / `[0, 0, 0]` / 1 (22° about its own axis, then 38° about z: chain on the
+    slot diagonal, the flat links still open; about 14.6 x 13.1 units in the slot); third person `[0, 0, 0]` /
+    `[0, 3, 1]` / 0.55 (held out in the fist, a ball either side); first person `[0, -35, 25]` / `[-1, 3.5, 0]` / 0.5
+    (both balls in view low right); `ground` `[0, 0, 0]` / `[0, 2, 0]` / 0.45; `fixed` `[0, 180, 45]` / 0.75; `head`
+    vanilla.
+  - grapeshot: `gui` `[30, 225, 0]` / `[0, 1.5, 0]` / 1.35 (the block view, about 12.1 x 13.4 units); third person
+    `[75, 45, 0]` / `[0, 2.5, 0]` / 0.5 (both hands); first person `[0, 45, 0]` (left `[0, 225, 0]`) / `[0, 4.5, 0]` /
+    0.5; `ground` `[0, 0, 0]` / `[0, 3, 0]` / 0.4; `fixed` `[0, 0, 0]` / 0.75; `head` vanilla.
+  - pellet: `item/generated`-like entries (never shown as an item).
+- **In flight** (`combat/cannon/client/CannonballRenderer`, which reads the kind from the synced item): chain shot is its
+  item model in `ItemDisplayContext.NONE` (no display transform, centred) at scale 1, its x axis laid along the
+  flight (the arrow's `YP(yRot - 90)`, `ZP(xRot)`) and turned about z, across the flight, by
+  `ShotTumble.angle(age, partialTick)` (36° a tick); a grapeshot pellet is `block/grapeshot_pellet` at 0.8 (2.4 px,
+  0.15 blocks) facing the camera; the cannonball and the swivel's shot stay vanilla's thrown item at 1.2.
+- Built like ART1b/ART4: a Python part list (octagon slab ball, link, crossed-box and six-element balls, octagon
+  disc and band helpers; patch names from `tools/gen_item_palette.py`) wrote the model JSON, which
+  `Codecs.java_block.parse(json, path)` opened in a new `java_block` tab; the display slots were set in
+  `Project.display_settings` and checked with an orthographic camera over the GUI slot (in display mode the slot is
+  ±3.2 scene units: the display scene is scaled 0.4); the export is `Codecs.java_block.compile({raw: true})` plus
+  `credit`, `gui_light: front`, the particle and the full display entries (numbers rounded to 4 decimals,
+  tab-indented), the project `Codecs.project.compile({raw: true})` with the sheets embedded, `path` `""` and
+  `relative_path` to the sheet under `common/src/main/resources`. The compiled elements match the part list one to
+  one. Script and helpers are not committed; rebuild them from these notes. `tools/lint_models.py`: 0 visible fights.
+- Renders: `renders/chain_shot.png` and `renders/grapeshot.png` (GUI slot on the slot grey, the same rendered at 16 px,
+  third person in the right hand) and `renders/chain_shot_turntable.png`, `grapeshot_turntable.png` (eight views in
+  45° steps, camera 12 px above the centre), each drawn with a `THREE.WebGLRenderer` in `risky_eval` (scene objects
+  other than the model, its display rig, the lights and the player reference hidden) and written with `fs`.
+
 Items (wearable hats, H2):
 - `pirate_hat`, `bandana`, `navy_hat`, `officer_hat` are written by `tools/gen_hat_items.py` (no Blockbench project):
   part lists copied from the hat cubes of `seafarer_models.js` (soldier's tricorn, officer's bicorne, pirate's bandana
@@ -1224,6 +1280,25 @@ Boarding plank (BRD1):
   the boards with a knot underneath; the far end (north) has two iron straps that bend down into hooks with barbs,
   3 px below the board, biting into the deck the plank lies on. The hook tops end 0.05 px inside the board (no z-fight).
 - Render: `renders/boarding_plank.png` (base, middle and tip as a three-cell run, the far end on the left).
+
+Boarding plank ramps (BRD2):
+- Three more groups in **`boarding_plank.bbmodel`** at the same position, each exported alone (the other cubes
+  `export = false`): `boarding_plank_ramp_low` -> `block/boarding_plank_ramp_low.json`, `boarding_plank_ramp_high` ->
+  `_ramp_high.json` (5 elements each) and `boarding_plank_steep` -> `_steep.json` (6). They climb north (block state
+  `pitch` `up_low`, `up_high`, `up`); the falling pitches use the same models turned 180 degrees in the block state.
+- Each is the middle cell's three boards and cleats, every element rotated about x with `rescale: true` through one
+  origin on the board's top surface. Java models allow only 22.5 and 45 degrees, so the 1-in-2 halves (26.6 degrees)
+  are 22.5 degree boards centred on the ideal slope plus 1 px: the low half's top runs 1.69 -> 8.31 px, the high half's
+  9.69 -> 16.31 px, a 1.4 px lap at the joint that reads as overlapping planks. The steep cell is a 45 degree board,
+  1.5 px thick before rescale (about 2 px across), top 1 -> 17 px, with three cleats. Positive x rotation lifts the
+  north end.
+- Collision is not the model: `PlankRun.steps` gives stepped boxes 2 px above the ideal slope (two steps per half
+  ramp, four per 45 degree cell, never more than 0.375 blocks up between steps).
+- Textures as BRD1. The project now stores the vanilla textures by `relative_path` (`../vanilla/<name>.png`, run
+  `tools/extract_vanilla_textures.py spruce_planks stripped_spruce_log anvil`); BRD1 had embedded them.
+- Renders: `renders/boarding_plank_ramps.png` (a run base, ramp low, ramp high, steep, tip: two blocks of climb) and
+  `renders/boarding_plank_ramps_side.png` (the same from the east, the far end on the right). The renders show small gaps at the joints
+  (Blockbench's preview did not seem to apply `rescale`); check the joints in game.
 
 Crow's nest (CN1):
 - **`crows_nest.bbmodel`** -> `block/crows_nest.json` (56 elements; vanilla `spruce_planks` staves and floor,

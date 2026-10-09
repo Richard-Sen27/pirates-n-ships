@@ -1,10 +1,17 @@
 package com.richardsenger.piratesnships.law.brig;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.crew.CrewConfig;
+import com.richardsenger.piratesnships.crew.hammock.ShipBunks;
+import com.richardsenger.piratesnships.crew.morale.CrewMorale;
+import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.law.LawConfig;
 import com.richardsenger.piratesnships.law.LawService;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.platform.attachment.AttachmentKey;
+import com.richardsenger.piratesnships.ship.sable.ShipBody;
+import com.richardsenger.piratesnships.ship.sable.ShipEntities;
+import com.richardsenger.piratesnships.station.winch.CaptainsWhistleItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.registries.Registries;
@@ -192,9 +199,37 @@ public final class BrigService {
 
     // --- Cells and the area query -------------------------------------------------------------------------------
 
-    /** Whether the prisoner (or any entity) stands in a brig cell: enclosed by walls, bars and a locked brig door. */
+    /**
+     * Whether the prisoner (or any entity) stands in a brig cell: enclosed by walls, bars and a locked brig door. Aboard
+     * a ship (FIX1) the cell is looked up in the ship's plot, where its blocks are: the entity's position mapped into
+     * the ship's frame ({@link ShipBody#toPlot}); an entity Sable keeps inside a plot is already there.
+     */
     public static boolean isInCell(LivingEntity entity) {
-        return WorldCells.check(entity.level(), entity.blockPosition(), BrigConfig.MAX_CELL_SIZE.get()).isCell();
+        return WorldCells.check(entity.level(), cellPos(entity), BrigConfig.MAX_CELL_SIZE.get()).isCell();
+    }
+
+    /** The block the cell check starts from: the feet in the world, or their place in the plot of the ship aboard. */
+    private static BlockPos cellPos(LivingEntity entity) {
+        if (entity.level() instanceof ServerLevel level && ShipEntities.containing(entity) == null) {
+            ShipBody ship = CaptainsWhistleItem.shipOf(level, entity);
+            if (ship != null) return BlockPos.containing(ship.toPlot(entity.position()));
+        }
+        return entity.blockPosition();
+    }
+
+    /**
+     * Whether the crew guarding {@code prisoner} has low morale ({@link EscapeRule#crewMoraleLow}): the ship it is held
+     * on has crew aboard whose average morale is below {@code crew.desertion.desert_below}. Not on a ship, or a ship
+     * without crew: false.
+     */
+    public static boolean crewMoraleLow(LivingEntity prisoner) {
+        if (!(prisoner.level() instanceof ServerLevel level)) return false;
+        ShipBody ship = ShipEntities.containing(prisoner);
+        if (ship == null) ship = CaptainsWhistleItem.shipOf(level, prisoner);
+        if (ship == null) return false;
+        List<Integer> morale = new ArrayList<>();
+        for (CrewMember c : ShipBunks.crewOf(level, ship)) morale.add(CrewMorale.get(c));
+        return EscapeRule.crewMoraleLow(morale, CrewConfig.DESERT_BELOW.get());
     }
 
     /** Prisoners within {@code area} (loaded entities). */
@@ -239,7 +274,10 @@ public final class BrigService {
         }
     }
 
-    /** One escape check with the morale and ship-capture inputs (no source yet: the crew and ship systems). */
+    /**
+     * One escape check with the morale and ship-capture inputs: the tick passes {@link #crewMoraleLow} (FIX1); the
+     * ship-capture input has no source yet.
+     */
     public static EscapeRule.Decision checkEscape(LivingEntity prisoner, boolean inCell, boolean crewMoraleLow, boolean shipCapturedByOwnFaction) {
         PrisonerState st = state(prisoner);
         EscapeRule.Inputs in = new EscapeRule.Inputs(LawConfig.PRISONER_ESCAPES.get(), inCell, st.led(), crewMoraleLow, shipCapturedByOwnFaction);
@@ -298,7 +336,7 @@ public final class BrigService {
                 Player captor = e.level().getPlayerByUUID(st.captor());
                 if (captor != null) captor.displayClientMessage(Component.translatable(MSG + "in_cell", e.getName()), true);
             }
-            checkEscape(e, inCell, false, false);
+            checkEscape(e, inCell, crewMoraleLow(e), false);
         }
     }
 

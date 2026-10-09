@@ -50,9 +50,6 @@ class BearingsTest {
         assertEquals(3, abaft.count());
         assertEquals(Bearings.Side.PORT, abaft.side());
         assertEquals(Bearings.Sector.ASTERN, Bearings.points(180).sector());
-        assertEquals(LookoutLang.KEY_BOW, LookoutLang.bearingKey(bow));
-        assertEquals(LookoutLang.KEY_ABAFT, LookoutLang.bearingKey(abaft));
-        assertEquals(LookoutLang.KEY_ASTERN, LookoutLang.bearingKey(Bearings.points(180)));
     }
 
     /** "Two points off the starboard bow": a ship heading north sees something north-north-east of it. */
@@ -82,11 +79,11 @@ class BearingsTest {
 
     @Test
     void shipsAreDescribedByWreckAndFlyingFlag() {
-        assertEquals(LookoutLang.KEY_WHAT_MERCHANT, LookoutLang.whatKey(FlagKind.MERCHANT, true, false));
-        assertEquals(LookoutLang.KEY_WHAT_NAVY, LookoutLang.whatKey(FlagKind.NAVY, true, false));
-        assertEquals(LookoutLang.KEY_WHAT_PIRATE, LookoutLang.whatKey(FlagKind.JOLLY_ROGER, true, false));
-        assertEquals(LookoutLang.KEY_WHAT_SHIP, LookoutLang.whatKey(FlagKind.CUSTOM, true, false));
-        assertEquals(LookoutLang.KEY_WHAT_SHIP, LookoutLang.whatKey(FlagKind.JOLLY_ROGER, false, false), "a struck flag tells nothing");
-        assertEquals(LookoutLang.KEY_WHAT_WRECK, LookoutLang.whatKey(FlagKind.MERCHANT, true, true));
+        assertEquals(SightingPayload.What.MERCHANT, LookoutLang.what(FlagKind.MERCHANT, true, false));
+        assertEquals(SightingPayload.What.NAVY, LookoutLang.what(FlagKind.NAVY, true, false));
+        assertEquals(SightingPayload.What.PIRATE, LookoutLang.what(FlagKind.JOLLY_ROGER, true, false));
+        assertEquals(SightingPayload.What.SAIL, LookoutLang.what(FlagKind.CUSTOM, true, false));
+        assertEquals(SightingPayload.What.SAIL, LookoutLang.what(FlagKind.JOLLY_ROGER, false, false), "a struck flag tells nothing");
+        assertEquals(SightingPayload.What.WRECK, LookoutLang.what(FlagKind.MERCHANT, true, true));
     }
 }

@@ -16,6 +16,7 @@ layout is mirrored in ship/hull/client/ShipHudSheet.java; never move a part with
       (50, 0)  bow cap, 6x14: the pointed bow end left of the hull strip
       (40, 20) pump glyph, 7x7: a pump handle over a rising drop
       (48, 20) breach tick, 3x6: a red crack
+      (56, 0)  sighting mark, 7x7: a white diamond in an ink outline, tinted in code by what the lookout saw (LKO2)
 
 Style as the GUI kit (art/README.md, "GUI kit"): pixel art without anti-aliasing, the kit's palette (imported from
 gen_gui_textures.py), deterministic bytes (stored deflate blocks).
@@ -162,12 +163,26 @@ def breach():
     return c
 
 
+def mark():
+    """A diamond, 7x7: white inside (ShipHud tints it), ink outline."""
+    c = Canvas(7, 7)
+    for y in range(7):
+        for x in range(7):
+            d = abs(x - 3) + abs(y - 3)
+            if d < 3:
+                c.set(x, y, rgb(255, 255, 255) if d < 2 else rgb(214, 214, 214))
+            elif d == 3:
+                c.set(x, y, INK)
+    return c
+
+
 PARTS = [  # (u, v, canvas factory); ShipHudSheet.java has the same table
     (0, 0, rose),
     (40, 0, needle),
     (50, 0, bow),
     (40, 20, pump),
     (48, 20, breach),
+    (56, 0, mark),
 ]
 
 

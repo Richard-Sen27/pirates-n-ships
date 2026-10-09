@@ -49,7 +49,7 @@ final class DecorData {
                 .block(ShipDecor.STERN_WINDOW, "Stern Window")
                 .block(ShipDecor.CHART_TABLE, "Chart Table")
                 .block(ShipDecor.SEA_COT, "Sea Cot")
-                .add(SeaCotBlock.KEY_ON_SHIP, "You can't sleep in a cot on a ship under way")
+                .add(SeaCotBlock.KEY_ON_SHIP, "This cot is just for show while it is aboard a ship")
                 .add(SeaCotBlock.KEY_NO_SLEEPING, "This cot is just for show"));
         data.models(DecorData::models);
         data.blockLoot(loot -> {

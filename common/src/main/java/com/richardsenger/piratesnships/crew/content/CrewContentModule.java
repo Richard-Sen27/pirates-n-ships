@@ -15,8 +15,11 @@ import com.richardsenger.piratesnships.crew.galley.WaterBarrelBlock;
 import com.richardsenger.piratesnships.crew.galley.WaterBarrelRules;
 import com.richardsenger.piratesnships.crew.hammock.CrewInfo;
 import com.richardsenger.piratesnships.crew.hammock.CrewRest;
+import com.richardsenger.piratesnships.crew.hammock.HammockConfig;
+import com.richardsenger.piratesnships.crew.hammock.PlayerSleep;
 import com.richardsenger.piratesnships.crew.hammock.HammockBlock;
 import com.richardsenger.piratesnships.crew.hammock.HammockGameTests;
+import com.richardsenger.piratesnships.crew.hammock.PlayerSleepGameTests;
 import com.richardsenger.piratesnships.crew.hammock.HammockTags;
 import com.richardsenger.piratesnships.station.StationModule;
 import net.minecraft.advancements.critereon.StatePropertiesPredicate;
@@ -70,6 +73,11 @@ public final class CrewContentModule implements ModModule {
     @Override
     public String id() {
         return "crew.content";
+    }
+
+    @Override
+    public void registerConfig() {
+        HammockConfig.init(); // crew.hammock (SLP1)
     }
 
     @Override
@@ -187,6 +195,8 @@ public final class CrewContentModule implements ModModule {
     public void registerEvents() {
         CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> ProvisionsCommands.register(dispatcher));
         CommonEvents.LEVEL_TICK_END.register(CrewRest::onLevelTick);
+        CommonEvents.PLAYER_TICK_END.register(PlayerSleep::onPlayerTick); // SLP1: players sleeping aboard
+        CommonEvents.PLAYER_WAKE_UP.register(PlayerSleep::onWakeUp);
         CommonEvents.SERVER_STOPPED.register(server -> CrewRest.onServerStopped());
     }
 
@@ -245,7 +255,8 @@ public final class CrewContentModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(CrewContentGameTests.class, GalleyGameTests.class, HammockGameTests.class);
+        return List.of(CrewContentGameTests.class, GalleyGameTests.class, HammockGameTests.class,
+                PlayerSleepGameTests.class);
     }
 
     private static TagKey<Item> cTag(String path) {

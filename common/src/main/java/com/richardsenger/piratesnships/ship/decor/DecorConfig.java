@@ -11,7 +11,9 @@ public final class DecorConfig {
             "Ship decor: lanterns, ship's bell, rope coils, stern windows, chart table, sea cot");
 
     public static final ConfigValue<Boolean> SEA_COT_SLEEPING = SECTION.bool("sea_cot_sleeping", true,
-            "Players can sleep in a sea cot and set their spawn there like in a bed (never while the cot is on an assembled ship)");
+            "Players can sleep in a sea cot and set their spawn there like in a bed (on an assembled ship only with sea_cot_sleeping_aboard as well)");
+    public static final ConfigValue<Boolean> SEA_COT_SLEEPING_ABOARD = SECTION.bool("sea_cot_sleeping_aboard", true,
+            "Players can sleep in a sea cot on an assembled ship: they lie in it as the ship sails, count for skipping the night and respawn on the ship. Needs sea_cot_sleeping");
     public static final ConfigValue<Integer> BELL_RING_TICKS = SECTION.intRange("bell_ring_ticks", 20, 2, 200,
             "How long the ship's bell swings after it is rung, in ticks (20 ticks = 1 second)");
 

@@ -16,6 +16,7 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerContainerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerWakeUpEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
@@ -58,6 +59,7 @@ public final class NeoForgeEventForwarder {
                 CommonEvents.PLAYER_CLONE.invoker().onClone(o, n, e.isWasDeath());
             }
         });
+        bus.addListener(PlayerWakeUpEvent.class, e -> CommonEvents.PLAYER_WAKE_UP.invoker().onWake(e.getEntity()));
         bus.addListener(PlayerContainerEvent.Open.class, e -> CommonEvents.CONTAINER_OPEN.invoker().on(e.getEntity(), e.getContainer()));
         bus.addListener(PlayerContainerEvent.Close.class, e -> CommonEvents.CONTAINER_CLOSE.invoker().on(e.getEntity(), e.getContainer()));
 

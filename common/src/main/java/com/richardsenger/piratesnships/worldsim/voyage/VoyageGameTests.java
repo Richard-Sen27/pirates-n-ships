@@ -365,6 +365,40 @@ public final class VoyageGameTests {
     }
 
     /**
+     * LANE1, on the dedicated-server smoke test's seed 2718281828 (the biome map, as the lanes read it, 32-block cells,
+     * the default search config). The seafarer village's berth (1189, 1546) lies on a beach cell whose nearest ocean cell
+     * is a 6-cell pocket: with beaches as land its lane died there ("no_path after 6 cells"); with beaches as shore it
+     * reaches open water 8500 blocks across its sea (5904, 8624). The pirate island (-3027, 4326) and the navy outpost
+     * (-5243, 2439) lie on separate seas: that search ends as NO_PATH having searched the island's whole sea, within its
+     * distance budget (the smoke test reported "budget after 20000 cells" for it).
+     */
+    @ModGameTest(batch = BATCH, timeoutTicks = 400)
+    public static void smokeSeedLanesLeaveTheBayAndNameSeparateSeas(GameTestHelper h) {
+        MinecraftServer server = h.getLevel().getServer();
+        var registries = server.registryAccess();
+        MultiNoiseBiomeSource source = MultiNoiseBiomeSource.createFromPreset(registries
+                .lookupOrThrow(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST).getOrThrow(MultiNoiseBiomeSourceParameterLists.OVERWORLD));
+        RandomState random = RandomState.create(registries.asGetterLookup(), NoiseGeneratorSettings.OVERWORLD, 2718281828L);
+        LanePathfinder.Params params = VoyageConfig.laneParams();
+        BiomeSeaGrid oceansOnly = new BiomeSeaGrid(32, source, random.sampler(), 63, false);
+        LanePathfinder.Result before = LanePathfinder.find(oceansOnly, 1189, 1546, 5904, 8624, params);
+        h.assertValueEqual(before.status(), LanePathfinder.Status.NO_PATH, "beaches as land: the village's pocket");
+        h.assertTrue(before.expanded() <= 10, "beaches as land: only the pocket is searched, " + before.expanded() + " cells");
+
+        BiomeSeaGrid shores = new BiomeSeaGrid(32, source, random.sampler(), 63, true);
+        LanePathfinder.Result out = LanePathfinder.find(shores, 1189, 1546, 5904, 8624, params);
+        h.assertTrue(out.found(), "village to open sea: " + out.status() + " after " + out.expanded() + " of " + out.budget());
+        h.assertTrue(Lane.length(out.waypoints()) > 8000, "lane length " + Lane.length(out.waypoints()));
+
+        LanePathfinder.Result apart = LanePathfinder.find(shores, -3027, 4326, -5243, 2439, params);
+        h.assertValueEqual(apart.status(), LanePathfinder.Status.NO_PATH, "island and outpost: separate seas, not the budget ("
+                + apart.expanded() + " of " + apart.budget() + ")");
+        h.assertTrue(apart.expanded() > 20_000 && apart.expanded() < apart.budget(), "the island's whole sea searched: "
+                + apart.expanded() + " of " + apart.budget());
+        h.succeed();
+    }
+
+    /**
      * Measures a first lane computation on a real overworld biome map (seed 1, cold grid) between two sea points about
      * 2000 blocks apart, and logs the cost. Not required: it depends on the seed's geography.
      */

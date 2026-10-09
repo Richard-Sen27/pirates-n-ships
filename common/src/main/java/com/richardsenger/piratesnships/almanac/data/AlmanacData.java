@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.almanac.data;
 
+import com.richardsenger.piratesnships.almanac.client.AlmanacScreenConfig;
+import com.richardsenger.piratesnships.almanac.client.AlmanacScreenText;
 import com.richardsenger.piratesnships.almanac.sync.AlmanacPayloads;
 import com.richardsenger.piratesnships.almanac.sync.AlmanacSync;
 import com.richardsenger.piratesnships.almanac.sync.ClientAlmanac;
@@ -21,6 +23,7 @@ public final class AlmanacData {
 
     public static void registerConfig() {
         AlmanacDataConfig.init();
+        AlmanacScreenConfig.init();
     }
 
     public static void registerContent() {
@@ -44,6 +47,7 @@ public final class AlmanacData {
 
     public static void gatherData(DataContributions data) {
         AlmanacChapterProvider.gather(data);
+        data.lang(AlmanacScreenText::lang);
     }
 
     public static List<Class<?>> gameTestClasses() {

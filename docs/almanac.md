@@ -100,3 +100,59 @@ sends it back on login (`AlmanacPagePayload.Restore`), so the Almanac opens ther
 index is the screen's, clamped to 0..9999 and not checked against the chapter's data pages. A report for a chapter the
 server does not have is ignored. Server config `almanac.remember_page` (default true): off stores nothing and sends no
 page.
+
+## Markup
+
+Every lang text the book shows (text, headings, list items, captions, button labels) may carry a small inline markup,
+parsed by `almanac/client/Markup` (no `§` codes):
+
+| Write | Shows |
+|---|---|
+| `**bold**` | bold (on top of the element's own `bold`) |
+| `_italic_` | italic; an underscore opens only at the start of a word and closes only at its end, so `snake_case` stays as written |
+| `{#rrggbb}text{/}` | coloured text; colours nest, `{/}` returns to the colour before |
+| `{item:ns:id}` | the item's icon inside the line (9 px; no namespace = `minecraft`); hovering shows the item's tooltip |
+| `[[ns:path]]` | a link to that chapter's first page, shown as the chapter's title (no namespace = `pirates_n_ships`) |
+| `[[ns:path\|text]]` | the same link showing `text` |
+| `\n` (a real line break in the lang text) | a new line |
+| `\*`, `\_`, `\{`, `\[`, `\\` | the character itself |
+
+Anything malformed (an unknown `{...}`, a bad id, an unclosed `[[`) is shown as written; an unclosed `**`, `_` or
+colour runs to the end of the text. A link to a chapter the book does not have does nothing.
+
+## The screen (ALM3)
+
+`almanac/client/AlmanacScreen`, opened by `AlmanacClient.open(@Nullable BlockPos tome)` (null: read in hand) at the page
+the player last read. A two-page parchment spread of 292 × 180 GUI pixels; each page's text box is 116 × 140 pixels
+(14 lines). The layout (`almanac/client/PageLayout`) works in these pixels, so it does not depend on the window:
+
+- **Free elements** (illustrations, item icons with their caption centred under them) sit at their unit coordinates on
+  the data page's first screen page. They are obstacles: a line that would cross one takes the widest free part of its
+  row when that is at least a third of the page, otherwise it continues below the obstacle. Illustrations keep their
+  aspect, centred in their box; a missing texture shows a faint box and logs a warning.
+- **Flowing elements** (headings bold and centred, paragraphs, bulleted lists, centred "Show me" buttons) wrap word by
+  word; what does not fit spills onto continuation pages, so one data page can take several screen pages. A heading
+  never ends a page alone.
+- **Spreads:** every chapter starts on a left page; the right page of a chapter's last spread may stay blank. The page
+  index stored as the last page (`ClientAlmanac.reportPage`) is the left page of the spread, in screen pages of that
+  chapter; a stored index past the chapter's end opens its last spread, an unknown chapter the first page of the book.
+- **Navigation:** the page corners (vanilla's arrows), the arrow keys and Page Up / Page Down, the mouse wheel, the
+  bookmarks on the right edge (one per chapter in book order, tinted with `bookmark_color`, with the chapter's icon;
+  hovering shows the title, the open chapter's sticks out further; they shrink and then form more columns when many
+  chapters do not fit) and links. Escape closes. Input waits while a page turns.
+- **Page turn:** the turning page narrows toward the spine, then the new page widens from it, with a darkening on the
+  fold and a shadow on the page under it; vanilla's page-turn sound once per turn.
+- **"Show me"** calls `AlmanacSceneOpener.open(sceneId)`, a no-op until a handler is installed with
+  `AlmanacSceneOpener.install(handler)` (ALM4 installs Ponder's).
+- An empty book (no sync yet) shows a single page saying so, without bookmarks.
+
+Placeholder textures come from `tools/gen_almanac_textures.py` (standard library; `textures/gui/almanac/book.png` and
+`bookmark.png`, `AlmanacTexturesTest` fails while the committed files differ from a fresh run); ART14 replaces them.
+
+Client config, section `almanac_screen`:
+
+| Key | Default | Meaning |
+|---|---|---|
+| `page_turn_ticks` | `8` (0–40) | Length of the page-turn animation; 0 turns at once |
+| `page_turn_sound` | `true` | Vanilla's page-turn sound on every turn |
+| `scale` | `1.0` (0.5–2.0) | Size of the book; always shrunk to fit small windows |

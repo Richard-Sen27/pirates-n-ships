@@ -1,7 +1,9 @@
 """Generates the starter sloop BuildSpec (bow toward -Z) and prints it as JSON.
 
-Also the base of the armed sloops (WS4c): ``navy_sloop_armed.py`` and ``pirate_sloop_armed.py`` import
-:func:`armed_spec`, which adds four guns and a shot locker and changes nothing else.
+Also the base of the armed sloops (WS4c, TPL2): ``navy_sloop_armed.py`` and ``pirate_sloop_armed.py`` import
+:func:`armed_spec`, which adds four guns and a shot locker (:func:`armed`) and a crow's nest with ratlines up to it
+(:func:`lookout`); the flag moves from the masthead to an ensign staff on the taffrail. Run on its own this file
+still prints the starter sloop byte for byte: the player's own ship has no nest (it is the player's to rig).
 """
 import json
 
@@ -254,6 +256,67 @@ def armed(base):
     return out
 
 
+# crow's nest and ratlines (TPL2): the nest sits on the mast top (the mast runs to y 19) where the flag was, so the
+# flag moves to a two-block ensign staff on the taffrail rail. A run of ratlines on each side of the mast climbs from
+# the quarterdeck beside the helm to the masthead: sloped (rising north, toward the bow) from x 3 / x 5 at z 22, y 8 up
+# to z 14, y 16, all of it aft of the square sail's cloth (which stands off the yards' plane z 13 by at most 1.5
+# blocks, bellied aft) and outside the jib's plane x 4; then hung on the mast's west / east face at z 13 from y 17 to
+# 19, above the upper yard (y 16), so neither run touches a yard, the cloth between the yards or the stay. A sloped
+# run cannot climb past a yard: the 6 px yard beam fills the mast's sides at y 10 and 16, so only above the upper yard
+# does the run go up the mast. From the top of the slope a climber jumps onto the hung net (it hangs over the upper
+# yard's end) and climbs it facing the mast; at the top he steps sideways into the nest.
+NEST = (CX, 20, MZ)
+ENSIGN = [(CX, 9, STERN), (CX, 10, STERN)]   # on the taffrail rail (CX, 8, STERN)
+SLOPE_START = (22, 8)                        # (z, y) of each run's foot on the quarterdeck (deck at y 7)
+SLOPE_TOP = (14, 16)                         # (z, y) of the last sloped link, right abaft the upper yard
+HUNG_YS = range(17, 20)                      # hung links on the mast face, above the upper yard
+RAT_SIDES = ((CX - 1, "w"), (CX + 1, "e"))   # x of each run and the face of the mast it hangs on (port, starboard)
+LOOKOUT_PALETTE = {
+    "nest": "pirates_n_ships:crows_nest",
+    "ensign_bottom": "pirates_n_ships:flagpole[facing=north,flag=none,part=bottom]",
+    "ensign_top": "pirates_n_ships:flagpole[facing=north,flag=none,part=top]",
+    "rat_slope": "pirates_n_ships:ratlines[facing=north,kind=slope,waterlogged=false]",
+    "rat_w": "pirates_n_ships:ratlines[facing=west,kind=wall,waterlogged=false]",
+    "rat_e": "pirates_n_ships:ratlines[facing=east,kind=wall,waterlogged=false]",
+}
+
+
+def ratline_cells():
+    """The ratlines of both runs: (x, y, z) -> palette key, foot first."""
+    out = {}
+    (z0, y0), (z1, y1) = SLOPE_START, SLOPE_TOP
+    assert z0 - z1 == y1 - y0  # 45 degrees: one up, one forward (north) per link
+    for x, side in RAT_SIDES:
+        for i in range(z0 - z1 + 1):
+            out[(x, y0 + i, z0 - i)] = "rat_slope"
+        for y in HUNG_YS:
+            out[(x, y, MZ)] = "rat_" + side
+    return out
+
+
+def lookout(base):
+    """``base`` with the crow's nest on the mast top, the ratlines up to it and the flag on the taffrail."""
+    out = dict(base)
+    nx, ny, nz = NEST
+    assert out.get(NEST) == "flag" and out.get((nx, ny - 1, nz)) == "mast", "the nest goes where the flag was"
+    out[NEST] = "nest"
+    for (x, y, z), key in zip(ENSIGN, ("ensign_bottom", "ensign_top")):
+        assert (x, y, z) not in out, (x, y, z)
+    assert out.get((ENSIGN[0][0], ENSIGN[0][1] - 1, ENSIGN[0][2])) == "rail"
+    out[ENSIGN[0]] = "ensign_bottom"
+    out[ENSIGN[1]] = "ensign_top"
+    for cell, key in ratline_cells().items():
+        assert cell not in out, cell  # free: no yard, no rail, nothing in the way
+        out[cell] = key
+    # the foot stands on the quarterdeck, the hung links hang on mast logs, the top link sits right above the yard
+    for x, _ in RAT_SIDES:
+        assert out.get((x, SLOPE_START[1] - 1, SLOPE_START[0])) == "deck"
+        assert out.get((x, SLOPE_TOP[1], MZ)) == "yard"
+        for y in HUNG_YS:
+            assert out.get((CX, y, MZ)) == "mast"
+    return out
+
+
 def spec(cells, pal, spec_id, name, style, notes):
     """The BuildSpec of ``cells``: runs along x merged into box operations, the palette keys in use only."""
     ops = []
@@ -283,12 +346,16 @@ NOTES = ["Bow toward -Z. Helm faces south.",
          "Square sail: yards at y=10 (9 long) and y=16 (7 long) on the mast at z=13.",
          "Jib: use a rope on the mast-head cleat, then on the bowsprit cleat."]
 ARMED_NOTES = NOTES + ["Guns: two a side in the waist at z=13 and z=15, muzzles at x=1 (west) and x=7 (east) "
-                       "through gun ports cut in the bulwark; shot locker (barrel) in the hold at [4, 3, 14]."]
+                       "through gun ports cut in the bulwark; shot locker (barrel) in the hold at [4, 3, 14].",
+                       "Crow's nest on the mast top at [4, 20, 13]; ratlines on both sides of the mast, sloped from "
+                       "the quarterdeck at z=22 up to z=14, y=16, then hung on the mast from y=17 to 19; the flag on "
+                       "an ensign staff on the taffrail at [4, 9..10, 27]."]
 
 
 def armed_spec(spec_id, name):
-    return spec(armed(blocks), {**palette, **ARMED_PALETTE}, spec_id, name,
-                "single-mast sloop with forecastle and stern cabin, four guns in the waist", ARMED_NOTES)
+    return spec(lookout(armed(blocks)), {**palette, **ARMED_PALETTE, **LOOKOUT_PALETTE}, spec_id, name,
+                "single-mast sloop with forecastle and stern cabin, four guns in the waist, a crow's nest",
+                ARMED_NOTES)
 
 
 if __name__ == "__main__":

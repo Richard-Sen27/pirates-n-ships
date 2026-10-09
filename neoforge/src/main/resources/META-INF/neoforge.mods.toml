@@ -48,6 +48,20 @@ versionRange = "${geckolib_version_range}"
 ordering = "NONE"
 side = "BOTH"
 # GuideME: the in-game guide book (optional). Without it the guide resources and the book recipe stay inactive.
+# Ponder (the Almanac's "Show me" scenes) and Flywheel (Ponder's renderer, client only), both bundled in our jar
+# (jar-in-jar, neoforge/build.gradle); NeoForge picks the newest copy when another mod bundles them too.
+[[dependencies.${mod_id}]]
+modId = "ponder"
+type="required"
+versionRange = "[${ponder_version},)"
+ordering = "AFTER"
+side = "BOTH"
+[[dependencies.${mod_id}]]
+modId = "flywheel"
+type="required"
+versionRange = "${flywheel_version_range}"
+ordering = "AFTER"
+side = "CLIENT"
 [[dependencies.${mod_id}]]
 modId = "guideme"
 type="optional"

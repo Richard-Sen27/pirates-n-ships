@@ -199,6 +199,9 @@ jobs:
       #   GeckoLib                 modrinth.com/mod/geckolib                 curseforge.com/minecraft/mc-mods/geckolib
       #   Player Animation Library modrinth.com/mod/player-animation-library curseforge.com/minecraft/mc-mods/player-animation-library
       #   GuideME (optional)       modrinth.com/mod/guideme                  curseforge.com/minecraft/mc-mods/guideme
+      # Ponder and Flywheel are required but bundled in our jars (jar-in-jar): neither has a standalone 1.21.1 project
+      # (modrinth.com/mod/ponder is Ponder for KubeJS, modrinth.com/mod/flywheel the legacy Flywheel), so they are not
+      # listed (docs/releasing.md).
       - name: Publish to Modrinth, CurseForge and GitHub Releases
         if: env.DRY_RUN != 'true' && env.PUBLISH != 'fabric'
         uses: Kira-NT/mc-publish@v3.3.1

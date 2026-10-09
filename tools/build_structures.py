@@ -13,7 +13,8 @@ For every source (files starting with ``_`` are helpers, not pieces):
 3. ``GET /api/session/export.schem?version=2`` -> ``art/schematics/structures/<group>/<piece>.schem`` (Sponge v2) and
    ``GET /api/session/preview.png`` -> ``art/renders/structures/<group>/<piece>.png`` (the lab's isometric render,
    seen from the south-east, flat block colours);
-4. ``tools/schem_to_structure.py`` -> ``common/src/main/resources/data/pirates_n_ships/structure/<group>/<piece>.nbt``.
+4. ``tools/schem_to_structure.py`` -> ``common/src/main/resources/data/pirates_n_ships/structure/<group>/<piece>.nbt``
+   (the ``ponder`` group, Ponder scene schematics: ``assets/pirates_n_ships/ponder/<piece>.nbt``).
 
 Files are only rewritten when their bytes change, and the lab's output is deterministic, so a second run changes
 nothing. The lab (``minecraft-schematic-lab`` v0.1.0, run without ``--mcp`` it is a plain HTTP server that never opens

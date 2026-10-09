@@ -428,7 +428,7 @@ and for step 5 a pirate island with a living captain (`/pirates mob captain list
      hung net is the awkward one) and whether the climb feels natural.
 3. **A patrol's lookout.** Fly the merchant flag, `/pirates world voyages spawn near patrol`, fly over it.
    - **Expected:** the patrol's ship has the nest and the ratlines, and a crew member stands in the nest (the
-     lookout), facing out; the helmsman is at the helm, the other deckhands at the winch. Board it: you may hear its
+     lookout), facing out; the helmsman is at the helm, the other deckhands at the winch or on deck. Board it: you may hear its
      lookout's calls ("Sail ho! ..." about your own ship) while you are aboard; nobody else does.
 4. **The manned nest counts (LAW4).** On your own ship fly false colours (WS4b / LAW4 setup: the merchant flag on a
    ship with a pirate record) near the patrol from step 3 and time how quickly its observation sees through them;

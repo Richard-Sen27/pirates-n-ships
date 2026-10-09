@@ -689,6 +689,30 @@ record the point forces in the `pirates_n_ships:sea_hazards` group every physics
   its area, plus a trace, in its failure message, and it gained a rest check (from tick 140: below 0.05 m/s and
   0.5 degrees). [V for the measurements; the cause is open]
 
+### 9.0l Slow drifts stall or overshoot well inside ±4,096 blocks (HZ1, measured)
+- **The stall threshold is about 360 × one f32 step per second, not 20 × (§9.0e).** Rapier's world positions are
+  `f32` (`marten/src/lib.rs` l.4, `rapier/src/lib.rs` l.657-668: the pose is cast to `Real`), and Sable runs it with
+  `solverIterations = 18` per substep (`PhysicsConfigData` l.10, passed on by `RapierPhysicsPipeline` l.564) and 2
+  substeps per tick. The measurements fit a position update 720 times a second that rounds to the nearest f32: a
+  per-axis speed below about 360 × ulp(coordinate) per second is lost (0.088 m/s between 2,048 and 4,096 blocks, 0.18
+  m/s up to 8,192, 0.35 m/s up to 16,384), and just above it the motion is rounded up to whole steps. [V for the
+  measurements, I for the mechanism]
+- Measured in `HazardGameTests.heavyShipMovesLessThanALightOne` (two hulls drifting at 0.07-0.15 m/s): the heavy hull's
+  x stayed at exactly 2737.5 for 110 ticks while it reported -0.069 m/s; at x=1,616 it drifted 0.47 blocks and at x=202
+  0.37 (ratio 1.27 = one step of 1.22e-4 over the 9.6e-5 the speed asks for); the light hull's x froze at 4,258.5 and the
+  orbit then carried it 0.72 blocks *out* of the whirlpool. The reported velocity is unaffected (the same -0.069 m/s
+  either way), and the velocity integrated over the window agreed across twelve runs at x/z from -3,517 to 4,258
+  (light 3.08-3.13 blocks travelled; the pose gave 2.99-3.26).
+- **Rule for tests:** a GameTest that measures a slow drift (below about 0.2 m/s on an axis) must not compare poses;
+  integrate `ShipBody.linearVelocity()` over the window (pattern: `HazardGameTests.Track`) or assert on velocity
+  (`SailingGameTestsControls`, anchor release). Tests that depend on the slow motion feeding back into the forces still
+  see a small spread from where the grid put them.
+- **For gameplay** the same holds in a real world: at 10,000 blocks from the origin a ship drifting slower than about
+  0.35 m/s on an axis does not move along it (whirlpool pull at the rim, a hull settling, a kedge creeping), at 100,000
+  blocks below about 2.8 m/s. Not ours to fix (it is Sable's native precision); worth a report upstream.
+- The async hull re-analysis (`dry_hull.async_analysis`) is not a source of spread here: delaying every analysis by
+  up to 0.4 s (results landing 9 to 53 ticks late instead of 1) left the measurements within the normal range. [V]
+
 ### 9.1 How Sable tests sub-levels
 - Tests live in **`sable/neoforge/src/main/java/dev/ryanhcode/sable/neoforge/gametest/`** (`AssemblyTest`, `PhysicsTest`,
   `SableTestHelper`), registered with NeoForge's `@GameTestHolder(Sable.MOD_ID)` and vanilla `@GameTest(template = …)`. [V]

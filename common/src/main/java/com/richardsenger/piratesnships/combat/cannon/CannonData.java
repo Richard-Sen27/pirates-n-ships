@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.combat.cannon;
 
 import com.google.gson.JsonObject;
+import com.richardsenger.piratesnships.combat.content.CombatContent;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
 import com.richardsenger.piratesnships.station.order.WhistleOrder;
@@ -42,13 +43,15 @@ public final class CannonData {
     public static void gather(DataContributions data) {
         data.lang(lang -> {
             lang.block(CannonContent.CANNON, "Cannon")
-                    .add(CannonContent.CANNONBALL.get().getDescriptionId(), "Cannonball");
+                    .add(CannonContent.CANNONBALL.get().getDescriptionId(), "Cannonball")
+                    .item(CannonContent.CHAIN_SHOT, "Chain Shot")
+                    .item(CannonContent.GRAPESHOT, "Grapeshot");
             for (CannonService.Outcome o : CannonService.Outcome.values()) {
                 lang.add(o.key(), switch (o) {
-                    case POWDER_IN -> "Powder in. Now load a cannonball";
+                    case POWDER_IN -> "Powder in. Now load a cannonball, chain shot or grapeshot";
                     case BALL_IN -> "Loaded. Use with an empty hand to fire";
-                    case NEEDS_POWDER_FIRST -> "Powder first, then the ball";
-                    case ALREADY_POWDERED -> "The powder is in. Load a cannonball";
+                    case NEEDS_POWDER_FIRST -> "Powder first, then the shot";
+                    case ALREADY_POWDERED -> "The powder is in. Load a cannonball, chain shot or grapeshot";
                     case ALREADY_LOADED -> "Already loaded. Use with an empty hand to fire";
                     case RELOADING -> "The barrel is still hot: %s s";
                     case AIMED -> "Elevation: %s°";
@@ -56,6 +59,7 @@ public final class CannonData {
                     case NOT_LOADED -> "Not loaded: put in gunpowder, then a cannonball";
                     case DISABLED -> "Cannons are disabled on this server";
                     case NOT_A_CANNON -> "That is not a cannon";
+                    case SHOT_DISABLED -> "This shot is disabled on this server";
                 });
             }
             // the crew order (G13); the whistle entry's lang is the station module's
@@ -81,6 +85,8 @@ public final class CannonData {
                             "Gun crews aim and fire at hostile ships in their arc until you release the crew");
         });
         data.models(CannonData::models);
+        data.itemTags(tags -> tags.tag(CannonContent.CANNON_SHOT).add(CombatContent.CANNONBALL.get(),
+                CannonContent.CHAIN_SHOT.get(), CannonContent.GRAPESHOT.get()));
         data.blockLoot(loot -> loot.add(CannonContent.CANNON.get(), masterOnly(CannonContent.CANNON.get())));
         data.blockTags(tags -> {
             tags.tag(BlockTags.MINEABLE_WITH_PICKAXE).add(CannonContent.CANNON.get());
@@ -99,6 +105,19 @@ public final class CannonData {
                 .define('N', Items.IRON_INGOT).define('I', Items.IRON_BLOCK).define('L', ItemTags.LOGS).define('P', ItemTags.PLANKS)
                 .unlockedBy("has_iron_block", InventoryChangeTrigger.TriggerInstance.hasItems(Items.IRON_BLOCK))
                 .save(out, CannonContent.CANNON.id()));
+        // CAN3: two balls' worth of iron on a chain; a canvas bag (string) of iron nuggets
+        data.recipes(out -> {
+            ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, CannonContent.CHAIN_SHOT.get(), 2)
+                    .pattern("ICI")
+                    .define('I', Items.IRON_INGOT).define('C', Items.CHAIN)
+                    .unlockedBy("has_chain", InventoryChangeTrigger.TriggerInstance.hasItems(Items.CHAIN))
+                    .save(out, CannonContent.CHAIN_SHOT.id());
+            ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, CannonContent.GRAPESHOT.get(), 2)
+                    .pattern("NSN").pattern("NNN").pattern("NNN")
+                    .define('N', Items.IRON_NUGGET).define('S', Items.STRING)
+                    .unlockedBy("has_iron_nugget", InventoryChangeTrigger.TriggerInstance.hasItems(Items.IRON_NUGGET))
+                    .save(out, CannonContent.GRAPESHOT.id());
+        });
     }
 
     static void physics(DataContributions data, ResourceLocation id, double mass, double volume) {
@@ -125,6 +144,9 @@ public final class CannonData {
 
     private static void models(ModelContext m) {
         cannon(m, CannonContent.CANNON.get());
+        // CAN3: flat sprites from tools/gen_shot_sprites.py (palette colours)
+        m.flatItem(CannonContent.CHAIN_SHOT.get());
+        m.flatItem(CannonContent.GRAPESHOT.get());
     }
 
     static VariantProperties.Rotation yRotation(Direction d) {
@@ -156,15 +178,18 @@ public final class CannonData {
             return json;
         });
 
-        PropertyDispatch.C3<Direction, CannonLoad, CannonPart> dispatch =
-                PropertyDispatch.properties(CannonBlock.FACING, CannonBlock.LOAD, CannonBlock.PART);
+        // CAN3: the loaded shot changes nothing in the look (the barrel's renderer shows the load)
+        PropertyDispatch.C4<Direction, CannonLoad, CannonPart, ShotKind> dispatch =
+                PropertyDispatch.properties(CannonBlock.FACING, CannonBlock.LOAD, CannonBlock.PART, CannonBlock.SHOT);
         for (Direction d : Direction.Plane.HORIZONTAL) {
             for (CannonLoad load : CannonLoad.values()) {
-                ResourceLocation front = base.withSuffix(load == CannonLoad.EMPTY ? "_carriage" : "_carriage_rammer");
-                dispatch.select(d, load, CannonPart.FRONT, Variant.variant().with(VariantProperties.MODEL, front)
-                        .with(VariantProperties.Y_ROT, yRotation(d)));
-                dispatch.select(d, load, CannonPart.REAR, Variant.variant().with(VariantProperties.MODEL, rear)
-                        .with(VariantProperties.Y_ROT, yRotation(d)));
+                for (ShotKind shot : ShotKind.values()) {
+                    ResourceLocation front = base.withSuffix(load == CannonLoad.EMPTY ? "_carriage" : "_carriage_rammer");
+                    dispatch.select(d, load, CannonPart.FRONT, shot, Variant.variant().with(VariantProperties.MODEL, front)
+                            .with(VariantProperties.Y_ROT, yRotation(d)));
+                    dispatch.select(d, load, CannonPart.REAR, shot, Variant.variant().with(VariantProperties.MODEL, rear)
+                            .with(VariantProperties.Y_ROT, yRotation(d)));
+                }
             }
         }
         m.blockStates().accept(MultiVariantGenerator.multiVariant(block).with(dispatch));

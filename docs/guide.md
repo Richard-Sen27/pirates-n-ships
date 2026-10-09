@@ -1118,6 +1118,25 @@ Cannonballs obey the world's rules: with `mobGriefing` off or inside the spawn p
 they smash drop their items, a gun you break gives back its powder and shot, and a ball that grazes a hull at a
 shallow angle pings off instead of breaking it; a square hit does the most damage.
 
+**Chain shot and grapeshot** load like a cannonball, after the powder. **Chain shot** (2 iron ingots and a chain,
+gives 2) is two balls on a chain: it flies slower and shorter than a ball (six tenths of its speed) and a little off
+the line, breaks no hull, and rips through rigging. Where it passes through a square sail it tears the cloth within
+1.5 blocks: the holes show, the cloth above a hole hangs with a frayed edge, and the sail draws only with what is
+left of it, so the ship loses way. It also cuts every rope it passes within 1.5 blocks of (a cut stay drops its
+triangular sail) and breaks the ratlines around where it tears or strikes. Torn cloth mends by itself, one block of
+it a minute, from the yard down; a new upper yard brings new cloth at once. Navy and pirate ships carry a few rounds of chain shot and grapeshot in their shot lockers beside the balls (`world_simulation.materialize.chain_shot_rounds`, `grapeshot_rounds`). **Grapeshot** (8 iron nuggets in a
+string-tied bag, gives 2) bursts from the muzzle as nine pellets in a narrow cone at four tenths of a ball's speed:
+each pellet hurts whoever it hits for 3 and breaks nothing, and none hit the people on your own deck, so fire it
+across a crowded enemy deck before boarding. Breaking a loaded gun gives back the shot that was in it.
+
+Crew loading takes whatever shot the supply holds: the ball first, unless the server's `cannons.crew.load_preference`
+names chain shot or grapeshot. Crews firing at will choose by themselves: grapeshot when three or more fighters
+stand on the target's deck within 24 blocks, chain shot at a ship they chase (a navy patrol's quarry, a pirate
+captain's prey) while it still makes way, else balls, and only what the locker holds. Server options:
+`cannons.chain_shot` and `cannons.grapeshot` (each on/off, speed, spread, damage; chain shot's radius, rigging damage
+and mending), `cannons.npc` (`prefers_chain_shot`, `chain_shot_min_speed`, `grapeshot_min_fighters`,
+`grapeshot_range`).
+
 ### Swivel gun
 A small gun on a yoke (three iron ingots over a stick) that mounts on a fence, wall, iron bars, brig bars or any
 full block. Load gunpowder, then a cannonball (or lead shot if the server says so). Hold right-click with an empty
@@ -1239,6 +1258,8 @@ A slain pirate captain drops each piece of his clothing with a 35 % chance (serv
 | Musket | 2 iron ingots, 1 flint, 1 planks | Longer reload, flatter and tighter shot. See [Firearms](#firearms). |
 | Lead Shot | 2 iron nuggets (gives 4) | Ammunition for pistol and musket, one per load, with one gunpowder. |
 | Cannonball | 4 iron ingots (gives 2) | Ammunition for the cannon, loaded after the gunpowder. |
+| Chain Shot | 2 iron ingots, 1 chain (gives 2) | Cannon shot that tears sails and cuts rigging, no hull damage. See [Cannons](#cannons). |
+| Grapeshot | 8 iron nuggets, 1 string (gives 2) | Cannon shot: a cone of nine pellets that hurt the people on a deck. See [Cannons](#cannons). |
 | Grappling Hook | 3 iron ingots, 1 string | Throw it at another ship to hook it and haul the hulls together. See [Grappling hook](#grappling-hook). |
 | Rope | string | Use it on a cleat or mooring ring, then on a second one up to 16 blocks away on the same ship: a stay (2+ blocks lower, cleats only) or a decorative rope line. It glints while it remembers the first anchor. |
 | Hull Patch | 2 planks, 1 coal or charcoal (gives 2) | Use on the edge of a hole in an assembled hull to close the breach. See [Fighting a leak](#fighting-a-leak). |
@@ -1319,6 +1340,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore pull, entity damage, lost-hook rule, `latch_world_blocks`, `latch_own_ship`, `slide.grab_cooldown_ticks`. |
 | `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevation range and steps, blocks per hit, recoil and impact impulses, ball lifetime and water behaviour, `mobGriefing` and spawn protection, drops from destroyed blocks, glancing hits and the bounce angle. |
 | `cannons.swivel` | Swivel gun on/off, ammo item and count, damage, muzzle speed, reload, blocks per hit, recoil and impact impulses, ball lifetime, elevation limits, aim reach. |
+| `cannons.chain_shot` / `cannons.grapeshot` | Chain shot and grapeshot on/off, range factor, spread, damage; chain shot's cloth radius, rigging damage and mend time; the pellet count. |
 | `mobs` | Mob types on/off and peaceful, hostility toggles, detection and fight ranges, skill tiers, musket timings and ammo, shove, drops. |
 | `hazards` / `hazard_visuals` (client) | Waterspouts and whirlpools on/off, spawn chances and interval, distance band, lifetimes, radii, pull, lift, spin, drag-down, drift, sail tearing, ship force scale and mass cap; particle density and sounds. |
 | `mobs.kraken` / `hazards.kraken` | Kraken on/off and chance per day; detection, grips, tentacle health and regrow, weak spots, strike and swipe intervals, damage, retreat. |

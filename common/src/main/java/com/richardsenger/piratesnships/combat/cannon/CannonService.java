@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -41,7 +42,7 @@ public final class CannonService {
     /** What a use of the cannon did. */
     public enum Outcome {
         POWDER_IN, BALL_IN, NEEDS_POWDER_FIRST, ALREADY_POWDERED, ALREADY_LOADED, RELOADING,
-        AIMED, FIRED, NOT_LOADED, DISABLED, NOT_A_CANNON;
+        AIMED, FIRED, NOT_LOADED, DISABLED, NOT_A_CANNON, SHOT_DISABLED;
 
         public String key() {
             return KEY_PREFIX + name().toLowerCase(Locale.ROOT);
@@ -80,8 +81,9 @@ public final class CannonService {
     // ---- loading --------------------------------------------------------------------------------------------------
 
     /**
-     * Puts the held gunpowder or cannonball into the cannon. One item is taken unless the player has infinite
-     * materials (creative). Refused in the wrong order, when already loaded, or during the reload cooldown.
+     * Puts the held gunpowder or shot (a cannonball, chain shot or grapeshot, CAN3) into the cannon. One item is taken
+     * unless the player has infinite materials (creative). Refused in the wrong order, when already loaded, during the
+     * reload cooldown, or for a shot whose server toggle is off. The shot is kept in {@link CannonBlock#SHOT}.
      */
     public static Use load(ServerLevel level, BlockPos pos, @Nullable Player player, ItemStack stack) {
         pos = master(level, pos);
@@ -89,9 +91,11 @@ public final class CannonService {
         if (be == null) return Use.of(Outcome.NOT_A_CANNON);
         if (!CannonConfig.ENABLED.get()) return Use.of(Outcome.DISABLED);
         CannonRules.Charge charge;
+        ShotKind shot = CannonBlock.shotOf(stack);
         if (CannonBlock.isPowder(stack)) {
             charge = CannonRules.Charge.POWDER;
-        } else if (CannonBlock.isBall(stack)) {
+        } else if (shot != null) {
+            if (!CannonConfig.allowed(shot)) return Use.of(Outcome.SHOT_DISABLED);
             charge = CannonRules.Charge.BALL;
         } else {
             return status(level, pos, be);
@@ -107,7 +111,9 @@ public final class CannonService {
         if (player == null || !player.hasInfiniteMaterials()) {
             stack.shrink(1);
         }
-        level.setBlock(pos, state.setValue(CannonBlock.LOAD, CannonRules.after(result, load)), Block.UPDATE_ALL);
+        BlockState next = state.setValue(CannonBlock.LOAD, CannonRules.after(result, load));
+        if (result == CannonRules.LoadOutcome.BALL_IN && shot != null) next = next.setValue(CannonBlock.SHOT, shot);
+        level.setBlock(pos, next, Block.UPDATE_ALL);
         Vec3 at = worldPoint(level, pos, Vec3.atCenterOf(pos));
         if (result == CannonRules.LoadOutcome.POWDER_IN) {
             level.playSound(null, at.x, at.y, at.z, SoundEvents.SAND_PLACE, SoundSource.BLOCKS, 0.8f, 1.2f);
@@ -162,8 +168,9 @@ public final class CannonService {
     }
 
     /**
-     * Fires a loaded cannon: one {@link CannonballEntity} leaves the muzzle in world space with the ship's velocity at
-     * the muzzle added, owned by {@code owner} (the firing player, for attribution; null for crew), with the shot sound,
+     * Fires a loaded cannon: one {@link CannonballEntity} (CAN3: of the loaded {@link ShotKind}; grapeshot as a cone of
+     * pellets, the returned ball is the first) leaves the muzzle in world space with the ship's velocity at the muzzle
+     * added, owned by {@code owner} (the firing player, for attribution; null for crew), with the shot sound,
      * smoke and a flash, and a recoil impulse on the carrying ship. The cannon is empty afterwards and the reload
      * cooldown starts. An unloaded cannon only says what it needs.
      */
@@ -195,16 +202,22 @@ public final class CannonService {
             direction = rotate(ship.orientation(), local.direction());
             carrier = ship.velocityAt(local.muzzle());
         }
-        Vec3 velocity = CannonRules.ballVelocity(direction, CannonConfig.MUZZLE_VELOCITY.get(), carrier);
+        ShotKind kind = state.getValue(CannonBlock.SHOT);
+        CannonballEntity ball = null;
+        for (Vec3 dir : shotDirections(level, kind, direction)) {
+            Vec3 velocity = CannonRules.ballVelocity(dir, CannonConfig.muzzleVelocity(kind), carrier);
+            CannonballEntity b = new CannonballEntity(level, muzzle, velocity, CannonConfig.entityDamage(kind),
+                    CannonConfig.BALL_LIFETIME_TICKS.get());
+            b.setKind(kind);
+            b.setOwner(owner);
+            b.setFiringShip(ship == null ? null : ship.id()); // FL2: who fired at whom
+            b.setBlockDamageFactor(blockDamageFactor);
+            level.addFreshEntity(b);
+            if (ball == null) ball = b;
+        }
 
-        CannonballEntity ball = new CannonballEntity(level, muzzle, velocity, CannonConfig.entityDamage(),
-                CannonConfig.BALL_LIFETIME_TICKS.get());
-        ball.setOwner(owner);
-        ball.setFiringShip(ship == null ? null : ship.id()); // FL2: who fired at whom
-        ball.setBlockDamageFactor(blockDamageFactor);
-        level.addFreshEntity(ball);
-
-        level.setBlock(pos, state.setValue(CannonBlock.LOAD, CannonLoad.EMPTY), Block.UPDATE_ALL);
+        level.setBlock(pos, state.setValue(CannonBlock.LOAD, CannonLoad.EMPTY).setValue(CannonBlock.SHOT, ShotKind.BALL),
+                Block.UPDATE_ALL);
         be.setReloadUntil(level.getGameTime() + CannonConfig.RELOAD_TICKS.get());
 
         level.playSound(null, muzzle.x, muzzle.y, muzzle.z, CombatSounds.CANNON_SHOT.get(), SoundSource.BLOCKS,
@@ -215,6 +228,21 @@ public final class CannonService {
             ship.applyImpulseNow(Vec3.atCenterOf(pos), CannonRules.recoilImpulse(local.direction(), recoil));
         }
         return new Use(Outcome.FIRED, Component.translatable(Outcome.FIRED.key()), ball);
+    }
+
+    /**
+     * The world directions the shot of {@code kind} leaves along, around the barrel's {@code direction} (CAN3): the ball
+     * straight, chain shot turned off by up to {@code cannons.chain_shot.spread_degrees}, grapeshot as a cone of
+     * {@code cannons.grapeshot.pellets} pellets ({@link ShotRules#cone}).
+     */
+    static List<Vec3> shotDirections(ServerLevel level, ShotKind kind, Vec3 direction) {
+        return switch (kind) {
+            case BALL -> List.of(direction.normalize());
+            case CHAIN -> List.of(ShotRules.deviate(direction, CannonConfig.CHAIN_SPREAD_DEGREES.get(),
+                    level.getRandom().nextDouble(), level.getRandom().nextDouble()));
+            case GRAPE -> ShotRules.cone(direction, CannonConfig.GRAPE_PELLETS.get(), CannonConfig.GRAPE_SPREAD_DEGREES.get(),
+                    level.getRandom().nextDouble() * 2.0 * Math.PI);
+        };
     }
 
     /** A big puff of smoke along the shot and a short fire flash at the muzzle. */

@@ -31,6 +31,19 @@ public final class GunneryConfig {
     public static final ConfigValue<Double> AIM_HEIGHT = S.doubleRange("aim_height", 0.5, 0.0, 1.0,
             "Where crews aim on a target ship's height: 0 = the bottom of its bounds, 0.5 = the middle, 1 = the top");
 
+    // ---- which shot (CAN3) -----------------------------------------------------------------------------------------
+
+    public static final ConfigValue<Boolean> PREFERS_CHAIN_SHOT = S.bool("prefers_chain_shot", true,
+            "Crews chasing a chosen quarry (a navy patrol's hunt, a pirate captain's chase) load chain shot while the "
+                    + "quarry still makes way, to shoot its sails away, when their locker holds any");
+    public static final ConfigValue<Double> CHAIN_SHOT_MIN_SPEED = S.doubleRange("chain_shot_min_speed", 0.5, 0.0, 50.0,
+            "A quarry slower than this (blocks per second) is stopped already: the crews load balls again");
+    public static final ConfigValue<Integer> GRAPESHOT_MIN_FIGHTERS = S.intRange("grapeshot_min_fighters", 3, 1, 64,
+            "Crews load grapeshot (when their locker holds any) when at least this many fighters (players and armed "
+                    + "mobs, not their own crew) stand on the target's deck within grapeshot_range");
+    public static final ConfigValue<Integer> GRAPESHOT_RANGE = S.intRange("grapeshot_range", 24, 1, 128,
+            "Grapeshot is chosen only for a target this close (blocks, horizontally between the ships' centres)");
+
     private GunneryConfig() {
     }
 

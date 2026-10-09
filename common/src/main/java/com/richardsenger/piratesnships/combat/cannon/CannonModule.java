@@ -10,9 +10,10 @@ import java.util.List;
  * The {@code combat.cannon} module (G9, P2, docs/design.md §8.2, §4.6): the two-block cannon (also a crew station), loaded with
  * gunpowder and a cannonball, aimed in elevation steps and fired; the cannonball, which holes ship hulls (a breach
  * below the waterline floods through the hull runtime), hurts entities and splashes into water; and the swivel gun, a
- * small gun on a railing that follows the aiming player's view and fires on release (also a crew station). Config
- * section {@code cannons} (with {@code cannons.swivel}); the block damage toggle and damage multipliers are in
- * {@code combat}.
+ * small gun on a railing that follows the aiming player's view and fires on release (also a crew station). CAN3: chain
+ * shot (tears sails, cuts rigging) and grapeshot (a cone of pellets at the people on a deck) load like a cannonball.
+ * Config section {@code cannons} (with {@code cannons.swivel}, {@code chain_shot}, {@code grapeshot}); the block damage
+ * toggle and damage multipliers are in {@code combat}.
  */
 public final class CannonModule implements ModModule {
 
@@ -30,6 +31,8 @@ public final class CannonModule implements ModModule {
     @Override
     public void registerContent() {
         CannonContent.init();
+        // CAN3: sails torn by chain shot mend at the cannon module's rate (the sailing module reads it through the hook)
+        com.richardsenger.piratesnships.sailing.sail.SailMending.setInterval(CannonConfig.CHAIN_MEND_TICKS::get);
     }
 
     /** WS4a: NPC gunnery's level tick and clean-ups (the cannon module's own sub-package, no module of its own). */
@@ -57,6 +60,7 @@ public final class CannonModule implements ModModule {
     @Override
     public List<Class<?>> gameTestClasses() {
         return List.of(CannonGameTests.class, CannonOrderGameTests.class, SwivelGunGameTests.class, CannonFollowUpGameTests.class,
-                CannonCrewGameTests.class, com.richardsenger.piratesnships.combat.cannon.npc.GunneryGameTests.class);
+                CannonCrewGameTests.class, com.richardsenger.piratesnships.combat.cannon.npc.GunneryGameTests.class,
+                CannonShotGameTests.class);
     }
 }

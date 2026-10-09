@@ -302,14 +302,17 @@ public final class SailingRuntime {
     }
 
     /**
-     * Replaces all square sails with the result of a relink. {@code trims} reads the trim of a head (its block state).
+     * Replaces all square sails with the result of a relink. {@code trims} reads the trim of a head (its block state),
+     * {@code intact} the share of its cloth that is not torn (CAN3, 0..1), which scales the sail's area.
      */
-    void replaceSquareSails(YardLinker.Linked linked, Function<BlockPos, SailTrim> trims, int maxGap) {
+    void replaceSquareSails(YardLinker.Linked linked, Function<BlockPos, SailTrim> trims,
+                            java.util.function.ToDoubleBiFunction<BlockPos, SquareSail> intact, int maxGap) {
         sails.entrySet().removeIf(e -> e.getValue().square() != null);
         recountUnfurled();
         for (SquareSail s : linked.sails()) {
             BlockPos head = new BlockPos(s.upper().middleX(), s.upper().y(), s.upper().middleZ());
-            put(head, new Sail(SailTypes.SQUARE, trims.apply(head), s.area(), s, null));
+            double whole = Math.max(0.0, Math.min(1.0, intact.applyAsDouble(head, s)));
+            put(head, new Sail(SailTypes.SQUARE, trims.apply(head), s.area() * whole, s, null));
         }
         yards = linked.rows();
         watchedGap = maxGap;

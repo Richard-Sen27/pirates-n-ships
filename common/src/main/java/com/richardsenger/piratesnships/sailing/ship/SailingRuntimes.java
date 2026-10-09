@@ -441,7 +441,8 @@ public final class SailingRuntimes {
         rt.replaceSquareSails(linked, head -> {
             BlockState s = level.getBlockState(head);
             return s.getBlock() instanceof YardBlock ? s.getValue(YardBlock.TRIM) : SailTrim.FURLED;
-        }, rules.maxGap());
+        }, (head, sail) -> level.getBlockEntity(head) instanceof YardBlockEntity be // CAN3: torn cloth draws less
+                ? be.tears().intactFraction(sail.geometry()) : 1.0, rules.maxGap());
         // cloth display: clear the yards as they were, then write the current ones
         for (YardRow r : before) {
             if (!linked.rows().contains(r)) {

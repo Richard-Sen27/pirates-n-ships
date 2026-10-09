@@ -15,8 +15,10 @@ item_ids:
   - pirates_n_ships:captains_hat
   - pirates_n_ships:captains_whistle
   - pirates_n_ships:carpenters_hammer
+  - pirates_n_ships:chain_shot
   - pirates_n_ships:cloth
   - pirates_n_ships:cutlass
+  - pirates_n_ships:grapeshot
   - pirates_n_ships:hardtack
   - pirates_n_ships:jolly_roger_flag
   - pirates_n_ships:kraken_beak
@@ -62,6 +64,8 @@ item_ids:
   <ItemIcon id="pirates_n_ships:musket" />
   <ItemIcon id="pirates_n_ships:lead_shot" />
   <ItemIcon id="pirates_n_ships:cannonball" />
+  <ItemIcon id="pirates_n_ships:chain_shot" />
+  <ItemIcon id="pirates_n_ships:grapeshot" />
   <ItemIcon id="pirates_n_ships:grappling_hook" />
   <ItemIcon id="pirates_n_ships:rope" />
   <ItemIcon id="pirates_n_ships:hull_patch" />
@@ -92,6 +96,8 @@ item_ids:
 | <ItemLink id="pirates_n_ships:musket" /> | 2 iron ingots, 1 flint, 1 planks | Longer reload, flatter and tighter shot. See [Firearms](combat.md#firearms). |
 | <ItemLink id="pirates_n_ships:lead_shot" /> | 2 iron nuggets (gives 4) | Ammunition for pistol and musket, one per load, with one gunpowder. |
 | <ItemLink id="pirates_n_ships:cannonball" /> | 4 iron ingots (gives 2) | Ammunition for the cannon, loaded after the gunpowder. |
+| <ItemLink id="pirates_n_ships:chain_shot" /> | 2 iron ingots, 1 chain (gives 2) | Cannon shot that tears sails and cuts rigging, no hull damage. See [Cannons](combat.md#cannons). |
+| <ItemLink id="pirates_n_ships:grapeshot" /> | 8 iron nuggets, 1 string (gives 2) | Cannon shot: a cone of nine pellets that hurt the people on a deck. See [Cannons](combat.md#cannons). |
 | <ItemLink id="pirates_n_ships:grappling_hook" /> | 3 iron ingots, 1 string | Throw it at another ship to hook it and haul the hulls together. See [Grappling hook](combat.md#grappling-hook). |
 | <ItemLink id="pirates_n_ships:rope" /> | string | Use it on a cleat or mooring ring, then on a second one up to 16 blocks away on the same ship: a stay (2+ blocks lower, cleats only) or a decorative rope line. It glints while it remembers the first anchor. |
 | <ItemLink id="pirates_n_ships:hull_patch" /> | 2 planks, 1 coal or charcoal (gives 2) | Use on the edge of a hole in an assembled hull to close the breach. See [Fighting a leak](ships.md#fighting-a-leak). |
@@ -120,6 +126,8 @@ item_ids:
   <RecipeFor id="pirates_n_ships:musket" />
   <RecipeFor id="pirates_n_ships:lead_shot" />
   <RecipeFor id="pirates_n_ships:cannonball" />
+  <RecipeFor id="pirates_n_ships:chain_shot" />
+  <RecipeFor id="pirates_n_ships:grapeshot" />
   <RecipeFor id="pirates_n_ships:grappling_hook" />
   <RecipeFor id="pirates_n_ships:rope" />
   <RecipeFor id="pirates_n_ships:hull_patch" />

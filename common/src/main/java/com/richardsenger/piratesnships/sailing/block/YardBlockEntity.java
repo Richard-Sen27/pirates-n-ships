@@ -6,6 +6,9 @@ import com.richardsenger.piratesnships.sailing.sail.SailBanner;
 import com.richardsenger.piratesnships.sailing.sail.SailTint;
 import com.richardsenger.piratesnships.sailing.sail.YardSails;
 import java.util.List;
+import com.richardsenger.piratesnships.sailing.sail.ClothTears;
+import com.richardsenger.piratesnships.sailing.sail.SailMending;
+import com.richardsenger.piratesnships.sailing.ship.SailingRuntimes;
 import java.util.Objects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -16,6 +19,7 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.Clearable;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BannerPatternLayers;
 import net.minecraft.world.level.block.Block;
@@ -43,6 +47,9 @@ import org.jetbrains.annotations.Nullable;
  * ({@link SailBanner#shown}, from the head's cloth and the {@code sails.*} config); a client reads those, never the
  * server config. As a {@link Clearable}, the old block entity of a move (Sable's {@code moveBlocks} clears it after
  * saving) forgets its banner, so breaking the old position never drops a copy.
+ * <p>CAN3: the head also keeps the holes chain shot tore into its cloth ({@link ClothTears}), saved and synced with the
+ * cloth; the renderer leaves them out and the sailing runtime scales the sail's area by the whole share. One torn cell
+ * mends every {@link SailMending#interval()} ticks.
  */
 public class YardBlockEntity extends BlockEntity implements Clearable {
 
@@ -52,12 +59,18 @@ public class YardBlockEntity extends BlockEntity implements Clearable {
     private static final String TINT = "tint";
     private static final String BANNER_SHOWN = "banner_shown";
 
+    private static final String TAG_TEARS = "tears";
+
     private @Nullable ClothGeometry geometry;
     private @Nullable DyeColor dye;
     private ItemStack banner = ItemStack.EMPTY;
     /** What the server last sent for drawing (read on the client; see the class comment). */
     private int syncedTint = SailTint.NONE;
     private boolean syncedBannerShown;
+    /** CAN3: the holes in the cloth this block heads. */
+    private ClothTears tears = ClothTears.NONE;
+    /** Server: game time of the next mended cell (0 = not counting). Not saved: a reload restarts the count. */
+    private long nextMend;
     /** Server: whether the first tick's re-check ran (not saved: every new or loaded block entity checks once). */
     private boolean checked;
 
@@ -161,7 +174,47 @@ public class YardBlockEntity extends BlockEntity implements Clearable {
         banner = ItemStack.EMPTY;
     }
 
+    /** The holes in the cloth this block heads (CAN3); none on a block that heads no sail. */
+    public ClothTears tears() {
+        return tears;
+    }
+
+    /**
+     * Server: replaces the holes in the cloth and syncs them; the ship's sailing runtime (if any) relinks, so the sail
+     * draws with its whole share at once.
+     */
+    public void setTears(ClothTears t) {
+        if (t.equals(tears)) {
+            return;
+        }
+        tears = t;
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            if (level instanceof ServerLevel server) {
+                SailingRuntimes.onRigChanged(server, worldPosition);
+            }
+        }
+    }
+
+    /** Server: mends one torn cell every {@link SailMending#interval()} ticks (0 = never). */
+    private void mend(Level level) {
+        int every = SailMending.interval();
+        if (tears.isEmpty() || every <= 0) {
+            nextMend = 0;
+            return;
+        }
+        long now = level.getGameTime();
+        if (nextMend == 0) {
+            nextMend = now + every;
+        } else if (now >= nextMend) {
+            nextMend = now + every;
+            setTears(tears.mendOne());
+        }
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, YardBlockEntity be) {
+        be.mend(level);
         int interval = SailingConfig.YARD_REFRESH_TICKS.get();
         if (be.checked && (level.getGameTime() + Math.floorMod(pos.asLong(), interval)) % interval != 0) {
             return;
@@ -195,6 +248,7 @@ public class YardBlockEntity extends BlockEntity implements Clearable {
             tag.putInt(TINT, clothTint());
             tag.putBoolean(BANNER_SHOWN, bannerShown());
         }
+        tag.putIntArray(TAG_TEARS, tears.packed());
     }
 
     @Override
@@ -211,6 +265,7 @@ public class YardBlockEntity extends BlockEntity implements Clearable {
         banner = tag.contains(BANNER, CompoundTag.TAG_COMPOUND) ? ItemStack.parseOptional(registries, tag.getCompound(BANNER)) : ItemStack.EMPTY;
         syncedTint = tag.contains(TINT, CompoundTag.TAG_INT) ? tag.getInt(TINT) : SailTint.NONE;
         syncedBannerShown = tag.getBoolean(BANNER_SHOWN);
+        tears = tag.contains(TAG_TEARS) ? ClothTears.of(tag.getIntArray(TAG_TEARS)) : ClothTears.NONE;
     }
 
     @Override

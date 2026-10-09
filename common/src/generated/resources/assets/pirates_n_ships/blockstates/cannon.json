@@ -1,98 +1,290 @@
 {
   "variants": {
-    "facing=east,load=empty,part=front": {
+    "facing=east,load=empty,part=front,shot=ball": {
       "model": "pirates_n_ships:block/cannon_carriage",
       "y": 90
     },
-    "facing=east,load=empty,part=rear": {
+    "facing=east,load=empty,part=front,shot=chain": {
+      "model": "pirates_n_ships:block/cannon_carriage",
+      "y": 90
+    },
+    "facing=east,load=empty,part=front,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_carriage",
+      "y": 90
+    },
+    "facing=east,load=empty,part=rear,shot=ball": {
       "model": "pirates_n_ships:block/cannon_rear",
       "y": 90
     },
-    "facing=east,load=loaded,part=front": {
+    "facing=east,load=empty,part=rear,shot=chain": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 90
+    },
+    "facing=east,load=empty,part=rear,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 90
+    },
+    "facing=east,load=loaded,part=front,shot=ball": {
       "model": "pirates_n_ships:block/cannon_carriage_rammer",
       "y": 90
     },
-    "facing=east,load=loaded,part=rear": {
-      "model": "pirates_n_ships:block/cannon_rear",
-      "y": 90
-    },
-    "facing=east,load=powder,part=front": {
+    "facing=east,load=loaded,part=front,shot=chain": {
       "model": "pirates_n_ships:block/cannon_carriage_rammer",
       "y": 90
     },
-    "facing=east,load=powder,part=rear": {
+    "facing=east,load=loaded,part=front,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
+      "y": 90
+    },
+    "facing=east,load=loaded,part=rear,shot=ball": {
       "model": "pirates_n_ships:block/cannon_rear",
       "y": 90
     },
-    "facing=north,load=empty,part=front": {
+    "facing=east,load=loaded,part=rear,shot=chain": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 90
+    },
+    "facing=east,load=loaded,part=rear,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 90
+    },
+    "facing=east,load=powder,part=front,shot=ball": {
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
+      "y": 90
+    },
+    "facing=east,load=powder,part=front,shot=chain": {
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
+      "y": 90
+    },
+    "facing=east,load=powder,part=front,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
+      "y": 90
+    },
+    "facing=east,load=powder,part=rear,shot=ball": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 90
+    },
+    "facing=east,load=powder,part=rear,shot=chain": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 90
+    },
+    "facing=east,load=powder,part=rear,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 90
+    },
+    "facing=north,load=empty,part=front,shot=ball": {
       "model": "pirates_n_ships:block/cannon_carriage",
       "y": 0
     },
-    "facing=north,load=empty,part=rear": {
+    "facing=north,load=empty,part=front,shot=chain": {
+      "model": "pirates_n_ships:block/cannon_carriage",
+      "y": 0
+    },
+    "facing=north,load=empty,part=front,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_carriage",
+      "y": 0
+    },
+    "facing=north,load=empty,part=rear,shot=ball": {
       "model": "pirates_n_ships:block/cannon_rear",
       "y": 0
     },
-    "facing=north,load=loaded,part=front": {
+    "facing=north,load=empty,part=rear,shot=chain": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 0
+    },
+    "facing=north,load=empty,part=rear,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 0
+    },
+    "facing=north,load=loaded,part=front,shot=ball": {
       "model": "pirates_n_ships:block/cannon_carriage_rammer",
       "y": 0
     },
-    "facing=north,load=loaded,part=rear": {
-      "model": "pirates_n_ships:block/cannon_rear",
-      "y": 0
-    },
-    "facing=north,load=powder,part=front": {
+    "facing=north,load=loaded,part=front,shot=chain": {
       "model": "pirates_n_ships:block/cannon_carriage_rammer",
       "y": 0
     },
-    "facing=north,load=powder,part=rear": {
+    "facing=north,load=loaded,part=front,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
+      "y": 0
+    },
+    "facing=north,load=loaded,part=rear,shot=ball": {
       "model": "pirates_n_ships:block/cannon_rear",
       "y": 0
     },
-    "facing=south,load=empty,part=front": {
+    "facing=north,load=loaded,part=rear,shot=chain": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 0
+    },
+    "facing=north,load=loaded,part=rear,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 0
+    },
+    "facing=north,load=powder,part=front,shot=ball": {
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
+      "y": 0
+    },
+    "facing=north,load=powder,part=front,shot=chain": {
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
+      "y": 0
+    },
+    "facing=north,load=powder,part=front,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
+      "y": 0
+    },
+    "facing=north,load=powder,part=rear,shot=ball": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 0
+    },
+    "facing=north,load=powder,part=rear,shot=chain": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 0
+    },
+    "facing=north,load=powder,part=rear,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 0
+    },
+    "facing=south,load=empty,part=front,shot=ball": {
       "model": "pirates_n_ships:block/cannon_carriage",
       "y": 180
     },
-    "facing=south,load=empty,part=rear": {
+    "facing=south,load=empty,part=front,shot=chain": {
+      "model": "pirates_n_ships:block/cannon_carriage",
+      "y": 180
+    },
+    "facing=south,load=empty,part=front,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_carriage",
+      "y": 180
+    },
+    "facing=south,load=empty,part=rear,shot=ball": {
       "model": "pirates_n_ships:block/cannon_rear",
       "y": 180
     },
-    "facing=south,load=loaded,part=front": {
+    "facing=south,load=empty,part=rear,shot=chain": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 180
+    },
+    "facing=south,load=empty,part=rear,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 180
+    },
+    "facing=south,load=loaded,part=front,shot=ball": {
       "model": "pirates_n_ships:block/cannon_carriage_rammer",
       "y": 180
     },
-    "facing=south,load=loaded,part=rear": {
-      "model": "pirates_n_ships:block/cannon_rear",
-      "y": 180
-    },
-    "facing=south,load=powder,part=front": {
+    "facing=south,load=loaded,part=front,shot=chain": {
       "model": "pirates_n_ships:block/cannon_carriage_rammer",
       "y": 180
     },
-    "facing=south,load=powder,part=rear": {
+    "facing=south,load=loaded,part=front,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
+      "y": 180
+    },
+    "facing=south,load=loaded,part=rear,shot=ball": {
       "model": "pirates_n_ships:block/cannon_rear",
       "y": 180
     },
-    "facing=west,load=empty,part=front": {
+    "facing=south,load=loaded,part=rear,shot=chain": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 180
+    },
+    "facing=south,load=loaded,part=rear,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 180
+    },
+    "facing=south,load=powder,part=front,shot=ball": {
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
+      "y": 180
+    },
+    "facing=south,load=powder,part=front,shot=chain": {
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
+      "y": 180
+    },
+    "facing=south,load=powder,part=front,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
+      "y": 180
+    },
+    "facing=south,load=powder,part=rear,shot=ball": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 180
+    },
+    "facing=south,load=powder,part=rear,shot=chain": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 180
+    },
+    "facing=south,load=powder,part=rear,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 180
+    },
+    "facing=west,load=empty,part=front,shot=ball": {
       "model": "pirates_n_ships:block/cannon_carriage",
       "y": 270
     },
-    "facing=west,load=empty,part=rear": {
+    "facing=west,load=empty,part=front,shot=chain": {
+      "model": "pirates_n_ships:block/cannon_carriage",
+      "y": 270
+    },
+    "facing=west,load=empty,part=front,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_carriage",
+      "y": 270
+    },
+    "facing=west,load=empty,part=rear,shot=ball": {
       "model": "pirates_n_ships:block/cannon_rear",
       "y": 270
     },
-    "facing=west,load=loaded,part=front": {
-      "model": "pirates_n_ships:block/cannon_carriage_rammer",
-      "y": 270
-    },
-    "facing=west,load=loaded,part=rear": {
+    "facing=west,load=empty,part=rear,shot=chain": {
       "model": "pirates_n_ships:block/cannon_rear",
       "y": 270
     },
-    "facing=west,load=powder,part=front": {
+    "facing=west,load=empty,part=rear,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 270
+    },
+    "facing=west,load=loaded,part=front,shot=ball": {
       "model": "pirates_n_ships:block/cannon_carriage_rammer",
       "y": 270
     },
-    "facing=west,load=powder,part=rear": {
+    "facing=west,load=loaded,part=front,shot=chain": {
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
+      "y": 270
+    },
+    "facing=west,load=loaded,part=front,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
+      "y": 270
+    },
+    "facing=west,load=loaded,part=rear,shot=ball": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 270
+    },
+    "facing=west,load=loaded,part=rear,shot=chain": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 270
+    },
+    "facing=west,load=loaded,part=rear,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 270
+    },
+    "facing=west,load=powder,part=front,shot=ball": {
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
+      "y": 270
+    },
+    "facing=west,load=powder,part=front,shot=chain": {
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
+      "y": 270
+    },
+    "facing=west,load=powder,part=front,shot=grape": {
+      "model": "pirates_n_ships:block/cannon_carriage_rammer",
+      "y": 270
+    },
+    "facing=west,load=powder,part=rear,shot=ball": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 270
+    },
+    "facing=west,load=powder,part=rear,shot=chain": {
+      "model": "pirates_n_ships:block/cannon_rear",
+      "y": 270
+    },
+    "facing=west,load=powder,part=rear,shot=grape": {
       "model": "pirates_n_ships:block/cannon_rear",
       "y": 270
     }

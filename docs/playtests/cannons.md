@@ -157,3 +157,42 @@ on land facing east, stand beside it.
    only the look stays level); `cannon_visuals.tilt_ticks = 0`: steps jump at once; 20: slow swings. Server
    `cannons.max_elevation_degrees = 30`: the barrel stops tilting at 20° (the model's limit) while the shots still
    go to 30°.
+
+## CAN3: chain shot and grapeshot
+New items: Chain Shot (2 iron ingots + 1 chain in a row, gives 2) and Grapeshot (8 iron nuggets around a string, gives 2),
+flat sprites from `tools/gen_shot_sprites.py`. Both load like a cannonball after the powder (the loaded barrel still
+shows a round ball). Build a target: a ship (or yards on land) with a full square sail of two 7-wide yards a few
+blocks apart, ratlines on the mast, a rope line or a stay between two cleats, and a cannon 10 to 20 blocks off.
+1. **Items and recipes:** both show in the creative tab and the recipe book with their sprites (two iron balls on a
+   chain; a tied canvas bag of small balls); hover names "Chain Shot", "Grapeshot". In hand and on the ground they look
+   like the other flat items.
+2. **Chain shot through a sail:** load powder and chain shot, aim the barrel through the middle of the full sail and
+   fire. Expected: white cloth bits and a wool tearing sound where it passes, a hole about three blocks across in the
+   cloth (whole blocks of cloth gone), the cloth block just above each hole showing the frayed foot edge, the shot
+   flying on behind the sail. Nothing of the hull breaks, ever. On a ship: `/pirates ship forces` (or the speed on
+   the HUD) shows the sail pushing less than before.
+3. **Chain shot at rigging:** fire so the shot passes within a block or so of the rope line or the stay: the rope
+   snaps (leash-break sound) and is gone from both cleats; a cut stay takes its triangular sail with it. Shoot at the
+   mast near the ratlines: the nets within 1.5 blocks break (they drop as items), the mast stays.
+4. **Chain shot range and spread:** at the same elevation, chain shot lands clearly shorter than a ball (about six
+   tenths of its speed) and a few shots in a row scatter slightly.
+5. **Mending:** wait a minute after a tear: one block of cloth comes back per minute, starting at the top
+   (`cannons.chain_shot.mend_ticks`, 0 = never). Breaking and replacing the upper yard gives a whole sail at once.
+6. **Furled and reefed:** furl the sail and fire chain shot through where the cloth would hang: nothing tears. Half
+   sail: only the drawn upper half can be torn.
+7. **Grapeshot:** stand a few mobs (or a second player) on an enemy deck or a platform 6 to 15 blocks in front of a
+   cannon loaded with grapeshot and fire: nine small grey pellets fly out in a narrow cone, the mobs in the cone take
+   3 damage each (one hit per volley per mob), no block breaks and no ship is pushed. A friend standing on your own
+   deck right in front of the muzzle is never hit. Beyond about 15 blocks the pellets fall into the sea.
+8. **Breaking a loaded gun:** load chain shot (or grapeshot) and break the cannon in survival: you get the cannon,
+   one gunpowder and the chain shot (grapeshot) back, not a cannonball.
+9. **Crew loading:** put gunpowder, cannonballs, chain shot and grapeshot in a chest by a crewed gun and blow
+   "Load!": the crew loads a ball. With server `cannons.crew.load_preference = CHAIN` the crew loads chain shot
+   instead; with only grapeshot in the chest it loads grapeshot.
+10. **NPC choice:** with "Fire at will" and a mixed locker, a hostile ship with three or more armed mobs or players on
+    deck within 24 blocks gets grapeshot; an empty deck gets balls. A navy patrol hunting you (WS4b) with chain shot
+    in its locker shoots chain shot while you are under way. A freshly appeared navy or pirate ship's shot locker holds
+    2 chain shot and 2 grapeshot beside its balls (`world_simulation.materialize.chain_shot_rounds`, `grapeshot_rounds`).
+11. **Toggles:** `cannons.chain_shot.enabled = false` (or `grapeshot.enabled`): the gun answers "This shot is
+    disabled on this server" and keeps the powder; `chain_shot.rigging_damage = false`: chain shot tears and cuts
+    nothing; `cannon_block_damage = false` or `mobGriefing` off: ratlines survive, cloth and ropes still tear.

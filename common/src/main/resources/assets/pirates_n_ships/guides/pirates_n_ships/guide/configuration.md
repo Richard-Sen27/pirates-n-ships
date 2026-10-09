@@ -25,6 +25,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore pull, entity damage, lost-hook rule, `latch_world_blocks`, `latch_own_ship`, `slide.grab_cooldown_ticks`. |
 | `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevation range and steps, blocks per hit, recoil and impact impulses, ball lifetime and water behaviour, `mobGriefing` and spawn protection, drops from destroyed blocks, glancing hits and the bounce angle. |
 | `cannons.swivel` | Swivel gun on/off, ammo item and count, damage, muzzle speed, reload, blocks per hit, recoil and impact impulses, ball lifetime, elevation limits, aim reach. |
+| `cannons.chain_shot` / `cannons.grapeshot` | Chain shot and grapeshot on/off, range factor, spread, damage; chain shot's cloth radius, rigging damage and mend time; the pellet count. |
 | `mobs` | Mob types on/off and peaceful, hostility toggles, detection and fight ranges, skill tiers, musket timings and ammo, shove, drops. |
 | `hazards` / `hazard_visuals` (client) | Waterspouts and whirlpools on/off, spawn chances and interval, distance band, lifetimes, radii, pull, lift, spin, drag-down, drift, sail tearing, ship force scale and mass cap; particle density and sounds. |
 | `mobs.kraken` / `hazards.kraken` | Kraken on/off and chance per day; detection, grips, tentacle health and regrow, weak spots, strike and swipe intervals, damage, retreat. |

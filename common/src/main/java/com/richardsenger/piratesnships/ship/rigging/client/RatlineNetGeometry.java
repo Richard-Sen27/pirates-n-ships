@@ -9,7 +9,8 @@ import java.util.List;
 /**
  * The drawn shape of a ratline net (RL2, pure): two side ropes from ring A to ring B that spread to {@code halfWidth}
  * either side of the line within {@link #TAPER} blocks of each ring (where they are tied together), and a rung between
- * them every {@code spacing} blocks ({@link RatlineNetRules#rungs}). No client classes, so it is tested with JUnit.
+ * them every {@code spacing} blocks ({@link RatlineNetRules#rungs}); RL4's fans ({@link #fan}). No client classes, so
+ * it is tested with JUnit.
  */
 public record RatlineNetGeometry(List<Point> left, List<Point> right, List<Point[]> rungs) {
 
@@ -39,6 +40,45 @@ public record RatlineNetGeometry(List<Point> left, List<Point> right, List<Point
         left.add(b);
         right.add(b);
         return new RatlineNetGeometry(left, right, rungs);
+    }
+
+    /** RL4: the drawn shape of a fan: every strand's rope from its foot to the hub, and rungs across all of them. */
+    public record Fan(List<Point[]> ropes, List<List<Point>> rungs) {
+    }
+
+    /**
+     * RL4: a fan of strands from {@code feet} (in fan order, outermost first and last) to one {@code hub}: every strand
+     * is a rope from its foot ring to the hub ring, and a rung every {@code spacing} blocks of the longest strand runs
+     * from the first strand to the last through the ones between, the rung at fraction f joining the points at fraction
+     * f of each strand's length (so the rungs narrow towards the hub). Rungs narrower than {@link #MIN_RUNG} are left out.
+     */
+    public static Fan fan(Point hub, List<Point> feet, double spacing) {
+        List<Point[]> ropes = new ArrayList<>();
+        double longest = 0;
+        for (Point f : feet) {
+            ropes.add(new Point[] {f, hub});
+            longest = Math.max(longest, Math.sqrt(sq(hub.x() - f.x()) + sq(hub.y() - f.y()) + sq(hub.z() - f.z())));
+        }
+        List<List<Point>> rungs = new ArrayList<>();
+        if (longest > 1.0e-9) {
+            for (Point at : RatlineNetRules.rungs(new Point(0, 0, 0), new Point(0, longest, 0), spacing)) {
+                double t = at.y() / longest;
+                List<Point> rung = new ArrayList<>(feet.size());
+                double width = 0;
+                for (Point f : feet) {
+                    Point p = new Point(f.x() + (hub.x() - f.x()) * t, f.y() + (hub.y() - f.y()) * t, f.z() + (hub.z() - f.z()) * t);
+                    if (!rung.isEmpty()) {
+                        Point q = rung.get(rung.size() - 1);
+                        width += Math.sqrt(sq(p.x() - q.x()) + sq(p.y() - q.y()) + sq(p.z() - q.z()));
+                    }
+                    rung.add(p);
+                }
+                if (width >= MIN_RUNG) {
+                    rungs.add(rung);
+                }
+            }
+        }
+        return new Fan(ropes, rungs);
     }
 
     private static double sq(double v) {

@@ -22,7 +22,7 @@ import java.util.List;
  * The ratline net (RL2): a rolled net of string and sticks. Used on a fitting (a chainplate or a mast hoop) it ties
  * that end as A ({@code net_start}, with the dimension; the item glints); used on a second fitting it strings the net
  * from A to B ({@link RatlineNets#check}, then {@link RatlineNets#string}) and is used up, unless the player is in
- * creative mode. Every answer goes to the action bar, short: a refusal keeps A. With {@code rigging.nets_enabled} off
+ * creative mode. A mast hoop takes several nets from different chainplates (RL4, its fan). Every answer goes to the action bar, short: a refusal keeps A. With {@code rigging.nets_enabled} off
  * it strings nothing. All on the server.
  */
 public class RatlineNetItem extends Item {
@@ -36,6 +36,10 @@ public class RatlineNetItem extends Item {
     public static final String KEY_OTHER_BODY = P + "other_body";
     public static final String KEY_BUSY = P + "busy";
     public static final String KEY_BLOCKED = P + "blocked";
+    /** RL4: a hoop holds {@code rigging.net_max_strands} nets. */
+    public static final String KEY_FULL = P + "full";
+    /** RL4: strung, but too far from its neighbours on the hoop to be netted in between. */
+    public static final String KEY_APART = P + "apart";
     public static final String KEY_DISABLED = P + "disabled";
     public static final String KEY_TOOLTIP = "item." + Constants.MOD_ID + ".ratline_net.tooltip";
 
@@ -74,8 +78,15 @@ public class RatlineNetItem extends Item {
         }
         GlobalPos start = stack.get(RiggingContent.NET_START.get());
         if (start == null || !start.dimension().equals(level.dimension()) || !isFitting(level, start.pos())) {
-            if (level.getBlockEntity(pos) instanceof NetFittingBlockEntity be && be.hasNet()) {
-                return Component.translatable(KEY_BUSY);
+            switch (RatlineNets.takesAnother(level, pos, null)) {
+                case BUSY -> {
+                    return Component.translatable(KEY_BUSY);
+                }
+                case FULL -> {
+                    return Component.translatable(KEY_FULL, RiggingConfig.NET_MAX_STRANDS.get());
+                }
+                default -> {
+                }
             }
             stack.set(RiggingContent.NET_START.get(), GlobalPos.of(level.dimension(), pos.immutable()));
             return Component.translatable(KEY_MARKED);
@@ -92,6 +103,9 @@ public class RatlineNetItem extends Item {
             }
             case BUSY -> {
                 return Component.translatable(KEY_BUSY);
+            }
+            case FULL -> {
+                return Component.translatable(KEY_FULL, RiggingConfig.NET_MAX_STRANDS.get());
             }
             case TOO_LONG -> {
                 double length = Math.sqrt(sq(check.net().ringA().x() - check.net().ringB().x())
@@ -113,6 +127,9 @@ public class RatlineNetItem extends Item {
         stack.remove(RiggingContent.NET_START.get());
         if (player == null || !player.getAbilities().instabuild) {
             stack.shrink(1);
+        }
+        if (!Double.isNaN(check.apart())) {
+            return Component.translatable(KEY_APART, String.format("%.1f", check.apart()));
         }
         return Component.translatable(KEY_STRUNG, check.net().cells().size());
     }

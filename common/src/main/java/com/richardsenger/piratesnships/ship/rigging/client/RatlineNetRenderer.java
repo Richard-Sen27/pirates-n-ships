@@ -7,6 +7,8 @@ import com.richardsenger.piratesnships.ship.rigging.NetFittingBlockEntity;
 import com.richardsenger.piratesnships.ship.rigging.RatlineNetRules;
 import com.richardsenger.piratesnships.ship.rigging.RatlineNetRules.Point;
 import com.richardsenger.piratesnships.ship.rigging.RatlineNets;
+import com.richardsenger.piratesnships.ship.rigging.RatlineNets.Net;
+import com.richardsenger.piratesnships.ship.rigging.RatlineNets.Strand;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -19,15 +21,20 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.AABB;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Draws a ratline net (RL2) from its fitting A ({@link NetFittingBlockEntity#isA}) to B as one continuous rope net:
+ * Draws the ratline nets of a hub (RL2, RL4) from the hub's block entity (the hoop, which knows all its strands,
+ * {@link RatlineNets#hubStrands}). A run of strands that join ({@link NetFittingBlockEntity#joinsNext}) is one fan
+ * ({@link RatlineNetGeometry#fan}): every strand's rope from its chainplate to the hoop, the outer ones the sides, and a
+ * rung every {@link #RUNG_SPACING} blocks from the first strand to the last through the ones between, narrowing towards
+ * the hoop. A lone strand is drawn as RL2 drew it, from its ring A to B as one continuous rope net:
  * two side ropes that leave A's ring, spread to {@link #HALF_WIDTH} either side of the line and close again at B's ring
  * ({@link RatlineNetGeometry}), and a rung across every {@link #RUNG_SPACING} blocks, all square rope beams with the
  * stay's {@code block/rope} texture tiled along their length (v runs in blocks, so the texture never stretches).
  *
- * <p>Drawn in A's block entity space with B's ring relative to A; on a ship Sable renders a sub-level's block
+ * <p>Drawn in the hub's block entity space with every ring relative to it; on a ship Sable renders a sub-level's block
  * entities with the ship's pose on the pose stack, so the net moves with the plot. NeoForge culls block entity
  * renderers by {@link #getRenderBoundingBox}; like the stay and the flag it does not set {@code shouldRenderOffScreen}
  * (Sable's sub-level path renders only per-section block entities).
@@ -48,24 +55,52 @@ public class RatlineNetRenderer implements BlockEntityRenderer<NetFittingBlockEn
     @Override
     public void render(NetFittingBlockEntity be, float partialTick, PoseStack pose, MultiBufferSource buffers, int light, int overlay) {
         Level level = be.getLevel();
-        if (level == null || !be.isA()) {
+        if (level == null || !be.hasNet()) {
             return;
         }
         BlockPos p = be.getBlockPos();
-        BlockPos other = be.partner();
-        Point a = RatlineNets.ring(level, p);
-        Point b = other == null ? null : RatlineNets.ring(level, other);
-        if (a == null || b == null) {
+        List<Strand> strands = RatlineNets.hubStrands(level, p);
+        if (strands.isEmpty()) {
             return;
         }
-        Direction facing = facing(be.getBlockState());
-        Point side = RatlineNetRules.side(a, b, facing.getClockWise().getStepX(), facing.getClockWise().getStepZ());
-        RatlineNetGeometry net = RatlineNetGeometry.of(local(a, p), local(b, p), side, HALF_WIDTH, RUNG_SPACING);
         VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(StayClothRenderer.ROPE_TEXTURE));
         PoseStack.Pose last = pose.last();
+        // the fan's strands in fan order; each run of strands joined to the next is drawn as one net
+        int i = 0;
+        while (i < strands.size()) {
+            int j = i;
+            while (j + 1 < strands.size() && be.joinsNext(strands.get(j).foot())) {
+                j++;
+            }
+            if (i == j) {
+                single(level, strands.get(i).net(), p, vc, last, light, overlay);
+            } else {
+                List<Point> feet = new ArrayList<>();
+                for (int k = i; k <= j; k++) {
+                    feet.add(local(strands.get(k).footRing(), p));
+                }
+                RatlineNetGeometry.Fan fan = RatlineNetGeometry.fan(local(strands.get(i).hubRing(), p), feet, RUNG_SPACING);
+                for (Point[] rope : fan.ropes()) {
+                    beam(vc, last, rope[0], rope[1], SIDE_HALF, light, overlay);
+                }
+                for (List<Point> rung : fan.rungs()) {
+                    for (int k = 0; k + 1 < rung.size(); k++) {
+                        beam(vc, last, rung.get(k), rung.get(k + 1), RUNG_HALF, light, overlay);
+                    }
+                }
+            }
+            i = j + 1;
+        }
+    }
+
+    /** A lone strand (RL2's look): two side ropes and rungs, the side taken from fitting A's facing for a vertical net. */
+    private static void single(Level level, Net n, BlockPos p, VertexConsumer vc, PoseStack.Pose last, int light, int overlay) {
+        Direction facing = facing(level.getBlockState(n.a()));
+        Point side = RatlineNetRules.side(n.ringA(), n.ringB(), facing.getClockWise().getStepX(), facing.getClockWise().getStepZ());
+        RatlineNetGeometry net = RatlineNetGeometry.of(local(n.ringA(), p), local(n.ringB(), p), side, HALF_WIDTH, RUNG_SPACING);
         for (List<Point> rope : List.of(net.left(), net.right())) {
-            for (int i = 0; i + 1 < rope.size(); i++) {
-                beam(vc, last, rope.get(i), rope.get(i + 1), SIDE_HALF, light, overlay);
+            for (int k = 0; k + 1 < rope.size(); k++) {
+                beam(vc, last, rope.get(k), rope.get(k + 1), SIDE_HALF, light, overlay);
             }
         }
         for (Point[] rung : net.rungs()) {
@@ -119,14 +154,16 @@ public class RatlineNetRenderer implements BlockEntityRenderer<NetFittingBlockEn
     }
 
     /**
-     * The net reaches to fitting B. NeoForge culls block entity renderers by this box
+     * The nets reach to every fitting the hub holds a net to. NeoForge culls block entity renderers by this box
      * ({@code IBlockEntityRendererExtension#getRenderBoundingBox}, which this method overrides when the NeoForge module
      * compiles the common sources); plain vanilla and Fabric have no such check.
      */
     public AABB getRenderBoundingBox(NetFittingBlockEntity be) {
         BlockPos p = be.getBlockPos();
-        BlockPos other = be.partner();
         AABB box = new AABB(p);
-        return (other == null ? box : box.minmax(new AABB(other))).inflate(HALF_WIDTH + 0.1);
+        for (NetFittingBlockEntity.Link l : be.links()) {
+            box = box.minmax(new AABB(l.other()));
+        }
+        return box.inflate(HALF_WIDTH + 0.1);
     }
 }

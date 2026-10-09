@@ -5,6 +5,7 @@ import com.richardsenger.piratesnships.core.datagen.LangBuilder;
 import com.richardsenger.piratesnships.crew.galley.WaterBarrelBlockEntity;
 import com.richardsenger.piratesnships.crew.provisions.ProvisionsConfig;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
+import com.richardsenger.piratesnships.ship.ShipBlockChanges;
 import com.richardsenger.piratesnships.ship.assembly.ShipAssembler;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
@@ -21,6 +22,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Container;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
@@ -87,6 +89,15 @@ public final class ShipCargo {
 
     private static final Map<ServerLevel, Map<UUID, Snapshot>> SHIPS = new IdentityHashMap<>();
 
+    /**
+     * PERF1: each ship's block count [blocks, game time counted]. Counting walks the whole plot ({@link ShipBody#plotBlocks},
+     * 1 % of the tick with eleven ships in the perf test), so the count is kept until a block of the ship turns into air
+     * or out of it ({@link #onBlockChanged}) and recounted at the latest after {@link #RECOUNT_TICKS}.
+     */
+    private static final Map<ServerLevel, Map<UUID, long[]>> BLOCK_COUNTS = new IdentityHashMap<>();
+    /** Longest a kept block count is trusted [ticks] (a change that bypassed the chunk would be seen by then). */
+    static final long RECOUNT_TICKS = 1200;
+
     private ShipCargo() {
     }
 
@@ -105,7 +116,40 @@ public final class ShipCargo {
             if (m != null) {
                 m.remove(id);
             }
+            Map<UUID, long[]> counts = BLOCK_COUNTS.get(level);
+            if (counts != null) {
+                counts.remove(id);
+            }
         });
+        ShipBlockChanges.register(ShipCargo::onBlockChanged);
+    }
+
+    /** {@link ShipBlockChanges}: a block of a ship appeared or went, so its kept block count is stale. */
+    static void onBlockChanged(ServerLevel level, BlockPos pos, BlockState oldState, BlockState newState) {
+        if (oldState.isAir() == newState.isAir()) {
+            return;
+        }
+        Map<UUID, long[]> counts = BLOCK_COUNTS.get(level);
+        if (counts == null || counts.isEmpty()) {
+            return;
+        }
+        ShipBody ship = SableShips.containing(level, pos);
+        if (ship != null) {
+            counts.remove(ship.id());
+        }
+    }
+
+    /** The ship's block count ({@code plotBlocks().size()}), kept between block changes (see {@link #BLOCK_COUNTS}). */
+    static int blockCount(ShipBody ship) {
+        ServerLevel level = ship.level();
+        long now = level.getGameTime();
+        Map<UUID, long[]> counts = BLOCK_COUNTS.computeIfAbsent(level, l -> new HashMap<>());
+        long[] kept = counts.get(ship.id());
+        if (kept == null || now - kept[1] >= RECOUNT_TICKS || now < kept[1]) {
+            kept = new long[] {ship.plotBlocks().size(), now};
+            counts.put(ship.id(), kept);
+        }
+        return (int) kept[0];
     }
 
     public static void lang(LangBuilder lang) {
@@ -166,7 +210,7 @@ public final class ShipCargo {
                 }
             }
         }
-        int blocks = ship.plotBlocks().size();
+        int blocks = blockCount(ship);
         double total = own + CargoForceRule.totalWeight(vanilla);
         return new Snapshot(level.getGameTime(), true, blocks, own, List.copyOf(vanilla), params, gravity,
                 TradeService.shipLoadLevel(total, blocks));
@@ -237,6 +281,7 @@ public final class ShipCargo {
 
     static void clear() {
         SHIPS.clear();
+        BLOCK_COUNTS.clear();
     }
 
     /** Mass [kpg] that the vanilla containers of {@code s} amount to (for tests and the playtest notes). */

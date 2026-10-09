@@ -16,6 +16,9 @@ public final class AlmanacConfig {
     /** ALM2: the last page per player ({@code almanac.data.AlmanacDataConfig} forwards to it). */
     public static final ConfigValue<Boolean> REMEMBER_PAGE = SECTION.bool("remember_page", true,
             "The Almanac opens at the page each player last read, also after death and relog (false: nothing is stored, it opens at the start)");
+    /** GUIDE2: the first-join gift ({@link AlmanacGift}), formerly {@code guide.give_on_first_join}. */
+    public static final ConfigValue<Boolean> GIVE_ON_FIRST_JOIN = SECTION.bool("give_on_first_join", true,
+            "A player who joins for the first time gets one Captain's Almanac, once");
 
     private AlmanacConfig() {
     }

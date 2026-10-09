@@ -1,5 +1,4 @@
-// 1.21.1	2026-10-09T17:49:43.751209	Raw JSON (data): pirates_n_ships
-48a3d1396f56a1821c2e6dd2a2ce6f5dc32fc15c data/pirates_n_ships/advancement/recipes/misc/guide_book.json
+// 1.21.1	2026-10-09T18:06:57.203614	Raw JSON (data): pirates_n_ships
 6fcaaca802eba3041f24d38afa04ea6da7afbfaf data/pirates_n_ships/almanac/chapters/charts.json
 59e7fee95c72f355f00abced3f3f4c15888d4fb0 data/pirates_n_ships/almanac/chapters/combat.json
 54f8694935785cfae9d221d9dcff7c630d5a458d data/pirates_n_ships/almanac/chapters/crew.json
@@ -10,7 +9,7 @@ e939b42d461808030e57b3fc501c6a37d5d1b036 data/pirates_n_ships/almanac/chapters/f
 d5d4e98695ca4a59deac88e975f7676e24ebbea8 data/pirates_n_ships/almanac/chapters/ledger.json
 fc338c3ef824f990440c83955e9b73e338db0be1 data/pirates_n_ships/almanac/chapters/not_yet.json
 7873f103b258ddaa7dff06ba29a52f0016ea5c24 data/pirates_n_ships/almanac/chapters/provisions.json
-a5eefa26a09e8e928f5f44ae8bd4e1fb3886a4ed data/pirates_n_ships/almanac/chapters/sailing.json
+07cea6b2cc0cf4ddae9da5ee888468b1bb573c0e data/pirates_n_ships/almanac/chapters/sailing.json
 104eb8e68ddee0109be71f85c857a36a5f70ffa6 data/pirates_n_ships/almanac/chapters/ships.json
 54734b40dab0d7ec94d875db9cbb9c16584b0daa data/pirates_n_ships/almanac/chapters/trade.json
 6ec02912b0938ea67c53baf8d27a9f94decf32e4 data/pirates_n_ships/almanac/chapters/welcome.json
@@ -52,7 +51,6 @@ d39936e9dff273c682fc443d65e5365483c0f9e4 data/pirates_n_ships/pirates_n_ships/tr
 5e7e4d27e408ce33f664bb3604814d4ab5a9e157 data/pirates_n_ships/pirates_n_ships/weapon/cutlass.json
 01cb828897cc72914941cc3951ef786f6f94985f data/pirates_n_ships/pirates_n_ships/weapon/rapier.json
 624725f319eeecaf26fa9a60b9220f4b7e214b0e data/pirates_n_ships/pirates_n_ships/weapon/saber.json
-ee4ab89c271de3f30b57621e15919ed9188d1957 data/pirates_n_ships/recipe/guide_book.json
 b035207a5bd361f8f0c83f4d75192bdc83591bf0 data/pirates_n_ships/tags/worldgen/biome/cold_water.json
 ff13fafcc6c847d2ce8a4262842bf1316dc580ea data/pirates_n_ships/tags/worldgen/biome/has_structure/navy_outpost.json
 ff13fafcc6c847d2ce8a4262842bf1316dc580ea data/pirates_n_ships/tags/worldgen/biome/has_structure/pirate_island.json

@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.almanac.ponder;
 
+import com.richardsenger.piratesnships.combat.boarding.PlankRun;
 import net.createmod.ponder.api.registration.StoryBoardEntry;
 import net.createmod.ponder.foundation.PonderScene;
 import net.createmod.ponder.foundation.instruction.DelayInstruction;
@@ -158,6 +159,120 @@ class PonderStoryboardsTest {
                         SteeringScene.MAX_RUDDER)), 1e-9);
         Vec3 tip = SteeringScene.rudderTip(Vec3.ZERO, 35);
         assertTrue(tip.x > 0 && tip.z > 0, "a starboard turn swings the rudder's trailing edge to starboard (east), aft");
+    }
+
+    /** PND2: the private fields the scenes write through ({@link SceneSync}) exist with the kind the scenes expect. */
+    @Test
+    void everySyncedFieldTheScenesUseResolves() throws ReflectiveOperationException {
+        for (SceneSync.Ref ref : SceneSync.FIELDS) {
+            Field f = ref.owner().getDeclaredField(ref.name()); // no class initialisation
+            assertTrue(java.lang.reflect.Modifier.isStatic(f.getModifiers()), ref + " is static");
+            boolean accessor = net.minecraft.network.syncher.EntityDataAccessor.class.isAssignableFrom(f.getType());
+            assertTrue(accessor || f.getType() == String.class, ref + " is a data accessor or a tag key");
+        }
+        assertEquals(String.class, SceneSync.FLAGPOLE_STATE.owner().getDeclaredField(SceneSync.FLAGPOLE_STATE.name()).getType());
+        assertEquals(String.class, SceneSync.BELL_RING_START.owner().getDeclaredField(SceneSync.BELL_RING_START.name()).getType());
+        assertEquals(String.class, SceneSync.BELL_STRIKE.owner().getDeclaredField(SceneSync.BELL_STRIKE.name()).getType());
+    }
+
+    @Test
+    void theLookoutsCallIsTwoPointsOffTheStarboardBow() {
+        // bow north (compass 0); the drawn direction is what Bearings calls "two points off the starboard bow"
+        Vec3 d = CrowsNestScene.callDirection();
+        com.richardsenger.piratesnships.station.lookout.Bearings.Relative r =
+                com.richardsenger.piratesnships.station.lookout.Bearings.of(0.0, d.x, d.z);
+        assertEquals(2, r.points());
+        assertEquals(com.richardsenger.piratesnships.station.lookout.Bearings.Side.STARBOARD, r.side());
+        assertEquals(com.richardsenger.piratesnships.station.lookout.Bearings.Sector.BOW, r.sector());
+        assertEquals(140, com.richardsenger.piratesnships.station.lookout.Bearings.calledDistance(CrowsNestScene.CALL_DISTANCE));
+        assertTrue(CrewSceneText.Nest.CALL.english().contains("two points off the starboard bow, 140 blocks"));
+    }
+
+    @Test
+    void theOrderWheelIsTheWhistlesMenu() {
+        // entry 0 (hoist) straight above the centre, the next one clockwise (to the right, as seen from the south)
+        Vec3 first = CrewOrdersScene.wheelSlot(0);
+        assertEquals(CrewOrdersScene.WHEEL.x, first.x, 1e-9);
+        assertEquals(CrewOrdersScene.WHEEL.y + CrewOrdersScene.WHEEL_RADIUS, first.y, 1e-9);
+        assertTrue(CrewOrdersScene.wheelSlot(1).x > CrewOrdersScene.WHEEL.x, "clockwise from the top");
+        assertEquals(10, com.richardsenger.piratesnships.station.order.WhistleOrder.entries().size(),
+                "the scene names fire at will and release crew; update its text if the wheel changes");
+    }
+
+    @Test
+    void thePlankIsTheRunTheRuleLaysForThisGap() {
+        // clicked on the top of our gunwale, facing east (her side); her hull hauled alongside stands at x 6..9, its
+        // gunwale on y 3; the rest is open water. BRD2's rule with the default settings lays a level two-cell run
+        // resting on her rail (no ramp: both rails are on y 3).
+        PlankRun.Start start = PlankRun.start(BoardingScene.GUNWALE, net.minecraft.core.Direction.UP, net.minecraft.core.Direction.EAST);
+        int herRailX = 9 - BoardingScene.HAUL;
+        PlankRun.Probe probe = new PlankRun.Probe() {
+            @Override
+            public boolean free(int i, int dy) {
+                return ground(i, dy) == PlankRun.Ground.NONE;
+            }
+
+            @Override
+            public boolean open(int i, int dy) {
+                return ground(i, dy) == PlankRun.Ground.NONE;
+            }
+
+            @Override
+            public PlankRun.Ground ground(int i, int dy) {
+                net.minecraft.core.BlockPos cell = start.cell(i, dy);
+                boolean hers = cell.getX() >= herRailX && cell.getX() <= herRailX + 3 && cell.getY() >= 1 && cell.getY() <= 3;
+                return hers ? PlankRun.Ground.STURDY : PlankRun.Ground.NONE;
+            }
+        };
+        PlankRun.Result run = PlankRun.find(new PlankRun.Settings(6, 2, 2, true), probe);
+        assertTrue(run.found());
+        assertEquals(BoardingScene.RUN.size(), run.length());
+        for (int i = 0; i < run.length(); i++) {
+            assertEquals(BoardingScene.RUN.get(i), start.cell(i, run.cells().get(i).dy()));
+            assertEquals(PlankRun.Pitch.FLAT, run.cells().get(i).pitch());
+        }
+        assertEquals(PlankRun.Landing.LEVEL, run.landing());
+    }
+
+    @Test
+    void theSwivelScenesAimStaysInTheGunsLimits() {
+        for (double[] a : SwivelGunScene.SWEEP) {
+            assertTrue(a[1] >= SwivelGunScene.MIN_ELEVATION && a[1] <= SwivelGunScene.MAX_ELEVATION, "elevation " + a[1]);
+        }
+        assertEquals(180.0, SwivelGunScene.SWEEP[0][0], "it starts on the bow (north)");
+        Vec3 m = SwivelGunScene.muzzle();
+        assertTrue(m.z < SwivelGunScene.GUN.getZ() + 0.5, "the muzzle points over the bow, out of the scene's deck");
+    }
+
+    @Test
+    void theGalleyAndHammockScenesUseTheGamesNumbers() {
+        // two water buckets of 3 rations in a 16-ration barrel: fill level 2 of 4 (1 after the first)
+        assertEquals(1, GalleyAndProvisionsScene.fillAfterBuckets(1));
+        assertEquals(2, GalleyAndProvisionsScene.fillAfterBuckets(2));
+        assertEquals(2, GalleyAndProvisionsScene.mealSpots().size());
+        // the sleeper lies on the canvas where foot and head meet, along the hammock
+        Vec3 bunk = HammocksAndRestScene.bunk(HammocksAndRestScene.FEET.get(0));
+        assertEquals(3.0, bunk.x, 1e-9);
+        assertEquals(2.5, bunk.z, 1e-9);
+        assertTrue(bunk.y > 1.0 && bunk.y < 1.5, "on the canvas");
+    }
+
+    @Test
+    void thePolesOnTheirFootingsShowTheGamesParts() {
+        // the schematics' pole parts are what FlagpoleFoot gives on a pedestal and on a crow's nest (FLG3)
+        assertEquals(com.richardsenger.piratesnships.ship.decor.flag.FlagpolePart.MIDDLE,
+                com.richardsenger.piratesnships.ship.decor.flag.FlagpoleFoot.part(
+                        com.richardsenger.piratesnships.ship.decor.flag.FlagpoleFoot.Support.PEDESTAL, true));
+        assertEquals(com.richardsenger.piratesnships.ship.decor.flag.FlagpolePart.TOP,
+                com.richardsenger.piratesnships.ship.decor.flag.FlagpoleFoot.part(
+                        com.richardsenger.piratesnships.ship.decor.flag.FlagpoleFoot.Support.CROWS_NEST, false));
+    }
+
+    @Test
+    void theSteeringTextNamesNoCommand() {
+        for (SceneLine line : SceneText.allLines()) {
+            assertTrue(!line.english().contains("/pirates"), line.key() + " names a command");
+        }
     }
 
     @Test

@@ -68,6 +68,13 @@ dependencies {
     include(modImplementation("dev.engine-room.flywheel:flywheel-fabric-${minecraft_version}:${flywheel_version}"))
     modLocalRuntime("dev.engine-room.flywheel:flywheel-fabric-api-${minecraft_version}:${flywheel_version}")
 
+    // JEI (optional, JEI1). The plugin lives in common (compat/jei) and is listed under fabric.mod.json's "jei" entry
+    // point; the full JEI jar is only in the dev runs, never published. -Ppirates_n_ships.no_jei leaves it out.
+    modCompileOnly("mezz.jei:jei-${minecraft_version}-fabric-api:${jei_version}")
+    if (!providers.gradleProperty('pirates_n_ships.no_jei').isPresent()) {
+        modLocalRuntime("mezz.jei:jei-${minecraft_version}-fabric:${jei_version}")
+    }
+
     // Mod Menu, dev runs only (never published; fabric.mod.json only "recommends" it): the in-game mod list with our
     // config screen (FAB2). 11.0.x is the Minecraft 1.21.1 line.
     modLocalRuntime("com.terraformersmc:modmenu:11.0.3") {

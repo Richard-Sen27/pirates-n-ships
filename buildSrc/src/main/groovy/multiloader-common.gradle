@@ -89,6 +89,16 @@ repositories {
             includeGroup('dev.engine-room.flywheel')
         }
     }
+    // JEI (optional compat, JEI1). The same maven as Veil above, but JEI's group is resolved only here.
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'BlameJared (JEI)'
+                url = 'https://maven.blamejared.com'
+            }
+        }
+        filter { includeGroup('mezz.jei') }
+    }
     // Modrinth (dev-only mods such as WorldEdit, never a dependency of the mod)
     exclusiveContent {
         forRepository {
@@ -165,9 +175,10 @@ processResources {
             'pal_version_range'            : pal_version_range,
             'geckolib_version'             : geckolib_version,
             'geckolib_version_range'       : geckolib_version_range,
-            'guideme_version_range'        : guideme_version_range,
             'ponder_version'               : ponder_version,
-            'flywheel_version_range'       : flywheel_version_range
+            'flywheel_version_range'       : flywheel_version_range,
+            'jei_version_range'            : jei_version_range,
+            'jei_fabric_version_range'     : jei_fabric_version_range
     ]
 
     filesMatching(['pack.mcmeta', 'fabric.mod.json', 'META-INF/neoforge.mods.toml', '*.mixins.json']) {

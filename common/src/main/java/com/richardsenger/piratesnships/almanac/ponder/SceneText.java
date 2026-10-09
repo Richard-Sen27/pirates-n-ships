@@ -39,7 +39,15 @@ public record SceneText(String scene, String title, List<SceneLine> lines) {
             of(ShipSceneText.PUMPS_AND_FLOODING, ShipSceneText.Pumps.TITLE, ShipSceneText.Pumps.values()),
             of(ShipSceneText.HULL_REPAIR, ShipSceneText.Repair.TITLE, ShipSceneText.Repair.values()),
             of(ShipSceneText.MOORING, ShipSceneText.Mooring.TITLE, ShipSceneText.Mooring.values()),
-            of(ShipSceneText.CARGO_AND_WEIGHT, ShipSceneText.Cargo.TITLE, ShipSceneText.Cargo.values()));
+            of(ShipSceneText.CARGO_AND_WEIGHT, ShipSceneText.Cargo.TITLE, ShipSceneText.Cargo.values()),
+            of(CrewSceneText.CREW_ORDERS, CrewSceneText.Orders.TITLE, CrewSceneText.Orders.values()),
+            of(CrewSceneText.BOARDING, CrewSceneText.Boarding.TITLE, CrewSceneText.Boarding.values()),
+            of(CrewSceneText.FLAGS_AND_ALLEGIANCE, CrewSceneText.Flags.TITLE, CrewSceneText.Flags.values()),
+            of(CrewSceneText.CROWS_NEST, CrewSceneText.Nest.TITLE, CrewSceneText.Nest.values()),
+            of(CrewSceneText.SHIPS_BELL, CrewSceneText.Bell.TITLE, CrewSceneText.Bell.values()),
+            of(CrewSceneText.GALLEY_AND_PROVISIONS, CrewSceneText.Galley.TITLE, CrewSceneText.Galley.values()),
+            of(CrewSceneText.HAMMOCKS_AND_REST, CrewSceneText.Rest.TITLE, CrewSceneText.Rest.values()),
+            of(CrewSceneText.SWIVEL_GUN, CrewSceneText.Swivel.TITLE, CrewSceneText.Swivel.values()));
 
     /** The scene's id, {@code pirates_n_ships:<scene>}. */
     public ResourceLocation id() {

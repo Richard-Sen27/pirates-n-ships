@@ -14,6 +14,13 @@ public final class ClientCareer {
     private static volatile Optional<CareerPayloads.View> view = Optional.empty();
     private static volatile long version;
     private static volatile Runnable opener = () -> { };
+    private static volatile SyncListener syncListener = (before, after) -> { };
+
+    /** HUD5: told of every career sync; {@code before} is null for the first one after joining. */
+    @FunctionalInterface
+    public interface SyncListener {
+        void onSync(CareerSyncPayload before, CareerSyncPayload after);
+    }
 
     private ClientCareer() {
     }
@@ -27,8 +34,15 @@ public final class ClientCareer {
     }
 
     public static void accept(CareerSyncPayload payload) {
+        CareerSyncPayload before = known ? current : null;
         current = payload;
         known = true;
+        syncListener.onSync(before, payload);
+    }
+
+    /** Client init only: who hears of career syncs (the rank box, HUD5). */
+    public static void setSyncListener(SyncListener l) {
+        syncListener = l;
     }
 
     /** Client init only: what opens the career screen. */

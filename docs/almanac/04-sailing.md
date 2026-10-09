@@ -111,6 +111,8 @@ The sea follows the weather. In fair weather there is a low swell or a light cho
 
 Waves come in sets: a run of bigger seas, then a calmer spell. Your ship rises on the crests and sinks in the troughs, a small boat far more than a big one, and in heavy weather the bow throws spray.
 
+A rowing boat rides the swell too, climbing the same crests out on open water, and anything you throw overboard bobs along with it; on lakes, rivers and in the shallows by the shore the water lies still as ever.
+
 >! In rough seas every open hatch or low rim near the waterline takes water at the crests. Close your hatches and keep a pump manned before a storm.
 
 A moving ship leaves a wake: a bow wave spreading from the stem and a trail of foam astern that fades over some seconds.

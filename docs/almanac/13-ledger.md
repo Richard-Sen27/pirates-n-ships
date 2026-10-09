@@ -63,7 +63,7 @@ Settings are written as section.name, with the default after the colon.
 - world.structures: villages, navy outposts, pirate islands, wrecks.
 - world\_simulation: voyages, convoys, navy patrols, raids, pirate captains at sea.
 - mobs: pirates, navy, sharks (mobs.shark), the kraken (mobs.kraken), harbour masters, pirate captains.
-- almanac.enabled: true. almanac.remember\_page: true.
+- almanac.enabled: true. almanac.remember\_page: true. almanac.give\_on\_first\_join: true (one Almanac for every new hand).
 
 ## Player commands
 Any player may use these:

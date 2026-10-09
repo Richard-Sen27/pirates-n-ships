@@ -3,7 +3,7 @@
 > **This is the testing and reference guide**, for the people who build and test the mod: it names config keys,
 > commands and test notes. The player's in-game guide, the Captain's Almanac, is its own text in the mod's voice and
 > lives in [`almanac/`](almanac/) (format: [`almanac.md`](almanac.md)); a mechanic that changes here must be changed
-> there too. After changing this file, regenerate GuideME with `python3 tools/gen_guideme.py` and commit the output.
+> there too.
 
 A guide to everything that exists in the mod today: what each block, item and system does and how to use it.
 It describes the code on `main`, not the plans. For the plans see [`design.md`](design.md), and for the state of
@@ -38,8 +38,31 @@ physics for moving ships.
 ---
 
 ## 0. The guide book
-With GuideME installed you start with the **Pirates 'n' Ships Guide** (also craftable from a book and a feather): this
-guide as an in-game book with item links, recipes and search. Hold G over one of the mod's items to open its page.
+The in-game guide is the **Captain's Almanac**, a leather-bound tome with brass corners. It works the same on NeoForge
+and Fabric and needs no other mod.
+
+- **Getting one:** every player gets one Almanac the first time they join a world (server config
+  `almanac.give_on_first_join`, on by default; once per player, so a lost book is not replaced, and while the switch
+  is off nothing is given and the book comes at the first login after it is turned on). More are crafted shapeless
+  from a book, two leather and two copper ingots; the recipe unlocks once you hold a book.
+- **Reading in hand:** use the Almanac (right-click) to open it.
+- **Placing it:** sneak-use it on top of a block to set the tome down, on any surface and also underwater. It lies
+  closed until someone right-clicks it to read; then it opens with a page flip and stays open while they read and a
+  few seconds after (`almanac.open_ticks`). Breaking it drops the book. With `almanac.enabled` off the Almanac is
+  decoration and never opens.
+- **Turning pages:** the arrows in the page corners, the arrow keys, Page Up and Page Down or the mouse wheel. The
+  bookmarks on the right edge jump to a chapter; links in the text jump to other chapters. Escape closes the book. It
+  opens again at the page you last read, also after death and relog (`almanac.remember_page`).
+- **Show me:** some pages have a "Show me" button that plays a Ponder scene of the mechanic (today: loading and firing
+  a cannon). The back button returns to the same page. The same scene opens from the item: hold the Ponder key (W by
+  default) while hovering the Cannon in your inventory.
+- **JEI:** with JEI (Just Enough Items) installed, every block and item the Almanac describes has an information
+  page in JEI with that text (R or U over it), and JEI gains two pages of the mod's own: the Harbor Market (each
+  trade good with its buy and sell prices) and Ship's Provisions (what the crew counts as food, water or rum).
+
+This file is the testing and reference guide: it lists every block, item, command and config value for testers and
+server owners. The Almanac's chapters are a separate text written for players (`docs/almanac/`, generated into the
+book with `python3 tools/gen_almanac.py` and `./gradlew :neoforge:runData`).
 
 ## 1. Your first ship
 
@@ -613,8 +636,9 @@ Lord trades as if the pirates liked him 7, 13 or 20 points more, and from Dread 
 until you attack them. **Titles:** navy officers carry their rank before their name (Mid., Lt., Capt., Cdre. or
 Adm.), a letter of marque makes you a Privateer, and growing infamy calls you Buccaneer, Dread Pirate and finally
 Pirate Lord, in chat, in the player list and over your head unless you already belong to another team. A small box at
-the top left shows your rank, your navy and pirate reputation and your letter; move or hide it in the client config
-(`career_hud`). When you name your own ship with a name tag at the helm, your title goes in front of its name
+the top left shows your rank, your navy and pirate reputation and your letter for a few seconds when you join, when
+your rank changes ("Promoted to Lieutenant", "Now Buccaneer") and after you close the career screen, then fades; pin
+it, hide it or move it to another corner in the client config (`career_hud.mode`, `show_seconds`, `corner`). When you name your own ship with a name tag at the helm, your title goes in front of its name
 ("Capt. Black Gull"); after a promotion, rename it to show the new title. **Fighting ships:** no shipwright sells
 the armed sloops of the navy and the pirates. You earn one by rank or you take one. The first time you reach Captain
 in the navy, a Ship Commission comes with the rank (a full pack drops it at your feet). Hand it to a navy officer or
@@ -714,8 +738,11 @@ the faster the ship, the denser and brighter, nothing below 1 block per second o
 
 The sea itself moves: around you the water surface rises into crests and sinks into troughs with the same waves that
 rock the ships, smooth near you and coarser toward the horizon, flat at the beach where the water is shallow, and never
-inside a dry hull. The foam rides on it. It is only a picture: swimming, boats, collisions and the ships' buoyancy still
-use the flat sea level, so a crest can wash over your feet without lifting you. You can see it from under water too.
+inside a dry hull. The foam rides on it. Swimming, collisions and the ships' buoyancy still use the flat sea level, so a
+crest can wash over your feet without lifting you. Boats ride the swell too: on the open sea a boat climbs the crests,
+sinks into the troughs and leans with the slope, and items thrown into the sea bob with it, while in lakes, rivers,
+shallow water and inside a hull they float as before (server config `waves.boats`, `waves.floating_items`, client
+setting `wave_effects.boat_tilt_degrees`). You can see it from under water too.
 Client settings `wave_effects.surface` (on by default), `surface_near_radius`, `surface_mid_radius`, `surface_far_cell`,
 `surface_full_depth` and `surface_underside`. With a mod that replaces Minecraft's chunk renderer (Sodium, Embeddium,
 Iris, Oculus, VulkanMod) the surface turns itself off and the water stays flat as before; the waves still rock the
@@ -1437,6 +1464,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `flags_brig` | False-colors detection, NPC surrender, capturing players, prisoner escapes. |
 | `brig` | Capture threshold, leading distances, cell size, escape chance, ransom. |
 | `melee` | Skill-based sword fighting: parry window, stamina, stagger, feint recovery, NPC feints on/off, sword sounds on/off and volume. |
+| `almanac` / `almanac_screen` (client) | The Captain's Almanac readable on/off (`enabled`), how long a placed tome stays open (`open_ticks`), the last page remembered per player (`remember_page`), the first-join gift (`give_on_first_join`); page-turn animation length and sound, book size. |
 | `core` | Debug logging. |
 | `ships`, `waves`, `hazards`, `crew`, `combat`, `survival`, `world`, `world_simulation`, and the client sections `audio` and `wave_effects` | Settings for features that are not built yet. They do nothing so far. |
 

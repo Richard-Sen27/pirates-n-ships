@@ -422,7 +422,10 @@ public final class QuestSeaGameTests {
             QuestParams params = QuestConfig.params();
             h.assertTrue(QuestGenerator.offerable(ctx, params).contains(QuestType.ESCORT), "escort not offerable");
             Quest offer = QuestGenerator.offer(QuestType.ESCORT, ctx, 1, params).orElseThrow();
-            h.assertTrue(offer.target() instanceof QuestTarget.Escort e && e.destination().equals(outpost.id()), "offer " + offer);
+            // Other tests of the same run may leave registered ports behind (world-gen outposts), so the destination
+            // is any escort option of the context, not necessarily this test's outpost.
+            h.assertTrue(offer.target() instanceof QuestTarget.Escort e
+                    && ctx.sea().escorts().stream().anyMatch(o -> o.destination().equals(e.destination())), "offer " + offer);
             ConfigOverrides.during(h, QuestConfig.SEA_QUESTS, false);
             QuestParams off = QuestConfig.params();
             h.assertTrue(QuestGenerator.offerable(ctx, off).stream().noneMatch(QuestType::seaQuest), "sea quests while off");

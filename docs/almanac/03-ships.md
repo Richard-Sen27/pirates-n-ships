@@ -94,7 +94,7 @@ Each repair takes 4 nails. Only pieces of the same ship join, and only pieces of
 illustration: figurehead_mermaid
 A ship should look the part.
 
-- A {item:pirates_n_ships:nameplate}**nameplate** (any sign and a gold nugget) shows her name once she is launched and named.
+- A {item:pirates_n_ships:nameplate}**name board** (any sign and a gold nugget) fixed on her side shows her name once she is launched and named; boards side by side join, and the name grows across the row.
 - A **figurehead** for the bow: a mermaid, lion, eagle or skull, from four planks and a prismarine shard, gold ingot, feather or bone. Click the hull block it should hang on, and the figure looks toward you.
 - The {item:pirates_n_ships:ship_lantern}**ship's lantern** stands on deck, hangs from a beam or from a bracket on a wall, and burns even under water.
 - {item:pirates_n_ships:stern_window}**Stern windows** go into a wall from outside; right-click to open or close the shutters.

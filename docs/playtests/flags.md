@@ -90,6 +90,38 @@ Please send screenshots of steps 3, 7 and 10, and `latest.log` if anything goes 
 3. **Performance.** 30 or more nameplates and 30 or more banner flags on one ship: no noticeable FPS or TPS drop.
 
 
+## NAME2: name boards
+
+The nameplate is now a **name board** (same item, now called "Name Board"): a framed oak plate flat on the hull, no
+chains. Boards side by side on one face join into one board and the name is drawn once across the row.
+
+1. **Placing.** Click the outer side of a hull plank with a name board: it lies flat against the plank, 2 px thick,
+   facing out, with a light log frame round a plank panel. Place a second and a third board to its left and right on
+   the same face: the frame's inner ends disappear and the three read as one board with one frame. A board above or
+   below a row stays on its own (its own full frame). Breaking the plank behind a board drops the board.
+2. **Rows of 1, 3 and 6.** On an assembled ship named "Black Gull" (name tag on the helm) build a 1-board, a 3-board
+   and a 6-board row on the outer hull. Within about a second each row shows "Black Gull" once, centred on the whole
+   row in dark brown letters: small on the single board (as the old plate), large on three, and on six as tall as the
+   board allows (not wider than three would need: the height caps it). Nothing is drawn on the other boards of a row
+   (no repeated name). Expected: letters never touch the frame.
+3. **Readability.** Stand 16, 32 and 64 blocks from the ship (F3 shows the distance) and look at each row. Expected:
+   the single board is readable at 16 like a sign at 16; the 3-board row is readable at 32 and still legible at 64;
+   the 6-board row easily at 64. Past `ship_identity.name_board_distance` (64) the name disappears and the bare board
+   stays; set it to 128 and the name is drawn to 128.
+4. **Both hull sides.** Build the same 3-board row on the port and the starboard side (and on the stern). From
+   outside, every row reads left to right, upright, never mirrored. Also while the ship turns and rolls.
+5. **Rename at the helm.** Rename to "Sea Wolf" (and earn a career title if one is at hand): every row changes within
+   about a second. HUD, logbook and bounty texts are unchanged from before.
+6. **Break the middle board** of the 3-board row: the row splits into two single boards, each with a full frame and
+   the name small on each. Put the board back: one row again, the name centred across it. Add a board at the left end
+   (seen from outside): the name moves to centre on the four boards.
+7. **Old worlds.** Load a world saved before NAME2 with a nameplate on a ship (or place the starter sloop template):
+   the plate is now a name board in the same place, facing the same way, showing the ship's name.
+8. **Disassembly turned.** Turn the ship about a quarter and disassemble at the helm: the rows stand on the blocks they
+   were on, still joined and read left to right; off a ship they show nothing (as before). Reassemble and name: the
+   name is back.
+
+
 Addendum (P1 finding, fixed in P4): on a ship that has turned since assembly the flag pointed the wrong way (180° after a half turn), because its wind facing ignored the ship's orientation. After P4 the flag must stream downwind on a turned ship too. When judging the sails, use `/pirates wind get`, not the flag.
 
 

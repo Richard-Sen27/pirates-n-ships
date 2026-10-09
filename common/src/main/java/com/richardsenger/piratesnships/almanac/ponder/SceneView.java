@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.almanac.ponder;
 
+import com.richardsenger.piratesnships.core.text.Num;
 import net.createmod.ponder.foundation.PonderScene;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
@@ -74,7 +75,7 @@ final class SceneView {
 
         @Override
         public String toString() {
-            return String.format("[%.0f..%.0f x %.0f..%.0f, %d lines]", x0, x1, y0, y1, lines);
+            return Num.format("[%.0f..%.0f x %.0f..%.0f, %d lines]", x0, x1, y0, y1, lines);
         }
     }
 

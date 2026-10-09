@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.mob.squad;
 
+import com.richardsenger.piratesnships.core.text.Num;
 import com.richardsenger.piratesnships.mob.entity.NavyOfficer;
 import com.richardsenger.piratesnships.mob.entity.NavySoldier;
 import com.richardsenger.piratesnships.mob.entity.SeafarerMob;
@@ -460,7 +461,7 @@ public final class Squad {
     }
 
     private static String describe(SeafarerMob m) {
-        return String.format("%.1f %.1f %.1f%s%s", m.getX(), m.getY(), m.getZ(), m.getTarget() != null ? " target" : "",
+        return Num.format("%.1f %.1f %.1f%s%s", m.getX(), m.getY(), m.getZ(), m.getTarget() != null ? " target" : "",
                 m.getNavigation().isDone() ? "" : " moving");
     }
 

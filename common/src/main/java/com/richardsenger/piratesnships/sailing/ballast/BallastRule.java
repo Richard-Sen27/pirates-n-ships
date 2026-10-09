@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.sailing.ballast;
 
+import com.richardsenger.piratesnships.core.text.Num;
 import java.util.Arrays;
 
 /**
@@ -109,7 +110,7 @@ public final class BallastRule {
 
         @Override
         public String toString() {
-            return String.format("mass %.2f, B %.1f, waterline %.3f, cob (%.3f, %.3f, %.3f), com (%.3f, %.3f, %.3f), torque (%.1f, 0, %.1f)%s",
+            return Num.format("mass %.2f, B %.1f, waterline %.3f, cob (%.3f, %.3f, %.3f), com (%.3f, %.3f, %.3f), torque (%.1f, 0, %.1f)%s",
                     mass, buoyancy, waterline, cob[0], cob[1], cob[2], com[0], com[1], com[2], torqueX, torqueZ, capped ? " capped" : "");
         }
     }

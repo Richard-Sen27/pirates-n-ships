@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.core.text.Num;
 import com.richardsenger.piratesnships.hazard.HazardConfig;
 import java.util.Arrays;
 import java.util.Optional;
@@ -58,8 +59,8 @@ public final class WaveCommands {
         SeaState target = SeaStates.target(level);
         boolean fixed = SeaStates.override(level) != null;
         c.getSource().sendSuccess(() -> Component.translatable(fixed ? KEY_OVERRIDE : KEY_INFO, now.id(), target.id(),
-                String.format("%.2f", f.amplitude()),
-                String.format("%.0f", com.richardsenger.piratesnships.sailing.wind.WindSample.normalizeDegrees(f.directionDegrees() + 180.0))),
+                Num.two(f.amplitude()),
+                Num.whole(com.richardsenger.piratesnships.sailing.wind.WindSample.normalizeDegrees(f.directionDegrees() + 180.0))),
                 false);
         return now.ordinal() + 1;
     }
@@ -74,7 +75,7 @@ public final class WaveCommands {
         ServerLevel level = c.getSource().getLevel();
         SeaStates.set(level, state.get(), fromDegrees == null ? null : fromDegrees + 180.0, SeaStateModel.Tracker.FOREVER);
         c.getSource().sendSuccess(() -> Component.translatable(KEY_SET, state.get().id(),
-                fromDegrees == null ? "-" : String.format("%.0f", fromDegrees)), true);
+                fromDegrees == null ? "-" : Num.whole(fromDegrees)), true);
         return 1;
     }
 

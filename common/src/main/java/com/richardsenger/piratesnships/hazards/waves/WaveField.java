@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.hazards.waves;
 
+import com.richardsenger.piratesnships.core.text.Num;
 import java.util.List;
 
 /**
@@ -357,8 +358,8 @@ public final class WaveField {
 
     @Override
     public String toString() {
-        return String.format("WaveField[amplitude %.2f, toward %.0f°%s, %d trains, groups ±%.2f]", amplitude, heading.current(),
-                heading.current() == heading.previous() ? "" : String.format(" (from %.0f°)", heading.previous()),
+        return Num.format("WaveField[amplitude %.2f, toward %.0f°%s, %d trains, groups ±%.2f]", amplitude, heading.current(),
+                heading.current() == heading.previous() ? "" : Num.format(" (from %.0f°)", heading.previous()),
                 components.size(), g.length > 0 ? groups.depth() : 0.0);
     }
 }

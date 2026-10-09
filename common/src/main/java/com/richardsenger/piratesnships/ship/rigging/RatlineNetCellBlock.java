@@ -4,6 +4,8 @@ import com.mojang.serialization.MapCodec;
 import com.richardsenger.piratesnships.core.block.Waterlogging;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -35,18 +37,26 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  *
  * <p>{@link #FACING} carries no look: it is the frame of the stored offset to A, so a rotated disassembly (which turns
  * the property but never block entity data) keeps the offset right.
+ *
+ * <p><b>Boarding nets (RAIL5).</b> A cell of a net hung along the rail ({@link BoardingNets}) has {@link #BOARDING} set
+ * and its {@link #FACING} on the net's outboard side (still the frame of its offsets, placed that way). It holds a
+ * boarder who comes in from outboard ({@link #entityInside}), cannot be mined or built over, and a cutlass cuts it
+ * ({@link #attack}).
  */
 public class RatlineNetCellBlock extends Block implements SimpleWaterloggedBlock, EntityBlock {
 
     public static final MapCodec<RatlineNetCellBlock> CODEC = simpleCodec(RatlineNetCellBlock::new);
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
     public static final BooleanProperty WATERLOGGED = Waterlogging.WATERLOGGED;
+    /** RAIL5: a cell of a boarding net along the rail. */
+    public static final BooleanProperty BOARDING = BooleanProperty.create("boarding");
 
     private static final VoxelShape OUTLINE = box(5, 5, 5, 11, 11, 11);
 
     public RatlineNetCellBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(WATERLOGGED, false));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(WATERLOGGED, false)
+                .setValue(BOARDING, false));
     }
 
     @Override
@@ -56,7 +66,7 @@ public class RatlineNetCellBlock extends Block implements SimpleWaterloggedBlock
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, WATERLOGGED);
+        builder.add(FACING, WATERLOGGED, BOARDING);
     }
 
     @Override
@@ -82,7 +92,29 @@ public class RatlineNetCellBlock extends Block implements SimpleWaterloggedBlock
     /** A block placed into the net takes the cell's place (and so breaks the net); a second net does not. */
     @Override
     protected boolean canBeReplaced(BlockState state, BlockPlaceContext context) {
-        return !context.getItemInHand().is(RiggingContent.NET_ITEM.get());
+        return !state.getValue(BOARDING) && !context.getItemInHand().is(RiggingContent.NET_ITEM.get());
+    }
+
+    /** RAIL5: a boarding net holds a boarder coming over the rail ({@link BoardingNets#onInside}). */
+    @Override
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+        if (state.getValue(BOARDING)) {
+            BoardingNets.onInside(state, level, pos, entity);
+        }
+    }
+
+    /** RAIL5: a cutlass hit on a boarding net ({@link BoardingNets#hit}). */
+    @Override
+    protected void attack(BlockState state, Level level, BlockPos pos, Player player) {
+        if (state.getValue(BOARDING)) {
+            BoardingNets.hit(level, pos, player);
+        }
+    }
+
+    /** RAIL5: a boarding net is not mined; a cutlass cuts it ({@link #attack}). */
+    @Override
+    protected float getDestroyProgress(BlockState state, Player player, BlockGetter level, BlockPos pos) {
+        return state.getValue(BOARDING) ? 0f : super.getDestroyProgress(state, player, level, pos);
     }
 
     @Override

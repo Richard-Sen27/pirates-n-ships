@@ -32,7 +32,8 @@ import java.util.List;
  * The {@code ship.rigging} module (docs/design.md §4.8 "Visual backlog 2", item 1): RL1's ratlines, a climbable rope
  * net hung on a mast or laid sloped from the gunwale to the masthead ({@link RatlinesBlock}); RL2's ratline nets,
  * strung between a chainplate and a mast hoop at any pitch ({@link RatlineNets}) and climbed along their line
- * ({@link RatlineNetAssist}); RL4's fans, several nets to one hoop netted together into a triangle.
+ * ({@link RatlineNetAssist}); RL4's fans, several nets to one hoop netted together into a triangle; RAIL5's boarding
+ * nets, strung along the rail between two chainplates on railings ({@link BoardingNets}).
  */
 public final class RiggingModule implements ModModule {
 
@@ -85,7 +86,11 @@ public final class RiggingModule implements ModModule {
                 .add(RatlineNetItem.KEY_DISABLED, "Ratline nets are disabled")
                 // RL4: a hoop's fan
                 .add(RatlineNetItem.KEY_FULL, "Hoop full: at most %s nets")
-                .add(RatlineNetItem.KEY_APART, "Too far apart for one net: %s"));
+                .add(RatlineNetItem.KEY_APART, "Too far apart for one net: %s")
+                // RAIL5: boarding nets along the rail
+                .add(RatlineNetItem.KEY_BOARDING_STRUNG, "Boarding net strung along the rail")
+                .add(RatlineNetItem.KEY_NOT_ALONG, "Boarding nets run along one rail edge")
+                .add(RatlineNetItem.KEY_TOO_SHORT, "Leave a block between the chainplates"));
         data.models(m -> {
             // hand-made Blockbench models (art/models/ratlines.bbmodel, design.md §4.8), drawn facing north: the hung net
             // against the south side, the sloped net rising to the north. Only the block state is generated; the item
@@ -193,6 +198,6 @@ public final class RiggingModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(RatlinesGameTests.class, RatlineNetGameTests.class);
+        return List.of(RatlinesGameTests.class, RatlineNetGameTests.class, BoardingNetGameTests.class);
     }
 }

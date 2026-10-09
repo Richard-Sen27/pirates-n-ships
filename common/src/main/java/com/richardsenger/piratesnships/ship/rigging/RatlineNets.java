@@ -21,11 +21,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -88,13 +90,21 @@ public final class RatlineNets {
     }
 
     /** Why a net cannot be strung, with the first blocked cell for {@link Refusal#BLOCKED}. */
-    public enum Refusal { NONE, SAME, TOO_LONG, TOO_FLAT, OTHER_BODY, BUSY, FULL, BLOCKED }
+    public enum Refusal { NONE, SAME, TOO_LONG, TOO_FLAT, OTHER_BODY, BUSY, FULL, BLOCKED,
+        /** RAIL5: chainplates on two railings at one height, but not along one railed edge. */
+        NOT_ALONG,
+        /** RAIL5: chainplates on two neighbouring railings: no block between them for a boarding net. */
+        TOO_SHORT }
 
     /**
      * The outcome of {@link #check}; {@code apart} is the distance to the nearest neighbouring strand's foot when the
-     * new strand has neighbours in its fan but joins none of them (too far apart), else NaN.
+     * new strand has neighbours in its fan but joins none of them (too far apart), else NaN; {@code boarding} when the
+     * net would hang along the rail as a boarding net (RAIL5, {@link BoardingNets}).
      */
-    public record Check(Refusal refusal, @Nullable BlockPos blocked, Net net, double apart) {
+    public record Check(Refusal refusal, @Nullable BlockPos blocked, Net net, double apart, boolean boarding) {
+        public Check(Refusal refusal, @Nullable BlockPos blocked, Net net, double apart) {
+            this(refusal, blocked, net, apart, false);
+        }
     }
 
     /** While a fan's cells are being brought in line, removing one of them breaks nothing (server thread only). */
@@ -308,17 +318,36 @@ public final class RatlineNets {
                 return new Check(r, null, net, Double.NaN);
             }
         }
-        switch (RatlineNetRules.check(ra, rb, maxLength, minPitch)) {
-            case SAME -> {
-                return new Check(Refusal.SAME, null, net, Double.NaN);
+        // RAIL5: two chainplates on top of railings at one height hang a boarding net along the rail instead
+        BoardingNetRules.Layout boarding = RiggingConfig.BOARDING_NETS.get()
+                ? BoardingNets.layout(level, a, b, RiggingConfig.BOARDING_NET_LENGTH.get()) : null;
+        if (boarding != null) {
+            switch (boarding.verdict()) {
+                case NOT_ALONG -> {
+                    return new Check(Refusal.NOT_ALONG, null, net, Double.NaN, true);
+                }
+                case TOO_SHORT -> {
+                    return new Check(Refusal.TOO_SHORT, null, net, Double.NaN, true);
+                }
+                case TOO_LONG -> {
+                    return new Check(Refusal.TOO_LONG, null, net, Double.NaN, true);
+                }
+                default -> {
+                }
             }
-            case TOO_LONG -> {
-                return new Check(Refusal.TOO_LONG, null, net, Double.NaN);
-            }
-            case TOO_FLAT -> {
-                return new Check(Refusal.TOO_FLAT, null, net, Double.NaN);
-            }
-            default -> {
+        } else {
+            switch (RatlineNetRules.check(ra, rb, maxLength, minPitch)) {
+                case SAME -> {
+                    return new Check(Refusal.SAME, null, net, Double.NaN);
+                }
+                case TOO_LONG -> {
+                    return new Check(Refusal.TOO_LONG, null, net, Double.NaN);
+                }
+                case TOO_FLAT -> {
+                    return new Check(Refusal.TOO_FLAT, null, net, Double.NaN);
+                }
+                default -> {
+                }
             }
         }
         Strand added = strand(level, net);
@@ -329,16 +358,16 @@ public final class RatlineNets {
         for (Cell c : net.cells()) {
             BlockPos p = new BlockPos(c.x(), c.y(), c.z());
             if (!acceptable(level, p, hub)) {
-                return new Check(Refusal.BLOCKED, p, net, Double.NaN);
+                return new Check(Refusal.BLOCKED, p, net, Double.NaN, boarding != null);
             }
         }
         for (Map.Entry<BlockPos, Placement> e : fan.cells().entrySet()) {
             BlockPos p = e.getKey();
             if (!acceptable(level, p, hub) && !(e.getValue().fill() && skipsFill(level.getBlockState(p)))) {
-                return new Check(Refusal.BLOCKED, p, net, Double.NaN);
+                return new Check(Refusal.BLOCKED, p, net, Double.NaN, boarding != null);
             }
         }
-        return new Check(Refusal.NONE, null, net, apart(fan, added));
+        return new Check(Refusal.NONE, null, net, apart(fan, added), boarding != null);
     }
 
     /** NaN when {@code added} has no neighbour in {@code fan} or joins one; else the distance to its nearest neighbour's foot. */
@@ -428,6 +457,8 @@ public final class RatlineNets {
         }
         List<Strand> broken = new ArrayList<>();
         BlockState cellState = RiggingContent.NET_CELL.get().defaultBlockState();
+        // RAIL5: a boarding net's cells face its outboard side (read from the rails once per strand)
+        Map<Strand, Optional<Direction>> outboard = new HashMap<>();
         syncing++;
         try {
             for (Map.Entry<BlockPos, Placement> e : fan.cells().entrySet()) {
@@ -444,7 +475,13 @@ public final class RatlineNets {
                         continue;
                     }
                     boolean water = level.getFluidState(p).getType() == Fluids.WATER;
-                    level.setBlock(p, cellState.setValue(RatlineNetCellBlock.WATERLOGGED, water), Block.UPDATE_ALL);
+                    BlockState place = cellState.setValue(RatlineNetCellBlock.WATERLOGGED, water);
+                    Direction out = outboard.computeIfAbsent(pl.owner(), s -> Optional.ofNullable(BoardingNets.outboard(level, s.net())))
+                            .orElse(null);
+                    if (out != null) {
+                        place = place.setValue(RatlineNetCellBlock.BOARDING, true).setValue(RatlineNetCellBlock.FACING, out);
+                    }
+                    level.setBlock(p, place, Block.UPDATE_ALL);
                 }
                 if (level.getBlockEntity(p) instanceof RatlineNetCellBlockEntity cell) {
                     Net n = pl.owner().net();

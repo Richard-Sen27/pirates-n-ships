@@ -35,6 +35,8 @@ import java.util.Set;
  *   <li><b>Pirate friendship</b>: {@link #piratesFriendly} ({@code SeafarerMob}'s target description).</li>
  *   <li><b>Promotion gifts</b>: {@link #afterStore}, called by {@link Careers#store} whenever a career changes; every
  *       rank gained hands out its {@code <rank>_items} once per player.</li>
+ *   <li><b>Ship grants</b> (SHP1): {@link #afterStore} also hands out a ship commission on reaching
+ *       {@code careers.ship_grants.navy_rank} or {@code infamy_rank} ({@link ShipGrants}), with its own toggle.</li>
  * </ul>
  * Everything answers "no reward" while {@code careers.enabled} is off. The navy's hunt for the infamous (more patrols)
  * is left to the world simulation's hunt rules (WS4b), which will read {@link Careers#infamy}.
@@ -99,7 +101,12 @@ public final class CareerRewards {
      * not gifted to this player yet, and notes them as gifted. Nothing while careers or {@code promotion_gifts} are off.
      */
     static void afterStore(Player player, CareerRecord before, CareerRecord after) {
-        if (!(player instanceof ServerPlayer sp) || !on() || !CareerConfig.PROMOTION_GIFTS.get()) return;
+        if (!(player instanceof ServerPlayer sp) || !on()) return;
+        if (CareerConfig.PROMOTION_GIFTS.get()) promotionGifts(sp, before, after);
+        ShipGrants.afterStore(sp, after); // SHP1: the ship commission comes with the rank's gifts
+    }
+
+    private static void promotionGifts(ServerPlayer sp, CareerRecord before, CareerRecord after) {
         Set<String> gifted = gifted(sp);
         List<String> due = CareerRewardRules.giftsDue(before, after, gifted);
         if (due.isEmpty()) return;
@@ -127,7 +134,7 @@ public final class CareerRewards {
     }
 
     /** Puts the stacks into the inventory; what does not fit is dropped at the player's feet. */
-    private static void give(ServerPlayer player, List<ItemStack> stacks) {
+    static void give(ServerPlayer player, List<ItemStack> stacks) {
         if (stacks.isEmpty()) return;
         boolean dropped = false;
         for (ItemStack stack : stacks) {

@@ -577,8 +577,17 @@ Adm.), a letter of marque makes you a Privateer, and growing infamy calls you Bu
 Pirate Lord, in chat, in the player list and over your head unless you already belong to another team. A small box at
 the top left shows your rank, your navy and pirate reputation and your letter; move or hide it in the client config
 (`career_hud`). When you name your own ship with a name tag at the helm, your title goes in front of its name
-("Capt. Black Gull"); after a promotion, rename it to show the new title. Server config `careers`,
-`careers.rewards`, `careers.name_prefix`, `careers.title_on_ship`.
+("Capt. Black Gull"); after a promotion, rename it to show the new title. **Fighting ships:** no shipwright sells
+the armed sloops of the navy and the pirates. You earn one by rank or you take one. The first time you reach Captain
+in the navy, a Ship Commission comes with the rank (a full pack drops it at your feet). Hand it to a navy officer or
+use it on the harbor master's desk of a navy outpost: an armed navy sloop with four guns waits at a free berth of the
+outpost, assembled, yours, named with your title ("Capt. Vigilant") and flying the navy flag. Reach Dread Captain on
+the pirate side and the brethren grant you a pirate sloop under the Jolly Roger the same way, at the fence's desk of a
+pirate island. Each side grants one ship per player, and only to the captain named on the commission; a navy
+commission is void once you leave the service. The shot locker comes empty, so buy powder and cannonballs before you
+sail. If no berth is free, come back later: you keep the commission. The other road is to take one at sea: kill the
+fighters of a navy or pirate sloop and hold her deck (see [Ships on the horizon](#ships-on-the-horizon)). Server
+config `careers`, `careers.rewards`, `careers.ship_grants`, `careers.name_prefix`, `careers.title_on_ship`.
 
 ### Quests
 Every harbor master's desk has a Quests tab with up to three offers, which the port renews when they run out after

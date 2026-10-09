@@ -3,7 +3,7 @@
 # `.claude/worktrees/merge` worktree and lands the verified merge commit on main.
 #   tools/merge_stage.sh <branch> <pkg> "<merge commit subject>" [gametest runs, default 2]
 #   CONTINUE=1 tools/merge_stage.sh ...   continues a merge whose hand-written conflicts were resolved by hand
-# Steps: merge --no-ff --no-commit (conflicts under common/src/generated/resources and the generated guides are
+# Steps: merge --no-ff --no-commit (conflicts under common/src/generated/resources  are
 # taken from the branch and regenerated; any other conflict stops with exit 3), runData, tools/gen_guideme.py,
 # build, N GameTest rounds, commit, fast-forward main. If main moved only by docs, CLAUDE.md, the generated guide
 # or this script, the verified commit is landed with a merge commit and the guide regenerated; otherwise exit 9.
@@ -13,8 +13,8 @@ BRANCH=$1; PKG=$2; SUBJECT=$3; RUNS=${4:-2}
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 WT=$ROOT/.claude/worktrees/merge
 LOG=${STAGE_LOG_DIR:-$ROOT/.claude/worktrees/stage-logs}/$PKG; mkdir -p "$LOG"
-GEN_RE='^common/src/generated/resources/|/assets/pirates_n_ships/guides/'
-DOCS_RE='^docs/|^CLAUDE\.md$|^common/src/main/resources/assets/pirates_n_ships/guides/|^tools/merge_(stage|batch)\.sh$'
+GEN_RE='^common/src/generated/resources/'
+DOCS_RE='^docs/|^CLAUDE\.md$|^tools/merge_(stage|batch)\.sh$'
 cd "$WT" || exit 1
 if [ -z "${CONTINUE:-}" ]; then
   if [ -n "$(git status --short | grep -v '^??')" ]; then echo "merge worktree dirty"; git status --short | head; exit 2; fi
@@ -36,8 +36,7 @@ else
 fi
 BASE=$(git rev-parse --short HEAD)
 ./gradlew -q :neoforge:runData > "$LOG/rundata.log" 2>&1 || { echo "RUNDATA FAILED"; tail -20 "$LOG/rundata.log"; exit 4; }
-python3 tools/gen_guideme.py > "$LOG/guide.log" 2>&1 || { echo "GUIDE FAILED"; tail -20 "$LOG/guide.log"; exit 4; }
-git add -A common/src/generated/resources common/src/main/resources/assets/pirates_n_ships/guides
+git add -A common/src/generated/resources
 ./gradlew build > "$LOG/build.log" 2>&1 || { echo "BUILD FAILED"; grep -E 'error:|FAILED|Exception' "$LOG/build.log" | head -20; exit 5; }
 echo "build ok"
 for i in $(seq 1 "$RUNS"); do
@@ -52,9 +51,10 @@ H=$(git rev-parse --short HEAD)
 cd "$ROOT" || exit 1
 if git merge --ff-only -q "$H" 2> "$LOG/ff.log"; then echo "MERGED $PKG -> main at $H (fast-forward)"; exit 0; fi
 MOVED=$(git diff --name-only "$BASE" main | grep -vE "$DOCS_RE" || true)
+MOVED="$MOVED$(git diff --name-only "$BASE" main | grep -E '^docs/almanac/' || true)"  # chapter sources feed datagen (ALM6)
 if [ -z "$MOVED" ]; then
   git merge --no-ff -q "$H" -m "chore(merge): land the verified $PKG merge on main" > "$LOG/land.log" 2>&1 || { echo "DOCS-ONLY MERGE FAILED"; cat "$LOG/land.log"; exit 8; }
-  python3 tools/gen_guideme.py > /dev/null 2>&1 && { git diff --quiet || git commit -q -am "chore(guide): regenerate after landing $PKG"; }
+  [ -f tools/gen_almanac.py ] && python3 tools/gen_almanac.py > /dev/null 2>&1; git diff --quiet || git commit -q -am "chore(almanac): regenerate after landing $PKG"
   echo "MERGED $PKG -> main with a merge commit (main had moved by docs only) at $(git rev-parse --short HEAD)"; exit 0
 fi
 echo "MAIN MOVED by code since $BASE; restage:"; echo "$MOVED" | head; exit 9

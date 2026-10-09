@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.almanac.ponder;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.almanac.client.AlmanacSceneOpener;
 import net.createmod.catnip.gui.ScreenOpener;
 import net.createmod.ponder.api.registration.StoryBoardEntry;
 import net.createmod.ponder.foundation.PonderIndex;
@@ -13,7 +14,7 @@ import java.util.Map;
 
 /**
  * The client side of our Ponder scenes (ALM4, physical client only): adds {@link AlmanacPonderPlugin} to Ponder and
- * opens a scene for the Almanac's "Show me" buttons (ALM3 calls {@link #show}).
+ * opens a scene for the Almanac's "Show me" buttons (installed as the {@link AlmanacSceneOpener} handler).
  */
 public final class AlmanacPonder {
 
@@ -27,6 +28,7 @@ public final class AlmanacPonder {
      */
     public static void register() {
         PonderIndex.addPlugin(new AlmanacPonderPlugin());
+        AlmanacSceneOpener.install(AlmanacPonder::show);
         Constants.LOG.info("Ponder: registered {} scene(s) of {}", AlmanacScenes.ALL.size(), Constants.MOD_ID);
     }
 
@@ -58,6 +60,20 @@ public final class AlmanacPonder {
             Constants.LOG.error("Ponder: could not show {}", id, e);
             return false;
         }
+    }
+
+    /**
+     * The Almanac's "Show me" handler ({@link AlmanacSceneOpener}): {@link #show(ResourceLocation)} for a valid id, false
+     * (logged) for a malformed one. Ponder's {@code ScreenOpener} keeps the book screen on its back stack: Ponder's back
+     * button or Backspace returns to the same page; Escape closes Ponder and with it the book.
+     */
+    public static boolean show(String id) {
+        ResourceLocation rl = ResourceLocation.tryParse(id);
+        if (rl == null) {
+            Constants.LOG.warn("Ponder: \"{}\" is not a scene id, nothing to show", id);
+            return false;
+        }
+        return show(rl);
     }
 
     /** Ponder's registered storyboard of one of our scenes: the entry of its item with its schematic. */

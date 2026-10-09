@@ -1,28 +1,24 @@
 package com.richardsenger.piratesnships.almanac.client;
 
-import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.almanac.AlmanacPayloads;
 import com.richardsenger.piratesnships.platform.Services;
 
 /**
- * Client side of reading the Captain's Almanac (ALM1, docs/design.md §3.4). Uses no client-only classes, so the
- * payload handler may reference it on both sides.
+ * Client side of reading the Captain's Almanac (ALM1, ALM3, docs/design.md §3.4). Uses no client-only classes itself,
+ * so the payload handler may reference it on both sides; the screen is reached only when {@link #open} runs.
  *
- * <p>{@link #open} is the single hook the almanac screen (ALM3) replaces: the server sends
- * {@link AlmanacPayloads.Open} when the player reads the placed tome ({@code tome} present) or the book in hand
- * ({@code tome} empty). Whatever opens must call {@link #closed} with the same payload once the reader is done (the
- * screen's {@code removed()}), so a placed tome closes again. Until ALM3 there is no screen: it logs and counts as
- * closed at once, and the tome lies open for {@code almanac.open_ticks}.
+ * <p>The server sends {@link AlmanacPayloads.Open} when the player reads the placed tome ({@code tome} present) or the
+ * book in hand ({@code tome} empty); {@link #open} shows {@link AlmanacScreen} at the page the player last read. The
+ * screen calls {@link #closed} with the same payload from its {@code removed()}, so a placed tome closes again.
  */
 public final class AlmanacClient {
 
     private AlmanacClient() {
     }
 
-    /** The server opened the almanac for this player. ALM3: open the screen here. */
+    /** The server opened the almanac for this player: show the book screen. */
     public static void open(AlmanacPayloads.Open open) {
-        Constants.LOG.debug("Captain's Almanac opened ({}); no screen until ALM3", open.tome().map(Object::toString).orElse("in hand"));
-        closed(open);
+        AlmanacScreen.show(open);
     }
 
     /** The reader is done with the almanac opened by {@code open}: tell the server, so a placed tome closes. */

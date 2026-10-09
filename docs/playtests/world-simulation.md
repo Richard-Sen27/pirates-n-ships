@@ -382,3 +382,67 @@ them and `world_simulation.convoys_per_day` raised (WS2 step 7); `/pirates world
 
 Report: `/pirates world factions` before and after steps 1 and 2, a screenshot of the ship in step 3 before you left
 and after it came back, `latest.log`, and anything a deckhand did that looked wrong.
+
+## TPL2: crow's nests on the NPC sloops, manned lookouts, the captain's ship name
+
+The armed navy and pirate sloops now carry a **crow's nest** on the mast top (the flag moved to a staff on the
+taffrail) and **ratlines** on both sides of the mast: sloped from the quarterdeck beside the helm up toward the bow to
+just abaft the upper yard, then hung on the mast above the upper yard up to the nest. A materialised NPC ship sends
+one of its deckhands up as the **lookout** (`world_simulation.materialize.man_lookout`, default on; he is one of the
+`crew_per_ship`, so one deckhand fewer works the sails), so its nest counts as manned (LAW4: a navy patrol watching
+you widens its false-colours observation). A pirate captain's voyage names its ship after him ("Black-Tooth
+Bartholomew Crowe's Sea Wolf": his name in the possessive and the pirate name the ship would have had; his surname
+alone if that is longer than a nameplate's 50 characters), shown in the ship's record, its nameplate, the voyage list
+("captain `<Name>` aboard `<ship>`") and every lookout's call ("Sail ho! A pirate ship ... : it's `<ship>`!").
+
+Covered headless: (JUnit `ArmedSloopLayoutTest`) the armed sloops differ from the starter sloop only by the guns,
+ports, locker, the nest where the flag was, the two-block staff and the 24 ratlines; each run climbs link by link from
+the quarterdeck to beside the nest, its hung links hang on mast logs above the upper yard, and no link enters the
+square sail's cloth envelope (bellied either way at the default `sail_visuals`) or the jib's plane; the starter sloop
+is unchanged (`SchemToStructureTest`). (`CaptainShipNamesTest`) the naming rule. (`ArmedShipGameTests`) the armed
+sloop still floats like the plain one; a navy patrol appears with one pinned crew member seated in its nest and
+`Lookouts.isManned` true, the helmsman at the helm and the crew count unchanged; with `man_lookout` off nobody sits
+there and the nest is not manned; a mock player climbs the port ratlines of the assembled sloop afloat from the
+quarterdeck into the nest (about 90 ticks). (`CaptainVoyageGameTests`) the captain's ship carries his name in its
+record, on its nameplate, in the voyage list's label and as the lookouts' name for it. (`LookoutGameTests`) a renowned
+ship is called by its name, an ordinary one as before. Not covered: how it looks (the nest, the nets beside the sail
+in a strong wind, the ensign), the climb by a real player with real controls, a lookout seen from far away.
+
+### Setup
+As for WS4c (a creative world with cheats, open ocean, the armed templates in `navy_templates` / `pirate_templates`),
+and for step 5 a pirate island with a living captain (`/pirates mob captain list`).
+
+### Steps
+1. **The armed sloop's rigging.** `/pirates ship place navy_sloop_armed assemble` at the shore and walk around it.
+   - **Expected:** a barrel-shaped crow's nest on the mast top; the flag (when hoisted) on a short staff on the
+     taffrail behind the helm, its cloth free of the lanterns. Two rope nets climb from the quarterdeck on either side
+     of the wheel up toward the mast, reaching it just behind the upper yard, and continue up the mast's sides above
+     the upper yard to the nest. Nothing pokes through the yards or the jib. Hoist the square sail (whistle "Hoist
+     sails") and turn the ship so the wind comes from ahead and from astern: the cloth may come close to the nets but
+     never cuts through them.
+2. **Climb it.** In survival, walk up one of the nets from the quarterdeck toward the bow (it climbs like a stair),
+   stop on the end of the upper yard at its top, face the mast and climb the net on the mast (hold jump or push
+   forward), and step sideways into the nest at the top.
+   - **Expected:** you get from the deck into the nest without breaking or placing anything; standing in the nest you
+     are in the barrel up to your chest. Report any step that needed a second try (the jump from the slope onto the
+     hung net is the awkward one) and whether the climb feels natural.
+3. **A patrol's lookout.** Fly the merchant flag, `/pirates world voyages spawn near patrol`, fly over it.
+   - **Expected:** the patrol's ship has the nest and the ratlines, and a crew member stands in the nest (the
+     lookout), facing out; the helmsman is at the helm, the other deckhands at the winch. Board it: you may hear its
+     lookout's calls ("Sail ho! ..." about your own ship) while you are aboard; nobody else does.
+4. **The manned nest counts (LAW4).** On your own ship fly false colours (WS4b / LAW4 setup: the merchant flag on a
+   ship with a pirate record) near the patrol from step 3 and time how quickly its observation sees through them;
+   then set `world_simulation.materialize.man_lookout = false`, spawn a new patrol and repeat.
+   - **Expected:** with the lookout up the patrol notices sooner and from farther away (`flags_brig.crows_nest_*`);
+     with `man_lookout` off nobody is in its nest and it takes the plain time and range. The second patrol's crew is
+     the same size (the deckhand works the sails instead).
+5. **The captain's ship.** Send the island's captain to sea (`/pirates mob captain voyage <island id>`), then
+   `/pirates world voyages` and materialise it (`/pirates world voyages materialize <id>` or fly there).
+   - **Expected:** the list line ends in "captain `<Name>` aboard `<Name>`'s `<Ship>`". His ship's nameplate on the
+     stern reads the same name. Put your own ship with a manned nest (a crew member assigned to your crow's nest, or
+     yourself standing in it) within the lookout range: the call reads "Sail ho! A pirate ship ..., N blocks: it's
+     `<Name>`'s `<Ship>`!". An ordinary pirate raider is called without a name.
+
+Report: screenshots of steps 1 (side view with the sail set, and from above), 2 (from inside the nest) and 3, the chat
+of step 5, `latest.log`, and anything that looked wrong (a net floating off the mast, the lookout standing beside the
+nest or on the deck, the cloth through the nets, a cut-off name on the nameplate).

@@ -6,11 +6,13 @@ import net.minecraft.util.StringRepresentable;
 
 import java.util.Locale;
 
-/** What a voyage is for (WS2): a merchant convoy, a navy patrol (WS4b) or a pirate raid (WS5). */
+/** What a voyage is for (WS2): a merchant convoy, a navy patrol (WS4b), a pirate raid (WS5) or a captain's cruise (BOS2). */
 public enum VoyageKind implements StringRepresentable {
     CONVOY(Faction.MERCHANTS),
     PATROL(Faction.NAVY),
-    RAID(Faction.PIRATES);
+    RAID(Faction.PIRATES),
+    /** A pirate captain's cruise from his island (BOS2, {@code worldsim.captain}), the captain aboard. */
+    CAPTAIN(Faction.PIRATES);
 
     public static final Codec<VoyageKind> CODEC = StringRepresentable.fromEnum(VoyageKind::values);
 

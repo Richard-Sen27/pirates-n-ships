@@ -35,6 +35,7 @@ public final class CaptainCommands {
     public static final String KEY_NONE = KEY + "none";
     public static final String KEY_LINE_ALIVE = KEY + "line.alive";
     public static final String KEY_LINE_LOST = KEY + "line.lost";
+    public static final String KEY_LINE_AT_SEA = KEY + "line.at_sea";
 
     private CaptainCommands() {
     }
@@ -83,7 +84,10 @@ public final class CaptainCommands {
         all.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> {
             CaptainEntry c = e.getValue();
             String post = c.post().toShortString();
-            Component line = c.alive()
+            Component line = c.atSea()
+                    ? Component.translatable(KEY_LINE_AT_SEA, c.name(), e.getKey().toString(),
+                    c.voyage().map(v -> v.toString().substring(0, 8)).orElse("?"), LawService.bountyTotal(server, c.id()))
+                    : c.alive()
                     ? Component.translatable(KEY_LINE_ALIVE, c.name(), e.getKey().toString(), post,
                     LawService.bountyTotal(server, c.id()))
                     : Component.translatable(KEY_LINE_LOST, c.name(), e.getKey().toString(), post, c.diedDay());

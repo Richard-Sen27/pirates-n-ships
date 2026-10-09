@@ -17,7 +17,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `dry_hull` | Dry hull on/off, buoyancy of the dry volume, weight of flood water. |
 | `flooding` | Flooding on/off, inflow rate; bilge pump on/off, rate, reach, use time and exhaustion; hull patch on/off. |
 | `wind` | Wind strength range, how fast it changes, weather multipliers, gusts, regional variation. |
-| `sailing` | Sail force, rudder strength, keel drag, anchor strength, roll and pitch damping. |
+| `sailing` | Sail force, rudder strength and turning authority (`rudder_force_factor`), keel drag, anchor strength, roll and pitch damping. |
 | `anchor_chain` | Chain speeds, travel time limits, anchor sounds and volumes. |
 | `hull_creaking` | Creaking on/off, how often, volume and pitch ranges, the rolling rate that counts. |
 | `audio` (client) | Music on/off and volume, the gap between tracks, shanties aboard. |
@@ -34,9 +34,10 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `melee_animations` (client) | Sword animations on/off, first-person mode, layer priority. |
 | `melee_input` / `melee_hud` (client) | Hold-to-thrust and parry-tap thresholds; stamina bar on/off, scale and offsets. |
 | `firearms.aim` / `firearm_view` (client) | Minimum hold, steady time and aimed spread factor, sneak lowers the gun; musket zoom. |
-| `firearms` | Firearms on/off, per gun: damage, muzzle velocity, spread, reload time, recoil; ball lifetime and gravity, cooldown, gunpowder use. |
+| `firearms` | Firearms on/off, `fire_on_attack` (left-click fires; off = release to fire), per gun: damage, muzzle velocity, spread, reload time, recoil; ball lifetime and gravity, cooldown, gunpowder use. |
 | `sailing_runtime` | Sailing forces on/off, heel scaling, steering and anchor on/off, rudder steps, chain length. |
 | `crew_stations` | Crew stations on/off, time per trim step. |
+| `ship_screen` | The ship screen at the helm on/off (off: sneak-use disassembles at once), its reach, how often it refreshes. |
 | `flags` | Hoisting delay, flags following the wind at its exact angle (land and ship check intervals), banners as flags. |
 | `dry_hull` | Also: whether slabs, stairs and hatches are drawn dry in their empty half. |
 | `sea_chest` | Sea chest on/off, worn speed, sink pull, wind drift and its cap, draft; paddling on/off, speed, backing speed, turn rate, hunger. |

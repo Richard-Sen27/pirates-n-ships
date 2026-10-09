@@ -79,3 +79,27 @@ surfaces").
    Then set the server config `dry_hull.flood_breath = false` (`pirates_n_ships-server.toml`): diving under the
    surface where the world's sea is not shows the overlay but no longer drains the air bubbles. Set it back to true.
 8. **Shaders and other renderers.** If you use Iris or Sodium, note whether the surface draws at all.
+
+## HV1c: plants in partly covered cells
+
+A water plant is now hidden as soon as any part of its cell (shifted by its random model offset, for tall seagrass) is
+inside the dry region, not only when its block position is; a tall seagrass goes as a whole when either half is cut
+(design.md §4.4, "Partly covered cells (HV1c)"). The rule is covered by JUnit tests and a GameTest; what it looks like
+has not been seen. Setup as above: the sloop moored over a seagrass meadow with some tall seagrass and kelp, so plants
+stand right under and beside the hold. Fancy graphics, no Sodium or Embeddium.
+
+1. **Hold floor and walls.** Go below deck and look at the floor edges, the corners and the lower walls, also crouched
+   with the camera close to the planks, and while the ship bobs. Expected: no blade of seagrass, tall seagrass, kelp or
+   sea pickle pokes through the floor, a wall, a slab or a stair into the hold, at any moment of the bobbing (before
+   HV1c, plants whose cell the hold only partly covered stuck out half a block).
+2. **The waterline and the deck.** If the hold reaches above the waterline, or a plant reaches up to the deck, look at
+   the deck underside and the hatch. Expected: nothing green inside the hold there either.
+3. **Outside stays.** Swim around the hull below the waterline. Expected: plants a block or more away from the hull
+   all stand, and so do most plants right against the planks. A plant whose cell reaches through the plank wall into
+   the hold (the ship sits between block positions) is hidden as a whole, also its part outside the hull; that is the
+   price of not cutting plants in half. Tell us if a plant visibly away from the hull (a block or more) is missing.
+4. **Tall seagrass.** Find a tall seagrass under the hull whose top half reaches into the hold. Expected: the whole
+   plant is gone, also its lower half outside the hull; no half plant.
+5. **Sailing.** Sail slowly (a block per second) over the meadow and watch the hold floor from inside. Expected: no
+   plant flickers into the hold at the floor edges; outside the stern the plants come back behind the ship. With debug
+   logging, note the "Hidden water plants" log line (µs per refresh, sections re-marked) and compare it with HV1.

@@ -293,6 +293,48 @@ public final class FlagGameTests {
         helper.succeed();
     }
 
+    /**
+     * FLG2: what the client's cloth renderer draws for a banner, read from a block entity loaded from the pole's update
+     * tag (as the client loads it): during the hoist and once it flies, the banner's base colour as tint and its
+     * pattern layers in order.
+     */
+    @ModGameTest(timeoutTicks = TIMEOUT)
+    public static void bannerDesignReachesTheClientsCloth(GameTestHelper helper) {
+        BlockPos rel = new BlockPos(1, 1, 1);
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        ItemStack banner = new ItemStack(Items.BLUE_BANNER);
+        var registry = helper.getLevel().registryAccess().registryOrThrow(Registries.BANNER_PATTERN);
+        banner.set(DataComponents.BANNER_PATTERNS, new BannerPatternLayers.Builder()
+                .add(registry.getHolderOrThrow(BannerPatterns.STRAIGHT_CROSS), DyeColor.WHITE)
+                .add(registry.getHolderOrThrow(BannerPatterns.BORDER), DyeColor.RED).build());
+        pole(helper, rel);
+        use(helper, player, rel, banner.copy());
+        Runnable check = () -> {
+            BlockPos abs = helper.absolutePos(rel);
+            var registries = helper.getLevel().registryAccess();
+            FlagpoleBlockEntity client = new FlagpoleBlockEntity(abs, helper.getLevel().getBlockState(abs));
+            client.loadWithComponents(be(helper, rel).getUpdateTag(registries), registries);
+            double now = helper.getLevel().getGameTime();
+            for (boolean animate : new boolean[]{true, false}) {
+                FlagHoist.Frame frame = FlagHoist.frame(client.state(), now, 1, animate);
+                if (frame.kind() == FlagKind.NONE) continue; // not animated and not flying yet
+                helper.assertTrue(frame.kind() == FlagKind.CUSTOM, "the client should draw a custom flag, got " + frame.kind());
+                helper.assertTrue(frame.tint() == FlagTint.rgb(DyeColor.BLUE), "the client cloth should be blue, got "
+                        + Integer.toHexString(frame.tint()) + " (animate " + animate + ")");
+                var layers = FlagBanner.layers(frame.kind(), frame.item());
+                helper.assertTrue(layers.size() == 2 && layers.get(0).color() == DyeColor.WHITE && layers.get(1).color() == DyeColor.RED
+                        && layers.get(0).pattern().is(BannerPatterns.STRAIGHT_CROSS) && layers.get(1).pattern().is(BannerPatterns.BORDER),
+                        "the client should draw the cross then the border, got " + layers);
+            }
+        };
+        GameTestSequence seq = helper.startSequence();
+        if (delay() >= 4) seq = seq.thenExecuteAfter(delay() / 2, check);
+        seq.thenExecuteAfter(delay() + 2, () -> {
+            assertReading(helper, rel, FlagReading.flying(FlagKind.CUSTOM));
+            check.run();
+        }).thenSucceed();
+    }
+
     @ModGameTest(template = GameTestTemplates.EMPTY_9)
     public static void allegianceQueryAgreesWithFlagLaw(GameTestHelper helper) {
         int x = 0;

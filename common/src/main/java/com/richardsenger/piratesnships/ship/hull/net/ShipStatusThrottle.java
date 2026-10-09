@@ -6,25 +6,53 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Per-player send rule of the ship status (HUD1), pure. It is asked once per sync interval for every player aboard:
- * a payload goes out when it differs from the last one that player got (another ship, or any rounded value changed),
- * and otherwise every {@link #KEEPALIVE_INTERVALS}th interval, so the client's 3 s freshness never runs out while the
- * player stays aboard.
+ * Per-player send rule of the ship status (HUD1, HUD2), pure. It is asked once per sync interval for every player
+ * aboard: a payload goes out when it differs from the last one that player got (another ship, or any rounded value
+ * changed), and otherwise once {@link #keepaliveIntervals} intervals have passed (about every {@link #KEEPALIVE_TICKS}).
+ * Each payload tells the client how long it stays fresh ({@link #freshTicks}): three keepalive periods and a second, so
+ * one or two lost sends and a lagging server never let the HUD go stale while the player stays aboard.
+ *
+ * <p>HUD2 fix: HUD1 kept an unchanged status back for five intervals (100 ticks at the default interval of 20), while
+ * the client dropped a status after 60 ticks; a ship at rest or holding a steady course showed its HUD for 3 s, hid it
+ * for 2 s, and so on.
  */
 public final class ShipStatusThrottle {
 
-    /** An unchanged status is still sent every this many intervals. */
-    public static final int KEEPALIVE_INTERVALS = 5;
+    /** An unchanged status is still sent about this often [ticks]. */
+    public static final int KEEPALIVE_TICKS = 40;
+    /** How many keepalive periods a status stays fresh on the client, plus {@link #FRESH_MARGIN_TICKS}. */
+    public static final int FRESH_PERIODS = 3;
+    public static final int FRESH_MARGIN_TICKS = 20;
 
     private record Sent(ShipStatusPayload payload, int quietIntervals) {
     }
 
     private final Map<UUID, Sent> sent = new HashMap<>();
 
-    /** Whether to send {@code payload} to {@code player} at this interval; records it when so. */
-    public boolean offer(UUID player, ShipStatusPayload payload) {
+    /** Intervals after which an unchanged status goes out again: about {@link #KEEPALIVE_TICKS}, at least one. */
+    public static int keepaliveIntervals(int intervalTicks) {
+        int interval = Math.max(1, intervalTicks);
+        return Math.max(1, KEEPALIVE_TICKS / interval);
+    }
+
+    /** Longest gap [ticks] between two statuses to a player who stays aboard. */
+    public static int keepalivePeriodTicks(int intervalTicks) {
+        return keepaliveIntervals(intervalTicks) * Math.max(1, intervalTicks);
+    }
+
+    /** How long [client ticks] a status sent at this interval stays fresh. */
+    public static int freshTicks(int intervalTicks) {
+        return FRESH_PERIODS * keepalivePeriodTicks(intervalTicks) + FRESH_MARGIN_TICKS;
+    }
+
+    /**
+     * Whether to send {@code payload} to {@code player} at this interval; records it when so.
+     *
+     * @param keepaliveIntervals {@link #keepaliveIntervals} of the current sync interval
+     */
+    public boolean offer(UUID player, ShipStatusPayload payload, int keepaliveIntervals) {
         Sent last = sent.get(player);
-        if (last == null || !last.payload().equals(payload) || last.quietIntervals() + 1 >= KEEPALIVE_INTERVALS) {
+        if (last == null || !last.payload().equals(payload) || last.quietIntervals() + 1 >= keepaliveIntervals) {
             sent.put(player, new Sent(payload, 0));
             return true;
         }

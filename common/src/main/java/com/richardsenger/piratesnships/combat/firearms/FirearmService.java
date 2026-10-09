@@ -107,6 +107,15 @@ public final class FirearmService {
         FirearmType type = FirearmsConfig.type(kind);
         double spread = FirearmRules.aimedSpread(type.spreadDegrees(), aimedTicks, FirearmsConfig.AIM_STEADY_TICKS.get(),
                 FirearmsConfig.AIMED_SPREAD_FACTOR.get());
+        return fireWithSpread(level, shooter, gun, kind, spread);
+    }
+
+    /**
+     * Like {@link #fire(ServerLevel, LivingEntity, ItemStack, FirearmKind)} with the shot's spread (half angle in
+     * degrees) already decided by the caller, e.g. the attack-key trigger's hip or aimed spread ({@link FirearmTrigger}).
+     */
+    public static Shot fireWithSpread(ServerLevel level, LivingEntity shooter, ItemStack gun, FirearmKind kind, double spread) {
+        FirearmType type = FirearmsConfig.type(kind);
         RandomSource random = shooter.getRandom();
         startCooldown(shooter, gun);
         if (FirearmRules.misfires(inRain(shooter), type.misfireChanceInRain(), random.nextDouble())) {

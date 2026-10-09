@@ -36,8 +36,16 @@ public final class VoyageCommands {
             PortRegistry.get(c.getSource().getServer()).index().all().stream().map(Port::id), b);
     private static final SuggestionProvider<CommandSourceStack> IDS = (c, b) -> SharedSuggestionProvider.suggest(
             Voyages.active(c.getSource().getServer()).stream().map(Voyage::shortId), b);
+    /** Extra words for a voyage's line (BOS2: the captain aboard), added by other packages. */
+    private static final List<java.util.function.BiFunction<net.minecraft.server.MinecraftServer, Voyage, Optional<Component>>> LABELS =
+            new java.util.concurrent.CopyOnWriteArrayList<>();
 
     private VoyageCommands() {
+    }
+
+    /** Adds {@code label} to the line of every voyage it answers for in {@code /pirates world voyages}. */
+    public static void label(java.util.function.BiFunction<net.minecraft.server.MinecraftServer, Voyage, Optional<Component>> label) {
+        LABELS.add(label);
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -64,17 +72,19 @@ public final class VoyageCommands {
         CommandSourceStack source = c.getSource();
         List<Voyage> all = Voyages.active(source.getServer());
         source.sendSuccess(() -> Component.translatable(KEY + "count", all.size(), Lanes.queued()), false);
-        for (Voyage v : all) source.sendSuccess(() -> line(v), false);
+        for (Voyage v : all) source.sendSuccess(() -> line(source.getServer(), v), false);
         return all.size();
     }
 
-    static Component line(Voyage v) {
+    static Component line(net.minecraft.server.MinecraftServer server, Voyage v) {
         Lane.Position p = v.position();
         String cargo = v.cargo().isEmpty() ? "-" : v.cargo().entrySet().stream()
                 .map(e -> e.getValue() + " " + e.getKey().getPath()).collect(Collectors.joining(", "));
-        return Component.translatable(KEY + "line", v.shortId(), v.kind().getSerializedName(), v.from().toString(), v.to().toString(),
-                Math.round(v.progress()), Math.round(v.length()), Math.round(p.x()), Math.round(p.z()),
+        net.minecraft.network.chat.MutableComponent line = Component.translatable(KEY + "line", v.shortId(), v.kind().getSerializedName(),
+                v.from().toString(), v.to().toString(), Math.round(v.progress()), Math.round(v.length()), Math.round(p.x()), Math.round(p.z()),
                 v.state().getSerializedName(), cargo);
+        for (var label : LABELS) label.apply(server, v).ifPresent(l -> line.append(", ").append(l));
+        return line;
     }
 
     private static int spawnConvoy(CommandContext<CommandSourceStack> c) {
@@ -87,7 +97,7 @@ public final class VoyageCommands {
             return 0;
         }
         source.sendSuccess(() -> Component.translatable(KEY + "spawned"), true);
-        source.sendSuccess(() -> line(v.get()), false);
+        source.sendSuccess(() -> line(source.getServer(), v.get()), false);
         return 1;
     }
 
@@ -103,7 +113,7 @@ public final class VoyageCommands {
         if (moved.isPresent() && moved.get().arrived() && Voyages.get(source.getServer(), v.get().id()).isEmpty()) {
             source.sendSuccess(() -> Component.translatable(KEY + "arrived", v.get().shortId(), v.get().to().toString()), true);
         } else {
-            moved.ifPresent(m -> source.sendSuccess(() -> line(m), false));
+            moved.ifPresent(m -> source.sendSuccess(() -> line(source.getServer(), m), false));
         }
         return 1;
     }

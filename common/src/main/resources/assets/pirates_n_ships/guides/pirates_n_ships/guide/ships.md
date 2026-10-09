@@ -22,7 +22,9 @@ Using a **helm** that stands in the world assembles a ship:
 - The ship gets a record (its id, a name, the owner). Use a **name tag** on the helm of an assembled ship to name it.
 
 ## Disassembly
-Sneak-use the helm with an empty hand. The ship is put back into the world as blocks, snapped to the block grid with
+Sneak-use the helm with an empty hand to open the [ship screen](ships.md#ship-screen), then press **Disassemble** on its Ship
+tab twice (the second click confirms). With the ship screen switched off (`ship_screen.enabled`), the sneak-use
+disassembles at once, as it used to. The ship is put back into the world as blocks, snapped to the block grid with
 its heading rounded to the nearest 90°. It is refused when:
 - the ship moves faster than 0.3 m/s or turns too fast,
 - it is tilted more than 6°,
@@ -33,6 +35,29 @@ you place a helm anywhere on its deck. The first helm placed steers; a second he
 the first stands. Using a helm on a floating hull the mod has lost track of makes it your ship again.
 
 Players and mobs on deck are set down on the deck blocks. Water inside the hull is removed.
+
+## Ship screen
+Sneak-use the helm of your assembled ship with an empty hand to open the **ship screen**: the ship and her crew on one
+page, three tabs.
+- **Ship:** her name (type a new one and press Rename or Enter; your career title goes in front, as with a name tag),
+  the flag she flies and what it tells others (struck colours, and whether the navy has seen through a false flag),
+  her captain with his title, the hull (compartments, how many flood, open breaches, pumps working), the load and
+  speed, the anchor (stowed, running out, down while she still moves, anchored, weighing), the sails (full, reefed,
+  furled), crew and bunks, the supplies left in days and the last payday. **Disassemble** (click twice) disassembles
+  her at this helm.
+- **Crew:** the captain's whistle orders as buttons (hoist, reef, furl, man the pumps, fire, load, fire at will, drop
+  and weigh anchor, release crew; "Release crew" also ends "Fire at will"), then every hand aboard with morale, station
+  or off duty, the order being carried out, who hired them, unpaid, and a warning when low morale has them close to
+  deserting. **Release** takes a hand off their station, **Dismiss** lets them go as the whistle's sneak-use does.
+- **Stations:** every station aboard (winches, pumps, cannons, capstans, the helm), who mans it, the order worked
+  there or an open job waiting for a free hand. **Release** frees it; **Man** lists your free hands, pick one with
+  **Send** and they go there and stay (like assigning with the whistle).
+
+The orders go out exactly as from the whistle: hands at the stations that take them start at once, unmanned stations
+become open jobs. Only the ship's owner opens the screen (anyone, on a ship without an owner); others are told it is
+not their ship. Release and Dismiss follow the whistle's rules: the captain or whoever hired that hand. The screen
+updates every second while open and closes when you step more than 8 blocks from the helm (`ship_screen.reach`). The
+whistle keeps working as before. Server config `ship_screen` (`enabled`, `reach`, `refresh_ticks`).
 
 ## The dry hull
 An assembled ship analyses its own hull:

@@ -3,6 +3,7 @@ package com.richardsenger.piratesnships.hazard;
 import com.richardsenger.piratesnships.core.config.ConfigSection;
 import com.richardsenger.piratesnships.core.config.ConfigValue;
 import com.richardsenger.piratesnships.core.config.ModConfigs;
+import com.richardsenger.piratesnships.sailing.effects.FoamRules;
 
 /**
  * Server config section {@code waves} and client section {@code wave_effects} (docs/design.md §17, group "Waves";
@@ -38,6 +39,17 @@ public final class HazardConfig {
             "Fraction of the ship's roll the camera follows (1 = the full roll)");
     public static final ConfigValue<Boolean> SPRAY = WAVE_EFFECTS.bool("spray", true,
             "Spray and a splash at the bow when it digs into a wave in rough or stormy seas");
+    // Foam streaks on the water (WD1, read through sailing.effects.SeaEffectsConfig#foam)
+    public static final ConfigValue<Boolean> FOAM = WAVE_EFFECTS.bool("foam", true,
+            "Faint foam streaks on the water, stretched along the direction the waves run, more in a higher sea; none in a calm sea");
+    public static final ConfigValue<Double> FOAM_DENSITY = WAVE_EFFECTS.doubleRange("foam_density", FoamRules.DEFAULTS.density(), 0.0, 20.0,
+            "Foam streaks tried per tick for every block of wave height (about half of them land, mostly on the crests)");
+    public static final ConfigValue<Double> FOAM_MIN_AMPLITUDE = WAVE_EFFECTS.doubleRange("foam_min_amplitude", FoamRules.DEFAULTS.minAmplitude(), 0.0, 5.0,
+            "No foam below this wave height in blocks (calm sea 0.1, moderate 0.3, rough 0.7, storm 1.2)");
+    public static final ConfigValue<Integer> FOAM_RADIUS = WAVE_EFFECTS.intRange("foam_radius", (int) FoamRules.DEFAULTS.radius(), 4, 64,
+            "Horizontal distance from the camera in blocks within which foam appears");
+    public static final ConfigValue<Integer> FOAM_LIFE_TICKS = WAVE_EFFECTS.intRange("foam_life_ticks", FoamRules.DEFAULTS.lifeTicks(), 10, 400,
+            "Life of one foam streak in ticks, including fading in and out");
 
     private HazardConfig() {
     }

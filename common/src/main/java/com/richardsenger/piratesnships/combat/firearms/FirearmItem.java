@@ -34,6 +34,9 @@ import java.util.List;
  *       After {@code aim_steady_ticks} of aiming the spread is multiplied by {@code aimed_spread_factor}; a loaded
  *       musket also zooms in on the client ({@code firearm_view.musket_zoom}).</li>
  * </ul>
+ * <b>Input (FA1):</b> with {@code firearms.fire_on_attack} on (the default) letting go of an aim never fires: the
+ * attack key does, aimed or from the hip ({@link FirearmTrigger}); letting go only lowers the gun. Off restores the
+ * release-to-fire scheme described above.
  * <b>Lowering (P5):</b> sneaking while aiming lowers the gun without firing ({@code firearms.aim.lower_on_sneak}):
  * the client lets go as soon as sneak is pressed ({@code client.FirearmLowering}), a release while sneaking never
  * fires ({@link FirearmRules#lowers}), and a loaded gun is not raised while sneaking ({@link FirearmRules#aimsOnUse}).
@@ -51,6 +54,7 @@ public class FirearmItem extends Item {
     public static final String LOADED_KEY = "item." + Constants.MOD_ID + ".firearm.loaded";
     public static final String UNLOADED_KEY = "item." + Constants.MOD_ID + ".firearm.unloaded";
     public static final String AIM_HINT_KEY = "item." + Constants.MOD_ID + ".firearm.hint.aim";
+    public static final String AIM_ATTACK_HINT_KEY = "item." + Constants.MOD_ID + ".firearm.hint.aim_attack";
     public static final String LOWER_HINT_KEY = "item." + Constants.MOD_ID + ".firearm.hint.lower";
     public static final String LOAD_HINT_KEY = "item." + Constants.MOD_ID + ".firearm.hint.load";
 
@@ -132,7 +136,9 @@ public class FirearmItem extends Item {
         // sneaking lowers the gun: no shot, it stays loaded (the client releases the use when sneak is pressed)
         if (FirearmRules.lowers(entity.isShiftKeyDown(), true, FirearmsConfig.LOWER_ON_SNEAK.get())) return;
         int held = FirearmRules.heldTicks(timeLeft);
-        if (level instanceof ServerLevel server && FirearmRules.firesOnRelease(held, FirearmsConfig.AIM_MIN_TICKS.get())) {
+        // FA1: with fire_on_attack on, letting go only lowers the gun; the attack key fires (FirearmTrigger)
+        if (level instanceof ServerLevel server
+                && FirearmTriggerRules.releaseFires(FirearmsConfig.FIRE_ON_ATTACK.get(), held, FirearmsConfig.AIM_MIN_TICKS.get())) {
             FirearmService.fire(server, entity, stack, kind, held);
         }
     }
@@ -180,7 +186,8 @@ public class FirearmItem extends Item {
             lines.add(Component.translatable(LOADED_KEY).withStyle(ChatFormatting.GOLD));
             Component what = FirearmLoads.loadedIn(stack).describe(stack);
             if (what != null) lines.add(what.copy().withStyle(ChatFormatting.GOLD));
-            lines.add(Component.translatable(AIM_HINT_KEY).withStyle(ChatFormatting.GRAY));
+            lines.add(Component.translatable(FirearmsConfig.FIRE_ON_ATTACK.get() ? AIM_ATTACK_HINT_KEY : AIM_HINT_KEY)
+                    .withStyle(ChatFormatting.GRAY));
             if (FirearmsConfig.LOWER_ON_SNEAK.get()) {
                 lines.add(Component.translatable(LOWER_HINT_KEY).withStyle(ChatFormatting.GRAY));
             }

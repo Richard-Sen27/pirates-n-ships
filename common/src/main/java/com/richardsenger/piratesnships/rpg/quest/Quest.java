@@ -67,6 +67,10 @@ public record Quest(UUID id, ResourceLocation port, PortKind giver, QuestType ty
         return new Quest(id, port, giver, type, t, needed, progress, rewardCoins, rewardDeed, offeredDay, offerExpiresDay, deadlineDay, state);
     }
 
+    public Quest withNeeded(int n) {
+        return new Quest(id, port, giver, type, target, n, progress, rewardCoins, rewardDeed, offeredDay, offerExpiresDay, deadlineDay, state);
+    }
+
     public Quest withDeadline(long day) {
         return new Quest(id, port, giver, type, target, needed, progress, rewardCoins, rewardDeed, offeredDay, offerExpiresDay, day, state);
     }

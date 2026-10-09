@@ -21,6 +21,7 @@ public final class ModModules {
             new com.richardsenger.piratesnships.crew.provisions.ProvisionsModule(),
             new com.richardsenger.piratesnships.ship.hull.HullModule(),
             new com.richardsenger.piratesnships.ship.assembly.AssemblyModule(),
+            new com.richardsenger.piratesnships.ship.screen.ShipScreenModule(),
             new com.richardsenger.piratesnships.core.settings.SettingsModule(),
             new com.richardsenger.piratesnships.combat.content.CombatContentModule(),
             new com.richardsenger.piratesnships.trade.content.TradeContentModule(),
@@ -28,6 +29,7 @@ public final class ModModules {
             new com.richardsenger.piratesnships.law.content.LawContentModule(),
             new com.richardsenger.piratesnships.law.brig.BrigModule(),
             new com.richardsenger.piratesnships.ship.decor.ShipDecorModule(),
+            new com.richardsenger.piratesnships.ship.rigging.RiggingModule(),
             new com.richardsenger.piratesnships.trade.TradeModule(),
             new com.richardsenger.piratesnships.trade.fees.FeesModule(),
             new com.richardsenger.piratesnships.combat.melee.MeleeModule(),
@@ -55,6 +57,7 @@ public final class ModModules {
             new com.richardsenger.piratesnships.worldsim.voyage.VoyageModule(),
             new com.richardsenger.piratesnships.worldsim.materialize.MaterializeModule(),
             new com.richardsenger.piratesnships.worldsim.navy.NavyModule(),
-            new com.richardsenger.piratesnships.worldsim.raid.RaidModule()
+            new com.richardsenger.piratesnships.worldsim.raid.RaidModule(),
+            new com.richardsenger.piratesnships.worldsim.captain.CaptainVoyageModule()
     );
 }

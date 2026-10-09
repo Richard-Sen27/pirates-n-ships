@@ -208,6 +208,42 @@ On land is fine for all of this except step 5.
    crew aboard. Repeat step 1 (stone in the mast) and run the command: the upper yard's line names the stone and its
    distance. The winch (empty hand) and the crew's "no sails" answer give the same reason.
 
+## 6c. VIS1b: sails moving in the wind
+Render only; nothing here changes speed or heel. Rig the §6 ship (a square sail from two 5-wide yards 5 apart and a
+triangular sail), add a flagpole with a flag on deck for comparison, assemble, full sail. Default client config
+(`sail_visuals.enabled` on, `max_belly` 0.6, `flutter_amplitude` 0.15, `segments` 8). Watch every step from the deck
+and once from the water about 15 blocks off the beam. "Leeward" = the side the flag streams to.
+1. **Running** (`/pirates wind set <from the stern> 8`, sail a minute so the ship has speed). Expected: the square sail
+   bellies toward the bow (leeward) with a smooth round belly, deepest in the middle, flat at both yards and at the
+   side edges, about half a block deep; the belly breathes slowly (a few percent, every 4 to 5 s); no flapping. The
+   cloth texture (seams, reef bands, frayed foot) is not torn or stretched; light and shade follow the curve. The belly
+   is shallower than when the ship stood still (the ship runs away from the wind). The triangular sail, its cloth
+   along the wind, hangs slack and shakes.
+2. **Reaching** (wind on the beam). Expected: the triangular sail bellies to leeward and draws; the square sail, whose
+   cloth now lies along the wind, hangs slack and shakes (a fast ripple running across it).
+3. **Close-hauled** (wind about 50° off the bow). Expected: the triangular sail still draws; the square sail luffs and
+   shakes.
+4. **Head to wind** (turn the bow into the wind while the ship still moves forward). Expected: both sails luff and
+   shake, the flutter stronger in a stronger wind; no belly. Note: a square sail on a ship that has never moved reads
+   the wind as from astern and keeps drawing (it does not know where the bow is until the ship moves; see the report).
+5. **Reefed** (winch to half). Expected: the same behaviour with a visibly smaller belly and swing; the free foot of the
+   square sail curves out a little; no jump when the trim changes, the belly eases over about half a second.
+6. **Furled.** Expected: the bundle under the yard / along the stay, exactly as before VIS1b, no motion.
+7. **Calm** (`/pirates wind set 0 0`). Expected: the cloth hangs slack with a slight sag (a few pixels) to the side it
+   last bellied to, perfectly still. Raise the wind again: the belly grows smoothly, no pop.
+8. **Wind flip** (`/pirates wind set` to the opposite bearing). Expected: the cloth crosses to the other side over
+   about a second instead of snapping; it briefly passes the yard line.
+9. **Gust** (`/weather thunder` and wait for gusts, or switch the wind from 4 to 14). Expected: the belly deepens
+   smoothly with the gust and relaxes after; a luffing sail shakes harder.
+10. **On land.** Yards and a stay on land with wind across the cloth: they belly to leeward; with the wind along the
+    cloth they shake. Nothing moves on land in a calm.
+11. **Culling.** With the deepest belly (`max_belly` 1.5) look past the sail so the head yard leaves the screen: the
+    cloth must not vanish while it is still in view.
+12. **Off switch.** `sail_visuals.enabled = false`: the fixed belly of before (no breathing, no flutter, the side
+    snaps when the wind flips).
+13. **Cost.** F3 frame time with the ship in view, `sail_visuals.enabled` on and off: report any visible difference.
+Report screenshots of 1, 2, 4, 5 and 7 from the deck and of 1 from the water, with the flag in the frame.
+
 ## Tuning questions (server config, section in brackets)
 | Question | Config value |
 |---|---|
@@ -310,10 +346,54 @@ steps (running chain), the heavy splash (entering the water) and stone breaking 
 ### Tuning questions (server config, `serverconfig/pirates_n_ships-server.toml`)
 | Question | Value |
 |---|---|
-| Does the ship turn too slowly or too fast? | `rudder_strength` [sailing] (also `keel_yaw_drag`) |
+| Does the ship turn too slowly or too fast? | `rudder_force_factor` (SH2), `rudder_strength` [sailing] (also `keel_yaw_drag`) |
 | Are three rudder steps per side right? Is 35° enough? | `rudder_steps` [sailing_runtime], `max_rudder_angle` [sailing] |
 | Does the anchored ship drift too far, or snap back too hard? | `anchor_slack`, `anchor_stiffness`, `anchor_damping` [sailing] |
 | Does the anchor stop a ship under full sail? | `anchor_max_acceleration` [sailing] |
 | Do dropping (2 s) and raising (5 s) feel right? | `anchor_drop_ticks`, `anchor_raise_ticks` [sailing] |
 | Is a 32-block chain right? | `anchor_chain_length` [sailing_runtime] |
 | Switch the features off | `steering_enabled`, `anchor_enabled` [sailing_runtime] |
+
+## SH2: turning authority (added for SH2)
+
+The human after playing: "35 degrees are not enough for the helm". The angle stays 35°; the rudder's force got its own
+factor, `sailing.rudder_force_factor`, default **3** (1 = the rudder before SH2). Measured in the GameTests
+(`SailingGameTestsTurning`, starter sloop, 29 blocks long, wind 12 blocks/s from astern, full sail = 1.33 blocks/s):
+
+| | before (factor 1) | now (factor 3) |
+|---|---|---|
+| turn rate, helm hard over | 0.51°/s | 1.55°/s |
+| 90° | about 3 min (not reached in the basin) | 58 s, advance 2.0 lengths, transfer 1.5 lengths |
+| 180° (tactical diameter) | about 10 ship lengths (300 blocks) | 117 s, 3.45 ship lengths (100 blocks) |
+
+A 45° rudder at factor 1 only got to 8.3 lengths, so the maximum angle stayed at 35°. Setup: open deep water with room for a 100-block
+circle, `/pirates ship place pirates_n_ships:starter_sloop assemble`, wind set
+from astern: `/pirates wind set <bearing your stern points to> 12`. Use `/pirates ship forces` on deck.
+
+### 1. Hard over at full speed
+1. Full sail, wait until the speed holds (a few seconds). Turn the wheel all the way to one side (rudder 35°).
+- Expected: the bow swings at once and keeps swinging at about 1.5° per second (a quarter turn in about a minute),
+  the ship sails a circle of about 100 blocks across and does not slow down much while the wind stays aft. Note:
+  with a fixed wind, a square sail stops drawing as the bow comes head to wind, so the ship may stall there.
+2. Tell us whether the circle feels right for a sloop: tighter, wider?
+
+### 2. Hard over at half speed
+1. Half sail (or a moderate wind, `/pirates wind set <bearing> 6`), wait for the speed to settle, helm hard over.
+- Expected: the ship answers just as surely but turns half as fast, on about the same circle (the GameTest measured
+  3.43 lengths at half speed against 3.39 at full speed).
+
+### 3. The heel in the turn
+1. While turning hard at full sail, watch the deck and the F3 screen.
+- Expected: the ship stays nearly upright (the GameTest saw under half a degree of change). It must never heel far or
+  capsize because of the rudder. Tell us if you see a lurch when the wheel goes hard over.
+
+### 4. The low-speed answer
+1. Furl the sails and let the ship coast to a stop with the rudder hard over.
+- Expected: the turn slows with the ship and stops when the ship stops: no turning on the spot without way through
+  the water (`rudderAtRestDoesNotTurn`). A coasting ship still turns a little while it has way.
+
+### 5. The config
+1. In `serverconfig/pirates_n_ships-server.toml`, section `[sailing]`, set `rudder_force_factor = 1.0`, reload the world.
+- Expected: the old, very wide circle (about 10 lengths). `2.0` gives about 5 lengths, `4.0` about 2.5.
+2. `max_rudder_angle = 45.0` with the factor back at 3: the wheel's ends and the line above the hotbar now show 45°
+   and the circle gets somewhat tighter (about a fifth).

@@ -27,12 +27,16 @@ public final class GameTestTemplates {
     /** 48×16×48 of air, for world structures (the seafarer village's dock head, pier and a street). */
     public static final String EMPTY_48 = Constants.MOD_ID + ":empty_48x16x48";
 
+    /** 160×40×160 of air, for a ship's turning circle in deep water (SH2: the starter sloop turns about 100 blocks across). */
+    public static final String EMPTY_160_DEEP = Constants.MOD_ID + ":empty_160x40x160";
+
     public static final List<Template> ALL = List.of(
             new Template(EMPTY_3, 3, 3, 3),
             new Template(EMPTY_9, 9, 6, 9),
             new Template(EMPTY_24, 24, 12, 24),
             new Template(EMPTY_40, 40, 12, 40),
-            new Template(EMPTY_48, 48, 16, 48));
+            new Template(EMPTY_48, 48, 16, 48),
+            new Template(EMPTY_160_DEEP, 160, 40, 160));
 
     private GameTestTemplates() {
     }

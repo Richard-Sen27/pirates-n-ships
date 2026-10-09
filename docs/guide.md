@@ -75,7 +75,9 @@ Using a **helm** that stands in the world assembles a ship:
 - The ship gets a record (its id, a name, the owner). Use a **name tag** on the helm of an assembled ship to name it.
 
 ### Disassembly
-Sneak-use the helm with an empty hand. The ship is put back into the world as blocks, snapped to the block grid with
+Sneak-use the helm with an empty hand to open the [ship screen](#ship-screen), then press **Disassemble** on its Ship
+tab twice (the second click confirms). With the ship screen switched off (`ship_screen.enabled`), the sneak-use
+disassembles at once, as it used to. The ship is put back into the world as blocks, snapped to the block grid with
 its heading rounded to the nearest 90°. It is refused when:
 - the ship moves faster than 0.3 m/s or turns too fast,
 - it is tilted more than 6°,
@@ -86,6 +88,29 @@ you place a helm anywhere on its deck. The first helm placed steers; a second he
 the first stands. Using a helm on a floating hull the mod has lost track of makes it your ship again.
 
 Players and mobs on deck are set down on the deck blocks. Water inside the hull is removed.
+
+### Ship screen
+Sneak-use the helm of your assembled ship with an empty hand to open the **ship screen**: the ship and her crew on one
+page, three tabs.
+- **Ship:** her name (type a new one and press Rename or Enter; your career title goes in front, as with a name tag),
+  the flag she flies and what it tells others (struck colours, and whether the navy has seen through a false flag),
+  her captain with his title, the hull (compartments, how many flood, open breaches, pumps working), the load and
+  speed, the anchor (stowed, running out, down while she still moves, anchored, weighing), the sails (full, reefed,
+  furled), crew and bunks, the supplies left in days and the last payday. **Disassemble** (click twice) disassembles
+  her at this helm.
+- **Crew:** the captain's whistle orders as buttons (hoist, reef, furl, man the pumps, fire, load, fire at will, drop
+  and weigh anchor, release crew; "Release crew" also ends "Fire at will"), then every hand aboard with morale, station
+  or off duty, the order being carried out, who hired them, unpaid, and a warning when low morale has them close to
+  deserting. **Release** takes a hand off their station, **Dismiss** lets them go as the whistle's sneak-use does.
+- **Stations:** every station aboard (winches, pumps, cannons, capstans, the helm), who mans it, the order worked
+  there or an open job waiting for a free hand. **Release** frees it; **Man** lists your free hands, pick one with
+  **Send** and they go there and stay (like assigning with the whistle).
+
+The orders go out exactly as from the whistle: hands at the stations that take them start at once, unmanned stations
+become open jobs. Only the ship's owner opens the screen (anyone, on a ship without an owner); others are told it is
+not their ship. Release and Dismiss follow the whistle's rules: the captain or whoever hired that hand. The screen
+updates every second while open and closes when you step more than 8 blocks from the helm (`ship_screen.reach`). The
+whistle keeps working as before. Server config `ship_screen` (`enabled`, `reach`, `refresh_ticks`).
 
 ### The dry hull
 An assembled ship analyses its own hull:
@@ -152,6 +177,14 @@ Each dimension has one wind: a direction and a strength of 3 to 12 blocks per se
 Rain makes it 1.5 times stronger and a thunderstorm 2.2 times, with gusts during thunderstorms. It is the same for
 every player and is sent to clients (nothing displays it yet, except the flags).
 
+**Seeing the wind.** Over the sea, thin white streaks drift through the air around you, from deck height up into the
+rigging, flying with the wind at the wind's own speed: they come from where the wind comes from and show its strength
+by how many there are and how fast they go. In a light breeze there are none, in a gale many, and a gust brings a
+flurry. They hang in the world, not on your ship, so on a sailing ship you see the true wind and your ship moving
+through it, as the HUD's wind arrow shows it. They are only a picture: nothing in the game depends on them. Client
+settings `wind_effects` (`streaks` turns them off; `density`, `min_strength`, `radius`, `height`, `life_ticks`); the
+video setting "Particles: Decreased" halves them and "Minimal" hides them.
+
 ### Sails
 A **square sail** is built from two **yards**. A yard is a straight row of yard blocks (a thin spar; place them against
 each other's ends to extend one); its middle block marks the mast column. Put a second yard with the same direction
@@ -187,6 +220,12 @@ Server config `sailing.sails.rope_lines`, `rope_sag`.
 - Sails only work on a ship that is afloat.
 - Yards run across the ship, stays run along it. Directions are only visual: the crew is assumed to trim the sails optimally.
 
+**Sails in the wind.** The cloth shows how a sail meets the wind you feel on board. A sail that draws bellies out to
+leeward, deeper the stronger the wind, and breathes slowly. A sail that luffs, with the wind running along its cloth
+or coming from too close ahead, hangs slack and shakes. Half sail bellies less, a furled sail stays a bundle, and in a
+calm the cloth just sags a little. It is only a look: the force comes from the rules above. Client config
+`sail_visuals.enabled`, `max_belly`, `flutter_amplitude`, `segments`.
+
 ### Sail winch
 Using it cycles the trim of **all** sails on its ship: furled → half → full → furled. Clicking an upper yard or a head cleat with the
 empty hand cycles only that sail.
@@ -212,10 +251,15 @@ music plays as usual. A running track is never cut off: the pool changes when it
 `music_enabled`, `music_volume`). The tracks and their authors are listed in [`credits.md`](credits.md).
 
 ### Helm and rudder
-On an assembled ship, using the helm turns the rudder one step: the right third of the wheel (as the helmsman sees it)
-to starboard, the left third to port, the middle back to midships. There are three steps per side, up to 35°. The
-action bar shows the position. The rudder only works while the ship moves through the water, and it reverses when the
-ship goes astern.
+Hold right-click on the helm of an assembled ship and turn the wheel (mouse or A/D); the rudder follows it up to 35°
+each way, and the line above the hotbar shows the angle. With `helm.wheel.drag_steering = false` you click the wheel
+instead: the right third (as the helmsman sees it) one step to starboard, the left third to port, the middle back to
+midships, three steps per side. The rudder only works while the ship moves through the water, and it reverses when the
+ship goes astern. Hard over, the starter sloop turns a circle about three to four ship lengths across (some 100
+blocks), at any speed: a slow ship turns on the same circle, it just takes longer to sail it (at full sail before a
+fresh wind about a minute for a quarter turn). It heels a little in the turn but never far. Server config: how sharp
+the ship turns is `sailing.rudder_force_factor` (3; 1 is the weaker rudder of earlier versions), the largest rudder
+angle `sailing.max_rudder_angle`.
 
 ### A helmsman holds the course
 Assign a crew member to the ship's helm (whistle on the crew member, then on the helm) or simply give a course:
@@ -323,6 +367,18 @@ from outside; right-click to close or open the shutters. The **Chart Table** is 
 spread out on it. The **Sea Cot** is a wooden bed for the captain's cabin: on land you can sleep in it and set your
 spawn like a bed, but not while it is aboard a ship at sea. Server config `ship_decor`.
 
+### Ratlines
+Ratlines are rope nets for climbing a mast, up to a crow's nest or a yard. Craft four from three string between four
+sticks (a stick in each corner). Click the side of a mast (logs, fence posts, walls or any solid side) to hang a net on
+it like a ladder; it falls and drops when the mast block behind it goes. Click the top of the deck or the gunwale to
+lay a sloped net instead: it rises at 45 degrees the way you look, so stand at the gunwale facing the mast. Click a
+ratline you already placed to add the next one at the end of its run: straight up a hanging net, one up and one
+forward along a sloped one, so a run climbs from the gunwale to the masthead like real shrouds. Sneak to place against
+the clicked side instead. Climb a hanging net like a ladder; walk up a sloped one, stepping on its ratlines. A sloped
+net needs the deck, a ratline below it, the previous net of its run or the mast in front of it to rest on; break one
+and the nets above it that rest on nothing else fall too. Ratlines work in water and on a sailing ship. Server config
+`rigging.ratlines_enabled`.
+
 ### Hammocks
 Your crew sleeps in hammocks. Hang one between two supports at the same height (fence posts, walls, logs, or a solid
 wall such as the hull side): click the block next to one support while looking toward the other. Recipe: 2 string
@@ -397,13 +453,16 @@ watch returns to the posts, and the guards stand fast again until morning. Opera
 info|patrol|return`. Server config `mobs.squad`.
 
 ### Ship HUD
-While you stand on a ship, a small panel in the top right corner shows its state. The compass rose turns a little
-ship-shaped needle to the bow's heading; the light arrow outside the rose sits on the side the wind comes from and
-points the way it blows: the longer it is, the stronger the wind, and it turns amber in a gust. Below it you read the
-speed (in knots, or blocks per second) and the rudder angle, then the ship's name and how heavily it is laden. The
-strip at the bottom is your hull from bow (left) to stern: one cell per compartment, filling blue as water comes in,
-with a red mark where a breach lets the sea in and a pump sign while a pump drains it. Client options under
-`ship_hud`: on/off, corner, size and speed unit; servers can switch it off with `ships.ship_status_hud`.
+While you are aboard a ship, two small panels show its state. At the bottom left, above the chat, the compass rose
+turns a little ship-shaped needle to the bow's heading; the light arrow outside the rose sits on the side the wind comes
+from and points the way it blows: the longer it is, the stronger the wind, and it turns amber in a gust. Below it you
+read the speed (in knots, or blocks per second) and the rudder angle, then the ship's name and how heavily it is laden.
+At the bottom right, clear of the hotbar, the hull strip shows your hull from bow (left) to stern: one cell per
+compartment, filling blue as water comes in, with a red mark where a breach lets the sea in and a pump sign while a
+pump drains it. The panels stay while you walk the deck, jump, climb the rigging or sit at the helm, and go a moment
+after you leave the ship. When you open the chat the compass moves up above it, or waits until the chat closes if
+there is no room. Client options under `ship_hud`: on/off, `compass_corner` and `hull_corner` (put both in one
+corner to stack them as one panel), size and speed unit; servers can switch it off with `ships.ship_status_hud`.
 
 ### Cargo weight
 What you carry weighs the ship down. Crates, cargo barrels, pantries and water barrels get heavier as they fill: a full
@@ -503,8 +562,16 @@ for a raised reward with no deposit. A treasure hunt hands you a treasure map; o
 quest pays doubloons and raises your reputation with the giver's side (navy, pirates or villagers). Villages and navy outposts may also send
 you after the nearest pirate island's named captain (within 3000 blocks): bring him down yourself or hand him to a
 navy officer in shackles for 400 doubloons on top of his bounty; if someone else gets him first, the quest fails,
-and his successor doesn't count. Drop a quest in the tab or with `/pirates quest abandon <id>`;
-`/pirates quest list` shows your quests. Server config `quests`.
+and his successor doesn't count. **Quests at sea:** villages and navy outposts ask you to escort a convoy to another
+port: on accepting, a merchant ship sets sail from the harbour, and you must keep within 96 blocks of her on at least
+half of her course and see her make port (120 doubloons, plus 60 per 1000 blocks of the way). If she is sunk or taken,
+or arrives without you, the escort fails. Pirate islands want merchant convoys plundered (take goods from a convoy's
+hold while you stand aboard) or navy patrols sunk or captured; navy outposts want pirate ships sunk or captured. A
+sinking counts for whoever fired the last cannonball that hit her within the last minute; a capture for whoever holds
+her deck. These hunts are offered only while such ships are at sea. Holding a letter of marque, you also earn 60
+doubloons of prize money on the spot for every pirate ship you sink or capture. Drop a quest in the tab or with
+`/pirates quest abandon <id>`; `/pirates quest list` shows your quests. Server config `quests` (`quests.sea_quests`
+for the sea quests), `careers.prize_money`.
 
 ### Pirate captains
 Every pirate island has a captain: a named pirate (for example "Black-Tooth Bartholomew Crowe") who keeps to the
@@ -516,6 +583,17 @@ minutes. If you hit him first he refuses: no honour, no duel. Slain, he drops hi
 and a treasure map of his island, and you get a bounty proof to hand to a navy officer. Taken alive in shackles, the
 navy pays the captain's reward of 150 plus his bounty alive. Five days after his fall a successor with a new name and
 a new bounty takes his post. Server config `mobs.captain`.
+
+A captain does not always stay home. Every two days he may put to sea (an even chance) on a pirate ship under the
+Jolly Roger, out to 600 blocks along the lane toward a village or navy outpost, or into open sea, and back again;
+while he is away his hut stands empty and `/pirates mob captain list` says he is at sea. He sails as the ship's lead
+fighter, and his ship fires on navy and merchant ships it meets. Carry a letter of marque or a bounty proof and he
+hunts you: within 192 blocks his ship circles yours and its guns take you as their target, until you get away,
+strike your colours, or he loses you. He never strikes his own colours. Killing him at sea counts as on land (duel
+him aboard, shoot him, or sink his ship: if it goes down with him, whoever hit it last gets his bounty proof), and
+his ship is yours to capture once he and his fighters are dead. Shackled aboard, he is your prisoner and his ship
+sails on without him. Otherwise he comes home to his post when his voyage ends. Server config
+`world_simulation.captain`.
 
 ### Pirate islands
 Pirate camps sit on beaches, rarer than villages, with a jetty (two berths), tents, a tavern hut, a captain's hut and
@@ -545,7 +623,9 @@ about a minute. Ships roll and pitch with the waves (big ships far less than sma
 throws spray, and any open hatch or low rim close to the waterline lets water in at the crests, so close your hatches
 and keep a pump ready before a storm. `/pirates waves` shows the sea; operators can hold a state with `/pirates waves
 set storm` and release it with `/pirates waves clear`. The camera can roll with the ship (client setting
-`wave_effects.camera_sway`, off by default). Server config `waves`.
+`wave_effects.camera_sway`, off by default). Faint foam streaks lie on the water around you, stretched along the
+direction the waves run and gathered on the crests: none in a calm sea, a few in a moderate one, many in a storm, and
+none inside a dry hull (client setting `wave_effects.foam`). Server config `waves`.
 
 ### Sea hazards
 In a thunderstorm at sea a waterspout can form 48 to 96 blocks from you: a turning column of spray up to 24 blocks
@@ -578,6 +658,9 @@ The **captain's whistle** (creative tab) gives orders:
 - Use it on an assigned crew member: it is released.
 - Use it in the air: opens the order wheel. Point at an order (hoist, reef, furl, release crew) and click, or hold the
   use key, aim and release. The order goes to all crew at stations on the ship you stand on. Esc closes the wheel.
+
+The [ship screen](#ship-screen) at the helm (sneak-use with an empty hand) gives the same orders, assigns and releases
+hands and shows every hand's morale, station and order at a glance.
 
 A crew member answers in chat ("Aye, hoisting the sails!") and then works: each trim step takes 2 seconds, and the
 sails change when the work is done. A player can still use the winch directly.
@@ -652,7 +735,7 @@ while you strike or take it down it runs down again, over the 3 seconds the work
 | none or Merchant Flag | Neutral to everyone. |
 | Navy Flag | Navy and merchants friendly, pirates hostile. A false flag if the captain has a bounty or too little navy standing. |
 | Jolly Roger | Pirates friendly, navy hostile, merchants may surrender. Being seen under it is a crime. |
-| any vanilla banner | A custom flag: neutral. It keeps its patterns, but the pole shows a generic cloth. |
+| any vanilla banner | A custom flag: neutral. The cloth shows the banner's colour and patterns. |
 
 At the pole:
 - **Use it with a flag item:** hoists that flag after 3 seconds and gives back the old one.
@@ -671,8 +754,10 @@ The flag points downwind, in 90° steps. Nothing reacts to flags in the world ye
 
 ---
 
-Hoist any banner on a flagpole to fly a custom flag: the cloth takes the banner's base colour (its patterns are not
-shown).
+Hoist any banner on a flagpole to fly a custom flag: the cloth takes the banner's base colour and shows every pattern
+of the banner, as if the banner were hung sideways from the pole (its top edge at the pole, its length along the
+cloth); the back of the flag shows the design mirrored, like a real flag. Client config `flag_visuals.banner_upright`
+stands the design upright instead (its top at the top of the cloth, stretched to the cloth's length).
 
 ## 6. Provisions
 
@@ -922,9 +1007,15 @@ nothing lets a player use it yet: the input and animation layers are missing.
 ### Firearms
 The pistol and the musket are single-shot flintlocks. Hold right-click with one lead shot and one gunpowder in your
 inventory to load (3 seconds for the pistol, 5 for the musket, with the bow pose; letting go early cancels and costs
-nothing; creative mode needs no ammo). The tooltip shows "Loaded" or "Unloaded". With a loaded gun, hold right-click to aim (a quick click still fires at once): after a second of steady aiming the
-shot is tighter, the musket zooms in a little, and the shot leaves when you release. To lower an aimed gun without firing, press sneak: the gun goes down still
-loaded and stays down while you keep sneaking (server option `firearms.aim.lower_on_sneak`). While you load, a white
+nothing; creative mode needs no ammo). The tooltip shows "Loaded" or "Unloaded". **Left-click fires, right-click
+aims.** With a loaded gun, hold right-click to aim: after a second of steady aiming the shot is tighter and the musket
+zooms in a little. Press left-click to fire, either while aiming or straight from the hip (no right-click: the full,
+wider spread of the gun). Letting go of right-click never fires, it only lowers the gun, which stays loaded. A gun in
+your main hand never swings, hits or breaks blocks with left-click, and left-click does nothing while you load. To
+lower an aimed gun, you can also press sneak: the gun goes down still loaded and stays down while you keep sneaking
+(server option `firearms.aim.lower_on_sneak`). The server option `firearms.fire_on_attack` (on by default) switches
+back to the old scheme when turned off: hold right-click to aim and release to fire (a quick click fires at once), and
+left-click is an ordinary attack again. While you load, a white
 bar under the gun's slot fills up; a loaded gun shows a full gold bar in the hotbar and inventory, its hammer cocked back, and its tooltip
 says "Loaded" or "Not loaded". You see yourself aim and reload (the Player Animation Library drives it, client option
 `firearm_animations.enabled`). Firing: a lead ball flies out with smoke and a small kick, the gun is unloaded again and needs half a second before it
@@ -968,7 +1059,7 @@ reloads by itself from that supply, so a manned, supplied gun keeps firing as fa
 
 ### Grappling hook
 **Shooting the hook.** Put the grappling hook in your **off hand** and a musket in your main hand. Hold use to load
-the hook into the musket (its full reload and one gunpowder), then aim and let go to fire it: a flat shot on a 64-block
+the hook into the musket (its full reload and one gunpowder), then aim with right-click and fire it with left-click: a flat shot on a 64-block
 rope. Thrown by hand, the hook's rope is 32 blocks. The hook catches on any solid surface: another ship (the rope hauls
 both ships together), your own ship (a line to slide down, e.g. from the mast top), or land (from a ship it slowly
 hauls your ship toward that point like a kedge; from land it is a zip line). It slips off leaves and glass panes. To
@@ -1134,7 +1225,7 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `dry_hull` | Dry hull on/off, buoyancy of the dry volume, weight of flood water. |
 | `flooding` | Flooding on/off, inflow rate; bilge pump on/off, rate, reach, use time and exhaustion; hull patch on/off. |
 | `wind` | Wind strength range, how fast it changes, weather multipliers, gusts, regional variation. |
-| `sailing` | Sail force, rudder strength, keel drag, anchor strength, roll and pitch damping. |
+| `sailing` | Sail force, rudder strength and turning authority (`rudder_force_factor`), keel drag, anchor strength, roll and pitch damping. |
 | `anchor_chain` | Chain speeds, travel time limits, anchor sounds and volumes. |
 | `hull_creaking` | Creaking on/off, how often, volume and pitch ranges, the rolling rate that counts. |
 | `audio` (client) | Music on/off and volume, the gap between tracks, shanties aboard. |
@@ -1151,9 +1242,10 @@ clients. Every feature has a switch and every strength or rate has a value.
 | `melee_animations` (client) | Sword animations on/off, first-person mode, layer priority. |
 | `melee_input` / `melee_hud` (client) | Hold-to-thrust and parry-tap thresholds; stamina bar on/off, scale and offsets. |
 | `firearms.aim` / `firearm_view` (client) | Minimum hold, steady time and aimed spread factor, sneak lowers the gun; musket zoom. |
-| `firearms` | Firearms on/off, per gun: damage, muzzle velocity, spread, reload time, recoil; ball lifetime and gravity, cooldown, gunpowder use. |
+| `firearms` | Firearms on/off, `fire_on_attack` (left-click fires; off = release to fire), per gun: damage, muzzle velocity, spread, reload time, recoil; ball lifetime and gravity, cooldown, gunpowder use. |
 | `sailing_runtime` | Sailing forces on/off, heel scaling, steering and anchor on/off, rudder steps, chain length. |
 | `crew_stations` | Crew stations on/off, time per trim step. |
+| `ship_screen` | The ship screen at the helm on/off (off: sneak-use disassembles at once), its reach, how often it refreshes. |
 | `flags` | Hoisting delay, flags following the wind at its exact angle (land and ship check intervals), banners as flags. |
 | `dry_hull` | Also: whether slabs, stairs and hatches are drawn dry in their empty half. |
 | `sea_chest` | Sea chest on/off, worn speed, sink pull, wind drift and its cap, draft; paddling on/off, speed, backing speed, turn rate, hunger. |

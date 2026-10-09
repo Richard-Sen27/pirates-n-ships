@@ -6,9 +6,6 @@ import com.richardsenger.piratesnships.ship.hull.runtime.DryHullConfig;
 import com.richardsenger.piratesnships.ship.sable.WaterRegions;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.LongList;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import it.unimi.dsi.fastutil.longs.LongSet;
-import it.unimi.dsi.fastutil.longs.LongSets;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -23,18 +20,19 @@ import org.jetbrains.annotations.Nullable;
  * the water inside a hull with a depth mask, but cutout blocks of the world (seagrass, kelp, sea pickles, bubble columns)
  * still show through the dry hold.
  *
- * <p>How: every {@code dry_hull_view.hidden_plants_refresh_ticks} ticks the client thread computes the world blocks that
- * all water occlusion regions cover right now ({@link RegionFootprint}) and publishes them as an immutable set. The
- * section compiler ({@code mixin.MixinSectionCompiler}, on worker threads) asks {@link #filter} for every block and
- * gets the bare fluid instead of a block in {@code #pirates_n_ships:hidden_in_dry_hull} that stands in that set. When
- * the footprint changes (the ship moved by a block, a region changed), the sections that hold a tagged block at a
- * newly covered or left position are re-marked for compilation; {@link LevelChunkSection#maybeHas} rules out most
- * sections without looking at blocks.
+ * <p>How: every {@code dry_hull_view.hidden_plants_refresh_ticks} ticks the client thread computes the world blocks
+ * whose cell any water occlusion region cuts right now, also only in part (HV1c; {@link PlantFootprint},
+ * {@link RegionFootprint}), and publishes them as an immutable footprint. The section compiler
+ * ({@code mixin.MixinSectionCompiler}, on worker threads) asks {@link #filter} for every block and gets the bare fluid
+ * instead of a block in {@code #pirates_n_ships:hidden_in_dry_hull} that the footprint hides (its cell, shifted by its
+ * model offset, or its other half's cell is cut). When the footprint changes (the ship moved, a region changed), the
+ * sections that hold a tagged block at a newly covered or left position, or right above or below one, are re-marked for
+ * compilation; {@link LevelChunkSection#maybeHas} rules out most sections without looking at blocks.
  */
 public final class HiddenWaterPlants {
 
-    /** World blocks ({@link BlockPos#asLong}) inside a region; replaced, never mutated, so worker threads may read it. */
-    private static volatile LongSet hidden = LongSets.EMPTY_SET;
+    /** World blocks whose cell a region cuts; replaced, never mutated, so worker threads may read it. */
+    private static volatile PlantFootprint hidden = PlantFootprint.EMPTY;
 
     private static final RefreshThrottle THROTTLE = new RefreshThrottle();
     private static @Nullable ClientLevel lastLevel;
@@ -53,8 +51,8 @@ public final class HiddenWaterPlants {
      * volatile read and an empty check.
      */
     public static BlockState filter(BlockState state, BlockPos pos) {
-        LongSet h = hidden;
-        if (h.isEmpty() || !state.is(HullTags.HIDDEN_IN_DRY_HULL) || !h.contains(pos.asLong())) {
+        PlantFootprint h = hidden;
+        if (h.isEmpty() || !h.hides(state, pos)) {
             return state;
         }
         return state.getFluidState().createLegacyBlock();
@@ -66,25 +64,20 @@ public final class HiddenWaterPlants {
         if (level != lastLevel) {
             // a new level compiles all its sections from scratch
             lastLevel = level;
-            hidden = LongSets.EMPTY_SET;
+            hidden = PlantFootprint.EMPTY;
             THROTTLE.reset();
         }
         if (level == null || !THROTTLE.ready(ticks++, DryHullConfig.HIDDEN_PLANTS_REFRESH_TICKS.get())) {
             return;
         }
         long t0 = System.nanoTime();
-        LongSet next = LongSets.EMPTY_SET;
+        PlantFootprint next = PlantFootprint.EMPTY;
         if (DryHullConfig.HIDE_WATER_PLANTS.get()) {
-            LongOpenHashSet set = new LongOpenHashSet();
-            for (WaterRegions.View v : WaterRegions.views(level)) {
-                statVisited += RegionFootprint.collect(v.minX, v.minY, v.minZ, v.maxX, v.maxY, v.maxZ, v::occupied,
-                        v::toWorld, v::toPlot, set);
-            }
-            if (!set.isEmpty()) {
-                next = set;
-            }
+            long[] visited = {0};
+            next = PlantFootprint.of(WaterRegions.views(level), visited);
+            statVisited += visited[0];
         }
-        LongSet before = hidden;
+        PlantFootprint before = hidden;
         if (!next.equals(before)) {
             hidden = next;
             remark(mc, level, before, next);
@@ -97,13 +90,13 @@ public final class HiddenWaterPlants {
     }
 
     public static void reset() {
-        hidden = LongSets.EMPTY_SET;
+        hidden = PlantFootprint.EMPTY;
         lastLevel = null;
         THROTTLE.reset();
     }
 
-    private static void remark(Minecraft mc, ClientLevel level, LongSet before, LongSet after) {
-        Long2ObjectMap<LongList> changed = RegionFootprint.changedBySection(before, after);
+    private static void remark(Minecraft mc, ClientLevel level, PlantFootprint before, PlantFootprint after) {
+        Long2ObjectMap<LongList> changed = PlantFootprint.changedBySection(before, after);
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (Long2ObjectMap.Entry<LongList> e : changed.long2ObjectEntrySet()) {
             statSections++;

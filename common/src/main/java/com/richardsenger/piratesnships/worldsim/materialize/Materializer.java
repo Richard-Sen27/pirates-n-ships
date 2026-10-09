@@ -302,8 +302,8 @@ public final class Materializer {
         }
     }
 
-    /** A name for the ship, picked by the voyage id from its faction's list. */
-    static String name(Voyage v) {
+    /** A name for the ship, picked by the voyage id from its faction's list (also the escort quest's convoy name, QST2). */
+    public static String name(Voyage v) {
         List<String> names = switch (v.faction()) {
             case MERCHANTS -> MERCHANT_NAMES;
             case NAVY -> NAVY_NAMES;

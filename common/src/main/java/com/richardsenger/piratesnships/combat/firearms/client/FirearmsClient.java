@@ -37,6 +37,9 @@ public final class FirearmsClient {
         ClientEvents.CLIENT_TICK_END.register(FirearmAnimationDriver::onClientTickEnd);
         // sneaking lowers an aimed gun without firing (P5)
         ClientEvents.CLIENT_TICK_END.register(FirearmLowering::onClientTickEnd);
+        // the attack key fires (FA1, firearms.fire_on_attack)
+        ClientEvents.CLIENT_TICK_START.register(FirearmAttackInput::onClientTickStart);
+        ClientEvents.INTERACTION_KEY.register(FirearmAttackInput::onInteraction);
         // the loading progress on the item bar (P5)
         FirearmClientState.set(new LocalFirearmClientState());
         // the loaded gun shows its cocked-hammer model (P6)

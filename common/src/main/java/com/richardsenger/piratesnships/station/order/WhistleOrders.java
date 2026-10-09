@@ -76,46 +76,60 @@ public final class WhistleOrders {
             Constants.LOG.debug("Ignoring unknown whistle order '{}' from {}", id, player.getName().getString());
             return Result.of(Outcome.UNKNOWN_ORDER);
         }
+        ShipBody ship = StationConfig.ENABLED.get() ? CaptainsWhistleItem.shipOf(level, player) : null;
+        Issued issued = issue(level, ship, order.get(), whistle);
+        player.displayClientMessage(issued.message(), true);
+        return issued.result();
+    }
+
+    /** What {@link #issue} did and the line that tells the captain about it (the whistle shows it in the action bar). */
+    public record Issued(Result result, Component message) {
+    }
+
+    /**
+     * Issues {@code order} to the crew of {@code ship}: the whistle's radial menu and the helm's ship screen (HGUI1) both
+     * come here, so the rules live in one place. {@code whistle} (may be null) remembers the last sail order. The
+     * caller checks who may give the order and tells the player {@link Issued#message()}.
+     */
+    public static Issued issue(ServerLevel level, @Nullable ShipBody ship, WhistleOrder order, @Nullable ItemStack whistle) {
         if (!StationConfig.ENABLED.get()) {
-            player.displayClientMessage(Component.translatable(CrewStations.KEY_DISABLED), true);
-            return Result.of(Outcome.DISABLED);
+            return new Issued(Result.of(Outcome.DISABLED), Component.translatable(CrewStations.KEY_DISABLED));
         }
-        ShipBody ship = CaptainsWhistleItem.shipOf(level, player);
         if (ship == null) {
-            player.displayClientMessage(Component.translatable(CaptainsWhistleItem.KEY_NOT_ON_SHIP), true);
-            return Result.of(Outcome.NOT_ON_SHIP);
+            return new Issued(Result.of(Outcome.NOT_ON_SHIP), Component.translatable(CaptainsWhistleItem.KEY_NOT_ON_SHIP));
         }
-        CrewOrder crewOrder = order.get().order();
+        CrewOrder crewOrder = order.order();
         int n;
         int jobs = 0;
+        Component message;
         if (crewOrder != null) {
             // only the crew at stations that take this order hear it (CrewStations#orderShip)
             n = CrewStations.orderShip(level, ship.id(), crewOrder);
             // the unmanned stations that take it become open jobs for the free crew (CR1)
             JobBoard.Posted posted = JobBoard.post(level, ship, crewOrder);
             jobs = posted.jobs();
-            if (crewOrder instanceof SailOrder sail) {
+            if (whistle != null && crewOrder instanceof SailOrder sail) {
                 whistle.set(StationContent.WHISTLE_ORDER.get(), sail); // the menu marks the last sail order
             }
             Component name = Component.translatable(crewOrder.nameKey());
             if (posted.noFreeHands()) {
-                player.displayClientMessage(Component.translatable(JobBoard.KEY_NO_FREE_HANDS, name), true);
+                message = Component.translatable(JobBoard.KEY_NO_FREE_HANDS, name);
             } else if (jobs > 0) {
-                player.displayClientMessage(Component.translatable(JobBoard.KEY_ORDER_POSTED, name, n, jobs), true);
+                message = Component.translatable(JobBoard.KEY_ORDER_POSTED, name, n, jobs);
             } else if (n == 0 && CrewStations.crewOf(level, ship.id()).stream().noneMatch(c -> CrewStations.takes(level, c, crewOrder))) {
                 // Q5: nobody heard it and no job opened: say what is missing instead of "0 crew carry it out"
-                player.displayClientMessage(OrderHints.why(level, ship, crewOrder), true);
+                message = OrderHints.why(level, ship, crewOrder);
             } else {
-                player.displayClientMessage(Component.translatable(CaptainsWhistleItem.KEY_ORDER, name, n), true);
+                message = Component.translatable(CaptainsWhistleItem.KEY_ORDER, name, n);
             }
         } else {
             // RELEASE, the only entry that is not a crew order so far: everyone leaves, the open jobs go too
             n = CrewStations.releaseShip(level, ship.id());
             JobBoard.clear(ship.id());
             Gunnery.clear(ship); // WS4a: "Fire at will" ends with the release
-            player.displayClientMessage(Component.translatable(KEY_RELEASED_ALL, n), true);
+            message = Component.translatable(KEY_RELEASED_ALL, n);
         }
-        return new Result(Outcome.ISSUED, n, jobs);
+        return new Issued(new Result(Outcome.ISSUED, n, jobs), message);
     }
 
     /** The whistle in the main hand, else in the off hand, else null. */

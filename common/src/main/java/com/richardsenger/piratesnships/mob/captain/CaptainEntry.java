@@ -8,6 +8,7 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -22,9 +23,10 @@ import java.util.UUID;
  * @param dimension  the level of his post
  * @param post       the block he stands in
  * @param facing     the direction he faces at his post
+ * @param voyage     the voyage he is at sea on (BOS2, {@code worldsim.captain}); empty while he keeps his post
  */
 public record CaptainEntry(UUID id, String name, int generation, boolean alive, long diedDay, ResourceKey<Level> dimension,
-                           BlockPos post, Direction facing) {
+                           BlockPos post, Direction facing, Optional<UUID> voyage) {
 
     public static final Codec<CaptainEntry> CODEC = RecordCodecBuilder.create(i -> i.group(
             UUIDUtil.CODEC.fieldOf("id").forGetter(CaptainEntry::id),
@@ -34,17 +36,34 @@ public record CaptainEntry(UUID id, String name, int generation, boolean alive, 
             Codec.LONG.optionalFieldOf("died_day", 0L).forGetter(CaptainEntry::diedDay),
             Level.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(CaptainEntry::dimension),
             BlockPos.CODEC.fieldOf("post").forGetter(CaptainEntry::post),
-            Direction.CODEC.fieldOf("facing").forGetter(CaptainEntry::facing)
+            Direction.CODEC.fieldOf("facing").forGetter(CaptainEntry::facing),
+            UUIDUtil.CODEC.optionalFieldOf("voyage").forGetter(CaptainEntry::voyage)
     ).apply(i, CaptainEntry::new));
 
-    /** The same captain, lost on {@code day}. */
+    /** A captain at his post (not at sea). */
+    public CaptainEntry(UUID id, String name, int generation, boolean alive, long diedDay, ResourceKey<Level> dimension,
+                        BlockPos post, Direction facing) {
+        this(id, name, generation, alive, diedDay, dimension, post, facing, Optional.empty());
+    }
+
+    /** The same captain, lost on {@code day} (no longer at sea). */
     public CaptainEntry dead(long day) {
-        return new CaptainEntry(id, name, generation, false, day, dimension, post, facing);
+        return new CaptainEntry(id, name, generation, false, day, dimension, post, facing, Optional.empty());
     }
 
     /** His successor at the same post. */
     public CaptainEntry successor(UUID newId, String newName) {
-        return new CaptainEntry(newId, newName, generation + 1, true, 0L, dimension, post, facing);
+        return new CaptainEntry(newId, newName, generation + 1, true, 0L, dimension, post, facing, Optional.empty());
+    }
+
+    /** The same captain at sea on {@code voyage}, or back at his post ({@code empty}). */
+    public CaptainEntry withVoyage(Optional<UUID> voyage) {
+        return new CaptainEntry(id, name, generation, alive, diedDay, dimension, post, facing, voyage);
+    }
+
+    /** He is alive and at sea on a voyage (BOS2); his post stands empty. */
+    public boolean atSea() {
+        return alive && voyage.isPresent();
     }
 
     /**

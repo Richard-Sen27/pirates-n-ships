@@ -1,0 +1,311 @@
+{
+	"credit": "Made with Blockbench, source art/models/railing.bbmodel",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"planks": "minecraft:block/oak_planks",
+		"iron": "minecraft:block/anvil",
+		"particle": "#planks"
+	},
+	"elements": [
+		{
+			"name": "lid",
+			"from": [
+				3,
+				4,
+				0.05
+			],
+			"to": [
+				13,
+				16,
+				1.05
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						3,
+						0,
+						13,
+						12
+					],
+					"texture": "#planks"
+				},
+				"south": {
+					"uv": [
+						3,
+						0,
+						13,
+						12
+					],
+					"texture": "#planks"
+				},
+				"up": {
+					"uv": [
+						3,
+						0.05,
+						13,
+						1.05
+					],
+					"texture": "#planks"
+				}
+			}
+		},
+		{
+			"name": "strap_0",
+			"from": [
+				4.5,
+				6,
+				-0.45
+			],
+			"to": [
+				5.5,
+				16.45,
+				0.05
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						4.5,
+						0,
+						5.5,
+						10.45
+					],
+					"texture": "#iron"
+				},
+				"east": {
+					"uv": [
+						0,
+						0,
+						0.5,
+						10.45
+					],
+					"texture": "#iron"
+				},
+				"west": {
+					"uv": [
+						0,
+						0,
+						0.5,
+						10.45
+					],
+					"texture": "#iron"
+				},
+				"up": {
+					"uv": [
+						4.5,
+						0,
+						5.5,
+						0.5
+					],
+					"texture": "#iron"
+				},
+				"down": {
+					"uv": [
+						4.5,
+						0,
+						5.5,
+						0.5
+					],
+					"texture": "#iron"
+				}
+			}
+		},
+		{
+			"name": "knuckle_0",
+			"from": [
+				4.25,
+				15.5,
+				-0.7
+			],
+			"to": [
+				5.75,
+				16.5,
+				0.3
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						4.25,
+						0,
+						5.75,
+						1
+					],
+					"texture": "#iron"
+				},
+				"east": {
+					"uv": [
+						0,
+						0,
+						1,
+						1
+					],
+					"texture": "#iron"
+				},
+				"south": {
+					"uv": [
+						4.25,
+						0,
+						5.75,
+						1
+					],
+					"texture": "#iron"
+				},
+				"west": {
+					"uv": [
+						0,
+						0,
+						1,
+						1
+					],
+					"texture": "#iron"
+				},
+				"up": {
+					"uv": [
+						4.25,
+						0,
+						5.75,
+						1
+					],
+					"texture": "#iron"
+				},
+				"down": {
+					"uv": [
+						4.25,
+						0,
+						5.75,
+						1
+					],
+					"texture": "#iron"
+				}
+			}
+		},
+		{
+			"name": "strap_1",
+			"from": [
+				10.5,
+				6,
+				-0.45
+			],
+			"to": [
+				11.5,
+				16.45,
+				0.05
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						10.5,
+						0,
+						11.5,
+						10.45
+					],
+					"texture": "#iron"
+				},
+				"east": {
+					"uv": [
+						0,
+						0,
+						0.5,
+						10.45
+					],
+					"texture": "#iron"
+				},
+				"west": {
+					"uv": [
+						0,
+						0,
+						0.5,
+						10.45
+					],
+					"texture": "#iron"
+				},
+				"up": {
+					"uv": [
+						10.5,
+						0,
+						11.5,
+						0.5
+					],
+					"texture": "#iron"
+				},
+				"down": {
+					"uv": [
+						10.5,
+						0,
+						11.5,
+						0.5
+					],
+					"texture": "#iron"
+				}
+			}
+		},
+		{
+			"name": "knuckle_1",
+			"from": [
+				10.25,
+				15.5,
+				-0.7
+			],
+			"to": [
+				11.75,
+				16.5,
+				0.3
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						10.25,
+						0,
+						11.75,
+						1
+					],
+					"texture": "#iron"
+				},
+				"east": {
+					"uv": [
+						0,
+						0,
+						1,
+						1
+					],
+					"texture": "#iron"
+				},
+				"south": {
+					"uv": [
+						10.25,
+						0,
+						11.75,
+						1
+					],
+					"texture": "#iron"
+				},
+				"west": {
+					"uv": [
+						0,
+						0,
+						1,
+						1
+					],
+					"texture": "#iron"
+				},
+				"up": {
+					"uv": [
+						10.25,
+						0,
+						11.75,
+						1
+					],
+					"texture": "#iron"
+				},
+				"down": {
+					"uv": [
+						10.25,
+						0,
+						11.75,
+						1
+					],
+					"texture": "#iron"
+				}
+			}
+		}
+	]
+}

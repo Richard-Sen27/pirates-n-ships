@@ -658,6 +658,18 @@
        {
         "type": "recipe",
         "recipe": "pirates_n_ships:oak_railing_gate"
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.ships.p16.text4"
+       },
+       {
+        "type": "recipe",
+        "recipe": "pirates_n_ships:oak_bulwark"
+       },
+       {
+        "type": "recipe",
+        "recipe": "pirates_n_ships:oak_bulwark_port"
        }
       ]
      },
@@ -3445,7 +3457,8 @@
          "pirates_n_ships.almanac.inventory.p2.list1_22",
          "pirates_n_ships.almanac.inventory.p2.list1_23",
          "pirates_n_ships.almanac.inventory.p2.list1_24",
-         "pirates_n_ships.almanac.inventory.p2.list1_25"
+         "pirates_n_ships.almanac.inventory.p2.list1_25",
+         "pirates_n_ships.almanac.inventory.p2.list1_26"
         ]
        }
       ]
@@ -3869,6 +3882,7 @@
   "pirates_n_ships.almanac.ships.p16.text1": "An {item:pirates_n_ships:oak_railing}**oak railing** runs along a block's edge; click again to rail another edge.",
   "pirates_n_ships.almanac.ships.p16.text2": "A {item:pirates_n_ships:oak_railing_port}**railing port** is the gap in it: cannons fire through it, boarders cross there.",
   "pirates_n_ships.almanac.ships.p16.text3": "A {item:pirates_n_ships:oak_railing_gate}**railing gate** swings open like a fence gate, and a lantern hangs from any railing post.",
+  "pirates_n_ships.almanac.ships.p16.text4": "A {item:pirates_n_ships:oak_bulwark}**bulwark** is a solid wall instead: a gun behind it fires into it, so cut a {item:pirates_n_ships:oak_bulwark_port}**gun port**, whose lid opens for the gun.",
   "pirates_n_ships.almanac.ships.p17.heading": "On deck",
   "pirates_n_ships.almanac.ships.p17.text1": "The {item:pirates_n_ships:ship_lantern}**ship's lantern** hangs or stands, and burns even under water.",
   "pirates_n_ships.almanac.ships.p17.text2": "{item:pirates_n_ships:rope_coil}**Rope coils** stack four to a spot.",
@@ -4321,7 +4335,8 @@
   "pirates_n_ships.almanac.inventory.p2.list1_22": "{item:pirates_n_ships:hammock}**Hammock:** a bunk for one hand. [[pirates_n_ships:crew|Crew]]",
   "pirates_n_ships.almanac.inventory.p2.list1_23": "{item:pirates_n_ships:boarding_plank}**Boarding plank:** a bridge to an enemy deck.",
   "pirates_n_ships.almanac.inventory.p2.list1_24": "{item:pirates_n_ships:oak_railing}{item:pirates_n_ships:oak_railing_port}**Railing, railing port:** a rail along a block's edge; click again to rail another. A cannon fires and a boarding plank goes out through the port.",
-  "pirates_n_ships.almanac.inventory.p2.list1_25": "{item:pirates_n_ships:oak_railing_gate}**Railing gate:** a railing section that swings open like a fence gate (use it, or redstone), so crew and boarding planks pass when it is open; a lantern hangs below or stands on any railing post, and a chain runs on from it.",
+  "pirates_n_ships.almanac.inventory.p2.list1_25": "{item:pirates_n_ships:oak_bulwark}{item:pirates_n_ships:oak_bulwark_port}**Bulwark, bulwark gun port:** a solid plank wall along a block's edge, placed like a railing. A cannon behind it fires into it; through the gun port it fires at every elevation, and the port's lid opens for the gun or by hand.",
+  "pirates_n_ships.almanac.inventory.p2.list1_26": "{item:pirates_n_ships:oak_railing_gate}**Railing gate:** a railing section that swings open like a fence gate (use it, or redstone), so crew and boarding planks pass when it is open; a lantern hangs below or stands on any railing post, and a chain runs on from it.",
   "pirates_n_ships.almanac.inventory.p3.heading": "Stores and cargo",
   "pirates_n_ships.almanac.inventory.p3.list1_1": "{item:pirates_n_ships:pantry}**Pantry:** the food store. [[pirates_n_ships:provisions|Provisions]]",
   "pirates_n_ships.almanac.inventory.p3.list1_2": "{item:pirates_n_ships:water_barrel}**Water barrel:** 16 rations of fresh water.",

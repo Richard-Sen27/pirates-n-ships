@@ -126,6 +126,12 @@ A {item:pirates_n_ships:oak_railing_gate}**railing gate** swings open like a fen
 
 {recipe:oak_railing_gate}
 
+A {item:pirates_n_ships:oak_bulwark}**bulwark** is a solid wall instead: a gun behind it fires into it, so cut a {item:pirates_n_ships:oak_bulwark_port}**gun port**, whose lid opens for the gun.
+
+{recipe:oak_bulwark}
+
+{recipe:oak_bulwark_port}
+
 ## On deck
 The {item:pirates_n_ships:ship_lantern}**ship's lantern** hangs or stands, and burns even under water.
 

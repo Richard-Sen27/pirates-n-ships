@@ -41,6 +41,7 @@ message.pirates_n_ships.brig.pressgang.not_a_prisoner
 message.pirates_n_ships.brig.pressgang.not_a_sailor
 message.pirates_n_ships.brig.pressgang.not_on_ship
 message.pirates_n_ships.brig.pressgang.not_your_ship
+message.pirates_n_ships.bulwark_port.held_open
 message.pirates_n_ships.bunk.not_here
 message.pirates_n_ships.cannon.aimed
 message.pirates_n_ships.cannon.already_loaded

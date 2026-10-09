@@ -1813,6 +1813,50 @@ for the gun; not saved).
   project files were saved by appending the new animation entries to the committed JSON (the committed animations are
   kept byte for byte, uuids included).
 
+### Rowing (OAR1)
+
+**Models** (`tools/gen_oar_models.py`, part lists; the script writes the exported JSON and a bare Blockbench project,
+textures referenced from `art/vanilla/` (`tools/extract_vanilla_textures.py oak_planks stripped_oak_log`); opened and
+rendered in Blockbench 2026-10-09, `python3 tools/lint_models.py` clean):
+- `block/oar_bench` (`art/models/oar_bench.bbmodel`, 12 elements, `#planks` and `#log`, a child per wood from the
+  wood family): north frame = `facing=north`, the outboard side. A thwart x 4..12 the whole block long, top at 8 px, on
+  four stripped-log legs with two stretchers and a spine; at the north end a gunwale board (y 6..9) with a knee under it
+  and two thole pins (y 9..13) with a 3 px gap where the oar lies. The item is the block model. Render
+  `renders/oar_bench.png` (two three-quarter views and the outboard end).
+- `item/oar` (`art/models/oar.bbmodel`, 9 elements, oak planks and stripped oak log): 3 blocks along the model's +y
+  (y −16..32): grip and knob, the loom with a leather button, the shaft, throat, shoulder, the blade (6 × 7.5 px) with a
+  centre rib. Third-person entries: rotation 0, scale 1.4, translation (0, 22.4, 0), which puts the loom at model y −8 in
+  the fist and runs the shaft along the hand's +y (4.2 blocks drawn); the left-hand entry equals the right one, vanilla
+  mirrors it (ART17). Render `renders/oar.png`.
+
+**Animations** `row_standing` and `row_seated` (2 s, loop, `easeInOutSine`) on the crew rig, written by
+`tools/gen_rowing_animations.py` into `crew_member.animation.json` and imported into `models/entity/crew_member.bbmodel`
+(Blockbench's export of the two equals the file; a constant channel carries two keys, since the exporter writes a
+one-key channel as a bare vector). Keys at 0 (catch), 0.45, 0.9 (finish), 1.2 (release), 1.6 (recovery), file
+convention: waist 22 / 6 / −10 / −6 / 8°; right arm (−88 / −70 / −48 / −55 / −75, −16, 0), the left arm its mirror;
+right_hand (1.8, 138.2, 29.6) / (30.5, 139.5, 36.3) / (59.9, 147.3, 37.0) / (76.4, 133.7, 58.9) / (59.9, 125.8, 74.5),
+left_hand the mirror (x kept, y and z negated). Standing: feet apart (right leg −14 to −18°, left 12 to 8°). Seated:
+root 4 px down onto the thwart, legs −84° forward and splayed 10°. Strips `renders/anim_crew_row_standing.png` and
+`anim_crew_row_seated.png` (top row from above and the rower's left front, bottom row from the front; a proxy oar on
+`right_hand` for the shot only, not saved).
+
+**The signs (GL1).** The hand keys were solved numerically against the oar's display entry with GeckoLib's transforms
+written out (baked pivots x-mirrored, x and y of every key negated, `rotationZYX`, the item frame's x −90, vanilla's
+`ItemTransform`), aiming the shaft outboard (the rower's right for the right hand), 36–40° down in the drive and
+14–16° in the recovery, swept 35° toward the bow at the catch and 35° toward the stern at the finish; the rower faces
+aft, so the blade moves toward the stern while in the water and the handle toward the bow. `crew/npc/OarRigTest`
+composes the real files end to end (GeckoLib's loader, `RenderUtil.prepMatrixForBone`, `HumanoidGeoRenderer.ItemFrame`,
+the oar's `ItemTransform` from `item/oar.json`, the renderer's `180 − bodyYaw` turn) for all four facings and both
+sides, with the handedness `sailing/oars/Rowing#leftHanded` gives (a rower whose outboard side is on its left is made
+left-handed, so the oar goes into the left hand and the left_hand keys mirror the stroke): the blade outboard more than
+1.8 blocks, below the deck in the drive, sweeping more than a block toward the stern, the handle pulled toward the bow,
+lifted more than 0.8 blocks in the recovery and carried back. Blockbench's preview agrees (the proxy blade, measured in
+the scene: outboard on the right, 12–13 px below the feet in the drive, moving 37 px forward from catch to finish).
+
+**Wiring.** `CrewPose.ROW_SEATED` / `ROW_STANDING` (station ids 7 and 8): the oar bench's resolver
+(`sailing/oars/OarBenchStation`) while its row order works, the rail rower's seat (`sailing/oars/OarSeat`, a
+`crew/npc/PosedSeat`) while it rows; both face aft (the stern of the ship's bow).
+
 ### Mob looks (M3-art)
 
 The pirate, sailor, navy soldier and officer are Blockbench models on the crew rig: `art/models/entity/<type>.bbmodel`,

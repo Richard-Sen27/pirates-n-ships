@@ -251,6 +251,20 @@ class PonderSchematicsTest {
         CompoundTag swivel = schematic(CrewSceneText.SWIVEL_GUN);
         assertEquals(MOD + ":swivel_gun[load=empty,piece=yoke,waterlogged=false]", stateAt(swivel, SwivelGunScene.GUN));
         assertTrue(stateAt(swivel, SwivelGunScene.GUN.below()).startsWith("minecraft:spruce_fence"), "the mount");
+
+        size(CrewSceneText.OARS, 9, 5, 9); // OAR1
+        CompoundTag oars = schematic(CrewSceneText.OARS);
+        assertEquals(MOD + ":oak_oar_bench[facing=east]", stateAt(oars, OarsScene.BENCH), "the bench, thole pin to starboard");
+        assertTrue(stateAt(oars, OarsScene.HELM).startsWith(MOD + ":helm[facing=south"), "the helm: bow north");
+        for (int z = 2; z <= 6; z++) {
+            assertTrue(stateAt(oars, 2, 4, z).startsWith(MOD + ":oak_railing["), "the port railing at z " + z);
+            assertTrue(stateAt(oars, 2, 4, z).contains("west=true"), "railed on its outboard edge at z " + z);
+        }
+        for (net.minecraft.world.phys.Vec3 spot : new net.minecraft.world.phys.Vec3[]{OarsScene.PORT_SPOT, OarsScene.STARBOARD_SPOT, OarsScene.START[0], OarsScene.START[1], OarsScene.START[2]}) {
+            String at = stateAt(oars, BlockPos.containing(spot));
+            assertTrue(at == null || at.equals("minecraft:air"), "room for a hand at " + spot + ": " + at);
+        }
+        assertTrue(stateAt(oars, BlockPos.containing(OarsScene.PORT_SPOT).below()).startsWith("minecraft:spruce_planks"), "the deck");
     }
 
     private static String stateAt(CompoundTag structure, BlockPos pos) {

@@ -90,8 +90,9 @@ public final class CrewRest {
         List<CrewMember> free = new ArrayList<>();
         Set<BlockPos> taken = new HashSet<>();
         for (CrewMember c : ShipBunks.crewOf(level, ship)) {
-            if (c.assignment() != null) {
-                c.setNightOutcome(NightOutcome.ON_DUTY);
+            if (c.assignment() != null || c.getVehicle() instanceof com.richardsenger.piratesnships.crew.npc.PosedSeat
+                    || CrewWalk.walksFor(c, WalkTarget.Purpose.OARS)) {
+                c.setNightOutcome(NightOutcome.ON_DUTY); // OAR1: a rower at the rail rows on through the night
             } else if (c.rest() != null) {
                 taken.add(c.rest().foot()); // already in its hammock (e.g. loaded mid-night)
             } else if (CrewWalk.walksFor(c, WalkTarget.Purpose.HAMMOCK)) {

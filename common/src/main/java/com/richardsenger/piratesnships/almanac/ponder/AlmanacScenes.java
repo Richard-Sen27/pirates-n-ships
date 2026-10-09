@@ -55,6 +55,8 @@ public final class AlmanacScenes {
     public static final ResourceLocation GALLEY_AND_PROVISIONS = Constants.id(CrewSceneText.GALLEY_AND_PROVISIONS);
     public static final ResourceLocation HAMMOCKS_AND_REST = Constants.id(CrewSceneText.HAMMOCKS_AND_REST);
     public static final ResourceLocation SWIVEL_GUN = Constants.id(CrewSceneText.SWIVEL_GUN);
+    /** OAR1: rowing, at the rail and on the oar bench. */
+    public static final ResourceLocation OARS = Constants.id(CrewSceneText.OARS);
 
     /** Their items. */
     public static final ResourceLocation CAPTAINS_WHISTLE_ITEM = Constants.id("captains_whistle");
@@ -65,6 +67,8 @@ public final class AlmanacScenes {
     public static final ResourceLocation PANTRY_ITEM = Constants.id("pantry");
     public static final ResourceLocation HAMMOCK_ITEM = Constants.id("hammock");
     public static final ResourceLocation SWIVEL_GUN_ITEM = Constants.id("swivel_gun");
+    /** The oak oar bench, the oar bench family's lead ({@code sailing.oars.OarsContent#BENCHES}). */
+    public static final ResourceLocation OAR_BENCH_ITEM = Constants.id("oak_oar_bench");
 
     /** Every scene, in the order the plugin registers them (an item's scenes play in this order). */
     public static final List<Scene> ALL = List.of(
@@ -84,7 +88,8 @@ public final class AlmanacScenes {
             new Scene(SHIPS_BELL, SHIPS_BELL_ITEM, SHIPS_BELL),
             new Scene(GALLEY_AND_PROVISIONS, PANTRY_ITEM, GALLEY_AND_PROVISIONS),
             new Scene(HAMMOCKS_AND_REST, HAMMOCK_ITEM, HAMMOCKS_AND_REST),
-            new Scene(SWIVEL_GUN, SWIVEL_GUN_ITEM, SWIVEL_GUN));
+            new Scene(SWIVEL_GUN, SWIVEL_GUN_ITEM, SWIVEL_GUN),
+            new Scene(OARS, OAR_BENCH_ITEM, OARS));
 
     private AlmanacScenes() {
     }

@@ -172,9 +172,9 @@ public final class ShipScreen extends Screen {
                 WhistleOrder o = orders.get(i);
                 int bx = x0 + (i % perRow) * (bw + TAB_GAP);
                 int by = top + 46 + (i / perRow) * 16;
-                BrassButton b = addRenderableWidget(new BrassButton(bx, by, bw, 14, Component.translatable(o.nameKey(anchor)), () -> order(o)));
+                BrassButton b = addRenderableWidget(new BrassButton(bx, by, bw, 14, Component.translatable(o.shownNameKey(anchor)), () -> order(o)));
                 b.active = active && !pending;
-                b.setTooltip(Tooltip.create(Component.translatable(o.descriptionKey(anchor))));
+                b.setTooltip(Tooltip.create(Component.translatable(o.shownDescriptionKey(anchor))));
             }
             listPanelTop = top + 80;
         } else {

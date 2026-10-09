@@ -136,3 +136,29 @@ Setup: `/pirates law score set @s 0`, `/pirates law bounty clear @s`. Mark goods
      chest count too.
 7. **Toggle off:** `law.plunder_notice = false`: desks still refuse marked goods with the same status line, but there
    is no chat line, no crime and no `suspected_piracy` aboard.
+
+## LAW4: a manned crow's nest sharpens false-colours detection
+Covered headlessly by `law/flag/FalseColorsDetectionTest` (JUnit: the range factor widens the observe range and the
+detection range, the rate factor multiplies the rate, factors of 1 change nothing), `law/world/FlagWorldGameTests`
+(`aMannedCrowsNestSeesFalseColoursFarther`, `aMannedCrowsNestSeesThroughFalseColoursFaster`,
+`switchedOffCrowsNestObserversSeeNoFarther`) and `station/lookout/LookoutGameTests`
+(`isMannedByASeatedLookoutOrAPlayerInTheNest`). What they cannot show: a real navy ship at sea with soldiers aboard
+and the detection over the default distances.
+
+Setup: two assembled ships at sea about 60 blocks apart. Ship A (the observer): a navy flag, a mast with a crow's nest
+and a ladder, two navy soldiers on deck (`/summon pirates_n_ships:navy_soldier`, they stay aboard), a crew member and a
+captain's whistle. Ship B (yours): a navy flag. `/pirates law score set @s 20` (a suspect: B's navy flag is false
+colours). Server config for the test: `flags_brig.false_flag_detection_strength = 5` so it happens within a minute.
+
+1. **No lookout, out of range.** Stay on B, 60 blocks from A (beyond `law.flags.observe_range` 48). Wait two minutes.
+   Expected: nothing; no "The navy has seen through your colours" in chat.
+2. **Lookout, out of range.** Whistle the crew member into A's crow's nest ("mans the station"). Expected: within a
+   minute or so "The navy has seen through your colours" in red (A's soldiers now
+   look 72 blocks).
+3. **A player in the nest.** Reset (`/pirates law score set @s 20`, wait out or lower `law.flags.blown_cover_ticks`),
+   release the crew member, have a second player stand in A's nest: same result as step 2.
+4. **Ashore unchanged.** Soldiers on land near a ship with a manned nest (not standing on it) still need you within 48
+   blocks.
+5. **Toggle.** `flags_brig.crows_nest_observers = false`: step 2 gives nothing at 60 blocks.
+
+Report: whether step 2 caught you, and roughly how long it took.

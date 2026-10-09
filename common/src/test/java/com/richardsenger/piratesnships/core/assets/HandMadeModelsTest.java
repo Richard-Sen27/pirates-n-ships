@@ -247,6 +247,25 @@ class HandMadeModelsTest {
         return out;
     }
 
+    /**
+     * CN1: the crow's nest's floor top is the block's collision floor (1.5 px, {@code CrowsNestBlock.FLOOR_HEIGHT}),
+     * where the lookout stands, and its rim is 20 px up (chest high on a crew member standing on the floor).
+     */
+    @Test
+    void crowsNestFloorAndRimMatchTheBlock() throws IOException {
+        double floorTop = 0;
+        double rim = 0;
+        for (JsonElement e : blockModel("crows_nest").getAsJsonArray("elements")) {
+            JsonObject o = e.getAsJsonObject();
+            String name = o.has("name") ? o.get("name").getAsString() : "";
+            double top = o.getAsJsonArray("to").get(1).getAsDouble();
+            if (name.startsWith("floor")) floorTop = Math.max(floorTop, top);
+            if (name.startsWith("stave")) rim = Math.max(rim, top);
+        }
+        assertEquals(1.5, floorTop, 1e-6, "floor top");
+        assertEquals(20.0, rim, 1e-6, "rim");
+    }
+
     private static JsonObject blockModel(String name) throws IOException {
         return JsonParser.parseString(Files.readString(MAIN_MODELS.resolve("block").resolve(name + ".json"))).getAsJsonObject();
     }

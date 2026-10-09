@@ -44,6 +44,16 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
+import com.richardsenger.piratesnships.crew.npc.CrewMember;
+import com.richardsenger.piratesnships.crew.npc.CrewStations;
+import com.richardsenger.piratesnships.law.flag.FalseColorsDetection;
+import com.richardsenger.piratesnships.ship.sable.ShipEntities;
+import com.richardsenger.piratesnships.station.StationContent;
+import com.richardsenger.piratesnships.station.lookout.LookoutContent;
+import com.richardsenger.piratesnships.station.lookout.Lookouts;
+import net.minecraft.world.phys.AABB;
+import java.util.HashMap;
+import java.util.Map;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Optional;
@@ -414,6 +424,178 @@ public final class FlagWorldGameTests {
                 .thenExecute(() -> {
                     h.assertTrue(h.getLevel().getBlockState(westWall(ship)).isAir(), "the ball did not hit the ship's wall");
                     h.assertValueEqual(LawService.record(shooter).totalCrimes(), 0, "crimes for hitting a merchant ship");
+                })
+                .thenSucceed();
+    }
+
+    // ------------------------------------------------------------------ LAW4: the crow's nest
+
+    /** The crow's nest on the observer ship, relative to the helm: on a fence one block starboard-aft of it. */
+    private static final BlockPos NEST_FROM_HELM = new BlockPos(1, 1, 1);
+
+    /**
+     * Two ships in the full basin: the navy observer ship A (x 2..6, navy flag, no owner, a fence mast with an
+     * unmanned crow's nest) with a navy soldier kept on its deck, and ship B (x 16..20) under false navy colours with
+     * its suspect owner aboard. The soldier's eyes are about 12 blocks from B's hull.
+     */
+    private record NestScene(Ship observer, Ship target, Player owner, SeafarerMob soldier) {
+        BlockPos nest() {
+            return observer.f().helmPlot().offset(NEST_FROM_HELM);
+        }
+
+        AABB hull() {
+            return target.body().worldBounds();
+        }
+    }
+
+    private static NestScene nestScene(GameTestHelper h) {
+        DryHullGameTests.basin(h, 0, 23, true);
+        SailingGameTestsShips.openSky(h, 24);
+        Ship a = ship(h, 2, FlagKind.NAVY, false, helm -> {
+            h.setBlock(helm.offset(1, 0, 1), Blocks.OAK_FENCE);
+            h.setBlock(helm.offset(NEST_FROM_HELM), LookoutContent.CROWS_NEST.get());
+        });
+        h.assertTrue(h.getLevel().getBlockState(a.f().helmPlot().offset(NEST_FROM_HELM)).is(LookoutContent.CROWS_NEST.get()),
+                "the crow's nest was not assembled");
+        Ship b = ship(h, 16, FlagKind.NAVY, false);
+        Player player = playerAboard(h, b);
+        setOwner(h, b, player.getUUID());
+        LawService.setScore(player, 20); // suspect: false colours, but no other reason for the navy to attack
+        h.assertTrue(LawService.fliesFalseColours(player, FlagKind.NAVY), "a suspect's navy flag is not false colours");
+        SeafarerMob soldier = h.spawn(MobContent.NAVY_SOLDIER.get(), new BlockPos(3, 9, 12));
+        soldier.setStationary(true);
+        Runnable put = () -> {
+            if (!a.body().isRemoved()) {
+                Vec3 at = a.body().toWorld(Vec3.atBottomCenterOf(a.f().helmPlot().offset(-1, 0, 1)));
+                soldier.setPos(at.x, at.y, at.z);
+            }
+        };
+        put.run();
+        h.onEachTick(put);
+        return new NestScene(a, b, player, soldier);
+    }
+
+    /** A crew member without AI on the observer's deck, seated at the crow's nest. */
+    private static CrewMember lookout(GameTestHelper h, NestScene s) {
+        CrewMember c = StationContent.CREW_MEMBER.get().create(h.getLevel());
+        if (c == null) throw new GameTestAssertException("no crew member");
+        Vec3 p = s.observer().body().toWorld(Vec3.atBottomCenterOf(s.observer().f().helmPlot().south()));
+        c.moveTo(p.x, p.y, p.z, 0, 0);
+        c.setNoAi(true);
+        h.getLevel().addFreshEntity(c);
+        CrewStations.AssignResult r = CrewStations.assign(h.getLevel(), c, s.nest());
+        h.assertTrue(r == CrewStations.AssignResult.ASSIGNED, "assign the lookout: " + r);
+        testInfo(h).addListener(new GameTestListener() {
+            @Override public void testStructureLoaded(GameTestInfo testInfo) { }
+            @Override public void testPassed(GameTestInfo test, GameTestRunner runner) { c.discard(); }
+            @Override public void testFailed(GameTestInfo test, GameTestRunner runner) { c.discard(); }
+            @Override public void testAddedForRerun(GameTestInfo oldTest, GameTestInfo newTest, GameTestRunner runner) { c.discard(); }
+        });
+        return c;
+    }
+
+    private static boolean aboardObserver(NestScene s) {
+        ShipBody on = ShipEntities.standingOrRiding(s.soldier());
+        return on != null && on.id().equals(s.observer().id());
+    }
+
+    /** Narrow sight for the range tests: 6 blocks to notice a flag at all and 6 to tell it, x4 from a manned nest. */
+    private static void narrowSight(GameTestHelper h) {
+        ConfigOverrides.during(h, LawConfig.FALSE_FLAG_DETECTION_STRENGTH, 100.0);
+        ConfigOverrides.during(h, LawConfig.OBSERVE_INTERVAL_TICKS, 10);
+        ConfigOverrides.during(h, LawConfig.OBSERVE_RANGE, 6.0);
+        ConfigOverrides.during(h, LawConfig.DETECTION_CLOSE_RANGE, 0.0);
+        ConfigOverrides.during(h, LawConfig.DETECTION_MAX_RANGE, 6.0);
+        ConfigOverrides.during(h, LawConfig.CROWS_NEST_RANGE_FACTOR, 4.0);
+    }
+
+    /**
+     * LAW4: a navy soldier aboard a ship 12 blocks off a false-flagged ship is beyond its 6 blocks of sight and never
+     * catches it; once a crew lookout mans the ship's crow's nest the sight reaches 24 blocks and the false colours are
+     * seen through.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 400, batch = CONFIG_BATCH + "crows_nest_range")
+    public static void aMannedCrowsNestSeesFalseColoursFarther(GameTestHelper h) {
+        narrowSight(h);
+        NestScene s = nestScene(h);
+        h.startSequence()
+                .thenWaitUntil(() -> h.assertTrue(aboardObserver(s), "the soldier is not aboard the observer ship yet"))
+                .thenExecuteAfter(60, () -> {
+                    double d = FlagCrimes.distance(s.soldier().getEyePosition(), s.hull());
+                    h.assertTrue(d > 6 && d < 24, "the soldier's eyes are " + d + " blocks from the target");
+                    h.assertFalse(FlagCrimes.hasMannedNest(h.getLevel(), s.soldier(), new HashMap<>()), "an empty nest counts as manned");
+                    h.assertValueEqual(count(s.owner(), CrimeType.CAUGHT_FALSE_COLORS), 0L,
+                            "caught by an observer without a lookout, " + d + " blocks off");
+                    lookout(h, s);
+                })
+                .thenWaitUntil(() -> h.assertTrue(count(s.owner(), CrimeType.CAUGHT_FALSE_COLORS) == 1,
+                        "not caught with a manned nest (nest manned: "
+                                + FlagCrimes.hasMannedNest(h.getLevel(), s.soldier(), new HashMap<>()) + ")"))
+                .thenExecute(() -> h.assertTrue(data(h, s.target()).coverBlown(LawService.now(h.getLevel().getServer())),
+                        "the cover is not blown"))
+                .thenSucceed();
+    }
+
+    /**
+     * LAW4: within the detection range the same soldier's chance per check grows by exactly crows_nest_rate_factor's
+     * rate once the nest is manned, and a navy soldier ashore (on the basin wall) keeps the plain chance. The chances
+     * are computed directly; {@code law.flags.enabled} off keeps the navy's own rolls out of the way.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 300, batch = CONFIG_BATCH + "crows_nest_rate")
+    public static void aMannedCrowsNestSeesThroughFalseColoursFaster(GameTestHelper h) {
+        ConfigOverrides.during(h, LawConfig.FLAGS_ENABLED, false);
+        ConfigOverrides.during(h, LawConfig.CROWS_NEST_RATE_FACTOR, 3.0);
+        NestScene s = nestScene(h);
+        SeafarerMob ashore = h.spawn(MobContent.NAVY_SOLDIER.get(), new BlockPos(0, 9, 12));
+        ashore.setStationary(true);
+        double[] before = new double[2];
+        h.startSequence()
+                .thenWaitUntil(() -> h.assertTrue(aboardObserver(s), "the soldier is not aboard the observer ship yet"))
+                .thenExecute(() -> {
+                    FalseColorsDetection.Params p = LawConfig.detectionParams();
+                    double score = LawService.score(s.owner());
+                    before[0] = FlagCrimes.detectionChance(h.getLevel(), s.soldier(), s.hull(), p, score, 40, new HashMap<>());
+                    before[1] = FlagCrimes.detectionChance(h.getLevel(), ashore, s.hull(), p, score, 40, new HashMap<>());
+                    h.assertTrue(before[0] > 0 && before[0] < 1, "chance without a lookout " + before[0]);
+                    lookout(h, s);
+                })
+                .thenExecuteAfter(5, () -> {
+                    FalseColorsDetection.Params p = LawConfig.detectionParams();
+                    double score = LawService.score(s.owner());
+                    Map<UUID, Boolean> nests = new HashMap<>();
+                    h.assertTrue(FlagCrimes.hasMannedNest(h.getLevel(), s.soldier(), nests), "the manned nest does not count");
+                    double with = FlagCrimes.detectionChance(h.getLevel(), s.soldier(), s.hull(), p, score, 40, nests);
+                    double d = FlagCrimes.distance(s.soldier().getEyePosition(), s.hull());
+                    double expected = FalseColorsDetection.chance(p, true, d, true, score, 40);
+                    h.assertTrue(Math.abs(with - expected) < 1e-12, "chance " + with + ", the nest's formula " + expected);
+                    double rateBefore = -Math.log1p(-before[0]);
+                    double rateWith = -Math.log1p(-with);
+                    h.assertTrue(rateWith > 3.0 * rateBefore * 0.999, "rate " + rateWith + " not 3x (or more) " + rateBefore);
+                    h.assertFalse(FlagCrimes.hasMannedNest(h.getLevel(), ashore, new HashMap<>()), "a soldier ashore has a nest");
+                    double ashoreNow = FlagCrimes.detectionChance(h.getLevel(), ashore, s.hull(), p, score, 40, new HashMap<>());
+                    // the target drifts a little in the water: compare with the plain formula at today's distance
+                    double plain = FalseColorsDetection.chance(p, true, FlagCrimes.distance(ashore.getEyePosition(), s.hull()),
+                            false, score, 40);
+                    h.assertTrue(before[1] > 0 && Math.abs(ashoreNow - plain) < 1e-12,
+                            "the soldier ashore: " + ashoreNow + ", the plain formula " + plain);
+                    h.assertValueEqual(count(s.owner(), CrimeType.CAUGHT_FALSE_COLORS), 0L, "the navy rolled during the test");
+                })
+                .thenSucceed();
+    }
+
+    /** {@code law.flags_brig.crows_nest_observers} off: a manned nest gives the soldier no farther sight. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 400, batch = CONFIG_BATCH + "crows_nest_off")
+    public static void switchedOffCrowsNestObserversSeeNoFarther(GameTestHelper h) {
+        narrowSight(h);
+        ConfigOverrides.during(h, LawConfig.CROWS_NEST_OBSERVERS, false);
+        NestScene s = nestScene(h);
+        lookout(h, s);
+        h.startSequence()
+                .thenWaitUntil(() -> h.assertTrue(aboardObserver(s), "the soldier is not aboard the observer ship yet"))
+                .thenExecuteAfter(5, () -> h.assertTrue(Lookouts.isManned(h.getLevel(), s.observer().body()), "the nest is not manned"))
+                .thenExecuteAfter(100, () -> {
+                    h.assertFalse(FlagCrimes.hasMannedNest(h.getLevel(), s.soldier(), new HashMap<>()), "the nest counts while switched off");
+                    h.assertValueEqual(count(s.owner(), CrimeType.CAUGHT_FALSE_COLORS), 0L, "caught with the nest switched off");
                 })
                 .thenSucceed();
     }

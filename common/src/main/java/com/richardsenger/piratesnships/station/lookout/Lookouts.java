@@ -145,15 +145,47 @@ public final class Lookouts {
             if (!CrewStations.worldBox(ship, 2).contains(feet)) {
                 continue;
             }
-            BlockPos local = BlockPos.containing(ship.toPlot(feet.add(0, 0.05, 0)));
-            for (int dy = 0; dy <= 1; dy++) {
-                BlockPos p = local.below(dy);
-                if (level.getBlockState(p).getBlock() instanceof CrowsNestBlock) {
-                    return new Nest(ship, p);
-                }
+            BlockPos p = nestOn(level, ship, entity);
+            if (p != null) {
+                return new Nest(ship, p);
             }
         }
         return null;
+    }
+
+    /** The plot position of {@code ship}'s crow's nest {@code entity} stands in (feet in it or just above it), or null. */
+    private static @Nullable BlockPos nestOn(ServerLevel level, ShipBody ship, Entity entity) {
+        BlockPos local = BlockPos.containing(ship.toPlot(entity.position().add(0, 0.05, 0)));
+        for (int dy = 0; dy <= 1; dy++) {
+            BlockPos p = local.below(dy);
+            if (level.getBlockState(p).getBlock() instanceof CrowsNestBlock) {
+                return p;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * LAW4: whether {@code ship} has a manned crow's nest: a crew member of the ship seated at one of its crow's nests,
+     * or a living, non-spectator player (any {@link Player} in the level, mock players included) standing in one. Two
+     * entity lookups in a box round the ship and a block read per candidate, so cheap enough per observation; it reads
+     * no lookout config (the watch's {@code lookout.enabled} only silences the calls, the nest is manned all the same).
+     */
+    public static boolean isManned(ServerLevel level, ShipBody ship) {
+        UUID id = ship.id();
+        for (CrewMember c : level.getEntitiesOfClass(CrewMember.class, CrewStations.worldBox(ship, 4),
+                c -> c.isAtStation() && c.assignment() != null && c.assignment().ship().equals(id))) {
+            if (level.getBlockState(c.assignment().pos()).getBlock() instanceof CrowsNestBlock) {
+                return true;
+            }
+        }
+        for (Player p : level.getEntitiesOfClass(Player.class, CrewStations.worldBox(ship, 2),
+                p -> p.isAlive() && !p.isSpectator())) {
+            if (nestOn(level, ship, p) != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -76,6 +76,11 @@ public final class DesertionGameTests {
     /**
      * Runs {@code body} once Sable has filled the ship's world bounds (they read empty for a tick or more after assembly,
      * longer under load), so the crew lookup by the ship's box finds the members placed on deck.
+     * <p>
+     * Tests mark their deserters inside {@code body}, in the same tick as their own {@link Desertions#run}: marks set
+     * earlier could be taken by the level's own look every {@link Desertions#INTERVAL} ticks (a member that may leave
+     * is gone before the test looks) or cleared by a dawn when the batch before left the level at night
+     * ({@link #morning} then ends that night).
      */
     private static void whenReady(GameTestHelper h, Ship s, Runnable body) {
         Runnable[] poll = new Runnable[1];
@@ -210,14 +215,12 @@ public final class DesertionGameTests {
     public static void deserterWalksOffAtThePort(GameTestHelper h) {
         ConfigOverrides.during(h, CrewConfig.DESERT_PORT_RADIUS, 16);
         Ship s = ship(h);
-        s.a().setDeserting(true, 0);
         whenReady(h, s, () -> {
+            s.a().setDeserting(true, 0);
             h.assertTrue(Desertions.portOf(h.getLevel(), s.f().ship(), 16).isEmpty(), "a port near the test ship before the test registered one");
-            Desertions.Result r = Desertions.run(h.getLevel());
-            h.assertTrue(r.atPort().isEmpty() && r.anywhere().isEmpty(), "left without a port: " + r);
+            Desertions.Result before = Desertions.run(h.getLevel());
+            h.assertTrue(before.atPort().isEmpty() && before.anywhere().isEmpty(), "left without a port: " + before);
             h.assertTrue(s.a().isAlive() && s.a().isDeserting(), "the deserter is gone without a port");
-        });
-        h.runAfterDelay(4, () -> {
             Port port = port(h);
             try {
                 h.assertTrue(Desertions.portOf(h.getLevel(), s.f().ship(), 0).isEmpty(), "the port box itself reaches the ship");
@@ -243,9 +246,9 @@ public final class DesertionGameTests {
     public static void deserterLeavesAnywhereAfterWaiting(GameTestHelper h) {
         ConfigOverrides.during(h, CrewConfig.DESERT_PORT_RADIUS, 0);
         Ship s = ship(h);
-        s.a().setDeserting(true, 2);
-        s.b().setDeserting(true, 3);
         whenReady(h, s, () -> {
+            s.a().setDeserting(true, 2);
+            s.b().setDeserting(true, 3);
             Desertions.Result r = Desertions.run(h.getLevel());
             h.assertTrue(r.anywhere().equals(List.of(s.b().getUUID())) && r.atPort().isEmpty(), "left: " + r);
             h.assertTrue(s.a().isAlive() && s.b().isRemoved(), "a alive " + s.a().isAlive() + ", b removed " + s.b().isRemoved());
@@ -261,8 +264,8 @@ public final class DesertionGameTests {
         ConfigOverrides.during(h, CrewConfig.DESERTION_ENABLED, false);
         ConfigOverrides.during(h, CrewConfig.DESERT_PORT_RADIUS, 16);
         Ship s = ship(h);
-        s.a().setDeserting(true, 5);
         whenReady(h, s, () -> {
+            s.a().setDeserting(true, 5);
             Port port = port(h);
             try {
                 Desertions.Result r = Desertions.run(h.getLevel());

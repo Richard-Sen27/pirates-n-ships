@@ -46,11 +46,13 @@ public class RailingPortBlock extends HorizontalDirectionalBlock implements Simp
 
     private static final Map<Direction, VoxelShape> SHAPES = new EnumMap<>(Direction.class);
     private static final Map<Direction, VoxelShape> COLLISIONS = new EnumMap<>(Direction.class);
+    private static final Map<Direction, VoxelShape> SUPPORTS = new EnumMap<>(Direction.class);
 
     static {
         for (Direction d : Direction.Plane.HORIZONTAL) {
             SHAPES.put(d, RailingBlock.shape(RailingRules.portBoxes(d, RailingRules.POST_TOP)));
             COLLISIONS.put(d, RailingBlock.shape(RailingRules.portBoxes(d, RailingRules.POST_TOP, RailingRules.PORT_COLLISION_POST)));
+            SUPPORTS.put(d, RailingBlock.shape(RailingRules.supportBoxes(RailingRules.portBoxes(d, RailingRules.RAIL_TOP), true)));
         }
     }
 
@@ -101,6 +103,12 @@ public class RailingPortBlock extends HorizontalDirectionalBlock implements Simp
     @Override
     protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return COLLISIONS.get(state.getValue(FACING));
+    }
+
+    /** RAIL3: its posts carry a lantern or a chain like a railing's ({@link RailingRules#supportBoxes}). */
+    @Override
+    protected VoxelShape getBlockSupportShape(BlockState state, BlockGetter level, BlockPos pos) {
+        return SUPPORTS.get(state.getValue(FACING));
     }
 
     @Override

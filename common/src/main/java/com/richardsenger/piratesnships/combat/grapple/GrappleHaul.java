@@ -201,6 +201,7 @@ public final class GrappleHaul {
         }
         s.peak = Math.max(s.peak, t);
         s.pullingSubsteps++;
+        h.recordLoad(t); // RAIL3: a hard haul tears out the railing the hook holds
         // horizontal part of the pull, toward the hand, at the hook's x/z and the center of mass height (no heel)
         if (Math.hypot(u.x, u.z) < 1.0e-6) {
             return; // a rope straight up or down: nothing to haul along the water

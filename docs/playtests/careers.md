@@ -171,6 +171,11 @@ grants again at once).
    Please report: is the berth placement sensible on the generated outpost quay (not on land, not inside the pier)?
 6. `/pirates career ship_grant @s reset` twice: two fresh commissions. Redeem one at the desk, then use the other.
    Expected: "Your ship was already delivered", the second commission stays.
+7. The look (ART11): the commission is a 3D rolled charter, parchment with a gold ribbon and a red wax seal hanging
+   below the roll. Expected: in the inventory slot and the hotbar a diagonal scroll with the seal at the lower right
+   (clearly not the receipt's letter, and fatter than the bounty proof); in the hand (first and third person) held
+   along the fingers like the bounty proof; dropped, a small upright scroll that spins like any dropped item; in an
+   item frame the front faces out. Please report clipping into the hand or a seal hidden in every view.
 
 ## 16. Refusals
 1. With a navy commission, use the desk of a seafarer village or a pirate island. Expected: "A navy commission is

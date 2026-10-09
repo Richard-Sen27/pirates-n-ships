@@ -4054,7 +4054,7 @@
   "pirates_n_ships.almanac.ledger.p7.list1_6": "world.structures: villages, navy outposts, pirate islands, wrecks.",
   "pirates_n_ships.almanac.ledger.p7.list1_7": "world\\_simulation: voyages, convoys, navy patrols, raids, pirate captains at sea.",
   "pirates_n_ships.almanac.ledger.p7.list1_8": "mobs: pirates, navy, sharks (mobs.shark), the kraken (mobs.kraken), harbour masters, pirate captains.",
-  "pirates_n_ships.almanac.ledger.p7.list1_9": "almanac.enabled: true. almanac.remember\\_page: true.",
+  "pirates_n_ships.almanac.ledger.p7.list1_9": "almanac.enabled: true. almanac.remember\\_page: true. almanac.give\\_on\\_first\\_join: true (one Almanac for every new hand).",
   "pirates_n_ships.almanac.ledger.p8.heading": "Player commands",
   "pirates_n_ships.almanac.ledger.p8.text1": "Any player may use these:",
   "pirates_n_ships.almanac.ledger.p8.list1_1": "/pirates career: your rank, standing and letter of marque.",

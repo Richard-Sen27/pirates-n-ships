@@ -207,3 +207,21 @@ Weapons and combat, Charts and navigation, The ship's inventory, The Quartermast
 9. **Facts:** spot-check a few numbers in game against the text: a sail winch cycles furled, half, full; the capstan
    refuses to drop over water deeper than 32 blocks; a hull patch from 2 planks and a coal makes 2; a water barrel holds
    16 rations; the crow's nest calls "Sail ho!" with a bearing in points.
+
+# Playtest: GuideME retired, the Almanac as first-join gift (work package GUIDE2)
+
+GuideME is gone: no dependency, no `guide` module, no generated pages. The first-join gift is now one Captain's
+Almanac (`almanac.give_on_first_join`, default true), pinned by `AlmanacGiftGameTests` (first join gives one, a second
+gives none, a lost book is not replaced, the switch off gives none and stores nothing). Please check both loaders.
+
+## Steps
+1. **First join:** create a new world (or join with a new player). The inventory holds exactly one Captain's Almanac.
+   Relog: still one, no second book. Throw it away, relog: none comes back.
+2. **Old world:** open a world where you got the old GuideME guide book before. You get one Almanac at the first login
+   (the flag is new), then never again.
+3. **No GuideME:** the mod list (Mods screen, Mod Menu on Fabric) shows no GuideME, the log has no `guideme` lines, the
+   creative inventory and recipe book have no "Pirates 'n' Ships Guide" book, and `/guideme` is no command. A world
+   saved with the old GuideME book in a chest loads without errors (the stack becomes air).
+4. **Switch off:** set `almanac.give_on_first_join` to false in the server config, join with a new player: no book.
+   Turn it back on and relog: the book arrives then.
+5. **Ledger:** the Quartermaster's ledger lists `almanac.give_on_first_join: true` with the other Almanac settings.

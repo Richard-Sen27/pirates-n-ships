@@ -58,9 +58,9 @@ from pathlib import Path
 sys.dont_write_bytecode = True  # no __pycache__ next to the tools
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import gen_guideme as guideme  # noqa: E402  (our item ids from the lang and item models, shared with GuideME)
+import almanac_lib as lib  # noqa: E402  (our item ids from the lang and item models)
 
-NS = guideme.NS
+NS = lib.NS
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "docs" / "almanac"
 OUT_JSON = ROOT / "common" / "src" / "datagen" / "almanac" / "chapters.json"
@@ -701,7 +701,7 @@ def write_illustrations():
 # ---------------------------------------------------------------------------------------------------- main
 
 def generate(directory=None):
-    _, _, items = guideme.load_items()
+    _, _, items = lib.load_items()
     chapters, lang, shown = build_chapters(read_sources(directory), items)
     unused = set(ILLUSTRATIONS) - shown
     if unused:

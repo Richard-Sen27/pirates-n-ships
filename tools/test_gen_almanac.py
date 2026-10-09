@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Unit tests of tools/gen_almanac.py (standard library unittest; AlmanacGuideTest runs this file).
+"""Unit tests of tools/gen_almanac.py and tools/almanac_lib.py's item inventory (standard library unittest;
+AlmanacGuideTest runs this file).
 
     python3 tools/test_gen_almanac.py
 """
+import json
 import sys
 import tempfile
 import unittest
@@ -10,6 +12,7 @@ from pathlib import Path
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import almanac_lib as lib  # noqa: E402
 import gen_almanac as ga  # noqa: E402
 
 NS = ga.NS
@@ -266,13 +269,65 @@ class ChapterTest(unittest.TestCase):
 class SourceTest(unittest.TestCase):
 
     def test_the_real_almanac_builds(self):
-        _, _, items = ga.guideme.load_items()
+        _, _, items = lib.load_items()
         chapters, lang, shown = ga.build_chapters(ga.read_sources(), items)
         self.assertEqual(chapters[0]["id"], f"{NS}:welcome")
         self.assertEqual(chapters[-1]["id"], f"{NS}:not_yet")
         self.assertEqual(shown, set(ga.ILLUSTRATIONS), "every illustration is shown")
         scenes = {e["scene"] for c in chapters for p in c["body"]["pages"] for e in p["elements"] if e["type"] == "show_me"}
         self.assertIn(f"{NS}:cannon_loading", scenes)
+
+
+class ItemsTest(unittest.TestCase):
+    """almanac_lib.load_items: the registered items; override variants are ignored, orphan models stop it."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self._tmp.name)
+        self.gen = self.root / "common/src/generated/resources/assets" / NS
+        self.main = self.root / "common/src/main/resources/assets" / NS
+        (self.gen / "lang").mkdir(parents=True)
+        (self.main / "models/item").mkdir(parents=True)
+        (self.gen / "models/item").mkdir(parents=True)
+        self.lang = {f"item.{NS}.foo": "Foo", f"block.{NS}.helm": "Helm", f"block.{NS}.rope_knot": "Rope Knot",
+                     f"entity.{NS}.shark": "Shark"}
+        self.model("main", "foo", {"parent": "minecraft:item/generated", "textures": {"layer0": f"{NS}:item/foo"},
+                                   "overrides": [{"predicate": {f"{NS}:loaded": 1.0}, "model": f"{NS}:item/foo_loaded"}]})
+        self.model("main", "foo_loaded", {"parent": "minecraft:item/generated"})
+        self.model("gen", "helm", {"parent": f"{NS}:block/helm"})
+
+    def tearDown(self):
+        lib.set_root(Path(lib.__file__).resolve().parent.parent)
+        self._tmp.cleanup()
+
+    def model(self, where, name, body):
+        base = self.main if where == "main" else self.gen
+        (base / "models/item" / f"{name}.json").write_text(json.dumps(body), encoding="utf-8")
+
+    def load(self):
+        (self.gen / "lang/en_us.json").write_text(json.dumps(self.lang), encoding="utf-8")
+        lib.set_root(self.root)
+        return lib.load_items()
+
+    def test_registered_items_and_block_items(self):
+        by_name, names, ids = self.load()
+        self.assertEqual(ids, {f"{NS}:foo", f"{NS}:helm"}, "a block without an item model is no item")
+        self.assertEqual(by_name["foo"], f"{NS}:foo")
+        self.assertEqual(names[f"{NS}:helm"], "Helm")
+        self.assertNotIn(f"{NS}:foo_loaded", ids, "an override variant is no item")
+
+    def test_orphan_model_stops_and_names_it(self):
+        self.model("main", "bar_orphan", {"parent": "minecraft:item/generated"})
+        with self.assertRaises(SystemExit) as e:
+            self.load()
+        self.assertIn(f"{NS}:bar_orphan", str(e.exception.code))
+        self.assertNotIn(f"{NS}:foo_loaded", str(e.exception.code), "the variant is not blamed")
+
+    def test_item_without_model_stops(self):
+        self.lang[f"item.{NS}.ghost"] = "Ghost"
+        with self.assertRaises(SystemExit) as e:
+            self.load()
+        self.assertIn(f"{NS}:ghost", str(e.exception.code))
 
 
 class PngTest(unittest.TestCase):

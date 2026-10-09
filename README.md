@@ -31,8 +31,9 @@ ships, and meet sharks, waterspouts, whirlpools and the kraken on the deep ocean
 - **Sea hazards.** Waterspouts in thunderstorms, drifting whirlpools in the deep ocean.
 - **Looks and sounds.** Every block and item is a hand-made 3D model; shanties and sea music, hull creaks, sword
   and gun sounds from licensed recordings (see [`docs/credits.md`](docs/credits.md)).
-- **In-game guide.** With GuideME installed, a guide book with every topic, item links and recipes (also the written
-  [player guide](docs/guide.md)).
+- **In-game guide.** The Captain's Almanac: a tome you read in hand or set down on a table, with chapter bookmarks,
+  illustrations and "Show me" scenes; every player gets one on first join (the written reference is
+  [`docs/guide.md`](docs/guide.md)).
 
 Every gameplay feature has a server config toggle, and every frequency and strength is a config value.
 
@@ -43,7 +44,6 @@ Every gameplay feature has a server config toggle, and every frequency and stren
 | Minecraft | 1.21.1 |
 | Loader | NeoForge (Fabric planned, see the roadmap) |
 | Required | [Sable](https://modrinth.com/mod/sable) (ship physics), [GeckoLib](https://modrinth.com/mod/geckolib) (animated mobs), [Player Animation Library](https://modrinth.com/mod/player-animation-library) (client, sword and gun animations) |
-| Optional | [GuideME](https://modrinth.com/mod/guideme) (the in-game guide book) |
 
 Releases are published to Modrinth, CurseForge and GitHub by tag (see [`docs/releasing.md`](docs/releasing.md)).
 

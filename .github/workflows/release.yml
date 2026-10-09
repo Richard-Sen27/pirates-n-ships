@@ -198,7 +198,6 @@ jobs:
       #   Sable                    modrinth.com/mod/sable                    curseforge.com/minecraft/mc-mods/sable
       #   GeckoLib                 modrinth.com/mod/geckolib                 curseforge.com/minecraft/mc-mods/geckolib
       #   Player Animation Library modrinth.com/mod/player-animation-library curseforge.com/minecraft/mc-mods/player-animation-library
-      #   GuideME (optional)       modrinth.com/mod/guideme                  curseforge.com/minecraft/mc-mods/guideme
       #   JEI (optional)           modrinth.com/mod/jei                      curseforge.com/minecraft/mc-mods/jei
       # Ponder and Flywheel are required but bundled in our jars (jar-in-jar): neither has a standalone 1.21.1 project
       # (modrinth.com/mod/ponder is Ponder for KubeJS, modrinth.com/mod/flywheel the legacy Flywheel), so they are not
@@ -226,7 +225,6 @@ jobs:
             sable(required){modrinth:T9PomCSv}{curseforge:1312371}
             geckolib(required){modrinth:8BmcQJ2H}{curseforge:388172}
             player_animation_library(required){modrinth:ha1mEyJS}{curseforge:1283899}
-            guideme(optional){modrinth:Ck4E7v7R}{curseforge:1173950}
             jei(optional){modrinth:u6dRKJwZ}{curseforge:238222}
 
       # The Fabric jar: its own Modrinth and CurseForge version (same version number, loader fabric) and a second asset
@@ -238,7 +236,6 @@ jobs:
       #   Fabric API               modrinth.com/mod/fabric-api               curseforge.com/minecraft/mc-mods/fabric-api
       #   Forge Config API Port    modrinth.com/mod/forge-config-api-port    curseforge.com/minecraft/mc-mods/forge-config-api-port-fabric
       #   JEI (optional)           modrinth.com/mod/jei                      curseforge.com/minecraft/mc-mods/jei
-      # GuideME has no Fabric build, so it is not listed here.
       - name: Publish the Fabric jar to Modrinth, CurseForge and GitHub Releases
         if: ${{ !cancelled() && steps.secrets.outcome == 'success' && env.PUBLISH != 'neoforge' }}
         uses: Kira-NT/mc-publish@v3.3.1

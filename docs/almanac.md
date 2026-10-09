@@ -234,7 +234,7 @@ inside our jar (jar-in-jar on both loaders, docs/releasing.md); everything of ou
 
 The mod's own chapters are written for the player in `docs/almanac/<nn>-<chapter>.md`, one file per bookmark, in the
 Almanac's voice (a ship's master addressing a new hand). `docs/guide.md` is the human's testing and reference guide and
-is not read by the Almanac (GuideME and the playtests keep using it). Two steps after every change to `docs/almanac/`:
+is not read by the Almanac (the playtests keep using it). Two steps after every change to `docs/almanac/`:
 
 ```
 python3 tools/gen_almanac.py        # docs/almanac/ -> common/src/datagen/almanac/chapters.json (+ illustrations)
@@ -276,7 +276,8 @@ contents:                            # a list linking every other chapter in boo
   button where it stands (no namespace = `pirates_n_ships`; a scene that does not exist yet logs a warning in the
   client and the reader stays on the page); `contents:` adds the Contents list.
 - **Markup:** the text is the screen's markup as written (see "Markup" above), checked by the script: balanced `**`,
-  closed `{#rrggbb}…{/}`, `{item:ns:id}` with a full id (ours must exist), `[[ns:chapter|text]]` links only to chapters
+  closed `{#rrggbb}…{/}`, `{item:ns:id}` with a full id (ours must exist: `tools/almanac_lib.py` lists our registered
+  items from the lang and the item models, GUIDE2), `[[ns:chapter|text]]` links only to chapters
   of the book; markdown italics (`*x*`), code spans, markdown links and stray braces stop it. Escape a literal `*`, `{`,
   `[[` or a word-edge `_` with a backslash. Name an item with its icon where it is first named:
   `{item:pirates_n_ships:helm}**helm**`.

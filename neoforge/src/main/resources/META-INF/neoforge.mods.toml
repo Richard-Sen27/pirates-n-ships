@@ -47,7 +47,6 @@ type="required"
 versionRange = "${geckolib_version_range}"
 ordering = "NONE"
 side = "BOTH"
-# GuideME: the in-game guide book (optional). Without it the guide resources and the book recipe stay inactive.
 # Ponder (the Almanac's "Show me" scenes) and Flywheel (Ponder's renderer, client only), both bundled in our jar
 # (jar-in-jar, neoforge/build.gradle); NeoForge picks the newest copy when another mod bundles them too.
 [[dependencies.${mod_id}]]
@@ -62,12 +61,6 @@ type="required"
 versionRange = "${flywheel_version_range}"
 ordering = "AFTER"
 side = "CLIENT"
-[[dependencies.${mod_id}]]
-modId = "guideme"
-type="optional"
-versionRange = "${guideme_version_range}"
-ordering = "NONE"
-side = "BOTH"
 # JEI (optional, JEI1): our plugin (compat/jei, found by JEI's @JeiPlugin scan) adds info pages, the harbour market,
 # shipyard and galley categories. Without JEI nothing of it loads.
 [[dependencies.${mod_id}]]

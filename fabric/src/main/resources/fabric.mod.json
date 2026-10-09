@@ -40,7 +40,6 @@
         "modmenu": "*"
     },
     "suggests": {
-        "guideme": "*",
         "jei": "*"
     },
     "breaks": {

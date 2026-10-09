@@ -60,9 +60,10 @@ public final class SailingGameTestsTurning {
     // ------------------------------------------------------------------ fixtures
 
     /**
-     * 160×160 stone basin (floor y=1, walls at the edges), water y=2..{@value #SEA_TOP}: 10 blocks deep. The starter sloop draws
-     * about 5.7 blocks at its stern (it floats 4° bow up), so the 6 blocks of the heel tests' basin ground it and hold it
-     * to a few tenths of a block per second.
+     * 160×160 stone basin (floor y=1, walls at the edges), water y=2..{@value #SEA_TOP}: 10 blocks deep. Measured by PHY1, the
+     * starter sloop draws 4.27 blocks at its stern keel (it floats 4.2° bow up) and clears the floor of the heel tests'
+     * 6-deep basin by 1.73 blocks (SH2's estimate of 5.7 blocks, which would ground it there, was a block and a half
+     * high); here it has about 5.7 blocks under the keel.
      */
     private static void basin(GameTestHelper h) {
         ServerLevel level = h.getLevel();

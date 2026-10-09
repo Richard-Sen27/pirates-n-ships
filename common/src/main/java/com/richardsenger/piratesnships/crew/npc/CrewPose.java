@@ -9,7 +9,8 @@ import org.jetbrains.annotations.Nullable;
  * Priority, highest first: a <b>station pose</b> (ART7: the helmsman's hold and turns, the gun crew's aim, load and
  * fire; chosen on the server by {@link StationPoses} and synced), {@link #WORK} (an order is being carried out at its
  * station), {@link #SLEEP} (it lies in a hammock, HM1/ART1d), {@link #SIT} (riding something that seats it; the
- * station seat does not, there the crew member stands), {@link #WALK} (the legs move), {@link #IDLE}.
+ * station seat does not, there the crew member stands), {@link #LEAN} (it leans on the rail, RAIL5), {@link #WALK} (the
+ * legs move), {@link #IDLE}.
  */
 public enum CrewPose {
     IDLE("idle"),
@@ -34,7 +35,9 @@ public enum CrewPose {
     /** OAR1: seated on an oar bench, facing aft, pulling the oar (catch, drive, recovery). */
     ROW_SEATED("row_seated"),
     /** OAR1: standing at the rail without a bench, facing aft, pulling the oar. */
-    ROW_STANDING("row_standing");
+    ROW_STANDING("row_standing"),
+    /** RAIL5: idle at the rail, forearms on the top rail, weight on the right leg (the head turn comes from code). */
+    LEAN("lean");
 
     /** Station poses in the order of their synced id ({@link #stationId()}); never reorder, append only. */
     private static final CrewPose[] STATION = {HELM, HELM_TURN_LEFT, HELM_TURN_RIGHT, CANNON_AIM, CANNON_LOAD, CANNON_FIRE, CAPSTAN_PUSH,
@@ -102,10 +105,20 @@ public enum CrewPose {
      *                everything else (a helmsman holding a course or a gun crew loading is also "working")
      */
     public static CrewPose choose(boolean moving, boolean working, boolean seated, boolean resting, @Nullable CrewPose station) {
+        return choose(moving, working, seated, resting, station, false);
+    }
+
+    /**
+     * @param leaning it leans on the rail ({@link CrewMember#isLeaning()}, RAIL5); wins over walking (a ship under way
+     *                can swing the legs of a crew member standing still)
+     */
+    public static CrewPose choose(boolean moving, boolean working, boolean seated, boolean resting, @Nullable CrewPose station,
+                                  boolean leaning) {
         if (station != null && station.isStationPose()) return station;
         if (working) return WORK;
         if (resting) return SLEEP;
         if (seated) return SIT;
+        if (leaning) return LEAN;
         if (moving) return WALK;
         return IDLE;
     }

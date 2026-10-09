@@ -73,6 +73,10 @@
         {
           "type": "text",
           "key": "pirates_n_ships.almanac.crew.p3.text2"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.crew.p3.text3"
         }
       ]
     },

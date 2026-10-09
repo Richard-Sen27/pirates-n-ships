@@ -609,6 +609,17 @@ chainplate in it is fine). Each strand is still one net item: breaking a chainpl
 into the net drops that strand's net at its chainplate and the rest of the fan closes up again; breaking the hoop drops
 every strand. All nets of a fan must be on one ship (or all on land).
 
+**Boarding nets (RAIL5).** Put two chainplates on top of two railings of one straight run, railed on the same edge,
+with at least one block between them, and string a ratline net from one to the other: "Boarding net strung along the
+rail". It hangs upright along the rail, from the rail top to a block above it, with a sagging top rope. Anyone who comes
+over the rail from outboard into the net (a boarder jumping across, a mob, a player) is held behind it for a second,
+slowed like in half a cobweb, and may then climb over (the net is climbable); the ship's own crew (on her deck, at her
+stations, or hired by her owner) pass freely both ways. It cannot be mined or built over: three hits with a **cutlass**
+cut it down and drop one net at the first chainplate. Chainplates on two edges ("Boarding nets run along one rail
+edge"), on neighbouring railings ("Leave a block between the chainplates") or more than 8 blocks apart ("Too long") are
+refused. Server config `rigging.boarding_nets` (off: such a net is refused as too flat, and strung ones hold nobody),
+`boarding_net_length` (8), `boarding_net_hold` (20 ticks), `boarding_net_cut_hits` (3).
+
 ### Hammocks
 Your crew sleeps in hammocks. Hang one between two supports at the same height (fence posts, walls, logs, or a solid
 wall such as the hull side): click the block next to one support while looking toward the other. Recipe: 2 string
@@ -940,6 +951,13 @@ deck (even while the ship sails) and takes the place when he gets there; the sta
 arrived. A place he cannot reach (behind a wall, up the mast to the crow's nest) or has not reached after 10 seconds
 puts him there anyway, as does an order to a sailor who is not on that ship. Server config `crew.walk` (`enabled` off:
 crew take their place at once).
+
+Idle crew **lean on the rail**: a sailor with no order, no station, no meal and no hammock looks for a railing within 6
+blocks on his ship, walks to it, steps up to the rail, turns to face the sea and leans on it, forearms on the top rail,
+looking out and now and then turning his head, for 30 to 90 seconds; then he strolls again for at least 30 seconds.
+At most three lean at once per ship, never in neighbouring blocks, and never in the rail blocks beside the helm or
+another station, nor where something stands on the rail. Any order, the meal call or nightfall ends it at once. Server
+config `crew.rail_lean` (`enabled`, `radius`, `min_seconds`, `max_seconds`, `leaners`, `pause_seconds`).
 
 The **captain's whistle** (creative tab) gives orders:
 - Use it on a crew member, then on a station: the crew member takes that station.
@@ -1698,7 +1716,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `ship_identity` | Name boards showing the ship's name, their refresh, how far the name is drawn (`name_board_distance`, 64 blocks). |
 | `ship_screen` | The ship screen at the helm on/off (off: sneak-use disassembles at once), its reach, how often it refreshes. |
 | `ship_decor` | The ship's bell ring time; sleeping in the sea cot, on land and aboard; railings on or off and their collision height (`railings_enabled`, `railing_collision_blocks`). |
-| `rigging` | Ratlines on/off; ratline nets on/off, their longest length (32 blocks, up to 64) and flattest pitch, the climbing assist; how many nets one mast hoop holds and how far apart two neighbouring chainplates may be to be netted together. |
+| `rigging` | Ratlines on/off; ratline nets on/off, their longest length (32 blocks, up to 64) and flattest pitch, the climbing assist; how many nets one mast hoop holds and how far apart two neighbouring chainplates may be to be netted together; boarding nets along the rail on/off (`boarding_nets`), their longest length, how long they hold a boarder and the cutlass hits that cut one. |
 | `wind` | Wind strength range, how fast it changes, weather multipliers, gusts, regional variation, sync interval. |
 | `sailing` | Sail force, half-trim factor, rudder strength and turning authority (`rudder_force_factor`, `max_rudder_angle`), keel drag, roll and pitch damping; `sails` (yard gaps and lengths, stay length and drop, rope lines and sag, dyeing, banners and their minimum size). |
 | `sailing_runtime` | Sailing forces, steering and anchor on/off, sail heel factor, sails needing water, rudder steps, the anchor chain's length (`anchor_chain_length`), draft, scan interval. |
@@ -1711,7 +1729,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `hazards` | Waterspouts and whirlpools (on/off, chances, durations, radii, pull, lift, spin, drag-down, drift, sail damage, per-player cap), spawn distances and interval, ship force scale and mass cap; `kraken` (on/off, chance per day). |
 | `crew_stations` | Crew stations on/off, time per trim step, order and acknowledgement radius; `capstan` (crew at the capstan), `course` (the helmsman's course keeping), `job_board` (free hands taking open jobs). |
 | `lookout` | Crow's nest lookout on/off, calls on/off, range, scan interval, how long a sighting is remembered, when it is called again, how long its compass mark stays, the land rays. |
-| `crew` | Crew size; `wages`, `morale`, `desertion`, `mutiny`, `meals`, `hammock` (players sleeping in hammocks), `hiring`, `walk`. |
+| `crew` | Crew size; `wages`, `morale`, `desertion`, `mutiny`, `meals`, `hammock` (players sleeping in hammocks), `hiring`, `walk`, `rail_lean` (idle crew leaning on the rail: on/off, radius, how long, how many per ship, the pause between). |
 | `provisions` | Consumption on/off and rate, food and water per crew and day, rum ration and morale, drunkenness, hunger and thirst effects, scurvy, spoilage, water barrel capacity, rain refill, weights. |
 | `survival` | `cold_water` (on/off, freeze rate, warm effect length), `swim_hunger` and its multiplier. |
 | `sea_chest` | Sea chest on/off, worn speed, sink pull, wind drift and its cap, draft; paddling on/off, speed, backing speed, turn rate, hunger. |

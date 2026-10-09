@@ -5,6 +5,10 @@ import com.richardsenger.piratesnships.crew.galley.MealRules;
 import com.richardsenger.piratesnships.crew.galley.MealSeat;
 import com.richardsenger.piratesnships.crew.hammock.CrewRest;
 import com.richardsenger.piratesnships.crew.hammock.HammockRef;
+import com.richardsenger.piratesnships.crew.lean.LeanRules;
+import com.richardsenger.piratesnships.crew.lean.RailLean;
+import com.richardsenger.piratesnships.crew.lean.RailLeanGoal;
+import net.minecraft.core.Direction;
 import com.richardsenger.piratesnships.crew.morale.MoraleRules;
 import com.richardsenger.piratesnships.crew.morale.NightOutcome;
 import com.richardsenger.piratesnships.crew.walk.CrewWalk;
@@ -96,6 +100,9 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
      */
     private static final EntityDataAccessor<Float> DATA_HELD_BODY_YAW = SynchedEntityData.defineId(CrewMember.class, EntityDataSerializers.FLOAT);
 
+    /** True while it leans on the rail (RAIL5, {@code crew.lean.RailLean}); set by the server, read by the animation. */
+    private static final EntityDataAccessor<Boolean> DATA_LEANING = SynchedEntityData.defineId(CrewMember.class, EntityDataSerializers.BOOLEAN);
+
     private static final Map<CrewPose, RawAnimation> POSE_ANIMATIONS = new EnumMap<>(CrewPose.class);
 
     static {
@@ -133,6 +140,10 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     private @Nullable WalkTarget walk;
     /** Its station pose faces it towards the wheel or gun (ART7): the look goals leave its head alone. Server only. */
     private boolean facingStation;
+    /** Its lean on the rail while it walks there or leans (RAIL5, {@code crew.lean.RailLean}), else null. Server only, not saved. */
+    private RailLean.@Nullable Lean lean;
+    /** Game time before which it does not look for the rail again (RAIL5). Server only, not saved. */
+    private long leanPauseUntil;
 
     public CrewMember(EntityType<? extends CrewMember> type, Level level) {
         super(type, level);
@@ -149,6 +160,8 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
+        // RAIL5: an idle crew member walks to the rail and leans on it for a while, ahead of strolling about
+        goalSelector.addGoal(4, new RailLeanGoal(this));
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.6) {
             @Override
             public boolean canUse() {
@@ -185,7 +198,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
      * where {@code crew.hammock.CrewRest#orient} holds head and body along the hammock.
      */
     public boolean mayLookAround() {
-        return !isResting() && !facingStation && !isEating();
+        return !isResting() && !facingStation && !isEating() && !isLeaning();
     }
 
     @Override
@@ -196,6 +209,36 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         builder.define(DATA_STATION_POSE, (byte) -1);
         builder.define(DATA_EATING, false);
         builder.define(DATA_HELD_BODY_YAW, Float.NaN);
+        builder.define(DATA_LEANING, false);
+    }
+
+    /** Whether it leans on the rail (RAIL5; synced to clients for the {@link CrewPose#LEAN} pose). */
+    public boolean isLeaning() {
+        return entityData.get(DATA_LEANING);
+    }
+
+    /** Server: sets the synced lean flag only; {@code crew.lean.RailLean} starts and ends the lean. */
+    public void setLeaning(boolean leaning) {
+        entityData.set(DATA_LEANING, leaning);
+    }
+
+    /** Its lean on the rail (walking there or leaning), else null (RAIL5). */
+    public RailLean.@Nullable Lean lean() {
+        return lean;
+    }
+
+    /** Sets the lean only; {@code crew.lean.RailLean} claims and ends it. */
+    public void setLean(RailLean.@Nullable Lean lean) {
+        this.lean = lean;
+    }
+
+    /** Game time before which it does not look for the rail again (RAIL5). */
+    public long leanPauseUntil() {
+        return leanPauseUntil;
+    }
+
+    public void setLeanPauseUntil(long until) {
+        this.leanPauseUntil = until;
     }
 
     /** Whether this crew member is at its station while the station carries out an order (synced to clients). */
@@ -230,7 +273,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
      * plays {@link CrewPose#SLEEP} (ART1d), lying along the hammock ({@code crew.hammock.CrewRest#orient}, HM2).
      */
     public CrewPose pose(boolean legsMoving) {
-        return CrewPose.choose(legsMoving, isWorking() || isEating(), isSeated(), isResting(), stationPose());
+        return CrewPose.choose(legsMoving, isWorking() || isEating(), isSeated(), isResting(), stationPose(), isLeaning());
     }
 
     /**
@@ -396,6 +439,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
             CrewRest.tick(level, this);
             entityData.set(DATA_WORKING, operatingHere()); // only sends when the value changes
             entityData.set(DATA_EATING, getVehicle() instanceof MealSeat);
+            RailLean.check(level, this); // RAIL5: an order, a meal or the hammock ends a lean at once
             showStationPose(level);
         }
     }
@@ -429,6 +473,10 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         } else if (getVehicle() instanceof MealSeat meal) {
             ShipBody ship = SableShips.containing(level, meal.blockPosition());
             target = MealRules.facingYaw(meal.blockPosition(), meal.provisions(), ship == null ? null : ship.orientation());
+        } else if (RailLean.facing(this) instanceof Direction outboard && lean != null) {
+            // RAIL5: leaning on the rail, facing the sea
+            ShipBody ship = SableShips.byId(level, lean.ship());
+            target = StationPoses.yaw(outboard, ship == null ? null : ship.orientation());
         }
         if (target == null) {
             entityData.set(DATA_HELD_BODY_YAW, Float.NaN);
@@ -442,6 +490,11 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         setYRot(StationFacing.continuous(getYRot(), turn.body()));
         if (headHeld) {
             setXRot(0);
+        }
+        if (isLeaning() && lean != null) {
+            // RAIL5: looking out to sea a little down, a slow turn to one side every few seconds (the rig never keys the head)
+            setYHeadRot(turn.body() + LeanRules.headYaw(level.getGameTime() - lean.started()));
+            setXRot(LeanRules.HEAD_PITCH);
         }
         entityData.set(DATA_HELD_BODY_YAW, Mth.wrapDegrees(turn.body()));
     }

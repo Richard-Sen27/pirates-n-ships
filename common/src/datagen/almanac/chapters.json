@@ -1382,6 +1382,10 @@
        {
         "type": "text",
         "key": "pirates_n_ships.almanac.crew.p3.text2"
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.crew.p3.text3"
        }
       ]
      },
@@ -2911,6 +2915,10 @@
        {
         "type": "recipe",
         "recipe": "pirates_n_ships:boarding_plank"
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.combat.p17.text3"
        }
       ]
      },
@@ -3966,6 +3974,7 @@
   "pirates_n_ships.almanac.crew.p3.heading": "Stations",
   "pirates_n_ships.almanac.crew.p3.text1": "A station is a block a hand can work: the {item:pirates_n_ships:sail_winch}**sail winch**, the **helm**, the {item:pirates_n_ships:capstan}**capstan**, the {item:pirates_n_ships:bilge_pump}**bilge pump**, the {item:pirates_n_ships:cannon}**cannon**, the {item:pirates_n_ships:swivel_gun}**swivel gun** and the {item:pirates_n_ships:crows_nest}**crow's nest**.",
   "pirates_n_ships.almanac.crew.p3.text2": "A posted hand walks to his station, even under way, and stays there while she sails.",
+  "pirates_n_ships.almanac.crew.p3.text3": "A hand with nothing to do strolls the deck, or leans on the {item:pirates_n_ships:oak_railing}**railing** a while and watches the sea. Any order calls him off.",
   "pirates_n_ships.almanac.crew.p4.heading": "The captain's whistle",
   "pirates_n_ships.almanac.crew.p4.show_me1": "Show me: giving orders",
   "pirates_n_ships.almanac.crew.p4.list1_1": "Use it on a hand, then on a station: he takes that station.",
@@ -4207,6 +4216,7 @@
   "pirates_n_ships.almanac.combat.p17.show_me1": "Show me: boarding an enemy",
   "pirates_n_ships.almanac.combat.p17.text1": "Use a rope made fast to a cleat or ring to slide down it, from your masthead onto her deck.",
   "pirates_n_ships.almanac.combat.p17.text2": "With the ships alongside, use a {item:pirates_n_ships:boarding_plank}**boarding plank** on top of your gunwale. Keep the ships together or it breaks. Hold the plank and look at your rail: the board it would lay shows in green, and a red cell marks what stands in the way.",
+  "pirates_n_ships.almanac.combat.p17.text3": "String a {item:pirates_n_ships:ratline_net}**ratline net** between two {item:pirates_n_ships:chainplate}**chainplates** on top of one run of railing and it hangs along the rail as a boarding net. Boarders coming over the rail are held a moment; your own crew pass. Three cutlass blows cut one down.",
   "pirates_n_ships.almanac.combat.p18.heading": "Taking a prize",
   "pirates_n_ships.almanac.combat.p18.text1": "Merchantmen, navy patrols and pirates sail the sea lanes.",
   "pirates_n_ships.almanac.combat.p18.list1_1": "Take goods from her hold while aboard: plundered.",

@@ -201,7 +201,14 @@ public final class RatlineNetAssist {
      * ({@link RatlineNets#climbLine}).
      */
     static @Nullable Net netAt(Level level, BlockPos pos) {
-        return RatlineNets.climbLine(level, pos);
+        Net net = RatlineNets.climbLine(level, pos);
+        // RAIL5: a boarding net hangs along the rail; it is climbed over like a ladder, never along its flat line
+        return net != null && BoardingNets.isBoarding(level, net) ? null : net;
+    }
+
+    /** The frame of the ship whose plot holds {@code pos} on either side, or null in the world (RAIL5's boarding nets). */
+    static @Nullable Frame frameAt(Level level, BlockPos pos) {
+        return frame(level, pos);
     }
 
     private static @Nullable Frame frame(Level level, BlockPos cell) {

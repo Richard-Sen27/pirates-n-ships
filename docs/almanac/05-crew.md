@@ -30,6 +30,8 @@ A station is a block a hand can work: the {item:pirates_n_ships:sail_winch}**sai
 
 A posted hand walks to his station, even under way, and stays there while she sails.
 
+A hand with nothing to do strolls the deck, or leans on the {item:pirates_n_ships:oak_railing}**railing** a while and watches the sea. Any order calls him off.
+
 ## The captain's whistle
 show_me: crew_orders | Show me: giving orders
 - Use it on a hand, then on a station: he takes that station.

@@ -28,6 +28,9 @@ public final class ShipHudSheet {
     /** The red breach tick drawn on a cell with an open breach. */
     public static final Part BREACH = new Part(48, 20, 3, 6);
 
+    /** LKO2: a sighting's mark on the rose's ring, a white diamond in an ink outline, tinted by what was seen. */
+    public static final Part MARK = new Part(56, 0, 7, 7);
+
     private ShipHudSheet() {
     }
 }

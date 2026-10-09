@@ -46,7 +46,7 @@ class ShipHudTextureTest {
         }
         assertTrue(ShipHudSheet.WIDTH <= 128 && ShipHudSheet.HEIGHT <= 64, "the sheet stays small");
         List<ShipHudSheet.Part> parts = List.of(ShipHudSheet.ROSE, ShipHudSheet.NEEDLE, ShipHudSheet.BOW, ShipHudSheet.PUMP,
-                ShipHudSheet.BREACH);
+                ShipHudSheet.BREACH, ShipHudSheet.MARK);
         for (ShipHudSheet.Part a : parts) {
             assertTrue(a.u() >= 0 && a.v() >= 0 && a.u() + a.w() <= ShipHudSheet.WIDTH && a.v() + a.h() <= ShipHudSheet.HEIGHT, a + " inside");
             for (ShipHudSheet.Part b : parts) {

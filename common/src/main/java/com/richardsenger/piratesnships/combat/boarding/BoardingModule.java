@@ -1,7 +1,16 @@
 package com.richardsenger.piratesnships.combat.boarding;
 
+import com.richardsenger.piratesnships.combat.boarding.order.BoardingOrderGameTests;
+import com.richardsenger.piratesnships.combat.boarding.order.BoardingParties;
+import com.richardsenger.piratesnships.combat.boarding.order.BoardingStatePayload;
+import com.richardsenger.piratesnships.combat.boarding.order.BoardingSync;
+import com.richardsenger.piratesnships.combat.boarding.order.ClientBoarding;
+import com.richardsenger.piratesnships.combat.boarding.order.NpcBoarding;
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
+import com.richardsenger.piratesnships.platform.Services;
+import com.richardsenger.piratesnships.platform.event.CommonEvents;
+import com.richardsenger.piratesnships.station.order.WhistleOrder;
 import com.richardsenger.piratesnships.ship.decor.SableWeightTags;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.advancements.critereon.ItemPredicate;
@@ -30,8 +39,8 @@ import java.util.List;
  * The {@code combat.boarding} module (docs/design.md §8.3, §8.4 "Boarding"): the boarding plank, a gangway of plank
  * blocks laid from a ship, a pier or the shore onto a ship, a pier or the shore (BRD1, BRD2), one straight board at a
  * single pitch (BRD4), breaking when its ends part, taken up again by hand; and on the client the board's renderer and
- * the placement preview. A boarding order that
- * sends crew across the planks {@link BoardingPlanks#between} two ships does not exist yet.
+ * the placement preview. BRD3: the "Board!" order ({@code order}): the crew cross a plank or a narrow gap onto the
+ * other ship and fight, NPC captains board the player the same way.
  */
 public final class BoardingModule implements ModModule {
 
@@ -52,6 +61,25 @@ public final class BoardingModule implements ModModule {
     }
 
     @Override
+    public void registerPayloads() {
+        Services.NETWORK.registerToClient(BoardingStatePayload.TYPE, BoardingStatePayload.CODEC, (p, player) -> ClientBoarding.accept(p));
+    }
+
+    @Override
+    public void registerEvents() {
+        CommonEvents.LEVEL_TICK_END.register(BoardingParties::onLevelTick);
+        CommonEvents.LEVEL_TICK_END.register(NpcBoarding::onLevelTick);
+        CommonEvents.SERVER_TICK_END.register(BoardingSync::onServerTick);
+        // a player joining has no "Back aboard" left over from another world or server
+        CommonEvents.PLAYER_LOGIN.register(player -> Services.NETWORK.sendToPlayer(player, new BoardingStatePayload(java.util.List.of())));
+        CommonEvents.SERVER_STOPPED.register(server -> {
+            BoardingParties.clear();
+            NpcBoarding.clear();
+            BoardingSync.clear();
+        });
+    }
+
+    @Override
     public void initClient() {
         com.richardsenger.piratesnships.combat.boarding.client.BoardingClient.init();
     }
@@ -67,7 +95,18 @@ public final class BoardingModule implements ModModule {
                 .add(BoardingPlankItem.KEY_TOO_FAR, "Too far: a plank reaches %s blocks")
                 .add(BoardingPlankItem.KEY_TOO_STEEP, "Too steep: at most %s degrees")
                 .add(BoardingPlankItem.KEY_NOTHING_TO_LAND, "Nothing to land on within reach")
-                .add(BoardingPlankItem.KEY_DISABLED, "Boarding planks are off on this server"));
+                .add(BoardingPlankItem.KEY_DISABLED, "Boarding planks are off on this server")
+                // BRD3: the boarding order's action-bar lines (MSG1: at most 40 characters)
+                .add(BoardingParties.KEY_BOARD, "%s hands, board her!")
+                .add(BoardingParties.KEY_BACK, "All hands back aboard")
+                .add(BoardingParties.KEY_NO_WAY, "No way across to board")
+                .add(BoardingParties.KEY_NO_HANDS, "No hands free to board")
+                .add(BoardingParties.KEY_DISABLED, "Boarding is off on this server")
+                .add(BoardingParties.KEY_CAPTURED, "Her deck is yours")
+                .add(WhistleOrder.BOARD.nameKey(), "Board!")
+                .add(WhistleOrder.BOARD.descriptionKey(), "The crew cross the gangway or a narrow gap and fight her crew; gunners and helmsman stay")
+                .add(WhistleOrder.BACK_ABOARD_KEY, "Back aboard")
+                .add(WhistleOrder.BACK_ABOARD_KEY + ".desc", "The boarders come home over the nearest way and take their stations again"));
         data.models(m -> {
             // BRD4: the straight board is drawn by BoardingPlankRenderer from segment 0; a cell's own model shows nothing
             // but the breaking particles (like the ratline net's cell). The item keeps its hand-made Blockbench model
@@ -103,6 +142,6 @@ public final class BoardingModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(BoardingGameTests.class);
+        return List.of(BoardingGameTests.class, BoardingOrderGameTests.class);
     }
 }

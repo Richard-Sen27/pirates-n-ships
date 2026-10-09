@@ -26,6 +26,9 @@ import org.jetbrains.annotations.Nullable;
  *       {@code SeafarerMob#truce}) does not attack it on sight; it still fights back when hit.</li>
  *   <li>Retaliation: a fighter that is not peaceful keeps fighting an attacker outside its own faction for
  *       {@code mobs.grudge_ticks} after being hit, even one it would not attack on sight.</li>
+ *   <li>Boarding (BRD3, docs/design.md §8.4): a fighter that is not a civilian attacks a boarding foe on sight (it
+ *       boards that one's ship, or that one boards the deck it defends: {@code combat.boarding.order.BoardingFight}),
+ *       whatever its faction, unless the foe is exempt, under a truce or aboard a ship that struck its colours.</li>
  * </ul>
  */
 public final class HostilityRules {
@@ -49,9 +52,15 @@ public final class HostilityRules {
      * @param likedByPirates a player the pirates like (REP1: pirate reputation above
      *                     {@code reputation.pirate_friendly_threshold}); only asked by pirate mobs
      * @param truce        the deciding mob granted it a truce (BOS1: a duel with the pirate captain)
+     * @param boardingFoe  a boarding foe of the deciding mob (BRD3): it boards the other's ship or the other boards its deck
      */
     public record Target(@Nullable MobFaction faction, boolean player, boolean exempt, boolean wantedByNavy, boolean monster,
-                         ShipStance ship, boolean likedByPirates, boolean truce) {
+                         ShipStance ship, boolean likedByPirates, boolean truce, boolean boardingFoe) {
+        public Target(@Nullable MobFaction faction, boolean player, boolean exempt, boolean wantedByNavy, boolean monster,
+                      ShipStance ship, boolean likedByPirates, boolean truce) {
+            this(faction, player, exempt, wantedByNavy, monster, ship, likedByPirates, truce, false);
+        }
+
         public Target(@Nullable MobFaction faction, boolean player, boolean exempt, boolean wantedByNavy, boolean monster,
                       ShipStance ship, boolean likedByPirates) {
             this(faction, player, exempt, wantedByNavy, monster, ship, likedByPirates, false);
@@ -68,12 +77,17 @@ public final class HostilityRules {
 
         /** The same target, liked by the pirates or not (REP1). */
         public Target withLikedByPirates(boolean liked) {
-            return new Target(faction, player, exempt, wantedByNavy, monster, ship, liked, truce);
+            return new Target(faction, player, exempt, wantedByNavy, monster, ship, liked, truce, boardingFoe);
         }
 
         /** The same target, under a truce with the deciding mob or not (BOS1). */
         public Target withTruce(boolean truce) {
-            return new Target(faction, player, exempt, wantedByNavy, monster, ship, likedByPirates, truce);
+            return new Target(faction, player, exempt, wantedByNavy, monster, ship, likedByPirates, truce, boardingFoe);
+        }
+
+        /** The same target, a boarding foe of the deciding mob or not (BRD3). */
+        public Target withBoardingFoe(boolean foe) {
+            return new Target(faction, player, exempt, wantedByNavy, monster, ship, likedByPirates, truce, foe);
         }
 
         public static Target ofPlayer(boolean exempt, boolean wanted) {
@@ -85,7 +99,7 @@ public final class HostilityRules {
         }
 
         public Target withShip(ShipStance stance) {
-            return new Target(faction, player, exempt, wantedByNavy, monster, stance, likedByPirates, truce);
+            return new Target(faction, player, exempt, wantedByNavy, monster, stance, likedByPirates, truce, boardingFoe);
         }
 
         public static Target ofMob(MobFaction faction) {
@@ -101,6 +115,7 @@ public final class HostilityRules {
     public static boolean attacksOnSight(MobFaction self, Target t, Params p) {
         if (p.peaceful() || t.exempt() || t.truce()) return false;
         if (t.ship() == ShipStance.SURRENDERED) return false; // struck colours: nobody attacks on sight
+        if (t.boardingFoe() && self != MobFaction.CIVILIAN) return true; // BRD3: boarders and the deck's defenders
         return switch (self) {
             case CIVILIAN -> false;
             case PIRATE -> t.player()

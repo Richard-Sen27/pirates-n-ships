@@ -201,8 +201,8 @@ class PonderStoryboardsTest {
         assertEquals(CrewOrdersScene.WHEEL.x, first.x, 1e-9);
         assertEquals(CrewOrdersScene.WHEEL.y + CrewOrdersScene.WHEEL_RADIUS, first.y, 1e-9);
         assertTrue(CrewOrdersScene.wheelSlot(1).x > CrewOrdersScene.WHEEL.x, "clockwise from the top");
-        // WHS1: one anchor toggle instead of "Drop anchor" and "Weigh anchor"
-        assertEquals(10, com.richardsenger.piratesnships.station.order.WhistleOrder.entries().size(), // OAR1: + the oars toggle
+        // WHS1: one anchor toggle instead of "Drop anchor" and "Weigh anchor"; OAR1: the oars toggle; BRD3: boarding
+        assertEquals(11, com.richardsenger.piratesnships.station.order.WhistleOrder.entries().size(),
                 "the scene names fire at will and release crew; update its text if the wheel changes");
     }
 
@@ -241,6 +241,22 @@ class PonderStoryboardsTest {
         }
         assertEquals(PlankRun.Landing.LEVEL, run.landing());
         assertEquals(0, run.rise());
+    }
+
+    @Test
+    void theBoardersWalkThePlankTheSceneLays() {
+        // BRD3: from our deck onto our gunwale's top, over every cell of the run on its board, down onto her deck
+        java.util.List<Vec3> path = BoardingScene.BOARDER_PATH;
+        assertEquals(BoardingScene.GUNWALE.getX() + 0.5, path.get(1).x, 1e-9, "onto our gunwale");
+        assertEquals(BoardingScene.GUNWALE.getY() + 1.0, path.get(1).y, 1e-9, "standing on its top");
+        for (net.minecraft.core.BlockPos cell : BoardingScene.RUN) {
+            assertTrue(path.stream().anyMatch(p -> Math.abs(p.x - (cell.getX() + 0.5)) < 1e-9 && Math.abs(p.z - (cell.getZ() + 0.5)) < 1e-9
+                    && p.y > cell.getY() && p.y < cell.getY() + 0.5), "the path misses the board on " + cell);
+        }
+        Vec3 last = path.get(path.size() - 1);
+        assertTrue(last.x > BoardingScene.RUN.get(BoardingScene.RUN.size() - 1).getX() + 1, "it ends past the tip, on her deck");
+        assertEquals(com.richardsenger.piratesnships.station.order.WhistleOrder.BOARD.icon().id().getPath(), "cutlass",
+                "the wheel's boarding entry shows the cutlass");
     }
 
     @Test

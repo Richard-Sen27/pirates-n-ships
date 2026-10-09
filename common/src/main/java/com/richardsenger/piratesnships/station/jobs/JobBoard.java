@@ -262,8 +262,8 @@ public final class JobBoard {
     }
 
     private static JobBoardRules.Status status(ServerLevel level, ShipBody ship, CrewMember c) {
-        if (BrigService.isPrisoner(c)) {
-            return null;
+        if (BrigService.isPrisoner(c) || c.isBoarding()) {
+            return null; // BRD3: a boarder is no free hand until it is back at its station
         }
         StationRef a = c.assignment();
         if (a == null) {

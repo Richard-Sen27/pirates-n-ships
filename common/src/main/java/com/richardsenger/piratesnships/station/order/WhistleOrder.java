@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.station.order;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.combat.boarding.order.ClientBoarding;
 import com.richardsenger.piratesnships.combat.cannon.CannonStation.CannonOrder;
 import com.richardsenger.piratesnships.sailing.oars.OarsSync;
 import com.richardsenger.piratesnships.sailing.oars.RowOrder;
@@ -21,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
  * anchor, repair, boarding) is one more constant here with its {@link CrewOrder}; {@link WhistleOrders} gives it
  * to the crew at the stations that take it. An entry without a crew order is a whistle action of its own
  * ({@link #RELEASE}), except {@link #ANCHOR}, whose crew order follows the anchor's state (WHS1, {@link #order(AnchorState.Phase)}).
+ * {@link #BOARD} (BRD3) is a toggle too: "Board!" while no boarding party of the ship is out, "Back aboard" while one
+ * is ({@link #nameKey(AnchorState.Phase, boolean)}); it is no station order, the server sends the crew across or back.
  * Pure data: the icon is an {@link Icon}, an item id or a GUI sprite id that the client resolves (ART19).
  */
 public enum WhistleOrder {
@@ -44,6 +47,12 @@ public enum WhistleOrder {
      * while it rows ({@code sailing.oars.Rowing#toggle}). The label follows the ship's rowing state ({@link #shownNameKey}).
      */
     ROW(RowOrder.ROW, Icon.item(Constants.id("oar"))),
+    /**
+     * BRD3: "Board!" sends the crew (gunners and helmsman stay) across a gangway or a narrow gap onto the ship alongside
+     * to fight; while they are out the same entry reads "Back aboard" and calls them home
+     * ({@code combat.boarding.order.BoardingParties}). The server decides by the party's state, the client only names it.
+     */
+    BOARD(null, Icon.item(Constants.id("cutlass"))),
     RELEASE(null, Icon.item(Constants.id("sail_winch")));
 
     private static final List<WhistleOrder> ENTRIES = List.of(values());
@@ -125,6 +134,11 @@ public enum WhistleOrder {
         return this == ANCHOR;
     }
 
+    /** Whether the order (and its label) follows the ship's boarding party: out or not (BRD3). */
+    public boolean followsBoarding() {
+        return this == BOARD;
+    }
+
     /** Every crew order this entry can give: its fixed one, both anchor directions for {@link #ANCHOR}, none for release. */
     public List<CrewOrder> orders() {
         if (this == ANCHOR) return List.of(AnchorOrder.DROP_ANCHOR, AnchorOrder.RAISE_ANCHOR);
@@ -165,18 +179,42 @@ public enum WhistleOrder {
         return this == ANCHOR ? anchorKey(AnchorOrder.toggle(anchor)) + ".desc" : descriptionKey();
     }
 
+    /**
+     * The label of this entry on a ship whose anchor is in {@code anchor} and whose boarding party is out or not
+     * ({@code boardingOut}, BRD3): {@link #BOARD} reads "Board!" or "Back aboard"; the anchor follows
+     * {@link #nameKey(AnchorState.Phase)}. Pure.
+     */
+    public String nameKey(AnchorState.@Nullable Phase anchor, boolean boardingOut) {
+        return this == BOARD && boardingOut ? toggledNameKey() : nameKey(anchor);
+    }
+
+    /** {@link #descriptionKey()} following the anchor and the boarding party like {@link #nameKey(AnchorState.Phase, boolean)}. */
+    public String descriptionKey(AnchorState.@Nullable Phase anchor, boolean boardingOut) {
+        return this == BOARD && boardingOut ? toggledDescriptionKey() : descriptionKey(anchor);
+    }
+
+    /** Label key of the boarding toggle while a party is out ("Back aboard", BRD3). */
+    public static final String BACK_ABOARD_KEY = "whistle_order." + Constants.MOD_ID + ".back_aboard";
+
     /** Label key of the anchor toggle in direction {@code direction} ("Drop anchor", "Raise anchor"). */
     public static String anchorKey(AnchorOrder direction) {
         return "whistle_order." + Constants.MOD_ID + "." + direction.id();
     }
 
-    /** Whether this entry is the oars toggle, whose label follows the ship's rowing state (OAR1: {@link #ROW}). */
+    /**
+     * Whether this entry is a toggle whose label follows the ship's state: the oars (OAR1: {@link #ROW}, rowing or not)
+     * and boarding (BRD3: {@link #BOARD}, a party out or not).
+     */
     public boolean isToggle() {
-        return this == ROW;
+        return this == ROW || this == BOARD;
     }
 
-    /** The name key of the toggle's other direction ("Ship oars"); {@link #nameKey()} for an entry that is no toggle. */
+    /**
+     * The name key of the toggle's other direction ("Ship oars", "Back aboard"); {@link #nameKey()} for an entry that is
+     * no toggle.
+     */
     public String toggledNameKey() {
+        if (this == BOARD) return BACK_ABOARD_KEY;
         return isToggle() ? nameKey() + ".toggled" : nameKey();
     }
 
@@ -187,7 +225,8 @@ public enum WhistleOrder {
 
     /**
      * Client: the label to show on the ship the player stands on, whose anchor is in {@code anchor}: "Ship oars" while it
-     * rows (OAR1, {@link OarsSync#clientRowing}), else {@link #nameKey(AnchorState.Phase)}.
+     * rows (OAR1, {@link OarsSync#clientRowing}), "Back aboard" while the player's boarding party is out (BRD3,
+     * {@link ClientBoarding#outHere}), else {@link #nameKey(AnchorState.Phase)}.
      */
     public String shownNameKey(AnchorState.@Nullable Phase anchor) {
         return toggledOnClient() ? toggledNameKey() : nameKey(anchor);
@@ -199,6 +238,6 @@ public enum WhistleOrder {
     }
 
     private boolean toggledOnClient() {
-        return this == ROW && OarsSync.clientRowing();
+        return this == ROW && OarsSync.clientRowing() || this == BOARD && ClientBoarding.outHere();
     }
 }

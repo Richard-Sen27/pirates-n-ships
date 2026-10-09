@@ -120,6 +120,16 @@ With the ships alongside, use a {item:pirates_n_ships:boarding_plank}**boarding 
 
 String a {item:pirates_n_ships:ratline_net}**ratline net** between two {item:pirates_n_ships:chainplate}**chainplates** on top of one run of railing and it hangs along the rail as a boarding net. Boarders coming over the rail are held a moment; your own crew pass. Three cutlass blows cut one down.
 
+## Board her!
+{spotlight:captains_whistle}
+With a gangway across or her rail two blocks off at most, blow **Board!**. Your hands cross and fight her crew; gunners and helmsman stay.
+
+- An empty hand takes a sword from your chests.
+- Her deck clear: "Her deck is yours", and they come home.
+- **Back aboard** calls them home early.
+
+>! Pirates alongside board you the same way.
+
 ## Taking a prize
 Merchantmen, navy patrols and pirates sail the sea lanes.
 

@@ -24,6 +24,7 @@ Minecraft mod. Full spec: `docs/design.md`. Read it at the start of every sessio
 - `refs/create-aeronautics`: an example of a real mod using Sable (assembly, forces).
 - `refs/multiloader-template`: the original template, for reference on build setup.
 - `refs/guideme`: the GuideME source (branch `1.21.1`), the in-game guidebook framework; read it before using its page format, tags or API.
+- `refs/ponder`: the Ponder source (Creators-of-Create, branch `mc1.21.1/dev`), the interactive scene library ("Show me" scenes); read it before registering scenes, plugins or scene structures.
 - `refs/` is read-only and excluded from the build. Never copy code from `refs/` into the mod (licenses).
 
 ## Commands

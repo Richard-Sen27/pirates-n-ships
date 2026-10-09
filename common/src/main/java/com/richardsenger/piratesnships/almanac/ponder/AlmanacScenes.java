@@ -70,6 +70,18 @@ public final class AlmanacScenes {
     /** The oak oar bench, the oar bench family's lead ({@code sailing.oars.OarsContent#BENCHES}). */
     public static final ResourceLocation OAR_BENCH_ITEM = Constants.id("oak_oar_bench");
 
+    /** PND4: what landed after PND2; each scene's id is also its schematic. */
+    public static final ResourceLocation RATLINE_NETS = Constants.id(ShipSceneText.RATLINE_NETS);
+    public static final ResourceLocation RAILINGS = Constants.id(ShipSceneText.RAILINGS);
+    public static final ResourceLocation SHIP_IDENTITY = Constants.id(ShipSceneText.SHIP_IDENTITY);
+    public static final ResourceLocation ON_DECK = Constants.id(CrewSceneText.ON_DECK);
+
+    /** Their items: the net, the oak railing (the railing family's lead, for the railings and the crew at the rail), the name board. */
+    public static final ResourceLocation RATLINE_NET_ITEM = Constants.id("ratline_net");
+    public static final ResourceLocation OAK_RAILING_ITEM = Constants.id("oak_railing");
+    /** The name board keeps the nameplate's registry id (NAME2). */
+    public static final ResourceLocation NAME_BOARD_ITEM = Constants.id("nameplate");
+
     /** Every scene, in the order the plugin registers them (an item's scenes play in this order). */
     public static final List<Scene> ALL = List.of(
             new Scene(CANNON_LOADING, CANNON_ITEM, CANNON_LOADING),
@@ -89,7 +101,11 @@ public final class AlmanacScenes {
             new Scene(GALLEY_AND_PROVISIONS, PANTRY_ITEM, GALLEY_AND_PROVISIONS),
             new Scene(HAMMOCKS_AND_REST, HAMMOCK_ITEM, HAMMOCKS_AND_REST),
             new Scene(SWIVEL_GUN, SWIVEL_GUN_ITEM, SWIVEL_GUN),
-            new Scene(OARS, OAR_BENCH_ITEM, OARS));
+            new Scene(OARS, OAR_BENCH_ITEM, OARS),
+            new Scene(RATLINE_NETS, RATLINE_NET_ITEM, RATLINE_NETS),
+            new Scene(RAILINGS, OAK_RAILING_ITEM, RAILINGS),
+            new Scene(SHIP_IDENTITY, NAME_BOARD_ITEM, SHIP_IDENTITY),
+            new Scene(ON_DECK, OAK_RAILING_ITEM, ON_DECK));
 
     private AlmanacScenes() {
     }

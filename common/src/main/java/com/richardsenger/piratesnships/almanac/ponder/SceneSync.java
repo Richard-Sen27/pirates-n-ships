@@ -5,6 +5,7 @@ import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.crew.npc.CrewPose;
 import com.richardsenger.piratesnships.mob.MeleePose;
 import com.richardsenger.piratesnships.mob.entity.SeafarerMob;
+import com.richardsenger.piratesnships.ship.decor.NameplateBlockEntity;
 import com.richardsenger.piratesnships.ship.decor.ShipsBellBlockEntity;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagpoleBlockEntity;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -46,9 +47,14 @@ final class SceneSync {
     static final Ref BELL_RING_START = new Ref(ShipsBellBlockEntity.class, "TAG_RING_START");
     static final Ref BELL_STRIKE = new Ref(ShipsBellBlockEntity.class, "TAG_STRIKE");
 
+    /** PND4: a name board's synced name and its place in its row (NAME2). */
+    static final Ref NAME_TEXT = new Ref(NameplateBlockEntity.class, "TAG_TEXT");
+    static final Ref NAME_ROW_INDEX = new Ref(NameplateBlockEntity.class, "TAG_ROW_INDEX");
+    static final Ref NAME_ROW_LENGTH = new Ref(NameplateBlockEntity.class, "TAG_ROW_LENGTH");
+
     /** Every field a scene relies on. */
     static final List<Ref> FIELDS = List.of(WORKING, RESTING, EATING, STATION_POSE, MELEE_POSE, AIMING, FLAGPOLE_STATE,
-            BELL_RING_START, BELL_STRIKE);
+            BELL_RING_START, BELL_STRIKE, NAME_TEXT, NAME_ROW_INDEX, NAME_ROW_LENGTH);
 
     private static boolean warned;
 

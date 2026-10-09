@@ -90,7 +90,27 @@ class AlmanacScenesTest {
     @Test
     void thereAreSeventeenScenes() {
         // ALM4's cannon, PND1's eight ship mechanics, PND2's eight for crew, combat and life aboard
-        assertEquals(18, AlmanacScenes.ALL.size()); // OAR1: oars
+        assertEquals(22, AlmanacScenes.ALL.size()); // OAR1: oars; PND4: nets, railings, identity, on deck
+    }
+
+    @Test
+    void thePnd4ScenesHaveTheIdsTheChaptersCarryOnTheirItems() {
+        // PND4 (design.md §3.4): what landed after PND2
+        Map<String, String> expected = new LinkedHashMap<>();
+        expected.put("ratline_nets", "ratline_net");
+        expected.put("railings", "oak_railing");
+        expected.put("ship_identity", "nameplate");
+        expected.put("on_deck", "oak_railing");
+        expected.forEach((scene, item) -> {
+            ResourceLocation id = ResourceLocation.parse("pirates_n_ships:" + scene);
+            AlmanacScenes.Target target = AlmanacScenes.resolve(id).orElseThrow(() -> new AssertionError(scene));
+            assertEquals(ResourceLocation.parse("pirates_n_ships:" + item), target.component(), scene);
+            assertEquals(id, target.scene().id());
+            assertEquals(id, target.scene().schematic());
+        });
+        // the railing's Ponder key plays the railings first, then the crew at the rail
+        assertEquals(List.of(AlmanacScenes.RAILINGS, AlmanacScenes.ON_DECK),
+                AlmanacScenes.forComponent(AlmanacScenes.OAK_RAILING_ITEM).stream().map(AlmanacScenes.Scene::id).toList());
     }
 
     @Test

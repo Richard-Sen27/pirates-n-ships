@@ -287,6 +287,11 @@
           "key": "pirates_n_ships.almanac.ships.p13.heading"
         },
         {
+          "type": "show_me",
+          "label": "pirates_n_ships.almanac.ships.p13.show_me1",
+          "scene": "pirates_n_ships:ship_identity"
+        },
+        {
           "type": "illustration",
           "h": 0.35,
           "texture": "pirates_n_ships:textures/almanac/figurehead_mermaid.png",
@@ -349,6 +354,11 @@
         {
           "type": "heading",
           "key": "pirates_n_ships.almanac.ships.p16.heading"
+        },
+        {
+          "type": "show_me",
+          "label": "pirates_n_ships.almanac.ships.p16.show_me1",
+          "scene": "pirates_n_ships:railings"
         },
         {
           "type": "text",

@@ -1853,9 +1853,20 @@ Every key `easeInOutSine`; the head is never keyed (contract above).
   it to the head bone already flipped, GL1 rule 2): 3 s looking straight out, then a 4 s turn to 35° one side and back,
   the other side the next cycle, within ST5's ±45° of the body; the head pitch is −10° (Minecraft pitch, up), which on
   the 24° waist leaves the face looking about 14° down at the water.
-- Open: see it in Blockbench and in game (the arm's single segment has no elbow, so "forearms on the rail" is the whole
-  arm lying across the top rail with the hands hanging just outboard); copy it into the seafarer projects when
-  Blockbench is free; a render.
+- **Checked in Blockbench (PND4, 2026-10-09).** `crew_member.bbmodel` opened in its own tab, `lean` imported from
+  `crew_member.animation.json` (Blockbench's export of it equals the file) and saved into the project (appended as the
+  18th animation, every other byte unchanged). A rail reference (16 px wide and tall, 2 px deep, its inner face 5.12 px
+  in front of the feet: `0.5 − 2/16 − LeanRules.LEAN_OFFSET` blocks, the front is −z in Blockbench) was added to the
+  preview scene for the check only. Sampled with the posed meshes at 0, 1.5 and 3 s: no cube of the rig enters the
+  rail; over the rail's depth the arm cubes' underside lies 16.5–16.8 px up (0.5–0.8 px above the 16 px rail top), the
+  sleeve and cuff layers 0.0–0.6 px, so the forearms rest on it (the rig test's 0.5–0.9 px agrees); the hands hang about
+  6.7 px outboard of the rail's outer face; the right leg stands straight under the shifted root, the left trails back
+  and out (the weight on one leg, a quiet shift: half a pixel); the only overlaps are the vanilla rig's own joints
+  (arm tops 0.27 px into the body at the shoulder, the legs 0.32 px at the hip). **No key changed**, so
+  `tools/gen_lean_animation.py` was not rerun. Render `renders/anim_crew_lean.png`: three frames (0, 1.5, 3 s) with the
+  rail reference and a deck, top row three-quarter front, bottom row from the leaner's left side (the head is
+  untouched: its turn is code). Open: the seafarer projects (`pirate`, `sailor`, `navy_*`) still do not carry `lean`
+  in their `.bbmodel` (they share the animation file, so the game is unaffected).
 
 ### Rowing (OAR1)
 

@@ -113,6 +113,7 @@ illustration: ratlines
 A net needs something to rest on: break one and those hanging from it fall too.
 
 ## Ratline nets
+show_me: ratline_nets | Show me: stringing ratline nets
 {spotlight:ratline_net}
 A {item:pirates_n_ships:ratline_net}**ratline net** runs from a {item:pirates_n_ships:chainplate}**chainplate** on the rail to a {item:pirates_n_ships:mast_hoop}**mast hoop** up the mast. Use the net on one, then on the other; the line between them must be clear.
 {recipe:ratline_net}

@@ -1,7 +1,7 @@
 package com.richardsenger.piratesnships.sailing.effects;
 
 /**
- * Pure helpers shared by the wind streaks and the foam (WD1, docs/design.md §5.4 "Seeing wind and waves"): how many
+ * Pure helpers shared by the wind streaks and the foam (WD1, WD2, docs/design.md §5.4 "Seeing wind and waves"): how many
  * particles a fractional rate gives this tick, where in the ring around the camera a particle starts, and how a particle
  * fades in and out over its life. No world access; the random numbers come from the caller.
  */
@@ -55,6 +55,24 @@ public final class SpawnRules {
         double in = smooth(f / FADE_FRACTION);
         double out = smooth((1.0 - f) / FADE_FRACTION);
         return Math.min(in, out);
+    }
+
+    /**
+     * A triangular distribution from {@code min} to {@code max} with its mode at {@code peak} (clamped into the range),
+     * by the inverse of its distribution function: dense around the peak, thinning linearly to both ends.
+     *
+     * @param u uniform in [0, 1)
+     */
+    public static double triangular(double min, double max, double peak, double u) {
+        double b = Math.max(min, max);
+        double c = Math.max(min, Math.min(b, peak));
+        double span = b - min;
+        if (span <= 0.0) {
+            return min;
+        }
+        double t = Math.max(0.0, Math.min(1.0, u));
+        double split = (c - min) / span;
+        return t < split ? min + Math.sqrt(t * span * (c - min)) : b - Math.sqrt((1.0 - t) * span * (b - c));
     }
 
     /** The unit vector {@code {x, z}} of a compass bearing (0 = north = −Z, 90 = east = +X), as {@code WindSample}. */

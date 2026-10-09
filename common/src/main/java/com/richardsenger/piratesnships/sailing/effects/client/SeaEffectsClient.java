@@ -8,7 +8,9 @@ import com.richardsenger.piratesnships.platform.event.ClientEvents;
 import com.richardsenger.piratesnships.sailing.effects.FoamRules;
 import com.richardsenger.piratesnships.sailing.effects.SeaEffectsConfig;
 import com.richardsenger.piratesnships.sailing.effects.SpawnRules;
+import com.richardsenger.piratesnships.sailing.effects.WindPuffs;
 import com.richardsenger.piratesnships.sailing.effects.WindStreakRules;
+import com.richardsenger.piratesnships.sailing.effects.WindStreakStyle;
 import com.richardsenger.piratesnships.sailing.wind.ClientWind;
 import com.richardsenger.piratesnships.sailing.wind.WindSample;
 import com.richardsenger.piratesnships.ship.sable.WaterRegions;
@@ -32,21 +34,36 @@ import org.jetbrains.annotations.Nullable;
  * streaks ({@code wind_effects.*}) drift with the synced wind ({@link ClientWind}) through the air over the sea around
  * the camera, and faint foam streaks ({@code wave_effects.foam*}) lie on the water along the direction of the synced
  * waves ({@link ClientWaves}), most on the crests. The rates and positions come from the pure {@link WindStreakRules}
- * and {@link FoamRules}. Both respect the video setting "Particles" and stop in calm air and a calm sea. Only renders:
+ * and {@link FoamRules}; WD2 gives each wind streak its own speed, heading, wobble, life and stroke sprite
+ * ({@link WindStreakStyle}) and births most of them in loose puffs ({@link WindPuffs}). Both respect the video setting "Particles" and stop in calm air and a calm sea. Only renders:
  * nothing here reaches the server or changes gameplay.
  */
 public final class SeaEffectsClient {
 
     /** Sprites of our own in the vanilla particle atlas (textures/particle/*.png, made by tools/gen_sea_effects_textures.py). */
-    static final ResourceLocation WIND_STREAK = Constants.id("wind_streak");
+    static final ResourceLocation[] WIND_STREAKS = new ResourceLocation[WindStreakStyle.VARIANTS];
+
+    static {
+        for (int i = 0; i < WIND_STREAKS.length; i++) {
+            WIND_STREAKS[i] = Constants.id("wind_streak_" + i);
+        }
+    }
+
     static final ResourceLocation FOAM_STREAK = Constants.id("foam_streak");
 
     /** Upper limit of streaks or foam spawned in one tick, whatever the config says. */
     static final int MAX_PER_TICK = 48;
-    /** Thickness of a wind streak and of a foam streak [blocks]. */
-    static final double STREAK_WIDTH = 0.09, FOAM_WIDTH = 0.45;
-    /** Opacity of a fully faded-in wind streak. */
-    static final double STREAK_ALPHA = 0.32;
+    /** Thickness of a foam streak [blocks]. */
+    static final double FOAM_WIDTH = 0.45;
+    /**
+     * Width of a wind streak's quad over its length (WD2): the stroke sprites are 64×16 with the thin stroke and its
+     * curves inside, so the quad keeps their aspect and the curl is not squashed.
+     */
+    static final double STREAK_ASPECT = 0.25;
+
+    /** The puffs of wind streaks still being born (WD2). */
+    private static final WindPuffs PUFFS = new WindPuffs();
+    private static @Nullable ClientLevel puffLevel;
 
     private SeaEffectsClient() {
     }
@@ -57,10 +74,19 @@ public final class SeaEffectsClient {
 
     static void tick(Minecraft mc) {
         ClientLevel level = mc.level;
-        if (level == null || mc.isPaused() || mc.player == null) {
+        if (level == null) {
+            PUFFS.clear();
+            puffLevel = null; // hold no reference to a level that was left
+            return;
+        }
+        if (mc.isPaused() || mc.player == null) {
             return;
         }
         boolean streaks = SeaEffectsConfig.STREAKS.get() && ClientWind.hasData();
+        if (level != puffLevel || !streaks) {
+            PUFFS.clear();
+            puffLevel = level;
+        }
         boolean foam = HazardConfig.FOAM.get() && ClientWaves.hasData();
         if (!streaks && !foam) {
             return;
@@ -89,32 +115,42 @@ public final class SeaEffectsClient {
                                      RandomSource r) {
         WindStreakRules rules = SeaEffectsConfig.windStreaks();
         if (!rules.inRange(cam.y, seaY)) {
+            PUFFS.clear();
             return;
         }
+        WindStreakStyle style = SeaEffectsConfig.windStyle();
         WindSample wind = ClientWind.sample(time);
-        int n = Math.min(MAX_PER_TICK, SpawnRules.count(rules.rate(wind.strength(), wind.gust()) * setting, r.nextDouble()));
-        if (n == 0) {
+        double rate = rules.rate(wind.strength(), wind.gust()) * setting;
+        if (rate <= 0.0 && PUFFS.pendingCount() == 0) {
             return;
         }
-        TextureAtlasSprite sprite = sprite(mc, WIND_STREAK);
-        if (sprite == null) {
+        TextureAtlasSprite[] sprites = windSprites(mc);
+        if (sprites == null) {
             return;
         }
-        double speed = WindStreakRules.speedPerTick(wind.strength());
-        double length = WindStreakRules.length(wind.strength());
-        for (int i = 0; i < n; i++) {
+        double alpha = style.opacity(wind.strength());
+        int[] spawned = {0};
+        PUFFS.tick(rate, wind.gust(), style, r::nextDouble, () -> {
             double[] p = rules.start(cam.x, cam.z, wind.dirX(), wind.dirZ(), wind.strength(), r.nextDouble(), r.nextDouble());
-            double y = rules.y(seaY, r.nextDouble());
-            BlockPos pos = BlockPos.containing(p[0], y, p[1]);
-            if (!level.isLoaded(pos) || !level.getBlockState(pos).isAir()
-                    || WaterRegions.isOccluded(level, new Vec3(p[0], y, p[1]))) {
-                continue;
+            return new double[] {p[0], rules.y(seaY, style.heightPeak(), r.nextDouble()), p[1]};
+        }, s -> {
+            if (spawned[0] >= MAX_PER_TICK) {
+                return;
             }
-            mc.particleEngine.add(new SeaStreakParticle(level, p[0], y, p[1], SeaStreakParticle.Shape.AIR,
-                    wind.dirX(), wind.dirZ(), speed * (0.9 + 0.2 * r.nextDouble()), (r.nextDouble() - 0.5) * 0.01,
-                    length * (0.75 + 0.5 * r.nextDouble()), STREAK_WIDTH * (0.8 + 0.4 * r.nextDouble()), STREAK_ALPHA,
-                    rules.lifeTicks(), sprite));
-        }
+            BlockPos pos = BlockPos.containing(s.x(), s.y(), s.z());
+            if (!level.isLoaded(pos) || !level.getBlockState(pos).isAir()
+                    || WaterRegions.isOccluded(level, new Vec3(s.x(), s.y(), s.z()))) {
+                return;
+            }
+            WindStreakStyle.Streak streak = style.streak(rules.lifeTicks(), s.speedU(), s.headingU(), r::nextDouble);
+            double[] dir = SpawnRules.bearing(wind.towardDegrees() + streak.headingOffsetDegrees());
+            double strength = wind.strength() * streak.speedFactor();
+            double length = WindStreakRules.length(strength) * (0.8 + 0.4 * r.nextDouble());
+            mc.particleEngine.add(new WindStreakParticle(level, s.x(), s.y(), s.z(), dir[0], dir[1],
+                    WindStreakRules.speedPerTick(strength), length, length * STREAK_ASPECT, alpha, streak.lifeTicks(),
+                    streak.wobbleAmplitude(), streak.wobblePhase(), sprites[streak.variant()]));
+            spawned[0]++;
+        });
     }
 
     private static void spawnFoam(Minecraft mc, ClientLevel level, Vec3 cam, double seaY, double time, double setting,
@@ -159,6 +195,17 @@ public final class SeaEffectsClient {
                     dir[0], dir[1], drift, 0.0, length * (0.7 + 0.6 * r.nextDouble()), FOAM_WIDTH * (0.7 + 0.6 * r.nextDouble()),
                     alpha, rules.lifeTicks(), sprite));
         }
+    }
+
+    private static TextureAtlasSprite @Nullable [] windSprites(Minecraft mc) {
+        TextureAtlasSprite[] sprites = new TextureAtlasSprite[WIND_STREAKS.length];
+        for (int i = 0; i < sprites.length; i++) {
+            sprites[i] = sprite(mc, WIND_STREAKS[i]);
+            if (sprites[i] == null) {
+                return null;
+            }
+        }
+        return sprites;
     }
 
     private static @Nullable TextureAtlasSprite sprite(Minecraft mc, ResourceLocation id) {

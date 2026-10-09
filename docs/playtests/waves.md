@@ -144,3 +144,57 @@ screenshots or short clips of steps 2, 3, 5 and 7, and `latest.log` if anything 
   on briefly before the new ones take over.
 - Streaks do not collide: one born over the sea may drift into a hill or through a ship's hull and sails.
 - Shader packs (Iris) were not checked.
+
+## WD2: natural wind streaks
+
+The human after WD1: "the wind and water particles are already REALLY good, but the wind particles still need some
+refinement, they don't feel natural yet." WD2 changes only the wind streaks; the foam is untouched. The rules (speed
+0.7–1.3 × the wind, heading ±8°, life 25–60 ticks, wobble 0.05–0.25 blocks; the triangular height around
+`height_peak`; puffs keeping the mean rate; the fast-in, slow-out fade; opacity by wind speed; sprite weights) and the
+four sprites are covered by JUnit (`WindStreakStyleTest`, `SeaEffectRulesTest`). Only the look needs the game.
+
+**What changed.** Each streak now flies at its own speed (`speed_spread` 0.3: 0.7 to 1.3 times the wind) and its own
+heading (`heading_jitter_degrees` 8), bobs gently once over its life (`wobble` 0.25: 0.05 to 0.25 blocks, mostly up
+and down, a third as much sideways) and lives 25 to 60 ticks (0.625 to 1.5 × `life_ticks` 40). About two thirds of
+them come in loose puffs (`puff_share` 0.65, all of them at a gust's peak) of 3 to 6 streaks (`puff_size` 6) within 2
+blocks (`puff_spread`) over 5 ticks (`puff_ticks`), with single streaks trickling between; the total stays what
+`density` gave in WD1. Most fly about 3 blocks above the sea (`height_peak`), fewer higher, a few up to `height` 12.
+The sprite is a tapered, slightly curved brush stroke, faint and hair-thin at the tail and fuller at the head: one of
+four (nearly straight, gentle arc, soft S, and less often a "whoosh" that curls up and back at the head). They fade in
+over the first 15 % of their life and dissolve slowly over the last 60 %. Opacity grows with the wind: 0.3 × `opacity`
+(0.36) at 4 blocks/s, full from 12 blocks/s.
+
+Setup as in WD1: `./gradlew :neoforge:runClient` (and once on Fabric, `./gradlew :fabric:runClient`), a creative
+world, default config, open sea, `/pirates ship place starter_sloop assemble`, stand on the deck, `/weather clear`,
+`/pirates waves set moderate`. Please send a short clip of steps 1 and 2 (10 s each, looking across the wind), and
+`latest.log` if anything goes wrong.
+
+1. **Moderate wind.** `/pirates wind set 0 6` (6 blocks/s from the north). Look across the wind (east or west), then
+   along it.
+   - **Expected:** faint, thin strokes, clearly paler than in WD1 at this speed, mostly between the deck and the
+     top of the lower sails, a few higher. They do not all fly in lockstep: some overtake others, their lines fan out
+     by a few degrees, each rises or dips gently once while it flies. They come in small loose clusters of 3 to 6 a
+     moment apart, with single ones between. Each appears quickly and fades out slowly, no popping. Now and then one
+     ends in a small curl at its leading end (it flies curl first). Their heads point downwind.
+   - Tune: too regular → raise `speed_spread` (0.4) or `heading_jitter_degrees` (12); too wavy → lower `wobble`; too
+     faint → raise `opacity`; too clumped → lower `puff_share`, or lower `puff_size`; clusters too tight → raise
+     `puff_spread`; too low or high → `height_peak`.
+2. **Strong wind.** `/pirates wind set 0 12`.
+   - **Expected:** about twice as many streaks as at 6, fully bright, longer and faster; the puffs read as gusts of
+     air rolling past the ship; still no lockstep and the same spread of heights. The overall count is what WD1 gave
+     at 12 blocks/s.
+3. **Gale with gusts.** `/pirates wind clear`, `/weather thunder`, wait for a gust (the HUD shows it).
+   - **Expected:** during the gust nearly every streak comes in a puff and there are more of them; between gusts the
+     trickle returns.
+4. **Unchanged.** Repeat WD1 steps 6 (inside the hull: no streaks born in a dry hold), 7 (Particles: Decreased about
+   half, Minimal none) and 8 (under water none). The foam looks exactly as before.
+5. **Curl orientation.** In step 1, watch a streak with a curl from the side, then walk around to see it from the
+   other side.
+   - **Expected:** the curl is at the downwind end and rolls up and back from either side (the stroke's top edge is
+     kept upward). Seen from straight above, curls may roll either way.
+
+### Known limits
+
+- The quad keeps the stroke's 4:1 aspect, so a long streak is also a wider quad; the stroke inside stays thin.
+- Seen from straight above, a curved stroke can flip sideways as the camera passes over it.
+- Puffs that are being born when the camera leaves the band over the sea are dropped.

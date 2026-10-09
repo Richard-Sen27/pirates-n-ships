@@ -1375,6 +1375,19 @@ Boarding plank ramps (BRD2):
   `renders/boarding_plank_ramps_side.png` (the same from the east, the far end on the right). The renders show small gaps at the joints
   (Blockbench's preview did not seem to apply `rescale`); check the joints in game.
 
+Boarding plank as one straight board (BRD4):
+- The gangway is now one straight board drawn by `BoardingPlankRenderer` (code, not a model) from the run's segment 0:
+  14 px wide (the BRD1 boards' x 1..15), 2 px thick, the vanilla `spruce_planks` texture tiled along it, a 3 px lip
+  where an end meets an edge, and `stripped_spruce_log` cleats (1.5 px long, 1 px high, 12 px wide) every block on a
+  board steeper than 15 degrees, after the BRD1 cleats. The cells' block model is generated particles only
+  (`spruce_planks`), like the ratline net's cell.
+- Removed: the block models `boarding_plank`, `boarding_plank_base`, `boarding_plank_tip` and the ramps
+  `boarding_plank_ramp_low`, `_ramp_high`, `_steep` (nothing references them), the ramp groups of
+  `boarding_plank.bbmodel` and their renders `renders/boarding_plank_ramps(_side).png`. The project keeps the
+  `boarding_plank_item` group (exported to `item/boarding_plank.json`, still the item's model) and, as the reference
+  for the board's look, the BRD1 groups `boarding_plank_base`, `boarding_plank`, `boarding_plank_tip`, which are no
+  longer exported; `renders/boarding_plank.png` shows them.
+
 Crow's nest (CN1):
 - **`crows_nest.bbmodel`** -> `block/crows_nest.json` (56 elements; vanilla `spruce_planks` staves and floor,
   `stripped_spruce_log` rim and struts, `anvil` hoops, `dark_oak_planks` underside; particle `spruce_planks`). One

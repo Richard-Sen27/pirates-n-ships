@@ -459,20 +459,23 @@ crow's nest down to an enemy deck is the classic move. Server config `grapple.sl
 Craft one from three wooden slabs over two iron nuggets. It is a gangway: lay it from a ship, a pier or the shore onto
 a ship, a pier or the shore. Use it on the top of a gunwale, rail or pier edge block, facing where it should go; it
 runs straight out from beside that block, level with its top (used on the side of the block, it lies a block lower).
-It takes the shortest run of up to six blocks that lands: resting on a deck or pier, or climbing onto the edge of one.
-When the far end is higher or lower, the plank climbs or falls up to two blocks on ramps, a gentle one (a block over
-two cells) where there is room, a steep one (a block per cell) over a short gap; the ramps have steps, so you and your
-crew walk up without jumping. While you hold the plank, the run it would lay where you look is outlined in green, or
-the cell in the way in red. A refusal says why on the action bar: something in the way (and how far out), too far,
-too steep, nothing to land on, or no plank from here (for example along a pier, where there is nothing to bridge).
+It reaches up to six blocks to the first deck or pier it can land on, preferring one level with its start, then one a
+block up or down, and so on: resting on that deck or pier, or meeting the top edge of a higher one. The plank is one
+straight board at a single pitch from its start to its landing, as steep as a block of rise for every block of run
+(45 degrees) at most; under the board are small steps, so you and your crew walk up and down without jumping. While
+you hold the plank, the board it would lay where you look is outlined in green, or the cell in the way in red. A
+refusal says why on the action bar: something in the way (and how far out), too far, too steep (and the steepest
+pitch allowed), nothing to land on, or no plank from here (for example along a pier, where there is nothing to bridge).
 
 A plank that touches a ship lies on that ship and moves with her, even when you lay it from the pier. Keep the ends
 together: when the far end drifts more than a block and a half sideways, or more than two and a half blocks up or down
 (a moored ship rides out a storm's heave), or a ship or a block an end rests on is gone, the whole plank breaks and
 drops back as one item. A plank between two piers is plain blocks. Breaking any part takes the whole plank down; sneak
 and use it with an empty hand, from either end, to take it up again. Server config `boarding.plank` (`max_length`,
-`max_rise`, `rise_run`, `steep_fallback`, `pick_up`, `break_distance`, `break_rise`); client config
-`boarding_view.preview`.
+`max_pitch`, `pick_up`, `break_distance`, `break_rise`; the ramp settings `max_rise`, `rise_run` and `steep_fallback`
+of earlier versions are gone and ignored in an old config file); client config `boarding_view.preview`. Planks laid
+with an earlier version are turned into straight boards the first time their world loads (a level one stays as it
+is; a sloped one is laid again from its near end, or drops back as one plank if no straight board fits there).
 
 ### Map tiles
 Craft a Map Tile from 8 sticks around a paper and place it on a table or a wall. Put several side by side in a
@@ -1674,7 +1677,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `combat` | Cannon block damage, rain misfires; `damage_multipliers` (cannon on blocks and entities, firearms). |
 | `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevations, blocks per hit, recoil and impact, ball lifetime and water, `mobGriefing` and spawn protection, drops, glancing hits; `swivel`, `chain_shot`, `grapeshot`, `crew` (loading by the crew, load preference), `npc` (fire at will). |
 | `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore haul, entity damage, lost hooks, latching on world blocks and on your own ship, cleats and rings, climbing; `launch` (from the musket), `slide` (sliding along a rope). |
-| `boarding` | `plank`: the boarding plank on/off, length, break distance. |
+| `boarding` | `plank`: the boarding plank on/off, length, steepest pitch (`max_pitch`, 45 degrees), pick-up, break distance and rise. |
 | `apparel` | Armour of the hats, coats, breeches and boots. |
 | `chart` | Charts on/off, cell size, sampling radius and interval, shallow depth, the cell cap, opening without the item (`open_without_item`, off by default), other players visible, marker cap; `tiles` (map tiles). |
 | `almanac` | The Captain's Almanac readable on/off (`enabled`), how long a placed tome stays open (`open_ticks`), the last page remembered per player (`remember_page`), the first-join gift (`give_on_first_join`). |

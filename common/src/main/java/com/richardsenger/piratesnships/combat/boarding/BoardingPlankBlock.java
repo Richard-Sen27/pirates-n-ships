@@ -5,7 +5,6 @@ import com.richardsenger.piratesnships.core.block.Waterlogging;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -18,14 +17,11 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -40,20 +36,21 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * One cell of a boarding plank run, the gangway (BRD1, BRD2, docs/design.md §8.3, §8.4), laid only by
+ * One cell of a boarding plank run, the gangway (BRD1, BRD2, BRD4, docs/design.md §8.3, §8.4), laid only by
  * {@link BoardingPlankItem}. {@link #FACING} is the direction the run is laid in (from segment 0 outward),
- * {@link #SEGMENT} the cell's index from segment 0 (0..5), {@link #TIP} marks the far end, {@link #PITCH} the slope of
- * this cell ({@link PlankRun.Pitch}). Segment 0 holds the {@link BoardingPlankBlockEntity} that watches both ends.
+ * {@link #SEGMENT} the cell's index from segment 0. Every cell has a {@link BoardingPlankBlockEntity} with the board's
+ * heights in it; segment 0's also holds the run and watches both ends. The board itself is drawn as one straight piece
+ * by {@code BoardingPlankRenderer} from segment 0; the cell's own model shows nothing (particles only).
  *
- * <p><b>Shape.</b> A flat cell is a 2 px board. A ramp cell is a staircase of 4 px steps under the ideal slope, two steps
- * for a half of a 1-in-2 ramp and four for a 45° cell, each step's top 2 px above the slope (at most the cell's top),
- * so players and crew walk up without jumping and the pathfinder sees stairs.
+ * <p><b>Shape.</b> The straight board's underside crosses the cell from its near to its far edge; the collision (and
+ * the outline, the same shape) is a staircase of four 4 px steps on it, each 2 px above the underside's higher end over
+ * that step, cut to the cell ({@link PlankRun#steps}): at 45° a step is a quarter block, so players and crew walk up
+ * without jumping and the pathfinder sees stairs. Without its block entity (a Ponder scene, a cell of an old save not
+ * recomputed yet) the cell is a flat 2 px board. The shape depends on the block entity, so the block has a dynamic shape
+ * ({@link BoardingContent}).
  *
- * <p><b>Links.</b> Consecutive segments join where their walking surfaces meet: segment {@code k + 1} lies one cell out
- * in {@link #FACING}, level with segment {@code k} or one block higher or lower ({@link #outer}, {@link #inner}). A
- * segment that lost a link breaks: a face neighbour at once through {@link #updateShape} (vanilla destroys a block
- * whose shape update returns air, with drops), a diagonal one (a ramp's step to the next level) through a tick scheduled
- * when its neighbour is removed. Only segment 0 has loot (one plank), so a run always yields exactly one item.
+ * <p><b>Breaking.</b> Removing any cell (broken, burnt, blown up) takes the whole run down at once
+ * ({@link #onRemove}); only segment 0 has loot (one plank), so a run always yields exactly one item.
  *
  * <p><b>Pick-up.</b> Sneak-use with an empty hand on any segment takes the whole run up and gives one plank back
  * ({@code boarding.plank.pick_up}).
@@ -61,23 +58,22 @@ import java.util.Map;
 public class BoardingPlankBlock extends HorizontalDirectionalBlock implements EntityBlock, SimpleWaterloggedBlock {
 
     public static final MapCodec<BoardingPlankBlock> CODEC = simpleCodec(BoardingPlankBlock::new);
-    public static final IntegerProperty SEGMENT = IntegerProperty.create("segment", 0, PlankRun.MAX_SEGMENTS - 1);
-    public static final BooleanProperty TIP = BooleanProperty.create("tip");
-    public static final EnumProperty<PlankRun.Pitch> PITCH = EnumProperty.create("pitch", PlankRun.Pitch.class);
+    public static final IntegerProperty SEGMENT = IntegerProperty.create("segment", 0, PlankRun.MAX_CELLS - 1);
 
-    /** Board thickness in pixels (collision and model). */
+    /** Board thickness in pixels (collision and renderer). */
     public static final int THICKNESS = 2;
-    /** Inset of the board from the run's long sides, in pixels (collision and model). */
+    /** Inset of the board from the run's long sides, in pixels (collision and renderer). */
     public static final int INSET = 1;
-    /** Height of one collision step of a ramp cell, in pixels. */
-    public static final int STEP_DEPTH = 4;
 
-    private static final Map<PlankRun.Pitch, Map<Direction, VoxelShape>> SHAPES = shapes();
+    private static final Map<Direction, VoxelShape> FLAT = flatShapes();
+
+    /** Set while cells are removed as part of a whole run (breaking it, taking it up): no further cascade. */
+    private static boolean quiet;
 
     public BoardingPlankBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(SEGMENT, 0).setValue(TIP, true)
-                .setValue(PITCH, PlankRun.Pitch.FLAT).setValue(Waterlogging.WATERLOGGED, false));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(SEGMENT, 0)
+                .setValue(Waterlogging.WATERLOGGED, false));
     }
 
     @Override
@@ -87,18 +83,12 @@ public class BoardingPlankBlock extends HorizontalDirectionalBlock implements En
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, SEGMENT, TIP, PITCH, Waterlogging.WATERLOGGED);
+        builder.add(FACING, SEGMENT, Waterlogging.WATERLOGGED);
     }
 
-    /** The state of flat segment {@code segment} of a run of {@code length} cells laid {@code facing}. */
-    public BlockState segment(Direction facing, int segment, int length) {
-        return segment(facing, segment, length, PlankRun.Pitch.FLAT);
-    }
-
-    /** The state of segment {@code segment} of a run of {@code length} cells laid {@code facing}, with this pitch. */
-    public BlockState segment(Direction facing, int segment, int length, PlankRun.Pitch pitch) {
-        return defaultBlockState().setValue(FACING, facing).setValue(SEGMENT, segment)
-                .setValue(TIP, PlankRun.isTip(segment, length)).setValue(PITCH, pitch);
+    /** The state of segment {@code segment} of a run laid {@code facing}. */
+    public BlockState segment(Direction facing, int segment) {
+        return defaultBlockState().setValue(FACING, facing).setValue(SEGMENT, Math.min(PlankRun.MAX_CELLS - 1, segment));
     }
 
     /** Planks are laid as a run by the item, never placed as a single block. */
@@ -107,74 +97,36 @@ public class BoardingPlankBlock extends HorizontalDirectionalBlock implements En
         return null;
     }
 
-    // ------------------------------------------------------------------ links
-
-    /** Surface height in half blocks of a cell's near ({@code far = false}) or far edge, absolute. */
-    private static int edge(BlockPos pos, BlockState state, boolean far) {
-        PlankRun.Pitch p = state.getValue(PITCH);
-        return 2 * pos.getY() + (far ? p.far : p.near);
-    }
-
-    /** Position of segment {@code segment + 1} of the run {@code pos} belongs to, or null when it is missing or the tip. */
-    public static @Nullable BlockPos outer(BlockGetter level, BlockPos pos, BlockState state) {
-        if (!state.is(BoardingContent.PLANK.get()) || state.getValue(TIP)) return null;
-        Direction facing = state.getValue(FACING);
-        int segment = state.getValue(SEGMENT);
-        BlockPos ahead = pos.relative(facing);
-        for (int dy = -1; dy <= 1; dy++) {
-            BlockPos n = ahead.above(dy);
-            BlockState ns = level.getBlockState(n);
-            if (isSegment(ns, facing, segment + 1) && edge(n, ns, false) == edge(pos, state, true)) return n;
+    /** Runs {@code r} with the cascade of {@link #onRemove} off (server thread only). */
+    static void quietly(Runnable r) {
+        boolean was = quiet;
+        quiet = true;
+        try {
+            r.run();
+        } finally {
+            quiet = was;
         }
-        return null;
     }
 
-    /** Position of segment {@code segment − 1} of the run {@code pos} belongs to, or null when it is missing or segment 0. */
-    public static @Nullable BlockPos inner(BlockGetter level, BlockPos pos, BlockState state) {
-        if (!state.is(BoardingContent.PLANK.get()) || state.getValue(SEGMENT) == 0) return null;
-        Direction facing = state.getValue(FACING);
-        int segment = state.getValue(SEGMENT);
-        BlockPos behind = pos.relative(facing.getOpposite());
-        for (int dy = -1; dy <= 1; dy++) {
-            BlockPos n = behind.above(dy);
-            BlockState ns = level.getBlockState(n);
-            if (isSegment(ns, facing, segment - 1) && edge(n, ns, true) == edge(pos, state, false)) return n;
-        }
-        return null;
-    }
+    // ------------------------------------------------------------------ the run
 
-    private static boolean linked(BlockGetter level, BlockPos pos, BlockState state) {
-        return (state.getValue(SEGMENT) == 0 || inner(level, pos, state) != null)
-                && (state.getValue(TIP) || outer(level, pos, state) != null);
-    }
-
-    private static boolean isSegment(BlockState s, Direction facing, int segment) {
-        return s.is(BoardingContent.PLANK.get()) && s.getValue(FACING) == facing && s.getValue(SEGMENT) == segment;
-    }
-
-    /** The positions of the whole run {@code pos} belongs to, segment 0 first (only the linked part). */
+    /** The positions of the whole run {@code pos} belongs to, segment 0 first (the cells still there). */
     public static List<BlockPos> run(BlockGetter level, BlockPos pos) {
-        BlockState state = level.getBlockState(pos);
         List<BlockPos> out = new ArrayList<>();
-        if (!state.is(BoardingContent.PLANK.get())) return out;
-        BlockPos base = pos;
-        for (int guard = 0; guard < PlankRun.MAX_SEGMENTS; guard++) {
-            BlockPos in = inner(level, base, level.getBlockState(base));
-            if (in == null) break;
-            base = in;
+        if (!level.getBlockState(pos).is(BoardingContent.PLANK.get())) return out;
+        BlockPos base = base(level, pos);
+        if (base != null && level.getBlockEntity(base) instanceof BoardingPlankBlockEntity be && be.isBase()) {
+            for (BlockPos c : be.cells()) {
+                if (level.getBlockState(c).is(BoardingContent.PLANK.get())) out.add(c);
+            }
         }
-        BlockPos at = base;
-        for (int guard = 0; guard < PlankRun.MAX_SEGMENTS && at != null; guard++) {
-            out.add(at.immutable());
-            at = outer(level, at, level.getBlockState(at));
-        }
+        if (!out.contains(pos)) out.add(pos.immutable());
         return out;
     }
 
-    /** Position of segment 0 of the run {@code pos} belongs to. */
-    public static BlockPos base(BlockGetter level, BlockPos pos) {
-        List<BlockPos> run = run(level, pos);
-        return run.isEmpty() ? pos : run.get(0);
+    /** Position of segment 0 of the run {@code pos} belongs to, or null when the cell knows no run. */
+    public static @Nullable BlockPos base(BlockGetter level, BlockPos pos) {
+        return level.getBlockEntity(pos) instanceof BoardingPlankBlockEntity be ? be.base() : null;
     }
 
     // ------------------------------------------------------------------ the run breaks as one
@@ -182,34 +134,27 @@ public class BoardingPlankBlock extends HorizontalDirectionalBlock implements En
     @Override
     protected BlockState updateShape(BlockState state, Direction dir, BlockState neighbor, LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
         Waterlogging.tickFluid(state, level, pos);
-        if (dir.getAxis() == state.getValue(FACING).getAxis() && !linked(level, pos, state)) {
-            return Blocks.AIR.defaultBlockState();
-        }
         return super.updateShape(state, dir, neighbor, level, pos, neighborPos);
     }
 
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!level.isClientSide && !movedByPiston && !newState.is(this)) {
-            // the diagonal neighbours of a ramp get no shape update: let them check their links next tick
-            Direction facing = state.getValue(FACING);
-            for (Direction d : new Direction[]{facing, facing.getOpposite()}) {
-                for (int dy = -1; dy <= 1; dy += 2) {
-                    BlockPos n = pos.relative(d).above(dy);
-                    if (level.getBlockState(n).is(this)) {
-                        level.scheduleTick(n, this, 1);
+        if (!level.isClientSide && !movedByPiston && !newState.is(this) && !quiet) {
+            // the rest of the run goes with it; segment 0 (wherever it is) drops the one plank
+            BlockPos base = base(level, pos);
+            if (base != null && level.getBlockEntity(base) instanceof BoardingPlankBlockEntity be && be.isBase()) {
+                List<BlockPos> cells = be.cells();
+                quietly(() -> {
+                    for (BlockPos c : cells) {
+                        if (!c.equals(pos) && level.getBlockState(c).is(this)
+                                && level.getBlockEntity(c) instanceof BoardingPlankBlockEntity other && base.equals(other.base())) {
+                            level.destroyBlock(c, true);
+                        }
                     }
-                }
+                });
             }
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
-    }
-
-    @Override
-    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-        if (!linked(level, pos, state)) {
-            level.destroyBlock(pos, true);
-        }
     }
 
     @Override
@@ -217,8 +162,8 @@ public class BoardingPlankBlock extends HorizontalDirectionalBlock implements En
         // creative: take the base (the only segment with loot) first without drops, so the run yields nothing
         if (!level.isClientSide && player.isCreative() && state.getValue(SEGMENT) > 0) {
             BlockPos base = base(level, pos);
-            BlockState bs = level.getBlockState(base);
-            if (bs.is(this) && bs.getValue(SEGMENT) == 0) {
+            BlockState bs = base == null ? null : level.getBlockState(base);
+            if (bs != null && bs.is(this) && bs.getValue(SEGMENT) == 0) {
                 level.setBlock(base, Waterlogging.leftBehind(bs), Block.UPDATE_ALL | Block.UPDATE_SUPPRESS_DROPS);
                 level.levelEvent(player, 2001, base, Block.getId(bs));
             }
@@ -256,26 +201,26 @@ public class BoardingPlankBlock extends HorizontalDirectionalBlock implements En
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext ctx) {
-        return shape(state.getValue(PITCH), state.getValue(FACING));
+        return level.getBlockEntity(pos) instanceof BoardingPlankBlockEntity be ? be.shape() : FLAT.get(state.getValue(FACING));
     }
 
-    /** The collision and outline shape of a cell of this pitch in a run laid {@code facing}. */
-    public static VoxelShape shape(PlankRun.Pitch pitch, Direction facing) {
-        return SHAPES.get(pitch).get(facing);
+    /**
+     * The collision and outline of a cell of a run laid {@code facing} whose board's underside lies {@code nearPx} and
+     * {@code farPx} above the cell's floor at its near and far edge: the steps of {@link PlankRun#steps} across the
+     * board's width.
+     */
+    public static VoxelShape cellShape(Direction facing, double nearPx, double farPx) {
+        VoxelShape s = Shapes.empty();
+        for (double[] b : PlankRun.steps(nearPx, farPx, THICKNESS)) {
+            s = Shapes.or(s, box(facing, b[0], b[1], b[2], b[3]));
+        }
+        return s.isEmpty() ? FLAT.get(facing) : s.optimize();
     }
 
-    private static Map<PlankRun.Pitch, Map<Direction, VoxelShape>> shapes() {
-        Map<PlankRun.Pitch, Map<Direction, VoxelShape>> out = new EnumMap<>(PlankRun.Pitch.class);
-        for (PlankRun.Pitch pitch : PlankRun.Pitch.values()) {
-            Map<Direction, VoxelShape> byFacing = new EnumMap<>(Direction.class);
-            for (Direction facing : Direction.Plane.HORIZONTAL) {
-                VoxelShape s = Shapes.empty();
-                for (double[] b : PlankRun.steps(pitch, THICKNESS, STEP_DEPTH)) {
-                    s = Shapes.or(s, box(facing, b[0], b[1], b[2], b[3]));
-                }
-                byFacing.put(facing, s.optimize());
-            }
-            out.put(pitch, byFacing);
+    private static Map<Direction, VoxelShape> flatShapes() {
+        Map<Direction, VoxelShape> out = new EnumMap<>(Direction.class);
+        for (Direction facing : Direction.Plane.HORIZONTAL) {
+            out.put(facing, box(facing, 0, 16, 0, THICKNESS));
         }
         return out;
     }
@@ -291,11 +236,11 @@ public class BoardingPlankBlock extends HorizontalDirectionalBlock implements En
         };
     }
 
-    // ------------------------------------------------------------------ block entity on segment 0
+    // ------------------------------------------------------------------ block entity on every cell
 
     @Override
     public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return state.getValue(SEGMENT) == 0 ? new BoardingPlankBlockEntity(pos, state) : null;
+        return new BoardingPlankBlockEntity(pos, state);
     }
 
     @Override

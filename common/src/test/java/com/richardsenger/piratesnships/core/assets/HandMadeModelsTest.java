@@ -53,7 +53,7 @@ class HandMadeModelsTest {
     }
 
     /** Every hand-made model by name; a new Blockbench model is added here, a missing or stray file fails. */
-    static final List<String> BLOCK_MODELS = List.of("bilge_pump", "bilge_pump_handle", "bilge_pump_item", "bilge_pump_rod", "boarding_plank", "boarding_plank_base", "boarding_plank_ramp_high", "boarding_plank_ramp_low", "boarding_plank_steep", "boarding_plank_tip", "brig_bars", "brig_bars_post", "brig_bars_side",
+    static final List<String> BLOCK_MODELS = List.of("bilge_pump", "bilge_pump_handle", "bilge_pump_item", "bilge_pump_rod", "brig_bars", "brig_bars_post", "brig_bars_side",
             "brig_bars_side_alt", "brig_door_bottom_left", "brig_door_bottom_left_locked",
             "brig_door_bottom_left_open_locked", "brig_door_bottom_right", "brig_door_bottom_right_locked",
             "brig_door_bottom_right_open_locked", "brig_door_top_left", "brig_door_top_right", "cannon",

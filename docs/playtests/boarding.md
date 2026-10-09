@@ -102,3 +102,48 @@ values (an existing file keeps `max_length` 4).
    (it does not move, breaking it drops one plank).
 2. With hired crew aboard a moored ship and a plank to the quay: tell me whether crew ever walk across it on their own
    (they have no order to; there is no "prepare to board" order yet).
+
+# BRD4: one straight board
+
+Covered headlessly (`BoardingGameTests` 23 on NeoForge and Fabric, `PlankRunTest` 30 JUnit): a dock two blocks lower
+than the far one, six blocks apart, gets one straight board at 18.4 degrees (three cells on the low row, three a block
+up, every cell's board on the one line) and a mock player walks it up and down without a jump or a drop; a crew member
+paths across it; three up over three (45 degrees) is laid, four up over three refused as too steep; a pier-to-ship
+gangway lifted three blocks breaks past `break_rise`; BRD2 saves load as straight boards (a level one in place, a
+ramp laid again); the BRD1/BRD2 ship and pier tests now expect straight boards. This section checks what only a
+client shows: the board's look, the walking feel, the preview.
+
+Defaults: `boarding.plank.max_length` 6, `max_pitch` 45, `pick_up` true, `break_distance` 1.5, `break_rise` 2.5. The
+BRD2 keys `max_rise`, `rise_run`, `steep_fallback` are gone (an old server config file may still list them; they are
+ignored).
+
+## 9. One pitch from end to end
+1. Build two stone piers six blocks apart, the far one two blocks lower (or moor a ship whose rail is two blocks above
+   a quay six blocks away). Hold a plank and look at the top edge of the high one, facing the low one. Expected: a
+   single green box from the edge down to the low pier's top, straight, no level stretch and no steep end.
+2. Click. Expected: one straight board at one pitch (about 18 degrees) from the high edge to the low pier, spruce
+   planks with the grain along the board, a short lip lying on the high pier's top edge, cleats across the board
+   every block (it is steeper than 15 degrees). Screenshot from the side, please.
+3. Walk down it, then back up, sprinting and sneaking. Expected: no jump needed, no snagging, no falling through; your
+   feet stay on or just above the board (the steps under it are at most a quarter block).
+4. Look at the board with an empty hand. Expected: the block outline is a small staircase following the board in the
+   cell you look at (that is its collision).
+5. Sneak-use the board with an empty hand from either end. Expected: the whole board goes, one plank in the inventory.
+
+## 10. The steepest board
+1. A pier three blocks above your rail, three blocks of water between (rail edge to pier side). Expected: the plank is
+   laid at 45 degrees; walk it (expected: walkable without jumping, cleats every block).
+2. The same pier four blocks above. Expected: refused, "Too steep: at most 45 degrees", nothing laid, no green box.
+3. Set `boarding.plank.max_pitch` to 30 and try the 45 degree case again. Expected: "Too steep: at most 30 degrees".
+4. A fence or lantern in the board's line on a slope. Expected: "Something is in the way N blocks out" and that cell
+   outlined in red where it sits on the slope (not on the start's row).
+
+## 11. Crew and ships
+1. With a crew member following you, walk across a sloped board from the ship to the quay and back. Expected: the
+   crew member crosses it on foot (no teleport, no getting stuck at the board's ends).
+2. A sloped board from a quay onto a moored ship in a thunderstorm (`/weather thunder`). Expected: the board moves with
+   the ship as one piece (no gaps between cells), stays while she heaves, and breaks with one plank dropped when she
+   drifts a block and a half away.
+3. A world with gangways laid before this version: load it. Expected: level gangways look the same (now one board);
+   sloped ones are straight boards from their near end (or, rarely, gone with one plank lying there); tell me if any
+   went missing without a plank.

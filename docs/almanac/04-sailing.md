@@ -83,7 +83,7 @@ A moored ship is simply a ship lying still at her berth: bring her in slowly and
 {recipe:mooring_ring}
 
 ## The gangway
-The {item:pirates_n_ships:boarding_plank}**boarding plank** bridges your deck and the quay. Use it on the edge of either, toward the other; it steps up or down to a high pier on its own.
+The {item:pirates_n_ships:boarding_plank}**boarding plank** bridges your deck and the quay. Use it on the edge of either, toward the other: it lies as one straight board, up or down to a high pier, up to six blocks.
 
 It goes where the ship goes, but let her drift along the quay and it breaks. Sneak and use it with an empty hand to stow it.
 

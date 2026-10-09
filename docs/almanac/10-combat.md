@@ -115,7 +115,7 @@ It slips off water, leaves, glass panes and creatures.
 show_me: boarding | Show me: boarding an enemy
 Use a rope made fast to a cleat or ring to slide down it, from your masthead onto her deck.
 
-With the ships alongside, use a {item:pirates_n_ships:boarding_plank}**boarding plank** on top of your gunwale. Keep the ships together or it breaks.
+With the ships alongside, use a {item:pirates_n_ships:boarding_plank}**boarding plank** on top of your gunwale. Keep the ships together or it breaks. Hold the plank and look at your rail: the board it would lay shows in green, and a red cell marks what stands in the way.
 {recipe:boarding_plank}
 
 ## Taking a prize

@@ -1,6 +1,8 @@
 package com.richardsenger.piratesnships.combat.cannon;
 
+import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Pure rules of the swivel gun (docs/design.md §8.2, P2): where its barrel points for a yaw and an elevation, where the
@@ -21,6 +23,11 @@ public final class SwivelRules {
     public static final double MUZZLE_LENGTH = 14.0 / 16.0;
     /** Distance from the pivot to the breech face, in blocks (6 px; for the model). */
     public static final double BREECH_LENGTH = 6.0 / 16.0;
+    /**
+     * RAIL1: how far a gun on a railing ({@link SwivelMount}) sits off the block's centre toward the railed edge, in
+     * blocks (6 px: the pintle stands over the rail, 2 px in from the block's side).
+     */
+    public static final double MOUNT_SHIFT = 6.0 / 16.0;
 
     /** An aim: yaw and elevation in degrees, in the block frame. */
     public record Aim(double yawDegrees, double elevationDegrees) {
@@ -67,9 +74,49 @@ public final class SwivelRules {
         return new Vec3(x + 0.5, y + PIVOT_HEIGHT, z + 0.5);
     }
 
+    /** RAIL1: how far the gun sits off its block's centre for {@code mount} (zero in the middle), in blocks. */
+    public static Vec3 mountOffset(SwivelMount mount) {
+        Direction edge = mount.edge();
+        if (edge == null) return Vec3.ZERO;
+        return new Vec3(edge.getStepX() * MOUNT_SHIFT, 0, edge.getStepZ() * MOUNT_SHIFT);
+    }
+
+    /** The pivot of a gun sitting on {@code mount} ({@link #pivot} shifted by {@link #mountOffset}). */
+    public static Vec3 pivot(int x, int y, int z, SwivelMount mount) {
+        return pivot(x, y, z).add(mountOffset(mount));
+    }
+
     /** The muzzle point: {@link #MUZZLE_LENGTH} from the pivot along the barrel. */
     public static Vec3 muzzle(int x, int y, int z, double yawDegrees, double elevationDegrees) {
-        return pivot(x, y, z).add(direction(yawDegrees, elevationDegrees).scale(MUZZLE_LENGTH));
+        return muzzle(x, y, z, SwivelMount.NONE, yawDegrees, elevationDegrees);
+    }
+
+    /** The muzzle point of a gun on {@code mount}. */
+    public static Vec3 muzzle(int x, int y, int z, SwivelMount mount, double yawDegrees, double elevationDegrees) {
+        return pivot(x, y, z, mount).add(direction(yawDegrees, elevationDegrees).scale(MUZZLE_LENGTH));
+    }
+
+    /**
+     * RAIL1: the edge a gun placed on a railing takes: its only railed edge, or with several the one nearest the click
+     * ({@code fx}, {@code fz}: the click point in the gun's block, 0..1); null without a railed edge.
+     */
+    public static @Nullable Direction mountEdge(java.util.Set<Direction> railed, double fx, double fz) {
+        Direction best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (Direction d : Direction.Plane.HORIZONTAL) {
+            if (!railed.contains(d)) continue;
+            double dist = switch (d) {
+                case NORTH -> fz;
+                case SOUTH -> 1.0 - fz;
+                case WEST -> fx;
+                default -> 1.0 - fx;
+            };
+            if (dist < bestDistance - 1.0e-9) {
+                best = d;
+                bestDistance = dist;
+            }
+        }
+        return best;
     }
 
     /**

@@ -229,7 +229,12 @@ public final class SwivelService {
 
     /** Where the shot of the gun at {@code pos} leaves from and which way, in the block (plot) frame. */
     public static CannonService.Barrel barrel(BlockPos pos, SwivelRules.Aim aim) {
-        return new CannonService.Barrel(SwivelRules.muzzle(pos.getX(), pos.getY(), pos.getZ(), aim.yawDegrees(), aim.elevationDegrees()),
+        return barrel(pos, SwivelMount.NONE, aim);
+    }
+
+    /** {@link #barrel(BlockPos, SwivelRules.Aim)} for a gun sitting on {@code mount} (RAIL1: shifted toward a railed edge). */
+    public static CannonService.Barrel barrel(BlockPos pos, SwivelMount mount, SwivelRules.Aim aim) {
+        return new CannonService.Barrel(SwivelRules.muzzle(pos.getX(), pos.getY(), pos.getZ(), mount, aim.yawDegrees(), aim.elevationDegrees()),
                 SwivelRules.direction(aim.yawDegrees(), aim.elevationDegrees()));
     }
 
@@ -246,7 +251,7 @@ public final class SwivelService {
         BlockState state = level.getBlockState(pos);
         if (!CannonRules.canFire(state.getValue(SwivelGunBlock.LOAD))) return status(level, pos);
 
-        CannonService.Barrel local = barrel(pos, be.aim());
+        CannonService.Barrel local = barrel(pos, state.getValue(SwivelGunBlock.MOUNT), be.aim());
         ShipBody ship = SableShips.containing(level, pos);
         Vec3 muzzle = local.muzzle();
         Vec3 direction = local.direction();

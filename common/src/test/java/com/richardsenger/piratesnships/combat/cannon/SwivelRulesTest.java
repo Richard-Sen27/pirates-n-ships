@@ -91,4 +91,29 @@ class SwivelRulesTest {
         assertFalse(new SwivelRules.Aim(179.8, 0).differs(new SwivelRules.Aim(-179.9, 0), 0.5), "across ±180 is close");
         assertTrue(new SwivelRules.Aim(10, 0).differs(new SwivelRules.Aim(10, 1), 0.5));
     }
+
+    /** RAIL1: a gun on a railing sits 6 px toward the railed edge; in the middle nothing moves. */
+    @Test
+    void aGunOnARailingShiftsTowardTheRailedEdge() {
+        assertVec(Vec3.ZERO, SwivelRules.mountOffset(SwivelMount.NONE));
+        assertVec(new Vec3(0, 0, -6.0 / 16), SwivelRules.mountOffset(SwivelMount.NORTH));
+        assertVec(new Vec3(6.0 / 16, 0, 0), SwivelRules.mountOffset(SwivelMount.EAST));
+        assertVec(SwivelRules.pivot(3, 4, 5), SwivelRules.pivot(3, 4, 5, SwivelMount.NONE));
+        assertVec(new Vec3(3.5 - 6.0 / 16, 4 + SwivelRules.PIVOT_HEIGHT, 5.5), SwivelRules.pivot(3, 4, 5, SwivelMount.WEST));
+        assertVec(SwivelRules.muzzle(0, 0, 0, 0, 0).add(0, 0, 6.0 / 16), SwivelRules.muzzle(0, 0, 0, SwivelMount.SOUTH, 0, 0));
+    }
+
+    /** RAIL1: the only railed edge, or the one nearest the click; none without a railed edge. */
+    @Test
+    void theMountTakesTheRailedEdgeNearestTheClick() {
+        java.util.Set<net.minecraft.core.Direction> north = java.util.EnumSet.of(net.minecraft.core.Direction.NORTH);
+        java.util.Set<net.minecraft.core.Direction> corner = java.util.EnumSet.of(net.minecraft.core.Direction.NORTH,
+                net.minecraft.core.Direction.EAST);
+        assertEquals(net.minecraft.core.Direction.NORTH, SwivelRules.mountEdge(north, 0.9, 0.9), "the only edge, wherever clicked");
+        assertEquals(net.minecraft.core.Direction.EAST, SwivelRules.mountEdge(corner, 0.9, 0.5));
+        assertEquals(net.minecraft.core.Direction.NORTH, SwivelRules.mountEdge(corner, 0.5, 0.2));
+        assertEquals(null, SwivelRules.mountEdge(java.util.EnumSet.noneOf(net.minecraft.core.Direction.class), 0.5, 0.5));
+        assertEquals(SwivelMount.NONE, SwivelMount.of(null));
+        assertEquals(SwivelMount.WEST, SwivelMount.of(net.minecraft.core.Direction.WEST));
+    }
 }

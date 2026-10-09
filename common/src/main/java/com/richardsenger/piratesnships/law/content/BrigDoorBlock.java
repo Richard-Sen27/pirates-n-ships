@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.law.content;
 
 import com.mojang.serialization.MapCodec;
+import com.richardsenger.piratesnships.core.block.PartBlockEntity;
 import com.richardsenger.piratesnships.law.brig.BrigDoorAccess;
 import com.richardsenger.piratesnships.law.brig.DoorLockRules;
 import net.minecraft.core.BlockPos;
@@ -73,9 +74,11 @@ public class BrigDoorBlock extends DoorBlock implements EntityBlock {
         builder.add(LOCKED);
     }
 
+    /** The owner lives on the lower half; the upper half has an empty {@link PartBlockEntity}, never null (FIX3). */
     @Override
-    public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return state.getValue(HALF) == DoubleBlockHalf.LOWER ? new BrigDoorBlockEntity(pos, state) : null;
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return state.getValue(HALF) == DoubleBlockHalf.LOWER ? new BrigDoorBlockEntity(pos, state)
+                : new PartBlockEntity(LawContent.BRIG_DOOR_UPPER_ENTITY.get(), pos, state);
     }
 
     // --- Queries and API ----------------------------------------------------------------------------------------

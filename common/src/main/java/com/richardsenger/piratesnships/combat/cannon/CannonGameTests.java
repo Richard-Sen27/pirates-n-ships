@@ -2,6 +2,7 @@ package com.richardsenger.piratesnships.combat.cannon;
 
 import com.richardsenger.piratesnships.combat.CombatConfig;
 import com.richardsenger.piratesnships.combat.content.CombatContent;
+import com.richardsenger.piratesnships.core.block.PartBlockEntity;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
@@ -239,7 +240,9 @@ public final class CannonGameTests {
                 && rear.getValue(CannonBlock.FACING) == Direction.EAST, "no rear half behind the master: " + rear);
         h.assertTrue(level.getBlockEntity(h.absolutePos(new BlockPos(4, 1, 4))) instanceof CannonBlockEntity,
                 "the master has no block entity");
-        h.assertTrue(level.getBlockEntity(h.absolutePos(new BlockPos(3, 1, 4))) == null, "the rear has a block entity");
+        // FIX3: the rear's block entity is the empty part one (worldgen needs one on every state), never the gun's
+        h.assertTrue(level.getBlockEntity(h.absolutePos(new BlockPos(3, 1, 4))) instanceof PartBlockEntity rearEntity
+                && rearEntity.getType() == CannonContent.CANNON_REAR_ENTITY.get(), "the rear has no empty part block entity");
         h.assertTrue(stack.getCount() == 2, "placing took " + (3 - stack.getCount()) + " items");
 
         h.assertFalse(place(h, player, stack, new BlockPos(4, 1, 7)), "placed with the rear blocked");

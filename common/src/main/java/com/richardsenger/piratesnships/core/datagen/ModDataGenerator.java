@@ -75,8 +75,9 @@ public final class ModDataGenerator {
         sink.add(true, new LangProvider(output, data.lang));
         sink.add(true, new ModelProvider(output, data.models));
         sink.add(false, new RecipeProvider(output, lookup) {
+            // public: Fabric API widens the vanilla method, and the fabric module compiles this file too (FAB1)
             @Override
-            protected void buildRecipes(RecipeOutput out) {
+            public void buildRecipes(RecipeOutput out) {
                 data.recipes.forEach(c -> c.accept(out));
             }
         });

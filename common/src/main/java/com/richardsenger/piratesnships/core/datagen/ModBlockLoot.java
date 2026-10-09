@@ -30,8 +30,10 @@ public final class ModBlockLoot extends BlockLootSubProvider {
         this.contributors = contributors;
     }
 
+    // public, not protected: Fabric API's access widener makes the vanilla method public, and the fabric module
+    // compiles this file against it (FAB1)
     @Override
-    protected void generate() {
+    public void generate() {
         contributors.forEach(c -> c.accept(this));
     }
 

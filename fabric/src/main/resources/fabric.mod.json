@@ -18,11 +18,18 @@
         "${mod_id}.mixins.json",
         "${mod_id}.fabric.mixins.json"
     ],
+    "accessWidener": "${mod_id}.accesswidener",
     "depends": {
         "fabricloader": ">=${fabric_loader_version}",
         "fabric-api": "*",
         "minecraft": "${minecraft_version}",
         "java": ">=${java_version}",
-        "sable": ">=${sable_version}"
+        "sable": ">=${sable_version} <3.0.0",
+        "geckolib": ">=${geckolib_version}",
+        "forgeconfigapiport": "*",
+        "player_animation_library": ">=${pal_version}"
+    },
+    "suggests": {
+        "guideme": "*"
     }
 }

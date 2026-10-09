@@ -4,13 +4,23 @@ import com.mojang.serialization.MapCodec;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.sailing.SailingConfig;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
+import com.richardsenger.piratesnships.sailing.sail.SailBanner;
+import com.richardsenger.piratesnships.sailing.sail.SailDecorations;
 import com.richardsenger.piratesnships.sailing.sail.YardSails;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.Containers;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.DyeItem;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -38,6 +48,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Placed, a yard runs across the player's view; placed against the end of a yard, it continues that yard. Every
  * yard block has a {@link YardBlockEntity}; the head's carries the cloth geometry for the renderer.
+ *
+ * <p>SAIL2: a dye used on the upper yard dyes the sail, a banner hangs on a large one, sneaking with an empty hand
+ * takes the banner back ({@link SailDecorations}).
  *
  * <p>Model: hand-made in Blockbench ({@code art/models/yard.bbmodel}, design.md §4.8), a chamfered spar along x on the
  * 6 px collision beam, with a rope band between two iron hoops in the middle and an iron jackstay on top (up to 1.8 px
@@ -105,8 +118,45 @@ public class YardBlock extends Block implements EntityBlock {
         };
     }
 
+    /**
+     * SAIL2: a dye dyes the sail this yard heads ({@code sails.dyeing}), a banner hangs on it ({@code sails.banners}),
+     * see {@link SailDecorations}; the item is spent only when it took. Any other item goes on to the trim.
+     */
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
+                                              InteractionHand hand, BlockHitResult hit) {
+        DyeColor color = stack.getItem() instanceof DyeItem dye ? dye.getDyeColor() : null;
+        boolean banner = SailBanner.isBanner(stack);
+        if (color != null && SailingConfig.SAIL_DYEING.get() || banner && SailingConfig.SAIL_BANNERS.get()) {
+            if (level instanceof ServerLevel) {
+                SailDecorations.Outcome o = color != null ? SailDecorations.dyeYard(level, pos, color)
+                        : SailDecorations.hangBanner(level, pos, stack);
+                if (o.consumes()) {
+                    level.playSound(null, pos, color != null ? SoundEvents.DYE_USE : SoundEvents.WOOL_PLACE, SoundSource.BLOCKS, 1f, 1f);
+                    stack.consume(1, player);
+                }
+                player.displayClientMessage(SailDecorations.message(o, color), true);
+            }
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        }
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    }
+
+    /** Sneaking with an empty hand takes a hung banner back (SAIL2); otherwise the empty hand cycles the trim. */
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+        if (player.isSecondaryUseActive()) {
+            if (level instanceof ServerLevel) {
+                ItemStack taken = SailDecorations.takeBanner(level, pos);
+                if (!taken.isEmpty()) {
+                    player.getInventory().placeItemBackInInventory(taken);
+                    player.displayClientMessage(SailDecorations.message(SailDecorations.Outcome.TAKEN, null), true);
+                    return InteractionResult.SUCCESS;
+                }
+            } else if (SailDecorations.hasBanner(level, pos)) {
+                return InteractionResult.SUCCESS;
+            }
+        }
         if (!SailingConfig.SAIL_BLOCK_TRIM.get()) {
             return InteractionResult.PASS;
         }
@@ -127,8 +177,19 @@ public class YardBlock extends Block implements EntityBlock {
         }
     }
 
+    /**
+     * Breaking a yard block that keeps a banner drops the banner (SAIL2). A block moved by Sable's assembly or
+     * disassembly ({@code movedByPiston}) keeps it: its data travels, and the old block entity was cleared after saving
+     * ({@link YardBlockEntity#clearContent}).
+     */
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!newState.is(this) && !movedByPiston && level instanceof ServerLevel
+                && level.getBlockEntity(pos) instanceof YardBlockEntity be && !be.banner().isEmpty()) {
+            ItemStack banner = be.banner();
+            be.clearContent();
+            Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, banner);
+        }
         super.onRemove(state, level, pos, newState, movedByPiston);
         if (!newState.is(this) && level instanceof ServerLevel serverLevel) {
             YardSails.refreshAround(serverLevel, pos);

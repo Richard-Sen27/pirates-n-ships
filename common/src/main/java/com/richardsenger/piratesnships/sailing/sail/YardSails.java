@@ -128,8 +128,13 @@ public final class YardSails {
         }
     }
 
-    /** Writes the cloth of {@code row} to its blocks' entities: the sail's on the middle block, none on the others. */
+    /**
+     * Writes the cloth of {@code row} to its blocks' entities: the sail's on the middle block, none on the others; and
+     * hands the yard's dye and banner on to blocks that joined it or became its middle (SAIL2,
+     * {@link SailDecorations#carryAlongRow}).
+     */
     public static void refreshRow(Level level, YardLookup lookup, YardRow row, YardRules rules) {
+        SailDecorations.carryAlongRow(level, row);
         SquareSail sail = YardLinker.sailHeadedBy(lookup, row, rules);
         ClothGeometry g = sail == null ? null : sail.geometry();
         for (int a = row.min(); a <= row.max(); a++) {

@@ -137,9 +137,15 @@ public final class UpkeepGameTests {
         return c;
     }
 
+    /**
+     * Morning of today. When the batch before left the level at night, this ends that night: the day tick sees the
+     * dawn here, before the fixture's crew exists, and not on the next tick, where it would feed and pay the new crew
+     * once before the test's own dawn.
+     */
     private static void morning(GameTestHelper h) {
         long today = h.getLevel().getDayTime() / RestRules.DAY * RestRules.DAY;
         h.getLevel().setDayTime(today + 1000L);
+        ShipDayTick.observe(h.getLevel());
     }
 
     /**

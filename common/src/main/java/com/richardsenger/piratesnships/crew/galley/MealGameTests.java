@@ -8,6 +8,7 @@ import com.richardsenger.piratesnships.crew.content.CrewContent;
 import com.richardsenger.piratesnships.crew.hammock.RestRules;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
+import com.richardsenger.piratesnships.crew.upkeep.ShipDayTick;
 import com.richardsenger.piratesnships.station.StationContent;
 import com.richardsenger.piratesnships.station.StationGameTests;
 import com.richardsenger.piratesnships.station.StationGameTests.Fixture;
@@ -46,6 +47,7 @@ public final class MealGameTests {
     private static Ship ship(GameTestHelper h) {
         ConfigOverrides.during(h, MealConfig.MEAL_TIMES, List.of("6000"));
         ConfigOverrides.during(h, MealConfig.MEAL_TICKS, MEAL_TICKS);
+        morning(h);
         Fixture f = StationGameTests.ship(h, false, x -> {
             x.setBlock(new BlockPos(18, 6, 18), CrewContent.PANTRY.get());
             x.setBlock(new BlockPos(20, 6, 18), CrewContent.WATER_BARREL.get());
@@ -61,6 +63,17 @@ public final class MealGameTests {
     private static void beforeMeal(GameTestHelper h) {
         long today = h.getLevel().getDayTime() / RestRules.DAY * RestRules.DAY;
         h.getLevel().setDayTime(today + 6000L - 5);
+    }
+
+    /**
+     * Morning of today, before the crew exists. When the batch before left the level at night, this ends that night:
+     * the ship day tick sees the dawn here, and not on the next tick, where it would feed the test's crew from the
+     * pantry once.
+     */
+    private static void morning(GameTestHelper h) {
+        long today = h.getLevel().getDayTime() / RestRules.DAY * RestRules.DAY;
+        h.getLevel().setDayTime(today + 1000L);
+        ShipDayTick.observe(h.getLevel());
     }
 
     private static CrewMember onDeck(GameTestHelper h, Fixture f, int x, int z) {

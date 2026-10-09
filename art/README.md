@@ -2097,7 +2097,7 @@ with brass corners"). One palette for all three: the GUI kit's leather and brass
   `lint_models.py`: 0 visible fights. `AlmanacModule` marks the item `handMadeItem` and points the block's particle at
   the new texture; the placeholder sprite `textures/item/captains_almanac.png` and `tools/gen_almanac_sprite.py` are
   gone.
-- **Item display** (the left hand mirrors y and z): `gui` `[30, 225, 0]` / `[0, 4.1, 0]` / 0.8 (fore-edge with the
+- **Item display** (hands replaced by ART16 below; the left hand mirrors y and z): `gui` `[30, 225, 0]` / `[0, 4.1, 0]` / 0.8 (fore-edge with the
   clasp lower left, head lower right, the cover's lozenge and all four caps read; 15.5 of 16 units wide, centred with
   the orthographic display check of F7g, which gives 32 px per unit at 1024 px); third person `[90, 0, 90]` /
   `[0, 2, 1]` / 0.5 (upright in the fist, spine down, cover outwards); first person `[90, -25, 80]` / `[-2, 5, 0]` /
@@ -2132,6 +2132,45 @@ with brass corners"). One palette for all three: the GUI kit's leather and brass
   `setupAnim` and `AlmanacBookPose.pose`, so they show the real texture on the real geometry.
   `renders/captains_almanac_screen.png`: the spread at 3x with three bookmarks tinted dark red, grey and blue
   (composited in Python, the open chapter's 3 px further out).
+
+Almanac in hand and the closed fore-edge (ART16, after the playtest note "in hand it looks way too small. on the thin
+cover side it also glitches a bit when closed"):
+- **Glitch:** not a z-fight (`lint_models.py` reported 0 before and after) but two open boxes at the clasp. The
+  `clasp_plate` (x 11.6..14.5, y 3.9..4.3) had no `down` face and the `clasp_catch` (y -0.3..0.1) no `up` face, on the
+  assumption that the cover hides them; both run 0.5 px past the cover's fore-edge (x 14), so from below the plate and
+  from above the catch the game culled the inner faces and showed the background through a 0.5 x 2 px slot right at
+  the page edges, flickering with view bob. Fix: the plate got a `down` face (the corner caps' underside patch, uv
+  `[12.25, 2.25, 13.75, 3.75]`), the catch an `up` face (the caps' top patch, `[14.25, 0.25, 15.75, 1.75]`); no element moved,
+  the parts inside the covers stay hidden, lint still 0 / 0 / 0. Lesson: a face may only be left out when another
+  element covers it over its whole area, not just most of it.
+- **Left hands repeat the right-hand values.** `ItemTransform.apply(leftHand, …)` already negates the y and z
+  rotation and the x translation of whatever entry it gets (vanilla source, 1.21.1), so an entry that negates them
+  itself is mirrored twice and shows the unmirrored pose in a mirrored place. Blockbench's display mode applies the
+  same rule, so `loadFirstLeft()` / `loadThirdLeft()` previews are trustworthy. For a book (a chiral object: cover,
+  head and fore-edge fix its handedness) the game's mirror also swaps the spine and the fore-edge; a left entry of
+  `R · Rz(180)` in model space keeps the fore-edge forward instead (the third-person left entry below, re-centred
+  with its own translation). The ART10 / ART15 / F8b notes that say "the left hand negates the y and z rotations"
+  describe exactly the double negation; their models are not changed here.
+- **Display** (measured in display mode with the slot's camera copied into an offscreen view; first-person screen
+  extents as NDC, x right, y up, -1..1):
+  - first person, both hands, `[70, -10, -8]` / `[4.5, 6.5, -2]` / 0.85 (was right `[90, -25, 80]` / `[-2, 5, 0]` /
+    0.32, left `[90, 25, -80]` / same): the cover faces the player, turned slightly towards the screen centre, head
+    up and leaning a little; the right hand shows the spine and its bands on the left, the left hand the clasp on the
+    right. Screen extent x 0.26..0.87, y 0.27..-0.86 (old x 0.38..0.80, y 0.16..-0.88, with the cover turned away and
+    the fore-edge to the player). Vanilla's `book` with `item/generated` (`[0, -90, 25]` / `[1.13, 3.2, 1.13]` / 0.68,
+    its sprite 16 x 14 px) reaches from x 0.43 off the screen's right and bottom edge with its top at y 0.26, so the
+    tome's top now matches the vanilla book's and the whole book stays in view.
+  - third person right `[0, 0, 90]` / `[-1, 2, 1]` / 0.6, left `[0, 0, -90]` / `[6, 2, 1]` / 0.6 (was `[90, 0, ±90]` /
+    `[0, 2, 1]` / 0.5, spine down): gripped at the spine, which sits against the fist, fore-edge and clasp pointing
+    forward, the front cover outwards and the back cover against the arm; 14 x 12 px at 0.6 is 8.4 x 7.2 px, the
+    vanilla book sprite at 0.55 is 8.8 x 7.7 px.
+  - `gui`, `ground`, `fixed`, `head` unchanged.
+- Renders: `renders/captains_almanac_fore_edge.png` (the closed tome from the fore-edge side at 2x; the clasp at 8x from
+  below and from above, before and after) and `renders/captains_almanac_in_hand.png` (first person before, right and
+  left after; third person right and left), drawn by offscreen views in Blockbench and composited on a canvas in
+  `risky_eval`. Export as in ART14 (the item JSON is `Codecs.java_block.compile({raw: true})` with the ART14 header, 4
+  decimals, tab-indented; the project `Codecs.project.compile({raw: true})` with `path` `""` and the old
+  `relative_path`).
 
 ## GUI kit (U1)
 

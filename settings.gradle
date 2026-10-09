@@ -11,7 +11,8 @@ pluginManagement {
             }
             filter {
                 includeGroup('net.fabricmc')
-                includeGroup('fabric-loom')
+                includeGroup('net.fabricmc.unpick')
+                includeGroup('net.fabricmc.fabric-loom-remap')
             }
         }
         exclusiveContent {
@@ -47,5 +48,5 @@ plugins {
 rootProject.name = 'pirates-n-ships'
 include('common')
 include('neoforge')
-// Fabric is disabled until the Fabric port milestone (see docs/design.md)
-// include('fabric')
+// Fabric: enabled since FAB1 (server side, GameTests); the client port is FAB2 (docs/fabric.md)
+include('fabric')

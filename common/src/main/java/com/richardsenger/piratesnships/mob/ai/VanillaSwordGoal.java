@@ -1,19 +1,19 @@
 package com.richardsenger.piratesnships.mob.ai;
 
 import com.richardsenger.piratesnships.combat.melee.MeleeService;
-import com.richardsenger.piratesnships.mob.entity.SeafarerMob;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 
 /**
  * Vanilla melee for duelists while {@code melee.skill_based_combat} is off (mod swords then fight like vanilla
- * swords for everyone, docs/design.md §8.5), or when the mob lost its sword.
+ * swords for everyone, docs/design.md §8.5), or when the mob lost its sword; also a crew member's fists (BRD3).
  */
 public class VanillaSwordGoal extends MeleeAttackGoal {
 
-    private final SeafarerMob seafarer;
+    private final Duelist seafarer;
 
-    public VanillaSwordGoal(SeafarerMob mob, double speed) {
+    public <T extends PathfinderMob & Duelist> VanillaSwordGoal(T mob, double speed) {
         super(mob, speed, true);
         this.seafarer = mob;
     }

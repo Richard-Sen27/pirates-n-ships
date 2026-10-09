@@ -9,9 +9,9 @@ import com.richardsenger.piratesnships.combat.melee.rules.CombatState;
 import com.richardsenger.piratesnships.combat.melee.rules.Phase;
 import com.richardsenger.piratesnships.combat.melee.weapon.WeaponDefinition;
 import com.richardsenger.piratesnships.mob.MobConfig;
-import com.richardsenger.piratesnships.mob.entity.SeafarerMob;
 import com.richardsenger.piratesnships.platform.Services;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.phys.AABB;
@@ -35,7 +35,8 @@ import java.util.Locale;
  * {@code mobs.duelist_reach_margin} inside the reach. {@code /pirates mob debug on} traces its states.
  *
  * <p>Only while {@code melee.skill_based_combat} is on and the mob holds a skill-based sword; otherwise
- * {@link VanillaSwordGoal} fights with vanilla melee.
+ * {@link VanillaSwordGoal} fights with vanilla melee. Any {@link Duelist} uses it: the humanoid mobs, and the crew while
+ * they board or defend their deck (BRD3).
  */
 public class DuelistAttackGoal extends Goal {
 
@@ -44,7 +45,8 @@ public class DuelistAttackGoal extends Goal {
     /** Heights (blocks) between feet beyond which the target is out of sword reach whatever the horizontal gap. */
     private static final double MAX_HEIGHT_DIFFERENCE = 1.5;
 
-    private final SeafarerMob mob;
+    private final PathfinderMob mob;
+    private final Duelist duelist;
     private final double speed;
     private int attackCooldown;
     private long attackSeenAt = -1;
@@ -63,8 +65,9 @@ public class DuelistAttackGoal extends Goal {
     private double lastGap = -1;
     private double closing;
 
-    public DuelistAttackGoal(SeafarerMob mob, double speed) {
+    public <T extends PathfinderMob & Duelist> DuelistAttackGoal(T mob, double speed) {
         this.mob = mob;
+        this.duelist = mob;
         this.speed = speed;
         setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
@@ -77,7 +80,7 @@ public class DuelistAttackGoal extends Goal {
     public boolean canUse() {
         LivingEntity t = mob.getTarget();
         // keepsTarget: the goal selector ticks before customServerAiStep re-checks a target set from outside
-        return t != null && t.isAlive() && MeleeService.skillBasedCombat() && weapon() != null && mob.keepsTarget(t);
+        return t != null && t.isAlive() && MeleeService.skillBasedCombat() && weapon() != null && duelist.keepsTarget(t);
     }
 
     @Override
@@ -162,7 +165,7 @@ public class DuelistAttackGoal extends Goal {
         DuelistBrain.View view = new DuelistBrain.View(self, opp, inReach, threatened,
                 attackSeenAt < 0 ? -1 : (int) (now - attackSeenAt), MeleeConfig.PARRY_WINDOW.get(), attackCooldown,
                 MobConfig.DUELIST_GUARD_STAMINA.get().floatValue(), feintPlanned);
-        SkillTier tier = MobConfig.skill(mob.kind()).tier(MeleeConfig.NPC_SKILL.get());
+        SkillTier tier = duelist.duelistSkill().tier(MeleeConfig.NPC_SKILL.get());
         DuelistBrain.Decision decision = DuelistBrain.explain(view, tier, parryRoll, thrustRoll);
         if (DuelistDebug.active()) trace(target, self, decision, gap, reach);
         switch (decision.action()) {

@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.ship.decor;
 
+import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
@@ -13,14 +14,19 @@ import com.richardsenger.piratesnships.ship.decor.flag.FlagGameTests;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagModelGameTests;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagpoleFooting;
 import com.richardsenger.piratesnships.ship.decor.flag.Flags;
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.core.Direction;
+import net.minecraft.data.models.blockstates.Condition;
+import net.minecraft.data.models.blockstates.MultiPartGenerator;
 import net.minecraft.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
 import net.minecraft.data.models.model.ModelLocationUtils;
 import net.minecraft.data.recipes.RecipeCategory;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
@@ -34,9 +40,9 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import java.util.List;
 
 /**
- * The {@code ship.decor} module: figureheads, nameplate, flagpole, cargo crate and cargo barrel. The four figureheads
+ * The {@code ship.decor} module: figureheads, name board, flagpole, cargo crate and cargo barrel. The four figureheads
  * (skull with crossed bones, spread-winged eagle, maned lion with its paws on a scroll, mermaid with her tail curling
- * under the bow), the nameplate and the flagpole use hand-made Blockbench models ({@code art/models/}, design.md §4.8;
+ * under the bow), the name board (NAME2, the nameplate's successor) and the flagpole use hand-made Blockbench models ({@code art/models/}, design.md §4.8;
  * datagen writes only their block states). Flags (items, the flagpole's block entity, block state and look, config,
  * commands) are in the {@code flag} sub-package. The ART2 decor blocks (lantern, bell, rope coil, stern window, chart
  * table, sea cot) have their datagen in {@link DecorData}; the railing family (RAIL1, {@code railing}, registered per
@@ -82,7 +88,7 @@ public final class ShipDecorModule implements ModModule {
                 .block(ShipDecor.FIGUREHEAD_LION, "Lion Figurehead")
                 .block(ShipDecor.FIGUREHEAD_EAGLE, "Eagle Figurehead")
                 .block(ShipDecor.FIGUREHEAD_SKULL, "Skull Figurehead")
-                .block(ShipDecor.NAMEPLATE, "Nameplate")
+                .block(ShipDecor.NAMEPLATE, "Name Board")
                 .add(NameplateText.KEY_WRECK_OF, "Wreck of %s")
                 .block(ShipDecor.FLAGPOLE, "Flagpole")
                 .block(ShipDecor.FLAG_PEDESTAL, "Flag Pedestal")
@@ -90,7 +96,7 @@ public final class ShipDecorModule implements ModModule {
                 .block(ShipDecor.CARGO_BARREL, "Cargo Barrel"));
         data.models(m -> {
             for (RegistryEntry<Block, FigureheadBlock> f : ShipDecor.figureheads()) figurehead(m, f.get());
-            nameplate(m, ShipDecor.NAMEPLATE.get());
+            nameBoard(m, ShipDecor.NAMEPLATE.get());
             // flagpole: model and block state in FlagData
             flagPedestal(m, ShipDecor.FLAG_PEDESTAL.get());
             // hand-made Blockbench models (art/models/cargo_{crate,barrel}.bbmodel, design.md §4.8): only the block
@@ -129,7 +135,8 @@ public final class ShipDecorModule implements ModModule {
             figureheadRecipe(out, ShipDecor.FIGUREHEAD_LION, Items.GOLD_INGOT);
             figureheadRecipe(out, ShipDecor.FIGUREHEAD_EAGLE, Items.FEATHER);
             figureheadRecipe(out, ShipDecor.FIGUREHEAD_SKULL, Items.BONE);
-            ShapelessRecipeBuilder.shapeless(RecipeCategory.DECORATIONS, ShipDecor.NAMEPLATE.get())
+            // NAME2: a row needs several boards
+            ShapelessRecipeBuilder.shapeless(RecipeCategory.DECORATIONS, ShipDecor.NAMEPLATE.get(), 3)
                     .requires(ItemTags.SIGNS).requires(Items.GOLD_NUGGET)
                     .unlockedBy("has_gold_nugget", InventoryChangeTrigger.TriggerInstance.hasItems(Items.GOLD_NUGGET))
                     .save(out, ShipDecor.NAMEPLATE.id());
@@ -168,14 +175,47 @@ public final class ShipDecorModule implements ModModule {
                 Variant.variant().with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(block))).with(horizontalFacing()));
     }
 
+    /** NAME2: the name board's hand-made parent models ({@code tools/gen_name_board_models.py}, {@code art/models/name_board.bbmodel}). */
+    static final ResourceLocation NAME_BOARD = Constants.id("block/name_board");
+    static final ResourceLocation NAME_BOARD_CAP_LEFT = Constants.id("block/name_board_cap_left");
+    static final ResourceLocation NAME_BOARD_CAP_RIGHT = Constants.id("block/name_board_cap_right");
+    static final ResourceLocation NAME_BOARD_ITEM = Constants.id("block/name_board_item");
+    /** The wood the name board comes in (it keeps the nameplate's single registry id; RAIL2 may widen it to a family). */
+    static final ShipWood NAME_BOARD_WOOD = ShipWood.OAK;
+
     /**
-     * Hand-made Blockbench model ({@code art/models/nameplate.bbmodel}, design.md §4.8): a board on two iron brackets
-     * against the back of the block (the ladder shape's side, facing north), rotated like a ladder. Only the block
-     * state is generated; the item model delegates to the block model.
+     * NAME2: the name board's block state (multipart, the north-facing parent models turned by {@code facing}): the
+     * panel with the frame's top and bottom always, the frame's end on the viewer's left where no board continues the
+     * row there ({@code left=false}) and likewise on the right, so the frame runs round a whole row. The parents use the
+     * wood family's texture variables; datagen writes their oak children ({@link WoodFamily#childJson}), and the item
+     * model is the oak child of {@code block/name_board_item} (a small framed board).
      */
-    private static void nameplate(ModelContext m, Block block) {
-        m.blockStates().accept(MultiVariantGenerator.multiVariant(block,
-                Variant.variant().with(VariantProperties.MODEL, ModelLocationUtils.getModelLocation(block))).with(horizontalFacing()));
+    private static void nameBoard(ModelContext m, Block block) {
+        ResourceLocation board = WoodFamily.child(NAME_BOARD_WOOD, NAME_BOARD);
+        ResourceLocation capLeft = WoodFamily.child(NAME_BOARD_WOOD, NAME_BOARD_CAP_LEFT);
+        ResourceLocation capRight = WoodFamily.child(NAME_BOARD_WOOD, NAME_BOARD_CAP_RIGHT);
+        for (ResourceLocation parent : List.of(NAME_BOARD, NAME_BOARD_CAP_LEFT, NAME_BOARD_CAP_RIGHT)) {
+            m.models().accept(WoodFamily.child(NAME_BOARD_WOOD, parent), () -> WoodFamily.childJson(NAME_BOARD_WOOD, parent));
+        }
+        m.models().accept(ModelLocationUtils.getModelLocation(block.asItem()), () -> WoodFamily.childJson(NAME_BOARD_WOOD, NAME_BOARD_ITEM));
+        MultiPartGenerator gen = MultiPartGenerator.multiPart(block);
+        for (Direction d : Direction.Plane.HORIZONTAL) {
+            gen.with(Condition.condition().term(NameBoardBlock.FACING, d), turned(board, d));
+            gen.with(Condition.condition().term(NameBoardBlock.FACING, d).term(NameBoardBlock.LEFT, false), turned(capLeft, d));
+            gen.with(Condition.condition().term(NameBoardBlock.FACING, d).term(NameBoardBlock.RIGHT, false), turned(capRight, d));
+        }
+        m.blockStates().accept(gen);
+    }
+
+    /** {@code model} (north-facing) turned to {@code d} by the block state. */
+    private static Variant turned(ResourceLocation model, Direction d) {
+        Variant v = Variant.variant().with(VariantProperties.MODEL, model);
+        return switch (d) {
+            case EAST -> v.with(VariantProperties.Y_ROT, VariantProperties.Rotation.R90);
+            case SOUTH -> v.with(VariantProperties.Y_ROT, VariantProperties.Rotation.R180);
+            case WEST -> v.with(VariantProperties.Y_ROT, VariantProperties.Rotation.R270);
+            default -> v;
+        };
     }
 
     /**

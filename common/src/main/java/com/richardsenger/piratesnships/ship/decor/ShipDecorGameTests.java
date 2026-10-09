@@ -119,12 +119,13 @@ public final class ShipDecorGameTests {
 
     @ModGameTest
     public static void decorRecipesAreLoaded(GameTestHelper helper) {
-        for (String id : List.of("figurehead_mermaid", "figurehead_lion", "figurehead_eagle", "figurehead_skull", "nameplate",
+        for (String id : List.of("figurehead_mermaid", "figurehead_lion", "figurehead_eagle", "figurehead_skull",
                 "cargo_crate", "cargo_barrel")) {
             ContentTestSupport.assertRecipe(helper, id, net.minecraft.core.registries.BuiltInRegistries.ITEM.get(
                     com.richardsenger.piratesnships.Constants.id(id)), 1);
         }
         ContentTestSupport.assertRecipe(helper, "flagpole", ShipDecor.FLAGPOLE.get().asItem(), 2);
+        ContentTestSupport.assertRecipe(helper, "nameplate", ShipDecor.NAMEPLATE.get().asItem(), 3); // NAME2: three boards
         helper.succeed();
     }
 }

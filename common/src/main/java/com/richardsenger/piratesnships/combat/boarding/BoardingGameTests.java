@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Boarding planks, the gangway (BRD1, BRD2, docs/design.md §8.3, §8.4), in a real server.
+ * Boarding planks, the gangway (BRD1, BRD2, BRD4, docs/design.md §8.3, §8.4), in a real server.
  *
  * <p>Ship to ship: two closed 5×4×5 plank hulls of {@link DryHullGameTests} float in one basin: ship A at x 2..6, ship B
  * three blocks east of it at x 10..14 (or eight blocks, at x 15..19). Both have their deck (the hull's top layer) at
@@ -182,11 +182,36 @@ public final class BoardingGameTests {
         h.assertTrue(s.b().ship().id().equals(laid.farShip()), "the plank landed on " + laid.farShip() + ", not on B");
     }
 
-    private static void assertOk(GameTestHelper h, BoardingPlanks.Laid laid, List<PlankRun.Pitch> pitches, PlankRun.Landing landing) {
+    /** The run was laid as one straight board of {@code columns} columns rising {@code rise} blocks, landing so. */
+    private static void assertOk(GameTestHelper h, BoardingPlanks.Laid laid, int columns, int rise, PlankRun.Landing landing) {
         h.assertTrue(laid.outcome() == BoardingPlanks.Outcome.OK, "the plank was refused: " + laid.outcome()
                 + (laid.outcome() == BoardingPlanks.Outcome.BLOCKED ? " at " + laid.blockedAt() : ""));
-        h.assertTrue(laid.pitches().equals(pitches) && laid.landing() == landing,
-                "expected " + pitches + " landing " + landing + ", got " + laid.pitches() + " " + laid.landing());
+        h.assertTrue(laid.columns() == columns && laid.rise() == rise && laid.landing() == landing,
+                "expected " + columns + " columns rising " + rise + " landing " + landing + ", got " + laid.columns()
+                        + " rising " + laid.rise() + " " + laid.landing());
+        assertStraight(h, laid);
+    }
+
+    /**
+     * Every laid cell's block entity carries the one straight line (BRD4): the board's underside at each cell's near and
+     * far edge lies at {@code rise * u / columns} above segment 0's start, so the run has a single pitch.
+     */
+    private static void assertStraight(GameTestHelper h, BoardingPlanks.Laid laid) {
+        BlockPos base = laid.base();
+        BoardingPlankBlockEntity be0 = (BoardingPlankBlockEntity) h.getLevel().getBlockEntity(base);
+        h.assertTrue(be0 != null && be0.isBase() && be0.cells().equals(laid.cells()), "segment 0 does not hold the run");
+        Direction f = be0.facing();
+        double y0 = base.getY() + be0.near();
+        double slope = laid.rise() / (double) laid.columns();
+        for (int k = 0; k < laid.length(); k++) {
+            BlockPos c = laid.cells().get(k);
+            BoardingPlankBlockEntity be = (BoardingPlankBlockEntity) h.getLevel().getBlockEntity(c);
+            h.assertTrue(be != null && base.equals(be.base()), "cell " + k + " does not know its run");
+            int u = (c.getX() - base.getX()) * f.getStepX() + (c.getZ() - base.getZ()) * f.getStepZ();
+            h.assertTrue(Math.abs(c.getY() + be.near() - (y0 + slope * u)) < 1e-6
+                            && Math.abs(c.getY() + be.far() - (y0 + slope * (u + 1))) < 1e-6,
+                    "cell " + k + " is off the straight line: near " + be.near() + ", far " + be.far());
+        }
     }
 
     /** Every cell of the run lies in {@code ship}'s plot. */
@@ -203,14 +228,27 @@ public final class BoardingGameTests {
      * {lowest feet y, last feet y, last x}.
      */
     private static double[] walkEast(Entity e, Vec3 from, double untilX) {
-        e.moveTo(from.x, from.y, from.z, -90.0f, 0.0f);
+        return walk(e, from, 1, untilX);
+    }
+
+    /**
+     * Walks {@code e} east ({@code sign} 1) or west (-1) as {@link #walkEast} does, until its x passes {@code untilX}.
+     * Returns {lowest feet y, last feet y, last x, highest feet y, the largest rise of one move}.
+     */
+    private static double[] walk(Entity e, Vec3 from, int sign, double untilX) {
+        e.moveTo(from.x, from.y, from.z, sign > 0 ? -90.0f : 90.0f, 0.0f);
         e.setOnGround(true);
         double lowest = e.getY();
-        for (int step = 0; step < 200 && e.getX() < untilX; step++) {
-            e.move(MoverType.SELF, new Vec3(0.12, -0.1, 0.0));
+        double highest = e.getY();
+        double jump = 0.0;
+        for (int step = 0; step < 300 && (sign > 0 ? e.getX() < untilX : e.getX() > untilX); step++) {
+            double before = e.getY();
+            e.move(MoverType.SELF, new Vec3(0.12 * sign, -0.1, 0.0));
             lowest = Math.min(lowest, e.getY());
+            highest = Math.max(highest, e.getY());
+            jump = Math.max(jump, e.getY() - before);
         }
-        return new double[]{lowest, e.getY(), e.getX()};
+        return new double[]{lowest, e.getY(), e.getX(), highest, jump};
     }
 
     // ------------------------------------------------------------------ ship to ship (BRD1)
@@ -236,12 +274,11 @@ public final class BoardingGameTests {
                 BlockPos cell = topCell(s.a(), i);
                 BlockState st = level.getBlockState(cell);
                 h.assertTrue(st.is(block) && st.getValue(BoardingPlankBlock.SEGMENT) == i
-                        && st.getValue(BoardingPlankBlock.FACING) == Direction.EAST
-                        && st.getValue(BoardingPlankBlock.PITCH) == PlankRun.Pitch.FLAT
-                        && st.getValue(BoardingPlankBlock.TIP) == (i == 3), "segment " + i + " is " + st);
+                        && st.getValue(BoardingPlankBlock.FACING) == Direction.EAST, "segment " + i + " is " + st);
                 h.assertTrue(!st.getCollisionShape(level, cell).isEmpty(), "segment " + i + " has no collision");
             }
             assertInPlot(h, laid.cells(), a);
+            assertStraight(h, laid);
             Vec3 tip = a.toWorld(Vec3.atCenterOf(topCell(s.a(), 3)));
             Vec3 overB = b.toWorld(Vec3.atCenterOf(westGunwale(s.b()).above()));
             h.assertTrue(tip.distanceTo(overB) < 0.5, "the far end " + tip + " is not over B's gunwale " + overB);
@@ -282,15 +319,16 @@ public final class BoardingGameTests {
     }
 
     /**
-     * From the side face of A's gunwale the run starts a block lower than B's deck: it is a three-cell run that climbs
-     * the block on a 1-in-2 ramp and meets B's gunwale top (BRD2; BRD1 ended it flat against B's gunwale).
+     * From the side face of A's gunwale the run starts a block lower than B's deck: one straight board over the three
+     * columns of water climbs the block and meets B's gunwale top (BRD4; BRD2 ramped up in its last two cells, BRD1
+     * ended it flat against B's gunwale).
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200)
-    public static void plankFromTheSideRampsUpToAHigherDeck(GameTestHelper h) {
+    public static void plankFromTheSideClimbsToAHigherDeck(GameTestHelper h) {
         Ships s = twoShips(h, 3);
         h.runAfterDelay(SETTLE, () -> {
             BoardingPlanks.Laid laid = BoardingPlanks.lay(h.getLevel(), eastGunwale(s.a()), Direction.EAST, Direction.NORTH);
-            assertOk(h, laid, List.of(PlankRun.Pitch.FLAT, PlankRun.Pitch.UP_LOW, PlankRun.Pitch.UP_HIGH), PlankRun.Landing.RAMP);
+            assertOk(h, laid, 3, 1, PlankRun.Landing.RAMP);
             h.assertTrue(eastGunwale(s.a()).east().equals(laid.base()), "segment 0 is at " + laid.base());
             h.assertTrue(s.b().ship().id().equals(laid.farShip()), "the plank did not land on B");
             h.succeed();
@@ -376,8 +414,8 @@ public final class BoardingGameTests {
     // ------------------------------------------------------------------ ship and pier (BRD2)
 
     /**
-     * Ship to a pier one block above the rail top, three blocks of water between: a 1-in-2 ramp in A's plot meets the
-     * pier's top edge, landing on the world; a player walks from A's deck up onto the pier without ever dropping.
+     * Ship to a pier one block above the rail top, three blocks of water between: one straight board in A's plot climbs
+     * to the pier's top edge, landing on the world; a player walks from A's deck up onto the pier without ever dropping.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200)
     public static void gangwayFromAShipRampsUpOneBlockToAPier(GameTestHelper h) {
@@ -386,7 +424,7 @@ public final class BoardingGameTests {
             Rail r = rail(a);
             BlockPos edge = pier(h, r, 3, 1);
             BoardingPlanks.Laid laid = layFromTop(h, a);
-            assertOk(h, laid, List.of(PlankRun.Pitch.FLAT, PlankRun.Pitch.UP_LOW, PlankRun.Pitch.UP_HIGH), PlankRun.Landing.RAMP);
+            assertOk(h, laid, 3, 1, PlankRun.Landing.RAMP);
             h.assertTrue(laid.farShip() == null && a.ship().id().equals(laid.ship()), "the run should lie in A and land on the world");
             assertInPlot(h, laid.cells(), a.ship());
             BoardingPlankBlockEntity be = (BoardingPlankBlockEntity) h.getLevel().getBlockEntity(laid.base());
@@ -405,8 +443,9 @@ public final class BoardingGameTests {
     }
 
     /**
-     * Ship to a pier two blocks above the rail top, four blocks of water between: two blocks of 1-in-2 ramp. Breaking the
-     * ramp's first upper cell takes the whole run down across the step to the next level and drops one plank.
+     * Ship to a pier two blocks above the rail top, four blocks of water between: one straight board rising two blocks
+     * over four columns (26.6 degrees), its last two cells a block up. Breaking its second cell takes the whole run down
+     * across the step to the next level and drops one plank.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200)
     public static void gangwayRampsUpTwoBlocksAndBreaksAcrossTheStep(GameTestHelper h) {
@@ -416,8 +455,7 @@ public final class BoardingGameTests {
             Rail r = rail(a);
             BlockPos edge = pier(h, r, 4, 2);
             BoardingPlanks.Laid laid = layFromTop(h, a);
-            assertOk(h, laid, List.of(PlankRun.Pitch.UP_LOW, PlankRun.Pitch.UP_HIGH, PlankRun.Pitch.UP_LOW, PlankRun.Pitch.UP_HIGH),
-                    PlankRun.Landing.RAMP);
+            assertOk(h, laid, 4, 2, PlankRun.Landing.RAMP);
             h.assertTrue(laid.cells().get(2).getY() == laid.cells().get(1).getY() + 1, "the second block of ramp is not a level up");
             // walk it
             Player walker = h.makeMockPlayer(GameType.SURVIVAL);
@@ -476,8 +514,7 @@ public final class BoardingGameTests {
         h.runAfterDelay(SETTLE, () -> {
             BlockPos edge = pier(h, rail(a), 3, 0);
             BoardingPlanks.Laid laid = BoardingPlanks.lay(h.getLevel(), edge, Direction.UP, Direction.WEST);
-            assertOk(h, laid, List.of(PlankRun.Pitch.FLAT, PlankRun.Pitch.FLAT, PlankRun.Pitch.FLAT, PlankRun.Pitch.FLAT),
-                    PlankRun.Landing.LEVEL);
+            assertOk(h, laid, 4, 0, PlankRun.Landing.LEVEL);
             h.assertTrue(a.ship().id().equals(laid.ship()) && laid.farShip() == null, "the run should lie in A, resting on the world");
             assertInPlot(h, laid.cells(), a.ship());
             h.assertTrue(eastGunwale(a).above().equals(laid.base()), "segment 0 is at " + laid.base() + ", not over A's rail");
@@ -534,8 +571,7 @@ public final class BoardingGameTests {
         h.runAfterDelay(SETTLE, () -> {
             pier(h, rail(a), 3, 0);
             BoardingPlanks.Laid laid = layFromTop(h, a);
-            assertOk(h, laid, List.of(PlankRun.Pitch.FLAT, PlankRun.Pitch.FLAT, PlankRun.Pitch.FLAT, PlankRun.Pitch.FLAT),
-                    PlankRun.Landing.LEVEL);
+            assertOk(h, laid, 4, 0, PlankRun.Landing.LEVEL);
             cells.addAll(laid.cells());
             ShipBody ship = a.ship();
             Vec3 helm = Vec3.atCenterOf(a.helmPlot());
@@ -595,15 +631,15 @@ public final class BoardingGameTests {
     }
 
     /**
-     * Dock to a dock a block higher: plain world blocks on a 1-in-2 ramp (no ship), segment 0 recording both docks; a crew
-     * member paths from the low dock up the ramp onto the high one.
+     * Dock to a dock a block higher: plain world blocks, one straight board rising a block over the three columns of the
+     * gap (no ship), segment 0 recording both docks; a crew member paths from the low dock up the board onto the high one.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 400)
     public static void gangwayBetweenDocksIsPlainBlocksAndCrewWalkIt(GameTestHelper h) {
         docks(h);
         ServerLevel level = h.getLevel();
         BoardingPlanks.Laid laid = BoardingPlanks.lay(level, h.absolutePos(new BlockPos(5, 4, 11)), Direction.UP, Direction.EAST);
-        assertOk(h, laid, List.of(PlankRun.Pitch.FLAT, PlankRun.Pitch.UP_LOW, PlankRun.Pitch.UP_HIGH), PlankRun.Landing.RAMP);
+        assertOk(h, laid, 3, 1, PlankRun.Landing.RAMP);
         h.assertTrue(laid.ship() == null && laid.farShip() == null, "a dock-to-dock run touches no ship");
         for (BlockPos c : laid.cells()) {
             h.assertTrue(SableShips.containing(level, c) == null, "a cell is in a plot");
@@ -641,5 +677,196 @@ public final class BoardingGameTests {
         BoardingPlanks.Laid laid = BoardingPlanks.lay(h.getLevel(), h.absolutePos(new BlockPos(3, 4, 11)), Direction.UP, Direction.SOUTH);
         h.assertTrue(laid.outcome() == BoardingPlanks.Outcome.NO_START, "expected NO_START, got " + laid.outcome());
         h.succeed();
+    }
+
+    // ------------------------------------------------------------------ one straight board (BRD4)
+
+    /**
+     * Two stone docks, the far one two blocks higher, six blocks of air between: x 1..3 (top y 5) and x 10..13 (top y
+     * 7), z 9..13.
+     */
+    private static void docksTwoApart(GameTestHelper h) {
+        for (int z = 9; z <= 13; z++) {
+            for (int x = 1; x <= 3; x++) {
+                for (int y = 1; y <= 4; y++) h.setBlock(new BlockPos(x, y, z), Blocks.STONE);
+            }
+            for (int x = 10; x <= 13; x++) {
+                for (int y = 1; y <= 6; y++) h.setBlock(new BlockPos(x, y, z), Blocks.STONE);
+            }
+        }
+    }
+
+    /**
+     * The human's case: a dock two blocks lower than the far one, six blocks apart. The plank is one straight board at a
+     * single pitch over the six columns (18.4 degrees: the first three cells on the low level, the last three a block
+     * up, every cell's board on the one line), not a level stretch and then a steep ramp; a mock player walks up it
+     * onto the high dock and back down onto the low one, never jumping more than a step and never dropping.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 100)
+    public static void aPlankTwoUpOverSixIsOneStraightBoardWalkedUpAndDown(GameTestHelper h) {
+        docksTwoApart(h);
+        ServerLevel level = h.getLevel();
+        BoardingPlanks.Laid laid = BoardingPlanks.lay(level, h.absolutePos(new BlockPos(3, 4, 11)), Direction.UP, Direction.EAST);
+        assertOk(h, laid, 6, 2, PlankRun.Landing.RAMP);
+        h.assertTrue(Math.abs(laid.pitchDegrees() - 18.43) < 0.01, "pitch " + laid.pitchDegrees());
+        for (int i = 0; i < 6; i++) {
+            BlockPos expected = h.absolutePos(new BlockPos(4 + i, i < 3 ? 5 : 6, 11));
+            h.assertTrue(laid.cells().get(i).equals(expected), "cell " + i + " is at " + laid.cells().get(i) + ", not " + expected);
+        }
+        // the collision follows the board: the cells' tops climb with it
+        double last = Double.NEGATIVE_INFINITY;
+        for (BlockPos c : laid.cells()) {
+            double top = c.getY() + level.getBlockState(c).getCollisionShape(level, c).max(Direction.Axis.Y);
+            h.assertTrue(top > last, "the collision does not climb at " + c + ": top " + top + " after " + last);
+            last = top;
+        }
+        Player walker = h.makeMockPlayer(GameType.SURVIVAL);
+        Vec3 low = Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(2, 5, 11)));
+        Vec3 high = Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(12, 7, 11)));
+        double[] up = walk(walker, low.add(0, 0.05, 0), 1, high.x);
+        h.assertTrue(up[2] >= high.x - 0.1 && Math.abs(up[1] - high.y) < 0.2,
+                "the walker did not reach the high dock: x " + up[2] + ", y " + up[1] + " (dock " + high + ")");
+        h.assertTrue(up[0] > low.y - 0.1, "the walker dropped to y " + up[0] + " on the way up");
+        h.assertTrue(up[4] <= 0.6, "the walker rose " + up[4] + " in one move (more than a vanilla step)");
+        double[] down = walk(walker, high.add(0, 0.05, 0), -1, low.x);
+        h.assertTrue(down[2] <= low.x + 0.1 && Math.abs(down[1] - low.y) < 0.2,
+                "the walker did not get down onto the low dock: x " + down[2] + ", y " + down[1] + " (dock " + low + ")");
+        h.assertTrue(down[0] > low.y - 0.1, "the walker dropped to y " + down[0] + " on the way down");
+        h.succeed();
+    }
+
+    /** A crew member paths across the same straight board, from the low dock up onto the high one. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 400)
+    public static void crewWalkAStraightBoardTwoUpOverSix(GameTestHelper h) {
+        docksTwoApart(h);
+        ServerLevel level = h.getLevel();
+        BoardingPlanks.Laid laid = BoardingPlanks.lay(level, h.absolutePos(new BlockPos(3, 4, 11)), Direction.UP, Direction.EAST);
+        assertOk(h, laid, 6, 2, PlankRun.Landing.RAMP);
+        CrewMember c = StationContent.CREW_MEMBER.get().create(level);
+        if (c == null) throw new AssertionError("no crew member");
+        Vec3 from = Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(2, 5, 11)));
+        Vec3 to = Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(12, 7, 11)));
+        c.moveTo(from.x, from.y, from.z, -90.0f, 0.0f);
+        c.setStationary(true);
+        level.addFreshEntity(c);
+        h.onEachTick(() -> {
+            if (c.getNavigation().isDone()) {
+                c.getNavigation().moveTo(to.x, to.y, to.z, 1.0);
+            }
+        });
+        h.succeedWhen(() -> {
+            double dock = h.absolutePos(new BlockPos(10, 7, 11)).getX();
+            h.assertTrue(c.position().distanceTo(to) < 1.6 && c.getX() > dock + 0.5,
+                    "the crew member is at " + c.position() + ", not on the high dock near " + to);
+            h.assertTrue(Math.abs(c.getY() - to.y) < 0.2, "the crew member is not on the high dock");
+            c.discard();
+        });
+    }
+
+    /**
+     * A gangway laid from a level pier onto A (in A's plot) still breaks when the ship heaves past {@code break_rise}:
+     * lifted 3 blocks, the check reads a vertical drift of about 3 and breaks, and the run is gone with one plank dropped.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200, batch = BATCH + "every_tick")
+    public static void gangwayFromAPierBreaksWhenTheShipHeavesPastBreakRise(GameTestHelper h) {
+        ConfigOverrides.during(h, BoardingConfig.CHECK_INTERVAL_TICKS, 1);
+        Fixture a = oneShip(h);
+        List<BlockPos> cells = new java.util.ArrayList<>();
+        h.runAfterDelay(SETTLE, () -> {
+            BlockPos edge = pier(h, rail(a), 3, 0);
+            BoardingPlanks.Laid laid = BoardingPlanks.lay(h.getLevel(), edge, Direction.UP, Direction.WEST);
+            assertOk(h, laid, 4, 0, PlankRun.Landing.LEVEL);
+            h.assertTrue(a.ship().id().equals(laid.ship()), "the run should lie in A");
+            cells.addAll(laid.cells());
+            ShipBody ship = a.ship();
+            Vec3 helm = Vec3.atCenterOf(a.helmPlot());
+            ship.placeAt(helm, ship.toWorld(helm).add(0.0, 3.0, 0.0), ship.orientation());
+            BoardingPlankBlockEntity.Check c = ((BoardingPlankBlockEntity) h.getLevel().getBlockEntity(cells.get(0))).check(h.getLevel());
+            h.assertTrue(Math.abs(c.vertical()) > BoardingConfig.BREAK_RISE.get() && c.breaks(),
+                    "after the heave: vertical " + c.vertical() + ", breaks " + c.breaks());
+        });
+        h.runAfterDelay(SETTLE + 20, () -> {
+            assertGone(h, cells);
+            int items = plankItems(h, cells.get(0));
+            h.assertTrue(items == 1, "expected one dropped plank, found " + items);
+            h.succeed();
+        });
+    }
+
+    // ------------------------------------------------------------------ old saves (BRD4)
+
+    /**
+     * Sets the cells of an old run (segment {@code k} at {@code cells[k]}, laid east, no board data) and loads segment
+     * 0's block entity from a BRD2 save of it: near support {@code support}, far block {@code farBlock}, the landing.
+     */
+    private static void oldRun(GameTestHelper h, List<BlockPos> cells, BlockPos support, BlockPos farBlock, PlankRun.Landing landing) {
+        ServerLevel level = h.getLevel();
+        BoardingPlankBlock block = BoardingContent.PLANK.get();
+        for (int k = 0; k < cells.size(); k++) {
+            level.setBlock(cells.get(k), block.segment(Direction.EAST, k), 3);
+        }
+        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+        tag.putBoolean("on_ship", false);
+        tag.put("base_support", net.minecraft.nbt.NbtUtils.writeBlockPos(support));
+        Vec3 tip = Vec3.atCenterOf(cells.get(cells.size() - 1));
+        tag.putDouble("far_x", tip.x);
+        tag.putDouble("far_y", tip.y);
+        tag.putDouble("far_z", tip.z);
+        tag.put("far_block", net.minecraft.nbt.NbtUtils.writeBlockPos(farBlock));
+        tag.put("tip", net.minecraft.nbt.NbtUtils.writeBlockPos(cells.get(cells.size() - 1)));
+        tag.putInt("length", cells.size());
+        tag.putString("landing", landing.name());
+        BoardingPlankBlockEntity be = (BoardingPlankBlockEntity) level.getBlockEntity(cells.get(0));
+        if (be == null) throw new AssertionError("no block entity on segment 0");
+        be.loadWithComponents(tag, level.registryAccess());
+    }
+
+    /**
+     * A BRD2 save of the dock-to-dock ramp (a level cell and the two halves of a 1-in-2 ramp, all on one row, landing on
+     * the high dock's edge) is laid again on its first tick as one straight board from the low dock: three cells rising
+     * a block, the same blocks, segment 0 holding the run, no plank dropped.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 100)
+    public static void aBrd2RampLoadsAsAStraightBoard(GameTestHelper h) {
+        docks(h);
+        List<BlockPos> cells = List.of(h.absolutePos(new BlockPos(6, 5, 11)), h.absolutePos(new BlockPos(7, 5, 11)),
+                h.absolutePos(new BlockPos(8, 5, 11)));
+        oldRun(h, cells, h.absolutePos(new BlockPos(5, 4, 11)), h.absolutePos(new BlockPos(9, 5, 11)), PlankRun.Landing.RAMP);
+        h.runAfterDelay(3, () -> {
+            BoardingPlankBlockEntity be = (BoardingPlankBlockEntity) h.getLevel().getBlockEntity(cells.get(0));
+            h.assertTrue(be != null && be.isBase(), "segment 0 holds no run after loading");
+            h.assertTrue(be.cells().equals(cells) && be.columns() == 3 && be.rise() == 1,
+                    "expected the straight board over three columns rising one, got " + be.cells() + ", " + be.columns()
+                            + " columns rising " + be.rise());
+            for (BlockPos c : cells) {
+                BoardingPlankBlockEntity cell = (BoardingPlankBlockEntity) h.getLevel().getBlockEntity(c);
+                h.assertTrue(cell != null && cells.get(0).equals(cell.base()), "cell " + c + " does not know its run");
+            }
+            h.assertTrue(plankItems(h, cells.get(0)) == 0, "a plank dropped while the run was laid again");
+            h.succeed();
+        });
+    }
+
+    /** A BRD2 save of a level run between two docks keeps its blocks in place and gets flat boards. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 100)
+    public static void aLevelBrd2RunLoadsInPlace(GameTestHelper h) {
+        for (int z = 9; z <= 13; z++) {
+            for (int x = 2; x <= 5; x++) for (int y = 1; y <= 4; y++) h.setBlock(new BlockPos(x, y, z), Blocks.STONE);
+            for (int x = 9; x <= 12; x++) for (int y = 1; y <= 4; y++) h.setBlock(new BlockPos(x, y, z), Blocks.STONE);
+        }
+        List<BlockPos> cells = new java.util.ArrayList<>();
+        for (int x = 6; x <= 9; x++) cells.add(h.absolutePos(new BlockPos(x, 5, 11)));
+        oldRun(h, cells, h.absolutePos(new BlockPos(5, 4, 11)), h.absolutePos(new BlockPos(9, 4, 11)), PlankRun.Landing.LEVEL);
+        h.runAfterDelay(3, () -> {
+            BoardingPlankBlockEntity be = (BoardingPlankBlockEntity) h.getLevel().getBlockEntity(cells.get(0));
+            h.assertTrue(be != null && be.isBase() && be.cells().equals(cells) && be.columns() == 4 && be.rise() == 0,
+                    "the level run was not kept: " + (be == null ? null : be.cells()));
+            for (BlockPos c : cells) {
+                BoardingPlankBlockEntity cell = (BoardingPlankBlockEntity) h.getLevel().getBlockEntity(c);
+                h.assertTrue(cell != null && cells.get(0).equals(cell.base()) && cell.near() == 0.0 && cell.far() == 0.0,
+                        "cell " + c + " is not a flat cell of the run");
+            }
+            h.succeed();
+        });
     }
 }

@@ -18,6 +18,10 @@
           "y": 0.09
         },
         {
+          "type": "spotlight",
+          "item": "minecraft:compass"
+        },
+        {
           "type": "text",
           "key": "pirates_n_ships.almanac.not_yet.p1.text1"
         }

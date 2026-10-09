@@ -1,0 +1,193 @@
+{
+	"credit": "Made with Blockbench, source art/models/name_board.bbmodel",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"planks": "minecraft:block/oak_planks",
+		"log": "minecraft:block/stripped_oak_log",
+		"particle": "#planks"
+	},
+	"elements": [
+		{
+			"name": "panel",
+			"from": [
+				0,
+				2,
+				14.5
+			],
+			"to": [
+				16,
+				14,
+				16
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						2,
+						16,
+						14
+					],
+					"texture": "#planks"
+				},
+				"south": {
+					"uv": [
+						0,
+						2,
+						16,
+						14
+					],
+					"texture": "#planks",
+					"cullface": "south"
+				}
+			}
+		},
+		{
+			"name": "frame_top",
+			"from": [
+				0,
+				14,
+				14
+			],
+			"to": [
+				16,
+				15,
+				16
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						1,
+						0,
+						2,
+						16
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						1,
+						0,
+						2,
+						16
+					],
+					"rotation": 90,
+					"texture": "#log",
+					"cullface": "south"
+				},
+				"up": {
+					"uv": [
+						14,
+						0,
+						16,
+						16
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"down": {
+					"uv": [
+						14,
+						0,
+						16,
+						16
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						14,
+						1,
+						16,
+						2
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						14,
+						1,
+						16,
+						2
+					],
+					"texture": "#log"
+				}
+			}
+		},
+		{
+			"name": "frame_bottom",
+			"from": [
+				0,
+				1,
+				14
+			],
+			"to": [
+				16,
+				2,
+				16
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						14,
+						0,
+						15,
+						16
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						14,
+						0,
+						15,
+						16
+					],
+					"rotation": 90,
+					"texture": "#log",
+					"cullface": "south"
+				},
+				"up": {
+					"uv": [
+						14,
+						0,
+						16,
+						16
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"down": {
+					"uv": [
+						14,
+						0,
+						16,
+						16
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						14,
+						14,
+						16,
+						15
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						14,
+						14,
+						16,
+						15
+					],
+					"texture": "#log"
+				}
+			}
+		}
+	]
+}

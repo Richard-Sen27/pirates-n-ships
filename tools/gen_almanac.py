@@ -29,6 +29,9 @@ voice. docs/guide.md is the testing and reference guide and is not read here. Ea
     illustration: yard                  places a declared illustration on this page (at its box)
     show_me: sails_and_winch | Show me: rigging a sail     a "Show me" button here (scene id, optional label)
     contents:                           a list linking every other chapter, in book order (the welcome chapter)
+    {spotlight:helm}                    a framed item at twice the size with its name under it (ALM8; a line of its own)
+    {recipe:helm}                       the crafting panel of one of our recipes (ALM8; a line of its own; the id must
+                                        exist in the generated recipes, common/src/generated/resources/data/<ns>/recipe)
 
 Body blocks: a paragraph (lines joined) -> text; "- " lines -> one list (indented lines continue an entry; at most
 64 entries); "1. " lines -> one text per entry with its number in bold; "> " paragraphs -> a tip (TIP_COLOR ink);
@@ -103,7 +106,7 @@ ILLUSTRATIONS = {
     "jolly_roger_flag": ("jolly_roger_flag.png", (0.5, 0.0, 1.0, 1.0)),
     "kraken": ("kraken.png", (0.335, 0.1, 0.5, 1.0)),
     "mob_pirate": ("mob_pirate.png", (0.0, 0.0, 0.36, 1.0)),
-    "nameplate": ("nameplate.png", FULL),
+    "nameplate": ("name_board_row.png", (0.15, 0.2, 0.8, 0.85)),
     "notice_board": ("notice_board.png", (0.0, 0.0, 0.34, 1.0)),
     "pantry": ("pantry.png", FULL),
     "pirate_captain": ("pirate_captain.png", (0.0, 0.0, 0.3, 1.0)),
@@ -130,6 +133,8 @@ ID_RE = re.compile(r"^[a-z0-9_]+$")
 COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 ORDERED_RE = re.compile(r"^(\d+)\.\s+(.*)$")
 DIRECTIVE_RE = re.compile(r"^(illustration|show_me|contents):\s*(.*)$")
+BLOCK_TOKEN_RE = re.compile(r"^\{(recipe|spotlight):([^}]*)}$")   # ALM8: a recipe panel or an item spotlight
+INLINE_BLOCK_RE = re.compile(r"\{(recipe|spotlight):")
 HEADING_RE = re.compile(r"^##\s+(.+?)\s*$")
 ITEM_RE = re.compile(r"\{item:([^}]*)}")
 LINK_RE = re.compile(r"\[\[([^\]|]*)(?:\|([^\]]*))?]]")
@@ -246,6 +251,8 @@ def check_markup(text, where, chapter_ids, items):
             raise SourceError(where, "a {/} without a colour to close")
     if depth:
         raise SourceError(where, "a {#rrggbb} colour that is never closed with {/}")
+    if INLINE_BLOCK_RE.search(bare):
+        raise SourceError(where, "{recipe:...} and {spotlight:...} are blocks: put them on a line of their own")
     other = re.sub(r"\{(#[0-9a-fA-F]{6}|/|item:[^}]*)}", "", bare)
     if "{" in other or "}" in other:
         raise SourceError(where, "a brace that is no markup; escape a literal one as \\{")
@@ -276,7 +283,7 @@ def split_blocks(numbered):
     """[(line number, text)] of one page -> [(kind, data, line number)].
 
     Kinds: "para" (text), "tip" (text), "warning" (text), "bullets" ([text]), "ordered" ([(n, text)]),
-    "illustration" (name), "show_me" ((scene, label)), "contents" (None).
+    "illustration" (name), "show_me" ((scene, label)), "contents" (None), "recipe" (full id), "spotlight" (full id).
     """
     blocks, i = [], 0
     while i < len(numbered):
@@ -287,6 +294,14 @@ def split_blocks(numbered):
             continue
         if s.startswith("|"):
             raise SourceError(f"line {n}", "tables do not fit the Almanac's pages; write a list")
+        b = BLOCK_TOKEN_RE.match(s)
+        if b:
+            value = b.group(2).strip()
+            if not value or not RESOURCE_RE.match(full_id(value)):
+                raise SourceError(f"line {n}", f"{{{b.group(1)}:{value}}}: no valid id")
+            blocks.append((b.group(1), full_id(value), n))
+            i += 1
+            continue
         d = DIRECTIVE_RE.match(s)
         if d:
             kind, value = d.group(1), d.group(2).strip()
@@ -334,7 +349,8 @@ def split_blocks(numbered):
         while i < len(numbered):
             _, raw = numbered[i]
             t = raw.strip()
-            if not t or t.startswith(("|", "- ")) or ORDERED_RE.match(t) or DIRECTIVE_RE.match(t):
+            if (not t or t.startswith(("|", "- ")) or ORDERED_RE.match(t) or DIRECTIVE_RE.match(t)
+                    or BLOCK_TOKEN_RE.match(t)):
                 break
             if kind != "para":
                 if not t.startswith(">"):
@@ -395,6 +411,12 @@ class PageBuilder:
     def show_me(self, scene, label):
         self.elements.append({"type": "show_me", "scene": scene, "label": self.key("show_me", label)})
 
+    def recipe(self, recipe):
+        self.elements.append({"type": "recipe", "recipe": recipe})
+
+    def spotlight(self, item):
+        self.elements.append({"type": "spotlight", "item": item})
+
     def build(self):
         if len(self.elements) > MAX_ELEMENTS:
             raise SystemExit(f"{self.chapter} page {self.number}: {len(self.elements)} elements (max {MAX_ELEMENTS})")
@@ -449,8 +471,17 @@ def read_sources(directory=None):
     return [Source(p.name, p.read_text(encoding="utf-8")) for p in files]
 
 
-def build_chapters(sources, items):
-    """Parsed sources (file order) and our item ids -> (chapters for the intermediate, lang map)."""
+def load_recipes():
+    """Our recipe ids ("pirates_n_ships:helm") from the generated data (run ./gradlew :neoforge:runData first)."""
+    directory = lib.ROOT / "common" / "src" / "generated" / "resources" / "data" / NS / "recipe"
+    return {f"{NS}:{p.relative_to(directory).with_suffix('').as_posix()}" for p in directory.rglob("*.json")}
+
+
+def build_chapters(sources, items, recipes=None):
+    """Parsed sources (file order), our item ids and recipe ids -> (chapters for the intermediate, lang map, shown
+    illustrations). Recipes default to the generated ones (load_recipes)."""
+    if recipes is None:
+        recipes = load_recipes()
     ids = [f"{NS}:{s.id}" for s in sources]
     if len(set(ids)) != len(ids):
         raise SystemExit(f"duplicate chapter ids in docs/almanac: {ids}")
@@ -475,18 +506,18 @@ def build_chapters(sources, items):
         page = PageBuilder(src.id, 1, lang)
         page.heading(lang[title_key])
         has_intro = any(line.strip() for _, line in intro)
-        write_page(page, intro, src, chapter_ids, items, ids, placed)
+        write_page(page, intro, src, chapter_ids, items, ids, placed, recipes)
         if not has_intro and rest:
             # Nothing before the first subsection: it shares the first page with the chapter title
             heading, lines = rest[0]
             rest = rest[1:]
             page.heading(check_markup(heading, src.name, chapter_ids, items))
-            write_page(page, lines, src, chapter_ids, items, ids, placed)
+            write_page(page, lines, src, chapter_ids, items, ids, placed, recipes)
         pages.append(page.build())
         for heading, lines in rest:
             page = PageBuilder(src.id, len(pages) + 1, lang)
             page.heading(check_markup(heading, src.name, chapter_ids, items))
-            write_page(page, lines, src, chapter_ids, items, ids, placed)
+            write_page(page, lines, src, chapter_ids, items, ids, placed, recipes)
             pages.append(page.build())
         if len(pages) > MAX_PAGES:
             raise SourceError(src.name, f"{len(pages)} pages (max {MAX_PAGES})")
@@ -508,7 +539,7 @@ def build_chapters(sources, items):
     return chapters, lang, shown
 
 
-def write_page(page, numbered, src, chapter_ids, items, ids, placed):
+def write_page(page, numbered, src, chapter_ids, items, ids, placed, recipes):
     try:
         blocks = split_blocks(numbered)
     except SourceError as e:
@@ -538,6 +569,15 @@ def write_page(page, numbered, src, chapter_ids, items, ids, placed):
             if not RESOURCE_RE.match(scene):
                 raise SourceError(where, f"show_me {scene!r} is no scene id")
             page.show_me(scene, check_markup(label, where, chapter_ids, items))
+        elif kind == "recipe":
+            if data not in recipes:
+                raise SourceError(where, f"{{recipe:{data}}}: no such recipe in the generated data "
+                                         "(only our own recipes; run ./gradlew :neoforge:runData after adding one)")
+            page.recipe(data)
+        elif kind == "spotlight":
+            if data.startswith(NS + ":") and data not in items:
+                raise SourceError(where, f"{{spotlight:{data}}} is no item of ours")
+            page.spotlight(data)
         elif kind == "contents":
             page.bullets([f"[[{rid}]]" for rid in ids if rid != f"{NS}:{src.id}"])
 

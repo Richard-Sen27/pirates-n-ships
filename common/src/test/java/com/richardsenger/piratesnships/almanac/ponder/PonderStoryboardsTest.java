@@ -208,8 +208,8 @@ class PonderStoryboardsTest {
     @Test
     void thePlankIsTheRunTheRuleLaysForThisGap() {
         // clicked on the top of our gunwale, facing east (her side); her hull hauled alongside stands at x 6..9, its
-        // gunwale on y 3; the rest is open water. BRD2's rule with the default settings lays a level two-cell run
-        // resting on her rail (no ramp: both rails are on y 3).
+        // gunwale on y 3; the rest is open water. BRD4's rule with the default settings lays a level two-cell board
+        // resting on her rail (both rails are on y 3).
         PlankRun.Start start = PlankRun.start(BoardingScene.GUNWALE, net.minecraft.core.Direction.UP, net.minecraft.core.Direction.EAST);
         int herRailX = 9 - BoardingScene.HAUL;
         PlankRun.Probe probe = new PlankRun.Probe() {
@@ -230,14 +230,16 @@ class PonderStoryboardsTest {
                 return hers ? PlankRun.Ground.STURDY : PlankRun.Ground.NONE;
             }
         };
-        PlankRun.Result run = PlankRun.find(new PlankRun.Settings(6, 2, 2, true), probe);
+        PlankRun.Result run = PlankRun.find(new PlankRun.Settings(6, 45.0), probe);
         assertTrue(run.found());
         assertEquals(BoardingScene.RUN.size(), run.length());
         for (int i = 0; i < run.length(); i++) {
             assertEquals(BoardingScene.RUN.get(i), start.cell(i, run.cells().get(i).dy()));
-            assertEquals(PlankRun.Pitch.FLAT, run.cells().get(i).pitch());
+            assertEquals(0.0, run.cells().get(i).near(), 1e-9);
+            assertEquals(0.0, run.cells().get(i).far(), 1e-9);
         }
         assertEquals(PlankRun.Landing.LEVEL, run.landing());
+        assertEquals(0, run.rise());
     }
 
     @Test

@@ -1,0 +1,345 @@
+{
+	"credit": "Made with Blockbench, source art/models/name_board.bbmodel",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"planks": "minecraft:block/oak_planks",
+		"log": "minecraft:block/stripped_oak_log",
+		"particle": "#planks"
+	},
+	"elements": [
+		{
+			"name": "panel",
+			"from": [
+				2,
+				4,
+				7.5
+			],
+			"to": [
+				14,
+				12,
+				8.5
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						2,
+						4,
+						14,
+						12
+					],
+					"texture": "#planks"
+				},
+				"south": {
+					"uv": [
+						2,
+						4,
+						14,
+						12
+					],
+					"texture": "#planks"
+				}
+			}
+		},
+		{
+			"name": "frame_top",
+			"from": [
+				1,
+				12,
+				7
+			],
+			"to": [
+				15,
+				13,
+				9
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						3,
+						1,
+						4,
+						15
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						7,
+						3,
+						9,
+						4
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						3,
+						1,
+						4,
+						15
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						7,
+						3,
+						9,
+						4
+					],
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						7,
+						1,
+						9,
+						15
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"down": {
+					"uv": [
+						7,
+						1,
+						9,
+						15
+					],
+					"rotation": 90,
+					"texture": "#log"
+				}
+			}
+		},
+		{
+			"name": "frame_bottom",
+			"from": [
+				1,
+				3,
+				7
+			],
+			"to": [
+				15,
+				4,
+				9
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						12,
+						1,
+						13,
+						15
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						7,
+						12,
+						9,
+						13
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						12,
+						1,
+						13,
+						15
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						7,
+						12,
+						9,
+						13
+					],
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						7,
+						1,
+						9,
+						15
+					],
+					"rotation": 90,
+					"texture": "#log"
+				},
+				"down": {
+					"uv": [
+						7,
+						1,
+						9,
+						15
+					],
+					"rotation": 90,
+					"texture": "#log"
+				}
+			}
+		},
+		{
+			"name": "frame_left",
+			"from": [
+				14,
+				4,
+				7
+			],
+			"to": [
+				15,
+				12,
+				9
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						14,
+						4,
+						15,
+						12
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						14,
+						4,
+						15,
+						12
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						7,
+						4,
+						9,
+						12
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						7,
+						4,
+						9,
+						12
+					],
+					"texture": "#log"
+				}
+			}
+		},
+		{
+			"name": "frame_right",
+			"from": [
+				1,
+				4,
+				7
+			],
+			"to": [
+				2,
+				12,
+				9
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						1,
+						4,
+						2,
+						12
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						1,
+						4,
+						2,
+						12
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						7,
+						4,
+						9,
+						12
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						7,
+						4,
+						9,
+						12
+					],
+					"texture": "#log"
+				}
+			}
+		}
+	],
+	"display": {
+		"gui": {
+			"rotation": [
+				15,
+				-30,
+				0
+			],
+			"translation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				0.9,
+				0.9,
+				0.9
+			]
+		},
+		"fixed": {
+			"rotation": [
+				0,
+				180,
+				0
+			],
+			"translation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				1,
+				1,
+				1
+			]
+		},
+		"ground": {
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"translation": [
+				0,
+				3,
+				0
+			],
+			"scale": [
+				0.5,
+				0.5,
+				0.5
+			]
+		}
+	}
+}

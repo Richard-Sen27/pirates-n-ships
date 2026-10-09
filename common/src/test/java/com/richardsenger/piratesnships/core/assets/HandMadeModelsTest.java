@@ -53,13 +53,13 @@ class HandMadeModelsTest {
     }
 
     /** Every hand-made model by name; a new Blockbench model is added here, a missing or stray file fails. */
-    static final List<String> BLOCK_MODELS = List.of("bilge_pump", "bilge_pump_handle", "bilge_pump_item", "bilge_pump_rod", "boarding_plank", "boarding_plank_base", "boarding_plank_ramp_high", "boarding_plank_ramp_low", "boarding_plank_steep", "boarding_plank_tip", "brig_bars", "brig_bars_post", "brig_bars_side",
+    static final List<String> BLOCK_MODELS = List.of("bilge_pump", "bilge_pump_handle", "bilge_pump_item", "bilge_pump_rod", "brig_bars", "brig_bars_post", "brig_bars_side",
             "brig_bars_side_alt", "brig_door_bottom_left", "brig_door_bottom_left_locked",
             "brig_door_bottom_left_open_locked", "brig_door_bottom_right", "brig_door_bottom_right_locked",
             "brig_door_bottom_right_open_locked", "brig_door_top_left", "brig_door_top_right", "cannon",
             "cannon_barrel", "cannon_barrel_loaded", "cannon_barrel_powder", "cannon_carriage", "cannon_carriage_rammer",
             "cannon_quoin", "capstan", "capstan_bars", "capstan_item", "cargo_barrel", "cargo_crate", "chainplate", "chart_table", "cleat", "crows_nest", "crows_nest_pole", "figurehead_eagle",
-            "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flag_pedestal", "flag_pedestal_pole", "flagpole", "flagpole_bottom", "flagpole_middle", "flagpole_top", "grapeshot_pellet", "hammock_foot", "hammock_head", "harbor_desk", "helm", "helm_item", "helm_wheel", "hull_patch", "mast_hoop", "mooring_ring", "nameplate",
+            "figurehead_lion", "figurehead_mermaid", "figurehead_skull", "flag_pedestal", "flag_pedestal_pole", "flagpole", "flagpole_bottom", "flagpole_middle", "flagpole_top", "grapeshot_pellet", "hammock_foot", "hammock_head", "harbor_desk", "helm", "helm_item", "helm_wheel", "hull_patch", "mast_hoop", "mooring_ring", "name_board", "name_board_cap_left", "name_board_cap_right", "name_board_item",
             "notice_board", "oar_bench", "pantry", "railing_edge", "railing_item", "railing_port", "railing_post", "ratlines", "ratlines_slope", "rope_coil_layers1", "rope_coil_layers2", "rope_coil_layers3", "rope_coil_layers4",
             "sail_winch", "sea_chest", "sea_cot_foot", "sea_cot_head", "sea_cot_item", "ship_lantern", "ship_lantern_ceiling",
             "ship_lantern_wall", "ships_bell", "ships_bell_bell", "ships_bell_clapper", "ships_bell_post", "ships_bell_wall", "stern_window",

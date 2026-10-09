@@ -8,13 +8,14 @@ illustrations:
   - cargo_barrel: 0.05 0.09 0.9 0.35
 ---
 illustration: cargo_barrel
-Every block and item a sea-going hand may need, with a line on each and the chapter that tells the rest.
+{spotlight:rope}
+Every block and item a hand may need, a line on each, and the chapter that tells the rest.
 
 ## The ship herself
 - {item:pirates_n_ships:helm}**Helm:** launches, steers and takes apart a ship. [[pirates_n_ships:ships|Ships]]
 - {item:pirates_n_ships:yard}**Yard:** a spar; two on a mast make a square sail. [[pirates_n_ships:sailing|Sailing]]
 - {item:pirates_n_ships:cleat}**Cleat:** holds a stay, a rope line or a grappling rope.
-- {item:pirates_n_ships:rope}**Rope:** three string; rigs stays and rope lines.
+- {item:pirates_n_ships:rope}**Rope:** rigs stays and rope lines.
 - {item:pirates_n_ships:sail_winch}**Sail winch:** works every sail aboard. A station.
 - {item:pirates_n_ships:capstan}**Capstan:** drops and weighs the anchor. A station.
 - {item:pirates_n_ships:mooring_ring}**Mooring ring:** catches and holds a grappling hook.
@@ -25,7 +26,7 @@ Every block and item a sea-going hand may need, with a line on each and the chap
 - {item:pirates_n_ships:hull_patch}**Hull patch:** closes a breach.
 - {item:pirates_n_ships:flagpole}**Flagpole:** flies your colours. [[pirates_n_ships:flags|Flags]]
 - {item:pirates_n_ships:flag_pedestal}**Flag pedestal:** a carved plinth a flagpole stands in.
-- {item:pirates_n_ships:nameplate}**Nameplate:** shows her name.
+- {item:pirates_n_ships:nameplate}**Name Board:** shows her name across the boards it joins.
 - {item:pirates_n_ships:figurehead_mermaid}{item:pirates_n_ships:figurehead_lion}{item:pirates_n_ships:figurehead_eagle}{item:pirates_n_ships:figurehead_skull}**Figureheads:** a mermaid, lion, eagle or skull for the bow.
 - {item:pirates_n_ships:ship_lantern}**Ship's lantern:** a lantern that burns under water.
 - {item:pirates_n_ships:stern_window}**Stern window:** shuttered windows for the great cabin.
@@ -34,7 +35,7 @@ Every block and item a sea-going hand may need, with a line on each and the chap
 - {item:pirates_n_ships:sea_cot}**Sea cot:** the captain's bed at sea.
 - {item:pirates_n_ships:hammock}**Hammock:** a bunk for one hand. [[pirates_n_ships:crew|Crew]]
 - {item:pirates_n_ships:boarding_plank}**Boarding plank:** a bridge to an enemy deck.
-- {item:pirates_n_ships:oak_railing}{item:pirates_n_ships:oak_railing_port}**Railing, railing port:** a rail along the edge of a block, with posts where the run ends or turns; click again to rail another edge. The port is the opening: a cannon fires through it, a boarding plank goes out over its sill, and a swivel gun or ratlines sit on a railing.
+- {item:pirates_n_ships:oak_railing}{item:pirates_n_ships:oak_railing_port}**Railing, railing port:** a rail along a block's edge; click again to rail another. A cannon fires and a boarding plank goes out through the port.
 
 ## Stores and cargo
 - {item:pirates_n_ships:pantry}**Pantry:** the food store. [[pirates_n_ships:provisions|Provisions]]
@@ -82,4 +83,4 @@ Every block and item a sea-going hand may need, with a line on each and the chap
 - {item:pirates_n_ships:captains_coat}**Captain's coat,** {item:pirates_n_ships:captains_breeches}**breeches,** {item:pirates_n_ships:captains_boots}**boots:** a pirate captain's finery.
 - {item:pirates_n_ships:officers_coat}**Officer's coat,** {item:pirates_n_ships:officers_breeches}**breeches,** {item:pirates_n_ships:officers_boots}**boots:** a navy officer's uniform.
 
-> Every one of them is in the "Pirates 'n' Ships" tab of the creative inventory, with spawn eggs for the folk and beasts of the sea.
+> All of them, with spawn eggs for the folk and beasts of the sea, are in the "Pirates 'n' Ships" creative tab.

@@ -25,7 +25,7 @@ class AlmanacTexturesTest {
 
     private static final Path REPO = Path.of("..").toAbsolutePath().normalize();
     private static final Path DIR = Path.of("src/main/resources/assets/pirates_n_ships/textures/gui/almanac");
-    private static final List<String> FILES = List.of("book.png", "bookmark.png");
+    private static final List<String> FILES = List.of("book.png", "bookmark.png", "panels.png");
     private static final Path TEXTURES = Path.of("src/main/resources/assets/pirates_n_ships/textures");
     private static final List<String> TOME_FILES = List.of("entity/captains_almanac_book.png", "item/captains_almanac_tome.png");
 
@@ -42,6 +42,7 @@ class AlmanacTexturesTest {
     void sizesMatchTheScreen() throws IOException {
         assertArrayEquals(new int[]{AlmanacScreen.BOOK_W, AlmanacScreen.BOOK_H}, size(DIR.resolve("book.png")));
         assertArrayEquals(new int[]{Bookmarks.TAB_W, Bookmarks.MAX_H}, size(DIR.resolve("bookmark.png")));
+        assertArrayEquals(new int[]{AlmanacPanels.TEX_W, AlmanacPanels.TEX_H}, size(DIR.resolve("panels.png")));
         // BookModel.createBodyLayer's texture size
         assertArrayEquals(new int[]{64, 32}, size(TEXTURES.resolve("entity/captains_almanac_book.png")));
         assertArrayEquals(new int[]{32, 32}, size(TEXTURES.resolve("item/captains_almanac_tome.png")));

@@ -11,107 +11,150 @@ illustrations:
   - figurehead_mermaid: 0.05 0.09 0.9 0.35
 ---
 illustration: nameplate
-A ship is a heap of timber that has agreed to float. Treat her well, know what she can bear, and mend her quickly when she is hurt.
+{spotlight:hull_patch}
+Timber that agreed to float. Mend her quickly when she is hurt.
 
 ## Launching at the helm
-show_me: ship_assembly | Show me: building and assembling a ship
-Using a {item:pirates_n_ships:helm}**helm** that stands in the world launches a ship:
+show_me: ship_assembly | Show me: assembling a ship
+Use a {item:pirates_n_ships:helm}**helm** to launch her: every block joined to it becomes part of her.
 
-- Every block joined to the helm, face to face or edge to edge, becomes part of her.
-- Air, water and natural ground never join: dirt, sand, raw stone, ores, gravel, ice, snow, leaves, coral and kelp stay where they are. Logs and planks are no ground, so a wooden ship is whole.
-- A ship may hold up to 2048 blocks. A bigger one the helm refuses, and says so. A dock that touches the hull counts toward the limit, so keep a gap.
-- Chests and barrels keep what is in them.
-- The sea closes over the place where she was built; no hole is left in the water.
+- Air, water and natural ground never join; logs and planks do.
+- Up to 2048 blocks. A dock touching the hull counts, so keep a gap.
 
-Your ship gets a name and an owner: you. Use a **name tag** on her helm to rename her.
+A **name tag** on her helm renames her.
 
 ## The ship screen
-Sneak and use the helm of your own ship with an empty hand to open the ship screen. It has three tabs.
+Sneak and use your helm with an empty hand. Only the owner may open it.
 
-- **Ship:** her name (type a new one and press Rename), the flag she flies, her hull (compartments, flooding, breaches, pumps), her load and speed, the anchor, the sails, crew and bunks, the days of supplies left and the last payday. **Disassemble**, pressed twice, takes her apart.
-- **Crew:** buttons for every whistle order, then every hand aboard with his morale, station, order and pay. **Release** takes a hand off his station; **Dismiss** lets him go.
-- **Stations:** every station aboard, who works it and what he does. **Man** lists your free hands; pick one with **Send** and he goes there and stays.
-
-Only the owner opens the screen; others are told she is not their ship. Step more than 8 blocks from the helm and it closes.
+- **Ship:** her name, hull, load, sails, crew, supplies and **Disassemble**.
+- **Crew:** orders, and every hand's morale, station and pay.
+- **Stations:** who works where; **Man** sends a free hand to one.
 
 ## Taking her apart
-Press **Disassemble** twice on the ship screen. She becomes blocks again, set square to the world with her heading turned to the nearest quarter. It is refused when:
+Press **Disassemble** twice and she becomes blocks. Not while she moves, heels over 6°, or something solid is in the way.
 
-- she still moves or turns,
-- she heels more than 6°,
-- something solid is in the way (you are told where).
-
-Players and beasts on deck are set down on the deck blocks, and any water inside the hull is let out.
-
-> If her helm is broken she stays a ship: her stations still work, but nothing steers or takes her apart until you place a new helm anywhere on her deck.
+> A ship whose helm is broken cannot be steered or taken apart until you place a new helm on her deck.
 
 ## The dry hold
-A ship knows her own hull. Any room that lies below the lowest place water could pour in stays dry: a closed cabin is dry, and an open boat is dry up to her rim. Inside the dry part there is no water: you walk and breathe as on land.
+Rooms below the lowest place water could pour in stay dry.
 
-- **Watertight:** full blocks, slabs, stairs and glass.
-- **Not watertight:** fences, walls, bars, panes, ladders and chains.
-- **Doors, trapdoors and fence gates** are openings: watertight when shut, a way in for water when open.
+- **Watertight:** full blocks, slabs, stairs, glass.
+- **Leaky:** fences, walls, bars, panes, ladders, chains.
+- **Doors, trapdoors, fence gates:** watertight only when shut.
 
-The dry volume under the waterline is what keeps her up. Flood water weighs her down, and a ship flooded through is a ship on the bottom.
+Dry volume keeps her up; flood water drags her down.
 
 ## Flooding
-A hull block destroyed below the waterline is a breach, and the sea pours into the room behind it. So does an open hatch or door below the waterline. The bigger and deeper the hole, the faster the water comes: a single hole one block under lets in about a block of water every second.
+A hull block destroyed below the waterline is a breach, and an open door or hatch there lets the sea in too.
 
-- Rooms joined by an open door or hatch fill together. A shut door holds the water back.
-- Placing any block into the breach stops the flow.
-- Flood water shows as a level surface in the room, rising and falling with the flood.
+Rooms joined by an open door fill together. Any block placed in the breach stops the flow.
 
->! Below that surface you hold your breath as in the sea. Get your head clear of the water, or drown in your own hold.
+>! Under the flood water you hold your breath, as in the sea.
 
 ## Pumps
 illustration: bilge_pump
 show_me: pumps_and_flooding | Show me: flooding and pumping
-Craft a {item:pirates_n_ships:bilge_pump}**bilge pump** from a stick, three planks and a bucket. Place it on the hold floor, or on the deck right above the hold: its pipe reaches 4 blocks down through the planks.
+Place a {item:pirates_n_ships:bilge_pump}**bilge pump** on the hold floor or the deck above it, and hold right-click to drain the highest flooded room below.
 
-Hold right-click on it to pump. It lifts one block of water a second and stops when you let go. Your view tells you how much water is left, or that the bilge is dry. It drains the highest flooded room below it, and several pumps in one room add up.
+{recipe:bilge_pump}
 
-> Pumping is hard work and makes you hungry. Post a hand at the pump with the whistle and order **Man the pumps**: he pumps until the room is dry.
+> Pumping is hungry work: order a hand to **Man the pumps**.
 
 ## Patching a breach
-illustration: shipwright_toolkit
-show_me: hull_repair | Show me: patching and mending a hull
-A {item:pirates_n_ships:hull_patch}**hull patch** is a tarred plank; two planks and a lump of coal or charcoal make two. Stand inside, look at the edge of the hole (the face of a hull block beside it) and use the patch. It fills the hole and the water stops at once.
+show_me: hull_repair | Show me: mending a hull
+Stand inside, look at the edge of the hole and use a {item:pirates_n_ships:hull_patch}**hull patch**. The water stops at once.
 
-A patch goes only into a real hole in an assembled ship; anywhere else it tells you so and is not spent. You may break a patch later and put in a proper plank, but the hole is open while you swap.
+{recipe:hull_patch}
 
 ## When she breaks in two
-Shoot or break the only block joining two parts of a ship and she splits. The part with the helm stays your ship; the other becomes a wreck that drifts but no longer sails, and its nameplate reads "Wreck of" her name. Pieces of fewer than four blocks fall apart into items.
+illustration: shipwright_toolkit
+Shoot through the only block joining two parts and she splits. The part with the helm stays your ship; the other drifts as a wreck.
 
-You can nail her together again with a {item:pirates_n_ships:shipwright_toolkit}**shipwright's toolkit**: a {item:pirates_n_ships:carpenters_hammer}**carpenter's hammer**, a {item:pirates_n_ships:saw}**saw**, {item:pirates_n_ships:nails}**nails** and leather. Three iron nuggets make eight nails.
+A {item:pirates_n_ships:shipwright_toolkit}**shipwright's toolkit** nails her together again.
 
-1. Sneak and use the toolkit on the part you keep, usually the one with the helm. While you hold the toolkit, green sparkles show where the pieces meet.
-2. Bring the broken piece back against her, lined up straight and touching face to face. Bridge a one-block gap with planks first.
-3. Use the toolkit on the broken piece. After a moment of hammering it is nailed back on, with its chests and stations, and she keeps her name.
+## Hammer and saw
+The toolkit needs a {item:pirates_n_ships:carpenters_hammer}**carpenter's hammer** and a {item:pirates_n_ships:saw}**saw**.
 
-Each repair takes 4 nails. Only pieces of the same ship join, and only pieces of up to 200 blocks.
+{recipe:carpenters_hammer}
 
-## Fitting her out
+{recipe:saw}
+
+## Nails and toolkit
+Add leather, and {item:pirates_n_ships:nails}**nails**: each repair takes 4.
+
+{recipe:nails}
+
+{recipe:shipwright_toolkit}
+
+## Nailing her back
+1. Sneak and use the toolkit on the part you keep. Green sparkles show where pieces meet.
+2. Bring the broken piece against her, straight and face to face. Bridge a one-block gap with planks.
+3. Use the toolkit on the broken piece, and she is whole.
+
+Only pieces of the same ship join, of up to 200 blocks each.
+
+## Fittings
 illustration: figurehead_mermaid
-A ship should look the part.
+A {item:pirates_n_ships:nameplate}**name board** (any sign and a gold nugget make three) fixed on her side shows her name once she is launched and named; boards side by side join, and the name grows across the row.
 
-- A {item:pirates_n_ships:nameplate}**nameplate** (any sign and a gold nugget) shows her name once she is launched and named.
-- A **figurehead** for the bow: a mermaid, lion, eagle or skull, from four planks and a prismarine shard, gold ingot, feather or bone. Click the hull block it should hang on, and the figure looks toward you.
-- The {item:pirates_n_ships:ship_lantern}**ship's lantern** stands on deck, hangs from a beam or from a bracket on a wall, and burns even under water.
-- {item:pirates_n_ships:stern_window}**Stern windows** go into a wall from outside; right-click to open or close the shutters.
-- {item:pirates_n_ships:rope_coil}**Rope coils** stack four to a spot.
-- The {item:pirates_n_ships:chart_table}**chart table** is a captain's table with a chart spread on it.
-- The {item:pirates_n_ships:sea_cot}**sea cot** is a wooden bed for the great cabin. Sleep in it aboard and you lie in it as she sails, and wake and respawn at it wherever she has gone.
+{recipe:nameplate}
+
+## Figureheads
+A figurehead hangs on the bow block you click and looks toward you. The {item:pirates_n_ships:figurehead_mermaid}**mermaid** and the {item:pirates_n_ships:figurehead_lion}**lion**:
+
+{recipe:figurehead_mermaid}
+
+{recipe:figurehead_lion}
+
+## More figureheads
+The {item:pirates_n_ships:figurehead_eagle}**eagle** and the {item:pirates_n_ships:figurehead_skull}**skull**:
+
+{recipe:figurehead_eagle}
+
+{recipe:figurehead_skull}
+
+## Railings
+An {item:pirates_n_ships:oak_railing}**oak railing** runs along a block's edge; click again to rail another edge.
+
+{recipe:oak_railing}
+
+A {item:pirates_n_ships:oak_railing_port}**railing port** is the gap in it: cannons fire through it, boarders cross there.
+
+{recipe:oak_railing_port}
+
+## On deck
+The {item:pirates_n_ships:ship_lantern}**ship's lantern** hangs or stands, and burns even under water.
+
+{recipe:ship_lantern}
+
+{item:pirates_n_ships:rope_coil}**Rope coils** stack four to a spot.
+
+{recipe:rope_coil}
+
+## The great cabin
+{item:pirates_n_ships:stern_window}**Stern windows** go into a wall from outside; right-click to work the shutters.
+
+{recipe:stern_window}
+
+The {item:pirates_n_ships:chart_table}**chart table** is a captain's table with a chart spread on it.
+
+{recipe:chart_table}
+
+## The sea cot
+Sleep in a {item:pirates_n_ships:sea_cot}**sea cot** aboard and you respawn at it wherever she has gone.
+
+{recipe:sea_cot}
 
 ## Ordering a ship
-The shipwrights of the seafarer villages build to order. Open the harbour master's desk and turn to the **Orders** tab: each ship shows her price in doubloons, the days he needs, and the logs and wool he wants. Any logs and any wool will do.
+Seafarer villages build ships to order. The **Orders** tab of the harbour master's desk shows each ship's price, days and materials.
 
-1. Carry the doubloons and the materials, and press **Order**. You receive a {item:pirates_n_ships:ship_receipt}**ship receipt**; its tooltip counts the days.
-2. When it reads "Ready for pickup", use the same port's desk with the receipt in hand.
-3. Your ship lies assembled at a free berth beside the pier, and she is yours.
+1. Bring the doubloons and materials and press **Order** for a {item:pirates_n_ships:ship_receipt}**ship receipt** that counts the days.
+2. When it reads "Ready for pickup", use the desk with the receipt in hand.
+3. She waits at a berth by the pier.
 
-A shipwright builds at most three ships at once. If both berths are taken, come back later: the receipt stays good. Armed sloops are never for sale; you earn one by rank or take one at sea (see [[pirates_n_ships:law|Law]] and [[pirates_n_ships:combat|Weapons and combat]]).
+Armed sloops are never for sale: earn one by rank or take one at sea ([[pirates_n_ships:law|Law]], [[pirates_n_ships:combat|Weapons and combat]]).
 
 ## Limits to know
-- **Keep near the middle of the world.** Very far from the world's centre, many tens of thousands of blocks out, ships stop moving true.
-- **Water under the hull.** A ship floats only on the water beneath her own hull; a ship in a dry dock beside the sea stays put.
-- **Load trims her.** The shipwright ballasts her level as you built her, but cargo and flood water make her list and sit lower.
+- Keep near the middle of the world: very far out, ships stop moving true.
+- A ship floats only on water beneath her own hull.
+- Cargo and flood water make her list and sit lower.

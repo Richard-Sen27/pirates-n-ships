@@ -1,0 +1,52 @@
+{
+	"credit": "Made with Blockbench, source art/models/name_board.bbmodel",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"log": "minecraft:block/stripped_oak_log",
+		"particle": "#log"
+	},
+	"elements": [
+		{
+			"name": "frame_left",
+			"from": [
+				15,
+				2,
+				14
+			],
+			"to": [
+				16,
+				14,
+				15.95
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						15,
+						2,
+						16,
+						14
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						14,
+						2,
+						15.95,
+						14
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						14,
+						2,
+						15.95,
+						14
+					],
+					"texture": "#log"
+				}
+			}
+		}
+	]
+}

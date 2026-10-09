@@ -1,3 +1,8 @@
 {
-  "parent": "pirates_n_ships:block/nameplate"
+  "parent": "pirates_n_ships:block/name_board_item",
+  "textures": {
+    "log": "minecraft:block/stripped_oak_log",
+    "particle": "minecraft:block/oak_planks",
+    "planks": "minecraft:block/oak_planks"
+  }
 }

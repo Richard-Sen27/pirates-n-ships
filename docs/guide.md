@@ -52,9 +52,21 @@ and Fabric and needs no other mod.
   closed until someone right-clicks it to read; then it opens with a page flip and stays open while they read and a
   few seconds after (`almanac.open_ticks`). Breaking it drops the book. With `almanac.enabled` off the Almanac is
   decoration and never opens.
+- **The index (ALM8):** the first opening after joining a world shows the index spread: on the left page every
+  chapter's icon and title in book order, in its bookmark colour (click one to open the chapter, hover for the full
+  title), on the right the book's foreword and "Continue where you left off:" with a button to the chapter and page
+  last read (a player who has read nothing gets "New aboard? Begin here:" and the first chapter). Later openings in
+  the same session go straight to the page last read; Home turns back to the index, and so does turning back past the
+  first chapter. The index has no bookmark and no page numbers.
 - **Turning pages:** the arrows in the page corners, the arrow keys, Page Up and Page Down or the mouse wheel. The
-  bookmarks on the right edge jump to a chapter; links in the text jump to other chapters. Escape closes the book. It
-  opens again at the page you last read, also after death and relog (`almanac.remember_page`).
+  bookmarks down the left edge (continuing down the right edge when the left is full) jump to a chapter; links in the
+  text jump to other chapters. Escape closes the book. The page you last read is remembered, also after death and
+  relog (`almanac.remember_page`).
+- **Recipe panels and spotlights (ALM8):** where a chapter introduces a craftable block or item it shows its crafting
+  grid: the 3x3 inputs, an arrow and the result with its count, a two-arrow mark on shapeless recipes, the inputs of a
+  tag cycling once a second, a tooltip on every slot. The panel reads the recipe the server sent, so a datapack that
+  changes a recipe changes the panel; a recipe that does not exist shows "This recipe is not in the world". Every
+  chapter opens with its picture and an item spotlight: the item framed at twice its size with its name under it.
 - **Show me:** some pages have a "Show me" button that plays a Ponder scene of the mechanic (17 scenes: assembling a
   ship, steering, sails and the winch, anchor and capstan, pumps and flooding, hull repair, mooring, cargo and weight,
   loading and firing a cannon, crew orders, boarding, flags and allegiance, the crow's nest, the ship's bell, galley
@@ -68,7 +80,35 @@ and Fabric and needs no other mod.
 
 This file is the testing and reference guide: it lists every block, item, command and config value for testers and
 server owners. The Almanac's chapters are a separate text written for players (`docs/almanac/`, generated into the
-book with `python3 tools/gen_almanac.py` and `./gradlew :neoforge:runData`).
+book with `python3 tools/gen_almanac.py` and `./gradlew :neoforge:runData`). Since ALM8 the chapters are short (half
+their former length): exact numbers and edge cases live here. The chapter source's block markup for the new pieces is
+a line of its own: `{recipe:<id>}` (one of our recipes; the generator stops on an id that is not in the generated
+recipes, and every recipe of ours has exactly one panel in the book) and `{spotlight:<item id>}` (format in
+`docs/almanac.md`).
+
+### What the Almanac no longer spells out (ALM8)
+
+The content pass moved these details out of the player's chapters; everything else it cut is stated in the sections
+below.
+
+- **Ships:** very far from the world's centre (tens of thousands of blocks out) ships stop moving true (floating-point
+  precision). A hull patch used anywhere but a real hole of an assembled ship says so and is not spent.
+- **Steering:** the line above the hotbar shows the rudder angle; let go of the wheel and the rudder stays where you
+  left it.
+- **Sails:** a yard is at most 15 blocks long (`sailing.sails.yard_max_length`); a longer row of yard blocks is no
+  yard and carries no sail.
+- **Mooring:** a harbour counts a ship as moored at its port once she lies still (anchored) within about 32 blocks of
+  it.
+- **Crew:** morale runs from 0 to 100, a new hand comes aboard at 70 (`crew.morale.start`). Hunger costs a hand 10
+  morale a day, thirst 25 (`provisions.hunger_morale_per_day`, `thirst_morale_per_day`); scurvy lowers it every day
+  until cured; a rum ration raises it a little each day. To hire, your own ship must lie within 32 blocks of the port
+  (`crew.hiring.ship_radius`). A hand speaks up only when he cannot carry out an order ("This ship has no sails,
+  captain!").
+- **Provisions:** the crew refuses foul fare as rations (rotten flesh, spider eyes and the like). Water and rum count
+  wherever they are stowed aboard, in a pantry or a water barrel. Prisoners in the brig eat and drink half a hand's
+  share and get no rum.
+- **Settings:** `flooding.pump_reach` 4, `crew_stations.ticks_per_trim_step` 40 (the 2-second trim step). A datapack
+  can add chapters to the Almanac or replace ours (`data/<ns>/almanac/chapters/`, format in `docs/almanac.md`).
 
 ## 1. Your first ship
 
@@ -248,7 +288,12 @@ below the head (the clew). Use a **rope** on the head cleat, then on the tack cl
 is used up and a stay runs between them. The cloth fills the triangle between the stay and the clew: furled is a bundle
 along the stay, half reaches half way down the mast, full fills the triangle. Its area is half of head-to-tack times
 head-to-clew. Click the head cleat with the empty hand to cycle its trim. Breaking the clew hides the cloth but keeps
-the stay; breaking the tack drops the rope (not in creative).
+the stay; breaking the tack drops the rope (not in creative). Between the head and the clew only air, mast blocks
+and **yard blocks** may stand, so a jib's cleats can share the yards' column in front of the mast: the head right above
+the upper yard and the clew right below the lower one, the yards in between. The square sail is not affected as long as
+no cleat sits between its two yards. The starter and armed sloops are rigged this way: yards at z 12, one block forward
+of the mast at z 13, the jib's head cleat at [4, 17, 12], its clew at [4, 9, 12] and the tack on the bowsprit at
+[4, 7, 1] (a jib of 44 blocks²).
 
 | Sail | Area | Good at |
 |---|---|---|
@@ -414,20 +459,23 @@ crow's nest down to an enemy deck is the classic move. Server config `grapple.sl
 Craft one from three wooden slabs over two iron nuggets. It is a gangway: lay it from a ship, a pier or the shore onto
 a ship, a pier or the shore. Use it on the top of a gunwale, rail or pier edge block, facing where it should go; it
 runs straight out from beside that block, level with its top (used on the side of the block, it lies a block lower).
-It takes the shortest run of up to six blocks that lands: resting on a deck or pier, or climbing onto the edge of one.
-When the far end is higher or lower, the plank climbs or falls up to two blocks on ramps, a gentle one (a block over
-two cells) where there is room, a steep one (a block per cell) over a short gap; the ramps have steps, so you and your
-crew walk up without jumping. While you hold the plank, the run it would lay where you look is outlined in green, or
-the cell in the way in red. A refusal says why on the action bar: something in the way (and how far out), too far,
-too steep, nothing to land on, or no plank from here (for example along a pier, where there is nothing to bridge).
+It reaches up to six blocks to the first deck or pier it can land on, preferring one level with its start, then one a
+block up or down, and so on: resting on that deck or pier, or meeting the top edge of a higher one. The plank is one
+straight board at a single pitch from its start to its landing, as steep as a block of rise for every block of run
+(45 degrees) at most; under the board are small steps, so you and your crew walk up and down without jumping. While
+you hold the plank, the board it would lay where you look is outlined in green, or the cell in the way in red. A
+refusal says why on the action bar: something in the way (and how far out), too far, too steep (and the steepest
+pitch allowed), nothing to land on, or no plank from here (for example along a pier, where there is nothing to bridge).
 
 A plank that touches a ship lies on that ship and moves with her, even when you lay it from the pier. Keep the ends
 together: when the far end drifts more than a block and a half sideways, or more than two and a half blocks up or down
 (a moored ship rides out a storm's heave), or a ship or a block an end rests on is gone, the whole plank breaks and
 drops back as one item. A plank between two piers is plain blocks. Breaking any part takes the whole plank down; sneak
 and use it with an empty hand, from either end, to take it up again. Server config `boarding.plank` (`max_length`,
-`max_rise`, `rise_run`, `steep_fallback`, `pick_up`, `break_distance`, `break_rise`); client config
-`boarding_view.preview`.
+`max_pitch`, `pick_up`, `break_distance`, `break_rise`; the ramp settings `max_rise`, `rise_run` and `steep_fallback`
+of earlier versions are gone and ignored in an old config file); client config `boarding_view.preview`. Planks laid
+with an earlier version are turned into straight boards the first time their world loads (a level one stays as it
+is; a sloped one is laid again from its near end, or drops back as one plank if no straight board fits there).
 
 ### Map tiles
 Craft a Map Tile from 8 sticks around a paper and place it on a table or a wall. Put several side by side in a
@@ -1426,7 +1474,7 @@ on by default; vanilla weapons are untouched):
 | Brig Door | 4 iron ingots, 2 iron bars | Lockable door for cells. |
 | Notice Board | 4 planks, 2 paper | Lists every bounty and places new ones for doubloons. |
 | Mermaid, Lion, Eagle and Skull Figurehead | 4 planks and a prismarine shard, gold ingot, feather or bone | Decoration for the bow. Click the hull block it should hang on: the plate lands there and the figure looks at you. |
-| Nameplate | any sign, 1 gold nugget | A board on two iron brackets that shows the ship's name once the ship is assembled and named (name tag on the helm); long names shrink to fit, renaming updates every plate within a second, disassembly clears them. Server option `ship_identity.nameplate_shows_name`. |
+| Name Board (was Nameplate) | any sign, 1 gold nugget (gives 3) | A framed oak plate fixed flat on the hull's side (no chains). Boards side by side on one face join into one board, and the ship's name is drawn once across the whole row, as large as the board's height allows: one board shows it small, three or more read from 30 to 60 blocks. Shows the name once the ship is assembled and named (name tag on the helm); renaming updates it within a second, disassembly clears it. Old nameplates load as boards. Server options `ship_identity.nameplate_shows_name`, `name_board_distance` (64, how far the name is drawn). |
 | Oak Railing | 3 sticks over 3 oak planks (gives 4) | A rail along a block's edge with automatic end and corner posts; click again to rail another edge. Drops one per edge. See [Railings](#railings). |
 | Oak Railing Port | 2 sticks (the corners) over 3 oak planks (gives 2) | The opening in a railing: two posts and a sill. A cannon fires through it, a boarding plank goes out from its sill. See [Railings](#railings). |
 
@@ -1594,7 +1642,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `dry_hull` | Dry hull on/off, buoyancy of the dry volume, weight of flood water, drowning under flood water (`flood_breath`), partial blocks drawn dry, analysis and sync timings. |
 | `flooding` | Flooding on/off, inflow rate, re-analysis on tilt; bilge pump on/off, rate, reach, use time and exhaustion; hull patch on/off. |
 | `ships` | Sinking and wreck persistence, the ship HUD on/off and its sync, shipwright orders (on/off, build days and prices per ship, price and material factors, orders per port). |
-| `ship_identity` | Nameplates showing the ship's name, their refresh. |
+| `ship_identity` | Name boards showing the ship's name, their refresh, how far the name is drawn (`name_board_distance`, 64 blocks). |
 | `ship_screen` | The ship screen at the helm on/off (off: sneak-use disassembles at once), its reach, how often it refreshes. |
 | `ship_decor` | The ship's bell ring time; sleeping in the sea cot, on land and aboard; railings on or off and their collision height (`railings_enabled`, `railing_collision_blocks`). |
 | `rigging` | Ratlines on/off; ratline nets on/off, their longest length (32 blocks, up to 64) and flattest pitch, the climbing assist; how many nets one mast hoop holds and how far apart two neighbouring chainplates may be to be netted together. |
@@ -1629,7 +1677,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `combat` | Cannon block damage, rain misfires; `damage_multipliers` (cannon on blocks and entities, firearms). |
 | `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevations, blocks per hit, recoil and impact, ball lifetime and water, `mobGriefing` and spawn protection, drops, glancing hits; `swivel`, `chain_shot`, `grapeshot`, `crew` (loading by the crew, load preference), `npc` (fire at will). |
 | `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore haul, entity damage, lost hooks, latching on world blocks and on your own ship, cleats and rings, climbing; `launch` (from the musket), `slide` (sliding along a rope). |
-| `boarding` | `plank`: the boarding plank on/off, length, break distance. |
+| `boarding` | `plank`: the boarding plank on/off, length, steepest pitch (`max_pitch`, 45 degrees), pick-up, break distance and rise. |
 | `apparel` | Armour of the hats, coats, breeches and boots. |
 | `chart` | Charts on/off, cell size, sampling radius and interval, shallow depth, the cell cap, opening without the item (`open_without_item`, off by default), other players visible, marker cap; `tiles` (map tiles). |
 | `almanac` | The Captain's Almanac readable on/off (`enabled`), how long a placed tome stays open (`open_ticks`), the last page remembered per player (`remember_page`), the first-join gift (`give_on_first_join`). |

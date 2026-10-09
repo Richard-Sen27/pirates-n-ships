@@ -16,7 +16,8 @@ import java.util.Optional;
 /**
  * One element of an Almanac page (docs/design.md §3.4, ALM2; JSON format in docs/almanac.md). Written in a page's
  * {@code elements} list with a {@code "type"} field. Text, headings, lists and "Show me" buttons flow from the top in
- * the order given (ALM3 lays them out); illustrations and item icons are placed freely in page units, where the page
+ * the order given (ALM3 lays them out), and so do recipe panels and item spotlights (ALM8, fixed-height blocks that
+ * never split across pages); illustrations and item icons are placed freely in page units, where the page
  * is the unit square (0,0 top left, 1,1 bottom right), so the screen can scale it. All text is lang keys.
  */
 public sealed interface PageElement {
@@ -35,7 +36,9 @@ public sealed interface PageElement {
         LIST("list"),
         ILLUSTRATION("illustration"),
         ITEM("item"),
-        SHOW_ME("show_me");
+        SHOW_ME("show_me"),
+        RECIPE("recipe"),
+        SPOTLIGHT("spotlight");
 
         public static final Codec<Kind> CODEC = StringRepresentable.fromEnum(Kind::values);
         public static final StreamCodec<ByteBuf, Kind> STREAM_CODEC = ByteBufCodecs.idMapper(i -> values()[i], Kind::ordinal);
@@ -59,6 +62,8 @@ public sealed interface PageElement {
                 case ILLUSTRATION -> Illustration.CODEC;
                 case ITEM -> ItemIcon.CODEC;
                 case SHOW_ME -> ShowMe.CODEC;
+                case RECIPE -> RecipePanel.CODEC;
+                case SPOTLIGHT -> Spotlight.CODEC;
             };
         }
 
@@ -70,6 +75,8 @@ public sealed interface PageElement {
                 case ILLUSTRATION -> Illustration.STREAM_CODEC;
                 case ITEM -> ItemIcon.STREAM_CODEC;
                 case SHOW_ME -> ShowMe.STREAM_CODEC;
+                case RECIPE -> RecipePanel.STREAM_CODEC;
+                case SPOTLIGHT -> Spotlight.STREAM_CODEC;
             };
         }
     }
@@ -238,6 +245,47 @@ public sealed interface PageElement {
         @Override
         public Kind kind() {
             return Kind.SHOW_ME;
+        }
+    }
+
+    /**
+     * A crafting panel (ALM8): the grid, the arrow and the result of one recipe, looked up by id in the client's
+     * recipe manager when the page is drawn (so a datapack's change shows). An unknown id draws an empty panel.
+     *
+     * @param recipe the recipe id, e.g. {@code pirates_n_ships:helm}
+     */
+    record RecipePanel(ResourceLocation recipe) implements PageElement {
+
+        public static final MapCodec<RecipePanel> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+                ResourceLocation.CODEC.fieldOf("recipe").forGetter(RecipePanel::recipe)
+        ).apply(i, RecipePanel::new));
+
+        public static final StreamCodec<ByteBuf, RecipePanel> STREAM_CODEC =
+                ResourceLocation.STREAM_CODEC.map(RecipePanel::new, RecipePanel::recipe);
+
+        @Override
+        public Kind kind() {
+            return Kind.RECIPE;
+        }
+    }
+
+    /**
+     * An item spotlight (ALM8): the item framed at twice its size with its name under it, as a block in the flow.
+     *
+     * @param item the item id; an unknown item fails the chapter
+     */
+    record Spotlight(ResourceLocation item) implements PageElement {
+
+        public static final MapCodec<Spotlight> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+                AlmanacCodecs.ITEM_ID.fieldOf("item").forGetter(Spotlight::item)
+        ).apply(i, Spotlight::new));
+
+        public static final StreamCodec<ByteBuf, Spotlight> STREAM_CODEC =
+                ResourceLocation.STREAM_CODEC.map(Spotlight::new, Spotlight::item);
+
+        @Override
+        public Kind kind() {
+            return Kind.SPOTLIGHT;
         }
     }
 }

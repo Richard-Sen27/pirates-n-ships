@@ -266,6 +266,53 @@ class ChapterTest(unittest.TestCase):
             build({"01-welcome.md": WELCOME, "04-sailing.md": SAILING})  # sailing links to combat
 
 
+RECIPES = {f"{NS}:helm", f"{NS}:yard"}
+
+
+class RecipeAndSpotlightTest(unittest.TestCase):
+    """ALM8: {recipe:...} and {spotlight:...} blocks."""
+
+    def chapter(self, body):
+        text = SAILING.replace("## The helm\nSee [[pirates_n_ships:combat|the guns]] and [[welcome]].\n", "## The helm\n" + body)
+        saved = ga.ILLUSTRATIONS
+        ga.ILLUSTRATIONS = {"yard": ("yard.png", ga.FULL), "cannon": ("cannon.png", ga.FULL)}
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                for name, t in {"01-welcome.md": WELCOME, "04-sailing.md": text, "10-combat.md": COMBAT}.items():
+                    (Path(tmp) / name).write_text(t, encoding="utf-8")
+                chapters, lang, _ = ga.build_chapters(ga.read_sources(tmp), ITEMS, RECIPES)
+                return chapters[1]["body"]["pages"][1]["elements"]
+        finally:
+            ga.ILLUSTRATIONS = saved
+
+    def test_blocks_become_elements_in_flow_order(self):
+        elements = self.chapter("Take the wheel.\n{recipe:helm}\n{spotlight:pirates_n_ships:yard}\n{spotlight:minecraft:compass}\nThen sail.\n")
+        self.assertEqual([e["type"] for e in elements], ["heading", "text", "recipe", "spotlight", "spotlight", "text"])
+        self.assertEqual(elements[2], {"type": "recipe", "recipe": f"{NS}:helm"})
+        self.assertEqual(elements[3], {"type": "spotlight", "item": f"{NS}:yard"})
+        self.assertEqual(elements[4], {"type": "spotlight", "item": "minecraft:compass"})
+
+    def test_a_block_line_ends_a_paragraph(self):
+        lines = [(1, "Take the wheel"), (2, "{recipe:helm}"), (3, "and sail.")]
+        self.assertEqual([k for k, _, _ in ga.split_blocks(lines)], ["para", "recipe", "para"])
+
+    def test_unknown_ids_stop(self):
+        for body in ("{recipe:cannon}\n", "{recipe:minecraft:stick}\n", "{spotlight:nothing}\n", "{recipe:}\n",
+                     "{spotlight:Bad Id}\n"):
+            with self.assertRaises(SystemExit, msg=body):
+                self.chapter(body)
+
+    def test_blocks_inside_text_stop(self):
+        for text in ("Craft it: {recipe:pirates_n_ships:helm} now", "a {spotlight:helm} inline"):
+            with self.assertRaises(SystemExit, msg=text):
+                ga.check_markup(text, "x", CHAPTERS, ITEMS)
+
+    def test_recipes_come_from_the_generated_data(self):
+        recipes = ga.load_recipes()
+        self.assertIn(f"{NS}:helm", recipes)
+        self.assertTrue(all(r.startswith(NS + ":") for r in recipes))
+
+
 class SourceTest(unittest.TestCase):
 
     def test_the_real_almanac_builds(self):

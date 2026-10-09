@@ -13,6 +13,10 @@ import com.richardsenger.piratesnships.core.gametest.ModGameTests;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.law.flag.Faction;
+import com.richardsenger.piratesnships.sailing.force.SailTypes;
+import com.richardsenger.piratesnships.sailing.rope.RopeLines;
+import com.richardsenger.piratesnships.sailing.ship.SailingRuntime;
+import com.richardsenger.piratesnships.sailing.ship.SailingRuntimes;
 import com.richardsenger.piratesnships.ship.ShipTestCleanup;
 import com.richardsenger.piratesnships.ship.assembly.AssemblyResult;
 import com.richardsenger.piratesnships.ship.assembly.ShipHelm;
@@ -441,8 +445,8 @@ public final class ArmedShipGameTests {
 
     /**
      * TPL2, RL1b: a mock player climbs the port ratlines of the armed navy sloop from the quarterdeck to the crow's nest
-     * in one go, never jumping: up the sloped run walking toward the bow (it rises like a stair) into its top link on the
-     * upper yard's end, then facing the mast and pushing against it (the top sloped link and the hung net are both
+     * in one go, never jumping: up the sloped run walking toward the bow (it rises like a stair) into its top link beside
+     * the mast (right above and abaft the upper yard's end, TPL3), then facing the mast and pushing against it (the top sloped link and the hung net are both
      * climbable, so he rises without a jump) and over into the nest. The sloop's structure is placed on land in the
      * test area, not assembled: the walk then runs through vanilla collision in doubles at the test's own coordinates.
      * (On a ship the scripted walk went through Sable's f32 plot collision, which is coarse at the high plot indices a
@@ -488,7 +492,7 @@ public final class ArmedShipGameTests {
             highest[0] = Math.max(highest[0], local.y);
             p.setJumping(false); // never: the climb is continuous
             switch (phase[0]) {
-                case "walk" -> { // up the slope toward the bow, into the top link over the yard's end
+                case "walk" -> { // up the slope toward the bow, into the top link beside the mast
                     face(p, 0, -1);
                     p.zza = 1f;
                     if (local.z < 13.95 && local.y > 16.9) phase[0] = "climb";
@@ -518,7 +522,7 @@ public final class ArmedShipGameTests {
 
     /**
      * TPL2, RL1b: on the armed navy sloop assembled and afloat, every ratlines block of the template is in the ship's plot
-     * with its state, stands there ({@code canSurvive}: the top sloped links on the upper yard's ends, the hung ones on
+     * with its state, stands there ({@code canSurvive}: the top sloped links on the links below them, the hung ones on
      * the mast) and is climbable. Plot cells are integers, so this holds at any plot index.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "ratlines")
@@ -547,6 +551,40 @@ public final class ArmedShipGameTests {
             }
             h.assertTrue(h.getLevel().getBlockState(new BlockPos(4, 20, 13).offset(offset)).getBlock() instanceof CrowsNestBlock,
                     "no nest on the ship");
+            h.succeed();
+        });
+    }
+
+    /**
+     * TPL3: on the armed navy sloop assembled and afloat, the yards one block forward of the mast make the square sail,
+     * and a rope from the jib's head cleat above the upper yard to the bowsprit cleat makes the jib: its clew search
+     * passes both yards down to the clew cleat below the lower yard (the jib 0.5 x 8 x 11 = 44 blocks²).
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "jib")
+    public static void theJibSetsThroughTheYardsOnTheAssembledSloop(GameTestHelper h) {
+        basin(h);
+        ShipTemplatePlacer.Result r = ShipTemplatePlacer.place(h.getLevel(), ShipTemplates.NAVY_SLOOP_ARMED_ID,
+                h.absolutePos(new BlockPos(24, 8, 44)), Direction.NORTH, true, true, null);
+        AssemblyResult a = r.assembly();
+        if (a == null || a.shipId() == null) throw new GameTestAssertException("not placed and assembled: " + r.outcome() + " " + a);
+        ShipTestCleanup.track(h, a.shipId());
+        ShipBody ship = SableShips.byId(h.getLevel(), a.shipId());
+        h.assertTrue(ship != null, "no ship");
+        h.runAtTickTime(40, () -> { // settled afloat
+            SailingRuntime rt = SailingRuntimes.getOrCreate(ship);
+            h.assertTrue(rt != null, "no sailing runtime");
+            // template cell -> plot: the template's helm is at [4, 8, 22]
+            BlockPos offset = ShipHelm.steering(ship).subtract(new BlockPos(4, 8, 22));
+            BlockPos upperYard = new BlockPos(4, 16, 12).offset(offset);
+            h.assertTrue(rt.sailCount() == 1 && rt.typeAt(upperYard) == SailTypes.SQUARE,
+                    "the square sail on the yards forward of the mast is missing: " + rt.sailPositions());
+            BlockPos head = new BlockPos(4, 17, 12).offset(offset);
+            BlockPos tack = new BlockPos(4, 7, 1).offset(offset);
+            h.assertTrue(RopeLines.rig(h.getLevel(), head, tack), "the jib's stay was not rigged");
+            h.assertTrue(rt.sailCount() == 2, "no jib after rigging the stay: " + rt.sailPositions());
+            h.assertTrue(rt.typeAt(head) == SailTypes.FORE_AND_AFT, "the head carries " + rt.typeAt(head));
+            h.assertTrue(rt.areaAt(head) == 44.0, "jib area " + rt.areaAt(head) + ", expected 44");
+            h.assertTrue(rt.typeAt(upperYard) == SailTypes.SQUARE, "the jib took the square sail down");
             h.succeed();
         });
     }

@@ -822,14 +822,15 @@ Item models (ART1a, ART1b):
   panel alone, with a `gui` entry `[20, -30, 0]` / 0.85.
 - **Rope** (28 elements, `palette_2` rope colours and `palette_4` twine whipping) and **chart** (14 elements,
   `palette`, `palette_3` paper and biscuit, `palette_4` cord; particle `palette_3`): no new colours.
-- **Flag bundles** (`navy_flag` 26 elements, `merchant_flag` 24, `jolly_roger_flag` 25; one project each, one shared
+- **Flag bundles** (`navy_flag` 28 elements, `merchant_flag` 26, `jolly_roger_flag` 32 since ART18; one project each, one shared
   part list): the cloth rolled on a halyard toggle, built upright along y around x = z = 8 and turned `z -45` about
   `[8, 8, 8]` like the cloth bolt, so the vanilla handheld slots hold it like a tool (lower knob in the fist). Parts:
   the toggle with two crossed-box knobs and a rope eye on top (`wood`, `wood_dark` of `palette`, `rope` of
   `palette_2`), the roll and the outer fold as two crossed boxes each (the second box 0.05 px shorter at its ends),
   two `rope_dark` lashings, the fold's loose end in two steps to the lower right, and the design on the fold: navy a
   white band all round plus a vertical arm on the front and back, merchant a red band, Jolly Roger a skull (eye holes
-  0.08 px proud of it) and a bone, 0.15 px proud of the front. The colours follow the flown cloth
+  0.08 px proud of it) and a bone, 0.15 px proud of the front, and since ART18 the same on the back (see "Flag bundle
+  devices on the back face (ART18)"). The colours follow the flown cloth
   (`tools/gen_flag_textures.py`), so the navy bundle is blue with a white cross. On crossed boxes the **front is the
   deep box's face** (z = 8 + w/2), not the wide box's: inlays go there. A `gui` entry `[0, 20, 45]` /
   `[-1.4, 0, 0]` / 0.9 stands the bundle upright in the slot (z +45 undoes the element turn; y 20 shows its side);
@@ -977,6 +978,33 @@ Railings (RAIL1):
 - Render `renders/railing.png`: a scratch free-format scene built from the model JSON (a three-block edge run with its
   end posts, a one-block gap, the port with the cannon model behind it, a corner of a north and an east edge with its
   end post, and the swivel gun shifted 6 px onto the rail); `renders/railing_item.png`: the item model.
+
+Name boards (NAME2):
+- **Part list in `tools/gen_name_board_models.py`** (committed). It writes the four parent models to `models/block/`
+  and their project `models/name_board.bbmodel` (groups `name_board` 3 elements, `name_board_cap_left` 1,
+  `name_board_cap_right` 1, `name_board_item` 5; the first three visible, all at the same place; textures `oak_planks`
+  with id `planks` and `stripped_oak_log` with id `log`, from `../vanilla/`). Every model uses the texture variables
+  `#planks` and `#log` (RAIL1); datagen (`ShipDecorModule#nameBoard`, `WoodFamily.childJson`) writes the oak children
+  `block/oak_name_board*` and `item/nameplate` (the block keeps the G8 nameplate's registry id). Lint clean (no fights,
+  no warnings).
+- **Board** (north-facing, against the south side of its block, 2 px thick, 14 px tall): plank panel x 0..16, y 2..14,
+  z 14.5..16 (front and back only: its ends and edges are always covered); stripped-log frame strips x 0..16 at
+  y 14..15 and 1..2, z 14..16, the log turned 90 degrees on the long faces so the grain runs along the strip. **Caps**:
+  the frame's ends, x 15..16 (viewer's left = east) and x 0..1 (right = west), y 2..14, z 14..15.95 (0.05 px short of
+  the back so they never fight the panel's back face); the multipart block state draws `name_board` always and a cap
+  only where the row ends (`left=false`, `right=false`), so a joined row has one frame round it. **Item**: a small
+  board standing in the block's middle (panel x 2..14, y 4..12, planks on both faces; frame x 1..15, y 3..13, z 7..9);
+  display `gui` `[15, -30, 0]` / 0.9, `fixed` `[0, 180, 0]`, `ground` 0.5 raised 3 px; the hands keep `block/block`'s
+  entries (the board is symmetric along x: ART17's "R unchanged" case).
+- **The name** is not part of the model: `NameplateRenderer` draws it from the row's master on the panel front
+  (z 14.45, behind the frame's front), centred on the row, dark brown `#2A1A0E`; the scale rule is `NameplateText`.
+- Checked in Blockbench (NAME2): the project loads with both textures, and `Codecs.java_block.compile()` of each group
+  (the other groups' cubes not exported) matches the part list's JSON element for element. Renders
+  `renders/name_board.png` (one board, caps on both ends), `renders/name_board_row.png` (a row of three: the middle
+  and right boards are clones of the board model, the right cap moved to the row's end; the name is a canvas overlay at
+  the size the scale rule gives "Black Gull" on three boards, not the game's font), `renders/name_board_item.png`
+  (the item at about its gui angle), drawn with a `THREE.WebGLRenderer` in `risky_eval` (offscreen views were all
+  taken) and written with `fs`.
 
 Ratline nets (RL2):
 - **Part list in `tools/gen_ratline_net_models.py`** (committed). Three projects, one model each:
@@ -1348,6 +1376,19 @@ Boarding plank ramps (BRD2):
   `renders/boarding_plank_ramps_side.png` (the same from the east, the far end on the right). The renders show small gaps at the joints
   (Blockbench's preview did not seem to apply `rescale`); check the joints in game.
 
+Boarding plank as one straight board (BRD4):
+- The gangway is now one straight board drawn by `BoardingPlankRenderer` (code, not a model) from the run's segment 0:
+  14 px wide (the BRD1 boards' x 1..15), 2 px thick, the vanilla `spruce_planks` texture tiled along it, a 3 px lip
+  where an end meets an edge, and `stripped_spruce_log` cleats (1.5 px long, 1 px high, 12 px wide) every block on a
+  board steeper than 15 degrees, after the BRD1 cleats. The cells' block model is generated particles only
+  (`spruce_planks`), like the ratline net's cell.
+- Removed: the block models `boarding_plank`, `boarding_plank_base`, `boarding_plank_tip` and the ramps
+  `boarding_plank_ramp_low`, `_ramp_high`, `_steep` (nothing references them), the ramp groups of
+  `boarding_plank.bbmodel` and their renders `renders/boarding_plank_ramps(_side).png`. The project keeps the
+  `boarding_plank_item` group (exported to `item/boarding_plank.json`, still the item's model) and, as the reference
+  for the board's look, the BRD1 groups `boarding_plank_base`, `boarding_plank`, `boarding_plank_tip`, which are no
+  longer exported; `renders/boarding_plank.png` shows them.
+
 Crow's nest (CN1):
 - **`crows_nest.bbmodel`** -> `block/crows_nest.json` (56 elements; vanilla `spruce_planks` staves and floor,
   `stripped_spruce_log` rim and struts, `anvil` hoops, `dark_oak_planks` underside; particle `spruce_planks`). One
@@ -1426,8 +1467,8 @@ Left-hand display audit (ART17, after ART16 found the book's left hand unmirrore
   | `grapeshot`, hats, `bandana` first person | `[0, 225, 0]` / `[0, -135, 0]` for `[0, 45, 0]` | turn about y | correct, unchanged |
   | the remaining 28 (`item/generated` copies, `doubloon`, `map_tile`, `treasure_map`, `ship_receipt`, third-person `[0, 0, 0]` / `[75, 45, 0]`) | same as right | `R` unchanged | correct, unchanged |
 - Inherent limit: a sprite-aligned item shows its other face in the left hand (the geometry is not mirrored), so the
-  Jolly Roger bundle's skull, which is on the front only, faces the body in the off hand; the pistol's lock likewise.
-  Vanilla sprites behave the same.
+  Jolly Roger bundle's skull, which was on the front only, faced the body in the off hand (fixed by ART18, below); the
+  pistol's lock likewise. Vanilla sprites behave the same.
 - Edits: only the changed `rotation` numbers in the display block of each model JSON and its project
   (`brig_key`, `brig_door` / `brig_door_item.bbmodel`, `hull_patch` / `hull_patch_item.bbmodel`, `chain_shot`), set in
   Blockbench's display mode and written into both files with every other byte kept (the diff shows only those
@@ -1435,6 +1476,29 @@ Left-hand display audit (ART17, after ART16 found the book's left hand unmirrore
 - Renders (left hand on the left, right on the right; first person on top, third person from the front three-quarter
   of each side): `renders/brig_key_hands.png`, `brig_door_hands.png`, `hull_patch_hands.png`,
   `chain_shot_hands.png`, and `pistol_hands.png` for the unchanged handheld form.
+
+Flag bundle devices on the back face (ART18, after ART17's finding that the off hand shows the bundle's back):
+- **Rule: a device on the front of the fold gets a copy on the back, turned 180° about the bundle's own axis** (the
+  element-space y axis through x = z = 8, before the element's `z -45`): `x → 16 − x`, `z → 16 − z`, faces south ↔
+  north and east ↔ west, up and down kept, same palette cell per face. A z-only reflection would read mirrored from
+  behind; the half-turn reads like the front (the navy's `cross_back`, there since ART1b, is exactly this turn of
+  `cross_front`, so its arm sits towards the hoist seen from either side).
+- **Jolly Roger** (skull and crossbone, symmetric, so the turn equals a mirror): `skull_back`, `jaw_back`,
+  `eye_l_back`, `eye_r_back`, `bone_back`, `bone_l_back`, `bone_r_back` added at z 4.22..4.45, on the deep fold box's
+  back face (z 4.45) with the same 0.15 px and eye 0.08 px proud steps as the front. 25 → 32 elements.
+- **Navy** (white Nordic cross: the band round the roll plus `cross_front` / `cross_back`) and **merchant** (red band
+  round the roll): the roll already carried them all round; only the loose flap showed the band on its front, so the
+  back of the flap was plain. `flap_stripe_back` (z 10.59..10.65, behind the flap's north face at 10.65) and
+  `flap_tip_stripe_back` (z 10.09..10.15, behind the tip at 10.15, with a west face, since the tip's west end is
+  open) carry the band there, same y span and cell as the front stripes. Navy 26 → 28, merchant 24 → 26.
+- Edits: the new elements are appended at the end of each model JSON's `elements` and of each project's `elements`
+  and `outliner` (uuids are `uuid5` of `pirates_n_ships/<model>/<name>`); every other byte of both files is
+  unchanged. The projects, loaded in Blockbench, compile (`Codecs.java_block.compile()`) to exactly the committed
+  elements. Lint: no fight or warning involves a new element.
+- Render `renders/flag_bundles_hands.png`: each bundle in the off hand (left columns) and the main hand (right
+  columns), first person (the display mode's eye, fov 70, the half of the screen with the item) and third person
+  (the player model from the outside three-quarter of that hand). In the off hand the skull, cross and band now face
+  out; the main hand is unchanged.
 
 ## Entities
 
@@ -2236,9 +2300,9 @@ z 25, so the hold was open to the sea); the generator now puts a bottom plank un
 
 | template | source | what it is | for |
 |---|---|---|---|
-| `starter_sloop` | `starter_sloop.py` | single-mast sloop, forecastle and stern cabin, 683 blocks | shipwright (400), merchant convoys |
+| `starter_sloop` | `starter_sloop.py` | single-mast sloop, forecastle and stern cabin, 685 blocks | shipwright (400), merchant convoys |
 | `starter_sloop_basic` | hand-built `.schem` | the same hull, fewer fittings | shipwright (300), merchant convoys |
-| `navy_sloop_armed` | `navy_sloop_armed.py` | the starter sloop with four guns, a shot locker, a crow's nest with ratlines on both sides up to it and the flag on a taffrail ensign staff, 715 blocks | navy patrols (not sold) |
+| `navy_sloop_armed` | `navy_sloop_armed.py` | the starter sloop with four guns, a shot locker, a crow's nest with ratlines on both sides up to it and the flag on a taffrail ensign staff, 717 blocks | navy patrols (not sold) |
 | `pirate_sloop_armed` | `pirate_sloop_armed.py` | the same blocks as `navy_sloop_armed` | pirate raiders, pirate captains' voyages (not sold) |
 
 **Armed sloops (WS4c):** `navy_sloop_armed.py` and `pirate_sloop_armed.py` import `armed_spec` from
@@ -2253,22 +2317,29 @@ reach of a gun counts as its locker. `ArmedSloopLayoutTest` diffs the armed stru
 and checks the guns, ports and reach. `starter_sloop.py` run on its own still prints the starter sloop byte for byte.
 Rebuild all three with the steps above (lab, then `schem_to_structure.py`).
 
+**The yard rule on the sloops (TPL3):** both yards stand at z 12, one block forward of the mast (z 13), which runs
+unbroken from the keelson to the masthead; the jib's head cleat sits right above the upper yard [4, 17, 12], its clew
+cleat right below the lower yard [4, 9, 12] (F5b's clew search passes yard blocks since TPL3), the tack on the bowsprit
+one block in from its tip [4, 7, 1], so the jib is 0.5 x 8 x 11 = 44 blocks² (42 before). `starter_sloop.py` places
+them; `ArmedSloopLayoutTest.theYardsStandForwardOfTheMastAndTheJibStillSets` checks all three sloops with the pure
+sail rules. The lab's previews are in `art/renders/ships/`.
+
 **Crow's nest and ratlines (TPL2):** `armed_spec` also applies `lookout()` (after `armed()`): the **crow's nest**
 (`pirates_n_ships:crows_nest`) sits on the mast top at [4, 20, 13] where the flag was, so the flag moves to a two-block
 **ensign staff** (flagpole `part=bottom` / `part=top`) on the taffrail rail at [4, 9..10, 27], with open air round its
 head for the cloth. A run of **ratlines** on each side of the mast (x 3, port, and x 5, starboard) climbs from the
 quarterdeck beside the helm to the masthead: ten **sloped** links (`kind=slope, facing=north`, one up and one toward
-the bow each) from [x, 8, 22] on the quarterdeck to [x, 17, 13], the last one lying on the upper yard's end right beside
-the mast (RL1b: the yard is a ratlines anchor), then two links **hung** on the mast's west / east face
+the bow each) from [x, 8, 22] on the quarterdeck to [x, 17, 13], the last one right beside the mast, above and abaft
+the upper yard's end (TPL3: the yards moved one block forward, so it stands on the link below it), then two links **hung** on the mast's west / east face
 (`kind=wall, facing=west|east`) at [x, 18..19, 13] straight above it; at the top a climber steps sideways into the
-nest. Why this way: the yards' 6 px beams fill the mast's sides at y 10 and 16, so a hung run on the mast cannot pass
-them (a net on a sail's yard is only allowed on the yard's end, outside the cloth), and the jib's stay and cleats
-occupy the plane x 4 forward of the mast, so the runs stay at x 3 and 5 and aft. The top sloped link touches the mast
+nest. Why this way (TPL2, before the yards moved forward): a hung run on the mast had to pass the yards and the
+cloth in front of it, and the jib's stay and cleats occupy the plane x 4 forward of the mast, so the runs stay at x 3
+and 5 and aft. The top sloped link touches the mast
 and is climbable, so the climb is continuous: no jump from the slope onto the hung net. The sloped links lie outside the square
-sail's cloth envelope (the cloth stands off the yards' plane z 13 by `ClothGeometry.clearance` plus the deepest VIS1b
+sail's cloth envelope (the cloth stands off the yards' plane z 12 by `ClothGeometry.clearance` plus the deepest VIS1b
 belly and flutter at the default `sail_visuals`, bellied either way), the hung ones above the upper yard; the yards,
 the sail (F5a: only air or mast between the yards' middle blocks) and the jib are untouched. Climbing: walk up the
-slope toward the bow into its top link on the upper yard's end, face the mast and push against it (no jump) up the
+slope toward the bow into its top link beside the mast, face the mast and push against it (no jump) up the
 hung net, step over into the nest. `ArmedSloopLayoutTest` pins the nest, the staff and every link (continuity,
 supports, the cloth and jib clearance); `ArmedShipGameTests.aPlayerClimbsTheRatlinesToTheNest` climbs it with a mock
 player without jumping on the structure placed on land, and `theRatlinesStandOnTheAssembledSloop` checks every link

@@ -15,13 +15,14 @@ import net.minecraft.world.level.material.PushReaction;
 
 /**
  * Registry entries of the {@code combat.boarding} module (BRD1): the boarding plank block, its item and block entity, and
- * (RAIL1) the tag of the openings a gangway is laid through.
+ * (RAIL1) the tag of the openings a gangway is laid through. BRD4: the plank's shape comes from its block entity (the
+ * straight board's height in the cell), so the block has a dynamic shape (no state-cached collision).
  */
 public final class BoardingContent {
 
     public static final RegistryEntry<Block, BoardingPlankBlock> PLANK = ModRegistry.block("boarding_plank",
             () -> new BoardingPlankBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).sound(SoundType.WOOD)
-                    .strength(1.0f).noOcclusion().ignitedByLava().pushReaction(PushReaction.DESTROY)));
+                    .strength(1.0f).noOcclusion().dynamicShape().ignitedByLava().pushReaction(PushReaction.DESTROY)));
     public static final RegistryEntry<Item, BoardingPlankItem> PLANK_ITEM = ModRegistry.item("boarding_plank",
             () -> new BoardingPlankItem(PLANK.get(), new Item.Properties().stacksTo(16)));
     public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<BoardingPlankBlockEntity>> PLANK_BLOCK_ENTITY =

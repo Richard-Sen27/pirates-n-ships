@@ -80,12 +80,26 @@ class AlmanacGuideTest {
     /** A chapter of the intermediate, its pages through the chapter codecs (the icon is checked separately). */
     private static Chapter chapter(ResourceLocation id, JsonObject body) {
         List<Page> pages = new ArrayList<>();
-        for (JsonElement p : body.getAsJsonArray("pages")) pages.add(Page.CODEC.parse(JsonOps.INSTANCE, p).getOrThrow());
+        for (JsonElement p : body.getAsJsonArray("pages")) pages.add(page(p.getAsJsonObject()));
         int color = body.has("bookmark_color")
                 ? AlmanacCodecs.COLOR.parse(JsonOps.INSTANCE, body.get("bookmark_color")).getOrThrow() : Chapter.DEFAULT_BOOKMARK_COLOR;
         int order = body.has("order") ? body.get("order").getAsInt() : Chapter.DEFAULT_ORDER;
         String title = AlmanacCodecs.LANG_KEY.parse(JsonOps.INSTANCE, body.get("title")).getOrThrow();
         return new Chapter(id, title, order, color, ResourceLocation.parse(body.get("icon").getAsString()), pages);
+    }
+
+    /**
+     * A page through the element codecs; a spotlight's item is taken as written (the codec checks it against the item
+     * registry, which has no items of ours here; {@link #recipePanelsSpotlightsAndOpeningPlates} checks it instead).
+     */
+    private static Page page(JsonObject json) {
+        List<PageElement> elements = new ArrayList<>();
+        for (JsonElement e : json.getAsJsonArray("elements")) {
+            JsonObject o = e.getAsJsonObject();
+            if (o.get("type").getAsString().equals("spotlight")) elements.add(new PageElement.Spotlight(ResourceLocation.parse(o.get("item").getAsString())));
+            else elements.add(PageElement.CODEC.parse(JsonOps.INSTANCE, o).getOrThrow());
+        }
+        return new Page(elements);
     }
 
     private static List<Chapter> chapters() {
@@ -238,6 +252,91 @@ class AlmanacGuideTest {
         }
         assertTrue(icons > 50, "only " + icons + " item icons in the text");
         assertTrue(links > 10, "only " + links + " links in the text");
+        assertTrue(problems.isEmpty(), String.join("\n", problems));
+    }
+
+    /**
+     * ALM8: every recipe of ours has exactly one recipe panel in the book (where its block or item is introduced), every
+     * panel names a generated recipe, every spotlight an item, and every chapter opens with its plate and a spotlight.
+     */
+    @Test
+    void recipePanelsSpotlightsAndOpeningPlates() throws IOException {
+        JsonObject lang = lang();
+        Path recipes = GENERATED.resolve("data/" + NS + "/recipe");
+        Set<String> ours = new TreeSet<>();
+        try (Stream<Path> files = Files.list(recipes)) {
+            files.filter(f -> f.toString().endsWith(".json")).forEach(f -> ours.add(NS + ":" + f.getFileName().toString().replace(".json", "")));
+        }
+        assertTrue(ours.size() > 50, "only " + ours.size() + " recipes");
+        Map<String, Integer> panels = new java.util.TreeMap<>();
+        List<String> problems = new ArrayList<>();
+        int spotlights = 0;
+        for (Chapter c : chapters()) {
+            for (Page page : c.pages()) {
+                for (PageElement el : page.elements()) {
+                    if (el instanceof PageElement.RecipePanel r) {
+                        panels.merge(r.recipe().toString(), 1, Integer::sum);
+                        if (!ours.contains(r.recipe().toString())) problems.add(c.id() + ": panel of unknown recipe " + r.recipe());
+                    } else if (el instanceof PageElement.Spotlight sp) {
+                        spotlights++;
+                        String p = checkItem(sp.item(), lang);
+                        if (p != null) problems.add(c.id() + " spotlight: " + p);
+                    }
+                }
+            }
+            List<PageElement> first = c.pages().getFirst().elements();
+            if (first.stream().noneMatch(e -> e instanceof PageElement.Illustration)) problems.add(c.id() + ": no plate on its first page");
+            if (first.stream().noneMatch(e -> e instanceof PageElement.Spotlight)) problems.add(c.id() + ": no spotlight on its first page");
+        }
+        for (String r : ours) {
+            int n = panels.getOrDefault(r, 0);
+            if (n != 1) problems.add(r + " has " + n + " recipe panels (one where it is introduced)");
+        }
+        System.out.println("Almanac: " + panels.size() + " recipe panels, " + spotlights + " spotlights");
+        assertTrue(problems.isEmpty(), String.join("\n", problems));
+    }
+
+    /**
+     * ALM8: every chapter lays out in the screen's text box (116 x 140) with a font of 6 px per character (wider than
+     * most of the game's letters): no block is taller than a page, and nothing is placed outside the page.
+     */
+    @Test
+    void everyChapterLaysOutInsideItsPages() {
+        Map<String, String> text = intermediate().lang();
+        com.richardsenger.piratesnships.almanac.client.PageLayout.TextSource source = new com.richardsenger.piratesnships.almanac.client.PageLayout.TextSource() {
+            @Override
+            public String text(String key) {
+                return text.getOrDefault(key, key);
+            }
+
+            @Override
+            public String chapterTitle(ResourceLocation chapter) {
+                return text.getOrDefault(AlmanacLang.title(chapter), chapter.toString());
+            }
+        };
+        int w = 116, h = 140;
+        List<String> problems = new ArrayList<>();
+        int pages = 0;
+        for (Chapter c : chapters()) {
+            var laid = com.richardsenger.piratesnships.almanac.client.PageLayout.layoutChapter(c, w, h, (t, bold, italic) -> t.length() * (bold ? 7 : 6), source);
+            pages += laid.size();
+            for (int i = 0; i < laid.size(); i++) {
+                for (var placed : laid.get(i).elements()) {
+                    com.richardsenger.piratesnships.almanac.client.PageLayout.Area a = switch (placed) {
+                        case com.richardsenger.piratesnships.almanac.client.PageLayout.TextRun r -> r.area();
+                        case com.richardsenger.piratesnships.almanac.client.PageLayout.RecipeBox r -> r.area();
+                        case com.richardsenger.piratesnships.almanac.client.PageLayout.SpotlightBox r -> r.area();
+                        case com.richardsenger.piratesnships.almanac.client.PageLayout.Button r -> r.area();
+                        case com.richardsenger.piratesnships.almanac.client.PageLayout.Picture r -> r.box();
+                        default -> null;
+                    };
+                    if (a != null && (a.x() < 0 || a.y() < 0 || a.right() > w || a.bottom() > h)) {
+                        problems.add(c.id() + " screen page " + (i + 1) + ": " + placed + " leaves the page");
+                    }
+                }
+            }
+        }
+        System.out.println("Almanac: " + pages + " screen pages at a 6 px font");
         assertTrue(problems.isEmpty(), String.join("\n", problems));
     }
 

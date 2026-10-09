@@ -17,15 +17,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Plans a gangway from a click (BRD2, docs/design.md §8.4; RAIL1: through a railing port, {@link PlankRun#throughOpening}): reads the world and the ships for {@link PlankRun} and says
- * where the cells go, in which frame, and what each end rests on. Used by the server to lay a run
+ * Plans a gangway from a click (BRD2, BRD4, docs/design.md §8.4; RAIL1: through a railing port,
+ * {@link PlankRun#throughOpening}): reads the world and the ships for {@link PlankRun} and says where the cells of the
+ * straight board go, in which frame, and what each end rests on. Used by the server to lay a run
  * ({@link BoardingPlanks#lay}) and by the client for the placement preview, so both see the same rule.
  *
  * <p><b>Frames.</b> A run touching a ship lives in that ship's plot and follows it:
  * <ul>
  *   <li>started on ship A: in A's plot, from the clicked block outward, landing on the world or another ship;</li>
  *   <li>started on the world and landing on ship B: planned again in B's frame from the same start, then laid from B's
- *       end outward (cell order and pitches reversed), so the cells follow B and Sable grows B's plot from its edge;</li>
+ *       end outward (cell order reversed, each cell's near and far heights swapped, the rise negated), so the cells
+ *       follow B and Sable grows B's plot from its edge;</li>
  *   <li>started on the world and landing on the world: plain world blocks.</li>
  * </ul>
  */
@@ -36,28 +38,41 @@ public final class PlankPlanner {
 
     /**
      * A planned run. On success: the frame it lies in ({@code frame}: the world or a ship), its cells in laying order
-     * (segment 0 first) with their pitches, the direction it is laid in ({@code facing}), the block segment 0's end
-     * rests on ({@code baseSupport}, frame position), what the far end rests on ({@code far}, {@code farBlock} in the far
-     * body's frame), the far end's spot in the far body's frame ({@code farPoint}), and the landing.
+     * (segment 0 first) with the board's underside heights in each ({@code heights}, near and far along {@code facing},
+     * blocks above that cell's floor), the direction it is laid in ({@code facing}), its length in columns and its rise
+     * in that direction (whole blocks), whether the board meets an edge at its near or far end (a lip is drawn there),
+     * the block segment 0's end rests on ({@code baseSupport}, frame position), what the far end rests on ({@code far},
+     * {@code farBlock} in the far body's frame), the far end's spot in the far body's frame ({@code farPoint}), and the
+     * landing. On {@link PlankRun.Failure#BLOCKED}: the taken cell ({@code blockedCell}, frame position) and its column
+     * ({@code blockedAt}).
      */
-    public record Plan(PlankRun.Failure failure, int blockedAt, @Nullable Body frame, List<BlockPos> cells,
-                       List<PlankRun.Pitch> pitches, @Nullable Direction facing, @Nullable PlankRun.Landing landing,
+    public record Plan(PlankRun.Failure failure, int blockedAt, @Nullable BlockPos blockedCell, @Nullable Body frame,
+                       List<BlockPos> cells, List<PlankRun.Cell> heights, @Nullable Direction facing, int columns,
+                       int rise, boolean lipNear, boolean lipFar, @Nullable PlankRun.Landing landing,
                        @Nullable BlockPos baseSupport, @Nullable Body far, @Nullable BlockPos farBlock,
                        @Nullable Vec3 farPoint) {
-        static Plan fail(PlankRun.Failure failure, int blockedAt) {
-            return new Plan(failure, blockedAt, null, List.of(), List.of(), null, null, null, null, null, null);
+        static Plan fail(PlankRun.Failure failure, int blockedAt, @Nullable BlockPos blockedCell) {
+            return new Plan(failure, blockedAt, blockedCell, null, List.of(), List.of(), null, 0, 0, false, false, null,
+                    null, null, null, null);
         }
 
-        static Plan fail(PlankRun.Result r) {
-            return fail(r.failure(), r.blockedAt());
+        static Plan fail(PlankRun.Result r, PlankRun.Start start) {
+            return fail(r.failure(), r.blockedAt(),
+                    r.failure() == PlankRun.Failure.BLOCKED && r.blockedAt() >= 0 ? start.cell(r.blockedAt(), r.blockedDy()) : null);
         }
 
         public boolean found() {
             return failure == PlankRun.Failure.NONE;
         }
 
+        /** Cells of the run. */
         public int length() {
             return cells.size();
+        }
+
+        /** The board's pitch in the laying direction, degrees (negative when it falls). */
+        public double pitchDegrees() {
+            return columns == 0 ? 0.0 : Math.toDegrees(Math.atan2(rise, columns));
         }
     }
 
@@ -66,8 +81,7 @@ public final class PlankPlanner {
 
     /** The rule's settings from the server config. */
     public static PlankRun.Settings settings() {
-        return new PlankRun.Settings(BoardingConfig.MAX_LENGTH.get(), BoardingConfig.MAX_RISE.get(),
-                BoardingConfig.RISE_RUN.get(), BoardingConfig.STEEP_FALLBACK.get());
+        return new PlankRun.Settings(BoardingConfig.MAX_LENGTH.get(), BoardingConfig.MAX_PITCH.get());
     }
 
     /**
@@ -77,7 +91,7 @@ public final class PlankPlanner {
     public static Plan plan(Level level, BlockPos clicked, Direction face, Direction playerFacing, PlankRun.Settings s) {
         BlockState clickedState = level.getBlockState(clicked);
         if (clickedState.is(BoardingContent.PLANK.get()) || clickedState.getCollisionShape(level, clicked).isEmpty()) {
-            return Plan.fail(PlankRun.Failure.NO_START, -1);
+            return Plan.fail(PlankRun.Failure.NO_START, -1, null);
         }
         // RAIL1: the top of a railing port's sill, facing outboard, starts the run beyond the port at its height
         Direction outboard = clickedState.is(BoardingContent.GANGWAY_OPENINGS)
@@ -85,29 +99,31 @@ public final class PlankPlanner {
                 ? clickedState.getValue(BlockStateProperties.HORIZONTAL_FACING) : null;
         PlankRun.Start start = PlankRun.start(clicked, PlankRun.throughOpening(face, playerFacing, outboard), playerFacing);
         if (start == null) {
-            return Plan.fail(PlankRun.Failure.NO_START, -1);
+            return Plan.fail(PlankRun.Failure.NO_START, -1, null);
         }
         Body home = PlankBodies.at(level, clicked);
         if (!home.isWorld()) {
             // from a ship: in its plot, landing on the world or any other ship
             LevelProbe probe = new LevelProbe(level, home, start, home, false, null, s);
             PlankRun.Result r = PlankRun.find(s, probe);
-            if (!r.found()) return Plan.fail(r);
+            if (!r.found()) return Plan.fail(r, start);
             Hit hit = probe.hit(r.landI(), r.landDy());
             List<BlockPos> cells = cells(start, r);
             Vec3 tipWorld = home.toWorld(Vec3.atCenterOf(cells.get(cells.size() - 1)));
-            return new Plan(PlankRun.Failure.NONE, -1, home, cells, pitches(r), start.direction(), r.landing(), clicked,
-                    hit.body(), hit.pos(), hit.body().toLocal(tipWorld));
+            return new Plan(PlankRun.Failure.NONE, -1, null, home, cells, r.cells(), start.direction(), r.columns(),
+                    r.rise(), true, r.landing() == PlankRun.Landing.RAMP, r.landing(), clicked, hit.body(), hit.pos(),
+                    hit.body().toLocal(tipWorld));
         }
         // from the world: anything to land on, the world only across a gap
         LevelProbe probe = new LevelProbe(level, Body.WORLD, start, Body.WORLD, true, null, s);
         PlankRun.Result r = PlankRun.find(s, probe);
-        if (!r.found()) return Plan.fail(r);
+        if (!r.found()) return Plan.fail(r, start);
         Hit hit = probe.hit(r.landI(), r.landDy());
         if (hit.body().isWorld()) {
             List<BlockPos> cells = cells(start, r);
-            return new Plan(PlankRun.Failure.NONE, -1, Body.WORLD, cells, pitches(r), start.direction(), r.landing(),
-                    clicked, Body.WORLD, hit.pos(), Vec3.atCenterOf(cells.get(cells.size() - 1)));
+            return new Plan(PlankRun.Failure.NONE, -1, null, Body.WORLD, cells, r.cells(), start.direction(), r.columns(),
+                    r.rise(), true, r.landing() == PlankRun.Landing.RAMP, r.landing(), clicked, Body.WORLD, hit.pos(),
+                    Vec3.atCenterOf(cells.get(cells.size() - 1)));
         }
         // onto ship B: plan again in B's frame from the same start, landing on B only, then lay it from B's end
         Body ship = hit.body();
@@ -115,31 +131,26 @@ public final class PlankPlanner {
                 ship.toLocal(start.direction()));
         LevelProbe shipProbe = new LevelProbe(level, ship, onShip, Body.WORLD, false, ship, s);
         PlankRun.Result rs = PlankRun.find(s, shipProbe);
-        if (!rs.found()) return Plan.fail(rs);
+        if (!rs.found()) return Plan.fail(rs, onShip);
         Hit landing = shipProbe.hit(rs.landI(), rs.landDy());
         List<BlockPos> fromShore = cells(onShip, rs);
         List<BlockPos> cells = new ArrayList<>(fromShore.size());
-        List<PlankRun.Pitch> pitches = new ArrayList<>(fromShore.size());
+        List<PlankRun.Cell> heights = new ArrayList<>(fromShore.size());
         for (int k = fromShore.size() - 1; k >= 0; k--) {
             cells.add(fromShore.get(k));
-            pitches.add(rs.cells().get(k).pitch().reversed());
+            heights.add(rs.cells().get(k).reversed());
         }
         Vec3 shoreEnd = ship.toWorld(Vec3.atCenterOf(fromShore.get(0)));
-        return new Plan(PlankRun.Failure.NONE, -1, ship, cells, pitches, onShip.direction().getOpposite(), rs.landing(),
-                landing.pos(), Body.WORLD, clicked, shoreEnd);
+        return new Plan(PlankRun.Failure.NONE, -1, null, ship, cells, heights, onShip.direction().getOpposite(),
+                rs.columns(), -rs.rise(), rs.landing() == PlankRun.Landing.RAMP, true, rs.landing(), landing.pos(),
+                Body.WORLD, clicked, shoreEnd);
     }
 
     private static List<BlockPos> cells(PlankRun.Start start, PlankRun.Result r) {
         List<BlockPos> out = new ArrayList<>(r.length());
-        for (int i = 0; i < r.length(); i++) {
-            out.add(start.cell(i, r.cells().get(i).dy()).immutable());
+        for (PlankRun.Cell c : r.cells()) {
+            out.add(start.cell(c.i(), c.dy()).immutable());
         }
-        return out;
-    }
-
-    private static List<PlankRun.Pitch> pitches(PlankRun.Result r) {
-        List<PlankRun.Pitch> out = new ArrayList<>(r.length());
-        for (PlankRun.Cell c : r.cells()) out.add(c.pitch());
         return out;
     }
 
@@ -173,7 +184,7 @@ public final class PlankPlanner {
             this.homeLandable = homeLandable;
             this.only = only;
             int reach = s.maxLength() + PlankRun.FAR_LOOK;
-            int h = s.maxRise() + PlankRun.STEEP_LOOK + 2;
+            int h = PlankRun.HEIGHT_LOOK + 2;
             AABB area = new AABB(frame.toWorld(Vec3.atCenterOf(start.cell(0))), frame.toWorld(Vec3.atCenterOf(start.cell(reach))))
                     .inflate(1.0, h, 1.0);
             for (Body b : PlankBodies.shipsNear(level, area, SHIP_MARGIN)) {

@@ -9,8 +9,8 @@ the server sends only keys and every client shows its own language. The code liv
 - Path: `data/<namespace>/almanac/chapters/<path>.json` (subfolders allowed). The chapter id is `<namespace>:<path>`.
 - Any datapack can add chapters in its own namespace, or replace one of ours by shipping the same path (the whole file
   is replaced, the top pack wins).
-- The mod's own chapters are written by datagen (`almanac/data/AlmanacChapterProvider`, later ALM5's generator from
-  `docs/guide.md`); never hand-edit the generated files.
+- The mod's own chapters are generated from `docs/guide.md` (see "Generated from the guide" below); never hand-edit the
+  generated files.
 - A broken file (bad JSON, unknown element type, unknown item, coordinates outside the page, no pages) is logged with
   its id and reason and skipped. It never fails the reload and never affects other chapters.
 - The server's book is sent to each player on login and to every player after `/reload`; a client that got nothing has
@@ -59,7 +59,7 @@ mod's own keys comes from datagen next to the chapter JSON.
 
 ## Example
 
-`data/pirates_n_ships/almanac/chapters/cannons.json` (shortened):
+A hand-written chapter (ALM2's former example, shortened):
 
 ```json
 {
@@ -200,3 +200,50 @@ inside our jar (jar-in-jar on both loaders, docs/releasing.md); everything of ou
 6. **Tests.** `AlmanacScenesTest`, `AlmanacPonderPluginTest` and `PonderSchematicsTest` pick the new scene up from
    `AlmanacScenes.ALL`; add the positions your storyboard relies on to `PonderSchematicsTest` as done for the cannon.
    The scene itself plays only in a client: add its checks to the Ponder playtest.
+
+## Generated from the guide (ALM5)
+
+The mod's own chapters are `docs/guide.md`, so the guide has one source. Two steps, both after every change to
+`docs/guide.md` (next to `python3 tools/gen_guideme.py` while GuideME lives):
+
+```
+python3 tools/gen_almanac.py        # docs/guide.md -> common/src/datagen/almanac/guide_chapters.json (+ illustrations)
+./gradlew :neoforge:runData         # intermediate -> data/pirates_n_ships/almanac/chapters/*.json and en_us.json
+```
+
+- **The intermediate** `common/src/datagen/almanac/guide_chapters.json` holds every chapter in the file format above
+  (`body`) and a `lang` map from each key to its English text. It is no resource and not shipped. Datagen
+  (`almanac/data/AlmanacChapterProvider`, found by walking up from the data run's working directory) parses every
+  chapter with the chapter codec (so a bad item id fails the data run), checks that every key has a text and writes the
+  chapter files and the lang. `python3 tools/gen_almanac.py --no-images` skips the illustrations (fast);
+  `--out FILE` writes the intermediate elsewhere (the staleness test).
+- **Chapters:** one per `## N. Title` section, id and icon and bookmark colour from `CHAPTERS` in the script, `order`
+  10 × N. Section 0 (The guide book) is the welcome chapter, with a generated Contents page that links every other
+  chapter; 15 (What does not exist yet) is the last. A new section in the guide stops the script until it is added to
+  `CHAPTERS`.
+- **Pages:** the first page opens with the chapter title as a heading and the text before the first `###`; every
+  `### Heading` starts a new page with that heading (a chapter with no text before its first `###` puts that
+  subsection on its first page). The screen continues pages that overflow.
+- **Markup:** `**bold**` stays, `*italic*` becomes `_italic_`, inline code becomes plain text; links to a heading of
+  the guide become `[[pirates_n_ships:<chapter>|text]]` (plain text inside the chapter itself), links to repository
+  files and the web become their text; the first bold name of one of our items on a page (`**Helm**`, `**yards**`)
+  gets its `{item:...}` icon in front. Literal `*`, `\`, `{`, `[[` and underscores at a word edge are escaped.
+- **Blocks:** paragraphs become `text`, `- ` lists a `list` (at most 64 entries each), numbered lists one `text` per
+  step with the bold number, and tables (the screen has none) a `list` with one entry per row: the first cell bold
+  (with item icons when the column holds item names, as in gen_guideme), descriptive columns ("What it does",
+  "Meaning", "Today", ...) after a colon, the others as `header: value` in brackets. `---` is dropped.
+- **Lang keys** follow the convention: `pirates_n_ships.almanac.<chapter>.p<page>.heading`, `.text<n>`,
+  `.list<n>_<entry>`, `.show_me<n>`.
+- **"Show me":** `SHOW_ME` in the script maps a (chapter, subsection heading) to a Ponder scene and a label; the button
+  follows the first paragraph of that page (today the cannon page of Weapons and combat).
+- **Illustrations:** `ILLUSTRATIONS` maps a chapter (its first page) or a (chapter, subsection heading) to a render in
+  `art/renders` and the panel of it to use (fractions; a render sheet often holds several views and labels). The script
+  keys out the panel's flat background (its corner colour), trims it to the model, scales it to at most 256 × 160 pixels
+  (box filter, standard library PNG reader and writer) and writes
+  `common/src/main/resources/assets/pirates_n_ships/textures/almanac/<render>.png`; the page gets an `illustration`
+  at x 0.05, y 0.09, 0.9 × 0.35 (under the heading line). One per page. An entry for a heading the guide no longer has
+  stops the script.
+- **Tests:** `tools/test_gen_almanac.py` (the conversions; run by JUnit), `AlmanacGuideTest` (the committed
+  intermediate is a fresh run; the generated files and lang match it; pages parse with the codecs; every key, item
+  icon, link target and illustration exists; illustrations under 2 MB; the whole book under 512 KB on the wire, it is
+  about 27 KB) and `AlmanacDataGameTests` (every chapter loads in a server, parsed with our items registered).

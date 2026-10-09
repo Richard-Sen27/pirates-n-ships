@@ -1,0 +1,53 @@
+{
+  "bookmark_color": "#6a4f5f",
+  "icon": "minecraft:knowledge_book",
+  "order": 140,
+  "pages": [
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.datapacks.p1.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.datapacks.p1.text1"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.datapacks.p1.list1_1",
+            "pirates_n_ships.almanac.datapacks.p1.list1_2",
+            "pirates_n_ships.almanac.datapacks.p1.list1_3"
+          ]
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.datapacks.p1.text2"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.datapacks.p1.list2_1",
+            "pirates_n_ships.almanac.datapacks.p1.list2_2",
+            "pirates_n_ships.almanac.datapacks.p1.list2_3",
+            "pirates_n_ships.almanac.datapacks.p1.list2_4",
+            "pirates_n_ships.almanac.datapacks.p1.list2_5",
+            "pirates_n_ships.almanac.datapacks.p1.list2_6",
+            "pirates_n_ships.almanac.datapacks.p1.list2_7",
+            "pirates_n_ships.almanac.datapacks.p1.list2_8",
+            "pirates_n_ships.almanac.datapacks.p1.list2_9",
+            "pirates_n_ships.almanac.datapacks.p1.list2_10",
+            "pirates_n_ships.almanac.datapacks.p1.list2_11",
+            "pirates_n_ships.almanac.datapacks.p1.list2_12"
+          ]
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.datapacks.p1.text3"
+        }
+      ]
+    }
+  ],
+  "title": "pirates_n_ships.almanac.datapacks.title"
+}

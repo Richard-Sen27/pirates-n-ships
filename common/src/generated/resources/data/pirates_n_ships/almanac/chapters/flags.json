@@ -1,0 +1,79 @@
+{
+  "bookmark_color": "#262626",
+  "icon": "pirates_n_ships:jolly_roger_flag",
+  "order": 50,
+  "pages": [
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.flags.p1.heading"
+        },
+        {
+          "type": "illustration",
+          "h": 0.35,
+          "texture": "pirates_n_ships:textures/almanac/jolly_roger_flag.png",
+          "w": 0.9,
+          "x": 0.05,
+          "y": 0.09
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.flags.p1.text1"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.flags.p1.text2"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.flags.p1.text3"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.flags.p1.text4"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.flags.p1.list1_1",
+            "pirates_n_ships.almanac.flags.p1.list1_2",
+            "pirates_n_ships.almanac.flags.p1.list1_3",
+            "pirates_n_ships.almanac.flags.p1.list1_4"
+          ]
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.flags.p1.text5"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.flags.p1.list2_1",
+            "pirates_n_ships.almanac.flags.p1.list2_2"
+          ]
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.flags.p1.text6"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.flags.p1.list3_1",
+            "pirates_n_ships.almanac.flags.p1.list3_2"
+          ]
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.flags.p1.text7"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.flags.p1.text8"
+        }
+      ]
+    }
+  ],
+  "title": "pirates_n_ships.almanac.flags.title"
+}

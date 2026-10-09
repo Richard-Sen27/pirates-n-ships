@@ -1,0 +1,61 @@
+{
+  "bookmark_color": "#7c6a4a",
+  "icon": "pirates_n_ships:rope",
+  "order": 110,
+  "pages": [
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.items.p1.heading"
+        },
+        {
+          "type": "illustration",
+          "h": 0.35,
+          "texture": "pirates_n_ships:textures/almanac/rum.png",
+          "w": 0.9,
+          "x": 0.05,
+          "y": 0.09
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.items.p1.list1_1",
+            "pirates_n_ships.almanac.items.p1.list1_2",
+            "pirates_n_ships.almanac.items.p1.list1_3",
+            "pirates_n_ships.almanac.items.p1.list1_4",
+            "pirates_n_ships.almanac.items.p1.list1_5",
+            "pirates_n_ships.almanac.items.p1.list1_6",
+            "pirates_n_ships.almanac.items.p1.list1_7",
+            "pirates_n_ships.almanac.items.p1.list1_8",
+            "pirates_n_ships.almanac.items.p1.list1_9",
+            "pirates_n_ships.almanac.items.p1.list1_10",
+            "pirates_n_ships.almanac.items.p1.list1_11",
+            "pirates_n_ships.almanac.items.p1.list1_12",
+            "pirates_n_ships.almanac.items.p1.list1_13",
+            "pirates_n_ships.almanac.items.p1.list1_14",
+            "pirates_n_ships.almanac.items.p1.list1_15",
+            "pirates_n_ships.almanac.items.p1.list1_16",
+            "pirates_n_ships.almanac.items.p1.list1_17",
+            "pirates_n_ships.almanac.items.p1.list1_18",
+            "pirates_n_ships.almanac.items.p1.list1_19",
+            "pirates_n_ships.almanac.items.p1.list1_20",
+            "pirates_n_ships.almanac.items.p1.list1_21",
+            "pirates_n_ships.almanac.items.p1.list1_22",
+            "pirates_n_ships.almanac.items.p1.list1_23",
+            "pirates_n_ships.almanac.items.p1.list1_24",
+            "pirates_n_ships.almanac.items.p1.list1_25",
+            "pirates_n_ships.almanac.items.p1.list1_26",
+            "pirates_n_ships.almanac.items.p1.list1_27",
+            "pirates_n_ships.almanac.items.p1.list1_28"
+          ]
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.items.p1.text1"
+        }
+      ]
+    }
+  ],
+  "title": "pirates_n_ships.almanac.items.title"
+}

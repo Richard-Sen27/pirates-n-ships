@@ -72,8 +72,11 @@ also add a resource pack with `assets/test/lang/en_us.json` holding one long key
    bullets with hanging indents; the red bold warning is red; the Jolly Roger illustration on Welcome page 2 is drawn
    at its box with its aspect kept, text never runs over it; item icons (gunpowder, cannonball, the almanac) sit
    where placed with their caption centred under them; hovering an icon shows the item tooltip.
-8. **Show me** (Cannons, page 3): a parchment button with the label, lighter on hover, a click sound; it does nothing
-   else until ALM4.
+8. **Show me** (Cannons, page 3): a parchment button with the label, lighter on hover, a click sound; the click opens
+   Ponder's "loading and firing the cannon" scene in place of the book. Ponder's back button (bottom left) or Backspace
+   returns to the same book page; Escape closes Ponder and the book together. A placed tome shuts when Ponder opens and
+   stays shut on the way back. A chapter whose `show_me` names an unknown scene: the click only clicks, the book stays,
+   `latest.log` has `Ponder: no scene for ...`.
 9. **Long chapter** (the test datapack): the text spills over several pages and spreads; bold, italic, the blue
    colour, the inline gunpowder icon and the links show; the links are navy and underline on hover; clicking
    "Cannons" jumps there.

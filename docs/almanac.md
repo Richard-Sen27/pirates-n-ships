@@ -142,8 +142,11 @@ the player last read. A two-page parchment spread of 292 × 180 GUI pixels; each
   chapters do not fit) and links. Escape closes. Input waits while a page turns.
 - **Page turn:** the turning page narrows toward the spine, then the new page widens from it, with a darkening on the
   fold and a shadow on the page under it; vanilla's page-turn sound once per turn.
-- **"Show me"** calls `AlmanacSceneOpener.open(sceneId)`, a no-op until a handler is installed with
-  `AlmanacSceneOpener.install(handler)` (ALM4 installs Ponder's).
+- **"Show me"** calls `AlmanacSceneOpener.open(sceneId)`; `almanac.ponder.AlmanacPonder.register()` installs Ponder's
+  handler (`AlmanacPonder.show`). A known id replaces the book with Ponder's screen; Ponder keeps the book on its back
+  stack, so its back button or Backspace returns to the same page, while Escape closes Ponder and the book together.
+  Leaving the book for Ponder counts as closing it (the placed tome shuts; it does not reopen on the way back). An
+  unknown or malformed id logs a warning and the reader stays on the page.
 - An empty book (no sync yet) shows a single page saying so, without bookmarks.
 
 Placeholder textures come from `tools/gen_almanac_textures.py` (standard library; `textures/gui/almanac/book.png` and

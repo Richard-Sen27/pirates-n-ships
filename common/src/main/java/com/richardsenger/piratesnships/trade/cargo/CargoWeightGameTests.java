@@ -194,6 +194,31 @@ public final class CargoWeightGameTests {
         });
     }
 
+    /**
+     * PERF1: the block count a weighing uses is kept between weighings ({@code ShipCargo.blockCount}) and follows the
+     * ship's blocks: a plank put on the deck counts at the next weighing, and so does taking it away again.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 100)
+    public static void weighingCountsBlocksPutOnAndTakenOffTheShip(GameTestHelper h) {
+        DryHullGameTests.basin(h, 0, 23, true);
+        Ship ship = assemble(h, hullWith(h, 9, ShipDecor.CARGO_CRATE.get()));
+        ServerLevel level = h.getLevel();
+        h.runAfterDelay(5, () -> {
+            int start = ship.body().plotBlocks().size();
+            h.assertValueEqual(ShipCargo.weighNow(ship.body()).blocks(), start, "first weighing");
+            h.assertValueEqual(ShipCargo.weighNow(ship.body()).blocks(), start, "kept count");
+            BlockPos deck = ship.helmPlot().offset(1, 0, 0);
+            h.assertTrue(level.getBlockState(deck).isAir(), "no free deck cell beside the helm: " + level.getBlockState(deck));
+            level.setBlock(deck, Blocks.OAK_PLANKS.defaultBlockState(), Block.UPDATE_ALL);
+            h.assertValueEqual(ShipCargo.weighNow(ship.body()).blocks(), start + 1, "after a plank was put on deck");
+            h.assertValueEqual(ship.body().plotBlocks().size(), start + 1, "plot walk after the plank");
+            level.setBlock(deck, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+            h.assertValueEqual(ShipCargo.weighNow(ship.body()).blocks(), start, "after the plank was taken off");
+            SableShips.remove(ship.body());
+            h.succeed();
+        });
+    }
+
     // ------------------------------------------------------------------ config off
 
     /** With {@code cargo_weight_affects_ships} off a filled crate keeps load 0 and the ship's mass. */

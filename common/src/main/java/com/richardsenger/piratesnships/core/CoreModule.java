@@ -22,6 +22,7 @@ public final class CoreModule implements ModModule {
     @Override
     public void registerConfig() {
         CoreConfig.init();
+        com.richardsenger.piratesnships.core.perf.PerfConfig.init();
     }
 
     @Override
@@ -63,7 +64,9 @@ public final class CoreModule implements ModModule {
 
     @Override
     public List<Class<?>> gameTestClasses() {
+        // PerformanceGameTests registers nothing without -Dpirates_n_ships.perf=true (PERF1, ModGameTests.PERF_PROPERTY)
         return List.of(CoreGameTests.class, com.richardsenger.piratesnships.core.block.WaterloggingGameTests.class,
-                com.richardsenger.piratesnships.core.save.SaveCompatGameTests.class);
+                com.richardsenger.piratesnships.core.save.SaveCompatGameTests.class,
+                com.richardsenger.piratesnships.core.perf.PerformanceGameTests.class);
     }
 }

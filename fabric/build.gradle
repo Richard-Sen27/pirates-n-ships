@@ -111,11 +111,13 @@ loom {
             ideConfigGenerated(true)
             runDir('runs/client')
         }
+        // ./gradlew :fabric:runServer: the dedicated server (Loom adds nogui). -Ppirates_n_ships.server.dir=<dir> moves its
+        // run directory (default runs/server); tools/server_smoke.sh (REL3) uses that for a throwaway world.
         server {
             server()
             setConfigName('Fabric Server')
             ideConfigGenerated(true)
-            runDir('runs/server')
+            runDir(providers.gradleProperty('pirates_n_ships.server.dir').getOrElse('runs/server'))
         }
         // ./gradlew :fabric:runGameTest. Fabric API's GameTest module starts the headless GameTest server, runs every
         // test of the "fabric-gametest" entry point (FabricGameTests: all modules' GameTest classes) and exits with a
@@ -133,6 +135,15 @@ loom {
             def only = providers.gradleProperty('pirates_n_ships.gametest.only').getOrNull()
             if (only) {
                 vmArg("-Dpirates_n_ships.gametest.only=${only}")
+            }
+            // PERF1: the manual performance test (ModGameTests.PERF_PROPERTY) and its report directory
+            def perf = providers.gradleProperty('pirates_n_ships.perf').getOrNull()
+            if (perf) {
+                vmArg("-Dpirates_n_ships.perf=${perf}")
+            }
+            def perfDir = providers.gradleProperty('pirates_n_ships.perf.dir').getOrNull()
+            if (perfDir) {
+                vmArg("-Dpirates_n_ships.perf.dir=${perfDir}")
             }
             runDir('build/gametest')
         }
@@ -154,5 +165,38 @@ tasks.matching { it.name == 'runGameTest' }.configureEach {
         watcher.text = toml =~ /(?m)^disableConfigWatcher\s*=/
                 ? toml.replaceAll(/(?m)^disableConfigWatcher\s*=.*$/, 'disableConfigWatcher = true')
                 : 'disableConfigWatcher = true\n' + toml
+    }
+}
+
+// REL3: what tools/server_smoke.sh --jar needs to run the release jar on a real (production) Fabric dedicated server,
+// in build/server-smoke-kit: mods/ (our remapped jar with its jar-in-jar Ponder and Flywheel, plus every required mod as
+// players download it: Fabric API, Sable, Forge Config API Port, GeckoLib, Player Animation Library), installer.jar
+// (the Fabric installer, which sets up the server launcher), java.txt (the Java 21 toolchain's launcher), versions.txt.
+configurations {
+    serverSmokeMods { transitive = false; canBeConsumed = false }
+    serverSmokeInstaller { transitive = false; canBeConsumed = false }
+}
+dependencies {
+    serverSmokeMods "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+    serverSmokeMods "dev.ryanhcode.sable:sable-fabric-${minecraft_version}:${sable_version}"
+    serverSmokeMods "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${forgeconfigapiport_version}"
+    serverSmokeMods "software.bernie.geckolib:geckolib-fabric-${minecraft_version}:${geckolib_version}"
+    serverSmokeMods "com.zigythebird.playeranim:PlayerAnimationLibFabric:${pal_version}"
+    serverSmokeInstaller "net.fabricmc:fabric-installer:1.0.1"
+}
+def serverSmokeJava = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(java_version) }
+tasks.register('serverSmokeKit', Sync) {
+    group = 'verification'
+    description = 'Collects the release jar, its dependencies and the Fabric installer for tools/server_smoke.sh --jar'
+    def javaPath = serverSmokeJava.map { it.executablePath.asFile.absolutePath }
+    def versions = "minecraft=${minecraft_version}\nloader=${fabric_loader_version}\n"
+    inputs.property('java', javaPath)
+    from(tasks.named('remapJar')) { into 'mods' }
+    from(configurations.serverSmokeMods) { into 'mods' }
+    from(configurations.serverSmokeInstaller) { rename { 'installer.jar' } }
+    into layout.buildDirectory.dir('server-smoke-kit')
+    doLast {
+        new File(destinationDir, 'java.txt').text = javaPath.get() + '\n'
+        new File(destinationDir, 'versions.txt').text = versions
     }
 }

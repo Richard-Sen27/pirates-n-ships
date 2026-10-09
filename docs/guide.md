@@ -703,6 +703,12 @@ A **crew member** is a simple NPC. Hire one at a harbor desk (see "Hiring crew" 
 **Stations** are blocks a crew member can man. The sail winch, helm, cannons, pump, capstan and crow's nest are stations. A crew member at a station stands on
 an invisible seat that travels with the ship, so it stays at its post while the ship moves.
 
+Crew **walk** to their place: a sailor on deck who is sent to a station, to a meal or to a hammock walks across the
+deck (even while the ship sails) and takes the place when he gets there; the station starts its work only once he has
+arrived. A place he cannot reach (behind a wall, up the mast to the crow's nest) or has not reached after 10 seconds
+puts him there anyway, as does an order to a sailor who is not on that ship. Server config `crew.walk` (`enabled` off:
+crew take their place at once).
+
 The **captain's whistle** (creative tab) gives orders:
 - Use it on a crew member, then on a station: the crew member takes that station.
 - Use it on an assigned crew member: it is released.

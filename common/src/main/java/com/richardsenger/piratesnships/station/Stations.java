@@ -49,6 +49,18 @@ public final class Stations {
 
     private static volatile WorkSpeed workSpeed = (level, ship) -> 1.0;
 
+    /**
+     * Whether a station's occupant is at the station yet (WALK1, docs/design.md §6): a crew member that walks there
+     * holds the order's work time until it arrives. Set by the crew module ({@code crew.walk.CrewWalk}); the station
+     * module does not know the crew.
+     */
+    @FunctionalInterface
+    public interface Attendance {
+        boolean present(ServerLevel level, StationRef ref, UUID occupant);
+    }
+
+    private static volatile Attendance attendance = (level, ref, occupant) -> true;
+
     private Stations() {
     }
 
@@ -163,6 +175,11 @@ public final class Stations {
         return duration(kind, level, ref, order);
     }
 
+    /** Sets the attendance source (once, from the crew module, WALK1). */
+    public static void setAttendance(Attendance source) {
+        attendance = source;
+    }
+
     /** Sets the work-speed source (once, from the crew module). */
     public static void setWorkSpeed(WorkSpeed source) {
         workSpeed = source;
@@ -200,6 +217,10 @@ public final class Stations {
             }
             if (SableShips.byId(level, me.getKey().ship()) == null) {
                 continue;
+            }
+            StationState.Occupant who = e.state().occupant();
+            if (who != null && !attendance.present(level, me.getKey(), who.id())) {
+                continue; // WALK1: the work waits until its crew member has walked to the station
             }
             Object finished = e.state().tick();
             if (finished != null) {

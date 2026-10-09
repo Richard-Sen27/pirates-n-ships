@@ -34,6 +34,7 @@ Every block and item a sea-going hand may need, with a line on each and the chap
 - {item:pirates_n_ships:sea_cot}**Sea cot:** the captain's bed at sea.
 - {item:pirates_n_ships:hammock}**Hammock:** a bunk for one hand. [[pirates_n_ships:crew|Crew]]
 - {item:pirates_n_ships:boarding_plank}**Boarding plank:** a bridge to an enemy deck.
+- {item:pirates_n_ships:oak_railing}{item:pirates_n_ships:oak_railing_port}**Railing, railing port:** a rail along the edge of a block, with posts where the run ends or turns; click again to rail another edge. The port is the opening: a cannon fires through it, a boarding plank goes out over its sill, and a swivel gun or ratlines sit on a railing.
 
 ## Stores and cargo
 - {item:pirates_n_ships:pantry}**Pantry:** the food store. [[pirates_n_ships:provisions|Provisions]]

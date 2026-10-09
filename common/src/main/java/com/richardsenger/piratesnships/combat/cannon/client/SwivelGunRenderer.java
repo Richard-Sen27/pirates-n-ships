@@ -13,9 +13,11 @@ import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 /**
- * Draws the swivel gun (docs/design.md §8.2, P2) from its block entity: the yoke turned by the yaw about the block's
+ * Draws the swivel gun (docs/design.md §8.2, P2) from its block entity, shifted toward the railed edge for a gun on a
+ * railing (RAIL1, {@link SwivelRules#mountOffset}): the yoke turned by the yaw about the block's (or the shifted)
  * vertical centre line, and the barrel turned by the yaw and raised by the elevation about the pivot
  * ({@link SwivelRules#PIVOT_HEIGHT}). Both are ordinary baked block models ({@code swivel_gun_yoke},
  * {@code swivel_gun_barrel[_loaded]}, hand-made Blockbench models since F7g), reached through the block's {@link SwivelGunBlock#PIECE}
@@ -43,6 +45,9 @@ public class SwivelGunRenderer implements BlockEntityRenderer<SwivelGunBlockEnti
         }
         BlockRenderDispatcher blocks = Minecraft.getInstance().getBlockRenderer();
         pose.pushPose();
+        // RAIL1: a gun on a railing sits on the railed edge (zero in the middle)
+        Vec3 mount = SwivelRules.mountOffset(state.getValue(SwivelGunBlock.MOUNT));
+        pose.translate((float) mount.x, 0f, (float) mount.z);
         pose.translate(0.5f, 0f, 0.5f);
         pose.mulPose(Axis.YP.rotationDegrees((float) (180.0 - aim.yawDegrees())));
         pose.translate(-0.5f, 0f, -0.5f);

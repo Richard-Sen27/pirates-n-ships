@@ -122,6 +122,10 @@ A {item:pirates_n_ships:oak_railing_port}**railing port** is the gap in it: cann
 
 {recipe:oak_railing_port}
 
+A {item:pirates_n_ships:oak_railing_gate}**railing gate** swings open for crew and planks, by hand or by redstone.
+
+{recipe:oak_railing_gate}
+
 ## On deck
 The {item:pirates_n_ships:ship_lantern}**ship's lantern** hangs or stands, and burns even under water.
 

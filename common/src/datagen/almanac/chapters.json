@@ -3376,7 +3376,7 @@
   "pirates_n_ships.almanac.welcome.p2.text2": "The book remembers where you left off and opens there next time.",
   "pirates_n_ships.almanac.welcome.p3.heading": "Show me",
   "pirates_n_ships.almanac.welcome.p3.text1": "Some pages carry a **Show me** button. Press it and the Almanac shows you the thing being done, step by step, on a little model of a ship. Back out of the scene and you return to the same page.",
-  "pirates_n_ships.almanac.welcome.p3.text2": "Holding the Ponder key over one of our items in your inventory shows the same scenes.",
+  "pirates_n_ships.almanac.welcome.p3.text2": "Hover over an item that has a scene, such as the cannon, and hold the Ponder key to watch it from your inventory.",
   "pirates_n_ships.almanac.welcome.p4.heading": "How this book is laid out",
   "pirates_n_ships.almanac.welcome.p4.text1": "Start with [[pirates_n_ships:first_ship|Your first ship]]: it takes you from a heap of planks to a ship under sail in a few pages. The chapters after it tell each part of the trade in full.",
   "pirates_n_ships.almanac.welcome.p4.text2": "The last pages are for the purser and the quartermaster: [[pirates_n_ships:inventory|The ship's inventory]] lists every block and item with a line on each, [[pirates_n_ships:ledger|The Quartermaster's ledger]] holds the settings and orders a server's keeper needs, and [[pirates_n_ships:not_yet|Not yet charted]] owns up to what is still missing.",

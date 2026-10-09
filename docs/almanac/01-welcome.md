@@ -25,7 +25,7 @@ The book remembers where you left off and opens there next time.
 ## Show me
 Some pages carry a **Show me** button. Press it and the Almanac shows you the thing being done, step by step, on a little model of a ship. Back out of the scene and you return to the same page.
 
-> Holding the Ponder key over one of our items in your inventory shows the same scenes.
+> Hover over an item that has a scene, such as the cannon, and hold the Ponder key to watch it from your inventory.
 
 ## How this book is laid out
 Start with [[pirates_n_ships:first_ship|Your first ship]]: it takes you from a heap of planks to a ship under sail in a few pages. The chapters after it tell each part of the trade in full.

@@ -138,6 +138,8 @@ Every block, item and entity id of 1.0.0. These must never be renamed or removed
 | Entity | `anchor`, `cannonball`, `crew_member`, `grappling_hook`, `hammock_seat`, `harbor_master`, `kraken`, `kraken_part`, `lead_ball`, `meal_seat`, `navy_officer`, `navy_soldier`, `oar_seat`, `pirate`, `pirate_captain`, `rope_rider`, `sailor`, `sea_chest`, `shark`, `station_seat`, `waterspout`, `whirlpool` |
 <!-- kept-ids:end -->
 
+Two block-entity types were added after this table was written (FIX3): `cannon_rear` and `brig_door_upper`. They are additive: a rear cannon half or an upper brig door half from an older world gets its empty block entity on first access, and nothing is lost.
+
 Not in the lang file and so not guarded here: block entity type ids (e.g. `boarding_plank`, `net_fitting`, `ratline_net_cell`, `nameplate`), data component, attachment and saved-data ids. They are equally part of the save format; renaming one loses its data the same way.
 
 ## Known risks found while writing this

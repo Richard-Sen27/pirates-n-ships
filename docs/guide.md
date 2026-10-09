@@ -375,13 +375,16 @@ get up on the deck beside it, and respawn at the cot wherever the ship has gone.
 ### Ratlines
 Ratlines are rope nets for climbing a mast, up to a crow's nest or a yard. Craft four from three string between four
 sticks (a stick in each corner). Click the side of a mast (logs, fence posts, walls or any solid side) to hang a net on
-it like a ladder; it falls and drops when the mast block behind it goes. Click the top of the deck or the gunwale to
+it like a ladder; it falls and drops when the mast block behind it goes. A net hangs on a yard too: on its end, or
+on its side when no sail hangs from it (a sail's cloth fills the sides of its yards; you are told so). Click the top of the deck or the gunwale to
 lay a sloped net instead: it rises at 45 degrees the way you look, so stand at the gunwale facing the mast. Click a
 ratline you already placed to add the next one at the end of its run: straight up a hanging net, one up and one
 forward along a sloped one, so a run climbs from the gunwale to the masthead like real shrouds. Sneak to place against
 the clicked side instead. Climb a hanging net like a ladder; walk up a sloped one, stepping on its ratlines. A sloped
-net needs the deck, a ratline below it, the previous net of its run or the mast in front of it to rest on; break one
-and the nets above it that rest on nothing else fall too. Ratlines work in water and on a sailing ship. Server config
+net needs the deck, a ratline below it, the previous net of its run, or the mast, a yard or a crow's nest in front of
+it to rest on; break one and the nets above it that rest on nothing else fall too. A sloped run may lie its last net
+on the end of a yard right beside the mast: walk up into it, face the mast and push forward, and you climb on up the
+hanging net above without a jump. Ratlines work in water and on a sailing ship. Server config
 `rigging.ratlines_enabled`.
 
 ### Hammocks

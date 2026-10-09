@@ -15,6 +15,7 @@ import com.richardsenger.piratesnships.law.flag.Faction;
 import com.richardsenger.piratesnships.ship.ShipTestCleanup;
 import com.richardsenger.piratesnships.ship.assembly.AssemblyResult;
 import com.richardsenger.piratesnships.ship.assembly.ShipHelm;
+import com.richardsenger.piratesnships.ship.rigging.RatlinesBlock;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.ship.template.ShipTemplatePlacer;
@@ -32,19 +33,27 @@ import com.richardsenger.piratesnships.worldsim.voyage.VoyageKind;
 import com.richardsenger.piratesnships.worldsim.voyage.Voyages;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -61,7 +70,8 @@ import java.util.UUID;
  * and load from its shot locker; a materialised navy or pirate voyage appears with {@code cannon_rounds} rounds per gun
  * in the locker and loaded guns, a merchant on the same hull with none, and dematerialising ignores the ammunition.
  * TPL2: a navy patrol keeps a lookout in its crow's nest ({@code man_lookout}), and a player climbs the ratlines from
- * the quarterdeck to the nest.
+ * the quarterdeck to the nest without a jump (RL1b; the sloop's structure placed on land), while on the assembled sloop
+ * every link stands.
  * Each test has its own batch (the stocking tests change or read config values).
  */
 public final class ArmedShipGameTests {
@@ -389,14 +399,89 @@ public final class ArmedShipGameTests {
     }
 
     /**
-     * TPL2: a mock player climbs the port ratlines of the armed navy sloop, assembled and afloat, from the quarterdeck
-     * to the crow's nest, steering as a player would (the RL1 climb pattern): up the sloped run walking toward the bow
-     * (it rises like a stair) onto the upper yard's end at its top, stopping there, then facing the mast and holding
-     * jump and forward up the net hung on it, and over into the nest. Each phase is chosen from the player's position in
-     * the ship's frame. (Measured: the slope takes about 45 ticks, the hung net 25; the whole climb about 90.)
+     * TPL2, RL1b: a mock player climbs the port ratlines of the armed navy sloop from the quarterdeck to the crow's nest
+     * in one go, never jumping: up the sloped run walking toward the bow (it rises like a stair) into its top link on the
+     * upper yard's end, then facing the mast and pushing against it (the top sloped link and the hung net are both
+     * climbable, so he rises without a jump) and over into the nest. The sloop's structure is placed on land in the
+     * test area, not assembled: the walk then runs through vanilla collision in doubles at the test's own coordinates.
+     * (On a ship the scripted walk went through Sable's f32 plot collision, which is coarse at the high plot indices a
+     * full GameTest run hands out; that the links stand and climb on an assembled ship is
+     * {@link #theRatlinesStandOnTheAssembledSloop} and the RL1 ship climbs.) Each phase is chosen from the player's
+     * position in the structure's frame.
      */
     @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 400, batch = BATCH + "ratlines")
     public static void aPlayerClimbsTheRatlinesToTheNest(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        StructureTemplate sloop = level.getStructureManager().get(Constants.id("ships/navy_sloop_armed")).orElse(null);
+        if (sloop == null) throw new GameTestAssertException("no navy_sloop_armed structure");
+        BlockPos origin = h.absolutePos(new BlockPos(19, 1, 9));
+        Vec3i size = sloop.getSize();
+        for (int x = -1; x <= size.getX(); x++) {
+            for (int z = -1; z <= size.getZ(); z++) {
+                for (int y = 0; y <= size.getY() + 4; y++) {
+                    BlockPos p = origin.offset(x, y, z);
+                    if (level.getBlockState(p).is(Blocks.BARRIER)) level.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                }
+            }
+        }
+        sloop.placeInWorld(level, origin, origin, new StructurePlaceSettings(), level.getRandom(), Block.UPDATE_CLIENTS);
+        BlockPos nest = origin.offset(4, 20, 13);
+        h.assertTrue(level.getBlockState(nest).getBlock() instanceof CrowsNestBlock, "no nest at " + nest);
+        Player[] player = {null};
+        double[] start = {0};
+        String[] phase = {"walk"};
+        double[] highest = {0};
+        int[] tick = {0};
+        h.onEachTick(() -> {
+            int t = tick[0]++;
+            if (t == 5) { // on the quarterdeck one block abaft the port run's foot [3, 8, 22]
+                Player p = h.makeMockPlayer(GameType.SURVIVAL);
+                p.moveTo(origin.getX() + 3.5, origin.getY() + 8.02, origin.getZ() + 23.5, 180f, 0f);
+                level.addFreshEntity(p);
+                player[0] = p;
+                start[0] = p.getY() - origin.getY();
+            }
+            Player p = player[0];
+            if (p == null || p.isRemoved()) return;
+            Vec3 local = p.position().subtract(Vec3.atLowerCornerOf(origin));
+            highest[0] = Math.max(highest[0], local.y);
+            p.setJumping(false); // never: the climb is continuous
+            switch (phase[0]) {
+                case "walk" -> { // up the slope toward the bow, into the top link over the yard's end
+                    face(p, 0, -1);
+                    p.zza = 1f;
+                    if (local.z < 13.95 && local.y > 16.9) phase[0] = "climb";
+                }
+                case "climb" -> { // face the mast (east of the port run), keep on its column, push and rise
+                    face(p, 1, Math.max(-1, Math.min(1, 2 * (13.5 - local.z))));
+                    p.zza = 1f;
+                    if (local.y >= 20) phase[0] = "step";
+                }
+                default -> { // over into the nest
+                    face(p, 1, 0);
+                    p.zza = 1f;
+                }
+            }
+        });
+        h.succeedWhen(() -> {
+            Player p = player[0];
+            if (p == null) throw new GameTestAssertException("not spawned yet");
+            if (!p.blockPosition().equals(nest)) {
+                throw new GameTestAssertException("not in the nest yet: phase " + phase[0] + ", at "
+                        + p.position().subtract(Vec3.atLowerCornerOf(origin)) + ", highest " + highest[0] + ", started at " + start[0]);
+            }
+            Constants.LOG.info("[RL1b] climbed from y {} to the nest without a jump", start[0]);
+            p.discard();
+        });
+    }
+
+    /**
+     * TPL2, RL1b: on the armed navy sloop assembled and afloat, every ratlines block of the template is in the ship's plot
+     * with its state, stands there ({@code canSurvive}: the top sloped links on the upper yard's ends, the hung ones on
+     * the mast) and is climbable. Plot cells are integers, so this holds at any plot index.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_48, timeoutTicks = 200, batch = BATCH + "ratlines")
+    public static void theRatlinesStandOnTheAssembledSloop(GameTestHelper h) {
         basin(h);
         ShipTemplatePlacer.Result r = ShipTemplatePlacer.place(h.getLevel(), ShipTemplates.NAVY_SLOOP_ARMED_ID,
                 h.absolutePos(new BlockPos(24, 8, 44)), Direction.NORTH, true, true, null);
@@ -405,78 +490,29 @@ public final class ArmedShipGameTests {
         ShipTestCleanup.track(h, a.shipId());
         ShipBody ship = SableShips.byId(h.getLevel(), a.shipId());
         h.assertTrue(ship != null, "no ship");
-        // template cell -> plot: the template's helm is at [4, 8, 22]
-        BlockPos offset = ShipHelm.steering(ship).subtract(new BlockPos(4, 8, 22));
-        BlockPos foot = new BlockPos(3, 8, 22).offset(offset);
-        BlockPos nest = new BlockPos(4, 20, 13).offset(offset);
-        h.assertTrue(h.getLevel().getBlockState(nest).getBlock() instanceof CrowsNestBlock, "no nest at " + nest);
-        Player[] player = {null};
-        double[] start = {0};
-        String[] phase = {"walk"};
-        double[] highest = {0};
-        int[] tick = {0};
-        h.onEachTick(() -> {
-            int t = tick[0]++;
-            if (t == 40) { // settled afloat (the RL1 tests' SETTLE)
-                Vec3 at = ship.toWorld(new Vec3(foot.getX() + 0.5, foot.getY() + 0.02, foot.getZ() + 1.5));
-                Player p = h.makeMockPlayer(GameType.SURVIVAL);
-                p.moveTo(at.x, at.y, at.z, 0f, 0f);
-                h.getLevel().addFreshEntity(p);
-                player[0] = p;
-                start[0] = ship.toPlot(p.position()).y;
+        StructureTemplate sloop = h.getLevel().getStructureManager().get(Constants.id("ships/navy_sloop_armed")).orElseThrow();
+        List<ShipTemplatePlacer.LocalBlock> nets = ShipTemplatePlacer.blocks(sloop, h.getLevel().holderLookup(Registries.BLOCK))
+                .stream().filter(b -> b.state().getBlock() instanceof RatlinesBlock).toList();
+        h.assertValueEqual(nets.size(), 24, "ratlines in the template");
+        h.runAtTickTime(40, () -> { // settled afloat
+            // template cell -> plot: the template's helm is at [4, 8, 22]
+            BlockPos offset = ShipHelm.steering(ship).subtract(new BlockPos(4, 8, 22));
+            for (ShipTemplatePlacer.LocalBlock b : nets) {
+                BlockPos at = b.pos().offset(offset);
+                BlockState s = h.getLevel().getBlockState(at);
+                h.assertTrue(s.equals(b.state()), "ratlines at template " + b.pos() + " is " + s + " in the plot");
+                h.assertTrue(s.canSurvive(h.getLevel(), at), "the ratlines at template " + b.pos() + " cannot stand on the ship");
+                h.assertTrue(s.is(BlockTags.CLIMBABLE), "not climbable");
             }
-            Player p = player[0];
-            if (p == null || p.isRemoved()) return;
-            Vec3 local = ship.toPlot(p.position());
-            highest[0] = Math.max(highest[0], local.y);
-            // keeps the climber on the hung net's column (z of the mast) while he faces the mast
-            double toColumn = Math.max(-1, Math.min(1, 2 * (nest.getZ() + 0.5 - local.z)));
-            switch (phase[0]) {
-                case "walk" -> { // up the slope toward the bow, onto the yard's end
-                    face(p, ship, local, 0, -1);
-                    p.setJumping(false);
-                    p.zza = 1f;
-                    if (local.z < nest.getZ() + 0.65 && local.y > nest.getY() - 4.5) phase[0] = "stand";
-                }
-                case "stand" -> { // stop on the yard's end under the hung net
-                    face(p, ship, local, 0, -1);
-                    p.setJumping(false);
-                    p.zza = 0f;
-                    Vec3 dm = p.getDeltaMovement();
-                    if (p.onGround() && Math.hypot(dm.x, dm.z) < 0.01) phase[0] = "climb";
-                }
-                case "climb" -> { // face the mast (east of the port run) and climb the hung net
-                    face(p, ship, local, 1, toColumn);
-                    p.setJumping(true);
-                    p.zza = 1f;
-                    if (local.y >= nest.getY()) phase[0] = "step";
-                }
-                default -> { // over into the nest
-                    face(p, ship, local, 1, 0);
-                    p.setJumping(false);
-                    p.zza = 1f;
-                }
-            }
-        });
-        h.succeedWhen(() -> {
-            Player p = player[0];
-            if (p == null) throw new GameTestAssertException("settling");
-            Lookouts.Nest in = Lookouts.nestOf(h.getLevel(), p);
-            if (in == null || !in.pos().equals(nest)) {
-                throw new GameTestAssertException("not in the nest yet: phase " + phase[0] + ", at " + ship.toPlot(p.position())
-                        + " (nest " + nest + "), highest " + highest[0] + ", started at " + start[0]);
-            }
-            Constants.LOG.info("[TPL2] climbed from {} to the nest at {} in the ship's frame", start[0], nest);
-            h.assertTrue(Lookouts.isManned(h.getLevel(), ship), "the player in the nest does not man it");
-            p.discard();
+            h.assertTrue(h.getLevel().getBlockState(new BlockPos(4, 20, 13).offset(offset)).getBlock() instanceof CrowsNestBlock,
+                    "no nest on the ship");
+            h.succeed();
         });
     }
 
-    /** Turns {@code p} to look along the ship's plot direction ({@code dx}, {@code dz}) in world space. */
-    private static void face(Player p, ShipBody ship, Vec3 local, double dx, double dz) {
-        Vec3 a = ship.toWorld(local);
-        Vec3 b = ship.toWorld(local.add(dx, 0, dz));
-        float yaw = (float) Math.toDegrees(Math.atan2(-(b.x - a.x), b.z - a.z));
+    /** Turns {@code p} to look along the horizontal direction ({@code dx}, {@code dz}). */
+    private static void face(Player p, double dx, double dz) {
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
         p.setYRot(yaw);
         p.setYHeadRot(yaw);
     }

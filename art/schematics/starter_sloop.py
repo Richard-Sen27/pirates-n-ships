@@ -256,20 +256,22 @@ def armed(base):
     return out
 
 
-# crow's nest and ratlines (TPL2): the nest sits on the mast top (the mast runs to y 19) where the flag was, so the
-# flag moves to a two-block ensign staff on the taffrail rail. A run of ratlines on each side of the mast climbs from
-# the quarterdeck beside the helm to the masthead: sloped (rising north, toward the bow) from x 3 / x 5 at z 22, y 8 up
-# to z 14, y 16, all of it aft of the square sail's cloth (which stands off the yards' plane z 13 by at most 1.5
-# blocks, bellied aft) and outside the jib's plane x 4; then hung on the mast's west / east face at z 13 from y 17 to
-# 19, above the upper yard (y 16), so neither run touches a yard, the cloth between the yards or the stay. A sloped
-# run cannot climb past a yard: the 6 px yard beam fills the mast's sides at y 10 and 16, so only above the upper yard
-# does the run go up the mast. From the top of the slope a climber jumps onto the hung net (it hangs over the upper
-# yard's end) and climbs it facing the mast; at the top he steps sideways into the nest.
+# crow's nest and ratlines (TPL2, RL1b): the nest sits on the mast top (the mast runs to y 19) where the flag was, so
+# the flag moves to a two-block ensign staff on the taffrail rail. A run of ratlines on each side of the mast climbs
+# from the quarterdeck beside the helm to the masthead in one go: sloped (rising north, toward the bow) from x 3 / x 5
+# at z 22, y 8 up to z 13, y 17, the last link lying on the upper yard's end (y 16; RL1b: a yard is a ratlines anchor,
+# so the link stands on it as well as on the link before). Up to z 14 the slope stays aft of the square sail's cloth
+# (which stands off the yards' plane z 13 by at most 1.5 blocks, bellied aft) and outside the jib's plane x 4; the top
+# link is above the upper yard, clear of the cloth. Then hung on the mast's west / east face at z 13 at y 18 and 19.
+# A climber walks up the slope into its top link, which touches the mast, faces the mast and climbs (the top sloped
+# link is climbable too, so pushing against the mast lifts him onto the hung net without a jump); at the top he steps
+# sideways into the nest. The yards, the sail (only air or mast between the yards' middle blocks) and the stay stay
+# untouched.
 NEST = (CX, 20, MZ)
 ENSIGN = [(CX, 9, STERN), (CX, 10, STERN)]   # on the taffrail rail (CX, 8, STERN)
 SLOPE_START = (22, 8)                        # (z, y) of each run's foot on the quarterdeck (deck at y 7)
-SLOPE_TOP = (14, 16)                         # (z, y) of the last sloped link, right abaft the upper yard
-HUNG_YS = range(17, 20)                      # hung links on the mast face, above the upper yard
+SLOPE_TOP = (13, 17)                         # (z, y) of the last sloped link, on the upper yard's end
+HUNG_YS = range(18, 20)                      # hung links on the mast face, above the top sloped link
 RAT_SIDES = ((CX - 1, "w"), (CX + 1, "e"))   # x of each run and the face of the mast it hangs on (port, starboard)
 LOOKOUT_PALETTE = {
     "nest": "pirates_n_ships:crows_nest",
@@ -308,10 +310,12 @@ def lookout(base):
     for cell, key in ratline_cells().items():
         assert cell not in out, cell  # free: no yard, no rail, nothing in the way
         out[cell] = key
-    # the foot stands on the quarterdeck, the hung links hang on mast logs, the top link sits right above the yard
+    # the foot stands on the quarterdeck, the top sloped link lies on the upper yard's end beside the mast, the hung
+    # links hang on mast logs
     for x, _ in RAT_SIDES:
         assert out.get((x, SLOPE_START[1] - 1, SLOPE_START[0])) == "deck"
-        assert out.get((x, SLOPE_TOP[1], MZ)) == "yard"
+        assert SLOPE_TOP[0] == MZ and out.get((x, SLOPE_TOP[1] - 1, MZ)) == "yard"
+        assert out.get((CX, SLOPE_TOP[1], MZ)) == "mast"
         for y in HUNG_YS:
             assert out.get((CX, y, MZ)) == "mast"
     return out
@@ -348,8 +352,8 @@ NOTES = ["Bow toward -Z. Helm faces south.",
 ARMED_NOTES = NOTES + ["Guns: two a side in the waist at z=13 and z=15, muzzles at x=1 (west) and x=7 (east) "
                        "through gun ports cut in the bulwark; shot locker (barrel) in the hold at [4, 3, 14].",
                        "Crow's nest on the mast top at [4, 20, 13]; ratlines on both sides of the mast, sloped from "
-                       "the quarterdeck at z=22 up to z=14, y=16, then hung on the mast from y=17 to 19; the flag on "
-                       "an ensign staff on the taffrail at [4, 9..10, 27]."]
+                       "the quarterdeck at z=22 up to z=13, y=17 on the upper yard's end, then hung on the mast at "
+                       "y=18 and 19; the flag on an ensign staff on the taffrail at [4, 9..10, 27]."]
 
 
 def armed_spec(spec_id, name):

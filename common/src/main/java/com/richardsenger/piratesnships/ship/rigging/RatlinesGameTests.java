@@ -5,10 +5,17 @@ import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
 import com.richardsenger.piratesnships.core.gametest.ModGameTests;
+import com.richardsenger.piratesnships.sailing.SailingConfig;
+import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
+import com.richardsenger.piratesnships.sailing.block.YardBlock;
+import com.richardsenger.piratesnships.sailing.block.YardBlockEntity;
+import com.richardsenger.piratesnships.sailing.sail.SquareSail;
+import com.richardsenger.piratesnships.sailing.sail.YardSails;
 import com.richardsenger.piratesnships.sailing.ship.SailingGameTestsShips;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests.Fixture;
 import com.richardsenger.piratesnships.ship.rigging.RatlinesRules.Kind;
+import com.richardsenger.piratesnships.station.lookout.LookoutContent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestGenerator;
@@ -38,7 +45,9 @@ import java.util.function.Supplier;
 
 /**
  * Ratlines (RL1, docs/design.md §4.8 "Visual backlog 2", item 1) in a real server: placing with the item against a
- * mast of logs or fences and sloped from a deck, extending a run, support loss, waterlogging, the toggle, and a mock
+ * mast of logs or fences and sloped from a deck, extending a run, (RL1b) nets on a yard's end, refused in a sail's
+ * cloth, the sail rigging with them, sloped nets leaning on a yard or the nest, support loss, waterlogging, the toggle,
+ * and a mock
  * player climbing a hung run and a sloped run on an assembled hull afloat in a basin (Sable's {@code climbing_sub_levels}
  * mixin finds the climbable block in the ship's plot).
  */
@@ -229,6 +238,98 @@ public final class RatlinesGameTests {
         InteractionResult r = use(h, p, new BlockPos(4, 4, 4), Direction.WEST);
         h.assertTrue(!h.getBlockState(new BlockPos(3, 4, 4)).is(RiggingContent.RATLINES.get()), "placed without support: " + r);
         h.assertTrue(p.getMainHandItem().getCount() == 1, "the item was used up");
+        h.succeed();
+    }
+
+    // ------------------------------------------------------------------ yards and the nest (RL1b)
+
+    /** A yard row along x at z 4 from x 2 to 6 at height {@code y}. */
+    private static void yard(GameTestHelper h, int y) {
+        for (int x = 2; x <= 6; x++) {
+            h.setBlock(new BlockPos(x, y, 4), SailingBlocks.YARD.get().defaultBlockState().setValue(YardBlock.AXIS, Direction.Axis.X));
+        }
+    }
+
+    /** A square sail: the lower yard at y 1, the upper at y 4 (both x 2..6, z 4), a log mast between them at x 4. */
+    private static void sail(GameTestHelper h) {
+        floor(h, 9);
+        yard(h, 1);
+        yard(h, 4);
+        for (int y = 2; y <= 3; y++) {
+            h.setBlock(new BlockPos(4, y, 4), Blocks.OAK_LOG);
+        }
+        h.assertTrue(YardSails.sailHeadedByYardAt(h.getLevel(), h.absolutePos(new BlockPos(4, 4, 4)), SailingConfig.yardRules()) != null,
+                "the fixture's yards make no sail");
+    }
+
+    /** RL1b: clicking a yard's end face hangs the net on it (outside the cloth's width). */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void aNetHangsOnAYardsEnd(GameTestHelper h) {
+        sail(h);
+        Player p = holder(h, Direction.WEST, 2);
+        h.assertTrue(use(h, p, new BlockPos(6, 4, 4), Direction.EAST).consumesAction(), "hanging on the yard's end did nothing");
+        h.assertBlockState(new BlockPos(7, 4, 4), s -> s.equals(ratlines(Kind.WALL, Direction.EAST)), () -> "no net on the yard's end");
+        h.assertTrue(p.getMainHandItem().getCount() == 1, "the item was not used up");
+        h.succeed();
+    }
+
+    /**
+     * RL1b: clicking the aft face of a sail's upper yard places nothing (the cloth hangs and bellies there; neither a hung
+     * net nor a sloped one leaning on the yard), and the item is kept. A lone yard with no sail takes the net.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void aNetInsideTheClothIsRefused(GameTestHelper h) {
+        sail(h);
+        Player p = holder(h, Direction.NORTH, 1);
+        InteractionResult r = use(h, p, new BlockPos(4, 4, 4), Direction.SOUTH);
+        h.assertTrue(!h.getBlockState(new BlockPos(4, 4, 5)).is(RiggingContent.RATLINES.get()), "a net was hung in the cloth: " + r);
+        h.assertTrue(p.getMainHandItem().getCount() == 1, "the item was used up");
+        h.assertTrue(RatlinesBlock.refusedByCloth(h.getLevel(), h.absolutePos(new BlockPos(4, 4, 5)),
+                new RatlinesRules.Placement(Kind.WALL, Direction.SOUTH)), "the hung net is not refused by the cloth");
+        // the same on a lone yard: take the lower yard and the mast away, no sail, no cloth, the net hangs
+        for (int x = 2; x <= 6; x++) {
+            h.setBlock(new BlockPos(x, 1, 4), Blocks.AIR);
+        }
+        h.setBlock(new BlockPos(4, 2, 4), Blocks.AIR);
+        h.setBlock(new BlockPos(4, 3, 4), Blocks.AIR);
+        h.assertTrue(use(h, p, new BlockPos(4, 4, 4), Direction.SOUTH).consumesAction(), "hanging on a lone yard did nothing");
+        h.assertBlockState(new BlockPos(4, 4, 5), s -> s.equals(ratlines(Kind.WALL, Direction.SOUTH)), () -> "no net on the lone yard's side");
+        h.succeed();
+    }
+
+    /** RL1b: with nets hung on both ends of both yards the sail still rigs: the head carries the cloth and sets. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void theSailStillRigsWithNetsOnTheYardEnds(GameTestHelper h) {
+        sail(h);
+        Player p = holder(h, Direction.WEST, 8);
+        for (int y : new int[] {1, 4}) {
+            h.assertTrue(use(h, p, new BlockPos(6, y, 4), Direction.EAST).consumesAction(), "no net on the east end at y " + y);
+            h.assertTrue(use(h, p, new BlockPos(2, y, 4), Direction.WEST).consumesAction(), "no net on the west end at y " + y);
+            h.assertBlockState(new BlockPos(7, y, 4), s -> s.equals(ratlines(Kind.WALL, Direction.EAST)), () -> "east net at y " + y);
+            h.assertBlockState(new BlockPos(1, y, 4), s -> s.equals(ratlines(Kind.WALL, Direction.WEST)), () -> "west net at y " + y);
+        }
+        BlockPos head = h.absolutePos(new BlockPos(4, 4, 4));
+        SquareSail sail = YardSails.sailHeadedByYardAt(h.getLevel(), head, SailingConfig.yardRules());
+        h.assertTrue(sail != null && sail.upper().length() == 5 && sail.lower().length() == 5, "the yards do not make the sail: " + sail);
+        h.assertTrue(h.getLevel().getBlockEntity(head) instanceof YardBlockEntity be && be.geometry() != null, "the head carries no cloth");
+        h.assertTrue(YardSails.cycle(h.getLevel(), head) != null, "the sail does not set");
+        h.succeed();
+    }
+
+    /**
+     * RL1b: a lone sloped net stands with its top edge leaning on a yard or on the crow's nest in front of it; with air
+     * in front it does not. A net hangs on the nest's side.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void aSlopedNetLeansOnAYardOrTheNest(GameTestHelper h) {
+        h.setBlock(new BlockPos(4, 3, 2), SailingBlocks.YARD.get().defaultBlockState().setValue(YardBlock.AXIS, Direction.Axis.Z));
+        h.setBlock(new BlockPos(4, 3, 6), LookoutContent.CROWS_NEST.get().defaultBlockState());
+        ServerLevel level = h.getLevel();
+        BlockState slope = ratlines(Kind.SLOPE, Direction.EAST);
+        h.assertTrue(slope.canSurvive(level, h.absolutePos(new BlockPos(3, 3, 2))), "a sloped net does not lean on a yard");
+        h.assertTrue(slope.canSurvive(level, h.absolutePos(new BlockPos(3, 3, 6))), "a sloped net does not lean on the nest");
+        h.assertTrue(!slope.canSurvive(level, h.absolutePos(new BlockPos(3, 3, 4))), "a sloped net stands on air");
+        h.assertTrue(ratlines(Kind.WALL, Direction.WEST).canSurvive(level, h.absolutePos(new BlockPos(3, 3, 6))), "no net hangs on the nest");
         h.succeed();
     }
 

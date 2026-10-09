@@ -2,7 +2,9 @@ package com.richardsenger.piratesnships.ship.rigging;
 
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
+import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
 import com.richardsenger.piratesnships.ship.decor.SableWeightTags;
+import com.richardsenger.piratesnships.station.lookout.LookoutContent;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.data.models.blockstates.PropertyDispatch;
@@ -43,7 +45,8 @@ public final class RiggingModule implements ModModule {
         data.lang(lang -> lang
                 .block(RiggingContent.RATLINES, "Ratlines")
                 .add(RatlinesItem.KEY_TOOLTIP, "Hang on a mast, or lay from the deck to climb up sloped")
-                .add(RatlinesItem.KEY_DISABLED, "Ratlines are disabled on this server"));
+                .add(RatlinesItem.KEY_DISABLED, "Ratlines are disabled on this server")
+                .add(RatlinesBlock.KEY_IN_CLOTH, "The sail's cloth hangs here: hang the ratlines on the yard's end"));
         data.models(m -> {
             // hand-made Blockbench models (art/models/ratlines.bbmodel, design.md §4.8), drawn facing north: the hung net
             // against the south side, the sloped net rising to the north. Only the block state is generated; the item
@@ -66,7 +69,9 @@ public final class RiggingModule implements ModModule {
         data.blockLoot(loot -> loot.dropSelf(RiggingContent.RATLINES.get()));
         data.blockTags(tags -> {
             tags.tag(BlockTags.CLIMBABLE).add(RiggingContent.RATLINES.get());
-            tags.tag(RiggingContent.RATLINES_ANCHORS).addTag(BlockTags.FENCES).addTag(BlockTags.WALLS);
+            // RL1b: a net hangs on a yard and a sloped run leans on a yard or the crow's nest (RatlinesRules)
+            tags.tag(RiggingContent.RATLINES_ANCHORS).addTag(BlockTags.FENCES).addTag(BlockTags.WALLS)
+                    .add(SailingBlocks.YARD.get()).add(LookoutContent.CROWS_NEST.get());
             // a rope net: light like a ladder, a quarter volume for buoyancy (Sable lists minecraft:ladder in both,
             // refs/sable common/src/main/resources/data/sable/tags/block/super_light.json and quarter_volume.json)
             tags.tag(SableWeightTags.SUPER_LIGHT).add(RiggingContent.RATLINES.get());

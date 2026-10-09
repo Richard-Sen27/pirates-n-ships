@@ -738,6 +738,7 @@
   "message.pirates_n_ships.pantry.next_spoil": "Next to spoil: %s %s in %s days",
   "message.pirates_n_ships.pantry.no_spoil": "Nothing in here spoils",
   "message.pirates_n_ships.ratlines.disabled": "Ratlines are disabled on this server",
+  "message.pirates_n_ships.ratlines.in_cloth": "The sail's cloth hangs here: hang the ratlines on the yard's end",
   "message.pirates_n_ships.rejoin.add_planks": "Add planks to bridge the gap",
   "message.pirates_n_ships.rejoin.busy": "Still hammering",
   "message.pirates_n_ships.rejoin.different_ship": "These pieces belong to a different ship",

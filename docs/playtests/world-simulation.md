@@ -386,8 +386,9 @@ and after it came back, `latest.log`, and anything a deckhand did that looked wr
 ## TPL2: crow's nests on the NPC sloops, manned lookouts, the captain's ship name
 
 The armed navy and pirate sloops now carry a **crow's nest** on the mast top (the flag moved to a staff on the
-taffrail) and **ratlines** on both sides of the mast: sloped from the quarterdeck beside the helm up toward the bow to
-just abaft the upper yard, then hung on the mast above the upper yard up to the nest. A materialised NPC ship sends
+taffrail) and **ratlines** on both sides of the mast: sloped from the quarterdeck beside the helm up toward the bow,
+the last sloped net lying on the upper yard's end beside the mast (RL1b), then hung on the mast above it up to the
+nest, one climb without a jump. A materialised NPC ship sends
 one of its deckhands up as the **lookout** (`world_simulation.materialize.man_lookout`, default on; he is one of the
 `crew_per_ship`, so one deckhand fewer works the sails), so its nest counts as manned (LAW4: a navy patrol watching
 you widens its false-colours observation). A pirate captain's voyage names its ship after him ("Black-Tooth
@@ -397,13 +398,16 @@ alone if that is longer than a nameplate's 50 characters), shown in the ship's r
 
 Covered headless: (JUnit `ArmedSloopLayoutTest`) the armed sloops differ from the starter sloop only by the guns,
 ports, locker, the nest where the flag was, the two-block staff and the 24 ratlines; each run climbs link by link from
-the quarterdeck to beside the nest, its hung links hang on mast logs above the upper yard, and no link enters the
+the quarterdeck to beside the nest, its top sloped link lies on the upper yard's end beside the mast with the hung
+links straight above it on mast logs, and no link enters the
 square sail's cloth envelope (bellied either way at the default `sail_visuals`) or the jib's plane; the starter sloop
 is unchanged (`SchemToStructureTest`). (`CaptainShipNamesTest`) the naming rule. (`ArmedShipGameTests`) the armed
 sloop still floats like the plain one; a navy patrol appears with one pinned crew member seated in its nest and
 `Lookouts.isManned` true, the helmsman at the helm and the crew count unchanged; with `man_lookout` off nobody sits
-there and the nest is not manned; a mock player climbs the port ratlines of the assembled sloop afloat from the
-quarterdeck into the nest (about 90 ticks). (`CaptainVoyageGameTests`) the captain's ship carries his name in its
+there and the nest is not manned; on the assembled sloop afloat every ratlines block stands in the plot and is
+climbable; a mock player climbs the port ratlines of the sloop's structure placed on land from the quarterdeck into
+the nest without ever jumping (RL1b; on land so the scripted walk does not run through Sable's coarse f32 plot
+collision at high plot indices). (`CaptainVoyageGameTests`) the captain's ship carries his name in its
 record, on its nameplate, in the voyage list's label and as the lookouts' name for it. (`LookoutGameTests`) a renowned
 ship is called by its name, an ordinary one as before. Not covered: how it looks (the nest, the nets beside the sail
 in a strong wind, the ensign), the climb by a real player with real controls, a lookout seen from far away.
@@ -416,16 +420,16 @@ and for step 5 a pirate island with a living captain (`/pirates mob captain list
 1. **The armed sloop's rigging.** `/pirates ship place navy_sloop_armed assemble` at the shore and walk around it.
    - **Expected:** a barrel-shaped crow's nest on the mast top; the flag (when hoisted) on a short staff on the
      taffrail behind the helm, its cloth free of the lanterns. Two rope nets climb from the quarterdeck on either side
-     of the wheel up toward the mast, reaching it just behind the upper yard, and continue up the mast's sides above
-     the upper yard to the nest. Nothing pokes through the yards or the jib. Hoist the square sail (whistle "Hoist
+     of the wheel up toward the mast, the last net lying on the end of the upper yard beside the mast, and continue up
+     the mast's sides above it to the nest. Nothing pokes through the yards or the jib. Hoist the square sail (whistle "Hoist
      sails") and turn the ship so the wind comes from ahead and from astern: the cloth may come close to the nets but
      never cuts through them.
-2. **Climb it.** In survival, walk up one of the nets from the quarterdeck toward the bow (it climbs like a stair),
-   stop on the end of the upper yard at its top, face the mast and climb the net on the mast (hold jump or push
-   forward), and step sideways into the nest at the top.
-   - **Expected:** you get from the deck into the nest without breaking or placing anything; standing in the nest you
-     are in the barrel up to your chest. Report any step that needed a second try (the jump from the slope onto the
-     hung net is the awkward one) and whether the climb feels natural.
+2. **Climb it.** In survival, walk up one of the nets from the quarterdeck toward the bow (it climbs like a stair)
+   into its last net on the end of the upper yard, turn to face the mast and push forward (no jump): you rise up the
+   net on the mast; at the top step sideways into the nest. Do it once on the ship lying still and once under way.
+   - **Expected:** you get from the deck into the nest without breaking or placing anything and without jumping;
+     standing in the nest you are in the barrel up to your chest. Report any step that needed a second try (the turn
+     from the slope's top to the mast is the one to watch) and whether the climb feels natural.
 3. **A patrol's lookout.** Fly the merchant flag, `/pirates world voyages spawn near patrol`, fly over it.
    - **Expected:** the patrol's ship has the nest and the ratlines, and a crew member stands in the nest (the
      lookout), facing out; the helmsman is at the helm, the other deckhands at the winch or on deck. Board it: you may hear its

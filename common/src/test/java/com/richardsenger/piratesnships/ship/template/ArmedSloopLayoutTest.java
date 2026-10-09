@@ -34,7 +34,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * in the waist (master outboard facing out, rear inboard), the bulwark cut out in front of each muzzle (the gun port),
  * the shot locker in the hold on its stand, within the gun crews' supply range (4) of every gun, and (TPL2) the crow's
  * nest on the mast top where the flag was, the flag on an ensign staff on the taffrail, and a run of ratlines on each
- * side of the mast from the quarterdeck to the masthead that is climbable link by link and keeps clear of the yards,
+ * side of the mast from the quarterdeck to the masthead that is climbable link by link without a jump (RL1b: the
+ * last sloped link lies on the upper yard's end) and keeps clear of the yards,
  * the square sail's cloth and the jib. Reads the committed {@code .nbt} files ({@code SchemToStructureTest} pins them
  * to their schematics).
  */
@@ -50,8 +51,11 @@ class ArmedSloopLayoutTest {
     private static final BlockPos NEST = new BlockPos(MAST_X, MAST_TOP + 1, MAST_Z);
     /** The ensign staff on the taffrail rail (4, 8, 27). */
     private static final BlockPos ENSIGN = new BlockPos(4, 9, 27);
-    /** Each run's foot on the quarterdeck, its last sloped link and the hung links' first height. */
-    private static final int FOOT_Z = 22, FOOT_Y = 8, TOP_Z = 14, TOP_Y = 16, HUNG_FROM = 17;
+    /**
+     * Each run's foot on the quarterdeck, its last sloped link (RL1b: on the upper yard's end, beside the mast) and the
+     * hung links' first height (right above the last sloped link).
+     */
+    private static final int FOOT_Z = 22, FOOT_Y = 8, TOP_Z = 13, TOP_Y = 17, HUNG_FROM = 18;
     /** The square sail: yards along x at z 13, the lower at y 10 (x 0..8), the upper at y 16 (x 1..7). */
     private static final int LOWER_YARD = 10, UPPER_YARD = 16;
     /** sail_visuals.max_belly and flutter_amplitude at their defaults (SailVisualsConfig). */
@@ -214,10 +218,11 @@ class ArmedSloopLayoutTest {
     }
 
     /**
-     * TPL2: each run is one climb from the quarterdeck to the nest: the foot stands on the deck, every sloped link is
-     * one up and one toward the bow from the last, the first hung link is one up and one forward from the last sloped
-     * one (over the upper yard's end), every hung link hangs on a mast log, and the cell above the top link is free
-     * beside the nest.
+     * TPL2, RL1b: each run is one climb from the quarterdeck to the nest without a jump: the foot stands on the deck,
+     * every sloped link is one up and one toward the bow from the last, the last sloped link lies on the upper yard's
+     * end (a ratlines anchor) right beside the mast, so a climber in it pushes against the mast and rises, the hung
+     * links start straight above it, every hung link hangs on a mast log, and the cell above the top link is free beside
+     * the nest.
      */
     @ParameterizedTest
     @ValueSource(strings = {"navy_sloop_armed", "pirate_sloop_armed"})
@@ -231,15 +236,19 @@ class ArmedSloopLayoutTest {
             BlockPos p = foot;
             while (SLOPE.equals(armed.get(p.above().north()))) p = p.above().north();
             assertEquals(new BlockPos(x, TOP_Y, TOP_Z), p, "the sloped run at x " + x + " breaks off");
-            assertEquals(null, armed.get(p.above()), "a block over the top of the slope at x " + x);
-            BlockPos hung = p.above().north();
+            assertTrue(armed.get(p.below()).startsWith("pirates_n_ships:yard"), "the top sloped link does not lie on the upper yard");
+            assertEquals(UPPER_YARD, p.getY() - 1, "the top sloped link is not on the upper yard");
+            assertEquals("minecraft:spruce_log[axis=y]", armed.get(new BlockPos(MAST_X, p.getY(), MAST_Z)),
+                    "no mast beside the top sloped link to push against");
+            assertEquals(null, armed.get(p.above().north()), "a block over the top of the slope at x " + x);
+            BlockPos hung = p.above();
+            assertEquals(HUNG_FROM, hung.getY());
             String face = x < MAST_X ? "west" : "east";
             for (int y = hung.getY(); y <= MAST_TOP; y++) {
                 BlockPos h = new BlockPos(x, y, MAST_Z);
                 assertEquals(RATLINES + "[facing=" + face + ",kind=wall,waterlogged=false]", armed.get(h), "hung link at " + h);
                 assertEquals("minecraft:spruce_log[axis=y]", armed.get(new BlockPos(MAST_X, y, MAST_Z)), "no mast behind " + h);
             }
-            assertTrue(armed.get(hung.below()).startsWith("pirates_n_ships:yard"), "the hung net does not start over the upper yard");
             BlockPos above = new BlockPos(x, MAST_TOP + 1, MAST_Z);
             assertEquals(null, armed.get(above), "the way into the nest at x " + x + " is blocked");
             assertEquals(1, Math.abs(above.getX() - NEST.getX()) + Math.abs(above.getZ() - NEST.getZ()), "the run does not end beside the nest");
@@ -251,8 +260,8 @@ class ArmedSloopLayoutTest {
      * The cloth hangs from the upper yard to the lower one in the yards' plane and stands off it to either side by
      * {@link ClothGeometry#clearance} plus the deepest belly and flutter VIS1b draws at the default
      * {@code sail_visuals} values (breathing included); the sloped nets' rope plane (the diagonal of their cell) must
-     * stay outside that envelope wherever the wind pushes the cloth, and the hung nets in the yards' plane hang above
-     * the upper yard.
+     * stay outside that envelope wherever the wind pushes the cloth, and the nets in the yards' plane (the top sloped
+     * link and the hung ones) lie above the upper yard.
      */
     @Test
     void ratlinesKeepClearOfTheClothAndTheJib() throws IOException {
@@ -269,6 +278,7 @@ class ArmedSloopLayoutTest {
         for (BlockPos p : nets) {
             assertNotEquals(MAST_X, p.getX(), "a net in the jib's plane at " + p);
             if (p.getZ() == MAST_Z) {
+                // the top sloped link on the yard's end and the hung links: all above the upper yard
                 assertTrue(p.getY() > UPPER_YARD, "a net in the sail's plane below the upper yard at " + p);
                 continue;
             }

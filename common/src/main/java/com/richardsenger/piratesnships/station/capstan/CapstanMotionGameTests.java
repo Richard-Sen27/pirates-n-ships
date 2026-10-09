@@ -16,7 +16,10 @@ import com.richardsenger.piratesnships.sailing.ship.ShipAnchor;
 import com.richardsenger.piratesnships.sailing.ship.ShipControls;
 import com.richardsenger.piratesnships.station.StationContent;
 import com.richardsenger.piratesnships.station.StationRef;
+import com.richardsenger.piratesnships.station.StationState;
 import com.richardsenger.piratesnships.station.Stations;
+import com.richardsenger.piratesnships.station.order.WhistleOrder;
+import com.richardsenger.piratesnships.station.order.WhistleOrders;
 import com.richardsenger.piratesnships.station.seat.StationSeat;
 import java.util.Collection;
 import java.util.HashSet;
@@ -111,6 +114,17 @@ public final class CapstanMotionGameTests {
         return s.position().distanceTo(s.home());
     }
 
+    /**
+     * Gives the whistle's anchor toggle (WHS1) to the ship, as the radial menu and the helm screen do, and checks that
+     * the crew member at the capstan took it in {@code direction}.
+     */
+    private static void toggle(GameTestHelper h, Rig r, AnchorOrder direction) {
+        WhistleOrders.Issued w = WhistleOrders.issue(h.getLevel(), r.f().ship(), WhistleOrder.ANCHOR, null);
+        h.assertTrue(w.result().outcome() == WhistleOrders.Outcome.ISSUED && w.result().crew() == 1, "anchor toggle: " + w.result());
+        StationState<Object> st = Stations.state(r.ref());
+        h.assertTrue(st != null && st.order() == direction, "the toggle did not " + direction + ": " + (st == null ? null : st.order()));
+    }
+
     /** Whether the anchor let go by hand holds on the ground. */
     private static boolean anchorDown(Rig r) {
         return r.phase() == AnchorState.Phase.HOLDING;
@@ -152,7 +166,8 @@ public final class CapstanMotionGameTests {
                         h.assertTrue(t - since[0] < 100, "the anchor did not land: " + r.phase());
                         return;
                     }
-                    h.assertTrue(CrewStations.order(level, c, AnchorOrder.RAISE_ANCHOR) == Stations.OrderResult.STARTED, "raise not started");
+                    // WHS1: the whistle's anchor toggle weighs the holding anchor
+                    toggle(h, r, AnchorOrder.RAISE_ANCHOR);
                     since[0] = t;
                     stage[0] = 2;
                 }
@@ -222,7 +237,8 @@ public final class CapstanMotionGameTests {
             switch (stage[0]) {
                 case 0 -> {
                     if (t < 3) return;
-                    h.assertTrue(CrewStations.order(level, c, AnchorOrder.DROP_ANCHOR) == Stations.OrderResult.STARTED, "drop not started");
+                    // WHS1: the whistle's anchor toggle lets the stowed anchor go
+                    toggle(h, r, AnchorOrder.DROP_ANCHOR);
                     since[0] = t;
                     stage[0] = 1;
                 }

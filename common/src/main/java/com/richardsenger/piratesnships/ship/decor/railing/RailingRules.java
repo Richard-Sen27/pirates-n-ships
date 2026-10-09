@@ -175,6 +175,64 @@ public final class RailingRules {
         return out;
     }
 
+    // ------------------------------------------------------------------ the gate (RAIL3)
+
+    /**
+     * Whether a railing gate's hinge goes to its left post (looking outboard, toward {@code facing}): a click in the
+     * left half of the edge hinges it there, the right half on the right post. {@code fx}, {@code fz}: the click point in
+     * the block (0..1).
+     */
+    public static boolean gateHingeLeft(double fx, double fz, Direction facing) {
+        double fromLeft = switch (facing.getCounterClockWise()) {
+            case WEST -> fx;
+            case EAST -> 1.0 - fx;
+            case NORTH -> fz;
+            default -> 1.0 - fz;
+        };
+        return fromLeft < 0.5;
+    }
+
+    /**
+     * The boxes of a railing gate facing {@code facing}: open, the port's (posts and sill, the leaf swung outboard out
+     * of the block); closed, the port's with the leaf between the posts, its rails and balusters ({@link #RAIL_DEPTH}
+     * deep) up to {@code leafTop}. {@code post}: the posts' side ({@link #POST} drawn, {@link #PORT_COLLISION_POST} for
+     * an open gate's collision so a player steps through as through a port).
+     */
+    public static List<double[]> gateBoxes(Direction facing, boolean open, double postTop, double leafTop, double post) {
+        List<double[]> out = portBoxes(facing, postTop, post);
+        if (!open) {
+            out.add(rotate(new double[]{POST, 0, 0, 16 - POST, leafTop, RAIL_DEPTH}, facing));
+        }
+        return out;
+    }
+
+    // ------------------------------------------------------------------ hanging from a post (RAIL3)
+
+    /** The centre column of a block, as vanilla's centre support ({@code SupportType.CENTER}) tests it, in pixels. */
+    public static final double[] CENTRE_COLUMN = {7, 0, 7, 9, 16, 9};
+
+    /**
+     * The support shape of a railing block (RAIL3): what vanilla's lantern, chain and torch rules see of its top and
+     * bottom faces. With a post ({@code hasPost}) the block counts as a sturdy centre: the posts and the centre column
+     * ({@link #CENTRE_COLUMN}, which vanilla's centre support needs; a post stands in a corner), so a lantern hangs
+     * below it or stands on it. Without one only the rails ({@code boxes}, cut to the block) and nothing at the centre.
+     */
+    public static List<double[]> supportBoxes(List<double[]> boxes, boolean hasPost) {
+        List<double[]> out = new ArrayList<>(boxes.size() + 1);
+        for (double[] b : boxes) out.add(new double[]{b[0], b[1], b[2], b[3], Math.min(16, b[4]), b[5]});
+        if (hasPost) out.add(CENTRE_COLUMN.clone());
+        return out;
+    }
+
+    /** Whether vanilla's centre support (a 2 x 2 px column at the centre, top or bottom face) is covered by {@code boxes}. */
+    public static boolean supportsCentre(List<double[]> boxes, boolean top) {
+        for (double[] b : boxes) {
+            boolean face = top ? b[4] >= 16 : b[1] <= 0;
+            if (face && b[0] <= 7 && b[2] <= 7 && b[3] >= 9 && b[5] >= 9) return true;
+        }
+        return false;
+    }
+
     /**
      * A box given in the north frame turned to {@code facing} like a block state's y rotation (east maps (x, z) to
      * (16 - z, x)); the same turn as {@code ship.decor.DecorShapes#rotate}.

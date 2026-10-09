@@ -14,6 +14,15 @@ common/src/main/resources/assets/pirates_n_ships/models/block/ and their Blockbe
 - block/railing_port: the railing port facing north: the two posts at the ends of the north edge and a 4 px sill
   between them (x 3..13, y 0..4, z 0.05..2), no rails.
 - block/railing_item: the item: one edge with a post at either end, centred in the block (z 6.5..9.5).
+- RAIL3, the railing gate's leaf (the gate's posts and sill are block/railing_port, drawn by the same block state):
+  block/railing_gate_left and _right: the closed leaf between the posts (x 3..13): the edge's top and lower rail and
+  the two balusters between them (x centres 6 and 10) standing on the sill (y 4) up to the top rail, two iron hinge
+  straps (#iron, vanilla anvil) round the rails at the hinge post's end, reaching 1 px onto the post, and a latch bar
+  with a handle on the inboard face at the other end, its tongue running into the latch post; left = hinged on the
+  west post (looking outboard, north), right = mirrored on the east post. block/railing_gate_left_open and
+  _right_open: the same leaf turned 90 degrees outboard (to the north, out of the block) about the hinge post's inner
+  outer corner (x 3 or 13, z 0), like a fence gate's leaf turn. block/railing_gate_item: the port's posts and sill with
+  the closed left leaf, centred like the railing's item.
 
 Every model uses two texture variables, #planks and #log (vanilla oak planks and stripped oak log here); the wood
 family's datagen (ship/decor/wood/WoodFamily) writes one child per wood that overrides them. The block state turns the
@@ -34,6 +43,7 @@ ART = ROOT / "art/models"
 
 PLANKS = "minecraft:block/oak_planks"
 LOG = "minecraft:block/stripped_oak_log"
+IRON = "minecraft:block/anvil"
 
 INSET = 0.05  # the rails' and the sill's outer face stand this far in from the block's edge
 RAIL_DEPTH = 2
@@ -126,6 +136,65 @@ def item():
     return rail_parts(z0) + post_parts(0, pz, "post_west") + post_parts(16 - POST, pz, "post_east")
 
 
+# ---------------------------------------------------------------------- the gate (RAIL3)
+
+LEAF = 16 - 2 * POST  # the leaf's length between the posts (u 0..10)
+GATE_BALUSTER_U = (3, 7)  # x centres 6 and 10, the edge's spacing
+STRAP_U = (-1, 3)  # the straps reach 1 px onto the hinge post
+STRAP_W = (-0.25, 2.25)
+STRAP_Y = ((13.75, 16.25), (6.75, 9.25))
+LATCH = ((8, 11.5), (11, 12), (2, 2.6))  # u, y, w of the latch bar
+HANDLE = ((8, 8.75), (10.5, 12.5), (2.6, 3.2))
+
+
+def leaf_parts():
+    """The leaf in its own frame: (name, (u0, u1), (y0, y1), (w0, w1), texture, end faces drawn closed).
+
+    u runs along the edge from the hinge post's inner face (0) to the latch post's (10), w is the depth from the
+    block's outer face (0) inboard.
+    """
+    out = [
+        ("top_rail", (0, LEAF), TOP_RAIL, (INSET, RAIL_DEPTH), "planks", False),
+        ("lower_rail", (0, LEAF), LOWER_RAIL, (INSET, RAIL_DEPTH), "planks", False),
+    ]
+    for i, u in enumerate(GATE_BALUSTER_U):
+        out.append((f"baluster_{i}", (u - 0.5, u + 0.5), (SILL_TOP, BALUSTER_TOP), (0.5, 1.5), "planks", True))
+    for i, y in enumerate(STRAP_Y):
+        out.append((f"hinge_strap_{i}", STRAP_U, y, STRAP_W, "iron", True))
+    out.append(("latch", LATCH[0], LATCH[1], LATCH[2], "iron", True))
+    out.append(("latch_handle", HANDLE[0], HANDLE[1], HANDLE[2], "iron", True))
+    return out
+
+
+def leaf(hinge_left, open_, dz=0.0):
+    """The leaf in the block's north frame: closed between the posts, or open, turned 90 degrees outboard (to -z)
+    about the hinge post's inner outer corner. Closed, the rails' end faces against the posts are left out."""
+    out = []
+    for name, (u0, u1), (y0, y1), (w0, w1), tex, ends in leaf_parts():
+        if not open_:
+            x = (POST + u0, POST + u1) if hinge_left else (16 - POST - u1, 16 - POST - u0)
+            z = (w0 + dz, w1 + dz)
+            faces = ("north", "south", "up", "down") + (("east", "west") if ends else ())
+        else:
+            x = (POST + w0, POST + w1) if hinge_left else (16 - POST - w1, 16 - POST - w0)
+            z = (-u1 + dz, -u0 + dz)
+            faces = ALL
+        if name.startswith("baluster"):
+            # the top rail covers a baluster's top, and closed the sill its foot (as on the edge)
+            faces = tuple(f for f in faces if f != "up" and (open_ or f != "down"))
+        out.append(cube(name, (x[0], y0, z[0]), (x[1], y1, z[1]), {f: tex for f in faces}))
+    return out
+
+
+def gate_item():
+    pz = 8 - POST / 2  # the posts centred as on the railing's item
+    dz = 8 - RAIL_DEPTH / 2  # the leaf's rails centred
+    out = post_parts(0, pz, "post_west") + post_parts(16 - POST, pz, "post_east")
+    out.append(cube("sill", (POST, 0, dz + INSET), (16 - POST, SILL_TOP, dz + RAIL_DEPTH),
+                    {f: "planks" for f in ("north", "south", "up")}))
+    return out + leaf(True, False, dz)
+
+
 def used_textures(elements):
     keys = []
     for e in elements:
@@ -138,9 +207,9 @@ def used_textures(elements):
 
 def block_model(elements):
     textures = {}
-    for k in ("planks", "log"):
+    for k, v in (("planks", PLANKS), ("log", LOG), ("iron", IRON)):
         if k in used_textures(elements):
-            textures[k] = PLANKS if k == "planks" else LOG
+            textures[k] = v
     textures["particle"] = "#planks"
     return {
         "credit": "Made with Blockbench, source art/models/railing.bbmodel",
@@ -159,6 +228,7 @@ def det_uuid(*parts):
 TEXTURES = [  # (key, vanilla file name)
     ("planks", "oak_planks"),
     ("log", "stripped_oak_log"),
+    ("iron", "anvil"),
 ]
 
 
@@ -228,7 +298,10 @@ def write(path, model):
 
 
 def main():
-    models = [("railing_edge", edge()), ("railing_post", post()), ("railing_port", port()), ("railing_item", item())]
+    models = [("railing_edge", edge()), ("railing_post", post()), ("railing_port", port()), ("railing_item", item()),
+              ("railing_gate_left", leaf(True, False)), ("railing_gate_right", leaf(False, False)),
+              ("railing_gate_left_open", leaf(True, True)), ("railing_gate_right_open", leaf(False, True)),
+              ("railing_gate_item", gate_item())]
     for name, els in models:
         write(MODELS / f"block/{name}.json", block_model(els))
     write(ART / "railing.bbmodel", project(models))

@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-09T21:31:13.539476	Recipes
+// 1.21.1	2026-10-09T21:54:40.112378	Recipes
 e1289c0eb7525c60669f4203ccd8af0d9d7b0744 data/pirates_n_ships/advancement/recipes/building_blocks/hull_patch.json
 dc908cf23933449a8a82c8037e57e8f3143c20f2 data/pirates_n_ships/advancement/recipes/combat/bandana.json
 8f98eb055171c739101420a0b9bbe9f3a8bf2903 data/pirates_n_ships/advancement/recipes/combat/cannon.json
@@ -63,6 +63,7 @@ f7e885188dc6f141897463c4c13c231ee16c9c9b data/pirates_n_ships/advancement/recipe
 4c42f624146f1bf49bfa62d375de17078bf27322 data/pirates_n_ships/advancement/recipes/misc/cloth.json
 aed6e57dfef6edfcf355303e53d77dfe704c1587 data/pirates_n_ships/advancement/recipes/misc/nails.json
 dc645eb64a6aaf129d1c677f5a0cea8e270db46b data/pirates_n_ships/advancement/recipes/redstone/brig_door.json
+f37b6fd51f8eb725b59c0a6ada9cd7dc6f74542e data/pirates_n_ships/advancement/recipes/redstone/oak_railing_gate.json
 88d50c7baa78bb0d4dc27459e14004cd9a979f8a data/pirates_n_ships/advancement/recipes/tools/brig_key.json
 940122c6e87c473770b5010c02d68e2f01ffa7a9 data/pirates_n_ships/advancement/recipes/tools/carpenters_hammer.json
 1daedb04441a8008d3d0ea8aea1c3c4af0b9e22c data/pirates_n_ships/advancement/recipes/tools/chart.json
@@ -129,6 +130,7 @@ f3293314602bc2f8489df1b00cd44ea77ffdc5e0 data/pirates_n_ships/recipe/musket.json
 f4683c952646f10265499f1ea4a044d7bb7987c5 data/pirates_n_ships/recipe/navy_hat.json
 6f7d4af39975880329fbb465515783e7f254da96 data/pirates_n_ships/recipe/notice_board.json
 e833dcd7384f702672bb73074936b2b7be84d84d data/pirates_n_ships/recipe/oak_railing.json
+7799133a13a04ffb572b14a45afaa1f54726127b data/pirates_n_ships/recipe/oak_railing_gate.json
 ee50eb7dfee157fbb11880b461110887e0496ac0 data/pirates_n_ships/recipe/oak_railing_port.json
 7dc6ab0e75b2a2f59f1ccdcc4e6c6c2a90224311 data/pirates_n_ships/recipe/officer_hat.json
 8a16b0a447e474281b7b36915f3d2fe91672a87e data/pirates_n_ships/recipe/officers_boots.json

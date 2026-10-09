@@ -84,6 +84,13 @@ public final class GrappleConfig {
             "A flying hook passing this close [blocks] to a mooring ring (or cleat) on another ship latches onto it (0 = only a direct hit)");
     public static final ConfigValue<Double> RING_HOLD_MULTIPLIER = S.doubleRange("ring_hold_multiplier", 2.0, 1.0, 8.0,
             "A hook latched on a mooring ring (or cleat) snaps only when the rope's ends are this many times its length apart");
+    public static final ConfigValue<Boolean> LATCHES_HOLD = S.bool("latches_hold", true,
+            "A hook latched on a railing or railing gate (the block tag pirates_n_ships:grapple_latches) holds like one on a "
+                    + "mooring ring: it snaps only at ring_hold_multiplier times the rope's length. Off = a railing holds like any block");
+    public static final ConfigValue<Double> RAILING_BREAK_FORCE = S.doubleRange("railing_break_force", 180.0, 0.0, 100000.0,
+            "Rope pull in kpg*m/s^2 above which a hauled hook tears out the railing (or gate) it holds and lets go: a ship-to-ship "
+                    + "haul pulls at most haul_force (120), a hand haul up to haul_max_force (200), so by default only a hard haul "
+                    + "by hand breaks a railing. 0 = railings never break");
 
     private static final ConfigSection LAUNCH = S.section("launch",
             "Loading the hook into a musket (hook in the off hand, musket in the main hand) and firing it");

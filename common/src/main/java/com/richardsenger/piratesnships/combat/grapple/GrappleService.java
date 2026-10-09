@@ -417,6 +417,7 @@ public final class GrappleService {
                 return; // the hulls lie together (or the ship lies at the kedge point): the rope holds without pulling
             }
             double t = GrappleRules.tension(d, hold, extension, GrappleConfig.HAUL_FORCE.get(), damping);
+            h.recordLoad(t); // RAIL3: the tear-out check of a hook on a railing
             if (t > 0) {
                 if (target != null) {
                     push(target, hookWorld, u.scale(-t), dt);
@@ -440,6 +441,7 @@ public final class GrappleService {
                 return; // the ship lies at the shore: the rope holds without pulling
             }
             double t = GrappleRules.tension(d, hold, extension, GrappleConfig.SHORE_HAUL_FORCE.get(), damping);
+            h.recordLoad(t);
             if (t > 0) {
                 push(target, hookWorld, u.scale(-t), dt);
             }

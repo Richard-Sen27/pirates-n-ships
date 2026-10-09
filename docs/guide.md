@@ -176,8 +176,9 @@ page, three tabs.
   speed, the anchor (stowed, running out, down while she still moves, anchored, weighing), the sails (full, reefed,
   furled), crew and bunks, the supplies left in days and the last payday. **Disassemble** (click twice) disassembles
   her at this helm.
-- **Crew:** the captain's whistle orders as buttons (hoist, reef, furl, man the pumps, fire, load, fire at will, drop
-  and weigh anchor, release crew; "Release crew" also ends "Fire at will"), then every hand aboard with morale, station
+- **Crew:** the captain's whistle orders as buttons (hoist, reef, furl, man the pumps, fire, load, fire at will, the
+  anchor, release crew; "Release crew" also ends "Fire at will"). The anchor is one button: it reads "Drop anchor"
+  while the anchor is stowed or coming up and "Raise anchor" while it runs out or holds, and gives that order. Then every hand aboard with morale, station
   or off duty, the order being carried out, who hired them, unpaid, and a warning when low morale has them close to
   deserting. **Release** takes a hand off their station, **Dismiss** lets them go as the whistle's sneak-use does.
 - **Stations:** every station aboard (winches, pumps, cannons, capstans, the helm), who mans it, the order worked
@@ -402,12 +403,16 @@ does not hold.) Server config `anchor_chain` (fall, chain, holding, sounds) and 
 `sailing_runtime.anchor_chain_length`.
 
 You can also put a crew member on the capstan: use the Captain's Whistle on the crew member, then on the
-capstan. In the whistle menu, "Drop anchor" makes the hand lean into the bars for two seconds before the anchor runs
-out, and "Weigh anchor" starts the winding at once; he keeps pushing until the anchor is stowed. While he works, the
+capstan. The whistle menu (and the ship screen) has one anchor entry that switches with the anchor: it reads "Drop
+anchor" while the anchor is stowed or coming up and "Raise anchor" while it runs out or holds, and the order follows
+the anchor's state when you give it (like using the capstan by hand). "Drop anchor" makes the hand lean into the bars
+for two seconds before the anchor runs out, and "Raise anchor" starts the winding at once; he keeps pushing until the
+anchor is stowed. While he works, the
 capstan's bars turn and he walks round the drum pushing them, then steps back to his spot. A free hand on deck
 takes an unmanned capstan by himself when you give the order. Over water deeper than the chain he refuses: "No
 ground for the anchor within the chain's reach, captain!" Commands: `/pirates crew order drop_anchor` and
-`raise_anchor`. Server config `crew_stations.capstan`.
+`raise_anchor` (the command keeps both directions; only the wheel and the screen have the one toggle). Server config
+`crew_stations.capstan`.
 
 ---
 
@@ -532,7 +537,17 @@ elevation; use a boarding plank on the sill while facing out and the gangway sta
 deck height, so the port is also where boarders go across. A **swivel gun** placed on a railing sits on the rail
 itself, at the edge (with a corner railing, on the edge nearest your click), and its crew stands on the deck inside;
 **ratlines** stand on a railing's top or hang on its side. Railings weigh like fences on a ship and hold water. Server
-config `ship_decor.railings_enabled` (off: railings and ports cannot be placed; placed ones stay).
+config `ship_decor.railings_enabled` (off: railings, ports and gates cannot be placed; placed ones stay).
+
+A **Railing Gate** (a stick, an iron nugget and a stick over three planks) is a port with a swinging leaf: closed it is
+a railing section with two iron hinge straps on one post and a latch on the other (the post on the half you click is the
+hinge), open it swings outboard like a fence gate. Use it, or give it a redstone signal, to open and close it. A run of
+railing continues into it without a second post. Closed it blocks like a railing and crew go around it; open, crew walk
+through, and a boarding plank used on its sill while facing out lays the gangway from beyond it, as from a port (a
+plank in hand does not swing the gate). **Railing posts carry things:** wherever a railing (or a port's or gate's) post
+stands, a lantern or soul lantern hangs below the block or stands on it, and a chain runs on from it; a plain stretch
+of rail carries nothing. The **grappling hook** holds on a railing or gate like on a cleat (twice the rope's length),
+but a hard haul tears the railing out and the rope lets go (`grapple.railing_break_force`).
 
 **Ratline nets (RL2).** For a longer or steeper climb, string a net between two iron fittings. A **chainplate** (two
 from an iron ingot under a ring of three iron nuggets) goes on top of the rail or on its side (any solid face, or a
@@ -898,9 +913,11 @@ crew take their place at once).
 The **captain's whistle** (creative tab) gives orders:
 - Use it on a crew member, then on a station: the crew member takes that station.
 - Use it on an assigned crew member: it is released.
-- Use it in the air: opens the order wheel with ten orders: Hoist sails, Reef sails, Furl sails, Man the pumps,
-  Fire!, Load!, Fire at will, Drop anchor, Weigh anchor, Release crew. Point at one and click, or hold the use key,
-  aim and release. The order goes to the crew on the ship you stand on whose station takes it; unmanned stations
+- Use it in the air: opens the order wheel with nine orders: Hoist sails, Reef sails, Furl sails, Man the pumps,
+  Fire!, Load!, Fire at will, the anchor, Release crew. The anchor is one toggle: it reads "Drop anchor" while the
+  anchor is stowed or coming up and "Raise anchor" while it runs out or holds (the label follows the ship status your
+  HUD shows; the server decides from the anchor's state when the order arrives). Point at one and click, or hold the
+  use key, aim and release. The order goes to the crew on the ship you stand on whose station takes it; unmanned stations
   become open jobs (see [Orders, not assignments](#orders-not-assignments)). Esc closes the wheel.
 
 The [ship screen](#ship-screen) at the helm (sneak-use with an empty hand) gives the same orders, assigns and releases
@@ -1586,7 +1603,7 @@ other level in use.
 | `/pirates crew info [crew]` | Morale, crew and bunks, supplies left, the last payday. |
 | `/pirates crew assign <crew> <station>` | Puts a crew member at a station. |
 | `/pirates crew release <crew>` | Releases crew from their stations. |
-| `/pirates crew order <hoist\|reef\|furl\|pump\|fire\|load\|fire_at_will\|drop_anchor\|raise_anchor> [crew]` | Gives an order, ship-wide or to the named crew. |
+| `/pirates crew order <hoist\|reef\|furl\|pump\|fire\|load\|fire_at_will\|drop_anchor\|raise_anchor> [crew]` | Gives an order, ship-wide or to the named crew. The anchor keeps its two directions here; the whistle wheel and the ship screen have one anchor toggle. |
 | `/pirates crew order course <x> <z> [<x> <z> …] [loop]` | Gives the helmsman a course through waypoints. |
 | `/pirates crew hire <sailor\|pirate\|navy> [port]`, `/pirates crew dismiss <crew>` | Hires a candidate; dismisses a hired hand. |
 | `/pirates provisions show <crew> [pos]` | What the pantry you look at holds, and how many days it feeds that crew. |
@@ -1676,7 +1693,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `firearms` | Firearms on/off, `fire_on_attack`, ball lifetime and gravity, cooldown, gunpowder use; `aim` (hold and steady times, aimed spread, sneak lowers the gun), `pistol` and `musket` (damage, muzzle velocity, spread, reload, recoil, sound). |
 | `combat` | Cannon block damage, rain misfires; `damage_multipliers` (cannon on blocks and entities, firearms). |
 | `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevations, blocks per hit, recoil and impact, ball lifetime and water, `mobGriefing` and spawn protection, drops, glancing hits; `swivel`, `chain_shot`, `grapeshot`, `crew` (loading by the crew, load preference), `npc` (fire at will). |
-| `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore haul, entity damage, lost hooks, latching on world blocks and on your own ship, cleats and rings, climbing; `launch` (from the musket), `slide` (sliding along a rope). |
+| `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore haul, entity damage, lost hooks, latching on world blocks and on your own ship, cleats and rings, railings holding the hook and tearing out (`latches_hold`, `railing_break_force`), climbing; `launch` (from the musket), `slide` (sliding along a rope). |
 | `boarding` | `plank`: the boarding plank on/off, length, steepest pitch (`max_pitch`, 45 degrees), pick-up, break distance and rise. |
 | `apparel` | Armour of the hats, coats, breeches and boots. |
 | `chart` | Charts on/off, cell size, sampling radius and interval, shallow depth, the cell cap, opening without the item (`open_without_item`, off by default), other players visible, marker cap; `tiles` (map tiles). |

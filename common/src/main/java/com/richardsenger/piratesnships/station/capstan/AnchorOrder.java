@@ -1,17 +1,29 @@
 package com.richardsenger.piratesnships.station.capstan;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.sailing.force.AnchorState;
 import com.richardsenger.piratesnships.station.order.CrewOrder;
 import java.util.Locale;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The orders of the capstan station (CRW3, docs/design.md §6, §7.5): let the anchor go, or heave it in. A
- * {@link CrewOrder}: the whistle's "Drop anchor" and "Weigh anchor" entries and {@code /pirates crew order drop_anchor}
- * / {@code raise_anchor} give it, and the job board posts it for an unmanned capstan.
+ * {@link CrewOrder}: the whistle's and the helm screen's one anchor toggle (WHS1, {@link #toggle}) and
+ * {@code /pirates crew order drop_anchor} / {@code raise_anchor} give it, and the job board posts it for an unmanned
+ * capstan.
  */
 public enum AnchorOrder implements CrewOrder {
     DROP_ANCHOR,
     RAISE_ANCHOR;
+
+    /**
+     * The direction of the anchor toggle (WHS1) for the anchor in {@code phase}: let it go while it is stowed or coming
+     * up (or the phase is unknown), weigh it while it runs out or holds; the same as a player's use of the capstan
+     * ({@code ShipControls#useCapstan}). Pure.
+     */
+    public static AnchorOrder toggle(AnchorState.@Nullable Phase phase) {
+        return phase == AnchorState.Phase.DROPPING || phase == AnchorState.Phase.HOLDING ? RAISE_ANCHOR : DROP_ANCHOR;
+    }
 
     @Override
     public String id() {

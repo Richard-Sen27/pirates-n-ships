@@ -118,6 +118,30 @@ jobs:
       - name: GameTests on Fabric
         run: ./gradlew :fabric:runGameTest -Pversion=${{ steps.version.outputs.version }} --console=plain
 
+      # REL3: the release jars on real dedicated servers (installed by the loaders' own installers), driven through
+      # RCON: ship placement and assembly, mobs, waves, ports from generated structures, a convoy, 30 s of ticking, a
+      # save and a clean stop. Fails on any exception, missing class, mixin failure or crash. About 3 minutes per loader
+      # (docs/releasing.md, "Dedicated-server smoke test").
+      - name: Dedicated-server smoke test (NeoForge, release jar)
+        env:
+          SMOKE_GRADLE_ARGS: -Pversion=${{ steps.version.outputs.version }}
+          SMOKE_OUT: build/server-smoke
+        run: tools/server_smoke.sh neoforge --jar
+
+      - name: Dedicated-server smoke test (Fabric, release jar)
+        env:
+          SMOKE_GRADLE_ARGS: -Pversion=${{ steps.version.outputs.version }}
+          SMOKE_OUT: build/server-smoke
+        run: tools/server_smoke.sh fabric --jar
+
+      - name: Upload the smoke test logs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-smoke-${{ steps.version.outputs.version }}
+          path: build/server-smoke
+          if-no-files-found: ignore
+
       - name: Check the NeoForge jar
         id: jar
         env:

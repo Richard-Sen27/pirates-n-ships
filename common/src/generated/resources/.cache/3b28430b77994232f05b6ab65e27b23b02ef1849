@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-09T02:53:01.808525	Block states and models: pirates_n_ships
+// 1.21.1	2026-10-09T03:17:48.366884	Block states and models: pirates_n_ships
 c189a7833975a61cf2c7c8fd326d27a32969cb9d assets/pirates_n_ships/blockstates/bilge_pump.json
 66226c130d39627104000bbfa87d4776c87b9ed0 assets/pirates_n_ships/blockstates/boarding_plank.json
 52e053a4f7334e9a78798b4b4b9a2ad80087f3d5 assets/pirates_n_ships/blockstates/brig_bars.json
@@ -9,7 +9,6 @@ e7e8e4548fc5047cae07be49dbfd505ce3d97d96 assets/pirates_n_ships/blockstates/cann
 d8feff695031e5decd3607e4c40a9f86e1513034 assets/pirates_n_ships/blockstates/cargo_crate.json
 42ff051885f7e4b514cc9fabd774b372e2c29454 assets/pirates_n_ships/blockstates/chart_table.json
 4904719964b56683a065a7301cc7a55eadea5d4f assets/pirates_n_ships/blockstates/cleat.json
-d44cfae99482cfd39abb09949a8c830f0338bbd7 assets/pirates_n_ships/blockstates/crows_nest.json
 d241f11bb103a4cdbc981e78e9b0b5005b4befcc assets/pirates_n_ships/blockstates/figurehead_eagle.json
 222afee5b6c4793885865664852f6055890652b6 assets/pirates_n_ships/blockstates/figurehead_lion.json
 0c84c5b83e1e180af8ddb93675fe66630e4cc789 assets/pirates_n_ships/blockstates/figurehead_mermaid.json
@@ -37,7 +36,7 @@ e6693690b1a2de5def4d4ee1b77abcdb3ac5acb1 assets/pirates_n_ships/blockstates/swiv
 0b12aae142cc2820b4f73c0ec793251dc3bc9fec assets/pirates_n_ships/blockstates/yard.json
 e2b8a59635f01479e9fe04f09cad8c517664bff3 assets/pirates_n_ships/models/block/cannon_rear.json
 c5ac1bd7624a36a4b6b4ab37906b56c61e277091 assets/pirates_n_ships/models/block/map_tile.json
-5982e307cbb43d7cd8267060c04e3d13c79444f7 assets/pirates_n_ships/models/item/bilge_pump.json
+673050e46ea3809409391b40574b18f1f9fff734 assets/pirates_n_ships/models/item/bilge_pump.json
 7b937a3b6f02e6abfce5d9e23f88171f665e804f assets/pirates_n_ships/models/item/brig_bars.json
 f7fb3b356386931f9fe39ebac39ce5984c685200 assets/pirates_n_ships/models/item/cannon.json
 6e2d9e4e9e945102afe0356dd536dd6bd2314eb5 assets/pirates_n_ships/models/item/capstan.json
@@ -45,7 +44,6 @@ e762fd96625dae60f3cbfdcb33e82b84c2f742ab assets/pirates_n_ships/models/item/carg
 724e2310f488c077c19808000615dc5c2378241c assets/pirates_n_ships/models/item/cargo_crate.json
 150e0042e6f54a263bb32c6c4d4baaf7ab127dae assets/pirates_n_ships/models/item/chart_table.json
 f1f1587eb52c46d53241c7cb9019de1506eee3b8 assets/pirates_n_ships/models/item/cleat.json
-4c8d5874ac039fc3cdddb876be53f4b1862766d2 assets/pirates_n_ships/models/item/crows_nest.json
 c2828a89c739dcf7d31509c39dbef0032d04a8c0 assets/pirates_n_ships/models/item/figurehead_eagle.json
 8011b8a61cfe0370674b6b357d92ed5112191a79 assets/pirates_n_ships/models/item/figurehead_lion.json
 9c494019b08c2cdab4ac80af298cd351a0f0e200 assets/pirates_n_ships/models/item/figurehead_mermaid.json

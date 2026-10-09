@@ -103,3 +103,39 @@ stand right under and beside the hold. Fancy graphics, no Sodium or Embeddium.
 5. **Sailing.** Sail slowly (a block per second) over the meadow and watch the hold floor from inside. Expected: no
    plant flickers into the hold at the floor edges; outside the stern the plants come back behind the ship. With debug
    logging, note the "Hidden water plants" log line (µs per refresh, sections re-marked) and compare it with HV1.
+
+## PMP1: the pump handle moves while someone pumps
+
+The bilge pump's brake handle now rocks about its pin while the pump is worked, and the piston rod under it slides up
+and down with it (design.md §4.8 "Visual backlog 2", item 3). The pumping flag comes from the server (it is on while
+the pump drains water, by a player or a crew member, and goes off a quarter second after the last stroke) and reaches
+the client through the pump's block entity: one block update when pumping starts and one when it stops. Its sync is
+covered by GameTests and the stroke math by JUnit tests; the look has not been seen. Render of both ends of the stroke:
+`art/renders/bilge_pump_stroke.png`. Setup as in FLD1: a ship with a hold below the waterline, a bilge pump in the
+hold (or on the deck above it), a breach to flood the hold and hull patches; for step 2 a crew member and a captain's
+whistle. Old worlds: a pump placed before PMP1 gets its block entity the first time it is worked.
+
+1. **The pump at rest.** Look at an idle pump from all sides, in the hand and in the inventory. Expected: it looks as
+   before PMP1 (handle raised towards the spout side, the rod under it); no handle missing, doubled or flickering, in
+   every facing. In the inventory and in the hand the pump is whole.
+2. **You pump.** Flood the hold a little, patch the breach and hold the use key on the pump. Expected: the handle swings
+   down and up about once a second (grip end down towards the spout side by roughly 28°, about 6 px at the grip), the
+   rod rides down into the cylinder and back up, smoothly, with no stutter at the turn; the handle never cuts into the
+   iron lip of the cylinder. The motion starts as soon as the action bar says "Pumping". Watch it also from a second
+   player if you can: both see it.
+3. **Stopping.** Let go of the use key in mid-stroke. Expected: within half a second the handle settles back up to its
+   rest smoothly from wherever it was (no snap). Tap use quickly a few times: the handle keeps moving while you tap and
+   settles afterwards; it does not judder.
+4. **A dry bilge.** Use the pump on a dry hold. Expected: "The bilge is dry", and the handle does not move (only a
+   pump that drains water rocks).
+5. **A crew member pumps.** Assign a crew member to the pump and give the pumping order (whistle). Expected: the
+   handle rocks the whole time the crew member pumps, also across the hand-over from one order to the next (no
+   pause), and settles at rest when the bilge is dry.
+6. **On a sailing ship.** Repeat step 2 while the ship sails and turns, and on a heeling ship in waves. Expected: the
+   handle and rod stay on the pump (they move with the ship, no lag or offset), the swing is still about the pin.
+7. **Relog.** Pump, and while the handle is rocking leave the world or move far away and come back. Expected: a pump
+   that is still being worked (a crew member) rocks again when you arrive; an idle one is at rest.
+8. **Toggle.** Set `pump_visuals.enabled = false` in the client config (`pirates_n_ships-client.toml` or the config
+   screen). Expected: the handle stays up while pumping (the water still goes). Set it back to true. Try
+   `pump_visuals.stroke_ticks = 40` (a slower stroke) and `stroke_degrees = 30` (the deepest the handle may go: it
+   should still clear the lip), then set them back to 20 and 28.

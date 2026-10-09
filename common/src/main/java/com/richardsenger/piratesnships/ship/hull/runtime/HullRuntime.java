@@ -221,6 +221,9 @@ public final class HullRuntime {
                 .withWaves(com.richardsenger.piratesnships.sailing.waves.WaveForces.spillHeight(level, id));
         int[] working = workingPumps();
         pumpingNow = working == null ? new int[0] : working;
+        for (BlockPos pump : pumps.working()) {
+            BilgePumps.markWorked(level, pump); // the handle rocks while the pump works (PMP1)
+        }
         lastReport = sim.tick(working == null ? input : input.withPumps(working));
         if (lastReport.inflow() > 0 || lastReport.outflow() > 0 || lastReport.pumped() > 0) {
             saveDirty = true;

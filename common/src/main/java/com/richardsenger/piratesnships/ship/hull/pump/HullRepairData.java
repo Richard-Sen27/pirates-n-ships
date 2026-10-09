@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.ship.hull.pump;
 
 import com.google.gson.JsonObject;
+import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
 import com.richardsenger.piratesnships.ship.hull.HullTags;
@@ -11,6 +12,7 @@ import net.minecraft.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
+import net.minecraft.data.models.model.DelegatedModel;
 import net.minecraft.data.models.model.ModelLocationUtils;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
@@ -98,7 +100,8 @@ public final class HullRepairData {
 
     /**
      * The bilge pump: a hand-made Blockbench model (art/models/bilge_pump.bbmodel, design.md §4.8) with its spout and
-     * its handle to the north, so only the block state is generated; turned by {@link BilgePumpBlock#FACING}.
+     * its handle to the north, so only the block state and the item model are generated; turned by
+     * {@link BilgePumpBlock#FACING}.
      */
     private static void pump(ModelContext m, Block block) {
         ResourceLocation model = ModelLocationUtils.getModelLocation(block);
@@ -112,5 +115,8 @@ public final class HullRepairData {
             }));
         }
         m.blockStates().accept(MultiVariantGenerator.multiVariant(block).with(dispatch));
+        // PMP1: block/bilge_pump is the body only (handle and rod are drawn by client/PumpHandleRenderer from
+        // block/bilge_pump_handle and block/bilge_pump_rod); the item shows the whole pump from block/bilge_pump_item
+        m.models().accept(ModelLocationUtils.getModelLocation(block.asItem()), new DelegatedModel(Constants.id("block/bilge_pump_item")));
     }
 }

@@ -16,8 +16,12 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -26,6 +30,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Bilge pump (docs/design.md §4.5): placed in or above the hold. A player pumps by using it; holding the use key repeats
@@ -41,8 +46,12 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * plank foot with an intake ring, an iron cylinder with a piston rod, and a brake handle on a pivot at the back that
  * rises 22.5 degrees towards {@link #FACING}. The spout with its drip points the same way, so both face the player who
  * placed the pump.
+ *
+ * <p>PMP1: the block model is the pump without its handle and piston rod; {@link BilgePumpBlockEntity} carries the
+ * synced pumping flag and {@code client/PumpHandleRenderer} draws the handle rocking about its pin and the rod riding
+ * under it.
  */
-public class BilgePumpBlock extends Block implements StationBlock {
+public class BilgePumpBlock extends Block implements StationBlock, EntityBlock {
 
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
@@ -100,6 +109,20 @@ public class BilgePumpBlock extends Block implements StationBlock {
             player.displayClientMessage(BilgePumps.operate(serverLevel, pos, player).message(), true);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new BilgePumpBlockEntity(pos, state);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends BlockEntity> @Nullable BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        if (level.isClientSide || type != HullRepairContent.BILGE_PUMP_ENTITY.get()) {
+            return null;
+        }
+        return (BlockEntityTicker<T>) (BlockEntityTicker<BilgePumpBlockEntity>) BilgePumpBlockEntity::serverTick;
     }
 
     /** Breaking the pump frees the station and removes its seat. */

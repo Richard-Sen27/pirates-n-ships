@@ -53,7 +53,7 @@ class HandMadeModelsTest {
     }
 
     /** Every hand-made model by name; a new Blockbench model is added here, a missing or stray file fails. */
-    static final List<String> BLOCK_MODELS = List.of("bilge_pump", "boarding_plank", "boarding_plank_base", "boarding_plank_tip", "brig_bars", "brig_bars_post", "brig_bars_side",
+    static final List<String> BLOCK_MODELS = List.of("bilge_pump", "bilge_pump_handle", "bilge_pump_item", "bilge_pump_rod", "boarding_plank", "boarding_plank_base", "boarding_plank_tip", "brig_bars", "brig_bars_post", "brig_bars_side",
             "brig_bars_side_alt", "brig_door_bottom_left", "brig_door_bottom_left_locked",
             "brig_door_bottom_left_open_locked", "brig_door_bottom_right", "brig_door_bottom_right_locked",
             "brig_door_bottom_right_open_locked", "brig_door_top_left", "brig_door_top_right", "cannon",
@@ -124,6 +124,42 @@ class HandMadeModelsTest {
         both.addAll(pedestal);
         assertEquals(item, both, "helm_item is not helm_wheel + helm");
         assertTrue(wheel.size() > 0 && pedestal.size() > 0, "empty helm part");
+    }
+
+    /**
+     * PMP1: the bilge pump is split into the body ({@code bilge_pump}, the block model), the piston rod
+     * ({@code bilge_pump_rod}) and the brake handle ({@code bilge_pump_handle}), both drawn by {@code PumpHandleRenderer};
+     * {@code bilge_pump_item} is all three for the item and alone carries the display entry. The item holds exactly the
+     * body's, the rod's and the handle's elements in that order, so the files stay in step with each other and with the
+     * {@code body}, {@code rod} and {@code handle} groups of {@code art/models/bilge_pump.bbmodel}. The handle is built at
+     * the top of its stroke, turned about the pin {@code PumpHandlePose} names.
+     */
+    @Test
+    void bilgePumpSplitsIntoBodyRodAndHandle() throws IOException {
+        JsonArray body = resolvedElements("bilge_pump");
+        JsonArray rod = resolvedElements("bilge_pump_rod");
+        JsonArray handle = resolvedElements("bilge_pump_handle");
+        JsonArray all = new JsonArray();
+        all.addAll(body);
+        all.addAll(rod);
+        all.addAll(handle);
+        assertEquals(all, resolvedElements("bilge_pump_item"), "bilge_pump_item is not bilge_pump + _rod + _handle");
+        assertEquals(27, all.size(), "the pump has 27 elements");
+        assertEquals(1, rod.size(), "rod");
+        assertEquals(2, handle.size(), "handle and grip");
+        for (JsonElement e : handle) {
+            JsonObject rotation = e.getAsJsonObject().getAsJsonObject("rotation");
+            assertEquals("x", rotation.get("axis").getAsString(), "the handle turns about x");
+            assertEquals(com.richardsenger.piratesnships.ship.hull.pump.PumpHandlePose.REST_DEGREES,
+                    rotation.get("angle").getAsDouble(), 1e-9, "the handle is built at rest");
+            JsonArray origin = rotation.getAsJsonArray("origin");
+            assertEquals(com.richardsenger.piratesnships.ship.hull.pump.PumpHandlePose.PIVOT_Y, origin.get(1).getAsDouble(), 1e-9);
+            assertEquals(com.richardsenger.piratesnships.ship.hull.pump.PumpHandlePose.PIVOT_Z, origin.get(2).getAsDouble(), 1e-9);
+        }
+        for (String name : List.of("bilge_pump", "bilge_pump_rod", "bilge_pump_handle")) {
+            assertFalse(blockModel(name).has("display"), name + ": only the item model carries display entries");
+        }
+        assertTrue(blockModel("bilge_pump_item").getAsJsonObject("display").has("gui"), "the item's gui entry");
     }
 
     /**

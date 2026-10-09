@@ -4,10 +4,12 @@ import com.richardsenger.piratesnships.almanac.data.Chapter;
 import com.richardsenger.piratesnships.almanac.data.Page;
 import com.richardsenger.piratesnships.almanac.data.PageElement;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * The Almanac's page layout engine (ALM3, docs/almanac.md). Pure: no client classes, font metrics and lang text are
@@ -19,8 +21,11 @@ import java.util.List;
  *       part of its row if that is at least a third of the page wide, else it moves below the obstacle;</li>
  *   <li>headings (bold, centred), paragraphs and bulleted lists wrap word by word with their {@link Markup} runs;
  *       "Show me" buttons are centred in the flow;</li>
+ *   <li>recipe panels and item spotlights (ALM8) are fixed-height blocks in the flow: centred, never split; one that
+ *       does not fit the rest of the page moves whole to the next page, and one taller than a page is an error
+ *       ({@link IllegalArgumentException});</li>
  *   <li>what does not fit spills onto a continuation page (no free elements there), so one data page can become
- *       several screen pages. A heading never ends a page alone.</li>
+ *       several screen pages. A heading never ends a page alone, and stays with a block that follows it.</li>
  * </ul>
  */
 public final class PageLayout {
@@ -41,6 +46,10 @@ public final class PageLayout {
     public static final int OBSTACLE_PAD = 2;
     /** Space between an item icon and its caption. */
     public static final int CAPTION_GAP = 2;
+    /** An item spotlight (ALM8): the frame of the item drawn at 2x, a gap, its name on one line. */
+    public static final int SPOTLIGHT_FRAME = 38;
+    public static final int SPOTLIGHT_NAME_GAP = 2;
+    public static final int SPOTLIGHT_H = SPOTLIGHT_FRAME + SPOTLIGHT_NAME_GAP + LINE_H;
     public static final int HEADING_COLOR = 0x5A2E12;
     public static final int CAPTION_COLOR = 0x7A6852;
 
@@ -113,6 +122,26 @@ public final class PageLayout {
     public record Button(String scene, String label, Area area) implements Placed {
     }
 
+    /** A recipe panel (ALM8) of {@link RecipeGrid#W} x {@link RecipeGrid#H}; the screen looks the recipe up. */
+    public record RecipeBox(ResourceLocation recipe, Area area) implements Placed {
+    }
+
+    /**
+     * An item spotlight (ALM8): {@code area} spans the page's width and {@link #SPOTLIGHT_H}; the frame of
+     * {@link #SPOTLIGHT_FRAME} is centred at its top, the item's name centred under it.
+     */
+    public record SpotlightBox(ResourceLocation item, Area area) implements Placed {
+
+        public Area frame() {
+            return new Area(area.x() + (area.w() - SPOTLIGHT_FRAME) / 2, area.y(), SPOTLIGHT_FRAME, SPOTLIGHT_FRAME);
+        }
+
+        /** The y of the name's line. */
+        public int nameY() {
+            return area.y() + SPOTLIGHT_FRAME + SPOTLIGHT_NAME_GAP;
+        }
+    }
+
     /**
      * One screen page.
      *
@@ -145,12 +174,15 @@ public final class PageLayout {
             if (el instanceof PageElement.Illustration ill) e.illustration(ill);
             else if (el instanceof PageElement.ItemIcon icon) e.itemIcon(icon);
         }
-        for (PageElement el : page.elements()) {
-            switch (el) {
-                case PageElement.Heading hd -> e.heading(hd);
+        List<PageElement> els = page.elements();
+        for (int i = 0; i < els.size(); i++) {
+            switch (els.get(i)) {
+                case PageElement.Heading hd -> e.heading(hd, i + 1 < els.size() ? els.get(i + 1) : null);
                 case PageElement.Text tx -> e.text(tx);
                 case PageElement.ListItems li -> e.list(li);
                 case PageElement.ShowMe sm -> e.button(sm);
+                case PageElement.RecipePanel rp -> e.block(RecipeGrid.W, RecipeGrid.H, a -> new RecipeBox(rp.recipe(), a), "recipe panel");
+                case PageElement.Spotlight sp -> e.block(width, SPOTLIGHT_H, a -> new SpotlightBox(sp.item(), a), "spotlight");
                 default -> {
                 }
             }
@@ -309,9 +341,12 @@ public final class PageLayout {
             }
         }
 
-        void heading(PageElement.Heading hd) {
+        void heading(PageElement.Heading hd, @Nullable PageElement next) {
             gap();
-            if (y > 0 && y + 2 * LINE_H > h) newPage();
+            // a heading keeps the next line, or the whole block that follows it, on its page
+            int keep = LINE_H + (blockHeight(next) > 0 ? HEADING_GAP + blockHeight(next) : LINE_H);
+            if (y > 0 && y + keep > h && keep <= h) newPage();
+            else if (y > 0 && y + 2 * LINE_H > h) newPage();
             paragraph(parse(hd.key(), new Markup.Style(true, false, HEADING_COLOR, null)), 0, true, false, w / 2);
             afterHeading = true;
         }
@@ -340,6 +375,23 @@ public final class PageLayout {
             Area area = new Area(s.x() + (s.w() - bw) / 2, s.y(), bw, BUTTON_H);
             cur.add(new Button(sm.scene(), label, area));
             y = s.y() + BUTTON_H;
+        }
+
+        /** The height of a fixed block, 0 for anything else. */
+        private int blockHeight(@Nullable PageElement el) {
+            if (el instanceof PageElement.RecipePanel) return RecipeGrid.H;
+            if (el instanceof PageElement.Spotlight) return SPOTLIGHT_H;
+            return 0;
+        }
+
+        /** A fixed-height block of {@code bw x bh}, centred, moved whole to the next page when it does not fit. */
+        void block(int bw, int bh, Function<Area, Placed> make, String what) {
+            if (bh > h) throw new IllegalArgumentException("a " + what + " of " + bh + " px does not fit a page of " + h + " px");
+            gap();
+            int width = Math.min(bw, w);
+            Area s = slot(bh, 0, width);
+            cur.add(make.apply(new Area(s.x() + (s.w() - width) / 2, s.y(), width, bh)));
+            y = s.y() + bh;
         }
 
         private void paragraph(List<Markup.Span> spans, int indent, boolean centred, boolean bullet, int minW) {

@@ -24,6 +24,7 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +43,12 @@ import java.util.Optional;
  * {@code almanac_screen.scale}, shrunk to fit small windows. Pages turn with the page corners, the arrow and page
  * keys, the mouse wheel, a bookmark or a link, animated by {@link PageTurn} with vanilla's page-turn sound; input waits
  * while a page turns. Every page change is reported through {@link ClientAlmanac#reportPage}.
+ *
+ * <p>ALM8: the book's first spread is the index (before chapter one, without a bookmark or page numbers): the chapter
+ * grid ({@link IndexLayout}) on the left page, the foreword and "Continue where you left off" on the right. The
+ * navigator counts it as chapter 0, so a navigator chapter {@code c > 0} is the book's chapter {@code c - 1}. Recipe
+ * panels ({@link RecipeGrid}, {@link RecipeView}) look their recipe up in the client's recipe manager each frame; item
+ * spotlights draw the item at twice its size.
  */
 public final class AlmanacScreen extends Screen {
 
@@ -96,6 +103,16 @@ public final class AlmanacScreen extends Screen {
     /** The server's open request; handed back to {@link AlmanacClient#closed} so a placed tome closes. */
     private final AlmanacPayloads.Open request;
     private final AlmanacProgress startAt;
+    /** Whether the book opens on the index spread (the first opening since joining, or nothing read yet). */
+    private final boolean startAtIndex;
+    /** 1 when the index spread comes first (a book with chapters), else 0: navigator chapter = book chapter + this. */
+    private final int lead;
+    @Nullable
+    private List<IndexLayout.Entry> indexEntries;
+    @Nullable
+    private PageLayout.ScreenPage indexRight;
+    @Nullable
+    private PageLayout.Area continueArea;
     private final Map<Integer, List<PageLayout.ScreenPage>> pages = new HashMap<>();
     private final Map<ResourceLocation, int[]> imageSizes = new HashMap<>();
     private final Map<ResourceLocation, ItemStack> stacks = new HashMap<>();
@@ -109,14 +126,16 @@ public final class AlmanacScreen extends Screen {
     private float top;
     private boolean started;
 
-    AlmanacScreen(AlmanacBook book, AlmanacProgress progress, AlmanacPayloads.Open request) {
+    AlmanacScreen(AlmanacBook book, AlmanacProgress progress, boolean atIndex, AlmanacPayloads.Open request) {
         super(Component.translatable(AlmanacScreenText.TITLE));
         this.book = book;
         this.empty = book.isEmpty();
         this.chapters = empty ? List.of(emptyChapter()) : book.chapters();
         this.request = request;
         this.startAt = progress;
-        this.nav = new BookNavigator(chapters.size(), c -> pages(c).size());
+        this.startAtIndex = atIndex;
+        this.lead = empty ? 0 : 1;
+        this.nav = new BookNavigator(chapters.size() + lead, c -> c < lead ? 1 : pages(c - lead).size());
         this.spread = nav.first();
         this.target = spread;
     }
@@ -128,7 +147,8 @@ public final class AlmanacScreen extends Screen {
             AlmanacClient.closed(request);
             return;
         }
-        mc.setScreen(new AlmanacScreen(ClientAlmanac.book(), ClientAlmanac.progress(), request));
+        boolean atIndex = ClientAlmanac.takeFirstOpening() || ClientAlmanac.progress().chapter().isEmpty();
+        mc.setScreen(new AlmanacScreen(ClientAlmanac.book(), ClientAlmanac.progress(), atIndex, request));
     }
 
     /** The single page shown when no chapter reached the client. */
@@ -146,18 +166,18 @@ public final class AlmanacScreen extends Screen {
     protected void init() {
         // the layout depends on the font and the language, which may have changed since the last init
         pages.clear();
+        indexEntries = null;
+        indexRight = null;
         double fit = Math.min((width - 16.0) / (BOOK_W + 2.0 * SIDE_ROOM), (height - 16.0) / BOOK_H);
         scale = (float) Math.max(0.25, Math.min(AlmanacScreenConfig.SCALE.get(), fit));
         left = (width - BOOK_W * scale) / 2f;
         top = (height - BOOK_H * scale) / 2f;
         if (!started) {
             started = true;
-            // the last page read; a chapter the book no longer has opens the book at its start
-            if (!empty && startAt.chapter().isPresent()) {
-                for (int i = 0; i < chapters.size(); i++) {
-                    if (chapters.get(i).id().equals(startAt.chapter().get())) spread = nav.clamp(i, startAt.page());
-                }
-            }
+            // the index on the first opening since joining; else the last page read (a chapter the book no longer has
+            // opens the book at its start, the index)
+            if (!empty && !startAtIndex) lastRead().ifPresent(s -> spread = s);
+            target = spread;
         }
         spread = nav.clamp(spread.chapter(), spread.page());
         target = nav.clamp(target.chapter(), target.page());
@@ -169,9 +189,25 @@ public final class AlmanacScreen extends Screen {
                 TABS_BOTTOM - TABS_TOP);
     }
 
-    /** The chapter whose bookmark is drawn as open: the one being turned to while a page turns. */
+    /** The book chapter whose bookmark is drawn as open (the one being turned to while a page turns); -1 on the index. */
     private int shownChapter() {
-        return turn.turning() ? target.chapter() : spread.chapter();
+        return (turn.turning() ? target.chapter() : spread.chapter()) - lead;
+    }
+
+    private boolean isIndex(BookNavigator.Spread s) {
+        return s.chapter() < lead;
+    }
+
+    /** The spread of the page the player last read, if the book has its chapter. */
+    private Optional<BookNavigator.Spread> lastRead() {
+        if (empty) return Optional.empty();
+        AlmanacProgress p = ClientAlmanac.progress();
+        if (p.chapter().isEmpty()) p = startAt;
+        if (p.chapter().isEmpty()) return Optional.empty();
+        for (int i = 0; i < chapters.size(); i++) {
+            if (chapters.get(i).id().equals(p.chapter().get())) return Optional.of(nav.clamp(i + lead, p.page()));
+        }
+        return Optional.empty();
     }
 
     // ------------------------------------------------------------------ pages
@@ -199,7 +235,8 @@ public final class AlmanacScreen extends Screen {
 
     @Nullable
     private PageLayout.ScreenPage page(BookNavigator.Spread s, int offset) {
-        List<PageLayout.ScreenPage> list = pages(s.chapter());
+        if (isIndex(s)) return offset == 1 ? indexRight() : null;
+        List<PageLayout.ScreenPage> list = pages(s.chapter() - lead);
         int i = s.page() + offset;
         return i >= 0 && i < list.size() ? list.get(i) : null;
     }
@@ -221,7 +258,7 @@ public final class AlmanacScreen extends Screen {
         spread = s;
         target = s;
         layoutTabs();
-        if (!empty) ClientAlmanac.reportPage(chapters.get(s.chapter()).id(), s.page());
+        if (!empty && !isIndex(s)) ClientAlmanac.reportPage(chapters.get(s.chapter() - lead).id(), s.page());
     }
 
     private void next() {
@@ -235,7 +272,7 @@ public final class AlmanacScreen extends Screen {
     private void openChapter(ResourceLocation id) {
         for (int i = 0; i < chapters.size(); i++) {
             if (chapters.get(i).id().equals(id)) {
-                turnTo(new BookNavigator.Spread(i, 0));
+                turnTo(new BookNavigator.Spread(i + lead, 0));
                 return;
             }
         }
@@ -279,8 +316,21 @@ public final class AlmanacScreen extends Screen {
         double bx = bookX(mouseX), by = bookY(mouseY);
         int tab = Bookmarks.hit(tabs, bx, by);
         if (tab >= 0) {
-            turnTo(new BookNavigator.Spread(tab, 0));
+            turnTo(new BookNavigator.Spread(tab + lead, 0));
             return true;
+        }
+        if (isIndex(spread)) {
+            int entry = indexHit(bx - LEFT_CONTENT_X, by - CONTENT_TOP);
+            if (entry >= 0) {
+                turnTo(new BookNavigator.Spread(entry + lead, 0));
+                return true;
+            }
+            indexRight();
+            if (continueArea != null && continueArea.contains(bx - RIGHT_CONTENT_X, by - CONTENT_TOP)) {
+                Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
+                turnTo(lastRead().orElse(new BookNavigator.Spread(lead, 0)));
+                return true;
+            }
         }
         if (onRightCorner(bx, by) && nav.next(spread).isPresent()) {
             next();
@@ -320,6 +370,10 @@ public final class AlmanacScreen extends Screen {
             }
             case InputConstants.KEY_LEFT, InputConstants.KEY_PAGEUP -> {
                 if (!turn.turning()) previous();
+                return true;
+            }
+            case InputConstants.KEY_HOME -> {
+                if (!turn.turning() && !empty) turnTo(nav.first());
                 return true;
             }
             default -> {
@@ -366,8 +420,12 @@ public final class AlmanacScreen extends Screen {
         g.pose().popPose();
         if (hoverTab >= 0) {
             g.renderTooltip(font, Component.translatable(chapters.get(hoverTab).title()), mouseX, mouseY);
+        } else if (hover.stack != null && !hover.stack.isEmpty()) {
+            g.renderTooltip(font, hover.stack, mouseX, mouseY);
         } else if (hover.item != null) {
             g.renderTooltip(font, stack(hover.item), mouseX, mouseY);
+        } else if (hover.text != null) {
+            g.renderTooltip(font, hover.text, mouseX, mouseY);
         } else if (still && onRightCorner(bx, by) && nav.next(spread).isPresent()) {
             g.renderTooltip(font, Component.translatable(AlmanacScreenText.NEXT), mouseX, mouseY);
         } else if (still && onLeftCorner(bx, by) && nav.previous(spread).isPresent()) {
@@ -379,6 +437,11 @@ public final class AlmanacScreen extends Screen {
     private static final class Hover {
         @Nullable
         ResourceLocation item;
+        /** A particular stack (a recipe slot: its count and the alternative shown). */
+        @Nullable
+        ItemStack stack;
+        @Nullable
+        Component text;
     }
 
     private void drawTabs(GuiGraphics g, int hover) {
@@ -411,9 +474,16 @@ public final class AlmanacScreen extends Screen {
 
     /** One page of {@code s} ({@code offset} 0 left, 1 right) with its text box at {@code contentX}. */
     private void drawPage(GuiGraphics g, BookNavigator.Spread s, int offset, int contentX, double bx, double by, @Nullable Hover hover) {
+        double px = bx - contentX, py = by - CONTENT_TOP;
+        if (isIndex(s) && offset == 0) {
+            g.pose().pushPose();
+            g.pose().translate(contentX, CONTENT_TOP, 0f);
+            drawIndex(g, px, py, hover);
+            g.pose().popPose();
+            return;
+        }
         PageLayout.ScreenPage page = page(s, offset);
         if (page == null) return;
-        double px = bx - contentX, py = by - CONTENT_TOP;
         g.pose().pushPose();
         g.pose().translate(contentX, CONTENT_TOP, 0f);
         for (PageLayout.Placed p : page.elements()) {
@@ -436,11 +506,206 @@ public final class AlmanacScreen extends Screen {
                 case PageLayout.Bullet b -> g.fill(b.x() + 3, b.y() + 2, b.x() + 6, b.y() + 5, GuiKit.INK);
                 case PageLayout.Button b -> drawButton(g, b, hover != null && b.area().contains(px, py));
                 case PageLayout.TextRun run -> drawRun(g, run, hover != null && run.style().link() != null && run.area().contains(px, py));
+                case PageLayout.RecipeBox box -> drawRecipe(g, box, px, py, hover);
+                case PageLayout.SpotlightBox spot -> drawSpotlight(g, spot, px, py, hover);
             }
         }
-        String number = String.valueOf(s.page() + offset + 1);
-        g.drawString(font, number, (CONTENT_W - font.width(number)) / 2, PAGE_NUMBER_Y - CONTENT_TOP, GuiKit.INK_DIM, false);
+        if (isIndex(s)) {
+            drawContinue(g, px, py, hover);
+        } else {
+            String number = String.valueOf(s.page() + offset + 1);
+            g.drawString(font, number, (CONTENT_W - font.width(number)) / 2, PAGE_NUMBER_Y - CONTENT_TOP, GuiKit.INK_DIM, false);
+        }
         g.pose().popPose();
+    }
+
+    // ------------------------------------------------------------------ the index spread (ALM8)
+
+    private List<IndexLayout.Entry> indexEntries() {
+        if (indexEntries == null) {
+            List<String> titles = chapters.stream().map(c -> I18n.get(c.title())).toList();
+            indexEntries = IndexLayout.layout(titles, CONTENT_W, CONTENT_H, this::measure);
+        }
+        return indexEntries;
+    }
+
+    /** The right page of the index: the book's title, the foreword and the line over the "continue" link. */
+    private PageLayout.ScreenPage indexRight() {
+        if (indexRight == null) {
+            boolean read = lastRead().isPresent();
+            Page page = new Page(List.of(new PageElement.Heading(AlmanacScreenText.TITLE),
+                    PageElement.Text.of(AlmanacScreenText.FOREWORD),
+                    new PageElement.Text(read ? AlmanacScreenText.CONTINUE : AlmanacScreenText.BEGIN, false, true, Optional.empty())));
+            indexRight = PageLayout.layout(page, 0, CONTENT_W, CONTENT_H, this::measure, new Lang()).getFirst();
+            int bottom = 0;
+            for (PageLayout.Placed p : indexRight.elements()) {
+                if (p instanceof PageLayout.TextRun run) bottom = Math.max(bottom, run.y() + PageLayout.LINE_H);
+            }
+            int y = Math.min(CONTENT_H - PageLayout.BUTTON_H, bottom + PageLayout.HEADING_GAP);
+            continueArea = new PageLayout.Area(0, y, CONTENT_W, PageLayout.BUTTON_H);
+        }
+        return indexRight;
+    }
+
+    /** The book chapter of the index entry at a point of the left page, or -1. */
+    private int indexHit(double px, double py) {
+        for (IndexLayout.Entry e : indexEntries()) if (e.cell().contains(px, py)) return e.chapter();
+        return -1;
+    }
+
+    private void drawIndex(GuiGraphics g, double px, double py, @Nullable Hover hover) {
+        for (IndexLayout.Entry e : indexEntries()) {
+            Chapter c = chapters.get(e.chapter());
+            boolean hovered = hover != null && e.cell().contains(px, py);
+            PageLayout.Area cell = e.cell();
+            if (hovered) g.fill(cell.x(), cell.y(), cell.right(), cell.bottom(), 0x24704020);
+            PageLayout.Area tile = e.tile();
+            if (e.framed()) {
+                RenderSystem.enableBlend();
+                g.blit(AlmanacPanels.TEXTURE, tile.x(), tile.y(), AlmanacPanels.tileU(tile.w()), AlmanacPanels.TILE_V,
+                        tile.w(), tile.h(), AlmanacPanels.TEX_W, AlmanacPanels.TEX_H);
+            }
+            float s = e.iconSize() / 16f;
+            g.pose().pushPose();
+            g.pose().translate(tile.x() + (tile.w() - e.iconSize()) / 2f, tile.y() + (tile.h() - e.iconSize()) / 2f, 0f);
+            g.pose().scale(s, s, 1f);
+            g.renderItem(stack(c.icon()), 0, 0);
+            g.pose().popPose();
+            int color = 0xFF000000 | darkInk(c.bookmarkColor());
+            g.pose().pushPose();
+            g.pose().translate(e.textX(), e.textY(), 0f);
+            g.pose().scale(e.scale(), e.scale(), 1f);
+            for (int i = 0; i < e.lines().size(); i++) {
+                Component line = Component.literal(e.lines().get(i)).withStyle(Style.EMPTY.withUnderlined(hovered));
+                g.drawString(font, line, 0, i * IndexLayout.FONT_LINE, color, false);
+            }
+            g.pose().popPose();
+            if (hovered) hover.text = Component.translatable(c.title());
+        }
+    }
+
+    /** A bookmark colour as ink on parchment: light colours are darkened so the title stays readable. */
+    static int darkInk(int rgb) {
+        int r = (rgb >> 16) & 0xFF, gr = (rgb >> 8) & 0xFF, b = rgb & 0xFF;
+        int luma = (r * 299 + gr * 587 + b * 114) / 1000;
+        if (luma <= 110) return rgb;
+        float f = 110f / luma;
+        return ((int) (r * f) << 16) | ((int) (gr * f) << 8) | (int) (b * f);
+    }
+
+    /** The "continue" link of the index's right page: the chapter last read and its page, or the first chapter. */
+    private void drawContinue(GuiGraphics g, double px, double py, @Nullable Hover hover) {
+        if (continueArea == null) return;
+        Optional<BookNavigator.Spread> last = lastRead();
+        BookNavigator.Spread to = last.orElse(new BookNavigator.Spread(lead, 0));
+        Chapter c = chapters.get(to.chapter() - lead);
+        String label = last.isPresent()
+                ? I18n.get(AlmanacScreenText.CONTINUE_LINK, I18n.get(c.title()), to.page() + 1)
+                : I18n.get(c.title());
+        boolean hovered = hover != null && continueArea.contains(px, py);
+        PageLayout.Area a = continueArea;
+        g.fill(a.x(), a.y(), a.right(), a.bottom(), BUTTON_EDGE);
+        g.fill(a.x() + 1, a.y() + 1, a.right() - 1, a.bottom() - 1, hovered ? BUTTON_FACE_HOVER : BUTTON_FACE);
+        g.fill(a.x() + 1, a.bottom() - 2, a.right() - 1, a.bottom() - 1, 0x30000000);
+        int icon = PageLayout.INLINE_ICON;
+        g.pose().pushPose();
+        g.pose().translate(a.x() + 3, a.y() + (a.h() - icon) / 2f, 0f);
+        g.pose().scale(icon / 16f, icon / 16f, 1f);
+        g.renderItem(stack(c.icon()), 0, 0);
+        g.pose().popPose();
+        int textW = a.w() - icon - 8;
+        String shown = font.width(label) > textW ? font.plainSubstrByWidth(label, textW - font.width("...")) + "..." : label;
+        g.drawString(font, shown, a.x() + icon + 5, a.y() + (a.h() - 8) / 2, 0xFF000000 | darkInk(c.bookmarkColor()), false);
+        if (hovered && !shown.equals(label)) hover.text = Component.literal(label);
+    }
+
+    // ------------------------------------------------------------------ recipe panels and spotlights (ALM8)
+
+    private void drawRecipe(GuiGraphics g, PageLayout.RecipeBox box, double px, double py, @Nullable Hover hover) {
+        PageLayout.Area a = box.area();
+        RenderSystem.enableBlend();
+        g.blit(AlmanacPanels.TEXTURE, a.x(), a.y(), AlmanacPanels.PANEL_U, AlmanacPanels.PANEL_V, RecipeGrid.W, RecipeGrid.H,
+                AlmanacPanels.TEX_W, AlmanacPanels.TEX_H);
+        Minecraft mc = Minecraft.getInstance();
+        RecipeView view = mc.level == null ? RecipeView.NONE : RecipeView.of(mc.level, box.recipe());
+        long time = mc.level == null ? 0 : mc.level.getGameTime();
+        g.blit(AlmanacPanels.TEXTURE, a.x() + RecipeGrid.ARROW_X, a.y() + RecipeGrid.ARROW_Y, AlmanacPanels.ARROW_U,
+                AlmanacPanels.ARROW_V, RecipeGrid.ARROW_W, RecipeGrid.ARROW_H, AlmanacPanels.TEX_W, AlmanacPanels.TEX_H);
+        switch (view.kind()) {
+            case SHAPED, SHAPELESS -> {
+                for (int slot = 0; slot < 9; slot++) {
+                    slot(g, a.x() + RecipeGrid.slotX(slot), a.y() + RecipeGrid.slotY(slot), view.inputs().get(slot), time, px, py, hover);
+                }
+                if (view.kind() == RecipeGrid.Kind.SHAPELESS) {
+                    g.blit(AlmanacPanels.TEXTURE, a.x() + RecipeGrid.MARK_X, a.y() + RecipeGrid.MARK_Y, AlmanacPanels.MARK_U,
+                            AlmanacPanels.MARK_V, RecipeGrid.MARK, RecipeGrid.MARK, AlmanacPanels.TEX_W, AlmanacPanels.TEX_H);
+                    if (hover != null && within(px, py, a.x() + RecipeGrid.MARK_X, a.y() + RecipeGrid.MARK_Y, RecipeGrid.MARK)) {
+                        hover.text = Component.translatable(AlmanacScreenText.SHAPELESS);
+                    }
+                }
+            }
+            case COOKING -> {
+                slot(g, a.x() + RecipeGrid.COOK_IN_X, a.y() + RecipeGrid.COOK_IN_Y, view.inputs().getFirst(), time, px, py, hover);
+                g.blit(AlmanacPanels.TEXTURE, a.x() + RecipeGrid.FLAME_X, a.y() + RecipeGrid.FLAME_Y, AlmanacPanels.FLAME_U,
+                        AlmanacPanels.FLAME_V, RecipeGrid.FLAME, RecipeGrid.FLAME, AlmanacPanels.TEX_W, AlmanacPanels.TEX_H);
+            }
+            case SINGLE -> slot(g, a.x() + RecipeGrid.SINGLE_X, a.y() + RecipeGrid.SINGLE_Y, view.inputs().getFirst(), time, px, py, hover);
+            case OTHER -> {
+                String missing = I18n.get(view.result().isEmpty() ? AlmanacScreenText.RECIPE_MISSING : AlmanacScreenText.RECIPE_UNKNOWN);
+                List<FormattedCharSequence> lines = font.split(Component.literal(missing), RecipeGrid.ARROW_X - RecipeGrid.GRID_X - 4);
+                int ty = a.y() + (RecipeGrid.H - lines.size() * 9) / 2;
+                for (FormattedCharSequence line : lines) {
+                    g.drawString(font, line, a.x() + RecipeGrid.GRID_X + 2, ty, GuiKit.INK_DIM, false);
+                    ty += 9;
+                }
+            }
+        }
+        int ox = a.x() + RecipeGrid.OUT_X, oy = a.y() + RecipeGrid.OUT_Y;
+        g.blit(AlmanacPanels.TEXTURE, ox, oy, AlmanacPanels.OUT_U, AlmanacPanels.OUT_V, RecipeGrid.OUT, RecipeGrid.OUT,
+                AlmanacPanels.TEX_W, AlmanacPanels.TEX_H);
+        ItemStack out = view.result();
+        if (!out.isEmpty()) {
+            g.renderItem(out, ox + 5, oy + 5);
+            g.renderItemDecorations(font, out, ox + 5, oy + 5);
+            if (hover != null && within(px, py, ox, oy, RecipeGrid.OUT)) hover.stack = out;
+        }
+    }
+
+    /** One input slot with the alternative of its ingredient shown now. */
+    private void slot(GuiGraphics g, int x, int y, List<ItemStack> options, long time, double px, double py, @Nullable Hover hover) {
+        g.blit(AlmanacPanels.TEXTURE, x, y, AlmanacPanels.SLOT_U, AlmanacPanels.SLOT_V, RecipeGrid.SLOT, RecipeGrid.SLOT,
+                AlmanacPanels.TEX_W, AlmanacPanels.TEX_H);
+        if (options.isEmpty()) return;
+        ItemStack shown = options.get(RecipeGrid.cycle(options.size(), time));
+        g.renderItem(shown, x + 1, y + 1);
+        if (hover != null && within(px, py, x, y, RecipeGrid.SLOT)) hover.stack = shown;
+    }
+
+    private static boolean within(double px, double py, int x, int y, int size) {
+        return px >= x && px < x + size && py >= y && py < y + size;
+    }
+
+    private void drawSpotlight(GuiGraphics g, PageLayout.SpotlightBox spot, double px, double py, @Nullable Hover hover) {
+        PageLayout.Area f = spot.frame();
+        RenderSystem.enableBlend();
+        g.blit(AlmanacPanels.TEXTURE, f.x(), f.y(), AlmanacPanels.SPOTLIGHT_U, AlmanacPanels.SPOTLIGHT_V, f.w(), f.h(),
+                AlmanacPanels.TEX_W, AlmanacPanels.TEX_H);
+        ItemStack stack = stack(spot.item());
+        g.pose().pushPose();
+        g.pose().translate(f.x() + (f.w() - 32) / 2f, f.y() + (f.h() - 32) / 2f, 0f);
+        g.pose().scale(2f, 2f, 1f);
+        g.renderItem(stack, 0, 0);
+        g.pose().popPose();
+        Style bold = Style.EMPTY.withBold(true);
+        String name = stack.getHoverName().getString();
+        int room = spot.area().w();
+        if (font.width(Component.literal(name).withStyle(bold)) > room) {
+            name = font.plainSubstrByWidth(name, room - font.width("...") - 8) + "...";
+        }
+        Component label = Component.literal(name).withStyle(bold);
+        g.drawString(font, label, spot.area().x() + (room - font.width(label)) / 2, spot.nameY(),
+                0xFF000000 | PageLayout.HEADING_COLOR, false);
+        if (hover != null && f.contains(px, py)) hover.item = spot.item();
     }
 
     private void drawRun(GuiGraphics g, PageLayout.TextRun run, boolean hovered) {

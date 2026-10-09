@@ -18,6 +18,10 @@
           "y": 0.09
         },
         {
+          "type": "spotlight",
+          "item": "pirates_n_ships:cargo_crate"
+        },
+        {
           "type": "text",
           "key": "pirates_n_ships.almanac.trade.p1.text1"
         }
@@ -46,8 +50,12 @@
           ]
         },
         {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.trade.p2.text2"
+          "type": "recipe",
+          "recipe": "pirates_n_ships:cargo_crate"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:cargo_barrel"
         }
       ]
     },
@@ -58,17 +66,16 @@
           "key": "pirates_n_ships.almanac.trade.p3.heading"
         },
         {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.trade.p3.list1_1",
+            "pirates_n_ships.almanac.trade.p3.list1_2",
+            "pirates_n_ships.almanac.trade.p3.list1_3"
+          ]
+        },
+        {
           "type": "text",
           "key": "pirates_n_ships.almanac.trade.p3.text1"
-        },
-        {
-          "type": "text",
-          "color": "#9a1c14",
-          "key": "pirates_n_ships.almanac.trade.p3.text2"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.trade.p3.text3"
         }
       ]
     },
@@ -79,28 +86,17 @@
           "key": "pirates_n_ships.almanac.trade.p4.heading"
         },
         {
-          "type": "illustration",
-          "h": 0.35,
-          "texture": "pirates_n_ships:textures/almanac/sea_chest.png",
-          "w": 0.9,
-          "x": 0.05,
-          "y": 0.09
-        },
-        {
           "type": "text",
           "key": "pirates_n_ships.almanac.trade.p4.text1"
         },
         {
-          "type": "list",
-          "items": [
-            "pirates_n_ships.almanac.trade.p4.list1_1",
-            "pirates_n_ships.almanac.trade.p4.list1_2",
-            "pirates_n_ships.almanac.trade.p4.list1_3"
-          ]
+          "type": "text",
+          "color": "#9a1c14",
+          "key": "pirates_n_ships.almanac.trade.p4.text2"
         },
         {
           "type": "text",
-          "key": "pirates_n_ships.almanac.trade.p4.text2"
+          "key": "pirates_n_ships.almanac.trade.p4.text3"
         }
       ]
     },
@@ -113,7 +109,7 @@
         {
           "type": "illustration",
           "h": 0.35,
-          "texture": "pirates_n_ships:textures/almanac/doubloon.png",
+          "texture": "pirates_n_ships:textures/almanac/sea_chest.png",
           "w": 0.9,
           "x": 0.05,
           "y": 0.09
@@ -123,17 +119,16 @@
           "key": "pirates_n_ships.almanac.trade.p5.text1"
         },
         {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:sea_chest"
+        },
+        {
           "type": "list",
           "items": [
             "pirates_n_ships.almanac.trade.p5.list1_1",
             "pirates_n_ships.almanac.trade.p5.list1_2",
-            "pirates_n_ships.almanac.trade.p5.list1_3",
-            "pirates_n_ships.almanac.trade.p5.list1_4"
+            "pirates_n_ships.almanac.trade.p5.list1_3"
           ]
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.trade.p5.text2"
         }
       ]
     },
@@ -148,16 +143,8 @@
           "key": "pirates_n_ships.almanac.trade.p6.text1"
         },
         {
-          "type": "list",
-          "items": [
-            "pirates_n_ships.almanac.trade.p6.list1_1",
-            "pirates_n_ships.almanac.trade.p6.list1_2",
-            "pirates_n_ships.almanac.trade.p6.list1_3"
-          ]
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.trade.p6.text2"
+          "type": "recipe",
+          "recipe": "pirates_n_ships:paddle"
         }
       ]
     },
@@ -170,7 +157,7 @@
         {
           "type": "illustration",
           "h": 0.35,
-          "texture": "pirates_n_ships:textures/almanac/harbor_desk.png",
+          "texture": "pirates_n_ships:textures/almanac/doubloon.png",
           "w": 0.9,
           "x": 0.05,
           "y": 0.09
@@ -182,20 +169,6 @@
         {
           "type": "text",
           "key": "pirates_n_ships.almanac.trade.p7.text2"
-        },
-        {
-          "type": "list",
-          "items": [
-            "pirates_n_ships.almanac.trade.p7.list1_1",
-            "pirates_n_ships.almanac.trade.p7.list1_2",
-            "pirates_n_ships.almanac.trade.p7.list1_3",
-            "pirates_n_ships.almanac.trade.p7.list1_4",
-            "pirates_n_ships.almanac.trade.p7.list1_5"
-          ]
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.trade.p7.text3"
         }
       ]
     },
@@ -210,12 +183,12 @@
           "key": "pirates_n_ships.almanac.trade.p8.text1"
         },
         {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.trade.p8.text2"
-        },
-        {
-          "type": "text",
-          "key": "pirates_n_ships.almanac.trade.p8.text3"
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.trade.p8.list1_1",
+            "pirates_n_ships.almanac.trade.p8.list1_2",
+            "pirates_n_ships.almanac.trade.p8.list1_3"
+          ]
         }
       ]
     },
@@ -226,13 +199,20 @@
           "key": "pirates_n_ships.almanac.trade.p9.heading"
         },
         {
+          "type": "illustration",
+          "h": 0.35,
+          "texture": "pirates_n_ships:textures/almanac/harbor_desk.png",
+          "w": 0.9,
+          "x": 0.05,
+          "y": 0.09
+        },
+        {
           "type": "text",
           "key": "pirates_n_ships.almanac.trade.p9.text1"
         },
         {
-          "type": "text",
-          "color": "#9a1c14",
-          "key": "pirates_n_ships.almanac.trade.p9.text2"
+          "type": "recipe",
+          "recipe": "pirates_n_ships:harbor_desk"
         }
       ]
     },
@@ -241,6 +221,15 @@
         {
           "type": "heading",
           "key": "pirates_n_ships.almanac.trade.p10.heading"
+        },
+        {
+          "type": "list",
+          "items": [
+            "pirates_n_ships.almanac.trade.p10.list1_1",
+            "pirates_n_ships.almanac.trade.p10.list1_2",
+            "pirates_n_ships.almanac.trade.p10.list1_3",
+            "pirates_n_ships.almanac.trade.p10.list1_4"
+          ]
         },
         {
           "type": "text",
@@ -257,6 +246,14 @@
         {
           "type": "text",
           "key": "pirates_n_ships.almanac.trade.p11.text1"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.trade.p11.text2"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:cloth"
         }
       ]
     },
@@ -271,19 +268,37 @@
           "key": "pirates_n_ships.almanac.trade.p12.text1"
         },
         {
-          "type": "list",
-          "items": [
-            "pirates_n_ships.almanac.trade.p12.list1_1",
-            "pirates_n_ships.almanac.trade.p12.list1_2",
-            "pirates_n_ships.almanac.trade.p12.list1_3",
-            "pirates_n_ships.almanac.trade.p12.list1_4",
-            "pirates_n_ships.almanac.trade.p12.list1_5",
-            "pirates_n_ships.almanac.trade.p12.list1_6"
-          ]
+          "type": "text",
+          "color": "#9a1c14",
+          "key": "pirates_n_ships.almanac.trade.p12.text2"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.trade.p13.heading"
         },
         {
           "type": "text",
-          "key": "pirates_n_ships.almanac.trade.p12.text2"
+          "key": "pirates_n_ships.almanac.trade.p13.text1"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.trade.p14.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.trade.p14.text1"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.trade.p14.text2"
         }
       ]
     }

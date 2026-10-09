@@ -252,3 +252,44 @@ right. Please check **both clients** and send screenshots.
    between markers, the cover and the pages next to them show no tooltip and turn nothing.
 5. **Nothing clipped:** at GUI scale 3 and at Auto, in a normal window and a small one, the book stays centred and both
    edges' markers, including a pulled-out and hovered one, are fully on screen.
+
+# Playtest: index, recipe panels, spotlights and shorter chapters (work package ALM8)
+
+The Almanac now opens on an **index spread** before chapter one, draws **recipe panels** and **item spotlights** in
+the text, and every chapter was rewritten to about half its length (13,694 words before, 6,847 after). The layout of
+the index, of the panels in the page flow (never split, moved whole to the next page) and the content rules (every
+recipe of ours has one panel, every chapter opens with its picture and a spotlight) are covered by JUnit
+(`IndexLayoutTest`, `PageLayoutTest`, `RecipeGridTest`, `AlmanacGuideTest`); the drawing needs a client. Please check
+**both clients** (`./gradlew :neoforge:runClient`, `./gradlew :fabric:runClient`) and send screenshots.
+
+## Steps
+1. **Index on a fresh join:** join a world, open the Almanac (in hand or placed). The first spread is the index: the
+   left page lists all 14 chapters top to bottom, each with its icon and its title in its bookmark colour, one per
+   ruled line; "The Quartermaster's ledger" is drawn a little smaller. No page numbers on the index, no marker sticks
+   out. The right page shows "The Captain's Almanac", a two-line foreword and "New aboard? Begin here:" with a button
+   showing the welcome chapter (for a player who never read a page).
+2. **Clicking tiles:** hover an index entry: it is shaded and underlined, the tooltip shows the full title. Click it:
+   the page turns to that chapter's first spread and its marker sticks out. Press Home, or turn back from the first
+   chapter's first spread: the index comes back.
+3. **Continue where you left off:** read a few pages into, say, "Sailing", close the book, open it again: it opens
+   at that page (same session). Leave the world and join again, open the book: the index, now with "Continue where
+   you left off:" and a button "Sailing, p. N" (the left page of the spread you read). Click it: the page turns to
+   exactly that spread.
+4. **A recipe panel:** in "Your first ship", find the helm's panel: a parchment card with the 3x3 grid, an arrow and
+   the helm in a brass-rimmed slot. Hover every slot: the tooltip of that ingredient; hover the result: the helm's
+   tooltip. Find a shapeless recipe (the Almanac's own, in "Welcome aboard"): a small two-arrow mark above the result,
+   with a tooltip "Shapeless: …". A slot with a tag (planks) cycles through the planks once a second. The nails'
+   panel in "Ships" shows the count 8 on the result.
+5. **A panel never splits:** page through "Ships" (the fittings pages hold two panels each): no panel is cut at the
+   bottom of a page; one that does not fit starts at the top of the next page, and a heading is never left alone
+   above a panel on the page before.
+6. **A spotlight:** every chapter's first page shows its picture and, under it, the chapter's key item framed at twice
+   its size with its bold name under it (the helm in "Your first ship", the writable book in the ledger). Hovering
+   the framed item shows its tooltip.
+7. **A chapter's new length:** "Sailing" and "Weapons and combat" read in short paragraphs (a few lines each) with
+   the panels and plates between them; every "Show me" button is still there and plays its scene.
+8. **Datapack change:** with a datapack that changes the helm recipe (or `/reload` after editing one), the helm's
+   panel shows the new recipe; a removed recipe shows "This recipe is not in the world".
+9. **Nothing clipped:** at GUI scale 3 and at Auto, in a normal window and a small one: the index entries, the
+   continue button, the recipe panels (the result's count included) and the spotlight names stay inside the pages;
+   nothing overlaps the page arrows.

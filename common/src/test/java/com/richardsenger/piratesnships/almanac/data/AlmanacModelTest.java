@@ -42,7 +42,9 @@ class AlmanacModelTest {
                 new PageElement.Illustration(ResourceLocation.fromNamespaceAndPath("pirates_n_ships", "textures/gui/x.png"), 0.1f, 0.2f, 0.5f, 0.75f),
                 new PageElement.ItemIcon(GUNPOWDER, 0.25f, 0.5f, Optional.of("a.caption")),
                 new PageElement.ItemIcon(BOOK, 0f, 1f, Optional.empty()),
-                new PageElement.ShowMe("pirates_n_ships:cannon_loading", "a.show_me"));
+                new PageElement.ShowMe("pirates_n_ships:cannon_loading", "a.show_me"),
+                new PageElement.RecipePanel(ResourceLocation.fromNamespaceAndPath("pirates_n_ships", "helm")),
+                new PageElement.Spotlight(GUNPOWDER));
     }
 
     private static <T> T wire(StreamCodec<ByteBuf, T> codec, T value) {
@@ -69,6 +71,9 @@ class AlmanacModelTest {
         assertEquals(new PageElement.Text("k", true, false, Optional.of(0xFF0000)), text);
         assertEquals(new PageElement.ListItems(List.of("x", "y")), parseElement("{\"type\":\"list\",\"items\":[\"x\",\"y\"]}"));
         assertEquals(new PageElement.ShowMe("ns:scene", "lbl"), parseElement("{\"type\":\"show_me\",\"scene\":\"ns:scene\",\"label\":\"lbl\"}"));
+        assertEquals(new PageElement.RecipePanel(ResourceLocation.fromNamespaceAndPath("pirates_n_ships", "helm")),
+                parseElement("{\"type\":\"recipe\",\"recipe\":\"pirates_n_ships:helm\"}"));
+        assertEquals(new PageElement.Spotlight(GUNPOWDER), parseElement("{\"type\":\"spotlight\",\"item\":\"minecraft:gunpowder\"}"));
     }
 
     private static PageElement parseElement(String json) {
@@ -84,6 +89,8 @@ class AlmanacModelTest {
         assertTrue(rejects("{\"type\":\"item\",\"item\":\"minecraft:no_such_item\",\"x\":0,\"y\":0}"), "unknown item");
         assertTrue(rejects("{\"type\":\"item\",\"item\":\"minecraft:air\",\"x\":0,\"y\":0}"), "air");
         assertTrue(rejects("{\"type\":\"sparkles\",\"key\":\"k\"}"), "unknown element type");
+        assertTrue(rejects("{\"type\":\"spotlight\",\"item\":\"minecraft:no_such_item\"}"), "spotlight of an unknown item");
+        assertTrue(rejects("{\"type\":\"recipe\",\"recipe\":\"Not An Id\"}"), "recipe panel without a valid id");
         assertTrue(rejects("{\"type\":\"illustration\",\"texture\":\"a:b.png\",\"x\":0.6,\"y\":0,\"w\":0.5,\"h\":0.5}"), "past the right edge");
         assertTrue(rejects("{\"type\":\"illustration\",\"texture\":\"a:b.png\",\"x\":0,\"y\":0,\"w\":0,\"h\":0.5}"), "no width");
         assertTrue(rejects("{\"type\":\"illustration\",\"texture\":\"a:b.png\",\"x\":-0.1,\"y\":0,\"w\":0.5,\"h\":0.5}"), "negative x");

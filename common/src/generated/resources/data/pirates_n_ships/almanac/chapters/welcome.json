@@ -1,0 +1,51 @@
+{
+  "icon": "minecraft:book",
+  "order": 0,
+  "pages": [
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.welcome.p1.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.welcome.p1.intro"
+        },
+        {
+          "type": "text",
+          "italic": true,
+          "key": "pirates_n_ships.almanac.welcome.p1.hint"
+        },
+        {
+          "type": "item",
+          "caption": "pirates_n_ships.almanac.welcome.p1.almanac_caption",
+          "item": "minecraft:book",
+          "x": 0.45,
+          "y": 0.75
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "heading",
+          "key": "pirates_n_ships.almanac.welcome.p2.heading"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.welcome.p2.text"
+        },
+        {
+          "type": "illustration",
+          "h": 0.4,
+          "texture": "pirates_n_ships:textures/block/flag_jolly_roger.png",
+          "w": 0.6,
+          "x": 0.2,
+          "y": 0.45
+        }
+      ]
+    }
+  ],
+  "title": "pirates_n_ships.almanac.welcome.title"
+}

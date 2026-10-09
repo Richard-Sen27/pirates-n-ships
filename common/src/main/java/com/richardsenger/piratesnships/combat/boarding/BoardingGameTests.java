@@ -523,10 +523,12 @@ public final class BoardingGameTests {
 
     /**
      * A gangway resting on a level pier holds through a 1.3-block heave (WAV4's storm heave of a moored hull): lifting A
-     * by 1.3 blocks reads a vertical drift of about 1.3 and no break, and the run is still there 20 ticks later.
+     * by 1.3 blocks reads a vertical drift of about 1.3 and no break, and the run is still there 20 ticks later, its ends
+     * checked every tick while the hull settles back.
      */
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200)
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200, batch = BATCH + "every_tick")
     public static void gangwayAtAPierRidesOutAHeave(GameTestHelper h) {
+        ConfigOverrides.during(h, BoardingConfig.CHECK_INTERVAL_TICKS, 1);
         Fixture a = oneShip(h);
         List<BlockPos> cells = new java.util.ArrayList<>();
         h.runAfterDelay(SETTLE, () -> {
@@ -549,9 +551,14 @@ public final class BoardingGameTests {
         });
     }
 
-    /** The same gangway breaks when the ship drifts two blocks off the pier (sideways allowance 1.5), dropping one plank. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200)
+    /**
+     * The same gangway breaks when the ship drifts two blocks off the pier (sideways allowance 1.5), dropping one plank.
+     * The ends are checked every tick here: a ship moved by {@code placeAt} drifts back toward where its body was within
+     * about six ticks, sooner than the default check interval of ten.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 200, batch = BATCH + "every_tick")
     public static void gangwayAtAPierBreaksWhenTheShipDriftsOff(GameTestHelper h) {
+        ConfigOverrides.during(h, BoardingConfig.CHECK_INTERVAL_TICKS, 1);
         Fixture a = oneShip(h);
         List<BlockPos> cells = new java.util.ArrayList<>();
         h.runAfterDelay(SETTLE, () -> {
@@ -618,7 +625,10 @@ public final class BoardingGameTests {
             }
         });
         h.succeedWhen(() -> {
-            h.assertTrue(c.position().distanceTo(to) < 1.0, "the crew member is at " + c.position() + ", not at " + to);
+            // the navigation stops within a block or so of its target: anywhere on the high dock past its edge will do
+            double dockB = h.absolutePos(new BlockPos(9, 5, 11)).getX();
+            h.assertTrue(c.position().distanceTo(to) < 1.6 && c.getX() > dockB + 0.5,
+                    "the crew member is at " + c.position() + ", not on the high dock near " + to);
             h.assertTrue(Math.abs(c.getY() - to.y) < 0.2, "the crew member is not on the high dock");
             c.discard();
         });

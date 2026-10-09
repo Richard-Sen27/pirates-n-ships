@@ -242,6 +242,16 @@ public class BoardingPlankBlock extends HorizontalDirectionalBlock implements En
         return new ItemStack(BoardingContent.PLANK_ITEM.get());
     }
 
+    /**
+     * Not a cell to walk through but a floor to walk on, like a slab or stairs: vanilla's walk node evaluator treats a
+     * block that is pathfindable on land as open air, so the cell above it would not count as walkable and crew would
+     * not path across a plank laid over a gap.
+     */
+    @Override
+    protected boolean isPathfindable(BlockState state, net.minecraft.world.level.pathfinder.PathComputationType type) {
+        return false;
+    }
+
     // ------------------------------------------------------------------ shape
 
     @Override

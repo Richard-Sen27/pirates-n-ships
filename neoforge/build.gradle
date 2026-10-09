@@ -29,8 +29,12 @@ neoForge {
                     '--output', rootProject.file('common/src/generated/resources/').getAbsolutePath(),
                     '--existing', rootProject.file('common/src/main/resources/').getAbsolutePath()
         }
+        // ./gradlew :neoforge:runServer: the dedicated server, headless. -Ppirates_n_ships.server.dir=<dir> moves its game
+        // directory (default run/, MDG's own); tools/server_smoke.sh (REL3) uses that for a throwaway world.
         server {
             server()
+            programArgument '--nogui'
+            providers.gradleProperty('pirates_n_ships.server.dir').map { project.file(it) }.orNull?.with { gameDirectory = it }
         }
         // ./gradlew :neoforge:runGameTestServer. Runs every GameTest in the mod namespace and exits
         // with a non-zero code (failing the Gradle task) when a required test fails. Scoped run (GT2):
@@ -130,5 +134,36 @@ tasks.named('test', Test) {
     useJUnitPlatform()
     testLogging {
         showStandardStreams = true
+    }
+}
+
+// REL3: what tools/server_smoke.sh --jar needs to run the release jar on a real (production) NeoForge dedicated server,
+// in build/server-smoke-kit: mods/ (our jar with its jar-in-jar Ponder and Flywheel, plus the required server-side mods
+// as players download them: Sable and GeckoLib; Player Animation Library is client only on NeoForge and deliberately
+// absent), installer.jar (the NeoForge server installer), java.txt (the Java 21 toolchain's launcher) and versions.txt.
+// The dev run (runServer) cannot stand in for this on NeoForge: its Minecraft jar keeps the client classes loadable.
+configurations {
+    serverSmokeMods { transitive = false; canBeConsumed = false }
+    serverSmokeInstaller { transitive = false; canBeConsumed = false }
+}
+dependencies {
+    serverSmokeMods "dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${sable_version}"
+    serverSmokeMods "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
+    serverSmokeInstaller "net.neoforged:neoforge:${neoforge_version}:installer"
+}
+def serverSmokeJava = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(java_version) }
+tasks.register('serverSmokeKit', Sync) {
+    group = 'verification'
+    description = 'Collects the release jar, its server-side dependencies and the NeoForge installer for tools/server_smoke.sh --jar'
+    def javaPath = serverSmokeJava.map { it.executablePath.asFile.absolutePath }
+    def versions = "minecraft=${minecraft_version}\nloader=${neoforge_version}\n"
+    inputs.property('java', javaPath)
+    from(tasks.named('jar')) { into 'mods' }
+    from(configurations.serverSmokeMods) { into 'mods' }
+    from(configurations.serverSmokeInstaller) { rename { 'installer.jar' } }
+    into layout.buildDirectory.dir('server-smoke-kit')
+    doLast {
+        new File(destinationDir, 'java.txt').text = javaPath.get() + '\n'
+        new File(destinationDir, 'versions.txt').text = versions
     }
 }

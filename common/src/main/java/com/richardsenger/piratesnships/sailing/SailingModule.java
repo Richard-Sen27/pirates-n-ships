@@ -62,6 +62,7 @@ public final class SailingModule implements ModModule {
         SailingBlocks.init();
         ShipForces.register();
         ShipForces.registerAnchor(); // the anchor's chain (AN2a)
+        ShipForces.registerBallast(); // the shipwright's ballast (TRM1)
         com.richardsenger.piratesnships.sailing.anchor.AnchorContent.init(); // visible anchor (F4)
         HelmSetup.registerContent(); // wheel steering (HELM1)
     }
@@ -78,15 +79,21 @@ public final class SailingModule implements ModModule {
         CommonEvents.SERVER_TICK_END.register(WindSync::onServerTick);
         CommonEvents.PLAYER_LOGIN.register(WindSync::onLogin);
         CommonEvents.LEVEL_TICK_END.register(SailingRuntimes::onLevelTick);
+        // TRM1: the shipwright's ballast, after the runtimes so a freshly found ship gets its ballast this tick
+        CommonEvents.LEVEL_TICK_END.register(com.richardsenger.piratesnships.sailing.ballast.ShipBallast::onLevelTick);
         // VIS1c: each ship's bow to the clients that render it, after the runtimes so a fresh one goes out this tick
         CommonEvents.LEVEL_TICK_END.register(com.richardsenger.piratesnships.sailing.ship.ShipBowSync::onLevelTick);
         CommonEvents.SERVER_STOPPED.register(server -> SailingRuntimes.onServerStopped());
+        CommonEvents.SERVER_STOPPED.register(server -> com.richardsenger.piratesnships.sailing.ballast.ShipBallast.clear());
         CommonEvents.SERVER_STOPPED.register(server -> com.richardsenger.piratesnships.sailing.ship.ShipBowSync.onServerStopped());
         CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> SailingCommands.register(dispatcher));
         SableShips.onShipRemoved(SailingRuntimes::onShipRemoved);
         SableShips.onShipRemoved(com.richardsenger.piratesnships.sailing.ship.ShipBowSync::onShipRemoved);
         SableShips.onPhysicsTick(SailingRuntimes::onPhysicsTick);
         ShipBlockChanges.register(SailingRuntimes::onBlockChanged);
+        SableShips.onShipRemoved((level, id, destroyed) -> com.richardsenger.piratesnships.sailing.ballast.ShipBallast.onShipRemoved(level, id));
+        SableShips.onPhysicsTick(com.richardsenger.piratesnships.sailing.ballast.ShipBallast::onPhysicsTick);
+        ShipBlockChanges.register(com.richardsenger.piratesnships.sailing.ballast.ShipBallast::onBlockChanged);
         // HL1b: a ship Sable moves to a new body keeps its bow (position-free); the anchor (a plot position) stays behind
         com.richardsenger.piratesnships.ship.assembly.ShipSplits.carryOnIdentityMove(SailingRuntimes.USER_DATA_KEY, tag -> {
             net.minecraft.nbt.CompoundTag kept = new net.minecraft.nbt.CompoundTag();
@@ -113,6 +120,7 @@ public final class SailingModule implements ModModule {
                     .block(SailingBlocks.SAIL_WINCH, "Sail Winch")
                     .add(ShipForces.SAILING_KEY, "Sails and Keel")
                     .add(ShipForces.ANCHOR_KEY, "Anchor Chain")
+                    .add(ShipForces.BALLAST_KEY, "Ballast")
                     .add(SailWinchBlock.trimKey(SailTrim.FURLED), "furled")
                     .add(SailWinchBlock.trimKey(SailTrim.HALF), "half sail")
                     .add(SailWinchBlock.trimKey(SailTrim.FULL), "full sail")
@@ -250,6 +258,7 @@ public final class SailingModule implements ModModule {
                 com.richardsenger.piratesnships.sailing.anchor.AnchorPhysicsGameTests.class,
                 com.richardsenger.piratesnships.sailing.ship.SailingGameTestsTurning.class,
                 com.richardsenger.piratesnships.sailing.ship.ShipBowSyncGameTests.class,
-                com.richardsenger.piratesnships.sailing.ship.SailDyeGameTests.class);
+                com.richardsenger.piratesnships.sailing.ship.SailDyeGameTests.class,
+                com.richardsenger.piratesnships.sailing.ballast.BallastGameTests.class);
     }
 }

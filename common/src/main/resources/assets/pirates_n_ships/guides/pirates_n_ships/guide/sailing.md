@@ -141,6 +141,10 @@ upright a second or two after you furl. Sails spill their wind as the heel nears
 ship on its side under sail alone. Cargo stowed to one side and water in the hold still make a ship list; pump it out
 and trim the load. Server config `stability`.
 
+A ship floats level as you built it: the shipwright ballasts it, so a tall stern castle or a heavy gun deck on one side
+does not tip it. What you load later does: cargo, flood water and damage still trim and heel it. Only an absurd build
+(a tower of iron far aft) is more than the ballast can make good. Server config `stability.auto_ballast`.
+
 ## Capstan and anchor
 The anchor is a real object: it hangs outside the hull on the side nearer to the capstan, just below the deck, and
 moves with the ship. The anchor is heavy and falls on its own: let it go while the ship has way on and it keeps the

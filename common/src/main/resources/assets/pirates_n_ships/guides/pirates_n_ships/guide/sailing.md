@@ -522,8 +522,9 @@ is found: every map of it turns grey and keeps as a souvenir, and the next blank
 Operators: `/pirates world treasure give [port]`. Server config `world.treasure_maps`, `cargo_trade.treasure_map_price`.
 
 ## Waves
-The sea follows the weather: calm or a light chop in fair weather, rough in rain, a storm in thunder, changing over
-about a minute. Ships roll, pitch and rise with the waves (big ships far less than small boats). The sea is not one
+The sea follows the weather: a low swell or a light chop in fair weather, rough in rain, a storm in thunder, changing
+over about a minute. A fair-weather chop lifts the water about half a block, rain about a block, and in a thunderstorm
+the biggest crests stand two blocks and more above the still sea. Ships roll, pitch and rise with the waves (big ships far less than small boats). The sea is not one
 even swell: waves of different lengths run a little across each other, so the rhythm is irregular, and they come in
 sets, a run of bigger waves for half a minute and then a calmer spell. On a crest the bow lifts and the whole hull rides
 up, in a trough it sinks back. In rough seas the bow
@@ -531,8 +532,8 @@ throws spray, and any open hatch or low rim close to the waterline lets water in
 and keep a pump ready before a storm. `/pirates waves` shows the sea; operators can hold a state with `/pirates waves
 set storm` and release it with `/pirates waves clear`. The camera can roll with the ship (client setting
 `wave_effects.camera_sway`, off by default). Faint foam streaks lie on the water around you, stretched along the
-direction the waves run and gathered on the crests: none in a calm sea, a few in a moderate one, many in a storm, and
-none inside a dry hull (client setting `wave_effects.foam`). Server config `waves`.
+direction the waves run and gathered on the crests: none in a calm sea, a few in a moderate one, about twice as many in
+a storm, and none inside a dry hull (client setting `wave_effects.foam`). Server config `waves`.
 
 The sea itself moves: around you the water surface rises into crests and sinks into troughs with the same waves that
 rock the ships, smooth near you and coarser toward the horizon, flat at the beach where the water is shallow, and never

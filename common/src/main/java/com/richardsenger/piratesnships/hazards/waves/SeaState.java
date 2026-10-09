@@ -6,12 +6,17 @@ import java.util.Optional;
 /**
  * The four sea states of docs/design.md §5.4, each with its wave amplitude (the highest crest above the still water,
  * in blocks, before the {@code waves.amplitude} multiplier). Pure.
+ *
+ * <p>WAV4 raised them from WV1's calm 0.1, moderate 0.3, rough 0.7 and storm 1.2 (tuned when the waves were only felt)
+ * once the sea was drawn (WAV3): the human found a clear sea barely visible and a thunderstorm not enough. With the
+ * wave groups the crests reach the amplitude × (1 + {@code waves.group_depth}); the summed trains stand at about 0.3 ×
+ * the amplitude on average (root mean square).
  */
 public enum SeaState {
-    CALM(0.1),
-    MODERATE(0.3),
-    ROUGH(0.7),
-    STORM(1.2);
+    CALM(0.15),
+    MODERATE(0.6),
+    ROUGH(1.2),
+    STORM(2.0);
 
     private final double amplitude;
 

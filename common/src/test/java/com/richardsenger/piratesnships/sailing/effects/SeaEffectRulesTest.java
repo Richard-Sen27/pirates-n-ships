@@ -194,14 +194,54 @@ class SeaEffectRulesTest {
         double storm = f.rate(SeaState.STORM.amplitude());
         assertTrue(moderate > 0.0, "a moderate sea has some foam");
         assertTrue(rough > moderate && storm > rough);
-        assertEquals(f.density() * SeaState.STORM.amplitude(), storm, EPS);
+        assertEquals(f.density() * Math.sqrt(SeaState.STORM.amplitude() - f.minAmplitude()), storm, EPS);
+    }
+
+    /**
+     * WAV4: the rate grows as a square root above the threshold, so a storm carries about twice a moderate sea's foam
+     * (WD1's linear rate: 4x, and 3.3x on WAV4's heights), and the default density is half of WD1's 2.5.
+     */
+    @Test
+    void stormFoamIsAboutTwiceAModerateSeas() {
+        FoamRules f = FoamRules.DEFAULTS;
+        assertEquals(1.25, f.density(), EPS);
+        double moderate = f.rate(SeaState.MODERATE.amplitude()), storm = f.rate(SeaState.STORM.amplitude());
+        double ratio = storm / moderate;
+        assertTrue(ratio >= 1.7 && ratio <= 2.5, "storm / moderate foam " + ratio);
+        // sub-linear: doubling the height above the threshold gives the square root of 2 times the rate
+        assertEquals(Math.sqrt(2.0), f.rate(f.minAmplitude() + 2.0) / f.rate(f.minAmplitude() + 1.0), EPS);
+        // the threshold itself spawns nothing, just above it a little
+        assertEquals(0.0, f.rate(f.minAmplitude()), EPS);
+        assertTrue(f.rate(f.minAmplitude() + 0.01) > 0.0);
+    }
+
+    /**
+     * WAV4: the mean streaks alive around the camera (rate x the mean share kept x life) stay moderate in every sea.
+     * The mean share kept, measured over the spectrum (200,000 random points of the WAV4 seas): 0.31. WD1 (density 2.5,
+     * linear rate, linear crest keep with a mean of 0.575) gave 34 streaks in a moderate sea (0.3), 80 rough (0.7) and
+     * 138 in a storm (1.2), and would have given 69 / 138 / 230 on WAV4's heights; now about 20 / 31 / 42.
+     */
+    @Test
+    void streaksAliveStayModerate() {
+        FoamRules f = FoamRules.DEFAULTS;
+        double moderate = f.streaksAlive(SeaState.MODERATE.amplitude(), 0.31);
+        double rough = f.streaksAlive(SeaState.ROUGH.amplitude(), 0.31);
+        double storm = f.streaksAlive(SeaState.STORM.amplitude(), 0.31);
+        assertTrue(moderate >= 10.0 && moderate <= 30.0, "moderate " + moderate);
+        assertTrue(rough > moderate && rough <= 45.0, "rough " + rough);
+        assertTrue(storm > rough && storm <= 60.0, "storm " + storm);
+        assertEquals(0.0, f.streaksAlive(SeaState.CALM.amplitude(), 0.31), EPS, "calm");
     }
 
     @Test
     void foamGathersOnTheCrests() {
-        double a = 1.2;
+        double a = 2.0;
         assertEquals(FoamRules.TROUGH_KEEP, FoamRules.crestKeep(-a, a), EPS);
+        assertEquals(FoamRules.TROUGH_KEEP, FoamRules.crestKeep(0.0, a), EPS, "the still level keeps only the trough share");
         assertEquals(1.0, FoamRules.crestKeep(a, a), EPS);
+        assertEquals(1.0, FoamRules.crestKeep(FoamRules.CREST_BAND * a, a), EPS, "the top of the crest band keeps all");
+        assertEquals((1.0 + FoamRules.TROUGH_KEEP) / 2.0, FoamRules.crestKeep(FoamRules.CREST_BAND * a / 2.0, a), EPS,
+                "the middle of the band");
         assertEquals(0.0, FoamRules.crestKeep(0.0, 0.0), EPS, "flat sea");
         double last = 0;
         for (double h = -a; h <= a; h += 0.1) {

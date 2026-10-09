@@ -19,8 +19,8 @@ public final class HazardConfig {
     public static final ConfigValue<Boolean> WAVES_ENABLED = WAVES.bool("enabled", true,
             "The sea state follows the weather, rocks ships with roll and pitch and spills water into low open hulls. Off = always a flat sea");
     public static final ConfigValue<Double> WAVE_AMPLITUDE = WAVES.doubleRange("amplitude", 1.0, 0.0, 5.0,
-            "Multiplier on the wave height of every sea state (calm 0.1, moderate 0.3, rough 0.7, storm 1.2 blocks); 0 = flat sea");
-    public static final ConfigValue<Double> SHIP_TORQUE = WAVES.doubleRange("ship_torque", 26.0, 0.0, 200.0,
+            "Multiplier on the wave height of every sea state (calm 0.15, moderate 0.6, rough 1.2, storm 2.0 blocks); 0 = flat sea");
+    public static final ConfigValue<Double> SHIP_TORQUE = WAVES.doubleRange("ship_torque", 18.0, 0.0, 200.0,
             "Roll and pitch torque per unit of wave slope and per kpg of ship mass, scaled by (blocks / 200)^-size_exponent");
     public static final ConfigValue<Double> SIZE_EXPONENT = WAVES.doubleRange("size_exponent", 1.0, 0.0, 2.0,
             "How much steadier big ships lie: the wave torque per kpg falls as (blocks / 200) to the power of minus this");
@@ -44,9 +44,9 @@ public final class HazardConfig {
             "Time scale of the wave groups in seconds: sets of bigger waves come and go over about this long");
     public static final ConfigValue<Boolean> HEAVE = WAVES.bool("heave", true,
             "Ships rise on wave crests and sink into troughs (a vertical force from the mean wave height under the hull)");
-    public static final ConfigValue<Double> HEAVE_STRENGTH = WAVES.doubleRange("heave_strength", 0.5, 0.0, 5.0,
+    public static final ConfigValue<Double> HEAVE_STRENGTH = WAVES.doubleRange("heave_strength", 0.95, 0.0, 5.0,
             "Heave force per block of mean wave height under the hull, as a share of the ship's weight");
-    public static final ConfigValue<Double> HEAVE_PER_MASS = WAVES.doubleRange("heave_per_mass", 6.0, 0.0, 50.0,
+    public static final ConfigValue<Double> HEAVE_PER_MASS = WAVES.doubleRange("heave_per_mass", 25.0, 0.0, 50.0,
             "Upper limit of the heave force per kpg of ship mass");
 
     private static final ConfigSection WAVE_EFFECTS = ModConfigs.client("wave_effects", "Client-side wave visuals");
@@ -63,9 +63,9 @@ public final class HazardConfig {
     public static final ConfigValue<Boolean> FOAM = WAVE_EFFECTS.bool("foam", true,
             "Faint foam streaks on the water, stretched along the direction the waves run, more in a higher sea; none in a calm sea");
     public static final ConfigValue<Double> FOAM_DENSITY = WAVE_EFFECTS.doubleRange("foam_density", FoamRules.DEFAULTS.density(), 0.0, 20.0,
-            "Foam streaks tried per tick for every block of wave height (about half of them land, mostly on the crests)");
+            "Foam streaks tried per tick at one block of wave height above foam_min_amplitude, growing with the square root of that height (about a third of them land, on the crests)");
     public static final ConfigValue<Double> FOAM_MIN_AMPLITUDE = WAVE_EFFECTS.doubleRange("foam_min_amplitude", FoamRules.DEFAULTS.minAmplitude(), 0.0, 5.0,
-            "No foam below this wave height in blocks (calm sea 0.1, moderate 0.3, rough 0.7, storm 1.2)");
+            "No foam below this wave height in blocks (calm sea 0.15, moderate 0.6, rough 1.2, storm 2.0)");
     public static final ConfigValue<Integer> FOAM_RADIUS = WAVE_EFFECTS.intRange("foam_radius", (int) FoamRules.DEFAULTS.radius(), 4, 64,
             "Horizontal distance from the camera in blocks within which foam appears");
     public static final ConfigValue<Integer> FOAM_LIFE_TICKS = WAVE_EFFECTS.intRange("foam_life_ticks", FoamRules.DEFAULTS.lifeTicks(), 10, 400,
@@ -79,7 +79,7 @@ public final class HazardConfig {
             "Distance from the camera in blocks within which the moving surface has one point every 4 blocks; beyond it the far cells reach to the render distance");
     public static final ConfigValue<Integer> SURFACE_FAR_CELL = WAVE_EFFECTS.intRange("surface_far_cell", 16, 4, 64,
             "Size in blocks of the moving surface's cells beyond surface_mid_radius (4, 8, 16, 32 or 64; other values round down)");
-    public static final ConfigValue<Integer> SURFACE_FULL_DEPTH = WAVE_EFFECTS.intRange("surface_full_depth", 4, 2, 16,
+    public static final ConfigValue<Integer> SURFACE_FULL_DEPTH = WAVE_EFFECTS.intRange("surface_full_depth", 6, 2, 16,
             "Water depth in blocks from which the surface moves with the full wave height; shallower water moves less, one block deep not at all, so waves never cut into a beach");
     public static final ConfigValue<Boolean> SURFACE_UNDERSIDE = WAVE_EFFECTS.bool("surface_underside", true,
             "Also draw the moving surface from below, so it shows when you look up from under water");

@@ -381,6 +381,39 @@ public final class LookoutGameTests {
         });
     }
 
+    /**
+     * LAW4: {@link Lookouts#isManned} is false for an empty nest, true while a crew lookout is seated in it, false
+     * again once he is released, true for a player (in the level) standing in it and false for one on the deck.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = BATCH + "manned")
+    public static void isMannedByASeatedLookoutOrAPlayerInTheNest(GameTestHelper h) {
+        Rig r = rig(h);
+        h.assertFalse(Lookouts.isManned(h.getLevel(), r.ship()), "an empty nest is manned");
+        CrewMember c = lookout(h, r);
+        h.runAtTickTime(5, () -> {
+            h.assertTrue(c.isAtStation(), "the lookout is not seated");
+            h.assertTrue(Lookouts.isManned(h.getLevel(), r.ship()), "a seated lookout does not man the nest");
+            CrewStations.release(h.getLevel(), c);
+            c.discard();
+        });
+        h.runAtTickTime(7, () -> {
+            h.assertFalse(Lookouts.isManned(h.getLevel(), r.ship()), "the nest is manned after the lookout left");
+            Player p = h.makeMockPlayer(GameType.SURVIVAL);
+            Vec3 deck = r.ship().toWorld(Vec3.atBottomCenterOf(r.nest().below(2).east()));
+            p.moveTo(deck.x, deck.y, deck.z);
+            h.getLevel().addFreshEntity(p);
+            try {
+                h.assertFalse(Lookouts.isManned(h.getLevel(), r.ship()), "a player on the deck mans the nest");
+                Vec3 at = r.floor();
+                p.setPos(at.x, at.y, at.z);
+                h.assertTrue(Lookouts.isManned(h.getLevel(), r.ship()), "a player standing in the nest does not man it");
+            } finally {
+                p.discard();
+            }
+            h.succeed();
+        });
+    }
+
     // ------------------------------------------------------------------ config
 
     /** lookout.enabled off: nothing is scanned, the shark is not called. */

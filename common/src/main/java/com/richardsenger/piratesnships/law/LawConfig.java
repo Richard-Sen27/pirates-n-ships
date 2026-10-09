@@ -153,8 +153,12 @@ public final class LawConfig {
             "Blocks within which an observer sees a flag perfectly");
     public static final ConfigValue<Double> DETECTION_MAX_RANGE = FLAGS.doubleRange("detection_max_range", 96.0, 0.0, 4096.0,
             "Blocks beyond which false colors can't be detected (without a crow's nest)");
+    public static final ConfigValue<Boolean> CROWS_NEST_OBSERVERS = FLAGS.bool("crows_nest_observers", true,
+            "Navy observers aboard a ship with a manned crow's nest (a crew lookout seated in it or a player standing in it) "
+                    + "notice flags farther and see through false colors faster (crows_nest_range_factor, crows_nest_rate_factor)");
     public static final ConfigValue<Double> CROWS_NEST_RANGE_FACTOR = FLAGS.doubleRange("crows_nest_range_factor", 1.5, 1.0, 10.0,
-            "Detection range multiplier for an observer with a manned crow's nest");
+            "Detection range multiplier for an observer with a manned crow's nest (applies to law.flags.observe_range and "
+                    + "detection_max_range)");
     public static final ConfigValue<Double> CROWS_NEST_RATE_FACTOR = FLAGS.doubleRange("crows_nest_rate_factor", 1.5, 1.0, 10.0,
             "Detection rate multiplier for an observer with a manned crow's nest");
     public static final ConfigValue<Double> DETECTION_SCORE_SCALE = FLAGS.doubleRange("detection_score_scale", 100.0, 1.0, 1000000.0,

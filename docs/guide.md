@@ -787,7 +787,8 @@ At the pole:
 **What the flag does.** The flag your ship flies is the highest flag on its poles. Under the Jolly Roger the navy attacks
 everyone aboard on sight and charges you for being seen; pirates leave you alone. A navy flag lets you pass the navy,
 unless you are a suspect or worse: then every navy soldier within range may see through your colours. If one does, you
-are charged heavily and the navy hunts your ship for five minutes, whatever you fly. Striking your colours surrenders:
+are charged heavily and the navy hunts your ship for five minutes, whatever you fly. A navy ship with a manned
+crow's nest sees your flag half again as far off and sees through it half again as fast. Striking your colours surrenders:
 navy and pirates stop attacking. Firing on a ship that struck its colours, or on one flying a merchant flag or banner,
 is a crime; if your crew fires, the charge goes to you as the ship's owner. Server config `law.flags`.
 - **Sneak-use with an empty hand:** takes the flag down.

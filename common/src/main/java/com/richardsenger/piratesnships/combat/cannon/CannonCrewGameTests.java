@@ -372,8 +372,9 @@ public final class CannonCrewGameTests {
             h.assertTrue(gunner.mayLookAround(), "the gunner may not look around at an idle gun");
             h.assertTrue(CrewStations.order(level, gunner, CannonOrder.FIRE) == Stations.OrderResult.STARTED, "fire was refused");
         });
-        h.runAfterDelay(4, () -> {
-            h.assertTrue(gunner.stationPose() == CrewPose.CANNON_FIRE, "pose during the fuse: " + gunner.stationPose());
+        h.runAfterDelay(4, () -> h.assertTrue(gunner.stationPose() == CrewPose.CANNON_FIRE, "pose during the fuse: " + gunner.stationPose()));
+        // ST5: the gunner turns to the gun at crew_stations.turn_degrees_per_tick (half a turn in 12 ticks at the default)
+        h.runAfterDelay(CannonStation.FUSE_TICKS + 3, () -> {
             if (!(gunner.getVehicle() instanceof StationSeat seat)) throw new GameTestAssertException("not on the station seat");
             Direction toward = null;
             for (Direction d : Direction.Plane.HORIZONTAL) {

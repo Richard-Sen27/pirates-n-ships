@@ -69,6 +69,7 @@ public final class SailingModule implements ModModule {
     public void registerPayloads() {
         WindSync.registerPayloads();
         HelmSetup.registerPayloads(); // wheel steering (HELM1)
+        com.richardsenger.piratesnships.sailing.ship.ShipBowSync.registerPayloads(); // the bow for the sails (VIS1c)
     }
 
     @Override
@@ -76,9 +77,13 @@ public final class SailingModule implements ModModule {
         CommonEvents.SERVER_TICK_END.register(WindSync::onServerTick);
         CommonEvents.PLAYER_LOGIN.register(WindSync::onLogin);
         CommonEvents.LEVEL_TICK_END.register(SailingRuntimes::onLevelTick);
+        // VIS1c: each ship's bow to the clients that render it, after the runtimes so a fresh one goes out this tick
+        CommonEvents.LEVEL_TICK_END.register(com.richardsenger.piratesnships.sailing.ship.ShipBowSync::onLevelTick);
         CommonEvents.SERVER_STOPPED.register(server -> SailingRuntimes.onServerStopped());
+        CommonEvents.SERVER_STOPPED.register(server -> com.richardsenger.piratesnships.sailing.ship.ShipBowSync.onServerStopped());
         CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> SailingCommands.register(dispatcher));
         SableShips.onShipRemoved(SailingRuntimes::onShipRemoved);
+        SableShips.onShipRemoved(com.richardsenger.piratesnships.sailing.ship.ShipBowSync::onShipRemoved);
         SableShips.onPhysicsTick(SailingRuntimes::onPhysicsTick);
         ShipBlockChanges.register(SailingRuntimes::onBlockChanged);
         // HL1b: a ship Sable moves to a new body keeps its bow (position-free); the anchor (a plot position) stays behind
@@ -232,6 +237,7 @@ public final class SailingModule implements ModModule {
                 com.richardsenger.piratesnships.sailing.rope.RopeLineGameTests.class,
                 com.richardsenger.piratesnships.sailing.ship.HelmHandoverGameTests.class,
                 com.richardsenger.piratesnships.sailing.anchor.AnchorPhysicsGameTests.class,
-                com.richardsenger.piratesnships.sailing.ship.SailingGameTestsTurning.class);
+                com.richardsenger.piratesnships.sailing.ship.SailingGameTestsTurning.class,
+                com.richardsenger.piratesnships.sailing.ship.ShipBowSyncGameTests.class);
     }
 }

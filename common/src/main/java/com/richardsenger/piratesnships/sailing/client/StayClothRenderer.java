@@ -46,8 +46,8 @@ import org.joml.Vector3f;
  * or mooring rings, and a stay without a sail) is drawn with sag by {@link RopeLineRenderer#drawLines}.
  *
  * <p><b>In the wind (VIS1b).</b> With client {@code sail_visuals.enabled} the cloth moves in its own frame like a
- * square sail's ({@link SailShape#triangle}, {@link SailAirTracker}; the bow is taken toward the tack until the ship's
- * motion says otherwise); off: the fixed bulge of before.
+ * square sail's ({@link SailShape#triangle}, {@link SailAirTracker}; on a ship the bow is the synced one, VIS1c, and
+ * without it the bow is taken toward the tack until the ship's motion says otherwise); off: the fixed bulge of before.
  *
  * <p>Like {@link YardClothRenderer} it works on land and on ships (Sable renders a sub-level's block entities with the
  * ship's pose on the pose stack), and it does not set {@code shouldRenderOffScreen} (see the note there); the
@@ -108,7 +108,7 @@ public class StayClothRenderer implements BlockEntityRenderer<CleatBlockEntity> 
                 normal.normalize();
                 SailShape.Look look = null;
                 if (SailVisualsConfig.ENABLED.get()) {
-                    // a stay runs along the ship with its tack forward (the sign corrected by the ship's motion)
+                    // without the ship's synced bow (VIS1c): a stay runs along the ship with its tack forward
                     look = air.look(be, be.side, 1);
                     float hx = (float) Math.hypot(g.tackX(), g.tackZ());
                     be.side = air.update(look, level, Vec3.atCenterOf(p), partialTick, now, SailTypes.FORE_AND_AFT_CURVE, trim,

@@ -3807,7 +3807,7 @@
   "pirates_n_ships.almanac.ships.p16.heading": "Railings",
   "pirates_n_ships.almanac.ships.p16.text1": "An {item:pirates_n_ships:oak_railing}**oak railing** runs along a block's edge; click again to rail another edge.",
   "pirates_n_ships.almanac.ships.p16.text2": "A {item:pirates_n_ships:oak_railing_port}**railing port** is the gap in it: cannons fire through it, boarders cross there.",
-  "pirates_n_ships.almanac.ships.p16.text3": "A {item:pirates_n_ships:oak_railing_gate}**railing gate** swings open for crew and planks, by hand or by redstone.",
+  "pirates_n_ships.almanac.ships.p16.text3": "A {item:pirates_n_ships:oak_railing_gate}**railing gate** swings open like a fence gate, and a lantern hangs from any railing post.",
   "pirates_n_ships.almanac.ships.p17.heading": "On deck",
   "pirates_n_ships.almanac.ships.p17.text1": "The {item:pirates_n_ships:ship_lantern}**ship's lantern** hangs or stands, and burns even under water.",
   "pirates_n_ships.almanac.ships.p17.text2": "{item:pirates_n_ships:rope_coil}**Rope coils** stack four to a spot.",

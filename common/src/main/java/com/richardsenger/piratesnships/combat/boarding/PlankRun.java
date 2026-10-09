@@ -230,6 +230,16 @@ public final class PlankRun {
         return null;
     }
 
+    /**
+     * RAIL1: the face a click on a gangway opening (a railing port, its outboard side {@code outboard}) counts as: a click
+     * on its top by someone facing outboard is a click on its outboard side, so the run starts in the block beyond the
+     * opening at the opening's own height (level with the deck it stands on) instead of a block above it. Any other
+     * click, or no opening ({@code outboard} null), keeps its face.
+     */
+    public static Direction throughOpening(Direction face, Direction playerFacing, @Nullable Direction outboard) {
+        return outboard != null && face == Direction.UP && playerFacing == outboard ? outboard : face;
+    }
+
     // ------------------------------------------------------------------ profiles
 
     /**

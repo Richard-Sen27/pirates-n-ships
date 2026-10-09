@@ -8,7 +8,7 @@ import com.richardsenger.piratesnships.core.config.ModConfigs;
 public final class DecorConfig {
 
     private static final ConfigSection SECTION = ModConfigs.server("ship_decor",
-            "Ship decor: lanterns, ship's bell, rope coils, stern windows, chart table, sea cot");
+            "Ship decor: lanterns, ship's bell, rope coils, stern windows, chart table, sea cot, railings");
 
     public static final ConfigValue<Boolean> SEA_COT_SLEEPING = SECTION.bool("sea_cot_sleeping", true,
             "Players can sleep in a sea cot and set their spawn there like in a bed (on an assembled ship only with sea_cot_sleeping_aboard as well)");
@@ -16,6 +16,13 @@ public final class DecorConfig {
             "Players can sleep in a sea cot on an assembled ship: they lie in it as the ship sails, count for skipping the night and respawn on the ship. Needs sea_cot_sleeping");
     public static final ConfigValue<Integer> BELL_RING_TICKS = SECTION.intRange("bell_ring_ticks", 20, 2, 200,
             "How long the ship's bell swings after it is rung, in ticks (20 ticks = 1 second)");
+    /** RAIL1: the railing family (railings and railing ports of every shipped wood). */
+    public static final ConfigValue<Boolean> RAILINGS_ENABLED = SECTION.bool("railings_enabled", true,
+            "Railings and railing ports can be placed. Off = the items place nothing; railings already placed stay");
+    /** RAIL1: how high a railing's collision reaches (a fence: 1.5). */
+    public static final ConfigValue<Double> RAILING_COLLISION_BLOCKS = SECTION.doubleRange("railing_collision_blocks", 1.5, 1.0, 2.0,
+            "How high a railing's collision reaches, in blocks: 1.5 like a fence keeps players from jumping over it, 1.0 lets"
+                    + " them vault it");
 
     // BELL1: how the ship's bell is drawn on this client
     private static final ConfigSection BELL_VISUALS = ModConfigs.client("bell_visuals", "How the ship's bell looks on this client");

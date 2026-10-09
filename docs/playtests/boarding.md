@@ -171,6 +171,9 @@ Defaults: `boarding.board_order` true, `board_gap` 2, `boarders_keep_stations` t
    to the gangway's end on your deck (no teleport), one after another along the board, and step onto her deck. One of
    them now holds the cutlass (the chest is empty). Screenshot while they are on the board, please.
 3. Open the wheel again. Expected: the entry now reads "Back aboard" (also on the helm's ship screen, Crew tab).
+4. (BRD5) Five free hands, one gangway, "Board!". Expected: they cross in file about a block apart, each one steps off
+   the board's end and moves aside off the landing (beside or ahead of it), and all five stand on her deck within
+   about ten seconds; nobody waits at the board's end or pops onto her deck (that would be the fallback set-down).
 
 ## 13. Board over a gap
 1. Haul the other ship alongside with the grappling hook until two blocks of water or less are between the rails (no

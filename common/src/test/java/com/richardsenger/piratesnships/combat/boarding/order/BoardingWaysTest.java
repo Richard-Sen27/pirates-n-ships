@@ -188,4 +188,61 @@ class BoardingWaysTest {
         assertSame(plank, BoardingWays.nearest(List.of(gap, plank), new Vec3(1, 9, 0)));
         assertNull(BoardingWays.nearest(List.of(), new Vec3(1, 9, 0)), "no way: the order is refused");
     }
+
+    // ------------------------------------------------------------------ BRD5: off the landing, in file
+
+    /**
+     * B's deck as in the boarding GameTests (x 10..14, the helm right ahead of the landing), landing at 11 from a board
+     * running east (z shifted down by 9): never behind the landing (under the board's end), never the helm nor past its
+     * corners (a body-wide straight walk), nearest first.
+     */
+    @Test
+    void roomCellsLieBesideOrAheadOfTheLandingAndClearOfTheHelm() {
+        Grid b = Grid.flat(10, 9);
+        BlockPos landing = new BlockPos(11, 9, 2);
+        b.block(new BlockPos(12, 9, 2)); // the helm
+        List<BlockPos> cells = BoardingWays.roomCells(landing, new Vec3(4, 0, 0), b::stand, c -> true, 3);
+        assertEquals(Set.of(new BlockPos(11, 9, 1), new BlockPos(11, 9, 3)), Set.copyOf(cells.subList(0, 2)), "beside the landing");
+        assertEquals(Set.of(new BlockPos(11, 9, 0), new BlockPos(11, 9, 4)), Set.copyOf(cells.subList(2, 4)), "two beside it");
+        assertEquals(4, cells.size(), "every other cell lies behind the helm or its corners: " + cells);
+    }
+
+    @Test
+    void roomCellsPreferStraightAheadAndStayWithinTheRadius() {
+        Grid b = Grid.flat(0, 9);
+        BlockPos landing = new BlockPos(1, 9, 2);
+        List<BlockPos> cells = BoardingWays.roomCells(landing, new Vec3(1, 0, 0), b::stand, c -> true, 1);
+        assertEquals(new BlockPos(2, 9, 2), cells.get(0), "straight ahead first");
+        assertEquals(5, cells.size(), "ahead, two beside, two diagonals ahead: " + cells);
+        for (BlockPos c : cells) assertTrue(c.getX() >= landing.getX(), "behind the landing (under the board): " + c);
+        // a ship turned a little: the cells beside the landing are still beside it
+        List<BlockPos> turned = BoardingWays.roomCells(landing, new Vec3(1, 0, 0.03), b::stand, c -> true, 1);
+        assertTrue(turned.contains(new BlockPos(1, 9, 1)) && turned.contains(new BlockPos(1, 9, 3)), "beside on a turned ship: " + turned);
+        assertTrue(BoardingWays.roomCells(landing, new Vec3(1, 0, 0), c -> false, c -> true, 3).isEmpty(), "no deck: no room");
+    }
+
+    /** Taken cells are left out, and a cell whose way passes a shipmate comes after every cell with a clear way. */
+    @Test
+    void roomCellsSkipTakenCellsAndAvoidWalkingThroughShipmates() {
+        Grid b = Grid.flat(0, 9);
+        BlockPos landing = new BlockPos(1, 9, 2);
+        BlockPos mate = new BlockPos(2, 9, 2);
+        List<BlockPos> cells = BoardingWays.roomCells(landing, new Vec3(1, 0, 0), b::stand, c -> !c.equals(mate), 3);
+        assertTrue(!cells.contains(mate), "a shipmate's cell");
+        int behindMate = cells.indexOf(new BlockPos(3, 9, 2));
+        assertTrue(behindMate >= 0, "the cell behind the mate is still a way aside: " + cells);
+        int beside = cells.indexOf(new BlockPos(1, 9, 0));
+        assertTrue(beside >= 0 && beside < behindMate, "two beside the landing (a clear way) before as far ahead past the mate");
+    }
+
+    @Test
+    void aBoarderWaitsForTheMateAheadOnly() {
+        Vec3 me = new Vec3(0, 0, 0);
+        Vec3 aim = new Vec3(4, 0, 0);
+        assertTrue(BoardingWays.waitsFor(me, aim, new Vec3(0.8, 0, 0.1), 1.0), "a mate just ahead");
+        assertTrue(!BoardingWays.waitsFor(me, aim, new Vec3(1.2, 0, 0), 1.0), "a block and more ahead: walk on");
+        assertTrue(!BoardingWays.waitsFor(me, aim, new Vec3(-0.6, 0, 0), 1.0), "a mate behind");
+        assertTrue(!BoardingWays.waitsFor(me, aim, new Vec3(0, 0, 0.7), 1.0), "a mate beside");
+        assertTrue(!BoardingWays.waitsFor(me, me, new Vec3(0.5, 0, 0), 1.0), "at its aim already");
+    }
 }

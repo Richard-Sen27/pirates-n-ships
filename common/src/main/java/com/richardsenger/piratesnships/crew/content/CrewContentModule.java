@@ -218,11 +218,12 @@ public final class CrewContentModule implements ModModule {
                 .generate(fill -> Variant.variant().with(VariantProperties.MODEL, fill == WaterBarrelRules.MAX_FILL
                         ? ModelLocationUtils.getModelLocation(barrel)
                         : ModelLocationUtils.getModelLocation(barrel, "_fill" + fill)))));
-        // The block's water surface is greyscale water_still tinted by the biome (CrewContentClient). Items have no
-        // colour handler, so the item model keeps the old pre-coloured stand-in for that texture slot.
+        // The water surface is greyscale water_still, tinted by the biome on the block and with the default water colour
+        // on the item (both in CrewContentClient, ITC1). The item model names the slot explicitly so it never falls
+        // back to a stand-in texture again.
         m.models().accept(ModelLocationUtils.getModelLocation(barrel.asItem()), () -> {
             JsonObject textures = new JsonObject();
-            textures.addProperty(WATER_TEXTURE_SLOT, "minecraft:block/blue_ice");
+            textures.addProperty(WATER_TEXTURE_SLOT, WATER_TEXTURE);
             JsonObject model = new JsonObject();
             model.addProperty("parent", ModelLocationUtils.getModelLocation(barrel).toString());
             model.add("textures", textures);
@@ -254,6 +255,8 @@ public final class CrewContentModule implements ModModule {
 
     /** The texture slot of the water surface in the hand-made water barrel models. */
     static final String WATER_TEXTURE_SLOT = "7";
+    /** The greyscale water texture of that slot, tinted through {@code CrewContentClient}'s colour handlers. */
+    static final String WATER_TEXTURE = "minecraft:block/water_still";
 
     @Override
     public void initClient() {

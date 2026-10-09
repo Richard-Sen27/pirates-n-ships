@@ -1022,8 +1022,39 @@ Railing gate (RAIL3):
   corner (x 3 or 13, z 0): x 3.05..5 (or 11..12.95), z -10..0, out of the block like a fence gate's leaf (all faces
   drawn; the balusters' tops stay hidden under the rail). **Item:** posts, sill and the closed left leaf, centred like
   the railing's item.
-- Not rendered yet; the orchestrator verifies the groups in Blockbench (`Codecs.java_block.compile()` per group against
-  the JSON, as for RAIL1).
+- Checked in Blockbench and rendered by RAIL4 (see "Bulwark (RAIL4), and the gate check").
+
+Bulwark (RAIL4), and the gate check:
+- **Part list in `tools/gen_railing_models.py`** (the RAIL1 script, extended; written by the script, checked in
+  Blockbench). Seven more groups in `models/railing.bbmodel` and parent models in `models/block/`: `bulwark_edge` 2
+  elements, `bulwark_stanchion` 2, `bulwark_port` 5, `bulwark_port_lid` 5, `bulwark_port_lid_open` 5, `bulwark_item` 6,
+  `bulwark_port_item` 10; textures `#planks`, `#log` and (the lid's straps) `#iron`, the wood family's children
+  overriding the first two. Lint clean (no fights, no warnings) for the seven.
+- **Edge** (north frame): a plank wall x 0..16, y 0..14, z 0.05..2 (north and south faces only: a neighbour's wall or a
+  stanchion hides its ends, the cap its top, the deck its foot) and a stripped-log cap rail y 14..16, z 0.05..3.95
+  (2 px proud of the wall's inboard face; 3.95, not 4, so its inboard face hides in a stanchion instead of fighting the
+  stanchion's). **Stanchion** (north-west corner, 4 x 4 px): a log post y 0..17 and a plank head to y 18. The multipart
+  state is the railing's: an edge model per edge, a stanchion per post, uvlock.
+- **Gun port** (north frame): the jambs x 0..3 and 13..16 (wall and cap rail ends, their end faces drawn so a lone port
+  is closed; beside a wall they hide inside it) and the sill x 3..13, y 0..4. The notch runs from the sill up through
+  the cap: a carriage cannon's barrel crosses the wall 12 px (−5°) to 22 px (20°) above the deck, so a lintel would cut
+  through it. **Lid** (`bulwark_port_lid`): a plank panel x 3..13, y 4..16, z 0.05..1.05 with two 1 px iron straps
+  (x 4.5 and 10.5, from y 6 to 16.45, 0.5 px proud, their inner face left out) and their hinge knuckles at the top.
+  **Open** (`_lid_open`): the same parts turned 90 degrees about the hinge (x axis at y 16, z 0), the bottom swung up
+  and out: the panel lies flat at y 14.95..15.95, z -12..0, straps on top, all faces drawn. **Items:** the wall with a
+  stanchion at either end, and the gun port with its shut lid, both centred (z 6..10).
+- Checked in Blockbench (RAIL4, a new tab of `railing.bbmodel`): `Codecs.java_block.compile()` of every group (the
+  other groups' cubes not exported) matches the part list's JSON element for element (from, to, UVs, texture keys), the
+  sixteen groups of the file, RAIL3's gate included.
+- **RAIL3's gate checked:** both hinges closed and open, and the item, rendered from inboard and from outboard-east:
+  the straps sit on the hinge post's end of the rails, the latch with its handle on the inboard face at the latch post,
+  the open leaf turns 90 degrees outboard about the hinge post, the item shows posts, sill and the closed left leaf.
+  Nothing needed fixing.
+- Renders (clones of the group meshes placed in the tab's scene, offscreen view, composed with a canvas and written
+  with `fs`; `art/vanilla` textures): `renders/railing_gate.png` (top: the gate left and right hinged, closed and open,
+  and the item, from inboard; bottom: the same from outboard), `renders/bulwark.png` (top, from inboard: a run with
+  its west stanchion, a shut and an open gun port, a corner with two stanchions, the two items; bottom, from outboard:
+  the shut lid's straps and the open lid lying flat).
 
 Ratline nets (RL2):
 - **Part list in `tools/gen_ratline_net_models.py`** (committed). Three projects, one model each:

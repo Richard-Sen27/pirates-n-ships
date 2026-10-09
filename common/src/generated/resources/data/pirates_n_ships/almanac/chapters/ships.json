@@ -373,6 +373,18 @@
         {
           "type": "recipe",
           "recipe": "pirates_n_ships:oak_railing_gate"
+        },
+        {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p16.text4"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:oak_bulwark"
+        },
+        {
+          "type": "recipe",
+          "recipe": "pirates_n_ships:oak_bulwark_port"
         }
       ]
     },

@@ -549,6 +549,19 @@ stands, a lantern or soul lantern hangs below the block or stands on it, and a c
 of rail carries nothing. The **grappling hook** holds on a railing or gate like on a cleat (twice the rope's length),
 but a hard haul tears the railing out and the rope lets go (`grapple.railing_break_force`).
 
+A **Bulwark** (a stick, a plank and a stick over three planks, gives 4) is the railing's solid variant: a plank wall
+2 pixels thick along the block's edge with a log cap rail on top, placed exactly like a railing (another click adds an
+edge, one item per edge), with square stanchions where a run ends or turns. A bulwark run goes on only into another
+bulwark or a gun port; next to a railing both end in a post. It blocks and weighs like a railing, is not part of the
+hull (a bulwarked deck floods and stays dry like a railed one), carries a swivel gun, ratlines, chainplates and the
+grappling hook, and lanterns hang from its stanchions. A carriage cannon right behind a plain bulwark fires into it:
+the ball is spent at once and breaks the wall (server config `cannons.walls_block_barrel`). A **Bulwark Gun Port** (a
+bulwark and an iron nugget) has a square notch from a low sill up through the cap rail and a lid hinged at the top:
+the lid swings up and out by itself when a carriage cannon stands right behind the port facing it (and shuts when the
+gun goes), and with an empty hand you prop it open or shut it ("The gun behind holds the lid open" while a gun stands
+there). The cannon fires through an open port at every elevation, and a boarding plank used on its sill while facing
+out lays the gangway, as from a railing port, while the lid is open.
+
 **Ratline nets (RL2).** For a longer or steeper climb, string a net between two iron fittings. A **chainplate** (two
 from an iron ingot under a ring of three iron nuggets) goes on top of the rail or on its side (any solid face, or a
 fence, wall or railing); a **mast hoop** (two from three iron ingots over a ring of three nuggets) goes on the side of a
@@ -1494,6 +1507,8 @@ on by default; vanilla weapons are untouched):
 | Name Board (was Nameplate) | any sign, 1 gold nugget (gives 3) | A framed oak plate fixed flat on the hull's side (no chains). Boards side by side on one face join into one board, and the ship's name is drawn once across the whole row, as large as the board's height allows: one board shows it small, three or more read from 30 to 60 blocks. Shows the name once the ship is assembled and named (name tag on the helm); renaming updates it within a second, disassembly clears it. Old nameplates load as boards. Server options `ship_identity.nameplate_shows_name`, `name_board_distance` (64, how far the name is drawn). |
 | Oak Railing | 3 sticks over 3 oak planks (gives 4) | A rail along a block's edge with automatic end and corner posts; click again to rail another edge. Drops one per edge. See [Railings](#railings). |
 | Oak Railing Port | 2 sticks (the corners) over 3 oak planks (gives 2) | The opening in a railing: two posts and a sill. A cannon fires through it, a boarding plank goes out from its sill. See [Railings](#railings). |
+| Oak Bulwark | a stick, a plank and a stick over 3 oak planks (gives 4) | A solid plank wall along a block's edge with a cap rail and stanchions, placed like a railing. A cannon behind it fires into it. Drops one per edge. See [Railings](#railings). |
+| Oak Bulwark Gun Port | 1 oak bulwark, 1 iron nugget | A bulwark with a square gun port; its lid opens for a cannon behind it or by hand, and a boarding plank goes out from its sill while open. See [Railings](#railings). |
 
 All blocks drop themselves. Wooden ones are mined with an axe, the bars and the door with a pickaxe.
 
@@ -1692,7 +1707,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `melee` | Skill-based sword fighting (`skill_based_combat`, on by default): parry and riposte windows, guard, stamina, stagger, feint recovery, NPC feints and skill; `sounds`. |
 | `firearms` | Firearms on/off, `fire_on_attack`, ball lifetime and gravity, cooldown, gunpowder use; `aim` (hold and steady times, aimed spread, sneak lowers the gun), `pistol` and `musket` (damage, muzzle velocity, spread, reload, recoil, sound). |
 | `combat` | Cannon block damage, rain misfires; `damage_multipliers` (cannon on blocks and entities, firearms). |
-| `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevations, blocks per hit, recoil and impact, ball lifetime and water, `mobGriefing` and spawn protection, drops, glancing hits; `swivel`, `chain_shot`, `grapeshot`, `crew` (loading by the crew, load preference), `npc` (fire at will). |
+| `cannons` | Cannons on/off, damage, muzzle speed, gravity, reload, elevations, blocks per hit, recoil and impact, ball lifetime and water, `mobGriefing` and spawn protection, drops, a barrel run into a bulwark (`walls_block_barrel`), glancing hits; `swivel`, `chain_shot`, `grapeshot`, `crew` (loading by the crew, load preference), `npc` (fire at will). |
 | `grapple` | Grappling hook on/off, throw speed, rope length, haul force and damping, hold distance and slack, shore haul, entity damage, lost hooks, latching on world blocks and on your own ship, cleats and rings, railings holding the hook and tearing out (`latches_hold`, `railing_break_force`), climbing; `launch` (from the musket), `slide` (sliding along a rope). |
 | `boarding` | `plank`: the boarding plank on/off, length, steepest pitch (`max_pitch`, 45 degrees), pick-up, break distance and rise. |
 | `apparel` | Armour of the hats, coats, breeches and boots. |

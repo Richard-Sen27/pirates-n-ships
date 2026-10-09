@@ -4,7 +4,7 @@ Minecraft mod. Full spec: `docs/design.md`. Read it at the start of every sessio
 
 ## Stack (do not deviate)
 - Minecraft **1.21.1**, Java **21**, Mojang mappings + Parchment.
-- **Multiloader project** (based on the MultiLoader-Template): `common/` (vanilla only), `neoforge/` (ModDevGradle), `fabric/` (Loom, disabled until the Fabric port milestone in design.md).
+- **Multiloader project** (based on the MultiLoader-Template): `common/` (vanilla only), `neoforge/` (ModDevGradle), `fabric/` (Loom, enabled since FAB1; the client port is FAB2; see `docs/fabric.md`). Gradle 9.5 runs on a Java 21 toolchain (`gradle/gradle-daemon-jvm.properties`).
 - Hard dependency: **Sable** (physics / sub-levels). `common` uses `sable-common`. Hard dependency: **GeckoLib** (animated entities; `common` compiles against `geckolib-common-1.21.1`). Client-side hard dependency: **Player Animation Library** (player melee animations). **No Create dependency.**
 - Every new dependency must exist for both NeoForge and Fabric, or be optional behind a compat module.
 - Never use APIs from older Forge/NeoForge versions (e.g. `DeferredRegister` patterns from 1.19, `IForgeCapability`, `RegistryObject`). When unsure, look it up in the generated MC/NeoForge sources instead of guessing.
@@ -29,6 +29,7 @@ Minecraft mod. Full spec: `docs/design.md`. Read it at the start of every sessio
 ## Commands
 - Build all enabled modules: `./gradlew build`
 - Logic tests (NeoForge runner): `./gradlew :neoforge:runGameTestServer`
+- The same tests on Fabric: `./gradlew :fabric:runGameTest` (same `pirates_n_ships.gametest.only` scoping; the merge stage runs it once per batch with `FABRIC=1`).
 - Scoped GameTests (what an agent runs; the merge stage runs the whole suite): `JAVA_TOOL_OPTIONS="-Dpirates_n_ships.gametest.only=FooGameTests,BarGameTests" ./gradlew :neoforge:runGameTestServer` (class simple names, case-insensitive; `ModGameTests.ONLY_PROPERTY`).
 - Generate data: `./gradlew :neoforge:runData` (output goes to `common/src/generated/resources`)
 - Dev client (run by the human, not by you): `./gradlew :neoforge:runClient`

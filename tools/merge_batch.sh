@@ -2,6 +2,7 @@
 # Orchestrator batch stage: merges several verified agent branches into `.claude/worktrees/merge`, verifies the
 # combined tree once (runData, guide, build, N GameTest rounds) and lands it on main.
 #   tools/merge_batch.sh <gametest runs> "<pkg>|<branch>|<merge commit subject>" ...
+#   FABRIC=1 adds one run of the Fabric GameTest suite after the NeoForge rounds.
 #   CONTINUE=1 tools/merge_batch.sh <runs> "<remaining entries>"...   after resolving a conflict by hand: commits the
 #   in-progress merge (conflicts resolved and added), merges the remaining entries, verifies, lands.
 # Conflicts under common/src/generated/resources and the generated guides are taken from the branch and regenerated;
@@ -60,6 +61,13 @@ for i in $(seq 1 "$RUNS"); do
     echo "GAMETEST RUN $i FAILED"; grep -E 'failed at|required tests' "$LOG/gametest-$i.log" | head -5 | cut -c1-300; exit 6
   fi
 done
+if [ -n "${FABRIC:-}" ]; then
+  if ./gradlew :fabric:runGameTest > "$LOG/gametest-fabric.log" 2>&1 && grep -q 'required tests passed' "$LOG/gametest-fabric.log"; then
+    echo "fabric gametest ok: $(grep -o 'All [0-9]* required tests' "$LOG/gametest-fabric.log" | head -1 | sed 's/All //')"
+  else
+    echo "FABRIC GAMETEST FAILED"; grep -E 'failed at|required tests' "$LOG/gametest-fabric.log" | head -5 | cut -c1-300; exit 6
+  fi
+fi
 H=$(git rev-parse --short HEAD)
 cd "$ROOT" || exit 1
 if git merge --ff-only -q "$H" 2> "$LOG/ff.log"; then echo "MERGED$PKGS -> main at $H (fast-forward)"; exit 0; fi

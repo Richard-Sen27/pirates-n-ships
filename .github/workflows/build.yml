@@ -24,3 +24,5 @@ jobs:
 
       - name: GameTests (NeoForge, Sable loaded)
         run: ./gradlew :neoforge:runGameTestServer --console=plain
+      - name: GameTests on Fabric
+        run: ./gradlew :fabric:runGameTest --console=plain

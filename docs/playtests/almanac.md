@@ -128,3 +128,39 @@ payload is covered by `AlmanacGuideTest` (JUnit) and `AlmanacDataGameTests`; how
    cell then the description; commands and config keys plain text (no backticks), `|` alternatives intact
    (`hoist|reef|furl`). What does not exist yet is the last chapter.
 8. **Last page** still works with the new chapters: read into Sailing, close, relog: it reopens there.
+
+# Playtest: the Almanac's real look (work package ART14)
+
+The tome's texture, the item model and the screen's parchment, leather and bookmarks replace the placeholders. The
+textures are checked byte for byte against their scripts (`AlmanacTexturesTest`) and the item model by
+`HandMadeModelsTest`; the look needs a client. Reference renders: `art/renders/captains_almanac.png` (the tome closed,
+open, turning; the item in the slot) and `art/renders/captains_almanac_screen.png`. Please check both clients and send
+screenshots.
+
+## Steps
+1. **Tome closed on a table:** sneak-place it on a chart table or crafting table. It lies closed: a dark brown leather
+   cover with a tooled frame and a lighter panel, brass caps on the two corners away from the spine, a brass strap at
+   the middle of the free edge, parchment page edges between the covers, the spine with two raised bands and a red
+   label. No missing (purple-black) texture, no see-through or inside-out faces (the parchment pastedown must not show
+   on top of the closed book).
+2. **Tome open:** right-click it. It opens as before (vanilla's animation); the pages are parchment with three faint
+   ruled lines each and a darker column at the spine; the cover edges around the pages are dark leather; the turning
+   pages are parchment on both sides. Close it (Escape) and check the closed look again after it settles.
+3. **Breaking:** break it: the particles are brown leather with bits of brass and parchment (the item texture).
+4. **Item in a slot:** the tome lies three-quarter in the slot, fore-edge with the brass clasp towards the lower left,
+   its thickness and all four brass corners visible, the cover's frame and gilt lozenge readable; it fills the slot
+   like a block item without touching the slot's edges. Also in the hotbar and the creative tab.
+5. **Item in hand:** third person (F5): held upright in the fist, spine down, cover facing outwards, not cutting
+   through the arm; left hand mirrored. First person: the cover faces you at the lower right, fore-edge and clasp to the
+   right, not clipping the camera. Dropped on the ground: small, lying flat. In an item frame: cover out, spine on the
+   left, centred.
+6. **Screen:** open it: leather boards with a tooled line and brass corner plates, two parchment pages with a soft warm
+   mottling, faint ruled lines, a darker gutter and crease at the spine, page stacks at the sides and bottom. The
+   bookmarks: silk ribbons in the chapter colours with stitched edges and a swallowtail end; the open chapter's sticks
+   out further; hover lightens it.
+7. **Readability:** read a full page at GUI scale 2 and 3: the dark ink text, the dim page numbers, the navy links and
+   the red warning stand out clearly on every part of the parchment, also over the darker mottles and near the
+   gutter. Report if the ruled lines fight with the text (they sit one pixel under plain lines of text; headings,
+   lists and pictures shift text off them; `RULE_STRENGTH` in `tools/gen_almanac_textures.py` makes them fainter).
+8. **Page turn:** turn pages slowly (`almanac_screen.page_turn_ticks` 20): the fold darkens smoothly towards the turning
+   page's free edge, no visible vertical bands (32 shade strips now).

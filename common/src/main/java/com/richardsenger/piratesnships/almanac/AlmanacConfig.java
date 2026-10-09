@@ -13,6 +13,9 @@ public final class AlmanacConfig {
             "The Captain's Almanac can be read, in hand or placed (off = the tome is decoration: it never opens or animates)");
     public static final ConfigValue<Integer> OPEN_TICKS = SECTION.intRange("open_ticks", 100, 10, 1200,
             "How long a placed almanac lies open after a right-click at the least, in ticks (20 ticks = 1 second); it stays open longer while the reader still has it open");
+    /** ALM2: the last page per player ({@code almanac.data.AlmanacDataConfig} forwards to it). */
+    public static final ConfigValue<Boolean> REMEMBER_PAGE = SECTION.bool("remember_page", true,
+            "The Almanac opens at the page each player last read, also after death and relog (false: nothing is stored, it opens at the start)");
 
     private AlmanacConfig() {
     }

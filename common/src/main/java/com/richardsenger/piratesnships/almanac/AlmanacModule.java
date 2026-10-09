@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.almanac;
 
 import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.almanac.data.AlmanacData;
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
@@ -16,12 +17,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * The {@code almanac} module: the Captain's Almanac, the in-game guide (docs/design.md §3.4). ALM1: the book item, the
- * placed tome with its opening animation, and the open/close payloads; the chapters (ALM2), the screen (ALM3) and the
- * Ponder scenes (ALM4) build on them.
+ * placed tome with its opening animation, and the open/close payloads; ALM2: the chapters, their sync and the last
+ * page per player ({@link AlmanacData}, hooked in here); the screen (ALM3) and the Ponder scenes (ALM4) build on them.
  */
 public final class AlmanacModule implements ModModule {
 
@@ -33,26 +35,31 @@ public final class AlmanacModule implements ModModule {
     @Override
     public void registerConfig() {
         AlmanacConfig.init();
+        AlmanacData.registerConfig();
     }
 
     @Override
     public void registerContent() {
         AlmanacContent.init();
+        AlmanacData.registerContent();
     }
 
     @Override
     public void registerPayloads() {
         AlmanacReading.registerPayloads();
+        AlmanacData.registerPayloads();
     }
 
     @Override
     public void registerEvents() {
         CommonEvents.SERVER_STOPPED.register(AlmanacReading::onServerStopped);
+        AlmanacData.registerEvents();
     }
 
     @Override
     public void initClient() {
         com.richardsenger.piratesnships.almanac.client.AlmanacClientSetup.init();
+        AlmanacData.initClient();
     }
 
     @Override
@@ -73,10 +80,13 @@ public final class AlmanacModule implements ModModule {
                 .requires(Items.BOOK).requires(Items.LEATHER, 2).requires(Items.COPPER_INGOT, 2)
                 .unlockedBy("has_book", InventoryChangeTrigger.TriggerInstance.hasItems(Items.BOOK))
                 .save(out, AlmanacContent.ALMANAC.id()));
+        AlmanacData.gatherData(data);
     }
 
     @Override
     public List<Class<?>> gameTestClasses() {
-        return List.of(AlmanacGameTests.class);
+        List<Class<?>> tests = new ArrayList<>(List.of(AlmanacGameTests.class));
+        tests.addAll(AlmanacData.gameTestClasses());
+        return List.copyOf(tests);
     }
 }

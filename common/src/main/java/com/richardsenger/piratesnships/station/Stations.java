@@ -204,6 +204,20 @@ public final class Stations {
         return e != null && e.state().occupant() != null;
     }
 
+    /**
+     * Whether the station at {@code ref} is carrying out an order right now: an order in progress whose occupant is at
+     * the station (WALK1's attendance: a crew member still walking there holds the work). The capstan's bars turn and
+     * its crew member walks round the drum only then (CAP2).
+     */
+    public static boolean isWorking(ServerLevel level, StationRef ref) {
+        Entry e = STATES.get(ref);
+        if (e == null || e.state().phase() != StationState.Phase.OPERATING) {
+            return false;
+        }
+        StationState.Occupant who = e.state().occupant();
+        return who != null && attendance.present(level, ref, who.id());
+    }
+
     /** Advances the orders in progress of this level; orders of ships that are not loaded wait. */
     public static void onLevelTick(ServerLevel level) {
         if (STATES.isEmpty()) {

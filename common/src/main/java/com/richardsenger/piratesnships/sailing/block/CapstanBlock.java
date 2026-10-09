@@ -6,6 +6,8 @@ import com.richardsenger.piratesnships.sailing.ship.ShipControls;
 import com.richardsenger.piratesnships.station.StationBlock;
 import com.richardsenger.piratesnships.station.StationKind;
 import com.richardsenger.piratesnships.station.Stations;
+import com.richardsenger.piratesnships.station.capstan.CapstanBlockEntity;
+import com.richardsenger.piratesnships.station.capstan.CapstanContent;
 import com.richardsenger.piratesnships.station.capstan.CapstanStation;
 import java.util.Locale;
 import net.minecraft.core.BlockPos;
@@ -18,10 +20,15 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The capstan (docs/design.md §5.3, §6): on an assembled ship, using it drops the ship's anchor, and using it again
@@ -35,8 +42,13 @@ import net.minecraft.world.phys.BlockHitResult;
  *
  * <p>CRW3: the capstan is a crew station ({@code station.capstan.CapstanStation}): a crew member at it drops and raises
  * the anchor on order, through {@link ShipControls#dropAnchor} and {@link ShipControls#raiseAnchor}.
+ *
+ * <p>CAP2: the block model ({@code block/capstan}) is the base and the drum; the bars and the drumhead
+ * ({@code block/capstan_bars}) are drawn by {@code station.capstan.client.CapstanBarsRenderer} from the block entity
+ * ({@link CapstanBlockEntity}), turning while a crew member works the capstan; the item shows both
+ * ({@code block/capstan_item}).
  */
-public class CapstanBlock extends Block implements StationBlock {
+public class CapstanBlock extends Block implements StationBlock, EntityBlock {
 
     /** Block-state mirror of {@link AnchorState.Phase}. */
     public enum Phase implements StringRepresentable {
@@ -78,6 +90,20 @@ public class CapstanBlock extends Block implements StationBlock {
         if (level instanceof ServerLevel serverLevel && !oldState.is(this)) {
             AnchorEntities.capstanPlaced(serverLevel, pos); // a capstan on a ship gets its visible anchor
         }
+    }
+
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new CapstanBlockEntity(pos, state);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends BlockEntity> @Nullable BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        if (level.isClientSide || type != CapstanContent.CAPSTAN_ENTITY.get()) {
+            return null;
+        }
+        return (BlockEntityTicker<T>) (BlockEntityTicker<CapstanBlockEntity>) CapstanBlockEntity::serverTick;
     }
 
     @Override

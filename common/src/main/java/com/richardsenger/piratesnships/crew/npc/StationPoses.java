@@ -11,7 +11,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Quaterniondc;
+import org.joml.Vector3d;
 
 /**
  * Station poses of the crew (ART7, {@code art/README.md} "Crew station animations (ART7)"): what a crew member at its
@@ -26,12 +29,24 @@ public final class StationPoses {
      * What a crew member shows at its station.
      *
      * @param pose   a station pose ({@link CrewPose#isStationPose()})
-     * @param facing the plot direction it faces (towards the wheel, the gun), or null to let it look around
+     * @param facing  the plot direction it faces (towards the wheel, the gun), or null to let it look around
+     * @param heading a horizontal plot direction it faces instead of {@code facing}, any way round (CAP2: along the
+     *                capstan's circle while it walks the bars round), or null
      */
-    public record Shown(CrewPose pose, @Nullable Direction facing) {
+    public record Shown(CrewPose pose, @Nullable Direction facing, @Nullable Vec3 heading) {
         public Shown {
             if (!pose.isStationPose()) throw new IllegalArgumentException(pose + " is not a station pose");
             if (facing != null && facing.getAxis().isVertical()) throw new IllegalArgumentException("facing must be horizontal");
+            if (heading != null && heading.x * heading.x + heading.z * heading.z < 1e-12) heading = null;
+        }
+
+        public Shown(CrewPose pose, @Nullable Direction facing) {
+            this(pose, facing, null);
+        }
+
+        /** Whether it turns to a set direction ({@link #heading} or {@link #facing}) rather than looking around. */
+        public boolean faces() {
+            return heading != null || facing != null;
         }
     }
 
@@ -79,5 +94,31 @@ public final class StationPoses {
      */
     public static float yaw(Direction facing, @Nullable Quaterniondc shipOrientation) {
         return SleepAxis.yaw(facing.getOpposite(), shipOrientation);
+    }
+
+    /**
+     * The world yaw of an entity facing the horizontal plot direction {@code heading} (CAP2), like
+     * {@link #yaw(Direction, Quaterniondc)} for any direction: turned into the world and projected on the horizontal plane.
+     */
+    public static float yaw(Vec3 heading, @Nullable Quaterniondc shipOrientation) {
+        Vector3d d = new Vector3d(heading.x, 0, heading.z);
+        if (shipOrientation != null) {
+            Vector3d w = shipOrientation.transform(new Vector3d(d));
+            if (w.x * w.x + w.z * w.z > 1e-8) {
+                d = w;
+            }
+        }
+        return Mth.wrapDegrees((float) Math.toDegrees(Math.atan2(-d.x, d.z)));
+    }
+
+    /** The yaw of the pose {@code shown} on a ship with {@code shipOrientation}: its heading, else its facing. */
+    public static float yaw(Shown shown, @Nullable Quaterniondc shipOrientation) {
+        Vec3 heading = shown.heading();
+        if (heading != null) {
+            return yaw(heading, shipOrientation);
+        }
+        Direction facing = shown.facing();
+        if (facing == null) throw new IllegalArgumentException("the pose faces nowhere");
+        return yaw(facing, shipOrientation);
     }
 }

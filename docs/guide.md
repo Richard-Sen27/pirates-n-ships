@@ -316,7 +316,8 @@ and does not hold. Server config `anchor`.
 
 You can also put a crew member on the capstan: use the Captain's Whistle on the crew member, then on the
 capstan. In the whistle menu, "Drop anchor" makes the hand lean into the bars for two seconds before the anchor runs
-out, and "Weigh anchor" starts the winding at once; he keeps pushing until the anchor is stowed. A free hand on deck
+out, and "Weigh anchor" starts the winding at once; he keeps pushing until the anchor is stowed. While he works, the
+capstan's bars turn and he walks round the drum pushing them, then steps back to his spot. A free hand on deck
 takes an unmanned capstan by himself when you give the order. Over water deeper than the chain he refuses: "No
 ground for the anchor within the chain's reach, captain!" Commands: `/pirates crew order drop_anchor` and
 `raise_anchor`. Server config `crew_stations.capstan`.

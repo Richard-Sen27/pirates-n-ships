@@ -9,7 +9,7 @@ import com.richardsenger.piratesnships.hazard.HazardConfig;
  * Client config section {@code wind_effects} (docs/design.md §17, §5.4 "Seeing wind and waves", WD1): the wind streaks.
  * The foam's values live in the existing client section {@code wave_effects} ({@link HazardConfig}). Defaults come from
  * {@link WindStreakRules#DEFAULTS}, {@link WindStreakStyle#DEFAULTS} (WD2) and {@link FoamRules#DEFAULTS};
- * {@link #windStreaks()}, {@link #windStyle()} and {@link #foam()} are the only adapters from config to the pure rules.
+ * {@link #windStreaks()}, {@link #windStyle()}, {@link #foam()} and {@link #wake()} (WAKE1) are the only adapters from config to the pure rules.
  * Client visuals only, no gameplay effect.
  */
 public final class SeaEffectsConfig {
@@ -75,5 +75,12 @@ public final class SeaEffectsConfig {
     public static FoamRules foam() {
         return new FoamRules(HazardConfig.FOAM_DENSITY.get(), HazardConfig.FOAM_MIN_AMPLITUDE.get(),
                 HazardConfig.FOAM_RADIUS.get(), HazardConfig.FOAM_LIFE_TICKS.get());
+    }
+
+    /** The wake rules from the current client config ({@code wave_effects.wake_*}, WAKE1). */
+    public static WakeRules wake() {
+        return new WakeRules(HazardConfig.WAKE_RADIUS.get(), HazardConfig.WAKE_MIN_SPEED.get(),
+                HazardConfig.WAKE_FULL_SPEED.get(), HazardConfig.WAKE_DENSITY.get(), HazardConfig.WAKE_LIFE_TICKS.get(),
+                HazardConfig.WAKE_SPREAD_DEGREES.get());
     }
 }

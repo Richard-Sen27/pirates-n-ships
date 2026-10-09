@@ -258,6 +258,77 @@ where they come from; turn the sloop beam on). Please send a short clip of steps
   sees flat water and pulls the hull back to the still waterline.
 - Ships in waves still never fall asleep in the physics engine.
 
+## WAKE1: the wake behind ships
+
+The rules (the waterline outline of a hull read from one plot layer, only its sea side; the stem, stern and sides
+found along the course, so a ship drifting sideways sheds its trail from the lee side; rates and opacity by speed,
+nothing below `wake_min_speed`; the bow wave's sideways speed `speed × tan(wake_spread_degrees)`, so seen from the ship
+its arms run back at the Kelvin angle; the stern trail drifting apart and settling; the fades) are covered by JUnit
+(`WakeRulesTest`). Nothing here touches the server or gameplay. Only the look needs the game.
+
+**How it works, in short.** Every client tick each ship within `wave_effects.wake_radius` (64) of the camera that moves
+through the water at `wake_min_speed` (1 block/s) or more sheds flat foam quads (the WD1 foam sprite) on the water:
+a **bow wave** on both sides of the stem moving straight out, so it forms a V of 19.5° (`wake_spread_degrees`) behind
+the bow and fades over 6 s; a **stern trail** across the stern's width, drifting slowly apart so it widens into a V,
+fading over `wake_life_ticks` (160, 8 s); above about 3.5 blocks/s a **thin foam line** along the hull sides (short
+lived), and above about 4.5 blocks/s a few **splash streaks** rising at the stem. The rates and the opacity grow with
+the speed up to `wake_full_speed` (8 blocks/s); `wake_density` (0.6 quads per tick per block of stern width at full
+speed) scales all of them. The quads stay where the water is (a turning ship leaves a curved wake), never spawn inside
+a dry hull, and share a cap of 48 per tick. The hull's waterline is read from the ship's blocks once a second.
+
+Setup: `./gradlew :neoforge:runClient`, a creative world with cheats on, default config, open sea, `/weather clear`,
+`/pirates waves set calm` (so the WD1 foam does not mix in). Place a starter sloop with
+`/pirates ship place starter_sloop assemble` and take the helm; the HUD shows the speed (set its unit to blocks per
+second in the HUD settings, or read knots: 1 block/s is about 1.94 kn). Hold a wind with `/pirates wind set <from> <strength>`
+to reach the speeds below. Please send screenshots or short clips of steps 1 to 4 (from the deck and from a height of
+about 15 blocks beside the ship), and `latest.log` if anything goes wrong.
+
+1. **At anchor.** Anchor the sloop (or leave the sails furled in a calm).
+   - **Expected:** no wake at all; the sloop rocking on the waves makes none either.
+2. **2 blocks/s.** A light wind, sails set.
+   - **Expected:** a faint, narrow trail behind the stern and a faint V of foam opening from the bow; no foam line
+     along the sides, no splash. Tune the faintness with `wake_density` and `wake_min_speed`.
+3. **5 blocks/s.** A fresh wind on a reach.
+   - **Expected:** a clearer V trail behind the stern, widening slowly and fading out about 30 to 40 blocks behind; the
+     bow wave's two arms run back from the stem at a narrow angle (about 20° each side of the course) and reach well
+     out beside the trail; a thin foam line hugs the waterline along both sides; now and then a small splash at the bow.
+4. **8 blocks/s.** A strong wind running free.
+   - **Expected:** the densest and brightest wake (but still translucent), the trail stretching about 60 blocks;
+     the bow wave clearly a V. Is the V too wide or too narrow? (`wake_spread_degrees`) Too long or short?
+     (`wake_life_ticks`) Too dense or sparse? (`wake_density`) Do the foam quads z-fight with the water or the WD1
+     foam?
+5. **Turning.** At 5 blocks/s or more put the helm hard over and sail a full circle.
+   - **Expected:** the trail stays on the water where the ship was, so it draws a curve (a circle after a full turn)
+     and fades from its old end; it does not swing round with the stern.
+6. **Inside and under the hull.** Watch from the deck and from inside the dry hold while sailing at 5 blocks/s.
+   - **Expected:** no foam inside the hold (no quad appears on the water inside the hull, also not from the bow
+     wave the hull sails over), none on the deck; foam beside the hull is drawn on the water, not on the planks.
+7. **Particles setting and toggle.** Video setting Particles: Decreased gives about half; **Minimal gives none**.
+   Client config `wave_effects.wake = false`: no wake. Turn them back.
+8. **Several ships and range.** Place a second sloop, sail both, and watch from 50 and from 80 blocks away.
+   - **Expected:** both leave a wake; beyond `wake_radius` (64) a ship leaves none (the old trail fades out).
+9. **Performance.** At 8 blocks/s with `wake_density = 2`, watch the F3 particle count ("P:") and the frame rate.
+   - **Expected:** at defaults a sloop at full speed adds roughly 400 to 600 particles; at the raised density it
+     stays playable (48 new per tick at most).
+
+Config keys per aspect: `wake` (on/off), `wake_radius` (which ships), `wake_min_speed` (the speed where it starts),
+`wake_full_speed` (where it is densest and brightest), `wake_density` (how much foam), `wake_life_ticks` (how long the
+trail is), `wake_spread_degrees` (the angle of the bow wave's V and how fast the stern trail widens).
+
+### Known limits
+
+- With the visible surface on (`wave_effects.surface`, WAV3) the flat wake quads rise and fall with it like the
+  foam; with it off or fallen back (Sodium, Iris, ...) they lie on the still water level. Check both in a storm: the
+  wake should neither float above a trough nor sink into a crest.
+- The speed is the ship's speed over the ground (there are no currents, so it is also its speed through the water);
+  it comes from the pose change per tick, smoothed, so a ship that is towed or pushed also leaves a wake.
+- The outline is one block layer at the waterline, re-read once a second: a hull that heels far over sheds from its
+  upright outline; a block placed at the waterline shows up within a second.
+- Every Sable sub-level floating at the waterline with at least four blocks in that layer counts as a ship (a raft
+  or a drifting wreck leaves a wake too).
+- Wake quads do not collide: a bow wave arm can cross a jetty or another hull.
+- Shader packs (Iris) and Fabulous graphics were not checked.
+
 ## WAV3: the visible sea
 
 The rules (which water columns carry the surface: still water at sea level − 1 with air above; the depth fade, 0 at

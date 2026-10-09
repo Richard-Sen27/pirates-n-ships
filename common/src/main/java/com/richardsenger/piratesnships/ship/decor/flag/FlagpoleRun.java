@@ -30,6 +30,23 @@ public final class FlagpoleRun {
         return level.getBlockState(pos).getBlock() instanceof FlagpoleBlock;
     }
 
+    /** What the block at {@code pos} is to a pole (FLG3): a flagpole, a footing (pedestal, crow's nest) or anything else. */
+    public static FlagpoleFoot.Support support(BlockGetter level, BlockPos pos) {
+        var block = level.getBlockState(pos).getBlock();
+        if (block instanceof FlagpoleBlock) return FlagpoleFoot.Support.FLAGPOLE;
+        if (block instanceof FlagpoleFooting footing) return footing.footing();
+        return FlagpoleFoot.Support.OTHER;
+    }
+
+    /**
+     * The pole the flagpole at {@code pos} belongs to, as blocks ({@link FlagpoleFoot#read}): foot, head, height and the
+     * block that draws the cleat (FLG3: the footing under the foot, else the foot). Reads the stack whatever
+     * {@code flags.stacked_poles} says; the flag's owner is still {@link #head}.
+     */
+    public static FlagpoleFoot.Pole pole(BlockGetter level, BlockPos pos) {
+        return FlagpoleFoot.read(dy -> support(level, pos.above(dy)), WALK_LIMIT);
+    }
+
     /** Contiguous flagpole blocks directly above {@code pos} (not counting {@code pos}), up to {@code limit}. */
     public static int countAbove(BlockGetter level, BlockPos pos, int limit) {
         int n = 0;

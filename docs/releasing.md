@@ -77,8 +77,9 @@ Before tagging, check:
 1. `main` is green on CI (build, JUnit, GameTests).
 2. The playtests for everything new since the last release are done (`docs/playtests/`, and the playtest list at the end of `docs/progress.md`). Nothing the release notes advertise should be unplaytested.
 3. `docs/progress.md` has no open blocker for the features in this release.
-4. Preview the notes: `python3 tools/release_notes.py <previous-tag> HEAD`.
-5. Optionally a dry run: Actions → Release → Run workflow, `version` = the planned tag, `dry_run` checked. It builds, runs the tests on both loaders, shows the notes in the job summary and attaches both jars as a workflow artifact.
+4. `docs/release/save-compatibility.md` is current: every stored format, block state, registry id or config key changed since the last release is in it (what converts, what is lost, what a player does by hand), and `KeptIdsTest` passes.
+5. Preview the notes: `python3 tools/release_notes.py <previous-tag> HEAD`.
+6. Optionally a dry run: Actions → Release → Run workflow, `version` = the planned tag, `dry_run` checked. It builds, runs the tests on both loaders, shows the notes in the job summary and attaches both jars as a workflow artifact.
 
 Then tag and push:
 

@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * Pure rules of the ratline nets (RL2, docs/design.md §4.8 "Ratline nets between fittings"): the cells a net strung
  * between two ring points takes (a 3D DDA walk), whether a net may be strung (length and pitch), and the climbing
- * assist's velocity along the net. Coordinates are block coordinates in one frame (the world, or one ship's plot).
+ * assist's velocity along the net; RL4's fans (several strands sharing a hub, the triangles between them). Coordinates are block coordinates in one frame (the world, or one ship's plot).
  */
 public final class RatlineNetRules {
 
@@ -40,8 +40,13 @@ public final class RatlineNetRules {
         TOO_FLAT
     }
 
-    /** Upper bound of the cells one walk may return (a guard against a broken input; the length rule is far below). */
+    /**
+     * Upper bound of the cells one walk may return (a guard against a broken input): a line of the longest allowed net
+     * ({@code rigging.net_max_length} at most 64) crosses at most 3 x 64 + 1 = 193 cells.
+     */
     private static final int MAX_CELLS = 256;
+    /** Upper bound of the cells of one fan triangle (legs of 64 blocks, a base of 16: about 1500 cells at most). */
+    private static final int MAX_TRIANGLE_CELLS = 16384;
 
     private RatlineNetRules() {
     }
@@ -150,6 +155,196 @@ public final class RatlineNetRules {
             return f < 1.0e-9 ? new Point(1, 0, 0) : new Point(fallbackX / f, 0, fallbackZ / f);
         }
         return new Point(-d.z / h, 0, d.x / h);
+    }
+
+    // ------------------------------------------------------------------ fans (RL4)
+
+    /** A cell of a fan: the strand that owns it (its index in fan order) and whether it fills a triangle. */
+    public record FanCell(Cell cell, int owner, boolean fill) {
+    }
+
+    /**
+     * The bearing of a strand's foot ring {@code foot} around its hub ring {@code hub} [degrees, 0..360): the
+     * horizontal angle {@code atan2(dz, dx)}. A foot straight under the hub has bearing 0.
+     */
+    public static double bearing(Point hub, Point foot) {
+        double dx = foot.x - hub.x, dz = foot.z - hub.z;
+        if (Math.abs(dx) < 1.0e-9 && Math.abs(dz) < 1.0e-9) {
+            return 0;
+        }
+        double a = Math.toDegrees(Math.atan2(dz, dx));
+        return a < 0 ? a + 360 : a;
+    }
+
+    /**
+     * The fan order of strands with feet {@code feet} round the hub {@code hub}: their indices sorted by
+     * {@link #bearing}, starting after the widest gap between two neighbouring bearings (the open side of the fan), so
+     * neighbours in the order are neighbours in the fan and the first and the last are its outer strands. Equal bearings
+     * keep the input order.
+     */
+    public static int[] fanOrder(Point hub, List<Point> feet) {
+        int n = feet.size();
+        Integer[] idx = new Integer[n];
+        double[] b = new double[n];
+        for (int i = 0; i < n; i++) {
+            idx[i] = i;
+            b[i] = bearing(hub, feet.get(i));
+        }
+        java.util.Arrays.sort(idx, (p, q) -> Double.compare(b[p], b[q]));
+        int start = 0;
+        if (n > 1) {
+            double widest = -1;
+            for (int i = 0; i < n; i++) {
+                double next = i + 1 < n ? b[idx[i + 1]] : b[idx[0]] + 360;
+                double gap = next - b[idx[i]];
+                if (gap > widest + 1.0e-9) {
+                    widest = gap;
+                    start = (i + 1) % n;
+                }
+            }
+        }
+        int[] out = new int[n];
+        for (int i = 0; i < n; i++) {
+            out[i] = idx[(start + i) % n];
+        }
+        return out;
+    }
+
+    /** Whether two neighbouring strands with feet {@code a} and {@code b} form one net: their feet at most {@code maxSpread} apart. */
+    public static boolean joins(Point a, Point b, double maxSpread) {
+        return b.minus(a).length() <= maxSpread + 1.0e-9;
+    }
+
+    /** The distance between two feet [blocks]. */
+    public static double spread(Point a, Point b) {
+        return b.minus(a).length();
+    }
+
+    /** How far into a cell a triangle must reach to take it [blocks]: a triangle only touching a face takes nothing. */
+    private static final double TOUCH = 1.0e-6;
+
+    /**
+     * Every cell the triangle ({@code hub}, {@code a}, {@code b}) passes through, sorted by y, then x, then z: each cell
+     * of the triangle's bounding box tested exactly against it (the separating-axis test of a triangle and a box, the
+     * box shrunk by {@link #TOUCH}). A walk of cross lines every half block misses the slivers where the
+     * triangle only clips a cell's corner, and a climber would fall through those.
+     */
+    public static List<Cell> triangleCells(Point hub, Point a, Point b) {
+        int x0 = (int) Math.floor(Math.min(hub.x, Math.min(a.x, b.x))), x1 = (int) Math.floor(Math.max(hub.x, Math.max(a.x, b.x)));
+        int y0 = (int) Math.floor(Math.min(hub.y, Math.min(a.y, b.y))), y1 = (int) Math.floor(Math.max(hub.y, Math.max(a.y, b.y)));
+        int z0 = (int) Math.floor(Math.min(hub.z, Math.min(a.z, b.z))), z1 = (int) Math.floor(Math.max(hub.z, Math.max(a.z, b.z)));
+        List<Cell> out = new ArrayList<>();
+        for (int y = y0; y <= y1; y++) {
+            for (int x = x0; x <= x1; x++) {
+                for (int z = z0; z <= z1; z++) {
+                    if (overlaps(hub, a, b, x + 0.5, y + 0.5, z + 0.5, 0.5 - TOUCH)) {
+                        out.add(new Cell(x, y, z));
+                    }
+                }
+            }
+        }
+        if (out.size() > MAX_TRIANGLE_CELLS) {
+            throw new IllegalArgumentException("a fan triangle of " + out.size() + " cells");
+        }
+        return out;
+    }
+
+    /** Whether the triangle (p, q, r) and the cube round (cx, cy, cz) with half size h overlap (Akenine-Möller's axes). */
+    static boolean overlaps(Point p, Point q, Point r, double cx, double cy, double cz, double h) {
+        double[] v0 = {p.x - cx, p.y - cy, p.z - cz};
+        double[] v1 = {q.x - cx, q.y - cy, q.z - cz};
+        double[] v2 = {r.x - cx, r.y - cy, r.z - cz};
+        double[][] v = {v0, v1, v2};
+        double[][] f = {sub(v1, v0), sub(v2, v1), sub(v0, v2)};
+        // the box's face normals
+        for (int i = 0; i < 3; i++) {
+            double lo = Math.min(v0[i], Math.min(v1[i], v2[i])), hi = Math.max(v0[i], Math.max(v1[i], v2[i]));
+            if (lo > h || hi < -h) {
+                return false;
+            }
+        }
+        // the nine cross products of the box's axes and the triangle's edges
+        for (int i = 0; i < 3; i++) {
+            double[] e = new double[3];
+            e[i] = 1;
+            for (double[] edge : f) {
+                double[] axis = cross(e, edge);
+                if (separates(axis, v, h)) {
+                    return false;
+                }
+            }
+        }
+        // the triangle's plane
+        return !separates(cross(f[0], f[1]), v, h);
+    }
+
+    private static boolean separates(double[] axis, double[][] v, double h) {
+        double p0 = dot(axis, v[0]), p1 = dot(axis, v[1]), p2 = dot(axis, v[2]);
+        double r = h * (Math.abs(axis[0]) + Math.abs(axis[1]) + Math.abs(axis[2]));
+        return Math.min(p0, Math.min(p1, p2)) > r || Math.max(p0, Math.max(p1, p2)) < -r;
+    }
+
+    private static double[] sub(double[] a, double[] b) {
+        return new double[] {a[0] - b[0], a[1] - b[1], a[2] - b[2]};
+    }
+
+    private static double[] cross(double[] a, double[] b) {
+        return new double[] {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]};
+    }
+
+    private static double dot(double[] a, double[] b) {
+        return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    }
+
+    /**
+     * The cells of a fan round the hub ring {@code hub}: strands with feet {@code feet} and their own cells
+     * {@code strandCells}, both in fan order ({@link #fanOrder}); {@code joinNext[k]} when strand k and k + 1 form one
+     * net ({@link #joins}). First every strand's own cells (a cell two strands share belongs to the earlier one), then
+     * the cells of each joined pair's triangle ({@link #triangleCells}) not yet taken, owned by the earlier strand of
+     * the pair (the one on their left by bearing). The hub's and every foot's own cell are never cells of the fan.
+     */
+    public static List<FanCell> fanCells(Point hub, List<Point> feet, List<List<Cell>> strandCells, boolean[] joinNext) {
+        java.util.Set<Cell> fittings = new java.util.HashSet<>();
+        fittings.add(hub.cell());
+        for (Point f : feet) {
+            fittings.add(f.cell());
+        }
+        java.util.Map<Cell, FanCell> out = new java.util.LinkedHashMap<>();
+        for (int k = 0; k < strandCells.size(); k++) {
+            for (Cell c : strandCells.get(k)) {
+                if (!fittings.contains(c)) {
+                    out.putIfAbsent(c, new FanCell(c, k, false));
+                }
+            }
+        }
+        for (int k = 0; k + 1 < feet.size(); k++) {
+            if (k < joinNext.length && joinNext[k]) {
+                for (Cell c : triangleCells(hub, feet.get(k), feet.get(k + 1))) {
+                    if (!fittings.contains(c)) {
+                        out.putIfAbsent(c, new FanCell(c, k, true));
+                    }
+                }
+            }
+        }
+        return new ArrayList<>(out.values());
+    }
+
+    /** The climb direction of a net cell: from its centre towards the hub ring, unit (straight up when it is there). */
+    public static Point climbDirection(Cell cell, Point hub) {
+        Point d = hub.minus(centre(cell));
+        double len = d.length();
+        return len < 1.0e-9 ? new Point(0, 1, 0) : new Point(d.x / len, d.y / len, d.z / len);
+    }
+
+    /** Whether {@code cell} is a top cell of its net: the next cell from its centre towards the hub ring is the hub's. */
+    public static boolean isTop(Cell cell, Point hub) {
+        List<Cell> w = walk(centre(cell), hub);
+        return w.size() >= 2 && w.get(1).equals(hub.cell());
+    }
+
+    /** The centre of a cell. */
+    public static Point centre(Cell c) {
+        return new Point(c.x() + 0.5, c.y() + 0.5, c.z() + 0.5);
     }
 
     // ------------------------------------------------------------------ climbing assist

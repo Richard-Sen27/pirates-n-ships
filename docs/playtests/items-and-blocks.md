@@ -472,7 +472,7 @@ the rail), `art/renders/railing_item.png`.
 - **Refusals:** a chainplate ten blocks from the mast and a hoop two blocks up (flatter than 30°): "Too flat: N°, at
   least 30°", the net stays in hand and still remembers the first fitting. A block in the line: "Blocked at x y z"
   naming that block's position. A chainplate on land and a hoop on a ship: "Both ends on one ship or on land". A
-  fitting that already holds a net: "That fitting already holds a net". 14 blocks: "Too long: 14.2 of 12 blocks".
+  fitting that already holds a net: "That fitting already holds a net". A net longer than 32 blocks (e.g. a hoop 34 blocks above the chainplate): "Too long: 33.2 of 32 blocks"; with `rigging.net_max_length = 12` a 14 block net: "Too long: 14.2 of 12 blocks". A tall mast: a chainplate at the rail and a hoop 20 blocks up and 8 in strings and climbs to the top.
 - **Break a cell:** aim into the middle of a net (a small box outline shows) and break it: the whole net vanishes and
   one ratline net drops at the chainplate (the first fitting you used); both fittings stay. Restring it, then place a
   plank into the net, and then break the hoop: each time the net comes down and drops once.
@@ -493,6 +493,27 @@ the rail), `art/renders/railing_item.png`.
   forward alone no longer climbs a diagonal net; jump and forward together still do (jerkily).
 - Say whether the net should be wider (it is 0.8 blocks), denser or thicker, and whether the small outline box of the
   cells gets in the way when aiming at the mast through the net.
+- **Triangle (RL4):** on a hull, put three chainplates on top of the gunwale two blocks apart (e.g. three blocks of rail
+  with one free block between each pair), and a hoop on the mast about five blocks up and three or four blocks inboard,
+  facing the rail. String each chainplate to the hoop (three net items). Expected: after the first, "Net strung through
+  N blocks"; after the second and third, the same. One net is drawn: three ropes from the chainplates meeting at the
+  hoop's ring, rungs every half block running from the left rope through the middle one to the right one, the rungs
+  getting shorter towards the hoop (a triangle); no separate side ropes per strand; the rope texture is not stretched
+  along the rungs. Look at it from the side and from below on a ship that rolls: the triangle stays on its fittings.
+- **Climb the middle:** stand on the rail between the first and second chainplate (in the netted space, not on a
+  chainplate) and hold forward: you climb straight up the triangle to the hoop without falling out between the ropes;
+  try it again from the other gap and from right next to the middle chainplate. Say whether the climb wobbles sideways
+  while you go up (the line you follow is re-aimed at each block).
+- **Break one strand:** break the middle chainplate: one ratline net drops at it; the two outer ropes stay and the
+  triangle is now drawn between them only (rungs from the left rope straight to the right one) and is still climbable
+  in the middle, also through the block where the middle chainplate was. String it again (the item tied on the hoop or
+  the chainplate): the middle rope is back. Break a net cell in the gap between two strands (aim at the small outline
+  near the rail): that gap's strand (the one on its left as you look from the hoop) drops; the rest closes up.
+- **Hoop full:** string two more chainplates to the same hoop (five), then a sixth: "Hoop full: at most 5 nets" (also
+  when you use the net on the full hoop first).
+- **Too far apart:** a chainplate 7 or more blocks along the rail from the nearest one of the fan: "Too far apart for
+  one net: 7.0" (the distance); it is drawn as its own two-rope net with nothing between it and the fan.
+- **Break the hoop:** every strand drops (three nets, each at its own chainplate), nothing climbable stays.
 
 ## Ship's bell swing (BELL1)
 

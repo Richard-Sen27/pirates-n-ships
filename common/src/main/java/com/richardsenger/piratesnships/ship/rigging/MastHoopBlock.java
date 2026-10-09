@@ -6,6 +6,8 @@ import com.richardsenger.piratesnships.ship.decor.DecorShapes;
 import com.richardsenger.piratesnships.ship.rigging.RatlineNetRules.Point;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -112,6 +114,12 @@ public class MastHoopBlock extends HorizontalDirectionalBlock implements SimpleW
     @Override
     protected BlockState mirror(BlockState state, Mirror mirror) {
         return state.rotate(mirror.getRotation(state.getValue(FACING)));
+    }
+
+    /** RL4: a hub checks its fan again after a block in it was replaced ({@link RatlineNets#removeStrands}). */
+    @Override
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        RatlineNets.resync(level, pos);
     }
 
     @Override

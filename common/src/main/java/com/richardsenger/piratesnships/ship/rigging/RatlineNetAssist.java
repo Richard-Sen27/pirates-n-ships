@@ -197,14 +197,11 @@ public final class RatlineNetAssist {
     /**
      * The net a climber at the climbable block {@code pos} hangs on: the net of a net cell, or the net a fitting holds
      * (the fittings are climbable too, so a climber gets onto the net from the chainplate's block and off it into the
-     * hoop's).
+     * hoop's); in a fill cell of a fan (RL4) the line through the cell along its climb direction to the hoop
+     * ({@link RatlineNets#climbLine}).
      */
     static @Nullable Net netAt(Level level, BlockPos pos) {
-        if (level.getBlockState(pos).is(RiggingContent.NET_CELL.get())) {
-            return level.getBlockEntity(pos) instanceof RatlineNetCellBlockEntity be && be.fittingA() != null
-                    ? RatlineNets.netOf(level, be.fittingA()) : null;
-        }
-        return level.getBlockState(pos).getBlock() instanceof NetFitting ? RatlineNets.netOf(level, pos) : null;
+        return RatlineNets.climbLine(level, pos);
     }
 
     private static @Nullable Frame frame(Level level, BlockPos cell) {

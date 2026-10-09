@@ -56,7 +56,10 @@ import java.util.function.Supplier;
  * on an assembled hull afloat (the climbing assist, {@code rigging.net_assist}), plus the vanilla-only climb of a
  * vertical net with the assist off; and (RL3) a 62° net climbed on a hull sailing at 4 m/s, straight and turning at
  * 0.3 rad/s, boarded from the deck (Sable carries the climber) and from the ring (the assist carries it); and climbing
- * off the top of a 62° and a vertical net onto a crow's nest one block over the hoop, and back down from it.
+ * off the top of a 62° and a vertical net onto a crow's nest one block over the hoop, and back down from it. RL4's
+ * fans: three strands to one hoop on land and on a ship (the triangle's fill cells, their climb direction, the top
+ * cell), a player climbing a fill to the hoop, breaking a chainplate, a fill cell or the hoop, a strand beyond the
+ * spread and a full hoop, a fan through assembly and a turned disassembly.
  */
 public final class RatlineNetGameTests {
 
@@ -249,9 +252,13 @@ public final class RatlineNetGameTests {
         h.succeed();
     }
 
-    /** A 20 degree line is too flat, a 13 block one too long; both refused and nothing placed. */
-    @ModGameTest(template = GameTestTemplates.EMPTY_24)
+    /**
+     * A 20 degree line is too flat, a 15 block one too long (with {@code rigging.net_max_length} at 12, RL2's old
+     * default; the default is 32 since RL4); both refused and nothing placed.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, batch = BATCH + "length_12")
     public static void aFlatOrLongLineIsRefused(GameTestHelper h) {
+        ConfigOverrides.during(h, RiggingConfig.NET_MAX_LENGTH, 12.0);
         floor(h, 24);
         ServerLevel level = h.getLevel();
         for (int y = 1; y <= 16; y++) {
@@ -389,6 +396,324 @@ public final class RatlineNetGameTests {
     public static void vanillaClimbsAFortyFiveDegreeNetWithJumpAndForward(GameTestHelper h) {
         ConfigOverrides.during(h, RiggingConfig.NET_ASSIST, false);
         landClimb(h, 1, 5, true, true, "45 degree net on land, no assist, jump and forward");
+    }
+
+    // ------------------------------------------------------------------ RL4: fans
+
+    /** The chainplates' z of the land fan: two blocks apart on the floor at x 2, so the rail cells between them are fill. */
+    private static final int[] LAND_FAN_Z = {2, 4, 6};
+    /** The chainplates' z of the ship fan: on the deck at x 9, two blocks apart. */
+    private static final int[] SHIP_FAN_Z = {9, 11, 13};
+
+    /**
+     * A land fan in a 9 block test (6 high): a log mast at x 6, z 4 from y 1 to 5, a hoop on its west side at y 5 (ring
+     * 5.7, 5.5, 4.5) and chainplates on the floor at x 2, z 2, 4 and 6; all three strung to the hoop with one stack of three.
+     * Returns the hoop's absolute position.
+     */
+    private static BlockPos landFan(GameTestHelper h) {
+        floor(h, 9);
+        for (int y = 1; y <= 5; y++) {
+            h.setBlock(new BlockPos(6, y, 4), Blocks.OAK_LOG);
+        }
+        h.setBlock(new BlockPos(5, 5, 4), hoop(Direction.WEST));
+        ServerLevel level = h.getLevel();
+        BlockPos hub = h.absolutePos(new BlockPos(5, 5, 4));
+        ItemStack stack = new ItemStack(RiggingContent.NET_ITEM.get(), 3);
+        for (int z : LAND_FAN_Z) {
+            h.setBlock(new BlockPos(2, 1, z), chainplate(AttachFace.FLOOR, Direction.EAST));
+            String r = string(level, h.absolutePos(new BlockPos(2, 1, z)), hub, stack);
+            h.assertTrue(r.equals(RatlineNetItem.KEY_STRUNG), "strand at z " + z + " not strung: " + r);
+        }
+        h.assertTrue(stack.isEmpty(), "three strands did not use three nets: " + stack.getCount() + " left");
+        return hub;
+    }
+
+    /**
+     * Null when every cell the fan at {@code hub} wants stands as a net cell owned as it should be (strand or fill, the
+     * right strand, the hub), else what is wrong; a fill cell on another fitting is left out by design. {@code fills}
+     * receives the number of fill cells standing.
+     */
+    private static String fanProblem(ServerLevel level, BlockPos hub, int[] fills) {
+        RatlineNets.Fan fan = RatlineNets.fanAt(level, hub);
+        fills[0] = 0;
+        for (var e : fan.cells().entrySet()) {
+            BlockPos p = e.getKey();
+            Net n = e.getValue().owner().net();
+            if (e.getValue().fill() && RatlineNets.skipsFill(level.getBlockState(p))) {
+                continue;
+            }
+            if (!level.getBlockState(p).is(RiggingContent.NET_CELL.get())
+                    || !(level.getBlockEntity(p) instanceof RatlineNetCellBlockEntity cell)
+                    || !cell.ownedBy(n.a(), n.b(), hub, e.getValue().fill())) {
+                return "cell " + p + " (" + e.getValue() + ") is " + level.getBlockState(p);
+            }
+            if (e.getValue().fill()) {
+                fills[0]++;
+            }
+        }
+        return null;
+    }
+
+    private static int netCount(ServerLevel level, BlockPos fitting) {
+        return level.getBlockEntity(fitting) instanceof NetFittingBlockEntity be ? be.netCount() : -1;
+    }
+
+    /**
+     * Three chainplates two blocks apart and one hoop on land: three strands, one net item each; the hoop holds all
+     * three in fan order, joined; every strand's cells stand and the rail cells between the chainplates are fill cells
+     * of the triangles, each knowing its climb direction towards the hoop; the cell under the hoop is a top cell.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void threeStrandsToOneHoopMakeATriangle(GameTestHelper h) {
+        BlockPos hub = landFan(h);
+        ServerLevel level = h.getLevel();
+        h.assertTrue(netCount(level, hub) == 3, "the hoop holds " + netCount(level, hub) + " nets");
+        List<RatlineNets.Strand> strands = RatlineNets.hubStrands(level, hub);
+        h.assertTrue(strands.size() == 3, "the hoop is the hub of " + strands.size() + " strands");
+        // fan order by bearing: z 6, 4, 2; the first two join the next
+        h.assertTrue(strands.get(0).foot().equals(h.absolutePos(new BlockPos(2, 1, 6)))
+                && strands.get(2).foot().equals(h.absolutePos(new BlockPos(2, 1, 2))), "not in fan order: " + strands);
+        NetFittingBlockEntity be = (NetFittingBlockEntity) level.getBlockEntity(hub);
+        h.assertTrue(be.joinsNext(strands.get(0).foot()) && be.joinsNext(strands.get(1).foot())
+                && !be.joinsNext(strands.get(2).foot()), "the strands do not join as one net");
+        for (RatlineNets.Strand s : strands) {
+            h.assertTrue(RatlineNets.standingCells(level, s.net()).size() == s.net().cells().size(), "a strand misses cells");
+        }
+        int[] fills = {0};
+        String problem = fanProblem(level, hub, fills);
+        h.assertTrue(problem == null, "the fan does not stand: " + problem);
+        h.assertTrue(fills[0] >= 2, "expected the rail cells and more as fill, found " + fills[0]);
+        for (int z : new int[] {3, 5}) {
+            BlockPos rail = h.absolutePos(new BlockPos(2, 1, z));
+            h.assertTrue(level.getBlockState(rail).is(BlockTags.CLIMBABLE)
+                    && level.getBlockEntity(rail) instanceof RatlineNetCellBlockEntity cell && cell.isFill(),
+                    "the rail cell at z " + z + " is not a fill cell");
+            RatlineNetCellBlockEntity cell = (RatlineNetCellBlockEntity) level.getBlockEntity(rail);
+            Vec3 d = cell.climbDirection();
+            Point ring = RatlineNets.ring(level, hub);
+            Vec3 want = new Vec3(ring.x(), ring.y(), ring.z()).subtract(Vec3.atCenterOf(rail)).normalize();
+            h.assertTrue(d != null && d.distanceTo(want) < 1e-6, "the climb direction at z " + z + " is " + d + ", expected " + want);
+            h.assertTrue(!cell.isTop(), "a rail cell is a top cell");
+        }
+        BlockPos under = h.absolutePos(new BlockPos(5, 4, 4));
+        h.assertTrue(level.getBlockEntity(under) instanceof RatlineNetCellBlockEntity top && top.isTop(),
+                "the cell under the hoop is not a top cell");
+        h.succeed();
+    }
+
+    /**
+     * Breaking the middle chainplate drops its net only; the outer two strands stay and re-fan into one triangle (the
+     * middle strand's cells now fill it, the broken chainplate's own block too once the hoop checked its fan again).
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void breakingTheMiddleChainplateReFansTheOuterStrands(GameTestHelper h) {
+        BlockPos hub = landFan(h);
+        ServerLevel level = h.getLevel();
+        BlockPos middle = h.absolutePos(new BlockPos(2, 1, 4));
+        Net gone = RatlineNets.net(level, middle, hub);
+        level.destroyBlock(middle, false);
+        h.assertTrue(netCount(level, hub) == 2, "the hoop holds " + netCount(level, hub) + " nets, expected 2");
+        h.runAfterDelay(3, () -> {
+            h.assertTrue(droppedNets(h) == 1, "expected one dropped net, found " + droppedNets(h));
+            for (int z : new int[] {2, 6}) {
+                h.assertTrue(RatlineNets.net(level, h.absolutePos(new BlockPos(2, 1, z)), hub) != null, "the strand at z " + z + " went");
+            }
+            int[] fills = {0};
+            String problem = fanProblem(level, hub, fills);
+            h.assertTrue(problem == null, "the re-fanned net does not stand: " + problem);
+            for (var c : gone.cells()) {
+                BlockPos p = new BlockPos(c.x(), c.y(), c.z());
+                h.assertTrue(level.getBlockState(p).is(RiggingContent.NET_CELL.get()), "the middle strand's cell " + p + " left a hole");
+            }
+            h.assertTrue(level.getBlockEntity(middle) instanceof RatlineNetCellBlockEntity cell && cell.isFill(),
+                    "the broken chainplate's block is not filled");
+            h.succeed();
+        });
+    }
+
+    /** Breaking a fill cell drops the strand that owns it (the middle one owns the fill at z 3) and re-fans the rest. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void breakingAFillCellDropsItsStrand(GameTestHelper h) {
+        BlockPos hub = landFan(h);
+        ServerLevel level = h.getLevel();
+        level.destroyBlock(h.absolutePos(new BlockPos(2, 1, 3)), false);
+        h.assertTrue(RatlineNets.net(level, h.absolutePos(new BlockPos(2, 1, 4)), hub) == null, "the middle strand stayed");
+        h.runAfterDelay(3, () -> {
+            h.assertTrue(droppedNets(h) == 1, "expected one dropped net, found " + droppedNets(h));
+            h.assertTrue(netCount(level, hub) == 2, "the hoop holds " + netCount(level, hub) + " nets, expected 2");
+            int[] fills = {0};
+            String problem = fanProblem(level, hub, fills);
+            h.assertTrue(problem == null, "the re-fanned net does not stand: " + problem);
+            h.succeed();
+        });
+    }
+
+    /** Breaking the hoop drops all three strands, each at its chainplate; no cell is left. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void breakingTheHoopDropsEveryStrand(GameTestHelper h) {
+        BlockPos hub = landFan(h);
+        ServerLevel level = h.getLevel();
+        level.destroyBlock(hub, false);
+        h.runAfterDelay(3, () -> {
+            h.assertTrue(droppedNets(h) == 3, "expected three dropped nets, found " + droppedNets(h));
+            for (int z : LAND_FAN_Z) {
+                h.assertTrue(netCount(level, h.absolutePos(new BlockPos(2, 1, z))) == 0, "a chainplate still holds a net");
+            }
+            BlockPos.betweenClosedStream(h.getBounds()).forEach(p -> h.assertTrue(
+                    !level.getBlockState(p).is(RiggingContent.NET_CELL.get()), "a net cell stayed at " + p));
+            h.succeed();
+        });
+    }
+
+    /**
+     * A fourth strand whose chainplate lies more than {@code rigging.net_max_spread} (6) from its neighbour's is strung
+     * but stays a separate net ("Too far apart for one net"), with no fill towards it; with {@code net_max_strands} at 4
+     * the hoop is then full.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, batch = BATCH + "strands_4")
+    public static void aStrandBeyondTheSpreadStaysSeparateAndTheHoopFills(GameTestHelper h) {
+        ConfigOverrides.during(h, RiggingConfig.NET_MAX_STRANDS, 4);
+        floor(h, 24);
+        for (int y = 1; y <= 9; y++) {
+            h.setBlock(new BlockPos(12, y, 12), Blocks.OAK_LOG);
+        }
+        h.setBlock(new BlockPos(11, 8, 12), hoop(Direction.WEST));
+        ServerLevel level = h.getLevel();
+        BlockPos hub = h.absolutePos(new BlockPos(11, 8, 12));
+        for (int z : new int[] {10, 12, 14}) {
+            h.setBlock(new BlockPos(8, 1, z), chainplate(AttachFace.FLOOR, Direction.EAST));
+            String r = string(level, h.absolutePos(new BlockPos(8, 1, z)), hub, new ItemStack(RiggingContent.NET_ITEM.get()));
+            h.assertTrue(r.equals(RatlineNetItem.KEY_STRUNG), "strand at z " + z + " not strung: " + r);
+        }
+        // 6.3 blocks from the chainplate at z 14
+        h.setBlock(new BlockPos(10, 1, 20), chainplate(AttachFace.FLOOR, Direction.EAST));
+        BlockPos far = h.absolutePos(new BlockPos(10, 1, 20));
+        ItemStack stack = new ItemStack(RiggingContent.NET_ITEM.get());
+        RatlineNetItem.use(level, stack, far, null);
+        Component answer = RatlineNetItem.use(level, stack, hub, null);
+        h.assertTrue(key(answer).equals(RatlineNetItem.KEY_APART), "the far strand was not strung apart: " + answer.getString());
+        h.assertTrue(answer.getString().endsWith("6.3"), "the message does not name the gap: " + answer.getString());
+        h.assertTrue(netCount(level, hub) == 4, "the hoop holds " + netCount(level, hub) + " nets, expected 4");
+        NetFittingBlockEntity be = (NetFittingBlockEntity) level.getBlockEntity(hub);
+        List<RatlineNets.Strand> strands = RatlineNets.hubStrands(level, hub);
+        for (int k = 0; k + 1 < strands.size(); k++) {
+            boolean farPair = strands.get(k).foot().equals(far) || strands.get(k + 1).foot().equals(far);
+            h.assertTrue(be.joinsNext(strands.get(k).foot()) != farPair, "strand " + k + " joins wrongly: " + strands);
+        }
+        int[] fills = {0};
+        String problem = fanProblem(level, hub, fills);
+        h.assertTrue(problem == null, "the fan does not stand: " + problem);
+        h.assertTrue(fills[0] > 0, "the first three strands lost their fill");
+        int lastNear = h.absolutePos(new BlockPos(8, 1, 14)).getZ();
+        for (var e : RatlineNets.fanAt(level, hub).cells().entrySet()) {
+            h.assertTrue(!e.getValue().fill() || e.getKey().getZ() <= lastNear,
+                    "a fill cell reaches towards the far strand at " + e.getKey());
+        }
+        // full: a fifth chainplate is refused at the hoop, and the hoop refuses to be tied first
+        h.setBlock(new BlockPos(8, 1, 8), chainplate(AttachFace.FLOOR, Direction.EAST));
+        String full = string(level, h.absolutePos(new BlockPos(8, 1, 8)), hub, new ItemStack(RiggingContent.NET_ITEM.get()));
+        h.assertTrue(full.equals(RatlineNetItem.KEY_FULL), "a fifth strand was not refused as full: " + full);
+        h.assertTrue(key(RatlineNetItem.use(level, new ItemStack(RiggingContent.NET_ITEM.get()), hub, null)).equals(RatlineNetItem.KEY_FULL),
+                "a full hoop could be tied");
+        h.succeed();
+    }
+
+    /** Climbing the middle of a fill on land: a player at the rail between two chainplates climbs to the hoop. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 160)
+    public static void playerClimbsAFillToTheHoopOnLand(GameTestHelper h) {
+        BlockPos hub = landFan(h);
+        BlockPos plate = h.absolutePos(new BlockPos(2, 1, 4));
+        climb(h, 0, () -> playerInLevel(h, h.absoluteVec(new Vec3(2.5, 1.0, 3.5)), Direction.EAST.toYRot()),
+                () -> RatlineNets.net(h.getLevel(), plate, hub), v -> v, false, true, 120, "fill on land");
+    }
+
+    /**
+     * A hull afloat with a log mast at x 13, z 11 from the deck (y 9) to y 14, a hoop on its west side at y 13 and
+     * chainplates on the deck at x 9, z 9, 11 and 13. Returns the helm.
+     */
+    private static BlockPos shipFanRig(GameTestHelper h) {
+        DryHullGameTests.basin(h, 0, 23, true);
+        SailingGameTestsShips.openSky(h, 24);
+        BlockPos helm = DryHullGameTests.hull(h, 9, false);
+        for (int y = 9; y <= 14; y++) {
+            h.setBlock(new BlockPos(13, y, 11), Blocks.OAK_LOG);
+        }
+        h.setBlock(new BlockPos(12, 13, 11), hoop(Direction.WEST));
+        for (int z : SHIP_FAN_Z) {
+            h.setBlock(new BlockPos(9, 9, z), chainplate(AttachFace.FLOOR, Direction.EAST));
+        }
+        return helm;
+    }
+
+    /**
+     * Three strands strung to one hoop in a ship's plot: three items, the fan stands with its fill; a player standing on
+     * the deck in the fill between the first two chainplates holds forward and climbs to the hoop.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 260)
+    public static void threeStrandsOnAShipAndAPlayerClimbsTheFill(GameTestHelper h) {
+        BlockPos helmRel = shipFanRig(h);
+        Fixture f = DryHullGameTests.assemble(h, helmRel);
+        ServerLevel level = h.getLevel();
+        BlockPos hub = plot(f, helmRel, new BlockPos(12, 13, 11));
+        ItemStack stack = new ItemStack(RiggingContent.NET_ITEM.get(), 3);
+        for (int z : SHIP_FAN_Z) {
+            String r = string(level, plot(f, helmRel, new BlockPos(9, 9, z)), hub, stack);
+            h.assertTrue(r.equals(RatlineNetItem.KEY_STRUNG), "strand at z " + z + " not strung in the plot: " + r);
+        }
+        h.assertTrue(stack.isEmpty() && netCount(level, hub) == 3, "three strands did not take three nets");
+        int[] fills = {0};
+        String problem = fanProblem(level, hub, fills);
+        h.assertTrue(problem == null && fills[0] > 0, "the fan does not stand in the plot: " + problem + ", " + fills[0] + " fill cells");
+        BlockPos start = plot(f, helmRel, new BlockPos(9, 9, 10));
+        h.assertTrue(level.getBlockEntity(start) instanceof RatlineNetCellBlockEntity cell && cell.isFill(),
+                "the deck cell between the first two chainplates is not a fill cell");
+        BlockPos middle = plot(f, helmRel, new BlockPos(9, 9, 11));
+        ShipBody ship = f.ship();
+        climb(h, SETTLE, () -> playerInLevel(h, ship.toWorld(new Vec3(start.getX() + 0.5, start.getY() + 0.02, start.getZ() + 0.5)),
+                        Direction.EAST.toYRot()),
+                () -> RatlineNets.net(level, middle, hub), ship::toPlot, false, true, 130, "fill on a ship");
+    }
+
+    /** A strung fan survives assembly and a disassembly turned a quarter round: strands, order, joins and fill. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 120)
+    public static void aFanSurvivesAssemblyAndATurnedDisassembly(GameTestHelper h) {
+        BlockPos helmRel = shipFanRig(h);
+        ServerLevel level = h.getLevel();
+        BlockPos hubRel = new BlockPos(12, 13, 11);
+        for (int z : SHIP_FAN_Z) {
+            String r = string(level, h.absolutePos(new BlockPos(9, 9, z)), h.absolutePos(hubRel), new ItemStack(RiggingContent.NET_ITEM.get()));
+            h.assertTrue(r.equals(RatlineNetItem.KEY_STRUNG), "strand at z " + z + " not strung on land: " + r);
+        }
+        int[] fills = {0};
+        h.assertTrue(fanProblem(level, h.absolutePos(hubRel), fills) == null, "the fan does not stand on land");
+        int landFills = fills[0];
+        h.assertTrue(landFills > 0, "no fill on land");
+
+        Fixture f = DryHullGameTests.assemble(h, helmRel);
+        BlockPos hub = plot(f, helmRel, hubRel);
+        h.assertTrue(netCount(level, hub) == 3, "the hoop holds " + netCount(level, hub) + " nets after assembly");
+        String problem = fanProblem(level, hub, fills);
+        h.assertTrue(problem == null && fills[0] == landFills, "the fan did not survive assembly: " + problem + ", " + fills[0] + " fills");
+
+        ShipBody ship = f.ship();
+        ship.setOrientation(new Quaterniond().rotateAxis(Math.toRadians(88), 0, 1, 0));
+        BlockPos goal = BlockPos.containing(ship.toWorld(Vec3.atCenterOf(f.helmPlot())));
+        int turns = DisassemblyMath.quarterTurns(ship.orientation());
+        BlockPos hubW = DisassemblyMath.target(hub, f.helmPlot(), goal, turns);
+        AssemblyResult d = ShipAssembler.disassemble(ship, f.helmPlot(), null);
+        h.assertTrue(d.outcome() == AssemblyResult.Outcome.DISASSEMBLED, "expected DISASSEMBLED, got " + d);
+        h.runAfterDelay(2, () -> {
+            h.assertTrue(netCount(level, hubW) == 3, "the hoop holds " + netCount(level, hubW) + " nets after the turned disassembly");
+            List<RatlineNets.Strand> strands = RatlineNets.hubStrands(level, hubW);
+            NetFittingBlockEntity be = (NetFittingBlockEntity) level.getBlockEntity(hubW);
+            h.assertTrue(strands.size() == 3 && be.joinsNext(strands.get(0).foot()) && be.joinsNext(strands.get(1).foot()),
+                    "the fan lost its order or joins: " + strands);
+            int[] after = {0};
+            String p = fanProblem(level, hubW, after);
+            h.assertTrue(p == null && after[0] == landFills, "the fan did not survive the turned disassembly: " + p + ", " + after[0] + " fills");
+            h.assertTrue(droppedNets(h) == 0, "a net broke on the way");
+            h.succeed();
+        });
     }
 
     // ------------------------------------------------------------------ on a ship

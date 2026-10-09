@@ -32,7 +32,7 @@ import java.util.List;
  * The {@code ship.rigging} module (docs/design.md §4.8 "Visual backlog 2", item 1): RL1's ratlines, a climbable rope
  * net hung on a mast or laid sloped from the gunwale to the masthead ({@link RatlinesBlock}); RL2's ratline nets,
  * strung between a chainplate and a mast hoop at any pitch ({@link RatlineNets}) and climbed along their line
- * ({@link RatlineNetAssist}).
+ * ({@link RatlineNetAssist}); RL4's fans, several nets to one hoop netted together into a triangle.
  */
 public final class RiggingModule implements ModModule {
 
@@ -82,7 +82,10 @@ public final class RiggingModule implements ModModule {
                 .add(RatlineNetItem.KEY_OTHER_BODY, "Both ends on one ship or on land")
                 .add(RatlineNetItem.KEY_BUSY, "That fitting already holds a net")
                 .add(RatlineNetItem.KEY_BLOCKED, "Blocked at %s %s %s")
-                .add(RatlineNetItem.KEY_DISABLED, "Ratline nets are disabled"));
+                .add(RatlineNetItem.KEY_DISABLED, "Ratline nets are disabled")
+                // RL4: a hoop's fan
+                .add(RatlineNetItem.KEY_FULL, "Hoop full: at most %s nets")
+                .add(RatlineNetItem.KEY_APART, "Too far apart for one net: %s"));
         data.models(m -> {
             // hand-made Blockbench models (art/models/ratlines.bbmodel, design.md §4.8), drawn facing north: the hung net
             // against the south side, the sloped net rising to the north. Only the block state is generated; the item

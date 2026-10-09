@@ -146,12 +146,16 @@ class HullAnalyzerTest {
     }
 
     @Test
-    void tiltedUpVectorPutsTheLowRimSideFirst() {
-        // Heel 40 degrees: the +x rim is lower, so the pour point drops and the basin shrinks.
+    void tiltedUpVectorLowersThePourPointButKeepsTheCompartment() {
+        // Heel 40 degrees: the +x rim is lower, so the pour point drops. The compartment is the same (CMP1).
         HullVec up = new HullVec(-Math.sin(Math.toRadians(40)), Math.cos(Math.toRadians(40)), 0);
         HullAnalysis level = HullAnalyzer.analyze(openHull5().build());
         HullAnalysis tilted = HullAnalyzer.analyze(openHull5().build(), up);
-        assertTrue(tilted.compartments().get(0).volume() < level.compartments().get(0).volume());
+        assertEquals(level.compartments().get(0).cells(), tilted.compartments().get(0).cells());
+        assertTrue(level.samePartition(tilted));
+        double levelSill = level.compartments().get(0).ports().get(0).sill();
+        double tiltedSill = tilted.compartments().get(0).ports().get(0).sill();
+        assertTrue(tiltedSill < levelSill - 0.5, "the low rim's sill: " + tiltedSill + " vs " + levelSill);
         assertTrue(tilted.tiltExceeds(HullVec.UP, 30));
         assertFalse(tilted.tiltExceeds(up, 1));
     }

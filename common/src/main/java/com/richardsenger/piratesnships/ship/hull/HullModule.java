@@ -14,6 +14,7 @@ import com.richardsenger.piratesnships.ship.hull.net.ShipStatusPayload;
 import com.richardsenger.piratesnships.ship.hull.net.ShipStatusSync;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullConfig;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullGameTests;
+import com.richardsenger.piratesnships.ship.hull.runtime.CompartmentStabilityGameTests;
 import com.richardsenger.piratesnships.ship.hull.runtime.DryHullViewGameTests;
 import com.richardsenger.piratesnships.ship.hull.client.FloodSurfaceStore;
 import com.richardsenger.piratesnships.ship.hull.runtime.FloodSurfacePayload;
@@ -109,6 +110,6 @@ public final class HullModule implements ModModule {
     @Override
     public List<Class<?>> gameTestClasses() {
         return List.of(HullGameTests.class, DryHullGameTests.class, DryHullViewGameTests.class,
-                PumpPatchGameTests.class, ShipStatusGameTests.class);
+                PumpPatchGameTests.class, ShipStatusGameTests.class, CompartmentStabilityGameTests.class);
     }
 }

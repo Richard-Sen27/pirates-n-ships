@@ -6,6 +6,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Plans a gangway from a click (BRD2, docs/design.md §8.4): reads the world and the ships for {@link PlankRun} and says
+ * Plans a gangway from a click (BRD2, docs/design.md §8.4; RAIL1: through a railing port, {@link PlankRun#throughOpening}): reads the world and the ships for {@link PlankRun} and says
  * where the cells go, in which frame, and what each end rests on. Used by the server to lay a run
  * ({@link BoardingPlanks#lay}) and by the client for the placement preview, so both see the same rule.
  *
@@ -78,7 +79,11 @@ public final class PlankPlanner {
         if (clickedState.is(BoardingContent.PLANK.get()) || clickedState.getCollisionShape(level, clicked).isEmpty()) {
             return Plan.fail(PlankRun.Failure.NO_START, -1);
         }
-        PlankRun.Start start = PlankRun.start(clicked, face, playerFacing);
+        // RAIL1: the top of a railing port's sill, facing outboard, starts the run beyond the port at its height
+        Direction outboard = clickedState.is(BoardingContent.GANGWAY_OPENINGS)
+                && clickedState.hasProperty(BlockStateProperties.HORIZONTAL_FACING)
+                ? clickedState.getValue(BlockStateProperties.HORIZONTAL_FACING) : null;
+        PlankRun.Start start = PlankRun.start(clicked, PlankRun.throughOpening(face, playerFacing, outboard), playerFacing);
         if (start == null) {
             return Plan.fail(PlankRun.Failure.NO_START, -1);
         }

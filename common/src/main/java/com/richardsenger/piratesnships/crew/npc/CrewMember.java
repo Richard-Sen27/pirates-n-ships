@@ -7,6 +7,8 @@ import com.richardsenger.piratesnships.crew.hammock.HammockRef;
 import com.richardsenger.piratesnships.crew.hammock.SleepAxis;
 import com.richardsenger.piratesnships.crew.morale.MoraleRules;
 import com.richardsenger.piratesnships.crew.morale.NightOutcome;
+import com.richardsenger.piratesnships.crew.walk.CrewWalk;
+import com.richardsenger.piratesnships.crew.walk.WalkTarget;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.station.StationConfig;
@@ -55,7 +57,8 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * ({@code art/README.md}, "Entities"). The controller runs on the client only; the server's part is the synced
  * {@link #isWorking()} flag and, since ART7, the synced station pose ({@link #stationPose()}, {@link StationPoses}),
  * with which the crew member also turns to face its wheel or gun. CR2 adds its low-morale day counter and whether it went unpaid at the last dawn (saved); CRW1 the player who hired it ({@link #hiredBy()}, saved); CRW2 its deserting mark
- * ({@link #isDeserting()}, saved) and whether it sits at a meal ({@link #isEating()}, synced).
+ * ({@link #isDeserting()}, saved) and whether it sits at a meal ({@link #isEating()}, synced); WALK1 where it walks
+ * to take its place ({@link #walk()}, saved).
  * This class and {@code crew/npc/client/} are the only GeckoLib importers.
  */
 public class CrewMember extends PathfinderMob implements GeoEntity {
@@ -71,6 +74,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     static final String TAG_DESERTING = Constants.MOD_ID + ":deserting";
     static final String TAG_DESERTING_DAYS = Constants.MOD_ID + ":deserting_days";
     static final String TAG_STATIONARY = Constants.MOD_ID + ":stationary";
+    static final String TAG_WALK = Constants.MOD_ID + ":walk";
 
     /** Ticks GeckoLib blends from one pose animation into the next. */
     private static final int POSE_TRANSITION_TICKS = 5;
@@ -117,6 +121,8 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     private int desertingDays;
     /** It never strolls when idle (WS3c: the deckhands of an NPC ship at sea). Off for every player's crew. Saved. */
     private boolean stationary;
+    /** Where it walks to take its place (WALK1, {@code crew.walk.CrewWalk}), else null. Server only, saved. */
+    private @Nullable WalkTarget walk;
     /** Its station pose faces it towards the wheel or gun (ART7): the look goals leave its head alone. Server only. */
     private boolean facingStation;
 
@@ -128,7 +134,8 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     public static AttributeSupplier.Builder createAttributes() {
         return PathfinderMob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0)
-                .add(Attributes.MOVEMENT_SPEED, 0.25);
+                .add(Attributes.MOVEMENT_SPEED, 0.25)
+                .add(Attributes.FOLLOW_RANGE, 32.0); // WALK1: the pathfinder's range, for paths along a long deck
     }
 
     @Override
@@ -137,7 +144,7 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.6) {
             @Override
             public boolean canUse() {
-                return assignment == null && rest == null && !stationary && !isPassenger() && super.canUse();
+                return assignment == null && rest == null && walk == null && !stationary && !isPassenger() && super.canUse();
             }
         });
         // HM2: a sleeper keeps its head and body along the hammock (CrewRest#orient); awake, it looks around again
@@ -348,6 +355,16 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         return stationary;
     }
 
+    /** Where it walks to take its place (WALK1), else null. */
+    public @Nullable WalkTarget walk() {
+        return walk;
+    }
+
+    /** Sets the walk only; {@code crew.walk.CrewWalk} starts, ends and steers it. */
+    public void setWalk(@Nullable WalkTarget walk) {
+        this.walk = walk;
+    }
+
     /** True when this crew member rides the seat of its assigned station. */
     public boolean isAtStation() {
         return assignment != null && getVehicle() instanceof StationSeat seat && seat.station().equals(assignment.pos());
@@ -356,6 +373,9 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
     @Override
     public void tick() {
         super.tick();
+        if (level() instanceof ServerLevel level && walk != null) {
+            CrewWalk.tick(level, this); // WALK1: arrive, give up, or look for a path
+        }
         if (level() instanceof ServerLevel level && assignment != null) {
             if (isAtStation()) {
                 CrewStations.keepOccupied(level, this);
@@ -448,6 +468,9 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         if (stationary) {
             tag.putBoolean(TAG_STATIONARY, true);
         }
+        if (walk != null) {
+            WalkTarget.CODEC.encodeStart(NbtOps.INSTANCE, walk).ifSuccess(t -> tag.put(TAG_WALK, t));
+        }
     }
 
     @Override
@@ -466,5 +489,6 @@ public class CrewMember extends PathfinderMob implements GeoEntity {
         hiredBy = tag.hasUUID(TAG_HIRED_BY) ? Optional.of(tag.getUUID(TAG_HIRED_BY)) : Optional.empty();
         setDeserting(tag.getBoolean(TAG_DESERTING), tag.getInt(TAG_DESERTING_DAYS));
         stationary = tag.getBoolean(TAG_STATIONARY);
+        walk = tag.contains(TAG_WALK) ? WalkTarget.CODEC.parse(NbtOps.INSTANCE, tag.get(TAG_WALK)).result().orElse(null) : null;
     }
 }

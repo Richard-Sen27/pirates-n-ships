@@ -6,6 +6,8 @@ import com.richardsenger.piratesnships.crew.morale.NightOutcome;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
 import com.richardsenger.piratesnships.crew.npc.CrewStations;
 import com.richardsenger.piratesnships.crew.upkeep.ShipDayTick;
+import com.richardsenger.piratesnships.crew.walk.CrewWalk;
+import com.richardsenger.piratesnships.crew.walk.WalkTarget;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import com.richardsenger.piratesnships.station.StationConfig;
@@ -21,6 +23,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
@@ -32,7 +35,8 @@ import net.minecraft.world.phys.Vec3;
  *   <li><b>Nightfall</b> ({@link RestRules#isNight} turns true, once per night and level): on every ship, crew at a
  *       station stay on duty ({@link NightOutcome#ON_DUTY}); every free crew member takes the nearest free hammock
  *       ({@link RestRules#assign}) and lies in it on a {@link HammockSeat} ({@link NightOutcome#SLEPT}); the rest find
- *       none ({@link NightOutcome#NO_HAMMOCK}).</li>
+ *       none ({@link NightOutcome#NO_HAMMOCK}). WALK1: on the ship it walks to the hammock first
+ *       ({@code crew.walk.CrewWalk}, {@link #arrive}).</li>
  *   <li><b>Dawn</b> (per crew member, the first tick its night is over): it gets up, the hammock rule changes its
  *       morale ({@link MoraleRules#dawnDelta} through {@link CrewMorale#adjust}), and one without a hammock grumbles.</li>
  *   <li><b>An order</b> at night ({@link CrewStations#assign}, by hand or by the job board) gets a sleeper up at once:
@@ -90,6 +94,8 @@ public final class CrewRest {
                 c.setNightOutcome(NightOutcome.ON_DUTY);
             } else if (c.rest() != null) {
                 taken.add(c.rest().foot()); // already in its hammock (e.g. loaded mid-night)
+            } else if (CrewWalk.walksFor(c, WalkTarget.Purpose.HAMMOCK)) {
+                taken.add(c.walk().anchor()); // on its way to its hammock (WALK1)
             } else {
                 free.add(c);
             }
@@ -118,12 +124,46 @@ public final class CrewRest {
         }
     }
 
-    /** Puts {@code crew} into the hammock whose foot is at plot position {@code foot}. */
+    /**
+     * Sends {@code crew} to the hammock whose foot is at plot position {@code foot}: it walks there over the deck
+     * (WALK1, {@code crew.walk.CrewWalk}) and lies down on arrival, or lies down at once. True when it is on its way or
+     * lies in it.
+     */
     static boolean lieDown(ServerLevel level, CrewMember crew, UUID ship, BlockPos foot) {
-        BlockState state = level.getBlockState(foot);
-        if (!(state.getBlock() instanceof HammockBlock) || state.getValue(HammockBlock.PART) != BedPart.FOOT) {
+        if (!isHammockFoot(level, foot)) {
             return false;
         }
+        if (CrewWalk.begin(level, crew, WalkTarget.Purpose.HAMMOCK, ship, foot, foot)) {
+            return true;
+        }
+        return lieDownNow(level, crew, ship, foot);
+    }
+
+    /**
+     * WALK1: a walk to the hammock at {@code foot} ended (arrived, or the fallback): it lies down if it is still night
+     * and the hammock is there and free; else its night is one without a hammock.
+     */
+    public static void arrive(ServerLevel level, CrewMember crew, UUID ship, BlockPos foot) {
+        if (!isNight(level) || crew.rest() != null || crew.assignment() != null) {
+            return;
+        }
+        boolean free = HammockSeat.at(level, foot).stream().noneMatch(Entity::isVehicle);
+        if (!free || !lieDownNow(level, crew, ship, foot)) {
+            crew.setNightOutcome(NightOutcome.NO_HAMMOCK);
+        }
+    }
+
+    private static boolean isHammockFoot(ServerLevel level, BlockPos foot) {
+        BlockState state = level.getBlockState(foot);
+        return state.getBlock() instanceof HammockBlock && state.getValue(HammockBlock.PART) == BedPart.FOOT;
+    }
+
+    /** Puts {@code crew} into the hammock whose foot is at plot position {@code foot} at once. */
+    static boolean lieDownNow(ServerLevel level, CrewMember crew, UUID ship, BlockPos foot) {
+        if (!isHammockFoot(level, foot)) {
+            return false;
+        }
+        BlockState state = level.getBlockState(foot);
         Direction facing = state.getValue(HammockBlock.FACING);
         HammockSeat seat = HammockSeat.spawn(level, foot, facing);
         crew.stopRiding();
@@ -169,6 +209,9 @@ public final class CrewRest {
      */
     public static void getUp(CrewMember crew, boolean onDuty) {
         crew.setRest(null);
+        if (CrewWalk.walksFor(crew, WalkTarget.Purpose.HAMMOCK)) {
+            CrewWalk.cancel(crew); // on its way to the hammock (WALK1): it stops where it is
+        }
         if (crew.getVehicle() instanceof HammockSeat seat) {
             crew.stopRiding();
             seat.discard();

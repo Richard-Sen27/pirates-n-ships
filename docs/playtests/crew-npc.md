@@ -410,3 +410,38 @@ nest (creative tab), a crew member, a captain's whistle; a second ship, a pirate
 
 Report: screenshots of steps 1, 2 and 4 (third person, from the deck and from below), the chat at steps 5 to 8, and
 whether the bearings in step 5 matched.
+
+## WALK1: crew walk to their place
+Covered by 7 JUnit tests (`WalkRulesTest`) and 6 GameTests (`crew/walk/CrewWalkGameTests`: a walk on a resting ship,
+one on a ship under way at 2 blocks/s, a walled-off station seated after the timeout, walking off, a meal walk and a
+hammock walk). What the tests cannot show: how the walk looks, whether the client renders the walker smoothly on a
+moving deck, and how it copes with real ship layouts (stairs, hatches, ratlines).
+
+Setup: an assembled ship afloat with a sail winch near the bow, a helm, a pantry and a hammock on deck (or in the
+hold), three or more crew spawned on the deck with `/pirates crew spawn`, the captain's whistle. Default config
+(`crew.walk.enabled = true`, `speed = 1.0`, `arrive_distance = 1.5`, `timeout_ticks = 200`). Send `latest.log` with
+`debug` logging if something looks wrong (the walk's fallbacks log at debug).
+
+1. **Ordered to the winch.** With the ship at rest, assign a crew member standing 6 or more blocks from the winch
+   (whistle on the crew member, then on the winch). Expected: it walks across the deck (walking animation, no
+   teleport), stands at the winch on arrival, and only then says "Aye ..." to a hoist order and starts hauling. The
+   sails do not move while it is still walking.
+2. **Job board.** Whistle "Hoist sails" with free crew on deck. Expected: the nearest free hand walks to each winch;
+   the sails go up only after it has arrived.
+3. **Moving ship.** Sail at speed (and turning) and order a crew member to a station on the far side of the deck.
+   Expected: it walks across the moving deck without sliding off, falling behind the ship, jittering or running in
+   place, and is seated on arrival. Report rubber-banding or a walker left in the water.
+4. **Meal time.** Set the time to just before noon (`/time set 5990`). Expected: free crew walk to the pantry (or
+   water barrel) and sit down there; crew at stations stay.
+5. **Nightfall.** `/time set 12500`. Expected: free crew walk to the nearest free hammock and lie down in it; a sailor
+   whose hammock is in the hold walks down the stairs or ladder if there is a walkable way, or is put into it after 10
+   seconds if not.
+6. **Blocked station.** Wall a winch in with planks two blocks high and order a crew member there. Expected: it walks
+   up to the wall, waits, and after about 10 seconds stands at the winch (the fallback). It must never stand there
+   forever doing nothing.
+7. **Crow's nest.** Order a crew member to the crow's nest up the mast. Expected: it walks toward the mast and is put
+   up into the nest after about 10 seconds (the pathfinder does not climb ratlines or ladders); report if it climbs.
+8. **Order during a walk.** While a crew member walks to one station, assign it to another. Expected: it turns round
+   and walks to the new one; the first station is free again.
+9. **Walking off.** Set `crew.walk.enabled = false` in the server config. Expected: crew are put at their station,
+   meal spot and hammock at once, as before.

@@ -3,6 +3,8 @@ package com.richardsenger.piratesnships.crew.galley;
 import com.richardsenger.piratesnships.crew.hammock.RestRules;
 import com.richardsenger.piratesnships.crew.hammock.ShipBunks;
 import com.richardsenger.piratesnships.crew.npc.CrewMember;
+import com.richardsenger.piratesnships.crew.walk.CrewWalk;
+import com.richardsenger.piratesnships.crew.walk.WalkTarget;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
 import com.richardsenger.piratesnships.ship.sable.ShipBody;
 import java.util.ArrayList;
@@ -29,8 +31,9 @@ import net.minecraft.world.phys.Vec3;
  * Nothing is eaten: the rations stay the per-day CR2 bookkeeping at dawn ({@code crew.upkeep.ShipDayTick}). A crew
  * member with no free spot beside any provisions block, or on a ship without one, stays where it is.
  * <p>
- * Like the station and hammock seats, the meal seat is taken at once, without a walk: the crew has no path finding on a
- * moving ship yet.
+ * WALK1: a diner on the ship walks to its meal spot ({@code crew.walk.CrewWalk}) and sits down on arrival, for the
+ * full {@code meal_ticks} from then; a meal that cannot be reached seats it at once, as before, after the walk's
+ * timeout. A diner on its way counts as busy ({@link #isFree}).
  */
 public final class MealVisits {
 
@@ -91,7 +94,7 @@ public final class MealVisits {
 
     /** Whether {@code crew} is free for a meal: not at a station, not asleep, not riding anything, not at a meal. */
     public static boolean isFree(CrewMember crew) {
-        return crew.isAlive() && crew.assignment() == null && crew.rest() == null && !crew.isPassenger();
+        return crew.isAlive() && crew.assignment() == null && crew.rest() == null && crew.walk() == null && !crew.isPassenger();
     }
 
     /** Seats as many of {@code free} as there are spots beside {@code blocks}, closest pairs first; removes them from {@code free}. */
@@ -118,15 +121,37 @@ public final class MealVisits {
         for (CrewMember c : List.copyOf(free)) {
             Integer i = pairs.get(c.getUUID());
             if (i == null) continue;
-            if (sitDown(level, c, owner.get(i), spots.get(i), until)) {
+            if (sitDown(level, ship, c, owner.get(i), spots.get(i), until)) {
                 free.remove(c);
                 seated.add(c);
             }
         }
     }
 
+    /**
+     * Sends {@code crew} to plot cell {@code spot} beside the provisions at {@code provisions}: it walks there (WALK1)
+     * or sits down at once. True when it is on its way or seated.
+     */
+    static boolean sitDown(ServerLevel level, ShipBody ship, CrewMember crew, BlockPos provisions, BlockPos spot, long until) {
+        if (CrewWalk.begin(level, crew, WalkTarget.Purpose.MEAL, ship.id(), spot, provisions)) {
+            return true;
+        }
+        return sitDownNow(level, crew, provisions, spot, until);
+    }
+
+    /**
+     * WALK1: a walk to the meal spot {@code spot} beside {@code provisions} ended (arrived, or the fallback): it sits
+     * down for a whole meal from now, if meals are still on and the provisions are still there.
+     */
+    public static void arrive(ServerLevel level, CrewMember crew, BlockPos provisions, BlockPos spot) {
+        if (!MealConfig.ENABLED.get() || !(level.getBlockEntity(provisions) instanceof ProvisionContainer) || !isFree(crew)) {
+            return;
+        }
+        sitDownNow(level, crew, provisions, spot, MealRules.mealEnd(level.getGameTime(), MealConfig.MEAL_TICKS.get()));
+    }
+
     /** Puts {@code crew} on a meal seat on plot cell {@code spot} beside the provisions at {@code provisions}. */
-    static boolean sitDown(ServerLevel level, CrewMember crew, BlockPos provisions, BlockPos spot, long until) {
+    static boolean sitDownNow(ServerLevel level, CrewMember crew, BlockPos provisions, BlockPos spot, long until) {
         MealSeat seat = MealSeat.spawn(level, provisions, spot, until);
         crew.getNavigation().stop();
         if (!crew.startRiding(seat, true)) {

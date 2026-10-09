@@ -2,6 +2,8 @@ package com.richardsenger.piratesnships.crew.npc;
 
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.crew.hammock.CrewRest;
+import com.richardsenger.piratesnships.crew.walk.CrewWalk;
+import com.richardsenger.piratesnships.crew.walk.WalkTarget;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
 import com.richardsenger.piratesnships.ship.assembly.ShipSplits;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
@@ -33,6 +35,9 @@ import net.minecraft.world.phys.AABB;
  * released when the station block is gone, the station is taken by somebody else, the ship no longer exists
  * ({@link ShipRegistry} has no record: disassembled or removed for good) or the feature is disabled. While the ship is
  * merely unloaded it waits.
+ * <p>
+ * WALK1: a crew member on the station's ship walks to the seat ({@code crew.walk.CrewWalk}) and is seated on arrival;
+ * the station is occupied from the order on, but its work waits until it arrives ({@code Stations.Attendance}).
  */
 public final class CrewStations {
 
@@ -83,7 +88,7 @@ public final class CrewStations {
         if (crew.assignment() != null && !crew.assignment().equals(ref)) {
             release(level, crew);
         }
-        if (crew.rest() != null) {
+        if (crew.rest() != null || CrewWalk.walksFor(crew, WalkTarget.Purpose.HAMMOCK)) {
             CrewRest.getUp(crew, true); // ordered to a station at night: up at once, on duty for the night (HM1)
         }
         crew.setAssignment(ref);
@@ -97,6 +102,9 @@ public final class CrewStations {
         StationRef ref = crew.assignment();
         crew.setAssignment(null);
         crew.setPinned(false);
+        if (CrewWalk.walksFor(crew, WalkTarget.Purpose.STATION)) {
+            CrewWalk.cancel(crew); // released on its way: it stops where it is
+        }
         if (crew.getVehicle() instanceof StationSeat seat) {
             crew.stopRiding();
             seat.discard();
@@ -110,6 +118,7 @@ public final class CrewStations {
     static void onCrewGone(CrewMember crew) {
         StationRef ref = crew.assignment();
         crew.setAssignment(null);
+        crew.setWalk(null);
         if (ref != null) {
             Stations.release(ref, crew.getUUID());
         }
@@ -180,20 +189,53 @@ public final class CrewStations {
         seat(level, crew, ref);
     }
 
+    /**
+     * Sends {@code crew} to the seat of station {@code ref}: it walks there over the deck (WALK1, {@link CrewWalk}) and
+     * takes the seat on arrival, or takes it at once when no walk starts (walking off, not on that ship, already
+     * beside it, no path).
+     */
     private static void seat(ServerLevel level, CrewMember crew, StationRef ref) {
+        if (crew.isAtStation() || CrewWalk.walksTo(crew, WalkTarget.Purpose.STATION, ref.ship(), ref.pos())) {
+            return;
+        }
+        StationSeat seat = StationSeat.free(level, ref.pos());
+        BlockPos spot = seat != null ? seat.blockPosition() : seatSpot(level, ref);
+        if (CrewWalk.begin(level, crew, WalkTarget.Purpose.STATION, ref.ship(), spot, ref.pos())) {
+            return;
+        }
+        seatNow(level, crew, ref);
+    }
+
+    /**
+     * WALK1: a walk to station {@code station} of {@code ship} ended (arrived, or the fallback after
+     * {@code crew.walk.timeout_ticks}): it takes the seat if it is still assigned there.
+     */
+    public static void arrive(ServerLevel level, CrewMember crew, UUID ship, BlockPos station) {
+        StationRef ref = crew.assignment();
+        if (ref != null && ref.ship().equals(ship) && ref.pos().equals(station) && StationConfig.ENABLED.get()) {
+            seatNow(level, crew, ref);
+        }
+    }
+
+    /** The plot cell the seat of station {@code ref} stands on. */
+    private static BlockPos seatSpot(ServerLevel level, StationRef ref) {
+        // beside any block of the station (a two-block cannon: beside its front or rear), never on one of them
+        var state = level.getBlockState(ref.pos());
+        List<BlockPos> footprint = state.getBlock() instanceof StationBlock b ? b.footprint(state, ref.pos()) : List.of(ref.pos());
+        BlockPos fixed = state.getBlock() instanceof StationBlock b ? b.seatSpot(state, ref.pos()) : null; // CN1: the crow's nest
+        return fixed != null ? fixed : StationSpot.choose(footprint,
+                p -> level.getBlockState(p).getCollisionShape(level, p).isEmpty(),
+                p -> level.getBlockState(p).isFaceSturdy(level, p, net.minecraft.core.Direction.UP));
+    }
+
+    /** Seats {@code crew} on the seat of station {@code ref} at once. */
+    private static void seatNow(ServerLevel level, CrewMember crew, StationRef ref) {
         if (crew.isAtStation()) {
             return;
         }
         StationSeat seat = StationSeat.free(level, ref.pos());
         if (seat == null) {
-            // beside any block of the station (a two-block cannon: beside its front or rear), never on one of them
-            var state = level.getBlockState(ref.pos());
-            List<BlockPos> footprint = state.getBlock() instanceof StationBlock b ? b.footprint(state, ref.pos()) : List.of(ref.pos());
-            BlockPos fixed = state.getBlock() instanceof StationBlock b ? b.seatSpot(state, ref.pos()) : null; // CN1: the crow's nest
-            BlockPos spot = fixed != null ? fixed : StationSpot.choose(footprint,
-                    p -> level.getBlockState(p).getCollisionShape(level, p).isEmpty(),
-                    p -> level.getBlockState(p).isFaceSturdy(level, p, net.minecraft.core.Direction.UP));
-            seat = StationSeat.spawn(level, ref.pos(), spot);
+            seat = StationSeat.spawn(level, ref.pos(), seatSpot(level, ref));
         }
         crew.stopRiding();
         crew.getNavigation().stop();

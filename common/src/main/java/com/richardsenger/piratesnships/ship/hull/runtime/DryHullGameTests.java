@@ -454,11 +454,12 @@ public final class DryHullGameTests {
                 "expected one 17-cell compartment, got " + f.runtime().simulation().analysis().compartments());
         h.succeedWhen(() -> {
             h.assertTrue(f.runtime().regionCount() == 1, "no dry region yet");
-            // 17 hold cells + the stair + 7 bottom slabs (the one under the stair touches no dry cell) + the deck hatch
-            // (its sky is above the sea, HV1)
+            // 17 hold cells + the stair + 8 bottom slabs + the deck hatch (its sky is above the sea, HV1). The slab under
+            // the stair touches no dry cell, but its empty half meets its neighbour slabs' empty halves, so it joins
+            // through them (HV2); before HV2 it stayed out (26 cells).
             int count = f.runtime().regionCells().get(0).count();
-            h.assertTrue(count == HOLD - 1 + 1 + 7 + 1, "expected 26 occluded cells, got " + count);
-            h.assertFalse(f.runtime().inRegion(f.hold(-1, -4, 1)), "the slab under the stair is in the region");
+            h.assertTrue(count == HOLD - 1 + 1 + 8 + 1, "expected 27 occluded cells, got " + count);
+            h.assertTrue(f.runtime().inRegion(f.hold(-1, -4, 1)), "the slab under the stair is not in the region (HV2)");
             h.assertTrue(WaterRegions.isOccluded(level, worldAt(f, slab, 0.5, 0.75, 0.5)), "empty half of the floor slab shows water");
             h.assertTrue(WaterRegions.isOccluded(level, worldAt(f, stair, 0.5, 0.75, 0.25)), "empty part of the stair shows water");
             h.assertFalse(f.runtime().inRegion(topSlab), "the top slab over the sea is in the region");

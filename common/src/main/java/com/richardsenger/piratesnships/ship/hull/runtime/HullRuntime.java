@@ -480,15 +480,21 @@ public final class HullRuntime {
             // partial blocks whose empty part faces only dry cells, or outside air above the sea, are drawn dry too
             // (design.md §4.3, §4.4 HV1)
             BitSet[] extra = partialsEnabled && partials.candidateCount() > 0 ? partials.additions(dry, seaShipFrame) : null;
+            // HV2: one region for the whole ship, not one per compartment. Sable masks water between the nearest front
+            // face and the nearest back face of all regions along a view ray, so the face where two regions touch (the
+            // dry deck well above an open hatch and the hold below it) counted as the end of the dry volume and the
+            // sea showed in the hold behind it.
+            BitSet all = new BitSet();
             for (Compartment c : sim.analysis().compartments()) {
                 BitSet d = dry.get(c.id());
                 if (extra != null && !d.isEmpty()) {
                     d.or(extra[c.id()]);
                 }
-                CellSet s = CellSet.fromGrid(g, d);
-                if (!s.isEmpty()) {
-                    cells.add(s);
-                }
+                all.or(d);
+            }
+            CellSet s = CellSet.fromGrid(g, all);
+            if (!s.isEmpty()) {
+                cells.add(s);
             }
         }
         if (cells.equals(regionCells) && regions.size() == cells.size()) {

@@ -1476,7 +1476,7 @@
   "pirates_n_ships.almanac.ships.p1.heading": "Ships",
   "pirates_n_ships.almanac.ships.p1.text1": "A ship is a heap of timber that has agreed to float. Treat her well, know what she can bear, and mend her quickly when she is hurt.",
   "pirates_n_ships.almanac.ships.p10.heading": "Fitting her out",
-  "pirates_n_ships.almanac.ships.p10.list1_1": "A {item:pirates_n_ships:nameplate}**nameplate** (any sign and a gold nugget) shows her name once she is launched and named.",
+  "pirates_n_ships.almanac.ships.p10.list1_1": "A {item:pirates_n_ships:nameplate}**name board** (any sign and a gold nugget) fixed on her side shows her name once she is launched and named; boards side by side join, and the name grows across the row.",
   "pirates_n_ships.almanac.ships.p10.list1_2": "A **figurehead** for the bow: a mermaid, lion, eagle or skull, from four planks and a prismarine shard, gold ingot, feather or bone. Click the hull block it should hang on, and the figure looks toward you.",
   "pirates_n_ships.almanac.ships.p10.list1_3": "The {item:pirates_n_ships:ship_lantern}**ship's lantern** stands on deck, hangs from a beam or from a bracket on a wall, and burns even under water.",
   "pirates_n_ships.almanac.ships.p10.list1_4": "{item:pirates_n_ships:stern_window}**Stern windows** go into a wall from outside; right-click to open or close the shutters.",

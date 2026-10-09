@@ -4,7 +4,7 @@ import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 
 /**
- * The {@code almanac.ponder} module (ALM4, PND1, docs/design.md §3.4, docs/almanac.md "Scenes"): Ponder scenes for the
+ * The {@code almanac.ponder} module (ALM4, PND1, PND2, docs/design.md §3.4, docs/almanac.md "Scenes"): Ponder scenes for the
  * Captain's Almanac's "Show me" buttons and the Ponder key on items.
  *
  * <ul>

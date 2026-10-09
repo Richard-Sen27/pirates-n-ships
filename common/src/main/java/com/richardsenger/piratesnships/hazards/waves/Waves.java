@@ -40,6 +40,7 @@ public final class Waves {
         CommonEvents.SERVER_STOPPED.register(server -> {
             SeaStates.clearAll();
             WaveForces.clear();
+            WaveSync.clear();
         });
         CommonEvents.REGISTER_COMMANDS.register((dispatcher, context, selection) -> WaveCommands.register(dispatcher));
     }

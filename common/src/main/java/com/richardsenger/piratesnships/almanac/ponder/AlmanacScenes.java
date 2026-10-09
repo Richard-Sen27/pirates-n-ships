@@ -46,6 +46,26 @@ public final class AlmanacScenes {
     public static final ResourceLocation MOORING_RING_ITEM = Constants.id("mooring_ring");
     public static final ResourceLocation CARGO_CRATE_ITEM = Constants.id("cargo_crate");
 
+    /** PND2, crew, combat and life aboard: each scene's id is also its schematic. */
+    public static final ResourceLocation CREW_ORDERS = Constants.id(CrewSceneText.CREW_ORDERS);
+    public static final ResourceLocation BOARDING = Constants.id(CrewSceneText.BOARDING);
+    public static final ResourceLocation FLAGS_AND_ALLEGIANCE = Constants.id(CrewSceneText.FLAGS_AND_ALLEGIANCE);
+    public static final ResourceLocation CROWS_NEST = Constants.id(CrewSceneText.CROWS_NEST);
+    public static final ResourceLocation SHIPS_BELL = Constants.id(CrewSceneText.SHIPS_BELL);
+    public static final ResourceLocation GALLEY_AND_PROVISIONS = Constants.id(CrewSceneText.GALLEY_AND_PROVISIONS);
+    public static final ResourceLocation HAMMOCKS_AND_REST = Constants.id(CrewSceneText.HAMMOCKS_AND_REST);
+    public static final ResourceLocation SWIVEL_GUN = Constants.id(CrewSceneText.SWIVEL_GUN);
+
+    /** Their items. */
+    public static final ResourceLocation CAPTAINS_WHISTLE_ITEM = Constants.id("captains_whistle");
+    public static final ResourceLocation BOARDING_PLANK_ITEM = Constants.id("boarding_plank");
+    public static final ResourceLocation JOLLY_ROGER_FLAG_ITEM = Constants.id("jolly_roger_flag");
+    public static final ResourceLocation CROWS_NEST_ITEM = Constants.id("crows_nest");
+    public static final ResourceLocation SHIPS_BELL_ITEM = Constants.id("ships_bell");
+    public static final ResourceLocation PANTRY_ITEM = Constants.id("pantry");
+    public static final ResourceLocation HAMMOCK_ITEM = Constants.id("hammock");
+    public static final ResourceLocation SWIVEL_GUN_ITEM = Constants.id("swivel_gun");
+
     /** Every scene, in the order the plugin registers them (an item's scenes play in this order). */
     public static final List<Scene> ALL = List.of(
             new Scene(CANNON_LOADING, CANNON_ITEM, CANNON_LOADING),
@@ -56,7 +76,15 @@ public final class AlmanacScenes {
             new Scene(PUMPS_AND_FLOODING, BILGE_PUMP_ITEM, PUMPS_AND_FLOODING),
             new Scene(HULL_REPAIR, HULL_PATCH_ITEM, HULL_REPAIR),
             new Scene(MOORING, MOORING_RING_ITEM, MOORING),
-            new Scene(CARGO_AND_WEIGHT, CARGO_CRATE_ITEM, CARGO_AND_WEIGHT));
+            new Scene(CARGO_AND_WEIGHT, CARGO_CRATE_ITEM, CARGO_AND_WEIGHT),
+            new Scene(CREW_ORDERS, CAPTAINS_WHISTLE_ITEM, CREW_ORDERS),
+            new Scene(BOARDING, BOARDING_PLANK_ITEM, BOARDING),
+            new Scene(FLAGS_AND_ALLEGIANCE, JOLLY_ROGER_FLAG_ITEM, FLAGS_AND_ALLEGIANCE),
+            new Scene(CROWS_NEST, CROWS_NEST_ITEM, CROWS_NEST),
+            new Scene(SHIPS_BELL, SHIPS_BELL_ITEM, SHIPS_BELL),
+            new Scene(GALLEY_AND_PROVISIONS, PANTRY_ITEM, GALLEY_AND_PROVISIONS),
+            new Scene(HAMMOCKS_AND_REST, HAMMOCK_ITEM, HAMMOCKS_AND_REST),
+            new Scene(SWIVEL_GUN, SWIVEL_GUN_ITEM, SWIVEL_GUN));
 
     private AlmanacScenes() {
     }

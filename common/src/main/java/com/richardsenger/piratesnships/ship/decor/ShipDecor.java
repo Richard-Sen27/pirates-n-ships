@@ -13,7 +13,7 @@ import net.minecraft.world.level.material.PushReaction;
 import java.util.List;
 
 /**
- * Decorative ship blocks: figureheads and nameplate (design.md §4.8), flagpole (§4.7), and the cargo crate and
+ * Decorative ship blocks: figureheads and the name board (design.md §4.8, NAME2), flagpole (§4.7), and the cargo crate and
  * cargo barrel (§4.9), which are plain solid blocks until the cargo package turns them into containers; the ART2 decor
  * (§4.8): ship's lantern, ship's bell, rope coil, stern window, chart table and sea cot.
  */
@@ -24,12 +24,16 @@ public final class ShipDecor {
     public static final RegistryEntry<Block, FigureheadBlock> FIGUREHEAD_EAGLE = figurehead("figurehead_eagle");
     public static final RegistryEntry<Block, FigureheadBlock> FIGUREHEAD_SKULL = figurehead("figurehead_skull");
 
-    /** A 3-pixel plate on the side of a hull (see {@link NameplateBlock}). */
-    public static final RegistryEntry<Block, NameplateBlock> NAMEPLATE = ModRegistry.blockWithItem("nameplate",
-            () -> new NameplateBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(1.0f).sound(SoundType.WOOD)
-                    .noOcclusion().pushReaction(PushReaction.DESTROY).ignitedByLava()));
+    /**
+     * The name board (NAME2, see {@link NameBoardBlock}): a 2 px oak plate fixed flat on a hull's side, joining its
+     * neighbours on the same face into one board. It keeps the G8 nameplate's registry id {@code nameplate} (block,
+     * item and block entity), so plates in saved worlds and ship templates load as boards.
+     */
+    public static final RegistryEntry<Block, NameBoardBlock> NAMEPLATE = ModRegistry.blockWithItem("nameplate",
+            () -> new NameBoardBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD)
+                    .strength(1.0f).sound(SoundType.WOOD).noOcclusion().pushReaction(PushReaction.DESTROY).ignitedByLava()));
 
-    /** The ship's name on a nameplate (see {@link NameplateBlockEntity}). */
+    /** The ship's name and the row on a name board (see {@link NameplateBlockEntity}). */
     public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<NameplateBlockEntity>> NAMEPLATE_BLOCK_ENTITY =
             ModRegistry.blockEntity("nameplate", NameplateBlockEntity::new, NAMEPLATE);
 

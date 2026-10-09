@@ -86,7 +86,7 @@ public class YardClothRenderer implements BlockEntityRenderer<YardBlockEntity> {
         if (SailVisualsConfig.ENABLED.get()) {
             look = air.look(be, be.side, 0);
             Vector3d out = ClothSide.squareSailOut(g.alongX());
-            // the yards run across the ship, so the bow lies along the cloth's out axis (its sign from the ship's motion)
+            // without the ship's synced bow (VIS1c): the yards run across the ship, so the bow lies along the out axis
             be.side = air.update(look, level, Vec3.atCenterOf(be.getBlockPos()), partialTick, now, SailTypes.SQUARE_CURVE, trim,
                     out.x, out.z, out.x, out.z, g.drop(), be.side);
         } else {

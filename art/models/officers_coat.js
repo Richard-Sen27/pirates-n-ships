@@ -4,7 +4,8 @@
 //   eval(require('fs').readFileSync('<repo>/art/models/officers_coat.js', 'utf8'))
 //   OC.build('<repo>')        new java_block tab with the coat, palette textures from textures/item/
 //   OC.export('<repo>')       writes the item model and the project file
-//   OC.paintArmor('<repo>')   writes the armour texture
+//   OC.paintArmor('<repo>')   wrote the ART6 armour texture; since ART9 tools/paint_apparel_armor.js writes it (same
+//                             body and arm pixels, plus the coat tails), so do not run this any more
 // The coat lies in the XY plane facing south like a vanilla sprite (collar up, skirt down, sleeves hanging out at
 // 22.5 degrees), z 7..9, so item/generated's display transforms hold it like a flat item. Colours are palette patches
 // (navy blue coat, white facings, gold epaulettes, buttons and lace, red cuffs): no new colour.

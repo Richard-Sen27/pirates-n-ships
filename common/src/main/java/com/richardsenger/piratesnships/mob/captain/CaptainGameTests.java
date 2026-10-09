@@ -332,6 +332,77 @@ public final class CaptainGameTests {
         h.succeed();
     }
 
+    /**
+     * ART9: with {@code clothing_drop_chance} 1 the slain captain drops his coat, breeches and boots beside his hat. Own
+     * batch: changes config.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = CONFIG_BATCH + "clothing_always")
+    public static void clothingDropsAtChanceOne(GameTestHelper h) {
+        ConfigOverrides.during(h, CaptainConfig.CLOTHING_DROP_CHANCE, 1.0);
+        int[] dropped = killAndCountClothing(h);
+        h.assertValueEqual(dropped[0], 1, "his hat");
+        h.assertValueEqual(dropped[1], 1, "his coat");
+        h.assertValueEqual(dropped[2], 1, "his breeches");
+        h.assertValueEqual(dropped[3], 1, "his boots");
+        h.succeed();
+    }
+
+    /** ART9: with {@code clothing_drop_chance} 0 he drops only his hat. Own batch: changes config. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = CONFIG_BATCH + "clothing_never")
+    public static void clothingNeverDropsAtChanceZero(GameTestHelper h) {
+        ConfigOverrides.during(h, CaptainConfig.CLOTHING_DROP_CHANCE, 0.0);
+        int[] dropped = killAndCountClothing(h);
+        h.assertValueEqual(dropped[0], 1, "his hat");
+        h.assertValueEqual(dropped[1] + dropped[2] + dropped[3], 0, "no clothing");
+        h.succeed();
+    }
+
+    /**
+     * ART9: at the default chance (0.35) the pieces drop independently: over 40 captains every piece drops at least
+     * once and is missing at least once (each of those four events fails with a probability below 3e-8), and the hat
+     * drops every time. Own batch: sets the default chance in case an earlier test left another.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = CONFIG_BATCH + "clothing_default", timeoutTicks = 400)
+    public static void clothingDropsAtTheConfiguredChance(GameTestHelper h) {
+        ConfigOverrides.during(h, CaptainConfig.CLOTHING_DROP_CHANCE, 0.35);
+        int kills = 40;
+        int[] total = new int[4];
+        int[] missing = new int[4];
+        for (int i = 0; i < kills; i++) {
+            int[] dropped = killAndCountClothing(h);
+            for (int k = 0; k < 4; k++) {
+                total[k] += dropped[k];
+                if (dropped[k] == 0) missing[k]++;
+            }
+        }
+        h.assertValueEqual(total[0], kills, "a hat per captain");
+        for (int k = 1; k < 4; k++) {
+            h.assertTrue(total[k] > 0 && missing[k] > 0, "piece " + k + " drops sometimes, not always: " + total[k] + " of " + kills);
+        }
+        h.succeed();
+    }
+
+    /**
+     * Spawns a captain on a fresh island, kills him, counts and removes the dropped hat, coat, breeches and boots (in
+     * that order) and cleans the island up.
+     */
+    private static int[] killAndCountClothing(GameTestHelper h) {
+        floor(h, 9);
+        ResourceLocation island = island();
+        PirateCaptain c = spawnCaptain(h, island, 4, 4);
+        c.hurt(h.getLevel().damageSources().generic(), 1000f);
+        h.assertTrue(c.isDeadOrDying(), "the captain fell");
+        BlockPos at = new BlockPos(4, 1, 4);
+        List<Item> items = List.of(ApparelContent.CAPTAINS_HAT.get(), ApparelContent.CAPTAINS_COAT.get(),
+                ApparelContent.CAPTAINS_BREECHES.get(), ApparelContent.CAPTAINS_BOOTS.get());
+        int[] counts = new int[items.size()];
+        for (int i = 0; i < items.size(); i++) counts[i] = countDropped(h, items.get(i), at);
+        h.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(h.absolutePos(at)).inflate(4)).forEach(ItemEntity::discard);
+        c.discard();
+        cleanUp(h, island, c.getUUID());
+        return counts;
+    }
+
     // ------------------------------------------------------------------ capture and turn-in
 
     /** Captured and handed to a navy officer, the captain pays the captain's tier plus his bounty alive. */

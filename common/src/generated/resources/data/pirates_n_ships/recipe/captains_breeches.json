@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "K": {
+      "item": "minecraft:black_wool"
+    },
+    "L": {
+      "item": "minecraft:leather"
+    }
+  },
+  "pattern": [
+    "KLK",
+    "K K",
+    "K K"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:captains_breeches"
+  }
+}

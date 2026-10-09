@@ -15,6 +15,8 @@ public final class SailingClient {
     public static void init() {
         // Wind of the last server must not leak into the next world
         ClientEvents.CLIENT_DISCONNECT.register(mc -> ClientWind.reset());
+        // ... nor the ship bows (VIS1c)
+        ClientEvents.CLIENT_DISCONNECT.register(mc -> com.richardsenger.piratesnships.sailing.ship.ClientShipBows.INSTANCE.clear());
         // The cloth of square sails, drawn from the head yard's block entity (F5a)
         ClientEvents.registerBlockEntityRenderer(SailingBlocks.YARD_BLOCK_ENTITY, YardClothRenderer::new);
         // The stay and the cloth of triangular sails, drawn from the head cleat's block entity (F5b)

@@ -15,7 +15,9 @@ import java.util.List;
  * The {@code apparel} module: wearable hats and the officer's coat for players (design.md §9, §15). Each hat is the hat
  * of a seafarer mob as a hand-made item model ({@code tools/gen_hat_items.py}; the captain's hat from Blockbench, ART6),
  * worn in the head slot with a small armour bonus ({@code apparel.hat_armor}). The officer's coat (ART6) is worn in the
- * chest slot ({@code apparel.officers_coat_armor}) and drawn by vanilla's armour layer.
+ * chest slot ({@code apparel.officers_coat_armor}); the pirate captain's coat, breeches and boots (ART9) in the chest,
+ * legs and feet slots. Vanilla's armour layer draws them; the two coats with a model of their own that adds the tails
+ * ({@code apparel.client.CoatArmorModel}, through {@code ClientEvents.registerArmorModel}).
  */
 public final class ApparelModule implements ModModule {
 
@@ -43,9 +45,13 @@ public final class ApparelModule implements ModModule {
                 .item(ApparelContent.NAVY_HAT, "Navy Tricorn")
                 .item(ApparelContent.OFFICER_HAT, "Officer's Bicorne")
                 .item(ApparelContent.CAPTAINS_HAT, "Captain's Hat")
-                .item(ApparelContent.OFFICERS_COAT, "Officer's Coat"));
+                .item(ApparelContent.OFFICERS_COAT, "Officer's Coat")
+                .item(ApparelContent.CAPTAINS_COAT, "Captain's Coat")
+                .item(ApparelContent.CAPTAINS_BREECHES, "Captain's Breeches")
+                .item(ApparelContent.CAPTAINS_BOOTS, "Captain's Boots"));
         // Every apparel item has a hand-made item model (tools/gen_hat_items.py for the four crafted hats, Blockbench
-        // projects art/models/captains_hat.bbmodel and officers_coat.bbmodel), so datagen writes none
+        // projects art/models/captains_hat.bbmodel, officers_coat.bbmodel and, ART9, captains_coat, captains_breeches and
+        // captains_boots.bbmodel), so datagen writes none
         data.recipes(out -> {
             // A tricorn: a row of black wool over leather with a bone (the skull) in the middle
             ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ApparelContent.PIRATE_HAT.get())
@@ -77,8 +83,32 @@ public final class ApparelModule implements ModModule {
                     .define('B', Items.BLUE_WOOL).define('W', Items.WHITE_WOOL).define('G', Items.GOLD_INGOT)
                     .unlockedBy("has_blue_wool", InventoryChangeTrigger.TriggerInstance.hasItems(Items.BLUE_WOOL))
                     .save(out, ApparelContent.OFFICERS_COAT.id());
+            // The captain's coat (ART9): black wool, a gold ingot for the edging and buttons, red wool for the sash and
+            // leather for the baldric
+            ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ApparelContent.CAPTAINS_COAT.get())
+                    .pattern("KGK").pattern("KRK").pattern("KLK")
+                    .define('K', Items.BLACK_WOOL).define('G', Items.GOLD_INGOT).define('R', Items.RED_WOOL).define('L', Items.LEATHER)
+                    .unlockedBy("has_black_wool", InventoryChangeTrigger.TriggerInstance.hasItems(Items.BLACK_WOOL))
+                    .save(out, ApparelContent.CAPTAINS_COAT.id());
+            // Dark breeches: black wool in the leggings shape, a leather waistband
+            ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ApparelContent.CAPTAINS_BREECHES.get())
+                    .pattern("KLK").pattern("K K").pattern("K K")
+                    .define('K', Items.BLACK_WOOL).define('L', Items.LEATHER)
+                    .unlockedBy("has_black_wool", InventoryChangeTrigger.TriggerInstance.hasItems(Items.BLACK_WOOL))
+                    .save(out, ApparelContent.CAPTAINS_BREECHES.id());
+            // Bucket-top boots: leather feet under black wool tops (vanilla's leather boots are leather only)
+            ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ApparelContent.CAPTAINS_BOOTS.get())
+                    .pattern("K K").pattern("L L")
+                    .define('K', Items.BLACK_WOOL).define('L', Items.LEATHER)
+                    .unlockedBy("has_leather", InventoryChangeTrigger.TriggerInstance.hasItems(Items.LEATHER))
+                    .save(out, ApparelContent.CAPTAINS_BOOTS.id());
             // The captain's hat has no recipe: the named pirate captain drops it
         });
+    }
+
+    @Override
+    public void initClient() {
+        com.richardsenger.piratesnships.apparel.client.ApparelClient.init(); // the coats' tails (ART9)
     }
 
     @Override

@@ -1,27 +1,17 @@
 package com.richardsenger.piratesnships.apparel;
 
+import com.richardsenger.piratesnships.core.config.ConfigValue;
 import net.minecraft.core.Holder;
-import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterial;
-import net.minecraft.world.item.component.ItemAttributeModifiers;
 
 /**
- * A wearable coat (ART6): the officer's coat. An {@link ArmorItem} for the chest slot, so vanilla's
- * {@code HumanoidArmorLayer} draws it on players, armour stands and vanilla humanoids from the material's layer texture
- * ({@code textures/models/armor/<material>_layer_1.png}): the chest counterpart of the hats, which vanilla's
- * {@code CustomHeadLayer} draws. No durability, like the hats; the armour bonus follows the config live
- * ({@link CoatArmor}) instead of the material's fixed defence. Right-click swaps it with the worn chest item
- * ({@code ArmorItem#use}).
+ * A wearable coat (ART6, ART9): the officer's coat and the captain's coat, chest-slot {@link ClothingItem}s. The client
+ * draws them with the coat model that adds the tails ({@code apparel.client.CoatArmorModel}); a loader without that hook
+ * would draw the coat to the waist from the same texture with vanilla's armour model.
  */
-public class CoatItem extends ArmorItem {
+public class CoatItem extends ClothingItem {
 
-    public CoatItem(Holder<ArmorMaterial> material, Properties properties) {
-        super(material, Type.CHESTPLATE, properties);
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public ItemAttributeModifiers getDefaultAttributeModifiers() {
-        return CoatArmor.modifiers(ApparelConfig.OFFICERS_COAT_ARMOR.get());
+    public CoatItem(Holder<ArmorMaterial> material, ConfigValue<Integer> armor, Properties properties) {
+        super(material, Type.CHESTPLATE, armor, properties);
     }
 }

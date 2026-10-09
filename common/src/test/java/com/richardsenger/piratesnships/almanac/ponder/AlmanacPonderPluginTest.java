@@ -52,6 +52,12 @@ class AlmanacPonderPluginTest {
         }
         assertTrue(registry.doScenesExistForId(ResourceLocation.parse("pirates_n_ships:cannon")),
                 "the cannon item's Ponder key plays the scene");
+        for (String item : List.of("helm", "sail_winch", "capstan", "bilge_pump", "hull_patch", "mooring_ring", "cargo_crate")) {
+            assertTrue(registry.doScenesExistForId(ResourceLocation.parse("pirates_n_ships:" + item)),
+                    "the Ponder key of " + item + " plays its scene");
+        }
+        assertEquals(2, registry.getRegisteredEntries().stream()
+                .filter(e -> e.getKey().equals(AlmanacScenes.HELM_ITEM)).count(), "the helm has assembly and steering");
     }
 
     @Test
@@ -59,10 +65,13 @@ class AlmanacPonderPluginTest {
         PonderLocalization localization = new PonderLocalization();
         new AlmanacPonderPlugin().registerSharedText(new DefaultSharedTextRegistrationHelper(MOD, localization));
         Map<ResourceLocation, String> expected = new HashMap<>();
-        for (CannonLoadingText.Line line : CannonLoadingText.Line.values()) {
-            expected.put(line.key(), line.english());
+        for (SceneLine line : SceneText.allLines()) {
+            assertEquals(null, expected.put(line.key(), line.english()), "duplicate shared-text key " + line.key());
         }
         assertEquals(expected, localization.shared);
+        for (CannonLoadingText.Line line : CannonLoadingText.Line.values()) {
+            assertEquals(line.english(), localization.shared.get(line.key()), "the cannon scene keeps its keys");
+        }
     }
 
     @Test
@@ -87,11 +96,19 @@ class AlmanacPonderPluginTest {
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             lang = JsonParser.parseReader(reader).getAsJsonObject();
         }
-        for (Map.Entry<String, String> e : CannonLoadingText.lang().entrySet()) {
+        for (Map.Entry<String, String> e : SceneText.allLang().entrySet()) {
             assertTrue(lang.has(e.getKey()), "run ./gradlew :neoforge:runData: no " + e.getKey());
             assertEquals(e.getValue(), lang.get(e.getKey()).getAsString(), e.getKey());
         }
         assertEquals(CannonLoadingText.Line.values().length + 1, CannonLoadingText.lang().size());
+        assertEquals(CannonLoadingText.lang(), SceneText.forScene(CannonLoadingText.SCENE).orElseThrow().lang());
+        // every scene of AlmanacScenes has a title and lines, and no text without a scene
+        assertEquals(AlmanacScenes.ALL.stream().map(AlmanacScenes.Scene::id).toList(),
+                SceneText.ALL.stream().map(SceneText::id).toList());
+        for (SceneText text : SceneText.ALL) {
+            assertTrue(lang.has(CannonLoadingText.titleLangKey(text.id())), "title of " + text.id());
+            assertTrue(text.lines().size() >= 5, text.id() + " says too little");
+        }
     }
 
     /** Ponder's own (protected) lang key formulas. */

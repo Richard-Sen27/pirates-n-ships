@@ -1,7 +1,29 @@
 plugins {
     id 'multiloader-loader'
-    id 'fabric-loom'
+    id 'net.fabricmc.fabric-loom-remap'
 }
+
+// Fabric module (FAB1: server side and GameTests; the client port is FAB2). docs/fabric.md describes what is wired.
+
+repositories {
+    // Forge Config API Port (the NeoForge config API on Fabric; Sable for Fabric also depends on it)
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Fuzs'
+                url = 'https://raw.githubusercontent.com/Fuzss/modresources/main/maven/'
+            }
+        }
+        filter { includeGroup('fuzs.forgeconfigapiport') }
+    }
+}
+
+// Mods that only the dev runs load (client, server, GameTest), like neoforge's localRuntime: never published.
+configurations {
+    localRuntime
+    runtimeClasspath.extendsFrom localRuntime
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
     mappings loom.layered {
@@ -10,6 +32,22 @@ dependencies {
     }
     modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+
+    // Sable (hard dependency). Its Fabric jar contains sable-common and nests Veil, sable-companion, Forge Config API
+    // Port and the native Rapier jar; its POM lists them too (Veil, companion and the config port at compile scope,
+    // sable_rapier at runtime), so Loom puts them on the dev classpath. Unlike the NeoForge variant it lists no Create.
+    modImplementation("dev.ryanhcode.sable:sable-fabric-${minecraft_version}:${sable_version}")
+    // Forge Config API Port: our IConfigHelper builds NeoForge ModConfigSpecs and registers them through it.
+    modImplementation("fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${forgeconfigapiport_version}")
+    // GeckoLib (required on both sides, animated entities).
+    modImplementation("software.bernie.geckolib:geckolib-fabric-${minecraft_version}:${geckolib_version}")
+    // Player Animation Library (required on the client; common's melee animation package compiles against it). The
+    // Fabric jar is in intermediary names, Loom remaps it to Mojang names (design.md §2: this was unverified until
+    // FAB1, it compiles). The jar contains PlayerAnimationLibCore's classes and nests mochafloats and javassist; its
+    // POM still lists Core (and through it newer gson, slf4j, fastutil, netty), so Core is excluded as on NeoForge.
+    modImplementation("com.zigythebird.playeranim:PlayerAnimationLibFabric:${pal_version}") {
+        exclude group: 'com.zigythebird.playeranim', module: 'PlayerAnimationLibCore'
+    }
 }
 
 loom {
@@ -33,5 +71,24 @@ loom {
             ideConfigGenerated(true)
             runDir('runs/server')
         }
+        // ./gradlew :fabric:runGameTest. Fabric API's GameTest module starts the headless GameTest server, runs every
+        // test of the "fabric-gametest" entry point (FabricGameTests: all modules' GameTest classes) and exits with a
+        // non-zero code when a required test fails. Honours -Dpirates_n_ships.gametest.only like the NeoForge run.
+        gameTest {
+            server()
+            setConfigName('Fabric GameTest')
+            ideConfigGenerated(false)
+            vmArg('-Dfabric-api.gametest')
+            vmArg("-Dfabric-api.gametest.report-file=${project.layout.buildDirectory.file('gametest/junit.xml').get().asFile}")
+            runDir('build/gametest')
+        }
+    }
+}
+
+// Like neoforge's runGameTestServer: every run starts from a fresh test world and fresh mod config.
+tasks.matching { it.name == 'runGameTest' }.configureEach {
+    doFirst {
+        project.delete(project.file('build/gametest/world'))
+        project.delete(project.fileTree('build/gametest/config') { include 'pirates_n_ships-*.toml' })
     }
 }

@@ -1,0 +1,27 @@
+accessWidener v2 named
+# Fabric twin of META-INF/accesstransformer.cfg (common + NeoForge): one entry per AT line, same order and reasons.
+# Loaded by fabric/ (Loom's accessWidenerPath, fabric.mod.json "accessWidener"). Keep both files in step.
+
+# BlockEntityType$BlockEntitySupplier (core.registry.ModRegistry#blockEntity)
+accessible class net/minecraft/world/level/block/entity/BlockEntityType$BlockEntitySupplier
+# Datagen: the tag appender returned by ModTagsProvider.tag(...)
+accessible class net/minecraft/data/tags/IntrinsicHolderTagsProvider$IntrinsicTagAppender
+# Datagen: tags.tag(X).add(a).addOptional(id) returns this type
+accessible class net/minecraft/data/tags/TagsProvider$TagAppender
+# law.brig: prisoners have their goal flags disabled (BrigService.restrain)
+accessible field net/minecraft/world/entity/Mob goalSelector Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+accessible field net/minecraft/world/entity/Mob targetSelector Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+# combat.firearms (P6): the loaded-gun item property, through vanilla's private per-item register (client class)
+accessible method net/minecraft/client/renderer/item/ItemProperties register (Lnet/minecraft/world/item/Item;Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/renderer/item/ClampedItemPropertyFunction;)V
+# crew.hammock (SLP1): HammockBlock#getRespawnPosition returns Optional<ServerPlayer.RespawnPosAngle>
+accessible class net/minecraft/server/level/ServerPlayer$RespawnPosAngle
+
+# Fabric only (no AT twin): IRegistryHelper#registerSpawnPlacement. NeoForge has RegisterSpawnPlacementsEvent; Fabric
+# API widens this method for itself only (non-transitive), so FabricRegistryHelper calls it through our own widening.
+accessible method net/minecraft/world/entity/SpawnPlacements register (Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/entity/SpawnPlacementType;Lnet/minecraft/world/level/levelgen/Heightmap$Types;Lnet/minecraft/world/entity/SpawnPlacements$SpawnPredicate;)V
+
+# Fabric only (no AT twin): FabricGameTests registers the generated tests itself. Vanilla's GameTestRegistry.register
+# instantiates the test class even for a static @GameTestGenerator (NeoForge patches that out), and ours have private
+# constructors, so the generators are invoked directly and their functions added here.
+accessible field net/minecraft/gametest/framework/GameTestRegistry TEST_FUNCTIONS Ljava/util/Collection;
+accessible field net/minecraft/gametest/framework/GameTestRegistry TEST_CLASS_NAMES Ljava/util/Set;

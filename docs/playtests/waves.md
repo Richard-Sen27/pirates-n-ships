@@ -520,3 +520,55 @@ view, render distance 12 or more. Please send a screenshot of steps 1 and 3 and 
   same, so they run in step, but they may be a tick apart (invisible except right next to vanilla still water).
 - Land wholly inside a far cell, away from its corners (a small island, a thin sandbar), can have crests drawn over it,
   since the cell's corners lie in deep water (before WAV5 such a cell lay flat).
+
+## WAV7: one sea for the ships and the drawn water
+
+**What changed for the player.** The human: "check if the boat movement on waves is actually synched with the waves in
+the water. sometimes it seemed to me as if these were two separate systems". They were, a little: the wave field was
+anchored (WV1), each ship's physics at the ship's hull and the drawn sea at the player's ship or at the camera (WAV3),
+and two anchors gave two phases at the same point. Measured on a storm at (3000, −2000) with the waves 20° off the
+trains' reference bearing: the drawn height at a ship's bow differed from the height the physics used by up to
+0.16 blocks with the sea anchored at that ship (aboard), and by up to 1.2 blocks (crests drawn where the ship met a
+trough) with the camera anchor 40 blocks away (watching from the quay). Now there is one sea for everything: the height
+at a point and moment is the same for every ship, the spray and spill, the foam, the wake and the drawn surface. To make
+that possible far from spawn, the waves no longer turn continuously with the wind: they keep their direction until the
+wind (with its slow offset) has moved more than `waves.direction_step_degrees` (10°) away, and then crossfade to the new
+direction over `waves.direction_fade_seconds` (15 s). New server config: those two values.
+
+Setup: `./gradlew :neoforge:runClient`, a creative world with open sea and a quay or beach, `wave_effects.surface` on,
+a starter sloop in the water. Please send a short video or a few screenshots of steps 1 to 3.
+
+1. **From the quay.** `/pirates waves set storm`. Stand on the quay or a beach and watch the sloop sailing past (a second
+   player at the helm, or anchored a little off the shore), and a vanilla boat in the water nearby.
+   - **Expected:** the sloop's bow and stern rise on the crests the drawn sea shows under them and sink into its troughs,
+     in step; a crest you see run under the hull lifts it as it passes. The vanilla boat (once WAV6 has landed) climbs
+     the same crests. Before WAV7 a ship 40 blocks from you could rise while the water under it was drawn in a trough.
+2. **Aboard.** Board the sloop and sail into the waves, then across them.
+   - **Expected:** your bow climbs the crest you see in front of it and drops into the trough behind it; no crest passes
+     through the hull without lifting it. (The hull rides about two thirds of a crest's height by design, WAV4: the
+     water still laps a little up the sides on the biggest crests.)
+3. **A direction change.** `/pirates waves set storm 270` (waves from the west), wait 5 s, then `/pirates waves set storm 0`
+   (from the north) and watch the open sea for 20 s. The command turns the sea at once; for the gradual turn of normal
+   play, `/pirates waves clear` and `/weather thunder` and watch over a few in-game hours, or set
+   `waves.direction_step_degrees` to 1 to see more steps.
+   - **Expected:** with the command the crests swing at once (a held direction applies immediately, as before). In normal
+     play, every so often (when the wind has moved 10° away) the crests swing to the new direction over about 15 s: for
+     a few seconds the sea looks choppier and a little lower while the two patterns overlap, then the new rows of crests
+     run on. Nothing jumps, and the ships keep riding what you see throughout.
+4. **Far from spawn.** `/tp @s 12000 ~ -9000` (open ocean), spawn or sail a sloop there, `/pirates waves set storm`.
+   Repeat steps 1 and 2. If you can, also try `/tp @s 1000000 ~ 1000000`.
+   - **Expected:** the same as near spawn: the waves run smoothly at their normal speed (no jitter, no racing or frozen
+     crests), and the ship rides the drawn crests. (Sable itself stalls slow motion far out, `docs/sable-notes.md`
+     §9.0l; that is about the ship's drift, not the waves.)
+5. **Fabric.** Repeat steps 1 and 2 with `./gradlew :fabric:runClient`.
+   - **Expected:** the same.
+
+### Known limits
+
+- The client blends the size of the sea (height, peak wavelength, wave groups) between syncs as before, so while the
+  weather changes the state the drawn waves can be up to a sync interval (3 s) behind the server's in height; their
+  crests stay in the same places.
+- Within a few blocks of a shore the drawn waves fade with the water depth (WAV3), the physics' do not; a ship never
+  sails there.
+- During a direction crossfade the two seas partly cancel, so the sea is up to about a third lower for a few seconds
+  around the middle of the fade.

@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/notice_board",
+  "textures": {
+    "log": "biomeswevegone:block/spirit/stripped_log",
+    "log_top": "biomeswevegone:block/spirit/stripped_log_top",
+    "particle": "biomeswevegone:block/spirit/planks",
+    "planks": "biomeswevegone:block/spirit/planks"
+  }
+}

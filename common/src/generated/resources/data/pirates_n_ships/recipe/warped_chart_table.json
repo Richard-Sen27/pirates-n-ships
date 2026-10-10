@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "pirates_n_ships:chart_table",
+  "key": {
+    "M": {
+      "item": "minecraft:map"
+    },
+    "P": {
+      "item": "minecraft:warped_planks"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    }
+  },
+  "pattern": [
+    " M ",
+    "PPP",
+    "S S"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:warped_chart_table"
+  }
+}

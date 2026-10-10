@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/flagpole_bottom",
+  "textures": {
+    "log": "ecologics:block/stripped_coconut_log",
+    "log_top": "ecologics:block/stripped_coconut_log_top",
+    "particle": "ecologics:block/stripped_coconut_log",
+    "planks": "ecologics:block/coconut_planks"
+  }
+}

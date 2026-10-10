@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.station.lookout;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.material.FluidState;
@@ -53,9 +55,9 @@ import org.jetbrains.annotations.Nullable;
  *       down. The plain nest's model is unchanged.</li>
  * </ul>
  */
-public class CrowsNestBlock extends Block implements StationBlock, FlagpoleFooting, SimpleWaterloggedBlock {
+public class CrowsNestBlock extends Block implements StationBlock, FlagpoleFooting, SimpleWaterloggedBlock, WoodBlock {
 
-    public static final MapCodec<CrowsNestBlock> CODEC = simpleCodec(CrowsNestBlock::new);
+    public static final MapCodec<CrowsNestBlock> CODEC = WoodBlock.codec(CrowsNestBlock::new);
 
     /** Top of the floor planks in px. */
     public static final double FLOOR_HEIGHT = 1.5;
@@ -65,8 +67,17 @@ public class CrowsNestBlock extends Block implements StationBlock, FlagpoleFooti
     private static final VoxelShape COLLISION = Block.box(0, 0, 0, 16, FLOOR_HEIGHT, 16);
     private static final VoxelShape OUTLINE = Block.box(0, 0, 0, 16, RIM_HEIGHT, 16);
 
-    public CrowsNestBlock(Properties properties) {
+    /** The wood of this member (WOOD3). */
+    private final ShipWood wood;
+
+    @Override
+    public ShipWood wood() {
+        return wood;
+    }
+
+    public CrowsNestBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(POLE, false).setValue(Waterlogging.WATERLOGGED, false));
     }
 

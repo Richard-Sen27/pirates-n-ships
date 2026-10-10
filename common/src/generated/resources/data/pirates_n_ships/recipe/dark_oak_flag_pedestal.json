@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "pirates_n_ships:flag_pedestal",
+  "key": {
+    "L": {
+      "item": "minecraft:stripped_dark_oak_log"
+    },
+    "P": {
+      "item": "minecraft:dark_oak_planks"
+    }
+  },
+  "pattern": [
+    "L",
+    "P"
+  ],
+  "result": {
+    "count": 2,
+    "id": "pirates_n_ships:dark_oak_flag_pedestal"
+  }
+}

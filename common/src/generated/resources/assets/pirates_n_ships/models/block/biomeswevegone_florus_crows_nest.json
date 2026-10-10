@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/crows_nest",
+  "textures": {
+    "log": "biomeswevegone:block/florus/stripped_stem",
+    "log_top": "biomeswevegone:block/florus/stripped_stem_top",
+    "particle": "biomeswevegone:block/florus/planks",
+    "planks": "biomeswevegone:block/florus/planks"
+  }
+}

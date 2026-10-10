@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.law.content;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.block.PartBlockEntity;
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
@@ -48,9 +50,11 @@ public final class LawContent {
                     .strength(5.0f).noOcclusion().pushReaction(PushReaction.DESTROY)));
 
     /** Lists the active bounties and takes new ones (design.md §13.2). */
-    public static final RegistryEntry<Block, NoticeBoardBlock> NOTICE_BOARD = ModRegistry.blockWithItem("notice_board",
-            () -> new NoticeBoardBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0f, 3.0f)
-                    .sound(SoundType.WOOD).noOcclusion().ignitedByLava()));
+    /** The notice board in every wood (WOOD3); the dark oak member keeps the id {@code notice_board}. */
+    public static final WoodFamily<NoticeBoardBlock> NOTICE_BOARDS = WoodFamily.register("notice_board", ShipWood.DARK_OAK,
+            wood -> new NoticeBoardBlock(wood, WoodFamily.properties(wood).noOcclusion()));
+    /** The dark oak notice board, legacy id {@code notice_board}. */
+    public static final RegistryEntry<Block, NoticeBoardBlock> NOTICE_BOARD = NOTICE_BOARDS.entry(ShipWood.DARK_OAK);
 
     /** Owner of a brig door (lower half). */
     @SuppressWarnings("unchecked")

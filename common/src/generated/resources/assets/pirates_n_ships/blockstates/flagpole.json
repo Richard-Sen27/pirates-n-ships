@@ -1,16 +1,16 @@
 {
   "variants": {
     "part=bottom": {
-      "model": "pirates_n_ships:block/flagpole_bottom"
+      "model": "pirates_n_ships:block/spruce_flagpole_bottom"
     },
     "part=middle": {
-      "model": "pirates_n_ships:block/flagpole_middle"
+      "model": "pirates_n_ships:block/spruce_flagpole_middle"
     },
     "part=single": {
-      "model": "pirates_n_ships:block/flagpole"
+      "model": "pirates_n_ships:block/spruce_flagpole"
     },
     "part=top": {
-      "model": "pirates_n_ships:block/flagpole_top"
+      "model": "pirates_n_ships:block/spruce_flagpole_top"
     }
   }
 }

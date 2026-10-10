@@ -2,8 +2,8 @@
 	"credit": "Made with Blockbench, source art/models/yard.bbmodel",
 	"parent": "minecraft:block/block",
 	"textures": {
-		"0": "minecraft:block/stripped_spruce_log",
-		"1": "minecraft:block/stripped_spruce_log_top",
+		"log": "minecraft:block/stripped_spruce_log",
+		"log_top": "minecraft:block/stripped_spruce_log_top",
 		"2": "minecraft:block/anvil",
 		"3": "minecraft:block/stripped_birch_log",
 		"particle": "minecraft:block/stripped_spruce_log"
@@ -39,7 +39,7 @@
 						11
 					],
 					"rotation": 90,
-					"texture": "#0"
+					"texture": "#log"
 				},
 				"east": {
 					"uv": [
@@ -48,7 +48,7 @@
 						10,
 						11
 					],
-					"texture": "#1"
+					"texture": "#log_top"
 				},
 				"south": {
 					"uv": [
@@ -58,7 +58,7 @@
 						11
 					],
 					"rotation": 90,
-					"texture": "#0"
+					"texture": "#log"
 				},
 				"west": {
 					"uv": [
@@ -67,7 +67,7 @@
 						10,
 						11
 					],
-					"texture": "#1"
+					"texture": "#log_top"
 				},
 				"up": {
 					"uv": [
@@ -77,7 +77,7 @@
 						10
 					],
 					"rotation": 90,
-					"texture": "#0"
+					"texture": "#log"
 				},
 				"down": {
 					"uv": [
@@ -87,7 +87,7 @@
 						10
 					],
 					"rotation": 90,
-					"texture": "#0"
+					"texture": "#log"
 				}
 			}
 		},
@@ -121,7 +121,7 @@
 						10
 					],
 					"rotation": 90,
-					"texture": "#0"
+					"texture": "#log"
 				},
 				"east": {
 					"uv": [
@@ -130,7 +130,7 @@
 						11,
 						10
 					],
-					"texture": "#1"
+					"texture": "#log_top"
 				},
 				"south": {
 					"uv": [
@@ -140,7 +140,7 @@
 						10
 					],
 					"rotation": 90,
-					"texture": "#0"
+					"texture": "#log"
 				},
 				"west": {
 					"uv": [
@@ -149,7 +149,7 @@
 						11,
 						10
 					],
-					"texture": "#1"
+					"texture": "#log_top"
 				},
 				"up": {
 					"uv": [
@@ -159,7 +159,7 @@
 						11
 					],
 					"rotation": 90,
-					"texture": "#0"
+					"texture": "#log"
 				},
 				"down": {
 					"uv": [
@@ -169,7 +169,7 @@
 						11
 					],
 					"rotation": 90,
-					"texture": "#0"
+					"texture": "#log"
 				}
 			}
 		},

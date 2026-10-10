@@ -133,7 +133,8 @@ class FlagClothModelTest {
         assertEquals(FlagpolePart.values().length, variants.size());
         for (FlagpolePart part : FlagpolePart.values()) {
             String model = variants.getAsJsonObject("part=" + part.getSerializedName()).get("model").getAsString();
-            assertEquals(part == FlagpolePart.SINGLE ? "pirates_n_ships:block/flagpole" : "pirates_n_ships:block/flagpole_" + part.getSerializedName(), model);
+            // WOOD3: the legacy flagpole is the spruce member of the family, its parts the spruce children
+            assertEquals(part == FlagpolePart.SINGLE ? "pirates_n_ships:block/spruce_flagpole" : "pirates_n_ships:block/spruce_flagpole_" + part.getSerializedName(), model);
         }
         for (FlagKind kind : FlagKind.values()) {
             assertFalse(Files.exists(ASSETS.resolve("models/block/flagpole_flag_" + kind.getSerializedName() + ".json")),

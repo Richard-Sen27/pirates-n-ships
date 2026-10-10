@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.ship.decor;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import com.mojang.serialization.MapCodec;
 import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.richardsenger.piratesnships.ship.decor.flag.FlagpoleFoot;
@@ -46,9 +48,9 @@ import org.jetbrains.annotations.Nullable;
  *   <li>Waterloggable (WLOG1).</li>
  * </ul>
  */
-public class FlagPedestalBlock extends Block implements FlagpoleFooting, SimpleWaterloggedBlock {
+public class FlagPedestalBlock extends Block implements FlagpoleFooting, SimpleWaterloggedBlock, WoodBlock {
 
-    public static final MapCodec<FlagPedestalBlock> CODEC = simpleCodec(FlagPedestalBlock::new);
+    public static final MapCodec<FlagPedestalBlock> CODEC = WoodBlock.codec(FlagPedestalBlock::new);
 
     /** Height of the pedestal in px (the top of its socket collar). */
     public static final double HEIGHT = 6.0;
@@ -57,8 +59,17 @@ public class FlagPedestalBlock extends Block implements FlagpoleFooting, SimpleW
     /** With a pole: the plinth and the pole stub (the flagpole's 4×4 post) from the socket to the block's top. */
     private static final VoxelShape WITH_POLE = Shapes.or(PLINTH, Block.box(6, 5, 6, 10, 16, 10));
 
-    public FlagPedestalBlock(Properties properties) {
+    /** The wood of this member (WOOD3). */
+    private final ShipWood wood;
+
+    @Override
+    public ShipWood wood() {
+        return wood;
+    }
+
+    public FlagPedestalBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(POLE, false).setValue(Waterlogging.WATERLOGGED, false));
     }
 

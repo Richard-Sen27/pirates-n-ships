@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/name_board_cap_left",
+  "textures": {
+    "log": "regions_unexplored:block/stripped_kapok_log",
+    "log_top": "regions_unexplored:block/stripped_kapok_log_top",
+    "particle": "regions_unexplored:block/kapok_planks",
+    "planks": "regions_unexplored:block/kapok_planks"
+  }
+}

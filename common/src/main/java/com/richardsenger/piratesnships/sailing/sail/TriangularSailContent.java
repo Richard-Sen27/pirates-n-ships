@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.sailing.sail;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
 import com.richardsenger.piratesnships.sailing.block.CleatBlock;
@@ -21,11 +23,17 @@ import net.minecraft.world.level.material.PushReaction;
  */
 public final class TriangularSailContent {
 
-    public static final RegistryEntry<Block, CleatBlock> CLEAT = ModRegistry.blockWithItem("cleat",
-            () -> new CleatBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(1.0f, 3.0f)
-                    .sound(SoundType.WOOD).noOcclusion().noCollission().pushReaction(PushReaction.DESTROY)));
+    /**
+     * The cleat in every wood (WOOD3; iron horns on a pad of the wood, which does not burn in lava like before); the
+     * dark oak member keeps the id {@code cleat}.
+     */
+    public static final WoodFamily<CleatBlock> CLEATS = WoodFamily.register("cleat", ShipWood.DARK_OAK,
+            wood -> new CleatBlock(wood, BlockBehaviour.Properties.of().mapColor(wood.mapColor()).strength(1.0f, 3.0f)
+                    .sound(wood.sound()).noOcclusion().noCollission().pushReaction(PushReaction.DESTROY)));
+    /** The dark oak cleat, legacy id {@code cleat}. */
+    public static final RegistryEntry<Block, CleatBlock> CLEAT = CLEATS.entry(ShipWood.DARK_OAK);
     public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<CleatBlockEntity>> CLEAT_BLOCK_ENTITY =
-            ModRegistry.blockEntity("cleat", CleatBlockEntity::new, CLEAT);
+            CLEATS.blockEntity("cleat", CleatBlockEntity::new);
     /** The cleat a rope was first used on (with its dimension), until it is used on a second one. */
     public static final RegistryEntry<DataComponentType<?>, DataComponentType<GlobalPos>> ROPE_START =
             ModRegistry.dataComponent("rope_start", b -> b.persistent(GlobalPos.CODEC).networkSynchronized(GlobalPos.STREAM_CODEC));

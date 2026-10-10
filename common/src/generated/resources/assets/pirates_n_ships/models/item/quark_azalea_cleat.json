@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/cleat",
+  "textures": {
+    "log": "quark:block/stripped_azalea_log",
+    "log_top": "quark:block/stripped_azalea_log_top",
+    "particle": "quark:block/stripped_azalea_log",
+    "planks": "quark:block/azalea_planks"
+  }
+}

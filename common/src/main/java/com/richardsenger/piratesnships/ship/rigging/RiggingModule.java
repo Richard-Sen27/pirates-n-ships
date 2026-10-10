@@ -116,8 +116,10 @@ public final class RiggingModule implements ModModule {
             tags.tag(BlockTags.CLIMBABLE).add(RiggingContent.RATLINES.get()).add(RiggingContent.NET_CELL.get())
                     .add(RiggingContent.CHAINPLATE.get()).add(RiggingContent.MAST_HOOP.get());
             // RL1b: a net hangs on a yard and a sloped run leans on a yard or the crow's nest (RatlinesRules)
-            tags.tag(RiggingContent.RATLINES_ANCHORS).addTag(BlockTags.FENCES).addTag(BlockTags.WALLS)
-                    .add(SailingBlocks.YARD.get()).add(LookoutContent.CROWS_NEST.get());
+            tags.tag(RiggingContent.RATLINES_ANCHORS).addTag(BlockTags.FENCES).addTag(BlockTags.WALLS);
+            // WOOD3: the yards and crow's nests of every wood (a mod's wood's member as an optional entry)
+            SailingBlocks.YARDS.tag(tags, RiggingContent.RATLINES_ANCHORS);
+            LookoutContent.CROWS_NESTS.tag(tags, RiggingContent.RATLINES_ANCHORS);
             // a rope net: light like a ladder, a quarter volume for buoyancy (Sable lists minecraft:ladder in both,
             // refs/sable common/src/main/resources/data/sable/tags/block/super_light.json and quarter_volume.json)
             tags.tag(SableWeightTags.SUPER_LIGHT).add(RiggingContent.RATLINES.get())

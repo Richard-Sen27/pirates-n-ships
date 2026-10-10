@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "pirates_n_ships:block/biomeswevegone_ironwood_yard"
+    },
+    "axis=z": {
+      "model": "pirates_n_ships:block/biomeswevegone_ironwood_yard",
+      "y": 90
+    }
+  }
+}

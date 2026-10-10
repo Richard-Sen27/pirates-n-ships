@@ -4,5 +4,5 @@
     "sable:mass": 0.05,
     "sable:volume": 0.05
   },
-  "selector": "pirates_n_ships:cleat"
+  "selector": "#pirates_n_ships:cleats"
 }

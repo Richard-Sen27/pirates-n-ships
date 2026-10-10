@@ -1,0 +1,51 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "regions_unexplored"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "regions_unexplored:stripped_blue_bioshroom_stem"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "regions_unexplored:blue_bioshroom_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "regions_unexplored"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "regions_unexplored:stripped_blue_bioshroom_stem",
+        "regions_unexplored:blue_bioshroom_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:flag_pedestal",
+  "key": {
+    "L": {
+      "item": "regions_unexplored:stripped_blue_bioshroom_stem"
+    },
+    "P": {
+      "item": "regions_unexplored:blue_bioshroom_planks"
+    }
+  },
+  "pattern": [
+    "L",
+    "P"
+  ],
+  "result": {
+    "count": 2,
+    "id": "pirates_n_ships:regions_unexplored_blue_bioshroom_flag_pedestal"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/flagpole",
+  "textures": {
+    "log": "twilightforest:block/stripped_time_log",
+    "log_top": "twilightforest:block/stripped_time_log_top",
+    "particle": "twilightforest:block/stripped_time_log",
+    "planks": "twilightforest:block/wood/planks_time_0"
+  }
+}

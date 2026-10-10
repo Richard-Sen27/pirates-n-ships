@@ -74,10 +74,16 @@ public final class FlagModelGameTests {
             JsonObject variant = variants.getAsJsonObject("part=" + part.getSerializedName());
             helper.assertTrue(variant != null, "no variant for part " + part);
             String model = variant.get("model").getAsString();
-            String expected = "pirates_n_ships:block/flagpole" + (part == FlagpolePart.SINGLE ? "" : "_" + part.getSerializedName());
+            // WOOD3: the legacy flagpole is the spruce member, its parts the spruce children of the hand-made parents
+            String expected = "pirates_n_ships:block/spruce_flagpole" + (part == FlagpolePart.SINGLE ? "" : "_" + part.getSerializedName());
             helper.assertTrue(model.equals(expected), part + " shows " + model + ", expected " + expected);
             helper.assertTrue(!variant.has("x") && !variant.has("y"), part + " is turned: " + variant);
-            JsonObject json = JsonParser.parseString(read(helper, assetPath(model, "models", ".json"))).getAsJsonObject();
+            JsonObject child = JsonParser.parseString(read(helper, assetPath(model, "models", ".json"))).getAsJsonObject();
+            String parent = child.get("parent").getAsString();
+            helper.assertTrue(parent.equals(FlagData.parentModel(part).toString()), part + ": child of " + parent);
+            helper.assertTrue(child.getAsJsonObject("textures").get("log").getAsString().equals("minecraft:block/stripped_spruce_log"),
+                    part + ": not the spruce log " + child);
+            JsonObject json = JsonParser.parseString(read(helper, assetPath(parent, "models", ".json"))).getAsJsonObject();
             String textures = json.getAsJsonObject("textures").toString();
             // the crown (truck and finial, gold) only at the head, the cleat (anvil iron) only at the foot
             boolean crown = part == FlagpolePart.SINGLE || part == FlagpolePart.TOP;

@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.ship.decor;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import com.richardsenger.piratesnships.core.block.Waterlogging;
@@ -71,9 +73,9 @@ import org.jetbrains.annotations.Nullable;
  *       any blocks there.</li>
  * </ul>
  */
-public class FlagpoleBlock extends Block implements EntityBlock, SimpleWaterloggedBlock {
+public class FlagpoleBlock extends Block implements EntityBlock, SimpleWaterloggedBlock, WoodBlock {
 
-    public static final MapCodec<FlagpoleBlock> CODEC = simpleCodec(FlagpoleBlock::new);
+    public static final MapCodec<FlagpoleBlock> CODEC = WoodBlock.codec(FlagpoleBlock::new);
     public static final EnumProperty<FlagKind> FLAG = EnumProperty.create("flag", FlagKind.class);
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final EnumProperty<FlagpolePart> PART = EnumProperty.create("part", FlagpolePart.class);
@@ -81,9 +83,18 @@ public class FlagpoleBlock extends Block implements EntityBlock, SimpleWaterlogg
     public static final String TOO_TALL_KEY = "message." + Constants.MOD_ID + ".flag.pole_too_tall";
     private static final VoxelShape SHAPE = Block.box(6, 0, 6, 10, 16, 10);
 
-    public FlagpoleBlock(Properties properties) {
+    /** The wood of this member (WOOD3). */
+    private final ShipWood wood;
+
+    @Override
+    public ShipWood wood() {
+        return wood;
+    }
+
+    public FlagpoleBlock(ShipWood wood, Properties properties) {
         // FLG3: the collision depends on the block below (none on a crow's nest), so it must not be cached per state
         super(properties.dynamicShape());
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(FLAG, FlagKind.NONE).setValue(FACING, Direction.NORTH)
                 .setValue(PART, FlagpolePart.SINGLE).setValue(Waterlogging.WATERLOGGED, false));
     }

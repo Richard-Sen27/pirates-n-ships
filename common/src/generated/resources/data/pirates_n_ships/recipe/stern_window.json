@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "misc",
+  "group": "pirates_n_ships:stern_window",
   "key": {
     "D": {
       "item": "minecraft:dark_oak_planks"

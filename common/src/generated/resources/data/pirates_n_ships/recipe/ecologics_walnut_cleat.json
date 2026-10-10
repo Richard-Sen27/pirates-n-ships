@@ -1,0 +1,45 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "ecologics"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "ecologics:walnut_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "ecologics"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "ecologics:walnut_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:cleat",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "P": {
+      "item": "ecologics:walnut_planks"
+    }
+  },
+  "pattern": [
+    "PIP"
+  ],
+  "result": {
+    "count": 2,
+    "id": "pirates_n_ships:ecologics_walnut_cleat"
+  }
+}

@@ -1,12 +1,13 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "misc",
+  "group": "pirates_n_ships:crows_nest",
   "key": {
     "N": {
       "item": "minecraft:iron_nugget"
     },
     "P": {
-      "tag": "minecraft:planks"
+      "item": "minecraft:spruce_planks"
     },
     "R": {
       "item": "pirates_n_ships:rope"

@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/yard",
+  "textures": {
+    "log": "biomeswevegone:block/cypress/stripped_log",
+    "log_top": "biomeswevegone:block/cypress/stripped_log_top",
+    "particle": "biomeswevegone:block/cypress/stripped_log",
+    "planks": "biomeswevegone:block/cypress/planks"
+  }
+}

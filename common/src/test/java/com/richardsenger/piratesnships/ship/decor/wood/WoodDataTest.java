@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Stream;
@@ -29,8 +30,14 @@ class WoodDataTest {
     private static final Path GENERATED = Path.of("src/generated/resources");
     private static final Path DATA = GENERATED.resolve("data/pirates_n_ships");
     private static final Path ASSETS = GENERATED.resolve("assets/pirates_n_ships");
-    /** The families WOOD1 converts; WOOD2-WOOD4 add theirs. */
-    private static final List<String> FAMILIES = List.of("railing", "railing_port", "railing_gate", "bulwark", "bulwark_port", "oar_bench");
+    /** The families WOOD1 converts; WOOD2-WOOD4 add theirs (WOOD3: the fittings, each with a legacy id, {@link #LEGACY}). */
+    private static final List<String> FAMILIES = List.of("railing", "railing_port", "railing_gate", "bulwark", "bulwark_port", "oar_bench",
+            "nameplate", "chart_table", "sea_cot", "stern_window", "notice_board", "flagpole", "flag_pedestal", "crows_nest", "yard", "cleat");
+    /** The wood whose member keeps a family's legacy id (docs/woods.md, "Legacy ids"). */
+    private static final Map<String, ShipWood> LEGACY = Map.of("nameplate", ShipWood.OAK, "chart_table", ShipWood.DARK_OAK,
+            "sea_cot", ShipWood.DARK_OAK, "stern_window", ShipWood.DARK_OAK, "notice_board", ShipWood.DARK_OAK,
+            "flagpole", ShipWood.SPRUCE, "flag_pedestal", ShipWood.SPRUCE, "crows_nest", ShipWood.SPRUCE, "yard", ShipWood.SPRUCE,
+            "cleat", ShipWood.DARK_OAK);
 
     private static JsonObject read(Path p) throws IOException {
         return JsonParser.parseString(Files.readString(p, StandardCharsets.UTF_8)).getAsJsonObject();
@@ -49,7 +56,7 @@ class WoodDataTest {
         List<String> missing = new ArrayList<>();
         for (String family : FAMILIES) {
             for (ShipWood wood : ShipWood.all()) {
-                String id = WoodFamily.name(wood, family);
+                String id = WoodFamily.memberName(wood, family, LEGACY.get(family));
                 if (!lang.has("block.pirates_n_ships." + id)) missing.add("lang " + id);
                 if (!Files.exists(ASSETS.resolve("blockstates/" + id + ".json"))) missing.add("blockstate " + id);
                 if (!Files.exists(ASSETS.resolve("models/item/" + id + ".json"))) missing.add("item model " + id);
@@ -60,6 +67,38 @@ class WoodDataTest {
         assertTrue(missing.isEmpty(), missing.size() + " missing: " + missing.subList(0, Math.min(20, missing.size())));
         assertEquals("Spruce Railing", lang.get("block.pirates_n_ships.spruce_railing").getAsString());
         assertEquals("Redwood Railing", lang.get("block.pirates_n_ships.biomesoplenty_redwood_railing").getAsString());
+        // WOOD3: the legacy member is named for its wood like every other
+        assertEquals("Spruce Yard", lang.get("block.pirates_n_ships.yard").getAsString());
+        assertEquals("Oak Name Board", lang.get("block.pirates_n_ships.nameplate").getAsString());
+        assertEquals("Birch Yard", lang.get("block.pirates_n_ships.birch_yard").getAsString());
+        assertTrue(!lang.has("block.pirates_n_ships.spruce_yard") && !lang.has("block.pirates_n_ships.oak_nameplate"),
+                "a legacy member is registered twice");
+    }
+
+    /**
+     * WOOD3: the yards' and cleats' Sable physics properties come in one file each (the legacy path), selected by a tag
+     * of every member, so a mod's wood that is not loaded logs no "unknown block".
+     */
+    @Test
+    void yardAndCleatPhysicsSelectEveryMemberByTag() throws IOException {
+        for (String family : List.of("yard", "cleat")) {
+            JsonObject json = read(DATA.resolve("physics_block_properties/" + family + ".json"));
+            String tag = family + "s";
+            assertEquals("#pirates_n_ships:" + tag, json.get("selector").getAsString());
+            JsonArray values = read(DATA.resolve("tags/block/" + tag + ".json")).getAsJsonArray("values");
+            assertEquals(ShipWood.all().size(), values.size(), tag + " members");
+            for (ShipWood wood : ShipWood.all()) {
+                String id = "pirates_n_ships:" + WoodFamily.memberName(wood, family, LEGACY.get(family));
+                boolean found = false;
+                for (JsonElement v : values) {
+                    found |= (v.isJsonObject() ? v.getAsJsonObject().get("id").getAsString() : v.getAsString()).equals(id);
+                }
+                assertTrue(found, tag + " lacks " + id);
+            }
+            try (Stream<Path> s = Files.list(DATA.resolve("physics_block_properties"))) {
+                assertTrue(s.noneMatch(f -> f.getFileName().toString().endsWith("_" + family + ".json")), "a per-member " + family + " file");
+            }
+        }
     }
 
     @Test

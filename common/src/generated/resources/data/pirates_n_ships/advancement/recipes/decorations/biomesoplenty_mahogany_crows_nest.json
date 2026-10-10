@@ -1,0 +1,57 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "biomesoplenty"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "biomesoplenty:mahogany_planks"
+    }
+  ],
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_rope": {
+      "conditions": {
+        "items": [
+          {
+            "items": "pirates_n_ships:rope"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "pirates_n_ships:biomesoplenty_mahogany_crows_nest"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "biomesoplenty"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "biomesoplenty:mahogany_planks"
+      ]
+    }
+  ],
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_rope"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "pirates_n_ships:biomesoplenty_mahogany_crows_nest"
+    ]
+  }
+}

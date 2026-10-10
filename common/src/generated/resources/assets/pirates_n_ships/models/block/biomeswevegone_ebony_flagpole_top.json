@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/flagpole_top",
+  "textures": {
+    "log": "biomeswevegone:block/ebony/stripped_log",
+    "log_top": "biomeswevegone:block/ebony/stripped_log_top",
+    "particle": "biomeswevegone:block/ebony/stripped_log",
+    "planks": "biomeswevegone:block/ebony/planks"
+  }
+}

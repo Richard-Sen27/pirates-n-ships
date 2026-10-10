@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.sailing.block;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
@@ -20,11 +22,13 @@ public final class SailingBlocks {
     /** Blocks that may stand between the two yards of a square sail (besides air): logs, wooden fences, our masts later. */
     public static final TagKey<Block> MASTS = TagKey.create(Registries.BLOCK, Constants.id("masts"));
 
-    public static final RegistryEntry<Block, YardBlock> YARD = ModRegistry.blockWithItem("yard",
-            () -> new YardBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0f, 3.0f)
-                    .sound(SoundType.WOOD).noOcclusion().ignitedByLava()));
+    /** The yard in every wood (WOOD3); the spruce member keeps the id {@code yard}. Datagen: {@link YardData}. */
+    public static final WoodFamily<YardBlock> YARDS = WoodFamily.register("yard", ShipWood.SPRUCE,
+            wood -> new YardBlock(wood, WoodFamily.properties(wood).noOcclusion()));
+    /** The spruce yard, legacy id {@code yard}. */
+    public static final RegistryEntry<Block, YardBlock> YARD = YARDS.entry(ShipWood.SPRUCE);
     public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<YardBlockEntity>> YARD_BLOCK_ENTITY =
-            ModRegistry.blockEntity("yard", YardBlockEntity::new, YARD);
+            YARDS.blockEntity("yard", YardBlockEntity::new);
     public static final RegistryEntry<Block, SailWinchBlock> SAIL_WINCH = ModRegistry.blockWithItem("sail_winch",
             () -> new SailWinchBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0f, 3.0f)
                     .sound(SoundType.WOOD).noOcclusion().ignitedByLava()));

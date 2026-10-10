@@ -1,13 +1,17 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "misc",
+  "group": "pirates_n_ships:flagpole",
   "key": {
+    "L": {
+      "item": "minecraft:stripped_spruce_log"
+    },
     "S": {
       "item": "minecraft:stick"
     }
   },
   "pattern": [
-    "S",
+    "L",
     "S",
     "S"
   ],

@@ -1,12 +1,13 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "misc",
+  "group": "pirates_n_ships:notice_board",
   "key": {
     "P": {
       "item": "minecraft:paper"
     },
     "W": {
-      "tag": "minecraft:planks"
+      "item": "minecraft:dark_oak_planks"
     }
   },
   "pattern": [

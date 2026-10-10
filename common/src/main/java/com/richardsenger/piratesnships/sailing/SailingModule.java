@@ -114,9 +114,9 @@ public final class SailingModule implements ModModule {
         com.richardsenger.piratesnships.sailing.anchor.AnchorData.gather(data); // visible anchor (F4)
         com.richardsenger.piratesnships.sailing.sail.TriangularSailData.gather(data); // cleat and rope (F5b)
         HelmSetup.gatherData(data); // wheel steering (HELM1)
+        com.richardsenger.piratesnships.sailing.block.YardData.gather(data); // the yard in every wood (WOOD3)
         data.lang(lang -> {
-            lang.block(SailingBlocks.YARD, "Yard")
-                    .add(YardBlock.KEY_NO_SAIL, "No sail: hang a yard %s-%s below")
+            lang.add(YardBlock.KEY_NO_SAIL, "No sail: hang a yard %s-%s below")
                     .block(SailingBlocks.SAIL_WINCH, "Sail Winch")
                     .add(ShipForces.SAILING_KEY, "Sails and Keel")
                     .add(ShipForces.ANCHOR_KEY, "Anchor Chain")
@@ -151,7 +151,6 @@ public final class SailingModule implements ModModule {
                     .add(k + "ship.idle", "No forces this tick: no sail is set and the ship is not moving in water");
         });
         data.models(m -> {
-            yard(m, SailingBlocks.YARD.get());
             sailWinch(m, SailingBlocks.SAIL_WINCH.get());
             // hand-made Blockbench models (art/models/capstan.bbmodel, design.md §4.8): only the block state and the item
             // model are generated. CAP2: block/capstan is the base and drum, block/capstan_bars the bars drawn turning by
@@ -162,39 +161,17 @@ public final class SailingModule implements ModModule {
                     new net.minecraft.data.models.model.DelegatedModel(com.richardsenger.piratesnships.Constants.id("block/capstan_item")));
         });
         data.blockLoot(loot -> {
-            loot.dropSelf(SailingBlocks.YARD.get());
             loot.dropSelf(SailingBlocks.SAIL_WINCH.get());
             loot.dropSelf(SailingBlocks.CAPSTAN.get());
         });
         data.blockTags(tags -> {
-            tags.tag(BlockTags.MINEABLE_WITH_AXE).add(SailingBlocks.YARD.get());
             // what may stand between the two yards of a square sail (besides air); our own mast blocks join later
             tags.tag(SailingBlocks.MASTS).addTag(BlockTags.LOGS).addTag(BlockTags.WOODEN_FENCES);
             tags.tag(BlockTags.MINEABLE_WITH_AXE).add(SailingBlocks.SAIL_WINCH.get());
             tags.tag(SableWeightTags.LIGHT).add(SailingBlocks.SAIL_WINCH.get());
             tags.tag(BlockTags.MINEABLE_WITH_AXE).add(SailingBlocks.CAPSTAN.get());
         });
-        // A yard is a 6 px spar (about 0.14 of a block of wood) high up on the mast: Sable's lightest tag (0.25 kpg, the
-        // fence's) still made the small test hull top-heavy with six of them, so it gets its own, physical mass and volume
-        // (refs/sable/wiki/Block Physics Properties.md; priority above Sable's tag definitions).
-        data.json(PackOutput.Target.DATA_PACK, "physics_block_properties", SailingBlocks.YARD.id(), () -> {
-            JsonObject properties = new JsonObject();
-            properties.addProperty("sable:mass", 0.1);
-            properties.addProperty("sable:volume", 0.15);
-            JsonObject json = new JsonObject();
-            json.addProperty("selector", SailingBlocks.YARD.id().toString());
-            json.addProperty("priority", 1001);
-            json.add("properties", properties);
-            return json;
-        });
         data.recipes(out -> {
-            // three logs in a row give three yards (the cloth needs no item: it is drawn between the yards)
-            ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, SailingBlocks.YARD.get(), 3)
-                    .pattern("LLL")
-                    .define('L', ItemTags.LOGS)
-                    .unlockedBy("has_log", InventoryChangeTrigger.TriggerInstance.hasItems(
-                            net.minecraft.advancements.critereon.ItemPredicate.Builder.item().of(ItemTags.LOGS)))
-                    .save(out, SailingBlocks.YARD.id());
             ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, SailingBlocks.SAIL_WINCH.get())
                     .pattern("TIT").pattern("PPP")
                     .define('T', Items.STRING).define('I', Items.IRON_INGOT).define('P', ItemTags.PLANKS)
@@ -207,18 +184,6 @@ public final class SailingModule implements ModModule {
                     .unlockedBy("has_chain", InventoryChangeTrigger.TriggerInstance.hasItems(Items.CHAIN))
                     .save(out, SailingBlocks.CAPSTAN.id());
         });
-    }
-
-    /**
-     * The yard: a hand-made Blockbench model along x (art/models/yard.bbmodel, design.md §4.8), so only the block state
-     * is generated; {@code axis=z} turns it by 90°. The cloth is drawn by {@code YardClothRenderer}, not by the model.
-     */
-    private static void yard(ModelContext m, YardBlock block) {
-        ResourceLocation model = ModelLocationUtils.getModelLocation(block);
-        m.blockStates().accept(MultiVariantGenerator.multiVariant(block).with(PropertyDispatch.property(YardBlock.AXIS)
-                .select(Direction.Axis.X, Variant.variant().with(VariantProperties.MODEL, model))
-                .select(Direction.Axis.Z, Variant.variant().with(VariantProperties.MODEL, model)
-                        .with(VariantProperties.Y_ROT, VariantProperties.Rotation.R90))));
     }
 
     /**

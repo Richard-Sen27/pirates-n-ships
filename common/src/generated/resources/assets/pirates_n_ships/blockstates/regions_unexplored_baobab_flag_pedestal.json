@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "pole=false": {
+      "model": "pirates_n_ships:block/regions_unexplored_baobab_flag_pedestal"
+    },
+    "pole=true": {
+      "model": "pirates_n_ships:block/regions_unexplored_baobab_flag_pedestal_pole"
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "biomeswevegone"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "biomeswevegone:zelkova_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "biomeswevegone"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "biomeswevegone:zelkova_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:sea_cot",
+  "key": {
+    "P": {
+      "item": "biomeswevegone:zelkova_planks"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    },
+    "W": {
+      "tag": "minecraft:wool"
+    }
+  },
+  "pattern": [
+    "PWP",
+    "PPP",
+    "S S"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:biomeswevegone_zelkova_sea_cot"
+  }
+}

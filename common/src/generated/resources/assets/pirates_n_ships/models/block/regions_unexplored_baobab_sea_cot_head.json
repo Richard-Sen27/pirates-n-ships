@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/sea_cot_head",
+  "textures": {
+    "log": "regions_unexplored:block/stripped_baobab_log",
+    "log_top": "regions_unexplored:block/stripped_baobab_log_top",
+    "particle": "regions_unexplored:block/baobab_planks",
+    "planks": "regions_unexplored:block/baobab_planks"
+  }
+}

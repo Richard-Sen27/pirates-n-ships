@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "pirates_n_ships:block/biomeswevegone_sakura_yard"
+    },
+    "axis=z": {
+      "model": "pirates_n_ships:block/biomeswevegone_sakura_yard",
+      "y": 90
+    }
+  }
+}

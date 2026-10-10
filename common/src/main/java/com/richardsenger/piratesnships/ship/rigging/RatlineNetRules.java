@@ -7,7 +7,8 @@ import java.util.List;
  * Pure rules of the ratline nets (RL2, docs/design.md §4.8 "Ratline nets between fittings"): the cells a net strung
  * between two ring points takes (a 3D DDA walk), whether a net may be strung (length and pitch), and the climbing
  * assist's velocity along the net; RL4's fans (several strands sharing a hub, the triangles between them); RL5's sheets
- * (strands in a row joined into a rectangle or a trapezoid, an anchor's capacity). Coordinates are block coordinates in
+ * (strands in a row joined into a rectangle or a trapezoid, an anchor's capacity); RL6's foot exit (when the assist lets
+ * go of a climber at the bottom of a net). Coordinates are block coordinates in
  * one frame (the world, or one ship's plot).
  */
 public final class RatlineNetRules {
@@ -519,6 +520,93 @@ public final class RatlineNetRules {
     /** The centre of a cell. */
     public static Point centre(Cell c) {
         return new Point(c.x() + 0.5, c.y() + 0.5, c.z() + 0.5);
+    }
+
+    // ------------------------------------------------------------------ the foot exit (RL6)
+
+    /**
+     * How closely a climber's walking direction must follow the net's heading to count as pushing into the net at its
+     * foot: the cosine of the widest angle between them (60°).
+     */
+    public static final double INTO_COS = 0.5;
+    /**
+     * How far down a climber at a net's foot looks to step off rather than climb [degrees below the horizon]:
+     * the net rises the way the deck lies (inboard, towards the mast), so the heading alone cannot tell "up the net" from
+     * "down onto the deck"; looking at the deck can.
+     */
+    public static final double STEP_OFF_PITCH = 30.0;
+
+    /**
+     * Whether feet at height {@code feetY} are at the foot of a net whose lower fitting is the block at height
+     * {@code footY}: in that block's layer (the latch's cell over the rail, the chainplate's cell on the deck, and every
+     * cell of the net beside them at that height, a sheet's bottom row).
+     */
+    public static boolean atFoot(int footY, double feetY) {
+        return Math.floor(feetY) == footY;
+    }
+
+    /**
+     * The net's horizontal heading from {@code a} to {@code b}: the unit horizontal direction from the lower ring towards
+     * the higher one, {x, z}; {0, 0} for a plumb net.
+     */
+    public static double[] heading(Point a, Point b) {
+        Point lo = a.y <= b.y ? a : b;
+        Point hi = a.y <= b.y ? b : a;
+        double dx = hi.x - lo.x, dz = hi.z - lo.z;
+        double h = Math.hypot(dx, dz);
+        return h < 1.0e-6 ? new double[] {0, 0} : new double[] {dx / h, dz / h};
+    }
+
+    /**
+     * The horizontal direction a player's input walks it, {x, z} (not normalised): vanilla's
+     * {@code Entity#getInputVector} of strafe {@code strafe} and forward {@code forward} turned by the yaw
+     * {@code yawDeg}.
+     */
+    public static double[] wish(float strafe, float forward, float yawDeg) {
+        double r = Math.toRadians(yawDeg);
+        double sin = Math.sin(r), cos = Math.cos(r);
+        return new double[] {strafe * cos - forward * sin, forward * cos + strafe * sin};
+    }
+
+    /**
+     * RL6, the foot exit (symmetric to RL3's exit at the top): whether a climber in the lowest layer of a net
+     * ({@link #atFoot}) is let go by the assist, so ordinary walking applies there. {@code onGround}: it stands on the
+     * rail's top or the deck; {@code rising}: it jumped (or vanilla's jump climb lifts it); {@code forward}: its forward
+     * input; {@code pitchDeg}: how far down it looks; {@code wishX, wishZ}: where its input walks it ({@link #wish});
+     * {@code headingX, headingZ}: the net's {@link #heading}, both in the net's frame.
+     * <ul>
+     *     <li>Sneaking always lets go.</li>
+     *     <li>Rising (a jump) climbs.</li>
+     *     <li>Without input it lets go on the ground and keeps hanging in the net above it.</li>
+     *     <li>Forward within 60° of the net's heading ({@link #INTO_COS}; any heading for a plumb net) pushes into the net
+     *     and climbs, unless the climber looks down at least {@link #STEP_OFF_PITCH}: it steps off onto the deck the net
+     *     rises over (also once it has left the rail's edge and drops through the latch's cell to the deck).</li>
+     *     <li>In the air, back with the net in front (climbing down the last of it) stays on the line until the feet
+     *     touch.</li>
+     *     <li>Everything else (along the rail, away from the net, back on the ground) lets go.</li>
+     * </ul>
+     */
+    public static boolean footRelease(boolean onGround, boolean sneaking, boolean rising, float forward, double pitchDeg,
+                                      double wishX, double wishZ, double headingX, double headingZ) {
+        if (sneaking) {
+            return true;
+        }
+        if (rising) {
+            return false;
+        }
+        double w = Math.hypot(wishX, wishZ);
+        if (w < 1.0e-6) {
+            return onGround;
+        }
+        boolean plumb = Math.hypot(headingX, headingZ) < 1.0e-6;
+        double along = (wishX * headingX + wishZ * headingZ) / w;
+        if (forward > 0 && (plumb || along >= INTO_COS)) {
+            return pitchDeg >= STEP_OFF_PITCH;
+        }
+        if (forward < 0 && !onGround && (plumb || along <= -INTO_COS)) {
+            return false;
+        }
+        return true;
     }
 
     // ------------------------------------------------------------------ climbing assist

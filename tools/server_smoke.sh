@@ -242,6 +242,54 @@ if [[ -n "$done_line" ]]; then
                 fi
             done
         done
+        # The nearest port of each kind can lie on separate seas (LANE1: on the default seed the village, the island
+        # and the outpost lie on three). The lane reply then names the extent of the closed sea around the first port,
+        # "(x A..B, z C..D)": look for ports of each kind from the middle of the largest such sea and of its quarters,
+        # generate them, and try each pair with a new port.
+        if ((convoy == 0)); then
+            box="$(grep -oE 'the sea around [^ ]+ \(x -?[0-9]+\.\.-?[0-9]+, z -?[0-9]+\.\.-?[0-9]+\)' "$replies" \
+                | sed -E 's/.*\(x (-?[0-9]+)\.\.(-?[0-9]+), z (-?[0-9]+)\.\.(-?[0-9]+)\)/\1 \2 \3 \4/' \
+                | awk '{ print ($2 - $1) * ($4 - $3), $0 }' | sort -n -r | head -1 | cut -d' ' -f2-)"
+            points=()
+            if [[ -n "$box" ]]; then
+                read -r x0 x1 z0 z1 <<<"$box"
+                points=("$(((x0 + x1) / 2)) $(((z0 + z1) / 2))" "$(((3 * x0 + x1) / 4)) $(((3 * z0 + z1) / 4))"
+                    "$(((x0 + 3 * x1) / 4)) $(((3 * z0 + z1) / 4))" "$(((3 * x0 + x1) / 4)) $(((z0 + 3 * z1) / 4))"
+                    "$(((x0 + 3 * x1) / 4)) $(((z0 + 3 * z1) / 4))")
+            fi
+            for point in "${points[@]}"; do
+                read -r qx qz <<<"$point"
+                for structure in seafarer_village pirate_island navy_outpost; do
+                    cmd="execute in minecraft:overworld positioned $qx 64 $qz run locate structure $mod_id:$structure"
+                    rcon "$cmd"
+                    at="$(grep -A2 -F "> $cmd" "$replies" | sed -E -n 's/.*\[(-?[0-9]+), [^,]+, (-?[0-9]+)\].*/\1 \2/p' | head -1)"
+                    if [[ -n "$at" ]]; then
+                        read -r px pz <<<"$at"
+                        rcon "forceload add $((px - 48)) $((pz - 48)) $((px + 48)) $((pz + 48))"
+                    fi
+                done
+            done
+            rcon "pirates world ports"
+            more=()
+            while IFS= read -r p; do more+=("$p"); done < <(awk '/^> pirates world ports/ { n++; next } /^> / { if (n == 3) exit; next } n == 3' \
+                "$replies" | grep -oE "$mod_id:(village|pirate_island|navy_outpost)_-?[0-9]+_-?[0-9]+" | awk '!seen[$0]++')
+            is_new() {
+                local q
+                for q in "${ports[@]}"; do [[ "$q" == "$1" ]] && return 1; done
+                return 0
+            }
+            for ((i = 0; i < ${#more[@]} && convoy == 0; i++)); do
+                for ((j = i + 1; j < ${#more[@]}; j++)); do
+                    is_new "${more[i]}" || is_new "${more[j]}" || continue
+                    rcon "pirates world voyages lane ${more[i]} ${more[j]}" \
+                        "pirates world voyages spawn convoy ${more[i]} ${more[j]}"
+                    if ! tail -2 "$replies" | grep -q -F 'No convoy from'; then
+                        convoy=1
+                        break
+                    fi
+                done
+            done
+        fi
         ((convoy)) || skipped+=("a convoy that sails: no sea lane between the generated ports on seed $seed")
     else
         fail "/pirates world voyages spawn convoy: fewer than two world ports after generating three port structures"

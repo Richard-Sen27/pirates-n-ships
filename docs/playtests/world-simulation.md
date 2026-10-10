@@ -54,11 +54,15 @@ the command prints them as well).
 
 ### Steps
 1. **Lane between two real ports:** `/pirates world voyages lane <port A> <port B>` (Tab completes the ids).
-   Expected: "Lane A -> B: N blocks, W waypoints, C cells searched, S biome samples, T ms" and a line of waypoints
+   Expected: "Lane A -> B: N blocks, W waypoints, C of B cells searched, S biome samples, T ms" and a line of waypoints
    `x z; x z; …`. N is at least the straight distance between the berths; the waypoints keep off the coasts.
    Teleport to a few waypoints (`/tp @s <x> 70 <z>`): each is on open ocean, none on land or in a river. Note T (the
    cost of a first search; expected tens of milliseconds for ~2000 blocks). Running the command again recomputes.
    Two ports separated by a continent: either a longer lane around it or "No lane … (no_path / budget …)".
+   LANE1: a port in a bay ringed by beach gets its lane over the beach; ports on separate seas answer "… the sea
+   around A (x …, z …) is closed … the two lie on separate seas" (seed 2718281828: village_1192_1530 and
+   pirate_island_-3012_4328), and a pair whose search runs out of cells answers "… the search budget of N cells for M
+   blocks ran out".
 2. **List:** `/pirates world voyages` → "0 voyages under way (0 lanes queued)" in a fresh world.
 3. **Prices before:** at port A's harbor desk note the price of a good A produces (cheap, e.g. sugar); at port B's
    desk note the price of the same good if B demands it (expensive).

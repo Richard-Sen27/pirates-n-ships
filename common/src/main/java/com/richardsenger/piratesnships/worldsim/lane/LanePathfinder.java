@@ -17,10 +17,14 @@ import java.util.PriorityQueue;
  *   <li>Endpoints: the cell of the start (end) block if it is sea, else the nearest sea cell within
  *       {@link Params#endpointRadius} cells (by distance, ties by scan order).</li>
  *   <li>Moves: 8 neighbours, cost 1 straight and √2 diagonal; a diagonal may not cut a land corner (both orthogonal
- *       cells must be sea). Entering a cell that touches land (any of its 8 neighbours is not sea) costs
- *       {@link Params#landMarginCost} times as much, so lanes keep off the coasts where they can.</li>
+ *       cells must be passable). Entering a shore cell ({@link SeaGrid#isShore}: passable, but the coast itself) costs
+ *       {@link Params#shoreCost} times as much; entering an open sea cell that touches land or shore (any of its 8
+ *       neighbours) costs {@link Params#landMarginCost} times as much, so lanes keep off the coasts where they can.</li>
  *   <li>Heuristic: octile distance (admissible, the cheapest move costs 1).</li>
- *   <li>Budget: at most {@link Params#maxCells} cells are expanded; then the search gives up ({@link Status#BUDGET}).</li>
+ *   <li>Budget ({@link Params#budget}): proportional to the straight distance between the endpoint cells,
+ *       {@link Params#cellsPerCell} cells per cell, clamped to {@link Params#minCells}..{@link Params#maxCells}; once
+ *       spent the search gives up ({@link Status#BUDGET}). A search that runs out of cells first ({@link Status#NO_PATH})
+ *       has searched the whole sea around the start: the two ports lie on separate seas.</li>
  *   <li>Result: the exact start and end blocks when their own cells are sea (else the endpoint cells' centres) with the
  *       centres of the cells where the path turns in between (collinear runs merged).</li>
  * </ul>
@@ -31,18 +35,57 @@ public final class LanePathfinder {
     private static final int[] DX = {1, -1, 0, 0, 1, 1, -1, -1};
     private static final int[] DZ = {0, 0, 1, -1, 1, -1, 1, -1};
 
-    /** Tuning; {@code landMarginCost} ≥ 1, {@code maxCells} ≥ 1, {@code endpointRadius} ≥ 0 cells. */
-    public record Params(double landMarginCost, int maxCells, int endpointRadius) {
-        public static final Params DEFAULT = new Params(4.0, 20_000, 8);
+    /**
+     * Tuning: {@code landMarginCost} and {@code shoreCost} ≥ 1, {@code endpointRadius} ≥ 0 cells; the budget is
+     * {@code cellsPerCell} × the straight distance in cells, clamped to {@code minCells}..{@code maxCells}
+     * ({@code cellsPerCell} 0: always {@code maxCells}).
+     */
+    public record Params(double landMarginCost, int maxCells, int endpointRadius, double shoreCost, int minCells, int cellsPerCell) {
+        public static final Params DEFAULT = new Params(4.0, 200_000, 8, 6.0, 20_000, 400);
+
+        /** A fixed budget of {@code maxCells}; shore cells cost as much as the land margin. */
+        public Params(double landMarginCost, int maxCells, int endpointRadius) {
+            this(landMarginCost, maxCells, endpointRadius, landMarginCost, maxCells, 0);
+        }
+
+        /** The budget for endpoint cells {@code straightCells} apart (octile distance). */
+        public int budget(double straightCells) {
+            int max = Math.max(1, maxCells);
+            if (cellsPerCell <= 0) return max;
+            int min = Math.max(1, Math.min(minCells, max));
+            double b = Math.ceil(cellsPerCell * Math.max(0.0, straightCells));
+            return (int) Math.max(min, Math.min(max, b));
+        }
     }
 
+    /**
+     * FOUND; NO_START / NO_END: no passable cell within {@code endpointRadius} of the start / end; NO_PATH: every cell
+     * reachable from the start was searched (separate seas); BUDGET: the budget ran out first.
+     */
     public enum Status { FOUND, NO_START, NO_END, NO_PATH, BUDGET }
 
-    /** The outcome: {@code waypoints} in block coordinates (empty unless FOUND), cells expanded, and the path cost. */
-    public record Result(Status status, List<Lane.Point> waypoints, int expanded, double cost) {
+    /**
+     * The outcome: {@code waypoints} in block coordinates (empty unless FOUND), cells expanded, the path cost, the
+     * budget the search had, the start and end cells it used ({@code null} for NO_START, NO_END) and the cell bounds of
+     * what it searched ({@code null} when nothing was; for NO_PATH: the extent of the start's closed sea).
+     */
+    public record Result(Status status, List<Lane.Point> waypoints, int expanded, double cost, int budget, Cell start, Cell end,
+                         Bounds searched) {
+        public Result(Status status, List<Lane.Point> waypoints, int expanded, double cost) {
+            this(status, waypoints, expanded, cost, 0, null, null, null);
+        }
+
         public boolean found() {
             return status == Status.FOUND;
         }
+    }
+
+    /** A grid cell. */
+    public record Cell(int x, int z) {
+    }
+
+    /** Inclusive cell bounds. */
+    public record Bounds(int minX, int minZ, int maxX, int maxZ) {
     }
 
     private LanePathfinder() {
@@ -66,7 +109,9 @@ public final class LanePathfinder {
         private final LongOpenHashSet closed = new LongOpenHashSet();
         private final PriorityQueue<Node> open = new PriorityQueue<>();
         private long startKey, endKey;
-        private int ex, ez;
+        private int sx, sz, ex, ez;
+        private int budget;
+        private int bMinX = Integer.MAX_VALUE, bMinZ = Integer.MAX_VALUE, bMaxX = Integer.MIN_VALUE, bMaxZ = Integer.MIN_VALUE;
         private int expanded;
         private Result result;
 
@@ -84,12 +129,14 @@ public final class LanePathfinder {
             }
             Optional<long[]> end = nearestSea(grid, grid.cellOf(toX), grid.cellOf(toZ), p.endpointRadius());
             if (end.isEmpty()) {
-                result = new Result(Status.NO_END, List.of(), 0, 0);
+                result = new Result(Status.NO_END, List.of(), 0, 0, 0, new Cell((int) start.get()[0], (int) start.get()[1]), null, null);
                 return;
             }
-            int sx = (int) start.get()[0], sz = (int) start.get()[1];
+            sx = (int) start.get()[0];
+            sz = (int) start.get()[1];
             ex = (int) end.get()[0];
             ez = (int) end.get()[1];
+            budget = p.budget(octile(sx, sz, ex, ez));
             g.defaultReturnValue(Double.POSITIVE_INFINITY);
             startKey = key(sx, sz);
             endKey = key(ex, ez);
@@ -104,6 +151,11 @@ public final class LanePathfinder {
 
         public boolean done() {
             return result != null;
+        }
+
+        /** The budget of this search (0 when an endpoint has no sea). */
+        public int budget() {
+            return budget;
         }
 
         /** Cells expanded so far. */
@@ -134,7 +186,7 @@ public final class LanePathfinder {
             if (result != null) return;
             Node n = open.poll();
             if (n == null) {
-                result = new Result(Status.NO_PATH, List.of(), expanded, 0);
+                result = done(Status.NO_PATH, List.of(), 0);
                 return;
             }
             long k = key(n.x, n.z);
@@ -148,21 +200,25 @@ public final class LanePathfinder {
                     cells.add(new long[]{unpackX(c), unpackZ(c)});
                 }
                 Collections.reverse(cells);
-                result = new Result(Status.FOUND, waypoints(grid, cells, fromX, fromZ, toX, toZ), expanded, n.g);
+                result = done(Status.FOUND, waypoints(grid, cells, fromX, fromZ, toX, toZ), n.g);
                 return;
             }
-            if (expanded >= p.maxCells()) {
-                result = new Result(Status.BUDGET, List.of(), expanded, 0);
+            if (expanded >= budget) {
+                result = done(Status.BUDGET, List.of(), 0);
                 return;
             }
             expanded++;
+            if (n.x < bMinX) bMinX = n.x;
+            if (n.x > bMaxX) bMaxX = n.x;
+            if (n.z < bMinZ) bMinZ = n.z;
+            if (n.z > bMaxZ) bMaxZ = n.z;
             for (int d = 0; d < 8; d++) {
                 int nx = n.x + DX[d], nz = n.z + DZ[d];
                 long nk = key(nx, nz);
                 if (closed.contains(nk) || !grid.isSea(nx, nz)) continue;
                 boolean diagonal = d >= 4;
                 if (diagonal && (!grid.isSea(n.x + DX[d], n.z) || !grid.isSea(n.x, n.z + DZ[d]))) continue;
-                double step = (diagonal ? SQRT2 : 1.0) * (touchesLand(grid, nx, nz) ? Math.max(1.0, p.landMarginCost()) : 1.0);
+                double step = (diagonal ? SQRT2 : 1.0) * enterCost(grid, nx, nz, p);
                 double ng = n.g + step;
                 if (ng < g.get(nk)) {
                     g.put(nk, ng);
@@ -171,11 +227,25 @@ public final class LanePathfinder {
                 }
             }
         }
+
+        private Result done(Status status, List<Lane.Point> waypoints, double cost) {
+            Bounds searched = expanded == 0 ? null : new Bounds(bMinX, bMinZ, bMaxX, bMaxZ);
+            return new Result(status, waypoints, expanded, cost, budget, new Cell(sx, sz), new Cell(ex, ez), searched);
+        }
     }
 
-    /** Whether any of the 8 neighbours of a cell is not sea. */
+    /** The cost factor of entering a passable cell: shore, open sea beside the coast, or open sea. */
+    static double enterCost(SeaGrid grid, int cx, int cz, Params p) {
+        if (grid.isShore(cx, cz)) return Math.max(1.0, p.shoreCost());
+        return touchesLand(grid, cx, cz) ? Math.max(1.0, p.landMarginCost()) : 1.0;
+    }
+
+    /** Whether any of the 8 neighbours of a cell is land or shore. */
     static boolean touchesLand(SeaGrid grid, int cx, int cz) {
-        for (int d = 0; d < 8; d++) if (!grid.isSea(cx + DX[d], cz + DZ[d])) return true;
+        for (int d = 0; d < 8; d++) {
+            int x = cx + DX[d], z = cz + DZ[d];
+            if (!grid.isSea(x, z) || grid.isShore(x, z)) return true;
+        }
         return false;
     }
 

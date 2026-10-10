@@ -776,6 +776,18 @@ a second, faster before the wind and slower into it. Harbor masters now reckon c
 and routes that pass near a pirate island pay a risk bonus. Operators can watch the traffic with
 `/pirates world voyages`. Server config `world_simulation.lanes`, `world_simulation.voyages`.
 
+A lane is searched on a map of 32-block cells read from the biomes, so it reaches unexplored sea without loading a
+chunk. It starts in the port's first berth's cell, or the nearest water cell within 8 cells of it, and ends the same
+way at the other port. Ocean cells are open water; beach cells count as shore a lane may cross at six times the cost
+(`cross_shores`, `shore_cost`), because the biome map draws beaches over shallow water and around many bays, and a
+port's bay would otherwise be cut off from its own sea. Rivers count as land. The search may look at 400 cells for
+every cell of straight distance between the two ports, at least 20 000 and at most 200 000 (`cells_per_cell`,
+`min_cells`, `max_cells`); a long search runs in slices of 5 ms in the background. Two ports on separate seas get no
+lane and no convoys: `/pirates world voyages lane <a> <b>` then says "the two lie on separate seas" and names the extent
+of the closed sea around the first port. A search that runs out of cells says so with its budget instead. Raising
+`world_simulation.lanes.version` throws away every cached lane; an update that changes the search rules does that by
+itself.
+
 ### Ships on the horizon
 NPC ships sail the sea lanes between ports even when nobody watches. When you come within sight of one, it becomes a
 real ship: a merchantman under the merchant flag with goods in her hold and a few armed sailors, a navy patrol, or a

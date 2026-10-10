@@ -20,15 +20,23 @@ public final class VoyageConfig {
             "Side of one sea grid cell in blocks (smaller = finer lanes, slower to find)");
     public static final ConfigValue<Double> LAND_MARGIN_COST = LANES.doubleRange("land_margin_cost", 4.0, 1.0, 100.0,
             "Cost multiplier for sea cells next to land, so lanes keep off the coasts (1 = hug the coast)");
-    public static final ConfigValue<Integer> MAX_CELLS = LANES.intRange("max_cells", 20_000, 100, 1_000_000,
-            "Most grid cells one lane search may expand before it gives up");
+    public static final ConfigValue<Boolean> CROSS_SHORES = LANES.bool("cross_shores", true,
+            "Lanes may cross beach cells of the biome map (often shallow water off a coast, and a port's bay can be ringed by them) at shore_cost; off = only ocean biomes are sea");
+    public static final ConfigValue<Double> SHORE_COST = LANES.doubleRange("shore_cost", 6.0, 1.0, 100.0,
+            "Cost multiplier for crossing a beach cell, so lanes use them only to leave a bay or pass a strait");
+    public static final ConfigValue<Integer> MAX_CELLS = LANES.intRange("max_cells", 200_000, 100, 1_000_000,
+            "Most grid cells one lane search may expand, however far apart the ports are");
+    public static final ConfigValue<Integer> MIN_CELLS = LANES.intRange("min_cells", 20_000, 100, 1_000_000,
+            "Grid cells every lane search may expand, however close the ports are");
+    public static final ConfigValue<Integer> CELLS_PER_CELL = LANES.intRange("cells_per_cell", 400, 0, 100_000,
+            "Lane search budget per grid cell of straight distance between the ports (between min_cells and max_cells; 0 = always max_cells)");
     public static final ConfigValue<Integer> MILLIS_PER_CHECK = LANES.intRange("millis_per_check", 5, 1, 1000,
             "Server time in milliseconds a background lane search may use per voyage check; a longer search continues in the next check");
     public static final ConfigValue<Integer> ENDPOINT_RADIUS_CELLS = LANES.intRange("endpoint_radius_cells", 8, 0, 64,
             "How far (in cells) from a port's berth the lane may start when the berth's own cell is not sea");
     public static final ConfigValue<Integer> RETRY_FAILED_TICKS = LANES.intRange("retry_failed_ticks", 24_000, 0, 10_000_000,
             "Ticks before a port pair without a lane is searched again (24000 = one day)");
-    public static final ConfigValue<Integer> VERSION = LANES.intRange("version", 1, 0, 1_000_000,
+    public static final ConfigValue<Integer> VERSION = LANES.intRange("version", 2, 0, 1_000_000,
             "Raise to throw away every cached lane (e.g. after changing the grid settings)");
     public static final ConfigValue<Integer> RISK_RADIUS = LANES.intRange("risk_radius", 300, 0, 10_000,
             "Pirate islands within this many blocks of a lane make delivery contracts on it riskier (and pay more)");
@@ -73,7 +81,8 @@ public final class VoyageConfig {
     }
 
     public static LanePathfinder.Params laneParams() {
-        return new LanePathfinder.Params(LAND_MARGIN_COST.get(), MAX_CELLS.get(), ENDPOINT_RADIUS_CELLS.get());
+        return new LanePathfinder.Params(LAND_MARGIN_COST.get(), MAX_CELLS.get(), ENDPOINT_RADIUS_CELLS.get(), SHORE_COST.get(),
+                MIN_CELLS.get(), CELLS_PER_CELL.get());
     }
 
     public static VoyageRules.Speed speed() {

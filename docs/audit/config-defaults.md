@@ -1020,11 +1020,15 @@ Not verdicts, tuning questions the docs leave open; each default below is the de
 | `factions.max_wealth` | `1000000` | 0 – 2147483647 | Most wealth (abstract doubloons) a faction can hold | Factions |  | OK |
 | `lanes.cell_blocks` | `32` | 8 – 256 | Side of one sea grid cell in blocks (smaller = finer lanes, slower to find) | CaptainVoyages, Hunting, Lanes |  | OK |
 | `lanes.land_margin_cost` | `4.0` | 1.0 – 100.0 | Cost multiplier for sea cells next to land, so lanes keep off the coasts (1 = hug the coast) | VoyageConfig |  | OK |
-| `lanes.max_cells` | `20000` | 100 – 1000000 | Most grid cells one lane search may expand before it gives up | VoyageConfig |  | OK |
+| `lanes.cross_shores` | `true` | – | Lanes may cross beach cells of the biome map (often shallow water off a coast, and a port's bay can be ringed by them) at shore_cost; off = only ocean biomes are sea | Lanes |  | OK (LANE1) |
+| `lanes.shore_cost` | `6.0` | 1.0 – 100.0 | Cost multiplier for crossing a beach cell, so lanes use them only to leave a bay or pass a strait | VoyageConfig |  | OK (LANE1) |
+| `lanes.max_cells` | `200000` | 100 – 1000000 | Most grid cells one lane search may expand, however far apart the ports are | VoyageConfig |  | OK (LANE1: was 20000, a fixed budget) |
+| `lanes.min_cells` | `20000` | 100 – 1000000 | Grid cells every lane search may expand, however close the ports are | VoyageConfig |  | OK (LANE1) |
+| `lanes.cells_per_cell` | `400` | 0 – 100000 | Lane search budget per grid cell of straight distance between the ports (between min_cells and max_cells; 0 = always max_cells) | VoyageConfig |  | OK (LANE1) |
 | `lanes.millis_per_check` | `5` | 1 – 1000 | Server time in milliseconds a background lane search may use per voyage check; a longer search continues in the next check | Lanes |  | OK |
 | `lanes.endpoint_radius_cells` | `8` | 0 – 64 | How far (in cells) from a port's berth the lane may start when the berth's own cell is not sea | VoyageConfig |  | OK |
 | `lanes.retry_failed_ticks` | `24000` | 0 – 10000000 | Ticks before a port pair without a lane is searched again (24000 = one day) | Lanes |  | OK |
-| `lanes.version` | `1` | 0 – 1000000 | Raise to throw away every cached lane (e.g. after changing the grid settings) | Lanes |  | **TEST**: Keep the value; optionally replace it later with an operator command (`/pirates world lanes reset`). A cache-buster for saved lanes, not a gameplay setting: raising it once throws every cached lane away. |
+| `lanes.version` | `2` | 0 – 1000000 | Raise to throw away every cached lane (e.g. after changing the grid settings) | Lanes |  | **TEST**: Keep the value; optionally replace it later with an operator command (`/pirates world lanes reset`). A cache-buster for saved lanes, not a gameplay setting: raising it once throws every cached lane away. |
 | `lanes.risk_radius` | `300` | 0 – 10000 | Pirate islands within this many blocks of a lane make delivery contracts on it riskier (and pay more) | Lanes |  | OK |
 | `lanes.risk_per_pirate_island` | `0.4` | 0.0 – 1.0 | Contract risk added by each pirate island near the lane (combined as 1 - (1 - r)^n) | Lanes |  | OK |
 | `lanes.base_risk` | `0.1` | 0.0 – 1.0 | Contract risk of a lane with no pirate island near it | Lanes |  | OK |

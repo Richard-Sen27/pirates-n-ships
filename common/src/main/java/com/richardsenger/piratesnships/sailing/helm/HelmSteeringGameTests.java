@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.sailing.helm;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
@@ -61,7 +62,7 @@ public final class HelmSteeringGameTests {
 
     private static BlockPos helmOf(ShipBody ship) {
         for (BlockPos p : ship.plotBlocks()) {
-            if (ship.level().getBlockState(p).is(AssemblyContent.HELM.get())) {
+            if (ship.level().getBlockState(p).getBlock() instanceof HelmBlock) {
                 return p;
             }
         }
@@ -275,6 +276,42 @@ public final class HelmSteeringGameTests {
                     "wheels not at the locks: " + wheel(h, helm[0]) + ", " + wheel(h, helm[1]));
             h.assertTrue(stb > MIN_TURN, "wheel to starboard did not turn the ship to starboard: " + stb + "°");
             h.assertTrue(port < -MIN_TURN, "wheel to port did not turn the ship to port: " + port + "°");
+            h.succeed();
+        });
+    }
+
+    /**
+     * WOOD4: a helm of another wood than the legacy dark oak one (spruce, {@code spruce_helm}) assembles the ship and
+     * steers her: its wheel turns to the lock and she turns to starboard under sail, as with the legacy helm.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 400, batch = "pirates_n_ships_helm_wheel_spruce")
+    public static void spruceHelmAssemblesAndSteers(GameTestHelper h) {
+        WindOverride.set(h.getLevel().dimension().location().toString(), 0.0, WIND, h.getLevel().getGameTime() + 700);
+        SailingGameTestsShips.basin(h, true);
+        BlockPos land = SailingGameTestsShips.squareHull(h, 17, 3, SailTrim.FULL);
+        SailingGameTestsShips.ballast(h, 17, 3);
+        h.setBlock(land, AssemblyContent.HELMS.get(ShipWood.SPRUCE).defaultBlockState()
+                .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
+        Fixture f = SailingGameTestsShips.assemble(h, land);
+        BlockPos helm = helmOf(f.ship());
+        h.assertTrue(h.getLevel().getBlockState(helm).getBlock() instanceof HelmBlock b && b.wood() == ShipWood.SPRUCE,
+                "the ship's helm is no spruce helm: " + h.getLevel().getBlockState(helm));
+        Player player = h.makeMockPlayer(GameType.SURVIVAL);
+        double[] heading = new double[2];
+        h.onEachTick(() -> {
+            long t = h.getTick();
+            if (f.ship().isRemoved()) return;
+            if (t <= 14) stand(player, f.ship(), helm, 0.5);
+            if (t == 2) use(h, helm, player);
+            if (t > 2 && t <= 12) HelmService.turn(player, helm, MAX_PER_TICK);
+            if (t == 13) HelmService.release(player, helm);
+            if (t == HEAD_FROM) heading[1] = f.runtime().headingDegrees(f.ship());
+            if (t == HEAD_TO) heading[0] = WindSample.normalizeDegrees(f.runtime().headingDegrees(f.ship()) - heading[1] + 180.0) - 180.0;
+        });
+        h.runAfterDelay(HEAD_TO + 1, () -> {
+            WindOverride.clear(h.getLevel().dimension().location().toString());
+            h.assertTrue(near(wheel(h, helm), LOCK), "the spruce helm's wheel is not at the lock: " + wheel(h, helm));
+            h.assertTrue(heading[0] > MIN_TURN, "the spruce helm did not turn the ship to starboard: " + heading[0] + "°");
             h.succeed();
         });
     }

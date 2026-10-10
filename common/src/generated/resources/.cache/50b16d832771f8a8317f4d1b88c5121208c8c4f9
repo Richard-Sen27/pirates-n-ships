@@ -1,9 +1,9 @@
-// 1.21.1	2026-10-10T12:40:59.618576	Tags for minecraft:block mod id vanilla
+// 1.21.1	2026-10-10T14:20:10.900579	Tags for minecraft:block mod id vanilla
 4574ad20b2942c15e4ade670401483c8652905aa data/c/tags/block/chests.json
 da39b6df40b11fa9987da5007d54347277a84ca2 data/minecraft/tags/block/climbable.json
 027425cd193e9e04ea5aed99085f092fa520d95e data/minecraft/tags/block/doors.json
-c2f66ff013dce613ee13fefda92cdb216b418b53 data/minecraft/tags/block/mineable/axe.json
-13ad1bcec5e42f643ce71e43388406f047890d96 data/minecraft/tags/block/mineable/pickaxe.json
+9b4b8f620a40534defbadcf6646fe2421137e9af data/minecraft/tags/block/mineable/axe.json
+4550189aa49462b1d44ac5536c5a3e5de79af3de data/minecraft/tags/block/mineable/pickaxe.json
 d203a86a191efea5b043ecfbd6050cc6e1731b62 data/pirates_n_ships/tags/block/barrel_blocking.json
 d1a9d654018d87e309dea75aaec0ce831977a495 data/pirates_n_ships/tags/block/cannon_breakable.json
 90b985302b5c05cc96c39f6cb2985a785fde74b2 data/pirates_n_ships/tags/block/cannon_proof.json
@@ -22,7 +22,7 @@ d0b4325bb417203ea7f0a861071937293d2a1ac8 data/pirates_n_ships/tags/block/terrain
 bb169b9e5997d40072757d8e612623b7c9775438 data/pirates_n_ships/tags/block/test_ground.json
 1a6606b59646e30901e8ced8c7447d19dcc5fedf data/pirates_n_ships/tags/block/watertight.json
 5073dbb2b10dec21ec2e422f93008dc243a5b4e7 data/sable/tags/block/heavy.json
-2aa7eb384e3141db2538aa90c848431276b18bb2 data/sable/tags/block/light.json
+fb1f55c0e1dfa6f64b994b704a86b7a65eec60b9 data/sable/tags/block/light.json
 8abd98cb2d9830554be6acbc068e6ec05d9f1c68 data/sable/tags/block/quarter_volume.json
 1c76d604fb52fae4f3f1b862f32c861ef4b624e2 data/sable/tags/block/super_light.json
 5ff94135773d217423e5c36de74970cc8d0a4792 data/sable/tags/block/weightless.json

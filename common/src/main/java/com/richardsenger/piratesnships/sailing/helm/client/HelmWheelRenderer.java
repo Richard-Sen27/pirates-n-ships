@@ -1,8 +1,8 @@
 package com.richardsenger.piratesnships.sailing.helm.client;
 
+import com.richardsenger.piratesnships.ship.decor.wood.client.WoodModels;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import com.richardsenger.piratesnships.platform.event.ClientEvents;
 import com.richardsenger.piratesnships.sailing.helm.HelmBlockEntity;
 import com.richardsenger.piratesnships.ship.assembly.HelmBlock;
 import net.minecraft.client.Minecraft;
@@ -38,7 +38,7 @@ public class HelmWheelRenderer implements BlockEntityRenderer<HelmBlockEntity> {
     @Override
     public void render(HelmBlockEntity be, float partialTick, PoseStack pose, MultiBufferSource buffers, int light, int overlay) {
         BlockState state = be.getBlockState();
-        if (!(state.getBlock() instanceof HelmBlock)) {
+        if (!(state.getBlock() instanceof HelmBlock helm)) {
             return;
         }
         Float local = HelmSteeringClient.predictedWheel(be.getBlockPos(), partialTick);
@@ -52,7 +52,7 @@ public class HelmWheelRenderer implements BlockEntityRenderer<HelmBlockEntity> {
         pose.translate(AXLE_X, AXLE_Y, AXLE_Z);
         pose.mulPose(Axis.ZP.rotationDegrees(angle));
         pose.translate(-AXLE_X, -AXLE_Y, -AXLE_Z);
-        BakedModel wheel = ClientEvents.additionalModel(HelmClient.WHEEL_MODEL);
+        BakedModel wheel = WoodModels.get(helm, HelmClient.WHEEL_MODEL); // WOOD4: the wheel of the helm's wood
         Minecraft.getInstance().getBlockRenderer().getModelRenderer().renderModel(pose.last(),
                 buffers.getBuffer(Sheets.solidBlockSheet()), null, wheel, 1f, 1f, 1f, light, overlay);
         pose.popPose();

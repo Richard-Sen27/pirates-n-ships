@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "pirates_n_ships:helm",
+  "key": {
+    "P": {
+      "item": "minecraft:cherry_planks"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    }
+  },
+  "pattern": [
+    "S S",
+    " P ",
+    "S S"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:cherry_helm"
+  }
+}

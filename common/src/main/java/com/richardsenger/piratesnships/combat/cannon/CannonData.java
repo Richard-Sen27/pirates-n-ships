@@ -1,5 +1,12 @@
 package com.richardsenger.piratesnships.combat.cannon;
 
+import org.jetbrains.annotations.Nullable;
+import java.util.List;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodRecipe;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodConditions;
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.Constants;
 import com.google.gson.JsonObject;
 import com.richardsenger.piratesnships.combat.content.CombatContent;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
@@ -13,12 +20,10 @@ import net.minecraft.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
-import net.minecraft.data.models.model.ModelLocationUtils;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -36,14 +41,24 @@ import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 public final class CannonData {
 
     static final String IRON = "minecraft:block/anvil";
+    /** The carriage of an empty gun (the master's block model) and with the rammer (powder and loaded), WOOD4 parents. */
+    static final ResourceLocation CARRIAGE_MODEL = Constants.id("block/cannon_carriage");
+    static final ResourceLocation CARRIAGE_RAMMER_MODEL = Constants.id("block/cannon_carriage_rammer");
+    /** The elevation wedge the barrel renderer draws (one child per wood). */
+    public static final ResourceLocation QUOIN_MODEL = Constants.id("block/cannon_quoin");
+    /** The whole gun, the items' parent (barrel, quoin and carriage, with the display entries). */
+    static final ResourceLocation ITEM_MODEL = Constants.id("block/cannon");
+    /** The rear half: a particle-only model, shared by every member (nothing of the rear is drawn). */
+    static final ResourceLocation REAR_MODEL = Constants.id("block/cannon_rear");
 
     private CannonData() {
     }
 
     public static void gather(DataContributions data) {
+        WoodFamily<CannonBlock> cannons = CannonContent.CANNONS;
         data.lang(lang -> {
-            lang.block(CannonContent.CANNON, "Cannon")
-                    .add(CannonContent.CANNONBALL.get().getDescriptionId(), "Cannonball")
+            cannons.lang(lang, "Cannon"); // WOOD4: "Dark Oak Cannon" (the legacy cannon), "Cherry Cannon", ...
+            lang.add(CannonContent.CANNONBALL.get().getDescriptionId(), "Cannonball")
                     .item(CannonContent.CHAIN_SHOT, "Chain Shot")
                     .item(CannonContent.GRAPESHOT, "Grapeshot");
             for (CannonService.Outcome o : CannonService.Outcome.values()) {
@@ -85,9 +100,9 @@ public final class CannonData {
         data.models(CannonData::models);
         data.itemTags(tags -> tags.tag(CannonContent.CANNON_SHOT).add(CombatContent.CANNONBALL.get(),
                 CannonContent.CHAIN_SHOT.get(), CannonContent.GRAPESHOT.get()));
-        data.blockLoot(loot -> loot.add(CannonContent.CANNON.get(), masterOnly(CannonContent.CANNON.get())));
+        cannons.loot(data, CannonData::masterOnly);
         data.blockTags(tags -> {
-            tags.tag(BlockTags.MINEABLE_WITH_PICKAXE).add(CannonContent.CANNON.get());
+            cannons.tag(tags, BlockTags.MINEABLE_WITH_PICKAXE);
             // what a ball may destroy where it is not part of a ship (ship blocks always break, see CannonRules)
             tags.tag(CannonContent.BREAKABLE).addTag(BlockTags.PLANKS).addTag(BlockTags.LOGS).addTag(BlockTags.WOOL)
                     .addTag(BlockTags.WOODEN_SLABS).addTag(BlockTags.WOODEN_STAIRS).addTag(BlockTags.WOODEN_FENCES)
@@ -96,13 +111,13 @@ public final class CannonData {
         });
         // Sable physics (refs/sable/wiki/Block Physics Properties.md): an iron barrel on a wooden carriage, heavy (4 in
         // all; Sable's #sable:light planks weigh 0.5). The entry is per block id, so each of the two halves gets half:
-        // mass 2 and a quarter block of volume.
-        physics(data, CannonContent.CANNON.id(), 2.0, 0.25);
-        data.recipes(out -> ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, CannonContent.CANNON.get())
-                .pattern("NIN").pattern("LPL")
-                .define('N', Items.IRON_INGOT).define('I', Items.IRON_BLOCK).define('L', ItemTags.LOGS).define('P', ItemTags.PLANKS)
-                .unlockedBy("has_iron_block", InventoryChangeTrigger.TriggerInstance.hasItems(Items.IRON_BLOCK))
-                .save(out, CannonContent.CANNON.id()));
+        // mass 2 and a quarter block of volume. WOOD4: one entry per member, a mod wood's with its mod's load conditions.
+        cannons.forEach((wood, cannon) -> physics(data, cannons.entry(wood).id(), 2.0, 0.25, wood));
+        // WOOD4: the carriage from that wood's stripped log and planks (was any log and planks)
+        cannons.recipe(data, WoodRecipe.shaped(RecipeCategory.COMBAT, 1, "NIN", "LPL")
+                .define('N', WoodRecipe.item(Items.IRON_INGOT)).define('I', WoodRecipe.item(Items.IRON_BLOCK))
+                .define('L', WoodRecipe.strippedLog()).define('P', WoodRecipe.planks())
+                .group(Constants.MOD_ID + ":cannon").unlockedBy("has_iron_block", WoodRecipe.item(Items.IRON_BLOCK)));
         // CAN3: two balls' worth of iron on a chain; a canvas bag (string) of iron nuggets
         data.recipes(out -> {
             ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, CannonContent.CHAIN_SHOT.get(), 2)
@@ -119,6 +134,11 @@ public final class CannonData {
     }
 
     static void physics(DataContributions data, ResourceLocation id, double mass, double volume) {
+        physics(data, id, mass, volume, null);
+    }
+
+    /** {@code wood} a mod's wood: the entry carries both loaders' load conditions of its mod ({@link WoodConditions}). */
+    static void physics(DataContributions data, ResourceLocation id, double mass, double volume, @Nullable ShipWood wood) {
         data.json(PackOutput.Target.DATA_PACK, "physics_block_properties", id, () -> {
             JsonObject properties = new JsonObject();
             properties.addProperty("sable:mass", mass);
@@ -127,6 +147,7 @@ public final class CannonData {
             json.addProperty("selector", id.toString());
             json.addProperty("priority", 1001);
             json.add("properties", properties);
+            if (wood != null && !wood.isVanilla()) WoodConditions.add(json, wood.modId(), List.of());
             return json;
         });
     }
@@ -141,7 +162,7 @@ public final class CannonData {
     }
 
     private static void models(ModelContext m) {
-        cannon(m, CannonContent.CANNON.get());
+        cannons(m);
         // ART15: hand-made 3D item models (art/models/chain_shot.bbmodel, grapeshot.bbmodel), so datagen writes none
         m.handMadeItem(CannonContent.CHAIN_SHOT.get());
         m.handMadeItem(CannonContent.GRAPESHOT.get());
@@ -161,35 +182,43 @@ public final class CannonData {
      * (the hand-made {@code cannon_carriage}, with the rammer leaning on it once powder is in {@code cannon_carriage_rammer},
      * from the carriage groups of art/models/cannon*.bbmodel, muzzle to the north, model z 0..32); the barrel and the quoin
      * are drawn by {@code client/CannonBarrelRenderer} at the elevation. The rear half shows nothing ({@code cannon_rear},
-     * generated: only a particle texture). Turned by {@link CannonBlock#FACING} (north is unrotated). The whole gun
-     * ({@code cannon}: barrel, quoin and carriage, with display entries that fit it into the slot) is the item's model,
-     * reached by the block item's default model {@code block/cannon}.
+     * generated: only a particle texture, one model for every member). Turned by {@link CannonBlock#FACING} (north is
+     * unrotated). The whole gun ({@code cannon}: barrel, quoin and carriage, with display entries that fit it into the
+     * slot) is the items' parent.
+     *
+     * <p>WOOD4: the carriage models, the quoin and the item use the wood variables, so every wood gets its children
+     * ({@code block/<wood>_cannon_carriage}, {@code _carriage_rammer}, {@code _cannon_quoin} for the renderer, and the
+     * item model); the iron barrels stay one model each.
      */
-    private static void cannon(ModelContext m, Block block) {
-        ResourceLocation base = ModelLocationUtils.getModelLocation(block);
-        ResourceLocation rear = base.withSuffix("_rear");
-        m.models().accept(rear, () -> {
+    private static void cannons(ModelContext m) {
+        WoodFamily<CannonBlock> cannons = CannonContent.CANNONS;
+        m.models().accept(REAR_MODEL, () -> {
             JsonObject textures = new JsonObject();
             textures.addProperty("particle", IRON);
             JsonObject json = new JsonObject();
             json.add("textures", textures);
             return json;
         });
-
+        cannons.childModels(m, CARRIAGE_MODEL);
+        cannons.childModels(m, CARRIAGE_RAMMER_MODEL);
+        cannons.childModels(m, QUOIN_MODEL);
+        cannons.itemModels(m, ITEM_MODEL);
         // CAN3: the loaded shot changes nothing in the look (the barrel's renderer shows the load)
-        PropertyDispatch.C4<Direction, CannonLoad, CannonPart, ShotKind> dispatch =
-                PropertyDispatch.properties(CannonBlock.FACING, CannonBlock.LOAD, CannonBlock.PART, CannonBlock.SHOT);
-        for (Direction d : Direction.Plane.HORIZONTAL) {
-            for (CannonLoad load : CannonLoad.values()) {
-                for (ShotKind shot : ShotKind.values()) {
-                    ResourceLocation front = base.withSuffix(load == CannonLoad.EMPTY ? "_carriage" : "_carriage_rammer");
-                    dispatch.select(d, load, CannonPart.FRONT, shot, Variant.variant().with(VariantProperties.MODEL, front)
-                            .with(VariantProperties.Y_ROT, yRotation(d)));
-                    dispatch.select(d, load, CannonPart.REAR, shot, Variant.variant().with(VariantProperties.MODEL, rear)
-                            .with(VariantProperties.Y_ROT, yRotation(d)));
+        cannons.forEach((wood, block) -> {
+            PropertyDispatch.C4<Direction, CannonLoad, CannonPart, ShotKind> dispatch =
+                    PropertyDispatch.properties(CannonBlock.FACING, CannonBlock.LOAD, CannonBlock.PART, CannonBlock.SHOT);
+            for (Direction d : Direction.Plane.HORIZONTAL) {
+                for (CannonLoad load : CannonLoad.values()) {
+                    for (ShotKind shot : ShotKind.values()) {
+                        ResourceLocation front = WoodFamily.child(wood, load == CannonLoad.EMPTY ? CARRIAGE_MODEL : CARRIAGE_RAMMER_MODEL);
+                        dispatch.select(d, load, CannonPart.FRONT, shot, Variant.variant().with(VariantProperties.MODEL, front)
+                                .with(VariantProperties.Y_ROT, yRotation(d)));
+                        dispatch.select(d, load, CannonPart.REAR, shot, Variant.variant().with(VariantProperties.MODEL, REAR_MODEL)
+                                .with(VariantProperties.Y_ROT, yRotation(d)));
+                    }
                 }
             }
-        }
-        m.blockStates().accept(MultiVariantGenerator.multiVariant(block).with(dispatch));
+            m.blockStates().accept(MultiVariantGenerator.multiVariant(block).with(dispatch));
+        });
     }
 }

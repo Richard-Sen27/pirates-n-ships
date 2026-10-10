@@ -11,6 +11,8 @@ import com.richardsenger.piratesnships.station.StationBlock;
 import com.richardsenger.piratesnships.station.StationKind;
 import com.richardsenger.piratesnships.station.Stations;
 import com.richardsenger.piratesnships.station.helm.HelmStation;
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -53,9 +55,9 @@ import org.jetbrains.annotations.Nullable;
  * <p>WS3a: the helm is also a station ({@link HelmStation}): a crew member assigned to it stands beside the wheel and
  * holds a course ({@code station.helm.CourseOrder}) on the ship's steering helm. Breaking it frees the station.
  */
-public class HelmBlock extends HorizontalDirectionalBlock implements EntityBlock, StationBlock {
+public class HelmBlock extends HorizontalDirectionalBlock implements EntityBlock, StationBlock, WoodBlock {
 
-    public static final MapCodec<HelmBlock> CODEC = simpleCodec(HelmBlock::new);
+    public static final MapCodec<HelmBlock> CODEC = simpleCodec(p -> new HelmBlock(ShipWood.DARK_OAK, p));
     public static final int MIDSHIPS = 5;
     public static final IntegerProperty RUDDER = IntegerProperty.create("rudder", 0, 2 * MIDSHIPS);
     public static final String KEY_DISASSEMBLE_HINT = com.richardsenger.piratesnships.Constants.MOD_ID + ".assembly.disassemble_hint";
@@ -101,9 +103,18 @@ public class HelmBlock extends HorizontalDirectionalBlock implements EntityBlock
         steering = handler;
     }
 
-    public HelmBlock(Properties properties) {
+    private final ShipWood wood;
+
+    /** WOOD4: one helm per wood ({@code AssemblyContent.HELMS}); every member behaves the same. */
+    public HelmBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(FACING, net.minecraft.core.Direction.NORTH).setValue(RUDDER, MIDSHIPS));
+    }
+
+    @Override
+    public ShipWood wood() {
+        return wood;
     }
 
     @Override

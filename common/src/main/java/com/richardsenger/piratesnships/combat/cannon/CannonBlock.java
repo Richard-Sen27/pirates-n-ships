@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.combat.cannon;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import com.richardsenger.piratesnships.core.text.ActionBar;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
@@ -66,7 +68,7 @@ import java.util.List;
  * Any other item in hand does its own thing. Each use works on either half and acts on the master. It is also a crew
  * station ({@link CannonStation}).
  */
-public class CannonBlock extends Block implements EntityBlock, StationBlock, SimpleWaterloggedBlock {
+public class CannonBlock extends Block implements EntityBlock, StationBlock, SimpleWaterloggedBlock, WoodBlock {
 
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final EnumProperty<CannonLoad> LOAD = EnumProperty.create("load", CannonLoad.class);
@@ -92,10 +94,22 @@ public class CannonBlock extends Block implements EntityBlock, StationBlock, Sim
         return box(b[0], b[1], b[2], b[3], b[4], b[5]);
     }
 
-    public CannonBlock(Properties properties) {
+    private final ShipWood wood;
+
+    /**
+     * WOOD4: one cannon per carriage wood ({@code CannonContent.CANNONS}); the barrel is iron in every member, and every
+     * member loads, aims and fires the same.
+     */
+    public CannonBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(LOAD, CannonLoad.EMPTY)
                 .setValue(PART, CannonPart.FRONT).setValue(SHOT, ShotKind.BALL).setValue(Waterlogging.WATERLOGGED, false));
+    }
+
+    @Override
+    public ShipWood wood() {
+        return wood;
     }
 
     @Override

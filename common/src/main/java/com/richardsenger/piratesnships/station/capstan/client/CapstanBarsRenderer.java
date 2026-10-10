@@ -1,8 +1,8 @@
 package com.richardsenger.piratesnships.station.capstan.client;
 
+import com.richardsenger.piratesnships.ship.decor.wood.client.WoodModels;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import com.richardsenger.piratesnships.platform.event.ClientEvents;
 import com.richardsenger.piratesnships.sailing.block.CapstanBlock;
 import com.richardsenger.piratesnships.station.capstan.CapstanBlockEntity;
 import net.minecraft.client.Minecraft;
@@ -30,7 +30,7 @@ public class CapstanBarsRenderer implements BlockEntityRenderer<CapstanBlockEnti
 
     @Override
     public void render(CapstanBlockEntity be, float partialTick, PoseStack pose, MultiBufferSource buffers, int light, int overlay) {
-        if (!(be.getBlockState().getBlock() instanceof CapstanBlock) || be.getLevel() == null) {
+        if (!(be.getBlockState().getBlock() instanceof CapstanBlock capstan) || be.getLevel() == null) {
             return;
         }
         double angle = be.barAngle(be.getLevel().getGameTime() + partialTick);
@@ -38,7 +38,7 @@ public class CapstanBarsRenderer implements BlockEntityRenderer<CapstanBlockEnti
         pose.translate(0.5f, 0f, 0.5f);
         pose.mulPose(Axis.YP.rotationDegrees((float) (angle % 360.0)));
         pose.translate(-0.5f, 0f, -0.5f);
-        BakedModel bars = ClientEvents.additionalModel(CapstanClient.BARS_MODEL);
+        BakedModel bars = WoodModels.get(capstan, CapstanClient.BARS_MODEL); // WOOD4: the bars of the capstan's wood
         Minecraft.getInstance().getBlockRenderer().getModelRenderer().renderModel(pose.last(),
                 buffers.getBuffer(Sheets.solidBlockSheet()), null, bars, 1f, 1f, 1f, light, overlay);
         pose.popPose();

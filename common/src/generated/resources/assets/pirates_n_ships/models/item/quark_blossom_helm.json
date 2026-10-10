@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/helm_item",
+  "textures": {
+    "log": "quark:block/stripped_blossom_log",
+    "log_top": "quark:block/stripped_blossom_log_top",
+    "particle": "quark:block/blossom_planks",
+    "planks": "quark:block/blossom_planks"
+  }
+}

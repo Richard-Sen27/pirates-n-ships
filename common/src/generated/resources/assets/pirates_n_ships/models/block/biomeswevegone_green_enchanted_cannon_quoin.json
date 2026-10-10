@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/cannon_quoin",
+  "textures": {
+    "log": "biomeswevegone:block/green_enchanted/stripped_log",
+    "log_top": "biomeswevegone:block/green_enchanted/stripped_log_top",
+    "particle": "biomeswevegone:block/green_enchanted/planks",
+    "planks": "biomeswevegone:block/green_enchanted/planks"
+  }
+}

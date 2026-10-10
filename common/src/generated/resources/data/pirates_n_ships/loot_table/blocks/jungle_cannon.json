@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "conditions": [
+            {
+              "block": "pirates_n_ships:jungle_cannon",
+              "condition": "minecraft:block_state_property",
+              "properties": {
+                "part": "front"
+              }
+            }
+          ],
+          "name": "pirates_n_ships:jungle_cannon"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "pirates_n_ships:blocks/jungle_cannon"
+}

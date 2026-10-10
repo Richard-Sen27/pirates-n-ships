@@ -197,6 +197,10 @@
        {
         "type": "recipe",
         "recipe": "pirates_n_ships:helm"
+       },
+       {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.first_ship.p3.text2"
        }
       ]
      },
@@ -3898,6 +3902,7 @@
   "pirates_n_ships.almanac.first_ship.p2.text3": "Natural ground (dirt, sand, raw stone, leaves) stays behind; cut and crafted blocks sail with her.",
   "pirates_n_ships.almanac.first_ship.p3.heading": "2. Set the helm",
   "pirates_n_ships.almanac.first_ship.p3.text1": "Place a {item:pirates_n_ships:helm}**helm** on deck. The bow is where the helmsman looks.",
+  "pirates_n_ships.almanac.first_ship.p3.text2": "Helms come in every wood, a wood mod's too, and so do the winch, the capstan, the bilge pump and the cannon's carriage: each is made from that wood's planks, and the panels show each wood in turn.",
   "pirates_n_ships.almanac.first_ship.p4.heading": "3. Rig a sail",
   "pirates_n_ships.almanac.first_ship.p4.text1": "Raise a mast of logs or fences with two rows of {item:pirates_n_ships:yard}**yards** across it, 2 to 8 blocks apart.",
   "pirates_n_ships.almanac.first_ship.p4.text2": "Add a {item:pirates_n_ships:sail_winch}**sail winch** on deck, and a {item:pirates_n_ships:capstan}**capstan** for an anchor.",

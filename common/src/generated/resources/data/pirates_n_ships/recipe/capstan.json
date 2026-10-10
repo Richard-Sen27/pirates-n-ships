@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "misc",
+  "group": "pirates_n_ships:capstan",
   "key": {
     "C": {
       "item": "minecraft:chain"
@@ -9,10 +10,10 @@
       "item": "minecraft:iron_block"
     },
     "L": {
-      "tag": "minecraft:logs"
+      "item": "minecraft:stripped_dark_oak_log"
     },
     "P": {
-      "tag": "minecraft:planks"
+      "item": "minecraft:dark_oak_planks"
     },
     "S": {
       "item": "minecraft:stick"

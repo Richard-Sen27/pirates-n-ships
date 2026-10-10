@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.ship.decor;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import com.mojang.serialization.MapCodec;
 import com.richardsenger.piratesnships.core.block.Waterlogging;
 import net.minecraft.core.BlockPos;
@@ -49,9 +51,9 @@ import java.util.Map;
  * name; the row's master (its leftmost board) draws the name across the row ({@code client.NameplateRenderer}).
  * Waterloggable (WLOG1), not climbable.
  */
-public class NameBoardBlock extends HorizontalDirectionalBlock implements EntityBlock, SimpleWaterloggedBlock {
+public class NameBoardBlock extends HorizontalDirectionalBlock implements EntityBlock, SimpleWaterloggedBlock, WoodBlock {
 
-    public static final MapCodec<NameBoardBlock> CODEC = simpleCodec(NameBoardBlock::new);
+    public static final MapCodec<NameBoardBlock> CODEC = WoodBlock.codec(NameBoardBlock::new);
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
     /** A board of the same row continues on the viewer's left ({@link NameBoardRow#left}). */
     public static final BooleanProperty LEFT = BooleanProperty.create("left");
@@ -69,8 +71,17 @@ public class NameBoardBlock extends HorizontalDirectionalBlock implements Entity
         SHAPES.put(Direction.EAST, Block.box(0, bottom, 0, 16 - front, top, 16));
     }
 
-    public NameBoardBlock(Properties properties) {
+    /** The wood of this member (WOOD3). */
+    private final ShipWood wood;
+
+    @Override
+    public ShipWood wood() {
+        return wood;
+    }
+
+    public NameBoardBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(LEFT, false).setValue(RIGHT, false)
                 .setValue(Waterlogging.WATERLOGGED, false));
     }
@@ -106,7 +117,7 @@ public class NameBoardBlock extends HorizontalDirectionalBlock implements Entity
         if (!context.replacingClickedOnBlock()) {
             // a click on a board's own front does not stack a board in front of it
             BlockState on = level.getBlockState(pos.relative(clicked.getOpposite()));
-            if (on.is(this) && on.getValue(FACING) == clicked) return null;
+            if (on.getBlock() instanceof NameBoardBlock && on.getValue(FACING) == clicked) return null;
         }
         if (clicked.getAxis().isHorizontal() && canAttach(level, pos, clicked)) {
             return Waterlogging.placed(connected(defaultBlockState().setValue(FACING, clicked), level, pos), context);
@@ -129,12 +140,15 @@ public class NameBoardBlock extends HorizontalDirectionalBlock implements Entity
                 .setValue(RIGHT, NameBoardRow.joins(lookup, pos.getX(), pos.getY(), pos.getZ(), facing, NameBoardRow.right(facing)));
     }
 
-    /** The world read as {@link NameBoardRow} needs it: the facing of each board of this block. */
+    /**
+     * The world read as {@link NameBoardRow} needs it: the facing of each name board. A row joins boards of every wood
+     * (WOOD3): each board keeps its own wood, the frame's end caps are those of the boards at the ends.
+     */
     public NameBoardRow.Lookup lookup(BlockGetter level) {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         return (x, y, z) -> {
             BlockState s = level.getBlockState(at.set(x, y, z));
-            return s.is(this) ? s.getValue(FACING) : null;
+            return s.getBlock() instanceof NameBoardBlock ? s.getValue(FACING) : null;
         };
     }
 

@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "part=bottom": {
+      "model": "pirates_n_ships:block/biomeswevegone_green_enchanted_flagpole_bottom"
+    },
+    "part=middle": {
+      "model": "pirates_n_ships:block/biomeswevegone_green_enchanted_flagpole_middle"
+    },
+    "part=single": {
+      "model": "pirates_n_ships:block/biomeswevegone_green_enchanted_flagpole"
+    },
+    "part=top": {
+      "model": "pirates_n_ships:block/biomeswevegone_green_enchanted_flagpole_top"
+    }
+  }
+}

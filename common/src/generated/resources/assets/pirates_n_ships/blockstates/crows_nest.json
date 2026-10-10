@@ -1,10 +1,10 @@
 {
   "variants": {
     "pole=false": {
-      "model": "pirates_n_ships:block/crows_nest"
+      "model": "pirates_n_ships:block/spruce_crows_nest"
     },
     "pole=true": {
-      "model": "pirates_n_ships:block/crows_nest_pole"
+      "model": "pirates_n_ships:block/spruce_crows_nest_pole"
     }
   }
 }

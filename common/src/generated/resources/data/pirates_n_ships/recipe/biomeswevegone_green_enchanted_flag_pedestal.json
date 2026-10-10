@@ -1,0 +1,51 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "biomeswevegone"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "biomeswevegone:stripped_green_enchanted_log"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "biomeswevegone:green_enchanted_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "biomeswevegone"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "biomeswevegone:stripped_green_enchanted_log",
+        "biomeswevegone:green_enchanted_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:flag_pedestal",
+  "key": {
+    "L": {
+      "item": "biomeswevegone:stripped_green_enchanted_log"
+    },
+    "P": {
+      "item": "biomeswevegone:green_enchanted_planks"
+    }
+  },
+  "pattern": [
+    "L",
+    "P"
+  ],
+  "result": {
+    "count": 2,
+    "id": "pirates_n_ships:biomeswevegone_green_enchanted_flag_pedestal"
+  }
+}

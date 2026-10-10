@@ -1,12 +1,13 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "misc",
+  "group": "pirates_n_ships:cleat",
   "key": {
     "I": {
       "item": "minecraft:iron_ingot"
     },
     "P": {
-      "tag": "minecraft:planks"
+      "item": "minecraft:dark_oak_planks"
     }
   },
   "pattern": [

@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "pirates_n_ships:sea_cot",
+  "key": {
+    "P": {
+      "item": "minecraft:acacia_planks"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    },
+    "W": {
+      "tag": "minecraft:wool"
+    }
+  },
+  "pattern": [
+    "PWP",
+    "PPP",
+    "S S"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:acacia_sea_cot"
+  }
+}

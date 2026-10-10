@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "pirates_n_ships:yard",
+  "key": {
+    "L": {
+      "item": "minecraft:stripped_cherry_log"
+    }
+  },
+  "pattern": [
+    "LLL"
+  ],
+  "result": {
+    "count": 3,
+    "id": "pirates_n_ships:cherry_yard"
+  }
+}

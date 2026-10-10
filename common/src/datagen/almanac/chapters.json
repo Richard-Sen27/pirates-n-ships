@@ -737,12 +737,16 @@
         "key": "pirates_n_ships.almanac.ships.p18.text1"
        },
        {
+        "type": "text",
+        "key": "pirates_n_ships.almanac.ships.p18.text2"
+       },
+       {
         "type": "recipe",
         "recipe": "pirates_n_ships:stern_window"
        },
        {
         "type": "text",
-        "key": "pirates_n_ships.almanac.ships.p18.text2"
+        "key": "pirates_n_ships.almanac.ships.p18.text3"
        },
        {
         "type": "recipe",
@@ -3964,7 +3968,7 @@
   "pirates_n_ships.almanac.ships.p12.text4": "Only pieces of the same ship join, of up to 200 blocks each.",
   "pirates_n_ships.almanac.ships.p13.heading": "Fittings",
   "pirates_n_ships.almanac.ships.p13.show_me1": "Show me: her name and figurehead",
-  "pirates_n_ships.almanac.ships.p13.text1": "A {item:pirates_n_ships:nameplate}**name board** (any sign and a gold nugget make three) fixed on her side shows her name once she is launched and named; boards side by side join, and the name grows across the row.",
+  "pirates_n_ships.almanac.ships.p13.text1": "A {item:pirates_n_ships:nameplate}**name board** (two planks and a gold nugget make three) fixed on her side shows her name once she is launched and named; boards side by side join, and the name grows across the row.",
   "pirates_n_ships.almanac.ships.p14.heading": "Figureheads",
   "pirates_n_ships.almanac.ships.p14.text1": "A figurehead hangs on the bow block you click and looks toward you. The {item:pirates_n_ships:figurehead_mermaid}**mermaid** and the {item:pirates_n_ships:figurehead_lion}**lion**:",
   "pirates_n_ships.almanac.ships.p15.heading": "More figureheads",
@@ -3982,7 +3986,8 @@
   "pirates_n_ships.almanac.ships.p17.text2": "{item:pirates_n_ships:rope_coil}**Rope coils** stack four to a spot.",
   "pirates_n_ships.almanac.ships.p18.heading": "The great cabin",
   "pirates_n_ships.almanac.ships.p18.text1": "{item:pirates_n_ships:stern_window}**Stern windows** go into a wall from outside; right-click to work the shutters.",
-  "pirates_n_ships.almanac.ships.p18.text2": "The {item:pirates_n_ships:chart_table}**chart table** is a captain's table with a chart spread on it.",
+  "pirates_n_ships.almanac.ships.p18.text2": "Every wooden fitting in this book comes in every wood, a wood mod's too: name boards, stern windows, chart tables, sea cots, notice boards, flagpoles and pedestals, crow's nests, yards and cleats, each from that wood's planks or stripped log, and the panels show each wood in turn.",
+  "pirates_n_ships.almanac.ships.p18.text3": "The {item:pirates_n_ships:chart_table}**chart table** is a captain's table with a chart spread on it.",
   "pirates_n_ships.almanac.ships.p19.heading": "The sea cot",
   "pirates_n_ships.almanac.ships.p19.text1": "Sleep in a {item:pirates_n_ships:sea_cot}**sea cot** aboard and you respawn at it wherever she has gone.",
   "pirates_n_ships.almanac.ships.p20.heading": "Ordering a ship",

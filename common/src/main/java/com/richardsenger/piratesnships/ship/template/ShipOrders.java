@@ -2,7 +2,7 @@ package com.richardsenger.piratesnships.ship.template;
 
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.rpg.career.CareerRewards;
-import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
+import com.richardsenger.piratesnships.sailing.block.YardBlock;
 import com.richardsenger.piratesnships.ship.ShipConfig;
 import com.richardsenger.piratesnships.ship.assembly.AssemblyResult;
 import com.richardsenger.piratesnships.ship.sable.SableShips;
@@ -101,7 +101,7 @@ public final class ShipOrders {
         Optional<StructureTemplate> structure = ShipTemplatePlacer.structure(level, template);
         if (structure.isEmpty() || structure.get().getSize().getX() < 1) return Optional.empty();
         List<LocalBlock> blocks = ShipTemplatePlacer.blocks(structure.get(), level.holderLookup(Registries.BLOCK));
-        int yards = (int) blocks.stream().filter(b -> b.state().is(SailingBlocks.YARD.get())).count();
+        int yards = (int) blocks.stream().filter(b -> b.state().getBlock() instanceof YardBlock).count(); // any wood (WOOD3)
         return Optional.of(new Stats(blocks.size(), yards));
     }
 

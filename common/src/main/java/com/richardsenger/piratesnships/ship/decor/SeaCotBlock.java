@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.ship.decor;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import com.mojang.serialization.MapCodec;
 import com.richardsenger.piratesnships.crew.hammock.Bunk;
 import com.richardsenger.piratesnships.crew.hammock.PlayerSleep;
@@ -49,9 +51,9 @@ import java.util.Map;
  * position, which Sable keeps track of as the ship moves. On land the cot stays pure vanilla.
  * No block entity: vanilla's {@code BedBlockEntity} is valid only for vanilla beds and only carries the colour.
  */
-public class SeaCotBlock extends BedBlock implements Bunk, SimpleWaterloggedBlock {
+public class SeaCotBlock extends BedBlock implements Bunk, SimpleWaterloggedBlock, WoodBlock {
 
-    public static final MapCodec<SeaCotBlock> CODEC = simpleCodec(SeaCotBlock::new);
+    public static final MapCodec<SeaCotBlock> CODEC = WoodBlock.codec(SeaCotBlock::new);
     public static final String KEY_ON_SHIP = "message.pirates_n_ships.sea_cot.on_ship";
     public static final String KEY_NO_SLEEPING = "message.pirates_n_ships.sea_cot.no_sleeping";
 
@@ -61,8 +63,17 @@ public class SeaCotBlock extends BedBlock implements Bunk, SimpleWaterloggedBloc
     private static final Map<Direction, VoxelShape> FOOT = DecorShapes.horizontal(
             DecorShapes.b(0.5, 0, 0, 15.5, 10.25, 16), DecorShapes.b(0.5, 0, 14, 15.5, 13.25, 16));
 
-    public SeaCotBlock(Properties properties) {
+    /** The wood of this member (WOOD3). */
+    private final ShipWood wood;
+
+    @Override
+    public ShipWood wood() {
+        return wood;
+    }
+
+    public SeaCotBlock(ShipWood wood, Properties properties) {
         super(DyeColor.RED, properties);
+        this.wood = wood;
         // BedBlock's own default comes from stateDefinition.any(), which is waterlogged
         registerDefaultState(defaultBlockState().setValue(Waterlogging.WATERLOGGED, false));
     }

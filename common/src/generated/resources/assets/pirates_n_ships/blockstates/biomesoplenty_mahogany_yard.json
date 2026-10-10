@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "pirates_n_ships:block/biomesoplenty_mahogany_yard"
+    },
+    "axis=z": {
+      "model": "pirates_n_ships:block/biomesoplenty_mahogany_yard",
+      "y": 90
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "pirates_n_ships:stern_window",
+  "key": {
+    "D": {
+      "item": "minecraft:oak_planks"
+    },
+    "N": {
+      "item": "minecraft:gold_nugget"
+    },
+    "S": {
+      "item": "minecraft:glass_pane"
+    }
+  },
+  "pattern": [
+    "DSD",
+    "SSS",
+    "DND"
+  ],
+  "result": {
+    "count": 2,
+    "id": "pirates_n_ships:oak_stern_window"
+  }
+}

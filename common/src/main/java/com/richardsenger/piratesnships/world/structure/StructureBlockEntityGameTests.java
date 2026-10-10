@@ -67,7 +67,9 @@ public final class StructureBlockEntityGameTests {
             String path = entry.id().getPath();
             paths.add(path);
             if (!(block instanceof EntityBlock entityBlock)) continue;
-            boolean listed = NO_BLOCK_ENTITY.containsKey(path);
+            // WOOD3: a listed wood family's legacy id covers every wood's member (sea_cot: oak_sea_cot, ...)
+            String suffix = com.richardsenger.piratesnships.ship.decor.wood.WoodIds.suffixOf(path);
+            boolean listed = NO_BLOCK_ENTITY.containsKey(path) || (suffix != null && NO_BLOCK_ENTITY.containsKey(suffix));
             boolean anyMissing = false;
             for (BlockState state : block.getStateDefinition().getPossibleStates()) {
                 BlockEntity be = entityBlock.newBlockEntity(BlockPos.ZERO, state);

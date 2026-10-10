@@ -1,0 +1,42 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "deeperdarker"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "deeperdarker:stripped_echo_log"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "deeperdarker"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "deeperdarker:stripped_echo_log"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:yard",
+  "key": {
+    "L": {
+      "item": "deeperdarker:stripped_echo_log"
+    }
+  },
+  "pattern": [
+    "LLL"
+  ],
+  "result": {
+    "count": 3,
+    "id": "pirates_n_ships:deeperdarker_echo_yard"
+  }
+}

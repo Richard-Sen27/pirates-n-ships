@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "pole=false": {
+      "model": "pirates_n_ships:block/quark_azalea_crows_nest"
+    },
+    "pole=true": {
+      "model": "pirates_n_ships:block/quark_azalea_crows_nest_pole"
+    }
+  }
+}

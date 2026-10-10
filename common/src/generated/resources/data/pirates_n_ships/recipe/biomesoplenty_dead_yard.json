@@ -1,0 +1,42 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "biomesoplenty"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "biomesoplenty:stripped_dead_log"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "biomesoplenty"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "biomesoplenty:stripped_dead_log"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:yard",
+  "key": {
+    "L": {
+      "item": "biomesoplenty:stripped_dead_log"
+    }
+  },
+  "pattern": [
+    "LLL"
+  ],
+  "result": {
+    "count": 3,
+    "id": "pirates_n_ships:biomesoplenty_dead_yard"
+  }
+}

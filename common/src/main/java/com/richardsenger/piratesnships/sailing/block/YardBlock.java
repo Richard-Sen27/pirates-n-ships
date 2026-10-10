@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.sailing.block;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import com.richardsenger.piratesnships.core.text.ActionBar;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.material.FluidState;
@@ -62,11 +64,11 @@ import org.jetbrains.annotations.Nullable;
  * above the beam); {@code axis=z} turns it by 90°. The model never shows {@link #TRIM}: the cloth is drawn by
  * {@code YardClothRenderer}.
  */
-public class YardBlock extends Block implements EntityBlock, SimpleWaterloggedBlock {
+public class YardBlock extends Block implements EntityBlock, SimpleWaterloggedBlock, WoodBlock {
 
     public static final EnumProperty<Direction.Axis> AXIS = BlockStateProperties.HORIZONTAL_AXIS;
     public static final EnumProperty<SailTrim> TRIM = EnumProperty.create("trim", SailTrim.class);
-    public static final MapCodec<YardBlock> CODEC = simpleCodec(YardBlock::new);
+    public static final MapCodec<YardBlock> CODEC = WoodBlock.codec(YardBlock::new);
 
     public static final String KEY_NO_SAIL = "message." + Constants.MOD_ID + ".yard.no_sail";
 
@@ -74,8 +76,17 @@ public class YardBlock extends Block implements EntityBlock, SimpleWaterloggedBl
     private static final VoxelShape SHAPE_X = Block.box(0, 5, 5, 16, 11, 11);
     private static final VoxelShape SHAPE_Z = Block.box(5, 5, 0, 11, 11, 16);
 
-    public YardBlock(Properties properties) {
+    /** The wood of this member (WOOD3). */
+    private final ShipWood wood;
+
+    @Override
+    public ShipWood wood() {
+        return wood;
+    }
+
+    public YardBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(AXIS, Direction.Axis.X).setValue(TRIM, SailTrim.FURLED).setValue(Waterlogging.WATERLOGGED, false));
     }
 

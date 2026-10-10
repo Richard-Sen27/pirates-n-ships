@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/sea_cot_head_right_joined",
+  "textures": {
+    "log": "biomeswevegone:block/witch_hazel/stripped_log",
+    "log_top": "biomeswevegone:block/witch_hazel/stripped_log_top",
+    "particle": "biomeswevegone:block/witch_hazel/planks",
+    "planks": "biomeswevegone:block/witch_hazel/planks"
+  }
+}

@@ -480,6 +480,39 @@ public final class PlayerSleepGameTests {
         });
     }
 
+    /**
+     * ART20: on land two cots side by side join into one berth, and vanilla's bed handling still sees two beds: two
+     * players sleep in them at once, each at its own cot's head half, and both are occupied.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 100, batch = BATCH + "cot_pair_land")
+    public static void twoJoinedSeaCotsOnLandSleepTwo(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockState cot = ShipDecor.SEA_COT.get().defaultBlockState().setValue(SeaCotBlock.FACING, Direction.NORTH);
+        for (int x : new int[]{4, 5}) {
+            h.setBlock(new BlockPos(x, 2, 5), cot.setValue(SeaCotBlock.PART, BedPart.FOOT));
+            h.setBlock(new BlockPos(x, 2, 4), cot.setValue(SeaCotBlock.PART, BedPart.HEAD));
+        }
+        BlockPos footA = h.absolutePos(new BlockPos(4, 2, 5)), headA = h.absolutePos(new BlockPos(4, 2, 4));
+        BlockPos footB = h.absolutePos(new BlockPos(5, 2, 5)), headB = h.absolutePos(new BlockPos(5, 2, 4));
+        h.assertTrue(level.getBlockState(footA).getValue(SeaCotBlock.RIGHT) && level.getBlockState(headB).getValue(SeaCotBlock.LEFT),
+                "the cots did not join: " + level.getBlockState(footA) + " / " + level.getBlockState(headB));
+        Sleeper p = sleeper(h, h.absoluteVec(new Vec3(4.5, 2, 6.5)));
+        Sleeper q = sleeper(h, h.absoluteVec(new Vec3(5.5, 2, 6.5)));
+        setTimeOfDay(h, MIDNIGHT);
+        h.runAfterDelay(DUSK, () -> {
+            use(h, p, footA);
+            use(h, q, footB);
+            h.assertTrue(p.isSleeping() && p.getSleepingPos().equals(Optional.of(headA)), "the first sleeper is not in its cot: " + p.getSleepingPos());
+            h.assertTrue(q.isSleeping() && q.getSleepingPos().equals(Optional.of(headB)), "the second sleeper is not in its cot: " + q.getSleepingPos());
+            h.assertTrue(level.getBlockState(headA).getValue(BedBlock.OCCUPIED) && level.getBlockState(headB).getValue(BedBlock.OCCUPIED),
+                    "both cots must be occupied");
+            p.stopSleepInBed(false, true);
+            q.stopSleepInBed(false, true);
+            morning(h);
+            h.succeed();
+        });
+    }
+
     // ------------------------------------------------------------------ the sea cot aboard
 
     /** A sea cot on the deck: foot (20, 9, 20), head (21, 9, 20), facing east. */
@@ -550,6 +583,53 @@ public final class PlayerSleepGameTests {
         h.runAfterDelay(DUSK + 4, () -> p.stopSleepInBed(false, true));
         h.runAfterDelay(DUSK + 7, () -> {
             assertUp(h, p, foot, "after Leave Bed");
+            morning(h);
+            h.succeed();
+        });
+    }
+
+    /**
+     * ART20: two cots side by side on the deck join into one berth (the first's right, the second's left, both halves)
+     * and stay joined through assembly; each is still its own bed: two players sleep in them at once, each on its own
+     * cot's seat, and both cots are occupied.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = BATCH + "cot_pair")
+    public static void twoJoinedSeaCotsAboardSleepTwo(GameTestHelper h) {
+        Fixture f = ship(h, x -> {
+            cotOnDeck(x);
+            BlockState cot = ShipDecor.SEA_COT.get().defaultBlockState().setValue(SeaCotBlock.FACING, Direction.EAST);
+            x.setBlock(new BlockPos(20, 9, 21), cot.setValue(SeaCotBlock.PART, BedPart.FOOT));
+            x.setBlock(new BlockPos(21, 9, 21), cot.setValue(SeaCotBlock.PART, BedPart.HEAD));
+        });
+        ServerLevel level = h.getLevel();
+        BlockPos footA = plot(f, 20, 9, 20), headA = plot(f, 21, 9, 20);
+        BlockPos footB = plot(f, 20, 9, 21), headB = plot(f, 21, 9, 21);
+        for (BlockPos a : List.of(footA, headA)) {
+            h.assertTrue(level.getBlockState(a).getValue(SeaCotBlock.RIGHT) && !level.getBlockState(a).getValue(SeaCotBlock.LEFT),
+                    "the first cot is not joined on its right (south) aboard: " + level.getBlockState(a));
+        }
+        for (BlockPos b : List.of(footB, headB)) {
+            h.assertTrue(level.getBlockState(b).getValue(SeaCotBlock.LEFT) && !level.getBlockState(b).getValue(SeaCotBlock.RIGHT),
+                    "the second cot is not joined on its left (north) aboard: " + level.getBlockState(b));
+        }
+        Sleeper p = sleeper(h, worldOf(f, Vec3.atBottomCenterOf(plot(f, 19, 9, 21))));
+        Sleeper q = sleeper(h, worldOf(f, Vec3.atBottomCenterOf(plot(f, 19, 9, 21))));
+        setTimeOfDay(h, MIDNIGHT);
+        h.runAfterDelay(DUSK, () -> {
+            use(h, p, footA);
+            use(h, q, footB);
+            assertAsleepOnSeat(h, p, footA, headA, "the first sleeper");
+            assertAsleepOnSeat(h, q, footB, headB, "the second sleeper");
+            h.assertTrue(level.getBlockState(headA).getValue(BedBlock.OCCUPIED) && level.getBlockState(headB).getValue(BedBlock.OCCUPIED),
+                    "both cots must be occupied");
+        });
+        h.runAfterDelay(DUSK + 4, () -> {
+            p.stopSleepInBed(false, true);
+            q.stopSleepInBed(false, true);
+        });
+        h.runAfterDelay(DUSK + 7, () -> {
+            assertUp(h, p, footA, "the first after Leave Bed");
+            assertUp(h, q, footB, "the second after Leave Bed");
             morning(h);
             h.succeed();
         });

@@ -62,7 +62,7 @@ public final class VoyageConfig {
             "Units of each good a convoy buys at its origin and sells at its destination");
     public static final ConfigValue<Integer> CONVOY_MIN_DISTANCE = VOYAGES.intRange("convoy_min_distance", 200, 0, 100_000,
             "Ports closer than this (blocks between centres) never send convoys to each other");
-    public static final ConfigValue<Integer> CONVOY_MAX_DISTANCE = VOYAGES.intRange("convoy_max_distance", 3000, 0, 100_000,
+    public static final ConfigValue<Integer> CONVOY_MAX_DISTANCE = VOYAGES.intRange("convoy_max_distance", 6000, 0, 100_000,
             "Ports farther apart than this (blocks between centres) never send convoys to each other");
     public static final ConfigValue<List<String>> MERCHANT_TEMPLATES = VOYAGES.stringList("merchant_templates",
             List.of("pirates_n_ships:starter_sloop", "pirates_n_ships:starter_sloop_basic"),

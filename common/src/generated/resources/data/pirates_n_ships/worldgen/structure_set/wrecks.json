@@ -1,9 +1,12 @@
 {
   "placement": {
-    "type": "minecraft:random_spread",
+    "type": "pirates_n_ships:configured_spread",
+    "config": "wreck",
+    "frequency": 1.0,
     "salt": 731552049,
     "separation": 8,
-    "spacing": 24
+    "spacing": 24,
+    "spread_type": "linear"
   },
   "structures": [
     {

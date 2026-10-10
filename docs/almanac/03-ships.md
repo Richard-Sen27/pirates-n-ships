@@ -163,7 +163,7 @@ The {item:pirates_n_ships:chart_table}**chart table** is a captain's table with 
 {recipe:chart_table}
 
 ## The sea cot
-Sleep in a {item:pirates_n_ships:sea_cot}**sea cot** aboard and you respawn at it wherever she has gone.
+Sleep in a {item:pirates_n_ships:sea_cot}**sea cot** aboard and you respawn at it wherever she has gone. Set cots side by side, facing the same way, and they join into one wide berth; each still sleeps one.
 
 {recipe:sea_cot}
 

@@ -1,9 +1,12 @@
 {
   "placement": {
-    "type": "minecraft:random_spread",
+    "type": "pirates_n_ships:configured_spread",
+    "config": "seafarer_village",
+    "frequency": 1.0,
     "salt": 584103926,
-    "separation": 12,
-    "spacing": 36
+    "separation": 10,
+    "spacing": 30,
+    "spread_type": "linear"
   },
   "structures": [
     {

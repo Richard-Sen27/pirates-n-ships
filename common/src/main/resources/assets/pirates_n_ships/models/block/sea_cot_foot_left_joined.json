@@ -1,0 +1,182 @@
+{
+  "credit": "Made with Blockbench, source art/models/sea_cot.bbmodel",
+  "parent": "minecraft:block/block",
+  "textures": {
+    "planks": "minecraft:block/dark_oak_planks",
+    "log": "minecraft:block/stripped_dark_oak_log",
+    "0": "minecraft:block/white_wool",
+    "1": "minecraft:block/red_wool",
+    "particle": "minecraft:block/dark_oak_planks"
+  },
+  "elements": [
+    {
+      "name": "footboard_w",
+      "from": [
+        0,
+        2,
+        14.5
+      ],
+      "to": [
+        2.5,
+        10,
+        15.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            13.5,
+            6,
+            16,
+            14
+          ],
+          "texture": "#planks"
+        },
+        "south": {
+          "uv": [
+            0,
+            6,
+            2.5,
+            14
+          ],
+          "texture": "#planks"
+        },
+        "down": {
+          "uv": [
+            0,
+            0.5,
+            2.5,
+            1.5
+          ],
+          "texture": "#planks"
+        }
+      }
+    },
+    {
+      "name": "footboard_rail_w",
+      "from": [
+        0,
+        10,
+        14.25
+      ],
+      "to": [
+        2.5,
+        10.75,
+        15.75
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            13.5,
+            5.25,
+            14.25,
+            7.75
+          ],
+          "rotation": 90,
+          "texture": "#log"
+        },
+        "south": {
+          "uv": [
+            0,
+            5.25,
+            0.75,
+            7.75
+          ],
+          "rotation": 90,
+          "texture": "#log"
+        },
+        "up": {
+          "uv": [
+            0,
+            -1.75,
+            1.5,
+            0.75
+          ],
+          "rotation": 90,
+          "texture": "#log"
+        },
+        "down": {
+          "uv": [
+            0,
+            0.25,
+            1.5,
+            2.75
+          ],
+          "rotation": 90,
+          "texture": "#log"
+        }
+      }
+    },
+    {
+      "name": "bottom_w_foot",
+      "from": [
+        0,
+        2,
+        0
+      ],
+      "to": [
+        2.5,
+        3,
+        14.5
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            0,
+            1.5,
+            2.5,
+            16
+          ],
+          "texture": "#planks"
+        }
+      }
+    },
+    {
+      "name": "mattress_w_foot",
+      "from": [
+        0,
+        3,
+        0
+      ],
+      "to": [
+        2.5,
+        8,
+        14.5
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            2.5,
+            14.5
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "blanket_w_foot",
+      "from": [
+        0,
+        8,
+        0
+      ],
+      "to": [
+        2.5,
+        8.6,
+        14.5
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            2.5,
+            14.5
+          ],
+          "texture": "#1"
+        }
+      }
+    }
+  ]
+}

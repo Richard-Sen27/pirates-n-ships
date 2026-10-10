@@ -60,8 +60,9 @@ the command prints them as well).
    cost of a first search; expected tens of milliseconds for ~2000 blocks). Running the command again recomputes.
    Two ports separated by a continent: either a longer lane around it or "No lane … (no_path / budget …)".
    LANE1: a port in a bay ringed by beach gets its lane over the beach; ports on separate seas answer "… the sea
-   around A (x …, z …) is closed … the two lie on separate seas" (seed 2718281828: village_1192_1530 and
-   pirate_island_-3012_4328), and a pair whose search runs out of cells answers "… the search budget of N cells for M
+   around A (x …, z …) is closed … the two lie on separate seas" (seed 2718281828 before WG5: village_1192_1530 and
+   pirate_island_-3012_4328; with WG5's spacing the seed's ports differ, e.g. village_5017_2200 and
+   pirate_island_-3931_-9000), and a pair whose search runs out of cells answers "… the search budget of N cells for M
    blocks ran out".
 2. **List:** `/pirates world voyages` → "0 voyages under way (0 lanes queued)" in a fresh world.
 3. **Prices before:** at port A's harbor desk note the price of a good A produces (cheap, e.g. sugar); at port B's
@@ -455,3 +456,44 @@ and for step 5 a pirate island with a living captain (`/pirates mob captain list
 Report: screenshots of steps 1 (side view with the sail set, and from above), 2 (from inside the nest) and 3, the chat
 of step 5, `latest.log`, and anything that looked wrong (a net floating off the mast, the lookout standing beside the
 nest or on the deck, the cloth through the nets, a cut-off name on the nameplate).
+
+## WG5: denser ports, spacing in the server config, convoys up to 6000 blocks
+
+The structure sets place villages, outposts, islands and wrecks through `pirates_n_ships:configured_spread`, which
+reads `world.structures.<kind>.spacing` and `separation` (in chunks) from the server config whenever a new chunk
+generates. New defaults: villages 30/10 (was 36/12), navy outposts 40/16 (48/20), pirate islands 52/20 (64/24),
+wrecks 24/8 (unchanged). `world_simulation.voyages.convoy_max_distance` is 6000 (was 3000). JUnit
+(`ConfiguredSpreadPlacementTest`: the chosen chunks equal vanilla's random spread for the config's numbers and for the
+JSON's when no config is loaded; salt, spread type, clamping) and GameTests (`SpreadPlacementGameTests`: the four sets
+load with the new type and read the loaded config; a `/locate`-style search over a beach biome map finds a village and
+an outpost; a changed spacing moves the grid) cover the logic. The real coastline needs a client.
+
+### Setup
+**Delete `config/pirates_n_ships-server.toml`** (or the copy in `<world>/serverconfig/`) before starting, or at least
+its `spacing`/`separation` lines and `convoy_max_distance`: the config library never puts a new default into an
+existing file, so an old file keeps 36/12, 64/24, 48/20 and 3000. Check the file after the start: the village section
+reads `spacing = 30`, `separation = 10`.
+
+### Steps
+1. **Closer villages.** Create a new world, fly along a coast and run `/locate structure pirates_n_ships:seafarer_village`
+   from three places a few hundred blocks apart, then `/pirates world ports` once a few have generated.
+   - **Expected:** villages are closer than before WG5, roughly a fifth: one grid cell is now 480 blocks wide (was
+     576), and a cell only gets a village when its start chunk is on a beach with sea beside it, so many cells stay
+     empty and inland cells never get one. Outposts and islands are rarer than villages but less rare than before.
+     Note the distances you see.
+2. **Change the spacing.** Stop the game, set `world.structures.seafarer_village.spacing = 12` and `separation = 4`,
+   create **another new world**, and repeat step 1.
+   - **Expected:** villages crowd the coasts (several within 400 blocks). `/locate` finds the nearest of them, never one
+     farther than the dense grid would place it. Set the values back to 30/10 afterwards.
+3. **Change after creation.** In a world explored around spawn, raise `seafarer_village.spacing` to 80 (separation
+   stays 10), restart, fly into unexplored land.
+   - **Expected:** the villages near spawn stay; in new land they become rare. At the edge of the old area a new
+     village may stand close to an old one (the grids differ there); that is expected.
+4. **Convoys between ports up to 6000 blocks apart.** In the new world of step 1, find two ports 3000 to 6000 blocks
+   apart on one sea (`/pirates world voyages lane <a> <b>` must give a lane). Set `world_simulation.convoys_per_day` to
+   100, wait a few minutes, `/pirates world voyages`.
+   - **Expected:** convoys sail between ports within 6000 blocks (centre to centre) that trade a good, including the
+     pair farther than 3000; no convoy between ports farther apart than 6000.
+
+Report: the `/locate` distances of steps 1 and 2, the `/pirates world ports` list, the convoy lines of step 4 and
+`latest.log`.

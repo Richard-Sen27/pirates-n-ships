@@ -1,36 +1,436 @@
 {
-  "variants": {
-    "facing=east,part=foot": {
-      "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot",
-      "y": 90
+  "multipart": [
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "part": "head"
+      }
     },
-    "facing=east,part=head": {
-      "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head",
-      "y": 90
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head_left",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "left": "false",
+        "part": "head"
+      }
     },
-    "facing=north,part=foot": {
-      "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot",
-      "y": 0
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head_right",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "part": "head",
+        "right": "false"
+      }
     },
-    "facing=north,part=head": {
-      "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head",
-      "y": 0
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head_left_joined",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "left": "true",
+        "part": "head"
+      }
     },
-    "facing=south,part=foot": {
-      "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot",
-      "y": 180
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head_right_joined",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "part": "head",
+        "right": "true"
+      }
     },
-    "facing=south,part=head": {
-      "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head",
-      "y": 180
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "part": "foot"
+      }
     },
-    "facing=west,part=foot": {
-      "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot",
-      "y": 270
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot_left",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "left": "false",
+        "part": "foot"
+      }
     },
-    "facing=west,part=head": {
-      "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head",
-      "y": 270
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot_right",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "part": "foot",
+        "right": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot_left_joined",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "left": "true",
+        "part": "foot"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot_right_joined",
+        "y": 0
+      },
+      "when": {
+        "facing": "north",
+        "part": "foot",
+        "right": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "part": "head"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head_left",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "left": "false",
+        "part": "head"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head_right",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "part": "head",
+        "right": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head_left_joined",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "left": "true",
+        "part": "head"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head_right_joined",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "part": "head",
+        "right": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "part": "foot"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot_left",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "left": "false",
+        "part": "foot"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot_right",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "part": "foot",
+        "right": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot_left_joined",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "left": "true",
+        "part": "foot"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot_right_joined",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "part": "foot",
+        "right": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "part": "head"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head_left",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "left": "false",
+        "part": "head"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head_right",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "part": "head",
+        "right": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head_left_joined",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "left": "true",
+        "part": "head"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head_right_joined",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "part": "head",
+        "right": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "part": "foot"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot_left",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "left": "false",
+        "part": "foot"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot_right",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "part": "foot",
+        "right": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot_left_joined",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "left": "true",
+        "part": "foot"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot_right_joined",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "part": "foot",
+        "right": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "part": "head"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head_left",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "left": "false",
+        "part": "head"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head_right",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "part": "head",
+        "right": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head_left_joined",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "left": "true",
+        "part": "head"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_head_right_joined",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "part": "head",
+        "right": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "part": "foot"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot_left",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "left": "false",
+        "part": "foot"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot_right",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "part": "foot",
+        "right": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot_left_joined",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "left": "true",
+        "part": "foot"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/natures_spirit_cypress_sea_cot_foot_right_joined",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "part": "foot",
+        "right": "true"
+      }
     }
-  }
+  ]
 }

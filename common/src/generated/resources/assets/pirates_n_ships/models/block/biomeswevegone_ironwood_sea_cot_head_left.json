@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/sea_cot_head_left",
+  "textures": {
+    "log": "biomeswevegone:block/ironwood/stripped_log",
+    "log_top": "biomeswevegone:block/ironwood/stripped_log_top",
+    "particle": "biomeswevegone:block/ironwood/planks",
+    "planks": "biomeswevegone:block/ironwood/planks"
+  }
+}

@@ -3,7 +3,7 @@ package com.richardsenger.piratesnships.world.wreck;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
-import com.richardsenger.piratesnships.world.WorldConfig;
+import com.richardsenger.piratesnships.world.structure.PortStructureData;
 import net.minecraft.data.PackOutput;
 
 import java.util.List;
@@ -35,7 +35,7 @@ public final class WreckData {
 
     public static void gather(DataContributions data) {
         data.json(PackOutput.Target.DATA_PACK, "worldgen/structure", WreckKeys.WRECK.location(), WreckData::structure);
-        data.json(PackOutput.Target.DATA_PACK, "worldgen/structure_set", WreckKeys.WRECKS.location(), WreckData::structureSet);
+        PortStructureData.writeStructureSet(data, WreckKeys.WRECKS, WreckKeys.WRECK, "wreck", SALT);
         data.json(PackOutput.Target.DATA_PACK, "tags/worldgen/biome", WreckKeys.HAS_WRECK.location(), () -> {
             JsonArray values = new JsonArray();
             values.add("#minecraft:is_ocean");
@@ -63,23 +63,6 @@ public final class WreckData {
         }
         json.add("pieces", pieces);
         json.addProperty("depth_below_floor", DEPTH_BELOW_FLOOR);
-        return json;
-    }
-
-    static JsonObject structureSet() {
-        JsonObject entry = new JsonObject();
-        entry.addProperty("structure", WreckKeys.WRECK.location().toString());
-        entry.addProperty("weight", 1);
-        JsonArray structures = new JsonArray();
-        structures.add(entry);
-        JsonObject placement = new JsonObject();
-        placement.addProperty("type", "minecraft:random_spread");
-        placement.addProperty("salt", SALT);
-        placement.addProperty("spacing", WorldConfig.WRECK.spacing().defaultValue());
-        placement.addProperty("separation", WorldConfig.WRECK_SEPARATION.defaultValue());
-        JsonObject json = new JsonObject();
-        json.add("structures", structures);
-        json.add("placement", placement);
         return json;
     }
 }

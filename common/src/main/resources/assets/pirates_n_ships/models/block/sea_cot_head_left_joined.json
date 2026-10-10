@@ -1,0 +1,275 @@
+{
+  "credit": "Made with Blockbench, source art/models/sea_cot.bbmodel",
+  "parent": "minecraft:block/block",
+  "textures": {
+    "planks": "minecraft:block/dark_oak_planks",
+    "log": "minecraft:block/stripped_dark_oak_log",
+    "0": "minecraft:block/white_wool",
+    "1": "minecraft:block/red_wool",
+    "particle": "minecraft:block/dark_oak_planks"
+  },
+  "elements": [
+    {
+      "name": "headboard_w",
+      "from": [
+        0,
+        2,
+        0.5
+      ],
+      "to": [
+        2.5,
+        13,
+        1.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            13.5,
+            3,
+            16,
+            14
+          ],
+          "texture": "#planks"
+        },
+        "south": {
+          "uv": [
+            0,
+            3,
+            2.5,
+            14
+          ],
+          "texture": "#planks"
+        },
+        "down": {
+          "uv": [
+            0,
+            14.5,
+            2.5,
+            15.5
+          ],
+          "texture": "#planks"
+        }
+      }
+    },
+    {
+      "name": "headboard_rail_w",
+      "from": [
+        0,
+        13,
+        0.25
+      ],
+      "to": [
+        2.5,
+        13.75,
+        1.75
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            13.5,
+            2.25,
+            14.25,
+            4.75
+          ],
+          "rotation": 90,
+          "texture": "#log"
+        },
+        "south": {
+          "uv": [
+            0,
+            2.25,
+            0.75,
+            4.75
+          ],
+          "rotation": 90,
+          "texture": "#log"
+        },
+        "up": {
+          "uv": [
+            0,
+            0.25,
+            1.5,
+            2.75
+          ],
+          "rotation": 90,
+          "texture": "#log"
+        },
+        "down": {
+          "uv": [
+            0,
+            -1.75,
+            1.5,
+            0.75
+          ],
+          "rotation": 90,
+          "texture": "#log"
+        }
+      }
+    },
+    {
+      "name": "bottom_w_head",
+      "from": [
+        0,
+        2,
+        1.5
+      ],
+      "to": [
+        2.5,
+        3,
+        16
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            0,
+            0,
+            2.5,
+            14.5
+          ],
+          "texture": "#planks"
+        }
+      }
+    },
+    {
+      "name": "mattress_w_head",
+      "from": [
+        0,
+        3,
+        1.5
+      ],
+      "to": [
+        2.5,
+        8,
+        16
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            1.5,
+            2.5,
+            16
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "blanket_w_head",
+      "from": [
+        0,
+        8,
+        11
+      ],
+      "to": [
+        2.5,
+        8.6,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            13.5,
+            7.4,
+            16,
+            8
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            11,
+            2.5,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    },
+    {
+      "name": "sheet_fold_w",
+      "from": [
+        0,
+        8.6,
+        11
+      ],
+      "to": [
+        2.5,
+        9,
+        12.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            13.5,
+            7,
+            16,
+            7.4
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            7,
+            2.5,
+            7.4
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            11,
+            2.5,
+            12.5
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "pillow_w",
+      "from": [
+        0,
+        8,
+        1.75
+      ],
+      "to": [
+        2.5,
+        9.25,
+        5.75
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            13.5,
+            6.75,
+            16,
+            8
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            6.75,
+            2.5,
+            8
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            1.75,
+            2.5,
+            5.75
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

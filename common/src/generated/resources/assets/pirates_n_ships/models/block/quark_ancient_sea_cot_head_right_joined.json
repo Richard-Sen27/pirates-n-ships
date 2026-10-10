@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/sea_cot_head_right_joined",
+  "textures": {
+    "log": "quark:block/stripped_ancient_log",
+    "log_top": "quark:block/stripped_ancient_log_top",
+    "particle": "quark:block/ancient_planks",
+    "planks": "quark:block/ancient_planks"
+  }
+}

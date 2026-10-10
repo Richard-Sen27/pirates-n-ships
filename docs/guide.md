@@ -720,6 +720,13 @@ port: use it to open the port's market. A desk you place anywhere inside a villa
 list ports with `/pirates world ports` and find the nearest with `/pirates world port nearest`. Server config
 `world.structures.seafarer_village`.
 
+How far apart the structures lie is server config too (WG5): each kind has a grid of `spacing` chunks with at most one
+start per cell, at least `separation` chunks from the next. Defaults: villages 30/10, navy outposts 40/16, pirate
+islands 52/20, wrecks 24/8, so a village is usually a few hundred blocks from the next on a coast. A changed value
+applies to chunks generated afterwards; structures already in the world stay where they are. `/locate` follows the
+configured grid. An existing config file keeps the values it has: delete the `spacing` and `separation` lines (or the
+file) to take new defaults.
+
 ### Navy outposts
 Navy outposts are stone forts on beaches, rarer than villages. A sea gate leads to a quay with two berths. The
 curtain walls carry cannons (unloaded) and end in corner towers. One building stands outside the land gate: a
@@ -783,8 +790,9 @@ Merchant ships sail between the ports along sea lanes that keep clear of the coa
 are made (cheap) and carries them to a port that wants them (expensive), so prices move: the port it leaves pays a
 little more for what it bought, the port it reaches pays a little less once it has sold. Convoys sail about 4 blocks
 a second, faster before the wind and slower into it. Harbor masters now reckon contract distances along these lanes,
-and routes that pass near a pirate island pay a risk bonus. Operators can watch the traffic with
-`/pirates world voyages`. Server config `world_simulation.lanes`, `world_simulation.voyages`.
+and routes that pass near a pirate island pay a risk bonus. Two ports send convoys to each other when their centres
+lie 200 to 6000 blocks apart (`convoy_min_distance`, `convoy_max_distance`; 3000 before WG5). Operators can watch the
+traffic with `/pirates world voyages`. Server config `world_simulation.lanes`, `world_simulation.voyages`.
 
 A lane is searched on a map of 32-block cells read from the biomes, so it reaches unexplored sea without loading a
 chunk. It starts in the port's first berth's cell, or the nearest water cell within 8 cells of it, and ends the same
@@ -1793,7 +1801,7 @@ switch and every strength or rate has a value. One row per top-level section, as
 | `reputation` | Reputation on/off, decay, thresholds (pirates friendly, navy hostile, villagers trading), price swing, the daily village trade cap; `deeds` (what each deed is worth to each side). |
 | `careers` | Careers on/off, enlistment, desertion, the officer's reach, name prefixes and titles on ships, prize money; `navy.*` and `infamy.*` (what each rank needs), `letter` (letter of marque), `rewards` (gifts, fee waiver, flag right, navy shipyard prices in `navy_ship_price`, infamy prices), `ship_grants`. |
 | `quests` | Quests on/off, offers per port, deadlines, active cap, counts, sea quests, escort rules, the captain hunt radius; `types` (which port kind offers which quest), `rewards`. |
-| `world` | `structures.*` (seafarer villages, navy outposts with their garrison, pirate islands with buried treasure, wrecks: on/off, frequency; `spacing` and `separation` only feed datagen, a datapack changes them), `spawn_weights` (only `pirate` is read; the shark's weight lives in `mobs`), `treasure_maps`. |
+| `world` | `structures.*` (seafarer villages, navy outposts with their garrison, pirate islands with buried treasure, wrecks: on/off, frequency, `spacing` and `separation` in chunks, read when new chunks generate), `spawn_weights` (only `pirate` is read; the shark's weight lives in `mobs`), `treasure_maps`. |
 | `world_simulation` | The off-screen world on/off, convoys and patrols per day, voyage cap, materialize radius, retaliation; `factions`, `lanes`, `voyages`, `materialize` (crews, fighters, guns and shot lockers of NPC ships), `navy` (patrols), `raids`, `captain` (pirate captains at sea). |
 | `mobs` | Hostility, detection and fight ranges, duelist behaviour, skill tiers, musket timings and ammo, shove, drops; `pirate`, `sailor`, `navy_soldier`, `navy_officer` (on/off, peaceful), `captain` (pirate captains, duels, drops, respawn), `harbor_master`, `squad` (the outpost's watch), `kraken`, `shark`. |
 | `melee` | Skill-based sword fighting (`skill_based_combat`, on by default): parry and riposte windows, guard, stamina, stagger, feint recovery, NPC feints and skill, `directional_mode` (declared, no effect yet); `sounds`. |

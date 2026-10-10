@@ -63,7 +63,7 @@ Keep them in your inventory; markets take them from there.
 Every port has a harbour master's desk.
 
 - **Seafarer villages:** a quay and a pier on a beach, then cobbled streets that bend and branch inland past cottages, taverns, a shipwright, a market and often a chapel or a beacon tower.
-- **Navy outposts:** rarer stone forts with cannon and a garrison.
+- **Navy outposts:** rarer stone forts with cannon and a garrison: a sea gate and quay, walls that bend inland round bastions and towers, and inside them lanes, barracks, a brig and a parade ground under the navy ensign.
 - **Pirate islands:** rarer still, camps under the Jolly Roger: a rough jetty, then tents, huts and a tavern along winding trails up from the beach. Strangers are not welcome.
 
 ## The harbour master

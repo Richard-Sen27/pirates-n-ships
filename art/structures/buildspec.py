@@ -164,7 +164,8 @@ class Piece:
         """A berth marker (README, "Berth markers"): points along the berth's bow direction, becomes water."""
         self._jigsaw(x, y, z, bow, f"{MOD}:berth", EMPTY_POOL, EMPTY_POOL, "minecraft:water", "aligned")
 
-    def _jigsaw(self, x, y, z, facing, name, target, pool, final_state, joint, selection_priority=0):
+    def _jigsaw(self, x, y, z, facing, name, target, pool, final_state, joint, selection_priority=0,
+                placement_priority=0):
         self._check(x, y, z)
         if facing not in FACINGS:
             raise ValueError(f"jigsaws here are horizontal, got {facing}")
@@ -177,7 +178,7 @@ class Piece:
                 "pool": pool,
                 "final_state": final_state,
                 "joint": joint,
-                "placement_priority": 0,
+                "placement_priority": placement_priority,
                 "selection_priority": selection_priority,
             },
         }

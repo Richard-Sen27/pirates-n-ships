@@ -2,7 +2,9 @@
 
 The sea is to the north: ``jetty_out`` on the north edge hangs the jetty from the beach (the jetty deck is level with
 the sand, row y 0, which sits one block above sea level). Gravel and dirt trails run from the jetty landing to a
-campfire ring with log seats, and on to ``path_out`` east and west and ``hut_out`` inland (south). The Jolly Roger
+campfire ring with log seats, and on to ``path_out`` east and west along the beach and the inland trailhead
+(``trailhead_out``, STR2) south: the camp is the beach landing and its trails climb inland from it (the inland
+connector was a ``hut_out`` before STR2). The Jolly Roger
 flies from a flagpole on the beach, the loot heap lies in the north-west corner, and the fence's shack (a 5x5
 lean-to) stands in the north-east corner with the harbor master's desk as the fence's counter, open to the camp
 (west), and a notice board on its south side.
@@ -21,7 +23,7 @@ S = 13
 FIRE_X, FIRE_Z = 5, 6                  # the campfire
 SX0, SX1, SZ0, SZ1 = 8, 12, 0, 4       # the fence's shack (front, open, at x 8; back wall at x 12)
 TRAIL_Z = 9                            # the east-west trail between the two path_out connectors
-GATE_X = 6                             # the inland trail (hut_out)
+GATE_X = 6                             # the inland trail (trailhead_out south)
 
 p = Piece("pirate_island_camp_start", "Pirate Beach Camp", (S, 8, S), PALETTE)
 
@@ -130,10 +132,10 @@ p.put(2, 1, 7, "dead_bush")
 p.connector(GATE_X, 0, 0, "jetty_out", "north", "minecraft:gravel")
 p.connector(0, 0, TRAIL_Z, "path_out", "west", "minecraft:gravel")
 p.connector(S - 1, 0, TRAIL_Z, "path_out", "east", "minecraft:gravel")
-p.connector(GATE_X, 0, S - 1, "hut_out", "south", "minecraft:dirt_path")
+p.connector(GATE_X, 0, S - 1, "trailhead_out", "south", "minecraft:dirt_path")
 
 p.emit("pirate beach camp: palisade, campfire ring with a spit, Jolly Roger, loot heap under a sail, the fence's "
        "lean-to shack",
        ["Start piece. Sea to the north: jetty_out at [6, 0, 0], path_out at [0, 0, 9] and [12, 0, 9], "
-        "hut_out at [6, 0, 12].",
+        "trailhead_out (inland) at [6, 0, 12].",
         "The sand (y 0) sits one block above sea level; the jetty's deck continues it."])

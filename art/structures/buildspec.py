@@ -22,6 +22,11 @@ CONNECTORS = {
     "pier_in": ("pier_out", EMPTY_POOL, "aligned"),
 }
 
+# name of a connector -> its jigsaw's selection priority (default 0). Vanilla's jigsaw tries a piece's connectors in
+# descending selection priority, so a group can let its buildings claim the space beside a street before the next
+# street piece does (STR2: the pirate island's hut_out and deco_out).
+SELECTION_PRIORITY: dict[str, int] = {}
+
 FACINGS = ("north", "south", "east", "west")
 
 
@@ -152,13 +157,14 @@ class Piece:
     def connector(self, x, y, z, name: str, facing: str, final_state: str):
         """A village connector; ``facing`` is where the jigsaw points (out of the piece)."""
         target, pool, joint = CONNECTORS[name]
-        self._jigsaw(x, y, z, facing, f"{MOD}:{name}", f"{MOD}:{target}", pool, final_state, joint)
+        self._jigsaw(x, y, z, facing, f"{MOD}:{name}", f"{MOD}:{target}", pool, final_state, joint,
+                     SELECTION_PRIORITY.get(name, 0))
 
     def berth(self, x, y, z, bow: str):
         """A berth marker (README, "Berth markers"): points along the berth's bow direction, becomes water."""
         self._jigsaw(x, y, z, bow, f"{MOD}:berth", EMPTY_POOL, EMPTY_POOL, "minecraft:water", "aligned")
 
-    def _jigsaw(self, x, y, z, facing, name, target, pool, final_state, joint):
+    def _jigsaw(self, x, y, z, facing, name, target, pool, final_state, joint, selection_priority=0):
         self._check(x, y, z)
         if facing not in FACINGS:
             raise ValueError(f"jigsaws here are horizontal, got {facing}")
@@ -172,7 +178,7 @@ class Piece:
                 "final_state": final_state,
                 "joint": joint,
                 "placement_priority": 0,
-                "selection_priority": 0,
+                "selection_priority": selection_priority,
             },
         }
 

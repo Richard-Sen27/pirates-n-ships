@@ -23,6 +23,10 @@ public final class PortStructures {
     public static final RegistryEntry<StructureProcessorType<?>, StructureProcessorType<ConnectionsProcessor>> CONNECTIONS =
             Services.REGISTRY.register(Registries.STRUCTURE_PROCESSOR, "connections", () -> () -> ConnectionsProcessor.CODEC);
 
+    /** The processor type {@code pirates_n_ships:boardwalk} ({@link BoardwalkProcessor}): the island's trails (STR2). */
+    public static final RegistryEntry<StructureProcessorType<?>, StructureProcessorType<BoardwalkProcessor>> BOARDWALK =
+            Services.REGISTRY.register(Registries.STRUCTURE_PROCESSOR, "boardwalk", () -> () -> BoardwalkProcessor.CODEC);
+
     private PortStructures() {
     }
 

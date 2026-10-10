@@ -52,6 +52,9 @@ neoForge {
                     .map { ['pirates_n_ships.perf': it] }.orElse([:]))
             systemProperties.putAll(providers.gradleProperty('pirates_n_ships.perf.dir')
                     .map { ['pirates_n_ships.perf.dir': it] }.orElse([:]))
+            // STR2: -Ppirates_n_ships.layout.dir=<dir> chooses where StructureLayoutGameTests writes its layout dumps
+            systemProperties.putAll(providers.gradleProperty('pirates_n_ships.layout.dir')
+                    .map { ['pirates_n_ships.layout.dir': it] }.orElse([:]))
         }
     }
     mods {

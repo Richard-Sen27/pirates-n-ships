@@ -14,6 +14,7 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureSet;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorList;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -31,9 +32,21 @@ public final class PortStructureData {
     private PortStructureData() {
     }
 
-    /** Fields of one port structure's JSON. {@code spawnOverrides} is the vanilla {@code spawn_overrides} object. */
+    /**
+     * Fields of one port structure's JSON. {@code spawnOverrides} is the vanilla {@code spawn_overrides} object,
+     * {@code terrainAdaptation} vanilla's {@code terrain_adaptation} ({@code none} unless a structure asks for more;
+     * STR2: the pirate island uses {@code beard_thin}), {@code landPiecesOnLand} {@link PortStructure}'s
+     * {@code land_pieces_on_land} (STR2: land pieces over open water are dropped, {@link LandFilter}).
+     */
     public record Spec(TagKey<Biome> biomes, ResourceKey<StructureTemplatePool> startPool, int size, int startHeight,
-                       int maxDistanceFromCenter, ShoreAnchor shoreAnchor, PortKind portKind, JsonObject spawnOverrides) {
+                       int maxDistanceFromCenter, ShoreAnchor shoreAnchor, PortKind portKind, JsonObject spawnOverrides,
+                       String terrainAdaptation, boolean landPiecesOnLand) {
+
+        /** A spec without terrain adaptation ({@code none}) and without the land filter, as WG1 and WG3 wrote theirs. */
+        public Spec(TagKey<Biome> biomes, ResourceKey<StructureTemplatePool> startPool, int size, int startHeight,
+                    int maxDistanceFromCenter, ShoreAnchor shoreAnchor, PortKind portKind, JsonObject spawnOverrides) {
+            this(biomes, startPool, size, startHeight, maxDistanceFromCenter, shoreAnchor, portKind, spawnOverrides, "none", false);
+        }
     }
 
     public static JsonObject structure(Spec spec) {
@@ -42,7 +55,7 @@ public final class PortStructureData {
         json.addProperty("biomes", "#" + spec.biomes().location());
         json.addProperty("step", "surface_structures");
         json.add("spawn_overrides", spec.spawnOverrides());
-        json.addProperty("terrain_adaptation", "none");
+        json.addProperty("terrain_adaptation", spec.terrainAdaptation());
         json.addProperty("start_pool", spec.startPool().location().toString());
         json.addProperty("size", spec.size());
         json.addProperty("start_height", spec.startHeight());
@@ -52,6 +65,7 @@ public final class PortStructureData {
         anchor.addProperty("z", spec.shoreAnchor().z());
         json.add("shore_anchor", anchor);
         json.addProperty("port_kind", spec.portKind().getSerializedName());
+        if (spec.landPiecesOnLand()) json.addProperty("land_pieces_on_land", true);
         return json;
     }
 
@@ -89,13 +103,22 @@ public final class PortStructureData {
      */
     public static void pool(DataContributions data, ResourceKey<StructureTemplatePool> key, String group, String fallback,
                             String projection, Map<String, Integer> pieces) {
+        pool(data, key, group, fallback, projection, ConnectionsProcessor.LIST, pieces);
+    }
+
+    /**
+     * As {@link #pool(DataContributions, ResourceKey, String, String, String, Map)} with another processor list for
+     * every element (STR2: the island's trails); the list must run {@link ConnectionsProcessor} as well.
+     */
+    public static void pool(DataContributions data, ResourceKey<StructureTemplatePool> key, String group, String fallback,
+                            String projection, ResourceKey<StructureProcessorList> processors, Map<String, Integer> pieces) {
         data.json(PackOutput.Target.DATA_PACK, "worldgen/template_pool", key.location(), () -> {
             JsonArray elements = new JsonArray();
             pieces.forEach((piece, weight) -> {
                 JsonObject element = new JsonObject();
                 element.addProperty("element_type", "minecraft:single_pool_element");
                 element.addProperty("location", Constants.id(group + "/" + piece).toString());
-                element.addProperty("processors", ConnectionsProcessor.LIST.location().toString());
+                element.addProperty("processors", processors.location().toString());
                 element.addProperty("projection", projection);
                 JsonObject entry = new JsonObject();
                 entry.add("element", element);

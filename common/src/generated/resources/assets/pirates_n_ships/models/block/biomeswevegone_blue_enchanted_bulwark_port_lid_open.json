@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/bulwark_port_lid_open",
+  "textures": {
+    "log": "biomeswevegone:block/blue_enchanted/stripped_log",
+    "log_top": "biomeswevegone:block/blue_enchanted/stripped_log_top",
+    "particle": "biomeswevegone:block/blue_enchanted/planks",
+    "planks": "biomeswevegone:block/blue_enchanted/planks"
+  }
+}

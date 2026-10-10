@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.ship.decor.railing;
 
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import com.richardsenger.piratesnships.combat.boarding.BoardingContent;
 import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.richardsenger.piratesnships.ship.decor.DecorConfig;
@@ -64,7 +65,15 @@ import java.util.concurrent.ConcurrentHashMap;
  * the plank reads for open gates only, {@code PlankRun#opening}). Its posts carry a lantern or a chain like a railing
  * post's ({@link RailingRules#supportBoxes}).
  */
-public class RailingGateBlock extends Block implements SimpleWaterloggedBlock {
+public class RailingGateBlock extends Block implements SimpleWaterloggedBlock, WoodBlock {
+    /** The wood of this member (WOOD1). */
+    private final ShipWood wood;
+
+    @Override
+    public ShipWood wood() {
+        return wood;
+    }
+
 
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final BooleanProperty OPEN = BlockStateProperties.OPEN;
@@ -80,6 +89,7 @@ public class RailingGateBlock extends Block implements SimpleWaterloggedBlock {
 
     public RailingGateBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         this.openSound = wood.woodType().fenceGateOpen();
         this.closeSound = wood.woodType().fenceGateClose();
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(OPEN, false)

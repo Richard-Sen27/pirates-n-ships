@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.sailing.oars;
 
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.richardsenger.piratesnships.station.StationBlock;
 import com.richardsenger.piratesnships.station.StationKind;
@@ -42,7 +44,15 @@ import org.jetbrains.annotations.Nullable;
  * family; built by {@code tools/gen_oar_models.py}. The shape is the thwart on its legs (8 px) and the gunwale board (9 px), so the crew step
  * over it like a slab.
  */
-public class OarBenchBlock extends Block implements StationBlock, SimpleWaterloggedBlock {
+public class OarBenchBlock extends Block implements StationBlock, SimpleWaterloggedBlock, WoodBlock {
+    /** The wood of this member (WOOD1). */
+    private final ShipWood wood;
+
+    @Override
+    public ShipWood wood() {
+        return wood;
+    }
+
 
     /** The outboard side: the thole pin's end of the thwart. */
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
@@ -58,8 +68,9 @@ public class OarBenchBlock extends Block implements StationBlock, SimpleWaterlog
         }
     }
 
-    public OarBenchBlock(Properties properties) {
+    public OarBenchBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(Waterlogging.WATERLOGGED, false));
     }
 

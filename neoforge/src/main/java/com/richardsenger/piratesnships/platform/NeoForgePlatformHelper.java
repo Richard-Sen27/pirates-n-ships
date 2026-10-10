@@ -19,6 +19,11 @@ public final class NeoForgePlatformHelper implements IPlatformHelper {
     }
 
     @Override
+    public boolean isDataGeneration() {
+        return net.neoforged.neoforge.data.loading.DatagenModLoader.isRunningDataGen();
+    }
+
+    @Override
     public boolean isDevelopmentEnvironment() {
         return !FMLLoader.isProduction();
     }

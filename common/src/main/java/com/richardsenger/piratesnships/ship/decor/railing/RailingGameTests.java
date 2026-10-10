@@ -228,6 +228,33 @@ public final class RailingGameTests {
         h.succeed();
     }
 
+    /**
+     * WOOD1: the family's factory path in another wood: a spruce railing places on a click with its posts, grows a
+     * corner, knows its wood, carries spruce's map colour, and drops one spruce railing per edge.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void aSpruceRailingWorksLikeOak(GameTestHelper h) {
+        floor(h, 0, 8);
+        RailingBlock spruce = RailingContent.RAILINGS.get(ShipWood.SPRUCE);
+        h.assertTrue(spruce != railing(), "spruce and oak share a block");
+        h.assertTrue(spruce.wood() == ShipWood.SPRUCE, "the spruce railing's wood is " + spruce.wood());
+        h.assertTrue(spruce.defaultMapColor() == ShipWood.SPRUCE.mapColor(), "map colour " + spruce.defaultMapColor());
+        Player p = holder(h, spruce.asItem(), 4, Direction.NORTH);
+        BlockPos cell = new BlockPos(4, 1, 4);
+        h.assertTrue(clickFloor(h, p, cell, 0.5, 0.1).consumesAction(), "the spruce railing was not placed");
+        h.assertTrue(clickFloor(h, p, cell, 0.9, 0.5).consumesAction(), "the second edge was refused");
+        h.assertTrue(h.getBlockState(cell).is(spruce), "placed " + h.getBlockState(cell));
+        h.assertTrue(edgesAt(h, cell).equals(set(Direction.NORTH, Direction.EAST)), "edges " + edgesAt(h, cell));
+        h.assertTrue(postsAt(h, cell).equals(set(Direction.NORTH, Direction.EAST, Direction.SOUTH)), "posts " + postsAt(h, cell));
+        h.getLevel().destroyBlock(h.absolutePos(cell), true);
+        h.runAfterDelay(2, () -> {
+            int n = items(h, spruce.asItem());
+            h.assertTrue(n == 2, "expected 2 spruce railings, got " + n);
+            h.assertTrue(items(h, railing().asItem()) == 0, "an oak railing dropped");
+            h.succeed();
+        });
+    }
+
     /** Breaking a railing of three edges drops three railings. */
     @ModGameTest(template = GameTestTemplates.EMPTY_9)
     public static void breakingDropsOnePerEdge(GameTestHelper h) {

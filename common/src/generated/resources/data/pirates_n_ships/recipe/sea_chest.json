@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "misc",
+  "group": "pirates_n_ships:sea_chest",
   "key": {
     "C": {
       "item": "minecraft:chest"
@@ -10,11 +11,15 @@
     },
     "L": {
       "item": "minecraft:leather"
+    },
+    "P": {
+      "item": "minecraft:dark_oak_planks"
     }
   },
   "pattern": [
     "LLL",
-    "ICI"
+    "ICI",
+    "PPP"
   ],
   "result": {
     "count": 1,

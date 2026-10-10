@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "pirates_n_ships:notice_board",
+  "key": {
+    "P": {
+      "item": "minecraft:paper"
+    },
+    "W": {
+      "item": "minecraft:jungle_planks"
+    }
+  },
+  "pattern": [
+    "WPW",
+    "WPW"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:jungle_notice_board"
+  }
+}

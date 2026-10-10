@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "pirates_n_ships:water_barrel",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_nugget"
+    },
+    "P": {
+      "item": "minecraft:cherry_planks"
+    },
+    "W": {
+      "item": "minecraft:water_bucket"
+    }
+  },
+  "pattern": [
+    "PIP",
+    "PWP",
+    "PIP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:cherry_water_barrel"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "twilightforest"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "twilightforest:canopy_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "twilightforest"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "twilightforest:canopy_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:notice_board",
+  "key": {
+    "P": {
+      "item": "minecraft:paper"
+    },
+    "W": {
+      "item": "twilightforest:canopy_planks"
+    }
+  },
+  "pattern": [
+    "WPW",
+    "WPW"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:twilightforest_canopy_notice_board"
+  }
+}

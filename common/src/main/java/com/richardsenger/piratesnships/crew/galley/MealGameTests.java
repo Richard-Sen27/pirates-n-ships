@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.crew.galley;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
@@ -45,18 +46,23 @@ public final class MealGameTests {
     private record Ship(Fixture f, CrewMember a, CrewMember b, BlockPos pantry) { }
 
     private static Ship ship(GameTestHelper h) {
+        return ship(h, CrewContent.PANTRY.get(), CrewContent.WATER_BARREL.get());
+    }
+
+    /** The test ship with {@code pantry} and {@code barrel} on deck (WOOD2: any wood's members). */
+    private static Ship ship(GameTestHelper h, PantryBlock pantry, WaterBarrelBlock barrel) {
         ConfigOverrides.during(h, MealConfig.MEAL_TIMES, List.of("6000"));
         ConfigOverrides.during(h, MealConfig.MEAL_TICKS, MEAL_TICKS);
         morning(h);
         Fixture f = StationGameTests.ship(h, false, x -> {
-            x.setBlock(new BlockPos(18, 6, 18), CrewContent.PANTRY.get());
-            x.setBlock(new BlockPos(20, 6, 18), CrewContent.WATER_BARREL.get());
+            x.setBlock(new BlockPos(18, 6, 18), pantry);
+            x.setBlock(new BlockPos(20, 6, 18), barrel);
         });
         CrewMember a = onDeck(h, f, 20, 20);
         CrewMember b = onDeck(h, f, 18, 19);
         CrewStations.AssignResult r = CrewStations.assign(h.getLevel(), b, f.winch());
         h.assertTrue(r == CrewStations.AssignResult.ASSIGNED, "assign b to the winch: " + r);
-        return new Ship(f, a, b, StationGameTests.find(h, f.ship(), CrewContent.PANTRY.get()));
+        return new Ship(f, a, b, StationGameTests.find(h, f.ship(), pantry));
     }
 
     /** Sets the clock five ticks before the meal time 6000; the meal is served by {@link #SERVED}. */
@@ -129,6 +135,26 @@ public final class MealGameTests {
             h.assertTrue(s.a().getVehicle() == null, "still seated after the meal: " + s.a().getVehicle());
             h.assertTrue(!s.a().isEating(), "still eating after the meal");
             h.assertTrue(seats(h, s).isEmpty(), "meal seats left: " + seats(h, s));
+            cleanup(s);
+            h.succeed();
+        });
+    }
+
+    /** WOOD2: an acacia pantry (not the legacy spruce one) serves the meal like the spruce pantry. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = CONFIG_BATCH + "meals_acacia")
+    public static void anAcaciaPantryServesTheMeal(GameTestHelper h) {
+        PantryBlock acacia = CrewContent.PANTRIES.get(ShipWood.ACACIA);
+        Ship s = ship(h, acacia, CrewContent.WATER_BARRELS.get(ShipWood.ACACIA));
+        h.assertTrue(h.getLevel().getBlockState(s.pantry()).is(acacia), "the acacia pantry is aboard");
+        beforeMeal(h);
+        h.runAfterDelay(SERVED, () -> {
+            h.assertTrue(s.a().getVehicle() instanceof MealSeat, "the free member is not at a meal: " + s.a().getVehicle());
+            MealSeat seat = (MealSeat) s.a().getVehicle();
+            h.assertTrue(seat.provisions().equals(s.pantry()), "the meal is not at the acacia pantry but at " + seat.provisions());
+            h.assertTrue(s.a().isEating(), "the eating flag is not set");
+        });
+        h.runAfterDelay(SERVED + MEAL_TICKS + 5, () -> {
+            h.assertTrue(s.a().getVehicle() == null, "still seated after the meal: " + s.a().getVehicle());
             cleanup(s);
             h.succeed();
         });

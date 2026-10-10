@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/water_barrel_fill2",
+  "textures": {
+    "log": "minecraft:block/stripped_warped_stem",
+    "log_top": "minecraft:block/stripped_warped_stem_top",
+    "particle": "minecraft:block/warped_planks",
+    "planks": "minecraft:block/warped_planks"
+  }
+}

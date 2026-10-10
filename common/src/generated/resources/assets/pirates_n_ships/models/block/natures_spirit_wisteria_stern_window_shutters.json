@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/stern_window_shutters",
+  "textures": {
+    "log": "natures_spirit:block/stripped_wisteria_log",
+    "log_top": "natures_spirit:block/stripped_wisteria_log_top",
+    "particle": "natures_spirit:block/wisteria_planks",
+    "planks": "natures_spirit:block/wisteria_planks"
+  }
+}

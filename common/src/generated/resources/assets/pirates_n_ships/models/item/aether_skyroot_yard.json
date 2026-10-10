@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/yard",
+  "textures": {
+    "log": "aether:block/natural/stripped_skyroot_log",
+    "log_top": "aether:block/natural/stripped_skyroot_log_top",
+    "particle": "aether:block/natural/stripped_skyroot_log",
+    "planks": "aether:block/construction/skyroot_planks"
+  }
+}

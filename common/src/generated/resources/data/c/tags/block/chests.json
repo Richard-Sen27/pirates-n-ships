@@ -1,5 +1,403 @@
 {
   "values": [
-    "pirates_n_ships:sea_chest"
+    "pirates_n_ships:oak_sea_chest",
+    "pirates_n_ships:spruce_sea_chest",
+    "pirates_n_ships:birch_sea_chest",
+    "pirates_n_ships:jungle_sea_chest",
+    "pirates_n_ships:acacia_sea_chest",
+    "pirates_n_ships:sea_chest",
+    "pirates_n_ships:mangrove_sea_chest",
+    "pirates_n_ships:cherry_sea_chest",
+    "pirates_n_ships:bamboo_sea_chest",
+    "pirates_n_ships:crimson_sea_chest",
+    "pirates_n_ships:warped_sea_chest",
+    {
+      "id": "pirates_n_ships:aether_skyroot_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:ars_nouveau_archwood_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_dead_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_empyreal_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_fir_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_hellbark_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_jacaranda_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_magic_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_mahogany_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_maple_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_palm_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_pine_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_redwood_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_umbran_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomesoplenty_willow_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_aspen_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_baobab_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_blue_enchanted_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_cika_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_cypress_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_ebony_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_fir_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_florus_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_green_enchanted_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_holly_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_ironwood_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_jacaranda_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_mahogany_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_maple_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_palm_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_pine_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_rainbow_eucalyptus_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_redwood_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_sakura_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_skyris_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_spirit_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_white_mangrove_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_willow_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_witch_hazel_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:biomeswevegone_zelkova_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:deeperdarker_echo_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:ecologics_azalea_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:ecologics_coconut_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:ecologics_walnut_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_aspen_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_cedar_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_coconut_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_cypress_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_fir_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_ghaf_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_joshua_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_larch_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_mahogany_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_maple_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_olive_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_palo_verde_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_redwood_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_saxaul_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_sugi_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_willow_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:natures_spirit_wisteria_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:quark_ancient_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:quark_azalea_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:quark_blossom_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_baobab_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_blackwood_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_blue_bioshroom_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_brimwood_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_cobalt_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_cypress_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_dead_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_eucalyptus_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_green_bioshroom_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_joshua_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_kapok_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_larch_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_magnolia_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_maple_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_palm_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_pine_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_pink_bioshroom_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_redwood_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_socotra_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_willow_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_wisteria_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:regions_unexplored_yellow_bioshroom_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_canopy_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_dark_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_mangrove_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_mining_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_sorting_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_time_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_transformation_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:twilightforest_twilight_oak_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:undergarden_grongle_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:undergarden_smogstem_sea_chest",
+      "required": false
+    },
+    {
+      "id": "pirates_n_ships:undergarden_wigglewood_sea_chest",
+      "required": false
+    }
   ]
 }

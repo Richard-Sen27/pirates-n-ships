@@ -1,0 +1,50 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "biomeswevegone"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "biomeswevegone:palm_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "biomeswevegone"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "biomeswevegone:palm_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:harbor_desk",
+  "key": {
+    "B": {
+      "item": "minecraft:book"
+    },
+    "G": {
+      "item": "minecraft:gold_nugget"
+    },
+    "P": {
+      "item": "biomeswevegone:palm_planks"
+    }
+  },
+  "pattern": [
+    "BG ",
+    "PPP",
+    "P P"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:biomeswevegone_palm_harbor_desk"
+  }
+}

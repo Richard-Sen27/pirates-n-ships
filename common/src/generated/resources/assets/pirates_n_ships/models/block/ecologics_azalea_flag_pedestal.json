@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/flag_pedestal",
+  "textures": {
+    "log": "ecologics:block/stripped_azalea_log",
+    "log_top": "ecologics:block/stripped_azalea_log_top",
+    "particle": "ecologics:block/stripped_azalea_log",
+    "planks": "ecologics:block/azalea_planks"
+  }
+}

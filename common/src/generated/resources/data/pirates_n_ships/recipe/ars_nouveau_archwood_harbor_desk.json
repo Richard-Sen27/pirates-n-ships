@@ -1,0 +1,50 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "ars_nouveau"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "ars_nouveau:archwood_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "ars_nouveau"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "ars_nouveau:archwood_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:harbor_desk",
+  "key": {
+    "B": {
+      "item": "minecraft:book"
+    },
+    "G": {
+      "item": "minecraft:gold_nugget"
+    },
+    "P": {
+      "item": "ars_nouveau:archwood_planks"
+    }
+  },
+  "pattern": [
+    "BG ",
+    "PPP",
+    "P P"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:ars_nouveau_archwood_harbor_desk"
+  }
+}

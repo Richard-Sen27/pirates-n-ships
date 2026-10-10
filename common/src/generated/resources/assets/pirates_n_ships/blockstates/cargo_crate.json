@@ -1,7 +1,7 @@
 {
   "variants": {
     "": {
-      "model": "pirates_n_ships:block/cargo_crate"
+      "model": "pirates_n_ships:block/oak_cargo_crate"
     }
   }
 }

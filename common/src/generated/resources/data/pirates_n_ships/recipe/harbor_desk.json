@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "misc",
+  "group": "pirates_n_ships:harbor_desk",
   "key": {
     "B": {
       "item": "minecraft:book"
@@ -9,7 +10,7 @@
       "item": "minecraft:gold_nugget"
     },
     "P": {
-      "tag": "minecraft:planks"
+      "item": "minecraft:dark_oak_planks"
     }
   },
   "pattern": [

@@ -3,7 +3,7 @@
 	"parent": "minecraft:block/block",
 	"textures": {
 		"planks": "minecraft:block/spruce_planks",
-		"rim": "minecraft:block/stripped_spruce_log",
+		"log": "minecraft:block/stripped_spruce_log",
 		"iron": "minecraft:block/anvil",
 		"dark": "minecraft:block/dark_oak_planks",
 		"particle": "minecraft:block/spruce_planks",
@@ -696,7 +696,7 @@
 						13.0706,
 						13.2
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				}
 			}
 		},
@@ -740,7 +740,7 @@
 						13.0706,
 						13.2
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				}
 			},
 			"rotation": {
@@ -793,7 +793,7 @@
 						13.0706,
 						13.2
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				}
 			},
 			"rotation": {
@@ -846,7 +846,7 @@
 						13.0706,
 						4.0
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				}
 			}
 		},
@@ -890,7 +890,7 @@
 						13.0706,
 						4.0
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				}
 			},
 			"rotation": {
@@ -943,7 +943,7 @@
 						13.0706,
 						4.0
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				}
 			},
 			"rotation": {
@@ -996,7 +996,7 @@
 						13.2,
 						13.0706
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				}
 			}
 		},
@@ -1040,7 +1040,7 @@
 						4.0,
 						13.0706
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				}
 			}
 		},
@@ -2696,7 +2696,7 @@
 						8.75,
 						13.0
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				},
 				"south": {
 					"uv": [
@@ -2705,7 +2705,7 @@
 						8.75,
 						13.0
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				},
 				"east": {
 					"uv": [
@@ -2714,7 +2714,7 @@
 						11.5,
 						13.0
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				},
 				"west": {
 					"uv": [
@@ -2723,7 +2723,7 @@
 						6.0,
 						13.0
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				},
 				"down": {
 					"uv": [
@@ -2732,7 +2732,7 @@
 						8.75,
 						11.5
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				}
 			},
 			"rotation": {
@@ -2765,7 +2765,7 @@
 						8.75,
 						13.0
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				},
 				"south": {
 					"uv": [
@@ -2774,7 +2774,7 @@
 						8.75,
 						13.0
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				},
 				"east": {
 					"uv": [
@@ -2783,7 +2783,7 @@
 						6.0,
 						13.0
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				},
 				"west": {
 					"uv": [
@@ -2792,7 +2792,7 @@
 						11.5,
 						13.0
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				},
 				"down": {
 					"uv": [
@@ -2801,7 +2801,7 @@
 						8.75,
 						6.0
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				}
 			},
 			"rotation": {
@@ -2834,7 +2834,7 @@
 						11.5,
 						13.0
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				},
 				"south": {
 					"uv": [
@@ -2843,7 +2843,7 @@
 						6.0,
 						13.0
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				},
 				"east": {
 					"uv": [
@@ -2852,7 +2852,7 @@
 						8.75,
 						13.0
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				},
 				"west": {
 					"uv": [
@@ -2861,7 +2861,7 @@
 						8.75,
 						13.0
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				},
 				"down": {
 					"uv": [
@@ -2870,7 +2870,7 @@
 						6.0,
 						8.75
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				}
 			},
 			"rotation": {
@@ -2903,7 +2903,7 @@
 						6.0,
 						13.0
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				},
 				"south": {
 					"uv": [
@@ -2912,7 +2912,7 @@
 						11.5,
 						13.0
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				},
 				"east": {
 					"uv": [
@@ -2921,7 +2921,7 @@
 						8.75,
 						13.0
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				},
 				"west": {
 					"uv": [
@@ -2930,7 +2930,7 @@
 						8.75,
 						13.0
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				},
 				"down": {
 					"uv": [
@@ -2939,7 +2939,7 @@
 						11.5,
 						8.75
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				}
 			},
 			"rotation": {
@@ -2981,7 +2981,7 @@
 						9.5,
 						14.5
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				},
 				"east": {
 					"uv": [
@@ -2990,7 +2990,7 @@
 						9.5,
 						14.5
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				},
 				"south": {
 					"uv": [
@@ -2999,7 +2999,7 @@
 						9.5,
 						14.5
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				},
 				"west": {
 					"uv": [
@@ -3008,7 +3008,7 @@
 						9.5,
 						14.5
 					],
-					"texture": "#rim"
+					"texture": "#log"
 				}
 			}
 		},

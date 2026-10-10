@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.trade.desk;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
@@ -50,9 +52,15 @@ import org.jetbrains.annotations.Nullable;
  * unrotated model, with the bell); the open ledger, the quill in its inkwell and the coin stacks face the harbor
  * master on the opposite side.
  */
-public class HarborDeskBlock extends BaseEntityBlock implements SimpleWaterloggedBlock {
+public class HarborDeskBlock extends BaseEntityBlock implements SimpleWaterloggedBlock, WoodBlock {
 
-    public static final MapCodec<HarborDeskBlock> CODEC = simpleCodec(HarborDeskBlock::new);
+    @Override
+    public ShipWood wood() {
+        return wood;
+    }
+
+
+    public static final MapCodec<HarborDeskBlock> CODEC = simpleCodec(p -> new HarborDeskBlock(ShipWood.DARK_OAK, p));
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     // Top board over two drawer pedestals; the model faces north, so the long side runs along x
@@ -61,8 +69,12 @@ public class HarborDeskBlock extends BaseEntityBlock implements SimpleWaterlogge
     private static final VoxelShape SHAPE_EW = Shapes.or(Block.box(2, 12, 0, 14, 15, 16),
             Block.box(3, 0, 1, 13, 12, 6), Block.box(3, 0, 10, 13, 12, 15));
 
-    public HarborDeskBlock(Properties properties) {
+    /** The wood of this member (WOOD2). */
+    private final ShipWood wood;
+
+    public HarborDeskBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(Waterlogging.WATERLOGGED, false));
     }
 

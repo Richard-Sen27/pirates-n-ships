@@ -2,6 +2,8 @@ package com.richardsenger.piratesnships.crew.content;
 
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
 import com.richardsenger.piratesnships.crew.galley.PantryBlock;
 import com.richardsenger.piratesnships.crew.galley.PantryBlockEntity;
 import com.richardsenger.piratesnships.crew.galley.WaterBarrelBlock;
@@ -22,7 +24,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
 
 /**
@@ -42,13 +43,23 @@ public final class CrewContent {
     public static final RegistryEntry<Item, Item> SALT_PORK = food("salt_pork", SALT_PORK_FOOD);
     public static final RegistryEntry<Item, Item> LIME = food("lime", LIME_FOOD);
 
-    public static final RegistryEntry<Block, PantryBlock> PANTRY = ModRegistry.blockWithItem("pantry", () -> new PantryBlock(woodProps().noOcclusion()));
-    public static final RegistryEntry<Block, WaterBarrelBlock> WATER_BARREL = ModRegistry.blockWithItem("water_barrel", () -> new WaterBarrelBlock(woodProps().noOcclusion()));
+    /** The pantry in every wood (WOOD2, docs/woods.md): {@code pantry} is spruce's legacy id. */
+    public static final WoodFamily<PantryBlock> PANTRIES = WoodFamily.register("pantry", ShipWood.SPRUCE,
+            wood -> new PantryBlock(wood, woodProps(wood)));
+    /** The water barrel in every wood (WOOD2): {@code water_barrel} is spruce's legacy id. */
+    public static final WoodFamily<WaterBarrelBlock> WATER_BARRELS = WoodFamily.register("water_barrel", ShipWood.SPRUCE,
+            wood -> new WaterBarrelBlock(wood, woodProps(wood)));
+    /** The legacy spruce pantry (the family's lead). */
+    public static final RegistryEntry<Block, PantryBlock> PANTRY = PANTRIES.lead();
+    /** The legacy spruce water barrel (the family's lead). */
+    public static final RegistryEntry<Block, WaterBarrelBlock> WATER_BARREL = WATER_BARRELS.lead();
 
+    /** One block entity type for every wood's pantry. */
     public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<PantryBlockEntity>> PANTRY_BLOCK_ENTITY =
-            ModRegistry.blockEntity("pantry", PantryBlockEntity::new, PANTRY);
+            PANTRIES.blockEntity("pantry", PantryBlockEntity::new);
+    /** One block entity type for every wood's water barrel. */
     public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<WaterBarrelBlockEntity>> WATER_BARREL_BLOCK_ENTITY =
-            ModRegistry.blockEntity("water_barrel", WaterBarrelBlockEntity::new, WATER_BARREL);
+            WATER_BARRELS.blockEntity("water_barrel", WaterBarrelBlockEntity::new);
 
     /** The crew's bunk (HM1): a two-block canvas bed hung between two supports. Undyed canvas; colours come later. */
     public static final RegistryEntry<Block, HammockBlock> HAMMOCK = ModRegistry.block("hammock", () -> new HammockBlock(
@@ -76,10 +87,9 @@ public final class CrewContent {
         return ModRegistry.item(name, () -> new Item(new Item.Properties().food(food)));
     }
 
-    /** Like a vanilla barrel. */
-    private static BlockBehaviour.Properties woodProps() {
-        return BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).instrument(NoteBlockInstrument.BASS)
-                .strength(2.5f).sound(SoundType.WOOD).ignitedByLava();
+    /** Like a vanilla barrel (strength 2.5), in {@code wood}'s colour and sound. */
+    private static BlockBehaviour.Properties woodProps(ShipWood wood) {
+        return WoodFamily.properties(wood).strength(2.5f).noOcclusion();
     }
 
     public static void init() {

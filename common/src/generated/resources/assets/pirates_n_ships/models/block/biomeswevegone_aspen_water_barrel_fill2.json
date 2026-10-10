@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/water_barrel_fill2",
+  "textures": {
+    "log": "biomeswevegone:block/aspen/stripped_log",
+    "log_top": "biomeswevegone:block/aspen/stripped_log_top",
+    "particle": "biomeswevegone:block/aspen/planks",
+    "planks": "biomeswevegone:block/aspen/planks"
+  }
+}

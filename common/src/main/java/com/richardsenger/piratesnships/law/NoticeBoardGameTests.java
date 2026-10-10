@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.law;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
@@ -159,6 +160,28 @@ public final class NoticeBoardGameTests {
                 NoticeBoardBackend.MSG + "refused.closed", "another board than the open one");
         helper.assertValueEqual(Wallet.count(p), 70L, "refusals cost nothing");
         helper.assertValueEqual(LawService.bountyTotal(server, t.id()), 40L, "and place nothing");
+        finish(helper, List.of(t.id()), p);
+    }
+
+    /**
+     * WOOD3: a mangrove notice board opens like the dark oak one and a bounty posted through it is paid and listed (the
+     * backend's open-board check takes a board of any wood).
+     */
+    @ModGameTest
+    public static void aMangroveBoardPostsABounty(GameTestHelper helper) {
+        var server = helper.getLevel().getServer();
+        BountyTarget t = target(helper, 10);
+        helper.setBlock(BOARD, LawContent.NOTICE_BOARDS.get(ShipWood.MANGROVE).defaultBlockState());
+        BlockPos abs = helper.absolutePos(BOARD);
+        ServerPlayer p = player(helper, "nb_mangrove", 100);
+        List<CustomPacketPayload> sent = NoticeBoardBackend.record(p.getUUID());
+        helper.assertTrue(use(helper, p).consumesAction(), "the mangrove board opens");
+        helper.assertTrue(NoticeBoardBackend.isOpen(p.getUUID(), abs), "session open");
+        NoticeBoardBackend.handlePlace(p, new NoticeBoardPayloads.Place(abs, t.name(), 30));
+        NoticeBoardPayloads.State state = lastState(helper, sent);
+        helper.assertTrue(state.result().orElseThrow().ok(), "posted: " + state.result());
+        helper.assertValueEqual(Wallet.count(p), 70L, "30 doubloons paid");
+        helper.assertValueEqual(LawService.bountyTotal(server, t.id()), 40L, "added to the target's bounties");
         finish(helper, List.of(t.id()), p);
     }
 

@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/harbor_desk",
+  "textures": {
+    "log": "regions_unexplored:block/stripped_larch_log",
+    "log_top": "regions_unexplored:block/stripped_larch_log_top",
+    "particle": "regions_unexplored:block/larch_planks",
+    "planks": "regions_unexplored:block/larch_planks"
+  }
+}

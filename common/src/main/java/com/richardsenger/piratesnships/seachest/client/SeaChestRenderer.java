@@ -3,7 +3,6 @@ package com.richardsenger.piratesnships.seachest.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.richardsenger.piratesnships.seachest.SeaChestConfig;
-import com.richardsenger.piratesnships.seachest.SeaChestContent;
 import com.richardsenger.piratesnships.seachest.SeaChestEntity;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
@@ -43,7 +42,7 @@ public class SeaChestRenderer extends EntityRenderer<SeaChestEntity> {
         float scale = entity.getBbWidth();
         pose.scale(scale, scale, scale);
         pose.translate(-0.5, 0.0, -0.5);
-        blocks.renderSingleBlock(SeaChestContent.BLOCK.get().defaultBlockState(), pose, buffers, light, OverlayTexture.NO_OVERLAY);
+        blocks.renderSingleBlock(entity.block().defaultBlockState(), pose, buffers, light, OverlayTexture.NO_OVERLAY);
         pose.popPose();
         super.render(entity, entityYaw, partialTick, pose, buffers, light);
     }

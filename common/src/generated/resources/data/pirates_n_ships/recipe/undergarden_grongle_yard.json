@@ -1,0 +1,42 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "undergarden"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "undergarden:stripped_grongle_log"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "undergarden"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "undergarden:stripped_grongle_log"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:yard",
+  "key": {
+    "L": {
+      "item": "undergarden:stripped_grongle_log"
+    }
+  },
+  "pattern": [
+    "LLL"
+  ],
+  "result": {
+    "count": 3,
+    "id": "pirates_n_ships:undergarden_grongle_yard"
+  }
+}

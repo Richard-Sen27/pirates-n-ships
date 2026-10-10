@@ -1,12 +1,13 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "misc",
+  "group": "pirates_n_ships:chart_table",
   "key": {
     "M": {
       "item": "minecraft:map"
     },
     "P": {
-      "tag": "minecraft:planks"
+      "item": "minecraft:dark_oak_planks"
     },
     "S": {
       "item": "minecraft:stick"

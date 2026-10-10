@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/water_barrel",
+  "textures": {
+    "log": "quark:block/stripped_azalea_log",
+    "log_top": "quark:block/stripped_azalea_log_top",
+    "particle": "quark:block/azalea_planks",
+    "planks": "quark:block/azalea_planks"
+  }
+}

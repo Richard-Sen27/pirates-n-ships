@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/cargo_crate",
+  "textures": {
+    "log": "regions_unexplored:block/stripped_brimwood_log",
+    "log_top": "regions_unexplored:block/stripped_brimwood_log_top",
+    "particle": "regions_unexplored:block/brimwood_planks",
+    "planks": "regions_unexplored:block/brimwood_planks"
+  }
+}

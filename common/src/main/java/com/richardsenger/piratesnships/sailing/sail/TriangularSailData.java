@@ -1,6 +1,12 @@
 package com.richardsenger.piratesnships.sailing.sail;
 
 import com.google.gson.JsonObject;
+import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodRecipe;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.block.Block;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
 import com.richardsenger.piratesnships.sailing.block.CleatBlock;
@@ -28,12 +34,16 @@ import net.minecraft.world.level.block.state.properties.AttachFace;
  */
 public final class TriangularSailData {
 
+    /** The cleat's hand-made parent (WOOD3: the pad {@code #log}/{@code #log_top}, the iron horns fixed). */
+    static final ResourceLocation CLEAT_MODEL = Constants.id("block/cleat");
+    /** Every cleat of every wood (a mod's wood's as an optional entry): the selector of the cleats' physics properties. */
+    public static final TagKey<Block> CLEATS = TagKey.create(Registries.BLOCK, Constants.id("cleats"));
+
     private TriangularSailData() {
     }
 
     public static void gather(DataContributions data) {
         data.lang(lang -> lang
-                .block(TriangularSailContent.CLEAT, "Cleat")
                 .item(TriangularSailContent.ROPE, "Rope")
                 .add(CleatBlock.KEY_NO_SAIL, "No sail: rig a stay, and a cleat below")
                 .add(RopeItem.KEY_TIED, "Tied: now a second cleat, ≤%s blocks")
@@ -46,28 +56,30 @@ public final class TriangularSailData {
                 .add(RopeItem.KEY_NO_LINES, "Rope lines are off: cleat to cleat only")
                 .add(RopeItem.KEY_ALREADY, "These two are already roped together")
                 .add(RopeItem.KEY_FULL, "An anchor holds at most %s ropes"));
+        WoodFamily<CleatBlock> cleats = TriangularSailContent.CLEATS;
+        data.lang(lang -> cleats.lang(lang, "Cleat")); // WOOD3: "Dark Oak Cleat", ...
         data.models(TriangularSailData::models);
-        data.blockLoot(loot -> loot.dropSelf(TriangularSailContent.CLEAT.get()));
-        data.blockTags(tags -> tags.tag(BlockTags.MINEABLE_WITH_AXE).add(TriangularSailContent.CLEAT.get()));
+        cleats.dropSelf(data);
+        data.blockTags(tags -> cleats.tag(tags, BlockTags.MINEABLE_WITH_AXE, CLEATS));
         // A cleat is a fist-sized fitting, mostly high up on the mast: like the yard, it gets its own small mass and volume
         // (refs/sable/wiki/Block Physics Properties.md; priority above Sable's tag definitions), so that a rig does not
-        // make the tender test hull top-heavy.
+        // make the tender test hull top-heavy. WOOD3: one file for every wood, selected by the cleats' tag (as the yards',
+        // sailing.block.YardData); the file keeps the legacy path.
         data.json(PackOutput.Target.DATA_PACK, "physics_block_properties", TriangularSailContent.CLEAT.id(), () -> {
             JsonObject properties = new JsonObject();
             properties.addProperty("sable:mass", 0.05);
             properties.addProperty("sable:volume", 0.05);
             JsonObject json = new JsonObject();
-            json.addProperty("selector", TriangularSailContent.CLEAT.id().toString());
+            json.addProperty("selector", "#" + CLEATS.location());
             json.addProperty("priority", 1001);
             json.add("properties", properties);
             return json;
         });
+        // the wood's planks either side of an iron ingot give two cleats
+        cleats.recipe(data, WoodRecipe.shaped(RecipeCategory.TRANSPORTATION, 2, "PIP")
+                .define('P', WoodRecipe.planks()).define('I', WoodRecipe.item(Items.IRON_INGOT))
+                .group(Constants.MOD_ID + ":cleat").unlockedBy("has_iron_ingot", WoodRecipe.item(Items.IRON_INGOT)));
         data.recipes(out -> {
-            ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, TriangularSailContent.CLEAT.get(), 2)
-                    .pattern("PIP")
-                    .define('P', ItemTags.PLANKS).define('I', Items.IRON_INGOT)
-                    .unlockedBy("has_iron_ingot", InventoryChangeTrigger.TriggerInstance.hasItems(Items.IRON_INGOT))
-                    .save(out, TriangularSailContent.CLEAT.id());
             ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, TriangularSailContent.ROPE.get())
                     .pattern("S").pattern("S").pattern("S")
                     .define('S', Items.STRING)
@@ -78,7 +90,10 @@ public final class TriangularSailData {
 
     private static void models(ModelContext m) {
         // The rope's item model is hand-made (art/models/rope.bbmodel, design.md §4.8)
-        cleat(m, TriangularSailContent.CLEAT.get());
+        WoodFamily<CleatBlock> cleats = TriangularSailContent.CLEATS;
+        cleats.childModels(m, CLEAT_MODEL, WoodFamily.Particle.LOG);
+        cleats.itemModels(m, CLEAT_MODEL, WoodFamily.Particle.LOG);
+        cleats.forEach((wood, cleat) -> cleat(m, cleat, WoodFamily.child(wood, CLEAT_MODEL)));
     }
 
     /**
@@ -87,8 +102,7 @@ public final class TriangularSailData {
      * the wall and the ceiling as vanilla turns buttons (x 90 / 180, then y by the facing). The cloth is drawn by the
      * stay renderer, so {@link CleatBlock#TRIM} does not change the model.
      */
-    private static void cleat(ModelContext m, CleatBlock block) {
-        ResourceLocation model = ModelLocationUtils.getModelLocation(block);
+    private static void cleat(ModelContext m, CleatBlock block, ResourceLocation model) {
         PropertyDispatch.C2<AttachFace, Direction> dispatch = PropertyDispatch.properties(CleatBlock.FACE, CleatBlock.FACING);
         for (Direction d : Direction.Plane.HORIZONTAL) {
             VariantProperties.Rotation y = rotation(d);

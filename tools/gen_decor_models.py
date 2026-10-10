@@ -32,6 +32,10 @@ PAL = {
 }
 OWN = {"rope": "pirates_n_ships:block/rope", "map_tile": "pirates_n_ships:block/map_tile"}
 LOGS = {"stripped_dark_oak_log", "stripped_spruce_log", "dark_oak_log", "stripped_oak_log"}
+# WOOD3: the texture variables of a wood family's parent model (art/README.md, "Wood families"): the main wood's
+# planks, stripped log and its end take a named key that datagen's child per wood sets; every other texture keeps a
+# numeric key in first-use order. Only models with `wood = True` (stern window, chart table, sea cot) name them.
+WOOD_KEYS = {"dark_oak_planks": "planks", "stripped_dark_oak_log": "log", "stripped_dark_oak_log_top": "log_top"}
 
 
 def tex_id(name):
@@ -82,6 +86,7 @@ class Model:
         self.name, self.particle, self.display = name, particle, display
         self.elements = []
         self.render_type = None
+        self.wood = False
 
     def add(self, elements):
         self.elements += elements
@@ -126,7 +131,10 @@ def compile_model(m):
     def key(alias):
         tid = tex_id(alias)
         if tid not in keys:
-            keys[tid] = str(len(keys))
+            if m.wood and alias in WOOD_KEYS:
+                keys[tid] = WOOD_KEYS[alias]
+            else:
+                keys[tid] = str(sum(1 for k in keys.values() if k.isdigit()))
             textures[keys[tid]] = tid
         return keys[tid]
 
@@ -455,6 +463,7 @@ def windows():
     for m in (plain, closed):
         m.project = "stern_window"
         m.render_type = "minecraft:cutout"
+        m.wood = True
     return [plain, closed]
 
 
@@ -512,6 +521,7 @@ def chart_table():
     m = Model("chart_table", "dark_oak_planks",
               {"gui": {"rotation": [30, 225, 0], "translation": [0, 0, 0], "scale": [0.56, 0.56, 0.56]}}).add(e)
     m.project = "chart_table"
+    m.wood = True
     return [m]
 
 
@@ -578,6 +588,7 @@ def cots():
     mi = Model("sea_cot_item", "dark_oak_planks", COT_ITEM_DISPLAY).add(shift(head + foot, dz=8))
     for m in (mh, mf, mi):
         m.project = "sea_cot"
+        m.wood = True
     for e in mi.elements:
         e["cull"] = False
     return [mh, mf, mi]

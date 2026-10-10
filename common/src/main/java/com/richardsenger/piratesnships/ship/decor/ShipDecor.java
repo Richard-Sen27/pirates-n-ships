@@ -2,6 +2,10 @@ package com.richardsenger.piratesnships.ship.decor;
 
 import com.richardsenger.piratesnships.core.registry.ModRegistry;
 import com.richardsenger.piratesnships.platform.registry.RegistryEntry;
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
+import com.richardsenger.piratesnships.trade.cargo.CargoContainerBlock;
+import com.richardsenger.piratesnships.trade.cargo.CargoContainers;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -25,29 +29,48 @@ public final class ShipDecor {
     public static final RegistryEntry<Block, FigureheadBlock> FIGUREHEAD_SKULL = figurehead("figurehead_skull");
 
     /**
-     * The name board (NAME2, see {@link NameBoardBlock}): a 2 px oak plate fixed flat on a hull's side, joining its
-     * neighbours on the same face into one board. It keeps the G8 nameplate's registry id {@code nameplate} (block,
-     * item and block entity), so plates in saved worlds and ship templates load as boards.
+     * The name board (NAME2, see {@link NameBoardBlock}): a 2 px plate fixed flat on a hull's side, joining its
+     * neighbours on the same face into one board; a wood family (WOOD3) whose oak member keeps the G8 nameplate's
+     * registry id {@code nameplate} (block, item and block entity), so plates in saved worlds and ship templates load
+     * as oak boards; the other woods are {@code <wood>_nameplate}.
      */
-    public static final RegistryEntry<Block, NameBoardBlock> NAMEPLATE = ModRegistry.blockWithItem("nameplate",
-            () -> new NameBoardBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD)
-                    .strength(1.0f).sound(SoundType.WOOD).noOcclusion().pushReaction(PushReaction.DESTROY).ignitedByLava()));
+    public static final WoodFamily<NameBoardBlock> NAMEPLATES = WoodFamily.register("nameplate", ShipWood.OAK,
+            wood -> new NameBoardBlock(wood, WoodFamily.properties(wood).strength(1.0f).noOcclusion().pushReaction(PushReaction.DESTROY)));
+    /** The oak name board, legacy id {@code nameplate}. */
+    public static final RegistryEntry<Block, NameBoardBlock> NAMEPLATE = NAMEPLATES.entry(ShipWood.OAK);
 
-    /** The ship's name and the row on a name board (see {@link NameplateBlockEntity}). */
+    /** The ship's name and the row on a name board of any wood (see {@link NameplateBlockEntity}). */
     public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<NameplateBlockEntity>> NAMEPLATE_BLOCK_ENTITY =
-            ModRegistry.blockEntity("nameplate", NameplateBlockEntity::new, NAMEPLATE);
+            NAMEPLATES.blockEntity("nameplate", NameplateBlockEntity::new);
 
-    public static final RegistryEntry<Block, FlagpoleBlock> FLAGPOLE = ModRegistry.blockWithItem("flagpole",
-            () -> new FlagpoleBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0f, 3.0f).sound(SoundType.WOOD)
-                    .noOcclusion().ignitedByLava()));
+    /** The flagpole in every wood (WOOD3); the spruce member keeps the id {@code flagpole}. */
+    public static final WoodFamily<FlagpoleBlock> FLAGPOLES = WoodFamily.register("flagpole", ShipWood.SPRUCE,
+            wood -> new FlagpoleBlock(wood, WoodFamily.properties(wood).noOcclusion()));
+    /** The spruce flagpole, legacy id {@code flagpole}. */
+    public static final RegistryEntry<Block, FlagpoleBlock> FLAGPOLE = FLAGPOLES.entry(ShipWood.SPRUCE);
 
-    /** FLG3: a plinth carved from a log that a flagpole stands in (see {@link FlagPedestalBlock}). */
-    public static final RegistryEntry<Block, FlagPedestalBlock> FLAG_PEDESTAL = ModRegistry.blockWithItem("flag_pedestal",
-            () -> new FlagPedestalBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).instrument(NoteBlockInstrument.BASS)
-                    .strength(2.0f, 3.0f).sound(SoundType.WOOD).noOcclusion().pushReaction(PushReaction.DESTROY).ignitedByLava()));
+    /**
+     * FLG3: a plinth carved from a log that a flagpole stands in (see {@link FlagPedestalBlock}); in every wood (WOOD3),
+     * the spruce member keeps the id {@code flag_pedestal}.
+     */
+    public static final WoodFamily<FlagPedestalBlock> FLAG_PEDESTALS = WoodFamily.register("flag_pedestal", ShipWood.SPRUCE,
+            wood -> new FlagPedestalBlock(wood, WoodFamily.properties(wood).noOcclusion().pushReaction(PushReaction.DESTROY)));
+    /** The spruce flag pedestal, legacy id {@code flag_pedestal}. */
+    public static final RegistryEntry<Block, FlagPedestalBlock> FLAG_PEDESTAL = FLAG_PEDESTALS.entry(ShipWood.SPRUCE);
 
-    public static final RegistryEntry<Block, Block> CARGO_CRATE = ModRegistry.blockWithItem("cargo_crate", () -> new com.richardsenger.piratesnships.trade.cargo.CargoContainerBlock(woodProps().noOcclusion(), com.richardsenger.piratesnships.trade.cargo.CargoContainers.Kind.CRATE));
-    public static final RegistryEntry<Block, Block> CARGO_BARREL = ModRegistry.blockWithItem("cargo_barrel", () -> new com.richardsenger.piratesnships.trade.cargo.CargoContainerBlock(woodProps().noOcclusion(), com.richardsenger.piratesnships.trade.cargo.CargoContainers.Kind.BARREL));
+    /**
+     * The cargo crate in every wood (WOOD2, docs/woods.md): {@code cargo_crate} is oak's legacy id (structures, Ponder
+     * schematics and ship templates name it), {@code <wood>_cargo_crate} every other wood's.
+     */
+    public static final WoodFamily<CargoContainerBlock> CARGO_CRATES = WoodFamily.register("cargo_crate", ShipWood.OAK,
+            wood -> new CargoContainerBlock(wood, cargoProps(wood), CargoContainers.Kind.CRATE));
+    /** The cargo barrel in every wood (WOOD2): {@code cargo_barrel} is spruce's legacy id. */
+    public static final WoodFamily<CargoContainerBlock> CARGO_BARRELS = WoodFamily.register("cargo_barrel", ShipWood.SPRUCE,
+            wood -> new CargoContainerBlock(wood, cargoProps(wood), CargoContainers.Kind.BARREL));
+    /** The legacy oak crate (the family's lead). */
+    public static final RegistryEntry<Block, CargoContainerBlock> CARGO_CRATE = CARGO_CRATES.lead();
+    /** The legacy spruce barrel (the family's lead). */
+    public static final RegistryEntry<Block, CargoContainerBlock> CARGO_BARREL = CARGO_BARRELS.lead();
 
     // ---------------------------------------------------------------- ART2: ship decor with hand-made models
 
@@ -63,15 +86,21 @@ public final class ShipDecor {
     public static final RegistryEntry<Block, RopeCoilBlock> ROPE_COIL = ModRegistry.blockWithItem("rope_coil",
             () -> new RopeCoilBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(0.8f).sound(SoundType.WOOL)
                     .noOcclusion().pushReaction(PushReaction.DESTROY).ignitedByLava()));
-    public static final RegistryEntry<Block, SternWindowBlock> STERN_WINDOW = ModRegistry.blockWithItem("stern_window",
-            () -> new SternWindowBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BROWN).strength(2.0f, 3.0f)
-                    .sound(SoundType.WOOD).noOcclusion().isViewBlocking((s, l, p) -> false).isSuffocating((s, l, p) -> false)
-                    .isRedstoneConductor((s, l, p) -> false).ignitedByLava()));
-    public static final RegistryEntry<Block, ChartTableBlock> CHART_TABLE = ModRegistry.blockWithItem("chart_table",
-            () -> new ChartTableBlock(woodProps().noOcclusion()));
-    public static final RegistryEntry<Block, SeaCotBlock> SEA_COT = ModRegistry.blockWithItem("sea_cot",
-            () -> new SeaCotBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BROWN).strength(0.6f).sound(SoundType.WOOD)
-                    .noOcclusion().pushReaction(PushReaction.DESTROY).ignitedByLava()));
+    // WOOD3: the stern window, chart table and sea cot in every wood; the dark oak members keep the legacy ids
+    public static final WoodFamily<SternWindowBlock> STERN_WINDOWS = WoodFamily.register("stern_window", ShipWood.DARK_OAK,
+            wood -> new SternWindowBlock(wood, WoodFamily.properties(wood).noOcclusion().isViewBlocking((s, l, p) -> false)
+                    .isSuffocating((s, l, p) -> false).isRedstoneConductor((s, l, p) -> false)));
+    /** The dark oak stern window, legacy id {@code stern_window}. */
+    public static final RegistryEntry<Block, SternWindowBlock> STERN_WINDOW = STERN_WINDOWS.entry(ShipWood.DARK_OAK);
+    /** Like a vanilla barrel (strength 2.5). */
+    public static final WoodFamily<ChartTableBlock> CHART_TABLES = WoodFamily.register("chart_table", ShipWood.DARK_OAK,
+            wood -> new ChartTableBlock(wood, WoodFamily.properties(wood).strength(2.5f).noOcclusion()));
+    /** The dark oak chart table, legacy id {@code chart_table}. */
+    public static final RegistryEntry<Block, ChartTableBlock> CHART_TABLE = CHART_TABLES.entry(ShipWood.DARK_OAK);
+    public static final WoodFamily<SeaCotBlock> SEA_COTS = WoodFamily.register("sea_cot", ShipWood.DARK_OAK,
+            wood -> new SeaCotBlock(wood, WoodFamily.properties(wood).strength(0.6f).noOcclusion().pushReaction(PushReaction.DESTROY)));
+    /** The dark oak sea cot, legacy id {@code sea_cot}. */
+    public static final RegistryEntry<Block, SeaCotBlock> SEA_COT = SEA_COTS.entry(ShipWood.DARK_OAK);
 
     private ShipDecor() {
     }
@@ -88,6 +117,11 @@ public final class ShipDecor {
     private static RegistryEntry<Block, FigureheadBlock> figurehead(String name) {
         return ModRegistry.blockWithItem(name, () -> new FigureheadBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD)
                 .instrument(NoteBlockInstrument.BASS).strength(2.0f, 3.0f).sound(SoundType.WOOD).noOcclusion().ignitedByLava()));
+    }
+
+    /** A cargo container of {@code wood}: like a vanilla barrel (strength 2.5), in the wood's colour and sound. */
+    private static BlockBehaviour.Properties cargoProps(ShipWood wood) {
+        return WoodFamily.properties(wood).strength(2.5f).noOcclusion();
     }
 
     /** Like a vanilla barrel. */

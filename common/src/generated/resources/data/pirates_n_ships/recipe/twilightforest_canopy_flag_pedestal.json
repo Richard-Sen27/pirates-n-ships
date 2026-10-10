@@ -1,0 +1,51 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "twilightforest"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "twilightforest:stripped_canopy_log"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "twilightforest:canopy_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "twilightforest"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "twilightforest:stripped_canopy_log",
+        "twilightforest:canopy_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:flag_pedestal",
+  "key": {
+    "L": {
+      "item": "twilightforest:stripped_canopy_log"
+    },
+    "P": {
+      "item": "twilightforest:canopy_planks"
+    }
+  },
+  "pattern": [
+    "L",
+    "P"
+  ],
+  "result": {
+    "count": 2,
+    "id": "pirates_n_ships:twilightforest_canopy_flag_pedestal"
+  }
+}

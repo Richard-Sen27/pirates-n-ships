@@ -1,9 +1,10 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "misc",
+  "group": "pirates_n_ships:yard",
   "key": {
     "L": {
-      "tag": "minecraft:logs"
+      "item": "minecraft:stripped_spruce_log"
     }
   },
   "pattern": [

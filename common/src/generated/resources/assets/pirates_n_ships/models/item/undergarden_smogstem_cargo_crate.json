@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/cargo_crate",
+  "textures": {
+    "log": "undergarden:block/stripped_smogstem_log_side",
+    "log_top": "undergarden:block/stripped_smogstem_log_end",
+    "particle": "undergarden:block/smogstem_planks",
+    "planks": "undergarden:block/smogstem_planks"
+  }
+}

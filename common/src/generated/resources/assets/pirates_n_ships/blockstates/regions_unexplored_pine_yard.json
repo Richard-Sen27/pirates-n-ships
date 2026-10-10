@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "pirates_n_ships:block/regions_unexplored_pine_yard"
+    },
+    "axis=z": {
+      "model": "pirates_n_ships:block/regions_unexplored_pine_yard",
+      "y": 90
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "parent": "pirates_n_ships:block/water_barrel",
+  "textures": {
+    "7": "minecraft:block/water_still",
+    "log": "biomeswevegone:block/witch_hazel/stripped_log",
+    "log_top": "biomeswevegone:block/witch_hazel/stripped_log_top",
+    "particle": "biomeswevegone:block/witch_hazel/planks",
+    "planks": "biomeswevegone:block/witch_hazel/planks"
+  }
+}

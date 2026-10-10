@@ -96,7 +96,7 @@ Only pieces of the same ship join, of up to 200 blocks each.
 ## Fittings
 show_me: ship_identity | Show me: her name and figurehead
 illustration: figurehead_mermaid
-A {item:pirates_n_ships:nameplate}**name board** (any sign and a gold nugget make three) fixed on her side shows her name once she is launched and named; boards side by side join, and the name grows across the row.
+A {item:pirates_n_ships:nameplate}**name board** (two planks and a gold nugget make three) fixed on her side shows her name once she is launched and named; boards side by side join, and the name grows across the row.
 
 {recipe:nameplate}
 
@@ -153,6 +153,8 @@ The {item:pirates_n_ships:ship_lantern}**ship's lantern** hangs or stands, and b
 
 ## The great cabin
 {item:pirates_n_ships:stern_window}**Stern windows** go into a wall from outside; right-click to work the shutters.
+
+Every wooden fitting in this book comes in every wood, a wood mod's too: name boards, stern windows, chart tables, sea cots, notice boards, flagpoles and pedestals, crow's nests, yards and cleats, each from that wood's planks or stripped log, and the panels show each wood in turn.
 
 {recipe:stern_window}
 

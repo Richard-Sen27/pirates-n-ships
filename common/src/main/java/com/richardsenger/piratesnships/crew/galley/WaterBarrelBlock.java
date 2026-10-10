@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.crew.galley;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import com.mojang.serialization.MapCodec;
 import com.richardsenger.piratesnships.crew.provisions.ProvisionSettings;
 import com.richardsenger.piratesnships.crew.provisions.ProvisionsConfig;
@@ -39,13 +41,23 @@ import org.jetbrains.annotations.Nullable;
  * one of five heights ({@code water_barrel_fill0..3}, {@code water_barrel} when full). It does not occlude its
  * neighbours ({@code noOcclusion} in {@code CrewContent}).
  */
-public class WaterBarrelBlock extends BaseEntityBlock {
+public class WaterBarrelBlock extends BaseEntityBlock implements WoodBlock {
 
-    public static final MapCodec<WaterBarrelBlock> CODEC = simpleCodec(WaterBarrelBlock::new);
+    @Override
+    public ShipWood wood() {
+        return wood;
+    }
+
+
+    public static final MapCodec<WaterBarrelBlock> CODEC = simpleCodec(p -> new WaterBarrelBlock(ShipWood.SPRUCE, p));
     public static final IntegerProperty FILL = IntegerProperty.create("fill", 0, WaterBarrelRules.MAX_FILL);
 
-    public WaterBarrelBlock(Properties properties) {
+    /** The wood of this member (WOOD2). */
+    private final ShipWood wood;
+
+    public WaterBarrelBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(FILL, 0).setValue(com.richardsenger.piratesnships.trade.cargo.CargoLoad.LOAD, 0));
     }
 

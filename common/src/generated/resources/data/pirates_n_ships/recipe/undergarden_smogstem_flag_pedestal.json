@@ -1,0 +1,51 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "undergarden"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "undergarden:stripped_smogstem_log"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "undergarden:smogstem_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "undergarden"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "undergarden:stripped_smogstem_log",
+        "undergarden:smogstem_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:flag_pedestal",
+  "key": {
+    "L": {
+      "item": "undergarden:stripped_smogstem_log"
+    },
+    "P": {
+      "item": "undergarden:smogstem_planks"
+    }
+  },
+  "pattern": [
+    "L",
+    "P"
+  ],
+  "result": {
+    "count": 2,
+    "id": "pirates_n_ships:undergarden_smogstem_flag_pedestal"
+  }
+}

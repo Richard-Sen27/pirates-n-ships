@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/water_barrel_fill1",
+  "textures": {
+    "log": "regions_unexplored:block/stripped_willow_log",
+    "log_top": "regions_unexplored:block/stripped_willow_log_top",
+    "particle": "regions_unexplored:block/willow_planks",
+    "planks": "regions_unexplored:block/willow_planks"
+  }
+}

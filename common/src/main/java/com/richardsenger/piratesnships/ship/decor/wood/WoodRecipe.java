@@ -22,6 +22,7 @@ import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -57,7 +58,7 @@ public final class WoodRecipe {
     public enum WoodItem { PLANKS, LOG, STRIPPED_LOG }
 
     /** An ingredient: a fixed item, an item of the recipe's wood, or the wood's member of a family. */
-    public sealed interface Part permits Fixed, OfWood, Member {
+    public sealed interface Part permits Fixed, OfWood, Member, Tagged {
     }
 
     record Fixed(Supplier<? extends ItemLike> item) implements Part {
@@ -67,6 +68,10 @@ public final class WoodRecipe {
     }
 
     record Member(WoodFamily<?> family) implements Part {
+    }
+
+    /** Any item of a tag (WOOD3: the sea cot's wool); never an unlock condition. */
+    record Tagged(TagKey<Item> tag) implements Part {
     }
 
     /** Stand-ins of a mod's wood items while its recipe is encoded (never ingredients of a family recipe themselves). */
@@ -106,6 +111,11 @@ public final class WoodRecipe {
 
     public static Part member(WoodFamily<?> family) {
         return new Member(family);
+    }
+
+    /** Any item of {@code tag} (WOOD3), the same in every wood's recipe. */
+    public static Part tag(TagKey<Item> tag) {
+        return new Tagged(tag);
     }
 
     /** A shaped recipe giving {@code count} with the rows of {@code pattern}. */
@@ -148,12 +158,18 @@ public final class WoodRecipe {
         return switch (part) {
             case Fixed f -> f.item().get();
             case Member m -> m.family().get(wood);
+            case Tagged t -> throw new IllegalArgumentException("a tag is no single item: " + t.tag().location());
             case OfWood o -> standIns ? STAND_INS.get(o.item()) : switch (o.item()) {
                 case PLANKS -> wood.planksItem();
                 case LOG -> wood.log();
                 case STRIPPED_LOG -> wood.strippedLog();
             };
         };
+    }
+
+    /** The ingredient of {@code part} for {@code wood}: a tag's items, or {@link #resolve the one item}. */
+    private static Ingredient ingredient(Part part, ShipWood wood, boolean standIns) {
+        return part instanceof Tagged t ? Ingredient.of(t.tag()) : Ingredient.of(resolve(part, wood, standIns));
     }
 
     /** The mod ids a stand-in turns into for {@code wood}. */
@@ -188,12 +204,12 @@ public final class WoodRecipe {
     void saveVanilla(RecipeOutput out, ShipWood wood, Block result, ResourceLocation id) {
         if (shapeless()) {
             ShapelessRecipeBuilder b = ShapelessRecipeBuilder.shapeless(category, result, count);
-            for (Part p : ingredients) b.requires(resolve(p, wood, false));
+            for (Part p : ingredients) b.requires(ingredient(p, wood, false));
             b.group(group).unlockedBy(unlockName, InventoryChangeTrigger.TriggerInstance.hasItems(resolve(unlock, wood, false))).save(out, id);
         } else {
             ShapedRecipeBuilder b = ShapedRecipeBuilder.shaped(category, result, count);
             for (String row : pattern) b.pattern(row);
-            key.forEach((c, p) -> b.define(c, resolve(p, wood, false)));
+            key.forEach((c, p) -> b.define(c, ingredient(p, wood, false)));
             b.group(group).unlockedBy(unlockName, InventoryChangeTrigger.TriggerInstance.hasItems(resolve(unlock, wood, false))).save(out, id);
         }
     }
@@ -204,11 +220,11 @@ public final class WoodRecipe {
         String g = group == null ? "" : group;
         if (shapeless()) {
             NonNullList<Ingredient> list = NonNullList.create();
-            for (Part p : ingredients) list.add(Ingredient.of(resolve(p, wood, true)));
+            for (Part p : ingredients) list.add(ingredient(p, wood, true));
             return new ShapelessRecipe(g, RecipeBuilder.determineBookCategory(category), stack, list);
         }
         Map<Character, Ingredient> k = new LinkedHashMap<>();
-        key.forEach((c, p) -> k.put(c, Ingredient.of(resolve(p, wood, true))));
+        key.forEach((c, p) -> k.put(c, ingredient(p, wood, true)));
         return new ShapedRecipe(g, RecipeBuilder.determineBookCategory(category), ShapedRecipePattern.of(k, pattern), stack, true);
     }
 

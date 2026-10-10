@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.ship.decor;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
@@ -24,17 +26,26 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * side (towards the player who placed it). Decor only, no container. Hand-made model {@code block/chart_table}
  * ({@code art/models/chart_table.bbmodel}).
  */
-public class ChartTableBlock extends HorizontalDirectionalBlock implements SimpleWaterloggedBlock {
+public class ChartTableBlock extends HorizontalDirectionalBlock implements SimpleWaterloggedBlock, WoodBlock {
 
-    public static final MapCodec<ChartTableBlock> CODEC = simpleCodec(ChartTableBlock::new);
+    public static final MapCodec<ChartTableBlock> CODEC = WoodBlock.codec(ChartTableBlock::new);
 
     /** The top with its fiddle rails and the four legs (symmetric, so the same for every facing). */
     private static final VoxelShape SHAPE = Shapes.or(Block.box(0, 12, 0, 16, 14.25, 16),
             Block.box(0.5, 0, 0.5, 2.5, 12, 2.5), Block.box(13.5, 0, 0.5, 15.5, 12, 2.5),
             Block.box(0.5, 0, 13.5, 2.5, 12, 15.5), Block.box(13.5, 0, 13.5, 15.5, 12, 15.5));
 
-    public ChartTableBlock(Properties properties) {
+    /** The wood of this member (WOOD3). */
+    private final ShipWood wood;
+
+    @Override
+    public ShipWood wood() {
+        return wood;
+    }
+
+    public ChartTableBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(Waterlogging.WATERLOGGED, false));
     }
 

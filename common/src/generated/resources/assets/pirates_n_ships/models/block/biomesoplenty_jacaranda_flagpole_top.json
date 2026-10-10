@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/flagpole_top",
+  "textures": {
+    "log": "biomesoplenty:block/stripped_jacaranda_log",
+    "log_top": "biomesoplenty:block/stripped_jacaranda_log_top",
+    "particle": "biomesoplenty:block/stripped_jacaranda_log",
+    "planks": "biomesoplenty:block/jacaranda_planks"
+  }
+}

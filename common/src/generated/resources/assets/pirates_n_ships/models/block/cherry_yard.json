@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/yard",
+  "textures": {
+    "log": "minecraft:block/stripped_cherry_log",
+    "log_top": "minecraft:block/stripped_cherry_log_top",
+    "particle": "minecraft:block/stripped_cherry_log",
+    "planks": "minecraft:block/cherry_planks"
+  }
+}

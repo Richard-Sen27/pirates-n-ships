@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "pirates_n_ships:block/biomesoplenty_palm_yard"
+    },
+    "axis=z": {
+      "model": "pirates_n_ships:block/biomesoplenty_palm_yard",
+      "y": 90
+    }
+  }
+}

@@ -985,6 +985,30 @@ Wood families: the model convention (WOOD1, `docs/woods.md`):
 - Legacy ids: a family may keep one wood's member under its pre-WOOD1 id (`helm` for dark oak); the models are named by
   wood all the same (`block/dark_oak_helm_wheel`), only the registry id is legacy.
 
+Storage blocks in every wood (WOOD2, `docs/woods.md`): the six Blockbench-only projects of the containers batch, S1-art
+and F7f keep their geometry; their texture keys were renamed by script (the exported JSON's `textures` keys and face
+`#refs`, the `.bbmodel` texture `id`s; the texture files and UVs are unchanged), the parent's `particle` is `#planks`,
+and the parents keep their old textures as defaults. Datagen writes `block/<wood>_<name>` per wood (the legacy member's
+too: `block/oak_cargo_crate`, `block/spruce_water_barrel_fill2`). Which texture follows the wood:
+
+| Model | Legacy id (wood) | `#planks` | `#log` / `#log_top` | Stays fixed |
+|---|---|---|---|---|
+| `cargo_crate` | `cargo_crate` (oak) | the oak slats and lid (was key `1`) | the stripped spruce posts (`3`) and their ends (`4`) | spruce rails `0`, black slots `2`, anvil bands `5`, dark oak inside `6` |
+| `cargo_barrel` | `cargo_barrel` (spruce) | the spruce staves (`0`) | none | oak heads `1`, anvil hoops `2`, dark oak bung `3`/`4` |
+| `pantry` | `pantry` (spruce) | the spruce planks (`2`) | the stripped spruce frame (`3`) | dark oak carcass `0`/`1`, oak panels `4`, anvil `5`, black `6` |
+| `water_barrel`, `_fill0..3` | `water_barrel` (spruce) | the spruce staves (`0`) | none | anvil hoops `1`, dark oak floor `2`, the oak dipper `4`/`5`/`6`, the water `7` (`water_still`, `tintindex 0`, kept) |
+| `harbor_desk` | `harbor_desk` (dark oak) | the dark oak body (`0`) | none | stripped spruce drawers `9` (a deliberate accent), birch, gold, wool, iron, paper |
+| `sea_chest` | `sea_chest` (dark oak) | the dark oak planks (`0`) | the stripped dark oak lid steps and feet (`1`) | iron `2`, anvil `3`, the rope handles (`stripped_birch_log`, `4`), black `5` |
+
+- The legacy member is a child like every other, so the oak crate's posts are now stripped oak (spruce before) and the
+  barrels, pantry and water barrel are spruce as before; the desk and the sea chest are dark oak as before.
+- The water barrel's item model per wood is a child of `block/water_barrel` with the wood's textures and `7` set to
+  `water_still` again (ITC1's guard against the old `blue_ice` stand-in); `CrewContentClient` tints every wood's
+  barrel, block and item.
+- The floating sea chest draws its own wood's block model (`SeaChestEntity` carries the wood, synced and saved).
+- Blockbench was not opened for the rename (only the `id` field changed; the projects parse as JSON, and the face
+  texture indices are untouched).
+
 Wood families of the machines (WOOD4):
 - **The rename.** The helm, capstan, sail winch, bilge pump and cannon models name their main wood with the family
   variables; nothing else changed (no element, UV or face moved). The committed JSON was rewritten by key (the texture
@@ -1017,6 +1041,40 @@ Wood families of the machines (WOOD4):
   CAN2 pipeline (generate, `lint_models.py --fix` with the mirrors, `--compose`) reproduces the seven committed files
   exactly (checked for WOOD4). The projects were not reopened in Blockbench (another agent may hold the one instance):
   only their texture ids changed, which the JSON round trip of the edit checked.
+
+Wood families of the fittings (WOOD3): the texture keys of the parents, renamed in the committed JSON and in the
+projects' texture `id` fields (by script, so the `.bbmodel` files differ only in those ids; the projects' faces point at
+textures by index, which did not change). Parents keep their old textures as defaults, so they stay valid on their own;
+datagen's children per wood set the variables (`block/<wood>_<part>`, the legacy member's too, e.g.
+`block/spruce_yard`).
+- **Name board** (`name_board*`): already `#planks` (panel) and `#log` (frame) since NAME2; the oak children of NAME2
+  became one child per wood. A row joins boards of every wood; each board keeps its own wood, so a mixed row shows its
+  boards' woods side by side and the end caps are those of the end boards.
+- **Stern window** (`stern_window`, `_shutters`; `tools/gen_decor_models.py`): `dark_oak_planks` -> `#planks` (mullion,
+  transoms, casing, hood, corbels, stool), `stripped_dark_oak_log` -> `#log` (stiles, head, bottom rail, hood top);
+  the `dark_oak_trapdoor` shutters, glass, brass and iron stay.
+- **Chart table** (`chart_table`; the same script): `dark_oak_planks` -> `#planks` (top, aprons), `stripped_dark_oak_log`
+  -> `#log` (legs, stretchers, fiddle rails); the `stripped_spruce_log` drawer front stays an accent.
+- **Sea cot** (`sea_cot_head`, `_foot`, `_item`; the same script): `dark_oak_planks` -> `#planks` (boards, knobs),
+  `stripped_dark_oak_log` -> `#log` (posts, panels, rails); the wool stays. The script names `planks`, `log` and
+  `log_top` only in models flagged `wood` (these three blocks); every other texture keeps a numeric key in first-use
+  order, and the lantern, bell and coil models are byte-identical.
+- **Notice board** (`notice_board`): `dark_oak_planks` -> `#planks` (feet, rails, roof), the unstripped `dark_oak_log`
+  posts and ridge beam -> `#log` and their end `dark_oak_log_top` -> `#log_top` (there is no bark variable, so the posts
+  are the wood's stripped log; the parent's defaults and project textures are now `stripped_dark_oak_log(_top)`); the
+  `spruce_planks` board behind the notices, the notices, pins, seal and nails stay. Particle: the wood's planks.
+- **Flagpole** (`flagpole`, `_bottom`, `_middle`, `_top`): `stripped_spruce_log` -> `#log` (the pole); the dark oak
+  truck, gold finial, anvil cleat and birch halyard stay. Particle: the log.
+- **Flag pedestal** (`flag_pedestal`, `_pole`): `stripped_spruce_log` -> `#log`, `stripped_spruce_log_top` ->
+  `#log_top`; the anvil hoop and socket and the birch halyard stay. The pole stub in `_pole` is `#log` too, so it is in
+  the pedestal's own wood. Particle: the log.
+- **Crow's nest** (`crows_nest`, `_pole`): `planks` stays the key (staves, floor), `rim` -> `log` (rim, struts); `dark`
+  (the dark oak underside), `iron` and `rope` (birch) stay fixed. The pole stub (`#log`) follows the nest's wood.
+- **Yard** (`yard`): `stripped_spruce_log` -> `#log`, its end -> `#log_top`; the anvil fittings and the birch rope bands
+  stay. Particle: the log.
+- **Cleat** (`cleat`): the pad's `stripped_dark_oak_log` -> `#log` and its end -> `#log_top`; the anvil horns stay.
+  Particle: the log (was the anvil).
+- `HandMadeModelsTest.woodFamilyParentsUseTheWoodVariables` checks every parent's keys.
 
 Railings (RAIL1; the look superseded by "Railing rework (RAIL6)" below):
 - **Part list in `tools/gen_railing_models.py`** (committed). It writes the four parent models of the wood family to

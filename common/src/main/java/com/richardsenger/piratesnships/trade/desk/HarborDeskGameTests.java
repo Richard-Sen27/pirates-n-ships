@@ -143,6 +143,30 @@ public final class HarborDeskGameTests {
         finish(helper, p);
     }
 
+    /**
+     * WOOD2: a mangrove desk (not the legacy dark oak one) is bound by the port's structure binding
+     * ({@code PortService.bindDesks}, an {@code instanceof} check now) and opens its port's market.
+     */
+    @ModGameTest
+    public static void aMangroveDeskBindsAPortAndOpensTheMarket(GameTestHelper helper) {
+        ResourceLocation port = port(helper, PortKind.SEAFARER_VILLAGE);
+        HarborDeskBlock mangrove = HarborDesks.HARBOR_DESKS.get(com.richardsenger.piratesnships.ship.decor.wood.ShipWood.MANGROVE);
+        helper.setBlock(DESK, mangrove.defaultBlockState());
+        HarborDeskBlockEntity be = (HarborDeskBlockEntity) helper.getBlockEntity(DESK);
+        helper.assertTrue(be.port().isEmpty(), "a placed desk starts unbound");
+        BlockPos abs = helper.absolutePos(DESK);
+        int bound = com.richardsenger.piratesnships.world.port.PortService.bindDesks(helper.getLevel(),
+                net.minecraft.world.level.levelgen.structure.BoundingBox.fromCorners(abs.offset(-1, -1, -1), abs.offset(1, 1, 1)), port);
+        helper.assertValueEqual(bound, 1, "desks bound");
+        helper.assertValueEqual(be.port(), Optional.of(port), "the mangrove desk's port");
+        ServerPlayer p = player(helper, 10);
+        List<CustomPacketPayload> sent = MarketBackend.record(p.getUUID());
+        helper.assertValueEqual(use(helper, p), InteractionResult.CONSUME, "use result");
+        helper.assertValueEqual(of(sent, MarketPayloads.OpenMarket.class).size(), 1, "one open payload");
+        helper.assertValueEqual(lastState(helper, sent).view().orElseThrow(() -> new AssertionError("no market view")).port(), port, "view port");
+        finish(helper, p);
+    }
+
     @ModGameTest
     public static void buyThroughTheDeskMatchesTheCommandPath(GameTestHelper helper) {
         ResourceLocation deskPort = port(helper, PortKind.SEAFARER_VILLAGE);

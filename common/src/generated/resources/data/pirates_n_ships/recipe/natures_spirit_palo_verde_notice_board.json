@@ -1,0 +1,46 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "natures_spirit"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "natures_spirit:palo_verde_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "natures_spirit"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "natures_spirit:palo_verde_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:notice_board",
+  "key": {
+    "P": {
+      "item": "minecraft:paper"
+    },
+    "W": {
+      "item": "natures_spirit:palo_verde_planks"
+    }
+  },
+  "pattern": [
+    "WPW",
+    "WPW"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:natures_spirit_palo_verde_notice_board"
+  }
+}

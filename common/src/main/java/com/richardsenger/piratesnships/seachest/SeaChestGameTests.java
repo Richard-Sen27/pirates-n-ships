@@ -157,6 +157,47 @@ public final class SeaChestGameTests {
     }
 
     /**
+     * WOOD2: a bamboo sea chest (not the legacy dark oak one) launched into water floats as a bamboo chest (the entity
+     * carries its wood, synced for the renderer and saved), keeps it through a save, and sneak-use gives back the
+     * bamboo chest's own item with the contents.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 120)
+    public static void aBambooChestFloatsAndComesBackAsItself(GameTestHelper h) {
+        SeaChestTestSupport.basin(h, 9, 4);
+        ServerLevel level = h.getLevel();
+        SeaChestItem bamboo = SeaChestContent.item(com.richardsenger.piratesnships.ship.decor.wood.ShipWood.BAMBOO);
+        h.assertTrue(bamboo != SeaChestContent.ITEM.get(), "the bamboo chest is its own item");
+        SeaChestEntity chest = SeaChestEntity.fromItem(level, h.absoluteVec(new Vec3(4.5, 4.4, 4.5)), 0f, SeaChestTestSupport.filledChest(bamboo));
+        level.addFreshEntity(chest);
+        h.assertTrue(chest.wood() == com.richardsenger.piratesnships.ship.decor.wood.ShipWood.BAMBOO, "the floating chest's wood is " + chest.wood());
+        h.assertTrue(chest.block() == bamboo.getBlock(), "the renderer draws the bamboo chest");
+        // saved and loaded: still bamboo; a chest saved before WOOD2 (no wood) is the legacy dark oak one
+        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+        chest.saveWithoutId(tag);
+        SeaChestEntity copy = new SeaChestEntity(SeaChestContent.ENTITY.get(), level);
+        copy.load(tag);
+        h.assertTrue(copy.wood() == com.richardsenger.piratesnships.ship.decor.wood.ShipWood.BAMBOO, "the loaded chest's wood is " + copy.wood());
+        tag.remove(SeaChestEntity.WOOD_TAG);
+        SeaChestEntity old = new SeaChestEntity(SeaChestContent.ENTITY.get(), level);
+        old.load(tag);
+        h.assertTrue(old.block() == SeaChestContent.BLOCK.get(), "a chest without a wood loads as the legacy chest");
+        double y0 = chest.getY();
+        h.runAfterDelay(60, () -> {
+            h.assertTrue(chest.isInWater() && chest.getY() > y0 - 1.0, "the bamboo chest does not float: y " + chest.getY() + " from " + y0);
+            Player player = h.makeMockPlayer(GameType.SURVIVAL);
+            player.setShiftKeyDown(true);
+            chest.interact(player, InteractionHand.MAIN_HAND);
+            h.assertTrue(chest.isRemoved(), "the picked-up chest should be gone");
+            int found = 0;
+            for (ItemStack s : player.getInventory().items) {
+                if (SeaChestTestSupport.holdsFilledContents(s, bamboo)) found++;
+            }
+            h.assertTrue(found == 1, "the player should hold the bamboo chest with the contents, found " + found);
+            h.succeed();
+        });
+    }
+
+    /**
      * Fully submerged the chest rises at up to 0.15 blocks/tick, then settles as a damped oscillation (per tick:
      * vertical damping 0.85, stiffness 0.04 / (draft x height) per block, so about 15 ticks per bob and a decay of
      * 0.85 per tick). After 100 ticks the bottom sits {@code draft x height} below the surface.

@@ -1,7 +1,7 @@
 {
   "variants": {
     "": {
-      "model": "pirates_n_ships:block/cargo_barrel"
+      "model": "pirates_n_ships:block/spruce_cargo_barrel"
     }
   }
 }

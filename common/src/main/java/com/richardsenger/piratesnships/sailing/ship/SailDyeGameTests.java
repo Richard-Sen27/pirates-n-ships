@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.sailing.ship;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.sailing.block.SailingBlocks;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
@@ -71,6 +73,23 @@ public final class SailDyeGameTests {
         SailingGameTestsShips.yard(h, 11, 3, 11, lowerHalf, SailTrim.FURLED);
         for (int y = 4; y < 3 + drop; y++) h.setBlock(new BlockPos(11, y, 11), Blocks.OAK_FENCE);
         SailingGameTestsShips.yard(h, 11, 3 + drop, 11, upperHalf, SailTrim.FULL);
+        return h.absolutePos(new BlockPos(11, 3 + drop, 11));
+    }
+
+    /**
+     * WOOD3: {@link #landSail} with the upper yard of {@code upper} and the lower of {@code lower} (any woods'), both
+     * along x. Returns the head, absolute.
+     */
+    private static BlockPos landSail(GameTestHelper h, YardBlock upper, YardBlock lower, int drop) {
+        for (int x = 4; x <= 18; x++) for (int z = 8; z <= 14; z++) h.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
+        h.setBlock(new BlockPos(11, 2, 11), Blocks.OAK_LOG);
+        for (int x = 10; x <= 12; x++) {
+            h.setBlock(new BlockPos(x, 3, 11), lower.defaultBlockState().setValue(YardBlock.AXIS, Direction.Axis.X)
+                    .setValue(YardBlock.TRIM, SailTrim.FURLED));
+            h.setBlock(new BlockPos(x, 3 + drop, 11), upper.defaultBlockState().setValue(YardBlock.AXIS, Direction.Axis.X)
+                    .setValue(YardBlock.TRIM, SailTrim.FULL));
+        }
+        for (int y = 4; y < 3 + drop; y++) h.setBlock(new BlockPos(11, y, 11), Blocks.OAK_FENCE);
         return h.absolutePos(new BlockPos(11, 3 + drop, 11));
     }
 
@@ -150,6 +169,22 @@ public final class SailDyeGameTests {
         h.assertTrue(white.isEmpty() && clientCopy(h, yardBe(h, head)).clothTint() == SailTint.NONE,
                 "white did not bring back the natural canvas");
         h.succeed();
+    }
+
+    /**
+     * WOOD3: birch yards over a jungle lower yard carry a square sail like the spruce ones: the head yard gets the
+     * cloth's geometry, and a dye on it colours the sail.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 80)
+    public static void aBirchYardCarriesASail(GameTestHelper h) {
+        BlockPos head = landSail(h, SailingBlocks.YARDS.get(ShipWood.BIRCH), SailingBlocks.YARDS.get(ShipWood.JUNGLE), 3);
+        Player player = h.makeMockPlayer(GameType.SURVIVAL);
+        h.succeedWhen(() -> {
+            h.assertTrue(yardBe(h, head).geometry() != null, "the birch head yard has no sail");
+            ItemStack red = new ItemStack(Items.RED_DYE);
+            if (yardBe(h, head).dye() == null) useItem(h, player, head, red);
+            h.assertTrue(yardBe(h, head).dye() == DyeColor.RED, "the birch sail was not dyed");
+        });
     }
 
     /** A dye on the head cleat of a triangular sail dyes it, the client copy reads it; a banner there is refused and kept. */

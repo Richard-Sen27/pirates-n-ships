@@ -1105,6 +1105,31 @@ Bulwark (RAIL4), and the gate check:
   its west stanchion, a shut and an open gun port, a corner with two stanchions, the two items; bottom, from outboard:
   the shut lid's straps and the open lid lying flat).
 
+Railing latch (RL5):
+- **Part list in `tools/gen_railing_models.py`** (the RAIL1 script, extended; written by the script, not yet looked at in
+  Blockbench or rendered). One more group in `models/railing.bbmodel` and the model `models/block/railing_latch`
+  (6 elements): an iron eye bolt standing on the cap of the north edge, for the railing and the bulwark alike (both
+  caps end at y 16). It is the model of its own block (`ship/rigging/RailingLatchBlock`, id `railing_latch`, no item)
+  in the cell over the rail, so it is made in that block's frame, the cap's top at y 0: a washer x 7..9,
+  y 0..0.4, z 0.3..2 (inside the railing's 2 px rail as on the bulwark's cap, so it never overhangs), a shank, and a square ring standing across the rail, x 7.6..8.4, outer y 0.55..2.95,
+  z 0.3..2.7, 0.6 px bars. The ring's centre (y 1.75, z 1.5) is the net's ring point (`RailingLatchBlock` `RING_INSET`
+  1.5 px, `RING_HEIGHT` 1.75 px over the cap).
+- **Iron only:** the chainplate's palette (`#metal` = `pirates_n_ships:item/palette_2`, a fourth texture `palette_2`
+  with id `metal` in the project, from the mod's textures) with the chainplate's UV patches (plate, bolt, ring), so the
+  model has no `#planks` or `#log` and every wood shares it without a child model. Datagen writes only the latch's
+  block state, turned by its `facing` without uvlock (fixed palette UVs). Lint clean (no fights).
+- Renders `renders/railing_latch.png` and `renders/railing_latch_bulwark.png` (RL5 follow-up): a three-block oak run
+  (railing, then bulwark) with the latch on the middle block's north edge and the first block of a net leaving its
+  ring as `RatlineNetRenderer` draws a lone strand (two side ropes from the ring, 52 degrees inboard); panels from the
+  deck, from outside, close up, and a side view along the rail clipped to the latch's block (the cap's profile, the
+  washer on it, the ring and the ropes starting in its hole). Drawn by a scratch three.js scene from the model JSON in
+  Blockbench (`risky_eval`, no project opened), vanilla textures from the 1.21.1 client jar. Checked: the washer
+  stands on the cap (y 16) without clipping or floating, inside the rail's depth; the ring stands in the plane of the
+  pull (along the strand, the way an eye bolt is loaded) and both ropes start in its hole.
+- **Why its own block** and not a `latch` state of the railing (the RL5 brief): with WOOD1's 108 woods a five-valued
+  property on every railing and bulwark would add about 440,000 block states; the bolt lies entirely in the cell over
+  the cap anyway, and the latch block also holds the net's link, so a railing never carries a block entity.
+
 Ratline nets (RL2):
 - **Part list in `tools/gen_ratline_net_models.py`** (committed). Three projects, one model each:
   `chainplate.bbmodel` -> `block/chainplate.json` (13 elements), `mast_hoop.bbmodel` -> `block/mast_hoop.json` (14),

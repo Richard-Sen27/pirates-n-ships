@@ -120,7 +120,7 @@ Use a rope made fast to a cleat or ring to slide down it, from your masthead ont
 With the ships alongside, use a {item:pirates_n_ships:boarding_plank}**boarding plank** on top of your gunwale. Keep the ships together or it breaks. Hold the plank and look at your rail: the board it would lay shows in green, and a red cell marks what stands in the way.
 {recipe:boarding_plank}
 
-String a {item:pirates_n_ships:ratline_net}**ratline net** between two {item:pirates_n_ships:chainplate}**chainplates** on top of one run of railing and it hangs along the rail as a boarding net. Boarders coming over the rail are held a moment; your own crew pass. Three cutlass blows cut one down.
+String a {item:pirates_n_ships:ratline_net}**ratline net** between two railings of one run, on the same edge, and it hangs along the rail as a boarding net. Boarders coming over the rail are held a moment; your own crew pass. Three cutlass blows cut one down.
 
 ## Board her!
 {spotlight:captains_whistle}

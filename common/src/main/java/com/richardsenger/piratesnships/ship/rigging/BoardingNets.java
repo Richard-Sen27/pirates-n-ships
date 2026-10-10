@@ -31,15 +31,18 @@ import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.WeakHashMap;
 
 /**
- * Boarding nets in a level (RAIL5, docs/design.md §4.8 "Railing extras"). A ratline net between two chainplates on top
- * of railing blocks of one body, at one height and along one railed edge both railings share, is a boarding net: its
+ * Boarding nets in a level (RAIL5, docs/design.md §4.8 "Railing extras"). A ratline net between two railing latches
+ * (RL5, {@link RailingLatchBlock}, on the same edge) or two chainplates on top of railing blocks (RAIL5's way, still
+ * accepted) of one body, at one height and along one railed edge both railings share, is a boarding net: its
  * cells are the block row above the rail between the chainplates (the line's own cells, {@link RatlineNetRules#netCells}),
  * placed with {@link RatlineNetCellBlock#BOARDING} and their {@link RatlineNetCellBlock#FACING} on the outboard side
  * (the shared edge), so the side turns with the ship.
@@ -72,19 +75,31 @@ public final class BoardingNets {
 
     // ------------------------------------------------------------------ what is a boarding net
 
-    /** The railing a floor chainplate at {@code pos} stands on, or null. */
+    /** The railing a floor chainplate or a railing latch (RL5) at {@code pos} stands on, or null. */
     static @Nullable BlockPos railBelow(BlockGetter level, BlockPos pos) {
         BlockState s = level.getBlockState(pos);
-        if (!(s.getBlock() instanceof ChainplateBlock) || s.getValue(ChainplateBlock.FACE) != AttachFace.FLOOR) {
+        boolean plate = s.getBlock() instanceof ChainplateBlock && s.getValue(ChainplateBlock.FACE) == AttachFace.FLOOR;
+        if (!plate && !(s.getBlock() instanceof RailingLatchBlock)) {
             return null;
         }
         BlockPos below = pos.below();
         return level.getBlockState(below).getBlock() instanceof RailingBlock ? below : null;
     }
 
+    /** The edges a boarding net end at {@code end} on the railing {@code rail} may hang along: a latch's own edge, else every railed one. */
+    private static Set<Direction> edgesFor(BlockGetter level, BlockPos end, BlockPos rail) {
+        BlockState s = level.getBlockState(end);
+        if (s.getBlock() instanceof RailingLatchBlock) {
+            Direction edge = s.getValue(RailingLatchBlock.FACING);
+            return RailingBlock.edges(level.getBlockState(rail)).contains(edge) ? EnumSet.of(edge) : EnumSet.noneOf(Direction.class);
+        }
+        return RailingBlock.edges(level.getBlockState(rail));
+    }
+
     /**
-     * The boarding net layout of fittings {@code a} and {@code b} when both are chainplates on top of railings at one
-     * height ({@link BoardingNetRules#layout}), else null (an ordinary ratline net).
+     * The boarding net layout of fittings {@code a} and {@code b} when both are latches or floor chainplates on top of
+     * railings at one height ({@link BoardingNetRules#layout}; a latch only along its own edge), else null (an ordinary
+     * ratline net).
      */
     public static @Nullable Layout layout(BlockGetter level, BlockPos a, BlockPos b, int maxLength) {
         if (a.getY() != b.getY()) {
@@ -94,8 +109,7 @@ public final class BoardingNets {
         if (ra == null || rb == null) {
             return null;
         }
-        return BoardingNetRules.layout(ra, RailingBlock.edges(level.getBlockState(ra)), rb,
-                RailingBlock.edges(level.getBlockState(rb)), maxLength);
+        return BoardingNetRules.layout(ra, edgesFor(level, a, ra), rb, edgesFor(level, b, rb), maxLength);
     }
 
     /** The outboard side of {@code net} when it is a boarding net, else null. */

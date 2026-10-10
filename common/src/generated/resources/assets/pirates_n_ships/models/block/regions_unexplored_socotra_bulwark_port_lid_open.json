@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/bulwark_port_lid_open",
+  "textures": {
+    "log": "regions_unexplored:block/stripped_socotra_log",
+    "log_top": "regions_unexplored:block/stripped_socotra_log_top",
+    "particle": "regions_unexplored:block/socotra_planks",
+    "planks": "regions_unexplored:block/socotra_planks"
+  }
+}

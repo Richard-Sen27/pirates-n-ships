@@ -1,0 +1,126 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/deeperdarker_echo_bulwark_port"
+      },
+      "when": {
+        "facing": "north"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/deeperdarker_echo_bulwark_port_lid"
+      },
+      "when": {
+        "facing": "north",
+        "open": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/deeperdarker_echo_bulwark_port_lid_open"
+      },
+      "when": {
+        "facing": "north",
+        "open": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/deeperdarker_echo_bulwark_port",
+        "uvlock": true,
+        "y": 90
+      },
+      "when": {
+        "facing": "east"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/deeperdarker_echo_bulwark_port_lid",
+        "uvlock": true,
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "open": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/deeperdarker_echo_bulwark_port_lid_open",
+        "uvlock": true,
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "open": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/deeperdarker_echo_bulwark_port",
+        "uvlock": true,
+        "y": 180
+      },
+      "when": {
+        "facing": "south"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/deeperdarker_echo_bulwark_port_lid",
+        "uvlock": true,
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "open": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/deeperdarker_echo_bulwark_port_lid_open",
+        "uvlock": true,
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "open": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/deeperdarker_echo_bulwark_port",
+        "uvlock": true,
+        "y": 270
+      },
+      "when": {
+        "facing": "west"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/deeperdarker_echo_bulwark_port_lid",
+        "uvlock": true,
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "open": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/deeperdarker_echo_bulwark_port_lid_open",
+        "uvlock": true,
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "open": "true"
+      }
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.ship.decor.railing;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
@@ -21,8 +22,8 @@ import java.util.List;
  */
 public class BulwarkBlock extends RailingBlock {
 
-    public BulwarkBlock(Properties properties) {
-        super(properties);
+    public BulwarkBlock(ShipWood wood, Properties properties) {
+        super(wood, properties);
     }
 
     @Override

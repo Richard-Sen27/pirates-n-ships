@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/bulwark_edge",
+  "textures": {
+    "log": "deeperdarker:block/stripped_echo_log",
+    "log_top": "deeperdarker:block/stripped_echo_log_top",
+    "particle": "deeperdarker:block/echo_planks",
+    "planks": "deeperdarker:block/echo_planks"
+  }
+}

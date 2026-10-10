@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/railing_gate_right",
+  "textures": {
+    "log": "natures_spirit:block/stripped_palo_verde_log",
+    "log_top": "natures_spirit:block/stripped_palo_verde_log_top",
+    "particle": "natures_spirit:block/palo_verde_planks",
+    "planks": "natures_spirit:block/palo_verde_planks"
+  }
+}

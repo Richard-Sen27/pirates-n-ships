@@ -3,6 +3,7 @@ package com.richardsenger.piratesnships.compat;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.almanac.client.Markup;
 import com.richardsenger.piratesnships.almanac.data.AlmanacLang;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodIds;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;
@@ -76,7 +77,18 @@ public final class InfoPages {
         List<Entry> entries = entries(lang, chapterOrder);
         Map<ResourceLocation, Page> out = new LinkedHashMap<>();
         for (Map.Entry<ResourceLocation, String> item : items.entrySet()) {
-            find(entries, item.getKey(), item.getValue()).ifPresent(e -> out.put(item.getKey(),
+            Optional<Entry> found = find(entries, item.getKey(), item.getValue());
+            if (found.isEmpty()) {
+                // WOOD1: a wood family's member without its own line uses the family's (the legacy or oak member's)
+                ResourceLocation id = item.getKey();
+                String rep = WoodIds.representative(id.getPath(),
+                        p -> items.containsKey(ResourceLocation.fromNamespaceAndPath(id.getNamespace(), p)));
+                if (!rep.equals(id.getPath())) {
+                    ResourceLocation repId = ResourceLocation.fromNamespaceAndPath(id.getNamespace(), rep);
+                    found = find(entries, repId, items.get(repId));
+                }
+            }
+            found.ifPresent(e -> out.put(item.getKey(),
                     new Page(clean(e.raw(), lang), lang.getOrDefault(PREFIX + e.chapter() + ".title", e.chapter()))));
         }
         return out;

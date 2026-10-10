@@ -960,6 +960,31 @@ Ratlines (RL1):
   sloped run from a deck (top: two views), and the two block models alone (bottom). The mast and deck are flat brown
   stand-ins (no `art/vanilla` textures were extracted).
 
+Wood families: the model convention (WOOD1, `docs/woods.md`):
+- A wooden block that comes in every wood is a **family** (`ship/decor/wood/WoodFamily`): its hand-made parent models
+  (Blockbench, or a part list in `tools/`) never name a wood's texture for "the wood"; they use three texture
+  variables, and datagen writes one child per wood (`block/<wood>_<part>`, e.g. `block/spruce_railing_edge`,
+  `block/biomesoplenty_redwood_railing_edge`) that sets them:
+  - `#planks`: the wood's planks (`minecraft:block/spruce_planks`);
+  - `#log`: the side of the wood's stripped log (`stripped_spruce_log`; bamboo `stripped_bamboo_block`, crimson and
+    warped `stripped_<wood>_stem`; a mod's wood its own, see `docs/wood-compat.md`);
+  - `#log_top`: the end of that stripped log (`stripped_spruce_log_top`, ...), for cut log ends seen from above.
+  The child also sets `particle`, to the planks by default or to the log for a log-only model
+  (`WoodFamily.Particle.LOG`: yards, poles).
+- **Which texture is "the wood"** in a model with accent woods: the main planks are `#planks` and the main stripped log
+  is `#log`; accents (a dark-oak trim on an oak body, iron, brass, cloth) stay fixed textures and do not follow the
+  wood. A model that wants a second wood-dependent texture needs a new variable in `WoodFamily` first.
+- **Rope is not wood:** `minecraft:block/stripped_birch_log` used as rope (yard bands, the winch rope, halyards, the
+  sea chest's handles, the crow's nest's `rope` key) stays a fixed texture, never `#log`; a family model keeps its
+  own key for it (`rope`). The stern window's `dark_oak_trapdoor` shutters likewise stay fixed: no `#trapdoor`
+  variable is added (decided in WOOD1; a shutter in the wood's own trapdoor needs one, and a mod's trapdoor texture is
+  not part of the verified table).
+- A renderer part of a family (a part a block entity renderer draws, like the helm's wheel) is a parent model with the
+  same variables; `ship/decor/wood/client/WoodModels.register(family, parent)` loads its child for every wood and
+  `WoodModels.get(block, parent)` fetches the member's.
+- Legacy ids: a family may keep one wood's member under its pre-WOOD1 id (`helm` for dark oak); the models are named by
+  wood all the same (`block/dark_oak_helm_wheel`), only the registry id is legacy.
+
 Railings (RAIL1):
 - **Part list in `tools/gen_railing_models.py`** (committed). It writes the four parent models of the wood family to
   `models/block/` and their project `models/railing.bbmodel` itself (groups `railing_edge` 6 elements, `railing_post`

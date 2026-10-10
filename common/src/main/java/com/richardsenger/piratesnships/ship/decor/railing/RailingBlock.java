@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.ship.decor.railing;
 
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.richardsenger.piratesnships.ship.decor.DecorConfig;
@@ -17,7 +19,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.Vec3;
@@ -58,12 +59,16 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p><b>Posts carry things</b> (RAIL3): a block with a post has a sturdy centre on its top and bottom faces
  * ({@link #getBlockSupportShape}), so a lantern hangs below it or stands on it and a chain runs on from it; a plain rail
  * does not. The grappling hook holds on a railing like on a cleat ({@code #pirates_n_ships:grapple_latches}).
- *
- * <p><b>Latch</b> (RL5, {@link #LATCH}): the edge whose cap carries an iron eye bolt for a ratline net, set by the net
- * item ({@code ship.rigging.RailingLatches}); the net's end is the invisible {@code ship.rigging.RailingLatchBlock} in
- * the block above, and the latch lasts only as long as that block does ({@link #updateShape}). Turned with the edges.
  */
-public class RailingBlock extends Block implements SimpleWaterloggedBlock {
+public class RailingBlock extends Block implements SimpleWaterloggedBlock, WoodBlock {
+    /** The wood of this member (WOOD1). */
+    private final ShipWood wood;
+
+    @Override
+    public ShipWood wood() {
+        return wood;
+    }
+
 
     public static final BooleanProperty NORTH = BlockStateProperties.NORTH;
     public static final BooleanProperty EAST = BlockStateProperties.EAST;
@@ -73,8 +78,6 @@ public class RailingBlock extends Block implements SimpleWaterloggedBlock {
     public static final BooleanProperty POST_NE = BooleanProperty.create("post_ne");
     public static final BooleanProperty POST_SE = BooleanProperty.create("post_se");
     public static final BooleanProperty POST_SW = BooleanProperty.create("post_sw");
-    /** RL5: the edge carrying a net's latch, or none. */
-    public static final EnumProperty<RailingLatch> LATCH = EnumProperty.create("latch", RailingLatch.class);
 
     /** Action bar text when a railing is placed while railings are disabled. */
     public static final String KEY_DISABLED = "message." + Constants.MOD_ID + ".railing.disabled";
@@ -98,9 +101,10 @@ public class RailingBlock extends Block implements SimpleWaterloggedBlock {
     private volatile double collisionHeight = -1;
     private volatile Map<BlockState, VoxelShape> collisions = new ConcurrentHashMap<>();
 
-    public RailingBlock(Properties properties) {
+    public RailingBlock(ShipWood wood, Properties properties) {
         super(properties);
-        BlockState s = stateDefinition.any().setValue(Waterlogging.WATERLOGGED, false).setValue(LATCH, RailingLatch.NONE);
+        this.wood = wood;
+        BlockState s = stateDefinition.any().setValue(Waterlogging.WATERLOGGED, false);
         for (BooleanProperty p : EDGES.values()) s = s.setValue(p, false);
         for (BooleanProperty p : POSTS.values()) s = s.setValue(p, false);
         registerDefaultState(s);
@@ -108,7 +112,7 @@ public class RailingBlock extends Block implements SimpleWaterloggedBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(NORTH, EAST, SOUTH, WEST, POST_NW, POST_NE, POST_SE, POST_SW, Waterlogging.WATERLOGGED, LATCH);
+        builder.add(NORTH, EAST, SOUTH, WEST, POST_NW, POST_NE, POST_SE, POST_SW, Waterlogging.WATERLOGGED);
     }
 
     /** The edge property of {@code edge} (a horizontal direction). */
@@ -230,22 +234,7 @@ public class RailingBlock extends Block implements SimpleWaterloggedBlock {
         if (direction.getAxis().isHorizontal()) {
             return withPosts(state, level, pos);
         }
-        if (direction == Direction.UP && state.getValue(LATCH) != RailingLatch.NONE && !latchHeld(state, neighbor)) {
-            // RL5: no orphan latch: the eye bolt goes with the net end above it
-            return state.setValue(LATCH, RailingLatch.NONE);
-        }
         return super.updateShape(state, direction, neighbor, level, pos, neighborPos);
-    }
-
-    /** The edge carrying {@code state}'s latch, or null. */
-    public static @Nullable Direction latch(BlockState state) {
-        return state.getBlock() instanceof RailingBlock ? state.getValue(LATCH).edge() : null;
-    }
-
-    /** RL5: whether {@code above} is the net end ({@code RailingLatchBlock}) that holds {@code state}'s latch. */
-    private static boolean latchHeld(BlockState state, BlockState above) {
-        return above.getBlock() instanceof com.richardsenger.piratesnships.ship.rigging.RailingLatchBlock
-                && above.getValue(com.richardsenger.piratesnships.ship.rigging.RailingLatchBlock.FACING) == latch(state);
     }
 
     // ------------------------------------------------------------------ shapes
@@ -320,8 +309,6 @@ public class RailingBlock extends Block implements SimpleWaterloggedBlock {
         Set<Direction> edges = edges(state);
         Set<Direction> posts = posts(state);
         BlockState out = state;
-        Direction latch = latch(state);
-        out = out.setValue(LATCH, latch == null ? RailingLatch.NONE : RailingLatch.of(turn.apply(latch)));
         for (Direction d : Direction.Plane.HORIZONTAL) {
             out = out.setValue(edge(turn.apply(d)), edges.contains(d));
         }

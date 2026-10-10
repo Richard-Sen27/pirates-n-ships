@@ -8,8 +8,9 @@ import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
 import com.richardsenger.piratesnships.ship.decor.SableWeightTags;
 import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodRecipe;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodRecipe.Part;
 import com.richardsenger.piratesnships.ship.rigging.RiggingContent;
-import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.advancements.critereon.StatePropertiesPredicate;
 import net.minecraft.core.Direction;
 import net.minecraft.data.models.blockstates.Condition;
@@ -19,8 +20,6 @@ import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
 import net.minecraft.data.recipes.RecipeCategory;
-import net.minecraft.data.recipes.ShapedRecipeBuilder;
-import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.Items;
@@ -103,14 +102,12 @@ public final class RailingData {
             lang.add(BulwarkPortBlock.KEY_HELD_OPEN, "The gun behind holds the lid open");
         });
         data.models(RailingData::models);
-        data.blockLoot(loot -> {
-            // one item per railed edge: each edge was placed with one (railings and, RAIL4, bulwarks)
-            railings.forEach((wood, block) -> loot.add(block, perEdge(block)));
-            bulwarks.forEach((wood, block) -> loot.add(block, perEdge(block)));
-            ports.forEach((wood, block) -> loot.dropSelf(block));
-            gates.forEach((wood, block) -> loot.dropSelf(block));
-            gunPorts.forEach((wood, block) -> loot.dropSelf(block));
-        });
+        // one item per railed edge: each edge was placed with one (railings and, RAIL4, bulwarks)
+        railings.loot(data, RailingData::perEdge);
+        bulwarks.loot(data, RailingData::perEdge);
+        ports.dropSelf(data);
+        gates.dropSelf(data);
+        gunPorts.dropSelf(data);
         data.blockTags(tags -> {
             railings.tag(tags, BlockTags.MINEABLE_WITH_AXE, SableWeightTags.SUPER_LIGHT, SableWeightTags.QUARTER_VOLUME,
                     CannonContent.BREAKABLE, CannonContent.SWIVEL_MOUNTS, RiggingContent.RATLINES_ANCHORS, GrappleContent.GRAPPLE_LATCHES);
@@ -126,39 +123,23 @@ public final class RailingData {
             gunPorts.tag(tags, BlockTags.MINEABLE_WITH_AXE, SableWeightTags.SUPER_LIGHT, SableWeightTags.QUARTER_VOLUME,
                     CannonContent.BREAKABLE, BoardingContent.GANGWAY_OPENINGS);
         });
-        data.recipes(out -> {
-            railings.forEach((wood, block) -> ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, block, 4)
-                    .pattern("SSS").pattern("PPP")
-                    .define('S', Items.STICK).define('P', wood.planks())
-                    .group(Constants.MOD_ID + ":railing")
-                    .unlockedBy("has_planks", InventoryChangeTrigger.TriggerInstance.hasItems(wood.planks()))
-                    .save(out, railings.entry(wood).id()));
-            ports.forEach((wood, block) -> ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, block, 2)
-                    .pattern("S S").pattern("PPP")
-                    .define('S', Items.STICK).define('P', wood.planks())
-                    .group(Constants.MOD_ID + ":railing_port")
-                    .unlockedBy("has_planks", InventoryChangeTrigger.TriggerInstance.hasItems(wood.planks()))
-                    .save(out, ports.entry(wood).id()));
-            gates.forEach((wood, block) -> ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, block, 1)
-                    .pattern("SNS").pattern("PPP")
-                    .define('S', Items.STICK).define('N', Items.IRON_NUGGET).define('P', wood.planks())
-                    .group(Constants.MOD_ID + ":railing_gate")
-                    .unlockedBy("has_planks", InventoryChangeTrigger.TriggerInstance.hasItems(wood.planks()))
-                    .save(out, gates.entry(wood).id()));
-            // RAIL4: SPS / PPP (vanilla's trapdoor is PPP / PPP); the gun port is a bulwark and an iron nugget (the
-            // lid's hinges)
-            bulwarks.forEach((wood, block) -> ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, block, 4)
-                    .pattern("SPS").pattern("PPP")
-                    .define('S', Items.STICK).define('P', wood.planks())
-                    .group(Constants.MOD_ID + ":bulwark")
-                    .unlockedBy("has_planks", InventoryChangeTrigger.TriggerInstance.hasItems(wood.planks()))
-                    .save(out, bulwarks.entry(wood).id()));
-            gunPorts.forEach((wood, block) -> ShapelessRecipeBuilder.shapeless(RecipeCategory.DECORATIONS, block, 1)
-                    .requires(bulwarks.get(wood)).requires(Items.IRON_NUGGET)
-                    .group(Constants.MOD_ID + ":bulwark_port")
-                    .unlockedBy("has_bulwark", InventoryChangeTrigger.TriggerInstance.hasItems(bulwarks.get(wood)))
-                    .save(out, gunPorts.entry(wood).id()));
-        });
+        Part planks = WoodRecipe.planks();
+        Part stick = WoodRecipe.item(Items.STICK);
+        Part nugget = WoodRecipe.item(Items.IRON_NUGGET);
+        railings.recipe(data, WoodRecipe.shaped(RecipeCategory.DECORATIONS, 4, "SSS", "PPP")
+                .define('S', stick).define('P', planks).group(Constants.MOD_ID + ":railing").unlockedBy("has_planks", planks));
+        ports.recipe(data, WoodRecipe.shaped(RecipeCategory.DECORATIONS, 2, "S S", "PPP")
+                .define('S', stick).define('P', planks).group(Constants.MOD_ID + ":railing_port").unlockedBy("has_planks", planks));
+        gates.recipe(data, WoodRecipe.shaped(RecipeCategory.REDSTONE, 1, "SNS", "PPP")
+                .define('S', stick).define('N', nugget).define('P', planks).group(Constants.MOD_ID + ":railing_gate")
+                .unlockedBy("has_planks", planks));
+        // RAIL4: SPS / PPP (vanilla's trapdoor is PPP / PPP); the gun port is a bulwark and an iron nugget (the
+        // lid's hinges)
+        bulwarks.recipe(data, WoodRecipe.shaped(RecipeCategory.DECORATIONS, 4, "SPS", "PPP")
+                .define('S', stick).define('P', planks).group(Constants.MOD_ID + ":bulwark").unlockedBy("has_planks", planks));
+        Part bulwark = WoodRecipe.member(bulwarks);
+        gunPorts.recipe(data, WoodRecipe.shapeless(RecipeCategory.DECORATIONS, 1).requires(bulwark).requires(nugget)
+                .group(Constants.MOD_ID + ":bulwark_port").unlockedBy("has_bulwark", bulwark));
     }
 
     /** A loot table that drops one {@code block} per railed edge (railings and bulwarks). */

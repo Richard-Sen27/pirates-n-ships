@@ -1,6 +1,9 @@
 package com.richardsenger.piratesnships.ship.assembly;
 
+import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.ModModule;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodRecipe;
 import com.richardsenger.piratesnships.platform.event.CommonEvents;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
@@ -18,14 +21,12 @@ import net.minecraft.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
-import net.minecraft.data.models.model.ModelLocationUtils;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import com.richardsenger.piratesnships.core.datagen.LangBuilder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
@@ -34,6 +35,9 @@ import net.minecraft.world.level.block.Blocks;
 /** Module {@code ship.assembly}: the helm, assembly into a Sable sub-level and disassembly back to blocks (spike 1), and
  * ship templates ({@code ship.template}: prebuilt ships placed by command, later by the shipwright). */
 public final class AssemblyModule implements ModModule {
+
+    /** The helm's hand-made pedestal, the parent of every wood's {@code block/<wood>_helm} (WOOD4). */
+    public static final ResourceLocation HELM_MODEL = Constants.id("block/helm");
 
     @Override
     public String id() {
@@ -75,9 +79,9 @@ public final class AssemblyModule implements ModModule {
 
     @Override
     public void gatherData(DataContributions data) {
-        Block helm = AssemblyContent.HELM.get();
+        WoodFamily<HelmBlock> helms = AssemblyContent.HELMS;
         data.lang(lang -> {
-            lang.block(AssemblyContent.HELM, "Helm");
+            helms.lang(lang, "Helm"); // WOOD4: "Dark Oak Helm" (the legacy helm), "Spruce Helm", ...
             lang.add(Outcome.ASSEMBLED.key(), "Ship assembled: %s blocks");
             lang.add(Outcome.DISASSEMBLED.key(), "Disassembled: %s blocks placed back");
             lang.add(Outcome.NAMED.key(), "Ship named \"%s\"");
@@ -103,27 +107,28 @@ public final class AssemblyModule implements ModModule {
             rejoinLang(lang);
         });
         data.models(m -> {
-            // Hand-made Blockbench model (art/models/helm.bbmodel, design.md §4.8): only the block state is generated.
-            // The wheel faces north; the item model delegates to the block model.
-            ResourceLocation model = ModelLocationUtils.getModelLocation(helm);
-            m.blockStates().accept(MultiVariantGenerator.multiVariant(helm, Variant.variant().with(VariantProperties.MODEL, model))
+            // Hand-made Blockbench model (art/models/helm.bbmodel, design.md §4.8) with the wood variables (WOOD4): one
+            // child per wood (block/<wood>_helm) and its block state. The wheel faces north; the wheel and the item
+            // models are sailing.helm's (HelmSetup).
+            helms.childModels(m, HELM_MODEL);
+            helms.forEach((wood, helm) -> m.blockStates().accept(MultiVariantGenerator.multiVariant(helm,
+                            Variant.variant().with(VariantProperties.MODEL, WoodFamily.child(wood, HELM_MODEL)))
                     .with(PropertyDispatch.property(HelmBlock.FACING)
                             .select(Direction.NORTH, Variant.variant())
                             .select(Direction.EAST, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R90))
                             .select(Direction.SOUTH, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R180))
-                            .select(Direction.WEST, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R270))));
+                            .select(Direction.WEST, Variant.variant().with(VariantProperties.Y_ROT, VariantProperties.Rotation.R270)))));
         });
         // carpenters_hammer, saw, nails and shipwright_toolkit are hand-made Blockbench item models (ART1c, art/models/)
         data.recipes(AssemblyModule::rejoinRecipes);
         data.definitions(ShipTemplates.TYPE, ShipTemplates.DEFAULTS);
-        data.blockLoot(loot -> loot.dropSelf(helm));
-        data.recipes(out -> ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, helm)
-                .pattern("S S").pattern(" P ").pattern("S S")
-                .define('S', Items.STICK).define('P', ItemTags.PLANKS)
-                .unlockedBy("has_stick", InventoryChangeTrigger.TriggerInstance.hasItems(Items.STICK))
-                .save(out));
+        helms.dropSelf(data);
+        // WOOD4: that wood's planks (was any planks); the dark oak helm keeps the recipe id helm
+        helms.recipe(data, WoodRecipe.shaped(RecipeCategory.TRANSPORTATION, 1, "S S", " P ", "S S")
+                .define('S', WoodRecipe.item(Items.STICK)).define('P', WoodRecipe.planks())
+                .group(Constants.MOD_ID + ":helm").unlockedBy("has_stick", WoodRecipe.item(Items.STICK)));
         data.blockTags(tags -> {
-            tags.tag(BlockTags.MINEABLE_WITH_AXE).add(helm);
+            helms.tag(tags, BlockTags.MINEABLE_WITH_AXE);
             tags.tag(ShipBlockRule.TERRAIN)
                     .add(Blocks.GRAVEL, Blocks.SUSPICIOUS_GRAVEL, Blocks.CLAY, Blocks.BEDROCK, Blocks.ICE,
                             Blocks.PACKED_ICE, Blocks.FROSTED_ICE, Blocks.MAGMA_BLOCK, Blocks.SEA_PICKLE, Blocks.KELP,

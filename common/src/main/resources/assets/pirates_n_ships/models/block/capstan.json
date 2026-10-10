@@ -2,13 +2,13 @@
 	"credit": "Made with Blockbench, source art/models/capstan.bbmodel",
 	"parent": "minecraft:block/block",
 	"textures": {
-		"0": "minecraft:block/dark_oak_planks",
-		"1": "minecraft:block/stripped_dark_oak_log",
-		"2": "minecraft:block/stripped_dark_oak_log_top",
+		"planks": "minecraft:block/dark_oak_planks",
+		"log": "minecraft:block/stripped_dark_oak_log",
+		"log_top": "minecraft:block/stripped_dark_oak_log_top",
 		"3": "minecraft:block/stripped_spruce_log",
 		"4": "minecraft:block/stripped_spruce_log_top",
 		"5": "minecraft:block/anvil",
-		"particle": "minecraft:block/dark_oak_planks"
+		"particle": "#planks"
 	},
 	"elements": [
 		{
@@ -40,7 +40,7 @@
 						15,
 						16
 					],
-					"texture": "#0"
+					"texture": "#planks"
 				},
 				"east": {
 					"uv": [
@@ -49,7 +49,7 @@
 						15,
 						16
 					],
-					"texture": "#0"
+					"texture": "#planks"
 				},
 				"south": {
 					"uv": [
@@ -58,7 +58,7 @@
 						15,
 						16
 					],
-					"texture": "#0"
+					"texture": "#planks"
 				},
 				"west": {
 					"uv": [
@@ -67,7 +67,7 @@
 						15,
 						16
 					],
-					"texture": "#0"
+					"texture": "#planks"
 				},
 				"up": {
 					"uv": [
@@ -76,7 +76,7 @@
 						15,
 						15
 					],
-					"texture": "#0"
+					"texture": "#planks"
 				},
 				"down": {
 					"uv": [
@@ -85,7 +85,7 @@
 						15,
 						15
 					],
-					"texture": "#0"
+					"texture": "#planks"
 				}
 			}
 		},
@@ -430,7 +430,7 @@
 						11,
 						12.5
 					],
-					"texture": "#1"
+					"texture": "#log"
 				},
 				"east": {
 					"uv": [
@@ -439,7 +439,7 @@
 						12,
 						12.5
 					],
-					"texture": "#1"
+					"texture": "#log"
 				},
 				"south": {
 					"uv": [
@@ -448,7 +448,7 @@
 						11,
 						12.5
 					],
-					"texture": "#1"
+					"texture": "#log"
 				},
 				"west": {
 					"uv": [
@@ -457,7 +457,7 @@
 						12,
 						12.5
 					],
-					"texture": "#1"
+					"texture": "#log"
 				},
 				"up": {
 					"uv": [
@@ -466,7 +466,7 @@
 						11,
 						12
 					],
-					"texture": "#2"
+					"texture": "#log_top"
 				},
 				"down": {
 					"uv": [
@@ -475,7 +475,7 @@
 						11,
 						12
 					],
-					"texture": "#2"
+					"texture": "#log_top"
 				}
 			}
 		},
@@ -508,7 +508,7 @@
 						12,
 						12.5
 					],
-					"texture": "#1"
+					"texture": "#log"
 				},
 				"east": {
 					"uv": [
@@ -517,7 +517,7 @@
 						11,
 						12.5
 					],
-					"texture": "#1"
+					"texture": "#log"
 				},
 				"south": {
 					"uv": [
@@ -526,7 +526,7 @@
 						12,
 						12.5
 					],
-					"texture": "#1"
+					"texture": "#log"
 				},
 				"west": {
 					"uv": [
@@ -535,7 +535,7 @@
 						11,
 						12.5
 					],
-					"texture": "#1"
+					"texture": "#log"
 				},
 				"up": {
 					"uv": [
@@ -544,7 +544,7 @@
 						12,
 						11
 					],
-					"texture": "#2"
+					"texture": "#log_top"
 				},
 				"down": {
 					"uv": [
@@ -553,7 +553,7 @@
 						12,
 						11
 					],
-					"texture": "#2"
+					"texture": "#log_top"
 				}
 			}
 		},

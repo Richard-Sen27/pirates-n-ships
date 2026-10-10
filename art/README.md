@@ -1009,6 +1009,39 @@ too: `block/oak_cargo_crate`, `block/spruce_water_barrel_fill2`). Which texture 
 - Blockbench was not opened for the rename (only the `id` field changed; the projects parse as JSON, and the face
   texture indices are untouched).
 
+Wood families of the machines (WOOD4):
+- **The rename.** The helm, capstan, sail winch, bilge pump and cannon models name their main wood with the family
+  variables; nothing else changed (no element, UV or face moved). The committed JSON was rewritten by key (the texture
+  entry and every `"texture": "#<n>"` face reference), and each project's texture `id` was set to the same name (the
+  `.bbmodel` faces point at textures by index, so only the `id` changed; `railing.bbmodel` already used named ids).
+  Every other key keeps its number. The parents keep the original wood as the default value of each variable, so a
+  parent renders as before and `HandMadeModelsTest` (which compares elements with their texture references, and the
+  cannon's and pump's parts by the texture they resolve to) holds.
+- **Helm** (`helm`, `helm_wheel`, `helm_item`; legacy `helm` = dark oak): `dark_oak_planks` -> `#planks` (pedestal),
+  `stripped_dark_oak_log` -> `#log` (pedestal and wheel); the spruce rim and pedestal planks, the stripped spruce log,
+  the gold and the iron stay. The wheel is a renderer part: `HelmWheelRenderer` draws
+  `block/<wood>_helm_wheel` (`WoodModels`).
+- **Capstan** (`capstan`, `capstan_bars`, `capstan_item`; legacy `capstan` = dark oak): `dark_oak_planks` -> `#planks`,
+  `stripped_dark_oak_log` -> `#log`, `stripped_dark_oak_log_top` -> `#log_top` (base plate and drumhead in planks, drum and cap in log); the spruce
+  whelps (side and end) and the iron stay. `CapstanBarsRenderer` draws `block/<wood>_capstan_bars`.
+- **Sail winch** (`sail_winch`; legacy `sail_winch` = spruce): `spruce_planks` -> `#planks`, `stripped_spruce_log` ->
+  `#log`, `stripped_spruce_log_top` -> `#log_top`; the rope (`stripped_birch_log`) got the key `rope` and stays fixed,
+  the dark oak caps and the iron stay.
+- **Bilge pump** (`bilge_pump`, `bilge_pump_item`; legacy `bilge_pump` = dark oak): `dark_oak_planks` -> `#planks`,
+  `stripped_spruce_log` -> `#log`, `stripped_spruce_log_top` -> `#log_top` (both follow the wood: the legacy dark oak
+  pump's casing is now stripped dark oak, where it was spruce), particle `#log`. `bilge_pump_rod` (iron) and
+  `bilge_pump_handle` (the oak accent) carry no wood texture, so they stay one model each and get no child per wood.
+- **Cannon** (`cannon_carriage`, `cannon_carriage_rammer`, `cannon_quoin`, the item `cannon`; legacy `cannon` = dark
+  oak): the cheeks `dark_oak_planks` -> `#planks`, the axletrees `stripped_dark_oak_log` -> `#log` and their ends
+  `stripped_dark_oak_log_top` -> `#log_top`; the spruce bed, trucks and rammer and the iron stay; the barrels have no
+  wood and stay one model each. `CannonBarrelRenderer` draws `block/<wood>_cannon_quoin`. `cannon_rear` stays one
+  generated particle-only model for every member (nothing of the rear half is drawn), not a family part.
+- **The cannon's part list** (`tools/gen_cannon_models.py`) writes the variable names itself: its keys `cheek`,
+  `axle` and `axle_end` become `planks`, `log` and `log_top` (`WOOD_VARS`), the rest are numbered as before. The
+  CAN2 pipeline (generate, `lint_models.py --fix` with the mirrors, `--compose`) reproduces the seven committed files
+  exactly (checked for WOOD4). The projects were not reopened in Blockbench (another agent may hold the one instance):
+  only their texture ids changed, which the JSON round trip of the edit checked.
+
 Railings (RAIL1):
 - **Part list in `tools/gen_railing_models.py`** (committed). It writes the four parent models of the wood family to
   `models/block/` and their project `models/railing.bbmodel` itself (groups `railing_edge` 6 elements, `railing_post`

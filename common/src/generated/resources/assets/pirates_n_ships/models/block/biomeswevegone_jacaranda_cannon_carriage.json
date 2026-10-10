@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/cannon_carriage",
+  "textures": {
+    "log": "biomeswevegone:block/jacaranda/stripped_log",
+    "log_top": "biomeswevegone:block/jacaranda/stripped_log_top",
+    "particle": "biomeswevegone:block/jacaranda/planks",
+    "planks": "biomeswevegone:block/jacaranda/planks"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "natures_spirit"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "natures_spirit:stripped_mahogany_log"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "natures_spirit:mahogany_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "natures_spirit"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "natures_spirit:stripped_mahogany_log",
+        "natures_spirit:mahogany_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:cannon",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "L": {
+      "item": "natures_spirit:stripped_mahogany_log"
+    },
+    "N": {
+      "item": "minecraft:iron_ingot"
+    },
+    "P": {
+      "item": "natures_spirit:mahogany_planks"
+    }
+  },
+  "pattern": [
+    "NIN",
+    "LPL"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:natures_spirit_mahogany_cannon"
+  }
+}

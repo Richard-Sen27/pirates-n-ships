@@ -25,7 +25,6 @@ import com.richardsenger.piratesnships.sailing.wind.WindOverride;
 import com.richardsenger.piratesnships.sailing.wind.WindSample;
 import com.richardsenger.piratesnships.sailing.wind.WindService;
 import com.richardsenger.piratesnships.ship.ShipRegistry;
-import com.richardsenger.piratesnships.ship.assembly.AssemblyContent;
 import com.richardsenger.piratesnships.sailing.helm.HelmBlockEntity;
 import com.richardsenger.piratesnships.sailing.helm.HelmConfig;
 import com.richardsenger.piratesnships.sailing.helm.WheelMath;
@@ -109,7 +108,7 @@ public final class SailingRuntimes {
             b[0] = Math.min(b[0], p.getX()); b[1] = Math.min(b[1], p.getY()); b[2] = Math.min(b[2], p.getZ());
             b[3] = Math.max(b[3], p.getX()); b[4] = Math.max(b[4], p.getY()); b[5] = Math.max(b[5], p.getZ());
             BlockState s = level.getBlockState(p);
-            if (helmFacing == null && s.is(AssemblyContent.HELM.get())) {
+            if (helmFacing == null && s.getBlock() instanceof HelmBlock) {
                 helmFacing = s.getValue(HorizontalDirectionalBlock.FACING);
                 helm = p.immutable();
                 rudder = RudderSteps.fromProperty(s.getValue(HelmBlock.RUDDER));

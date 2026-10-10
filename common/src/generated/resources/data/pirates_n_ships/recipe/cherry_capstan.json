@@ -1,0 +1,31 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "pirates_n_ships:capstan",
+  "key": {
+    "C": {
+      "item": "minecraft:chain"
+    },
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "L": {
+      "item": "minecraft:stripped_cherry_log"
+    },
+    "P": {
+      "item": "minecraft:cherry_planks"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    }
+  },
+  "pattern": [
+    "LSL",
+    "CIC",
+    "PPP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:cherry_capstan"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "twilightforest"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "twilightforest:stripped_twilight_oak_log"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "twilightforest:twilight_oak_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "twilightforest"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "twilightforest:stripped_twilight_oak_log",
+        "twilightforest:twilight_oak_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:capstan",
+  "key": {
+    "C": {
+      "item": "minecraft:chain"
+    },
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "L": {
+      "item": "twilightforest:stripped_twilight_oak_log"
+    },
+    "P": {
+      "item": "twilightforest:twilight_oak_planks"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    }
+  },
+  "pattern": [
+    "LSL",
+    "CIC",
+    "PPP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:twilightforest_twilight_oak_capstan"
+  }
+}

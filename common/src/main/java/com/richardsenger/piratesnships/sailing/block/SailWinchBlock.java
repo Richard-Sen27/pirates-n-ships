@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.sailing.block;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import com.richardsenger.piratesnships.core.text.ActionBar;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.sailing.force.SailTrim;
@@ -41,7 +43,7 @@ import net.minecraft.world.phys.BlockHitResult;
  * {@code facing=east}, which is also the default state, so winches from before the facing existed keep their look.
  * The facing is visual only: the trim cycle and the crew station do not depend on it.
  */
-public class SailWinchBlock extends Block implements StationBlock {
+public class SailWinchBlock extends Block implements StationBlock, WoodBlock {
 
     static final String KEY = "message." + Constants.MOD_ID + ".sail_winch.";
     public static final String KEY_NOT_ON_SHIP = KEY + "not_on_ship";
@@ -50,9 +52,18 @@ public class SailWinchBlock extends Block implements StationBlock {
     /** The side the crank is on (the model's unrotated crank is east). */
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
-    public SailWinchBlock(Properties properties) {
+    private final ShipWood wood;
+
+    /** WOOD4: one winch per wood ({@code SailingBlocks.SAIL_WINCHES}); every member behaves the same. */
+    public SailWinchBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.EAST));
+    }
+
+    @Override
+    public ShipWood wood() {
+        return wood;
     }
 
     @Override

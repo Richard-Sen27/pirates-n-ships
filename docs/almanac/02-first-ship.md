@@ -26,6 +26,8 @@ Place a {item:pirates_n_ships:helm}**helm** on deck. The bow is where the helmsm
 
 {recipe:helm}
 
+Helms come in every wood, a wood mod's too, and so do the winch, the capstan, the bilge pump and the cannon's carriage: each is made from that wood's planks, and the panels show each wood in turn.
+
 ## 3. Rig a sail
 Raise a mast of logs or fences with two rows of {item:pirates_n_ships:yard}**yards** across it, 2 to 8 blocks apart.
 

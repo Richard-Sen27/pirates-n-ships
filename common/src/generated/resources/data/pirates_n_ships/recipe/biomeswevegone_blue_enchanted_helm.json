@@ -1,0 +1,47 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "biomeswevegone"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "biomeswevegone:blue_enchanted_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "biomeswevegone"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "biomeswevegone:blue_enchanted_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:helm",
+  "key": {
+    "P": {
+      "item": "biomeswevegone:blue_enchanted_planks"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    }
+  },
+  "pattern": [
+    "S S",
+    " P ",
+    "S S"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:biomeswevegone_blue_enchanted_helm"
+  }
+}

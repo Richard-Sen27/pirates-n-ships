@@ -4,5 +4,5 @@
     "sable:mass": 2.0,
     "sable:volume": 0.25
   },
-  "selector": "pirates_n_ships:cannon"
+  "selector": "#pirates_n_ships:cannons"
 }

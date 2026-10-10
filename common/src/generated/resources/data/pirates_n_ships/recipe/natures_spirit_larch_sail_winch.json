@@ -1,0 +1,49 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "natures_spirit"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "natures_spirit:larch_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "natures_spirit"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "natures_spirit:larch_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:sail_winch",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "P": {
+      "item": "natures_spirit:larch_planks"
+    },
+    "T": {
+      "item": "minecraft:string"
+    }
+  },
+  "pattern": [
+    "TIT",
+    "PPP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:natures_spirit_larch_sail_winch"
+  }
+}

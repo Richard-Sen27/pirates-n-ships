@@ -67,13 +67,17 @@ and Fabric and needs no other mod.
   tag cycling once a second, a tooltip on every slot. The panel reads the recipe the server sent, so a datapack that
   changes a recipe changes the panel; a recipe that does not exist shows "This recipe is not in the world". Every
   chapter opens with its picture and an item spotlight: the item framed at twice its size with its name under it.
-- **Show me:** some pages have a "Show me" button that plays a Ponder scene of the mechanic (17 scenes: assembling a
+- **Show me:** some pages have a "Show me" button that plays a Ponder scene of the mechanic (22 scenes: assembling a
   ship, steering, sails and the winch, anchor and capstan, pumps and flooding, hull repair, mooring, cargo and weight,
   loading and firing a cannon, crew orders, boarding, flags and allegiance, the crow's nest, the ship's bell, galley
-  and provisions, hammocks and rest, the swivel gun). The back button returns to the same page. The same scene opens
-  from the item: hold the Ponder key (W by default) while hovering the helm, sail winch, capstan, bilge pump, hull
-  patch, mooring ring, cargo crate, cannon, captain's whistle, boarding plank, Jolly Roger, crow's nest, ship's bell,
-  pantry, hammock or swivel gun in your inventory.
+  and provisions, hammocks and rest, the swivel gun, oars, ratline nets, railings and bulwarks, her name and
+  figurehead, hands on deck). The back button returns to the same page. The same scenes open from the inventory:
+  every block and item a scene shows (PND5: its schematic's blocks, the items it uses, every wood of a wood family)
+  carries Ponder's hint in its tooltip; hold the Ponder key (W by default) while hovering it. An item's own scenes come
+  first (the helm: assembly and steering, then crew orders, oars and her name). Ponder's index lists one member of
+  each wood family (the oak railing, the helm), not one per wood. Blocks and items without a scene: clothing, tools,
+  weapons other than the cutlass and musket, food other than rum and limes, the brig, the chart table, cleat, notice
+  board, sea chest, stern window, ship lantern, rope, map tile and spawn eggs.
 - **JEI:** with JEI (Just Enough Items) installed, every block and item the Almanac describes has an information
   page in JEI with that text (R or U over it), and JEI gains two pages of the mod's own: the Harbor Market (each
   trade good with its buy and sell prices) and Ship's Provisions (what the crew counts as food, water or rum).

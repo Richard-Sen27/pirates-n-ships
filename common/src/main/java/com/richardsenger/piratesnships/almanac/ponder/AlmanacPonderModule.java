@@ -3,6 +3,8 @@ package com.richardsenger.piratesnships.almanac.ponder;
 import com.richardsenger.piratesnships.core.ModModule;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
 
+import java.util.List;
+
 /**
  * The {@code almanac.ponder} module (ALM4, PND1, PND2, docs/design.md §3.4, docs/almanac.md "Scenes"): Ponder scenes for the
  * Captain's Almanac's "Show me" buttons and the Ponder key on items.
@@ -13,7 +15,7 @@ import com.richardsenger.piratesnships.core.datagen.DataContributions;
  *   <li>Datagen: the scenes' English lang ({@link SceneText#allLang()}).</li>
  *   <li>The scene schematics are resources from the structure pipeline ({@code art/structures/ponder/}).</li>
  * </ul>
- * No config toggle: the scenes change no gameplay.
+ * No config toggle: the scenes change no gameplay. GameTests: {@link AlmanacPonderGameTests} (the scenes' subjects, PND5).
  */
 public final class AlmanacPonderModule implements ModModule {
 
@@ -25,6 +27,11 @@ public final class AlmanacPonderModule implements ModModule {
     @Override
     public void initClient() {
         AlmanacPonder.register();
+    }
+
+    @Override
+    public List<Class<?>> gameTestClasses() {
+        return List.of(AlmanacPonderGameTests.class);
     }
 
     @Override

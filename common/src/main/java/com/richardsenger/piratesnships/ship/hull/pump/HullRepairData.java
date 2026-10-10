@@ -1,11 +1,9 @@
 package com.richardsenger.piratesnships.ship.hull.pump;
 
-import org.jetbrains.annotations.Nullable;
-import java.util.List;
+import net.minecraft.tags.TagKey;
+import net.minecraft.core.registries.Registries;
 import com.richardsenger.piratesnships.ship.decor.wood.WoodRecipe;
 import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
-import com.richardsenger.piratesnships.ship.decor.wood.WoodConditions;
-import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.google.gson.JsonObject;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
@@ -37,6 +35,8 @@ public final class HullRepairData {
     static final ResourceLocation PUMP_MODEL = Constants.id("block/bilge_pump");
     /** The whole pump (body, rod and handle) for the items. */
     static final ResourceLocation PUMP_ITEM_MODEL = Constants.id("block/bilge_pump_item");
+    /** WOOD4: every bilge pump, the selector of the pump's Sable weight. */
+    public static final TagKey<Block> PUMPS = TagKey.create(Registries.BLOCK, Constants.id("bilge_pumps"));
 
     private HullRepairData() {
     }
@@ -59,7 +59,7 @@ public final class HullRepairData {
         data.blockLoot(loot -> loot.dropSelf(HullRepairContent.HULL_PATCH_BLOCK.get()));
         pumps.dropSelf(data);
         data.blockTags(tags -> {
-            pumps.tag(tags, BlockTags.MINEABLE_WITH_AXE);
+            pumps.tag(tags, BlockTags.MINEABLE_WITH_AXE, PUMPS);
             tags.tag(BlockTags.MINEABLE_WITH_AXE).add(HullRepairContent.HULL_PATCH_BLOCK.get());
             // a full cube is watertight anyway; the tag says it outright, whatever a pack does to the shape rules
             tags.tag(HullTags.WATERTIGHT).add(HullRepairContent.HULL_PATCH_BLOCK.get());
@@ -67,9 +67,10 @@ public final class HullRepairData {
         // Sable physics (refs/sable/wiki/Block Physics Properties.md): the patch weighs and displaces like a plank
         // (Sable's #sable:light, mass 0.5, volume 1); the pump is a post with an iron spout, a bit heavier than its volume.
         physics(data, HullRepairContent.HULL_PATCH_BLOCK.id(), 0.5, 1.0);
-        // WOOD4: one entry per member (Sable's selector is one block id or a tag); a mod wood's entry loads only with its
-        // mod (both loaders' conditions, like its recipe), so Sable never meets an unknown block id
-        pumps.forEach((wood, pump) -> physics(data, pumps.entry(wood).id(), 0.4, 0.3, wood));
+        // WOOD4: the entry keeps its file (bilge_pump) and selects every member through the family's tag (a mod wood's
+        // member as an optional entry): Sable's loader reads no load conditions, so a per-member file of a mod's wood
+        // would log an unknown block without the mod
+        physics(data, HullRepairContent.BILGE_PUMP.id(), "#" + PUMPS.location(), 0.4, 0.3);
         data.recipes(out -> {
             // Pitch: charcoal (or coal) is the vanilla stand-in for pine tar, which is made by charring pine wood. It is
             // at hand from the first day, so a leak can be patched early; two boards and the pitch make two patches.
@@ -85,20 +86,19 @@ public final class HullRepairData {
     }
 
     private static void physics(DataContributions data, ResourceLocation id, double mass, double volume) {
-        physics(data, id, mass, volume, null);
+        physics(data, id, id.toString(), mass, volume);
     }
 
-    /** {@code wood} a mod's wood: the entry carries both loaders' load conditions of its mod ({@link WoodConditions}). */
-    static void physics(DataContributions data, ResourceLocation id, double mass, double volume, @Nullable ShipWood wood) {
+    /** The Sable entry {@code id} for {@code selector} (a block id, or {@code #} and a tag). */
+    private static void physics(DataContributions data, ResourceLocation id, String selector, double mass, double volume) {
         data.json(PackOutput.Target.DATA_PACK, "physics_block_properties", id, () -> {
             JsonObject properties = new JsonObject();
             properties.addProperty("sable:mass", mass);
             properties.addProperty("sable:volume", volume);
             JsonObject json = new JsonObject();
-            json.addProperty("selector", id.toString());
+            json.addProperty("selector", selector);
             json.addProperty("priority", 1001);
             json.add("properties", properties);
-            if (wood != null && !wood.isVanilla()) WoodConditions.add(json, wood.modId(), List.of());
             return json;
         });
     }

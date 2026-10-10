@@ -1,12 +1,14 @@
-// 1.21.1	2026-10-10T14:20:10.900579	Tags for minecraft:block mod id vanilla
+// 1.21.1	2026-10-10T14:51:44.273055	Tags for minecraft:block mod id vanilla
 4574ad20b2942c15e4ade670401483c8652905aa data/c/tags/block/chests.json
 da39b6df40b11fa9987da5007d54347277a84ca2 data/minecraft/tags/block/climbable.json
 027425cd193e9e04ea5aed99085f092fa520d95e data/minecraft/tags/block/doors.json
 9b4b8f620a40534defbadcf6646fe2421137e9af data/minecraft/tags/block/mineable/axe.json
 4550189aa49462b1d44ac5536c5a3e5de79af3de data/minecraft/tags/block/mineable/pickaxe.json
 d203a86a191efea5b043ecfbd6050cc6e1731b62 data/pirates_n_ships/tags/block/barrel_blocking.json
+289c6bbb0194237bae7e5c6db340244091bcf83b data/pirates_n_ships/tags/block/bilge_pumps.json
 d1a9d654018d87e309dea75aaec0ce831977a495 data/pirates_n_ships/tags/block/cannon_breakable.json
 90b985302b5c05cc96c39f6cb2985a785fde74b2 data/pirates_n_ships/tags/block/cannon_proof.json
+f0c0fd5b294bae55c56fb302527fa2460ce9caab data/pirates_n_ships/tags/block/cannons.json
 582cf2be0ef0a019ed330dac0e8b4887d62df4f6 data/pirates_n_ships/tags/block/gangway_openings.json
 03c7637845c1f1466e57392cd1bcd8dac1491025 data/pirates_n_ships/tags/block/grapple_latches.json
 bb626600c7889c11c6e9962b5e3a8493f255d778 data/pirates_n_ships/tags/block/grapple_slips.json

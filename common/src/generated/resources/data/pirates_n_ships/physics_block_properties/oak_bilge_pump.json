@@ -1,8 +1,0 @@
-{
-  "priority": 1001,
-  "properties": {
-    "sable:mass": 0.4,
-    "sable:volume": 0.3
-  },
-  "selector": "pirates_n_ships:oak_bilge_pump"
-}

@@ -35,8 +35,9 @@ The model convention (`#planks`, `#log`, `#log_top`, which texture is "the wood"
 
 ## What ships
 
-- **Registration:** every vanilla wood always; a mod's wood only when its mod is loaded. The registry gains 6
-  families x 11 woods = 66 blocks with items (it had the 6 oak members); each loaded wood mod adds 6 per wood.
+- **Registration:** every vanilla wood always; a mod's wood only when its mod is loaded. WOOD1's 6 families x 11
+  woods = 66 blocks with items (it had the 6 oak members); WOOD4's 5 machine families add 5 x 11 = 55 (they had the 5
+  legacy members: 50 new blocks); each loaded wood mod adds one member per family and wood.
 - **Creative tab:** registration order, so family-major: oak railing, spruce railing, ... warped railing, the loaded
   mods' railings, then the ports, and so on (like vanilla's fences).
 - **Names:** "Spruce Railing", "Redwood Railing". No mod name in the name or a tooltip: two mods with the same wood
@@ -133,5 +134,32 @@ Almanac's panel, JEI's info page); its models are named by wood like the rest (`
   member without its own.
 - Waterlogging: the families' blocks are partial and waterloggable; `WaterloggingGameTests` walks the registry, so new
   members are covered.
-- Renderer parts: `WoodModels.ids` is unit-tested; no current family has one (WOOD4's helm, capstan, pump and cannon
-  will).
+- Renderer parts: `WoodModels.ids` is unit-tested; WOOD4's helm wheel, capstan bars and cannon quoin are family parts
+  (`WoodDataTest.everyMachinePartHasAChildInEveryWood`).
+
+## The families (WOOD4: the machines)
+
+| Family | Legacy id (wood) | Variables in the parents | Renderer parts (`WoodModels`) | Recipe |
+|---|---|---|---|---|
+| Helm (`AssemblyContent.HELMS`) | `helm` (dark oak) | `helm`, `helm_wheel`, `helm_item`: `#planks`, `#log` | `helm_wheel` (`HelmWheelRenderer`) | sticks and the wood's planks |
+| Capstan (`SailingBlocks.CAPSTANS`) | `capstan` (dark oak) | `capstan`, `capstan_bars`, `capstan_item`: `#planks`, `#log`, `#log_top` | `capstan_bars` (`CapstanBarsRenderer`) | the wood's stripped logs and planks, chain, iron block |
+| Sail winch (`SailingBlocks.SAIL_WINCHES`) | `sail_winch` (spruce) | `sail_winch`: `#planks`, `#log`, `#log_top` (rope `rope`, fixed) | none | string, iron, the wood's planks |
+| Bilge pump (`HullRepairContent.BILGE_PUMPS`) | `bilge_pump` (dark oak) | `bilge_pump`, `bilge_pump_item`: `#planks`, `#log`, `#log_top` | none (rod and handle are iron and oak accents, one model each) | stick, bucket, the wood's planks |
+| Cannon (`CannonContent.CANNONS`) | `cannon` (dark oak) | `cannon_carriage`, `cannon_carriage_rammer`, `cannon_quoin`, `cannon` (item): `#planks`, `#log`, `#log_top` | `cannon_quoin` (`CannonBarrelRenderer`); the iron barrels stay one model each | iron, the wood's stripped logs and planks |
+
+- **One block entity type per family** (`WoodFamily.blockEntity`): `helm`, `capstan`, `bilge_pump`, `cannon` and the
+  cannon's empty rear part `cannon_rear` are valid for every member. The cannon's rear half stays a state of the
+  member's own block with the shared particle-only model `block/cannon_rear` (it draws nothing), not a family part.
+- **Identity checks** became `instanceof` (`ShipCoins`, `SailingRuntimes`, `ShipTemplatePlacer`); the old fields
+  (`AssemblyContent.HELM`, `SailingBlocks.CAPSTAN`, `SAIL_WINCH`, `HullRepairContent.BILGE_PUMP`,
+  `CannonContent.CANNON`) are the legacy member, for placing one (structures, templates, tests), never for comparing.
+- **Sable weight of the pump and the cannon:** each keeps its file (`physics_block_properties/bilge_pump.json`,
+  `cannon.json`) and selects the family's tag (`#pirates_n_ships:bilge_pumps`, `#pirates_n_ships:cannons`; a mod
+  wood's member is an optional entry). Sable's loader (`PhysicsBlockPropertiesDefinitionLoader`, a plain
+  `SimpleJsonResourceReloadListener`) reads no load conditions on NeoForge: a per-member file of a mod's wood logged
+  "Unknown block" for each of the 194 without the mod (seen in a GameTest run), so a family's weight goes through its
+  tag.
+- **Properties:** wooden machines take `WoodFamily.properties(wood)` (the wood's map colour and sound) with their old
+  strength; the cannon keeps its metal properties (map colour, sound, 3.5/6, pickaxe).
+- **Not wood families:** the Ponder scenes and `AlmanacScenes` stay on the legacy ids (the "Show me" key works on the
+  legacy member); the whistle's icons (`WhistleOrder`) show the legacy items.

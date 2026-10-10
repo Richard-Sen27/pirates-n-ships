@@ -1,11 +1,9 @@
 package com.richardsenger.piratesnships.combat.cannon;
 
-import org.jetbrains.annotations.Nullable;
-import java.util.List;
+import net.minecraft.tags.TagKey;
+import net.minecraft.core.registries.Registries;
 import com.richardsenger.piratesnships.ship.decor.wood.WoodRecipe;
 import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
-import com.richardsenger.piratesnships.ship.decor.wood.WoodConditions;
-import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.richardsenger.piratesnships.Constants;
 import com.google.gson.JsonObject;
 import com.richardsenger.piratesnships.combat.content.CombatContent;
@@ -50,6 +48,8 @@ public final class CannonData {
     static final ResourceLocation ITEM_MODEL = Constants.id("block/cannon");
     /** The rear half: a particle-only model, shared by every member (nothing of the rear is drawn). */
     static final ResourceLocation REAR_MODEL = Constants.id("block/cannon_rear");
+    /** WOOD4: every cannon, the selector of the cannon's Sable weight. */
+    public static final TagKey<Block> CANNONS = TagKey.create(Registries.BLOCK, Constants.id("cannons"));
 
     private CannonData() {
     }
@@ -102,7 +102,7 @@ public final class CannonData {
                 CannonContent.CHAIN_SHOT.get(), CannonContent.GRAPESHOT.get()));
         cannons.loot(data, CannonData::masterOnly);
         data.blockTags(tags -> {
-            cannons.tag(tags, BlockTags.MINEABLE_WITH_PICKAXE);
+            cannons.tag(tags, BlockTags.MINEABLE_WITH_PICKAXE, CANNONS);
             // what a ball may destroy where it is not part of a ship (ship blocks always break, see CannonRules)
             tags.tag(CannonContent.BREAKABLE).addTag(BlockTags.PLANKS).addTag(BlockTags.LOGS).addTag(BlockTags.WOOL)
                     .addTag(BlockTags.WOODEN_SLABS).addTag(BlockTags.WOODEN_STAIRS).addTag(BlockTags.WOODEN_FENCES)
@@ -111,8 +111,9 @@ public final class CannonData {
         });
         // Sable physics (refs/sable/wiki/Block Physics Properties.md): an iron barrel on a wooden carriage, heavy (4 in
         // all; Sable's #sable:light planks weigh 0.5). The entry is per block id, so each of the two halves gets half:
-        // mass 2 and a quarter block of volume. WOOD4: one entry per member, a mod wood's with its mod's load conditions.
-        cannons.forEach((wood, cannon) -> physics(data, cannons.entry(wood).id(), 2.0, 0.25, wood));
+        // mass 2 and a quarter block of volume. WOOD4: the entry keeps its file (cannon) and selects every member through
+        // the family's tag (a mod wood's member as an optional entry; Sable's loader reads no load conditions).
+        physics(data, CannonContent.CANNON.id(), "#" + CANNONS.location(), 2.0, 0.25);
         // WOOD4: the carriage from that wood's stripped log and planks (was any log and planks)
         cannons.recipe(data, WoodRecipe.shaped(RecipeCategory.COMBAT, 1, "NIN", "LPL")
                 .define('N', WoodRecipe.item(Items.IRON_INGOT)).define('I', WoodRecipe.item(Items.IRON_BLOCK))
@@ -134,20 +135,19 @@ public final class CannonData {
     }
 
     static void physics(DataContributions data, ResourceLocation id, double mass, double volume) {
-        physics(data, id, mass, volume, null);
+        physics(data, id, id.toString(), mass, volume);
     }
 
-    /** {@code wood} a mod's wood: the entry carries both loaders' load conditions of its mod ({@link WoodConditions}). */
-    static void physics(DataContributions data, ResourceLocation id, double mass, double volume, @Nullable ShipWood wood) {
+    /** The Sable entry {@code id} for {@code selector} (a block id, or {@code #} and a tag). */
+    static void physics(DataContributions data, ResourceLocation id, String selector, double mass, double volume) {
         data.json(PackOutput.Target.DATA_PACK, "physics_block_properties", id, () -> {
             JsonObject properties = new JsonObject();
             properties.addProperty("sable:mass", mass);
             properties.addProperty("sable:volume", volume);
             JsonObject json = new JsonObject();
-            json.addProperty("selector", id.toString());
+            json.addProperty("selector", selector);
             json.addProperty("priority", 1001);
             json.add("properties", properties);
-            if (wood != null && !wood.isVanilla()) WoodConditions.add(json, wood.modId(), List.of());
             return json;
         });
     }

@@ -116,29 +116,26 @@ class WoodDataTest {
     }
 
     /**
-     * WOOD4: the pump and the cannon keep their Sable weight in every wood (one entry per member, as before for the legacy
-     * id), and a mod wood's entry loads only with its mod, so Sable never logs an unknown block.
+     * WOOD4: the pump and the cannon keep their Sable weight in every wood: the entry keeps its file (the legacy id) and
+     * selects the family's tag, which lists every member (a mod wood's as an optional entry), because Sable's loader
+     * reads no load conditions and a per-member file of a mod's wood would name an unknown block without the mod.
      */
     @Test
     void everyPumpAndCannonHasItsPhysicsEntry() throws IOException {
-        List<String> problems = new ArrayList<>();
         for (String family : List.of("bilge_pump", "cannon")) {
+            JsonObject json = read(DATA.resolve("physics_block_properties/" + family + ".json"));
+            String tag = family + "s";
+            assertEquals("#pirates_n_ships:" + tag, json.get("selector").getAsString(), family);
+            JsonArray values = read(DATA.resolve("tags/block/" + tag + ".json")).getAsJsonArray("values");
+            Set<String> ids = new TreeSet<>();
+            for (JsonElement v : values) ids.add(v.isJsonObject() ? v.getAsJsonObject().get("id").getAsString() : v.getAsString());
             for (ShipWood wood : ShipWood.all()) {
-                String id = WoodFamily.memberName(wood, family, LEGACY.get(family));
-                Path p = DATA.resolve("physics_block_properties/" + id + ".json");
-                if (!Files.exists(p)) {
-                    problems.add("missing " + id);
-                    continue;
-                }
-                JsonObject json = read(p);
-                if (!("pirates_n_ships:" + id).equals(json.get("selector").getAsString())) problems.add(id + ": selector " + json.get("selector"));
-                boolean conditioned = json.has(WoodConditions.NEOFORGE) && json.has(WoodConditions.FABRIC);
-                if (conditioned == wood.isVanilla()) problems.add(id + (wood.isVanilla() ? ": conditions on a vanilla wood" : ": no conditions"));
+                String id = "pirates_n_ships:" + WoodFamily.memberName(wood, family, LEGACY.get(family));
+                assertTrue(ids.contains(id), tag + " lacks " + id);
             }
+            assertTrue(Files.notExists(DATA.resolve("physics_block_properties/spruce_" + family + ".json")), "a per-member entry");
         }
-        assertTrue(problems.isEmpty(), problems.size() + " problems: " + problems.subList(0, Math.min(20, problems.size())));
-        JsonObject cannon = read(DATA.resolve("physics_block_properties/cherry_cannon.json")).getAsJsonObject("properties");
-        assertEquals(2.0, cannon.get("sable:mass").getAsDouble());
+        assertEquals(2.0, read(DATA.resolve("physics_block_properties/cannon.json")).getAsJsonObject("properties").get("sable:mass").getAsDouble());
     }
 
     @Test

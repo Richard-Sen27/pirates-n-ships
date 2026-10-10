@@ -84,7 +84,8 @@ public final class PortStructure extends Structure {
             Codec.intRange(1, 128).fieldOf("max_distance_from_center").forGetter(s -> s.maxDistanceFromCenter),
             ShoreAnchor.CODEC.optionalFieldOf("shore_anchor", ShoreAnchor.VILLAGE).forGetter(s -> s.shoreAnchor),
             PortKind.CODEC.optionalFieldOf("port_kind", PortKind.SEAFARER_VILLAGE).forGetter(s -> s.portKind),
-            Codec.BOOL.optionalFieldOf("land_pieces_on_land", false).forGetter(s -> s.landPiecesOnLand)
+            Codec.BOOL.optionalFieldOf("land_pieces_on_land", false).forGetter(s -> s.landPiecesOnLand),
+            Codec.BOOL.optionalFieldOf("unbearded_start", false).forGetter(s -> s.unbeardedStart)
     ).apply(i, PortStructure::new));
 
     /** Salt of the frequency roll (independent of the layout random); the port kind is mixed in. */
@@ -97,10 +98,17 @@ public final class PortStructure extends Structure {
     private final ShoreAnchor shoreAnchor;
     private final PortKind portKind;
     private final boolean landPiecesOnLand;
+    private final boolean unbeardedStart;
     private volatile boolean warnedUnconfigured;
 
     public PortStructure(StructureSettings settings, Holder<StructureTemplatePool> startPool, int maxDepth, int startHeight,
                          int maxDistanceFromCenter, ShoreAnchor shoreAnchor, PortKind portKind, boolean landPiecesOnLand) {
+        this(settings, startPool, maxDepth, startHeight, maxDistanceFromCenter, shoreAnchor, portKind, landPiecesOnLand, false);
+    }
+
+    public PortStructure(StructureSettings settings, Holder<StructureTemplatePool> startPool, int maxDepth, int startHeight,
+                         int maxDistanceFromCenter, ShoreAnchor shoreAnchor, PortKind portKind, boolean landPiecesOnLand,
+                         boolean unbeardedStart) {
         super(settings);
         this.startPool = startPool;
         this.maxDepth = maxDepth;
@@ -109,6 +117,7 @@ public final class PortStructure extends Structure {
         this.shoreAnchor = shoreAnchor;
         this.portKind = portKind;
         this.landPiecesOnLand = landPiecesOnLand;
+        this.unbeardedStart = unbeardedStart;
     }
 
     /** First free (non-solid, fluids ignored) height of a column: water there iff it is at most the sea surface. */
@@ -140,6 +149,15 @@ public final class PortStructure extends Structure {
     /** STR2: whether land pieces over open water are dropped after the jigsaw ({@link LandFilter}). */
     public boolean landPiecesOnLand() {
         return landPiecesOnLand;
+    }
+
+    /**
+     * STR3: whether the start piece is kept out of the beard's reach as well ({@link #unbearded}): the village's dock
+     * head stands on the shore at the sea surface, and the beard round it would raise the sea in front of the quay
+     * under the pier. The island's camp keeps its beard (it widens the landing).
+     */
+    public boolean unbeardedStart() {
+        return unbeardedStart;
     }
 
     public Holder<StructureTemplatePool> startPool() {
@@ -219,8 +237,9 @@ public final class PortStructure extends Structure {
                 StructurePiece piece = pieces.get(i);
                 if (keep != null && !keep[i]) continue;
                 if (i > 0 && sinksIntoTerrain(piece)) piece.move(0, -1, 0);
-                if (i > 0 && nodes.get(i).parent() == 0 && !nodes.get(i).land() && piece instanceof PoolElementStructurePiece p) {
-                    piece = unbearded(p, context.structureTemplateManager());
+                boolean rigidFromStart = i > 0 && nodes.get(i).parent() == 0 && !nodes.get(i).land();
+                if ((rigidFromStart || (i == 0 && unbeardedStart)) && piece instanceof PoolElementStructurePiece p) {
+                    piece = unbearded(p, context.structureTemplateManager(), !unbeardedStart);
                 }
                 builder.addPiece(piece);
             }
@@ -243,9 +262,24 @@ public final class PortStructure extends Structure {
      * jetty (seen in the REL3 smoke world). The copy keeps the element, position, rotation, box and junctions.
      */
     static PoolElementStructurePiece unbearded(PoolElementStructurePiece piece, net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager templates) {
+        return unbearded(piece, templates, true);
+    }
+
+    /**
+     * As {@link #unbearded(PoolElementStructurePiece, net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager)};
+     * without {@code keepRigidJunctions} the copy drops its junctions to rigid pieces (STR3, {@code unbearded_start}):
+     * vanilla's beardifier also lays ground round every junction, and the one between the dock head and the pier sits on
+     * the quay's sea edge, where it would raise the seabed under the pier's landward end. The junctions to
+     * terrain-matching pieces (the street) stay; each junction is kept by both of its pieces, so nothing else is lost.
+     */
+    static PoolElementStructurePiece unbearded(PoolElementStructurePiece piece,
+                                               net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager templates,
+                                               boolean keepRigidJunctions) {
         PoolElementStructurePiece copy = new PoolElementStructurePiece(templates, piece.getElement(), piece.getPosition(),
                 UNBEARDED_GROUND_LEVEL_DELTA, piece.getRotation(), piece.getBoundingBox(), LiquidSettings.APPLY_WATERLOGGING);
-        piece.getJunctions().forEach(copy::addJunction);
+        for (JigsawJunction junction : piece.getJunctions()) {
+            if (keepRigidJunctions || junction.getDestProjection() != StructureTemplatePool.Projection.RIGID) copy.addJunction(junction);
+        }
         return copy;
     }
 

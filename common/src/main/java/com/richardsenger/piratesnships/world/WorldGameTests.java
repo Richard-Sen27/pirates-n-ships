@@ -13,6 +13,7 @@ import com.richardsenger.piratesnships.world.port.Port;
 import com.richardsenger.piratesnships.world.port.PortRegistry;
 import com.richardsenger.piratesnships.world.port.PortService;
 import com.richardsenger.piratesnships.world.structure.PortStructure;
+import com.richardsenger.piratesnships.world.village.VillageData;
 import com.richardsenger.piratesnships.world.village.VillageKeys;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -44,8 +45,9 @@ import java.util.Optional;
  * The seafarer village on a hand-built shore (WG1): a flat sand beach with the sea on one side inside a 48×48 test
  * area (water rows y 3..6, so the sea surface is relative y 6). The tests run the structure's own planning at a chosen
  * site with the terrain read from the real blocks, then place the pieces through {@link StructureStart#placeInChunk},
- * which also runs {@code afterPlace} (port registry and desk binding). Depth 1: dock head, pier, one street and its
- * street end (the terminator once the depth runs out); 20 + 11 + 7 + 3 blocks across the shore.
+ * which also runs {@code afterPlace} (port registry and desk binding). Depth 1: dock head, pier, one street piece of the
+ * streetheads pool (STR3) and its ends (the terminators once the depth runs out); the pieces inside the test area are
+ * placed.
  */
 public final class WorldGameTests {
 
@@ -95,7 +97,7 @@ public final class WorldGameTests {
         var pools = level.registryAccess().registryOrThrow(Registries.TEMPLATE_POOL);
         int elements = 0;
         for (ResourceKey<StructureTemplatePool> key : List.of(VillageKeys.START, VillageKeys.STREETS,
-                VillageKeys.BUILDINGS, VillageKeys.PIER, VillageKeys.TERMINATORS)) {
+                VillageKeys.BUILDINGS, VillageKeys.PIER, VillageKeys.TERMINATORS, VillageKeys.STREETHEADS, VillageKeys.DECORATIONS)) {
             StructureTemplatePool pool = pools.get(key);
             helper.assertTrue(pool != null, "pool " + key.location() + " is loaded");
             for (StructurePoolElement element : pool.getShuffledTemplates(RandomSource.create(0L))) {
@@ -104,8 +106,10 @@ public final class WorldGameTests {
                 elements++;
             }
         }
-        // dock head, street, house ×3, tavern, shipwright (weights expand), pier, street end
-        helper.assertValueEqual(elements, 1 + 1 + 5 + 1 + 1, "pool elements");
+        // the dock head, the pier and every weighted entry of the STR3 pools (weights expand)
+        int expected = 1 + 1 + sum(VillageData.STREETS) + sum(VillageData.BUILDINGS) + sum(VillageData.TERMINATORS)
+                + sum(VillageData.STREETHEADS) + sum(VillageData.DECORATIONS);
+        helper.assertValueEqual(elements, expected, "pool elements");
         helper.assertValueEqual(pools.get(VillageKeys.STREETS).getFallback().unwrapKey(), Optional.of(VillageKeys.TERMINATORS),
                 "streets fall back to the terminators");
         helper.succeed();
@@ -120,11 +124,26 @@ public final class WorldGameTests {
         Structure.GenerationContext context = context(level, site);
         Optional<Structure.GenerationStub> stub = structure.plan(context, site, seaY, terrain(helper), 1);
         helper.assertTrue(stub.isPresent(), "the shore gives a generation point");
-        StructureStart start = new StructureStart(structure, context.chunkPos(), 0, stub.get().getPiecesBuilder().build());
+        // STR3: depth 1 is the dock head, the pier, one street piece of the streetheads pool and its ends; only the pieces
+        // inside the test area are placed (a long streethead's ends may reach beyond it)
+        BoundingBox area = BoundingBox.fromCorners(helper.absolutePos(BlockPos.ZERO),
+                helper.absolutePos(new BlockPos(SIZE - 1, 15, SIZE - 1)));
+        List<StructurePiece> planned = stub.get().getPiecesBuilder().build().pieces();
+        List<String> names = planned.stream().map(p -> p instanceof net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece e
+                ? com.richardsenger.piratesnships.world.structure.StructureLayout.templateName(e.getElement().toString()) : "?").toList();
+        helper.assertValueEqual(names.get(0), "dock_head", "the start piece");
+        helper.assertValueEqual(names.stream().filter("pier"::equals).count(), 1L, "one pier");
+        helper.assertValueEqual(names.stream().filter(VillageData.STREETHEADS::containsKey).count(), 1L,
+                "one street piece from the streetheads pool: " + names);
+        helper.assertTrue(names.stream().allMatch(n -> n.equals("dock_head") || n.equals("pier") || VillageData.STREETHEADS.containsKey(n)
+                || VillageData.TERMINATORS.containsKey(n)), "only the dock head, the pier, the street and its ends: " + names);
+        List<StructurePiece> inside = planned.stream().filter(p -> insideXZ(area, p.getBoundingBox())).toList();
+        StructureStart start = new StructureStart(structure, context.chunkPos(), 0,
+                new net.minecraft.world.level.levelgen.structure.pieces.PiecesContainer(inside));
         place(level, start);
 
         List<StructurePiece> pieces = start.getPieces();
-        helper.assertValueEqual(pieces.size(), 4, "dock head, pier, street and street end");
+        helper.assertTrue(pieces.size() >= 3, "dock head, pier and street inside the test area: " + pieces.size());
         BoundingBox dock = pieces.get(0).getBoundingBox();
         helper.assertValueEqual(dock.minY(), seaY + 1, "dock head paving one above the sea surface");
         // The quay's sea edge is the shore row; the dock head lies on the land side of it
@@ -168,6 +187,14 @@ public final class WorldGameTests {
         helper.assertValueEqual(HarborDeskService.boundPort(level, later), Optional.of(port.id()), "placed desk bound");
         level.setBlockAndUpdate(later, Blocks.AIR.defaultBlockState());
         helper.succeed();
+    }
+
+    private static int sum(java.util.Map<String, Integer> weights) {
+        return weights.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    private static boolean insideXZ(BoundingBox area, BoundingBox box) {
+        return box.minX() >= area.minX() && box.maxX() <= area.maxX() && box.minZ() >= area.minZ() && box.maxZ() <= area.maxZ();
     }
 
     // --- Shore ------------------------------------------------------------------------------------------------

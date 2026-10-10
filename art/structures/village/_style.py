@@ -208,3 +208,128 @@ def bed(piece, x, y, z, facing, colour="red"):
     dx, dz = {"north": (0, -1), "south": (0, 1), "east": (1, 0), "west": (-1, 0)}[facing]
     piece.put(x, y, z, f"minecraft:{colour}_bed[facing={facing},part=foot]")
     piece.put(x + dx, y, z + dz, f"minecraft:{colour}_bed[facing={facing},part=head]")
+
+
+# -------------------------------------------------------------------- STR3: the natural layout's vocabulary
+
+import buildspec  # noqa: E402  (after the path setup above)
+
+POOL = f"{buildspec.MOD}:village"
+
+# STR3 (art/README.md, "Natural layout of the village (STR3)"): the dock head's inland street draws from a pool without
+# ends and bends, so every village climbs inland; streets and squares hang decorations on deco_out.
+buildspec.CONNECTORS.update({
+    "streethead_out": ("street_in", f"{POOL}/streetheads", "aligned"),
+    "deco_out": ("deco_in", f"{POOL}/decorations", "rollable"),
+    "deco_in": ("deco_out", buildspec.EMPTY_POOL, "rollable"),
+})
+# vanilla's jigsaw tries a piece's connectors in descending selection priority: the dock head's inland street first,
+# then a street's next street pieces, its buildings and last its decorations. Streets before buildings (the island
+# does it the other way round): a building placed first claims the corner a bend, a fork or a square needs, and only
+# the narrow straight still fits, so the streets ran on in a line; placed after the streets, a building that does not
+# fit gives way to a smaller one of the pool.
+buildspec.SELECTION_PRIORITY.update({"streethead_out": 3, "street_out": 2, "building_out": 1})
+
+PALETTE.update({
+    "andesite": "minecraft:andesite",
+    "grass": "minecraft:grass_block[snowy=false]",
+    "log": "minecraft:oak_log[axis=y]",
+    "spruce_log": "minecraft:spruce_log[axis=y]",
+    "leaves": "minecraft:oak_leaves[distance=1,persistent=true,waterlogged=false]",
+    "spruce_leaves": "minecraft:spruce_leaves[distance=1,persistent=true,waterlogged=false]",
+    "dark_post": "minecraft:stripped_dark_oak_log[axis=y]",
+    "chain_y": "minecraft:chain[axis=y]",
+    "chain_x": "minecraft:chain[axis=x]",
+    "chain_z": "minecraft:chain[axis=z]",
+    "barrel_up": "minecraft:barrel[facing=up,open=false]",
+    "crate": "pirates_n_ships:cargo_crate",
+    "cargo_barrel": "pirates_n_ships:cargo_barrel",
+    "net": "minecraft:cobweb",
+    "red": "minecraft:red_wool",
+    "white": "minecraft:white_wool",
+    "slab": "minecraft:spruce_slab[type=bottom]",
+    "slab_top": "minecraft:spruce_slab[type=top]",
+    "brick_slab": "minecraft:brick_slab[type=bottom]",
+    "stone_slab": "minecraft:stone_brick_slab[type=bottom]",
+})
+
+
+def jit(x, y, z, salt=0) -> int:
+    """A fixed pseudo-random number 0..999 for a position: irregular but deterministic (byte-identical rebuilds)."""
+    v = (x * 73856093) ^ (y * 19349663) ^ (z * 83492791) ^ (salt * 2654435761)
+    v = ((v ^ (v >> 13)) * 1274126177) & 0xFFFFFFFF
+    return (v ^ (v >> 16)) % 1000
+
+
+def tree(piece, x, y, z, height=3, crown=2, salt=0):
+    """A small oak on (x, y - 1, z): a log ``height`` tall and a rounded crown of leaves (persistent) of radius
+    ``crown`` around its top, a few leaves left out (``jit``). Cells outside the box are skipped."""
+    for dy in range(height):
+        piece.put_inside(x, y + dy, z, "log")
+    top = y + height
+    for dy in (-1, 0, 1):
+        r = crown if dy < 1 else crown - 1
+        for dx in range(-r, r + 1):
+            for dz in range(-r, r + 1):
+                if dx == 0 and dz == 0 and dy < 1:
+                    continue
+                if abs(dx) == r and abs(dz) == r and (r > 1 or dy != 0):
+                    continue
+                if jit(x + dx, top + dy, z + dz, salt) < 120 and (abs(dx) == r or abs(dz) == r):
+                    continue
+                cx, cy, cz = x + dx, top + dy, z + dz
+                if piece.inside(cx, cy, cz) and piece.get(cx, cy, cz) is None and (cx, cy, cz) not in piece.jigsaws:
+                    piece.put(cx, cy, cz, "leaves")
+    if piece.inside(x, top + 1, z):
+        piece.put(x, top + 1, z, "leaves")
+
+
+def bench(piece, x, y, z, faces):
+    """A spruce stair bench whose sitter looks toward ``faces`` (the stair's back is on the other side)."""
+    piece.put(x, y, z, stairs_state("spruce", OPPOSITE[faces]))
+
+
+def flower(piece, x, y, z, salt=0):
+    """One of the village's flowers (poppy, dandelion, cornflower, oxeye daisy, allium)."""
+    kinds = ("poppy", "dandelion", "cornflower", "oxeye_daisy", "allium", "azure_bluet")
+    piece.put(x, y, z, f"minecraft:{kinds[jit(x, y, z, salt) % len(kinds)]}")
+
+
+def awning(piece, x0, x1, y, z, along="x"):
+    """A striped awning of red and white wool, one block deep, from x0 to x1 (or z0 to z1 with ``along`` z)."""
+    for i, c in enumerate(range(min(x0, x1), max(x0, x1) + 1)):
+        key = "red" if i % 2 == 0 else "white"
+        if along == "x":
+            piece.put(c, y, z, key)
+        else:
+            piece.put(z, y, c, key)
+
+
+def hanging_sign(piece, x, y, z, rotation, lines, wood="spruce"):
+    """A hanging sign (hung from the block above) at (x, y, z) whose text faces ``rotation`` (0 south, 4 west, 8
+    north, 12 east), with up to four lines of plain text on both sides. The block entity goes out through
+    ``piece.jigsaws`` as a ``block_entity`` operation (as on the pirate island, STR2); ``Id`` overrides the lab's default
+    with the block entity type, ``minecraft:hanging_sign``, so ``tools/check_structures.py`` passes."""
+    import json as _json
+    messages = [_json.dumps(text) for text in (list(lines) + ["", "", "", ""])[:4]]
+    side = {"messages": messages, "color": "black", "has_glowing_text": False}
+    piece._check(x, y, z)
+    piece.blocks.pop((x, y, z), None)
+    piece.jigsaws[(x, y, z)] = {
+        "block": f"minecraft:{wood}_hanging_sign[attached=false,rotation={rotation},waterlogged=false]",
+        "data": {"Id": "minecraft:hanging_sign", "front_text": side, "back_text": side, "is_waxed": False},
+    }
+
+
+def ground_patch(piece, x0, z0, x1, z1, reach=1, salt=0, keys=("path", "coarse", "gravel")):
+    """Trodden ground round a footprint that fades into the terrain (cells already set or holding a jigsaw stay)."""
+    sx, _, sz = piece.size
+    for z in range(max(0, z0 - reach), min(sz - 1, z1 + reach) + 1):
+        for x in range(max(0, x0 - reach), min(sx - 1, x1 + reach) + 1):
+            if x0 <= x <= x1 and z0 <= z <= z1:
+                continue
+            if (x, 0, z) in piece.jigsaws or piece.get(x, 0, z) is not None:
+                continue
+            d = max(x0 - x, x - x1, z0 - z, z - z1)
+            if jit(x, 0, z, salt) < (800 if d == 1 else 300):
+                piece.put(x, 0, z, keys[jit(x, 0, z, salt + 7) % len(keys)])

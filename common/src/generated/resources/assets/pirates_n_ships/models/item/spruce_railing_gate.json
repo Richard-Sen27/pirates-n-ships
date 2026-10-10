@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/railing_gate_item",
+  "textures": {
+    "log": "minecraft:block/stripped_spruce_log",
+    "log_top": "minecraft:block/stripped_spruce_log_top",
+    "particle": "minecraft:block/spruce_planks",
+    "planks": "minecraft:block/spruce_planks"
+  }
+}

@@ -5,17 +5,17 @@ import net.minecraft.world.level.material.PushReaction;
 
 /**
  * Registry entries of the railing family (RAIL1, docs/design.md §4.8 "Railings (RAIL1/RAIL2)"): {@code <wood>_railing}
- * and {@code <wood>_railing_port} for every shipped wood ({@code ShipWood.SHIPPED}: oak in RAIL1), and (RAIL3)
+ * and {@code <wood>_railing_port} for every shipped wood ({@code ShipWood.shipped()}: the eleven vanilla woods and the loaded mods' woods, WOOD1), and (RAIL3)
  * {@code <wood>_railing_gate}, and (RAIL4) {@code <wood>_bulwark} and {@code <wood>_bulwark_port}.
  */
 public final class RailingContent {
 
     public static final WoodFamily<RailingBlock> RAILINGS = WoodFamily.register("railing",
-            wood -> new RailingBlock(WoodFamily.properties(wood).noOcclusion().pushReaction(PushReaction.NORMAL)
+            wood -> new RailingBlock(wood, WoodFamily.properties(wood).noOcclusion().pushReaction(PushReaction.NORMAL)
                     .isRedstoneConductor((s, l, p) -> false).isSuffocating((s, l, p) -> false).isViewBlocking((s, l, p) -> false)));
 
     public static final WoodFamily<RailingPortBlock> PORTS = WoodFamily.register("railing_port",
-            wood -> new RailingPortBlock(WoodFamily.properties(wood).noOcclusion()
+            wood -> new RailingPortBlock(wood, WoodFamily.properties(wood).noOcclusion()
                     .isRedstoneConductor((s, l, p) -> false).isSuffocating((s, l, p) -> false).isViewBlocking((s, l, p) -> false)));
 
     /** RAIL3: the railing gate. */
@@ -25,12 +25,12 @@ public final class RailingContent {
 
     /** RAIL4: the bulwark, the railing's solid variant. */
     public static final WoodFamily<BulwarkBlock> BULWARKS = WoodFamily.register("bulwark",
-            wood -> new BulwarkBlock(WoodFamily.properties(wood).noOcclusion().pushReaction(PushReaction.NORMAL)
+            wood -> new BulwarkBlock(wood, WoodFamily.properties(wood).noOcclusion().pushReaction(PushReaction.NORMAL)
                     .isRedstoneConductor((s, l, p) -> false).isSuffocating((s, l, p) -> false).isViewBlocking((s, l, p) -> false)));
 
     /** RAIL4: the bulwark gun port. */
     public static final WoodFamily<BulwarkPortBlock> BULWARK_PORTS = WoodFamily.register("bulwark_port",
-            wood -> new BulwarkPortBlock(WoodFamily.properties(wood).noOcclusion()
+            wood -> new BulwarkPortBlock(wood, WoodFamily.properties(wood).noOcclusion()
                     .isRedstoneConductor((s, l, p) -> false).isSuffocating((s, l, p) -> false).isViewBlocking((s, l, p) -> false)));
 
     private RailingContent() {

@@ -18,6 +18,12 @@ public class FabricPlatformHelper implements IPlatformHelper {
     }
 
     @Override
+    public boolean isDataGeneration() {
+        // Fabric API's data generation entrypoint sets this property (the project generates data on NeoForge)
+        return System.getProperty("fabric-api.datagen") != null;
+    }
+
+    @Override
     public boolean isDevelopmentEnvironment() {
         return FabricLoader.getInstance().isDevelopmentEnvironment();
     }

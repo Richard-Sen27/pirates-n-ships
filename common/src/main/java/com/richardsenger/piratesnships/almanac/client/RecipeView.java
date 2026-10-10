@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.almanac.client;
 
+import com.richardsenger.piratesnships.Constants;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
@@ -33,6 +35,21 @@ public record RecipeView(RecipeGrid.Kind kind, List<List<ItemStack>> inputs, Ite
 
     public RecipeView {
         inputs = List.copyOf(inputs);
+    }
+
+    /**
+     * WOOD1: the recipes a panel of {@code id} shows in turn: every member of {@code id}'s wood family whose recipe is
+     * in the world (in {@code ShipWood.shipped()} order), or {@code id} alone when it is no family member.
+     */
+    public static List<ResourceLocation> family(Level level, ResourceLocation id) {
+        if (!id.getNamespace().equals(Constants.MOD_ID)) return List.of(id);
+        WoodFamily<?> family = WoodFamily.ofPath(id.getPath());
+        if (family == null) return List.of(id);
+        List<ResourceLocation> out = new ArrayList<>();
+        for (ResourceLocation member : family.ids()) {
+            if (level.getRecipeManager().byKey(member).isPresent()) out.add(member);
+        }
+        return out.isEmpty() ? List.of(id) : out;
     }
 
     public static RecipeView of(Level level, ResourceLocation id) {

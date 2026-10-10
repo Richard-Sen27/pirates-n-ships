@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "pirates_n_ships:block/natures_spirit_cypress_oar_bench",
+      "uvlock": true,
+      "y": 90
+    },
+    "facing=north": {
+      "model": "pirates_n_ships:block/natures_spirit_cypress_oar_bench"
+    },
+    "facing=south": {
+      "model": "pirates_n_ships:block/natures_spirit_cypress_oar_bench",
+      "uvlock": true,
+      "y": 180
+    },
+    "facing=west": {
+      "model": "pirates_n_ships:block/natures_spirit_cypress_oar_bench",
+      "uvlock": true,
+      "y": 270
+    }
+  }
+}

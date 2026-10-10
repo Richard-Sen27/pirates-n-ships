@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/railing_gate_right_open",
+  "textures": {
+    "log": "regions_unexplored:block/stripped_cypress_log",
+    "log_top": "regions_unexplored:block/stripped_cypress_log_top",
+    "particle": "regions_unexplored:block/cypress_planks",
+    "planks": "regions_unexplored:block/cypress_planks"
+  }
+}

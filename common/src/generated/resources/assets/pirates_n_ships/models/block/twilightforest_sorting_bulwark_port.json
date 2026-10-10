@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/bulwark_port",
+  "textures": {
+    "log": "twilightforest:block/stripped_sorting_log",
+    "log_top": "twilightforest:block/stripped_sorting_log_top",
+    "particle": "twilightforest:block/wood/planks_sort_0",
+    "planks": "twilightforest:block/wood/planks_sort_0"
+  }
+}

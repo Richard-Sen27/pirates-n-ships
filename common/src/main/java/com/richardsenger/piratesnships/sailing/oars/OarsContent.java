@@ -16,7 +16,7 @@ import net.minecraft.world.level.material.PushReaction;
 public final class OarsContent {
 
     public static final WoodFamily<OarBenchBlock> BENCHES = WoodFamily.register("oar_bench",
-            wood -> new OarBenchBlock(WoodFamily.properties(wood).noOcclusion().pushReaction(PushReaction.NORMAL)
+            wood -> new OarBenchBlock(wood, WoodFamily.properties(wood).noOcclusion().pushReaction(PushReaction.NORMAL)
                     .isRedstoneConductor((s, l, p) -> false).isSuffocating((s, l, p) -> false).isViewBlocking((s, l, p) -> false)));
 
     public static final RegistryEntry<Item, Item> OAR = ModRegistry.item("oar", () -> new Item(new Item.Properties().stacksTo(1)));

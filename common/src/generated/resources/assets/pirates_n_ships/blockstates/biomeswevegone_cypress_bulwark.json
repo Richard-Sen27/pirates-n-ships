@@ -1,0 +1,80 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomeswevegone_cypress_bulwark_edge"
+      },
+      "when": {
+        "north": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomeswevegone_cypress_bulwark_edge",
+        "uvlock": true,
+        "y": 90
+      },
+      "when": {
+        "east": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomeswevegone_cypress_bulwark_edge",
+        "uvlock": true,
+        "y": 180
+      },
+      "when": {
+        "south": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomeswevegone_cypress_bulwark_edge",
+        "uvlock": true,
+        "y": 270
+      },
+      "when": {
+        "west": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomeswevegone_cypress_bulwark_stanchion"
+      },
+      "when": {
+        "post_nw": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomeswevegone_cypress_bulwark_stanchion",
+        "uvlock": true,
+        "y": 90
+      },
+      "when": {
+        "post_ne": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomeswevegone_cypress_bulwark_stanchion",
+        "uvlock": true,
+        "y": 180
+      },
+      "when": {
+        "post_se": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomeswevegone_cypress_bulwark_stanchion",
+        "uvlock": true,
+        "y": 270
+      },
+      "when": {
+        "post_sw": "true"
+      }
+    }
+  ]
+}

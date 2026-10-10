@@ -261,7 +261,18 @@ class AlmanacGuideTest {
     }
 
     /**
-     * ALM8: every recipe of ours has exactly one recipe panel in the book (where its block or item is introduced), every
+     * WOOD1: the recipe that stands for {@code id}'s wood family ({@code <wood>_<suffix>} or a legacy id): the legacy
+     * member's or oak's; any other recipe stands for itself.
+     */
+    static String family(String id, Set<String> ours) {
+        ResourceLocation rl = ResourceLocation.parse(id);
+        String rep = com.richardsenger.piratesnships.ship.decor.wood.WoodIds.representative(rl.getPath(),
+                p -> ours.contains(rl.getNamespace() + ":" + p));
+        return rl.getNamespace() + ":" + rep;
+    }
+
+    /**
+     * ALM8 (family-aware since WOOD1): every recipe of ours has exactly one recipe panel in the book (where its block or item is introduced), every
      * panel names a generated recipe, every spotlight an item, and every chapter opens with its plate and a spotlight.
      */
     @Test
@@ -280,7 +291,7 @@ class AlmanacGuideTest {
             for (Page page : c.pages()) {
                 for (PageElement el : page.elements()) {
                     if (el instanceof PageElement.RecipePanel r) {
-                        panels.merge(r.recipe().toString(), 1, Integer::sum);
+                        panels.merge(family(r.recipe().toString(), ours), 1, Integer::sum);
                         if (!ours.contains(r.recipe().toString())) problems.add(c.id() + ": panel of unknown recipe " + r.recipe());
                     } else if (el instanceof PageElement.Spotlight sp) {
                         spotlights++;
@@ -293,9 +304,11 @@ class AlmanacGuideTest {
             if (first.stream().noneMatch(e -> e instanceof PageElement.Illustration)) problems.add(c.id() + ": no plate on its first page");
             if (first.stream().noneMatch(e -> e instanceof PageElement.Spotlight)) problems.add(c.id() + ": no spotlight on its first page");
         }
-        for (String r : ours) {
+        Set<String> families = new TreeSet<>();
+        for (String r : ours) families.add(family(r, ours));
+        for (String r : families) {
             int n = panels.getOrDefault(r, 0);
-            if (n != 1) problems.add(r + " has " + n + " recipe panels (one where it is introduced)");
+            if (n != 1) problems.add(r + " has " + n + " recipe panels (one where it is introduced; a wood family's one for all its woods)");
         }
         System.out.println("Almanac: " + panels.size() + " recipe panels, " + spotlights + " spotlights");
         assertTrue(problems.isEmpty(), String.join("\n", problems));

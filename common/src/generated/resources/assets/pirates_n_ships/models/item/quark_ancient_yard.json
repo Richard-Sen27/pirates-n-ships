@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/yard",
+  "textures": {
+    "log": "quark:block/stripped_ancient_log",
+    "log_top": "quark:block/stripped_ancient_log_top",
+    "particle": "quark:block/stripped_ancient_log",
+    "planks": "quark:block/ancient_planks"
+  }
+}

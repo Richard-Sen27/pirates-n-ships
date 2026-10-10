@@ -47,20 +47,36 @@ The model convention (`#planks`, `#log`, `#log_top`, which texture is "the wood"
   mangrove is "Twilight Mangrove" so it does not read like vanilla's.
 - **Recipes:** each member from that wood's planks (and sticks, nuggets as before), in the family's recipe group.
 
-## The families (WOOD2: the storage blocks, with the WOOD1 families)
+## The families
 
-| Family (suffix) | Legacy id (wood) | Variables | Block entity | Since |
+| Family (suffix) | Legacy id (wood) | Variables | Registered in | Datagen |
 |---|---|---|---|---|
-| `railing`, `railing_port`, `railing_gate`, `bulwark`, `bulwark_port` | none (oak's member is `oak_railing`, ...) | `#planks`, `#log` | none | WOOD1 |
-| `oar_bench` | none | `#planks`, `#log` | none | WOOD1 |
-| `cargo_crate` | `cargo_crate` (oak) | `#planks`, `#log`, `#log_top` | `cargo_container`, shared with the barrels | WOOD2 |
-| `cargo_barrel` | `cargo_barrel` (spruce) | `#planks` | `cargo_container` | WOOD2 |
-| `pantry` | `pantry` (spruce) | `#planks`, `#log` | `pantry` | WOOD2 |
-| `water_barrel` | `water_barrel` (spruce) | `#planks` (five parents: `water_barrel`, `_fill0..3`) | `water_barrel` | WOOD2 |
-| `harbor_desk` | `harbor_desk` (dark oak) | `#planks` | `harbor_desk` | WOOD2 |
-| `sea_chest` | `sea_chest` (dark oak) | `#planks`, `#log` | `sea_chest` | WOOD2 |
+| `railing`, `railing_port`, `railing_gate`, `bulwark`, `bulwark_port` | none (oak leads) | `#planks`, `#log` | `ship/decor/railing/RailingContent` | `RailingData` |
+| `oar_bench` | none | `#planks`, `#log` | `sailing/oars/OarsContent` | `OarsData` |
+| `cargo_crate` | `cargo_crate` (oak) | `#planks`, `#log`, `#log_top` | `ShipDecor.CARGO_CRATES` | `trade/cargo/CargoContainerData` |
+| `cargo_barrel` | `cargo_barrel` (spruce) | `#planks` | `ShipDecor.CARGO_BARRELS` | `trade/cargo/CargoContainerData` |
+| `pantry` | `pantry` (spruce) | `#planks`, `#log` | `crew/content/CrewContent.PANTRIES` | `CrewContentModule` |
+| `water_barrel` | `water_barrel` (spruce) | `#planks` (five parents: `water_barrel`, `_fill0..3`) | `CrewContent.WATER_BARRELS` | `CrewContentModule` |
+| `harbor_desk` | `harbor_desk` (dark oak) | `#planks` | `trade/desk/HarborDesks.HARBOR_DESKS` | `HarborDeskData` |
+| `sea_chest` | `sea_chest` (dark oak) | `#planks`, `#log` | `seachest/SeaChestContent.CHESTS` | `SeaChestModule` |
+| `nameplate` (the name board) | `nameplate` (oak) | `#planks`, `#log` | `ShipDecor.NAMEPLATES` | `ShipDecorModule` |
+| `flagpole` | `flagpole` (spruce) | `#log` | `ShipDecor.FLAGPOLES` | `flag/FlagData` |
+| `flag_pedestal` | `flag_pedestal` (spruce) | `#log`, `#log_top` | `ShipDecor.FLAG_PEDESTALS` | `ShipDecorModule` |
+| `stern_window`, `chart_table`, `sea_cot` | dark oak | `#planks`, `#log` | `ShipDecor.STERN_WINDOWS`, `CHART_TABLES`, `SEA_COTS` | `DecorData` |
+| `notice_board` | `notice_board` (dark oak) | `#planks`, `#log`, `#log_top` | `law/content/LawContent.NOTICE_BOARDS` | `NoticeBoardData` |
+| `crows_nest` | `crows_nest` (spruce) | `#planks`, `#log` | `station/lookout/LookoutContent.CROWS_NESTS` | `LookoutModule` |
+| `yard` | `yard` (spruce) | `#log`, `#log_top` | `sailing/block/SailingBlocks.YARDS` | `sailing/block/YardData` |
+| `cleat` | `cleat` (dark oak) | `#log`, `#log_top` | `sailing/sail/TriangularSailContent.CLEATS` | `TriangularSailData` |
+| `helm` | `helm` (dark oak) | `#planks`, `#log`; part `helm_wheel` | `ship/assembly/AssemblyContent.HELMS` | `HelmSetup` |
+| `capstan` | `capstan` (dark oak) | `#planks`, `#log`, `#log_top`; part `capstan_bars` | `SailingBlocks.CAPSTANS` | `sailing/block/WinchAndCapstanData` |
+| `sail_winch` | `sail_winch` (spruce) | `#planks`, `#log`, `#log_top` (rope fixed) | `SailingBlocks.SAIL_WINCHES` | `sailing/block/WinchAndCapstanData` |
+| `bilge_pump` | `bilge_pump` (dark oak) | `#planks`, `#log`, `#log_top` | `HullRepairContent.BILGE_PUMPS` | `HullRepairData` |
+| `cannon` | `cannon` (dark oak) | `#planks`, `#log`, `#log_top`; part `cannon_quoin` | `CannonContent.CANNONS` | `CannonData` |
 
-WOOD2's storage blocks, what changed besides the members:
+The machines' (WOOD4) renderer parts, recipes and properties are detailed in "The machines (WOOD4)" below.
+
+WOOD2 (the storage blocks), what changed besides the members (block entities: `cargo_container` for every crate and
+barrel, `pantry`, `water_barrel`, `harbor_desk`, `sea_chest` each valid for every member):
 
 - **Identity checks:** the cargo container type lists every crate and barrel; `PortService.bindDesks` binds any
   `HarborDeskBlock` (was `is(HARBOR_DESK)`); JEI's market and provisions catalysts are every desk, pantry and water
@@ -78,6 +94,22 @@ WOOD2's storage blocks, what changed besides the members:
   `register(suffix, legacyWood, factory, item)` (the sea chest's wearable item), `itemTag` and `entries()`.
 - **Not done:** the paddle's recipe still unlocks with the legacy sea chest; Ponder scenes and the Almanac show the
   legacy members (the Almanac's recipe panel cycles the woods).
+
+WOOD3 (the fittings): each content class keeps its old constant as the legacy member (`ShipDecor.YARD` is
+`YARDS.entry(SPRUCE)`), so tests, schematics and templates that name it still work; everything that asks "is this a
+yard" asks `instanceof YardBlock` (or the family's tag) instead, never `is(YARD)`. The family block entities
+(`nameplate`, `flagpole`, `yard`, `cleat`) are one type valid for every member (`WoodFamily.blockEntity`). Codecs:
+`WoodBlock.codec(factory)` for a block class whose vanilla parent demands one. Recipes per wood: name board two planks
+and a gold nugget (3); flagpole the stripped log over two sticks (2); flag pedestal the stripped log over a plank (2);
+stern window from the wood's planks (2, dark oak's before); chart table, sea cot (any wool, `WoodRecipe.tag`), notice
+board, crow's nest and cleat from the wood's planks; yard three stripped logs (3, any log before). Tags: the yards and
+crow's nests of every wood are `ratlines_anchors`; `pirates_n_ships:yards` and `:cleats` hold every member.
+
+**Sable physics of a family:** the yard and the cleat had a per-id `physics_block_properties` file. A selector naming a
+block that is not registered (a mod's wood without its mod) logs "Unknown block" on every level load
+(`refs/sable/common/.../PhysicsBlockPropertiesDefinitionLoader#applyToBlocks`), and Sable's own loader applies no load
+conditions, so a family's file keeps the legacy path and selects the family's tag (`"selector": "#pirates_n_ships:yards"`),
+whose compat entries are optional. WOOD2 and WOOD4 do the same (`cargo_crates`, `cargo_barrels`, `pantries`, `water_barrels`, `bilge_pumps`, `cannons`).
 
 ## Datagen and the compat files
 
@@ -170,7 +202,7 @@ Almanac's panel, JEI's info page); its models are named by wood like the rest (`
 - Renderer parts: `WoodModels.ids` is unit-tested; WOOD4's helm wheel, capstan bars and cannon quoin are family parts
   (`WoodDataTest.everyMachinePartHasAChildInEveryWood`).
 
-## The families (WOOD4: the machines)
+## The machines (WOOD4)
 
 | Family | Legacy id (wood) | Variables in the parents | Renderer parts (`WoodModels`) | Recipe |
 |---|---|---|---|---|

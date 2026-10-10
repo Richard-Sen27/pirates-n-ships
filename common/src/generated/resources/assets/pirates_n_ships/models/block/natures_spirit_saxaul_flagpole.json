@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/flagpole",
+  "textures": {
+    "log": "natures_spirit:block/stripped_saxaul_log",
+    "log_top": "natures_spirit:block/stripped_saxaul_log_top",
+    "particle": "natures_spirit:block/stripped_saxaul_log",
+    "planks": "natures_spirit:block/saxaul_planks"
+  }
+}

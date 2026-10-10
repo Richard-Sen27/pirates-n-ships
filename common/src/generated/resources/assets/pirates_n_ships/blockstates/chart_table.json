@@ -1,19 +1,19 @@
 {
   "variants": {
     "facing=east": {
-      "model": "pirates_n_ships:block/chart_table",
+      "model": "pirates_n_ships:block/dark_oak_chart_table",
       "y": 90
     },
     "facing=north": {
-      "model": "pirates_n_ships:block/chart_table",
+      "model": "pirates_n_ships:block/dark_oak_chart_table",
       "y": 0
     },
     "facing=south": {
-      "model": "pirates_n_ships:block/chart_table",
+      "model": "pirates_n_ships:block/dark_oak_chart_table",
       "y": 180
     },
     "facing=west": {
-      "model": "pirates_n_ships:block/chart_table",
+      "model": "pirates_n_ships:block/dark_oak_chart_table",
       "y": 270
     }
   }

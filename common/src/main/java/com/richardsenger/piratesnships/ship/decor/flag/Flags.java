@@ -26,8 +26,9 @@ public final class Flags {
     public static final RegistryEntry<Item, Item> NAVY_FLAG = flag("navy_flag");
     public static final RegistryEntry<Item, Item> JOLLY_ROGER_FLAG = flag("jolly_roger_flag");
 
+    /** The flagpole's block entity, valid for the flagpole of every wood (WOOD3). */
     public static final RegistryEntry<BlockEntityType<?>, BlockEntityType<FlagpoleBlockEntity>> FLAGPOLE_BLOCK_ENTITY =
-            ModRegistry.blockEntity("flagpole", FlagpoleBlockEntity::new, ShipDecor.FLAGPOLE);
+            ShipDecor.FLAGPOLES.blockEntity("flagpole", FlagpoleBlockEntity::new);
 
     /** Everything that can be hoisted on a flagpole: our flags and {@code #minecraft:banners}. */
     public static final TagKey<Item> FLAGS = TagKey.create(Registries.ITEM, Constants.id("flags"));

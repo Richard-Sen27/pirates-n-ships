@@ -2,7 +2,7 @@
 	"credit": "Made with Blockbench, source art/models/flagpole.bbmodel",
 	"parent": "minecraft:block/block",
 	"textures": {
-		"0": "minecraft:block/stripped_spruce_log",
+		"log": "minecraft:block/stripped_spruce_log",
 		"1": "minecraft:block/dark_oak_planks",
 		"2": "minecraft:block/gold_block",
 		"3": "minecraft:block/anvil",
@@ -29,7 +29,7 @@
 						9.5,
 						16
 					],
-					"texture": "#0"
+					"texture": "#log"
 				},
 				"east": {
 					"uv": [
@@ -38,7 +38,7 @@
 						9.5,
 						16
 					],
-					"texture": "#0"
+					"texture": "#log"
 				},
 				"south": {
 					"uv": [
@@ -47,7 +47,7 @@
 						9.5,
 						16
 					],
-					"texture": "#0"
+					"texture": "#log"
 				},
 				"west": {
 					"uv": [
@@ -56,7 +56,7 @@
 						9.5,
 						16
 					],
-					"texture": "#0"
+					"texture": "#log"
 				},
 				"up": {
 					"uv": [
@@ -65,7 +65,7 @@
 						9.5,
 						9.5
 					],
-					"texture": "#0"
+					"texture": "#log"
 				},
 				"down": {
 					"uv": [
@@ -74,7 +74,7 @@
 						9.5,
 						9.5
 					],
-					"texture": "#0"
+					"texture": "#log"
 				}
 			}
 		},

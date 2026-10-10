@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.law.content;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
@@ -30,16 +32,25 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * with the notices (towards the player who placed it; north in the unrotated model). The model is hand-made
  * ({@code art/models/notice_board.bbmodel}).
  */
-public class NoticeBoardBlock extends HorizontalDirectionalBlock implements SimpleWaterloggedBlock {
+public class NoticeBoardBlock extends HorizontalDirectionalBlock implements SimpleWaterloggedBlock, WoodBlock {
 
-    public static final MapCodec<NoticeBoardBlock> CODEC = simpleCodec(NoticeBoardBlock::new);
+    public static final MapCodec<NoticeBoardBlock> CODEC = WoodBlock.codec(NoticeBoardBlock::new);
 
     /** Posts, board and feet of the model (x 1..15, z 6..10 facing north); the roof overhang stays outside. */
     private static final VoxelShape SHAPE_NS = Block.box(1, 0, 6, 15, 16, 10);
     private static final VoxelShape SHAPE_EW = Block.box(6, 0, 1, 10, 16, 15);
 
-    public NoticeBoardBlock(Properties properties) {
+    /** The wood of this member (WOOD3). */
+    private final ShipWood wood;
+
+    @Override
+    public ShipWood wood() {
+        return wood;
+    }
+
+    public NoticeBoardBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(Waterlogging.WATERLOGGED, false));
     }
 

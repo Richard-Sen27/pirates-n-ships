@@ -1,17 +1,18 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "misc",
+  "group": "pirates_n_ships:flag_pedestal",
   "key": {
     "L": {
-      "tag": "minecraft:logs"
+      "item": "minecraft:stripped_spruce_log"
     },
-    "S": {
-      "tag": "minecraft:wooden_slabs"
+    "P": {
+      "item": "minecraft:spruce_planks"
     }
   },
   "pattern": [
     "L",
-    "S"
+    "P"
   ],
   "result": {
     "count": 2,

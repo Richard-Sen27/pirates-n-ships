@@ -372,8 +372,9 @@ class HandMadeModelsTest {
             assertTrue(anvil && rope, base + "_pole: no cleat or no halyard");
             assertFalse(blockModel(base + "_pole").has("display"), base + "_pole: only the plain model carries display entries");
         }
-        assertEquals(blockModel("flag_pedestal").getAsJsonObject("textures").get("0").getAsString(),
-                blockModel("flagpole").getAsJsonObject("textures").get("0").getAsString(), "the pedestal is in the pole's wood");
+        // WOOD3: the pedestal's log is the flagpole's (#log, set per wood by the family's children)
+        assertEquals(blockModel("flag_pedestal").getAsJsonObject("textures").get("log").getAsString(),
+                blockModel("flagpole").getAsJsonObject("textures").get("log").getAsString(), "the pedestal is in the pole's wood");
         JsonObject pedestal = blockModel("flag_pedestal");
         assertTrue(pedestal.getAsJsonObject("display").has("gui"), "flag_pedestal: the item's gui entry");
         for (JsonElement e : pedestal.getAsJsonArray("elements")) {
@@ -384,6 +385,37 @@ class HandMadeModelsTest {
                 double hi = axis == 1 ? 6 : 13;
                 assertTrue(from.get(axis).getAsDouble() >= lo && to.get(axis).getAsDouble() <= hi,
                         e.getAsJsonObject().get("name") + " leaves the pedestal's shape");
+            }
+        }
+    }
+
+    /**
+     * WOOD3: the parents of the WOOD3 wood families name the wood through the family's texture variables
+     * ({@code #planks}, {@code #log}, {@code #log_top}; art/README.md "Wood families"): each parent has the keys its
+     * block's wood uses and no other key still holds that wood's main planks or stripped log (an accent of another wood,
+     * iron, cloth or the birch rope stays a fixed texture).
+     */
+    @Test
+    void woodFamilyParentsUseTheWoodVariables() throws IOException {
+        Map<String, List<String>> keys = new java.util.LinkedHashMap<>();
+        for (String n : List.of("name_board", "name_board_item")) keys.put(n, List.of("planks", "log"));
+        for (String n : List.of("name_board_cap_left", "name_board_cap_right")) keys.put(n, List.of("log"));
+        for (String n : List.of("stern_window", "stern_window_shutters", "sea_cot_head", "sea_cot_foot", "sea_cot_item", "chart_table")) {
+            keys.put(n, List.of("planks", "log"));
+        }
+        keys.put("notice_board", List.of("planks", "log", "log_top"));
+        for (String n : List.of("flagpole", "flagpole_bottom", "flagpole_middle", "flagpole_top")) keys.put(n, List.of("log"));
+        for (String n : List.of("flag_pedestal", "flag_pedestal_pole", "yard", "cleat")) keys.put(n, List.of("log", "log_top"));
+        for (String n : List.of("crows_nest", "crows_nest_pole")) keys.put(n, List.of("planks", "log"));
+        for (Map.Entry<String, List<String>> e : keys.entrySet()) {
+            JsonObject textures = blockModel(e.getKey()).getAsJsonObject("textures");
+            for (String key : e.getValue()) assertTrue(textures.has(key), e.getKey() + ": no #" + key + " in " + textures);
+            for (Map.Entry<String, JsonElement> t : textures.entrySet()) {
+                if (e.getValue().contains(t.getKey()) || t.getKey().equals("particle")) continue;
+                for (String key : e.getValue()) {
+                    assertFalse(t.getValue().getAsString().equals(textures.get(key).getAsString()),
+                            e.getKey() + ": #" + t.getKey() + " is the wood's " + key + " under another key");
+                }
             }
         }
     }

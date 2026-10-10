@@ -1,16 +1,15 @@
-// 1.21.1	2026-10-10T19:03:07.332642	Tags for minecraft:block mod id vanilla
-2c8eb52bdd56b61e29cd0f2efc460d97112cd559 data/c/tags/block/chests.json
-6855f60c6e803939aafda3340d36fb30b062d510 data/minecraft/tags/block/climbable.json
+// 1.21.1	2026-10-10T15:46:50.611676	Tags for minecraft:block mod id vanilla
+4574ad20b2942c15e4ade670401483c8652905aa data/c/tags/block/chests.json
+da39b6df40b11fa9987da5007d54347277a84ca2 data/minecraft/tags/block/climbable.json
 027425cd193e9e04ea5aed99085f092fa520d95e data/minecraft/tags/block/doors.json
-4325cdf45334dc388fceec6eb3ec5532469ae1e0 data/minecraft/tags/block/mineable/axe.json
+7f316079b92b56ba59a055758e053d2a7ef78219 data/minecraft/tags/block/mineable/axe.json
 4550189aa49462b1d44ac5536c5a3e5de79af3de data/minecraft/tags/block/mineable/pickaxe.json
 d203a86a191efea5b043ecfbd6050cc6e1731b62 data/pirates_n_ships/tags/block/barrel_blocking.json
 289c6bbb0194237bae7e5c6db340244091bcf83b data/pirates_n_ships/tags/block/bilge_pumps.json
 d1a9d654018d87e309dea75aaec0ce831977a495 data/pirates_n_ships/tags/block/cannon_breakable.json
 90b985302b5c05cc96c39f6cb2985a785fde74b2 data/pirates_n_ships/tags/block/cannon_proof.json
 f0c0fd5b294bae55c56fb302527fa2460ce9caab data/pirates_n_ships/tags/block/cannons.json
-5f7f1f7db22f1888b7c887be41ab7584d401e2ef data/pirates_n_ships/tags/block/cargo_barrels.json
-636e808f1bd3cf81dff3a094c6b5cb80845e5f95 data/pirates_n_ships/tags/block/cargo_crates.json
+cf033eaf224840400c4edd4ae39003310d7f802e data/pirates_n_ships/tags/block/cleats.json
 582cf2be0ef0a019ed330dac0e8b4887d62df4f6 data/pirates_n_ships/tags/block/gangway_openings.json
 03c7637845c1f1466e57392cd1bcd8dac1491025 data/pirates_n_ships/tags/block/grapple_latches.json
 bb626600c7889c11c6e9962b5e3a8493f255d778 data/pirates_n_ships/tags/block/grapple_slips.json
@@ -19,16 +18,15 @@ bb626600c7889c11c6e9962b5e3a8493f255d778 data/pirates_n_ships/tags/block/grapple
 f7371fa73528b6e981b1f5dd5cf010306cb35cdf data/pirates_n_ships/tags/block/masts.json
 efa5c7038ab6e296491b919dff511cf035976fa2 data/pirates_n_ships/tags/block/never_assemble.json
 35133e95f1c8fdd7a1c21afcc231fc0bffefb9a8 data/pirates_n_ships/tags/block/not_watertight.json
-515c641b61111b6a18d99c70b41271e0a212f62c data/pirates_n_ships/tags/block/pantries.json
-9e23c8283313e113dda64ac09a8eaa47b47f8d87 data/pirates_n_ships/tags/block/ratlines_anchors.json
+4fdc63b6834a0a66769ba7bd10d43c554c0b03df data/pirates_n_ships/tags/block/ratlines_anchors.json
 8e345550119e9f281cee9c9e331994be011266ca data/pirates_n_ships/tags/block/shot_lockers.json
 726608cd69f105bec2f7f6e5c6c4bae57183579d data/pirates_n_ships/tags/block/swivel_mounts.json
 d0b4325bb417203ea7f0a861071937293d2a1ac8 data/pirates_n_ships/tags/block/terrain.json
 bb169b9e5997d40072757d8e612623b7c9775438 data/pirates_n_ships/tags/block/test_ground.json
-389daa77531c92034ffd17d1b95a491b547112d2 data/pirates_n_ships/tags/block/water_barrels.json
 1a6606b59646e30901e8ced8c7447d19dcc5fedf data/pirates_n_ships/tags/block/watertight.json
-389daa77531c92034ffd17d1b95a491b547112d2 data/sable/tags/block/heavy.json
-736e51e747fc1e44bd382931ca0a0fd300b869df data/sable/tags/block/light.json
-38b8aa1c333475d91d98b5260b56a1f162ee5985 data/sable/tags/block/quarter_volume.json
-1c76d604fb52fae4f3f1b862f32c861ef4b624e2 data/sable/tags/block/super_light.json
-40a32ce559ac94d99abe262a7f15d22c43d18144 data/sable/tags/block/weightless.json
+98810020125bc4d9ecb93b1fa43dc6d052fe35a5 data/pirates_n_ships/tags/block/yards.json
+5073dbb2b10dec21ec2e422f93008dc243a5b4e7 data/sable/tags/block/heavy.json
+c9e6efa44415e21b39e6417059c47fad556fdb25 data/sable/tags/block/light.json
+a8932fee304c153dd096754b23a5318c75d97b08 data/sable/tags/block/quarter_volume.json
+869b899dbe31bb7f97c8af9a3ed4a63088193a01 data/sable/tags/block/super_light.json
+5ff94135773d217423e5c36de74970cc8d0a4792 data/sable/tags/block/weightless.json

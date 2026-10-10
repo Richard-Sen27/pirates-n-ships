@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/flag_pedestal",
+  "textures": {
+    "log": "undergarden:block/stripped_wigglewood_log_side",
+    "log_top": "undergarden:block/stripped_wigglewood_log_end",
+    "particle": "undergarden:block/stripped_wigglewood_log_side",
+    "planks": "undergarden:block/wigglewood_planks"
+  }
+}

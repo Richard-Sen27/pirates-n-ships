@@ -1,9 +1,13 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "pirates_n_ships:nameplate",
   "ingredients": [
     {
-      "tag": "minecraft:signs"
+      "item": "minecraft:oak_planks"
+    },
+    {
+      "item": "minecraft:oak_planks"
     },
     {
       "item": "minecraft:gold_nugget"

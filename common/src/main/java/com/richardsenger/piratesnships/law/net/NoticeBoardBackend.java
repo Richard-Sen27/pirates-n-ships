@@ -7,7 +7,7 @@ import com.richardsenger.piratesnships.law.bounty.BountyBoard;
 import com.richardsenger.piratesnships.law.bounty.BountyTarget;
 import com.richardsenger.piratesnships.law.bounty.NoticeBoardListing;
 import com.richardsenger.piratesnships.law.client.ClientNoticeBoard;
-import com.richardsenger.piratesnships.law.content.LawContent;
+import com.richardsenger.piratesnships.law.content.NoticeBoardBlock;
 import com.richardsenger.piratesnships.platform.Services;
 import com.richardsenger.piratesnships.trade.coin.Wallet;
 import net.minecraft.core.BlockPos;
@@ -173,7 +173,7 @@ public final class NoticeBoardBackend {
     private static boolean valid(ServerPlayer player, Session s, BlockPos board) {
         if (!LawConfig.NOTICE_BOARDS.get() || !s.board().equals(board)) return false;
         if (!player.isAlive() || player.level().dimension() != s.dimension()) return false;
-        if (!player.level().getBlockState(board).is(LawContent.NOTICE_BOARD.get())) return false;
+        if (!(player.level().getBlockState(board).getBlock() instanceof NoticeBoardBlock)) return false; // any wood (WOOD3)
         double reach = LawConfig.NOTICE_BOARD_REACH.get();
         return player.position().distanceToSqr(Vec3.atCenterOf(board)) <= reach * reach;
     }

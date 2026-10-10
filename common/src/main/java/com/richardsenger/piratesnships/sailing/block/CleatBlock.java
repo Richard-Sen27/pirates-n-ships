@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.sailing.block;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import com.richardsenger.piratesnships.core.text.ActionBar;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.LevelAccessor;
@@ -67,10 +69,10 @@ import org.jetbrains.annotations.Nullable;
  * dark wooden pad, modelled on the floor with its horns along {@link #FACING} and turned for the wall and the ceiling
  * by the block state. {@link #TRIM} does not change the model (the cloth is drawn by the stay renderer).
  */
-public class CleatBlock extends FaceAttachedHorizontalDirectionalBlock implements EntityBlock, RopeAnchor, SimpleWaterloggedBlock {
+public class CleatBlock extends FaceAttachedHorizontalDirectionalBlock implements EntityBlock, RopeAnchor, SimpleWaterloggedBlock, WoodBlock {
 
     public static final EnumProperty<SailTrim> TRIM = EnumProperty.create("trim", SailTrim.class);
-    public static final MapCodec<CleatBlock> CODEC = simpleCodec(CleatBlock::new);
+    public static final MapCodec<CleatBlock> CODEC = WoodBlock.codec(CleatBlock::new);
 
     public static final String KEY_NO_SAIL = "message." + Constants.MOD_ID + ".cleat.no_sail";
 
@@ -87,8 +89,17 @@ public class CleatBlock extends FaceAttachedHorizontalDirectionalBlock implement
     private static final VoxelShape WALL_EAST = Block.box(0, 2, 5, 5, 14, 11);
     private static final VoxelShape WALL_WEST = Block.box(11, 2, 5, 16, 14, 11);
 
-    public CleatBlock(Properties properties) {
+    /** The wood of this member (WOOD3). */
+    private final ShipWood wood;
+
+    @Override
+    public ShipWood wood() {
+        return wood;
+    }
+
+    public CleatBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(FACE, AttachFace.WALL).setValue(FACING, Direction.NORTH)
                 .setValue(TRIM, SailTrim.FURLED).setValue(Waterlogging.WATERLOGGED, false));
     }

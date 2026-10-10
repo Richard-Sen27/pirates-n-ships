@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/flagpole_top",
+  "textures": {
+    "log": "minecraft:block/stripped_bamboo_block",
+    "log_top": "minecraft:block/stripped_bamboo_block_top",
+    "particle": "minecraft:block/stripped_bamboo_block",
+    "planks": "minecraft:block/bamboo_planks"
+  }
+}

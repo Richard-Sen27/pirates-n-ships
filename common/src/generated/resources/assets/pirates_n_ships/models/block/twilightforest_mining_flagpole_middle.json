@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/flagpole_middle",
+  "textures": {
+    "log": "twilightforest:block/stripped_mining_log",
+    "log_top": "twilightforest:block/stripped_mining_log_top",
+    "particle": "twilightforest:block/stripped_mining_log",
+    "planks": "twilightforest:block/wood/planks_mine_0"
+  }
+}

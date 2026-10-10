@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "part=bottom": {
+      "model": "pirates_n_ships:block/natures_spirit_sugi_flagpole_bottom"
+    },
+    "part=middle": {
+      "model": "pirates_n_ships:block/natures_spirit_sugi_flagpole_middle"
+    },
+    "part=single": {
+      "model": "pirates_n_ships:block/natures_spirit_sugi_flagpole"
+    },
+    "part=top": {
+      "model": "pirates_n_ships:block/natures_spirit_sugi_flagpole_top"
+    }
+  }
+}

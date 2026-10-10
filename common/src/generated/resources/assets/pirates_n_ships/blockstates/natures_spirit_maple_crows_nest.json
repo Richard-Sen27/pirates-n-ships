@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "pole=false": {
+      "model": "pirates_n_ships:block/natures_spirit_maple_crows_nest"
+    },
+    "pole=true": {
+      "model": "pirates_n_ships:block/natures_spirit_maple_crows_nest_pole"
+    }
+  }
+}

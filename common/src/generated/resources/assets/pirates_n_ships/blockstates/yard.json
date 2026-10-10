@@ -1,10 +1,10 @@
 {
   "variants": {
     "axis=x": {
-      "model": "pirates_n_ships:block/yard"
+      "model": "pirates_n_ships:block/spruce_yard"
     },
     "axis=z": {
-      "model": "pirates_n_ships:block/yard",
+      "model": "pirates_n_ships:block/spruce_yard",
       "y": 90
     }
   }

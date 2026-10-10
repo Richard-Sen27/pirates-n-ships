@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.sailing.rope;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.sailing.block.CleatBlock;
 import com.richardsenger.piratesnships.core.text.ActionBar;
 import com.richardsenger.piratesnships.combat.grapple.GrappleContent;
 import com.richardsenger.piratesnships.combat.grapple.MooringRingBlock;
@@ -205,6 +207,31 @@ public final class RopeLineGameTests {
         level.destroyBlock(h.absolutePos(clewRel), false);
         h.assertTrue(cloth(level, head) == null, "the sail survived its clew");
         h.assertTrue(RopeLines.joined(level, head, tack), "removing the clew took the rope down");
+        h.succeed();
+    }
+
+    /**
+     * WOOD3: jungle cleats hold a rope and make a stay sail like the dark oak ones: a jungle head and tack take the rope
+     * (the stay), a jungle clew below the head makes the cloth.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_24, timeoutTicks = 60)
+    public static void jungleCleatsHoldARopeAndASail(GameTestHelper h) {
+        floor(h, 24);
+        for (int y = 2; y <= 7; y++) h.setBlock(new BlockPos(5, y, 5), Blocks.OAK_LOG);
+        BlockPos headRel = new BlockPos(5, 7, 6), tackRel = new BlockPos(5, 2, 11), clewRel = new BlockPos(5, 2, 6);
+        BlockState jungle = TriangularSailContent.CLEATS.get(ShipWood.JUNGLE).defaultBlockState();
+        h.setBlock(headRel, jungle.setValue(CleatBlock.FACE, AttachFace.WALL).setValue(CleatBlock.FACING, Direction.SOUTH));
+        h.setBlock(tackRel, jungle.setValue(CleatBlock.FACE, AttachFace.FLOOR).setValue(CleatBlock.FACING, Direction.NORTH));
+        ServerLevel level = h.getLevel();
+        BlockPos head = h.absolutePos(headRel), tack = h.absolutePos(tackRel);
+        h.assertTrue(level.getBlockEntity(head) instanceof CleatBlockEntity, "the jungle cleat has no cleat block entity");
+        ItemStack rope = new ItemStack(TriangularSailContent.ROPE.get(), 2);
+        RopeItem.use(level, rope, head, null);
+        Component rigged = RopeItem.use(level, rope, tack, null);
+        h.assertTrue(key(rigged).equals(RopeItem.KEY_RIGGED), "the jungle cleats took no stay: " + rigged.getString());
+        h.assertTrue(RopeLines.joined(level, head, tack), "no rope between the jungle cleats");
+        h.setBlock(clewRel, jungle.setValue(CleatBlock.FACE, AttachFace.FLOOR).setValue(CleatBlock.FACING, Direction.NORTH));
+        h.assertTrue(new TriangleCloth(0, -5, 5, 5).equals(cloth(level, head)), "the jungle clew did not make the sail: " + cloth(level, head));
         h.succeed();
     }
 

@@ -1,0 +1,117 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_empyreal_name_board"
+      },
+      "when": {
+        "facing": "north"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_empyreal_name_board_cap_left"
+      },
+      "when": {
+        "facing": "north",
+        "left": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_empyreal_name_board_cap_right"
+      },
+      "when": {
+        "facing": "north",
+        "right": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_empyreal_name_board",
+        "y": 90
+      },
+      "when": {
+        "facing": "east"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_empyreal_name_board_cap_left",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "left": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_empyreal_name_board_cap_right",
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "right": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_empyreal_name_board",
+        "y": 180
+      },
+      "when": {
+        "facing": "south"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_empyreal_name_board_cap_left",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "left": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_empyreal_name_board_cap_right",
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "right": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_empyreal_name_board",
+        "y": 270
+      },
+      "when": {
+        "facing": "west"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_empyreal_name_board_cap_left",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "left": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/biomesoplenty_empyreal_name_board_cap_right",
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "right": "false"
+      }
+    }
+  ]
+}

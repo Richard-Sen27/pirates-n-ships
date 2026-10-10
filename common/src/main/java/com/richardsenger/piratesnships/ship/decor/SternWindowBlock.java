@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.ship.decor;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -25,13 +27,22 @@ import net.minecraft.world.phys.BlockHitResult;
  * side. Open, it lets sky light through like glass. Hand-made models {@code block/stern_window} and
  * {@code block/stern_window_shutters} ({@code art/models/stern_window.bbmodel}, cutout render type for the glass).
  */
-public class SternWindowBlock extends HorizontalDirectionalBlock {
+public class SternWindowBlock extends HorizontalDirectionalBlock implements WoodBlock {
 
-    public static final MapCodec<SternWindowBlock> CODEC = simpleCodec(SternWindowBlock::new);
+    public static final MapCodec<SternWindowBlock> CODEC = WoodBlock.codec(SternWindowBlock::new);
     public static final BooleanProperty SHUTTERS = BooleanProperty.create("shutters");
 
-    public SternWindowBlock(Properties properties) {
+    /** The wood of this member (WOOD3). */
+    private final ShipWood wood;
+
+    @Override
+    public ShipWood wood() {
+        return wood;
+    }
+
+    public SternWindowBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(SHUTTERS, false));
     }
 

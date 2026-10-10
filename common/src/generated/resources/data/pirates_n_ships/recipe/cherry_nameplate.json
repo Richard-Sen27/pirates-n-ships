@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "pirates_n_ships:nameplate",
+  "ingredients": [
+    {
+      "item": "minecraft:cherry_planks"
+    },
+    {
+      "item": "minecraft:cherry_planks"
+    },
+    {
+      "item": "minecraft:gold_nugget"
+    }
+  ],
+  "result": {
+    "count": 3,
+    "id": "pirates_n_ships:cherry_nameplate"
+  }
+}

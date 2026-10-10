@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/name_board_item",
+  "textures": {
+    "log": "natures_spirit:block/stripped_coconut_log",
+    "log_top": "natures_spirit:block/stripped_coconut_log_top",
+    "particle": "natures_spirit:block/coconut_planks",
+    "planks": "natures_spirit:block/coconut_planks"
+  }
+}

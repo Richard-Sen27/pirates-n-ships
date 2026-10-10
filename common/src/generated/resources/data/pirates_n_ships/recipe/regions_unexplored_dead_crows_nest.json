@@ -1,0 +1,50 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "regions_unexplored"
+    },
+    {
+      "type": "neoforge:item_exists",
+      "item": "regions_unexplored:dead_planks"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "regions_unexplored"
+      ]
+    },
+    {
+      "condition": "fabric:registry_contains",
+      "registry": "minecraft:item",
+      "values": [
+        "regions_unexplored:dead_planks"
+      ]
+    }
+  ],
+  "group": "pirates_n_ships:crows_nest",
+  "key": {
+    "N": {
+      "item": "minecraft:iron_nugget"
+    },
+    "P": {
+      "item": "regions_unexplored:dead_planks"
+    },
+    "R": {
+      "item": "pirates_n_ships:rope"
+    }
+  },
+  "pattern": [
+    "PRP",
+    "N N",
+    "PPP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pirates_n_ships:regions_unexplored_dead_crows_nest"
+  }
+}

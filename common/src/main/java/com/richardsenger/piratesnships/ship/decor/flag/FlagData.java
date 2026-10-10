@@ -1,6 +1,8 @@
 package com.richardsenger.piratesnships.ship.decor.flag;
 
+import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.datagen.DataContributions;
+import com.richardsenger.piratesnships.ship.decor.wood.WoodFamily;
 import com.richardsenger.piratesnships.core.datagen.LangBuilder;
 import com.richardsenger.piratesnships.core.datagen.ModelContext;
 import com.richardsenger.piratesnships.law.flag.FlagKind;
@@ -74,18 +76,26 @@ public final class FlagData {
 
     private static void models(ModelContext m) {
         // The flag items' models are hand-made folded bundles (art/models/<flag>.bbmodel, design.md §4.8, ART1b)
-        Block pole = ShipDecor.FLAGPOLE.get();
         // Hand-made Blockbench models (art/models/flagpole*.bbmodel), one per part of a tall pole (VIS1a), never
         // turned; the flag and facing do not show: the cloth is drawn by the FlagClothRenderer at the flag's exact
-        // downwind yaw (FL1), not by the block model. The item keeps the single pole (the default block item model).
-        m.blockStates().accept(MultiVariantGenerator.multiVariant(pole).with(PropertyDispatch.property(FlagpoleBlock.PART)
-                .generate(part -> Variant.variant().with(VariantProperties.MODEL, partModel(pole, part)))));
+        // downwind yaw (FL1), not by the block model. WOOD3: log-only parents, a child per wood with the log as
+        // particle; the item is the wood's single pole.
+        WoodFamily<FlagpoleBlock> poles = ShipDecor.FLAGPOLES;
+        for (FlagpolePart part : FlagpolePart.values()) poles.childModels(m, parentModel(part), WoodFamily.Particle.LOG);
+        poles.itemModels(m, parentModel(FlagpolePart.SINGLE), WoodFamily.Particle.LOG);
+        poles.forEach((wood, pole) -> m.blockStates().accept(MultiVariantGenerator.multiVariant(pole)
+                .with(PropertyDispatch.property(FlagpoleBlock.PART)
+                        .generate(part -> Variant.variant().with(VariantProperties.MODEL, partModel(pole, part))))));
     }
 
-    /** The hand-made model of a flagpole part: {@code block/flagpole} for a lone pole, {@code block/flagpole_<part>} otherwise. */
-    public static ResourceLocation partModel(Block pole, FlagpolePart part) {
-        return part == FlagpolePart.SINGLE ? ModelLocationUtils.getModelLocation(pole)
-                : ModelLocationUtils.getModelLocation(pole, "_" + part.getSerializedName());
+    /** The hand-made parent of a flagpole part: {@code block/flagpole} for a lone pole, {@code block/flagpole_<part>} otherwise. */
+    public static ResourceLocation parentModel(FlagpolePart part) {
+        return Constants.id(part == FlagpolePart.SINGLE ? "block/flagpole" : "block/flagpole_" + part.getSerializedName());
+    }
+
+    /** The model of a flagpole part in {@code pole}'s wood: {@code block/<wood>_flagpole[_<part>]} (WOOD3). */
+    public static ResourceLocation partModel(FlagpoleBlock pole, FlagpolePart part) {
+        return WoodFamily.child(pole.wood(), parentModel(part));
     }
 
     private static void recipes(RecipeOutput out) {

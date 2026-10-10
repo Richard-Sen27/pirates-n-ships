@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/sea_cot_head_left_joined",
+  "textures": {
+    "log": "biomesoplenty:block/stripped_fir_log",
+    "log_top": "biomesoplenty:block/stripped_fir_log_top",
+    "particle": "biomesoplenty:block/fir_planks",
+    "planks": "biomesoplenty:block/fir_planks"
+  }
+}

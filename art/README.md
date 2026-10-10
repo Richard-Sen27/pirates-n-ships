@@ -2863,6 +2863,26 @@ python3 tools/render_generated_structure.py neoforge/build/gametest/structure-la
     --out art/renders/structures
 ```
 
+**A real world.** `art/renders/structures/pirate_island_smoke_top.png` and `_iso.png` show the island the NeoForge
+dedicated-server smoke test generates (seed 2718281828, port `pirate_island_-3012_4328`: a narrow sandy spit with the
+jetty running west into the sea, real terrain, the beard and the land filter at work). To regenerate:
+
+```sh
+tools/server_smoke.sh neoforge
+python3 tools/world_region.py neoforge/build/server-smoke/world -3088 4256 -2960 4384 --y0 45 --y1 95 \
+    --out /tmp/pirate_island_smoke.schem
+python3 tools/render_generated_structure.py /tmp/pirate_island_smoke.schem --out art/renders/structures
+```
+
+`tools/world_region.py` cuts a box out of a saved world's Anvil region files as a Sponge schematic (standard library;
+chunks not generated up to features come out as air). The first smoke render showed the beard raising a sand bar the
+length of the jetty: vanilla's jigsaw gives a rigid child of a rigid parent its parent's ground level (the jetty's
+came out one above the sea), so `PortStructure.plan` now copies every rigid piece hanging rigidly from the start
+(jetty, pier, quay) with its ground level a thousand blocks down, out of the beard's reach
+(`PortStructure.unbearded`; `StructureLayoutGameTests.pirateIslandBeardSparesTheJetty` feeds the island's pieces to
+vanilla's beardifier and fails without it). The camp's own beard still widens the beach a few blocks in front of the
+landing.
+
 `tools/render_generated_structure.py` draws `_top` (every column's top block from above, lit from the north-west,
 water darkened with depth, 8 px per block) and `_iso` (the south-east isometric view with `tools/iso_render.render`,
 shapes and rough Minecraft colours, only exposed blocks). `--iso lab --port N` posts the region to the

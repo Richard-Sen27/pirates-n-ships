@@ -211,16 +211,42 @@ public final class PortStructure extends Structure {
                 Optional.empty(), maxDistanceFromCenter, PoolAliasLookup.EMPTY, DimensionPadding.ZERO, LiquidSettings.APPLY_WATERLOGGING);
         return stub.map(s -> new GenerationStub(s.position(), builder -> {
             List<StructurePiece> pieces = s.getPiecesBuilder().build().pieces();
+            List<LandFilter.Node> nodes = landNodes(pieces);
             boolean[] keep = landPiecesOnLand
-                    ? LandFilter.keep(landNodes(pieces), (x, z) -> terrain.firstFree(x, z) <= seaSurface)
+                    ? LandFilter.keep(nodes, (x, z) -> terrain.firstFree(x, z) <= seaSurface)
                     : null;
             for (int i = 0; i < pieces.size(); i++) {
                 StructurePiece piece = pieces.get(i);
                 if (keep != null && !keep[i]) continue;
                 if (i > 0 && sinksIntoTerrain(piece)) piece.move(0, -1, 0);
+                if (i > 0 && nodes.get(i).parent() == 0 && !nodes.get(i).land() && piece instanceof PoolElementStructurePiece p) {
+                    piece = unbearded(p, context.structureTemplateManager());
+                }
                 builder.addPiece(piece);
             }
         }));
+    }
+
+    /**
+     * The ground level offset that takes a piece out of the beard's reach: vanilla's {@code Beardifier} levels the
+     * terrain toward {@code box.minY() + groundLevelDelta} only within 12 blocks above and below that level, so a level
+     * a thousand blocks down leaves the piece's surroundings alone. The offset is used by nothing else once the jigsaw
+     * has assembled the pieces (it is saved with the piece).
+     */
+    public static final int UNBEARDED_GROUND_LEVEL_DELTA = -1000;
+
+    /**
+     * {@code piece} with its ground level out of the beard's reach (STR2): a rigid piece hanging rigidly from the start
+     * piece is the jetty, the pier or the quay, standing in the water. Vanilla's jigsaw gives such a child the ground
+     * level of its parent (the jetty hangs five blocks below the camp's sand, so its ground level comes out six above
+     * its foot, one above the sea), and with terrain adaptation the beard would raise a sand bar the length of the
+     * jetty (seen in the REL3 smoke world). The copy keeps the element, position, rotation, box and junctions.
+     */
+    static PoolElementStructurePiece unbearded(PoolElementStructurePiece piece, net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager templates) {
+        PoolElementStructurePiece copy = new PoolElementStructurePiece(templates, piece.getElement(), piece.getPosition(),
+                UNBEARDED_GROUND_LEVEL_DELTA, piece.getRotation(), piece.getBoundingBox(), LiquidSettings.APPLY_WATERLOGGING);
+        piece.getJunctions().forEach(copy::addJunction);
+        return copy;
     }
 
     /**

@@ -134,6 +134,47 @@ public final class StructureLayoutGameTests {
         helper.succeed();
     }
 
+    /**
+     * The beard (terrain adaptation {@code beard_thin}) levels the ground round the huts but leaves the jetty's water
+     * alone: vanilla's beardifier, fed the island's pieces the way {@code Beardifier.forStructuresInChunk} feeds them,
+     * adds nothing at the jetty's far end (the jetty's ground level is out of reach, {@link PortStructure#unbearded}),
+     * and fills under the ground row beside a building.
+     */
+    @ModGameTest(timeoutTicks = 100)
+    public static void pirateIslandBeardSparesTheJetty(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        int seaY = helper.absolutePos(BlockPos.ZERO).getY() + SEA_Y;
+        PortStructure island = island(level);
+        helper.assertValueEqual(island.terrainAdaptation(), net.minecraft.world.level.levelgen.structure.TerrainAdjustment.BEARD_THIN,
+                "terrain adaptation");
+        List<StructurePiece> pieces = planIsland(helper, level, seaY, ISLAND_SEEDS[0]);
+        var rigids = new it.unimi.dsi.fastutil.objects.ObjectArrayList<net.minecraft.world.level.levelgen.Beardifier.Rigid>();
+        var junctions = new it.unimi.dsi.fastutil.objects.ObjectArrayList<net.minecraft.world.level.levelgen.structure.pools.JigsawJunction>();
+        for (StructurePiece piece : pieces) {
+            if (!(piece instanceof net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece p)) continue;
+            if (p.getElement().getProjection() == net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool.Projection.RIGID) {
+                rigids.add(new net.minecraft.world.level.levelgen.Beardifier.Rigid(p.getBoundingBox(), island.terrainAdaptation(),
+                        p.getGroundLevelDelta()));
+            }
+            junctions.addAll(p.getJunctions());
+        }
+        net.minecraft.world.level.levelgen.Beardifier beard = new net.minecraft.world.level.levelgen.Beardifier(rigids.iterator(), junctions.iterator());
+        StructureLayout layout = StructureLayout.of(pieces);
+        BoundingBox jetty = single(helper, layout, "jetty", ISLAND_SEEDS[0]);
+        for (int y = seaY - 4; y <= seaY + 2; y++) {
+            double d = beard.compute(new net.minecraft.world.level.levelgen.DensityFunction.SinglePointContext(
+                    (jetty.minX() + jetty.maxX()) / 2, y, jetty.minZ()));
+            helper.assertTrue(Math.abs(d) < 1e-6, "no beard at the jetty's far end (y " + y + "): " + d);
+        }
+        StructureLayout.Piece hut = layout.pieces().stream().filter(p -> IslandData.HUTS.containsKey(p.name())
+                && !p.name().startsWith("treasure")).findFirst().orElse(null);
+        helper.assertTrue(hut != null, "a building on the island");
+        double under = beard.compute(new net.minecraft.world.level.levelgen.DensityFunction.SinglePointContext(
+                hut.box().minX() - 1, hut.box().minY() - 1, hut.box().minZ() + 1));
+        helper.assertTrue(under > 0.05, "the beard fills the ground beside " + hut.name() + ": " + under);
+        helper.succeed();
+    }
+
     @ModGameTest(template = GameTestTemplates.EMPTY_160_DEEP, timeoutTicks = 400, batch = "pirates_n_ships_structure_layout")
     public static void pirateIslandPlaced1(GameTestHelper helper) {
         placeIsland(helper, RENDER_SEEDS[0]);

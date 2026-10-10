@@ -820,3 +820,27 @@ anything differs. Watch both logs for an exception that names `compat.jei` or `P
 
 1. Hold the brig key, the brig door, the hull patch and the chain shot in the off hand (F to swap), in first person and in third person (F5, front and back), next to the same item in the main hand: each off-hand pose is the mirror image of the main-hand one (key bow lower left, shank into the screen to the right; door hinge towards the middle; hull patch braced face towards you; chain shot both balls low left), never the main-hand pose turned edge on. Spot check a sword and the pistol the same way (unchanged, already mirrored).
 2. **Flag bundles (ART18):** hold the Jolly Roger, navy and merchant flag bundles in the off hand, first and third person: the Jolly Roger shows its skull and bone upright towards you and outward (not a plain black roll), the navy its white cross, the merchant its red band, and on the navy and merchant bundles the band runs on across the loose flap; in the main hand they look as before (`art/renders/flag_bundles_hands.png`).
+
+## Sea cot: item, thicker bed, joined berths (ART20)
+
+The cot got a new look (a mattress on a low log frame), its item views were fixed, and cots side by side join into one
+wide berth. Compare with `art/renders/sea_cot_before_after.png`, `sea_cot_item.png` (old item views on top) and
+`sea_cot_joined.png`. `/give @s pirates_n_ships:sea_cot 4`, `pirates_n_ships:spruce_sea_cot 2`,
+`pirates_n_ships:oak_sea_cot 2`.
+- **Item:** look at the cot in the hotbar and the inventory. Expected: a small bed seen from its foot, the red blanket,
+  white pillow and the headboard at the back, nothing that looks like stray white pixels. Hold it: in first person it
+  lies crosswise low on the right of the screen (in the off hand on the left), clearly a bed; put it in an item frame
+  (seen from above, head up) and drop it on the ground. Send a screenshot of each.
+- **The bed:** place one cot. Expected: corner posts (taller at the head), a thin log rail along each side well below
+  the mattress, a thick white mattress showing above the rails at the head, the red blanket hanging over its sides, a
+  pillow, panelled head- and footboard; no gap or line where the two halves meet. Say whether it still reads too thin.
+- **Sleeping:** sleep in it at night (on land, then aboard an assembled ship). Expected: you lie at the same height as
+  in a vanilla bed, not sunk into the blanket or floating, the footboard does not cut through your legs; the outline
+  (F3 off, look at it) is a slab with the headboard or footboard at its end.
+- **Joining:** place a second cot right beside the first, facing the same way. Expected: the side rails and posts
+  between them disappear, the mattress, blanket, pillow and the head- and footboards run across: one wide berth with
+  posts only at its four corners. Add a third: still one berth. Use a spruce and an oak cot in the row: they join, each
+  shows its own wood. Place a cot crosswise next to the row's end, and one shifted a block along the row: neither
+  joins. Break the middle cot of three: the two left over show their rails and posts again.
+- **Two sleepers:** with a second player (or a crew member at night aboard), sleep in a joined pair: each lies in his
+  own cot, both count for skipping the night.

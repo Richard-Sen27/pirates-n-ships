@@ -1055,7 +1055,8 @@ datagen's children per wood set the variables (`block/<wood>_<part>`, the legacy
   the `dark_oak_trapdoor` shutters, glass, brass and iron stay.
 - **Chart table** (`chart_table`; the same script): `dark_oak_planks` -> `#planks` (top, aprons), `stripped_dark_oak_log`
   -> `#log` (legs, stretchers, fiddle rails); the `stripped_spruce_log` drawer front stays an accent.
-- **Sea cot** (`sea_cot_head`, `_foot`, `_item`; the same script): `dark_oak_planks` -> `#planks` (boards, knobs),
+- **Sea cot** (`sea_cot_head`, `_foot`, `_item`, and since ART20 each half's `_left`, `_right`, `_left_joined`,
+  `_right_joined`; the same script): `dark_oak_planks` -> `#planks` (boards, knobs),
   `stripped_dark_oak_log` -> `#log` (posts, panels, rails); the wool stays. The script names `planks`, `log` and
   `log_top` only in models flagged `wood` (these three blocks); every other texture keeps a numeric key in first-use
   order, and the lantern, bell and coil models are byte-identical.
@@ -1332,13 +1333,57 @@ Ship decor (ART2): ship's lantern, ship's bell, rope coil, stern window, chart t
   fiddle rails, a `map_tile` chart turned 22.5 degrees with zero-height ink strips (black coast, red course, compass
   cross) 0.05 px above it, a `packed_ice` glass weight, brass dividers (the two legs 0.05 px apart in height), an
   inkwell and a quill.
-- **Sea cot** (head 17, foot 13, item 30 elements): built as one frame (head z -16..0, foot 0..16) and split at the
+- **Sea cot** (ART2's look, superseded by "Sea cot rework (ART20)" below; head 17, foot 13, item 30 elements): built as one frame (head z -16..0, foot 0..16) and split at the
   seam (seam faces left out); posts, panelled head- and footboard, side boards and rails, a red blanket with a white
   sheet fold, pillow; the mattress shows only at the head. The item model (`block/sea_cot_item`, both halves shifted
   8 px south) carries the display entries (GUI scale 0.42).
 - Renders: `renders/ship_lantern.png` (floor, wall, ceiling), `ships_bell.png` (ART2: floor, floor ringing, wall,
   wall ringing; the ringing models are gone since BELL1, see `ships_bell_swing.png`), `rope_coil.png` (one and three coils), `stern_window.png` (open, shutters), `chart_table.png`,
   `sea_cot.png`.
+
+Sea cot rework (ART20):
+- **Why:** the human (2026-10-10): the cot "has some visual problems as an item", "the bed itself is way too thin",
+  and two cots side by side "should connect".
+- **Item diagnosis** (rendered at the gui, first person, ground and item frame transforms; `renders/sea_cot_item.png`,
+  before on top): no z-fight and no open face (`lint_models.py` 0 / 0 before and after). The faults were the display
+  entries against ART2's sunken geometry: the gui (`[30, 225, 0]`) looked at the cot from its head, so the 15.75 px
+  headboard hid the pillow, the mattress lay 1.75 px under the side boards and only a red patch with two white slivers
+  (the sheet fold and the pillow's top over the headboard) showed; at 16 px it read as a dark crate with stray white
+  pixels. First person (`[0, 45, 0]` at 0.25) laid the 2-block model flat along the bottom edge of the screen, mostly
+  out of view; the item frame (`[0, 90, 0]`) showed only its side boards. Fix: gui `[30, -35, 0]` / `[0, 0.5, 0]` /
+  0.45 (from the foot: blanket, sheet fold, pillow and headboard in view), first person `[0, -60, 0]` / `[0, 6, 0]` /
+  0.3 for both hands (crosswise and higher; the left entry repeats the right one, ART17: the cot is symmetric along x),
+  item frame `[-90, 180, 0]` / 0.42 (from above, head up), ground 0.2; third person and head unchanged. The item is
+  the core and both edges of both halves, shifted 8 px south, so it shows the block's proportions.
+- **Proportions** (part list `cot_core`, `cot_edge_w`, `cot_fill_w` in `tools/gen_decor_models.py`, constants
+  `COT_*`; facing north, head z -16..0, foot 0..16 in one frame, parts crossing z 0 cut by `split_seam` with the cut
+  faces left out, so the halves meet without a seam): `#log` side rails y 2..5 (3 px) between corner posts that alone
+  reach the floor (the head posts to 14 px with a knob, the foot posts to 11), plank bottom boards y 2..3, a white wool
+  mattress y 3..8 (5 px, ART2's showed 2 px between the boards), a red blanket y 8..8.6 from z -5 to the footboard with a
+  drape down the mattress' sides onto the rail, a sheet fold to 9 px, a full-width pillow y 8..9.25 with a puff to 9.6.
+  Panelled headboard to 13 px under a log cap rail (13..13.75), footboard to 10 px under its cap (10..10.75). The
+  sleeper lies at vanilla's 11 px (`lyingHeight` unchanged), above the blanket and the footboard cap. Renders:
+  `renders/sea_cot_before_after.png` (ART2 and ART20 from the same cameras: three-quarter, from the head, side at
+  eye level), `renders/sea_cot.png` (redrawn).
+- **Joining** (block state `left` / `right`, `SeaCotBerth`, the name board's row pattern, no block entity): seen from
+  the foot, left is `facing` counter-clockwise (north: west, x 0). A half joins the half beside it when that is a sea
+  cot of the same facing and part (any wood), so cots side by side join head to head and foot to foot, a row of any
+  length pairwise; a crosswise cot or one shifted a block along its length does not join. Each half is a multipart:
+  the core (`sea_cot_head`, `sea_cot_foot`: boards x 2.5..13.5, mattress, blanket, sheet fold, pillow) always, and per
+  side either the edge (`_left`, `_right`: posts, knobs, rail, drape; while unjoined) or the fill (`_left_joined`,
+  `_right_joined`: head- or footboard with its cap, bottom, mattress, blanket, fold and pillow run on to the block's
+  side, the faces there left out; no post, no rail). So a joined row reads as one berth with posts only at its ends, one
+  bolster across with a pillow puff per sleeper. The east parts are the west ones mirrored (`mirror_x`). Mixed woods
+  join: each block draws its own wood, so a mixed row shows its cots' woods side by side in the boards and the end
+  posts are the end cots'. Lint: every part, every core-with-sides combination and the item 0 / 0 / 0. Render:
+  `renders/sea_cot_joined.png` (a dark oak pair, a spruce, oak, dark oak row of three, a cot beside a crosswise cot,
+  the pair from both ends).
+- **Outline and collision:** vanilla's 9 px slab over the cot (x 0.5..15.5, to the block's side on a joined side),
+  plus the headboard to 14.75 px or the footboard to 11.75 px at the outer end (ART2: a 10.25 px box).
+- **Project:** `art/models/sea_cot.bbmodel` is now written by the script (`bb_project`, like the railing's): 11 groups,
+  the item first and visible, textures from `art/vanilla/`. Renders by the RAIL6 method (scratch three.js scene in
+  Blockbench's `risky_eval`, no project opened; the multipart emulated by the conditions above; item transforms as
+  `ItemTransform.apply` and vanilla's first-person arm offset `(±0.56, -0.52, -0.72)` at a 70 degree field of view).
 
 Ship's bell swing (BELL1):
 - **Four groups in `ships_bell.bbmodel`** (32 elements): `bell` (origin = the pin (8, 13, 8): the brass `yoke` round the

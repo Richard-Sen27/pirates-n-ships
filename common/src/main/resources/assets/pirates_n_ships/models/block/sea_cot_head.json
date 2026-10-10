@@ -2,275 +2,13 @@
   "credit": "Made with Blockbench, source art/models/sea_cot.bbmodel",
   "parent": "minecraft:block/block",
   "textures": {
-    "log": "minecraft:block/stripped_dark_oak_log",
     "planks": "minecraft:block/dark_oak_planks",
+    "log": "minecraft:block/stripped_dark_oak_log",
     "0": "minecraft:block/white_wool",
     "1": "minecraft:block/red_wool",
     "particle": "minecraft:block/dark_oak_planks"
   },
   "elements": [
-    {
-      "name": "head_post_w",
-      "from": [
-        0.5,
-        0,
-        0
-      ],
-      "to": [
-        2.5,
-        15,
-        2
-      ],
-      "faces": {
-        "north": {
-          "uv": [
-            13.5,
-            1,
-            15.5,
-            16
-          ],
-          "texture": "#log",
-          "cullface": "north"
-        },
-        "east": {
-          "uv": [
-            14,
-            1,
-            16,
-            16
-          ],
-          "texture": "#log"
-        },
-        "south": {
-          "uv": [
-            0.5,
-            1,
-            2.5,
-            16
-          ],
-          "texture": "#log"
-        },
-        "west": {
-          "uv": [
-            0,
-            1,
-            2,
-            16
-          ],
-          "texture": "#log"
-        },
-        "up": {
-          "uv": [
-            0.5,
-            0,
-            2.5,
-            2
-          ],
-          "texture": "#log"
-        },
-        "down": {
-          "uv": [
-            0.5,
-            14,
-            2.5,
-            16
-          ],
-          "texture": "#log",
-          "cullface": "down"
-        }
-      }
-    },
-    {
-      "name": "head_knob_w",
-      "from": [
-        0.75,
-        15,
-        0.25
-      ],
-      "to": [
-        2.25,
-        15.75,
-        1.75
-      ],
-      "faces": {
-        "north": {
-          "uv": [
-            13.75,
-            0.25,
-            15.25,
-            1
-          ],
-          "texture": "#planks"
-        },
-        "east": {
-          "uv": [
-            14.25,
-            0.25,
-            15.75,
-            1
-          ],
-          "texture": "#planks"
-        },
-        "south": {
-          "uv": [
-            0.75,
-            0.25,
-            2.25,
-            1
-          ],
-          "texture": "#planks"
-        },
-        "west": {
-          "uv": [
-            0.25,
-            0.25,
-            1.75,
-            1
-          ],
-          "texture": "#planks"
-        },
-        "up": {
-          "uv": [
-            0.75,
-            0.25,
-            2.25,
-            1.75
-          ],
-          "texture": "#planks"
-        }
-      }
-    },
-    {
-      "name": "head_post_e",
-      "from": [
-        13.5,
-        0,
-        0
-      ],
-      "to": [
-        15.5,
-        15,
-        2
-      ],
-      "faces": {
-        "north": {
-          "uv": [
-            0.5,
-            1,
-            2.5,
-            16
-          ],
-          "texture": "#log",
-          "cullface": "north"
-        },
-        "east": {
-          "uv": [
-            14,
-            1,
-            16,
-            16
-          ],
-          "texture": "#log"
-        },
-        "south": {
-          "uv": [
-            13.5,
-            1,
-            15.5,
-            16
-          ],
-          "texture": "#log"
-        },
-        "west": {
-          "uv": [
-            0,
-            1,
-            2,
-            16
-          ],
-          "texture": "#log"
-        },
-        "up": {
-          "uv": [
-            13.5,
-            0,
-            15.5,
-            2
-          ],
-          "texture": "#log"
-        },
-        "down": {
-          "uv": [
-            13.5,
-            14,
-            15.5,
-            16
-          ],
-          "texture": "#log",
-          "cullface": "down"
-        }
-      }
-    },
-    {
-      "name": "head_knob_e",
-      "from": [
-        13.75,
-        15,
-        0.25
-      ],
-      "to": [
-        15.25,
-        15.75,
-        1.75
-      ],
-      "faces": {
-        "north": {
-          "uv": [
-            0.75,
-            0.25,
-            2.25,
-            1
-          ],
-          "texture": "#planks"
-        },
-        "east": {
-          "uv": [
-            14.25,
-            0.25,
-            15.75,
-            1
-          ],
-          "texture": "#planks"
-        },
-        "south": {
-          "uv": [
-            13.75,
-            0.25,
-            15.25,
-            1
-          ],
-          "texture": "#planks"
-        },
-        "west": {
-          "uv": [
-            0.25,
-            0.25,
-            1.75,
-            1
-          ],
-          "texture": "#planks"
-        },
-        "up": {
-          "uv": [
-            13.75,
-            0.25,
-            15.25,
-            1.75
-          ],
-          "texture": "#planks"
-        }
-      }
-    },
     {
       "name": "headboard",
       "from": [
@@ -280,14 +18,14 @@
       ],
       "to": [
         13.5,
-        14,
+        13,
         1.5
       ],
       "faces": {
         "north": {
           "uv": [
             2.5,
-            2,
+            3,
             13.5,
             14
           ],
@@ -296,7 +34,7 @@
         "south": {
           "uv": [
             2.5,
-            2,
+            3,
             13.5,
             14
           ],
@@ -317,39 +55,39 @@
       "name": "headboard_panel",
       "from": [
         4,
-        5,
+        6,
         0.2
       ],
       "to": [
         12,
-        12,
+        11.5,
         0.5
       ],
       "faces": {
         "north": {
           "uv": [
             4,
-            4,
+            4.5,
             12,
-            11
+            10
           ],
           "texture": "#log"
         },
         "east": {
           "uv": [
             15.5,
-            4,
+            4.5,
             15.8,
-            11
+            10
           ],
           "texture": "#log"
         },
         "west": {
           "uv": [
             0.2,
-            4,
+            4.5,
             0.5,
-            11
+            10
           ],
           "texture": "#log"
         },
@@ -377,21 +115,21 @@
       "name": "headboard_rail",
       "from": [
         2.5,
-        14,
+        13,
         0.25
       ],
       "to": [
         13.5,
-        14.75,
+        13.75,
         1.75
       ],
       "faces": {
         "north": {
           "uv": [
             2.5,
-            1.25,
+            2.25,
             3.25,
-            12.25
+            13.25
           ],
           "rotation": 90,
           "texture": "#log"
@@ -399,9 +137,9 @@
         "south": {
           "uv": [
             2.5,
-            1.25,
+            2.25,
             3.25,
-            12.25
+            13.25
           ],
           "rotation": 90,
           "texture": "#log"
@@ -424,232 +162,6 @@
             9.25
           ],
           "rotation": 90,
-          "texture": "#log"
-        }
-      }
-    },
-    {
-      "name": "side_w_head",
-      "from": [
-        1,
-        2,
-        2
-      ],
-      "to": [
-        2.5,
-        9.5,
-        16
-      ],
-      "faces": {
-        "north": {
-          "uv": [
-            13.5,
-            6.5,
-            15,
-            14
-          ],
-          "texture": "#planks"
-        },
-        "east": {
-          "uv": [
-            0,
-            6.5,
-            14,
-            14
-          ],
-          "texture": "#planks"
-        },
-        "west": {
-          "uv": [
-            2,
-            6.5,
-            16,
-            14
-          ],
-          "texture": "#planks"
-        },
-        "down": {
-          "uv": [
-            1,
-            0,
-            2.5,
-            14
-          ],
-          "texture": "#planks"
-        }
-      }
-    },
-    {
-      "name": "side_e_head",
-      "from": [
-        13.5,
-        2,
-        2
-      ],
-      "to": [
-        15,
-        9.5,
-        16
-      ],
-      "faces": {
-        "north": {
-          "uv": [
-            1,
-            6.5,
-            2.5,
-            14
-          ],
-          "texture": "#planks"
-        },
-        "east": {
-          "uv": [
-            0,
-            6.5,
-            14,
-            14
-          ],
-          "texture": "#planks"
-        },
-        "west": {
-          "uv": [
-            2,
-            6.5,
-            16,
-            14
-          ],
-          "texture": "#planks"
-        },
-        "down": {
-          "uv": [
-            13.5,
-            0,
-            15,
-            14
-          ],
-          "texture": "#planks"
-        }
-      }
-    },
-    {
-      "name": "rail_w_head",
-      "from": [
-        0.75,
-        9.5,
-        2
-      ],
-      "to": [
-        2.75,
-        10.25,
-        16
-      ],
-      "faces": {
-        "north": {
-          "uv": [
-            13.25,
-            5.75,
-            15.25,
-            6.5
-          ],
-          "texture": "#log"
-        },
-        "east": {
-          "uv": [
-            0,
-            -10.25,
-            0.75,
-            3.75
-          ],
-          "rotation": 90,
-          "texture": "#log"
-        },
-        "west": {
-          "uv": [
-            2,
-            -10.25,
-            2.75,
-            3.75
-          ],
-          "rotation": 90,
-          "texture": "#log"
-        },
-        "up": {
-          "uv": [
-            0.75,
-            2,
-            2.75,
-            16
-          ],
-          "texture": "#log"
-        },
-        "down": {
-          "uv": [
-            0.75,
-            0,
-            2.75,
-            14
-          ],
-          "texture": "#log"
-        }
-      }
-    },
-    {
-      "name": "rail_e_head",
-      "from": [
-        13.25,
-        9.5,
-        2
-      ],
-      "to": [
-        15.25,
-        10.25,
-        16
-      ],
-      "faces": {
-        "north": {
-          "uv": [
-            0.75,
-            5.75,
-            2.75,
-            6.5
-          ],
-          "texture": "#log"
-        },
-        "east": {
-          "uv": [
-            0,
-            -10.25,
-            0.75,
-            3.75
-          ],
-          "rotation": 90,
-          "texture": "#log"
-        },
-        "west": {
-          "uv": [
-            2,
-            -10.25,
-            2.75,
-            3.75
-          ],
-          "rotation": 90,
-          "texture": "#log"
-        },
-        "up": {
-          "uv": [
-            13.25,
-            2,
-            15.25,
-            16
-          ],
-          "texture": "#log"
-        },
-        "down": {
-          "uv": [
-            13.25,
-            0,
-            15.25,
-            14
-          ],
           "texture": "#log"
         }
       }
@@ -687,10 +199,28 @@
       ],
       "to": [
         13.5,
-        8.5,
+        8,
         16
       ],
       "faces": {
+        "east": {
+          "uv": [
+            0,
+            8,
+            14.5,
+            13
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            1.5,
+            8,
+            16,
+            13
+          ],
+          "texture": "#0"
+        },
         "up": {
           "uv": [
             2.5,
@@ -706,21 +236,39 @@
       "name": "blanket_head",
       "from": [
         2.5,
-        8.5,
+        8,
         11
       ],
       "to": [
         13.5,
-        9.1,
+        8.6,
         16
       ],
       "faces": {
         "north": {
           "uv": [
             2.5,
-            6.9,
+            7.4,
             13.5,
-            7.5
+            8
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            0,
+            7.4,
+            5,
+            8
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            11,
+            7.4,
+            16,
+            8
           ],
           "texture": "#1"
         },
@@ -739,30 +287,48 @@
       "name": "sheet_fold",
       "from": [
         2.5,
-        9.1,
+        8.6,
         11
       ],
       "to": [
         13.5,
-        9.5,
+        9,
         12.5
       ],
       "faces": {
         "north": {
           "uv": [
             2.5,
-            6.5,
+            7,
             13.5,
-            6.9
+            7.4
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            3.5,
+            7,
+            5,
+            7.4
           ],
           "texture": "#0"
         },
         "south": {
           "uv": [
             2.5,
-            6.5,
+            7,
             13.5,
-            6.9
+            7.4
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            11,
+            7,
+            12.5,
+            7.4
           ],
           "texture": "#0"
         },
@@ -780,58 +346,58 @@
     {
       "name": "pillow",
       "from": [
-        4,
-        8.5,
+        2.5,
+        8,
         1.75
       ],
       "to": [
-        12,
-        10.25,
-        5.5
+        13.5,
+        9.25,
+        5.75
       ],
       "faces": {
         "north": {
           "uv": [
-            4,
-            5.75,
-            12,
-            7.5
+            2.5,
+            6.75,
+            13.5,
+            8
           ],
           "texture": "#0"
         },
         "east": {
           "uv": [
-            10.5,
-            5.75,
+            10.25,
+            6.75,
             14.25,
-            7.5
+            8
           ],
           "texture": "#0"
         },
         "south": {
           "uv": [
-            4,
-            5.75,
-            12,
-            7.5
+            2.5,
+            6.75,
+            13.5,
+            8
           ],
           "texture": "#0"
         },
         "west": {
           "uv": [
             1.75,
+            6.75,
             5.75,
-            5.5,
-            7.5
+            8
           ],
           "texture": "#0"
         },
         "up": {
           "uv": [
-            4,
+            2.5,
             1.75,
-            12,
-            5.5
+            13.5,
+            5.75
           ],
           "texture": "#0"
         }
@@ -840,58 +406,58 @@
     {
       "name": "pillow_puff",
       "from": [
-        4.5,
-        10.25,
+        4,
+        9.25,
         2.25
       ],
       "to": [
-        11.5,
-        10.75,
-        5
+        12,
+        9.6,
+        5.25
       ],
       "faces": {
         "north": {
           "uv": [
-            4.5,
-            5.25,
-            11.5,
-            5.75
+            4,
+            6.4,
+            12,
+            6.75
           ],
           "texture": "#0"
         },
         "east": {
           "uv": [
-            11,
-            5.25,
+            10.75,
+            6.4,
             13.75,
-            5.75
+            6.75
           ],
           "texture": "#0"
         },
         "south": {
           "uv": [
-            4.5,
-            5.25,
-            11.5,
-            5.75
+            4,
+            6.4,
+            12,
+            6.75
           ],
           "texture": "#0"
         },
         "west": {
           "uv": [
             2.25,
+            6.4,
             5.25,
-            5,
-            5.75
+            6.75
           ],
           "texture": "#0"
         },
         "up": {
           "uv": [
-            4.5,
+            4,
             2.25,
-            11.5,
-            5
+            12,
+            5.25
           ],
           "texture": "#0"
         }

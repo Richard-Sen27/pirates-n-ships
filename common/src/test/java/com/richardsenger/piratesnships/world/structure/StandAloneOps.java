@@ -1,6 +1,7 @@
 package com.richardsenger.piratesnships.world.structure;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.Lifecycle;
@@ -12,15 +13,18 @@ import net.minecraft.core.Registry;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.levelgen.structure.StructureSet;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -60,6 +64,22 @@ public final class StandAloneOps {
                 return new RegistryOps.RegistryInfo<>(owner, getter, Lifecycle.stable());
             }
         });
+    }
+
+    /** A structure set's entries and its {@code pirates_n_ships:configured_spread} placement (WG5). */
+    public record ConfiguredSet(List<StructureSet.StructureSelectionEntry> structures, ConfiguredSpreadPlacement placement) {
+    }
+
+    /**
+     * Parses {@code worldgen/structure_set/<name>} with vanilla's entry codec and our placement's codec (our placement
+     * type is not in the JUnit registry, so {@code StructureSet.DIRECT_CODEC} cannot dispatch to it).
+     */
+    public static ConfiguredSet configuredSet(RegistryOps<JsonElement> ops, String name) throws IOException {
+        JsonObject json = generated("worldgen/structure_set/" + name).getAsJsonObject();
+        JsonObject placement = json.getAsJsonObject("placement");
+        assertEquals("pirates_n_ships:configured_spread", placement.get("type").getAsString(), name + " placement type");
+        return new ConfiguredSet(StructureSet.StructureSelectionEntry.CODEC.listOf().parse(ops, json.get("structures")).getOrThrow(),
+                ConfiguredSpreadPlacement.CODEC.codec().parse(ops, placement).getOrThrow());
     }
 
     public static Path root() {

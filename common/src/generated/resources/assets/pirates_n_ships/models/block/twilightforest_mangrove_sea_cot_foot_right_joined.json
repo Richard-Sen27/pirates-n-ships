@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/sea_cot_foot_right_joined",
+  "textures": {
+    "log": "twilightforest:block/stripped_mangrove_log",
+    "log_top": "twilightforest:block/stripped_mangrove_log_top",
+    "particle": "twilightforest:block/wood/planks_mangrove_0",
+    "planks": "twilightforest:block/wood/planks_mangrove_0"
+  }
+}

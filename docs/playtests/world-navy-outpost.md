@@ -70,8 +70,8 @@ cheats on. Use survival for steps 5 to 9 (creative players are never attacked an
     - `garrison_soldiers = 0`, `garrison_officers = 0`: new outposts stand empty.
     - `mobs.navy_soldier.enabled = false` (the mob toggle): no soldiers are placed.
     - `world.structures.navy_outpost.enabled = false`, restart, fly to an unexplored coast: **expected** no new
-      outposts; existing ones and their garrison stay. `frequency = 0.5`: about half as many. Changing `spacing` or
-      `separation` in the config does nothing (datapack values, see the comments).
+      outposts; existing ones and their garrison stay. `frequency = 0.5`: about half as many. `spacing` and
+      `separation` apply to new chunks since WG5 (see "WG5" in `world-simulation.md`).
 
 ## Open problems to watch
 - **Terrain inside the fort.** The templates carry no air (art/README.md) and terrain adaptation is `none`, so on a

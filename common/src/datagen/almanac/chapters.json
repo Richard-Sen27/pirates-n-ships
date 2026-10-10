@@ -3999,7 +3999,7 @@
   "pirates_n_ships.almanac.ships.p18.text2": "Every wooden fitting in this book comes in every wood, a wood mod's too: name boards, stern windows, chart tables, sea cots, notice boards, flagpoles and pedestals, crow's nests, yards and cleats, each from that wood's planks or stripped log, and the panels show each wood in turn.",
   "pirates_n_ships.almanac.ships.p18.text3": "The {item:pirates_n_ships:chart_table}**chart table** is a captain's table with a chart spread on it.",
   "pirates_n_ships.almanac.ships.p19.heading": "The sea cot",
-  "pirates_n_ships.almanac.ships.p19.text1": "Sleep in a {item:pirates_n_ships:sea_cot}**sea cot** aboard and you respawn at it wherever she has gone.",
+  "pirates_n_ships.almanac.ships.p19.text1": "Sleep in a {item:pirates_n_ships:sea_cot}**sea cot** aboard and you respawn at it wherever she has gone. Set cots side by side, facing the same way, and they join into one wide berth; each still sleeps one.",
   "pirates_n_ships.almanac.ships.p20.heading": "Ordering a ship",
   "pirates_n_ships.almanac.ships.p20.text1": "Seafarer villages build ships to order. The **Orders** tab of the harbour master's desk shows each ship's price, days and materials.",
   "pirates_n_ships.almanac.ships.p20.text2": "**1.** Bring the doubloons and materials and press **Order** for a {item:pirates_n_ships:ship_receipt}**ship receipt** that counts the days.",

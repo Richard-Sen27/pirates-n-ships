@@ -90,6 +90,7 @@ public final class WorldModule implements ModModule {
                 TreasureMapGameTests.class, ConnectionsGameTests.class,
                 StructureBlockEntityGameTests.class, StructureLayoutGameTests.class,
                 com.richardsenger.piratesnships.world.structure.OutpostLayoutGameTests.class,
-                com.richardsenger.piratesnships.world.village.VillageLayoutGameTests.class);
+                com.richardsenger.piratesnships.world.village.VillageLayoutGameTests.class,
+                com.richardsenger.piratesnships.world.structure.SpreadPlacementGameTests.class);
     }
 }

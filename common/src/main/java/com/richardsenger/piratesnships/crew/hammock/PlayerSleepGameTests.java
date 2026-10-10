@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.crew.hammock;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.mojang.authlib.GameProfile;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
@@ -483,7 +484,12 @@ public final class PlayerSleepGameTests {
 
     /** A sea cot on the deck: foot (20, 9, 20), head (21, 9, 20), facing east. */
     private static void cotOnDeck(GameTestHelper h) {
-        BlockState cot = ShipDecor.SEA_COT.get().defaultBlockState().setValue(SeaCotBlock.FACING, Direction.EAST);
+        cotOnDeck(h, ShipDecor.SEA_COT.get());
+    }
+
+    /** {@link #cotOnDeck(GameTestHelper)} with the cot {@code block} (WOOD3: any wood's). */
+    private static void cotOnDeck(GameTestHelper h, SeaCotBlock block) {
+        BlockState cot = block.defaultBlockState().setValue(SeaCotBlock.FACING, Direction.EAST);
         h.setBlock(new BlockPos(20, 9, 20), cot.setValue(SeaCotBlock.PART, BedPart.FOOT));
         h.setBlock(new BlockPos(21, 9, 20), cot.setValue(SeaCotBlock.PART, BedPart.HEAD));
     }
@@ -520,6 +526,30 @@ public final class PlayerSleepGameTests {
                     "woke at " + p.position() + ", not on the deck beside the cot");
             h.assertTrue(!level.getBlockState(head).getValue(BedBlock.OCCUPIED) && !level.getBlockState(foot).getValue(BedBlock.OCCUPIED),
                     "the cot is still occupied");
+            morning(h);
+            h.succeed();
+        });
+    }
+
+    /** WOOD3: a bamboo sea cot aboard is slept in like the dark oak one: the player lies on its seat, the cot is occupied. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = BATCH + "cot_bamboo")
+    public static void aBambooSeaCotAboardSleeps(GameTestHelper h) {
+        SeaCotBlock bamboo = ShipDecor.SEA_COTS.get(ShipWood.BAMBOO);
+        Fixture f = ship(h, x -> cotOnDeck(x, bamboo));
+        ServerLevel level = h.getLevel();
+        BlockPos foot = plot(f, 20, 9, 20), head = plot(f, 21, 9, 20);
+        h.assertTrue(level.getBlockState(head).is(bamboo), "no bamboo cot on the ship: " + level.getBlockState(head));
+        Sleeper p = sleeper(h, worldOf(f, Vec3.atBottomCenterOf(plot(f, 19, 9, 21))));
+        setTimeOfDay(h, MIDNIGHT);
+        h.runAfterDelay(DUSK, () -> {
+            use(h, p, foot);
+            h.assertTrue(p.isSleeping(), "not asleep in the bamboo cot: " + p.actionBar);
+            assertAsleepOnSeat(h, p, foot, head, "in the bamboo cot");
+            h.assertTrue(level.getBlockState(head).getValue(BedBlock.OCCUPIED), "the cot is not occupied");
+        });
+        h.runAfterDelay(DUSK + 4, () -> p.stopSleepInBed(false, true));
+        h.runAfterDelay(DUSK + 7, () -> {
+            assertUp(h, p, foot, "after Leave Bed");
             morning(h);
             h.succeed();
         });

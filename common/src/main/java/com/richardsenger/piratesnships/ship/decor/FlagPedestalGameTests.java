@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.ship.decor;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
@@ -95,6 +96,28 @@ public final class FlagPedestalGameTests {
             h.assertItemEntityPresent(ShipDecor.FLAG_PEDESTAL.get().asItem(), new BlockPos(1, 2, 1), 1.5);
             h.succeed();
         });
+    }
+
+    /**
+     * WOOD3: a dark oak pedestal takes a cherry pole: the pedestal shows the pole, the pole stands on it with its cleat
+     * at the pedestal, whatever the two woods.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, batch = BATCH)
+    public static void aDarkOakPedestalTakesAPoleOfAnotherWood(GameTestHelper h) {
+        stackedConfig(h);
+        Player player = h.makeMockPlayer(GameType.CREATIVE);
+        BlockPos base = new BlockPos(2, 1, 2), pedestal = base.above(), low = pedestal.above();
+        h.setBlock(base, Blocks.STONE);
+        Block darkOak = ShipDecor.FLAG_PEDESTALS.get(ShipWood.DARK_OAK);
+        h.assertTrue(placeOnTop(h, player, darkOak, base).consumesAction(), "the dark oak pedestal was not placed");
+        h.assertBlockPresent(darkOak, pedestal);
+        h.assertTrue(placeOnTop(h, player, ShipDecor.FLAGPOLES.get(ShipWood.CHERRY), pedestal).consumesAction(),
+                "the cherry pole was not placed on the pedestal");
+        h.assertBlockProperty(pedestal, FlagpoleFooting.POLE, true);
+        h.assertBlockProperty(low, FlagpoleBlock.PART, FlagpolePart.TOP);
+        FlagpoleFoot.Pole one = pole(h, low);
+        h.assertTrue(one.height() == 1 && one.cleat() == -1 && one.base() == FlagpoleFoot.Support.PEDESTAL, "pole on the pedestal: " + one);
+        h.succeed();
     }
 
     /**

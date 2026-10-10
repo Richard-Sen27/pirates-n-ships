@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.ship.decor;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.content.ContentTestSupport;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
@@ -195,6 +196,55 @@ public final class DecorGameTests {
         helper.assertBlockProperty(pos, SternWindowBlock.FACING, Direction.EAST);
         use(helper, player, pos);
         helper.assertBlockProperty(pos, SternWindowBlock.SHUTTERS, false);
+        helper.succeed();
+    }
+
+    /**
+     * WOOD3: a warped stern window, placed by a player looking south, faces him (north), its shutters close and open,
+     * it drops itself, its recipe gives two, and a nether wood's window does not catch fire from lava.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void aWarpedSternWindowPlacesWithShutters(GameTestHelper helper) {
+        Block window = ShipDecor.STERN_WINDOWS.get(ShipWood.WARPED);
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        BlockPos floor = new BlockPos(4, 1, 4);
+        helper.setBlock(floor, Blocks.STONE);
+        player.setYRot(Direction.SOUTH.toYRot());
+        BlockPos pos = place(helper, player, window, floor, Direction.UP);
+        helper.assertBlockProperty(pos, SternWindowBlock.FACING, Direction.NORTH);
+        helper.assertBlockProperty(pos, SternWindowBlock.SHUTTERS, false);
+        use(helper, player, pos);
+        helper.assertBlockProperty(pos, SternWindowBlock.SHUTTERS, true);
+        use(helper, player, pos);
+        helper.assertBlockProperty(pos, SternWindowBlock.SHUTTERS, false);
+        helper.assertTrue(!window.defaultBlockState().ignitedByLava(), "a warped window burns in lava");
+        helper.assertTrue(ShipDecor.STERN_WINDOW.get().defaultBlockState().ignitedByLava(), "the dark oak window does not burn in lava");
+        ContentTestSupport.assertPlacesAndDropsSelf(helper, window, new BlockPos(1, 2, 1));
+        ContentTestSupport.assertRecipe(helper, "warped_stern_window", window.asItem(), 2);
+        helper.succeed();
+    }
+
+    /**
+     * WOOD3: a crimson chart table, placed by a player looking east, faces him with its drawer (west), stands on its
+     * own legs (the top's shape), drops itself and comes from crimson planks.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9)
+    public static void aCrimsonChartTablePlacesFacingThePlayer(GameTestHelper helper) {
+        Block table = ShipDecor.CHART_TABLES.get(ShipWood.CRIMSON);
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        BlockPos floor = new BlockPos(4, 1, 4);
+        helper.setBlock(floor, Blocks.STONE);
+        player.setYRot(Direction.EAST.toYRot());
+        BlockPos pos = place(helper, player, table, floor, Direction.UP);
+        helper.assertBlockProperty(pos, ChartTableBlock.FACING, Direction.WEST);
+        helper.assertTrue(((ChartTableBlock) table).wood() == ShipWood.CRIMSON, "the table does not know its wood");
+        BlockState state = helper.getBlockState(pos);
+        helper.assertTrue(state.getShape(helper.getLevel(), helper.absolutePos(pos)).max(Direction.Axis.Y) > 0.85,
+                "the table top is missing from the shape");
+        ContentTestSupport.assertPlacesAndDropsSelf(helper, table, new BlockPos(1, 2, 1));
+        ContentTestSupport.assertRecipe(helper, "crimson_chart_table", table.asItem(), 1);
+        helper.assertTrue(helper.getLevel().getRecipeManager().byKey(Constants.id("crimson_chart_table")).orElseThrow().value()
+                .getIngredients().stream().anyMatch(i -> i.test(new ItemStack(Items.CRIMSON_PLANKS))), "not made of crimson planks");
         helper.succeed();
     }
 

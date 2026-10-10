@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.ship.decor;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
 import com.richardsenger.piratesnships.core.gametest.ModGameTest;
@@ -210,6 +211,33 @@ public final class NameplateGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * WOOD3: a row of a spruce, an oak (the legacy {@code nameplate}) and a birch board joins into one board on a ship,
+     * and the spruce master shows the ship's name; every board keeps its own wood.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 200)
+    public static void aSpruceNameBoardShowsTheNameInARowOfMixedWoods(GameTestHelper helper) {
+        buildHull(helper, false);
+        List<ShipWood> woods = List.of(ShipWood.SPRUCE, ShipWood.OAK, ShipWood.BIRCH);
+        for (int i = 0; i < ROW.size(); i++) {
+            helper.setBlock(ROW.get(i), ShipDecor.NAMEPLATES.get(woods.get(i)).defaultBlockState().setValue(NameBoardBlock.FACING, Direction.NORTH));
+        }
+        ShipBody ship = assemble(helper);
+        BlockPos helm = find(ship, AssemblyContent.HELM.get());
+        helper.assertTrue(helm != null, "helm not in the plot");
+        List<BlockPos> plotRow = new ArrayList<>();
+        for (BlockPos p : ROW) plotRow.add(helm.offset(p.subtract(HELM)));
+        for (int i = 0; i < ROW.size(); i++) {
+            BlockState s = helper.getLevel().getBlockState(plotRow.get(i));
+            helper.assertTrue(s.is(ShipDecor.NAMEPLATES.get(woods.get(i))), "board " + i + " is not " + woods.get(i) + ": " + s);
+        }
+        helper.assertTrue(ShipAssembler.name(ship, "Black Gull").success(), "naming failed");
+        helper.succeedWhen(() -> {
+            assertRowAbsolute(helper, plotRow);
+            assertText(helper, plotRow.get(0), "Black Gull");
+        });
+    }
+
     /** A row survives assembly and a disassembly turned a quarter round: still one row, the same board its master. */
     @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = 200)
     public static void aRowSurvivesAssemblyAndATurnedDisassembly(GameTestHelper helper) {
@@ -326,7 +354,7 @@ public final class NameplateGameTests {
         for (int i = 0; i < row.size(); i++) {
             BlockPos p = row.get(i);
             BlockState s = level.getBlockState(p);
-            if (!s.is(ShipDecor.NAMEPLATE.get()) || !(level.getBlockEntity(p) instanceof NameplateBlockEntity be)) {
+            if (!(s.getBlock() instanceof NameBoardBlock) || !(level.getBlockEntity(p) instanceof NameplateBlockEntity be)) {
                 throw new GameTestAssertException("no name board at " + p + ": " + s);
             }
             if (be.rowIndex() != i) throw new GameTestAssertException("board " + p + " has index " + be.rowIndex() + ", expected " + i);

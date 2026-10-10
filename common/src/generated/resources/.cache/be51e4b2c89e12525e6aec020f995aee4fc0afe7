@@ -1,4 +1,4 @@
-// 1.21.1	2026-10-10T14:32:31.999066	Raw JSON (data): pirates_n_ships
+// 1.21.1	2026-10-10T15:11:57.825224	Raw JSON (data): pirates_n_ships
 83d4229b876541fdafca0b0204dd1992244f1684 data/pirates_n_ships/advancement/recipes/decorations/aether_skyroot_bulwark.json
 aaede8159d1fb7c105ed469a4fc710a223e62486 data/pirates_n_ships/advancement/recipes/decorations/aether_skyroot_bulwark_port.json
 ddf1139e9016d392e73fba94f640a8bcd44c5700 data/pirates_n_ships/advancement/recipes/decorations/aether_skyroot_chart_table.json
@@ -1562,7 +1562,7 @@ c4ff12db94de4599cec90c32e217057f2aa65e87 data/pirates_n_ships/almanac/chapters/c
 4177e70dbd491b9aec384ee27f5751e59b80c113 data/pirates_n_ships/almanac/chapters/not_yet.json
 0f67372046bdf64db07a6593ac34d994b02f100b data/pirates_n_ships/almanac/chapters/provisions.json
 4f507b7403cdb7dc1ccf859a8c08a39da0867839 data/pirates_n_ships/almanac/chapters/sailing.json
-530bea8fcea2cd2081814d2c6faf2116059e867d data/pirates_n_ships/almanac/chapters/ships.json
+c99b0bf44c34b77d73f19d1219eb4805854888fc data/pirates_n_ships/almanac/chapters/ships.json
 e05406b093b3ac5b1e51c76b3da9015455212896 data/pirates_n_ships/almanac/chapters/trade.json
 c0a6111bebe674c9f043afd182b116d226e9ca4f data/pirates_n_ships/almanac/chapters/welcome.json
 f94a6d7d4b9ac38d8e11f27893af1eb781197ce2 data/pirates_n_ships/loot_table/blocks/aether_skyroot_bulwark.json

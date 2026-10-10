@@ -443,12 +443,16 @@
           "key": "pirates_n_ships.almanac.ships.p18.text1"
         },
         {
+          "type": "text",
+          "key": "pirates_n_ships.almanac.ships.p18.text2"
+        },
+        {
           "type": "recipe",
           "recipe": "pirates_n_ships:stern_window"
         },
         {
           "type": "text",
-          "key": "pirates_n_ships.almanac.ships.p18.text2"
+          "key": "pirates_n_ships.almanac.ships.p18.text3"
         },
         {
           "type": "recipe",

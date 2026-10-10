@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.station.lookout;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
+import com.richardsenger.piratesnships.ship.rigging.RiggingContent;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
@@ -110,6 +112,11 @@ public final class LookoutGameTests {
 
     /** The rig with {@code poleBlocks} flagpole blocks standing on the nest (FLG3). */
     private static Rig rig(GameTestHelper h, int x0, int z0, int poleBlocks) {
+        return rig(h, x0, z0, poleBlocks, LookoutContent.CROWS_NEST.get());
+    }
+
+    /** The rig with the crow's nest {@code nestBlock} (WOOD3: any wood's). */
+    private static Rig rig(GameTestHelper h, int x0, int z0, int poleBlocks, CrowsNestBlock nestBlock) {
         for (int x = x0; x <= x0 + 4; x++) {
             for (int z = z0; z <= z0 + 4; z++) {
                 for (int y = 5; y <= 8; y++) {
@@ -122,11 +129,11 @@ public final class LookoutGameTests {
         BlockPos helm = new BlockPos(x0 + 2, 9, z0 + 1);
         h.setBlock(helm, AssemblyContent.HELM.get().defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
         h.setBlock(new BlockPos(x0 + 2, 9, z0 + 3), Blocks.OAK_FENCE);
-        h.setBlock(new BlockPos(x0 + 2, 10, z0 + 3), LookoutContent.CROWS_NEST.get());
+        h.setBlock(new BlockPos(x0 + 2, 10, z0 + 3), nestBlock);
         for (int i = 1; i <= poleBlocks; i++) h.setBlock(new BlockPos(x0 + 2, 10 + i, z0 + 3), ShipDecor.FLAGPOLE.get());
         Fixture f = SailingGameTestsShips.assemble(h, helm);
         for (BlockPos p : f.ship().plotBlocks()) {
-            if (h.getLevel().getBlockState(p).is(LookoutContent.CROWS_NEST.get())) {
+            if (h.getLevel().getBlockState(p).is(nestBlock)) {
                 return new Rig(f, p);
             }
         }
@@ -377,6 +384,31 @@ public final class LookoutGameTests {
             h.assertTrue(call.what() == SightingPayload.What.SHARK && call.relative() < -60 && call.relative() > -120
                     && call.distance() == rep.sighting().distance() && call.ship().equals(r.ship().id()), "call " + call);
             h.assertTrue(about(scan(h, r, List.of(), now + 60), key(s)).isEmpty(), "the shark was called twice");
+            s.discard();
+            CrewStations.release(h.getLevel(), c);
+            c.discard();
+            Lookouts.forget(r.ship().id());
+            h.succeed();
+        });
+    }
+
+    /**
+     * WOOD3: an acacia crow's nest is a lookout station like the spruce one: a crew member seated in it calls a shark
+     * once; the nest anchors ratlines (the family is in {@code ratlines_anchors}).
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 100, batch = BATCH + "acacia")
+    public static void anAcaciaNestSightsAShark(GameTestHelper h) {
+        SailingGameTestsShips.basin(h, true);
+        CrowsNestBlock acacia = LookoutContent.CROWS_NESTS.get(ShipWood.ACACIA);
+        Rig r = rig(h, 3, 3, 0, acacia);
+        h.assertTrue(h.getLevel().getBlockState(r.nest()).is(RiggingContent.RATLINES_ANCHORS), "the acacia nest anchors no ratlines");
+        CrewMember c = lookout(h, r);
+        Shark s = shark(h, r, 12, 0);
+        h.runAtTickTime(5, () -> {
+            long now = firstScan(h, r);
+            List<Lookouts.Report> first = about(scan(h, r, List.of(), now), key(s));
+            h.assertTrue(first.size() == 1 && first.get(0).sighting().kind() == Lookouts.Kind.SHARK,
+                    "shark calls from the acacia nest: " + first);
             s.discard();
             CrewStations.release(h.getLevel(), c);
             c.discard();

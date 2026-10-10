@@ -1,5 +1,6 @@
 package com.richardsenger.piratesnships.ship.decor.flag;
 
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.richardsenger.piratesnships.combat.content.ContentTestSupport;
 import com.richardsenger.piratesnships.core.gametest.ConfigOverrides;
 import com.richardsenger.piratesnships.core.gametest.GameTestTemplates;
@@ -150,6 +151,27 @@ public final class FlagGameTests {
                 assertReading(helper, poles.get(i), FlagReading.flying(kinds.get(i)));
                 helper.assertTrue(be(helper, poles.get(i)).state().hoistedBy().orElseThrow().equals(player.getUUID()), "hoister not stored");
             }
+        }).thenSucceed();
+    }
+
+    /**
+     * WOOD3: a cherry flagpole takes a flag and flies it after the hoist delay like the spruce one; its block entity is
+     * the flagpole's, and it drops itself with the flag when broken.
+     */
+    @ModGameTest(template = GameTestTemplates.EMPTY_9, timeoutTicks = TIMEOUT)
+    public static void aCherryFlagpoleFliesAFlag(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        BlockPos rel = new BlockPos(3, 1, 3);
+        helper.setBlock(rel, ShipDecor.FLAGPOLES.get(ShipWood.CHERRY));
+        helper.assertTrue(helper.getLevel().getBlockEntity(helper.absolutePos(rel)) instanceof FlagpoleBlockEntity,
+                "the cherry pole has no flagpole block entity");
+        use(helper, player, rel, Flags.stackFor(FlagKind.NAVY));
+        helper.assertTrue(player.getMainHandItem().isEmpty(), "the flag item should be taken by the pole");
+        helper.startSequence().thenExecuteAfter(delay() + 2, () -> {
+            assertReading(helper, rel, FlagReading.flying(FlagKind.NAVY));
+            helper.getLevel().destroyBlock(helper.absolutePos(rel), true);
+            helper.assertItemEntityPresent(ShipDecor.FLAGPOLES.get(ShipWood.CHERRY).asItem(), rel, 2.0);
+            helper.assertItemEntityPresent(Flags.NAVY_FLAG.get(), rel, 2.0);
         }).thenSucceed();
     }
 

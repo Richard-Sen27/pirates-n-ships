@@ -2,8 +2,8 @@
 """Checks the release texts against the code (docs/releasing.md, "Cutting a release").
 
 Usage:
-    check_release_texts.py [file ...]   check the given Markdown files (default: the store page, the 1.0.0
-                                        notes and the README)
+    check_release_texts.py [file ...]   check the given Markdown files (default: the store page, the README and
+                                        the notes of the version being released, see below)
     check_release_texts.py --self-test  check the rules on fixed input
 
 What fails, per file and line:
@@ -18,9 +18,15 @@ What fails, per file and line:
   the one in gradle.properties (a Maven suffix such as `+mc.1.21.1` may be left out);
 - in a release-notes file (`*-notes.md`), a dependency of the release that is not named with its version at all.
 
+The version being released is the environment variable VERSION when set (the release workflow's "Release notes"
+step sets it to the tag without its `v`, e.g. 0.1.0 for v0.1.0), otherwise `mod_version` from gradle.properties. Its
+notes are docs/release/<version>-notes.md, the file the workflow publishes; they are checked when they exist (a
+hand-written notes file is optional after the first release) and the summary says when there are none.
+
 The output is one line per problem and a summary; the exit code is 1 when anything failed.
 """
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -28,7 +34,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 LANG = ROOT / "common/src/generated/resources/assets/pirates_n_ships/lang/en_us.json"
 GRADLE_PROPERTIES = ROOT / "gradle.properties"
-DEFAULT_FILES = ["docs/release/store-page.md", "docs/release/1.0.0-notes.md", "README.md"]
+DEFAULT_FILES = ["docs/release/store-page.md", "README.md"]
+NOTES = "docs/release/{version}-notes.md"
 MOD_ID = "pirates_n_ships"
 
 # Dependency names as players read them -> the gradle.properties key that holds the version. Longer names first, so
@@ -59,6 +66,17 @@ ITALIC = re.compile(r"(?<![*\w])\*(?!\*)([^*\n]+?)(?<!\s)\*(?!\*)|(?<![_\w])_(?!
 
 def load_lang(path=LANG):
     return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def release_version(props, environ=os.environ):
+    """The version whose notes are checked: VERSION from the release workflow, else gradle.properties' mod_version."""
+    return environ.get("VERSION") or props.get("mod_version", "")
+
+
+def default_files(props, environ=os.environ, root=ROOT):
+    """The store page, the README and, when it exists, the notes file the workflow publishes for this version."""
+    notes = NOTES.format(version=release_version(props, environ))
+    return DEFAULT_FILES + [notes] if (root / notes).exists() else list(DEFAULT_FILES)
 
 
 def load_properties(path=GRADLE_PROPERTIES):
@@ -162,8 +180,11 @@ def self_test():
     for fragment in expected:
         assert any(fragment in p for p in problems), f"missed {fragment!r}: {problems}"
     assert len(problems) == len(expected), problems
-    notes = check_text("1.0.0-notes.md", "Sable 2.0.6 only\n", facts)
+    notes = check_text("0.1.0-notes.md", "Sable 2.0.6 only\n", facts)
     assert any("do not name GeckoLib" in p for p in notes) and not any("name Sable" in p for p in notes), notes
+    assert release_version({"mod_version": "0.1.0"}, {}) == "0.1.0"
+    assert release_version({"mod_version": "0.1.0"}, {"VERSION": "0.2.0-beta.1"}) == "0.2.0-beta.1"
+    assert NOTES.format(version="0.1.0") == "docs/release/0.1.0-notes.md"
     print("check_release_texts self-test passed")
 
 
@@ -174,8 +195,11 @@ def main(argv):
     unknown = [a for a in argv if a.startswith("--")]
     if unknown:
         sys.exit(f"unknown option(s): {' '.join(unknown)}\n{__doc__}")
-    files = argv or DEFAULT_FILES
-    facts = Facts(load_lang(), load_properties())
+    props = load_properties()
+    files = argv or default_files(props)
+    if not argv and len(files) == len(DEFAULT_FILES):
+        print(f"no release notes for {release_version(props)} ({NOTES.format(version=release_version(props))})")
+    facts = Facts(load_lang(), props)
     problems = []
     for name in files:
         path = Path(name) if Path(name).is_absolute() else ROOT / name
@@ -185,7 +209,7 @@ def main(argv):
         problems += check_text(name, path.read_text(encoding="utf-8"), facts)
     for problem in problems:
         print(problem)
-    print(f"{len(files)} file(s) checked against {len(facts.registry_ids)} registry ids, "
+    print(f"{len(files)} file(s) ({', '.join(files)}) checked against {len(facts.registry_ids)} registry ids, "
           f"{len(facts.config_keys)} config keys and gradle.properties: "
           + (f"{len(problems)} problem(s)" if problems else "all good"))
     return 1 if problems else 0

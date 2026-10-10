@@ -151,8 +151,13 @@ public final class VoyageCommands {
                     VoyageConfig.ENDPOINT_RADIUS_CELLS.get(), from.toString(), ms);
             case NO_END -> Component.translatable(KEY + "no_lane.no_start", from.toString(), to.toString(), status,
                     VoyageConfig.ENDPOINT_RADIUS_CELLS.get(), to.toString(), ms);
-            case NO_PATH -> Component.translatable(KEY + "no_lane.no_path", from.toString(), to.toString(), status, res.expanded(),
-                    from.toString(), to.toString(), ms);
+            case NO_PATH -> {
+                int cell = VoyageConfig.CELL_BLOCKS.get();
+                var b = res.searched();
+                yield Component.translatable(KEY + "no_lane.no_path", from.toString(), to.toString(), status, res.expanded(),
+                        from.toString(), b == null ? "-" : b.minX() * cell, b == null ? "-" : b.maxX() * cell + cell - 1,
+                        b == null ? "-" : b.minZ() * cell, b == null ? "-" : b.maxZ() * cell + cell - 1, to.toString(), ms);
+            }
             case BUDGET -> Component.translatable(KEY + "no_lane.budget", from.toString(), to.toString(), status, res.expanded(),
                     res.budget(), Math.round(r.straight()), ms);
             case FOUND -> Component.translatable(KEY + "no_lane", from.toString(), to.toString(), status, res.expanded(), ms);
@@ -169,7 +174,7 @@ public final class VoyageCommands {
                 .add(KEY + "no_lane", "No lane from %s to %s (%s after %s cells, %s ms)")
                 .add(KEY + "no_lane.unknown", "No lane from %s to %s: unknown port, or the two are in different dimensions")
                 .add(KEY + "no_lane.no_start", "No lane from %s to %s (%s): no sea within %s cells of the berth of %s (%s ms)")
-                .add(KEY + "no_lane.no_path", "No lane from %s to %s (%s after %s cells): the sea around %s is closed and never reaches %s, the two lie on separate seas (%s ms)")
+                .add(KEY + "no_lane.no_path", "No lane from %s to %s (%s after %s cells): the sea around %s (x %s..%s, z %s..%s) is closed and never reaches %s, the two lie on separate seas (%s ms)")
                 .add(KEY + "no_lane.budget", "No lane from %s to %s (%s after %s cells): the search budget of %s cells for %s blocks ran out (%s ms)")
                 .add(KEY + "lane", "Lane %s -> %s: %s blocks, %s waypoints, %s of %s cells searched, %s biome samples, %s ms");
     }

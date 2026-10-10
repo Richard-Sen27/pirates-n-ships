@@ -287,6 +287,7 @@ class LanePathfinderTest {
         LanePathfinder.Result closed = LanePathfinder.find(split, 16, 16, 101 * CELL + 16, 16, new LanePathfinder.Params(4.0, 200_000, 8, 6.0, 20_000, 400));
         assertEquals(LanePathfinder.Status.NO_PATH, closed.status(), "separate seas: the whole closed sea searched");
         assertEquals(141 * 141, closed.expanded());
+        assertEquals(new LanePathfinder.Bounds(-70, -70, 70, 70), closed.searched(), "the closed sea's extent");
         assertEquals(40_400, closed.budget(), "400 x 101 cells");
         LanePathfinder.Result tight = LanePathfinder.find(split, 16, 16, 101 * CELL + 16, 16, new LanePathfinder.Params(4.0, 200_000, 8, 6.0, 1_000, 100));
         assertEquals(LanePathfinder.Status.BUDGET, tight.status());

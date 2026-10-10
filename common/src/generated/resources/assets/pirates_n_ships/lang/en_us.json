@@ -261,7 +261,7 @@
   "commands.pirates_n_ships.world.voyages.materialize.waiting_for_chunks": "Voyage %s waits for its chunks to load; try again in a moment",
   "commands.pirates_n_ships.world.voyages.no_lane": "No lane from %s to %s (%s after %s cells, %s ms)",
   "commands.pirates_n_ships.world.voyages.no_lane.budget": "No lane from %s to %s (%s after %s cells): the search budget of %s cells for %s blocks ran out (%s ms)",
-  "commands.pirates_n_ships.world.voyages.no_lane.no_path": "No lane from %s to %s (%s after %s cells): the sea around %s is closed and never reaches %s, the two lie on separate seas (%s ms)",
+  "commands.pirates_n_ships.world.voyages.no_lane.no_path": "No lane from %s to %s (%s after %s cells): the sea around %s (x %s..%s, z %s..%s) is closed and never reaches %s, the two lie on separate seas (%s ms)",
   "commands.pirates_n_ships.world.voyages.no_lane.no_start": "No lane from %s to %s (%s): no sea within %s cells of the berth of %s (%s ms)",
   "commands.pirates_n_ships.world.voyages.no_lane.unknown": "No lane from %s to %s: unknown port, or the two are in different dimensions",
   "commands.pirates_n_ships.world.voyages.not_materialised": "Voyage %s is not a real ship",

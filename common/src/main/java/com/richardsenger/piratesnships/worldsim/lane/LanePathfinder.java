@@ -66,11 +66,13 @@ public final class LanePathfinder {
 
     /**
      * The outcome: {@code waypoints} in block coordinates (empty unless FOUND), cells expanded, the path cost, the
-     * budget the search had and the start and end cells it used ({@code null} for NO_START, NO_END).
+     * budget the search had, the start and end cells it used ({@code null} for NO_START, NO_END) and the cell bounds of
+     * what it searched ({@code null} when nothing was; for NO_PATH: the extent of the start's closed sea).
      */
-    public record Result(Status status, List<Lane.Point> waypoints, int expanded, double cost, int budget, Cell start, Cell end) {
+    public record Result(Status status, List<Lane.Point> waypoints, int expanded, double cost, int budget, Cell start, Cell end,
+                         Bounds searched) {
         public Result(Status status, List<Lane.Point> waypoints, int expanded, double cost) {
-            this(status, waypoints, expanded, cost, 0, null, null);
+            this(status, waypoints, expanded, cost, 0, null, null, null);
         }
 
         public boolean found() {
@@ -80,6 +82,10 @@ public final class LanePathfinder {
 
     /** A grid cell. */
     public record Cell(int x, int z) {
+    }
+
+    /** Inclusive cell bounds. */
+    public record Bounds(int minX, int minZ, int maxX, int maxZ) {
     }
 
     private LanePathfinder() {
@@ -105,6 +111,7 @@ public final class LanePathfinder {
         private long startKey, endKey;
         private int sx, sz, ex, ez;
         private int budget;
+        private int bMinX = Integer.MAX_VALUE, bMinZ = Integer.MAX_VALUE, bMaxX = Integer.MIN_VALUE, bMaxZ = Integer.MIN_VALUE;
         private int expanded;
         private Result result;
 
@@ -122,7 +129,7 @@ public final class LanePathfinder {
             }
             Optional<long[]> end = nearestSea(grid, grid.cellOf(toX), grid.cellOf(toZ), p.endpointRadius());
             if (end.isEmpty()) {
-                result = new Result(Status.NO_END, List.of(), 0, 0, 0, new Cell((int) start.get()[0], (int) start.get()[1]), null);
+                result = new Result(Status.NO_END, List.of(), 0, 0, 0, new Cell((int) start.get()[0], (int) start.get()[1]), null, null);
                 return;
             }
             sx = (int) start.get()[0];
@@ -201,6 +208,10 @@ public final class LanePathfinder {
                 return;
             }
             expanded++;
+            if (n.x < bMinX) bMinX = n.x;
+            if (n.x > bMaxX) bMaxX = n.x;
+            if (n.z < bMinZ) bMinZ = n.z;
+            if (n.z > bMaxZ) bMaxZ = n.z;
             for (int d = 0; d < 8; d++) {
                 int nx = n.x + DX[d], nz = n.z + DZ[d];
                 long nk = key(nx, nz);
@@ -218,7 +229,8 @@ public final class LanePathfinder {
         }
 
         private Result done(Status status, List<Lane.Point> waypoints, double cost) {
-            return new Result(status, waypoints, expanded, cost, budget, new Cell(sx, sz), new Cell(ex, ez));
+            Bounds searched = expanded == 0 ? null : new Bounds(bMinX, bMinZ, bMaxX, bMaxZ);
+            return new Result(status, waypoints, expanded, cost, budget, new Cell(sx, sz), new Cell(ex, ez), searched);
         }
     }
 

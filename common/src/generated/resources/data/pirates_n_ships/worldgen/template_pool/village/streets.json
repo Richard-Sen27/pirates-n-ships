@@ -4,7 +4,79 @@
       "element": {
         "element_type": "minecraft:single_pool_element",
         "location": "pirates_n_ships:village/street",
-        "processors": "pirates_n_ships:connections",
+        "processors": "pirates_n_ships:village_street",
+        "projection": "terrain_matching"
+      },
+      "weight": 3
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/street_long",
+        "processors": "pirates_n_ships:village_street",
+        "projection": "terrain_matching"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/street_bend_left",
+        "processors": "pirates_n_ships:village_street",
+        "projection": "terrain_matching"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/street_bend_right",
+        "processors": "pirates_n_ships:village_street",
+        "projection": "terrain_matching"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/street_fork_left",
+        "processors": "pirates_n_ships:village_street",
+        "projection": "terrain_matching"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/street_fork_right",
+        "processors": "pirates_n_ships:village_street",
+        "projection": "terrain_matching"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/street_crossroads",
+        "processors": "pirates_n_ships:village_street",
+        "projection": "terrain_matching"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/street_square_well",
+        "processors": "pirates_n_ships:village_street",
+        "projection": "terrain_matching"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/street_square_market",
+        "processors": "pirates_n_ships:village_street",
         "projection": "terrain_matching"
       },
       "weight": 1

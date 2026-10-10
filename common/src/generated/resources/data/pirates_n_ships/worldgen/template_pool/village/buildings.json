@@ -7,7 +7,34 @@
         "processors": "pirates_n_ships:connections",
         "projection": "rigid"
       },
-      "weight": 3
+      "weight": 6
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/house_tall",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 4
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/house_garden",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 4
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/house_fisher",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 4
     },
     {
       "element": {
@@ -16,12 +43,84 @@
         "processors": "pirates_n_ships:connections",
         "projection": "rigid"
       },
-      "weight": 1
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/inn",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 2
     },
     {
       "element": {
         "element_type": "minecraft:single_pool_element",
         "location": "pirates_n_ships:village/shipwright",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/slipway",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/warehouse",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/net_loft",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/fish_market",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/lighthouse",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/chapel",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/well",
         "processors": "pirates_n_ships:connections",
         "projection": "rigid"
       },

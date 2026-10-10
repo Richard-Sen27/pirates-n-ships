@@ -65,16 +65,27 @@ class StructurePiecesTest {
     private record Group(String name, List<String> pieces, Map<String, List<String>> convention) {
     }
 
+    /** The seafarer village (ST1; STR3's street network, building looks and decorations). */
     private static final Group VILLAGE = new Group("village",
-            List.of("dock_head", "house_small", "pier", "shipwright", "street", "street_end", "tavern"),
+            List.of("chapel", "deco_barrels", "deco_bench_tree", "deco_cart", "deco_fish_rack", "deco_flowers",
+                    "deco_lantern", "deco_laundry", "deco_nets", "deco_rowboat", "deco_woodpile", "dock_head",
+                    "fish_market", "house_fisher", "house_garden", "house_small", "house_tall", "inn", "lighthouse",
+                    "net_loft", "pier", "shipwright", "slipway", "street", "street_bend_left", "street_bend_right",
+                    "street_crossroads", "street_end", "street_end_green", "street_end_loop", "street_fork_left",
+                    "street_fork_right", "street_long", "street_square_market", "street_square_well", "tavern",
+                    "warehouse", "well"),
             Map.of(
                     MOD + ":street_out", List.of(MOD + ":street_in", MOD + ":village/streets", "aligned"),
                     MOD + ":street_in", List.of(MOD + ":street_out", EMPTY, "aligned"),
                     MOD + ":building_out", List.of(MOD + ":building_in", MOD + ":village/buildings", "rollable"),
                     MOD + ":building_in", List.of(MOD + ":building_out", EMPTY, "rollable"),
                     MOD + ":pier_out", List.of(MOD + ":pier_in", MOD + ":village/pier", "aligned"),
-                    MOD + ":pier_in", List.of(MOD + ":pier_out", EMPTY, "aligned")));
-    private static final Set<String> BUILDINGS = Set.of("house_small", "shipwright", "tavern");
+                    MOD + ":pier_in", List.of(MOD + ":pier_out", EMPTY, "aligned"),
+                    MOD + ":streethead_out", List.of(MOD + ":street_in", MOD + ":village/streetheads", "aligned"),
+                    MOD + ":deco_out", List.of(MOD + ":deco_in", MOD + ":village/decorations", "rollable"),
+                    MOD + ":deco_in", List.of(MOD + ":deco_out", EMPTY, "rollable")));
+    private static final Set<String> BUILDINGS = Set.of("chapel", "fish_market", "house_fisher", "house_garden",
+            "house_small", "house_tall", "inn", "lighthouse", "net_loft", "shipwright", "slipway", "tavern", "warehouse", "well");
 
     /** The pirate island (ST2; STR2's path network, building looks and decorations). */
     private static final Group ISLAND = new Group("pirate_island",
@@ -359,17 +370,41 @@ class StructurePiecesTest {
 
     @Test
     void connectorsPerPiece() throws IOException {
-        assertEquals(Map.of("pier_out", 1, "street_out", 1), countNames(jigsaws(village("dock_head"))));
+        assertEquals(Map.of("pier_out", 1, "streethead_out", 1), countNames(jigsaws(village("dock_head"))));
         assertEquals(Map.of("berth", 2, "pier_in", 1), countNames(jigsaws(village("pier"))));
         assertEquals(Map.of("building_out", 2, "street_in", 1, "street_out", 1), countNames(jigsaws(village("street"))));
-        assertEquals(Map.of("street_in", 1), countNames(jigsaws(village("street_end"))), "the terminator spawns nothing");
+        // STR3's street network: one street_in per piece; straights and bends lead on once, forks twice, the crossroads
+        // three times, the market square never (a dead end of buildings); buildings and decorations on the sides
+        assertEquals(Map.of("building_out", 2, "deco_out", 2, "street_in", 1, "street_out", 1), countNames(jigsaws(village("street_long"))));
+        for (String bend : List.of("street_bend_left", "street_bend_right")) {
+            assertEquals(Map.of("building_out", 2, "street_in", 1, "street_out", 1), countNames(jigsaws(village(bend))), bend);
+            Jigsaw out = jigsaws(village(bend)).stream().filter(j -> j.name().endsWith("street_out")).findFirst().orElseThrow();
+            assertEquals(bend.endsWith("left") ? "east" : "west", out.front(), bend + " turns");
+        }
+        for (String fork : List.of("street_fork_left", "street_fork_right")) {
+            assertEquals(Map.of("building_out", 1, "deco_out", 1, "street_in", 1, "street_out", 2), countNames(jigsaws(village(fork))), fork);
+        }
+        assertEquals(Map.of("street_in", 1, "street_out", 3), countNames(jigsaws(village("street_crossroads"))));
+        assertEquals(Map.of("building_out", 2, "deco_out", 2, "street_in", 1, "street_out", 1),
+                countNames(jigsaws(village("street_square_well"))));
+        assertEquals(Map.of("building_out", 3, "deco_out", 2, "street_in", 1), countNames(jigsaws(village("street_square_market"))));
+        for (String end : List.of("street_end", "street_end_green", "street_end_loop")) {
+            assertEquals(Map.of("street_in", 1), countNames(jigsaws(village(end))), end + ": the terminator spawns nothing");
+        }
+        for (String name : VILLAGE.pieces()) {
+            if (!name.startsWith("deco_")) continue;
+            List<Jigsaw> jigsaws = jigsaws(village(name));
+            assertEquals(Map.of("deco_in", 1), countNames(jigsaws), name);
+            assertEquals("north", jigsaws.get(0).front(), name + " faces north");
+            assertEquals(0, jigsaws.get(0).pos().getY(), name + ": the connector is on the ground row");
+        }
         for (String building : BUILDINGS) {
             List<Jigsaw> jigsaws = jigsaws(village(building));
             assertEquals(Map.of("building_in", 1), countNames(jigsaws), building);
             assertEquals("north", jigsaws.get(0).front(), building + " faces north");
             assertEquals(0, jigsaws.get(0).pos().getY(), building + ": the connector is on the foundation row");
         }
-        // the dock head's connectors: pier seaward (north), street inland (south), both on the quay row
+        // the dock head's connectors: pier seaward (north), the streethead inland (south), both on the quay row
         for (Jigsaw j : jigsaws(village("dock_head"))) {
             assertEquals(j.name().endsWith("pier_out") ? "north" : "south", j.front(), j.name());
             assertEquals(0, j.pos().getY(), j.name());

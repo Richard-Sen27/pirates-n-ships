@@ -1,0 +1,95 @@
+{
+  "elements": [
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/deco_cart",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/deco_barrels",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 3
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/deco_nets",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/deco_rowboat",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/deco_flowers",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 3
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/deco_bench_tree",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/deco_lantern",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/deco_fish_rack",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/deco_woodpile",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:village/deco_laundry",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 2
+    }
+  ],
+  "fallback": "minecraft:empty"
+}

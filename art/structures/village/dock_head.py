@@ -2,7 +2,7 @@
 prints the BuildSpec as JSON.
 
 The sea is to the north: ``pier_out`` on the north edge hangs the pier from the quay (the pier deck is level with the
-paving, row y 0, which sits one block above sea level), ``street_out`` on the south edge leads inland. The hut (east
+paving, row y 0, which sits one block above sea level), ``streethead_out`` on the south edge leads inland (STR3: it draws from the streetheads pool, which never ends or bends, so every village climbs inland). The hut (east
 half) has its door on the north side; inside, the harbor master's desk faces the door (its customer side north), and
 the notice board stands on the quay beside the door, its notices facing the quay."""
 from _style import DARK, PALETTE, corner_post, door_frame, lantern_post, plinth, rafter_ends, trim_band, window
@@ -76,8 +76,8 @@ p.put(3, 1, 9, "minecraft:barrel[facing=up]")
 p.put(3, 2, 9, "minecraft:flower_pot")
 
 p.connector(5, 0, 0, "pier_out", "north", "minecraft:chiseled_stone_bricks")
-p.connector(2, 0, S - 1, "street_out", "south", "minecraft:stone_bricks")
+p.connector(2, 0, S - 1, "streethead_out", "south", "minecraft:stone_bricks")
 
 p.emit("stone quay with the harbor master's hut, a notice board, lanterns and cargo",
-       ["Start piece. Sea to the north: pier_out at [5, 0, 0], street_out at [2, 0, 10].",
+       ["Start piece. Sea to the north: pier_out at [5, 0, 0], streethead_out at [2, 0, 10].",
         "The paving (y 0) sits one block above sea level; the pier's deck continues it."])

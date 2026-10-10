@@ -249,7 +249,7 @@ public final class OutpostLayoutGameTests {
                 b.maxX() + StructureLayoutGameTests.MARGIN, Math.min(level.getMaxBuildHeight() - 1, b.maxY() + StructureLayoutGameTests.MARGIN),
                 b.maxZ() + StructureLayoutGameTests.MARGIN);
         try {
-            RegionSchematic.write(level, region, StructureLayoutGameTests.dir().resolve("navy_outpost_" + seed + ".schem"));
+            RegionSchematic.write(level, region, helper.absolutePos(BlockPos.ZERO), StructureLayoutGameTests.dir().resolve("navy_outpost_" + seed + ".schem"));
         } catch (IOException e) {
             throw new IllegalStateException("could not write the region of seed " + seed, e);
         }

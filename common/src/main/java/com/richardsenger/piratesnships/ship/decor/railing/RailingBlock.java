@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.ship.decor.railing;
 
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.core.block.Waterlogging;
 import com.richardsenger.piratesnships.ship.decor.DecorConfig;
@@ -58,7 +60,15 @@ import java.util.concurrent.ConcurrentHashMap;
  * ({@link #getBlockSupportShape}), so a lantern hangs below it or stands on it and a chain runs on from it; a plain rail
  * does not. The grappling hook holds on a railing like on a cleat ({@code #pirates_n_ships:grapple_latches}).
  */
-public class RailingBlock extends Block implements SimpleWaterloggedBlock {
+public class RailingBlock extends Block implements SimpleWaterloggedBlock, WoodBlock {
+    /** The wood of this member (WOOD1). */
+    private final ShipWood wood;
+
+    @Override
+    public ShipWood wood() {
+        return wood;
+    }
+
 
     public static final BooleanProperty NORTH = BlockStateProperties.NORTH;
     public static final BooleanProperty EAST = BlockStateProperties.EAST;
@@ -91,8 +101,9 @@ public class RailingBlock extends Block implements SimpleWaterloggedBlock {
     private volatile double collisionHeight = -1;
     private volatile Map<BlockState, VoxelShape> collisions = new ConcurrentHashMap<>();
 
-    public RailingBlock(Properties properties) {
+    public RailingBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         BlockState s = stateDefinition.any().setValue(Waterlogging.WATERLOGGED, false);
         for (BooleanProperty p : EDGES.values()) s = s.setValue(p, false);
         for (BooleanProperty p : POSTS.values()) s = s.setValue(p, false);

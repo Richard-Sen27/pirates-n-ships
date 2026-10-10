@@ -76,6 +76,25 @@ class InfoPagesTest {
         assertEquals(new InfoPages.Page("Helm: Steers. (see Ships)", "The ship's inventory"), page);
     }
 
+    /** WOOD1: one inventory line of a wood family's lead (oak, or the legacy member) covers every wood's member. */
+    @Test
+    void aWoodFamilysLineCoversEveryWood() {
+        Map<String, String> lang = lang(
+                "pirates_n_ships.almanac.inventory.title", "The ship's inventory",
+                "pirates_n_ships.almanac.inventory.p1.list1_1", "{item:pirates_n_ships:oak_railing}**Oak railing**: Runs along an edge.",
+                "pirates_n_ships.almanac.inventory.p1.list1_2", "{item:pirates_n_ships:helm}**Helm**: Steers.");
+        Map<ResourceLocation, String> items = new LinkedHashMap<>();
+        items.put(id("oak_railing"), "Oak Railing");
+        items.put(id("spruce_railing"), "Spruce Railing");
+        items.put(id("biomesoplenty_redwood_railing"), "Redwood Railing");
+        items.put(id("helm"), "Dark Oak Helm");
+        items.put(id("oak_helm"), "Oak Helm");
+        Map<ResourceLocation, InfoPages.Page> pages = InfoPages.build(lang, items);
+        assertEquals("Oak railing: Runs along an edge.", pages.get(id("spruce_railing")).text());
+        assertEquals(pages.get(id("oak_railing")), pages.get(id("biomesoplenty_redwood_railing")));
+        assertEquals("Helm: Steers.", pages.get(id("oak_helm")).text(), "the legacy member's line covers the family");
+    }
+
     @Test
     void linksInsideTheTextKeepTheirLabelOrTheChapterTitle() {
         Map<String, String> lang = lang(

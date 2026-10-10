@@ -644,10 +644,17 @@ public final class AlmanacScreen extends Screen {
         g.blit(AlmanacPanels.TEXTURE, a.x(), a.y(), AlmanacPanels.PANEL_U, AlmanacPanels.PANEL_V, RecipeGrid.W, RecipeGrid.H,
                 AlmanacPanels.TEX_W, AlmanacPanels.TEX_H);
         Minecraft mc = Minecraft.getInstance();
-        RecipeView view = mc.level == null ? RecipeView.NONE : RecipeView.of(mc.level, box.recipe());
         long time = mc.level == null ? 0 : mc.level.getGameTime();
+        // WOOD1: a wood family's panel shows each wood's recipe in turn
+        List<ResourceLocation> members = mc.level == null ? List.of(box.recipe()) : RecipeView.family(mc.level, box.recipe());
+        ResourceLocation shown = members.get(RecipeGrid.familyCycle(members.size(), time));
+        RecipeView view = mc.level == null ? RecipeView.NONE : RecipeView.of(mc.level, shown);
         g.blit(AlmanacPanels.TEXTURE, a.x() + RecipeGrid.ARROW_X, a.y() + RecipeGrid.ARROW_Y, AlmanacPanels.ARROW_U,
                 AlmanacPanels.ARROW_V, RecipeGrid.ARROW_W, RecipeGrid.ARROW_H, AlmanacPanels.TEX_W, AlmanacPanels.TEX_H);
+        if (members.size() > 1 && hover != null && px >= a.x() + RecipeGrid.ARROW_X && px < a.x() + RecipeGrid.ARROW_X + RecipeGrid.ARROW_W
+                && py >= a.y() + RecipeGrid.ARROW_Y && py < a.y() + RecipeGrid.ARROW_Y + RecipeGrid.ARROW_H) {
+            hover.text = Component.translatable(AlmanacScreenText.EVERY_WOOD);
+        }
         switch (view.kind()) {
             case SHAPED, SHAPELESS -> {
                 for (int slot = 0; slot < 9; slot++) {

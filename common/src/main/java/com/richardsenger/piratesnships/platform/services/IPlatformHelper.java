@@ -9,6 +9,12 @@ public interface IPlatformHelper {
     /** Whether a mod with the given id is loaded. */
     boolean isModLoaded(String modId);
 
+    /**
+     * Whether this is a data generation run (WOOD1: the wood families then register every wood, the compat woods'
+     * included, so datagen writes their files; usable during registration).
+     */
+    boolean isDataGeneration();
+
     /** Whether we run in a development environment (Gradle runs) rather than a production install. */
     boolean isDevelopmentEnvironment();
 

@@ -118,6 +118,8 @@ The {item:pirates_n_ships:figurehead_eagle}**eagle** and the {item:pirates_n_shi
 show_me: railings | Show me: railings and bulwarks
 An {item:pirates_n_ships:oak_railing}**oak railing** runs along a block's edge; click again to rail another edge.
 
+Railings, ports, gates and bulwarks come in every wood, a wood mod's too: each is made from that wood's planks, and the panels below show each wood in turn.
+
 {recipe:oak_railing}
 
 A {item:pirates_n_ships:oak_railing_port}**railing port** is the gap in it: cannons fire through it, boarders cross there.

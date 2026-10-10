@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestGenerator;
@@ -80,11 +81,16 @@ public final class OarGameTests {
 
     /** The ballasted hull at (x0, 3) with {@code benches} oar benches at the rails amidships, assembled. */
     private static Ship ship(GameTestHelper h, int x0, boolean benches) {
+        return ship(h, x0, benches, ShipWood.OAK);
+    }
+
+    /** {@link #ship(GameTestHelper, int, boolean)} with benches of {@code wood} (WOOD1). */
+    private static Ship ship(GameTestHelper h, int x0, boolean benches, ShipWood wood) {
         BlockPos helm = StationGameTests.hull(h, x0, 3);
         SailingGameTestsShips.ballast(h, x0, 3);
         if (benches) {
-            h.setBlock(new BlockPos(x0 + 4, 9, 6), bench(Direction.EAST)); // port
-            h.setBlock(new BlockPos(x0, 9, 6), bench(Direction.WEST)); // starboard
+            h.setBlock(new BlockPos(x0 + 4, 9, 6), bench(Direction.EAST, wood)); // port
+            h.setBlock(new BlockPos(x0, 9, 6), bench(Direction.WEST, wood)); // starboard
         }
         AssemblyResult r = ShipTestCleanup.assemble(h, helm);
         if (r.shipId() == null) throw new AssertionError("assembly failed: " + r);
@@ -95,7 +101,11 @@ public final class OarGameTests {
     }
 
     private static net.minecraft.world.level.block.state.BlockState bench(Direction outboard) {
-        return OarsContent.BENCHES.lead().get().defaultBlockState().setValue(OarBenchBlock.FACING, outboard);
+        return bench(outboard, ShipWood.OAK);
+    }
+
+    private static net.minecraft.world.level.block.state.BlockState bench(Direction outboard, ShipWood wood) {
+        return OarsContent.BENCHES.get(wood).defaultBlockState().setValue(OarBenchBlock.FACING, outboard);
     }
 
     /** Three crew with AI amidships on the deck (stationary: they never stroll). */
@@ -337,16 +347,27 @@ public final class OarGameTests {
     /** Assembly keeps the benches: the station, its facing and its kind on the ship. */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 60, batch = BATCH + "assembly")
     public static void assemblyKeepsTheBenches(GameTestHelper h) {
+        keepsBenches(h, ShipWood.OAK);
+    }
+
+    /** WOOD1: the family's factory path in another wood: spruce benches are stations on the ship like oak ones. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 60, batch = BATCH + "assembly_spruce")
+    public static void assemblyKeepsSpruceBenches(GameTestHelper h) {
+        keepsBenches(h, ShipWood.SPRUCE);
+    }
+
+    private static void keepsBenches(GameTestHelper h, ShipWood wood) {
         pin(h);
         calm(h);
         StationGameTests.basin(h, true);
-        Ship s = ship(h, 17, true);
+        Ship s = ship(h, 17, true, wood);
         h.runAfterDelay(2, () -> {
             clearWind(h);
             Map<Direction, Integer> found = new java.util.EnumMap<>(Direction.class);
             for (BlockPos p : s.body().plotBlocks()) {
                 var state = h.getLevel().getBlockState(p);
-                if (state.getBlock() instanceof OarBenchBlock) {
+                if (state.getBlock() instanceof OarBenchBlock bench) {
+                    h.assertTrue(bench.wood() == wood, "a " + bench.wood() + " bench, expected " + wood);
                     found.merge(state.getValue(OarBenchBlock.FACING), 1, Integer::sum);
                     StationRef ref = Stations.at(h.getLevel(), p);
                     h.assertTrue(ref != null && Stations.kindAt(h.getLevel(), ref) == OarBenchStation.INSTANCE, "the bench is no station on the ship");

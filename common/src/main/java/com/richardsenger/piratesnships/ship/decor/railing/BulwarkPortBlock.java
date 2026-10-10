@@ -1,5 +1,7 @@
 package com.richardsenger.piratesnships.ship.decor.railing;
 
+import com.richardsenger.piratesnships.ship.decor.wood.WoodBlock;
+import com.richardsenger.piratesnships.ship.decor.wood.ShipWood;
 import com.mojang.serialization.MapCodec;
 import com.richardsenger.piratesnships.Constants;
 import com.richardsenger.piratesnships.combat.boarding.BoardingContent;
@@ -63,9 +65,17 @@ import java.util.concurrent.ConcurrentHashMap;
  * jambs 2 px wide in the outer corners and the sill, so a player steps out over it as through a railing port. Crew path
  * through it only while open. Waterloggable (WLOG1), refused while {@code ship_decor.railings_enabled} is off.
  */
-public class BulwarkPortBlock extends HorizontalDirectionalBlock implements SimpleWaterloggedBlock {
+public class BulwarkPortBlock extends HorizontalDirectionalBlock implements SimpleWaterloggedBlock, WoodBlock {
+    /** The wood of this member (WOOD1). */
+    private final ShipWood wood;
 
-    public static final MapCodec<BulwarkPortBlock> CODEC = simpleCodec(BulwarkPortBlock::new);
+    @Override
+    public ShipWood wood() {
+        return wood;
+    }
+
+
+    public static final MapCodec<BulwarkPortBlock> CODEC = simpleCodec(p -> new BulwarkPortBlock(ShipWood.OAK, p));
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
     public static final BooleanProperty OPEN = BlockStateProperties.OPEN;
     /** The lid as a player left it, open or shut; a cannon inboard opens it whatever this says. */
@@ -79,8 +89,9 @@ public class BulwarkPortBlock extends HorizontalDirectionalBlock implements Simp
     private volatile double collisionHeight = -1;
     private volatile Map<BlockState, VoxelShape> collisions = new ConcurrentHashMap<>();
 
-    public BulwarkPortBlock(Properties properties) {
+    public BulwarkPortBlock(ShipWood wood, Properties properties) {
         super(properties);
+        this.wood = wood;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(OPEN, false)
                 .setValue(PROPPED, false).setValue(Waterlogging.WATERLOGGED, false));
     }

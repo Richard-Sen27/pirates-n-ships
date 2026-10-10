@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/railing_gate_item",
+  "textures": {
+    "log": "biomesoplenty:block/stripped_palm_log",
+    "log_top": "biomesoplenty:block/stripped_palm_log_top",
+    "particle": "biomesoplenty:block/palm_planks",
+    "planks": "biomesoplenty:block/palm_planks"
+  }
+}

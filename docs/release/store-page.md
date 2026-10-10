@@ -154,7 +154,7 @@ rounds are done.
 - Feints are for the NPC duelists only; players cannot feint, and there is no directional attack and parry mode.
 - Triangular sails are not torn by chain shot (only their rope is cut), and the *Swivel Gun* fires neither chain shot
   nor grapeshot.
-- Railings, bulwarks and oar benches come in oak only for now (more woods are in progress).
+- Railings, bulwarks and oar benches come in every vanilla wood and in the woods of eleven wood mods when installed; the other wooden blocks follow.
 - Not built yet: a ship's logbook, hull paint, a wanted poster of your own.
 - On Fabric the config screen needs Mod Menu (otherwise edit the config files).
 - JEI is held at 19.39.0.372 until the mod moves to a newer NeoForge.

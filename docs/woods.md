@@ -3,7 +3,7 @@
 The human, 2026-10-10: "i want you to add the multi wood support (including woods from other mods)"; earlier "the thing
 with the wood counts for all various wood based things in this mod". WOOD1 builds the core and ships the two families
 that existed (the railing family of RAIL1, RAIL3 and RAIL4, and the oar bench of OAR1) in every wood; WOOD2 to WOOD4
-convert the other wooden blocks.
+convert the other wooden blocks. RAIL6 adds the rope railing (`<wood>_rope_railing`) as a seventh family.
 
 ## The pieces (`ship/decor/wood`)
 
@@ -36,7 +36,8 @@ The model convention (`#planks`, `#log`, `#log_top`, which texture is "the wood"
 ## What ships
 
 - **Registration:** every vanilla wood always; a mod's wood only when its mod is loaded. The registry gains 6
-  families x 11 woods = 66 blocks with items (it had the 6 oak members); each loaded wood mod adds 6 per wood.
+  families x 11 woods = 66 blocks with items (it had the 6 oak members); each loaded wood mod adds 6 per wood. RAIL6's
+  rope railing makes it 7 families (77 blocks without wood mods, 7 per loaded compat wood).
 - **Creative tab:** registration order, so family-major: oak railing, spruce railing, ... warped railing, the loaded
   mods' railings, then the ports, and so on (like vanilla's fences).
 - **Names:** "Spruce Railing", "Redwood Railing". No mod name in the name or a tooltip: two mods with the same wood

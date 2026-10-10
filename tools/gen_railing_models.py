@@ -404,7 +404,7 @@ LATCH_CENTRE_Z = 1.5  # RailingLatchBlock.RING_INSET (px)
 LATCH_CAP = 0  # the cap's top in the latch block's own frame (y 16 of the railing below)
 LATCH_RING_Y = (0.55, 2.95)  # outer; the centre 1.75 = RailingLatchBlock.RING_HEIGHT (px)
 LATCH_RING_X = (7.6, 8.4)
-LATCH_WASHER_Z = (0.3, 2.0)  # on the railing's 2 px rail (0.05..2) as on the bulwark's cap (0.05..3.95): never overhanging
+LATCH_WASHER_Z = (0.3, 2.0)  # on the cap's band (RAIL6: z -0.45..2.45, the top at y 16) and the rope railing's top line
 LATCH_BAR = 0.6
 LATCH_RING_HALF = 1.2
 # the chainplate's palette patches: plate sides, plate top, bolt sides, ring sides, ring top, ring bottom

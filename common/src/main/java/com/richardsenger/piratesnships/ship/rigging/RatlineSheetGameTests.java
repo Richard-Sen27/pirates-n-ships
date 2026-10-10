@@ -67,10 +67,10 @@ public final class RatlineSheetGameTests {
 
     /**
      * Where a climber is put to board a net at a latch on a railing's west edge whose ring is {@code ring}: in the net
-     * end's cell, 0.36 inboard of the ring, so its box stays clear of the rail's collision.
+     * end's cell, 0.55 inboard of the ring, so its box stays 0.2 clear of the rail's collision (a ship's tick of 4 m/s).
      */
     static Vec3 besideLatch(Point ring) {
-        return new Vec3(ring.x() + 0.36, ring.y() + 0.05, ring.z());
+        return new Vec3(ring.x() + 0.55, ring.y() + 0.05, ring.z());
     }
 
     private static String key(net.minecraft.network.chat.Component c) {
@@ -338,10 +338,19 @@ public final class RatlineSheetGameTests {
         }, () -> RatlineNets.netOf(level, end), ship::toPlot, false, true, 130, "latched net on a still ship");
     }
 
-    /** A 52° net from a latch on a ship sailing at a steady 4 m/s under the climber (RL3's pattern; the assist carries it). */
+    /**
+     * A 52° net from a latch on a ship sailing at a steady 4 m/s (RL3's pattern): the climber stands on the deck in the
+     * railing's block, jumps onto the net and climbs it while Sable carries it with the ship.
+     */
     @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 240)
     public static void playerClimbsALatchedNetOnAShipUnderWay(GameTestHelper h) {
-        RatlineNetGameTests.underWayClimb(h, new Vec3(4, 0, 0), 0, false, true, "latched net, ship at 4 m/s");
+        RatlineNetGameTests.underWayClimb(h, new Vec3(4, 0, 0), 0, true, true, "latched net from the deck, ship at 4 m/s");
+    }
+
+    /** The same with the climber put straight into the net end's cell, never touching the deck: the assist carries it. */
+    @ModGameTest(template = GameTestTemplates.EMPTY_40, timeoutTicks = 240)
+    public static void untrackedClimberKeepsUpWithALatchedNetUnderWay(GameTestHelper h) {
+        RatlineNetGameTests.underWayClimb(h, new Vec3(4, 0, 0), 0, false, true, "latched net from its end, ship at 4 m/s");
     }
 
     // ------------------------------------------------------------------ sheets

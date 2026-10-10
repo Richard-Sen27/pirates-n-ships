@@ -353,11 +353,17 @@ public final class RatlineNets {
     /** The sheet of the group {@code hubs} as it stands, with {@code extra} added (a strand being checked) when not null. */
     private static Sheet sheet(BlockGetter level, Function<BlockPos, BlockState> states, Set<BlockPos> hubs,
                                @Nullable Strand extra, double maxSpread) {
+        // each hub's strands in bearing order (RL4's fan order), so who owns a shared cell never depends on the order
+        // the links happen to be stored in
         List<Strand> strands = new ArrayList<>();
         for (BlockPos h : hubs) {
-            strands.addAll(hubStrands(level, states, h));
+            List<Strand> own = new ArrayList<>(hubStrands(level, states, h));
+            if (extra != null && extra.hub().equals(h)) {
+                own.add(extra);
+            }
+            strands.addAll(bearingOrder(own));
         }
-        if (extra != null) {
+        if (extra != null && !hubs.contains(extra.hub())) {
             strands.add(extra);
         }
         int n = strands.size();
@@ -382,6 +388,22 @@ public final class RatlineNets {
             cells.put(new BlockPos(c.cell().x(), c.cell().y(), c.cell().z()), new Placement(strands.get(c.owner()), c.fill(), hub2));
         }
         return new Sheet(hubs, strands, partner, cells);
+    }
+
+    /** {@code strands} of one hub in RL4's fan order round it ({@link RatlineNetRules#fanOrder}). */
+    private static List<Strand> bearingOrder(List<Strand> strands) {
+        if (strands.size() < 2) {
+            return strands;
+        }
+        List<Point> feet = new ArrayList<>();
+        for (Strand s : strands) {
+            feet.add(s.footRing());
+        }
+        List<Strand> out = new ArrayList<>();
+        for (int i : RatlineNetRules.fanOrder(strands.get(0).hubRing(), feet)) {
+            out.add(strands.get(i));
+        }
+        return out;
     }
 
     /** The sheet of {@code hub}'s group as it stands. */
@@ -473,14 +495,14 @@ public final class RatlineNets {
                 return new Check(Refusal.BLOCKED, p, net, Double.NaN, boarding != null);
             }
         }
-        int k = sheet.strands().size() - 1;
+        int k = sheet.strands().indexOf(added);
         if (sheet.joined(k)) {
             return new Check(Refusal.NONE, null, net, Double.NaN, boarding != null);
         }
         // strung alone: how far its nearest neighbour on the same hub is, and whether that one is just not in a row
         double nearest = Double.POSITIVE_INFINITY;
-        for (int i = 0; i < k; i++) {
-            if (sheet.strands().get(i).hub().equals(hub)) {
+        for (int i = 0; i < sheet.strands().size(); i++) {
+            if (i != k && sheet.strands().get(i).hub().equals(hub)) {
                 nearest = Math.min(nearest, RatlineNetRules.spread(added.footRing(), sheet.strands().get(i).footRing()));
             }
         }

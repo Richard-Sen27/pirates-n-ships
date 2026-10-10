@@ -856,9 +856,12 @@ public final class RatlineNetGameTests {
         h.assertTrue(net != null, what + ": no net");
         Point a = net.ringA(), b = net.ringB();
         Vec3 ringB = new Vec3(b.x(), b.y(), b.z());
-        // RL5: at a latch the climber is put in the net end's cell just inboard of the rail, clear of its collision
-        Vec3 board = fromDeck ? new Vec3(plate.getX() - 0.5, plate.getY() + 0.02, plate.getZ() + 0.5)
-                : latch ? RatlineSheetGameTests.besideLatch(a) : new Vec3(a.x(), a.y() + 0.1, a.z());
+        // RL5: at a latch the climber stands on the deck in the railing's block, inboard of the rail, and jumps onto the
+        // net (fromDeck), or is put in the net end's cell inboard of the rail, clear of its collision
+        Vec3 board = latch ? (fromDeck ? new Vec3(plate.getX() + 0.6, plate.getY() - 1 + 0.02, plate.getZ() + 0.5)
+                : RatlineSheetGameTests.besideLatch(a))
+                : fromDeck ? new Vec3(plate.getX() - 0.5, plate.getY() + 0.02, plate.getZ() + 0.5)
+                : new Vec3(a.x(), a.y() + 0.1, a.z());
         int forTicks = 90;
         Player[] player = {null};
         double[] best = {Double.POSITIVE_INFINITY};
@@ -891,6 +894,7 @@ public final class RatlineNetGameTests {
                 return;
             }
             p.zza = 1f;
+            p.setJumping(latch && fromDeck);
             Vec3 feet = ship.toPlot(p.position());
             double toB = feet.distanceTo(ringB);
             double line = lineDistance(a, b, feet);

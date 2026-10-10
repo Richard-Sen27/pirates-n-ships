@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/railing_baluster_east",
+  "textures": {
+    "log": "regions_unexplored:block/stripped_joshua_log",
+    "log_top": "regions_unexplored:block/stripped_joshua_log_top",
+    "particle": "regions_unexplored:block/joshua_planks",
+    "planks": "regions_unexplored:block/joshua_planks"
+  }
+}

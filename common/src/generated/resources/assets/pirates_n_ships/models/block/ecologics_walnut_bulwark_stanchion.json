@@ -1,9 +1,0 @@
-{
-  "parent": "pirates_n_ships:block/bulwark_stanchion",
-  "textures": {
-    "log": "ecologics:block/stripped_walnut_log",
-    "log_top": "ecologics:block/stripped_walnut_log_top",
-    "particle": "ecologics:block/walnut_planks",
-    "planks": "ecologics:block/walnut_planks"
-  }
-}

@@ -1,0 +1,74 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/quark_ancient_rope_railing_edge"
+      },
+      "when": {
+        "north": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/quark_ancient_rope_railing_edge",
+        "y": 90
+      },
+      "when": {
+        "east": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/quark_ancient_rope_railing_edge",
+        "y": 180
+      },
+      "when": {
+        "south": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/quark_ancient_rope_railing_edge",
+        "y": 270
+      },
+      "when": {
+        "west": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/quark_ancient_railing_post"
+      },
+      "when": {
+        "post_nw": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/quark_ancient_railing_post",
+        "y": 90
+      },
+      "when": {
+        "post_ne": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/quark_ancient_railing_post",
+        "y": 180
+      },
+      "when": {
+        "post_se": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "pirates_n_ships:block/quark_ancient_railing_post",
+        "y": 270
+      },
+      "when": {
+        "post_sw": "true"
+      }
+    }
+  ]
+}

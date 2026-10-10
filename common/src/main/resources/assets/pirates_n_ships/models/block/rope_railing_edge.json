@@ -1,0 +1,174 @@
+{
+	"credit": "Made with Blockbench, source art/models/railing.bbmodel",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"log": "minecraft:block/stripped_oak_log",
+		"log_top": "minecraft:block/stripped_oak_log_top",
+		"rope": "pirates_n_ships:block/rope_line",
+		"particle": "#log"
+	},
+	"elements": [
+		{
+			"name": "stanchion",
+			"from": [
+				0,
+				0,
+				0
+			],
+			"to": [
+				2,
+				16.25,
+				2
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0,
+						2,
+						16
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						0,
+						0,
+						2,
+						16
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						0,
+						0,
+						2,
+						16
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						0,
+						0,
+						2,
+						16
+					],
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						0,
+						0,
+						2,
+						2
+					],
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "rope_top",
+			"from": [
+				0,
+				14.5,
+				0.25
+			],
+			"to": [
+				16,
+				16,
+				1.75
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0,
+						16,
+						1.5
+					],
+					"texture": "#rope"
+				},
+				"south": {
+					"uv": [
+						0,
+						0,
+						16,
+						1.5
+					],
+					"texture": "#rope"
+				},
+				"up": {
+					"uv": [
+						0,
+						0.25,
+						16,
+						1.75
+					],
+					"texture": "#rope"
+				},
+				"down": {
+					"uv": [
+						0,
+						0.25,
+						16,
+						1.75
+					],
+					"texture": "#rope"
+				}
+			}
+		},
+		{
+			"name": "rope_middle",
+			"from": [
+				0,
+				7,
+				0.25
+			],
+			"to": [
+				16,
+				8.5,
+				1.75
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						7.5,
+						16,
+						9
+					],
+					"texture": "#rope"
+				},
+				"south": {
+					"uv": [
+						0,
+						7.5,
+						16,
+						9
+					],
+					"texture": "#rope"
+				},
+				"up": {
+					"uv": [
+						0,
+						0.25,
+						16,
+						1.75
+					],
+					"texture": "#rope"
+				},
+				"down": {
+					"uv": [
+						0,
+						0.25,
+						16,
+						1.75
+					],
+					"texture": "#rope"
+				}
+			}
+		}
+	]
+}

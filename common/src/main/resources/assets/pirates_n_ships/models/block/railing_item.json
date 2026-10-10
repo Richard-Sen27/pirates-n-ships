@@ -4,53 +4,181 @@
 	"textures": {
 		"planks": "minecraft:block/oak_planks",
 		"log": "minecraft:block/stripped_oak_log",
+		"log_top": "minecraft:block/stripped_oak_log_top",
 		"particle": "#planks"
 	},
 	"elements": [
 		{
-			"name": "top_rail",
+			"name": "cap",
 			"from": [
 				0,
 				14,
-				7.05
+				6
+			],
+			"to": [
+				16,
+				15.5,
+				10
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0.5,
+						0,
+						2,
+						16
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"south": {
+					"uv": [
+						0.5,
+						0,
+						2,
+						16
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"up": {
+					"uv": [
+						6,
+						0,
+						10,
+						16
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"down": {
+					"uv": [
+						6,
+						0,
+						10,
+						16
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"east": {
+					"uv": [
+						6,
+						0.5,
+						10,
+						2
+					],
+					"texture": "#log_top"
+				},
+				"west": {
+					"uv": [
+						6,
+						0.5,
+						10,
+						2
+					],
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "cap_band",
+			"from": [
+				0,
+				15.5,
+				6.55
 			],
 			"to": [
 				16,
 				16,
-				9
+				9.45
 			],
 			"faces": {
 				"north": {
 					"uv": [
 						0,
 						0,
+						0.5,
+						16
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"south": {
+					"uv": [
+						0,
+						0,
+						0.5,
+						16
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"up": {
+					"uv": [
+						6.55,
+						0,
+						9.45,
+						16
+					],
+					"texture": "#log",
+					"rotation": 90
+				},
+				"east": {
+					"uv": [
+						6.55,
+						0,
+						9.45,
+						0.5
+					],
+					"texture": "#log_top"
+				},
+				"west": {
+					"uv": [
+						6.55,
+						0,
+						9.45,
+						0.5
+					],
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "toe_rail",
+			"from": [
+				0,
+				0,
+				7
+			],
+			"to": [
+				16,
+				2,
+				9
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						14,
 						16,
-						2
+						16
 					],
 					"texture": "#planks"
 				},
 				"south": {
 					"uv": [
 						0,
-						0,
+						14,
 						16,
-						2
+						16
 					],
 					"texture": "#planks"
 				},
 				"up": {
 					"uv": [
 						0,
-						7.05,
-						16,
-						9
-					],
-					"texture": "#planks"
-				},
-				"down": {
-					"uv": [
-						0,
-						7.05,
+						7,
 						16,
 						9
 					],
@@ -59,270 +187,255 @@
 			}
 		},
 		{
-			"name": "lower_rail",
+			"name": "baluster",
 			"from": [
-				0,
 				7,
-				7.05
+				2,
+				7
 			],
 			"to": [
-				16,
 				9,
+				14,
 				9
 			],
 			"faces": {
 				"north": {
 					"uv": [
-						0,
 						7,
-						16,
-						9
+						2,
+						9,
+						14
 					],
-					"texture": "#planks"
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						7,
+						2,
+						9,
+						14
+					],
+					"texture": "#log"
 				},
 				"south": {
 					"uv": [
-						0,
 						7,
-						16,
-						9
+						2,
+						9,
+						14
 					],
-					"texture": "#planks"
+					"texture": "#log"
 				},
-				"up": {
+				"west": {
 					"uv": [
-						0,
-						7.05,
-						16,
-						9
+						7,
+						2,
+						9,
+						14
 					],
-					"texture": "#planks"
+					"texture": "#log"
+				}
+			}
+		},
+		{
+			"name": "baluster_collar_low",
+			"from": [
+				6.75,
+				6,
+				6.75
+			],
+			"to": [
+				9.25,
+				6.5,
+				9.25
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						6.75,
+						9.5,
+						9.25,
+						10
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						6.75,
+						9.5,
+						9.25,
+						10
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						6.75,
+						9.5,
+						9.25,
+						10
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						6.75,
+						9.5,
+						9.25,
+						10
+					],
+					"texture": "#log"
 				},
 				"down": {
 					"uv": [
-						0,
-						7.05,
-						16,
-						9
+						6.75,
+						6.75,
+						9.25,
+						9.25
 					],
-					"texture": "#planks"
+					"texture": "#log_top"
 				}
 			}
 		},
 		{
-			"name": "baluster_0",
+			"name": "baluster_bulge",
 			"from": [
-				1.5,
-				0,
-				7.5
-			],
-			"to": [
-				2.5,
-				14,
-				8.5
-			],
-			"faces": {
-				"north": {
-					"uv": [
-						1.5,
-						2,
-						2.5,
-						16
-					],
-					"texture": "#planks"
-				},
-				"east": {
-					"uv": [
-						7.5,
-						2,
-						8.5,
-						16
-					],
-					"texture": "#planks"
-				},
-				"south": {
-					"uv": [
-						1.5,
-						2,
-						2.5,
-						16
-					],
-					"texture": "#planks"
-				},
-				"west": {
-					"uv": [
-						7.5,
-						2,
-						8.5,
-						16
-					],
-					"texture": "#planks"
-				}
-			}
-		},
-		{
-			"name": "baluster_1",
-			"from": [
-				5.5,
-				0,
-				7.5
-			],
-			"to": [
 				6.5,
-				14,
-				8.5
+				6.5,
+				6.5
 			],
-			"faces": {
-				"north": {
-					"uv": [
-						5.5,
-						2,
-						6.5,
-						16
-					],
-					"texture": "#planks"
-				},
-				"east": {
-					"uv": [
-						7.5,
-						2,
-						8.5,
-						16
-					],
-					"texture": "#planks"
-				},
-				"south": {
-					"uv": [
-						5.5,
-						2,
-						6.5,
-						16
-					],
-					"texture": "#planks"
-				},
-				"west": {
-					"uv": [
-						7.5,
-						2,
-						8.5,
-						16
-					],
-					"texture": "#planks"
-				}
-			}
-		},
-		{
-			"name": "baluster_2",
-			"from": [
+			"to": [
 				9.5,
-				0,
-				7.5
-			],
-			"to": [
-				10.5,
-				14,
-				8.5
+				8.5,
+				9.5
 			],
 			"faces": {
 				"north": {
 					"uv": [
+						6.5,
+						7.5,
 						9.5,
-						2,
-						10.5,
-						16
+						9.5
 					],
-					"texture": "#planks"
+					"texture": "#log"
 				},
 				"east": {
 					"uv": [
+						6.5,
 						7.5,
-						2,
-						8.5,
-						16
+						9.5,
+						9.5
 					],
-					"texture": "#planks"
+					"texture": "#log"
 				},
 				"south": {
 					"uv": [
+						6.5,
+						7.5,
 						9.5,
-						2,
-						10.5,
-						16
+						9.5
 					],
-					"texture": "#planks"
+					"texture": "#log"
 				},
 				"west": {
 					"uv": [
+						6.5,
 						7.5,
-						2,
-						8.5,
-						16
+						9.5,
+						9.5
 					],
-					"texture": "#planks"
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						6.5,
+						6.5,
+						9.5,
+						9.5
+					],
+					"texture": "#log_top"
+				},
+				"down": {
+					"uv": [
+						6.5,
+						6.5,
+						9.5,
+						9.5
+					],
+					"texture": "#log_top"
 				}
 			}
 		},
 		{
-			"name": "baluster_3",
+			"name": "baluster_collar_high",
 			"from": [
-				13.5,
-				0,
-				7.5
+				6.75,
+				8.5,
+				6.75
 			],
 			"to": [
-				14.5,
-				14,
-				8.5
+				9.25,
+				9,
+				9.25
 			],
 			"faces": {
 				"north": {
 					"uv": [
-						13.5,
-						2,
-						14.5,
-						16
+						6.75,
+						7,
+						9.25,
+						7.5
 					],
-					"texture": "#planks"
+					"texture": "#log"
 				},
 				"east": {
 					"uv": [
-						7.5,
-						2,
-						8.5,
-						16
+						6.75,
+						7,
+						9.25,
+						7.5
 					],
-					"texture": "#planks"
+					"texture": "#log"
 				},
 				"south": {
 					"uv": [
-						13.5,
-						2,
-						14.5,
-						16
+						6.75,
+						7,
+						9.25,
+						7.5
 					],
-					"texture": "#planks"
+					"texture": "#log"
 				},
 				"west": {
 					"uv": [
-						7.5,
-						2,
-						8.5,
-						16
+						6.75,
+						7,
+						9.25,
+						7.5
 					],
-					"texture": "#planks"
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						6.75,
+						6.75,
+						9.25,
+						9.25
+					],
+					"texture": "#log_top"
 				}
 			}
 		},
 		{
 			"name": "post_west",
 			"from": [
-				0,
+				-0.5,
 				0,
 				6.5
 			],
 			"to": [
-				3,
-				16,
+				2.5,
+				16.5,
 				9.5
 			],
 			"faces": {
@@ -361,57 +474,6 @@
 						16
 					],
 					"texture": "#log"
-				}
-			}
-		},
-		{
-			"name": "post_west_cap",
-			"from": [
-				0,
-				16,
-				6.5
-			],
-			"to": [
-				3,
-				17,
-				9.5
-			],
-			"faces": {
-				"north": {
-					"uv": [
-						0,
-						0,
-						3,
-						1
-					],
-					"texture": "#planks"
-				},
-				"east": {
-					"uv": [
-						6.5,
-						0,
-						9.5,
-						1
-					],
-					"texture": "#planks"
-				},
-				"south": {
-					"uv": [
-						0,
-						0,
-						3,
-						1
-					],
-					"texture": "#planks"
-				},
-				"west": {
-					"uv": [
-						6.5,
-						0,
-						9.5,
-						1
-					],
-					"texture": "#planks"
 				},
 				"up": {
 					"uv": [
@@ -420,20 +482,140 @@
 						3,
 						9.5
 					],
-					"texture": "#planks"
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "post_west_finial",
+			"from": [
+				0,
+				16.5,
+				7
+			],
+			"to": [
+				2,
+				18.5,
+				9
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0,
+						2,
+						2
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						7,
+						0,
+						9,
+						2
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						0,
+						0,
+						2,
+						2
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						7,
+						0,
+						9,
+						2
+					],
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						0,
+						7,
+						2,
+						9
+					],
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "post_west_tip",
+			"from": [
+				0.5,
+				18.5,
+				7.5
+			],
+			"to": [
+				1.5,
+				19.5,
+				8.5
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0.5,
+						0,
+						1.5,
+						1
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						7.5,
+						0,
+						8.5,
+						1
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						0.5,
+						0,
+						1.5,
+						1
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						7.5,
+						0,
+						8.5,
+						1
+					],
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						0.5,
+						7.5,
+						1.5,
+						8.5
+					],
+					"texture": "#log_top"
 				}
 			}
 		},
 		{
 			"name": "post_east",
 			"from": [
-				13,
+				13.5,
 				0,
 				6.5
 			],
 			"to": [
-				16,
-				16,
+				16.5,
+				16.5,
 				9.5
 			],
 			"faces": {
@@ -472,57 +654,6 @@
 						16
 					],
 					"texture": "#log"
-				}
-			}
-		},
-		{
-			"name": "post_east_cap",
-			"from": [
-				13,
-				16,
-				6.5
-			],
-			"to": [
-				16,
-				17,
-				9.5
-			],
-			"faces": {
-				"north": {
-					"uv": [
-						13,
-						0,
-						16,
-						1
-					],
-					"texture": "#planks"
-				},
-				"east": {
-					"uv": [
-						6.5,
-						0,
-						9.5,
-						1
-					],
-					"texture": "#planks"
-				},
-				"south": {
-					"uv": [
-						13,
-						0,
-						16,
-						1
-					],
-					"texture": "#planks"
-				},
-				"west": {
-					"uv": [
-						6.5,
-						0,
-						9.5,
-						1
-					],
-					"texture": "#planks"
 				},
 				"up": {
 					"uv": [
@@ -531,7 +662,127 @@
 						16,
 						9.5
 					],
-					"texture": "#planks"
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "post_east_finial",
+			"from": [
+				14,
+				16.5,
+				7
+			],
+			"to": [
+				16,
+				18.5,
+				9
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						14,
+						0,
+						16,
+						2
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						7,
+						0,
+						9,
+						2
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						14,
+						0,
+						16,
+						2
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						7,
+						0,
+						9,
+						2
+					],
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						14,
+						7,
+						16,
+						9
+					],
+					"texture": "#log_top"
+				}
+			}
+		},
+		{
+			"name": "post_east_tip",
+			"from": [
+				14.5,
+				18.5,
+				7.5
+			],
+			"to": [
+				15.5,
+				19.5,
+				8.5
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						14.5,
+						0,
+						15.5,
+						1
+					],
+					"texture": "#log"
+				},
+				"east": {
+					"uv": [
+						7.5,
+						0,
+						8.5,
+						1
+					],
+					"texture": "#log"
+				},
+				"south": {
+					"uv": [
+						14.5,
+						0,
+						15.5,
+						1
+					],
+					"texture": "#log"
+				},
+				"west": {
+					"uv": [
+						7.5,
+						0,
+						8.5,
+						1
+					],
+					"texture": "#log"
+				},
+				"up": {
+					"uv": [
+						14.5,
+						7.5,
+						15.5,
+						8.5
+					],
+					"texture": "#log_top"
 				}
 			}
 		}

@@ -1,0 +1,9 @@
+{
+  "parent": "pirates_n_ships:block/railing_baluster_east",
+  "textures": {
+    "log": "minecraft:block/stripped_oak_log",
+    "log_top": "minecraft:block/stripped_oak_log_top",
+    "particle": "minecraft:block/oak_planks",
+    "planks": "minecraft:block/oak_planks"
+  }
+}

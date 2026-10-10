@@ -671,6 +671,42 @@ four or five blocks inboard, `/give @s pirates_n_ships:mast_hoop 8`, `/give @s p
 - **Ponder:** the Almanac's "Show me: stringing ratline nets" shows the bolt appearing on the rail when the net is
   strung, instead of chainplates on the rail.
 
+### Railing rework and rope railing (RAIL6)
+
+The railing family looks new; nothing about placing or using it changed. Compare with the renders
+`art/renders/railing_before_after.png` (old and new from the same camera), `railing.png`, `railing_gate.png`,
+`bulwark.png`, `rope_railing.png`, `railing_latch.png`, `railing_latch_bulwark.png`. `/give @s
+pirates_n_ships:oak_railing 16`, `oak_railing_port 2`, `oak_railing_gate 2`, `oak_bulwark 8`, `oak_rope_railing 16`,
+`spruce_rope_railing 8`, `ratline_net 2`, `mast_hoop 2`, `grappling_hook`, `swivel_gun`, `cannon` (or craft the rope
+railing: three string over two planks with a gap between them, gives 4).
+- **The railing's look:** lay a run of four along a deck edge, a gap of one block, one more railing, then a corner.
+  Expected: a log cap rail on top (overhanging the balusters a pixel on each side, with a small step on its top), a
+  plank toe rail on the deck, two slim turned balusters per block (a bulge low on each), wide openings, no middle rail;
+  turned posts with a small finial only at the run's ends, at the gap and at the corner, none in a straight run, and no
+  baluster pressed against a post. Say whether it still reads bulky or like a fence, and whether the openings feel
+  right.
+- **Every edge alike:** a railing on each of the four edges of a hatch: the cap's grain runs along the rail on all four
+  (no cross grain on the east and west edges), the corners close (look at the outer corner of the cap from above: a
+  half-pixel notch is expected there).
+- **Port and gate:** a port and a gate in a run: the run's cap ends against their turned posts; the gate's leaf has the
+  same cap, one turned baluster and a bottom rail on the sill, thin iron hinge bands and a latch bar on the cap's inboard
+  side; it swings outboard as before.
+- **Bulwark:** a bulwark run: the same cap rail as the railing on top of the wall, turned posts at its ends (no square
+  stanchions any more); a gun port's jambs carry the cap ends.
+- **Rope railing:** lay a run of three, a lone block and a corner: a stanchion per block, a rope line at the top and one
+  at mid height, turned posts at the ends and the corner. Next to an oak railing on the same edge both end in a post.
+  It waterlogs, drops one per edge, cannot be jumped (1.5 blocks), crew do not walk through it, crew lean on it when
+  idle.
+- **Latch:** use a ratline net on the rope railing's top line, then on a mast hoop: the iron latch stands on the top
+  rope (not floating, not sunk into it) and the net leaves its ring. On a railing and a bulwark the latch stands on the
+  new cap the same way.
+- **Swivel gun and lean:** a swivel gun on a railing sits on the cap; an idle crew member leaning on the railing rests
+  his forearms on the cap (send a screenshot: the cap now reaches 1 px further inboard, check his belly does not sink
+  into it visibly).
+- **Grapple:** throw the grappling hook at another ship's rope railing: it holds like on a railing.
+- **Other woods:** a spruce rope railing and a dark oak railing show their wood's log and planks; the rope keeps its colour. Say whether the lines read as twisted rope at a few
+  blocks' distance (the texture is `block/rope_line`, drawn for the 1.5 px lines).
+
 ## Ship's bell swing (BELL1)
 
 The bell now swings about the pin of its yoke instead of flipping to a second model (replaces the swing check in step

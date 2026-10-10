@@ -1,9 +1,0 @@
-{
-  "parent": "pirates_n_ships:block/bulwark_stanchion",
-  "textures": {
-    "log": "regions_unexplored:block/stripped_pink_bioshroom_stem",
-    "log_top": "regions_unexplored:block/stripped_pink_bioshroom_stem_top",
-    "particle": "regions_unexplored:block/pink_bioshroom_planks",
-    "planks": "regions_unexplored:block/pink_bioshroom_planks"
-  }
-}

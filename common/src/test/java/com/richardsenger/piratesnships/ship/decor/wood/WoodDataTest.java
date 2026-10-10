@@ -31,7 +31,7 @@ class WoodDataTest {
     private static final Path DATA = GENERATED.resolve("data/pirates_n_ships");
     private static final Path ASSETS = GENERATED.resolve("assets/pirates_n_ships");
     /** The families WOOD1 converts; WOOD2-WOOD4 add theirs (WOOD2: the storage blocks, WOOD3: the fittings, WOOD4: the machines; legacy ids in {@link #LEGACY}). */
-    private static final List<String> FAMILIES = List.of("railing", "railing_port", "railing_gate", "bulwark", "bulwark_port", "oar_bench",
+    private static final List<String> FAMILIES = List.of("railing", "railing_port", "railing_gate", "bulwark", "bulwark_port", "rope_railing", "oar_bench",
             "cargo_crate", "cargo_barrel", "pantry", "water_barrel", "harbor_desk", "sea_chest",
             "nameplate", "chart_table", "sea_cot", "stern_window", "notice_board", "flagpole", "flag_pedestal", "crows_nest", "yard", "cleat",
             "helm", "capstan", "sail_winch", "bilge_pump", "cannon");

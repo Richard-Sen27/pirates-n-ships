@@ -1,0 +1,94 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "block": "pirates_n_ships:bamboo_rope_railing",
+          "condition": "minecraft:block_state_property",
+          "properties": {
+            "north": "true"
+          }
+        },
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "pirates_n_ships:bamboo_rope_railing"
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "block": "pirates_n_ships:bamboo_rope_railing",
+          "condition": "minecraft:block_state_property",
+          "properties": {
+            "east": "true"
+          }
+        },
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "pirates_n_ships:bamboo_rope_railing"
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "block": "pirates_n_ships:bamboo_rope_railing",
+          "condition": "minecraft:block_state_property",
+          "properties": {
+            "south": "true"
+          }
+        },
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "pirates_n_ships:bamboo_rope_railing"
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "block": "pirates_n_ships:bamboo_rope_railing",
+          "condition": "minecraft:block_state_property",
+          "properties": {
+            "west": "true"
+          }
+        },
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "pirates_n_ships:bamboo_rope_railing"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "pirates_n_ships:blocks/bamboo_rope_railing"
+}

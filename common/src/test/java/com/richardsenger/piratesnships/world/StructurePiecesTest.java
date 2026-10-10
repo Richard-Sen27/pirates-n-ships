@@ -76,17 +76,31 @@ class StructurePiecesTest {
                     MOD + ":pier_in", List.of(MOD + ":pier_out", EMPTY, "aligned")));
     private static final Set<String> BUILDINGS = Set.of("house_small", "shipwright", "tavern");
 
-    /** The pirate island (ST2). */
+    /** The pirate island (ST2; STR2's path network, building looks and decorations). */
     private static final Group ISLAND = new Group("pirate_island",
-            List.of("camp_start", "captains_hut", "jetty", "path", "path_end", "tavern_hut", "tent", "treasure_spot"),
+            List.of("camp_start", "captains_cabin", "captains_hut", "captains_lookout",
+                    "deco_campfire", "deco_crates", "deco_fish_rack", "deco_hammock", "deco_jolly_roger", "deco_palm",
+                    "deco_rocks", "deco_rum_cask", "deco_skull_post", "deco_washing_line",
+                    "hut_porch", "hut_stilts", "hut_thatch", "jetty", "longboat", "lookout_tower",
+                    "path", "path_bend_left", "path_bend_right", "path_clearing", "path_end", "path_end_palm",
+                    "path_end_rocks", "path_fork_left", "path_fork_right", "path_junction", "path_long",
+                    "powder_store", "smokehouse", "tavern_deck", "tavern_hut", "tavern_long",
+                    "tent", "tent_large", "tent_lean", "tent_small", "treasure_cairn", "treasure_spot", "treasure_wreck"),
             Map.of(
                     MOD + ":path_out", List.of(MOD + ":path_in", MOD + ":pirate_island/paths", "aligned"),
                     MOD + ":path_in", List.of(MOD + ":path_out", EMPTY, "aligned"),
                     MOD + ":hut_out", List.of(MOD + ":hut_in", MOD + ":pirate_island/huts", "rollable"),
                     MOD + ":hut_in", List.of(MOD + ":hut_out", EMPTY, "rollable"),
                     MOD + ":jetty_out", List.of(MOD + ":jetty_in", MOD + ":pirate_island/jetty", "aligned"),
-                    MOD + ":jetty_in", List.of(MOD + ":jetty_out", EMPTY, "aligned")));
-    private static final Set<String> HUTS = Set.of("captains_hut", "tavern_hut", "tent");
+                    MOD + ":jetty_in", List.of(MOD + ":jetty_out", EMPTY, "aligned"),
+                    MOD + ":trailhead_out", List.of(MOD + ":path_in", MOD + ":pirate_island/trailheads", "aligned"),
+                    MOD + ":deco_out", List.of(MOD + ":deco_in", MOD + ":pirate_island/decorations", "rollable"),
+                    MOD + ":deco_in", List.of(MOD + ":deco_out", EMPTY, "rollable")));
+    /** The buildings of the huts pool (the treasure looks are checked on their own). */
+    private static final Set<String> HUTS = Set.of("captains_cabin", "captains_hut", "captains_lookout", "hut_porch",
+            "hut_stilts", "hut_thatch", "longboat", "lookout_tower", "powder_store", "smokehouse", "tavern_deck",
+            "tavern_hut", "tavern_long", "tent", "tent_large", "tent_lean", "tent_small");
+    private static final Set<String> TREASURES = Set.of("treasure_cairn", "treasure_spot", "treasure_wreck");
 
     /** The navy outpost (ST3): each run of the curtain wall has its own jigsaw pair (art/README.md). */
     private static final Group NAVY = new Group("navy_outpost",
@@ -400,25 +414,52 @@ class StructurePiecesTest {
 
     @Test
     void islandConnectorsPerPiece() throws IOException {
-        assertEquals(Map.of("jetty_out", 1, "path_out", 2, "hut_out", 1), countNames(jigsaws(island("camp_start"))));
+        assertEquals(Map.of("jetty_out", 1, "path_out", 2, "trailhead_out", 1), countNames(jigsaws(island("camp_start"))));
         assertEquals(Map.of("berth", 2, "jetty_in", 1), countNames(jigsaws(island("jetty"))));
+        // STR2's path network: every trail piece has one path_in; straights and bends one path_out, forks and the
+        // junction two, the clearing none (a cul-de-sac of buildings); huts and decorations hang on the sides
         assertEquals(Map.of("hut_out", 2, "path_in", 1, "path_out", 1), countNames(jigsaws(island("path"))));
-        assertEquals(Map.of("path_in", 1), countNames(jigsaws(island("path_end"))));
-        assertEquals(Map.of("hut_in", 1, "treasure", 1), countNames(jigsaws(island("treasure_spot"))));
+        assertEquals(Map.of("hut_out", 2, "deco_out", 2, "path_in", 1, "path_out", 1), countNames(jigsaws(island("path_long"))));
+        for (String bend : List.of("path_bend_left", "path_bend_right")) {
+            assertEquals(Map.of("hut_out", 2, "path_in", 1, "path_out", 1), countNames(jigsaws(island(bend))), bend);
+        }
+        for (String fork : List.of("path_fork_left", "path_fork_right")) {
+            assertEquals(Map.of("deco_out", 1, "hut_out", 1, "path_in", 1, "path_out", 2), countNames(jigsaws(island(fork))), fork);
+        }
+        assertEquals(Map.of("hut_out", 1, "path_in", 1, "path_out", 2), countNames(jigsaws(island("path_junction"))));
+        assertEquals(Map.of("hut_out", 2, "deco_out", 1, "path_in", 1), countNames(jigsaws(island("path_clearing"))));
+        for (String end : List.of("path_end", "path_end_rocks", "path_end_palm")) {
+            assertEquals(Map.of("path_in", 1), countNames(jigsaws(island(end))), end);
+        }
+        // a bend turns: its path_out points sideways, not on along the path_in's line
+        for (String bend : List.of("path_bend_left", "path_bend_right")) {
+            Jigsaw out = jigsaws(island(bend)).stream().filter(j -> j.name().endsWith("path_out")).findFirst().orElseThrow();
+            assertEquals(bend.endsWith("left") ? "east" : "west", out.front(), bend);
+        }
+        for (String treasure : TREASURES) {
+            assertEquals(Map.of("hut_in", 1, "treasure", 1), countNames(jigsaws(island(treasure))), treasure);
+        }
+        for (String name : ISLAND.pieces()) {
+            if (!name.startsWith("deco_")) continue;
+            List<Jigsaw> jigsaws = jigsaws(island(name));
+            assertEquals(Map.of("deco_in", 1), countNames(jigsaws), name);
+            assertEquals("north", jigsaws.get(0).front(), name + " faces north");
+            assertEquals(0, jigsaws.get(0).pos().getY(), name + ": the connector is on the ground row");
+        }
         for (String hut : HUTS) {
             List<Jigsaw> jigsaws = jigsaws(island(hut));
             assertEquals(Map.of("hut_in", 1), countNames(jigsaws), hut);
             assertEquals("north", jigsaws.get(0).front(), hut + " faces north");
             assertEquals(0, jigsaws.get(0).pos().getY(), hut + ": the connector is on the foundation row");
         }
-        // the camp's connectors: jetty seaward (north), the paths east and west, the huts inland (south), all on the sand
+        // the camp's connectors: jetty seaward (north), the trails east and west, the trailhead inland (south), all on the sand
         Set<String> pathSides = new TreeSet<>();
         for (Jigsaw j : jigsaws(island("camp_start"))) {
             assertEquals(0, j.pos().getY(), j.name());
             switch (j.name().substring(MOD.length() + 1)) {
                 case "jetty_out" -> assertEquals("north", j.front());
-                case "hut_out" -> assertEquals("south", j.front());
                 case "path_out" -> pathSides.add(j.front());
+                case "trailhead_out" -> assertEquals("south", j.front(), "the trailhead leads inland");
                 default -> fail("unexpected " + j.name());
             }
         }
@@ -427,7 +468,19 @@ class StructurePiecesTest {
 
     @Test
     void treasureIsBuriedTwoBlocksUnderTheSurface() throws IOException {
-        CompoundTag spot = island("treasure_spot");
+        for (String look : TREASURES) {
+            assertTreasureBuried(look);
+        }
+        // no other piece buries treasure
+        for (Group group : GROUPS) for (String name : group.pieces()) {
+            if (group != ISLAND || !TREASURES.contains(name)) {
+                assertFalse(countNames(jigsaws(piece(group, name))).containsKey("treasure"), group.name() + "/" + name);
+            }
+        }
+    }
+
+    private static void assertTreasureBuried(String look) throws IOException {
+        CompoundTag spot = island(look);
         int[] size = size(spot);
         List<Jigsaw> jigsaws = jigsaws(spot);
         Jigsaw in = jigsaws.stream().filter(j -> j.name().endsWith("hut_in")).findFirst().orElseThrow();
@@ -449,13 +502,7 @@ class StructurePiecesTest {
                 sandAbove.add(pos.getInt(1));
             }
         }
-        assertEquals(2, sandAbove.size(), "sand covers the treasure");
-        // no other piece buries treasure
-        for (Group group : GROUPS) for (String name : group.pieces()) {
-            if (group != ISLAND || !name.equals("treasure_spot")) {
-                assertFalse(countNames(jigsaws(piece(group, name))).containsKey("treasure"), group.name() + "/" + name);
-            }
-        }
+        assertEquals(2, sandAbove.size(), look + ": sand covers the treasure");
     }
 
     /** The committed NBT is exactly what the converter makes from the committed schematics. */

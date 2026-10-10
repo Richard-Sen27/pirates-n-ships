@@ -4,10 +4,73 @@
       "element": {
         "element_type": "minecraft:single_pool_element",
         "location": "pirates_n_ships:pirate_island/path",
-        "processors": "pirates_n_ships:connections",
+        "processors": "pirates_n_ships:pirate_island_trail",
+        "projection": "terrain_matching"
+      },
+      "weight": 3
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:pirate_island/path_long",
+        "processors": "pirates_n_ships:pirate_island_trail",
+        "projection": "terrain_matching"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:pirate_island/path_bend_left",
+        "processors": "pirates_n_ships:pirate_island_trail",
+        "projection": "terrain_matching"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:pirate_island/path_bend_right",
+        "processors": "pirates_n_ships:pirate_island_trail",
+        "projection": "terrain_matching"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:pirate_island/path_fork_left",
+        "processors": "pirates_n_ships:pirate_island_trail",
+        "projection": "terrain_matching"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:pirate_island/path_fork_right",
+        "processors": "pirates_n_ships:pirate_island_trail",
+        "projection": "terrain_matching"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:pirate_island/path_junction",
+        "processors": "pirates_n_ships:pirate_island_trail",
         "projection": "terrain_matching"
       },
       "weight": 1
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:pirate_island/path_clearing",
+        "processors": "pirates_n_ships:pirate_island_trail",
+        "projection": "terrain_matching"
+      },
+      "weight": 2
     }
   ],
   "fallback": "pirates_n_ships:pirate_island/terminators"

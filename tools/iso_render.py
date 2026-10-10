@@ -41,6 +41,18 @@ COLOURS = {
     "harbor_desk": "5b3a20", "notice_board": "c9a86a", "cargo_crate": "b08a50", "cargo_barrel": "6e4a28",
     "mooring_ring": "404040", "cleat": "505050", "sea_chest": "6a4020", "map_tile": "d8c8a0", "flagpole": "8a6a40",
     "cannon": "303030", "brig_bars": "5a5a5a", "brig_door": "5a5a5a",
+    # STR2: the pirate island's natural layout and the generated-structure renders (terrain, palms, camp props)
+    "stripped_jungle_log": "c9a26b", "jungle_log": "5b4a24", "jungle_planks": "a0734a", "jungle_leaves": "3c8a28",
+    "oak_leaves": "4a7a30", "birch_leaves": "6a8a40", "spruce_leaves": "3a5a3a", "mangrove_leaves": "4a7a28",
+    "red_wool": "a12722", "light_gray_wool": "9d9d97", "black_wool": "1d1d21", "yellow_wool": "f8c527",
+    "white_carpet": "e8e8e8", "brown_carpet": "6e4a2a", "black_banner": "1d1d21", "red_banner": "a12722",
+    "white_banner": "e8e8e8", "bone_block": "e1dcc5", "skeleton_skull": "d8d8d0", "campfire": "d06a20",
+    "rope_coil": "b89c6a", "hammock": "d8c8a8", "dried_kelp_block": "3b4a2a", "hay": "c8a02a", "tnt": "c83a2a",
+    "stone": "7d7d7d", "smooth_stone": "9e9e9e", "dead_bush": "8a6a3a", "short_grass": "6a9a40", "tall_grass": "6a9a40",
+    "fern": "4a8a30", "seagrass": "2f6a2a", "kelp": "3f7a2a", "grass": "5d8a3a", "podzol": "6a4a24", "mud": "3c3837",
+    "clay": "a0a6b2", "red_sand": "be6621", "sea_pickle": "6a7a2a", "sugar_cane": "8ab84a", "bamboo": "5a8a2a",
+    "lily_pad": "2a6a1a", "snow": "f0f4f4", "ice": "90b0f0", "stone_slab": "9e9e9e", "cobblestone_slab": "7f7f7f",
+    "melon": "6a9a2a", "pumpkin": "c87a20", "cocoa": "8a5a2a", "vine": "3a6a1a", "moss": "5a7a2a",
 }
 KEYS = sorted(COLOURS, key=len, reverse=True)
 TURN = {"north": "east", "east": "south", "south": "west", "west": "north"}

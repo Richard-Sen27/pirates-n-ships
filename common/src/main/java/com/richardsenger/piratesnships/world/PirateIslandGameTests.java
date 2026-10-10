@@ -19,6 +19,7 @@ import com.richardsenger.piratesnships.world.port.PortService;
 import com.richardsenger.piratesnships.world.port.TreasureSite;
 import com.richardsenger.piratesnships.world.structure.PortStructure;
 import com.richardsenger.piratesnships.world.structure.ShoreAnchor;
+import com.richardsenger.piratesnships.world.structure.StructureLayoutGameTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
@@ -53,13 +54,17 @@ import java.util.Optional;
 
 /**
  * The pirate island on a hand-built shore (WG2), on the same 48×48 beach as {@link WorldGameTests} (sand, sea to the
- * north, sea surface at relative y 6). Depth 1: the camp, its jetty, two paths with their ends and one hut on the
- * camp's south side. The hut is drawn from the huts pool, so the test tries world seeds until the layout puts the
- * treasure spot there (deterministic per seed; one in six).
+ * north, sea surface at relative y 6). Depth 2 (STR2: the camp's trails carry the huts): the camp, its jetty, the
+ * trails and the buildings on them; only the pieces inside the test area are placed. The buildings are drawn from the
+ * huts pool, so the test tries world seeds until exactly one treasure piece (any of its three looks) lies in the area
+ * (deterministic per seed). The trails' height comes from a flat generator at the beach's surface
+ * ({@link StructureLayoutGameTests#beachGenerator}).
  */
 public final class PirateIslandGameTests {
 
     private static final int MAX_SEED_TRIES = 200;
+    /** The three looks of the buried treasure (STR2). */
+    private static final List<String> TREASURES = List.of("treasure_spot", "treasure_cairn", "treasure_wreck");
 
     private PirateIslandGameTests() {
     }
@@ -80,19 +85,26 @@ public final class PirateIslandGameTests {
         helper.assertValueEqual(structure.portKind(), PortKind.PIRATE_ISLAND, "port kind of the structure");
         helper.assertValueEqual(structure.shoreAnchor(), ShoreAnchor.PIRATE_CAMP, "shore anchor");
 
+        // STR2: the camp's trails carry the huts, so depth 2; the beach generator puts the trails' (and the huts')
+        // height on the hand-built sand; only the pieces inside the test area are kept and placed
+        ChunkGenerator beach = StructureLayoutGameTests.beachGenerator(helper, level, seaY + 2);
+        BoundingBox area = BoundingBox.fromCorners(helper.absolutePos(BlockPos.ZERO),
+                helper.absolutePos(new BlockPos(WorldGameTests.SIZE - 1, 15, WorldGameTests.SIZE - 1)));
         Structure.GenerationContext context = null;
         List<StructurePiece> pieces = null;
         for (int salt = 0; salt < MAX_SEED_TRIES && pieces == null; salt++) {
-            Structure.GenerationContext c = context(level, site, level.getSeed() + salt);
-            Optional<Structure.GenerationStub> stub = structure.plan(c, site, seaY, WorldGameTests.terrain(helper), 1);
+            Structure.GenerationContext c = context(level, beach, site, level.getSeed() + salt);
+            Optional<Structure.GenerationStub> stub = structure.plan(c, site, seaY, WorldGameTests.terrain(helper), 2);
             helper.assertTrue(stub.isPresent(), "the shore gives a generation point");
-            List<StructurePiece> p = stub.get().getPiecesBuilder().build().pieces();
-            if (p.stream().anyMatch(piece -> isPiece(piece, "treasure_spot"))) {
+            List<StructurePiece> p = stub.get().getPiecesBuilder().build().pieces().stream()
+                    .filter(piece -> insideXZ(area, piece.getBoundingBox())).toList();
+            if (p.stream().filter(piece -> TREASURES.stream().anyMatch(t -> isPiece(piece, t))).count() == 1
+                    && p.stream().anyMatch(piece -> isPiece(piece, "jetty"))) {
                 context = c;
                 pieces = p;
             }
         }
-        helper.assertTrue(pieces != null, "a layout with the treasure spot on the camp within " + MAX_SEED_TRIES + " seeds");
+        helper.assertTrue(pieces != null, "a layout with one treasure piece next to the camp within " + MAX_SEED_TRIES + " seeds");
         StructureStart start = new StructureStart(structure, context.chunkPos(), 0, new PiecesContainer(pieces));
         WorldGameTests.place(level, start);
 
@@ -127,7 +139,7 @@ public final class PirateIslandGameTests {
         helper.assertValueEqual(port.treasures().size(), 1, "one treasure site");
         TreasureSite treasure = port.treasures().get(0);
         helper.assertTrue(!treasure.looted(), "a new treasure is not looted");
-        StructurePiece spot = pieces.stream().filter(p -> isPiece(p, "treasure_spot")).findFirst().orElseThrow();
+        StructurePiece spot = pieces.stream().filter(p -> TREASURES.stream().anyMatch(t -> isPiece(p, t))).findFirst().orElseThrow();
         helper.assertTrue(spot.getBoundingBox().isInside(treasure.pos()), "treasure inside the treasure spot");
         helper.assertValueEqual(treasure.pos().getY(), camp.minY() - 2, "treasure two below the surface");
         helper.assertTrue(level.getBlockState(treasure.pos()).is(Blocks.CHEST), "buried chest at " + treasure.pos().toShortString());
@@ -209,7 +221,7 @@ public final class PirateIslandGameTests {
         var pools = level.registryAccess().registryOrThrow(Registries.TEMPLATE_POOL);
         int elements = 0;
         for (ResourceKey<StructureTemplatePool> key : List.of(IslandKeys.START, IslandKeys.PATHS, IslandKeys.HUTS,
-                IslandKeys.JETTY, IslandKeys.TERMINATORS)) {
+                IslandKeys.JETTY, IslandKeys.TERMINATORS, IslandKeys.DECORATIONS, IslandKeys.TRAILHEADS)) {
             StructureTemplatePool pool = pools.get(key);
             helper.assertTrue(pool != null, "pool " + key.location() + " is loaded");
             for (StructurePoolElement element : pool.getShuffledTemplates(RandomSource.create(0L))) {
@@ -218,8 +230,10 @@ public final class PirateIslandGameTests {
                 elements++;
             }
         }
-        // camp, path, tent ×3, tavern hut, captain's hut, treasure spot (weights expand), jetty, path end
-        helper.assertValueEqual(elements, 1 + 1 + 6 + 1 + 1, "pool elements");
+        // the camp, the jetty and every weighted entry of the STR2 pools (weights expand)
+        int expected = 1 + 1 + sum(IslandData.PATHS) + sum(IslandData.HUTS) + sum(IslandData.TERMINATORS) + sum(IslandData.DECORATIONS)
+                + sum(IslandData.TRAILHEADS);
+        helper.assertValueEqual(elements, expected, "pool elements");
         helper.assertValueEqual(pools.get(IslandKeys.PATHS).getFallback().unwrapKey(), Optional.of(IslandKeys.TERMINATORS),
                 "paths fall back to the terminators");
         helper.succeed();
@@ -237,8 +251,19 @@ public final class PirateIslandGameTests {
         return island;
     }
 
+    private static int sum(java.util.Map<String, Integer> weights) {
+        return weights.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    private static boolean insideXZ(BoundingBox area, BoundingBox box) {
+        return box.minX() >= area.minX() && box.maxX() <= area.maxX() && box.minZ() >= area.minZ() && box.maxZ() <= area.maxZ();
+    }
+
     private static Structure.GenerationContext context(ServerLevel level, BlockPos site, long seed) {
-        ChunkGenerator generator = level.getChunkSource().getGenerator();
+        return context(level, level.getChunkSource().getGenerator(), site, seed);
+    }
+
+    private static Structure.GenerationContext context(ServerLevel level, ChunkGenerator generator, BlockPos site, long seed) {
         return new Structure.GenerationContext(level.registryAccess(), generator, generator.getBiomeSource(),
                 level.getChunkSource().randomState(), level.getStructureManager(), seed, new ChunkPos(site), level, b -> true);
     }

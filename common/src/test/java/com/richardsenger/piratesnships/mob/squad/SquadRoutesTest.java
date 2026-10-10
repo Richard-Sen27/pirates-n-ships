@@ -2,6 +2,7 @@ package com.richardsenger.piratesnships.mob.squad;
 
 import com.richardsenger.piratesnships.world.outpost.GarrisonPosts;
 import com.richardsenger.piratesnships.world.outpost.GarrisonPosts.PlacedPiece;
+import com.richardsenger.piratesnships.world.outpost.OutpostPieces;
 import com.richardsenger.piratesnships.world.structure.StandAloneOps;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
@@ -105,13 +106,34 @@ class SquadRoutesTest {
         assertNull(SquadRoutes.anchor(List.of(QUAY, EAST_WALL)));
     }
 
+    /**
+     * STR4: a run that turns inland at an angle is walked along its trace, piece by piece (each time the nearest piece
+     * not yet walked), not by distance from the gate: the flank wall beyond the angle comes after the angle even when
+     * the next shore wall of the other side is nearer the gate.
+     */
+    @Test
+    void aBentRunIsWalkedAlongItsTrace() {
+        // east run: a wall, an angle turning south, two flank walls (turned clockwise) going inland
+        PlacedPiece angle = new PlacedPiece("wall_angle_east", new BlockPos(122, 64, 200), Rotation.NONE);
+        PlacedPiece flank1 = new PlacedPiece("flank_wall", new BlockPos(128, 64, 207), Rotation.CLOCKWISE_90);
+        PlacedPiece flank2 = new PlacedPiece("flank_long", new BlockPos(128, 64, 214), Rotation.CLOCKWISE_90);
+        List<BlockPos> route = SquadRoutes.route(List.of(GATE, flank2, EAST_WALL, flank1, angle, WEST_WALL));
+        int start = route.indexOf(new BlockPos(111, 69, 203));
+        assertEquals(List.of(
+                GarrisonPosts.toWorld(EAST_WALL, SquadRoutes.WALL_WALK_EAST_RUN),
+                GarrisonPosts.toWorld(angle, OutpostPieces.WALLS.get("wall_angle_east").walkEast()),
+                GarrisonPosts.toWorld(flank1, OutpostPieces.WALLS.get("flank_wall").walkEast()),
+                GarrisonPosts.toWorld(flank2, OutpostPieces.WALLS.get("flank_long").walkEast())),
+                route.subList(start + 1, start + 5), "out along the shore, round the angle and down the flank");
+    }
+
     @Test
     void everySpotIsAPlaceToStandInItsPiece() throws IOException {
-        Map<String, List<BlockPos>> spots = Map.of(
+        Map<String, List<BlockPos>> spots = new HashMap<>(Map.of(
                 GarrisonPosts.FORT_GATE, List.of(SquadRoutes.COURT, SquadRoutes.LAND_GATE, SquadRoutes.SEA_GATE,
                         SquadRoutes.EAST_WALK, SquadRoutes.WEST_WALK, SquadRoutes.STAIR_HEAD),
-                "wall", List.of(SquadRoutes.WALL_WALK_EAST_RUN, SquadRoutes.WALL_WALK_WEST_RUN),
-                "quay", List.of(SquadRoutes.QUAY_DECK));
+                "quay", List.of(SquadRoutes.QUAY_DECK)));
+        OutpostPieces.WALLS.forEach((name, wall) -> spots.put(name, List.of(wall.walkEast(), wall.walkWest())));
         for (Map.Entry<String, List<BlockPos>> e : spots.entrySet()) {
             Map<BlockPos, String> names = new HashMap<>();
             Map<BlockPos, BlockState> blocks = template(e.getKey(), names);
@@ -137,17 +159,32 @@ class SquadRoutesTest {
     void theWalkwayIsTwoWideThroughEveryWallAndTheGate() throws IOException {
         assertLane("wall", 7, List.of(3, 4), List.of(0, 6));
         assertLane(GarrisonPosts.FORT_GATE, 15, List.of(2, 3), List.of(0, 14));
+        // STR4: every straight piece of the trace in every state, and the bastion's line behind its projection
+        for (String state : List.of("wall", "flank", "back")) {
+            assertLane(state.equals("wall") ? "wall" : state + "_wall", 7, List.of(3, 4), List.of(0, 6));
+            assertLane(state + "_long", 11, List.of(3, 4), List.of(0, 10));
+            assertLane(state + "_sally_port", 9, List.of(3, 4), List.of(0, 8));
+            assertLane(state + "_stair", 9, List.of(3, 4), List.of(0, 8));
+        }
+        for (String bastion : List.of("wall_bastion", "flank_bastion")) {
+            assertLane(bastion, 11, List.of(8, 9), List.of(0, 10), 8, 5);
+        }
     }
 
     private static void assertLane(String piece, int length, List<Integer> laneZ, List<Integer> joints) throws IOException {
+        assertLane(piece, length, laneZ, joints, 5, 0);
+    }
+
+    /** The walkway (people on row {@code y}) of a piece whose section starts at row {@code dz}. */
+    private static void assertLane(String piece, int length, List<Integer> laneZ, List<Integer> joints, int y, int dz) throws IOException {
         Map<BlockPos, String> names = new HashMap<>();
         Map<BlockPos, BlockState> blocks = template(piece, names);
         List<BlockPos> cells = new ArrayList<>();
         for (int x = 0; x < length; x++) {
-            for (int z : laneZ) cells.add(new BlockPos(x, 5, z));
+            for (int z : laneZ) cells.add(new BlockPos(x, y, z));
         }
         for (int x : joints) {
-            for (int z = 1; z <= 4; z++) cells.add(new BlockPos(x, 5, z));
+            for (int z = 1; z <= 4; z++) cells.add(new BlockPos(x, y, z + dz));
         }
         for (BlockPos p : cells) {
             String where = piece + " walkway " + p.toShortString();

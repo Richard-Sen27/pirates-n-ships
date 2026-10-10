@@ -9,7 +9,7 @@ import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureSet;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 
-/** Data keys of the navy outpost (WG3): structure, structure set, biome tag and pools. No registration here. */
+/** Data keys of the navy outpost (WG3, STR4): structure, structure set, biome tag and pools. No registration here. */
 public final class OutpostKeys {
 
     public static final ResourceKey<Structure> NAVY_OUTPOST = ResourceKey.create(Registries.STRUCTURE, Constants.id("navy_outpost"));
@@ -21,6 +21,14 @@ public final class OutpostKeys {
     public static final ResourceKey<StructureTemplatePool> BUILDINGS = pool("buildings");
     public static final ResourceKey<StructureTemplatePool> QUAY = pool("quay");
     public static final ResourceKey<StructureTemplatePool> TERMINATORS = pool("terminators");
+    /** STR4: the wall trace's flank (after a salient angle) and back (after a second one) states. */
+    public static final ResourceKey<StructureTemplatePool> WALLS_FLANK = pool("walls_flank");
+    public static final ResourceKey<StructureTemplatePool> WALLS_BACK = pool("walls_back");
+    /** STR4: the court's lanes: what the land gate draws, the lanes, their dead ends; the decorations. */
+    public static final ResourceKey<StructureTemplatePool> LANEHEADS = pool("laneheads");
+    public static final ResourceKey<StructureTemplatePool> LANES = pool("lanes");
+    public static final ResourceKey<StructureTemplatePool> LANE_ENDS = pool("lane_ends");
+    public static final ResourceKey<StructureTemplatePool> DECORATIONS = pool("decorations");
 
     private OutpostKeys() {
     }

@@ -2,7 +2,9 @@ package com.richardsenger.piratesnships.world;
 
 import com.richardsenger.piratesnships.mob.MobFaction;
 import com.richardsenger.piratesnships.mob.entity.SeafarerMob;
+import com.richardsenger.piratesnships.world.outpost.GarrisonPosts;
 import com.richardsenger.piratesnships.world.outpost.OutpostKeys;
+import com.richardsenger.piratesnships.world.outpost.OutpostPieces;
 import com.richardsenger.piratesnships.world.structure.PortStructure;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -11,6 +13,8 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece;
+import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.level.levelgen.structure.pieces.PiecesContainer;
@@ -20,8 +24,10 @@ import java.util.List;
 
 /**
  * The navy outpost of {@link NavyOutpostGameTests} for other modules' GameTests (MOB2's squads): the hand-built shore of
- * {@link WorldGameTests} on {@code EMPTY_48}, the outpost planned at depth 1 (fort gate, quay, one wall each way ending
- * in a wall tower, one building) and placed with its garrison, as world generation places it.
+ * {@link WorldGameTests} on {@code EMPTY_48}, the outpost planned at depth 1 (fort gate, quay, one piece of the wall
+ * trace each way ending in a tower) and placed with its garrison, as world generation places it. STR4: the court (the
+ * lanes from the land gate and what hangs from them) is left out ({@link #withoutTheCourt}): the 48 block arena has no
+ * room for it, and it holds no posts at depth 1; {@code world/structure/OutpostLayoutGameTests} places whole outposts.
  */
 public final class OutpostFixture {
 
@@ -43,10 +49,19 @@ public final class OutpostFixture {
         Structure.GenerationContext context = WorldGameTests.context(level, site);
         Structure.GenerationStub stub = structure.plan(context, site, WorldGameTests.seaSurface(helper), WorldGameTests.terrain(helper), 1)
                 .orElseThrow(() -> new IllegalStateException("the shore gives no generation point"));
-        StructureStart start = new StructureStart(structure, context.chunkPos(), 0, stub.getPiecesBuilder().build());
+        StructureStart start = new StructureStart(structure, context.chunkPos(), 0,
+                new PiecesContainer(withoutTheCourt(stub.getPiecesBuilder().build().pieces())));
         WorldGameTests.place(level, start);
         PiecesContainer pieces = new PiecesContainer(start.getPieces());
         return new Placed(start, pieces, pieces.calculateBoundingBox());
+    }
+
+    /** The fort gate, the quay and the wall trace with its towers: the planned pieces without the court (STR4). */
+    public static List<StructurePiece> withoutTheCourt(List<StructurePiece> pieces) {
+        return pieces.stream().filter(p -> {
+            String name = p instanceof PoolElementStructurePiece e ? GarrisonPosts.pieceName(e.getElement().toString()) : "";
+            return name.equals(GarrisonPosts.FORT_GATE) || name.equals("quay") || OutpostPieces.isWall(name) || OutpostPieces.isTower(name);
+        }).toList();
     }
 
     /** The living navy mobs in and around {@code box}. */

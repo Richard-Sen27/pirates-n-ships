@@ -19,6 +19,7 @@ import com.richardsenger.piratesnships.world.outpost.Garrison;
 import com.richardsenger.piratesnships.world.outpost.GarrisonPosts;
 import com.richardsenger.piratesnships.world.outpost.OutpostData;
 import com.richardsenger.piratesnships.world.outpost.OutpostKeys;
+import com.richardsenger.piratesnships.world.outpost.OutpostPieces;
 import com.richardsenger.piratesnships.world.port.Berth;
 import com.richardsenger.piratesnships.world.port.Port;
 import com.richardsenger.piratesnships.world.port.PortRegistry;
@@ -59,8 +60,10 @@ import java.util.Optional;
 
 /**
  * The navy outpost on the hand-built shore of {@link WorldGameTests} (WG3): 48×48 sand beach, sea surface at relative
- * y 6. Depth 1: the fort gate, its quay, one wall each way ending in a wall tower, and one building on the apron
- * (15 + 2 × 14 = 43 blocks along the shore, 15 + 9 inland, 18 out over the water). The structure is placed through
+ * y 6. Depth 1: the fort gate, its quay, one piece of the wall trace each way (STR4: any piece of the shore state, a
+ * straight, a bastion, a sally port, a stair or an angle) ending in a tower, 18 blocks out over the water; the court
+ * (lanes and what hangs from them) is left out, the arena has no room for it ({@link OutpostFixture#withoutTheCourt};
+ * {@code world/structure/OutpostLayoutGameTests} plans and places whole outposts). The structure is placed through
  * {@link StructureStart#placeInChunk}, which runs {@code afterPlace}: port, desk binding and garrison.
  */
 public final class NavyOutpostGameTests {
@@ -101,7 +104,8 @@ public final class NavyOutpostGameTests {
         Optional<Structure.GenerationStub> stub = structure.plan(context, site, WorldGameTests.seaSurface(helper),
                 WorldGameTests.terrain(helper), 1);
         helper.assertTrue(stub.isPresent(), "the shore gives a generation point");
-        StructureStart start = new StructureStart(structure, context.chunkPos(), 0, stub.get().getPiecesBuilder().build());
+        StructureStart start = new StructureStart(structure, context.chunkPos(), 0,
+                new PiecesContainer(OutpostFixture.withoutTheCourt(stub.get().getPiecesBuilder().build().pieces())));
         BoundingBox box = new PiecesContainer(start.getPieces()).calculateBoundingBox();
         WorldGameTests.place(level, start);
 
@@ -125,7 +129,7 @@ public final class NavyOutpostGameTests {
             promoted++;
             if (state.is(CannonContent.CANNON.get()) && !CannonBlock.isMaster(state)) cannonRears++;
         }
-        helper.assertTrue(cannonRears >= 2, "the two walls' cannons stand in the outpost (" + cannonRears + " rears)");
+        helper.assertTrue(cannonRears >= 2, "the two wall pieces' cannons stand in the outpost (" + cannonRears + " rears)");
         helper.assertTrue(failed.isEmpty(), "block entities worldgen fails to load (" + failed.size() + " of " + promoted
                 + "): " + failed);
         navy(level, box).forEach(SeafarerMob::discard);
@@ -152,8 +156,9 @@ public final class NavyOutpostGameTests {
         ServerLevel level = helper.getLevel();
         var pools = level.registryAccess().registryOrThrow(Registries.TEMPLATE_POOL);
         int elements = 0;
-        for (ResourceKey<StructureTemplatePool> key : List.of(OutpostKeys.START, OutpostKeys.WALLS, OutpostKeys.BUILDINGS,
-                OutpostKeys.QUAY, OutpostKeys.TERMINATORS)) {
+        for (ResourceKey<StructureTemplatePool> key : List.of(OutpostKeys.START, OutpostKeys.WALLS, OutpostKeys.WALLS_FLANK,
+                OutpostKeys.WALLS_BACK, OutpostKeys.BUILDINGS, OutpostKeys.QUAY, OutpostKeys.TERMINATORS, OutpostKeys.LANEHEADS,
+                OutpostKeys.LANES, OutpostKeys.LANE_ENDS, OutpostKeys.DECORATIONS)) {
             StructureTemplatePool pool = pools.get(key);
             helper.assertTrue(pool != null, "pool " + key.location() + " is loaded");
             for (StructurePoolElement element : pool.getShuffledTemplates(RandomSource.create(0L))) {
@@ -162,10 +167,19 @@ public final class NavyOutpostGameTests {
                 elements++;
             }
         }
-        // fort gate, wall, barracks ×2, brig, watchtower (weights expand), quay, wall tower
-        helper.assertValueEqual(elements, 1 + 1 + 4 + 1 + 1, "pool elements");
-        helper.assertValueEqual(pools.get(OutpostKeys.WALLS).getFallback().unwrapKey(), Optional.of(OutpostKeys.TERMINATORS),
-                "walls fall back to the wall tower");
+        // weights expand in the pools: fort gate and quay one each, the rest as OutpostData weighs them
+        int weights = 2;
+        for (var pool : List.of(OutpostData.WALLS, OutpostData.WALLS_FLANK, OutpostData.WALLS_BACK, OutpostData.BUILDINGS,
+                OutpostData.TERMINATORS, OutpostData.LANEHEADS, OutpostData.LANES, OutpostData.LANE_ENDS, OutpostData.DECORATIONS)) {
+            weights += pool.values().stream().mapToInt(Integer::intValue).sum();
+        }
+        helper.assertValueEqual(elements, weights, "pool elements");
+        for (ResourceKey<StructureTemplatePool> walls : List.of(OutpostKeys.WALLS, OutpostKeys.WALLS_FLANK, OutpostKeys.WALLS_BACK)) {
+            helper.assertValueEqual(pools.get(walls).getFallback().unwrapKey(), Optional.of(OutpostKeys.TERMINATORS),
+                    walls.location() + " falls back to the towers");
+        }
+        helper.assertValueEqual(pools.get(OutpostKeys.LANES).getFallback().unwrapKey(), Optional.of(OutpostKeys.LANE_ENDS),
+                "lanes end in a dead end");
         helper.assertValueEqual(MobContent.NAVY_SOLDIER.get().getCategory(), MobCategory.MISC, "navy soldiers never spawn naturally");
         helper.assertValueEqual(MobContent.NAVY_OFFICER.get().getCategory(), MobCategory.MISC, "navy officers never spawn naturally");
         helper.assertTrue(structure(level).spawnOverrides().isEmpty(), "the outpost has no spawn overrides");
@@ -186,7 +200,8 @@ public final class NavyOutpostGameTests {
         Structure.GenerationContext context = WorldGameTests.context(level, site);
         Optional<Structure.GenerationStub> stub = structure.plan(context, site, seaY, WorldGameTests.terrain(helper), 1);
         helper.assertTrue(stub.isPresent(), "the shore gives a generation point");
-        StructureStart start = new StructureStart(structure, context.chunkPos(), 0, stub.get().getPiecesBuilder().build());
+        StructureStart start = new StructureStart(structure, context.chunkPos(), 0,
+                new PiecesContainer(OutpostFixture.withoutTheCourt(stub.get().getPiecesBuilder().build().pieces())));
         List<StructurePiece> pieces = start.getPieces();
         PiecesContainer container = new PiecesContainer(pieces);
         BoundingBox box = container.calculateBoundingBox();
@@ -200,8 +215,15 @@ public final class NavyOutpostGameTests {
         helper.assertValueEqual(WorldGameTests.seaEdge(gateBox, sea),
                 WorldGameTests.canonicalToWorld(helper, sea, WorldGameTests.SITE_X, WorldGameTests.SHORE_Z), "sea wall on the last land row");
         helper.assertValueEqual(((PoolElementStructurePiece) gate).getRotation(), ShoreFacing.rotationFacing(sea), "the gate's sea side faces the sea");
-        helper.assertValueEqual(count(pieces, "wall"), 2L, "one wall each way");
-        helper.assertValueEqual(count(pieces, "wall_tower"), 2L, "each wall run ends in a tower");
+        long walls = pieces.stream().filter(p -> OutpostPieces.isWall(name(p))).count();
+        long towers = pieces.stream().filter(p -> OutpostPieces.isTower(name(p))).count();
+        helper.assertValueEqual(walls, 2L, "one piece of the wall trace each way");
+        helper.assertValueEqual(towers, 2L, "each wall run ends in a tower");
+        for (StructurePiece p : pieces) {
+            if (!OutpostPieces.isWall(name(p)) && !OutpostPieces.isTower(name(p))) continue;
+            helper.assertValueEqual(p.getBoundingBox().minY(), gateBox.minY() - (name(p).endsWith("bastion") ? 3 : 0),
+                    name(p) + " is level with the gate");
+        }
 
         // the quay: over the water, deck one above the sea surface, two berths in water
         StructurePiece quay = pieces.stream().filter(p -> isPiece(p, "quay")).findFirst().orElse(null);
@@ -290,8 +312,8 @@ public final class NavyOutpostGameTests {
         return level.getEntitiesOfClass(SeafarerMob.class, AABB.of(box).inflate(1), m -> m.faction() == MobFaction.NAVY && m.isAlive());
     }
 
-    private static long count(List<StructurePiece> pieces, String name) {
-        return pieces.stream().filter(p -> isPiece(p, name)).count();
+    private static String name(StructurePiece piece) {
+        return piece instanceof PoolElementStructurePiece p ? GarrisonPosts.pieceName(p.getElement().toString()) : "";
     }
 
     private static boolean isPiece(StructurePiece piece, String name) {

@@ -26,7 +26,28 @@ CONNECTORS = {
     "building_in": ("building_out", EMPTY_POOL, "rollable"),
     "quay_out": ("quay_in", f"{MOD}:{GROUP}/quay", "aligned"),
     "quay_in": ("quay_out", EMPTY_POOL, "aligned"),
+    # STR4 (natural layout): the wall trace has three states, each with its own pool, so a run turns inland at most
+    # twice and never back toward the sea: along the shore (wall_*_out -> walls), down the flank after a salient
+    # angle (flank_*_out -> walls_flank), back toward the other run after a second one (back_*_out -> walls_back).
+    # Every wall piece attaches by wall_east_in / wall_west_in whatever its state.
+    "flank_east_out": ("wall_east_in", f"{MOD}:{GROUP}/walls_flank", "aligned"),
+    "flank_west_out": ("wall_west_in", f"{MOD}:{GROUP}/walls_flank", "aligned"),
+    "back_east_out": ("wall_east_in", f"{MOD}:{GROUP}/walls_back", "aligned"),
+    "back_west_out": ("wall_west_in", f"{MOD}:{GROUP}/walls_back", "aligned"),
+    # STR4: the court's lanes (terrain matching) from the land gate, the buildings and decorations on their sides
+    "lanehead_out": ("lane_in", f"{MOD}:{GROUP}/laneheads", "aligned"),
+    "lane_out": ("lane_in", f"{MOD}:{GROUP}/lanes", "aligned"),
+    "lane_in": ("lane_out", EMPTY_POOL, "aligned"),
+    "deco_out": ("deco_in", f"{MOD}:{GROUP}/decorations", "rollable"),
+    "deco_in": ("deco_out", EMPTY_POOL, "rollable"),
 }
+
+# STR4: vanilla's jigsaw tries a piece's connectors in descending selection priority (a lane places its buildings, then
+# its decorations, then the next lane) and processes the placed pieces in descending placement priority of the
+# connector they hang from: every wall connector carries 2, so both wall runs are laid out end to end before the
+# court's lanes take the space inside them.
+SELECTION_PRIORITY = {"building_out": 2, "deco_out": 1, "lanehead_out": 1}
+PLACEMENT_PRIORITY = {name: 2 for name in CONNECTORS if name.endswith(("east_out", "west_out"))}
 
 # the curtain wall's section, shared by the fort gate, the wall and the tower so the walkway runs through
 PARAPET_Z = 0          # the seaward face: solid to the parapet row, merlons above
@@ -80,7 +101,8 @@ OPPOSITE = {"north": "south", "south": "north", "east": "west", "west": "east"}
 def connector(piece, x, y, z, name: str, facing: str, final_state: str):
     """A navy outpost connector (see CONNECTORS); ``facing`` is where the jigsaw points (out of the piece)."""
     target, pool, joint = CONNECTORS[name]
-    piece._jigsaw(x, y, z, facing, f"{MOD}:{name}", f"{MOD}:{target}", pool, final_state, joint)
+    piece._jigsaw(x, y, z, facing, f"{MOD}:{name}", f"{MOD}:{target}", pool, final_state, joint,
+                  SELECTION_PRIORITY.get(name, 0), PLACEMENT_PRIORITY.get(name, 0))
 
 
 def stair(block: str, facing: str, half: str = "bottom") -> str:

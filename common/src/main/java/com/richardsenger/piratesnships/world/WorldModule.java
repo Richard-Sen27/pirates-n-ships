@@ -88,6 +88,7 @@ public final class WorldModule implements ModModule {
     public List<Class<?>> gameTestClasses() {
         return List.of(WorldGameTests.class, PirateIslandGameTests.class, NavyOutpostGameTests.class, WreckGameTests.class,
                 TreasureMapGameTests.class, ConnectionsGameTests.class,
-                StructureBlockEntityGameTests.class, StructureLayoutGameTests.class);
+                StructureBlockEntityGameTests.class, StructureLayoutGameTests.class,
+                com.richardsenger.piratesnships.world.structure.OutpostLayoutGameTests.class);
     }
 }

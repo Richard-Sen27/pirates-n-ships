@@ -7,6 +7,24 @@
         "processors": "pirates_n_ships:connections",
         "projection": "rigid"
       },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:navy_outpost/round_tower",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
+      "weight": 2
+    },
+    {
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "pirates_n_ships:navy_outpost/battery",
+        "processors": "pirates_n_ships:connections",
+        "projection": "rigid"
+      },
       "weight": 1
     }
   ],

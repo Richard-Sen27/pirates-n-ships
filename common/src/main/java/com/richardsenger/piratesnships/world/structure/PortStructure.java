@@ -65,10 +65,10 @@ import java.util.Optional;
  *     places the garrison posts of the chunk being placed ({@link PortService}, {@link TreasureChests},
  *     {@link Garrison}); a pirate island places its named captain (BOS1, {@link IslandCaptains}).</li>
  * </ol>
- * Terrain adaptation comes from the JSON; the village and the outpost use {@code none}, because vanilla's beardifier
- * treats every rigid piece alike and would raise land under the pier and around the quay (see {@code VillageData}); the
- * pirate island uses {@code beard_thin} since STR2 (its jetty's foot is under water, so the beard there only shapes the
- * shore and the seabed round it; {@code IslandData}).
+ * Terrain adaptation comes from the JSON; the village uses {@code none}, because vanilla's beardifier treats every
+ * rigid piece alike and would raise land under the pier (see {@code VillageData}); the pirate island (STR2) and the navy
+ * outpost (STR4) use {@code beard_thin} with their rigid chain from the start (jetty; quay, walls and towers) kept out of
+ * the beard ({@link #rigidChain}, {@link #unbearded}), so only the ground pieces and the start shape the terrain.
  */
 public final class PortStructure extends Structure {
 
@@ -215,16 +215,35 @@ public final class PortStructure extends Structure {
             boolean[] keep = landPiecesOnLand
                     ? LandFilter.keep(nodes, (x, z) -> terrain.firstFree(x, z) <= seaSurface)
                     : null;
+            boolean[] chain = rigidChain(pieces, nodes);
             for (int i = 0; i < pieces.size(); i++) {
                 StructurePiece piece = pieces.get(i);
                 if (keep != null && !keep[i]) continue;
                 if (i > 0 && sinksIntoTerrain(piece)) piece.move(0, -1, 0);
-                if (i > 0 && nodes.get(i).parent() == 0 && !nodes.get(i).land() && piece instanceof PoolElementStructurePiece p) {
+                if (chain[i] && piece instanceof PoolElementStructurePiece p) {
                     piece = unbearded(p, context.structureTemplateManager());
                 }
                 builder.addPiece(piece);
             }
         }));
+    }
+
+    /**
+     * The pieces hanging rigidly from the start through rigid pieces only (STR4): the jetty, the pier, the quay, and
+     * the navy outpost's whole wall trace with its towers (a wall hangs from the gate or from the wall before it). They
+     * are copied {@link #unbearded}. A land piece (terrain matching, or rigid on a terrain-matching parent) breaks the
+     * chain, so the buildings and decorations of the court, the camp and the town keep the beard.
+     */
+    static boolean[] rigidChain(List<StructurePiece> pieces, List<LandFilter.Node> nodes) {
+        boolean[] chain = new boolean[pieces.size()];
+        for (int i = 1; i < pieces.size(); i++) {
+            LandFilter.Node node = nodes.get(i);
+            if (node.land() || !(pieces.get(i) instanceof PoolElementStructurePiece p)
+                    || p.getElement().getProjection() != StructureTemplatePool.Projection.RIGID) continue;
+            int parent = node.parent();
+            chain[i] = parent == 0 || (parent > 0 && parent < i && chain[parent]);
+        }
+        return chain;
     }
 
     /**

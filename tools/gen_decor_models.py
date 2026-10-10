@@ -14,6 +14,7 @@ follows the part; palette faces map the inner 3 x 3 px of a 4 x 4 patch of textu
 """
 import json
 import math
+import uuid
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -526,83 +527,245 @@ def chart_table():
 
 
 # ---------------------------------------------------------------- sea cot
+# ART20: a bed frame of log rails 3 px tall round a 5 px mattress (y 3..8), the blanket (top 8.6) and a pillow on top,
+# so the cot lies at vanilla's bed height; cots side by side join into one berth (block state `left` / `right`, the
+# name board's row pattern): each half is a core model plus, per side, either the edge (post, rail, the blanket's
+# drape) or the fill that runs the mattress, blanket, pillow and the head- or footboard across to the block's side.
+# Facing north the cot's left (seen from its foot, looking along `facing`) is west, x 0; its right is east, x 16.
 
-def cot_parts():
-    """Both halves in one frame, facing north: the head lies at z -16..0, the foot at z 0..16."""
-    e = []
-    for side, x in (("w", 0.5), ("e", 13.5)):
-        e += [
-            box("head_post_" + side, (x, 0, -16), (x + 2, 15, -14), "stripped_dark_oak_log"),
-            box("head_knob_" + side, (x + 0.25, 15, -15.75), (x + 1.75, 15.75, -14.25), "dark_oak_planks", hide=("down",)),
-            box("foot_post_" + side, (x, 0, 14), (x + 2, 12.5, 16), "stripped_dark_oak_log"),
-            box("foot_knob_" + side, (x + 0.25, 12.5, 14.25), (x + 1.75, 13.25, 15.75), "dark_oak_planks", hide=("down",)),
-        ]
-    e += [
-        box("headboard", (2.5, 2, -15.5), (13.5, 14, -14.5), "dark_oak_planks", hide=("east", "west", "up")),
-        box("headboard_panel", (4, 5, -15.8), (12, 12, -15.5), "stripped_dark_oak_log", hide=("south",)),
-        box("headboard_rail", (2.5, 14, -15.75), (13.5, 14.75, -14.25), "stripped_dark_oak_log", grain="x", hide=("east", "west")),
-        box("footboard", (2.5, 2, 14.5), (13.5, 11, 15.5), "dark_oak_planks", hide=("east", "west", "up")),
-        box("footboard_panel", (4, 4, 15.5), (12, 9.5, 15.8), "stripped_dark_oak_log", hide=("north",)),
-        box("footboard_rail", (2.5, 11, 14.25), (13.5, 11.75, 15.75), "stripped_dark_oak_log", grain="x", hide=("east", "west")),
+COT_SEAM = 0.0                 # head z -16..0, foot z 0..16 in the combined frame
+COT_RAIL = (2.0, 5.0)          # side rails, 3 px
+COT_BOTTOM = (2.0, 3.0)        # the bottom boards under the mattress
+COT_MATTRESS = (3.0, 8.0)      # 5 px
+COT_BLANKET = (8.0, 8.6)       # the lying surface, under vanilla's 9 px
+COT_FOLD = (8.6, 9.0)
+COT_PILLOW = (8.0, 9.25)
+COT_PUFF = (9.25, 9.6)
+COT_HEAD_Z = (-16.0, -14.0)    # the head posts; the headboard z -15.5..-14.5
+COT_FOOT_Z = (14.0, 16.0)
+COT_BLANKET_Z = (-5.0, 14.5)   # the blanket from below the pillow to the footboard
+COT_IN = (-14.5, 14.5)         # inside the head- and footboard
+COT_HEAD_TOP, COT_FOOT_TOP = 13.0, 10.0   # the boards' tops, under their cap rails
+
+
+def mirror_x(elements):
+    """The east side's copy of west-side parts: x -> 16 - x, east and west faces swap (hidden ones too)."""
+    swap = {"east": "west", "west": "east"}
+    out = []
+    for e in elements:
+        e = dict(e)
+        e["from"], e["to"] = [16 - e["to"][0], e["from"][1], e["from"][2]], [16 - e["from"][0], e["to"][1], e["to"][2]]
+        e["hide"] = {swap.get(d, d) for d in e["hide"]}
+        e["ftex"] = {swap.get(d, d): t for d, t in e["ftex"].items()}
+        e["uv"] = {swap.get(d, d): u for d, u in e["uv"].items()}
+        e["name"] = e["name"].replace("_w", "_e") if e["name"].endswith("_w") else e["name"] + "_e"
+        assert e["rot"] is None, e["name"]
+        out.append(e)
+    return out
+
+
+def split_seam(elements):
+    """(head, foot): parts crossing the seam are cut there and the cut faces left out, so the halves meet seamlessly."""
+    head, foot = [], []
+    for e in elements:
+        z0, z1 = e["from"][2], e["to"][2]
+        if z1 <= COT_SEAM:
+            head.append(e)
+        elif z0 >= COT_SEAM:
+            foot.append(e)
+        else:
+            h = dict(e, to=[e["to"][0], e["to"][1], COT_SEAM], hide=set(e["hide"]) | {"south"}, name=e["name"] + "_head")
+            f = dict(e, **{"from": [e["from"][0], e["from"][1], COT_SEAM]}, hide=set(e["hide"]) | {"north"},
+                     name=e["name"] + "_foot")
+            head.append(h)
+            foot.append(f)
+    return head, foot
+
+
+def cot_core():
+    """The middle x 2.5..13.5 of the whole cot: boards, mattress, blanket, pillow. Its sides are inside the edge parts
+    (posts, rails, drape) or inside the joined neighbour's mattress, so they are drawn and never seen."""
+    hz0, hz1 = -15.5, -14.5
+    fz0, fz1 = 14.5, 15.5
+    return [
+        box("headboard", (2.5, COT_BOTTOM[0], hz0), (13.5, COT_HEAD_TOP, hz1), "dark_oak_planks", hide=("east", "west", "up")),
+        box("headboard_panel", (4, 6, hz0 - 0.3), (12, 11.5, hz0), "stripped_dark_oak_log", hide=("south",)),
+        box("headboard_rail", (2.5, COT_HEAD_TOP, -15.75), (13.5, COT_HEAD_TOP + 0.75, -14.25), "stripped_dark_oak_log",
+            grain="x", hide=("east", "west")),
+        box("footboard", (2.5, COT_BOTTOM[0], fz0), (13.5, COT_FOOT_TOP, fz1), "dark_oak_planks", hide=("east", "west", "up")),
+        box("footboard_panel", (4, 4, fz1), (12, 8, fz1 + 0.3), "stripped_dark_oak_log", hide=("north",)),
+        box("footboard_rail", (2.5, COT_FOOT_TOP, 14.25), (13.5, COT_FOOT_TOP + 0.75, 15.75), "stripped_dark_oak_log",
+            grain="x", hide=("east", "west")),
+        box("bottom", (2.5, COT_BOTTOM[0], COT_IN[0]), (13.5, COT_BOTTOM[1], COT_IN[1]), "dark_oak_planks",
+            hide=("north", "south", "east", "west", "up")),
+        # the mattress' up face shows at the head, under the pillow's ends; the blanket covers the rest
+        box("mattress", (2.5, COT_MATTRESS[0], COT_IN[0]), (13.5, COT_MATTRESS[1], COT_IN[1]), "white_wool",
+            hide=("north", "south", "down")),
+        box("blanket", (2.5, COT_BLANKET[0], COT_BLANKET_Z[0]), (13.5, COT_BLANKET[1], COT_BLANKET_Z[1]), "red_wool",
+            hide=("south", "down")),
+        box("sheet_fold", (2.5, COT_FOLD[0], COT_BLANKET_Z[0]), (13.5, COT_FOLD[1], COT_BLANKET_Z[0] + 1.5), "white_wool",
+            hide=("down",)),
+        box("pillow", (2.5, COT_PILLOW[0], -14.25), (13.5, COT_PILLOW[1], -10.25), "white_wool", hide=("down",)),
+        box("pillow_puff", (4, COT_PUFF[0], -13.75), (12, COT_PUFF[1], -10.75), "white_wool", hide=("down",)),
     ]
-    for half, (z0, z1) in (("head", (-14, 0)), ("foot", (0, 14))):
-        seam = ("south",) if half == "head" else ("north",)
+
+
+def cot_edge_w():
+    """The cot's west side where it ends: corner posts with knobs, the side rail and the blanket's drape."""
+    e = []
+    for end, (z0, z1), top in (("head", COT_HEAD_Z, COT_HEAD_TOP + 1), ("foot", COT_FOOT_Z, COT_FOOT_TOP + 1)):
         e += [
-            box("side_w_" + half, (1, 2, z0), (2.5, 9.5, z1), "dark_oak_planks", hide=seam + ("up",)),
-            box("side_e_" + half, (13.5, 2, z0), (15, 9.5, z1), "dark_oak_planks", hide=seam + ("up",)),
-            box("rail_w_" + half, (0.75, 9.5, z0), (2.75, 10.25, z1), "stripped_dark_oak_log", grain="z", hide=seam),
-            box("rail_e_" + half, (13.25, 9.5, z0), (15.25, 10.25, z1), "stripped_dark_oak_log", grain="z", hide=seam),
+            box(end + "_post_w", (0.5, 0, z0), (2.5, top, z1), "stripped_dark_oak_log"),
+            box(end + "_knob_w", (0.75, top, z0 + 0.25), (2.25, top + 0.75, z1 - 0.25), "dark_oak_planks", hide=("down",)),
         ]
     e += [
-        box("bottom_head", (2.5, 2, -14.5), (13.5, 3, 0), "dark_oak_planks", hide=("south", "north", "east", "west", "up")),
-        box("bottom_foot", (2.5, 2, 0), (13.5, 3, 14.5), "dark_oak_planks", hide=("north", "south", "east", "west", "up")),
-        box("mattress_head", (2.5, 3, -14.5), (13.5, 8.5, 0), "white_wool", hide=("south", "north", "east", "west", "down")),
-        box("blanket_head", (2.5, 8.5, -5), (13.5, 9.1, 0), "red_wool", hide=("south", "east", "west", "down")),
-        box("blanket_foot", (2.5, 8.5, 0), (13.5, 9.1, 14.5), "red_wool", hide=("north", "south", "east", "west", "down")),
-        box("sheet_fold", (2.5, 9.1, -5), (13.5, 9.5, -3.5), "white_wool", hide=("east", "west", "down")),
-        box("pillow", (4, 8.5, -14.25), (12, 10.25, -10.5), "white_wool", hide=("down",)),
-        box("pillow_puff", (4.5, 10.25, -13.75), (11.5, 10.75, -11), "white_wool", hide=("down",)),
+        box("rail_w", (0.5, COT_RAIL[0], COT_HEAD_Z[1]), (2.5, COT_RAIL[1], COT_FOOT_Z[0]), "stripped_dark_oak_log",
+            grain="z", hide=("north", "south")),
+        # the blanket hangs over the mattress' side down onto the rail
+        box("drape_w", (2.2, COT_RAIL[1], COT_BLANKET_Z[0]), (2.5, COT_BLANKET[1], COT_BLANKET_Z[1]), "red_wool",
+            hide=("east", "south", "down")),
     ]
     return e
 
 
+def cot_fill_w():
+    """The cot's west side where a neighbour joins it: everything of the core runs on to x 0 (the faces there meet
+    the neighbour's and are left out); no post, no rail."""
+    e = []
+    for el in cot_core():
+        if el["name"] in ("headboard_panel", "footboard_panel", "pillow_puff"):
+            continue
+        f = dict(el, **{"from": [0, el["from"][1], el["from"][2]]}, to=[2.5, el["to"][1], el["to"][2]],
+                 name=el["name"] + "_w", hide=set(el["hide"]) | {"west", "east"})
+        e.append(f)
+    return e
+
+
+def cot_halves():
+    """{suffix: (head elements, foot elements)} for '' (core), '_left', '_right', '_left_joined', '_right_joined'."""
+    parts = {"": cot_core(), "_left": cot_edge_w(), "_right": mirror_x(cot_edge_w()),
+             "_left_joined": cot_fill_w(), "_right_joined": mirror_x(cot_fill_w())}
+    return {k: split_seam(v) for k, v in parts.items()}
+
+
+# ART20: the gui looks along the cot from its foot, so the pillow and the headboard stand at the back (ART2's y 225
+# looked from the head: the headboard hid the pillow and the sunken mattress showed as white slivers); first person
+# holds it crosswise and higher (ART2's lay flat at the screen's bottom edge, mostly out of view); the item frame shows
+# it from above, head up. A left-hand entry repeats the right one (ART17; the cot is symmetric along x).
 COT_ITEM_DISPLAY = {
-    "gui": {"rotation": [30, 225, 0], "translation": [0, 0, 0], "scale": [0.42, 0.42, 0.42]},
-    "ground": {"rotation": [0, 0, 0], "translation": [0, 3, 0], "scale": [0.15, 0.15, 0.15]},
-    "fixed": {"rotation": [0, 90, 0], "translation": [0, 0, 0], "scale": [0.4, 0.4, 0.4]},
+    "gui": {"rotation": [30, -35, 0], "translation": [0, 0.5, 0], "scale": [0.45, 0.45, 0.45]},
+    "ground": {"rotation": [0, 0, 0], "translation": [0, 3, 0], "scale": [0.2, 0.2, 0.2]},
+    "fixed": {"rotation": [-90, 180, 0], "translation": [0, 0, 0], "scale": [0.42, 0.42, 0.42]},
     "head": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [0.4, 0.4, 0.4]},
     "thirdperson_righthand": {"rotation": [75, 45, 0], "translation": [0, 2.5, 0], "scale": [0.25, 0.25, 0.25]},
     "thirdperson_lefthand": {"rotation": [75, 45, 0], "translation": [0, 2.5, 0], "scale": [0.25, 0.25, 0.25]},
-    "firstperson_righthand": {"rotation": [0, 45, 0], "translation": [0, 0, 0], "scale": [0.25, 0.25, 0.25]},
-    "firstperson_lefthand": {"rotation": [0, 225, 0], "translation": [0, 0, 0], "scale": [0.25, 0.25, 0.25]},
+    "firstperson_righthand": {"rotation": [0, -60, 0], "translation": [0, 6, 0], "scale": [0.3, 0.3, 0.3]},
+    "firstperson_lefthand": {"rotation": [0, -60, 0], "translation": [0, 6, 0], "scale": [0.3, 0.3, 0.3]},
 }
 
 
 def cots():
-    parts = cot_parts()
-    head = [e for e in parts if e["to"][2] <= 0]
-    foot = [e for e in parts if e["from"][2] >= 0]
-    assert len(head) + len(foot) == len(parts), "a cot part crosses the seam"
-    mh = Model("sea_cot_head", "dark_oak_planks").add(shift(head, dz=16))
-    mf = Model("sea_cot_foot", "dark_oak_planks").add(foot)
-    mi = Model("sea_cot_item", "dark_oak_planks", COT_ITEM_DISPLAY).add(shift(head + foot, dz=8))
-    for m in (mh, mf, mi):
+    halves = cot_halves()
+    out = []
+    for suffix, (head, foot) in halves.items():
+        out.append(Model("sea_cot_head" + suffix, "dark_oak_planks").add(shift(head, dz=16)))
+        out.append(Model("sea_cot_foot" + suffix, "dark_oak_planks").add(foot))
+    whole = []
+    for suffix in ("", "_left", "_right"):
+        head, foot = halves[suffix]
+        whole += head + foot
+    mi = Model("sea_cot_item", "dark_oak_planks", COT_ITEM_DISPLAY).add(shift(whole, dz=8))
+    out.append(mi)
+    for m in out:
         m.project = "sea_cot"
         m.wood = True
     for e in mi.elements:
         e["cull"] = False
-    return [mh, mf, mi]
+    return out
 
 
 def all_models():
     return lanterns() + bells() + rope_coils() + windows() + chart_table() + cots()
 
 
+# ---------------------------------------------------------------- the sea cot's Blockbench project (ART20)
+# ART20 writes art/models/sea_cot.bbmodel from the part list (as tools/gen_railing_models.py does for the railing):
+# one group per exported model, the item first and visible; textures by file from art/vanilla/ like ART2's projects.
+
+def det_uuid(*parts):
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, "pirates_n_ships/sea_cot/" + "/".join(parts)))
+
+
+def bb_project(name, compiled):
+    """A java_block project of `compiled` [(model name, compiled JSON)], textures in first-use order."""
+    tex_ids, textures = [], []
+    for _, data in compiled:
+        for el in data["elements"]:
+            for f in el["faces"].values():
+                tid = data["textures"][f["texture"][1:]]
+                if tid not in tex_ids:
+                    key = f["texture"][1:]
+                    tex_ids.append(tid)
+                    file = tid.split("/")[-1]
+                    textures.append({
+                        "name": file + ".png", "path": "", "relative_path": "../vanilla/%s.png" % file,
+                        "folder": "block", "namespace": "minecraft", "id": key if not key.isdigit() else str(len(textures)),
+                        "group": "", "scope": 0, "width": 16, "height": 16, "uv_width": 16, "uv_height": 16,
+                        "particle": key == "planks", "use_as_default": False, "layers_enabled": False,
+                        "sync_to_project": "", "file_format": "png", "render_mode": "default", "render_sides": "auto",
+                        "wrap_mode": "limited", "pbr_channel": "color", "fps": 7, "frame_time": 1,
+                        "frame_order_type": "loop", "frame_order": "", "frame_interpolate": False, "visible": True,
+                        "internal": False, "saved": True, "uuid": det_uuid("texture", file)})
+    elements, groups, outliner = [], [], []
+    for gi, (gname, data) in enumerate(compiled):
+        ids = []
+        for i, el in enumerate(data["elements"]):
+            faces = {}
+            for d in DIRS:
+                if d in el["faces"]:
+                    f = el["faces"][d]
+                    faces[d] = {"uv": f["uv"], "texture": tex_ids.index(data["textures"][f["texture"][1:]])}
+                    if "rotation" in f:
+                        faces[d]["rotation"] = f["rotation"]
+                else:
+                    faces[d] = {"uv": [0, 0, 1, 1], "texture": None}
+            e = {"name": el["name"], "box_uv": False, "render_order": "default", "rescale": False, "locked": False,
+                 "shade_direction_override": "", "light_emission": 0, "export": True, "scope": 0,
+                 "allow_mirror_modeling": True, "from": el["from"], "to": el["to"], "autouv": 0, "color": i % 8,
+                 "origin": el["rotation"]["origin"] if "rotation" in el else [8, 8, 8], "faces": faces,
+                 "type": "cube", "uuid": det_uuid(gname, str(i), el["name"]), "visibility": gi == 0}
+            elements.append(e)
+            ids.append(e["uuid"])
+        g = {"name": gname, "uuid": det_uuid("group", gname), "export": True, "locked": False, "scope": 0,
+             "selected": False, "visibility": gi == 0, "_static": {"properties": {}, "temp_data": {}},
+             "origin": [8, 8, 8], "rotation": [0, 0, 0], "color": 0, "children": [], "reset": False, "shade": True,
+             "mirror_uv": False, "autouv": 0, "isOpen": False, "primary_selected": False}
+        groups.append(g)
+        outliner.append({"uuid": g["uuid"], "isOpen": False, "children": ids})
+    project = {
+        "meta": {"format_version": "5.0", "model_format": "java_block", "box_uv": False},
+        "name": name, "parent": "", "ambientocclusion": True, "front_gui_light": False,
+        "visible_box": [1, 1, 0], "variable_placeholders": "", "multi_file_ruleset": "",
+        "variable_placeholder_buttons": [], "unhandled_root_fields": {},
+        "resolution": {"width": 16, "height": 16},
+        "elements": elements, "groups": groups, "outliner": outliner, "textures": textures,
+    }
+    display = next((data["display"] for _, data in compiled if "display" in data), None)
+    if display:
+        project["display"] = display
+    return project
+
+
 def main():
+    cot = []
     for m in all_models():
         data = compile_model(m)
         (OUT / (m.name + ".json")).write_text(json.dumps(data, indent=2) + "\n")
         print("%-28s %3d elements, %d textures" % (m.name, len(data["elements"]), len(data["textures"]) - 1))
+        if m.project == "sea_cot":
+            cot.append((m.name, data))
+    cot.sort(key=lambda c: c[0] != "sea_cot_item")
+    (ROOT / "art/models/sea_cot.bbmodel").write_text(json.dumps(bb_project("sea_cot", cot), indent="\t") + "\n")
 
 
 if __name__ == "__main__":

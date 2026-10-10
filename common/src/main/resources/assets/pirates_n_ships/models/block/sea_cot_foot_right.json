@@ -1,0 +1,229 @@
+{
+  "credit": "Made with Blockbench, source art/models/sea_cot.bbmodel",
+  "parent": "minecraft:block/block",
+  "textures": {
+    "log": "minecraft:block/stripped_dark_oak_log",
+    "planks": "minecraft:block/dark_oak_planks",
+    "0": "minecraft:block/red_wool",
+    "particle": "minecraft:block/dark_oak_planks"
+  },
+  "elements": [
+    {
+      "name": "foot_post_e",
+      "from": [
+        13.5,
+        0,
+        14
+      ],
+      "to": [
+        15.5,
+        11,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            5,
+            2.5,
+            16
+          ],
+          "texture": "#log"
+        },
+        "east": {
+          "uv": [
+            0,
+            5,
+            2,
+            16
+          ],
+          "texture": "#log"
+        },
+        "south": {
+          "uv": [
+            13.5,
+            5,
+            15.5,
+            16
+          ],
+          "texture": "#log",
+          "cullface": "south"
+        },
+        "west": {
+          "uv": [
+            14,
+            5,
+            16,
+            16
+          ],
+          "texture": "#log"
+        },
+        "up": {
+          "uv": [
+            13.5,
+            14,
+            15.5,
+            16
+          ],
+          "texture": "#log"
+        },
+        "down": {
+          "uv": [
+            13.5,
+            0,
+            15.5,
+            2
+          ],
+          "texture": "#log",
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "name": "foot_knob_e",
+      "from": [
+        13.75,
+        11,
+        14.25
+      ],
+      "to": [
+        15.25,
+        11.75,
+        15.75
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.75,
+            4.25,
+            2.25,
+            5
+          ],
+          "texture": "#planks"
+        },
+        "east": {
+          "uv": [
+            0.25,
+            4.25,
+            1.75,
+            5
+          ],
+          "texture": "#planks"
+        },
+        "south": {
+          "uv": [
+            13.75,
+            4.25,
+            15.25,
+            5
+          ],
+          "texture": "#planks"
+        },
+        "west": {
+          "uv": [
+            14.25,
+            4.25,
+            15.75,
+            5
+          ],
+          "texture": "#planks"
+        },
+        "up": {
+          "uv": [
+            13.75,
+            14.25,
+            15.25,
+            15.75
+          ],
+          "texture": "#planks"
+        }
+      }
+    },
+    {
+      "name": "rail_e_foot",
+      "from": [
+        13.5,
+        2,
+        0
+      ],
+      "to": [
+        15.5,
+        5,
+        14
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            2,
+            -5,
+            5,
+            9
+          ],
+          "rotation": 90,
+          "texture": "#log"
+        },
+        "west": {
+          "uv": [
+            0,
+            -5,
+            3,
+            9
+          ],
+          "rotation": 90,
+          "texture": "#log"
+        },
+        "up": {
+          "uv": [
+            13.5,
+            0,
+            15.5,
+            14
+          ],
+          "texture": "#log"
+        },
+        "down": {
+          "uv": [
+            13.5,
+            2,
+            15.5,
+            16
+          ],
+          "texture": "#log"
+        }
+      }
+    },
+    {
+      "name": "drape_e_foot",
+      "from": [
+        13.5,
+        5,
+        0
+      ],
+      "to": [
+        13.8,
+        8.6,
+        14.5
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            1.5,
+            7.4,
+            16,
+            11
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            13.5,
+            0,
+            13.8,
+            14.5
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}
